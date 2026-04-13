@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use Illuminate\Database\Connection;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 
@@ -268,8 +269,8 @@ final class MatriculaChartQueries
                 return null;
             }
 
-            $q = $db->table($turma.' as t')
-                ->join($turno.' as tn', 't.'.$turnoCol, '=', 'tn.'.$tnId);
+            $q = $db->table($turma.' as t');
+            self::joinTurmaAliasToTurnoCatalog($db, $q, 't', $turno, 'tn', $turnoCol, $tnId);
             $yearVal = $filters->yearFilterValue();
             if ($yearVal !== null && $tc['year'] !== '') {
                 $q->where('t.'.$tc['year'], $yearVal);
@@ -563,8 +564,8 @@ final class MatriculaChartQueries
             }
             $tId = (string) config('ieducar.columns.turma.id');
 
-            $q = $db->table($turma.' as t')
-                ->join($turno.' as tn', 't.'.$turnoCol, '=', 'tn.'.$tnId);
+            $q = $db->table($turma.' as t');
+            self::joinTurmaAliasToTurnoCatalog($db, $q, 't', $turno, 'tn', $turnoCol, $tnId);
 
             $yearVal = $filters->yearFilterValue();
             if ($yearVal !== null && $tc['year'] !== '') {
@@ -626,8 +627,8 @@ final class MatriculaChartQueries
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
-            $q->join($turno.' as tn', 't_filter.'.$turnoCol, '=', 'tn.'.$tnId)
-                ->selectRaw('tn.'.$tnId.' as tid')
+            self::joinTurmaAliasToTurnoCatalog($db, $q, 't_filter', $turno, 'tn', $turnoCol, $tnId);
+            $q->selectRaw('tn.'.$tnId.' as tid')
                 ->selectRaw('MAX(tn.'.$tnName.') as tname')
                 ->selectRaw('COUNT(*) as cnt')
                 ->groupBy('tn.'.$tnId)
@@ -1401,19 +1402,23 @@ final class MatriculaChartQueries
                 return null;
             }
             $sId = $spec['idCol'];
-            $maxCol = IeducarColumnInspector::firstExistingColumn($db, $serieT, [
+            $cfgMax = trim((string) config('ieducar.columns.serie.idade_limite_max', ''));
+            $maxCol = IeducarColumnInspector::firstExistingColumn($db, $serieT, array_filter([
+                $cfgMax !== '' ? $cfgMax : null,
                 'idade_maxima',
                 'idade_max',
                 'idade_maxima_escolar',
-            ], $city);
-            $minCol = IeducarColumnInspector::firstExistingColumn($db, $serieT, [
-                'idade_minima',
-                'idade_min',
-            ], $city);
-            if ($maxCol === null && $minCol === null) {
+                'idade_final',
+                'idade_fim',
+                'idade_ideal_max',
+                'idade_maxima_ideal',
+            ]), $city);
+            if ($maxCol === null) {
                 return null;
             }
-            $limiteCol = $maxCol ?? $minCol;
+
+            $grammar = $db->getQueryGrammar();
+            $limiteExpr = $grammar->wrap('s').'.'.$grammar->wrap($maxCol);
 
             $mAtivo = (string) config('ieducar.columns.matricula.ativo');
             $mAluno = (string) config('ieducar.columns.matricula.aluno');
@@ -1440,20 +1445,28 @@ final class MatriculaChartQueries
 
             $refDateExpr = self::refDateCorteEscolarSql($db, 't_filter', $tc['year']);
             $idadeExpr = self::idadeAnosCompletosSql($db, $refDateExpr, 'p', $birthCol);
-            $limiteExpr = 's.'.$limiteCol;
             $distorcaoCond = '('.$idadeExpr.') > ('.$limiteExpr.' + 2)';
 
-            $base = function () use ($db, $city, $filters, $mat, $mAtivo, $mAluno, $aluno, $aId, $aPessoa, $pessoa, $pId, $serieT, $sId, $tc, $birthCol, $limiteCol) {
+            $serieJoinCol = $tc['serie'];
+            $base = function () use ($db, $city, $filters, $mat, $mAtivo, $mAluno, $aluno, $aId, $aPessoa, $pessoa, $pId, $serieT, $sId, $birthCol, $serieJoinCol, $limiteExpr, $grammar) {
                 $q = $db->table($mat.' as m');
                 MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
                 MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
                 MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
                 MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
                 $q->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
-                    ->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId)
-                    ->join($serieT.' as s', 't_filter.'.$tc['serie'], '=', 's.'.$sId)
+                    ->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId);
+                $tSerieFk = $grammar->wrap('t_filter').'.'.$grammar->wrap($serieJoinCol);
+                $sPk = $grammar->wrap('s').'.'.$grammar->wrap($sId);
+                $q->join($serieT.' as s', function ($join) use ($db, $tSerieFk, $sPk) {
+                    if ($db->getDriverName() === 'pgsql') {
+                        $join->whereRaw('('.$tSerieFk.')::text = ('.$sPk.')::text');
+                    } else {
+                        $join->whereRaw('CAST('.$tSerieFk.' AS UNSIGNED) = CAST('.$sPk.' AS UNSIGNED)');
+                    }
+                })
                     ->whereNotNull('p.'.$birthCol)
-                    ->whereNotNull('s.'.$limiteCol);
+                    ->whereRaw('('.$limiteExpr.') IS NOT NULL');
 
                 return $q;
             };
@@ -1717,5 +1730,29 @@ final class MatriculaChartQueries
         }
 
         return null;
+    }
+
+    /**
+     * JOIN turma.FK ↔ catálogo de turno (pmieducar.turma_turno, cadastro.turno, …) com cast para alinhar tipos int/text entre motores.
+     */
+    private static function joinTurmaAliasToTurnoCatalog(
+        Connection $db,
+        Builder $q,
+        string $turmaAlias,
+        string $turnoQualifiedTable,
+        string $turnoAlias,
+        string $turmaTurnoFkCol,
+        string $turnoIdCol,
+    ): void {
+        $g = $db->getQueryGrammar();
+        $lhs = $g->wrap($turmaAlias).'.'.$g->wrap($turmaTurnoFkCol);
+        $rhs = $g->wrap($turnoAlias).'.'.$g->wrap($turnoIdCol);
+        $q->join($turnoQualifiedTable.' as '.$turnoAlias, function ($join) use ($db, $lhs, $rhs) {
+            if ($db->getDriverName() === 'pgsql') {
+                $join->whereRaw('('.$lhs.')::text = ('.$rhs.')::text');
+            } else {
+                $join->whereRaw('CAST('.$lhs.' AS UNSIGNED) = CAST('.$rhs.' AS UNSIGNED)');
+            }
+        });
     }
 }

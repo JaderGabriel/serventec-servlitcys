@@ -1,42 +1,6 @@
 {
-  "_chunk-7ZXdHUL4.js": {
-    "file": "assets/chunk-7ZXdHUL4.js",
-    "name": "chunk"
-  },
-  "_typeof-GPCnPm50.js": {
-    "file": "assets/typeof-GPCnPm50.js",
-    "name": "typeof"
-  },
-  "node_modules/canvg/lib/index.es.js": {
-    "file": "assets/index.es-DUtKM-H5.js",
-    "name": "index.es",
-    "src": "node_modules/canvg/lib/index.es.js",
-    "isDynamicEntry": true,
-    "imports": [
-      "_chunk-7ZXdHUL4.js",
-      "_typeof-GPCnPm50.js"
-    ]
-  },
-  "node_modules/dompurify/dist/purify.js": {
-    "file": "assets/purify-B4PMJCZx.js",
-    "name": "purify",
-    "src": "node_modules/dompurify/dist/purify.js",
-    "isDynamicEntry": true,
-    "imports": [
-      "_chunk-7ZXdHUL4.js"
-    ]
-  },
-  "node_modules/html2canvas/dist/html2canvas.js": {
-    "file": "assets/html2canvas-QVl6BCzI.js",
-    "name": "html2canvas",
-    "src": "node_modules/html2canvas/dist/html2canvas.js",
-    "isDynamicEntry": true,
-    "imports": [
-      "_chunk-7ZXdHUL4.js"
-    ]
-  },
   "resources/css/app.css": {
-    "file": "assets/app-C8h8IO19.css",
+    "file": "assets/app-9f4xy4L8.css",
     "name": "app",
     "names": [
       "app.css"
@@ -45,18 +9,9 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-DVPvkiRk.js",
+    "file": "assets/app-BOXbRRJ0.js",
     "name": "app",
     "src": "resources/js/app.js",
-    "isEntry": true,
-    "imports": [
-      "_chunk-7ZXdHUL4.js",
-      "_typeof-GPCnPm50.js"
-    ],
-    "dynamicImports": [
-      "node_modules/html2canvas/dist/html2canvas.js",
-      "node_modules/dompurify/dist/purify.js",
-      "node_modules/canvg/lib/index.es.js"
-    ]
+    "isEntry": true
   }
 }

@@ -12,7 +12,7 @@
     @endif
 
     @if (! empty($inclusionData['notes']))
-        <div class="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-4 py-3 text-xs text-amber-900 dark:text-amber-100 space-y-1">
+        <div class="rounded-md bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-600 px-4 py-3 text-xs text-slate-700 dark:text-slate-300 space-y-1.5 leading-relaxed">
             @foreach ($inclusionData['notes'] as $note)
                 <p>{{ $note }}</p>
             @endforeach

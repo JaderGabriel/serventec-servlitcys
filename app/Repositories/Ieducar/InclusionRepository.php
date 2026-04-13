@@ -14,6 +14,7 @@ use App\Support\Ieducar\MatriculaAtivoFilter;
 use App\Support\Ieducar\MatriculaChartQueries;
 use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 
 /**
@@ -60,7 +61,7 @@ class InclusionRepository
                     $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
                     if ($totalMat !== null && $totalMat > 0) {
                         $notes[] = __(
-                            'Não há medidores NEE nesta base: confirme a tabela aluno_deficiência (e cadastro.deficiencia) ou defina IEDUCAR_SQL_INCLUSION_GAUGE_DEFICIENCIA / _SINDROME / _ALTAS_HABILIDADES em config/ieducar.php.'
+                            'NEE: não foi encontrada a tabela aluno_deficiência (ou pivô equivalente) ligada a deficiências. Verifique pmieducar.aluno_deficiencia / cadastro.deficiencia ou defina IEDUCAR_SQL_INCLUSION_GAUGE_* em config/ieducar.php.'
                         );
                     }
                 }
@@ -99,7 +100,7 @@ class InclusionRepository
                         $charts[] = $racaChart;
                     } else {
                         $notes[] = __(
-                            'Não foi possível montar o gráfico de raça/cor automaticamente. Confirme IEDUCAR_TABLE_RACA (cadastro.raca), colunas em pessoa/aluno (ref_cod_raca), IEDUCAR_TABLE_RACA_FALLBACKS ou defina IEDUCAR_SQL_INCLUSION_RACA.'
+                            'Raça/cor: não foi possível agregar por catálogo. Confirme IEDUCAR_TABLE_RACA, ref_cod_raca em pessoa/aluno/física, IEDUCAR_TABLE_RACA_FALLBACKS ou IEDUCAR_SQL_INCLUSION_RACA.'
                         );
                     }
                 }
@@ -256,17 +257,17 @@ class InclusionRepository
                 ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
 
             if ($pRaca !== null && $pId !== null) {
-                $q->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId)
-                    ->leftJoin($racaT.' as r', 'p.'.$pRaca, '=', 'r.'.$rIdCol);
+                $q->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId);
+                self::leftJoinRacaCatalogOnFk($db, $q, 'p', $pRaca, $racaT, 'r', $rIdCol);
             } elseif ($aRaca !== null) {
-                $q->leftJoin($racaT.' as r', 'a.'.$aRaca, '=', 'r.'.$rIdCol);
+                self::leftJoinRacaCatalogOnFk($db, $q, 'a', $aRaca, $racaT, 'r', $rIdCol);
             } elseif ($fisicaTable !== null && $fisicaRacaCol !== null && $fisicaLinkCol !== null && $pId !== null) {
                 $q->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId)
-                    ->leftJoin($fisicaTable.' as pf', 'p.'.$pId, '=', 'pf.'.$fisicaLinkCol)
-                    ->leftJoin($racaT.' as r', 'pf.'.$fisicaRacaCol, '=', 'r.'.$rIdCol);
+                    ->leftJoin($fisicaTable.' as pf', 'p.'.$pId, '=', 'pf.'.$fisicaLinkCol);
+                self::leftJoinRacaCatalogOnFk($db, $q, 'pf', $fisicaRacaCol, $racaT, 'r', $rIdCol);
             } elseif ($fisicaViaAluno !== null) {
-                $q->leftJoin($fisicaViaAluno['table'].' as pf', 'a.'.$fisicaViaAluno['alunoCol'], '=', 'pf.'.$fisicaViaAluno['fisicaLink'])
-                    ->leftJoin($racaT.' as r', 'pf.'.$fisicaViaAluno['racaCol'], '=', 'r.'.$rIdCol);
+                $q->leftJoin($fisicaViaAluno['table'].' as pf', 'a.'.$fisicaViaAluno['alunoCol'], '=', 'pf.'.$fisicaViaAluno['fisicaLink']);
+                self::leftJoinRacaCatalogOnFk($db, $q, 'pf', $fisicaViaAluno['racaCol'], $racaT, 'r', $rIdCol);
             } else {
                 return null;
             }
@@ -314,6 +315,7 @@ class InclusionRepository
                 (string) config('ieducar.columns.raca.id'),
                 'cod_raca',
                 'id',
+                'id_raca',
                 'codigo',
             ]), $city);
             $nameCol = IeducarColumnInspector::firstExistingColumn($db, $qualified, array_filter([
@@ -352,6 +354,30 @@ class InclusionRepository
             'cadastro.fisica',
             'public.fisica',
         ])));
+    }
+
+    /**
+     * leftJoin pessoa/aluno/fisica.FK → cadastro.raca com cast (evita 0 linhas por int ≠ bigint).
+     */
+    private static function leftJoinRacaCatalogOnFk(
+        Connection $db,
+        Builder $q,
+        string $lhsAlias,
+        string $lhsCol,
+        string $racaQualified,
+        string $racaAlias,
+        string $rIdCol,
+    ): void {
+        $g = $db->getQueryGrammar();
+        $lhs = $g->wrap($lhsAlias).'.'.$g->wrap($lhsCol);
+        $rhs = $g->wrap($racaAlias).'.'.$g->wrap($rIdCol);
+        $q->leftJoin($racaQualified.' as '.$racaAlias, function ($join) use ($db, $lhs, $rhs) {
+            if ($db->getDriverName() === 'pgsql') {
+                $join->whereRaw('('.$lhs.')::text = ('.$rhs.')::text');
+            } else {
+                $join->whereRaw('CAST('.$lhs.' AS UNSIGNED) = CAST('.$rhs.' AS UNSIGNED)');
+            }
+        });
     }
 
     /**

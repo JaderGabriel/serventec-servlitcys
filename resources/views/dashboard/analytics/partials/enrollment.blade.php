@@ -65,6 +65,17 @@
         </div>
     @endif
 
+    @if (
+        ! empty($enrollmentData['kpis'])
+        && (int) ($enrollmentData['kpis']['matriculas'] ?? 0) > 0
+        && empty($enrollmentData['distorcao'])
+        && empty($enrollmentData['error'])
+    )
+        <div class="rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50/90 dark:bg-slate-900/40 px-4 py-3 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+            {{ __('Distorção idade/série: o cálculo automático precisa de data de nascimento na pessoa, série ligada à turma e uma coluna de idade limite superior na tabela série (por exemplo idade_maxima ou idade_final). Se a sua base usar outro nome, defina IEDUCAR_COL_SERIE_IDADE_LIMITE_MAX no .env ou use IEDUCAR_SQL_DISTORCAO_REDE_CHART para o gráfico e o cartão.') }}
+        </div>
+    @endif
+
     @if (! empty($enrollmentData['unidades_escolares']))
         <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
             <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40">

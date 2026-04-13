@@ -295,6 +295,8 @@ final class InclusionSpecialEducationGauges
             $primary,
             'pmieducar.aluno_deficiencia',
             'public.aluno_deficiencia',
+            'educacenso.aluno_deficiencia',
+            'modules.aluno_deficiencia',
             trim((string) config('ieducar.pgsql_schema_cadastro', 'cadastro')).'.aluno_deficiencia',
         ])));
     }

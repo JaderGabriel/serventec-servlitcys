@@ -30,7 +30,15 @@ class EnrollmentRepository
     public function sample(?City $city, IeducarFilterState $filters): array
     {
         if ($city === null) {
-            return ['rows' => [], 'kpis' => null, 'distorcao' => null, 'unidades_escolares' => null, 'error' => null, 'chart' => null, 'charts' => []];
+            return [
+                'rows' => [],
+                'kpis' => null,
+                'distorcao' => null,
+                'unidades_escolares' => null,
+                'error' => null,
+                'chart' => null,
+                'charts' => [],
+            ];
         }
 
         try {

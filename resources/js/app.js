@@ -3,11 +3,7 @@ import "./bootstrap";
 import Alpine from "alpinejs";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import {
-    buildCompositeExport,
-    downloadPdfFromSizedDataUrl,
-    triggerPngDownload,
-} from "./chartExportHelpers.js";
+import { buildCompositeExport, triggerPngDownload } from "./chartExportHelpers.js";
 import { initAnalyticsFilterTurno } from "./analyticsFilterTurno.js";
 
 Chart.register(ChartDataLabels);
@@ -71,6 +67,7 @@ document.addEventListener("alpine:init", () => {
                     pulseResize();
                     setTimeout(pulseResize, 80);
                     setTimeout(pulseResize, 240);
+                    setTimeout(pulseResize, 450);
                     window.dispatchEvent(
                         new CustomEvent("analytics-tab-changed", {
                             detail: { tab: this.tab },
@@ -486,36 +483,30 @@ document.addEventListener("alpine:init", () => {
                 if (!this.chart) {
                     return;
                 }
+                const root = this.$root;
                 try {
-                    const { dataUrl } = buildCompositeExport(
-                        this.chart,
-                        this._exportMeta,
-                        this._payload?.title || "",
-                    );
-                    triggerPngDownload(dataUrl, this._exportFilename);
+                    root?.scrollIntoView?.({ block: "nearest", behavior: "instant" });
                 } catch (e) {
-                    console.error(e);
+                    /* ignore */
                 }
-            },
-            exportPdf() {
-                if (!this.chart) {
-                    return;
-                }
-                try {
-                    const { dataUrl, width, height } = buildCompositeExport(
-                        this.chart,
-                        this._exportMeta,
-                        this._payload?.title || "",
-                    );
-                    downloadPdfFromSizedDataUrl(
-                        dataUrl,
-                        width,
-                        height,
-                        this._exportFilename,
-                    );
-                } catch (e) {
-                    console.error(e);
-                }
+                this.chart.resize();
+                this.chart.update("none");
+                requestAnimationFrame(() => {
+                    this.chart.resize();
+                    this.chart.update("none");
+                    requestAnimationFrame(() => {
+                        try {
+                            const { dataUrl } = buildCompositeExport(
+                                this.chart,
+                                this._exportMeta,
+                                this._payload?.title || "",
+                            );
+                            triggerPngDownload(dataUrl, this._exportFilename);
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    });
+                });
             },
         }),
     );

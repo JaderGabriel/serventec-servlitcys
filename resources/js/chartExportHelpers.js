@@ -1,5 +1,3 @@
-import { jsPDF } from "jspdf";
-
 /**
  * @returns {() => void}
  */
@@ -140,6 +138,17 @@ export function buildCompositeExport(chart, meta, chartTitle) {
         const src = chart.canvas;
         let imgW = src.width;
         let imgH = src.height;
+        if (!imgW || !imgH) {
+            chart.resize();
+            chart.update("none");
+            imgW = src.width;
+            imgH = src.height;
+        }
+        if (!imgW || !imgH) {
+            const rect = src.getBoundingClientRect?.() || { width: 0, height: 0 };
+            imgW = Math.max(400, Math.round(rect.width) || 600);
+            imgH = Math.max(240, Math.round(rect.height) || 360);
+        }
 
         const pad = 28;
         const maxContentW = 1320;
@@ -236,44 +245,6 @@ export function buildCompositeExport(chart, meta, chartTitle) {
     } finally {
         restore();
     }
-}
-
-/**
- * PDF síncrono (import estático de jsPDF; sem Image.onload).
- *
- * @param {string} dataUrl
- * @param {number} pxWidth
- * @param {number} pxHeight
- * @param {string} filenameBase
- */
-export function downloadPdfFromSizedDataUrl(
-    dataUrl,
-    pxWidth,
-    pxHeight,
-    filenameBase,
-) {
-    const doc = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4",
-    });
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const margin = 8;
-    const maxW = pageW - 2 * margin;
-    const maxH = pageH - 2 * margin;
-    const ratio = pxHeight / pxWidth;
-    let rw = maxW;
-    let rh = rw * ratio;
-    if (rh > maxH) {
-        rh = maxH;
-        rw = rh / ratio;
-    }
-    const x = margin + (maxW - rw) / 2;
-    const y = margin + (maxH - rh) / 2;
-    doc.addImage(dataUrl, "PNG", x, y, rw, rh);
-    const safe = (filenameBase || "grafico").replace(/[^a-zA-Z0-9-_]/g, "_");
-    doc.save(`${safe}.pdf`);
 }
 
 export function triggerPngDownload(dataUrl, filenameBase) {

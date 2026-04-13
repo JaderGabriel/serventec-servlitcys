@@ -154,6 +154,11 @@ return [
             'sort' => env('IEDUCAR_COL_SERIE_SORT', 'serie'),
             /** Ordenação alternativa (educacenso) quando existir na tabela série. */
             'etapa_educacenso' => env('IEDUCAR_COL_SERIE_ETAPA_EDUCACENSO', 'etapa_educacenso'),
+            /**
+             * Idade limite superior para cálculo de distorção (INEP: atraso se idade > limite + 2).
+             * Se vazio, o painel tenta idade_maxima, idade_final, etc.
+             */
+            'idade_limite_max' => env('IEDUCAR_COL_SERIE_IDADE_LIMITE_MAX', ''),
         ],
         'turma' => [
             'id' => env('IEDUCAR_COL_TURMA_ID', 'cod_turma'),

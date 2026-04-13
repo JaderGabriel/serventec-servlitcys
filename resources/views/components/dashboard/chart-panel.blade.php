@@ -25,15 +25,9 @@
                     type="button"
                     @click="exportPng()"
                     class="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
+                    title="{{ __('Exportar imagem PNG com cabeçalho e filtros') }}"
                 >
                     {{ __('PNG') }}
-                </button>
-                <button
-                    type="button"
-                    @click="exportPdf()"
-                    class="inline-flex items-center gap-1 rounded-md bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
-                >
-                    {{ __('PDF') }}
                 </button>
             </div>
         </div>
