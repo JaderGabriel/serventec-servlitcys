@@ -4,6 +4,7 @@
     'yearOptions',
     'ieducarOptions' => [],
     'formAction',
+    'filterOptionsTurnoUrl' => null,
 ])
 
 @php
@@ -28,8 +29,18 @@
             @endforeach
         </div>
     @endif
-    <form method="get" action="{{ $formAction }}" class="p-4">
+    <form
+        method="get"
+        action="{{ $formAction }}"
+        class="p-4"
+        @if (is_string($filterOptionsTurnoUrl) && $filterOptionsTurnoUrl !== '')
+            data-analytics-turno-cascade
+            data-analytics-filter-options-url="{{ $filterOptionsTurnoUrl }}"
+            data-analytics-turno-todos-label="{{ __('Todos os dados') }}"
+        @endif
+    >
         <input type="hidden" name="city_id" value="{{ $city->id }}" />
+        {{ $filtersExtras ?? '' }}
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>

@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "format:js": "npx prettier --write \"resources/js/**/*.js\""
     },
     "dependencies": {
         "chart.js": "^4.4.6",

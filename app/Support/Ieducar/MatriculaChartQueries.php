@@ -402,7 +402,7 @@ final class MatriculaChartQueries
         try {
             $spec = self::escolaJoinSpec($db, $city);
             if ($spec === null) {
-                return null;
+                return self::matriculasPorEscolaGroupedRowsEscolaIdOnly($db, $city, $filters, $sqlLimit);
             }
             ['qualified' => $escola, 'idCol' => $eId, 'nameCol' => $eName] = $spec;
 
@@ -414,16 +414,74 @@ final class MatriculaChartQueries
                 return null;
             }
 
+            $grammar = $db->getQueryGrammar();
+            $tEsc = $grammar->wrap('t_filter').'.'.$grammar->wrap($refEscola);
+            $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
+
             $q = $db->table($mat.' as m');
             MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
-            $q->join($escola.' as e', 't_filter.'.$refEscola, '=', 'e.'.$eId)
+            $q->join($escola.' as e', function ($join) use ($db, $tEsc, $ePk) {
+                if ($db->getDriverName() === 'pgsql') {
+                    $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
+                } else {
+                    $join->whereRaw('CAST('.$tEsc.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
+                }
+            })
                 ->selectRaw('e.'.$eId.' as eid')
                 ->selectRaw('MAX(e.'.$eName.') as ename')
                 ->selectRaw('COUNT(*) as cnt')
                 ->groupBy('e.'.$eId)
+                ->orderByDesc('cnt');
+            if ($sqlLimit !== null && $sqlLimit > 0) {
+                $q->limit($sqlLimit);
+            }
+
+            $rows = $q->get();
+
+            if ($rows->isEmpty()) {
+                $fallback = self::matriculasPorEscolaGroupedRowsEscolaIdOnly($db, $city, $filters, $sqlLimit);
+
+                return ($fallback !== null && $fallback->isNotEmpty()) ? $fallback : null;
+            }
+
+            return $rows;
+        } catch (QueryException|\Throwable) {
+            return self::matriculasPorEscolaGroupedRowsEscolaIdOnly($db, $city, $filters, $sqlLimit);
+        }
+    }
+
+    /**
+     * Agregação só pelo FK de escola na turma (sem JOIN), quando o JOIN falha ou tipos divergem.
+     *
+     * @return Collection<int, object>|null
+     */
+    private static function matriculasPorEscolaGroupedRowsEscolaIdOnly(Connection $db, City $city, IeducarFilterState $filters, ?int $sqlLimit = null): ?Collection
+    {
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            $refEscola = $tc['escola'];
+            if ($refEscola === '') {
+                return null;
+            }
+
+            $grammar = $db->getQueryGrammar();
+            $tEsc = $grammar->wrap('t_filter').'.'.$grammar->wrap($refEscola);
+
+            $q = $db->table($mat.' as m');
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+            $q->whereNotNull('t_filter.'.$refEscola);
+            $q->selectRaw($tEsc.' as eid')
+                ->selectRaw("'' as ename")
+                ->selectRaw('COUNT(*) as cnt')
+                ->groupBy($tEsc)
                 ->orderByDesc('cnt');
             if ($sqlLimit !== null && $sqlLimit > 0) {
                 $q->limit($sqlLimit);
@@ -1604,6 +1662,34 @@ final class MatriculaChartQueries
      */
     private static function turnoJoinSpec(Connection $db, City $city): ?array
     {
+        $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+        $fk = $tc['turno'];
+        $preferTurmaTurnoTable = in_array($fk, ['ref_cod_turma_turno', 'turma_turno_id'], true);
+
+        if ($preferTurmaTurnoTable) {
+            $tt = IeducarSchema::resolveTable('turma_turno', $city);
+            if ($tt !== '' && IeducarColumnInspector::tableExists($db, $tt, $city)) {
+                $idCol = IeducarColumnInspector::firstExistingColumn($db, $tt, array_filter([
+                    'id',
+                    'cod_turno',
+                    (string) config('ieducar.columns.turno.id'),
+                ]), $city);
+                $nameCol = IeducarColumnInspector::firstExistingColumn($db, $tt, array_filter([
+                    'nome',
+                    'nm_turno',
+                    'name',
+                    (string) config('ieducar.columns.turno.name'),
+                ]), $city);
+                if ($idCol !== null && $nameCol !== null) {
+                    return [
+                        'qualified' => $tt,
+                        'idCol' => $idCol,
+                        'nameCol' => $nameCol,
+                    ];
+                }
+            }
+        }
+
         foreach (IeducarSchema::turnoTableCandidates($city) as $qualified) {
             if (! IeducarColumnInspector::tableExists($db, $qualified, $city)) {
                 continue;

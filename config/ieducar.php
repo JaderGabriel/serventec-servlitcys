@@ -285,6 +285,12 @@ return [
          * Colunas: label (ou name) e valor (ou value, quantidade, pct) — contagens ou percentuais por fatia.
          */
         'distorcao_rede_chart' => env('IEDUCAR_SQL_DISTORCAO_REDE_CHART'),
+        /**
+         * Ab Desempenho: indicadores IDEB, SAEB e metas PNE (dados externos ao registo de matrícula).
+         * Várias linhas. Colunas reconhecidas: eixo|bloco|categoria (valores: ideb, saeb, pne), indicador|label|nome,
+         * valor|value, referencia|ano, unidade, detalhe|observacao.
+         */
+        'performance_inep_indicadores' => env('IEDUCAR_SQL_PERFORMANCE_INEP'),
     ],
 
     /*

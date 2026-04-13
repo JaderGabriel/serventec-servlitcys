@@ -12,6 +12,7 @@ use App\Support\Ieducar\MatriculaAtivoFilter;
 use App\Support\Ieducar\MatriculaChartQueries;
 use App\Support\Ieducar\MatriculaSituacaoResolver;
 use App\Support\Ieducar\MatriculaTurmaJoin;
+use App\Support\Ieducar\PerformanceInepPanel;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 
@@ -48,7 +49,8 @@ class PerformanceRepository
      *     alerta_ano_encerrado: ?string
      *   },
      *   distorcao_pct: ?float,
-     *   distorcao_note: ?string
+     *   distorcao_note: ?string,
+     *   inep_panel: ?array<string, mixed>
      * }
      */
     public function snapshot(?City $city, IeducarFilterState $filters): array
@@ -68,6 +70,7 @@ class PerformanceRepository
             ],
             'distorcao_pct' => null,
             'distorcao_note' => null,
+            'inep_panel' => null,
         ];
 
         if ($city === null) {
@@ -76,15 +79,22 @@ class PerformanceRepository
 
         try {
             return $this->cityData->run($city, function (Connection $db) use ($city, $filters) {
+                $inepPanel = PerformanceInepPanel::build($db, $city, $filters);
+
                 $mat = IeducarSchema::resolveTable('matricula', $city);
                 $spec = MatriculaSituacaoResolver::resolveChaveAgrupamento($db, $city);
                 if ($spec === null) {
+                    $chartsInep = [];
+                    if (($inepPanel['consolidated_chart'] ?? null) !== null) {
+                        $chartsInep[] = $inepPanel['consolidated_chart'];
+                    }
+
                     return [
                         'rows' => [],
                         'message' => __('Não foi possível determinar a situação da matrícula: confirme colunas «aprovado» ou «ref_cod_matricula_situacao» em matricula e a tabela «matricula_situacao» (IEDUCAR_TABLE_MATRICULA_SITUACAO) com «codigo» INEP.'),
                         'error' => null,
-                        'chart' => null,
-                        'charts' => [],
+                        'chart' => $chartsInep[0] ?? null,
+                        'charts' => $chartsInep,
                         'kpis' => [],
                         'kpi_meta' => [
                             'total_matriculas' => 0,
@@ -94,6 +104,7 @@ class PerformanceRepository
                         ],
                         'distorcao_pct' => null,
                         'distorcao_note' => null,
+                        'inep_panel' => $inepPanel,
                     ];
                 }
 
@@ -125,16 +136,22 @@ class PerformanceRepository
                         ],
                         'distorcao_pct' => null,
                         'distorcao_note' => null,
+                        'inep_panel' => $inepPanel,
                     ];
                 }
 
                 if ($rows->isEmpty()) {
+                    $chartsInep = [];
+                    if (($inepPanel['consolidated_chart'] ?? null) !== null) {
+                        $chartsInep[] = $inepPanel['consolidated_chart'];
+                    }
+
                     return [
                         'rows' => [],
                         'message' => __('Sem matrículas activas para os filtros seleccionados.'),
                         'error' => null,
-                        'chart' => null,
-                        'charts' => [],
+                        'chart' => $chartsInep[0] ?? null,
+                        'charts' => $chartsInep,
                         'kpis' => [],
                         'kpi_meta' => [
                             'total_matriculas' => 0,
@@ -144,6 +161,7 @@ class PerformanceRepository
                         ],
                         'distorcao_pct' => null,
                         'distorcao_note' => null,
+                        'inep_panel' => $inepPanel,
                     ];
                 }
 
@@ -179,6 +197,10 @@ class PerformanceRepository
                         $dVals[] = $b['q'];
                     }
                 }
+                if ($dLabels === [] && $total > 0) {
+                    $dLabels = [__('Total de matrículas (agregado)')];
+                    $dVals = [$total];
+                }
                 if ($dLabels !== []) {
                     $charts[] = ChartPayload::doughnut(__('Indicadores agregados (rede)'), $dLabels, $dVals);
                 }
@@ -213,6 +235,10 @@ class PerformanceRepository
                     array_unshift($charts, $distorcaoChart);
                 }
 
+                if (($inepPanel['consolidated_chart'] ?? null) !== null) {
+                    $charts[] = $inepPanel['consolidated_chart'];
+                }
+
                 [$distorcaoPct, $distorcaoNote] = $this->tryDistorcaoRede($db, $city);
 
                 return [
@@ -225,6 +251,7 @@ class PerformanceRepository
                     'kpi_meta' => $ind['kpi_meta'],
                     'distorcao_pct' => $distorcaoPct,
                     'distorcao_note' => $distorcaoNote,
+                    'inep_panel' => $inepPanel,
                 ];
             });
         } catch (\Throwable $e) {
@@ -243,6 +270,7 @@ class PerformanceRepository
                 ],
                 'distorcao_pct' => null,
                 'distorcao_note' => null,
+                'inep_panel' => null,
             ];
         }
     }

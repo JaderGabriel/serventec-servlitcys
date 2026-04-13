@@ -1,4 +1,4 @@
-import { jsPDF } from 'jspdf';
+import { jsPDF } from "jspdf";
 
 /**
  * @returns {() => void}
@@ -18,54 +18,63 @@ export function applyLightThemeForExport(chart) {
     };
 
     if (o.plugins?.legend?.labels) {
-        o.plugins.legend.labels.color = '#1f2937';
+        o.plugins.legend.labels.color = "#1f2937";
     }
-    ['x', 'y'].forEach((axis) => {
+    ["x", "y"].forEach((axis) => {
         if (o.scales?.[axis]?.ticks) {
-            o.scales[axis].ticks.color = '#4b5563';
+            o.scales[axis].ticks.color = "#4b5563";
         }
         if (o.scales?.[axis]?.grid) {
-            o.scales[axis].grid.color = 'rgba(148, 163, 184, 0.35)';
+            o.scales[axis].grid.color = "rgba(148, 163, 184, 0.35)";
         }
     });
     if (o.plugins?.datalabels) {
         o.plugins.datalabels.color = (ctx) => {
             const t = ctx.chart?.config?.type;
-            if (t === 'doughnut' || t === 'pie') {
-                return '#f8fafc';
+            if (t === "doughnut" || t === "pie") {
+                return "#f8fafc";
             }
-            return '#111827';
+            return "#111827";
         };
     }
-    chart.update('none');
+    chart.update("none");
 
     return () => {
-        if (o.plugins?.legend?.labels && backup.legendLabelsColor !== undefined) {
+        if (
+            o.plugins?.legend?.labels &&
+            backup.legendLabelsColor !== undefined
+        ) {
             o.plugins.legend.labels.color = backup.legendLabelsColor;
         }
-        ['x', 'y'].forEach((axis) => {
-            if (o.scales?.[axis]?.ticks && backup[`${axis}TicksColor`] !== undefined) {
+        ["x", "y"].forEach((axis) => {
+            if (
+                o.scales?.[axis]?.ticks &&
+                backup[`${axis}TicksColor`] !== undefined
+            ) {
                 o.scales[axis].ticks.color = backup[`${axis}TicksColor`];
             }
-            if (o.scales?.[axis]?.grid && backup[`${axis}GridColor`] !== undefined) {
+            if (
+                o.scales?.[axis]?.grid &&
+                backup[`${axis}GridColor`] !== undefined
+            ) {
                 o.scales[axis].grid.color = backup[`${axis}GridColor`];
             }
         });
         if (o.plugins?.datalabels && backup.datalabelsColor !== undefined) {
             o.plugins.datalabels.color = backup.datalabelsColor;
         }
-        chart.update('none');
+        chart.update("none");
     };
 }
 
 function countWrappedLines(text, maxWidth, font) {
-    const ctx = document.createElement('canvas').getContext('2d');
+    const ctx = document.createElement("canvas").getContext("2d");
     if (!ctx || !text) {
         return 1;
     }
     ctx.font = font;
     const words = String(text).split(/\s+/);
-    let line = '';
+    let line = "";
     let n = 0;
     words.forEach((word) => {
         const test = line ? `${line} ${word}` : word;
@@ -82,14 +91,23 @@ function countWrappedLines(text, maxWidth, font) {
     return Math.max(1, n);
 }
 
-function drawWrappedLines(ctx, text, x, startY, maxWidth, lineHeight, font, color) {
+function drawWrappedLines(
+    ctx,
+    text,
+    x,
+    startY,
+    maxWidth,
+    lineHeight,
+    font,
+    color,
+) {
     ctx.font = font;
     ctx.fillStyle = color;
     if (!text) {
         return startY;
     }
     const words = String(text).split(/\s+/);
-    let line = '';
+    let line = "";
     let y = startY;
     words.forEach((word) => {
         const test = line ? `${line} ${word}` : word;
@@ -118,7 +136,7 @@ function drawWrappedLines(ctx, text, x, startY, maxWidth, lineHeight, font, colo
 export function buildCompositeExport(chart, meta, chartTitle) {
     const restore = applyLightThemeForExport(chart);
     try {
-        chart.update('none');
+        chart.update("none");
         const src = chart.canvas;
         let imgW = src.width;
         let imgH = src.height;
@@ -134,14 +152,20 @@ export function buildCompositeExport(chart, meta, chartTitle) {
             imgH = Math.round(imgH * s);
         }
 
-        const foot = [meta.footerLine, meta.generatedAt].filter(Boolean).join(' · ');
+        const foot = [meta.footerLine, meta.generatedAt]
+            .filter(Boolean)
+            .join(" · ");
 
-        const fontTitle = 'bold 17px system-ui, -apple-system, "Segoe UI", sans-serif';
-        const fontSub = '600 14px system-ui, -apple-system, "Segoe UI", sans-serif';
-        const fontCity = '13px system-ui, -apple-system, "Segoe UI", sans-serif';
-        const fontFoot = '11px system-ui, -apple-system, "Segoe UI", sans-serif';
+        const fontTitle =
+            'bold 17px system-ui, -apple-system, "Segoe UI", sans-serif';
+        const fontSub =
+            '600 14px system-ui, -apple-system, "Segoe UI", sans-serif';
+        const fontCity =
+            '13px system-ui, -apple-system, "Segoe UI", sans-serif';
+        const fontFoot =
+            '11px system-ui, -apple-system, "Segoe UI", sans-serif';
 
-        const linesSub = countWrappedLines(chartTitle || '', textMax, fontSub);
+        const linesSub = countWrappedLines(chartTitle || "", textMax, fontSub);
         const linesFoot = countWrappedLines(foot, textMax, fontFoot);
 
         let headerH = pad + 20;
@@ -158,27 +182,36 @@ export function buildCompositeExport(chart, meta, chartTitle) {
         const w = innerW;
         const h = Math.ceil(headerH + imgH + 20 + footerH);
 
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         canvas.width = w;
         canvas.height = h;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
         if (!ctx) {
-            throw new Error('Canvas unsupported');
+            throw new Error("Canvas unsupported");
         }
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, w, h);
 
         let y = pad;
         ctx.font = fontTitle;
-        ctx.fillStyle = '#111827';
-        ctx.fillText(meta.documentTitle || 'Relatório', pad, y);
+        ctx.fillStyle = "#111827";
+        ctx.fillText(meta.documentTitle || "Relatório", pad, y);
         y += 24;
 
-        y = drawWrappedLines(ctx, chartTitle || '', pad, y, textMax, 18, fontSub, '#374151');
+        y = drawWrappedLines(
+            ctx,
+            chartTitle || "",
+            pad,
+            y,
+            textMax,
+            18,
+            fontSub,
+            "#374151",
+        );
         y += 10;
 
         ctx.font = fontCity;
-        ctx.fillStyle = '#1f2937';
+        ctx.fillStyle = "#1f2937";
         if (meta.cityLine) {
             ctx.fillText(meta.cityLine, pad, y);
             y += 20;
@@ -193,10 +226,10 @@ export function buildCompositeExport(chart, meta, chartTitle) {
         ctx.drawImage(src, imgX, y, imgW, imgH);
         y += imgH + 16;
 
-        drawWrappedLines(ctx, foot, pad, y, textMax, 14, fontFoot, '#6b7280');
+        drawWrappedLines(ctx, foot, pad, y, textMax, 14, fontFoot, "#6b7280");
 
         return {
-            dataUrl: canvas.toDataURL('image/png', 1),
+            dataUrl: canvas.toDataURL("image/png", 1),
             width: canvas.width,
             height: canvas.height,
         };
@@ -213,8 +246,17 @@ export function buildCompositeExport(chart, meta, chartTitle) {
  * @param {number} pxHeight
  * @param {string} filenameBase
  */
-export function downloadPdfFromSizedDataUrl(dataUrl, pxWidth, pxHeight, filenameBase) {
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+export function downloadPdfFromSizedDataUrl(
+    dataUrl,
+    pxWidth,
+    pxHeight,
+    filenameBase,
+) {
+    const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4",
+    });
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
     const margin = 8;
@@ -229,14 +271,14 @@ export function downloadPdfFromSizedDataUrl(dataUrl, pxWidth, pxHeight, filename
     }
     const x = margin + (maxW - rw) / 2;
     const y = margin + (maxH - rh) / 2;
-    doc.addImage(dataUrl, 'PNG', x, y, rw, rh);
-    const safe = (filenameBase || 'grafico').replace(/[^a-zA-Z0-9-_]/g, '_');
+    doc.addImage(dataUrl, "PNG", x, y, rw, rh);
+    const safe = (filenameBase || "grafico").replace(/[^a-zA-Z0-9-_]/g, "_");
     doc.save(`${safe}.pdf`);
 }
 
 export function triggerPngDownload(dataUrl, filenameBase) {
-    const a = document.createElement('a');
-    const safe = (filenameBase || 'grafico').replace(/[^a-zA-Z0-9-_]/g, '_');
+    const a = document.createElement("a");
+    const safe = (filenameBase || "grafico").replace(/[^a-zA-Z0-9-_]/g, "_");
     a.download = `${safe}.png`;
     a.href = dataUrl;
     a.click();

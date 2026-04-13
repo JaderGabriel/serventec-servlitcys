@@ -126,6 +126,19 @@ class AnalyticsDashboardController extends Controller
 
         $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
 
+        $tabs = [
+            'overview' => __('Visão geral'),
+            'enrollment' => __('Matrículas'),
+            'network' => __('Rede e oferta'),
+            'inclusion' => __('Inclusão & Diversidade'),
+            'performance' => __('Desempenho'),
+            'attendance' => __('Frequência'),
+            'fundeb' => __('FUNDEB'),
+        ];
+        $tabKeys = array_keys($tabs);
+        $qTab = (string) $request->query('tab', '');
+        $analyticsInitialTab = in_array($qTab, $tabKeys, true) ? $qTab : 'overview';
+
         return view('dashboard.analytics', [
             'cities' => $cities,
             'selectedCity' => $city,
@@ -141,15 +154,8 @@ class AnalyticsDashboardController extends Controller
             'networkData' => $networkData,
             'fundebData' => $fundebData,
             'chartExportContext' => $chartExportContext,
-            'tabs' => [
-                'overview' => __('Visão geral'),
-                'enrollment' => __('Matrículas'),
-                'network' => __('Rede e oferta'),
-                'inclusion' => __('Inclusão & Diversidade'),
-                'performance' => __('Desempenho'),
-                'attendance' => __('Frequência'),
-                'fundeb' => __('FUNDEB'),
-            ],
+            'tabs' => $tabs,
+            'analyticsInitialTab' => $analyticsInitialTab,
         ]);
     }
 

@@ -100,7 +100,10 @@ final class MatriculaTurmaJoin
             'cod_curso',
         ]), $city) ?? '';
 
+        // Preferir FK para pmieducar.turma_turno (i-Educar 2.x) antes de cadastro.turno.
         $turno = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
+            'ref_cod_turma_turno',
+            'turma_turno_id',
             (string) config('ieducar.columns.turma.turno'),
             'ref_cod_turno',
             'cod_turno',

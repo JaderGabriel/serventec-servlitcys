@@ -8,6 +8,13 @@
     display: none !important;
 }
 
+/* Painel analítico: espaçamento consistente entre blocos dentro de cada aba */
+@layer components {
+    .analytics-tab-panel {
+        @apply space-y-4;
+    }
+}
+
 /* Landing: padrão de grelha suave (usado na welcome) */
 @layer utilities {
     .bg-grid-edu {
