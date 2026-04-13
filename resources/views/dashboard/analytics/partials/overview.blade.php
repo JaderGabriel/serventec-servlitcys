@@ -2,8 +2,14 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Esta aba mostra totais agregados na base do município: número de registros nas tabelas de escola, turma e matrícula (conforme nomes em config/ieducar.php). São contagens diretas, sem filtros de ano ou escola, úteis para validar se a extração está coerente.') }}
+        {{ __('Esta aba mostra totais na base do município (escola, turma, matrícula). Com filtros aplicados, as contagens respeitam ano, escola, curso, série/etapa e turno nas tabelas configuradas. O segmento pode exigir mapeamento extra no iEducar.') }}
     </p>
+
+    @if (! empty($overviewData['filter_note']))
+        <p class="text-xs text-indigo-800 dark:text-indigo-200 bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 rounded-md px-3 py-2">
+            {{ $overviewData['filter_note'] }}
+        </p>
+    @endif
 
     @if (! empty($overviewData['error']))
         <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
@@ -32,14 +38,16 @@
                 </p>
             </div>
         </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Totais lidos diretamente da base da cidade (config/ieducar.php).') }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Totais conforme filtros e config/ieducar.php (colunas da turma para recortes).') }}</p>
     @else
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Selecione uma cidade para carregar os indicadores.') }}</p>
     @endif
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-        <div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-6 text-center text-xs text-gray-400 dark:text-gray-500">{{ __('Gráfico: evolução (em desenvolvimento)') }}</div>
-        <div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-6 text-center text-xs text-gray-400 dark:text-gray-500">{{ __('Gráfico: distribuição (em desenvolvimento)') }}</div>
-        <div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-6 text-center text-xs text-gray-400 dark:text-gray-500">{{ __('Mapa / tabela (em desenvolvimento)') }}</div>
-    </div>
+    @if (! empty($overviewData['charts']))
+        <div class="grid grid-cols-1 lg:grid-cols-1 gap-6 mt-4">
+            @foreach ($overviewData['charts'] as $idx => $chart)
+                <x-dashboard.chart-panel :chart="$chart" :exportFilename="'visao-geral-'.$idx" />
+            @endforeach
+        </div>
+    @endif
 </div>

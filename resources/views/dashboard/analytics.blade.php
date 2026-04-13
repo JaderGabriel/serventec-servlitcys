@@ -13,7 +13,7 @@
             <div class="rounded-lg border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/80 dark:bg-indigo-950/30 px-4 py-3 text-sm text-indigo-900 dark:text-indigo-100">
                 <p class="font-medium">{{ __('O que este painel pesquisa') }}</p>
                 <p class="mt-1 text-indigo-800/90 dark:text-indigo-200/90 leading-relaxed">
-                    {{ __('Os dados vêm da base do iEducar do município selecionado (conexão MySQL/MariaDB ou PostgreSQL configurada no cadastro da cidade). Os filtros abaixo restringem escola, curso, série, segmento, etapa, turno e ano letivo — conforme tabelas e colunas definidas em config/ieducar.php. Cada aba mostra um tipo de indicador: visão geral (totais de escolas, turmas e matrículas), amostra de matrículas, desempenho e frequência (áreas em evolução).') }}
+                    {{ __('Os dados vêm da base do iEducar do município selecionado (conexão MySQL/MariaDB ou PostgreSQL configurada no cadastro da cidade). Os filtros abaixo restringem escola, curso, série, segmento, etapa, turno e ano letivo — conforme tabelas e colunas definidas em config/ieducar.php. Cada aba mostra indicadores e gráficos exportáveis (PNG): visão geral, matrículas, desempenho, frequência e inclusão/diversidade.') }}
                 </p>
             </div>
 
@@ -70,18 +70,31 @@
                     </div>
 
                     <div class="p-6 min-h-[280px]">
-                        <div x-show="tab === 'overview'" x-cloak>
-                            @include('dashboard.analytics.partials.overview', ['overviewData' => $overviewData])
-                        </div>
-                        <div x-show="tab === 'enrollment'" x-cloak>
-                            @include('dashboard.analytics.partials.enrollment', ['enrollmentData' => $enrollmentData])
-                        </div>
-                        <div x-show="tab === 'performance'" x-cloak>
-                            @include('dashboard.analytics.partials.performance', ['performanceData' => $performanceData])
-                        </div>
-                        <div x-show="tab === 'attendance'" x-cloak>
-                            @include('dashboard.analytics.partials.attendance', ['attendanceData' => $attendanceData])
-                        </div>
+                        <template x-if="tab === 'overview'">
+                            <div>
+                                @include('dashboard.analytics.partials.overview', ['overviewData' => $overviewData])
+                            </div>
+                        </template>
+                        <template x-if="tab === 'enrollment'">
+                            <div>
+                                @include('dashboard.analytics.partials.enrollment', ['enrollmentData' => $enrollmentData])
+                            </div>
+                        </template>
+                        <template x-if="tab === 'performance'">
+                            <div>
+                                @include('dashboard.analytics.partials.performance', ['performanceData' => $performanceData])
+                            </div>
+                        </template>
+                        <template x-if="tab === 'attendance'">
+                            <div>
+                                @include('dashboard.analytics.partials.attendance', ['attendanceData' => $attendanceData])
+                            </div>
+                        </template>
+                        <template x-if="tab === 'inclusion'">
+                            <div>
+                                @include('dashboard.analytics.partials.inclusion', ['inclusionData' => $inclusionData])
+                            </div>
+                        </template>
                     </div>
                 </div>
             @else

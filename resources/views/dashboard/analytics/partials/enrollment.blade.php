@@ -2,8 +2,12 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Lista uma amostra das últimas linhas da tabela de matrícula do iEducar (códigos de matrícula e referência de turma). Serve para inspecionar dados brutos; para relatórios filtrados por ano ou escola, alinhe os repositórios com o schema local.') }}
+        {{ __('Lista uma amostra das últimas linhas da tabela de matrícula e um gráfico das turmas com maior número de matrículas (top 12), respeitando os filtros quando a turma entra na consulta.') }}
     </p>
+
+    @if (! empty($enrollmentData['chart']))
+        <x-dashboard.chart-panel :chart="$enrollmentData['chart']" exportFilename="matriculas-por-turma" />
+    @endif
 
     @if (! empty($enrollmentData['error']))
         <div class="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
@@ -30,7 +34,7 @@
                 </tbody>
             </table>
         </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Últimas 30 matrículas (amostra). Ajuste joins e filtros no repositório conforme o schema.') }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Últimas 30 matrículas (amostra).') }}</p>
     @elseif (empty($enrollmentData['error']))
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Sem dados de matrícula ou cidade não selecionada.') }}</p>
     @endif

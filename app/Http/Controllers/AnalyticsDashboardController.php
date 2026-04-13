@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\City;
 use App\Repositories\Ieducar\AttendanceRepository;
 use App\Repositories\Ieducar\EnrollmentRepository;
+use App\Repositories\Ieducar\InclusionRepository;
 use App\Repositories\Ieducar\OverviewRepository;
 use App\Repositories\Ieducar\PerformanceRepository;
 use App\Services\Ieducar\FilterOptionsService;
@@ -25,6 +26,7 @@ class AnalyticsDashboardController extends Controller
         EnrollmentRepository $enrollmentRepository,
         PerformanceRepository $performanceRepository,
         AttendanceRepository $attendanceRepository,
+        InclusionRepository $inclusionRepository,
     ): View {
         $cities = City::query()->forAnalytics()->orderBy('name')->get();
 
@@ -63,6 +65,7 @@ class AnalyticsDashboardController extends Controller
         $enrollmentData = $enrollmentRepository->sample($city, $filters);
         $performanceData = $performanceRepository->placeholder($city, $filters);
         $attendanceData = $attendanceRepository->placeholder($city, $filters);
+        $inclusionData = $inclusionRepository->snapshot($city, $filters);
 
         return view('dashboard.analytics', [
             'cities' => $cities,
@@ -74,11 +77,13 @@ class AnalyticsDashboardController extends Controller
             'enrollmentData' => $enrollmentData,
             'performanceData' => $performanceData,
             'attendanceData' => $attendanceData,
+            'inclusionData' => $inclusionData,
             'tabs' => [
                 'overview' => __('Visão geral'),
                 'enrollment' => __('Matrículas'),
                 'performance' => __('Desempenho'),
                 'attendance' => __('Frequência'),
+                'inclusion' => __('Inclusão e diversidade'),
             ],
         ]);
     }

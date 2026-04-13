@@ -1,6 +1,15 @@
 import './bootstrap';
 
 import Alpine from 'alpinejs';
+import Chart from 'chart.js/auto';
+
+function chartTextColor() {
+    return document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#374151';
+}
+
+function chartGridColor() {
+    return document.documentElement.classList.contains('dark') ? 'rgba(148,163,184,0.2)' : 'rgba(100,116,139,0.2)';
+}
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('cityDbStatus', (fetchUrl, hasSetup) => ({
@@ -62,6 +71,93 @@ document.addEventListener('alpine:init', () => {
             }
 
             return '';
+        },
+    }));
+
+    Alpine.data('chartPanel', (payload, exportFilename = 'grafico') => ({
+        chart: null,
+        init() {
+            if (!payload?.labels?.length || !payload?.datasets?.length) {
+                return;
+            }
+            this.$nextTick(() => {
+                const canvas = this.$refs.canvas;
+                if (!canvas) {
+                    return;
+                }
+                const ctx = canvas.getContext('2d');
+                const isRadial = ['doughnut', 'pie', 'polarArea'].includes(payload.type);
+                const scales = isRadial
+                    ? {}
+                    : {
+                          x: {
+                              ticks: { color: chartTextColor() },
+                              grid: { color: chartGridColor() },
+                          },
+                          y: {
+                              beginAtZero: true,
+                              ticks: { color: chartTextColor() },
+                              grid: { color: chartGridColor() },
+                          },
+                      };
+                this.chart = new Chart(ctx, {
+                    type: payload.type,
+                    data: {
+                        labels: payload.labels,
+                        datasets: payload.datasets,
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: isRadial ? 'right' : 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    pointStyle: 'rectRounded',
+                                    padding: 14,
+                                    color: chartTextColor(),
+                                    generateLabels: (chart) => {
+                                        const ds0 = chart.data.datasets[0];
+                                        const bg = ds0?.backgroundColor;
+                                        const labels = chart.data.labels;
+                                        if (Array.isArray(bg) && labels?.length && bg.length >= labels.length) {
+                                            return labels.map((label, i) => ({
+                                                text: String(label),
+                                                fillStyle: bg[i],
+                                                strokeStyle: bg[i],
+                                                lineWidth: 0,
+                                                hidden: false,
+                                                index: i,
+                                                datasetIndex: 0,
+                                            }));
+                                        }
+                                        return Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                                    },
+                                },
+                            },
+                            tooltip: {
+                                enabled: true,
+                            },
+                        },
+                        scales,
+                    },
+                });
+            });
+        },
+        destroy() {
+            this.chart?.destroy();
+        },
+        exportPng() {
+            if (!this.chart) {
+                return;
+            }
+            const a = document.createElement('a');
+            const base = typeof exportFilename === 'string' && exportFilename ? exportFilename : 'grafico';
+            a.download = `${base.replace(/[^a-zA-Z0-9-_]/g, '_')}.png`;
+            a.href = this.chart.toBase64Image('image/png', 1);
+            a.click();
         },
     }));
 });

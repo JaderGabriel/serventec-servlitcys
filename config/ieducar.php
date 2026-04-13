@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Schema padrão no PostgreSQL (Portabilis)
+    |--------------------------------------------------------------------------
+    |
+    | Se a cidade usa pgsql e nem IEDUCAR_SCHEMA nem o campo ieducar_schema da
+    | cidade estiverem definidos, usa-se este valor (típico: pmieducar).
+    | Defina IEDUCAR_PGSQL_DEFAULT_SCHEMA vazio para desativar e usar só public.
+    |
+    */
+
+    'pgsql_default_schema' => env('IEDUCAR_PGSQL_DEFAULT_SCHEMA', 'pmieducar'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Nomes de tabelas
     |--------------------------------------------------------------------------
     */
@@ -30,6 +43,9 @@ return [
         'matricula' => env('IEDUCAR_TABLE_MATRICULA', 'matricula'),
         'nivel_ensino' => env('IEDUCAR_TABLE_NIVEL_ENSINO', 'nivel_ensino'),
         'turno' => env('IEDUCAR_TABLE_TURNO', 'turno'),
+        'aluno' => env('IEDUCAR_TABLE_ALUNO', 'aluno'),
+        'pessoa' => env('IEDUCAR_TABLE_PESSOA', 'cadastro.pessoa'),
+        'raca' => env('IEDUCAR_TABLE_RACA', 'cadastro.raca'),
     ],
 
     /*
@@ -59,11 +75,28 @@ return [
             'id' => env('IEDUCAR_COL_TURMA_ID', 'cod_turma'),
             'name' => env('IEDUCAR_COL_TURMA_NAME', 'nm_turma'),
             'year' => env('IEDUCAR_COL_TURMA_ANO', 'ano'),
+            'escola' => env('IEDUCAR_COL_TURMA_ESCOLA', 'ref_cod_escola'),
+            'curso' => env('IEDUCAR_COL_TURMA_CURSO', 'ref_cod_curso'),
+            'serie' => env('IEDUCAR_COL_TURMA_SERIE', 'ref_cod_serie'),
+            'turno' => env('IEDUCAR_COL_TURMA_TURNO', 'ref_cod_turno'),
         ],
         'matricula' => [
             'id' => env('IEDUCAR_COL_MATRICULA_ID', 'cod_matricula'),
             'turma' => env('IEDUCAR_COL_MATRICULA_TURMA', 'ref_cod_turma'),
+            'aluno' => env('IEDUCAR_COL_MATRICULA_ALUNO', 'ref_cod_aluno'),
             'ativo' => env('IEDUCAR_COL_MATRICULA_ATIVO', 'ativo'),
+        ],
+        'aluno' => [
+            'id' => env('IEDUCAR_COL_ALUNO_ID', 'cod_aluno'),
+            'pessoa' => env('IEDUCAR_COL_ALUNO_PESSOA', 'ref_cod_pessoa'),
+        ],
+        'pessoa' => [
+            'id' => env('IEDUCAR_COL_PESSOA_ID', 'idpes'),
+            'raca' => env('IEDUCAR_COL_PESSOA_RACA', 'ref_cod_raca'),
+        ],
+        'raca' => [
+            'id' => env('IEDUCAR_COL_RACA_ID', 'cod_raca'),
+            'name' => env('IEDUCAR_COL_RACA_NAME', 'nm_raca'),
         ],
         'nivel_ensino' => [
             'id' => env('IEDUCAR_COL_NIVEL_ID', 'cod_nivel_ensino'),
@@ -116,7 +149,20 @@ return [
         'serie_pairs' => env('IEDUCAR_SQL_SERIE'),
         'nivel_ensino_pairs' => env('IEDUCAR_SQL_NIVEL_ENSINO'),
         'turno_pairs' => env('IEDUCAR_SQL_TURNO'),
+        'inclusion_raca' => env('IEDUCAR_SQL_INCLUSION_RACA'),
+        'inclusion_extra' => env('IEDUCAR_SQL_INCLUSION_EXTRA'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Paleta para gráficos (hex) — legenda e barras
+    |--------------------------------------------------------------------------
+    */
+
+    'chart_colors' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+        'IEDUCAR_CHART_COLORS',
+        '#6366f1,#22c55e,#f59e0b,#ec4899,#06b6d4,#a855f7,#14b8a6,#f97316,#84cc16,#e11d48'
+    ))))),
 
     /*
     |--------------------------------------------------------------------------

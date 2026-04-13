@@ -21,7 +21,7 @@
     <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
         <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Filtros (estilo iEducar)') }}</h3>
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
-            {{ __('Os valores dos selects são lidos da base do município (tabelas e colunas em config/ieducar.php). Ao aplicar, os parâmetros são enviados na URL e usados pelos repositórios que montam as consultas — nem todos os indicadores usam todos os filtros até estarem implementados.') }}
+            {{ __('Os valores dos selects são lidos da base do município (tabelas e colunas em config/ieducar.php). Ao aplicar, os parâmetros seguem na URL: visão geral, matrículas e inclusão usam turma/escola quando existirem colunas em turma; o segmento (nível de ensino) pode exigir regra extra no iEducar para filtrar turmas.') }}
         </p>
     </div>
     @if (! empty($loadErrors))

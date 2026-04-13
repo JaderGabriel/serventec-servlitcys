@@ -98,20 +98,20 @@ class FilterOptionsService
         $max = (int) config('ieducar.max_rows', 2000);
 
         try {
-            return $this->cityData->run($city, function (Connection $db) use ($max) {
+            return $this->cityData->run($city, function (Connection $db) use ($max, $city) {
                 $custom = config('ieducar.sql.ano_letivo_distinct');
                 if (is_string($custom) && trim($custom) !== '') {
                     return $this->yearsFromRawSql($db, $custom, $max);
                 }
 
                 try {
-                    return $this->yearsFromAnoLetivoTable($db, $max);
+                    return $this->yearsFromAnoLetivoTable($db, $max, $city);
                 } catch (QueryException $e) {
                     if (! config('ieducar.fallbacks.ano_letivo_from_turma', true)) {
                         throw $e;
                     }
 
-                    return $this->yearsFromTurmaTable($db, $max);
+                    return $this->yearsFromTurmaTable($db, $max, $city);
                 }
             });
         } catch (QueryException $e) {
@@ -148,9 +148,9 @@ class FilterOptionsService
     /**
      * @return array<int, int>
      */
-    private function yearsFromAnoLetivoTable(Connection $db, int $max): array
+    private function yearsFromAnoLetivoTable(Connection $db, int $max, City $city): array
     {
-        $table = IeducarSchema::resolveTable('ano_letivo');
+        $table = IeducarSchema::resolveTable('ano_letivo', $city);
         $col = config('ieducar.columns.ano_letivo.year');
 
         $years = $db->table($table)
@@ -177,9 +177,9 @@ class FilterOptionsService
     /**
      * @return array<int, int>
      */
-    private function yearsFromTurmaTable(Connection $db, int $max): array
+    private function yearsFromTurmaTable(Connection $db, int $max, City $city): array
     {
-        $table = IeducarSchema::resolveTable('turma');
+        $table = IeducarSchema::resolveTable('turma', $city);
         $col = config('ieducar.columns.turma.year');
 
         $years = $db->table($table)
@@ -220,7 +220,7 @@ class FilterOptionsService
         };
 
         try {
-            return $this->cityData->run($city, function (Connection $db) use ($logical, $sqlKey) {
+            return $this->cityData->run($city, function (Connection $db) use ($logical, $sqlKey, $city) {
                 $max = (int) config('ieducar.max_rows', 2000);
 
                 if ($sqlKey !== null) {
@@ -230,7 +230,7 @@ class FilterOptionsService
                     }
                 }
 
-                return $this->pairsFromTable($db, $logical, $max);
+                return $this->pairsFromTable($db, $logical, $max, $city);
             });
         } catch (QueryException $e) {
             Log::debug("ieducar.{$logical}", ['message' => $e->getMessage()]);
@@ -293,7 +293,7 @@ class FilterOptionsService
     /**
      * @return list<array{id: string, name: string}>
      */
-    private function pairsFromTable(Connection $db, string $logical, int $max): array
+    private function pairsFromTable(Connection $db, string $logical, int $max, City $city): array
     {
         $tableKey = match ($logical) {
             'escola' => 'escola',
@@ -304,7 +304,7 @@ class FilterOptionsService
             default => 'escola',
         };
 
-        $table = IeducarSchema::resolveTable($tableKey);
+        $table = IeducarSchema::resolveTable($tableKey, $city);
         $idCol = config("ieducar.columns.{$logical}.id");
         $nameCol = config("ieducar.columns.{$logical}.name");
 

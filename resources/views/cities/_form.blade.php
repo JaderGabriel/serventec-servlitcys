@@ -45,6 +45,13 @@
             </div>
 
             <div>
+                <x-input-label for="ieducar_schema" :value="__('Schema PostgreSQL (iEducar)')" />
+                <x-text-input id="ieducar_schema" class="block mt-1 w-full" type="text" name="ieducar_schema" maxlength="63" :value="old('ieducar_schema', $city?->ieducar_schema)" placeholder="pmieducar" />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Opcional. Em bases Portabilis o padrão é «pmieducar» (aplicado automaticamente se deixar vazio e o motor for PostgreSQL). Preencha só se o schema for outro.') }}</p>
+                <x-input-error :messages="$errors->get('ieducar_schema')" class="mt-2" />
+            </div>
+
+            <div>
                 <x-input-label for="db_host" :value="__('Host')" />
                 <x-text-input id="db_host" class="block mt-1 w-full" type="text" name="db_host" :value="old('db_host', $city?->db_host)" required placeholder="ex.: db.exemplo.com" />
                 <x-input-error :messages="$errors->get('db_host')" class="mt-2" />

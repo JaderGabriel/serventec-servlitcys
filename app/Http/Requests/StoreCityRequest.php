@@ -33,6 +33,11 @@ class StoreCityRequest extends FormRequest
         $this->merge([
             'is_active' => $this->boolean('is_active'),
         ]);
+
+        if ($this->has('ieducar_schema')) {
+            $s = trim((string) $this->input('ieducar_schema'));
+            $this->merge(['ieducar_schema' => $s === '' ? null : $s]);
+        }
     }
 
     /**
@@ -50,6 +55,7 @@ class StoreCityRequest extends FormRequest
             'uf' => ['required', 'string', 'size:2', 'regex:/^[A-Z]{2}$/'],
             'country' => ['nullable', 'string', 'max:100'],
             'db_driver' => ['required', 'string', Rule::in([City::DRIVER_MYSQL, City::DRIVER_PGSQL])],
+            'ieducar_schema' => ['nullable', 'string', 'max:63', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]*$/'],
             'db_host' => ['required', 'string', 'max:255'],
             'db_port' => ['nullable', 'integer', 'min:1', 'max:65535'],
             'db_database' => ['required', 'string', 'max:255'],

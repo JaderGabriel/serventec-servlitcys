@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\CityFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
     'uf',
     'country',
     'db_driver',
+    'ieducar_schema',
     'db_host',
     'db_port',
     'db_database',
@@ -25,7 +27,7 @@ class City extends Model
 
     public const DRIVER_PGSQL = 'pgsql';
 
-    /** @use HasFactory<\Database\Factories\CityFactory> */
+    /** @use HasFactory<CityFactory> */
     use HasFactory;
 
     /**
