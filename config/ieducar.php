@@ -194,8 +194,14 @@ return [
     |--------------------------------------------------------------------------
     |
     | Se preenchidas, substituem o SELECT gerado automaticamente.
-    | Devem devolver colunas: id, name (para escolas, cursos, etc.) ou ano (para anos).
-    | Use identificadores conforme o motor da cidade (aspas em PostgreSQL).
+    | Devem devolver colunas: id e name (ou nome) para pares; ano para anos.
+    |
+    | Placeholders (substituídos por cidade/schema): {escola}, {curso}, {turno}, {serie},
+    | {ano_letivo}, {turma}, {matricula} — alinhado ao iEducar 2.x (pmieducar, cadastro…).
+    |
+    | Exemplo PostgreSQL (nome via função relatorio, comum na 2.11):
+    | SELECT cod_escola AS id, relatorio.get_nome_escola(cod_escola) AS nome FROM {escola}
+    | WHERE ativo = 1 ORDER BY nome
     |
     */
 
@@ -209,6 +215,32 @@ return [
         'inclusion_raca' => env('IEDUCAR_SQL_INCLUSION_RACA'),
         'inclusion_extra' => env('IEDUCAR_SQL_INCLUSION_EXTRA'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | PostgreSQL: escolas via relatorio.get_nome_escola (iEducar Portabilis)
+    |--------------------------------------------------------------------------
+    |
+    | Se não houver IEDUCAR_SQL_ESCOLA, em pgsql tenta-se SELECT com relatorio.get_nome_escola.
+    | Desative se a função não existir na base (MySQL ignora).
+    |
+    */
+
+    'pgsql_use_relatorio_escola_nome' => filter_var(
+        env('IEDUCAR_PGSQL_USE_RELATORIO_ESCOLA_NOME', true),
+        FILTER_VALIDATE_BOOL
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
+    | PostgreSQL: turnos via SQL explícito (evita falhas com schema.tabela no builder)
+    |--------------------------------------------------------------------------
+    */
+
+    'pgsql_use_raw_turno_sql' => filter_var(
+        env('IEDUCAR_PGSQL_USE_RAW_TURNO_SQL', true),
+        FILTER_VALIDATE_BOOL
+    ),
 
     /*
     |--------------------------------------------------------------------------

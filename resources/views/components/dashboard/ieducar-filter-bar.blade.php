@@ -18,7 +18,7 @@
     <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
         <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Filtros (estilo iEducar)') }}</h3>
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
-            {{ __('Os valores dos selects são lidos da base do município (config/ieducar.php). «Tipo/Segmento» usa a tabela de curso; turno usa cadastro.turno por defeito no PostgreSQL.') }}
+            {{ __('Os valores dos selects vêm da base do município (config/ieducar.php). No PostgreSQL (iEducar 2.x), escolas podem usar relatorio.get_nome_escola; turnos usam cadastro.turno. Personalize IEDUCAR_SQL_ESCOLA / IEDUCAR_SQL_TURNO com placeholders {escola} e {turno}.') }}
         </p>
     </div>
     @if (! empty($loadErrors))

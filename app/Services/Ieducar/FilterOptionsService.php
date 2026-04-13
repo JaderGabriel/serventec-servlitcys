@@ -231,7 +231,25 @@ class FilterOptionsService
                 if ($sqlKey !== null) {
                     $custom = config('ieducar.sql.'.$sqlKey);
                     if (is_string($custom) && trim($custom) !== '') {
-                        return $this->pairsFromRawSql($db, $custom, $max);
+                        $sql = $this->interpolateSqlPlaceholders(trim($custom), $city);
+
+                        return $this->pairsFromRawSql($db, $sql, $max);
+                    }
+                }
+
+                if ($logical === 'escola' && $db->getDriverName() === 'pgsql' && config('ieducar.pgsql_use_relatorio_escola_nome', true)) {
+                    try {
+                        return $this->pairsFromRawSql($db, $this->buildPgsqlEscolaRelatorioSql($city), $max);
+                    } catch (QueryException $e) {
+                        Log::debug('ieducar.escola.relatorio_fallback', ['message' => $e->getMessage()]);
+                    }
+                }
+
+                if ($logical === 'turno' && $db->getDriverName() === 'pgsql' && config('ieducar.pgsql_use_raw_turno_sql', true)) {
+                    try {
+                        return $this->pairsFromRawSql($db, $this->buildPgsqlTurnoRawSql($city), $max);
+                    } catch (QueryException $e) {
+                        Log::debug('ieducar.turno.raw_fallback', ['message' => $e->getMessage()]);
                     }
                 }
 
@@ -257,6 +275,50 @@ class FilterOptionsService
 
             return [];
         }
+    }
+
+    /**
+     * Substitui {escola}, {turno}, etc. pelo nome resolvido da tabela (schema incluído).
+     */
+    private function interpolateSqlPlaceholders(string $sql, City $city): string
+    {
+        $map = [
+            '{escola}' => IeducarSchema::resolveTable('escola', $city),
+            '{curso}' => IeducarSchema::resolveTable('curso', $city),
+            '{turno}' => IeducarSchema::resolveTable('turno', $city),
+            '{serie}' => IeducarSchema::resolveTable('serie', $city),
+            '{ano_letivo}' => IeducarSchema::resolveTable('ano_letivo', $city),
+            '{turma}' => IeducarSchema::resolveTable('turma', $city),
+            '{matricula}' => IeducarSchema::resolveTable('matricula', $city),
+        ];
+
+        return str_replace(array_keys($map), array_values($map), $sql);
+    }
+
+    /**
+     * iEducar PostgreSQL: nome de escola via relatorio.get_nome_escola (comum na 2.x).
+     */
+    private function buildPgsqlEscolaRelatorioSql(City $city): string
+    {
+        $t = IeducarSchema::resolveTable('escola', $city);
+        $id = (string) config('ieducar.columns.escola.id');
+        $active = (string) config('ieducar.columns.escola.active');
+
+        return 'SELECT e.'.$id.'::text AS id, relatorio.get_nome_escola(e.'.$id.') AS nome FROM '.$t.' e '
+            .'WHERE (e.'.$active.' IS TRUE OR e.'.$active.' = 1 OR (e.'.$active.')::text IN (\'1\',\'t\',\'true\',\'T\')) '
+            .'ORDER BY nome';
+    }
+
+    /**
+     * SELECT explícito em cadastro.turno (evita edge cases do query builder com schema.tabela).
+     */
+    private function buildPgsqlTurnoRawSql(City $city): string
+    {
+        $t = IeducarSchema::resolveTable('turno', $city);
+        $id = (string) config('ieducar.columns.turno.id');
+        $name = (string) config('ieducar.columns.turno.name');
+
+        return 'SELECT t.'.$id.'::text AS id, t.'.$name.' AS nome FROM '.$t.' t ORDER BY t.'.$name;
     }
 
     /**
