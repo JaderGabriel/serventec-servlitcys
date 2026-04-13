@@ -60,6 +60,16 @@ php artisan view:cache
 
 Servidor web: document root = `public/`.
 
+### Vite / CORS (`[::1]:5173` ou `localhost:5173`)
+
+Se o browser tentar carregar scripts de `http://127.0.0.1:5173` ou `[::1]:5173` em produção, o Laravel encontrou o ficheiro **`public/hot`** (criado localmente por `npm run dev`) e pensa que o Vite está em modo desenvolvimento.
+
+1. **`APP_ENV=production`** no `.env` do servidor (e `php artisan config:cache` depois).
+2. **Apagar `public/hot`** no servidor: `rm -f public/hot` (não deve existir em produção; está no `.gitignore`).
+3. Garantir que **`public/build/manifest.json`** existe (assets compilados no repositório ou após `npm run build`).
+
+A aplicação também **remove automaticamente** `public/hot` ao arrancar em ambiente `production`, mas convém não enviar esse ficheiro no deploy.
+
 ### Quando alterar `resources/css` ou `resources/js`
 
 Recompila **na tua máquina ou na CI** (Node 20+) e faz commit de `public/build/`:

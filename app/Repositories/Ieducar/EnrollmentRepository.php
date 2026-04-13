@@ -5,6 +5,7 @@ namespace App\Repositories\Ieducar;
 use App\Models\City;
 use App\Services\CityDataConnection;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Ieducar\IeducarSchema;
 use Illuminate\Database\QueryException;
 
 class EnrollmentRepository
@@ -26,7 +27,7 @@ class EnrollmentRepository
 
         try {
             return $this->cityData->run($city, function ($db) {
-                $table = config('ieducar.tables.matricula');
+                $table = IeducarSchema::resolveTable('matricula');
                 $mid = config('ieducar.columns.matricula.id');
                 $mturma = config('ieducar.columns.matricula.turma');
 

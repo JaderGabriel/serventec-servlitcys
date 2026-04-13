@@ -4,12 +4,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Nomes de tabelas (MySQL / iEducar — Portabilis)
+    | Schema (PostgreSQL / iEducar Portabilis)
     |--------------------------------------------------------------------------
     |
-    | Ajuste via .env se a sua instalação usar prefixos ou nomes diferentes.
-    | As consultas usam estes valores com Query Builder (identificadores escapados).
+    | Ex.: pmieducar — as consultas passam a usar "pmieducar"."escola", etc.
+    | Em MySQL sem schema, deixe vazio. Também pode definir tabela completa em
+    | IEDUCAR_TABLE_* (ex.: cadastro.turno) e o prefixo não será aplicado.
     |
+    */
+
+    'schema' => env('IEDUCAR_SCHEMA', ''),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Nomes de tabelas
+    |--------------------------------------------------------------------------
     */
 
     'tables' => [
@@ -49,6 +58,7 @@ return [
         'turma' => [
             'id' => env('IEDUCAR_COL_TURMA_ID', 'cod_turma'),
             'name' => env('IEDUCAR_COL_TURMA_NAME', 'nm_turma'),
+            'year' => env('IEDUCAR_COL_TURMA_ANO', 'ano'),
         ],
         'matricula' => [
             'id' => env('IEDUCAR_COL_MATRICULA_ID', 'cod_matricula'),
@@ -63,6 +73,49 @@ return [
             'id' => env('IEDUCAR_COL_TURNO_ID', 'id'),
             'name' => env('IEDUCAR_COL_TURNO_NAME', 'nome'),
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Filtros nas listagens (SELECT para os combos)
+    |--------------------------------------------------------------------------
+    */
+
+    'filters' => [
+        'escola_only_active' => filter_var(env('IEDUCAR_FILTER_ESCOLA_ONLY_ACTIVE', true), FILTER_VALIDATE_BOOL),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fallbacks quando a tabela ano_letivo não existir ou falhar
+    |--------------------------------------------------------------------------
+    |
+    | Muitas instalações iEducar guardam o ano na tabela turma (coluna ano).
+    |
+    */
+
+    'fallbacks' => [
+        'ano_letivo_from_turma' => filter_var(env('IEDUCAR_ANO_FALLBACK_FROM_TURMA', true), FILTER_VALIDATE_BOOL),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Consultas SQL personalizadas (opcional)
+    |--------------------------------------------------------------------------
+    |
+    | Se preenchidas, substituem o SELECT gerado automaticamente.
+    | Devem devolver colunas: id, name (para escolas, cursos, etc.) ou ano (para anos).
+    | Use identificadores conforme o motor da cidade (aspas em PostgreSQL).
+    |
+    */
+
+    'sql' => [
+        'ano_letivo_distinct' => env('IEDUCAR_SQL_ANO_LETIVO'),
+        'escola_pairs' => env('IEDUCAR_SQL_ESCOLA'),
+        'curso_pairs' => env('IEDUCAR_SQL_CURSO'),
+        'serie_pairs' => env('IEDUCAR_SQL_SERIE'),
+        'nivel_ensino_pairs' => env('IEDUCAR_SQL_NIVEL_ENSINO'),
+        'turno_pairs' => env('IEDUCAR_SQL_TURNO'),
     ],
 
     /*

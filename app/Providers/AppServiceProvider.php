@@ -29,6 +29,18 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(City::class, CityPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
 
+        /*
+         * Em produção, o ficheiro public/hot (gerado por `npm run dev`) faz o @vite apontar
+         * para o servidor de desenvolvimento (ex.: [::1]:5173), causando CORS no domínio real.
+         * Remove-o para forçar o uso do manifest em public/build/.
+         */
+        if ($this->app->environment('production')) {
+            $hot = public_path('hot');
+            if (is_file($hot)) {
+                @unlink($hot);
+            }
+        }
+
         try {
             if (Schema::hasTable('mail_settings')) {
                 app(MailConfigService::class)->applyFromDatabase();

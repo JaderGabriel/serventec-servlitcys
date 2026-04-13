@@ -5,6 +5,7 @@ namespace App\Repositories\Ieducar;
 use App\Models\City;
 use App\Services\CityDataConnection;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Ieducar\IeducarSchema;
 use Illuminate\Database\QueryException;
 
 class OverviewRepository
@@ -24,12 +25,10 @@ class OverviewRepository
 
         try {
             return $this->cityData->run($city, function ($db) {
-                $tables = config('ieducar.tables');
-
                 return [
                     'kpis' => [
-                        'escolas' => $this->safeCount($db, $tables['escola'] ?? null),
-                        'turmas' => $this->safeCount($db, $tables['turma'] ?? null),
+                        'escolas' => $this->safeCount($db, 'escola'),
+                        'turmas' => $this->safeCount($db, 'turma'),
                         'matriculas' => $this->countMatriculas($db),
                     ],
                     'error' => null,
@@ -43,26 +42,24 @@ class OverviewRepository
         }
     }
 
-    private function safeCount(\Illuminate\Database\Connection $db, ?string $table): ?int
+    private function safeCount(\Illuminate\Database\Connection $db, string $logicalKey): ?int
     {
-        if (! $table) {
-            return null;
-        }
-
         try {
+            $table = IeducarSchema::resolveTable($logicalKey);
+
             return (int) $db->table($table)->count();
-        } catch (QueryException) {
+        } catch (QueryException|\InvalidArgumentException) {
             return null;
         }
     }
 
     private function countMatriculas(\Illuminate\Database\Connection $db): ?int
     {
-        $table = config('ieducar.tables.matricula');
-
         try {
+            $table = IeducarSchema::resolveTable('matricula');
+
             return (int) $db->table($table)->count();
-        } catch (QueryException) {
+        } catch (QueryException|\InvalidArgumentException) {
             return null;
         }
     }
