@@ -58,6 +58,20 @@ class IeducarSchemaTest extends TestCase
         $this->assertSame('cadastro.turno', IeducarSchema::resolveTable('turno', $city));
     }
 
+    public function test_turma_turno_resolves_when_config_empty_uses_default_name(): void
+    {
+        config(['ieducar.schema' => '']);
+        config(['ieducar.pgsql_default_schema' => 'pmieducar']);
+        config(['ieducar.tables.turma_turno' => '']);
+
+        $city = new City([
+            'db_driver' => City::DRIVER_PGSQL,
+            'ieducar_schema' => null,
+        ]);
+
+        $this->assertSame('pmieducar.turma_turno', IeducarSchema::resolveTable('turma_turno', $city));
+    }
+
     public function test_mysql_maps_cadastro_turno_to_short_table_in_single_database(): void
     {
         config(['ieducar.schema' => '']);

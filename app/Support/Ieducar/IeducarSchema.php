@@ -20,6 +20,9 @@ final class IeducarSchema
     {
         $table = config("ieducar.tables.{$logicalKey}");
         if ($table === null || $table === '') {
+            $table = self::defaultTableForLogicalKey($logicalKey);
+        }
+        if ($table === null || $table === '') {
             throw new \InvalidArgumentException("ieducar.tables.{$logicalKey} não está definido.");
         }
 
@@ -159,6 +162,18 @@ final class IeducarSchema
     }
 
     /**
+     * Fallback quando a chave em config/ieducar.php está ausente, em cache antigo ou o .env
+     * define a variável vazia (ex.: IEDUCAR_TABLE_TURMA_TURNO=).
+     */
+    private static function defaultTableForLogicalKey(string $logicalKey): ?string
+    {
+        return match ($logicalKey) {
+            'turma_turno' => 'turma_turno',
+            default => null,
+        };
+    }
+
+    /**
      * Nome de tabela curto para MySQL quando só existe config «cadastro.xxx» (Portabilis).
      */
     private static function mysqlShortTableName(string $logicalKey, string $qualified): string
@@ -167,6 +182,7 @@ final class IeducarSchema
 
         return match ($logicalKey) {
             'turno' => $short !== '' ? $short : 'turno',
+            'turma_turno' => $short !== '' ? $short : 'turma_turno',
             'pessoa' => $short !== '' ? $short : 'pessoa',
             'raca' => $short !== '' ? $short : 'raca',
             'aluno_deficiencia' => $short !== '' ? $short : 'aluno_deficiencia',
