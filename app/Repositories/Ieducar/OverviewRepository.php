@@ -8,6 +8,8 @@ use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\MatriculaAtivoFilter;
+use App\Support\Ieducar\MatriculaChartQueries;
+use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 
@@ -51,6 +53,21 @@ class OverviewRepository
                             (float) ($kpis['matriculas'] ?? 0),
                         ]
                     );
+                }
+
+                foreach ([
+                    fn () => MatriculaChartQueries::matriculasPorCursoTop($db, $city, $filters),
+                    fn () => MatriculaChartQueries::matriculasPorEscolaTop($db, $city, $filters),
+                    fn () => MatriculaChartQueries::turmasPorTurnoDistribuicao($db, $city, $filters),
+                ] as $fn) {
+                    try {
+                        $c = $fn();
+                        if ($c !== null) {
+                            $charts[] = $c;
+                        }
+                    } catch (QueryException) {
+                        // Ignorar gráficos opcionais quando a base não tiver as tabelas esperadas.
+                    }
                 }
 
                 $note = $this->filterNote($filters);
@@ -135,6 +152,7 @@ class OverviewRepository
     {
         try {
             $mat = IeducarSchema::resolveTable('matricula', $city);
+            $mId = (string) config('ieducar.columns.matricula.id');
             $mTurma = (string) config('ieducar.columns.matricula.turma');
             $mAtivo = (string) config('ieducar.columns.matricula.ativo');
 
@@ -158,8 +176,25 @@ class OverviewRepository
             $curso = (string) config('ieducar.columns.turma.curso');
             $turno = (string) config('ieducar.columns.turma.turno');
 
-            $q = $db->table($mat.' as m')->join($turma.' as t', 'm.'.$mTurma, '=', 't.'.$tId);
-            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            $usePivot = MatriculaTurmaJoin::usePivotTable($db, $city);
+
+            if ($usePivot) {
+                $mt = IeducarSchema::resolveTable('matricula_turma', $city);
+                $mtMat = (string) config('ieducar.columns.matricula_turma.matricula');
+                $mtTurma = (string) config('ieducar.columns.matricula_turma.turma');
+                $mtAtivo = (string) config('ieducar.columns.matricula_turma.ativo');
+                $q = $db->table($mat.' as m')
+                    ->join($mt.' as mt', 'm.'.$mId, '=', 'mt.'.$mtMat)
+                    ->join($turma.' as t', 'mt.'.$mtTurma, '=', 't.'.$tId);
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+                if ($mtAtivo !== '') {
+                    MatriculaAtivoFilter::apply($q, $db, 'mt.'.$mtAtivo);
+                }
+            } else {
+                $q = $db->table($mat.' as m')->join($turma.' as t', 'm.'.$mTurma, '=', 't.'.$tId);
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            }
+
             if ($yearVal !== null && $year !== '') {
                 $q->where('t.'.$year, $yearVal);
             }

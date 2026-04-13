@@ -8,8 +8,8 @@ use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\MatriculaAtivoFilter;
+use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 
 /**
@@ -65,14 +65,8 @@ class InclusionRepository
                         $charts[] = $extra;
                     }
                 } else {
-                    $charts[] = ChartPayload::bar(
-                        __('Exemplo: indicador complementar'),
-                        __('Valor ilustrativo'),
-                        [__('Série A'), __('Série B'), __('Série C')],
-                        [40, 35, 25]
-                    );
                     $notes[] = __(
-                        'O segundo gráfico é ilustrativo até definir IEDUCAR_SQL_INCLUSION_EXTRA (ex.: necessidades educacionais específicas, público-alvo).'
+                        'Para um segundo gráfico de inclusão, defina IEDUCAR_SQL_INCLUSION_EXTRA (duas colunas: rótulo e valor).'
                     );
                 }
             });
@@ -119,7 +113,7 @@ class InclusionRepository
 
             MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
 
-            $this->applyMatriculaTurmaFilters($q, $city, $filters);
+            MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
 
             $rows = $q->orderByDesc('c')->limit(16)->get();
             if ($rows->isEmpty()) {
@@ -137,42 +131,6 @@ class InclusionRepository
             return ChartPayload::doughnut(__('Matrículas por raça/cor (cadastro)'), $labels, $values);
         } catch (QueryException|\Throwable) {
             return null;
-        }
-    }
-
-    private function applyMatriculaTurmaFilters(Builder $q, City $city, IeducarFilterState $filters): void
-    {
-        $yearVal = $filters->yearFilterValue();
-        $needsTurma = $yearVal !== null
-            || $filters->escola_id !== null
-            || $filters->curso_id !== null
-            || $filters->turno_id !== null;
-
-        if (! $needsTurma) {
-            return;
-        }
-
-        $turma = IeducarSchema::resolveTable('turma', $city);
-        $mTurma = (string) config('ieducar.columns.matricula.turma');
-        $tId = (string) config('ieducar.columns.turma.id');
-        $year = (string) config('ieducar.columns.turma.year');
-        $escola = (string) config('ieducar.columns.turma.escola');
-        $curso = (string) config('ieducar.columns.turma.curso');
-        $turno = (string) config('ieducar.columns.turma.turno');
-
-        $q->join($turma.' as t_filter', 'm.'.$mTurma, '=', 't_filter.'.$tId);
-
-        if ($yearVal !== null && $year !== '') {
-            $q->where('t_filter.'.$year, $yearVal);
-        }
-        if ($filters->escola_id !== null && $escola !== '') {
-            $q->where('t_filter.'.$escola, $filters->escola_id);
-        }
-        if ($filters->curso_id !== null && $curso !== '') {
-            $q->where('t_filter.'.$curso, $filters->curso_id);
-        }
-        if ($filters->turno_id !== null && $turno !== '') {
-            $q->where('t_filter.'.$turno, $filters->turno_id);
         }
     }
 

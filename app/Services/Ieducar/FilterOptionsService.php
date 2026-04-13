@@ -4,6 +4,7 @@ namespace App\Services\Ieducar;
 
 use App\Models\City;
 use App\Services\CityDataConnection;
+use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
@@ -309,8 +310,18 @@ class FilterOptionsService
         };
 
         $table = IeducarSchema::resolveTable($tableKey, $city);
-        $idCol = config("ieducar.columns.{$logical}.id");
-        $nameCol = config("ieducar.columns.{$logical}.name");
+        $idCol = (string) config("ieducar.columns.{$logical}.id");
+        $nameCol = (string) config("ieducar.columns.{$logical}.name");
+
+        if ($logical === 'escola' && $nameCol === 'nome' && ! IeducarColumnInspector::columnExists($db, $table, 'nome')
+            && IeducarColumnInspector::columnExists($db, $table, 'fantasia')) {
+            $nameCol = 'fantasia';
+        }
+
+        if ($logical === 'turno' && ! IeducarColumnInspector::columnExists($db, $table, $idCol)
+            && IeducarColumnInspector::columnExists($db, $table, 'id')) {
+            $idCol = 'id';
+        }
 
         $q = $db->table($table)->select([$idCol.' as id', $nameCol.' as name'])->orderBy($nameCol);
 

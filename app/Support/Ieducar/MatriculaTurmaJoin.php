@@ -1,0 +1,119 @@
+<?php
+
+namespace App\Support\Ieducar;
+
+use App\Models\City;
+use App\Support\Dashboard\IeducarFilterState;
+use Illuminate\Database\Connection;
+use Illuminate\Database\Query\Builder;
+
+/**
+ * Ligação matrícula ↔ turma: coluna direta em matricula (ref_cod_turma) ou pivô pmieducar.matricula_turma.
+ */
+final class MatriculaTurmaJoin
+{
+    /** @var array<string, bool> */
+    private static array $pivotCache = [];
+
+    /**
+     * Usar tabela matricula_turma quando matricula não tiver a coluna configurada (ex.: ref_cod_turma).
+     */
+    public static function usePivotTable(Connection $db, City $city): bool
+    {
+        $key = $city->getKey().'_'.spl_object_id($db).'_'.(string) config('ieducar.columns.matricula.turma');
+        if (array_key_exists($key, self::$pivotCache)) {
+            return self::$pivotCache[$key];
+        }
+
+        $matTable = IeducarSchema::resolveTable('matricula', $city);
+        $directCol = (string) config('ieducar.columns.matricula.turma');
+        if (IeducarColumnInspector::columnExists($db, $matTable, $directCol)) {
+            return self::$pivotCache[$key] = false;
+        }
+
+        $pivotTable = IeducarSchema::resolveTable('matricula_turma', $city);
+        $cMat = (string) config('ieducar.columns.matricula_turma.matricula');
+        $cTurma = (string) config('ieducar.columns.matricula_turma.turma');
+        $out = IeducarColumnInspector::columnExists($db, $pivotTable, $cMat)
+            && IeducarColumnInspector::columnExists($db, $pivotTable, $cTurma);
+
+        return self::$pivotCache[$key] = $out;
+    }
+
+    /**
+     * Junta sempre matricula (alias m) à turma (aliases mt_filter + t_filter como no iEducar).
+     */
+    public static function joinMatriculaToTurma(Builder $q, Connection $db, City $city, string $matAlias = 'm'): void
+    {
+        $turma = IeducarSchema::resolveTable('turma', $city);
+        $mId = (string) config('ieducar.columns.matricula.id');
+        $mTurma = (string) config('ieducar.columns.matricula.turma');
+        $tId = (string) config('ieducar.columns.turma.id');
+
+        if (self::usePivotTable($db, $city)) {
+            $mt = IeducarSchema::resolveTable('matricula_turma', $city);
+            $mtMat = (string) config('ieducar.columns.matricula_turma.matricula');
+            $mtTurma = (string) config('ieducar.columns.matricula_turma.turma');
+            $q->join($mt.' as mt_filter', $matAlias.'.'.$mId, '=', 'mt_filter.'.$mtMat)
+                ->join($turma.' as t_filter', 'mt_filter.'.$mtTurma, '=', 't_filter.'.$tId);
+        } else {
+            $q->join($turma.' as t_filter', $matAlias.'.'.$mTurma, '=', 't_filter.'.$tId);
+        }
+    }
+
+    /**
+     * Filtros de dimensão na turma (ano letivo, escola, curso, turno).
+     */
+    public static function applyTurmaFiltersWhere(Builder $q, City $city, IeducarFilterState $filters, string $turmaAlias = 't_filter'): void
+    {
+        $yearVal = $filters->yearFilterValue();
+        $year = (string) config('ieducar.columns.turma.year');
+        $escola = (string) config('ieducar.columns.turma.escola');
+        $curso = (string) config('ieducar.columns.turma.curso');
+        $turno = (string) config('ieducar.columns.turma.turno');
+
+        if ($yearVal !== null && $year !== '') {
+            $q->where($turmaAlias.'.'.$year, $yearVal);
+        }
+        if ($filters->escola_id !== null && $escola !== '') {
+            $q->where($turmaAlias.'.'.$escola, $filters->escola_id);
+        }
+        if ($filters->curso_id !== null && $curso !== '') {
+            $q->where($turmaAlias.'.'.$curso, $filters->curso_id);
+        }
+        if ($filters->turno_id !== null && $turno !== '') {
+            $q->where($turmaAlias.'.'.$turno, $filters->turno_id);
+        }
+    }
+
+    /**
+     * Junta matricula (alias m) à turma quando ano/escola/curso/turno exigem recorte por turma.
+     */
+    public static function applyTurmaFiltersFromMatricula(Builder $q, Connection $db, City $city, IeducarFilterState $filters): void
+    {
+        $yearVal = $filters->yearFilterValue();
+        $needsTurma = $yearVal !== null
+            || $filters->escola_id !== null
+            || $filters->curso_id !== null
+            || $filters->turno_id !== null;
+
+        if (! $needsTurma) {
+            return;
+        }
+
+        self::joinMatriculaToTurma($q, $db, $city, 'm');
+        self::applyTurmaFiltersWhere($q, $city, $filters, 't_filter');
+    }
+
+    /**
+     * Filtro ativo em matricula_turma quando há pivô (alinhado a OverviewRepository::countMatriculas).
+     */
+    public static function applyPivotAtivoIfNeeded(Builder $q, Connection $db, City $city): void
+    {
+        if (! self::usePivotTable($db, $city)) {
+            return;
+        }
+        $mtAtivo = (string) config('ieducar.columns.matricula_turma.ativo');
+        MatriculaAtivoFilter::apply($q, $db, 'mt_filter.'.$mtAtivo);
+    }
+}

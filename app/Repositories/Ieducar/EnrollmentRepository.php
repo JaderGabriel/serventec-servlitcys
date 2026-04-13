@@ -8,6 +8,8 @@ use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\MatriculaAtivoFilter;
+use App\Support\Ieducar\MatriculaChartQueries;
+use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 
@@ -20,12 +22,17 @@ class EnrollmentRepository
     /**
      * Amostra de matrículas (últimas N linhas) + gráfico por turma (top).
      *
-     * @return array{rows: list<object>, error: ?string, chart: ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}}
+     * @return array{
+     *   rows: list<object>,
+     *   error: ?string,
+     *   chart: ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>},
+     *   charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}>
+     * }
      */
     public function sample(?City $city, IeducarFilterState $filters): array
     {
         if ($city === null) {
-            return ['rows' => [], 'error' => null, 'chart' => null];
+            return ['rows' => [], 'error' => null, 'chart' => null, 'charts' => []];
         }
 
         try {
@@ -36,28 +43,71 @@ class EnrollmentRepository
                 $mAtivo = (string) config('ieducar.columns.matricula.ativo');
 
                 try {
-                    $q = $db->table($table)
-                        ->select([
-                            $mid.' as cod_matricula',
-                            $mturma.' as ref_cod_turma',
-                        ])
-                        ->orderByDesc($mid);
-                    MatriculaAtivoFilter::apply($q, $db, $mAtivo);
+                    if (MatriculaTurmaJoin::usePivotTable($db, $city)) {
+                        $mt = IeducarSchema::resolveTable('matricula_turma', $city);
+                        $mtMat = (string) config('ieducar.columns.matricula_turma.matricula');
+                        $mtTurma = (string) config('ieducar.columns.matricula_turma.turma');
+                        $mtAtivo = (string) config('ieducar.columns.matricula_turma.ativo');
+                        $q = $db->table($table.' as m')
+                            ->join($mt.' as mt', 'm.'.$mid, '=', 'mt.'.$mtMat)
+                            ->select([
+                                'm.'.$mid.' as cod_matricula',
+                                'mt.'.$mtTurma.' as ref_cod_turma',
+                            ])
+                            ->orderByDesc('m.'.$mid);
+                        MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+                        if ($mtAtivo !== '') {
+                            MatriculaAtivoFilter::apply($q, $db, 'mt.'.$mtAtivo);
+                        }
+                    } else {
+                        $q = $db->table($table)
+                            ->select([
+                                $mid.' as cod_matricula',
+                                $mturma.' as ref_cod_turma',
+                            ])
+                            ->orderByDesc($mid);
+                        MatriculaAtivoFilter::apply($q, $db, $mAtivo);
+                    }
                     $rows = $q->limit(30)->get()->all();
 
-                    $chart = $this->turmasComMaisMatriculas($db, $city, $filters);
+                    $charts = [];
+                    $main = $this->turmasComMaisMatriculas($db, $city, $filters);
+                    if ($main !== null) {
+                        $charts[] = $main;
+                    }
+                    foreach ([
+                        fn () => MatriculaChartQueries::matriculasPorCursoTop($db, $city, $filters),
+                        fn () => MatriculaChartQueries::matriculasPorEscolaTop($db, $city, $filters),
+                        fn () => MatriculaChartQueries::matriculasPorSerieTop($db, $city, $filters),
+                        fn () => MatriculaChartQueries::matriculasPorTurno($db, $city, $filters),
+                        fn () => MatriculaChartQueries::turmasPorTurnoDistribuicao($db, $city, $filters),
+                    ] as $fn) {
+                        try {
+                            $c = $fn();
+                            if ($c !== null) {
+                                $charts[] = $c;
+                            }
+                        } catch (QueryException) {
+                        }
+                    }
 
-                    return ['rows' => $rows, 'error' => null, 'chart' => $chart];
+                    return [
+                        'rows' => $rows,
+                        'error' => null,
+                        'chart' => $charts[0] ?? null,
+                        'charts' => $charts,
+                    ];
                 } catch (QueryException $e) {
                     return [
                         'rows' => [],
                         'error' => __('Não foi possível listar matrículas. Ajuste config/ieducar.php (tabela e colunas).').' '.$e->getMessage(),
                         'chart' => null,
+                        'charts' => [],
                     ];
                 }
             });
         } catch (\Throwable $e) {
-            return ['rows' => [], 'error' => $e->getMessage(), 'chart' => null];
+            return ['rows' => [], 'error' => $e->getMessage(), 'chart' => null, 'charts' => []];
         }
     }
 
@@ -69,6 +119,7 @@ class EnrollmentRepository
         try {
             $mat = IeducarSchema::resolveTable('matricula', $city);
             $turma = IeducarSchema::resolveTable('turma', $city);
+            $mId = (string) config('ieducar.columns.matricula.id');
             $mTurma = (string) config('ieducar.columns.matricula.turma');
             $mAtivo = (string) config('ieducar.columns.matricula.ativo');
             $tId = (string) config('ieducar.columns.turma.id');
@@ -78,13 +129,31 @@ class EnrollmentRepository
             $curso = (string) config('ieducar.columns.turma.curso');
             $turno = (string) config('ieducar.columns.turma.turno');
 
-            $q = $db->table($mat.' as m')
-                ->join($turma.' as t', 'm.'.$mTurma, '=', 't.'.$tId)
-                ->select('t.'.$tId.' as tid')
-                ->selectRaw('MAX(t.'.$tName.') as tname')
-                ->selectRaw('COUNT(*) as c');
+            $usePivot = MatriculaTurmaJoin::usePivotTable($db, $city);
 
-            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            if ($usePivot) {
+                $mt = IeducarSchema::resolveTable('matricula_turma', $city);
+                $mtMat = (string) config('ieducar.columns.matricula_turma.matricula');
+                $mtTurma = (string) config('ieducar.columns.matricula_turma.turma');
+                $mtAtivo = (string) config('ieducar.columns.matricula_turma.ativo');
+                $q = $db->table($mat.' as m')
+                    ->join($mt.' as mt', 'm.'.$mId, '=', 'mt.'.$mtMat)
+                    ->join($turma.' as t', 'mt.'.$mtTurma, '=', 't.'.$tId)
+                    ->select('t.'.$tId.' as tid')
+                    ->selectRaw('MAX(t.'.$tName.') as tname')
+                    ->selectRaw('COUNT(*) as c');
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+                if ($mtAtivo !== '') {
+                    MatriculaAtivoFilter::apply($q, $db, 'mt.'.$mtAtivo);
+                }
+            } else {
+                $q = $db->table($mat.' as m')
+                    ->join($turma.' as t', 'm.'.$mTurma, '=', 't.'.$tId)
+                    ->select('t.'.$tId.' as tid')
+                    ->selectRaw('MAX(t.'.$tName.') as tname')
+                    ->selectRaw('COUNT(*) as c');
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            }
 
             $yearVal = $filters->yearFilterValue();
             if ($yearVal !== null && $year !== '') {

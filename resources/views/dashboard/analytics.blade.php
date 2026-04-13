@@ -89,6 +89,16 @@
                                 @include('dashboard.analytics.partials.enrollment', ['enrollmentData' => $enrollmentData])
                             </div>
                         </template>
+                        <template x-if="tab === 'network'">
+                            <div>
+                                @include('dashboard.analytics.partials.network', ['networkData' => $networkData])
+                            </div>
+                        </template>
+                        <template x-if="tab === 'equity'">
+                            <div>
+                                @include('dashboard.analytics.partials.equity', ['equityData' => $equityData])
+                            </div>
+                        </template>
                         <template x-if="tab === 'performance'">
                             <div>
                                 @include('dashboard.analytics.partials.performance', ['performanceData' => $performanceData])

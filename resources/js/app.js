@@ -2,6 +2,9 @@ import './bootstrap';
 
 import Alpine from 'alpinejs';
 import Chart from 'chart.js/auto';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+
+Chart.register(ChartDataLabels);
 
 function chartTextColor() {
     return document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#374151';
@@ -100,6 +103,108 @@ document.addEventListener('alpine:init', () => {
                               grid: { color: chartGridColor() },
                           },
                       };
+                const extra =
+                    payload.options && typeof payload.options === 'object' ? payload.options : {};
+                const defaultPlugins = {
+                    datalabels: {
+                        clip: false,
+                        display: true,
+                        color: (ctx) => {
+                            const t = ctx.chart.config.type;
+                            if (t === 'doughnut' || t === 'pie') {
+                                return '#f8fafc';
+                            }
+                            return chartTextColor();
+                        },
+                        anchor: (ctx) => {
+                            const t = ctx.chart.config.type;
+                            const idx = ctx.chart.options.indexAxis;
+                            if (t === 'bar' && idx === 'y') {
+                                return 'end';
+                            }
+                            if (t === 'bar' || t === 'line') {
+                                return 'end';
+                            }
+                            return 'center';
+                        },
+                        align: (ctx) => {
+                            const t = ctx.chart.config.type;
+                            const idx = ctx.chart.options.indexAxis;
+                            if (t === 'bar' && idx === 'y') {
+                                return 'end';
+                            }
+                            if (t === 'bar') {
+                                return 'end';
+                            }
+                            if (t === 'line') {
+                                return 'top';
+                            }
+                            return 'center';
+                        },
+                        offset: (ctx) => {
+                            const t = ctx.chart.config.type;
+                            if (t === 'bar' || t === 'line') {
+                                return 2;
+                            }
+                            return 0;
+                        },
+                        font: { weight: '600', size: 11 },
+                        formatter: (value, ctx) => {
+                            if (value === null || value === undefined) {
+                                return '';
+                            }
+                            const t = ctx.chart.config.type;
+                            if (t === 'doughnut' || t === 'pie') {
+                                const data = ctx.dataset.data;
+                                const sum = data.reduce((a, b) => a + Number(b), 0);
+                                const pct = sum ? Math.round((Number(value) / sum) * 100) : 0;
+                                const fmt =
+                                    typeof value === 'number' && !Number.isInteger(value)
+                                        ? String(Math.round(value * 10) / 10)
+                                        : String(value);
+                                return `${fmt}\n(${pct}%)`;
+                            }
+                            if (typeof value === 'number' && !Number.isInteger(value)) {
+                                return String(Math.round(value * 10) / 10);
+                            }
+                            return String(value);
+                        },
+                    },
+                    legend: {
+                        display: true,
+                        position: isRadial ? 'right' : 'top',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'rectRounded',
+                            padding: 14,
+                            color: chartTextColor(),
+                            generateLabels: (chart) => {
+                                const ds0 = chart.data.datasets[0];
+                                const bg = ds0?.backgroundColor;
+                                const labels = chart.data.labels;
+                                if (Array.isArray(bg) && labels?.length && bg.length >= labels.length) {
+                                    return labels.map((label, i) => ({
+                                        text: String(label),
+                                        fillStyle: bg[i],
+                                        strokeStyle: bg[i],
+                                        lineWidth: 0,
+                                        hidden: false,
+                                        index: i,
+                                        datasetIndex: 0,
+                                    }));
+                                }
+                                return Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                            },
+                        },
+                    },
+                    tooltip: {
+                        enabled: true,
+                    },
+                };
+                const mergedPlugins = {
+                    ...defaultPlugins,
+                    ...(extra.plugins && typeof extra.plugins === 'object' ? extra.plugins : {}),
+                };
                 this.chart = new Chart(ctx, {
                     type: payload.type,
                     data: {
@@ -109,39 +214,13 @@ document.addEventListener('alpine:init', () => {
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: isRadial ? 'right' : 'top',
-                                labels: {
-                                    usePointStyle: true,
-                                    pointStyle: 'rectRounded',
-                                    padding: 14,
-                                    color: chartTextColor(),
-                                    generateLabels: (chart) => {
-                                        const ds0 = chart.data.datasets[0];
-                                        const bg = ds0?.backgroundColor;
-                                        const labels = chart.data.labels;
-                                        if (Array.isArray(bg) && labels?.length && bg.length >= labels.length) {
-                                            return labels.map((label, i) => ({
-                                                text: String(label),
-                                                fillStyle: bg[i],
-                                                strokeStyle: bg[i],
-                                                lineWidth: 0,
-                                                hidden: false,
-                                                index: i,
-                                                datasetIndex: 0,
-                                            }));
-                                        }
-                                        return Chart.defaults.plugins.legend.labels.generateLabels(chart);
-                                    },
-                                },
-                            },
-                            tooltip: {
-                                enabled: true,
-                            },
+                        indexAxis: extra.indexAxis,
+                        layout: {
+                            ...(extra.layout && typeof extra.layout === 'object' ? extra.layout : {}),
+                            padding: isRadial ? {} : { top: 14 },
                         },
-                        scales,
+                        plugins: mergedPlugins,
+                        scales: extra.scales !== undefined ? extra.scales : scales,
                     },
                 });
             });

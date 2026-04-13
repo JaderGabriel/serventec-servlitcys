@@ -2,11 +2,21 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Lista uma amostra das últimas linhas da tabela de matrícula e um gráfico das turmas com maior número de matrículas (top 12), respeitando os filtros quando a turma entra na consulta.') }}
+        {{ __('Lista uma amostra das últimas matrículas e vários gráficos (turma, curso, escola, série, turnos e oferta), alinhados aos filtros quando a turma entra na consulta.') }}
     </p>
 
-    @if (! empty($enrollmentData['chart']))
-        <x-dashboard.chart-panel :chart="$enrollmentData['chart']" exportFilename="matriculas-por-turma" />
+    @php
+        $enrollmentCharts = $enrollmentData['charts'] ?? [];
+        if ($enrollmentCharts === [] && ! empty($enrollmentData['chart'])) {
+            $enrollmentCharts = [$enrollmentData['chart']];
+        }
+    @endphp
+    @if ($enrollmentCharts !== [])
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            @foreach ($enrollmentCharts as $idx => $chart)
+                <x-dashboard.chart-panel :chart="$chart" :exportFilename="'matriculas-'.$idx" />
+            @endforeach
+        </div>
     @endif
 
     @if (! empty($enrollmentData['error']))

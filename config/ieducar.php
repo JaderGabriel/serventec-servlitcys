@@ -56,6 +56,8 @@ return [
         'serie' => env('IEDUCAR_TABLE_SERIE', 'serie'),
         'turma' => env('IEDUCAR_TABLE_TURMA', 'turma'),
         'matricula' => env('IEDUCAR_TABLE_MATRICULA', 'matricula'),
+        'matricula_turma' => env('IEDUCAR_TABLE_MATRICULA_TURMA', 'matricula_turma'),
+        'falta_aluno' => env('IEDUCAR_TABLE_FALTA_ALUNO', 'falta_aluno'),
         'nivel_ensino' => env('IEDUCAR_TABLE_NIVEL_ENSINO', 'nivel_ensino'),
         'turno' => env('IEDUCAR_TABLE_TURNO', 'cadastro.turno'),
         'aluno' => env('IEDUCAR_TABLE_ALUNO', 'aluno'),
@@ -117,6 +119,21 @@ return [
             'aluno' => env('IEDUCAR_COL_MATRICULA_ALUNO', 'ref_cod_aluno'),
             'ativo' => env('IEDUCAR_COL_MATRICULA_ATIVO', 'ativo'),
         ],
+        /*
+         * Pivô matrícula ↔ turma (PostgreSQL iEducar moderno). Usado quando matricula não tem ref_cod_turma.
+         */
+        'matricula_turma' => [
+            'matricula' => env('IEDUCAR_COL_MATRICULA_TURMA_MATRICULA', 'ref_cod_matricula'),
+            'turma' => env('IEDUCAR_COL_MATRICULA_TURMA_TURMA', 'ref_cod_turma'),
+            'ativo' => env('IEDUCAR_COL_MATRICULA_TURMA_ATIVO', 'ativo'),
+        ],
+        'falta_aluno' => [
+            'matricula' => env('IEDUCAR_COL_FALTA_MATRICULA', 'ref_cod_matricula'),
+            'data' => env('IEDUCAR_COL_FALTA_DATA', 'data_falta'),
+        ],
+        'matricula_situacao' => [
+            'aprovado' => env('IEDUCAR_COL_MATRICULA_APROVADO', 'aprovado'),
+        ],
         'aluno' => [
             'id' => env('IEDUCAR_COL_ALUNO_ID', 'cod_aluno'),
             'pessoa' => env('IEDUCAR_COL_ALUNO_PESSOA', 'ref_cod_pessoa'),
@@ -124,6 +141,7 @@ return [
         'pessoa' => [
             'id' => env('IEDUCAR_COL_PESSOA_ID', 'idpes'),
             'raca' => env('IEDUCAR_COL_PESSOA_RACA', 'ref_cod_raca'),
+            'sexo' => env('IEDUCAR_COL_PESSOA_SEXO', 'sexo'),
         ],
         'raca' => [
             'id' => env('IEDUCAR_COL_RACA_ID', 'cod_raca'),

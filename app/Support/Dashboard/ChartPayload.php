@@ -46,7 +46,23 @@ final class ChartPayload
                     'borderWidth' => 1,
                 ],
             ],
+            'options' => [],
         ];
+    }
+
+    /**
+     * Barras horizontais (melhor para rótulos longos: cursos, escolas).
+     *
+     * @param  list<string|int|float>  $labels
+     * @param  list<int|float>  $values
+     * @return array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options: array<string, mixed>}
+     */
+    public static function barHorizontal(string $title, string $datasetLabel, array $labels, array $values): array
+    {
+        $payload = self::bar($title, $datasetLabel, $labels, $values);
+        $payload['options'] = ['indexAxis' => 'y'];
+
+        return $payload;
     }
 
     /**
