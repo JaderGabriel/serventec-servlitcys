@@ -54,10 +54,10 @@ final class IeducarSchema
             return $global;
         }
 
-        if ($city !== null && $city->dataDriver() === City::DRIVER_PGSQL) {
+        if ($city !== null && $city->effectiveIeducarDriver() === City::DRIVER_PGSQL) {
             $fallback = trim((string) config('ieducar.pgsql_default_schema', ''));
 
-            return $fallback;
+            return $fallback !== '' ? $fallback : 'pmieducar';
         }
 
         return '';

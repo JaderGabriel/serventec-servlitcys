@@ -57,4 +57,18 @@ class IeducarSchemaTest extends TestCase
 
         $this->assertSame('cadastro.turno', IeducarSchema::resolveTable('turno', $city));
     }
+
+    public function test_port_5432_mysql_driver_still_resolves_pmieducar_schema(): void
+    {
+        config(['ieducar.schema' => '']);
+        config(['ieducar.pgsql_default_schema' => 'pmieducar']);
+        config(['ieducar.tables.matricula' => 'matricula']);
+
+        $city = new City([
+            'db_driver' => City::DRIVER_MYSQL,
+            'db_port' => 5432,
+        ]);
+
+        $this->assertSame('pmieducar.matricula', IeducarSchema::resolveTable('matricula', $city));
+    }
 }

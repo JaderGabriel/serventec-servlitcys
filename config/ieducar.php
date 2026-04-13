@@ -26,7 +26,22 @@ return [
     |
     */
 
-    'pgsql_default_schema' => env('IEDUCAR_PGSQL_DEFAULT_SCHEMA', 'pmieducar'),
+    /*
+     * Valor vazio no .env não deve remover o schema (Laravel devolve '' e quebra prefixos).
+     * Use IEDUCAR_PGSQL_DEFAULT_SCHEMA=public se precisar só do search_path.
+     */
+    'pgsql_default_schema' => env('IEDUCAR_PGSQL_DEFAULT_SCHEMA') ?: 'pmieducar',
+
+    /*
+    |--------------------------------------------------------------------------
+    | search_path na conexão PostgreSQL (bases Portabilis)
+    |--------------------------------------------------------------------------
+    |
+    | Permite resolver nomes curtos (matricula, escola) como no iEducar.
+    |
+    */
+
+    'pgsql_search_path' => env('IEDUCAR_PGSQL_SEARCH_PATH', 'pmieducar,cadastro,public'),
 
     /*
     |--------------------------------------------------------------------------

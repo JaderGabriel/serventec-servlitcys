@@ -63,6 +63,23 @@ class City extends Model
     }
 
     /**
+     * Motor efectivo para iEducar: corrige cadastro em que a porta é 5432 mas o campo ainda diz "mysql".
+     */
+    public function effectiveIeducarDriver(): string
+    {
+        $d = $this->dataDriver();
+        if ($d === self::DRIVER_PGSQL) {
+            return self::DRIVER_PGSQL;
+        }
+
+        if ((int) ($this->db_port ?? 0) === 5432) {
+            return self::DRIVER_PGSQL;
+        }
+
+        return $d;
+    }
+
+    /**
      * Cidades com credenciais de base de dados preenchidas (mínimo para ligar).
      */
     public function scopeWithDataSetup(Builder $query): void

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\City;
+use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
@@ -28,20 +29,29 @@ class CityDataConnection
         }
 
         $name = $this->connectionName($city);
-        $driver = $city->dataDriver();
+        $driver = $city->effectiveIeducarDriver();
         $templateKey = $driver === City::DRIVER_PGSQL ? 'pgsql' : 'mysql';
         $base = config("database.connections.{$templateKey}");
 
         $port = (int) ($city->db_port ?: ($driver === City::DRIVER_PGSQL ? 5432 : 3306));
 
-        Config::set("database.connections.{$name}", array_merge($base, [
+        $connection = array_merge($base, [
             'driver' => $driver,
             'host' => $city->db_host,
             'port' => $port,
             'database' => $city->db_database,
             'username' => $city->db_username,
             'password' => $city->db_password ?? '',
-        ]));
+        ]);
+
+        if ($driver === City::DRIVER_PGSQL) {
+            $searchPath = trim((string) config('ieducar.pgsql_search_path', 'pmieducar,cadastro,public'));
+            if ($searchPath !== '') {
+                $connection['search_path'] = $searchPath;
+            }
+        }
+
+        Config::set("database.connections.{$name}", $connection);
     }
 
     public function purge(City $city): void
@@ -54,7 +64,7 @@ class CityDataConnection
      *
      * @template T
      *
-     * @param  callable(\Illuminate\Database\Connection): T  $callback
+     * @param  callable(Connection): T  $callback
      * @return T
      */
     public function run(City $city, callable $callback): mixed
@@ -76,7 +86,7 @@ class CityDataConnection
      */
     public function probe(City $city): array
     {
-        $driver = $city->dataDriver();
+        $driver = $city->effectiveIeducarDriver();
 
         try {
             $this->configure($city);
@@ -111,7 +121,7 @@ class CityDataConnection
         }
     }
 
-    private function tableCountMysql(\Illuminate\Database\Connection $conn, ?string $schema): ?int
+    private function tableCountMysql(Connection $conn, ?string $schema): ?int
     {
         if ($schema === null || $schema === '') {
             return null;
@@ -125,7 +135,7 @@ class CityDataConnection
         return is_object($tablesRow) ? (int) ($tablesRow->c ?? 0) : null;
     }
 
-    private function tableCountPostgres(\Illuminate\Database\Connection $conn): ?int
+    private function tableCountPostgres(Connection $conn): ?int
     {
         $tablesRow = $conn->selectOne(
             <<<'SQL'
@@ -155,7 +165,7 @@ class CityDataConnection
             ];
         }
 
-        $driver = $city->dataDriver();
+        $driver = $city->effectiveIeducarDriver();
         $t0 = microtime(true);
 
         try {
