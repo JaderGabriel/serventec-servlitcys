@@ -1675,12 +1675,45 @@ final class MatriculaChartQueries
      */
     private static function turnoJoinSpec(Connection $db, City $city): ?array
     {
+        // 1) Se existir pmieducar.turma_turno (ou equivalente) e a turma tiver FK física para esse
+        // catálogo, usar sempre este JOIN — evita cair em cadastro.turno com outro espaço de IDs.
+        $turma = IeducarSchema::resolveTable('turma', $city);
+        $tt = IeducarSchema::resolveTable('turma_turno', $city);
+        if ($tt !== '' && IeducarColumnInspector::tableExists($db, $tt, $city)) {
+            $hasTurmaTurnoFk = false;
+            foreach (['ref_cod_turma_turno', 'turma_turno_id'] as $col) {
+                if (IeducarColumnInspector::columnExists($db, $turma, $col, $city)) {
+                    $hasTurmaTurnoFk = true;
+                    break;
+                }
+            }
+            if ($hasTurmaTurnoFk) {
+                $idCol = IeducarColumnInspector::firstExistingColumn($db, $tt, array_filter([
+                    'id',
+                    'cod_turno',
+                    (string) config('ieducar.columns.turno.id'),
+                ]), $city);
+                $nameCol = IeducarColumnInspector::firstExistingColumn($db, $tt, array_filter([
+                    'nome',
+                    'nm_turno',
+                    'name',
+                    (string) config('ieducar.columns.turno.name'),
+                ]), $city);
+                if ($idCol !== null && $nameCol !== null) {
+                    return [
+                        'qualified' => $tt,
+                        'idCol' => $idCol,
+                        'nameCol' => $nameCol,
+                    ];
+                }
+            }
+        }
+
         $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
         $fk = $tc['turno'];
         $preferTurmaTurnoTable = in_array($fk, ['ref_cod_turma_turno', 'turma_turno_id'], true);
 
         if ($preferTurmaTurnoTable) {
-            $tt = IeducarSchema::resolveTable('turma_turno', $city);
             if ($tt !== '' && IeducarColumnInspector::tableExists($db, $tt, $city)) {
                 $idCol = IeducarColumnInspector::firstExistingColumn($db, $tt, array_filter([
                     'id',

@@ -12,6 +12,7 @@ use App\Support\Ieducar\MatriculaAtivoFilter;
 use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use stdClass;
@@ -310,6 +311,52 @@ class FilterOptionsService
     }
 
     /**
+     * A turma referencia pmieducar.turma_turno (FK ref_cod_turma_turno / turma_turno_id) e a tabela existe.
+     * Só nesse caso o select de filtro deve usar IDs do catálogo turma_turno (alinhado a MatriculaChartQueries::turnoJoinSpec).
+     */
+    private function turmaReferencesTurmaTurnoCatalog(Connection $db, City $city): bool
+    {
+        $turma = IeducarSchema::resolveTable('turma', $city);
+        if ($turma === '' || ! IeducarColumnInspector::tableExists($db, $turma, $city)) {
+            return false;
+        }
+
+        $tt = IeducarSchema::resolveTable('turma_turno', $city);
+        if ($tt === '' || ! IeducarColumnInspector::tableExists($db, $tt, $city)) {
+            return false;
+        }
+
+        foreach (['ref_cod_turma_turno', 'turma_turno_id'] as $col) {
+            if (IeducarColumnInspector::columnExists($db, $turma, $col, $city)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * JOIN turma.FK ↔ id do catálogo de turno com cast compatível (PostgreSQL int/text vs MySQL).
+     */
+    private function joinTurmaFkToTurnoCatalogColumn(
+        Connection $db,
+        JoinClause $join,
+        string $turmaAlias,
+        string $turnoAlias,
+        string $turmaFkCol,
+        string $turnoIdCol,
+    ): void {
+        $g = $db->getQueryGrammar();
+        $lhs = $g->wrap($turmaAlias).'.'.$g->wrap($turmaFkCol);
+        $rhs = $g->wrap($turnoAlias).'.'.$g->wrap($turnoIdCol);
+        if ($db->getDriverName() === 'pgsql') {
+            $join->whereRaw('('.$lhs.')::text = ('.$rhs.')::text');
+        } else {
+            $join->whereRaw('CAST('.$lhs.' AS UNSIGNED) = CAST('.$rhs.' AS UNSIGNED)');
+        }
+    }
+
+    /**
      * Catálogo pmieducar.turma_turno (id, nome), alinhado ao i-Educar 2.x.
      *
      * @return list<array{id: string, name: string}>|null null = tabela inexistente; [] = sem linhas (usa fallback)
@@ -357,7 +404,16 @@ class FilterOptionsService
                 }
 
                 $rows = $db->table($tbl.' as tt')
-                    ->join($turma.' as t', 't.'.$tc['turno'], '=', 'tt.'.$idCol)
+                    ->join($turma.' as t', function ($join) use ($db, $tc, $idCol) {
+                        $this->joinTurmaFkToTurnoCatalogColumn(
+                            $db,
+                            $join,
+                            't',
+                            'tt',
+                            $tc['turno'],
+                            $idCol,
+                        );
+                    })
                     ->where('t.'.$tc['year'], $anoLetivo)
                     ->selectRaw('tt.'.$idCol.' as id, tt.'.$nameCol.' as name')
                     ->distinct()
@@ -394,9 +450,16 @@ class FilterOptionsService
      */
     private function tryLoadTurnoPairs(Connection $db, City $city, int $max, ?int $anoLetivo): array
     {
-        $turmaTurno = $this->tryLoadTurmaTurnoPairs($db, $city, $max, $anoLetivo);
-        if ($turmaTurno !== null && $turmaTurno !== []) {
-            return $turmaTurno;
+        // Só listar IDs de turma_turno se a turma realmente usa essa FK (evita misturar com cadastro.turno).
+        $usesTurmaTurnoFk = $this->turmaReferencesTurmaTurnoCatalog($db, $city);
+        if ($usesTurmaTurnoFk) {
+            $turmaTurno = $this->tryLoadTurmaTurnoPairs($db, $city, $max, $anoLetivo);
+            if ($turmaTurno !== null && $turmaTurno !== []) {
+                return $turmaTurno;
+            }
+
+            // Lista vazia ou só via turma: não usar SELECT * em cadastro.turno (outro espaço de IDs).
+            return $this->tryTurnoPairsFromTurmaJoin($db, $city, $max);
         }
 
         foreach (IeducarSchema::turnoTableCandidates($city) as $tbl) {
@@ -430,7 +493,7 @@ class FilterOptionsService
     }
 
     /**
-     * Último recurso: turnos distintos presentes na tabela turma com JOIN ao cadastro de turno.
+     * Último recurso: turnos distintos presentes na tabela turma com JOIN ao catálogo de turno.
      */
     private function tryTurnoPairsFromTurmaJoin(Connection $db, City $city, int $max): array
     {
@@ -445,43 +508,94 @@ class FilterOptionsService
                 return [];
             }
 
-            foreach (IeducarSchema::turnoTableCandidates($city) as $turnoTbl) {
-                if (! IeducarColumnInspector::tableExists($db, $turnoTbl, $city)) {
-                    continue;
-                }
-
-                $idCol = IeducarColumnInspector::firstExistingColumn($db, $turnoTbl, array_filter([
-                    (string) config('ieducar.columns.turno.id'),
-                    'cod_turno',
+            if ($this->turmaReferencesTurmaTurnoCatalog($db, $city)) {
+                $tt = IeducarSchema::resolveTable('turma_turno', $city);
+                $idCol = IeducarColumnInspector::firstExistingColumn($db, $tt, array_filter([
                     'id',
+                    'cod_turno',
+                    (string) config('ieducar.columns.turno.id'),
                 ]), $city);
-                $nameCol = IeducarColumnInspector::firstExistingColumn($db, $turnoTbl, array_filter([
-                    (string) config('ieducar.columns.turno.name'),
+                $nameCol = IeducarColumnInspector::firstExistingColumn($db, $tt, array_filter([
                     'nome',
                     'nm_turno',
-                    'descricao',
+                    'name',
+                    (string) config('ieducar.columns.turno.name'),
                 ]), $city);
-
-                if ($idCol === null || $nameCol === null) {
-                    continue;
+                if ($idCol !== null && $nameCol !== null) {
+                    $rows = $db->table($turma.' as tt')
+                        ->join($tt.' as tn', function ($join) use ($db, $tc, $idCol) {
+                            $this->joinTurmaFkToTurnoCatalogColumn(
+                                $db,
+                                $join,
+                                'tt',
+                                'tn',
+                                $tc['turno'],
+                                $idCol,
+                            );
+                        })
+                        ->selectRaw('tn.'.$idCol.' as id, tn.'.$nameCol.' as name')
+                        ->distinct()
+                        ->orderByRaw('tn.'.$nameCol)
+                        ->limit($max)
+                        ->get();
+                    if ($rows->isNotEmpty()) {
+                        return $rows->map(fn ($r) => [
+                            'id' => (string) $r->id,
+                            'name' => (string) $r->name,
+                        ])->all();
+                    }
                 }
+            }
 
-                $rows = $db->table($turma.' as tt')
-                    ->join($turnoTbl.' as tn', 'tt.'.$tc['turno'], '=', 'tn.'.$idCol)
-                    ->selectRaw('tn.'.$idCol.' as id, tn.'.$nameCol.' as name')
-                    ->distinct()
-                    ->orderByRaw('tn.'.$nameCol)
-                    ->limit($max)
-                    ->get();
+            // Catálogos alternativos (ex. cadastro.turno): só quando a turma não usa exclusivamente turma_turno.
+            if (! $this->turmaReferencesTurmaTurnoCatalog($db, $city)) {
+                foreach (IeducarSchema::turnoTableCandidates($city) as $turnoTbl) {
+                    if (! IeducarColumnInspector::tableExists($db, $turnoTbl, $city)) {
+                        continue;
+                    }
 
-                if ($rows->isEmpty()) {
-                    continue;
+                    $idCol = IeducarColumnInspector::firstExistingColumn($db, $turnoTbl, array_filter([
+                        (string) config('ieducar.columns.turno.id'),
+                        'cod_turno',
+                        'id',
+                    ]), $city);
+                    $nameCol = IeducarColumnInspector::firstExistingColumn($db, $turnoTbl, array_filter([
+                        (string) config('ieducar.columns.turno.name'),
+                        'nome',
+                        'nm_turno',
+                        'descricao',
+                    ]), $city);
+
+                    if ($idCol === null || $nameCol === null) {
+                        continue;
+                    }
+
+                    $rows = $db->table($turma.' as tt')
+                        ->join($turnoTbl.' as tn', function ($join) use ($db, $tc, $idCol) {
+                            $this->joinTurmaFkToTurnoCatalogColumn(
+                                $db,
+                                $join,
+                                'tt',
+                                'tn',
+                                $tc['turno'],
+                                $idCol,
+                            );
+                        })
+                        ->selectRaw('tn.'.$idCol.' as id, tn.'.$nameCol.' as name')
+                        ->distinct()
+                        ->orderByRaw('tn.'.$nameCol)
+                        ->limit($max)
+                        ->get();
+
+                    if ($rows->isEmpty()) {
+                        continue;
+                    }
+
+                    return $rows->map(fn ($r) => [
+                        'id' => (string) $r->id,
+                        'name' => (string) $r->name,
+                    ])->all();
                 }
-
-                return $rows->map(fn ($r) => [
-                    'id' => (string) $r->id,
-                    'name' => (string) $r->name,
-                ])->all();
             }
         } catch (\Throwable $e) {
             Log::debug('ieducar.turno.turma_join', ['message' => $e->getMessage()]);

@@ -146,13 +146,20 @@ document.addEventListener("alpine:init", () => {
 
     Alpine.data(
         "chartPanel",
-        (payload, exportFilename = "grafico", exportMeta = {}) => ({
+        (
+            payload,
+            exportFilename = "grafico",
+            exportMeta = {},
+            panelId = "",
+        ) => ({
             chart: null,
             _payload: null,
             _exportMeta: null,
             _exportFilename: "grafico",
+            _panelId: "",
             _cleanupMq: null,
             _cleanupIo: null,
+            _cleanupRo: null,
             _onViewport: null,
             init() {
                 if (!payload?.labels?.length || !payload?.datasets?.length) {
@@ -160,6 +167,10 @@ document.addEventListener("alpine:init", () => {
                 }
                 this._payload = payload;
                 this._exportFilename = exportFilename;
+                this._panelId =
+                    typeof panelId === "string" && panelId
+                        ? panelId
+                        : "";
                 this._exportMeta = {
                     documentTitle:
                         exportMeta.documentTitle || "Análise educacional",
@@ -435,8 +446,16 @@ document.addEventListener("alpine:init", () => {
                         this._cleanupMq = () =>
                             mq.removeEventListener("change", applyResponsive);
 
+                        const pulseChartSize = () => {
+                            if (!this.chart) {
+                                return;
+                            }
+                            this.chart.resize();
+                            this.chart.update("none");
+                        };
+
                         this._onViewport = () => {
-                            requestAnimationFrame(() => this.chart?.resize());
+                            requestAnimationFrame(() => pulseChartSize());
                         };
                         window.addEventListener("resize", this._onViewport);
                         window.addEventListener(
@@ -448,7 +467,7 @@ document.addEventListener("alpine:init", () => {
                             (entries) => {
                                 for (const en of entries) {
                                     if (en.isIntersecting && this.chart) {
-                                        this.chart.resize();
+                                        pulseChartSize();
                                     }
                                 }
                             },
@@ -457,9 +476,42 @@ document.addEventListener("alpine:init", () => {
                         io.observe(canvas);
                         this._cleanupIo = () => io.disconnect();
 
+                        const roRoot = this.$el;
+                        if (
+                            typeof ResizeObserver !== "undefined" &&
+                            roRoot instanceof Element
+                        ) {
+                            let roTimer = null;
+                            const ro = new ResizeObserver(() => {
+                                if (!this.chart) {
+                                    return;
+                                }
+                                const r = roRoot.getBoundingClientRect();
+                                if (r.width < 2 || r.height < 2) {
+                                    return;
+                                }
+                                if (roTimer) {
+                                    clearTimeout(roTimer);
+                                }
+                                roTimer = setTimeout(() => {
+                                    roTimer = null;
+                                    pulseChartSize();
+                                }, 16);
+                            });
+                            ro.observe(roRoot);
+                            this._cleanupRo = () => {
+                                if (roTimer) {
+                                    clearTimeout(roTimer);
+                                }
+                                ro.disconnect();
+                            };
+                        }
+
                         requestAnimationFrame(() => {
                             requestAnimationFrame(() => {
-                                this.chart?.resize();
+                                pulseChartSize();
+                                setTimeout(() => pulseChartSize(), 120);
+                                setTimeout(() => pulseChartSize(), 400);
                             });
                         });
                     } catch (e) {
@@ -470,6 +522,7 @@ document.addEventListener("alpine:init", () => {
             destroy() {
                 this._cleanupMq?.();
                 this._cleanupIo?.();
+                this._cleanupRo?.();
                 if (this._onViewport) {
                     window.removeEventListener("resize", this._onViewport);
                     window.removeEventListener(

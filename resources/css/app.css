@@ -13,6 +13,12 @@
     .analytics-tab-panel {
         @apply space-y-4 min-h-[min(28rem,75vh)] w-full max-w-full;
     }
+
+    /* Isola layout/stacking de cada cartão de gráfico (IDs no HTML discriminam instâncias). */
+    .chart-panel-host {
+        contain: layout paint;
+        isolation: isolate;
+    }
 }
 
 /* Landing: padrão de grelha suave (usado na welcome) */
