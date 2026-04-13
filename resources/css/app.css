@@ -1,0 +1,19 @@
+@import url('https://fonts.bunny.net/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[x-cloak] {
+    display: none !important;
+}
+
+/* Landing: padrão de grelha suave (usado na welcome) */
+@layer utilities {
+    .bg-grid-edu {
+        background-image:
+            linear-gradient(to right, rgb(255 255 255 / 0.04) 1px, transparent 1px),
+            linear-gradient(to bottom, rgb(255 255 255 / 0.04) 1px, transparent 1px);
+        background-size: 48px 48px;
+    }
+}
