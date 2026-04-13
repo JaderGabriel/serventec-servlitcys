@@ -119,6 +119,35 @@ final class MatriculaTurmaJoin
     }
 
     /**
+     * Igualdade na coluna da turma com valor do filtro (FK numérica ou texto).
+     * Use $turmaAlias vazio quando a query usa {@see Builder::table()} sem alias (só o nome da coluna).
+     */
+    public static function whereTurmaColumnEqualsFilterId(Builder $q, Connection $db, string $turmaAlias, string $column, ?string $value): void
+    {
+        if ($value === null || $column === '') {
+            return;
+        }
+
+        $trim = trim($value);
+        if ($trim === '') {
+            return;
+        }
+
+        $grammar = $db->getQueryGrammar();
+        $colSql = $turmaAlias !== ''
+            ? $grammar->wrap($turmaAlias).'.'.$grammar->wrap($column)
+            : $grammar->wrap($column);
+
+        if (is_numeric($trim)) {
+            $q->whereRaw($colSql.' = ?', [(int) $trim]);
+
+            return;
+        }
+
+        $q->whereRaw($colSql.' = ?', [$trim]);
+    }
+
+    /**
      * Filtros de dimensão na turma (ano letivo, escola, curso, turno).
      */
     public static function applyTurmaFiltersWhere(Builder $q, Connection $db, City $city, IeducarFilterState $filters, string $turmaAlias = 't_filter'): void
@@ -129,15 +158,9 @@ final class MatriculaTurmaJoin
         if ($yearVal !== null && $cols['year'] !== '') {
             $q->where($turmaAlias.'.'.$cols['year'], $yearVal);
         }
-        if ($filters->escola_id !== null && $cols['escola'] !== '') {
-            $q->where($turmaAlias.'.'.$cols['escola'], $filters->escola_id);
-        }
-        if ($filters->curso_id !== null && $cols['curso'] !== '') {
-            $q->where($turmaAlias.'.'.$cols['curso'], $filters->curso_id);
-        }
-        if ($filters->turno_id !== null && $cols['turno'] !== '') {
-            $q->where($turmaAlias.'.'.$cols['turno'], $filters->turno_id);
-        }
+        self::whereTurmaColumnEqualsFilterId($q, $db, $turmaAlias, $cols['escola'], $filters->escola_id);
+        self::whereTurmaColumnEqualsFilterId($q, $db, $turmaAlias, $cols['curso'], $filters->curso_id);
+        self::whereTurmaColumnEqualsFilterId($q, $db, $turmaAlias, $cols['turno'], $filters->turno_id);
     }
 
     /**

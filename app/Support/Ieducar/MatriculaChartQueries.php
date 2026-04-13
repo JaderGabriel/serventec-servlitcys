@@ -26,9 +26,9 @@ final class MatriculaChartQueries
 
             $yearVal = $filters->yearFilterValue();
             $needsTurma = $yearVal !== null
-                || $filters->escola_id
-                || $filters->curso_id
-                || $filters->turno_id;
+                || $filters->escola_id !== null
+                || $filters->curso_id !== null
+                || $filters->turno_id !== null;
 
             if (! $needsTurma) {
                 $q = $db->table($mat);
@@ -63,15 +63,9 @@ final class MatriculaChartQueries
             if ($yearVal !== null && $tc['year'] !== '') {
                 $q->where('t.'.$tc['year'], $yearVal);
             }
-            if ($filters->escola_id && $tc['escola'] !== '') {
-                $q->where('t.'.$tc['escola'], $filters->escola_id);
-            }
-            if ($filters->curso_id && $tc['curso'] !== '') {
-                $q->where('t.'.$tc['curso'], $filters->curso_id);
-            }
-            if ($filters->turno_id && $tc['turno'] !== '') {
-                $q->where('t.'.$tc['turno'], $filters->turno_id);
-            }
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['turno'], $filters->turno_id);
 
             return (int) $q->count();
         } catch (QueryException|\InvalidArgumentException) {
@@ -98,15 +92,9 @@ final class MatriculaChartQueries
             if ($yearVal !== null) {
                 $q->where($tc['year'], $yearVal);
             }
-            if ($filters->escola_id !== null && $tc['escola'] !== '') {
-                $q->where($tc['escola'], $filters->escola_id);
-            }
-            if ($filters->curso_id !== null && $tc['curso'] !== '') {
-                $q->where($tc['curso'], $filters->curso_id);
-            }
-            if ($filters->turno_id !== null && $tc['turno'] !== '') {
-                $q->where($tc['turno'], $filters->turno_id);
-            }
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, '', $tc['escola'], $filters->escola_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, '', $tc['curso'], $filters->curso_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, '', $tc['turno'], $filters->turno_id);
 
             $rows = $q->select($tc['year'])
                 ->whereNotNull($tc['year'])
@@ -221,15 +209,9 @@ final class MatriculaChartQueries
             if ($yearVal !== null && $tc['year'] !== '') {
                 $tq->where('t.'.$tc['year'], $yearVal);
             }
-            if ($filters->escola_id !== null && $tc['escola'] !== '') {
-                $tq->where('t.'.$tc['escola'], $filters->escola_id);
-            }
-            if ($filters->curso_id !== null && $tc['curso'] !== '') {
-                $tq->where('t.'.$tc['curso'], $filters->curso_id);
-            }
-            if ($filters->turno_id !== null && $tc['turno'] !== '') {
-                $tq->where('t.'.$tc['turno'], $filters->turno_id);
-            }
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($tq, $db, 't', $tc['escola'], $filters->escola_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($tq, $db, 't', $tc['curso'], $filters->curso_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($tq, $db, 't', $tc['turno'], $filters->turno_id);
 
             $caps = $tq->pluck('t.'.$maxCol, 't.'.$tId);
             $counts = self::matriculaCountByTurma($db, $city, $filters);
@@ -291,15 +273,9 @@ final class MatriculaChartQueries
             if ($yearVal !== null && $tc['year'] !== '') {
                 $q->where('t.'.$tc['year'], $yearVal);
             }
-            if ($filters->escola_id !== null && $tc['escola'] !== '') {
-                $q->where('t.'.$tc['escola'], $filters->escola_id);
-            }
-            if ($filters->curso_id !== null && $tc['curso'] !== '') {
-                $q->where('t.'.$tc['curso'], $filters->curso_id);
-            }
-            if ($filters->turno_id !== null && $turnoCol !== '') {
-                $q->where('t.'.$turnoCol, $filters->turno_id);
-            }
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $turnoCol, $filters->turno_id);
 
             $turmaRows = $q->select([
                 't.'.$tId.' as tid',
@@ -498,15 +474,9 @@ final class MatriculaChartQueries
             if ($yearVal !== null && $tc['year'] !== '') {
                 $q->where('t.'.$tc['year'], $yearVal);
             }
-            if ($filters->escola_id !== null && $tc['escola'] !== '') {
-                $q->where('t.'.$tc['escola'], $filters->escola_id);
-            }
-            if ($filters->curso_id !== null && $tc['curso'] !== '') {
-                $q->where('t.'.$tc['curso'], $filters->curso_id);
-            }
-            if ($filters->turno_id !== null && $turnoCol !== '') {
-                $q->where('t.'.$turnoCol, $filters->turno_id);
-            }
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $turnoCol, $filters->turno_id);
 
             $q->selectRaw('tn.'.$tnId.' as tid')
                 ->selectRaw('MAX(tn.'.$tnName.') as tname')
@@ -675,10 +645,10 @@ final class MatriculaChartQueries
                 'cod_sexo',
                 'cd_sexo',
                 'ind_sexo',
+                'ref_cod_sexo',
+                'tp_sexo',
+                'sexo_id',
             ]), $city);
-            if ($sexoCol === null) {
-                return null;
-            }
 
             $mat = IeducarSchema::resolveTable('matricula', $city);
             $aluno = IeducarSchema::resolveTable('aluno', $city);
@@ -706,12 +676,49 @@ final class MatriculaChartQueries
                 return null;
             }
 
+            $fisicaTable = null;
+            $fisicaSexoCol = null;
+            $fisicaLinkCol = null;
+            if ($sexoCol === null) {
+                foreach (self::fisicaTableCandidates($city) as $cand) {
+                    if (! IeducarColumnInspector::tableExists($db, $cand, $city)) {
+                        continue;
+                    }
+                    $fisicaSexoCol = IeducarColumnInspector::firstExistingColumn($db, $cand, [
+                        'sexo',
+                        'tipo_sexo',
+                        'genero',
+                        'idsexo',
+                    ], $city);
+                    $fisicaLinkCol = IeducarColumnInspector::firstExistingColumn($db, $cand, [
+                        'idpes',
+                        'ref_idpes',
+                    ], $city);
+                    if ($fisicaSexoCol !== null && $fisicaLinkCol !== null) {
+                        $fisicaTable = $cand;
+                        break;
+                    }
+                }
+            }
+
+            if ($sexoCol === null && ($fisicaTable === null || $fisicaSexoCol === null || $fisicaLinkCol === null)) {
+                return null;
+            }
+
             $q = $db->table($mat.' as m')
                 ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
-                ->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId)
-                ->selectRaw('p.'.$sexoCol.' as sx')
-                ->selectRaw('COUNT(*) as c')
-                ->groupBy('p.'.$sexoCol);
+                ->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId);
+
+            if ($fisicaTable !== null) {
+                $q->leftJoin($fisicaTable.' as pf', 'p.'.$pId, '=', 'pf.'.$fisicaLinkCol)
+                    ->selectRaw('pf.'.$fisicaSexoCol.' as sx')
+                    ->selectRaw('COUNT(*) as c')
+                    ->groupBy('pf.'.$fisicaSexoCol);
+            } else {
+                $q->selectRaw('p.'.$sexoCol.' as sx')
+                    ->selectRaw('COUNT(*) as c')
+                    ->groupBy('p.'.$sexoCol);
+            }
 
             MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
             MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
@@ -729,9 +736,23 @@ final class MatriculaChartQueries
             }
 
             return ChartPayload::doughnut(__('Matrículas por sexo (cadastro)'), $labels, $values);
-        } catch (QueryException) {
+        } catch (QueryException|\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Tabelas candidatas onde o sexo pode estar (iEducar: cadastro.fisica ligada a pessoa por idpes).
+     *
+     * @return list<string>
+     */
+    private static function fisicaTableCandidates(City $city): array
+    {
+        $cad = trim((string) config('ieducar.pgsql_schema_cadastro', 'cadastro')).'.fisica';
+        $sch = IeducarSchema::effectiveSchema($city);
+        $main = $sch !== '' ? $sch.'.fisica' : 'fisica';
+
+        return array_values(array_unique(array_filter([$cad, $main, 'cadastro.fisica'])));
     }
 
     private static function labelSexo(mixed $v): string
@@ -827,15 +848,9 @@ final class MatriculaChartQueries
             if ($yearVal !== null && $tc['year'] !== '') {
                 $q->where('t.'.$tc['year'], $yearVal);
             }
-            if ($filters->escola_id !== null && $tc['escola'] !== '') {
-                $q->where('t.'.$tc['escola'], $filters->escola_id);
-            }
-            if ($filters->curso_id !== null && $tc['curso'] !== '') {
-                $q->where('t.'.$tc['curso'], $filters->curso_id);
-            }
-            if ($filters->turno_id !== null && $tc['turno'] !== '') {
-                $q->where('t.'.$tc['turno'], $filters->turno_id);
-            }
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['turno'], $filters->turno_id);
 
             $selectCols = ['t.'.$tId.' as tid', 't.'.$maxCol.' as cap'];
             if ($por === 'escola') {
@@ -947,15 +962,9 @@ final class MatriculaChartQueries
                 if ($yearVal !== null && $tc['year'] !== '') {
                     $tq->where('t.'.$tc['year'], $yearVal);
                 }
-                if ($filters->escola_id !== null && $tc['escola'] !== '') {
-                    $tq->where('t.'.$tc['escola'], $filters->escola_id);
-                }
-                if ($filters->curso_id !== null && $tc['curso'] !== '') {
-                    $tq->where('t.'.$tc['curso'], $filters->curso_id);
-                }
-                if ($filters->turno_id !== null && $tc['turno'] !== '') {
-                    $tq->where('t.'.$tc['turno'], $filters->turno_id);
-                }
+                MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($tq, $db, 't', $tc['escola'], $filters->escola_id);
+                MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($tq, $db, 't', $tc['curso'], $filters->curso_id);
+                MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($tq, $db, 't', $tc['turno'], $filters->turno_id);
                 $caps = $tq->pluck($maxCol, $tId);
                 $counts = self::matriculaCountByTurma($db, $city, $filters);
                 $sumCap = 0;

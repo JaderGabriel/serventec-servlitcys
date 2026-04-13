@@ -56,9 +56,14 @@ return [
     | Schemas PostgreSQL nomeados (placeholders em SQL customizado)
     |--------------------------------------------------------------------------
     |
-    | Em IEDUCAR_SQL_* use {cadastro}, {relatorio}, {modules}, {public} ou {schema}/{schema_main}
+    | Em IEDUCAR_SQL_* use {cadastro}, {relatorio}, {modules}, {public}, {matricula_situacao},
+    | {matricula_turma}, {matricula}, {raca}, etc. (ver IeducarSqlPlaceholders), ou {schema}/{schema_main}
     | para o schema principal (pmieducar ou cities.ieducar_schema). Funções como
     | relatorio.get_nome_escola exigem o schema relatorio no search_path ou chamada qualificada.
+    |
+    | Situação da matrícula (Desempenho): IEDUCAR_TABLE_MATRICULA_SITUACAO, IEDUCAR_COL_MATRICULA_SITUACAO_PK,
+    | IEDUCAR_COL_MATRICULA_SITUACAO_CODIGO_INEP. Inclusão raça/cor: IEDUCAR_TABLE_RACA,
+    | IEDUCAR_SQL_INCLUSION_RACA, IEDUCAR_TABLE_RACA_FALLBACKS.
     |
     */
 
@@ -92,6 +97,8 @@ return [
         'raca' => env('IEDUCAR_TABLE_RACA', 'cadastro.raca'),
         /** Tabelas adicionais para raça/cor (PostgreSQL), separadas por vírgula. */
         'raca_fallbacks' => env('IEDUCAR_TABLE_RACA_FALLBACKS', ''),
+        /** Catálogo de situações (INEP); ligação matricula.ref_cod_matricula_situacao → cod_matricula_situacao. */
+        'matricula_situacao' => env('IEDUCAR_TABLE_MATRICULA_SITUACAO', 'matricula_situacao'),
     ],
 
     /*
@@ -108,6 +115,7 @@ return [
         'turno' => env('IEDUCAR_MYSQL_TABLE_TURNO'),
         'pessoa' => env('IEDUCAR_MYSQL_TABLE_PESSOA'),
         'raca' => env('IEDUCAR_MYSQL_TABLE_RACA'),
+        'matricula_situacao' => env('IEDUCAR_MYSQL_TABLE_MATRICULA_SITUACAO'),
     ],
 
     /*
@@ -170,6 +178,11 @@ return [
         ],
         'matricula_situacao' => [
             'aprovado' => env('IEDUCAR_COL_MATRICULA_APROVADO', 'aprovado'),
+        ],
+        /** Tabela matricula_situacao (catálogo): código INEP em «codigo». */
+        'matricula_situacao_catalog' => [
+            'id' => env('IEDUCAR_COL_MATRICULA_SITUACAO_PK', 'cod_matricula_situacao'),
+            'codigo' => env('IEDUCAR_COL_MATRICULA_SITUACAO_CODIGO_INEP', 'codigo'),
         ],
         'aluno' => [
             'id' => env('IEDUCAR_COL_ALUNO_ID', 'cod_aluno'),

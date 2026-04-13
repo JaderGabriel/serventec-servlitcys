@@ -106,7 +106,7 @@ class OverviewRepository
             return null;
         }
 
-        if ($filters->escola_id || $filters->curso_id || $filters->turno_id) {
+        if ($filters->escola_id !== null || $filters->curso_id !== null || $filters->turno_id !== null) {
             return __('Os totais acima aplicam também escola, tipo/segmento e turno quando existirem na turma.');
         }
 
@@ -119,8 +119,8 @@ class OverviewRepository
             $table = IeducarSchema::resolveTable('escola', $city);
             $id = (string) config('ieducar.columns.escola.id');
             $q = $db->table($table);
-            if ($filters->escola_id) {
-                $q->where($id, $filters->escola_id);
+            if ($filters->escola_id !== null) {
+                MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, '', $id, $filters->escola_id);
             }
 
             return (int) $q->count();
@@ -140,15 +140,9 @@ class OverviewRepository
             if ($yearVal !== null && $tc['year'] !== '') {
                 $q->where($tc['year'], $yearVal);
             }
-            if ($filters->escola_id && $tc['escola'] !== '') {
-                $q->where($tc['escola'], $filters->escola_id);
-            }
-            if ($filters->curso_id && $tc['curso'] !== '') {
-                $q->where($tc['curso'], $filters->curso_id);
-            }
-            if ($filters->turno_id && $tc['turno'] !== '') {
-                $q->where($tc['turno'], $filters->turno_id);
-            }
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, '', $tc['escola'], $filters->escola_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, '', $tc['curso'], $filters->curso_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, '', $tc['turno'], $filters->turno_id);
 
             return (int) $q->count();
         } catch (QueryException|\InvalidArgumentException) {

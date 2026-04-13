@@ -333,6 +333,67 @@ class FilterOptionsService
             }
         }
 
+        return $this->tryTurnoPairsFromTurmaJoin($db, $city, $max);
+    }
+
+    /**
+     * Último recurso: turnos distintos presentes na tabela turma com JOIN ao cadastro de turno.
+     */
+    private function tryTurnoPairsFromTurmaJoin(Connection $db, City $city, int $max): array
+    {
+        try {
+            $turma = IeducarSchema::resolveTable('turma', $city);
+            if (! IeducarColumnInspector::tableExists($db, $turma, $city)) {
+                return [];
+            }
+
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            if ($tc['turno'] === '') {
+                return [];
+            }
+
+            foreach (IeducarSchema::turnoTableCandidates($city) as $turnoTbl) {
+                if (! IeducarColumnInspector::tableExists($db, $turnoTbl, $city)) {
+                    continue;
+                }
+
+                $idCol = IeducarColumnInspector::firstExistingColumn($db, $turnoTbl, array_filter([
+                    (string) config('ieducar.columns.turno.id'),
+                    'cod_turno',
+                    'id',
+                ]), $city);
+                $nameCol = IeducarColumnInspector::firstExistingColumn($db, $turnoTbl, array_filter([
+                    (string) config('ieducar.columns.turno.name'),
+                    'nome',
+                    'nm_turno',
+                    'descricao',
+                ]), $city);
+
+                if ($idCol === null || $nameCol === null) {
+                    continue;
+                }
+
+                $rows = $db->table($turma.' as tt')
+                    ->join($turnoTbl.' as tn', 'tt.'.$tc['turno'], '=', 'tn.'.$idCol)
+                    ->selectRaw('tn.'.$idCol.' as id, tn.'.$nameCol.' as name')
+                    ->distinct()
+                    ->orderByRaw('tn.'.$nameCol)
+                    ->limit($max)
+                    ->get();
+
+                if ($rows->isEmpty()) {
+                    continue;
+                }
+
+                return $rows->map(fn ($r) => [
+                    'id' => (string) $r->id,
+                    'name' => (string) $r->name,
+                ])->all();
+            }
+        } catch (\Throwable $e) {
+            Log::debug('ieducar.turno.turma_join', ['message' => $e->getMessage()]);
+        }
+
         return [];
     }
 
@@ -421,7 +482,7 @@ class FilterOptionsService
     private function pairFromRow(stdClass $row): ?array
     {
         $id = $this->readRowString($row, ['id', 'codigo', 'cod', 'cod_escola', 'cod_curso', 'cod_serie', 'cod_nivel_ensino', 'cod_turno']);
-        $name = $this->readRowString($row, ['name', 'nome', 'label', 'titulo', 'nm_curso', 'nm_serie', 'nm_nivel']);
+        $name = $this->readRowString($row, ['name', 'nome', 'label', 'titulo', 'nm_turno', 'nm_curso', 'nm_serie', 'nm_nivel']);
         if ($id !== null && $name !== null) {
             return ['id' => $id, 'name' => $name];
         }

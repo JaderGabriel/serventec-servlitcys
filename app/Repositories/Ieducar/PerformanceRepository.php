@@ -6,11 +6,11 @@ use App\Models\City;
 use App\Services\CityDataConnection;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
-use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\IeducarSqlPlaceholders;
 use App\Support\Ieducar\MatriculaAtivoFilter;
 use App\Support\Ieducar\MatriculaChartQueries;
+use App\Support\Ieducar\MatriculaSituacaoResolver;
 use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
@@ -77,18 +77,18 @@ class PerformanceRepository
         try {
             return $this->cityData->run($city, function (Connection $db) use ($city, $filters) {
                 $mat = IeducarSchema::resolveTable('matricula', $city);
-                $col = (string) config('ieducar.columns.matricula_situacao.aprovado');
-                if ($col === '' || ! IeducarColumnInspector::columnExists($db, $mat, $col, $city)) {
+                $spec = MatriculaSituacaoResolver::resolveChaveAgrupamento($db, $city);
+                if ($spec === null) {
                     return [
                         'rows' => [],
-                        'message' => __('Não foi encontrada a coluna de situação na tabela de matrícula. Defina IEDUCAR_COL_MATRICULA_APROVADO (por defeito «aprovado») em config/ieducar.php.'),
+                        'message' => __('Não foi possível determinar a situação da matrícula: confirme colunas «aprovado» ou «ref_cod_matricula_situacao» em matricula e a tabela «matricula_situacao» (IEDUCAR_TABLE_MATRICULA_SITUACAO) com «codigo» INEP.'),
                         'error' => null,
                         'chart' => null,
                         'charts' => [],
                         'kpis' => [],
                         'kpi_meta' => [
                             'total_matriculas' => 0,
-                            'campo_situacao' => $col,
+                            'campo_situacao' => '',
                             'denominador_texto' => '',
                             'alerta_ano_encerrado' => null,
                         ],
@@ -97,13 +97,15 @@ class PerformanceRepository
                     ];
                 }
 
+                $campoSituacao = $spec['campo_situacao'];
                 $mAtivo = (string) config('ieducar.columns.matricula.ativo');
 
                 $q = $db->table($mat.' as m');
                 MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+                $spec['applyJoins']($q);
                 MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
-                $q->selectRaw('m.'.$col.' as chave, COUNT(*) as c')
-                    ->groupBy('m.'.$col);
+                $q->selectRaw($spec['chaveExpr'].' as chave, COUNT(*) as c')
+                    ->groupByRaw($spec['groupByExpr']);
 
                 try {
                     $rows = $q->orderByDesc('c')->get();
@@ -117,7 +119,7 @@ class PerformanceRepository
                         'kpis' => [],
                         'kpi_meta' => [
                             'total_matriculas' => 0,
-                            'campo_situacao' => $col,
+                            'campo_situacao' => $campoSituacao,
                             'denominador_texto' => '',
                             'alerta_ano_encerrado' => null,
                         ],
@@ -136,7 +138,7 @@ class PerformanceRepository
                         'kpis' => [],
                         'kpi_meta' => [
                             'total_matriculas' => 0,
-                            'campo_situacao' => $col,
+                            'campo_situacao' => $campoSituacao,
                             'denominador_texto' => '',
                             'alerta_ano_encerrado' => null,
                         ],
@@ -165,7 +167,7 @@ class PerformanceRepository
                 }
 
                 $total = array_sum($counts);
-                $ind = $this->buildIndicadoresRede($counts, $total, $filters, $col);
+                $ind = $this->buildIndicadoresRede($counts, $total, $filters, $campoSituacao);
 
                 $charts = [];
 
@@ -199,7 +201,7 @@ class PerformanceRepository
                 }
 
                 $chart = ChartPayload::bar(
-                    __('Matrículas por situação (:col)', ['col' => $col]),
+                    __('Matrículas por situação (:col)', ['col' => $campoSituacao]),
                     __('Matrículas'),
                     $labels,
                     $values
@@ -423,11 +425,27 @@ class PerformanceRepository
         if ($v === null || $v === '') {
             return '';
         }
-        if (is_numeric($v)) {
-            return (string) (int) $v;
+        if (is_bool($v)) {
+            return $v ? '1' : '0';
+        }
+        if (is_float($v)) {
+            return (string) (int) round($v);
+        }
+        if (is_int($v)) {
+            return (string) $v;
+        }
+        $s = trim((string) $v);
+        if ($s === 't' || strcasecmp($s, 'true') === 0) {
+            return '1';
+        }
+        if ($s === 'f' || strcasecmp($s, 'false') === 0) {
+            return '0';
+        }
+        if (is_numeric($s)) {
+            return (string) (int) $s;
         }
 
-        return (string) $v;
+        return $s;
     }
 
     /**

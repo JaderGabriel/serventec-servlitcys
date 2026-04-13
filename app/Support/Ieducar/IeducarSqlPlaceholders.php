@@ -18,6 +18,7 @@ final class IeducarSqlPlaceholders
     {
         return [
             '{matricula_turma}' => IeducarSchema::resolveTable('matricula_turma', $city),
+            '{matricula_situacao}' => IeducarSchema::resolveTable('matricula_situacao', $city),
             '{falta_aluno}' => IeducarSchema::resolveTable('falta_aluno', $city),
             '{ano_letivo}' => IeducarSchema::resolveTable('ano_letivo', $city),
             '{matricula}' => IeducarSchema::resolveTable('matricula', $city),

@@ -48,7 +48,7 @@
                 <select id="escola_id" name="escola_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     <option value="">{{ __('Todos os dados') }}</option>
                     @foreach ($escolas as $opt)
-                        <option value="{{ $opt['id'] }}" @selected(old('escola_id', $filters->escola_id) === $opt['id'])>{{ $opt['name'] }}</option>
+                        <option value="{{ $opt['id'] }}" @selected((string) old('escola_id', $filters->escola_id) === (string) $opt['id'])>{{ $opt['name'] }}</option>
                     @endforeach
                 </select>
             </div>
@@ -57,7 +57,7 @@
                 <select id="curso_id" name="curso_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     <option value="">{{ __('Todos os dados') }}</option>
                     @foreach ($cursos as $opt)
-                        <option value="{{ $opt['id'] }}" @selected(old('curso_id', $filters->curso_id) === $opt['id'])>{{ $opt['name'] }}</option>
+                        <option value="{{ $opt['id'] }}" @selected((string) old('curso_id', $filters->curso_id) === (string) $opt['id'])>{{ $opt['name'] }}</option>
                     @endforeach
                 </select>
             </div>
@@ -66,7 +66,7 @@
                 <select id="turno_id" name="turno_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     <option value="">{{ __('Todos os dados') }}</option>
                     @foreach ($turnos as $opt)
-                        <option value="{{ $opt['id'] }}" @selected(old('turno_id', $filters->turno_id) === $opt['id'])>{{ $opt['name'] }}</option>
+                        <option value="{{ $opt['id'] }}" @selected((string) old('turno_id', $filters->turno_id) === (string) $opt['id'])>{{ $opt['name'] }}</option>
                     @endforeach
                 </select>
             </div>

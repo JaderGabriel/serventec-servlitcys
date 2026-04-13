@@ -131,6 +131,8 @@ class InclusionRepository
                     'cod_raca',
                     'id_raca',
                     'raca_id',
+                    'cor_raca',
+                    'cor',
                 ]), $city);
             }
 
@@ -140,7 +142,33 @@ class InclusionRepository
                     'ref_cod_raca',
                     'cod_raca',
                     'id_raca',
+                    'raca_cor',
                 ]), $city);
+            }
+
+            $fisicaTable = null;
+            $fisicaRacaCol = null;
+            $fisicaLinkCol = null;
+            if ($pRaca === null && $aRaca === null && $pId !== null) {
+                foreach (self::fisicaTableCandidates($city) as $cand) {
+                    if (! IeducarColumnInspector::tableExists($db, $cand, $city)) {
+                        continue;
+                    }
+                    $fisicaRacaCol = IeducarColumnInspector::firstExistingColumn($db, $cand, [
+                        'ref_cod_raca',
+                        'cod_raca',
+                        'raca_cor',
+                        'id_raca',
+                    ], $city);
+                    $fisicaLinkCol = IeducarColumnInspector::firstExistingColumn($db, $cand, [
+                        'idpes',
+                        'ref_idpes',
+                    ], $city);
+                    if ($fisicaRacaCol !== null && $fisicaLinkCol !== null) {
+                        $fisicaTable = $cand;
+                        break;
+                    }
+                }
             }
 
             $q = $db->table($mat.' as m')
@@ -151,6 +179,10 @@ class InclusionRepository
                     ->leftJoin($racaT.' as r', 'p.'.$pRaca, '=', 'r.'.$rIdCol);
             } elseif ($aRaca !== null) {
                 $q->leftJoin($racaT.' as r', 'a.'.$aRaca, '=', 'r.'.$rIdCol);
+            } elseif ($fisicaTable !== null && $fisicaRacaCol !== null && $fisicaLinkCol !== null && $pId !== null) {
+                $q->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId)
+                    ->leftJoin($fisicaTable.' as pf', 'p.'.$pId, '=', 'pf.'.$fisicaLinkCol)
+                    ->leftJoin($racaT.' as r', 'pf.'.$fisicaRacaCol, '=', 'r.'.$rIdCol);
             } else {
                 return null;
             }
@@ -218,6 +250,17 @@ class InclusionRepository
         }
 
         return null;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function fisicaTableCandidates(City $city): array
+    {
+        $cad = trim((string) config('ieducar.pgsql_schema_cadastro', 'cadastro')).'.fisica';
+        $sch = IeducarSchema::effectiveSchema($city);
+
+        return array_values(array_unique(array_filter([$cad, $sch !== '' ? $sch.'.fisica' : '', 'cadastro.fisica'])));
     }
 
     /**

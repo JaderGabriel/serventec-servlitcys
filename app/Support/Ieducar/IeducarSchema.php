@@ -169,6 +169,7 @@ final class IeducarSchema
             'turno' => $short !== '' ? $short : 'turno',
             'pessoa' => $short !== '' ? $short : 'pessoa',
             'raca' => $short !== '' ? $short : 'raca',
+            'matricula_situacao' => $short !== '' ? $short : 'matricula_situacao',
             default => $short,
         };
     }
