@@ -1,4 +1,4 @@
-@props(['overviewData', 'yearFilterReady' => true])
+@props(['overviewData', 'yearFilterReady' => true, 'chartExportContext' => []])
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
@@ -46,7 +46,12 @@
     @if ($yearFilterReady && ! empty($overviewData['charts']))
         <div class="grid grid-cols-1 gap-6 mt-4 w-full max-w-none">
             @foreach ($overviewData['charts'] as $idx => $chart)
-                <x-dashboard.chart-panel :chart="$chart" :exportFilename="'visao-geral-'.$idx" :compact="false" />
+                <x-dashboard.chart-panel
+                    :chart="$chart"
+                    :exportFilename="'visao-geral-'.$idx"
+                    :exportMeta="$chartExportContext"
+                    :compact="false"
+                />
             @endforeach
         </div>
     @endif

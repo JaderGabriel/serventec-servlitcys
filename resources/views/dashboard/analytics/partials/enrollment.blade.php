@@ -1,8 +1,8 @@
-@props(['enrollmentData'])
+@props(['enrollmentData', 'chartExportContext' => []])
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Inclui distorção idade/série (rede) quando a base tiver data de nascimento e idade mínima/máxima na série; totais por nível de ensino, série e curso (Educacenso), escolas principais, turno, oferta e vagas. KPIs no topo: matrículas activas, turmas com alunos e ocupação média quando existir max_aluno na turma.') }}
+        {{ __('Inclui distorção idade/série (rede), em seguida matrículas por escola (principais + «outras» ou top 10), níveis/séries/cursos, turno, oferta e vagas. KPIs no topo: matrículas activas, turmas e ocupação média quando existir capacidade na turma.') }}
     </p>
 
     @if (! empty($enrollmentData['kpis']))
@@ -39,7 +39,11 @@
     @if ($enrollmentCharts !== [])
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
             @foreach ($enrollmentCharts as $idx => $chart)
-                <x-dashboard.chart-panel :chart="$chart" :exportFilename="'matriculas-'.$idx" />
+                <x-dashboard.chart-panel
+                    :chart="$chart"
+                    :exportFilename="'matriculas-'.$idx"
+                    :exportMeta="$chartExportContext"
+                />
             @endforeach
         </div>
     @endif

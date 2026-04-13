@@ -107,6 +107,10 @@ final class MatriculaTurmaJoin
             (string) config('ieducar.columns.turma.serie'),
             'ref_cod_serie',
             'cod_serie',
+            'ref_serie',
+            'serie_id',
+            'id_serie',
+            'cod_serie_turma',
         ]), $city) ?? '';
 
         return self::$turmaFilterColumnsCache[$key] = [

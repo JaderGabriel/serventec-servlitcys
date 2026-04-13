@@ -17,7 +17,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 
 /**
- * Inclusão e diversidade: medidores (NEE), equidade (sexo/série), raça/cor e SQL opcional.
+ * Inclusão & Diversidade: medidores (NEE), equidade (sexo + série/nível/curso), raça/cor e SQL opcional.
  */
 class InclusionRepository
 {
@@ -61,12 +61,15 @@ class InclusionRepository
                     );
                 }
 
-                try {
-                    $serieTop = MatriculaChartQueries::matriculasPorSerieTop($db, $city, $filters);
-                    if ($serieTop !== null) {
-                        $charts[] = $serieTop;
-                    }
-                } catch (QueryException) {
+                $equidade2 = MatriculaChartQueries::matriculasPorSerieTop($db, $city, $filters)
+                    ?? MatriculaChartQueries::matriculasPorNivelEnsinoEducacenso($db, $city, $filters)
+                    ?? MatriculaChartQueries::matriculasPorCursoTop($db, $city, $filters);
+                if ($equidade2 !== null) {
+                    $charts[] = $equidade2;
+                } else {
+                    $notes[] = __(
+                        'Gráfico complementar (série, nível de ensino ou curso) indisponível: verifique colunas da turma (série/curso), tabelas série/curso/nível e IEDUCAR_TABLE_* em config/ieducar.php.'
+                    );
                 }
 
                 $customRaca = config('ieducar.sql.inclusion_raca');

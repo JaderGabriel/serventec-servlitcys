@@ -1,4 +1,4 @@
-@props(['attendanceData'])
+@props(['attendanceData', 'chartExportContext' => []])
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
@@ -22,7 +22,11 @@
     @if ($attCharts !== [])
         <div class="grid grid-cols-1 gap-6">
             @foreach ($attCharts as $idx => $chart)
-                <x-dashboard.chart-panel :chart="$chart" :exportFilename="'frequencia-'.$idx" />
+                <x-dashboard.chart-panel
+                    :chart="$chart"
+                    :exportFilename="'frequencia-'.$idx"
+                    :exportMeta="$chartExportContext"
+                />
             @endforeach
         </div>
     @elseif (empty($attendanceData['error']) && empty($attendanceData['message']))

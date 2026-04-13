@@ -3,6 +3,11 @@ import './bootstrap';
 import Alpine from 'alpinejs';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import {
+    buildCompositeDataUrl,
+    downloadPdfFromDataUrl,
+    triggerPngDownload,
+} from './chartExportHelpers.js';
 
 Chart.register(ChartDataLabels);
 
@@ -77,12 +82,25 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
-    Alpine.data('chartPanel', (payload, exportFilename = 'grafico') => ({
+    Alpine.data('chartPanel', (payload, exportFilename = 'grafico', exportMeta = {}) => ({
         chart: null,
+        _payload: null,
+        _exportMeta: null,
+        _exportFilename: 'grafico',
+        _cleanupMq: null,
         init() {
             if (!payload?.labels?.length || !payload?.datasets?.length) {
                 return;
             }
+            this._payload = payload;
+            this._exportFilename = exportFilename;
+            this._exportMeta = {
+                documentTitle: exportMeta.documentTitle || 'Análise educacional',
+                cityLine: exportMeta.cityLine || '',
+                filterLines: Array.isArray(exportMeta.filterLines) ? exportMeta.filterLines : [],
+                footerLine: exportMeta.footerLine || '',
+                generatedAt: exportMeta.generatedAt || '',
+            };
             this.$nextTick(() => {
                 const canvas = this.$refs.canvas;
                 if (!canvas) {
@@ -94,7 +112,11 @@ document.addEventListener('alpine:init', () => {
                     ? {}
                     : {
                           x: {
-                              ticks: { color: chartTextColor() },
+                              ticks: {
+                                  color: chartTextColor(),
+                                  maxRotation: 45,
+                                  autoSkip: true,
+                              },
                               grid: { color: chartGridColor() },
                           },
                           y: {
@@ -234,20 +256,80 @@ document.addEventListener('alpine:init', () => {
                         scales: extra.scales !== undefined ? extra.scales : scales,
                     },
                 });
+
+                const mq = window.matchMedia('(max-width: 639px)');
+                const applyResponsive = () => {
+                    if (!this.chart) {
+                        return;
+                    }
+                    const isSmall = mq.matches;
+                    const radial = ['doughnut', 'pie', 'polarArea'].includes(payload.type);
+                    const pos = isSmall ? 'bottom' : radial ? 'right' : 'top';
+                    this.chart.options.plugins.legend.position = pos;
+                    if (this.chart.options.plugins.legend.labels) {
+                        Object.assign(this.chart.options.plugins.legend.labels, {
+                            boxWidth: isSmall ? 10 : 12,
+                            padding: isSmall ? 10 : 14,
+                            font: { size: isSmall ? 10 : 12, family: 'system-ui, sans-serif' },
+                        });
+                    }
+                    if (this.chart.options.scales?.x?.ticks) {
+                        Object.assign(this.chart.options.scales.x.ticks, {
+                            maxRotation: isSmall ? 60 : 45,
+                            minRotation: isSmall ? 40 : 0,
+                            autoSkip: true,
+                            font: { size: isSmall ? 9 : 11 },
+                        });
+                    }
+                    if (this.chart.options.scales?.y?.ticks) {
+                        this.chart.options.scales.y.ticks.font = { size: isSmall ? 9 : 11 };
+                    }
+                    if (isSmall && radial) {
+                        this.chart.options.layout = {
+                            ...(this.chart.options.layout || {}),
+                            padding: { ...(this.chart.options.layout?.padding || {}), bottom: 12 },
+                        };
+                    }
+                    this.chart.update('none');
+                };
+                applyResponsive();
+                mq.addEventListener('change', applyResponsive);
+                this._cleanupMq = () => mq.removeEventListener('change', applyResponsive);
             });
         },
         destroy() {
+            this._cleanupMq?.();
             this.chart?.destroy();
         },
-        exportPng() {
+        async exportPng() {
             if (!this.chart) {
                 return;
             }
-            const a = document.createElement('a');
-            const base = typeof exportFilename === 'string' && exportFilename ? exportFilename : 'grafico';
-            a.download = `${base.replace(/[^a-zA-Z0-9-_]/g, '_')}.png`;
-            a.href = this.chart.toBase64Image('image/png', 1);
-            a.click();
+            try {
+                const dataUrl = await buildCompositeDataUrl(
+                    this.chart,
+                    this._exportMeta,
+                    this._payload?.title || '',
+                );
+                triggerPngDownload(dataUrl, this._exportFilename);
+            } catch (e) {
+                console.error(e);
+            }
+        },
+        async exportPdf() {
+            if (!this.chart) {
+                return;
+            }
+            try {
+                const dataUrl = await buildCompositeDataUrl(
+                    this.chart,
+                    this._exportMeta,
+                    this._payload?.title || '',
+                );
+                await downloadPdfFromDataUrl(dataUrl, this._exportFilename);
+            } catch (e) {
+                console.error(e);
+            }
         },
     }));
 });

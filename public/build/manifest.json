@@ -1,6 +1,62 @@
 {
+  "_chunk-7ZXdHUL4.js": {
+    "file": "assets/chunk-7ZXdHUL4.js",
+    "name": "chunk"
+  },
+  "_preload-helper-DeY0NW3A.js": {
+    "file": "assets/preload-helper-DeY0NW3A.js",
+    "name": "preload-helper"
+  },
+  "_typeof-4GwhTj0O.js": {
+    "file": "assets/typeof-4GwhTj0O.js",
+    "name": "typeof"
+  },
+  "node_modules/canvg/lib/index.es.js": {
+    "file": "assets/index.es-qKF0dWov.js",
+    "name": "index.es",
+    "src": "node_modules/canvg/lib/index.es.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-7ZXdHUL4.js",
+      "_typeof-4GwhTj0O.js"
+    ]
+  },
+  "node_modules/dompurify/dist/purify.js": {
+    "file": "assets/purify-BsQv14Cw.js",
+    "name": "purify",
+    "src": "node_modules/dompurify/dist/purify.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-7ZXdHUL4.js"
+    ]
+  },
+  "node_modules/html2canvas/dist/html2canvas.js": {
+    "file": "assets/html2canvas-BAfZNSwU.js",
+    "name": "html2canvas",
+    "src": "node_modules/html2canvas/dist/html2canvas.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-7ZXdHUL4.js"
+    ]
+  },
+  "node_modules/jspdf/dist/jspdf.es.min.js": {
+    "file": "assets/jspdf.es.min-D9g3PNU3.js",
+    "name": "jspdf.es.min",
+    "src": "node_modules/jspdf/dist/jspdf.es.min.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-7ZXdHUL4.js",
+      "_preload-helper-DeY0NW3A.js",
+      "_typeof-4GwhTj0O.js"
+    ],
+    "dynamicImports": [
+      "node_modules/html2canvas/dist/html2canvas.js",
+      "node_modules/dompurify/dist/purify.js",
+      "node_modules/canvg/lib/index.es.js"
+    ]
+  },
   "resources/css/app.css": {
-    "file": "assets/app-CjIihx-v.css",
+    "file": "assets/app-BjFGnO0u.css",
     "name": "app",
     "names": [
       "app.css"
@@ -9,9 +65,16 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-B3M8woxr.js",
+    "file": "assets/app-CM344acb.js",
     "name": "app",
     "src": "resources/js/app.js",
-    "isEntry": true
+    "isEntry": true,
+    "imports": [
+      "_chunk-7ZXdHUL4.js",
+      "_preload-helper-DeY0NW3A.js"
+    ],
+    "dynamicImports": [
+      "node_modules/jspdf/dist/jspdf.es.min.js"
+    ]
   }
 }

@@ -13,7 +13,7 @@
             <div class="rounded-lg border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/80 dark:bg-indigo-950/30 px-4 py-3 text-sm text-indigo-900 dark:text-indigo-100">
                 <p class="font-medium">{{ __('O que este painel pesquisa') }}</p>
                 <p class="mt-1 text-indigo-800/90 dark:text-indigo-200/90 leading-relaxed">
-                    {{ __('Os dados vêm da base do iEducar do município selecionado (MySQL/MariaDB ou PostgreSQL no cadastro da cidade). Os filtros restringem ano letivo, escola, tipo/segmento (tabela curso), turno (cadastro.turno no PostgreSQL) e tabelas em config/ieducar.php. Cada aba tem indicadores e gráficos exportáveis (PNG).') }}
+                    {{ __('Os dados vêm da base do iEducar do município selecionado (MySQL/MariaDB ou PostgreSQL no cadastro da cidade). Os filtros restringem ano letivo, escola, tipo/segmento (tabela curso), turno (cadastro.turno no PostgreSQL) e tabelas em config/ieducar.php. Cada gráfico pode ser exportado em PNG ou PDF (fundo branco, legenda e cabeçalho com cidade e filtros).') }}
                 </p>
             </div>
 
@@ -81,32 +81,48 @@
                                 @include('dashboard.analytics.partials.overview', [
                                     'overviewData' => $overviewData,
                                     'yearFilterReady' => $yearFilterReady,
+                                    'chartExportContext' => $chartExportContext,
                                 ])
                             </div>
                         </template>
                         <template x-if="tab === 'enrollment'">
                             <div>
-                                @include('dashboard.analytics.partials.enrollment', ['enrollmentData' => $enrollmentData])
+                                @include('dashboard.analytics.partials.enrollment', [
+                                    'enrollmentData' => $enrollmentData,
+                                    'chartExportContext' => $chartExportContext,
+                                ])
                             </div>
                         </template>
                         <template x-if="tab === 'network'">
                             <div>
-                                @include('dashboard.analytics.partials.network', ['networkData' => $networkData])
+                                @include('dashboard.analytics.partials.network', [
+                                    'networkData' => $networkData,
+                                    'chartExportContext' => $chartExportContext,
+                                ])
                             </div>
                         </template>
                         <template x-if="tab === 'inclusion'">
                             <div>
-                                @include('dashboard.analytics.partials.inclusion', ['inclusionData' => $inclusionData])
+                                @include('dashboard.analytics.partials.inclusion', [
+                                    'inclusionData' => $inclusionData,
+                                    'chartExportContext' => $chartExportContext,
+                                ])
                             </div>
                         </template>
                         <template x-if="tab === 'performance'">
                             <div>
-                                @include('dashboard.analytics.partials.performance', ['performanceData' => $performanceData])
+                                @include('dashboard.analytics.partials.performance', [
+                                    'performanceData' => $performanceData,
+                                    'chartExportContext' => $chartExportContext,
+                                ])
                             </div>
                         </template>
                         <template x-if="tab === 'attendance'">
                             <div>
-                                @include('dashboard.analytics.partials.attendance', ['attendanceData' => $attendanceData])
+                                @include('dashboard.analytics.partials.attendance', [
+                                    'attendanceData' => $attendanceData,
+                                    'chartExportContext' => $chartExportContext,
+                                ])
                             </div>
                         </template>
                     </div>

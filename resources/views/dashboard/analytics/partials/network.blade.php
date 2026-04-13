@@ -1,4 +1,4 @@
-@props(['networkData'])
+@props(['networkData', 'chartExportContext' => []])
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
@@ -57,7 +57,11 @@
     @if (! empty($networkData['charts']))
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
             @foreach ($networkData['charts'] as $idx => $chart)
-                <x-dashboard.chart-panel :chart="$chart" :exportFilename="'rede-oferta-'.$idx" />
+                <x-dashboard.chart-panel
+                    :chart="$chart"
+                    :exportFilename="'rede-oferta-'.$idx"
+                    :exportMeta="$chartExportContext"
+                />
             @endforeach
         </div>
     @elseif (empty($networkData['error']))

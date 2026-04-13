@@ -1,4 +1,4 @@
-@props(['performanceData'])
+@props(['performanceData', 'chartExportContext' => []])
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
@@ -31,24 +31,30 @@
     @if (! empty($performanceData['kpis']))
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             @foreach ($performanceData['kpis'] as $kpi)
-                <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-3 flex flex-col gap-1">
-                    <p class="text-xs font-medium text-gray-700 dark:text-gray-300 leading-tight">{{ $kpi['label'] ?? '—' }}</p>
-                    @if (! empty($kpi['formula']))
-                        <p class="text-[11px] font-mono text-gray-500 dark:text-gray-400 leading-snug">{{ $kpi['formula'] }}</p>
-                    @endif
-                    @if (! empty($kpi['description']))
-                        <p class="text-[11px] text-gray-600 dark:text-gray-400 leading-snug">{{ $kpi['description'] }}</p>
-                    @endif
-                    <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">
-                        @if (($kpi['percent'] ?? null) !== null)
-                            {{ number_format((float) $kpi['percent'], 1, ',', '.') }}%
-                        @else
-                            —
+                <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-3 flex flex-col gap-2 min-h-[12rem]">
+                    <p class="text-sm font-bold text-gray-900 dark:text-gray-100 leading-snug">
+                        {{ $kpi['chart_label'] ?? $kpi['label'] ?? '—' }}
+                    </p>
+                    <div class="text-[11px] text-gray-600 dark:text-gray-400 space-y-2 text-justify flex-1">
+                        @if (! empty($kpi['formula']))
+                            <p class="font-mono text-gray-700 dark:text-gray-300 leading-relaxed">{{ $kpi['formula'] }}</p>
                         @endif
-                    </p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        {{ isset($kpi['quantidade']) ? number_format((int) $kpi['quantidade']) : '—' }} {{ __('matrículas') }}
-                    </p>
+                        @if (! empty($kpi['description']))
+                            <p class="leading-relaxed">{{ $kpi['description'] }}</p>
+                        @endif
+                    </div>
+                    <div class="mt-auto pt-3 border-t border-gray-200 dark:border-gray-600 space-y-1">
+                        <p class="text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                            @if (($kpi['percent'] ?? null) !== null)
+                                {{ number_format((float) $kpi['percent'], 1, ',', '.') }}%
+                            @else
+                                —
+                            @endif
+                        </p>
+                        <p class="text-xs text-gray-600 dark:text-gray-300 tabular-nums">
+                            {{ isset($kpi['quantidade']) ? number_format((int) $kpi['quantidade']) : '—' }} {{ __('matrículas') }}
+                        </p>
+                    </div>
                 </div>
             @endforeach
         </div>
@@ -73,7 +79,11 @@
         <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('No gráfico de barras horizontais, a taxa combinada «abandono + remanejamento» não é mostrada (é a soma das duas taxas já representadas).') }}</p>
         <div class="grid grid-cols-1 gap-6">
             @foreach ($perfCharts as $idx => $chart)
-                <x-dashboard.chart-panel :chart="$chart" :exportFilename="'desempenho-'.$idx" />
+                <x-dashboard.chart-panel
+                    :chart="$chart"
+                    :exportFilename="'desempenho-'.$idx"
+                    :exportMeta="$chartExportContext"
+                />
             @endforeach
         </div>
     @elseif (empty($performanceData['error']) && empty($performanceData['message']))

@@ -10,6 +10,7 @@ use App\Repositories\Ieducar\NetworkRepository;
 use App\Repositories\Ieducar\OverviewRepository;
 use App\Repositories\Ieducar\PerformanceRepository;
 use App\Services\Ieducar\FilterOptionsService;
+use App\Support\Dashboard\ChartExportMeta;
 use App\Support\Dashboard\IeducarFilterState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -102,6 +103,8 @@ class AnalyticsDashboardController extends Controller
             ? $networkRepository->snapshot($city, $filters)
             : ['charts' => [], 'notes' => [], 'error' => null];
 
+        $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
+
         return view('dashboard.analytics', [
             'cities' => $cities,
             'selectedCity' => $city,
@@ -115,11 +118,12 @@ class AnalyticsDashboardController extends Controller
             'attendanceData' => $attendanceData,
             'inclusionData' => $inclusionData,
             'networkData' => $networkData,
+            'chartExportContext' => $chartExportContext,
             'tabs' => [
                 'overview' => __('Visão geral'),
                 'enrollment' => __('Matrículas'),
                 'network' => __('Rede e oferta'),
-                'inclusion' => __('Inclusão e diversidade'),
+                'inclusion' => __('Inclusão & Diversidade'),
                 'performance' => __('Desempenho'),
                 'attendance' => __('Frequência'),
             ],

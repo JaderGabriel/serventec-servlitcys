@@ -37,12 +37,21 @@ class EnrollmentRepository
                     $kpis = MatriculaChartQueries::enrollmentResumoKpis($db, $city, $filters);
 
                     $charts = [];
+                    $dist = MatriculaChartQueries::distorcaoIdadeSerieRedeChart($db, $city, $filters);
+                    if ($dist !== null) {
+                        $charts[] = $dist;
+                    }
+
+                    $porEscola = MatriculaChartQueries::matriculasPorEscolaComOutros($db, $city, $filters, 14)
+                        ?? MatriculaChartQueries::matriculasPorEscolaTop($db, $city, $filters);
+                    if ($porEscola !== null) {
+                        $charts[] = $porEscola;
+                    }
+
                     foreach ([
-                        fn () => MatriculaChartQueries::distorcaoIdadeSerieRedeChart($db, $city, $filters),
                         fn () => MatriculaChartQueries::matriculasPorNivelEnsinoEducacenso($db, $city, $filters),
                         fn () => MatriculaChartQueries::matriculasPorSerieEducacensoCompleto($db, $city, $filters),
                         fn () => MatriculaChartQueries::matriculasPorCursoEducacensoCompleto($db, $city, $filters),
-                        fn () => MatriculaChartQueries::matriculasPorEscolaComOutros($db, $city, $filters, 12),
                         fn () => MatriculaChartQueries::matriculasPorTurno($db, $city, $filters),
                         fn () => MatriculaChartQueries::turmasPorTurnoDistribuicao($db, $city, $filters),
                         fn () => MatriculaChartQueries::vagasAbertasPorCurso($db, $city, $filters),
