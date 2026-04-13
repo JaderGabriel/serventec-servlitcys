@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\City;
 use App\Repositories\Ieducar\AttendanceRepository;
 use App\Repositories\Ieducar\EnrollmentRepository;
+use App\Repositories\Ieducar\FundebRepository;
 use App\Repositories\Ieducar\InclusionRepository;
 use App\Repositories\Ieducar\NetworkRepository;
 use App\Repositories\Ieducar\OverviewRepository;
@@ -30,6 +31,7 @@ class AnalyticsDashboardController extends Controller
         AttendanceRepository $attendanceRepository,
         InclusionRepository $inclusionRepository,
         NetworkRepository $networkRepository,
+        FundebRepository $fundebRepository,
     ): View {
         $cities = City::query()->forAnalytics()->orderBy('name')->get();
 
@@ -103,6 +105,25 @@ class AnalyticsDashboardController extends Controller
             ? $networkRepository->snapshot($city, $filters)
             : ['charts' => [], 'notes' => [], 'error' => null];
 
+        $fundebData = $yearFilterReady && $city !== null
+            ? $fundebRepository->buildReport(
+                $city,
+                $filters,
+                $overviewData,
+                $enrollmentData,
+                $performanceData,
+                $attendanceData,
+                $inclusionData,
+                $networkData,
+            )
+            : [
+                'year_label' => '',
+                'city_name' => '',
+                'intro' => '',
+                'footnote' => '',
+                'modules' => [],
+            ];
+
         $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
 
         return view('dashboard.analytics', [
@@ -118,6 +139,7 @@ class AnalyticsDashboardController extends Controller
             'attendanceData' => $attendanceData,
             'inclusionData' => $inclusionData,
             'networkData' => $networkData,
+            'fundebData' => $fundebData,
             'chartExportContext' => $chartExportContext,
             'tabs' => [
                 'overview' => __('Visão geral'),
@@ -126,6 +148,7 @@ class AnalyticsDashboardController extends Controller
                 'inclusion' => __('Inclusão & Diversidade'),
                 'performance' => __('Desempenho'),
                 'attendance' => __('Frequência'),
+                'fundeb' => __('FUNDEB'),
             ],
         ]);
     }
