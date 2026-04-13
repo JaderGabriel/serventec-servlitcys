@@ -235,9 +235,13 @@ class FilterOptionsService
                 if ($sqlKey !== null) {
                     $custom = config('ieducar.sql.'.$sqlKey);
                     if (is_string($custom) && trim($custom) !== '') {
-                        $sql = IeducarSqlPlaceholders::interpolate(trim($custom), $city);
+                        try {
+                            $sql = IeducarSqlPlaceholders::interpolate(trim($custom), $city);
 
-                        return $this->pairsFromRawSql($db, $sql, $max);
+                            return $this->pairsFromRawSql($db, $sql, $max);
+                        } catch (\Throwable $e) {
+                            Log::debug("ieducar.{$logical}.custom_sql", ['message' => $e->getMessage()]);
+                        }
                     }
                 }
 
@@ -249,12 +253,8 @@ class FilterOptionsService
                     }
                 }
 
-                if ($logical === 'turno' && $db->getDriverName() === 'pgsql' && config('ieducar.pgsql_use_raw_turno_sql', true)) {
-                    try {
-                        return $this->pairsFromRawSql($db, $this->buildPgsqlTurnoRawSql($db, $city), $max);
-                    } catch (\Throwable $e) {
-                        Log::debug('ieducar.turno.raw_fallback', ['message' => $e->getMessage()]);
-                    }
+                if ($logical === 'turno') {
+                    return $this->tryLoadTurnoPairs($db, $city, $max);
                 }
 
                 return $this->pairsFromTable($db, $logical, $max, $city);
@@ -298,17 +298,51 @@ class FilterOptionsService
     }
 
     /**
-     * SELECT explícito em cadastro.turno (identificadores resolvidos na base).
+     * @return list<array{id: string, name: string}>
      */
-    private function buildPgsqlTurnoRawSql(Connection $db, City $city): string
+    private function tryLoadTurnoPairs(Connection $db, City $city, int $max): array
     {
-        $t = IeducarSchema::resolveTable('turno', $city);
-        $id = IeducarColumnInspector::firstExistingColumn($db, $t, array_filter([
+        foreach (IeducarSchema::turnoTableCandidates($city) as $tbl) {
+            if (! IeducarColumnInspector::tableExists($db, $tbl, $city)) {
+                continue;
+            }
+
+            if ($db->getDriverName() === 'pgsql' && config('ieducar.pgsql_use_raw_turno_sql', true)) {
+                try {
+                    $sql = $this->buildPgsqlTurnoRawSqlForTable($db, $city, $tbl);
+                    $pairs = $this->pairsFromRawSql($db, $sql, $max);
+                    if ($pairs !== []) {
+                        return $pairs;
+                    }
+                } catch (\Throwable $e) {
+                    Log::debug('ieducar.turno.raw', ['table' => $tbl, 'message' => $e->getMessage()]);
+                }
+            }
+
+            try {
+                $pairs = $this->pairsFromTurnoTable($db, $tbl, $max, $city);
+                if ($pairs !== []) {
+                    return $pairs;
+                }
+            } catch (\Throwable $e) {
+                Log::debug('ieducar.turno.qb', ['table' => $tbl, 'message' => $e->getMessage()]);
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * SELECT explícito na tabela de turnos indicada (PostgreSQL).
+     */
+    private function buildPgsqlTurnoRawSqlForTable(Connection $db, City $city, string $qualifiedTable): string
+    {
+        $id = IeducarColumnInspector::firstExistingColumn($db, $qualifiedTable, array_filter([
             (string) config('ieducar.columns.turno.id'),
             'cod_turno',
             'id',
         ]), $city);
-        $name = IeducarColumnInspector::firstExistingColumn($db, $t, array_filter([
+        $name = IeducarColumnInspector::firstExistingColumn($db, $qualifiedTable, array_filter([
             (string) config('ieducar.columns.turno.name'),
             'nome',
             'nm_turno',
@@ -316,15 +350,48 @@ class FilterOptionsService
         ]), $city);
 
         if ($id === null || $name === null) {
-            throw new \RuntimeException('Colunas id/nome não encontradas em cadastro.turno.');
+            throw new \RuntimeException('Colunas id/nome não encontradas na tabela de turno.');
         }
 
-        $from = $db->getQueryGrammar()->wrapTable($t);
+        $from = $db->getQueryGrammar()->wrapTable($qualifiedTable);
         $tw = $db->getQueryGrammar()->wrap('t');
         $idw = $db->getQueryGrammar()->wrap($id);
         $nw = $db->getQueryGrammar()->wrap($name);
 
         return 'SELECT '.$tw.'.'.$idw.'::text AS id, '.$tw.'.'.$nw.' AS nome FROM '.$from.' AS '.$tw.' ORDER BY '.$tw.'.'.$nw;
+    }
+
+    /**
+     * @return list<array{id: string, name: string}>
+     */
+    private function pairsFromTurnoTable(Connection $db, string $qualifiedTable, int $max, City $city): array
+    {
+        $idCol = IeducarColumnInspector::firstExistingColumn($db, $qualifiedTable, array_filter([
+            (string) config('ieducar.columns.turno.id'),
+            'cod_turno',
+            'id',
+        ]), $city);
+        $nameCol = IeducarColumnInspector::firstExistingColumn($db, $qualifiedTable, array_filter([
+            (string) config('ieducar.columns.turno.name'),
+            'nome',
+            'nm_turno',
+            'descricao',
+        ]), $city);
+
+        if ($idCol === null || $nameCol === null) {
+            return [];
+        }
+
+        return $db->table($qualifiedTable)
+            ->select([$idCol.' as id', $nameCol.' as name'])
+            ->orderBy($nameCol)
+            ->limit($max)
+            ->get()
+            ->map(fn ($r) => [
+                'id' => (string) $r->id,
+                'name' => (string) $r->name,
+            ])
+            ->all();
     }
 
     /**
@@ -384,26 +451,6 @@ class FilterOptionsService
         if ($logical === 'escola' && $nameCol === 'nome' && ! IeducarColumnInspector::columnExists($db, $table, 'nome', $city)
             && IeducarColumnInspector::columnExists($db, $table, 'fantasia', $city)) {
             $nameCol = 'fantasia';
-        }
-
-        if ($logical === 'turno') {
-            $idResolved = IeducarColumnInspector::firstExistingColumn($db, $table, array_filter([
-                $idCol,
-                'cod_turno',
-                'id',
-            ]), $city);
-            $nameResolved = IeducarColumnInspector::firstExistingColumn($db, $table, array_filter([
-                $nameCol,
-                'nome',
-                'nm_turno',
-                'descricao',
-            ]), $city);
-            if ($idResolved !== null) {
-                $idCol = $idResolved;
-            }
-            if ($nameResolved !== null) {
-                $nameCol = $nameResolved;
-            }
         }
 
         $q = $db->table($table)->select([$idCol.' as id', $nameCol.' as name'])->orderBy($nameCol);

@@ -77,6 +77,47 @@ final class IeducarSchema
     }
 
     /**
+     * Tabelas candidatas para turnos (PostgreSQL: cadastro, schema da cidade, public, extras no .env).
+     *
+     * @return list<string>
+     */
+    public static function turnoTableCandidates(?City $city): array
+    {
+        $primary = self::resolveTable('turno', $city);
+        $out = [$primary];
+
+        if ($city !== null && $city->effectiveIeducarDriver() === City::DRIVER_MYSQL) {
+            return array_values(array_unique(array_filter($out)));
+        }
+
+        $extra = trim((string) config('ieducar.tables.turno_fallbacks', ''));
+        if ($extra !== '') {
+            foreach (preg_split('/\s*,\s*/', $extra) as $t) {
+                if ($t !== '' && ! in_array($t, $out, true)) {
+                    $out[] = $t;
+                }
+            }
+        }
+
+        $cad = trim((string) config('ieducar.pgsql_schema_cadastro', 'cadastro')).'.turno';
+        foreach ([$cad, 'public.turno'] as $t) {
+            if (! in_array($t, $out, true)) {
+                $out[] = $t;
+            }
+        }
+
+        $schema = self::effectiveSchema($city);
+        if ($schema !== '') {
+            $st = $schema.'.turno';
+            if (! in_array($st, $out, true)) {
+                $out[] = $st;
+            }
+        }
+
+        return array_values(array_unique(array_filter($out)));
+    }
+
+    /**
      * Nome de tabela curto para MySQL quando só existe config «cadastro.xxx» (Portabilis).
      */
     private static function mysqlShortTableName(string $logicalKey, string $qualified): string

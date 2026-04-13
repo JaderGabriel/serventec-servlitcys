@@ -118,4 +118,36 @@ final class ChartPayload
             ],
         ];
     }
+
+    /**
+     * Junta categorias excedentes num único rótulo (gráficos legíveis; totais conservados).
+     *
+     * @param  list<string|int|float>  $labels
+     * @param  list<int|float>  $values
+     * @return array{0: list<string>, 1: list<int|float>}
+     */
+    public static function capTailAsOutros(array $labels, array $values, int $maxCategories, string $outrosLabel = 'Outros'): array
+    {
+        $labels = array_values($labels);
+        $values = array_values($values);
+        $n = min(count($labels), count($values));
+        if ($n === 0) {
+            return [[], []];
+        }
+        $labels = array_slice($labels, 0, $n);
+        $values = array_slice($values, 0, $n);
+        if ($n <= $maxCategories) {
+            return [array_map(static fn ($l) => (string) $l, $labels), $values];
+        }
+        $keep = max(1, $maxCategories - 1);
+        $rest = 0;
+        for ($i = $keep; $i < $n; $i++) {
+            $rest += (int) $values[$i];
+        }
+
+        return [
+            array_merge(array_map(static fn ($l) => (string) $l, array_slice($labels, 0, $keep)), [$outrosLabel]),
+            array_merge(array_slice($values, 0, $keep), [$rest]),
+        ];
+    }
 }

@@ -8,6 +8,7 @@ use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
+use App\Support\Ieducar\IeducarSqlPlaceholders;
 use App\Support\Ieducar\MatriculaAtivoFilter;
 use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
@@ -18,6 +19,15 @@ use Illuminate\Database\QueryException;
  */
 class PerformanceRepository
 {
+    /** @var list<string> */
+    private const APROVACAO = ['2', '5', '12', '13', '14'];
+
+    /** @var list<string> */
+    private const REPROVACAO = ['3', '6', '8'];
+
+    /** @var list<string> */
+    private const EM_CURSO = ['1', '4', '7'];
+
     public function __construct(
         private CityDataConnection $cityData
     ) {}
@@ -28,13 +38,27 @@ class PerformanceRepository
      *   message: string,
      *   error: ?string,
      *   chart: ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>},
-     *   charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}>
+     *   charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}>,
+     *   kpis: list<array{id: string, label: string, percent: ?float, quantidade: int}>,
+     *   distorcao_pct: ?float,
+     *   distorcao_note: ?string
      * }
      */
     public function snapshot(?City $city, IeducarFilterState $filters): array
     {
+        $empty = [
+            'rows' => [],
+            'message' => '',
+            'error' => null,
+            'chart' => null,
+            'charts' => [],
+            'kpis' => [],
+            'distorcao_pct' => null,
+            'distorcao_note' => null,
+        ];
+
         if ($city === null) {
-            return ['rows' => [], 'message' => '', 'error' => null, 'chart' => null, 'charts' => []];
+            return $empty;
         }
 
         try {
@@ -48,6 +72,9 @@ class PerformanceRepository
                         'error' => null,
                         'chart' => null,
                         'charts' => [],
+                        'kpis' => [],
+                        'distorcao_pct' => null,
+                        'distorcao_note' => null,
                     ];
                 }
 
@@ -60,7 +87,7 @@ class PerformanceRepository
                     ->groupBy('m.'.$col);
 
                 try {
-                    $rows = $q->orderByDesc('c')->limit(24)->get();
+                    $rows = $q->orderByDesc('c')->get();
                 } catch (QueryException $e) {
                     return [
                         'rows' => [],
@@ -68,6 +95,9 @@ class PerformanceRepository
                         'error' => $e->getMessage(),
                         'chart' => null,
                         'charts' => [],
+                        'kpis' => [],
+                        'distorcao_pct' => null,
+                        'distorcao_note' => null,
                     ];
                 }
 
@@ -78,19 +108,59 @@ class PerformanceRepository
                         'error' => null,
                         'chart' => null,
                         'charts' => [],
+                        'kpis' => [],
+                        'distorcao_pct' => null,
+                        'distorcao_note' => null,
                     ];
                 }
 
+                $counts = [];
                 $labels = [];
                 $values = [];
                 $tableRows = [];
                 foreach ($rows as $row) {
                     $k = $row->chave;
                     $c = (int) ($row->c ?? 0);
+                    $key = $this->normalizeSituacaoKey($k);
+                    $counts[$key] = $c;
                     $label = $this->labelSituacaoMatricula($k);
                     $labels[] = $label;
                     $values[] = $c;
                     $tableRows[] = ['label' => $label, 'quantidade' => $c];
+                }
+
+                $total = array_sum($counts);
+                $ind = $this->buildIndicadoresRede($counts, $total);
+
+                $charts = [];
+
+                $dLabels = [];
+                $dVals = [];
+                foreach ($ind['buckets'] as $b) {
+                    if ($b['q'] > 0) {
+                        $dLabels[] = $b['label'];
+                        $dVals[] = $b['q'];
+                    }
+                }
+                if ($dLabels !== []) {
+                    $charts[] = ChartPayload::doughnut(__('Indicadores agregados (rede)'), $dLabels, $dVals);
+                }
+
+                $kpiBarLabels = [];
+                $kpiBarVals = [];
+                foreach ($ind['kpis'] as $kpi) {
+                    if ($kpi['percent'] !== null) {
+                        $kpiBarLabels[] = $kpi['label'];
+                        $kpiBarVals[] = $kpi['percent'];
+                    }
+                }
+                if ($kpiBarLabels !== []) {
+                    $charts[] = ChartPayload::barHorizontal(
+                        __('Taxas sobre o total de matrículas (rede)'),
+                        __('Percentagem'),
+                        $kpiBarLabels,
+                        $kpiBarVals
+                    );
                 }
 
                 $chart = ChartPayload::bar(
@@ -99,13 +169,19 @@ class PerformanceRepository
                     $labels,
                     $values
                 );
+                $charts[] = $chart;
+
+                [$distorcaoPct, $distorcaoNote] = $this->tryDistorcaoRede($db, $city);
 
                 return [
                     'rows' => $tableRows,
                     'message' => '',
                     'error' => null,
                     'chart' => $chart,
-                    'charts' => $chart !== null ? [$chart] : [],
+                    'charts' => $charts,
+                    'kpis' => $ind['kpis'],
+                    'distorcao_pct' => $distorcaoPct,
+                    'distorcao_note' => $distorcaoNote,
                 ];
             });
         } catch (\Throwable $e) {
@@ -115,7 +191,108 @@ class PerformanceRepository
                 'error' => $e->getMessage(),
                 'chart' => null,
                 'charts' => [],
+                'kpis' => [],
+                'distorcao_pct' => null,
+                'distorcao_note' => null,
             ];
+        }
+    }
+
+    /**
+     * @param  array<string, int>  $counts
+     * @return array{buckets: list<array{label: string, q: int}>, kpis: list<array{id: string, label: string, percent: ?float, quantidade: int}>}
+     */
+    private function buildIndicadoresRede(array $counts, int $total): array
+    {
+        $pct = static function (int $n) use ($total): ?float {
+            if ($total <= 0) {
+                return null;
+            }
+
+            return round(100.0 * $n / $total, 1);
+        };
+
+        $sum = function (array $codes) use ($counts): int {
+            $s = 0;
+            foreach ($codes as $c) {
+                $s += $counts[$c] ?? 0;
+            }
+
+            return $s;
+        };
+
+        $aprov = $sum(self::APROVACAO);
+        $reprov = $sum(self::REPROVACAO);
+        $emCurso = $sum(self::EM_CURSO);
+        $reclass = $counts['10'] ?? 0;
+        $aband = $counts['11'] ?? 0;
+        $remanej = $counts['16'] ?? 0;
+        $known = $aprov + $reprov + $emCurso + $reclass + $aband + $remanej;
+        $outros = max(0, $total - $known);
+
+        $buckets = [
+            ['label' => __('Aprovação'), 'q' => $aprov],
+            ['label' => __('Reprovação'), 'q' => $reprov],
+            ['label' => __('Em curso / exame / paralela'), 'q' => $emCurso],
+            ['label' => __('Reclassificação'), 'q' => $reclass],
+            ['label' => __('Abandono'), 'q' => $aband],
+            ['label' => __('Remanejamento'), 'q' => $remanej],
+            ['label' => __('Outros'), 'q' => $outros],
+        ];
+
+        $evasaoComb = $aband + $remanej;
+
+        $kpis = [
+            ['id' => 'aprovacao', 'label' => __('Taxa de aprovação'), 'percent' => $pct($aprov), 'quantidade' => $aprov],
+            ['id' => 'reprovacao', 'label' => __('Taxa de reprovação'), 'percent' => $pct($reprov), 'quantidade' => $reprov],
+            ['id' => 'em_curso', 'label' => __('Taxa em curso / exame'), 'percent' => $pct($emCurso), 'quantidade' => $emCurso],
+            ['id' => 'reclassificacao', 'label' => __('Taxa de reclassificação'), 'percent' => $pct($reclass), 'quantidade' => $reclass],
+            ['id' => 'abandono', 'label' => __('Taxa de abandono'), 'percent' => $pct($aband), 'quantidade' => $aband],
+            ['id' => 'remanejamento', 'label' => __('Taxa de remanejamento'), 'percent' => $pct($remanej), 'quantidade' => $remanej],
+            ['id' => 'evasao', 'label' => __('Abandono + remanejamento (fluxo para fora)'), 'percent' => $pct($evasaoComb), 'quantidade' => $evasaoComb],
+        ];
+
+        return ['buckets' => $buckets, 'kpis' => $kpis];
+    }
+
+    private function normalizeSituacaoKey(mixed $v): string
+    {
+        if ($v === null || $v === '') {
+            return '';
+        }
+
+        return (string) $v;
+    }
+
+    /**
+     * @return array{0: ?float, 1: ?string}
+     */
+    private function tryDistorcaoRede(Connection $db, City $city): array
+    {
+        $sql = (string) config('ieducar.sql.distorcao_rede', '');
+        $sql = trim($sql);
+        if ($sql === '') {
+            return [null, null];
+        }
+
+        try {
+            $sql = IeducarSqlPlaceholders::interpolate($sql, $city);
+            $row = $db->selectOne($sql);
+            if ($row === null) {
+                return [null, null];
+            }
+            $arr = (array) $row;
+            $num = null;
+            foreach ($arr as $v) {
+                if (is_numeric($v)) {
+                    $num = (float) $v;
+                    break;
+                }
+            }
+
+            return [$num, null];
+        } catch (\Throwable) {
+            return [null, __('Não foi possível executar IEDUCAR_SQL_DISTORCAO_REDE.')];
         }
     }
 

@@ -85,6 +85,19 @@ final class IeducarFilterState
         return array_merge(['city_id' => $cityId], $this->toQueryParams());
     }
 
+    /**
+     * Novo estado com outro ano letivo (mantém escola, curso e turno).
+     * Use null para «todos os anos» (equivalente a ano_letivo = all).
+     */
+    public function withAnoLetivoOverride(?int $year): self
+    {
+        if ($year === null) {
+            return new self('all', $this->escola_id, $this->curso_id, $this->turno_id);
+        }
+
+        return new self((string) $year, $this->escola_id, $this->curso_id, $this->turno_id);
+    }
+
     private static function nullableString(mixed $value): ?string
     {
         if ($value === null || $value === '' || $value === 'all') {

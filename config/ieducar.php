@@ -85,6 +85,8 @@ return [
         'falta_aluno' => env('IEDUCAR_TABLE_FALTA_ALUNO', 'falta_aluno'),
         'nivel_ensino' => env('IEDUCAR_TABLE_NIVEL_ENSINO', 'nivel_ensino'),
         'turno' => env('IEDUCAR_TABLE_TURNO', 'cadastro.turno'),
+        /** Tabelas adicionais a tentar para o filtro turno (PostgreSQL), separadas por vírgula. */
+        'turno_fallbacks' => env('IEDUCAR_TABLE_TURNO_FALLBACKS', ''),
         'aluno' => env('IEDUCAR_TABLE_ALUNO', 'aluno'),
         'pessoa' => env('IEDUCAR_TABLE_PESSOA', 'cadastro.pessoa'),
         'raca' => env('IEDUCAR_TABLE_RACA', 'cadastro.raca'),
@@ -124,12 +126,16 @@ return [
         'curso' => [
             'id' => env('IEDUCAR_COL_CURSO_ID', 'cod_curso'),
             'name' => env('IEDUCAR_COL_CURSO_NAME', 'nm_curso'),
+            /** Ligação curso → nível de ensino (hierarquia Educacenso / INEP). */
+            'nivel_ensino' => env('IEDUCAR_COL_CURSO_NIVEL', 'ref_cod_nivel_ensino'),
         ],
         'serie' => [
             'id' => env('IEDUCAR_COL_SERIE_ID', 'cod_serie'),
             'name' => env('IEDUCAR_COL_SERIE_NAME', 'nm_serie'),
             /** Ordenação tipo INEP / ano da etapa (inteiro na série escolar). */
             'sort' => env('IEDUCAR_COL_SERIE_SORT', 'serie'),
+            /** Ordenação alternativa (educacenso) quando existir na tabela série. */
+            'etapa_educacenso' => env('IEDUCAR_COL_SERIE_ETAPA_EDUCACENSO', 'etapa_educacenso'),
         ],
         'turma' => [
             'id' => env('IEDUCAR_COL_TURMA_ID', 'cod_turma'),
@@ -236,6 +242,8 @@ return [
         'turno_pairs' => env('IEDUCAR_SQL_TURNO'),
         'inclusion_raca' => env('IEDUCAR_SQL_INCLUSION_RACA'),
         'inclusion_extra' => env('IEDUCAR_SQL_INCLUSION_EXTRA'),
+        /** Uma linha com índice ou percentual de distorção idade/série na rede (opcional). Ex.: SELECT 12.5 AS percentual */
+        'distorcao_rede' => env('IEDUCAR_SQL_DISTORCAO_REDE'),
     ],
 
     /*

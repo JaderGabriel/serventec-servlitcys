@@ -73,7 +73,7 @@ class AnalyticsDashboardController extends Controller
 
         $enrollmentData = $yearFilterReady
             ? $enrollmentRepository->sample($city, $filters)
-            : ['rows' => [], 'error' => null, 'chart' => null, 'charts' => []];
+            : ['rows' => [], 'kpis' => null, 'error' => null, 'chart' => null, 'charts' => []];
 
         $performanceData = $yearFilterReady
             ? $performanceRepository->snapshot($city, $filters)

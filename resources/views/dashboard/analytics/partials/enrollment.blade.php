@@ -2,8 +2,33 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Gráficos de matrículas por turma (ordenados por etapa/série), escola, série, turno, oferta e vagas em aberto (capacidade − alunos), conforme filtros e config/ieducar.php.') }}
+        {{ __('Totais por nível de ensino, série e curso (estrutura Educacenso), escolas principais, turno, oferta e vagas. KPIs no topo: matrículas activas, turmas com alunos e ocupação média quando existir max_aluno na turma.') }}
     </p>
+
+    @if (! empty($enrollmentData['kpis']))
+        @php $k = $enrollmentData['kpis']; @endphp
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Matrículas activas') }}</p>
+                <p class="mt-1 text-2xl font-semibold text-indigo-600 dark:text-indigo-400">{{ number_format($k['matriculas'] ?? 0) }}</p>
+            </div>
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Turmas com matrícula') }}</p>
+                <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ number_format($k['turmas_distintas'] ?? 0) }}</p>
+            </div>
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Ocupação média (turmas com vaga)') }}</p>
+                <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                    @if (isset($k['ocupacao_pct']) && $k['ocupacao_pct'] !== null)
+                        {{ number_format($k['ocupacao_pct'], 1) }}%
+                    @else
+                        —
+                    @endif
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ __('Requer coluna de capacidade na turma (ex.: max_aluno).') }}</p>
+            </div>
+        </div>
+    @endif
 
     @php
         $enrollmentCharts = $enrollmentData['charts'] ?? [];

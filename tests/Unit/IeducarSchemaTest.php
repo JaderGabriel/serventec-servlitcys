@@ -98,4 +98,34 @@ class IeducarSchemaTest extends TestCase
 
         $this->assertSame('pmieducar.matricula', IeducarSchema::resolveTable('matricula', $city));
     }
+
+    public function test_turno_table_candidates_for_pgsql_include_fallbacks(): void
+    {
+        config([
+            'ieducar.schema' => '',
+            'ieducar.pgsql_default_schema' => 'pmieducar',
+            'ieducar.pgsql_schema_cadastro' => 'cadastro',
+            'ieducar.tables.turno' => 'cadastro.turno',
+            'ieducar.tables.turno_fallbacks' => '',
+        ]);
+        $city = new City(['db_driver' => City::DRIVER_PGSQL]);
+
+        $c = IeducarSchema::turnoTableCandidates($city);
+
+        $this->assertContains('cadastro.turno', $c);
+        $this->assertContains('public.turno', $c);
+        $this->assertContains('pmieducar.turno', $c);
+    }
+
+    public function test_turno_table_candidates_mysql_only_resolved_primary(): void
+    {
+        config(['ieducar.tables.turno' => 'cadastro.turno']);
+
+        $city = new City([
+            'db_driver' => City::DRIVER_MYSQL,
+            'db_port' => 3306,
+        ]);
+
+        $this->assertSame(['turno'], IeducarSchema::turnoTableCandidates($city));
+    }
 }
