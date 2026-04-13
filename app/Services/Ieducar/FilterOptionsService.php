@@ -6,6 +6,8 @@ use App\Models\City;
 use App\Services\CityDataConnection;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
+use App\Support\Ieducar\IeducarSqlPlaceholders;
+use App\Support\Ieducar\MatriculaAtivoFilter;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
@@ -106,7 +108,9 @@ class FilterOptionsService
             return $this->cityData->run($city, function (Connection $db) use ($max, $city) {
                 $custom = config('ieducar.sql.ano_letivo_distinct');
                 if (is_string($custom) && trim($custom) !== '') {
-                    return $this->yearsFromRawSql($db, $custom, $max);
+                    $sql = IeducarSqlPlaceholders::interpolate(trim($custom), $city);
+
+                    return $this->yearsFromRawSql($db, $sql, $max);
                 }
 
                 try {
@@ -231,7 +235,7 @@ class FilterOptionsService
                 if ($sqlKey !== null) {
                     $custom = config('ieducar.sql.'.$sqlKey);
                     if (is_string($custom) && trim($custom) !== '') {
-                        $sql = $this->interpolateSqlPlaceholders(trim($custom), $city);
+                        $sql = IeducarSqlPlaceholders::interpolate(trim($custom), $city);
 
                         return $this->pairsFromRawSql($db, $sql, $max);
                     }
@@ -278,24 +282,6 @@ class FilterOptionsService
     }
 
     /**
-     * Substitui {escola}, {turno}, etc. pelo nome resolvido da tabela (schema incluído).
-     */
-    private function interpolateSqlPlaceholders(string $sql, City $city): string
-    {
-        $map = [
-            '{escola}' => IeducarSchema::resolveTable('escola', $city),
-            '{curso}' => IeducarSchema::resolveTable('curso', $city),
-            '{turno}' => IeducarSchema::resolveTable('turno', $city),
-            '{serie}' => IeducarSchema::resolveTable('serie', $city),
-            '{ano_letivo}' => IeducarSchema::resolveTable('ano_letivo', $city),
-            '{turma}' => IeducarSchema::resolveTable('turma', $city),
-            '{matricula}' => IeducarSchema::resolveTable('matricula', $city),
-        ];
-
-        return str_replace(array_keys($map), array_values($map), $sql);
-    }
-
-    /**
      * iEducar PostgreSQL: nome de escola via relatorio.get_nome_escola (comum na 2.x).
      */
     private function buildPgsqlEscolaRelatorioSql(City $city): string
@@ -304,8 +290,10 @@ class FilterOptionsService
         $id = (string) config('ieducar.columns.escola.id');
         $active = (string) config('ieducar.columns.escola.active');
 
+        $activeExpr = MatriculaAtivoFilter::pgsqlActiveExpression('e.'.$active);
+
         return 'SELECT e.'.$id.'::text AS id, relatorio.get_nome_escola(e.'.$id.') AS nome FROM '.$t.' e '
-            .'WHERE (e.'.$active.' IS TRUE OR e.'.$active.' = 1 OR (e.'.$active.')::text IN (\'1\',\'t\',\'true\',\'T\')) '
+            .'WHERE '.$activeExpr.' '
             .'ORDER BY nome';
     }
 
@@ -421,7 +409,7 @@ class FilterOptionsService
     {
         if ($db->getDriverName() === 'pgsql') {
             $col = $db->getQueryGrammar()->wrap($activeCol);
-            $q->whereRaw("({$col} IS TRUE OR {$col} = 1 OR ({$col})::text IN ('1','t','true','T'))");
+            $q->whereRaw(MatriculaAtivoFilter::pgsqlActiveExpression($col));
 
             return;
         }

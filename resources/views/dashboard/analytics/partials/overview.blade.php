@@ -44,9 +44,9 @@
     @endif
 
     @if ($yearFilterReady && ! empty($overviewData['charts']))
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-4">
+        <div class="grid grid-cols-1 gap-6 mt-4 w-full max-w-none">
             @foreach ($overviewData['charts'] as $idx => $chart)
-                <x-dashboard.chart-panel :chart="$chart" :exportFilename="'visao-geral-'.$idx" />
+                <x-dashboard.chart-panel :chart="$chart" :exportFilename="'visao-geral-'.$idx" :compact="false" />
             @endforeach
         </div>
     @endif

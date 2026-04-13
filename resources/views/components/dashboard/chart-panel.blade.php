@@ -1,6 +1,8 @@
 @props([
     'chart' => null,
     'exportFilename' => 'grafico',
+    /** Quando false, o gráfico usa mais altura (ex.: visão geral em coluna única). */
+    'compact' => true,
 ])
 
 @php
@@ -24,8 +26,8 @@
                 {{ __('Exportar PNG') }}
             </button>
         </div>
-        <div class="p-4 h-72 relative">
-            <canvas x-ref="canvas" class="!max-h-64"></canvas>
+        <div class="p-4 relative {{ $compact ? 'h-72' : 'min-h-[min(28rem,70vh)] h-[min(28rem,70vh)]' }}">
+            <canvas x-ref="canvas" class="{{ $compact ? '!max-h-64' : 'h-full w-full max-h-none' }}"></canvas>
         </div>
     </div>
 @endif

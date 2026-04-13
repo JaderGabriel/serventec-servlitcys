@@ -87,7 +87,7 @@ final class IeducarFilterState
 
     private static function nullableString(mixed $value): ?string
     {
-        if ($value === null || $value === '') {
+        if ($value === null || $value === '' || $value === 'all') {
             return null;
         }
 

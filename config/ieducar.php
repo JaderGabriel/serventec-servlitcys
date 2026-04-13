@@ -53,6 +53,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Schemas PostgreSQL nomeados (placeholders em SQL customizado)
+    |--------------------------------------------------------------------------
+    |
+    | Em IEDUCAR_SQL_* use {cadastro}, {relatorio}, {modules}, {public} ou {schema}/{schema_main}
+    | para o schema principal (pmieducar ou cities.ieducar_schema). Funções como
+    | relatorio.get_nome_escola exigem o schema relatorio no search_path ou chamada qualificada.
+    |
+    */
+
+    'pgsql_schema_cadastro' => env('IEDUCAR_PGSQL_SCHEMA_CADASTRO', 'cadastro'),
+
+    'pgsql_schema_relatorio' => env('IEDUCAR_PGSQL_SCHEMA_RELATORIO', 'relatorio'),
+
+    'pgsql_schema_modules' => env('IEDUCAR_PGSQL_SCHEMA_MODULES', 'modules'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Nomes de tabelas
     |--------------------------------------------------------------------------
     */
@@ -197,7 +214,8 @@ return [
     | Devem devolver colunas: id e name (ou nome) para pares; ano para anos.
     |
     | Placeholders (substituídos por cidade/schema): {escola}, {curso}, {turno}, {serie},
-    | {ano_letivo}, {turma}, {matricula} — alinhado ao iEducar 2.x (pmieducar, cadastro…).
+    | {ano_letivo}, {turma}, {matricula}, {matricula_turma}, {aluno}, {pessoa}, {raca}, {falta_aluno};
+    | schemas: {schema} ou {schema_main}, {cadastro}, {relatorio}, {modules}, {public}.
     |
     | Exemplo PostgreSQL (nome via função relatorio, comum na 2.11):
     | SELECT cod_escola AS id, relatorio.get_nome_escola(cod_escola) AS nome FROM {escola}

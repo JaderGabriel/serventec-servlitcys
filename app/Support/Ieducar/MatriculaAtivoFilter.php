@@ -18,9 +18,8 @@ final class MatriculaAtivoFilter
 
         if ($db->getDriverName() === 'pgsql') {
             $col = self::wrapQualifiedColumn($db, $columnRef);
-            $query->whereRaw(
-                "({$col}) IS TRUE OR ({$col})::text IN ('1','t','true','T') OR ({$col}) = 1"
-            );
+            // i-Educar usa frequentemente smallint (0/1) em «ativo»; em PostgreSQL IS TRUE exige boolean.
+            $query->whereRaw(self::pgsqlActiveExpression($col));
 
             return;
         }
@@ -36,5 +35,15 @@ final class MatriculaAtivoFilter
             fn (string $s) => $grammar->wrap(trim($s)),
             explode('.', $ref)
         ));
+    }
+
+    /**
+     * Condição «registro ativo» segura para PostgreSQL (boolean, smallint, char).
+     *
+     * @param  string  $wrappedColumn  Identificador já envolvido por wrap() (pode ser qualificado).
+     */
+    public static function pgsqlActiveExpression(string $wrappedColumn): string
+    {
+        return "(({$wrappedColumn})::text IN ('1','t','true','T') OR ({$wrappedColumn}) = 1)";
     }
 }

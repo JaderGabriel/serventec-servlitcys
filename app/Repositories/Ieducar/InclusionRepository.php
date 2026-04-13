@@ -7,6 +7,7 @@ use App\Services\CityDataConnection;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarSchema;
+use App\Support\Ieducar\IeducarSqlPlaceholders;
 use App\Support\Ieducar\MatriculaAtivoFilter;
 use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
@@ -41,7 +42,7 @@ class InclusionRepository
             $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$notes) {
                 $customRaca = config('ieducar.sql.inclusion_raca');
                 if (is_string($customRaca) && trim($customRaca) !== '') {
-                    $racaChart = $this->chartFromRawSql($db, trim($customRaca), __('Matrículas por raça/cor (SQL personalizado)'));
+                    $racaChart = $this->chartFromRawSql($db, $city, trim($customRaca), __('Matrículas por raça/cor (SQL personalizado)'));
                     if ($racaChart !== null) {
                         $charts[] = $racaChart;
                     } else {
@@ -60,7 +61,7 @@ class InclusionRepository
 
                 $customExtra = config('ieducar.sql.inclusion_extra');
                 if (is_string($customExtra) && trim($customExtra) !== '') {
-                    $extra = $this->chartFromRawSql($db, trim($customExtra), __('Indicador complementar (SQL personalizado)'));
+                    $extra = $this->chartFromRawSql($db, $city, trim($customExtra), __('Indicador complementar (SQL personalizado)'));
                     if ($extra !== null) {
                         $charts[] = $extra;
                     }
@@ -137,10 +138,10 @@ class InclusionRepository
     /**
      * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}
      */
-    private function chartFromRawSql(Connection $db, string $sql, string $title): ?array
+    private function chartFromRawSql(Connection $db, City $city, string $sql, string $title): ?array
     {
         try {
-            $rows = $db->select($this->appendLimit($sql, 32));
+            $rows = $db->select($this->appendLimit(IeducarSqlPlaceholders::interpolate($sql, $city), 32));
             $labels = [];
             $values = [];
             foreach ($rows as $row) {
