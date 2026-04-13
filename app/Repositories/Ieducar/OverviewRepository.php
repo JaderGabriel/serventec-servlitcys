@@ -7,6 +7,7 @@ use App\Services\CityDataConnection;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarSchema;
+use App\Support\Ieducar\MatriculaAtivoFilter;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 
@@ -145,9 +146,7 @@ class OverviewRepository
 
             if (! $needsTurma) {
                 $q = $db->table($mat);
-                if ($mAtivo !== '') {
-                    $q->whereIn($mAtivo, [1, '1', true, 't', 'true']);
-                }
+                MatriculaAtivoFilter::apply($q, $db, $mAtivo);
 
                 return (int) $q->count();
             }
@@ -160,9 +159,7 @@ class OverviewRepository
             $turno = (string) config('ieducar.columns.turma.turno');
 
             $q = $db->table($mat.' as m')->join($turma.' as t', 'm.'.$mTurma, '=', 't.'.$tId);
-            if ($mAtivo !== '') {
-                $q->whereIn('m.'.$mAtivo, [1, '1', true, 't', 'true']);
-            }
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
             if ($yearVal !== null && $year !== '') {
                 $q->where('t.'.$year, $yearVal);
             }

@@ -280,7 +280,7 @@ class FilterOptionsService
      */
     private function pairFromRow(stdClass $row): ?array
     {
-        $id = $this->readRowString($row, ['id', 'codigo', 'cod', 'cod_escola', 'cod_curso', 'cod_serie', 'cod_nivel_ensino']);
+        $id = $this->readRowString($row, ['id', 'codigo', 'cod', 'cod_escola', 'cod_curso', 'cod_serie', 'cod_nivel_ensino', 'cod_turno']);
         $name = $this->readRowString($row, ['name', 'nome', 'label', 'titulo', 'nm_curso', 'nm_serie', 'nm_nivel']);
         if ($id !== null && $name !== null) {
             return ['id' => $id, 'name' => $name];
@@ -318,6 +318,20 @@ class FilterOptionsService
             $activeCol = config('ieducar.columns.escola.active');
             if (is_string($activeCol) && $activeCol !== '') {
                 $this->applyEscolaAtivoFilter($db, $q, $activeCol);
+                try {
+                    return $q->limit($max)->get()->map(fn ($r) => [
+                        'id' => (string) $r->id,
+                        'name' => (string) $r->name,
+                    ])->all();
+                } catch (QueryException $e) {
+                    Log::debug('ieducar.escola', ['message' => $e->getMessage(), 'retry' => 'without ativo filter']);
+                    $q2 = $db->table($table)->select([$idCol.' as id', $nameCol.' as name'])->orderBy($nameCol);
+
+                    return $q2->limit($max)->get()->map(fn ($r) => [
+                        'id' => (string) $r->id,
+                        'name' => (string) $r->name,
+                    ])->all();
+                }
             }
         }
 

@@ -7,6 +7,7 @@ use App\Services\CityDataConnection;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarSchema;
+use App\Support\Ieducar\MatriculaAtivoFilter;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 
@@ -35,15 +36,14 @@ class EnrollmentRepository
                 $mAtivo = (string) config('ieducar.columns.matricula.ativo');
 
                 try {
-                    $rows = $db->table($table)
+                    $q = $db->table($table)
                         ->select([
                             $mid.' as cod_matricula',
                             $mturma.' as ref_cod_turma',
                         ])
-                        ->orderByDesc($mid)
-                        ->limit(30)
-                        ->get()
-                        ->all();
+                        ->orderByDesc($mid);
+                    MatriculaAtivoFilter::apply($q, $db, $mAtivo);
+                    $rows = $q->limit(30)->get()->all();
 
                     $chart = $this->turmasComMaisMatriculas($db, $city, $filters);
 
@@ -84,9 +84,7 @@ class EnrollmentRepository
                 ->selectRaw('MAX(t.'.$tName.') as tname')
                 ->selectRaw('COUNT(*) as c');
 
-            if ($mAtivo !== '') {
-                $q->whereIn('m.'.$mAtivo, [1, '1', true, 't', 'true']);
-            }
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
 
             $yearVal = $filters->yearFilterValue();
             if ($yearVal !== null && $year !== '') {

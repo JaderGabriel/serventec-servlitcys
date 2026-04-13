@@ -58,6 +58,33 @@ class IeducarSchemaTest extends TestCase
         $this->assertSame('cadastro.turno', IeducarSchema::resolveTable('turno', $city));
     }
 
+    public function test_mysql_maps_cadastro_turno_to_short_table_in_single_database(): void
+    {
+        config(['ieducar.schema' => '']);
+        config(['ieducar.tables.turno' => 'cadastro.turno']);
+
+        $city = new City([
+            'db_driver' => City::DRIVER_MYSQL,
+            'db_port' => 3306,
+        ]);
+
+        $this->assertSame('turno', IeducarSchema::resolveTable('turno', $city));
+    }
+
+    public function test_mysql_tables_mysql_turno_override(): void
+    {
+        config(['ieducar.schema' => '']);
+        config(['ieducar.tables.turno' => 'cadastro.turno']);
+        config(['ieducar.tables_mysql.turno' => 'cadastro_turno']);
+
+        $city = new City([
+            'db_driver' => City::DRIVER_MYSQL,
+            'db_port' => 3306,
+        ]);
+
+        $this->assertSame('cadastro_turno', IeducarSchema::resolveTable('turno', $city));
+    }
+
     public function test_port_5432_mysql_driver_still_resolves_pmieducar_schema(): void
     {
         config(['ieducar.schema' => '']);

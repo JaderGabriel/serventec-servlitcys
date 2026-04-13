@@ -65,6 +65,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Tabelas no MySQL (nome curto na base única)
+    |--------------------------------------------------------------------------
+    |
+    | Quando o motor é MySQL, «cadastro.turno» etc. são mapeados para o nome local
+    | (ex.: turno). Defina aqui se o nome for diferente do sufixo após o ponto.
+    |
+    */
+
+    'tables_mysql' => [
+        'turno' => env('IEDUCAR_MYSQL_TABLE_TURNO'),
+        'pessoa' => env('IEDUCAR_MYSQL_TABLE_PESSOA'),
+        'raca' => env('IEDUCAR_MYSQL_TABLE_RACA'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Colunas por tabela
     |--------------------------------------------------------------------------
     */
@@ -118,7 +134,7 @@ return [
             'name' => env('IEDUCAR_COL_NIVEL_NAME', 'nm_nivel'),
         ],
         'turno' => [
-            'id' => env('IEDUCAR_COL_TURNO_ID', 'id'),
+            'id' => env('IEDUCAR_COL_TURNO_ID', 'cod_turno'),
             'name' => env('IEDUCAR_COL_TURNO_NAME', 'nome'),
         ],
     ],

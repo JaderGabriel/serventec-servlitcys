@@ -25,6 +25,19 @@ final class IeducarSchema
 
         $table = (string) $table;
 
+        /*
+         * MySQL/MariaDB: nomes «schema.tabela» do Portabilis (ex.: cadastro.turno) não são válidos
+         * como database.tabela na mesma conexão — usa-se o nome curto (turno) na base da cidade.
+         */
+        if ($city !== null && $city->effectiveIeducarDriver() === City::DRIVER_MYSQL && str_contains($table, '.')) {
+            $override = config("ieducar.tables_mysql.{$logicalKey}");
+            if (is_string($override) && trim($override) !== '') {
+                $table = $override;
+            } else {
+                $table = self::mysqlShortTableName($logicalKey, $table);
+            }
+        }
+
         if (str_contains($table, '.')) {
             return $table;
         }
@@ -61,5 +74,20 @@ final class IeducarSchema
         }
 
         return '';
+    }
+
+    /**
+     * Nome de tabela curto para MySQL quando só existe config «cadastro.xxx» (Portabilis).
+     */
+    private static function mysqlShortTableName(string $logicalKey, string $qualified): string
+    {
+        $short = substr($qualified, (int) strrpos($qualified, '.') + 1);
+
+        return match ($logicalKey) {
+            'turno' => $short !== '' ? $short : 'turno',
+            'pessoa' => $short !== '' ? $short : 'pessoa',
+            'raca' => $short !== '' ? $short : 'raca',
+            default => $short,
+        };
     }
 }

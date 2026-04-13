@@ -7,6 +7,7 @@ use App\Services\CityDataConnection;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarSchema;
+use App\Support\Ieducar\MatriculaAtivoFilter;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
@@ -116,11 +117,7 @@ class InclusionRepository
                 ->groupBy('r.'.$rId)
                 ->groupBy('r.'.$rName);
 
-            if ($mAtivo !== '') {
-                $q->where(function ($w) use ($mAtivo) {
-                    $w->whereIn('m.'.$mAtivo, [1, '1', true, 't', 'true']);
-                });
-            }
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
 
             $this->applyMatriculaTurmaFilters($q, $city, $filters);
 
