@@ -10,7 +10,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 
 /**
- * Equidade: sexo e recorte por segmento (curso) para comparar volumes entre grupos.
+ * Equidade: distribuição por sexo e por etapa/série (comparar volumes entre grupos).
  */
 class EquityRepository
 {
@@ -46,7 +46,6 @@ class EquityRepository
                 }
 
                 foreach ([
-                    fn () => MatriculaChartQueries::matriculasPorCursoTop($db, $city, $filters),
                     fn () => MatriculaChartQueries::matriculasPorSerieTop($db, $city, $filters),
                 ] as $fn) {
                     try {

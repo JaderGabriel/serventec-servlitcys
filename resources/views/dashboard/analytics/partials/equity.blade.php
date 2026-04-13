@@ -2,7 +2,7 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Recortes de equidade: sexo (cadastro) e volumes por tipo/segmento (curso) e série, para comparar grupos e apoiar políticas de acesso e permanência.') }}
+        {{ __('Indicadores de equidade: distribuição por sexo (cadastro) e volumes por etapa/série (comparar grupos e apoiar políticas de acesso e permanência).') }}
     </p>
 
     @if (! empty($equityData['error']))

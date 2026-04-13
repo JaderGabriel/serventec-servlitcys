@@ -285,7 +285,14 @@ final class MatriculaChartQueries
         try {
             $pessoa = IeducarSchema::resolveTable('pessoa', $city);
             $sexoCol = (string) config('ieducar.columns.pessoa.sexo');
-            if ($sexoCol === '' || ! IeducarColumnInspector::columnExists($db, $pessoa, $sexoCol, $city)) {
+            $sexoCol = IeducarColumnInspector::firstExistingColumn($db, $pessoa, array_filter([
+                $sexoCol,
+                'sexo',
+                'tipo_sexo',
+                'genero',
+                'idsexo',
+            ]), $city);
+            if ($sexoCol === null) {
                 return null;
             }
 
@@ -338,5 +345,158 @@ final class MatriculaChartQueries
             'F', '2' => __('Feminino'),
             default => (string) $v,
         };
+    }
+
+    /**
+     * Contagem de matrículas activas por turma (para vagas).
+     *
+     * @return array<string, int> cod_turma => quantidade
+     */
+    public static function matriculaCountByTurma(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $tId = (string) config('ieducar.columns.turma.id');
+
+            $q = $db->table($mat.' as m');
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $city, $filters, 't_filter');
+            $q->selectRaw('t_filter.'.$tId.' as tid')
+                ->selectRaw('COUNT(*) as c')
+                ->groupBy('t_filter.'.$tId);
+
+            $out = [];
+            foreach ($q->get() as $row) {
+                $out[(string) ($row->tid ?? '')] = (int) ($row->c ?? 0);
+            }
+
+            return $out;
+        } catch (QueryException) {
+            return [];
+        }
+    }
+
+    /**
+     * Soma de vagas em aberto (capacidade − matrículas) por segmento (curso).
+     *
+     * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}
+     */
+    public static function vagasAbertasPorCurso(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        return self::vagasAbertasAgrupadas($db, $city, $filters, 'curso');
+    }
+
+    /**
+     * Soma de vagas em aberto por escola.
+     *
+     * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}
+     */
+    public static function vagasAbertasPorEscola(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        return self::vagasAbertasAgrupadas($db, $city, $filters, 'escola');
+    }
+
+    /**
+     * @param  'curso'|'escola'  $por
+     */
+    private static function vagasAbertasAgrupadas(Connection $db, City $city, IeducarFilterState $filters, string $por): ?array
+    {
+        try {
+            $turma = IeducarSchema::resolveTable('turma', $city);
+            $maxCol = (string) config('ieducar.columns.turma.max_alunos');
+            if ($maxCol === '' || ! IeducarColumnInspector::columnExists($db, $turma, $maxCol, $city)) {
+                return null;
+            }
+
+            $tId = (string) config('ieducar.columns.turma.id');
+            $year = (string) config('ieducar.columns.turma.year');
+            $escola = (string) config('ieducar.columns.turma.escola');
+            $curso = (string) config('ieducar.columns.turma.curso');
+            $turno = (string) config('ieducar.columns.turma.turno');
+
+            $q = $db->table($turma.' as t');
+            $yearVal = $filters->yearFilterValue();
+            if ($yearVal !== null && $year !== '') {
+                $q->where('t.'.$year, $yearVal);
+            }
+            if ($filters->escola_id !== null && $escola !== '') {
+                $q->where('t.'.$escola, $filters->escola_id);
+            }
+            if ($filters->curso_id !== null && $curso !== '') {
+                $q->where('t.'.$curso, $filters->curso_id);
+            }
+            if ($filters->turno_id !== null && $turno !== '') {
+                $q->where('t.'.$turno, $filters->turno_id);
+            }
+
+            $turmaRows = $q->select(['t.'.$tId.' as tid', 't.'.$maxCol.' as cap', 't.'.$escola.' as eid', 't.'.$curso.' as cid'])->get();
+            if ($turmaRows->isEmpty()) {
+                return null;
+            }
+
+            $counts = self::matriculaCountByTurma($db, $city, $filters);
+            $agg = [];
+            foreach ($turmaRows as $row) {
+                $tid = (string) ($row->tid ?? '');
+                $cap = (int) ($row->cap ?? 0);
+                $en = $counts[$tid] ?? 0;
+                $vac = max(0, $cap - $en);
+                if ($vac === 0) {
+                    continue;
+                }
+                $key = $por === 'escola'
+                    ? (string) ($row->eid ?? '')
+                    : (string) ($row->cid ?? '');
+                if ($key === '') {
+                    continue;
+                }
+                $agg[$key] = ($agg[$key] ?? 0) + $vac;
+            }
+
+            if ($agg === []) {
+                return null;
+            }
+
+            $items = [];
+            foreach ($agg as $id => $v) {
+                $items[] = ['id' => $id, 'v' => $v];
+            }
+            usort($items, fn ($a, $b) => $b['v'] <=> $a['v']);
+
+            $escolaT = IeducarSchema::resolveTable('escola', $city);
+            $cursoT = IeducarSchema::resolveTable('curso', $city);
+            $eId = (string) config('ieducar.columns.escola.id');
+            $eName = (string) config('ieducar.columns.escola.name');
+            $cId = (string) config('ieducar.columns.curso.id');
+            $cName = (string) config('ieducar.columns.curso.name');
+
+            $labels = [];
+            $values = [];
+            foreach ($items as $it) {
+                if ($por === 'escola') {
+                    $name = $db->table($escolaT)->where($eId, $it['id'])->value($eName);
+                } else {
+                    $name = $db->table($cursoT)->where($cId, $it['id'])->value($cName);
+                }
+                $labels[] = $name !== null && (string) $name !== '' ? (string) $name : ('#'.$it['id']);
+                $values[] = $it['v'];
+            }
+
+            $title = $por === 'escola'
+                ? __('Vagas em aberto por escola (capacidade − matrículas)')
+                : __('Vagas em aberto por segmento (curso)');
+
+            return ChartPayload::barHorizontal(
+                $title,
+                __('Vagas'),
+                $labels,
+                $values
+            );
+        } catch (QueryException|\Throwable) {
+            return null;
+        }
     }
 }

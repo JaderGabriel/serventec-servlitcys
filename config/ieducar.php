@@ -128,6 +128,8 @@ return [
         'serie' => [
             'id' => env('IEDUCAR_COL_SERIE_ID', 'cod_serie'),
             'name' => env('IEDUCAR_COL_SERIE_NAME', 'nm_serie'),
+            /** Ordenação tipo INEP / ano da etapa (inteiro na série escolar). */
+            'sort' => env('IEDUCAR_COL_SERIE_SORT', 'serie'),
         ],
         'turma' => [
             'id' => env('IEDUCAR_COL_TURMA_ID', 'cod_turma'),
@@ -137,6 +139,8 @@ return [
             'curso' => env('IEDUCAR_COL_TURMA_CURSO', 'ref_cod_curso'),
             'serie' => env('IEDUCAR_COL_TURMA_SERIE', 'ref_cod_serie'),
             'turno' => env('IEDUCAR_COL_TURMA_TURNO', 'ref_cod_turno'),
+            /** Capacidade da turma (vagas = max − matrículas activas). */
+            'max_alunos' => env('IEDUCAR_COL_TURMA_MAX_ALUNO', 'max_aluno'),
         ],
         'matricula' => [
             'id' => env('IEDUCAR_COL_MATRICULA_ID', 'cod_matricula'),

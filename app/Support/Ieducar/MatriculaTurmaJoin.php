@@ -102,6 +102,7 @@ final class MatriculaTurmaJoin
         }
 
         self::joinMatriculaToTurma($q, $db, $city, 'm');
+        self::applyPivotAtivoIfNeeded($q, $db, $city);
         self::applyTurmaFiltersWhere($q, $city, $filters, 't_filter');
     }
 

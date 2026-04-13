@@ -27,6 +27,21 @@ final class IeducarColumnInspector
         return (bool) ($row->e ?? false);
     }
 
+    /**
+     * @param  list<string>  $candidates
+     */
+    public static function firstExistingColumn(Connection $db, string $qualifiedTable, array $candidates, ?City $city = null): ?string
+    {
+        foreach ($candidates as $col) {
+            $col = trim((string) $col);
+            if ($col !== '' && self::columnExists($db, $qualifiedTable, $col, $city)) {
+                return $col;
+            }
+        }
+
+        return null;
+    }
+
     public static function columnExists(Connection $db, string $qualifiedTable, string $column, ?City $city = null): bool
     {
         if ($column === '') {

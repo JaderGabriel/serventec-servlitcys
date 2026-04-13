@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Services\CityDataConnection;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\IeducarSqlPlaceholders;
 use App\Support\Ieducar\MatriculaAtivoFilter;
@@ -65,10 +66,6 @@ class InclusionRepository
                     if ($extra !== null) {
                         $charts[] = $extra;
                     }
-                } else {
-                    $notes[] = __(
-                        'Para um segundo gráfico de inclusão, defina IEDUCAR_SQL_INCLUSION_EXTRA (duas colunas: rótulo e valor).'
-                    );
                 }
             });
         } catch (\Throwable $e) {
@@ -98,9 +95,27 @@ class InclusionRepository
             $aId = (string) config('ieducar.columns.aluno.id');
             $aPessoa = (string) config('ieducar.columns.aluno.pessoa');
             $pId = (string) config('ieducar.columns.pessoa.id');
-            $pRaca = (string) config('ieducar.columns.pessoa.raca');
+            $pRaca = IeducarColumnInspector::firstExistingColumn($db, $pessoa, array_filter([
+                (string) config('ieducar.columns.pessoa.raca'),
+                'ref_cod_raca',
+                'cod_raca',
+            ]), $city);
             $rId = (string) config('ieducar.columns.raca.id');
             $rName = (string) config('ieducar.columns.raca.name');
+            $rId = IeducarColumnInspector::firstExistingColumn($db, $raca, array_filter([
+                $rId,
+                'cod_raca',
+                'id',
+            ]), $city) ?? $rId;
+            $rName = IeducarColumnInspector::firstExistingColumn($db, $raca, array_filter([
+                $rName,
+                'nm_raca',
+                'nome',
+            ]), $city) ?? $rName;
+
+            if ($pRaca === null || $rId === '' || $rName === '') {
+                return null;
+            }
 
             $q = $db->table($mat.' as m')
                 ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
