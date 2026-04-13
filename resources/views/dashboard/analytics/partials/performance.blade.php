@@ -2,7 +2,7 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Indicadores da rede (taxas sobre matrículas activas) e distribuição pelo campo de situação (por defeito «aprovado» na tabela matricula). Os filtros aplicam-se através da turma quando o ano ou escola/tipo/turno estão definidos.') }}
+        {{ __('Cada taxa = (matrículas na categoria) ÷ (total de matrículas activas no filtro) × 100. O total usa matricula.ativo e o campo de situação (por defeito «aprovado»); os filtros de ano/escola/curso/turno aplicam-se pela turma. As categorias seguem os códigos i-Educar no mesmo campo. O gráfico de distorção idade/série (rede) usa idade à data de corte 31/03 e o limite etário da série (INEP: com distorção quando idade > limite + 2 anos), ou SQL personalizado IEDUCAR_SQL_DISTORCAO_REDE_CHART.') }}
     </p>
     @if (! empty($performanceData['error']))
         <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
@@ -17,11 +17,28 @@
         <p class="text-xs text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2">{{ $performanceData['distorcao_note'] }}</p>
     @endif
 
+    @if (filled(data_get($performanceData, 'kpi_meta.denominador_texto')))
+        <p class="text-xs text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 leading-relaxed">
+            {{ data_get($performanceData, 'kpi_meta.denominador_texto') }}
+        </p>
+    @endif
+    @if (filled(data_get($performanceData, 'kpi_meta.alerta_ano_encerrado')))
+        <div class="rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-3 py-2 text-sm text-amber-950 dark:text-amber-100">
+            {{ data_get($performanceData, 'kpi_meta.alerta_ano_encerrado') }}
+        </div>
+    @endif
+
     @if (! empty($performanceData['kpis']))
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             @foreach ($performanceData['kpis'] as $kpi)
-                <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-3">
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 leading-tight">{{ $kpi['label'] ?? '—' }}</p>
+                <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-3 flex flex-col gap-1">
+                    <p class="text-xs font-medium text-gray-700 dark:text-gray-300 leading-tight">{{ $kpi['label'] ?? '—' }}</p>
+                    @if (! empty($kpi['formula']))
+                        <p class="text-[11px] font-mono text-gray-500 dark:text-gray-400 leading-snug">{{ $kpi['formula'] }}</p>
+                    @endif
+                    @if (! empty($kpi['description']))
+                        <p class="text-[11px] text-gray-600 dark:text-gray-400 leading-snug">{{ $kpi['description'] }}</p>
+                    @endif
                     <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">
                         @if (($kpi['percent'] ?? null) !== null)
                             {{ number_format((float) $kpi['percent'], 1, ',', '.') }}%
@@ -53,6 +70,7 @@
         }
     @endphp
     @if ($perfCharts !== [])
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('No gráfico de barras horizontais, a taxa combinada «abandono + remanejamento» não é mostrada (é a soma das duas taxas já representadas).') }}</p>
         <div class="grid grid-cols-1 gap-6">
             @foreach ($perfCharts as $idx => $chart)
                 <x-dashboard.chart-panel :chart="$chart" :exportFilename="'desempenho-'.$idx" />

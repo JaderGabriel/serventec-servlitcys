@@ -77,7 +77,20 @@ class AnalyticsDashboardController extends Controller
 
         $performanceData = $yearFilterReady
             ? $performanceRepository->snapshot($city, $filters)
-            : ['rows' => [], 'message' => '', 'error' => null, 'chart' => null, 'charts' => []];
+            : [
+                'rows' => [],
+                'message' => '',
+                'error' => null,
+                'chart' => null,
+                'charts' => [],
+                'kpis' => [],
+                'kpi_meta' => [
+                    'total_matriculas' => 0,
+                    'campo_situacao' => '',
+                    'denominador_texto' => '',
+                    'alerta_ano_encerrado' => null,
+                ],
+            ];
 
         $attendanceData = $yearFilterReady
             ? $attendanceRepository->snapshot($city, $filters)

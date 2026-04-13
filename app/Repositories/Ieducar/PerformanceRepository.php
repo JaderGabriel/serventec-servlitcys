@@ -10,6 +10,7 @@ use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\IeducarSqlPlaceholders;
 use App\Support\Ieducar\MatriculaAtivoFilter;
+use App\Support\Ieducar\MatriculaChartQueries;
 use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
@@ -39,7 +40,13 @@ class PerformanceRepository
      *   error: ?string,
      *   chart: ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>},
      *   charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}>,
-     *   kpis: list<array{id: string, label: string, percent: ?float, quantidade: int}>,
+     *   kpis: list<array<string, mixed>>,
+     *   kpi_meta: array{
+     *     total_matriculas: int,
+     *     campo_situacao: string,
+     *     denominador_texto: string,
+     *     alerta_ano_encerrado: ?string
+     *   },
      *   distorcao_pct: ?float,
      *   distorcao_note: ?string
      * }
@@ -53,6 +60,12 @@ class PerformanceRepository
             'chart' => null,
             'charts' => [],
             'kpis' => [],
+            'kpi_meta' => [
+                'total_matriculas' => 0,
+                'campo_situacao' => '',
+                'denominador_texto' => '',
+                'alerta_ano_encerrado' => null,
+            ],
             'distorcao_pct' => null,
             'distorcao_note' => null,
         ];
@@ -73,6 +86,12 @@ class PerformanceRepository
                         'chart' => null,
                         'charts' => [],
                         'kpis' => [],
+                        'kpi_meta' => [
+                            'total_matriculas' => 0,
+                            'campo_situacao' => $col,
+                            'denominador_texto' => '',
+                            'alerta_ano_encerrado' => null,
+                        ],
                         'distorcao_pct' => null,
                         'distorcao_note' => null,
                     ];
@@ -96,6 +115,12 @@ class PerformanceRepository
                         'chart' => null,
                         'charts' => [],
                         'kpis' => [],
+                        'kpi_meta' => [
+                            'total_matriculas' => 0,
+                            'campo_situacao' => $col,
+                            'denominador_texto' => '',
+                            'alerta_ano_encerrado' => null,
+                        ],
                         'distorcao_pct' => null,
                         'distorcao_note' => null,
                     ];
@@ -109,28 +134,38 @@ class PerformanceRepository
                         'chart' => null,
                         'charts' => [],
                         'kpis' => [],
+                        'kpi_meta' => [
+                            'total_matriculas' => 0,
+                            'campo_situacao' => $col,
+                            'denominador_texto' => '',
+                            'alerta_ano_encerrado' => null,
+                        ],
                         'distorcao_pct' => null,
                         'distorcao_note' => null,
                     ];
                 }
 
                 $counts = [];
-                $labels = [];
-                $values = [];
-                $tableRows = [];
                 foreach ($rows as $row) {
                     $k = $row->chave;
                     $c = (int) ($row->c ?? 0);
                     $key = $this->normalizeSituacaoKey($k);
-                    $counts[$key] = $c;
-                    $label = $this->labelSituacaoMatricula($k);
+                    $counts[$key] = ($counts[$key] ?? 0) + $c;
+                }
+                arsort($counts);
+
+                $labels = [];
+                $values = [];
+                $tableRows = [];
+                foreach ($counts as $key => $c) {
+                    $label = $this->labelSituacaoMatricula($key === '' ? null : $key);
                     $labels[] = $label;
                     $values[] = $c;
                     $tableRows[] = ['label' => $label, 'quantidade' => $c];
                 }
 
                 $total = array_sum($counts);
-                $ind = $this->buildIndicadoresRede($counts, $total);
+                $ind = $this->buildIndicadoresRede($counts, $total, $filters, $col);
 
                 $charts = [];
 
@@ -149,14 +184,14 @@ class PerformanceRepository
                 $kpiBarLabels = [];
                 $kpiBarVals = [];
                 foreach ($ind['kpis'] as $kpi) {
-                    if ($kpi['percent'] !== null) {
-                        $kpiBarLabels[] = $kpi['label'];
+                    if (($kpi['include_in_bar_chart'] ?? true) && $kpi['percent'] !== null) {
+                        $kpiBarLabels[] = (string) ($kpi['chart_label'] ?? $kpi['label']);
                         $kpiBarVals[] = $kpi['percent'];
                     }
                 }
                 if ($kpiBarLabels !== []) {
                     $charts[] = ChartPayload::barHorizontal(
-                        __('Taxas sobre o total de matrículas (rede)'),
+                        __('Taxas sobre o total de matrículas activas (mesmo denominador)'),
                         __('Percentagem'),
                         $kpiBarLabels,
                         $kpiBarVals
@@ -171,6 +206,11 @@ class PerformanceRepository
                 );
                 $charts[] = $chart;
 
+                $distorcaoChart = MatriculaChartQueries::distorcaoIdadeSerieRedeChart($db, $city, $filters);
+                if ($distorcaoChart !== null) {
+                    array_unshift($charts, $distorcaoChart);
+                }
+
                 [$distorcaoPct, $distorcaoNote] = $this->tryDistorcaoRede($db, $city);
 
                 return [
@@ -180,6 +220,7 @@ class PerformanceRepository
                     'chart' => $chart,
                     'charts' => $charts,
                     'kpis' => $ind['kpis'],
+                    'kpi_meta' => $ind['kpi_meta'],
                     'distorcao_pct' => $distorcaoPct,
                     'distorcao_note' => $distorcaoNote,
                 ];
@@ -192,6 +233,12 @@ class PerformanceRepository
                 'chart' => null,
                 'charts' => [],
                 'kpis' => [],
+                'kpi_meta' => [
+                    'total_matriculas' => 0,
+                    'campo_situacao' => '',
+                    'denominador_texto' => '',
+                    'alerta_ano_encerrado' => null,
+                ],
                 'distorcao_pct' => null,
                 'distorcao_note' => null,
             ];
@@ -200,9 +247,18 @@ class PerformanceRepository
 
     /**
      * @param  array<string, int>  $counts
-     * @return array{buckets: list<array{label: string, q: int}>, kpis: list<array{id: string, label: string, percent: ?float, quantidade: int}>}
+     * @return array{
+     *   buckets: list<array{label: string, q: int}>,
+     *   kpis: list<array<string, mixed>>,
+     *   kpi_meta: array{
+     *     total_matriculas: int,
+     *     campo_situacao: string,
+     *     denominador_texto: string,
+     *     alerta_ano_encerrado: ?string
+     *   }
+     * }
      */
-    private function buildIndicadoresRede(array $counts, int $total): array
+    private function buildIndicadoresRede(array $counts, int $total, IeducarFilterState $filters, string $situacaoCol): array
     {
         $pct = static function (int $n) use ($total): ?float {
             if ($total <= 0) {
@@ -242,23 +298,133 @@ class PerformanceRepository
 
         $evasaoComb = $aband + $remanej;
 
+        $denominadorTxt = __(
+            'Denominador comum: :total matrículas com matricula.ativo conforme configuração, campo «:col» (situação) agrupado por código i-Educar, com os filtros de ano/turma aplicados.',
+            ['total' => $total, 'col' => $situacaoCol]
+        );
+
+        $emPct = $pct($emCurso);
+        $yearVal = $filters->yearFilterValue();
+        $currentYear = (int) date('Y');
+        $alertaAno = null;
+        if ($yearVal !== null && $yearVal < $currentYear && $emPct !== null && $emPct >= 30.0) {
+            $alertaAno = __(
+                'O ano letivo seleccionado já terminou, mas uma parte relevante das matrículas aparece como «em curso / exame / paralela» (códigos 1, 4 e 7). Isso costuma indicar que a situação final ainda não foi actualizada no i-Educar — não é uma taxa pedagógica de «andamento» do ano.'
+            );
+        }
+
+        $kpi = function (
+            string $id,
+            string $label,
+            string $chartLabel,
+            string $desc,
+            string $formula,
+            ?float $p,
+            int $q,
+            bool $inBar
+        ) {
+            return [
+                'id' => $id,
+                'label' => $label,
+                'chart_label' => $chartLabel,
+                'description' => $desc,
+                'formula' => $formula,
+                'percent' => $p,
+                'quantidade' => $q,
+                'include_in_bar_chart' => $inBar,
+            ];
+        };
+
         $kpis = [
-            ['id' => 'aprovacao', 'label' => __('Taxa de aprovação'), 'percent' => $pct($aprov), 'quantidade' => $aprov],
-            ['id' => 'reprovacao', 'label' => __('Taxa de reprovação'), 'percent' => $pct($reprov), 'quantidade' => $reprov],
-            ['id' => 'em_curso', 'label' => __('Taxa em curso / exame'), 'percent' => $pct($emCurso), 'quantidade' => $emCurso],
-            ['id' => 'reclassificacao', 'label' => __('Taxa de reclassificação'), 'percent' => $pct($reclass), 'quantidade' => $reclass],
-            ['id' => 'abandono', 'label' => __('Taxa de abandono'), 'percent' => $pct($aband), 'quantidade' => $aband],
-            ['id' => 'remanejamento', 'label' => __('Taxa de remanejamento'), 'percent' => $pct($remanej), 'quantidade' => $remanej],
-            ['id' => 'evasao', 'label' => __('Abandono + remanejamento (fluxo para fora)'), 'percent' => $pct($evasaoComb), 'quantidade' => $evasaoComb],
+            $kpi(
+                'aprovacao',
+                __('Taxa de aprovação'),
+                __('Aprovação — cód. 2, 5, 12, 13, 14'),
+                __('Percentagem de matrículas cuja situação corresponde a aprovação (códigos i-Educar 2, 5, 12, 13 e 14) em relação ao total de matrículas activas no filtro.'),
+                __('(matrículas com situação ∈ {2,5,12,13,14}) ÷ (total de matrículas no denominador) × 100'),
+                $pct($aprov),
+                $aprov,
+                true
+            ),
+            $kpi(
+                'reprovacao',
+                __('Taxa de reprovação'),
+                __('Reprovação — cód. 3, 6, 8'),
+                __('Percentagem de matrículas com reprovação, retido ou reprovação por faltas (códigos 3, 6 e 8).'),
+                __('(situação ∈ {3,6,8}) ÷ (total) × 100'),
+                $pct($reprov),
+                $reprov,
+                true
+            ),
+            $kpi(
+                'em_curso',
+                __('Taxa «em curso / exame / paralela»'),
+                __('Em curso / exame / paralela — cód. 1, 4, 7'),
+                __('Percentagem com situação «em curso», «em exame» ou «paralela» (códigos 1, 4 e 7). O campo reflecte o estado no registo; em anos já encerrados, valores muito altos indicam sobretudo falta de fecho/actualização da situação na base.'),
+                __('(situação ∈ {1,4,7}) ÷ (total) × 100'),
+                $pct($emCurso),
+                $emCurso,
+                true
+            ),
+            $kpi(
+                'reclassificacao',
+                __('Taxa de reclassificação'),
+                __('Reclassificação — cód. 10'),
+                __('Percentagem com situação «reclassificado» (código 10).'),
+                __('(situação = 10) ÷ (total) × 100'),
+                $pct($reclass),
+                $reclass,
+                true
+            ),
+            $kpi(
+                'abandono',
+                __('Taxa de abandono'),
+                __('Abandono — cód. 11'),
+                __('Percentagem com situação «abandono» (código 11).'),
+                __('(situação = 11) ÷ (total) × 100'),
+                $pct($aband),
+                $aband,
+                true
+            ),
+            $kpi(
+                'remanejamento',
+                __('Taxa de remanejamento'),
+                __('Remanejamento — cód. 16'),
+                __('Percentagem com situação «remanejado» (código 16).'),
+                __('(situação = 16) ÷ (total) × 100'),
+                $pct($remanej),
+                $remanej,
+                true
+            ),
+            $kpi(
+                'evasao',
+                __('Taxa abandono + remanejamento (combinada)'),
+                __('Abandono + remanejamento'),
+                __('Soma das matrículas com abandono ou remanejamento (códigos 11 e 16). A percentagem é (11+16)÷total; coincide com a soma das percentagens de abandono e remanejamento. Não entra no gráfico de barras para evitar redundância com as duas anteriores.'),
+                __('((situação = 11) + (situação = 16)) ÷ (total) × 100'),
+                $pct($evasaoComb),
+                $evasaoComb,
+                false
+            ),
         ];
 
-        return ['buckets' => $buckets, 'kpis' => $kpis];
+        $kpiMeta = [
+            'total_matriculas' => $total,
+            'campo_situacao' => $situacaoCol,
+            'denominador_texto' => $denominadorTxt,
+            'alerta_ano_encerrado' => $alertaAno,
+        ];
+
+        return ['buckets' => $buckets, 'kpis' => $kpis, 'kpi_meta' => $kpiMeta];
     }
 
     private function normalizeSituacaoKey(mixed $v): string
     {
         if ($v === null || $v === '') {
             return '';
+        }
+        if (is_numeric($v)) {
+            return (string) (int) $v;
         }
 
         return (string) $v;

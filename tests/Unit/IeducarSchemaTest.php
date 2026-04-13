@@ -128,4 +128,34 @@ class IeducarSchemaTest extends TestCase
 
         $this->assertSame(['turno'], IeducarSchema::turnoTableCandidates($city));
     }
+
+    public function test_raca_table_candidates_for_pgsql_include_fallbacks(): void
+    {
+        config([
+            'ieducar.schema' => '',
+            'ieducar.pgsql_default_schema' => 'pmieducar',
+            'ieducar.pgsql_schema_cadastro' => 'cadastro',
+            'ieducar.tables.raca' => 'cadastro.raca',
+            'ieducar.tables.raca_fallbacks' => '',
+        ]);
+        $city = new City(['db_driver' => City::DRIVER_PGSQL]);
+
+        $c = IeducarSchema::racaTableCandidates($city);
+
+        $this->assertContains('cadastro.raca', $c);
+        $this->assertContains('public.raca', $c);
+        $this->assertContains('pmieducar.raca', $c);
+    }
+
+    public function test_raca_table_candidates_mysql_only_resolved_primary(): void
+    {
+        config(['ieducar.tables.raca' => 'cadastro.raca']);
+
+        $city = new City([
+            'db_driver' => City::DRIVER_MYSQL,
+            'db_port' => 3306,
+        ]);
+
+        $this->assertSame(['raca'], IeducarSchema::racaTableCandidates($city));
+    }
 }

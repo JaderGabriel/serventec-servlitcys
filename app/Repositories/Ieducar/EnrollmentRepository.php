@@ -38,6 +38,7 @@ class EnrollmentRepository
 
                     $charts = [];
                     foreach ([
+                        fn () => MatriculaChartQueries::distorcaoIdadeSerieRedeChart($db, $city, $filters),
                         fn () => MatriculaChartQueries::matriculasPorNivelEnsinoEducacenso($db, $city, $filters),
                         fn () => MatriculaChartQueries::matriculasPorSerieEducacensoCompleto($db, $city, $filters),
                         fn () => MatriculaChartQueries::matriculasPorCursoEducacensoCompleto($db, $city, $filters),

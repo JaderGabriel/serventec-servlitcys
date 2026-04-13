@@ -55,7 +55,7 @@ class InclusionRepository
                         $charts[] = $racaChart;
                     } else {
                         $notes[] = __(
-                            'Não foi possível montar o gráfico de raça/cor automaticamente. Verifique tabelas aluno, pessoa e raca em config/ieducar.php ou defina IEDUCAR_SQL_INCLUSION_RACA.'
+                            'Não foi possível montar o gráfico de raça/cor automaticamente. Confirme IEDUCAR_TABLE_RACA (cadastro.raca), colunas em pessoa/aluno (ref_cod_raca), IEDUCAR_TABLE_RACA_FALLBACKS ou defina IEDUCAR_SQL_INCLUSION_RACA.'
                         );
                     }
                 }
@@ -88,47 +88,79 @@ class InclusionRepository
             $mat = IeducarSchema::resolveTable('matricula', $city);
             $aluno = IeducarSchema::resolveTable('aluno', $city);
             $pessoa = IeducarSchema::resolveTable('pessoa', $city);
-            $raca = IeducarSchema::resolveTable('raca', $city);
+
+            if (! IeducarColumnInspector::tableExists($db, $mat, $city)
+                || ! IeducarColumnInspector::tableExists($db, $aluno, $city)) {
+                return null;
+            }
+
+            $racaSpec = self::resolveRacaJoinSpec($db, $city);
+            if ($racaSpec === null) {
+                return null;
+            }
+
+            $racaT = $racaSpec['qualified'];
+            $rIdCol = $racaSpec['idCol'];
+            $rNameCol = $racaSpec['nameCol'];
 
             $mAluno = (string) config('ieducar.columns.matricula.aluno');
             $mAtivo = (string) config('ieducar.columns.matricula.ativo');
             $aId = (string) config('ieducar.columns.aluno.id');
-            $aPessoa = (string) config('ieducar.columns.aluno.pessoa');
-            $pId = (string) config('ieducar.columns.pessoa.id');
-            $pRaca = IeducarColumnInspector::firstExistingColumn($db, $pessoa, array_filter([
-                (string) config('ieducar.columns.pessoa.raca'),
-                'ref_cod_raca',
-                'cod_raca',
+            $aPessoa = IeducarColumnInspector::firstExistingColumn($db, $aluno, array_filter([
+                (string) config('ieducar.columns.aluno.pessoa'),
+                'ref_cod_pessoa',
+                'ref_idpes',
+                'idpes',
             ]), $city);
-            $rId = (string) config('ieducar.columns.raca.id');
-            $rName = (string) config('ieducar.columns.raca.name');
-            $rId = IeducarColumnInspector::firstExistingColumn($db, $raca, array_filter([
-                $rId,
-                'cod_raca',
-                'id',
-            ]), $city) ?? $rId;
-            $rName = IeducarColumnInspector::firstExistingColumn($db, $raca, array_filter([
-                $rName,
-                'nm_raca',
-                'nome',
-            ]), $city) ?? $rName;
-
-            if ($pRaca === null || $rId === '' || $rName === '') {
+            if ($aPessoa === null) {
                 return null;
             }
 
+            $pRaca = null;
+            $pId = null;
+            if (IeducarColumnInspector::tableExists($db, $pessoa, $city)) {
+                $pId = IeducarColumnInspector::firstExistingColumn($db, $pessoa, array_filter([
+                    (string) config('ieducar.columns.pessoa.id'),
+                    'idpes',
+                    'id',
+                    'cod_pessoa',
+                ]), $city);
+                $pRaca = IeducarColumnInspector::firstExistingColumn($db, $pessoa, array_filter([
+                    (string) config('ieducar.columns.pessoa.raca'),
+                    'ref_cod_raca',
+                    'cod_raca',
+                    'id_raca',
+                    'raca_id',
+                ]), $city);
+            }
+
+            $aRaca = null;
+            if ($pRaca === null) {
+                $aRaca = IeducarColumnInspector::firstExistingColumn($db, $aluno, array_filter([
+                    'ref_cod_raca',
+                    'cod_raca',
+                    'id_raca',
+                ]), $city);
+            }
+
             $q = $db->table($mat.' as m')
-                ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
-                ->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId)
-                ->leftJoin($raca.' as r', 'p.'.$pRaca, '=', 'r.'.$rId)
-                ->selectRaw('r.'.$rId.' as rid')
-                ->selectRaw('r.'.$rName.' as rname')
+                ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
+
+            if ($pRaca !== null && $pId !== null) {
+                $q->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId)
+                    ->leftJoin($racaT.' as r', 'p.'.$pRaca, '=', 'r.'.$rIdCol);
+            } elseif ($aRaca !== null) {
+                $q->leftJoin($racaT.' as r', 'a.'.$aRaca, '=', 'r.'.$rIdCol);
+            } else {
+                return null;
+            }
+
+            $q->selectRaw('r.'.$rIdCol.' as rid')
+                ->selectRaw('MAX(r.'.$rNameCol.') as rname')
                 ->selectRaw('COUNT(*) as c')
-                ->groupBy('r.'.$rId)
-                ->groupBy('r.'.$rName);
+                ->groupBy('r.'.$rIdCol);
 
             MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
-
             MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
 
             $rows = $q->orderByDesc('c')->limit(16)->get();
@@ -148,6 +180,44 @@ class InclusionRepository
         } catch (QueryException|\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Primeira tabela raca acessível com colunas id + nome (para JOIN).
+     *
+     * @return array{qualified: string, idCol: string, nameCol: string}|null
+     */
+    private static function resolveRacaJoinSpec(Connection $db, City $city): ?array
+    {
+        foreach (IeducarSchema::racaTableCandidates($city) as $qualified) {
+            if (! IeducarColumnInspector::tableExists($db, $qualified, $city)) {
+                continue;
+            }
+
+            $idCol = IeducarColumnInspector::firstExistingColumn($db, $qualified, array_filter([
+                (string) config('ieducar.columns.raca.id'),
+                'cod_raca',
+                'id',
+                'codigo',
+            ]), $city);
+            $nameCol = IeducarColumnInspector::firstExistingColumn($db, $qualified, array_filter([
+                (string) config('ieducar.columns.raca.name'),
+                'nm_raca',
+                'nome',
+                'descricao',
+                'ds_raca',
+            ]), $city);
+
+            if ($idCol !== null && $nameCol !== null) {
+                return [
+                    'qualified' => $qualified,
+                    'idCol' => $idCol,
+                    'nameCol' => $nameCol,
+                ];
+            }
+        }
+
+        return null;
     }
 
     /**

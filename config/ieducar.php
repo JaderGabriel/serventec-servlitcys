@@ -90,6 +90,8 @@ return [
         'aluno' => env('IEDUCAR_TABLE_ALUNO', 'aluno'),
         'pessoa' => env('IEDUCAR_TABLE_PESSOA', 'cadastro.pessoa'),
         'raca' => env('IEDUCAR_TABLE_RACA', 'cadastro.raca'),
+        /** Tabelas adicionais para raça/cor (PostgreSQL), separadas por vírgula. */
+        'raca_fallbacks' => env('IEDUCAR_TABLE_RACA_FALLBACKS', ''),
     ],
 
     /*
@@ -188,6 +190,7 @@ return [
         ],
         'turno' => [
             'id' => env('IEDUCAR_COL_TURNO_ID', 'cod_turno'),
+            /** Em PostgreSQL (Portabilis) o rótulo costuma ser nm_turno; o painel detecta automaticamente se nome/nm_turno falharem. */
             'name' => env('IEDUCAR_COL_TURNO_NAME', 'nome'),
         ],
     ],
@@ -244,6 +247,11 @@ return [
         'inclusion_extra' => env('IEDUCAR_SQL_INCLUSION_EXTRA'),
         /** Uma linha com índice ou percentual de distorção idade/série na rede (opcional). Ex.: SELECT 12.5 AS percentual */
         'distorcao_rede' => env('IEDUCAR_SQL_DISTORCAO_REDE'),
+        /**
+         * Várias linhas para o gráfico de distorção idade/série (opcional).
+         * Colunas: label (ou name) e valor (ou value, quantidade, pct) — contagens ou percentuais por fatia.
+         */
+        'distorcao_rede_chart' => env('IEDUCAR_SQL_DISTORCAO_REDE_CHART'),
     ],
 
     /*

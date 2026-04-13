@@ -8,6 +8,7 @@ use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\IeducarSqlPlaceholders;
 use App\Support\Ieducar\MatriculaAtivoFilter;
+use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
@@ -189,7 +190,10 @@ class FilterOptionsService
     private function yearsFromTurmaTable(Connection $db, int $max, City $city): array
     {
         $table = IeducarSchema::resolveTable('turma', $city);
-        $col = config('ieducar.columns.turma.year');
+        $col = MatriculaTurmaJoin::turmaFilterColumns($db, $city)['year'];
+        if ($col === '') {
+            return [];
+        }
 
         $years = $db->table($table)
             ->select($col)

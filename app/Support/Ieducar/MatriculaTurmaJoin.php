@@ -15,6 +15,9 @@ final class MatriculaTurmaJoin
     /** @var array<string, bool> */
     private static array $pivotCache = [];
 
+    /** @var array<string, array{year: string, escola: string, curso: string, turno: string, serie: string}> */
+    private static array $turmaFilterColumnsCache = [];
+
     /**
      * Usar tabela matricula_turma quando matricula não tiver a coluna configurada (ex.: ref_cod_turma).
      */
@@ -62,27 +65,78 @@ final class MatriculaTurmaJoin
     }
 
     /**
+     * Colunas reais em pmieducar.turma para filtros (algumas bases não têm ref_cod_escola; usam cod_escola, etc.).
+     *
+     * @return array{year: string, escola: string, curso: string, turno: string, serie: string}
+     */
+    public static function turmaFilterColumns(Connection $db, City $city): array
+    {
+        $key = $city->getKey().'_'.spl_object_id($db);
+        if (isset(self::$turmaFilterColumnsCache[$key])) {
+            return self::$turmaFilterColumnsCache[$key];
+        }
+
+        $turma = IeducarSchema::resolveTable('turma', $city);
+
+        $year = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
+            (string) config('ieducar.columns.turma.year'),
+            'ano',
+            'year',
+        ]), $city) ?? 'ano';
+
+        $escola = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
+            (string) config('ieducar.columns.turma.escola'),
+            'ref_cod_escola',
+            'cod_escola',
+            'ref_escola',
+        ]), $city) ?? '';
+
+        $curso = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
+            (string) config('ieducar.columns.turma.curso'),
+            'ref_cod_curso',
+            'cod_curso',
+        ]), $city) ?? '';
+
+        $turno = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
+            (string) config('ieducar.columns.turma.turno'),
+            'ref_cod_turno',
+            'cod_turno',
+        ]), $city) ?? '';
+
+        $serie = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
+            (string) config('ieducar.columns.turma.serie'),
+            'ref_cod_serie',
+            'cod_serie',
+        ]), $city) ?? '';
+
+        return self::$turmaFilterColumnsCache[$key] = [
+            'year' => $year,
+            'escola' => $escola,
+            'curso' => $curso,
+            'turno' => $turno,
+            'serie' => $serie,
+        ];
+    }
+
+    /**
      * Filtros de dimensão na turma (ano letivo, escola, curso, turno).
      */
-    public static function applyTurmaFiltersWhere(Builder $q, City $city, IeducarFilterState $filters, string $turmaAlias = 't_filter'): void
+    public static function applyTurmaFiltersWhere(Builder $q, Connection $db, City $city, IeducarFilterState $filters, string $turmaAlias = 't_filter'): void
     {
+        $cols = self::turmaFilterColumns($db, $city);
         $yearVal = $filters->yearFilterValue();
-        $year = (string) config('ieducar.columns.turma.year');
-        $escola = (string) config('ieducar.columns.turma.escola');
-        $curso = (string) config('ieducar.columns.turma.curso');
-        $turno = (string) config('ieducar.columns.turma.turno');
 
-        if ($yearVal !== null && $year !== '') {
-            $q->where($turmaAlias.'.'.$year, $yearVal);
+        if ($yearVal !== null && $cols['year'] !== '') {
+            $q->where($turmaAlias.'.'.$cols['year'], $yearVal);
         }
-        if ($filters->escola_id !== null && $escola !== '') {
-            $q->where($turmaAlias.'.'.$escola, $filters->escola_id);
+        if ($filters->escola_id !== null && $cols['escola'] !== '') {
+            $q->where($turmaAlias.'.'.$cols['escola'], $filters->escola_id);
         }
-        if ($filters->curso_id !== null && $curso !== '') {
-            $q->where($turmaAlias.'.'.$curso, $filters->curso_id);
+        if ($filters->curso_id !== null && $cols['curso'] !== '') {
+            $q->where($turmaAlias.'.'.$cols['curso'], $filters->curso_id);
         }
-        if ($filters->turno_id !== null && $turno !== '') {
-            $q->where($turmaAlias.'.'.$turno, $filters->turno_id);
+        if ($filters->turno_id !== null && $cols['turno'] !== '') {
+            $q->where($turmaAlias.'.'.$cols['turno'], $filters->turno_id);
         }
     }
 
@@ -103,7 +157,7 @@ final class MatriculaTurmaJoin
 
         self::joinMatriculaToTurma($q, $db, $city, 'm');
         self::applyPivotAtivoIfNeeded($q, $db, $city);
-        self::applyTurmaFiltersWhere($q, $city, $filters, 't_filter');
+        self::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\MatriculaChartQueries;
+use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 
@@ -132,24 +133,21 @@ class OverviewRepository
     {
         try {
             $table = IeducarSchema::resolveTable('turma', $city);
-            $year = (string) config('ieducar.columns.turma.year');
-            $escola = (string) config('ieducar.columns.turma.escola');
-            $curso = (string) config('ieducar.columns.turma.curso');
-            $turno = (string) config('ieducar.columns.turma.turno');
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
 
             $q = $db->table($table);
             $yearVal = $filters->yearFilterValue();
-            if ($yearVal !== null && $year !== '') {
-                $q->where($year, $yearVal);
+            if ($yearVal !== null && $tc['year'] !== '') {
+                $q->where($tc['year'], $yearVal);
             }
-            if ($filters->escola_id && $escola !== '') {
-                $q->where($escola, $filters->escola_id);
+            if ($filters->escola_id && $tc['escola'] !== '') {
+                $q->where($tc['escola'], $filters->escola_id);
             }
-            if ($filters->curso_id && $curso !== '') {
-                $q->where($curso, $filters->curso_id);
+            if ($filters->curso_id && $tc['curso'] !== '') {
+                $q->where($tc['curso'], $filters->curso_id);
             }
-            if ($filters->turno_id && $turno !== '') {
-                $q->where($turno, $filters->turno_id);
+            if ($filters->turno_id && $tc['turno'] !== '') {
+                $q->where($tc['turno'], $filters->turno_id);
             }
 
             return (int) $q->count();

@@ -41,7 +41,7 @@ class EquityRepository
                     $charts[] = $sex;
                 } else {
                     $notes[] = __(
-                        'Gráfico por sexo indisponível: verifique a coluna em cadastro.pessoa (IEDUCAR_COL_PESSOA_SEXO) ou a ligação aluno ↔ pessoa.'
+                        'Gráfico por sexo indisponível: confirme cadastro.pessoa (colunas sexo / tipo_sexo / idsexo, etc.), IEDUCAR_TABLE_PESSOA / IEDUCAR_TABLE_ALUNO e as colunas IEDUCAR_COL_ALUNO_PESSOA e IEDUCAR_COL_PESSOA_ID (idpes).'
                     );
                 }
 

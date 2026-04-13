@@ -71,8 +71,13 @@ class NetworkRepository
 
                 if ($charts === []) {
                     $notes[] = __(
-                        'Não foi possível montar gráficos de rede/oferta. Confirme turma, turno, série e escola em config/ieducar.php.'
+                        'Nenhum gráfico de rede/oferta foi gerado. Confirme em config/ieducar.php: turma (e pivô matricula_turma se aplicável), turno, série, escola, curso, coluna de capacidade na turma (max_aluno), e filtros (ano / escola / segmento / turno).'
                     );
+                    if (is_array($kpis) && (int) ($kpis['matriculas'] ?? 0) > 0) {
+                        $notes[] = __(
+                            'Existem matrículas no filtro, mas as consultas de gráfico falharam (por exemplo ligação turma→turno/escola/série ou nomes de colunas diferentes de «nome» / «nm_curso» / «nm_serie»). Verifique os JOINs na base ou defina IEDUCAR_COL_* nas tabelas correspondentes.'
+                        );
+                    }
                 }
             });
         } catch (\Throwable $e) {

@@ -2,7 +2,7 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Totais por nível de ensino, série e curso (estrutura Educacenso), escolas principais, turno, oferta e vagas. KPIs no topo: matrículas activas, turmas com alunos e ocupação média quando existir max_aluno na turma.') }}
+        {{ __('Inclui distorção idade/série (rede) quando a base tiver data de nascimento e idade mínima/máxima na série; totais por nível de ensino, série e curso (Educacenso), escolas principais, turno, oferta e vagas. KPIs no topo: matrículas activas, turmas com alunos e ocupação média quando existir max_aluno na turma.') }}
     </p>
 
     @if (! empty($enrollmentData['kpis']))
