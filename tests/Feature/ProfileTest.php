@@ -31,7 +31,6 @@ class ProfileTest extends TestCase
                 'name' => 'Test User',
                 'username' => $user->username,
                 'email' => 'test@example.com',
-                'birth_date' => '1990-05-15',
             ]);
 
         $response
@@ -55,7 +54,6 @@ class ProfileTest extends TestCase
                 'name' => 'Test User',
                 'username' => $user->username,
                 'email' => $user->email,
-                'birth_date' => $user->birth_date->format('Y-m-d'),
             ]);
 
         $response

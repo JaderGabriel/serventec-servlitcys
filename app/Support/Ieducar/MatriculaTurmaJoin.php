@@ -27,15 +27,15 @@ final class MatriculaTurmaJoin
 
         $matTable = IeducarSchema::resolveTable('matricula', $city);
         $directCol = (string) config('ieducar.columns.matricula.turma');
-        if (IeducarColumnInspector::columnExists($db, $matTable, $directCol)) {
+        if (IeducarColumnInspector::columnExists($db, $matTable, $directCol, $city)) {
             return self::$pivotCache[$key] = false;
         }
 
         $pivotTable = IeducarSchema::resolveTable('matricula_turma', $city);
         $cMat = (string) config('ieducar.columns.matricula_turma.matricula');
         $cTurma = (string) config('ieducar.columns.matricula_turma.turma');
-        $out = IeducarColumnInspector::columnExists($db, $pivotTable, $cMat)
-            && IeducarColumnInspector::columnExists($db, $pivotTable, $cTurma);
+        $out = IeducarColumnInspector::columnExists($db, $pivotTable, $cMat, $city)
+            && IeducarColumnInspector::columnExists($db, $pivotTable, $cTurma, $city);
 
         return self::$pivotCache[$key] = $out;
     }

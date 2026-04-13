@@ -285,7 +285,7 @@ final class MatriculaChartQueries
         try {
             $pessoa = IeducarSchema::resolveTable('pessoa', $city);
             $sexoCol = (string) config('ieducar.columns.pessoa.sexo');
-            if ($sexoCol === '' || ! IeducarColumnInspector::columnExists($db, $pessoa, $sexoCol)) {
+            if ($sexoCol === '' || ! IeducarColumnInspector::columnExists($db, $pessoa, $sexoCol, $city)) {
                 return null;
             }
 

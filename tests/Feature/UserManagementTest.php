@@ -37,7 +37,6 @@ class UserManagementTest extends TestCase
             'name' => 'Novo Utilizador',
             'username' => 'novo_utilizador',
             'email' => 'novo@example.com',
-            'birth_date' => '1995-06-15',
             'password' => 'PasswordSegura1!',
             'password_confirmation' => 'PasswordSegura1!',
             'is_admin' => false,
@@ -49,6 +48,11 @@ class UserManagementTest extends TestCase
             'username' => 'novo_utilizador',
             'is_admin' => false,
         ]);
+
+        $created = User::query()->where('email', 'novo@example.com')->first();
+        $this->assertNotNull($created);
+        $this->assertNull($created->birth_date);
+        $this->assertNull($created->cpf);
     }
 
     public function test_non_admin_cannot_create_user_via_post(): void
@@ -59,7 +63,6 @@ class UserManagementTest extends TestCase
             'name' => 'X',
             'username' => 'user_x',
             'email' => 'x@example.com',
-            'birth_date' => '2000-01-01',
             'password' => 'PasswordSegura1!',
             'password_confirmation' => 'PasswordSegura1!',
         ])->assertForbidden();

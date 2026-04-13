@@ -7,8 +7,8 @@ use App\Models\City;
 /**
  * Resolve nomes de tabelas iEducar na base do município (MySQL ou PostgreSQL).
  *
- * Se IEDUCAR_SCHEMA estiver definido (ex.: pmieducar no PostgreSQL Portabilis),
- * prefixa as tabelas. Se o nome em config já contiver ponto (schema.tabela), não duplica.
+ * Compatível com iEducar 2.x (ex. 2.11) em PostgreSQL: vários schemas (pmieducar,
+ * cadastro, …). Tabelas já qualificadas em config (cadastro.pessoa) não são alteradas.
  *
  * Ordem do schema efetivo: tabela já qualificada (schema.tabela) > campo da cidade
  * (ieducar_schema) > IEDUCAR_SCHEMA > para pgsql sem nada acima, pgsql_default_schema

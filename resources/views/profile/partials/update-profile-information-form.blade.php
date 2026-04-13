@@ -5,7 +5,7 @@
         </h2>
 
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {{ __('Atualize nome, nome de usuário, e-mail e data de nascimento.') }}
+            {{ __('Atualize nome, nome de usuário e e-mail. A data de nascimento e o CPF foram definidos no primeiro acesso.') }}
         </p>
     </header>
 
@@ -53,12 +53,13 @@
             @endif
         </div>
 
-        <div>
-            <x-input-label for="birth_date" :value="__('Data de nascimento')" />
-            <x-text-input id="birth_date" name="birth_date" type="date" class="mt-1 block w-full" :value="old('birth_date', $user->birth_date?->format('Y-m-d'))" />
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Usada junto com o e-mail na recuperação de senha.') }}</p>
-            <x-input-error class="mt-2" :messages="$errors->get('birth_date')" />
-        </div>
+        @if ($user->birth_date && $user->cpf)
+            <div class="rounded-md border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 px-4 py-3 text-sm text-gray-700 dark:text-gray-200 space-y-1">
+                <p><span class="font-medium">{{ __('Data de nascimento') }}:</span> {{ $user->birth_date->format('d/m/Y') }}</p>
+                <p><span class="font-medium">{{ __('CPF') }}:</span> {{ \App\Support\Cpf::formatMasked($user->cpf) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Estes dados não podem ser alterados aqui; foram registados no primeiro acesso.') }}</p>
+            </div>
+        @endif
 
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Salvar') }}</x-primary-button>

@@ -40,7 +40,7 @@ class AttendanceRepository
         try {
             return $this->cityData->run($city, function (Connection $db) use ($city, $filters) {
                 $fa = IeducarSchema::resolveTable('falta_aluno', $city);
-                if (! IeducarColumnInspector::tableExists($db, $fa)) {
+                if (! IeducarColumnInspector::tableExists($db, $fa, $city)) {
                     return [
                         'rows' => [],
                         'message' => __('A tabela de faltas não existe ou não está acessível. Ajuste IEDUCAR_TABLE_FALTA_ALUNO em config/ieducar.php.'),
@@ -52,7 +52,7 @@ class AttendanceRepository
 
                 $matCol = (string) config('ieducar.columns.falta_aluno.matricula');
                 $dataCol = (string) config('ieducar.columns.falta_aluno.data');
-                if (! IeducarColumnInspector::columnExists($db, $fa, $matCol)) {
+                if (! IeducarColumnInspector::columnExists($db, $fa, $matCol, $city)) {
                     return [
                         'rows' => [],
                         'message' => __('Coluna de ligação à matrícula não encontrada em falta_aluno. Defina IEDUCAR_COL_FALTA_MATRICULA.'),
@@ -61,11 +61,11 @@ class AttendanceRepository
                         'charts' => [],
                     ];
                 }
-                if (! IeducarColumnInspector::columnExists($db, $fa, $dataCol)
-                    && IeducarColumnInspector::columnExists($db, $fa, 'data')) {
+                if (! IeducarColumnInspector::columnExists($db, $fa, $dataCol, $city)
+                    && IeducarColumnInspector::columnExists($db, $fa, 'data', $city)) {
                     $dataCol = 'data';
                 }
-                if (! IeducarColumnInspector::columnExists($db, $fa, $dataCol)) {
+                if (! IeducarColumnInspector::columnExists($db, $fa, $dataCol, $city)) {
                     return [
                         'rows' => [],
                         'message' => __('Coluna de data da falta não encontrada. Defina IEDUCAR_COL_FALTA_DATA (ex.: data_falta).'),

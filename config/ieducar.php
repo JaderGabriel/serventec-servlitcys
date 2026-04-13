@@ -4,12 +4,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Schema (PostgreSQL / iEducar Portabilis)
+    | Schema (PostgreSQL / iEducar Portabilis, ex. 2.11)
     |--------------------------------------------------------------------------
     |
-    | Ex.: pmieducar — as consultas passam a usar "pmieducar"."escola", etc.
-    | Em MySQL sem schema, deixe vazio. Também pode definir tabela completa em
-    | IEDUCAR_TABLE_* (ex.: cadastro.turno) e o prefixo não será aplicado.
+    | O iEducar usa vários schemas na mesma base (pmieducar, cadastro, public, …).
+    | As consultas do painel qualificam tabelas via IeducarSchema; cadastro.pessoa,
+    | cadastro.turno, etc. vêm de config com ponto e não são prefixados outra vez.
+    |
+    | Por cidade, defina o schema principal em cities.ieducar_schema (ex.: pmieducar).
+    | CityDataConnection coloca esse schema primeiro no search_path PostgreSQL e junta
+    | IEDUCAR_PGSQL_SEARCH_PATH sem duplicar — alinhado às instalações 2.x.
+    |
+    | Em MySQL sem schema, deixe vazio. Tabelas completas em IEDUCAR_TABLE_* (ex.:
+    | cadastro.turno) não recebem prefixo do schema global.
     |
     */
 
@@ -34,10 +41,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | search_path na conexão PostgreSQL (bases Portabilis)
+    | search_path na conexão PostgreSQL (bases Portabilis / iEducar 2.x)
     |--------------------------------------------------------------------------
     |
-    | Permite resolver nomes curtos (matricula, escola) como no iEducar.
+    | Lista de schemas adicionais após o schema principal da cidade (sempre primeiro
+    | em runtime). Inclua cadastro para cadastro.* e public se necessário.
     |
     */
 

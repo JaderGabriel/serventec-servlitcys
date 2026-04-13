@@ -41,7 +41,7 @@ class PerformanceRepository
             return $this->cityData->run($city, function (Connection $db) use ($city, $filters) {
                 $mat = IeducarSchema::resolveTable('matricula', $city);
                 $col = (string) config('ieducar.columns.matricula_situacao.aprovado');
-                if ($col === '' || ! IeducarColumnInspector::columnExists($db, $mat, $col)) {
+                if ($col === '' || ! IeducarColumnInspector::columnExists($db, $mat, $col, $city)) {
                     return [
                         'rows' => [],
                         'message' => __('Não foi encontrada a coluna de situação na tabela de matrícula. Defina IEDUCAR_COL_MATRICULA_APROVADO (por defeito «aprovado») em config/ieducar.php.'),

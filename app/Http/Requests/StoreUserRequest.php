@@ -24,7 +24,6 @@ class StoreUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', Rule::unique(User::class, 'username')],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'birth_date' => ['required', 'date'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'is_admin' => ['boolean'],
         ];

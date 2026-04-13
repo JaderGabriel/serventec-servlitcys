@@ -9,9 +9,9 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        $email = (string) 'jadergabriel8@gmail.com';
-        $plainPassword = (string) '123456789';
-        $username = (string) 'jadergabriel';
+        $email = (string) '';
+        $plainPassword = (string) '';
+        $username = (string) '';
 
         User::query()->updateOrCreate(
             ['email' => $email],
@@ -19,7 +19,8 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Administrador',
                 'username' => $username,
                 'password' => $plainPassword,
-                'birth_date' => env('ADMIN_BIRTH_DATE', '1993-08-07'),
+                'birth_date' => env('ADMIN_BIRTH_DATE', '1990-31-12'),
+                'cpf' => env('ADMIN_CPF', ''),
                 'is_admin' => true,
                 'email_verified_at' => now(),
             ]

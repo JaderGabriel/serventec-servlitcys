@@ -45,10 +45,7 @@ class CityDataConnection
         ]);
 
         if ($driver === City::DRIVER_PGSQL) {
-            $searchPath = trim((string) config('ieducar.pgsql_search_path', 'pmieducar,cadastro,public'));
-            if ($searchPath !== '') {
-                $connection['search_path'] = $searchPath;
-            }
+            $connection['search_path'] = $this->buildPgsqlSearchPathForCity($city);
         }
 
         Config::set("database.connections.{$name}", $connection);
@@ -57,6 +54,38 @@ class CityDataConnection
     public function purge(City $city): void
     {
         DB::purge($this->connectionName($city));
+    }
+
+    /**
+     * Monta o search_path do PostgreSQL para iEducar (ex.: 2.x Portabilis): o schema principal
+     * da cidade vem primeiro (pmieducar ou o definido em cities.ieducar_schema), depois os
+     * restantes de config (cadastro, public, …), sem duplicar — importante quando há vários
+     * schemas na mesma base e tabelas qualificadas como cadastro.pessoa.
+     */
+    private function buildPgsqlSearchPathForCity(City $city): string
+    {
+        $configured = trim((string) config('ieducar.pgsql_search_path', 'pmieducar,cadastro,public'));
+        $fromConfig = array_values(array_filter(array_map('trim', explode(',', $configured)), static fn (string $s): bool => $s !== ''));
+
+        $main = trim((string) ($city->ieducar_schema ?? ''));
+        if ($main === '') {
+            $main = trim((string) config('ieducar.schema', ''));
+        }
+        if ($main === '') {
+            $main = trim((string) config('ieducar.pgsql_default_schema', '')) ?: 'pmieducar';
+        }
+
+        $ordered = [];
+        if ($main !== '') {
+            $ordered[] = $main;
+        }
+        foreach ($fromConfig as $schema) {
+            if (! in_array($schema, $ordered, true)) {
+                $ordered[] = $schema;
+            }
+        }
+
+        return $ordered !== [] ? implode(',', $ordered) : 'public';
     }
 
     /**

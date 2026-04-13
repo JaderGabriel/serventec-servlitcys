@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'username', 'email', 'birth_date', 'password', 'is_admin'])]
+#[Fillable(['name', 'username', 'email', 'birth_date', 'cpf', 'password', 'is_admin'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -30,5 +30,19 @@ class User extends Authenticatable
             'is_admin' => 'boolean',
             'birth_date' => 'date',
         ];
+    }
+
+    /**
+     * Data de nascimento e CPF são obrigatórios após o primeiro login (não no cadastro pelo admin).
+     */
+    public function needsProfileCompletion(): bool
+    {
+        if ($this->birth_date === null) {
+            return true;
+        }
+
+        $cpf = $this->cpf;
+
+        return $cpf === null || $cpf === '';
     }
 }

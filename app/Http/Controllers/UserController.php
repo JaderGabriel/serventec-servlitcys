@@ -22,7 +22,6 @@ class UserController extends Controller
             'name' => $request->validated('name'),
             'username' => $request->validated('username'),
             'email' => $request->validated('email'),
-            'birth_date' => $request->validated('birth_date'),
             'password' => $request->validated('password'),
             'is_admin' => $request->validated('is_admin'),
             'email_verified_at' => now(),

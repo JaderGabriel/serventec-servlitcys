@@ -313,13 +313,13 @@ class FilterOptionsService
         $idCol = (string) config("ieducar.columns.{$logical}.id");
         $nameCol = (string) config("ieducar.columns.{$logical}.name");
 
-        if ($logical === 'escola' && $nameCol === 'nome' && ! IeducarColumnInspector::columnExists($db, $table, 'nome')
-            && IeducarColumnInspector::columnExists($db, $table, 'fantasia')) {
+        if ($logical === 'escola' && $nameCol === 'nome' && ! IeducarColumnInspector::columnExists($db, $table, 'nome', $city)
+            && IeducarColumnInspector::columnExists($db, $table, 'fantasia', $city)) {
             $nameCol = 'fantasia';
         }
 
-        if ($logical === 'turno' && ! IeducarColumnInspector::columnExists($db, $table, $idCol)
-            && IeducarColumnInspector::columnExists($db, $table, 'id')) {
+        if ($logical === 'turno' && ! IeducarColumnInspector::columnExists($db, $table, $idCol, $city)
+            && IeducarColumnInspector::columnExists($db, $table, 'id', $city)) {
             $idCol = 'id';
         }
 
