@@ -99,6 +99,10 @@ return [
         'raca_fallbacks' => env('IEDUCAR_TABLE_RACA_FALLBACKS', ''),
         /** Catálogo de situações (INEP); ligação matricula.ref_cod_matricula_situacao → cod_matricula_situacao. */
         'matricula_situacao' => env('IEDUCAR_TABLE_MATRICULA_SITUACAO', 'matricula_situacao'),
+        /** Pivô aluno ↔ deficiência (Portabilis / iEducar 2.x). */
+        'aluno_deficiencia' => env('IEDUCAR_TABLE_ALUNO_DEFICIENCIA', 'aluno_deficiencia'),
+        /** Catálogo de deficiências (nome legível para classificar síndromes / altas habilidades). */
+        'deficiencia' => env('IEDUCAR_TABLE_DEFICIENCIA', 'cadastro.deficiencia'),
     ],
 
     /*
@@ -116,6 +120,8 @@ return [
         'pessoa' => env('IEDUCAR_MYSQL_TABLE_PESSOA'),
         'raca' => env('IEDUCAR_MYSQL_TABLE_RACA'),
         'matricula_situacao' => env('IEDUCAR_MYSQL_TABLE_MATRICULA_SITUACAO'),
+        'aluno_deficiencia' => env('IEDUCAR_MYSQL_TABLE_ALUNO_DEFICIENCIA'),
+        'deficiencia' => env('IEDUCAR_MYSQL_TABLE_DEFICIENCIA'),
     ],
 
     /*
@@ -197,6 +203,14 @@ return [
             'id' => env('IEDUCAR_COL_RACA_ID', 'cod_raca'),
             'name' => env('IEDUCAR_COL_RACA_NAME', 'nm_raca'),
         ],
+        'aluno_deficiencia' => [
+            'aluno' => env('IEDUCAR_COL_ALUNO_DEFICIENCIA_ALUNO', 'ref_cod_aluno'),
+            'deficiencia' => env('IEDUCAR_COL_ALUNO_DEFICIENCIA_DEF', 'ref_cod_deficiencia'),
+        ],
+        'deficiencia' => [
+            'id' => env('IEDUCAR_COL_DEFICIENCIA_ID', 'cod_deficiencia'),
+            'name' => env('IEDUCAR_COL_DEFICIENCIA_NAME', 'nm_deficiencia'),
+        ],
         'nivel_ensino' => [
             'id' => env('IEDUCAR_COL_NIVEL_ID', 'cod_nivel_ensino'),
             'name' => env('IEDUCAR_COL_NIVEL_NAME', 'nm_nivel'),
@@ -258,6 +272,10 @@ return [
         'turno_pairs' => env('IEDUCAR_SQL_TURNO'),
         'inclusion_raca' => env('IEDUCAR_SQL_INCLUSION_RACA'),
         'inclusion_extra' => env('IEDUCAR_SQL_INCLUSION_EXTRA'),
+        /** Uma linha: coluna «pct» (0–100) ou «numerador» + «denominador» (matrículas). Placeholders como inclusion_raca. */
+        'inclusion_gauge_deficiencia' => env('IEDUCAR_SQL_INCLUSION_GAUGE_DEF'),
+        'inclusion_gauge_sindrome' => env('IEDUCAR_SQL_INCLUSION_GAUGE_SINDROME'),
+        'inclusion_gauge_altas_habilidades' => env('IEDUCAR_SQL_INCLUSION_GAUGE_ALTAS_HABILIDADES'),
         /** Uma linha com índice ou percentual de distorção idade/série na rede (opcional). Ex.: SELECT 12.5 AS percentual */
         'distorcao_rede' => env('IEDUCAR_SQL_DISTORCAO_REDE'),
         /**

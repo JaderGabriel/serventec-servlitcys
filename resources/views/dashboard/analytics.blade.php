@@ -94,9 +94,9 @@
                                 @include('dashboard.analytics.partials.network', ['networkData' => $networkData])
                             </div>
                         </template>
-                        <template x-if="tab === 'equity'">
+                        <template x-if="tab === 'inclusion'">
                             <div>
-                                @include('dashboard.analytics.partials.equity', ['equityData' => $equityData])
+                                @include('dashboard.analytics.partials.inclusion', ['inclusionData' => $inclusionData])
                             </div>
                         </template>
                         <template x-if="tab === 'performance'">
@@ -107,11 +107,6 @@
                         <template x-if="tab === 'attendance'">
                             <div>
                                 @include('dashboard.analytics.partials.attendance', ['attendanceData' => $attendanceData])
-                            </div>
-                        </template>
-                        <template x-if="tab === 'inclusion'">
-                            <div>
-                                @include('dashboard.analytics.partials.inclusion', ['inclusionData' => $inclusionData])
                             </div>
                         </template>
                     </div>

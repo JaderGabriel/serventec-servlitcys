@@ -1,8 +1,8 @@
 @props(['inclusionData'])
 
-<div class="space-y-4">
+<div class="space-y-6">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Indicadores de inclusão e diversidade: raça/cor declarada no cadastro (quando as tabelas aluno, pessoa e raca estiverem acessíveis) e espaço para SQL personalizado (Necessidades educacionais, público do transporte, etc.). Os filtros do painel aplicam-se quando a consulta passa pela turma.') }}
+        {{ __('Inclusão e diversidade: medidores sobre necessidades educacionais (deficiências, síndromes/TEA, altas habilidades), distribuição por sexo e por série (equidade), raça/cor no cadastro e indicadores por SQL opcional. Os filtros do painel aplicam-se quando a consulta passa pela turma.') }}
     </p>
 
     @if (! empty($inclusionData['error']))
@@ -19,13 +19,34 @@
         </div>
     @endif
 
-    @if (! empty($inclusionData['charts']))
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            @foreach ($inclusionData['charts'] as $idx => $chart)
-                <x-dashboard.chart-panel :chart="$chart" :exportFilename="'inclusao-'.$idx" />
-            @endforeach
+    @if (! empty($inclusionData['gauges']))
+        <div>
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{{ __('Medidores (sobre matrículas activas no filtro)') }}</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                @foreach ($inclusionData['gauges'] as $idx => $gauge)
+                    <div class="space-y-2">
+                        <x-dashboard.chart-panel
+                            :chart="$gauge['chart']"
+                            :exportFilename="'inclusao-medidor-'.$idx"
+                            :compact="true"
+                        />
+                        <p class="text-xs text-gray-500 dark:text-gray-400 leading-snug">{{ $gauge['caption'] }}</p>
+                    </div>
+                @endforeach
+            </div>
         </div>
-    @elseif (empty($inclusionData['error']))
-        <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Sem gráficos disponíveis para esta base.') }}</p>
+    @endif
+
+    @if (! empty($inclusionData['charts']))
+        <div>
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{{ __('Gráficos') }}</h3>
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                @foreach ($inclusionData['charts'] as $idx => $chart)
+                    <x-dashboard.chart-panel :chart="$chart" :exportFilename="'inclusao-'.$idx" />
+                @endforeach
+            </div>
+        </div>
+    @elseif (empty($inclusionData['error']) && empty($inclusionData['charts']) && empty($inclusionData['gauges'] ?? []))
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Sem indicadores disponíveis para esta base ou filtros.') }}</p>
     @endif
 </div>

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\City;
 use App\Repositories\Ieducar\AttendanceRepository;
 use App\Repositories\Ieducar\EnrollmentRepository;
-use App\Repositories\Ieducar\EquityRepository;
 use App\Repositories\Ieducar\InclusionRepository;
 use App\Repositories\Ieducar\NetworkRepository;
 use App\Repositories\Ieducar\OverviewRepository;
@@ -30,7 +29,6 @@ class AnalyticsDashboardController extends Controller
         AttendanceRepository $attendanceRepository,
         InclusionRepository $inclusionRepository,
         NetworkRepository $networkRepository,
-        EquityRepository $equityRepository,
     ): View {
         $cities = City::query()->forAnalytics()->orderBy('name')->get();
 
@@ -98,14 +96,10 @@ class AnalyticsDashboardController extends Controller
 
         $inclusionData = $yearFilterReady
             ? $inclusionRepository->snapshot($city, $filters)
-            : ['charts' => [], 'notes' => [], 'error' => null];
+            : ['charts' => [], 'gauges' => [], 'notes' => [], 'error' => null];
 
         $networkData = $yearFilterReady
             ? $networkRepository->snapshot($city, $filters)
-            : ['charts' => [], 'notes' => [], 'error' => null];
-
-        $equityData = $yearFilterReady
-            ? $equityRepository->snapshot($city, $filters)
             : ['charts' => [], 'notes' => [], 'error' => null];
 
         return view('dashboard.analytics', [
@@ -121,15 +115,13 @@ class AnalyticsDashboardController extends Controller
             'attendanceData' => $attendanceData,
             'inclusionData' => $inclusionData,
             'networkData' => $networkData,
-            'equityData' => $equityData,
             'tabs' => [
                 'overview' => __('Visão geral'),
                 'enrollment' => __('Matrículas'),
                 'network' => __('Rede e oferta'),
-                'equity' => __('Equidade'),
+                'inclusion' => __('Inclusão e diversidade'),
                 'performance' => __('Desempenho'),
                 'attendance' => __('Frequência'),
-                'inclusion' => __('Inclusão e diversidade'),
             ],
         ]);
     }

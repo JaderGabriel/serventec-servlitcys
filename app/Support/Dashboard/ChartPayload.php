@@ -94,6 +94,41 @@ final class ChartPayload
     }
 
     /**
+     * Medidor semicircular (0–100 %) para Chart.js (doughnut com rotação e arco).
+     */
+    public static function gaugePercent(string $title, float $percent): array
+    {
+        $colors = self::palette();
+        $filled = $colors[0] ?? '#6366f1';
+        $p = max(0.0, min(100.0, $percent));
+        $rest = max(0.01, 100.0 - $p);
+
+        return [
+            'type' => 'doughnut',
+            'title' => $title,
+            'labels' => [__('Com indicação'), __('Restante')],
+            'datasets' => [
+                [
+                    'label' => $title,
+                    'data' => [$p, $rest],
+                    'backgroundColor' => [$filled, '#e5e7eb'],
+                    'borderWidth' => 0,
+                ],
+            ],
+            'options' => [
+                'rotation' => -90,
+                'circumference' => 180,
+                'cutout' => '72%',
+                'plugins' => [
+                    'legend' => [
+                        'display' => false,
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
      * @param  list<string|int|float>  $labels
      * @param  list<int|float>  $values
      * @return array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}

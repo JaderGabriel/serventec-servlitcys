@@ -9,13 +9,15 @@ use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\IeducarSqlPlaceholders;
+use App\Support\Ieducar\InclusionSpecialEducationGauges;
 use App\Support\Ieducar\MatriculaAtivoFilter;
+use App\Support\Ieducar\MatriculaChartQueries;
 use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 
 /**
- * Indicadores de inclusão e diversidade (raça/cor, etc.) a partir de cadastro + matrícula.
+ * Inclusão e diversidade: medidores (NEE), equidade (sexo/série), raça/cor e SQL opcional.
  */
 class InclusionRepository
 {
@@ -26,6 +28,7 @@ class InclusionRepository
     /**
      * @return array{
      *   charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}>,
+     *   gauges: list<array{chart: array<string, mixed>, caption: string}>,
      *   notes: list<string>,
      *   error: ?string
      * }
@@ -33,14 +36,39 @@ class InclusionRepository
     public function snapshot(?City $city, IeducarFilterState $filters): array
     {
         if ($city === null) {
-            return ['charts' => [], 'notes' => [], 'error' => null];
+            return ['charts' => [], 'gauges' => [], 'notes' => [], 'error' => null];
         }
 
         $charts = [];
+        $gauges = [];
         $notes = [];
 
         try {
-            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$notes) {
+            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$gauges, &$notes) {
+                foreach (InclusionSpecialEducationGauges::build($db, $city, $filters) as $row) {
+                    $gauges[] = [
+                        'chart' => ChartPayload::gaugePercent($row['title'], $row['percent']),
+                        'caption' => $row['caption'],
+                    ];
+                }
+
+                $sex = MatriculaChartQueries::matriculasPorSexo($db, $city, $filters);
+                if ($sex !== null) {
+                    $charts[] = $sex;
+                } else {
+                    $notes[] = __(
+                        'Gráfico por sexo indisponível: confirme cadastro.pessoa (sexo, idsexo, …) ou cadastro.fisica, IEDUCAR_TABLE_PESSOA / IEDUCAR_COL_ALUNO_PESSOA e IEDUCAR_COL_PESSOA_ID.'
+                    );
+                }
+
+                try {
+                    $serieTop = MatriculaChartQueries::matriculasPorSerieTop($db, $city, $filters);
+                    if ($serieTop !== null) {
+                        $charts[] = $serieTop;
+                    }
+                } catch (QueryException) {
+                }
+
                 $customRaca = config('ieducar.sql.inclusion_raca');
                 if (is_string($customRaca) && trim($customRaca) !== '') {
                     $racaChart = $this->chartFromRawSql($db, $city, trim($customRaca), __('Matrículas por raça/cor (SQL personalizado)'));
@@ -71,12 +99,13 @@ class InclusionRepository
         } catch (\Throwable $e) {
             return [
                 'charts' => [],
+                'gauges' => [],
                 'notes' => [],
                 'error' => $e->getMessage(),
             ];
         }
 
-        return ['charts' => $charts, 'notes' => $notes, 'error' => null];
+        return ['charts' => $charts, 'gauges' => $gauges, 'notes' => $notes, 'error' => null];
     }
 
     /**
@@ -133,6 +162,7 @@ class InclusionRepository
                     'raca_id',
                     'cor_raca',
                     'cor',
+                    'ref_cod_cor',
                 ]), $city);
             }
 
@@ -171,6 +201,41 @@ class InclusionRepository
                 }
             }
 
+            /** @var array{table: string, racaCol: string, fisicaLink: string, alunoCol: string}|null */
+            $fisicaViaAluno = null;
+            if ($pRaca === null && $aRaca === null && $fisicaTable === null) {
+                $aIdpesCol = IeducarColumnInspector::firstExistingColumn($db, $aluno, array_filter([
+                    'ref_idpes',
+                    'idpes',
+                ]), $city);
+                if ($aIdpesCol !== null) {
+                    foreach (self::fisicaTableCandidates($city) as $cand) {
+                        if (! IeducarColumnInspector::tableExists($db, $cand, $city)) {
+                            continue;
+                        }
+                        $fc = IeducarColumnInspector::firstExistingColumn($db, $cand, [
+                            'ref_cod_raca',
+                            'cod_raca',
+                            'raca_cor',
+                            'id_raca',
+                        ], $city);
+                        $fl = IeducarColumnInspector::firstExistingColumn($db, $cand, [
+                            'idpes',
+                            'ref_idpes',
+                        ], $city);
+                        if ($fc !== null && $fl !== null) {
+                            $fisicaViaAluno = [
+                                'table' => $cand,
+                                'racaCol' => $fc,
+                                'fisicaLink' => $fl,
+                                'alunoCol' => $aIdpesCol,
+                            ];
+                            break;
+                        }
+                    }
+                }
+            }
+
             $q = $db->table($mat.' as m')
                 ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
 
@@ -183,6 +248,9 @@ class InclusionRepository
                 $q->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId)
                     ->leftJoin($fisicaTable.' as pf', 'p.'.$pId, '=', 'pf.'.$fisicaLinkCol)
                     ->leftJoin($racaT.' as r', 'pf.'.$fisicaRacaCol, '=', 'r.'.$rIdCol);
+            } elseif ($fisicaViaAluno !== null) {
+                $q->leftJoin($fisicaViaAluno['table'].' as pf', 'a.'.$fisicaViaAluno['alunoCol'], '=', 'pf.'.$fisicaViaAluno['fisicaLink'])
+                    ->leftJoin($racaT.' as r', 'pf.'.$fisicaViaAluno['racaCol'], '=', 'r.'.$rIdCol);
             } else {
                 return null;
             }
@@ -236,15 +304,17 @@ class InclusionRepository
                 (string) config('ieducar.columns.raca.name'),
                 'nm_raca',
                 'nome',
+                'nm_cor',
                 'descricao',
                 'ds_raca',
+                'rac_nome',
             ]), $city);
 
-            if ($idCol !== null && $nameCol !== null) {
+            if ($idCol !== null) {
                 return [
                     'qualified' => $qualified,
                     'idCol' => $idCol,
-                    'nameCol' => $nameCol,
+                    'nameCol' => $nameCol ?? $idCol,
                 ];
             }
         }
@@ -260,7 +330,12 @@ class InclusionRepository
         $cad = trim((string) config('ieducar.pgsql_schema_cadastro', 'cadastro')).'.fisica';
         $sch = IeducarSchema::effectiveSchema($city);
 
-        return array_values(array_unique(array_filter([$cad, $sch !== '' ? $sch.'.fisica' : '', 'cadastro.fisica'])));
+        return array_values(array_unique(array_filter([
+            $cad,
+            $sch !== '' ? $sch.'.fisica' : '',
+            'cadastro.fisica',
+            'public.fisica',
+        ])));
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Support\Ieducar;
 
 use App\Models\City;
+use App\Repositories\Ieducar\PerformanceRepository;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
 
@@ -71,12 +72,13 @@ final class MatriculaSituacaoResolver
             };
 
             if ($aproCol !== null) {
+                $legacy = self::legacyAprovadoColumnToInepChaveSql($wrapM($aproCol), $driver);
                 if ($driver === 'pgsql') {
-                    $chaveExpr = 'COALESCE('.$wrapMs($codigoCol).'::text, CAST('.$wrapM($aproCol).' AS text))';
-                    $groupByExpr = 'COALESCE('.$wrapMs($codigoCol).'::text, CAST('.$wrapM($aproCol).' AS text))';
+                    $chaveExpr = 'COALESCE(NULLIF(TRIM('.$wrapMs($codigoCol).'::text), \'\'), '.$legacy.')';
+                    $groupByExpr = $chaveExpr;
                 } else {
-                    $chaveExpr = 'COALESCE(CAST('.$wrapMs($codigoCol).' AS CHAR), CAST('.$wrapM($aproCol).' AS CHAR))';
-                    $groupByExpr = 'COALESCE(CAST('.$wrapMs($codigoCol).' AS CHAR), CAST('.$wrapM($aproCol).' AS CHAR))';
+                    $chaveExpr = 'COALESCE(NULLIF(TRIM(CAST('.$wrapMs($codigoCol).' AS CHAR)), \'\'), '.$legacy.')';
+                    $groupByExpr = $chaveExpr;
                 }
 
                 return [
@@ -96,21 +98,44 @@ final class MatriculaSituacaoResolver
         }
 
         if ($aproCol !== null) {
-            $applyJoins = static function (Builder $q): void {
-            };
+            $applyJoins = static function (Builder $q): void {};
 
-            $cast = $driver === 'pgsql' ? 'text' : 'CHAR';
-            $chaveExpr = 'CAST('.$wrapM($aproCol).' AS '.$cast.')';
-            $groupByExpr = 'CAST('.$wrapM($aproCol).' AS '.$cast.')';
+            $chaveExpr = self::legacyAprovadoColumnToInepChaveSql($wrapM($aproCol), $driver);
+            $groupByExpr = $chaveExpr;
 
             return [
                 'applyJoins' => $applyJoins,
                 'chaveExpr' => $chaveExpr,
                 'groupByExpr' => $groupByExpr,
-                'campo_situacao' => 'matricula.'.$aproCol,
+                'campo_situacao' => 'matricula.'.$aproCol.' (mapeado para códigos INEP 2/3)',
             ];
         }
 
         return null;
+    }
+
+    /**
+     * Coluna legada «aprovado» (boolean ou 0/1) não é o código INEP: «1» no texto é «em curso» (INEP 1).
+     * Mapeia para 2 (aprovado) e 3 (reprovado) para alinhar com {@see PerformanceRepository}.
+     */
+    private static function legacyAprovadoColumnToInepChaveSql(string $qualifiedColumn, string $driver): string
+    {
+        $c = $qualifiedColumn;
+
+        if ($driver === 'pgsql') {
+            return 'CASE
+                WHEN '.$c.' IS NULL THEN \'0\'
+                WHEN TRIM(CAST('.$c.' AS text)) IN (\'1\',\'t\',\'true\',\'T\',\'yes\') THEN \'2\'
+                WHEN TRIM(CAST('.$c.' AS text)) IN (\'0\',\'f\',\'false\',\'F\',\'no\') THEN \'3\'
+                ELSE \'0\'
+            END';
+        }
+
+        return 'CASE
+            WHEN '.$c.' IS NULL THEN \'0\'
+            WHEN TRIM(CAST('.$c.' AS CHAR)) IN (\'1\',\'t\',\'true\',\'T\',\'yes\') THEN \'2\'
+            WHEN TRIM(CAST('.$c.' AS CHAR)) IN (\'0\',\'f\',\'false\',\'F\',\'no\') THEN \'3\'
+            ELSE \'0\'
+        END';
     }
 }

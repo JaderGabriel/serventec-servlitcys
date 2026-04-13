@@ -105,6 +105,16 @@ document.addEventListener('alpine:init', () => {
                       };
                 const extra =
                     payload.options && typeof payload.options === 'object' ? payload.options : {};
+                const radialGeometry =
+                    isRadial && extra
+                        ? {
+                              ...(extra.rotation !== undefined ? { rotation: extra.rotation } : {}),
+                              ...(extra.circumference !== undefined
+                                  ? { circumference: extra.circumference }
+                                  : {}),
+                              ...(extra.cutout !== undefined ? { cutout: extra.cutout } : {}),
+                          }
+                        : {};
                 const defaultPlugins = {
                     datalabels: {
                         clip: false,
@@ -212,6 +222,7 @@ document.addEventListener('alpine:init', () => {
                         datasets: payload.datasets,
                     },
                     options: {
+                        ...radialGeometry,
                         responsive: true,
                         maintainAspectRatio: false,
                         indexAxis: extra.indexAxis,
