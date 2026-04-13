@@ -45,11 +45,24 @@ class InclusionRepository
 
         try {
             $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$gauges, &$notes) {
-                foreach (InclusionSpecialEducationGauges::build($db, $city, $filters) as $row) {
-                    $gauges[] = [
-                        'chart' => ChartPayload::gaugePercent($row['title'], $row['percent']),
-                        'caption' => $row['caption'],
-                    ];
+                try {
+                    foreach (InclusionSpecialEducationGauges::build($db, $city, $filters) as $row) {
+                        $gauges[] = [
+                            'chart' => ChartPayload::gaugePercent($row['title'], $row['percent']),
+                            'caption' => $row['caption'],
+                        ];
+                    }
+                } catch (\Throwable $e) {
+                    $notes[] = __('Medidores de educação especial (NEE): erro ao calcular — :msg', ['msg' => $e->getMessage()]);
+                }
+
+                if ($gauges === []) {
+                    $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
+                    if ($totalMat !== null && $totalMat > 0) {
+                        $notes[] = __(
+                            'Não há medidores NEE nesta base: confirme a tabela aluno_deficiência (e cadastro.deficiencia) ou defina IEDUCAR_SQL_INCLUSION_GAUGE_DEFICIENCIA / _SINDROME / _ALTAS_HABILIDADES em config/ieducar.php.'
+                        );
+                    }
                 }
 
                 $sex = MatriculaChartQueries::matriculasPorSexo($db, $city, $filters);

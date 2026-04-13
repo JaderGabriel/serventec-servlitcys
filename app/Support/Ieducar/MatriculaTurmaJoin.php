@@ -89,6 +89,9 @@ final class MatriculaTurmaJoin
             'ref_cod_escola',
             'cod_escola',
             'ref_escola',
+            'escola_id',
+            'id_escola',
+            'cod_escola_turma',
         ]), $city) ?? '';
 
         $curso = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([

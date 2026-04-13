@@ -4,8 +4,8 @@ import Alpine from 'alpinejs';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import {
-    buildCompositeDataUrl,
-    downloadPdfFromDataUrl,
+    buildCompositeExport,
+    downloadPdfFromSizedDataUrl,
     triggerPngDownload,
 } from './chartExportHelpers.js';
 
@@ -295,18 +295,24 @@ document.addEventListener('alpine:init', () => {
                 applyResponsive();
                 mq.addEventListener('change', applyResponsive);
                 this._cleanupMq = () => mq.removeEventListener('change', applyResponsive);
+
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        this.chart?.resize();
+                    });
+                });
             });
         },
         destroy() {
             this._cleanupMq?.();
             this.chart?.destroy();
         },
-        async exportPng() {
+        exportPng() {
             if (!this.chart) {
                 return;
             }
             try {
-                const dataUrl = await buildCompositeDataUrl(
+                const { dataUrl } = buildCompositeExport(
                     this.chart,
                     this._exportMeta,
                     this._payload?.title || '',
@@ -316,17 +322,17 @@ document.addEventListener('alpine:init', () => {
                 console.error(e);
             }
         },
-        async exportPdf() {
+        exportPdf() {
             if (!this.chart) {
                 return;
             }
             try {
-                const dataUrl = await buildCompositeDataUrl(
+                const { dataUrl, width, height } = buildCompositeExport(
                     this.chart,
                     this._exportMeta,
                     this._payload?.title || '',
                 );
-                await downloadPdfFromDataUrl(dataUrl, this._exportFilename);
+                downloadPdfFromSizedDataUrl(dataUrl, width, height, this._exportFilename);
             } catch (e) {
                 console.error(e);
             }

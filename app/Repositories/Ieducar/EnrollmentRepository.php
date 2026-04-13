@@ -20,6 +20,8 @@ class EnrollmentRepository
      * @return array{
      *   rows: list<object>,
      *   kpis: ?array{matriculas: int, turmas_distintas: int, ocupacao_pct: ?float},
+     *   distorcao: ?array{com: int, sem: int, total: int, pct: ?float, fonte: string},
+     *   unidades_escolares: ?list<array{nome: string, total: int}>,
      *   error: ?string,
      *   chart: ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>},
      *   charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}>
@@ -28,13 +30,28 @@ class EnrollmentRepository
     public function sample(?City $city, IeducarFilterState $filters): array
     {
         if ($city === null) {
-            return ['rows' => [], 'kpis' => null, 'error' => null, 'chart' => null, 'charts' => []];
+            return ['rows' => [], 'kpis' => null, 'distorcao' => null, 'unidades_escolares' => null, 'error' => null, 'chart' => null, 'charts' => []];
         }
 
         try {
             return $this->cityData->run($city, function ($db) use ($city, $filters) {
                 try {
                     $kpis = MatriculaChartQueries::enrollmentResumoKpis($db, $city, $filters);
+                    $unidadesEscolares = MatriculaChartQueries::matriculasPorUnidadesEscolaresCard($db, $city, $filters, 24);
+
+                    $distCont = MatriculaChartQueries::distorcaoIdadeSerieContagens($db, $city, $filters);
+                    $distorcao = null;
+                    if ($distCont !== null && ($distCont['total'] ?? 0) > 0) {
+                        $tot = (int) $distCont['total'];
+                        $com = (int) $distCont['com'];
+                        $distorcao = [
+                            'com' => $com,
+                            'sem' => (int) $distCont['sem'],
+                            'total' => $tot,
+                            'pct' => round(100.0 * $com / $tot, 1),
+                            'fonte' => (string) $distCont['fonte'],
+                        ];
+                    }
 
                     $charts = [];
                     $dist = MatriculaChartQueries::distorcaoIdadeSerieRedeChart($db, $city, $filters);
@@ -69,6 +86,8 @@ class EnrollmentRepository
                     return [
                         'rows' => [],
                         'kpis' => $kpis,
+                        'distorcao' => $distorcao,
+                        'unidades_escolares' => $unidadesEscolares,
                         'error' => null,
                         'chart' => $charts[0] ?? null,
                         'charts' => $charts,
@@ -77,6 +96,8 @@ class EnrollmentRepository
                     return [
                         'rows' => [],
                         'kpis' => null,
+                        'distorcao' => null,
+                        'unidades_escolares' => null,
                         'error' => __('Não foi possível listar matrículas. Ajuste config/ieducar.php (tabela e colunas).').' '.$e->getMessage(),
                         'chart' => null,
                         'charts' => [],
@@ -84,7 +105,7 @@ class EnrollmentRepository
                 }
             });
         } catch (\Throwable $e) {
-            return ['rows' => [], 'kpis' => null, 'error' => $e->getMessage(), 'chart' => null, 'charts' => []];
+            return ['rows' => [], 'kpis' => null, 'distorcao' => null, 'unidades_escolares' => null, 'error' => $e->getMessage(), 'chart' => null, 'charts' => []];
         }
     }
 }

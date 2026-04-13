@@ -4,6 +4,7 @@ namespace App\Services\Ieducar;
 
 use App\Models\City;
 use App\Services\CityDataConnection;
+use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\IeducarSqlPlaceholders;
@@ -39,14 +40,18 @@ class FilterOptionsService
      *   errors: list<string>,
      * }
      */
-    public function loadAll(City $city): array
+    public function loadAll(City $city, ?IeducarFilterState $filterState = null): array
     {
         $errors = [];
 
         $years = $this->mergeYearOptions($city, $errors);
         $escolas = $this->loadPairs($city, 'escola', $errors);
         $cursos = $this->loadPairs($city, 'curso', $errors);
-        $turnos = $this->loadPairs($city, 'turno', $errors);
+        $anoTurno = null;
+        if ($filterState !== null && $filterState->hasYearSelected() && ! $filterState->isAllSchoolYears()) {
+            $anoTurno = $filterState->yearFilterValue();
+        }
+        $turnos = $this->loadPairs($city, 'turno', $errors, $anoTurno);
 
         return [
             'years' => $years,
@@ -63,14 +68,14 @@ class FilterOptionsService
     /**
      * @return list<array{id: string, name: string}>
      */
-    public function loadByKind(City $city, string $kind): array
+    public function loadByKind(City $city, string $kind, ?int $anoLetivo = null): array
     {
         $errors = [];
 
         return match ($kind) {
             'escola', 'escolas' => $this->loadPairs($city, 'escola', $errors),
             'curso', 'cursos' => $this->loadPairs($city, 'curso', $errors),
-            'turno', 'turnos' => $this->loadPairs($city, 'turno', $errors),
+            'turno', 'turnos' => $this->loadPairs($city, 'turno', $errors, $anoLetivo),
             default => [],
         };
     }
@@ -221,7 +226,10 @@ class FilterOptionsService
      * @param  list<string>  $errors
      * @return list<array{id: string, name: string}>
      */
-    private function loadPairs(City $city, string $logical, array &$errors): array
+    /**
+     * @param  list<string>  $errors
+     */
+    private function loadPairs(City $city, string $logical, array &$errors, ?int $anoLetivoParaTurno = null): array
     {
         $sqlKey = match ($logical) {
             'escola' => 'escola_pairs',
@@ -233,7 +241,7 @@ class FilterOptionsService
         };
 
         try {
-            return $this->cityData->run($city, function (Connection $db) use ($logical, $sqlKey, $city) {
+            return $this->cityData->run($city, function (Connection $db) use ($logical, $sqlKey, $city, $anoLetivoParaTurno) {
                 $max = (int) config('ieducar.max_rows', 2000);
 
                 if ($sqlKey !== null) {
@@ -258,7 +266,7 @@ class FilterOptionsService
                 }
 
                 if ($logical === 'turno') {
-                    return $this->tryLoadTurnoPairs($db, $city, $max);
+                    return $this->tryLoadTurnoPairs($db, $city, $max, $anoLetivoParaTurno);
                 }
 
                 return $this->pairsFromTable($db, $logical, $max, $city);
@@ -302,10 +310,95 @@ class FilterOptionsService
     }
 
     /**
+     * Catálogo pmieducar.turma_turno (id, nome), alinhado ao i-Educar 2.x.
+     *
+     * @return list<array{id: string, name: string}>|null null = tabela inexistente; [] = sem linhas (usa fallback)
+     */
+    private function tryLoadTurmaTurnoPairs(Connection $db, City $city, int $max, ?int $anoLetivo): ?array
+    {
+        try {
+            $tbl = IeducarSchema::resolveTable('turma_turno', $city);
+            if (! IeducarColumnInspector::tableExists($db, $tbl, $city)) {
+                return null;
+            }
+
+            $idCol = IeducarColumnInspector::firstExistingColumn($db, $tbl, array_filter([
+                'id',
+                'cod_turno',
+                (string) config('ieducar.columns.turno.id'),
+            ]), $city);
+            $nameCol = IeducarColumnInspector::firstExistingColumn($db, $tbl, array_filter([
+                'nome',
+                'nm_turno',
+                'name',
+                (string) config('ieducar.columns.turno.name'),
+            ]), $city);
+            if ($idCol === null || $nameCol === null) {
+                return null;
+            }
+
+            $anoCol = IeducarColumnInspector::firstExistingColumn($db, $tbl, array_filter([
+                'ano',
+                'ref_cod_ano_letivo',
+                'ano_letivo',
+            ]), $city);
+
+            $q = $db->table($tbl);
+            if ($anoLetivo !== null && $anoCol !== null) {
+                $q->where($anoCol, $anoLetivo);
+            } elseif ($anoLetivo !== null && $anoCol === null) {
+                $turma = IeducarSchema::resolveTable('turma', $city);
+                if (! IeducarColumnInspector::tableExists($db, $turma, $city)) {
+                    return [];
+                }
+                $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+                if ($tc['turno'] === '' || $tc['year'] === '') {
+                    return [];
+                }
+
+                $rows = $db->table($tbl.' as tt')
+                    ->join($turma.' as t', 't.'.$tc['turno'], '=', 'tt.'.$idCol)
+                    ->where('t.'.$tc['year'], $anoLetivo)
+                    ->selectRaw('tt.'.$idCol.' as id, tt.'.$nameCol.' as name')
+                    ->distinct()
+                    ->orderBy('tt.'.$idCol)
+                    ->limit($max)
+                    ->get();
+
+                return $rows->map(fn ($r) => [
+                    'id' => (string) $r->id,
+                    'name' => (string) $r->name,
+                ])->all();
+            }
+
+            return $q->select([$idCol.' as id', $nameCol.' as name'])
+                ->orderBy($idCol)
+                ->limit($max)
+                ->get()
+                ->map(fn ($r) => [
+                    'id' => (string) $r->id,
+                    'name' => (string) $r->name,
+                ])
+                ->all();
+        } catch (\Throwable $e) {
+            Log::debug('ieducar.turma_turno', ['message' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Turnos: prioriza `turma_turno` (id, nome), com filtro por ano quando existir coluna `ano` ou via turma.
+     *
      * @return list<array{id: string, name: string}>
      */
-    private function tryLoadTurnoPairs(Connection $db, City $city, int $max): array
+    private function tryLoadTurnoPairs(Connection $db, City $city, int $max, ?int $anoLetivo): array
     {
+        $turmaTurno = $this->tryLoadTurmaTurnoPairs($db, $city, $max, $anoLetivo);
+        if ($turmaTurno !== null && $turmaTurno !== []) {
+            return $turmaTurno;
+        }
+
         foreach (IeducarSchema::turnoTableCandidates($city) as $tbl) {
             if (! IeducarColumnInspector::tableExists($db, $tbl, $city)) {
                 continue;

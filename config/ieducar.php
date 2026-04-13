@@ -85,6 +85,8 @@ return [
         'curso' => env('IEDUCAR_TABLE_CURSO', 'curso'),
         'serie' => env('IEDUCAR_TABLE_SERIE', 'serie'),
         'turma' => env('IEDUCAR_TABLE_TURMA', 'turma'),
+        /** Catálogo de turnos (Portabilis 2.x: pmieducar.turma_turno com id, nome). */
+        'turma_turno' => env('IEDUCAR_TABLE_TURMA_TURNO', 'turma_turno'),
         'matricula' => env('IEDUCAR_TABLE_MATRICULA', 'matricula'),
         'matricula_turma' => env('IEDUCAR_TABLE_MATRICULA_TURMA', 'matricula_turma'),
         'falta_aluno' => env('IEDUCAR_TABLE_FALTA_ALUNO', 'falta_aluno'),

@@ -60,7 +60,7 @@ class AnalyticsDashboardController extends Controller
         if ($city) {
             $this->authorize('viewAnalytics', $city);
 
-            $ieducarOptions = $filterOptionsService->loadAll($city);
+            $ieducarOptions = $filterOptionsService->loadAll($city, $filters);
             if (! empty($ieducarOptions['years'])) {
                 $yearOptions = $ieducarOptions['years'];
             }
@@ -161,13 +161,20 @@ class AnalyticsDashboardController extends Controller
         $request->validate([
             'city_id' => ['required', 'integer'],
             'kind' => ['required', 'string', 'max:32'],
+            'ano_letivo' => ['nullable', 'string', 'max:32'],
         ]);
 
         $city = City::query()->forAnalytics()->whereKey($request->integer('city_id'))->firstOrFail();
 
         $this->authorize('viewAnalytics', $city);
 
-        $data = $filterOptionsService->loadByKind($city, $request->string('kind')->toString());
+        $rawAno = $request->input('ano_letivo');
+        $anoFiltro = null;
+        if (is_string($rawAno) && $rawAno !== '' && $rawAno !== 'all' && ctype_digit($rawAno)) {
+            $anoFiltro = (int) $rawAno;
+        }
+
+        $data = $filterOptionsService->loadByKind($city, $request->string('kind')->toString(), $anoFiltro);
 
         return response()->json(['data' => $data]);
     }

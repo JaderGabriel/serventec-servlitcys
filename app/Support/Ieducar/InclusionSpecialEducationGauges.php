@@ -294,6 +294,7 @@ final class InclusionSpecialEducationGauges
         return array_values(array_unique(array_filter([
             $primary,
             'pmieducar.aluno_deficiencia',
+            'public.aluno_deficiencia',
             trim((string) config('ieducar.pgsql_schema_cadastro', 'cadastro')).'.aluno_deficiencia',
         ])));
     }

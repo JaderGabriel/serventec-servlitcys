@@ -7,6 +7,7 @@ use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Collection;
 
 /**
  * Gráficos reutilizáveis (matrícula × turma × curso/escola/turno) para o painel analítico.
@@ -392,9 +393,11 @@ final class MatriculaChartQueries
     }
 
     /**
-     * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}
+     * Agregação por escola (turma → unidade). Reutilizado por gráficos e pelo cartão de unidades.
+     *
+     * @return Collection<int, object>|null
      */
-    public static function matriculasPorEscolaTop(Connection $db, City $city, IeducarFilterState $filters): ?array
+    private static function matriculasPorEscolaGroupedRows(Connection $db, City $city, IeducarFilterState $filters, ?int $sqlLimit = null)
     {
         try {
             $spec = self::escolaJoinSpec($db, $city);
@@ -421,30 +424,65 @@ final class MatriculaChartQueries
                 ->selectRaw('MAX(e.'.$eName.') as ename')
                 ->selectRaw('COUNT(*) as cnt')
                 ->groupBy('e.'.$eId)
-                ->orderByDesc('cnt')
-                ->limit(10);
+                ->orderByDesc('cnt');
+            if ($sqlLimit !== null && $sqlLimit > 0) {
+                $q->limit($sqlLimit);
+            }
 
             $rows = $q->get();
-            if ($rows->isEmpty()) {
-                return null;
-            }
 
-            $labels = [];
-            $values = [];
-            foreach ($rows as $row) {
-                $labels[] = (string) (($row->ename ?? '') !== '' ? $row->ename : ('#'.$row->eid));
-                $values[] = (int) ($row->cnt ?? 0);
-            }
-
-            return ChartPayload::barHorizontal(
-                __('Matrículas por escola — top 10'),
-                __('Matrículas'),
-                $labels,
-                $values
-            );
+            return $rows->isEmpty() ? null : $rows;
         } catch (QueryException|\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}
+     */
+    public static function matriculasPorEscolaTop(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        $rows = self::matriculasPorEscolaGroupedRows($db, $city, $filters, 10);
+        if ($rows === null) {
+            return null;
+        }
+
+        $labels = [];
+        $values = [];
+        foreach ($rows as $row) {
+            $labels[] = (string) (($row->ename ?? '') !== '' ? $row->ename : ('#'.$row->eid));
+            $values[] = (int) ($row->cnt ?? 0);
+        }
+
+        return ChartPayload::barHorizontal(
+            __('Matrículas por escola — top 10'),
+            __('Matrículas'),
+            $labels,
+            $values
+        );
+    }
+
+    /**
+     * Lista para o cartão «por unidade escolar» (sem agregar «outras»).
+     *
+     * @return list<array{nome: string, total: int}>|null
+     */
+    public static function matriculasPorUnidadesEscolaresCard(Connection $db, City $city, IeducarFilterState $filters, int $limit = 20): ?array
+    {
+        $rows = self::matriculasPorEscolaGroupedRows($db, $city, $filters, max(1, $limit));
+        if ($rows === null) {
+            return null;
+        }
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[] = [
+                'nome' => (string) (($row->ename ?? '') !== '' ? $row->ename : ('#'.$row->eid)),
+                'total' => (int) ($row->cnt ?? 0),
+            ];
+        }
+
+        return $out;
     }
 
     /**
@@ -1198,103 +1236,81 @@ final class MatriculaChartQueries
      */
     public static function matriculasPorEscolaComOutros(Connection $db, City $city, IeducarFilterState $filters, int $maxVisible = 12): ?array
     {
-        try {
-            $spec = self::escolaJoinSpec($db, $city);
-            if ($spec === null) {
-                return null;
-            }
-            ['qualified' => $escola, 'idCol' => $eId, 'nameCol' => $eName] = $spec;
-
-            $mat = IeducarSchema::resolveTable('matricula', $city);
-            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
-            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
-            $refEscola = $tc['escola'];
-            if ($refEscola === '') {
-                return null;
-            }
-
-            $q = $db->table($mat.' as m');
-            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
-            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
-            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
-            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
-            $q->join($escola.' as e', 't_filter.'.$refEscola, '=', 'e.'.$eId)
-                ->selectRaw('e.'.$eId.' as eid')
-                ->selectRaw('MAX(e.'.$eName.') as ename')
-                ->selectRaw('COUNT(*) as cnt')
-                ->groupBy('e.'.$eId)
-                ->orderByDesc('cnt')
-                ->limit(250);
-
-            $rows = $q->get();
-            if ($rows->isEmpty()) {
-                return null;
-            }
-
-            $labels = [];
-            $values = [];
-            foreach ($rows as $row) {
-                $labels[] = (string) (($row->ename ?? '') !== '' ? $row->ename : ('#'.$row->eid));
-                $values[] = (int) ($row->cnt ?? 0);
-            }
-
-            [$labels, $values] = ChartPayload::capTailAsOutros($labels, $values, max(4, $maxVisible), __('Outras escolas'));
-
-            return ChartPayload::barHorizontal(
-                __('Matrículas por escola (principais + outras agregadas)'),
-                __('Matrículas'),
-                $labels,
-                $values
-            );
-        } catch (QueryException|\Throwable) {
+        $rows = self::matriculasPorEscolaGroupedRows($db, $city, $filters, 250);
+        if ($rows === null) {
             return null;
         }
+
+        $labels = [];
+        $values = [];
+        foreach ($rows as $row) {
+            $labels[] = (string) (($row->ename ?? '') !== '' ? $row->ename : ('#'.$row->eid));
+            $values[] = (int) ($row->cnt ?? 0);
+        }
+
+        [$labels, $values] = ChartPayload::capTailAsOutros($labels, $values, max(4, $maxVisible), __('Outras escolas'));
+
+        return ChartPayload::barHorizontal(
+            __('Matrículas por escola (principais + outras agregadas)'),
+            __('Matrículas'),
+            $labels,
+            $values
+        );
     }
 
     /**
-     * Distorção idade/série (rede): gráfico de rosca com «com distorção» vs «sem distorção» (critério INEP: idade à data de corte 31/03 > idade máxima da série + 2 anos, quando existir idade_maxima; senão idade_minima + 2).
+     * Contagens para cartão / KPI (SQL custom ou critério INEP automático).
      *
-     * 1) Se existir ieducar.sql.distorcao_rede_chart, usa-se esse SQL (várias linhas: label + valor).
-     * 2) Caso contrário, monta-se a consulta a partir de matrícula → turma → série e cadastro (data de nascimento).
-     *
-     * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}
+     * @return array{com: int, sem: int, total: int, fonte: 'custom'|'automatico'}|null
      */
-    public static function distorcaoIdadeSerieRedeChart(Connection $db, City $city, IeducarFilterState $filters): ?array
+    public static function distorcaoIdadeSerieContagens(Connection $db, City $city, IeducarFilterState $filters): ?array
     {
-        $custom = trim((string) config('ieducar.sql.distorcao_rede_chart', ''));
-        if ($custom !== '') {
-            try {
-                $sql = IeducarSqlPlaceholders::interpolate($custom, $city);
-                $rows = $db->select($sql);
-                if ($rows === []) {
-                    return null;
-                }
-                $labels = [];
-                $values = [];
-                foreach ($rows as $row) {
-                    $arr = (array) $row;
-                    $label = $arr['label'] ?? $arr['name'] ?? $arr['categoria'] ?? $arr['rotulo'] ?? null;
-                    $val = $arr['valor'] ?? $arr['value'] ?? $arr['quantidade'] ?? $arr['pct'] ?? $arr['total'] ?? null;
-                    if ($label === null || $val === null) {
-                        continue;
-                    }
-                    $labels[] = (string) $label;
-                    $values[] = is_numeric($val) ? (float) $val : 0.0;
-                }
-                if ($labels === []) {
-                    return null;
-                }
-
-                return ChartPayload::doughnut(
-                    __('Distorção idade/série (rede)'),
-                    $labels,
-                    $values
-                );
-            } catch (QueryException|\Throwable) {
-                // tenta caminho automático
-            }
+        $fromCustom = self::distorcaoIdadeSerieContagensFromCustomSql($db, $city);
+        if ($fromCustom !== null) {
+            return $fromCustom;
         }
 
+        return self::distorcaoIdadeSerieContagensAutomatico($db, $city, $filters);
+    }
+
+    /**
+     * @return array{com: int, sem: int, total: int, fonte: 'custom'}|null
+     */
+    private static function distorcaoIdadeSerieContagensFromCustomSql(Connection $db, City $city): ?array
+    {
+        $custom = trim((string) config('ieducar.sql.distorcao_rede_chart', ''));
+        if ($custom === '') {
+            return null;
+        }
+        try {
+            $sql = IeducarSqlPlaceholders::interpolate($custom, $city);
+            $rows = $db->select($sql);
+            $vals = [];
+            foreach ($rows as $row) {
+                $arr = (array) $row;
+                $val = $arr['valor'] ?? $arr['value'] ?? $arr['quantidade'] ?? $arr['pct'] ?? $arr['total'] ?? null;
+                if ($val === null || ! is_numeric($val)) {
+                    continue;
+                }
+                $vals[] = (int) $val;
+            }
+            if (count($vals) >= 2) {
+                $com = $vals[0];
+                $sem = $vals[1];
+
+                return ['com' => $com, 'sem' => $sem, 'total' => $com + $sem, 'fonte' => 'custom'];
+            }
+        } catch (QueryException|\Throwable) {
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{com: int, sem: int, total: int, fonte: 'automatico'}|null
+     */
+    private static function distorcaoIdadeSerieContagensAutomatico(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
         try {
             $mat = IeducarSchema::resolveTable('matricula', $city);
             $aluno = IeducarSchema::resolveTable('aluno', $city);
@@ -1393,17 +1409,69 @@ final class MatriculaChartQueries
                 return null;
             }
 
-            return ChartPayload::doughnut(
-                __('Distorção idade/série (rede)'),
-                [
-                    __('Com distorção (idade > limite + 2 anos)'),
-                    __('Sem distorção'),
-                ],
-                [(float) $com, (float) $sem]
-            );
+            return ['com' => $com, 'sem' => $sem, 'total' => $com + $sem, 'fonte' => 'automatico'];
         } catch (QueryException|\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Distorção idade/série (rede): gráfico de rosca com «com distorção» vs «sem distorção» (critério INEP: idade à data de corte 31/03 > idade máxima da série + 2 anos, quando existir idade_maxima; senão idade_minima + 2).
+     *
+     * 1) Se existir ieducar.sql.distorcao_rede_chart, usa-se esse SQL (várias linhas: label + valor).
+     * 2) Caso contrário, monta-se a consulta a partir de matrícula → turma → série e cadastro (data de nascimento).
+     *
+     * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}
+     */
+    public static function distorcaoIdadeSerieRedeChart(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        $custom = trim((string) config('ieducar.sql.distorcao_rede_chart', ''));
+        if ($custom !== '') {
+            try {
+                $sql = IeducarSqlPlaceholders::interpolate($custom, $city);
+                $rows = $db->select($sql);
+                if ($rows === []) {
+                    return null;
+                }
+                $labels = [];
+                $values = [];
+                foreach ($rows as $row) {
+                    $arr = (array) $row;
+                    $label = $arr['label'] ?? $arr['name'] ?? $arr['categoria'] ?? $arr['rotulo'] ?? null;
+                    $val = $arr['valor'] ?? $arr['value'] ?? $arr['quantidade'] ?? $arr['pct'] ?? $arr['total'] ?? null;
+                    if ($label === null || $val === null) {
+                        continue;
+                    }
+                    $labels[] = (string) $label;
+                    $values[] = is_numeric($val) ? (float) $val : 0.0;
+                }
+                if ($labels === []) {
+                    return null;
+                }
+
+                return ChartPayload::doughnut(
+                    __('Distorção idade/série (rede)'),
+                    $labels,
+                    $values
+                );
+            } catch (QueryException|\Throwable) {
+                // tenta caminho automático
+            }
+        }
+
+        $c = self::distorcaoIdadeSerieContagensAutomatico($db, $city, $filters);
+        if ($c === null) {
+            return null;
+        }
+
+        return ChartPayload::doughnut(
+            __('Distorção idade/série (rede)'),
+            [
+                __('Com distorção (idade > limite + 2 anos)'),
+                __('Sem distorção'),
+            ],
+            [(float) $c['com'], (float) $c['sem']]
+        );
     }
 
     /**
@@ -1416,7 +1484,7 @@ final class MatriculaChartQueries
             return 'make_date(CAST('.$y.' AS integer), 3, 31)';
         }
 
-        return "STR_TO_DATE(CONCAT(".$y.", '-03-31'), '%Y-%m-%d')";
+        return 'STR_TO_DATE(CONCAT('.$y.", '-03-31'), '%Y-%m-%d')";
     }
 
     /**
