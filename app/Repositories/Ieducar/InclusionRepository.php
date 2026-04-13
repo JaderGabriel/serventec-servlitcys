@@ -145,10 +145,10 @@ class InclusionRepository
 
     private function applyMatriculaTurmaFilters(Builder $q, City $city, IeducarFilterState $filters): void
     {
-        $needsTurma = $filters->ano_letivo !== null
+        $yearVal = $filters->yearFilterValue();
+        $needsTurma = $yearVal !== null
             || $filters->escola_id !== null
             || $filters->curso_id !== null
-            || $this->serieFilterValue($filters) !== null
             || $filters->turno_id !== null;
 
         if (! $needsTurma) {
@@ -161,13 +161,12 @@ class InclusionRepository
         $year = (string) config('ieducar.columns.turma.year');
         $escola = (string) config('ieducar.columns.turma.escola');
         $curso = (string) config('ieducar.columns.turma.curso');
-        $serie = (string) config('ieducar.columns.turma.serie');
         $turno = (string) config('ieducar.columns.turma.turno');
 
         $q->join($turma.' as t_filter', 'm.'.$mTurma, '=', 't_filter.'.$tId);
 
-        if ($filters->ano_letivo !== null && $year !== '') {
-            $q->where('t_filter.'.$year, $filters->ano_letivo);
+        if ($yearVal !== null && $year !== '') {
+            $q->where('t_filter.'.$year, $yearVal);
         }
         if ($filters->escola_id !== null && $escola !== '') {
             $q->where('t_filter.'.$escola, $filters->escola_id);
@@ -175,25 +174,9 @@ class InclusionRepository
         if ($filters->curso_id !== null && $curso !== '') {
             $q->where('t_filter.'.$curso, $filters->curso_id);
         }
-        $serieVal = $this->serieFilterValue($filters);
-        if ($serieVal !== null && $serie !== '') {
-            $q->where('t_filter.'.$serie, $serieVal);
-        }
         if ($filters->turno_id !== null && $turno !== '') {
             $q->where('t_filter.'.$turno, $filters->turno_id);
         }
-    }
-
-    private function serieFilterValue(IeducarFilterState $filters): ?string
-    {
-        if ($filters->serie_id !== null && $filters->serie_id !== '') {
-            return $filters->serie_id;
-        }
-        if ($filters->etapa_id !== null && $filters->etapa_id !== '') {
-            return $filters->etapa_id;
-        }
-
-        return null;
     }
 
     /**

@@ -73,19 +73,15 @@ class OverviewRepository
 
     private function filterNote(IeducarFilterState $filters): ?string
     {
-        $has = $filters->ano_letivo !== null
-            || $filters->escola_id
-            || $filters->curso_id
-            || $filters->serie_id
-            || $filters->segmento_id
-            || $filters->etapa_id
-            || $filters->turno_id;
-
-        if (! $has) {
+        if (! $filters->hasYearSelected()) {
             return null;
         }
 
-        return __('Os totais acima aplicam os filtros selecionados (por tabela turma / escola quando disponível na base). O segmento pode exigir colunas adicionais no iEducar.');
+        if ($filters->escola_id || $filters->curso_id || $filters->turno_id) {
+            return __('Os totais acima aplicam também escola, tipo/segmento e turno quando existirem na turma.');
+        }
+
+        return null;
     }
 
     private function countEscolas(Connection $db, City $city, IeducarFilterState $filters): ?int
@@ -111,22 +107,18 @@ class OverviewRepository
             $year = (string) config('ieducar.columns.turma.year');
             $escola = (string) config('ieducar.columns.turma.escola');
             $curso = (string) config('ieducar.columns.turma.curso');
-            $serie = (string) config('ieducar.columns.turma.serie');
             $turno = (string) config('ieducar.columns.turma.turno');
 
             $q = $db->table($table);
-            if ($filters->ano_letivo !== null && $year !== '') {
-                $q->where($year, $filters->ano_letivo);
+            $yearVal = $filters->yearFilterValue();
+            if ($yearVal !== null && $year !== '') {
+                $q->where($year, $yearVal);
             }
             if ($filters->escola_id && $escola !== '') {
                 $q->where($escola, $filters->escola_id);
             }
             if ($filters->curso_id && $curso !== '') {
                 $q->where($curso, $filters->curso_id);
-            }
-            $serieVal = $filters->serie_id ?: $filters->etapa_id;
-            if ($serieVal && $serie !== '') {
-                $q->where($serie, $serieVal);
             }
             if ($filters->turno_id && $turno !== '') {
                 $q->where($turno, $filters->turno_id);
@@ -145,11 +137,10 @@ class OverviewRepository
             $mTurma = (string) config('ieducar.columns.matricula.turma');
             $mAtivo = (string) config('ieducar.columns.matricula.ativo');
 
-            $needsTurma = $filters->ano_letivo !== null
+            $yearVal = $filters->yearFilterValue();
+            $needsTurma = $yearVal !== null
                 || $filters->escola_id
                 || $filters->curso_id
-                || $filters->serie_id
-                || $filters->etapa_id
                 || $filters->turno_id;
 
             if (! $needsTurma) {
@@ -166,25 +157,20 @@ class OverviewRepository
             $year = (string) config('ieducar.columns.turma.year');
             $escola = (string) config('ieducar.columns.turma.escola');
             $curso = (string) config('ieducar.columns.turma.curso');
-            $serie = (string) config('ieducar.columns.turma.serie');
             $turno = (string) config('ieducar.columns.turma.turno');
 
             $q = $db->table($mat.' as m')->join($turma.' as t', 'm.'.$mTurma, '=', 't.'.$tId);
             if ($mAtivo !== '') {
                 $q->whereIn('m.'.$mAtivo, [1, '1', true, 't', 'true']);
             }
-            if ($filters->ano_letivo !== null && $year !== '') {
-                $q->where('t.'.$year, $filters->ano_letivo);
+            if ($yearVal !== null && $year !== '') {
+                $q->where('t.'.$year, $yearVal);
             }
             if ($filters->escola_id && $escola !== '') {
                 $q->where('t.'.$escola, $filters->escola_id);
             }
             if ($filters->curso_id && $curso !== '') {
                 $q->where('t.'.$curso, $filters->curso_id);
-            }
-            $serieVal = $filters->serie_id ?: $filters->etapa_id;
-            if ($serieVal && $serie !== '') {
-                $q->where('t.'.$serie, $serieVal);
             }
             if ($filters->turno_id && $turno !== '') {
                 $q->where('t.'.$turno, $filters->turno_id);

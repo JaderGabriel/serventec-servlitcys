@@ -57,7 +57,7 @@ return [
         'turma' => env('IEDUCAR_TABLE_TURMA', 'turma'),
         'matricula' => env('IEDUCAR_TABLE_MATRICULA', 'matricula'),
         'nivel_ensino' => env('IEDUCAR_TABLE_NIVEL_ENSINO', 'nivel_ensino'),
-        'turno' => env('IEDUCAR_TABLE_TURNO', 'turno'),
+        'turno' => env('IEDUCAR_TABLE_TURNO', 'cadastro.turno'),
         'aluno' => env('IEDUCAR_TABLE_ALUNO', 'aluno'),
         'pessoa' => env('IEDUCAR_TABLE_PESSOA', 'cadastro.pessoa'),
         'raca' => env('IEDUCAR_TABLE_RACA', 'cadastro.raca'),

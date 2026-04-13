@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Services\CityDataConnection;
 use App\Support\Ieducar\IeducarSchema;
 use Illuminate\Database\Connection;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use stdClass;
@@ -21,6 +22,8 @@ class FilterOptionsService
     ) {}
 
     /**
+     * series, segmentos e etapas ficam vazios (resposta legada; filtros retirados da UI).
+     *
      * @return array{
      *   years: array<int|string, int|string>,
      *   escolas: list<array{id: string, name: string}>,
@@ -39,17 +42,15 @@ class FilterOptionsService
         $years = $this->mergeYearOptions($city, $errors);
         $escolas = $this->loadPairs($city, 'escola', $errors);
         $cursos = $this->loadPairs($city, 'curso', $errors);
-        $series = $this->loadPairs($city, 'serie', $errors);
-        $segmentos = $this->loadPairs($city, 'nivel_ensino', $errors);
         $turnos = $this->loadPairs($city, 'turno', $errors);
 
         return [
             'years' => $years,
             'escolas' => $escolas,
             'cursos' => $cursos,
-            'series' => $series,
-            'segmentos' => $segmentos,
-            'etapas' => $series,
+            'series' => [],
+            'segmentos' => [],
+            'etapas' => [],
             'turnos' => $turnos,
             'errors' => $errors,
         ];
@@ -65,28 +66,31 @@ class FilterOptionsService
         return match ($kind) {
             'escola', 'escolas' => $this->loadPairs($city, 'escola', $errors),
             'curso', 'cursos' => $this->loadPairs($city, 'curso', $errors),
-            'serie', 'series' => $this->loadPairs($city, 'serie', $errors),
-            'segmento', 'segmentos' => $this->loadPairs($city, 'nivel_ensino', $errors),
-            'etapa', 'etapas' => $this->loadPairs($city, 'serie', $errors),
             'turno', 'turnos' => $this->loadPairs($city, 'turno', $errors),
             default => [],
         };
     }
 
     /**
+     * Placeholder vazio, «Todos os anos», depois só anos existentes na base da cidade.
+     *
      * @param  list<string>  $errors
-     * @return array<int|string, int|string>
+     * @return array<string, string>
      */
     private function mergeYearOptions(City $city, array &$errors): array
     {
         $fromDb = $this->loadYearsFromDatabase($city, $errors);
-        $current = (int) date('Y');
-        $range = [];
-        for ($y = $current + 1; $y >= $current - 8; $y--) {
-            $range[$y] = $y;
+        $out = [
+            '' => __('— Selecione o ano letivo —'),
+            'all' => __('Todos os anos'),
+        ];
+        krsort($fromDb);
+        foreach ($fromDb as $y => $_) {
+            $ys = (string) $y;
+            $out[$ys] = $ys;
         }
 
-        return $fromDb + $range;
+        return $out;
     }
 
     /**
@@ -313,7 +317,7 @@ class FilterOptionsService
         if ($logical === 'escola' && config('ieducar.filters.escola_only_active', true)) {
             $activeCol = config('ieducar.columns.escola.active');
             if (is_string($activeCol) && $activeCol !== '') {
-                $q->whereIn($activeCol, [1, '1', true, 't', 'true']);
+                $this->applyEscolaAtivoFilter($db, $q, $activeCol);
             }
         }
 
@@ -321,6 +325,21 @@ class FilterOptionsService
             'id' => (string) $r->id,
             'name' => (string) $r->name,
         ])->all();
+    }
+
+    /**
+     * Filtro «ativo» compatível com PostgreSQL (boolean / smallint / char).
+     */
+    private function applyEscolaAtivoFilter(Connection $db, Builder $q, string $activeCol): void
+    {
+        if ($db->getDriverName() === 'pgsql') {
+            $col = $db->getQueryGrammar()->wrap($activeCol);
+            $q->whereRaw("({$col} IS TRUE OR {$col} = 1 OR ({$col})::text IN ('1','t','true','T'))");
+
+            return;
+        }
+
+        $q->whereIn($activeCol, [1, '1', true, 't', 'true']);
     }
 
     private function appendLimit(string $sql, int $max): string

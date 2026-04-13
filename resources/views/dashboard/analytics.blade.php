@@ -13,7 +13,7 @@
             <div class="rounded-lg border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/80 dark:bg-indigo-950/30 px-4 py-3 text-sm text-indigo-900 dark:text-indigo-100">
                 <p class="font-medium">{{ __('O que este painel pesquisa') }}</p>
                 <p class="mt-1 text-indigo-800/90 dark:text-indigo-200/90 leading-relaxed">
-                    {{ __('Os dados vêm da base do iEducar do município selecionado (conexão MySQL/MariaDB ou PostgreSQL configurada no cadastro da cidade). Os filtros abaixo restringem escola, curso, série, segmento, etapa, turno e ano letivo — conforme tabelas e colunas definidas em config/ieducar.php. Cada aba mostra indicadores e gráficos exportáveis (PNG): visão geral, matrículas, desempenho, frequência e inclusão/diversidade.') }}
+                    {{ __('Os dados vêm da base do iEducar do município selecionado (MySQL/MariaDB ou PostgreSQL no cadastro da cidade). Os filtros restringem ano letivo, escola, tipo/segmento (tabela curso), turno (cadastro.turno no PostgreSQL) e tabelas em config/ieducar.php. Cada aba tem indicadores e gráficos exportáveis (PNG).') }}
                 </p>
             </div>
 
@@ -45,6 +45,12 @@
                     :formAction="route('dashboard.analytics')"
                 />
 
+                @if (! $yearFilterReady)
+                    <div class="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
+                        {{ __('Selecione o ano letivo (ou «Todos os anos») e clique em Aplicar filtros para carregar os indicadores e gráficos.') }}
+                    </div>
+                @endif
+
                 <div
                     x-data="{ tab: 'overview' }"
                     class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden"
@@ -72,7 +78,10 @@
                     <div class="p-6 min-h-[280px]">
                         <template x-if="tab === 'overview'">
                             <div>
-                                @include('dashboard.analytics.partials.overview', ['overviewData' => $overviewData])
+                                @include('dashboard.analytics.partials.overview', [
+                                    'overviewData' => $overviewData,
+                                    'yearFilterReady' => $yearFilterReady,
+                                ])
                             </div>
                         </template>
                         <template x-if="tab === 'enrollment'">

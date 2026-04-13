@@ -40,7 +40,7 @@ class AnalyticsDashboardController extends Controller
                 ->first();
         }
 
-        $yearOptions = $this->schoolYearOptions();
+        $yearOptions = $this->schoolYearOptionsFallback();
         $ieducarOptions = [
             'years' => [],
             'escolas' => [],
@@ -61,17 +61,34 @@ class AnalyticsDashboardController extends Controller
             }
         }
 
-        $overviewData = $overviewRepository->summary($city, $filters);
-        $enrollmentData = $enrollmentRepository->sample($city, $filters);
-        $performanceData = $performanceRepository->placeholder($city, $filters);
-        $attendanceData = $attendanceRepository->placeholder($city, $filters);
-        $inclusionData = $inclusionRepository->snapshot($city, $filters);
+        $yearFilterReady = $city !== null && $filters->hasYearSelected();
+
+        $overviewData = $yearFilterReady
+            ? $overviewRepository->summary($city, $filters)
+            : ['kpis' => null, 'charts' => [], 'filter_note' => null, 'error' => null];
+
+        $enrollmentData = $yearFilterReady
+            ? $enrollmentRepository->sample($city, $filters)
+            : ['rows' => [], 'error' => null, 'chart' => null];
+
+        $performanceData = $yearFilterReady
+            ? $performanceRepository->placeholder($city, $filters)
+            : ['rows' => [], 'message' => '', 'error' => null, 'chart' => null];
+
+        $attendanceData = $yearFilterReady
+            ? $attendanceRepository->placeholder($city, $filters)
+            : ['rows' => [], 'message' => '', 'error' => null, 'chart' => null];
+
+        $inclusionData = $yearFilterReady
+            ? $inclusionRepository->snapshot($city, $filters)
+            : ['charts' => [], 'notes' => [], 'error' => null];
 
         return view('dashboard.analytics', [
             'cities' => $cities,
             'selectedCity' => $city,
             'filters' => $filters,
             'yearOptions' => $yearOptions,
+            'yearFilterReady' => $yearFilterReady,
             'ieducarOptions' => $ieducarOptions,
             'overviewData' => $overviewData,
             'enrollmentData' => $enrollmentData,
@@ -108,18 +125,13 @@ class AnalyticsDashboardController extends Controller
     }
 
     /**
-     * Anos letivos quando a base ainda não respondeu.
-     *
-     * @return array<int, int>
+     * @return array<string, string>
      */
-    private function schoolYearOptions(): array
+    private function schoolYearOptionsFallback(): array
     {
-        $current = (int) date('Y');
-        $years = [];
-        for ($y = $current + 1; $y >= $current - 8; $y--) {
-            $years[$y] = $y;
-        }
-
-        return $years;
+        return [
+            '' => __('— Selecione o ano letivo —'),
+            'all' => __('Todos os anos'),
+        ];
     }
 }

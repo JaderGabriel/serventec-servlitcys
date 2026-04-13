@@ -5,39 +5,66 @@ namespace App\Support\Dashboard;
 use Illuminate\Http\Request;
 
 /**
- * Estado dos filtros estilo iEducar (ano, escola, curso, série, segmento, etapa, turno).
- * Mantém os parâmetros GET para o painel e futuras consultas à base da cidade.
+ * Estado dos filtros do painel (ano letivo obrigatório para carregar indicadores; escola, tipo/segmento, turno opcionais).
  */
 final class IeducarFilterState
 {
     public function __construct(
-        public ?int $ano_letivo,
+        /** null = ainda não escolhido; "all" = todos os anos; caso contrário ano (string numérica). */
+        public ?string $ano_letivo,
         public ?string $escola_id,
         public ?string $curso_id,
-        public ?string $serie_id,
-        public ?string $segmento_id,
-        public ?string $etapa_id,
         public ?string $turno_id,
     ) {}
 
     public static function fromRequest(Request $request): self
     {
-        $ano = $request->input('ano_letivo');
+        $raw = $request->input('ano_letivo');
+        $ano = null;
+        if ($raw !== null && $raw !== '') {
+            if ($raw === 'all') {
+                $ano = 'all';
+            } else {
+                $i = (int) $raw;
+
+                $ano = $i > 0 ? (string) $i : null;
+            }
+        }
 
         return new self(
-            ano_letivo: $ano !== null && $ano !== '' ? (int) $ano : null,
+            ano_letivo: $ano,
             escola_id: self::nullableString($request->input('escola_id')),
             curso_id: self::nullableString($request->input('curso_id')),
-            serie_id: self::nullableString($request->input('serie_id')),
-            segmento_id: self::nullableString($request->input('segmento_id')),
-            etapa_id: self::nullableString($request->input('etapa_id')),
             turno_id: self::nullableString($request->input('turno_id')),
         );
     }
 
     /**
-     * Parâmetros para query string (mantém filtros ao mudar de página ou aba).
-     *
+     * O utilizador escolheu «Todos os anos» ou um ano específico (não o placeholder vazio).
+     */
+    public function hasYearSelected(): bool
+    {
+        return $this->ano_letivo !== null && $this->ano_letivo !== '';
+    }
+
+    public function isAllSchoolYears(): bool
+    {
+        return $this->ano_letivo === 'all';
+    }
+
+    /**
+     * Valor numérico para filtrar coluna ano da turma, ou null quando «todos os anos».
+     */
+    public function yearFilterValue(): ?int
+    {
+        if (! $this->hasYearSelected() || $this->isAllSchoolYears()) {
+            return null;
+        }
+
+        return (int) $this->ano_letivo;
+    }
+
+    /**
      * @return array<string, string|int|null>
      */
     public function toQueryParams(): array
@@ -46,16 +73,11 @@ final class IeducarFilterState
             'ano_letivo' => $this->ano_letivo,
             'escola_id' => $this->escola_id,
             'curso_id' => $this->curso_id,
-            'serie_id' => $this->serie_id,
-            'segmento_id' => $this->segmento_id,
-            'etapa_id' => $this->etapa_id,
             'turno_id' => $this->turno_id,
         ], fn ($v) => $v !== null && $v !== '');
     }
 
     /**
-     * Junta com city_id para links.
-     *
      * @return array<string, string|int|null>
      */
     public function toQueryParamsWithCity(int $cityId): array

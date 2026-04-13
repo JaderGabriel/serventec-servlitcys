@@ -1,23 +1,23 @@
-@props(['overviewData'])
+@props(['overviewData', 'yearFilterReady' => true])
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Esta aba mostra totais na base do município (escola, turma, matrícula). Com filtros aplicados, as contagens respeitam ano, escola, curso, série/etapa e turno nas tabelas configuradas. O segmento pode exigir mapeamento extra no iEducar.') }}
+        {{ __('Esta aba mostra totais na base do município (escola, turma, matrícula). O ano letivo é obrigatório; depois pode filtrar escola, tipo/segmento e turno.') }}
     </p>
 
-    @if (! empty($overviewData['filter_note']))
+    @if ($yearFilterReady && ! empty($overviewData['filter_note']))
         <p class="text-xs text-indigo-800 dark:text-indigo-200 bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 rounded-md px-3 py-2">
             {{ $overviewData['filter_note'] }}
         </p>
     @endif
 
-    @if (! empty($overviewData['error']))
+    @if ($yearFilterReady && ! empty($overviewData['error']))
         <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
             {{ $overviewData['error'] }}
         </div>
     @endif
 
-    @if (! empty($overviewData['kpis']))
+    @if ($yearFilterReady && ! empty($overviewData['kpis']))
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4">
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Escolas') }}</p>
@@ -39,11 +39,11 @@
             </div>
         </div>
         <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Totais conforme filtros e config/ieducar.php (colunas da turma para recortes).') }}</p>
-    @else
-        <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Selecione uma cidade para carregar os indicadores.') }}</p>
+    @elseif ($yearFilterReady && empty($overviewData['error']))
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Sem totais para estes filtros.') }}</p>
     @endif
 
-    @if (! empty($overviewData['charts']))
+    @if ($yearFilterReady && ! empty($overviewData['charts']))
         <div class="grid grid-cols-1 lg:grid-cols-1 gap-6 mt-4">
             @foreach ($overviewData['charts'] as $idx => $chart)
                 <x-dashboard.chart-panel :chart="$chart" :exportFilename="'visao-geral-'.$idx" />

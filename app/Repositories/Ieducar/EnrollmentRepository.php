@@ -76,7 +76,6 @@ class EnrollmentRepository
             $year = (string) config('ieducar.columns.turma.year');
             $escola = (string) config('ieducar.columns.turma.escola');
             $curso = (string) config('ieducar.columns.turma.curso');
-            $serie = (string) config('ieducar.columns.turma.serie');
             $turno = (string) config('ieducar.columns.turma.turno');
 
             $q = $db->table($mat.' as m')
@@ -89,18 +88,15 @@ class EnrollmentRepository
                 $q->whereIn('m.'.$mAtivo, [1, '1', true, 't', 'true']);
             }
 
-            if ($filters->ano_letivo !== null && $year !== '') {
-                $q->where('t.'.$year, $filters->ano_letivo);
+            $yearVal = $filters->yearFilterValue();
+            if ($yearVal !== null && $year !== '') {
+                $q->where('t.'.$year, $yearVal);
             }
             if ($filters->escola_id && $escola !== '') {
                 $q->where('t.'.$escola, $filters->escola_id);
             }
             if ($filters->curso_id && $curso !== '') {
                 $q->where('t.'.$curso, $filters->curso_id);
-            }
-            $serieVal = $filters->serie_id ?: $filters->etapa_id;
-            if ($serieVal && $serie !== '') {
-                $q->where('t.'.$serie, $serieVal);
             }
             if ($filters->turno_id && $turno !== '') {
                 $q->where('t.'.$turno, $filters->turno_id);
