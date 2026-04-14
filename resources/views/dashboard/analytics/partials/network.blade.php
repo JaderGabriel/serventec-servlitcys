@@ -58,7 +58,7 @@
         <div class="border-b border-amber-200/80 dark:border-amber-800/60 px-4 py-3 bg-amber-100/50 dark:bg-amber-950/40">
             <h3 class="text-base font-semibold text-amber-950 dark:text-amber-100">{{ __('Vagas ociosas por escola') }}</h3>
             <p class="mt-1 text-xs text-amber-900/85 dark:text-amber-200/90 leading-relaxed">
-                {{ __('Barras horizontais por unidade: soma das vagas ociosas nas turmas (capacidade declarada − matrículas ativas), conforme os filtros. Só entram escolas com vagas > 0 no agregado.') }}
+                {{ __('Por unidade: multi-barras por curso (agrupadas com poucas séries; empilhadas quando há muitos cursos). Vagas ociosas = soma nas turmas ativas (capacidade declarada − matrículas ativas). Respeita ano letivo e filtros de curso/turno; só entram escolas com vagas > 0 no total.') }}
             </p>
         </div>
         <div class="p-3 sm:p-4 min-w-0">

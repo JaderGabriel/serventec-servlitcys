@@ -121,6 +121,7 @@ class SyncSchoolUnitGeosOfficial extends Command
                     $ieduLat = is_numeric($g->ieducar_lat) ? (float) $g->ieducar_lat : null;
                     $ieduLng = is_numeric($g->ieducar_lng) ? (float) $g->ieducar_lng : null;
 
+                    // Divergência só faz sentido com par i-Educar; sem coordenadas locais, limpa alerta e metros.
                     $divMeters = null;
                     $hasDiv = false;
                     if ($ieduLat !== null && $ieduLng !== null) {

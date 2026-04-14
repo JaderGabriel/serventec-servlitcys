@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\GeoSyncController;
 use App\Http\Controllers\AnalyticsDashboardController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\DashboardController;
@@ -47,6 +48,9 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(func
 
     Route::get('/settings/mail', [MailSettingsController::class, 'edit'])->name('settings.mail.edit');
     Route::put('/settings/mail', [MailSettingsController::class, 'update'])->name('settings.mail.update');
+
+    Route::get('/admin/geo-sync', [GeoSyncController::class, 'index'])->name('admin.geo-sync.index');
+    Route::post('/admin/geo-sync', [GeoSyncController::class, 'run'])->name('admin.geo-sync.run');
 });
 
 require __DIR__.'/auth.php';

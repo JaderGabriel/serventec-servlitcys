@@ -35,6 +35,77 @@ function nf(n) {
     return Number(n).toLocaleString("pt-BR");
 }
 
+/** Distância em metros (esfera), para divergência i-Educar × INEP ou grafo no mapa. */
+function haversineMeters(lat1, lng1, lat2, lng2) {
+    const a1 = Number(lat1);
+    const o1 = Number(lng1);
+    const a2 = Number(lat2);
+    const o2 = Number(lng2);
+    if (
+        !Number.isFinite(a1) ||
+        !Number.isFinite(o1) ||
+        !Number.isFinite(a2) ||
+        !Number.isFinite(o2) ||
+        Math.abs(a1) > 90 ||
+        Math.abs(a2) > 90 ||
+        Math.abs(o1) > 180 ||
+        Math.abs(o2) > 180
+    ) {
+        return null;
+    }
+    const R = 6371000;
+    const p1 = (a1 * Math.PI) / 180;
+    const p2 = (a2 * Math.PI) / 180;
+    const dp = ((a2 - a1) * Math.PI) / 180;
+    const dl = ((o2 - o1) * Math.PI) / 180;
+    const s =
+        Math.sin(dp / 2) ** 2 +
+        Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+}
+
+/**
+ * Grafo leve: cada ponto liga-se aos k vizinhos mais próximos (arestas únicas).
+ * @param {Array<{ lat: number, lng: number }>} pts
+ * @returns {Array<[number, number]>}
+ */
+function nearestNeighborEdges(pts, kNeighbors) {
+    const k = Math.max(1, Math.min(2, kNeighbors | 0));
+    const n = pts.length;
+    if (n < 2) {
+        return [];
+    }
+    const edges = new Set();
+    for (let i = 0; i < n; i++) {
+        const dists = [];
+        for (let j = 0; j < n; j++) {
+            if (i === j) {
+                continue;
+            }
+            const d = haversineMeters(
+                pts[i].lat,
+                pts[i].lng,
+                pts[j].lat,
+                pts[j].lng,
+            );
+            if (d != null && d > 0) {
+                dists.push({ j, d });
+            }
+        }
+        dists.sort((a, b) => a.d - b.d);
+        for (let t = 0; t < Math.min(k, dists.length); t++) {
+            const a = i;
+            const b = dists[t].j;
+            const key = a < b ? `${a}-${b}` : `${b}-${a}`;
+            edges.add(key);
+        }
+    }
+    return Array.from(edges).map((key) => {
+        const parts = key.split("-").map(Number);
+        return /** @type {[number, number]} */ ([parts[0], parts[1]]);
+    });
+}
+
 function markerStrokeFill(mk) {
     const key = mk?.school?.status_key;
     if (key === "ativa") {
@@ -188,11 +259,19 @@ function buildSchoolPopupHtml(mk, footnote) {
     return body;
 }
 
-function buildSchoolModalPayload(mk) {
+function buildSchoolModalPayload(mk, qeduBaseFallback) {
     const s = mk?.school && typeof mk.school === "object" ? mk.school : null;
     const nome = String(s?.nome || mk?.label || "—");
     const status = String(s?.status_label || "");
     const inep = s?.inep != null && s?.inep !== "" ? String(s.inep) : "";
+
+    const qeduLink = Array.isArray(mk?.inep_links)
+        ? mk.inep_links.find((ln) => ln && ln.id === "qedu")
+        : null;
+    const pageUrl = qeduLink?.url ? safeExternalHref(qeduLink.url) : "";
+    const baseCfg = String(
+        mk?.qedu_escola_base_url || qeduBaseFallback || "",
+    ).replace(/\/$/, "");
 
     return {
         title: nome,
@@ -201,7 +280,7 @@ function buildSchoolModalPayload(mk) {
         fonte_coordenada_label: String(mk?.fonte_coordenada_label || ""),
         geo_divergence:
             mk?.geo_divergence && typeof mk.geo_divergence === "object"
-                ? mk.geo_divergence
+                ? { ...mk.geo_divergence }
                 : null,
         meta: String(mk?.meta || ""),
         inep,
@@ -215,6 +294,11 @@ function buildSchoolModalPayload(mk) {
             capacidade_declarada: s?.capacidade_declarada ?? null,
             vagas_disponiveis: s?.vagas_disponiveis ?? null,
             endereco: String(s?.endereco || ""),
+        },
+        oferta: Array.isArray(s?.oferta_curso_serie) ? s.oferta_curso_serie : [],
+        qedu: {
+            base_url: baseCfg,
+            page_url: pageUrl,
         },
         conciliation: mk?.conciliation ?? null,
         inep_catalog: Array.isArray(mk?.inep_catalog) ? mk.inep_catalog : [],
@@ -241,13 +325,19 @@ export default function createSchoolUnitsMap(
     const options =
         optionsInput && typeof optionsInput === "object" ? optionsInput : {};
     const mode = String(options.mode || "default");
+    const qeduEscolaBaseUrl =
+        typeof options.qeduEscolaBaseUrl === "string"
+            ? options.qeduEscolaBaseUrl.trim()
+            : "";
 
     return {
         markers,
         footnote,
         mode,
+        qeduEscolaBaseUrl,
         map: null,
         group: null,
+        graphLayer: null,
         booted: false,
         modalOpen: false,
         modal: null,
@@ -275,6 +365,10 @@ export default function createSchoolUnitsMap(
                     this._onTab,
                 );
             }
+            if (this.graphLayer) {
+                this.graphLayer.remove();
+                this.graphLayer = null;
+            }
             if (this.map) {
                 this.map.remove();
                 this.map = null;
@@ -282,7 +376,26 @@ export default function createSchoolUnitsMap(
         },
 
         openSchoolModal(mk) {
-            this.modal = buildSchoolModalPayload(mk);
+            this.modal = buildSchoolModalPayload(mk, this.qeduEscolaBaseUrl);
+            const gd = this.modal?.geo_divergence;
+            if (
+                gd &&
+                (gd.meters == null || gd.meters === "") &&
+                gd.ieducar_lat != null &&
+                gd.ieducar_lng != null &&
+                gd.official_lat != null &&
+                gd.official_lng != null
+            ) {
+                const m = haversineMeters(
+                    gd.ieducar_lat,
+                    gd.ieducar_lng,
+                    gd.official_lat,
+                    gd.official_lng,
+                );
+                if (m != null) {
+                    gd.meters = m;
+                }
+            }
             this.modalOpen = true;
         },
 
@@ -319,6 +432,21 @@ export default function createSchoolUnitsMap(
                         Math.abs(toFiniteNumber(m.lng)) <= 180,
                 )
                 .map((m) => [toFiniteNumber(m.lat), toFiniteNumber(m.lng)]);
+            const graphPts = this.markers
+                .map((m) => {
+                    const la = toFiniteNumber(m.lat);
+                    const ln = toFiniteNumber(m.lng);
+                    if (
+                        la === null ||
+                        ln === null ||
+                        Math.abs(la) > 90 ||
+                        Math.abs(ln) > 180
+                    ) {
+                        return null;
+                    }
+                    return { lat: la, lng: ln };
+                })
+                .filter(Boolean);
 
             if (latlngs.length === 0) {
                 return;
@@ -335,7 +463,38 @@ export default function createSchoolUnitsMap(
                     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             }).addTo(this.map);
 
+            this.graphLayer = L.layerGroup().addTo(this.map);
             this.group = L.layerGroup().addTo(this.map);
+
+            const maxGraphUnits = 50;
+            if (
+                graphPts.length >= 2 &&
+                graphPts.length <= maxGraphUnits &&
+                this.graphLayer
+            ) {
+                const k = graphPts.length > 28 ? 1 : 2;
+                const ptsSimple = graphPts.map((p) => ({
+                    lat: p.lat,
+                    lng: p.lng,
+                }));
+                for (const [ia, ib] of nearestNeighborEdges(ptsSimple, k)) {
+                    const a = graphPts[ia];
+                    const b = graphPts[ib];
+                    L.polyline(
+                        [
+                            [a.lat, a.lng],
+                            [b.lat, b.lng],
+                        ],
+                        {
+                            color: "#94a3b8",
+                            weight: 1,
+                            opacity: 0.3,
+                            dashArray: "4 7",
+                            interactive: false,
+                        },
+                    ).addTo(this.graphLayer);
+                }
+            }
 
             // “Cobertura”: raio ~ proporcional às matrículas no filtro (quando existir).
             let maxMat = 0;

@@ -678,6 +678,10 @@ document.addEventListener("alpine:init", () => {
                                     scales,
                                     extra.scales,
                                 ),
+                                ...(extra.datasets &&
+                                typeof extra.datasets === "object"
+                                    ? { datasets: extra.datasets }
+                                    : {}),
                             },
                         });
 

@@ -1013,6 +1013,11 @@ final class MatriculaChartQueries
             turno_id: $filters->turno_id,
         );
 
+        $stacked = self::vagasOciosasPorEscolaCursoStacked($db, $city, $filtersAllSchools);
+        if ($stacked !== null) {
+            return $stacked;
+        }
+
         $direct = self::vagasAbertasAgrupadas($db, $city, $filtersAllSchools, 'escola', [
             'include_zero' => true,
             'max_items' => 250,
@@ -1022,6 +1027,217 @@ final class MatriculaChartQueries
         }
 
         return self::vagasAbertasPorEscolaViaMatriculaEscola($db, $city, $filters);
+    }
+
+    /**
+     * Vagas ociosas por escola com várias séries por curso (agrupadas ou empilhadas conforme o número de cursos).
+     *
+     * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>, subtitle?: string}
+     */
+    private static function vagasOciosasPorEscolaCursoStacked(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        try {
+            $turma = IeducarSchema::resolveTable('turma', $city);
+            $maxCol = (string) config('ieducar.columns.turma.max_alunos');
+            if ($maxCol === '' || ! IeducarColumnInspector::columnExists($db, $turma, $maxCol, $city)) {
+                return null;
+            }
+
+            $tId = (string) config('ieducar.columns.turma.id');
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            if ($tc['curso'] === '') {
+                return null;
+            }
+
+            if ($tc['escola'] !== '') {
+                $q = $db->table($turma.' as t');
+                $yearVal = $filters->yearFilterValue();
+                if ($yearVal !== null && $tc['year'] !== '') {
+                    $q->where('t.'.$tc['year'], $yearVal);
+                }
+                MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
+                MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
+                MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['turno'], $filters->turno_id);
+
+                $turmaRows = $q->select([
+                    't.'.$tId.' as tid',
+                    't.'.$maxCol.' as cap',
+                    't.'.$tc['escola'].' as eid',
+                    't.'.$tc['curso'].' as cid',
+                ])->get();
+            } else {
+                $mat = IeducarSchema::resolveTable('matricula', $city);
+                $mEsc = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
+                    (string) config('ieducar.columns.matricula.escola'),
+                    'ref_ref_cod_escola',
+                    'ref_cod_escola',
+                    'cod_escola',
+                ]), $city);
+                if ($mEsc === null) {
+                    return null;
+                }
+
+                $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+                $q = $db->table($mat.' as m');
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+                MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+                MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+                MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+                $g = $db->getQueryGrammar();
+                $q->groupBy('t_filter.'.$g->wrap($tId))
+                    ->selectRaw('t_filter.'.$g->wrap($tId).' as tid')
+                    ->selectRaw('MAX(t_filter.'.$g->wrap($maxCol).') as cap')
+                    ->selectRaw('MAX(m.'.$g->wrap($mEsc).') as eid')
+                    ->selectRaw('MAX(t_filter.'.$g->wrap($tc['curso']).') as cid');
+
+                $turmaRows = $q->get();
+            }
+
+            if ($turmaRows->isEmpty()) {
+                return null;
+            }
+
+            $counts = self::matriculaCountByTurma($db, $city, $filters);
+            /** @var array<string, array<string, int>> $matrix */
+            $matrix = [];
+            foreach ($turmaRows as $row) {
+                $tid = (string) ($row->tid ?? '');
+                $cap = (int) ($row->cap ?? 0);
+                $en = $counts[$tid] ?? 0;
+                $vac = max(0, $cap - $en);
+                $eid = (string) ($row->eid ?? '');
+                $cid = (string) ($row->cid ?? '');
+                if ($eid === '' || $cid === '') {
+                    continue;
+                }
+                if (! isset($matrix[$eid])) {
+                    $matrix[$eid] = [];
+                }
+                $matrix[$eid][$cid] = ($matrix[$eid][$cid] ?? 0) + $vac;
+            }
+
+            if ($matrix === []) {
+                return null;
+            }
+
+            $schoolTotals = [];
+            foreach ($matrix as $eid => $courses) {
+                $schoolTotals[$eid] = array_sum($courses);
+            }
+
+            $anyPositive = false;
+            foreach ($schoolTotals as $t) {
+                if ($t > 0) {
+                    $anyPositive = true;
+                    break;
+                }
+            }
+            if (! $anyPositive) {
+                return null;
+            }
+
+            $schoolsWithVac = array_keys(array_filter($schoolTotals, static fn (int $v): bool => $v > 0));
+            usort($schoolsWithVac, function (string $a, string $b) use ($schoolTotals): int {
+                return ($schoolTotals[$b] ?? 0) <=> ($schoolTotals[$a] ?? 0);
+            });
+            $maxSchools = 55;
+            $schoolIds = array_slice($schoolsWithVac, 0, $maxSchools);
+
+            $courseTotals = [];
+            foreach ($schoolIds as $sid) {
+                foreach ($matrix[$sid] ?? [] as $cid => $v) {
+                    $courseTotals[$cid] = ($courseTotals[$cid] ?? 0) + $v;
+                }
+            }
+            arsort($courseTotals);
+            $maxCourseSeries = 18;
+            $topCourseIds = array_slice(array_keys($courseTotals), 0, $maxCourseSeries);
+            $topSet = array_flip($topCourseIds);
+
+            $hasOutros = false;
+            foreach ($schoolIds as $sid) {
+                foreach ($matrix[$sid] ?? [] as $cid => $v) {
+                    if ($v > 0 && ! isset($topSet[$cid])) {
+                        $hasOutros = true;
+                        break 2;
+                    }
+                }
+            }
+
+            $escolaT = IeducarSchema::resolveTable('escola', $city);
+            $cursoT = IeducarSchema::resolveTable('curso', $city);
+            $eIdCol = (string) config('ieducar.columns.escola.id');
+            $eNameCol = (string) config('ieducar.columns.escola.name');
+            $cIdCol = (string) config('ieducar.columns.curso.id');
+            $cNameCol = (string) config('ieducar.columns.curso.name');
+
+            $labels = [];
+            foreach ($schoolIds as $sid) {
+                $name = $db->table($escolaT)->where($eIdCol, $sid)->value($eNameCol);
+                $labels[] = $name !== null && (string) $name !== '' ? (string) $name : ('#'.$sid);
+            }
+
+            $series = [];
+            foreach ($topCourseIds as $cid) {
+                $data = [];
+                foreach ($schoolIds as $sid) {
+                    $data[] = (float) ($matrix[$sid][$cid] ?? 0);
+                }
+                $cname = $db->table($cursoT)->where($cIdCol, $cid)->value($cNameCol);
+                $series[] = [
+                    'label' => $cname !== null && (string) $cname !== '' ? (string) $cname : ('#'.$cid),
+                    'data' => $data,
+                ];
+            }
+            if ($hasOutros) {
+                $data = [];
+                foreach ($schoolIds as $sid) {
+                    $sum = 0;
+                    foreach ($matrix[$sid] ?? [] as $cid => $v) {
+                        if (! isset($topSet[$cid])) {
+                            $sum += $v;
+                        }
+                    }
+                    $data[] = (float) $sum;
+                }
+                $series[] = [
+                    'label' => __('Outros cursos'),
+                    'data' => $data,
+                ];
+            }
+
+            $seriesCount = count($series);
+            $useStacked = $seriesCount > 10;
+
+            $payload = $useStacked
+                ? ChartPayload::barHorizontalStacked(
+                    __('Vagas ociosas por escola'),
+                    __('Vagas'),
+                    $labels,
+                    $series
+                )
+                : ChartPayload::barHorizontalGrouped(
+                    __('Vagas ociosas por escola'),
+                    __('Vagas'),
+                    $labels,
+                    $series
+                );
+
+            $payload['subtitle'] = $useStacked
+                ? __(
+                    'Por turma: capacidade declarada menos matrículas ativas, somadas por curso em cada escola. Com muitas séries (>10 cursos/«Outros»), as barras ficam empilhadas para caber no painel. Respeita ano letivo e filtros de curso/turno; até :max escolas com vagas ociosas > 0 no total.',
+                    ['max' => $maxSchools]
+                )
+                : __(
+                    'Por turma: capacidade declarada menos matrículas ativas, somadas por curso em cada escola (multi-barras agrupadas por curso). Respeita ano letivo e filtros de curso/turno; até :max escolas com vagas ociosas > 0 no total.',
+                    ['max' => $maxSchools]
+                );
+            $payload['options'] = array_merge($payload['options'] ?? [], ['panelHeight' => 'xxl']);
+
+            return $payload;
+        } catch (QueryException|\Throwable) {
+            return null;
+        }
     }
 
     /**

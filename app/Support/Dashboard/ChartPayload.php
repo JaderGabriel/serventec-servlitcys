@@ -69,6 +69,95 @@ final class ChartPayload
     }
 
     /**
+     * Barras horizontais empilhadas: uma cor por série (ex.: curso), mesmas categorias no eixo Y.
+     *
+     * @param  list<string|int|float>  $labels
+     * @param  list<array{label: string, data: list<int|float>}>  $series
+     * @return array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options: array<string, mixed>}
+     */
+    public static function barHorizontalStacked(string $title, string $valueAxisLabel, array $labels, array $series): array
+    {
+        return self::barHorizontalMultiSeries($title, $valueAxisLabel, $labels, $series, true, 48);
+    }
+
+    /**
+     * Barras horizontais agrupadas (multi-barras lado a lado por categoria no eixo Y).
+     *
+     * @param  list<string|int|float>  $labels
+     * @param  list<array{label: string, data: list<int|float>}>  $series
+     * @return array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options: array<string, mixed>}
+     */
+    public static function barHorizontalGrouped(string $title, string $valueAxisLabel, array $labels, array $series): array
+    {
+        return self::barHorizontalMultiSeries($title, $valueAxisLabel, $labels, $series, false, 22);
+    }
+
+    /**
+     * @param  list<string|int|float>  $labels
+     * @param  list<array{label: string, data: list<int|float>}>  $series
+     * @return array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options: array<string, mixed>}
+     */
+    private static function barHorizontalMultiSeries(string $title, string $valueAxisLabel, array $labels, array $series, bool $stacked, int $maxBarThickness): array
+    {
+        $labels = array_map(static fn ($l) => (string) $l, $labels);
+        $n = count($labels);
+        $colors = self::palette();
+        $datasets = [];
+        foreach (array_values($series) as $i => $s) {
+            $c = $colors[$i % max(1, count($colors))];
+            $raw = array_values(array_map(static fn ($v) => is_numeric($v) ? (float) $v : 0.0, $s['data'] ?? []));
+            if (count($raw) < $n) {
+                $raw = array_pad($raw, $n, 0.0);
+            } elseif (count($raw) > $n) {
+                $raw = array_slice($raw, 0, $n);
+            }
+            $datasets[] = [
+                'label' => (string) ($s['label'] ?? ''),
+                'data' => $raw,
+                'backgroundColor' => $c,
+                'borderColor' => $c,
+                'borderWidth' => 1,
+                'borderRadius' => 4,
+                'borderSkipped' => false,
+                'maxBarThickness' => $maxBarThickness,
+            ];
+        }
+
+        $options = [
+            'indexAxis' => 'y',
+            'scales' => [
+                'x' => [
+                    'stacked' => $stacked,
+                    'beginAtZero' => true,
+                    'title' => [
+                        'display' => true,
+                        'text' => $valueAxisLabel,
+                    ],
+                ],
+                'y' => [
+                    'stacked' => $stacked,
+                ],
+            ],
+        ];
+        if (! $stacked) {
+            $options['datasets'] = [
+                'bar' => [
+                    'categoryPercentage' => 0.72,
+                    'barPercentage' => 0.72,
+                ],
+            ];
+        }
+
+        return [
+            'type' => 'bar',
+            'title' => $title,
+            'labels' => $labels,
+            'datasets' => $datasets,
+            'options' => $options,
+        ];
+    }
+
+    /**
      * @param  list<string|int|float>  $labels
      * @param  list<int|float>  $values
      * @return array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}

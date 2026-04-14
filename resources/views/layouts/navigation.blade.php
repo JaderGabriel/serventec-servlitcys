@@ -49,6 +49,13 @@
                         @if (Auth::user()->is_admin)
                             <div class="border-t border-gray-200 dark:border-gray-600"></div>
                             <div class="px-4 py-2">
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Geografia') }}</p>
+                            </div>
+                            <x-dropdown-link :href="route('admin.geo-sync.index')" :title="__('Sincronizar coordenadas do i-Educar, import CSV opcional, coordenadas oficiais INEP e divergência; ver resultado do comando na mesma página.')">
+                                {{ __('Sincronização geográfica') }}
+                            </x-dropdown-link>
+                            <div class="border-t border-gray-200 dark:border-gray-600"></div>
+                            <div class="px-4 py-2">
                                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Usuários') }}</p>
                             </div>
                             <x-dropdown-link :href="route('users.index')">
@@ -126,6 +133,13 @@
                 </x-responsive-nav-link>
 
                 @if (Auth::user()->is_admin)
+                    <div class="px-4 py-2">
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Geografia') }}</p>
+                    </div>
+                    <x-responsive-nav-link :href="route('admin.geo-sync.index')" :active="request()->routeIs('admin.geo-sync.*')" :title="__('Sincronização de dados geográficos (i-Educar, INEP, pipeline).')">
+                        {{ __('Sincronização geográfica') }}
+                    </x-responsive-nav-link>
+                    <div class="border-t border-gray-200 dark:border-gray-600 my-2"></div>
                     <div class="px-4 py-2">
                         <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Usuários') }}</p>
                     </div>

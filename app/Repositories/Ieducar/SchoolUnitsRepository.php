@@ -888,6 +888,121 @@ class SchoolUnitsRepository
     }
 
     /**
+     * Cursos e anos/séries ofertados (turmas distintas no ano e filtros), por escola.
+     *
+     * @param  list<int>  $eids
+     * @return array<int, list<string>>
+     */
+    private function ofertaCursoSeriePorEscolaIds(Connection $db, City $city, IeducarFilterState $filters, array $eids): array
+    {
+        if ($eids === []) {
+            return [];
+        }
+        try {
+            $turma = IeducarSchema::resolveTable('turma', $city);
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            if ($tc['escola'] === '' || $tc['curso'] === '') {
+                return [];
+            }
+
+            $q = $db->table($turma.' as t');
+            if ($filters->yearFilterValue() !== null && $tc['year'] !== '') {
+                $q->where('t.'.$tc['year'], $filters->yearFilterValue());
+            }
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['turno'], $filters->turno_id);
+            $q->whereIn('t.'.$tc['escola'], $eids);
+
+            $cols = ['t.'.$tc['escola'].' as eid', 't.'.$tc['curso'].' as cid'];
+            if ($tc['serie'] !== '') {
+                $cols[] = 't.'.$tc['serie'].' as sid';
+            }
+            $rows = $q->select($cols)->distinct()->get();
+
+            $cursoT = IeducarSchema::resolveTable('curso', $city);
+            $cIdCol = (string) config('ieducar.columns.curso.id');
+            $cNameCol = (string) config('ieducar.columns.curso.name');
+
+            $serieT = IeducarSchema::resolveTable('serie', $city);
+            $sIdCol = (string) config('ieducar.columns.serie.id');
+            $sNameCol = IeducarColumnInspector::firstExistingColumn($db, $serieT, [
+                (string) config('ieducar.columns.serie.name'),
+                'nm_serie',
+                'serie',
+            ], $city);
+
+            $cids = [];
+            $sids = [];
+            foreach ($rows as $row) {
+                $a = (array) $row;
+                $cid = (int) ($a['cid'] ?? 0);
+                if ($cid > 0) {
+                    $cids[$cid] = true;
+                }
+                if (isset($a['sid'])) {
+                    $sid = (int) $a['sid'];
+                    if ($sid > 0) {
+                        $sids[$sid] = true;
+                    }
+                }
+            }
+
+            $cmap = [];
+            if ($cids !== []) {
+                foreach ($db->table($cursoT)->whereIn($cIdCol, array_keys($cids))->get() as $cr) {
+                    $cmap[(int) $cr->{$cIdCol}] = trim((string) ($cr->{$cNameCol} ?? ''));
+                }
+            }
+            $smap = [];
+            if ($sNameCol !== null && $sids !== []) {
+                foreach ($db->table($serieT)->whereIn($sIdCol, array_keys($sids))->get() as $sr) {
+                    $smap[(int) $sr->{$sIdCol}] = trim((string) ($sr->{$sNameCol} ?? ''));
+                }
+            }
+
+            /** @var array<int, array<string, bool>> $acc */
+            $acc = [];
+            foreach ($rows as $row) {
+                $a = (array) $row;
+                $eid = (int) ($a['eid'] ?? 0);
+                if ($eid <= 0) {
+                    continue;
+                }
+                $cid = (int) ($a['cid'] ?? 0);
+                $cn = $cid > 0 ? ($cmap[$cid] ?? ('#'.$cid)) : '';
+                $sn = '';
+                if ($tc['serie'] !== '' && isset($a['sid'])) {
+                    $sid = (int) $a['sid'];
+                    $sn = $sid > 0 && $sNameCol !== null ? ($smap[$sid] ?? ('#'.$sid)) : '';
+                }
+                $line = $cn;
+                if ($sn !== '') {
+                    $line = $line !== '' ? $line.' — '.$sn : $sn;
+                }
+                if ($line === '') {
+                    continue;
+                }
+                if (! isset($acc[$eid])) {
+                    $acc[$eid] = [];
+                }
+                $acc[$eid][$line] = true;
+            }
+
+            $out = [];
+            foreach ($acc as $eid => $lines) {
+                $list = array_keys($lines);
+                sort($list, SORT_STRING);
+                $out[$eid] = array_values($list);
+            }
+
+            return $out;
+        } catch (QueryException|\Throwable) {
+            return [];
+        }
+    }
+
+    /**
      * @param  list<int>  $eids
      * @return array<int, array<string, mixed>>
      */
@@ -900,6 +1015,7 @@ class SchoolUnitsRepository
         $matBy = $this->matriculasCountByEscolaIds($db, $city, $filters, $eids);
         $capBy = $this->capacidadeTurmasByEscolaIds($db, $city, $filters, $eids);
         $cardBy = $this->fetchEscolaCardFieldsByIds($db, $city, $eids);
+        $ofertaBy = $this->ofertaCursoSeriePorEscolaIds($db, $city, $filters, $eids);
 
         $out = [];
         foreach ($eids as $eid) {
@@ -913,6 +1029,7 @@ class SchoolUnitsRepository
                 'capacidade_declarada' => $cap,
                 'vagas_disponiveis' => $vagas,
             ], $card);
+            $out[$eid]['oferta_curso_serie'] = $ofertaBy[$eid] ?? [];
         }
 
         return $out;
@@ -1274,6 +1391,8 @@ class SchoolUnitsRepository
                     'url' => $qeduBase.'/'.$inep,
                 ];
             }
+
+            $m['qedu_escola_base_url'] = $qeduBase;
 
             if ($school !== null && $inep !== null) {
                 $m['conciliation'] = $this->conciliarUnidadeLocalComInep($school, $hit);
