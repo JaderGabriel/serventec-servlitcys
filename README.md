@@ -1,13 +1,15 @@
 # servlitcys
 
-Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases iEducar/MySQL por cidade.
+Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
+
+**Versão actual:** **2.0** (tag `v2.0` no repositório).
 
 ## Requisitos
 
-- PHP **8.3+** com extensões: `pdo_mysql`, `pdo_sqlite` (testes), `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`
+- PHP **8.3+** com extensões: `pdo_mysql`, `pdo_pgsql` (bases i-Educar em PostgreSQL), `pdo_sqlite` (testes), `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`
 - Composer 2
 - Node.js **20+** e npm (apenas para **desenvolvimento** ou para **recompilar** CSS/JS após alterações — ver abaixo)
-- MySQL/MariaDB para ambiente local e produção
+- **MySQL/MariaDB** para a base principal da aplicação (utilizadores, cidades, sessões) em local e produção
 
 ## Instalação (desenvolvimento)
 
@@ -41,8 +43,10 @@ Noutro terminal: `php artisan serve` (ou use o script `composer run dev` se conf
 | `SERVENTEC_WHATSAPP_NUMBER` | Opcional: número WhatsApp (só dígitos com DDI) para o botão “Contactar Serventec” na página inicial |
 | `DB_*` | Base principal Laravel (utilizadores, cidades, sessões) |
 | `SESSION_ENCRYPT` | Considerar `true` em produção com HTTPS |
+| `IEDUCAR_MATRICULA_INDICADORES_INCLUIR_SITUACAO_INEP` | Opcional (default `true`): nos indicadores de matrícula, contar também matrículas com situação INEP «em curso» (`matricula_situacao.codigo`, ex. `1`) quando a coluna `ativo` na matrícula está indefinida ou inconsistente com o ecrã do i-Educar |
+| `IEDUCAR_MATRICULA_SITUACAO_INEP_ATIVAS` | Opcional: lista separada por vírgulas de códigos INEP tratados como matrícula activa em conjunto com o filtro de `ativo` (default: `1`) |
 
-Credenciais MySQL por cidade (`db_*` no modelo `City`) são guardadas **encriptadas** na base (cast `encrypted`).
+Credenciais de ligação à base i-Educar por cidade (`db_*` no modelo `City`) são guardadas **encriptadas** na base (cast `encrypted`).
 
 ## Produção (sem Node no servidor)
 
@@ -107,6 +111,13 @@ composer test
 | Painel e análise (cidades com dados válidos) | Utilizadores autenticados e verificados |
 | CRUD de cidades e criação de utilizadores | Apenas **`is_admin`** |
 | Registo público | **Desativado** — utilizadores criados no painel por administrador |
+
+## Histórico de versões (resumo)
+
+| Tag | Notas |
+|-----|--------|
+| **v2.0** | Indicadores de matrícula alinhados com situação INEP quando `ativo` está indefinido; variáveis `IEDUCAR_MATRICULA_*` acima. Documentação de requisitos actualizada (`pdo_pgsql` para i-Educar em PostgreSQL). |
+| v1.0 | Versão inicial etiquetada. |
 
 ## Licença
 
