@@ -101,7 +101,7 @@ return [
         'raca_fallbacks' => env('IEDUCAR_TABLE_RACA_FALLBACKS', ''),
         /** Catálogo de situações (INEP); ligação matricula.ref_cod_matricula_situacao → cod_matricula_situacao. */
         'matricula_situacao' => env('IEDUCAR_TABLE_MATRICULA_SITUACAO', 'matricula_situacao'),
-        /** Pivô aluno ↔ deficiência (Portabilis / iEducar 2.x). */
+        /** Pivô aluno ↔ deficiência (Portabilis / iEducar 2.x). Se o BI usar outro schema, defina o nome qualificado; o painel também procura aluno_deficiencia via information_schema. */
         'aluno_deficiencia' => env('IEDUCAR_TABLE_ALUNO_DEFICIENCIA', 'aluno_deficiencia'),
         /** Catálogo de deficiências (nome legível para classificar síndromes / altas habilidades). */
         'deficiencia' => env('IEDUCAR_TABLE_DEFICIENCIA', 'cadastro.deficiencia'),

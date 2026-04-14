@@ -5,7 +5,6 @@
     $totalMat = $inclusionData['total_matriculas'] ?? null;
     $eqFonte = $inclusionData['equidade_fonte'] ?? null;
     $eqLabel = match ($eqFonte) {
-        'nivel_ensino' => __('Nível de ensino (Educacenso)'),
         'serie' => __('Série'),
         'curso' => __('Curso'),
         default => null,
@@ -78,7 +77,7 @@
 
     @if (! empty($inclusionData['charts']))
         <div>
-            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{{ __('Género, etapa e cor ou raça') }}</h3>
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{{ __('Género, cor ou raça, distorção idade/série e série/curso') }}</h3>
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 @foreach ($inclusionData['charts'] as $idx => $chart)
                     <x-dashboard.chart-panel

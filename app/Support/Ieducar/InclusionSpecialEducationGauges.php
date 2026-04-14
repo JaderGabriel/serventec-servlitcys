@@ -104,11 +104,15 @@ final class InclusionSpecialEducationGauges
                 (string) config('ieducar.columns.aluno_deficiencia.aluno'),
                 'ref_cod_aluno',
                 'cod_aluno',
+                'aluno_id',
+                'id_aluno',
             ]), $city);
             $adDef = IeducarColumnInspector::firstExistingColumn($db, $adTable, array_filter([
                 (string) config('ieducar.columns.aluno_deficiencia.deficiencia'),
                 'ref_cod_deficiencia',
                 'cod_deficiencia',
+                'deficiencia_id',
+                'ref_deficiencia',
             ]), $city);
 
             if ($adAluno === null || $adDef === null) {
@@ -271,7 +275,10 @@ final class InclusionSpecialEducationGauges
             }
         }
 
-        return null;
+        return IeducarColumnInspector::findQualifiedTableByNames($db, [
+            'aluno_deficiencia',
+            'aluno_deficiencias',
+        ], $city);
     }
 
     private static function resolveDeficienciaCatalogTable(Connection $db, City $city): ?string
@@ -282,7 +289,10 @@ final class InclusionSpecialEducationGauges
             }
         }
 
-        return null;
+        return IeducarColumnInspector::findQualifiedTableByNames($db, [
+            'deficiencia',
+            'deficiencias',
+        ], $city);
     }
 
     /**

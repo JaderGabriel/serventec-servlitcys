@@ -21,8 +21,8 @@ use Illuminate\Database\QueryException;
  * Inclusão & Diversidade: educação especial (NEE), género, distribuição por etapa (equidade), cor ou raça e SQL opcional.
  *
  * Regras: denominador comum = matrículas activas no filtro (MatriculaAtivoFilter + turma);
- * educação especial via aluno_deficiência + cadastro ou SQL em ieducar.sql.inclusion_gauge_*;
- * cor/raça alinhada ao cadastro INEP quando o JOIN ao catálogo raca existir.
+ * educação especial via aluno_deficiência (detecção em vários schemas) + cadastro ou SQL em ieducar.sql.inclusion_gauge_*;
+ * cor/raça e distorção idade/série como nas outras abas (queries partilhadas).
  */
 class InclusionRepository
 {
@@ -79,7 +79,7 @@ class InclusionRepository
                 if ($gauges === []) {
                     if ($totalMatriculas !== null && $totalMatriculas > 0) {
                         $notes[] = __(
-                            'Educação especial: não foi encontrada a tabela aluno_deficiência (ou equivalente) ligada a deficiências. Configure pmieducar.aluno_deficiência / cadastro.deficiencia ou defina IEDUCAR_SQL_INCLUSION_GAUGE_* em config/ieducar.php para percentagens oficiais por tipo.'
+                            'Educação especial: não foi possível montar medidores (vínculo aluno–deficiência ou colunas IEDUCAR_COL_ALUNO_DEFICIENCIA_*). O sistema procura automaticamente aluno_deficiencia em vários schemas; confirme IEDUCAR_TABLE_ALUNO_DEFICIENCIA / IEDUCAR_MYSQL_TABLE_ALUNO_DEFICIENCIA ou defina IEDUCAR_SQL_INCLUSION_GAUGE_* se o BI usar outra origem.'
                         );
                     }
                 }
@@ -90,22 +90,6 @@ class InclusionRepository
                 } else {
                     $notes[] = __(
                         'Sexo (registo administrativo): indisponível — confirme cadastro.pessoa (sexo, idsexo, …) ou cadastro.fisica, e colunas de ligação aluno↔pessoa.'
-                    );
-                }
-
-                // Equidade por etapa: priorizar nível de ensino (Educacenso), depois série, depois curso.
-                if (($tmp = MatriculaChartQueries::matriculasPorNivelEnsinoEducacenso($db, $city, $filters)) !== null) {
-                    $charts[] = $tmp;
-                    $equidadeFonte = 'nivel_ensino';
-                } elseif (($tmp = MatriculaChartQueries::matriculasPorSerieTop($db, $city, $filters)) !== null) {
-                    $charts[] = $tmp;
-                    $equidadeFonte = 'serie';
-                } elseif (($tmp = MatriculaChartQueries::matriculasPorCursoTop($db, $city, $filters)) !== null) {
-                    $charts[] = $tmp;
-                    $equidadeFonte = 'curso';
-                } else {
-                    $notes[] = __(
-                        'Distribuição por etapa (equidade): indisponível — verifique turma→curso→nível de ensino ou turma→série e tabelas em config/ieducar.php.'
                     );
                 }
 
@@ -126,6 +110,28 @@ class InclusionRepository
                             'Cor ou raça: não foi possível agregar pelo catálogo. Confirme IEDUCAR_TABLE_RACA, ref_cod_raca em pessoa/aluno/física, fallbacks ou IEDUCAR_SQL_INCLUSION_RACA (mesmos filtros de matrícula).'
                         );
                     }
+                }
+
+                try {
+                    $dist = MatriculaChartQueries::distorcaoIdadeSerieRedeChart($db, $city, $filters);
+                    if ($dist !== null) {
+                        $charts[] = $dist;
+                    }
+                } catch (QueryException) {
+                    // Base sem colunas para distorção (série / idade).
+                }
+
+                // Equidade por etapa nesta aba: série ou curso (sem nível de ensino isolado).
+                if (($tmp = MatriculaChartQueries::matriculasPorSerieTop($db, $city, $filters)) !== null) {
+                    $charts[] = $tmp;
+                    $equidadeFonte = 'serie';
+                } elseif (($tmp = MatriculaChartQueries::matriculasPorCursoTop($db, $city, $filters)) !== null) {
+                    $charts[] = $tmp;
+                    $equidadeFonte = 'curso';
+                } else {
+                    $notes[] = __(
+                        'Distribuição por série ou curso (equidade): indisponível — verifique turma→série / turma→curso e tabelas em config/ieducar.php.'
+                    );
                 }
 
                 $customExtra = config('ieducar.sql.inclusion_extra');
@@ -169,16 +175,15 @@ class InclusionRepository
     private function methodologyLines(?string $equidadeFonte): array
     {
         $eq = match ($equidadeFonte) {
-            'nivel_ensino' => __('O gráfico de equidade usa níveis de ensino (curso → nível), alinhado à hierarquia Educacenso/INEP.'),
-            'serie' => __('O gráfico de equidade usa séries (turma → série) quando o nível de ensino não está disponível.'),
-            'curso' => __('O gráfico de equidade usa cursos (turma → curso) como recurso quando série e nível não estão disponíveis.'),
-            default => __('O gráfico de equidade por etapa não foi gerado (dados insuficientes).'),
+            'serie' => __('O gráfico complementar de equidade usa séries (turma → série).'),
+            'curso' => __('O gráfico complementar de equidade usa cursos (turma → curso) quando a série não está disponível.'),
+            default => __('O gráfico de série/curso não foi gerado (dados insuficientes).'),
         };
 
         return [
             __('Todos os indicadores respeitam os filtros actuais (ano letivo, escola, segmento, turno) através da turma, com matrícula considerada activa conforme config/ieducar.php.'),
-            __('Sexo e cor ou raça refletem o registo administrativo no cadastro (pessoa/física), como no Censo Escolar — não substituem declaração de identidade de género ou autodeclaração fora do sistema.'),
-            __('Educação especial: com SQL personalizado (IEDUCAR_SQL_INCLUSION_GAUGE_*), as percentagens seguem a regra definida pelo município; sem SQL, a heurística classifica tipos de deficiência por palavras-chave no nome — pode divergir da classificação clínica ou do Censo.'),
+            __('Sexo, cor ou raça e distorção idade/série seguem as mesmas regras de junção que nas restantes abas (cadastro INEP / critério de distorção).'),
+            __('Educação especial: com SQL personalizado (IEDUCAR_SQL_INCLUSION_GAUGE_*), as percentagens seguem a regra definida pelo município; sem SQL, usa-se o pivô aluno_deficiência (procurado em vários schemas) e o nome no cadastro de deficiências — pode divergir de outros relatórios.'),
             $eq,
         ];
     }
