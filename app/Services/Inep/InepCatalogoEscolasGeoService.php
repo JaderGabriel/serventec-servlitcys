@@ -2,8 +2,8 @@
 
 namespace App\Services\Inep;
 
-use App\Models\InepSchoolGeo;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -76,12 +76,23 @@ class InepCatalogoEscolasGeoService
             return [];
         }
 
-        // Fonte local (importação/manual): quando existe, é a mais confiável e não depende de rede externa.
-        // Ideal para ambientes em que o portal/ArcGIS bloqueia automação ou publica apenas recortes regionais.
-        $local = InepSchoolGeo::query()
-            ->whereIn('inep_code', $normalized)
-            ->get()
-            ->keyBy('inep_code');
+        // Fonte local (legada): `inep_school_geos` pode não existir em produção (foi descontinuada).
+        // Se existir, usa como cache offline; se não existir, ignora e segue para ArcGIS/Redis cache.
+        $local = collect();
+        try {
+            $conn = DB::connection();
+            $has = $conn->getSchemaBuilder()->hasTable('inep_school_geos');
+            if ($has) {
+                $rows = $conn->table('inep_school_geos')
+                    ->whereIn('inep_code', $normalized)
+                    ->get()
+                    ->keyBy('inep_code');
+                $local = $rows;
+            }
+        } catch (\Throwable $e) {
+            Log::debug('INEP local table lookup skipped', ['message' => $e->getMessage()]);
+            $local = collect();
+        }
 
         $urls = config('ieducar.inep_geocoding.arcgis_layer_query_urls');
         if (! is_array($urls) || $urls === []) {
@@ -104,13 +115,23 @@ class InepCatalogoEscolasGeoService
 
         foreach ($normalized as $code) {
             $row = $local->get($code);
-            if ($row instanceof InepSchoolGeo && $this->validCoord((float) $row->lat, (float) $row->lng)) {
+            $lat = is_object($row) ? ($row->lat ?? null) : null;
+            $lng = is_object($row) ? ($row->lng ?? null) : null;
+            if (is_numeric($lat) && is_numeric($lng) && $this->validCoord((float) $lat, (float) $lng)) {
+                $payload = null;
+                if (is_object($row)) {
+                    $payload = $row->payload ?? null;
+                }
+                if (is_string($payload)) {
+                    $decoded = json_decode($payload, true);
+                    $payload = is_array($decoded) ? $decoded : null;
+                }
                 $out[$code] = [
-                    'lat' => (float) $row->lat,
-                    'lng' => (float) $row->lng,
-                    'nome_inep' => (string) (($row->payload['Escola'] ?? '') ?: ($row->payload['nome'] ?? '')),
+                    'lat' => (float) $lat,
+                    'lng' => (float) $lng,
+                    'nome_inep' => is_array($payload) ? (string) (($payload['Escola'] ?? '') ?: ($payload['nome'] ?? '')) : '',
                     'catalog' => [],
-                    'catalog_assoc' => is_array($row->payload) ? $row->payload : [],
+                    'catalog_assoc' => is_array($payload) ? $payload : [],
                 ];
             }
         }
