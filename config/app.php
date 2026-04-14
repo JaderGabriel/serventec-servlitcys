@@ -65,7 +65,8 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // GMT-3 (Brasil). Ajuste se o município usar outro fuso.
+    'timezone' => env('APP_TIMEZONE', 'America/Sao_Paulo'),
 
     /*
     |--------------------------------------------------------------------------

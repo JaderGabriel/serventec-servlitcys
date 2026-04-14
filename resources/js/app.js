@@ -93,8 +93,8 @@ function mergeCartesianScales(base, extra) {
 }
 
 document.addEventListener("alpine:init", () => {
-    Alpine.data("schoolUnitsMap", (markers, footnote = null) =>
-        createSchoolUnitsMap(markers, footnote),
+    Alpine.data("schoolUnitsMap", (markers, footnote = null, options = null) =>
+        createSchoolUnitsMap(markers, footnote, options),
     );
 
     Alpine.data(
@@ -327,6 +327,9 @@ document.addEventListener("alpine:init", () => {
                         : [],
                     footerLine: exportMeta.footerLine || "",
                     generatedAt: exportMeta.generatedAt || "",
+                    appName: exportMeta.appName || "",
+                    copyrightLine: exportMeta.copyrightLine || "",
+                    poweredByLine: exportMeta.poweredByLine || "",
                 };
                 this.$nextTick(() => {
                     try {

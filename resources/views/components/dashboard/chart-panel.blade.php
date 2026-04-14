@@ -27,10 +27,10 @@
         x-data="chartPanel(@js($chart), @js($exportFilename), @js($exportMeta), @js($chartPanelDomId), @js($compact))"
     >
         <div class="flex flex-col gap-3 px-3 py-3 sm:py-2.5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40">
-            <div class="min-w-0 w-full text-center sm:flex-1 sm:text-left">
-                <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200 break-words">{{ $chart['title'] ?? '' }}</h4>
+            <div class="min-w-0 w-full text-center">
+                <h4 class="text-sm font-bold uppercase tracking-wide text-gray-800 dark:text-gray-200 break-words">{{ $chart['title'] ?? '' }}</h4>
                 @if ($chartSubtitle)
-                    <p class="mt-1.5 text-xs text-gray-600 dark:text-gray-400 leading-relaxed text-center sm:text-left">{{ $chartSubtitle }}</p>
+                    <p class="mt-1.5 text-xs text-gray-600 dark:text-gray-400 leading-relaxed text-center">{{ $chartSubtitle }}</p>
                 @endif
             </div>
             <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-stretch sm:justify-end w-full sm:gap-2">

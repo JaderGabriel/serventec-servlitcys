@@ -24,7 +24,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Se o ambiente estiver configurado com `REDIS_CLIENT=phpredis` mas a extensão
+        // não estiver disponível, o Laravel falha com "Class \"Redis\" not found".
+        // Fazemos fallback para Predis (via composer) para manter a app funcional.
+        if (config('database.redis.client') === 'phpredis' && ! class_exists(\Redis::class)) {
+            config(['database.redis.client' => 'predis']);
+        }
     }
 
     /**

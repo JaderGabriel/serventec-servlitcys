@@ -192,17 +192,26 @@ function buildSchoolPopupHtml(mk, footnote) {
  * Mapa OSM (Leaflet) para unidades escolares com coordenadas.
  * @param {unknown} markersInput
  * @param {unknown} footnoteInput
+ * @param {unknown} optionsInput
  */
-export default function createSchoolUnitsMap(markersInput, footnoteInput) {
+export default function createSchoolUnitsMap(
+    markersInput,
+    footnoteInput,
+    optionsInput,
+) {
     const markers = Array.isArray(markersInput) ? markersInput : [];
     const footnote =
         typeof footnoteInput === "string" && footnoteInput.trim() !== ""
             ? footnoteInput
             : null;
+    const options =
+        optionsInput && typeof optionsInput === "object" ? optionsInput : {};
+    const mode = String(options.mode || "default");
 
     return {
         markers,
         footnote,
+        mode,
         map: null,
         group: null,
         booted: false,
@@ -281,6 +290,18 @@ export default function createSchoolUnitsMap(markersInput, footnoteInput) {
 
             this.group = L.layerGroup().addTo(this.map);
 
+            // “Cobertura”: raio ~ proporcional às matrículas no filtro (quando existir).
+            let maxMat = 0;
+            if (this.mode === "coverage") {
+                for (const mk of this.markers) {
+                    const m = mk?.school?.matriculas;
+                    const v = toFiniteNumber(m);
+                    if (v !== null && v > maxMat) {
+                        maxMat = v;
+                    }
+                }
+            }
+
             this.markers.forEach((mk) => {
                 const lat = toFiniteNumber(mk.lat);
                 const lng = toFiniteNumber(mk.lng);
@@ -294,12 +315,23 @@ export default function createSchoolUnitsMap(markersInput, footnoteInput) {
                 }
                 const { color, fill } = markerStrokeFill(mk);
                 const popupHtml = buildSchoolPopupHtml(mk, this.footnote);
+                const baseRadius = 8;
+                let radius = baseRadius;
+                if (this.mode === "coverage") {
+                    const v = toFiniteNumber(mk?.school?.matriculas);
+                    if (v !== null && v > 0 && maxMat > 0) {
+                        // 6..18
+                        radius = Math.round(6 + 12 * Math.sqrt(v / maxMat));
+                    } else {
+                        radius = 6;
+                    }
+                }
                 L.circleMarker([lat, lng], {
-                    radius: 8,
+                    radius,
                     color,
                     weight: 2,
                     fillColor: fill,
-                    fillOpacity: 0.92,
+                    fillOpacity: this.mode === "coverage" ? 0.65 : 0.92,
                 })
                     .bindPopup(`<div class="max-w-xs">${popupHtml}</div>`)
                     .addTo(this.group);

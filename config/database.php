@@ -145,7 +145,10 @@ return [
 
     'redis' => [
 
-        'client' => env('REDIS_CLIENT', 'phpredis'),
+        // Em muitos ambientes (ex.: produção sem extensão `phpredis`), usar `phpredis` gera
+        // "Class \"Redis\" not found". Por defeito, caímos para `predis` quando a extensão
+        // não estiver carregada, mantendo compatibilidade com ambos.
+        'client' => env('REDIS_CLIENT', extension_loaded('redis') ? 'phpredis' : 'predis'),
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),

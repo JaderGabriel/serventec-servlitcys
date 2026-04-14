@@ -169,6 +169,7 @@ function drawWrappedLines(
     font,
     color,
 ) {
+    const oldAlign = ctx.textAlign;
     ctx.font = font;
     ctx.fillStyle = color;
     if (!text) {
@@ -191,6 +192,7 @@ function drawWrappedLines(
         ctx.fillText(line, x, y);
         y += lineHeight;
     }
+    ctx.textAlign = oldAlign;
     return y;
 }
 
@@ -254,9 +256,9 @@ export function buildCompositeExport(chart, meta, chartTitle) {
             .join(" · ");
 
         const fontTitle =
-            'bold 17px system-ui, -apple-system, "Segoe UI", sans-serif';
+            'bold 18px system-ui, -apple-system, "Segoe UI", sans-serif';
         const fontSub =
-            '600 14px system-ui, -apple-system, "Segoe UI", sans-serif';
+            '800 14px system-ui, -apple-system, "Segoe UI", sans-serif';
         const fontCity =
             '13px system-ui, -apple-system, "Segoe UI", sans-serif';
         const fontFoot =
@@ -294,16 +296,43 @@ export function buildCompositeExport(chart, meta, chartTitle) {
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, w, h);
 
+        const cx = Math.round(w / 2);
+
+        // Helpers: logo simples (sem dependência de imagens externas).
+        const drawToolLogo = (y0) => {
+            const size = 22;
+            const x0 = cx - size / 2;
+            ctx.save();
+            ctx.fillStyle = "#4f46e5";
+            ctx.beginPath();
+            ctx.roundRect(x0, y0, size, size, 6);
+            ctx.fill();
+            ctx.strokeStyle = "rgba(255,255,255,0.65)";
+            ctx.lineWidth = 1.25;
+            ctx.beginPath();
+            ctx.moveTo(x0 + 6, y0 + 14);
+            ctx.lineTo(x0 + 10, y0 + 10);
+            ctx.lineTo(x0 + 13, y0 + 13);
+            ctx.lineTo(x0 + 17, y0 + 8);
+            ctx.stroke();
+            ctx.restore();
+            return y0 + size;
+        };
+
         let y = headerBandPad + pad;
+        // Logo + nome do documento (centralizado)
+        y = drawToolLogo(y) + 10;
         ctx.font = fontTitle;
         ctx.fillStyle = "#111827";
-        ctx.fillText(meta.documentTitle || "Relatório", pad, y);
-        y += 24;
+        ctx.textAlign = "center";
+        ctx.fillText(meta.documentTitle || "Relatório", cx, y);
+        y += 26;
 
+        const titleUpper = String(chartTitle || "").toUpperCase();
         y = drawWrappedLines(
             ctx,
-            chartTitle || "",
-            pad,
+            titleUpper,
+            cx,
             y,
             textMax,
             18,
@@ -315,11 +344,11 @@ export function buildCompositeExport(chart, meta, chartTitle) {
         ctx.font = fontCity;
         ctx.fillStyle = "#1f2937";
         if (meta.cityLine) {
-            ctx.fillText(meta.cityLine, pad, y);
+            ctx.fillText(meta.cityLine, cx, y);
             y += 20;
         }
         (meta.filterLines || []).forEach((line) => {
-            ctx.fillText(String(line), pad, y);
+            ctx.fillText(String(line), cx, y);
             y += 18;
         });
         y += headerBandPad;
@@ -358,11 +387,25 @@ export function buildCompositeExport(chart, meta, chartTitle) {
         ctx.lineTo(w, footerTop);
         ctx.stroke();
 
+        ctx.textAlign = "center";
+        const footerY0 = footerTop + footerBandPad;
+        // Rodapé: logo + texto direitos autorais (centralizado)
+        let fy = footerY0;
+        fy = drawToolLogo(fy) + 8;
+        const appName = (meta.appName && String(meta.appName).trim()) || "";
+        const copyright =
+            (meta.copyrightLine && String(meta.copyrightLine).trim()) || "";
+        const powered =
+            (meta.poweredByLine && String(meta.poweredByLine).trim()) || "";
+        const footerText = [copyright, powered, foot]
+            .filter((s) => String(s || "").trim() !== "")
+            .join(" · ");
+
         drawWrappedLines(
             ctx,
-            foot,
-            pad,
-            footerTop + footerBandPad,
+            footerText,
+            cx,
+            fy,
             textMax,
             14,
             fontFoot,

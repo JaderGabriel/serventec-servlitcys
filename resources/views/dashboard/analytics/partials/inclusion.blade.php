@@ -104,6 +104,46 @@
                     @php
                         $tot = $neeDetalheCatalogo['totais_por_secao'] ?? [];
                     @endphp
+
+                    {{-- Cards adicionais: matrículas por deficiência / síndromes / altas habilidades (quando houver lista detalhada) --}}
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 min-w-0 mt-6">
+                        @php
+                            $mkChart = function (string $title, array $rows): array {
+                                $labels = [];
+                                $values = [];
+                                foreach (array_slice($rows, 0, 14) as $r) {
+                                    $labels[] = (string) ($r['nome'] ?? '—');
+                                    $values[] = (float) ((int) ($r['total'] ?? 0));
+                                }
+                                return \App\Support\Dashboard\ChartPayload::barHorizontal($title, __('Matrículas'), $labels, $values);
+                            };
+                        @endphp
+                        @if (! empty($neeDetalheCatalogo['deficiencias']))
+                            <x-dashboard.chart-panel
+                                :chart="$mkChart(__('Matrículas — deficiências (top 14)'), $neeDetalheCatalogo['deficiencias'])"
+                                :exportFilename="'inclusao-nee-deficiencias'"
+                                :exportMeta="$chartExportContext"
+                                :compact="false"
+                            />
+                        @endif
+                        @if (! empty($neeDetalheCatalogo['sindromes_tea']))
+                            <x-dashboard.chart-panel
+                                :chart="$mkChart(__('Matrículas — síndromes/TEA (top 14)'), $neeDetalheCatalogo['sindromes_tea'])"
+                                :exportFilename="'inclusao-nee-sindromes-tea'"
+                                :exportMeta="$chartExportContext"
+                                :compact="false"
+                            />
+                        @endif
+                        @if (! empty($neeDetalheCatalogo['ne_altas_habilidades']))
+                            <x-dashboard.chart-panel
+                                :chart="$mkChart(__('Matrículas — altas habilidades (top 14)'), $neeDetalheCatalogo['ne_altas_habilidades'])"
+                                :exportFilename="'inclusao-nee-altas-habilidades'"
+                                :exportMeta="$chartExportContext"
+                                :compact="false"
+                            />
+                        @endif
+                    </div>
+
                     <div class="mt-6 rounded-lg border border-violet-100 dark:border-violet-900/40 bg-violet-50/40 dark:bg-violet-950/20 px-4 py-4 space-y-4">
                         <div>
                             <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Contagem por designação no catálogo (deficiências, síndromes/TEA e NE)') }}</h4>

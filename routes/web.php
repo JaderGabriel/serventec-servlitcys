@@ -7,6 +7,7 @@ use App\Http\Controllers\FirstAccessProfileController;
 use App\Http\Controllers\MailSettingsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserLoginHistoryController;
 use App\Http\Controllers\UserSessionController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +41,7 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(func
     Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::get('/users/{user}/logins', [UserLoginHistoryController::class, 'index'])->name('users.logins');
     Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::post('/users/{user}/terminate-sessions', [UserController::class, 'terminateSessions'])->name('users.terminate-sessions');
 

@@ -115,9 +115,6 @@
         && empty($enrollmentData['distorcao'])
         && empty($enrollmentData['error'])
     )
-        <div class="rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50/90 dark:bg-slate-900/40 px-4 py-3 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-            {{ __('Distorção idade/série: o cálculo automático precisa de data de nascimento na pessoa, série ligada à turma e uma coluna de idade limite superior na tabela série (por exemplo idade_maxima ou idade_final). Se a sua base usar outro nome, defina IEDUCAR_COL_SERIE_IDADE_LIMITE_MAX no .env ou use IEDUCAR_SQL_DISTORCAO_REDE_CHART para o gráfico e o cartão.') }}
-        </div>
     @endif
 
     @if (! empty($enrollmentData['unidades_escolares']))
