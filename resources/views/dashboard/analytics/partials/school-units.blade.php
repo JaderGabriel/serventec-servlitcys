@@ -14,6 +14,7 @@
     $tabErr = $tab['error'] ?? null;
     $topErr = is_array($schoolUnitsData) ? ($schoolUnitsData['error'] ?? null) : null;
     $inepCatalogUrl = 'https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/inep-data/catalogo-de-escolas';
+    $markerCount = is_array($markers) ? count($markers) : 0;
 @endphp
 
 <div class="space-y-6">
@@ -24,6 +25,51 @@
             {{ __('O mapa usa OpenStreetMap. As coordenadas vêm primeiro da base i-Educar (latitude/longitude na escola); se não existirem, tenta-se o código INEP da escola contra o Catálogo de Escolas (INEP/MEC), serviço público ArcGIS. Transporte e lista de espera dependem das colunas existentes na sua base.') }}
         @endif
     </p>
+
+    @if ($topErr)
+        <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
+            {{ $topErr }}
+        </div>
+    @endif
+    @if ($tabErr && $tabErr !== $topErr)
+        <div class="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 px-4 py-3 text-xs text-amber-900 dark:text-amber-100">
+            {{ $tabErr }}
+        </div>
+    @endif
+
+    @if ($yearFilterReady)
+        {{-- Mapa em destaque: o cartão aparece sempre com ano aplicado; o mapa Leaflet só monta quando há marcadores. --}}
+        <div class="rounded-xl border border-emerald-200/90 dark:border-emerald-800/80 bg-white dark:bg-gray-900 overflow-hidden shadow-sm ring-1 ring-emerald-100/80 dark:ring-emerald-900/40">
+            <div class="border-b border-emerald-100 dark:border-emerald-900/50 px-4 py-3 bg-emerald-50/90 dark:bg-emerald-950/40">
+                <h3 class="text-base font-semibold text-emerald-950 dark:text-emerald-100">{{ __('Mapa das unidades escolares') }}</h3>
+                <p class="mt-1 text-xs text-emerald-900/85 dark:text-emerald-200/90 leading-relaxed">
+                    @if ($markerCount > 0)
+                        {{ __('Clique num marcador para ver INEP, contacto, gestor, matrículas e vagas (quando calculáveis) e a origem da coordenada.') }}
+                    @else
+                        {{ __('Neste momento não há coordenadas para posicionar escolas. Verifique latitude/longitude na tabela escola ou código INEP para o Catálogo INEP.') }}
+                    @endif
+                </p>
+            </div>
+            @if ($markerCount > 0)
+                <div
+                    class="relative z-0"
+                    x-data="schoolUnitsMap(@js($markers))"
+                >
+                    <div
+                        x-ref="mapContainer"
+                        class="z-0 h-[min(28rem,55vh)] w-full min-h-[240px] bg-slate-100 dark:bg-slate-900 [&_.leaflet-container]:h-full [&_.leaflet-container]:z-[1]"
+                    ></div>
+                </div>
+            @else
+                <div class="px-4 py-10 text-center text-sm text-gray-600 dark:text-gray-400 border-t border-emerald-100/60 dark:border-emerald-900/40">
+                    {{ __('Sem marcadores no mapa para os filtros atuais.') }}
+                    @if ($geoNote)
+                        <span class="block mt-2 text-xs text-amber-800 dark:text-amber-200/90">{{ $geoNote }}</span>
+                    @endif
+                </div>
+            @endif
+        </div>
+    @endif
 
     @if ($yearFilterReady && $geoAttribution !== [])
         <div class="rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50/70 dark:bg-sky-950/25 p-4 shadow-sm">
@@ -43,7 +89,7 @@
             @elseif ($geoSource === 'mixed')
                 <p class="mt-2 text-[11px] font-medium text-sky-900 dark:text-sky-100">{{ __('Marcadores atuais: mistura de coordenadas locais e do Catálogo INEP.') }}</p>
             @elseif ($geoSource === 'none')
-                <p class="mt-2 text-[11px] text-sky-800/85 dark:text-sky-200/85">{{ __('Ainda sem marcadores: veja a mensagem abaixo ou confira código INEP e colunas de latitude/longitude.') }}</p>
+                <p class="mt-2 text-[11px] text-sky-800/85 dark:text-sky-200/85">{{ __('Ainda sem marcadores: veja a mensagem no mapa ou confira código INEP e colunas de latitude/longitude.') }}</p>
             @endif
         </div>
     @endif
@@ -89,39 +135,8 @@
         </div>
     @endif
 
-    @if ($topErr)
-        <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
-            {{ $topErr }}
-        </div>
-    @endif
-    @if ($tabErr && $tabErr !== $topErr)
-        <div class="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 px-4 py-3 text-xs text-amber-900 dark:text-amber-100">
-            {{ $tabErr }}
-        </div>
-    @endif
-
-    @if ($geoNote)
+    @if ($geoNote && $markerCount > 0)
         <p class="text-xs text-amber-800 dark:text-amber-200/90 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 rounded-lg px-3 py-2">{{ $geoNote }}</p>
-    @endif
-
-    @if ($yearFilterReady && count($markers) > 0)
-        <div
-            class="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 overflow-hidden shadow-sm"
-            x-data="schoolUnitsMap(@js($markers))"
-        >
-            <div class="border-b border-gray-100 dark:border-gray-700 px-4 py-3 bg-gray-50/90 dark:bg-gray-800/80">
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Mapa das unidades') }}</h3>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Clique num marcador para ver dados da unidade (INEP, contacto, matrículas, vagas) e a origem da coordenada.') }}</p>
-            </div>
-            <div
-                x-ref="mapContainer"
-                class="z-0 h-[min(28rem,55vh)] w-full min-h-[240px] bg-slate-100 dark:bg-slate-900 [&_.leaflet-container]:h-full [&_.leaflet-container]:z-[1]"
-            ></div>
-        </div>
-    @elseif ($yearFilterReady)
-        <div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-8 text-center text-sm text-gray-500 dark:text-gray-400">
-            {{ __('Sem coordenadas para montar o mapa com os filtros atuais. Preencha latitude/longitude na escola ou o código INEP para consulta ao Catálogo INEP.') }}
-        </div>
     @endif
 
     @if ($transport && is_array($transport))

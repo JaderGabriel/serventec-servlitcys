@@ -333,7 +333,31 @@ document.addEventListener("alpine:init", () => {
                         const defaultPlugins = {
                             datalabels: {
                                 clip: false,
-                                display: true,
+                                display: (ctx) => {
+                                    const chart = ctx.chart;
+                                    const type = chart.config.type;
+                                    const n = chart.data.datasets?.length ?? 0;
+                                    if (
+                                        n === 1 &&
+                                        [
+                                            "bar",
+                                            "line",
+                                            "doughnut",
+                                            "pie",
+                                            "polarArea",
+                                        ].includes(type)
+                                    ) {
+                                        return chart.getDataVisibility(
+                                            ctx.dataIndex,
+                                        );
+                                    }
+                                    if (n > 1) {
+                                        return chart.isDatasetVisible(
+                                            ctx.datasetIndex,
+                                        );
+                                    }
+                                    return true;
+                                },
                                 color: (ctx) => {
                                     const t = ctx.chart.config.type;
                                     if (t === "doughnut" || t === "pie") {
@@ -381,8 +405,12 @@ document.addEventListener("alpine:init", () => {
                                     const t = ctx.chart.config.type;
                                     if (t === "doughnut" || t === "pie") {
                                         const data = ctx.dataset.data;
+                                        const chart = ctx.chart;
                                         const sum = data.reduce(
-                                            (a, b) => a + Number(b),
+                                            (a, b, i) =>
+                                                chart.getDataVisibility(i)
+                                                    ? a + Number(b)
+                                                    : a,
                                             0,
                                         );
                                         const pct = sum
@@ -526,7 +554,7 @@ document.addEventListener("alpine:init", () => {
                                                 !chart.isDatasetVisible(di),
                                             );
                                         }
-                                        chart.update();
+                                        chart.update("none");
                                     } catch (err) {
                                         console.warn(
                                             "legend onClick fallback",
@@ -809,22 +837,28 @@ document.addEventListener("alpine:init", () => {
                 const dsCount = c.data.datasets.length;
                 const labels = c.data.labels || [];
                 if (dsCount === 1) {
-                    return labels.map((label, i) => ({
-                        key: `c-${i}`,
-                        label: String(label ?? ""),
-                        visible: c.getDataVisibility(i),
-                        kind: "category",
-                        index: i,
-                    }));
+                    return labels.map((label, i) => {
+                        const idx = Number(i);
+                        return {
+                            key: `c-${idx}`,
+                            label: String(label ?? ""),
+                            visible: c.getDataVisibility(idx),
+                            kind: "category",
+                            index: idx,
+                        };
+                    });
                 }
 
-                return c.data.datasets.map((ds, di) => ({
-                    key: `d-${di}`,
-                    label: String(ds.label ?? `Série ${di + 1}`),
-                    visible: c.isDatasetVisible(di),
-                    kind: "dataset",
-                    index: di,
-                }));
+                return c.data.datasets.map((ds, di) => {
+                    const d = Number(di);
+                    return {
+                        key: `d-${d}`,
+                        label: String(ds.label ?? `Série ${d + 1}`),
+                        visible: c.isDatasetVisible(d),
+                        kind: "dataset",
+                        index: d,
+                    };
+                });
             },
             toggleFilterRow(row) {
                 const c = this.chart;
@@ -832,11 +866,16 @@ document.addEventListener("alpine:init", () => {
                     return;
                 }
                 if (row.kind === "category") {
-                    c.toggleDataVisibility(row.index);
+                    const idx = Number(row.index);
+                    c.toggleDataVisibility(idx);
                 } else if (row.kind === "dataset") {
-                    c.setDatasetVisibility(row.index, !c.isDatasetVisible(row.index));
+                    const di = Number(row.index);
+                    c.setDatasetVisibility(
+                        di,
+                        !c.isDatasetVisible(di),
+                    );
                 }
-                c.update();
+                c.update("none");
                 this._filterNonce++;
             },
             zoomIn() {

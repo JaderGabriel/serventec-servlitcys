@@ -57,9 +57,9 @@
     @if (! empty($networkData['vagas_por_unidade_chart']) && is_array($networkData['vagas_por_unidade_chart']))
         <div class="rounded-xl border border-amber-200/90 dark:border-amber-800/80 bg-gradient-to-b from-amber-50/90 to-white dark:from-amber-950/35 dark:to-gray-900/80 shadow-sm overflow-hidden">
             <div class="border-b border-amber-200/80 dark:border-amber-800/60 px-4 py-3 bg-amber-100/50 dark:bg-amber-950/40">
-                <h3 class="text-base font-semibold text-amber-950 dark:text-amber-100">{{ __('Vagas em aberto por Unidade (escola)') }}</h3>
+                <h3 class="text-base font-semibold text-amber-950 dark:text-amber-100">{{ __('Vagas ociosas por escola') }}</h3>
                 <p class="mt-1 text-xs text-amber-900/85 dark:text-amber-200/90 leading-relaxed">
-                    {{ __('Barras horizontais por escola: soma das vagas disponíveis nas turmas (capacidade − matrículas ativas), conforme os filtros do painel.') }}
+                    {{ __('Barras horizontais por unidade: soma das vagas ociosas nas turmas (capacidade declarada − matrículas ativas), conforme os filtros. Só entram escolas com vagas > 0 no agregado.') }}
                 </p>
             </div>
             <div class="p-3 sm:p-4 min-w-0">

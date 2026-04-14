@@ -91,6 +91,7 @@ export default function createSchoolUnitsMap(markersInput) {
         group: null,
         booted: false,
         _onTab: null,
+        _bootAttempts: 0,
 
         init() {
             this._onTab = (e) => {
@@ -122,9 +123,20 @@ export default function createSchoolUnitsMap(markersInput) {
                 return;
             }
             const el = this.$refs.mapContainer;
-            if (!el || el.offsetWidth < 20) {
+            if (!el) {
                 return;
             }
+            if (el.offsetWidth < 20) {
+                if (this._bootAttempts < 12) {
+                    this._bootAttempts += 1;
+                    setTimeout(
+                        () => this.tryBoot(),
+                        120 * this._bootAttempts,
+                    );
+                }
+                return;
+            }
+            this._bootAttempts = 0;
 
             const latlngs = this.markers
                 .filter(
