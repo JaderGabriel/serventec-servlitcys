@@ -17,6 +17,30 @@ use Illuminate\Support\Facades\DB;
 #[Description('Sincroniza coordenadas locais das escolas a partir do iEducar (por cidade)')]
 class SyncSchoolUnitGeos extends Command
 {
+    /**
+     * @param  array<int, mixed>  $bindings
+     */
+    private function sqlWithBindings(string $sql, array $bindings): string
+    {
+        // Mostra bindings de forma legível (sem executar o "replace" de forma perigosa).
+        $pretty = [];
+        foreach ($bindings as $b) {
+            if ($b === null) {
+                $pretty[] = 'NULL';
+            } elseif (is_bool($b)) {
+                $pretty[] = $b ? 'true' : 'false';
+            } elseif (is_numeric($b)) {
+                $pretty[] = (string) $b;
+            } else {
+                $s = (string) $b;
+                $s = mb_substr($s, 0, 160, 'UTF-8');
+                $pretty[] = "'".str_replace("'", "''", $s)."'";
+            }
+        }
+
+        return $sql.($pretty !== [] ? '  -- bindings: ['.implode(', ', $pretty).']' : '');
+    }
+
     private function resolveEscolaNameColumnByProbe($db, string $escolaT, array $candidates): ?string
     {
         $candidates = array_values(array_unique(array_filter(array_map(
@@ -94,9 +118,8 @@ class SyncSchoolUnitGeos extends Command
                         'nome',
                     ]);
                     if ($eName === null) {
-                        $this->warn(' - coluna de nome da escola não encontrada na tabela escola.');
-
-                        return;
+                        // Não bloquear a sincronização por falta de nome.
+                        $this->warn(' - coluna de nome da escola não encontrada na tabela escola (ignorando para sincronizar coordenadas).');
                     }
 
                     $latCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
@@ -115,17 +138,39 @@ class SyncSchoolUnitGeos extends Command
                         return;
                     }
 
-                    $rows = $db->table($escolaT.' as e')
+                    $q = $db->table($escolaT.' as e')
                         ->select([
                             'e.'.$eId.' as eid',
-                            'e.'.$eName.' as nome',
                             'e.'.$latCol.' as la',
                             'e.'.$lngCol.' as ln',
-                        ])
+                        ]);
+                    if ($eName !== null) {
+                        $q->addSelect('e.'.$eName.' as nome');
+                    }
+
+                    $q = $q
                         ->when($inepCol !== null, fn ($q) => $q->addSelect('e.'.$inepCol.' as inep'))
                         ->orderBy('e.'.$eId)
-                        ->limit(5000)
-                        ->get();
+                        ->limit(5000);
+
+                    $this->line(' - SQL (select escolas): '.$this->sqlWithBindings($q->toSql(), $q->getBindings()));
+
+                    $rows = $q->get();
+
+                    $this->line(' - Linhas obtidas (bruto): '.count($rows));
+                    $sampleN = min(5, count($rows));
+                    if ($sampleN > 0) {
+                        $this->line(' - Amostra (primeiras '.$sampleN.'):');
+                        for ($i = 0; $i < $sampleN; $i++) {
+                            $a = (array) $rows[$i];
+                            $this->line('   • eid='.(string) ($a['eid'] ?? '')
+                                .' la='.(string) ($a['la'] ?? '')
+                                .' ln='.(string) ($a['ln'] ?? '')
+                                .' inep='.(string) ($a['inep'] ?? '')
+                                .' nome='.(isset($a['nome']) ? (string) $a['nome'] : '')
+                            );
+                        }
+                    }
 
                     $batch = [];
                     $now = now();
@@ -175,7 +220,7 @@ class SyncSchoolUnitGeos extends Command
                             'ieducar_seen_at' => $now,
                             'has_divergence' => false,
                             'meta' => json_encode([
-                                'nome' => (string) ($a['nome'] ?? ''),
+                                'nome' => isset($a['nome']) ? (string) $a['nome'] : '',
                             ], JSON_UNESCAPED_UNICODE),
                             'created_at' => $now,
                             'updated_at' => $now,
@@ -186,6 +231,20 @@ class SyncSchoolUnitGeos extends Command
                         $this->info(' - nenhuma coordenada válida encontrada na escola.');
 
                         return;
+                    }
+
+                    $this->line(' - Registos válidos para upsert: '.count($batch));
+                    $previewN = min(3, count($batch));
+                    if ($previewN > 0) {
+                        $this->line(' - Preview (primeiros '.$previewN.' para upsert):');
+                        for ($i = 0; $i < $previewN; $i++) {
+                            $b = $batch[$i];
+                            $this->line('   • escola_id='.(string) ($b['escola_id'] ?? '')
+                                .' inep_code='.(string) ($b['inep_code'] ?? '')
+                                .' lat='.(string) ($b['lat'] ?? '')
+                                .' lng='.(string) ($b['lng'] ?? '')
+                            );
+                        }
                     }
 
                     DB::table((new SchoolUnitGeo())->getTable())->upsert(
