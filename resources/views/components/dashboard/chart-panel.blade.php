@@ -203,7 +203,7 @@
                     {{ __('Desmarque para ocultar temporariamente. Toque de novo na legenda do gráfico também alterna séries (quando visível).') }}
                 </p>
                 <ul class="flex-1 overflow-y-auto px-4 py-2 text-sm text-gray-800 dark:text-gray-200 min-h-0">
-                    <template x-for="row in filterRows()" :key="row.key">
+                    <template x-for="row in filterRows()" :key="row.key + '-' + _filterNonce">
                         <li class="flex items-start gap-3 border-b border-gray-100 py-2.5 last:border-0 dark:border-gray-700">
                             <input
                                 type="checkbox"

@@ -51,7 +51,7 @@
                         <x-input-error :messages="$errors->get('is_admin')" class="mt-2" />
 
                         <div class="flex items-center justify-end gap-4">
-                            <a href="{{ route('dashboard') }}" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
+                            <a href="{{ route('users.index') }}" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
                                 {{ __('Cancelar') }}
                             </a>
                             <x-primary-button>

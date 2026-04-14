@@ -2,11 +2,14 @@
 
 namespace App\Providers;
 
+use App\Listeners\LogSuccessfulUserLogin;
 use App\Models\City;
 use App\Models\User;
 use App\Policies\CityPolicy;
 use App\Policies\UserPolicy;
 use App\Services\MailConfigService;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -28,6 +31,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(City::class, CityPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
+
+        Event::listen(Login::class, LogSuccessfulUserLogin::class);
 
         /*
          * Em produção, o ficheiro public/hot (gerado por `npm run dev`) faz o @vite apontar

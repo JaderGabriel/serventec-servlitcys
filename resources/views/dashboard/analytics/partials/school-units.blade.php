@@ -10,6 +10,7 @@
     $geoAttribution = is_array($tab['geo_attribution'] ?? null) ? $tab['geo_attribution'] : [];
     $mapScope = $tab['map_scope'] ?? 'matricula';
     $showWaitingCapacity = (bool) ($tab['show_waiting_capacity'] ?? true);
+    $geoDistribution = is_array($tab['geo_distribution'] ?? null) ? $tab['geo_distribution'] : null;
     $tabErr = $tab['error'] ?? null;
     $topErr = is_array($schoolUnitsData) ? ($schoolUnitsData['error'] ?? null) : null;
     $inepCatalogUrl = 'https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/inep-data/catalogo-de-escolas';
@@ -47,6 +48,47 @@
         </div>
     @endif
 
+    @if ($yearFilterReady && $geoDistribution !== null)
+        <div class="rounded-xl border border-violet-200 dark:border-violet-900/50 bg-violet-50/70 dark:bg-violet-950/25 p-4 shadow-sm">
+            <h3 class="text-sm font-semibold text-violet-950 dark:text-violet-100">{{ __('Distribuição geográfica') }}</h3>
+            <p class="mt-1 text-xs text-violet-900/90 dark:text-violet-200/90 leading-relaxed">
+                @if (($geoDistribution['map_scope'] ?? '') === 'rede_escola')
+                    {{ __('Resumo das unidades com posição no mapa (modo rede — cadastro na tabela escola).') }}
+                @else
+                    {{ __('Resumo das unidades no âmbito de matrículas ativas nos filtros e com coordenadas disponíveis.') }}
+                @endif
+            </p>
+            <dl class="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm text-violet-900 dark:text-violet-100">
+                <div class="rounded-lg bg-white/80 dark:bg-gray-900/40 px-3 py-2">
+                    <dt class="text-[11px] uppercase text-violet-700 dark:text-violet-300">{{ __('Escolas no escopo') }}</dt>
+                    <dd class="font-semibold tabular-nums">{{ number_format((int) ($geoDistribution['escolas_no_escopo'] ?? 0)) }}</dd>
+                </div>
+                <div class="rounded-lg bg-white/80 dark:bg-gray-900/40 px-3 py-2">
+                    <dt class="text-[11px] uppercase text-violet-700 dark:text-violet-300">{{ __('Coord. na base') }}</dt>
+                    <dd class="font-semibold tabular-nums">{{ number_format((int) ($geoDistribution['com_coordenadas_base'] ?? 0)) }}</dd>
+                </div>
+                <div class="rounded-lg bg-white/80 dark:bg-gray-900/40 px-3 py-2">
+                    <dt class="text-[11px] uppercase text-violet-700 dark:text-violet-300">{{ __('Coord. via INEP') }}</dt>
+                    <dd class="font-semibold tabular-nums">{{ number_format((int) ($geoDistribution['com_coordenadas_inep'] ?? 0)) }}</dd>
+                </div>
+                <div class="rounded-lg bg-white/80 dark:bg-gray-900/40 px-3 py-2">
+                    <dt class="text-[11px] uppercase text-violet-700 dark:text-violet-300">{{ __('Total com posição') }}</dt>
+                    <dd class="font-semibold tabular-nums">{{ number_format((int) ($geoDistribution['total_com_coordenadas'] ?? 0)) }}</dd>
+                </div>
+                <div class="rounded-lg bg-white/80 dark:bg-gray-900/40 px-3 py-2">
+                    <dt class="text-[11px] uppercase text-violet-700 dark:text-violet-300">{{ __('Marcadores no mapa') }}</dt>
+                    <dd class="font-semibold tabular-nums">{{ number_format((int) ($geoDistribution['marcadores_exibidos'] ?? 0)) }} / {{ number_format((int) ($geoDistribution['limite_marcadores'] ?? 120)) }}</dd>
+                </div>
+                @if (array_key_exists('inep_geocoding_ativo', $geoDistribution))
+                    <div class="rounded-lg bg-white/80 dark:bg-gray-900/40 px-3 py-2 col-span-2 sm:col-span-1">
+                        <dt class="text-[11px] uppercase text-violet-700 dark:text-violet-300">{{ __('Geocodificação INEP') }}</dt>
+                        <dd class="font-semibold">{{ ($geoDistribution['inep_geocoding_ativo'] ?? false) ? __('Ativa') : __('Desativada') }}</dd>
+                    </div>
+                @endif
+            </dl>
+        </div>
+    @endif
+
     @if ($topErr)
         <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
             {{ $topErr }}
@@ -69,7 +111,7 @@
         >
             <div class="border-b border-gray-100 dark:border-gray-700 px-4 py-3 bg-gray-50/90 dark:bg-gray-800/80">
                 <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Mapa das unidades') }}</h3>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Clique num marcador para ver a origem da coordenada (base i-Educar ou INEP).') }}</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Clique num marcador para ver dados da unidade (INEP, contacto, matrículas, vagas) e a origem da coordenada.') }}</p>
             </div>
             <div
                 x-ref="mapContainer"

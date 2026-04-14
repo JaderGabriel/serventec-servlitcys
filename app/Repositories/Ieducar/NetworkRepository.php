@@ -21,6 +21,7 @@ class NetworkRepository
     /**
      * @return array{
      *   charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}>,
+     *   vagas_por_unidade_chart: ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>, subtitle?: string},
      *   kpis: ?array{
      *     capacidade_total: int,
      *     matriculas: int,
@@ -35,25 +36,31 @@ class NetworkRepository
     public function snapshot(?City $city, IeducarFilterState $filters): array
     {
         if ($city === null) {
-            return ['charts' => [], 'kpis' => null, 'notes' => [], 'error' => null];
+            return ['charts' => [], 'vagas_por_unidade_chart' => null, 'kpis' => null, 'notes' => [], 'error' => null];
         }
 
         $charts = [];
+        $vagasPorUnidadeChart = null;
         $notes = [];
         $kpis = null;
 
         try {
-            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$notes, &$kpis) {
+            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$vagasPorUnidadeChart, &$notes, &$kpis) {
                 try {
                     $kpis = MatriculaChartQueries::redeVagasResumoKpis($db, $city, $filters);
                 } catch (QueryException) {
                     $kpis = null;
                 }
 
+                try {
+                    $vagasPorUnidadeChart = MatriculaChartQueries::vagasAbertasPorEscola($db, $city, $filters);
+                } catch (QueryException) {
+                    $vagasPorUnidadeChart = null;
+                }
+
                 foreach ([
                     fn () => MatriculaChartQueries::vagasOciosasPorTurno($db, $city, $filters),
                     fn () => MatriculaChartQueries::vagasAbertasPorCurso($db, $city, $filters),
-                    fn () => MatriculaChartQueries::vagasAbertasPorEscola($db, $city, $filters),
                     fn () => MatriculaChartQueries::matriculasPorSerieTop($db, $city, $filters),
                     fn () => MatriculaChartQueries::matriculasPorEscolaTop($db, $city, $filters),
                 ] as $fn) {
@@ -67,7 +74,7 @@ class NetworkRepository
                     }
                 }
 
-                if ($charts === []) {
+                if ($charts === [] && $vagasPorUnidadeChart === null) {
                     $notes[] = __(
                         'Nenhum gráfico de rede/oferta foi gerado. Confirme em config/ieducar.php: turma (e pivô matricula_turma se aplicável), turno, série, escola, curso, coluna de capacidade na turma (max_aluno), e filtros (ano / escola / segmento / turno).'
                     );
@@ -79,9 +86,9 @@ class NetworkRepository
                 }
             });
         } catch (\Throwable $e) {
-            return ['charts' => [], 'kpis' => null, 'notes' => [], 'error' => $e->getMessage()];
+            return ['charts' => [], 'vagas_por_unidade_chart' => null, 'kpis' => null, 'notes' => [], 'error' => $e->getMessage()];
         }
 
-        return ['charts' => $charts, 'kpis' => $kpis, 'notes' => $notes, 'error' => null];
+        return ['charts' => $charts, 'vagas_por_unidade_chart' => $vagasPorUnidadeChart, 'kpis' => $kpis, 'notes' => $notes, 'error' => null];
     }
 }

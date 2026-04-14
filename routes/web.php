@@ -32,6 +32,7 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(func
     Route::get('cities/{city}/db-status', [CityController::class, 'dbStatus'])->name('cities.db-status');
     Route::resource('cities', CityController::class)->except(['show']);
 
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
 

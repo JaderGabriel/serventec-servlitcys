@@ -216,6 +216,8 @@ document.addEventListener("alpine:init", () => {
             /** Mostrar filtro por categoria (1 série) ou por série (>1 série). */
             filterUi: false,
             filterModalOpen: false,
+            /** Incrementado ao alternar visibilidade (modal/legenda) para o Alpine actualizar os checkboxes. */
+            _filterNonce: 0,
             init() {
                 if (!payload?.labels?.length || !payload?.datasets?.length) {
                     return;
@@ -270,6 +272,7 @@ document.addEventListener("alpine:init", () => {
                 };
                 this.$nextTick(() => {
                     try {
+                        const self = this;
                         const canvas = this.$refs.canvas;
                         if (!canvas) {
                             return;
@@ -494,6 +497,46 @@ document.addEventListener("alpine:init", () => {
                             payload,
                             extra,
                         );
+
+                        const userLegendOnClick = mergedPlugins.legend?.onClick;
+                        mergedPlugins.legend = {
+                            ...(mergedPlugins.legend || {}),
+                            onClick: (e, legendItem, legend) => {
+                                if (typeof userLegendOnClick === "function") {
+                                    userLegendOnClick.call(
+                                        legend.chart,
+                                        e,
+                                        legendItem,
+                                        legend,
+                                    );
+                                } else {
+                                    const chart = legend.chart;
+                                    try {
+                                        if (
+                                            chart.data.datasets.length === 1
+                                        ) {
+                                            chart.toggleDataVisibility(
+                                                legendItem.index,
+                                            );
+                                        } else {
+                                            const di =
+                                                legendItem.datasetIndex;
+                                            chart.setDatasetVisibility(
+                                                di,
+                                                !chart.isDatasetVisible(di),
+                                            );
+                                        }
+                                        chart.update();
+                                    } catch (err) {
+                                        console.warn(
+                                            "legend onClick fallback",
+                                            err,
+                                        );
+                                    }
+                                }
+                                self._filterNonce++;
+                            },
+                        };
 
                         const cartesianInteractive =
                             !isRadial &&
@@ -758,6 +801,7 @@ document.addEventListener("alpine:init", () => {
                 });
             },
             filterRows() {
+                void this._filterNonce;
                 const c = this.chart;
                 if (!c) {
                     return [];
@@ -793,6 +837,7 @@ document.addEventListener("alpine:init", () => {
                     c.setDatasetVisibility(row.index, !c.isDatasetVisible(row.index));
                 }
                 c.update();
+                this._filterNonce++;
             },
             zoomIn() {
                 chartZoomInButton(this.chart);

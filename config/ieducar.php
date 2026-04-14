@@ -107,6 +107,8 @@ return [
         'aluno_deficiencia' => env('IEDUCAR_TABLE_ALUNO_DEFICIENCIA', 'aluno_deficiencia'),
         /** Catálogo de deficiências (nome legível para classificar síndromes / altas habilidades). */
         'deficiencia' => env('IEDUCAR_TABLE_DEFICIENCIA', 'cadastro.deficiencia'),
+        /** Pessoa ↔ deficiência (Portabilis / BIS); prioridade na aba Inclusão em relação a aluno_deficiência. */
+        'fisica_deficiencia' => env('IEDUCAR_TABLE_FISICA_DEFICIENCIA', ''),
     ],
 
     /*

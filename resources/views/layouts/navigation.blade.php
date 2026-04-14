@@ -48,8 +48,8 @@
 
                         @if (Auth::user()->is_admin)
                             <div class="border-t border-gray-200 dark:border-gray-600"></div>
-                            <x-dropdown-link :href="route('users.create')">
-                                {{ __('Novo usuário') }}
+                            <x-dropdown-link :href="route('users.index')">
+                                {{ __('Controle de utilizadores') }}
                             </x-dropdown-link>
                             <x-dropdown-link :href="route('settings.mail.edit')">
                                 {{ __('E-mail (SMTP)') }}
@@ -113,8 +113,8 @@
                 </x-responsive-nav-link>
 
                 @if (Auth::user()->is_admin)
-                    <x-responsive-nav-link :href="route('users.create')" :active="request()->routeIs('users.create')">
-                        {{ __('Novo usuário') }}
+                    <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                        {{ __('Controle de utilizadores') }}
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('settings.mail.edit')" :active="request()->routeIs('settings.mail.*')">
                         {{ __('E-mail (SMTP)') }}

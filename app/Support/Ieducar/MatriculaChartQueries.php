@@ -1096,15 +1096,22 @@ final class MatriculaChartQueries
             }
 
             $title = $por === 'escola'
-                ? __('Vagas em aberto por escola (capacidade − matrículas)')
+                ? __('Vagas em aberto por Unidade (escola)')
                 : __('Vagas em aberto por segmento (curso)');
 
-            return ChartPayload::barHorizontal(
+            $payload = ChartPayload::barHorizontal(
                 $title,
                 __('Vagas'),
                 $labels,
                 $values
             );
+            if ($por === 'escola') {
+                $payload['subtitle'] = __(
+                    'Por turma: capacidade declarada (máx. de alunos) menos matrículas ativas, respeitando os filtros; valores somados por unidade. Só entram turmas com vagas em aberto (> 0).'
+                );
+            }
+
+            return $payload;
         } catch (QueryException|\Throwable) {
             return null;
         }

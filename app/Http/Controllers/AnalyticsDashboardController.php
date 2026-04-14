@@ -88,6 +88,11 @@ class AnalyticsDashboardController extends Controller
                     'transport' => null,
                     'waiting' => null,
                     'geo_note' => null,
+                    'geo_source' => null,
+                    'geo_attribution' => [],
+                    'geo_distribution' => null,
+                    'map_scope' => 'matricula',
+                    'show_waiting_capacity' => true,
                     'error' => null,
                 ],
                 'error' => null,
@@ -142,7 +147,7 @@ class AnalyticsDashboardController extends Controller
 
         $networkData = $yearFilterReady
             ? $networkRepository->snapshot($city, $filters)
-            : ['charts' => [], 'notes' => [], 'error' => null];
+            : ['charts' => [], 'vagas_por_unidade_chart' => null, 'notes' => [], 'error' => null];
 
         $fundebData = $yearFilterReady && $city !== null
             ? $fundebRepository->buildReport(

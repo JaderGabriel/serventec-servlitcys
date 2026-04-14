@@ -38,6 +38,7 @@ class SchoolUnitsRepository
      *     geo_note: ?string,
      *     geo_source: ?string,
      *     geo_attribution: list<string>,
+     *     geo_distribution: ?array<string, mixed>,
      *     map_scope: 'matricula'|'rede_escola',
      *     show_waiting_capacity: bool,
      *     error: ?string
@@ -62,6 +63,7 @@ class SchoolUnitsRepository
                     'geo_note' => null,
                     'geo_source' => null,
                     'geo_attribution' => [],
+                    'geo_distribution' => null,
                     'map_scope' => 'matricula',
                     'show_waiting_capacity' => true,
                     'error' => null,
@@ -93,6 +95,7 @@ class SchoolUnitsRepository
                 $geoNote = $mapBundle['geo_note'];
                 $geoSource = $mapBundle['geo_source'];
                 $geoAttribution = $mapBundle['geo_attribution'];
+                $geoDistribution = $mapBundle['geo_distribution'] ?? null;
                 $mapScope = $mapBundle['map_scope'];
                 $showWaitingCapacity = $mapBundle['show_waiting_capacity'];
 
@@ -115,6 +118,7 @@ class SchoolUnitsRepository
                         'geo_note' => $geoNote,
                         'geo_source' => $geoSource,
                         'geo_attribution' => $geoAttribution,
+                        'geo_distribution' => $geoDistribution,
                         'map_scope' => $mapScope,
                         'show_waiting_capacity' => $showWaitingCapacity,
                         'error' => null,
@@ -137,6 +141,7 @@ class SchoolUnitsRepository
                     'geo_note' => null,
                     'geo_source' => null,
                     'geo_attribution' => [],
+                    'geo_distribution' => null,
                     'map_scope' => 'matricula',
                     'show_waiting_capacity' => true,
                     'error' => $e->getMessage(),
@@ -546,22 +551,306 @@ class SchoolUnitsRepository
         }
     }
 
+    private function escolaStatusKeyFromAtivo(mixed $v): string
+    {
+        if ($v === null) {
+            return 'unknown';
+        }
+        if ($v === true || $v === 1 || $v === '1' || $v === 't') {
+            return 'ativa';
+        }
+
+        return 'inativa';
+    }
+
+    /**
+     * @param  list<int>  $eids
+     * @return array<int, int>
+     */
+    private function matriculasCountByEscolaIds(Connection $db, City $city, IeducarFilterState $filters, array $eids): array
+    {
+        if ($eids === []) {
+            return [];
+        }
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $escolaT = IeducarSchema::resolveTable('escola', $city);
+            $eId = (string) config('ieducar.columns.escola.id');
+
+            $q = $db->table($mat.' as m');
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            $q->join($escolaT.' as e', 't_filter.'.$tc['escola'], '=', 'e.'.$eId);
+            $q->whereIn('e.'.$eId, $eids);
+            $q->selectRaw('e.'.$eId.' as eid')
+                ->selectRaw('COUNT(*) as c')
+                ->groupBy('e.'.$eId);
+
+            $out = [];
+            foreach ($q->get() as $row) {
+                $a = (array) $row;
+                $out[(int) ($a['eid'] ?? 0)] = (int) ($a['c'] ?? 0);
+            }
+
+            return $out;
+        } catch (QueryException|\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * @param  list<int>  $eids
+     * @return array<int, int>
+     */
+    private function capacidadeTurmasByEscolaIds(Connection $db, City $city, IeducarFilterState $filters, array $eids): array
+    {
+        if ($eids === []) {
+            return [];
+        }
+        try {
+            $turma = IeducarSchema::resolveTable('turma', $city);
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            $maxCol = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
+                (string) config('ieducar.columns.turma.max_alunos'),
+                'max_aluno',
+                'max_alunos',
+            ]), $city);
+            if ($maxCol === null || $tc['escola'] === '') {
+                return [];
+            }
+
+            $q = $db->table($turma.' as t');
+            if ($filters->yearFilterValue() !== null && $tc['year'] !== '') {
+                $q->where('t.'.$tc['year'], $filters->yearFilterValue());
+            }
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['turno'], $filters->turno_id);
+            $q->whereIn('t.'.$tc['escola'], $eids);
+
+            $escolaKey = 't.'.$tc['escola'];
+            $g = $db->getQueryGrammar();
+            $rows = $q->selectRaw($escolaKey.' as eid')
+                ->selectRaw('SUM(COALESCE(t.'.$g->wrap($maxCol).', 0)) as cap')
+                ->groupBy($escolaKey)
+                ->get();
+
+            $out = [];
+            foreach ($rows as $row) {
+                $a = (array) $row;
+                $out[(int) ($a['eid'] ?? 0)] = (int) ($a['cap'] ?? 0);
+            }
+
+            return $out;
+        } catch (QueryException|\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * @param  list<int>  $eids
+     * @return array<int, array<string, mixed>>
+     */
+    private function fetchEscolaCardFieldsByIds(Connection $db, City $city, array $eids): array
+    {
+        if ($eids === []) {
+            return [];
+        }
+        try {
+            $escolaT = IeducarSchema::resolveTable('escola', $city);
+            $eId = (string) config('ieducar.columns.escola.id');
+            $eName = (string) config('ieducar.columns.escola.name');
+            $tel = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'telefone', 'fone', 'fone_1', 'nr_telefone', 'tel',
+            ], $city);
+            $email = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'email', 'mail', 'e_mail',
+            ], $city);
+            $gest = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'nome_responsavel', 'nm_responsavel', 'responsavel', 'nome_gestor', 'nm_diretor',
+            ], $city);
+            $log = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'logradouro', 'endereco', 'nm_logradouro',
+            ], $city);
+            $num = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'numero', 'nr_numero', 'num',
+            ], $city);
+            $bai = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'bairro', 'nm_bairro',
+            ], $city);
+            $mun = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'municipio', 'cidade', 'nm_municipio',
+            ], $city);
+            $cep = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'cep', 'nr_cep',
+            ], $city);
+            $inepCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'codigo_inep', 'cod_escola_inep', 'inep', 'cod_inep', 'codigo_escola_inep', 'inep_escola', 'ref_cod_escola_inep',
+            ], $city);
+            $eActive = IeducarColumnInspector::firstExistingColumn($db, $escolaT, array_filter([
+                (string) config('ieducar.columns.escola.active'),
+                'ativo',
+            ]), $city);
+
+            $g = $db->getQueryGrammar();
+            $we = $g->wrap('e');
+
+            $q = $db->table($escolaT.' as e')->whereIn('e.'.$eId, $eids);
+            $q->selectRaw($we.'.'.$g->wrap($eId).' as eid')
+                ->selectRaw($we.'.'.$g->wrap($eName).' as nome_escola');
+            if ($tel !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($tel).' as tel_raw');
+            }
+            if ($email !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($email).' as email_raw');
+            }
+            if ($gest !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($gest).' as gest_raw');
+            }
+            if ($log !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($log).' as log_raw');
+            }
+            if ($num !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($num).' as num_raw');
+            }
+            if ($bai !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($bai).' as bai_raw');
+            }
+            if ($mun !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($mun).' as mun_raw');
+            }
+            if ($cep !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($cep).' as cep_raw');
+            }
+            if ($inepCol !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($inepCol).' as inep_raw');
+            }
+            if ($eActive !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($eActive).' as ativo_raw');
+            }
+
+            $out = [];
+            foreach ($q->get() as $row) {
+                $a = (array) $row;
+                $eid = (int) ($a['eid'] ?? 0);
+                if ($eid <= 0) {
+                    continue;
+                }
+                $parts = [];
+                $lr = trim((string) ($a['log_raw'] ?? ''));
+                $nr = trim((string) ($a['num_raw'] ?? ''));
+                $br = trim((string) ($a['bai_raw'] ?? ''));
+                $mu = trim((string) ($a['mun_raw'] ?? ''));
+                $cp = trim((string) ($a['cep_raw'] ?? ''));
+                if ($lr !== '') {
+                    $parts[] = $lr.($nr !== '' ? ', '.$nr : '');
+                }
+                if ($br !== '') {
+                    $parts[] = $br;
+                }
+                if ($mu !== '') {
+                    $parts[] = $mu;
+                }
+                if ($cp !== '') {
+                    $parts[] = __('CEP').' '.$cp;
+                }
+                $endereco = $parts !== [] ? implode(' — ', $parts) : null;
+
+                $inepVal = $a['inep_raw'] ?? null;
+                $inep = is_numeric($inepVal) ? (int) $inepVal : null;
+                if ($inep !== null && $inep <= 0) {
+                    $inep = null;
+                }
+
+                $ativo = $a['ativo_raw'] ?? null;
+                $sk = $this->escolaStatusKeyFromAtivo($ativo);
+
+                $out[$eid] = [
+                    'nome' => trim((string) ($a['nome_escola'] ?? '')) ?: null,
+                    'telefone' => isset($a['tel_raw']) ? trim((string) $a['tel_raw']) : null,
+                    'email' => isset($a['email_raw']) ? trim((string) $a['email_raw']) : null,
+                    'gestor' => isset($a['gest_raw']) ? trim((string) $a['gest_raw']) : null,
+                    'endereco' => $endereco,
+                    'inep' => $inep,
+                    'status_key' => $sk,
+                    'status_label' => $this->labelEscolaAtiva($ativo),
+                ];
+                foreach (['telefone', 'email', 'gestor'] as $k) {
+                    if (($out[$eid][$k] ?? '') === '') {
+                        $out[$eid][$k] = null;
+                    }
+                }
+            }
+
+            return $out;
+        } catch (QueryException|\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * @param  list<int>  $eids
+     * @return array<int, array<string, mixed>>
+     */
+    private function loadMapMarkerSchoolPayloads(Connection $db, City $city, IeducarFilterState $filters, array $eids): array
+    {
+        $eids = array_values(array_unique(array_values(array_filter($eids, fn ($x) => (int) $x > 0))));
+        if ($eids === []) {
+            return [];
+        }
+        $matBy = $this->matriculasCountByEscolaIds($db, $city, $filters, $eids);
+        $capBy = $this->capacidadeTurmasByEscolaIds($db, $city, $filters, $eids);
+        $cardBy = $this->fetchEscolaCardFieldsByIds($db, $city, $eids);
+
+        $out = [];
+        foreach ($eids as $eid) {
+            $mat = $matBy[$eid] ?? 0;
+            $cap = $capBy[$eid] ?? null;
+            $card = $cardBy[$eid] ?? [];
+            $vagas = $cap !== null ? max(0, $cap - $mat) : null;
+            $out[$eid] = array_merge([
+                'eid' => $eid,
+                'matriculas' => $mat,
+                'capacidade_declarada' => $cap,
+                'vagas_disponiveis' => $vagas,
+            ], $card);
+        }
+
+        return $out;
+    }
+
     /**
      * @param  list<object|array<string, mixed>>  $rows
+     * @param  'matricula'|'rede_escola'  $mapScopeLabel
      * @return array{
-     *   markers: list<array{lat: float, lng: float, label: string, meta: string}>,
+     *   markers: list<array<string, mixed>>,
      *   geo_note: ?string,
      *   geo_source: string,
-     *   geo_attribution: list<string>
+     *   geo_attribution: list<string>,
+     *   geo_distribution: array<string, mixed>
      * }
      */
-    private function buildMarkersFromEscolaRows(array $rows): array
+    private function buildMarkersFromEscolaRows(Connection $db, City $city, IeducarFilterState $filters, array $rows, string $mapScopeLabel): array
     {
         $markers = [];
         $dbCount = 0;
         $inepCount = 0;
-        /** @var array<int, string> */
+        /** @var list<array{inep: int, eid: int, nome: string}> $pendingInep */
         $pendingInep = [];
+
+        $eidsEscopo = [];
+        foreach ($rows as $row) {
+            $arr = (array) $row;
+            $eidRow = isset($arr['eid']) ? (int) $arr['eid'] : 0;
+            if ($eidRow > 0) {
+                $eidsEscopo[$eidRow] = true;
+            }
+        }
+        $nEscolasEscopo = count($eidsEscopo);
 
         foreach ($rows as $row) {
             $arr = (array) $row;
@@ -569,6 +858,7 @@ class SchoolUnitsRepository
             if ($nome === '') {
                 $nome = __('Sem nome');
             }
+            $eid = isset($arr['eid']) ? (int) $arr['eid'] : 0;
             $la = array_key_exists('la', $arr) && $arr['la'] !== null ? (float) $arr['la'] : null;
             $ln = array_key_exists('ln', $arr) && $arr['ln'] !== null ? (float) $arr['ln'] : null;
             $inepRaw = $arr['inep'] ?? null;
@@ -587,34 +877,62 @@ class SchoolUnitsRepository
                     'lng' => $ln,
                     'label' => $nome,
                     'meta' => __('Coordenadas na base i-Educar (tabela escola).'),
+                    'eid' => $eid,
+                    'fonte_coordenada' => 'db',
                 ];
                 $dbCount++;
 
                 continue;
             }
 
-            if ($inep !== null) {
-                $pendingInep[$inep] = $nome;
+            if ($inep !== null && $eid > 0) {
+                $pendingInep[] = ['inep' => $inep, 'eid' => $eid, 'nome' => $nome];
             }
         }
 
-        if ($pendingInep !== [] && filter_var(config('ieducar.inep_geocoding.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
-            $hits = $this->inepGeo->lookupByInepCodes(array_keys($pendingInep));
-            foreach ($pendingInep as $code => $label) {
+        $inepEnabled = filter_var(config('ieducar.inep_geocoding.enabled', true), FILTER_VALIDATE_BOOLEAN);
+        if ($pendingInep !== [] && $inepEnabled) {
+            $codes = [];
+            foreach ($pendingInep as $p) {
+                $codes[$p['inep']] = true;
+            }
+            $hits = $this->inepGeo->lookupByInepCodes(array_keys($codes));
+            foreach ($pendingInep as $p) {
+                $code = $p['inep'];
                 if (! isset($hits[$code])) {
                     continue;
                 }
                 $markers[] = [
                     'lat' => $hits[$code]['lat'],
                     'lng' => $hits[$code]['lng'],
-                    'label' => $label,
+                    'label' => $p['nome'],
                     'meta' => __('Catálogo de Escolas (INEP/MEC): coordenadas públicas — código INEP :code.', ['code' => $code]),
+                    'eid' => $p['eid'],
+                    'fonte_coordenada' => 'inep',
                 ];
                 $inepCount++;
             }
         }
 
-        $markers = array_slice($markers, 0, 120);
+        $totalComCoord = count($markers);
+        $limite = 120;
+        $markersSlice = array_slice($markers, 0, $limite);
+
+        $eidsCarga = [];
+        foreach ($markersSlice as $m) {
+            $id = (int) ($m['eid'] ?? 0);
+            if ($id > 0) {
+                $eidsCarga[] = $id;
+            }
+        }
+        $payloads = $this->loadMapMarkerSchoolPayloads($db, $city, $filters, $eidsCarga);
+
+        $finalMarkers = [];
+        foreach ($markersSlice as $m) {
+            $eid = (int) ($m['eid'] ?? 0);
+            $m['school'] = $eid > 0 ? ($payloads[$eid] ?? null) : null;
+            $finalMarkers[] = $m;
+        }
 
         $geoSource = 'none';
         if ($dbCount > 0 && $inepCount > 0) {
@@ -628,24 +946,37 @@ class SchoolUnitsRepository
         $attribution = $this->geoAttributionLines();
 
         $geoNote = null;
-        if ($markers === []) {
+        if ($finalMarkers === []) {
             $geoNote = __('Sem coordenadas para as escolas do filtro: preencha latitude/longitude na escola na base i-Educar ou garanta o código INEP (ex.: codigo_inep) para consulta ao Catálogo de Escolas INEP.');
         }
 
+        $geoDistribution = [
+            'map_scope' => $mapScopeLabel,
+            'escolas_no_escopo' => $nEscolasEscopo,
+            'com_coordenadas_base' => $dbCount,
+            'com_coordenadas_inep' => $inepCount,
+            'total_com_coordenadas' => $totalComCoord,
+            'limite_marcadores' => $limite,
+            'marcadores_exibidos' => count($finalMarkers),
+            'inep_geocoding_ativo' => $inepEnabled,
+        ];
+
         return [
-            'markers' => $markers,
+            'markers' => $finalMarkers,
             'geo_note' => $geoNote,
             'geo_source' => $geoSource,
             'geo_attribution' => $attribution,
+            'geo_distribution' => $geoDistribution,
         ];
     }
 
     /**
      * @return array{
-     *   markers: list<array{lat: float, lng: float, label: string, meta: string}>,
+     *   markers: list<array<string, mixed>>,
      *   geo_note: ?string,
      *   geo_source: string,
      *   geo_attribution: list<string>,
+     *   geo_distribution: array<string, mixed>,
      *   map_scope: 'matricula'|'rede_escola',
      *   show_waiting_capacity: bool
      * }
@@ -655,7 +986,7 @@ class SchoolUnitsRepository
         $attribution = $this->geoAttributionLines();
 
         $scopedRows = $this->escolasScopedForMap($db, $city, $filters);
-        $fromMatricula = $this->buildMarkersFromEscolaRows($scopedRows);
+        $fromMatricula = $this->buildMarkersFromEscolaRows($db, $city, $filters, $scopedRows, 'matricula');
 
         if ($fromMatricula['markers'] !== []) {
             return [
@@ -663,13 +994,14 @@ class SchoolUnitsRepository
                 'geo_note' => $fromMatricula['geo_note'],
                 'geo_source' => $fromMatricula['geo_source'],
                 'geo_attribution' => $fromMatricula['geo_attribution'],
+                'geo_distribution' => $fromMatricula['geo_distribution'],
                 'map_scope' => 'matricula',
                 'show_waiting_capacity' => true,
             ];
         }
 
         $redeRows = $this->escolasRedeParaMapaFallback($db, $city, $filters);
-        $fromRede = $this->buildMarkersFromEscolaRows($redeRows);
+        $fromRede = $this->buildMarkersFromEscolaRows($db, $city, $filters, $redeRows, 'rede_escola');
 
         if ($fromRede['markers'] !== []) {
             $extra = __('Mapa com unidades cadastradas na rede (tabela escola). Não são exibidos indicadores de lista de espera e capacidade por turma neste modo, porque o mapa não está restrito ao âmbito de matrículas ativas nos filtros.');
@@ -679,6 +1011,7 @@ class SchoolUnitsRepository
                 'geo_note' => $fromRede['geo_note'] !== null ? $fromRede['geo_note'].' '.$extra : $extra,
                 'geo_source' => $fromRede['geo_source'],
                 'geo_attribution' => $fromRede['geo_attribution'],
+                'geo_distribution' => $fromRede['geo_distribution'],
                 'map_scope' => 'rede_escola',
                 'show_waiting_capacity' => false,
             ];
@@ -688,11 +1021,29 @@ class SchoolUnitsRepository
             ? __('Não há escolas no âmbito dos filtros (matrículas ativas) para posicionar no mapa.')
             : __('Sem coordenadas para as escolas do filtro: preencha latitude/longitude na escola na base i-Educar ou garanta o código INEP (ex.: codigo_inep) para consulta ao Catálogo de Escolas INEP.');
 
+        $nEscopo = 0;
+        foreach ($scopedRows as $r) {
+            $a = (array) $r;
+            if (((int) ($a['eid'] ?? 0)) > 0) {
+                $nEscopo++;
+            }
+        }
+
         return [
             'markers' => [],
             'geo_note' => $geoNote,
             'geo_source' => 'none',
             'geo_attribution' => $attribution,
+            'geo_distribution' => [
+                'map_scope' => 'matricula',
+                'escolas_no_escopo' => $nEscopo,
+                'com_coordenadas_base' => 0,
+                'com_coordenadas_inep' => 0,
+                'total_com_coordenadas' => 0,
+                'limite_marcadores' => 120,
+                'marcadores_exibidos' => 0,
+                'inep_geocoding_ativo' => filter_var(config('ieducar.inep_geocoding.enabled', true), FILTER_VALIDATE_BOOLEAN),
+            ],
             'map_scope' => 'matricula',
             'show_waiting_capacity' => true,
         ];
