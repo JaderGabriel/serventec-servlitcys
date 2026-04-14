@@ -97,6 +97,8 @@ return [
         'aluno' => env('IEDUCAR_TABLE_ALUNO', 'aluno'),
         'pessoa' => env('IEDUCAR_TABLE_PESSOA', 'cadastro.pessoa'),
         'raca' => env('IEDUCAR_TABLE_RACA', 'cadastro.raca'),
+        /** Pivô pessoa física ↔ raça (Portabilis: cadastro.fisica_raca; aluno.ref_idpes → ref_idpes, ref_cod_raca → raca). */
+        'fisica_raca' => env('IEDUCAR_TABLE_FISICA_RACA', 'cadastro.fisica_raca'),
         /** Tabelas adicionais para raça/cor (PostgreSQL), separadas por vírgula. */
         'raca_fallbacks' => env('IEDUCAR_TABLE_RACA_FALLBACKS', ''),
         /** Catálogo de situações (INEP); ligação matricula.ref_cod_matricula_situacao → cod_matricula_situacao. */
@@ -121,6 +123,7 @@ return [
         'turno' => env('IEDUCAR_MYSQL_TABLE_TURNO'),
         'pessoa' => env('IEDUCAR_MYSQL_TABLE_PESSOA'),
         'raca' => env('IEDUCAR_MYSQL_TABLE_RACA'),
+        'fisica_raca' => env('IEDUCAR_MYSQL_TABLE_FISICA_RACA'),
         'matricula_situacao' => env('IEDUCAR_MYSQL_TABLE_MATRICULA_SITUACAO'),
         'aluno_deficiencia' => env('IEDUCAR_MYSQL_TABLE_ALUNO_DEFICIENCIA'),
         'deficiencia' => env('IEDUCAR_MYSQL_TABLE_DEFICIENCIA'),

@@ -185,6 +185,7 @@ final class IeducarSchema
             'turma_turno' => $short !== '' ? $short : 'turma_turno',
             'pessoa' => $short !== '' ? $short : 'pessoa',
             'raca' => $short !== '' ? $short : 'raca',
+            'fisica_raca' => $short !== '' ? $short : 'fisica_raca',
             'aluno_deficiencia' => $short !== '' ? $short : 'aluno_deficiencia',
             'deficiencia' => $short !== '' ? $short : 'deficiencia',
             'matricula_situacao' => $short !== '' ? $short : 'matricula_situacao',

@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão actual:** **2.0** (tag `v2.0` no repositório).
+**Versão actual:** **2.0.1** (tag `v2.0.1` no repositório).
 
 ## Requisitos
 
@@ -45,6 +45,7 @@ Noutro terminal: `php artisan serve` (ou use o script `composer run dev` se conf
 | `SESSION_ENCRYPT` | Considerar `true` em produção com HTTPS |
 | `IEDUCAR_MATRICULA_INDICADORES_INCLUIR_SITUACAO_INEP` | Opcional (default `true`): nos indicadores de matrícula, contar também matrículas com situação INEP «em curso» (`matricula_situacao.codigo`, ex. `1`) quando a coluna `ativo` na matrícula está indefinida ou inconsistente com o ecrã do i-Educar |
 | `IEDUCAR_MATRICULA_SITUACAO_INEP_ATIVAS` | Opcional: lista separada por vírgulas de códigos INEP tratados como matrícula activa em conjunto com o filtro de `ativo` (default: `1`) |
+| `IEDUCAR_TABLE_FISICA_RACA` / `IEDUCAR_MYSQL_TABLE_FISICA_RACA` | Opcional: tabela pivô física ↔ raça (default PostgreSQL: `cadastro.fisica_raca`); usada no gráfico «cor ou raça» da aba Inclusão |
 
 Credenciais de ligação à base i-Educar por cidade (`db_*` no modelo `City`) são guardadas **encriptadas** na base (cast `encrypted`).
 
@@ -116,7 +117,8 @@ composer test
 
 | Tag | Notas |
 |-----|--------|
-| **v2.0** | Indicadores de matrícula alinhados com situação INEP quando `ativo` está indefinido; variáveis `IEDUCAR_MATRICULA_*` acima. Documentação de requisitos actualizada (`pdo_pgsql` para i-Educar em PostgreSQL). |
+| **v2.0.1** | Gráfico de cor/raça (Inclusão): prioriza `fisica_raca` como no BI (aluno → `cadastro.fisica_raca` → `raca`), `COUNT(DISTINCT matrícula)` e rótulo «Não declarado»; config `IEDUCAR_TABLE_FISICA_RACA`. |
+| v2.0 | Indicadores de matrícula alinhados com situação INEP quando `ativo` está indefinido; variáveis `IEDUCAR_MATRICULA_*` acima. Documentação de requisitos actualizada (`pdo_pgsql` para i-Educar em PostgreSQL). |
 | v1.0 | Versão inicial etiquetada. |
 
 ## Licença

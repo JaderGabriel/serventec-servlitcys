@@ -190,6 +190,9 @@ class InclusionRepository
     }
 
     /**
+     * Distribuição por cor/raça alinhada ao BI i-Educar típico: prioriza `cadastro.fisica_raca`
+     * (aluno.ref_idpes → fisica_raca → raca), com COUNT(DISTINCT cod_matricula) e rótulo «Não declarado» quando vazio.
+     *
      * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}
      */
     private function raceDistributionChart(Connection $db, City $city, IeducarFilterState $filters): ?array
@@ -215,7 +218,11 @@ class InclusionRepository
 
             $mAluno = (string) config('ieducar.columns.matricula.aluno');
             $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $mId = (string) config('ieducar.columns.matricula.id');
             $aId = (string) config('ieducar.columns.aluno.id');
+            $grammar = $db->getQueryGrammar();
+            $distinctMatriculas = 'COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).')';
+
             $aPessoa = IeducarColumnInspector::firstExistingColumn($db, $aluno, array_filter([
                 (string) config('ieducar.columns.aluno.pessoa'),
                 'ref_cod_pessoa',
@@ -225,6 +232,12 @@ class InclusionRepository
             if ($aPessoa === null) {
                 return null;
             }
+
+            $aIdpes = IeducarColumnInspector::firstExistingColumn($db, $aluno, array_filter([
+                'ref_idpes',
+                'idpes',
+            ]), $city);
+            $fisicaRacaPivot = self::resolveFisicaRacaPivotSpec($db, $city);
 
             $pRaca = null;
             $pId = null;
@@ -284,7 +297,7 @@ class InclusionRepository
 
             /** @var array{table: string, racaCol: string, fisicaLink: string, alunoCol: string}|null */
             $fisicaViaAluno = null;
-            if ($pRaca === null && $aRaca === null && $fisicaTable === null) {
+            if ($pRaca === null && $aRaca === null && $fisicaTable === null && $fisicaRacaPivot === null) {
                 $aIdpesCol = IeducarColumnInspector::firstExistingColumn($db, $aluno, array_filter([
                     'ref_idpes',
                     'idpes',
@@ -320,7 +333,10 @@ class InclusionRepository
             $q = $db->table($mat.' as m')
                 ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
 
-            if ($pRaca !== null && $pId !== null) {
+            if ($fisicaRacaPivot !== null && $aIdpes !== null) {
+                $q->leftJoin($fisicaRacaPivot['qualified'].' as fr', 'a.'.$aIdpes, '=', 'fr.'.$fisicaRacaPivot['idpesCol']);
+                self::leftJoinRacaCatalogOnFk($db, $q, 'fr', $fisicaRacaPivot['racaFkCol'], $racaT, 'r', $rIdCol);
+            } elseif ($pRaca !== null && $pId !== null) {
                 $q->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId);
                 self::leftJoinRacaCatalogOnFk($db, $q, 'p', $pRaca, $racaT, 'r', $rIdCol);
             } elseif ($aRaca !== null) {
@@ -338,7 +354,7 @@ class InclusionRepository
 
             $q->selectRaw('r.'.$rIdCol.' as rid')
                 ->selectRaw('MAX(r.'.$rNameCol.') as rname')
-                ->selectRaw('COUNT(*) as c')
+                ->selectRaw($distinctMatriculas.' as c')
                 ->groupBy('r.'.$rIdCol);
 
             MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
@@ -353,7 +369,7 @@ class InclusionRepository
             $values = [];
             foreach ($rows as $row) {
                 $nm = $row->rname ?? null;
-                $labels[] = $nm !== null && (string) $nm !== '' ? (string) $nm : __('Não informado');
+                $labels[] = $nm !== null && (string) $nm !== '' ? (string) $nm : __('Não declarado');
                 $values[] = (int) ($row->c ?? 0);
             }
 
@@ -361,6 +377,66 @@ class InclusionRepository
         } catch (QueryException|\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Pivô cadastro.fisica_raca (BI: aluno.ref_idpes = fr.ref_idpes, fr.ref_cod_raca → raca).
+     *
+     * @return ?array{qualified: string, idpesCol: string, racaFkCol: string}
+     */
+    private static function resolveFisicaRacaPivotSpec(Connection $db, City $city): ?array
+    {
+        foreach (self::fisicaRacaTableCandidates($city) as $qualified) {
+            if (! IeducarColumnInspector::tableExists($db, $qualified, $city)) {
+                continue;
+            }
+            $idpesCol = IeducarColumnInspector::firstExistingColumn($db, $qualified, [
+                'ref_idpes',
+                'idpes',
+            ], $city);
+            $racaFkCol = IeducarColumnInspector::firstExistingColumn($db, $qualified, [
+                'ref_cod_raca',
+                'cod_raca',
+            ], $city);
+            if ($idpesCol !== null && $racaFkCol !== null) {
+                return [
+                    'qualified' => $qualified,
+                    'idpesCol' => $idpesCol,
+                    'racaFkCol' => $racaFkCol,
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function fisicaRacaTableCandidates(City $city): array
+    {
+        $out = [];
+        try {
+            $out[] = IeducarSchema::resolveTable('fisica_raca', $city);
+        } catch (\InvalidArgumentException) {
+            // ignorado
+        }
+
+        $cad = trim((string) config('ieducar.pgsql_schema_cadastro', 'cadastro')).'.fisica_raca';
+        $sch = IeducarSchema::effectiveSchema($city);
+
+        foreach (array_unique(array_filter([
+            $cad,
+            $sch !== '' ? $sch.'.fisica_raca' : '',
+            'cadastro.fisica_raca',
+            'public.fisica_raca',
+        ])) as $t) {
+            if ($t !== '' && ! in_array($t, $out, true)) {
+                $out[] = $t;
+            }
+        }
+
+        return array_values(array_unique(array_filter($out)));
     }
 
     /**
