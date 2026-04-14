@@ -4,6 +4,7 @@ namespace App\Services\Inep;
 
 use App\Models\City;
 use App\Models\SchoolUnitGeo;
+use App\Support\InepGeoFallbackCsvPath;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -276,8 +277,7 @@ class InepCatalogoEscolasGeoService
             $out['fallback_2_redis_cache'][(string) $code] = $summary;
         }
 
-        $csvRel = (string) config('ieducar.inep_geocoding.fallback_csv_path', 'app/inep_geo_fallback.csv');
-        $csvPath = str_starts_with($csvRel, '/') ? $csvRel : storage_path($csvRel);
+        $csvPath = InepGeoFallbackCsvPath::absolute((string) config('ieducar.inep_geocoding.fallback_csv_path', 'inep_geo_fallback.csv'));
         $csvHits = $this->coordsFromCsvFallback($normalized);
         $out['fallback_2b_csv_local_scope'] = [
             'enabled' => filter_var(config('ieducar.inep_geocoding.fallback_csv_enabled', true), FILTER_VALIDATE_BOOLEAN),
@@ -651,7 +651,7 @@ class InepCatalogoEscolasGeoService
     }
 
     /**
-     * Lê `ieducar.inep_geocoding.fallback_csv_path` (storage) e devolve hits só para INEP na whitelist local.
+     * Lê `ieducar.inep_geocoding.fallback_csv_path` (disco public / legado storage) e devolve hits só para INEP na whitelist local.
      *
      * @param  list<int>  $normalizedCodes
      * @return array<int, array{lat: float, lng: float, nome_inep: string, catalog: array, catalog_assoc: array}>
@@ -662,8 +662,7 @@ class InepCatalogoEscolasGeoService
             return [];
         }
 
-        $rel = (string) config('ieducar.inep_geocoding.fallback_csv_path', 'app/inep_geo_fallback.csv');
-        $path = str_starts_with($rel, '/') ? $rel : storage_path($rel);
+        $path = InepGeoFallbackCsvPath::absolute((string) config('ieducar.inep_geocoding.fallback_csv_path', 'inep_geo_fallback.csv'));
         if (! is_readable($path)) {
             return [];
         }

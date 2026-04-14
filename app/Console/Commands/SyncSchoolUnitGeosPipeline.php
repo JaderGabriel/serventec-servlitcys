@@ -73,37 +73,21 @@ class SyncSchoolUnitGeosPipeline extends Command
 
         if ($withCsvImport) {
             $step++;
-            $rel = is_string($csvPathOpt) && trim($csvPathOpt) !== ''
-                ? trim($csvPathOpt)
-                : (string) config('ieducar.inep_geocoding.fallback_csv_path', 'app/inep_geo_fallback.csv');
-            $path = str_starts_with($rel, '/') ? $rel : storage_path($rel);
-
-            if (! is_readable($path)) {
-                $msg = 'CSV de fallback não encontrado ou ilegível: '.$path;
-                if ($skipCsvOnMissing) {
-                    $this->warn("[{$step}] app:import-inep-geo-fallback-csv — omitido: {$msg}");
-                    $this->newLine();
-                } else {
-                    $this->error("[{$step}] {$msg}");
-
-                    return self::FAILURE;
-                }
-            } else {
-                $this->info("[{$step}] app:import-inep-geo-fallback-csv — atualizar linhas existentes a partir do CSV");
-                $importArgs = [
-                    '--also-map-coords' => $csvAlsoMap,
-                ];
-                if (is_string($csvPathOpt) && trim($csvPathOpt) !== '') {
-                    $importArgs['--path'] = trim($csvPathOpt);
-                }
-                $exit = $this->call('app:import-inep-geo-fallback-csv', $importArgs);
-                if ($exit !== self::SUCCESS) {
-                    $this->error('O import CSV terminou com código '.$exit.'.');
-
-                    return $exit;
-                }
-                $this->newLine();
+            $this->info("[{$step}] app:import-inep-geo-fallback-csv — atualizar linhas existentes a partir do CSV");
+            $importArgs = [
+                '--also-map-coords' => $csvAlsoMap,
+                '--skip-if-missing' => $skipCsvOnMissing ? '1' : '0',
+            ];
+            if (is_string($csvPathOpt) && trim($csvPathOpt) !== '') {
+                $importArgs['--path'] = trim($csvPathOpt);
             }
+            $exit = $this->call('app:import-inep-geo-fallback-csv', $importArgs);
+            if ($exit !== self::SUCCESS) {
+                $this->error('O import CSV terminou com código '.$exit.'.');
+
+                return $exit;
+            }
+            $this->newLine();
         }
 
         $step++;

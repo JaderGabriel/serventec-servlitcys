@@ -4,13 +4,14 @@ namespace App\Console\Commands;
 
 use App\Models\City;
 use App\Models\SchoolUnitGeo;
+use App\Support\InepGeoFallbackCsvPath;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
 #[Signature('app:export-inep-geo-fallback-csv
-    {--path= : Caminho relativo a storage/ ou absoluto (default: config ieducar.inep_geocoding.fallback_csv_path)}
+    {--path= : Caminho relativo ao disco public (storage/app/public), legado app/... sob storage/, ou absoluto}
     {--city= : Se definido, só exporta escolas desta cidade (ainda forAnalytics)}'
 )]
 #[Description('Exporta CSV só com escolas (INEP) das cidades forAnalytics — base para preencher coords e reimportar')]
@@ -23,8 +24,8 @@ class ExportInepGeoFallbackCsv extends Command
 
         $rel = is_string($pathOpt) && trim($pathOpt) !== ''
             ? trim($pathOpt)
-            : (string) config('ieducar.inep_geocoding.fallback_csv_path', 'app/inep_geo_fallback.csv');
-        $path = str_starts_with($rel, '/') ? $rel : storage_path($rel);
+            : (string) config('ieducar.inep_geocoding.fallback_csv_path', 'inep_geo_fallback.csv');
+        $path = InepGeoFallbackCsvPath::absolute($rel);
 
         $citiesQ = City::query()->forAnalytics()->orderBy('id');
         if ($cityOpt !== null && $cityOpt !== '') {
