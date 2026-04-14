@@ -35,6 +35,7 @@ class InclusionRepository
      * @return array{
      *   charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}>,
      *   nee_charts_count: int,
+     *   nee_detalhe_catalogo: ?array<string, mixed>,
      *   aee_cross: ?array<string, mixed>,
      *   gauges: list<array{chart: array<string, mixed>, caption: string}>,
      *   notes: list<string>,
@@ -50,6 +51,7 @@ class InclusionRepository
             return [
                 'charts' => [],
                 'nee_charts_count' => 0,
+                'nee_detalhe_catalogo' => null,
                 'aee_cross' => null,
                 'gauges' => [],
                 'notes' => [],
@@ -62,6 +64,7 @@ class InclusionRepository
 
         $charts = [];
         $neeCharts = [];
+        $neeDetalheCatalogo = null;
         $aeeCross = null;
         $gauges = [];
         $notes = [];
@@ -69,7 +72,7 @@ class InclusionRepository
         $equidadeFonte = null;
 
         try {
-            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte) {
+            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte) {
                 $totalMatriculas = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
 
                 try {
@@ -77,6 +80,12 @@ class InclusionRepository
                 } catch (\Throwable $e) {
                     $notes[] = __('Gráficos NEE (deficiências, síndromes e cadastro): erro — :msg', ['msg' => $e->getMessage()]);
                     $neeCharts = [];
+                }
+
+                try {
+                    $neeDetalheCatalogo = InclusionDashboardQueries::buildNeeDetalheCatalogoPorCategoria($db, $city, $filters);
+                } catch (\Throwable) {
+                    $neeDetalheCatalogo = null;
                 }
 
                 try {
@@ -169,6 +178,7 @@ class InclusionRepository
             return [
                 'charts' => [],
                 'nee_charts_count' => 0,
+                'nee_detalhe_catalogo' => null,
                 'aee_cross' => null,
                 'gauges' => [],
                 'notes' => [],
@@ -184,6 +194,7 @@ class InclusionRepository
         return [
             'charts' => $charts,
             'nee_charts_count' => count($neeCharts),
+            'nee_detalhe_catalogo' => $neeDetalheCatalogo,
             'aee_cross' => $aeeCross,
             'gauges' => $gauges,
             'notes' => $notes,

@@ -143,7 +143,7 @@
             >
                 <div class="absolute inset-0 bg-black/40 dark:bg-black/60" @click="legendModalOpen = false"></div>
                 <div
-                    class="relative z-10 flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-800"
+                    class="relative z-10 flex max-h-[95vh] w-full min-h-0 max-w-lg sm:max-w-xl flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-800"
                     role="dialog"
                     aria-modal="true"
                     :aria-labelledby="'{{ $chartPanelDomId }}-legend-title'"
@@ -161,9 +161,9 @@
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
-                    <ul class="min-h-0 flex-1 overflow-y-auto px-4 py-2 text-sm text-gray-800 dark:text-gray-200">
+                    <ul class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-2 pb-6 text-sm text-gray-800 dark:text-gray-200 [scrollbar-gutter:stable]">
                         <template x-for="(row, idx) in legendRows()" :key="idx">
-                            <li class="border-b border-gray-100 py-2 last:border-0 dark:border-gray-700">
+                            <li class="border-b border-gray-100 py-2.5 last:border-0 dark:border-gray-700">
                                 <span class="block break-words font-medium" x-text="row.label"></span>
                                 <span class="tabular-nums text-xs text-gray-600 dark:text-gray-400" x-show="row.value !== null && row.value !== undefined" x-text="row.valueText"></span>
                             </li>
@@ -184,7 +184,7 @@
             >
                 <div class="absolute inset-0 bg-black/40 dark:bg-black/60" @click="filterModalOpen = false"></div>
                 <div
-                    class="relative z-10 flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-800"
+                    class="relative z-10 flex max-h-[95vh] w-full min-h-0 max-w-lg sm:max-w-xl flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-800"
                     role="dialog"
                     aria-modal="true"
                     :aria-labelledby="'{{ $chartPanelDomId }}-filter-title'"
@@ -205,7 +205,7 @@
                     <p class="shrink-0 px-4 pb-1 pt-2 text-[11px] leading-relaxed text-gray-500 dark:text-gray-400">
                         {{ __('Marque ou desmarque para incluir ou excluir categorias ou séries: o gráfico é atualizado com os dados filtrados (não é só esconder a cor). A legenda do gráfico faz o mesmo quando está visível.') }}
                     </p>
-                    <ul class="min-h-0 flex-1 overflow-y-auto px-4 py-2 text-sm text-gray-800 dark:text-gray-200">
+                    <ul class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-2 pb-8 text-sm text-gray-800 dark:text-gray-200 [scrollbar-gutter:stable]">
                         <template x-for="row in filterRows()" :key="row.key + '-' + _filterNonce">
                             <li class="flex items-start gap-3 border-b border-gray-100 py-2.5 last:border-0 dark:border-gray-700">
                                 <input

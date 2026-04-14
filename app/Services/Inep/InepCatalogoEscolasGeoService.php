@@ -88,17 +88,16 @@ class InepCatalogoEscolasGeoService
             $toFetch = [];
             foreach ($chunk as $code) {
                 $cached = Cache::get($this->cacheKey($code));
-                if (is_array($cached)) {
-                    if (! empty($cached['miss'])) {
-                        continue;
-                    }
+                if (is_array($cached) && empty($cached['miss'])) {
                     $row = $this->hydrateFromCache($cached);
                     if ($row !== null) {
                         $out[$code] = $row;
-                    }
 
-                    continue;
+                        continue;
+                    }
                 }
+                // Cache miss, falha anterior ou coordenadas inválidas no cache: voltar a pedir ao ArcGIS
+                // (não bloquear indefinidamente com «miss» — evita mapa vazio quando a API já devolve o INEP).
                 $toFetch[] = $code;
             }
             if ($toFetch === []) {
@@ -112,6 +111,7 @@ class InepCatalogoEscolasGeoService
                     Cache::put($this->cacheKey($code), $row, $ttl);
                     $out[$code] = $row;
                 } else {
+                    // Falha transitória ou escola fora da camada: TTL curto para permitir retry sem martelar a API
                     Cache::put($this->cacheKey($code), ['miss' => true], $missTtl);
                 }
             }

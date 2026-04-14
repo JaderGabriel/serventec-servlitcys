@@ -136,6 +136,7 @@ class AnalyticsDashboardController extends Controller
             : [
                 'charts' => [],
                 'nee_charts_count' => 0,
+                'nee_detalhe_catalogo' => null,
                 'aee_cross' => null,
                 'gauges' => [],
                 'notes' => [],

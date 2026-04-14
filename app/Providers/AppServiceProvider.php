@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\LogSuccessfulUserLogin;
+use App\Livewire\Pulse\InstitutionTrafficCard;
 use App\Models\City;
 use App\Models\User;
 use App\Policies\CityPolicy;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,7 +34,13 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(City::class, CityPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
 
+        Livewire::component('pulse.institution-traffic-card', InstitutionTrafficCard::class);
+
         Event::listen(Login::class, LogSuccessfulUserLogin::class);
+
+        $this->app->booted(function (): void {
+            Gate::define('viewPulse', fn (?User $user): bool => $user !== null && $user->is_admin === true);
+        });
 
         /*
          * Em produção, o ficheiro public/hot (gerado por `npm run dev`) faz o @vite apontar

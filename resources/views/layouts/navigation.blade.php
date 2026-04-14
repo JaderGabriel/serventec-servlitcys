@@ -51,6 +51,9 @@
                             <x-dropdown-link :href="route('users.index')">
                                 {{ __('Controle de utilizadores') }}
                             </x-dropdown-link>
+                            <x-dropdown-link :href="route('pulse')">
+                                {{ __('Monitorização (Pulse)') }}
+                            </x-dropdown-link>
                             <x-dropdown-link :href="route('settings.mail.edit')">
                                 {{ __('E-mail (SMTP)') }}
                             </x-dropdown-link>
@@ -115,6 +118,9 @@
                 @if (Auth::user()->is_admin)
                     <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
                         {{ __('Controle de utilizadores') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('pulse')" :active="request()->routeIs('pulse')">
+                        {{ __('Monitorização (Pulse)') }}
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('settings.mail.edit')" :active="request()->routeIs('settings.mail.*')">
                         {{ __('E-mail (SMTP)') }}

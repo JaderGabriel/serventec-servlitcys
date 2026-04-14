@@ -326,7 +326,7 @@ final class MatriculaChartQueries
                 $values[] = $it['v'];
             }
 
-            return ChartPayload::barHorizontal(
+            return ChartPayload::bar(
                 __('Vagas ociosas por turno (capacidade − matrículas)'),
                 __('Vagas ociosas'),
                 $labels,
@@ -1003,7 +1003,137 @@ final class MatriculaChartQueries
      */
     public static function vagasAbertasPorEscola(Connection $db, City $city, IeducarFilterState $filters): ?array
     {
-        return self::vagasAbertasAgrupadas($db, $city, $filters, 'escola');
+        $direct = self::vagasAbertasAgrupadas($db, $city, $filters, 'escola');
+        if ($direct !== null) {
+            return $direct;
+        }
+
+        return self::vagasAbertasPorEscolaViaMatriculaEscola($db, $city, $filters);
+    }
+
+    /**
+     * Quando a turma não tem FK para escola, mas a matrícula tem (ex.: ref_cod_escola), agrega vagas por essa coluna.
+     *
+     * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>, subtitle?: string}
+     */
+    private static function vagasAbertasPorEscolaViaMatriculaEscola(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        try {
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            if ($tc['escola'] !== '') {
+                return null;
+            }
+
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $mEsc = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
+                (string) config('ieducar.columns.matricula.escola'),
+                'ref_ref_cod_escola',
+                'ref_cod_escola',
+                'cod_escola',
+            ]), $city);
+            if ($mEsc === null) {
+                return null;
+            }
+
+            $turma = IeducarSchema::resolveTable('turma', $city);
+            $maxCol = (string) config('ieducar.columns.turma.max_alunos');
+            if ($maxCol === '' || ! IeducarColumnInspector::columnExists($db, $turma, $maxCol, $city)) {
+                return null;
+            }
+
+            $tId = (string) config('ieducar.columns.turma.id');
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+
+            $q = $db->table($mat.' as m');
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+
+            $g = $db->getQueryGrammar();
+            $q->groupBy('t_filter.'.$g->wrap($tId))
+                ->selectRaw('t_filter.'.$g->wrap($tId).' as tid')
+                ->selectRaw('MAX(t_filter.'.$g->wrap($maxCol).') as cap')
+                ->selectRaw('MAX(m.'.$g->wrap($mEsc).') as eid');
+
+            $turmaRows = $q->get();
+            if ($turmaRows->isEmpty()) {
+                return null;
+            }
+
+            $counts = self::matriculaCountByTurma($db, $city, $filters);
+            $agg = [];
+            $capAgg = [];
+            foreach ($turmaRows as $row) {
+                $tid = (string) ($row->tid ?? '');
+                $cap = (int) ($row->cap ?? 0);
+                $en = $counts[$tid] ?? 0;
+                $vac = max(0, $cap - $en);
+                $key = (string) ($row->eid ?? '');
+                if ($key === '') {
+                    continue;
+                }
+                $agg[$key] = ($agg[$key] ?? 0) + $vac;
+                $capAgg[$key] = ($capAgg[$key] ?? 0) + max(0, $cap);
+            }
+
+            if ($agg === []) {
+                return null;
+            }
+
+            $items = [];
+            foreach ($agg as $id => $v) {
+                $items[] = [
+                    'id' => $id,
+                    'v' => $v,
+                    'cap' => (int) ($capAgg[$id] ?? 0),
+                ];
+            }
+            $anyPositive = false;
+            foreach ($items as $it) {
+                if (($it['v'] ?? 0) > 0) {
+                    $anyPositive = true;
+                    break;
+                }
+            }
+            if ($anyPositive) {
+                $items = array_values(array_filter($items, static fn (array $x): bool => ($x['v'] ?? 0) > 0));
+                usort($items, fn ($a, $b) => $b['v'] <=> $a['v']);
+            } else {
+                usort($items, fn ($a, $b) => $b['cap'] <=> $a['cap']);
+                $items = array_slice($items, 0, 40);
+            }
+
+            $escolaT = IeducarSchema::resolveTable('escola', $city);
+            $eId = (string) config('ieducar.columns.escola.id');
+            $eName = (string) config('ieducar.columns.escola.name');
+
+            $labels = [];
+            $values = [];
+            foreach ($items as $it) {
+                $name = $db->table($escolaT)->where($eId, $it['id'])->value($eName);
+                $labels[] = $name !== null && (string) $name !== '' ? (string) $name : ('#'.$it['id']);
+                $values[] = (float) $it['v'];
+            }
+
+            $payload = ChartPayload::barHorizontal(
+                __('Vagas ociosas por escola'),
+                __('Vagas'),
+                $labels,
+                $values
+            );
+            $payload['subtitle'] = $anyPositive
+                ? __(
+                    'Por turma: capacidade declarada menos matrículas ativas, somadas por escola; escola obtida pela coluna de matrícula (turma sem FK de escola). Só aparecem escolas com vagas ociosas > 0.'
+                )
+                : __(
+                    'Não há vagas ociosas no filtro. O gráfico mostra escolas com maior capacidade (via matrícula → escola). Valores 0 — confira capacidade e matrículas na base.'
+                );
+
+            return $payload;
+        } catch (QueryException|\Throwable) {
+            return null;
+        }
     }
 
     /**
@@ -1115,12 +1245,9 @@ final class MatriculaChartQueries
                 ? __('Vagas ociosas por escola')
                 : __('Vagas em aberto por segmento (curso)');
 
-            $payload = ChartPayload::barHorizontal(
-                $title,
-                __('Vagas'),
-                $labels,
-                $values
-            );
+            $payload = $por === 'escola'
+                ? ChartPayload::barHorizontal($title, __('Vagas'), $labels, $values)
+                : ChartPayload::bar($title, __('Vagas'), $labels, $values);
             if ($por === 'escola') {
                 $payload['subtitle'] = $anyPositive
                     ? __(

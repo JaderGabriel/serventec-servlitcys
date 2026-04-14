@@ -21,7 +21,43 @@ import { initAnalyticsFilterTurno } from "./analyticsFilterTurno.js";
 import createSchoolUnitsMap from "./schoolUnitsMap.js";
 
 registerChartVisualPlugins(Chart);
-Chart.register(ChartDataLabels, radialCalloutsPlugin);
+
+/** Linha fina entre a legenda (topo) e a área do gráfico — não aplicar a pizza/donut/medidor. */
+const legendChartSeparatorPlugin = {
+    id: "legendChartSeparator",
+    afterDraw(chart) {
+        const t = chart.config.type;
+        if (t === "doughnut" || t === "pie" || t === "polarArea") {
+            return;
+        }
+        const opt = chart.options || {};
+        if (
+            t === "doughnut" &&
+            Number(opt.circumference) === 180 &&
+            Number(opt.rotation) === -90
+        ) {
+            return;
+        }
+        if (opt.plugins?.legend?.display === false) {
+            return;
+        }
+        const ca = chart.chartArea;
+        if (!ca || ca.bottom <= ca.top) {
+            return;
+        }
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.strokeStyle = chartGridColor();
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(ca.left, ca.top + 0.5);
+        ctx.lineTo(ca.right, ca.top + 0.5);
+        ctx.stroke();
+        ctx.restore();
+    },
+};
+
+Chart.register(ChartDataLabels, radialCalloutsPlugin, legendChartSeparatorPlugin);
 
 function chartTextColor() {
     return document.documentElement.classList.contains("dark")
@@ -979,15 +1015,15 @@ document.addEventListener("alpine:init", () => {
                 let body =
                     "p-2 sm:p-4 relative w-full overflow-x-auto overflow-y-auto transition-all duration-200 ease-out ";
                 body += c
-                    ? "min-h-[240px] h-[min(24rem,calc(100vw-2.5rem))] sm:h-80 md:min-h-[20rem]"
-                    : "min-h-[min(28rem,62vh)] w-full";
+                    ? "min-h-[280px] h-[min(28rem,calc(100vw-2rem))] sm:h-[26rem] md:min-h-[22rem]"
+                    : "min-h-[min(32rem,70vh)] w-full";
                 this.panelBodyClass = body;
 
                 let cv =
                     "block w-full max-w-full chart-panel-canvas transition-all duration-200 ";
                 cv += c
-                    ? "max-h-[min(22rem,58vw)] sm:max-h-72"
-                    : "min-h-[16rem] w-full max-h-none";
+                    ? "max-h-[min(26rem,72vw)] sm:max-h-[22rem] md:max-h-96"
+                    : "min-h-[18rem] w-full max-h-none";
                 this.canvasExtraClass = cv;
             },
             legendRows() {
