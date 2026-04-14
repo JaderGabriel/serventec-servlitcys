@@ -39,7 +39,7 @@ final class InclusionSpecialEducationGauges
                 $out[] = [
                     'title' => $titles[$key],
                     'percent' => $pct,
-                    'caption' => __('Percentagem sobre o total de matrículas activas no filtro (SQL personalizado).'),
+                    'caption' => __('Percentagem sobre o denominador devolvido pelo SQL (matrículas activas no filtro, salvo definição explícita na consulta).'),
                 ];
             }
         }
@@ -188,17 +188,17 @@ final class InclusionSpecialEducationGauges
                     [
                         'title' => __('Deficiências'),
                         'percent' => $pct($nDef),
-                        'caption' => __(':n de :d matrículas com registo associado (exclui categorias «síndromes/TEA» e «altas habilidades» pelo nome no cadastro).', ['n' => $nDef, 'd' => $den]),
+                        'caption' => __(':n de :d matrículas com registo associado (exclui pelo nome do cadastro as categorias tratadas em «Síndromes/TEA» e «Altas habilidades»). Vários vínculos em aluno_deficiência podem contar o mesmo estudante em mais do que um medidor.', ['n' => $nDef, 'd' => $den]),
                     ],
                     [
                         'title' => __('Síndromes e TEA'),
                         'percent' => $pct($nSin),
-                        'caption' => __(':n de :d matrículas (palavras-chave no nome da deficiência: síndrome, TEA, autismo, Asperger, Down, etc.).', ['n' => $nSin, 'd' => $den]),
+                        'caption' => __(':n de :d matrículas (palavras-chave no nome da deficiência). Ver metodologia na caixa «Referência metodológica».', ['n' => $nSin, 'd' => $den]),
                     ],
                     [
                         'title' => __('Altas habilidades / superdotação'),
                         'percent' => $pct($nAh),
-                        'caption' => __(':n de :d matrículas (palavras-chave: superdotação, altas habilidades, gifted, talento).', ['n' => $nAh, 'd' => $den]),
+                        'caption' => __(':n de :d matrículas (palavras-chave no nome da deficiência). O mesmo estudante pode entrar em mais do que um medidor se existirem vários registos em aluno_deficiência.', ['n' => $nAh, 'd' => $den]),
                     ],
                 ];
             }
@@ -228,6 +228,7 @@ final class InclusionSpecialEducationGauges
     {
         return [
             'síndrome', 'sindrome', 'syndrome', 'tea', 'autis', 'asperger', 'down',
+            'espectro autista', 'transtorno do espectro',
             'turner', 'fragil', 'x frag', 'rett', 'prader', 'willi', 'angelman',
         ];
     }
@@ -239,7 +240,7 @@ final class InclusionSpecialEducationGauges
     {
         return [
             'superdota', 'super dot', 'alta habilidade', 'altas habilidades', 'gifted', 'talento',
-            'precoce', 'habilidade intelectual',
+            'precoce', 'habilidade intelectual', 'ah sd', 'superdotacao',
         ];
     }
 

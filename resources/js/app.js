@@ -538,27 +538,51 @@ document.addEventListener("alpine:init", () => {
                 }
                 const root = this.$root;
                 try {
-                    root?.scrollIntoView?.({ block: "nearest", behavior: "instant" });
+                    root?.scrollIntoView?.({
+                        block: "nearest",
+                        behavior: "auto",
+                    });
                 } catch (e) {
                     /* ignore */
                 }
+
+                const canvas = this.chart.canvas;
+                const wrap = canvas?.parentElement;
+                let prevMinW = "";
+                let prevMinH = "";
+                if (wrap && (wrap.clientWidth < 8 || wrap.clientHeight < 8)) {
+                    prevMinW = wrap.style.minWidth;
+                    prevMinH = wrap.style.minHeight;
+                    wrap.style.minWidth = "min(100%, 640px)";
+                    wrap.style.minHeight = "280px";
+                }
+
+                const runExport = () => {
+                    try {
+                        this.chart.resize();
+                        this.chart.update("none");
+                        const { dataUrl } = buildCompositeExport(
+                            this.chart,
+                            this._exportMeta,
+                            this._payload?.title || "",
+                        );
+                        triggerPngDownload(dataUrl, this._exportFilename);
+                    } catch (e) {
+                        console.error("exportPng", e);
+                    } finally {
+                        if (wrap) {
+                            wrap.style.minWidth = prevMinW;
+                            wrap.style.minHeight = prevMinH;
+                        }
+                    }
+                };
+
                 this.chart.resize();
                 this.chart.update("none");
                 requestAnimationFrame(() => {
                     this.chart.resize();
                     this.chart.update("none");
-                    requestAnimationFrame(() => {
-                        try {
-                            const { dataUrl } = buildCompositeExport(
-                                this.chart,
-                                this._exportMeta,
-                                this._payload?.title || "",
-                            );
-                            triggerPngDownload(dataUrl, this._exportFilename);
-                        } catch (e) {
-                            console.error(e);
-                        }
-                    });
+                    requestAnimationFrame(runExport);
                 });
             },
         }),

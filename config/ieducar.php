@@ -277,6 +277,7 @@ return [
         'serie_pairs' => env('IEDUCAR_SQL_SERIE'),
         'nivel_ensino_pairs' => env('IEDUCAR_SQL_NIVEL_ENSINO'),
         'turno_pairs' => env('IEDUCAR_SQL_TURNO'),
+        /** Cor/raça na aba Inclusão: mesmos placeholders que outras queries; deve filtrar matrículas activas como o painel. */
         'inclusion_raca' => env('IEDUCAR_SQL_INCLUSION_RACA'),
         'inclusion_extra' => env('IEDUCAR_SQL_INCLUSION_EXTRA'),
         /** Uma linha: coluna «pct» (0–100) ou «numerador» + «denominador» (matrículas). Placeholders como inclusion_raca. */

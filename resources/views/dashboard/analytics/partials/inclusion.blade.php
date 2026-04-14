@@ -1,9 +1,46 @@
 @props(['inclusionData', 'chartExportContext' => []])
 
+@php
+    $methodology = $inclusionData['methodology'] ?? [];
+    $totalMat = $inclusionData['total_matriculas'] ?? null;
+    $eqFonte = $inclusionData['equidade_fonte'] ?? null;
+    $eqLabel = match ($eqFonte) {
+        'nivel_ensino' => __('Nível de ensino (Educacenso)'),
+        'serie' => __('Série'),
+        'curso' => __('Curso'),
+        default => null,
+    };
+@endphp
+
 <div class="space-y-6">
-    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Inclusão & Diversidade: medidores (NEE), distribuição por sexo, segundo gráfico de equidade (série, nível de ensino ou curso conforme a base), raça/cor e SQL opcional. Os filtros aplicam-se pela turma quando existir.') }}
-    </p>
+    <div class="rounded-lg border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-3">
+        <h2 class="text-sm font-semibold text-indigo-900 dark:text-indigo-100">{{ __('Inclusão & Diversidade') }}</h2>
+        <p class="text-sm text-gray-700 dark:text-gray-300 mt-1 leading-relaxed">
+            {{ __('Indicadores para acompanhar educação especial, equidade por etapa e cor ou raça, com o mesmo denominador de matrículas activas sujeitas aos filtros (turma). Os dados seguem o registo na base i-Educar; para regras oficiais do Censo ou do VAAR use os relatórios do INEP/MEC ou SQL personalizado em config/ieducar.php.') }}
+        </p>
+        @if ($totalMat !== null)
+            <p class="mt-2 text-sm font-medium text-gray-800 dark:text-gray-200">
+                {{ __('Matrículas activas no filtro (denominador comum):') }}
+                <span class="tabular-nums text-indigo-700 dark:text-indigo-300">{{ number_format($totalMat) }}</span>
+            </p>
+        @endif
+        @if ($eqLabel)
+            <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                {{ __('Gráfico de equidade por etapa:') }} <span class="font-medium text-gray-800 dark:text-gray-200">{{ $eqLabel }}</span>
+            </p>
+        @endif
+    </div>
+
+    @if (! empty($methodology))
+        <div class="rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800/50 px-4 py-3">
+            <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Referência metodológica') }}</h3>
+            <ul class="mt-2 list-disc list-inside text-xs text-gray-600 dark:text-gray-300 space-y-1.5 leading-relaxed">
+                @foreach ($methodology as $line)
+                    <li>{{ $line }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     @if (! empty($inclusionData['error']))
         <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
@@ -21,7 +58,8 @@
 
     @if (! empty($inclusionData['gauges']))
         <div>
-            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{{ __('Medidores (sobre matrículas activas no filtro)') }}</h3>
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('Educação especial e multidiversidade') }}</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Percentagem sobre matrículas activas no filtro; prioridade a SQL em IEDUCAR_SQL_INCLUSION_GAUGE_*.') }}</p>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 @foreach ($inclusionData['gauges'] as $idx => $gauge)
                     <div class="space-y-2">
@@ -40,7 +78,7 @@
 
     @if (! empty($inclusionData['charts']))
         <div>
-            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{{ __('Equidade, raça/cor e complementares') }}</h3>
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{{ __('Género, etapa e cor ou raça') }}</h3>
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 @foreach ($inclusionData['charts'] as $idx => $chart)
                     <x-dashboard.chart-panel

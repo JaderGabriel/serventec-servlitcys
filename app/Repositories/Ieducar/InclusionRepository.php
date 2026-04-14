@@ -18,7 +18,11 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 
 /**
- * Inclusão & Diversidade: medidores (NEE), equidade (sexo + série/nível/curso), raça/cor e SQL opcional.
+ * Inclusão & Diversidade: educação especial (NEE), género, distribuição por etapa (equidade), cor ou raça e SQL opcional.
+ *
+ * Regras: denominador comum = matrículas activas no filtro (MatriculaAtivoFilter + turma);
+ * educação especial via aluno_deficiência + cadastro ou SQL em ieducar.sql.inclusion_gauge_*;
+ * cor/raça alinhada ao cadastro INEP quando o JOIN ao catálogo raca existir.
  */
 class InclusionRepository
 {
@@ -31,21 +35,36 @@ class InclusionRepository
      *   charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}>,
      *   gauges: list<array{chart: array<string, mixed>, caption: string}>,
      *   notes: list<string>,
-     *   error: ?string
+     *   error: ?string,
+     *   total_matriculas: ?int,
+     *   equidade_fonte: ?string,
+     *   methodology: list<string>
      * }
      */
     public function snapshot(?City $city, IeducarFilterState $filters): array
     {
         if ($city === null) {
-            return ['charts' => [], 'gauges' => [], 'notes' => [], 'error' => null];
+            return [
+                'charts' => [],
+                'gauges' => [],
+                'notes' => [],
+                'error' => null,
+                'total_matriculas' => null,
+                'equidade_fonte' => null,
+                'methodology' => [],
+            ];
         }
 
         $charts = [];
         $gauges = [];
         $notes = [];
+        $totalMatriculas = null;
+        $equidadeFonte = null;
 
         try {
-            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$gauges, &$notes) {
+            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte) {
+                $totalMatriculas = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
+
                 try {
                     foreach (InclusionSpecialEducationGauges::build($db, $city, $filters) as $row) {
                         $gauges[] = [
@@ -58,10 +77,9 @@ class InclusionRepository
                 }
 
                 if ($gauges === []) {
-                    $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
-                    if ($totalMat !== null && $totalMat > 0) {
+                    if ($totalMatriculas !== null && $totalMatriculas > 0) {
                         $notes[] = __(
-                            'NEE: não foi encontrada a tabela aluno_deficiência (ou pivô equivalente) ligada a deficiências. Verifique pmieducar.aluno_deficiencia / cadastro.deficiencia ou defina IEDUCAR_SQL_INCLUSION_GAUGE_* em config/ieducar.php.'
+                            'Educação especial: não foi encontrada a tabela aluno_deficiência (ou equivalente) ligada a deficiências. Configure pmieducar.aluno_deficiência / cadastro.deficiencia ou defina IEDUCAR_SQL_INCLUSION_GAUGE_* em config/ieducar.php para percentagens oficiais por tipo.'
                         );
                     }
                 }
@@ -71,24 +89,29 @@ class InclusionRepository
                     $charts[] = $sex;
                 } else {
                     $notes[] = __(
-                        'Gráfico por sexo indisponível: confirme cadastro.pessoa (sexo, idsexo, …) ou cadastro.fisica, IEDUCAR_TABLE_PESSOA / IEDUCAR_COL_ALUNO_PESSOA e IEDUCAR_COL_PESSOA_ID.'
+                        'Sexo (registo administrativo): indisponível — confirme cadastro.pessoa (sexo, idsexo, …) ou cadastro.fisica, e colunas de ligação aluno↔pessoa.'
                     );
                 }
 
-                $equidade2 = MatriculaChartQueries::matriculasPorSerieTop($db, $city, $filters)
-                    ?? MatriculaChartQueries::matriculasPorNivelEnsinoEducacenso($db, $city, $filters)
-                    ?? MatriculaChartQueries::matriculasPorCursoTop($db, $city, $filters);
-                if ($equidade2 !== null) {
-                    $charts[] = $equidade2;
+                // Equidade por etapa: priorizar nível de ensino (Educacenso), depois série, depois curso.
+                if (($tmp = MatriculaChartQueries::matriculasPorNivelEnsinoEducacenso($db, $city, $filters)) !== null) {
+                    $charts[] = $tmp;
+                    $equidadeFonte = 'nivel_ensino';
+                } elseif (($tmp = MatriculaChartQueries::matriculasPorSerieTop($db, $city, $filters)) !== null) {
+                    $charts[] = $tmp;
+                    $equidadeFonte = 'serie';
+                } elseif (($tmp = MatriculaChartQueries::matriculasPorCursoTop($db, $city, $filters)) !== null) {
+                    $charts[] = $tmp;
+                    $equidadeFonte = 'curso';
                 } else {
                     $notes[] = __(
-                        'Gráfico complementar (série, nível de ensino ou curso) indisponível: verifique colunas da turma (série/curso), tabelas série/curso/nível e IEDUCAR_TABLE_* em config/ieducar.php.'
+                        'Distribuição por etapa (equidade): indisponível — verifique turma→curso→nível de ensino ou turma→série e tabelas em config/ieducar.php.'
                     );
                 }
 
                 $customRaca = config('ieducar.sql.inclusion_raca');
                 if (is_string($customRaca) && trim($customRaca) !== '') {
-                    $racaChart = $this->chartFromRawSql($db, $city, trim($customRaca), __('Matrículas por raça/cor (SQL personalizado)'));
+                    $racaChart = $this->chartFromRawSql($db, $city, trim($customRaca), __('Matrículas por cor ou raça (SQL personalizado)'));
                     if ($racaChart !== null) {
                         $charts[] = $racaChart;
                     } else {
@@ -100,7 +123,7 @@ class InclusionRepository
                         $charts[] = $racaChart;
                     } else {
                         $notes[] = __(
-                            'Raça/cor: não foi possível agregar por catálogo. Confirme IEDUCAR_TABLE_RACA, ref_cod_raca em pessoa/aluno/física, IEDUCAR_TABLE_RACA_FALLBACKS ou IEDUCAR_SQL_INCLUSION_RACA.'
+                            'Cor ou raça: não foi possível agregar pelo catálogo. Confirme IEDUCAR_TABLE_RACA, ref_cod_raca em pessoa/aluno/física, fallbacks ou IEDUCAR_SQL_INCLUSION_RACA (mesmos filtros de matrícula).'
                         );
                     }
                 }
@@ -119,10 +142,45 @@ class InclusionRepository
                 'gauges' => [],
                 'notes' => [],
                 'error' => $e->getMessage(),
+                'total_matriculas' => null,
+                'equidade_fonte' => null,
+                'methodology' => [],
             ];
         }
 
-        return ['charts' => $charts, 'gauges' => $gauges, 'notes' => $notes, 'error' => null];
+        $methodology = $this->methodologyLines($equidadeFonte);
+
+        return [
+            'charts' => $charts,
+            'gauges' => $gauges,
+            'notes' => $notes,
+            'error' => null,
+            'total_matriculas' => $totalMatriculas,
+            'equidade_fonte' => $equidadeFonte,
+            'methodology' => $methodology,
+        ];
+    }
+
+    /**
+     * Textos de referência (Educacenso / INEP / LBI) para interpretação dos indicadores.
+     *
+     * @return list<string>
+     */
+    private function methodologyLines(?string $equidadeFonte): array
+    {
+        $eq = match ($equidadeFonte) {
+            'nivel_ensino' => __('O gráfico de equidade usa níveis de ensino (curso → nível), alinhado à hierarquia Educacenso/INEP.'),
+            'serie' => __('O gráfico de equidade usa séries (turma → série) quando o nível de ensino não está disponível.'),
+            'curso' => __('O gráfico de equidade usa cursos (turma → curso) como recurso quando série e nível não estão disponíveis.'),
+            default => __('O gráfico de equidade por etapa não foi gerado (dados insuficientes).'),
+        };
+
+        return [
+            __('Todos os indicadores respeitam os filtros actuais (ano letivo, escola, segmento, turno) através da turma, com matrícula considerada activa conforme config/ieducar.php.'),
+            __('Sexo e cor ou raça refletem o registo administrativo no cadastro (pessoa/física), como no Censo Escolar — não substituem declaração de identidade de género ou autodeclaração fora do sistema.'),
+            __('Educação especial: com SQL personalizado (IEDUCAR_SQL_INCLUSION_GAUGE_*), as percentagens seguem a regra definida pelo município; sem SQL, a heurística classifica tipos de deficiência por palavras-chave no nome — pode divergir da classificação clínica ou do Censo.'),
+            $eq,
+        ];
     }
 
     /**
@@ -293,7 +351,7 @@ class InclusionRepository
                 $values[] = (int) ($row->c ?? 0);
             }
 
-            return ChartPayload::doughnut(__('Matrículas por raça/cor (cadastro)'), $labels, $values);
+            return ChartPayload::doughnut(__('Matrículas por cor ou raça (cadastro — referência INEP)'), $labels, $values);
         } catch (QueryException|\Throwable) {
             return null;
         }

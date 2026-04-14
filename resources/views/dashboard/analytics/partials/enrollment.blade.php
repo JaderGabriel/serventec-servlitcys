@@ -2,7 +2,7 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Inclui distorção idade/série (rede), em seguida matrículas por escola (principais + «outras» ou top 10), níveis/séries/cursos, turno, oferta e vagas. KPIs no topo: matrículas activas, turmas e ocupação média quando existir capacidade na turma.') }}
+        {{ __('Gráficos: Distorção Idade-Série, matrículas por escola (principais + «outras» ou top 10), níveis/séries/cursos, turno e vagas por escola. KPIs no topo: matrículas activas, turmas e ocupação média quando existir capacidade na turma.') }}
     </p>
 
     @if (! empty($enrollmentData['kpis']))
@@ -33,7 +33,7 @@
     @if (! empty($enrollmentData['distorcao']))
         @php $d = $enrollmentData['distorcao']; @endphp
         <div class="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/25 p-4 shadow-sm">
-            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Distorção idade/série (rede)') }}</h3>
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Distorção Idade-Série') }}</h3>
             <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
                 {{ __('Critério INEP: idade à 31/03 > idade máxima (ou mínima) da série + 2 anos. Percentagem = matrículas com distorção ÷ total com idade/série válidos no filtro.') }}
             </p>

@@ -149,6 +149,19 @@ export function buildCompositeExport(chart, meta, chartTitle) {
             imgW = Math.max(400, Math.round(rect.width) || 600);
             imgH = Math.max(240, Math.round(rect.height) || 360);
         }
+        // Chart.js: dimensões lógicas quando o buffer do canvas ainda está a zero (ex.: aba oculta).
+        if ((!imgW || !imgH) && chart.chartArea) {
+            const ca = chart.chartArea;
+            const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+            if (ca.width > 0 && ca.height > 0) {
+                imgW = Math.round(ca.width * dpr) || Math.round(ca.width);
+                imgH = Math.round(ca.height * dpr) || Math.round(ca.height);
+            }
+        }
+        if (!imgW || !imgH) {
+            imgW = Math.max(400, Number(chart.width) || 600);
+            imgH = Math.max(240, Number(chart.height) || 360);
+        }
 
         const pad = 28;
         const maxContentW = 1320;
@@ -232,6 +245,11 @@ export function buildCompositeExport(chart, meta, chartTitle) {
         y += 12;
 
         const imgX = pad + (w - 2 * pad - imgW) / 2;
+        if (!src.width || !src.height) {
+            throw new Error(
+                "Canvas do gráfico sem dimensões. Redimensione a janela ou mude de aba e tente de novo.",
+            );
+        }
         ctx.drawImage(src, imgX, y, imgW, imgH);
         y += imgH + 16;
 
@@ -248,9 +266,48 @@ export function buildCompositeExport(chart, meta, chartTitle) {
 }
 
 export function triggerPngDownload(dataUrl, filenameBase) {
+    const raw = String(filenameBase || "grafico").trim();
+    const safe = raw.replace(/[^a-zA-Z0-9-_]/g, "_").replace(/^_+|_+$/g, "") || "grafico";
+    const name = `${safe}.png`;
+
     const a = document.createElement("a");
-    const safe = (filenameBase || "grafico").replace(/[^a-zA-Z0-9-_]/g, "_");
-    a.download = `${safe}.png`;
-    a.href = dataUrl;
+    a.setAttribute("download", name);
+    a.style.display = "none";
+
+    let revokeUrl = null;
+    try {
+        if (typeof dataUrl === "string" && dataUrl.startsWith("data:")) {
+            const parts = dataUrl.split(",");
+            const b64 = parts[1];
+            if (b64) {
+                const mime =
+                    parts[0].match(/data:([^;,]+)/)?.[1] || "image/png";
+                const bin = atob(b64);
+                const len = bin.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = bin.charCodeAt(i);
+                }
+                const blob = new Blob([bytes], { type: mime });
+                revokeUrl = URL.createObjectURL(blob);
+                a.href = revokeUrl;
+            } else {
+                a.href = dataUrl;
+            }
+        } else {
+            a.href = dataUrl;
+        }
+    } catch (e) {
+        console.warn("triggerPngDownload blob fallback", e);
+        a.href = dataUrl;
+    }
+
+    document.body.appendChild(a);
     a.click();
+    setTimeout(() => {
+        if (revokeUrl) {
+            URL.revokeObjectURL(revokeUrl);
+        }
+        a.remove();
+    }, 400);
 }

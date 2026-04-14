@@ -78,8 +78,6 @@ class EnrollmentRepository
                         fn () => MatriculaChartQueries::matriculasPorSerieEducacensoCompleto($db, $city, $filters),
                         fn () => MatriculaChartQueries::matriculasPorCursoEducacensoCompleto($db, $city, $filters),
                         fn () => MatriculaChartQueries::matriculasPorTurno($db, $city, $filters),
-                        fn () => MatriculaChartQueries::turmasPorTurnoDistribuicao($db, $city, $filters),
-                        fn () => MatriculaChartQueries::vagasAbertasPorCurso($db, $city, $filters),
                         fn () => MatriculaChartQueries::vagasAbertasPorEscola($db, $city, $filters),
                     ] as $fn) {
                         try {

@@ -10,7 +10,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 
 /**
- * Rede e oferta: turnos, séries e distribuição de turmas (decisões de expansão e janelas).
+ * Rede e oferta: vagas por turno/segmento/escola e matrículas por série e escola (expansão e uso da rede).
  */
 class NetworkRepository
 {
@@ -54,8 +54,6 @@ class NetworkRepository
                     fn () => MatriculaChartQueries::vagasOciosasPorTurno($db, $city, $filters),
                     fn () => MatriculaChartQueries::vagasAbertasPorCurso($db, $city, $filters),
                     fn () => MatriculaChartQueries::vagasAbertasPorEscola($db, $city, $filters),
-                    fn () => MatriculaChartQueries::turmasPorTurnoDistribuicao($db, $city, $filters),
-                    fn () => MatriculaChartQueries::matriculasPorTurno($db, $city, $filters),
                     fn () => MatriculaChartQueries::matriculasPorSerieTop($db, $city, $filters),
                     fn () => MatriculaChartQueries::matriculasPorEscolaTop($db, $city, $filters),
                 ] as $fn) {

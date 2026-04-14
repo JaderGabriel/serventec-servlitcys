@@ -832,7 +832,7 @@ final class MatriculaChartQueries
                 $values[] = (int) ($row->c ?? 0);
             }
 
-            return ChartPayload::doughnut(__('Matrículas por sexo (cadastro)'), $labels, $values);
+            return ChartPayload::doughnut(__('Matrículas por sexo (registo administrativo — Educacenso)'), $labels, $values);
         } catch (QueryException|\Throwable) {
             return null;
         }
@@ -1521,7 +1521,7 @@ final class MatriculaChartQueries
                 }
 
                 return ChartPayload::doughnut(
-                    __('Distorção idade/série (rede)'),
+                    __('Distorção Idade-Série'),
                     $labels,
                     $values
                 );
@@ -1536,7 +1536,7 @@ final class MatriculaChartQueries
         }
 
         return ChartPayload::doughnut(
-            __('Distorção idade/série (rede)'),
+            __('Distorção Idade-Série'),
             [
                 __('Com distorção (idade > limite + 2 anos)'),
                 __('Sem distorção'),

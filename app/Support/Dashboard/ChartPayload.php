@@ -106,7 +106,7 @@ final class ChartPayload
         return [
             'type' => 'doughnut',
             'title' => $title,
-            'labels' => [__('Com indicação'), __('Restante')],
+            'labels' => [__('Com registo'), __('Restante')],
             'datasets' => [
                 [
                     'label' => $title,

@@ -69,7 +69,6 @@ class OverviewRepository
                 foreach ([
                     fn () => MatriculaChartQueries::matriculasPorCursoTop($db, $city, $filters),
                     fn () => MatriculaChartQueries::matriculasPorEscolaTop($db, $city, $filters),
-                    fn () => MatriculaChartQueries::turmasPorTurnoDistribuicao($db, $city, $filters),
                 ] as $fn) {
                     try {
                         $c = $fn();

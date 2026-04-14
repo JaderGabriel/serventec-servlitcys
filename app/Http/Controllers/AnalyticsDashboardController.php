@@ -107,7 +107,15 @@ class AnalyticsDashboardController extends Controller
 
         $inclusionData = $yearFilterReady
             ? $inclusionRepository->snapshot($city, $filters)
-            : ['charts' => [], 'gauges' => [], 'notes' => [], 'error' => null];
+            : [
+                'charts' => [],
+                'gauges' => [],
+                'notes' => [],
+                'error' => null,
+                'total_matriculas' => null,
+                'equidade_fonte' => null,
+                'methodology' => [],
+            ];
 
         $networkData = $yearFilterReady
             ? $networkRepository->snapshot($city, $filters)

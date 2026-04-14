@@ -2,7 +2,7 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Oferta por turno, vagas ociosas (capacidade declarada − matrículas), distribuição de turmas e matrículas por série e escola — útil para planear expansão e uso da rede.') }}
+        {{ __('Vagas ociosas por turno, vagas por segmento e por escola, matrículas por série e escola — útil para planear expansão e uso da rede.') }}
     </p>
 
     @if (! empty($networkData['kpis']) && is_array($networkData['kpis']))
