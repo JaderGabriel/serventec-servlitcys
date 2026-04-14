@@ -10,6 +10,7 @@ import {
     triggerPngDownload,
 } from "./chartExportHelpers.js";
 import { initAnalyticsFilterTurno } from "./analyticsFilterTurno.js";
+import createSchoolUnitsMap from "./schoolUnitsMap.js";
 
 Chart.register(ChartDataLabels, radialCalloutsPlugin);
 
@@ -47,6 +48,8 @@ function mergeCartesianScales(base, extra) {
 }
 
 document.addEventListener("alpine:init", () => {
+    Alpine.data("schoolUnitsMap", (markers) => createSchoolUnitsMap(markers));
+
     Alpine.data(
         "analyticsTabs",
         (allowedKeys, initialFromServer = "overview") => ({

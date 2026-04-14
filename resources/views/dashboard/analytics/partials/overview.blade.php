@@ -1,4 +1,12 @@
-@props(['overviewData', 'yearFilterReady' => true, 'chartExportContext' => []])
+@props(['overviewData', 'schoolUnits' => null, 'yearFilterReady' => true, 'chartExportContext' => []])
+
+@php
+    $suOv = is_array($schoolUnits) && isset($schoolUnits['overview']) ? $schoolUnits['overview'] : null;
+    $yearRows = $suOv['year_global_rows'] ?? [];
+    $schoolYearRows = $suOv['school_year_rows'] ?? [];
+    $unitsRows = $suOv['units_rows'] ?? [];
+    $suNotes = $suOv['notes'] ?? [];
+@endphp
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
@@ -14,6 +22,105 @@
     @if ($yearFilterReady && ! empty($overviewData['error']))
         <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
             {{ $overviewData['error'] }}
+        </div>
+    @endif
+
+    @if ($yearFilterReady && $suOv !== null && (count($yearRows) > 0 || count($schoolYearRows) > 0 || count($unitsRows) > 0 || count($suNotes) > 0))
+        <div class="space-y-4">
+            @if (count($yearRows) > 0)
+                <div class="rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50/70 dark:bg-sky-950/25 p-4 shadow-sm">
+                    <h3 class="text-sm font-semibold text-sky-950 dark:text-sky-100">{{ __('Situação dos anos letivos (tabela ano letivo)') }}</h3>
+                    <p class="mt-1 text-xs text-sky-900/90 dark:text-sky-200/90 leading-relaxed">
+                        {{ __('Com base no registo em «ano letivo» (quando existir). Andamento/ativo variam conforme a versão do i-Educar.') }}
+                    </p>
+                    <div class="mt-3 overflow-x-auto max-h-56 overflow-y-auto rounded-lg border border-sky-100 dark:border-sky-900/50">
+                        <table class="min-w-full text-xs text-left">
+                            <thead class="bg-white/90 dark:bg-gray-900/60 sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-2 font-medium text-sky-900 dark:text-sky-100">{{ __('Ano') }}</th>
+                                    <th class="px-3 py-2 font-medium text-sky-900 dark:text-sky-100">{{ __('Estado') }}</th>
+                                    <th class="px-3 py-2 font-medium text-sky-900 dark:text-sky-100">{{ __('Detalhe') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-sky-100 dark:divide-sky-900/40">
+                                @foreach ($yearRows as $yr)
+                                    <tr>
+                                        <td class="px-3 py-1.5 tabular-nums">{{ $yr['ano'] ?? '—' }}</td>
+                                        <td class="px-3 py-1.5">{{ $yr['status'] ?? '—' }}</td>
+                                        <td class="px-3 py-1.5 text-gray-600 dark:text-gray-400">{{ $yr['detalhe'] ?? '' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+
+            @if (count($schoolYearRows) > 0)
+                <div class="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/70 dark:bg-violet-950/25 p-4 shadow-sm">
+                    <h3 class="text-sm font-semibold text-violet-950 dark:text-violet-100">{{ __('Ano letivo por unidade escolar (turmas no filtro)') }}</h3>
+                    <p class="mt-1 text-xs text-violet-900/90 dark:text-violet-200/90 leading-relaxed">
+                        {{ __('Cada linha combina escola e ano em que existem turmas; o estado repete o indicador global desse ano, quando disponível.') }}
+                    </p>
+                    <div class="mt-3 overflow-x-auto max-h-72 overflow-y-auto rounded-lg border border-violet-100 dark:border-violet-900/50">
+                        <table class="min-w-full text-xs text-left">
+                            <thead class="bg-white/90 dark:bg-gray-900/60 sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-2 font-medium">{{ __('Unidade') }}</th>
+                                    <th class="px-3 py-2 font-medium">{{ __('Ano') }}</th>
+                                    <th class="px-3 py-2 font-medium">{{ __('Estado') }}</th>
+                                    <th class="px-3 py-2 font-medium">{{ __('Detalhe') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-violet-100 dark:divide-violet-900/40">
+                                @foreach ($schoolYearRows as $sr)
+                                    <tr>
+                                        <td class="px-3 py-1.5 break-words max-w-[14rem]">{{ $sr['escola'] ?? '—' }}</td>
+                                        <td class="px-3 py-1.5 tabular-nums">{{ $sr['ano'] ?? '—' }}</td>
+                                        <td class="px-3 py-1.5">{{ $sr['status'] ?? '—' }}</td>
+                                        <td class="px-3 py-1.5 text-gray-600 dark:text-gray-400">{{ $sr['detalhe'] ?? '' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+
+            @if (count($unitsRows) > 0)
+                <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/70 dark:bg-amber-950/20 p-4 shadow-sm">
+                    <h3 class="text-sm font-semibold text-amber-950 dark:text-amber-100">{{ __('Unidades escolares: porte e situação') }}</h3>
+                    <p class="mt-1 text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
+                        {{ __('Porte estimado pelo total de matrículas ativas no filtro; situação da unidade usa a coluna «ativo» da escola quando existir.') }}
+                    </p>
+                    <div class="mt-3 overflow-x-auto max-h-80 overflow-y-auto rounded-lg border border-amber-100 dark:border-amber-900/50">
+                        <table class="min-w-full text-xs text-left">
+                            <thead class="bg-white/90 dark:bg-gray-900/60 sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-2 font-medium">{{ __('Unidade') }}</th>
+                                    <th class="px-3 py-2 font-medium">{{ __('Porte') }}</th>
+                                    <th class="px-3 py-2 font-medium">{{ __('Situação') }}</th>
+                                    <th class="px-3 py-2 font-medium">{{ __('Matrículas') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-amber-100 dark:divide-amber-900/40">
+                                @foreach ($unitsRows as $ur)
+                                    <tr>
+                                        <td class="px-3 py-1.5 break-words max-w-[16rem]">{{ $ur['escola'] ?? '—' }}</td>
+                                        <td class="px-3 py-1.5">{{ $ur['porte'] ?? '—' }}</td>
+                                        <td class="px-3 py-1.5">{{ $ur['unidade_status'] ?? '—' }}</td>
+                                        <td class="px-3 py-1.5 tabular-nums">{{ number_format((int) ($ur['matriculas'] ?? 0)) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+
+            @foreach ($suNotes as $note)
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ $note }}</p>
+            @endforeach
         </div>
     @endif
 

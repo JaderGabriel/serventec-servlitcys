@@ -87,6 +87,7 @@
                             <div x-show="tab === 'overview'" x-cloak class="analytics-tab-panel">
                                 @include('dashboard.analytics.partials.overview', [
                                     'overviewData' => $overviewData,
+                                    'schoolUnits' => $schoolUnitsData,
                                     'yearFilterReady' => $yearFilterReady,
                                     'chartExportContext' => $chartExportContext,
                                 ])
@@ -94,6 +95,13 @@
                             <div x-show="tab === 'enrollment'" x-cloak class="analytics-tab-panel">
                                 @include('dashboard.analytics.partials.enrollment', [
                                     'enrollmentData' => $enrollmentData,
+                                    'chartExportContext' => $chartExportContext,
+                                ])
+                            </div>
+                            <div x-show="tab === 'school_units'" x-cloak class="analytics-tab-panel">
+                                @include('dashboard.analytics.partials.school-units', [
+                                    'schoolUnitsData' => $schoolUnitsData,
+                                    'yearFilterReady' => $yearFilterReady,
                                     'chartExportContext' => $chartExportContext,
                                 ])
                             </div>

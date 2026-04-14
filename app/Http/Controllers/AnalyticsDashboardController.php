@@ -10,6 +10,7 @@ use App\Repositories\Ieducar\InclusionRepository;
 use App\Repositories\Ieducar\NetworkRepository;
 use App\Repositories\Ieducar\OverviewRepository;
 use App\Repositories\Ieducar\PerformanceRepository;
+use App\Repositories\Ieducar\SchoolUnitsRepository;
 use App\Services\Ieducar\FilterOptionsService;
 use App\Support\Dashboard\ChartExportMeta;
 use App\Support\Dashboard\IeducarFilterState;
@@ -32,6 +33,7 @@ class AnalyticsDashboardController extends Controller
         InclusionRepository $inclusionRepository,
         NetworkRepository $networkRepository,
         FundebRepository $fundebRepository,
+        SchoolUnitsRepository $schoolUnitsRepository,
     ): View {
         $cities = City::query()->forAnalytics()->orderBy('name')->get();
 
@@ -71,6 +73,25 @@ class AnalyticsDashboardController extends Controller
         $overviewData = $yearFilterReady
             ? $overviewRepository->summary($city, $filters)
             : ['kpis' => null, 'charts' => [], 'filter_note' => null, 'error' => null];
+
+        $schoolUnitsData = $yearFilterReady && $city !== null
+            ? $schoolUnitsRepository->snapshot($city, $filters)
+            : [
+                'overview' => [
+                    'year_global_rows' => [],
+                    'school_year_rows' => [],
+                    'units_rows' => [],
+                    'notes' => [],
+                ],
+                'tab' => [
+                    'markers' => [],
+                    'transport' => null,
+                    'waiting' => null,
+                    'geo_note' => null,
+                    'error' => null,
+                ],
+                'error' => null,
+            ];
 
         $enrollmentData = $yearFilterReady
             ? $enrollmentRepository->sample($city, $filters)
@@ -145,6 +166,7 @@ class AnalyticsDashboardController extends Controller
         $tabs = [
             'overview' => __('Visão geral'),
             'enrollment' => __('Matrículas'),
+            'school_units' => __('Unidades escolares'),
             'network' => __('Rede e oferta'),
             'inclusion' => __('Inclusão & Diversidade'),
             'performance' => __('Desempenho'),
@@ -163,6 +185,7 @@ class AnalyticsDashboardController extends Controller
             'yearFilterReady' => $yearFilterReady,
             'ieducarOptions' => $ieducarOptions,
             'overviewData' => $overviewData,
+            'schoolUnitsData' => $schoolUnitsData,
             'enrollmentData' => $enrollmentData,
             'performanceData' => $performanceData,
             'attendanceData' => $attendanceData,
