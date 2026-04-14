@@ -145,16 +145,20 @@ class SyncSchoolUnitGeosOfficial extends Command
 
             if ($dryRun) {
                 $this->warn(' - dry-run=1: nenhuma alteração gravada.');
+
                 continue;
             }
 
             if ($updates !== []) {
-                // Atualização em lote por id (upsert no mesmo table).
-                DB::table((new SchoolUnitGeo())->getTable())->upsert(
-                    $updates,
-                    ['id'],
-                    ['official_lat', 'official_lng', 'official_source', 'official_seen_at', 'has_divergence', 'divergence_meters', 'updated_at']
-                );
+                // Apenas UPDATE por id — nunca INSERT (upsert() gerava INSERT incompleto e falhava em city_id sem default).
+                $table = (new SchoolUnitGeo)->getTable();
+                DB::transaction(function () use ($table, $updates): void {
+                    foreach ($updates as $row) {
+                        $id = $row['id'];
+                        unset($row['id']);
+                        DB::table($table)->where('id', $id)->update($row);
+                    }
+                });
                 $totalUpdated += count($updates);
             }
         }
@@ -180,4 +184,3 @@ class SyncSchoolUnitGeosOfficial extends Command
         return $r * $c;
     }
 }
-
