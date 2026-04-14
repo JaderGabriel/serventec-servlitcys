@@ -1,4 +1,7 @@
 /**
+ * Aplica cores «claras» para exportação sem redesenhar (evita layout Chart.js / fullSize).
+ * O redesenho opcional fica em {@see safeChartUpdate}.
+ *
  * @returns {() => void}
  */
 export function applyLightThemeForExport(chart) {
@@ -35,7 +38,6 @@ export function applyLightThemeForExport(chart) {
             return "#111827";
         };
     }
-    chart.update("none");
 
     return () => {
         if (
@@ -61,8 +63,44 @@ export function applyLightThemeForExport(chart) {
         if (o.plugins?.datalabels && backup.datalabelsColor !== undefined) {
             o.plugins.datalabels.color = backup.datalabelsColor;
         }
-        chart.update("none");
+        try {
+            chart.update("none");
+        } catch (e) {
+            console.warn("applyLightThemeForExport restore update", e);
+        }
     };
+}
+
+/**
+ * Redesenho Chart.js com tolerância a falhas (evita «Cannot set properties of undefined (fullSize)»).
+ */
+export function safeChartUpdate(chart) {
+    if (!chart) {
+        return false;
+    }
+    try {
+        chart.update("none");
+        return true;
+    } catch (e) {
+        console.warn("safeChartUpdate", e);
+        return false;
+    }
+}
+
+/**
+ * Redimensiona o gráfico com tolerância a falhas.
+ */
+export function safeChartResize(chart) {
+    if (!chart) {
+        return false;
+    }
+    try {
+        chart.resize();
+        return true;
+    } catch (e) {
+        console.warn("safeChartResize", e);
+        return false;
+    }
 }
 
 function countWrappedLines(text, maxWidth, font) {
@@ -134,13 +172,15 @@ function drawWrappedLines(
 export function buildCompositeExport(chart, meta, chartTitle) {
     const restore = applyLightThemeForExport(chart);
     try {
-        chart.update("none");
+        safeChartResize(chart);
+        safeChartUpdate(chart);
+
         const src = chart.canvas;
         let imgW = src.width;
         let imgH = src.height;
         if (!imgW || !imgH) {
-            chart.resize();
-            chart.update("none");
+            safeChartResize(chart);
+            safeChartUpdate(chart);
             imgW = src.width;
             imgH = src.height;
         }
@@ -149,10 +189,10 @@ export function buildCompositeExport(chart, meta, chartTitle) {
             imgW = Math.max(400, Math.round(rect.width) || 600);
             imgH = Math.max(240, Math.round(rect.height) || 360);
         }
-        // Chart.js: dimensões lógicas quando o buffer do canvas ainda está a zero (ex.: aba oculta).
         if ((!imgW || !imgH) && chart.chartArea) {
             const ca = chart.chartArea;
-            const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+            const dpr =
+                typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
             if (ca.width > 0 && ca.height > 0) {
                 imgW = Math.round(ca.width * dpr) || Math.round(ca.width);
                 imgH = Math.round(ca.height * dpr) || Math.round(ca.height);
@@ -261,13 +301,29 @@ export function buildCompositeExport(chart, meta, chartTitle) {
             height: canvas.height,
         };
     } finally {
-        restore();
+        try {
+            restore();
+        } catch (e) {
+            console.warn("buildCompositeExport restore", e);
+        }
     }
+}
+
+/**
+ * Export mínimo: só o canvas do Chart.js (sem cabeçalho), se o modo composto falhar.
+ */
+export function buildCanvasOnlyExport(chart) {
+    const c = chart?.canvas;
+    if (!c || !c.width || !c.height) {
+        throw new Error("Canvas indisponível");
+    }
+    return c.toDataURL("image/png", 1);
 }
 
 export function triggerPngDownload(dataUrl, filenameBase) {
     const raw = String(filenameBase || "grafico").trim();
-    const safe = raw.replace(/[^a-zA-Z0-9-_]/g, "_").replace(/^_+|_+$/g, "") || "grafico";
+    const safe =
+        raw.replace(/[^a-zA-Z0-9-_]/g, "_").replace(/^_+|_+$/g, "") || "grafico";
     const name = `${safe}.png`;
 
     const a = document.createElement("a");

@@ -1546,19 +1546,63 @@ final class MatriculaChartQueries
                 $values[] = round((float) ($row->taxa ?? 0.0), 2);
             }
 
+            $values = self::normalizeTaxaPercentValues($values);
+
             $sub = $anoVal !== null
                 ? ' ('.$anoVal.')'
                 : ' ('.__('últimos 5 anos').')';
 
-            return ChartPayload::bar(
+            $chart = ChartPayload::bar(
                 __('Distorção idade/série — taxa por ano').$sub,
-                __('Taxa %'),
+                __('Percentagem (%)'),
                 $labels,
                 $values
             );
+            $chart['subtitle'] = __(
+                'Percentagem de matrículas em que a idade (referência 1 de março do ano letivo) excede o limite etário esperado para a série (idade_final ou idade_ideal na tabela série).'
+            );
+            $chart['footnote'] = __(
+                'Eixo vertical de 0 a 100 %. Cada barra é o quociente: matrículas em distorção naquele ano ÷ todas as matrículas com data de nascimento e série válidas no agrupamento. Critério distinto do cartão INEP +2 anos usado na rosca «rede».'
+            );
+            $chart['options'] = array_merge($chart['options'] ?? [], [
+                'scales' => [
+                    'y' => [
+                        'beginAtZero' => true,
+                        'max' => 100,
+                        'title' => [
+                            'display' => true,
+                            'text' => __('Percentagem (%)'),
+                        ],
+                    ],
+                ],
+            ]);
+
+            return $chart;
         } catch (QueryException|\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Se a taxa vier como razão 0–1 em vez de 0–100 %, converte para percentagem.
+     *
+     * @param  list<float>  $values
+     * @return list<float>
+     */
+    private static function normalizeTaxaPercentValues(array $values): array
+    {
+        if ($values === []) {
+            return $values;
+        }
+        $max = max($values);
+        if ($max <= 1.0 && $max > 0.0) {
+            return array_map(
+                static fn (float $v) => round($v * 100.0, 2),
+                $values
+            );
+        }
+
+        return $values;
     }
 
     /**
@@ -1785,11 +1829,21 @@ final class MatriculaChartQueries
                     return null;
                 }
 
-                return ChartPayload::doughnut(
-                    __('Distorção Idade-Série'),
+                [$labels, $values, $fracNote] = self::normalizeDistorcaoDoughnutValues($labels, $values);
+
+                $chart = ChartPayload::doughnut(
+                    __('Distorção idade/série (rede)'),
                     $labels,
                     $values
                 );
+                $chart['subtitle'] = __(
+                    'Cada fatia mostra o número absoluto de matrículas; a percentagem no rótulo é esse valor dividido pelo total das duas fatias.'
+                );
+                $chart['footnote'] = __(
+                    'Critério INEP (rede): idade na data de corte 31/03 do ano letivo da turma > idade máxima da série + 2 anos. Use colunas valor/quantidade no SQL (contagens); se enviar proporções entre 0 e 1, o painel converte para a mesma escala visual.'
+                ).($fracNote !== '' ? ' '.$fracNote : '');
+
+                return $chart;
             } catch (QueryException|\Throwable) {
                 // tenta caminho automático
             }
@@ -1800,14 +1854,65 @@ final class MatriculaChartQueries
             return null;
         }
 
-        return ChartPayload::doughnut(
-            __('Distorção Idade-Série'),
+        $com = (float) $c['com'];
+        $sem = (float) $c['sem'];
+        $total = $com + $sem;
+        $pctCom = $total > 0 ? round(100.0 * $com / $total, 1) : 0.0;
+
+        $chart = ChartPayload::doughnut(
+            __('Distorção idade/série (rede)'),
             [
                 __('Com distorção (idade > limite + 2 anos)'),
                 __('Sem distorção'),
             ],
-            [(float) $c['com'], (float) $c['sem']]
+            [$com, $sem]
         );
+        $chart['subtitle'] = __(
+            'Contagens absolutas de matrículas activas no filtro: :com com distorção e :sem sem distorção (total :total). Taxa de distorção na rede: :pct %.',
+            [
+                'com' => number_format((int) $com, 0, ',', '.'),
+                'sem' => number_format((int) $sem, 0, ',', '.'),
+                'total' => number_format((int) $total, 0, ',', '.'),
+                'pct' => number_format($pctCom, 1, ',', '.'),
+            ]
+        );
+        $chart['footnote'] = __(
+            'O gráfico de rosca usa as mesmas contagens do cartão acima. Os rótulos sobre as fatias mostram o valor absoluto e a percentagem em relação ao total das duas categorias.'
+        );
+
+        return $chart;
+    }
+
+    /**
+     * SQL personalizado por vezes devolve proporções 0–1 em vez de contagens; normaliza para escala de «pesos» coerente com a rosca.
+     *
+     * @param  list<string>  $labels
+     * @param  list<float>  $values
+     * @return array{0: list<string>, 1: list<float>, 2: string}
+     */
+    private static function normalizeDistorcaoDoughnutValues(array $labels, array $values): array
+    {
+        $values = array_values($values);
+        $labels = array_values($labels);
+        $n = min(count($labels), count($values));
+        if ($n < 2) {
+            return [$labels, $values, ''];
+        }
+        $slice = array_slice($values, 0, $n);
+        $max = max($slice);
+        $sum = array_sum($slice);
+        $note = '';
+        if ($max <= 1.0 && $sum <= 1.0001 && $sum > 0) {
+            $scaled = array_map(
+                static fn (float $v) => round($v * 100.0, 6),
+                array_slice($values, 0, $n)
+            );
+            $note = __('Valores entre 0 e 1 foram interpretados como proporções e multiplicados por 100 apenas para o desenho da rosca (as percentagens nos rótulos continuam correctas).');
+
+            return [array_slice($labels, 0, $n), $scaled, $note];
+        }
+
+        return [array_slice($labels, 0, $n), array_slice($values, 0, $n), ''];
     }
 
     /**

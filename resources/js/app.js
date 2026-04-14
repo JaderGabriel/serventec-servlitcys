@@ -3,7 +3,11 @@ import "./bootstrap";
 import Alpine from "alpinejs";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import { buildCompositeExport, triggerPngDownload } from "./chartExportHelpers.js";
+import {
+    buildCanvasOnlyExport,
+    buildCompositeExport,
+    triggerPngDownload,
+} from "./chartExportHelpers.js";
 import { initAnalyticsFilterTurno } from "./analyticsFilterTurno.js";
 
 Chart.register(ChartDataLabels);
@@ -18,6 +22,27 @@ function chartGridColor() {
     return document.documentElement.classList.contains("dark")
         ? "rgba(148,163,184,0.2)"
         : "rgba(100,116,139,0.2)";
+}
+
+/** Rótulos longos (ex.: nomes de escolas): texto na legenda/eixo sem estourar o layout. */
+function truncateChartLabel(text, maxLen) {
+    const s = String(text ?? "");
+    const m = Math.max(8, maxLen | 0);
+    if (s.length <= m) {
+        return s;
+    }
+    return `${s.slice(0, Math.max(1, m - 1))}…`;
+}
+
+/** Junta opções de eixos do payload com os padrões (evita perder eixo X ao só definir Y). */
+function mergeCartesianScales(base, extra) {
+    if (!extra || typeof extra !== "object") {
+        return base;
+    }
+    return {
+        x: { ...(base?.x || {}), ...(extra.x || {}) },
+        y: { ...(base?.y || {}), ...(extra.y || {}) },
+    };
 }
 
 document.addEventListener("alpine:init", () => {
@@ -151,20 +176,31 @@ document.addEventListener("alpine:init", () => {
             exportFilename = "grafico",
             exportMeta = {},
             panelId = "",
+            compact = true,
         ) => ({
             chart: null,
             _payload: null,
             _exportMeta: null,
             _exportFilename: "grafico",
             _panelId: "",
+            _compact: true,
             _cleanupMq: null,
             _cleanupIo: null,
             _cleanupRo: null,
             _onViewport: null,
+            _pulseChartSize: null,
+            _origLegendGen: null,
+            _legendTruncate: 48,
+            _tickTruncate: 36,
+            menuOpen: false,
+            legendModalOpen: false,
+            expanded: false,
+            legendVisible: true,
             init() {
                 if (!payload?.labels?.length || !payload?.datasets?.length) {
                     return;
                 }
+                this._compact = compact !== false;
                 this._payload = payload;
                 this._exportFilename = exportFilename;
                 this._panelId =
@@ -289,8 +325,8 @@ document.addEventListener("alpine:init", () => {
                                         );
                                         const pct = sum
                                             ? Math.round(
-                                                  (Number(value) / sum) * 100,
-                                              )
+                                                  (Number(value) / sum) * 1000,
+                                              ) / 10
                                             : 0;
                                         const fmt =
                                             typeof value === "number" &&
@@ -300,7 +336,7 @@ document.addEventListener("alpine:init", () => {
                                                           10,
                                                   )
                                                 : String(value);
-                                        return `${fmt}\n(${pct}%)`;
+                                        return `${fmt}\n(${pct}% do total)`;
                                     }
                                     if (
                                         typeof value === "number" &&
@@ -376,12 +412,28 @@ document.addEventListener("alpine:init", () => {
                                     padding: isRadial ? {} : { top: 14 },
                                 },
                                 plugins: mergedPlugins,
-                                scales:
-                                    extra.scales !== undefined
-                                        ? extra.scales
-                                        : scales,
+                                scales: mergeCartesianScales(
+                                    scales,
+                                    extra.scales,
+                                ),
                             },
                         });
+
+                        const legLabels = this.chart.options.plugins.legend
+                            .labels;
+                        this._origLegendGen =
+                            legLabels.generateLabels.bind(legLabels);
+                        legLabels.generateLabels = (chart) => {
+                            const items = this._origLegendGen(chart);
+                            const max = this._legendTruncate ?? 48;
+                            return items.map((it) => ({
+                                ...it,
+                                text: truncateChartLabel(
+                                    String(it.text ?? ""),
+                                    max,
+                                ),
+                            }));
+                        };
 
                         const mq = window.matchMedia("(max-width: 639px)");
                         const applyResponsive = () => {
@@ -450,9 +502,14 @@ document.addEventListener("alpine:init", () => {
                             if (!this.chart) {
                                 return;
                             }
-                            this.chart.resize();
-                            this.chart.update("none");
+                            try {
+                                this.chart.resize();
+                                this.chart.update("none");
+                            } catch (e) {
+                                console.warn("chartPanel resize", e);
+                            }
                         };
+                        this._pulseChartSize = pulseChartSize;
 
                         this._onViewport = () => {
                             requestAnimationFrame(() => pulseChartSize());
@@ -514,10 +571,181 @@ document.addEventListener("alpine:init", () => {
                                 setTimeout(() => pulseChartSize(), 400);
                             });
                         });
+                        requestAnimationFrame(() => {
+                            this.applyDensityOptions();
+                        });
                     } catch (e) {
                         console.error("chartPanel", e);
                     }
                 });
+            },
+            bodyClass() {
+                const c = this._compact;
+                const e = this.expanded;
+                let base =
+                    "p-2 sm:p-4 relative w-full overflow-x-auto overflow-y-hidden transition-[min-height] duration-200 ease-out ";
+                if (e) {
+                    base += c
+                        ? "min-h-[min(30rem,80vh)] h-[min(38rem,85vh)] sm:min-h-[min(36rem,88vh)]"
+                        : "min-h-[min(34rem,88vh)] h-[min(40rem,90vh)]";
+                } else {
+                    base += c
+                        ? "min-h-[220px] h-[min(22rem,calc(100vw-2.5rem))] sm:h-72 md:min-h-[18rem]"
+                        : "min-h-[min(28rem,70vh)] h-[min(28rem,70vh)]";
+                }
+                return base;
+            },
+            canvasClass() {
+                const c = this._compact;
+                const e = this.expanded;
+                let base =
+                    "block w-full max-w-full chart-panel-canvas transition-[max-height] duration-200 ";
+                if (!e && c) {
+                    base +=
+                        "max-h-[min(20rem,55vw)] sm:max-h-64";
+                } else if (e && c) {
+                    base +=
+                        "max-h-[min(28rem,75vh)] sm:max-h-[min(32rem,80vh)]";
+                } else {
+                    base += "h-full";
+                }
+                return base;
+            },
+            legendRows() {
+                if (!this.chart?.data?.labels) {
+                    return [];
+                }
+                const labels = this.chart.data.labels;
+                const ds0 = this.chart.data.datasets[0];
+                const data = ds0?.data ?? [];
+                return labels.map((label, i) => {
+                    const v = data[i];
+                    let valueText = "";
+                    if (v !== undefined && v !== null) {
+                        if (typeof v === "number") {
+                            valueText = Number.isInteger(v)
+                                ? String(v)
+                                : String(Math.round(v * 10) / 10);
+                        } else {
+                            valueText = String(v);
+                        }
+                    }
+                    return {
+                        label: String(label ?? ""),
+                        value: v,
+                        valueText,
+                    };
+                });
+            },
+            toggleExpanded() {
+                this.expanded = !this.expanded;
+                this.applyDensityOptions();
+                this.$nextTick(() => {
+                    this._pulseChartSize?.();
+                });
+            },
+            toggleLegend() {
+                if (!this.chart) {
+                    return;
+                }
+                this.legendVisible = !this.legendVisible;
+                this.chart.options.plugins.legend.display = this.legendVisible;
+                this.chart.update("none");
+            },
+            applyDensityOptions() {
+                if (!this.chart) {
+                    return;
+                }
+                const labels = this.chart.data.labels || [];
+                const n = labels.length;
+                const longLine = labels.some(
+                    (l) =>
+                        String(l ?? "").length > (this.expanded ? 42 : 28),
+                );
+                const e = this.expanded;
+
+                this._legendTruncate = e ? 72 : n > 10 || longLine ? 38 : 52;
+                this._tickTruncate = e ? 56 : n > 14 ? 20 : n > 8 ? 28 : 38;
+
+                const leg = this.chart.options.plugins.legend;
+                if (leg) {
+                    if (!e && n > 6 && this.legendVisible) {
+                        leg.maxHeight = 140;
+                    } else {
+                        delete leg.maxHeight;
+                    }
+                    if (leg.labels) {
+                        leg.labels.boxWidth = e ? 14 : n > 12 ? 10 : 12;
+                        leg.labels.padding = e ? 12 : n > 12 ? 8 : 14;
+                    }
+                }
+
+                const t = this.chart.config.type;
+                if (
+                    (t === "bar" || t === "line") &&
+                    this.chart.options.scales
+                ) {
+                    const catAxis =
+                        this.chart.options.indexAxis === "y" ? "y" : "x";
+                    const ticks = this.chart.options.scales[catAxis]?.ticks;
+                    if (ticks) {
+                        ticks.autoSkip = true;
+                        ticks.autoSkipPadding = n > 16 ? 4 : 2;
+                        if (n > 24) {
+                            ticks.maxTicksLimit = e ? 28 : 18;
+                        } else {
+                            delete ticks.maxTicksLimit;
+                        }
+                    }
+                }
+
+                this._patchCategoryTickCallbacks();
+                try {
+                    this.chart.update("none");
+                } catch (err) {
+                    console.warn("applyDensityOptions", err);
+                }
+            },
+            _patchCategoryTickCallbacks() {
+                const chart = this.chart;
+                if (!chart) {
+                    return;
+                }
+                const max = this._tickTruncate ?? 36;
+                const t = (raw) =>
+                    truncateChartLabel(String(raw ?? ""), max);
+                const type = chart.config.type;
+
+                const patchAxis = (key) => {
+                    const sc = chart.options.scales?.[key];
+                    if (!sc?.ticks) {
+                        return;
+                    }
+                    sc.ticks.callback = (tickValue) => {
+                        let raw = tickValue;
+                        try {
+                            const scale = chart.scales?.[key];
+                            if (
+                                scale &&
+                                typeof scale.getLabelForValue ===
+                                    "function"
+                            ) {
+                                raw = scale.getLabelForValue(tickValue);
+                            }
+                        } catch (e) {
+                            raw = tickValue;
+                        }
+                        return t(raw);
+                    };
+                };
+
+                if (type === "bar" || type === "line") {
+                    if (chart.options.indexAxis === "y") {
+                        patchAxis("y");
+                    } else {
+                        patchAxis("x");
+                    }
+                }
             },
             destroy() {
                 this._cleanupMq?.();
@@ -559,16 +787,23 @@ document.addEventListener("alpine:init", () => {
 
                 const runExport = () => {
                     try {
-                        this.chart.resize();
-                        this.chart.update("none");
-                        const { dataUrl } = buildCompositeExport(
-                            this.chart,
-                            this._exportMeta,
-                            this._payload?.title || "",
-                        );
+                        let dataUrl;
+                        try {
+                            dataUrl = buildCompositeExport(
+                                this.chart,
+                                this._exportMeta,
+                                this._payload?.title || "",
+                            ).dataUrl;
+                        } catch (e1) {
+                            console.warn("exportPng composite", e1);
+                            try {
+                                dataUrl = buildCanvasOnlyExport(this.chart);
+                            } catch (e2) {
+                                console.error("exportPng canvas only", e2);
+                                return;
+                            }
+                        }
                         triggerPngDownload(dataUrl, this._exportFilename);
-                    } catch (e) {
-                        console.error("exportPng", e);
                     } finally {
                         if (wrap) {
                             wrap.style.minWidth = prevMinW;
@@ -577,11 +812,7 @@ document.addEventListener("alpine:init", () => {
                     }
                 };
 
-                this.chart.resize();
-                this.chart.update("none");
                 requestAnimationFrame(() => {
-                    this.chart.resize();
-                    this.chart.update("none");
                     requestAnimationFrame(runExport);
                 });
             },
