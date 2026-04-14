@@ -91,6 +91,10 @@ export default function createSchoolUnitsMap(markersInput) {
                     return;
                 }
                 const label = escapeHtml(mk.label || "—");
+                const meta = escapeHtml(mk.meta || "");
+                const popupHtml = meta
+                    ? `<div class="text-sm font-medium">${label}</div><p class="mt-1.5 text-xs text-gray-600 dark:text-gray-400 leading-snug">${meta}</p>`
+                    : `<div class="text-sm">${label}</div>`;
                 L.circleMarker([mk.lat, mk.lng], {
                     radius: 8,
                     color: "#4f46e5",
@@ -98,7 +102,7 @@ export default function createSchoolUnitsMap(markersInput) {
                     fillColor: "#818cf8",
                     fillOpacity: 0.92,
                 })
-                    .bindPopup(`<div class="text-sm">${label}</div>`)
+                    .bindPopup(`<div class="max-w-xs">${popupHtml}</div>`)
                     .addTo(this.group);
             });
 

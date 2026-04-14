@@ -164,10 +164,10 @@ class AnalyticsDashboardController extends Controller
         $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
 
         $tabs = [
-            'overview' => __('Visão geral'),
+            'overview' => __('Visão Geral'),
             'enrollment' => __('Matrículas'),
-            'school_units' => __('Unidades escolares'),
-            'network' => __('Rede e oferta'),
+            'network' => __('Rede & Oferta'),
+            'school_units' => __('Unidades Escolares'),
             'inclusion' => __('Inclusão & Diversidade'),
             'performance' => __('Desempenho'),
             'attendance' => __('Frequência'),

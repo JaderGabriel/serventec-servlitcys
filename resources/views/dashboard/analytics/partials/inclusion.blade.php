@@ -78,7 +78,7 @@
     @if (! empty($inclusionData['charts']))
         <div>
             <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{{ __('Género, cor ou raça, distorção idade/série e série/curso') }}</h3>
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 min-w-0">
                 @foreach ($inclusionData['charts'] as $idx => $chart)
                     <x-dashboard.chart-panel
                         :chart="$chart"

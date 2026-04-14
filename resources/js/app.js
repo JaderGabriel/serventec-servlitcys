@@ -3,6 +3,11 @@ import "./bootstrap";
 import Alpine from "alpinejs";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import {
+    cartesianInteractionDefaults,
+    mergeAnnotationAndZoomPlugins,
+    registerChartVisualPlugins,
+} from "./chartVisualDefaults.js";
 import { radialCalloutsPlugin } from "./chartRadialCallouts.js";
 import {
     buildCanvasOnlyExport,
@@ -12,6 +17,7 @@ import {
 import { initAnalyticsFilterTurno } from "./analyticsFilterTurno.js";
 import createSchoolUnitsMap from "./schoolUnitsMap.js";
 
+registerChartVisualPlugins(Chart);
 Chart.register(ChartDataLabels, radialCalloutsPlugin);
 
 function chartTextColor() {
@@ -200,6 +206,10 @@ document.addEventListener("alpine:init", () => {
             legendModalOpen: false,
             expanded: false,
             legendVisible: true,
+            /** Rosca/pizza: legenda visual = plugin radialCallouts (não o legend do Chart.js). */
+            _legendUsesRadialCallouts: false,
+            /** Mostrar dica de zoom/pan (barras/linhas). */
+            chartInteractive: false,
             /** Classes do contentor / canvas (actualizadas por syncLayoutClasses; Alpine 3.4 não rastreia bem métodos em :class). */
             panelBodyClass: "",
             canvasExtraClass: "",
@@ -256,12 +266,20 @@ document.addEventListener("alpine:init", () => {
                                           maxRotation: 45,
                                           autoSkip: true,
                                       },
-                                      grid: { color: chartGridColor() },
+                                      grid: {
+                                          color: chartGridColor(),
+                                          drawBorder: false,
+                                      },
+                                      border: { display: false },
                                   },
                                   y: {
                                       beginAtZero: true,
                                       ticks: { color: chartTextColor() },
-                                      grid: { color: chartGridColor() },
+                                      grid: {
+                                          color: chartGridColor(),
+                                          drawBorder: false,
+                                      },
+                                      border: { display: false },
                                   },
                               };
                         const extra =
@@ -436,6 +454,34 @@ document.addEventListener("alpine:init", () => {
                                 display: false,
                             };
                         }
+                        if (isGauge) {
+                            const pct = Number(
+                                payload.datasets?.[0]?.data?.[0] ?? 0,
+                            );
+                            mergedPlugins.datalabels = {
+                                ...(mergedPlugins.datalabels || {}),
+                                display: (ctx) => ctx.dataIndex === 0,
+                                color: "#f8fafc",
+                                font: { weight: "700", size: 16 },
+                                formatter: () => `${Math.round(pct)}%`,
+                            };
+                        }
+                        mergeAnnotationAndZoomPlugins(
+                            mergedPlugins,
+                            payload,
+                            extra,
+                        );
+
+                        const cartesianInteractive =
+                            !isRadial &&
+                            !isGauge &&
+                            ["bar", "line", "scatter"].includes(
+                                payload.type,
+                            );
+                        const interactionBlock = cartesianInteractive
+                            ? cartesianInteractionDefaults()
+                            : {};
+
                         this.chart = new Chart(ctx, {
                             type: payload.type,
                             data: {
@@ -443,6 +489,7 @@ document.addEventListener("alpine:init", () => {
                                 datasets: payload.datasets,
                             },
                             options: {
+                                ...interactionBlock,
                                 ...radialGeometry,
                                 responsive: true,
                                 maintainAspectRatio: false,
@@ -477,21 +524,30 @@ document.addEventListener("alpine:init", () => {
                             },
                         });
 
-                        const legLabels = this.chart.options.plugins.legend
-                            .labels;
-                        this._origLegendGen =
-                            legLabels.generateLabels.bind(legLabels);
-                        legLabels.generateLabels = (chart) => {
-                            const items = this._origLegendGen(chart);
-                            const max = this._legendTruncate ?? 48;
-                            return items.map((it) => ({
-                                ...it,
-                                text: truncateChartLabel(
-                                    String(it.text ?? ""),
-                                    max,
-                                ),
-                            }));
-                        };
+                        this.chartInteractive = cartesianInteractive;
+
+                        this._legendUsesRadialCallouts =
+                            !!useRadialCallouts &&
+                            this.chart.options.plugins?.radialCallouts
+                                ?.display !== false;
+
+                        const legPlugin = this.chart.options.plugins.legend;
+                        if (legPlugin?.labels?.generateLabels) {
+                            const legLabels = legPlugin.labels;
+                            this._origLegendGen =
+                                legLabels.generateLabels.bind(legLabels);
+                            legLabels.generateLabels = (chart) => {
+                                const items = this._origLegendGen(chart);
+                                const max = this._legendTruncate ?? 48;
+                                return items.map((it) => ({
+                                    ...it,
+                                    text: truncateChartLabel(
+                                        String(it.text ?? ""),
+                                        max,
+                                    ),
+                                }));
+                            };
+                        }
 
                         const mq = window.matchMedia("(max-width: 639px)");
                         const applyResponsive = () => {
@@ -696,6 +752,14 @@ document.addEventListener("alpine:init", () => {
             toggleExpanded() {
                 this.expanded = !this.expanded;
                 this.applyDensityOptions();
+                this.$nextTick(() => {
+                    requestAnimationFrame(() => {
+                        this._pulseChartSize?.();
+                        setTimeout(() => this._pulseChartSize?.(), 80);
+                        setTimeout(() => this._pulseChartSize?.(), 240);
+                        setTimeout(() => this._pulseChartSize?.(), 500);
+                    });
+                });
             },
             toggleLegend() {
                 if (!this.chart) {
@@ -706,9 +770,18 @@ document.addEventListener("alpine:init", () => {
                 if (!plugins.legend) {
                     plugins.legend = {};
                 }
-                plugins.legend.display = !!this.legendVisible;
+                if (!plugins.radialCallouts) {
+                    plugins.radialCallouts = {};
+                }
+                if (this._legendUsesRadialCallouts) {
+                    plugins.radialCallouts.display = this.legendVisible;
+                    plugins.legend.display = false;
+                } else {
+                    plugins.legend.display = !!this.legendVisible;
+                }
+                this.applyDensityOptions();
                 try {
-                    this.chart.update("none");
+                    this.chart.update();
                 } catch (e) {
                     console.warn("toggleLegend update", e);
                     try {

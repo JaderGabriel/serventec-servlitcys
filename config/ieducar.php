@@ -365,6 +365,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Georreferenciação INEP (Catálogo de Escolas — dados abertos)
+    |--------------------------------------------------------------------------
+    |
+    | Quando a tabela escola não tem latitude/longitude, o painel pode consultar
+    | o serviço ArcGIS público do INEP usando o código INEP da escola (coluna
+    | detectada automaticamente: codigo_inep, inep, …).
+    |
+    */
+
+    'inep_geocoding' => [
+        'enabled' => filter_var(env('IEDUCAR_INEP_GEOCODING_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'arcgis_layer_query_url' => env(
+            'IEDUCAR_INEP_ARCGIS_QUERY_URL',
+            'https://services3.arcgis.com/ba17q0p2zHwzRK3B/arcgis/rest/services/inep_escolas_fmt_250609_geocode/FeatureServer/1/query'
+        ),
+        'cache_ttl_seconds' => max(3600, (int) env('IEDUCAR_INEP_GEO_CACHE_TTL', 2592000)),
+        'batch_size' => max(5, min(100, (int) env('IEDUCAR_INEP_GEO_BATCH_SIZE', 40))),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Limites de segurança
     |--------------------------------------------------------------------------
     */

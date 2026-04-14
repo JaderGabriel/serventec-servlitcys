@@ -89,7 +89,7 @@
 
             @if (count($unitsRows) > 0)
                 <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/70 dark:bg-amber-950/20 p-4 shadow-sm">
-                    <h3 class="text-sm font-semibold text-amber-950 dark:text-amber-100">{{ __('Unidades escolares: porte e situação') }}</h3>
+                    <h3 class="text-sm font-semibold text-amber-950 dark:text-amber-100">{{ __('Unidades Escolares: porte e situação') }}</h3>
                     <p class="mt-1 text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
                         {{ __('Porte estimado pelo total de matrículas ativas no filtro; situação da unidade usa a coluna «ativo» da escola quando existir.') }}
                     </p>

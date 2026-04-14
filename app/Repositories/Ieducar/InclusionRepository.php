@@ -113,7 +113,7 @@ class InclusionRepository
                 }
 
                 try {
-                    $dist = MatriculaChartQueries::distorcaoIdadeSerieTaxaPorAnoFisica($db, $city, $filters)
+                    $dist = MatriculaChartQueries::distorcaoIdadeSeriePorEscolaFisica($db, $city, $filters)
                         ?? MatriculaChartQueries::distorcaoIdadeSerieRedeChart($db, $city, $filters);
                     if ($dist !== null) {
                         $charts[] = $dist;
@@ -183,7 +183,7 @@ class InclusionRepository
 
         return [
             __('Todos os indicadores respeitam os filtros atuais (ano letivo, escola, segmento, turno) através da turma, com matrícula considerada ativa conforme config/ieducar.php.'),
-            __('Distorção idade/série: em PostgreSQL com física e série, mostra-se a taxa por ano (referência 1 de março); caso contrário usa-se o gráfico de barras por série com quantidades de alunos com distorção (critério INEP +2 anos).'),
+            __('Distorção idade/série: em PostgreSQL com física e série, mostra-se a contagem por unidade escolar (referência 1 de março); caso contrário usa-se o gráfico de barras por série com quantidades de alunos com distorção (critério INEP +2 anos).'),
             __('Educação especial: com SQL personalizado (IEDUCAR_SQL_INCLUSION_GAUGE_*), as percentagens seguem a regra definida pelo município; sem SQL, usa-se o pivô aluno_deficiência (procurado em vários schemas) e o nome no cadastro de deficiências — pode divergir de outros relatórios.'),
             $eq,
         ];
@@ -373,7 +373,12 @@ class InclusionRepository
                 $values[] = (int) ($row->c ?? 0);
             }
 
-            return ChartPayload::doughnut(__('Matrículas por cor ou raça (cadastro — referência INEP)'), $labels, $values);
+            return ChartPayload::barHorizontal(
+                __('Matrículas por cor ou raça (cadastro — referência INEP)'),
+                __('Matrículas'),
+                $labels,
+                $values
+            );
         } catch (QueryException|\Throwable) {
             return null;
         }
@@ -542,7 +547,7 @@ class InclusionRepository
                 return null;
             }
 
-            return ChartPayload::doughnut($title, $labels, $values);
+            return ChartPayload::barHorizontal($title, __('Matrículas'), $labels, $values);
         } catch (QueryException) {
             return null;
         }

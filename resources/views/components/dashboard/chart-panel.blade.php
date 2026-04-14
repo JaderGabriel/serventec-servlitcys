@@ -23,22 +23,22 @@
         id="{{ $chartPanelDomId }}"
         data-chart-panel-root="1"
         data-chart-panel-id="{{ $chartPanelDomId }}"
-        class="chart-panel-host rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm"
+        class="chart-panel-host min-w-0 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm"
         :class="expanded || menuOpen ? 'overflow-visible' : 'overflow-hidden'"
         x-data="chartPanel(@js($chart), @js($exportFilename), @js($exportMeta), @js($chartPanelDomId), @js($compact))"
     >
-        <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between px-3 py-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40">
+        <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between px-3 py-2.5 sm:py-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40">
             <div class="min-w-0 w-full text-center sm:flex-1 sm:text-left sm:pr-2">
                 <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200 break-words">{{ $chart['title'] ?? '' }}</h4>
                 @if ($chartSubtitle)
                     <p class="mt-1.5 text-xs text-gray-600 dark:text-gray-400 leading-relaxed text-center sm:text-left">{{ $chartSubtitle }}</p>
                 @endif
             </div>
-            <div class="chart-panel-toolbar relative z-40 flex w-full flex-nowrap items-center justify-end gap-2 shrink-0 overflow-x-auto sm:w-auto sm:overflow-visible sm:z-auto [scrollbar-width:thin]">
+            <div class="chart-panel-toolbar relative z-40 flex w-full flex-wrap items-stretch sm:items-center justify-end gap-2 shrink-0 sm:w-auto sm:flex-nowrap sm:overflow-visible sm:z-auto [scrollbar-width:thin]">
                 <button
                     type="button"
                     @click="exportPng()"
-                    class="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
+                    class="inline-flex min-h-[44px] sm:min-h-0 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md bg-indigo-600 px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
                     title="{{ __('Exportar imagem PNG com cabeçalho e filtros') }}"
                 >
                     {{ __('PNG') }}
@@ -57,7 +57,7 @@
                         type="button"
                         @click.stop="menuOpen = !menuOpen"
                         :aria-expanded="menuOpen"
-                        class="inline-flex max-w-full shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
+                        class="inline-flex min-h-[44px] sm:min-h-0 max-w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
                         title="{{ __('Opções de visualização do gráfico') }}"
                     >
                         <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -139,6 +139,13 @@
                 :class="canvasExtraClass"
             ></canvas>
         </div>
+        <p
+            x-show="chartInteractive"
+            x-cloak
+            class="px-3 pb-1.5 pt-0 text-[10px] leading-snug text-gray-500 dark:text-gray-500 sm:text-[11px]"
+        >
+            {{ __('Interação: Ctrl + roda do rato para zoom · arrastar para mover · pinça no telemóvel para zoom.') }}
+        </p>
         @if ($chartFootnote)
             <div class="px-3 py-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
                 {{ $chartFootnote }}

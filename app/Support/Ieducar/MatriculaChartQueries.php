@@ -1405,13 +1405,13 @@ final class MatriculaChartQueries
     }
 
     /**
-     * Distorção idade/série: taxa por ano letivo (PostgreSQL), estilo relatórios BIS —
-     * matricula → aluno → cadastro.fisica (data de nascimento) e série com idade_final / idade_ideal.
-     * Idade na data de referência 1 de março do ano letivo; distorção se idade > limite (sem +2 anos do critério INEP alternativo).
+     * Distorção idade/série (PostgreSQL): contagem de matrículas em distorção por unidade escolar —
+     * matricula → turma → escola; aluno → cadastro.fisica (nascimento); série com idade_final / idade_ideal.
+     * Idade na data de referência 1 de março do ano da matrícula; distorção se idade > limite etário da série.
      *
      * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}
      */
-    public static function distorcaoIdadeSerieTaxaPorAnoFisica(
+    public static function distorcaoIdadeSeriePorEscolaFisica(
         Connection $db,
         City $city,
         IeducarFilterState $filters,
@@ -1487,6 +1487,15 @@ final class MatriculaChartQueries
                 'ref_cod_serie',
             ]), $city);
             $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            if ($tc['escola'] === '') {
+                return null;
+            }
+
+            $escolaSpec = self::escolaJoinSpec($db, $city);
+            if ($escolaSpec === null) {
+                return null;
+            }
+            ['qualified' => $escola, 'idCol' => $eId, 'nameCol' => $eName] = $escolaSpec;
 
             $q = $db->table($mat.' as m');
             MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
@@ -1527,12 +1536,19 @@ final class MatriculaChartQueries
 
             $ageCond = 'extract(year from age(make_date(cast('.$mAnoW.' as integer), 3, 1), '.$fNascW.'))::int > ('.$limiteSql.')';
 
-            $q->selectRaw($mAnoW.'::text as anolabel')
-                ->selectRaw(
-                    'count(*) filter (where '.$ageCond.') * 100.0 / nullif(count(*), 0) as taxa'
-                )
-                ->groupByRaw($mAnoW)
-                ->orderByRaw($mAnoW);
+            $tEsc = $g->wrap('t_filter').'.'.$g->wrap($tc['escola']);
+            $ePk = $g->wrap('e').'.'.$g->wrap($eId);
+            $q->join($escola.' as e', function ($join) use ($tEsc, $ePk) {
+                $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
+            });
+
+            $q->selectRaw('e.'.$eId.' as eid')
+                ->selectRaw('MAX(e.'.$eName.') as ename')
+                ->selectRaw('count(*) filter (where '.$ageCond.') as cnt')
+                ->groupBy('e.'.$eId)
+                ->havingRaw('count(*) filter (where '.$ageCond.') > 0')
+                ->orderByRaw('count(*) filter (where '.$ageCond.') desc')
+                ->limit(250);
 
             $rows = $q->get();
             if ($rows->isEmpty()) {
@@ -1542,36 +1558,38 @@ final class MatriculaChartQueries
             $labels = [];
             $values = [];
             foreach ($rows as $row) {
-                $labels[] = (string) ($row->anolabel ?? '');
-                $values[] = round((float) ($row->taxa ?? 0.0), 2);
+                $labels[] = (string) (($row->ename ?? '') !== '' ? $row->ename : ('#'.$row->eid));
+                $values[] = (int) ($row->cnt ?? 0);
             }
-
-            $values = self::normalizeTaxaPercentValues($values);
 
             $sub = $anoVal !== null
                 ? ' ('.$anoVal.')'
                 : ' ('.__('últimos 5 anos').')';
 
-            $chart = ChartPayload::bar(
-                __('Distorção idade/série — taxa por ano').$sub,
-                __('Percentagem (%)'),
+            [$labels, $values] = ChartPayload::capTailAsOutros($labels, $values, 12, __('Outras unidades'));
+
+            $total = array_sum(array_map(static fn ($v) => (int) $v, $values));
+
+            $chart = ChartPayload::barHorizontal(
+                __('Distorção idade/série — por unidade escolar').$sub,
+                __('Matrículas com distorção'),
                 $labels,
                 $values
             );
             $chart['subtitle'] = __(
-                'Percentagem de matrículas em que a idade (referência 1 de março do ano letivo) excede o limite etário esperado para a série (idade_final ou idade_ideal na tabela série).'
+                'Contagem de matrículas em que a idade (referência 1 de março do ano letivo da matrícula) excede o limite etário esperado para a série (idade_final ou idade_ideal na tabela série), por escola da rede.'
             );
             $chart['footnote'] = __(
-                'Eixo vertical de 0 a 100 %. Cada barra é o quociente: matrículas em distorção naquele ano ÷ todas as matrículas com data de nascimento e série válidas no agrupamento. Critério distinto do cartão INEP +2 anos usado na rosca «rede».'
+                'Barras horizontais: apenas matrículas classificadas com distorção; somatório das barras (incl. «Outras unidades»): :n.',
+                ['n' => number_format($total, 0, ',', '.')]
             );
             $chart['options'] = array_merge($chart['options'] ?? [], [
                 'scales' => [
-                    'y' => [
+                    'x' => [
                         'beginAtZero' => true,
-                        'max' => 100,
                         'title' => [
                             'display' => true,
-                            'text' => __('Percentagem (%)'),
+                            'text' => __('Matrículas'),
                         ],
                     ],
                 ],
@@ -1581,28 +1599,6 @@ final class MatriculaChartQueries
         } catch (QueryException|\Throwable) {
             return null;
         }
-    }
-
-    /**
-     * Se a taxa vier como razão 0–1 em vez de 0–100 %, converte para percentagem.
-     *
-     * @param  list<float>  $values
-     * @return list<float>
-     */
-    private static function normalizeTaxaPercentValues(array $values): array
-    {
-        if ($values === []) {
-            return $values;
-        }
-        $max = max($values);
-        if ($max <= 1.0 && $max > 0.0) {
-            return array_map(
-                static fn (float $v) => round($v * 100.0, 2),
-                $values
-            );
-        }
-
-        return $values;
     }
 
     /**
