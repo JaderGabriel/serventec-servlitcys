@@ -257,6 +257,8 @@ export default function createSchoolUnitsMap(
         init() {
             this._onTab = (e) => {
                 if (e?.detail?.tab === "school_units") {
+                    // Painel estava display:none (outro tab): offsetWidth=0 esgotava retries; ao voltar ao tab, re-tentar.
+                    this._bootAttempts = 0;
                     setTimeout(() => this.tryBoot(), 450);
                 }
             };

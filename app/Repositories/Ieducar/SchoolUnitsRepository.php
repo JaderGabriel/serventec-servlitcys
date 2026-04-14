@@ -1011,7 +1011,7 @@ class SchoolUnitsRepository
                         'updated_at' => $now,
                     ];
 
-                    DB::table((new SchoolUnitGeo())->getTable())->upsert(
+                    DB::table((new SchoolUnitGeo)->getTable())->upsert(
                         [array_merge($payload, ['created_at' => $now])],
                         ['city_id', 'escola_id'],
                         ['inep_code', 'lat', 'lng', 'ieducar_lat', 'ieducar_lng', 'ieducar_seen_at', 'has_divergence', 'divergence_meters', 'meta', 'updated_at'],
@@ -1038,29 +1038,48 @@ class SchoolUnitsRepository
                 continue;
             }
 
-            // Sem coordenadas no iEducar: tentar fallback local primeiro.
+            // Sem coordenadas no iEducar: tentar fallback local (mapa lat/lng ou só oficial INEP em cache).
             $local = $eid > 0 ? ($localByEid[$eid] ?? null) : null;
-            if ($local instanceof SchoolUnitGeo && is_numeric($local->lat) && is_numeric($local->lng)) {
-                $localCount++;
-                $geoDiv = $this->geoDivergencePayload(
-                    is_numeric($local->ieducar_lat) ? (float) $local->ieducar_lat : null,
-                    is_numeric($local->ieducar_lng) ? (float) $local->ieducar_lng : null,
-                    is_numeric($local->official_lat) ? (float) $local->official_lat : null,
-                    is_numeric($local->official_lng) ? (float) $local->official_lng : null,
-                    $local->divergence_meters !== null ? (float) $local->divergence_meters : null,
-                    (bool) $local->has_divergence,
-                );
-                $markers[] = [
-                    'lat' => (float) $local->lat,
-                    'lng' => (float) $local->lng,
-                    'label' => $nome,
-                    'meta' => __('Coordenadas locais (cache) — preenchidas a partir do iEducar em sincronização anterior.'),
-                    'eid' => $eid,
-                    'fonte_coordenada' => 'local',
-                    'fonte_coordenada_label' => $this->fonteCoordenadaLabel('local'),
-                    'geo_divergence' => $geoDiv,
-                ];
-                continue;
+            if ($local instanceof SchoolUnitGeo) {
+                $mapLat = null;
+                $mapLng = null;
+                if (is_numeric($local->lat) && is_numeric($local->lng)) {
+                    $mapLat = (float) $local->lat;
+                    $mapLng = (float) $local->lng;
+                } elseif (is_numeric($local->official_lat) && is_numeric($local->official_lng)) {
+                    $mapLat = (float) $local->official_lat;
+                    $mapLng = (float) $local->official_lng;
+                }
+                $mapOk = $mapLat !== null && $mapLng !== null
+                    && ! (abs($mapLat) < 0.01 && abs($mapLng) < 0.01)
+                    && abs($mapLat) <= 90 && abs($mapLng) <= 180;
+
+                if ($mapOk) {
+                    $localCount++;
+                    $geoDiv = $this->geoDivergencePayload(
+                        is_numeric($local->ieducar_lat) ? (float) $local->ieducar_lat : null,
+                        is_numeric($local->ieducar_lng) ? (float) $local->ieducar_lng : null,
+                        is_numeric($local->official_lat) ? (float) $local->official_lat : null,
+                        is_numeric($local->official_lng) ? (float) $local->official_lng : null,
+                        $local->divergence_meters !== null ? (float) $local->divergence_meters : null,
+                        (bool) $local->has_divergence,
+                    );
+                    $fromOfficialOnly = is_numeric($local->lat) && is_numeric($local->lng) ? false : true;
+                    $markers[] = [
+                        'lat' => $mapLat,
+                        'lng' => $mapLng,
+                        'label' => $nome,
+                        'meta' => $fromOfficialOnly
+                            ? __('Coordenadas oficiais INEP em cache (school_unit_geos); a tabela escola ainda não tem lat/lng para o mapa.')
+                            : __('Coordenadas locais (cache) — preenchidas a partir do iEducar em sincronização anterior.'),
+                        'eid' => $eid,
+                        'fonte_coordenada' => $fromOfficialOnly ? 'inep' : 'local',
+                        'fonte_coordenada_label' => $this->fonteCoordenadaLabel($fromOfficialOnly ? 'inep' : 'local'),
+                        'geo_divergence' => $geoDiv,
+                    ];
+
+                    continue;
+                }
             }
 
             // Por fim, (opcional) INEP oficial (quando houver fonte nacional funcionando).
@@ -1116,7 +1135,7 @@ class SchoolUnitsRepository
                         'updated_at' => $nowInep,
                         'created_at' => $nowInep,
                     ];
-                    DB::table((new SchoolUnitGeo())->getTable())->upsert(
+                    DB::table((new SchoolUnitGeo)->getTable())->upsert(
                         [$rowInep],
                         ['city_id', 'escola_id'],
                         ['inep_code', 'lat', 'lng', 'ieducar_lat', 'ieducar_lng', 'ieducar_seen_at', 'official_lat', 'official_lng', 'official_source', 'official_seen_at', 'has_divergence', 'divergence_meters', 'meta', 'updated_at'],

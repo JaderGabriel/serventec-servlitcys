@@ -105,16 +105,28 @@ document.addEventListener("alpine:init", () => {
                 const allowed = Array.isArray(allowedKeys) ? allowedKeys : [];
                 let next = "overview";
                 try {
-                    const s = sessionStorage.getItem(
-                        "servlitcys_analytics_tab",
-                    );
-                    if (s && allowed.includes(s)) {
-                        next = s;
-                    } else if (
-                        initialFromServer &&
-                        allowed.includes(initialFromServer)
-                    ) {
-                        next = initialFromServer;
+                    let urlTab = null;
+                    try {
+                        urlTab = new URLSearchParams(window.location.search).get(
+                            "tab",
+                        );
+                    } catch {
+                        urlTab = null;
+                    }
+                    if (urlTab && allowed.includes(urlTab)) {
+                        next = urlTab;
+                    } else {
+                        const s = sessionStorage.getItem(
+                            "servlitcys_analytics_tab",
+                        );
+                        if (s && allowed.includes(s)) {
+                            next = s;
+                        } else if (
+                            initialFromServer &&
+                            allowed.includes(initialFromServer)
+                        ) {
+                            next = initialFromServer;
+                        }
                     }
                 } catch (e) {
                     if (
