@@ -22,6 +22,8 @@
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
         @if ($mapScope === 'rede_escola')
             {{ __('Mapa OpenStreetMap com unidades da tabela escola. Coordenadas: cadastro local e, quando existir código INEP, Catálogo INEP (ArcGIS). Secções abaixo resumem capacidade, geografia e cobertura — evite comparar totais duplicados entre blocos; use o mapa principal para detalhe por unidade (modal).') }}
+        @elseif ($mapScope === 'geo_cache')
+            {{ __('Mapa a partir do cache local (school_unit_geos): não há matrículas no âmbito do filtro ou a consulta não devolveu escolas; posições vêm das coordenadas/INEP já guardados. Indicadores de turma/lista podem estar vazios.') }}
         @else
             {{ __('Mapa OpenStreetMap; prioridade a coordenadas na escola (i-Educar), depois INEP/ArcGIS. As secções seguintes condensam listas de espera, distribuição geográfica e cobertura; o mapa grande e o modal concentram a leitura por escola.') }}
         @endif
@@ -432,6 +434,8 @@
                     <p class="mt-1 text-xs text-violet-900/90 dark:text-violet-200/90 leading-relaxed">
                         @if (($geoDistribution['map_scope'] ?? '') === 'rede_escola')
                             {{ __('Resumo das unidades com posição no mapa (modo rede — cadastro na tabela escola).') }}
+                        @elseif (($geoDistribution['map_scope'] ?? '') === 'geo_cache')
+                            {{ __('Resumo com base no cache local (school_unit_geos): escolas com INEP ou coordenadas guardadas, quando o âmbito de matrículas não devolve unidades.') }}
                         @else
                             {{ __('Resumo das unidades no âmbito de matrículas ativas nos filtros e com coordenadas disponíveis.') }}
                         @endif

@@ -152,11 +152,14 @@
                 || str_contains($title, 'Matrículas por unidade escolar')
                 || str_contains($title, 'Matrículas por tipo/segmento')
                 || str_contains($title, 'Matrículas por curso')
+                || str_contains($title, 'segmento')
+                || str_contains($title, 'totais')
                 || str_contains($title, 'Matrículas por série');
 
             if ($needsTall) {
                 $c['options'] = is_array($c['options'] ?? null) ? $c['options'] : [];
-                $c['options']['panelHeight'] = 'xl';
+                // Barras horizontais com muitos rótulos: painel extra-alto + min-height dinâmico no JS.
+                $c['options']['panelHeight'] = 'xxl';
             }
 
             return $c;

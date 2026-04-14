@@ -320,7 +320,7 @@ document.addEventListener("alpine:init", () => {
                     typeof extraEarly.panelHeight === "string"
                         ? extraEarly.panelHeight.trim().toLowerCase()
                         : "";
-                this._panelHeight = ["sm", "md", "lg", "xl"].includes(phRaw)
+                this._panelHeight = ["sm", "md", "lg", "xl", "xxl"].includes(phRaw)
                     ? phRaw
                     : "md";
                 this.syncLayoutClasses();
@@ -1027,7 +1027,7 @@ document.addEventListener("alpine:init", () => {
                         ? onChart
                         : src.labels.length;
                 if (isH && n > 0) {
-                    const h = Math.min(4000, Math.max(300, 72 + n * 44));
+                    const h = Math.min(5200, Math.max(320, 80 + n * 52));
                     this.panelBodyStyle = `min-height: ${h}px`;
                 } else {
                     this.panelBodyStyle = isH ? "min-height: 280px" : "";
@@ -1050,6 +1050,8 @@ document.addEventListener("alpine:init", () => {
                         body += "min-h-[min(40rem,78vh)] w-full";
                     } else if (ph === "xl") {
                         body += "min-h-[min(48rem,85vh)] w-full";
+                    } else if (ph === "xxl") {
+                        body += "min-h-[min(56rem,92vh)] w-full";
                     } else {
                         body += "min-h-[min(32rem,70vh)] w-full";
                     }
@@ -1065,6 +1067,8 @@ document.addEventListener("alpine:init", () => {
                         cv += "min-h-[14rem] w-full max-h-none";
                     } else if (ph === "xl") {
                         cv += "min-h-[26rem] w-full max-h-none";
+                    } else if (ph === "xxl") {
+                        cv += "min-h-[32rem] w-full max-h-none";
                     } else {
                         cv += "min-h-[18rem] w-full max-h-none";
                     }

@@ -1336,13 +1336,98 @@ class SchoolUnitsRepository
     }
 
     /**
+     * Nomes de escolas para o mapa (só colunas mínimas).
+     *
+     * @param  list<int>  $eids
+     * @return array<int, string>
+     */
+    private function fetchEscolaNamesByIdsForMap(Connection $db, City $city, array $eids): array
+    {
+        if ($eids === []) {
+            return [];
+        }
+        try {
+            $escolaT = IeducarSchema::resolveTable('escola', $city);
+            $eId = (string) config('ieducar.columns.escola.id');
+            $en = $this->escolaNomeSql($db, $city, 'e', $eId);
+            $g = $db->getQueryGrammar();
+            $we = $g->wrap('e');
+            $rows = $db->table($escolaT.' as e')
+                ->whereIn('e.'.$eId, $eids)
+                ->selectRaw($we.'.'.$g->wrap($eId).' as eid')
+                ->selectRaw($en['expr'].' as escola_nome')
+                ->get();
+            $out = [];
+            foreach ($rows as $row) {
+                $a = (array) $row;
+                $eid = (int) ($a['eid'] ?? 0);
+                if ($eid > 0) {
+                    $out[$eid] = trim((string) ($a['escola_nome'] ?? ''));
+                }
+            }
+
+            return $out;
+        } catch (QueryException|\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * Quando não há escolas no âmbito de matrículas (ou rede) mas existem linhas em school_unit_geos
+     * com INEP ou coordenadas — permite mapa e estatísticas coerentes com o cache local.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function escolasRowsFromSchoolUnitGeoFallback(City $city, IeducarFilterState $filters): array
+    {
+        try {
+            $q = SchoolUnitGeo::query()
+                ->where('city_id', $city->id)
+                ->where('escola_id', '>', 0);
+            if ($filters->escola_id !== null) {
+                $q->where('escola_id', (int) $filters->escola_id);
+            }
+            $geos = $q->orderBy('escola_id')->limit(300)->get();
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $candidates = [];
+        foreach ($geos as $g) {
+            $hasMap = (is_numeric($g->lat) && is_numeric($g->lng))
+                || (is_numeric($g->official_lat) && is_numeric($g->official_lng));
+            $hasInep = is_numeric($g->inep_code) && (int) $g->inep_code > 0;
+            if (! $hasMap && ! $hasInep) {
+                continue;
+            }
+            $candidates[] = $g;
+        }
+
+        if ($candidates === []) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($candidates as $g) {
+            $eid = (int) $g->escola_id;
+            if ($eid <= 0) {
+                continue;
+            }
+            $inep = is_numeric($g->inep_code) && (int) $g->inep_code > 0 ? (int) $g->inep_code : null;
+            $out[] = ['eid' => $eid, 'inep' => $inep];
+        }
+
+        return $out;
+    }
+
+    /**
      * @return array{
      *   markers: list<array<string, mixed>>,
      *   geo_note: ?string,
      *   geo_source: string,
      *   geo_attribution: list<string>,
      *   geo_distribution: array<string, mixed>,
-     *   map_scope: 'matricula'|'rede_escola',
+     *   map_scope: 'matricula'|'rede_escola'|'geo_cache',
      *   show_waiting_capacity: bool
      * }
      */
@@ -1380,6 +1465,43 @@ class SchoolUnitsRepository
                 'map_scope' => 'rede_escola',
                 'show_waiting_capacity' => false,
             ];
+        }
+
+        $cacheRowData = $this->escolasRowsFromSchoolUnitGeoFallback($city, $filters);
+        if ($cacheRowData !== []) {
+            $eidsForNames = array_values(array_unique(array_map(
+                static fn (array $r): int => (int) ($r['eid'] ?? 0),
+                $cacheRowData,
+            )));
+            $eidsForNames = array_values(array_filter($eidsForNames, static fn (int $id): bool => $id > 0));
+            $namesByEid = $this->fetchEscolaNamesByIdsForMap($db, $city, $eidsForNames);
+            $cacheRows = [];
+            foreach ($cacheRowData as $row) {
+                $eid = (int) ($row['eid'] ?? 0);
+                $nome = $eid > 0 ? ($namesByEid[$eid] ?? '') : '';
+                $cacheRows[] = [
+                    'eid' => $eid,
+                    'escola_nome' => $nome !== '' ? $nome : __('Unidade #:id', ['id' => $eid]),
+                    'la' => null,
+                    'ln' => null,
+                    'inep' => $row['inep'] ?? null,
+                ];
+            }
+            $fromCache = $this->buildMarkersFromEscolaRows($db, $city, $filters, $cacheRows, 'geo_cache');
+
+            if ($fromCache['markers'] !== []) {
+                $extra = __('Modo cache local (school_unit_geos): não há matrículas ativas no âmbito do ano/filtros ou a consulta não devolveu escolas; o mapa usa coordenadas e INEP já guardados na base local.');
+
+                return [
+                    'markers' => $fromCache['markers'],
+                    'geo_note' => $fromCache['geo_note'] !== null ? $fromCache['geo_note'].' '.$extra : $extra,
+                    'geo_source' => $fromCache['geo_source'],
+                    'geo_attribution' => $fromCache['geo_attribution'],
+                    'geo_distribution' => $fromCache['geo_distribution'],
+                    'map_scope' => 'geo_cache',
+                    'show_waiting_capacity' => false,
+                ];
+            }
         }
 
         $geoNote = $scopedRows === []

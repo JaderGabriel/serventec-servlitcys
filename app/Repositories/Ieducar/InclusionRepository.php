@@ -43,7 +43,8 @@ class InclusionRepository
      *   error: ?string,
      *   total_matriculas: ?int,
      *   equidade_fonte: ?string,
-     *   methodology: list<string>
+     *   methodology: list<string>,
+     *   nee_grupo_resumo: ?array{deficiencias: int, sindromes_tea: int, ne_altas_habilidades: int}
      * }
      */
     public function snapshot(?City $city, IeducarFilterState $filters): array
@@ -60,6 +61,7 @@ class InclusionRepository
                 'total_matriculas' => null,
                 'equidade_fonte' => null,
                 'methodology' => [],
+                'nee_grupo_resumo' => null,
             ];
         }
 
@@ -71,9 +73,10 @@ class InclusionRepository
         $notes = [];
         $totalMatriculas = null;
         $equidadeFonte = null;
+        $neeGrupoResumo = null;
 
         try {
-            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte) {
+            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo) {
                 $totalMatriculas = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
 
                 try {
@@ -183,6 +186,17 @@ class InclusionRepository
                     array_values(array_filter([$escolaRacaNee])),
                     $tailCharts
                 );
+
+                if ($neeCharts !== [] && isset($neeCharts[0]['datasets'][0]['data'])) {
+                    $data = $neeCharts[0]['datasets'][0]['data'];
+                    if (is_array($data) && count($data) === 3) {
+                        $neeGrupoResumo = [
+                            'deficiencias' => (int) round((float) ($data[0] ?? 0)),
+                            'sindromes_tea' => (int) round((float) ($data[1] ?? 0)),
+                            'ne_altas_habilidades' => (int) round((float) ($data[2] ?? 0)),
+                        ];
+                    }
+                }
             });
         } catch (\Throwable $e) {
             return [
@@ -196,6 +210,7 @@ class InclusionRepository
                 'total_matriculas' => null,
                 'equidade_fonte' => null,
                 'methodology' => [],
+                'nee_grupo_resumo' => null,
             ];
         }
 
@@ -212,6 +227,7 @@ class InclusionRepository
             'total_matriculas' => $totalMatriculas,
             'equidade_fonte' => $equidadeFonte,
             'methodology' => $methodology,
+            'nee_grupo_resumo' => $neeGrupoResumo,
         ];
     }
 
@@ -671,7 +687,7 @@ class InclusionRepository
 
             $q = $db->table($mat.' as m')
                 ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
-                ->whereIn('a.'.$aId, function ($sub) use ($db, $adTable, $adAluno) {
+                ->whereIn('a.'.$aId, function ($sub) use ($adTable, $adAluno) {
                     $sub->from($adTable)->select($adAluno)->distinct();
                 });
 

@@ -144,11 +144,12 @@ class AnalyticsDashboardController extends Controller
                 'total_matriculas' => null,
                 'equidade_fonte' => null,
                 'methodology' => [],
+                'nee_grupo_resumo' => null,
             ];
 
         $networkData = $yearFilterReady
             ? $networkRepository->snapshot($city, $filters)
-            : ['charts' => [], 'vagas_por_unidade_chart' => null, 'notes' => [], 'error' => null];
+            : ['charts' => [], 'vagas_por_unidade_chart' => null, 'kpis' => null, 'notes' => [], 'error' => null];
 
         $fundebData = $yearFilterReady && $city !== null
             ? $fundebRepository->buildReport(

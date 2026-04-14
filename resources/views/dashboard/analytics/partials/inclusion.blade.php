@@ -13,6 +13,10 @@
             || ! empty($neeDetalheCatalogo['sindromes_tea'])
             || ! empty($neeDetalheCatalogo['ne_altas_habilidades'])
         );
+    $neeGrupoResumo = is_array($inclusionData['nee_grupo_resumo'] ?? null) ? $inclusionData['nee_grupo_resumo'] : null;
+    $neeGrupoResumoTotal = is_array($neeGrupoResumo)
+        ? (int) (($neeGrupoResumo['deficiencias'] ?? 0) + ($neeGrupoResumo['sindromes_tea'] ?? 0) + ($neeGrupoResumo['ne_altas_habilidades'] ?? 0))
+        : 0;
     $eqLabel = match ($eqFonte) {
         'serie' => __('Série'),
         default => null,
@@ -88,6 +92,25 @@
             <div class="mb-8">
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('NEE — cadastro (deficiências, síndromes e altas habilidades)') }}</h3>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Gráficos derivados de aluno_deficiência e do catálogo de deficiências; o detalhe por nome segue as designações registadas na base.') }}</p>
+                @if ($neeGrupoResumo !== null && $neeGrupoResumoTotal > 0)
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                        <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3">
+                            <p class="text-[11px] font-medium uppercase text-violet-700 dark:text-violet-300">{{ __('Deficiências (grupo)') }}</p>
+                            <p class="mt-1 text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format((int) ($neeGrupoResumo['deficiencias'] ?? 0)) }}</p>
+                            <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ __('Matrículas distintas no critério do gráfico de barras.') }}</p>
+                        </div>
+                        <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3">
+                            <p class="text-[11px] font-medium uppercase text-violet-700 dark:text-violet-300">{{ __('Síndromes e TEA') }}</p>
+                            <p class="mt-1 text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format((int) ($neeGrupoResumo['sindromes_tea'] ?? 0)) }}</p>
+                            <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ __('Palavras-chave no nome da deficiência no catálogo.') }}</p>
+                        </div>
+                        <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3">
+                            <p class="text-[11px] font-medium uppercase text-violet-700 dark:text-violet-300">{{ __('NE — altas habilidades') }}</p>
+                            <p class="mt-1 text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format((int) ($neeGrupoResumo['ne_altas_habilidades'] ?? 0)) }}</p>
+                            <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ __('Inclui superdotação quando configurado nas palavras-chave.') }}</p>
+                        </div>
+                    </div>
+                @endif
                 @if ($neeChartsCount > 0)
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 min-w-0">
                         <x-dashboard.chart-panel

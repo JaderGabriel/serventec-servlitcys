@@ -168,8 +168,153 @@ final class InclusionDashboardQueries
         if ($det !== null) {
             $out[] = $det;
         }
+        $porEscola = self::chartNeeMatriculasPorEscolaTop($db, $city, $filters);
+        if ($porEscola !== null) {
+            $out[] = $porEscola;
+        }
 
         return $out;
+    }
+
+    /**
+     * Barras horizontais: matrículas NEE (DISTINCT) por escola (turma → escola; fallback matrícula → escola).
+     *
+     * @return ?array<string, mixed>
+     */
+    private static function chartNeeMatriculasPorEscolaTop(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        try {
+            $map = self::neeMatriculasDistinctCountByEscolaMap($db, $city, $filters);
+            if ($map === []) {
+                return null;
+            }
+            arsort($map);
+            $map = array_slice($map, 0, 24, true);
+            $escolaT = IeducarSchema::resolveTable('escola', $city);
+            $eId = (string) config('ieducar.columns.escola.id');
+            $eName = (string) config('ieducar.columns.escola.name');
+            $labels = [];
+            $values = [];
+            foreach ($map as $eidStr => $cnt) {
+                $name = $db->table($escolaT)->where($eId, $eidStr)->value($eName);
+                $labels[] = $name !== null && (string) $name !== '' ? (string) $name : ('#'.$eidStr);
+                $values[] = (float) $cnt;
+            }
+            $chart = ChartPayload::barHorizontal(
+                __('Matrículas NEE (educação especial) por escola'),
+                __('Matrículas (distintas)'),
+                $labels,
+                $values
+            );
+            $chart['subtitle'] = __(
+                'Contagem de matrículas activas distintas com vínculo a aluno_deficiência (ou cadastro equivalente), agrupadas por unidade escolar. Top :n escolas no filtro.',
+                ['n' => count($labels)]
+            );
+            $chart['options'] = array_merge($chart['options'] ?? [], ['panelHeight' => 'xxl']);
+
+            return $chart;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * @return array<string, int> eid => contagem
+     */
+    private static function neeMatriculasDistinctCountByEscolaMap(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        try {
+            $adTable = self::resolveAlunoDeficienciaTable($db, $city);
+            if ($adTable === null) {
+                return [];
+            }
+            $adAluno = IeducarColumnInspector::firstExistingColumn($db, $adTable, array_filter([
+                (string) config('ieducar.columns.aluno_deficiencia.aluno'),
+                'ref_cod_aluno',
+                'cod_aluno',
+                'aluno_id',
+                'id_aluno',
+            ]), $city);
+            if ($adAluno === null) {
+                return [];
+            }
+
+            $escolaT = IeducarSchema::resolveTable('escola', $city);
+            $eId = (string) config('ieducar.columns.escola.id');
+
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $aluno = IeducarSchema::resolveTable('aluno', $city);
+            $mAluno = (string) config('ieducar.columns.matricula.aluno');
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $mId = (string) config('ieducar.columns.matricula.id');
+            $aId = (string) config('ieducar.columns.aluno.id');
+
+            $grammar = $db->getQueryGrammar();
+            $baseAlunosComNee = function () use ($db, $mat, $aluno, $mAluno, $aId, $adTable, $adAluno): Builder {
+                return $db->table($mat.' as m')
+                    ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
+                    ->whereIn('a.'.$aId, function ($sub) use ($adTable, $adAluno) {
+                        $sub->from($adTable)->select($adAluno)->distinct();
+                    });
+            };
+
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            if ($tc['escola'] !== '') {
+                $refEscola = $tc['escola'];
+                $tEsc = $grammar->wrap('t_filter').'.'.$grammar->wrap($refEscola);
+                $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
+
+                $q = $baseAlunosComNee();
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+                MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+                MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+                MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+                $q->join($escolaT.' as e', function ($join) use ($db, $tEsc, $ePk) {
+                    if ($db->getDriverName() === 'pgsql') {
+                        $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
+                    } else {
+                        $join->whereRaw('CAST('.$tEsc.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
+                    }
+                })
+                    ->selectRaw('e.'.$eId.' as eid')
+                    ->selectRaw('COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).') as c')
+                    ->groupBy('e.'.$eId);
+                $out = [];
+                foreach ($q->get() as $row) {
+                    $out[(string) $row->eid] = (int) ($row->c ?? 0);
+                }
+
+                return $out;
+            }
+
+            $mEsc = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
+                (string) config('ieducar.columns.matricula.escola'),
+                'ref_cod_escola',
+                'ref_ref_cod_escola',
+                'cod_escola',
+            ]), $city);
+            if ($mEsc === null) {
+                return [];
+            }
+
+            $q = $baseAlunosComNee();
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+            $q->join($escolaT.' as e', 'm.'.$mEsc, '=', 'e.'.$eId)
+                ->selectRaw('e.'.$eId.' as eid')
+                ->selectRaw('COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).') as c')
+                ->groupBy('e.'.$eId);
+            $out = [];
+            foreach ($q->get() as $row) {
+                $out[(string) $row->eid] = (int) ($row->c ?? 0);
+            }
+
+            return $out;
+        } catch (QueryException|\Throwable) {
+            return [];
+        }
     }
 
     /**
