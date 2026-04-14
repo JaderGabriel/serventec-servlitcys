@@ -1003,7 +1003,20 @@ final class MatriculaChartQueries
      */
     public static function vagasAbertasPorEscola(Connection $db, City $city, IeducarFilterState $filters): ?array
     {
-        $direct = self::vagasAbertasAgrupadas($db, $city, $filters, 'escola');
+        // Requisito do painel: sempre mostrar TODAS as escolas da rede no ano,
+        // mesmo quando o filtro de escola estiver selecionado (não "apagar" o gráfico).
+        // Mantém filtros de curso/turno, mas remove recorte por escola.
+        $filtersAllSchools = new IeducarFilterState(
+            ano_letivo: $filters->ano_letivo,
+            escola_id: null,
+            curso_id: $filters->curso_id,
+            turno_id: $filters->turno_id,
+        );
+
+        $direct = self::vagasAbertasAgrupadas($db, $city, $filtersAllSchools, 'escola', [
+            'include_zero' => true,
+            'max_items' => 250,
+        ]);
         if ($direct !== null) {
             return $direct;
         }
@@ -1139,9 +1152,13 @@ final class MatriculaChartQueries
     /**
      * @param  'curso'|'escola'  $por
      */
-    private static function vagasAbertasAgrupadas(Connection $db, City $city, IeducarFilterState $filters, string $por): ?array
+    private static function vagasAbertasAgrupadas(Connection $db, City $city, IeducarFilterState $filters, string $por, array $opts = []): ?array
     {
         try {
+            $includeZero = (bool) ($opts['include_zero'] ?? false);
+            $maxItems = $opts['max_items'] ?? null;
+            $maxItems = is_int($maxItems) && $maxItems > 0 ? $maxItems : null;
+
             $turma = IeducarSchema::resolveTable('turma', $city);
             $maxCol = (string) config('ieducar.columns.turma.max_alunos');
             if ($maxCol === '' || ! IeducarColumnInspector::columnExists($db, $turma, $maxCol, $city)) {
@@ -1214,12 +1231,18 @@ final class MatriculaChartQueries
                     break;
                 }
             }
-            if ($anyPositive) {
-                $items = array_values(array_filter($items, static fn (array $x): bool => ($x['v'] ?? 0) > 0));
-                usort($items, fn ($a, $b) => $b['v'] <=> $a['v']);
-            } else {
-                usort($items, fn ($a, $b) => $b['cap'] <=> $a['cap']);
-                $items = array_slice($items, 0, 40);
+
+            // Ordenação: vagas desc, depois capacidade desc (para desempate e para casos com 0).
+            usort($items, fn ($a, $b) => ($b['v'] <=> $a['v']) ?: ($b['cap'] <=> $a['cap']));
+
+            if (! $includeZero) {
+                if ($anyPositive) {
+                    $items = array_values(array_filter($items, static fn (array $x): bool => ($x['v'] ?? 0) > 0));
+                } else {
+                    $items = array_slice($items, 0, 40);
+                }
+            } elseif ($maxItems !== null) {
+                $items = array_slice($items, 0, $maxItems);
             }
 
             $escolaT = IeducarSchema::resolveTable('escola', $city);

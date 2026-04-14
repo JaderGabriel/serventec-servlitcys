@@ -4,6 +4,7 @@ namespace App\Repositories\Ieducar;
 
 use App\Models\City;
 use App\Services\CityDataConnection;
+use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\MatriculaChartQueries;
 use Illuminate\Database\QueryException;
@@ -96,6 +97,20 @@ class EnrollmentRepository
                             }
                         } catch (QueryException) {
                         }
+                    }
+
+                    // Card extra para evitar "buraco" visual e manter a temática de matrículas:
+                    // distribuição do fluxo (abandono/remanejamento) quando existir base de situação INEP.
+                    if (is_array($fluxoTaxas) && (int) ($fluxoTaxas['total'] ?? 0) > 0) {
+                        $abandono = (int) ($fluxoTaxas['abandono_q'] ?? 0);
+                        $remanej = (int) ($fluxoTaxas['remanejamento_q'] ?? 0);
+                        $outros = max(0, (int) ($fluxoTaxas['total'] ?? 0) - $abandono - $remanej);
+
+                        $charts[] = ChartPayload::doughnut(
+                            __('Matrículas — fluxo escolar (abandono/remanejamento)'),
+                            [__('Abandono (11)'), __('Remanejamento (16)'), __('Outras situações / sem código')],
+                            [$abandono, $remanej, $outros],
+                        );
                     }
 
                     return [

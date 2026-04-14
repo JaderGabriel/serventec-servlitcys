@@ -235,6 +235,7 @@ document.addEventListener("alpine:init", () => {
             _exportFilename: "grafico",
             _panelId: "",
             _compact: true,
+            _panelHeight: "md",
             _cleanupMq: null,
             _cleanupIo: null,
             _cleanupRo: null,
@@ -303,6 +304,13 @@ document.addEventListener("alpine:init", () => {
                     !isGaugeEarly &&
                     ((dsCount === 1 && labelCount > 1) || dsCount > 1);
                 this._compact = compact !== false;
+                const phRaw =
+                    typeof extraEarly.panelHeight === "string"
+                        ? extraEarly.panelHeight.trim().toLowerCase()
+                        : "";
+                this._panelHeight = ["sm", "md", "lg", "xl"].includes(phRaw)
+                    ? phRaw
+                    : "md";
                 this.syncLayoutClasses();
                 this._payload = payload;
                 try {
@@ -1015,18 +1023,40 @@ document.addEventListener("alpine:init", () => {
             },
             syncLayoutClasses() {
                 const c = this._compact;
+                const ph = this._panelHeight || "md";
                 let body =
                     "p-2 sm:p-4 relative w-full overflow-x-auto overflow-y-auto transition-all duration-200 ease-out ";
-                body += c
-                    ? "min-h-[280px] h-[min(28rem,calc(100vw-2rem))] sm:h-[26rem] md:min-h-[22rem]"
-                    : "min-h-[min(32rem,70vh)] w-full";
+                if (c) {
+                    // Compacto: usado em medidores e gráficos pequenos. Evitar crescer demais em mobile.
+                    body += "min-h-[280px] h-[min(28rem,calc(100vw-2rem))] sm:h-[26rem] md:min-h-[22rem]";
+                } else {
+                    // Não-compacto: usado na maioria dos gráficos do painel analítico.
+                    // panelHeight controla o "respiro" vertical quando há muitos rótulos/linhas.
+                    if (ph === "sm") {
+                        body += "min-h-[min(22rem,52vh)] w-full";
+                    } else if (ph === "lg") {
+                        body += "min-h-[min(40rem,78vh)] w-full";
+                    } else if (ph === "xl") {
+                        body += "min-h-[min(48rem,85vh)] w-full";
+                    } else {
+                        body += "min-h-[min(32rem,70vh)] w-full";
+                    }
+                }
                 this.panelBodyClass = body;
 
                 let cv =
                     "block w-full max-w-full chart-panel-canvas transition-all duration-200 ";
-                cv += c
-                    ? "max-h-[min(26rem,72vw)] sm:max-h-[22rem] md:max-h-96"
-                    : "min-h-[18rem] w-full max-h-none";
+                if (c) {
+                    cv += "max-h-[min(26rem,72vw)] sm:max-h-[22rem] md:max-h-96";
+                } else {
+                    if (ph === "sm") {
+                        cv += "min-h-[14rem] w-full max-h-none";
+                    } else if (ph === "xl") {
+                        cv += "min-h-[26rem] w-full max-h-none";
+                    } else {
+                        cv += "min-h-[18rem] w-full max-h-none";
+                    }
+                }
                 this.canvasExtraClass = cv;
             },
             legendRows() {

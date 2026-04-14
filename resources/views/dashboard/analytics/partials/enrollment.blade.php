@@ -141,6 +141,26 @@
         if ($enrollmentCharts === [] && ! empty($enrollmentData['chart'])) {
             $enrollmentCharts = [$enrollmentData['chart']];
         }
+
+        // Melhorar legibilidade: alguns gráficos têm muitos rótulos e precisam de mais altura.
+        $enrollmentCharts = array_map(static function ($c) {
+            if (! is_array($c)) {
+                return $c;
+            }
+            $title = (string) ($c['title'] ?? '');
+            $needsTall = str_contains($title, 'Matrículas por escola')
+                || str_contains($title, 'Matrículas por unidade escolar')
+                || str_contains($title, 'Matrículas por tipo/segmento')
+                || str_contains($title, 'Matrículas por curso')
+                || str_contains($title, 'Matrículas por série');
+
+            if ($needsTall) {
+                $c['options'] = is_array($c['options'] ?? null) ? $c['options'] : [];
+                $c['options']['panelHeight'] = 'xl';
+            }
+
+            return $c;
+        }, $enrollmentCharts);
     @endphp
     @if ($enrollmentCharts !== [])
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
