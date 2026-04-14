@@ -202,6 +202,6 @@ final class MatriculaTurmaJoin
             return;
         }
         $mtAtivo = (string) config('ieducar.columns.matricula_turma.ativo');
-        MatriculaAtivoFilter::apply($q, $db, 'mt_filter.'.$mtAtivo);
+        MatriculaAtivoFilter::apply($q, $db, 'mt_filter.'.$mtAtivo, $city);
     }
 }

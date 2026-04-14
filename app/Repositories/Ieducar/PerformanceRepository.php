@@ -112,7 +112,7 @@ class PerformanceRepository
                 $mAtivo = (string) config('ieducar.columns.matricula.ativo');
 
                 $q = $db->table($mat.' as m');
-                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
                 $spec['applyJoins']($q);
                 MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
                 $q->selectRaw($spec['chaveExpr'].' as chave, COUNT(*) as c')

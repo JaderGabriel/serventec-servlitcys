@@ -141,7 +141,7 @@ final class InclusionSpecialEducationGauges
             $base = static function () use ($db, $mat, $aluno, $mAluno, $mAtivo, $aId, $city, $filters): Builder {
                 $q = $db->table($mat.' as m')
                     ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
-                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
                 MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
 
                 return $q;

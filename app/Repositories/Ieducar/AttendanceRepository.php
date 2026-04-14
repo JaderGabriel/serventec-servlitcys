@@ -89,7 +89,7 @@ class AttendanceRepository
 
                 $q = $db->table($fa.' as fa')
                     ->join($mat.' as m', 'fa.'.$matCol, '=', 'm.'.$mId);
-                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
                 MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
 
                 $yearVal = $filters->yearFilterValue();

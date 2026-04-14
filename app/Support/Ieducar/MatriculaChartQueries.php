@@ -33,8 +33,8 @@ final class MatriculaChartQueries
                 || $filters->turno_id !== null;
 
             if (! $needsTurma) {
-                $q = $db->table($mat);
-                MatriculaAtivoFilter::apply($q, $db, $mAtivo);
+                $q = $db->table($mat.' as m');
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
 
                 return (int) $q->count();
             }
@@ -53,13 +53,13 @@ final class MatriculaChartQueries
                 $q = $db->table($mat.' as m')
                     ->join($mt.' as mt', 'm.'.$mId, '=', 'mt.'.$mtMat)
                     ->join($turma.' as t', 'mt.'.$mtTurma, '=', 't.'.$tId);
-                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
                 if ($mtAtivo !== '') {
-                    MatriculaAtivoFilter::apply($q, $db, 'mt.'.$mtAtivo);
+                    MatriculaAtivoFilter::apply($q, $db, 'mt.'.$mtAtivo, $city);
                 }
             } else {
                 $q = $db->table($mat.' as m')->join($turma.' as t', 'm.'.$mTurma, '=', 't.'.$tId);
-                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
             }
 
             if ($yearVal !== null && $tc['year'] !== '') {
@@ -358,7 +358,7 @@ final class MatriculaChartQueries
             }
 
             $q = $db->table($mat.' as m');
-            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
@@ -420,7 +420,7 @@ final class MatriculaChartQueries
             $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
 
             $q = $db->table($mat.' as m');
-            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
@@ -474,7 +474,7 @@ final class MatriculaChartQueries
             $tEsc = $grammar->wrap('t_filter').'.'.$grammar->wrap($refEscola);
 
             $q = $db->table($mat.' as m');
-            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
@@ -542,6 +542,93 @@ final class MatriculaChartQueries
         }
 
         return $out;
+    }
+
+    /**
+     * Matrículas por escola com nome via relatorio.get_nome_escola (PostgreSQL / Portabilis), join directo
+     * matricula → escola quando existir coluna de FK na matrícula (ex.: ref_ref_cod_escola), com os mesmos filtros
+     * que o resto do painel (turma + matrícula activa).
+     *
+     * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}
+     */
+    public static function matriculasPorEscolaRelatorioDireto(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        int $limit = 15,
+    ): ?array {
+        try {
+            $spec = self::escolaJoinSpec($db, $city);
+            if ($spec === null) {
+                return null;
+            }
+            ['qualified' => $escola, 'idCol' => $eId, 'nameCol' => $eName] = $spec;
+
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $mEsc = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
+                (string) config('ieducar.columns.matricula.escola'),
+                'ref_ref_cod_escola',
+                'ref_cod_escola',
+                'cod_escola',
+            ]), $city);
+            if ($mEsc === null) {
+                return null;
+            }
+
+            $grammar = $db->getQueryGrammar();
+            $mEscW = $grammar->wrap('m').'.'.$grammar->wrap($mEsc);
+            $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
+
+            $q = $db->table($mat.' as m');
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+            $q->join($escola.' as e', function ($join) use ($db, $mEscW, $ePk) {
+                if ($db->getDriverName() === 'pgsql') {
+                    $join->whereRaw('('.$mEscW.')::text = ('.$ePk.')::text');
+                } else {
+                    $join->whereRaw('CAST('.$mEscW.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
+                }
+            });
+
+            $q->selectRaw('e.'.$eId.' as eid');
+            if ($db->getDriverName() === 'pgsql'
+                && filter_var(config('ieducar.pgsql_use_relatorio_escola_nome', true), FILTER_VALIDATE_BOOLEAN)) {
+                $q->addSelect($db->raw('relatorio.get_nome_escola(e.'.$eId.') as ename'));
+            } else {
+                $q->addSelect($db->raw('MAX(e.'.$eName.') as ename'));
+            }
+            $q->selectRaw('COUNT(*) as cnt')
+                ->groupBy('e.'.$eId)
+                ->orderByDesc('cnt')
+                ->limit(max(1, $limit));
+
+            $rows = $q->get();
+            if ($rows->isEmpty()) {
+                return null;
+            }
+
+            $labels = [];
+            $values = [];
+            foreach ($rows as $row) {
+                $labels[] = (string) (($row->ename ?? '') !== '' ? $row->ename : ('#'.$row->eid));
+                $values[] = (int) ($row->cnt ?? 0);
+            }
+
+            $ano = $filters->yearFilterValue();
+            $suf = $ano !== null ? ' ('.$ano.')' : ' ('.__('todos os anos').')';
+
+            return ChartPayload::barHorizontal(
+                __('Matrículas por escola').$suf,
+                __('Matrículas'),
+                $labels,
+                $values
+            );
+        } catch (QueryException|\Throwable) {
+            return null;
+        }
     }
 
     /**
@@ -623,7 +710,7 @@ final class MatriculaChartQueries
             }
 
             $q = $db->table($mat.' as m');
-            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
@@ -682,7 +769,7 @@ final class MatriculaChartQueries
             $mAtivo = (string) config('ieducar.columns.matricula.ativo');
 
             $q = $db->table($mat.' as m');
-            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
@@ -817,7 +904,7 @@ final class MatriculaChartQueries
                     ->groupBy('p.'.$sexoCol);
             }
 
-            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
             MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
 
             $rows = $q->orderByDesc('c')->limit(16)->get();
@@ -880,7 +967,7 @@ final class MatriculaChartQueries
             $tId = (string) config('ieducar.columns.turma.id');
 
             $q = $db->table($mat.' as m');
-            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
@@ -1038,7 +1125,7 @@ final class MatriculaChartQueries
 
             $base = function () use ($db, $city, $filters, $mat, $mAtivo) {
                 $q = $db->table($mat.' as m');
-                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
                 MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
                 MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
                 MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
@@ -1120,7 +1207,7 @@ final class MatriculaChartQueries
             $mAtivo = (string) config('ieducar.columns.matricula.ativo');
 
             $q = $db->table($mat.' as m');
-            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
@@ -1186,7 +1273,7 @@ final class MatriculaChartQueries
             ]), $city);
 
             $q = $db->table($mat.' as m');
-            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
@@ -1252,7 +1339,7 @@ final class MatriculaChartQueries
             $cName = (string) config('ieducar.columns.curso.name');
 
             $q = $db->table($mat.' as m');
-            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
@@ -1315,6 +1402,184 @@ final class MatriculaChartQueries
             $labels,
             $values
         );
+    }
+
+    /**
+     * Distorção idade/série: taxa por ano letivo (PostgreSQL), estilo relatórios BIS —
+     * matricula → aluno → cadastro.fisica (data de nascimento) e série com idade_final / idade_ideal.
+     * Idade na data de referência 1 de março do ano letivo; distorção se idade > limite (sem +2 anos do critério INEP alternativo).
+     *
+     * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}
+     */
+    public static function distorcaoIdadeSerieTaxaPorAnoFisica(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+    ): ?array {
+        if ($db->getDriverName() !== 'pgsql') {
+            return null;
+        }
+
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $aluno = IeducarSchema::resolveTable('aluno', $city);
+            $serieT = IeducarSchema::resolveTable('serie', $city);
+
+            $fisicaTable = self::resolveFisicaTableForDistorcao($db, $city);
+            if ($fisicaTable === null
+                || ! IeducarColumnInspector::tableExists($db, $mat, $city)
+                || ! IeducarColumnInspector::tableExists($db, $aluno, $city)
+                || ! IeducarColumnInspector::tableExists($db, $serieT, $city)) {
+                return null;
+            }
+
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $mAluno = (string) config('ieducar.columns.matricula.aluno');
+            $aId = (string) config('ieducar.columns.aluno.id');
+            $aPessoa = IeducarColumnInspector::firstExistingColumn($db, $aluno, array_filter([
+                (string) config('ieducar.columns.aluno.pessoa'),
+                'ref_cod_pessoa',
+                'ref_idpes',
+                'idpes',
+            ]), $city);
+            $fLink = IeducarColumnInspector::firstExistingColumn($db, $fisicaTable, ['idpes', 'ref_idpes'], $city);
+            $fNasc = IeducarColumnInspector::firstExistingColumn($db, $fisicaTable, [
+                'data_nasc', 'data_nascimento', 'dt_nascimento',
+            ], $city);
+
+            if ($aPessoa === null || $fLink === null || $fNasc === null) {
+                return null;
+            }
+
+            $spec = self::serieJoinSpec($db, $city);
+            if ($spec === null) {
+                return null;
+            }
+            $sPk = $spec['idCol'];
+            $idadeFinal = IeducarColumnInspector::firstExistingColumn($db, $serieT, ['idade_final', 'idade_fim'], $city);
+            $idadeIdeal = IeducarColumnInspector::firstExistingColumn($db, $serieT, ['idade_ideal', 'idade_ideal_max'], $city);
+            if ($idadeFinal === null && $idadeIdeal === null) {
+                return null;
+            }
+
+            $g = $db->getQueryGrammar();
+            if ($idadeFinal !== null && $idadeIdeal !== null) {
+                $limiteSql = 'COALESCE(NULLIF('.$g->wrap('s').'.'.$g->wrap($idadeFinal).', 0), '.$g->wrap('s').'.'.$g->wrap($idadeIdeal).', 99)';
+            } elseif ($idadeFinal !== null) {
+                $limiteSql = 'COALESCE(NULLIF('.$g->wrap('s').'.'.$g->wrap($idadeFinal).', 0), 99)';
+            } else {
+                $limiteSql = 'COALESCE('.$g->wrap('s').'.'.$g->wrap((string) $idadeIdeal).', 99)';
+            }
+
+            $mAno = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
+                (string) config('ieducar.columns.matricula.ano'),
+                'ano',
+                'ref_ano_letivo',
+                'ano_letivo',
+            ]), $city);
+            if ($mAno === null) {
+                return null;
+            }
+
+            $mSer = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
+                (string) config('ieducar.columns.matricula.serie'),
+                'ref_ref_cod_serie',
+                'ref_cod_serie',
+            ]), $city);
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+
+            $q = $db->table($mat.' as m');
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+
+            $q->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
+                ->join($fisicaTable.' as f', 'a.'.$aPessoa, '=', 'f.'.$fLink)
+                ->whereNotNull('f.'.$fNasc);
+
+            if ($mSer !== null) {
+                $lhs = $g->wrap('m').'.'.$g->wrap($mSer);
+                $rhs = $g->wrap('s').'.'.$g->wrap($sPk);
+                $q->leftJoin($serieT.' as s', function ($join) use ($lhs, $rhs) {
+                    $join->whereRaw('('.$lhs.')::text = ('.$rhs.')::text');
+                });
+            } elseif ($tc['serie'] !== '') {
+                $lhs = $g->wrap('t_filter').'.'.$g->wrap($tc['serie']);
+                $rhs = $g->wrap('s').'.'.$g->wrap($sPk);
+                $q->leftJoin($serieT.' as s', function ($join) use ($lhs, $rhs) {
+                    $join->whereRaw('('.$lhs.')::text = ('.$rhs.')::text');
+                });
+            } else {
+                return null;
+            }
+
+            $anoVal = $filters->yearFilterValue();
+            if ($anoVal !== null) {
+                $q->where('m.'.$mAno, $anoVal);
+            } else {
+                $y0 = (int) date('Y');
+                $q->whereBetween('m.'.$mAno, [$y0 - 4, $y0]);
+            }
+
+            $mAnoW = $g->wrap('m').'.'.$g->wrap($mAno);
+            $fNascW = $g->wrap('f').'.'.$g->wrap($fNasc);
+
+            $ageCond = 'extract(year from age(make_date(cast('.$mAnoW.' as integer), 3, 1), '.$fNascW.'))::int > ('.$limiteSql.')';
+
+            $q->selectRaw($mAnoW.'::text as anolabel')
+                ->selectRaw(
+                    'count(*) filter (where '.$ageCond.') * 100.0 / nullif(count(*), 0) as taxa'
+                )
+                ->groupByRaw($mAnoW)
+                ->orderByRaw($mAnoW);
+
+            $rows = $q->get();
+            if ($rows->isEmpty()) {
+                return null;
+            }
+
+            $labels = [];
+            $values = [];
+            foreach ($rows as $row) {
+                $labels[] = (string) ($row->anolabel ?? '');
+                $values[] = round((float) ($row->taxa ?? 0.0), 2);
+            }
+
+            $sub = $anoVal !== null
+                ? ' ('.$anoVal.')'
+                : ' ('.__('últimos 5 anos').')';
+
+            return ChartPayload::bar(
+                __('Distorção idade/série — taxa por ano').$sub,
+                __('Taxa %'),
+                $labels,
+                $values
+            );
+        } catch (QueryException|\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * @return string|null tabela qualificada cadastro.fisica ou schema.fisica
+     */
+    private static function resolveFisicaTableForDistorcao(Connection $db, City $city): ?string
+    {
+        $cad = trim((string) config('ieducar.pgsql_schema_cadastro', 'cadastro')).'.fisica';
+        $sch = IeducarSchema::effectiveSchema($city);
+        foreach (array_values(array_unique(array_filter([
+            $cad,
+            $sch !== '' ? $sch.'.fisica' : '',
+            'public.fisica',
+            'cadastro.fisica',
+        ]))) as $t) {
+            if (IeducarColumnInspector::tableExists($db, $t, $city)) {
+                return $t;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -1450,7 +1715,7 @@ final class MatriculaChartQueries
             $serieJoinCol = $tc['serie'];
             $base = function () use ($db, $city, $filters, $mat, $mAtivo, $mAluno, $aluno, $aId, $aPessoa, $pessoa, $pId, $serieT, $sId, $birthCol, $serieJoinCol, $limiteExpr, $grammar) {
                 $q = $db->table($mat.' as m');
-                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo);
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
                 MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
                 MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
                 MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');

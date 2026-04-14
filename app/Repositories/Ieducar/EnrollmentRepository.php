@@ -67,7 +67,8 @@ class EnrollmentRepository
                         $charts[] = $dist;
                     }
 
-                    $porEscola = MatriculaChartQueries::matriculasPorEscolaComOutros($db, $city, $filters, 14)
+                    $porEscola = MatriculaChartQueries::matriculasPorEscolaRelatorioDireto($db, $city, $filters, 15)
+                        ?? MatriculaChartQueries::matriculasPorEscolaComOutros($db, $city, $filters, 14)
                         ?? MatriculaChartQueries::matriculasPorEscolaTop($db, $city, $filters);
                     if ($porEscola !== null) {
                         $charts[] = $porEscola;

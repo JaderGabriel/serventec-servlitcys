@@ -176,6 +176,12 @@ return [
             'turma' => env('IEDUCAR_COL_MATRICULA_TURMA', 'ref_cod_turma'),
             'aluno' => env('IEDUCAR_COL_MATRICULA_ALUNO', 'ref_cod_aluno'),
             'ativo' => env('IEDUCAR_COL_MATRICULA_ATIVO', 'ativo'),
+            /** Ligação directa matrícula → escola (quando existir; ex.: ref_ref_cod_escola, ref_cod_escola). */
+            'escola' => env('IEDUCAR_COL_MATRICULA_ESCOLA', ''),
+            /** Série na matrícula (algumas bases; senão usa-se turma). */
+            'serie' => env('IEDUCAR_COL_MATRICULA_SERIE', ''),
+            /** Ano letivo na matrícula (ex.: ano). */
+            'ano' => env('IEDUCAR_COL_MATRICULA_ANO', ''),
         ],
         /*
          * Pivô matrícula ↔ turma (PostgreSQL iEducar moderno). Usado quando matricula não tem ref_cod_turma.
@@ -250,6 +256,24 @@ return [
 
     'fallbacks' => [
         'ano_letivo_from_turma' => filter_var(env('IEDUCAR_ANO_FALLBACK_FROM_TURMA', true), FILTER_VALIDATE_BOOL),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Matrículas «activas» nos indicadores (KPIs / gráficos)
+    |--------------------------------------------------------------------------
+    |
+    | Em várias bases i-Educar, «ativo» em matricula está NULL ou 0 enquanto
+    | ref_cod_matricula_situacao aponta para situação INEP «em curso» (código 1).
+    | Com incluir_situacao_inep activo, as contagens consideram também matrículas
+    | cuja linha em matricula_situacao tem codigo INEP na lista (por defeito: 1).
+    |
+    */
+
+    'matricula_indicadores' => [
+        'incluir_situacao_inep' => filter_var(env('IEDUCAR_MATRICULA_INDICADORES_INCLUIR_SITUACAO_INEP', true), FILTER_VALIDATE_BOOL),
+        /** Códigos INEP (matricula_situacao.codigo) tratados como matrícula activa em conjunto com ativo=1. */
+        'situacao_inep_como_ativa' => array_values(array_filter(array_map('trim', explode(',', (string) env('IEDUCAR_MATRICULA_SITUACAO_INEP_ATIVAS', '1'))), static fn (string $s): bool => $s !== '')),
     ],
 
     /*
