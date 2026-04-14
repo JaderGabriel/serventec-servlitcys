@@ -4,7 +4,10 @@ namespace App\Console\Commands;
 
 use App\Models\City;
 use App\Models\SchoolUnitGeo;
+use App\Services\Inep\InepCensoEscolaGeoAggService;
+use App\Services\Inep\InepMicrodadosCadastroEscolasDownloader;
 use App\Support\InepMicrodadosCadastroEscolasPath;
+use App\Support\InepMicrodadosEscolasCsv;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -17,20 +20,12 @@ use Illuminate\Support\Facades\DB;
     {--only-missing=1 : Se 1, só INEPs em school_unit_geos ainda sem coordenadas oficiais (ou mapa com --also-map-coords)}
     {--also-map-coords=0 : Se 1, também preenche lat/lng quando vazios e a linha do CSV tiver coordenadas}
     {--threshold=100 : Limiar de divergência em metros (0 = usar config ieducar.inep_geocoding.divergence_threshold_meters)}
-    {--skip-if-missing=0 : Se 1, termina com sucesso se o ficheiro não existir (apenas aviso)}'
+    {--skip-if-missing=0 : Se 1, termina com sucesso se o ficheiro não existir (apenas aviso)}
+    {--fetch=1 : Se 1 e o CSV não existir, descarrega o ZIP oficial do INEP (apaga CSVs antigos do mesmo tipo antes)}'
 )]
-#[Description('Lê MICRODADOS_CADASTRO_ESCOLAS_*.CSV do INEP e atualiza APENAS linhas school_unit_geos existentes (INEP válido)')]
+#[Description('Lê microdados do Censo (CSV local) e atualiza APENAS linhas school_unit_geos existentes (INEP válido)')]
 class ImportInepMicrodadosCadastroEscolasGeo extends Command
 {
-    /** @var list<string> */
-    private const INEP_HEADER_ALIASES = ['co_entidade', 'codigo_inep', 'nu_inep', 'inep', 'cod_inep', 'cod_inep_escola'];
-
-    /** @var list<string> */
-    private const LAT_HEADER_ALIASES = ['nu_latitude', 'latitude', 'lat', 'vl_latitude', 'y'];
-
-    /** @var list<string> */
-    private const LNG_HEADER_ALIASES = ['nu_longitude', 'longitude', 'lng', 'vl_longitude', 'x'];
-
     public function handle(): int
     {
         $cityOpt = $this->option('city');
@@ -44,19 +39,41 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
         $pathOpt = $this->option('path');
         $rel = is_string($pathOpt) && trim($pathOpt) !== ''
             ? trim($pathOpt)
-            : (string) config('ieducar.inep_geocoding.microdados_cadastro_escolas_path', 'inep/MICRODADOS_CADASTRO_ESCOLAS_*.csv');
+            : (string) config('ieducar.inep_geocoding.microdados_cadastro_escolas_path', 'inep/microdados_ed_basica_*.csv');
         $path = InepMicrodadosCadastroEscolasPath::resolve($rel);
+
+        $wantFetch = (string) $this->option('fetch') === '1';
+        $fetchEnabled = filter_var(config('ieducar.inep_geocoding.microdados_fetch_enabled', true), FILTER_VALIDATE_BOOLEAN);
+        if (($path === null || ! is_readable($path)) && $wantFetch && $fetchEnabled) {
+            $this->info('A descarregar microdados oficiais do INEP (ZIP → CSV) …');
+            try {
+                $dl = app(InepMicrodadosCadastroEscolasDownloader::class);
+                $yearOpt = config('ieducar.inep_geocoding.microdados_download_year');
+                $year = is_string($yearOpt) && trim($yearOpt) !== '' && ctype_digit(trim($yearOpt))
+                    ? (int) trim($yearOpt)
+                    : null;
+                $path = $dl->downloadAndExtract($year);
+                $this->info('Descarga concluída: '.$path);
+            } catch (\Throwable $e) {
+                $this->error('Descarga INEP falhou: '.$e->getMessage());
+                if ((string) $this->option('skip-if-missing') === '1') {
+                    return self::SUCCESS;
+                }
+
+                return self::FAILURE;
+            }
+        }
 
         if ($path === null || ! is_readable($path)) {
             if ((string) $this->option('skip-if-missing') === '1') {
-                $this->warn('Ficheiro MICRODADOS_CADASTRO_ESCOLAS não encontrado; import omitido.');
-                $this->line('Configure IEDUCAR_INEP_MICRODADOS_CADASTRO_ESCOLAS (disco public / storage/app/public) ou use --path=');
+                $this->warn('Ficheiro de microdados não encontrado; import omitido.');
                 $this->line('Valor configurado: '.$rel);
+                $this->line('Ative --fetch=1 (e IEDUCAR_INEP_MICRODADOS_FETCH) ou coloque o CSV em storage/app/public/inep/.');
 
                 return self::SUCCESS;
             }
 
-            $this->error('Ficheiro não encontrado ou ilegível. Coloque o CSV em storage/app/public/ (ex.: inep/MICRODADOS_CADASTRO_ESCOLAS_2024.csv) ou defina IEDUCAR_INEP_MICRODADOS_CADASTRO_ESCOLAS.');
+            $this->error('Ficheiro não encontrado ou ilegível.');
             $this->line('Valor resolvido: '.$rel);
 
             return self::FAILURE;
@@ -71,6 +88,7 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
         $cityIdList = $allowedCityIds->pluck('id')->all();
         if ($cityIdList === []) {
             $this->warn('Nenhuma cidade no escopo.');
+            $this->maybeIndexCensoGeoAggFromPath($path);
 
             return self::SUCCESS;
         }
@@ -78,6 +96,7 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
         $neededIneps = $this->queryNeededInepCodes($cityIdList, $onlyMissing, $alsoMap);
         if ($neededIneps === []) {
             $this->info('Nenhum código INEP em falta no escopo; nada a importar.');
+            $this->maybeIndexCensoGeoAggFromPath($path);
 
             return self::SUCCESS;
         }
@@ -110,33 +129,46 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
             return self::FAILURE;
         }
 
-        $map = [];
-        foreach ($header as $i => $h) {
-            $map[mb_strtolower(trim((string) $h))] = $i;
-        }
+        $map = InepMicrodadosEscolasCsv::mapHeader($header);
 
-        $inepIdx = $this->pickColumnIndex($map, self::INEP_HEADER_ALIASES);
-        $latIdx = $this->pickColumnIndex($map, self::LAT_HEADER_ALIASES);
-        $lngIdx = $this->pickColumnIndex($map, self::LNG_HEADER_ALIASES);
-
-        if ($inepIdx === null || $latIdx === null || $lngIdx === null) {
+        $inepIdx = InepMicrodadosEscolasCsv::inepColumnIndex($map);
+        if ($inepIdx === null) {
             fclose($fh);
-            $this->error('Cabeçalho deve incluir coluna INEP (ex.: CO_ENTIDADE) e latitude/longitude (ex.: NU_LATITUDE, NU_LONGITUDE). Colunas encontradas: '.implode(', ', array_keys($map)));
+            $this->error('Cabeçalho deve incluir coluna INEP (ex.: CO_ENTIDADE). Colunas: '.implode(', ', array_keys($map)));
 
             return self::FAILURE;
+        }
+
+        if (! InepMicrodadosEscolasCsv::headerHasGeoColumns($map)) {
+            fclose($fh);
+            $this->warn('Este ficheiro não contém colunas de latitude/longitude (comum nos microdados públicos do Censo após restrições de privacidade). Nada a atualizar em official_lat/lng; use o passo ArcGIS ou um CSV com coords.');
+            $this->info('Importação terminada sem alterações (0 registos).');
+            $this->maybeIndexCensoGeoAggFromPath($path);
+
+            return self::SUCCESS;
+        }
+
+        $ll = InepMicrodadosEscolasCsv::latLngColumnIndices($map);
+        $latIdx = $ll['lat'];
+        $lngIdx = $ll['lng'];
+        if ($latIdx === null || $lngIdx === null) {
+            fclose($fh);
+            $this->maybeIndexCensoGeoAggFromPath($path);
+
+            return self::SUCCESS;
         }
 
         $hits = [];
 
         while (($row = fgetcsv($fh, 0, $delimiter)) !== false) {
             $inepRaw = $row[$inepIdx] ?? '';
-            $inep = $this->parseInep($inepRaw);
+            $inep = InepMicrodadosEscolasCsv::parseInepCode($inepRaw);
             if ($inep <= 0 || ! isset($neededFlip[$inep])) {
                 continue;
             }
 
-            $lat = $this->parseCoordinate($row[$latIdx] ?? null);
-            $lng = $this->parseCoordinate($row[$lngIdx] ?? null);
+            $lat = InepMicrodadosEscolasCsv::parseCoordinate($row[$latIdx] ?? null);
+            $lng = InepMicrodadosEscolasCsv::parseCoordinate($row[$lngIdx] ?? null);
             if ($lat === null || $lng === null) {
                 continue;
             }
@@ -196,8 +228,20 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
         }
 
         $this->info("Importação concluída. Registos atualizados: {$updated}; INEPs distintos no CSV (escopo): ".count($hits).'.');
+        $this->maybeIndexCensoGeoAggFromPath($path);
 
         return self::SUCCESS;
+    }
+
+    private function maybeIndexCensoGeoAggFromPath(string $absolutePath): void
+    {
+        if (! filter_var(config('ieducar.inep_geocoding.censo_geo_agg_index_on_import', true), FILTER_VALIDATE_BOOLEAN)) {
+            return;
+        }
+
+        $this->line('A atualizar índice de geografia Censo (modal) a partir do mesmo CSV …');
+        $n = app(InepCensoEscolaGeoAggService::class)->indexFromMicrodadosCsv($absolutePath);
+        $this->info("Índice Censo (geo agregada): {$n} linhas.");
     }
 
     /**
@@ -234,21 +278,6 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
             ->all();
     }
 
-    /**
-     * @param  array<string, int>  $map
-     * @param  list<string>  $aliases
-     */
-    private function pickColumnIndex(array $map, array $aliases): ?int
-    {
-        foreach ($aliases as $a) {
-            if (isset($map[$a])) {
-                return $map[$a];
-            }
-        }
-
-        return null;
-    }
-
     private function resolveDelimiter(string $configured, string $firstLine): string
     {
         $configured = trim($configured);
@@ -256,38 +285,7 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
             return $configured;
         }
 
-        $semi = substr_count($firstLine, ';');
-        $comma = substr_count($firstLine, ',');
-
-        return $semi >= $comma ? ';' : ',';
-    }
-
-    private function parseInep(mixed $raw): int
-    {
-        $s = preg_replace('/\D+/', '', (string) $raw) ?? '';
-        if ($s === '') {
-            return 0;
-        }
-        if (strlen($s) > 8) {
-            $s = substr($s, -8);
-        }
-
-        return (int) $s;
-    }
-
-    private function parseCoordinate(mixed $raw): ?float
-    {
-        $v = trim((string) $raw);
-        if ($v === '' || $v === 'null') {
-            return null;
-        }
-        $v = str_replace(',', '.', str_replace(' ', '', $v));
-        if (! is_numeric($v)) {
-            return null;
-        }
-        $f = (float) $v;
-
-        return is_finite($f) ? $f : null;
+        return InepMicrodadosEscolasCsv::delimiterFromFirstLine($firstLine);
     }
 
     private function haversineMeters(float $lat1, float $lng1, float $lat2, float $lng2): ?float

@@ -97,13 +97,14 @@
             </div>
 
             <div class="rounded-xl border border-blue-200/80 bg-blue-50/70 dark:border-blue-900/50 dark:bg-blue-950/25 p-4 sm:p-5">
-                <p class="text-sm font-semibold text-blue-950 dark:text-blue-100">{{ __('Na leitura (runtime): ordem dos 7 fallbacks INEP + camadas ArcGIS') }}</p>
+                <p class="text-sm font-semibold text-blue-950 dark:text-blue-100">{{ __('Na leitura (runtime): ordem dos fallbacks INEP + camadas ArcGIS') }}</p>
                 <p class="mt-1 text-sm text-blue-900/90 dark:text-blue-200/90 leading-relaxed">
                     {{ __('Ordem interna usada pelo catálogo e pelo mapa (além das coordenadas já guardadas na escola no i-Educar e em school_unit_geos):') }}
                 </p>
                 <ol class="mt-3 list-decimal list-outside space-y-2 pl-5 text-sm text-blue-950 dark:text-blue-100/95 leading-relaxed">
                     <li>{{ __('Tabela local legada `inep_school_geos` (se existir), com payload JSON quando disponível.') }}</li>
-                    <li>{{ __('CSV de fallback (`IEDUCAR_INEP_GEO_FALLBACK_CSV`), apenas INEPs já presentes no cache local exportado.') }}</li>
+                    <li>{{ __('Microdados locais (`microdados_ed_basica_*.csv` em `storage/app/public/inep/`), apenas se o ficheiro tiver colunas de latitude/longitude; INEPs no mesmo escopo local que o CSV manual.') }}</li>
+                    <li>{{ __('CSV de fallback manual (`IEDUCAR_INEP_GEO_FALLBACK_CSV`), apenas INEPs já presentes no cache local exportado.') }}</li>
                     <li>{{ __('Cache Redis (`inep_geo_v2_*`) de consultas anteriores ao ArcGIS.') }}</li>
                     <li>{{ __('Primeira URL em `IEDUCAR_INEP_ARCGIS_QUERY_URLS` (ou `IEDUCAR_INEP_ARCGIS_QUERY_URL` legado) — query por Código_INEP.') }}</li>
                     <li>{{ __('URLs seguintes na mesma lista (segunda camada/serviço nacional ou regional) até obter feição ou esgotar a lista.') }}</li>
@@ -286,10 +287,10 @@
                                 <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-900 dark:bg-slate-800 dark:text-slate-100">{{ __('Passo 3') }}</span>
                                 <span class="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-800 ring-1 ring-slate-200/80 dark:bg-slate-900/40 dark:text-slate-200 dark:ring-slate-600">{{ __('INEP — cadastro') }}</span>
                             </div>
-                            <h3 class="mt-2 text-base font-semibold text-gray-900 dark:text-gray-100 cursor-help border-b border-dashed border-gray-300 dark:border-gray-600 pb-1 inline-block" title="{{ __('Coloque o CSV MICRODADOS_CADASTRO_ESCOLAS_*.csv do INEP em storage/app/public (ex.: inep/). O comando lê só os códigos INEP já presentes em school_unit_geos e ainda sem coordenadas; não cria unidades novas.') }}">
+                            <h3 class="mt-2 text-base font-semibold text-gray-900 dark:text-gray-100 cursor-help border-b border-dashed border-gray-300 dark:border-gray-600 pb-1 inline-block" title="{{ __('Descarrega o ZIP oficial do INEP (Censo Escolar) se necessário, extrai microdados_ed_basica_*.csv para storage/app/public/inep/ e atualiza só INEPs já em school_unit_geos. Não cria unidades novas.') }}">
                                 {{ __('MICRODADOS INEP (cadastro de escolas)') }}
                             </h3>
-                            <p class="mt-2 text-[11px] font-mono text-gray-600 dark:text-gray-400 leading-relaxed">{{ __('Comando: app:import-inep-microdados-cadastro-escolas-geo — IEDUCAR_INEP_MICRODADOS_CADASTRO_ESCOLAS') }}</p>
+                            <p class="mt-2 text-[11px] font-mono text-gray-600 dark:text-gray-400 leading-relaxed">{{ __('Comando: app:import-inep-microdados-cadastro-escolas-geo — IEDUCAR_INEP_MICRODADOS_CADASTRO_ESCOLAS / descarga automática') }}</p>
                         </div>
                     </div>
                     <form method="post" action="{{ route('admin.geo-sync.run') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4 gap-y-3">
@@ -313,6 +314,10 @@
                         <label class="flex items-start gap-2 cursor-pointer md:col-span-2 group" title="{{ __('Se marcado, também preenche lat/lng do mapa quando vazios.') }}">
                             <input type="checkbox" name="microdados_also_map_coords" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
                             <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Também preencher lat/lng do mapa (quando vazios)') }}</span>
+                        </label>
+                        <label class="flex items-start gap-2 cursor-pointer md:col-span-2 group" title="{{ __('Remove CSVs antigos de microdados na pasta inep/ antes de descarregar um ZIP novo.') }}">
+                            <input type="checkbox" name="microdados_fetch" value="1" checked class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
+                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Descarregar ZIP do INEP se o CSV ainda não existir') }}</span>
                         </label>
                         <div class="md:col-span-2">
                             <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Executar import MICRODADOS') }}</x-primary-button>
@@ -381,6 +386,10 @@
                             <label class="flex items-start gap-2 cursor-pointer group" title="{{ __('Repassado ao passo microdados do pipeline.') }}">
                                 <input type="checkbox" name="pipeline_microdados_map_coords" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
                                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Microdados: também preencher lat/lng do mapa') }}</span>
+                            </label>
+                            <label class="flex items-start gap-2 cursor-pointer group" title="{{ __('Último passo: descarrega o ZIP do INEP se não houver CSV local.') }}">
+                                <input type="checkbox" name="pipeline_microdados_fetch" value="1" checked class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
+                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Microdados: descarregar ZIP do INEP se necessário') }}</span>
                             </label>
                             <label class="flex items-start gap-2 cursor-pointer group">
                                 <input type="checkbox" name="ieducar_only_missing" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />

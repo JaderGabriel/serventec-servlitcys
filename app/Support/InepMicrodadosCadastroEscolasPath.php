@@ -5,7 +5,8 @@ namespace App\Support;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Resolve o caminho absoluto do CSV de microdados INEP `MICRODADOS_CADASTRO_ESCOLAS_*`.
+ * Resolve o caminho absoluto do CSV de microdados do Censo (`microdados_ed_basica_*.csv`) ou
+ * legado `MICRODADOS_CADASTRO_ESCOLAS_*.csv`.
  *
  * O ficheiro deve estar no disco `public` do Laravel (`storage/app/public`), servido via
  * `php artisan storage:link` como `public/storage/...` quando necessário.

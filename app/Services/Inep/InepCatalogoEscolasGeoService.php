@@ -5,6 +5,8 @@ namespace App\Services\Inep;
 use App\Models\City;
 use App\Models\SchoolUnitGeo;
 use App\Support\InepGeoFallbackCsvPath;
+use App\Support\InepMicrodadosCadastroEscolasPath;
+use App\Support\InepMicrodadosEscolasCsv;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -143,7 +145,21 @@ class InepCatalogoEscolasGeoService
             }
         }
 
-        // Fallback CSV (só INEPs já presentes em school_unit_geos das cidades forAnalytics — ver export).
+        $pendingMicrodados = [];
+        foreach ($normalized as $code) {
+            if (! isset($out[$code])) {
+                $pendingMicrodados[] = $code;
+            }
+        }
+        if ($pendingMicrodados !== []) {
+            foreach ($this->coordsFromMicrodadosCadastroFile($pendingMicrodados) as $code => $hit) {
+                if (! isset($out[$code])) {
+                    $out[$code] = $hit;
+                }
+            }
+        }
+
+        // Fallback CSV manual (só INEPs já presentes em school_unit_geos das cidades forAnalytics — ver export).
         foreach ($this->coordsFromCsvFallback($normalized) as $code => $hit) {
             if (! isset($out[$code])) {
                 $out[$code] = $hit;
@@ -242,8 +258,17 @@ class InepCatalogoEscolasGeoService
             'fallback_2b_csv_local_scope' => [],
             'fallback_3_arcgis' => [],
             'fallback_4_school_unit_geos_by_inep' => [],
+            'fallback_1b_microdados_ed_basica' => [
+                'enabled' => false,
+                'configured_path' => '',
+                'resolved_absolute' => null,
+                'readable' => false,
+                'header_has_geo_columns' => null,
+                'inep_hits' => [],
+                'count' => 0,
+            ],
             'merged_like_lookup' => [
-                'note' => 'Simulação: inep_school_geos ∪ CSV (escopo local) ∪ Redis ∪ ArcGIS ∪ school_unit_geos (por INEP).',
+                'note' => 'Simulação: inep_school_geos ∪ microdados_ed_basica (local, se lat/lng) ∪ CSV manual ∪ Redis ∪ ArcGIS ∪ school_unit_geos (por INEP).',
                 'would_resolve' => [],
             ],
         ];
@@ -291,6 +316,35 @@ class InepCatalogoEscolasGeoService
             }
             $out['fallback_2_redis_cache'][(string) $code] = $summary;
         }
+
+        $mdConfigured = (string) config('ieducar.inep_geocoding.microdados_cadastro_escolas_path', 'inep/microdados_ed_basica_*.csv');
+        $mdResolved = InepMicrodadosCadastroEscolasPath::resolve($mdConfigured);
+        $microdadosHits = $this->coordsFromMicrodadosCadastroFile($normalized);
+        $hasGeoHeader = null;
+        if (is_string($mdResolved) && is_readable($mdResolved)) {
+            $fhPeek = fopen($mdResolved, 'rb');
+            if ($fhPeek !== false) {
+                $fl = fgets($fhPeek);
+                if ($fl !== false) {
+                    $dPeek = InepMicrodadosEscolasCsv::delimiterFromFirstLine($fl);
+                    rewind($fhPeek);
+                    $hdrPeek = fgetcsv($fhPeek, 0, $dPeek);
+                    if (is_array($hdrPeek)) {
+                        $hasGeoHeader = InepMicrodadosEscolasCsv::headerHasGeoColumns(InepMicrodadosEscolasCsv::mapHeader($hdrPeek));
+                    }
+                }
+                fclose($fhPeek);
+            }
+        }
+        $out['fallback_1b_microdados_ed_basica'] = [
+            'enabled' => filter_var(config('ieducar.inep_geocoding.microdados_runtime_lookup_enabled', true), FILTER_VALIDATE_BOOLEAN),
+            'configured_path' => $mdConfigured,
+            'resolved_absolute' => $mdResolved,
+            'readable' => is_string($mdResolved) && is_readable($mdResolved),
+            'header_has_geo_columns' => $hasGeoHeader,
+            'inep_hits' => array_keys($microdadosHits),
+            'count' => count($microdadosHits),
+        ];
 
         $csvPath = InepGeoFallbackCsvPath::absolute((string) config('ieducar.inep_geocoding.fallback_csv_path', 'inep_geo_fallback.csv'));
         $csvHits = $this->coordsFromCsvFallback($normalized);
@@ -396,6 +450,8 @@ class InepCatalogoEscolasGeoService
             $row = $rowsLocal[$code] ?? $rowsLocal[(string) $code] ?? null;
             if (is_array($row) && ! empty($row['valid_coords'])) {
                 $source = 'inep_school_geos';
+            } elseif (isset($microdadosHits[$code])) {
+                $source = 'microdados_ed_basica_local';
             } elseif (isset($csvHits[$code])) {
                 $source = 'csv_fallback_local_scope';
             } elseif (($out['fallback_2_redis_cache'][(string) $code]['has_lat_lng'] ?? false)
@@ -910,6 +966,104 @@ class InepCatalogoEscolasGeoService
             ->all();
 
         return $cache;
+    }
+
+    /**
+     * Microdados do Censo (ficheiro local `microdados_ed_basica_*.csv` ou legado). Só aplica se o CSV
+     * tiver colunas de latitude/longitude (em muitos anos públicos não existem — ver INEP/LGPD).
+     *
+     * @param  list<int>  $normalizedCodes
+     * @return array<int, array{lat: float, lng: float, nome_inep: string, catalog: array, catalog_assoc: array}>
+     */
+    private function coordsFromMicrodadosCadastroFile(array $normalizedCodes): array
+    {
+        if (! filter_var(config('ieducar.inep_geocoding.microdados_runtime_lookup_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            return [];
+        }
+
+        $path = InepMicrodadosCadastroEscolasPath::resolve((string) config(
+            'ieducar.inep_geocoding.microdados_cadastro_escolas_path',
+            'inep/microdados_ed_basica_*.csv'
+        ));
+        if ($path === null || ! is_readable($path)) {
+            return [];
+        }
+
+        $fh = fopen($path, 'rb');
+        if ($fh === false) {
+            return [];
+        }
+
+        $firstLine = fgets($fh);
+        if ($firstLine === false) {
+            fclose($fh);
+
+            return [];
+        }
+        $delimiter = InepMicrodadosEscolasCsv::delimiterFromFirstLine($firstLine);
+        rewind($fh);
+        $header = fgetcsv($fh, 0, $delimiter);
+        if ($header === false) {
+            fclose($fh);
+
+            return [];
+        }
+        $map = InepMicrodadosEscolasCsv::mapHeader($header);
+        if (! InepMicrodadosEscolasCsv::headerHasGeoColumns($map)) {
+            fclose($fh);
+
+            return [];
+        }
+        $inepIdx = InepMicrodadosEscolasCsv::inepColumnIndex($map);
+        if ($inepIdx === null) {
+            fclose($fh);
+
+            return [];
+        }
+        $ll = InepMicrodadosEscolasCsv::latLngColumnIndices($map);
+        $latIdx = $ll['lat'];
+        $lngIdx = $ll['lng'];
+        if ($latIdx === null || $lngIdx === null) {
+            fclose($fh);
+
+            return [];
+        }
+
+        $whitelist = $this->allowedInepWhitelistFromLocalSchools();
+        $wanted = [];
+        foreach ($normalizedCodes as $c) {
+            if (isset($whitelist[$c])) {
+                $wanted[$c] = true;
+            }
+        }
+        if ($wanted === []) {
+            fclose($fh);
+
+            return [];
+        }
+
+        $out = [];
+        while (($row = fgetcsv($fh, 0, $delimiter)) !== false) {
+            $inep = InepMicrodadosEscolasCsv::parseInepCode($row[$inepIdx] ?? '');
+            if ($inep <= 0 || ! isset($wanted[$inep]) || isset($out[$inep])) {
+                continue;
+            }
+            $lat = InepMicrodadosEscolasCsv::parseCoordinate($row[$latIdx] ?? null);
+            $lng = InepMicrodadosEscolasCsv::parseCoordinate($row[$lngIdx] ?? null);
+            if ($lat === null || $lng === null || ! $this->validCoord($lat, $lng)) {
+                continue;
+            }
+            $out[$inep] = [
+                'lat' => $lat,
+                'lng' => $lng,
+                'nome_inep' => '',
+                'catalog' => [],
+                'catalog_assoc' => ['Fonte' => 'Microdados INEP (cadastro escolas)'],
+            ];
+        }
+        fclose($fh);
+
+        return $out;
     }
 
     /**

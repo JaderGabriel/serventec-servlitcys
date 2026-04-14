@@ -202,6 +202,34 @@
                                                         <p class="mt-1 text-sm text-slate-800 dark:text-slate-200 leading-relaxed break-words" x-text="modal.base.endereco_inep"></p>
                                                     </div>
                                                 </template>
+                                                <template x-if="modal?.geo_censo_agg && typeof modal.geo_censo_agg === 'object' && (modal.geo_censo_agg.resumo || modal.geo_censo_agg.no_municipio)">
+                                                    <div class="mt-3 border-t border-emerald-200/80 pt-3 dark:border-emerald-900/40">
+                                                        <p class="text-[10px] font-semibold uppercase text-emerald-800 dark:text-emerald-200/90">{{ __('Censo Escolar (microdados INEP)') }}</p>
+                                                        <p class="mt-1 text-xs text-emerald-950/90 dark:text-emerald-50/95 leading-relaxed" x-text="modal.geo_censo_agg.resumo || '—'"></p>
+                                                        <dl class="mt-2 space-y-1 text-[11px] text-slate-800 dark:text-slate-200">
+                                                            <div class="flex justify-between gap-2" x-show="modal.geo_censo_agg.nu_ano_censo != null && modal.geo_censo_agg.nu_ano_censo !== ''">
+                                                                <dt class="text-slate-500 dark:text-slate-400">{{ __('Ano do Censo') }}</dt>
+                                                                <dd class="text-right tabular-nums" x-text="modal.geo_censo_agg.nu_ano_censo ?? '—'"></dd>
+                                                            </div>
+                                                            <div class="flex justify-between gap-2" x-show="modal.geo_censo_agg.no_municipio">
+                                                                <dt class="text-slate-500 dark:text-slate-400">{{ __('Município') }}</dt>
+                                                                <dd class="text-right break-words" x-text="modal.geo_censo_agg.no_municipio || '—'"></dd>
+                                                            </div>
+                                                            <div class="flex justify-between gap-2" x-show="modal.geo_censo_agg.sg_uf || modal.geo_censo_agg.no_uf">
+                                                                <dt class="text-slate-500 dark:text-slate-400">{{ __('UF') }}</dt>
+                                                                <dd class="text-right break-words" x-text="[modal.geo_censo_agg.sg_uf, modal.geo_censo_agg.no_uf].filter(Boolean).join(' — ') || '—'"></dd>
+                                                            </div>
+                                                            <div class="flex justify-between gap-2" x-show="modal.geo_censo_agg.no_regiao">
+                                                                <dt class="text-slate-500 dark:text-slate-400">{{ __('Região') }}</dt>
+                                                                <dd class="text-right break-words" x-text="modal.geo_censo_agg.no_regiao || '—'"></dd>
+                                                            </div>
+                                                            <div class="flex justify-between gap-2" x-show="modal.geo_censo_agg.localizacao_label">
+                                                                <dt class="text-slate-500 dark:text-slate-400">{{ __('Localização') }}</dt>
+                                                                <dd class="text-right break-words" x-text="modal.geo_censo_agg.localizacao_label || '—'"></dd>
+                                                            </div>
+                                                        </dl>
+                                                    </div>
+                                                </template>
                                             </div>
                                         </div>
                                     </div>

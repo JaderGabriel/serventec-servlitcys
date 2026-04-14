@@ -223,6 +223,7 @@ function buildSchoolPopupHtml(mk, footnote) {
     const em = s.email ? escapeHtml(s.email) : "—";
     const gest = s.gestor ? escapeHtml(s.gestor) : "—";
     const end = s.endereco ? escapeHtml(s.endereco) : "—";
+    const endCadRaw = String(s.endereco_cadastro ?? s.endereco ?? "").trim();
 
     const localRows = [
         ["INEP", inep],
@@ -246,6 +247,16 @@ function buildSchoolPopupHtml(mk, footnote) {
         body += `<div class="flex gap-2 justify-between"><dt class="text-gray-500 dark:text-gray-400 shrink-0">${escapeHtml(k)}</dt><dd class="text-right min-w-0 break-words">${v}</dd></div>`;
     }
     body += `</dl>`;
+
+    const gAgg = s.geo_censo_agg;
+    if (
+        !endCadRaw &&
+        gAgg &&
+        typeof gAgg === "object" &&
+        String(gAgg.resumo || "").trim() !== ""
+    ) {
+        body += `<p class="mt-2 rounded-md border border-emerald-200/80 bg-emerald-50/90 px-2 py-1.5 text-[11px] leading-snug text-emerald-950 dark:border-emerald-800/50 dark:bg-emerald-950/35 dark:text-emerald-50/95"><span class="font-semibold">${escapeHtml("Censo Escolar (INEP):")}</span> ${escapeHtml(gAgg.resumo)}</p>`;
+    }
 
     body += buildCatalogSection(mk.inep_catalog);
     body += buildLinksSection(mk.inep_links);
@@ -312,6 +323,10 @@ function buildSchoolModalPayload(mk, qeduBaseFallback) {
             ),
             endereco_inep: String(s?.endereco_inep || ""),
         },
+        geo_censo_agg:
+            s?.geo_censo_agg && typeof s.geo_censo_agg === "object"
+                ? { ...s.geo_censo_agg }
+                : null,
         oferta: Array.isArray(s?.oferta_curso_serie) ? s.oferta_curso_serie : [],
         inepPortal: {
             page_url: pageUrl,

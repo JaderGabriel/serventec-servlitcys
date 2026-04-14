@@ -73,6 +73,7 @@ class GeoSyncController extends Controller
                         '--skip-if-missing' => '1',
                         '--only-missing' => '1',
                         '--threshold' => (string) $threshold,
+                        '--fetch' => $request->boolean('microdados_fetch', true) ? '1' : '0',
                     ];
                     if ($cityId !== null) {
                         $args['--city'] = (string) $cityId;
@@ -103,6 +104,7 @@ class GeoSyncController extends Controller
                         '--dry-run' => $dryRun ? '1' : '0',
                         '--skip-microdados-if-missing' => $pipelineSkipMicrodadosIfMissing ? '1' : '0',
                         '--microdados-also-map-coords' => $pipelineMicrodadosMapCoords ? '1' : '0',
+                        '--microdados-fetch' => $request->boolean('pipeline_microdados_fetch', true) ? '1' : '0',
                     ];
                     if ($cityId !== null) {
                         $args['--city'] = (string) $cityId;

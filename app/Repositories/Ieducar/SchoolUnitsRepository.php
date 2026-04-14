@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Models\SchoolUnitGeo;
 use App\Services\CityDataConnection;
 use App\Services\Inep\InepCatalogoEscolasGeoService;
+use App\Services\Inep\InepCensoEscolaGeoAggService;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
@@ -23,7 +24,8 @@ class SchoolUnitsRepository
 {
     public function __construct(
         private CityDataConnection $cityData,
-        private InepCatalogoEscolasGeoService $inepGeo
+        private InepCatalogoEscolasGeoService $inepGeo,
+        private InepCensoEscolaGeoAggService $censoGeoAgg
     ) {}
 
     /**
@@ -1820,7 +1822,65 @@ class SchoolUnitsRepository
             $out[] = $m;
         }
 
-        return $out;
+        return $this->enrichSchoolMarkersWithCensoGeoAgg($out);
+    }
+
+    /**
+     * Preenche geografia administrativa (Censo Escolar / microdados indexado) quando não há endereço no cadastro i-Educar.
+     *
+     * @param  list<array<string, mixed>>  $markers
+     * @return list<array<string, mixed>>
+     */
+    private function enrichSchoolMarkersWithCensoGeoAgg(array $markers): array
+    {
+        if (! filter_var(config('ieducar.inep_geocoding.censo_geo_agg_modal_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            return $markers;
+        }
+
+        $need = [];
+        foreach ($markers as $m) {
+            $school = $m['school'] ?? null;
+            if (! is_array($school)) {
+                continue;
+            }
+            $inep = isset($school['inep']) && is_numeric($school['inep']) ? (int) $school['inep'] : null;
+            if ($inep === null || $inep <= 0) {
+                continue;
+            }
+            $endCad = trim((string) ($school['endereco_cadastro'] ?? ''));
+            if ($endCad !== '') {
+                continue;
+            }
+            $need[$inep] = true;
+        }
+        if ($need === []) {
+            return $markers;
+        }
+
+        $hits = $this->censoGeoAgg->lookupByInepCodes(array_keys($need));
+        if ($hits === []) {
+            return $markers;
+        }
+
+        foreach ($markers as $i => $m) {
+            $school = $m['school'] ?? null;
+            if (! is_array($school)) {
+                continue;
+            }
+            $inep = isset($school['inep']) && is_numeric($school['inep']) ? (int) $school['inep'] : null;
+            if ($inep === null || ! isset($hits[$inep])) {
+                continue;
+            }
+            $endCad = trim((string) ($school['endereco_cadastro'] ?? ''));
+            if ($endCad !== '') {
+                continue;
+            }
+            $school['geo_censo_agg'] = $hits[$inep];
+            $m['school'] = $school;
+            $markers[$i] = $m;
+        }
+
+        return $markers;
     }
 
     /**

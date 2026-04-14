@@ -11,8 +11,8 @@ use Illuminate\Console\Command;
  * em seguida, coordenadas oficiais por INEP; por último, fallback a partir do CSV de
  * microdados INEP (cadastro de escolas) para INEPs ainda sem coordenadas.
  *
- * O serviço InepCatalogoEscolasGeoService (passo oficial) aplica internamente, por código INEP:
- * tabela legada inep_school_geos (se existir) → CSV de fallback manual (config) → cache Redis → ArcGIS (URLs em config).
+ * No mapa/catálogo, o InepCatalogoEscolasGeoService tenta por INEP: tabela legada inep_school_geos →
+ * microdados local (se tiver lat/lng) → CSV manual → cache Redis → ArcGIS → school_unit_geos por INEP.
  */
 #[Signature('app:sync-school-unit-geos-pipeline
     {--city= : ID da cidade (opcional; todas as cidades forAnalytics se omitido)}
@@ -23,7 +23,8 @@ use Illuminate\Console\Command;
     {--dry-run=0 : Se 1, só o passo oficial simula gravação (app:sync-school-unit-geos-official)}
     {--microdados-also-map-coords=0 : Se 1, repassado ao import microdados (preenche lat/lng do mapa quando vazios)}
     {--skip-microdados-if-missing=1 : Se 1, último passo termina com aviso se o CSV INEP não existir (útil em CI/cron)}
-    {--microdados-path= : Caminho do CSV microdados (opcional; repassado ao import; default em config)}'
+    {--microdados-path= : Caminho do CSV microdados (opcional; repassado ao import; default em config)}
+    {--microdados-fetch=1 : Se 1, descarrega o ZIP oficial do INEP quando o CSV não existir (apaga CSVs antigos antes)}'
 )]
 #[Description('Pipeline: (1) i-Educar → school_unit_geos; (2) INEP oficial + divergência; (3) microdados INEP (cadastro) para INEPs ainda sem coords')]
 class SyncSchoolUnitGeosPipeline extends Command
@@ -41,10 +42,11 @@ class SyncSchoolUnitGeosPipeline extends Command
         $microMap = (string) $this->option('microdados-also-map-coords') === '1' ? '1' : '0';
         $skipMicroIfMissing = (string) $this->option('skip-microdados-if-missing') === '1';
         $microPathOpt = $this->option('microdados-path');
+        $microFetch = (string) $this->option('microdados-fetch') !== '0' ? '1' : '0';
 
         $this->info('=== Pipeline school_unit_geos (INEP + dados oficiais + microdados) ===');
-        $this->line('Ordem: i-Educar (opc.) → coordenadas oficiais INEP (ArcGIS + fallbacks internos) → microdados INEP (cadastro de escolas).');
-        $this->line('No passo INEP, o serviço tenta: tabela inep_school_geos (se existir) → CSV manual em config → cache → ArcGIS.');
+        $this->line('Ordem: i-Educar (opc.) → coordenadas oficiais INEP (ArcGIS + fallbacks internos) → import microdados (ZIP INEP se necessário).');
+        $this->line('No mapa, lookup INEP: inep_school_geos → microdados local (se coords) → CSV manual → Redis → ArcGIS → school_unit_geos.');
         $this->newLine();
 
         $step = 0;
@@ -89,12 +91,13 @@ class SyncSchoolUnitGeosPipeline extends Command
         $this->newLine();
 
         $step++;
-        $this->info("[{$step}] app:import-inep-microdados-cadastro-escolas-geo — fallback INEP (MICRODADOS_CADASTRO_ESCOLAS) só para INEPs em falta");
+        $this->info("[{$step}] app:import-inep-microdados-cadastro-escolas-geo — microdados Censo (ZIP INEP se necessário), só INEPs em falta");
         $microArgs = [
             '--only-missing' => '1',
             '--also-map-coords' => $microMap,
             '--threshold' => $threshold,
             '--skip-if-missing' => $skipMicroIfMissing ? '1' : '0',
+            '--fetch' => $microFetch,
         ];
         if ($cityArg !== null) {
             $microArgs['--city'] = $cityArg;

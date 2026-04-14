@@ -477,15 +477,30 @@ return [
         'fallback_csv_enabled' => filter_var(env('IEDUCAR_INEP_GEO_FALLBACK_CSV_ENABLED', true), FILTER_VALIDATE_BOOL),
         'fallback_csv_path' => env('IEDUCAR_INEP_GEO_FALLBACK_CSV', 'inep_geo_fallback.csv'),
         /**
-         * Microdados INEP `MICRODADOS_CADASTRO_ESCOLAS_*.csv` (último ano: use glob no nome).
-         * Relativo ao disco public (`storage/app/public`), ex.: `inep/MICRODADOS_CADASTRO_ESCOLAS_*.csv`.
+         * CSV de escolas extraído do ZIP oficial do Censo (`microdados_ed_basica_*.csv`) ou ficheiro
+         * legado `MICRODADOS_CADASTRO_ESCOLAS_*.csv`. Glob escolhe o ano mais recente no nome.
          *
          * @see InepMicrodadosCadastroEscolasPath
          */
         'microdados_cadastro_escolas_path' => env(
             'IEDUCAR_INEP_MICRODADOS_CADASTRO_ESCOLAS',
-            'inep/MICRODADOS_CADASTRO_ESCOLAS_*.csv'
+            'inep/microdados_ed_basica_*.csv'
         ),
+        /** Descarregar automaticamente o ZIP do INEP quando o CSV não existir (import/pipeline). */
+        'microdados_fetch_enabled' => filter_var(env('IEDUCAR_INEP_MICRODADOS_FETCH', true), FILTER_VALIDATE_BOOL),
+        /** URL do ZIP (placeholder {year}). HTTP costuma ser mais fiável que HTTPS no mirror INEP. */
+        'microdados_download_url_template' => (string) env(
+            'IEDUCAR_INEP_MICRODADOS_DOWNLOAD_URL',
+            'http://download.inep.gov.br/dados_abertos/microdados_censo_escolar_{year}.zip'
+        ),
+        /** Ano fixo do Censo (vazio = detetar o ZIP mais recente disponível). */
+        'microdados_download_year' => env('IEDUCAR_INEP_MICRODADOS_YEAR', ''),
+        /** No lookup do mapa/catálogo, ler coordenadas do CSV local (se existir colunas lat/lng). */
+        'microdados_runtime_lookup_enabled' => filter_var(env('IEDUCAR_INEP_MICRODADOS_RUNTIME_LOOKUP', true), FILTER_VALIDATE_BOOL),
+        /** Modal do mapa: mostrar município/UF/região (Censo) quando não há endereço no cadastro i-Educar. */
+        'censo_geo_agg_modal_enabled' => filter_var(env('IEDUCAR_INEP_CENSO_GEO_AGG_MODAL', true), FILTER_VALIDATE_BOOL),
+        /** Após import do microdados, reindexar tabela `inep_censo_escola_geo_agg` (pode demorar em ficheiros nacionais). */
+        'censo_geo_agg_index_on_import' => filter_var(env('IEDUCAR_INEP_CENSO_GEO_AGG_INDEX_ON_IMPORT', true), FILTER_VALIDATE_BOOL),
         /** Distância mínima (Haversine) para marcar divergência entre i-Educar e coordenada oficial (INEP). */
         'divergence_threshold_meters' => max(1.0, (float) env('IEDUCAR_GEO_DIVERGENCE_THRESHOLD_M', 100)),
         /**
