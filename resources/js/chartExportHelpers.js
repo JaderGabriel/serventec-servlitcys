@@ -1,4 +1,36 @@
 /**
+ * Data/hora no fuso America/Sao_Paulo (GMT-3) para o rodapé do PNG quando o servidor não envia `generatedAt`.
+ *
+ * @returns {string}
+ */
+export function formatFooterTimestampGmt3() {
+    try {
+        const parts = new Intl.DateTimeFormat("pt-BR", {
+            timeZone: "America/Sao_Paulo",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+        }).formatToParts(new Date());
+        const g = (t) => parts.find((p) => p.type === t)?.value ?? "";
+        const day = g("day");
+        const month = g("month");
+        const year = g("year");
+        const hour = g("hour");
+        const minute = g("minute");
+        if (!day || !month || !year) {
+            return "";
+        }
+
+        return `${day}/${month}/${year} ${hour}:${minute} GMT-3`;
+    } catch {
+        return "";
+    }
+}
+
+/**
  * Aplica cores «claras» para exportação sem redesenhar (evita layout Chart.js / fullSize).
  * O redesenho opcional fica em {@see safeChartUpdate}.
  *
@@ -214,7 +246,10 @@ export function buildCompositeExport(chart, meta, chartTitle) {
             imgH = Math.round(imgH * s);
         }
 
-        const foot = [meta.footerLine, meta.generatedAt]
+        const generatedLine =
+            (meta.generatedAt && String(meta.generatedAt).trim()) ||
+            formatFooterTimestampGmt3();
+        const foot = [meta.footerLine, generatedLine]
             .filter(Boolean)
             .join(" · ");
 

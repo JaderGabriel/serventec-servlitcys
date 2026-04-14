@@ -38,6 +38,8 @@ class SchoolUnitsRepository
      *     geo_note: ?string,
      *     geo_source: ?string,
      *     geo_attribution: list<string>,
+     *     map_scope: 'matricula'|'rede_escola',
+     *     show_waiting_capacity: bool,
      *     error: ?string
      *   },
      *   error: ?string
@@ -60,6 +62,8 @@ class SchoolUnitsRepository
                     'geo_note' => null,
                     'geo_source' => null,
                     'geo_attribution' => [],
+                    'map_scope' => 'matricula',
+                    'show_waiting_capacity' => true,
                     'error' => null,
                 ],
                 'error' => null,
@@ -89,9 +93,13 @@ class SchoolUnitsRepository
                 $geoNote = $mapBundle['geo_note'];
                 $geoSource = $mapBundle['geo_source'];
                 $geoAttribution = $mapBundle['geo_attribution'];
+                $mapScope = $mapBundle['map_scope'];
+                $showWaitingCapacity = $mapBundle['show_waiting_capacity'];
 
                 $transport = $this->transportHint($db, $city, $filters);
-                $waiting = $this->waitingListHint($db, $city, $filters);
+                $waiting = $showWaitingCapacity
+                    ? $this->waitingListHint($db, $city, $filters)
+                    : null;
 
                 return [
                     'overview' => [
@@ -107,6 +115,8 @@ class SchoolUnitsRepository
                         'geo_note' => $geoNote,
                         'geo_source' => $geoSource,
                         'geo_attribution' => $geoAttribution,
+                        'map_scope' => $mapScope,
+                        'show_waiting_capacity' => $showWaitingCapacity,
                         'error' => null,
                     ],
                     'error' => null,
@@ -127,6 +137,8 @@ class SchoolUnitsRepository
                     'geo_note' => null,
                     'geo_source' => null,
                     'geo_attribution' => [],
+                    'map_scope' => 'matricula',
+                    'show_waiting_capacity' => true,
                     'error' => $e->getMessage(),
                 ],
                 'error' => $e->getMessage(),
@@ -472,25 +484,79 @@ class SchoolUnitsRepository
     }
 
     /**
+     * Unidades na tabela escola (cadastro da rede), sem depender de matrícula — fallback para o mapa.
+     *
+     * @return list<object|array<string, mixed>>
+     */
+    private function escolasRedeParaMapaFallback(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        try {
+            $escolaT = IeducarSchema::resolveTable('escola', $city);
+            $eId = (string) config('ieducar.columns.escola.id');
+            $eName = (string) config('ieducar.columns.escola.name');
+
+            $latCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'latitude', 'lat', 'geo_lat', 'latitude_graus',
+            ], $city);
+            $lngCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'longitude', 'lng', 'lon', 'geo_lng', 'longitude_graus',
+            ], $city);
+            $inepCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'codigo_inep', 'cod_escola_inep', 'inep', 'cod_inep', 'codigo_escola_inep', 'inep_escola', 'ref_cod_escola_inep',
+            ], $city);
+
+            $eActive = IeducarColumnInspector::firstExistingColumn($db, $escolaT, array_filter([
+                (string) config('ieducar.columns.escola.active'),
+                'ativo',
+            ]), $city);
+
+            $q = $db->table($escolaT.' as e');
+            if ($eActive !== null) {
+                $q->where(function ($w) use ($eActive) {
+                    $w->where('e.'.$eActive, 1)
+                        ->orWhere('e.'.$eActive, '1')
+                        ->orWhere('e.'.$eActive, 't')
+                        ->orWhere('e.'.$eActive, true);
+                });
+            }
+
+            $g = $db->getQueryGrammar();
+            $we = $g->wrap('e');
+            $q->selectRaw($we.'.'.$g->wrap($eId).' as eid')
+                ->selectRaw($we.'.'.$g->wrap($eName).' as escola_nome');
+            if ($latCol !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($latCol).' as la');
+            }
+            if ($lngCol !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($lngCol).' as ln');
+            }
+            if ($inepCol !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($inepCol).' as inep');
+            }
+
+            if ($filters->escola_id !== null) {
+                $q->where('e.'.$eId, (int) $filters->escola_id);
+            }
+
+            $rows = $q->orderByRaw($we.'.'.$g->wrap($eName))->limit(250)->get();
+
+            return $rows->all();
+        } catch (QueryException|\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * @param  list<object|array<string, mixed>>  $rows
      * @return array{
      *   markers: list<array{lat: float, lng: float, label: string, meta: string}>,
      *   geo_note: ?string,
-     *   geo_source: ?string,
+     *   geo_source: string,
      *   geo_attribution: list<string>
      * }
      */
-    private function buildMapMarkers(Connection $db, City $city, IeducarFilterState $filters): array
+    private function buildMarkersFromEscolaRows(array $rows): array
     {
-        $rows = $this->escolasScopedForMap($db, $city, $filters);
-        if ($rows === []) {
-            return [
-                'markers' => [],
-                'geo_note' => __('Não há escolas no âmbito dos filtros (matrículas ativas) para posicionar no mapa.'),
-                'geo_source' => 'none',
-                'geo_attribution' => $this->geoAttributionLines(),
-            ];
-        }
-
         $markers = [];
         $dbCount = 0;
         $inepCount = 0;
@@ -550,15 +616,13 @@ class SchoolUnitsRepository
 
         $markers = array_slice($markers, 0, 120);
 
-        $geoSource = null;
+        $geoSource = 'none';
         if ($dbCount > 0 && $inepCount > 0) {
             $geoSource = 'mixed';
         } elseif ($dbCount > 0) {
             $geoSource = 'db';
         } elseif ($inepCount > 0) {
             $geoSource = 'inep_arcgis';
-        } else {
-            $geoSource = 'none';
         }
 
         $attribution = $this->geoAttributionLines();
@@ -573,6 +637,64 @@ class SchoolUnitsRepository
             'geo_note' => $geoNote,
             'geo_source' => $geoSource,
             'geo_attribution' => $attribution,
+        ];
+    }
+
+    /**
+     * @return array{
+     *   markers: list<array{lat: float, lng: float, label: string, meta: string}>,
+     *   geo_note: ?string,
+     *   geo_source: string,
+     *   geo_attribution: list<string>,
+     *   map_scope: 'matricula'|'rede_escola',
+     *   show_waiting_capacity: bool
+     * }
+     */
+    private function buildMapMarkers(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        $attribution = $this->geoAttributionLines();
+
+        $scopedRows = $this->escolasScopedForMap($db, $city, $filters);
+        $fromMatricula = $this->buildMarkersFromEscolaRows($scopedRows);
+
+        if ($fromMatricula['markers'] !== []) {
+            return [
+                'markers' => $fromMatricula['markers'],
+                'geo_note' => $fromMatricula['geo_note'],
+                'geo_source' => $fromMatricula['geo_source'],
+                'geo_attribution' => $fromMatricula['geo_attribution'],
+                'map_scope' => 'matricula',
+                'show_waiting_capacity' => true,
+            ];
+        }
+
+        $redeRows = $this->escolasRedeParaMapaFallback($db, $city, $filters);
+        $fromRede = $this->buildMarkersFromEscolaRows($redeRows);
+
+        if ($fromRede['markers'] !== []) {
+            $extra = __('Mapa com unidades cadastradas na rede (tabela escola). Não são exibidos indicadores de lista de espera e capacidade por turma neste modo, porque o mapa não está restrito ao âmbito de matrículas ativas nos filtros.');
+
+            return [
+                'markers' => $fromRede['markers'],
+                'geo_note' => $fromRede['geo_note'] !== null ? $fromRede['geo_note'].' '.$extra : $extra,
+                'geo_source' => $fromRede['geo_source'],
+                'geo_attribution' => $fromRede['geo_attribution'],
+                'map_scope' => 'rede_escola',
+                'show_waiting_capacity' => false,
+            ];
+        }
+
+        $geoNote = $scopedRows === []
+            ? __('Não há escolas no âmbito dos filtros (matrículas ativas) para posicionar no mapa.')
+            : __('Sem coordenadas para as escolas do filtro: preencha latitude/longitude na escola na base i-Educar ou garanta o código INEP (ex.: codigo_inep) para consulta ao Catálogo de Escolas INEP.');
+
+        return [
+            'markers' => [],
+            'geo_note' => $geoNote,
+            'geo_source' => 'none',
+            'geo_attribution' => $attribution,
+            'map_scope' => 'matricula',
+            'show_waiting_capacity' => true,
         ];
     }
 

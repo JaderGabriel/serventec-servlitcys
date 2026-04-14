@@ -8,6 +8,8 @@
     $geoNote = $tab['geo_note'] ?? null;
     $geoSource = $tab['geo_source'] ?? null;
     $geoAttribution = is_array($tab['geo_attribution'] ?? null) ? $tab['geo_attribution'] : [];
+    $mapScope = $tab['map_scope'] ?? 'matricula';
+    $showWaitingCapacity = (bool) ($tab['show_waiting_capacity'] ?? true);
     $tabErr = $tab['error'] ?? null;
     $topErr = is_array($schoolUnitsData) ? ($schoolUnitsData['error'] ?? null) : null;
     $inepCatalogUrl = 'https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/inep-data/catalogo-de-escolas';
@@ -15,7 +17,11 @@
 
 <div class="space-y-6">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('O mapa usa OpenStreetMap. As coordenadas vêm primeiro da base i-Educar (latitude/longitude na escola); se não existirem, tenta-se o código INEP da escola contra o Catálogo de Escolas (INEP/MEC), serviço público ArcGIS. Transporte e lista de espera dependem das colunas existentes na sua base.') }}
+        @if ($mapScope === 'rede_escola')
+            {{ __('O mapa usa OpenStreetMap e mostra unidades cadastradas na tabela escola (rede municipal). Quando não há posicionamento no âmbito de matrículas ativas nos filtros, este modo garante a visualização das unidades com coordenadas ou INEP. Transporte escolar continua baseado nas colunas de matrícula, se existirem.') }}
+        @else
+            {{ __('O mapa usa OpenStreetMap. As coordenadas vêm primeiro da base i-Educar (latitude/longitude na escola); se não existirem, tenta-se o código INEP da escola contra o Catálogo de Escolas (INEP/MEC), serviço público ArcGIS. Transporte e lista de espera dependem das colunas existentes na sua base.') }}
+        @endif
     </p>
 
     @if ($yearFilterReady && $geoAttribution !== [])
@@ -90,7 +96,7 @@
         </div>
     @endif
 
-    @if ($waiting && is_array($waiting))
+    @if ($showWaitingCapacity && $waiting && is_array($waiting))
         <div class="rounded-xl border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/70 dark:bg-emerald-950/25 p-4">
             <h3 class="text-sm font-semibold text-emerald-950 dark:text-emerald-100">{{ __('Lista de espera e capacidade (turmas)') }}</h3>
             <p class="mt-1 text-xs text-emerald-900/90 dark:text-emerald-100/90">{{ $waiting['texto'] ?? '' }}</p>

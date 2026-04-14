@@ -328,6 +328,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Inclusão — palavras-chave (heurística) para AEE e segmentos
+    |--------------------------------------------------------------------------
+    |
+    | Usado no cruzamento «aluno NEE em turma AEE vs outras turmas»: comparação
+    | case-insensitive no nome da turma e do curso. Liste termos separados por
+    | vírgula ou use as variáveis de ambiente com a mesma lista.
+    |
+    */
+
+    'inclusion' => [
+        'aee_keywords' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'IEDUCAR_INCLUSION_AEE_KEYWORDS',
+            'aee,atendimento educacional especializado,atendimento especializado,sala de recurso,sala multifuncional,multifuncional'
+        ))))),
+        'eja_keywords' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'IEDUCAR_INCLUSION_EJA_KEYWORDS',
+            'eja,educação de jovens e adultos,educacao de jovens e adultos'
+        ))))),
+        'infantil_keywords' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'IEDUCAR_INCLUSION_INFANTIL_KEYWORDS',
+            'educação infantil,educacao infantil,creche,berçário,bercario,pré-escola,pre-escola,infantil'
+        ))))),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | PostgreSQL: escolas via relatorio.get_nome_escola (iEducar Portabilis)
     |--------------------------------------------------------------------------
     |

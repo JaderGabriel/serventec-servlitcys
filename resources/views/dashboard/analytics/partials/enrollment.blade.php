@@ -2,7 +2,7 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Gráficos: Distorção Idade-Série (barras por série com distorção), matrículas por escola (principais + «outras» ou top 10), níveis/séries/cursos, turno e vagas por escola. KPIs no topo: matrículas ativas, turmas e ocupação média quando existir capacidade na turma.') }}
+        {{ __('Gráficos: distorção idade-série por unidade escolar (quando a base permite), distorção na rede por série/ano, matrículas por escola, séries/cursos, turno e vagas. Inclui taxas de abandono e de evasão (abandono + remanejamento) com o mesmo denominador da aba Desempenho. KPIs no topo: matrículas ativas, turmas e ocupação média quando existir capacidade na turma.') }}
     </p>
 
     @if (! empty($enrollmentData['kpis']))
@@ -62,6 +62,48 @@
                 </div>
             </div>
             <p class="text-[11px] text-gray-500 dark:text-gray-500 mt-2">{{ __('Fonte do cálculo:') }} {{ $d['fonte'] === 'custom' ? __('SQL personalizado (IEDUCAR_SQL_DISTORCAO_REDE_CHART)') : __('consulta automática (matrícula → turma → série)')}}</p>
+        </div>
+    @endif
+
+    @if (! empty($enrollmentData['fluxo_taxas']))
+        @php $f = $enrollmentData['fluxo_taxas']; @endphp
+        <div class="rounded-lg border border-rose-100 dark:border-rose-900/50 bg-rose-50/70 dark:bg-rose-950/20 p-4 shadow-sm">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Abandono e evasão escolar (situação da matrícula)') }}</h3>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
+                {{ __('As percentagens usam o mesmo denominador que na aba Desempenho: total de matrículas ativas no filtro, com código de situação INEP na matrícula (tabela matricula_situacao ou equivalente).') }}
+            </p>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
+                <strong class="text-gray-800 dark:text-gray-200">{{ __('Taxa de abandono:') }}</strong>
+                {{ __('proporção de matrículas com situação «abandono» (código 11). Indica saída sem conclusão nem transferência formal registrada como remanejamento.') }}
+            </p>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
+                <strong class="text-gray-800 dark:text-gray-200">{{ __('Taxa de evasão (combinada):') }}</strong>
+                {{ __('proporção de matrículas com abandono (11) ou remanejamento (16). Útil como indicador de fluxo que deixa a turma/escola sem concluir o ano na mesma unidade; o remanejamento implica mudança de oferta, não necessariamente abandono escolar no sentido amplo.') }}
+            </p>
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="rounded-md bg-white/80 dark:bg-gray-900/40 px-3 py-2 border border-rose-100/80 dark:border-rose-900/40">
+                    <p class="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Taxa de abandono (cód. 11)') }}</p>
+                    <p class="mt-1 text-2xl font-semibold tabular-nums text-rose-800 dark:text-rose-200">
+                        @if (($f['abandono_pct'] ?? null) !== null)
+                            {{ number_format((float) $f['abandono_pct'], 1, ',', '.') }}%
+                        @else
+                            —
+                        @endif
+                    </p>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 tabular-nums">{{ number_format((int) ($f['abandono_q'] ?? 0)) }} {{ __('matrículas') }} · {{ __('total') }} {{ number_format((int) ($f['total'] ?? 0)) }}</p>
+                </div>
+                <div class="rounded-md bg-white/80 dark:bg-gray-900/40 px-3 py-2 border border-rose-100/80 dark:border-rose-900/40">
+                    <p class="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Taxa de evasão (11 + 16)') }}</p>
+                    <p class="mt-1 text-2xl font-semibold tabular-nums text-rose-800 dark:text-rose-200">
+                        @if (($f['evasao_pct'] ?? null) !== null)
+                            {{ number_format((float) $f['evasao_pct'], 1, ',', '.') }}%
+                        @else
+                            —
+                        @endif
+                    </p>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 tabular-nums">{{ number_format((int) ($f['evasao_q'] ?? 0)) }} {{ __('matrículas') }} ({{ __('ab.:') }} {{ number_format((int) ($f['abandono_q'] ?? 0)) }}, {{ __('rem.:') }} {{ number_format((int) ($f['remanejamento_q'] ?? 0)) }})</p>
+                </div>
+            </div>
         </div>
     @endif
 

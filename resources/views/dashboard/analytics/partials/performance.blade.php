@@ -9,7 +9,7 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Cada taxa = (matrículas na categoria) ÷ (total de matrículas ativas no filtro) × 100. O total usa matricula.ativo e o campo de situação (por defeito «aprovado»); os filtros de ano/escola/curso/turno aplicam-se pela turma. As categorias seguem os códigos i-Educar no mesmo campo. O gráfico de distorção idade/série (rede) mostra barras horizontais com quantidades absolutas por ano/série (idade à data de corte 31/03 e limite etário + 2 anos), ou SQL personalizado IEDUCAR_SQL_DISTORCAO_REDE_CHART.') }}
+        {{ __('Cada taxa = (matrículas na categoria) ÷ (total de matrículas ativas no filtro) × 100. O total usa matricula.ativo e o campo de situação (códigos INEP via matricula_situacao ou equivalente); os filtros de ano/escola/curso/turno aplicam-se pela turma. Entre os indicadores destacam-se a taxa de reclassificação (cód. 10), abandono (11), remanejamento (16) e taxas agregadas de aprovação e reprovação. O gráfico de distorção idade/série (rede), quando presente, usa idade à 31/03 e limite etário + 2 anos, ou SQL IEDUCAR_SQL_DISTORCAO_REDE_CHART.') }}
     </p>
 
     @php $inepPanel = $performanceData['inep_panel'] ?? null; @endphp

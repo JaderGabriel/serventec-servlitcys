@@ -130,6 +130,8 @@ class AnalyticsDashboardController extends Controller
             ? $inclusionRepository->snapshot($city, $filters)
             : [
                 'charts' => [],
+                'nee_charts_count' => 0,
+                'aee_cross' => null,
                 'gauges' => [],
                 'notes' => [],
                 'error' => null,

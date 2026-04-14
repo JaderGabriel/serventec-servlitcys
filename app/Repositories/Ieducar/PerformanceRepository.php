@@ -391,6 +391,16 @@ class PerformanceRepository
                 true
             ),
             $kpi(
+                'reclassificacao',
+                __('Taxa de reclassificação'),
+                __('Reclassificação — cód. 10'),
+                __('Percentagem com situação «reclassificado» (código 10 INEP): mudança de série ou etapa sem concluir o ano letivo na série de origem, conforme registo na matrícula.'),
+                __('(situação = 10) ÷ (total) × 100'),
+                $pct($reclass),
+                $reclass,
+                true
+            ),
+            $kpi(
                 'em_curso',
                 __('Taxa «em curso / exame / paralela»'),
                 __('Em curso / exame / paralela — cód. 1, 4, 7'),
@@ -398,16 +408,6 @@ class PerformanceRepository
                 __('(situação ∈ {1,4,7}) ÷ (total) × 100'),
                 $pct($emCurso),
                 $emCurso,
-                true
-            ),
-            $kpi(
-                'reclassificacao',
-                __('Taxa de reclassificação'),
-                __('Reclassificação — cód. 10'),
-                __('Percentagem com situação «reclassificado» (código 10).'),
-                __('(situação = 10) ÷ (total) × 100'),
-                $pct($reclass),
-                $reclass,
                 true
             ),
             $kpi(

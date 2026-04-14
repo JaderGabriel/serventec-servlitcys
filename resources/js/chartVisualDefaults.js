@@ -1,6 +1,6 @@
 /**
- * Melhorias visuais partilhadas: zoom/pan ([chartjs-plugin-zoom](https://www.chartjs.org/chartjs-plugin-zoom/)),
- * linha de referência da média ([chartjs-plugin-annotation](https://www.chartjs.org/chartjs-plugin-annotation/3.1.0/)).
+ * Zoom/pan ([chartjs-plugin-zoom](https://www.chartjs.org/chartjs-plugin-zoom/));
+ * anotações manuais via payload em options.plugins.annotation (sem linha de média automática).
  */
 import annotationPlugin from "chartjs-plugin-annotation";
 import zoomPlugin from "chartjs-plugin-zoom";
@@ -12,78 +12,6 @@ import zoomPlugin from "chartjs-plugin-zoom";
  */
 export function registerChartVisualPlugins(ChartConstructor) {
     ChartConstructor.register(annotationPlugin, zoomPlugin);
-}
-
-function averageOfFirstDataset(payload) {
-    const ds0 = payload?.datasets?.[0];
-    const data = ds0?.data;
-    if (!Array.isArray(data) || data.length === 0) {
-        return null;
-    }
-    const nums = data.map((v) => Number(v)).filter((n) => Number.isFinite(n));
-    if (nums.length < 2) {
-        return null;
-    }
-    const sum = nums.reduce((a, b) => a + b, 0);
-    return sum / nums.length;
-}
-
-/**
- * Linha tracejada na média do 1.º dataset (um dataset apenas).
- * Barras verticais: eixo Y. Barras horizontais (indexAxis 'y'): eixo X.
- */
-export function buildAverageLineAnnotations(payload, extra) {
-    if (extra?.plugins?.annotation?.disableAutoAverage === true) {
-        return {};
-    }
-    if (!payload?.datasets || payload.datasets.length !== 1) {
-        return {};
-    }
-    const avg = averageOfFirstDataset(payload);
-    if (avg === null) {
-        return {};
-    }
-
-    const isDark =
-        typeof document !== "undefined" &&
-        document.documentElement.classList.contains("dark");
-    const lineCol = isDark
-        ? "rgba(129, 140, 248, 0.85)"
-        : "rgba(79, 70, 229, 0.75)";
-    const labelBg = isDark
-        ? "rgba(55, 48, 163, 0.92)"
-        : "rgba(79, 70, 229, 0.9)";
-    const labelText = isDark ? "#e0e7ff" : "#ffffff";
-
-    const horizontal = extra?.indexAxis === "y";
-    const scaleID = horizontal ? "x" : "y";
-    const rounded =
-        Math.abs(avg) >= 1000
-            ? Math.round(avg).toLocaleString("pt-PT")
-            : avg >= 10
-              ? avg.toFixed(1)
-              : avg.toFixed(2);
-
-    return {
-        servlitcysAvgLine: {
-            type: "line",
-            scaleID,
-            value: avg,
-            borderColor: lineCol,
-            borderWidth: 2,
-            borderDash: [6, 4],
-            label: {
-                display: true,
-                content: `Média: ${rounded}`,
-                position: horizontal ? "50%" : "end",
-                backgroundColor: labelBg,
-                color: labelText,
-                font: { size: 10, weight: "600" },
-                padding: 4,
-                borderRadius: 4,
-            },
-        },
-    };
 }
 
 /**
@@ -134,9 +62,9 @@ function shallowMergeZoom(base, user) {
 }
 
 /**
- * Junta plugins padrão (zoom + média) com o que vier do servidor.
+ * Junta zoom e anotações opcionais do servidor (sem média automática).
  */
-export function mergeAnnotationAndZoomPlugins(mergedPlugins, payload, extra) {
+export function mergeAnnotationAndZoomPlugins(mergedPlugins, payload, _extra) {
     const type = payload?.type;
     const cartesian =
         type === "bar" || type === "line" || type === "scatter";
@@ -146,13 +74,11 @@ export function mergeAnnotationAndZoomPlugins(mergedPlugins, payload, extra) {
     }
 
     const userAnn = mergedPlugins.annotation;
-    const autoAvg = buildAverageLineAnnotations(payload, extra);
     const mergedAnnotations = {
         ...(userAnn?.annotations &&
         typeof userAnn.annotations === "object"
             ? userAnn.annotations
             : {}),
-        ...autoAvg,
     };
 
     mergedPlugins.annotation = {
@@ -180,4 +106,69 @@ export function cartesianInteractionDefaults() {
             intersect: false,
         },
     };
+}
+
+/** Velocidade alinhada à roda do plugin (chartjs-plugin-zoom, wheel.speed ≈ 0.1). */
+const ZOOM_BUTTON_STEP = 0.12;
+
+/**
+ * Ponto focal ao centro da área do gráfico (zoom programático).
+ *
+ * @param {import("chart.js").Chart} chart
+ * @returns {{ x: number, y: number }}
+ */
+export function chartZoomFocalPoint(chart) {
+    const ca = chart?.chartArea;
+    if (ca && ca.width > 0 && ca.height > 0) {
+        return {
+            x: ca.left + ca.width / 2,
+            y: ca.top + ca.height / 2,
+        };
+    }
+    const w = chart?.width ?? 0;
+    const h = chart?.height ?? 0;
+
+    return { x: w / 2 || 200, y: h / 2 || 150 };
+}
+
+/**
+ * @param {import("chart.js").Chart} chart
+ */
+export function chartZoomInButton(chart) {
+    if (typeof chart?.zoom !== "function") {
+        return;
+    }
+    const speed = ZOOM_BUTTON_STEP;
+    const factor = 1 + speed;
+    chart.zoom({
+        x: factor,
+        y: factor,
+        focalPoint: chartZoomFocalPoint(chart),
+    });
+}
+
+/**
+ * @param {import("chart.js").Chart} chart
+ */
+export function chartZoomOutButton(chart) {
+    if (typeof chart?.zoom !== "function") {
+        return;
+    }
+    const speed = ZOOM_BUTTON_STEP;
+    const factor = 2 - 1 / (1 - speed);
+    chart.zoom({
+        x: factor,
+        y: factor,
+        focalPoint: chartZoomFocalPoint(chart),
+    });
+}
+
+/**
+ * @param {import("chart.js").Chart} chart
+ */
+export function chartResetZoomView(chart) {
+    if (typeof chart?.resetZoom !== "function") {
+        return;
+    }
+    chart.resetZoom();
 }

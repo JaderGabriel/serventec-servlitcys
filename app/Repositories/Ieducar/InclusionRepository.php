@@ -9,6 +9,7 @@ use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\IeducarSqlPlaceholders;
+use App\Support\Ieducar\InclusionDashboardQueries;
 use App\Support\Ieducar\InclusionSpecialEducationGauges;
 use App\Support\Ieducar\MatriculaAtivoFilter;
 use App\Support\Ieducar\MatriculaChartQueries;
@@ -33,6 +34,8 @@ class InclusionRepository
     /**
      * @return array{
      *   charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}>,
+     *   nee_charts_count: int,
+     *   aee_cross: ?array<string, mixed>,
      *   gauges: list<array{chart: array<string, mixed>, caption: string}>,
      *   notes: list<string>,
      *   error: ?string,
@@ -46,6 +49,8 @@ class InclusionRepository
         if ($city === null) {
             return [
                 'charts' => [],
+                'nee_charts_count' => 0,
+                'aee_cross' => null,
                 'gauges' => [],
                 'notes' => [],
                 'error' => null,
@@ -56,14 +61,29 @@ class InclusionRepository
         }
 
         $charts = [];
+        $neeCharts = [];
+        $aeeCross = null;
         $gauges = [];
         $notes = [];
         $totalMatriculas = null;
         $equidadeFonte = null;
 
         try {
-            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte) {
+            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte) {
                 $totalMatriculas = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
+
+                try {
+                    $neeCharts = InclusionDashboardQueries::buildCharts($db, $city, $filters);
+                } catch (\Throwable $e) {
+                    $notes[] = __('Gráficos NEE (deficiências, síndromes e cadastro): erro — :msg', ['msg' => $e->getMessage()]);
+                    $neeCharts = [];
+                }
+
+                try {
+                    $aeeCross = InclusionDashboardQueries::buildAeeCrossEnrollment($db, $city, $filters);
+                } catch (\Throwable) {
+                    $aeeCross = null;
+                }
 
                 try {
                     foreach (InclusionSpecialEducationGauges::build($db, $city, $filters) as $row) {
@@ -142,10 +162,14 @@ class InclusionRepository
                         $charts[] = $extra;
                     }
                 }
+
+                $charts = array_merge($neeCharts, $charts);
             });
         } catch (\Throwable $e) {
             return [
                 'charts' => [],
+                'nee_charts_count' => 0,
+                'aee_cross' => null,
                 'gauges' => [],
                 'notes' => [],
                 'error' => $e->getMessage(),
@@ -159,6 +183,8 @@ class InclusionRepository
 
         return [
             'charts' => $charts,
+            'nee_charts_count' => count($neeCharts),
+            'aee_cross' => $aeeCross,
             'gauges' => $gauges,
             'notes' => $notes,
             'error' => null,
@@ -185,6 +211,7 @@ class InclusionRepository
             __('Todos os indicadores respeitam os filtros atuais (ano letivo, escola, segmento, turno) através da turma, com matrícula considerada ativa conforme config/ieducar.php.'),
             __('Distorção idade/série: em PostgreSQL com física e série, mostra-se a contagem por unidade escolar (referência 1 de março); caso contrário usa-se o gráfico de barras por série com quantidades de alunos com distorção (critério INEP +2 anos).'),
             __('Educação especial: com SQL personalizado (IEDUCAR_SQL_INCLUSION_GAUGE_*), as percentagens seguem a regra definida pelo município; sem SQL, usa-se o pivô aluno_deficiência (procurado em vários schemas) e o nome no cadastro de deficiências — pode divergir de outros relatórios.'),
+            __('Cruzamento AEE: turmas «AEE» são identificadas por palavras-chave no nome da turma e do curso (config/ieducar.php, inclusão). Os segmentos das outras matrículas do mesmo aluno são heurísticos; ajuste IEDUCAR_INCLUSION_* se os rótulos não coincidirem com a rede.'),
             $eq,
         ];
     }

@@ -9,6 +9,9 @@ use App\Models\City;
  */
 final class ChartExportMeta
 {
+    /** Fuso usado no rodapé PNG/PDF dos gráficos (Brasil — GMT-3). */
+    private const EXPORT_TIMEZONE = 'America/Sao_Paulo';
+
     /**
      * @param  array{
      *   years?: array<string|int, mixed>,
@@ -21,12 +24,15 @@ final class ChartExportMeta
      *   cityLine: string,
      *   filterLines: list<string>,
      *   footerLine: string,
-     *   generatedAt: string
+     *   generatedAt: string (data/hora em America/Sao_Paulo, sufixo GMT-3)
      * }
      */
     public static function forAnalytics(?City $city, IeducarFilterState $filters, array $ieducarOptions): array
     {
-        $generatedAt = now()->timezone(config('app.timezone'))->format('d/m/Y H:i');
+        $generatedAt = now()
+            ->timezone(self::EXPORT_TIMEZONE)
+            ->format('d/m/Y H:i')
+            .' GMT-3';
 
         if ($city === null) {
             return [

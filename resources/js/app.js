@@ -5,6 +5,9 @@ import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import {
     cartesianInteractionDefaults,
+    chartResetZoomView,
+    chartZoomInButton,
+    chartZoomOutButton,
     mergeAnnotationAndZoomPlugins,
     registerChartVisualPlugins,
 } from "./chartVisualDefaults.js";
@@ -202,33 +205,53 @@ document.addEventListener("alpine:init", () => {
             _origLegendGen: null,
             _legendTruncate: 48,
             _tickTruncate: 36,
-            menuOpen: false,
             legendModalOpen: false,
-            expanded: false,
-            legendVisible: true,
             /** Rosca/pizza: legenda visual = plugin radialCallouts (não o legend do Chart.js). */
             _legendUsesRadialCallouts: false,
-            /** Mostrar dica de zoom/pan (barras/linhas). */
-            chartInteractive: false,
             /** Classes do contentor / canvas (actualizadas por syncLayoutClasses; Alpine 3.4 não rastreia bem métodos em :class). */
             panelBodyClass: "",
             canvasExtraClass: "",
+            /** Gráficos cartesianos: controlos de zoom + pinça/arrastar. */
+            zoomUi: false,
+            /** Mostrar filtro por categoria (1 série) ou por série (>1 série). */
+            filterUi: false,
+            filterModalOpen: false,
             init() {
                 if (!payload?.labels?.length || !payload?.datasets?.length) {
                     return;
                 }
+                const extraEarly =
+                    payload.options && typeof payload.options === "object"
+                        ? payload.options
+                        : {};
+                const isGaugeEarly =
+                    payload.type === "doughnut" &&
+                    Number(extraEarly.circumference) === 180 &&
+                    Number(extraEarly.rotation) === -90;
+                const isRadialEarly = [
+                    "doughnut",
+                    "pie",
+                    "polarArea",
+                ].includes(payload.type);
+                const labelCount = payload.labels.length;
+                const dsCount = payload.datasets.length;
+                this.zoomUi =
+                    !isRadialEarly &&
+                    !isGaugeEarly &&
+                    ["bar", "line", "scatter"].includes(payload.type);
+                this.filterUi =
+                    [
+                        "bar",
+                        "line",
+                        "scatter",
+                        "doughnut",
+                        "pie",
+                        "polarArea",
+                    ].includes(payload.type) &&
+                    !isGaugeEarly &&
+                    ((dsCount === 1 && labelCount > 1) || dsCount > 1);
                 this._compact = compact !== false;
                 this.syncLayoutClasses();
-                this.$watch("expanded", () => {
-                    this.syncLayoutClasses();
-                    this.$nextTick(() => {
-                        requestAnimationFrame(() => {
-                            requestAnimationFrame(() => {
-                                this._pulseChartSize?.();
-                            });
-                        });
-                    });
-                });
                 this._payload = payload;
                 this._exportFilename = exportFilename;
                 this._panelId =
@@ -524,8 +547,6 @@ document.addEventListener("alpine:init", () => {
                             },
                         });
 
-                        this.chartInteractive = cartesianInteractive;
-
                         this._legendUsesRadialCallouts =
                             !!useRadialCallouts &&
                             this.chart.options.plugins?.radialCallouts
@@ -696,31 +717,18 @@ document.addEventListener("alpine:init", () => {
             },
             syncLayoutClasses() {
                 const c = this._compact;
-                const e = this.expanded;
                 let body =
                     "p-2 sm:p-4 relative w-full overflow-x-auto overflow-y-hidden transition-all duration-200 ease-out ";
-                if (e) {
-                    body += c
-                        ? "min-h-[min(30rem,80vh)] min-h-[30rem] sm:min-h-[36rem] h-[min(42rem,90vh)]"
-                        : "min-h-[min(36rem,92vh)] h-[min(44rem,92vh)]";
-                } else {
-                    body += c
-                        ? "min-h-[220px] h-[min(22rem,calc(100vw-2.5rem))] sm:h-72 md:min-h-[18rem]"
-                        : "min-h-[min(28rem,70vh)] h-[min(28rem,70vh)]";
-                }
+                body += c
+                    ? "min-h-[220px] h-[min(22rem,calc(100vw-2.5rem))] sm:h-72 md:min-h-[18rem]"
+                    : "min-h-[min(28rem,70vh)] h-[min(28rem,70vh)]";
                 this.panelBodyClass = body;
 
                 let cv =
                     "block w-full max-w-full chart-panel-canvas transition-all duration-200 ";
-                if (!e && c) {
-                    cv +=
-                        "max-h-[min(20rem,55vw)] sm:max-h-64";
-                } else if (e && c) {
-                    cv +=
-                        "min-h-[18rem] max-h-[min(36rem,78vh)] sm:min-h-[22rem] sm:max-h-[min(40rem,82vh)]";
-                } else {
-                    cv += "min-h-[16rem] h-full max-h-none";
-                }
+                cv += c
+                    ? "max-h-[min(20rem,55vw)] sm:max-h-64"
+                    : "min-h-[16rem] h-full max-h-none";
                 this.canvasExtraClass = cv;
             },
             legendRows() {
@@ -749,47 +757,51 @@ document.addEventListener("alpine:init", () => {
                     };
                 });
             },
-            toggleExpanded() {
-                this.expanded = !this.expanded;
-                this.applyDensityOptions();
-                this.$nextTick(() => {
-                    requestAnimationFrame(() => {
-                        this._pulseChartSize?.();
-                        setTimeout(() => this._pulseChartSize?.(), 80);
-                        setTimeout(() => this._pulseChartSize?.(), 240);
-                        setTimeout(() => this._pulseChartSize?.(), 500);
-                    });
-                });
+            filterRows() {
+                const c = this.chart;
+                if (!c) {
+                    return [];
+                }
+                const dsCount = c.data.datasets.length;
+                const labels = c.data.labels || [];
+                if (dsCount === 1) {
+                    return labels.map((label, i) => ({
+                        key: `c-${i}`,
+                        label: String(label ?? ""),
+                        visible: c.getDataVisibility(i),
+                        kind: "category",
+                        index: i,
+                    }));
+                }
+
+                return c.data.datasets.map((ds, di) => ({
+                    key: `d-${di}`,
+                    label: String(ds.label ?? `Série ${di + 1}`),
+                    visible: c.isDatasetVisible(di),
+                    kind: "dataset",
+                    index: di,
+                }));
             },
-            toggleLegend() {
-                if (!this.chart) {
+            toggleFilterRow(row) {
+                const c = this.chart;
+                if (!c || !row) {
                     return;
                 }
-                this.legendVisible = !this.legendVisible;
-                const plugins = this.chart.options.plugins;
-                if (!plugins.legend) {
-                    plugins.legend = {};
+                if (row.kind === "category") {
+                    c.toggleDataVisibility(row.index);
+                } else if (row.kind === "dataset") {
+                    c.setDatasetVisibility(row.index, !c.isDatasetVisible(row.index));
                 }
-                if (!plugins.radialCallouts) {
-                    plugins.radialCallouts = {};
-                }
-                if (this._legendUsesRadialCallouts) {
-                    plugins.radialCallouts.display = this.legendVisible;
-                    plugins.legend.display = false;
-                } else {
-                    plugins.legend.display = !!this.legendVisible;
-                }
-                this.applyDensityOptions();
-                try {
-                    this.chart.update();
-                } catch (e) {
-                    console.warn("toggleLegend update", e);
-                    try {
-                        this.chart.draw();
-                    } catch (e2) {
-                        console.warn("toggleLegend draw", e2);
-                    }
-                }
+                c.update();
+            },
+            zoomIn() {
+                chartZoomInButton(this.chart);
+            },
+            zoomOut() {
+                chartZoomOutButton(this.chart);
+            },
+            resetZoomView() {
+                chartResetZoomView(this.chart);
             },
             applyDensityOptions() {
                 if (!this.chart) {
@@ -798,24 +810,22 @@ document.addEventListener("alpine:init", () => {
                 const labels = this.chart.data.labels || [];
                 const n = labels.length;
                 const longLine = labels.some(
-                    (l) =>
-                        String(l ?? "").length > (this.expanded ? 42 : 28),
+                    (l) => String(l ?? "").length > 28,
                 );
-                const e = this.expanded;
 
-                this._legendTruncate = e ? 72 : n > 10 || longLine ? 38 : 52;
-                this._tickTruncate = e ? 56 : n > 14 ? 20 : n > 8 ? 28 : 38;
+                this._legendTruncate = n > 10 || longLine ? 38 : 52;
+                this._tickTruncate = n > 14 ? 20 : n > 8 ? 28 : 38;
 
                 const leg = this.chart.options.plugins.legend;
                 if (leg) {
-                    if (!e && n > 6 && this.legendVisible) {
+                    if (n > 6) {
                         leg.maxHeight = 140;
                     } else {
                         delete leg.maxHeight;
                     }
                     if (leg.labels) {
-                        leg.labels.boxWidth = e ? 14 : n > 12 ? 10 : 12;
-                        leg.labels.padding = e ? 12 : n > 12 ? 8 : 14;
+                        leg.labels.boxWidth = n > 12 ? 10 : 12;
+                        leg.labels.padding = n > 12 ? 8 : 14;
                     }
                 }
 
@@ -831,7 +841,7 @@ document.addEventListener("alpine:init", () => {
                         ticks.autoSkip = true;
                         ticks.autoSkipPadding = n > 16 ? 4 : 2;
                         if (n > 24) {
-                            ticks.maxTicksLimit = e ? 28 : 18;
+                            ticks.maxTicksLimit = 18;
                         } else {
                             delete ticks.maxTicksLimit;
                         }

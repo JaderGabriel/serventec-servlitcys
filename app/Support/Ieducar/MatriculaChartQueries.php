@@ -2051,6 +2051,103 @@ final class MatriculaChartQueries
     }
 
     /**
+     * Taxas de abandono (INEP 11) e evasão escolar combinada (11 + 16 remanejamento), mesmo denominador da aba Desempenho.
+     *
+     * @return ?array{
+     *   total: int,
+     *   abandono_q: int,
+     *   remanejamento_q: int,
+     *   evasao_q: int,
+     *   abandono_pct: ?float,
+     *   evasao_pct: ?float
+     * }
+     */
+    public static function taxasAbandonoEvasaoFluxoEscolar(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+    ): ?array {
+        $spec = MatriculaSituacaoResolver::resolveChaveAgrupamento($db, $city);
+        if ($spec === null) {
+            return null;
+        }
+
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $q = $db->table($mat.' as m');
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            $spec['applyJoins']($q);
+            MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
+            $q->selectRaw($spec['chaveExpr'].' as chave, COUNT(*) as c')
+                ->groupByRaw($spec['groupByExpr']);
+
+            $rows = $q->get();
+        } catch (QueryException) {
+            return null;
+        }
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $k = self::normalizeSituacaoInepKey($row->chave);
+            $counts[$k] = ($counts[$k] ?? 0) + (int) ($row->c ?? 0);
+        }
+
+        $total = array_sum($counts);
+        if ($total <= 0) {
+            return [
+                'total' => 0,
+                'abandono_q' => 0,
+                'remanejamento_q' => 0,
+                'evasao_q' => 0,
+                'abandono_pct' => null,
+                'evasao_pct' => null,
+            ];
+        }
+
+        $aband = $counts['11'] ?? 0;
+        $rem = $counts['16'] ?? 0;
+        $ev = $aband + $rem;
+
+        return [
+            'total' => $total,
+            'abandono_q' => $aband,
+            'remanejamento_q' => $rem,
+            'evasao_q' => $ev,
+            'abandono_pct' => round(100.0 * $aband / $total, 1),
+            'evasao_pct' => round(100.0 * $ev / $total, 1),
+        ];
+    }
+
+    private static function normalizeSituacaoInepKey(mixed $v): string
+    {
+        if ($v === null || $v === '') {
+            return '';
+        }
+        if (is_bool($v)) {
+            return $v ? '1' : '0';
+        }
+        if (is_float($v)) {
+            return (string) (int) round($v);
+        }
+        if (is_int($v)) {
+            return (string) $v;
+        }
+        $s = trim((string) $v);
+        if ($s === 't' || strcasecmp($s, 'true') === 0) {
+            return '1';
+        }
+        if ($s === 'f' || strcasecmp($s, 'false') === 0) {
+            return '0';
+        }
+        if (is_numeric($s)) {
+            return (string) (int) $s;
+        }
+
+        return $s;
+    }
+
+    /**
      * Data de corte escolar 31/03 do ano letivo da turma (expressão SQL).
      */
     private static function refDateCorteEscolarSql(Connection $db, string $turmaAlias, string $yearCol): string

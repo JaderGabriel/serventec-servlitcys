@@ -15,12 +15,13 @@ class EnrollmentRepository
     ) {}
 
     /**
-     * Gráficos e KPIs de matrículas (hierarquia Educacenso: nível → série → curso; escolas, turno, vagas).
+     * Gráficos e KPIs de matrículas (distorção por escola/rede, séries/cursos, escolas, turno, vagas).
      *
      * @return array{
      *   rows: list<object>,
      *   kpis: ?array{matriculas: int, turmas_distintas: int, ocupacao_pct: ?float},
      *   distorcao: ?array{com: int, sem: int, total: int, pct: ?float, fonte: string},
+     *   fluxo_taxas: ?array{total: int, abandono_q: int, remanejamento_q: int, evasao_q: int, abandono_pct: ?float, evasao_pct: ?float},
      *   unidades_escolares: ?list<array{nome: string, total: int}>,
      *   error: ?string,
      *   chart: ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>},
@@ -34,6 +35,7 @@ class EnrollmentRepository
                 'rows' => [],
                 'kpis' => null,
                 'distorcao' => null,
+                'fluxo_taxas' => null,
                 'unidades_escolares' => null,
                 'error' => null,
                 'chart' => null,
@@ -46,6 +48,8 @@ class EnrollmentRepository
                 try {
                     $kpis = MatriculaChartQueries::enrollmentResumoKpis($db, $city, $filters);
                     $unidadesEscolares = MatriculaChartQueries::matriculasPorUnidadesEscolaresCard($db, $city, $filters, 24);
+
+                    $fluxoTaxas = MatriculaChartQueries::taxasAbandonoEvasaoFluxoEscolar($db, $city, $filters);
 
                     $distCont = MatriculaChartQueries::distorcaoIdadeSerieContagens($db, $city, $filters);
                     $distorcao = null;
@@ -62,6 +66,11 @@ class EnrollmentRepository
                     }
 
                     $charts = [];
+                    $distPorEscola = MatriculaChartQueries::distorcaoIdadeSeriePorEscolaFisica($db, $city, $filters);
+                    if ($distPorEscola !== null) {
+                        $charts[] = $distPorEscola;
+                    }
+
                     $dist = MatriculaChartQueries::distorcaoIdadeSerieRedeChart($db, $city, $filters);
                     if ($dist !== null) {
                         $charts[] = $dist;
@@ -75,7 +84,6 @@ class EnrollmentRepository
                     }
 
                     foreach ([
-                        fn () => MatriculaChartQueries::matriculasPorNivelEnsinoEducacenso($db, $city, $filters),
                         fn () => MatriculaChartQueries::matriculasPorSerieEducacensoCompleto($db, $city, $filters),
                         fn () => MatriculaChartQueries::matriculasPorCursoEducacensoCompleto($db, $city, $filters),
                         fn () => MatriculaChartQueries::matriculasPorTurno($db, $city, $filters),
@@ -94,6 +102,7 @@ class EnrollmentRepository
                         'rows' => [],
                         'kpis' => $kpis,
                         'distorcao' => $distorcao,
+                        'fluxo_taxas' => $fluxoTaxas,
                         'unidades_escolares' => $unidadesEscolares,
                         'error' => null,
                         'chart' => $charts[0] ?? null,
@@ -104,6 +113,7 @@ class EnrollmentRepository
                         'rows' => [],
                         'kpis' => null,
                         'distorcao' => null,
+                        'fluxo_taxas' => null,
                         'unidades_escolares' => null,
                         'error' => __('Não foi possível listar matrículas. Ajuste config/ieducar.php (tabela e colunas).').' '.$e->getMessage(),
                         'chart' => null,
@@ -112,7 +122,7 @@ class EnrollmentRepository
                 }
             });
         } catch (\Throwable $e) {
-            return ['rows' => [], 'kpis' => null, 'distorcao' => null, 'unidades_escolares' => null, 'error' => $e->getMessage(), 'chart' => null, 'charts' => []];
+            return ['rows' => [], 'kpis' => null, 'distorcao' => null, 'fluxo_taxas' => null, 'unidades_escolares' => null, 'error' => $e->getMessage(), 'chart' => null, 'charts' => []];
         }
     }
 }
