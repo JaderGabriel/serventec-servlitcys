@@ -21,9 +21,10 @@ final class InclusionDashboardQueries
      * prioriza `cadastro.fisica_deficiencia` (pessoa ↔ deficiência via ref_idpes); senão `aluno_deficiencia`.
      * Respeita MatriculaAtivoFilter e filtros de turma (ano, escola, curso, turno).
      *
+     * @param  ?int  $limit  Limite de linhas por catálogo (null = sem limite — para detalhe completo no painel).
      * @return Collection<int, object{deficiencia: string, total: int}>
      */
-    public static function getMatriculasPorDeficiencia(Connection $db, City $city, IeducarFilterState $filters): Collection
+    public static function getMatriculasPorDeficiencia(Connection $db, City $city, IeducarFilterState $filters, ?int $limit = 22): Collection
     {
         $defTable = self::resolveDeficienciaCatalogTable($db, $city);
         $fisica = self::resolveFisicaDeficienciaJoinSpec($db, $city);
@@ -32,7 +33,7 @@ final class InclusionDashboardQueries
 
         if ($fisica !== null && $defTable !== null && $aIdpes !== null) {
             try {
-                $rows = self::queryMatriculasPorDeficienciaFisicaPath($db, $city, $filters, $fisica, $defTable);
+                $rows = self::queryMatriculasPorDeficienciaFisicaPath($db, $city, $filters, $fisica, $defTable, $limit);
                 if ($rows !== []) {
                     return collect($rows)->map(fn ($r) => (object) [
                         'deficiencia' => (string) ($r->deficiencia ?? ''),
@@ -44,12 +45,113 @@ final class InclusionDashboardQueries
             }
         }
 
-        $rows = self::queryMatriculasPorDeficienciaAlunoDefPath($db, $city, $filters);
+        $rows = self::queryMatriculasPorDeficienciaAlunoDefPath($db, $city, $filters, $limit);
 
         return collect($rows)->map(fn ($r) => (object) [
             'deficiencia' => (string) ($r->deficiencia ?? ''),
             'total' => (int) ($r->total ?? 0),
         ]);
+    }
+
+    /**
+     * Contagem por designação no catálogo, separada em deficiências, síndromes/TEA e NE (altas habilidades),
+     * sem agregar em «Outros» — para o card de detalhe na aba Inclusão.
+     *
+     * @return ?array{
+     *   deficiencias: list<array{nome: string, total: int}>,
+     *   sindromes_tea: list<array{nome: string, total: int}>,
+     *   ne_altas_habilidades: list<array{nome: string, total: int}>,
+     *   totais_por_secao: array{deficiencias: int, sindromes_tea: int, ne_altas_habilidades: int},
+     *   footnote: string
+     * }
+     */
+    public static function buildNeeDetalheCatalogoPorCategoria(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        try {
+            $col = self::getMatriculasPorDeficiencia($db, $city, $filters, null);
+            if ($col->isEmpty()) {
+                return null;
+            }
+
+            $def = [];
+            $sin = [];
+            $ne = [];
+            foreach ($col as $row) {
+                $nm = trim((string) ($row->deficiencia ?? ''));
+                if ($nm === '') {
+                    $nm = __('Não informado');
+                }
+                $t = (int) ($row->total ?? 0);
+                if ($t <= 0) {
+                    continue;
+                }
+                $item = ['nome' => $nm, 'total' => $t];
+                $cat = self::classificarDesignacaoNee($nm);
+                if ($cat === 'ne') {
+                    $ne[] = $item;
+                } elseif ($cat === 'sindrome') {
+                    $sin[] = $item;
+                } else {
+                    $def[] = $item;
+                }
+            }
+
+            $sort = static fn (array $a, array $b): int => $b['total'] <=> $a['total'];
+            usort($def, $sort);
+            usort($sin, $sort);
+            usort($ne, $sort);
+
+            $sum = static fn (array $rows): int => (int) array_sum(array_column($rows, 'total'));
+
+            $alunoT = IeducarSchema::resolveTable('aluno', $city);
+            $usesFisica = self::resolveFisicaDeficienciaJoinSpec($db, $city) !== null
+                && self::resolveDeficienciaCatalogTable($db, $city) !== null
+                && self::resolveAlunoIdpesColumn($db, $alunoT, $city) !== null;
+
+            $footnote = $usesFisica
+                ? __(
+                    'Contagens DISTINCT de matrículas ativas por designação em cadastro.deficiencia (vínculo fisica_deficiencia). Categorização por palavras-chave no nome, alinhada ao gráfico «Matrículas por grupo». Uma matrícula pode aparecer em mais do que uma linha se o aluno tiver vários vínculos.'
+                )
+                : __(
+                    'Contagens por designação em aluno_deficiencia + cadastro.deficiencia. Categorização por palavras-chave no nome (síndromes/TEA, altas habilidades, demais deficiências), como no gráfico de grupos.'
+                );
+
+            return [
+                'deficiencias' => $def,
+                'sindromes_tea' => $sin,
+                'ne_altas_habilidades' => $ne,
+                'totais_por_secao' => [
+                    'deficiencias' => $sum($def),
+                    'sindromes_tea' => $sum($sin),
+                    'ne_altas_habilidades' => $sum($ne),
+                ],
+                'footnote' => $footnote,
+            ];
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Alinha-se ao gráfico de três grupos: NE (altas habilidades) e síndromes/TEA por palavras-chave; o restante conta como deficiência.
+     */
+    private static function classificarDesignacaoNee(string $nome): string
+    {
+        $h = mb_strtolower($nome);
+        foreach (self::altasHabilidadesKeywords() as $w) {
+            $w = trim((string) $w);
+            if ($w !== '' && str_contains($h, mb_strtolower($w))) {
+                return 'ne';
+            }
+        }
+        foreach (self::sindromeKeywords() as $w) {
+            $w = trim((string) $w);
+            if ($w !== '' && str_contains($h, mb_strtolower($w))) {
+                return 'sindrome';
+            }
+        }
+
+        return 'deficiencia';
     }
 
     /**
@@ -651,6 +753,7 @@ final class InclusionDashboardQueries
         IeducarFilterState $filters,
         array $fisica,
         string $defTable,
+        ?int $limit = 22,
     ): array {
         $mat = IeducarSchema::resolveTable('matricula', $city);
         $aluno = IeducarSchema::resolveTable('aluno', $city);
@@ -689,8 +792,10 @@ final class InclusionDashboardQueries
         $q->selectRaw('MAX(COALESCE(d.'.$wNm.', \'Não informado\')) as deficiencia')
             ->selectRaw('COUNT(DISTINCT m.'.$g->wrap($mId).') as total')
             ->groupBy('d.'.$wPk)
-            ->orderByDesc('total')
-            ->limit(22);
+            ->orderByDesc('total');
+        if ($limit !== null) {
+            $q->limit($limit);
+        }
 
         return $q->get()->all();
     }
@@ -704,6 +809,7 @@ final class InclusionDashboardQueries
         Connection $db,
         City $city,
         IeducarFilterState $filters,
+        ?int $limit = 22,
     ): array {
         $adTable = self::resolveAlunoDeficienciaTable($db, $city);
         $defTable = self::resolveDeficienciaCatalogTable($db, $city);
@@ -749,8 +855,10 @@ final class InclusionDashboardQueries
         $q->selectRaw('MAX(d.'.$g->wrap($nmCol).') as deficiencia')
             ->selectRaw('COUNT(DISTINCT m.'.$g->wrap($mId).') as total')
             ->groupBy('d.'.$g->wrap($defPk))
-            ->orderByDesc('total')
-            ->limit(22);
+            ->orderByDesc('total');
+        if ($limit !== null) {
+            $q->limit($limit);
+        }
 
         return $q->get()->all();
     }

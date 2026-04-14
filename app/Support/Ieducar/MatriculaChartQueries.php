@@ -1049,14 +1049,12 @@ final class MatriculaChartQueries
 
             $counts = self::matriculaCountByTurma($db, $city, $filters);
             $agg = [];
+            $capAgg = [];
             foreach ($turmaRows as $row) {
                 $tid = (string) ($row->tid ?? '');
                 $cap = (int) ($row->cap ?? 0);
                 $en = $counts[$tid] ?? 0;
                 $vac = max(0, $cap - $en);
-                if ($vac === 0) {
-                    continue;
-                }
                 $key = $por === 'escola'
                     ? (string) ($row->eid ?? '')
                     : (string) ($row->cid ?? '');
@@ -1064,6 +1062,7 @@ final class MatriculaChartQueries
                     continue;
                 }
                 $agg[$key] = ($agg[$key] ?? 0) + $vac;
+                $capAgg[$key] = ($capAgg[$key] ?? 0) + max(0, $cap);
             }
 
             if ($agg === []) {
@@ -1072,9 +1071,26 @@ final class MatriculaChartQueries
 
             $items = [];
             foreach ($agg as $id => $v) {
-                $items[] = ['id' => $id, 'v' => $v];
+                $items[] = [
+                    'id' => $id,
+                    'v' => $v,
+                    'cap' => (int) ($capAgg[$id] ?? 0),
+                ];
             }
-            usort($items, fn ($a, $b) => $b['v'] <=> $a['v']);
+            $anyPositive = false;
+            foreach ($items as $it) {
+                if (($it['v'] ?? 0) > 0) {
+                    $anyPositive = true;
+                    break;
+                }
+            }
+            if ($anyPositive) {
+                $items = array_values(array_filter($items, static fn (array $x): bool => ($x['v'] ?? 0) > 0));
+                usort($items, fn ($a, $b) => $b['v'] <=> $a['v']);
+            } else {
+                usort($items, fn ($a, $b) => $b['cap'] <=> $a['cap']);
+                $items = array_slice($items, 0, 40);
+            }
 
             $escolaT = IeducarSchema::resolveTable('escola', $city);
             $cursoT = IeducarSchema::resolveTable('curso', $city);
@@ -1092,7 +1108,7 @@ final class MatriculaChartQueries
                     $name = $db->table($cursoT)->where($cId, $it['id'])->value($cName);
                 }
                 $labels[] = $name !== null && (string) $name !== '' ? (string) $name : ('#'.$it['id']);
-                $values[] = $it['v'];
+                $values[] = (float) $it['v'];
             }
 
             $title = $por === 'escola'
@@ -1106,9 +1122,13 @@ final class MatriculaChartQueries
                 $values
             );
             if ($por === 'escola') {
-                $payload['subtitle'] = __(
-                    'Por turma: capacidade declarada (máx. de alunos) menos matrículas ativas, respeitando os filtros; valores somados por escola (vagas ociosas). Só entram turmas com saldo > 0.'
-                );
+                $payload['subtitle'] = $anyPositive
+                    ? __(
+                        'Por turma: capacidade declarada (máx. de alunos) menos matrículas ativas, respeitando os filtros; valores somados por escola. Só aparecem escolas com vagas ociosas > 0.'
+                    )
+                    : __(
+                        'Não há vagas ociosas no filtro (turmas cheias ou capacidade não declarada). O gráfico mostra as escolas com maior capacidade declarada nas turmas, com valor 0 de vagas — confira capacidade e matrículas na base.'
+                    );
             }
 
             return $payload;

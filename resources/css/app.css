@@ -16,7 +16,8 @@
 
     /* Isola layout/stacking de cada cartão de gráfico (IDs no HTML discriminam instâncias). */
     .chart-panel-host {
-        contain: layout paint;
+        /* layout: isola reflow; evitar contain:paint para não recortar diálogos fixed filhos */
+        contain: layout;
         isolation: isolate;
     }
 }

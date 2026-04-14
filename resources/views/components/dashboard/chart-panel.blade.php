@@ -131,101 +131,104 @@
             </div>
         @endif
 
-        {{-- Modal: lista completa de rótulos / valores --}}
-        <div
-            x-show="legendModalOpen"
-            x-transition.opacity.duration.150ms
-            @keydown.escape.window="legendModalOpen = false"
-            class="fixed inset-0 z-[100] flex items-center justify-center p-4"
-            style="display: none;"
-            x-cloak
-        >
-            <div class="absolute inset-0 bg-black/40 dark:bg-black/60" @click="legendModalOpen = false"></div>
+        {{-- Modais no body para não serem recortados por overflow dos antepassados --}}
+        <template x-teleport="body">
             <div
-                class="relative z-10 max-h-[min(32rem,85vh)] w-full max-w-lg overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-800"
-                role="dialog"
-                aria-modal="true"
-                :aria-labelledby="'{{ $chartPanelDomId }}-legend-title'"
+                x-show="legendModalOpen"
+                x-transition.opacity.duration.150ms
+                @keydown.escape.window="legendModalOpen = false"
+                class="fixed inset-0 z-[240] flex items-center justify-center p-3 sm:p-4"
+                style="display: none;"
+                x-cloak
             >
-                <div class="flex items-start justify-between gap-2 border-b border-gray-100 px-4 py-3 dark:border-gray-700">
-                    <h3 id="{{ $chartPanelDomId }}-legend-title" class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        {{ __('Rótulos do gráfico') }}
-                    </h3>
-                    <button
-                        type="button"
-                        class="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-                        @click="legendModalOpen = false"
-                        title="{{ __('Fechar') }}"
-                    >
-                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
+                <div class="absolute inset-0 bg-black/40 dark:bg-black/60" @click="legendModalOpen = false"></div>
+                <div
+                    class="relative z-10 flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-800"
+                    role="dialog"
+                    aria-modal="true"
+                    :aria-labelledby="'{{ $chartPanelDomId }}-legend-title'"
+                >
+                    <div class="flex shrink-0 items-start justify-between gap-2 border-b border-gray-100 px-4 py-3 dark:border-gray-700">
+                        <h3 id="{{ $chartPanelDomId }}-legend-title" class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            {{ __('Rótulos do gráfico') }}
+                        </h3>
+                        <button
+                            type="button"
+                            class="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                            @click="legendModalOpen = false"
+                            title="{{ __('Fechar') }}"
+                        >
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <ul class="min-h-0 flex-1 overflow-y-auto px-4 py-2 text-sm text-gray-800 dark:text-gray-200">
+                        <template x-for="(row, idx) in legendRows()" :key="idx">
+                            <li class="border-b border-gray-100 py-2 last:border-0 dark:border-gray-700">
+                                <span class="block break-words font-medium" x-text="row.label"></span>
+                                <span class="tabular-nums text-xs text-gray-600 dark:text-gray-400" x-show="row.value !== null && row.value !== undefined" x-text="row.valueText"></span>
+                            </li>
+                        </template>
+                    </ul>
                 </div>
-                <ul class="max-h-[min(24rem,70vh)] overflow-y-auto px-4 py-2 text-sm text-gray-800 dark:text-gray-200">
-                    <template x-for="(row, idx) in legendRows()" :key="idx">
-                        <li class="border-b border-gray-100 py-2 last:border-0 dark:border-gray-700">
-                            <span class="block break-words font-medium" x-text="row.label"></span>
-                            <span class="tabular-nums text-xs text-gray-600 dark:text-gray-400" x-show="row.value !== null && row.value !== undefined" x-text="row.valueText"></span>
-                        </li>
-                    </template>
-                </ul>
             </div>
-        </div>
+        </template>
 
-        {{-- Modal: filtrar categorias ou séries --}}
-        <div
-            x-show="filterModalOpen"
-            x-transition.opacity.duration.150ms
-            @keydown.escape.window="filterModalOpen = false"
-            class="fixed inset-0 z-[100] flex items-center justify-center p-4"
-            style="display: none;"
-            x-cloak
-        >
-            <div class="absolute inset-0 bg-black/40 dark:bg-black/60" @click="filterModalOpen = false"></div>
+        <template x-teleport="body">
             <div
-                class="relative z-10 max-h-[min(36rem,88vh)] w-full max-w-lg overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-800 flex flex-col"
-                role="dialog"
-                aria-modal="true"
-                :aria-labelledby="'{{ $chartPanelDomId }}-filter-title'"
+                x-show="filterModalOpen"
+                x-transition.opacity.duration.150ms
+                @keydown.escape.window="filterModalOpen = false"
+                class="fixed inset-0 z-[240] flex items-center justify-center p-3 sm:p-4"
+                style="display: none;"
+                x-cloak
             >
-                <div class="flex items-start justify-between gap-2 border-b border-gray-100 px-4 py-3 dark:border-gray-700 shrink-0">
-                    <h3 id="{{ $chartPanelDomId }}-filter-title" class="text-sm font-semibold text-gray-900 dark:text-gray-100 pr-2">
-                        {{ __('Filtrar dados no gráfico') }}
-                    </h3>
-                    <button
-                        type="button"
-                        class="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-gray-200 shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                        @click="filterModalOpen = false"
-                        title="{{ __('Fechar') }}"
-                    >
-                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                </div>
-                <p class="px-4 pt-2 pb-1 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed shrink-0">
-                    {{ __('Marque ou desmarque para incluir ou excluir categorias ou séries: o gráfico é atualizado com os dados filtrados (não é só esconder a cor). A legenda do gráfico faz o mesmo quando está visível.') }}
-                </p>
-                <ul class="flex-1 overflow-y-auto px-4 py-2 text-sm text-gray-800 dark:text-gray-200 min-h-0">
-                    <template x-for="row in filterRows()" :key="row.key + '-' + _filterNonce">
-                        <li class="flex items-start gap-3 border-b border-gray-100 py-2.5 last:border-0 dark:border-gray-700">
-                            <input
-                                type="checkbox"
-                                class="mt-0.5 h-5 w-5 shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800"
-                                :checked="row.visible"
-                                @change="toggleFilterRow(row)"
-                            />
-                            <span class="min-w-0 flex-1 break-words leading-snug" x-text="row.label"></span>
-                        </li>
-                    </template>
-                </ul>
-                <div class="border-t border-gray-100 dark:border-gray-700 px-4 py-3 shrink-0">
-                    <button
-                        type="button"
-                        class="w-full min-h-[44px] rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        @click="filterModalOpen = false"
-                    >
-                        {{ __('Concluir') }}
-                    </button>
+                <div class="absolute inset-0 bg-black/40 dark:bg-black/60" @click="filterModalOpen = false"></div>
+                <div
+                    class="relative z-10 flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-800"
+                    role="dialog"
+                    aria-modal="true"
+                    :aria-labelledby="'{{ $chartPanelDomId }}-filter-title'"
+                >
+                    <div class="flex shrink-0 items-start justify-between gap-2 border-b border-gray-100 px-4 py-3 dark:border-gray-700">
+                        <h3 id="{{ $chartPanelDomId }}-filter-title" class="pr-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            {{ __('Filtrar dados no gráfico') }}
+                        </h3>
+                        <button
+                            type="button"
+                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                            @click="filterModalOpen = false"
+                            title="{{ __('Fechar') }}"
+                        >
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <p class="shrink-0 px-4 pb-1 pt-2 text-[11px] leading-relaxed text-gray-500 dark:text-gray-400">
+                        {{ __('Marque ou desmarque para incluir ou excluir categorias ou séries: o gráfico é atualizado com os dados filtrados (não é só esconder a cor). A legenda do gráfico faz o mesmo quando está visível.') }}
+                    </p>
+                    <ul class="min-h-0 flex-1 overflow-y-auto px-4 py-2 text-sm text-gray-800 dark:text-gray-200">
+                        <template x-for="row in filterRows()" :key="row.key + '-' + _filterNonce">
+                            <li class="flex items-start gap-3 border-b border-gray-100 py-2.5 last:border-0 dark:border-gray-700">
+                                <input
+                                    type="checkbox"
+                                    class="mt-0.5 h-5 w-5 shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800"
+                                    :checked="row.visible"
+                                    @change="toggleFilterRow(row)"
+                                />
+                                <span class="min-w-0 flex-1 break-words leading-snug" x-text="row.label"></span>
+                            </li>
+                        </template>
+                    </ul>
+                    <div class="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-700">
+                        <button
+                            type="button"
+                            class="min-h-[44px] w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            @click="filterModalOpen = false"
+                        >
+                            {{ __('Concluir') }}
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </template>
     </div>
 @endif

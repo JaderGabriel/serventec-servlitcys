@@ -518,10 +518,12 @@ class SchoolUnitsRepository
             $q = $db->table($escolaT.' as e');
             if ($eActive !== null) {
                 $q->where(function ($w) use ($eActive) {
-                    $w->where('e.'.$eActive, 1)
-                        ->orWhere('e.'.$eActive, '1')
-                        ->orWhere('e.'.$eActive, 't')
-                        ->orWhere('e.'.$eActive, true);
+                    $col = 'e.'.$eActive;
+                    $w->where($col, 1)
+                        ->orWhere($col, '1')
+                        ->orWhere($col, 't')
+                        ->orWhere($col, true)
+                        ->orWhereNull($col);
                 });
             }
 

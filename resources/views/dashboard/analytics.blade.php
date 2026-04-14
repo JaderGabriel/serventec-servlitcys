@@ -61,7 +61,7 @@
                     @endif
 
                     <div
-                        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden"
+                        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-x-hidden overflow-y-visible"
                     >
                         <div class="border-b border-gray-200 dark:border-gray-700 px-4 pt-4 bg-gray-50 dark:bg-gray-900/40">
                             <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">{{ __('Áreas de análise (estilo Power BI / iEducar)') }}</p>
