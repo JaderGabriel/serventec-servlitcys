@@ -56,7 +56,18 @@ class SyncSchoolUnitGeos extends Command
                     }
 
                     $eId = (string) config('ieducar.columns.escola.id');
-                    $eName = (string) config('ieducar.columns.escola.name');
+                    $eName = IeducarColumnInspector::firstExistingColumn($db, $escolaT, array_filter([
+                        (string) config('ieducar.columns.escola.name'),
+                        'nm_escola',
+                        'nome_escola',
+                        'fantasia',
+                        'nome',
+                    ]), $city);
+                    if ($eName === null) {
+                        $this->warn(' - coluna de nome da escola não encontrada na tabela escola.');
+
+                        return;
+                    }
 
                     $latCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
                         'latitude', 'lat', 'geo_lat', 'latitude_graus',
