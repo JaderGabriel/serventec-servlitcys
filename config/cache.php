@@ -119,12 +119,13 @@ return [
     | Serializable Classes
     |--------------------------------------------------------------------------
     |
-    | This value determines the classes that can be unserialized from cache
-    | storage. By default, no PHP classes will be unserialized from your
-    | cache to prevent gadget chain attacks if your APP_KEY is leaked.
+    | `false` força `allowed_classes => false` no unserialize e quebra o Laravel
+    | Pulse (cartões Livewire guardam `Illuminate\Support\Collection` em cache).
+    | Use `null` (equivalente ao omitir a chave) para o comportamento clássico do
+    | Laravel, ou um array explícito de classes permitidas.
     |
     */
 
-    'serializable_classes' => false,
+    'serializable_classes' => null,
 
 ];

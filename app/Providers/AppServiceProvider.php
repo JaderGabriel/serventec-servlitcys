@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Listeners\LogSuccessfulUserLogin;
 use App\Livewire\Pulse\InstitutionTrafficCard;
+use App\Livewire\Pulse\RedisOverviewCard;
 use App\Models\City;
 use App\Models\User;
 use App\Policies\CityPolicy;
@@ -35,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, UserPolicy::class);
 
         Livewire::component('pulse.institution-traffic-card', InstitutionTrafficCard::class);
+        Livewire::component('pulse.redis-overview-card', RedisOverviewCard::class);
 
         Event::listen(Login::class, LogSuccessfulUserLogin::class);
 

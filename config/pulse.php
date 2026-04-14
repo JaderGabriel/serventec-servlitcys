@@ -162,10 +162,25 @@ return [
             'ignore' => [
                 ...Pulse::defaultVendorCacheKeys(),
             ],
-            'groups' => [
-                '/^job-exceptions:.*/' => 'job-exceptions:*',
-                // '/:\d+/' => ':*',
-            ],
+            'groups' => array_merge(
+                [
+                    '/^job-exceptions:.*/' => 'job-exceptions:*',
+                    '/^inep_geo_v2_/' => 'INEP geocodificação (cache)',
+                ],
+                (static function (): array {
+                    $g = [];
+                    $cp = (string) config('cache.prefix', '');
+                    if ($cp !== '') {
+                        $g['/^'.preg_quote($cp, '/').'/'] = 'Laravel cache (prefixo)';
+                    }
+                    $rp = (string) config('database.redis.options.prefix', '');
+                    if ($rp !== '') {
+                        $g['/^'.preg_quote($rp, '/').'/'] = 'Prefixo Redis (DB)';
+                    }
+
+                    return $g;
+                })(),
+            ),
         ],
 
         Recorders\Exceptions::class => [
@@ -234,6 +249,8 @@ return [
             'ignore' => [
                 '#^/'.env('PULSE_PATH', 'pulse').'$#', // Pulse dashboard...
                 '#^/telescope#', // Telescope dashboard...
+                '#^/livewire#', // pedidos Livewire (polling / updates)
+                '#^/up$#', // health
             ],
         ],
 
@@ -251,6 +268,8 @@ return [
             'ignore' => [
                 '#^/'.env('PULSE_PATH', 'pulse').'$#', // Pulse dashboard...
                 '#^/telescope#', // Telescope dashboard...
+                '#^/livewire#',
+                '#^/up$#',
             ],
         ],
     ],

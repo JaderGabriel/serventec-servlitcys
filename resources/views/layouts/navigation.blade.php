@@ -52,13 +52,13 @@
                                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Usuários') }}</p>
                             </div>
                             <x-dropdown-link :href="route('users.index')">
-                                {{ __('Lista e gestão') }}
+                                {{ __('Gerenciar') }}
                             </x-dropdown-link>
                             <x-dropdown-link :href="route('users.create')">
-                                {{ __('Novo utilizador') }}
+                                {{ __('Novo') }}
                             </x-dropdown-link>
                             <x-dropdown-link :href="route('users.sessions.index')">
-                                {{ __('Sessões ativas') }}
+                                {{ __('Sessões') }}
                             </x-dropdown-link>
                             <div class="border-t border-gray-200 dark:border-gray-600"></div>
                             <x-dropdown-link :href="route('pulse')">
