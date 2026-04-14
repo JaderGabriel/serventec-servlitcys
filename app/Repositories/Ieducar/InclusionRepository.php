@@ -62,6 +62,7 @@ class InclusionRepository
                 'equidade_fonte' => null,
                 'methodology' => [],
                 'nee_grupo_resumo' => null,
+                'chart_raca_por_escola_stacked' => null,
             ];
         }
 
@@ -74,9 +75,10 @@ class InclusionRepository
         $totalMatriculas = null;
         $equidadeFonte = null;
         $neeGrupoResumo = null;
+        $chartRacaPorEscolaStacked = null;
 
         try {
-            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo) {
+            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo, &$chartRacaPorEscolaStacked) {
                 $totalMatriculas = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
 
                 try {
@@ -121,7 +123,7 @@ class InclusionRepository
 
                 $sex = MatriculaChartQueries::matriculasPorSexo($db, $city, $filters);
                 if ($sex !== null) {
-                    $sex['options'] = array_merge($sex['options'] ?? [], ['panelHeight' => 'sm']);
+                    $sex['options'] = array_merge($sex['options'] ?? [], ['panelHeight' => 'lg']);
                     $sex['compact_panel'] = true;
                     $tailCharts[] = $sex;
                 } else {
@@ -134,7 +136,7 @@ class InclusionRepository
                 if (is_string($customRaca) && trim($customRaca) !== '') {
                     $racaChart = $this->chartFromRawSql($db, $city, trim($customRaca), __('Matrículas por cor ou raça (SQL personalizado)'));
                     if ($racaChart !== null) {
-                        $racaChart['options'] = array_merge($racaChart['options'] ?? [], ['panelHeight' => 'sm']);
+                        $racaChart['options'] = array_merge($racaChart['options'] ?? [], ['panelHeight' => 'lg']);
                         $racaChart['compact_panel'] = true;
                         $tailCharts[] = $racaChart;
                     } else {
@@ -143,7 +145,7 @@ class InclusionRepository
                 } else {
                     $racaChart = $this->raceDistributionChart($db, $city, $filters);
                     if ($racaChart !== null) {
-                        $racaChart['options'] = array_merge($racaChart['options'] ?? [], ['panelHeight' => 'sm']);
+                        $racaChart['options'] = array_merge($racaChart['options'] ?? [], ['panelHeight' => 'lg']);
                         $racaChart['compact_panel'] = true;
                         $tailCharts[] = $racaChart;
                     } else {
@@ -180,6 +182,12 @@ class InclusionRepository
                     }
                 }
 
+                try {
+                    $chartRacaPorEscolaStacked = $this->escolaRacaPorEscolaStackedChart($db, $city, $filters);
+                } catch (\Throwable) {
+                    $chartRacaPorEscolaStacked = null;
+                }
+
                 $escolaRacaNee = $this->escolaRacaENeeMultiLineChart($db, $city, $filters);
                 $charts = array_merge(
                     $neeCharts,
@@ -211,6 +219,7 @@ class InclusionRepository
                 'equidade_fonte' => null,
                 'methodology' => [],
                 'nee_grupo_resumo' => null,
+                'chart_raca_por_escola_stacked' => null,
             ];
         }
 
@@ -228,6 +237,7 @@ class InclusionRepository
             'equidade_fonte' => $equidadeFonte,
             'methodology' => $methodology,
             'nee_grupo_resumo' => $neeGrupoResumo,
+            'chart_raca_por_escola_stacked' => $chartRacaPorEscolaStacked,
         ];
     }
 
@@ -719,11 +729,18 @@ class InclusionRepository
     }
 
     /**
-     * Linhas por escola: séries de matrículas por cor/raça (top categorias + «Outros») e matrículas NEE (aluno_deficiência).
+     * Agregação matrículas × escola × cor/raça (mesma base do gráfico de linhas NEE×raça).
      *
-     * @return ?array<string, mixed>
+     * @return ?array{
+     *   labels: list<string>,
+     *   race_series: list<array{label: string, data: list<float>},
+     *   rows: \Illuminate\Support\Collection,
+     *   nSchoolsBefore: int,
+     *   outrosLabel: string,
+     *   eids_order: list<string>
+     * }
      */
-    private function escolaRacaENeeMultiLineChart(Connection $db, City $city, IeducarFilterState $filters): ?array
+    private function buildMatriculaPorEscolaRacaAggregation(Connection $db, City $city, IeducarFilterState $filters): ?array
     {
         try {
             $mat = IeducarSchema::resolveTable('matricula', $city);
@@ -990,32 +1007,93 @@ class InclusionRepository
                 $series[] = ['label' => $outrosLabel, 'data' => $outrosData];
             }
 
-            $neeByE = $this->neeMatriculasPorEscola($db, $city, $filters);
-            $neeData = [];
-            foreach (array_keys($cell) as $eid) {
-                $neeData[] = (float) ($neeByE[$eid] ?? 0);
-            }
-            $series[] = [
-                'label' => __('Matrículas NEE (aluno_deficiência)'),
-                'data' => $neeData,
+            return [
+                'labels' => $labels,
+                'race_series' => $series,
+                'rows' => $rows,
+                'nSchoolsBefore' => $nSchoolsBefore,
+                'outrosLabel' => $outrosLabel,
+                'eids_order' => array_keys($cell),
             ];
-
-            $chart = ChartPayload::lineMulti(
-                __('Matrículas por cor/raça e NEE — por escola (filtro actual)'),
-                $labels,
-                $series
-            );
-            $chart['panel_layout'] = 'full';
-            $footnote = __('Cada ponto no eixo horizontal é uma unidade escolar (turma→escola). As linhas de raça/cor usam as categorias mais frequentes na rede; as restantes entram em «:outros». NEE: contagem de matrículas de alunos com registo em aluno_deficiência.', ['outros' => $outrosLabel]);
-            if ($nSchoolsBefore > $maxSchools) {
-                $footnote .= ' '.__('Mostram-se as :n escolas com maior volume de matrículas no filtro.', ['n' => $maxSchools]);
-            }
-            $chart['footnote'] = $footnote;
-
-            return $chart;
         } catch (QueryException|\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Linhas por escola: séries de matrículas por cor/raça (top categorias + «Outros») e matrículas NEE (aluno_deficiência).
+     *
+     * @return ?array<string, mixed>
+     */
+    private function escolaRacaENeeMultiLineChart(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        $agg = $this->buildMatriculaPorEscolaRacaAggregation($db, $city, $filters);
+        if ($agg === null) {
+            return null;
+        }
+
+        $labels = $agg['labels'];
+        $series = $agg['race_series'];
+        $nSchoolsBefore = $agg['nSchoolsBefore'];
+        $outrosLabel = $agg['outrosLabel'];
+        $maxSchools = 60;
+
+        $neeByE = $this->neeMatriculasPorEscola($db, $city, $filters);
+        $neeData = [];
+        foreach ($agg['eids_order'] as $eid) {
+            $neeData[] = (float) ($neeByE[$eid] ?? 0);
+        }
+        $series[] = [
+            'label' => __('Matrículas NEE (aluno_deficiência)'),
+            'data' => $neeData,
+        ];
+
+        $chart = ChartPayload::lineMulti(
+            __('Matrículas por cor/raça e NEE — por escola (filtro actual)'),
+            $labels,
+            $series
+        );
+        $chart['panel_layout'] = 'full';
+        $footnote = __('Cada ponto no eixo horizontal é uma unidade escolar (turma→escola). As linhas de raça/cor usam as categorias mais frequentes na rede; as restantes entram em «:outros». NEE: contagem de matrículas de alunos com registo em aluno_deficiência.', ['outros' => $outrosLabel]);
+        if ($nSchoolsBefore > $maxSchools) {
+            $footnote .= ' '.__('Mostram-se as :n escolas com maior volume de matrículas no filtro.', ['n' => $maxSchools]);
+        }
+        $chart['footnote'] = $footnote;
+
+        return $chart;
+    }
+
+    /**
+     * Barras horizontais empilhadas: por escola, segmentos coloridos por cor/raça (cadastro).
+     *
+     * @return ?array<string, mixed>
+     */
+    private function escolaRacaPorEscolaStackedChart(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        $agg = $this->buildMatriculaPorEscolaRacaAggregation($db, $city, $filters);
+        if ($agg === null) {
+            return null;
+        }
+
+        $nSchoolsBefore = $agg['nSchoolsBefore'];
+        $outrosLabel = $agg['outrosLabel'];
+        $maxSchools = 60;
+
+        $chart = ChartPayload::barHorizontalStacked(
+            __('Matrículas por cor ou raça — por escola (segmentos empilhados)'),
+            __('Matrículas'),
+            $agg['labels'],
+            $agg['race_series']
+        );
+        $chart['panel_layout'] = 'full';
+        $chart['options'] = array_merge($chart['options'] ?? [], ['panelHeight' => 'xxl']);
+        $footnote = __('Cada barra horizontal é uma unidade escolar; os segmentos coloridos são as categorias de raça/cor (as mais frequentes na rede; as restantes em «:outros»). Mesmos filtros e critérios de ligação aluno↔raça que o gráfico de distribuição global por raça.', ['outros' => $outrosLabel]);
+        if ($nSchoolsBefore > $maxSchools) {
+            $footnote .= ' '.__('Mostram-se as :n escolas com maior volume de matrículas no filtro.', ['n' => $maxSchools]);
+        }
+        $chart['footnote'] = $footnote;
+
+        return $chart;
     }
 
     /**

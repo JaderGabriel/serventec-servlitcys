@@ -23,7 +23,7 @@ class GeoSyncController extends Controller
     public function run(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'step' => 'required|string|in:ieducar,csv,official,pipeline,probe',
+            'step' => 'required|string|in:ieducar,microdados,official,pipeline,probe',
             'city_id' => 'nullable|integer|exists:cities,id',
             'threshold' => 'nullable|numeric|min:0|max:50000',
         ]);
@@ -42,7 +42,8 @@ class GeoSyncController extends Controller
         $ieducarOnlyMissing = $request->boolean('ieducar_only_missing');
         $officialOnlyMissing = $request->boolean('official_only_missing');
         $pipelineSkipIeducar = $request->boolean('pipeline_skip_ieducar');
-        $pipelineWithCsv = $request->boolean('pipeline_with_csv');
+        $pipelineSkipMicrodadosIfMissing = $request->boolean('pipeline_skip_microdados_if_missing');
+        $pipelineMicrodadosMapCoords = $request->boolean('pipeline_microdados_map_coords');
         $dryRun = $request->boolean('dry_run');
 
         if ($validated['step'] === 'probe' && $cityId === null) {
@@ -65,12 +66,18 @@ class GeoSyncController extends Controller
                     $exitCode = Artisan::call('app:sync-school-unit-geos', $args);
                     break;
 
-                case 'csv':
-                    $title = __('Import CSV de fallback INEP');
-                    $exitCode = Artisan::call('app:import-inep-geo-fallback-csv', [
-                        '--also-map-coords' => '0',
+                case 'microdados':
+                    $title = __('Import MICRODADOS INEP (cadastro de escolas)');
+                    $args = [
+                        '--also-map-coords' => $request->boolean('microdados_also_map_coords') ? '1' : '0',
                         '--skip-if-missing' => '1',
-                    ]);
+                        '--only-missing' => '1',
+                        '--threshold' => (string) $threshold,
+                    ];
+                    if ($cityId !== null) {
+                        $args['--city'] = (string) $cityId;
+                    }
+                    $exitCode = Artisan::call('app:import-inep-microdados-cadastro-escolas-geo', $args);
                     break;
 
                 case 'official':
@@ -94,8 +101,8 @@ class GeoSyncController extends Controller
                         '--official-only-missing' => $officialOnlyMissing ? '1' : '0',
                         '--threshold' => (string) $threshold,
                         '--dry-run' => $dryRun ? '1' : '0',
-                        '--with-csv-import' => $pipelineWithCsv ? '1' : '0',
-                        '--skip-csv-on-missing-file' => '1',
+                        '--skip-microdados-if-missing' => $pipelineSkipMicrodadosIfMissing ? '1' : '0',
+                        '--microdados-also-map-coords' => $pipelineMicrodadosMapCoords ? '1' : '0',
                     ];
                     if ($cityId !== null) {
                         $args['--city'] = (string) $cityId;

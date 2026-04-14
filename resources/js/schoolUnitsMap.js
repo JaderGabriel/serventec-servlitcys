@@ -265,22 +265,25 @@ function buildSchoolModalPayload(mk, qeduBaseFallback) {
     const status = String(s?.status_label || "");
     const inep = s?.inep != null && s?.inep !== "" ? String(s.inep) : "";
 
-    const qeduLink = Array.isArray(mk?.inep_links)
-        ? mk.inep_links.find((ln) => ln && ln.id === "qedu")
+    const portalLink = Array.isArray(mk?.inep_links)
+        ? mk.inep_links.find(
+              (ln) => ln && (ln.id === "inep_portal" || ln.id === "qedu"),
+          )
         : null;
-    const baseCfg = String(
-        mk?.qedu_escola_base_url ||
+    const templateCfg = String(
+        mk?.inep_portal_escola_base_url ||
             qeduBaseFallback ||
-            "https://www.qedu.org.br/escola",
-    ).replace(/\/$/, "");
-    let pageUrl = qeduLink?.url ? safeExternalHref(qeduLink.url) : "";
-    if (
-        (!pageUrl || pageUrl === "#") &&
-        inep &&
-        baseCfg &&
-        baseCfg.startsWith("http")
-    ) {
-        pageUrl = safeExternalHref(`${baseCfg}/${inep}`);
+            "https://www.portalideb.org.br/resultado/escola/{inep}",
+    ).trim();
+    let pageUrl = portalLink?.url ? safeExternalHref(portalLink.url) : "";
+    if ((!pageUrl || pageUrl === "#") && inep && templateCfg.startsWith("http")) {
+        if (templateCfg.includes("{inep}")) {
+            pageUrl = safeExternalHref(
+                templateCfg.replace("{inep}", String(inep).trim()),
+            );
+        } else {
+            pageUrl = safeExternalHref(templateCfg);
+        }
     }
 
     return {
@@ -310,8 +313,7 @@ function buildSchoolModalPayload(mk, qeduBaseFallback) {
             endereco_inep: String(s?.endereco_inep || ""),
         },
         oferta: Array.isArray(s?.oferta_curso_serie) ? s.oferta_curso_serie : [],
-        qedu: {
-            base_url: baseCfg,
+        inepPortal: {
             page_url: pageUrl,
         },
         conciliation: mk?.conciliation ?? null,

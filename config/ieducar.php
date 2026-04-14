@@ -1,6 +1,7 @@
 <?php
 
 use App\Support\InepGeoFallbackCsvPath;
+use App\Support\InepMicrodadosCadastroEscolasPath;
 
 return [
 
@@ -384,6 +385,12 @@ return [
         FILTER_VALIDATE_BOOL
     ),
 
+    /** Telefone da escola via relatorio.get_telefone_escola(cod_escola) quando ainda vazio (Portabilis). */
+    'pgsql_use_relatorio_get_telefone_escola' => filter_var(
+        env('IEDUCAR_PGSQL_USE_RELATORIO_GET_TELEFONE_ESCOLA', true),
+        FILTER_VALIDATE_BOOL
+    ),
+
     /*
     |--------------------------------------------------------------------------
     | PostgreSQL: turnos via SQL explícito (evita falhas com schema.tabela no builder)
@@ -443,11 +450,20 @@ return [
         'batch_size' => max(5, min(100, (int) env('IEDUCAR_INEP_GEO_BATCH_SIZE', 40))),
         /** Quando true, consulta o ArcGIS por INEP para preencher o catálogo no popup (mesmo com coordenadas só na base). */
         'enrich_markers_with_inep_catalog' => filter_var(env('IEDUCAR_INEP_ENRICH_MAP_MARKERS', true), FILTER_VALIDATE_BOOL),
-        /** Base para link QEdu (ficha da escola, IDEB/SAEB divulgados). Sem barra final. */
+        /** @deprecated Legado; o modal usa inep_portal_escola_url_template (Portal IDEB / INEP). */
         'qedu_escola_base_url' => rtrim((string) env(
             'IEDUCAR_QEDU_ESCOLA_BASE_URL',
             'https://www.qedu.org.br/escola'
         ), '/'),
+        /**
+         * URL público INEP para consulta por escola (painel pedagógico / IDEB por escola).
+         * Use o placeholder {inep} para o código INEP (ex.: …/resultado/escola/{inep}).
+         * Se não contiver {inep}, o mesmo URL é usado para todas (página geral do INEP).
+         */
+        'inep_portal_escola_url_template' => (string) env(
+            'IEDUCAR_INEP_PORTAL_ESCOLA_URL_TEMPLATE',
+            'https://www.portalideb.org.br/resultado/escola/{inep}'
+        ),
         /**
          * Fallback offline: CSV com coordenadas apenas para INEPs já presentes em school_unit_geos
          * das cidades forAnalytics (exportado via app:export-inep-geo-fallback-csv).
@@ -460,6 +476,16 @@ return [
          */
         'fallback_csv_enabled' => filter_var(env('IEDUCAR_INEP_GEO_FALLBACK_CSV_ENABLED', true), FILTER_VALIDATE_BOOL),
         'fallback_csv_path' => env('IEDUCAR_INEP_GEO_FALLBACK_CSV', 'inep_geo_fallback.csv'),
+        /**
+         * Microdados INEP `MICRODADOS_CADASTRO_ESCOLAS_*.csv` (último ano: use glob no nome).
+         * Relativo ao disco public (`storage/app/public`), ex.: `inep/MICRODADOS_CADASTRO_ESCOLAS_*.csv`.
+         *
+         * @see InepMicrodadosCadastroEscolasPath
+         */
+        'microdados_cadastro_escolas_path' => env(
+            'IEDUCAR_INEP_MICRODADOS_CADASTRO_ESCOLAS',
+            'inep/MICRODADOS_CADASTRO_ESCOLAS_*.csv'
+        ),
         /** Distância mínima (Haversine) para marcar divergência entre i-Educar e coordenada oficial (INEP). */
         'divergence_threshold_meters' => max(1.0, (float) env('IEDUCAR_GEO_DIVERGENCE_THRESHOLD_M', 100)),
         /**

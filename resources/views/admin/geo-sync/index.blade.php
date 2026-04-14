@@ -24,7 +24,7 @@
                             <p class="text-[11px] font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">{{ __('Administração') }}</p>
                             <h1 class="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{{ __('Sincronização geográfica') }}</h1>
                             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed">
-                                {{ __('Ciclo completo: ler o cadastro i-Educar, gravar em school_unit_geos, opcionalmente CSV, puxar coordenadas oficiais INEP (ArcGIS e fallbacks), validar com o probe e consumir no mapa das Unidades Escolares — tudo a partir desta página.') }}
+                                {{ __('Ciclo completo: ler o cadastro i-Educar, gravar em school_unit_geos, puxar coordenadas oficiais INEP (ArcGIS e fallbacks), aplicar o fallback MICRODADOS_CADASTRO_ESCOLAS do INEP para INEPs ainda sem coordenadas, validar com o probe e consumir no mapa das Unidades Escolares — tudo a partir desta página.') }}
                             </p>
                         </div>
                         @if ($cityCount > 0)
@@ -51,7 +51,7 @@
                     <div class="min-w-0 flex-1">
                         <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ __('Ciclo completo de busca de dados') }}</p>
                         <p class="mt-1 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                            {{ __('Primeira vez: execute os passos 1 → 2 (opcional) → 3, ou use o passo 4 (pipeline) para correr a sequência. O passo 5 testa a cadeia INEP sem gravar. A saída de cada comando aparece abaixo. Passe o rato sobre o título de cada cartão para mais detalhe.') }}
+                            {{ __('Primeira vez: execute os passos 1 → 2 → 3, ou use o passo 4 (pipeline) para correr a sequência. O passo 5 testa a cadeia INEP sem gravar. A saída de cada comando aparece abaixo. Passe o rato sobre o título de cada cartão para mais detalhe.') }}
                         </p>
                     </div>
                 </div>
@@ -68,19 +68,19 @@
                             <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('Sync → tabela `school_unit_geos`') }}</span>
                         </div>
                         <span class="hidden sm:inline self-center text-slate-400 dark:text-slate-500" aria-hidden="true">→</span>
-                        <div class="shrink-0 rounded-lg border border-slate-200/90 bg-white dark:bg-slate-900/50 px-3 py-2.5 max-w-[11rem] text-left">
-                            <span class="font-bold text-slate-800 dark:text-slate-200">{{ __('Passo 2') }} <span class="text-amber-700 dark:text-amber-300 font-normal">({{ __('opc.') }})</span></span>
-                            <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('CSV de fallback nas linhas existentes') }}</span>
+                        <div class="shrink-0 rounded-lg border border-emerald-200/90 bg-emerald-50/80 dark:border-emerald-900/50 dark:bg-emerald-950/25 px-3 py-2.5 max-w-[11rem] text-left">
+                            <span class="font-bold text-emerald-900 dark:text-emerald-200">{{ __('Passo 2') }}</span>
+                            <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('Coordenadas oficiais INEP (ArcGIS + fallbacks)') }}</span>
                         </div>
                         <span class="hidden sm:inline self-center text-slate-400 dark:text-slate-500" aria-hidden="true">→</span>
-                        <div class="shrink-0 rounded-lg border border-emerald-200/90 bg-emerald-50/80 dark:border-emerald-900/50 dark:bg-emerald-950/25 px-3 py-2.5 max-w-[11rem] text-left">
-                            <span class="font-bold text-emerald-900 dark:text-emerald-200">{{ __('Passo 3') }}</span>
-                            <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('Coordenadas oficiais INEP (ArcGIS + fallbacks)') }}</span>
+                        <div class="shrink-0 rounded-lg border border-slate-200/90 bg-white dark:bg-slate-900/50 px-3 py-2.5 max-w-[11rem] text-left">
+                            <span class="font-bold text-slate-800 dark:text-slate-200">{{ __('Passo 3') }}</span>
+                            <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('MICRODADOS INEP (cadastro de escolas)') }}</span>
                         </div>
                         <span class="hidden sm:inline self-center text-slate-400 dark:text-slate-500" aria-hidden="true">→</span>
                         <div class="shrink-0 rounded-lg border border-fuchsia-200/90 bg-fuchsia-50/70 dark:border-fuchsia-900/50 dark:bg-fuchsia-950/20 px-3 py-2.5 max-w-[11rem] text-left">
                             <span class="font-bold text-fuchsia-900 dark:text-fuchsia-200">{{ __('Passo 4') }}</span>
-                            <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('Pipeline: orquestra 1 + 2 + 3') }}</span>
+                            <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('Pipeline: orquestra 1 + 2 + 3 (último = microdados)') }}</span>
                         </div>
                         <span class="hidden sm:inline self-center text-slate-400 dark:text-slate-500" aria-hidden="true">→</span>
                         <div class="shrink-0 rounded-lg border border-amber-200/90 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/25 px-3 py-2.5 max-w-[11rem] text-left">
@@ -177,7 +177,7 @@
                     <div class="flex flex-wrap items-end justify-between gap-2 mb-4">
                         <div>
                             <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Escrita na base: passos 1 a 3') }}</p>
-                            <p class="mt-0.5 text-sm text-gray-600 dark:text-gray-300">{{ __('Cache local (`school_unit_geos`), CSV opcional e coordenadas oficiais INEP com divergência.') }}</p>
+                            <p class="mt-0.5 text-sm text-gray-600 dark:text-gray-300">{{ __('Cache local (`school_unit_geos`), coordenadas oficiais INEP com divergência e fallback MICRODADOS do INEP (último passo).') }}</p>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -221,34 +221,8 @@
                     </form>
                 </div>
 
-                {{-- 2 CSV --}}
-                <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 shadow-sm ring-1 ring-black/5 dark:ring-white/5 p-5 space-y-4 transition duration-200 hover:shadow-md">
-                    <div class="flex items-start gap-3">
-                        <div class="mt-0.5 rounded-lg bg-slate-900 dark:bg-slate-700 text-white p-2 shadow-sm">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 7.5h16.5M3.75 12h16.5M3.75 16.5h16.5" />
-                            </svg>
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-900 dark:bg-slate-800 dark:text-slate-100">{{ __('Passo 2') }}</span>
-                                <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 ring-1 ring-amber-200/80 dark:bg-amber-950/40 dark:text-amber-100 dark:ring-amber-800/50">{{ __('Opcional') }}</span>
-                            </div>
-                            <h3 class="mt-2 text-base font-semibold text-gray-900 dark:text-gray-100 cursor-help border-b border-dashed border-gray-300 dark:border-gray-600 pb-1 inline-block" title="{{ __('Atualiza linhas já existentes em school_unit_geos a partir de um CSV configurado (IEDUCAR_INEP_GEO_FALLBACK_CSV). Não cria escolas novas; útil quando o ArcGIS está indisponível ou para dados offline.') }}">
-                                {{ __('Import CSV de fallback') }}
-                            </h3>
-                            <p class="mt-2 text-[11px] font-mono text-gray-600 dark:text-gray-400 leading-relaxed">{{ __('Comando: app:import-inep-geo-fallback-csv — se o ficheiro não existir, o passo termina com aviso.') }}</p>
-                        </div>
-                    </div>
-                    <form method="post" action="{{ route('admin.geo-sync.run') }}" class="space-y-3">
-                        @csrf
-                        <input type="hidden" name="step" value="csv">
-                        <x-primary-button type="submit">{{ __('Executar import CSV') }}</x-primary-button>
-                    </form>
-                </div>
-
-                {{-- 3 Oficial INEP --}}
-                <div class="rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-gradient-to-b from-emerald-50/70 to-white dark:from-emerald-950/35 dark:to-gray-900 shadow-sm ring-1 ring-black/5 dark:ring-white/5 p-5 space-y-4 lg:col-span-2 transition duration-200 hover:shadow-md">
+                {{-- 2 Oficial INEP --}}
+                <div class="rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-gradient-to-b from-emerald-50/70 to-white dark:from-emerald-950/35 dark:to-gray-900 shadow-sm ring-1 ring-black/5 dark:ring-white/5 p-5 space-y-4 transition duration-200 hover:shadow-md">
                     <div class="flex items-start gap-3">
                         <div class="mt-0.5 rounded-lg bg-emerald-600 text-white p-2 shadow-sm">
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
@@ -258,7 +232,7 @@
                         </div>
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
-                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-950 dark:bg-emerald-950/60 dark:text-emerald-100">{{ __('Passo 3') }}</span>
+                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-950 dark:bg-emerald-950/60 dark:text-emerald-100">{{ __('Passo 2') }}</span>
                                 <span class="inline-flex items-center rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-900/90 ring-1 ring-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-800/60">{{ __('INEP oficial') }}</span>
                             </div>
                             <h3 class="mt-2 text-base font-semibold text-emerald-950 dark:text-emerald-100 cursor-help border-b border-dashed border-emerald-300/80 dark:border-emerald-800/60 pb-1 inline-block" title="{{ __('Consulta coordenadas oficiais por código INEP (ArcGIS / fallbacks) e grava official_lat/lng. A divergência (metros e alerta) só é calculada quando existem coordenadas i-Educar na mesma linha; caso contrário, limpa o indicador de divergência.') }}">
@@ -298,6 +272,53 @@
                         </div>
                     </form>
                 </div>
+
+                {{-- 3 Microdados INEP --}}
+                <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 shadow-sm ring-1 ring-black/5 dark:ring-white/5 p-5 space-y-4 lg:col-span-2 transition duration-200 hover:shadow-md">
+                    <div class="flex items-start gap-3">
+                        <div class="mt-0.5 rounded-lg bg-slate-900 dark:bg-slate-700 text-white p-2 shadow-sm">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 7.5h16.5M3.75 12h16.5M3.75 16.5h16.5" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-900 dark:bg-slate-800 dark:text-slate-100">{{ __('Passo 3') }}</span>
+                                <span class="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-800 ring-1 ring-slate-200/80 dark:bg-slate-900/40 dark:text-slate-200 dark:ring-slate-600">{{ __('INEP — cadastro') }}</span>
+                            </div>
+                            <h3 class="mt-2 text-base font-semibold text-gray-900 dark:text-gray-100 cursor-help border-b border-dashed border-gray-300 dark:border-gray-600 pb-1 inline-block" title="{{ __('Coloque o CSV MICRODADOS_CADASTRO_ESCOLAS_*.csv do INEP em storage/app/public (ex.: inep/). O comando lê só os códigos INEP já presentes em school_unit_geos e ainda sem coordenadas; não cria unidades novas.') }}">
+                                {{ __('MICRODADOS INEP (cadastro de escolas)') }}
+                            </h3>
+                            <p class="mt-2 text-[11px] font-mono text-gray-600 dark:text-gray-400 leading-relaxed">{{ __('Comando: app:import-inep-microdados-cadastro-escolas-geo — IEDUCAR_INEP_MICRODADOS_CADASTRO_ESCOLAS') }}</p>
+                        </div>
+                    </div>
+                    <form method="post" action="{{ route('admin.geo-sync.run') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4 gap-y-3">
+                        @csrf
+                        <input type="hidden" name="step" value="microdados">
+                        <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <x-input-label for="microdados_city" :value="__('Cidade (opcional)')" />
+                                <select id="microdados_city" name="city_id" class="{{ $selectClass }}" @disabled($cityCount === 0)>
+                                    <option value="">{{ __('Todas') }}</option>
+                                    @foreach ($cities as $c)
+                                        <option value="{{ $c->id }}">{{ $c->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <x-input-label for="threshold_micro" :value="__('Limiar de divergência (metros)')" />
+                                <x-text-input id="threshold_micro" name="threshold" type="number" step="1" min="0" class="mt-1 block w-full" :value="old('threshold', config('ieducar.inep_geocoding.divergence_threshold_meters', 100))" />
+                            </div>
+                        </div>
+                        <label class="flex items-start gap-2 cursor-pointer md:col-span-2 group" title="{{ __('Se marcado, também preenche lat/lng do mapa quando vazios.') }}">
+                            <input type="checkbox" name="microdados_also_map_coords" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
+                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Também preencher lat/lng do mapa (quando vazios)') }}</span>
+                        </label>
+                        <div class="md:col-span-2">
+                            <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Executar import MICRODADOS') }}</x-primary-button>
+                        </div>
+                    </form>
+                </div>
                     </div>
                 </div>
 
@@ -305,7 +326,7 @@
                     <div class="flex flex-wrap items-end justify-between gap-2 mb-4">
                         <div>
                             <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Fecho do ciclo: passos 4 e 5') }}</p>
-                            <p class="mt-0.5 text-sm text-gray-600 dark:text-gray-300">{{ __('Pipeline orquestra 1–3; o probe percorre a mesma cadeia de fontes que o mapa usa (sem alterar dados).') }}</p>
+                            <p class="mt-0.5 text-sm text-gray-600 dark:text-gray-300">{{ __('Pipeline orquestra 1–3 (i-Educar, oficial INEP, microdados); o probe percorre a mesma cadeia de fontes que o mapa usa (sem alterar dados).') }}</p>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 gap-6">
@@ -323,7 +344,7 @@
                                 <span class="inline-flex items-center rounded-full bg-fuchsia-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-fuchsia-950 dark:bg-fuchsia-950/60 dark:text-fuchsia-100">{{ __('Passo 4') }}</span>
                                 <span class="inline-flex items-center rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-fuchsia-900/90 ring-1 ring-fuchsia-200/80 dark:bg-fuchsia-950/40 dark:text-fuchsia-200 dark:ring-fuchsia-800/60">{{ __('Orquestração') }}</span>
                             </div>
-                            <h3 class="mt-2 text-base font-semibold text-fuchsia-950 dark:text-fuchsia-100 cursor-help border-b border-dashed border-fuchsia-300/80 dark:border-fuchsia-800/60 pb-1 inline-block" title="{{ __('Executa em sequência: (1) sync i-Educar opcional, (2) import CSV opcional, (3) coordenadas oficiais INEP. Use quando quiser um botão único após configurar as opções abaixo.') }}">
+                            <h3 class="mt-2 text-base font-semibold text-fuchsia-950 dark:text-fuchsia-100 cursor-help border-b border-dashed border-fuchsia-300/80 dark:border-fuchsia-800/60 pb-1 inline-block" title="{{ __('Executa em sequência: (1) sync i-Educar opcional, (2) coordenadas oficiais INEP, (3) import MICRODADOS_CADASTRO_ESCOLAS para INEPs ainda sem coordenadas.') }}">
                                 {{ __('Pipeline completo') }}
                             </h3>
                             <p class="mt-2 text-[11px] font-mono text-fuchsia-900/85 dark:text-fuchsia-200/80 leading-relaxed">{{ __('Comando: app:sync-school-unit-geos-pipeline') }}</p>
@@ -349,13 +370,17 @@
                         </div>
                         <div class="md:col-span-2 rounded-lg border border-fuchsia-200/70 bg-fuchsia-50/40 p-3 dark:border-fuchsia-900/50 dark:bg-fuchsia-950/20 space-y-2">
                             <p class="text-[11px] font-semibold uppercase tracking-wide text-fuchsia-900/90 dark:text-fuchsia-200/90">{{ __('Opções do pipeline') }}</p>
-                            <label class="flex items-start gap-2 cursor-pointer group" title="{{ __('Não executa o passo i-Educar; útil se já sincronizou o cadastro local e só quer oficial + CSV.') }}">
+                            <label class="flex items-start gap-2 cursor-pointer group" title="{{ __('Não executa o passo i-Educar; útil se já sincronizou o cadastro local e só quer oficial + microdados.') }}">
                                 <input type="checkbox" name="pipeline_skip_ieducar" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
                                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Ignorar passo i-Educar') }}</span>
                             </label>
-                            <label class="flex items-start gap-2 cursor-pointer group" title="{{ __('Inclui o import CSV entre i-Educar e o passo oficial (se o ficheiro existir).') }}">
-                                <input type="checkbox" name="pipeline_with_csv" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
-                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Incluir import CSV no pipeline') }}</span>
+                            <label class="flex items-start gap-2 cursor-pointer group" title="{{ __('Se marcado e o ficheiro MICRODADOS não existir, o último passo apenas avisa e o pipeline termina com sucesso.') }}">
+                                <input type="checkbox" name="pipeline_skip_microdados_if_missing" value="1" checked class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
+                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Se MICRODADOS ausente: avisar e continuar') }}</span>
+                            </label>
+                            <label class="flex items-start gap-2 cursor-pointer group" title="{{ __('Repassado ao passo microdados do pipeline.') }}">
+                                <input type="checkbox" name="pipeline_microdados_map_coords" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
+                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Microdados: também preencher lat/lng do mapa') }}</span>
                             </label>
                             <label class="flex items-start gap-2 cursor-pointer group">
                                 <input type="checkbox" name="ieducar_only_missing" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />

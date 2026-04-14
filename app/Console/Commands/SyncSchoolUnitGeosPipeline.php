@@ -8,24 +8,24 @@ use Illuminate\Console\Command;
 
 /**
  * Orquestra a ordem correta para encher school_unit_geos com dados do i-Educar e,
- * em seguida, coordenadas oficiais por INEP.
+ * em seguida, coordenadas oficiais por INEP; por último, fallback a partir do CSV de
+ * microdados INEP (cadastro de escolas) para INEPs ainda sem coordenadas.
  *
  * O serviço InepCatalogoEscolasGeoService (passo oficial) aplica internamente, por código INEP:
- * tabela legada inep_school_geos (se existir) → CSV de fallback (config) → cache Redis → ArcGIS (URLs em config).
+ * tabela legada inep_school_geos (se existir) → CSV de fallback manual (config) → cache Redis → ArcGIS (URLs em config).
  */
 #[Signature('app:sync-school-unit-geos-pipeline
     {--city= : ID da cidade (opcional; todas as cidades forAnalytics se omitido)}
-    {--skip-ieducar=0 : Se 1, não executa app:sync-school-unit-geos (só import CSV opcional + oficial)}
+    {--skip-ieducar=0 : Se 1, não executa app:sync-school-unit-geos (só oficial + microdados)}
     {--ieducar-only-missing=0 : Repassado a app:sync-school-unit-geos (1 = só escolas sem linha em school_unit_geos)}
     {--official-only-missing=1 : Repassado a app:sync-school-unit-geos-official}
     {--threshold=100 : Limiar de divergência em metros (0 = usar config ieducar.inep_geocoding.divergence_threshold_meters)}
     {--dry-run=0 : Se 1, só o passo oficial simula gravação (app:sync-school-unit-geos-official)}
-    {--with-csv-import=0 : Se 1, executa app:import-inep-geo-fallback-csv entre i-Educar e oficial (se o ficheiro existir)}
-    {--csv-path= : Caminho do CSV (opcional; repassado ao import; default em config)}
-    {--csv-also-map-coords=0 : Se 1, repassado ao import CSV}
-    {--skip-csv-on-missing-file=1 : Com --with-csv-import=1, se o CSV não existir apenas avisa e segue (1) ou falha (0)}'
+    {--microdados-also-map-coords=0 : Se 1, repassado ao import microdados (preenche lat/lng do mapa quando vazios)}
+    {--skip-microdados-if-missing=1 : Se 1, último passo termina com aviso se o CSV INEP não existir (útil em CI/cron)}
+    {--microdados-path= : Caminho do CSV microdados (opcional; repassado ao import; default em config)}'
 )]
-#[Description('Pipeline: (1) i-Educar → school_unit_geos; (2) opcional CSV; (3) INEP oficial + fallbacks internos + divergência')]
+#[Description('Pipeline: (1) i-Educar → school_unit_geos; (2) INEP oficial + divergência; (3) microdados INEP (cadastro) para INEPs ainda sem coords')]
 class SyncSchoolUnitGeosPipeline extends Command
 {
     public function handle(): int
@@ -38,14 +38,13 @@ class SyncSchoolUnitGeosPipeline extends Command
         $officialOnlyMissing = (string) $this->option('official-only-missing') !== '0' ? '1' : '0';
         $threshold = (string) $this->option('threshold');
         $dryRun = (string) $this->option('dry-run') === '1' ? '1' : '0';
-        $withCsvImport = (string) $this->option('with-csv-import') === '1';
-        $skipCsvOnMissing = (string) $this->option('skip-csv-on-missing-file') !== '0';
-        $csvPathOpt = $this->option('csv-path');
-        $csvAlsoMap = (string) $this->option('csv-also-map-coords') === '1' ? '1' : '0';
+        $microMap = (string) $this->option('microdados-also-map-coords') === '1' ? '1' : '0';
+        $skipMicroIfMissing = (string) $this->option('skip-microdados-if-missing') === '1';
+        $microPathOpt = $this->option('microdados-path');
 
-        $this->info('=== Pipeline school_unit_geos (INEP + dados oficiais) ===');
-        $this->line('Ordem: i-Educar (opc.) → import CSV offline (opc.) → coordenadas oficiais INEP.');
-        $this->line('No passo INEP, o serviço tenta: tabela inep_school_geos (se existir) → CSV em config → cache → ArcGIS.');
+        $this->info('=== Pipeline school_unit_geos (INEP + dados oficiais + microdados) ===');
+        $this->line('Ordem: i-Educar (opc.) → coordenadas oficiais INEP (ArcGIS + fallbacks internos) → microdados INEP (cadastro de escolas).');
+        $this->line('No passo INEP, o serviço tenta: tabela inep_school_geos (se existir) → CSV manual em config → cache → ArcGIS.');
         $this->newLine();
 
         $step = 0;
@@ -71,25 +70,6 @@ class SyncSchoolUnitGeosPipeline extends Command
             $this->newLine();
         }
 
-        if ($withCsvImport) {
-            $step++;
-            $this->info("[{$step}] app:import-inep-geo-fallback-csv — atualizar linhas existentes a partir do CSV");
-            $importArgs = [
-                '--also-map-coords' => $csvAlsoMap,
-                '--skip-if-missing' => $skipCsvOnMissing ? '1' : '0',
-            ];
-            if (is_string($csvPathOpt) && trim($csvPathOpt) !== '') {
-                $importArgs['--path'] = trim($csvPathOpt);
-            }
-            $exit = $this->call('app:import-inep-geo-fallback-csv', $importArgs);
-            if ($exit !== self::SUCCESS) {
-                $this->error('O import CSV terminou com código '.$exit.'.');
-
-                return $exit;
-            }
-            $this->newLine();
-        }
-
         $step++;
         $this->info("[{$step}] app:sync-school-unit-geos-official — INEP (ArcGIS + fallbacks) e divergência vs i-Educar");
         $officialArgs = [
@@ -103,6 +83,28 @@ class SyncSchoolUnitGeosPipeline extends Command
         $exit = $this->call('app:sync-school-unit-geos-official', $officialArgs);
         if ($exit !== self::SUCCESS) {
             $this->error('O passo oficial INEP terminou com código '.$exit.'.');
+
+            return $exit;
+        }
+        $this->newLine();
+
+        $step++;
+        $this->info("[{$step}] app:import-inep-microdados-cadastro-escolas-geo — fallback INEP (MICRODADOS_CADASTRO_ESCOLAS) só para INEPs em falta");
+        $microArgs = [
+            '--only-missing' => '1',
+            '--also-map-coords' => $microMap,
+            '--threshold' => $threshold,
+            '--skip-if-missing' => $skipMicroIfMissing ? '1' : '0',
+        ];
+        if ($cityArg !== null) {
+            $microArgs['--city'] = $cityArg;
+        }
+        if (is_string($microPathOpt) && trim($microPathOpt) !== '') {
+            $microArgs['--path'] = trim($microPathOpt);
+        }
+        $exit = $this->call('app:import-inep-microdados-cadastro-escolas-geo', $microArgs);
+        if ($exit !== self::SUCCESS) {
+            $this->error('O import microdados INEP terminou com código '.$exit.'.');
 
             return $exit;
         }

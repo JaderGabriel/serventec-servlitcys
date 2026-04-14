@@ -17,6 +17,7 @@
     $neeGrupoResumoTotal = is_array($neeGrupoResumo)
         ? (int) (($neeGrupoResumo['deficiencias'] ?? 0) + ($neeGrupoResumo['sindromes_tea'] ?? 0) + ($neeGrupoResumo['ne_altas_habilidades'] ?? 0))
         : 0;
+    $chartRacaPorEscolaStacked = is_array($inclusionData['chart_raca_por_escola_stacked'] ?? null) ? $inclusionData['chart_raca_por_escola_stacked'] : null;
     $eqLabel = match ($eqFonte) {
         'serie' => __('Série'),
         default => null,
@@ -87,32 +88,32 @@
         </div>
     @endif
 
-    @if (! empty($inclusionData['charts']) || is_array($aeeCross) || $hasNeeDetalheCatalogo)
+    @if (! empty($inclusionData['charts']) || is_array($aeeCross) || $hasNeeDetalheCatalogo || is_array($chartRacaPorEscolaStacked))
         @if ($neeChartsCount > 0 || $hasNeeDetalheCatalogo)
             <div class="mb-8">
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('NEE — cadastro (deficiências, síndromes e altas habilidades)') }}</h3>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Gráficos derivados de aluno_deficiência e do catálogo de deficiências; o detalhe por nome segue as designações registadas na base.') }}</p>
                 @if ($neeGrupoResumo !== null && $neeGrupoResumoTotal > 0)
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                        <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 items-stretch">
+                        <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
                             <p class="text-[11px] font-medium uppercase text-violet-700 dark:text-violet-300">{{ __('Deficiências (grupo)') }}</p>
                             <p class="mt-1 text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format((int) ($neeGrupoResumo['deficiencias'] ?? 0)) }}</p>
-                            <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ __('Matrículas distintas no critério do gráfico de barras.') }}</p>
+                            <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400 flex-1">{{ __('Matrículas distintas no critério do gráfico «Matrículas por grupo».') }}</p>
                         </div>
-                        <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3">
+                        <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
                             <p class="text-[11px] font-medium uppercase text-violet-700 dark:text-violet-300">{{ __('Síndromes e TEA') }}</p>
                             <p class="mt-1 text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format((int) ($neeGrupoResumo['sindromes_tea'] ?? 0)) }}</p>
-                            <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ __('Palavras-chave no nome da deficiência no catálogo.') }}</p>
+                            <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400 flex-1">{{ __('Palavras-chave no nome da deficiência no catálogo.') }}</p>
                         </div>
-                        <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3">
+                        <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
                             <p class="text-[11px] font-medium uppercase text-violet-700 dark:text-violet-300">{{ __('NE — altas habilidades') }}</p>
                             <p class="mt-1 text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format((int) ($neeGrupoResumo['ne_altas_habilidades'] ?? 0)) }}</p>
-                            <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ __('Inclui superdotação quando configurado nas palavras-chave.') }}</p>
+                            <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400 flex-1">{{ __('Inclui superdotação quando configurado nas palavras-chave.') }}</p>
                         </div>
                     </div>
                 @endif
                 @if ($neeChartsCount > 0)
-                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 min-w-0">
+                    <div class="min-w-0 w-full [&_.chart-panel-host]:min-h-[min(32rem,70vh)]">
                         <x-dashboard.chart-panel
                             :chart="$inclusionData['charts'][0]"
                             :exportFilename="'inclusao-nee-0'"
@@ -127,45 +128,6 @@
                         $tot = $neeDetalheCatalogo['totais_por_secao'] ?? [];
                     @endphp
 
-                    {{-- Cards adicionais: matrículas por deficiência / síndromes / altas habilidades (quando houver lista detalhada) --}}
-                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 min-w-0 mt-6">
-                        @php
-                            $mkChart = function (string $title, array $rows): array {
-                                $labels = [];
-                                $values = [];
-                                foreach (array_slice($rows, 0, 14) as $r) {
-                                    $labels[] = (string) ($r['nome'] ?? '—');
-                                    $values[] = (float) ((int) ($r['total'] ?? 0));
-                                }
-                                return \App\Support\Dashboard\ChartPayload::barHorizontal($title, __('Matrículas'), $labels, $values);
-                            };
-                        @endphp
-                        @if (! empty($neeDetalheCatalogo['deficiencias']))
-                            <x-dashboard.chart-panel
-                                :chart="$mkChart(__('Matrículas — deficiências (top 14)'), $neeDetalheCatalogo['deficiencias'])"
-                                :exportFilename="'inclusao-nee-deficiencias'"
-                                :exportMeta="$chartExportContext"
-                                :compact="false"
-                            />
-                        @endif
-                        @if (! empty($neeDetalheCatalogo['sindromes_tea']))
-                            <x-dashboard.chart-panel
-                                :chart="$mkChart(__('Matrículas — síndromes/TEA (top 14)'), $neeDetalheCatalogo['sindromes_tea'])"
-                                :exportFilename="'inclusao-nee-sindromes-tea'"
-                                :exportMeta="$chartExportContext"
-                                :compact="false"
-                            />
-                        @endif
-                        @if (! empty($neeDetalheCatalogo['ne_altas_habilidades']))
-                            <x-dashboard.chart-panel
-                                :chart="$mkChart(__('Matrículas — altas habilidades (top 14)'), $neeDetalheCatalogo['ne_altas_habilidades'])"
-                                :exportFilename="'inclusao-nee-altas-habilidades'"
-                                :exportMeta="$chartExportContext"
-                                :compact="false"
-                            />
-                        @endif
-                    </div>
-
                     <div class="mt-6 rounded-lg border border-violet-100 dark:border-violet-900/40 bg-violet-50/40 dark:bg-violet-950/20 px-4 py-4 space-y-4">
                         <div>
                             <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Contagem por designação no catálogo (deficiências, síndromes/TEA e NE)') }}</h4>
@@ -173,13 +135,13 @@
                                 {{ __('Cada linha corresponde a uma designação em cadastro; sem agrupamento em «Outros». A classificação em três blocos segue as mesmas palavras-chave do gráfico «Matrículas por grupo».') }}
                             </p>
                         </div>
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 min-w-0">
-                            <div class="rounded-md border border-white/80 dark:border-gray-700 bg-white/90 dark:bg-gray-800/70 min-h-0 flex flex-col">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 min-w-0 items-stretch">
+                            <div class="rounded-md border border-white/80 dark:border-gray-700 bg-white/90 dark:bg-gray-800/70 min-h-[min(28rem,58vh)] flex flex-col shadow-sm">
                                 <div class="px-3 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
                                     <span class="text-xs font-semibold text-gray-700 dark:text-gray-200">{{ __('Deficiências') }}</span>
                                     <span class="tabular-nums text-xs font-medium text-violet-700 dark:text-violet-300">{{ number_format((int) ($tot['deficiencias'] ?? 0)) }}</span>
                                 </div>
-                                <ul class="max-h-[min(32rem,58vh)] min-h-[12rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
+                                <ul class="flex-1 max-h-[min(32rem,58vh)] min-h-[16rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
                                     @foreach ($neeDetalheCatalogo['deficiencias'] as $row)
                                         <li class="px-3 py-1.5 flex justify-between gap-2">
                                             <span class="text-gray-800 dark:text-gray-200 break-words">{{ $row['nome'] ?? '—' }}</span>
@@ -188,12 +150,12 @@
                                     @endforeach
                                 </ul>
                             </div>
-                            <div class="rounded-md border border-white/80 dark:border-gray-700 bg-white/90 dark:bg-gray-800/70 min-h-0 flex flex-col">
+                            <div class="rounded-md border border-white/80 dark:border-gray-700 bg-white/90 dark:bg-gray-800/70 min-h-[min(28rem,58vh)] flex flex-col shadow-sm">
                                 <div class="px-3 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
                                     <span class="text-xs font-semibold text-gray-700 dark:text-gray-200">{{ __('Síndromes / TEA') }}</span>
                                     <span class="tabular-nums text-xs font-medium text-violet-700 dark:text-violet-300">{{ number_format((int) ($tot['sindromes_tea'] ?? 0)) }}</span>
                                 </div>
-                                <ul class="max-h-[min(32rem,58vh)] min-h-[12rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
+                                <ul class="flex-1 max-h-[min(32rem,58vh)] min-h-[16rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
                                     @foreach ($neeDetalheCatalogo['sindromes_tea'] as $row)
                                         <li class="px-3 py-1.5 flex justify-between gap-2">
                                             <span class="text-gray-800 dark:text-gray-200 break-words">{{ $row['nome'] ?? '—' }}</span>
@@ -202,12 +164,12 @@
                                     @endforeach
                                 </ul>
                             </div>
-                            <div class="rounded-md border border-white/80 dark:border-gray-700 bg-white/90 dark:bg-gray-800/70 min-h-0 flex flex-col">
+                            <div class="rounded-md border border-white/80 dark:border-gray-700 bg-white/90 dark:bg-gray-800/70 min-h-[min(28rem,58vh)] flex flex-col shadow-sm">
                                 <div class="px-3 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
                                     <span class="text-xs font-semibold text-gray-700 dark:text-gray-200">{{ __('NE (altas habilidades)') }}</span>
                                     <span class="tabular-nums text-xs font-medium text-violet-700 dark:text-violet-300">{{ number_format((int) ($tot['ne_altas_habilidades'] ?? 0)) }}</span>
                                 </div>
-                                <ul class="max-h-[min(32rem,58vh)] min-h-[12rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
+                                <ul class="flex-1 max-h-[min(32rem,58vh)] min-h-[16rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
                                     @foreach ($neeDetalheCatalogo['ne_altas_habilidades'] as $row)
                                         <li class="px-3 py-1.5 flex justify-between gap-2">
                                             <span class="text-gray-800 dark:text-gray-200 break-words">{{ $row['nome'] ?? '—' }}</span>
@@ -293,24 +255,52 @@
             </div>
         @endif
 
-        @if (count($inclusionData['charts']) > $neeChartsCount)
-            <div>
-                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{{ __('Por escola, género, raça e equidade') }}</h3>
-                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 min-w-0">
-                    @foreach (array_slice($inclusionData['charts'], $neeChartsCount) as $idx => $chart)
-                        <div class="{{ ! empty($chart['panel_layout']) && $chart['panel_layout'] === 'full' ? 'xl:col-span-2' : '' }} min-w-0">
-                            <x-dashboard.chart-panel
-                                :chart="$chart"
-                                :exportFilename="'inclusao-'.($neeChartsCount + $idx)"
-                                :exportMeta="$chartExportContext"
-                                :compact="! empty($chart['compact_panel'])"
-                            />
-                        </div>
-                    @endforeach
-                </div>
+        @php
+            $tailAfterNee = array_slice($inclusionData['charts'] ?? [], $neeChartsCount);
+        @endphp
+        @if (count($tailAfterNee) > 0 || is_array($chartRacaPorEscolaStacked))
+            <div class="space-y-6">
+                @if (count($tailAfterNee) >= 1)
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 min-w-0 items-stretch [&_.chart-panel-host]:h-full [&_.chart-panel-host]:flex [&_.chart-panel-host]:flex-col">
+                        @foreach (array_slice($tailAfterNee, 0, 2) as $idx => $chart)
+                            <div class="{{ ! empty($chart['panel_layout']) && $chart['panel_layout'] === 'full' ? 'xl:col-span-2' : '' }} min-w-0 flex flex-col h-full">
+                                <x-dashboard.chart-panel
+                                    :chart="$chart"
+                                    :exportFilename="'inclusao-'.($neeChartsCount + $idx)"
+                                    :exportMeta="$chartExportContext"
+                                    :compact="! empty($chart['compact_panel'])"
+                                />
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+                @if (is_array($chartRacaPorEscolaStacked) && ! empty($chartRacaPorEscolaStacked['labels']))
+                    <div class="w-full min-w-0">
+                        <x-dashboard.chart-panel
+                            :chart="$chartRacaPorEscolaStacked"
+                            :exportFilename="'inclusao-raca-por-escola-empilhado'"
+                            :exportMeta="$chartExportContext"
+                            :compact="false"
+                        />
+                    </div>
+                @endif
+                @if (count($tailAfterNee) > 2)
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 min-w-0">
+                        @foreach (array_slice($tailAfterNee, 2) as $idx => $chart)
+                            <div class="{{ ! empty($chart['panel_layout']) && $chart['panel_layout'] === 'full' ? 'xl:col-span-2' : '' }} min-w-0">
+                                <x-dashboard.chart-panel
+                                    :chart="$chart"
+                                    :exportFilename="'inclusao-'.($neeChartsCount + 2 + $idx)"
+                                    :exportMeta="$chartExportContext"
+                                    :compact="! empty($chart['compact_panel'])"
+                                />
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         @endif
-    @elseif (empty($inclusionData['error']) && empty($inclusionData['charts']) && empty($inclusionData['gauges'] ?? []) && ! is_array($aeeCross) && ! $hasNeeDetalheCatalogo)
+    @elseif (empty($inclusionData['error']) && empty($inclusionData['charts']) && empty($inclusionData['gauges'] ?? []) && ! is_array($aeeCross) && ! $hasNeeDetalheCatalogo && ! is_array($chartRacaPorEscolaStacked))
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Sem indicadores disponíveis para esta base ou filtros.') }}</p>
     @endif
 </div>

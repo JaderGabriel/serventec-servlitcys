@@ -15,8 +15,9 @@
     $topErr = is_array($schoolUnitsData) ? ($schoolUnitsData['error'] ?? null) : null;
     $inepCatalogUrl = 'https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/inep-data/catalogo-de-escolas';
     $markerCount = is_array($markers) ? count($markers) : 0;
-    $mapPopupFootnote = __('O IDEB e o SAEB não são fornecidos pelo serviço ArcGIS; use o botão do QEdu ou o portal do INEP para indicadores oficiais por escola.');
-    $qeduEscolaBaseUrl = rtrim((string) config('ieducar.inep_geocoding.qedu_escola_base_url', 'https://www.qedu.org.br/escola'), '/');
+    $mapPopupFootnote = __('O IDEB e o SAEB não são fornecidos pelo serviço ArcGIS; use o link do Portal IDEB (INEP) no rodapé do modal para indicadores oficiais por escola.');
+    $inepPortalEscolaTemplate = (string) config('ieducar.inep_geocoding.inep_portal_escola_url_template', 'https://www.portalideb.org.br/resultado/escola/{inep}');
+    $qeduEscolaBaseUrl = $inepPortalEscolaTemplate;
 @endphp
 
 <div class="space-y-6">
@@ -91,7 +92,7 @@
                             <h3 class="text-base font-semibold uppercase tracking-wide text-emerald-950 dark:text-emerald-100">{{ __('MAPA DAS UNIDADES ESCOLARES') }}</h3>
                             <p class="mt-1 text-xs text-emerald-900/85 dark:text-emerald-200/90 leading-relaxed">
                                 @if ($markerCount > 0)
-                                    {{ __('Clique num marcador para ver dados da base local, Catálogo INEP (ArcGIS) quando existir e links (QEdu). Com várias unidades, linhas tracejadas discretas ligam cada escola aos vizinhos mais próximos (grafo leve).') }}
+                                    {{ __('Clique num marcador para ver dados da base local, Catálogo INEP (ArcGIS) quando existir e link ao Portal IDEB (INEP). Com várias unidades, linhas tracejadas discretas ligam cada escola aos vizinhos mais próximos (grafo leve).') }}
                                 @else
                                     {{ __('Sem coordenadas para posicionar unidades. Verifique latitude/longitude na base ou código INEP para geocodificação.') }}
                                 @endif
@@ -277,10 +278,10 @@
                                         </p>
                                     </div>
 
-                                    <div class="flex flex-wrap gap-2" x-show="Array.isArray(modal?.inep_links) && (modal.inep_links.filter(ln => ln && ln.id !== 'qedu').length > 0)">
+                                    <div class="flex flex-wrap gap-2" x-show="Array.isArray(modal?.inep_links) && (modal.inep_links.filter(ln => ln && ln.id !== 'inep_portal').length > 0)">
                                         <template x-for="(ln, li) in (modal?.inep_links || [])" :key="li + '-' + (ln?.url || '')">
                                             <a
-                                                x-show="ln && ln.id !== 'qedu'"
+                                                x-show="ln && ln.id !== 'inep_portal'"
                                                 class="inline-flex items-center justify-center rounded-md border border-indigo-200 bg-white px-3 py-2 text-xs font-medium text-indigo-800 shadow-sm hover:bg-indigo-50 dark:border-indigo-800 dark:bg-gray-900 dark:text-indigo-200 dark:hover:bg-indigo-950/50"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
@@ -293,13 +294,13 @@
 
                                 <div class="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/40 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <a
-                                        x-show="modal?.inep && modal?.qedu?.page_url && modal.qedu.page_url !== '#'"
+                                        x-show="modal?.inep && modal?.inepPortal?.page_url && modal.inepPortal.page_url !== '#'"
                                         class="inline-flex w-full sm:w-auto items-center justify-center rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        :href="modal.qedu.page_url"
+                                        :href="modal.inepPortal.page_url"
                                     >
-                                        {{ __('QEdu — ficha e indicadores (abre em nova aba)') }}
+                                        {{ __('Portal IDEB (INEP) — painel pedagógico e indicadores (nova aba)') }}
                                     </a>
                                     <button
                                         type="button"

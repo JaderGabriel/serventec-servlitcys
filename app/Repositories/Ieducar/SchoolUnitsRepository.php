@@ -669,56 +669,409 @@ class SchoolUnitsRepository
     }
 
     /**
-     * @param  list<int>  $eids
-     * @return array<int, int>
+     * Primeira tabela qualificada que existir na base (pmieducar/cadastro ou nome curto em MySQL).
+     *
+     * @param  list<string>  $candidates
      */
-    private function capacidadeTurmasByEscolaIds(Connection $db, City $city, IeducarFilterState $filters, array $eids): array
+    private function firstExistingQualifiedTable(Connection $db, City $city, array $candidates): ?string
     {
-        if ($eids === []) {
-            return [];
+        foreach ($candidates as $t) {
+            $t = trim((string) $t);
+            if ($t !== '' && IeducarColumnInspector::tableExists($db, $t, $city)) {
+                return $t;
+            }
         }
+
+        return null;
+    }
+
+    private function preferNonEmpty(?string $existing, ?string $incoming): ?string
+    {
+        $ex = trim((string) ($existing ?? ''));
+        if ($ex !== '') {
+            return $ex;
+        }
+        $in = trim((string) ($incoming ?? ''));
+
+        return $in !== '' ? $in : null;
+    }
+
+    /**
+     * Formato alinhado a relatorio.get_telefone_escola / view_dados_escola (ddd + fone numéricos).
+     */
+    private function formatDddFone(mixed $ddd, mixed $fone): string
+    {
+        $d = preg_replace('/\D+/', '', (string) ($ddd ?? '')) ?? '';
+        $f = preg_replace('/\D+/', '', (string) ($fone ?? '')) ?? '';
+        if ($f === '') {
+            return '';
+        }
+        if ($d !== '' && strlen($f) >= 8) {
+            return '('.$d.') '.$f;
+        }
+
+        return $f;
+    }
+
+    /**
+     * Enriquece contacto/endereço/gestor com escola_complemento e cadastro (pessoa, fone_pessoa, juridica),
+     * como em relatorio.view_dados_escola no i-Educar Portabilis.
+     *
+     * @param  array<int, array<string, mixed>>  $cards
+     * @return array<int, array<string, mixed>>
+     */
+    private function mergeIeducarCadastroExtras(Connection $db, City $city, array $cards): array
+    {
+        if ($cards === []) {
+            return $cards;
+        }
+
+        $eids = array_keys($cards);
+        $escolaT = IeducarSchema::resolveTable('escola', $city);
+        $eId = (string) config('ieducar.columns.escola.id');
+        $mainSchema = trim((string) IeducarSchema::effectiveSchema($city));
+        if ($mainSchema === '') {
+            $mainSchema = trim((string) config('ieducar.pgsql_default_schema', 'pmieducar')) ?: 'pmieducar';
+        }
+
+        $compT = $this->firstExistingQualifiedTable($db, $city, [
+            $mainSchema.'.escola_complemento',
+            'escola_complemento',
+        ]);
+        if ($compT !== null) {
+            try {
+                $fk = IeducarColumnInspector::firstExistingColumn($db, $compT, ['ref_cod_escola', 'cod_escola'], $city) ?? 'ref_cod_escola';
+                $rows = $db->table($compT)->whereIn($fk, $eids)->get();
+                foreach ($rows as $row) {
+                    $a = (array) $row;
+                    $eid = (int) ($a[$fk] ?? 0);
+                    if ($eid <= 0 || ! isset($cards[$eid])) {
+                        continue;
+                    }
+                    $log = trim((string) ($a['logradouro'] ?? ''));
+                    $num = trim((string) ($a['numero'] ?? ''));
+                    $co = trim((string) ($a['complemento'] ?? ''));
+                    $bai = trim((string) ($a['bairro'] ?? ''));
+                    $mun = trim((string) ($a['municipio'] ?? ''));
+                    $cepRaw = $a['cep'] ?? null;
+                    $cep = $cepRaw !== null && $cepRaw !== ''
+                        ? str_pad(preg_replace('/\D+/', '', (string) $cepRaw) ?? '', 8, '0', STR_PAD_LEFT)
+                        : '';
+                    $parts = [];
+                    if ($log !== '') {
+                        $parts[] = $log.($num !== '' ? ', '.$num : '');
+                    }
+                    if ($co !== '') {
+                        $parts[] = $co;
+                    }
+                    if ($bai !== '') {
+                        $parts[] = $bai;
+                    }
+                    if ($mun !== '') {
+                        $parts[] = $mun;
+                    }
+                    if ($cep !== '' && strlen($cep) === 8) {
+                        $parts[] = __('CEP').' '.substr($cep, 0, 5).'-'.substr($cep, 5, 3);
+                    }
+                    $end = $parts !== [] ? implode(' — ', $parts) : null;
+                    if ($end !== null) {
+                        $cards[$eid]['endereco'] = $this->preferNonEmpty($cards[$eid]['endereco'] ?? null, $end);
+                    }
+                    $tel = $this->formatDddFone($a['ddd_telefone'] ?? null, $a['telefone'] ?? null);
+                    if ($tel !== '') {
+                        $cards[$eid]['telefone'] = $this->preferNonEmpty($cards[$eid]['telefone'] ?? null, $tel);
+                    }
+                    $em = trim((string) ($a['email'] ?? ''));
+                    if ($em !== '') {
+                        $cards[$eid]['email'] = $this->preferNonEmpty($cards[$eid]['email'] ?? null, $em);
+                    }
+                }
+            } catch (QueryException|\Throwable) {
+            }
+        }
+
+        $refPesCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, ['ref_idpes', 'ref_cod_pessoa'], $city);
+        $refGestCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, ['ref_idpes_gestor', 'ref_cod_pessoa_gestor'], $city);
+        $emailGestCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, ['email_gestor'], $city);
+
+        $g = $db->getQueryGrammar();
+        $we = $g->wrap('e');
+        $idpesByEid = [];
+        $idpesGestByEid = [];
+        $emailGestByEid = [];
         try {
-            $turma = IeducarSchema::resolveTable('turma', $city);
-            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
-            $maxCol = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
-                (string) config('ieducar.columns.turma.max_alunos'),
-                'max_aluno',
-                'max_alunos',
-                'nr_maximo_alunos',
-                'qtd_maxima_alunos',
-                'qtde_max_alunos',
-                'capacidade_maxima',
-            ]), $city);
-            if ($maxCol === null || $tc['escola'] === '') {
-                return [];
+            $q = $db->table($escolaT.' as e')->whereIn('e.'.$eId, $eids);
+            $q->selectRaw($we.'.'.$g->wrap($eId).' as eid');
+            if ($refPesCol !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($refPesCol).' as ref_idpes');
             }
-
-            $q = $db->table($turma.' as t');
-            if ($filters->yearFilterValue() !== null && $tc['year'] !== '') {
-                $q->where('t.'.$tc['year'], $filters->yearFilterValue());
+            if ($refGestCol !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($refGestCol).' as ref_idpes_gestor');
             }
-            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
-            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
-            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['turno'], $filters->turno_id);
-            $q->whereIn('t.'.$tc['escola'], $eids);
-
-            $escolaKey = 't.'.$tc['escola'];
-            $g = $db->getQueryGrammar();
-            $rows = $q->selectRaw($escolaKey.' as eid')
-                ->selectRaw('SUM(COALESCE(t.'.$g->wrap($maxCol).', 0)) as cap')
-                ->groupBy($escolaKey)
-                ->get();
-
-            $out = [];
-            foreach ($rows as $row) {
+            if ($emailGestCol !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($emailGestCol).' as email_gestor');
+            }
+            foreach ($q->get() as $row) {
                 $a = (array) $row;
-                $out[(int) ($a['eid'] ?? 0)] = (int) ($a['cap'] ?? 0);
+                $eid = (int) ($a['eid'] ?? 0);
+                if ($eid <= 0) {
+                    continue;
+                }
+                if (isset($a['ref_idpes']) && is_numeric($a['ref_idpes']) && (int) $a['ref_idpes'] > 0) {
+                    $idpesByEid[$eid] = (int) $a['ref_idpes'];
+                }
+                if (isset($a['ref_idpes_gestor']) && is_numeric($a['ref_idpes_gestor']) && (int) $a['ref_idpes_gestor'] > 0) {
+                    $idpesGestByEid[$eid] = (int) $a['ref_idpes_gestor'];
+                }
+                if (isset($a['email_gestor']) && trim((string) $a['email_gestor']) !== '') {
+                    $emailGestByEid[$eid] = trim((string) $a['email_gestor']);
+                }
             }
-
-            return $out;
         } catch (QueryException|\Throwable) {
-            return [];
         }
+
+        $pessoaT = IeducarSchema::resolveTable('pessoa', $city);
+        $idpesCol = (string) config('ieducar.columns.pessoa.id', 'idpes');
+        $nomePessoaCol = IeducarColumnInspector::firstExistingColumn($db, $pessoaT, ['nome', 'nm_pessoa'], $city);
+        $emailPessoaCol = IeducarColumnInspector::firstExistingColumn($db, $pessoaT, ['email', 'e_mail', 'mail'], $city);
+
+        $allPes = array_values(array_unique(array_filter(array_merge(
+            array_values($idpesByEid),
+            array_values($idpesGestByEid),
+        ))));
+        $pessoaNomeById = [];
+        $pessoaEmailById = [];
+        if ($allPes !== [] && IeducarColumnInspector::tableExists($db, $pessoaT, $city)) {
+            try {
+                $pq = $db->table($pessoaT)->whereIn($idpesCol, $allPes);
+                $sel = [$idpesCol];
+                if ($nomePessoaCol !== null) {
+                    $sel[] = $nomePessoaCol;
+                }
+                if ($emailPessoaCol !== null) {
+                    $sel[] = $emailPessoaCol;
+                }
+                foreach ($pq->get($sel) as $pr) {
+                    $pa = (array) $pr;
+                    $ip = (int) ($pa[$idpesCol] ?? 0);
+                    if ($ip <= 0) {
+                        continue;
+                    }
+                    if ($nomePessoaCol !== null) {
+                        $pessoaNomeById[$ip] = trim((string) ($pa[$nomePessoaCol] ?? ''));
+                    }
+                    if ($emailPessoaCol !== null) {
+                        $pessoaEmailById[$ip] = trim((string) ($pa[$emailPessoaCol] ?? ''));
+                    }
+                }
+            } catch (QueryException|\Throwable) {
+            }
+        }
+
+        $cadSchema = trim((string) config('ieducar.pgsql_schema_cadastro', 'cadastro'));
+        $foneT = $this->firstExistingQualifiedTable($db, $city, array_filter([
+            $cadSchema !== '' ? $cadSchema.'.fone_pessoa' : '',
+            'fone_pessoa',
+        ]));
+        $foneTipoCol = null;
+        $foneDddCol = null;
+        $foneNumCol = null;
+        $foneIdpesCol = null;
+        if ($foneT !== null) {
+            $foneTipoCol = IeducarColumnInspector::firstExistingColumn($db, $foneT, ['tipo'], $city);
+            $foneDddCol = IeducarColumnInspector::firstExistingColumn($db, $foneT, ['ddd'], $city);
+            $foneNumCol = IeducarColumnInspector::firstExistingColumn($db, $foneT, ['fone', 'telefone'], $city);
+            $foneIdpesCol = IeducarColumnInspector::firstExistingColumn($db, $foneT, ['idpes'], $city);
+        }
+
+        $foneStrByIdpes = [];
+        if ($foneT !== null && $foneTipoCol !== null && $foneNumCol !== null && $foneIdpesCol !== null) {
+            $idpesEscola = array_values(array_unique(array_values($idpesByEid)));
+            if ($idpesEscola !== []) {
+                try {
+                    $fq = $db->table($foneT)->whereIn($foneIdpesCol, $idpesEscola)->where($foneTipoCol, 1);
+                    foreach ($fq->get() as $fr) {
+                        $fa = (array) $fr;
+                        $ip = (int) ($fa[$foneIdpesCol] ?? 0);
+                        if ($ip <= 0) {
+                            continue;
+                        }
+                        $ddd = $foneDddCol !== null ? ($fa[$foneDddCol] ?? null) : null;
+                        $fn = $this->formatDddFone($ddd, $fa[$foneNumCol] ?? null);
+                        if ($fn !== '' && ! isset($foneStrByIdpes[$ip])) {
+                            $foneStrByIdpes[$ip] = $fn;
+                        }
+                    }
+                } catch (QueryException|\Throwable) {
+                }
+            }
+        }
+
+        foreach ($eids as $eid) {
+            if (! isset($cards[$eid])) {
+                continue;
+            }
+            $idpes = $idpesByEid[$eid] ?? null;
+            if ($idpes !== null && $idpes > 0) {
+                if (($cards[$eid]['email'] ?? null) === null && isset($pessoaEmailById[$idpes]) && $pessoaEmailById[$idpes] !== '') {
+                    $cards[$eid]['email'] = $pessoaEmailById[$idpes];
+                }
+                if (($cards[$eid]['telefone'] ?? null) === null && isset($foneStrByIdpes[$idpes])) {
+                    $cards[$eid]['telefone'] = $foneStrByIdpes[$idpes];
+                }
+            }
+            $idpesG = $idpesGestByEid[$eid] ?? null;
+            if ($idpesG !== null && $idpesG > 0 && ($nomePessoaCol !== null)) {
+                $nm = $pessoaNomeById[$idpesG] ?? '';
+                if ($nm !== '' && (($cards[$eid]['gestor'] ?? null) === null || trim((string) $cards[$eid]['gestor']) === '')) {
+                    $cards[$eid]['gestor'] = $nm;
+                }
+            }
+            if (isset($emailGestByEid[$eid])) {
+                $eg = $emailGestByEid[$eid];
+                $g0 = trim((string) ($cards[$eid]['gestor'] ?? ''));
+                if ($eg !== '') {
+                    if ($g0 !== '') {
+                        $cards[$eid]['gestor'] = $g0.' — '.$eg;
+                    } else {
+                        $cards[$eid]['gestor'] = $eg;
+                    }
+                }
+            }
+        }
+
+        $modSchema = trim((string) config('ieducar.pgsql_schema_modules', 'modules'));
+        $phpT = $this->firstExistingQualifiedTable($db, $city, array_filter([
+            $modSchema !== '' ? $modSchema.'.person_has_place' : '',
+            'person_has_place',
+        ]));
+        $adrT = $this->firstExistingQualifiedTable($db, $city, array_filter([
+            $modSchema !== '' ? $modSchema.'.addresses' : '',
+            'addresses',
+        ]));
+        if ($phpT !== null && $adrT !== null && $idpesByEid !== []) {
+            $phpPersonCol = IeducarColumnInspector::firstExistingColumn($db, $phpT, ['person_id', 'idpes'], $city);
+            $phpPlaceCol = IeducarColumnInspector::firstExistingColumn($db, $phpT, ['place_id'], $city);
+            $phpTypeCol = IeducarColumnInspector::firstExistingColumn($db, $phpT, ['type'], $city);
+            $adrIdCol = IeducarColumnInspector::firstExistingColumn($db, $adrT, ['id'], $city);
+            $adrStreet = IeducarColumnInspector::firstExistingColumn($db, $adrT, ['address', 'logradouro', 'nm_logradouro'], $city);
+            $adrNum = IeducarColumnInspector::firstExistingColumn($db, $adrT, ['number', 'numero', 'nr_numero'], $city);
+            $adrBai = IeducarColumnInspector::firstExistingColumn($db, $adrT, ['neighborhood', 'bairro', 'nm_bairro'], $city);
+            $adrCity = IeducarColumnInspector::firstExistingColumn($db, $adrT, ['city', 'municipio', 'nm_municipio'], $city);
+            $adrCep = IeducarColumnInspector::firstExistingColumn($db, $adrT, ['postal_code', 'cep', 'nr_cep'], $city);
+            $adrUf = IeducarColumnInspector::firstExistingColumn($db, $adrT, ['state_abbreviation', 'uf'], $city);
+            if ($phpPersonCol !== null && $phpPlaceCol !== null && $adrIdCol !== null && $adrStreet !== null) {
+                $idpesList = array_values(array_unique(array_values($idpesByEid)));
+                try {
+                    $addrQ = $db->table($phpT.' as php')
+                        ->join($adrT.' as a', 'php.'.$phpPlaceCol, '=', 'a.'.$adrIdCol)
+                        ->whereIn('php.'.$phpPersonCol, $idpesList);
+                    if ($phpTypeCol !== null) {
+                        $addrQ->where('php.'.$phpTypeCol, 1);
+                    }
+                    $addrQ->select([
+                        'php.'.$phpPersonCol.' as idpes',
+                        'a.'.$adrStreet.' as logradouro',
+                    ]);
+                    if ($adrNum !== null) {
+                        $addrQ->addSelect('a.'.$adrNum.' as numero');
+                    }
+                    if ($adrBai !== null) {
+                        $addrQ->addSelect('a.'.$adrBai.' as bairro');
+                    }
+                    if ($adrCity !== null) {
+                        $addrQ->addSelect('a.'.$adrCity.' as municipio');
+                    }
+                    if ($adrCep !== null) {
+                        $addrQ->addSelect('a.'.$adrCep.' as cep');
+                    }
+                    if ($adrUf !== null) {
+                        $addrQ->addSelect('a.'.$adrUf.' as uf');
+                    }
+                    $endByIdpes = [];
+                    foreach ($addrQ->get() as $ar) {
+                        $ba = (array) $ar;
+                        $ip = (int) ($ba['idpes'] ?? 0);
+                        if ($ip <= 0 || isset($endByIdpes[$ip])) {
+                            continue;
+                        }
+                        $lr = trim((string) ($ba['logradouro'] ?? ''));
+                        $nr = trim((string) ($ba['numero'] ?? ''));
+                        $br = trim((string) ($ba['bairro'] ?? ''));
+                        $mu = trim((string) ($ba['municipio'] ?? ''));
+                        $cp = trim((string) ($ba['cep'] ?? ''));
+                        $uf = trim((string) ($ba['uf'] ?? ''));
+                        $cpDigits = preg_replace('/\D+/', '', $cp) ?? '';
+                        $cepFmt = strlen($cpDigits) === 8
+                            ? __('CEP').' '.substr($cpDigits, 0, 5).'-'.substr($cpDigits, 5, 3)
+                            : ($cp !== '' ? __('CEP').' '.$cp : '');
+                        $parts = [];
+                        if ($lr !== '') {
+                            $parts[] = $lr.($nr !== '' ? ', '.$nr : '');
+                        }
+                        if ($br !== '') {
+                            $parts[] = $br;
+                        }
+                        if ($mu !== '') {
+                            $parts[] = $uf !== '' ? $mu.'/'.$uf : $mu;
+                        } elseif ($uf !== '') {
+                            $parts[] = $uf;
+                        }
+                        if ($cepFmt !== '') {
+                            $parts[] = $cepFmt;
+                        }
+                        if ($parts !== []) {
+                            $endByIdpes[$ip] = implode(' — ', $parts);
+                        }
+                    }
+                    foreach ($eids as $eid) {
+                        $ip = $idpesByEid[$eid] ?? null;
+                        if ($ip === null || ! isset($endByIdpes[$ip])) {
+                            continue;
+                        }
+                        $cards[$eid]['endereco'] = $this->preferNonEmpty($cards[$eid]['endereco'] ?? null, $endByIdpes[$ip]);
+                    }
+                } catch (QueryException|\Throwable) {
+                }
+            }
+        }
+
+        if ($db->getDriverName() === 'pgsql'
+            && filter_var(config('ieducar.pgsql_use_relatorio_get_telefone_escola', true), FILTER_VALIDATE_BOOLEAN)) {
+            $relSchema = trim((string) config('ieducar.pgsql_schema_relatorio', 'relatorio')) ?: 'relatorio';
+            $g = $db->getQueryGrammar();
+            $fn = $g->wrapTable($relSchema).'.get_telefone_escola';
+            foreach ($eids as $eid) {
+                if (! isset($cards[$eid])) {
+                    continue;
+                }
+                $tel = trim((string) ($cards[$eid]['telefone'] ?? ''));
+                if ($tel !== '') {
+                    continue;
+                }
+                try {
+                    $rows = $db->select('SELECT '.$fn.'(?) AS t', [$eid]);
+                    $t = isset($rows[0]) && isset($rows[0]->t) ? trim((string) $rows[0]->t) : '';
+                    if ($t !== '') {
+                        $cards[$eid]['telefone'] = $t;
+                    }
+                } catch (QueryException|\Throwable) {
+                }
+            }
+        }
+
+        foreach ($eids as $eid) {
+            if (! isset($cards[$eid])) {
+                continue;
+            }
+            foreach (['telefone', 'email', 'gestor', 'endereco'] as $k) {
+                if (($cards[$eid][$k] ?? '') === '') {
+                    $cards[$eid][$k] = null;
+                }
+            }
+        }
+
+        return $cards;
     }
 
     /**
@@ -879,7 +1232,7 @@ class SchoolUnitsRepository
                 }
             }
 
-            return $out;
+            return $this->mergeIeducarCadastroExtras($db, $city, $out);
         } catch (QueryException|\Throwable) {
             return [];
         }
@@ -1011,7 +1364,7 @@ class SchoolUnitsRepository
             return [];
         }
         $matBy = $this->matriculasCountByEscolaIds($db, $city, $filters, $eids);
-        $capBy = $this->capacidadeTurmasByEscolaIds($db, $city, $filters, $eids);
+        $capVagasBy = MatriculaChartQueries::capacidadeEVagasPorEscolaIds($db, $city, $filters, $eids);
         $cardBy = $this->fetchEscolaCardFieldsByIds($db, $city, $eids);
         $ofertaBy = $this->ofertaCursoSeriePorEscolaIds($db, $city, $filters, $eids);
 
@@ -1029,7 +1382,9 @@ class SchoolUnitsRepository
         $out = [];
         foreach ($eids as $eid) {
             $mat = $matBy[$eid] ?? 0;
-            $cap = $capBy[$eid] ?? null;
+            $bundle = $capVagasBy[$eid] ?? null;
+            $cap = $bundle !== null ? ($bundle['capacidade_declarada'] ?? null) : null;
+            $vagas = $bundle !== null ? ($bundle['vagas_disponiveis'] ?? null) : null;
             $card = $cardBy[$eid] ?? [];
             $geoRow = $inepFromGeoByEid[$eid] ?? null;
             if ($geoRow !== null) {
@@ -1038,7 +1393,6 @@ class SchoolUnitsRepository
                     $card['inep'] = (int) $ic;
                 }
             }
-            $vagas = $cap !== null ? max(0, $cap - $mat) : null;
             $out[$eid] = array_merge([
                 'eid' => $eid,
                 'matriculas' => $mat,
@@ -1354,7 +1708,26 @@ class SchoolUnitsRepository
     }
 
     /**
-     * Catálogo INEP (ArcGIS), links QEdu e alertas de conciliação com a base local.
+     * URL público INEP para a escola (Portal IDEB ou template em config com {inep}).
+     */
+    private function inepPortalEscolaPublicUrl(int $inep): string
+    {
+        if ($inep <= 0) {
+            return '';
+        }
+        $t = trim((string) config('ieducar.inep_geocoding.inep_portal_escola_url_template', ''));
+        if ($t === '') {
+            $t = 'https://www.portalideb.org.br/resultado/escola/{inep}';
+        }
+        if (str_contains($t, '{inep}')) {
+            return str_replace('{inep}', (string) $inep, $t);
+        }
+
+        return $t;
+    }
+
+    /**
+     * Catálogo INEP (ArcGIS), link público INEP (Portal IDEB / painel por escola) e conciliação com a base local.
      *
      * @param  list<array<string, mixed>>  $markers
      * @return list<array<string, mixed>>
@@ -1362,10 +1735,9 @@ class SchoolUnitsRepository
     private function enrichMarkersWithInepCatalogAndLinks(array $markers): array
     {
         $enrich = filter_var(config('ieducar.inep_geocoding.enrich_markers_with_inep_catalog', true), FILTER_VALIDATE_BOOLEAN);
-        $qeduBase = (string) config('ieducar.inep_geocoding.qedu_escola_base_url', 'https://www.qedu.org.br/escola');
-        $qeduBase = $qeduBase !== '' ? rtrim($qeduBase, '/') : '';
-        if ($qeduBase === '') {
-            $qeduBase = 'https://www.qedu.org.br/escola';
+        $legacyQedu = rtrim((string) config('ieducar.inep_geocoding.qedu_escola_base_url', 'https://www.qedu.org.br/escola'), '/');
+        if ($legacyQedu === '') {
+            $legacyQedu = 'https://www.qedu.org.br/escola';
         }
 
         $inepCodes = [];
@@ -1425,15 +1797,19 @@ class SchoolUnitsRepository
             }
 
             $m['inep_links'] = [];
-            if ($inep !== null && $qeduBase !== '') {
-                $m['inep_links'][] = [
-                    'id' => 'qedu',
-                    'label' => __('QEdu — IDEB, SAEB e ficha da escola'),
-                    'url' => $qeduBase.'/'.$inep,
-                ];
+            if ($inep !== null) {
+                $portalUrl = $this->inepPortalEscolaPublicUrl($inep);
+                if ($portalUrl !== '') {
+                    $m['inep_links'][] = [
+                        'id' => 'inep_portal',
+                        'label' => __('Portal IDEB (INEP) — indicadores e painel pedagógico da escola'),
+                        'url' => $portalUrl,
+                    ];
+                }
             }
 
-            $m['qedu_escola_base_url'] = $qeduBase;
+            $m['inep_portal_escola_base_url'] = trim((string) config('ieducar.inep_geocoding.inep_portal_escola_url_template', ''));
+            $m['qedu_escola_base_url'] = $legacyQedu;
 
             if ($school !== null && $inep !== null) {
                 $m['conciliation'] = $this->conciliarUnidadeLocalComInep($school, $hit);
