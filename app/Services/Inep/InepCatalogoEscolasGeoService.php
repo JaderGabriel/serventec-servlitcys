@@ -7,15 +7,55 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Coordenadas a partir do Catálogo de Escolas (INEP/MEC) via serviço ArcGIS público.
+ * Coordenadas e metadados do Catálogo de Escolas (INEP/MEC) via serviço ArcGIS público.
+ *
+ * Nota: a camada ArcGIS não inclui o valor numérico do IDEB; esse indicador é obtido
+ * em portais como o QEdu (link gerado no repositório do mapa por código INEP).
  *
  * @see https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/inep-data/catalogo-de-escolas
  */
 class InepCatalogoEscolasGeoService
 {
     /**
+     * Ordem e rótulos de exibição para atributos ArcGIS (chaves como no serviço).
+     *
+     * @return list<array{field: string, label: string}>
+     */
+    private function catalogFieldSchema(): array
+    {
+        return [
+            ['field' => 'Escola', 'label' => __('Nome (Catálogo INEP)')],
+            ['field' => 'Código_INEP', 'label' => __('Código INEP')],
+            ['field' => 'UF', 'label' => __('UF')],
+            ['field' => 'Município', 'label' => __('Município')],
+            ['field' => 'Dependência_Administrativa', 'label' => __('Dependência administrativa')],
+            ['field' => 'Categoria_Administrativa', 'label' => __('Categoria administrativa')],
+            ['field' => 'Etapas_e_Modalidade_de_Ensino_O', 'label' => __('Etapas e modalidades oferecidas')],
+            ['field' => 'Porte_da_Escola', 'label' => __('Porte da escola')],
+            ['field' => 'Localização', 'label' => __('Localização (urbana/rural)')],
+            ['field' => 'Localidade_Diferenciada', 'label' => __('Localidade diferenciada')],
+            ['field' => 'Endereço', 'label' => __('Endereço (Catálogo INEP)')],
+            ['field' => 'Telefone', 'label' => __('Telefone (Catálogo INEP)')],
+            ['field' => 'Restrição_de_Atendimento', 'label' => __('Restrição de atendimento')],
+            ['field' => 'Categoria_Escola_Privada', 'label' => __('Categoria escola privada')],
+            ['field' => 'Conveniada_Poder_Público', 'label' => __('Conveniada poder público')],
+            ['field' => 'Regulamentação_pelo_Conselho_de', 'label' => __('Regulamentação pelo conselho de educação')],
+            ['field' => 'Outras_Ofertas_Educacionais', 'label' => __('Outras ofertas educacionais')],
+            ['field' => 'Coordenadas', 'label' => __('Coordenadas declaradas no catálogo')],
+            ['field' => 'Latitude', 'label' => __('Latitude')],
+            ['field' => 'Longitude', 'label' => __('Longitude')],
+        ];
+    }
+
+    /**
      * @param  list<int|string>  $codes  Códigos INEP (8 dígitos habituais)
-     * @return array<int, array{lat: float, lng: float, nome_inep: string}>
+     * @return array<int, array{
+     *   lat: float,
+     *   lng: float,
+     *   nome_inep: string,
+     *   catalog: list<array{field: string, label: string, value: string}>,
+     *   catalog_assoc: array<string, string>
+     * }>
      */
     public function lookupByInepCodes(array $codes): array
     {
@@ -52,12 +92,9 @@ class InepCatalogoEscolasGeoService
                     if (! empty($cached['miss'])) {
                         continue;
                     }
-                    if (isset($cached['lat'], $cached['lng']) && $this->validCoord((float) $cached['lat'], (float) $cached['lng'])) {
-                        $out[$code] = [
-                            'lat' => (float) $cached['lat'],
-                            'lng' => (float) $cached['lng'],
-                            'nome_inep' => (string) ($cached['nome_inep'] ?? ''),
-                        ];
+                    $row = $this->hydrateFromCache($cached);
+                    if ($row !== null) {
+                        $out[$code] = $row;
                     }
 
                     continue;
@@ -85,7 +122,32 @@ class InepCatalogoEscolasGeoService
 
     public function cacheKey(int $code): string
     {
-        return 'inep_geo_v1_'.$code;
+        return 'inep_geo_v2_'.$code;
+    }
+
+    /**
+     * @param  array<string, mixed>  $cached
+     * @return ?array{
+     *   lat: float,
+     *   lng: float,
+     *   nome_inep: string,
+     *   catalog: list<array{field: string, label: string, value: string}>,
+     *   catalog_assoc: array<string, string>
+     * }
+     */
+    private function hydrateFromCache(array $cached): ?array
+    {
+        if (isset($cached['lat'], $cached['lng']) && $this->validCoord((float) $cached['lat'], (float) $cached['lng'])) {
+            return [
+                'lat' => (float) $cached['lat'],
+                'lng' => (float) $cached['lng'],
+                'nome_inep' => (string) ($cached['nome_inep'] ?? ''),
+                'catalog' => is_array($cached['catalog'] ?? null) ? $cached['catalog'] : [],
+                'catalog_assoc' => is_array($cached['catalog_assoc'] ?? null) ? $cached['catalog_assoc'] : [],
+            ];
+        }
+
+        return null;
     }
 
     private function normalizeInepCode(mixed $c): ?int
@@ -108,7 +170,13 @@ class InepCatalogoEscolasGeoService
 
     /**
      * @param  list<int>  $codes
-     * @return array<int, array{lat: float, lng: float, nome_inep: string}>
+     * @return array<int, array{
+     *   lat: float,
+     *   lng: float,
+     *   nome_inep: string,
+     *   catalog: list<array{field: string, label: string, value: string}>,
+     *   catalog_assoc: array<string, string>
+     * }>
      */
     private function fetchFromArcgis(string $url, array $codes): array
     {
@@ -120,7 +188,7 @@ class InepCatalogoEscolasGeoService
                 ->acceptJson()
                 ->get($url, [
                     'where' => $where,
-                    'outFields' => 'Código_INEP,Escola,Latitude,Longitude',
+                    'outFields' => '*',
                     'f' => 'json',
                     'returnGeometry' => 'false',
                 ]);
@@ -145,10 +213,13 @@ class InepCatalogoEscolasGeoService
                 if (! $this->validCoord($lat, $lng)) {
                     continue;
                 }
+                [$catalog, $catalogAssoc] = $this->buildCatalogFromAttributes($attrs);
                 $out[$code] = [
                     'lat' => $lat,
                     'lng' => $lng,
                     'nome_inep' => (string) ($attrs['Escola'] ?? ''),
+                    'catalog' => $catalog,
+                    'catalog_assoc' => $catalogAssoc,
                 ];
             }
 
@@ -158,6 +229,42 @@ class InepCatalogoEscolasGeoService
 
             return [];
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $attrs
+     * @return array{0: list<array{field: string, label: string, value: string}>, 1: array<string, string>}
+     */
+    private function buildCatalogFromAttributes(array $attrs): array
+    {
+        $rows = [];
+        $assoc = [];
+        foreach ($this->catalogFieldSchema() as $def) {
+            $field = $def['field'];
+            if (! array_key_exists($field, $attrs)) {
+                continue;
+            }
+            $raw = $attrs[$field];
+            if ($raw === null || $raw === '') {
+                continue;
+            }
+            if (is_float($raw) || is_int($raw)) {
+                $str = (string) $raw;
+            } else {
+                $str = trim((string) $raw);
+            }
+            if ($str === '') {
+                continue;
+            }
+            $rows[] = [
+                'field' => $field,
+                'label' => $def['label'],
+                'value' => $str,
+            ];
+            $assoc[$field] = $str;
+        }
+
+        return [$rows, $assoc];
     }
 
     private function validCoord(float $lat, float $lng): bool

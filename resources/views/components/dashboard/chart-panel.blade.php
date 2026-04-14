@@ -116,6 +116,7 @@
         <div
             class="relative z-0 isolate p-2 sm:p-4 w-full overflow-x-auto transition-[min-height] duration-200 ease-out"
             :class="[panelBodyClass, zoomUi ? 'touch-none' : '']"
+            :style="panelBodyStyle || null"
         >
             <canvas
                 id="{{ $chartPanelDomId }}-canvas"
@@ -200,7 +201,7 @@
                     </button>
                 </div>
                 <p class="px-4 pt-2 pb-1 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed shrink-0">
-                    {{ __('Desmarque para ocultar temporariamente. Toque de novo na legenda do gráfico também alterna séries (quando visível).') }}
+                    {{ __('Marque ou desmarque para incluir ou excluir categorias ou séries: o gráfico é atualizado com os dados filtrados (não é só esconder a cor). A legenda do gráfico faz o mesmo quando está visível.') }}
                 </p>
                 <ul class="flex-1 overflow-y-auto px-4 py-2 text-sm text-gray-800 dark:text-gray-200 min-h-0">
                     <template x-for="row in filterRows()" :key="row.key + '-' + _filterNonce">

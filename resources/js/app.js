@@ -57,7 +57,9 @@ function mergeCartesianScales(base, extra) {
 }
 
 document.addEventListener("alpine:init", () => {
-    Alpine.data("schoolUnitsMap", (markers) => createSchoolUnitsMap(markers));
+    Alpine.data("schoolUnitsMap", (markers, footnote = null) =>
+        createSchoolUnitsMap(markers, footnote),
+    );
 
     Alpine.data(
         "analyticsTabs",
@@ -218,6 +220,18 @@ document.addEventListener("alpine:init", () => {
             filterModalOpen: false,
             /** Incrementado ao alternar visibilidade (modal/legenda) para o Alpine actualizar os checkboxes. */
             _filterNonce: 0,
+            /** Cópia profunda do payload para filtros (recortar dados em vez de meta.hidden). */
+            _sourcePayload: null,
+            /** Índices de categoria ocultos (true = oculto) — chave = índice no payload original. */
+            _catHidden: {},
+            /** Índices de série ocultos (multi-dataset). */
+            _dsHidden: {},
+            /** Mapeia posição no gráfico filtrado → índice no payload original (uma série). */
+            _visibleSourceIndices: [],
+            /** Idem para várias séries (barras agrupadas, etc.). */
+            _visibleDatasetIndices: [],
+            /** Estilo dinâmico (min-height) para barras horizontais. */
+            panelBodyStyle: "",
             init() {
                 if (!payload?.labels?.length || !payload?.datasets?.length) {
                     return;
@@ -255,6 +269,14 @@ document.addEventListener("alpine:init", () => {
                 this._compact = compact !== false;
                 this.syncLayoutClasses();
                 this._payload = payload;
+                try {
+                    this._sourcePayload =
+                        typeof structuredClone === "function"
+                            ? structuredClone(payload)
+                            : JSON.parse(JSON.stringify(payload));
+                } catch (e) {
+                    this._sourcePayload = payload;
+                }
                 this._exportFilename = exportFilename;
                 this._panelId =
                     typeof panelId === "string" && panelId
@@ -333,31 +355,7 @@ document.addEventListener("alpine:init", () => {
                         const defaultPlugins = {
                             datalabels: {
                                 clip: false,
-                                display: (ctx) => {
-                                    const chart = ctx.chart;
-                                    const type = chart.config.type;
-                                    const n = chart.data.datasets?.length ?? 0;
-                                    if (
-                                        n === 1 &&
-                                        [
-                                            "bar",
-                                            "line",
-                                            "doughnut",
-                                            "pie",
-                                            "polarArea",
-                                        ].includes(type)
-                                    ) {
-                                        return chart.getDataVisibility(
-                                            ctx.dataIndex,
-                                        );
-                                    }
-                                    if (n > 1) {
-                                        return chart.isDatasetVisible(
-                                            ctx.datasetIndex,
-                                        );
-                                    }
-                                    return true;
-                                },
+                                display: () => true,
                                 color: (ctx) => {
                                     const t = ctx.chart.config.type;
                                     if (t === "doughnut" || t === "pie") {
@@ -405,12 +403,8 @@ document.addEventListener("alpine:init", () => {
                                     const t = ctx.chart.config.type;
                                     if (t === "doughnut" || t === "pie") {
                                         const data = ctx.dataset.data;
-                                        const chart = ctx.chart;
                                         const sum = data.reduce(
-                                            (a, b, i) =>
-                                                chart.getDataVisibility(i)
-                                                    ? a + Number(b)
-                                                    : a,
+                                            (a, b) => a + Number(b),
                                             0,
                                         );
                                         const pct = sum
@@ -530,6 +524,16 @@ document.addEventListener("alpine:init", () => {
                         mergedPlugins.legend = {
                             ...(mergedPlugins.legend || {}),
                             onClick: (e, legendItem, legend) => {
+                                if (
+                                    self.filterUi &&
+                                    self._sourcePayload &&
+                                    typeof self.applyLegendFilter ===
+                                        "function"
+                                ) {
+                                    self.applyLegendFilter(legendItem);
+                                    self._filterNonce++;
+                                    return;
+                                }
                                 if (typeof userLegendOnClick === "function") {
                                     userLegendOnClick.call(
                                         legend.chart,
@@ -780,34 +784,219 @@ document.addEventListener("alpine:init", () => {
                         requestAnimationFrame(() => {
                             this.applyDensityOptions();
                             this.syncLayoutClasses();
+                            if (this.chart && this._sourcePayload) {
+                                this.rebuildVisibleSourceIndices();
+                                this.syncChartBodyMinHeight();
+                            }
                         });
                     } catch (e) {
                         console.error("chartPanel", e);
                     }
                 });
             },
+            rebuildVisibleSourceIndices() {
+                const src = this._sourcePayload;
+                if (!src?.labels?.length) {
+                    this._visibleSourceIndices = [];
+                    return;
+                }
+                const out = [];
+                for (let i = 0; i < src.labels.length; i++) {
+                    if (!this._catHidden[i]) {
+                        out.push(i);
+                    }
+                }
+                this._visibleSourceIndices = out;
+            },
+            applySourceDataFilter() {
+                const c = this.chart;
+                const src = this._sourcePayload;
+                if (!c || !src?.datasets?.length) {
+                    return;
+                }
+                const t = src.type;
+                const nDs = src.datasets.length;
+
+                if (nDs > 1) {
+                    const kept = [];
+                    for (let j = 0; j < nDs; j++) {
+                        if (this._dsHidden[j]) {
+                            continue;
+                        }
+                        try {
+                            kept.push(
+                                JSON.parse(
+                                    JSON.stringify(src.datasets[j]),
+                                ),
+                            );
+                        } catch (e) {
+                            kept.push({ ...src.datasets[j] });
+                        }
+                    }
+                    c.data.datasets = kept;
+                    c.data.labels = src.labels
+                        ? [...src.labels]
+                        : c.data.labels;
+                    this.rebuildVisibleDatasetIndices();
+                    try {
+                        chartResetZoomView(c);
+                    } catch (e) {
+                        /* ignore */
+                    }
+                    c.update("none");
+                    this.applyDensityOptions();
+                    this.syncChartBodyMinHeight();
+                    return;
+                }
+
+                const ds0 = src.datasets[0];
+                this.rebuildVisibleSourceIndices();
+                const vis = this._visibleSourceIndices;
+                const pick = (v) => {
+                    if (!Array.isArray(v)) {
+                        return v;
+                    }
+                    return vis.map((i) => v[i]);
+                };
+
+                if (
+                    [
+                        "bar",
+                        "line",
+                        "scatter",
+                        "doughnut",
+                        "pie",
+                        "polarArea",
+                    ].includes(t)
+                ) {
+                    if (!vis.length) {
+                        c.data.labels = [];
+                        c.data.datasets[0].data = [];
+                        if (
+                            Array.isArray(c.data.datasets[0].backgroundColor)
+                        ) {
+                            c.data.datasets[0].backgroundColor = [];
+                        }
+                        if (Array.isArray(c.data.datasets[0].borderColor)) {
+                            c.data.datasets[0].borderColor = [];
+                        }
+                    } else {
+                        c.data.labels = vis.map((i) => src.labels[i]);
+                        c.data.datasets[0].data = vis.map((i) => ds0.data[i]);
+                        if (ds0.backgroundColor !== undefined) {
+                            c.data.datasets[0].backgroundColor = pick(
+                                ds0.backgroundColor,
+                            );
+                        }
+                        if (ds0.borderColor !== undefined) {
+                            c.data.datasets[0].borderColor = pick(
+                                ds0.borderColor,
+                            );
+                        }
+                        if (ds0.hoverBackgroundColor !== undefined) {
+                            c.data.datasets[0].hoverBackgroundColor = pick(
+                                ds0.hoverBackgroundColor,
+                            );
+                        }
+                    }
+                }
+
+                try {
+                    chartResetZoomView(c);
+                } catch (e) {
+                    /* ignore */
+                }
+                c.update("none");
+                this.rebuildVisibleDatasetIndices();
+                this.applyDensityOptions();
+                this.syncChartBodyMinHeight();
+            },
+            rebuildVisibleDatasetIndices() {
+                const src = this._sourcePayload;
+                if (!src?.datasets || src.datasets.length <= 1) {
+                    this._visibleDatasetIndices = [];
+                    return;
+                }
+                const out = [];
+                for (let j = 0; j < src.datasets.length; j++) {
+                    if (!this._dsHidden[j]) {
+                        out.push(j);
+                    }
+                }
+                this._visibleDatasetIndices = out;
+            },
+            applyLegendFilter(legendItem) {
+                const src = this._sourcePayload;
+                if (!src) {
+                    return;
+                }
+                if (src.datasets.length === 1) {
+                    const fi = legendItem.index;
+                    const srcIdx = this._visibleSourceIndices[fi];
+                    if (srcIdx === undefined) {
+                        return;
+                    }
+                    this._catHidden[srcIdx] = !this._catHidden[srcIdx];
+                } else {
+                    const di = legendItem.datasetIndex;
+                    const origJ = this._visibleDatasetIndices[di];
+                    if (origJ === undefined) {
+                        return;
+                    }
+                    this._dsHidden[origJ] = !this._dsHidden[origJ];
+                }
+                this.applySourceDataFilter();
+            },
+            syncChartBodyMinHeight() {
+                const src = this._sourcePayload;
+                if (!src?.labels) {
+                    this.panelBodyStyle = "";
+                    return;
+                }
+                const isH =
+                    src.options &&
+                    typeof src.options === "object" &&
+                    src.options.indexAxis === "y" &&
+                    src.type === "bar";
+                const onChart =
+                    this.chart?.data?.labels &&
+                    Array.isArray(this.chart.data.labels)
+                        ? this.chart.data.labels.length
+                        : 0;
+                const n =
+                    onChart > 0
+                        ? onChart
+                        : src.labels.length;
+                if (isH && n > 0) {
+                    const h = Math.min(4000, Math.max(300, 72 + n * 44));
+                    this.panelBodyStyle = `min-height: ${h}px`;
+                } else {
+                    this.panelBodyStyle = isH ? "min-height: 280px" : "";
+                }
+            },
             syncLayoutClasses() {
                 const c = this._compact;
                 let body =
-                    "p-2 sm:p-4 relative w-full overflow-x-auto overflow-y-hidden transition-all duration-200 ease-out ";
+                    "p-2 sm:p-4 relative w-full overflow-x-auto overflow-y-auto transition-all duration-200 ease-out ";
                 body += c
                     ? "min-h-[220px] h-[min(22rem,calc(100vw-2.5rem))] sm:h-72 md:min-h-[18rem]"
-                    : "min-h-[min(28rem,70vh)] h-[min(28rem,70vh)]";
+                    : "min-h-[min(24rem,55vh)] w-full";
                 this.panelBodyClass = body;
 
                 let cv =
                     "block w-full max-w-full chart-panel-canvas transition-all duration-200 ";
                 cv += c
                     ? "max-h-[min(20rem,55vw)] sm:max-h-64"
-                    : "min-h-[16rem] h-full max-h-none";
+                    : "min-h-[14rem] w-full max-h-none";
                 this.canvasExtraClass = cv;
             },
             legendRows() {
-                if (!this.chart?.data?.labels) {
+                const src = this._sourcePayload;
+                if (!src?.labels?.length || !src?.datasets?.[0]) {
                     return [];
                 }
-                const labels = this.chart.data.labels;
-                const ds0 = this.chart.data.datasets[0];
+                const labels = src.labels;
+                const ds0 = src.datasets[0];
                 const data = ds0?.data ?? [];
                 return labels.map((label, i) => {
                     const v = data[i];
@@ -830,52 +1019,48 @@ document.addEventListener("alpine:init", () => {
             },
             filterRows() {
                 void this._filterNonce;
-                const c = this.chart;
-                if (!c) {
+                const src = this._sourcePayload;
+                if (!src?.datasets?.length) {
                     return [];
                 }
-                const dsCount = c.data.datasets.length;
-                const labels = c.data.labels || [];
-                if (dsCount === 1) {
+                const dsCount = src.datasets.length;
+                const labels = src.labels || [];
+                if (dsCount === 1 && labels.length) {
                     return labels.map((label, i) => {
                         const idx = Number(i);
                         return {
                             key: `c-${idx}`,
                             label: String(label ?? ""),
-                            visible: c.getDataVisibility(idx),
+                            visible: !this._catHidden[idx],
                             kind: "category",
                             index: idx,
                         };
                     });
                 }
 
-                return c.data.datasets.map((ds, di) => {
+                return src.datasets.map((ds, di) => {
                     const d = Number(di);
                     return {
                         key: `d-${d}`,
                         label: String(ds.label ?? `Série ${d + 1}`),
-                        visible: c.isDatasetVisible(d),
+                        visible: !this._dsHidden[d],
                         kind: "dataset",
                         index: d,
                     };
                 });
             },
             toggleFilterRow(row) {
-                const c = this.chart;
-                if (!c || !row) {
+                if (!row || !this._sourcePayload) {
                     return;
                 }
                 if (row.kind === "category") {
                     const idx = Number(row.index);
-                    c.toggleDataVisibility(idx);
+                    this._catHidden[idx] = !this._catHidden[idx];
                 } else if (row.kind === "dataset") {
                     const di = Number(row.index);
-                    c.setDatasetVisibility(
-                        di,
-                        !c.isDatasetVisible(di),
-                    );
+                    this._dsHidden[di] = !this._dsHidden[di];
                 }
-                c.update("none");
+                this.applySourceDataFilter();
                 this._filterNonce++;
             },
             zoomIn() {

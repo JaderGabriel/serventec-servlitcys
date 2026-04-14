@@ -934,6 +934,8 @@ class SchoolUnitsRepository
             $finalMarkers[] = $m;
         }
 
+        $finalMarkers = $this->enrichMarkersWithInepCatalogAndLinks($finalMarkers, $inepEnabled);
+
         $geoSource = 'none';
         if ($dbCount > 0 && $inepCount > 0) {
             $geoSource = 'mixed';
@@ -967,6 +969,121 @@ class SchoolUnitsRepository
             'geo_source' => $geoSource,
             'geo_attribution' => $attribution,
             'geo_distribution' => $geoDistribution,
+        ];
+    }
+
+    /**
+     * Catálogo INEP (ArcGIS), links QEdu e alertas de conciliação com a base local.
+     *
+     * @param  list<array<string, mixed>>  $markers
+     * @return list<array<string, mixed>>
+     */
+    private function enrichMarkersWithInepCatalogAndLinks(array $markers, bool $inepEnabled): array
+    {
+        $enrich = filter_var(config('ieducar.inep_geocoding.enrich_markers_with_inep_catalog', true), FILTER_VALIDATE_BOOLEAN);
+        $qeduBase = (string) config('ieducar.inep_geocoding.qedu_escola_base_url', 'https://www.qedu.org.br/escola');
+        $qeduBase = $qeduBase !== '' ? rtrim($qeduBase, '/') : '';
+
+        $inepCodes = [];
+        foreach ($markers as $m) {
+            $school = $m['school'] ?? null;
+            if (! is_array($school)) {
+                continue;
+            }
+            $inep = isset($school['inep']) && is_numeric($school['inep']) ? (int) $school['inep'] : null;
+            if ($inep !== null && $inep > 0) {
+                $inepCodes[$inep] = true;
+            }
+        }
+        $codesList = array_keys($inepCodes);
+
+        $hits = [];
+        if ($enrich && $inepEnabled && $codesList !== []) {
+            $hits = $this->inepGeo->lookupByInepCodes($codesList);
+        }
+
+        $out = [];
+        foreach ($markers as $m) {
+            $school = isset($m['school']) && is_array($m['school']) ? $m['school'] : null;
+            $inep = null;
+            if ($school !== null && isset($school['inep']) && is_numeric($school['inep'])) {
+                $inep = (int) $school['inep'];
+                if ($inep <= 0) {
+                    $inep = null;
+                }
+            }
+
+            $hit = $inep !== null ? ($hits[$inep] ?? null) : null;
+
+            $m['inep_catalog'] = is_array($hit) ? ($hit['catalog'] ?? []) : [];
+            $m['inep_catalog_assoc'] = is_array($hit) ? ($hit['catalog_assoc'] ?? []) : [];
+
+            $m['inep_links'] = [];
+            if ($inep !== null && $qeduBase !== '') {
+                $m['inep_links'][] = [
+                    'id' => 'qedu',
+                    'label' => __('QEdu — IDEB, SAEB e ficha da escola'),
+                    'url' => $qeduBase.'/'.$inep,
+                ];
+            }
+
+            if ($school !== null && $inep !== null) {
+                $m['conciliation'] = $this->conciliarUnidadeLocalComInep($school, $hit);
+            } else {
+                $m['conciliation'] = null;
+            }
+
+            $out[] = $m;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  array<string, mixed>  $school
+     * @param  array<string, mixed>|null  $inepHit
+     * @return array<string, mixed>
+     */
+    private function conciliarUnidadeLocalComInep(array $school, ?array $inepHit): array
+    {
+        $nomeLocal = trim((string) ($school['nome'] ?? ''));
+        $nomeCat = $inepHit !== null ? trim((string) ($inepHit['nome_inep'] ?? '')) : '';
+        $norm = static function (string $s): string {
+            $s = mb_strtolower($s, 'UTF-8');
+            $s = preg_replace('/\s+/u', ' ', $s) ?? $s;
+
+            return trim($s);
+        };
+        $nomesCoincidem = $nomeLocal !== '' && $nomeCat !== ''
+            && $norm($nomeLocal) === $norm($nomeCat);
+
+        $assoc = is_array($inepHit) ? ($inepHit['catalog_assoc'] ?? []) : [];
+        $telLoc = trim((string) ($school['telefone'] ?? ''));
+        $telCat = trim((string) ($assoc['Telefone'] ?? ''));
+        $endLoc = trim((string) ($school['endereco'] ?? ''));
+        $endCat = trim((string) ($assoc['Endereço'] ?? ''));
+
+        $digits = static function (string $s): string {
+            return preg_replace('/\D+/', '', $s) ?? '';
+        };
+        $telIguais = $telLoc !== '' && $telCat !== ''
+            && ($digits($telLoc) === $digits($telCat) || str_contains($telLoc, $telCat) || str_contains($telCat, $telLoc));
+
+        $endIguais = $endLoc !== '' && $endCat !== ''
+            && (mb_stripos($endLoc, mb_substr($endCat, 0, 12, 'UTF-8'), 0, 'UTF-8') !== false
+                || mb_stripos($endCat, mb_substr($endLoc, 0, 12, 'UTF-8'), 0, 'UTF-8') !== false);
+
+        return [
+            'nomes_coincidem' => $nomesCoincidem,
+            'nome_local' => $nomeLocal !== '' ? $nomeLocal : null,
+            'nome_catalogo' => $nomeCat !== '' ? $nomeCat : null,
+            'telefones_coincidem' => $telIguais,
+            'telefone_local' => $telLoc !== '' ? $telLoc : null,
+            'telefone_catalogo' => $telCat !== '' ? $telCat : null,
+            'enderecos_coincidem' => $endIguais,
+            'endereco_local' => $endLoc !== '' ? $endLoc : null,
+            'endereco_catalogo' => $endCat !== '' ? $endCat : null,
+            'catalogo_disponivel' => $inepHit !== null && ($inepHit['catalog'] ?? []) !== [],
         ];
     }
 

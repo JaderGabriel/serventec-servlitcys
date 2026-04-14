@@ -15,6 +15,7 @@
     $topErr = is_array($schoolUnitsData) ? ($schoolUnitsData['error'] ?? null) : null;
     $inepCatalogUrl = 'https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/inep-data/catalogo-de-escolas';
     $markerCount = is_array($markers) ? count($markers) : 0;
+    $mapPopupFootnote = __('O IDEB e o SAEB não são fornecidos pelo serviço ArcGIS; use o botão do QEdu ou o portal do INEP para indicadores oficiais por escola.');
 @endphp
 
 <div class="space-y-6">
@@ -44,7 +45,7 @@
                 <h3 class="text-base font-semibold text-emerald-950 dark:text-emerald-100">{{ __('Mapa das unidades escolares') }}</h3>
                 <p class="mt-1 text-xs text-emerald-900/85 dark:text-emerald-200/90 leading-relaxed">
                     @if ($markerCount > 0)
-                        {{ __('Clique num marcador para ver INEP, contacto, gestor, matrículas e vagas (quando calculáveis) e a origem da coordenada.') }}
+                        {{ __('Clique num marcador para ver dados da base local, catálogo INEP (ArcGIS) quando existir, conciliação de nomes/contactos e o atalho ao QEdu (IDEB/SAEB).') }}
                     @else
                         {{ __('Neste momento não há coordenadas para posicionar escolas. Verifique latitude/longitude na tabela escola ou código INEP para o Catálogo INEP.') }}
                     @endif
@@ -53,7 +54,7 @@
             @if ($markerCount > 0)
                 <div
                     class="relative z-0"
-                    x-data="schoolUnitsMap(@js($markers))"
+                    x-data="schoolUnitsMap(@js($markers), @js($mapPopupFootnote))"
                 >
                     <div
                         x-ref="mapContainer"

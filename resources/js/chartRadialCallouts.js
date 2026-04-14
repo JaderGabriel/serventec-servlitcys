@@ -37,12 +37,7 @@ export const radialCalloutsPlugin = {
         }
 
         const sumRaw =
-            data.reduce((a, b, i) => {
-                if (!chart.getDataVisibility(i)) {
-                    return a;
-                }
-                return a + Math.abs(Number(b) || 0);
-            }, 0) || 1;
+            data.reduce((a, b) => a + Math.abs(Number(b) || 0), 0) || 1;
 
         const dark = document.documentElement.classList.contains("dark");
         const fillBox = dark ? "rgba(17,24,39,0.94)" : "rgba(255,255,255,0.96)";
@@ -57,9 +52,6 @@ export const radialCalloutsPlugin = {
         ctx.lineWidth = 1;
 
         meta.data.forEach((arc, i) => {
-            if (!chart.getDataVisibility(i)) {
-                return;
-            }
             if (arc.skip || data[i] == null) {
                 return;
             }

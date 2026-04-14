@@ -7,6 +7,22 @@ function escapeHtml(s) {
     return d.innerHTML;
 }
 
+function safeExternalHref(url) {
+    const s = String(url ?? "").trim();
+    if (!s.startsWith("https://") && !s.startsWith("http://")) {
+        return "#";
+    }
+    try {
+        const u = new URL(s);
+        if (u.protocol === "https:" || u.protocol === "http:") {
+            return u.href;
+        }
+    } catch {
+        /* ignore */
+    }
+    return "#";
+}
+
 function nf(n) {
     if (n === null || n === undefined || Number.isNaN(Number(n))) {
         return "—";
@@ -28,15 +44,94 @@ function markerStrokeFill(mk) {
     return { color: "#4f46e5", fill: "#818cf8" };
 }
 
-function buildSchoolPopupHtml(mk) {
-    const label = escapeHtml(mk.label || "—");
+function buildConciliationHtml(c) {
+    if (!c || typeof c !== "object") {
+        return "";
+    }
+    const parts = [];
+    if (
+        c.catalogo_disponivel &&
+        c.nome_local &&
+        c.nome_catalogo &&
+        c.nomes_coincidem === false
+    ) {
+        parts.push(
+            `<p class="text-[11px] text-amber-900 dark:text-amber-100/95 leading-snug"><span class="font-semibold">${escapeHtml("Atenção:")}</span> ${escapeHtml("o nome na base local difere do nome no Catálogo INEP — confira antes de cruzar dados.")}</p>`,
+        );
+    }
+    if (
+        c.telefone_local &&
+        c.telefone_catalogo &&
+        c.telefones_coincidem === false
+    ) {
+        parts.push(
+            `<p class="text-[11px] text-amber-900 dark:text-amber-100/95 leading-snug">${escapeHtml("Telefone local e do catálogo não coincidem textualmente.")}</p>`,
+        );
+    }
+    if (
+        c.endereco_local &&
+        c.endereco_catalogo &&
+        c.enderecos_coincidem === false
+    ) {
+        parts.push(
+            `<p class="text-[11px] text-amber-900 dark:text-amber-100/95 leading-snug">${escapeHtml("Endereço local e do catálogo parecem diferentes — valide no campo.")}</p>`,
+        );
+    }
+    if (parts.length === 0) {
+        return "";
+    }
+    return `<div class="mb-2 rounded-md border border-amber-200/90 bg-amber-50/90 dark:border-amber-800/60 dark:bg-amber-950/40 px-2 py-1.5 space-y-1">${parts.join("")}</div>`;
+}
+
+function buildCatalogSection(rows) {
+    if (!Array.isArray(rows) || rows.length === 0) {
+        return "";
+    }
+    let block = `<div class="mt-2 border-t border-slate-200 dark:border-slate-600 pt-2">`;
+    block += `<h5 class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">${escapeHtml("Catálogo INEP (ArcGIS)")}</h5>`;
+    block += `<dl class="mt-1.5 space-y-1 text-xs text-slate-800 dark:text-slate-200">`;
+    for (const row of rows) {
+        const lab = escapeHtml(row?.label ?? "");
+        const val = escapeHtml(row?.value ?? "");
+        block += `<div class="flex gap-2 justify-between"><dt class="text-slate-500 dark:text-slate-400 shrink-0 max-w-[40%]">${lab}</dt><dd class="text-right min-w-0 break-words">${val}</dd></div>`;
+    }
+    block += `</dl></div>`;
+    return block;
+}
+
+function buildLinksSection(links) {
+    if (!Array.isArray(links) || links.length === 0) {
+        return "";
+    }
+    let block = `<div class="mt-2 flex flex-col gap-1.5">`;
+    for (const ln of links) {
+        const href = safeExternalHref(ln?.url);
+        const label = escapeHtml(ln?.label ?? "Link");
+        block += `<a href="${href}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-2.5 py-1.5 text-center text-[11px] font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">${label}</a>`;
+    }
+    block += `</div>`;
+    return block;
+}
+
+function buildSchoolPopupHtml(mk, footnote) {
     const meta = escapeHtml(mk.meta || "");
     const s = mk.school;
+    const conc = buildConciliationHtml(mk.conciliation);
+
     if (!s || typeof s !== "object") {
-        return meta
-            ? `<div class="text-sm font-medium">${label}</div><p class="mt-1.5 text-xs text-gray-600 dark:text-gray-400 leading-snug">${meta}</p>`
-            : `<div class="text-sm">${label}</div>`;
+        const label = escapeHtml(mk.label || "—");
+        let body = `<div class="text-sm font-medium">${label}</div>`;
+        if (meta) {
+            body += `<p class="mt-1.5 text-xs text-gray-600 dark:text-gray-400 leading-snug">${meta}</p>`;
+        }
+        body += buildCatalogSection(mk.inep_catalog);
+        body += buildLinksSection(mk.inep_links);
+        if (footnote) {
+            body += `<p class="mt-2 border-t border-gray-200 dark:border-gray-600 pt-2 text-[10px] text-gray-500 dark:text-gray-400 leading-snug">${escapeHtml(footnote)}</p>`;
+        }
+        return body;
     }
+
     const nome = escapeHtml(s.nome || mk.label || "—");
     const status = escapeHtml(s.status_label || "");
     const inep =
@@ -53,40 +148,56 @@ function buildSchoolPopupHtml(mk) {
     const gest = s.gestor ? escapeHtml(s.gestor) : "—";
     const end = s.endereco ? escapeHtml(s.endereco) : "—";
 
-    const rows = [
+    const localRows = [
         ["INEP", inep],
-        ["Matrículas", mat],
+        ["Matrículas (filtros)", mat],
         ["Capacidade (turmas)", cap],
         ["Vagas disponíveis", vag],
-        ["Telefone", tel],
+        ["Telefone (base)", tel],
         ["E-mail", em],
         ["Gestor", gest],
-        ["Endereço", end],
+        ["Endereço (base)", end],
     ];
 
     let body = `<div class="text-sm font-semibold text-gray-900 dark:text-gray-100">${nome}</div>`;
     if (status) {
         body += `<p class="mt-0.5 text-xs font-medium text-gray-700 dark:text-gray-300">${status}</p>`;
     }
-    body += `<dl class="mt-2 space-y-1 text-xs text-gray-800 dark:text-gray-200">`;
-    for (const [k, v] of rows) {
+    body += conc;
+    body += `<h5 class="mt-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">${escapeHtml("Base local (i-Educar)")}</h5>`;
+    body += `<dl class="mt-1 space-y-1 text-xs text-gray-800 dark:text-gray-200">`;
+    for (const [k, v] of localRows) {
         body += `<div class="flex gap-2 justify-between"><dt class="text-gray-500 dark:text-gray-400 shrink-0">${escapeHtml(k)}</dt><dd class="text-right min-w-0 break-words">${v}</dd></div>`;
     }
     body += `</dl>`;
+
+    body += buildCatalogSection(mk.inep_catalog);
+    body += buildLinksSection(mk.inep_links);
+
     if (meta) {
         body += `<p class="mt-2 border-t border-gray-200 dark:border-gray-600 pt-2 text-[11px] text-gray-500 dark:text-gray-400 leading-snug">${meta}</p>`;
+    }
+    if (footnote) {
+        body += `<p class="mt-2 text-[10px] text-gray-500 dark:text-gray-400 leading-snug">${escapeHtml(footnote)}</p>`;
     }
     return body;
 }
 
 /**
  * Mapa OSM (Leaflet) para unidades escolares com coordenadas.
+ * @param {unknown} markersInput
+ * @param {unknown} footnoteInput
  */
-export default function createSchoolUnitsMap(markersInput) {
+export default function createSchoolUnitsMap(markersInput, footnoteInput) {
     const markers = Array.isArray(markersInput) ? markersInput : [];
+    const footnote =
+        typeof footnoteInput === "string" && footnoteInput.trim() !== ""
+            ? footnoteInput
+            : null;
 
     return {
         markers,
+        footnote,
         map: null,
         group: null,
         booted: false,
@@ -175,7 +286,7 @@ export default function createSchoolUnitsMap(markersInput) {
                     return;
                 }
                 const { color, fill } = markerStrokeFill(mk);
-                const popupHtml = buildSchoolPopupHtml(mk);
+                const popupHtml = buildSchoolPopupHtml(mk, this.footnote);
                 L.circleMarker([mk.lat, mk.lng], {
                     radius: 8,
                     color,

@@ -397,8 +397,12 @@ return [
     |--------------------------------------------------------------------------
     |
     | Quando a tabela escola não tem latitude/longitude, o painel pode consultar
-    | o serviço ArcGIS público do INEP usando o código INEP da escola (coluna
-    | detectada automaticamente: codigo_inep, inep, …).
+    | um serviço ArcGIS público (query por Código_INEP) usando o código INEP da
+    | escola (coluna detectada automaticamente: codigo_inep, inep, …).
+    |
+    | Atenção: o URL padrão abaixo aponta para uma camada com poucos milhares de
+    | feições (subconjunto / recorte — não cobre todas as escolas do país). Se o
+    | INEP publicar outra Feature Layer nacional, defina IEDUCAR_INEP_ARCGIS_QUERY_URL.
     |
     */
 
@@ -410,6 +414,13 @@ return [
         ),
         'cache_ttl_seconds' => max(3600, (int) env('IEDUCAR_INEP_GEO_CACHE_TTL', 2592000)),
         'batch_size' => max(5, min(100, (int) env('IEDUCAR_INEP_GEO_BATCH_SIZE', 40))),
+        /** Quando true, consulta o ArcGIS por INEP para preencher o catálogo no popup (mesmo com coordenadas só na base). */
+        'enrich_markers_with_inep_catalog' => filter_var(env('IEDUCAR_INEP_ENRICH_MAP_MARKERS', true), FILTER_VALIDATE_BOOL),
+        /** Base para link QEdu (ficha da escola, IDEB/SAEB divulgados). Sem barra final. */
+        'qedu_escola_base_url' => rtrim((string) env(
+            'IEDUCAR_QEDU_ESCOLA_BASE_URL',
+            'https://www.qedu.org.br/escola'
+        ), '/'),
     ],
 
     /*
