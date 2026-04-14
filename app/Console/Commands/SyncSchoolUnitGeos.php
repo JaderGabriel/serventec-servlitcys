@@ -7,6 +7,7 @@ use App\Models\SchoolUnitGeo;
 use App\Services\CityDataConnection;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
+use Illuminate\Database\QueryException;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -16,6 +17,32 @@ use Illuminate\Support\Facades\DB;
 #[Description('Sincroniza coordenadas locais das escolas a partir do iEducar (por cidade)')]
 class SyncSchoolUnitGeos extends Command
 {
+    private function resolveEscolaNameColumnByProbe($db, string $escolaT, array $candidates): ?string
+    {
+        $candidates = array_values(array_unique(array_filter(array_map(
+            fn ($v) => is_string($v) ? trim($v) : '',
+            $candidates
+        ))));
+
+        foreach ($candidates as $col) {
+            try {
+                // Query mínima: se a coluna não existir, Postgres responde rápido com 42703.
+                $db->table($escolaT.' as e')->select('e.'.$col)->limit(1)->get();
+
+                return $col;
+            } catch (QueryException $e) {
+                $sqlState = (string) ($e->errorInfo[0] ?? '');
+                if ($sqlState === '42703') { // undefined_column
+                    continue;
+                }
+                // Outro erro (conexão, schema, permissões etc.) deve propagar.
+                throw $e;
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Execute the console command.
      */
@@ -56,13 +83,16 @@ class SyncSchoolUnitGeos extends Command
                     }
 
                     $eId = (string) config('ieducar.columns.escola.id');
-                    $eName = IeducarColumnInspector::firstExistingColumn($db, $escolaT, array_filter([
+                    $eName = $this->resolveEscolaNameColumnByProbe($db, $escolaT, [
                         (string) config('ieducar.columns.escola.name'),
                         'nm_escola',
                         'nome_escola',
                         'fantasia',
+                        'nm_fantasia',
+                        'razao_social',
+                        'descricao',
                         'nome',
-                    ]), $city);
+                    ]);
                     if ($eName === null) {
                         $this->warn(' - coluna de nome da escola não encontrada na tabela escola.');
 

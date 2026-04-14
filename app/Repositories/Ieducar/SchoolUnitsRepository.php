@@ -154,6 +154,41 @@ class SchoolUnitsRepository
     }
 
     /**
+     * Em PostgreSQL (Portabilis/iEducar 2.x), algumas bases não têm coluna `escola.nome` e expõem o nome via
+     * função `relatorio.get_nome_escola(cod_escola)`. Este helper centraliza o SQL usado no dashboard para
+     * alinhar com a forma como os filtros carregam as escolas (FilterOptionsService).
+     *
+     * @return array{expr: string, order_expr: string}
+     */
+    private function escolaNomeSql(Connection $db, City $city, string $escolaAlias, string $escolaIdCol): array
+    {
+        $g = $db->getQueryGrammar();
+        $wAlias = $g->wrap($escolaAlias);
+        $wId = $g->wrap($escolaIdCol);
+
+        if ($db->getDriverName() === 'pgsql'
+            && filter_var(config('ieducar.pgsql_use_relatorio_escola_nome', true), FILTER_VALIDATE_BOOLEAN)) {
+            $relSchema = (string) config('ieducar.pgsql_schema_relatorio', 'relatorio');
+            $relSchema = $relSchema !== '' ? trim($relSchema) : 'relatorio';
+            $fn = $g->wrapTable($relSchema).'.get_nome_escola';
+            $expr = $fn.'('.$wAlias.'.'.$wId.')';
+
+            return [
+                'expr' => $expr,
+                'order_expr' => $expr,
+            ];
+        }
+
+        $eName = (string) config('ieducar.columns.escola.name');
+        $expr = $wAlias.'.'.$g->wrap($eName);
+
+        return [
+            'expr' => $expr,
+            'order_expr' => $expr,
+        ];
+    }
+
+    /**
      * @return list<int>
      */
     private function yearsNumericScope(Connection $db, City $city, IeducarFilterState $filters): array
@@ -288,7 +323,7 @@ class SchoolUnitsRepository
             $eCol = $tc['escola'];
             $escolaT = IeducarSchema::resolveTable('escola', $city);
             $eId = (string) config('ieducar.columns.escola.id');
-            $eName = (string) config('ieducar.columns.escola.name');
+            $en = $this->escolaNomeSql($db, $city, 'e', $eId);
 
             $g = $db->getQueryGrammar();
             $wE = $g->wrap('e');
@@ -300,10 +335,10 @@ class SchoolUnitsRepository
             $q = $db->table($turma.' as t')
                 ->join($escolaT.' as e', 't.'.$eCol, '=', 'e.'.$eId)
                 ->whereIn('t.'.$yCol, $years)
-                ->selectRaw($wE.'.'.$g->wrap($eName).' as escola_nome')
+                ->selectRaw('MAX('.$en['expr'].') as escola_nome')
                 ->selectRaw($anoSelect.' as ano')
-                ->groupBy('e.'.$eId, 'e.'.$eName, 't.'.$yCol)
-                ->orderBy($wE.'.'.$g->wrap($eName))
+                ->groupBy('e.'.$eId, 't.'.$yCol)
+                ->orderByRaw('MAX('.$en['order_expr'].')')
                 ->orderBy('ano');
 
             MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
@@ -345,7 +380,7 @@ class SchoolUnitsRepository
             $mAtivo = (string) config('ieducar.columns.matricula.ativo');
             $escolaT = IeducarSchema::resolveTable('escola', $city);
             $eId = (string) config('ieducar.columns.escola.id');
-            $eName = (string) config('ieducar.columns.escola.name');
+            $en = $this->escolaNomeSql($db, $city, 'e', $eId);
             $eActive = IeducarColumnInspector::firstExistingColumn($db, $escolaT, array_filter([
                 (string) config('ieducar.columns.escola.active'),
                 'ativo',
@@ -362,15 +397,15 @@ class SchoolUnitsRepository
 
             if ($eActive !== null) {
                 $q->selectRaw('e.'.$eId.' as eid')
-                    ->selectRaw('e.'.$eName.' as escola_nome')
+                    ->selectRaw('MAX('.$en['expr'].') as escola_nome')
                     ->selectRaw('e.'.$eActive.' as escola_ativo')
                     ->selectRaw('COUNT(*) as c')
-                    ->groupBy('e.'.$eId, 'e.'.$eName, 'e.'.$eActive);
+                    ->groupBy('e.'.$eId, 'e.'.$eActive);
             } else {
                 $q->selectRaw('e.'.$eId.' as eid')
-                    ->selectRaw('e.'.$eName.' as escola_nome')
+                    ->selectRaw('MAX('.$en['expr'].') as escola_nome')
                     ->selectRaw('COUNT(*) as c')
-                    ->groupBy('e.'.$eId, 'e.'.$eName);
+                    ->groupBy('e.'.$eId);
             }
 
             $rows = $q->orderByDesc('c')->limit(200)->get();
@@ -442,7 +477,7 @@ class SchoolUnitsRepository
             $mAtivo = (string) config('ieducar.columns.matricula.ativo');
             $escolaT = IeducarSchema::resolveTable('escola', $city);
             $eId = (string) config('ieducar.columns.escola.id');
-            $eName = (string) config('ieducar.columns.escola.name');
+            $en = $this->escolaNomeSql($db, $city, 'e', $eId);
 
             $latCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
                 'latitude', 'lat', 'geo_lat', 'latitude_graus',
@@ -470,7 +505,7 @@ class SchoolUnitsRepository
             $g = $db->getQueryGrammar();
             $we = $g->wrap('e');
             $q->selectRaw($we.'.'.$g->wrap($eId).' as eid')
-                ->selectRaw('MAX('.$we.'.'.$g->wrap($eName).') as escola_nome');
+                ->selectRaw('MAX('.$en['expr'].') as escola_nome');
             if ($latCol !== null) {
                 $q->selectRaw('MAX('.$we.'.'.$g->wrap($latCol).') as la');
             }
@@ -482,7 +517,7 @@ class SchoolUnitsRepository
             }
             $q->groupBy('e.'.$eId);
 
-            $rows = $q->orderByRaw('MAX('.$we.'.'.$g->wrap($eName).')')->limit(200)->get();
+            $rows = $q->orderByRaw('MAX('.$en['order_expr'].')')->limit(200)->get();
 
             return $rows->all();
         } catch (QueryException|\Throwable) {
@@ -500,7 +535,7 @@ class SchoolUnitsRepository
         try {
             $escolaT = IeducarSchema::resolveTable('escola', $city);
             $eId = (string) config('ieducar.columns.escola.id');
-            $eName = (string) config('ieducar.columns.escola.name');
+            $en = $this->escolaNomeSql($db, $city, 'e', $eId);
 
             $latCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
                 'latitude', 'lat', 'geo_lat', 'latitude_graus',
@@ -532,7 +567,7 @@ class SchoolUnitsRepository
             $g = $db->getQueryGrammar();
             $we = $g->wrap('e');
             $q->selectRaw($we.'.'.$g->wrap($eId).' as eid')
-                ->selectRaw($we.'.'.$g->wrap($eName).' as escola_nome');
+                ->selectRaw($en['expr'].' as escola_nome');
             if ($latCol !== null) {
                 $q->selectRaw($we.'.'.$g->wrap($latCol).' as la');
             }
@@ -547,7 +582,7 @@ class SchoolUnitsRepository
                 $q->where('e.'.$eId, (int) $filters->escola_id);
             }
 
-            $rows = $q->orderByRaw($we.'.'.$g->wrap($eName))->limit(250)->get();
+            $rows = $q->orderByRaw($en['order_expr'])->limit(250)->get();
 
             return $rows->all();
         } catch (QueryException|\Throwable) {
@@ -667,7 +702,7 @@ class SchoolUnitsRepository
         try {
             $escolaT = IeducarSchema::resolveTable('escola', $city);
             $eId = (string) config('ieducar.columns.escola.id');
-            $eName = (string) config('ieducar.columns.escola.name');
+            $en = $this->escolaNomeSql($db, $city, 'e', $eId);
             $tel = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
                 'telefone', 'fone', 'fone_1', 'nr_telefone', 'tel',
             ], $city);
@@ -705,7 +740,7 @@ class SchoolUnitsRepository
 
             $q = $db->table($escolaT.' as e')->whereIn('e.'.$eId, $eids);
             $q->selectRaw($we.'.'.$g->wrap($eId).' as eid')
-                ->selectRaw($we.'.'.$g->wrap($eName).' as nome_escola');
+                ->selectRaw($en['expr'].' as nome_escola');
             if ($tel !== null) {
                 $q->selectRaw($we.'.'.$g->wrap($tel).' as tel_raw');
             }
