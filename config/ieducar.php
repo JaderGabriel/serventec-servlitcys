@@ -142,6 +142,8 @@ return [
             'id' => env('IEDUCAR_COL_ESCOLA_ID', 'cod_escola'),
             'name' => env('IEDUCAR_COL_ESCOLA_NAME', 'nome'),
             'active' => env('IEDUCAR_COL_ESCOLA_ACTIVE', 'ativo'),
+            /** Código INEP da escola (nem sempre existe na mesma tabela; deixe vazio se não houver). */
+            'inep' => env('IEDUCAR_COL_ESCOLA_INEP', ''),
         ],
         'ano_letivo' => [
             'year' => env('IEDUCAR_COL_ANO_LETIVO_ANO', 'ano'),

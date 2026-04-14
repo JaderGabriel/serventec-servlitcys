@@ -67,6 +67,50 @@ class SyncSchoolUnitGeos extends Command
         return null;
     }
 
+    private function resolveColumnByProbe($db, string $table, array $candidates, string $alias = 'e'): ?string
+    {
+        $candidates = array_values(array_unique(array_filter(array_map(
+            fn ($v) => is_string($v) ? trim($v) : '',
+            $candidates
+        ))));
+
+        foreach ($candidates as $col) {
+            try {
+                $db->table($table.' as '.$alias)->select($alias.'.'.$col)->limit(1)->get();
+
+                return $col;
+            } catch (QueryException $e) {
+                $sqlState = (string) ($e->errorInfo[0] ?? '');
+                if ($sqlState === '42703') { // undefined_column
+                    continue;
+                }
+                throw $e;
+            }
+        }
+
+        return null;
+    }
+
+    private function relatorioGetNomeEscolaExpr($db, string $alias, string $eId): ?string
+    {
+        try {
+            if ($db->getDriverName() !== 'pgsql') {
+                return null;
+            }
+            if (! filter_var(config('ieducar.pgsql_use_relatorio_escola_nome', true), FILTER_VALIDATE_BOOLEAN)) {
+                return null;
+            }
+            $relSchema = (string) config('ieducar.pgsql_schema_relatorio', 'relatorio');
+            $relSchema = $relSchema !== '' ? trim($relSchema) : 'relatorio';
+            $g = $db->getQueryGrammar();
+            $fn = $g->wrapTable($relSchema).'.get_nome_escola';
+
+            return $fn.'('.$g->wrap($alias).'.'.$g->wrap($eId).')';
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
     /**
      * Execute the console command.
      */
@@ -128,9 +172,20 @@ class SyncSchoolUnitGeos extends Command
                     $lngCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
                         'longitude', 'lng', 'lon', 'geo_lng', 'longitude_graus',
                     ], $city);
-                    $inepCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
-                        'codigo_inep', 'cod_escola_inep', 'inep', 'cod_inep', 'codigo_escola_inep', 'inep_escola', 'ref_cod_escola_inep',
-                    ], $city);
+                    $inepCol = $this->resolveColumnByProbe($db, $escolaT, array_filter([
+                        (string) config('ieducar.columns.escola.inep'),
+                        'codigo_inep',
+                        'cod_escola_inep',
+                        'inep',
+                        'cod_inep',
+                        'codigo_escola_inep',
+                        'inep_escola',
+                        'ref_cod_escola_inep',
+                    ]), 'e');
+
+                    if ($inepCol === null) {
+                        $this->warn(' - coluna de código INEP não encontrada na tabela escola (inep_code ficará vazio). Configure IEDUCAR_COL_ESCOLA_INEP se a base usar outro nome.');
+                    }
 
                     if ($latCol === null || $lngCol === null) {
                         $this->warn(' - colunas latitude/longitude não encontradas na tabela escola.');
@@ -144,7 +199,10 @@ class SyncSchoolUnitGeos extends Command
                             'e.'.$latCol.' as la',
                             'e.'.$lngCol.' as ln',
                         ]);
-                    if ($eName !== null) {
+                    $relNomeExpr = $this->relatorioGetNomeEscolaExpr($db, 'e', $eId);
+                    if ($relNomeExpr !== null) {
+                        $q->selectRaw($relNomeExpr.' as nome');
+                    } elseif ($eName !== null) {
                         $q->addSelect('e.'.$eName.' as nome');
                     }
 
