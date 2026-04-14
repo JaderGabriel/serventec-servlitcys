@@ -7,25 +7,27 @@
 
     @if (! empty($enrollmentData['kpis']))
         @php $k = $enrollmentData['kpis']; @endphp
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[6.75rem] flex flex-col justify-center">
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Matrículas ativas') }}</p>
                 <p class="mt-1 text-2xl font-semibold text-indigo-600 dark:text-indigo-400">{{ number_format($k['matriculas'] ?? 0) }}</p>
             </div>
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4">
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[6.75rem] flex flex-col justify-center">
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Turmas com matrícula') }}</p>
                 <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ number_format($k['turmas_distintas'] ?? 0) }}</p>
             </div>
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Ocupação média (turmas com vaga)') }}</p>
-                <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                    @if (isset($k['ocupacao_pct']) && $k['ocupacao_pct'] !== null)
-                        {{ number_format($k['ocupacao_pct'], 1) }}%
-                    @else
-                        —
-                    @endif
-                </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ __('Requer coluna de capacidade na turma (ex.: max_aluno).') }}</p>
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[7.5rem] flex flex-col justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Ocupação média (turmas com vaga)') }}</p>
+                    <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                        @if (isset($k['ocupacao_pct']) && $k['ocupacao_pct'] !== null)
+                            {{ number_format($k['ocupacao_pct'], 1) }}%
+                        @else
+                            —
+                        @endif
+                    </p>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-snug">{{ __('Requer coluna de capacidade na turma (ex.: max_aluno).') }}</p>
             </div>
         </div>
     @endif
@@ -150,6 +152,7 @@
                     :chart="$chart"
                     :exportFilename="'matriculas-'.$idx"
                     :exportMeta="$chartExportContext"
+                    :compact="false"
                 />
             @endforeach
         </div>

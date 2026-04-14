@@ -33,7 +33,7 @@
                     <p class="mt-1 text-xs text-sky-900/90 dark:text-sky-200/90 leading-relaxed">
                         {{ __('Com base no registo em «ano letivo» (quando existir). Andamento/ativo variam conforme a versão do i-Educar.') }}
                     </p>
-                    <div class="mt-3 overflow-x-auto max-h-56 overflow-y-auto rounded-lg border border-sky-100 dark:border-sky-900/50">
+                    <div class="mt-3 overflow-x-auto max-h-64 sm:max-h-72 overflow-y-auto rounded-lg border border-sky-100 dark:border-sky-900/50">
                         <table class="min-w-full text-xs text-left">
                             <thead class="bg-white/90 dark:bg-gray-900/60 sticky top-0">
                                 <tr>
@@ -62,7 +62,7 @@
                     <p class="mt-1 text-xs text-violet-900/90 dark:text-violet-200/90 leading-relaxed">
                         {{ __('Cada linha combina escola e ano em que existem turmas; o estado repete o indicador global desse ano, quando disponível.') }}
                     </p>
-                    <div class="mt-3 overflow-x-auto max-h-72 overflow-y-auto rounded-lg border border-violet-100 dark:border-violet-900/50">
+                    <div class="mt-3 overflow-x-auto max-h-80 sm:max-h-96 overflow-y-auto rounded-lg border border-violet-100 dark:border-violet-900/50">
                         <table class="min-w-full text-xs text-left">
                             <thead class="bg-white/90 dark:bg-gray-900/60 sticky top-0">
                                 <tr>
@@ -93,7 +93,7 @@
                     <p class="mt-1 text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
                         {{ __('Porte estimado pelo total de matrículas ativas no filtro; situação da unidade usa a coluna «ativo» da escola quando existir.') }}
                     </p>
-                    <div class="mt-3 overflow-x-auto max-h-80 overflow-y-auto rounded-lg border border-amber-100 dark:border-amber-900/50">
+                    <div class="mt-3 overflow-x-auto max-h-96 min-h-[12rem] overflow-y-auto rounded-lg border border-amber-100 dark:border-amber-900/50">
                         <table class="min-w-full text-xs text-left">
                             <thead class="bg-white/90 dark:bg-gray-900/60 sticky top-0">
                                 <tr>
@@ -125,20 +125,20 @@
     @endif
 
     @if ($yearFilterReady && ! empty($overviewData['kpis']))
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[6.75rem] flex flex-col justify-center">
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Escolas') }}</p>
                 <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
                     {{ $overviewData['kpis']['escolas'] !== null ? number_format($overviewData['kpis']['escolas']) : '—' }}
                 </p>
             </div>
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4">
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[6.75rem] flex flex-col justify-center">
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Turmas') }}</p>
                 <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
                     {{ $overviewData['kpis']['turmas'] !== null ? number_format($overviewData['kpis']['turmas']) : '—' }}
                 </p>
             </div>
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4">
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[6.75rem] flex flex-col justify-center">
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Matrículas (tabela)') }}</p>
                 <p class="mt-1 text-2xl font-semibold text-indigo-600 dark:text-indigo-400">
                     {{ $overviewData['kpis']['matriculas'] !== null ? number_format($overviewData['kpis']['matriculas']) : '—' }}

@@ -83,7 +83,7 @@
                             </nav>
                         </div>
 
-                        <div class="p-4 sm:p-6 min-h-[min(32rem,80vh)] relative min-w-0">
+                        <div class="p-4 sm:p-6 min-h-[min(38rem,88vh)] relative min-w-0">
                             <div x-show="tab === 'overview'" x-cloak class="analytics-tab-panel">
                                 @include('dashboard.analytics.partials.overview', [
                                     'overviewData' => $overviewData,

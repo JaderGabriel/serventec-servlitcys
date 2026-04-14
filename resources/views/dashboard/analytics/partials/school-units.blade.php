@@ -58,7 +58,7 @@
                 >
                     <div
                         x-ref="mapContainer"
-                        class="z-0 h-[min(28rem,55vh)] w-full min-h-[240px] bg-slate-100 dark:bg-slate-900 [&_.leaflet-container]:h-full [&_.leaflet-container]:z-[1]"
+                        class="z-0 h-[min(32rem,62vh)] w-full min-h-[280px] bg-slate-100 dark:bg-slate-900 [&_.leaflet-container]:h-full [&_.leaflet-container]:z-[1]"
                     ></div>
                 </div>
             @else

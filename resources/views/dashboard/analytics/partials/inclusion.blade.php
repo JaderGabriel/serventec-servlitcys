@@ -88,6 +88,7 @@
                             :chart="$chart"
                             :exportFilename="'inclusao-nee-'.$idx"
                             :exportMeta="$chartExportContext"
+                            :compact="false"
                         />
                     @endforeach
                 </div>
@@ -158,6 +159,7 @@
                             :chart="$chart"
                             :exportFilename="'inclusao-'.($neeChartsCount + $idx)"
                             :exportMeta="$chartExportContext"
+                            :compact="false"
                         />
                     @endforeach
                 </div>

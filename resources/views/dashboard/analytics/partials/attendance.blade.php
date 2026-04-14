@@ -26,6 +26,7 @@
                     :chart="$chart"
                     :exportFilename="'frequencia-'.$idx"
                     :exportMeta="$chartExportContext"
+                    :compact="false"
                 />
             @endforeach
         </div>

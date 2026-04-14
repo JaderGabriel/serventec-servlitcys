@@ -37,7 +37,7 @@
                 @foreach (['ideb', 'saeb', 'pne'] as $secKey)
                     @php $sec = $inepPanel['sections'][$secKey] ?? null; @endphp
                     @if ($sec !== null)
-                        <div class="rounded-lg border border-white/80 dark:border-indigo-900/50 bg-white/90 dark:bg-gray-900/40 p-3 shadow-sm flex flex-col gap-2 min-h-[11rem]">
+                        <div class="rounded-lg border border-white/80 dark:border-indigo-900/50 bg-white/90 dark:bg-gray-900/40 p-4 shadow-sm flex flex-col gap-2 min-h-[12rem]">
                             <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $sec['title'] }}</p>
                             <p class="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed flex-1">{{ $sec['intro'] }}</p>
                             @if (! empty($sec['items']))
@@ -96,9 +96,9 @@
     @endif
 
     @if (! empty($performanceData['kpis']))
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
             @foreach ($performanceData['kpis'] as $kpi)
-                <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-3 flex flex-col gap-2 min-h-[12rem]">
+                <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 flex flex-col gap-2 min-h-[13rem]">
                     <p class="text-sm font-bold text-gray-900 dark:text-gray-100 leading-snug">
                         {{ $kpi['chart_label'] ?? $kpi['label'] ?? '—' }}
                     </p>
@@ -141,6 +141,7 @@
                     :chart="$chart"
                     :exportFilename="'desempenho-'.$idx"
                     :exportMeta="$chartExportContext"
+                    :compact="false"
                 />
             @endforeach
         </div>

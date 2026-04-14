@@ -11,7 +11,7 @@
 /* Painel analítico: espaçamento consistente entre blocos dentro de cada aba */
 @layer components {
     .analytics-tab-panel {
-        @apply space-y-4 min-h-[min(28rem,75vh)] w-full max-w-full;
+        @apply space-y-5 min-h-[min(32rem,82vh)] w-full max-w-full;
     }
 
     /* Isola layout/stacking de cada cartão de gráfico (IDs no HTML discriminam instâncias). */

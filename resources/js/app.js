@@ -979,15 +979,15 @@ document.addEventListener("alpine:init", () => {
                 let body =
                     "p-2 sm:p-4 relative w-full overflow-x-auto overflow-y-auto transition-all duration-200 ease-out ";
                 body += c
-                    ? "min-h-[220px] h-[min(22rem,calc(100vw-2.5rem))] sm:h-72 md:min-h-[18rem]"
-                    : "min-h-[min(24rem,55vh)] w-full";
+                    ? "min-h-[240px] h-[min(24rem,calc(100vw-2.5rem))] sm:h-80 md:min-h-[20rem]"
+                    : "min-h-[min(28rem,62vh)] w-full";
                 this.panelBodyClass = body;
 
                 let cv =
                     "block w-full max-w-full chart-panel-canvas transition-all duration-200 ";
                 cv += c
-                    ? "max-h-[min(20rem,55vw)] sm:max-h-64"
-                    : "min-h-[14rem] w-full max-h-none";
+                    ? "max-h-[min(22rem,58vw)] sm:max-h-72"
+                    : "min-h-[16rem] w-full max-h-none";
                 this.canvasExtraClass = cv;
             },
             legendRows() {

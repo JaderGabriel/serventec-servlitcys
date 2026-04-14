@@ -9,20 +9,20 @@
         @php
             $vk = $networkData['kpis'];
         @endphp
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-stretch">
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[6.25rem] flex flex-col justify-center">
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Capacidade (turmas)') }}</p>
                 <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($vk['capacidade_total'] ?? 0)) }}</p>
             </div>
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-3">
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[6.25rem] flex flex-col justify-center">
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Matrículas') }}</p>
                 <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($vk['matriculas'] ?? 0)) }}</p>
             </div>
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-3">
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[6.25rem] flex flex-col justify-center">
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Vagas ociosas') }}</p>
                 <p class="mt-1 text-xl font-semibold text-amber-700 dark:text-amber-300">{{ number_format((int) ($vk['vagas_ociosas'] ?? 0)) }}</p>
             </div>
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-3">
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[6.25rem] flex flex-col justify-center">
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Taxa de ociosidade') }}</p>
                 <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">
                     @if (($vk['taxa_ociosidade_pct'] ?? null) !== null)
@@ -32,7 +32,7 @@
                     @endif
                 </p>
             </div>
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-3">
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[6.25rem] flex flex-col justify-center">
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Turmas c/ capacidade') }}</p>
                 <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($vk['turmas_com_capacidade'] ?? 0)) }}</p>
             </div>
