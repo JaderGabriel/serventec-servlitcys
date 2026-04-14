@@ -2,6 +2,7 @@
 
 namespace App\Services\Inep;
 
+use App\Models\InepSchoolGeo;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -75,18 +76,51 @@ class InepCatalogoEscolasGeoService
             return [];
         }
 
-        $url = (string) config(
-            'ieducar.inep_geocoding.arcgis_layer_query_url',
-            'https://services3.arcgis.com/ba17q0p2zHwzRK3B/arcgis/rest/services/inep_escolas_fmt_250609_geocode/FeatureServer/1/query'
-        );
+        // Fonte local (importação/manual): quando existe, é a mais confiável e não depende de rede externa.
+        // Ideal para ambientes em que o portal/ArcGIS bloqueia automação ou publica apenas recortes regionais.
+        $local = InepSchoolGeo::query()
+            ->whereIn('inep_code', $normalized)
+            ->get()
+            ->keyBy('inep_code');
+
+        $urls = config('ieducar.inep_geocoding.arcgis_layer_query_urls');
+        if (! is_array($urls) || $urls === []) {
+            $urls = [
+                (string) config(
+                    'ieducar.inep_geocoding.arcgis_layer_query_url',
+                    'https://services3.arcgis.com/ba17q0p2zHwzRK3B/arcgis/rest/services/inep_escolas_fmt_250609_geocode/FeatureServer/1/query'
+                ),
+            ];
+        }
+        $urls = array_values(array_filter(array_map(static fn ($u) => is_string($u) ? trim($u) : '', $urls)));
+        if ($urls === []) {
+            return [];
+        }
         $batchSize = max(5, min(100, (int) config('ieducar.inep_geocoding.batch_size', 40)));
         $ttl = max(3600, (int) config('ieducar.inep_geocoding.cache_ttl_seconds', 2592000));
         $missTtl = min(86400, $ttl);
 
         $out = [];
+
+        foreach ($normalized as $code) {
+            $row = $local->get($code);
+            if ($row instanceof InepSchoolGeo && $this->validCoord((float) $row->lat, (float) $row->lng)) {
+                $out[$code] = [
+                    'lat' => (float) $row->lat,
+                    'lng' => (float) $row->lng,
+                    'nome_inep' => (string) (($row->payload['Escola'] ?? '') ?: ($row->payload['nome'] ?? '')),
+                    'catalog' => [],
+                    'catalog_assoc' => is_array($row->payload) ? $row->payload : [],
+                ];
+            }
+        }
+
         foreach (array_chunk($normalized, $batchSize) as $chunk) {
             $toFetch = [];
             foreach ($chunk as $code) {
+                if (isset($out[$code])) {
+                    continue;
+                }
                 $cached = Cache::get($this->cacheKey($code));
                 if (is_array($cached) && empty($cached['miss'])) {
                     $row = $this->hydrateFromCache($cached);
@@ -104,7 +138,13 @@ class InepCatalogoEscolasGeoService
                 continue;
             }
 
-            $fetched = $this->fetchFromArcgis($url, $toFetch);
+            $fetched = [];
+            foreach ($urls as $url) {
+                $fetched = $this->fetchFromArcgis($url, $toFetch);
+                if ($fetched !== []) {
+                    break;
+                }
+            }
             foreach ($toFetch as $code) {
                 if (isset($fetched[$code])) {
                     $row = $fetched[$code];
@@ -181,11 +221,12 @@ class InepCatalogoEscolasGeoService
     private function fetchFromArcgis(string $url, array $codes): array
     {
         $inList = implode(',', array_map(static fn (int $i) => (string) $i, array_map('intval', $codes)));
-        // Alguns serviços ArcGIS variam o nome do campo (com/sem acento). Tentamos o mais comum.
+        // Observação: alguns endpoints Aceitam o campo apenas quando citado (aspas duplas).
+        // Sem isso, é comum responder "Invalid query parameters".
         $whereCandidates = [
-            'Código_INEP IN ('.$inList.')',
-            'Codigo_INEP IN ('.$inList.')',
-            'CODIGO_INEP IN ('.$inList.')',
+            '"Código_INEP" IN ('.$inList.')',
+            '"Codigo_INEP" IN ('.$inList.')',
+            '"CODIGO_INEP" IN ('.$inList.')',
         ];
 
         try {

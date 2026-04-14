@@ -188,6 +188,35 @@ function buildSchoolPopupHtml(mk, footnote) {
     return body;
 }
 
+function buildSchoolModalPayload(mk) {
+    const s = mk?.school && typeof mk.school === "object" ? mk.school : null;
+    const nome = String(s?.nome || mk?.label || "—");
+    const status = String(s?.status_label || "");
+    const inep = s?.inep != null && s?.inep !== "" ? String(s.inep) : "";
+
+    return {
+        title: nome,
+        status,
+        fonte_coordenada: String(mk?.fonte_coordenada || ""),
+        meta: String(mk?.meta || ""),
+        inep,
+        contato: {
+            telefone: String(s?.telefone || ""),
+            email: String(s?.email || ""),
+            gestor: String(s?.gestor || ""),
+        },
+        base: {
+            matriculas: s?.matriculas ?? null,
+            capacidade_declarada: s?.capacidade_declarada ?? null,
+            vagas_disponiveis: s?.vagas_disponiveis ?? null,
+            endereco: String(s?.endereco || ""),
+        },
+        conciliation: mk?.conciliation ?? null,
+        inep_catalog: Array.isArray(mk?.inep_catalog) ? mk.inep_catalog : [],
+        inep_links: Array.isArray(mk?.inep_links) ? mk.inep_links : [],
+    };
+}
+
 /**
  * Mapa OSM (Leaflet) para unidades escolares com coordenadas.
  * @param {unknown} markersInput
@@ -215,6 +244,8 @@ export default function createSchoolUnitsMap(
         map: null,
         group: null,
         booted: false,
+        modalOpen: false,
+        modal: null,
         _onTab: null,
         _bootAttempts: 0,
 
@@ -241,6 +272,15 @@ export default function createSchoolUnitsMap(
                 this.map.remove();
                 this.map = null;
             }
+        },
+
+        openSchoolModal(mk) {
+            this.modal = buildSchoolModalPayload(mk);
+            this.modalOpen = true;
+        },
+
+        closeSchoolModal() {
+            this.modalOpen = false;
         },
 
         tryBoot() {
@@ -314,7 +354,6 @@ export default function createSchoolUnitsMap(
                     return;
                 }
                 const { color, fill } = markerStrokeFill(mk);
-                const popupHtml = buildSchoolPopupHtml(mk, this.footnote);
                 const baseRadius = 8;
                 let radius = baseRadius;
                 if (this.mode === "coverage") {
@@ -333,7 +372,7 @@ export default function createSchoolUnitsMap(
                     fillColor: fill,
                     fillOpacity: this.mode === "coverage" ? 0.65 : 0.92,
                 })
-                    .bindPopup(`<div class="max-w-xs">${popupHtml}</div>`)
+                    .on("click", () => this.openSchoolModal(mk))
                     .addTo(this.group);
             });
 

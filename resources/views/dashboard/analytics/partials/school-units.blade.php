@@ -97,6 +97,152 @@
             @if ($markerCount > 0)
                 <div class="relative z-0" x-data="schoolUnitsMap(@js($markers), @js($mapPopupFootnote))">
                     <div x-ref="mapContainer" class="z-0 h-[min(32rem,62vh)] w-full min-h-[280px] bg-slate-100 dark:bg-slate-900 [&_.leaflet-container]:h-full [&_.leaflet-container]:z-[1]"></div>
+
+                    {{-- Modal (identidade do sistema) --}}
+                    <template x-teleport="body">
+                        <div
+                            x-show="modalOpen"
+                            x-transition.opacity.duration.150ms
+                            @keydown.escape.window="closeSchoolModal()"
+                            class="fixed inset-0 z-[240] flex items-center justify-center p-3 sm:p-4"
+                            style="display: none;"
+                            x-cloak
+                        >
+                            <div class="absolute inset-0 bg-black/40 dark:bg-black/60" @click="closeSchoolModal()"></div>
+                            <div
+                                class="relative z-10 flex max-h-[95vh] w-full min-h-0 max-w-2xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-800"
+                                role="dialog"
+                                aria-modal="true"
+                            >
+                                <div class="flex items-start justify-between gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-700">
+                                    <div class="min-w-0">
+                                        <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 break-words" x-text="modal?.title || '—'"></h3>
+                                        <div class="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 font-medium text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-200">
+                                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21s6-5.686 6-10a6 6 0 1 0-12 0c0 4.314 6 10 6 10Z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
+                                                </svg>
+                                                <span x-text="modal?.fonte_coordenada ? ('Fonte: ' + modal.fonte_coordenada) : 'Fonte: —'"></span>
+                                            </span>
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 font-medium text-slate-700 dark:bg-slate-900/60 dark:text-slate-200" x-show="modal?.inep">
+                                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 1 0-9-9 9 9 0 0 0 9 9Z" />
+                                                </svg>
+                                                <span x-text="'INEP: ' + (modal?.inep || '—')"></span>
+                                            </span>
+                                            <span class="text-gray-500 dark:text-gray-400" x-show="modal?.status" x-text="modal?.status"></span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        @click="closeSchoolModal()"
+                                        title="{{ __('Fechar') }}"
+                                        aria-label="{{ __('Fechar') }}"
+                                    >
+                                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <div class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-4 space-y-4 [scrollbar-gutter:stable]">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50/70 dark:bg-gray-900/40 p-3">
+                                            <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Contato') }}</p>
+                                            <dl class="mt-2 space-y-1 text-sm text-gray-800 dark:text-gray-200">
+                                                <div class="flex items-start justify-between gap-2">
+                                                    <dt class="text-gray-500 dark:text-gray-400 inline-flex items-center gap-1">
+                                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h1.5a2.25 2.25 0 0 0 2.25-2.25v-1.372a1.125 1.125 0 0 0-.852-1.091l-4.423-1.106a1.125 1.125 0 0 0-1.173.417l-.97 1.293a1.125 1.125 0 0 1-1.21.38 12.035 12.035 0 0 1-7.143-7.143 1.125 1.125 0 0 1 .38-1.21l1.293-.97a1.125 1.125 0 0 0 .417-1.173L6.963 3.102A1.125 1.125 0 0 0 5.872 2.25H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" /></svg>
+                                                        {{ __('Telefone') }}
+                                                    </dt>
+                                                    <dd class="text-right break-words" x-text="modal?.contato?.telefone || '—'"></dd>
+                                                </div>
+                                                <div class="flex items-start justify-between gap-2">
+                                                    <dt class="text-gray-500 dark:text-gray-400 inline-flex items-center gap-1">
+                                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15A2.25 2.25 0 0 1 2.25 17.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15A2.25 2.25 0 0 0 2.25 6.75m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>
+                                                        {{ __('E-mail') }}
+                                                    </dt>
+                                                    <dd class="text-right break-words" x-text="modal?.contato?.email || '—'"></dd>
+                                                </div>
+                                                <div class="flex items-start justify-between gap-2">
+                                                    <dt class="text-gray-500 dark:text-gray-400 inline-flex items-center gap-1">
+                                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a7.5 7.5 0 0 1 15 0v.75a.75.75 0 0 1-.75.75H5.25a.75.75 0 0 1-.75-.75v-.75Z" /></svg>
+                                                        {{ __('Gestor') }}
+                                                    </dt>
+                                                    <dd class="text-right break-words" x-text="modal?.contato?.gestor || '—'"></dd>
+                                                </div>
+                                            </dl>
+                                        </div>
+
+                                        <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50/70 dark:bg-gray-900/40 p-3">
+                                            <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Indicadores (filtros)') }}</p>
+                                            <dl class="mt-2 space-y-1 text-sm text-gray-800 dark:text-gray-200">
+                                                <div class="flex items-start justify-between gap-2">
+                                                    <dt class="text-gray-500 dark:text-gray-400 inline-flex items-center gap-1">
+                                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18" /><path stroke-linecap="round" stroke-linejoin="round" d="M7 15l3-3 3 3 6-6" /></svg>
+                                                        {{ __('Matrículas') }}
+                                                    </dt>
+                                                    <dd class="text-right tabular-nums" x-text="(modal?.base?.matriculas ?? null) === null ? '—' : Number(modal.base.matriculas).toLocaleString('pt-BR')"></dd>
+                                                </div>
+                                                <div class="flex items-start justify-between gap-2">
+                                                    <dt class="text-gray-500 dark:text-gray-400 inline-flex items-center gap-1">
+                                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15M4.5 12h15M4.5 17.25h15" /></svg>
+                                                        {{ __('Capacidade') }}
+                                                    </dt>
+                                                    <dd class="text-right tabular-nums" x-text="(modal?.base?.capacidade_declarada ?? null) === null ? '—' : Number(modal.base.capacidade_declarada).toLocaleString('pt-BR')"></dd>
+                                                </div>
+                                                <div class="flex items-start justify-between gap-2">
+                                                    <dt class="text-gray-500 dark:text-gray-400 inline-flex items-center gap-1">
+                                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m9-9H3" /></svg>
+                                                        {{ __('Vagas') }}
+                                                    </dt>
+                                                    <dd class="text-right tabular-nums" x-text="(modal?.base?.vagas_disponiveis ?? null) === null ? '—' : Number(modal.base.vagas_disponiveis).toLocaleString('pt-BR')"></dd>
+                                                </div>
+                                            </dl>
+                                        </div>
+                                    </div>
+
+                                    <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800/50 p-3">
+                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Endereço (base)') }}</p>
+                                        <p class="mt-2 text-sm text-gray-800 dark:text-gray-200 break-words" x-text="modal?.base?.endereco || '—'"></p>
+                                        <p class="mt-2 text-[11px] text-gray-500 dark:text-gray-400 leading-snug" x-show="modal?.meta" x-text="modal?.meta"></p>
+                                    </div>
+
+                                    <div class="rounded-lg border border-amber-200/80 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/20 p-3" x-show="modal?.conciliation && modal?.conciliation?.catalogo_disponivel">
+                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-900 dark:text-amber-200">{{ __('Alerta de conciliação (INEP × local)') }}</p>
+                                        <p class="mt-2 text-sm text-amber-950 dark:text-amber-100 leading-relaxed">
+                                            {{ __('Foram detectadas diferenças potenciais (nome/telefone/endereço) entre a base local e o catálogo do INEP. Use para validação de cadastro.') }}
+                                        </p>
+                                    </div>
+
+                                    <div class="flex flex-wrap gap-2" x-show="Array.isArray(modal?.inep_links) && modal.inep_links.length">
+                                        <template x-for="ln in (modal?.inep_links || [])" :key="ln.url">
+                                            <a
+                                                class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                :href="ln.url"
+                                                x-text="ln.label || 'Link'"
+                                            ></a>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div class="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/40">
+                                    <button
+                                        type="button"
+                                        class="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        @click="closeSchoolModal()"
+                                    >
+                                        {{ __('Fechar') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             @else
                 <div class="px-4 py-10 text-center text-sm text-gray-600 dark:text-gray-400 border-t border-emerald-100/60 dark:border-emerald-900/40">

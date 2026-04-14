@@ -408,10 +408,21 @@ return [
 
     'inep_geocoding' => [
         'enabled' => filter_var(env('IEDUCAR_INEP_GEOCODING_ENABLED', true), FILTER_VALIDATE_BOOL),
-        'arcgis_layer_query_url' => env(
-            'IEDUCAR_INEP_ARCGIS_QUERY_URL',
-            'https://services3.arcgis.com/ba17q0p2zHwzRK3B/arcgis/rest/services/inep_escolas_fmt_250609_geocode/FeatureServer/1/query'
-        ),
+        /**
+         * Uma (1) URL ou uma lista (em ordem de tentativa) de URLs de query ArcGIS.
+         *
+         * - `IEDUCAR_INEP_ARCGIS_QUERY_URLS`: separado por vírgula (primeira URL tem prioridade)
+         * - fallback: `IEDUCAR_INEP_ARCGIS_QUERY_URL` (legado)
+         *
+         * Nota: a URL padrão do repositório é um recorte pequeno; configure uma camada nacional para cobrir todas as escolas.
+         */
+        'arcgis_layer_query_urls' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'IEDUCAR_INEP_ARCGIS_QUERY_URLS',
+            (string) env(
+                'IEDUCAR_INEP_ARCGIS_QUERY_URL',
+                'https://services3.arcgis.com/ba17q0p2zHwzRK3B/arcgis/rest/services/inep_escolas_fmt_250609_geocode/FeatureServer/1/query'
+            )
+        ))))),
         'cache_ttl_seconds' => max(3600, (int) env('IEDUCAR_INEP_GEO_CACHE_TTL', 2592000)),
         'batch_size' => max(5, min(100, (int) env('IEDUCAR_INEP_GEO_BATCH_SIZE', 40))),
         /** Quando true, consulta o ArcGIS por INEP para preencher o catálogo no popup (mesmo com coordenadas só na base). */

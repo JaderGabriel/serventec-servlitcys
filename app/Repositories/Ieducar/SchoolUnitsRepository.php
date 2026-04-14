@@ -3,6 +3,7 @@
 namespace App\Repositories\Ieducar;
 
 use App\Models\City;
+use App\Models\SchoolUnitGeo;
 use App\Services\CityDataConnection;
 use App\Services\Inep\InepCatalogoEscolasGeoService;
 use App\Support\Dashboard\IeducarFilterState;
@@ -12,6 +13,7 @@ use App\Support\Ieducar\MatriculaAtivoFilter;
 use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Contexto de anos letivos, unidades escolares, mapa e indicadores opcionais (transporte, lista de espera).
@@ -854,6 +856,21 @@ class SchoolUnitsRepository
         }
         $nEscolasEscopo = count($eidsEscopo);
 
+        // Geos locais (cache) por cidade+escola: fallback quando iEducar não tem lat/lng.
+        $localByEid = [];
+        try {
+            if ($nEscolasEscopo > 0) {
+                $localByEid = SchoolUnitGeo::query()
+                    ->where('city_id', $city->id)
+                    ->whereIn('escola_id', array_keys($eidsEscopo))
+                    ->get()
+                    ->keyBy('escola_id')
+                    ->all();
+            }
+        } catch (\Throwable) {
+            $localByEid = [];
+        }
+
         foreach ($rows as $row) {
             $arr = (array) $row;
             $nome = trim((string) ($arr['escola_nome'] ?? ''));
@@ -874,6 +891,30 @@ class SchoolUnitsRepository
                 && abs($la) <= 90 && abs($ln) <= 180;
 
             if ($hasDb) {
+                // Atualiza cache local com a coordenada do iEducar (fonte preferida).
+                try {
+                    $now = now();
+                    $payload = [
+                        'city_id' => (int) $city->id,
+                        'escola_id' => $eid,
+                        'inep_code' => $inep,
+                        'lat' => $la,
+                        'lng' => $ln,
+                        'ieducar_lat' => $la,
+                        'ieducar_lng' => $ln,
+                        'ieducar_seen_at' => $now,
+                        'meta' => json_encode(['nome' => $nome], JSON_UNESCAPED_UNICODE),
+                        'updated_at' => $now,
+                    ];
+
+                    DB::table((new SchoolUnitGeo())->getTable())->upsert(
+                        [array_merge($payload, ['created_at' => $now])],
+                        ['city_id', 'escola_id'],
+                        ['inep_code', 'lat', 'lng', 'ieducar_lat', 'ieducar_lng', 'ieducar_seen_at', 'meta', 'updated_at'],
+                    );
+                } catch (\Throwable) {
+                }
+
                 $markers[] = [
                     'lat' => $la,
                     'lng' => $ln,
@@ -887,6 +928,21 @@ class SchoolUnitsRepository
                 continue;
             }
 
+            // Sem coordenadas no iEducar: tentar fallback local primeiro.
+            $local = $eid > 0 ? ($localByEid[$eid] ?? null) : null;
+            if ($local instanceof SchoolUnitGeo && is_numeric($local->lat) && is_numeric($local->lng)) {
+                $markers[] = [
+                    'lat' => (float) $local->lat,
+                    'lng' => (float) $local->lng,
+                    'label' => $nome,
+                    'meta' => __('Coordenadas locais (cache) — preenchidas a partir do iEducar em sincronização anterior.'),
+                    'eid' => $eid,
+                    'fonte_coordenada' => 'local',
+                ];
+                continue;
+            }
+
+            // Por fim, (opcional) INEP oficial (quando houver fonte nacional funcionando).
             if ($inep !== null && $eid > 0) {
                 $pendingInep[] = ['inep' => $inep, 'eid' => $eid, 'nome' => $nome];
             }
