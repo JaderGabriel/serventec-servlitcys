@@ -2,10 +2,13 @@
 
 namespace App\Services\Inep;
 
+use App\Models\City;
+use App\Models\SchoolUnitGeo;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * Coordenadas e metadados do Catálogo de Escolas (INEP/MEC) via serviço ArcGIS público.
@@ -136,6 +139,13 @@ class InepCatalogoEscolasGeoService
             }
         }
 
+        // Fallback CSV (só INEPs já presentes em school_unit_geos das cidades forAnalytics — ver export).
+        foreach ($this->coordsFromCsvFallback($normalized) as $code => $hit) {
+            if (! isset($out[$code])) {
+                $out[$code] = $hit;
+            }
+        }
+
         foreach (array_chunk($normalized, $batchSize) as $chunk) {
             $toFetch = [];
             foreach ($chunk as $code) {
@@ -184,6 +194,214 @@ class InepCatalogoEscolasGeoService
     public function cacheKey(int $code): string
     {
         return 'inep_geo_v2_'.$code;
+    }
+
+    /**
+     * Diagnóstico read-only: percorre cada fallback (tabela legada, cache, ArcGIS por URL e variantes de WHERE)
+     * sem gravar cache nem alterar dados. Útil para `php artisan app:probe-inep-geo-fallbacks`.
+     *
+     * @param  list<int|string>  $codes
+     * @return array<string, mixed>
+     */
+    public function diagnoseInepGeocodingFallbacks(array $codes): array
+    {
+        $normalized = [];
+        foreach ($codes as $c) {
+            $n = $this->normalizeInepCode($c);
+            if ($n !== null) {
+                $normalized[] = $n;
+            }
+        }
+        $normalized = array_values(array_unique($normalized));
+
+        $out = [
+            'inep_geocoding_enabled' => filter_var(config('ieducar.inep_geocoding.enabled', true), FILTER_VALIDATE_BOOLEAN),
+            'codes_normalized' => $normalized,
+            'fallback_1_local_table_inep_school_geos' => [
+                'table' => 'inep_school_geos',
+                'exists' => false,
+                'rows' => [],
+                'error' => null,
+            ],
+            'fallback_2_redis_cache' => [],
+            'fallback_2b_csv_local_scope' => [],
+            'fallback_3_arcgis' => [],
+            'merged_like_lookup' => [
+                'note' => 'Simulação: inep_school_geos ∪ CSV (escopo local) ∪ Redis ∪ ArcGIS.',
+                'would_resolve' => [],
+            ],
+        ];
+
+        try {
+            $conn = DB::connection();
+            $has = $conn->getSchemaBuilder()->hasTable('inep_school_geos');
+            $out['fallback_1_local_table_inep_school_geos']['exists'] = $has;
+            if ($has && $normalized !== []) {
+                $rows = $conn->table('inep_school_geos')
+                    ->whereIn('inep_code', $normalized)
+                    ->get();
+                foreach ($rows as $row) {
+                    $ic = is_object($row) ? ($row->inep_code ?? null) : null;
+                    $lat = is_object($row) ? ($row->lat ?? null) : null;
+                    $lng = is_object($row) ? ($row->lng ?? null) : null;
+                    $ok = is_numeric($lat) && is_numeric($lng) && $this->validCoord((float) $lat, (float) $lng);
+                    $out['fallback_1_local_table_inep_school_geos']['rows'][(int) $ic] = [
+                        'valid_coords' => $ok,
+                        'lat' => $lat,
+                        'lng' => $lng,
+                    ];
+                }
+            }
+        } catch (\Throwable $e) {
+            $out['fallback_1_local_table_inep_school_geos']['error'] = $e->getMessage();
+        }
+
+        foreach ($normalized as $code) {
+            $k = $this->cacheKey($code);
+            $raw = Cache::get($k);
+            $summary = [
+                'cache_key' => $k,
+                'present' => $raw !== null,
+            ];
+            if (is_array($raw)) {
+                $summary['is_miss_marker'] = ! empty($raw['miss']);
+                $summary['has_lat_lng'] = isset($raw['lat'], $raw['lng']);
+                if ($summary['has_lat_lng']) {
+                    $summary['valid_coords'] = $this->validCoord((float) $raw['lat'], (float) $raw['lng']);
+                }
+            } else {
+                $summary['is_miss_marker'] = false;
+                $summary['has_lat_lng'] = false;
+            }
+            $out['fallback_2_redis_cache'][(string) $code] = $summary;
+        }
+
+        $csvRel = (string) config('ieducar.inep_geocoding.fallback_csv_path', 'app/inep_geo_fallback.csv');
+        $csvPath = str_starts_with($csvRel, '/') ? $csvRel : storage_path($csvRel);
+        $csvHits = $this->coordsFromCsvFallback($normalized);
+        $out['fallback_2b_csv_local_scope'] = [
+            'enabled' => filter_var(config('ieducar.inep_geocoding.fallback_csv_enabled', true), FILTER_VALIDATE_BOOLEAN),
+            'path' => $csvPath,
+            'readable' => is_readable($csvPath),
+            'inep_hits' => array_keys($csvHits),
+            'count' => count($csvHits),
+        ];
+
+        $urls = config('ieducar.inep_geocoding.arcgis_layer_query_urls');
+        if (! is_array($urls) || $urls === []) {
+            $urls = [
+                (string) config(
+                    'ieducar.inep_geocoding.arcgis_layer_query_url',
+                    'https://services3.arcgis.com/ba17q0p2zHwzRK3B/arcgis/rest/services/inep_escolas_fmt_250609_geocode/FeatureServer/1/query'
+                ),
+            ];
+        }
+        $urls = array_values(array_filter(array_map(static fn ($u) => is_string($u) ? trim($u) : '', $urls)));
+
+        $inList = implode(',', array_map(static fn (int $i) => (string) $i, array_map('intval', $normalized)));
+        $whereCandidates = [
+            '"Código_INEP" IN ('.$inList.')',
+            '"Codigo_INEP" IN ('.$inList.')',
+            '"CODIGO_INEP" IN ('.$inList.')',
+        ];
+
+        $queryParamsBase = [
+            'outFields' => implode(',', [
+                'Escola',
+                'Código_INEP',
+                'Codigo_INEP',
+                'UF',
+                'Município',
+                'Municipio',
+                'Latitude',
+                'Longitude',
+            ]),
+            'f' => 'json',
+            'returnGeometry' => 'true',
+            'outSR' => 4326,
+        ];
+
+        foreach ($urls as $idx => $url) {
+            $urlEntry = [
+                'index' => $idx,
+                'url' => $url,
+                'where_attempts' => [],
+                'fetch_parsed_hits' => [],
+            ];
+            foreach ($whereCandidates as $where) {
+                try {
+                    $response = Http::timeout(25)
+                        ->acceptJson()
+                        ->get($url, array_merge($queryParamsBase, ['where' => $where]));
+                    $status = $response->status();
+                    $json = $response->json();
+                    $featCount = is_array($json) && isset($json['features']) && is_array($json['features'])
+                        ? count($json['features'])
+                        : 0;
+                    $errMsg = null;
+                    if (is_array($json) && isset($json['error'])) {
+                        $err = $json['error'];
+                        $errMsg = is_array($err) ? (string) ($err['message'] ?? json_encode($err)) : (string) $err;
+                    }
+                    $sampleIneps = [];
+                    if (is_array($json['features'] ?? null)) {
+                        foreach (array_slice($json['features'], 0, 5) as $f) {
+                            $attrs = is_array($f['attributes'] ?? null) ? $f['attributes'] : [];
+                            $ci = (int) ($attrs['Código_INEP'] ?? ($attrs['Codigo_INEP'] ?? 0));
+                            if ($ci > 0) {
+                                $sampleIneps[] = $ci;
+                            }
+                        }
+                    }
+                    $urlEntry['where_attempts'][] = [
+                        'where' => $where,
+                        'http_status' => $status,
+                        'ok' => $response->successful(),
+                        'arcgis_error' => $errMsg,
+                        'feature_count' => $featCount,
+                        'sample_inep_from_features' => $sampleIneps,
+                        'exceeded_transfer_limit' => $json['exceededTransferLimit'] ?? null,
+                    ];
+                } catch (\Throwable $e) {
+                    $urlEntry['where_attempts'][] = [
+                        'where' => $where,
+                        'exception' => $e->getMessage(),
+                    ];
+                }
+            }
+            // Mesma lógica de parse que lookupByInepCodes (sem escrever cache).
+            $urlEntry['fetch_parsed_hits'] = $this->fetchFromArcgis($url, $normalized);
+            $out['fallback_3_arcgis'][] = $urlEntry;
+        }
+
+        $resolved = [];
+        foreach ($normalized as $code) {
+            $source = null;
+            $rowsLocal = $out['fallback_1_local_table_inep_school_geos']['rows'] ?? [];
+            $row = $rowsLocal[$code] ?? $rowsLocal[(string) $code] ?? null;
+            if (is_array($row) && ! empty($row['valid_coords'])) {
+                $source = 'inep_school_geos';
+            } elseif (isset($csvHits[$code])) {
+                $source = 'csv_fallback_local_scope';
+            } elseif (($out['fallback_2_redis_cache'][(string) $code]['has_lat_lng'] ?? false)
+                && ($out['fallback_2_redis_cache'][(string) $code]['valid_coords'] ?? false)
+                && empty($out['fallback_2_redis_cache'][(string) $code]['is_miss_marker'])) {
+                $source = 'redis_cache';
+            } else {
+                foreach ($out['fallback_3_arcgis'] as $arc) {
+                    $hits = $arc['fetch_parsed_hits'] ?? [];
+                    if (isset($hits[$code])) {
+                        $source = 'arcgis:'.Str::limit((string) ($arc['url'] ?? ''), 80);
+
+                        break;
+                    }
+                }
+            }
+            $resolved[(string) $code] = $source ?? 'none';
+        }
+        $out['merged_like_lookup']['would_resolve'] = $resolved;
+
+        return $out;
     }
 
     /**
@@ -310,6 +528,12 @@ class InepCatalogoEscolasGeoService
             }
 
             $features = is_array($data['features'] ?? null) ? $data['features'] : [];
+            if ($features === []) {
+                Log::info('INEP ArcGIS geocode: 0 features', [
+                    'url' => $url,
+                    'requested_count' => count($codes),
+                ]);
+            }
             $out = [];
             foreach ($features as $f) {
                 $attrs = is_array($f['attributes'] ?? null) ? $f['attributes'] : [];
@@ -397,5 +621,151 @@ class InepCatalogoEscolasGeoService
         }
 
         return abs($lat) <= 90 && abs($lng) <= 180;
+    }
+
+    /**
+     * INEPs permitidos no CSV: apenas os que existem em school_unit_geos para cidades forAnalytics.
+     *
+     * @return array<int, true>
+     */
+    private function allowedInepWhitelistFromLocalSchools(): array
+    {
+        static $cache = null;
+        if (is_array($cache)) {
+            return $cache;
+        }
+
+        $cityIds = City::query()->forAnalytics()->pluck('id');
+        $cache = SchoolUnitGeo::query()
+            ->whereIn('city_id', $cityIds)
+            ->whereNotNull('inep_code')
+            ->where('inep_code', '>', 0)
+            ->distinct()
+            ->pluck('inep_code')
+            ->map(fn ($v) => (int) $v)
+            ->unique()
+            ->flip()
+            ->all();
+
+        return $cache;
+    }
+
+    /**
+     * Lê `ieducar.inep_geocoding.fallback_csv_path` (storage) e devolve hits só para INEP na whitelist local.
+     *
+     * @param  list<int>  $normalizedCodes
+     * @return array<int, array{lat: float, lng: float, nome_inep: string, catalog: array, catalog_assoc: array}>
+     */
+    private function coordsFromCsvFallback(array $normalizedCodes): array
+    {
+        if (! filter_var(config('ieducar.inep_geocoding.fallback_csv_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            return [];
+        }
+
+        $rel = (string) config('ieducar.inep_geocoding.fallback_csv_path', 'app/inep_geo_fallback.csv');
+        $path = str_starts_with($rel, '/') ? $rel : storage_path($rel);
+        if (! is_readable($path)) {
+            return [];
+        }
+
+        $whitelist = $this->allowedInepWhitelistFromLocalSchools();
+        $fh = fopen($path, 'rb');
+        if ($fh === false) {
+            return [];
+        }
+
+        $delimiter = ';';
+        $header = fgetcsv($fh, 0, $delimiter);
+        if ($header === false) {
+            fclose($fh);
+
+            return [];
+        }
+
+        $map = [];
+        foreach ($header as $i => $h) {
+            $map[mb_strtolower(trim((string) $h))] = $i;
+        }
+        if (! isset($map['inep_code']) || count($header) < 2) {
+            rewind($fh);
+            $delimiter = ',';
+            $header = fgetcsv($fh, 0, $delimiter);
+            $map = [];
+            if (is_array($header)) {
+                foreach ($header as $i => $h) {
+                    $map[mb_strtolower(trim((string) $h))] = $i;
+                }
+            }
+        }
+        if (! isset($map['inep_code'])) {
+            fclose($fh);
+
+            return [];
+        }
+
+        $wanted = [];
+        foreach ($normalizedCodes as $c) {
+            if (isset($whitelist[$c])) {
+                $wanted[$c] = true;
+            }
+        }
+        if ($wanted === []) {
+            fclose($fh);
+
+            return [];
+        }
+
+        $out = [];
+
+        while (($row = fgetcsv($fh, 0, $delimiter)) !== false) {
+            $inepRaw = $row[$map['inep_code']] ?? '';
+            if (! is_numeric($inepRaw)) {
+                continue;
+            }
+            $inep = (int) $inepRaw;
+            if ($inep <= 0 || ! isset($wanted[$inep]) || isset($out[$inep])) {
+                continue;
+            }
+
+            $lat = $this->csvPickFloat($row, $map, ['official_lat', 'lat']);
+            $lng = $this->csvPickFloat($row, $map, ['official_lng', 'lng']);
+            if ($lat === null || $lng === null || ! $this->validCoord($lat, $lng)) {
+                continue;
+            }
+
+            $out[$inep] = [
+                'lat' => $lat,
+                'lng' => $lng,
+                'nome_inep' => '',
+                'catalog' => [],
+                'catalog_assoc' => ['Fonte' => 'CSV fallback (escopo local)'],
+            ];
+        }
+        fclose($fh);
+
+        return $out;
+    }
+
+    /**
+     * @param  array<string, int>  $map
+     * @param  list<string>  $keys
+     */
+    private function csvPickFloat(array $row, array $map, array $keys): ?float
+    {
+        foreach ($keys as $k) {
+            $k = mb_strtolower($k);
+            if (! isset($map[$k])) {
+                continue;
+            }
+            $v = trim((string) ($row[$map[$k]] ?? ''));
+            if ($v === '' || $v === 'null') {
+                continue;
+            }
+            if (is_numeric($v)) {
+                return (float) $v;
+            }
+        }
+
+        return null;
     }
 }

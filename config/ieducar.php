@@ -445,6 +445,15 @@ return [
             'IEDUCAR_QEDU_ESCOLA_BASE_URL',
             'https://www.qedu.org.br/escola'
         ), '/'),
+        /**
+         * Fallback offline: CSV com coordenadas apenas para INEPs já presentes em school_unit_geos
+         * das cidades forAnalytics (exportado via app:export-inep-geo-fallback-csv).
+         * O lookup ignora linhas cujo INEP não esteja na whitelist local.
+         */
+        'fallback_csv_enabled' => filter_var(env('IEDUCAR_INEP_GEO_FALLBACK_CSV_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'fallback_csv_path' => env('IEDUCAR_INEP_GEO_FALLBACK_CSV', 'app/inep_geo_fallback.csv'),
+        /** Distância mínima (Haversine) para marcar divergência entre i-Educar e coordenada oficial (INEP). */
+        'divergence_threshold_meters' => max(1.0, (float) env('IEDUCAR_GEO_DIVERGENCE_THRESHOLD_M', 100)),
     ],
 
     /*

@@ -5,6 +5,8 @@
 
     <livewire:pulse.usage cols="4" rows="2" />
 
+    <livewire:pulse.exceptions cols="6" />
+
     <livewire:pulse.queues cols="4" />
 
     <livewire:pulse.cache cols="4" />
@@ -12,8 +14,6 @@
     <livewire:pulse.redis-overview-card cols="full" rows="2" />
 
     <livewire:pulse.slow-queries cols="8" />
-
-    <livewire:pulse.exceptions cols="6" />
 
     <livewire:pulse.slow-requests cols="6" />
 

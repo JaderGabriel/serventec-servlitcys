@@ -15,7 +15,6 @@
         );
     $eqLabel = match ($eqFonte) {
         'serie' => __('Série'),
-        'curso' => __('Curso'),
         default => null,
     };
 @endphp
@@ -273,15 +272,17 @@
 
         @if (count($inclusionData['charts']) > $neeChartsCount)
             <div>
-                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{{ __('Género, cor ou raça, distorção idade/série e série/curso') }}</h3>
+                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{{ __('Por escola, género, raça e equidade') }}</h3>
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 min-w-0">
                     @foreach (array_slice($inclusionData['charts'], $neeChartsCount) as $idx => $chart)
-                        <x-dashboard.chart-panel
-                            :chart="$chart"
-                            :exportFilename="'inclusao-'.($neeChartsCount + $idx)"
-                            :exportMeta="$chartExportContext"
-                            :compact="false"
-                        />
+                        <div class="{{ ! empty($chart['panel_layout']) && $chart['panel_layout'] === 'full' ? 'xl:col-span-2' : '' }} min-w-0">
+                            <x-dashboard.chart-panel
+                                :chart="$chart"
+                                :exportFilename="'inclusao-'.($neeChartsCount + $idx)"
+                                :exportMeta="$chartExportContext"
+                                :compact="! empty($chart['compact_panel'])"
+                            />
+                        </div>
                     @endforeach
                 </div>
             </div>

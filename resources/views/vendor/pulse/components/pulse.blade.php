@@ -17,7 +17,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }} — Pulse</title>
+        <title>{{ config('app.name', 'Laravel') }} — {{ __('Monitoramento') }}</title>
 
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
 
@@ -49,7 +49,7 @@
                                 </li>
                                 <li class="opacity-60">/</li>
                                 <li class="font-medium text-gray-700 dark:text-gray-200">
-                                    {{ __('Monitorização (Pulse)') }}
+                                    {{ __('Monitoramento') }}
                                 </li>
                             </ol>
                         </nav>
@@ -61,7 +61,7 @@
                             </svg>
                             <div>
                                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                                    {{ __('Monitorização (Pulse)') }}
+                                    {{ __('Monitoramento operacional') }}
                                 </h2>
                                 <div class="mt-2 flex flex-wrap items-center gap-2">
                                     <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-900/40 px-2 py-0.5 text-[11px] font-medium text-gray-700 dark:text-gray-200">
@@ -88,7 +88,7 @@
                                     </span>
                                 </div>
                                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-2xl">
-                                    {{ __('Desempenho da aplicação, filas, cache, queries lentas, requests e integrações externas. “Servers online” considera snapshots nos últimos :s s.', ['s' => $serverFreshWindow]) }}
+                                    {{ __('Indicadores para decidir com dados: erros e excepções primeiro, filas e cache, latência (HTTP, jobs, SQL, saída), uso e carga. “Servers online” usa snapshots nos últimos :s s.', ['s' => $serverFreshWindow]) }}
                                 </p>
                             </div>
                         </div>

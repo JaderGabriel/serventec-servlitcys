@@ -31,7 +31,7 @@ class SyncSchoolUnitGeosOfficial extends Command
         $dryRun = (string) $this->option('dry-run') === '1';
         $threshold = (float) $this->option('threshold');
         if ($threshold <= 0) {
-            $threshold = 100.0;
+            $threshold = (float) config('ieducar.inep_geocoding.divergence_threshold_meters', 100);
         }
 
         $citiesQ = City::query()->forAnalytics();
@@ -54,6 +54,19 @@ class SyncSchoolUnitGeosOfficial extends Command
             $city = $cityModel;
 
             $this->info("Cidade {$city->id} — {$city->name}: consultando coordenadas oficiais (INEP) …");
+
+            $inepEnabled = filter_var(config('ieducar.inep_geocoding.enabled', true), FILTER_VALIDATE_BOOLEAN);
+            $urls = config('ieducar.inep_geocoding.arcgis_layer_query_urls');
+            $urls = is_array($urls) ? array_values(array_filter(array_map(fn ($u) => is_string($u) ? trim($u) : '', $urls))) : [];
+            $this->line(' - INEP geocoding ativo: '.($inepEnabled ? 'sim' : 'não'));
+            if ($urls !== []) {
+                $this->line(' - ArcGIS URLs (ordem de tentativa):');
+                foreach ($urls as $u) {
+                    $this->line('   • '.$u);
+                }
+            } else {
+                $this->warn(' - ArcGIS URLs: vazio (configure IEDUCAR_INEP_ARCGIS_QUERY_URLS)');
+            }
 
             $q = SchoolUnitGeo::query()
                 ->where('city_id', $city->id)

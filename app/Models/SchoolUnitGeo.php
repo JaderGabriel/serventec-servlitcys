@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class SchoolUnitGeo extends Model
 {
+    public function city(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(City::class);
+    }
+
     protected $fillable = [
         'city_id',
         'escola_id',

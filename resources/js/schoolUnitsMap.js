@@ -198,6 +198,11 @@ function buildSchoolModalPayload(mk) {
         title: nome,
         status,
         fonte_coordenada: String(mk?.fonte_coordenada || ""),
+        fonte_coordenada_label: String(mk?.fonte_coordenada_label || ""),
+        geo_divergence:
+            mk?.geo_divergence && typeof mk.geo_divergence === "object"
+                ? mk.geo_divergence
+                : null,
         meta: String(mk?.meta || ""),
         inep,
         contato: {

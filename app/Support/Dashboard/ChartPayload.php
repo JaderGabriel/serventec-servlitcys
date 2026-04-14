@@ -169,6 +169,54 @@ final class ChartPayload
     }
 
     /**
+     * Várias séries (linhas) com paleta automática — ex.: raça/cor e NEE por escola.
+     *
+     * @param  list<array{label: string, data: list<int|float>}>  $series
+     * @return array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}
+     */
+    public static function lineMulti(string $title, array $labels, array $series, array $extraOptions = []): array
+    {
+        $colors = self::palette();
+        $datasets = [];
+        foreach (array_values($series) as $i => $s) {
+            $c = $colors[$i % max(1, count($colors))];
+            $datasets[] = [
+                'label' => (string) ($s['label'] ?? ''),
+                'data' => array_values(array_map(static fn ($v) => is_numeric($v) ? (float) $v : 0.0, $s['data'] ?? [])),
+                'borderColor' => $c,
+                'backgroundColor' => $c.'22',
+                'fill' => false,
+                'tension' => 0.22,
+                'borderWidth' => 2,
+                'pointRadius' => 2,
+                'pointHoverRadius' => 4,
+                'pointBackgroundColor' => $c,
+                'pointBorderColor' => '#ffffff',
+                'pointBorderWidth' => 1,
+            ];
+        }
+
+        return [
+            'type' => 'line',
+            'title' => $title,
+            'labels' => array_map(static fn ($l) => (string) $l, $labels),
+            'datasets' => $datasets,
+            'options' => array_merge([
+                'panelHeight' => 'lg',
+                'scales' => [
+                    'x' => [
+                        'ticks' => [
+                            'maxRotation' => 88,
+                            'minRotation' => 45,
+                            'autoSkip' => true,
+                        ],
+                    ],
+                ],
+            ], $extraOptions),
+        ];
+    }
+
+    /**
      * Junta categorias excedentes num único rótulo (gráficos legíveis; totais conservados).
      *
      * @param  list<string|int|float>  $labels

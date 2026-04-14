@@ -17,6 +17,7 @@ use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Collection;
 
 /**
  * Inclusão & Diversidade: educação especial (NEE), género, distribuição por etapa (equidade), cor ou raça e SQL opcional.
@@ -113,9 +114,13 @@ class InclusionRepository
                     }
                 }
 
+                $tailCharts = [];
+
                 $sex = MatriculaChartQueries::matriculasPorSexo($db, $city, $filters);
                 if ($sex !== null) {
-                    $charts[] = $sex;
+                    $sex['options'] = array_merge($sex['options'] ?? [], ['panelHeight' => 'sm']);
+                    $sex['compact_panel'] = true;
+                    $tailCharts[] = $sex;
                 } else {
                     $notes[] = __(
                         'Sexo (registo administrativo): indisponível — confirme cadastro.pessoa (sexo, idsexo, …) ou cadastro.fisica, e colunas de ligação aluno↔pessoa.'
@@ -126,14 +131,18 @@ class InclusionRepository
                 if (is_string($customRaca) && trim($customRaca) !== '') {
                     $racaChart = $this->chartFromRawSql($db, $city, trim($customRaca), __('Matrículas por cor ou raça (SQL personalizado)'));
                     if ($racaChart !== null) {
-                        $charts[] = $racaChart;
+                        $racaChart['options'] = array_merge($racaChart['options'] ?? [], ['panelHeight' => 'sm']);
+                        $racaChart['compact_panel'] = true;
+                        $tailCharts[] = $racaChart;
                     } else {
                         $notes[] = __('A consulta personalizada de inclusão (raça) não devolveu linhas válidas.');
                     }
                 } else {
                     $racaChart = $this->raceDistributionChart($db, $city, $filters);
                     if ($racaChart !== null) {
-                        $charts[] = $racaChart;
+                        $racaChart['options'] = array_merge($racaChart['options'] ?? [], ['panelHeight' => 'sm']);
+                        $racaChart['compact_panel'] = true;
+                        $tailCharts[] = $racaChart;
                     } else {
                         $notes[] = __(
                             'Cor ou raça: não foi possível agregar pelo catálogo. Confirme IEDUCAR_TABLE_RACA, ref_cod_raca em pessoa/aluno/física, fallbacks ou IEDUCAR_SQL_INCLUSION_RACA (mesmos filtros de matrícula).'
@@ -145,22 +154,18 @@ class InclusionRepository
                     $dist = MatriculaChartQueries::distorcaoIdadeSeriePorEscolaFisica($db, $city, $filters)
                         ?? MatriculaChartQueries::distorcaoIdadeSerieRedeChart($db, $city, $filters);
                     if ($dist !== null) {
-                        $charts[] = $dist;
+                        $tailCharts[] = $dist;
                     }
                 } catch (QueryException) {
                     // Base sem colunas para distorção (série / idade / física).
                 }
 
-                // Equidade por etapa nesta aba: série ou curso (sem nível de ensino isolado).
                 if (($tmp = MatriculaChartQueries::matriculasPorSerieTop($db, $city, $filters)) !== null) {
-                    $charts[] = $tmp;
+                    $tailCharts[] = $tmp;
                     $equidadeFonte = 'serie';
-                } elseif (($tmp = MatriculaChartQueries::matriculasPorCursoTop($db, $city, $filters)) !== null) {
-                    $charts[] = $tmp;
-                    $equidadeFonte = 'curso';
                 } else {
                     $notes[] = __(
-                        'Distribuição por série ou curso (equidade): indisponível — verifique turma→série / turma→curso e tabelas em config/ieducar.php.'
+                        'Distribuição por série (equidade): indisponível — verifique turma→série e tabelas em config/ieducar.php.'
                     );
                 }
 
@@ -168,11 +173,16 @@ class InclusionRepository
                 if (is_string($customExtra) && trim($customExtra) !== '') {
                     $extra = $this->chartFromRawSql($db, $city, trim($customExtra), __('Indicador complementar (SQL personalizado)'));
                     if ($extra !== null) {
-                        $charts[] = $extra;
+                        $tailCharts[] = $extra;
                     }
                 }
 
-                $charts = array_merge($neeCharts, $charts);
+                $escolaRacaNee = $this->escolaRacaENeeMultiLineChart($db, $city, $filters);
+                $charts = array_merge(
+                    $neeCharts,
+                    array_values(array_filter([$escolaRacaNee])),
+                    $tailCharts
+                );
             });
         } catch (\Throwable $e) {
             return [
@@ -213,9 +223,8 @@ class InclusionRepository
     private function methodologyLines(?string $equidadeFonte): array
     {
         $eq = match ($equidadeFonte) {
-            'serie' => __('O gráfico complementar de equidade usa séries (turma → série).'),
-            'curso' => __('O gráfico complementar de equidade usa cursos (turma → curso) quando a série não está disponível.'),
-            default => __('O gráfico de série/curso não foi gerado (dados insuficientes).'),
+            'serie' => __('O gráfico complementar de equidade usa séries (turma → série). Nesta aba não se usa o gráfico por curso (top 10).'),
+            default => __('O gráfico de série (equidade) não foi gerado (dados insuficientes).'),
         };
 
         return [
@@ -561,6 +570,459 @@ class InclusionRepository
                 $join->whereRaw('CAST('.$lhs.' AS UNSIGNED) = CAST('.$rhs.' AS UNSIGNED)');
             }
         });
+    }
+
+    /**
+     * @return array{qualified: string, idCol: string, nameCol: string}|null
+     */
+    private static function resolveEscolaJoinSpec(Connection $db, City $city): ?array
+    {
+        $qualified = IeducarSchema::resolveTable('escola', $city);
+        if (! IeducarColumnInspector::tableExists($db, $qualified, $city)) {
+            return null;
+        }
+
+        $idCol = IeducarColumnInspector::firstExistingColumn($db, $qualified, array_filter([
+            (string) config('ieducar.columns.escola.id'),
+            'cod_escola',
+            'id',
+        ]), $city);
+        $nameCol = IeducarColumnInspector::firstExistingColumn($db, $qualified, array_filter([
+            (string) config('ieducar.columns.escola.name'),
+            'nome',
+            'nm_escola',
+            'fantasia',
+            'razao_social',
+            'sigla',
+        ]), $city);
+
+        if ($idCol === null || $nameCol === null) {
+            return null;
+        }
+
+        return ['qualified' => $qualified, 'idCol' => $idCol, 'nameCol' => $nameCol];
+    }
+
+    private static function resolveAlunoDeficienciaTable(Connection $db, City $city): ?string
+    {
+        foreach (array_values(array_unique(array_filter([
+            IeducarSchema::resolveTable('aluno_deficiencia', $city),
+            'pmieducar.aluno_deficiencia',
+            'public.aluno_deficiencia',
+            'educacenso.aluno_deficiencia',
+            trim((string) config('ieducar.pgsql_schema_cadastro', 'cadastro')).'.aluno_deficiencia',
+        ]))) as $t) {
+            if ($t !== '' && IeducarColumnInspector::tableExists($db, $t, $city)) {
+                return $t;
+            }
+        }
+
+        return IeducarColumnInspector::findQualifiedTableByNames($db, [
+            'aluno_deficiencia',
+            'aluno_deficiencias',
+        ], $city);
+    }
+
+    /**
+     * Matrículas com registo em aluno_deficiência, por escola (turma → unidade).
+     *
+     * @return array<string, int> chave = id escola em string
+     */
+    private function neeMatriculasPorEscola(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        try {
+            $adTable = self::resolveAlunoDeficienciaTable($db, $city);
+            if ($adTable === null) {
+                return [];
+            }
+
+            $adAluno = IeducarColumnInspector::firstExistingColumn($db, $adTable, array_filter([
+                (string) config('ieducar.columns.aluno_deficiencia.aluno'),
+                'ref_cod_aluno',
+                'cod_aluno',
+                'aluno_id',
+                'id_aluno',
+            ]), $city);
+            if ($adAluno === null) {
+                return [];
+            }
+
+            $escolaSpec = self::resolveEscolaJoinSpec($db, $city);
+            if ($escolaSpec === null) {
+                return [];
+            }
+            ['qualified' => $escolaT, 'idCol' => $eId] = $escolaSpec;
+
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $aluno = IeducarSchema::resolveTable('aluno', $city);
+            $mAluno = (string) config('ieducar.columns.matricula.aluno');
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $mId = (string) config('ieducar.columns.matricula.id');
+            $aId = (string) config('ieducar.columns.aluno.id');
+
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            if ($tc['escola'] === '') {
+                return [];
+            }
+            $refEscola = $tc['escola'];
+            $grammar = $db->getQueryGrammar();
+            $tEsc = $grammar->wrap('t_filter').'.'.$grammar->wrap($refEscola);
+            $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
+
+            $q = $db->table($mat.' as m')
+                ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
+                ->whereIn('a.'.$aId, function ($sub) use ($db, $adTable, $adAluno) {
+                    $sub->from($adTable)->select($adAluno)->distinct();
+                });
+
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+
+            $q->join($escolaT.' as e', function ($join) use ($db, $tEsc, $ePk) {
+                if ($db->getDriverName() === 'pgsql') {
+                    $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
+                } else {
+                    $join->whereRaw('CAST('.$tEsc.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
+                }
+            })
+                ->selectRaw('e.'.$eId.' as eid')
+                ->selectRaw('COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).') as c')
+                ->groupBy('e.'.$eId);
+
+            $out = [];
+            foreach ($q->get() as $row) {
+                $out[(string) $row->eid] = (int) ($row->c ?? 0);
+            }
+
+            return $out;
+        } catch (QueryException|\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * Linhas por escola: séries de matrículas por cor/raça (top categorias + «Outros») e matrículas NEE (aluno_deficiência).
+     *
+     * @return ?array<string, mixed>
+     */
+    private function escolaRacaENeeMultiLineChart(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $aluno = IeducarSchema::resolveTable('aluno', $city);
+            $pessoa = IeducarSchema::resolveTable('pessoa', $city);
+
+            if (! IeducarColumnInspector::tableExists($db, $mat, $city)
+                || ! IeducarColumnInspector::tableExists($db, $aluno, $city)) {
+                return null;
+            }
+
+            $racaSpec = self::resolveRacaJoinSpec($db, $city);
+            if ($racaSpec === null) {
+                return null;
+            }
+
+            $racaT = $racaSpec['qualified'];
+            $rIdCol = $racaSpec['idCol'];
+            $rNameCol = $racaSpec['nameCol'];
+
+            $mAluno = (string) config('ieducar.columns.matricula.aluno');
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $mId = (string) config('ieducar.columns.matricula.id');
+            $aId = (string) config('ieducar.columns.aluno.id');
+            $grammar = $db->getQueryGrammar();
+
+            $aPessoa = IeducarColumnInspector::firstExistingColumn($db, $aluno, array_filter([
+                (string) config('ieducar.columns.aluno.pessoa'),
+                'ref_cod_pessoa',
+                'ref_idpes',
+                'idpes',
+            ]), $city);
+            if ($aPessoa === null) {
+                return null;
+            }
+
+            $aIdpes = IeducarColumnInspector::firstExistingColumn($db, $aluno, array_filter([
+                'ref_idpes',
+                'idpes',
+            ]), $city);
+            $fisicaRacaPivot = self::resolveFisicaRacaPivotSpec($db, $city);
+
+            $pRaca = null;
+            $pId = null;
+            if (IeducarColumnInspector::tableExists($db, $pessoa, $city)) {
+                $pId = IeducarColumnInspector::firstExistingColumn($db, $pessoa, array_filter([
+                    (string) config('ieducar.columns.pessoa.id'),
+                    'idpes',
+                    'id',
+                    'cod_pessoa',
+                ]), $city);
+                $pRaca = IeducarColumnInspector::firstExistingColumn($db, $pessoa, array_filter([
+                    (string) config('ieducar.columns.pessoa.raca'),
+                    'ref_cod_raca',
+                    'cod_raca',
+                    'id_raca',
+                    'raca_id',
+                    'cor_raca',
+                    'cor',
+                    'ref_cod_cor',
+                ]), $city);
+            }
+
+            $aRaca = null;
+            if ($pRaca === null) {
+                $aRaca = IeducarColumnInspector::firstExistingColumn($db, $aluno, array_filter([
+                    'ref_cod_raca',
+                    'cod_raca',
+                    'id_raca',
+                    'raca_cor',
+                ]), $city);
+            }
+
+            $fisicaTable = null;
+            $fisicaRacaCol = null;
+            $fisicaLinkCol = null;
+            if ($pRaca === null && $aRaca === null && $pId !== null) {
+                foreach (self::fisicaTableCandidates($city) as $cand) {
+                    if (! IeducarColumnInspector::tableExists($db, $cand, $city)) {
+                        continue;
+                    }
+                    $fisicaRacaCol = IeducarColumnInspector::firstExistingColumn($db, $cand, [
+                        'ref_cod_raca',
+                        'cod_raca',
+                        'raca_cor',
+                        'id_raca',
+                    ], $city);
+                    $fisicaLinkCol = IeducarColumnInspector::firstExistingColumn($db, $cand, [
+                        'idpes',
+                        'ref_idpes',
+                    ], $city);
+                    if ($fisicaRacaCol !== null && $fisicaLinkCol !== null) {
+                        $fisicaTable = $cand;
+                        break;
+                    }
+                }
+            }
+
+            /** @var array{table: string, racaCol: string, fisicaLink: string, alunoCol: string}|null */
+            $fisicaViaAluno = null;
+            if ($pRaca === null && $aRaca === null && $fisicaTable === null && $fisicaRacaPivot === null) {
+                $aIdpesCol = IeducarColumnInspector::firstExistingColumn($db, $aluno, array_filter([
+                    'ref_idpes',
+                    'idpes',
+                ]), $city);
+                if ($aIdpesCol !== null) {
+                    foreach (self::fisicaTableCandidates($city) as $cand) {
+                        if (! IeducarColumnInspector::tableExists($db, $cand, $city)) {
+                            continue;
+                        }
+                        $fc = IeducarColumnInspector::firstExistingColumn($db, $cand, [
+                            'ref_cod_raca',
+                            'cod_raca',
+                            'raca_cor',
+                            'id_raca',
+                        ], $city);
+                        $fl = IeducarColumnInspector::firstExistingColumn($db, $cand, [
+                            'idpes',
+                            'ref_idpes',
+                        ], $city);
+                        if ($fc !== null && $fl !== null) {
+                            $fisicaViaAluno = [
+                                'table' => $cand,
+                                'racaCol' => $fc,
+                                'fisicaLink' => $fl,
+                                'alunoCol' => $aIdpesCol,
+                            ];
+                            break;
+                        }
+                    }
+                }
+            }
+
+            $q = $db->table($mat.' as m')
+                ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
+
+            if ($fisicaRacaPivot !== null && $aIdpes !== null) {
+                $q->leftJoin($fisicaRacaPivot['qualified'].' as fr', 'a.'.$aIdpes, '=', 'fr.'.$fisicaRacaPivot['idpesCol']);
+                self::leftJoinRacaCatalogOnFk($db, $q, 'fr', $fisicaRacaPivot['racaFkCol'], $racaT, 'r', $rIdCol);
+            } elseif ($pRaca !== null && $pId !== null) {
+                $q->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId);
+                self::leftJoinRacaCatalogOnFk($db, $q, 'p', $pRaca, $racaT, 'r', $rIdCol);
+            } elseif ($aRaca !== null) {
+                self::leftJoinRacaCatalogOnFk($db, $q, 'a', $aRaca, $racaT, 'r', $rIdCol);
+            } elseif ($fisicaTable !== null && $fisicaRacaCol !== null && $fisicaLinkCol !== null && $pId !== null) {
+                $q->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId)
+                    ->leftJoin($fisicaTable.' as pf', 'p.'.$pId, '=', 'pf.'.$fisicaLinkCol);
+                self::leftJoinRacaCatalogOnFk($db, $q, 'pf', $fisicaRacaCol, $racaT, 'r', $rIdCol);
+            } elseif ($fisicaViaAluno !== null) {
+                $q->leftJoin($fisicaViaAluno['table'].' as pf', 'a.'.$fisicaViaAluno['alunoCol'], '=', 'pf.'.$fisicaViaAluno['fisicaLink']);
+                self::leftJoinRacaCatalogOnFk($db, $q, 'pf', $fisicaViaAluno['racaCol'], $racaT, 'r', $rIdCol);
+            } else {
+                return null;
+            }
+
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+
+            $escolaSpec = self::resolveEscolaJoinSpec($db, $city);
+            if ($escolaSpec === null) {
+                return null;
+            }
+            ['qualified' => $escolaT, 'idCol' => $eId, 'nameCol' => $eName] = $escolaSpec;
+
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            if ($tc['escola'] === '') {
+                return null;
+            }
+            $refEscola = $tc['escola'];
+            $tEsc = $grammar->wrap('t_filter').'.'.$grammar->wrap($refEscola);
+            $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
+
+            $q->join($escolaT.' as e', function ($join) use ($db, $tEsc, $ePk) {
+                if ($db->getDriverName() === 'pgsql') {
+                    $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
+                } else {
+                    $join->whereRaw('CAST('.$tEsc.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
+                }
+            });
+
+            $q->selectRaw('e.'.$eId.' as eid')
+                ->selectRaw('MAX(e.'.$eName.') as ename')
+                ->selectRaw('r.'.$rIdCol.' as rid')
+                ->selectRaw('MAX(r.'.$rNameCol.') as rname')
+                ->selectRaw('COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).') as c')
+                ->groupBy('e.'.$eId)
+                ->groupBy('r.'.$rIdCol);
+
+            $rows = $q->get();
+            if ($rows->isEmpty()) {
+                return null;
+            }
+
+            $raceTotals = [];
+            $cell = [];
+            foreach ($rows as $row) {
+                $eid = (string) $row->eid;
+                $rk = $row->rid === null ? "\0null" : 'id:'.(string) $row->rid;
+                $c = (int) ($row->c ?? 0);
+                $raceTotals[$rk] = ($raceTotals[$rk] ?? 0) + $c;
+                if (! isset($cell[$eid])) {
+                    $cell[$eid] = [
+                        'name' => (string) (($row->ename ?? '') !== '' ? $row->ename : ('#'.$eid)),
+                        'byR' => [],
+                    ];
+                }
+                $cell[$eid]['byR'][$rk] = ($cell[$eid]['byR'][$rk] ?? 0) + $c;
+            }
+
+            arsort($raceTotals);
+            $topRaceKeys = array_slice(array_keys($raceTotals), 0, 5);
+            $raceLabels = [];
+            foreach ($topRaceKeys as $rk) {
+                $raceLabels[$rk] = $rk === "\0null"
+                    ? __('Não declarado')
+                    : $this->raceLabelFromRows($rows, $rk);
+            }
+
+            uasort($cell, static fn ($a, $b) => strcmp((string) $a['name'], (string) $b['name']));
+
+            $maxSchools = 60;
+            $nSchoolsBefore = count($cell);
+            if ($nSchoolsBefore > $maxSchools) {
+                $totByE = [];
+                foreach ($cell as $eid => $meta) {
+                    $totByE[$eid] = array_sum($meta['byR']);
+                }
+                arsort($totByE);
+                $keepIds = array_slice(array_keys($totByE), 0, $maxSchools);
+                $cell = array_intersect_key($cell, array_flip($keepIds));
+            }
+
+            $labels = [];
+            foreach ($cell as $meta) {
+                $labels[] = (string) $meta['name'];
+            }
+
+            $series = [];
+            foreach ($topRaceKeys as $rk) {
+                $data = [];
+                foreach ($cell as $meta) {
+                    $data[] = (float) ($meta['byR'][$rk] ?? 0);
+                }
+                $series[] = [
+                    'label' => $raceLabels[$rk] ?? $rk,
+                    'data' => $data,
+                ];
+            }
+
+            $outrosLabel = __('Outras categorias de raça/cor');
+            $outrosData = [];
+            foreach ($cell as $meta) {
+                $sum = 0;
+                foreach ($meta['byR'] as $rk => $v) {
+                    if (! in_array($rk, $topRaceKeys, true)) {
+                        $sum += (int) $v;
+                    }
+                }
+                $outrosData[] = (float) $sum;
+            }
+            if (array_sum($outrosData) > 0) {
+                $series[] = ['label' => $outrosLabel, 'data' => $outrosData];
+            }
+
+            $neeByE = $this->neeMatriculasPorEscola($db, $city, $filters);
+            $neeData = [];
+            foreach (array_keys($cell) as $eid) {
+                $neeData[] = (float) ($neeByE[$eid] ?? 0);
+            }
+            $series[] = [
+                'label' => __('Matrículas NEE (aluno_deficiência)'),
+                'data' => $neeData,
+            ];
+
+            $chart = ChartPayload::lineMulti(
+                __('Matrículas por cor/raça e NEE — por escola (filtro actual)'),
+                $labels,
+                $series
+            );
+            $chart['panel_layout'] = 'full';
+            $footnote = __('Cada ponto no eixo horizontal é uma unidade escolar (turma→escola). As linhas de raça/cor usam as categorias mais frequentes na rede; as restantes entram em «:outros». NEE: contagem de matrículas de alunos com registo em aluno_deficiência.', ['outros' => $outrosLabel]);
+            if ($nSchoolsBefore > $maxSchools) {
+                $footnote .= ' '.__('Mostram-se as :n escolas com maior volume de matrículas no filtro.', ['n' => $maxSchools]);
+            }
+            $chart['footnote'] = $footnote;
+
+            return $chart;
+        } catch (QueryException|\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Rótulo legível para uma chave de raça já agregada (procura nas linhas SQL).
+     */
+    private function raceLabelFromRows(Collection $rows, string $rk): string
+    {
+        if ($rk === "\0null") {
+            return __('Não declarado');
+        }
+        if (! str_starts_with($rk, 'id:')) {
+            return $rk;
+        }
+        $want = substr($rk, 3);
+        foreach ($rows as $row) {
+            if ($row->rid !== null && (string) $row->rid === $want) {
+                $nm = $row->rname ?? null;
+
+                return $nm !== null && (string) $nm !== '' ? (string) $nm : __('Raça #:id', ['id' => $want]);
+            }
+        }
+
+        return __('Raça #:id', ['id' => $want]);
     }
 
     /**
