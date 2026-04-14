@@ -91,6 +91,77 @@ class SyncSchoolUnitGeos extends Command
         return null;
     }
 
+    /**
+     * Tenta descobrir onde está o Código INEP quando não existe na tabela escola.
+     *
+     * @return ?array{table: string, alias: string, fk: string, col: string}
+     */
+    private function resolveInepJoinSpecByProbe($db, City $city, string $escolaTable, string $eAlias, string $eIdCol): ?array
+    {
+        if ($db->getDriverName() !== 'pgsql') {
+            return null;
+        }
+
+        $schema = IeducarSchema::effectiveSchema($city);
+        if ($schema === '') {
+            $schema = 'pmieducar';
+        }
+
+        $joinTables = [
+            $schema.'.escola_complemento',
+            $schema.'.escola_complementar',
+            $schema.'.escola_inep',
+            $schema.'.escola_dados_inep',
+            $schema.'.escola_dados',
+        ];
+        $fkCandidates = [
+            'ref_cod_escola',
+            'cod_escola',
+            'escola_id',
+            'ref_escola',
+        ];
+        $colCandidates = array_values(array_unique(array_filter([
+            (string) config('ieducar.columns.escola.inep'),
+            'codigo_inep',
+            'cod_inep',
+            'inep',
+            'inep_code',
+            'cod_escola_inep',
+            'codigo_escola_inep',
+        ])));
+
+        $joinAlias = 'ei';
+
+        foreach ($joinTables as $jt) {
+            foreach ($fkCandidates as $fk) {
+                foreach ($colCandidates as $col) {
+                    try {
+                        $q = $db->table($escolaTable.' as '.$eAlias)
+                            ->leftJoin($jt.' as '.$joinAlias, $eAlias.'.'.$eIdCol, '=', $joinAlias.'.'.$fk)
+                            ->select([$eAlias.'.'.$eIdCol.' as eid', $joinAlias.'.'.$col.' as inep'])
+                            ->limit(1);
+                        $q->get();
+
+                        return [
+                            'table' => $jt,
+                            'alias' => $joinAlias,
+                            'fk' => $fk,
+                            'col' => $col,
+                        ];
+                    } catch (QueryException $e) {
+                        $sqlState = (string) ($e->errorInfo[0] ?? '');
+                        if (in_array($sqlState, ['42703', '42P01'], true)) { // undefined_column / undefined_table
+                            continue;
+                        }
+                        throw $e;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
     private function relatorioGetNomeEscolaExpr($db, string $alias, string $eId): ?string
     {
         try {
@@ -183,8 +254,18 @@ class SyncSchoolUnitGeos extends Command
                         'ref_cod_escola_inep',
                     ]), 'e');
 
+                    $inepJoin = null;
                     if ($inepCol === null) {
-                        $this->warn(' - coluna de código INEP não encontrada na tabela escola (inep_code ficará vazio). Configure IEDUCAR_COL_ESCOLA_INEP se a base usar outro nome.');
+                        // Quando o INEP não está na escola, tentar tabela complementar.
+                        $inepJoin = $this->resolveInepJoinSpecByProbe($db, $city, $escolaT, 'e', $eId);
+                    }
+
+                    if ($inepCol === null) {
+                        if ($inepJoin !== null) {
+                            $this->info(' - Código INEP encontrado via JOIN: '.$inepJoin['table'].'.'.$inepJoin['col'].' (FK '.$inepJoin['fk'].')');
+                        } else {
+                            $this->warn(' - coluna de código INEP não encontrada na tabela escola (inep_code ficará vazio). Configure IEDUCAR_COL_ESCOLA_INEP se a base usar outro nome.');
+                        }
                     }
 
                     if ($latCol === null || $lngCol === null) {
@@ -210,6 +291,11 @@ class SyncSchoolUnitGeos extends Command
                         ->when($inepCol !== null, fn ($q) => $q->addSelect('e.'.$inepCol.' as inep'))
                         ->orderBy('e.'.$eId)
                         ->limit(5000);
+
+                    if ($inepCol === null && $inepJoin !== null) {
+                        $q->leftJoin($inepJoin['table'].' as '.$inepJoin['alias'], 'e.'.$eId, '=', $inepJoin['alias'].'.'.$inepJoin['fk']);
+                        $q->addSelect($inepJoin['alias'].'.'.$inepJoin['col'].' as inep');
+                    }
 
                     $this->line(' - SQL (select escolas): '.$this->sqlWithBindings($q->toSql(), $q->getBindings()));
 
