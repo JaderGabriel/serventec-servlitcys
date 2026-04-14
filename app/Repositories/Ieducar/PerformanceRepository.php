@@ -148,7 +148,7 @@ class PerformanceRepository
 
                     return [
                         'rows' => [],
-                        'message' => __('Sem matrículas activas para os filtros seleccionados.'),
+                        'message' => __('Sem matrículas ativas para os filtros seleccionados.'),
                         'error' => null,
                         'chart' => $chartsInep[0] ?? null,
                         'charts' => $chartsInep,
@@ -202,7 +202,11 @@ class PerformanceRepository
                     $dVals = [$total];
                 }
                 if ($dLabels !== []) {
-                    $charts[] = ChartPayload::doughnut(__('Indicadores agregados (rede)'), $dLabels, $dVals);
+                    $agg = ChartPayload::doughnut(__('Indicadores agregados (rede)'), $dLabels, $dVals);
+                    $agg['subtitle'] = __(
+                        'Distribuição das matrículas ativas do filtro pelas categorias de situação agregadas na rede. Cada fatia corresponde a uma categoria; o tamanho reflecte a participação no total considerado no denominador comum.'
+                    );
+                    $charts[] = $agg;
                 }
 
                 $kpiBarLabels = [];
@@ -215,7 +219,7 @@ class PerformanceRepository
                 }
                 if ($kpiBarLabels !== []) {
                     $charts[] = ChartPayload::barHorizontal(
-                        __('Taxas sobre o total de matrículas activas (mesmo denominador)'),
+                        __('Taxas sobre o total de matrículas ativas (mesmo denominador)'),
                         __('Percentagem'),
                         $kpiBarLabels,
                         $kpiBarVals
@@ -370,7 +374,7 @@ class PerformanceRepository
                 'aprovacao',
                 __('Taxa de aprovação'),
                 __('Aprovação — cód. 2, 5, 12, 13, 14'),
-                __('Percentagem de matrículas cuja situação corresponde a aprovação (códigos i-Educar 2, 5, 12, 13 e 14) em relação ao total de matrículas activas no filtro.'),
+                __('Percentagem de matrículas cuja situação corresponde a aprovação (códigos i-Educar 2, 5, 12, 13 e 14) em relação ao total de matrículas ativas no filtro.'),
                 __('(matrículas com situação ∈ {2,5,12,13,14}) ÷ (total de matrículas no denominador) × 100'),
                 $pct($aprov),
                 $aprov,
@@ -390,7 +394,7 @@ class PerformanceRepository
                 'em_curso',
                 __('Taxa «em curso / exame / paralela»'),
                 __('Em curso / exame / paralela — cód. 1, 4, 7'),
-                __('Percentagem com situação «em curso», «em exame» ou «paralela» (códigos 1, 4 e 7). O campo reflecte o estado no registo; em anos já encerrados, valores muito altos indicam sobretudo falta de fecho/actualização da situação na base.'),
+                __('Percentagem com situação «em curso», «em exame» ou «paralela» (códigos 1, 4 e 7). O campo reflecte o estado no registo; em anos já encerrados, valores muito altos indicam sobretudo falta de fechamento ou atualização na base de dados.'),
                 __('(situação ∈ {1,4,7}) ÷ (total) × 100'),
                 $pct($emCurso),
                 $emCurso,

@@ -171,7 +171,7 @@ return [
             'curso' => env('IEDUCAR_COL_TURMA_CURSO', 'ref_cod_curso'),
             'serie' => env('IEDUCAR_COL_TURMA_SERIE', 'ref_cod_serie'),
             'turno' => env('IEDUCAR_COL_TURMA_TURNO', 'ref_cod_turno'),
-            /** Capacidade da turma (vagas = max − matrículas activas). */
+            /** Capacidade da turma (vagas = max − matrículas ativas). */
             'max_alunos' => env('IEDUCAR_COL_TURMA_MAX_ALUNO', 'max_aluno'),
         ],
         'matricula' => [
@@ -263,19 +263,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Matrículas «activas» nos indicadores (KPIs / gráficos)
+    | Matrículas «ativas» nos indicadores (KPIs / gráficos)
     |--------------------------------------------------------------------------
     |
     | Em várias bases i-Educar, «ativo» em matricula está NULL ou 0 enquanto
     | ref_cod_matricula_situacao aponta para situação INEP «em curso» (código 1).
-    | Com incluir_situacao_inep activo, as contagens consideram também matrículas
+    | Com incluir_situacao_inep ativo, as contagens consideram também matrículas
     | cuja linha em matricula_situacao tem codigo INEP na lista (por defeito: 1).
     |
     */
 
     'matricula_indicadores' => [
         'incluir_situacao_inep' => filter_var(env('IEDUCAR_MATRICULA_INDICADORES_INCLUIR_SITUACAO_INEP', true), FILTER_VALIDATE_BOOL),
-        /** Códigos INEP (matricula_situacao.codigo) tratados como matrícula activa em conjunto com ativo=1. */
+        /** Códigos INEP (matricula_situacao.codigo) tratados como matrícula ativa em conjunto com ativo=1. */
         'situacao_inep_como_ativa' => array_values(array_filter(array_map('trim', explode(',', (string) env('IEDUCAR_MATRICULA_SITUACAO_INEP_ATIVAS', '1'))), static fn (string $s): bool => $s !== '')),
     ],
 
@@ -304,7 +304,7 @@ return [
         'serie_pairs' => env('IEDUCAR_SQL_SERIE'),
         'nivel_ensino_pairs' => env('IEDUCAR_SQL_NIVEL_ENSINO'),
         'turno_pairs' => env('IEDUCAR_SQL_TURNO'),
-        /** Cor/raça na aba Inclusão: mesmos placeholders que outras queries; deve filtrar matrículas activas como o painel. */
+        /** Cor/raça na aba Inclusão: mesmos placeholders que outras queries; deve filtrar matrículas ativas como o painel. */
         'inclusion_raca' => env('IEDUCAR_SQL_INCLUSION_RACA'),
         'inclusion_extra' => env('IEDUCAR_SQL_INCLUSION_EXTRA'),
         /** Uma linha: coluna «pct» (0–100) ou «numerador» + «denominador» (matrículas). Placeholders como inclusion_raca. */

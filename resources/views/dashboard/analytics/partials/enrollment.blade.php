@@ -2,14 +2,14 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Gráficos: Distorção Idade-Série, matrículas por escola (principais + «outras» ou top 10), níveis/séries/cursos, turno e vagas por escola. KPIs no topo: matrículas activas, turmas e ocupação média quando existir capacidade na turma.') }}
+        {{ __('Gráficos: Distorção Idade-Série (barras por série com distorção), matrículas por escola (principais + «outras» ou top 10), níveis/séries/cursos, turno e vagas por escola. KPIs no topo: matrículas ativas, turmas e ocupação média quando existir capacidade na turma.') }}
     </p>
 
     @if (! empty($enrollmentData['kpis']))
         @php $k = $enrollmentData['kpis']; @endphp
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Matrículas activas') }}</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Matrículas ativas') }}</p>
                 <p class="mt-1 text-2xl font-semibold text-indigo-600 dark:text-indigo-400">{{ number_format($k['matriculas'] ?? 0) }}</p>
             </div>
             <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4">
@@ -80,7 +80,7 @@
         <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
             <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40">
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Matrículas por unidade escolar') }}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ __('Principais escolas no filtro actual (ordenadas por total de matrículas activas).') }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ __('Principais escolas no filtro atual (ordenadas por total de matrículas ativas).') }}</p>
             </div>
             <div class="p-4">
                 <ul class="divide-y divide-gray-100 dark:divide-gray-700">

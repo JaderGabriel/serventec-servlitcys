@@ -9,7 +9,7 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Cada taxa = (matrículas na categoria) ÷ (total de matrículas activas no filtro) × 100. O total usa matricula.ativo e o campo de situação (por defeito «aprovado»); os filtros de ano/escola/curso/turno aplicam-se pela turma. As categorias seguem os códigos i-Educar no mesmo campo. O gráfico de distorção idade/série (rede) usa idade à data de corte 31/03 e o limite etário da série (INEP: com distorção quando idade > limite + 2 anos), ou SQL personalizado IEDUCAR_SQL_DISTORCAO_REDE_CHART.') }}
+        {{ __('Cada taxa = (matrículas na categoria) ÷ (total de matrículas ativas no filtro) × 100. O total usa matricula.ativo e o campo de situação (por defeito «aprovado»); os filtros de ano/escola/curso/turno aplicam-se pela turma. As categorias seguem os códigos i-Educar no mesmo campo. O gráfico de distorção idade/série (rede) mostra barras horizontais com quantidades absolutas por ano/série (idade à data de corte 31/03 e limite etário + 2 anos), ou SQL personalizado IEDUCAR_SQL_DISTORCAO_REDE_CHART.') }}
     </p>
 
     @php $inepPanel = $performanceData['inep_panel'] ?? null; @endphp
@@ -131,13 +131,10 @@
                 <span class="font-semibold">{{ number_format((float) $performanceData['distorcao_pct'], 1, ',', '.') }}%</span>
                 <span class="text-xs text-indigo-700 dark:text-indigo-300">({{ __('fonte: IEDUCAR_SQL_DISTORCAO_REDE') }})</span>
             </div>
-        @else
-            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Distorção idade/série: opcional via IEDUCAR_SQL_DISTORCAO_REDE (consulta personalizada por município).') }}</p>
         @endif
     @endif
 
     @if ($perfCharts !== [])
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('No gráfico de barras horizontais, a taxa combinada «abandono + remanejamento» não é mostrada (é a soma das duas taxas já representadas).') }}</p>
         <div class="grid grid-cols-1 gap-6">
             @foreach ($perfCharts as $idx => $chart)
                 <x-dashboard.chart-panel
@@ -149,7 +146,7 @@
         </div>
     @elseif (empty($performanceData['error']) && empty($performanceData['message']) && $perfCharts === [] && empty($performanceData['kpis'] ?? []) && empty($performanceData['inep_panel'] ?? null))
         <div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-12 text-center text-sm text-gray-400 dark:text-gray-500">
-            {{ __('Sem dados para desempenho com os filtros actuais.') }}
+            {{ __('Sem dados para desempenho com os filtros atuais.') }}
         </div>
     @endif
 

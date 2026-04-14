@@ -10,7 +10,7 @@ use Illuminate\Database\Query\Builder;
  * Filtro «matrícula ativa» compatível com PostgreSQL (boolean / smallint / char) e MySQL.
  *
  * Quando é passada a cidade e a config ieducar.matricula_indicadores.incluir_situacao_inep
- * está activa, matrículas com alias «m» também entram se existir situação INEP em curso
+ * está ativa, matrículas com alias «m» também entram se existir situação INEP em curso
  * (ex. codigo=1 em matricula_situacao), alinhando bases onde «ativo» está indefinido.
  */
 final class MatriculaAtivoFilter

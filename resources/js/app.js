@@ -3,6 +3,7 @@ import "./bootstrap";
 import Alpine from "alpinejs";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import { radialCalloutsPlugin } from "./chartRadialCallouts.js";
 import {
     buildCanvasOnlyExport,
     buildCompositeExport,
@@ -10,7 +11,7 @@ import {
 } from "./chartExportHelpers.js";
 import { initAnalyticsFilterTurno } from "./analyticsFilterTurno.js";
 
-Chart.register(ChartDataLabels);
+Chart.register(ChartDataLabels, radialCalloutsPlugin);
 
 function chartTextColor() {
     return document.documentElement.classList.contains("dark")
@@ -196,11 +197,25 @@ document.addEventListener("alpine:init", () => {
             legendModalOpen: false,
             expanded: false,
             legendVisible: true,
+            /** Classes do contentor / canvas (actualizadas por syncLayoutClasses; Alpine 3.4 não rastreia bem métodos em :class). */
+            panelBodyClass: "",
+            canvasExtraClass: "",
             init() {
                 if (!payload?.labels?.length || !payload?.datasets?.length) {
                     return;
                 }
                 this._compact = compact !== false;
+                this.syncLayoutClasses();
+                this.$watch("expanded", () => {
+                    this.syncLayoutClasses();
+                    this.$nextTick(() => {
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                                this._pulseChartSize?.();
+                            });
+                        });
+                    });
+                });
                 this._payload = payload;
                 this._exportFilename = exportFilename;
                 this._panelId =
@@ -393,6 +408,31 @@ document.addEventListener("alpine:init", () => {
                                 ? extra.plugins
                                 : {}),
                         };
+                        const isGauge =
+                            payload.type === "doughnut" &&
+                            Number(extra.circumference) === 180 &&
+                            Number(extra.rotation) === -90;
+                        const useRadialCallouts =
+                            (payload.type === "doughnut" ||
+                                payload.type === "pie") &&
+                            !isGauge;
+                        if (useRadialCallouts) {
+                            mergedPlugins.radialCallouts = {
+                                display: true,
+                                ...(typeof mergedPlugins.radialCallouts ===
+                                    "object" && mergedPlugins.radialCallouts
+                                    ? mergedPlugins.radialCallouts
+                                    : {}),
+                            };
+                            mergedPlugins.legend = {
+                                ...(mergedPlugins.legend || {}),
+                                display: false,
+                            };
+                            mergedPlugins.datalabels = {
+                                ...(mergedPlugins.datalabels || {}),
+                                display: false,
+                            };
+                        }
                         this.chart = new Chart(ctx, {
                             type: payload.type,
                             data: {
@@ -409,7 +449,22 @@ document.addEventListener("alpine:init", () => {
                                     typeof extra.layout === "object"
                                         ? extra.layout
                                         : {}),
-                                    padding: isRadial ? {} : { top: 14 },
+                                    padding: {
+                                        ...(typeof extra.layout?.padding ===
+                                        "object"
+                                            ? extra.layout.padding
+                                            : {}),
+                                        ...(useRadialCallouts
+                                            ? {
+                                                  left: 8,
+                                                  right: 8,
+                                                  top: 16,
+                                                  bottom: 16,
+                                              }
+                                            : isRadial
+                                              ? {}
+                                              : { top: 14 }),
+                                    },
                                 },
                                 plugins: mergedPlugins,
                                 scales: mergeCartesianScales(
@@ -573,43 +628,41 @@ document.addEventListener("alpine:init", () => {
                         });
                         requestAnimationFrame(() => {
                             this.applyDensityOptions();
+                            this.syncLayoutClasses();
                         });
                     } catch (e) {
                         console.error("chartPanel", e);
                     }
                 });
             },
-            bodyClass() {
+            syncLayoutClasses() {
                 const c = this._compact;
                 const e = this.expanded;
-                let base =
-                    "p-2 sm:p-4 relative w-full overflow-x-auto overflow-y-hidden transition-[min-height] duration-200 ease-out ";
+                let body =
+                    "p-2 sm:p-4 relative w-full overflow-x-auto overflow-y-hidden transition-all duration-200 ease-out ";
                 if (e) {
-                    base += c
-                        ? "min-h-[min(30rem,80vh)] h-[min(38rem,85vh)] sm:min-h-[min(36rem,88vh)]"
-                        : "min-h-[min(34rem,88vh)] h-[min(40rem,90vh)]";
+                    body += c
+                        ? "min-h-[min(30rem,80vh)] min-h-[30rem] sm:min-h-[36rem] h-[min(42rem,90vh)]"
+                        : "min-h-[min(36rem,92vh)] h-[min(44rem,92vh)]";
                 } else {
-                    base += c
+                    body += c
                         ? "min-h-[220px] h-[min(22rem,calc(100vw-2.5rem))] sm:h-72 md:min-h-[18rem]"
                         : "min-h-[min(28rem,70vh)] h-[min(28rem,70vh)]";
                 }
-                return base;
-            },
-            canvasClass() {
-                const c = this._compact;
-                const e = this.expanded;
-                let base =
-                    "block w-full max-w-full chart-panel-canvas transition-[max-height] duration-200 ";
+                this.panelBodyClass = body;
+
+                let cv =
+                    "block w-full max-w-full chart-panel-canvas transition-all duration-200 ";
                 if (!e && c) {
-                    base +=
+                    cv +=
                         "max-h-[min(20rem,55vw)] sm:max-h-64";
                 } else if (e && c) {
-                    base +=
-                        "max-h-[min(28rem,75vh)] sm:max-h-[min(32rem,80vh)]";
+                    cv +=
+                        "min-h-[18rem] max-h-[min(36rem,78vh)] sm:min-h-[22rem] sm:max-h-[min(40rem,82vh)]";
                 } else {
-                    base += "h-full";
+                    cv += "min-h-[16rem] h-full max-h-none";
                 }
-                return base;
+                this.canvasExtraClass = cv;
             },
             legendRows() {
                 if (!this.chart?.data?.labels) {
@@ -640,17 +693,27 @@ document.addEventListener("alpine:init", () => {
             toggleExpanded() {
                 this.expanded = !this.expanded;
                 this.applyDensityOptions();
-                this.$nextTick(() => {
-                    this._pulseChartSize?.();
-                });
             },
             toggleLegend() {
                 if (!this.chart) {
                     return;
                 }
                 this.legendVisible = !this.legendVisible;
-                this.chart.options.plugins.legend.display = this.legendVisible;
-                this.chart.update("none");
+                const plugins = this.chart.options.plugins;
+                if (!plugins.legend) {
+                    plugins.legend = {};
+                }
+                plugins.legend.display = !!this.legendVisible;
+                try {
+                    this.chart.update("none");
+                } catch (e) {
+                    console.warn("toggleLegend update", e);
+                    try {
+                        this.chart.draw();
+                    } catch (e2) {
+                        console.warn("toggleLegend draw", e2);
+                    }
+                }
             },
             applyDensityOptions() {
                 if (!this.chart) {

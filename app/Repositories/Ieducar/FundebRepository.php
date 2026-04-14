@@ -142,7 +142,7 @@ class FundebRepository
 
         $evidencias = [];
         if ($matTotal > 0) {
-            $evidencias[] = __('Total de matrículas activas no filtro: :n.', ['n' => number_format($matTotal, 0, ',', '.')]);
+            $evidencias[] = __('Total de matrículas ativas no filtro: :n.', ['n' => number_format($matTotal, 0, ',', '.')]);
         }
         if ($hasKpis || $hasCharts || $hasRows) {
             $evidencias[] = __('Existem indicadores de situação de matrícula / desempenho calculados a partir do i-Educar (aprovados, reprovações, distorções, etc., conforme configurado).');
@@ -248,7 +248,7 @@ class FundebRepository
 
         $evidencias = [];
         if ($matTotal > 0) {
-            $evidencias[] = __('Matrículas activas (filtro): :n.', ['n' => number_format($matTotal, 0, ',', '.')]);
+            $evidencias[] = __('Matrículas ativas (filtro): :n.', ['n' => number_format($matTotal, 0, ',', '.')]);
         }
         if (is_array($kpis) && isset($kpis['vagas_ociosas'], $kpis['capacidade_total'])) {
             $evidencias[] = __(
@@ -284,7 +284,7 @@ class FundebRepository
             'A oferta de vagas na educação infantil e no ensino fundamental e a redução da distorção idade/série são eixos centrais das metas de acesso; os números abaixo vêm da base i-Educar filtrada.'
         );
         if ($matTotal <= 0) {
-            $situacao = __('Sem matrículas activas no filtro — alargue o ano ou remova filtros para ver a rede completa.');
+            $situacao = __('Sem matrículas ativas no filtro — alargue o ano ou remova filtros para ver a rede completa.');
         }
 
         return [

@@ -15,11 +15,11 @@
     <div class="rounded-lg border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-3">
         <h2 class="text-sm font-semibold text-indigo-900 dark:text-indigo-100">{{ __('Inclusão & Diversidade') }}</h2>
         <p class="text-sm text-gray-700 dark:text-gray-300 mt-1 leading-relaxed">
-            {{ __('Indicadores para acompanhar educação especial, equidade por etapa e cor ou raça, com o mesmo denominador de matrículas activas sujeitas aos filtros (turma). Os dados seguem o registo na base i-Educar; para regras oficiais do Censo ou do VAAR use os relatórios do INEP/MEC ou SQL personalizado em config/ieducar.php.') }}
+            {{ __('Indicadores para acompanhar educação especial, equidade por etapa e cor ou raça, com o mesmo denominador de matrículas ativas sujeitas aos filtros (turma). Os dados seguem o registo na base i-Educar; para regras oficiais do Censo ou do VAAR use os relatórios do INEP/MEC ou SQL personalizado em config/ieducar.php.') }}
         </p>
         @if ($totalMat !== null)
             <p class="mt-2 text-sm font-medium text-gray-800 dark:text-gray-200">
-                {{ __('Matrículas activas no filtro (denominador comum):') }}
+                {{ __('Matrículas ativas no filtro (denominador comum):') }}
                 <span class="tabular-nums text-indigo-700 dark:text-indigo-300">{{ number_format($totalMat) }}</span>
             </p>
         @endif
@@ -58,7 +58,7 @@
     @if (! empty($inclusionData['gauges']))
         <div>
             <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('Educação especial e multidiversidade') }}</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Percentagem sobre matrículas activas no filtro; prioridade a SQL em IEDUCAR_SQL_INCLUSION_GAUGE_*.') }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Percentagem sobre matrículas ativas no filtro; prioridade a SQL em IEDUCAR_SQL_INCLUSION_GAUGE_*.') }}</p>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 @foreach ($inclusionData['gauges'] as $idx => $gauge)
                     <div class="space-y-2">

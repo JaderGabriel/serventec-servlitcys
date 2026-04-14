@@ -16,7 +16,7 @@ use Illuminate\Support\Collection;
 final class MatriculaChartQueries
 {
     /**
-     * Contagem de matrículas activas (mesma lógica da visão geral: junta turma quando há ano ou recortes dimensionais).
+     * Contagem de matrículas ativas (mesma lógica da visão geral: junta turma quando há ano ou recortes dimensionais).
      */
     public static function totalMatriculasAtivasFiltradas(Connection $db, City $city, IeducarFilterState $filters): ?int
     {
@@ -166,7 +166,7 @@ final class MatriculaChartQueries
 
         return ChartPayload::line(
             __('Evolução de matrículas por ano letivo (comparativo)'),
-            __('Matrículas activas'),
+            __('Matrículas ativas'),
             $labels,
             $values
         );
@@ -547,7 +547,7 @@ final class MatriculaChartQueries
     /**
      * Matrículas por escola com nome via relatorio.get_nome_escola (PostgreSQL / Portabilis), join directo
      * matricula → escola quando existir coluna de FK na matrícula (ex.: ref_ref_cod_escola), com os mesmos filtros
-     * que o resto do painel (turma + matrícula activa).
+     * que o resto do painel (turma + matrícula ativa).
      *
      * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}
      */
@@ -688,7 +688,7 @@ final class MatriculaChartQueries
     }
 
     /**
-     * Matrículas activas por turno (cadastro.turno).
+     * Matrículas ativas por turno (cadastro.turno).
      *
      * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}
      */
@@ -955,7 +955,7 @@ final class MatriculaChartQueries
     }
 
     /**
-     * Contagem de matrículas activas por turma (para vagas).
+     * Contagem de matrículas ativas por turma (para vagas).
      *
      * @return array<string, int> cod_turma => quantidade
      */
@@ -1111,7 +1111,7 @@ final class MatriculaChartQueries
     }
 
     /**
-     * Resumo para KPIs: total de matrículas activas, turmas distintas e, se existir max_aluno, taxa média de ocupação.
+     * Resumo para KPIs: total de matrículas ativas, turmas distintas e, se existir max_aluno, taxa média de ocupação.
      *
      * @return array{matriculas: int, turmas_distintas: int, ocupacao_pct: ?float}
      */
@@ -1245,7 +1245,7 @@ final class MatriculaChartQueries
     }
 
     /**
-     * Todas as séries com matrícula activa, ordenadas por etapa (INEP) quando a coluna existir.
+     * Todas as séries com matrícula ativa, ordenadas por etapa (INEP) quando a coluna existir.
      *
      * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}
      */
@@ -1319,7 +1319,7 @@ final class MatriculaChartQueries
     }
 
     /**
-     * Todos os cursos (segmentos) com total de matrículas activas.
+     * Todos os cursos (segmentos) com total de matrículas ativas.
      *
      * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}
      */
@@ -1796,10 +1796,153 @@ final class MatriculaChartQueries
     }
 
     /**
-     * Distorção idade/série (rede): gráfico de rosca com «com distorção» vs «sem distorção» (critério INEP: idade à data de corte 31/03 > idade máxima da série + 2 anos, quando existir idade_maxima; senão idade_minima + 2).
+     * Matrículas com distorção idade/série, agrupadas por série (rótulo + quantidade absoluta).
      *
-     * 1) Se existir ieducar.sql.distorcao_rede_chart, usa-se esse SQL (várias linhas: label + valor).
-     * 2) Caso contrário, monta-se a consulta a partir de matrícula → turma → série e cadastro (data de nascimento).
+     * @return array{labels: list<string>, values: list<float>}|null
+     */
+    private static function distorcaoComDistorsaoPorSerieAutomatico(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $aluno = IeducarSchema::resolveTable('aluno', $city);
+            $pessoa = IeducarSchema::resolveTable('pessoa', $city);
+            $serieT = IeducarSchema::resolveTable('serie', $city);
+
+            if (! IeducarColumnInspector::tableExists($db, $aluno, $city)
+                || ! IeducarColumnInspector::tableExists($db, $pessoa, $city)
+                || ! IeducarColumnInspector::tableExists($db, $serieT, $city)) {
+                return null;
+            }
+
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            if ($tc['year'] === '' || $tc['serie'] === '') {
+                return null;
+            }
+
+            $birthCol = IeducarColumnInspector::firstExistingColumn($db, $pessoa, array_filter([
+                'data_nasc',
+                'data_nascimento',
+                'dt_nascimento',
+                'dt_nasc',
+            ]), $city);
+            if ($birthCol === null) {
+                return null;
+            }
+
+            $spec = self::serieJoinSpec($db, $city);
+            if ($spec === null) {
+                return null;
+            }
+            $sId = $spec['idCol'];
+            $nameCol = $spec['nameCol'];
+            $cfgMax = trim((string) config('ieducar.columns.serie.idade_limite_max', ''));
+            $maxCol = IeducarColumnInspector::firstExistingColumn($db, $serieT, array_filter([
+                $cfgMax !== '' ? $cfgMax : null,
+                'idade_maxima',
+                'idade_max',
+                'idade_maxima_escolar',
+                'idade_final',
+                'idade_fim',
+                'idade_ideal_max',
+                'idade_maxima_ideal',
+            ]), $city);
+            if ($maxCol === null) {
+                return null;
+            }
+
+            $grammar = $db->getQueryGrammar();
+            $limiteExpr = $grammar->wrap('s').'.'.$grammar->wrap($maxCol);
+
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $mAluno = (string) config('ieducar.columns.matricula.aluno');
+            $aId = (string) config('ieducar.columns.aluno.id');
+            $aPessoa = IeducarColumnInspector::firstExistingColumn($db, $aluno, array_filter([
+                (string) config('ieducar.columns.aluno.pessoa'),
+                'ref_cod_pessoa',
+                'ref_idpes',
+                'idpes',
+            ]), $city);
+            if ($aPessoa === null) {
+                return null;
+            }
+
+            $pId = IeducarColumnInspector::firstExistingColumn($db, $pessoa, array_filter([
+                (string) config('ieducar.columns.pessoa.id'),
+                'idpes',
+                'id',
+                'cod_pessoa',
+            ]), $city);
+            if ($pId === null) {
+                return null;
+            }
+
+            $refDateExpr = self::refDateCorteEscolarSql($db, 't_filter', $tc['year']);
+            $idadeExpr = self::idadeAnosCompletosSql($db, $refDateExpr, 'p', $birthCol);
+            $distorcaoCond = '('.$idadeExpr.') > ('.$limiteExpr.' + 2)';
+
+            $serieJoinCol = $tc['serie'];
+            $base = function () use ($db, $city, $filters, $mat, $mAtivo, $mAluno, $aluno, $aId, $aPessoa, $pessoa, $pId, $serieT, $sId, $birthCol, $serieJoinCol, $limiteExpr, $grammar) {
+                $q = $db->table($mat.' as m');
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+                MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+                MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+                MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+                $q->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
+                    ->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId);
+                $tSerieFk = $grammar->wrap('t_filter').'.'.$grammar->wrap($serieJoinCol);
+                $sPk = $grammar->wrap('s').'.'.$grammar->wrap($sId);
+                $q->join($serieT.' as s', function ($join) use ($db, $tSerieFk, $sPk) {
+                    if ($db->getDriverName() === 'pgsql') {
+                        $join->whereRaw('('.$tSerieFk.')::text = ('.$sPk.')::text');
+                    } else {
+                        $join->whereRaw('CAST('.$tSerieFk.' AS UNSIGNED) = CAST('.$sPk.' AS UNSIGNED)');
+                    }
+                })
+                    ->whereNotNull('p.'.$birthCol)
+                    ->whereRaw('('.$limiteExpr.') IS NOT NULL');
+
+                return $q;
+            };
+
+            $sidWrapped = $grammar->wrap('s').'.'.$grammar->wrap($sId);
+            $snameWrapped = $grammar->wrap('s').'.'.$grammar->wrap($nameCol);
+
+            $rows = $base()
+                ->whereRaw($distorcaoCond)
+                ->selectRaw($snameWrapped.' as serie_lbl')
+                ->selectRaw('COUNT(*) as cnt')
+                ->groupBy([$sidWrapped, $snameWrapped])
+                ->orderByDesc('cnt')
+                ->limit(40)
+                ->get();
+
+            if ($rows->isEmpty()) {
+                return null;
+            }
+
+            $labels = [];
+            $values = [];
+            foreach ($rows as $row) {
+                $arr = (array) $row;
+                $lbl = isset($arr['serie_lbl']) ? trim((string) $arr['serie_lbl']) : '';
+                if ($lbl === '') {
+                    $lbl = __('Série sem nome');
+                }
+                $labels[] = $lbl;
+                $values[] = (float) ($arr['cnt'] ?? 0);
+            }
+
+            return ['labels' => $labels, 'values' => $values];
+        } catch (QueryException|\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Distorção idade/série (rede): barras horizontais (eixo Y = ano/série) com quantidade absoluta de alunos com distorção por série.
+     *
+     * 1) Se existir ieducar.sql.distorcao_rede_chart, usa-se esse SQL (uma linha por categoria: label + quantidade).
+     * 2) Caso contrário, agrupa-se por série com o critério INEP (idade à data de corte 31/03 > idade máxima da série + 2 anos).
      *
      * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}
      */
@@ -1830,17 +1973,19 @@ final class MatriculaChartQueries
                 }
 
                 [$labels, $values, $fracNote] = self::normalizeDistorcaoDoughnutValues($labels, $values);
+                [$labels, $values] = ChartPayload::capTailAsOutros($labels, $values, 32, __('Outras séries'));
 
-                $chart = ChartPayload::doughnut(
+                $chart = ChartPayload::barHorizontal(
                     __('Distorção idade/série (rede)'),
+                    __('Alunos com distorção'),
                     $labels,
                     $values
                 );
                 $chart['subtitle'] = __(
-                    'Cada fatia mostra o número absoluto de matrículas; a percentagem no rótulo é esse valor dividido pelo total das duas fatias.'
+                    'Barras horizontais: cada linha corresponde a um ano/série (ou categoria do SQL) com a quantidade absoluta de matrículas com distorção idade/série.'
                 );
                 $chart['footnote'] = __(
-                    'Critério INEP (rede): idade na data de corte 31/03 do ano letivo da turma > idade máxima da série + 2 anos. Use colunas valor/quantidade no SQL (contagens); se enviar proporções entre 0 e 1, o painel converte para a mesma escala visual.'
+                    'Critério INEP (rede): idade na data de corte 31/03 do ano letivo da turma > idade máxima da série + 2 anos. O SQL deve devolver contagens por linha (colunas label e valor/quantidade); proporções entre 0 e 1 são ajustadas para escala de desenho.'
                 ).($fracNote !== '' ? ' '.$fracNote : '');
 
                 return $chart;
@@ -1849,35 +1994,29 @@ final class MatriculaChartQueries
             }
         }
 
-        $c = self::distorcaoIdadeSerieContagensAutomatico($db, $city, $filters);
-        if ($c === null) {
+        $bySerie = self::distorcaoComDistorsaoPorSerieAutomatico($db, $city, $filters);
+        if ($bySerie === null || $bySerie['labels'] === []) {
             return null;
         }
 
-        $com = (float) $c['com'];
-        $sem = (float) $c['sem'];
-        $total = $com + $sem;
-        $pctCom = $total > 0 ? round(100.0 * $com / $total, 1) : 0.0;
+        $labels = $bySerie['labels'];
+        $values = $bySerie['values'];
+        [$labels, $values] = ChartPayload::capTailAsOutros($labels, $values, 32, __('Outras séries'));
 
-        $chart = ChartPayload::doughnut(
+        $total = array_sum(array_map(static fn ($v) => (float) $v, $values));
+
+        $chart = ChartPayload::barHorizontal(
             __('Distorção idade/série (rede)'),
-            [
-                __('Com distorção (idade > limite + 2 anos)'),
-                __('Sem distorção'),
-            ],
-            [$com, $sem]
+            __('Alunos com distorção'),
+            $labels,
+            $values
         );
         $chart['subtitle'] = __(
-            'Contagens absolutas de matrículas activas no filtro: :com com distorção e :sem sem distorção (total :total). Taxa de distorção na rede: :pct %.',
-            [
-                'com' => number_format((int) $com, 0, ',', '.'),
-                'sem' => number_format((int) $sem, 0, ',', '.'),
-                'total' => number_format((int) $total, 0, ',', '.'),
-                'pct' => number_format($pctCom, 1, ',', '.'),
-            ]
+            'Quantidade absoluta de matrículas ativas com distorção (idade à 31/03 > limite etário da série + 2 anos), por ano/série, nos filtros atuais. Total com distorção (somatório das barras): :n.',
+            ['n' => number_format((int) round($total), 0, ',', '.')]
         );
         $chart['footnote'] = __(
-            'O gráfico de rosca usa as mesmas contagens do cartão acima. Os rótulos sobre as fatias mostram o valor absoluto e a percentagem em relação ao total das duas categorias.'
+            'Barras horizontais (categorias no eixo vertical): apenas matrículas classificadas com distorção; séries sem casos não aparecem.'
         );
 
         return $chart;

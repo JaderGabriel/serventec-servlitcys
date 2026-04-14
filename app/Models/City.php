@@ -43,7 +43,7 @@ class City extends Model
     }
 
     /**
-     * Cidades activas (disponíveis para painéis e consultas).
+     * Cidades ativas (disponíveis para painéis e consultas).
      */
     public function scopeActive(Builder $query): void
     {
@@ -90,7 +90,7 @@ class City extends Model
     }
 
     /**
-     * Cidades elegíveis para analytics: activas + setup de dados.
+     * Cidades elegíveis para analytics: ativas + setup de dados.
      * Padrão único para dropdowns e consultas do dashboard iEducar.
      */
     public function scopeForAnalytics(Builder $query): void

@@ -9,7 +9,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 
 /**
- * Medidores (% sobre matrículas activas filtradas) para deficiências, síndromes e altas habilidades.
+ * Medidores (% sobre matrículas ativas filtradas) para deficiências, síndromes e altas habilidades.
  *
  * Prioridade: SQL em config (ieducar.sql.inclusion_gauge_*); senão heurística com aluno_deficiencia + cadastro.deficiencia.
  */
@@ -39,7 +39,7 @@ final class InclusionSpecialEducationGauges
                 $out[] = [
                     'title' => $titles[$key],
                     'percent' => $pct,
-                    'caption' => __('Percentagem sobre o denominador devolvido pelo SQL (matrículas activas no filtro, salvo definição explícita na consulta).'),
+                    'caption' => __('Percentagem sobre o denominador devolvido pelo SQL (matrículas ativas no filtro, salvo definição explícita na consulta).'),
                 ];
             }
         }

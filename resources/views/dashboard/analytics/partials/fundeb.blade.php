@@ -58,7 +58,7 @@
                             <p class="leading-relaxed">{{ $mod['explanation'] ?? '' }}</p>
                         </div>
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">{{ __('Situação com base no filtro actual (i-Educar)') }}</p>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">{{ __('Situação com base no filtro atual (i-Educar)') }}</p>
                             <p class="leading-relaxed">{{ $mod['situacao'] ?? '' }}</p>
                         </div>
                         @if (! empty($mod['evidencias']))

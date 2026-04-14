@@ -230,19 +230,24 @@ export function buildCompositeExport(chart, meta, chartTitle) {
         const linesSub = countWrappedLines(chartTitle || "", textMax, fontSub);
         const linesFoot = countWrappedLines(foot, textMax, fontFoot);
 
-        let headerH = pad + 20;
-        headerH += linesSub * 18 + 10;
-        if (meta.cityLine) {
-            headerH += 20;
-        }
-        (meta.filterLines || []).forEach(() => {
-            headerH += 18;
-        });
-        headerH += 14;
+        const headerBandPad = 14;
+        const footerBandPad = 16;
+        const footerH = footerBandPad + linesFoot * 14 + footerBandPad;
 
-        const footerH = linesFoot * 14 + pad;
         const w = innerW;
-        const h = Math.ceil(headerH + imgH + 20 + footerH);
+        /** Altura aproximada do cabeçalho (texto + faixa), alinhada ao desenho abaixo. */
+        const headerHApprox =
+            headerBandPad +
+            pad +
+            20 +
+            linesSub * 18 +
+            10 +
+            (meta.cityLine ? 20 : 0) +
+            (meta.filterLines || []).length * 18 +
+            headerBandPad +
+            8;
+
+        const h = Math.ceil(headerHApprox + imgH + 20 + footerH + 32);
 
         const canvas = document.createElement("canvas");
         canvas.width = w;
@@ -254,7 +259,7 @@ export function buildCompositeExport(chart, meta, chartTitle) {
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, w, h);
 
-        let y = pad;
+        let y = headerBandPad + pad;
         ctx.font = fontTitle;
         ctx.fillStyle = "#111827";
         ctx.fillText(meta.documentTitle || "Relatório", pad, y);
@@ -282,7 +287,21 @@ export function buildCompositeExport(chart, meta, chartTitle) {
             ctx.fillText(String(line), pad, y);
             y += 18;
         });
-        y += 12;
+        y += headerBandPad;
+
+        const headerBg = "#f3f4f6";
+        const headerBorder = "#e5e7eb";
+        const headerFillH = y;
+        ctx.save();
+        ctx.globalCompositeOperation = "destination-over";
+        ctx.fillStyle = headerBg;
+        ctx.fillRect(0, 0, w, headerFillH);
+        ctx.restore();
+        ctx.strokeStyle = headerBorder;
+        ctx.beginPath();
+        ctx.moveTo(0, headerFillH);
+        ctx.lineTo(w, headerFillH);
+        ctx.stroke();
 
         const imgX = pad + (w - 2 * pad - imgW) / 2;
         if (!src.width || !src.height) {
@@ -293,7 +312,27 @@ export function buildCompositeExport(chart, meta, chartTitle) {
         ctx.drawImage(src, imgX, y, imgW, imgH);
         y += imgH + 16;
 
-        drawWrappedLines(ctx, foot, pad, y, textMax, 14, fontFoot, "#6b7280");
+        const footerTop = y;
+        const footerBg = "#f9fafb";
+        const footerBorder = "#e5e7eb";
+        ctx.fillStyle = footerBg;
+        ctx.fillRect(0, footerTop, w, h - footerTop);
+        ctx.strokeStyle = footerBorder;
+        ctx.beginPath();
+        ctx.moveTo(0, footerTop);
+        ctx.lineTo(w, footerTop);
+        ctx.stroke();
+
+        drawWrappedLines(
+            ctx,
+            foot,
+            pad,
+            footerTop + footerBandPad,
+            textMax,
+            14,
+            fontFoot,
+            "#64748b",
+        );
 
         return {
             dataUrl: canvas.toDataURL("image/png", 1),
