@@ -172,7 +172,8 @@ class SyncSchoolUnitGeos extends Command
                         }
                     }
 
-                    $batch = [];
+                    $batchCoords = [];
+                    $batchMetaOnly = [];
                     $now = now();
 
                     // Para only-missing, buscamos quais escola_ids já existem localmente.
@@ -197,26 +198,22 @@ class SyncSchoolUnitGeos extends Command
                         }
                         $la = isset($a['la']) && is_numeric($a['la']) ? (float) $a['la'] : null;
                         $ln = isset($a['ln']) && is_numeric($a['ln']) ? (float) $a['ln'] : null;
-                        if ($la === null || $ln === null || abs($la) > 90 || abs($ln) > 180) {
-                            continue;
-                        }
-                        if (abs($la) < 0.01 && abs($ln) < 0.01) {
-                            continue;
-                        }
                         $inepRaw = $a['inep'] ?? null;
                         $inep = is_numeric($inepRaw) ? (int) $inepRaw : null;
                         if ($inep !== null && $inep <= 0) {
                             $inep = null;
                         }
 
-                        $batch[] = [
+                        $validCoord = $la !== null && $ln !== null
+                            && ! (abs($la) < 0.01 && abs($ln) < 0.01)
+                            && abs($la) <= 90 && abs($ln) <= 180;
+
+                        $base = [
                             'city_id' => (int) $city->id,
                             'escola_id' => $eid,
                             'inep_code' => $inep,
-                            'lat' => $la,
-                            'lng' => $ln,
-                            'ieducar_lat' => $la,
-                            'ieducar_lng' => $ln,
+                            'ieducar_lat' => $validCoord ? $la : null,
+                            'ieducar_lng' => $validCoord ? $ln : null,
                             'ieducar_seen_at' => $now,
                             'has_divergence' => false,
                             'meta' => json_encode([
@@ -225,20 +222,34 @@ class SyncSchoolUnitGeos extends Command
                             'created_at' => $now,
                             'updated_at' => $now,
                         ];
+
+                        if ($validCoord) {
+                            $batchCoords[] = array_merge($base, [
+                                'lat' => $la,
+                                'lng' => $ln,
+                            ]);
+                        } else {
+                            // Sem coordenadas na base iEducar: ainda assim salvar INEP/meta/seen_at.
+                            $batchMetaOnly[] = array_merge($base, [
+                                'lat' => null,
+                                'lng' => null,
+                            ]);
+                        }
                     }
 
-                    if ($batch === []) {
-                        $this->info(' - nenhuma coordenada válida encontrada na escola.');
+                    if ($batchCoords === [] && $batchMetaOnly === []) {
+                        $this->info(' - nenhuma escola encontrada para processar.');
 
                         return;
                     }
 
-                    $this->line(' - Registos válidos para upsert: '.count($batch));
-                    $previewN = min(3, count($batch));
+                    $this->line(' - Registos para upsert (com coordenadas): '.count($batchCoords));
+                    $this->line(' - Registos para upsert (sem coordenadas): '.count($batchMetaOnly));
+                    $previewN = min(3, count($batchCoords));
                     if ($previewN > 0) {
-                        $this->line(' - Preview (primeiros '.$previewN.' para upsert):');
+                        $this->line(' - Preview (primeiros '.$previewN.' com coordenadas):');
                         for ($i = 0; $i < $previewN; $i++) {
-                            $b = $batch[$i];
+                            $b = $batchCoords[$i];
                             $this->line('   • escola_id='.(string) ($b['escola_id'] ?? '')
                                 .' inep_code='.(string) ($b['inep_code'] ?? '')
                                 .' lat='.(string) ($b['lat'] ?? '')
@@ -247,14 +258,23 @@ class SyncSchoolUnitGeos extends Command
                         }
                     }
 
-                    DB::table((new SchoolUnitGeo())->getTable())->upsert(
-                        $batch,
-                        ['city_id', 'escola_id'],
-                        ['inep_code', 'lat', 'lng', 'ieducar_lat', 'ieducar_lng', 'ieducar_seen_at', 'has_divergence', 'meta', 'updated_at'],
-                    );
+                    if ($batchCoords !== []) {
+                        DB::table((new SchoolUnitGeo())->getTable())->upsert(
+                            $batchCoords,
+                            ['city_id', 'escola_id'],
+                            ['inep_code', 'lat', 'lng', 'ieducar_lat', 'ieducar_lng', 'ieducar_seen_at', 'has_divergence', 'meta', 'updated_at'],
+                        );
+                    }
+                    if ($batchMetaOnly !== []) {
+                        DB::table((new SchoolUnitGeo())->getTable())->upsert(
+                            $batchMetaOnly,
+                            ['city_id', 'escola_id'],
+                            ['inep_code', 'ieducar_lat', 'ieducar_lng', 'ieducar_seen_at', 'has_divergence', 'meta', 'updated_at'],
+                        );
+                    }
 
-                    $totalUpserts += count($batch);
-                    $this->info(' - upsert: '.count($batch).' escolas com coordenadas.');
+                    $totalUpserts += count($batchCoords) + count($batchMetaOnly);
+                    $this->info(' - upsert: '.count($batchCoords).' com coordenadas; '.count($batchMetaOnly).' sem coordenadas.');
                 });
             } catch (\Throwable $e) {
                 $this->error(" - erro ao sincronizar: {$e->getMessage()}");

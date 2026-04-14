@@ -18,8 +18,8 @@ return new class extends Migration
             $table->unsignedBigInteger('inep_code')->nullable()->index();
 
             // Coordenadas "locais" usadas no mapa quando a base iEducar estiver sem lat/lng.
-            $table->decimal('lat', 10, 7);
-            $table->decimal('lng', 10, 7);
+            $table->decimal('lat', 10, 7)->nullable();
+            $table->decimal('lng', 10, 7)->nullable();
 
             // Última observação de coordenadas na base iEducar (para detectar divergências).
             $table->decimal('ieducar_lat', 10, 7)->nullable();
