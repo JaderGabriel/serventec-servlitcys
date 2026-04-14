@@ -1,6 +1,11 @@
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+function toFiniteNumber(v) {
+    const n = typeof v === "number" ? v : Number(String(v ?? "").trim());
+    return Number.isFinite(n) ? n : null;
+}
+
 function escapeHtml(s) {
     const d = document.createElement("div");
     d.textContent = String(s ?? "");
@@ -252,12 +257,12 @@ export default function createSchoolUnitsMap(markersInput, footnoteInput) {
             const latlngs = this.markers
                 .filter(
                     (m) =>
-                        Number.isFinite(m.lat) &&
-                        Number.isFinite(m.lng) &&
-                        Math.abs(m.lat) <= 90 &&
-                        Math.abs(m.lng) <= 180,
+                        toFiniteNumber(m.lat) !== null &&
+                        toFiniteNumber(m.lng) !== null &&
+                        Math.abs(toFiniteNumber(m.lat)) <= 90 &&
+                        Math.abs(toFiniteNumber(m.lng)) <= 180,
                 )
-                .map((m) => [m.lat, m.lng]);
+                .map((m) => [toFiniteNumber(m.lat), toFiniteNumber(m.lng)]);
 
             if (latlngs.length === 0) {
                 return;
@@ -277,17 +282,19 @@ export default function createSchoolUnitsMap(markersInput, footnoteInput) {
             this.group = L.layerGroup().addTo(this.map);
 
             this.markers.forEach((mk) => {
+                const lat = toFiniteNumber(mk.lat);
+                const lng = toFiniteNumber(mk.lng);
                 if (
-                    !Number.isFinite(mk.lat) ||
-                    !Number.isFinite(mk.lng) ||
-                    Math.abs(mk.lat) > 90 ||
-                    Math.abs(mk.lng) > 180
+                    lat === null ||
+                    lng === null ||
+                    Math.abs(lat) > 90 ||
+                    Math.abs(lng) > 180
                 ) {
                     return;
                 }
                 const { color, fill } = markerStrokeFill(mk);
                 const popupHtml = buildSchoolPopupHtml(mk, this.footnote);
-                L.circleMarker([mk.lat, mk.lng], {
+                L.circleMarker([lat, lng], {
                     radius: 8,
                     color,
                     weight: 2,

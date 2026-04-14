@@ -181,35 +181,96 @@ class InepCatalogoEscolasGeoService
     private function fetchFromArcgis(string $url, array $codes): array
     {
         $inList = implode(',', array_map(static fn (int $i) => (string) $i, array_map('intval', $codes)));
-        $where = 'Código_INEP IN ('.$inList.')';
+        // Alguns serviços ArcGIS variam o nome do campo (com/sem acento). Tentamos o mais comum.
+        $whereCandidates = [
+            'Código_INEP IN ('.$inList.')',
+            'Codigo_INEP IN ('.$inList.')',
+            'CODIGO_INEP IN ('.$inList.')',
+        ];
 
         try {
-            $response = Http::timeout(25)
-                ->acceptJson()
-                ->get($url, [
-                    'where' => $where,
-                    'outFields' => '*',
-                    'f' => 'json',
-                    'returnGeometry' => 'false',
-                ]);
+            $data = null;
+            $lastStatus = null;
+            foreach ($whereCandidates as $where) {
+                $response = Http::timeout(25)
+                    ->acceptJson()
+                    ->get($url, [
+                        'where' => $where,
+                        // Evita payload gigante; ainda assim traz campos do popup.
+                        'outFields' => implode(',', [
+                            'Escola',
+                            'Código_INEP',
+                            'Codigo_INEP',
+                            'UF',
+                            'Município',
+                            'Municipio',
+                            'Dependência_Administrativa',
+                            'Categoria_Administrativa',
+                            'Etapas_e_Modalidade_de_Ensino_O',
+                            'Porte_da_Escola',
+                            'Localização',
+                            'Localizacao',
+                            'Localidade_Diferenciada',
+                            'Endereço',
+                            'Endereco',
+                            'Telefone',
+                            'Coordenadas',
+                            'Latitude',
+                            'Longitude',
+                        ]),
+                        'f' => 'json',
+                        // Quando Latitude/Longitude não vêm como atributos, a geometria costuma ter (x,y).
+                        'returnGeometry' => 'true',
+                        'outSR' => 4326,
+                    ]);
 
-            if (! $response->successful()) {
-                Log::warning('INEP ArcGIS geocode: HTTP não OK', ['status' => $response->status()]);
+                $lastStatus = $response->status();
+                if (! $response->successful()) {
+                    continue;
+                }
+
+                $data = $response->json();
+                if (is_array($data) && isset($data['error'])) {
+                    $msg = is_array($data['error']) ? ($data['error']['message'] ?? null) : null;
+                    Log::warning('INEP ArcGIS geocode: erro no payload', ['message' => $msg, 'where' => $where]);
+                    $data = null;
+
+                    continue;
+                }
+
+                break;
+            }
+
+            if (! is_array($data)) {
+                Log::warning('INEP ArcGIS geocode: HTTP não OK', ['status' => $lastStatus]);
 
                 return [];
             }
 
-            $data = $response->json();
             $features = is_array($data['features'] ?? null) ? $data['features'] : [];
             $out = [];
             foreach ($features as $f) {
                 $attrs = is_array($f['attributes'] ?? null) ? $f['attributes'] : [];
-                $code = (int) ($attrs['Código_INEP'] ?? 0);
+                $code = (int) ($attrs['Código_INEP'] ?? ($attrs['Codigo_INEP'] ?? 0));
                 if ($code <= 0) {
                     continue;
                 }
-                $lat = (float) ($attrs['Latitude'] ?? 0);
-                $lng = (float) ($attrs['Longitude'] ?? 0);
+                $latAttr = $attrs['Latitude'] ?? null;
+                $lngAttr = $attrs['Longitude'] ?? null;
+                $lat = is_numeric($latAttr) ? (float) $latAttr : 0.0;
+                $lng = is_numeric($lngAttr) ? (float) $lngAttr : 0.0;
+
+                if (! $this->validCoord($lat, $lng)) {
+                    $geom = is_array($f['geometry'] ?? null) ? $f['geometry'] : [];
+                    $x = $geom['x'] ?? null;
+                    $y = $geom['y'] ?? null;
+                    if (is_numeric($x) && is_numeric($y)) {
+                        // ArcGIS costuma devolver x=longitude, y=latitude.
+                        $lng = (float) $x;
+                        $lat = (float) $y;
+                    }
+                }
+
                 if (! $this->validCoord($lat, $lng)) {
                     continue;
                 }
