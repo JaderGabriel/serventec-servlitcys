@@ -111,6 +111,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Scheduler (php artisan schedule:run)
+    |--------------------------------------------------------------------------
+    |
+    | Use sempre `pulse:check --once` no agendador: o comando sem `--once` é um
+    | daemon em loop e não deve ser disparado por cron (multiplicaria processos).
+    | O digest via `pulse:work --stop-when-empty` processa uma leva por execução;
+    | desative se já tiver `pulse:work` em Supervisor (evite duplicar).
+    |
+    */
+
+    'schedule' => [
+        'enabled' => env('PULSE_SCHEDULE_ENABLED', true),
+        'interval_minutes' => max(1, min(59, (int) env('PULSE_SCHEDULE_INTERVAL_MINUTES', 5))),
+        'run_digest_tick' => env('PULSE_SCHEDULE_DIGEST_TICK', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Pulse Route Middleware
     |--------------------------------------------------------------------------
     |

@@ -2,6 +2,9 @@
     $actionLabels = [
         'login' => __('Início de sessão'),
         'user_created' => __('Utilizador criado'),
+        'user_updated' => __('Conta atualizada'),
+        'sessions_terminated' => __('Sessões encerradas (admin)'),
+        'session_revoked' => __('Sessão revogada'),
     ];
 @endphp
 
@@ -10,9 +13,9 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                    {{ __('Controle de utilizadores') }}
+                    {{ __('Usuários') }}
                 </h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Apenas visível no menu para administradores. Lista de contas, registo de atividade e criação de novos utilizadores.') }}</p>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Gestão de contas: editar dados, senha, ativar ou desativar, encerrar sessões noutros dispositivos e consultar atividade.') }}</p>
             </div>
             <a href="{{ route('users.create') }}" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition">
                 {{ __('Novo utilizador') }}
@@ -41,6 +44,8 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Utilizador') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('E-mail') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Perfil') }}</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Estado') }}</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Sessões') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Verificado') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Criado em') }}</th>
                                 <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Opções') }}</th>
@@ -59,6 +64,20 @@
                                             <span class="inline-flex rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Utilizador') }}</span>
                                         @endif
                                     </td>
+                                    <td class="px-4 py-3 text-sm">
+                                        @if ($u->is_active)
+                                            <span class="inline-flex rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:text-emerald-200">{{ __('Ativo') }}</span>
+                                        @else
+                                            <span class="inline-flex rounded-full bg-red-100 dark:bg-red-900/40 px-2 py-0.5 text-xs font-medium text-red-800 dark:text-red-200">{{ __('Desativado') }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                                        @if (($u->database_sessions_count ?? 0) > 0)
+                                            <span title="{{ __('Sessões ativas (driver database)') }}">{{ $u->database_sessions_count }}</span>
+                                        @else
+                                            <span class="text-gray-400 dark:text-gray-500">0</span>
+                                        @endif
+                                    </td>
                                     <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                                         @if ($u->email_verified_at)
                                             <span title="{{ $u->email_verified_at }}">{{ $u->email_verified_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</span>
@@ -70,16 +89,17 @@
                                         {{ $u->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-right">
+                                        <a href="{{ route('users.edit', $u) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">{{ __('Gerir') }}</a>
                                         @if ($u->id === auth()->id())
-                                            <a href="{{ route('profile.edit') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">{{ __('O meu perfil') }}</a>
-                                        @else
-                                            <span class="text-gray-400 dark:text-gray-500" title="{{ __('Edição de outras contas pode ser acrescentada mais tarde.') }}">—</span>
+                                            <span class="block mt-1">
+                                                <a href="{{ route('profile.edit') }}" class="text-xs text-gray-500 dark:text-gray-400 hover:underline">{{ __('Meu perfil') }}</a>
+                                            </span>
                                         @endif
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('Nenhum utilizador encontrado.') }}</td>
+                                    <td colspan="9" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('Nenhum utilizador encontrado.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>

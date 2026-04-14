@@ -7,6 +7,7 @@ use App\Http\Controllers\FirstAccessProfileController;
 use App\Http\Controllers\MailSettingsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserSessionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -32,9 +33,15 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(func
     Route::get('cities/{city}/db-status', [CityController::class, 'dbStatus'])->name('cities.db-status');
     Route::resource('cities', CityController::class)->except(['show']);
 
+    Route::get('/users/sessoes', [UserSessionController::class, 'index'])->name('users.sessions.index');
+    Route::delete('/users/sessoes/{session}', [UserSessionController::class, 'destroy'])->name('users.sessions.destroy');
+
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::post('/users/{user}/terminate-sessions', [UserController::class, 'terminateSessions'])->name('users.terminate-sessions');
 
     Route::get('/settings/mail', [MailSettingsController::class, 'edit'])->name('settings.mail.edit');
     Route::put('/settings/mail', [MailSettingsController::class, 'update'])->name('settings.mail.update');

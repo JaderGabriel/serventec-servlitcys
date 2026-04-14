@@ -28,7 +28,7 @@
 
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
-                <x-dropdown align="right" width="w-56">
+                <x-dropdown align="right" width="w-64">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
                             <div>{{ Auth::user()->name }}</div>
@@ -48,9 +48,19 @@
 
                         @if (Auth::user()->is_admin)
                             <div class="border-t border-gray-200 dark:border-gray-600"></div>
+                            <div class="px-4 py-2">
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Usuários') }}</p>
+                            </div>
                             <x-dropdown-link :href="route('users.index')">
-                                {{ __('Controle de utilizadores') }}
+                                {{ __('Lista e gestão') }}
                             </x-dropdown-link>
+                            <x-dropdown-link :href="route('users.create')">
+                                {{ __('Novo utilizador') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('users.sessions.index')">
+                                {{ __('Sessões ativas') }}
+                            </x-dropdown-link>
+                            <div class="border-t border-gray-200 dark:border-gray-600"></div>
                             <x-dropdown-link :href="route('pulse')">
                                 {{ __('Monitorização (Pulse)') }}
                             </x-dropdown-link>
@@ -116,9 +126,19 @@
                 </x-responsive-nav-link>
 
                 @if (Auth::user()->is_admin)
-                    <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
-                        {{ __('Controle de utilizadores') }}
+                    <div class="px-4 py-2">
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Usuários') }}</p>
+                    </div>
+                    <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.index') || request()->routeIs('users.create') || request()->routeIs('users.edit')">
+                        {{ __('Lista e gestão') }}
                     </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('users.create')" :active="request()->routeIs('users.create')">
+                        {{ __('Novo utilizador') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('users.sessions.index')" :active="request()->routeIs('users.sessions.*')">
+                        {{ __('Sessões ativas') }}
+                    </x-responsive-nav-link>
+                    <div class="border-t border-gray-200 dark:border-gray-600 my-2"></div>
                     <x-responsive-nav-link :href="route('pulse')" :active="request()->routeIs('pulse')">
                         {{ __('Monitorização (Pulse)') }}
                     </x-responsive-nav-link>

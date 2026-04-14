@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\DB;
 
 #[Fillable(['name', 'username', 'email', 'birth_date', 'cpf', 'password', 'is_admin', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]

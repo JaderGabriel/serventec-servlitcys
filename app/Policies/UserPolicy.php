@@ -21,4 +21,20 @@ class UserPolicy
     {
         return $user->is_admin === true;
     }
+
+    /**
+     * Ver e editar outro utilizador (administradores).
+     */
+    public function view(User $user, User $model): bool
+    {
+        return $user->is_admin === true;
+    }
+
+    /**
+     * Atualizar dados, perfil, senha ou estado de outro utilizador.
+     */
+    public function update(User $user, User $model): bool
+    {
+        return $user->is_admin === true;
+    }
 }
