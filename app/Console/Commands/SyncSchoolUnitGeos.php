@@ -7,6 +7,7 @@ use App\Models\SchoolUnitGeo;
 use App\Services\CityDataConnection;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -92,6 +93,44 @@ class SyncSchoolUnitGeos extends Command
     }
 
     /**
+     * i-Educar 2.11 (PostgreSQL): o INEP da unidade está em `modules.educacenso_cod_escola`
+     * (cod_escola → cod_escola_inep), não em `pmieducar.escola`. Ver Portabilis migration
+     * `create_modules_educacenso_cod_escola_table`.
+     *
+     * @return ?Builder Subconsulta: cod_escola + MAX(cod_escola_inep) AS inep
+     */
+    private function educacensoCodEscolaInepSubquery($db, City $city): ?Builder
+    {
+        if ($db->getDriverName() !== 'pgsql') {
+            return null;
+        }
+
+        $table = trim((string) config('ieducar.tables.educacenso_cod_escola', 'modules.educacenso_cod_escola'));
+        if ($table === '') {
+            return null;
+        }
+
+        try {
+            $db->table($table)->limit(1)->get();
+        } catch (QueryException $e) {
+            $sqlState = (string) ($e->errorInfo[0] ?? '');
+            if (in_array($sqlState, ['42P01', '3F000'], true)) { // undefined_table / invalid_schema_name
+                return null;
+            }
+            throw $e;
+        }
+
+        $fk = (string) config('ieducar.columns.educacenso_cod_escola.cod_escola', 'cod_escola');
+        $inepCol = (string) config('ieducar.columns.educacenso_cod_escola.cod_escola_inep', 'cod_escola_inep');
+        $g = $db->getQueryGrammar();
+
+        return $db->table($table)
+            ->select($fk)
+            ->selectRaw('MAX('.$g->wrap($inepCol).') as inep')
+            ->groupBy($fk);
+    }
+
+    /**
      * Tenta descobrir onde está o Código INEP quando não existe na tabela escola.
      *
      * @return ?array{table: string, alias: string, fk: string, col: string}
@@ -108,6 +147,7 @@ class SyncSchoolUnitGeos extends Command
         }
 
         $joinTables = [
+            trim((string) config('ieducar.tables.educacenso_cod_escola', 'modules.educacenso_cod_escola')),
             $schema.'.escola_complemento',
             $schema.'.escola_complementar',
             $schema.'.escola_inep',
@@ -254,17 +294,27 @@ class SyncSchoolUnitGeos extends Command
                         'ref_cod_escola_inep',
                     ]), 'e');
 
-                    $inepJoin = null;
+                    /** @var ?Builder $inepEducacensoSub */
+                    $inepEducacensoSub = null;
                     if ($inepCol === null) {
-                        // Quando o INEP não está na escola, tentar tabela complementar.
+                        // i-Educar 2.11: INEP em modules.educacenso_cod_escola (documentação / schema oficial).
+                        $inepEducacensoSub = $this->educacensoCodEscolaInepSubquery($db, $city);
+                        if ($inepEducacensoSub !== null) {
+                            $this->info(' - Código INEP: tabela modules.educacenso_cod_escola (cod_escola → cod_escola_inep), conforme i-Educar 2.11.');
+                        }
+                    }
+
+                    $inepJoin = null;
+                    if ($inepCol === null && $inepEducacensoSub === null) {
+                        // Fallback: outras tabelas complementares (instalações antigas / customizações).
                         $inepJoin = $this->resolveInepJoinSpecByProbe($db, $city, $escolaT, 'e', $eId);
                     }
 
-                    if ($inepCol === null) {
+                    if ($inepCol === null && $inepEducacensoSub === null) {
                         if ($inepJoin !== null) {
                             $this->info(' - Código INEP encontrado via JOIN: '.$inepJoin['table'].'.'.$inepJoin['col'].' (FK '.$inepJoin['fk'].')');
                         } else {
-                            $this->warn(' - coluna de código INEP não encontrada na tabela escola (inep_code ficará vazio). Configure IEDUCAR_COL_ESCOLA_INEP se a base usar outro nome.');
+                            $this->warn(' - Código INEP não encontrado (sem coluna em escola, sem modules.educacenso_cod_escola e sem JOIN alternativo). inep_code ficará vazio.');
                         }
                     }
 
@@ -287,12 +337,19 @@ class SyncSchoolUnitGeos extends Command
                         $q->addSelect('e.'.$eName.' as nome');
                     }
 
+                    $fkEduc = (string) config('ieducar.columns.educacenso_cod_escola.cod_escola', 'cod_escola');
+
                     $q = $q
                         ->when($inepCol !== null, fn ($q) => $q->addSelect('e.'.$inepCol.' as inep'))
                         ->orderBy('e.'.$eId)
                         ->limit(5000);
 
-                    if ($inepCol === null && $inepJoin !== null) {
+                    if ($inepCol === null && $inepEducacensoSub !== null) {
+                        $q->leftJoinSub($inepEducacensoSub, 'inep_sq', function ($join) use ($eId, $fkEduc) {
+                            $join->on('e.'.$eId, '=', 'inep_sq.'.$fkEduc);
+                        });
+                        $q->addSelect('inep_sq.inep as inep');
+                    } elseif ($inepCol === null && $inepJoin !== null) {
                         $q->leftJoin($inepJoin['table'].' as '.$inepJoin['alias'], 'e.'.$eId, '=', $inepJoin['alias'].'.'.$inepJoin['fk']);
                         $q->addSelect($inepJoin['alias'].'.'.$inepJoin['col'].' as inep');
                     }

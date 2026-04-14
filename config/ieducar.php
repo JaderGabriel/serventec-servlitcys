@@ -109,6 +109,12 @@ return [
         'deficiencia' => env('IEDUCAR_TABLE_DEFICIENCIA', 'cadastro.deficiencia'),
         /** Pessoa ↔ deficiência (Portabilis / BIS); prioridade na aba Inclusão em relação a aluno_deficiência. */
         'fisica_deficiencia' => env('IEDUCAR_TABLE_FISICA_DEFICIENCIA', ''),
+        /**
+         * Educacenso (i-Educar 2.x PostgreSQL): ligação escola interna ↔ código INEP.
+         * Ver migration legacy `create_modules_educacenso_cod_escola_table` no repositório portabilis/i-educar.
+         * Colunas típicas: cod_escola, cod_escola_inep (PK composta).
+         */
+        'educacenso_cod_escola' => env('IEDUCAR_TABLE_EDUCACENSO_COD_ESCOLA', 'modules.educacenso_cod_escola'),
     ],
 
     /*
@@ -144,6 +150,11 @@ return [
             'active' => env('IEDUCAR_COL_ESCOLA_ACTIVE', 'ativo'),
             /** Código INEP da escola (nem sempre existe na mesma tabela; deixe vazio se não houver). */
             'inep' => env('IEDUCAR_COL_ESCOLA_INEP', ''),
+        ],
+        /** Tabela modules.educacenso_cod_escola (i-Educar 2.11): INEP não fica em pmieducar.escola. */
+        'educacenso_cod_escola' => [
+            'cod_escola' => env('IEDUCAR_COL_EDUCACENSO_COD_ESCOLA', 'cod_escola'),
+            'cod_escola_inep' => env('IEDUCAR_COL_EDUCACENSO_COD_ESCOLA_INEP', 'cod_escola_inep'),
         ],
         'ano_letivo' => [
             'year' => env('IEDUCAR_COL_ANO_LETIVO_ANO', 'ano'),
