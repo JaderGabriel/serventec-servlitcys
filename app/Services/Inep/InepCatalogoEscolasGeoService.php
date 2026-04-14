@@ -457,52 +457,138 @@ class InepCatalogoEscolasGeoService
      *   catalog_assoc: array<string, string>
      * }>
      */
+    /**
+     * Cliente HTTP com User-Agent para serviços ArcGIS que ignoram pedidos sem agente.
+     */
+    private function inepHttp()
+    {
+        return Http::timeout(30)
+            ->acceptJson()
+            ->withHeaders([
+                'User-Agent' => 'Servlitcys/INEP-Geo (+https://github.com) Laravel',
+            ]);
+    }
+
+    /**
+     * Campos de atributos pedidos ao FeatureServer (layer INEP pode variar).
+     *
+     * @return list<string>
+     */
+    private function arcgisOutFieldsList(): array
+    {
+        return [
+            'Escola',
+            'Código_INEP',
+            'Codigo_INEP',
+            'CO_INEP',
+            'codigo_inep',
+            'UF',
+            'Município',
+            'Municipio',
+            'Dependência_Administrativa',
+            'Categoria_Administrativa',
+            'Etapas_e_Modalidade_de_Ensino_O',
+            'Porte_da_Escola',
+            'Localização',
+            'Localizacao',
+            'Localidade_Diferenciada',
+            'Endereço',
+            'Endereco',
+            'Telefone',
+            'Coordenadas',
+            'Latitude',
+            'Longitude',
+        ];
+    }
+
+    /**
+     * Extrai INEP dos atributos ArcGIS (nomes de campo variam entre versões da camada).
+     */
+    private function inepCodeFromArcgisAttributes(array $attrs): int
+    {
+        foreach (['Código_INEP', 'Codigo_INEP', 'CODIGO_INEP', 'CO_INEP', 'codigo_inep', 'INEP'] as $k) {
+            if (! array_key_exists($k, $attrs)) {
+                continue;
+            }
+            $raw = $attrs[$k];
+            if ($raw === null || $raw === '') {
+                continue;
+            }
+            $n = $this->normalizeInepCode($raw);
+
+            return $n ?? 0;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Tenta obter lat/lng a partir de geometria (ponto, polígono com anéis).
+     *
+     * @return array{0: float, 1: float}|null
+     */
+    private function latLngFromArcgisGeometry(array $geom): ?array
+    {
+        // Ponto / multiponto simplificado
+        if (isset($geom['x'], $geom['y']) && is_numeric($geom['x']) && is_numeric($geom['y'])) {
+            return [(float) $geom['y'], (float) $geom['x']];
+        }
+        // Polígono: primeiro vértice do primeiro anel
+        if (isset($geom['rings'][0][0]) && is_array($geom['rings'][0][0])) {
+            $p = $geom['rings'][0][0];
+            if (count($p) >= 2 && is_numeric($p[0]) && is_numeric($p[1])) {
+                return [(float) $p[1], (float) $p[0]];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  list<int>  $codes
+     * @return array<int, array{
+     *   lat: float,
+     *   lng: float,
+     *   nome_inep: string,
+     *   catalog: list<array{field: string, label: string, value: string}>,
+     *   catalog_assoc: array<string, string>
+     * }>
+     */
     private function fetchFromArcgis(string $url, array $codes): array
     {
-        $inList = implode(',', array_map(static fn (int $i) => (string) $i, array_map('intval', $codes)));
-        // Observação: alguns endpoints Aceitam o campo apenas quando citado (aspas duplas).
-        // Sem isso, é comum responder "Invalid query parameters".
+        $codes = array_values(array_filter(array_map('intval', $codes), fn ($c) => $c > 0));
+        if ($codes === []) {
+            return [];
+        }
+
+        $inList = implode(',', array_map(static fn (int $i) => (string) $i, $codes));
+        // Observação: campos citados com aspas; camadas novas podem usar nomes ligeiramente diferentes.
         $whereCandidates = [
             '"Código_INEP" IN ('.$inList.')',
             '"Codigo_INEP" IN ('.$inList.')',
             '"CODIGO_INEP" IN ('.$inList.')',
+            '"CO_INEP" IN ('.$inList.')',
+            'Código_INEP IN ('.$inList.')',
+            'Codigo_INEP IN ('.$inList.')',
+            'CO_INEP IN ('.$inList.')',
+        ];
+
+        $baseQuery = [
+            'outFields' => implode(',', $this->arcgisOutFieldsList()),
+            'f' => 'json',
+            'returnGeometry' => 'true',
+            'outSR' => 4326,
+            'resultRecordCount' => 5000,
+            'returnExceededLimitOnly' => 'false',
         ];
 
         try {
             $data = null;
             $lastStatus = null;
             foreach ($whereCandidates as $where) {
-                $response = Http::timeout(25)
-                    ->acceptJson()
-                    ->get($url, [
-                        'where' => $where,
-                        // Evita payload gigante; ainda assim traz campos do popup.
-                        'outFields' => implode(',', [
-                            'Escola',
-                            'Código_INEP',
-                            'Codigo_INEP',
-                            'UF',
-                            'Município',
-                            'Municipio',
-                            'Dependência_Administrativa',
-                            'Categoria_Administrativa',
-                            'Etapas_e_Modalidade_de_Ensino_O',
-                            'Porte_da_Escola',
-                            'Localização',
-                            'Localizacao',
-                            'Localidade_Diferenciada',
-                            'Endereço',
-                            'Endereco',
-                            'Telefone',
-                            'Coordenadas',
-                            'Latitude',
-                            'Longitude',
-                        ]),
-                        'f' => 'json',
-                        // Quando Latitude/Longitude não vêm como atributos, a geometria costuma ter (x,y).
-                        'returnGeometry' => 'true',
-                        'outSR' => 4326,
-                    ]);
+                $response = $this->inepHttp()->get($url, array_merge($baseQuery, [
+                    'where' => $where,
+                ]));
 
                 $lastStatus = $response->status();
                 if (! $response->successful()) {
@@ -518,56 +604,47 @@ class InepCatalogoEscolasGeoService
                     continue;
                 }
 
-                break;
+                $featCount = is_array($data['features'] ?? null) ? count($data['features']) : 0;
+                if ($featCount > 0) {
+                    break;
+                }
             }
 
             if (! is_array($data)) {
-                Log::warning('INEP ArcGIS geocode: HTTP não OK', ['status' => $lastStatus]);
+                Log::warning('INEP ArcGIS geocode: HTTP não OK ou sem resposta', ['status' => $lastStatus]);
 
                 return [];
             }
 
             $features = is_array($data['features'] ?? null) ? $data['features'] : [];
             if ($features === []) {
-                Log::info('INEP ArcGIS geocode: 0 features', [
+                Log::info('INEP ArcGIS geocode: 0 features no lote', [
                     'url' => $url,
                     'requested_count' => count($codes),
                 ]);
             }
             $out = [];
             foreach ($features as $f) {
-                $attrs = is_array($f['attributes'] ?? null) ? $f['attributes'] : [];
-                $code = (int) ($attrs['Código_INEP'] ?? ($attrs['Codigo_INEP'] ?? 0));
-                if ($code <= 0) {
-                    continue;
+                $parsed = $this->parseArcgisFeatureToHit($f);
+                if ($parsed !== null) {
+                    $out[$parsed['code']] = $parsed['hit'];
                 }
-                $latAttr = $attrs['Latitude'] ?? null;
-                $lngAttr = $attrs['Longitude'] ?? null;
-                $lat = is_numeric($latAttr) ? (float) $latAttr : 0.0;
-                $lng = is_numeric($lngAttr) ? (float) $lngAttr : 0.0;
+            }
 
-                if (! $this->validCoord($lat, $lng)) {
-                    $geom = is_array($f['geometry'] ?? null) ? $f['geometry'] : [];
-                    $x = $geom['x'] ?? null;
-                    $y = $geom['y'] ?? null;
-                    if (is_numeric($x) && is_numeric($y)) {
-                        // ArcGIS costuma devolver x=longitude, y=latitude.
-                        $lng = (float) $x;
-                        $lat = (float) $y;
+            // Fallback: consulta por um INEP de cada vez (alguns serviços falham com IN (...) grande ou tipos mistos).
+            $missing = [];
+            foreach ($codes as $c) {
+                if (! isset($out[$c])) {
+                    $missing[] = $c;
+                }
+            }
+            if ($missing !== []) {
+                foreach ($missing as $code) {
+                    $one = $this->fetchFromArcgisSingleInep($url, $code);
+                    if ($one !== null) {
+                        $out[$code] = $one;
                     }
                 }
-
-                if (! $this->validCoord($lat, $lng)) {
-                    continue;
-                }
-                [$catalog, $catalogAssoc] = $this->buildCatalogFromAttributes($attrs);
-                $out[$code] = [
-                    'lat' => $lat,
-                    'lng' => $lng,
-                    'nome_inep' => (string) ($attrs['Escola'] ?? ''),
-                    'catalog' => $catalog,
-                    'catalog_assoc' => $catalogAssoc,
-                ];
             }
 
             return $out;
@@ -576,6 +653,103 @@ class InepCatalogoEscolasGeoService
 
             return [];
         }
+    }
+
+    /**
+     * @return ?array{code: int, hit: array<string, mixed>}
+     */
+    private function parseArcgisFeatureToHit(array $f): ?array
+    {
+        $attrs = is_array($f['attributes'] ?? null) ? $f['attributes'] : [];
+        $code = $this->inepCodeFromArcgisAttributes($attrs);
+        if ($code <= 0) {
+            return null;
+        }
+        $latAttr = $attrs['Latitude'] ?? null;
+        $lngAttr = $attrs['Longitude'] ?? null;
+        $lat = is_numeric($latAttr) ? (float) $latAttr : 0.0;
+        $lng = is_numeric($lngAttr) ? (float) $lngAttr : 0.0;
+
+        if (! $this->validCoord($lat, $lng)) {
+            $geom = is_array($f['geometry'] ?? null) ? $f['geometry'] : [];
+            $xy = $this->latLngFromArcgisGeometry($geom);
+            if ($xy !== null) {
+                [$lat, $lng] = $xy;
+            }
+        }
+
+        if (! $this->validCoord($lat, $lng)) {
+            return null;
+        }
+        [$catalog, $catalogAssoc] = $this->buildCatalogFromAttributes($attrs);
+
+        return [
+            'code' => $code,
+            'hit' => [
+                'lat' => $lat,
+                'lng' => $lng,
+                'nome_inep' => (string) ($attrs['Escola'] ?? ''),
+                'catalog' => $catalog,
+                'catalog_assoc' => $catalogAssoc,
+            ],
+        ];
+    }
+
+    /**
+     * @return ?array{
+     *   lat: float,
+     *   lng: float,
+     *   nome_inep: string,
+     *   catalog: list<array{field: string, label: string, value: string}>,
+     *   catalog_assoc: array<string, string>
+     * }
+     */
+    private function fetchFromArcgisSingleInep(string $url, int $code): ?array
+    {
+        if ($code <= 0) {
+            return null;
+        }
+        $wheres = [
+            '"Código_INEP" = '.$code,
+            '"Codigo_INEP" = '.$code,
+            '"CO_INEP" = '.$code,
+            '"Código_INEP" = \''.$code.'\'',
+            'Código_INEP = '.$code,
+        ];
+        $baseQuery = [
+            'outFields' => implode(',', $this->arcgisOutFieldsList()),
+            'f' => 'json',
+            'returnGeometry' => 'true',
+            'outSR' => 4326,
+            'resultRecordCount' => 5,
+        ];
+
+        foreach ($wheres as $where) {
+            try {
+                $response = $this->inepHttp()->get($url, array_merge($baseQuery, ['where' => $where]));
+                if (! $response->successful()) {
+                    continue;
+                }
+                $data = $response->json();
+                if (! is_array($data) || isset($data['error'])) {
+                    continue;
+                }
+                $features = is_array($data['features'] ?? null) ? $data['features'] : [];
+                foreach ($features as $f) {
+                    if (! is_array($f)) {
+                        continue;
+                    }
+                    $parsed = $this->parseArcgisFeatureToHit($f);
+                    if ($parsed !== null && $parsed['code'] === $code) {
+                        return $parsed['hit'];
+                    }
+                }
+            } catch (\Throwable) {
+                continue;
+            }
+        }
+
+        return null;
     }
 
     /**

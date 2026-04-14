@@ -7,11 +7,11 @@ use App\Models\SchoolUnitGeo;
 use App\Services\CityDataConnection;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
-use Illuminate\Database\Query\Builder;
-use Illuminate\Database\QueryException;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 #[Signature('app:sync-school-unit-geos {--city= : ID da cidade (opcional; se omitido, sincroniza todas forAnalytics)} {--only-missing=0 : Se 1, só preenche quando não existir registro local}')]
@@ -318,18 +318,18 @@ class SyncSchoolUnitGeos extends Command
                         }
                     }
 
-                    if ($latCol === null || $lngCol === null) {
-                        $this->warn(' - colunas latitude/longitude não encontradas na tabela escola.');
-
-                        return;
+                    $hasGeoCols = $latCol !== null && $lngCol !== null;
+                    if (! $hasGeoCols) {
+                        $this->warn(' - colunas latitude/longitude não encontradas na tabela escola: sincroniza apenas código INEP e nome; sem coordenadas i-Educar (o passo oficial INEP pode ainda preencher lat/lng oficiais e o mapa).');
                     }
 
                     $q = $db->table($escolaT.' as e')
                         ->select([
                             'e.'.$eId.' as eid',
-                            'e.'.$latCol.' as la',
-                            'e.'.$lngCol.' as ln',
                         ]);
+                    if ($hasGeoCols) {
+                        $q->addSelect('e.'.$latCol.' as la', 'e.'.$lngCol.' as ln');
+                    }
                     $relNomeExpr = $this->relatorioGetNomeEscolaExpr($db, 'e', $eId);
                     if ($relNomeExpr !== null) {
                         $q->selectRaw($relNomeExpr.' as nome');
@@ -397,8 +397,8 @@ class SyncSchoolUnitGeos extends Command
                         if ($onlyMissing && isset($existing[$eid])) {
                             continue;
                         }
-                        $la = isset($a['la']) && is_numeric($a['la']) ? (float) $a['la'] : null;
-                        $ln = isset($a['ln']) && is_numeric($a['ln']) ? (float) $a['ln'] : null;
+                        $la = $hasGeoCols && isset($a['la']) && is_numeric($a['la']) ? (float) $a['la'] : null;
+                        $ln = $hasGeoCols && isset($a['ln']) && is_numeric($a['ln']) ? (float) $a['ln'] : null;
                         $inepRaw = $a['inep'] ?? null;
                         $inep = is_numeric($inepRaw) ? (int) $inepRaw : null;
                         if ($inep !== null && $inep <= 0) {
@@ -460,14 +460,14 @@ class SyncSchoolUnitGeos extends Command
                     }
 
                     if ($batchCoords !== []) {
-                        DB::table((new SchoolUnitGeo())->getTable())->upsert(
+                        DB::table((new SchoolUnitGeo)->getTable())->upsert(
                             $batchCoords,
                             ['city_id', 'escola_id'],
                             ['inep_code', 'lat', 'lng', 'ieducar_lat', 'ieducar_lng', 'ieducar_seen_at', 'has_divergence', 'meta', 'updated_at'],
                         );
                     }
                     if ($batchMetaOnly !== []) {
-                        DB::table((new SchoolUnitGeo())->getTable())->upsert(
+                        DB::table((new SchoolUnitGeo)->getTable())->upsert(
                             $batchMetaOnly,
                             ['city_id', 'escola_id'],
                             ['inep_code', 'ieducar_lat', 'ieducar_lng', 'ieducar_seen_at', 'has_divergence', 'meta', 'updated_at'],
