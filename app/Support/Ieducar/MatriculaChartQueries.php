@@ -332,9 +332,17 @@ final class MatriculaChartQueries
             $out['matriculas'] = $resumo['matriculas'];
 
             $turma = IeducarSchema::resolveTable('turma', $city);
-            $maxCol = (string) config('ieducar.columns.turma.max_alunos');
+            $maxCol = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
+                (string) config('ieducar.columns.turma.max_alunos'),
+                'max_aluno',
+                'max_alunos',
+                'nr_maximo_alunos',
+                'qtd_maxima_alunos',
+                'qtde_max_alunos',
+                'capacidade_maxima',
+            ]), $city);
             $tId = (string) config('ieducar.columns.turma.id');
-            if ($maxCol === '' || ! IeducarColumnInspector::columnExists($db, $turma, $maxCol, $city)) {
+            if ($maxCol === null) {
                 return $out;
             }
 
@@ -391,8 +399,16 @@ final class MatriculaChartQueries
             }
             ['qualified' => $turno, 'idCol' => $tnId, 'nameCol' => $tnName] = $turnoSpec;
 
-            $maxCol = (string) config('ieducar.columns.turma.max_alunos');
-            if ($maxCol === '' || ! IeducarColumnInspector::columnExists($db, $turma, $maxCol, $city)) {
+            $maxCol = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
+                (string) config('ieducar.columns.turma.max_alunos'),
+                'max_aluno',
+                'max_alunos',
+                'nr_maximo_alunos',
+                'qtd_maxima_alunos',
+                'qtde_max_alunos',
+                'capacidade_maxima',
+            ]), $city);
+            if ($maxCol === null) {
                 return null;
             }
 
@@ -1172,13 +1188,22 @@ final class MatriculaChartQueries
     {
         try {
             $turma = IeducarSchema::resolveTable('turma', $city);
-            $maxCol = (string) config('ieducar.columns.turma.max_alunos');
-            if ($maxCol === '' || ! IeducarColumnInspector::columnExists($db, $turma, $maxCol, $city)) {
+            $maxCol = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
+                (string) config('ieducar.columns.turma.max_alunos'),
+                'max_aluno',
+                'max_alunos',
+                'nr_maximo_alunos',
+                'qtd_maxima_alunos',
+                'qtde_max_alunos',
+                'capacidade_maxima',
+            ]), $city);
+            if ($maxCol === null) {
                 return null;
             }
 
             $tId = (string) config('ieducar.columns.turma.id');
             $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            $semCursoKey = '__sem_curso__';
             if ($tc['curso'] === '') {
                 return null;
             }
@@ -1235,15 +1260,23 @@ final class MatriculaChartQueries
             /** @var array<string, array<string, int>> $matrix */
             $matrix = [];
             foreach ($turmaRows as $row) {
-                $tid = (string) ($row->tid ?? '');
-                $cap = (int) ($row->cap ?? 0);
-                $en = $counts[$tid] ?? 0;
-                $vac = max(0, $cap - $en);
-                $eid = (string) ($row->eid ?? '');
-                $cid = (string) ($row->cid ?? '');
-                if ($eid === '' || $cid === '') {
+                $tid = trim((string) ($row->tid ?? ''));
+                if ($tid === '') {
                     continue;
                 }
+                $cap = (int) ($row->cap ?? 0);
+                if ($cap <= 0) {
+                    continue;
+                }
+                $enRaw = (int) ($counts[$tid] ?? 0);
+                $en = min($cap, $enRaw);
+                $vac = max(0, $cap - $en);
+                $eid = trim((string) ($row->eid ?? ''));
+                if ($eid === '' || $eid === '0') {
+                    continue;
+                }
+                $cidRaw = trim((string) ($row->cid ?? ''));
+                $cid = ($cidRaw === '' || $cidRaw === '0') ? $semCursoKey : $cidRaw;
                 if (! isset($matrix[$eid])) {
                     $matrix[$eid] = [];
                 }
@@ -1317,7 +1350,9 @@ final class MatriculaChartQueries
                 foreach ($schoolIds as $sid) {
                     $data[] = (float) ($matrix[$sid][$cid] ?? 0);
                 }
-                $cname = $db->table($cursoT)->where($cIdCol, $cid)->value($cNameCol);
+                $cname = $cid === $semCursoKey
+                    ? __('Sem curso')
+                    : $db->table($cursoT)->where($cIdCol, $cid)->value($cNameCol);
                 $series[] = [
                     'label' => $cname !== null && (string) $cname !== '' ? (string) $cname : ('#'.$cid),
                     'data' => $data,
@@ -1399,8 +1434,16 @@ final class MatriculaChartQueries
             }
 
             $turma = IeducarSchema::resolveTable('turma', $city);
-            $maxCol = (string) config('ieducar.columns.turma.max_alunos');
-            if ($maxCol === '' || ! IeducarColumnInspector::columnExists($db, $turma, $maxCol, $city)) {
+            $maxCol = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
+                (string) config('ieducar.columns.turma.max_alunos'),
+                'max_aluno',
+                'max_alunos',
+                'nr_maximo_alunos',
+                'qtd_maxima_alunos',
+                'qtde_max_alunos',
+                'capacidade_maxima',
+            ]), $city);
+            if ($maxCol === null) {
                 return null;
             }
 
@@ -1428,12 +1471,16 @@ final class MatriculaChartQueries
             $agg = [];
             $capAgg = [];
             foreach ($turmaRows as $row) {
-                $tid = (string) ($row->tid ?? '');
+                $tid = trim((string) ($row->tid ?? ''));
                 $cap = (int) ($row->cap ?? 0);
-                $en = $counts[$tid] ?? 0;
+                if ($cap <= 0) {
+                    continue;
+                }
+                $enRaw = (int) ($counts[$tid] ?? 0);
+                $en = min($cap, $enRaw);
                 $vac = max(0, $cap - $en);
-                $key = (string) ($row->eid ?? '');
-                if ($key === '') {
+                $key = trim((string) ($row->eid ?? ''));
+                if ($key === '' || $key === '0') {
                     continue;
                 }
                 $agg[$key] = ($agg[$key] ?? 0) + $vac;
@@ -1510,8 +1557,16 @@ final class MatriculaChartQueries
             $maxItems = is_int($maxItems) && $maxItems > 0 ? $maxItems : null;
 
             $turma = IeducarSchema::resolveTable('turma', $city);
-            $maxCol = (string) config('ieducar.columns.turma.max_alunos');
-            if ($maxCol === '' || ! IeducarColumnInspector::columnExists($db, $turma, $maxCol, $city)) {
+            $maxCol = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
+                (string) config('ieducar.columns.turma.max_alunos'),
+                'max_aluno',
+                'max_alunos',
+                'nr_maximo_alunos',
+                'qtd_maxima_alunos',
+                'qtde_max_alunos',
+                'capacidade_maxima',
+            ]), $city);
+            if ($maxCol === null) {
                 return null;
             }
 
@@ -1548,14 +1603,18 @@ final class MatriculaChartQueries
             $agg = [];
             $capAgg = [];
             foreach ($turmaRows as $row) {
-                $tid = (string) ($row->tid ?? '');
+                $tid = trim((string) ($row->tid ?? ''));
                 $cap = (int) ($row->cap ?? 0);
-                $en = $counts[$tid] ?? 0;
+                if ($cap <= 0) {
+                    continue;
+                }
+                $enRaw = (int) ($counts[$tid] ?? 0);
+                $en = min($cap, $enRaw);
                 $vac = max(0, $cap - $en);
                 $key = $por === 'escola'
-                    ? (string) ($row->eid ?? '')
-                    : (string) ($row->cid ?? '');
-                if ($key === '') {
+                    ? trim((string) ($row->eid ?? ''))
+                    : trim((string) ($row->cid ?? ''));
+                if ($key === '' || $key === '0') {
                     continue;
                 }
                 $agg[$key] = ($agg[$key] ?? 0) + $vac;

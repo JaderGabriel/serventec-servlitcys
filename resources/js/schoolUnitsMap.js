@@ -268,10 +268,20 @@ function buildSchoolModalPayload(mk, qeduBaseFallback) {
     const qeduLink = Array.isArray(mk?.inep_links)
         ? mk.inep_links.find((ln) => ln && ln.id === "qedu")
         : null;
-    const pageUrl = qeduLink?.url ? safeExternalHref(qeduLink.url) : "";
     const baseCfg = String(
-        mk?.qedu_escola_base_url || qeduBaseFallback || "",
+        mk?.qedu_escola_base_url ||
+            qeduBaseFallback ||
+            "https://www.qedu.org.br/escola",
     ).replace(/\/$/, "");
+    let pageUrl = qeduLink?.url ? safeExternalHref(qeduLink.url) : "";
+    if (
+        (!pageUrl || pageUrl === "#") &&
+        inep &&
+        baseCfg &&
+        baseCfg.startsWith("http")
+    ) {
+        pageUrl = safeExternalHref(`${baseCfg}/${inep}`);
+    }
 
     return {
         title: nome,

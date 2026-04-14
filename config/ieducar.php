@@ -422,6 +422,7 @@ return [
     */
 
     'inep_geocoding' => [
+        /** INEP para coordenadas no mapa (ArcGIS e fallbacks). Com false, ainda é possível enriquecer o cartão se `enrich_markers_with_inep_catalog` estiver ativo. */
         'enabled' => filter_var(env('IEDUCAR_INEP_GEOCODING_ENABLED', true), FILTER_VALIDATE_BOOL),
         /**
          * Uma (1) URL ou uma lista (em ordem de tentativa) de URLs de query ArcGIS.

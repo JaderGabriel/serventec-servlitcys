@@ -65,7 +65,9 @@ class InepCatalogoEscolasGeoService
      */
     public function lookupByInepCodes(array $codes): array
     {
-        if (! filter_var(config('ieducar.inep_geocoding.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+        $geoEnabled = filter_var(config('ieducar.inep_geocoding.enabled', true), FILTER_VALIDATE_BOOLEAN);
+        $enrichCatalog = filter_var(config('ieducar.inep_geocoding.enrich_markers_with_inep_catalog', true), FILTER_VALIDATE_BOOLEAN);
+        if (! $geoEnabled && ! $enrichCatalog) {
             return [];
         }
 
@@ -709,6 +711,7 @@ class InepCatalogoEscolasGeoService
     private function parseArcgisFeatureToHit(array $f): ?array
     {
         $attrs = is_array($f['attributes'] ?? null) ? $f['attributes'] : [];
+        $attrs = $this->normalizeArcgisSchoolAttributes($attrs);
         $code = $this->inepCodeFromArcgisAttributes($attrs);
         if ($code <= 0) {
             return null;
@@ -741,6 +744,45 @@ class InepCatalogoEscolasGeoService
                 'catalog_assoc' => $catalogAssoc,
             ],
         ];
+    }
+
+    /**
+     * Algumas camadas ArcGIS usam nomes de campo sem acento ou em maiúsculas.
+     *
+     * @param  array<string, mixed>  $attrs
+     * @return array<string, mixed>
+     */
+    private function normalizeArcgisSchoolAttributes(array $attrs): array
+    {
+        $copy = $attrs;
+        $ensure = static function (string $canonical, array $candidates) use (&$copy): void {
+            $cur = $copy[$canonical] ?? null;
+            $empty = $cur === null || $cur === ''
+                || (is_string($cur) && trim($cur) === '');
+            if (! $empty) {
+                return;
+            }
+            foreach ($candidates as $k) {
+                if (! array_key_exists($k, $copy)) {
+                    continue;
+                }
+                $v = $copy[$k];
+                if ($v === null || $v === '') {
+                    continue;
+                }
+                if (is_string($v) && trim($v) === '') {
+                    continue;
+                }
+                $copy[$canonical] = $v;
+
+                break;
+            }
+        };
+        $ensure('Endereço', ['Endereco', 'ENDERECO', 'endereco', 'ENDERECO_ESCOLA']);
+        $ensure('Telefone', ['Telefone_1', 'Fone', 'fone', 'TELEFONE']);
+        $ensure('Escola', ['Nome_Escola', 'nome_escola', 'NM_ESCOLA']);
+
+        return $copy;
     }
 
     /**

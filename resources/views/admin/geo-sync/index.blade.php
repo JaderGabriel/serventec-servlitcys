@@ -24,7 +24,7 @@
                             <p class="text-[11px] font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">{{ __('Administração') }}</p>
                             <h1 class="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{{ __('Sincronização geográfica') }}</h1>
                             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed">
-                                {{ __('Coordenadas locais (i-Educar), oficiais (INEP) e diagnóstico — sem sair do painel.') }}
+                                {{ __('Ciclo completo: ler o cadastro i-Educar, gravar em school_unit_geos, opcionalmente CSV, puxar coordenadas oficiais INEP (ArcGIS e fallbacks), validar com o probe e consumir no mapa das Unidades Escolares — tudo a partir desta página.') }}
                             </p>
                         </div>
                         @if ($cityCount > 0)
@@ -41,7 +41,7 @@
 
                 <div class="p-6 sm:p-8 space-y-8">
 
-            <div class="rounded-xl border border-slate-200/90 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/40 p-4 sm:p-5">
+            <div class="rounded-xl border border-slate-200/90 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/40 p-4 sm:p-5 space-y-4">
                 <div class="flex items-start gap-3">
                     <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-800 dark:ring-slate-600">
                         <svg class="h-5 w-5 text-slate-700 dark:text-slate-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
@@ -49,12 +49,70 @@
                         </svg>
                     </div>
                     <div class="min-w-0 flex-1">
-                        <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ __('Como usar') }}</p>
+                        <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ __('Ciclo completo de busca de dados') }}</p>
                         <p class="mt-1 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                            {{ __('Na primeira carga, siga 1 → 2 (opcional) → 3. O pipeline executa a sequência automaticamente. Passe o rato sobre o título de cada cartão para a descrição longa. A saída do último comando aparece abaixo.') }}
+                            {{ __('Primeira vez: execute os passos 1 → 2 (opcional) → 3, ou use o passo 4 (pipeline) para correr a sequência. O passo 5 testa a cadeia INEP sem gravar. A saída de cada comando aparece abaixo. Passe o rato sobre o título de cada cartão para mais detalhe.') }}
                         </p>
                     </div>
                 </div>
+                <div class="rounded-lg border border-slate-200/90 bg-white/90 dark:bg-slate-950/40 dark:border-slate-700/80 p-3 sm:p-4 overflow-x-auto">
+                    <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-3">{{ __('Fluxo (escrita na base → leitura no painel)') }}</p>
+                    <div class="flex flex-nowrap sm:flex-wrap items-stretch justify-start gap-2 min-w-0 text-[11px] sm:text-xs">
+                        <div class="shrink-0 rounded-lg border border-slate-200/90 bg-slate-50/90 dark:bg-slate-900/50 dark:border-slate-600 px-3 py-2.5 max-w-[11rem] text-left">
+                            <span class="font-bold text-slate-700 dark:text-slate-200">A</span>
+                            <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('Fonte: i-Educar (escola, INEP, coords locais)') }}</span>
+                        </div>
+                        <span class="hidden sm:inline self-center text-slate-400 dark:text-slate-500" aria-hidden="true">→</span>
+                        <div class="shrink-0 rounded-lg border border-indigo-200/90 bg-indigo-50/90 dark:border-indigo-900/60 dark:bg-indigo-950/30 px-3 py-2.5 max-w-[11rem] text-left">
+                            <span class="font-bold text-indigo-800 dark:text-indigo-200">{{ __('Passo 1') }}</span>
+                            <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('Sync → tabela `school_unit_geos`') }}</span>
+                        </div>
+                        <span class="hidden sm:inline self-center text-slate-400 dark:text-slate-500" aria-hidden="true">→</span>
+                        <div class="shrink-0 rounded-lg border border-slate-200/90 bg-white dark:bg-slate-900/50 px-3 py-2.5 max-w-[11rem] text-left">
+                            <span class="font-bold text-slate-800 dark:text-slate-200">{{ __('Passo 2') }} <span class="text-amber-700 dark:text-amber-300 font-normal">({{ __('opc.') }})</span></span>
+                            <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('CSV de fallback nas linhas existentes') }}</span>
+                        </div>
+                        <span class="hidden sm:inline self-center text-slate-400 dark:text-slate-500" aria-hidden="true">→</span>
+                        <div class="shrink-0 rounded-lg border border-emerald-200/90 bg-emerald-50/80 dark:border-emerald-900/50 dark:bg-emerald-950/25 px-3 py-2.5 max-w-[11rem] text-left">
+                            <span class="font-bold text-emerald-900 dark:text-emerald-200">{{ __('Passo 3') }}</span>
+                            <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('Coordenadas oficiais INEP (ArcGIS + fallbacks)') }}</span>
+                        </div>
+                        <span class="hidden sm:inline self-center text-slate-400 dark:text-slate-500" aria-hidden="true">→</span>
+                        <div class="shrink-0 rounded-lg border border-fuchsia-200/90 bg-fuchsia-50/70 dark:border-fuchsia-900/50 dark:bg-fuchsia-950/20 px-3 py-2.5 max-w-[11rem] text-left">
+                            <span class="font-bold text-fuchsia-900 dark:text-fuchsia-200">{{ __('Passo 4') }}</span>
+                            <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('Pipeline: orquestra 1 + 2 + 3') }}</span>
+                        </div>
+                        <span class="hidden sm:inline self-center text-slate-400 dark:text-slate-500" aria-hidden="true">→</span>
+                        <div class="shrink-0 rounded-lg border border-amber-200/90 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/25 px-3 py-2.5 max-w-[11rem] text-left">
+                            <span class="font-bold text-amber-950 dark:text-amber-100">{{ __('Passo 5') }}</span>
+                            <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('Probe: mesma cadeia de busca, só diagnóstico') }}</span>
+                        </div>
+                        <span class="hidden sm:inline self-center text-slate-400 dark:text-slate-500" aria-hidden="true">→</span>
+                        <div class="shrink-0 rounded-lg border border-violet-200/90 bg-violet-50/80 dark:border-violet-900/50 dark:bg-violet-950/25 px-3 py-2.5 max-w-[11rem] text-left">
+                            <span class="font-bold text-violet-900 dark:text-violet-200">B</span>
+                            <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('Consumo: Analytics → Unidades Escolares (mapa, cache Redis, QEdu)') }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-xl border border-blue-200/80 bg-blue-50/70 dark:border-blue-900/50 dark:bg-blue-950/25 p-4 sm:p-5">
+                <p class="text-sm font-semibold text-blue-950 dark:text-blue-100">{{ __('Na leitura (runtime): ordem dos 7 fallbacks INEP + camadas ArcGIS') }}</p>
+                <p class="mt-1 text-sm text-blue-900/90 dark:text-blue-200/90 leading-relaxed">
+                    {{ __('Ordem interna usada pelo catálogo e pelo mapa (além das coordenadas já guardadas na escola no i-Educar e em school_unit_geos):') }}
+                </p>
+                <ol class="mt-3 list-decimal list-outside space-y-2 pl-5 text-sm text-blue-950 dark:text-blue-100/95 leading-relaxed">
+                    <li>{{ __('Tabela local legada `inep_school_geos` (se existir), com payload JSON quando disponível.') }}</li>
+                    <li>{{ __('CSV de fallback (`IEDUCAR_INEP_GEO_FALLBACK_CSV`), apenas INEPs já presentes no cache local exportado.') }}</li>
+                    <li>{{ __('Cache Redis (`inep_geo_v2_*`) de consultas anteriores ao ArcGIS.') }}</li>
+                    <li>{{ __('Primeira URL em `IEDUCAR_INEP_ARCGIS_QUERY_URLS` (ou `IEDUCAR_INEP_ARCGIS_QUERY_URL` legado) — query por Código_INEP.') }}</li>
+                    <li>{{ __('URLs seguintes na mesma lista (segunda camada/serviço nacional ou regional) até obter feição ou esgotar a lista.') }}</li>
+                    <li>{{ __('Reutilização de coordenadas em `school_unit_geos` pelo mesmo código INEP (outra sincronização/cidade), quando configurado.') }}</li>
+                    <li>{{ __('Metadados do catálogo (endereço/telefone) podem ser enriquecidos mesmo com geocodificação INEP desligada, desde que `IEDUCAR_INEP_ENRICH_MAP_MARKERS` esteja ativo; link QEdu usa sempre o código INEP + base QEdu.') }}</li>
+                </ol>
+                <p class="mt-3 text-xs text-blue-900/85 dark:text-blue-200/80 font-mono break-all leading-relaxed">
+                    {{ __('Exemplo de duas camadas:') }} IEDUCAR_INEP_ARCGIS_QUERY_URLS={{ __('https://…/FeatureServer/1/query,https://…/FeatureServer/0/query') }}
+                </p>
             </div>
 
             @if ($cityCount === 0)
@@ -118,8 +176,8 @@
                 <div>
                     <div class="flex flex-wrap items-end justify-between gap-2 mb-4">
                         <div>
-                            <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Fluxo principal') }}</p>
-                            <p class="mt-0.5 text-sm text-gray-600 dark:text-gray-300">{{ __('Passos 1 a 3 — da base local ao INEP oficial.') }}</p>
+                            <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Escrita na base: passos 1 a 3') }}</p>
+                            <p class="mt-0.5 text-sm text-gray-600 dark:text-gray-300">{{ __('Cache local (`school_unit_geos`), CSV opcional e coordenadas oficiais INEP com divergência.') }}</p>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -246,8 +304,8 @@
                 <div>
                     <div class="flex flex-wrap items-end justify-between gap-2 mb-4">
                         <div>
-                            <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Automação e diagnóstico') }}</p>
-                            <p class="mt-0.5 text-sm text-gray-600 dark:text-gray-300">{{ __('Pipeline completo ou teste de rede/configuração (passos 4 e 5).') }}</p>
+                            <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Fecho do ciclo: passos 4 e 5') }}</p>
+                            <p class="mt-0.5 text-sm text-gray-600 dark:text-gray-300">{{ __('Pipeline orquestra 1–3; o probe percorre a mesma cadeia de fontes que o mapa usa (sem alterar dados).') }}</p>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 gap-6">

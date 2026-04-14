@@ -293,7 +293,7 @@
 
                                 <div class="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/40 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <a
-                                        x-show="modal?.qedu?.page_url"
+                                        x-show="modal?.inep && modal?.qedu?.page_url && modal.qedu.page_url !== '#'"
                                         class="inline-flex w-full sm:w-auto items-center justify-center rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
                                         target="_blank"
                                         rel="noopener noreferrer"

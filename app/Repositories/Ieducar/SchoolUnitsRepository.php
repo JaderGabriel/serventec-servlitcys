@@ -6,11 +6,11 @@ use App\Models\City;
 use App\Models\SchoolUnitGeo;
 use App\Services\CityDataConnection;
 use App\Services\Inep\InepCatalogoEscolasGeoService;
-use App\Support\Ieducar\MatriculaChartQueries;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\MatriculaAtivoFilter;
+use App\Support\Ieducar\MatriculaChartQueries;
 use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
@@ -684,6 +684,10 @@ class SchoolUnitsRepository
                 (string) config('ieducar.columns.turma.max_alunos'),
                 'max_aluno',
                 'max_alunos',
+                'nr_maximo_alunos',
+                'qtd_maxima_alunos',
+                'qtde_max_alunos',
+                'capacidade_maxima',
             ]), $city);
             if ($maxCol === null || $tc['escola'] === '') {
                 return [];
@@ -744,7 +748,7 @@ class SchoolUnitsRepository
                 'nome_responsavel', 'nm_responsavel', 'responsavel', 'nome_gestor', 'nm_diretor',
             ], $city);
             $log = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
-                'logradouro', 'endereco', 'nm_logradouro',
+                'logradouro', 'endereco', 'nm_logradouro', 'descricao_endereco', 'localizacao',
             ], $city);
             $num = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
                 'numero', 'nr_numero', 'num',
@@ -1011,11 +1015,29 @@ class SchoolUnitsRepository
         $cardBy = $this->fetchEscolaCardFieldsByIds($db, $city, $eids);
         $ofertaBy = $this->ofertaCursoSeriePorEscolaIds($db, $city, $filters, $eids);
 
+        $inepFromGeoByEid = [];
+        try {
+            $inepFromGeoByEid = SchoolUnitGeo::query()
+                ->where('city_id', $city->id)
+                ->whereIn('escola_id', $eids)
+                ->get()
+                ->keyBy('escola_id');
+        } catch (\Throwable) {
+            $inepFromGeoByEid = [];
+        }
+
         $out = [];
         foreach ($eids as $eid) {
             $mat = $matBy[$eid] ?? 0;
             $cap = $capBy[$eid] ?? null;
             $card = $cardBy[$eid] ?? [];
+            $geoRow = $inepFromGeoByEid[$eid] ?? null;
+            if ($geoRow !== null) {
+                $ic = $geoRow->inep_code ?? null;
+                if (($card['inep'] ?? null) === null && is_numeric($ic) && (int) $ic > 0) {
+                    $card['inep'] = (int) $ic;
+                }
+            }
             $vagas = $cap !== null ? max(0, $cap - $mat) : null;
             $out[$eid] = array_merge([
                 'eid' => $eid,
@@ -1288,7 +1310,7 @@ class SchoolUnitsRepository
             $finalMarkers[] = $m;
         }
 
-        $finalMarkers = $this->enrichMarkersWithInepCatalogAndLinks($finalMarkers, $inepEnabled);
+        $finalMarkers = $this->enrichMarkersWithInepCatalogAndLinks($finalMarkers);
 
         $geoSource = 'none';
         $nFontes = ($dbCount > 0 ? 1 : 0) + ($inepCount > 0 ? 1 : 0) + ($localCount > 0 ? 1 : 0);
@@ -1337,11 +1359,14 @@ class SchoolUnitsRepository
      * @param  list<array<string, mixed>>  $markers
      * @return list<array<string, mixed>>
      */
-    private function enrichMarkersWithInepCatalogAndLinks(array $markers, bool $inepEnabled): array
+    private function enrichMarkersWithInepCatalogAndLinks(array $markers): array
     {
         $enrich = filter_var(config('ieducar.inep_geocoding.enrich_markers_with_inep_catalog', true), FILTER_VALIDATE_BOOLEAN);
         $qeduBase = (string) config('ieducar.inep_geocoding.qedu_escola_base_url', 'https://www.qedu.org.br/escola');
         $qeduBase = $qeduBase !== '' ? rtrim($qeduBase, '/') : '';
+        if ($qeduBase === '') {
+            $qeduBase = 'https://www.qedu.org.br/escola';
+        }
 
         $inepCodes = [];
         foreach ($markers as $m) {
@@ -1357,7 +1382,7 @@ class SchoolUnitsRepository
         $codesList = array_keys($inepCodes);
 
         $hits = [];
-        if ($enrich && $inepEnabled && $codesList !== []) {
+        if ($enrich && $codesList !== []) {
             $hits = $this->inepGeo->lookupByInepCodes($codesList);
         }
 
@@ -1383,8 +1408,8 @@ class SchoolUnitsRepository
 
             if (is_array($school) && is_array($hit)) {
                 $assoc = $hit['catalog_assoc'] ?? [];
-                $telCat = trim((string) ($assoc['Telefone'] ?? ''));
-                $endCat = trim((string) ($assoc['Endereço'] ?? ''));
+                $telCat = trim((string) ($assoc['Telefone'] ?? $assoc['Telefone_1'] ?? ''));
+                $endCat = trim((string) ($assoc['Endereço'] ?? $assoc['Endereco'] ?? $assoc['ENDERECO'] ?? ''));
                 $endLocal = trim((string) ($school['endereco'] ?? ''));
                 $school['endereco_cadastro'] = $endLocal !== '' ? $endLocal : null;
                 if ($telCat !== '' && trim((string) ($school['telefone'] ?? '')) === '') {
@@ -1442,9 +1467,9 @@ class SchoolUnitsRepository
 
         $assoc = is_array($inepHit) ? ($inepHit['catalog_assoc'] ?? []) : [];
         $telLoc = trim((string) ($school['telefone'] ?? ''));
-        $telCat = trim((string) ($assoc['Telefone'] ?? ''));
+        $telCat = trim((string) ($assoc['Telefone'] ?? $assoc['Telefone_1'] ?? ''));
         $endLoc = trim((string) ($school['endereco'] ?? ''));
-        $endCat = trim((string) ($assoc['Endereço'] ?? ''));
+        $endCat = trim((string) ($assoc['Endereço'] ?? $assoc['Endereco'] ?? $assoc['ENDERECO'] ?? ''));
 
         $digits = static function (string $s): string {
             return preg_replace('/\D+/', '', $s) ?? '';
@@ -1739,6 +1764,10 @@ class SchoolUnitsRepository
                 (string) config('ieducar.columns.turma.max_alunos'),
                 'max_aluno',
                 'max_alunos',
+                'nr_maximo_alunos',
+                'qtd_maxima_alunos',
+                'qtde_max_alunos',
+                'capacidade_maxima',
             ]), $city);
 
             $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
