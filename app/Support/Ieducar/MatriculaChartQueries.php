@@ -76,6 +76,140 @@ final class MatriculaChartQueries
     }
 
     /**
+     * Contagem de matrículas ativas por escola (mesma lógica que os gráficos «por escola»: join turma + opcional join escola para alinhar tipos).
+     *
+     * @param  list<int>  $eids
+     * @return array<int, int>
+     */
+    public static function matriculasCountByEscolaIds(Connection $db, City $city, IeducarFilterState $filters, array $eids): array
+    {
+        $eids = array_values(array_unique(array_map(static fn ($x) => (int) $x, array_filter($eids, static fn ($x) => (int) $x > 0))));
+        if ($eids === []) {
+            return [];
+        }
+
+        $out = array_fill_keys($eids, 0);
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            $refEscola = $tc['escola'];
+            if ($refEscola === '') {
+                return array_replace($out, self::matriculasCountByEscolaIdsDirectMatriculaEscola($db, $city, $filters, $eids));
+            }
+
+            $grammar = $db->getQueryGrammar();
+            $tEsc = $grammar->wrap('t_filter').'.'.$grammar->wrap($refEscola);
+
+            $q = $db->table($mat.' as m');
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+
+            $spec = self::escolaJoinSpec($db, $city);
+            if ($spec !== null) {
+                ['qualified' => $escola, 'idCol' => $eId] = $spec;
+                $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
+                $q->join($escola.' as e', function ($join) use ($db, $tEsc, $ePk) {
+                    if ($db->getDriverName() === 'pgsql') {
+                        $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
+                    } else {
+                        $join->whereRaw('CAST('.$tEsc.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
+                    }
+                });
+                $q->whereIn('e.'.$eId, $eids);
+                $q->selectRaw('e.'.$eId.' as eid')
+                    ->selectRaw('COUNT(*) as c')
+                    ->groupBy('e.'.$eId);
+            } else {
+                $q->whereIn('t_filter.'.$refEscola, $eids);
+                $q->selectRaw($tEsc.' as eid')
+                    ->selectRaw('COUNT(*) as c')
+                    ->groupBy($tEsc);
+            }
+
+            foreach ($q->get() as $row) {
+                $a = (array) $row;
+                $eid = (int) ($a['eid'] ?? 0);
+                if ($eid > 0) {
+                    $out[$eid] = (int) ($a['c'] ?? 0);
+                }
+            }
+        } catch (QueryException|\Throwable) {
+            $out = array_fill_keys($eids, 0);
+        }
+
+        $needAlt = [];
+        foreach ($eids as $eid) {
+            if (($out[$eid] ?? 0) === 0) {
+                $needAlt[] = $eid;
+            }
+        }
+        if ($needAlt !== []) {
+            $alt = self::matriculasCountByEscolaIdsDirectMatriculaEscola($db, $city, $filters, $needAlt);
+            foreach ($alt as $eid => $c) {
+                if ($c > 0) {
+                    $out[(int) $eid] = $c;
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Quando a turma não liga bem à escola, tenta contar pela FK escola na própria matrícula (bases Portabilis / variantes).
+     *
+     * @param  list<int>  $eids
+     * @return array<int, int>
+     */
+    private static function matriculasCountByEscolaIdsDirectMatriculaEscola(Connection $db, City $city, IeducarFilterState $filters, array $eids): array
+    {
+        $eids = array_values(array_unique(array_map(static fn ($x) => (int) $x, array_filter($eids, static fn ($x) => (int) $x > 0))));
+        if ($eids === []) {
+            return [];
+        }
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $mEsc = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
+                (string) config('ieducar.columns.matricula.escola'),
+                'ref_ref_cod_escola',
+                'ref_cod_escola',
+                'cod_escola',
+            ]), $city);
+            if ($mEsc === null) {
+                return [];
+            }
+            $mAno = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
+                (string) config('ieducar.columns.matricula.ano'),
+                'ano',
+            ]), $city);
+
+            $q = $db->table($mat.' as m');
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            if ($mAno !== null && $filters->yearFilterValue() !== null) {
+                $q->where('m.'.$mAno, $filters->yearFilterValue());
+            }
+            $q->whereIn('m.'.$mEsc, $eids);
+            $q->selectRaw('m.'.$mEsc.' as eid')
+                ->selectRaw('COUNT(*) as c')
+                ->groupBy('m.'.$mEsc);
+
+            $out = [];
+            foreach ($q->get() as $row) {
+                $a = (array) $row;
+                $out[(int) ($a['eid'] ?? 0)] = (int) ($a['c'] ?? 0);
+            }
+
+            return $out;
+        } catch (QueryException|\Throwable) {
+            return [];
+        }
+    }
+
+    /**
      * Anos letivos distintos na turma (desc), com os mesmos filtros dimensionais; ano letivo só aplica se estiver definido em $filters.
      *
      * @return list<int>

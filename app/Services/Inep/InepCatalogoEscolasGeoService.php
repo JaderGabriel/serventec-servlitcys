@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 /**
@@ -177,6 +178,17 @@ class InepCatalogoEscolasGeoService
                     break;
                 }
             }
+            $stillMissing = [];
+            foreach ($toFetch as $code) {
+                if (! isset($fetched[$code])) {
+                    $stillMissing[] = $code;
+                }
+            }
+            if ($stillMissing !== []) {
+                foreach ($this->coordsFromSchoolUnitGeoByInep($stillMissing) as $code => $row) {
+                    $fetched[$code] = $row;
+                }
+            }
             foreach ($toFetch as $code) {
                 if (isset($fetched[$code])) {
                     $row = $fetched[$code];
@@ -227,8 +239,9 @@ class InepCatalogoEscolasGeoService
             'fallback_2_redis_cache' => [],
             'fallback_2b_csv_local_scope' => [],
             'fallback_3_arcgis' => [],
+            'fallback_4_school_unit_geos_by_inep' => [],
             'merged_like_lookup' => [
-                'note' => 'Simulação: inep_school_geos ∪ CSV (escopo local) ∪ Redis ∪ ArcGIS.',
+                'note' => 'Simulação: inep_school_geos ∪ CSV (escopo local) ∪ Redis ∪ ArcGIS ∪ school_unit_geos (por INEP).',
                 'would_resolve' => [],
             ],
         ];
@@ -302,20 +315,10 @@ class InepCatalogoEscolasGeoService
         $whereCandidates = [
             '"Código_INEP" IN ('.$inList.')',
             '"Codigo_INEP" IN ('.$inList.')',
-            '"CODIGO_INEP" IN ('.$inList.')',
         ];
 
         $queryParamsBase = [
-            'outFields' => implode(',', [
-                'Escola',
-                'Código_INEP',
-                'Codigo_INEP',
-                'UF',
-                'Município',
-                'Municipio',
-                'Latitude',
-                'Longitude',
-            ]),
+            'outFields' => $this->arcgisOutFieldsRequestParam(),
             'f' => 'json',
             'returnGeometry' => 'true',
             'outSR' => 4326,
@@ -362,6 +365,9 @@ class InepCatalogoEscolasGeoService
                         'sample_inep_from_features' => $sampleIneps,
                         'exceeded_transfer_limit' => $json['exceededTransferLimit'] ?? null,
                     ];
+                    if ($errMsg === null) {
+                        break;
+                    }
                 } catch (\Throwable $e) {
                     $urlEntry['where_attempts'][] = [
                         'where' => $where,
@@ -373,6 +379,13 @@ class InepCatalogoEscolasGeoService
             $urlEntry['fetch_parsed_hits'] = $this->fetchFromArcgis($url, $normalized);
             $out['fallback_3_arcgis'][] = $urlEntry;
         }
+
+        $unitGeoHits = $this->coordsFromSchoolUnitGeoByInep($normalized);
+        $out['fallback_4_school_unit_geos_by_inep'] = [
+            'enabled' => filter_var(config('ieducar.inep_geocoding.school_unit_geo_inep_fallback_enabled', true), FILTER_VALIDATE_BOOLEAN),
+            'inep_hits' => array_keys($unitGeoHits),
+            'count' => count($unitGeoHits),
+        ];
 
         $resolved = [];
         foreach ($normalized as $code) {
@@ -395,6 +408,9 @@ class InepCatalogoEscolasGeoService
 
                         break;
                     }
+                }
+                if ($source === null && isset($unitGeoHits[$code])) {
+                    $source = 'school_unit_geos_by_inep';
                 }
             }
             $resolved[(string) $code] = $source ?? 'none';
@@ -470,35 +486,72 @@ class InepCatalogoEscolasGeoService
     }
 
     /**
-     * Campos de atributos pedidos ao FeatureServer (layer INEP pode variar).
-     *
-     * @return list<string>
+     * Parâmetro outFields para o ArcGIS (lista fixa com nomes inexistentes na camada faz 400 Invalid field).
      */
-    private function arcgisOutFieldsList(): array
+    private function arcgisOutFieldsRequestParam(): string
     {
-        return [
-            'Escola',
-            'Código_INEP',
-            'Codigo_INEP',
-            'CO_INEP',
-            'codigo_inep',
-            'UF',
-            'Município',
-            'Municipio',
-            'Dependência_Administrativa',
-            'Categoria_Administrativa',
-            'Etapas_e_Modalidade_de_Ensino_O',
-            'Porte_da_Escola',
-            'Localização',
-            'Localizacao',
-            'Localidade_Diferenciada',
-            'Endereço',
-            'Endereco',
-            'Telefone',
-            'Coordenadas',
-            'Latitude',
-            'Longitude',
-        ];
+        return '*';
+    }
+
+    /**
+     * Coordenadas já sincronizadas em `school_unit_geos` (qualquer cidade), para o mesmo código INEP.
+     *
+     * @param  list<int>  $normalizedCodes
+     * @return array<int, array{lat: float, lng: float, nome_inep: string, catalog: array, catalog_assoc: array}>
+     */
+    private function coordsFromSchoolUnitGeoByInep(array $normalizedCodes): array
+    {
+        if ($normalizedCodes === []) {
+            return [];
+        }
+        if (! filter_var(config('ieducar.inep_geocoding.school_unit_geo_inep_fallback_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            return [];
+        }
+        if (! Schema::hasTable((new SchoolUnitGeo)->getTable())) {
+            return [];
+        }
+
+        $rows = SchoolUnitGeo::query()
+            ->whereIn('inep_code', $normalizedCodes)
+            ->orderByDesc('updated_at')
+            ->get()
+            ->unique('inep_code');
+
+        $out = [];
+        foreach ($rows as $row) {
+            $code = (int) ($row->inep_code ?? 0);
+            if ($code <= 0 || isset($out[$code])) {
+                continue;
+            }
+            $lat = null;
+            $lng = null;
+            if (is_numeric($row->official_lat) && is_numeric($row->official_lng)) {
+                $lat = (float) $row->official_lat;
+                $lng = (float) $row->official_lng;
+            } elseif (is_numeric($row->lat) && is_numeric($row->lng)) {
+                $lat = (float) $row->lat;
+                $lng = (float) $row->lng;
+            }
+            if ($lat === null || $lng === null || ! $this->validCoord($lat, $lng)) {
+                continue;
+            }
+            $meta = [];
+            if (is_string($row->meta) && $row->meta !== '') {
+                $decoded = json_decode($row->meta, true);
+                $meta = is_array($decoded) ? $decoded : [];
+            }
+            $out[$code] = [
+                'lat' => $lat,
+                'lng' => $lng,
+                'nome_inep' => (string) ($meta['nome'] ?? ''),
+                'catalog' => [],
+                'catalog_assoc' => [
+                    'Fonte' => __('Coordenadas em cache (school_unit_geos); reutilizadas por código INEP.'),
+                ],
+            ];
+        }
+
+        return $out;
     }
 
     /**
@@ -562,19 +615,15 @@ class InepCatalogoEscolasGeoService
         }
 
         $inList = implode(',', array_map(static fn (int $i) => (string) $i, $codes));
-        // Observação: campos citados com aspas; camadas novas podem usar nomes ligeiramente diferentes.
+        // Camada oficial INEP usa «Código_INEP» (com acento). Variantes sem acento geram erro 400 nalguns serviços.
         $whereCandidates = [
             '"Código_INEP" IN ('.$inList.')',
             '"Codigo_INEP" IN ('.$inList.')',
-            '"CODIGO_INEP" IN ('.$inList.')',
-            '"CO_INEP" IN ('.$inList.')',
             'Código_INEP IN ('.$inList.')',
-            'Codigo_INEP IN ('.$inList.')',
-            'CO_INEP IN ('.$inList.')',
         ];
 
         $baseQuery = [
-            'outFields' => implode(',', $this->arcgisOutFieldsList()),
+            'outFields' => $this->arcgisOutFieldsRequestParam(),
             'f' => 'json',
             'returnGeometry' => 'true',
             'outSR' => 4326,
@@ -605,9 +654,8 @@ class InepCatalogoEscolasGeoService
                 }
 
                 $featCount = is_array($data['features'] ?? null) ? count($data['features']) : 0;
-                if ($featCount > 0) {
-                    break;
-                }
+                // Resposta válida com 0 feições: o WHERE está correto; não tentar variantes que podem ser inválidas.
+                break;
             }
 
             if (! is_array($data)) {
@@ -711,13 +759,11 @@ class InepCatalogoEscolasGeoService
         }
         $wheres = [
             '"Código_INEP" = '.$code,
-            '"Codigo_INEP" = '.$code,
-            '"CO_INEP" = '.$code,
             '"Código_INEP" = \''.$code.'\'',
             'Código_INEP = '.$code,
         ];
         $baseQuery = [
-            'outFields' => implode(',', $this->arcgisOutFieldsList()),
+            'outFields' => $this->arcgisOutFieldsRequestParam(),
             'f' => 'json',
             'returnGeometry' => 'true',
             'outSR' => 4326,

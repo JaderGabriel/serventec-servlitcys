@@ -461,6 +461,10 @@ return [
         'fallback_csv_path' => env('IEDUCAR_INEP_GEO_FALLBACK_CSV', 'inep_geo_fallback.csv'),
         /** Distância mínima (Haversine) para marcar divergência entre i-Educar e coordenada oficial (INEP). */
         'divergence_threshold_meters' => max(1.0, (float) env('IEDUCAR_GEO_DIVERGENCE_THRESHOLD_M', 100)),
+        /**
+         * Quando o ArcGIS não devolve o INEP, reutiliza coordenadas já guardadas em school_unit_geos (outra cidade/mesmo INEP).
+         */
+        'school_unit_geo_inep_fallback_enabled' => filter_var(env('IEDUCAR_INEP_GEO_SCHOOL_UNIT_GEO_FALLBACK', true), FILTER_VALIDATE_BOOL),
     ],
 
     /*

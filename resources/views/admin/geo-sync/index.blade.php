@@ -10,21 +10,56 @@
         </div>
     </x-slot>
 
+    @php($cityCount = $cities->count())
+    @php($selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition')
+
     <div class="py-10">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/30 p-4">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="rounded-2xl border border-gray-200/90 bg-white shadow-sm ring-1 ring-gray-950/5 dark:border-gray-700 dark:bg-gray-900 dark:ring-white/10 overflow-hidden">
+                <div class="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white px-6 py-5 dark:border-gray-800 dark:from-gray-900 dark:to-gray-900/80 sm:px-8">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <p class="text-[11px] font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">{{ __('Administração') }}</p>
+                            <h1 class="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{{ __('Sincronização geográfica') }}</h1>
+                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed">
+                                {{ __('Coordenadas locais (i-Educar), oficiais (INEP) e diagnóstico — sem sair do painel.') }}
+                            </p>
+                        </div>
+                        @if ($cityCount > 0)
+                            <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                <svg class="h-4 w-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.125-9 12.375-9 12.375S1.5 17.625 1.5 10.5a9 9 0 1 1 18 0Z" />
+                                </svg>
+                                {{ trans_choice(':count cidade no filtro|:count cidades no filtro', $cityCount, ['count' => $cityCount]) }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="p-6 sm:p-8 space-y-8">
+
+            <div class="rounded-xl border border-slate-200/90 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/40 p-4 sm:p-5">
                 <div class="flex items-start gap-3">
-                    <svg class="h-5 w-5 mt-0.5 text-slate-700 dark:text-slate-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 2.25c.414 0 .75.336.75.75v.75h.75a.75.75 0 0 1 0 1.5H12v.75a.75.75 0 0 1-1.5 0v-.75h-.75a.75.75 0 0 1 0-1.5h.75V3a.75.75 0 0 1 .75-.75Zm0 6.75a.75.75 0 0 1 .75.75v1.5h1.5a.75.75 0 0 1 0 1.5H12v1.5a.75.75 0 0 1-1.5 0v-1.5H9a.75.75 0 0 1 0-1.5h1.5V9.75a.75.75 0 0 1 .75-.75ZM6.75 21.75A2.25 2.25 0 0 1 4.5 19.5V6.75A2.25 2.25 0 0 1 6.75 4.5h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 0 6 6.75V19.5c0 .414.336.75.75.75h10.5a.75.75 0 0 0 .75-.75V6.75a.75.75 0 0 0-.75-.75h-1.5a.75.75 0 0 1 0-1.5h1.5A2.25 2.25 0 0 1 19.5 6.75V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75Z" />
-                    </svg>
-                    <div class="min-w-0">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-800 dark:ring-slate-600">
+                        <svg class="h-5 w-5 text-slate-700 dark:text-slate-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 2.25c.414 0 .75.336.75.75v.75h.75a.75.75 0 0 1 0 1.5H12v.75a.75.75 0 0 1-1.5 0v-.75h-.75a.75.75 0 0 1 0-1.5h.75V3a.75.75 0 0 1 .75-.75Zm0 6.75a.75.75 0 0 1 .75.75v1.5h1.5a.75.75 0 0 1 0 1.5H12v1.5a.75.75 0 0 1-1.5 0v-1.5H9a.75.75 0 0 1 0-1.5h1.5V9.75a.75.75 0 0 1 .75-.75ZM6.75 21.75A2.25 2.25 0 0 1 4.5 19.5V6.75A2.25 2.25 0 0 1 6.75 4.5h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 0 6 6.75V19.5c0 .414.336.75.75.75h10.5a.75.75 0 0 0 .75-.75V6.75a.75.75 0 0 0-.75-.75h-1.5a.75.75 0 0 1 0-1.5h1.5A2.25 2.25 0 0 1 19.5 6.75V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75Z" />
+                        </svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
                         <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ __('Como usar') }}</p>
                         <p class="mt-1 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                            {{ __('Execute os passos na ordem (1 → 3) na primeira carga, ou use o pipeline. Passe o rato sobre o título de cada cartão para ver a explicação. O resultado do último comando aparece logo abaixo.') }}
+                            {{ __('Na primeira carga, siga 1 → 2 (opcional) → 3. O pipeline executa a sequência automaticamente. Passe o rato sobre o título de cada cartão para a descrição longa. A saída do último comando aparece abaixo.') }}
                         </p>
                     </div>
                 </div>
             </div>
+
+            @if ($cityCount === 0)
+                <div class="rounded-xl border border-amber-200/90 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/25 dark:text-amber-100">
+                    {{ __('Não há cidades com analytics ativo. Crie ou ative cidades antes de sincronizar coordenadas.') }}
+                </div>
+            @endif
 
             @if (session('geo_sync_error'))
                 <div class="rounded-xl border border-red-200/90 bg-red-50 dark:bg-red-900/20 dark:border-red-800 px-4 py-3">
@@ -77,9 +112,17 @@
                 </div>
             @endif
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="space-y-10">
+                <div>
+                    <div class="flex flex-wrap items-end justify-between gap-2 mb-4">
+                        <div>
+                            <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Fluxo principal') }}</p>
+                            <p class="mt-0.5 text-sm text-gray-600 dark:text-gray-300">{{ __('Passos 1 a 3 — da base local ao INEP oficial.') }}</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {{-- 1 i-Educar --}}
-                <div class="rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-gradient-to-b from-indigo-50/70 to-white dark:from-indigo-950/35 dark:to-gray-900 shadow-sm p-5 space-y-4">
+                <div class="rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-gradient-to-b from-indigo-50/70 to-white dark:from-indigo-950/35 dark:to-gray-900 shadow-sm ring-1 ring-black/5 dark:ring-white/5 p-5 space-y-4 transition duration-200 hover:shadow-md">
                     <div class="flex items-start gap-3">
                         <div class="mt-0.5 rounded-lg bg-indigo-600 text-white p-2 shadow-sm">
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
@@ -87,11 +130,15 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75h4.5M9.75 12.75h4.5M9.75 15.75h4.5" />
                             </svg>
                         </div>
-                        <div class="min-w-0">
-                            <h3 class="text-base font-semibold text-indigo-950 dark:text-indigo-100 cursor-help border-b border-dashed border-indigo-300/80 dark:border-indigo-800/60 pb-1 inline-block" title="{{ __('Lê escolas no i-Educar da cidade (ou todas), cria/atualiza linhas em school_unit_geos com código INEP e coordenadas locais (lat/lng na tabela escola quando existirem). Base para comparar depois com o INEP oficial.') }}">
-                                {{ __('1. i-Educar → cache local (school_unit_geos)') }}
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-indigo-900 dark:bg-indigo-950/70 dark:text-indigo-200">{{ __('Passo 1') }}</span>
+                                <span class="inline-flex items-center rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-800/90 ring-1 ring-indigo-200/80 dark:bg-indigo-950/40 dark:text-indigo-200 dark:ring-indigo-800/60">{{ __('Dados locais') }}</span>
+                            </div>
+                            <h3 class="mt-2 text-base font-semibold text-indigo-950 dark:text-indigo-100 cursor-help border-b border-dashed border-indigo-300/80 dark:border-indigo-800/60 pb-1 inline-block" title="{{ __('Lê escolas no i-Educar da cidade (ou todas), cria/atualiza linhas em school_unit_geos com código INEP e coordenadas locais (lat/lng na tabela escola quando existirem). Base para comparar depois com o INEP oficial.') }}">
+                                {{ __('i-Educar → cache local (school_unit_geos)') }}
                             </h3>
-                            <p class="mt-2 text-xs text-indigo-900/85 dark:text-indigo-200/80 leading-relaxed">{{ __('Comando: app:sync-school-unit-geos') }}</p>
+                            <p class="mt-2 text-[11px] font-mono text-indigo-900/80 dark:text-indigo-200/75 leading-relaxed">{{ __('Comando: app:sync-school-unit-geos') }}</p>
                         </div>
                     </div>
                     <form method="post" action="{{ route('admin.geo-sync.run') }}" class="space-y-3">
@@ -99,7 +146,7 @@
                         <input type="hidden" name="step" value="ieducar">
                         <div>
                             <x-input-label for="ieducar_city" :value="__('Cidade (opcional)')" />
-                            <select id="ieducar_city" name="city_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            <select id="ieducar_city" name="city_id" class="{{ $selectClass }}" @disabled($cityCount === 0)>
                                 <option value="">{{ __('Todas as cidades com analytics') }}</option>
                                 @foreach ($cities as $c)
                                     <option value="{{ $c->id }}">{{ $c->name }}</option>
@@ -110,23 +157,27 @@
                             <input type="checkbox" name="ieducar_only_missing" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
                             <span class="text-sm text-gray-700 dark:text-gray-300 group-hover:text-indigo-700 dark:group-hover:text-indigo-300">{{ __('Apenas escolas sem linha em school_unit_geos') }}</span>
                         </label>
-                        <x-primary-button type="submit">{{ __('Executar') }}</x-primary-button>
+                        <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Executar') }}</x-primary-button>
                     </form>
                 </div>
 
                 {{-- 2 CSV --}}
-                <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 shadow-sm p-5 space-y-4">
+                <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-800 shadow-sm ring-1 ring-black/5 dark:ring-white/5 p-5 space-y-4 transition duration-200 hover:shadow-md">
                     <div class="flex items-start gap-3">
                         <div class="mt-0.5 rounded-lg bg-slate-900 dark:bg-slate-700 text-white p-2 shadow-sm">
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 7.5h16.5M3.75 12h16.5M3.75 16.5h16.5" />
                             </svg>
                         </div>
-                        <div class="min-w-0">
-                            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 cursor-help border-b border-dashed border-gray-300 dark:border-gray-600 pb-1 inline-block" title="{{ __('Atualiza linhas já existentes em school_unit_geos a partir de um CSV configurado (IEDUCAR_INEP_GEO_FALLBACK_CSV). Não cria escolas novas; útil quando o ArcGIS está indisponível ou para dados offline.') }}">
-                                {{ __('2. Import CSV de fallback (opcional)') }}
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-900 dark:bg-slate-800 dark:text-slate-100">{{ __('Passo 2') }}</span>
+                                <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 ring-1 ring-amber-200/80 dark:bg-amber-950/40 dark:text-amber-100 dark:ring-amber-800/50">{{ __('Opcional') }}</span>
+                            </div>
+                            <h3 class="mt-2 text-base font-semibold text-gray-900 dark:text-gray-100 cursor-help border-b border-dashed border-gray-300 dark:border-gray-600 pb-1 inline-block" title="{{ __('Atualiza linhas já existentes em school_unit_geos a partir de um CSV configurado (IEDUCAR_INEP_GEO_FALLBACK_CSV). Não cria escolas novas; útil quando o ArcGIS está indisponível ou para dados offline.') }}">
+                                {{ __('Import CSV de fallback') }}
                             </h3>
-                            <p class="mt-2 text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ __('Comando: app:import-inep-geo-fallback-csv — se o ficheiro não existir, o passo termina com aviso.') }}</p>
+                            <p class="mt-2 text-[11px] font-mono text-gray-600 dark:text-gray-400 leading-relaxed">{{ __('Comando: app:import-inep-geo-fallback-csv — se o ficheiro não existir, o passo termina com aviso.') }}</p>
                         </div>
                     </div>
                     <form method="post" action="{{ route('admin.geo-sync.run') }}" class="space-y-3">
@@ -137,7 +188,7 @@
                 </div>
 
                 {{-- 3 Oficial INEP --}}
-                <div class="rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-gradient-to-b from-emerald-50/70 to-white dark:from-emerald-950/35 dark:to-gray-900 shadow-sm p-5 space-y-4 lg:col-span-2">
+                <div class="rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-gradient-to-b from-emerald-50/70 to-white dark:from-emerald-950/35 dark:to-gray-900 shadow-sm ring-1 ring-black/5 dark:ring-white/5 p-5 space-y-4 lg:col-span-2 transition duration-200 hover:shadow-md">
                     <div class="flex items-start gap-3">
                         <div class="mt-0.5 rounded-lg bg-emerald-600 text-white p-2 shadow-sm">
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
@@ -145,11 +196,15 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
                             </svg>
                         </div>
-                        <div class="min-w-0">
-                            <h3 class="text-base font-semibold text-emerald-950 dark:text-emerald-100 cursor-help border-b border-dashed border-emerald-300/80 dark:border-emerald-800/60 pb-1 inline-block" title="{{ __('Consulta coordenadas oficiais por código INEP (ArcGIS / fallbacks) e grava official_lat/lng. A divergência (metros e alerta) só é calculada quando existem coordenadas i-Educar na mesma linha; caso contrário, limpa o indicador de divergência.') }}">
-                                {{ __('3. Coordenadas oficiais INEP + divergência vs i-Educar') }}
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-950 dark:bg-emerald-950/60 dark:text-emerald-100">{{ __('Passo 3') }}</span>
+                                <span class="inline-flex items-center rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-900/90 ring-1 ring-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-800/60">{{ __('INEP oficial') }}</span>
+                            </div>
+                            <h3 class="mt-2 text-base font-semibold text-emerald-950 dark:text-emerald-100 cursor-help border-b border-dashed border-emerald-300/80 dark:border-emerald-800/60 pb-1 inline-block" title="{{ __('Consulta coordenadas oficiais por código INEP (ArcGIS / fallbacks) e grava official_lat/lng. A divergência (metros e alerta) só é calculada quando existem coordenadas i-Educar na mesma linha; caso contrário, limpa o indicador de divergência.') }}">
+                                {{ __('Coordenadas oficiais INEP + divergência vs i-Educar') }}
                             </h3>
-                            <p class="mt-2 text-xs text-emerald-900/85 dark:text-emerald-200/80 leading-relaxed">{{ __('Comando: app:sync-school-unit-geos-official') }}</p>
+                            <p class="mt-2 text-[11px] font-mono text-emerald-900/85 dark:text-emerald-200/80 leading-relaxed">{{ __('Comando: app:sync-school-unit-geos-official') }}</p>
                         </div>
                     </div>
                     <form method="post" action="{{ route('admin.geo-sync.run') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4 gap-y-3">
@@ -158,7 +213,7 @@
                         <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <x-input-label for="official_city" :value="__('Cidade (opcional)')" />
-                                <select id="official_city" name="city_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                <select id="official_city" name="city_id" class="{{ $selectClass }}" @disabled($cityCount === 0)>
                                     <option value="">{{ __('Todas') }}</option>
                                     @foreach ($cities as $c)
                                         <option value="{{ $c->id }}">{{ $c->name }}</option>
@@ -179,13 +234,23 @@
                             <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Dry-run (simular)') }}</span>
                         </label>
                         <div class="md:col-span-2">
-                            <x-primary-button type="submit">{{ __('Puxar dados oficiais / atualizar divergência') }}</x-primary-button>
+                            <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Puxar dados oficiais / atualizar divergência') }}</x-primary-button>
                         </div>
                     </form>
                 </div>
+                    </div>
+                </div>
 
+                <div>
+                    <div class="flex flex-wrap items-end justify-between gap-2 mb-4">
+                        <div>
+                            <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Automação e diagnóstico') }}</p>
+                            <p class="mt-0.5 text-sm text-gray-600 dark:text-gray-300">{{ __('Pipeline completo ou teste de rede/configuração (passos 4 e 5).') }}</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-6">
                 {{-- 4 Pipeline --}}
-                <div class="rounded-xl border border-fuchsia-200/80 dark:border-fuchsia-900/60 bg-gradient-to-b from-fuchsia-50/70 to-white dark:from-fuchsia-950/30 dark:to-gray-900 shadow-sm p-5 space-y-4 lg:col-span-2">
+                <div class="rounded-xl border border-fuchsia-200/80 dark:border-fuchsia-900/60 bg-gradient-to-b from-fuchsia-50/70 to-white dark:from-fuchsia-950/30 dark:to-gray-900 shadow-sm ring-1 ring-black/5 dark:ring-white/5 p-5 space-y-4 transition duration-200 hover:shadow-md">
                     <div class="flex items-start gap-3">
                         <div class="mt-0.5 rounded-lg bg-fuchsia-600 text-white p-2 shadow-sm">
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
@@ -193,11 +258,15 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 13.5h6M9 16.5h6" />
                             </svg>
                         </div>
-                        <div class="min-w-0">
-                            <h3 class="text-base font-semibold text-fuchsia-950 dark:text-fuchsia-100 cursor-help border-b border-dashed border-fuchsia-300/80 dark:border-fuchsia-800/60 pb-1 inline-block" title="{{ __('Executa em sequência: (1) sync i-Educar opcional, (2) import CSV opcional, (3) coordenadas oficiais INEP. Use quando quiser um botão único após configurar as opções abaixo.') }}">
-                                {{ __('4. Pipeline completo') }}
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="inline-flex items-center rounded-full bg-fuchsia-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-fuchsia-950 dark:bg-fuchsia-950/60 dark:text-fuchsia-100">{{ __('Passo 4') }}</span>
+                                <span class="inline-flex items-center rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-fuchsia-900/90 ring-1 ring-fuchsia-200/80 dark:bg-fuchsia-950/40 dark:text-fuchsia-200 dark:ring-fuchsia-800/60">{{ __('Orquestração') }}</span>
+                            </div>
+                            <h3 class="mt-2 text-base font-semibold text-fuchsia-950 dark:text-fuchsia-100 cursor-help border-b border-dashed border-fuchsia-300/80 dark:border-fuchsia-800/60 pb-1 inline-block" title="{{ __('Executa em sequência: (1) sync i-Educar opcional, (2) import CSV opcional, (3) coordenadas oficiais INEP. Use quando quiser um botão único após configurar as opções abaixo.') }}">
+                                {{ __('Pipeline completo') }}
                             </h3>
-                            <p class="mt-2 text-xs text-fuchsia-900/85 dark:text-fuchsia-200/80 leading-relaxed">{{ __('Comando: app:sync-school-unit-geos-pipeline') }}</p>
+                            <p class="mt-2 text-[11px] font-mono text-fuchsia-900/85 dark:text-fuchsia-200/80 leading-relaxed">{{ __('Comando: app:sync-school-unit-geos-pipeline') }}</p>
                         </div>
                     </div>
                     <form method="post" action="{{ route('admin.geo-sync.run') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4 gap-y-3">
@@ -206,7 +275,7 @@
                         <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <x-input-label for="pipe_city" :value="__('Cidade (opcional)')" />
-                                <select id="pipe_city" name="city_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                <select id="pipe_city" name="city_id" class="{{ $selectClass }}" @disabled($cityCount === 0)>
                                     <option value="">{{ __('Todas') }}</option>
                                     @foreach ($cities as $c)
                                         <option value="{{ $c->id }}">{{ $c->name }}</option>
@@ -218,45 +287,52 @@
                                 <x-text-input id="threshold_pipe" name="threshold" type="number" step="1" min="0" class="mt-1 block w-full" :value="old('threshold', config('ieducar.inep_geocoding.divergence_threshold_meters', 100))" />
                             </div>
                         </div>
-                        <label class="flex items-start gap-2 cursor-pointer md:col-span-2 group" title="{{ __('Não executa o passo i-Educar; útil se já sincronizou o cadastro local e só quer oficial + CSV.') }}">
-                            <input type="checkbox" name="pipeline_skip_ieducar" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
-                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Ignorar passo i-Educar') }}</span>
-                        </label>
-                        <label class="flex items-start gap-2 cursor-pointer md:col-span-2 group" title="{{ __('Inclui o import CSV entre i-Educar e o passo oficial (se o ficheiro existir).') }}">
-                            <input type="checkbox" name="pipeline_with_csv" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
-                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Incluir import CSV no pipeline') }}</span>
-                        </label>
-                        <label class="flex items-start gap-2 cursor-pointer md:col-span-2 group">
-                            <input type="checkbox" name="ieducar_only_missing" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
-                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Pipeline: i-Educar só linhas em falta') }}</span>
-                        </label>
-                        <label class="flex items-start gap-2 cursor-pointer md:col-span-2 group">
-                            <input type="checkbox" name="official_only_missing" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
-                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Pipeline: oficiais só em falta') }}</span>
-                        </label>
-                        <label class="flex items-start gap-2 cursor-pointer md:col-span-2 group">
-                            <input type="checkbox" name="dry_run" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
-                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Dry-run no passo oficial') }}</span>
-                        </label>
+                        <div class="md:col-span-2 rounded-lg border border-fuchsia-200/70 bg-fuchsia-50/40 p-3 dark:border-fuchsia-900/50 dark:bg-fuchsia-950/20 space-y-2">
+                            <p class="text-[11px] font-semibold uppercase tracking-wide text-fuchsia-900/90 dark:text-fuchsia-200/90">{{ __('Opções do pipeline') }}</p>
+                            <label class="flex items-start gap-2 cursor-pointer group" title="{{ __('Não executa o passo i-Educar; útil se já sincronizou o cadastro local e só quer oficial + CSV.') }}">
+                                <input type="checkbox" name="pipeline_skip_ieducar" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
+                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Ignorar passo i-Educar') }}</span>
+                            </label>
+                            <label class="flex items-start gap-2 cursor-pointer group" title="{{ __('Inclui o import CSV entre i-Educar e o passo oficial (se o ficheiro existir).') }}">
+                                <input type="checkbox" name="pipeline_with_csv" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
+                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Incluir import CSV no pipeline') }}</span>
+                            </label>
+                            <label class="flex items-start gap-2 cursor-pointer group">
+                                <input type="checkbox" name="ieducar_only_missing" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
+                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Pipeline: i-Educar só linhas em falta') }}</span>
+                            </label>
+                            <label class="flex items-start gap-2 cursor-pointer group">
+                                <input type="checkbox" name="official_only_missing" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
+                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Pipeline: oficiais só em falta') }}</span>
+                            </label>
+                            <label class="flex items-start gap-2 cursor-pointer group">
+                                <input type="checkbox" name="dry_run" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
+                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Dry-run no passo oficial') }}</span>
+                            </label>
+                        </div>
                         <div class="md:col-span-2">
-                            <x-primary-button type="submit">{{ __('Executar pipeline') }}</x-primary-button>
+                            <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Executar pipeline') }}</x-primary-button>
                         </div>
                     </form>
                 </div>
 
                 {{-- 5 Probe --}}
-                <div class="rounded-xl border border-amber-200/80 dark:border-amber-900/60 bg-gradient-to-b from-amber-50/70 to-white dark:from-amber-950/30 dark:to-gray-900 shadow-sm p-5 space-y-4 lg:col-span-2">
+                <div class="rounded-xl border border-amber-200/80 dark:border-amber-900/60 bg-gradient-to-b from-amber-50/70 to-white dark:from-amber-950/30 dark:to-gray-900 shadow-sm ring-1 ring-black/5 dark:ring-white/5 p-5 space-y-4 transition duration-200 hover:shadow-md">
                     <div class="flex items-start gap-3">
                         <div class="mt-0.5 rounded-lg bg-amber-600 text-white p-2 shadow-sm">
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 10.5h9.75M10.5 15h9.75M4.5 6h.008v.008H4.5V6Zm0 4.5h.008v.008H4.5V10.5Zm0 4.5h.008v.008H4.5V15Z" />
                             </svg>
                         </div>
-                        <div class="min-w-0">
-                            <h3 class="text-base font-semibold text-amber-950 dark:text-amber-100 cursor-help border-b border-dashed border-amber-300/80 dark:border-amber-800/60 pb-1 inline-block" title="{{ __('Testa a cadeia de fontes INEP (tabela local, Redis, ArcGIS) para alguns códigos; não altera dados. Útil para diagnóstico de rede ou configuração.') }}">
-                                {{ __('5. Diagnóstico (probe INEP)') }}
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-950 dark:bg-amber-950/60 dark:text-amber-100">{{ __('Passo 5') }}</span>
+                                <span class="inline-flex items-center rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900/90 ring-1 ring-amber-200/80 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-800/60">{{ __('Diagnóstico') }}</span>
+                            </div>
+                            <h3 class="mt-2 text-base font-semibold text-amber-950 dark:text-amber-100 cursor-help border-b border-dashed border-amber-300/80 dark:border-amber-800/60 pb-1 inline-block" title="{{ __('Testa a cadeia de fontes INEP (tabela local, Redis, ArcGIS) para alguns códigos; não altera dados. Útil para diagnóstico de rede ou configuração.') }}">
+                                {{ __('Diagnóstico (probe INEP)') }}
                             </h3>
-                            <p class="mt-2 text-xs text-amber-900/85 dark:text-amber-200/80 leading-relaxed">{{ __('Comando: app:probe-inep-geo-fallbacks') }}</p>
+                            <p class="mt-2 text-[11px] font-mono text-amber-900/85 dark:text-amber-200/80 leading-relaxed">{{ __('Comando: app:probe-inep-geo-fallbacks') }}</p>
                         </div>
                     </div>
                     <form method="post" action="{{ route('admin.geo-sync.run') }}" class="flex flex-wrap gap-4 items-end">
@@ -264,15 +340,20 @@
                         <input type="hidden" name="step" value="probe">
                         <div class="flex-1 min-w-[200px]">
                             <x-input-label for="probe_city" :value="__('Cidade (obrigatório)')" />
-                            <select id="probe_city" name="city_id" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            <select id="probe_city" name="city_id" class="{{ $selectClass }}" @required($cityCount > 0) @disabled($cityCount === 0)>
                                 <option value="">{{ __('Selecione…') }}</option>
                                 @foreach ($cities as $c)
                                     <option value="{{ $c->id }}">{{ $c->name }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <x-secondary-button type="submit">{{ __('Executar diagnóstico') }}</x-secondary-button>
+                        <x-secondary-button type="submit" :disabled="$cityCount === 0">{{ __('Executar diagnóstico') }}</x-secondary-button>
                     </form>
+                </div>
+                    </div>
+                </div>
+            </div>
+
                 </div>
             </div>
         </div>

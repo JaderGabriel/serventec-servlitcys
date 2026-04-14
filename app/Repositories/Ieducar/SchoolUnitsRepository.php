@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Models\SchoolUnitGeo;
 use App\Services\CityDataConnection;
 use App\Services\Inep\InepCatalogoEscolasGeoService;
+use App\Support\Ieducar\MatriculaChartQueries;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
@@ -664,37 +665,7 @@ class SchoolUnitsRepository
      */
     private function matriculasCountByEscolaIds(Connection $db, City $city, IeducarFilterState $filters, array $eids): array
     {
-        if ($eids === []) {
-            return [];
-        }
-        try {
-            $mat = IeducarSchema::resolveTable('matricula', $city);
-            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
-            $escolaT = IeducarSchema::resolveTable('escola', $city);
-            $eId = (string) config('ieducar.columns.escola.id');
-
-            $q = $db->table($mat.' as m');
-            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
-            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
-            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
-            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
-            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
-            $q->join($escolaT.' as e', 't_filter.'.$tc['escola'], '=', 'e.'.$eId);
-            $q->whereIn('e.'.$eId, $eids);
-            $q->selectRaw('e.'.$eId.' as eid')
-                ->selectRaw('COUNT(*) as c')
-                ->groupBy('e.'.$eId);
-
-            $out = [];
-            foreach ($q->get() as $row) {
-                $a = (array) $row;
-                $out[(int) ($a['eid'] ?? 0)] = (int) ($a['c'] ?? 0);
-            }
-
-            return $out;
-        } catch (QueryException|\Throwable) {
-            return [];
-        }
+        return MatriculaChartQueries::matriculasCountByEscolaIds($db, $city, $filters, $eids);
     }
 
     /**
@@ -760,7 +731,11 @@ class SchoolUnitsRepository
             $eId = (string) config('ieducar.columns.escola.id');
             $en = $this->escolaNomeSql($db, $city, 'e', $eId);
             $tel = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
-                'telefone', 'fone', 'fone_1', 'nr_telefone', 'tel',
+                'telefone', 'fone', 'fone_1', 'nr_telefone', 'tel', 'tel_comercial',
+                'telefone_1', 'telefone_escola', 'telefone_ddd', 'nr_telefone_1',
+            ], $city);
+            $ddd = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'ddd', 'ddd_telefone', 'nr_ddd', 'ddd_1',
             ], $city);
             $email = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
                 'email', 'mail', 'e_mail',
@@ -782,6 +757,9 @@ class SchoolUnitsRepository
             ], $city);
             $cep = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
                 'cep', 'nr_cep',
+            ], $city);
+            $comp = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'complemento', 'complemento_endereco', 'nm_complemento',
             ], $city);
             $inepCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
                 'codigo_inep', 'cod_escola_inep', 'inep', 'cod_inep', 'codigo_escola_inep', 'inep_escola', 'ref_cod_escola_inep',
@@ -821,6 +799,12 @@ class SchoolUnitsRepository
             if ($cep !== null) {
                 $q->selectRaw($we.'.'.$g->wrap($cep).' as cep_raw');
             }
+            if ($ddd !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($ddd).' as ddd_raw');
+            }
+            if ($comp !== null) {
+                $q->selectRaw($we.'.'.$g->wrap($comp).' as comp_raw');
+            }
             if ($inepCol !== null) {
                 $q->selectRaw($we.'.'.$g->wrap($inepCol).' as inep_raw');
             }
@@ -841,8 +825,12 @@ class SchoolUnitsRepository
                 $br = trim((string) ($a['bai_raw'] ?? ''));
                 $mu = trim((string) ($a['mun_raw'] ?? ''));
                 $cp = trim((string) ($a['cep_raw'] ?? ''));
+                $co = trim((string) ($a['comp_raw'] ?? ''));
                 if ($lr !== '') {
                     $parts[] = $lr.($nr !== '' ? ', '.$nr : '');
+                }
+                if ($co !== '') {
+                    $parts[] = $co;
                 }
                 if ($br !== '') {
                     $parts[] = $br;
@@ -864,9 +852,15 @@ class SchoolUnitsRepository
                 $ativo = $a['ativo_raw'] ?? null;
                 $sk = $this->escolaStatusKeyFromAtivo($ativo);
 
+                $telStr = isset($a['tel_raw']) ? trim((string) $a['tel_raw']) : '';
+                $dddStr = isset($a['ddd_raw']) ? preg_replace('/\D+/', '', (string) $a['ddd_raw']) : '';
+                if ($telStr !== '' && $dddStr !== '' && ! str_starts_with(preg_replace('/\D+/', '', $telStr), $dddStr)) {
+                    $telStr = '('.$dddStr.') '.$telStr;
+                }
+
                 $out[$eid] = [
                     'nome' => trim((string) ($a['nome_escola'] ?? '')) ?: null,
-                    'telefone' => isset($a['tel_raw']) ? trim((string) $a['tel_raw']) : null,
+                    'telefone' => $telStr !== '' ? $telStr : null,
                     'email' => isset($a['email_raw']) ? trim((string) $a['email_raw']) : null,
                     'gestor' => isset($a['gest_raw']) ? trim((string) $a['gest_raw']) : null,
                     'endereco' => $endereco,
@@ -1370,6 +1364,10 @@ class SchoolUnitsRepository
         $out = [];
         foreach ($markers as $m) {
             $school = isset($m['school']) && is_array($m['school']) ? $m['school'] : null;
+            if (is_array($school) && ! array_key_exists('endereco_cadastro', $school)) {
+                $el = trim((string) ($school['endereco'] ?? ''));
+                $school['endereco_cadastro'] = $el !== '' ? $el : null;
+            }
             $inep = null;
             if ($school !== null && isset($school['inep']) && is_numeric($school['inep'])) {
                 $inep = (int) $school['inep'];
@@ -1382,6 +1380,24 @@ class SchoolUnitsRepository
 
             $m['inep_catalog'] = is_array($hit) ? ($hit['catalog'] ?? []) : [];
             $m['inep_catalog_assoc'] = is_array($hit) ? ($hit['catalog_assoc'] ?? []) : [];
+
+            if (is_array($school) && is_array($hit)) {
+                $assoc = $hit['catalog_assoc'] ?? [];
+                $telCat = trim((string) ($assoc['Telefone'] ?? ''));
+                $endCat = trim((string) ($assoc['Endereço'] ?? ''));
+                $endLocal = trim((string) ($school['endereco'] ?? ''));
+                $school['endereco_cadastro'] = $endLocal !== '' ? $endLocal : null;
+                if ($telCat !== '' && trim((string) ($school['telefone'] ?? '')) === '') {
+                    $school['telefone'] = $telCat;
+                }
+                if ($endCat !== '') {
+                    $school['endereco_inep'] = $endCat;
+                }
+                if ($endLocal === '' && $endCat !== '') {
+                    $school['endereco'] = $endCat;
+                }
+                $m['school'] = $school;
+            }
 
             $m['inep_links'] = [];
             if ($inep !== null && $qeduBase !== '') {

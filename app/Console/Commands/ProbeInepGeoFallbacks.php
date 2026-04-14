@@ -109,6 +109,12 @@ class ProbeInepGeoFallbacks extends Command
         $this->line('    hits para os códigos pedidos: '.($fbCsv['count'] ?? 0).' → '.implode(', ', $fbCsv['inep_hits'] ?? []));
         $this->newLine();
 
+        $fb4 = $diag['fallback_4_school_unit_geos_by_inep'] ?? [];
+        $this->info('[4] school_unit_geos (fallback por INEP em cache agregado)');
+        $this->line('    ativo: '.(($fb4['enabled'] ?? false) ? 'sim' : 'não'));
+        $this->line('    hits: '.($fb4['count'] ?? 0).' → '.implode(', ', $fb4['inep_hits'] ?? []));
+        $this->newLine();
+
         $this->info('[3] ArcGIS (cada URL da config; cada tentativa de WHERE)');
         foreach ($diag['fallback_3_arcgis'] ?? [] as $arc) {
             $this->line('    URL #'.($arc['index'] ?? '?').': '.($arc['url'] ?? ''));
@@ -130,7 +136,7 @@ class ProbeInepGeoFallbacks extends Command
             $this->newLine();
         }
 
-        $this->info('[Resumo] Onde cada INEP seria resolvido (ordem: local → Redis → 1.º ArcGIS com hit)');
+        $this->info('[Resumo] Onde cada INEP seria resolvido (ordem: local → CSV → Redis → ArcGIS → school_unit_geos)');
         foreach ($diag['merged_like_lookup']['would_resolve'] ?? [] as $ic => $src) {
             $this->line('    '.$ic.' → '.($src ?: 'none'));
         }

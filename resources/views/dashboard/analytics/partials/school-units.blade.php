@@ -166,51 +166,42 @@
                                 </div>
 
                                 <div class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-4 space-y-4 [scrollbar-gutter:stable]">
-                                    {{-- Localização: comparação de coordenadas + endereço num único bloco --}}
+                                    {{-- Localização: duas colunas (geográfico | endereços) --}}
                                     <div class="w-full rounded-xl border border-slate-200/90 bg-gradient-to-b from-slate-50/95 to-white dark:from-slate-900/50 dark:to-gray-900/80 dark:border-slate-600 p-4 shadow-sm">
-                                        <div class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-                                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">{{ __('Localização') }}</p>
-                                            <p class="text-[10px] text-slate-500 dark:text-slate-400" x-show="modal?.qedu?.base_url" x-text="'QEdu: ' + (modal?.qedu?.base_url || '')"></p>
-                                        </div>
-                                        <div
-                                            class="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6"
-                                            x-show="modal?.geo_divergence && (modal.geo_divergence.official_lat != null || modal.geo_divergence.ieducar_lat != null || modal.geo_divergence.has_divergence)"
-                                            x-cloak
-                                        >
-                                            <div class="min-w-0 rounded-lg border border-amber-200/90 bg-amber-50/90 px-3 py-3 dark:border-amber-800/50 dark:bg-amber-950/35">
-                                                <p class="text-[11px] font-semibold text-amber-950 dark:text-amber-100">{{ __('Comparação i-Educar × INEP (coordenadas)') }}</p>
-                                                <p class="mt-2 text-[11px] text-amber-900/90 dark:text-amber-100/90 leading-snug">{{ __('Distância em linha reta entre o ponto do cadastro i-Educar e o ponto do Catálogo INEP (quando ambos existem).') }}</p>
-                                                <p class="mt-3 text-3xl font-bold tabular-nums tracking-tight text-amber-950 dark:text-amber-50" x-text="modal?.geo_divergence?.meters != null ? (Math.round(Number(modal.geo_divergence.meters)).toLocaleString('pt-BR') + ' m') : '—'"></p>
-                                                <p class="mt-1 text-[11px] text-amber-900/85 dark:text-amber-200/90">
-                                                    <span class="font-medium">{{ __('Limiar de alerta:') }}</span>
-                                                    <span class="tabular-nums" x-text="modal?.geo_divergence?.threshold_meters != null ? (Number(modal.geo_divergence.threshold_meters).toLocaleString('pt-BR') + ' m') : '—'"></span>
-                                                    <span x-show="modal?.geo_divergence?.has_divergence" class="ml-1 font-semibold text-amber-950 dark:text-amber-100">({{ __('≥ limiar') }})</span>
-                                                    <span x-show="modal?.geo_divergence && !modal.geo_divergence.has_divergence && modal.geo_divergence.official_lat != null && modal.geo_divergence.ieducar_lat != null" class="ml-1 font-medium text-emerald-800 dark:text-emerald-200">({{ __('abaixo do limiar') }})</span>
-                                                </p>
-                                                <dl class="mt-3 space-y-1 text-[11px] text-amber-950 dark:text-amber-100/95">
-                                                    <div class="flex justify-between gap-2" x-show="modal?.geo_divergence?.ieducar_lat != null">
-                                                        <dt class="opacity-80">{{ __('Lat/Lng i-Educar') }}</dt>
-                                                        <dd class="tabular-nums text-right" x-text="(modal.geo_divergence.ieducar_lat != null && modal.geo_divergence.ieducar_lng != null) ? (Number(modal.geo_divergence.ieducar_lat).toFixed(5) + ', ' + Number(modal.geo_divergence.ieducar_lng).toFixed(5)) : '—'"></dd>
+                                        <p class="text-center text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">{{ __('Localização') }}</p>
+                                        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 md:items-start">
+                                            <div class="min-w-0 rounded-lg border border-sky-200/80 bg-sky-50/80 px-3 py-3 dark:border-sky-900/50 dark:bg-sky-950/30">
+                                                <p class="text-[11px] font-semibold uppercase tracking-wide text-sky-900 dark:text-sky-100">{{ __('Dados geográficos') }}</p>
+                                                <p class="mt-1 text-[11px] text-sky-700/90 dark:text-sky-200/80" x-text="modal?.fonte_coordenada_label || '—'"></p>
+                                                <template x-if="modal?.geo_divergence && (modal.geo_divergence.official_lat != null || modal.geo_divergence.ieducar_lat != null || modal.geo_divergence.has_divergence)">
+                                                    <div class="mt-3 rounded-md border border-amber-200/90 bg-amber-50/90 px-2 py-2 dark:border-amber-800/50 dark:bg-amber-950/35">
+                                                        <p class="text-[11px] font-semibold text-amber-950 dark:text-amber-100">{{ __('Comparação i-Educar × INEP') }}</p>
+                                                        <p class="mt-2 text-2xl font-bold tabular-nums text-amber-950 dark:text-amber-50" x-text="modal?.geo_divergence?.meters != null ? (Math.round(Number(modal.geo_divergence.meters)).toLocaleString('pt-BR') + ' m') : '—'"></p>
+                                                        <dl class="mt-2 space-y-1 text-[11px] text-amber-950 dark:text-amber-100/95">
+                                                            <div class="flex justify-between gap-2" x-show="modal?.geo_divergence?.ieducar_lat != null">
+                                                                <dt class="opacity-80">{{ __('Lat/Lng i-Educar') }}</dt>
+                                                                <dd class="tabular-nums text-right" x-text="(modal.geo_divergence.ieducar_lat != null && modal.geo_divergence.ieducar_lng != null) ? (Number(modal.geo_divergence.ieducar_lat).toFixed(5) + ', ' + Number(modal.geo_divergence.ieducar_lng).toFixed(5)) : '—'"></dd>
+                                                            </div>
+                                                            <div class="flex justify-between gap-2" x-show="modal?.geo_divergence?.official_lat != null">
+                                                                <dt class="opacity-80">{{ __('Lat/Lng INEP') }}</dt>
+                                                                <dd class="tabular-nums text-right" x-text="(modal.geo_divergence.official_lat != null && modal.geo_divergence.official_lng != null) ? (Number(modal.geo_divergence.official_lat).toFixed(5) + ', ' + Number(modal.geo_divergence.official_lng).toFixed(5)) : '—'"></dd>
+                                                            </div>
+                                                        </dl>
                                                     </div>
-                                                    <div class="flex justify-between gap-2" x-show="modal?.geo_divergence?.official_lat != null">
-                                                        <dt class="opacity-80">{{ __('Lat/Lng INEP') }}</dt>
-                                                        <dd class="tabular-nums text-right" x-text="(modal.geo_divergence.official_lat != null && modal.geo_divergence.official_lng != null) ? (Number(modal.geo_divergence.official_lat).toFixed(5) + ', ' + Number(modal.geo_divergence.official_lng).toFixed(5)) : '—'"></dd>
-                                                    </div>
-                                                </dl>
+                                                </template>
+                                                <p class="mt-3 text-[11px] text-slate-500 dark:text-slate-400 leading-snug" x-show="modal?.meta" x-text="modal?.meta"></p>
                                             </div>
                                             <div class="min-w-0 md:border-l md:border-slate-200 md:pl-6 dark:md:border-slate-600">
-                                                <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">{{ __('Endereço humanizado (cadastro i-Educar)') }}</p>
-                                                <p class="mt-2 text-sm text-slate-900 dark:text-slate-100 leading-relaxed break-words" x-text="modal?.base?.endereco || '—'"></p>
-                                                <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400 leading-snug border-t border-slate-200/80 dark:border-slate-600/80 pt-2" x-show="modal?.meta" x-text="modal?.meta"></p>
+                                                <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">{{ __('Endereço') }}</p>
+                                                <p class="mt-2 text-[10px] font-semibold uppercase text-slate-500 dark:text-slate-400">{{ __('Cadastro i-Educar') }}</p>
+                                                <p class="mt-1 text-sm text-slate-900 dark:text-slate-100 leading-relaxed break-words" x-text="(modal?.base?.endereco_cadastro || modal?.base?.endereco) ? (modal.base.endereco_cadastro || modal.base.endereco) : '—'"></p>
+                                                <template x-if="modal?.base?.endereco_inep && String(modal.base.endereco_inep).trim() !== ''">
+                                                    <div class="mt-3 border-t border-slate-200/80 pt-3 dark:border-slate-600/80">
+                                                        <p class="text-[10px] font-semibold uppercase text-slate-500 dark:text-slate-400">{{ __('Catálogo INEP (ArcGIS)') }}</p>
+                                                        <p class="mt-1 text-sm text-slate-800 dark:text-slate-200 leading-relaxed break-words" x-text="modal.base.endereco_inep"></p>
+                                                    </div>
+                                                </template>
                                             </div>
-                                        </div>
-                                        <div
-                                            class="mt-3"
-                                            x-show="!(modal?.geo_divergence && (modal.geo_divergence.official_lat != null || modal.geo_divergence.ieducar_lat != null))"
-                                        >
-                                            <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">{{ __('Endereço (cadastro i-Educar)') }}</p>
-                                            <p class="mt-2 text-sm text-slate-900 dark:text-slate-100 leading-relaxed break-words" x-text="modal?.base?.endereco || '—'"></p>
-                                            <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400 leading-snug" x-show="modal?.meta" x-text="modal?.meta"></p>
                                         </div>
                                     </div>
 
@@ -286,35 +277,33 @@
                                         </p>
                                     </div>
 
-                                    <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                                        <a
-                                            x-show="modal?.qedu?.page_url"
-                                            class="inline-flex flex-1 min-w-[12rem] items-center justify-center rounded-lg bg-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500 sm:py-2.5"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            :href="modal.qedu.page_url"
-                                        >
-                                            {{ __('Abrir QEdu — indicadores pedagógicos (IDEB, SAEB, ficha)') }}
-                                        </a>
-                                        <div class="flex flex-wrap gap-2">
-                                            <template x-for="(ln, li) in (modal?.inep_links || [])" :key="li + '-' + (ln?.url || '')">
-                                                <a
-                                                    x-show="ln && ln.id !== 'qedu'"
-                                                    class="inline-flex items-center justify-center rounded-md border border-indigo-200 bg-white px-3 py-2 text-xs font-medium text-indigo-800 shadow-sm hover:bg-indigo-50 dark:border-indigo-800 dark:bg-gray-900 dark:text-indigo-200 dark:hover:bg-indigo-950/50"
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    :href="ln.url"
-                                                    x-text="ln.label || 'Link'"
-                                                ></a>
-                                            </template>
-                                        </div>
+                                    <div class="flex flex-wrap gap-2" x-show="Array.isArray(modal?.inep_links) && (modal.inep_links.filter(ln => ln && ln.id !== 'qedu').length > 0)">
+                                        <template x-for="(ln, li) in (modal?.inep_links || [])" :key="li + '-' + (ln?.url || '')">
+                                            <a
+                                                x-show="ln && ln.id !== 'qedu'"
+                                                class="inline-flex items-center justify-center rounded-md border border-indigo-200 bg-white px-3 py-2 text-xs font-medium text-indigo-800 shadow-sm hover:bg-indigo-50 dark:border-indigo-800 dark:bg-gray-900 dark:text-indigo-200 dark:hover:bg-indigo-950/50"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                :href="ln.url"
+                                                x-text="ln.label || 'Link'"
+                                            ></a>
+                                        </template>
                                     </div>
                                 </div>
 
-                                <div class="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/40 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                                <div class="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/40 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <a
+                                        x-show="modal?.qedu?.page_url"
+                                        class="inline-flex w-full sm:w-auto items-center justify-center rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        :href="modal.qedu.page_url"
+                                    >
+                                        {{ __('QEdu — ficha e indicadores (abre em nova aba)') }}
+                                    </a>
                                     <button
                                         type="button"
-                                        class="w-full sm:w-auto rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        class="w-full sm:w-auto rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:ml-auto"
                                         @click="closeSchoolModal()"
                                     >
                                         {{ __('Fechar') }}

@@ -294,6 +294,10 @@ function buildSchoolModalPayload(mk, qeduBaseFallback) {
             capacidade_declarada: s?.capacidade_declarada ?? null,
             vagas_disponiveis: s?.vagas_disponiveis ?? null,
             endereco: String(s?.endereco || ""),
+            endereco_cadastro: String(
+                s?.endereco_cadastro ?? s?.endereco ?? "",
+            ),
+            endereco_inep: String(s?.endereco_inep || ""),
         },
         oferta: Array.isArray(s?.oferta_curso_serie) ? s.oferta_curso_serie : [],
         qedu: {
