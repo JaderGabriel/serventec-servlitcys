@@ -1254,6 +1254,12 @@ final class MatriculaChartQueries
         return self::vagasAbertasAgrupadas($db, $city, $filters, 'curso');
     }
 
+    /** Título do gráfico principal de oferta por unidade (Rede & Oferta). */
+    private static function chartTitleDistribuicaoVagasNaCidade(): string
+    {
+        return __('Distribuição de vagas na cidade');
+    }
+
     /**
      * Soma de vagas em aberto por escola.
      *
@@ -1446,11 +1452,23 @@ final class MatriculaChartQueries
             $cIdCol = (string) config('ieducar.columns.curso.id');
             $cNameCol = (string) config('ieducar.columns.curso.name');
 
+            $schoolNamesMap = $db->table($escolaT)
+                ->whereIn($eIdCol, $schoolIds)
+                ->pluck($eNameCol, $eIdCol)
+                ->all();
             $labels = [];
             foreach ($schoolIds as $sid) {
-                $name = $db->table($escolaT)->where($eIdCol, $sid)->value($eNameCol);
+                $name = $schoolNamesMap[$sid] ?? $schoolNamesMap[(string) $sid] ?? null;
                 $labels[] = $name !== null && (string) $name !== '' ? (string) $name : ('#'.$sid);
             }
+
+            $courseIdsForNames = array_values(array_filter(
+                $topCourseIds,
+                static fn ($cid) => $cid !== $semCursoKey
+            ));
+            $courseNamesMap = $courseIdsForNames === []
+                ? []
+                : $db->table($cursoT)->whereIn($cIdCol, $courseIdsForNames)->pluck($cNameCol, $cIdCol)->all();
 
             $series = [];
             foreach ($topCourseIds as $cid) {
@@ -1458,11 +1476,14 @@ final class MatriculaChartQueries
                 foreach ($schoolIds as $sid) {
                     $data[] = (float) ($matrix[$sid][$cid] ?? 0);
                 }
-                $cname = $cid === $semCursoKey
-                    ? __('Sem curso')
-                    : $db->table($cursoT)->where($cIdCol, $cid)->value($cNameCol);
+                if ($cid === $semCursoKey) {
+                    $cname = __('Sem curso');
+                } else {
+                    $cn = $courseNamesMap[$cid] ?? $courseNamesMap[(string) $cid] ?? null;
+                    $cname = $cn !== null && (string) $cn !== '' ? (string) $cn : ('#'.$cid);
+                }
                 $series[] = [
-                    'label' => $cname !== null && (string) $cname !== '' ? (string) $cname : ('#'.$cid),
+                    'label' => $cname,
                     'data' => $data,
                 ];
             }
@@ -1486,15 +1507,16 @@ final class MatriculaChartQueries
             $seriesCount = count($series);
             $useStacked = $seriesCount > 10;
 
+            $title = self::chartTitleDistribuicaoVagasNaCidade();
             $payload = $useStacked
                 ? ChartPayload::barHorizontalStacked(
-                    __('Vagas ociosas por escola'),
+                    $title,
                     __('Vagas'),
                     $labels,
                     $series
                 )
                 : ChartPayload::barHorizontalGrouped(
-                    __('Vagas ociosas por escola'),
+                    $title,
                     __('Vagas'),
                     $labels,
                     $series
@@ -1502,11 +1524,11 @@ final class MatriculaChartQueries
 
             $payload['subtitle'] = $useStacked
                 ? __(
-                    'Por turma: capacidade declarada menos matrículas ativas, somadas por curso em cada escola. Com muitas séries (>10 cursos/«Outros»), as barras ficam empilhadas para caber no painel. Respeita ano letivo e filtros de curso/turno; até :max escolas com vagas ociosas > 0 no total.',
+                    'Distribuição por curso em cada unidade: por turma, vagas livres = capacidade declarada menos matrículas ativas. Com muitas séries (>10 cursos/«Outros»), barras empilhadas. Ano letivo e filtros de curso/turno; até :max escolas com vagas > 0 no total.',
                     ['max' => $maxSchools]
                 )
                 : __(
-                    'Por turma: capacidade declarada menos matrículas ativas, somadas por curso em cada escola (multi-barras agrupadas por curso). Respeita ano letivo e filtros de curso/turno; até :max escolas com vagas ociosas > 0 no total.',
+                    'Distribuição por curso (barras agrupadas): mesma regra por turma; ano letivo e filtros de curso/turno; até :max escolas com vagas > 0 no total.',
                     ['max' => $maxSchools]
                 );
             $payload['options'] = array_merge($payload['options'] ?? [], ['panelHeight' => 'xxl']);
@@ -1626,16 +1648,22 @@ final class MatriculaChartQueries
             $eId = (string) config('ieducar.columns.escola.id');
             $eName = (string) config('ieducar.columns.escola.name');
 
+            $idsForNames = array_column($items, 'id');
+            $schoolNamesMap = $idsForNames === []
+                ? []
+                : $db->table($escolaT)->whereIn($eId, $idsForNames)->pluck($eName, $eId)->all();
+
             $labels = [];
             $values = [];
             foreach ($items as $it) {
-                $name = $db->table($escolaT)->where($eId, $it['id'])->value($eName);
-                $labels[] = $name !== null && (string) $name !== '' ? (string) $name : ('#'.$it['id']);
+                $id = $it['id'];
+                $name = $schoolNamesMap[$id] ?? $schoolNamesMap[(string) $id] ?? null;
+                $labels[] = $name !== null && (string) $name !== '' ? (string) $name : ('#'.$id);
                 $values[] = (float) $it['v'];
             }
 
             $payload = ChartPayload::barHorizontal(
-                __('Vagas ociosas por escola'),
+                self::chartTitleDistribuicaoVagasNaCidade(),
                 __('Vagas'),
                 $labels,
                 $values
@@ -1769,20 +1797,25 @@ final class MatriculaChartQueries
             $cId = (string) config('ieducar.columns.curso.id');
             $cName = (string) config('ieducar.columns.curso.name');
 
+            $idsForNames = array_column($items, 'id');
+            $namesMap = [];
+            if ($por === 'escola' && $idsForNames !== []) {
+                $namesMap = $db->table($escolaT)->whereIn($eId, $idsForNames)->pluck($eName, $eId)->all();
+            } elseif ($por !== 'escola' && $idsForNames !== []) {
+                $namesMap = $db->table($cursoT)->whereIn($cId, $idsForNames)->pluck($cName, $cId)->all();
+            }
+
             $labels = [];
             $values = [];
             foreach ($items as $it) {
-                if ($por === 'escola') {
-                    $name = $db->table($escolaT)->where($eId, $it['id'])->value($eName);
-                } else {
-                    $name = $db->table($cursoT)->where($cId, $it['id'])->value($cName);
-                }
-                $labels[] = $name !== null && (string) $name !== '' ? (string) $name : ('#'.$it['id']);
+                $id = $it['id'];
+                $name = $namesMap[$id] ?? $namesMap[(string) $id] ?? null;
+                $labels[] = $name !== null && (string) $name !== '' ? (string) $name : ('#'.$id);
                 $values[] = (float) $it['v'];
             }
 
             $title = $por === 'escola'
-                ? __('Vagas ociosas por escola')
+                ? self::chartTitleDistribuicaoVagasNaCidade()
                 : __('Vagas em aberto por segmento (curso)');
 
             $payload = $por === 'escola'

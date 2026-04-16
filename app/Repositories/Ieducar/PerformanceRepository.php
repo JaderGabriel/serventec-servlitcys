@@ -13,6 +13,7 @@ use App\Support\Ieducar\MatriculaChartQueries;
 use App\Support\Ieducar\MatriculaSituacaoResolver;
 use App\Support\Ieducar\MatriculaTurmaJoin;
 use App\Support\Ieducar\PerformanceInepPanel;
+use App\Support\Ieducar\PerformanceSaebSeries;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 
@@ -50,7 +51,8 @@ class PerformanceRepository
      *   },
      *   distorcao_pct: ?float,
      *   distorcao_note: ?string,
-     *   inep_panel: ?array<string, mixed>
+     *   inep_panel: ?array<string, mixed>,
+     *   saeb_series: array{charts: list<array<string, mixed>>, notes: list<string>, error: ?string, source_hint: ?string, explicacao_modal: ?array<string, mixed>}
      * }
      */
     public function snapshot(?City $city, IeducarFilterState $filters): array
@@ -71,6 +73,7 @@ class PerformanceRepository
             'distorcao_pct' => null,
             'distorcao_note' => null,
             'inep_panel' => null,
+            'saeb_series' => ['charts' => [], 'notes' => [], 'error' => null, 'source_hint' => null, 'explicacao_modal' => null],
         ];
 
         if ($city === null) {
@@ -80,6 +83,7 @@ class PerformanceRepository
         try {
             return $this->cityData->run($city, function (Connection $db) use ($city, $filters) {
                 $inepPanel = PerformanceInepPanel::build($db, $city, $filters);
+                $saebSeries = PerformanceSaebSeries::build($db, $city, $filters);
 
                 $mat = IeducarSchema::resolveTable('matricula', $city);
                 $spec = MatriculaSituacaoResolver::resolveChaveAgrupamento($db, $city);
@@ -105,6 +109,7 @@ class PerformanceRepository
                         'distorcao_pct' => null,
                         'distorcao_note' => null,
                         'inep_panel' => $inepPanel,
+                        'saeb_series' => $saebSeries,
                     ];
                 }
 
@@ -137,6 +142,7 @@ class PerformanceRepository
                         'distorcao_pct' => null,
                         'distorcao_note' => null,
                         'inep_panel' => $inepPanel,
+                        'saeb_series' => $saebSeries,
                     ];
                 }
 
@@ -162,6 +168,7 @@ class PerformanceRepository
                         'distorcao_pct' => null,
                         'distorcao_note' => null,
                         'inep_panel' => $inepPanel,
+                        'saeb_series' => $saebSeries,
                     ];
                 }
 
@@ -256,6 +263,7 @@ class PerformanceRepository
                     'distorcao_pct' => $distorcaoPct,
                     'distorcao_note' => $distorcaoNote,
                     'inep_panel' => $inepPanel,
+                    'saeb_series' => $saebSeries,
                 ];
             });
         } catch (\Throwable $e) {
@@ -275,6 +283,7 @@ class PerformanceRepository
                 'distorcao_pct' => null,
                 'distorcao_note' => null,
                 'inep_panel' => null,
+                'saeb_series' => ['charts' => [], 'notes' => [], 'error' => null, 'source_hint' => null, 'explicacao_modal' => null],
             ];
         }
     }
