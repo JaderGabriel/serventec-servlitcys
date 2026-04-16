@@ -49,10 +49,13 @@
                         @if (Auth::user()->is_admin)
                             <div class="border-t border-gray-200 dark:border-gray-600"></div>
                             <div class="px-4 py-2">
-                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Geografia') }}</p>
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Sincronizações') }}</p>
                             </div>
-                            <x-dropdown-link :href="route('admin.geo-sync.index')" :title="__('Sincronizar coordenadas do i-Educar, oficiais INEP, microdados INEP e divergência; ver resultado do comando na mesma página.')">
-                                {{ __('Sincronização Geográfica') }}
+                            <x-dropdown-link :href="route('admin.geo-sync.index')" :title="__('Coordenadas i-Educar, INEP ArcGIS, microdados e pipeline; saída dos comandos na mesma página.')">
+                                {{ __('Geográficas') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.pedagogical-sync.index')" :title="__('Importar séries SAEB (JSON) para os gráficos da aba Desempenho; fonte INEP com fallbacks.')">
+                                {{ __('Pedagógicas') }}
                             </x-dropdown-link>
                             <div class="border-t border-gray-200 dark:border-gray-600"></div>
                             <div class="px-4 py-2">
@@ -134,10 +137,13 @@
 
                 @if (Auth::user()->is_admin)
                     <div class="px-4 py-2">
-                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Geografia') }}</p>
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Sincronizações') }}</p>
                     </div>
-                    <x-responsive-nav-link :href="route('admin.geo-sync.index')" :active="request()->routeIs('admin.geo-sync.*')" :title="__('Sincronização de dados geográficos (i-Educar, INEP, pipeline).')">
-                        {{ __('Sincronização geográfica') }}
+                    <x-responsive-nav-link :href="route('admin.geo-sync.index')" :active="request()->routeIs('admin.geo-sync.*')" :title="__('Sincronização geográfica (i-Educar, INEP, pipeline).')">
+                        {{ __('Geográficas') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.pedagogical-sync.index')" :active="request()->routeIs('admin.pedagogical-sync.*')" :title="__('Sincronização pedagógica (SAEB / JSON).')">
+                        {{ __('Pedagógicas') }}
                     </x-responsive-nav-link>
                     <div class="border-t border-gray-200 dark:border-gray-600 my-2"></div>
                     <div class="px-4 py-2">

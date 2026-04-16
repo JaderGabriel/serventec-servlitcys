@@ -2,7 +2,7 @@
 
 <div class="space-y-6 network-offer-tab">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Vagas ociosas por turno, vagas por segmento e por escola, matrículas por série e escola — útil para planear expansão e uso da rede.') }}
+        {{ __('Oferta por turno e segmento, distribuição de vagas por unidade e matrículas por série e escola — útil para planear expansão e uso da rede.') }}
     </p>
 
     @if (! empty($networkData['kpis']) && is_array($networkData['kpis']))
@@ -20,7 +20,7 @@
             </div>
             <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[6.25rem] flex flex-col justify-center">
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Vagas ociosas') }}</p>
-                <p class="mt-1 text-xl font-semibold text-amber-700 dark:text-amber-300">{{ number_format((int) ($vk['vagas_ociosas'] ?? 0)) }}</p>
+                <p class="mt-1 text-xl font-semibold text-violet-700 dark:text-violet-300">{{ number_format((int) ($vk['vagas_ociosas'] ?? 0)) }}</p>
             </div>
             <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[6.25rem] flex flex-col justify-center">
                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Taxa de ociosidade') }}</p>
@@ -37,7 +37,7 @@
                 <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($vk['turmas_com_capacidade'] ?? 0)) }}</p>
             </div>
         </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Vagas ociosas = soma de max(alunos) − matrículas por turma (quando a coluna de capacidade existe na turma).') }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Vagas ociosas = soma, por turma, de max(alunos) − matrículas ativas (quando a coluna de capacidade existe na turma).') }}</p>
     @endif
 
     @if (! empty($networkData['error']))
@@ -54,25 +54,41 @@
         </div>
     @endif
 
-    <div class="rounded-xl border border-amber-200/90 dark:border-amber-800/80 bg-gradient-to-b from-amber-50/90 to-white dark:from-amber-950/35 dark:to-gray-900/80 shadow-sm overflow-hidden">
-        <div class="border-b border-amber-200/80 dark:border-amber-800/60 px-4 py-3 bg-amber-100/50 dark:bg-amber-950/40">
-            <h3 class="text-base font-semibold text-amber-950 dark:text-amber-100">{{ __('Vagas ociosas por escola') }}</h3>
-            <p class="mt-1 text-xs text-amber-900/85 dark:text-amber-200/90 leading-relaxed">
-                {{ __('Por unidade: multi-barras por curso (agrupadas com poucas séries; empilhadas quando há muitos cursos). Vagas ociosas = soma nas turmas ativas (capacidade declarada − matrículas ativas). Respeita ano letivo e filtros de curso/turno; só entram escolas com vagas > 0 no total.') }}
-            </p>
+    {{-- Cartão principal: distribuição de vagas (mesma lógica de dados que o gráfico PHP) --}}
+    <div class="rounded-xl border border-violet-200/90 dark:border-violet-800/55 bg-gradient-to-br from-violet-50/95 via-white to-white dark:from-violet-950/35 dark:via-gray-900/90 dark:to-gray-900/95 shadow-sm overflow-hidden">
+        <div class="border-b border-violet-200/75 dark:border-violet-800/45 bg-violet-100/45 dark:bg-violet-950/45 px-4 py-4 sm:px-5">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
+                <div class="min-w-0 flex-1">
+                    <h3 class="text-sm font-bold uppercase tracking-[0.14em] text-violet-950 dark:text-violet-100">
+                        {{ __('Distribuição de vagas na cidade') }}
+                    </h3>
+                    <p class="mt-2 text-xs text-violet-900/90 dark:text-violet-200/85 leading-relaxed">
+                        {{ __('Compara, por unidade escolar, a capacidade declarada nas turmas com as matrículas ativas — no ano letivo e nos filtros de curso e turno. O território completo da rede é mostrado mesmo com filtro de escola noutros blocos.') }}
+                    </p>
+                </div>
+                <div class="w-full shrink-0 rounded-lg border border-violet-200/85 dark:border-violet-700/45 bg-white/90 dark:bg-gray-900/55 px-3 py-3 sm:max-w-md lg:max-w-sm">
+                    <p class="text-[10px] font-semibold uppercase tracking-wide text-violet-600 dark:text-violet-300">{{ __('Definição de dados') }}</p>
+                    <ul class="mt-2 list-disc pl-4 text-[11px] leading-snug text-violet-900 dark:text-violet-100/95 space-y-1.5">
+                        <li>{{ __('Por turma: vagas livres = capacidade máxima da turma menos matrículas ativas (limitadas à capacidade).') }}</li>
+                        <li>{{ __('Somatório por escola; séries por curso quando a base o permite (barras agrupadas ou empilhadas).') }}</li>
+                        <li>{{ __('Exige coluna de capacidade na turma (ex.: max. alunos) e matrículas ligadas às turmas.') }}</li>
+                    </ul>
+                </div>
+            </div>
         </div>
-        <div class="p-3 sm:p-4 min-w-0">
+        <div class="p-3 sm:p-4 min-w-0 bg-white/60 dark:bg-gray-900/20">
             @if (! empty($networkData['vagas_por_unidade_chart']) && is_array($networkData['vagas_por_unidade_chart']))
                 <x-dashboard.chart-panel
                     :chart="$networkData['vagas_por_unidade_chart']"
-                    exportFilename="rede-oferta-vagas-unidade"
+                    exportFilename="rede-oferta-distribuicao-vagas-cidade"
                     :exportMeta="$chartExportContext"
                     :compact="false"
-                    chartPanelId="chart-vagas-por-unidade-escola"
+                    chartPanelId="chart-distribuicao-vagas-cidade"
+                    :suppressTitle="true"
                 />
             @else
-                <div class="rounded-lg border border-dashed border-amber-300/80 dark:border-amber-700/60 bg-amber-50/50 dark:bg-amber-950/20 px-4 py-8 text-center text-sm text-amber-900 dark:text-amber-200/90 leading-relaxed">
-                    {{ __('Não foi possível gerar o gráfico por escola neste filtro. É necessário coluna de capacidade na turma (ex.: max. alunos), matrículas ligadas às turmas e, no agregado, pelo menos uma escola com vagas ociosas > 0. Confirme também ano letivo e filtros de escola/curso/turno.') }}
+                <div class="rounded-lg border border-dashed border-violet-300/90 dark:border-violet-700/55 bg-violet-50/50 dark:bg-violet-950/25 px-4 py-8 text-center text-sm text-violet-950 dark:text-violet-100/90 leading-relaxed">
+                    {{ __('Não foi possível gerar a distribuição por escola neste filtro. Confirme coluna de capacidade na turma, matrículas ligadas às turmas e, no agregado, pelo menos uma escola com vagas livres > 0. Verifique ano letivo e filtros de curso/turno.') }}
                 </div>
             @endif
         </div>

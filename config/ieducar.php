@@ -346,6 +346,35 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Desempenho — SAEB (séries finais e preliminares)
+    |--------------------------------------------------------------------------
+    |
+    | Os gráficos leem apenas o JSON em storage/app/public (importação em Admin → Sincronizações → Pedagógicas).
+    | IEDUCAR_SAEB_IMPORT_URLS: URLs separadas por vírgula (a sua fonte canónica de JSON com «pontos»).
+    | Se estiver vazio: tenta-se só APP_URL/saeb/historico.example.json; se falhar, copia-se database/data/saeb_historico.example.json.
+    | Pontos podem ter escola_id (cod_escola i-Educar) para séries por escola; sem escola = rede municipal.
+    |
+    */
+
+    'saeb' => [
+        'enabled' => filter_var(env('IEDUCAR_SAEB_SERIES_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'json_path' => env('IEDUCAR_SAEB_JSON_PATH', 'saeb/historico.json'),
+        /** Lista separada por vírgulas: tenta em ordem até obter JSON com chave «pontos». Vazio = só APP_URL/saeb/historico.example.json. */
+        'import_urls' => trim((string) env('IEDUCAR_SAEB_IMPORT_URLS', '')),
+        /** Timeout global (teto); por tentativa usa-se o menor entre este e import_attempt_timeout_seconds. */
+        'import_timeout_seconds' => (int) env('IEDUCAR_SAEB_IMPORT_TIMEOUT', 45),
+        /** Timeout por pedido HTTP ao percorrer várias URLs (evita minutos de espera em páginas HTML). */
+        'import_attempt_timeout_seconds' => (int) env('IEDUCAR_SAEB_IMPORT_ATTEMPT_TIMEOUT', 12),
+        /**
+         * URLs extra quando import_urls está vazio (além de APP_URL/saeb/historico.example.json). Por defeito vazio.
+         *
+         * @var list<string>
+         */
+        'import_url_defaults' => [],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Inclusão — palavras-chave (heurística) para AEE e segmentos
     |--------------------------------------------------------------------------
     |

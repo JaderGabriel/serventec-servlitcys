@@ -62,9 +62,9 @@ class NetworkRepository
                     try {
                         $fallback = MatriculaChartQueries::matriculasPorEscolaTop($db, $city, $filters);
                         if ($fallback !== null && is_array($fallback)) {
-                            $fallback['title'] = __('Matrículas por escola (rede — substitui vagas ociosas)');
+                            $fallback['title'] = __('Matrículas por escola (rede — sem distribuição de vagas)');
                             $fallback['subtitle'] = __(
-                                'Não foi possível calcular vagas ociosas por turma (coluna de capacidade na turma, ligação matrícula↔turma↔escola ou todas as turmas sem vaga livre). Este gráfico mostra o volume de matrículas ativas por unidade para leitura da rede.'
+                                'Não foi possível calcular a distribuição de vagas por turma (capacidade na turma, ligação matrícula↔turma↔escola ou turmas sem vaga livre). Este gráfico mostra o volume de matrículas ativas por unidade como leitura alternativa da rede.'
                             );
                             $fallback['options'] = array_merge($fallback['options'] ?? [], ['panelHeight' => 'xxl']);
                             $vagasPorUnidadeChart = $fallback;

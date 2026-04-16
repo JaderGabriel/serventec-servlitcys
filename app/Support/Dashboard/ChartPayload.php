@@ -306,6 +306,130 @@ final class ChartPayload
     }
 
     /**
+     * SAEB / séries INEP: finais (linha sólida, círculos) vs preliminares (tracejado, triângulos). Use null onde não há valor.
+     *
+     * @param  list<string|int>  $yearLabels
+     * @param  list<float|int|null>  $finalData
+     * @param  list<float|int|null>  $prelimData
+     * @return array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>, subtitle?: string, footnote?: string}
+     */
+    public static function lineSaebHistory(
+        string $title,
+        string $yAxisLabel,
+        array $yearLabels,
+        array $finalData,
+        array $prelimData,
+        ?string $subtitle = null,
+        ?string $footnote = null
+    ): array {
+        $n = count($yearLabels);
+        $norm = static function (array $arr, int $len): array {
+            $arr = array_values($arr);
+            if (count($arr) < $len) {
+                $arr = array_pad($arr, $len, null);
+            } elseif (count($arr) > $len) {
+                $arr = array_slice($arr, 0, $len);
+            }
+
+            return array_map(static function ($v) {
+                if ($v === null || $v === '') {
+                    return null;
+                }
+
+                return is_numeric($v) ? (float) $v : null;
+            }, $arr);
+        };
+
+        $finalC = '#15803d';
+        $prelC = '#d97706';
+
+        $payload = [
+            'type' => 'line',
+            'title' => $title,
+            'labels' => array_map(static fn ($l) => (string) $l, $yearLabels),
+            'datasets' => [
+                [
+                    'label' => __('Resultado final (oficial INEP)'),
+                    'data' => $norm($finalData, $n),
+                    'borderColor' => $finalC,
+                    'backgroundColor' => $finalC.'22',
+                    'fill' => false,
+                    'tension' => 0.2,
+                    'borderWidth' => 2.5,
+                    'borderDash' => [],
+                    'pointRadius' => 5,
+                    'pointHoverRadius' => 7,
+                    'pointStyle' => 'circle',
+                    'pointBackgroundColor' => $finalC,
+                    'pointBorderColor' => '#ffffff',
+                    'pointBorderWidth' => 2,
+                ],
+                [
+                    'label' => __('Resultado preliminar'),
+                    'data' => $norm($prelimData, $n),
+                    'borderColor' => $prelC,
+                    'backgroundColor' => $prelC.'18',
+                    'fill' => false,
+                    'tension' => 0.2,
+                    'borderWidth' => 2.5,
+                    'borderDash' => [7, 5],
+                    'pointRadius' => 5,
+                    'pointHoverRadius' => 7,
+                    'pointStyle' => 'triangle',
+                    'pointBackgroundColor' => $prelC,
+                    'pointBorderColor' => '#ffffff',
+                    'pointBorderWidth' => 2,
+                ],
+            ],
+            'options' => [
+                'panelHeight' => 'lg',
+                'elements' => [
+                    'line' => [
+                        'spanGaps' => false,
+                    ],
+                ],
+                'plugins' => [
+                    'legend' => [
+                        'labels' => [
+                            'usePointStyle' => true,
+                            'padding' => 16,
+                        ],
+                    ],
+                ],
+                'scales' => [
+                    'x' => [
+                        'title' => [
+                            'display' => true,
+                            'text' => __('Ano (aplicação / divulgação)'),
+                        ],
+                        'ticks' => [
+                            'maxRotation' => 0,
+                            'minRotation' => 0,
+                            'autoSkip' => true,
+                        ],
+                    ],
+                    'y' => [
+                        'beginAtZero' => true,
+                        'title' => [
+                            'display' => true,
+                            'text' => $yAxisLabel,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        if ($subtitle !== null && $subtitle !== '') {
+            $payload['subtitle'] = $subtitle;
+        }
+        if ($footnote !== null && $footnote !== '') {
+            $payload['footnote'] = $footnote;
+        }
+
+        return $payload;
+    }
+
+    /**
      * Junta categorias excedentes num único rótulo (gráficos legíveis; totais conservados).
      *
      * @param  list<string|int|float>  $labels
