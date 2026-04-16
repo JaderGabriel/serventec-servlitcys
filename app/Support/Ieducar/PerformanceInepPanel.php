@@ -43,18 +43,13 @@ final class PerformanceInepPanel
         ];
 
         $sql = trim((string) config('ieducar.sql.performance_inep_indicadores', ''));
-        $sqlNote = null;
         $sqlError = null;
 
         if ($sql === '') {
-            $sqlNote = __(
-                'Para mostrar aqui valores de IDEB, SAEB ou metas PNE a partir da sua base, defina IEDUCAR_SQL_PERFORMANCE_INEP em .env (consulta com colunas eixo, indicador, valor, referencia; ver comentário em config/ieducar.php).'
-            );
-
             return [
                 'sections' => $sections,
                 'consolidated_chart' => null,
-                'sql_note' => $sqlNote,
+                'sql_note' => null,
                 'sql_error' => null,
             ];
         }

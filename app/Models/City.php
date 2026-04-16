@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 #[Fillable([
     'name',
     'uf',
+    'ibge_municipio',
     'country',
     'db_driver',
     'ieducar_schema',

@@ -8,6 +8,61 @@
 @endphp
 
 <div class="space-y-4">
+    @php $inepPanel = $performanceData['inep_panel'] ?? null; @endphp
+    @if ($inepPanel !== null)
+        @if (! empty($inepPanel['sql_error']))
+            <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
+                {{ $inepPanel['sql_error'] }}
+            </div>
+        @endif
+
+        <div class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-950/25 p-4 space-y-4">
+            <div>
+                <h3 class="text-sm font-semibold text-indigo-950 dark:text-indigo-100">{{ __('Indicadores externos: IDEB, SAEB e PNE') }}</h3>
+                <p class="text-xs text-indigo-900/90 dark:text-indigo-200/90 mt-1 leading-relaxed">
+                    {{ __('O IDEB e o SAEB são produzidos pelo INEP; as metas do PNE são acompanhadas com indicadores nacionais. Abaixo consolidamos referências e, se configurado, valores lidos da sua base (tabela ou view própria). Consulte também o portal do INEP para séries históricas oficiais.') }}
+                    <a href="https://www.gov.br/inep/pt-br" class="text-indigo-700 dark:text-indigo-300 underline" target="_blank" rel="noopener noreferrer">https://www.gov.br/inep/pt-br</a>
+                </p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                @foreach (['ideb', 'saeb', 'pne'] as $secKey)
+                    @php $sec = $inepPanel['sections'][$secKey] ?? null; @endphp
+                    @if ($sec !== null)
+                        <div class="rounded-lg border border-white/80 dark:border-indigo-900/50 bg-white/90 dark:bg-gray-900/40 p-4 shadow-sm flex flex-col gap-2 min-h-[12rem]">
+                            <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $sec['title'] }}</p>
+                            <p class="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed flex-1">{{ $sec['intro'] }}</p>
+                            @if (! empty($sec['items']))
+                                <ul class="text-xs space-y-2 text-gray-800 dark:text-gray-200 border-t border-gray-100 dark:border-gray-700 pt-2">
+                                    @foreach ($sec['items'] as $item)
+                                        <li class="leading-snug">
+                                            <span class="font-medium">{{ $item['label'] ?? '—' }}</span>
+                                            @if (($item['valor'] ?? null) !== null && is_numeric($item['valor']))
+                                                <span class="tabular-nums text-indigo-700 dark:text-indigo-300"> — {{ number_format((float) $item['valor'], 2, ',', '.') }}</span>
+                                                @if (! empty($item['unidade']))
+                                                    <span class="text-gray-500"> ({{ $item['unidade'] }})</span>
+                                                @endif
+                                            @else
+                                                <span class="text-gray-500"> — {{ __('valor não numérico na base') }}</span>
+                                            @endif
+                                            @if (! empty($item['referencia']))
+                                                <span class="text-gray-500"> · {{ __('ref.') }} {{ $item['referencia'] }}</span>
+                                            @endif
+                                            @if (! empty($item['detalhe']))
+                                                <p class="text-[10px] text-gray-500 mt-0.5">{{ $item['detalhe'] }}</p>
+                                            @endif
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                <p class="text-[11px] text-amber-800 dark:text-amber-200/90">{{ $sec['empty_hint'] }}</p>
+                            @endif
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
         {{ __('Cada taxa = (matrículas na categoria) ÷ (total de matrículas ativas no filtro) × 100. O total usa matricula.ativo e o campo de situação (códigos INEP via matricula_situacao ou equivalente); os filtros de ano/escola/curso/turno aplicam-se pela turma. Entre os indicadores destacam-se a taxa de reclassificação (cód. 10), abandono (11), remanejamento (16) e taxas agregadas de aprovação e reprovação. O gráfico de distorção idade/série (rede), quando presente, usa idade à 31/03 e limite etário + 2 anos, ou SQL IEDUCAR_SQL_DISTORCAO_REDE_CHART.') }}
     </p>
@@ -20,7 +75,7 @@
         </div>
     @endif
 
-    @if ($saebSeries !== null && (($saebSeries['charts'] ?? []) !== [] || ($saebSeries['notes'] ?? []) !== [] || ($saebSeries['source_hint'] ?? null) || ! empty($saebExplicacao)))
+    @if ($saebSeries !== null && (($saebSeries['charts'] ?? []) !== [] || ($saebSeries['notes'] ?? []) !== [] || ($saebSeries['source_hint'] ?? null) || ! empty($saebExplicacao) || ! empty($saebSeries['summary']) || ! empty($saebSeries['school_table']) || ! empty($saebSeries['extra_charts'])))
         <div class="rounded-xl border border-emerald-200/90 dark:border-emerald-800/60 bg-gradient-to-br from-emerald-50/95 via-white to-white dark:from-emerald-950/35 dark:via-gray-900/90 dark:to-gray-900/95 shadow-sm overflow-hidden" x-data="{ saebHelpOpen: false }">
             <div class="border-b border-emerald-200/80 dark:border-emerald-800/50 bg-emerald-100/50 dark:bg-emerald-950/45 px-4 py-4 sm:px-5">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
@@ -63,23 +118,122 @@
                 @if (! empty($saebSeries['source_hint']))
                     <p class="mt-2 text-[11px] text-emerald-800/80 dark:text-emerald-300/80">{{ $saebSeries['source_hint'] }}</p>
                 @endif
+                @php $saebSummary = is_array($saebSeries['summary'] ?? null) ? $saebSeries['summary'] : null; @endphp
+                @if ($saebSummary !== null && $saebSummary !== [])
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div class="rounded-lg border border-emerald-200/80 bg-white/90 dark:bg-emerald-950/30 dark:border-emerald-800 px-3 py-2.5">
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">{{ __('Recorte municipal (JSON)') }}</p>
+                            <p class="mt-1 text-xs text-emerald-950 dark:text-emerald-100">
+                                @if (! empty($saebSummary['municipio_nome']))
+                                    {{ $saebSummary['municipio_nome'] }}
+                                    @if (! empty($saebSummary['municipio_ibge']))
+                                        <span class="text-emerald-700/90 dark:text-emerald-300/90">· IBGE {{ $saebSummary['municipio_ibge'] }}</span>
+                                    @endif
+                                @else
+                                    {{ __('city_id local :id', ['id' => (string) ($saebSummary['city_id_local'] ?? '—')]) }}
+                                @endif
+                            </p>
+                        </div>
+                        <div class="rounded-lg border border-emerald-200/80 bg-white/90 dark:bg-emerald-950/30 dark:border-emerald-800 px-3 py-2.5">
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">{{ __('Pontos no ficheiro') }}</p>
+                            <p class="mt-1 text-xs tabular-nums text-emerald-950 dark:text-emerald-100">
+                                {{ __('Rede: :m · Por escola: :e · Escolas distintas: :s', ['m' => (string) ($saebSummary['pontos_municipais'] ?? '0'), 'e' => (string) ($saebSummary['pontos_escola'] ?? '0'), 's' => (string) ($saebSummary['escolas_distintas'] ?? '0')]) }}
+                            </p>
+                        </div>
+                        <div class="rounded-lg border border-emerald-200/80 bg-white/90 dark:bg-emerald-950/30 dark:border-emerald-800 px-3 py-2.5">
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">{{ __('Último ano municipal (LP / MAT)') }}</p>
+                            <p class="mt-1 text-xs tabular-nums text-emerald-950 dark:text-emerald-100">
+                                @if (($saebSummary['rede_lp_ultimo'] ?? null) !== null && ($saebSummary['rede_mat_ultimo'] ?? null) !== null)
+                                    LP {{ number_format((float) $saebSummary['rede_lp_ultimo'], 1, ',', '.') }}% · MAT {{ number_format((float) $saebSummary['rede_mat_ultimo'], 1, ',', '.') }}%
+                                    @if (($saebSummary['rede_gap_lp_menos_mat'] ?? null) !== null)
+                                        <span class="block mt-0.5 text-[11px] text-emerald-800/85 dark:text-emerald-200/85">{{ __('Diferença LP−MAT: :g', ['g' => number_format((float) $saebSummary['rede_gap_lp_menos_mat'], 1, ',', '.')]) }}</span>
+                                    @endif
+                                @else
+                                    —
+                                @endif
+                            </p>
+                        </div>
+                        <div class="rounded-lg border border-emerald-200/80 bg-white/90 dark:bg-emerald-950/30 dark:border-emerald-800 px-3 py-2.5 sm:col-span-2 lg:col-span-1">
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">{{ __('Leitura para decisão') }}</p>
+                            <p class="mt-1 text-[11px] text-emerald-900/95 dark:text-emerald-100/90 leading-snug">{{ $saebSummary['decisao_nota'] ?? '—' }}</p>
+                        </div>
+                    </div>
+                @endif
             </div>
-            @if (! empty($saebSeries['charts']) && is_array($saebSeries['charts']))
-                <div class="p-3 sm:p-4 space-y-4 bg-white/50 dark:bg-gray-900/40">
-                    @foreach ($saebSeries['charts'] as $sidx => $saebChart)
-                        <x-dashboard.chart-panel
-                            :chart="$saebChart"
-                            :exportFilename="'desempenho-saeb-'.$sidx"
-                            :exportMeta="$chartExportContext"
-                            :compact="false"
-                            :chartPanelId="'chart-saeb-' . $sidx"
-                            :suppressTitle="false"
-                        />
-                    @endforeach
+            @if (! empty($saebSeries['school_table']) && is_array($saebSeries['school_table']) && ($saebSeries['school_table'] ?? []) !== [])
+                <div class="px-3 sm:px-4 py-3 border-b border-emerald-100 dark:border-emerald-900/50 bg-white/60 dark:bg-gray-900/30">
+                    <p class="text-xs font-semibold text-emerald-950 dark:text-emerald-100">{{ __('Escolas com dados no JSON (último valor final por disciplina)') }}</p>
+                    <div class="mt-2 overflow-x-auto rounded-lg border border-emerald-100 dark:border-emerald-900/40">
+                        <table class="min-w-full text-xs text-left">
+                            <thead class="bg-emerald-50/90 dark:bg-emerald-950/50 text-[10px] uppercase tracking-wide text-emerald-900 dark:text-emerald-200">
+                                <tr>
+                                    <th class="px-3 py-2">{{ __('Escola') }}</th>
+                                    <th class="px-3 py-2 tabular-nums">{{ __('cod_escola') }}</th>
+                                    <th class="px-3 py-2 tabular-nums">{{ __('LP %') }}</th>
+                                    <th class="px-3 py-2 tabular-nums">{{ __('MAT %') }}</th>
+                                    <th class="px-3 py-2 tabular-nums">{{ __('LP−MAT') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-emerald-100 dark:divide-emerald-900/50 text-emerald-950 dark:text-emerald-100">
+                                @foreach ($saebSeries['school_table'] as $row)
+                                    <tr>
+                                        <td class="px-3 py-2 max-w-[14rem]">{{ $row['nome'] ?? '—' }}</td>
+                                        <td class="px-3 py-2 tabular-nums">{{ $row['escola_id'] ?? '—' }}</td>
+                                        <td class="px-3 py-2 tabular-nums">
+                                            @if (($row['lp_pct'] ?? null) !== null)
+                                                {{ number_format((float) $row['lp_pct'], 1, ',', '.') }}@if (! empty($row['lp_ano'])) <span class="text-gray-500">({{ $row['lp_ano'] }})</span>@endif
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                        <td class="px-3 py-2 tabular-nums">
+                                            @if (($row['mat_pct'] ?? null) !== null)
+                                                {{ number_format((float) $row['mat_pct'], 1, ',', '.') }}@if (! empty($row['mat_ano'])) <span class="text-gray-500">({{ $row['mat_ano'] }})</span>@endif
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                        <td class="px-3 py-2 tabular-nums">{{ ($row['gap_lp_menos_mat'] ?? null) !== null ? number_format((float) $row['gap_lp_menos_mat'], 1, ',', '.') : '—' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            @elseif (empty($saebSeries['error']))
+            @endif
+            @if (
+                (! empty($saebSeries['charts']) && is_array($saebSeries['charts']))
+                || (! empty($saebSeries['extra_charts']) && is_array($saebSeries['extra_charts']))
+            )
+                <div class="p-3 sm:p-4 space-y-4 bg-white/50 dark:bg-gray-900/40">
+                    @if (! empty($saebSeries['charts']) && is_array($saebSeries['charts']))
+                        @foreach ($saebSeries['charts'] as $sidx => $saebChart)
+                            <x-dashboard.chart-panel
+                                :chart="$saebChart"
+                                :exportFilename="'desempenho-saeb-'.$sidx"
+                                :exportMeta="$chartExportContext"
+                                :compact="false"
+                                :chartPanelId="'chart-saeb-' . $sidx"
+                                :suppressTitle="false"
+                            />
+                        @endforeach
+                    @endif
+                    @if (! empty($saebSeries['extra_charts']) && is_array($saebSeries['extra_charts']))
+                        @foreach ($saebSeries['extra_charts'] as $eidx => $saebExtra)
+                            <x-dashboard.chart-panel
+                                :chart="$saebExtra"
+                                :exportFilename="'desempenho-saeb-extra-' . $eidx"
+                                :exportMeta="$chartExportContext"
+                                :compact="false"
+                                :chartPanelId="'chart-saeb-extra-' . $eidx"
+                                :suppressTitle="false"
+                            />
+                        @endforeach
+                    @endif
+                </div>
+            @elseif (empty($saebSeries['error']) && empty($saebSeries['summary']) && empty($saebSeries['school_table']))
                 <div class="px-4 py-6 text-sm text-emerald-900/90 dark:text-emerald-200/90">
-                    {{ __('Ainda não há dados SAEB importados. Em Admin → Sincronizações → Pedagógicas, importe o JSON (INEP com fallbacks) ou copie o modelo; os gráficos leem apenas storage/app/public/saeb/historico.json.') }}
+                    {{ __('Ainda não há dados SAEB importados. Em Admin → Sincronizações → Pedagógicas, execute a sincronização oficial (IBGE) ou defina URLs em IEDUCAR_SAEB_IMPORT_URLS; os gráficos leem apenas storage/app/public/saeb/historico.json.') }}
                 </div>
             @endif
 
@@ -180,65 +334,6 @@
         </div>
     @endif
 
-    @php $inepPanel = $performanceData['inep_panel'] ?? null; @endphp
-    @if ($inepPanel !== null)
-        @if (! empty($inepPanel['sql_error']))
-            <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
-                {{ $inepPanel['sql_error'] }}
-            </div>
-        @endif
-        @if (! empty($inepPanel['sql_note']))
-            <div class="rounded-md bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 px-4 py-3 text-xs text-sky-900 dark:text-sky-100 leading-relaxed">
-                {{ $inepPanel['sql_note'] }}
-            </div>
-        @endif
-
-        <div class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-950/25 p-4 space-y-4">
-            <div>
-                <h3 class="text-sm font-semibold text-indigo-950 dark:text-indigo-100">{{ __('Indicadores externos: IDEB, SAEB e PNE') }}</h3>
-                <p class="text-xs text-indigo-900/90 dark:text-indigo-200/90 mt-1 leading-relaxed">
-                    {{ __('O IDEB e o SAEB são produzidos pelo INEP; as metas do PNE são acompanhadas com indicadores nacionais. Abaixo consolidamos referências e, se configurado, valores lidos da sua base (tabela ou view própria). Consulte também o portal do INEP para séries históricas oficiais.') }}
-                    <a href="https://www.gov.br/inep/pt-br" class="text-indigo-700 dark:text-indigo-300 underline" target="_blank" rel="noopener noreferrer">https://www.gov.br/inep/pt-br</a>
-                </p>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                @foreach (['ideb', 'saeb', 'pne'] as $secKey)
-                    @php $sec = $inepPanel['sections'][$secKey] ?? null; @endphp
-                    @if ($sec !== null)
-                        <div class="rounded-lg border border-white/80 dark:border-indigo-900/50 bg-white/90 dark:bg-gray-900/40 p-4 shadow-sm flex flex-col gap-2 min-h-[12rem]">
-                            <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $sec['title'] }}</p>
-                            <p class="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed flex-1">{{ $sec['intro'] }}</p>
-                            @if (! empty($sec['items']))
-                                <ul class="text-xs space-y-2 text-gray-800 dark:text-gray-200 border-t border-gray-100 dark:border-gray-700 pt-2">
-                                    @foreach ($sec['items'] as $item)
-                                        <li class="leading-snug">
-                                            <span class="font-medium">{{ $item['label'] ?? '—' }}</span>
-                                            @if (($item['valor'] ?? null) !== null && is_numeric($item['valor']))
-                                                <span class="tabular-nums text-indigo-700 dark:text-indigo-300"> — {{ number_format((float) $item['valor'], 2, ',', '.') }}</span>
-                                                @if (! empty($item['unidade']))
-                                                    <span class="text-gray-500"> ({{ $item['unidade'] }})</span>
-                                                @endif
-                                            @else
-                                                <span class="text-gray-500"> — {{ __('valor não numérico na base') }}</span>
-                                            @endif
-                                            @if (! empty($item['referencia']))
-                                                <span class="text-gray-500"> · {{ __('ref.') }} {{ $item['referencia'] }}</span>
-                                            @endif
-                                            @if (! empty($item['detalhe']))
-                                                <p class="text-[10px] text-gray-500 mt-0.5">{{ $item['detalhe'] }}</p>
-                                            @endif
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @else
-                                <p class="text-[11px] text-amber-800 dark:text-amber-200/90">{{ $sec['empty_hint'] }}</p>
-                            @endif
-                        </div>
-                    @endif
-                @endforeach
-            </div>
-        </div>
-    @endif
     @if (! empty($performanceData['error']))
         <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
             {{ $performanceData['error'] }}
@@ -313,7 +408,7 @@
                 />
             @endforeach
         </div>
-    @elseif (empty($performanceData['error']) && empty($performanceData['message']) && $perfCharts === [] && empty($performanceData['kpis'] ?? []) && empty($performanceData['inep_panel'] ?? null) && empty(($performanceData['saeb_series']['charts'] ?? [])) && empty(($performanceData['saeb_series']['explicacao_modal'] ?? null)))
+    @elseif (empty($performanceData['error']) && empty($performanceData['message']) && $perfCharts === [] && empty($performanceData['kpis'] ?? []) && empty($performanceData['inep_panel'] ?? null) && empty(($performanceData['saeb_series']['charts'] ?? [])) && empty(($performanceData['saeb_series']['extra_charts'] ?? [])) && empty(($performanceData['saeb_series']['summary'] ?? null)) && empty(($performanceData['saeb_series']['school_table'] ?? [])) && empty(($performanceData['saeb_series']['explicacao_modal'] ?? null)))
         <div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-12 text-center text-sm text-gray-400 dark:text-gray-500">
             {{ __('Sem dados para desempenho com os filtros atuais.') }}
         </div>

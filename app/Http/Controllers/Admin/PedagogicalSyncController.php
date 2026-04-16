@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\Inep\SaebOfficialMunicipalImportService;
 use App\Services\Inep\SaebPedagogicalImportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,23 +36,24 @@ class PedagogicalSyncController extends Controller
             'pontosCount' => $pontosCount,
             'importUrlsConfigured' => trim((string) config('ieducar.saeb.import_urls', '')) !== '',
             'importUrlDefaultsCount' => is_array(config('ieducar.saeb.import_url_defaults')) ? count(config('ieducar.saeb.import_url_defaults')) : 0,
-            'appUrl' => rtrim((string) config('app.url', ''), '/'),
+            'officialTemplateConfigured' => trim((string) config('ieducar.saeb.official_url_template', '')) !== '',
         ]);
     }
 
-    public function run(Request $request, SaebPedagogicalImportService $import): RedirectResponse
-    {
+    public function run(
+        Request $request,
+        SaebPedagogicalImportService $import,
+        SaebOfficialMunicipalImportService $official,
+    ): RedirectResponse {
         $validated = $request->validate([
-            'action' => 'required|string|in:import,seed',
+            'action' => 'required|string|in:import_official,import_urls',
         ]);
 
-        @set_time_limit(120);
+        @set_time_limit(300);
 
-        if ($validated['action'] === 'seed') {
-            $result = $import->copyExampleOnly();
-        } else {
-            $result = $import->importFromConfiguredSources();
-        }
+        $result = $validated['action'] === 'import_official'
+            ? $official->importFromOfficialTemplate()
+            : $import->importFromConfiguredSources();
 
         return redirect()
             ->route('admin.pedagogical-sync.index')

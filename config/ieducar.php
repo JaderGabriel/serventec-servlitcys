@@ -349,28 +349,36 @@ return [
     | Desempenho — SAEB (séries finais e preliminares)
     |--------------------------------------------------------------------------
     |
-    | Os gráficos leem apenas o JSON em storage/app/public (importação em Admin → Sincronizações → Pedagógicas).
-    | IEDUCAR_SAEB_IMPORT_URLS: URLs separadas por vírgula (a sua fonte canónica de JSON com «pontos»).
-    | Se estiver vazio: tenta-se só APP_URL/saeb/historico.example.json; se falhar, copia-se database/data/saeb_historico.example.json.
-    | Pontos podem ter escola_id (cod_escola i-Educar) para séries por escola; sem escola = rede municipal.
+    | Os gráficos leem apenas o JSON em storage/app/public (Admin → Sincronizações → Pedagógicas).
+    | Importação oficial: IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com {ibge}, {uf}, {city_id} — uma URL por município
+    | cadastrado (código IBGE em cities.ibge_municipio). Cada ponto deve ter city_ids (automático na importação oficial).
+    | IEDUCAR_SAEB_IMPORT_URLS: URLs opcionais (JSON completo com «pontos»); não há fallback para ficheiros de exemplo.
     |
     */
 
     'saeb' => [
         'enabled' => filter_var(env('IEDUCAR_SAEB_SERIES_ENABLED', true), FILTER_VALIDATE_BOOL),
         'json_path' => env('IEDUCAR_SAEB_JSON_PATH', 'saeb/historico.json'),
-        /** Lista separada por vírgulas: tenta em ordem até obter JSON com chave «pontos». Vazio = só APP_URL/saeb/historico.example.json. */
+        /** Lista separada por vírgulas: tenta em ordem até obter JSON com chave «pontos». Vazio = não há importação por URL. */
         'import_urls' => trim((string) env('IEDUCAR_SAEB_IMPORT_URLS', '')),
         /** Timeout global (teto); por tentativa usa-se o menor entre este e import_attempt_timeout_seconds. */
         'import_timeout_seconds' => (int) env('IEDUCAR_SAEB_IMPORT_TIMEOUT', 45),
         /** Timeout por pedido HTTP ao percorrer várias URLs (evita minutos de espera em páginas HTML). */
         'import_attempt_timeout_seconds' => (int) env('IEDUCAR_SAEB_IMPORT_ATTEMPT_TIMEOUT', 12),
         /**
-         * URLs extra quando import_urls está vazio (além de APP_URL/saeb/historico.example.json). Por defeito vazio.
+         * URLs extra quando import_urls está vazio. Por defeito vazio.
          *
          * @var list<string>
          */
         'import_url_defaults' => [],
+        /** URL com placeholders {ibge} (7 dígitos), {uf}, {city_id} — uma requisição por cidade com ibge_municipio. */
+        'official_url_template' => trim((string) env('IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE', '')),
+        /** Timeout por pedido HTTP na importação oficial por município. */
+        'official_timeout_seconds' => (int) env('IEDUCAR_SAEB_OFFICIAL_TIMEOUT', 60),
+        /** Gravar storage/app/public/saeb/municipio/{ibge}.json após cada importação bem-sucedida (para GET /api/saeb/municipio/...). */
+        'municipio_json_files_enabled' => filter_var(env('IEDUCAR_SAEB_MUNICIPIO_JSON_FILES', true), FILTER_VALIDATE_BOOL),
+        /** Expor GET /api/saeb/municipio/{ibge}(.json) com dados agregados. */
+        'public_api_enabled' => filter_var(env('IEDUCAR_SAEB_PUBLIC_API', true), FILTER_VALIDATE_BOOL),
     ],
 
     /*

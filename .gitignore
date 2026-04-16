@@ -22,6 +22,10 @@
 /storage/pail
 /vendor
 
+# SAEB / exemplos JSON (evitar dados de teste em produção)
+/database/data/*.example.json
+/public/saeb/*.example.json
+
 # Bancos locais (nunca versionar dados reais)
 /database/*.sqlite
 /database/*.sqlite-journal

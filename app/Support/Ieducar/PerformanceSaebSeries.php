@@ -11,12 +11,16 @@ use Illuminate\Support\Facades\Storage;
 /**
  * Séries históricas do SAEB na aba Desempenho.
  * Os gráficos leem **apenas** o ficheiro JSON importado (Sincronizações → Pedagógicas), p.ex. storage/app/public/saeb/historico.json.
+ * Cada ponto deve ter «city_ids» (importação oficial por IBGE ou JSON manual); sem isso o ponto é ignorado.
  */
 final class PerformanceSaebSeries
 {
     /**
      * @return array{
      *   charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>, subtitle?: string, footnote?: string}>,
+     *   extra_charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>, subtitle?: string, footnote?: string}>,
+     *   summary: ?array<string, mixed>,
+     *   school_table: list<array<string, mixed>>,
      *   notes: list<string>,
      *   error: ?string,
      *   source_hint: ?string,
@@ -25,7 +29,16 @@ final class PerformanceSaebSeries
      */
     public static function build(Connection $db, City $city, IeducarFilterState $filters): array
     {
-        $empty = ['charts' => [], 'notes' => [], 'error' => null, 'source_hint' => null, 'explicacao_modal' => null];
+        $empty = [
+            'charts' => [],
+            'extra_charts' => [],
+            'summary' => null,
+            'school_table' => [],
+            'notes' => [],
+            'error' => null,
+            'source_hint' => null,
+            'explicacao_modal' => null,
+        ];
 
         if (! filter_var(config('ieducar.saeb.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             return $empty;
@@ -36,6 +49,9 @@ final class PerformanceSaebSeries
         } catch (\Throwable $e) {
             return [
                 'charts' => [],
+                'extra_charts' => [],
+                'summary' => null,
+                'school_table' => [],
                 'notes' => [],
                 'error' => __('Não foi possível carregar séries SAEB: :msg', ['msg' => $e->getMessage()]),
                 'source_hint' => null,
@@ -51,9 +67,12 @@ final class PerformanceSaebSeries
         if ($points === []) {
             return [
                 'charts' => [],
+                'extra_charts' => [],
+                'summary' => null,
+                'school_table' => [],
                 'notes' => [
                     __(
-                        'Sem dados SAEB no ficheiro local. Importe em Admin → Sincronizações → Pedagógicas (o gráfico usa apenas :path).',
+                        'Sem dados SAEB utilizáveis no ficheiro (:path). Importe em Admin → Sincronizações → Pedagógicas ou confirme que cada ponto tem «city_ids» com o id interno da cidade.',
                         ['path' => $bundle['path']]
                     ),
                 ],
@@ -67,22 +86,10 @@ final class PerformanceSaebSeries
         if ($points === []) {
             return [
                 'charts' => [],
-                'notes' => [__('Não há pontos SAEB para este município no ficheiro (city_ids).')],
-                'error' => null,
-                'source_hint' => $footnoteBase,
-                'explicacao_modal' => $explicacaoModal,
-            ];
-        }
-
-        $points = self::filterPointsForSchoolFilter($points, $filters);
-        if ($points === []) {
-            $msg = $filters->escola_id !== null
-                ? __('Não há pontos SAEB para a escola seleccionada no ficheiro (use escola_id / escola_ids no JSON alinhados ao cod_escola do i-Educar).')
-                : __('Não há pontos de rede municipal no ficheiro (pontos sem escola_id). Importe dados agregados por município ou seleccione uma escola com série própria.');
-
-            return [
-                'charts' => [],
-                'notes' => [$msg],
+                'extra_charts' => [],
+                'summary' => null,
+                'school_table' => [],
+                'notes' => [__('Não há dados SAEB para esta cidade no ficheiro importado (cada ponto deve incluir o id desta cidade em «city_ids»).')],
                 'error' => null,
                 'source_hint' => $footnoteBase,
                 'explicacao_modal' => $explicacaoModal,
@@ -90,11 +97,14 @@ final class PerformanceSaebSeries
         }
 
         $maxYear = self::maxYearFilter($filters);
-        $points = array_values(array_filter($points, static fn (array $p): bool => (int) ($p['year'] ?? 0) <= $maxYear));
+        $pointsYear = array_values(array_filter($points, static fn (array $p): bool => (int) ($p['year'] ?? 0) <= $maxYear));
 
-        if ($points === []) {
+        if ($pointsYear === []) {
             return [
                 'charts' => [],
+                'extra_charts' => [],
+                'summary' => null,
+                'school_table' => [],
                 'notes' => [__('Não há resultados SAEB até ao ano seleccionado no filtro.')],
                 'error' => null,
                 'source_hint' => $footnoteBase,
@@ -102,10 +112,28 @@ final class PerformanceSaebSeries
             ];
         }
 
-        $escolaNomes = self::resolveEscolaNames($db, $city, $points);
+        $pointsForCharts = self::filterPointsForSchoolFilter($pointsYear, $filters);
+        if ($pointsForCharts === []) {
+            $msg = $filters->escola_id !== null
+                ? __('Não há pontos SAEB para a escola seleccionada no ficheiro (use escola_id / escola_ids no JSON alinhados ao cod_escola do i-Educar).')
+                : __('Não há pontos de rede municipal no ficheiro (pontos sem escola_id). Importe dados agregados por município ou seleccione uma escola com série própria.');
+
+            return [
+                'charts' => [],
+                'extra_charts' => [],
+                'summary' => self::buildSummaryBlock($fileMeta, $pointsYear, $maxYear, $city),
+                'school_table' => self::buildSchoolTableRows($pointsYear, $maxYear, self::resolveEscolaNames($db, $city, $pointsYear)),
+                'notes' => [$msg],
+                'error' => null,
+                'source_hint' => $footnoteBase,
+                'explicacao_modal' => $explicacaoModal,
+            ];
+        }
+
+        $escolaNomes = self::resolveEscolaNames($db, $city, $pointsYear);
 
         $grouped = [];
-        foreach ($points as $p) {
+        foreach ($pointsForCharts as $p) {
             $key = (string) ($p['series_key'] ?? '');
             if ($key === '') {
                 continue;
@@ -123,21 +151,329 @@ final class PerformanceSaebSeries
             }
         }
 
+        $extraCharts = [];
+        if ($filters->escola_id === null) {
+            $cmp = self::buildSchoolComparisonChart($pointsYear, $maxYear, $escolaNomes, $footnoteBase);
+            if ($cmp !== null) {
+                $extraCharts[] = $cmp;
+            }
+        }
+        $schoolTable = self::buildSchoolTableRows(
+            $filters->escola_id === null ? $pointsYear : $pointsForCharts,
+            $maxYear,
+            $escolaNomes
+        );
+
         $hint = __('Círculos verdes — resultado final oficial; triângulos laranja tracejados — preliminar.');
         $yearNote = $filters->hasYearSelected() && ! $filters->isAllSchoolYears()
             ? __('A série mostra todos os anos disponíveis até :ano (inclusive), conforme o filtro de ano letivo.', ['ano' => (string) $filters->ano_letivo])
             : __('A série mostra todos os anos disponíveis na fonte.');
         $schoolNote = $filters->escola_id !== null
             ? __('Filtro de escola activo: séries por cod_escola :id (i-Educar).', ['id' => (string) $filters->escola_id])
-            : __('Sem filtro de escola: mostram-se apenas indicadores da rede municipal (pontos sem escola_id no JSON).');
+            : __('Sem filtro de escola: linhas temporais = rede municipal; quadro e gráfico comparativo usam escolas com pontos no JSON.');
 
         return [
             'charts' => $charts,
+            'extra_charts' => $extraCharts,
+            'summary' => self::buildSummaryBlock($fileMeta, $pointsYear, $maxYear, $city),
+            'school_table' => $schoolTable,
             'notes' => [$yearNote, $schoolNote, $hint],
             'error' => null,
             'source_hint' => $footnoteBase,
             'explicacao_modal' => $explicacaoModal,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $fileMeta
+     * @param  list<array<string, mixed>>  $pointsYear
+     * @return array<string, mixed>
+     */
+    private static function buildSummaryBlock(?array $fileMeta, array $pointsYear, int $maxYear, City $city): array
+    {
+        $nMun = 0;
+        $nEsc = 0;
+        $ids = [];
+        foreach ($pointsYear as $p) {
+            $eid = isset($p['escola_id']) && is_numeric($p['escola_id']) ? (int) $p['escola_id'] : null;
+            $has = ($eid !== null && $eid > 0) || (isset($p['escola_ids']) && is_array($p['escola_ids']) && $p['escola_ids'] !== []);
+            if ($has) {
+                $nEsc++;
+                if ($eid !== null && $eid > 0) {
+                    $ids[$eid] = true;
+                }
+            } else {
+                $nMun++;
+            }
+        }
+
+        $ibge = is_array($fileMeta) && isset($fileMeta['municipio_ibge']) ? trim((string) $fileMeta['municipio_ibge']) : '';
+        $munNome = is_array($fileMeta) && isset($fileMeta['municipio_nome']) ? trim((string) $fileMeta['municipio_nome']) : '';
+
+        $lp = self::latestMunicipalDisciplineValue($pointsYear, $maxYear, 'lp');
+        $mat = self::latestMunicipalDisciplineValue($pointsYear, $maxYear, 'mat');
+        $gap = ($lp !== null && $mat !== null) ? round($lp - $mat, 2) : null;
+
+        $years = [];
+        foreach ($pointsYear as $p) {
+            $y = (int) ($p['year'] ?? 0);
+            if ($y > 0) {
+                $years[$y] = true;
+            }
+        }
+        $yMin = $years !== [] ? min(array_keys($years)) : null;
+        $yMax = $years !== [] ? min(max(array_keys($years)), $maxYear) : null;
+
+        return [
+            'municipio_ibge' => $ibge !== '' ? $ibge : null,
+            'municipio_nome' => $munNome !== '' ? $munNome : null,
+            'city_id_local' => (int) $city->id,
+            'pontos_municipais' => $nMun,
+            'pontos_escola' => $nEsc,
+            'escolas_distintas' => count($ids),
+            'ano_min' => $yMin,
+            'ano_max' => $yMax,
+            'rede_lp_ultimo' => $lp,
+            'rede_mat_ultimo' => $mat,
+            'rede_gap_lp_menos_mat' => $gap,
+            'decisao_nota' => $gap !== null && $gap < 0
+                ? __('Lacuna: Matemática abaixo de Língua Portuguesa no último ponto municipal — priorizar reforço em MAT.')
+                : ($gap !== null && $gap > 3
+                    ? __('Lacuna: LP abaixo de MAT no último ponto municipal — reforço em leitura/escrita.')
+                    : __('Comparar séries e escolas no quadro abaixo para priorizar unidades ou etapas.')),
+        ];
+    }
+
+    /**
+     * Último valor «final» municipal para disciplina (lp|mat), qualquer etapa no JSON.
+     *
+     * @param  list<array<string, mixed>>  $pointsYear
+     */
+    private static function latestMunicipalDisciplineValue(array $pointsYear, int $maxYear, string $disc): ?float
+    {
+        $bestYear = null;
+        $bestVal = null;
+        foreach ($pointsYear as $p) {
+            $sk = (string) ($p['series_key'] ?? '');
+            if (! str_ends_with($sk, '|municipal')) {
+                continue;
+            }
+            if (! str_starts_with($sk, strtolower($disc).'|')) {
+                continue;
+            }
+            if (empty($p['is_final'])) {
+                continue;
+            }
+            $y = (int) ($p['year'] ?? 0);
+            if ($y <= 0 || $y > $maxYear) {
+                continue;
+            }
+            $v = $p['value'] ?? null;
+            if (! is_numeric($v)) {
+                continue;
+            }
+            if ($bestYear === null || $y > $bestYear) {
+                $bestYear = $y;
+                $bestVal = (float) $v;
+            }
+        }
+
+        return $bestVal;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $pointsYear
+     * @param  array<int, string>  $escolaNomes
+     * @return list<array<string, mixed>>
+     */
+    private static function buildSchoolTableRows(array $pointsYear, int $maxYear, array $escolaNomes): array
+    {
+        $bySchool = [];
+        foreach ($pointsYear as $p) {
+            $eid = isset($p['escola_id']) && is_numeric($p['escola_id']) ? (int) $p['escola_id'] : null;
+            if ($eid === null || $eid <= 0) {
+                continue;
+            }
+            $y = (int) ($p['year'] ?? 0);
+            if ($y <= 0 || $y > $maxYear) {
+                continue;
+            }
+            $sk = (string) ($p['series_key'] ?? '');
+            if (! str_starts_with($sk, 'lp|') && ! str_starts_with($sk, 'mat|')) {
+                continue;
+            }
+            $disc = str_starts_with($sk, 'lp|') ? 'lp' : 'mat';
+            if (empty($p['is_final'])) {
+                continue;
+            }
+            $v = $p['value'] ?? null;
+            if (! is_numeric($v)) {
+                continue;
+            }
+            if (! isset($bySchool[$eid])) {
+                $bySchool[$eid] = [];
+            }
+            if (! isset($bySchool[$eid][$disc]) || $y >= ($bySchool[$eid][$disc]['y'] ?? 0)) {
+                $bySchool[$eid][$disc] = ['y' => $y, 'v' => (float) $v];
+            }
+        }
+
+        $rows = [];
+        foreach ($bySchool as $eid => $d) {
+            $lp = $d['lp']['v'] ?? null;
+            $mat = $d['mat']['v'] ?? null;
+            $yLp = $d['lp']['y'] ?? null;
+            $yMat = $d['mat']['y'] ?? null;
+            $gap = ($lp !== null && $mat !== null) ? round($lp - $mat, 2) : null;
+            $rows[] = [
+                'escola_id' => $eid,
+                'nome' => $escolaNomes[$eid] ?? __('Escola :id', ['id' => (string) $eid]),
+                'lp_pct' => $lp,
+                'lp_ano' => $yLp,
+                'mat_pct' => $mat,
+                'mat_ano' => $yMat,
+                'gap_lp_menos_mat' => $gap,
+            ];
+        }
+        usort($rows, static fn (array $a, array $b): int => strcmp((string) ($a['nome'] ?? ''), (string) ($b['nome'] ?? '')));
+
+        return $rows;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $pointsYear
+     * @param  array<int, string>  $escolaNomes
+     * @return array<string, mixed>|null
+     */
+    private static function buildSchoolComparisonChart(array $pointsYear, int $maxYear, array $escolaNomes, string $footnoteBase): ?array
+    {
+        $refYear = null;
+        foreach ($pointsYear as $p) {
+            $eid = isset($p['escola_id']) && is_numeric($p['escola_id']) ? (int) $p['escola_id'] : null;
+            if ($eid === null || $eid <= 0) {
+                continue;
+            }
+            $y = (int) ($p['year'] ?? 0);
+            if ($y > 0 && $y <= $maxYear) {
+                $refYear = $refYear === null ? $y : max($refYear, $y);
+            }
+        }
+        if ($refYear === null) {
+            return null;
+        }
+
+        $schoolIds = [];
+        foreach ($pointsYear as $p) {
+            $eid = isset($p['escola_id']) && is_numeric($p['escola_id']) ? (int) $p['escola_id'] : null;
+            if ($eid !== null && $eid > 0) {
+                $schoolIds[$eid] = true;
+            }
+        }
+        $schoolIds = array_keys($schoolIds);
+        if ($schoolIds === []) {
+            return null;
+        }
+        sort($schoolIds);
+
+        $labels = [];
+        $lpData = [];
+        $matData = [];
+        foreach ($schoolIds as $eid) {
+            $lp = self::schoolDiscAtYear($pointsYear, $eid, $refYear, 'lp', $maxYear);
+            $mat = self::schoolDiscAtYear($pointsYear, $eid, $refYear, 'mat', $maxYear);
+            if ($lp === null && $mat === null) {
+                continue;
+            }
+            $nome = $escolaNomes[$eid] ?? __('Escola :id', ['id' => (string) $eid]);
+            $short = mb_strlen($nome) > 42 ? mb_substr($nome, 0, 39).'…' : $nome;
+            $labels[] = $short;
+            $lpData[] = $lp;
+            $matData[] = $mat;
+        }
+
+        if ($labels === []) {
+            return null;
+        }
+
+        $chart = ChartPayload::barHorizontalGrouped(
+            __('SAEB — comparativo por escola (LP e MAT, ano :ano)', ['ano' => (string) $refYear]),
+            __('% proficientes (final)'),
+            $labels,
+            [
+                ['label' => __('Língua Portuguesa'), 'data' => $lpData],
+                ['label' => __('Matemática'), 'data' => $matData],
+            ]
+        );
+        $chart['subtitle'] = __('Valores do último ano com dados por escola no ficheiro (até :ano do filtro).', ['ano' => (string) $maxYear]);
+        $chart['footnote'] = $footnoteBase;
+
+        return $chart;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $pointsYear
+     */
+    private static function schoolDiscAtYear(array $pointsYear, int $escolaId, int $preferYear, string $disc, int $maxYear): ?float
+    {
+        $bestY = null;
+        $bestV = null;
+        foreach ($pointsYear as $p) {
+            $eid = isset($p['escola_id']) && is_numeric($p['escola_id']) ? (int) $p['escola_id'] : null;
+            if ($eid !== $escolaId) {
+                continue;
+            }
+            $sk = (string) ($p['series_key'] ?? '');
+            if (! str_starts_with($sk, strtolower($disc).'|')) {
+                continue;
+            }
+            if (empty($p['is_final'])) {
+                continue;
+            }
+            $y = (int) ($p['year'] ?? 0);
+            if ($y <= 0 || $y > $maxYear) {
+                continue;
+            }
+            $v = $p['value'] ?? null;
+            if (! is_numeric($v)) {
+                continue;
+            }
+            if ($y !== $preferYear) {
+                continue;
+            }
+            $bestV = (float) $v;
+            $bestY = $y;
+        }
+        if ($bestV !== null) {
+            return $bestV;
+        }
+
+        foreach ($pointsYear as $p) {
+            $eid = isset($p['escola_id']) && is_numeric($p['escola_id']) ? (int) $p['escola_id'] : null;
+            if ($eid !== $escolaId) {
+                continue;
+            }
+            $sk = (string) ($p['series_key'] ?? '');
+            if (! str_starts_with($sk, strtolower($disc).'|')) {
+                continue;
+            }
+            if (empty($p['is_final'])) {
+                continue;
+            }
+            $y = (int) ($p['year'] ?? 0);
+            if ($y <= 0 || $y > $maxYear) {
+                continue;
+            }
+            $v = $p['value'] ?? null;
+            if (! is_numeric($v)) {
+                continue;
+            }
+            if ($bestY === null || $y > $bestY) {
+                $bestY = $y;
+                $bestV = (float) $v;
+            }
+        }
+
+        return $bestV;
     }
 
     /**
@@ -411,11 +747,12 @@ final class PerformanceSaebSeries
         $out = [];
         foreach ($points as $p) {
             $ids = $p['city_ids'] ?? null;
-            if (is_array($ids) && $ids !== []) {
-                $ids = array_map(static fn ($x) => (int) $x, $ids);
-                if (! in_array($cid, $ids, true)) {
-                    continue;
-                }
+            if (! is_array($ids) || $ids === []) {
+                continue;
+            }
+            $ids = array_map(static fn ($x) => (int) $x, $ids);
+            if (! in_array($cid, $ids, true)) {
+                continue;
             }
             $out[] = $p;
         }
@@ -434,9 +771,12 @@ final class PerformanceSaebSeries
             return [];
         }
 
-        $cityIds = null;
+        $rootCityIds = null;
         if (isset($decoded['city_ids']) && is_array($decoded['city_ids'])) {
-            $cityIds = array_map(static fn ($x) => (int) $x, $decoded['city_ids']);
+            $rootCityIds = array_values(array_unique(array_map(static fn ($x) => (int) $x, $decoded['city_ids'])));
+            if ($rootCityIds === []) {
+                $rootCityIds = null;
+            }
         }
 
         $out = [];
@@ -491,9 +831,18 @@ final class PerformanceSaebSeries
             if ($escolaIdsList !== []) {
                 $row['escola_ids'] = $escolaIdsList;
             }
-            if ($cityIds !== null) {
-                $row['city_ids'] = $cityIds;
+            $pointCityIds = null;
+            if (isset($p['city_ids']) && is_array($p['city_ids'])) {
+                $pointCityIds = array_values(array_unique(array_map(static fn ($x) => (int) $x, $p['city_ids'])));
+                if ($pointCityIds === []) {
+                    $pointCityIds = null;
+                }
             }
+            $effectiveCityIds = $pointCityIds ?? $rootCityIds;
+            if ($effectiveCityIds === null || $effectiveCityIds === []) {
+                continue;
+            }
+            $row['city_ids'] = $effectiveCityIds;
             $out[] = $row;
         }
 

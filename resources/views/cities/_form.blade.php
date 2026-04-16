@@ -16,6 +16,13 @@
             </div>
 
             <div>
+                <x-input-label for="ibge_municipio" :value="__('Código IBGE do município (7 dígitos)')" />
+                <x-text-input id="ibge_municipio" class="block mt-1 w-full font-mono" type="text" name="ibge_municipio" inputmode="numeric" maxlength="7" pattern="[0-9]{7}" :value="old('ibge_municipio', $city?->ibge_municipio)" placeholder="2910800" />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Obrigatório para sincronizar séries SAEB oficiais por município. Consulte o código no IBGE ou no Portal IDEB.') }}</p>
+                <x-input-error :messages="$errors->get('ibge_municipio')" class="mt-2" />
+            </div>
+
+            <div>
                 <x-input-label for="country" :value="__('País')" />
                 <x-text-input id="country" class="block mt-1 w-full" type="text" name="country" :value="old('country', $city?->country ?? 'Brasil')" />
                 <x-input-error :messages="$errors->get('country')" class="mt-2" />
