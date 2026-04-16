@@ -52,6 +52,7 @@
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Cidade') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('UF') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('IBGE') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('País') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('BD') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Ativa') }}</th>
@@ -65,6 +66,7 @@
                                 <tr>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{{ $city->name }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $city->uf }}</td>
+                                    <td class="px-6 py-4 text-sm font-mono text-gray-600 dark:text-gray-300">{{ $city->ibge_municipio ?? '—' }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $city->country }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
                                         @if ($city->dataDriver() === 'pgsql')
@@ -147,7 +149,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('Nenhuma cidade encontrada com os filtros atuais.') }}</td>
+                                    <td colspan="9" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('Nenhuma cidade encontrada com os filtros atuais.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>

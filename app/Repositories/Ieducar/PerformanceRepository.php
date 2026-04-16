@@ -52,7 +52,7 @@ class PerformanceRepository
      *   distorcao_pct: ?float,
      *   distorcao_note: ?string,
      *   inep_panel: ?array<string, mixed>,
-     *   saeb_series: array{charts: list<array<string, mixed>>, notes: list<string>, error: ?string, source_hint: ?string, explicacao_modal: ?array<string, mixed>}
+     *   saeb_series: array{charts: list<array<string, mixed>>, extra_charts?: list<array<string, mixed>>, summary?: ?array<string, mixed>, school_table?: list<array<string, mixed>>, notes: list<string>, error: ?string, source_hint: ?string, explicacao_modal: ?array<string, mixed>}
      * }
      */
     public function snapshot(?City $city, IeducarFilterState $filters): array
@@ -73,7 +73,16 @@ class PerformanceRepository
             'distorcao_pct' => null,
             'distorcao_note' => null,
             'inep_panel' => null,
-            'saeb_series' => ['charts' => [], 'notes' => [], 'error' => null, 'source_hint' => null, 'explicacao_modal' => null],
+            'saeb_series' => [
+                'charts' => [],
+                'extra_charts' => [],
+                'summary' => null,
+                'school_table' => [],
+                'notes' => [],
+                'error' => null,
+                'source_hint' => null,
+                'explicacao_modal' => null,
+            ],
         ];
 
         if ($city === null) {
@@ -283,7 +292,16 @@ class PerformanceRepository
                 'distorcao_pct' => null,
                 'distorcao_note' => null,
                 'inep_panel' => null,
-                'saeb_series' => ['charts' => [], 'notes' => [], 'error' => null, 'source_hint' => null, 'explicacao_modal' => null],
+                'saeb_series' => [
+                    'charts' => [],
+                    'extra_charts' => [],
+                    'summary' => null,
+                    'school_table' => [],
+                    'notes' => [],
+                    'error' => null,
+                    'source_hint' => null,
+                    'explicacao_modal' => null,
+                ],
             ];
         }
     }

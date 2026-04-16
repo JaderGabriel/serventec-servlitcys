@@ -7,12 +7,13 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Importa séries SAEB (JSON) para storage/app/public, com URL primária e fallbacks,
- * e cópia de recurso modelo em database/data/saeb_historico.example.json.
+ * Grava séries SAEB (JSON) em storage/app/public — importação por URL explícita ou payload já montado (sincronização oficial).
  */
 class SaebPedagogicalImportService
 {
     /**
+     * Tenta cada URL em IEDUCAR_SAEB_IMPORT_URLS até obter JSON com «pontos» não vazio. Não utiliza dados de demonstração.
+     *
      * @return array{ok: bool, message: string, fonte_efetiva: ?string, path: string}
      */
     public function importFromConfiguredSources(): array
@@ -20,6 +21,17 @@ class SaebPedagogicalImportService
         $rel = $this->relativePath();
         $attempts = [];
         $urls = $this->importUrlList();
+
+        if ($urls === []) {
+            return [
+                'ok' => false,
+                'message' => __(
+                    'Nenhuma URL configurada (IEDUCAR_SAEB_IMPORT_URLS). Use a sincronização oficial por município ou defina uma URL que devolva JSON com a chave «pontos».'
+                ),
+                'fonte_efetiva' => null,
+                'path' => $rel,
+            ];
+        }
 
         foreach ($urls as $url) {
             $attempts[] = $url;
@@ -34,7 +46,7 @@ class SaebPedagogicalImportService
                 if ($resp->successful()) {
                     $decoded = json_decode($resp->body(), true);
                     if ($this->isValidPayload($decoded)) {
-                        return $this->savePayload($decoded, $url, $attempts, $rel);
+                        return $this->writePayloadToDisk($decoded, $url, $attempts, $rel, null);
                     }
                 }
             } catch (\Throwable) {
@@ -42,51 +54,36 @@ class SaebPedagogicalImportService
             }
         }
 
-        return $this->copyExamplePayload(
-            __('Nenhuma URL devolveu JSON válido; a usar o ficheiro modelo do repositório.'),
-            $attempts,
-            $rel
-        );
+        return [
+            'ok' => false,
+            'message' => __(
+                'Nenhuma URL devolveu JSON válido (chave «pontos» ou «points» com pelo menos um item). Verifique a rede e o formato.'
+            ),
+            'fonte_efetiva' => null,
+            'path' => $rel,
+        ];
     }
 
     /**
-     * @return array{ok: bool, message: string, fonte_efetiva: ?string, path: string}
-     */
-    public function copyExampleOnly(): array
-    {
-        return $this->copyExamplePayload(__('Modelo copiado a partir de database/data/saeb_historico.example.json.'), [], $this->relativePath());
-    }
-
-    /**
+     * Persiste um payload já validado (usado pela importação oficial por IBGE).
+     *
+     * @param  array<string, mixed>  $decoded
      * @param  list<string>  $attempts
      * @return array{ok: bool, message: string, fonte_efetiva: ?string, path: string}
      */
-    private function copyExamplePayload(string $message, array $attempts, string $rel): array
+    public function persistHistoricoJson(array $decoded, string $fonteEfetiva, array $attempts = [], ?string $extraMessage = null): array
     {
-        $examplePath = base_path('database/data/saeb_historico.example.json');
-        if (! is_readable($examplePath)) {
+        $rel = $this->relativePath();
+        if (! $this->isValidPayload($decoded)) {
             return [
                 'ok' => false,
-                'message' => __('Ficheiro modelo não encontrado: :path', ['path' => $examplePath]),
+                'message' => __('O JSON não contém «pontos» válidos.'),
                 'fonte_efetiva' => null,
                 'path' => $rel,
             ];
         }
 
-        $raw = file_get_contents($examplePath);
-        $decoded = json_decode((string) $raw, true);
-        if (! is_array($decoded) || ! $this->isValidPayload($decoded)) {
-            return [
-                'ok' => false,
-                'message' => __('O ficheiro modelo não tem um formato válido (pontos).'),
-                'fonte_efetiva' => null,
-                'path' => $rel,
-            ];
-        }
-
-        $label = 'database/data/saeb_historico.example.json';
-
-        return $this->savePayload($decoded, $label, $attempts, $rel, $message);
+        return $this->writePayloadToDisk($decoded, $fonteEfetiva, $attempts, $rel, $extraMessage);
     }
 
     /**
@@ -94,7 +91,7 @@ class SaebPedagogicalImportService
      * @param  list<string>  $attempts
      * @return array{ok: bool, message: string, fonte_efetiva: ?string, path: string}
      */
-    private function savePayload(array $decoded, string $fonteEfetiva, array $attempts, string $rel, ?string $extraMessage = null): array
+    private function writePayloadToDisk(array $decoded, string $fonteEfetiva, array $attempts, string $rel, ?string $extraMessage = null): array
     {
         $meta = is_array($decoded['meta'] ?? null) ? $decoded['meta'] : [];
         $meta['fonte_efetiva'] = $fonteEfetiva;
@@ -130,6 +127,8 @@ class SaebPedagogicalImportService
         }
         Storage::disk('public')->put($rel, $json);
 
+        SaebMunicipioFilesWriter::syncFromDecodedPayload($decoded);
+
         $abs = storage_path('app/public/'.$rel);
         $msg = $extraMessage ?? __('Importação concluída. Dados gravados em :path.', ['path' => $abs]);
 
@@ -155,6 +154,8 @@ class SaebPedagogicalImportService
     }
 
     /**
+     * Apenas URLs explícitas em .env e, opcionalmente, import_url_defaults em config (sem APP_URL nem ficheiros de exemplo).
+     *
      * @return list<string>
      */
     private function importUrlList(): array
@@ -167,11 +168,6 @@ class SaebPedagogicalImportService
         }
 
         $urls = [];
-        $appUrl = rtrim((string) config('app.url', ''), '/');
-        if ($appUrl !== '' && str_starts_with($appUrl, 'http')) {
-            $urls[] = $appUrl.'/saeb/historico.example.json';
-        }
-
         foreach (config('ieducar.saeb.import_url_defaults', []) as $u) {
             if (is_string($u) && trim($u) !== '' && str_starts_with(trim($u), 'http')) {
                 $urls[] = trim($u);

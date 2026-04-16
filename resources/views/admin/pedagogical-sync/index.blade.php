@@ -5,7 +5,7 @@
                 {{ __('Sincronização pedagógica (SAEB)') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ __('Importação de séries SAEB para o ficheiro usado nos gráficos da aba Desempenho. Ordem: URL primária (INEP/dados abertos), URLs de fallback na mesma variável, e por fim o modelo database/data/saeb_historico.example.json.') }}
+                {{ __('Importação de séries SAEB a partir de fontes oficiais (por código IBGE) ou de URLs que devolvam JSON com «pontos» e «city_ids». Não são utilizados dados de demonstração.') }}
             </p>
         </div>
     </x-slot>
@@ -17,7 +17,7 @@
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">{{ __('Administração') }}</p>
                     <h1 class="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{{ __('Sincronização pedagógica') }}</h1>
                     <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed">
-                        {{ __('O painel de análise lê unicamente o JSON em disco (sem SQL nem URL em tempo real). Após importar, os gráficos SAEB mostram a fonte efectiva no rodapé de cada gráfico.') }}
+                        {{ __('O painel lê apenas o JSON em disco. Cada ponto deve referenciar o id interno da cidade em «city_ids» (preenchido automaticamente na importação oficial por IBGE).') }}
                     </p>
                 </div>
 
@@ -55,16 +55,22 @@
                                 <dd class="mt-0.5 tabular-nums text-gray-900 dark:text-gray-100">{{ number_format($pontosCount) }}</dd>
                             </div>
                             <div>
-                                <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('URLs de importação (.env)') }}</dt>
+                                <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Importação oficial (IBGE)') }}</dt>
+                                <dd class="mt-0.5 text-xs text-gray-700 dark:text-gray-300">
+                                    @if ($officialTemplateConfigured)
+                                        {{ __('IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE definido') }}
+                                    @else
+                                        {{ __('Não configurado — defina o modelo de URL no .env') }}
+                                    @endif
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('URLs manuais (.env)') }}</dt>
                                 <dd class="mt-0.5 text-xs text-gray-700 dark:text-gray-300">
                                     @if ($importUrlsConfigured)
-                                        {{ __('Configuradas (IEDUCAR_SAEB_IMPORT_URLS)') }}
+                                        {{ __('IEDUCAR_SAEB_IMPORT_URLS configurada(s)') }}
                                     @else
-                                        @if ($importUrlDefaultsCount > 0)
-                                            {{ __('Não definidas em .env — lista extra em config (:n) + :app', ['n' => $importUrlDefaultsCount, 'app' => ($appUrl !== '' ? $appUrl.'/saeb/historico.example.json' : __('APP_URL não definido'))]) }}
-                                        @else
-                                            {{ __('Não definidas em .env — tenta-se só :app (depois modelo local).', ['app' => ($appUrl !== '' ? $appUrl.'/saeb/historico.example.json' : __('APP_URL/saeb/historico.example.json'))]) }}
-                                        @endif
+                                        {{ __('Opcional — JSON completo com «pontos»') }}
                                     @endif
                                 </dd>
                             </div>
@@ -78,34 +84,43 @@
                     </div>
 
                     <div class="rounded-xl border border-blue-200/80 bg-blue-50/70 dark:border-blue-900/50 dark:bg-blue-950/25 p-4 sm:p-5">
-                        <p class="text-sm font-semibold text-blue-950 dark:text-blue-100">{{ __('Ordem de fontes (importação)') }}</p>
+                        <p class="text-sm font-semibold text-blue-950 dark:text-blue-100">{{ __('Importação oficial por município') }}</p>
                         <ol class="mt-2 list-decimal list-outside space-y-2 pl-5 text-sm text-blue-950 dark:text-blue-100/95">
-                            <li>{{ __('Cada URL em IEDUCAR_SAEB_IMPORT_URLS (separadas por vírgula), por ordem, até resposta HTTP com JSON válido (chave «pontos»).') }}</li>
-                            <li>{{ __('Se .env estiver vazio: tenta-se só APP_URL/saeb/historico.example.json; se falhar, copia-se o modelo local. Opcional: import_url_defaults em config para mais URLs.') }}</li>
-                            <li>{{ __('Se todas falharem, copia-se o modelo em database/data/saeb_historico.example.json para o caminho configurado.') }}</li>
-                            <li>{{ __('Ação «Apenas modelo local» grava sempre a partir do ficheiro de exemplo, sem HTTP.') }}</li>
+                            <li>{{ __('Cadastre o código IBGE (7 dígitos) em cada cidade (edição da cidade).') }}</li>
+                            <li>{{ __('Defina IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com {ibge}, opcionalmente {uf} e {city_id} — o sistema descarrega um JSON por cidade com rede analítica.') }}</li>
+                            <li>{{ __('A resposta deve trazer «pontos» (ou «resultados» no formato documentado no código) com séries SAEB; cada ponto é etiquetado com o id interno da cidade.') }}</li>
                         </ol>
+                    </div>
+
+                    <div class="rounded-xl border border-amber-200/80 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-950/20 p-4 sm:p-5">
+                        <p class="text-sm font-semibold text-amber-950 dark:text-amber-100">{{ __('Importação por URL (opcional)') }}</p>
+                        <p class="mt-1 text-sm text-amber-950/90 dark:text-amber-100/90">
+                            {{ __('IEDUCAR_SAEB_IMPORT_URLS: uma ou mais URLs separadas por vírgula; a primeira resposta válida grava o ficheiro. O JSON deve incluir «city_ids» em cada ponto ou ao nível do documento.') }}
+                        </p>
+                        @if ($importUrlDefaultsCount > 0)
+                            <p class="mt-2 text-xs text-amber-900/80 dark:text-amber-200/80">{{ __('Há :n URL(s) extra em config (import_url_defaults).', ['n' => $importUrlDefaultsCount]) }}</p>
+                        @endif
                     </div>
 
                     <div class="flex flex-col sm:flex-row flex-wrap gap-3">
                         <form method="post" action="{{ route('admin.pedagogical-sync.run') }}" class="inline">
                             @csrf
-                            <input type="hidden" name="action" value="import" />
+                            <input type="hidden" name="action" value="import_official" />
                             <button type="submit" class="inline-flex justify-center items-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                                {{ __('Importar (URL primária + fallbacks + modelo)') }}
+                                {{ __('Sincronizar dados oficiais (IBGE)') }}
                             </button>
                         </form>
                         <form method="post" action="{{ route('admin.pedagogical-sync.run') }}" class="inline">
                             @csrf
-                            <input type="hidden" name="action" value="seed" />
+                            <input type="hidden" name="action" value="import_urls" />
                             <button type="submit" class="inline-flex justify-center items-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
-                                {{ __('Apenas modelo local (exemplo)') }}
+                                {{ __('Importar de IEDUCAR_SAEB_IMPORT_URLS') }}
                             </button>
                         </form>
                     </div>
 
                     <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                        {{ __('Variáveis: IEDUCAR_SAEB_JSON_PATH (destino), IEDUCAR_SAEB_IMPORT_URLS, IEDUCAR_SAEB_IMPORT_TIMEOUT. O gráfico na Análise → Desempenho lê apenas este ficheiro.') }}
+                        {{ __('Após importar, este servidor expõe GET :url (ou o mesmo caminho com .json). Variáveis: IEDUCAR_SAEB_JSON_PATH, IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE, IEDUCAR_SAEB_IMPORT_URLS. Comando: php artisan saeb:import-official', ['url' => rtrim((string) config('app.url'), '/').'/api/saeb/municipio/{ibge}']) }}
                     </p>
                 </div>
             </div>

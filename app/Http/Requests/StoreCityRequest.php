@@ -38,6 +38,11 @@ class StoreCityRequest extends FormRequest
             $s = trim((string) $this->input('ieducar_schema'));
             $this->merge(['ieducar_schema' => $s === '' ? null : $s]);
         }
+
+        if ($this->has('ibge_municipio')) {
+            $ibge = preg_replace('/\D/', '', (string) $this->input('ibge_municipio'));
+            $this->merge(['ibge_municipio' => ($ibge !== '' && strlen($ibge) === 7) ? $ibge : null]);
+        }
     }
 
     /**
@@ -53,6 +58,13 @@ class StoreCityRequest extends FormRequest
                 Rule::unique('cities', 'name')->where(fn ($q) => $q->where('uf', (string) $this->input('uf'))),
             ],
             'uf' => ['required', 'string', 'size:2', 'regex:/^[A-Z]{2}$/'],
+            'ibge_municipio' => [
+                'nullable',
+                'string',
+                'size:7',
+                'regex:/^[0-9]{7}$/',
+                Rule::unique('cities', 'ibge_municipio'),
+            ],
             'country' => ['nullable', 'string', 'max:100'],
             'db_driver' => ['required', 'string', Rule::in([City::DRIVER_MYSQL, City::DRIVER_PGSQL])],
             'ieducar_schema' => ['nullable', 'string', 'max:63', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]*$/'],
@@ -72,6 +84,7 @@ class StoreCityRequest extends FormRequest
     {
         return [
             'name.unique' => __('Já existe uma cidade com este nome neste estado.'),
+            'ibge_municipio.unique' => __('Este código IBGE já está associado a outra cidade.'),
         ];
     }
 }

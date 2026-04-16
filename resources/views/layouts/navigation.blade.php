@@ -54,7 +54,7 @@
                             <x-dropdown-link :href="route('admin.geo-sync.index')" :title="__('Coordenadas i-Educar, INEP ArcGIS, microdados e pipeline; saída dos comandos na mesma página.')">
                                 {{ __('Geográficas') }}
                             </x-dropdown-link>
-                            <x-dropdown-link :href="route('admin.pedagogical-sync.index')" :title="__('Importar séries SAEB (JSON) para os gráficos da aba Desempenho; fonte INEP com fallbacks.')">
+                            <x-dropdown-link :href="route('admin.pedagogical-sync.index')" :title="__('Sincronização SAEB por IBGE ou URL; dados reais, sem ficheiros de exemplo.')">
                                 {{ __('Pedagógicas') }}
                             </x-dropdown-link>
                             <div class="border-t border-gray-200 dark:border-gray-600"></div>
