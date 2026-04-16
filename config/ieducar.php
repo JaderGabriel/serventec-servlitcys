@@ -371,8 +371,10 @@ return [
          * @var list<string>
          */
         'import_url_defaults' => [],
-        /** URL com placeholders {ibge} (7 dígitos), {uf}, {city_id} — uma requisição por cidade com ibge_municipio. */
+        /** URL com placeholders {ibge} (7 dígitos), {uf}, {city_id}. Vazio = usa APP_URL + /api/saeb/municipio/{ibge}.json */
         'official_url_template' => trim((string) env('IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE', '')),
+        /** Antes do HTTP: ler storage (saeb/municipio/{ibge}.json ou corte do historico.json). */
+        'official_use_internal_storage_first' => filter_var(env('IEDUCAR_SAEB_OFFICIAL_USE_INTERNAL', true), FILTER_VALIDATE_BOOL),
         /** Timeout por pedido HTTP na importação oficial por município. */
         'official_timeout_seconds' => (int) env('IEDUCAR_SAEB_OFFICIAL_TIMEOUT', 60),
         /** Gravar storage/app/public/saeb/municipio/{ibge}.json após cada importação bem-sucedida (para GET /api/saeb/municipio/...). */

@@ -7,6 +7,7 @@ use App\Services\CityDataConnection;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarSchema;
+use App\Support\Ieducar\InclusionDashboardQueries;
 use App\Support\Ieducar\MatriculaChartQueries;
 use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
@@ -41,6 +42,23 @@ class OverviewRepository
                 ];
 
                 $charts = [];
+
+                try {
+                    $neeOverview = InclusionDashboardQueries::chartNeeResumoVisaoGeral($db, $city, $filters);
+                    if ($neeOverview !== null) {
+                        $charts[] = $neeOverview;
+                    }
+                } catch (QueryException|\Throwable) {
+                }
+
+                try {
+                    $redeOverview = MatriculaChartQueries::chartRedeOfertaResumoVisaoGeral($db, $city, $filters);
+                    if ($redeOverview !== null) {
+                        $charts[] = $redeOverview;
+                    }
+                } catch (QueryException|\Throwable) {
+                }
+
                 if ($kpis['escolas'] !== null || $kpis['turmas'] !== null || $kpis['matriculas'] !== null) {
                     $charts[] = ChartPayload::bar(
                         __('Totais (visão geral)'),

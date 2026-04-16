@@ -2,32 +2,30 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Gráficos: distorção idade-série por unidade escolar (quando a base permite), distorção na rede por série/ano, matrículas por escola, séries/cursos, turno e vagas. Inclui taxas de abandono e de evasão (abandono + remanejamento) com o mesmo denominador da aba Desempenho. KPIs no topo: matrículas ativas, turmas e ocupação média quando existir capacidade na turma.') }}
+        {{ __('KPIs: matrículas ativas, turmas e ocupação média (quando existir capacidade na turma). Taxas de abandono e evasão usam o mesmo denominador da aba Desempenho. Gráficos em duas colunas em ecrãs largos; após o fluxo escolar, distorção idade/série por turno/curso e por escola.') }}
     </p>
 
     @if (! empty($enrollmentData['kpis']))
         @php $k = $enrollmentData['kpis']; @endphp
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-5 sm:p-6 min-h-[13.5rem] flex flex-col justify-center">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Matrículas ativas') }}</p>
-                <p class="mt-2 text-2xl sm:text-3xl font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">{{ number_format($k['matriculas'] ?? 0) }}</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-stretch">
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 px-3 py-2 sm:px-3 sm:py-2.5 min-h-0 flex flex-col justify-center">
+                <p class="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase leading-tight">{{ __('Matrículas ativas') }}</p>
+                <p class="mt-0.5 text-lg sm:text-xl font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums leading-tight">{{ number_format($k['matriculas'] ?? 0) }}</p>
             </div>
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-5 sm:p-6 min-h-[13.5rem] flex flex-col justify-center">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Turmas com matrícula') }}</p>
-                <p class="mt-2 text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-gray-100 tabular-nums">{{ number_format($k['turmas_distintas'] ?? 0) }}</p>
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 px-3 py-2 sm:px-3 sm:py-2.5 min-h-0 flex flex-col justify-center">
+                <p class="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase leading-tight">{{ __('Turmas com matrícula') }}</p>
+                <p class="mt-0.5 text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 tabular-nums leading-tight">{{ number_format($k['turmas_distintas'] ?? 0) }}</p>
             </div>
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-5 sm:p-6 min-h-[15rem] flex flex-col justify-between">
-                <div>
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Ocupação média (turmas com vaga)') }}</p>
-                    <p class="mt-2 text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-gray-100 tabular-nums">
-                        @if (isset($k['ocupacao_pct']) && $k['ocupacao_pct'] !== null)
-                            {{ number_format($k['ocupacao_pct'], 1) }}%
-                        @else
-                            —
-                        @endif
-                    </p>
-                </div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-snug">{{ __('Requer coluna de capacidade na turma (ex.: max_aluno).') }}</p>
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 px-3 py-2 sm:px-3 sm:py-2.5 min-h-0 flex flex-col justify-center gap-0.5">
+                <p class="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase leading-tight">{{ __('Ocupação média (turmas com vaga)') }}</p>
+                <p class="mt-0.5 text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 tabular-nums leading-tight">
+                    @if (isset($k['ocupacao_pct']) && $k['ocupacao_pct'] !== null)
+                        {{ number_format($k['ocupacao_pct'], 1) }}%
+                    @else
+                        —
+                    @endif
+                </p>
+                <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-tight line-clamp-2">{{ __('Requer coluna de capacidade na turma (ex.: max_aluno).') }}</p>
             </div>
         </div>
     @endif
@@ -154,7 +152,8 @@
                 || str_contains($title, 'Matrículas por curso')
                 || str_contains($title, 'segmento')
                 || str_contains($title, 'totais')
-                || str_contains($title, 'Matrículas por série');
+                || str_contains($title, 'Matrículas por série')
+                || str_contains($title, 'Distorção idade/série');
 
             if ($needsTall) {
                 $c['options'] = is_array($c['options'] ?? null) ? $c['options'] : [];
@@ -164,15 +163,21 @@
 
             return $c;
         }, $enrollmentCharts);
+
     @endphp
     @if ($enrollmentCharts !== [])
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch min-w-0 w-full max-w-none">
             @foreach ($enrollmentCharts as $idx => $chart)
+                @php
+                    $panelPayload = $chart;
+                    unset($panelPayload['pair_in_row']);
+                @endphp
                 <x-dashboard.chart-panel
-                    :chart="$chart"
+                    :chart="$panelPayload"
                     :exportFilename="'matriculas-'.$idx"
                     :exportMeta="$chartExportContext"
                     :compact="false"
+                    :chartPanelId="'chart-mat-'.$idx"
                 />
             @endforeach
         </div>

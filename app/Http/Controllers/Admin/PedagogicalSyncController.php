@@ -28,6 +28,10 @@ class PedagogicalSyncController extends Controller
             }
         }
 
+        $appUrl = rtrim((string) config('app.url', ''), '/');
+        $officialEnvSet = trim((string) config('ieducar.saeb.official_url_template', '')) !== '';
+        $appUrlOk = $appUrl !== '' && str_starts_with($appUrl, 'http');
+
         return view('admin.pedagogical-sync.index', [
             'jsonPath' => $rel,
             'absPath' => storage_path('app/public/'.$rel),
@@ -36,7 +40,9 @@ class PedagogicalSyncController extends Controller
             'pontosCount' => $pontosCount,
             'importUrlsConfigured' => trim((string) config('ieducar.saeb.import_urls', '')) !== '',
             'importUrlDefaultsCount' => is_array(config('ieducar.saeb.import_url_defaults')) ? count(config('ieducar.saeb.import_url_defaults')) : 0,
-            'officialTemplateConfigured' => trim((string) config('ieducar.saeb.official_url_template', '')) !== '',
+            'officialTemplateConfigured' => $officialEnvSet,
+            'officialUrlUsesAppDefault' => ! $officialEnvSet && $appUrlOk,
+            'appUrl' => $appUrl,
         ]);
     }
 

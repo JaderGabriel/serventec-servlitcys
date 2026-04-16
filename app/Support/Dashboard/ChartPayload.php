@@ -63,7 +63,21 @@ final class ChartPayload
     public static function barHorizontal(string $title, string $datasetLabel, array $labels, array $values): array
     {
         $payload = self::bar($title, $datasetLabel, $labels, $values);
-        $payload['options'] = ['indexAxis' => 'y'];
+        $payload['options'] = array_merge(
+            [
+                'indexAxis' => 'y',
+                /** Evita recorte de rótulos/valores nas bordas do cartão (datalabels no fim da barra). */
+                'layout' => [
+                    'padding' => [
+                        'left' => 4,
+                        'right' => 48,
+                        'top' => 10,
+                        'bottom' => 10,
+                    ],
+                ],
+            ],
+            is_array($payload['options'] ?? null) ? $payload['options'] : []
+        );
 
         return $payload;
     }

@@ -10,7 +10,7 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Esta aba mostra totais na base do município (escola, turma, matrícula). O ano letivo é obrigatório; depois pode filtrar escola, tipo/segmento e turno.') }}
+        {{ __('Esta aba mostra totais na base do município (escola, turma, matrícula). Inclui resumos de NEE (educação especial) e de rede/oferta (capacidade e vagas), alinhados às abas correspondentes. O ano letivo é obrigatório; depois pode filtrar escola, tipo/segmento e turno. Os gráficos seguem duas colunas em ecrãs largos.') }}
     </p>
 
     @if ($yearFilterReady && ! empty($overviewData['filter_note']))
@@ -151,13 +151,14 @@
     @endif
 
     @if ($yearFilterReady && ! empty($overviewData['charts']))
-        <div class="grid grid-cols-1 gap-6 mt-4 w-full max-w-none">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch min-w-0 mt-4 w-full max-w-none">
             @foreach ($overviewData['charts'] as $idx => $chart)
                 <x-dashboard.chart-panel
                     :chart="$chart"
                     :exportFilename="'visao-geral-'.$idx"
                     :exportMeta="$chartExportContext"
-                    :compact="false"
+                    :compact="true"
+                    :chartPanelId="'chart-visao-geral-'.$idx"
                 />
             @endforeach
         </div>

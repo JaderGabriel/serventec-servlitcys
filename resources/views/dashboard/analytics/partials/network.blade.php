@@ -95,14 +95,64 @@
     </div>
 
     @if (! empty($networkData['charts']))
-        <div class="grid grid-cols-1 gap-8">
-            @foreach ($networkData['charts'] as $idx => $chart)
-                <x-dashboard.chart-panel
-                    :chart="$chart"
-                    :exportFilename="'rede-oferta-'.$idx"
-                    :exportMeta="$chartExportContext"
-                    :compact="false"
-                />
+        @php
+            $pairKeyRede = 'rede-oferta-turno-segmento';
+            $redeFragments = [];
+            $ri = 0;
+            $nRede = count($networkData['charts']);
+            while ($ri < $nRede) {
+                $ch = $networkData['charts'][$ri];
+                $pid = $ch['pair_in_row'] ?? null;
+                if ($pid === $pairKeyRede) {
+                    $group = [$ch];
+                    $ri++;
+                    if ($ri < $nRede && (($networkData['charts'][$ri]['pair_in_row'] ?? null) === $pairKeyRede)) {
+                        $group[] = $networkData['charts'][$ri];
+                        $ri++;
+                    }
+                    $redeFragments[] = ['type' => 'pair', 'charts' => $group];
+                } else {
+                    $redeFragments[] = ['type' => 'single', 'charts' => [$ch]];
+                    $ri++;
+                }
+            }
+            $redeChartIdx = 0;
+        @endphp
+        <div class="grid grid-cols-1 gap-6">
+            @foreach ($redeFragments as $frag)
+                @if ($frag['type'] === 'pair' && count($frag['charts']) === 2)
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch min-w-0">
+                        @foreach ($frag['charts'] as $chart)
+                            @php
+                                $panelPayload = $chart;
+                                unset($panelPayload['pair_in_row']);
+                            @endphp
+                            <x-dashboard.chart-panel
+                                :chart="$panelPayload"
+                                :exportFilename="'rede-oferta-'.$redeChartIdx"
+                                :exportMeta="$chartExportContext"
+                                :compact="true"
+                                :chartPanelId="'chart-rede-'.$redeChartIdx"
+                            />
+                            @php $redeChartIdx++; @endphp
+                        @endforeach
+                    </div>
+                @else
+                    @foreach ($frag['charts'] as $chart)
+                        @php
+                            $panelPayload = $chart;
+                            unset($panelPayload['pair_in_row']);
+                        @endphp
+                        <x-dashboard.chart-panel
+                            :chart="$panelPayload"
+                            :exportFilename="'rede-oferta-'.$redeChartIdx"
+                            :exportMeta="$chartExportContext"
+                            :compact="false"
+                            :chartPanelId="'chart-rede-'.$redeChartIdx"
+                        />
+                        @php $redeChartIdx++; @endphp
+                    @endforeach
+                @endif
             @endforeach
         </div>
     @elseif (empty($networkData['error']) && empty($networkData['vagas_por_unidade_chart'] ?? null))

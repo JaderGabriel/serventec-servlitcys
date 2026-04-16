@@ -59,8 +59,10 @@
                                 <dd class="mt-0.5 text-xs text-gray-700 dark:text-gray-300">
                                     @if ($officialTemplateConfigured)
                                         {{ __('IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE definido') }}
+                                    @elseif ($officialUrlUsesAppDefault ?? false)
+                                        {{ __('URL automática: APP_URL + /api/saeb/municipio/{ibge}.json (defina APP_URL com o domínio público HTTPS)') }}
                                     @else
-                                        {{ __('Não configurado — defina o modelo de URL no .env') }}
+                                        {{ __('Defina APP_URL (https://…) ou IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com {ibge}') }}
                                     @endif
                                 </dd>
                             </div>
@@ -87,7 +89,7 @@
                         <p class="text-sm font-semibold text-blue-950 dark:text-blue-100">{{ __('Importação oficial por município') }}</p>
                         <ol class="mt-2 list-decimal list-outside space-y-2 pl-5 text-sm text-blue-950 dark:text-blue-100/95">
                             <li>{{ __('Cadastre o código IBGE (7 dígitos) em cada cidade (edição da cidade).') }}</li>
-                            <li>{{ __('Defina IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com {ibge}, opcionalmente {uf} e {city_id} — o sistema descarrega um JSON por cidade com rede analítica.') }}</li>
+                            <li>{{ __('Opcional: IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com {ibge}. Se vazio, usa APP_URL + /api/saeb/municipio/{ibge}.json; primeiro tenta leitura em storage (saeb/municipio ou historico.json), depois HTTP.') }}</li>
                             <li>{{ __('A resposta deve trazer «pontos» (ou «resultados» no formato documentado no código) com séries SAEB; cada ponto é etiquetado com o id interno da cidade.') }}</li>
                         </ol>
                     </div>

@@ -385,6 +385,44 @@ final class MatriculaChartQueries
     }
 
     /**
+     * Barras: capacidade, matrículas e vagas ociosas — resumo para a aba Visão geral (alinhado a Rede e Oferta).
+     *
+     * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>, subtitle?: string}
+     */
+    public static function chartRedeOfertaResumoVisaoGeral(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        try {
+            $k = self::redeVagasResumoKpis($db, $city, $filters);
+            $cap = (int) ($k['capacidade_total'] ?? 0);
+            $mat = (int) ($k['matriculas'] ?? 0);
+            $vac = (int) ($k['vagas_ociosas'] ?? 0);
+            $taxa = $k['taxa_ociosidade_pct'] ?? null;
+            $nTurmasCap = (int) ($k['turmas_com_capacidade'] ?? 0);
+
+            $chart = ChartPayload::bar(
+                __('Rede e oferta (resumo) — capacidade e vagas'),
+                __('Quantidade'),
+                [
+                    __('Capacidade (turmas)'),
+                    __('Matrículas no filtro'),
+                    __('Vagas ociosas'),
+                ],
+                [(float) $cap, (float) $mat, (float) $vac]
+            );
+            $sub = __('Turmas com capacidade declarada: :n.', ['n' => $nTurmasCap]);
+            if ($taxa !== null) {
+                $sub .= ' '.__('Taxa de ociosidade: :p%.', ['p' => number_format((float) $taxa, 1, ',', '.')]);
+            }
+            $chart['subtitle'] = $sub;
+            $chart['options'] = array_merge($chart['options'] ?? [], ['panelHeight' => 'lg']);
+
+            return $chart;
+        } catch (QueryException|\Throwable) {
+            return null;
+        }
+    }
+
+    /**
      * Vagas ociosas (capacidade − matrículas) agregadas por turno.
      *
      * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}
@@ -1290,7 +1328,7 @@ final class MatriculaChartQueries
             return $direct;
         }
 
-        return self::vagasAbertasPorEscolaViaMatriculaEscola($db, $city, $filters);
+        return self::vagasAbertasPorEscolaViaMatriculaEscola($db, $city, $filtersAllSchools);
     }
 
     /**
@@ -1540,18 +1578,14 @@ final class MatriculaChartQueries
     }
 
     /**
-     * Quando a turma não tem FK para escola, mas a matrícula tem (ex.: ref_cod_escola), agrega vagas por essa coluna.
+     * Agrega vagas por escola usando a coluna de escola na matrícula (ex.: ref_cod_escola).
+     * Usado como último recurso quando o agrupamento pela turma não produz unidades (FK vazia ou inconsistente).
      *
      * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>, subtitle?: string}
      */
     private static function vagasAbertasPorEscolaViaMatriculaEscola(Connection $db, City $city, IeducarFilterState $filters): ?array
     {
         try {
-            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
-            if ($tc['escola'] !== '') {
-                return null;
-            }
-
             $mat = IeducarSchema::resolveTable('matricula', $city);
             $mEsc = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
                 (string) config('ieducar.columns.matricula.escola'),
@@ -1670,7 +1704,7 @@ final class MatriculaChartQueries
             );
             $payload['subtitle'] = $anyPositive
                 ? __(
-                    'Por turma: capacidade declarada menos matrículas ativas, somadas por escola; escola obtida pela coluna de matrícula (turma sem FK de escola). Só aparecem escolas com vagas ociosas > 0.'
+                    'Por turma: capacidade declarada menos matrículas ativas, somadas por escola; escola obtida pela coluna de matrícula (útil quando a turma não tem escola ou a FK não está preenchida). Só aparecem escolas com vagas ociosas > 0.'
                 )
                 : __(
                     'Não há vagas ociosas no filtro. O gráfico mostra escolas com maior capacidade (via matrícula → escola). Valores 0 — confira capacidade e matrículas na base.'
@@ -2659,6 +2693,398 @@ final class MatriculaChartQueries
         } catch (QueryException|\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Matrículas com distorção idade/série, agrupadas por turno × curso (rótulos compostos).
+     *
+     * @return array{labels: list<string>, values: list<float>}|null
+     */
+    private static function distorcaoComDistorsaoPorTurnoCursoAutomatico(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+    ): ?array {
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $aluno = IeducarSchema::resolveTable('aluno', $city);
+            $pessoa = IeducarSchema::resolveTable('pessoa', $city);
+            $serieT = IeducarSchema::resolveTable('serie', $city);
+
+            if (! IeducarColumnInspector::tableExists($db, $aluno, $city)
+                || ! IeducarColumnInspector::tableExists($db, $pessoa, $city)
+                || ! IeducarColumnInspector::tableExists($db, $serieT, $city)) {
+                return null;
+            }
+
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            if ($tc['year'] === '' || $tc['serie'] === '' || $tc['curso'] === '' || $tc['turno'] === '') {
+                return null;
+            }
+
+            $cursoSpec = self::cursoJoinSpec($db, $city);
+            $turnoSpec = self::turnoJoinSpec($db, $city);
+            if ($cursoSpec === null || $turnoSpec === null) {
+                return null;
+            }
+
+            $birthCol = IeducarColumnInspector::firstExistingColumn($db, $pessoa, array_filter([
+                'data_nasc',
+                'data_nascimento',
+                'dt_nascimento',
+                'dt_nasc',
+            ]), $city);
+            if ($birthCol === null) {
+                return null;
+            }
+
+            $spec = self::serieJoinSpec($db, $city);
+            if ($spec === null) {
+                return null;
+            }
+            $sId = $spec['idCol'];
+            $cfgMax = trim((string) config('ieducar.columns.serie.idade_limite_max', ''));
+            $maxCol = IeducarColumnInspector::firstExistingColumn($db, $serieT, array_filter([
+                $cfgMax !== '' ? $cfgMax : null,
+                'idade_maxima',
+                'idade_max',
+                'idade_maxima_escolar',
+                'idade_final',
+                'idade_fim',
+                'idade_ideal_max',
+                'idade_maxima_ideal',
+            ]), $city);
+            if ($maxCol === null) {
+                return null;
+            }
+
+            $grammar = $db->getQueryGrammar();
+            $limiteExpr = $grammar->wrap('s').'.'.$grammar->wrap($maxCol);
+
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $mAluno = (string) config('ieducar.columns.matricula.aluno');
+            $aId = (string) config('ieducar.columns.aluno.id');
+            $aPessoa = IeducarColumnInspector::firstExistingColumn($db, $aluno, array_filter([
+                (string) config('ieducar.columns.aluno.pessoa'),
+                'ref_cod_pessoa',
+                'ref_idpes',
+                'idpes',
+            ]), $city);
+            if ($aPessoa === null) {
+                return null;
+            }
+
+            $pId = IeducarColumnInspector::firstExistingColumn($db, $pessoa, array_filter([
+                (string) config('ieducar.columns.pessoa.id'),
+                'idpes',
+                'id',
+                'cod_pessoa',
+            ]), $city);
+            if ($pId === null) {
+                return null;
+            }
+
+            $refDateExpr = self::refDateCorteEscolarSql($db, 't_filter', $tc['year']);
+            $idadeExpr = self::idadeAnosCompletosSql($db, $refDateExpr, 'p', $birthCol);
+            $distorcaoCond = '('.$idadeExpr.') > ('.$limiteExpr.' + 2)';
+
+            $serieJoinCol = $tc['serie'];
+            $cIdCol = $cursoSpec['idCol'];
+            $cNameCol = $cursoSpec['nameCol'];
+            $tnId = $turnoSpec['idCol'];
+            $tnName = $turnoSpec['nameCol'];
+
+            $base = function () use ($db, $city, $filters, $mat, $mAtivo, $mAluno, $aluno, $aId, $aPessoa, $pessoa, $pId, $serieT, $sId, $birthCol, $serieJoinCol, $limiteExpr, $grammar, $tc, $cursoSpec, $turnoSpec, $cIdCol): Builder {
+                $q = $db->table($mat.' as m');
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+                MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+                MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+                MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+                $q->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
+                    ->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId);
+                $tSerieFk = $grammar->wrap('t_filter').'.'.$grammar->wrap($serieJoinCol);
+                $sPk = $grammar->wrap('s').'.'.$grammar->wrap($sId);
+                $q->join($serieT.' as s', function ($join) use ($db, $tSerieFk, $sPk) {
+                    if ($db->getDriverName() === 'pgsql') {
+                        $join->whereRaw('('.$tSerieFk.')::text = ('.$sPk.')::text');
+                    } else {
+                        $join->whereRaw('CAST('.$tSerieFk.' AS UNSIGNED) = CAST('.$sPk.' AS UNSIGNED)');
+                    }
+                })
+                    ->whereNotNull('p.'.$birthCol)
+                    ->whereRaw('('.$limiteExpr.') IS NOT NULL');
+
+                $tCurFk = $grammar->wrap('t_filter').'.'.$grammar->wrap($tc['curso']);
+                $cPk = $grammar->wrap('c').'.'.$grammar->wrap($cIdCol);
+                $q->join($cursoSpec['qualified'].' as c', function ($join) use ($db, $tCurFk, $cPk) {
+                    if ($db->getDriverName() === 'pgsql') {
+                        $join->whereRaw('('.$tCurFk.')::text = ('.$cPk.')::text');
+                    } else {
+                        $join->whereRaw('CAST('.$tCurFk.' AS UNSIGNED) = CAST('.$cPk.' AS UNSIGNED)');
+                    }
+                });
+                self::joinTurmaAliasToTurnoCatalog($db, $q, 't_filter', $turnoSpec['qualified'], 'tn', $tc['turno'], $tnId);
+
+                return $q;
+            };
+
+            $tidW = $grammar->wrap('tn').'.'.$grammar->wrap($tnId);
+            $cidW = $grammar->wrap('c').'.'.$grammar->wrap($cIdCol);
+            $rows = $base()
+                ->whereRaw($distorcaoCond)
+                ->selectRaw($tidW.' as tid')
+                ->selectRaw('MAX(tn.'.$grammar->wrap($tnName).') as tname')
+                ->selectRaw($cidW.' as cid')
+                ->selectRaw('MAX(c.'.$grammar->wrap($cNameCol).') as cname')
+                ->selectRaw('COUNT(*) as cnt')
+                ->groupBy([$tidW, $cidW])
+                ->orderByDesc('cnt')
+                ->limit(24)
+                ->get();
+
+            if ($rows->isEmpty()) {
+                return null;
+            }
+
+            $labels = [];
+            $values = [];
+            foreach ($rows as $row) {
+                $tn = trim((string) ($row->tname ?? ''));
+                $cn = trim((string) ($row->cname ?? ''));
+                if ($tn === '') {
+                    $tn = __('Turno #:id', ['id' => (string) ($row->tid ?? '')]);
+                }
+                if ($cn === '') {
+                    $cn = __('Curso #:id', ['id' => (string) ($row->cid ?? '')]);
+                }
+                $labels[] = $tn.' · '.$cn;
+                $values[] = (float) ($row->cnt ?? 0);
+            }
+
+            return ['labels' => $labels, 'values' => $values];
+        } catch (QueryException|\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Matrículas com distorção idade/série, agrupadas por escola (critério INEP automático).
+     *
+     * @return array{labels: list<string>, values: list<float>}|null
+     */
+    private static function distorcaoComDistorsaoPorEscolaAutomatico(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+    ): ?array {
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $aluno = IeducarSchema::resolveTable('aluno', $city);
+            $pessoa = IeducarSchema::resolveTable('pessoa', $city);
+            $serieT = IeducarSchema::resolveTable('serie', $city);
+
+            if (! IeducarColumnInspector::tableExists($db, $aluno, $city)
+                || ! IeducarColumnInspector::tableExists($db, $pessoa, $city)
+                || ! IeducarColumnInspector::tableExists($db, $serieT, $city)) {
+                return null;
+            }
+
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            if ($tc['year'] === '' || $tc['serie'] === '' || $tc['escola'] === '') {
+                return null;
+            }
+
+            $escolaSpec = self::escolaJoinSpec($db, $city);
+            if ($escolaSpec === null) {
+                return null;
+            }
+
+            $birthCol = IeducarColumnInspector::firstExistingColumn($db, $pessoa, array_filter([
+                'data_nasc',
+                'data_nascimento',
+                'dt_nascimento',
+                'dt_nasc',
+            ]), $city);
+            if ($birthCol === null) {
+                return null;
+            }
+
+            $spec = self::serieJoinSpec($db, $city);
+            if ($spec === null) {
+                return null;
+            }
+            $sId = $spec['idCol'];
+            $cfgMax = trim((string) config('ieducar.columns.serie.idade_limite_max', ''));
+            $maxCol = IeducarColumnInspector::firstExistingColumn($db, $serieT, array_filter([
+                $cfgMax !== '' ? $cfgMax : null,
+                'idade_maxima',
+                'idade_max',
+                'idade_maxima_escolar',
+                'idade_final',
+                'idade_fim',
+                'idade_ideal_max',
+                'idade_maxima_ideal',
+            ]), $city);
+            if ($maxCol === null) {
+                return null;
+            }
+
+            $grammar = $db->getQueryGrammar();
+            $limiteExpr = $grammar->wrap('s').'.'.$grammar->wrap($maxCol);
+
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $mAluno = (string) config('ieducar.columns.matricula.aluno');
+            $aId = (string) config('ieducar.columns.aluno.id');
+            $aPessoa = IeducarColumnInspector::firstExistingColumn($db, $aluno, array_filter([
+                (string) config('ieducar.columns.aluno.pessoa'),
+                'ref_cod_pessoa',
+                'ref_idpes',
+                'idpes',
+            ]), $city);
+            if ($aPessoa === null) {
+                return null;
+            }
+
+            $pId = IeducarColumnInspector::firstExistingColumn($db, $pessoa, array_filter([
+                (string) config('ieducar.columns.pessoa.id'),
+                'idpes',
+                'id',
+                'cod_pessoa',
+            ]), $city);
+            if ($pId === null) {
+                return null;
+            }
+
+            $refDateExpr = self::refDateCorteEscolarSql($db, 't_filter', $tc['year']);
+            $idadeExpr = self::idadeAnosCompletosSql($db, $refDateExpr, 'p', $birthCol);
+            $distorcaoCond = '('.$idadeExpr.') > ('.$limiteExpr.' + 2)';
+
+            $serieJoinCol = $tc['serie'];
+            $eIdCol = $escolaSpec['idCol'];
+            $eNameCol = $escolaSpec['nameCol'];
+
+            $base = function () use ($db, $city, $filters, $mat, $mAtivo, $mAluno, $aluno, $aId, $aPessoa, $pessoa, $pId, $serieT, $sId, $birthCol, $serieJoinCol, $limiteExpr, $grammar, $tc, $escolaSpec, $eIdCol): Builder {
+                $q = $db->table($mat.' as m');
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+                MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+                MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+                MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+                $q->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
+                    ->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId);
+                $tSerieFk = $grammar->wrap('t_filter').'.'.$grammar->wrap($serieJoinCol);
+                $sPk = $grammar->wrap('s').'.'.$grammar->wrap($sId);
+                $q->join($serieT.' as s', function ($join) use ($db, $tSerieFk, $sPk) {
+                    if ($db->getDriverName() === 'pgsql') {
+                        $join->whereRaw('('.$tSerieFk.')::text = ('.$sPk.')::text');
+                    } else {
+                        $join->whereRaw('CAST('.$tSerieFk.' AS UNSIGNED) = CAST('.$sPk.' AS UNSIGNED)');
+                    }
+                })
+                    ->whereNotNull('p.'.$birthCol)
+                    ->whereRaw('('.$limiteExpr.') IS NOT NULL');
+
+                $tEscFk = $grammar->wrap('t_filter').'.'.$grammar->wrap($tc['escola']);
+                $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eIdCol);
+                $q->join($escolaSpec['qualified'].' as e', function ($join) use ($db, $tEscFk, $ePk) {
+                    if ($db->getDriverName() === 'pgsql') {
+                        $join->whereRaw('('.$tEscFk.')::text = ('.$ePk.')::text');
+                    } else {
+                        $join->whereRaw('CAST('.$tEscFk.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
+                    }
+                });
+
+                return $q;
+            };
+
+            $eidW = $grammar->wrap('e').'.'.$grammar->wrap($eIdCol);
+            $rows = $base()
+                ->whereRaw($distorcaoCond)
+                ->selectRaw($eidW.' as eid')
+                ->selectRaw('MAX(e.'.$grammar->wrap($eNameCol).') as ename')
+                ->selectRaw('COUNT(*) as cnt')
+                ->groupBy([$eidW])
+                ->orderByDesc('cnt')
+                ->limit(20)
+                ->get();
+
+            if ($rows->isEmpty()) {
+                return null;
+            }
+
+            $labels = [];
+            $values = [];
+            foreach ($rows as $row) {
+                $labels[] = (string) (($row->ename ?? '') !== '' ? $row->ename : ('#'.($row->eid ?? '')));
+                $values[] = (float) ($row->cnt ?? 0);
+            }
+
+            return ['labels' => $labels, 'values' => $values];
+        } catch (QueryException|\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Distorção na rede: onde há casos (turno × curso), critério INEP automático.
+     *
+     * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>, subtitle?: string}
+     */
+    public static function distorcaoIdadeSeriePorTurnoCursoRedeChart(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+    ): ?array {
+        $by = self::distorcaoComDistorsaoPorTurnoCursoAutomatico($db, $city, $filters);
+        if ($by === null || $by['labels'] === []) {
+            return null;
+        }
+
+        [$labels, $values] = ChartPayload::capTailAsOutros($by['labels'], $by['values'], 18, __('Outros turno/curso'));
+
+        $chart = ChartPayload::barHorizontal(
+            __('Distorção idade/série — turno e curso (rede)'),
+            __('Matrículas com distorção'),
+            $labels,
+            $values
+        );
+        $chart['subtitle'] = __(
+            'Contagem de matrículas activas com distorção (idade à 31/03 > limite da série + 2 anos), por combinação turno × curso no filtro.'
+        );
+        $chart['options'] = array_merge($chart['options'] ?? [], ['panelHeight' => 'xl']);
+
+        return $chart;
+    }
+
+    /**
+     * Distorção por escola (automático MySQL/MariaDB/PostgreSQL), quando a base tem turma→escola e série.
+     *
+     * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>, subtitle?: string}
+     */
+    public static function distorcaoIdadeSeriePorEscolaAutomaticoChart(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+    ): ?array {
+        $by = self::distorcaoComDistorsaoPorEscolaAutomatico($db, $city, $filters);
+        if ($by === null || $by['labels'] === []) {
+            return null;
+        }
+
+        [$labels, $values] = ChartPayload::capTailAsOutros($by['labels'], $by['values'], 14, __('Outras unidades'));
+
+        $chart = ChartPayload::barHorizontal(
+            __('Distorção idade/série — por escola (rede)'),
+            __('Matrículas com distorção'),
+            $labels,
+            $values
+        );
+        $chart['subtitle'] = __(
+            'Critério INEP automático (pessoa.data_nasc, série com idade máxima). Top :n unidades com mais casos no filtro.',
+            ['n' => count($labels)]
+        );
+        $chart['options'] = array_merge($chart['options'] ?? [], ['panelHeight' => 'xxl']);
+
+        return $chart;
     }
 
     /**

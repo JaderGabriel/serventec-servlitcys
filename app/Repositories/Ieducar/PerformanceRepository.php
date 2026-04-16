@@ -205,26 +205,6 @@ class PerformanceRepository
 
                 $charts = [];
 
-                $dLabels = [];
-                $dVals = [];
-                foreach ($ind['buckets'] as $b) {
-                    if ($b['q'] > 0) {
-                        $dLabels[] = $b['label'];
-                        $dVals[] = $b['q'];
-                    }
-                }
-                if ($dLabels === [] && $total > 0) {
-                    $dLabels = [__('Total de matrículas (agregado)')];
-                    $dVals = [$total];
-                }
-                if ($dLabels !== []) {
-                    $agg = ChartPayload::doughnut(__('Indicadores agregados (rede)'), $dLabels, $dVals);
-                    $agg['subtitle'] = __(
-                        'Distribuição das matrículas ativas do filtro pelas categorias de situação agregadas na rede. Cada fatia corresponde a uma categoria; o tamanho reflecte a participação no total considerado no denominador comum.'
-                    );
-                    $charts[] = $agg;
-                }
-
                 $kpiBarLabels = [];
                 $kpiBarVals = [];
                 foreach ($ind['kpis'] as $kpi) {
@@ -233,13 +213,21 @@ class PerformanceRepository
                         $kpiBarVals[] = $kpi['percent'];
                     }
                 }
+                $hasKpiBar = false;
                 if ($kpiBarLabels !== []) {
-                    $charts[] = ChartPayload::barHorizontal(
+                    $kpiChart = ChartPayload::barHorizontal(
                         __('Taxas sobre o total de matrículas ativas (mesmo denominador)'),
                         __('Percentagem'),
                         $kpiBarLabels,
                         $kpiBarVals
                     );
+                    $kpiChart['pair_in_row'] = 'desempenho-taxas-situacao';
+                    $kpiChart['options'] = array_merge(
+                        is_array($kpiChart['options'] ?? null) ? $kpiChart['options'] : [],
+                        ['panelHeight' => 'xxxl']
+                    );
+                    $charts[] = $kpiChart;
+                    $hasKpiBar = true;
                 }
 
                 $chart = ChartPayload::bar(
@@ -248,6 +236,13 @@ class PerformanceRepository
                     $labels,
                     $values
                 );
+                if ($hasKpiBar) {
+                    $chart['pair_in_row'] = 'desempenho-taxas-situacao';
+                    $chart['options'] = array_merge(
+                        is_array($chart['options'] ?? null) ? $chart['options'] : [],
+                        ['panelHeight' => 'xl']
+                    );
+                }
                 $charts[] = $chart;
 
                 $distorcaoChart = MatriculaChartQueries::distorcaoIdadeSerieRedeChart($db, $city, $filters);

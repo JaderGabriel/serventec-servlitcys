@@ -3,6 +3,7 @@
 namespace App\Services\Inep;
 
 use App\Models\City;
+use App\Support\Inep\SaebMunicipioPayloadReader;
 use App\Support\Inep\SaebOfficialPayloadParser;
 use Illuminate\Support\Facades\Http;
 
@@ -21,13 +22,13 @@ class SaebOfficialMunicipalImportService
     public function importFromOfficialTemplate(): array
     {
         $rel = $this->relativePath();
-        $template = trim((string) config('ieducar.saeb.official_url_template', ''));
+        $template = $this->resolveOfficialUrlTemplate();
 
         if ($template === '' || ! str_contains($template, '{ibge}')) {
             return [
                 'ok' => false,
                 'message' => __(
-                    'Configure IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE no .env com o placeholder {ibge} (código de 7 dígitos do município).'
+                    'Defina APP_URL com a URL pública da aplicação (https://…) ou IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com o placeholder {ibge}. O IBGE nas cidades não substitui a URL de origem dos dados.'
                 ),
                 'fonte_efetiva' => null,
                 'path' => $rel,
@@ -51,6 +52,8 @@ class SaebOfficialMunicipalImportService
             ];
         }
 
+        $useInternalFirst = filter_var(config('ieducar.saeb.official_use_internal_storage_first', true), FILTER_VALIDATE_BOOLEAN);
+
         $allPontos = [];
         $errors = [];
         $urlsTentadas = [];
@@ -58,57 +61,69 @@ class SaebOfficialMunicipalImportService
         foreach ($cities as $city) {
             /** @var City $city */
             $ibge = (string) $city->ibge_municipio;
-            $url = $this->expandTemplate($template, $city, $ibge);
-            $urlsTentadas[] = $url;
+            $decoded = null;
 
-            try {
-                $resp = Http::timeout($this->httpTimeoutSeconds())
-                    ->withHeaders([
-                        'User-Agent' => 'ServLitcys-SAEB-Official/1.0',
-                        'Accept' => 'application/json, text/plain;q=0.9, */*;q=0.8',
-                    ])
-                    ->acceptJson()
-                    ->get($url);
+            if ($useInternalFirst) {
+                $decoded = SaebMunicipioPayloadReader::loadForIbge($ibge);
+            }
 
-                if (! $resp->successful()) {
-                    $errors[] = __(':nome (IBGE :ibge): HTTP :code', [
+            if ($decoded === null) {
+                $url = $this->expandTemplate($template, $city, $ibge);
+                $urlsTentadas[] = $url;
+
+                try {
+                    $resp = Http::timeout($this->httpTimeoutSeconds())
+                        ->withHeaders([
+                            'User-Agent' => 'ServLitcys-SAEB-Official/1.0',
+                            'Accept' => 'application/json, text/plain;q=0.9, */*;q=0.8',
+                        ])
+                        ->acceptJson()
+                        ->get($url);
+
+                    if (! $resp->successful()) {
+                        $errors[] = __(':nome (IBGE :ibge): HTTP :code', [
+                            'nome' => $city->name,
+                            'ibge' => $ibge,
+                            'code' => (string) $resp->status(),
+                        ]);
+
+                        continue;
+                    }
+
+                    $decoded = json_decode($resp->body(), true);
+                    if (! is_array($decoded)) {
+                        $errors[] = __(':nome (IBGE :ibge): resposta não é JSON.', [
+                            'nome' => $city->name,
+                            'ibge' => $ibge,
+                        ]);
+
+                        continue;
+                    }
+                } catch (\Throwable $e) {
+                    $errors[] = __(':nome (IBGE :ibge): :msg', [
                         'nome' => $city->name,
                         'ibge' => $ibge,
-                        'code' => (string) $resp->status(),
+                        'msg' => $e->getMessage(),
                     ]);
 
                     continue;
                 }
+            } else {
+                $urlsTentadas[] = __('Leitura interna (storage) para IBGE :ibge', ['ibge' => $ibge]);
+            }
 
-                $decoded = json_decode($resp->body(), true);
-                if (! is_array($decoded)) {
-                    $errors[] = __(':nome (IBGE :ibge): resposta não é JSON.', [
-                        'nome' => $city->name,
-                        'ibge' => $ibge,
-                    ]);
-
-                    continue;
-                }
-
-                $pontos = SaebOfficialPayloadParser::pontosForCity($decoded, $city);
-                if ($pontos === []) {
-                    $errors[] = __(':nome (IBGE :ibge): JSON sem pontos reconhecíveis (chaves «pontos» ou «resultados»).', [
-                        'nome' => $city->name,
-                        'ibge' => $ibge,
-                    ]);
-
-                    continue;
-                }
-
-                foreach ($pontos as $p) {
-                    $allPontos[] = $p;
-                }
-            } catch (\Throwable $e) {
-                $errors[] = __(':nome (IBGE :ibge): :msg', [
+            $pontos = SaebOfficialPayloadParser::pontosForCity($decoded, $city);
+            if ($pontos === []) {
+                $errors[] = __(':nome (IBGE :ibge): JSON sem pontos reconhecíveis (chaves «pontos» ou «resultados»).', [
                     'nome' => $city->name,
                     'ibge' => $ibge,
-                    'msg' => $e->getMessage(),
                 ]);
+
+                continue;
+            }
+
+            foreach ($pontos as $p) {
+                $allPontos[] = $p;
             }
         }
 
@@ -149,6 +164,24 @@ class SaebOfficialMunicipalImportService
             $urlsTentadas,
             $extra
         );
+    }
+
+    /**
+     * Se IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE estiver vazio, usa a API desta aplicação (requer APP_URL correcto em produção).
+     */
+    private function resolveOfficialUrlTemplate(): string
+    {
+        $t = trim((string) config('ieducar.saeb.official_url_template', ''));
+        if ($t !== '' && str_contains($t, '{ibge}')) {
+            return $t;
+        }
+
+        $appUrl = rtrim((string) config('app.url', ''), '/');
+        if ($appUrl === '' || ! str_starts_with($appUrl, 'http')) {
+            return '';
+        }
+
+        return $appUrl.'/api/saeb/municipio/{ibge}.json';
     }
 
     private function expandTemplate(string $template, City $city, string $ibge): string
