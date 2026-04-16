@@ -398,14 +398,66 @@
     @endif
 
     @if ($perfCharts !== [])
+        @php
+            $pairKeyPerf = 'desempenho-taxas-situacao';
+            $perfFragments = [];
+            $pi = 0;
+            $nPerf = count($perfCharts);
+            while ($pi < $nPerf) {
+                $ch = $perfCharts[$pi];
+                $pid = $ch['pair_in_row'] ?? null;
+                if ($pid === $pairKeyPerf) {
+                    $group = [$ch];
+                    $pi++;
+                    if ($pi < $nPerf && (($perfCharts[$pi]['pair_in_row'] ?? null) === $pairKeyPerf)) {
+                        $group[] = $perfCharts[$pi];
+                        $pi++;
+                    }
+                    $perfFragments[] = ['type' => 'pair', 'charts' => $group];
+                } else {
+                    $perfFragments[] = ['type' => 'single', 'charts' => [$ch]];
+                    $pi++;
+                }
+            }
+            $globalChartIdx = 0;
+        @endphp
         <div class="grid grid-cols-1 gap-6">
-            @foreach ($perfCharts as $idx => $chart)
-                <x-dashboard.chart-panel
-                    :chart="$chart"
-                    :exportFilename="'desempenho-'.$idx"
-                    :exportMeta="$chartExportContext"
-                    :compact="false"
-                />
+            @foreach ($perfFragments as $frag)
+                @if ($frag['type'] === 'pair' && count($frag['charts']) === 2)
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch min-w-0">
+                        @foreach ($frag['charts'] as $chart)
+                            @php
+                                $panelPayload = $chart;
+                                unset($panelPayload['pair_in_row']);
+                            @endphp
+                            <x-dashboard.chart-panel
+                                :chart="$panelPayload"
+                                :exportFilename="'desempenho-'.$globalChartIdx"
+                                :exportMeta="$chartExportContext"
+                                :compact="true"
+                                :chartPanelId="'chart-desp-'.$globalChartIdx"
+                                :suppressTitle="false"
+                            />
+                            @php $globalChartIdx++; @endphp
+                        @endforeach
+                    </div>
+                @else
+                    @foreach ($frag['charts'] as $chart)
+                        @php
+                            $panelPayload = $chart;
+                            unset($panelPayload['pair_in_row']);
+                        @endphp
+                        <x-dashboard.chart-panel
+                            :chart="$panelPayload"
+                            :exportFilename="'desempenho-'.$globalChartIdx"
+                            :exportMeta="$chartExportContext"
+                            :compact="false"
+                            :chartPanelId="'chart-desp-'.$globalChartIdx"
+                            :suppressTitle="false"
+                        />
+                        @php $globalChartIdx++; @endphp
+                    @endforeach
+                @endif
             @endforeach
         </div>
     @elseif (empty($performanceData['error']) && empty($performanceData['message']) && $perfCharts === [] && empty($performanceData['kpis'] ?? []) && empty($performanceData['inep_panel'] ?? null) && empty(($performanceData['saeb_series']['charts'] ?? [])) && empty(($performanceData['saeb_series']['extra_charts'] ?? [])) && empty(($performanceData['saeb_series']['summary'] ?? null)) && empty(($performanceData['saeb_series']['school_table'] ?? [])) && empty(($performanceData['saeb_series']['explicacao_modal'] ?? null)))

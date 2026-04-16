@@ -67,15 +67,6 @@ class EnrollmentRepository
                     }
 
                     $charts = [];
-                    $distPorEscola = MatriculaChartQueries::distorcaoIdadeSeriePorEscolaFisica($db, $city, $filters);
-                    if ($distPorEscola !== null) {
-                        $charts[] = $distPorEscola;
-                    }
-
-                    $dist = MatriculaChartQueries::distorcaoIdadeSerieRedeChart($db, $city, $filters);
-                    if ($dist !== null) {
-                        $charts[] = $dist;
-                    }
 
                     $porEscola = MatriculaChartQueries::matriculasPorEscolaRelatorioDireto($db, $city, $filters, 15)
                         ?? MatriculaChartQueries::matriculasPorEscolaComOutros($db, $city, $filters, 14)
@@ -99,8 +90,7 @@ class EnrollmentRepository
                         }
                     }
 
-                    // Card extra para evitar "buraco" visual e manter a temática de matrículas:
-                    // distribuição do fluxo (abandono/remanejamento) quando existir base de situação INEP.
+                    // Card extra: distribuição do fluxo (abandono/remanejamento) quando existir base de situação INEP.
                     if (is_array($fluxoTaxas) && (int) ($fluxoTaxas['total'] ?? 0) > 0) {
                         $abandono = (int) ($fluxoTaxas['abandono_q'] ?? 0);
                         $remanej = (int) ($fluxoTaxas['remanejamento_q'] ?? 0);
@@ -111,6 +101,17 @@ class EnrollmentRepository
                             [__('Abandono (11)'), __('Remanejamento (16)'), __('Outras situações / sem código')],
                             [$abandono, $remanej, $outros],
                         );
+                    }
+
+                    $distTurnoCurso = MatriculaChartQueries::distorcaoIdadeSeriePorTurnoCursoRedeChart($db, $city, $filters);
+                    if ($distTurnoCurso !== null) {
+                        $charts[] = $distTurnoCurso;
+                    }
+
+                    $distEscolas = MatriculaChartQueries::distorcaoIdadeSeriePorEscolaFisica($db, $city, $filters)
+                        ?? MatriculaChartQueries::distorcaoIdadeSeriePorEscolaAutomaticoChart($db, $city, $filters);
+                    if ($distEscolas !== null) {
+                        $charts[] = $distEscolas;
                     }
 
                     return [

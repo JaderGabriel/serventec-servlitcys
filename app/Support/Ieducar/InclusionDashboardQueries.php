@@ -168,9 +168,368 @@ final class InclusionDashboardQueries
         if ($det !== null) {
             $out[] = $det;
         }
-        $porEscola = self::chartNeeMatriculasPorEscolaTop($db, $city, $filters);
-        if ($porEscola !== null) {
-            $out[] = $porEscola;
+        $porEscolaDet = self::chartNeeDeficienciasPorEscolaStacked($db, $city, $filters);
+        if ($porEscolaDet === null) {
+            $porEscolaDet = self::chartNeeMatriculasPorEscolaTop($db, $city, $filters);
+        }
+        if ($porEscolaDet !== null) {
+            $out[] = $porEscolaDet;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Resumo NEE (três grupos) para a aba Visão geral — mesmos critérios que o gráfico principal em Inclusão & Diversidade.
+     *
+     * @return ?array<string, mixed>
+     */
+    public static function chartNeeResumoVisaoGeral(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        $chart = self::chartTresGruposDeficienciaSindromeNe($db, $city, $filters);
+        if ($chart === null) {
+            return null;
+        }
+
+        $chart['title'] = __('NEE (resumo) — educação especial');
+        $chart['options'] = array_merge(
+            is_array($chart['options'] ?? null) ? $chart['options'] : [],
+            ['panelHeight' => 'lg']
+        );
+
+        return $chart;
+    }
+
+    /**
+     * Barras horizontais empilhadas: por escola, segmentos = designação no catálogo de deficiências (onde existe cada NEE).
+     *
+     * @return ?array<string, mixed>
+     */
+    private static function chartNeeDeficienciasPorEscolaStacked(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        try {
+            $rows = self::fetchNeeEscolaDeficienciaAggregationRows($db, $city, $filters);
+            if ($rows === []) {
+                return null;
+            }
+
+            $totByE = [];
+            $totByD = [];
+            /** @var array<string, array<string, int>> $cell */
+            $cell = [];
+            $names = [];
+            foreach ($rows as $r) {
+                $eid = $r['eid'];
+                $did = $r['did'];
+                $c = $r['c'];
+                if ($c <= 0) {
+                    continue;
+                }
+                $totByE[$eid] = ($totByE[$eid] ?? 0) + $c;
+                $totByD[$did] = ($totByD[$did] ?? 0) + $c;
+                $cell[$eid][$did] = ($cell[$eid][$did] ?? 0) + $c;
+                $nm = trim((string) ($r['dname'] ?? ''));
+                $names[$did] = $nm !== '' ? $nm : __('Não informado');
+            }
+
+            if ($totByE === []) {
+                return null;
+            }
+
+            $maxSchools = 24;
+            $maxDefTypes = 14;
+            arsort($totByE);
+            $eidOrder = array_slice(array_keys($totByE), 0, $maxSchools, true);
+
+            arsort($totByD);
+            $defKeysAll = array_keys($totByD);
+            $topDefKeys = array_slice($defKeysAll, 0, $maxDefTypes);
+            $topDefSet = array_flip($topDefKeys);
+
+            $escolaT = IeducarSchema::resolveTable('escola', $city);
+            $eIdCol = (string) config('ieducar.columns.escola.id');
+            $eNameCol = (string) config('ieducar.columns.escola.name');
+
+            $labels = [];
+            foreach ($eidOrder as $eidStr) {
+                $name = $db->table($escolaT)->where($eIdCol, $eidStr)->value($eNameCol);
+                $labels[] = $name !== null && (string) $name !== '' ? (string) $name : ('#'.$eidStr);
+            }
+
+            $series = [];
+            foreach ($topDefKeys as $did) {
+                $data = [];
+                foreach ($eidOrder as $eidStr) {
+                    $data[] = (float) ($cell[$eidStr][$did] ?? 0);
+                }
+                $series[] = [
+                    'label' => $names[$did] ?? ('#'.$did),
+                    'data' => $data,
+                ];
+            }
+
+            $outrosData = [];
+            foreach ($eidOrder as $eidStr) {
+                $sum = 0;
+                foreach ($cell[$eidStr] ?? [] as $did => $v) {
+                    if (! isset($topDefSet[$did])) {
+                        $sum += $v;
+                    }
+                }
+                $outrosData[] = (float) $sum;
+            }
+            if (array_sum($outrosData) > 0.5) {
+                $series[] = [
+                    'label' => __('Outras designações'),
+                    'data' => $outrosData,
+                ];
+            }
+
+            $chart = ChartPayload::barHorizontalStacked(
+                __('NEE por tipo de deficiência — por escola'),
+                __('Matrículas (distintas)'),
+                $labels,
+                $series
+            );
+            $chart['subtitle'] = __(
+                'Cada barra é uma unidade escolar; os segmentos mostram quantas matrículas activas distintas existem por designação no catálogo (cadastro.deficiencia). Até :n escolas e :m tipos mais frequentes no filtro.',
+                ['n' => count($labels), 'm' => count($topDefKeys)]
+            );
+            $chart['options'] = array_merge($chart['options'] ?? [], ['panelHeight' => 'xxxl']);
+            $chart['footnote'] = __(
+                'Mesma origem que «Matrículas por tipo (cadastro)»: prioridade a cadastro.fisica_deficiência; senão aluno_deficiência. Uma matrícula pode contar em mais do que um segmento se o aluno tiver vários vínculos.'
+            );
+
+            return $chart;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * @return list<array{eid: string, did: string, dname: string, c: int}>
+     */
+    private static function fetchNeeEscolaDeficienciaAggregationRows(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        $defTable = self::resolveDeficienciaCatalogTable($db, $city);
+        if ($defTable === null) {
+            return [];
+        }
+
+        $alunoT = IeducarSchema::resolveTable('aluno', $city);
+        $fisica = self::resolveFisicaDeficienciaJoinSpec($db, $city);
+        $aIdpes = self::resolveAlunoIdpesColumn($db, $alunoT, $city);
+
+        if ($fisica !== null && $aIdpes !== null) {
+            try {
+                $r = self::queryNeeEscolaDeficienciaFisicaPath($db, $city, $filters, $fisica, $defTable);
+                if ($r !== []) {
+                    return $r;
+                }
+            } catch (\Throwable) {
+                // tenta aluno_deficiência
+            }
+        }
+
+        return self::queryNeeEscolaDeficienciaAlunoDefPath($db, $city, $filters, $defTable);
+    }
+
+    /**
+     * @param  array{table: string, idpes_col: string, def_fk: string}  $fisica
+     * @return list<array{eid: string, did: string, dname: string, c: int}>
+     */
+    private static function queryNeeEscolaDeficienciaFisicaPath(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        array $fisica,
+        string $defTable,
+    ): array {
+        $mat = IeducarSchema::resolveTable('matricula', $city);
+        $aluno = IeducarSchema::resolveTable('aluno', $city);
+        $mId = (string) config('ieducar.columns.matricula.id');
+        $mAluno = (string) config('ieducar.columns.matricula.aluno');
+        $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+        $aId = (string) config('ieducar.columns.aluno.id');
+        $aIdpes = self::resolveAlunoIdpesColumn($db, $aluno, $city);
+        if ($aIdpes === null) {
+            return [];
+        }
+
+        $defPk = IeducarColumnInspector::firstExistingColumn($db, $defTable, array_filter([
+            (string) config('ieducar.columns.deficiencia.id'),
+            'cod_deficiencia',
+        ]), $city);
+        $nmCol = IeducarColumnInspector::firstExistingColumn($db, $defTable, array_filter([
+            (string) config('ieducar.columns.deficiencia.name'),
+            'nm_deficiencia',
+        ]), $city);
+        if ($defPk === null || $nmCol === null) {
+            return [];
+        }
+
+        $escolaT = IeducarSchema::resolveTable('escola', $city);
+        $eId = (string) config('ieducar.columns.escola.id');
+
+        $g = $db->getQueryGrammar();
+        $wNm = $g->wrap($nmCol);
+        $wPk = $g->wrap($defPk);
+
+        $q = $db->table($mat.' as m')
+            ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
+            ->join($fisica['table'].' as fd', 'a.'.$aIdpes, '=', 'fd.'.$fisica['idpes_col'])
+            ->join($defTable.' as d', 'fd.'.$fisica['def_fk'], '=', 'd.'.$defPk);
+        MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+        MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+        MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+        MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+
+        if (! self::joinEscolaOnMatriculaTurmaQuery($db, $city, $q, $escolaT, $eId)) {
+            return [];
+        }
+
+        $q->selectRaw('e.'.$eId.' as eid')
+            ->selectRaw('d.'.$wPk.' as did')
+            ->selectRaw('MAX(COALESCE(d.'.$wNm.', \'Não informado\')) as dname')
+            ->selectRaw('COUNT(DISTINCT '.$g->wrap('m').'.'.$g->wrap($mId).') as c')
+            ->groupBy('e.'.$eId)
+            ->groupBy('d.'.$wPk);
+
+        return self::mapNeeEscolaDeficienciaRows($q->get());
+    }
+
+    /**
+     * @return list<array{eid: string, did: string, dname: string, c: int}>
+     */
+    private static function queryNeeEscolaDeficienciaAlunoDefPath(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        string $defTable,
+    ): array {
+        $adTable = self::resolveAlunoDeficienciaTable($db, $city);
+        if ($adTable === null) {
+            return [];
+        }
+        $adAluno = IeducarColumnInspector::firstExistingColumn($db, $adTable, array_filter([
+            (string) config('ieducar.columns.aluno_deficiencia.aluno'),
+            'ref_cod_aluno',
+            'cod_aluno',
+        ]), $city);
+        $adDef = IeducarColumnInspector::firstExistingColumn($db, $adTable, array_filter([
+            (string) config('ieducar.columns.aluno_deficiencia.deficiencia'),
+            'ref_cod_deficiencia',
+        ]), $city);
+        $defPk = IeducarColumnInspector::firstExistingColumn($db, $defTable, array_filter([
+            (string) config('ieducar.columns.deficiencia.id'),
+            'cod_deficiencia',
+        ]), $city);
+        $nmCol = IeducarColumnInspector::firstExistingColumn($db, $defTable, array_filter([
+            (string) config('ieducar.columns.deficiencia.name'),
+            'nm_deficiencia',
+        ]), $city);
+        if ($adAluno === null || $adDef === null || $defPk === null || $nmCol === null) {
+            return [];
+        }
+
+        $mat = IeducarSchema::resolveTable('matricula', $city);
+        $aluno = IeducarSchema::resolveTable('aluno', $city);
+        $mId = (string) config('ieducar.columns.matricula.id');
+        $mAluno = (string) config('ieducar.columns.matricula.aluno');
+        $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+        $aId = (string) config('ieducar.columns.aluno.id');
+
+        $escolaT = IeducarSchema::resolveTable('escola', $city);
+        $eId = (string) config('ieducar.columns.escola.id');
+
+        $g = $db->getQueryGrammar();
+        $wNm = $g->wrap($nmCol);
+        $wPk = $g->wrap($defPk);
+
+        $q = $db->table($mat.' as m')
+            ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
+            ->join($adTable.' as ad', 'a.'.$aId, '=', 'ad.'.$adAluno)
+            ->join($defTable.' as d', 'ad.'.$adDef, '=', 'd.'.$defPk);
+        MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+        MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+        MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+        MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+
+        if (! self::joinEscolaOnMatriculaTurmaQuery($db, $city, $q, $escolaT, $eId)) {
+            return [];
+        }
+
+        $q->selectRaw('e.'.$eId.' as eid')
+            ->selectRaw('d.'.$wPk.' as did')
+            ->selectRaw('MAX(COALESCE(d.'.$wNm.', \'Não informado\')) as dname')
+            ->selectRaw('COUNT(DISTINCT '.$g->wrap('m').'.'.$g->wrap($mId).') as c')
+            ->groupBy('e.'.$eId)
+            ->groupBy('d.'.$wPk);
+
+        return self::mapNeeEscolaDeficienciaRows($q->get());
+    }
+
+    /**
+     * Junta escola a uma query que já tem matricula m e turma t_filter (mesma regra que neeMatriculasDistinctCountByEscolaMap).
+     */
+    private static function joinEscolaOnMatriculaTurmaQuery(
+        Connection $db,
+        City $city,
+        Builder $q,
+        string $escolaT,
+        string $eId,
+    ): bool {
+        $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+        $grammar = $db->getQueryGrammar();
+        if ($tc['escola'] !== '') {
+            $refEscola = $tc['escola'];
+            $tEsc = $grammar->wrap('t_filter').'.'.$grammar->wrap($refEscola);
+            $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
+            $q->join($escolaT.' as e', function ($join) use ($db, $tEsc, $ePk) {
+                if ($db->getDriverName() === 'pgsql') {
+                    $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
+                } else {
+                    $join->whereRaw('CAST('.$tEsc.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
+                }
+            });
+
+            return true;
+        }
+
+        $mat = IeducarSchema::resolveTable('matricula', $city);
+        $mEsc = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
+            (string) config('ieducar.columns.matricula.escola'),
+            'ref_cod_escola',
+            'ref_ref_cod_escola',
+            'cod_escola',
+        ]), $city);
+        if ($mEsc === null) {
+            return false;
+        }
+        $q->join($escolaT.' as e', 'm.'.$mEsc, '=', 'e.'.$eId);
+
+        return true;
+    }
+
+    /**
+     * @param  Collection<int, object>  $rows
+     * @return list<array{eid: string, did: string, dname: string, c: int}>
+     */
+    private static function mapNeeEscolaDeficienciaRows(Collection $rows): array
+    {
+        $out = [];
+        foreach ($rows as $row) {
+            $eid = trim((string) ($row->eid ?? ''));
+            $did = trim((string) ($row->did ?? ''));
+            if ($eid === '' || $eid === '0' || $did === '') {
+                continue;
+            }
+            $out[] = [
+                'eid' => $eid,
+                'did' => $did,
+                'dname' => (string) ($row->dname ?? ''),
+                'c' => (int) ($row->c ?? 0),
+            ];
         }
 
         return $out;

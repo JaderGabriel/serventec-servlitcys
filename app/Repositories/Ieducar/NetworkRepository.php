@@ -90,6 +90,12 @@ class NetworkRepository
                     }
                 }
 
+                $pairKeyRede = 'rede-oferta-turno-segmento';
+                if (count($charts) >= 2) {
+                    $charts[0]['pair_in_row'] = $pairKeyRede;
+                    $charts[1]['pair_in_row'] = $pairKeyRede;
+                }
+
                 if ($charts === [] && $vagasPorUnidadeChart === null) {
                     $notes[] = __(
                         'Nenhum gráfico de rede/oferta foi gerado. Confirme em config/ieducar.php: turma (e pivô matricula_turma se aplicável), turno, série, escola, curso, coluna de capacidade na turma (max_aluno), e filtros (ano / escola / segmento / turno).'

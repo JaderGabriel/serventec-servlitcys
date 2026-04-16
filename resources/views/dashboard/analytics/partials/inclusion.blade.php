@@ -92,7 +92,7 @@
         @if ($neeChartsCount > 0 || $hasNeeDetalheCatalogo)
             <div class="mb-8">
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('NEE — cadastro (deficiências, síndromes e altas habilidades)') }}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Gráficos derivados de aluno_deficiência e do catálogo de deficiências; o detalhe por nome segue as designações registadas na base.') }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Gráficos derivados de aluno_deficiência (ou fisica_deficiência) e do catálogo de deficiências; o gráfico por escola mostra, em cada unidade, quais designações de NEE existem (segmentos empilhados). O detalhe por nome segue as designações registadas na base.') }}</p>
                 @if ($neeGrupoResumo !== null && $neeGrupoResumoTotal > 0)
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 items-stretch">
                         <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
