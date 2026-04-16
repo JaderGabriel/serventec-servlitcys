@@ -8,6 +8,8 @@
     'chartPanelId' => null,
     /** Oculta o título repetido quando o cartão pai já mostra o mesmo cabeçalho (mantém subtítulo e ações). */
     'suppressTitle' => false,
+    /** default | indigo — alinha com o cabeçalho das abas da análise educacional */
+    'panelTone' => 'default',
 ])
 
 @php
@@ -18,6 +20,28 @@
     $chartPanelDomId = $chartPanelId ?? 'chart-panel-'.str_replace('-', '', (string) \Illuminate\Support\Str::uuid());
     $chartSubtitle = is_array($chart) && ! empty($chart['subtitle']) ? (string) $chart['subtitle'] : null;
     $chartFootnote = is_array($chart) && ! empty($chart['footnote']) ? (string) $chart['footnote'] : null;
+    $toneIndigo = $panelTone === 'indigo';
+    $panelRootClass = $toneIndigo
+        ? 'border-indigo-200/90 dark:border-indigo-800/65 bg-white dark:bg-gray-800 ring-1 ring-indigo-100/70 dark:ring-indigo-900/45'
+        : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800';
+    $panelHeaderClass = $toneIndigo
+        ? 'border-indigo-100 dark:border-indigo-900/55 bg-indigo-50/85 dark:bg-indigo-950/35'
+        : 'border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40';
+    $panelTitleClass = $toneIndigo
+        ? 'text-indigo-950 dark:text-indigo-100'
+        : 'text-gray-800 dark:text-gray-200';
+    $panelSubtitleClass = $toneIndigo
+        ? 'text-indigo-900/85 dark:text-indigo-200/85'
+        : 'text-gray-600 dark:text-gray-400';
+    $zoomBarClass = $toneIndigo
+        ? 'border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/70 dark:bg-indigo-950/30'
+        : 'border-gray-100 dark:border-gray-700 bg-slate-50/90 dark:bg-slate-950/40';
+    $zoomHelpTextClass = $toneIndigo
+        ? 'text-indigo-900/85 dark:text-indigo-200/85'
+        : 'text-slate-600 dark:text-slate-400';
+    $footnoteBarClass = $toneIndigo
+        ? 'border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/60 dark:bg-indigo-950/25 text-indigo-900/90 dark:text-indigo-200/90'
+        : 'border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400';
 @endphp
 
 @if ($hasChart)
@@ -25,16 +49,16 @@
         id="{{ $chartPanelDomId }}"
         data-chart-panel-root="1"
         data-chart-panel-id="{{ $chartPanelDomId }}"
-        class="chart-panel-host min-w-0 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm overflow-hidden"
+        class="chart-panel-host min-w-0 rounded-lg border shadow-sm overflow-hidden {{ $panelRootClass }}"
         x-data="chartPanel(@js($chart), @js($exportFilename), @js($exportMeta), @js($chartPanelDomId), @js($compact))"
     >
-        <div class="flex flex-col gap-3 px-3 py-3 sm:py-2.5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40">
+        <div class="flex flex-col gap-3 px-3 py-3 sm:py-2.5 border-b {{ $panelHeaderClass }}">
             <div class="min-w-0 w-full text-center">
                 @if (! $suppressTitle)
-                    <h4 class="text-sm font-bold uppercase tracking-wide text-gray-800 dark:text-gray-200 break-words">{{ $chart['title'] ?? '' }}</h4>
+                    <h4 class="text-sm font-bold uppercase tracking-wide break-words {{ $panelTitleClass }}">{{ $chart['title'] ?? '' }}</h4>
                 @endif
                 @if ($chartSubtitle)
-                    <p class="{{ $suppressTitle ? '' : 'mt-1.5 ' }}text-xs text-gray-600 dark:text-gray-400 leading-relaxed text-center">{{ $chartSubtitle }}</p>
+                    <p class="{{ $suppressTitle ? '' : 'mt-1.5 ' }}text-xs leading-relaxed text-center {{ $panelSubtitleClass }}">{{ $chartSubtitle }}</p>
                 @endif
             </div>
             <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-stretch sm:justify-end w-full sm:gap-2">
@@ -77,9 +101,9 @@
         <div
             x-show="zoomUi"
             x-cloak
-            class="border-b border-gray-100 dark:border-gray-700 bg-slate-50/90 dark:bg-slate-950/40 px-3 py-2.5 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+            class="border-b px-3 py-2.5 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 {{ $zoomBarClass }}"
         >
-            <p class="text-[11px] leading-snug text-center text-slate-600 dark:text-slate-400 sm:text-left sm:flex-1 sm:min-w-0">
+            <p class="text-[11px] leading-snug text-center sm:text-left sm:flex-1 sm:min-w-0 {{ $zoomHelpTextClass }}">
                 <span class="sm:hidden">{{ __('Pinça com dois dedos para ampliar ou reduzir. Arraste para mover. No computador: Ctrl + roda do rato para zoom.') }}</span>
                 <span class="hidden sm:inline">{{ __('Pinça para zoom · arrastar para mover · Ctrl + roda para zoom (computador).') }}</span>
             </p>
@@ -130,7 +154,7 @@
             ></canvas>
         </div>
         @if ($chartFootnote)
-            <div class="px-3 py-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+            <div class="px-3 py-2 border-t text-xs leading-relaxed {{ $footnoteBarClass }}">
                 {{ $chartFootnote }}
             </div>
         @endif

@@ -98,6 +98,14 @@ class OverviewRepository
                     }
                 }
 
+                try {
+                    $porTurno = MatriculaChartQueries::matriculasPorTurno($db, $city, $filters);
+                    if ($porTurno !== null) {
+                        $charts[] = $porTurno;
+                    }
+                } catch (QueryException) {
+                }
+
                 $note = $this->filterNote($filters);
 
                 return [

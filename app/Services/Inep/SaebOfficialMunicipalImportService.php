@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Support\Inep\SaebMunicipioPayloadReader;
 use App\Support\Inep\SaebOfficialPayloadParser;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 /**
  * Obtém séries SAEB por município (código IBGE) para cada cidade cadastrada e grava um único JSON agregado.
@@ -71,6 +72,17 @@ class SaebOfficialMunicipalImportService
                 $url = $this->expandTemplate($template, $city, $ibge);
                 $urlsTentadas[] = $url;
 
+                if ($this->isSameApplicationSaebEndpointUrl($url)) {
+                    $errors[] = __(':nome (IBGE :ibge): sem dados SAEB em storage para este código; o endpoint da própria aplicação (:url) só devolve JSON já importado (HTTP 404 até lá). Coloque ficheiros em storage/app/public/saeb/municipio/:ibge.json ou pontos em :hist com municipio_ibge ou city_ids, ou use primeiro «Importar de IEDUCAR_SAEB_IMPORT_URLS» / defina IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com uma URL externa.', [
+                        'nome' => $city->name,
+                        'ibge' => $ibge,
+                        'url' => $url,
+                        'hist' => $this->relativePath(),
+                    ]);
+
+                    continue;
+                }
+
                 try {
                     $resp = Http::timeout($this->httpTimeoutSeconds())
                         ->withHeaders([
@@ -128,7 +140,11 @@ class SaebOfficialMunicipalImportService
         }
 
         if ($allPontos === []) {
-            $msg = __('Nenhum município devolveu dados SAEB válidos.')."\n".implode("\n", $errors);
+            $hint = '';
+            if ($this->usesDefaultAppUrlTemplate($template)) {
+                $hint = "\n\n".__('Nota: com IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE vazio, a importação usa APP_URL + /api/saeb/municipio/{ibge}.json — isso só funciona depois de existir JSON em storage (ou use uma URL externa real no .env).');
+            }
+            $msg = __('Nenhum município devolveu dados SAEB válidos.').$hint."\n".implode("\n", $errors);
 
             return [
                 'ok' => false,
@@ -203,5 +219,57 @@ class SaebOfficialMunicipalImportService
         $teto = max(15, min(180, (int) config('ieducar.saeb.official_timeout_seconds', 60)));
 
         return $teto;
+    }
+
+    /**
+     * URL resolvida aponta para o endpoint SAEB desta mesma aplicação (importação circular sem dados prévios em storage).
+     */
+    private function isSameApplicationSaebEndpointUrl(string $url): bool
+    {
+        if ($url === '' || ! str_contains($url, '/api/saeb/municipio/')) {
+            return false;
+        }
+
+        $appUrl = rtrim((string) config('app.url', ''), '/');
+        if ($appUrl === '' || ! str_starts_with($appUrl, 'http')) {
+            return false;
+        }
+
+        $parsedApp = parse_url($appUrl);
+        $parsedUrl = parse_url($url);
+        $hostApp = strtolower((string) ($parsedApp['host'] ?? ''));
+        $hostUrl = strtolower((string) ($parsedUrl['host'] ?? ''));
+        if ($hostApp === '' || $hostUrl === '') {
+            return false;
+        }
+
+        $hostsMatch = $hostApp === $hostUrl
+            || $this->normalizeHostForCompare($hostApp) === $this->normalizeHostForCompare($hostUrl);
+
+        return $hostsMatch;
+    }
+
+    private function normalizeHostForCompare(string $host): string
+    {
+        $host = strtolower($host);
+
+        return Str::startsWith($host, 'www.') ? substr($host, 4) : $host;
+    }
+
+    private function usesDefaultAppUrlTemplate(string $template): bool
+    {
+        $t = trim((string) config('ieducar.saeb.official_url_template', ''));
+
+        return $t === '' && $template === $this->defaultOfficialTemplateFromAppUrl();
+    }
+
+    private function defaultOfficialTemplateFromAppUrl(): string
+    {
+        $appUrl = rtrim((string) config('app.url', ''), '/');
+        if ($appUrl === '' || ! str_starts_with($appUrl, 'http')) {
+            return '';
+        }
+
+        return $appUrl.'/api/saeb/municipio/{ibge}.json';
     }
 }

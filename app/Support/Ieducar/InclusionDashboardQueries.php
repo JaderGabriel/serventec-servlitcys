@@ -168,12 +168,15 @@ final class InclusionDashboardQueries
         if ($det !== null) {
             $out[] = $det;
         }
-        $porEscolaDet = self::chartNeeDeficienciasPorEscolaStacked($db, $city, $filters);
-        if ($porEscolaDet === null) {
-            $porEscolaDet = self::chartNeeMatriculasPorEscolaTop($db, $city, $filters);
+        // Total de matrículas NEE por unidade (barras simples) — sempre que possível.
+        $porEscolaTotal = self::chartNeeMatriculasPorEscolaTop($db, $city, $filters);
+        if ($porEscolaTotal !== null) {
+            $out[] = $porEscolaTotal;
         }
-        if ($porEscolaDet !== null) {
-            $out[] = $porEscolaDet;
+        // Detalhe por tipo de deficiência no catálogo (empilhado), além do total acima.
+        $porEscolaStacked = self::chartNeeDeficienciasPorEscolaStacked($db, $city, $filters);
+        if ($porEscolaStacked !== null) {
+            $out[] = $porEscolaStacked;
         }
 
         return $out;
@@ -764,7 +767,7 @@ final class InclusionDashboardQueries
             $note = null;
             if ($nAlunosAee === 0 && $matAee === 0) {
                 $note = __(
-                    'Nenhuma turma foi classificada como AEE pelas palavras-chave configuradas (IEDUCAR_INCLUSION_AEE_KEYWORDS). Ajuste o .env ou o nome das turmas/cursos na base para incluir termos como «AEE» ou «atendimento educacional especializado».'
+                    'Não foram encontradas turmas identificadas como AEE com os critérios actuais (nome da turma ou do curso).'
                 );
             }
 

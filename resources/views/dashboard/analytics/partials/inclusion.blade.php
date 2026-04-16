@@ -28,7 +28,7 @@
     <div class="rounded-lg border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-3">
         <h2 class="text-sm font-semibold text-indigo-900 dark:text-indigo-100">{{ __('Inclusão & Diversidade') }}</h2>
         <p class="text-sm text-gray-700 dark:text-gray-300 mt-1 leading-relaxed">
-            {{ __('Indicadores para acompanhar educação especial, equidade por etapa e cor ou raça, com o mesmo denominador de matrículas ativas sujeitas aos filtros (turma). Os dados seguem o registo na base i-Educar; para regras oficiais do Censo ou do VAAR use os relatórios do INEP/MEC ou SQL personalizado em config/ieducar.php.') }}
+            {{ __('Indicadores para acompanhar educação especial, equidade por etapa e cor ou raça, com o mesmo denominador de matrículas ativas sujeitas aos filtros (turma). Os dados refletem o registo na base escolar; para critérios oficiais do Censo ou do VAAR utilize os relatórios do INEP/MEC.') }}
         </p>
         @if ($totalMat !== null)
             <p class="mt-2 text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -71,7 +71,7 @@
     @if (! empty($inclusionData['gauges']))
         <div>
             <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('Educação especial e multidiversidade') }}</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Percentagem sobre matrículas ativas no filtro; prioridade a SQL em IEDUCAR_SQL_INCLUSION_GAUGE_*.') }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Percentagem sobre matrículas ativas no filtro; valores calculados a partir do cadastro quando disponível.') }}</p>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 @foreach ($inclusionData['gauges'] as $idx => $gauge)
                     <div class="space-y-2">
@@ -92,7 +92,7 @@
         @if ($neeChartsCount > 0 || $hasNeeDetalheCatalogo)
             <div class="mb-8">
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('NEE — cadastro (deficiências, síndromes e altas habilidades)') }}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Gráficos derivados de aluno_deficiência (ou fisica_deficiência) e do catálogo de deficiências; o gráfico por escola mostra, em cada unidade, quais designações de NEE existem (segmentos empilhados). O detalhe por nome segue as designações registadas na base.') }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Gráficos derivados de aluno_deficiência (ou fisica_deficiência) e do catálogo de deficiências. Há um gráfico com o total de matrículas NEE por escola e, quando a base permite, outro com segmentos empilhados por designação no catálogo. O detalhe em lista segue as designações registadas na base.') }}</p>
                 @if ($neeGrupoResumo !== null && $neeGrupoResumoTotal > 0)
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 items-stretch">
                         <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
@@ -150,12 +150,12 @@
                                     @endforeach
                                 </ul>
                             </div>
-                            <div class="rounded-md border border-white/80 dark:border-gray-700 bg-white/90 dark:bg-gray-800/70 min-h-[min(28rem,58vh)] flex flex-col shadow-sm">
+                            <div class="rounded-md border border-white/80 dark:border-gray-700 bg-white/90 dark:bg-gray-800/70 min-h-[min(20rem,46vh)] flex flex-col shadow-sm">
                                 <div class="px-3 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
                                     <span class="text-xs font-semibold text-gray-700 dark:text-gray-200">{{ __('Síndromes / TEA') }}</span>
                                     <span class="tabular-nums text-xs font-medium text-violet-700 dark:text-violet-300">{{ number_format((int) ($tot['sindromes_tea'] ?? 0)) }}</span>
                                 </div>
-                                <ul class="flex-1 max-h-[min(32rem,58vh)] min-h-[16rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
+                                <ul class="flex-1 max-h-[min(24rem,46vh)] min-h-[11rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
                                     @foreach ($neeDetalheCatalogo['sindromes_tea'] as $row)
                                         <li class="px-3 py-1.5 flex justify-between gap-2">
                                             <span class="text-gray-800 dark:text-gray-200 break-words">{{ $row['nome'] ?? '—' }}</span>
@@ -164,12 +164,12 @@
                                     @endforeach
                                 </ul>
                             </div>
-                            <div class="rounded-md border border-white/80 dark:border-gray-700 bg-white/90 dark:bg-gray-800/70 min-h-[min(28rem,58vh)] flex flex-col shadow-sm">
+                            <div class="rounded-md border border-white/80 dark:border-gray-700 bg-white/90 dark:bg-gray-800/70 min-h-[min(20rem,46vh)] flex flex-col shadow-sm">
                                 <div class="px-3 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
                                     <span class="text-xs font-semibold text-gray-700 dark:text-gray-200">{{ __('NE (altas habilidades)') }}</span>
                                     <span class="tabular-nums text-xs font-medium text-violet-700 dark:text-violet-300">{{ number_format((int) ($tot['ne_altas_habilidades'] ?? 0)) }}</span>
                                 </div>
-                                <ul class="flex-1 max-h-[min(32rem,58vh)] min-h-[16rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
+                                <ul class="flex-1 max-h-[min(24rem,46vh)] min-h-[11rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
                                     @foreach ($neeDetalheCatalogo['ne_altas_habilidades'] as $row)
                                         <li class="px-3 py-1.5 flex justify-between gap-2">
                                             <span class="text-gray-800 dark:text-gray-200 break-words">{{ $row['nome'] ?? '—' }}</span>
@@ -186,8 +186,17 @@
                 @endif
 
                 @if ($neeChartsCount > 1)
-                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 min-w-0 mt-6">
-                        @foreach (array_slice($inclusionData['charts'], 1, $neeChartsCount - 1) as $idx => $chart)
+                    @php
+                        $neeTailCharts = array_slice($inclusionData['charts'], 1, $neeChartsCount - 1);
+                        $neeTailCount = count($neeTailCharts);
+                    @endphp
+                    <div
+                        class="grid grid-cols-1 xl:grid-cols-2 gap-6 min-w-0 mt-6 items-start [&>.chart-panel-host]:flex [&>.chart-panel-host]:flex-col [&>.chart-panel-host]:min-h-0"
+                        @class([
+                            '[&>.chart-panel-host:nth-last-child(-n+2)]:max-h-[min(30rem,72vh)] [&>.chart-panel-host:nth-last-child(-n+2)]:overflow-hidden' => $neeTailCount >= 2,
+                        ])
+                    >
+                        @foreach ($neeTailCharts as $idx => $chart)
                             <x-dashboard.chart-panel
                                 :chart="$chart"
                                 :exportFilename="'inclusao-nee-'.($idx + 1)"
@@ -205,7 +214,7 @@
                 <div>
                     <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('AEE e outras matrículas (alunos NEE)') }}</h3>
                     <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                        {{ __('Apenas alunos com registo em aluno_deficiência. Turmas AEE são detectadas por palavras-chave no nome da turma ou do curso (config/ieducar.php — inclusão). As outras matrículas do mesmo aluno são agrupadas por segmento de forma heurística.') }}
+                        {{ __('Apenas alunos com registo em aluno_deficiência. Turmas AEE são identificadas por termos no nome da turma ou do curso. As outras matrículas do mesmo aluno são agrupadas por segmento de forma heurística.') }}
                     </p>
                 </div>
                 @if (! empty($aeeCross['note']))

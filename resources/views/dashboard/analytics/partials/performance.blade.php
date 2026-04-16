@@ -64,7 +64,7 @@
     @endif
 
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Cada taxa = (matrículas na categoria) ÷ (total de matrículas ativas no filtro) × 100. O total usa matricula.ativo e o campo de situação (códigos INEP via matricula_situacao ou equivalente); os filtros de ano/escola/curso/turno aplicam-se pela turma. Entre os indicadores destacam-se a taxa de reclassificação (cód. 10), abandono (11), remanejamento (16) e taxas agregadas de aprovação e reprovação. O gráfico de distorção idade/série (rede), quando presente, usa idade à 31/03 e limite etário + 2 anos, ou SQL IEDUCAR_SQL_DISTORCAO_REDE_CHART.') }}
+        {{ __('Cada taxa = (matrículas na categoria) ÷ (total de matrículas ativas no filtro) × 100. Os filtros de ano, escola, curso e turno aplicam-se pela turma. Entre os indicadores destacam-se reclassificação (cód. 10), abandono (11), remanejamento (16) e taxas de aprovação e reprovação. O gráfico de distorção idade/série, quando presente, segue o critério INEP (idade à 31/03 e limite etário + 2 anos).') }}
     </p>
 
     @php $saebSeries = $performanceData['saeb_series'] ?? null; @endphp
@@ -233,7 +233,7 @@
                 </div>
             @elseif (empty($saebSeries['error']) && empty($saebSeries['summary']) && empty($saebSeries['school_table']))
                 <div class="px-4 py-6 text-sm text-emerald-900/90 dark:text-emerald-200/90">
-                    {{ __('Ainda não há dados SAEB importados. Em Admin → Sincronizações → Pedagógicas, execute a sincronização oficial (IBGE) ou defina URLs em IEDUCAR_SAEB_IMPORT_URLS; os gráficos leem apenas storage/app/public/saeb/historico.json.') }}
+                    {{ __('Ainda não há dados SAEB importados. Em Administração → Sincronizações → Pedagógicas, importe os dados oficiais ou configure as fontes de JSON indicadas pela equipa técnica.') }}
                 </div>
             @endif
 
@@ -392,7 +392,7 @@
             <div class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/30 px-3 py-2 text-sm text-indigo-900 dark:text-indigo-100">
                 {{ __('Distorção idade/série (rede)') }}:
                 <span class="font-semibold">{{ number_format((float) $performanceData['distorcao_pct'], 1, ',', '.') }}%</span>
-                <span class="text-xs text-indigo-700 dark:text-indigo-300">({{ __('fonte: IEDUCAR_SQL_DISTORCAO_REDE') }})</span>
+                <span class="text-xs text-indigo-700 dark:text-indigo-300">({{ __('critério de rede ou definição personalizada') }})</span>
             </div>
         @endif
     @endif

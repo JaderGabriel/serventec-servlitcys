@@ -83,8 +83,8 @@ class InclusionRepository
 
                 try {
                     $neeCharts = InclusionDashboardQueries::buildCharts($db, $city, $filters);
-                } catch (\Throwable $e) {
-                    $notes[] = __('Gráficos NEE (deficiências, síndromes e cadastro): erro — :msg', ['msg' => $e->getMessage()]);
+                } catch (\Throwable) {
+                    $notes[] = __('Não foi possível carregar os gráficos de educação especial para estes filtros.');
                     $neeCharts = [];
                 }
 
@@ -107,16 +107,8 @@ class InclusionRepository
                             'caption' => $row['caption'],
                         ];
                     }
-                } catch (\Throwable $e) {
-                    $notes[] = __('Medidores de educação especial (NEE): erro ao calcular — :msg', ['msg' => $e->getMessage()]);
-                }
-
-                if ($gauges === []) {
-                    if ($totalMatriculas !== null && $totalMatriculas > 0) {
-                        $notes[] = __(
-                            'Educação especial: não foi possível montar medidores (vínculo aluno–deficiência ou colunas IEDUCAR_COL_ALUNO_DEFICIENCIA_*). O sistema procura automaticamente aluno_deficiencia em vários schemas; confirme IEDUCAR_TABLE_ALUNO_DEFICIENCIA / IEDUCAR_MYSQL_TABLE_ALUNO_DEFICIENCIA ou defina IEDUCAR_SQL_INCLUSION_GAUGE_* se o BI usar outra origem.'
-                        );
-                    }
+                } catch (\Throwable) {
+                    $notes[] = __('Não foi possível calcular os medidores de educação especial.');
                 }
 
                 $tailCharts = [];
@@ -126,10 +118,6 @@ class InclusionRepository
                     $sex['options'] = array_merge($sex['options'] ?? [], ['panelHeight' => 'lg']);
                     $sex['compact_panel'] = true;
                     $tailCharts[] = $sex;
-                } else {
-                    $notes[] = __(
-                        'Sexo (registo administrativo): indisponível — confirme cadastro.pessoa (sexo, idsexo, …) ou cadastro.fisica, e colunas de ligação aluno↔pessoa.'
-                    );
                 }
 
                 $customRaca = config('ieducar.sql.inclusion_raca');
@@ -139,8 +127,6 @@ class InclusionRepository
                         $racaChart['options'] = array_merge($racaChart['options'] ?? [], ['panelHeight' => 'lg']);
                         $racaChart['compact_panel'] = true;
                         $tailCharts[] = $racaChart;
-                    } else {
-                        $notes[] = __('A consulta personalizada de inclusão (raça) não devolveu linhas válidas.');
                     }
                 } else {
                     $racaChart = $this->raceDistributionChart($db, $city, $filters);
@@ -148,10 +134,6 @@ class InclusionRepository
                         $racaChart['options'] = array_merge($racaChart['options'] ?? [], ['panelHeight' => 'lg']);
                         $racaChart['compact_panel'] = true;
                         $tailCharts[] = $racaChart;
-                    } else {
-                        $notes[] = __(
-                            'Cor ou raça: não foi possível agregar pelo catálogo. Confirme IEDUCAR_TABLE_RACA, ref_cod_raca em pessoa/aluno/física, fallbacks ou IEDUCAR_SQL_INCLUSION_RACA (mesmos filtros de matrícula).'
-                        );
                     }
                 }
 
@@ -168,10 +150,6 @@ class InclusionRepository
                 if (($tmp = MatriculaChartQueries::matriculasPorSerieTop($db, $city, $filters)) !== null) {
                     $tailCharts[] = $tmp;
                     $equidadeFonte = 'serie';
-                } else {
-                    $notes[] = __(
-                        'Distribuição por série (equidade): indisponível — verifique turma→série e tabelas em config/ieducar.php.'
-                    );
                 }
 
                 $customExtra = config('ieducar.sql.inclusion_extra');

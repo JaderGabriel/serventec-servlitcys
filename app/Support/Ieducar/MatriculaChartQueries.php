@@ -1410,7 +1410,9 @@ final class MatriculaChartQueries
 
             $counts = self::matriculaCountByTurma($db, $city, $filters);
             /** @var array<string, array<string, int>> $matrix */
+            /** @var array<string, int> $capBySchool */
             $matrix = [];
+            $capBySchool = [];
             foreach ($turmaRows as $row) {
                 $tid = trim((string) ($row->tid ?? ''));
                 if ($tid === '') {
@@ -1427,6 +1429,7 @@ final class MatriculaChartQueries
                 if ($eid === '' || $eid === '0') {
                     continue;
                 }
+                $capBySchool[$eid] = ($capBySchool[$eid] ?? 0) + $cap;
                 $cidRaw = trim((string) ($row->cid ?? ''));
                 $cid = ($cidRaw === '' || $cidRaw === '0') ? $semCursoKey : $cidRaw;
                 if (! isset($matrix[$eid])) {
@@ -1452,7 +1455,42 @@ final class MatriculaChartQueries
                 }
             }
             if (! $anyPositive) {
-                return null;
+                // Rede cheia no filtro: ainda assim mostrar distribuição por capacidade declarada (evita cartão vazio).
+                if ($capBySchool === []) {
+                    return null;
+                }
+                $schoolIdsCap = array_keys($capBySchool);
+                usort($schoolIdsCap, function (string $a, string $b) use ($capBySchool): int {
+                    return ($capBySchool[$b] ?? 0) <=> ($capBySchool[$a] ?? 0);
+                });
+                $maxSchools = 55;
+                $schoolIdsCap = array_slice($schoolIdsCap, 0, $maxSchools);
+                $escolaT = IeducarSchema::resolveTable('escola', $city);
+                $eIdCol = (string) config('ieducar.columns.escola.id');
+                $eNameCol = (string) config('ieducar.columns.escola.name');
+                $schoolNamesMap = $db->table($escolaT)
+                    ->whereIn($eIdCol, $schoolIdsCap)
+                    ->pluck($eNameCol, $eIdCol)
+                    ->all();
+                $labels = [];
+                $values = [];
+                foreach ($schoolIdsCap as $sid) {
+                    $name = $schoolNamesMap[$sid] ?? $schoolNamesMap[(string) $sid] ?? null;
+                    $labels[] = $name !== null && (string) $name !== '' ? (string) $name : ('#'.$sid);
+                    $values[] = (float) ($capBySchool[$sid] ?? 0);
+                }
+                $payload = ChartPayload::barHorizontal(
+                    __('Capacidade declarada por escola (sem vagas livres no filtro)'),
+                    __('Capacidade (máx. alunos)'),
+                    $labels,
+                    $values
+                );
+                $payload['subtitle'] = __(
+                    'Não há vagas ociosas nas turmas deste recorte (oferta ocupada). O gráfico mostra a capacidade máxima declarada por unidade para comparar o porte da rede. Ajuste filtros ou confira max. alunos na turma e matrículas ativas.'
+                );
+                $payload['options'] = array_merge($payload['options'] ?? [], ['panelHeight' => 'xxl']);
+
+                return $payload;
             }
 
             $schoolsWithVac = array_keys(array_filter($schoolTotals, static fn (int $v): bool => $v > 0));
@@ -2396,6 +2434,65 @@ final class MatriculaChartQueries
         }
 
         return self::distorcaoIdadeSerieContagensAutomatico($db, $city, $filters);
+    }
+
+    /**
+     * Texto para o painel quando não há KPI de distorção mas existem matrículas no filtro.
+     */
+    public static function distorcaoIdadeSerieCartaoIndisponivelMotivo(Connection $db, City $city, IeducarFilterState $filters): ?string
+    {
+        $custom = trim((string) config('ieducar.sql.distorcao_rede_chart', ''));
+        if ($custom !== '') {
+            return __('A consulta personalizada de distorção não devolveu dados utilizáveis.');
+        }
+
+        $aluno = IeducarSchema::resolveTable('aluno', $city);
+        $pessoa = IeducarSchema::resolveTable('pessoa', $city);
+        $serieT = IeducarSchema::resolveTable('serie', $city);
+        if (! IeducarColumnInspector::tableExists($db, $aluno, $city)
+            || ! IeducarColumnInspector::tableExists($db, $pessoa, $city)
+            || ! IeducarColumnInspector::tableExists($db, $serieT, $city)) {
+            return __('Faltam dados cadastrais necessários para calcular a distorção idade–série neste município.');
+        }
+
+        $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+        if ($tc['year'] === '' || $tc['serie'] === '') {
+            return __('Verifique na turma o ano letivo e a série ligados às matrículas.');
+        }
+
+        $birthCol = IeducarColumnInspector::firstExistingColumn($db, $pessoa, array_filter([
+            'data_nasc',
+            'data_nascimento',
+            'dt_nascimento',
+            'dt_nasc',
+        ]), $city);
+        if ($birthCol === null) {
+            return __('É necessário registo de data de nascimento dos alunos para este indicador.');
+        }
+
+        $spec = self::serieJoinSpec($db, $city);
+        if ($spec === null) {
+            return __('Não foi possível associar turmas às séries para os dados actuais.');
+        }
+
+        $cfgMax = trim((string) config('ieducar.columns.serie.idade_limite_max', ''));
+        $maxCol = IeducarColumnInspector::firstExistingColumn($db, $serieT, array_filter([
+            $cfgMax !== '' ? $cfgMax : null,
+            'idade_maxima',
+            'idade_max',
+            'idade_maxima_escolar',
+            'idade_final',
+            'idade_fim',
+            'idade_ideal_max',
+            'idade_maxima_ideal',
+        ]), $city);
+        if ($maxCol === null) {
+            return __('Falta informação de idade prevista por série no cadastro escolar.');
+        }
+
+        return __(
+            'Ainda não foi possível calcular a distorção idade–série para este filtro: confirme datas de nascimento, série na turma e matrículas activas.'
+        );
     }
 
     /**

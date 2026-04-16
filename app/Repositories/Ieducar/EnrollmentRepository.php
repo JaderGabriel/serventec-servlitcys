@@ -22,6 +22,7 @@ class EnrollmentRepository
      *   rows: list<object>,
      *   kpis: ?array{matriculas: int, turmas_distintas: int, ocupacao_pct: ?float},
      *   distorcao: ?array{com: int, sem: int, total: int, pct: ?float, fonte: string},
+     *   distorcao_cartao_motivo: ?string,
      *   fluxo_taxas: ?array{total: int, abandono_q: int, remanejamento_q: int, evasao_q: int, abandono_pct: ?float, evasao_pct: ?float},
      *   unidades_escolares: ?list<array{nome: string, total: int}>,
      *   error: ?string,
@@ -36,6 +37,7 @@ class EnrollmentRepository
                 'rows' => [],
                 'kpis' => null,
                 'distorcao' => null,
+                'distorcao_cartao_motivo' => null,
                 'fluxo_taxas' => null,
                 'unidades_escolares' => null,
                 'error' => null,
@@ -64,6 +66,10 @@ class EnrollmentRepository
                             'pct' => round(100.0 * $com / $tot, 1),
                             'fonte' => (string) $distCont['fonte'],
                         ];
+                    }
+                    $distorcaoCartaoMotivo = null;
+                    if ($distorcao === null && ($kpis['matriculas'] ?? 0) > 0) {
+                        $distorcaoCartaoMotivo = MatriculaChartQueries::distorcaoIdadeSerieCartaoIndisponivelMotivo($db, $city, $filters);
                     }
 
                     $charts = [];
@@ -118,27 +124,29 @@ class EnrollmentRepository
                         'rows' => [],
                         'kpis' => $kpis,
                         'distorcao' => $distorcao,
+                        'distorcao_cartao_motivo' => $distorcaoCartaoMotivo,
                         'fluxo_taxas' => $fluxoTaxas,
                         'unidades_escolares' => $unidadesEscolares,
                         'error' => null,
                         'chart' => $charts[0] ?? null,
                         'charts' => $charts,
                     ];
-                } catch (QueryException $e) {
+                } catch (QueryException) {
                     return [
                         'rows' => [],
                         'kpis' => null,
                         'distorcao' => null,
+                        'distorcao_cartao_motivo' => null,
                         'fluxo_taxas' => null,
                         'unidades_escolares' => null,
-                        'error' => __('Não foi possível listar matrículas. Ajuste config/ieducar.php (tabela e colunas).').' '.$e->getMessage(),
+                        'error' => __('Não foi possível listar matrículas. Verifique os filtros ou contacte o suporte técnico.'),
                         'chart' => null,
                         'charts' => [],
                     ];
                 }
             });
-        } catch (\Throwable $e) {
-            return ['rows' => [], 'kpis' => null, 'distorcao' => null, 'fluxo_taxas' => null, 'unidades_escolares' => null, 'error' => $e->getMessage(), 'chart' => null, 'charts' => []];
+        } catch (\Throwable) {
+            return ['rows' => [], 'kpis' => null, 'distorcao' => null, 'distorcao_cartao_motivo' => null, 'fluxo_taxas' => null, 'unidades_escolares' => null, 'error' => __('Não foi possível carregar os dados de matrículas.'), 'chart' => null, 'charts' => []];
         }
     }
 }

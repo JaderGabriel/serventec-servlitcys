@@ -61,7 +61,7 @@
                     </p>
                 </div>
             </div>
-            <p class="text-[11px] text-gray-500 dark:text-gray-500 mt-2">{{ __('Fonte do cálculo:') }} {{ $d['fonte'] === 'custom' ? __('SQL personalizado (IEDUCAR_SQL_DISTORCAO_REDE_CHART)') : __('consulta automática (matrícula → turma → série)')}}</p>
+            <p class="text-[11px] text-gray-500 dark:text-gray-500 mt-2">{{ __('Fonte do cálculo:') }} {{ $d['fonte'] === 'custom' ? __('definição personalizada') : __('cálculo automático (matrícula, turma e série)')}}</p>
         </div>
     @endif
 
@@ -112,7 +112,17 @@
         && (int) ($enrollmentData['kpis']['matriculas'] ?? 0) > 0
         && empty($enrollmentData['distorcao'])
         && empty($enrollmentData['error'])
+        && ! empty($enrollmentData['distorcao_cartao_motivo'] ?? null)
     )
+        <div class="rounded-lg border border-amber-200/90 dark:border-amber-800/60 bg-amber-50/80 dark:bg-amber-950/25 p-4 shadow-sm">
+            <h3 class="text-sm font-semibold text-amber-950 dark:text-amber-100">{{ __('Distorção idade–série (indisponível)') }}</h3>
+            <p class="text-xs text-amber-900/90 dark:text-amber-200/85 mt-2 leading-relaxed">
+                {{ $enrollmentData['distorcao_cartao_motivo'] }}
+            </p>
+            <p class="text-[11px] text-amber-800/80 dark:text-amber-300/75 mt-2 leading-relaxed">
+                {{ __('Se o indicador continuar indisponível, a equipa técnica pode configurar uma consulta personalizada ou rever o cadastro de séries e datas de nascimento.') }}
+            </p>
+        </div>
     @endif
 
     @if (! empty($enrollmentData['unidades_escolares']))

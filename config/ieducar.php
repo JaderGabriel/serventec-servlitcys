@@ -350,6 +350,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | Os gráficos leem apenas o JSON em storage/app/public (Admin → Sincronizações → Pedagógicas).
+    | Primeira carga: IEDUCAR_SAEB_IMPORT_URLS, ficheiros em storage ou template externo — o endpoint interno
+    | GET /api/saeb/municipio/{ibge} só devolve dados depois de existir JSON em disco (não use como única fonte).
     | Importação oficial: IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com {ibge}, {uf}, {city_id} — uma URL por município
     | cadastrado (código IBGE em cities.ibge_municipio). Cada ponto deve ter city_ids (automático na importação oficial).
     | IEDUCAR_SAEB_IMPORT_URLS: URLs opcionais (JSON completo com «pontos»); não há fallback para ficheiros de exemplo.
@@ -371,7 +373,7 @@ return [
          * @var list<string>
          */
         'import_url_defaults' => [],
-        /** URL com placeholders {ibge} (7 dígitos), {uf}, {city_id}. Vazio = usa APP_URL + /api/saeb/municipio/{ibge}.json */
+        /** URL com placeholders {ibge} (7 dígitos), {uf}, {city_id}. Vazio = APP_URL + /api/saeb/municipio/{ibge}.json (só útil se já houver JSON importado). */
         'official_url_template' => trim((string) env('IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE', '')),
         /** Antes do HTTP: ler storage (saeb/municipio/{ibge}.json ou corte do historico.json). */
         'official_use_internal_storage_first' => filter_var(env('IEDUCAR_SAEB_OFFICIAL_USE_INTERNAL', true), FILTER_VALIDATE_BOOL),

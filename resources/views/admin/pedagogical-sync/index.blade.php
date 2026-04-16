@@ -5,7 +5,7 @@
                 {{ __('Sincronização pedagógica (SAEB)') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ __('Importação de séries SAEB a partir de fontes oficiais (por código IBGE) ou de URLs que devolvam JSON com «pontos» e «city_ids». Não são utilizados dados de demonstração.') }}
+                {{ __('Importação de séries SAEB: use primeiro «Importar de IEDUCAR_SAEB_IMPORT_URLS», ficheiros em storage ou um template externo (IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE). O endpoint interno APP_URL + /api/saeb só devolve JSON depois de existir dados em disco — não serve como única fonte num servidor vazio.') }}
             </p>
         </div>
     </x-slot>
@@ -17,7 +17,7 @@
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">{{ __('Administração') }}</p>
                     <h1 class="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{{ __('Sincronização pedagógica') }}</h1>
                     <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed">
-                        {{ __('O painel lê apenas o JSON em disco. Cada ponto deve referenciar o id interno da cidade em «city_ids» (preenchido automaticamente na importação oficial por IBGE).') }}
+                        {{ __('O painel lê apenas o JSON em disco. Cada ponto deve referenciar o id interno da cidade em «city_ids» (preenchido automaticamente na importação oficial por IBGE). Sem ficheiros prévios, defina uma fonte externa real ou importe por URL antes de contar com a rota /api/saeb/municipio.') }}
                     </p>
                 </div>
 
@@ -58,9 +58,9 @@
                                 <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Importação oficial (IBGE)') }}</dt>
                                 <dd class="mt-0.5 text-xs text-gray-700 dark:text-gray-300">
                                     @if ($officialTemplateConfigured)
-                                        {{ __('IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE definido') }}
+                                        {{ __('IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE definido (HTTP por município)') }}
                                     @elseif ($officialUrlUsesAppDefault ?? false)
-                                        {{ __('URL automática: APP_URL + /api/saeb/municipio/{ibge}.json (defina APP_URL com o domínio público HTTPS)') }}
+                                        {{ __('URL automática: APP_URL + /api/saeb/municipio/{ibge}.json — requer APP_URL HTTPS; o GET só devolve 200 quando já há JSON importado (use importação por URL ou template externo na primeira carga)') }}
                                     @else
                                         {{ __('Defina APP_URL (https://…) ou IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com {ibge}') }}
                                     @endif
@@ -88,6 +88,7 @@
                     <div class="rounded-xl border border-blue-200/80 bg-blue-50/70 dark:border-blue-900/50 dark:bg-blue-950/25 p-4 sm:p-5">
                         <p class="text-sm font-semibold text-blue-950 dark:text-blue-100">{{ __('Importação oficial por município') }}</p>
                         <ol class="mt-2 list-decimal list-outside space-y-2 pl-5 text-sm text-blue-950 dark:text-blue-100/95">
+                            <li>{{ __('Primeira instalação: use «Importar de IEDUCAR_SAEB_IMPORT_URLS», ficheiros em storage ou IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com URL externa — evite depender só do endpoint /api/saeb da própria app (resposta 404 até haver dados).') }}</li>
                             <li>{{ __('Cadastre o código IBGE (7 dígitos) em cada cidade (edição da cidade).') }}</li>
                             <li>{{ __('Opcional: IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com {ibge}. Se vazio, usa APP_URL + /api/saeb/municipio/{ibge}.json; primeiro tenta leitura em storage (saeb/municipio ou historico.json), depois HTTP.') }}</li>
                             <li>{{ __('A resposta deve trazer «pontos» (ou «resultados» no formato documentado no código) com séries SAEB; cada ponto é etiquetado com o id interno da cidade.') }}</li>
@@ -122,7 +123,7 @@
                     </div>
 
                     <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                        {{ __('Após importar, este servidor expõe GET :url (ou o mesmo caminho com .json). Variáveis: IEDUCAR_SAEB_JSON_PATH, IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE, IEDUCAR_SAEB_IMPORT_URLS. Comando: php artisan saeb:import-official', ['url' => rtrim((string) config('app.url'), '/').'/api/saeb/municipio/{ibge}']) }}
+                        {{ __('Após importar, este servidor expõe GET :url (ou o mesmo caminho com .json) para consumo interno ou espelho. Variáveis: IEDUCAR_SAEB_JSON_PATH, IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE, IEDUCAR_SAEB_IMPORT_URLS. Comando: php artisan saeb:import-official', ['url' => rtrim((string) config('app.url'), '/').'/api/saeb/municipio/{ibge}']) }}
                     </p>
                 </div>
             </div>

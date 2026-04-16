@@ -10,7 +10,7 @@
 
 <div class="space-y-4">
     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Esta aba mostra totais na base do município (escola, turma, matrícula). Inclui resumos de NEE (educação especial) e de rede/oferta (capacidade e vagas), alinhados às abas correspondentes. O ano letivo é obrigatório; depois pode filtrar escola, tipo/segmento e turno. Os gráficos seguem duas colunas em ecrãs largos.') }}
+        {{ __('Esta aba mostra totais na base do município (escola, turma, matrícula). Inclui resumos de NEE (educação especial) e de rede/oferta (capacidade e vagas), alinhados às abas correspondentes. O ano letivo é obrigatório; depois pode filtrar escola, tipo/segmento e turno. Os gráficos usam até três colunas em ecrãs largos, no mesmo estilo visual das abas.') }}
     </p>
 
     @if ($yearFilterReady && ! empty($overviewData['filter_note']))
@@ -126,32 +126,32 @@
 
     @if ($yearFilterReady && ! empty($overviewData['kpis']))
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[6.75rem] flex flex-col justify-center">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Escolas') }}</p>
-                <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+            <div class="rounded-lg border border-indigo-200/90 dark:border-indigo-800/60 bg-indigo-50/85 dark:bg-indigo-950/35 p-4 min-h-[6.75rem] flex flex-col justify-center shadow-sm ring-1 ring-indigo-100/60 dark:ring-indigo-900/40">
+                <p class="text-xs font-semibold text-indigo-800/90 dark:text-indigo-200/90 uppercase tracking-wide">{{ __('Escolas') }}</p>
+                <p class="mt-1 text-2xl font-semibold tabular-nums text-indigo-950 dark:text-indigo-50">
                     {{ $overviewData['kpis']['escolas'] !== null ? number_format($overviewData['kpis']['escolas']) : '—' }}
                 </p>
             </div>
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[6.75rem] flex flex-col justify-center">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Turmas') }}</p>
-                <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+            <div class="rounded-lg border border-indigo-200/90 dark:border-indigo-800/60 bg-indigo-50/85 dark:bg-indigo-950/35 p-4 min-h-[6.75rem] flex flex-col justify-center shadow-sm ring-1 ring-indigo-100/60 dark:ring-indigo-900/40">
+                <p class="text-xs font-semibold text-indigo-800/90 dark:text-indigo-200/90 uppercase tracking-wide">{{ __('Turmas') }}</p>
+                <p class="mt-1 text-2xl font-semibold tabular-nums text-indigo-950 dark:text-indigo-50">
                     {{ $overviewData['kpis']['turmas'] !== null ? number_format($overviewData['kpis']['turmas']) : '—' }}
                 </p>
             </div>
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 min-h-[6.75rem] flex flex-col justify-center">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Matrículas (tabela)') }}</p>
-                <p class="mt-1 text-2xl font-semibold text-indigo-600 dark:text-indigo-400">
+            <div class="rounded-lg border border-indigo-300/90 dark:border-indigo-700/70 bg-white dark:bg-indigo-950/50 p-4 min-h-[6.75rem] flex flex-col justify-center shadow-sm ring-1 ring-indigo-200/70 dark:ring-indigo-800/50">
+                <p class="text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wide">{{ __('Matrículas (tabela)') }}</p>
+                <p class="mt-1 text-2xl font-semibold tabular-nums text-indigo-600 dark:text-indigo-400">
                     {{ $overviewData['kpis']['matriculas'] !== null ? number_format($overviewData['kpis']['matriculas']) : '—' }}
                 </p>
             </div>
         </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Totais conforme filtros e config/ieducar.php (colunas da turma para recortes).') }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Totais conforme os filtros aplicados e a estrutura de turmas na base.') }}</p>
     @elseif ($yearFilterReady && empty($overviewData['error']))
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Sem totais para estes filtros.') }}</p>
     @endif
 
     @if ($yearFilterReady && ! empty($overviewData['charts']))
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch min-w-0 mt-4 w-full max-w-none">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch min-w-0 mt-4 w-full max-w-none">
             @foreach ($overviewData['charts'] as $idx => $chart)
                 <x-dashboard.chart-panel
                     :chart="$chart"
@@ -159,6 +159,7 @@
                     :exportMeta="$chartExportContext"
                     :compact="true"
                     :chartPanelId="'chart-visao-geral-'.$idx"
+                    panelTone="indigo"
                 />
             @endforeach
         </div>

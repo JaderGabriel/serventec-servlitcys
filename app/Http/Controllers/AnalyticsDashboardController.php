@@ -104,6 +104,8 @@ class AnalyticsDashboardController extends Controller
                 'rows' => [],
                 'kpis' => null,
                 'distorcao' => null,
+                'distorcao_cartao_motivo' => null,
+                'fluxo_taxas' => null,
                 'unidades_escolares' => null,
                 'error' => null,
                 'chart' => null,
