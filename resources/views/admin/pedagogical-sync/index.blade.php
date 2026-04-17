@@ -16,7 +16,7 @@
     </x-slot>
 
     <div class="py-10">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8" x-data="{ storageModalOpen: false }">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="rounded-2xl border border-gray-200/90 bg-white shadow-sm ring-1 ring-gray-950/5 dark:border-gray-700 dark:bg-gray-900 dark:ring-white/10 overflow-hidden">
                 <div class="border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-white px-6 py-5 dark:border-gray-800 dark:from-emerald-950/40 dark:to-gray-900/80 sm:px-8">
                     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -40,12 +40,12 @@
                             <button
                                 type="button"
                                 class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/90 bg-white/90 px-3 py-1.5 text-xs font-medium text-emerald-900 shadow-sm hover:bg-emerald-50 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-900/50"
-                                @click="storageModalOpen = true"
+                                @click="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'pedagogical-storage-saeb' }))"
                             >
                                 <svg class="h-4 w-4 opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v11.25" />
                                 </svg>
-                                {{ __('Ver ficheiro SAEB') }}
+                                {{ __('Resumo do ficheiro') }}
                                 @if ($fileExists)
                                     <span class="tabular-nums text-emerald-700 dark:text-emerald-300">· {{ number_format($pontosCount) }}</span>
                                 @endif
@@ -124,15 +124,32 @@
                             </div>
                             <div>
                                 <dt class="text-[10px] font-sans font-semibold uppercase tracking-wide text-blue-800/90 dark:text-blue-300/90">{{ __('IEDUCAR_SAEB_IMPORT_URLS') }}</dt>
-                                <dd class="mt-0.5">{{ $importUrlsDisplay !== '' ? $importUrlsDisplay : __('(vazio)') }}</dd>
+                                <dd class="mt-0.5 font-mono">
+                                    @if ($importUrlsDisplay !== '')
+                                        {{ $importUrlsDisplay }}
+                                    @else
+                                        <span class="text-blue-800/75 dark:text-blue-200/75">{{ __('(vazio — opcional; use no passo 1 se tiver URLs de JSON)') }}</span>
+                                    @endif
+                                </dd>
                             </div>
                             <div>
-                                <dt class="text-[10px] font-sans font-semibold uppercase tracking-wide text-blue-800/90 dark:text-blue-300/90">{{ __('ZIP microdados INEP (modelo)') }}</dt>
-                                <dd class="mt-0.5">{{ $microdadosZipExample ?? '' }}</dd>
+                                <dt class="text-[10px] font-sans font-semibold uppercase tracking-wide text-blue-800/90 dark:text-blue-300/90">{{ __('IEDUCAR_SAEB_MICRODADOS_ZIP_URL') }}</dt>
+                                <dd class="mt-1 space-y-1.5">
+                                    <p class="text-[11px] font-sans text-blue-900/85 dark:text-blue-100/85">{{ __('Modelo (substitua {year} pelo ano dos ficheiros INEP):') }}</p>
+                                    <p class="break-all">{{ $microdadosZipTemplate ?? '' }}</p>
+                                    <p class="text-[11px] font-sans text-blue-900/85 dark:text-blue-100/85">{{ __('Exemplo com o ano sugerido no formulário (:year):', ['year' => $defaultMicrodadosYear ?? (int) date('Y') - 1]) }}</p>
+                                    <p class="break-all">{{ $microdadosZipExample ?? '' }}</p>
+                                </dd>
                             </div>
                             <div>
                                 <dt class="text-[10px] font-sans font-semibold uppercase tracking-wide text-blue-800/90 dark:text-blue-300/90">{{ __('IEDUCAR_SAEB_OPENDATA_CSV_URL') }}</dt>
-                                <dd class="mt-0.5">{{ ($opendataCsvUrl ?? '') !== '' ? $opendataCsvUrl : __('(vazio)') }}</dd>
+                                <dd class="mt-0.5 font-mono">
+                                    @if (($opendataCsvUrl ?? '') !== '')
+                                        {{ $opendataCsvUrl }}
+                                    @else
+                                        <span class="text-blue-800/75 dark:text-blue-200/75">{{ __('(vazio — opcional; usada no passo 4 se o campo URL estiver vazio)') }}</span>
+                                    @endif
+                                </dd>
                             </div>
                         </dl>
                     </div>
@@ -304,91 +321,75 @@
                 </div>
             </div>
 
-            <template x-teleport="body">
-                <div
-                    x-show="storageModalOpen"
-                    x-transition:enter="transition ease-out duration-150"
-                    x-transition:enter-start="opacity-0"
-                    x-transition:enter-end="opacity-100"
-                    x-transition:leave="transition ease-in duration-100"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
-                    @keydown.escape.window="storageModalOpen = false"
-                    class="fixed inset-0 z-[10050] flex items-end justify-center p-0 sm:items-center sm:p-4"
-                    x-cloak
-                >
-                    <div
-                        class="absolute inset-0 bg-gray-900/50 dark:bg-black/60"
-                        @click="storageModalOpen = false"
-                        aria-hidden="true"
-                    ></div>
-                    <div
-                        class="relative z-[10051] flex min-h-0 w-full max-w-lg max-h-[min(90vh,40rem)] flex-col overflow-hidden rounded-t-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-600 dark:bg-gray-800 sm:mx-auto sm:rounded-xl"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="pedagogical-storage-modal-title"
-                    >
-                        <div class="flex shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-700">
-                            <div class="min-w-0 flex-1">
-                                <h3 id="pedagogical-storage-modal-title" class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                    {{ __('Ficheiro SAEB no servidor') }}
-                                </h3>
-                                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ __('É aqui que ficam os pontos usados no painel Desempenho.') }}</p>
+            <x-modal name="pedagogical-storage-saeb" maxWidth="lg" focusable>
+                <div class="flex max-h-[min(85vh,32rem)] flex-col">
+                    <div class="shrink-0 border-b border-emerald-100 bg-gradient-to-r from-emerald-50/90 to-white px-5 py-4 dark:border-emerald-900/40 dark:from-emerald-950/50 dark:to-gray-900">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h2 id="pedagogical-storage-modal-title" class="text-base font-semibold text-gray-900 dark:text-gray-100">
+                                    {{ __('Dados SAEB guardados') }}
+                                </h2>
+                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                    {{ __('Isto é o que o painel Desempenho lê depois de cada importação.') }}
+                                </p>
                             </div>
                             <button
                                 type="button"
-                                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                                @click="storageModalOpen = false"
+                                class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-500 transition hover:bg-white/80 hover:text-gray-800 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                                x-on:click="$dispatch('close')"
                                 aria-label="{{ __('Fechar') }}"
                             >
                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
-                        <div class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-3 [scrollbar-gutter:stable]">
-                            <dl class="space-y-3 text-sm">
-                                <div>
-                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Onde está guardado') }}</dt>
-                                    <dd class="mt-1 font-mono text-xs text-gray-900 dark:text-gray-100 break-all">{{ $jsonPath }}</dd>
-                                </div>
-                                <div class="flex flex-wrap gap-4">
-                                    <div>
-                                        <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Já existe?') }}</dt>
-                                        <dd class="mt-1">
-                                            @if ($fileExists)
-                                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200">{{ __('Sim') }}</span>
-                                            @else
-                                                <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">{{ __('Ainda não') }}</span>
-                                            @endif
-                                        </dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Pontos importados') }}</dt>
-                                        <dd class="mt-1 tabular-nums text-gray-900 dark:text-gray-100">{{ number_format($pontosCount) }}</dd>
-                                    </div>
-                                </div>
-                                @if (is_array($meta) && $meta !== [])
-                                    <div class="rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50/90 dark:bg-gray-900/50 p-3 text-xs">
-                                        <p class="font-medium text-gray-800 dark:text-gray-200">{{ __('Detalhes da última gravação') }}</p>
-                                        <pre class="mt-2 max-h-40 overflow-auto rounded bg-white/80 p-2 text-[11px] text-gray-600 dark:bg-gray-950/50 dark:text-gray-400">{{ json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
-                                    </div>
-                                @endif
-                                <p class="text-[11px] leading-relaxed text-gray-500 dark:text-gray-400">
-                                    {{ __('Caminho completo no disco: :path', ['path' => $absPath ?? '']) }}
+                    </div>
+
+                    <div class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-5 py-4 [scrollbar-gutter:stable]">
+                        <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                            <div class="rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-3 dark:border-gray-600 dark:bg-gray-900/40">
+                                <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Ficheiro') }}</p>
+                                <p class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                                    @if ($fileExists)
+                                        {{ __('Sim') }}
+                                    @else
+                                        {{ __('Não') }}
+                                    @endif
                                 </p>
-                            </dl>
+                            </div>
+                            <div class="rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-3 dark:border-gray-600 dark:bg-gray-900/40">
+                                <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Pontos') }}</p>
+                                <p class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format($pontosCount) }}</p>
+                            </div>
                         </div>
-                        <div class="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-700">
-                            <button
-                                type="button"
-                                class="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-                                @click="storageModalOpen = false"
-                            >
-                                {{ __('Fechar') }}
-                            </button>
+
+                        <div class="mt-4 rounded-lg border border-dashed border-gray-200 bg-white/60 p-3 dark:border-gray-600 dark:bg-gray-950/30">
+                            <p class="text-xs font-medium text-gray-600 dark:text-gray-300">{{ __('Local no site (storage público)') }}</p>
+                            <p class="mt-1 break-all font-mono text-[11px] leading-relaxed text-gray-800 dark:text-gray-200">{{ $jsonPath }}</p>
                         </div>
+
+                        @if (is_array($meta) && $meta !== [])
+                            <details class="mt-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <summary class="cursor-pointer select-none px-3 py-2 text-sm font-medium text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/80">
+                                    {{ __('Ver informação técnica (última gravação)') }}
+                                </summary>
+                                <div class="border-t border-gray-100 px-3 py-2 dark:border-gray-600">
+                                    <pre class="max-h-36 overflow-auto rounded bg-slate-50 p-2 text-[11px] text-gray-600 dark:bg-black/30 dark:text-gray-400">{{ json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                </div>
+                            </details>
+                        @endif
+
+                        <p class="mt-4 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                            {{ __('Caminho completo no servidor: :path', ['path' => $absPath ?? '']) }}
+                        </p>
+                    </div>
+
+                    <div class="shrink-0 border-t border-gray-200 bg-gray-50/90 px-5 py-3 dark:border-gray-700 dark:bg-gray-900/60">
+                        <x-secondary-button type="button" class="w-full justify-center py-2.5" x-on:click="$dispatch('close')">
+                            {{ __('Fechar') }}
+                        </x-secondary-button>
                     </div>
                 </div>
-            </template>
+            </x-modal>
         </div>
     </div>
 </x-app-layout>

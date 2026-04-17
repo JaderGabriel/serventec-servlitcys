@@ -2,7 +2,7 @@
 
 namespace App\Services\Inep;
 
-use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -50,27 +50,150 @@ final class SaebMicrodadosInepDownloader
     }
 
     /**
-     * Opções Guzzle para verificação SSL (CA do sistema ou ficheiro explícito).
+     * Ficheiros PEM de CA a tentar (ordem: bundles completos do SO antes dos caminhos do PHP/OpenSSL).
      *
-     * @return array{verify: bool|string}
+     * @return list<string>
      */
-    private function guzzleVerifyOptions(): array
+    public static function collectSystemCaBundleCandidates(): array
     {
-        $verify = filter_var(config('ieducar.saeb.microdados_http_verify', true), FILTER_VALIDATE_BOOL);
-        $ca = trim((string) config('ieducar.saeb.microdados_http_ca_bundle', ''));
+        $candidates = [];
 
-        if ($ca !== '' && is_readable($ca)) {
-            return ['verify' => $ca];
+        foreach (['SSL_CERT_FILE', 'CURL_CA_BUNDLE'] as $envKey) {
+            $v = getenv($envKey);
+            if (is_string($v) && $v !== '' && is_file($v) && is_readable($v)) {
+                $candidates[] = $v;
+            }
         }
 
-        return ['verify' => $verify];
+        foreach ([
+            '/etc/ssl/certs/ca-certificates.crt',
+            '/etc/pki/tls/certs/ca-bundle.crt',
+            '/etc/ssl/cert.pem',
+            '/usr/lib/ssl/cert.pem',
+            '/usr/local/share/certs/ca-root.crt',
+        ] as $path) {
+            if (is_readable($path)) {
+                $candidates[] = $path;
+            }
+        }
+
+        foreach (['curl.cainfo', 'openssl.cafile'] as $iniKey) {
+            $v = ini_get($iniKey);
+            if (is_string($v) && $v !== '' && is_readable($v)) {
+                $candidates[] = $v;
+            }
+        }
+
+        if (function_exists('openssl_get_cert_locations')) {
+            $loc = openssl_get_cert_locations();
+            foreach (['default_cert_file', 'cafile'] as $k) {
+                if (! empty($loc[$k]) && is_string($loc[$k]) && is_readable($loc[$k])) {
+                    $candidates[] = $loc[$k];
+                }
+            }
+        }
+
+        /** @var list<string> */
+        return array_values(array_unique($candidates));
     }
 
-    private function pendingRequest(int $timeout, string $userAgent): PendingRequest
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function httpClientOptionVariants(): array
     {
-        return Http::timeout($timeout)
-            ->withHeaders(['User-Agent' => $userAgent])
-            ->withOptions($this->guzzleVerifyOptions());
+        $verifyEnabled = filter_var(config('ieducar.saeb.microdados_http_verify', true), FILTER_VALIDATE_BOOL);
+        if (! $verifyEnabled) {
+            return [['verify' => false]];
+        }
+
+        $variants = [];
+        $seen = [];
+
+        $push = function (array $opts) use (&$variants, &$seen): void {
+            $key = json_encode($opts);
+            if (isset($seen[$key])) {
+                return;
+            }
+            $seen[$key] = true;
+            $variants[] = $opts;
+        };
+
+        $configured = trim((string) config('ieducar.saeb.microdados_http_ca_bundle', ''));
+        if ($configured !== '' && is_readable($configured)) {
+            $push($this->verifyOptionsForCaFile($configured));
+        }
+
+        foreach (self::collectSystemCaBundleCandidates() as $path) {
+            $push($this->verifyOptionsForCaFile($path));
+        }
+
+        $push(['verify' => true]);
+
+        return $variants;
+    }
+
+    /**
+     * @return array{verify: string, curl: array<int, string>}
+     */
+    private function verifyOptionsForCaFile(string $caPath): array
+    {
+        return [
+            'verify' => $caPath,
+            'curl' => [
+                \CURLOPT_CAINFO => $caPath,
+            ],
+        ];
+    }
+
+    private function isSslConnectionError(\Throwable $e): bool
+    {
+        $m = strtolower($e->getMessage());
+
+        return str_contains($m, 'ssl')
+            || str_contains($m, 'certificate')
+            || str_contains($m, 'curl error 60')
+            || str_contains($m, 'unable to get local issuer');
+    }
+
+    /**
+     * GET com sink, repetindo com outro bundle CA se o erro for SSL (cURL 60).
+     *
+     * @throws \Throwable
+     */
+    private function getWithSinkRespectingSsl(string $url, string $sinkPath, int $timeout, string $userAgent): Response
+    {
+        $variants = $this->httpClientOptionVariants();
+
+        foreach ($variants as $index => $opts) {
+            try {
+                $response = Http::timeout($timeout)
+                    ->withHeaders(['User-Agent' => $userAgent])
+                    ->withOptions($opts)
+                    ->sink($sinkPath)
+                    ->get($url);
+
+                if ($response->successful()) {
+                    return $response;
+                }
+
+                throw new \RuntimeException(__('Download falhou (HTTP :code).', ['code' => (string) $response->status()]));
+            } catch (\Throwable $e) {
+                if ($this->isSslConnectionError($e) && $index < count($variants) - 1) {
+                    Log::debug('saeb.microdados.http_ssl_retry', [
+                        'attempt' => $index + 1,
+                        'of' => count($variants),
+                        'message' => $e->getMessage(),
+                    ]);
+
+                    continue;
+                }
+
+                throw $e instanceof \RuntimeException ? $e : new \RuntimeException($e->getMessage(), 0, $e);
+            }
+        }
+
+        throw new \RuntimeException(__('Download falhou após tentativas SSL.'));
     }
 
     /**
@@ -101,16 +224,7 @@ final class SaebMicrodadosInepDownloader
         }
 
         try {
-            $response = $this->pendingRequest($timeout, 'servlitcys/1.0 (SAEB microdados INEP)')
-                ->sink($tmpZip)
-                ->get($url);
-
-            if (! $response->successful()) {
-                throw new \RuntimeException(__('Download INEP falhou (HTTP :code): :url', [
-                    'code' => (string) $response->status(),
-                    'url' => $url,
-                ]));
-            }
+            $this->getWithSinkRespectingSsl($url, $tmpZip, $timeout, 'servlitcys/1.0 (SAEB microdados INEP)');
 
             if (! is_readable($tmpZip) || filesize($tmpZip) < 1000) {
                 throw new \RuntimeException(__('Ficheiro ZIP inválido ou vazio.'));
@@ -148,13 +262,8 @@ final class SaebMicrodadosInepDownloader
         $path = $tmp.'.csv';
 
         try {
-            $response = $this->pendingRequest($timeout, 'servlitcys/1.0 (SAEB dados abertos)')
-                ->sink($path)
-                ->get($url);
+            $this->getWithSinkRespectingSsl($url, $path, $timeout, 'servlitcys/1.0 (SAEB dados abertos)');
 
-            if (! $response->successful()) {
-                throw new \RuntimeException(__('Download falhou (HTTP :code).', ['code' => (string) $response->status()]));
-            }
             if (! is_readable($path) || filesize($path) < 10) {
                 throw new \RuntimeException(__('Resposta vazia ou inválida.'));
             }

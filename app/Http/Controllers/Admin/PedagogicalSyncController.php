@@ -42,11 +42,11 @@ class PedagogicalSyncController extends Controller
             ? trim((string) config('ieducar.saeb.official_url_template', ''))
             : ($appUrlOk ? $appUrl.'/api/saeb/municipio/{ibge}.json' : '');
         $importUrlsRaw = trim((string) config('ieducar.saeb.import_urls', ''));
-        $microdadosZipExample = str_replace(
-            '{year}',
-            (string) $defaultMdYear,
-            (string) config('ieducar.saeb.microdados_inep_zip_url_template', 'https://download.inep.gov.br/microdados/microdados_saeb_{year}.zip')
+        $microdadosZipTemplate = (string) config(
+            'ieducar.saeb.microdados_inep_zip_url_template',
+            'https://download.inep.gov.br/microdados/microdados_saeb_{year}.zip'
         );
+        $microdadosZipExample = str_replace('{year}', (string) $defaultMdYear, $microdadosZipTemplate);
         $opendataCsvUrl = trim((string) config('ieducar.saeb.microdados_opendata_csv_url', ''));
 
         return view('admin.pedagogical-sync.index', [
@@ -67,6 +67,7 @@ class PedagogicalSyncController extends Controller
             'cityCount' => $cities->count(),
             'effectiveOfficialTemplate' => $effectiveOfficialTemplate,
             'importUrlsDisplay' => $importUrlsRaw,
+            'microdadosZipTemplate' => $microdadosZipTemplate,
             'microdadosZipExample' => $microdadosZipExample,
             'opendataCsvUrl' => $opendataCsvUrl,
         ]);
