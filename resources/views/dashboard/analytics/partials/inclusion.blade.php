@@ -18,6 +18,9 @@
         ? (int) (($neeGrupoResumo['deficiencias'] ?? 0) + ($neeGrupoResumo['sindromes_tea'] ?? 0) + ($neeGrupoResumo['ne_altas_habilidades'] ?? 0))
         : 0;
     $chartRacaPorEscolaStacked = is_array($inclusionData['chart_raca_por_escola_stacked'] ?? null) ? $inclusionData['chart_raca_por_escola_stacked'] : null;
+    $neeMatriculasPorEscola = is_array($inclusionData['nee_matriculas_por_escola'] ?? null)
+        ? $inclusionData['nee_matriculas_por_escola']
+        : [];
     $eqLabel = match ($eqFonte) {
         'serie' => __('Série'),
         default => null,
@@ -88,7 +91,34 @@
         </div>
     @endif
 
-    @if (! empty($inclusionData['charts']) || is_array($aeeCross) || $hasNeeDetalheCatalogo || is_array($chartRacaPorEscolaStacked))
+    @if (! empty($neeMatriculasPorEscola))
+        <div class="rounded-lg border border-violet-200/80 dark:border-violet-800/50 bg-white dark:bg-gray-900/40 px-4 py-4">
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('Matrículas NEE por escola') }}</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+                {{ __('Matrículas ativas com registo em aluno_deficiência, por unidade escolar (ligação turma → escola ou, quando a turma não tem escola, pela FK de escola na matrícula). Ordenado por total decrescente.') }}
+            </p>
+            <div class="overflow-x-auto rounded-md border border-gray-200 dark:border-gray-600 max-h-[min(28rem,60vh)] overflow-y-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800/95 text-left text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
+                        <tr>
+                            <th class="px-3 py-2 font-medium">{{ __('Escola') }}</th>
+                            <th class="px-3 py-2 font-medium tabular-nums text-right">{{ __('Matrículas NEE') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        @foreach ($neeMatriculasPorEscola as $row)
+                            <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-800/50">
+                                <td class="px-3 py-2 text-gray-800 dark:text-gray-200">{{ $row['nome'] ?? '—' }}</td>
+                                <td class="px-3 py-2 tabular-nums text-right text-gray-900 dark:text-gray-100">{{ number_format((int) ($row['matriculas'] ?? 0)) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+
+    @if (! empty($inclusionData['charts']) || is_array($aeeCross) || $hasNeeDetalheCatalogo || is_array($chartRacaPorEscolaStacked) || ! empty($neeMatriculasPorEscola))
         @if ($neeChartsCount > 0 || $hasNeeDetalheCatalogo)
             <div class="mb-8">
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('NEE — cadastro (deficiências, síndromes e altas habilidades)') }}</h3>
@@ -310,7 +340,7 @@
                 @endif
             </div>
         @endif
-    @elseif (empty($inclusionData['error']) && empty($inclusionData['charts']) && empty($inclusionData['gauges'] ?? []) && ! is_array($aeeCross) && ! $hasNeeDetalheCatalogo && ! is_array($chartRacaPorEscolaStacked))
+    @elseif (empty($inclusionData['error']) && empty($inclusionData['charts']) && empty($inclusionData['gauges'] ?? []) && ! is_array($aeeCross) && ! $hasNeeDetalheCatalogo && ! is_array($chartRacaPorEscolaStacked) && empty($neeMatriculasPorEscola))
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Sem indicadores disponíveis para esta base ou filtros.') }}</p>
     @endif
 </div>

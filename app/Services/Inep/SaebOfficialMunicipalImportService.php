@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 /**
- * Obtém séries SAEB por município (código IBGE) para cada cidade cadastrada e grava um único JSON agregado.
+ * Obtém séries SAEB por município (código IBGE) para cada cidade cadastrada e grava na base (saeb_indicator_points).
  */
 class SaebOfficialMunicipalImportService
 {
@@ -23,7 +23,7 @@ class SaebOfficialMunicipalImportService
      */
     public function importFromOfficialTemplate(?string $templateOverride = null): array
     {
-        $rel = $this->relativePath();
+        $rel = SaebHistoricoDatabase::STORAGE_LABEL;
         $template = null;
         $trimOverride = $templateOverride !== null ? trim($templateOverride) : '';
         if ($trimOverride !== '') {
@@ -80,11 +80,10 @@ class SaebOfficialMunicipalImportService
                 $urlsTentadas[] = $url;
 
                 if ($this->isSameApplicationSaebEndpointUrl($url)) {
-                    $errors[] = __(':nome (IBGE :ibge): sem dados SAEB em storage para este código; o endpoint da própria aplicação (:url) só devolve JSON já importado (HTTP 404 até lá). Coloque ficheiros em storage/app/public/saeb/municipio/:ibge.json ou pontos em :hist com municipio_ibge ou city_ids, ou use primeiro «Importar de IEDUCAR_SAEB_IMPORT_URLS» / defina IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com uma URL externa.', [
+                    $errors[] = __(':nome (IBGE :ibge): sem dados SAEB na base para este código; o endpoint da própria aplicação (:url) só devolve JSON já importado (HTTP 404 até lá). Importe primeiro (CSV, microdados ou IEDUCAR_SAEB_IMPORT_URLS) ou defina IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com uma URL externa.', [
                         'nome' => $city->name,
                         'ibge' => $ibge,
                         'url' => $url,
-                        'hist' => $this->relativePath(),
                     ]);
 
                     continue;
@@ -149,7 +148,7 @@ class SaebOfficialMunicipalImportService
         if ($allPontos === []) {
             $hint = '';
             if ($this->usesDefaultAppUrlTemplate($template, $trimOverride === '')) {
-                $hint = "\n\n".__('Nota: com IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE vazio, a importação usa APP_URL + /api/saeb/municipio/{ibge}.json — isso só funciona depois de existir JSON em storage (ou use uma URL externa real no .env).');
+                $hint = "\n\n".__('Nota: com IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE vazio, a importação usa APP_URL + /api/saeb/municipio/{ibge}.json — isso só responde depois de haver dados na base (importação prévia) ou use uma URL externa real no .env.');
             }
             $msg = __('Nenhum município devolveu dados SAEB válidos.').$hint."\n".implode("\n", $errors);
 
@@ -214,11 +213,6 @@ class SaebOfficialMunicipalImportService
             [$ibge, (string) $city->uf, (string) $city->getKey()],
             $template
         );
-    }
-
-    private function relativePath(): string
-    {
-        return trim((string) config('ieducar.saeb.json_path', 'saeb/historico.json')) ?: 'saeb/historico.json';
     }
 
     private function httpTimeoutSeconds(): int

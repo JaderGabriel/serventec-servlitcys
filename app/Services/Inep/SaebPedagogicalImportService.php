@@ -4,13 +4,16 @@ namespace App\Services\Inep;
 
 use App\Support\Inep\SaebExplicacaoModalBuilder;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 
 /**
- * Grava séries SAEB (JSON) em storage/app/public — importação por URL explícita ou payload já montado (sincronização oficial).
+ * Grava séries SAEB na base de dados (tabela saeb_indicator_points) — importação por URL ou payload já montado.
  */
 class SaebPedagogicalImportService
 {
+    public function __construct(
+        private SaebHistoricoDatabase $historicoDb,
+    ) {}
+
     /**
      * Tenta cada URL em IEDUCAR_SAEB_IMPORT_URLS até obter JSON com «pontos» não vazio. Não utiliza dados de demonstração.
      *
@@ -18,7 +21,6 @@ class SaebPedagogicalImportService
      */
     public function importFromConfiguredSources(): array
     {
-        $rel = $this->relativePath();
         $attempts = [];
         $urls = $this->importUrlList();
 
@@ -29,7 +31,7 @@ class SaebPedagogicalImportService
                     'Nenhuma URL configurada (IEDUCAR_SAEB_IMPORT_URLS). Use a sincronização oficial por município ou defina uma URL que devolva JSON com a chave «pontos».'
                 ),
                 'fonte_efetiva' => null,
-                'path' => $rel,
+                'path' => SaebHistoricoDatabase::STORAGE_LABEL,
             ];
         }
 
@@ -46,7 +48,7 @@ class SaebPedagogicalImportService
                 if ($resp->successful()) {
                     $decoded = json_decode($resp->body(), true);
                     if ($this->isValidPayload($decoded)) {
-                        return $this->writePayloadToDisk($decoded, $url, $attempts, $rel, null);
+                        return $this->writePayloadToDisk($decoded, $url, $attempts, null);
                     }
                 }
             } catch (\Throwable) {
@@ -60,7 +62,7 @@ class SaebPedagogicalImportService
                 'Nenhuma URL devolveu JSON válido (chave «pontos» ou «points» com pelo menos um item). Verifique a rede e o formato.'
             ),
             'fonte_efetiva' => null,
-            'path' => $rel,
+            'path' => SaebHistoricoDatabase::STORAGE_LABEL,
         ];
     }
 
@@ -73,17 +75,16 @@ class SaebPedagogicalImportService
      */
     public function persistHistoricoJson(array $decoded, string $fonteEfetiva, array $attempts = [], ?string $extraMessage = null): array
     {
-        $rel = $this->relativePath();
         if (! $this->isValidPayload($decoded)) {
             return [
                 'ok' => false,
                 'message' => __('O JSON não contém «pontos» válidos.'),
                 'fonte_efetiva' => null,
-                'path' => $rel,
+                'path' => SaebHistoricoDatabase::STORAGE_LABEL,
             ];
         }
 
-        return $this->writePayloadToDisk($decoded, $fonteEfetiva, $attempts, $rel, $extraMessage);
+        return $this->writePayloadToDisk($decoded, $fonteEfetiva, $attempts, $extraMessage);
     }
 
     /**
@@ -91,7 +92,7 @@ class SaebPedagogicalImportService
      * @param  list<string>  $attempts
      * @return array{ok: bool, message: string, fonte_efetiva: ?string, path: string}
      */
-    private function writePayloadToDisk(array $decoded, string $fonteEfetiva, array $attempts, string $rel, ?string $extraMessage = null): array
+    private function writePayloadToDisk(array $decoded, string $fonteEfetiva, array $attempts, ?string $extraMessage = null): array
     {
         $meta = is_array($decoded['meta'] ?? null) ? $decoded['meta'] : [];
         $meta['fonte_efetiva'] = $fonteEfetiva;
@@ -116,27 +117,17 @@ class SaebPedagogicalImportService
 
         $decoded['meta'] = $meta;
 
-        $json = json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        if ($json === false) {
-            return [
-                'ok' => false,
-                'message' => __('Não foi possível serializar o JSON (codificação).'),
-                'fonte_efetiva' => null,
-                'path' => $rel,
-            ];
-        }
-        Storage::disk('public')->put($rel, $json);
+        $this->historicoDb->persistFullPayload($decoded);
 
         SaebMunicipioFilesWriter::syncFromDecodedPayload($decoded);
 
-        $abs = storage_path('app/public/'.$rel);
-        $msg = $extraMessage ?? __('Importação concluída. Dados gravados em :path.', ['path' => $abs]);
+        $msg = $extraMessage ?? __('Importação concluída. Dados gravados na base (tabela saeb_indicator_points).');
 
         return [
             'ok' => true,
             'message' => $msg,
             'fonte_efetiva' => $fonteEfetiva,
-            'path' => $rel,
+            'path' => SaebHistoricoDatabase::STORAGE_LABEL,
         ];
     }
 
@@ -175,11 +166,6 @@ class SaebPedagogicalImportService
         }
 
         return array_values(array_unique($urls));
-    }
-
-    private function relativePath(): string
-    {
-        return trim((string) config('ieducar.saeb.json_path', 'saeb/historico.json')) ?: 'saeb/historico.json';
     }
 
     /**

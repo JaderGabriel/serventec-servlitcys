@@ -1032,14 +1032,18 @@ document.addEventListener("alpine:init", () => {
                     onChart > 0
                         ? onChart
                         : src.labels.length;
-                if (isH && n > 0) {
+                const skipHAuto =
+                    src.options &&
+                    typeof src.options === "object" &&
+                    src.options.skipHorizontalBarAutoHeight === true;
+                if (isH && n > 0 && !skipHAuto) {
                     const rowPx = ["xxxl"].includes(this._panelHeight)
                         ? 104
                         : 52;
                     const h = Math.min(10400, Math.max(320, 80 + n * rowPx));
                     this.panelBodyStyle = `min-height: ${h}px`;
                 } else {
-                    this.panelBodyStyle = isH ? "min-height: 280px" : "";
+                    this.panelBodyStyle = isH && !skipHAuto ? "min-height: 280px" : "";
                 }
             },
             syncLayoutClasses() {

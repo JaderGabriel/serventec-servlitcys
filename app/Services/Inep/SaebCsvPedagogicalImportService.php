@@ -4,7 +4,6 @@ namespace App\Services\Inep;
 
 use App\Models\City;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Importa séries SAEB a partir de CSV tabular (exportações INEP, dados abertos ou folhas próprias).
@@ -51,6 +50,7 @@ final class SaebCsvPedagogicalImportService
     public function __construct(
         private SaebPedagogicalImportService $writer,
         private SaebInepToEscolaIdResolver $inepResolver,
+        private SaebHistoricoDatabase $historicoDb,
     ) {}
 
     /**
@@ -61,7 +61,7 @@ final class SaebCsvPedagogicalImportService
         bool $mergeExisting = true,
         bool $resolveInep = true,
     ): array {
-        $rel = $this->relativePath();
+        $rel = SaebHistoricoDatabase::STORAGE_LABEL;
         if (! is_readable($absolutePath)) {
             return [
                 'ok' => false,
@@ -265,8 +265,6 @@ final class SaebCsvPedagogicalImportService
      */
     private function mergePayload(array $pontosNovos, bool $mergeExisting, string $sourcePath): array
     {
-        $rel = $this->relativePath();
-        $disk = Storage::disk('public');
         $existingPontos = [];
         $meta = [
             'descricao' => __('Séries SAEB importadas por CSV (municípios e opcionalmente escolas).'),
@@ -274,21 +272,11 @@ final class SaebCsvPedagogicalImportService
             'csv_origem' => $sourcePath,
         ];
 
-        if ($mergeExisting && $disk->exists($rel)) {
-            $raw = $disk->get($rel);
-            $decoded = json_decode((string) $raw, true);
-            if (is_array($decoded)) {
-                $prev = $decoded['pontos'] ?? $decoded['points'] ?? [];
-                if (is_array($prev)) {
-                    foreach ($prev as $p) {
-                        if (is_array($p)) {
-                            $existingPontos[] = $p;
-                        }
-                    }
-                }
-                if (isset($decoded['meta']) && is_array($decoded['meta'])) {
-                    $meta = array_merge($decoded['meta'], $meta);
-                }
+        if ($mergeExisting) {
+            $existingPontos = $this->historicoDb->allRawPontos();
+            $prevMeta = $this->historicoDb->meta();
+            if (is_array($prevMeta)) {
+                $meta = array_merge($prevMeta, $meta);
             }
         }
 
@@ -360,11 +348,6 @@ final class SaebCsvPedagogicalImportService
         }
 
         return $cityId.'|'.$year.'|'.$disc.'|'.$etapa.'|'.$eid.'|'.$st;
-    }
-
-    private function relativePath(): string
-    {
-        return trim((string) config('ieducar.saeb.json_path', 'saeb/historico.json')) ?: 'saeb/historico.json';
     }
 
     /**

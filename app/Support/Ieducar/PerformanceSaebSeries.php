@@ -3,15 +3,15 @@
 namespace App\Support\Ieducar;
 
 use App\Models\City;
+use App\Services\Inep\SaebHistoricoDatabase;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use Illuminate\Database\Connection;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Séries históricas do SAEB na aba Desempenho.
- * Os gráficos leem **apenas** o ficheiro JSON importado (Sincronizações → Pedagógicas), p.ex. storage/app/public/saeb/historico.json.
- * Cada ponto deve ter «city_ids» (importação oficial por IBGE ou JSON manual); sem isso o ponto é ignorado.
+ * Os dados vêm da tabela PostgreSQL `saeb_indicator_points` (Sincronizações → Pedagógicas).
+ * Cada ponto deve ter «city_ids» (importação oficial por IBGE ou CSV/JSON); sem isso o ponto é ignorado.
  */
 final class PerformanceSaebSeries
 {
@@ -45,7 +45,7 @@ final class PerformanceSaebSeries
         }
 
         try {
-            $bundle = self::loadPublicSaebFile();
+            $bundle = self::loadSaebBundle();
         } catch (\Throwable $e) {
             return [
                 'charts' => [],
@@ -72,12 +72,12 @@ final class PerformanceSaebSeries
                 'school_table' => [],
                 'notes' => [
                     __(
-                        'Sem dados SAEB utilizáveis no ficheiro (:path). Importe em Admin → Sincronizações → Pedagógicas ou confirme que cada ponto tem «city_ids» com o id interno da cidade.',
+                        'Sem dados SAEB utilizáveis na base (:path). Importe em Admin → Sincronizações → Pedagógicas ou confirme que cada ponto tem «city_ids» com o id interno da cidade.',
                         ['path' => $bundle['path']]
                     ),
                 ],
                 'error' => null,
-                'source_hint' => __('Importação pedagógica (JSON) — ver Sincronizações Pedagógicas.'),
+                'source_hint' => __('Importação pedagógica (tabela saeb_indicator_points) — ver Sincronizações Pedagógicas.'),
                 'explicacao_modal' => $explicacaoModal,
             ];
         }
@@ -115,8 +115,8 @@ final class PerformanceSaebSeries
         $pointsForCharts = self::filterPointsForSchoolFilter($pointsYear, $filters);
         if ($pointsForCharts === []) {
             $msg = $filters->escola_id !== null
-                ? __('Não há pontos SAEB para a escola seleccionada no ficheiro (use escola_id / escola_ids no JSON alinhados ao cod_escola do i-Educar).')
-                : __('Não há pontos de rede municipal no ficheiro (pontos sem escola_id). Importe dados agregados por município ou seleccione uma escola com série própria.');
+                ? __('Não há pontos SAEB para a escola seleccionada nos dados importados (use escola_id / escola_ids alinhados ao cod_escola do i-Educar).')
+                : __('Não há pontos de rede municipal importados (pontos sem escola_id). Importe dados agregados por município ou seleccione uma escola com série própria.');
 
             return [
                 'charts' => [],
@@ -170,7 +170,7 @@ final class PerformanceSaebSeries
             : __('A série mostra todos os anos disponíveis na fonte.');
         $schoolNote = $filters->escola_id !== null
             ? __('Filtro de escola activo: séries por cod_escola :id (i-Educar).', ['id' => (string) $filters->escola_id])
-            : __('Sem filtro de escola: linhas temporais = rede municipal; quadro e gráfico comparativo usam escolas com pontos no JSON.');
+            : __('Sem filtro de escola: linhas temporais = rede municipal; quadro e gráfico comparativo usam escolas com pontos importados.');
 
         return [
             'charts' => $charts,
@@ -404,7 +404,7 @@ final class PerformanceSaebSeries
                 ['label' => __('Matemática'), 'data' => $matData],
             ]
         );
-        $chart['subtitle'] = __('Valores do último ano com dados por escola no ficheiro (até :ano do filtro).', ['ano' => (string) $maxYear]);
+        $chart['subtitle'] = __('Valores do último ano com dados por escola na importação (até :ano do filtro).', ['ano' => (string) $maxYear]);
         $chart['footnote'] = $footnoteBase;
 
         return $chart;
@@ -559,32 +559,9 @@ final class PerformanceSaebSeries
     /**
      * @return array{points: list<array<string, mixed>>, meta: ?array<string, mixed>, explicacao_modal: ?array<string, mixed>, path: string}
      */
-    private static function loadPublicSaebFile(): array
+    private static function loadSaebBundle(): array
     {
-        $rel = trim((string) config('ieducar.saeb.json_path', 'saeb/historico.json'));
-        if ($rel === '') {
-            return ['points' => [], 'meta' => null, 'explicacao_modal' => null, 'path' => 'saeb/historico.json'];
-        }
-
-        $disk = Storage::disk('public');
-        if (! $disk->exists($rel)) {
-            return ['points' => [], 'meta' => null, 'explicacao_modal' => null, 'path' => $rel];
-        }
-
-        $raw = $disk->get($rel);
-        $decoded = json_decode((string) $raw, true);
-        if (! is_array($decoded)) {
-            return ['points' => [], 'meta' => null, 'explicacao_modal' => null, 'path' => $rel];
-        }
-
-        $meta = isset($decoded['meta']) && is_array($decoded['meta']) ? $decoded['meta'] : null;
-        $explicacaoModal = null;
-        if ($meta !== null && isset($meta['explicacao_modal']) && is_array($meta['explicacao_modal'])) {
-            $explicacaoModal = $meta['explicacao_modal'];
-        }
-        $points = self::normalizeJsonPayload($decoded);
-
-        return ['points' => $points, 'meta' => $meta, 'explicacao_modal' => $explicacaoModal, 'path' => $rel];
+        return app(SaebHistoricoDatabase::class)->loadBundleForCharts();
     }
 
     /**
@@ -593,7 +570,11 @@ final class PerformanceSaebSeries
     private static function formatFootnoteFromMeta(?array $meta, string $relPath): string
     {
         $bits = [];
-        $bits[] = __('Ficheiro: :path', ['path' => 'storage/app/public/'.$relPath]);
+        if ($relPath === SaebHistoricoDatabase::STORAGE_LABEL) {
+            $bits[] = __('Armazenamento: tabela PostgreSQL (:table).', ['table' => 'saeb_indicator_points']);
+        } else {
+            $bits[] = __('Ficheiro: :path', ['path' => 'storage/app/public/'.$relPath]);
+        }
 
         if ($meta !== null) {
             if (! empty($meta['fonte_efetiva'])) {
@@ -758,138 +739,5 @@ final class PerformanceSaebSeries
         }
 
         return $out;
-    }
-
-    /**
-     * @param  array<string, mixed>  $decoded
-     * @return list<array<string, mixed>>
-     */
-    private static function normalizeJsonPayload(array $decoded): array
-    {
-        $pontos = $decoded['pontos'] ?? $decoded['points'] ?? $decoded['series'] ?? null;
-        if (! is_array($pontos)) {
-            return [];
-        }
-
-        $rootCityIds = null;
-        if (isset($decoded['city_ids']) && is_array($decoded['city_ids'])) {
-            $rootCityIds = array_values(array_unique(array_map(static fn ($x) => (int) $x, $decoded['city_ids'])));
-            if ($rootCityIds === []) {
-                $rootCityIds = null;
-            }
-        }
-
-        $out = [];
-        foreach ($pontos as $p) {
-            if (! is_array($p)) {
-                continue;
-            }
-            $year = self::intish(self::pick($p, ['ano', 'year', 'ano_aplicacao'], null));
-            if ($year === null || $year <= 0) {
-                continue;
-            }
-            $val = self::pick($p, ['valor', 'value', 'v'], null);
-            if (! is_numeric($val)) {
-                continue;
-            }
-            $statusRaw = strtolower((string) self::pick($p, ['status', 'tipo'], 'final'));
-            $isFinal = self::statusIsFinal($statusRaw);
-            $disc = strtolower((string) self::pick($p, ['disciplina', 'disc'], 'lp'));
-            $etapa = strtolower((string) self::pick($p, ['etapa', 'etapa_ensino'], 'geral'));
-
-            $pointEscolaId = self::intish(self::pick($p, ['escola_id', 'cod_escola'], null));
-            $rawEids = $p['escola_ids'] ?? null;
-            $escolaIdsList = [];
-            if (is_array($rawEids)) {
-                foreach ($rawEids as $x) {
-                    if (is_numeric($x) && (int) $x > 0) {
-                        $escolaIdsList[] = (int) $x;
-                    }
-                }
-                $escolaIdsList = array_values(array_unique($escolaIdsList));
-            }
-
-            if ($pointEscolaId !== null && $pointEscolaId > 0) {
-                $scope = 'escola_'.$pointEscolaId;
-            } elseif ($escolaIdsList !== []) {
-                sort($escolaIdsList);
-                $scope = 'escola_'.$escolaIdsList[0];
-            } else {
-                $scope = 'municipal';
-            }
-
-            $row = [
-                'year' => $year,
-                'series_key' => $disc.'|'.$etapa.'|'.$scope,
-                'value' => (float) $val,
-                'is_final' => $isFinal,
-                'unidade' => (string) self::pick($p, ['unidade', 'unit'], '%'),
-            ];
-            if ($pointEscolaId !== null && $pointEscolaId > 0) {
-                $row['escola_id'] = $pointEscolaId;
-            }
-            if ($escolaIdsList !== []) {
-                $row['escola_ids'] = $escolaIdsList;
-            }
-            $pointCityIds = null;
-            if (isset($p['city_ids']) && is_array($p['city_ids'])) {
-                $pointCityIds = array_values(array_unique(array_map(static fn ($x) => (int) $x, $p['city_ids'])));
-                if ($pointCityIds === []) {
-                    $pointCityIds = null;
-                }
-            }
-            $effectiveCityIds = $pointCityIds ?? $rootCityIds;
-            if ($effectiveCityIds === null || $effectiveCityIds === []) {
-                continue;
-            }
-            $row['city_ids'] = $effectiveCityIds;
-            $out[] = $row;
-        }
-
-        return $out;
-    }
-
-    private static function statusIsFinal(string $s): bool
-    {
-        if (str_contains($s, 'prelim')) {
-            return false;
-        }
-        if (str_contains($s, 'prel')) {
-            return false;
-        }
-        if (str_contains($s, 'prov')) {
-            return false;
-        }
-        if ($s === 'p') {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * @param  array<string, mixed>  $arr
-     */
-    private static function pick(array $arr, array $keys, mixed $default = null): mixed
-    {
-        foreach ($keys as $k) {
-            if (array_key_exists($k, $arr) && $arr[$k] !== null && $arr[$k] !== '') {
-                return $arr[$k];
-            }
-        }
-
-        return $default;
-    }
-
-    private static function intish(mixed $v): ?int
-    {
-        if ($v === null || $v === '') {
-            return null;
-        }
-        if (is_numeric($v)) {
-            return (int) $v;
-        }
-
-        return null;
     }
 }

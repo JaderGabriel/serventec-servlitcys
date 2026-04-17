@@ -130,6 +130,10 @@ final class SaebMicrodadosInepDownloader
 
         $push(['verify' => true]);
 
+        if (filter_var(config('ieducar.saeb.microdados_http_insecure_fallback', false), FILTER_VALIDATE_BOOL)) {
+            $push(['verify' => false]);
+        }
+
         return $variants;
     }
 
@@ -167,6 +171,10 @@ final class SaebMicrodadosInepDownloader
 
         foreach ($variants as $index => $opts) {
             try {
+                if (($opts['verify'] ?? null) === false) {
+                    Log::warning('saeb.microdados.download_ssl_verify_disabled', ['url' => $url]);
+                }
+
                 $response = Http::timeout($timeout)
                     ->withHeaders(['User-Agent' => $userAgent])
                     ->withOptions($opts)

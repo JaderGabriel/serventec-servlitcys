@@ -27,8 +27,8 @@
                                 {{ __('Ligue cada escola/município ao código IBGE nas cidades. Depois siga os passos abaixo — a ordem depende da fonte que tiver disponível.') }}
                             </p>
                         </div>
-                        <div class="flex flex-wrap items-center justify-end gap-2">
-                            @if ($cityCount > 0)
+                        @if ($cityCount > 0)
+                            <div class="flex flex-wrap items-center justify-end gap-2">
                                 <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">
                                     <svg class="h-4 w-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -36,25 +36,97 @@
                                     </svg>
                                     {{ trans_choice(':count cidade no filtro|:count cidades no filtro', $cityCount, ['count' => $cityCount]) }}
                                 </span>
-                            @endif
-                            <button
-                                type="button"
-                                class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/90 bg-white/90 px-3 py-1.5 text-xs font-medium text-emerald-900 shadow-sm hover:bg-emerald-50 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-900/50"
-                                @click="window.dispatchEvent(new CustomEvent('open-modal', { detail: 'pedagogical-storage-saeb' }))"
-                            >
-                                <svg class="h-4 w-4 opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v11.25" />
-                                </svg>
-                                {{ __('Resumo do ficheiro') }}
-                                @if ($fileExists)
-                                    <span class="tabular-nums text-emerald-700 dark:text-emerald-300">· {{ number_format($pontosCount) }}</span>
-                                @endif
-                            </button>
-                        </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
                 <div class="p-6 sm:p-8 space-y-8">
+
+                    <details id="saeb-historico-resumo" class="rounded-xl border border-emerald-200/90 bg-emerald-50/40 dark:border-emerald-800/50 dark:bg-emerald-950/20 [&_summary::-webkit-details-marker]:hidden">
+                        <summary class="cursor-pointer list-none px-4 py-3 flex flex-wrap items-center justify-between gap-3 font-medium text-emerald-900 dark:text-emerald-100">
+                            <span class="inline-flex min-w-0 items-center gap-2">
+                                <svg class="h-4 w-4 shrink-0 opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v11.25" />
+                                </svg>
+                                <span>{{ __('Dados SAEB guardados (base de dados)') }}</span>
+                                @if ($fileExists)
+                                    <span class="tabular-nums text-emerald-700 dark:text-emerald-300">· {{ number_format($pontosCount) }} {{ __('pontos') }}</span>
+                                @endif
+                            </span>
+                            <span class="shrink-0 text-xs font-normal text-emerald-800/80 dark:text-emerald-300/80">{{ __('Toque para expandir') }}</span>
+                        </summary>
+                        <div class="border-t border-emerald-200/60 dark:border-emerald-800/50 px-4 py-4 space-y-4">
+                            <p class="text-sm text-emerald-900/90 dark:text-emerald-100/90">{{ __('Isto é o que o painel Desempenho lê depois de cada importação.') }}</p>
+                            <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                                <div class="rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-3 dark:border-gray-600 dark:bg-gray-900/40">
+                                    <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Ficheiro') }}</p>
+                                    <p class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                                        @if ($fileExists)
+                                            {{ __('Sim') }}
+                                        @else
+                                            {{ __('Não') }}
+                                        @endif
+                                    </p>
+                                </div>
+                                <div class="rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-3 dark:border-gray-600 dark:bg-gray-900/40">
+                                    <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Pontos') }}</p>
+                                    <p class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format($pontosCount) }}</p>
+                                </div>
+                            </div>
+                            <div class="rounded-lg border border-dashed border-emerald-200/80 bg-white/70 p-3 dark:border-emerald-800/50 dark:bg-emerald-950/20">
+                                <p class="text-xs font-medium text-gray-600 dark:text-gray-300">{{ __('Armazenamento') }}</p>
+                                <p class="mt-1 break-all font-mono text-[11px] leading-relaxed text-gray-800 dark:text-gray-200">{{ __('Tabelas :meta e :pontos (PostgreSQL).', ['meta' => 'saeb_import_meta', 'pontos' => 'saeb_indicator_points']) }}</p>
+                            </div>
+                            @if (is_array($meta) && $meta !== [])
+                                <details class="rounded-lg border border-gray-200 dark:border-gray-600">
+                                    <summary class="cursor-pointer select-none px-3 py-2 text-sm font-medium text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/80">
+                                        {{ __('Ver informação técnica (última gravação)') }}
+                                    </summary>
+                                    <div class="border-t border-gray-100 px-3 py-2 dark:border-gray-600">
+                                        <pre class="max-h-36 overflow-auto rounded bg-slate-50 p-2 text-[11px] text-gray-600 dark:bg-black/30 dark:text-gray-400">{{ json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                    </div>
+                                </details>
+                            @endif
+                            <p class="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                                @if (! empty($absPath))
+                                    {{ __('Caminho completo no servidor: :path', ['path' => $absPath]) }}
+                                @else
+                                    {{ __('Os pontos brutos ficam em :pontos; metadados da última importação em :meta.', ['pontos' => 'saeb_indicator_points', 'meta' => 'saeb_import_meta']) }}
+                                @endif
+                            </p>
+                        </div>
+                    </details>
+
+                    <div class="rounded-xl border border-amber-200/90 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/20 px-4 py-3 text-sm text-amber-950 dark:text-amber-100 space-y-2">
+                        <p class="font-semibold">{{ __('Descarga INEP e SSL') }}</p>
+                        <ul class="list-disc pl-5 space-y-1.5 text-xs leading-relaxed">
+                            <li>{{ __('O INEP não publica ZIP por município: o ficheiro é nacional (tipicamente >600MB). O filtro pelas cidades do sistema acontece só depois de extrair.') }}</li>
+                            <li>{{ __('Para menos dados na rede, prefira os passos 1–3 ou um CSV (passo 4) em vez do ZIP oficial.') }}</li>
+                            <li>{{ __('Erro cURL 60: atualize o pacote ca-certificates no servidor ou defina IEDUCAR_SAEB_HTTP_CA_BUNDLE. Último recurso (dev): IEDUCAR_SAEB_HTTP_INSECURE_FALLBACK=true') }}</li>
+                        </ul>
+                    </div>
+
+                    <div class="rounded-xl border border-slate-200/90 bg-white dark:bg-slate-900/40 dark:border-slate-700 p-4 text-sm">
+                        <p class="font-semibold text-slate-900 dark:text-slate-100">{{ __('Obrigatório, opcional e pesado') }}</p>
+                        <dl class="mt-3 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                            <div class="flex flex-wrap gap-x-2 gap-y-1">
+                                <dt class="shrink-0"><span class="inline-flex rounded-md bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200">{{ __('Obrigatório') }}</span></dt>
+                                <dd>{{ __('Pelo menos uma importação que preencha as tabelas SAEB (pontos + meta).') }}</dd>
+                            </div>
+                            <div class="flex flex-wrap gap-x-2 gap-y-1">
+                                <dt class="shrink-0"><span class="inline-flex rounded-md bg-slate-200 px-2 py-0.5 font-semibold text-slate-800 dark:bg-slate-600 dark:text-slate-100">{{ __('Opcional') }}</span></dt>
+                                <dd>{{ __('Passos 1 e 2; URL de modelo diferente no passo 3; IEDUCAR_SAEB_OPENDATA_CSV_URL; manter cache do ZIP.') }}</dd>
+                            </div>
+                            <div class="flex flex-wrap gap-x-2 gap-y-1">
+                                <dt class="shrink-0"><span class="inline-flex rounded-md bg-orange-100 px-2 py-0.5 font-semibold text-orange-900 dark:bg-orange-900/40 dark:text-orange-200">{{ __('Pesado') }}</span></dt>
+                                <dd>{{ __('Passo 4 com ZIP oficial INEP (tempo, disco e largura de banda).') }}</dd>
+                            </div>
+                        </dl>
+                        <p class="mt-3 text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                            {{ __('Os gráficos Desempenho (SAEB) leem directamente :table.', ['table' => 'saeb_indicator_points']) }}
+                        </p>
+                    </div>
 
                     {{-- Fluxo em passos (espelho da página geográfica) --}}
                     <div class="rounded-xl border border-slate-200/90 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/40 p-4 sm:p-5 space-y-4">
@@ -67,7 +139,7 @@
                             <div class="min-w-0 flex-1">
                                 <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ __('Ciclo de importação SAEB') }}</p>
                                 <p class="mt-1 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                                    {{ __('Primeira carga: prefira passos 1 ou 2 antes de depender do passo 3 (HTTP por IBGE). O passo 4 descarrega microdados públicos e filtra pelos municípios cadastrados.') }}
+                                    {{ __('Primeira carga: prefira passos 1 ou 2 ou o passo 3 (HTTP por IBGE). O passo 4 com ZIP INEP é o mais pesado; com CSV ou JSON continua a filtrar pelos IBGE das cidades.') }}
                                 </p>
                             </div>
                         </div>
@@ -182,7 +254,11 @@
                                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" /></svg>
                                         </div>
                                         <div class="min-w-0 flex-1">
-                                            <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-950 dark:bg-amber-950/70 dark:text-amber-200">{{ __('Passo 1') }}</span>
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-950 dark:bg-amber-950/70 dark:text-amber-200">{{ __('Passo 1') }}</span>
+                                                <span class="inline-flex items-center rounded-full bg-slate-200/90 px-2 py-0.5 text-[10px] font-semibold text-slate-800 dark:bg-slate-600 dark:text-slate-100">{{ __('Opcional') }}</span>
+                                                <span class="inline-flex items-center rounded-full bg-emerald-100/90 px-2 py-0.5 text-[10px] font-semibold text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200">{{ __('Leve') }}</span>
+                                            </div>
                                             <h3 class="mt-2 text-base font-semibold text-amber-950 dark:text-amber-100">{{ __('Importar JSON (IEDUCAR_SAEB_IMPORT_URLS)') }}</h3>
                                             <p class="mt-2 text-xs text-amber-900/85 dark:text-amber-200/80 leading-relaxed">{{ __('Tenta cada URL até obter JSON com «pontos». Configure as URLs na secção de URLs acima.') }}</p>
                                         </div>
@@ -201,7 +277,11 @@
                                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
                                         </div>
                                         <div class="min-w-0 flex-1">
-                                            <span class="inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-950 dark:bg-violet-950/70 dark:text-violet-200">{{ __('Passo 2') }}</span>
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <span class="inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-950 dark:bg-violet-950/70 dark:text-violet-200">{{ __('Passo 2') }}</span>
+                                                <span class="inline-flex items-center rounded-full bg-slate-200/90 px-2 py-0.5 text-[10px] font-semibold text-slate-800 dark:bg-slate-600 dark:text-slate-100">{{ __('Opcional') }}</span>
+                                                <span class="inline-flex items-center rounded-full bg-emerald-100/90 px-2 py-0.5 text-[10px] font-semibold text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200">{{ __('Leve') }}</span>
+                                            </div>
                                             <h3 class="mt-2 text-base font-semibold text-violet-950 dark:text-violet-100">{{ __('CSV tabular') }}</h3>
                                             <p class="mt-2 text-xs text-violet-900/85 dark:text-violet-200/80">{{ __('IBGE, ano, disciplina, etapa, valor; opcional INEP ou escola_id.') }}</p>
                                         </div>
@@ -217,7 +297,7 @@
                                             <label class="inline-flex items-center gap-2 text-sm text-violet-950 dark:text-violet-100 cursor-pointer">
                                                 <input type="hidden" name="csv_merge" value="0" />
                                                 <input type="checkbox" name="csv_merge" value="1" checked class="rounded border-gray-300 dark:border-gray-600" />
-                                                <span>{{ __('Fundir com historico.json') }}</span>
+                                                <span>{{ __('Fundir com dados já importados na base') }}</span>
                                             </label>
                                             <label class="inline-flex items-center gap-2 text-sm text-violet-950 dark:text-violet-100 cursor-pointer">
                                                 <input type="hidden" name="csv_resolve_inep" value="0" />
@@ -236,7 +316,11 @@
                                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3" /></svg>
                                         </div>
                                         <div class="min-w-0 flex-1">
-                                            <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-950 dark:bg-emerald-950/70 dark:text-emerald-200">{{ __('Passo 3') }}</span>
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-950 dark:bg-emerald-950/70 dark:text-emerald-200">{{ __('Passo 3') }}</span>
+                                                <span class="inline-flex items-center rounded-full bg-sky-100/90 px-2 py-0.5 text-[10px] font-semibold text-sky-900 dark:bg-sky-900/45 dark:text-sky-200">{{ __('Requer cidades + IBGE') }}</span>
+                                                <span class="inline-flex items-center rounded-full bg-emerald-100/90 px-2 py-0.5 text-[10px] font-semibold text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200">{{ __('Leve') }}</span>
+                                            </div>
                                             <h3 class="mt-2 text-base font-semibold text-emerald-950 dark:text-emerald-100">{{ __('Sincronizar dados oficiais por município (IBGE)') }}</h3>
                                             <p class="mt-2 text-xs text-emerald-900/85 dark:text-emerald-200/80 leading-relaxed">
                                                 {{ __('Por defeito usa o template oficial indicado na caixa azul acima. Marque a opção abaixo apenas se precisar de uma URL de modelo diferente (teste ou espelho) sem alterar o .env.') }}
@@ -268,9 +352,14 @@
                                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
                                             </div>
                                             <div class="min-w-0 flex-1">
-                                                <span class="inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-950 dark:bg-sky-950/70 dark:text-sky-200">{{ __('Passo 4') }}</span>
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    <span class="inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-950 dark:bg-sky-950/70 dark:text-sky-200">{{ __('Passo 4') }}</span>
+                                                    <span class="inline-flex items-center rounded-full bg-slate-200/90 px-2 py-0.5 text-[10px] font-semibold text-slate-800 dark:bg-slate-600 dark:text-slate-100">{{ __('Opcional') }}</span>
+                                                    <span class="inline-flex items-center rounded-full bg-orange-100/90 px-2 py-0.5 text-[10px] font-semibold text-orange-900 dark:bg-orange-900/40 dark:text-orange-200">{{ __('Pesado se ZIP INEP') }}</span>
+                                                    <span class="inline-flex items-center rounded-full bg-emerald-100/90 px-2 py-0.5 text-[10px] font-semibold text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200">{{ __('CSV mais leve') }}</span>
+                                                </div>
                                                 <h3 class="mt-2 text-base font-semibold text-sky-950 dark:text-sky-100">{{ __('Microdados INEP / CSV dados abertos') }}</h3>
-                                                <p class="mt-2 text-xs text-sky-900/85 dark:text-sky-200/80">{{ __('ZIP oficial ou URL de CSV; filtra pelos IBGE das cidades. Operação pesada — prefira CLI em produção.') }}</p>
+                                                <p class="mt-2 text-xs text-sky-900/85 dark:text-sky-200/80">{{ __('ZIP oficial ou URL de CSV; filtra pelos IBGE das cidades. ZIP INEP: use CLI (saeb:sync-microdados) em produção.') }}</p>
                                                 @if (! empty($opendataCsvUrlConfigured ?? false))
                                                     <p class="mt-2 text-xs text-sky-800/90 dark:text-sky-300/80">{{ __('Com URL vazio no formulário, usa IEDUCAR_SAEB_OPENDATA_CSV_URL se estiver definida.') }}</p>
                                                 @endif
@@ -320,76 +409,6 @@
                     </p>
                 </div>
             </div>
-
-            <x-modal name="pedagogical-storage-saeb" maxWidth="lg" focusable>
-                <div class="flex max-h-[min(85vh,32rem)] flex-col">
-                    <div class="shrink-0 border-b border-emerald-100 bg-gradient-to-r from-emerald-50/90 to-white px-5 py-4 dark:border-emerald-900/40 dark:from-emerald-950/50 dark:to-gray-900">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0">
-                                <h2 id="pedagogical-storage-modal-title" class="text-base font-semibold text-gray-900 dark:text-gray-100">
-                                    {{ __('Dados SAEB guardados') }}
-                                </h2>
-                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                    {{ __('Isto é o que o painel Desempenho lê depois de cada importação.') }}
-                                </p>
-                            </div>
-                            <button
-                                type="button"
-                                class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-500 transition hover:bg-white/80 hover:text-gray-800 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-                                x-on:click="$dispatch('close')"
-                                aria-label="{{ __('Fechar') }}"
-                            >
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-5 py-4 [scrollbar-gutter:stable]">
-                        <div class="grid grid-cols-2 gap-3 sm:gap-4">
-                            <div class="rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-3 dark:border-gray-600 dark:bg-gray-900/40">
-                                <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Ficheiro') }}</p>
-                                <p class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-gray-100">
-                                    @if ($fileExists)
-                                        {{ __('Sim') }}
-                                    @else
-                                        {{ __('Não') }}
-                                    @endif
-                                </p>
-                            </div>
-                            <div class="rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-3 dark:border-gray-600 dark:bg-gray-900/40">
-                                <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Pontos') }}</p>
-                                <p class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format($pontosCount) }}</p>
-                            </div>
-                        </div>
-
-                        <div class="mt-4 rounded-lg border border-dashed border-gray-200 bg-white/60 p-3 dark:border-gray-600 dark:bg-gray-950/30">
-                            <p class="text-xs font-medium text-gray-600 dark:text-gray-300">{{ __('Local no site (storage público)') }}</p>
-                            <p class="mt-1 break-all font-mono text-[11px] leading-relaxed text-gray-800 dark:text-gray-200">{{ $jsonPath }}</p>
-                        </div>
-
-                        @if (is_array($meta) && $meta !== [])
-                            <details class="mt-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                                <summary class="cursor-pointer select-none px-3 py-2 text-sm font-medium text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/80">
-                                    {{ __('Ver informação técnica (última gravação)') }}
-                                </summary>
-                                <div class="border-t border-gray-100 px-3 py-2 dark:border-gray-600">
-                                    <pre class="max-h-36 overflow-auto rounded bg-slate-50 p-2 text-[11px] text-gray-600 dark:bg-black/30 dark:text-gray-400">{{ json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
-                                </div>
-                            </details>
-                        @endif
-
-                        <p class="mt-4 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-                            {{ __('Caminho completo no servidor: :path', ['path' => $absPath ?? '']) }}
-                        </p>
-                    </div>
-
-                    <div class="shrink-0 border-t border-gray-200 bg-gray-50/90 px-5 py-3 dark:border-gray-700 dark:bg-gray-900/60">
-                        <x-secondary-button type="button" class="w-full justify-center py-2.5" x-on:click="$dispatch('close')">
-                            {{ __('Fechar') }}
-                        </x-secondary-button>
-                    </div>
-                </div>
-            </x-modal>
         </div>
     </div>
 </x-app-layout>

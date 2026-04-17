@@ -74,6 +74,22 @@ class NetworkRepository
                     }
                 }
 
+                if ($vagasPorUnidadeChart === null) {
+                    try {
+                        $fallback2 = MatriculaChartQueries::matriculasPorEscolaRelatorioDireto($db, $city, $filters, 20);
+                        if ($fallback2 !== null && is_array($fallback2)) {
+                            $fallback2['title'] = __('Matrículas por escola (rede — sem distribuição de vagas)');
+                            $fallback2['subtitle'] = __(
+                                'Agrupamento pela escola na matrícula (FK para escola). Usado quando o top por turma não está disponível — por exemplo turma sem coluna de escola.'
+                            );
+                            $fallback2['options'] = array_merge($fallback2['options'] ?? [], ['panelHeight' => 'xxl']);
+                            $vagasPorUnidadeChart = $fallback2;
+                        }
+                    } catch (QueryException) {
+                        // Mantém null.
+                    }
+                }
+
                 foreach ([
                     fn () => MatriculaChartQueries::vagasOciosasPorTurno($db, $city, $filters),
                     fn () => MatriculaChartQueries::vagasAbertasPorCurso($db, $city, $filters),

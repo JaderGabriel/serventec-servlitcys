@@ -5,31 +5,23 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Services\Inep\SaebCsvPedagogicalImportService;
+use App\Services\Inep\SaebHistoricoDatabase;
 use App\Services\Inep\SaebMicrodadosOpenDataImportService;
 use App\Services\Inep\SaebOfficialMunicipalImportService;
 use App\Services\Inep\SaebPedagogicalImportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class PedagogicalSyncController extends Controller
 {
     public function index(): View
     {
-        $rel = trim((string) config('ieducar.saeb.json_path', 'saeb/historico.json'));
-        $disk = Storage::disk('public');
-        $exists = $rel !== '' && $disk->exists($rel);
-        $meta = null;
-        $pontosCount = 0;
-        if ($exists) {
-            $decoded = json_decode((string) $disk->get($rel), true);
-            if (is_array($decoded)) {
-                $meta = isset($decoded['meta']) && is_array($decoded['meta']) ? $decoded['meta'] : null;
-                $pontos = $decoded['pontos'] ?? $decoded['points'] ?? [];
-                $pontosCount = is_array($pontos) ? count($pontos) : 0;
-            }
-        }
+        $historico = app(SaebHistoricoDatabase::class);
+        $pontosCount = $historico->pointsCount();
+        $meta = $historico->meta();
+        $exists = $pontosCount > 0 || (is_array($meta) && $meta !== []);
+        $rel = SaebHistoricoDatabase::STORAGE_LABEL;
 
         $appUrl = rtrim((string) config('app.url', ''), '/');
         $officialEnvSet = trim((string) config('ieducar.saeb.official_url_template', '')) !== '';
@@ -51,7 +43,7 @@ class PedagogicalSyncController extends Controller
 
         return view('admin.pedagogical-sync.index', [
             'jsonPath' => $rel,
-            'absPath' => storage_path('app/public/'.$rel),
+            'absPath' => null,
             'fileExists' => $exists,
             'meta' => $meta,
             'pontosCount' => $pontosCount,

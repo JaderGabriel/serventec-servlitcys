@@ -1467,7 +1467,49 @@ final class MatriculaChartQueries
                 }
             }
             if (! $anyPositive) {
-                return null;
+                // Rede cheia no recorte: ainda assim mostrar capacidade por escola (evita cartão vazio).
+                $capBySchool = [];
+                foreach ($items as $it) {
+                    $cap = (int) ($it['cap'] ?? 0);
+                    if ($cap <= 0) {
+                        continue;
+                    }
+                    $capBySchool[(string) $it['id']] = $cap;
+                }
+                if ($capBySchool === []) {
+                    return null;
+                }
+                $schoolIdsCap = array_keys($capBySchool);
+                usort($schoolIdsCap, function (string $a, string $b) use ($capBySchool): int {
+                    return ($capBySchool[$b] ?? 0) <=> ($capBySchool[$a] ?? 0);
+                });
+                $maxSchools = 250;
+                if (count($schoolIdsCap) > $maxSchools) {
+                    $schoolIdsCap = array_slice($schoolIdsCap, 0, $maxSchools);
+                }
+                $escolaT = IeducarSchema::resolveTable('escola', $city);
+                $eId = (string) config('ieducar.columns.escola.id');
+                $eName = (string) config('ieducar.columns.escola.name');
+                $schoolNamesMap = $db->table($escolaT)->whereIn($eId, $schoolIdsCap)->pluck($eName, $eId)->all();
+                $labels = [];
+                $values = [];
+                foreach ($schoolIdsCap as $sid) {
+                    $name = $schoolNamesMap[$sid] ?? $schoolNamesMap[(string) $sid] ?? null;
+                    $labels[] = $name !== null && (string) $name !== '' ? (string) $name : ('#'.$sid);
+                    $values[] = (float) ($capBySchool[$sid] ?? 0);
+                }
+                $payload = ChartPayload::barHorizontal(
+                    self::chartTitleDistribuicaoVagasNaCidade(),
+                    __('Capacidade (máx. alunos)'),
+                    $labels,
+                    $values
+                );
+                $payload['subtitle'] = __(
+                    'Não há vagas livres neste recorte (oferta ocupada). O gráfico mostra a capacidade máxima declarada por unidade, com a mesma regra dos indicadores — para comparar o porte da rede quando o agrupamento direto por turma não devolve vagas > 0.'
+                );
+                $payload['options'] = array_merge($payload['options'] ?? [], ['panelHeight' => 'xxl']);
+
+                return $payload;
             }
 
             usort($items, fn ($a, $b) => ($b['v'] <=> $a['v']) ?: ($b['cap'] <=> $a['cap']));

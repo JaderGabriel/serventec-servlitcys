@@ -6,7 +6,7 @@ use App\Models\City;
 use Illuminate\Support\Collection;
 
 /**
- * Orquestra download de microdados SAEB (INEP ou CSV em dados.gov) e gravação em historico.json
+ * Orquestra download de microdados SAEB (INEP ou CSV em dados.gov) e gravação na base (saeb_indicator_points),
  * apenas para municípios/UF das cidades com analytics activo.
  */
 final class SaebMicrodadosOpenDataImportService
@@ -27,7 +27,7 @@ final class SaebMicrodadosOpenDataImportService
                 'ok' => false,
                 'message' => __('Importação por microdados INEP desactivada (IEDUCAR_SAEB_MICRODADOS_ENABLED).'),
                 'fonte_efetiva' => null,
-                'path' => $this->jsonPath(),
+                'path' => SaebHistoricoDatabase::STORAGE_LABEL,
             ];
         }
 
@@ -38,7 +38,7 @@ final class SaebMicrodadosOpenDataImportService
                 'ok' => false,
                 'message' => __('Nenhuma cidade com IBGE (7 dígitos) e base configurada.'),
                 'fonte_efetiva' => null,
-                'path' => $this->jsonPath(),
+                'path' => SaebHistoricoDatabase::STORAGE_LABEL,
             ];
         }
 
@@ -56,7 +56,7 @@ final class SaebMicrodadosOpenDataImportService
                     'ok' => false,
                     'message' => __('Não foi encontrado um CSV adequado no ZIP (ajuste o dicionário de dados ou IEDUCAR_SAEB_MICRODADOS_CSV_MIN_SCORE).'),
                     'fonte_efetiva' => null,
-                    'path' => $this->jsonPath(),
+                    'path' => SaebHistoricoDatabase::STORAGE_LABEL,
                 ];
             }
 
@@ -81,7 +81,7 @@ final class SaebMicrodadosOpenDataImportService
                         $stats['warnings']
                     )),
                     'fonte_efetiva' => null,
-                    'path' => $this->jsonPath(),
+                    'path' => SaebHistoricoDatabase::STORAGE_LABEL,
                     'detalhes' => [
                         'csv_escolhido' => $csvPath,
                         'linhas_ignoradas' => $stats['skipped'],
@@ -119,7 +119,7 @@ final class SaebMicrodadosOpenDataImportService
                 'ok' => false,
                 'message' => __('Falha na sincronização de microdados: :msg', ['msg' => $e->getMessage()]),
                 'fonte_efetiva' => null,
-                'path' => $this->jsonPath(),
+                'path' => SaebHistoricoDatabase::STORAGE_LABEL,
             ];
         } finally {
             if ($canonicalPath !== null && is_file($canonicalPath)) {
@@ -143,7 +143,7 @@ final class SaebMicrodadosOpenDataImportService
                 'ok' => false,
                 'message' => __('Importação por microdados desactivada (IEDUCAR_SAEB_MICRODADOS_ENABLED).'),
                 'fonte_efetiva' => null,
-                'path' => $this->jsonPath(),
+                'path' => SaebHistoricoDatabase::STORAGE_LABEL,
             ];
         }
 
@@ -152,7 +152,7 @@ final class SaebMicrodadosOpenDataImportService
                 'ok' => false,
                 'message' => __('URL inválida (use http ou https).'),
                 'fonte_efetiva' => null,
-                'path' => $this->jsonPath(),
+                'path' => SaebHistoricoDatabase::STORAGE_LABEL,
             ];
         }
 
@@ -163,7 +163,7 @@ final class SaebMicrodadosOpenDataImportService
                 'ok' => false,
                 'message' => __('Nenhuma cidade com IBGE e base configurada.'),
                 'fonte_efetiva' => null,
-                'path' => $this->jsonPath(),
+                'path' => SaebHistoricoDatabase::STORAGE_LABEL,
             ];
         }
 
@@ -188,7 +188,7 @@ final class SaebMicrodadosOpenDataImportService
                         $stats['warnings']
                     )),
                     'fonte_efetiva' => null,
-                    'path' => $this->jsonPath(),
+                    'path' => SaebHistoricoDatabase::STORAGE_LABEL,
                     'detalhes' => ['url' => $url, 'skipped' => $stats['skipped']],
                 ];
             }
@@ -210,7 +210,7 @@ final class SaebMicrodadosOpenDataImportService
                 'ok' => false,
                 'message' => __('Falha ao obter ou processar o CSV: :msg', ['msg' => $e->getMessage()]),
                 'fonte_efetiva' => null,
-                'path' => $this->jsonPath(),
+                'path' => SaebHistoricoDatabase::STORAGE_LABEL,
             ];
         } finally {
             if ($downloaded !== null && is_file($downloaded)) {
@@ -258,10 +258,5 @@ final class SaebMicrodadosOpenDataImportService
         }
 
         return $this->syncFromRemoteCsvUrl($url, $merge, $resolveInep);
-    }
-
-    private function jsonPath(): string
-    {
-        return trim((string) config('ieducar.saeb.json_path', 'saeb/historico.json')) ?: 'saeb/historico.json';
     }
 }

@@ -44,7 +44,8 @@ class InclusionRepository
      *   total_matriculas: ?int,
      *   equidade_fonte: ?string,
      *   methodology: list<string>,
-     *   nee_grupo_resumo: ?array{deficiencias: int, sindromes_tea: int, ne_altas_habilidades: int}
+     *   nee_grupo_resumo: ?array{deficiencias: int, sindromes_tea: int, ne_altas_habilidades: int},
+     *   nee_matriculas_por_escola: list<array{escola_id: int, nome: string, matriculas: int}>
      * }
      */
     public function snapshot(?City $city, IeducarFilterState $filters): array
@@ -63,6 +64,7 @@ class InclusionRepository
                 'methodology' => [],
                 'nee_grupo_resumo' => null,
                 'chart_raca_por_escola_stacked' => null,
+                'nee_matriculas_por_escola' => [],
             ];
         }
 
@@ -76,9 +78,10 @@ class InclusionRepository
         $equidadeFonte = null;
         $neeGrupoResumo = null;
         $chartRacaPorEscolaStacked = null;
+        $neeMatriculasPorEscola = [];
 
         try {
-            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo, &$chartRacaPorEscolaStacked) {
+            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo, &$chartRacaPorEscolaStacked, &$neeMatriculasPorEscola) {
                 $totalMatriculas = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
 
                 try {
@@ -115,7 +118,10 @@ class InclusionRepository
 
                 $sex = MatriculaChartQueries::matriculasPorSexo($db, $city, $filters);
                 if ($sex !== null) {
-                    $sex['options'] = array_merge($sex['options'] ?? [], ['panelHeight' => 'lg']);
+                    $sex['options'] = array_merge($sex['options'] ?? [], [
+                        'panelHeight' => 'lg',
+                        'skipHorizontalBarAutoHeight' => true,
+                    ]);
                     $sex['compact_panel'] = true;
                     $tailCharts[] = $sex;
                 }
@@ -124,14 +130,20 @@ class InclusionRepository
                 if (is_string($customRaca) && trim($customRaca) !== '') {
                     $racaChart = $this->chartFromRawSql($db, $city, trim($customRaca), __('Matrículas por cor ou raça (SQL personalizado)'));
                     if ($racaChart !== null) {
-                        $racaChart['options'] = array_merge($racaChart['options'] ?? [], ['panelHeight' => 'lg']);
+                        $racaChart['options'] = array_merge($racaChart['options'] ?? [], [
+                            'panelHeight' => 'lg',
+                            'skipHorizontalBarAutoHeight' => true,
+                        ]);
                         $racaChart['compact_panel'] = true;
                         $tailCharts[] = $racaChart;
                     }
                 } else {
                     $racaChart = $this->raceDistributionChart($db, $city, $filters);
                     if ($racaChart !== null) {
-                        $racaChart['options'] = array_merge($racaChart['options'] ?? [], ['panelHeight' => 'lg']);
+                        $racaChart['options'] = array_merge($racaChart['options'] ?? [], [
+                            'panelHeight' => 'lg',
+                            'skipHorizontalBarAutoHeight' => true,
+                        ]);
                         $racaChart['compact_panel'] = true;
                         $tailCharts[] = $racaChart;
                     }
@@ -183,6 +195,12 @@ class InclusionRepository
                         ];
                     }
                 }
+
+                try {
+                    $neeMatriculasPorEscola = $this->neeMatriculasPorEscolaTableRows($db, $city, $filters);
+                } catch (\Throwable) {
+                    $neeMatriculasPorEscola = [];
+                }
             });
         } catch (\Throwable $e) {
             return [
@@ -198,6 +216,7 @@ class InclusionRepository
                 'methodology' => [],
                 'nee_grupo_resumo' => null,
                 'chart_raca_por_escola_stacked' => null,
+                'nee_matriculas_por_escola' => [],
             ];
         }
 
@@ -216,6 +235,7 @@ class InclusionRepository
             'methodology' => $methodology,
             'nee_grupo_resumo' => $neeGrupoResumo,
             'chart_raca_por_escola_stacked' => $chartRacaPorEscolaStacked,
+            'nee_matriculas_por_escola' => $neeMatriculasPorEscola,
         ];
     }
 
@@ -628,11 +648,24 @@ class InclusionRepository
     }
 
     /**
-     * Matrículas com registo em aluno_deficiência, por escola (turma → unidade).
+     * Matrículas com registo em aluno_deficiência, por escola (turma → unidade, ou matrícula → escola).
      *
      * @return array<string, int> chave = id escola em string
      */
     private function neeMatriculasPorEscola(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+        if ($tc['escola'] !== '') {
+            return $this->neeMatriculasPorEscolaViaTurma($db, $city, $filters);
+        }
+
+        return $this->neeMatriculasPorEscolaViaMatriculaEscola($db, $city, $filters);
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function neeMatriculasPorEscolaViaTurma(Connection $db, City $city, IeducarFilterState $filters): array
     {
         try {
             $adTable = self::resolveAlunoDeficienciaTable($db, $city);
@@ -704,6 +737,135 @@ class InclusionRepository
         } catch (QueryException|\Throwable) {
             return [];
         }
+    }
+
+    /**
+     * Quando a turma não tem coluna de escola: mesma lógica de matrículas por escola «relatório directo» (FK na matrícula).
+     *
+     * @return array<string, int>
+     */
+    private function neeMatriculasPorEscolaViaMatriculaEscola(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        try {
+            $adTable = self::resolveAlunoDeficienciaTable($db, $city);
+            if ($adTable === null) {
+                return [];
+            }
+
+            $adAluno = IeducarColumnInspector::firstExistingColumn($db, $adTable, array_filter([
+                (string) config('ieducar.columns.aluno_deficiencia.aluno'),
+                'ref_cod_aluno',
+                'cod_aluno',
+                'aluno_id',
+                'id_aluno',
+            ]), $city);
+            if ($adAluno === null) {
+                return [];
+            }
+
+            $escolaSpec = self::resolveEscolaJoinSpec($db, $city);
+            if ($escolaSpec === null) {
+                return [];
+            }
+            ['qualified' => $escolaT, 'idCol' => $eId] = $escolaSpec;
+
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $aluno = IeducarSchema::resolveTable('aluno', $city);
+            $mAluno = (string) config('ieducar.columns.matricula.aluno');
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $mId = (string) config('ieducar.columns.matricula.id');
+            $aId = (string) config('ieducar.columns.aluno.id');
+
+            $mEsc = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
+                (string) config('ieducar.columns.matricula.escola'),
+                'ref_ref_cod_escola',
+                'ref_cod_escola',
+                'cod_escola',
+            ]), $city);
+            if ($mEsc === null) {
+                return [];
+            }
+
+            $grammar = $db->getQueryGrammar();
+            $mEscW = $grammar->wrap('m').'.'.$grammar->wrap($mEsc);
+            $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
+
+            $q = $db->table($mat.' as m')
+                ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
+                ->whereIn('a.'.$aId, function ($sub) use ($adTable, $adAluno) {
+                    $sub->from($adTable)->select($adAluno)->distinct();
+                });
+
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+
+            $q->join($escolaT.' as e', function ($join) use ($db, $mEscW, $ePk) {
+                if ($db->getDriverName() === 'pgsql') {
+                    $join->whereRaw('('.$mEscW.')::text = ('.$ePk.')::text');
+                } else {
+                    $join->whereRaw('CAST('.$mEscW.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
+                }
+            })
+                ->selectRaw('e.'.$eId.' as eid')
+                ->selectRaw('COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).') as c')
+                ->groupBy('e.'.$eId);
+
+            $out = [];
+            foreach ($q->get() as $row) {
+                $out[(string) $row->eid] = (int) ($row->c ?? 0);
+            }
+
+            return $out;
+        } catch (QueryException|\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * Linhas para tabela «matrículas NEE por escola».
+     *
+     * @return list<array{escola_id: int, nome: string, matriculas: int}>
+     */
+    private function neeMatriculasPorEscolaTableRows(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        $counts = $this->neeMatriculasPorEscola($db, $city, $filters);
+        if ($counts === []) {
+            return [];
+        }
+
+        $escolaSpec = self::resolveEscolaJoinSpec($db, $city);
+        if ($escolaSpec === null) {
+            $rows = [];
+            foreach ($counts as $eid => $c) {
+                $rows[] = [
+                    'escola_id' => (int) $eid,
+                    'nome' => '#'.$eid,
+                    'matriculas' => $c,
+                ];
+            }
+            usort($rows, fn (array $a, array $b): int => $b['matriculas'] <=> $a['matriculas']);
+
+            return $rows;
+        }
+
+        ['qualified' => $escolaT, 'idCol' => $eId, 'nameCol' => $eName] = $escolaSpec;
+        $ids = array_map(intval(...), array_keys($counts));
+        $names = $db->table($escolaT)->whereIn($eId, $ids)->pluck($eName, $eId)->all();
+
+        $rows = [];
+        foreach ($counts as $eid => $c) {
+            $nm = $names[$eid] ?? $names[(string) $eid] ?? null;
+            $rows[] = [
+                'escola_id' => (int) $eid,
+                'nome' => (($nm !== null && (string) $nm !== '') ? (string) $nm : '#'.$eid),
+                'matriculas' => $c,
+            ];
+        }
+        usort($rows, fn (array $a, array $b): int => $b['matriculas'] <=> $a['matriculas']);
+
+        return $rows;
     }
 
     /**
