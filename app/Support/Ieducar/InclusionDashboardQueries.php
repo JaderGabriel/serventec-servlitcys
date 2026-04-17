@@ -164,14 +164,14 @@ final class InclusionDashboardQueries
         if ($g3 !== null) {
             $out[] = $g3;
         }
-        $det = self::chartMatriculasPorNomeDeficiencia($db, $city, $filters);
-        if ($det !== null) {
-            $out[] = $det;
-        }
-        // Total de matrículas NEE por unidade (barras simples) — sempre que possível.
+        // Total de matrículas NEE por unidade (barras simples) — em seguida ao resumo por grupos.
         $porEscolaTotal = self::chartNeeMatriculasPorEscolaTop($db, $city, $filters);
         if ($porEscolaTotal !== null) {
             $out[] = $porEscolaTotal;
+        }
+        $det = self::chartMatriculasPorNomeDeficiencia($db, $city, $filters);
+        if ($det !== null) {
+            $out[] = $det;
         }
         // Detalhe por tipo de deficiência no catálogo (empilhado), além do total acima.
         $porEscolaStacked = self::chartNeeDeficienciasPorEscolaStacked($db, $city, $filters);
@@ -569,7 +569,7 @@ final class InclusionDashboardQueries
                 $values
             );
             $chart['subtitle'] = __(
-                'Contagem de matrículas activas distintas com vínculo a aluno_deficiência (ou cadastro equivalente), agrupadas por unidade escolar. Top :n escolas no filtro.',
+                'Contagem de matrículas activas distintas com educação especial (prioridade: cadastro.fisica_deficiência + deficiência; senão aluno_deficiência), agrupadas por unidade escolar. Top :n escolas no filtro.',
                 ['n' => count($labels)]
             );
             $chart['options'] = array_merge($chart['options'] ?? [], ['panelHeight' => 'xxl']);
@@ -581,11 +581,117 @@ final class InclusionDashboardQueries
     }
 
     /**
+     * Mapa escola → contagem DISTINCT de matrículas NEE, via cadastro.fisica_deficiência (BIS), alinhado ao gráfico de três grupos.
+     *
+     * @return array<string, int>
+     */
+    private static function neeMatriculasDistinctCountByEscolaMapFisicaPath(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        $defTable = self::resolveDeficienciaCatalogTable($db, $city);
+        $fisica = self::resolveFisicaDeficienciaJoinSpec($db, $city);
+        $alunoT = IeducarSchema::resolveTable('aluno', $city);
+        $aIdpes = self::resolveAlunoIdpesColumn($db, $alunoT, $city);
+        if ($defTable === null || $fisica === null || $aIdpes === null) {
+            return [];
+        }
+        $defPk = IeducarColumnInspector::firstExistingColumn($db, $defTable, array_filter([
+            (string) config('ieducar.columns.deficiencia.id'),
+            'cod_deficiencia',
+        ]), $city);
+        if ($defPk === null) {
+            return [];
+        }
+
+        $escolaT = IeducarSchema::resolveTable('escola', $city);
+        $eId = (string) config('ieducar.columns.escola.id');
+
+        $mat = IeducarSchema::resolveTable('matricula', $city);
+        $aluno = IeducarSchema::resolveTable('aluno', $city);
+        $mAluno = (string) config('ieducar.columns.matricula.aluno');
+        $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+        $mId = (string) config('ieducar.columns.matricula.id');
+        $aId = (string) config('ieducar.columns.aluno.id');
+
+        $grammar = $db->getQueryGrammar();
+
+        $baseMatriculaAlunoComNeeFisica = function () use ($db, $mat, $aluno, $mAluno, $aId, $fisica, $defTable, $defPk, $aIdpes): Builder {
+            return $db->table($mat.' as m')
+                ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
+                ->join($fisica['table'].' as fd', 'a.'.$aIdpes, '=', 'fd.'.$fisica['idpes_col'])
+                ->join($defTable.' as d', 'fd.'.$fisica['def_fk'], '=', 'd.'.$defPk);
+        };
+
+        $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+        if ($tc['escola'] !== '') {
+            $refEscola = $tc['escola'];
+            $tEsc = $grammar->wrap('t_filter').'.'.$grammar->wrap($refEscola);
+            $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
+
+            $q = $baseMatriculaAlunoComNeeFisica();
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+            $q->join($escolaT.' as e', function ($join) use ($db, $tEsc, $ePk) {
+                if ($db->getDriverName() === 'pgsql') {
+                    $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
+                } else {
+                    $join->whereRaw('CAST('.$tEsc.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
+                }
+            })
+                ->selectRaw('e.'.$eId.' as eid')
+                ->selectRaw('COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).') as c')
+                ->groupBy('e.'.$eId);
+            $out = [];
+            foreach ($q->get() as $row) {
+                $out[(string) $row->eid] = (int) ($row->c ?? 0);
+            }
+
+            return $out;
+        }
+
+        $mEsc = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
+            (string) config('ieducar.columns.matricula.escola'),
+            'ref_cod_escola',
+            'ref_ref_cod_escola',
+            'cod_escola',
+        ]), $city);
+        if ($mEsc === null) {
+            return [];
+        }
+
+        $q = $baseMatriculaAlunoComNeeFisica();
+        MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+        MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+        MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+        MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+        $q->join($escolaT.' as e', 'm.'.$mEsc, '=', 'e.'.$eId)
+            ->selectRaw('e.'.$eId.' as eid')
+            ->selectRaw('COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).') as c')
+            ->groupBy('e.'.$eId);
+        $out = [];
+        foreach ($q->get() as $row) {
+            $out[(string) $row->eid] = (int) ($row->c ?? 0);
+        }
+
+        return $out;
+    }
+
+    /**
      * @return array<string, int> eid => contagem
      */
     private static function neeMatriculasDistinctCountByEscolaMap(Connection $db, City $city, IeducarFilterState $filters): array
     {
         try {
+            try {
+                $mapFisica = self::neeMatriculasDistinctCountByEscolaMapFisicaPath($db, $city, $filters);
+                if ($mapFisica !== []) {
+                    return $mapFisica;
+                }
+            } catch (QueryException|\Throwable) {
+                // Continua com aluno_deficiência.
+            }
+
             $adTable = self::resolveAlunoDeficienciaTable($db, $city);
             if ($adTable === null) {
                 return [];

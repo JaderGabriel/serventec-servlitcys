@@ -92,7 +92,7 @@
         @if ($neeChartsCount > 0 || $hasNeeDetalheCatalogo)
             <div class="mb-8">
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('NEE — cadastro (deficiências, síndromes e altas habilidades)') }}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Gráficos derivados de aluno_deficiência (ou fisica_deficiência) e do catálogo de deficiências. Há um gráfico com o total de matrículas NEE por escola e, quando a base permite, outro com segmentos empilhados por designação no catálogo. O detalhe em lista segue as designações registadas na base.') }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Gráficos derivados de aluno_deficiência (ou fisica_deficiência) e do catálogo de deficiências. Após o resumo por grupo, mostra-se o total de matrículas NEE por escola e, quando a base permite, segmentos empilhados por designação no catálogo. O detalhe em lista segue as designações registadas na base.') }}</p>
                 @if ($neeGrupoResumo !== null && $neeGrupoResumoTotal > 0)
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 items-stretch">
                         <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
@@ -270,9 +270,10 @@
         @if (count($tailAfterNee) > 0 || is_array($chartRacaPorEscolaStacked))
             <div class="space-y-6">
                 @if (count($tailAfterNee) >= 1)
-                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 min-w-0 items-stretch [&_.chart-panel-host]:h-full [&_.chart-panel-host]:flex [&_.chart-panel-host]:flex-col">
+                    {{-- Sexo e cor/raça: mesma altura de cartão em ecrã largo --}}
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 min-w-0 items-stretch [&>div]:flex [&>div]:flex-col [&>div]:min-h-0 xl:[&>div]:min-h-[min(32rem,75vh)] [&_.chart-panel-host]:flex-1 [&_.chart-panel-host]:flex [&_.chart-panel-host]:flex-col [&_.chart-panel-host]:min-h-0">
                         @foreach (array_slice($tailAfterNee, 0, 2) as $idx => $chart)
-                            <div class="{{ ! empty($chart['panel_layout']) && $chart['panel_layout'] === 'full' ? 'xl:col-span-2' : '' }} min-w-0 flex flex-col h-full">
+                            <div class="{{ ! empty($chart['panel_layout']) && $chart['panel_layout'] === 'full' ? 'xl:col-span-2' : '' }} min-w-0 flex flex-col h-full min-h-0">
                                 <x-dashboard.chart-panel
                                     :chart="$chart"
                                     :exportFilename="'inclusao-'.($neeChartsCount + $idx)"

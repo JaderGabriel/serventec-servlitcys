@@ -355,6 +355,7 @@ return [
     | Importação oficial: IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com {ibge}, {uf}, {city_id} — uma URL por município
     | cadastrado (código IBGE em cities.ibge_municipio). Cada ponto deve ter city_ids (automático na importação oficial).
     | IEDUCAR_SAEB_IMPORT_URLS: URLs opcionais (JSON completo com «pontos»); não há fallback para ficheiros de exemplo.
+    | Importação CSV: comando artisan saeb:import-csv (dados reais por município/escola a partir de CSV tabular).
     |
     */
 
@@ -383,6 +384,29 @@ return [
         'municipio_json_files_enabled' => filter_var(env('IEDUCAR_SAEB_MUNICIPIO_JSON_FILES', true), FILTER_VALIDATE_BOOL),
         /** Expor GET /api/saeb/municipio/{ibge}(.json) com dados agregados. */
         'public_api_enabled' => filter_var(env('IEDUCAR_SAEB_PUBLIC_API', true), FILTER_VALIDATE_BOOL),
+
+        /**
+         * Microdados SAEB (INEP ZIP) e CSV público (dados.gov / URL directa): download, filtro por cidades cadastradas, normalização.
+         */
+        'microdados_enabled' => filter_var(env('IEDUCAR_SAEB_MICRODADOS_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'microdados_inep_zip_url_template' => (string) env(
+            'IEDUCAR_SAEB_MICRODADOS_ZIP_URL',
+            'https://download.inep.gov.br/microdados/microdados_saeb_{year}.zip'
+        ),
+        'microdados_cache_path' => trim((string) env('IEDUCAR_SAEB_MICRODADOS_CACHE_PATH', 'saeb/microdados_cache')) ?: 'saeb/microdados_cache',
+        'microdados_download_timeout_seconds' => (int) env('IEDUCAR_SAEB_MICRODADOS_TIMEOUT', 900),
+        /** Pontuação mínima (cabeçalho) para escolher o melhor .csv dentro do ZIP. */
+        'microdados_csv_min_score' => (int) env('IEDUCAR_SAEB_MICRODADOS_CSV_MIN_SCORE', 6),
+        /** Limite de linhas de saída canónica (protecção). */
+        'microdados_max_rows' => (int) env('IEDUCAR_SAEB_MICRODADOS_MAX_ROWS', 5_000_000),
+        /**
+         * Mapeamento opcional de colunas INEP → chaves internas (ibge, year, year_alt, uf, disciplina, valor, lp_wide, mat_wide, etapa, inep_escola, preliminar_flag, tipo_resultado).
+         *
+         * @var array<string, list<string>>
+         */
+        'microdados_column_map' => [],
+        /** URL opcional de CSV (dados.gov.br, CKAN) quando não se usa o ZIP INEP. */
+        'microdados_opendata_csv_url' => trim((string) env('IEDUCAR_SAEB_OPENDATA_CSV_URL', '')),
     ],
 
     /*

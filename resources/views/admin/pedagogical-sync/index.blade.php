@@ -5,7 +5,7 @@
                 {{ __('Sincronização pedagógica (SAEB)') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ __('Importação de séries SAEB: use primeiro «Importar de IEDUCAR_SAEB_IMPORT_URLS», ficheiros em storage ou um template externo (IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE). O endpoint interno APP_URL + /api/saeb só devolve JSON depois de existir dados em disco — não serve como única fonte num servidor vazio.') }}
+                {{ __('Importação de séries SAEB: CSV tabular (IBGE, ano, disciplina, etapa, valor), «Importar de IEDUCAR_SAEB_IMPORT_URLS», ficheiros em storage ou template externo (IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE). O endpoint interno APP_URL + /api/saeb só devolve JSON depois de existir dados em disco — não serve como única fonte num servidor vazio.') }}
             </p>
         </div>
     </x-slot>
@@ -88,7 +88,7 @@
                     <div class="rounded-xl border border-blue-200/80 bg-blue-50/70 dark:border-blue-900/50 dark:bg-blue-950/25 p-4 sm:p-5">
                         <p class="text-sm font-semibold text-blue-950 dark:text-blue-100">{{ __('Importação oficial por município') }}</p>
                         <ol class="mt-2 list-decimal list-outside space-y-2 pl-5 text-sm text-blue-950 dark:text-blue-100/95">
-                            <li>{{ __('Primeira instalação: use «Importar de IEDUCAR_SAEB_IMPORT_URLS», ficheiros em storage ou IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com URL externa — evite depender só do endpoint /api/saeb da própria app (resposta 404 até haver dados).') }}</li>
+                            <li>{{ __('Primeira instalação: use «Importar CSV», «Importar de IEDUCAR_SAEB_IMPORT_URLS», ficheiros em storage ou IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com URL externa — evite depender só do endpoint /api/saeb da própria app (resposta 404 até haver dados).') }}</li>
                             <li>{{ __('Cadastre o código IBGE (7 dígitos) em cada cidade (edição da cidade).') }}</li>
                             <li>{{ __('Opcional: IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com {ibge}. Se vazio, usa APP_URL + /api/saeb/municipio/{ibge}.json; primeiro tenta leitura em storage (saeb/municipio ou historico.json), depois HTTP.') }}</li>
                             <li>{{ __('A resposta deve trazer «pontos» (ou «resultados» no formato documentado no código) com séries SAEB; cada ponto é etiquetado com o id interno da cidade.') }}</li>
@@ -104,6 +104,85 @@
                             <p class="mt-2 text-xs text-amber-900/80 dark:text-amber-200/80">{{ __('Há :n URL(s) extra em config (import_url_defaults).', ['n' => $importUrlDefaultsCount]) }}</p>
                         @endif
                     </div>
+
+                    <div class="rounded-xl border border-violet-200/80 bg-violet-50/70 dark:border-violet-900/45 dark:bg-violet-950/25 p-4 sm:p-5">
+                        <p class="text-sm font-semibold text-violet-950 dark:text-violet-100">{{ __('Importação por CSV (dados reais)') }}</p>
+                        <p class="mt-1 text-sm text-violet-950/90 dark:text-violet-100/90 leading-relaxed">
+                            {{ __('Cabeçalho obrigatório: colunas para IBGE do município (ex.: municipio_ibge), ano (ex.: ano_aplicacao), disciplina (LP/MAT), etapa (anos iniciais/finais, EM, …) e valor numérico. Opcional: INEP da escola (ex.: inep_escola) ou id interno i-Educar (escola_id / cod_escola_ie); status e unidade.') }}
+                        </p>
+                        <p class="mt-2 text-xs text-violet-900/85 dark:text-violet-200/80 font-mono leading-relaxed">
+                            municipio_ibge;ano_aplicacao;disciplina;etapa;valor;inep_escola
+                        </p>
+                        <form method="post" action="{{ route('admin.pedagogical-sync.run') }}" enctype="multipart/form-data" class="mt-4 space-y-3">
+                            @csrf
+                            <input type="hidden" name="action" value="import_csv" />
+                            <div>
+                                <label for="csv_file" class="block text-xs font-medium text-violet-900 dark:text-violet-200">{{ __('Ficheiro .csv ou .txt') }}</label>
+                                <input id="csv_file" name="csv_file" type="file" accept=".csv,.txt,text/csv,text/plain" required class="mt-1 block w-full text-sm text-gray-700 dark:text-gray-200 file:mr-3 file:rounded-md file:border-0 file:bg-violet-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-violet-500" />
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-6">
+                                <label class="inline-flex items-center gap-2 text-sm text-violet-950 dark:text-violet-100 cursor-pointer">
+                                    <input type="hidden" name="csv_merge" value="0" />
+                                    <input type="checkbox" name="csv_merge" value="1" checked class="rounded border-gray-300 dark:border-gray-600" />
+                                    <span>{{ __('Fundir com o historico.json existente') }}</span>
+                                </label>
+                                <label class="inline-flex items-center gap-2 text-sm text-violet-950 dark:text-violet-100 cursor-pointer">
+                                    <input type="hidden" name="csv_resolve_inep" value="0" />
+                                    <input type="checkbox" name="csv_resolve_inep" value="1" checked class="rounded border-gray-300 dark:border-gray-600" />
+                                    <span>{{ __('Mapear INEP da escola → cod_escola (i-Educar)') }}</span>
+                                </label>
+                            </div>
+                            <button type="submit" class="inline-flex justify-center items-center rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                {{ __('Importar CSV') }}
+                            </button>
+                        </form>
+                    </div>
+
+                    @if ($microdadosEnabled ?? true)
+                        <div class="rounded-xl border border-sky-200/80 bg-sky-50/70 dark:border-sky-900/45 dark:bg-sky-950/25 p-4 sm:p-5">
+                            <p class="text-sm font-semibold text-sky-950 dark:text-sky-100">{{ __('Microdados SAEB (INEP + dados abertos)') }}</p>
+                            <p class="mt-1 text-sm text-sky-950/90 dark:text-sky-100/90 leading-relaxed">
+                                {{ __('Descarrega o ZIP oficial do INEP (ou um CSV por URL), filtra pelos municípios das cidades cadastradas (IBGE + base i-Educar), normaliza colunas típicas e grava o mesmo historico.json. O ZIP pode ser grande e demorar — prefira o comando CLI em produção.') }}
+                            </p>
+                            @if (! empty($opendataCsvUrlConfigured ?? false))
+                                <p class="mt-2 text-xs text-sky-900/85 dark:text-sky-200/80">{{ __('IEDUCAR_SAEB_OPENDATA_CSV_URL está definida: deixe o campo URL vazio para usar esse endereço, ou sobrescreva abaixo.') }}</p>
+                            @endif
+                            <form method="post" action="{{ route('admin.pedagogical-sync.run') }}" class="mt-4 space-y-3">
+                                @csrf
+                                <input type="hidden" name="action" value="import_microdados" />
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label for="md_year" class="block text-xs font-medium text-sky-900 dark:text-sky-200">{{ __('Ano dos microdados (ZIP INEP)') }}</label>
+                                        <input id="md_year" name="md_year" type="number" min="2000" max="2100" value="{{ $defaultMicrodadosYear ?? (int) date('Y') - 1 }}" class="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-2" />
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label for="md_url" class="block text-xs font-medium text-sky-900 dark:text-sky-200">{{ __('URL de CSV público (opcional — em vez do ZIP)') }}</label>
+                                        <input id="md_url" name="md_url" type="url" placeholder="https://…" value="{{ old('md_url') }}" class="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-2 font-mono text-xs" />
+                                    </div>
+                                </div>
+                                <div class="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-6">
+                                    <label class="inline-flex items-center gap-2 text-sm text-sky-950 dark:text-sky-100 cursor-pointer">
+                                        <input type="hidden" name="md_merge" value="0" />
+                                        <input type="checkbox" name="md_merge" value="1" checked class="rounded border-gray-300 dark:border-gray-600" />
+                                        <span>{{ __('Fundir com historico.json') }}</span>
+                                    </label>
+                                    <label class="inline-flex items-center gap-2 text-sm text-sky-950 dark:text-sky-100 cursor-pointer">
+                                        <input type="hidden" name="md_resolve_inep" value="0" />
+                                        <input type="checkbox" name="md_resolve_inep" value="1" checked class="rounded border-gray-300 dark:border-gray-600" />
+                                        <span>{{ __('Mapear INEP → cod_escola') }}</span>
+                                    </label>
+                                    <label class="inline-flex items-center gap-2 text-sm text-sky-950 dark:text-sky-100 cursor-pointer" title="{{ __('Só relevante para o ZIP INEP: mantém a pasta extraída em storage para depuração.') }}">
+                                        <input type="hidden" name="md_keep_cache" value="0" />
+                                        <input type="checkbox" name="md_keep_cache" value="1" class="rounded border-gray-300 dark:border-gray-600" />
+                                        <span>{{ __('Manter cache da extracção (ZIP)') }}</span>
+                                    </label>
+                                </div>
+                                <button type="submit" class="inline-flex justify-center items-center rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                                    {{ __('Sincronizar microdados (automático)') }}
+                                </button>
+                            </form>
+                        </div>
+                    @endif
 
                     <div class="flex flex-col sm:flex-row flex-wrap gap-3">
                         <form method="post" action="{{ route('admin.pedagogical-sync.run') }}" class="inline">
@@ -123,7 +202,7 @@
                     </div>
 
                     <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                        {{ __('Após importar, este servidor expõe GET :url (ou o mesmo caminho com .json) para consumo interno ou espelho. Variáveis: IEDUCAR_SAEB_JSON_PATH, IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE, IEDUCAR_SAEB_IMPORT_URLS. Comando: php artisan saeb:import-official', ['url' => rtrim((string) config('app.url'), '/').'/api/saeb/municipio/{ibge}']) }}
+                        {{ __('Após importar, este servidor expõe GET :url (ou o mesmo caminho com .json) para consumo interno ou espelho. Variáveis: IEDUCAR_SAEB_JSON_PATH, IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE, IEDUCAR_SAEB_IMPORT_URLS. CLI: saeb:import-csv · saeb:sync-microdados · saeb:import-official', ['url' => rtrim((string) config('app.url'), '/').'/api/saeb/municipio/{ibge}']) }}
                     </p>
                 </div>
             </div>
