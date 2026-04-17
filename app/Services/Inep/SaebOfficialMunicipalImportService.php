@@ -18,12 +18,19 @@ class SaebOfficialMunicipalImportService
     ) {}
 
     /**
+     * @param  string|null  $templateOverride  URL com {ibge} (e opcionalmente {uf}, {city_id}); sobrescreve IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE quando preenchida.
      * @return array{ok: bool, message: string, fonte_efetiva: ?string, path: string, detalhes?: array<string, mixed>}
      */
-    public function importFromOfficialTemplate(): array
+    public function importFromOfficialTemplate(?string $templateOverride = null): array
     {
         $rel = $this->relativePath();
-        $template = $this->resolveOfficialUrlTemplate();
+        $template = null;
+        $trimOverride = $templateOverride !== null ? trim($templateOverride) : '';
+        if ($trimOverride !== '') {
+            $template = $trimOverride;
+        } else {
+            $template = $this->resolveOfficialUrlTemplate();
+        }
 
         if ($template === '' || ! str_contains($template, '{ibge}')) {
             return [
@@ -141,7 +148,7 @@ class SaebOfficialMunicipalImportService
 
         if ($allPontos === []) {
             $hint = '';
-            if ($this->usesDefaultAppUrlTemplate($template)) {
+            if ($this->usesDefaultAppUrlTemplate($template, $trimOverride === '')) {
                 $hint = "\n\n".__('Nota: com IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE vazio, a importação usa APP_URL + /api/saeb/municipio/{ibge}.json — isso só funciona depois de existir JSON em storage (ou use uma URL externa real no .env).');
             }
             $msg = __('Nenhum município devolveu dados SAEB válidos.').$hint."\n".implode("\n", $errors);
@@ -256,8 +263,12 @@ class SaebOfficialMunicipalImportService
         return Str::startsWith($host, 'www.') ? substr($host, 4) : $host;
     }
 
-    private function usesDefaultAppUrlTemplate(string $template): bool
+    private function usesDefaultAppUrlTemplate(string $template, bool $fromConfigOnly): bool
     {
+        if (! $fromConfigOnly) {
+            return false;
+        }
+
         $t = trim((string) config('ieducar.saeb.official_url_template', ''));
 
         return $t === '' && $template === $this->defaultOfficialTemplateFromAppUrl();

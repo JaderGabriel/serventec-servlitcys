@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\City;
 use App\Services\Inep\SaebCsvPedagogicalImportService;
 use App\Services\Inep\SaebMicrodadosOpenDataImportService;
 use App\Services\Inep\SaebOfficialMunicipalImportService;
@@ -36,20 +37,38 @@ class PedagogicalSyncController extends Controller
 
         $defaultMdYear = max(2000, (int) date('Y') - 1);
 
+        $cities = City::query()->forAnalytics()->orderBy('name')->get();
+        $effectiveOfficialTemplate = $officialEnvSet
+            ? trim((string) config('ieducar.saeb.official_url_template', ''))
+            : ($appUrlOk ? $appUrl.'/api/saeb/municipio/{ibge}.json' : '');
+        $importUrlsRaw = trim((string) config('ieducar.saeb.import_urls', ''));
+        $microdadosZipExample = str_replace(
+            '{year}',
+            (string) $defaultMdYear,
+            (string) config('ieducar.saeb.microdados_inep_zip_url_template', 'https://download.inep.gov.br/microdados/microdados_saeb_{year}.zip')
+        );
+        $opendataCsvUrl = trim((string) config('ieducar.saeb.microdados_opendata_csv_url', ''));
+
         return view('admin.pedagogical-sync.index', [
             'jsonPath' => $rel,
             'absPath' => storage_path('app/public/'.$rel),
             'fileExists' => $exists,
             'meta' => $meta,
             'pontosCount' => $pontosCount,
-            'importUrlsConfigured' => trim((string) config('ieducar.saeb.import_urls', '')) !== '',
+            'importUrlsConfigured' => $importUrlsRaw !== '',
             'importUrlDefaultsCount' => is_array(config('ieducar.saeb.import_url_defaults')) ? count(config('ieducar.saeb.import_url_defaults')) : 0,
             'officialTemplateConfigured' => $officialEnvSet,
             'officialUrlUsesAppDefault' => ! $officialEnvSet && $appUrlOk,
             'appUrl' => $appUrl,
             'microdadosEnabled' => filter_var(config('ieducar.saeb.microdados_enabled', true), FILTER_VALIDATE_BOOLEAN),
             'defaultMicrodadosYear' => $defaultMdYear,
-            'opendataCsvUrlConfigured' => trim((string) config('ieducar.saeb.microdados_opendata_csv_url', '')) !== '',
+            'opendataCsvUrlConfigured' => $opendataCsvUrl !== '',
+            'cities' => $cities,
+            'cityCount' => $cities->count(),
+            'effectiveOfficialTemplate' => $effectiveOfficialTemplate,
+            'importUrlsDisplay' => $importUrlsRaw,
+            'microdadosZipExample' => $microdadosZipExample,
+            'opendataCsvUrl' => $opendataCsvUrl,
         ]);
     }
 
@@ -70,6 +89,8 @@ class PedagogicalSyncController extends Controller
             'md_merge' => 'sometimes|boolean',
             'md_resolve_inep' => 'sometimes|boolean',
             'md_keep_cache' => 'sometimes|boolean',
+            'use_custom_official_url' => 'exclude_unless:action,import_official|sometimes|boolean',
+            'official_url_override' => 'exclude_unless:action,import_official|nullable|string|max:2048',
         ]);
 
         @set_time_limit(300);
@@ -165,9 +186,27 @@ class PedagogicalSyncController extends Controller
                 );
         }
 
-        $result = $validated['action'] === 'import_official'
-            ? $official->importFromOfficialTemplate()
-            : $import->importFromConfiguredSources();
+        if ($validated['action'] === 'import_official') {
+            $override = null;
+            if ($request->boolean('use_custom_official_url')) {
+                $override = trim((string) $request->input('official_url_override', ''));
+                if ($override === '' || ! str_contains($override, '{ibge}')) {
+                    return redirect()
+                        ->route('admin.pedagogical-sync.index')
+                        ->withInput()
+                        ->with('pedagogical_sync_error', __('Indique uma URL modelo com o placeholder {ibge}.'));
+                }
+                if (! str_starts_with($override, 'http://') && ! str_starts_with($override, 'https://')) {
+                    return redirect()
+                        ->route('admin.pedagogical-sync.index')
+                        ->withInput()
+                        ->with('pedagogical_sync_error', __('A URL deve começar por http:// ou https://.'));
+                }
+            }
+            $result = $official->importFromOfficialTemplate($override);
+        } else {
+            $result = $import->importFromConfiguredSources();
+        }
 
         return redirect()
             ->route('admin.pedagogical-sync.index')
