@@ -18,6 +18,11 @@ use Livewire\Attributes\Lazy;
 class ServerStatusStrip extends Card
 {
     /**
+     * Quando true, remove o “cartão” exterior para encaixar no painel fundido com o cartão Servers.
+     */
+    public bool $embedded = false;
+
+    /**
      * Placeholder fino (evita o skeleton em grelha do cartão Pulse por defeito).
      */
     public function placeholder(): Renderable

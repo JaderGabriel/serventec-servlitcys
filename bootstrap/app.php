@@ -5,10 +5,10 @@ use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\RecordPulseInstitutionContext;
 use Illuminate\Console\Scheduling\Schedule;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Artisan;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -36,12 +36,15 @@ return Application::configure(basePath: dirname(__DIR__))
             return;
         }
 
-        $minutes = (int) config('pulse.schedule.interval_minutes', 5);
-        // Mutex maior que o intervalo para locks órfãos; evita picos se `schedule:run` se sobrepor.
-        $mutexExpires = min(120, max(10, $minutes * 2 + 2));
+        // Mutex: evitar execuções em paralelo se `pulse:work` demorar mais de um minuto.
+        $mutexExpires = min(180, max(60, (int) config('pulse.schedule.interval_minutes', 5) * 30));
 
-        // Um único agendamento: mesma cadência do cron (`*/N`), sequencial no mesmo processo,
-        // sem `runInBackground`; se uma execução anterior ainda estiver ativa, esta é ignorada.
+        /*
+         * `everyMinute()` + cron a cada minuto (`schedule:run`): em cada invocação há tarefa
+         * “pronta” — evita “No scheduled commands are ready to run” causado por expressões
+         * cron esparsas (ex. de cinco em cinco minutos) quando o relógio não coincide.
+         * Alinhado ao guia oficial do Laravel Pulse.
+         */
         $schedule->call(function (): void {
             Artisan::call('pulse:check', ['--once' => true]);
 
@@ -50,7 +53,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         })
             ->name('pulse-scheduled-tick')
-            ->cron(sprintf('*/%d * * * *', $minutes))
+            ->everyMinute()
             ->withoutOverlapping($mutexExpires);
     })
     ->create();

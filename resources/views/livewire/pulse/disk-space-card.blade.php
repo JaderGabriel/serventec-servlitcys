@@ -27,13 +27,13 @@
     <x-pulse::scroll :expand="$expand" wire:poll.60s="">
         <div class="space-y-3 text-sm">
             @if (! $data['ok'])
-                <div class="rounded-xl border border-gray-200/80 bg-gray-50/70 px-3 py-2 text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-900/40 dark:text-gray-300">
+                <div class="rounded-xl border border-gray-200/80 bg-gray-50/70 px-3 py-2 text-xs italic text-gray-700 dark:border-gray-600 dark:bg-gray-900/40 dark:text-gray-300">
                     {{ __('Não foi possível ler o espaço em disco deste volume.') }}
                 </div>
             @else
                 <div class="rounded-xl border border-emerald-200/60 bg-emerald-50/40 px-3 py-3 dark:border-emerald-900/40 dark:bg-emerald-950/20">
                     <p class="text-2xl font-semibold tabular-nums text-emerald-900 dark:text-emerald-100">{{ $data['pct_free'] }}%</p>
-                    <p class="mt-1 text-xs text-emerald-800/90 dark:text-emerald-200/90">{{ __('livres no volume') }}</p>
+                    <p class="mt-1 text-xs italic text-emerald-800/90 dark:text-emerald-200/90">{{ __('livres no volume') }}</p>
                 </div>
                 <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div class="rounded-xl border border-gray-100/90 bg-gray-50/50 px-3 py-2 dark:border-gray-700/80 dark:bg-gray-900/30">

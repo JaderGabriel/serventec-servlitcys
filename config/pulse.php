@@ -114,12 +114,16 @@ return [
     | Scheduler (php artisan schedule:run)
     |--------------------------------------------------------------------------
     |
-    | Use sempre `pulse:check --once` no agendador: o comando sem `--once` é um
-    | daemon em loop e não deve ser disparado por cron (multiplicaria processos).
-    | `interval_minutes` alinha o Pulse ao cron (ex.: `schedule:run` a cada 5 min).
-    | O agendador corre `pulse:check` e depois `pulse:work --stop-when-empty` em
-    | sequência no mesmo processo, com mutex partilhado. Desative o digest aqui
-    | se já tiver `pulse:work` em Supervisor (evite duplicar).
+    | O tick do Pulse está registado com `everyMinute()` em `bootstrap/app.php`.
+    | Configure o cron do servidor para correr **cada minuto**, por exemplo:
+    | `* * * * * cd /caminho/para/a/app && php artisan schedule:run >> /dev/null 2>&1`
+    | Assim `pulse:check --once` e (opcionalmente) `pulse:work --stop-when-empty`
+    | executam de forma fiável. Nunca agende `pulse:check` sem `--once` no cron.
+    |
+    | `interval_minutes` define sobretudo a janela “servidor online” na UI (cartão
+    | Servers / faixa de estado), não o intervalo do agendador.
+    |
+    | Desative `run_digest_tick` se já tiver `pulse:work` contínuo em Supervisor.
     |
     */
 

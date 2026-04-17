@@ -26,16 +26,29 @@ class RecordPulseInstitutionContext
             return $next($request);
         }
 
-        return Pulse::ignore(function () use ($request, $next) {
-            Pulse::record('trafego_app', 'total', null)->count();
+        Pulse::record('trafego_app', 'total', null)->count();
 
-            $cityId = $this->resolveCityId($request);
-            if ($cityId !== null && $cityId > 0) {
-                Pulse::record('instituicao_request', 'cid:'.$cityId, null)->count();
-            }
+        $cityId = $this->resolveCityId($request);
+        if ($cityId !== null && $cityId > 0) {
+            Pulse::record('instituicao_request', 'cid:'.$cityId, null)->count();
+        }
 
-            return $next($request);
-        });
+        $this->recordSyncAdminEndpoints($request);
+
+        return Pulse::ignore(fn () => $next($request));
+    }
+
+    private function recordSyncAdminEndpoints(Request $request): void
+    {
+        if ($request->is('admin/geo-sync', 'admin/geo-sync/*')) {
+            Pulse::record('sync_admin_endpoint', 'geo-sync', null)->count();
+
+            return;
+        }
+
+        if ($request->is('admin/pedagogical-sync', 'admin/pedagogical-sync/*')) {
+            Pulse::record('sync_admin_endpoint', 'pedagogical-sync', null)->count();
+        }
     }
 
     private function resolveCityId(Request $request): ?int

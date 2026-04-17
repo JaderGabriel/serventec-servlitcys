@@ -14,6 +14,7 @@
         'rose' => 'border border-rose-200/90 bg-gradient-to-r from-rose-50/95 to-rose-50/35 text-rose-950 shadow-md ring-2 ring-rose-200/50 dark:border-rose-800/55 dark:from-rose-950/45 dark:to-rose-950/20 dark:text-rose-100 dark:ring-rose-800/35',
         'red' => 'border border-red-200/90 bg-gradient-to-r from-red-50/95 to-red-50/35 text-red-950 shadow-md ring-2 ring-red-200/50 dark:border-red-900/50 dark:from-red-950/45 dark:to-red-950/20 dark:text-red-100 dark:ring-red-900/35',
         'indigo' => 'border border-indigo-200/90 bg-gradient-to-r from-indigo-50/95 to-indigo-50/35 text-indigo-950 shadow-md ring-2 ring-indigo-200/55 dark:border-indigo-800/55 dark:from-indigo-950/50 dark:to-indigo-950/20 dark:text-indigo-100 dark:ring-indigo-700/40',
+        'teal' => 'border border-teal-200/90 bg-gradient-to-r from-teal-50/95 to-teal-50/35 text-teal-950 shadow-md ring-2 ring-teal-200/50 dark:border-teal-800/55 dark:from-teal-950/50 dark:to-teal-950/20 dark:text-teal-100 dark:ring-teal-800/40',
     ];
     $cardClass = $styles[$accent] ?? $styles['indigo'];
 
@@ -26,6 +27,7 @@
         'rose' => 'bg-gradient-to-b from-rose-500 to-pink-600',
         'red' => 'bg-gradient-to-b from-red-500 to-rose-700',
         'indigo' => 'bg-gradient-to-b from-indigo-500 to-violet-600',
+        'teal' => 'bg-gradient-to-b from-teal-500 to-cyan-600',
     ];
     $barClass = $bar[$accent] ?? $bar['indigo'];
 
@@ -38,6 +40,7 @@
         'cpu' => 'M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-13.5h.008v.008H9v-.008zm0 3.75h.008v.008H9V9.375zm0 3.75h.008v.008H9v-.008zm0 3.75h.008v.008H9v-.008zm3.75-11.25h.008v.008h-.008v-.008zm0 3.75h.008v.008h-.008V9.375zm0 3.75h.008v.008h-.008v-.008zm0 3.75h.008v.008h-.008v-.008zm3.75-11.25h.008v.008h-.008v-.008zm0 3.75h.008v.008h-.008V9.375zm0 3.75h.008v.008h-.008v-.008zm0 3.75h.008v.008h-.008v-.008z',
         'bolt' => 'M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z',
         'exclamation' => 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z',
+        'cloud-arrow-up' => 'M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z',
         'rectangle-group' => 'M2.25 7.125C2.25 6.504 2.754 6 3.375 6h6c.621 0 1.125.504 1.125 1.125v3.75c0 .621-.504 1.125-1.125 1.125h-6a1.125 1.125 0 01-1.125-1.125v-3.75zM14.25 8.625c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v8.25c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 01-1.125-1.125v-8.25zM3.75 16.125c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 01-1.125-1.125v-2.25z',
         'circle' => 'M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.431l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456zM16.5 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z',
     ];
@@ -45,18 +48,19 @@
 @endphp
 
 <div {{ $attributes->merge(['class' => 'pulse-dashboard-theme default:col-span-full pt-10 first:pt-2 sm:pt-11 sm:first:pt-2']) }}>
-    <div class="relative overflow-hidden rounded-2xl pl-4 sm:pl-5">
-        <div class="absolute start-0 top-0 h-full w-1.5 {{ $barClass }}" aria-hidden="true"></div>
-        <div class="flex items-start gap-3.5 px-4 py-3.5 sm:gap-4 sm:px-5 sm:py-4 {{ $cardClass }}">
+    {{-- Mesmo padding horizontal que <x-pulse::card> (p-3 sm:p-6) para alinhar títulos com os cartões de dados. --}}
+    <div class="flex items-stretch gap-3 rounded-2xl p-3 sm:gap-3.5 sm:p-6 {{ $cardClass }}">
+        <div class="w-1.5 shrink-0 rounded-full {{ $barClass }}" aria-hidden="true"></div>
+        <div class="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
             <div class="shrink-0 rounded-xl bg-white/70 p-2 shadow-sm ring-1 ring-white/60 dark:bg-black/25 dark:ring-white/10">
                 <svg class="h-6 w-6 opacity-95" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="{{ $path }}" />
                 </svg>
             </div>
             <div class="min-w-0 pb-px">
-                <h2 class="text-base font-semibold leading-snug tracking-tight sm:text-lg">{{ $title }}</h2>
+                <h2 class="text-base font-bold uppercase leading-snug tracking-wide sm:text-lg">{{ $title }}</h2>
                 @if ($subtitle)
-                    <p class="mt-1.5 max-w-4xl text-sm leading-relaxed opacity-90">{{ $subtitle }}</p>
+                    <p class="mt-1.5 max-w-4xl text-sm italic leading-relaxed opacity-90">{{ $subtitle }}</p>
                 @endif
             </div>
         </div>

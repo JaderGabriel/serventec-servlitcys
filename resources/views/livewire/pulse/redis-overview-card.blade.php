@@ -13,22 +13,22 @@
         <div class="space-y-4 text-sm text-gray-700 dark:text-gray-200">
             <div class="rounded-md bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 px-3 py-2 text-xs">
                 <p class="font-medium text-gray-800 dark:text-gray-100">{{ __('Cache da aplicação Laravel') }}</p>
-                <p class="mt-1 text-gray-600 dark:text-gray-400">
-                    {{ __('Driver actual:') }} <code class="font-mono">{{ $cacheStore }}</code>
+                <p class="mt-1 italic text-gray-600 dark:text-gray-400">
+                    {{ __('Driver actual:') }} <code class="font-mono not-italic">{{ $cacheStore }}</code>
                     @if ($cacheStore !== 'redis')
                         <span class="text-amber-600 dark:text-amber-400"> — {{ __('o cartão «Cache» do Pulse mostra hits/misses; este bloco mostra o servidor Redis usado para filas/sessões se existir.') }}</span>
                     @endif
                 </p>
-                <p class="mt-1 text-gray-600 dark:text-gray-400">
-                    {{ __('Prefixo Laravel cache:') }} <code class="font-mono break-all">{{ $cachePrefix ?: '—' }}</code>
+                <p class="mt-1 italic text-gray-600 dark:text-gray-400">
+                    {{ __('Prefixo Laravel cache:') }} <code class="font-mono break-all not-italic">{{ $cachePrefix ?: '—' }}</code>
                 </p>
-                <p class="mt-1 text-gray-600 dark:text-gray-400">
-                    {{ __('Prefixo Redis (database.redis.options.prefix):') }} <code class="font-mono break-all">{{ $redisPrefix ?: '—' }}</code>
+                <p class="mt-1 italic text-gray-600 dark:text-gray-400">
+                    {{ __('Prefixo Redis (database.redis.options.prefix):') }} <code class="font-mono break-all not-italic">{{ $redisPrefix ?: '—' }}</code>
                 </p>
             </div>
 
             @if (! $payload['ok'] && $payload['error'])
-                <div class="rounded-md border border-red-200 dark:border-red-900/50 bg-red-50/80 dark:bg-red-900/20 px-3 py-2 text-xs text-red-800 dark:text-red-200">
+                <div class="rounded-md border border-red-200 dark:border-red-900/50 bg-red-50/80 dark:bg-red-900/20 px-3 py-2 text-xs italic text-red-800 dark:text-red-200">
                     {{ $payload['error'] }}
                 </div>
             @endif
@@ -58,7 +58,7 @@
                 </div>
             @endforeach
 
-            <p class="text-xs text-gray-500 dark:text-gray-400">
+            <p class="text-xs italic text-gray-500 dark:text-gray-400">
                 {{ __('Chaves individuais não são listadas (pode ser milhões). O cartão «Cache» do Pulse agrupa interacções por etiqueta; os prefixos acima explicam o que entra no Redis com o prefixo global.') }}
             </p>
         </div>

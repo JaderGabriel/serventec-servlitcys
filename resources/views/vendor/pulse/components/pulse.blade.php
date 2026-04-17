@@ -57,7 +57,7 @@
                                 <h1 class="text-xl font-semibold leading-tight text-indigo-950 dark:text-indigo-100 sm:text-2xl">
                                     {{ __('Monitorização operacional') }}
                                 </h1>
-                                <p class="mt-1.5 text-sm text-indigo-900/80 dark:text-indigo-200/85">
+                                <p class="mt-1.5 text-sm italic text-indigo-900/80 dark:text-indigo-200/85">
                                     {{ __('Latência, filas, cache, excepções e carga — alinhado ao painel analítico e às rotas lazy do dashboard.') }}
                                 </p>
                                 <div class="mt-3 flex flex-wrap items-center gap-2">
@@ -84,7 +84,7 @@
                                         {{ __('Servers:') }} <span class="ml-1 font-mono">~{{ $pulseEveryMin }}m</span>
                                     </span>
                                 </div>
-                                <p class="mt-3 max-w-3xl text-xs leading-relaxed text-indigo-800/70 dark:text-indigo-300/75">
+                                <p class="mt-3 max-w-3xl text-xs italic leading-relaxed text-indigo-800/70 dark:text-indigo-300/75">
                                     {{ __('Indicadores para decidir com dados: erros e excepções primeiro, filas e cache, latência (HTTP, jobs, SQL, saída), uso e carga. “Servers online” usa snapshots nos últimos :seconds segundos.', ['seconds' => $serverFreshWindow]) }}
                                 </p>
                             </div>
@@ -97,15 +97,12 @@
             <main class="flex-1 w-full min-w-0 bg-gradient-to-b from-gray-100/90 to-gray-100 py-6 sm:py-9 dark:from-gray-900 dark:to-gray-900">
                 <div
                     id="pulse-main-grid"
-                    {{ $attributes->merge(['class' => "mx-auto w-full max-w-[min(100%,100rem)] grid default:grid-cols-{$cols} px-4 sm:px-6 lg:px-10 xl:px-12 default:gap-x-5 default:gap-y-7 sm:default:gap-x-6 sm:default:gap-y-8 lg:default:gap-x-7 lg:default:gap-y-9"]) }}
+                    style="--pulse-dashboard-cols: {{ (int) $cols }};"
+                    {{ $attributes->merge(['class' => "pulse-main-grid-gaps mx-auto w-full max-w-[min(100%,100rem)] grid default:grid-cols-{$cols} px-4 sm:px-6 lg:px-10 xl:px-12"]) }}
                 >
                     {{ $slot }}
                 </div>
             </main>
-
-            <div class="mx-auto w-full max-w-[min(100%,100rem)] shrink-0 border-t border-indigo-200/60 bg-gray-100/95 px-4 pb-4 pt-4 sm:px-6 sm:pb-5 sm:pt-5 lg:px-10 xl:px-12 dark:border-indigo-900/50 dark:bg-gray-900">
-                <livewire:pulse.server-status-strip />
-            </div>
 
             @include('layouts.app-footer', ['pulseFooter' => true])
         </div>

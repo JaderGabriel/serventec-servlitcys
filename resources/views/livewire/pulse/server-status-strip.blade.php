@@ -15,7 +15,10 @@
 @endphp
 <div
     wire:poll.5s
-    class="rounded-2xl border border-indigo-200/70 bg-white/95 px-4 py-3 shadow-md ring-1 ring-indigo-950/[0.05] backdrop-blur-sm dark:border-indigo-800/50 dark:bg-gray-800/90 dark:ring-indigo-400/10 sm:px-5"
+    @class([
+        'rounded-2xl border border-indigo-200/70 bg-white/95 px-4 py-3 shadow-md ring-1 ring-indigo-950/[0.05] backdrop-blur-sm dark:border-indigo-800/50 dark:bg-gray-800/90 dark:ring-indigo-400/10 sm:px-5' => ! $embedded,
+        'border-0 bg-transparent px-0 py-0 shadow-none ring-0 backdrop-blur-none dark:bg-transparent' => $embedded,
+    ])
 >
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
@@ -81,7 +84,7 @@
             </div>
         </div>
 
-        <div class="flex shrink-0 flex-col items-start gap-0.5 text-[11px] text-gray-500 dark:text-gray-400 sm:items-end">
+        <div class="flex shrink-0 flex-col items-start gap-0.5 text-[11px] italic text-gray-500 dark:text-gray-400 sm:items-end">
             @if ($payload['updated_human'] ?? null)
                 <span title="{{ __('Último snapshot de sistema (Pulse)') }}">{{ __('Atualizado') }} {{ $payload['updated_human'] }}</span>
             @endif

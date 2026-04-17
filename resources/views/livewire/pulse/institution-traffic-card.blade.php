@@ -14,14 +14,14 @@
             <div>
                 <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">{{ __('Total de pedidos (aplicação inteira)') }}</h3>
                 <p class="text-3xl font-bold tabular-nums text-gray-800 dark:text-gray-100">{{ number_format((int) $globalTotal) }}</p>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Inclui painel, análise e rotas sem cidade seleccionada — visão agregada de todas as instituições.') }}</p>
+                <p class="mt-1 text-xs italic text-gray-500 dark:text-gray-400">{{ __('Inclui painel, análise e rotas sem cidade seleccionada — visão agregada de todas as instituições.') }}</p>
             </div>
 
             <div>
                 <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">{{ __('Pedidos com contexto de cidade (por instituição)') }}</h3>
                 @if ($cityRows->isEmpty())
                     <x-pulse::no-results />
-                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ __('Ainda não há dados: use o painel com uma cidade seleccionada (parâmetro city_id) ou rotas de gestão de cidades.') }}</p>
+                    <p class="mt-2 text-xs italic text-gray-500 dark:text-gray-400">{{ __('Ainda não há dados: use o painel com uma cidade seleccionada (parâmetro city_id) ou rotas de gestão de cidades.') }}</p>
                 @else
                     <x-pulse::table>
                         <x-pulse::thead>

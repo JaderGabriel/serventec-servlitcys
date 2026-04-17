@@ -11,7 +11,7 @@
     <x-pulse::scroll :expand="$expand" wire:poll.20s="">
         <div class="space-y-3 text-sm">
             @if ($data['error'])
-                <div class="rounded-xl border border-amber-200/80 bg-amber-50/70 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+                <div class="rounded-xl border border-amber-200/80 bg-amber-50/70 px-3 py-2 text-xs italic text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
                     {{ __('Pendentes:') }} {{ $data['error'] }}
                 </div>
             @endif
@@ -36,7 +36,7 @@
                         @if ($data['failed'] !== null)
                             {{ number_format($data['failed']) }}
                         @else
-                            {{ __('Tabela inexistente ou indisponível.') }}
+                            <span class="italic">{{ __('Tabela inexistente ou indisponível.') }}</span>
                         @endif
                     </dd>
                 </div>

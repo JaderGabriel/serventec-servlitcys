@@ -10,6 +10,7 @@ use App\Livewire\Pulse\InstitutionTrafficCard;
 use App\Livewire\Pulse\QueueAndFailuresCard;
 use App\Livewire\Pulse\RedisOverviewCard;
 use App\Livewire\Pulse\ServerStatusStrip;
+use App\Livewire\Pulse\SyncAdminPulseCard;
 use App\Models\City;
 use App\Models\User;
 use App\Policies\CityPolicy;
@@ -53,6 +54,7 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('pulse.queue-and-failures-card', QueueAndFailuresCard::class);
         Livewire::component('pulse.disk-space-card', DiskSpaceCard::class);
         Livewire::component('pulse.server-status-strip', ServerStatusStrip::class);
+        Livewire::component('pulse.sync-admin-pulse-card', SyncAdminPulseCard::class);
 
         /*
          * O Pulse regista o componente anónimo <x-pulse> com prefixo "pulse" (hash xxh128).
