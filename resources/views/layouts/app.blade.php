@@ -17,12 +17,12 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
+        <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
             @include('layouts.navigation')
 
             <!-- Page Heading -->
             @isset($header)
-                <header class="bg-white dark:bg-gray-800 shadow">
+                <header class="bg-white dark:bg-gray-800 shadow shrink-0">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
@@ -30,7 +30,7 @@
             @endisset
 
             <!-- Page Content -->
-            <main>
+            <main class="flex-1 w-full min-w-0">
                 @if (session('success'))
                     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 pt-4">
                         <div class="rounded-md bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 px-4 py-3 text-green-800 dark:text-green-200 text-sm">
@@ -40,6 +40,8 @@
                 @endif
                 {{ $slot }}
             </main>
+
+            @include('layouts.app-footer')
         </div>
     </body>
 </html>

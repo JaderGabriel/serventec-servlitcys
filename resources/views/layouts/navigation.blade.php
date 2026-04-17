@@ -19,6 +19,9 @@
                         {{ __('Análise') }}
                     </x-nav-link>
                     @if (Auth::user()->is_admin)
+                        <x-nav-link :href="route('pulse')" :active="request()->routeIs('pulse')">
+                            {{ __('Monitorização') }}
+                        </x-nav-link>
                         <x-nav-link :href="route('cities.index')" :active="request()->routeIs('cities.*')">
                             {{ __('Cidades') }}
                         </x-nav-link>
@@ -71,9 +74,6 @@
                                 {{ __('Sessões') }}
                             </x-dropdown-link>
                             <div class="border-t border-gray-200 dark:border-gray-600"></div>
-                            <x-dropdown-link :href="route('pulse')">
-                                {{ __('Monitorização (Pulse)') }}
-                            </x-dropdown-link>
                             <x-dropdown-link :href="route('settings.mail.edit')">
                                 {{ __('E-mail (SMTP)') }}
                             </x-dropdown-link>
@@ -117,6 +117,9 @@
                 {{ __('Análise') }}
             </x-responsive-nav-link>
             @if (Auth::user()->is_admin)
+                <x-responsive-nav-link :href="route('pulse')" :active="request()->routeIs('pulse')">
+                    {{ __('Monitorização') }}
+                </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('cities.index')" :active="request()->routeIs('cities.*')">
                     {{ __('Cidades') }}
                 </x-responsive-nav-link>
@@ -159,9 +162,6 @@
                         {{ __('Sessões ativas') }}
                     </x-responsive-nav-link>
                     <div class="border-t border-gray-200 dark:border-gray-600 my-2"></div>
-                    <x-responsive-nav-link :href="route('pulse')" :active="request()->routeIs('pulse')">
-                        {{ __('Monitorização (Pulse)') }}
-                    </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('settings.mail.edit')" :active="request()->routeIs('settings.mail.*')">
                         {{ __('E-mail (SMTP)') }}
                     </x-responsive-nav-link>

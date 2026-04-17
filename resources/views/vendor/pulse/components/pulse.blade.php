@@ -17,7 +17,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }} — {{ __('Monitoramento') }}</title>
+        <title>{{ config('app.name', 'Laravel') }} — {{ __('Monitorização (Pulse)') }}</title>
 
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
 
@@ -34,36 +34,44 @@
         @livewireScriptConfig
     </head>
     <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
+        <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
             @include('layouts.navigation')
 
-            <header class="bg-white dark:bg-gray-800 shadow">
+            <header class="shrink-0 border-b border-indigo-100 dark:border-indigo-900/50 bg-gradient-to-b from-white to-indigo-50/40 dark:from-gray-800 dark:to-indigo-950/25 shadow-sm">
                 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                    <div class="flex flex-col gap-4">
-                        <nav class="text-xs text-gray-500 dark:text-gray-400">
-                            <ol class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                <li>
-                                    <a href="{{ route('dashboard') }}" class="hover:text-gray-700 dark:hover:text-gray-200 hover:underline">
-                                        {{ __('Painel') }}
-                                    </a>
-                                </li>
-                                <li class="opacity-60">/</li>
-                                <li class="font-medium text-gray-700 dark:text-gray-200">
-                                    {{ __('Monitoramento') }}
-                                </li>
-                            </ol>
-                        </nav>
+                    <nav class="text-xs text-gray-500 dark:text-gray-400">
+                        <ol class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <li>
+                                <a href="{{ route('dashboard') }}" class="hover:text-gray-700 dark:hover:text-gray-200 hover:underline">
+                                    {{ __('Painel') }}
+                                </a>
+                            </li>
+                            <li class="opacity-60" aria-hidden="true">/</li>
+                            <li class="font-medium text-gray-700 dark:text-gray-200">
+                                {{ __('Monitorização') }}
+                            </li>
+                            <li class="opacity-60" aria-hidden="true">/</li>
+                            <li class="text-indigo-600 dark:text-indigo-400 font-medium">
+                                Laravel Pulse
+                            </li>
+                        </ol>
+                    </nav>
 
-                        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div class="flex items-center gap-3">
-                            <svg class="h-7 w-7 text-indigo-600 dark:text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7.5 14.25 10.5 11.25 13.5 14.25 18 9.75" />
-                            </svg>
-                            <div>
-                                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                                    {{ __('Monitoramento operacional') }}
-                                </h2>
-                                <div class="mt-2 flex flex-wrap items-center gap-2">
+                    <div class="mt-5 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                        <div class="flex items-start gap-4 min-w-0">
+                            <div class="shrink-0 rounded-xl bg-indigo-100 dark:bg-indigo-950/50 p-2.5 ring-1 ring-indigo-200/80 dark:ring-indigo-800/60">
+                                <svg class="h-8 w-8 text-indigo-600 dark:text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7.5 14.25 10.5 11.25 13.5 14.25 18 9.75" />
+                                </svg>
+                            </div>
+                            <div class="min-w-0">
+                                <h1 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+                                    {{ __('Monitorização operacional') }}
+                                </h1>
+                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                                    {{ __('Latência, filas, cache, excepções e carga — alinhado ao painel analítico e às rotas lazy do dashboard.') }}
+                                </p>
+                                <div class="mt-3 flex flex-wrap items-center gap-2">
                                     <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-900/40 px-2 py-0.5 text-[11px] font-medium text-gray-700 dark:text-gray-200">
                                         <span class="h-1.5 w-1.5 rounded-full {{ $env === 'production' ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
                                         {{ strtoupper($env) }}
@@ -87,37 +95,59 @@
                                         {{ __('Servers:') }} <span class="ml-1 font-mono">~{{ $pulseEveryMin }}m</span>
                                     </span>
                                 </div>
-                                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-2xl">
-                                    {{ __('Indicadores para decidir com dados: erros e excepções primeiro, filas e cache, latência (HTTP, jobs, SQL, saída), uso e carga. “Servers online” usa snapshots nos últimos :s s.', ['s' => $serverFreshWindow]) }}
+                                <p class="mt-3 text-xs text-gray-500 dark:text-gray-400 max-w-3xl leading-relaxed">
+                                    {{ __('Indicadores para decidir com dados: erros e excepções primeiro, filas e cache, latência (HTTP, jobs, SQL, saída), uso e carga. “Servers online” usa snapshots nos últimos :seconds segundos.', ['seconds' => $serverFreshWindow]) }}
                                 </p>
                             </div>
                         </div>
 
-                        <div class="flex flex-col gap-3 sm:items-end">
-                            <div class="flex flex-wrap items-center gap-2 sm:justify-end">
-                                <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition">
+                        <div class="flex flex-col gap-4 lg:items-end shrink-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition">
                                     {{ __('Painel') }}
                                 </a>
-                                <a href="{{ route('dashboard.analytics') }}" class="inline-flex items-center justify-center px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition">
+                                <a href="{{ route('dashboard.analytics') }}" class="inline-flex items-center justify-center px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition">
                                     {{ __('Análise') }}
                                 </a>
+                                @auth
+                                    @if (Auth::user()->is_admin)
+                                        <a href="{{ route('cities.index') }}" class="inline-flex items-center justify-center px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition">
+                                            {{ __('Cidades') }}
+                                        </a>
+                                    @endif
+                                @endauth
                             </div>
 
-                            <div class="flex items-center gap-3 sm:gap-6">
-                            <livewire:pulse.period-selector />
-                            <x-pulse::theme-switcher />
+                            <div class="flex flex-wrap items-center gap-3 sm:gap-6">
+                                <livewire:pulse.period-selector />
+                                <x-pulse::theme-switcher />
                             </div>
                         </div>
                     </div>
-                    </div>
+
+                    @auth
+                        @if (Auth::user()->is_admin)
+                            <div class="mt-6 rounded-lg border border-gray-200 dark:border-gray-600 bg-white/60 dark:bg-gray-900/40 px-4 py-3">
+                                <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">{{ __('Ferramentas de administração') }}</p>
+                                <div class="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                                    <a href="{{ route('admin.geo-sync.index') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('Sincronização geográfica') }}</a>
+                                    <a href="{{ route('admin.pedagogical-sync.index') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('Sincronização pedagógica') }}</a>
+                                    <a href="{{ route('users.index') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('Utilizadores') }}</a>
+                                    <a href="{{ route('settings.mail.edit') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('E-mail (SMTP)') }}</a>
+                                </div>
+                            </div>
+                        @endif
+                    @endauth
                 </div>
             </header>
 
-            <main class="py-8">
+            <main class="flex-1 w-full min-w-0 py-8">
                 <div {{ $attributes->merge(['class' => "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid default:grid-cols-{$cols} default:gap-6"]) }}>
                     {{ $slot }}
                 </div>
             </main>
+
+            @include('layouts.app-footer')
         </div>
     </body>
 </html>
