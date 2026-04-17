@@ -14,6 +14,7 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
@@ -42,6 +43,19 @@ class AppServiceProvider extends ServiceProvider
 
         Livewire::component('pulse.institution-traffic-card', InstitutionTrafficCard::class);
         Livewire::component('pulse.redis-overview-card', RedisOverviewCard::class);
+
+        /*
+         * O Pulse regista o componente anónimo <x-pulse> com prefixo "pulse" (hash xxh128).
+         * Esse caminho aponta primeiro para vendor/laravel/pulse/.../components/pulse.blade.php.
+         * As cópias em resources/views/vendor/pulse/ só substituem vistas do namespace pulse::*
+         * (ex.: pulse::dashboard), não o componente anónimo — por isso o layout publicado era ignorado.
+         * Antecedemos o mesmo hash de namespace com a pasta da app para <x-pulse> usar a vista publicada.
+         */
+        $pulseAnonymousNs = hash('xxh128', 'pulse');
+        $pulseLayoutDir = resource_path('views/vendor/pulse/components');
+        if (is_dir($pulseLayoutDir)) {
+            View::getFinder()->prependNamespace($pulseAnonymousNs, $pulseLayoutDir);
+        }
 
         Event::listen(Login::class, LogSuccessfulUserLogin::class);
 
