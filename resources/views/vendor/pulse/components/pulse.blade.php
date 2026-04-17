@@ -25,8 +25,14 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        <!-- App (Tailwind/Alpine) + Pulse -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        {{--
+            Só CSS da app (Tailwind para navegação/rodapé). Não carregar resources/js/app.js aqui:
+            Pulse::js() já inclui livewire.js + pulse.js inline; app.js importa Alpine e Chart.js e
+            duplica o Alpine do Livewire, quebrando wire: e o layout dos cartões.
+            O Livewire 3 injeta outro script no </body> se hasRenderedScripts for false — marcamos
+            no fim do body para evitar duplicar o runtime.
+        --}}
+        @vite(['resources/css/app.css'])
         {!! Pulse::css() !!}
         @livewireStyles
 
@@ -149,5 +155,9 @@
 
             @include('layouts.app-footer')
         </div>
+
+        @php
+            app(\Livewire\Mechanisms\FrontendAssets\FrontendAssets::class)->hasRenderedScripts = true;
+        @endphp
     </body>
 </html>
