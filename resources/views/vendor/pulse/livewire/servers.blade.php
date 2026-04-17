@@ -12,11 +12,10 @@ $friendlySize = function(int $mb, int $precision = 0) {
 $cols = ! empty($cols) ? $cols : 'full';
 $rows = ! empty($rows) ? $rows : 1;
 
-// O componente original considera "online" apenas se houver snapshot nos últimos 30s.
-// Como este projeto pode usar `schedule:run` (tick) em produção, ajustamos a janela
-// para o intervalo configurado no agendador do Pulse (ex.: 5 min).
-$minutes = (int) config('pulse.schedule.interval_minutes', 5);
-$recentWindowSec = max(30, min(3600, ($minutes * 60) + 15));
+// Janela “online”: alinhar a `pulse.schedule.interval_minutes` + margem para atrasos do
+// cron e locks — coerente com `ServerStatusStrip` e menos falsos “offline”.
+$intervalMin = max(1, (int) config('pulse.schedule.interval_minutes', 5));
+$recentWindowSec = max(120, min(3600, ($intervalMin * 60) + 90));
 @endphp
 
 <section

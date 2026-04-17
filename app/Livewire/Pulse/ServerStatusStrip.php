@@ -51,7 +51,7 @@ class ServerStatusStrip extends Card
         $serverName = (string) config('pulse.recorders.'.ServersRecorder::class.'.server_name', (string) gethostname());
         $targetSlug = Str::slug($serverName);
         $intervalMin = max(1, (int) config('pulse.schedule.interval_minutes', 5));
-        $freshWindow = max(45, min(3600, ($intervalMin * 60) + 30));
+        $freshWindow = max(120, min(3600, ($intervalMin * 60) + 90));
 
         /** @var Collection<string, object{ timestamp: int, key: string, value: string }> $systems */
         $systems = $this->values('system');

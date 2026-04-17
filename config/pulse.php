@@ -114,7 +114,8 @@ return [
     | Scheduler (php artisan schedule:run)
     |--------------------------------------------------------------------------
     |
-    | O tick do Pulse está registado com `everyMinute()` em `bootstrap/app.php`.
+    | Em `bootstrap/app.php` há duas tarefas: `pulse-scheduled-check` (`pulse:check --once`)
+    | e `pulse-scheduled-work` (`pulse:work --stop-when-empty`), cada uma com o seu mutex.
     | Configure o cron do servidor para correr **cada minuto**, por exemplo:
     | `* * * * * cd /caminho/para/a/app && php artisan schedule:run >> /dev/null 2>&1`
     | Assim `pulse:check --once` e (opcionalmente) `pulse:work --stop-when-empty`

@@ -8,7 +8,7 @@
     $pulseStorage = (string) config('pulse.storage.driver', 'database');
     $pulseIngest = (string) config('pulse.ingest.driver', 'storage');
     $pulseEveryMin = (int) config('pulse.schedule.interval_minutes', 5);
-    $serverFreshWindow = max(30, min(3600, ($pulseEveryMin * 60) + 15));
+    $serverFreshWindow = max(120, min(3600, ($pulseEveryMin * 60) + 90));
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">

@@ -36,24 +36,25 @@ return Application::configure(basePath: dirname(__DIR__))
             return;
         }
 
-        // Mutex: evitar execuções em paralelo se `pulse:work` demorar mais de um minuto.
-        $mutexExpires = min(180, max(60, (int) config('pulse.schedule.interval_minutes', 5) * 30));
-
         /*
-         * `everyMinute()` + cron a cada minuto (`schedule:run`): em cada invocação há tarefa
-         * “pronta” — evita “No scheduled commands are ready to run” causado por expressões
-         * cron esparsas (ex. de cinco em cinco minutos) quando o relógio não coincide.
-         * Alinhado ao guia oficial do Laravel Pulse.
+         * Separar `pulse:check` e `pulse:work`: se ficarem na mesma closure com um único
+         * `withoutOverlapping`, um digest longo pode atrasar ou impedir snapshots de sistema
+         * e o cartão Servers mostra “offline” apesar do schedule:list estar correcto.
          */
         $schedule->call(function (): void {
             Artisan::call('pulse:check', ['--once' => true]);
-
-            if (config('pulse.schedule.run_digest_tick', true)) {
-                Artisan::call('pulse:work', ['--stop-when-empty' => true]);
-            }
         })
-            ->name('pulse-scheduled-tick')
+            ->name('pulse-scheduled-check')
             ->everyMinute()
-            ->withoutOverlapping($mutexExpires);
+            ->withoutOverlapping(120);
+
+        if (config('pulse.schedule.run_digest_tick', true)) {
+            $schedule->call(function (): void {
+                Artisan::call('pulse:work', ['--stop-when-empty' => true]);
+            })
+                ->name('pulse-scheduled-work')
+                ->everyMinute()
+                ->withoutOverlapping(300);
+        }
     })
     ->create();
