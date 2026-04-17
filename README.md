@@ -42,6 +42,7 @@ Noutro terminal: `php artisan serve` (ou use o script `composer run dev` se conf
 | `ADMIN_EMAIL` / `ADMIN_USERNAME` / `ADMIN_PASSWORD` / `ADMIN_BIRTH_DATE` | Credenciais e data de nascimento do admin criado pelo `AdminUserSeeder` (a data entra na recuperação de palavra-passe) |
 | `SERVENTEC_WHATSAPP_NUMBER` | Opcional: número WhatsApp (só dígitos com DDI) para o botão “Contactar Serventec” na página inicial |
 | `DB_*` | Base principal Laravel (utilizadores, cidades, sessões) |
+| `ANALYTICS_LAZY_TABS` | Opcional (default `true` em `config/analytics.php`): carregar abas pesadas do painel de análise sob demanda; pedidos `.../dashboard/analytics/tab?tab=…` aparecem no Pulse por aba. |
 | `SESSION_ENCRYPT` | Considerar `true` em produção com HTTPS |
 | `IEDUCAR_MATRICULA_INDICADORES_INCLUIR_SITUACAO_INEP` | Opcional (default `true`): nos indicadores de matrícula, contar também matrículas com situação INEP «em curso» (`matricula_situacao.codigo`, ex. `1`) quando a coluna `ativo` na matrícula está indefinida ou inconsistente com o ecrã do i-Educar |
 | `IEDUCAR_MATRICULA_SITUACAO_INEP_ATIVAS` | Opcional: lista separada por vírgulas de códigos INEP tratados como matrícula ativa em conjunto com o filtro de `ativo` (default: `1`) |
@@ -100,10 +101,19 @@ composer test
 # ou: php artisan test
 ```
 
+## Análise estática (PHPStan / Larastan)
+
+Analisa `app/Services` e `app/Repositories` (nível 5, com `phpstan-baseline.neon` para dívida existente).
+
+```bash
+composer run phpstan
+```
+
 ## Documentação
 
 - [Documentação executiva](docs/DOCUMENTACAO_EXECUTIVA.md) — visão de negócio e stakeholders
 - [Segurança e operações](docs/SEGURANCA.md) — senhas, permissões e checklist de deploy
+- [Métricas: queries lentas no analytics](docs/METRICAS_QUERIES_ANALYTICS.md) — Pulse, staging e anonimização
 
 ## Estrutura de permissões (resumo)
 

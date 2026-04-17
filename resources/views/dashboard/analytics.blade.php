@@ -37,8 +37,11 @@
             </div>
 
             @if ($selectedCity)
+                @php
+                    $lazyTabLoading = $lazyTabLoading ?? false;
+                @endphp
                 <div
-                    x-data="analyticsTabs(@js(array_keys($tabs)), @js($analyticsInitialTab ?? 'overview'))"
+                    x-data="analyticsTabs(@js(array_keys($tabs)), @js($analyticsInitialTab ?? 'overview'), @js($lazyTabLoading), @js(route('dashboard.analytics.tab')))"
                     class="space-y-6"
                 >
                     <x-dashboard.ieducar-filter-bar
@@ -93,10 +96,18 @@
                                 ])
                             </div>
                             <div x-show="tab === 'enrollment'" x-cloak class="analytics-tab-panel">
-                                @include('dashboard.analytics.partials.enrollment', [
-                                    'enrollmentData' => $enrollmentData,
-                                    'chartExportContext' => $chartExportContext,
-                                ])
+                                @if (! $lazyTabLoading)
+                                    @include('dashboard.analytics.partials.enrollment', [
+                                        'enrollmentData' => $enrollmentData,
+                                        'chartExportContext' => $chartExportContext,
+                                    ])
+                                @else
+                                    <div class="relative min-h-[12rem]" x-ref="panelEnrollment">
+                                        <div x-show="loadingTab === 'enrollment'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
+                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar indicadores…') }}</span>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                             <div x-show="tab === 'school_units'" x-cloak class="analytics-tab-panel">
                                 @include('dashboard.analytics.partials.school-units', [
@@ -106,35 +117,75 @@
                                 ])
                             </div>
                             <div x-show="tab === 'network'" x-cloak class="analytics-tab-panel">
-                                @include('dashboard.analytics.partials.network', [
-                                    'networkData' => $networkData,
-                                    'chartExportContext' => $chartExportContext,
-                                ])
+                                @if (! $lazyTabLoading)
+                                    @include('dashboard.analytics.partials.network', [
+                                        'networkData' => $networkData,
+                                        'chartExportContext' => $chartExportContext,
+                                    ])
+                                @else
+                                    <div class="relative min-h-[12rem]" x-ref="panelNetwork">
+                                        <div x-show="loadingTab === 'network'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
+                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar indicadores…') }}</span>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                             <div x-show="tab === 'inclusion'" x-cloak class="analytics-tab-panel">
-                                @include('dashboard.analytics.partials.inclusion', [
-                                    'inclusionData' => $inclusionData,
-                                    'chartExportContext' => $chartExportContext,
-                                ])
+                                @if (! $lazyTabLoading)
+                                    @include('dashboard.analytics.partials.inclusion', [
+                                        'inclusionData' => $inclusionData,
+                                        'chartExportContext' => $chartExportContext,
+                                    ])
+                                @else
+                                    <div class="relative min-h-[12rem]" x-ref="panelInclusion">
+                                        <div x-show="loadingTab === 'inclusion'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
+                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar indicadores…') }}</span>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                             <div x-show="tab === 'performance'" x-cloak class="analytics-tab-panel">
-                                @include('dashboard.analytics.partials.performance', [
-                                    'performanceData' => $performanceData,
-                                    'chartExportContext' => $chartExportContext,
-                                ])
+                                @if (! $lazyTabLoading)
+                                    @include('dashboard.analytics.partials.performance', [
+                                        'performanceData' => $performanceData,
+                                        'chartExportContext' => $chartExportContext,
+                                    ])
+                                @else
+                                    <div class="relative min-h-[12rem]" x-ref="panelPerformance">
+                                        <div x-show="loadingTab === 'performance'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
+                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar indicadores…') }}</span>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                             <div x-show="tab === 'attendance'" x-cloak class="analytics-tab-panel">
-                                @include('dashboard.analytics.partials.attendance', [
-                                    'attendanceData' => $attendanceData,
-                                    'chartExportContext' => $chartExportContext,
-                                ])
+                                @if (! $lazyTabLoading)
+                                    @include('dashboard.analytics.partials.attendance', [
+                                        'attendanceData' => $attendanceData,
+                                        'chartExportContext' => $chartExportContext,
+                                    ])
+                                @else
+                                    <div class="relative min-h-[12rem]" x-ref="panelAttendance">
+                                        <div x-show="loadingTab === 'attendance'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
+                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar indicadores…') }}</span>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                             <div x-show="tab === 'fundeb'" x-cloak class="analytics-tab-panel">
-                                @include('dashboard.analytics.partials.fundeb', [
-                                    'fundebData' => $fundebData,
-                                    'yearFilterReady' => $yearFilterReady,
-                                    'chartExportContext' => $chartExportContext,
-                                ])
+                                @if (! $lazyTabLoading)
+                                    @include('dashboard.analytics.partials.fundeb', [
+                                        'fundebData' => $fundebData,
+                                        'yearFilterReady' => $yearFilterReady,
+                                        'chartExportContext' => $chartExportContext,
+                                    ])
+                                @else
+                                    <div class="relative min-h-[12rem]" x-ref="panelFundeb">
+                                        <div x-show="loadingTab === 'fundeb'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
+                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar indicadores…') }}</span>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>

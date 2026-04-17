@@ -34,4 +34,19 @@ class AnalyticsDashboardTest extends TestCase
             ]))
             ->assertUnprocessable();
     }
+
+    public function test_guest_is_redirected_from_analytics_tab(): void
+    {
+        $this->get(route('dashboard.analytics.tab', ['tab' => 'enrollment']))
+            ->assertRedirect(route('login'));
+    }
+
+    public function test_analytics_tab_invalid_tab_returns_404(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('dashboard.analytics.tab', ['tab' => 'invalid']))
+            ->assertNotFound();
+    }
 }

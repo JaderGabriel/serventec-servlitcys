@@ -1,0 +1,484 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Strict comparison using \!\=\= between array\{type\: string, title\: string, labels\: list\<string\>, datasets\: list\<array\<string, mixed\>\>\} and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Repositories/Ieducar/AttendanceRepository.php
+
+		-
+			message: '#^Offset ''abandono_q'' on array\{total\: int, abandono_q\: int, remanejamento_q\: int, evasao_q\: int, abandono_pct\: float\|null, evasao_pct\: float\|null\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Repositories/Ieducar/EnrollmentRepository.php
+
+		-
+			message: '#^Offset ''matriculas'' on array\{matriculas\: int, turmas_distintas\: int, ocupacao_pct\: float\|null\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Repositories/Ieducar/EnrollmentRepository.php
+
+		-
+			message: '#^Offset ''remanejamento_q'' on array\{total\: int, abandono_q\: int, remanejamento_q\: int, evasao_q\: int, abandono_pct\: float\|null, evasao_pct\: float\|null\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Repositories/Ieducar/EnrollmentRepository.php
+
+		-
+			message: '#^Offset ''total'' on array\{com\: int, sem\: int, total\: int, fonte\: ''automatico''\|''custom''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Repositories/Ieducar/EnrollmentRepository.php
+
+		-
+			message: '#^Offset ''total'' on array\{total\: int, abandono_q\: int, remanejamento_q\: int, evasao_q\: int, abandono_pct\: float\|null, evasao_pct\: float\|null\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Repositories/Ieducar/EnrollmentRepository.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Repositories/Ieducar/FundebRepository.php
+
+		-
+			message: '#^Dead catch \- Illuminate\\Database\\QueryException is never thrown in the try block\.$#'
+			identifier: catch.neverThrown
+			count: 4
+			path: app/Repositories/Ieducar/InclusionRepository.php
+
+		-
+			message: '#^Offset ''options'' on array\{type\: string, title\: string, labels\: list\<string\>, datasets\: list\<array\<string, mixed\>\>, options\: array\<string, mixed\>, panel_layout\: ''full''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Repositories/Ieducar/InclusionRepository.php
+
+		-
+			message: '#^Offset ''options'' on array\{type\: string, title\: string, labels\: list\<string\>, datasets\: list\<array\<string, mixed\>\>\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 3
+			path: app/Repositories/Ieducar/InclusionRepository.php
+
+		-
+			message: '''
+				#^PHPDoc tag @return has invalid value \(\?array\{
+				  labels\: list\<string\>,
+				  race_series\: list\<array\{label\: string, data\: list\<float\>\},
+				  rows\: \\Illuminate\\Support\\Collection,
+				  nSchoolsBefore\: int,
+				  outrosLabel\: string,
+				  eids_order\: list\<string\>
+				\}\)\: Unexpected token "\:", expected '\}' at offset 186 on line 6$#
+			'''
+			identifier: phpDoc.parseError
+			count: 1
+			path: app/Repositories/Ieducar/InclusionRepository.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{''ref_cod_raca'', ''cod_raca'', ''id_raca'', ''raca_cor''\}\) to function array_filter does not contain falsy values, the array will always stay the same\.$#'
+			identifier: arrayFilter.same
+			count: 2
+			path: app/Repositories/Ieducar/InclusionRepository.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{''ref_idpes'', ''idpes''\}\) to function array_filter does not contain falsy values, the array will always stay the same\.$#'
+			identifier: arrayFilter.same
+			count: 4
+			path: app/Repositories/Ieducar/InclusionRepository.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{0\?\: non\-empty\-array\<string, mixed\>\}\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Repositories/Ieducar/InclusionRepository.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-falsy\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 2
+			path: app/Repositories/Ieducar/InclusionRepository.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\{type\: string, title\: string, labels\: list\<string\>, datasets\: list\<array\<string, mixed\>\>, options\?\: array\<string, mixed\>\} will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: app/Repositories/Ieducar/NetworkRepository.php
+
+		-
+			message: '#^Offset ''matriculas'' on array\{capacidade_total\: int, matriculas\: int, vagas_ociosas\: int, taxa_ociosidade_pct\: float\|null, turmas_com_capacidade\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Repositories/Ieducar/NetworkRepository.php
+
+		-
+			message: '#^Dead catch \- Illuminate\\Database\\QueryException is never thrown in the try block\.$#'
+			identifier: catch.neverThrown
+			count: 2
+			path: app/Repositories/Ieducar/OverviewRepository.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Repositories/Ieducar/PerformanceRepository.php
+
+		-
+			message: '#^Call to function is_array\(\) with null will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Repositories/Ieducar/PerformanceRepository.php
+
+		-
+			message: '#^Offset ''10'' on array\<string, int\> on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Repositories/Ieducar/PerformanceRepository.php
+
+		-
+			message: '#^Offset ''11'' on array\<string, int\> on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Repositories/Ieducar/PerformanceRepository.php
+
+		-
+			message: '#^Offset ''16'' on array\<string, int\> on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Repositories/Ieducar/PerformanceRepository.php
+
+		-
+			message: '#^Offset ''options'' on array\{type\: string, title\: string, labels\: list\<string\>, datasets\: list\<array\<string, mixed\>\>, options\: array\<string, mixed\>, pair_in_row\: ''desempenho\-taxas…''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Repositories/Ieducar/PerformanceRepository.php
+
+		-
+			message: '#^Offset ''options'' on array\{type\: string, title\: string, labels\: list\<string\>, datasets\: list\<array\<string, mixed\>\>, pair_in_row\: ''desempenho\-taxas…''\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Repositories/Ieducar/PerformanceRepository.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 2
+			path: app/Repositories/Ieducar/SchoolUnitsRepository.php
+
+		-
+			message: '#^Dead catch \- Illuminate\\Database\\QueryException is never thrown in the try block\.$#'
+			identifier: catch.neverThrown
+			count: 17
+			path: app/Repositories/Ieducar/SchoolUnitsRepository.php
+
+		-
+			message: '#^Offset ''capacidade_declarada'' on array\{capacidade_declarada\: int, vagas_disponiveis\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Repositories/Ieducar/SchoolUnitsRepository.php
+
+		-
+			message: '#^Offset ''catalog'' on array\{lat\: float, lng\: float, nome_inep\: string, catalog\: list\<array\{field\: string, label\: string, value\: string\}\>, catalog_assoc\: array\<string, string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Repositories/Ieducar/SchoolUnitsRepository.php
+
+		-
+			message: '#^Offset ''catalog_assoc'' on array\{lat\: float, lng\: float, nome_inep\: string, catalog\: list\<array\{field\: string, label\: string, value\: string\}\>, catalog_assoc\: array\<string, string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Repositories/Ieducar/SchoolUnitsRepository.php
+
+		-
+			message: '#^Offset ''eid'' on array\{lat\: float, lng\: float\|null, label\: \(array\|string\), meta\: \(array\|string\), eid\: int, fonte_coordenada\: ''db''\|''inep''\|''local'', fonte_coordenada_label\: string, geo_divergence\: array\<string, mixed\>\|null\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Repositories/Ieducar/SchoolUnitsRepository.php
+
+		-
+			message: '#^Offset ''geo_distribution'' on array\{markers\: list\<array\<string, mixed\>\>, geo_note\: string\|null, geo_source\: string, geo_attribution\: list\<string\>, geo_distribution\: array\<string, mixed\>, map_scope\: ''geo_cache''\|''matricula''\|''rede_escola'', show_waiting_capacity\: bool\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Repositories/Ieducar/SchoolUnitsRepository.php
+
+		-
+			message: '#^Offset ''vagas_disponiveis'' on array\{capacidade_declarada\: int, vagas_disponiveis\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Repositories/Ieducar/SchoolUnitsRepository.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<int\<1, max\>\>\) to function array_filter does not contain falsy values, the array will always stay the same\.$#'
+			identifier: arrayFilter.same
+			count: 1
+			path: app/Repositories/Ieducar/SchoolUnitsRepository.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Repositories/Ieducar/SchoolUnitsRepository.php
+
+		-
+			message: '#^Parameter \#5 \$mapScopeLabel of method App\\Repositories\\Ieducar\\SchoolUnitsRepository\:\:buildMarkersFromEscolaRows\(\) expects ''matricula''\|''rede_escola'', ''geo_cache'' given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Repositories/Ieducar/SchoolUnitsRepository.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between float and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Repositories/Ieducar/SchoolUnitsRepository.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>ieducar_seen_at" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Repositories/Ieducar/SchoolUnitsRepository.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-empty\-list\<non\-empty\-string\> and array\{\} will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/CityDataConnection.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-empty\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/CityDataConnection.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{''ano'', ''ref_cod_ano_letivo'', ''ano_letivo''\}\) to function array_filter does not contain falsy values, the array will always stay the same\.$#'
+			identifier: arrayFilter.same
+			count: 1
+			path: app/Services/Ieducar/FilterOptionsService.php
+
+		-
+			message: '#^Parameter &\$errors by\-ref type of method App\\Services\\Ieducar\\FilterOptionsService\:\:loadPairs\(\) expects list\<string\>, non\-empty\-list\<\(array\|string\)\> given\.$#'
+			identifier: parameterByRef.type
+			count: 1
+			path: app/Services/Ieducar/FilterOptionsService.php
+
+		-
+			message: '#^Parameter &\$errors by\-ref type of method App\\Services\\Ieducar\\FilterOptionsService\:\:loadYearsFromDatabase\(\) expects list\<string\>, non\-empty\-list\<\(array\|string\)\> given\.$#'
+			identifier: parameterByRef.type
+			count: 1
+			path: app/Services/Ieducar/FilterOptionsService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between null and null will always evaluate to true\.$#'
+			identifier: identical.alwaysTrue
+			count: 1
+			path: app/Services/Ieducar/FilterOptionsService.php
+
+		-
+			message: '#^Call to function is_object\(\) with object will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Inep/InepCatalogoEscolasGeoService.php
+
+		-
+			message: '#^Call to function is_object\(\) with stdClass will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 3
+			path: app/Services/Inep/InepCatalogoEscolasGeoService.php
+
+		-
+			message: '#^Method App\\Services\\Inep\\InepCatalogoEscolasGeoService\:\:allowedInepWhitelistFromLocalSchools\(\) should return array\<int, true\> but returns array\<int, \(int\|string\)\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/Inep/InepCatalogoEscolasGeoService.php
+
+		-
+			message: '#^Offset ''fetch_parsed_hits'' on array\{index\: int\<0, max\>, url\: non\-falsy\-string, where_attempts\: non\-empty\-list\<array\{where\: non\-falsy\-string, exception\: string\}\|array\{where\: non\-falsy\-string, http_status\: int, ok\: bool, arcgis_error\: string\|null, feature_count\: int\<0, max\>, sample_inep_from_features\: list\<int\<1, max\>\>, exceeded_transfer_limit\: mixed\}\>, fetch_parsed_hits\: array\<int, array\{lat\: float, lng\: float, nome_inep\: string, catalog\: list\<array\{field\: string, label\: string, value\: string\}\>, catalog_assoc\: array\<string, string\>\}\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Inep/InepCatalogoEscolasGeoService.php
+
+		-
+			message: '#^Offset ''rows'' on array\{table\: ''inep_school_geos'', exists\: bool, rows\: array\<int, array\{valid_coords\: bool, lat\: mixed, lng\: mixed\}\>, error\: string\|null\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Inep/InepCatalogoEscolasGeoService.php
+
+		-
+			message: '#^Offset ''url'' on array\{index\: int\<0, max\>, url\: non\-falsy\-string, where_attempts\: non\-empty\-list\<array\{where\: non\-falsy\-string, exception\: string\}\|array\{where\: non\-falsy\-string, http_status\: int, ok\: bool, arcgis_error\: string\|null, feature_count\: int\<0, max\>, sample_inep_from_features\: list\<int\<1, max\>\>, exceeded_transfer_limit\: mixed\}\>, fetch_parsed_hits\: array\<int, array\{lat\: float, lng\: float, nome_inep\: string, catalog\: list\<array\{field\: string, label\: string, value\: string\}\>, catalog_assoc\: array\<string, string\>\}\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Inep/InepCatalogoEscolasGeoService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between float and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/Inep/InepCatalogoEscolasGeoService.php
+
+		-
+			message: '#^Call to function is_numeric\(\) with int will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Inep/InepCensoEscolaGeoAggService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between array\{\} and array\{\} will always evaluate to true\.$#'
+			identifier: identical.alwaysTrue
+			count: 1
+			path: app/Services/Inep/InepCensoEscolaGeoAggService.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Services/Inep/InepCensoEscolaGeoAggService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Inep/SaebCsvPedagogicalImportService.php
+
+		-
+			message: '#^Comparison operation "\<" between int\<1, max\> and 1 is always false\.$#'
+			identifier: smaller.alwaysFalse
+			count: 1
+			path: app/Services/Inep/SaebCsvPedagogicalImportService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<array\<string, mixed\>\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Services/Inep/SaebCsvPedagogicalImportService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between int and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 5
+			path: app/Services/Inep/SaebCsvPedagogicalImportService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between lowercase\-string&non\-empty\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/Inep/SaebCsvPedagogicalImportService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/Inep/SaebCsvPedagogicalImportService.php
+
+		-
+			message: '#^Call to function is_array\(\) with string\|null will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 7
+			path: app/Services/Inep/SaebHistoricoDatabase.php
+
+		-
+			message: '#^Method App\\Services\\Inep\\SaebHistoricoDatabase\:\:buildMunicipioPayload\(\) never returns array\<string, mixed\> so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Services/Inep/SaebHistoricoDatabase.php
+
+		-
+			message: '#^Method App\\Services\\Inep\\SaebHistoricoDatabase\:\:meta\(\) never returns array\<string, mixed\> so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Services/Inep/SaebHistoricoDatabase.php
+
+		-
+			message: '#^Offset ''explicacao_modal'' on \*NEVER\* in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: app/Services/Inep/SaebHistoricoDatabase.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 2
+			path: app/Services/Inep/SaebHistoricoDatabase.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between null and null will always evaluate to false\.$#'
+			identifier: notIdentical.alwaysFalse
+			count: 1
+			path: app/Services/Inep/SaebHistoricoDatabase.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between array\{\} and array\{\} will always evaluate to true\.$#'
+			identifier: identical.alwaysTrue
+			count: 2
+			path: app/Services/Inep/SaebHistoricoDatabase.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 2
+			path: app/Services/Inep/SaebHistoricoDatabase.php
+
+		-
+			message: '#^Call to function is_object\(\) with stdClass will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: app/Services/Inep/SaebInepToEscolaIdResolver.php
+
+		-
+			message: '#^Offset string on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Services/Inep/SaebInepToEscolaIdResolver.php
+
+		-
+			message: '#^Method App\\Services\\Inep\\SaebMicrodadosCsvStreamConverter\:\:allowedUfCodesFromCities\(\) should return array\<string, true\> but returns array\<11\|12\|13\|14\|15\|16\|17\|21\|22\|23\|24\|25\|26\|27\|28\|29\|31\|32\|33\|35\|41\|42\|43\|50\|51\|52\|53, true\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/Inep/SaebMicrodadosCsvStreamConverter.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between lowercase\-string&non\-empty\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/Inep/SaebMicrodadosCsvStreamConverter.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between non\-empty\-list\<string\|null\> and array\{\} will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/Inep/SaebMicrodadosCsvStreamConverter.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Services/Inep/SaebMicrodadosInepDownloader.php
+
+		-
+			message: '#^Offset ''detalhes'' on array\{ok\: false, message\: string, fonte_efetiva\: string\|null, path\: string, avisos\?\: list\<string\>\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Inep/SaebMicrodadosOpenDataImportService.php
+
+		-
+			message: '#^Offset ''message'' on array\{ok\: true, message\: string, fonte_efetiva\: string\|null, path\: string, avisos\?\: list\<string\>\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 2
+			path: app/Services/Inep/SaebMicrodadosOpenDataImportService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/Inep/SaebMicrodadosOpenDataImportService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between 7 and 7 will always evaluate to false\.$#'
+			identifier: notIdentical.alwaysFalse
+			count: 1
+			path: app/Services/Inep/SaebMunicipioFilesWriter.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<mixed, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Inep/SaebPedagogicalImportService.php

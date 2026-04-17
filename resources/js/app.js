@@ -99,8 +99,17 @@ document.addEventListener("alpine:init", () => {
 
     Alpine.data(
         "analyticsTabs",
-        (allowedKeys, initialFromServer = "overview") => ({
+        (
+            allowedKeys,
+            initialFromServer = "overview",
+            lazy = false,
+            tabFetchUrl = "",
+        ) => ({
             tab: "overview",
+            lazy: lazy === true,
+            tabFetchUrl: typeof tabFetchUrl === "string" ? tabFetchUrl : "",
+            tabLoaded: {},
+            loadingTab: null,
             init() {
                 const allowed = Array.isArray(allowedKeys) ? allowedKeys : [];
                 let next = "overview";
@@ -140,6 +149,75 @@ document.addEventListener("alpine:init", () => {
                 this.$watch("tab", () => this.afterTabChange());
                 this.$nextTick(() => this.afterTabChange());
             },
+            maybeLoadTab(t) {
+                if (!this.lazy) {
+                    return;
+                }
+                if (t === "overview" || t === "school_units") {
+                    return;
+                }
+                if (this.tabLoaded[t]) {
+                    return;
+                }
+                this.loadTabLazy(t);
+            },
+            async loadTabLazy(t) {
+                if (!this.lazy) {
+                    return;
+                }
+                const refMap = {
+                    enrollment: "panelEnrollment",
+                    network: "panelNetwork",
+                    inclusion: "panelInclusion",
+                    performance: "panelPerformance",
+                    attendance: "panelAttendance",
+                    fundeb: "panelFundeb",
+                };
+                const refName = refMap[t];
+                if (!refName || !this.tabFetchUrl) {
+                    return;
+                }
+                this.loadingTab = t;
+                try {
+                    const u = new URL(this.tabFetchUrl, window.location.origin);
+                    u.search = window.location.search;
+                    u.searchParams.set("tab", t);
+                    const r = await fetch(u.toString(), {
+                        headers: {
+                            Accept: "text/html",
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                        credentials: "same-origin",
+                    });
+                    if (!r.ok) {
+                        const text = await r.text();
+                        throw new Error(text || `HTTP ${r.status}`);
+                    }
+                    const html = await r.text();
+                    const el = this.$refs[refName];
+                    if (!el) {
+                        return;
+                    }
+                    el.innerHTML = html;
+                    Alpine.initTree(el);
+                    this.tabLoaded[t] = true;
+                } catch (e) {
+                    console.error("analytics tab lazy", e);
+                    const el = this.$refs[refName];
+                    if (el) {
+                        const p = document.createElement("p");
+                        p.className =
+                            "text-sm text-red-600 dark:text-red-400 px-2 py-4";
+                        p.textContent =
+                            e instanceof Error
+                                ? e.message
+                                : "Erro ao carregar a aba.";
+                        el.replaceChildren(p);
+                    }
+                } finally {
+                    this.loadingTab = null;
+                }
+            },
             afterTabChange() {
                 try {
                     sessionStorage.setItem(
@@ -148,6 +226,9 @@ document.addEventListener("alpine:init", () => {
                     );
                 } catch (e) {
                     /* ignore */
+                }
+                if (this.lazy) {
+                    this.maybeLoadTab(this.tab);
                 }
                 const pulseResize = () =>
                     window.dispatchEvent(new Event("resize"));

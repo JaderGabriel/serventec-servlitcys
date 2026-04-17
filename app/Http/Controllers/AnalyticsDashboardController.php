@@ -12,10 +12,12 @@ use App\Repositories\Ieducar\OverviewRepository;
 use App\Repositories\Ieducar\PerformanceRepository;
 use App\Repositories\Ieducar\SchoolUnitsRepository;
 use App\Services\Ieducar\FilterOptionsService;
+use App\Support\Dashboard\AnalyticsEmptyPayloads;
 use App\Support\Dashboard\ChartExportMeta;
 use App\Support\Dashboard\IeducarFilterState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 /**
@@ -69,6 +71,7 @@ class AnalyticsDashboardController extends Controller
         }
 
         $yearFilterReady = $city !== null && $filters->hasYearSelected();
+        $lazyTabLoading = (bool) config('analytics.lazy_tab_loading', true);
 
         $overviewData = $yearFilterReady
             ? $overviewRepository->summary($city, $filters)
@@ -98,63 +101,13 @@ class AnalyticsDashboardController extends Controller
                 'error' => null,
             ];
 
-        $enrollmentData = $yearFilterReady
-            ? $enrollmentRepository->sample($city, $filters)
-            : [
-                'rows' => [],
-                'kpis' => null,
-                'distorcao' => null,
-                'distorcao_cartao_motivo' => null,
-                'fluxo_taxas' => null,
-                'unidades_escolares' => null,
-                'error' => null,
-                'chart' => null,
-                'charts' => [],
-            ];
-
-        $performanceData = $yearFilterReady
-            ? $performanceRepository->snapshot($city, $filters)
-            : [
-                'rows' => [],
-                'message' => '',
-                'error' => null,
-                'chart' => null,
-                'charts' => [],
-                'kpis' => [],
-                'kpi_meta' => [
-                    'total_matriculas' => 0,
-                    'campo_situacao' => '',
-                    'denominador_texto' => '',
-                    'alerta_ano_encerrado' => null,
-                ],
-            ];
-
-        $attendanceData = $yearFilterReady
-            ? $attendanceRepository->snapshot($city, $filters)
-            : ['rows' => [], 'message' => '', 'error' => null, 'chart' => null, 'charts' => []];
-
-        $inclusionData = $yearFilterReady
-            ? $inclusionRepository->snapshot($city, $filters)
-            : [
-                'charts' => [],
-                'nee_charts_count' => 0,
-                'nee_detalhe_catalogo' => null,
-                'aee_cross' => null,
-                'gauges' => [],
-                'notes' => [],
-                'error' => null,
-                'total_matriculas' => null,
-                'equidade_fonte' => null,
-                'methodology' => [],
-                'nee_grupo_resumo' => null,
-            ];
-
-        $networkData = $yearFilterReady
-            ? $networkRepository->snapshot($city, $filters)
-            : ['charts' => [], 'vagas_por_unidade_chart' => null, 'kpis' => null, 'notes' => [], 'error' => null];
-
-        $fundebData = $yearFilterReady && $city !== null
-            ? $fundebRepository->buildReport(
+        if ($yearFilterReady && $city !== null && ! $lazyTabLoading) {
+            $enrollmentData = $enrollmentRepository->sample($city, $filters);
+            $performanceData = $performanceRepository->snapshot($city, $filters);
+            $attendanceData = $attendanceRepository->snapshot($city, $filters);
+            $inclusionData = $inclusionRepository->snapshot($city, $filters);
+            $networkData = $networkRepository->snapshot($city, $filters);
+            $fundebData = $fundebRepository->buildReport(
                 $city,
                 $filters,
                 $overviewData,
@@ -163,14 +116,15 @@ class AnalyticsDashboardController extends Controller
                 $attendanceData,
                 $inclusionData,
                 $networkData,
-            )
-            : [
-                'year_label' => '',
-                'city_name' => '',
-                'intro' => '',
-                'footnote' => '',
-                'modules' => [],
-            ];
+            );
+        } else {
+            $enrollmentData = AnalyticsEmptyPayloads::enrollment();
+            $performanceData = AnalyticsEmptyPayloads::performance();
+            $attendanceData = AnalyticsEmptyPayloads::attendance();
+            $inclusionData = AnalyticsEmptyPayloads::inclusion();
+            $networkData = AnalyticsEmptyPayloads::network();
+            $fundebData = AnalyticsEmptyPayloads::fundeb();
+        }
 
         $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
 
@@ -206,7 +160,114 @@ class AnalyticsDashboardController extends Controller
             'chartExportContext' => $chartExportContext,
             'tabs' => $tabs,
             'analyticsInitialTab' => $analyticsInitialTab,
+            'lazyTabLoading' => $lazyTabLoading,
         ]);
+    }
+
+    /**
+     * HTML de uma aba pesada (carregamento lazy). Cada pedido aparece no Pulse como URL
+     * distinta (`/dashboard/analytics/tab?tab=…`) para análise de tempo por aba.
+     */
+    public function tabPartial(
+        Request $request,
+        FilterOptionsService $filterOptionsService,
+        OverviewRepository $overviewRepository,
+        EnrollmentRepository $enrollmentRepository,
+        PerformanceRepository $performanceRepository,
+        AttendanceRepository $attendanceRepository,
+        InclusionRepository $inclusionRepository,
+        NetworkRepository $networkRepository,
+        FundebRepository $fundebRepository,
+    ): Response {
+        $tab = (string) $request->query('tab', '');
+        $allowed = ['enrollment', 'network', 'inclusion', 'performance', 'attendance', 'fundeb'];
+        if (! in_array($tab, $allowed, true)) {
+            abort(404);
+        }
+
+        $city = $request->filled('city_id')
+            ? City::query()->forAnalytics()->whereKey($request->integer('city_id'))->first()
+            : null;
+
+        if ($city === null) {
+            return response()
+                ->view('dashboard.analytics.partials.tab-fetch-notice', [
+                    'message' => __('Seleccione uma cidade no painel acima.'),
+                ])
+                ->header('X-Analytics-Tab', $tab)
+                ->header('X-Analytics-Tab-Status', 'no-city');
+        }
+
+        $this->authorize('viewAnalytics', $city);
+
+        $filters = IeducarFilterState::fromRequest($request);
+
+        if (! $filters->hasYearSelected()) {
+            return response()
+                ->view('dashboard.analytics.partials.tab-fetch-notice', [
+                    'message' => __('Aplique os filtros (ano letivo) no painel superior e confirme para carregar esta aba.'),
+                ])
+                ->header('X-Analytics-Tab', $tab)
+                ->header('X-Analytics-Tab-Status', 'no-year');
+        }
+
+        $ieducarOptions = $filterOptionsService->loadAll($city, $filters);
+        $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
+
+        $headers = [
+            'X-Analytics-Tab' => $tab,
+            'X-Analytics-Tab-Status' => 'ok',
+        ];
+
+        return match ($tab) {
+            'enrollment' => response()
+                ->view('dashboard.analytics.partials.enrollment', [
+                    'enrollmentData' => $enrollmentRepository->sample($city, $filters),
+                    'chartExportContext' => $chartExportContext,
+                ])
+                ->withHeaders($headers),
+            'network' => response()
+                ->view('dashboard.analytics.partials.network', [
+                    'networkData' => $networkRepository->snapshot($city, $filters),
+                    'chartExportContext' => $chartExportContext,
+                ])
+                ->withHeaders($headers),
+            'inclusion' => response()
+                ->view('dashboard.analytics.partials.inclusion', [
+                    'inclusionData' => $inclusionRepository->snapshot($city, $filters),
+                    'chartExportContext' => $chartExportContext,
+                ])
+                ->withHeaders($headers),
+            'performance' => response()
+                ->view('dashboard.analytics.partials.performance', [
+                    'performanceData' => $performanceRepository->snapshot($city, $filters),
+                    'chartExportContext' => $chartExportContext,
+                ])
+                ->withHeaders($headers),
+            'attendance' => response()
+                ->view('dashboard.analytics.partials.attendance', [
+                    'attendanceData' => $attendanceRepository->snapshot($city, $filters),
+                    'chartExportContext' => $chartExportContext,
+                ])
+                ->withHeaders($headers),
+            'fundeb' => response()
+                ->view('dashboard.analytics.partials.fundeb', [
+                    'fundebData' => $fundebRepository->buildReport(
+                        $city,
+                        $filters,
+                        $overviewRepository->summary($city, $filters),
+                        $enrollmentRepository->sample($city, $filters),
+                        $performanceRepository->snapshot($city, $filters),
+                        $attendanceRepository->snapshot($city, $filters),
+                        $inclusionRepository->snapshot($city, $filters),
+                        $networkRepository->snapshot($city, $filters),
+                    ),
+                    'yearFilterReady' => true,
+                    'chartExportContext' => $chartExportContext,
+                ])
+                ->withHeaders($headers),
+            default => abort(404),
+        };
     }
 
     /**
