@@ -254,7 +254,7 @@
                                             <label for="official_url_override" class="block text-xs font-medium text-emerald-900 dark:text-emerald-200">{{ __('URL modelo (obrigatório {ibge}; opcional {uf}, {city_id})') }}</label>
                                             <input id="official_url_override" name="official_url_override" type="url" value="{{ old('official_url_override') }}" placeholder="https://exemplo.gov.br/api/saeb/{ibge}.json" class="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-mono text-gray-900 dark:text-gray-100 px-3 py-2" />
                                         </div>
-                                        <x-primary-button type="submit" @disabled($cityCount === 0)>{{ __('Sincronizar por IBGE') }}</x-primary-button>
+                                        <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Sincronizar por IBGE') }}</x-primary-button>
                                     </form>
                                 </div>
 
