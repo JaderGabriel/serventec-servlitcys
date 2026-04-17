@@ -1,12 +1,12 @@
-{{-- Barra superior do Pulse: sem menu hamburger; período e tema ao lado do utilizador. --}}
+{{-- Barra superior do Pulse: uma linha — logo/links à esquerda; período, tema e utilizador à direita. --}}
 <nav class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col gap-4 py-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-x-6">
-            <div class="flex flex-wrap items-center gap-x-6 gap-y-3 min-w-0">
-                <a href="{{ route('dashboard') }}" class="flex items-center gap-2 shrink-0 group" title="{{ config('app.name') }}">
+        <div class="flex min-h-14 flex-nowrap items-center justify-between gap-x-4 py-3 sm:min-h-16 sm:py-4">
+            <div class="flex min-w-0 flex-1 flex-nowrap items-center gap-x-4 overflow-x-auto sm:gap-x-6 [scrollbar-width:thin]">
+                <a href="{{ route('dashboard') }}" class="flex shrink-0 items-center gap-2 group" title="{{ config('app.name') }}">
                     <x-application-logo class="block h-9 w-[3.25rem] shrink-0 text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition" />
                 </a>
-                <div class="flex flex-wrap items-center gap-x-2 gap-y-2">
+                <div class="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-2">
                     <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition {{ request()->routeIs('dashboard') ? 'ring-2 ring-indigo-500' : '' }}">
                         {{ __('Painel') }}
                     </a>
@@ -21,8 +21,8 @@
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center justify-start lg:justify-end gap-3 sm:gap-4 shrink-0">
-                <div class="flex flex-wrap items-center gap-3 sm:gap-4">
+            <div class="flex shrink-0 items-center justify-end gap-3 ps-1 sm:gap-4 sm:ps-2">
+                <div class="flex items-center gap-3 sm:gap-4">
                     <livewire:pulse.period-selector />
                     <x-pulse::theme-switcher />
                 </div>

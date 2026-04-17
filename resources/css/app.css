@@ -22,6 +22,13 @@
     }
 }
 
+/* Pulse: cartões mais largos, borda e sombra mais suaves (sobrepõe ring padrão do pacote). */
+@layer components {
+    #pulse-main-grid > section {
+        @apply rounded-2xl shadow-[0_1px_3px_rgba(15,23,42,0.05)] ring-1 ring-gray-950/[0.05] dark:shadow-[0_1px_3px_rgba(0,0,0,0.25)] dark:ring-white/[0.06];
+    }
+}
+
 /* Landing: padrão de grelha suave (usado na welcome) */
 @layer utilities {
     .bg-grid-edu {

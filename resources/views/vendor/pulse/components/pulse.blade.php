@@ -92,11 +92,18 @@
                 </div>
             </header>
 
-            <main class="flex-1 w-full min-w-0 py-8">
-                <div {{ $attributes->merge(['class' => "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid default:grid-cols-{$cols} default:gap-6"]) }}>
+            <main class="flex-1 w-full min-w-0 py-6 sm:py-8">
+                <div
+                    id="pulse-main-grid"
+                    {{ $attributes->merge(['class' => "max-w-[min(100%,96rem)] mx-auto px-4 sm:px-6 lg:px-10 grid default:grid-cols-{$cols} default:gap-5 lg:default:gap-6"]) }}
+                >
                     {{ $slot }}
                 </div>
             </main>
+
+            <div class="max-w-[min(100%,96rem)] mx-auto w-full shrink-0 px-4 pb-4 sm:px-6 lg:px-10">
+                <livewire:pulse.server-status-strip />
+            </div>
 
             @include('layouts.app-footer', ['pulseFooter' => true])
         </div>

@@ -3,8 +3,13 @@
 namespace App\Providers;
 
 use App\Listeners\LogSuccessfulUserLogin;
+use App\Livewire\Pulse\ApplicationInsightsCard;
+use App\Livewire\Pulse\DatabaseHealthCard;
+use App\Livewire\Pulse\DiskSpaceCard;
 use App\Livewire\Pulse\InstitutionTrafficCard;
+use App\Livewire\Pulse\QueueAndFailuresCard;
 use App\Livewire\Pulse\RedisOverviewCard;
+use App\Livewire\Pulse\ServerStatusStrip;
 use App\Models\City;
 use App\Models\User;
 use App\Policies\CityPolicy;
@@ -43,6 +48,11 @@ class AppServiceProvider extends ServiceProvider
 
         Livewire::component('pulse.institution-traffic-card', InstitutionTrafficCard::class);
         Livewire::component('pulse.redis-overview-card', RedisOverviewCard::class);
+        Livewire::component('pulse.application-insights-card', ApplicationInsightsCard::class);
+        Livewire::component('pulse.database-health-card', DatabaseHealthCard::class);
+        Livewire::component('pulse.queue-and-failures-card', QueueAndFailuresCard::class);
+        Livewire::component('pulse.disk-space-card', DiskSpaceCard::class);
+        Livewire::component('pulse.server-status-strip', ServerStatusStrip::class);
 
         /*
          * O Pulse regista o componente anónimo <x-pulse> com prefixo "pulse" (hash xxh128).
