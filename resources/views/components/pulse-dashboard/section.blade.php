@@ -6,16 +6,28 @@
 ])
 @php
     $styles = [
-        'emerald' => 'border-emerald-200/70 dark:border-emerald-800/50 bg-emerald-50/60 dark:bg-emerald-950/25 text-emerald-800 dark:text-emerald-200',
-        'slate' => 'border-slate-200/70 dark:border-slate-700/50 bg-slate-50/70 dark:bg-slate-900/35 text-slate-800 dark:text-slate-200',
-        'amber' => 'border-amber-200/70 dark:border-amber-800/50 bg-amber-50/60 dark:bg-amber-950/25 text-amber-900 dark:text-amber-200',
-        'violet' => 'border-violet-200/70 dark:border-violet-800/50 bg-violet-50/60 dark:bg-violet-950/30 text-violet-900 dark:text-violet-200',
-        'sky' => 'border-sky-200/70 dark:border-sky-800/50 bg-sky-50/60 dark:bg-sky-950/25 text-sky-900 dark:text-sky-200',
-        'rose' => 'border-rose-200/70 dark:border-rose-800/50 bg-rose-50/60 dark:bg-rose-950/25 text-rose-900 dark:text-rose-200',
-        'red' => 'border-red-200/70 dark:border-red-900/50 bg-red-50/60 dark:bg-red-950/25 text-red-900 dark:text-red-200',
-        'indigo' => 'border-indigo-200/70 dark:border-indigo-800/50 bg-indigo-50/60 dark:bg-indigo-950/25 text-indigo-900 dark:text-indigo-200',
+        'emerald' => 'border border-emerald-200/90 bg-gradient-to-r from-emerald-50/95 to-emerald-50/40 text-emerald-900 shadow-md ring-2 ring-emerald-200/50 dark:border-emerald-800/60 dark:from-emerald-950/50 dark:to-emerald-950/20 dark:text-emerald-100 dark:ring-emerald-800/40',
+        'slate' => 'border border-slate-200/90 bg-gradient-to-r from-slate-50/95 to-slate-50/35 text-slate-900 shadow-md ring-2 ring-slate-200/45 dark:border-slate-600/60 dark:from-slate-900/55 dark:to-slate-900/25 dark:text-slate-100 dark:ring-slate-600/35',
+        'amber' => 'border border-amber-200/90 bg-gradient-to-r from-amber-50/95 to-amber-50/35 text-amber-950 shadow-md ring-2 ring-amber-200/50 dark:border-amber-800/55 dark:from-amber-950/45 dark:to-amber-950/20 dark:text-amber-100 dark:ring-amber-800/35',
+        'violet' => 'border border-violet-200/90 bg-gradient-to-r from-violet-50/95 to-violet-50/35 text-violet-950 shadow-md ring-2 ring-violet-200/50 dark:border-violet-800/55 dark:from-violet-950/50 dark:to-violet-950/20 dark:text-violet-100 dark:ring-violet-800/40',
+        'sky' => 'border border-sky-200/90 bg-gradient-to-r from-sky-50/95 to-sky-50/35 text-sky-950 shadow-md ring-2 ring-sky-200/50 dark:border-sky-800/55 dark:from-sky-950/45 dark:to-sky-950/20 dark:text-sky-100 dark:ring-sky-800/35',
+        'rose' => 'border border-rose-200/90 bg-gradient-to-r from-rose-50/95 to-rose-50/35 text-rose-950 shadow-md ring-2 ring-rose-200/50 dark:border-rose-800/55 dark:from-rose-950/45 dark:to-rose-950/20 dark:text-rose-100 dark:ring-rose-800/35',
+        'red' => 'border border-red-200/90 bg-gradient-to-r from-red-50/95 to-red-50/35 text-red-950 shadow-md ring-2 ring-red-200/50 dark:border-red-900/50 dark:from-red-950/45 dark:to-red-950/20 dark:text-red-100 dark:ring-red-900/35',
+        'indigo' => 'border border-indigo-200/90 bg-gradient-to-r from-indigo-50/95 to-indigo-50/35 text-indigo-950 shadow-md ring-2 ring-indigo-200/55 dark:border-indigo-800/55 dark:from-indigo-950/50 dark:to-indigo-950/20 dark:text-indigo-100 dark:ring-indigo-700/40',
     ];
     $cardClass = $styles[$accent] ?? $styles['indigo'];
+
+    $bar = [
+        'emerald' => 'bg-gradient-to-b from-emerald-500 to-teal-600',
+        'slate' => 'bg-gradient-to-b from-slate-500 to-slate-700',
+        'amber' => 'bg-gradient-to-b from-amber-500 to-orange-600',
+        'violet' => 'bg-gradient-to-b from-violet-500 to-purple-600',
+        'sky' => 'bg-gradient-to-b from-sky-500 to-blue-600',
+        'rose' => 'bg-gradient-to-b from-rose-500 to-pink-600',
+        'red' => 'bg-gradient-to-b from-red-500 to-rose-700',
+        'indigo' => 'bg-gradient-to-b from-indigo-500 to-violet-600',
+    ];
+    $barClass = $bar[$accent] ?? $bar['indigo'];
 
     $icons = [
         'chart-bar' => 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z',
@@ -32,18 +44,21 @@
     $path = $icons[$icon] ?? $icons['rectangle-group'];
 @endphp
 
-<div {{ $attributes->merge(['class' => 'pulse-dashboard-theme default:col-span-full border-t border-gray-200/60 pt-7 first:border-t-0 first:pt-0 dark:border-gray-700/50']) }}>
-    <div class="flex items-start gap-3 rounded-2xl border px-3 py-2.5 shadow-sm sm:gap-3.5 sm:px-4 sm:py-3 {{ $cardClass }}">
-        <div class="shrink-0 rounded-xl bg-white/55 p-1.5 dark:bg-black/25 sm:p-2">
-            <svg class="h-5 w-5 opacity-90 sm:h-6 sm:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="{{ $path }}" />
-            </svg>
-        </div>
-        <div class="min-w-0 pt-px">
-            <h2 class="text-[0.9375rem] font-semibold leading-snug tracking-tight sm:text-base">{{ $title }}</h2>
-            @if ($subtitle)
-                <p class="mt-1 max-w-4xl text-sm leading-relaxed opacity-88">{{ $subtitle }}</p>
-            @endif
+<div {{ $attributes->merge(['class' => 'pulse-dashboard-theme default:col-span-full pt-10 first:pt-2 sm:pt-11 sm:first:pt-2']) }}>
+    <div class="relative overflow-hidden rounded-2xl pl-4 sm:pl-5">
+        <div class="absolute start-0 top-0 h-full w-1.5 {{ $barClass }}" aria-hidden="true"></div>
+        <div class="flex items-start gap-3.5 px-4 py-3.5 sm:gap-4 sm:px-5 sm:py-4 {{ $cardClass }}">
+            <div class="shrink-0 rounded-xl bg-white/70 p-2 shadow-sm ring-1 ring-white/60 dark:bg-black/25 dark:ring-white/10">
+                <svg class="h-6 w-6 opacity-95" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $path }}" />
+                </svg>
+            </div>
+            <div class="min-w-0 pb-px">
+                <h2 class="text-base font-semibold leading-snug tracking-tight sm:text-lg">{{ $title }}</h2>
+                @if ($subtitle)
+                    <p class="mt-1.5 max-w-4xl text-sm leading-relaxed opacity-90">{{ $subtitle }}</p>
+                @endif
+            </div>
         </div>
     </div>
 </div>

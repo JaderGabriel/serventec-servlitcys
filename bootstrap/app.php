@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\RecordPulseInstitutionContext;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -36,20 +37,20 @@ return Application::configure(basePath: dirname(__DIR__))
         }
 
         $minutes = (int) config('pulse.schedule.interval_minutes', 5);
-        $mutexExpires = min(120, $minutes + 2);
+        // Mutex maior que o intervalo para locks órfãos; evita picos se `schedule:run` se sobrepor.
+        $mutexExpires = min(120, max(10, $minutes * 2 + 2));
 
-        // Uma fotografia por intervalo; executa no mesmo processo do schedule:run (sem runInBackground).
-        $schedule->command('pulse:check', ['--once' => true])
+        // Um único agendamento: mesma cadência do cron (`*/N`), sequencial no mesmo processo,
+        // sem `runInBackground`; se uma execução anterior ainda estiver ativa, esta é ignorada.
+        $schedule->call(function (): void {
+            Artisan::call('pulse:check', ['--once' => true]);
+
+            if (config('pulse.schedule.run_digest_tick', true)) {
+                Artisan::call('pulse:work', ['--stop-when-empty' => true]);
+            }
+        })
+            ->name('pulse-scheduled-tick')
             ->cron(sprintf('*/%d * * * *', $minutes))
-            ->withoutOverlapping($mutexExpires)
-            ->name('pulse:check-once');
-
-        // Uma passagem de digest por intervalo (alternativa ao daemon `pulse:work` em Supervisor).
-        if (config('pulse.schedule.run_digest_tick', true)) {
-            $schedule->command('pulse:work', ['--stop-when-empty' => true])
-                ->cron(sprintf('*/%d * * * *', $minutes))
-                ->withoutOverlapping($mutexExpires)
-                ->name('pulse:work-tick');
-        }
+            ->withoutOverlapping($mutexExpires);
     })
     ->create();

@@ -5,7 +5,7 @@
 <footer class="mt-auto border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/90">
     <div @class([
         'mx-auto py-4 sm:py-5',
-        'max-w-[min(100%,96rem)] px-3 sm:px-5 lg:px-8 xl:px-10' => $pulseFooter,
+        'max-w-[min(100%,100rem)] px-4 sm:px-6 lg:px-10 xl:px-12' => $pulseFooter,
         'max-w-7xl px-4 sm:px-6 lg:px-8' => ! $pulseFooter,
     ])>
         @if ($pulseFooter)

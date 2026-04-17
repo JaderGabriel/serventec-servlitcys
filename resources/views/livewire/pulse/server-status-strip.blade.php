@@ -15,7 +15,7 @@
 @endphp
 <div
     wire:poll.5s
-    class="rounded-2xl border border-gray-200/80 bg-white/90 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-gray-600/60 dark:bg-gray-800/85 sm:px-5"
+    class="rounded-2xl border border-indigo-200/70 bg-white/95 px-4 py-3 shadow-md ring-1 ring-indigo-950/[0.05] backdrop-blur-sm dark:border-indigo-800/50 dark:bg-gray-800/90 dark:ring-indigo-400/10 sm:px-5"
 >
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex flex-wrap items-center gap-x-5 gap-y-2">

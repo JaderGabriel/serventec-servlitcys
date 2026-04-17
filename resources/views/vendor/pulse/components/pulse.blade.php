@@ -43,20 +43,21 @@
         <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
             @include('layouts.navigation-pulse')
 
-            <header class="shrink-0 border-b border-indigo-100 dark:border-indigo-900/50 bg-gradient-to-b from-white to-indigo-50/40 dark:from-gray-800 dark:to-indigo-950/25 shadow-sm">
-                <div class="mx-auto max-w-[min(100%,96rem)] px-3 py-5 sm:px-5 sm:py-6 lg:px-8 xl:px-10">
+            <header class="shrink-0 border-b-2 border-indigo-200/70 bg-gradient-to-br from-white via-indigo-50/70 to-violet-50/50 shadow-[0_4px_24px_-8px_rgba(79,70,229,0.2)] dark:border-indigo-800/60 dark:from-gray-800 dark:via-indigo-950/40 dark:to-gray-900 dark:shadow-[inset_0_-1px_0_0_rgba(99,102,241,0.15)]">
+                <div class="mx-auto max-w-[min(100%,100rem)] px-4 py-6 sm:px-6 sm:py-7 lg:px-10 xl:px-12">
+                    <div class="rounded-2xl border border-indigo-100/90 bg-white/75 p-5 shadow-sm ring-1 ring-indigo-200/60 backdrop-blur-sm dark:border-indigo-800/40 dark:bg-gray-900/50 dark:ring-indigo-600/30 sm:p-6">
                     <div class="flex flex-col gap-6 lg:flex-row lg:items-start">
                         <div class="flex items-start gap-4 min-w-0">
-                            <div class="shrink-0 rounded-xl bg-indigo-100 dark:bg-indigo-950/50 p-2.5 ring-1 ring-indigo-200/80 dark:ring-indigo-800/60">
+                            <div class="shrink-0 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 p-2.5 ring-2 ring-indigo-200/90 dark:from-indigo-950/80 dark:to-violet-950/50 dark:ring-indigo-700/50">
                                 <svg class="h-8 w-8 text-indigo-600 dark:text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7.5 14.25 10.5 11.25 13.5 14.25 18 9.75" />
                                 </svg>
                             </div>
                             <div class="min-w-0">
-                                <h1 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+                                <h1 class="text-xl font-semibold leading-tight text-indigo-950 dark:text-indigo-100 sm:text-2xl">
                                     {{ __('Monitorização operacional') }}
                                 </h1>
-                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                                <p class="mt-1.5 text-sm text-indigo-900/80 dark:text-indigo-200/85">
                                     {{ __('Latência, filas, cache, excepções e carga — alinhado ao painel analítico e às rotas lazy do dashboard.') }}
                                 </p>
                                 <div class="mt-3 flex flex-wrap items-center gap-2">
@@ -83,25 +84,26 @@
                                         {{ __('Servers:') }} <span class="ml-1 font-mono">~{{ $pulseEveryMin }}m</span>
                                     </span>
                                 </div>
-                                <p class="mt-3 text-xs text-gray-500 dark:text-gray-400 max-w-3xl leading-relaxed">
+                                <p class="mt-3 max-w-3xl text-xs leading-relaxed text-indigo-800/70 dark:text-indigo-300/75">
                                     {{ __('Indicadores para decidir com dados: erros e excepções primeiro, filas e cache, latência (HTTP, jobs, SQL, saída), uso e carga. “Servers online” usa snapshots nos últimos :seconds segundos.', ['seconds' => $serverFreshWindow]) }}
                                 </p>
                             </div>
                         </div>
                     </div>
+                    </div>
                 </div>
             </header>
 
-            <main class="flex-1 w-full min-w-0 py-5 sm:py-7">
+            <main class="flex-1 w-full min-w-0 bg-gradient-to-b from-gray-100/90 to-gray-100 py-6 sm:py-9 dark:from-gray-900 dark:to-gray-900">
                 <div
                     id="pulse-main-grid"
-                    {{ $attributes->merge(['class' => "mx-auto w-full max-w-[min(100%,96rem)] grid default:grid-cols-{$cols} px-3 sm:px-5 lg:px-8 xl:px-10 default:gap-x-4 default:gap-y-4 sm:default:gap-x-5 sm:default:gap-y-5 lg:default:gap-x-6 lg:default:gap-y-6"]) }}
+                    {{ $attributes->merge(['class' => "mx-auto w-full max-w-[min(100%,100rem)] grid default:grid-cols-{$cols} px-4 sm:px-6 lg:px-10 xl:px-12 default:gap-x-5 default:gap-y-7 sm:default:gap-x-6 sm:default:gap-y-8 lg:default:gap-x-7 lg:default:gap-y-9"]) }}
                 >
                     {{ $slot }}
                 </div>
             </main>
 
-            <div class="max-w-[min(100%,96rem)] mx-auto w-full shrink-0 border-t border-gray-200/70 px-3 pb-3 pt-3 sm:px-5 sm:pb-4 sm:pt-4 lg:px-8 xl:px-10 dark:border-gray-700/50">
+            <div class="mx-auto w-full max-w-[min(100%,100rem)] shrink-0 border-t border-indigo-200/60 bg-gray-100/95 px-4 pb-4 pt-4 sm:px-6 sm:pb-5 sm:pt-5 lg:px-10 xl:px-12 dark:border-indigo-900/50 dark:bg-gray-900">
                 <livewire:pulse.server-status-strip />
             </div>
 

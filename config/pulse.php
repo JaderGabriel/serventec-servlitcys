@@ -116,8 +116,10 @@ return [
     |
     | Use sempre `pulse:check --once` no agendador: o comando sem `--once` é um
     | daemon em loop e não deve ser disparado por cron (multiplicaria processos).
-    | O digest via `pulse:work --stop-when-empty` processa uma leva por execução;
-    | desative se já tiver `pulse:work` em Supervisor (evite duplicar).
+    | `interval_minutes` alinha o Pulse ao cron (ex.: `schedule:run` a cada 5 min).
+    | O agendador corre `pulse:check` e depois `pulse:work --stop-when-empty` em
+    | sequência no mesmo processo, com mutex partilhado. Desative o digest aqui
+    | se já tiver `pulse:work` em Supervisor (evite duplicar).
     |
     */
 
