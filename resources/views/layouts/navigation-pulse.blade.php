@@ -1,6 +1,6 @@
 {{-- Barra superior do Pulse: uma linha — logo/links à esquerda; período, tema e utilizador à direita. --}}
 <nav class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-[min(100%,96rem)] px-3 sm:px-5 lg:px-8 xl:px-10">
         <div class="flex min-h-14 flex-nowrap items-center justify-between gap-x-4 py-3 sm:min-h-16 sm:py-4">
             <div class="flex min-w-0 flex-1 flex-nowrap items-center gap-x-4 overflow-x-auto sm:gap-x-6 [scrollbar-width:thin]">
                 <a href="{{ route('dashboard') }}" class="flex shrink-0 items-center gap-2 group" title="{{ config('app.name') }}">

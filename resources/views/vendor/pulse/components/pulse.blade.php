@@ -44,7 +44,7 @@
             @include('layouts.navigation-pulse')
 
             <header class="shrink-0 border-b border-indigo-100 dark:border-indigo-900/50 bg-gradient-to-b from-white to-indigo-50/40 dark:from-gray-800 dark:to-indigo-950/25 shadow-sm">
-                <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                <div class="mx-auto max-w-[min(100%,96rem)] px-3 py-5 sm:px-5 sm:py-6 lg:px-8 xl:px-10">
                     <div class="flex flex-col gap-6 lg:flex-row lg:items-start">
                         <div class="flex items-start gap-4 min-w-0">
                             <div class="shrink-0 rounded-xl bg-indigo-100 dark:bg-indigo-950/50 p-2.5 ring-1 ring-indigo-200/80 dark:ring-indigo-800/60">
@@ -92,16 +92,16 @@
                 </div>
             </header>
 
-            <main class="flex-1 w-full min-w-0 py-6 sm:py-8">
+            <main class="flex-1 w-full min-w-0 py-5 sm:py-7">
                 <div
                     id="pulse-main-grid"
-                    {{ $attributes->merge(['class' => "max-w-[min(100%,96rem)] mx-auto px-4 sm:px-6 lg:px-10 grid default:grid-cols-{$cols} default:gap-5 lg:default:gap-6"]) }}
+                    {{ $attributes->merge(['class' => "mx-auto w-full max-w-[min(100%,96rem)] grid default:grid-cols-{$cols} px-3 sm:px-5 lg:px-8 xl:px-10 default:gap-x-4 default:gap-y-4 sm:default:gap-x-5 sm:default:gap-y-5 lg:default:gap-x-6 lg:default:gap-y-6"]) }}
                 >
                     {{ $slot }}
                 </div>
             </main>
 
-            <div class="max-w-[min(100%,96rem)] mx-auto w-full shrink-0 px-4 pb-4 sm:px-6 lg:px-10">
+            <div class="max-w-[min(100%,96rem)] mx-auto w-full shrink-0 border-t border-gray-200/70 px-3 pb-3 pt-3 sm:px-5 sm:pb-4 sm:pt-4 lg:px-8 xl:px-10 dark:border-gray-700/50">
                 <livewire:pulse.server-status-strip />
             </div>
 

@@ -32,17 +32,17 @@
     $path = $icons[$icon] ?? $icons['rectangle-group'];
 @endphp
 
-<div {{ $attributes->merge(['class' => 'default:col-span-full mt-8 mb-2 first:mt-2']) }}>
-    <div class="flex items-start gap-3 rounded-2xl border px-4 py-3 shadow-sm {{ $cardClass }}">
-        <div class="shrink-0 rounded-xl bg-white/50 p-2 dark:bg-black/20">
-            <svg class="h-6 w-6 opacity-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+<div {{ $attributes->merge(['class' => 'pulse-dashboard-theme default:col-span-full border-t border-gray-200/60 pt-7 first:border-t-0 first:pt-0 dark:border-gray-700/50']) }}>
+    <div class="flex items-start gap-3 rounded-2xl border px-3 py-2.5 shadow-sm sm:gap-3.5 sm:px-4 sm:py-3 {{ $cardClass }}">
+        <div class="shrink-0 rounded-xl bg-white/55 p-1.5 dark:bg-black/25 sm:p-2">
+            <svg class="h-5 w-5 opacity-90 sm:h-6 sm:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="{{ $path }}" />
             </svg>
         </div>
-        <div class="min-w-0 pt-0.5">
-            <h2 class="text-base font-semibold leading-tight">{{ $title }}</h2>
+        <div class="min-w-0 pt-px">
+            <h2 class="text-[0.9375rem] font-semibold leading-snug tracking-tight sm:text-base">{{ $title }}</h2>
             @if ($subtitle)
-                <p class="mt-1 text-sm opacity-85">{{ $subtitle }}</p>
+                <p class="mt-1 max-w-4xl text-sm leading-relaxed opacity-88">{{ $subtitle }}</p>
             @endif
         </div>
     </div>
