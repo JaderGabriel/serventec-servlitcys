@@ -2,8 +2,10 @@
 
 namespace App\Services\Inep;
 
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use ZipArchive;
 
 /**
@@ -22,14 +24,66 @@ final class SaebMicrodadosInepDownloader
     }
 
     /**
+     * URL aponta para ZIP de microdados (INEP ou outro) em vez de CSV.
+     */
+    public static function isZipUrl(string $url): bool
+    {
+        $path = (string) (parse_url($url, PHP_URL_PATH) ?? '');
+        if ($path !== '' && str_ends_with(strtolower($path), '.zip')) {
+            return true;
+        }
+        $l = strtolower($url);
+
+        return str_contains($l, 'microdados_saeb_') || str_contains($l, 'microdados_saeb');
+    }
+
+    /**
+     * Extrai o ano do padrão microdados_saeb_YYYY do INEP, se existir.
+     */
+    public static function yearFromZipUrl(string $url): ?int
+    {
+        if (preg_match('/microdados_saeb_(\d{4})/i', $url, $m) !== 1) {
+            return null;
+        }
+
+        return max(2000, min(2100, (int) $m[1]));
+    }
+
+    /**
+     * Opções Guzzle para verificação SSL (CA do sistema ou ficheiro explícito).
+     *
+     * @return array{verify: bool|string}
+     */
+    private function guzzleVerifyOptions(): array
+    {
+        $verify = filter_var(config('ieducar.saeb.microdados_http_verify', true), FILTER_VALIDATE_BOOL);
+        $ca = trim((string) config('ieducar.saeb.microdados_http_ca_bundle', ''));
+
+        if ($ca !== '' && is_readable($ca)) {
+            return ['verify' => $ca];
+        }
+
+        return ['verify' => $verify];
+    }
+
+    private function pendingRequest(int $timeout, string $userAgent): PendingRequest
+    {
+        return Http::timeout($timeout)
+            ->withHeaders(['User-Agent' => $userAgent])
+            ->withOptions($this->guzzleVerifyOptions());
+    }
+
+    /**
      * Descarrega e extrai o ZIP; devolve o caminho absoluto do directório de extracção.
      *
      * @throws \RuntimeException
      */
-    public function downloadAndExtract(int $year): string
+    public function downloadAndExtract(int $year, ?string $zipUrlOverride = null): string
     {
         $timeout = max(120, min(3600, (int) config('ieducar.saeb.microdados_download_timeout_seconds', 900)));
-        $url = $this->zipUrlForYear($year);
+        $url = ($zipUrlOverride !== null && trim($zipUrlOverride) !== '')
+            ? trim($zipUrlOverride)
+            : $this->zipUrlForYear($year);
 
         $cacheRoot = storage_path('app/'.trim((string) config('ieducar.saeb.microdados_cache_path', 'saeb/microdados_cache'), '/'));
         if (! is_dir($cacheRoot)) {
@@ -47,8 +101,7 @@ final class SaebMicrodadosInepDownloader
         }
 
         try {
-            $response = Http::timeout($timeout)
-                ->withHeaders(['User-Agent' => 'servlitcys/1.0 (SAEB microdados INEP)'])
+            $response = $this->pendingRequest($timeout, 'servlitcys/1.0 (SAEB microdados INEP)')
                 ->sink($tmpZip)
                 ->get($url);
 
@@ -95,8 +148,7 @@ final class SaebMicrodadosInepDownloader
         $path = $tmp.'.csv';
 
         try {
-            $response = Http::timeout($timeout)
-                ->withHeaders(['User-Agent' => 'servlitcys/1.0 (SAEB dados abertos)'])
+            $response = $this->pendingRequest($timeout, 'servlitcys/1.0 (SAEB dados abertos)')
                 ->sink($path)
                 ->get($url);
 

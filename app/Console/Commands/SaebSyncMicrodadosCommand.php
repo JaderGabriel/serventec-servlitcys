@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Inep\SaebMicrodadosInepDownloader;
 use App\Services\Inep\SaebMicrodadosOpenDataImportService;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -24,15 +25,23 @@ class SaebSyncMicrodadosCommand extends Command
 
         $url = trim((string) $this->option('url'));
         if ($url !== '') {
-            $this->info(__('A processar CSV remoto…'));
-            $result = $service->syncFromRemoteCsvUrl($url, $merge, $resolveInep);
+            $yearOpt = $this->option('year');
+            $fallbackYear = is_numeric($yearOpt)
+                ? max(1995, min(2100, (int) $yearOpt))
+                : max(1995, (int) date('Y') - 1);
+            if (SaebMicrodadosInepDownloader::isZipUrl($url)) {
+                $this->info(__('A descarregar ZIP de microdados…'));
+            } else {
+                $this->info(__('A processar CSV remoto…'));
+            }
+            $result = $service->syncFromMicrodadosFormUrl($url, $merge, $resolveInep, $purgeExtract, $fallbackYear);
         } else {
             $yearOpt = $this->option('year');
             $year = is_numeric($yearOpt)
                 ? max(1995, min(2100, (int) $yearOpt))
                 : max(1995, (int) date('Y') - 1);
             $this->info(__('A descarregar microdados INEP :year (ZIP) …', ['year' => (string) $year]));
-            $result = $service->syncFromInepZip($year, $merge, $resolveInep, $purgeExtract);
+            $result = $service->syncFromInepZip($year, $merge, $resolveInep, $purgeExtract, null);
         }
 
         if ($result['ok']) {

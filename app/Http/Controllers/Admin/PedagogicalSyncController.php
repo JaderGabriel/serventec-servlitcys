@@ -101,6 +101,11 @@ class PedagogicalSyncController extends Controller
             $resolveInep = $request->boolean('md_resolve_inep', true);
             $purgeExtract = ! $request->boolean('md_keep_cache', false);
 
+            $fallbackYear = isset($validated['md_year']) && is_numeric($validated['md_year'])
+                ? (int) $validated['md_year']
+                : max(2000, (int) date('Y') - 1);
+            $fallbackYear = max(2000, min(2100, $fallbackYear));
+
             $url = trim((string) ($validated['md_url'] ?? ''));
             if ($url === '') {
                 $configured = trim((string) config('ieducar.saeb.microdados_opendata_csv_url', ''));
@@ -110,13 +115,9 @@ class PedagogicalSyncController extends Controller
             }
 
             if ($url !== '') {
-                $result = $microdados->syncFromRemoteCsvUrl($url, $merge, $resolveInep);
+                $result = $microdados->syncFromMicrodadosFormUrl($url, $merge, $resolveInep, $purgeExtract, $fallbackYear);
             } else {
-                $year = isset($validated['md_year']) && is_numeric($validated['md_year'])
-                    ? (int) $validated['md_year']
-                    : max(2000, (int) date('Y') - 1);
-                $year = max(2000, min(2100, $year));
-                $result = $microdados->syncFromInepZip($year, $merge, $resolveInep, $purgeExtract);
+                $result = $microdados->syncFromInepZip($fallbackYear, $merge, $resolveInep, $purgeExtract, null);
             }
 
             $message = $result['message'];

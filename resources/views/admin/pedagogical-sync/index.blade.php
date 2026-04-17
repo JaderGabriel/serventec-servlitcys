@@ -17,7 +17,7 @@
 
     <div class="py-10">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="rounded-2xl border border-gray-200/90 bg-white shadow-sm ring-1 ring-gray-950/5 dark:border-gray-700 dark:bg-gray-900 dark:ring-white/10 overflow-hidden">
+            <div class="rounded-2xl border border-gray-200/90 bg-white shadow-sm ring-1 ring-gray-950/5 dark:border-gray-700 dark:bg-gray-900 dark:ring-white/10 overflow-hidden" x-data="{ storageModalOpen: false }">
                 <div class="border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-white px-6 py-5 dark:border-gray-800 dark:from-emerald-950/40 dark:to-gray-900/80 sm:px-8">
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div>
@@ -27,15 +27,30 @@
                                 {{ __('Cada ponto no JSON deve incluir «city_ids» com o id interno da cidade. Cadastre o IBGE (7 dígitos) nas cidades e execute os passos abaixo na ordem que fizer sentido para a sua rede.') }}
                             </p>
                         </div>
-                        @if ($cityCount > 0)
-                            <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                                <svg class="h-4 w-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.125-9 12.375-9 12.375S1.5 17.625 1.5 10.5a9 9 0 1 1 18 0Z" />
+                        <div class="flex flex-wrap items-center justify-end gap-2">
+                            @if ($cityCount > 0)
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                    <svg class="h-4 w-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.125-9 12.375-9 12.375S1.5 17.625 1.5 10.5a9 9 0 1 1 18 0Z" />
+                                    </svg>
+                                    {{ trans_choice(':count cidade no filtro|:count cidades no filtro', $cityCount, ['count' => $cityCount]) }}
+                                </span>
+                            @endif
+                            <button
+                                type="button"
+                                class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/90 bg-white/90 px-3 py-1.5 text-xs font-medium text-emerald-900 shadow-sm hover:bg-emerald-50 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-900/50"
+                                @click="storageModalOpen = true"
+                            >
+                                <svg class="h-4 w-4 opacity-80" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v11.25" />
                                 </svg>
-                                {{ trans_choice(':count cidade no filtro|:count cidades no filtro', $cityCount, ['count' => $cityCount]) }}
-                            </span>
-                        @endif
+                                {{ __('Estado do armazenamento') }}
+                                @if ($fileExists)
+                                    <span class="tabular-nums text-emerald-700 dark:text-emerald-300">· {{ number_format($pontosCount) }}</span>
+                                @endif
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -132,36 +147,6 @@
                             {{ session('pedagogical_sync_error') }}
                         </div>
                     @endif
-
-                    <div class="rounded-xl border border-slate-200/90 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/40 p-4 sm:p-5">
-                        <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ __('Estado do armazenamento') }}</p>
-                        <dl class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                            <div>
-                                <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Caminho relativo (disco public)') }}</dt>
-                                <dd class="mt-0.5 font-mono text-xs text-gray-900 dark:text-gray-100 break-all">{{ $jsonPath }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Ficheiro presente') }}</dt>
-                                <dd class="mt-0.5">
-                                    @if ($fileExists)
-                                        <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200">{{ __('Sim') }}</span>
-                                    @else
-                                        <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">{{ __('Não') }}</span>
-                                    @endif
-                                </dd>
-                            </div>
-                            <div>
-                                <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Pontos no ficheiro') }}</dt>
-                                <dd class="mt-0.5 tabular-nums text-gray-900 dark:text-gray-100">{{ number_format($pontosCount) }}</dd>
-                            </div>
-                        </dl>
-                        @if (is_array($meta) && $meta !== [])
-                            <div class="mt-4 rounded-lg border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-gray-900/50 p-3 text-xs">
-                                <p class="font-semibold text-gray-800 dark:text-gray-200">{{ __('Meta (última gravação)') }}</p>
-                                <pre class="mt-2 overflow-x-auto text-[11px] text-gray-600 dark:text-gray-400 whitespace-pre-wrap max-h-48 overflow-y-auto">{{ json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
-                            </div>
-                        @endif
-                    </div>
 
                     @if ($cityCount === 0)
                         <div class="rounded-xl border border-amber-200/90 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/25 dark:text-amber-100">
@@ -282,8 +267,9 @@
                                                 <input id="md_year" name="md_year" type="number" min="2000" max="2100" value="{{ old('md_year', $defaultMicrodadosYear ?? (int) date('Y') - 1) }}" class="{{ $selectClass }}" />
                                             </div>
                                             <div class="sm:col-span-2">
-                                                <x-input-label for="md_url" :value="__('URL CSV público (opcional)')" />
-                                                <input id="md_url" name="md_url" type="url" placeholder="https://…" value="{{ old('md_url') }}" class="{{ $selectClass }} font-mono text-xs" />
+                                                <x-input-label for="md_url" :value="__('URL opcional (CSV ou ZIP INEP)')" />
+                                                <p class="mt-1 text-[11px] text-sky-800/85 dark:text-sky-300/80 leading-relaxed">{{ __('Vazio: usa o ano ao lado com o modelo ZIP do .env. Ou cole CSV (dados abertos) ou o ZIP oficial (ex.: microdados_saeb_2023.zip).') }}</p>
+                                                <input id="md_url" name="md_url" type="url" placeholder="https://…" value="{{ old('md_url') }}" class="{{ $selectClass }} mt-1 font-mono text-xs" />
                                             </div>
                                             <div class="sm:col-span-2 flex flex-wrap gap-4">
                                                 <label class="inline-flex items-center gap-2 text-sm text-sky-950 dark:text-sky-100 cursor-pointer">
@@ -315,6 +301,70 @@
                     <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed border-t border-gray-200 dark:border-gray-700 pt-6">
                         {{ __('Após importar: GET :url · Variáveis: IEDUCAR_SAEB_JSON_PATH, IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE, IEDUCAR_SAEB_IMPORT_URLS. CLI: php artisan saeb:import-csv · saeb:sync-microdados · saeb:import-official', ['url' => rtrim((string) config('app.url'), '/').'/api/saeb/municipio/{ibge}']) }}
                     </p>
+
+                    <template x-teleport="body">
+                        <div
+                            x-show="storageModalOpen"
+                            x-transition.opacity.duration.150ms
+                            @keydown.escape.window="storageModalOpen = false"
+                            class="fixed inset-0 z-[240] flex items-center justify-center p-3 sm:p-4"
+                            style="display: none;"
+                            x-cloak
+                        >
+                            <div class="absolute inset-0 bg-black/40 dark:bg-black/60" @click="storageModalOpen = false"></div>
+                            <div
+                                class="relative z-10 flex max-h-[92vh] w-full min-h-0 max-w-lg flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-800"
+                                role="dialog"
+                                aria-modal="true"
+                                aria-labelledby="pedagogical-storage-modal-title"
+                            >
+                                <div class="flex shrink-0 items-start justify-between gap-2 border-b border-gray-100 px-4 py-3 dark:border-gray-700">
+                                    <h3 id="pedagogical-storage-modal-title" class="pr-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                        {{ __('Estado do armazenamento (historico.json)') }}
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        class="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                                        @click="storageModalOpen = false"
+                                        title="{{ __('Fechar') }}"
+                                    >
+                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                </div>
+                                <div class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-4 [scrollbar-gutter:stable]">
+                                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                        <div class="sm:col-span-2">
+                                            <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Caminho relativo (disco public)') }}</dt>
+                                            <dd class="mt-0.5 font-mono text-xs text-gray-900 dark:text-gray-100 break-all">{{ $jsonPath }}</dd>
+                                        </div>
+                                        <div>
+                                            <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Ficheiro presente') }}</dt>
+                                            <dd class="mt-0.5">
+                                                @if ($fileExists)
+                                                    <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200">{{ __('Sim') }}</span>
+                                                @else
+                                                    <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">{{ __('Não') }}</span>
+                                                @endif
+                                            </dd>
+                                        </div>
+                                        <div>
+                                            <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Pontos no ficheiro') }}</dt>
+                                            <dd class="mt-0.5 tabular-nums text-gray-900 dark:text-gray-100">{{ number_format($pontosCount) }}</dd>
+                                        </div>
+                                    </dl>
+                                    @if (is_array($meta) && $meta !== [])
+                                        <div class="mt-4 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50/80 dark:bg-gray-900/50 p-3 text-xs">
+                                            <p class="font-semibold text-gray-800 dark:text-gray-200">{{ __('Meta (última gravação)') }}</p>
+                                            <pre class="mt-2 overflow-x-auto text-[11px] text-gray-600 dark:text-gray-400 whitespace-pre-wrap max-h-56 overflow-y-auto">{{ json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                        </div>
+                                    @endif
+                                    <p class="mt-4 text-[11px] leading-relaxed text-gray-500 dark:text-gray-400">
+                                        {{ __('Caminho absoluto no servidor: :path', ['path' => $absPath ?? '']) }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>

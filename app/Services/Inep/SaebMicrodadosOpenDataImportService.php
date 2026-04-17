@@ -20,7 +20,7 @@ final class SaebMicrodadosOpenDataImportService
     /**
      * @return array{ok: bool, message: string, fonte_efetiva: ?string, path: string, detalhes?: array<string, mixed>}
      */
-    public function syncFromInepZip(int $year, bool $merge, bool $resolveInep, bool $purgeExtract = true): array
+    public function syncFromInepZip(int $year, bool $merge, bool $resolveInep, bool $purgeExtract = true, ?string $zipUrlOverride = null): array
     {
         if (! filter_var(config('ieducar.saeb.microdados_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             return [
@@ -46,7 +46,7 @@ final class SaebMicrodadosOpenDataImportService
         $canonicalPath = null;
 
         try {
-            $extractDir = $this->downloader->downloadAndExtract($year);
+            $extractDir = $this->downloader->downloadAndExtract($year, $zipUrlOverride);
             $csvPath = $this->converter->pickBestCsv($extractDir);
             if ($csvPath === null) {
                 $this->downloader->deleteDirectory($extractDir);
@@ -240,6 +240,24 @@ final class SaebMicrodadosOpenDataImportService
         }
 
         return $out;
+    }
+
+    /**
+     * URL do formulário admin ou CLI: CSV directo, ou ZIP INEP (detectado pelo sufixo / padrão do nome).
+     *
+     * @return array{ok: bool, message: string, fonte_efetiva: ?string, path: string, detalhes?: array<string, mixed>}
+     */
+    public function syncFromMicrodadosFormUrl(string $url, bool $merge, bool $resolveInep, bool $purgeExtract, int $fallbackYear): array
+    {
+        $url = trim($url);
+        if (SaebMicrodadosInepDownloader::isZipUrl($url)) {
+            $fromUrl = SaebMicrodadosInepDownloader::yearFromZipUrl($url);
+            $y = $fromUrl ?? max(2000, min(2100, $fallbackYear));
+
+            return $this->syncFromInepZip($y, $merge, $resolveInep, $purgeExtract, $url);
+        }
+
+        return $this->syncFromRemoteCsvUrl($url, $merge, $resolveInep);
     }
 
     private function jsonPath(): string

@@ -395,6 +395,10 @@ return [
         ),
         'microdados_cache_path' => trim((string) env('IEDUCAR_SAEB_MICRODADOS_CACHE_PATH', 'saeb/microdados_cache')) ?: 'saeb/microdados_cache',
         'microdados_download_timeout_seconds' => (int) env('IEDUCAR_SAEB_MICRODADOS_TIMEOUT', 900),
+        /** cURL/Guzzle: verificar certificado SSL (false só em dev com CA em falta). */
+        'microdados_http_verify' => filter_var(env('IEDUCAR_SAEB_HTTP_VERIFY', true), FILTER_VALIDATE_BOOL),
+        /** Caminho opcional para cacert.pem (ex.: /etc/ssl/certs/ca-certificates.crt). */
+        'microdados_http_ca_bundle' => trim((string) env('IEDUCAR_SAEB_HTTP_CA_BUNDLE', '')),
         /** Pontuação mínima (cabeçalho) para escolher o melhor .csv dentro do ZIP. */
         'microdados_csv_min_score' => (int) env('IEDUCAR_SAEB_MICRODADOS_CSV_MIN_SCORE', 6),
         /** Limite de linhas de saída canónica (protecção). */
