@@ -5,6 +5,21 @@
 .env.*
 .env.backup
 .env.production
+
+# --- Segurança: chaves, certificados e ficheiros locais com segredos ---
+*.pem
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+/storage/**/*.key
+docker-compose.override.yml
+.envrc
+.direnv/
+.cursor/mcp.json
+.npmrc
+.yarnrc.yml
+*.secret
 .phpactor.json
 .phpunit.result.cache
 /.fleet
