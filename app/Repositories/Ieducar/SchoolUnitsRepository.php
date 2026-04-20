@@ -8,6 +8,7 @@ use App\Services\CityDataConnection;
 use App\Services\Inep\InepCatalogoEscolasGeoService;
 use App\Services\Inep\InepCensoEscolaGeoAggService;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Ieducar\EscolaSubstatusResolver;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\MatriculaAtivoFilter;
@@ -33,7 +34,7 @@ class SchoolUnitsRepository
      *   overview: array{
      *     year_global_rows: list<array{ano: int, status: string, detalhe: string}>,
      *     school_year_rows: list<array{escola: string, ano: int, status: string, detalhe: string}>,
-     *     units_rows: list<array{escola: string, porte: string, unidade_status: string, matriculas: int}>,
+     *     units_rows: list<array{escola: string, porte: string, unidade_status: string, substatus?: string|null, matriculas: int}>,
      *     notes: list<string>
      *   },
      *   tab: array{
@@ -374,7 +375,7 @@ class SchoolUnitsRepository
     }
 
     /**
-     * @return list<array{escola: string, porte: string, unidade_status: string, matriculas: int}>
+     * @return list<array{escola: string, porte: string, unidade_status: string, substatus?: string|null, matriculas: int}>
      */
     private function unitsWithPorte(Connection $db, City $city, IeducarFilterState $filters): array
     {
@@ -388,6 +389,8 @@ class SchoolUnitsRepository
                 (string) config('ieducar.columns.escola.active'),
                 'ativo',
             ]), $city);
+            $subSpec = EscolaSubstatusResolver::resolveJoinSpec($db, $city);
+            $g = $db->getQueryGrammar();
 
             $q = $db->table($mat.' as m');
             MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
@@ -397,6 +400,9 @@ class SchoolUnitsRepository
 
             $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
             $q->join($escolaT.' as e', 't_filter.'.$tc['escola'], '=', 'e.'.$eId);
+            if ($subSpec !== null) {
+                EscolaSubstatusResolver::applyLeftJoinCatalog($q, $db, 'e', 'ssub', $subSpec);
+            }
 
             if ($eActive !== null) {
                 $q->selectRaw('e.'.$eId.' as eid')
@@ -411,6 +417,11 @@ class SchoolUnitsRepository
                     ->groupBy('e.'.$eId);
             }
 
+            if ($subSpec !== null) {
+                $sn = $g->wrap('ssub').'.'.$g->wrap($subSpec['name']);
+                $q->selectRaw('MAX('.$sn.') as escola_substatus_raw');
+            }
+
             $rows = $q->orderByDesc('c')->limit(200)->get();
             $out = [];
             foreach ($rows as $row) {
@@ -418,12 +429,21 @@ class SchoolUnitsRepository
                 $n = (int) ($arr['c'] ?? 0);
                 $porte = $this->porteFromCount($n);
                 $ua = $this->labelEscolaAtiva($arr['escola_ativo'] ?? null);
-                $out[] = [
+                $sub = null;
+                if ($subSpec !== null) {
+                    $t = trim((string) ($arr['escola_substatus_raw'] ?? ''));
+                    $sub = $t !== '' ? $t : null;
+                }
+                $rowOut = [
                     'escola' => trim((string) ($arr['escola_nome'] ?? '')) ?: '—',
                     'porte' => $porte,
                     'unidade_status' => $ua,
                     'matriculas' => $n,
                 ];
+                if ($subSpec !== null) {
+                    $rowOut['substatus'] = $sub;
+                }
+                $out[] = $rowOut;
             }
 
             return $out;

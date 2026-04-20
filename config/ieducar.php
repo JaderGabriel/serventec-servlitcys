@@ -118,6 +118,11 @@ return [
          * Colunas típicas: cod_escola, cod_escola_inep (PK composta).
          */
         'educacenso_cod_escola' => env('IEDUCAR_TABLE_EDUCACENSO_COD_ESCOLA', 'modules.educacenso_cod_escola'),
+        /**
+         * Catálogo opcional: situação de funcionamento / substatus da escola (Educacenso).
+         * Se vazio, o painel tenta descobrir o nome da tabela via information_schema.
+         */
+        'escola_situacao_funcionamento' => env('IEDUCAR_TABLE_ESCOLA_SITUACAO_FUNCIONAMENTO', ''),
     ],
 
     /*
@@ -153,6 +158,16 @@ return [
             'active' => env('IEDUCAR_COL_ESCOLA_ACTIVE', 'ativo'),
             /** Código INEP da escola (nem sempre existe na mesma tabela; deixe vazio se não houver). */
             'inep' => env('IEDUCAR_COL_ESCOLA_INEP', ''),
+            /**
+             * FK opcional para o catálogo de situação de funcionamento (substatus).
+             * Se vazio, tentam-se nomes típicos (ref_cod_situacao_funcionamento, …).
+             */
+            'substatus_fk' => env('IEDUCAR_COL_ESCOLA_SUBSTATUS_FK', ''),
+        ],
+        /** Catálogo ligado por escola.substatus_fk (ou coluna descoberta). */
+        'escola_situacao_funcionamento' => [
+            'id' => env('IEDUCAR_COL_ESCOLA_SITFUNC_PK', ''),
+            'name' => env('IEDUCAR_COL_ESCOLA_SITFUNC_NAME', ''),
         ],
         /** Tabela modules.educacenso_cod_escola (i-Educar 2.11): INEP não fica em pmieducar.escola. */
         'educacenso_cod_escola' => [

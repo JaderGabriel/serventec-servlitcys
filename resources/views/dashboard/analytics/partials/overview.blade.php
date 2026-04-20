@@ -91,7 +91,7 @@
                 <div class="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/70 dark:bg-amber-950/20 p-4 shadow-sm">
                     <h3 class="text-sm font-semibold text-amber-950 dark:text-amber-100">{{ __('Unidades Escolares: porte e situação') }}</h3>
                     <p class="mt-1 text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
-                        {{ __('Porte estimado pelo total de matrículas ativas no filtro; situação da unidade usa a coluna «ativo» da escola quando existir.') }}
+                        {{ __('Porte estimado pelo total de matrículas ativas no filtro; situação usa «ativo» da escola e, quando a base tiver catálogo, o substatus de funcionamento.') }}
                     </p>
                     <div class="mt-3 overflow-x-auto max-h-96 min-h-[12rem] overflow-y-auto rounded-lg border border-amber-100 dark:border-amber-900/50">
                         <table class="min-w-full text-xs text-left">
@@ -108,7 +108,12 @@
                                     <tr>
                                         <td class="px-3 py-1.5 break-words max-w-[16rem]">{{ $ur['escola'] ?? '—' }}</td>
                                         <td class="px-3 py-1.5">{{ $ur['porte'] ?? '—' }}</td>
-                                        <td class="px-3 py-1.5">{{ $ur['unidade_status'] ?? '—' }}</td>
+                                        <td class="px-3 py-1.5">
+                                            <span class="block">{{ $ur['unidade_status'] ?? '—' }}</span>
+                                            @if (! empty($ur['substatus']))
+                                                <span class="block text-gray-600 dark:text-gray-400 mt-0.5">{{ $ur['substatus'] }}</span>
+                                            @endif
+                                        </td>
                                         <td class="px-3 py-1.5 tabular-nums">{{ number_format((int) ($ur['matriculas'] ?? 0)) }}</td>
                                     </tr>
                                 @endforeach
@@ -125,18 +130,56 @@
     @endif
 
     @if ($yearFilterReady && ! empty($overviewData['kpis']))
+        @php
+            $kpiDetails = is_array($overviewData) ? ($overviewData['kpi_details'] ?? []) : [];
+            $escolasDetails = is_array($kpiDetails) ? ($kpiDetails['escolas'] ?? null) : null;
+            $turmasPorCurso = is_array($kpiDetails) ? ($kpiDetails['turmas_por_curso'] ?? null) : null;
+        @endphp
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
             <div class="rounded-lg border border-indigo-200/90 dark:border-indigo-800/60 bg-indigo-50/85 dark:bg-indigo-950/35 p-4 min-h-[6.75rem] flex flex-col justify-center shadow-sm ring-1 ring-indigo-100/60 dark:ring-indigo-900/40">
                 <p class="text-xs font-semibold text-indigo-800/90 dark:text-indigo-200/90 uppercase tracking-wide">{{ __('Escolas') }}</p>
                 <p class="mt-1 text-2xl font-semibold tabular-nums text-indigo-950 dark:text-indigo-50">
                     {{ $overviewData['kpis']['escolas'] !== null ? number_format($overviewData['kpis']['escolas']) : '—' }}
                 </p>
+                @if (is_array($escolasDetails) && (isset($escolasDetails['ativas']) || isset($escolasDetails['inativas'])))
+                    <p class="mt-1 text-[11px] italic text-indigo-900/80 dark:text-indigo-200/85">
+                        {{ __('Ativas: :a · Inativas: :i', [
+                            'a' => number_format((int) ($escolasDetails['ativas'] ?? 0)),
+                            'i' => number_format((int) ($escolasDetails['inativas'] ?? 0)),
+                        ]) }}
+                    </p>
+                    @php
+                        $porSub = is_array($escolasDetails['por_substatus'] ?? null) ? $escolasDetails['por_substatus'] : [];
+                    @endphp
+                    @if (count($porSub) > 0)
+                        <div class="mt-1.5 space-y-0.5 text-[11px] text-indigo-900/85 dark:text-indigo-200/90">
+                            @foreach (array_slice($porSub, 0, 6) as $row)
+                                <p class="leading-snug">
+                                    <span class="font-medium not-italic">{{ $row['label'] ?? '—' }}</span>
+                                    <span class="opacity-80">·</span>
+                                    <span class="tabular-nums">{{ number_format((int) ($row['total'] ?? 0)) }}</span>
+                                </p>
+                            @endforeach
+                        </div>
+                    @endif
+                @endif
             </div>
             <div class="rounded-lg border border-indigo-200/90 dark:border-indigo-800/60 bg-indigo-50/85 dark:bg-indigo-950/35 p-4 min-h-[6.75rem] flex flex-col justify-center shadow-sm ring-1 ring-indigo-100/60 dark:ring-indigo-900/40">
                 <p class="text-xs font-semibold text-indigo-800/90 dark:text-indigo-200/90 uppercase tracking-wide">{{ __('Turmas') }}</p>
                 <p class="mt-1 text-2xl font-semibold tabular-nums text-indigo-950 dark:text-indigo-50">
                     {{ $overviewData['kpis']['turmas'] !== null ? number_format($overviewData['kpis']['turmas']) : '—' }}
                 </p>
+                @if (is_array($turmasPorCurso) && count($turmasPorCurso) > 0)
+                    <div class="mt-2 space-y-0.5">
+                        @foreach (array_slice($turmasPorCurso, 0, 5) as $row)
+                            <p class="text-[11px] italic text-indigo-900/80 dark:text-indigo-200/85">
+                                <span class="font-medium not-italic">{{ $row['curso'] ?? '—' }}</span>
+                                <span class="opacity-80">·</span>
+                                <span class="tabular-nums">{{ number_format((int) ($row['turmas'] ?? 0)) }}</span>
+                            </p>
+                        @endforeach
+                    </div>
+                @endif
             </div>
             <div class="rounded-lg border border-indigo-300/90 dark:border-indigo-700/70 bg-white dark:bg-indigo-950/50 p-4 min-h-[6.75rem] flex flex-col justify-center shadow-sm ring-1 ring-indigo-200/70 dark:ring-indigo-800/50">
                 <p class="text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wide">{{ __('Matrículas (tabela)') }}</p>

@@ -59,9 +59,21 @@
                 <select id="escola_id" name="escola_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     <option value="">{{ __('Todos os dados') }}</option>
                     @foreach ($escolas as $opt)
-                        <option value="{{ $opt['id'] }}" @selected((string) old('escola_id', $filters->escola_id) === (string) $opt['id'])>{{ $opt['name'] }}</option>
+                        @php
+                            $inep = isset($opt['inep']) && is_string($opt['inep']) && trim($opt['inep']) !== '' ? trim($opt['inep']) : null;
+                            $active = $opt['active'] ?? null;
+                            $marker = $active === true ? '●' : ($active === false ? '○' : '·');
+                            $status = $active === true ? __('ATIVA') : ($active === false ? __('INATIVA') : __('—'));
+                            $sub = isset($opt['substatus']) && is_string($opt['substatus']) && trim($opt['substatus']) !== '' ? trim($opt['substatus']) : null;
+                            $label = ($inep ? ($inep.' — ') : '').($opt['name'] ?? '—');
+                            $label = $marker.' '.$label.' '.$status.($sub ? ' · '.$sub : '');
+                        @endphp
+                        <option value="{{ $opt['id'] }}" @selected((string) old('escola_id', $filters->escola_id) === (string) $opt['id'])>{{ $label }}</option>
                     @endforeach
                 </select>
+                <p class="mt-1 text-[11px] italic text-gray-500 dark:text-gray-400">
+                    {{ __('Legenda: ● ativa · ○ inativa · INEP antes do nome quando existir · substatus de funcionamento quando a base o expuser.') }}
+                </p>
             </div>
             <div>
                 <x-input-label for="curso_id" :value="__('Tipo/Segmento')" />

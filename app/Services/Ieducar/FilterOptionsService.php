@@ -5,6 +5,7 @@ namespace App\Services\Ieducar;
 use App\Models\City;
 use App\Services\CityDataConnection;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Ieducar\EscolaSubstatusResolver;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\IeducarSqlPlaceholders;
@@ -32,7 +33,7 @@ class FilterOptionsService
      *
      * @return array{
      *   years: array<int|string, int|string>,
-     *   escolas: list<array{id: string, name: string}>,
+     *   escolas: list<array{id: string, name: string, inep?: string|null, active?: bool|null, substatus?: string|null}>,
      *   cursos: list<array{id: string, name: string}>,
      *   series: list<array{id: string, name: string}>,
      *   segmentos: list<array{id: string, name: string}>,
@@ -245,32 +246,41 @@ class FilterOptionsService
             return $this->cityData->run($city, function (Connection $db) use ($logical, $sqlKey, $city, $anoLetivoParaTurno) {
                 $max = (int) config('ieducar.max_rows', 2000);
 
+                $pairs = null;
                 if ($sqlKey !== null) {
                     $custom = config('ieducar.sql.'.$sqlKey);
                     if (is_string($custom) && trim($custom) !== '') {
                         try {
                             $sql = IeducarSqlPlaceholders::interpolate(trim($custom), $city);
 
-                            return $this->pairsFromRawSql($db, $sql, $max);
+                            $pairs = $this->pairsFromRawSql($db, $sql, $max);
                         } catch (\Throwable $e) {
                             Log::debug("ieducar.{$logical}.custom_sql", ['message' => $e->getMessage()]);
                         }
                     }
                 }
 
-                if ($logical === 'escola' && $db->getDriverName() === 'pgsql' && config('ieducar.pgsql_use_relatorio_escola_nome', true)) {
+                if ($pairs === null && $logical === 'escola' && $db->getDriverName() === 'pgsql' && config('ieducar.pgsql_use_relatorio_escola_nome', true)) {
                     try {
-                        return $this->pairsFromRawSql($db, $this->buildPgsqlEscolaRelatorioSql($city), $max);
+                        $pairs = $this->pairsFromRawSql($db, $this->buildPgsqlEscolaRelatorioSql($city), $max);
                     } catch (QueryException $e) {
                         Log::debug('ieducar.escola.relatorio_fallback', ['message' => $e->getMessage()]);
                     }
                 }
 
-                if ($logical === 'turno') {
-                    return $this->tryLoadTurnoPairs($db, $city, $max, $anoLetivoParaTurno);
+                if ($pairs === null && $logical === 'turno') {
+                    $pairs = $this->tryLoadTurnoPairs($db, $city, $max, $anoLetivoParaTurno);
                 }
 
-                return $this->pairsFromTable($db, $logical, $max, $city);
+                if ($pairs === null) {
+                    $pairs = $this->pairsFromTable($db, $logical, $max, $city);
+                }
+
+                if ($logical === 'escola') {
+                    return $this->enrichEscolaPairs($db, $city, $pairs);
+                }
+
+                return $pairs;
             });
         } catch (QueryException $e) {
             Log::debug("ieducar.{$logical}", ['message' => $e->getMessage()]);
@@ -308,6 +318,148 @@ class FilterOptionsService
         return 'SELECT e.'.$id.'::text AS id, relatorio.get_nome_escola(e.'.$id.') AS nome FROM '.$t.' e '
             .'WHERE '.$activeExpr.' '
             .'ORDER BY nome';
+    }
+
+    /**
+     * Enriquecer opções do filtro Escola com INEP e estado (ativo/inativo) quando possível.
+     *
+     * @param  list<array{id: string, name: string}>  $pairs
+     * @return list<array{id: string, name: string, inep?: string|null, active?: bool|null, substatus?: string|null}>
+     */
+    private function enrichEscolaPairs(Connection $db, City $city, array $pairs): array
+    {
+        if ($pairs === []) {
+            return [];
+        }
+
+        $ids = array_values(array_unique(array_filter(array_map(
+            static fn (array $r): string => (string) $r['id'],
+            $pairs
+        ), static fn (string $id): bool => $id !== '')));
+
+        if ($ids === []) {
+            return $pairs;
+        }
+
+        $escolaTable = IeducarSchema::resolveTable('escola', $city);
+        $idCol = (string) config('ieducar.columns.escola.id');
+        $activeCol = (string) config('ieducar.columns.escola.active');
+        $inepCol = (string) config('ieducar.columns.escola.inep', '');
+
+        $hasActive = $activeCol !== '' && IeducarColumnInspector::columnExists($db, $escolaTable, $activeCol, $city);
+        $hasInepInSameTable = $inepCol !== '' && IeducarColumnInspector::columnExists($db, $escolaTable, $inepCol, $city);
+
+        $educTable = null;
+        $educCodEscola = (string) config('ieducar.columns.educacenso_cod_escola.cod_escola', 'cod_escola');
+        $educCodInep = (string) config('ieducar.columns.educacenso_cod_escola.cod_escola_inep', 'cod_escola_inep');
+        if (! $hasInepInSameTable) {
+            try {
+                $educTable = IeducarSchema::resolveTable('educacenso_cod_escola', $city);
+                if (! IeducarColumnInspector::tableExists($db, $educTable, $city)) {
+                    $educTable = null;
+                }
+            } catch (\InvalidArgumentException) {
+                $educTable = null;
+            }
+        }
+
+        $q = $db->table($escolaTable.' as e')
+            ->whereIn('e.'.$idCol, $ids)
+            ->select(['e.'.$idCol.' as id']);
+
+        if ($hasActive) {
+            $q->addSelect('e.'.$activeCol.' as active_value');
+        }
+
+        $subSpec = EscolaSubstatusResolver::resolveJoinSpec($db, $city);
+        if ($subSpec !== null) {
+            EscolaSubstatusResolver::applyLeftJoinCatalog($q, $db, 'e', 'ssub', $subSpec);
+            $g = $db->getQueryGrammar();
+            $q->addSelect($g->wrap('ssub').'.'.$g->wrap($subSpec['name']).' as substatus_value');
+        }
+
+        if ($hasInepInSameTable) {
+            $q->addSelect('e.'.$inepCol.' as inep_value');
+        } elseif ($educTable !== null) {
+            $q->leftJoin($educTable.' as edu', function (JoinClause $join) use ($db, $educCodEscola, $idCol) {
+                $g = $db->getQueryGrammar();
+                $lhs = $g->wrap('e').'.'.$g->wrap($idCol);
+                $rhs = $g->wrap('edu').'.'.$g->wrap($educCodEscola);
+                if ($db->getDriverName() === 'pgsql') {
+                    $join->whereRaw('('.$lhs.')::text = ('.$rhs.')::text');
+                } else {
+                    $join->whereRaw('CAST('.$lhs.' AS UNSIGNED) = CAST('.$rhs.' AS UNSIGNED)');
+                }
+            });
+            $q->addSelect('edu.'.$educCodInep.' as inep_value');
+        }
+
+        $rows = $q->get();
+
+        $byId = [];
+        foreach ($rows as $r) {
+            $id = (string) ($r->id ?? '');
+            if ($id === '') {
+                continue;
+            }
+            $active = null;
+            if ($hasActive) {
+                $active = $this->normalizeBool($r->active_value ?? null);
+            }
+            $inep = null;
+            if (property_exists($r, 'inep_value')) {
+                $v = trim((string) ($r->inep_value ?? ''));
+                $inep = $v !== '' ? $v : null;
+            }
+            $entry = ['active' => $active, 'inep' => $inep];
+            if ($subSpec !== null) {
+                $substatus = null;
+                if (property_exists($r, 'substatus_value')) {
+                    $sv = trim((string) ($r->substatus_value ?? ''));
+                    $substatus = $sv !== '' ? $sv : null;
+                }
+                $entry['substatus'] = $substatus;
+            }
+            $byId[$id] = $entry;
+        }
+
+        return array_map(function (array $p) use ($byId) {
+            $id = (string) $p['id'];
+            if ($id !== '' && isset($byId[$id])) {
+                $p['active'] = $byId[$id]['active'];
+                $p['inep'] = $byId[$id]['inep'];
+                if (isset($byId[$id]['substatus'])) {
+                    $p['substatus'] = $byId[$id]['substatus'];
+                }
+            }
+
+            return $p;
+        }, $pairs);
+    }
+
+    private function normalizeBool(mixed $v): ?bool
+    {
+        if ($v === null) {
+            return null;
+        }
+        if (is_bool($v)) {
+            return $v;
+        }
+        if (is_int($v)) {
+            return $v !== 0;
+        }
+        $s = strtolower(trim((string) $v));
+        if ($s === '') {
+            return null;
+        }
+        if (in_array($s, ['1', 't', 'true', 'y', 'yes', 'sim'], true)) {
+            return true;
+        }
+        if (in_array($s, ['0', 'f', 'false', 'n', 'no', 'nao', 'não'], true)) {
+            return false;
+        }
+
+        return null;
     }
 
     /**
