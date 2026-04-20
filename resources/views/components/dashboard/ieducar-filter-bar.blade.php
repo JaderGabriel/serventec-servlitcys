@@ -62,17 +62,34 @@
                         @php
                             $inep = isset($opt['inep']) && is_string($opt['inep']) && trim($opt['inep']) !== '' ? trim($opt['inep']) : null;
                             $active = $opt['active'] ?? null;
-                            $marker = $active === true ? '●' : ($active === false ? '○' : '·');
-                            $status = $active === true ? __('ATIVA') : ($active === false ? __('INATIVA') : __('—'));
-                            $sub = isset($opt['substatus']) && is_string($opt['substatus']) && trim($opt['substatus']) !== '' ? trim($opt['substatus']) : null;
-                            $label = ($inep ? ($inep.' — ') : '').($opt['name'] ?? '—');
-                            $label = $marker.' '.$label.' '.$status.($sub ? ' · '.$sub : '');
+                            $sub = isset($opt['substatus']) && is_string($opt['substatus']) ? strtolower(trim($opt['substatus'])) : '';
+                            // Emojis: <option> não suporta CSS; cores via símbolos Unicode.
+                            if ($active === true) {
+                                $marker = '🟢';
+                            } elseif ($active === false) {
+                                $marker = match (true) {
+                                    $sub !== '' && str_contains($sub, 'paralis') => '🟠',
+                                    $sub !== '' && (str_contains($sub, 'extint') || str_contains($sub, 'baixad')) => '⚫',
+                                    $sub !== '' && (str_contains($sub, 'anex') || str_contains($sub, 'integrad')) => '🔵',
+                                    default => '🔴',
+                                };
+                            } else {
+                                $marker = '⚪';
+                            }
+                            $label = $marker.' '.($inep ? ($inep.' — ') : '').($opt['name'] ?? '—');
                         @endphp
                         <option value="{{ $opt['id'] }}" @selected((string) old('escola_id', $filters->escola_id) === (string) $opt['id'])>{{ $label }}</option>
                     @endforeach
                 </select>
-                <p class="mt-1 text-[11px] italic text-gray-500 dark:text-gray-400">
-                    {{ __('Legenda: ● ativa · ○ inativa · INEP antes do nome quando existir · substatus de funcionamento quando a base o expuser.') }}
+                <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span class="font-medium not-italic text-gray-600 dark:text-gray-300">{{ __('Legenda:') }}</span>
+                    <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0" aria-hidden="true"></span>{{ __('ativa') }}</span>
+                    <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-red-500 shrink-0" aria-hidden="true"></span>{{ __('inativa') }}</span>
+                    <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-amber-500 shrink-0" aria-hidden="true"></span>{{ __('paralisada (substatus)') }}</span>
+                    <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-neutral-800 dark:bg-neutral-200 shrink-0" aria-hidden="true"></span>{{ __('extinta/baixada') }}</span>
+                    <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-sky-500 shrink-0" aria-hidden="true"></span>{{ __('anexo/integrada') }}</span>
+                    <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-500 shrink-0" aria-hidden="true"></span>{{ __('indisponível') }}</span>
+                    <span class="text-gray-400 dark:text-gray-500">{{ __('INEP antes do nome quando existir.') }}</span>
                 </p>
             </div>
             <div>
