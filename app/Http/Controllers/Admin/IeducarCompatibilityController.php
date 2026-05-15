@@ -350,6 +350,10 @@ class IeducarCompatibilityController extends Controller
                 continue;
             }
             $st = (string) ($row['status'] ?? $row['availability'] ?? 'unavailable');
+            if ((bool) ($row['has_issue'] ?? false) && $st === 'ok') {
+                $st = 'warning';
+                $routines[$i]['status'] = $st;
+            }
             $routines[$i]['ui_status_class'] = match ($st) {
                 'danger' => 'text-red-700 dark:text-red-300',
                 'warning' => 'text-amber-700 dark:text-amber-300',

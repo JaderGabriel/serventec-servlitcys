@@ -38,6 +38,18 @@ final class SchoolGeoPositionResolver
         );
     }
 
+    /**
+     * Posição persistida utilizável no mapa (i-Educar e/ou cache local), sem consulta INEP em tempo real.
+     */
+    public static function hasStoredMapPosition(?float $ieducarLat, ?float $ieducarLng, ?SchoolUnitGeo $geo): bool
+    {
+        if (self::coordsAreUsable($ieducarLat, $ieducarLng)) {
+            return true;
+        }
+
+        return $geo instanceof SchoolUnitGeo && self::schoolUnitGeoHasUsable($geo);
+    }
+
     public static function countCacheUnits(City $city, ?int $escolaFilterId = null): int
     {
         if (! self::cacheTableUsable($city)) {

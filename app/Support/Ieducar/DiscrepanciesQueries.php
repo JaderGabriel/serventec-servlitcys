@@ -695,14 +695,19 @@ final class DiscrepanciesQueries
      */
     public static function escolasSemPosicaoUtilizavelParaMapa(Connection $db, City $city, IeducarFilterState $filters): array
     {
-        $comMatricula = self::escolasComMatriculasSemPosicaoUtilizavel($db, $city, $filters);
-        if ($comMatricula !== []) {
-            return $comMatricula;
+        $fromMatricula = self::escolasComMatriculasSemPosicaoUtilizavel($db, $city, $filters);
+        if ($fromMatricula !== []) {
+            return $fromMatricula;
         }
 
         $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
         if ($totalMat > 0) {
             return [];
+        }
+
+        $fromRede = self::escolasRedeSemPosicaoUtilizavel($db, $city, $filters);
+        if ($fromRede !== []) {
+            return $fromRede;
         }
 
         return SchoolGeoPositionResolver::escolasCacheSemPosicaoUtilizavel(
@@ -715,6 +720,88 @@ final class DiscrepanciesQueries
      * @return list<array{escola_id: string, escola: string, total: int}>
      */
     private static function escolasComMatriculasSemPosicaoUtilizavel(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        $viaTurma = self::escolasComMatriculasSemPosicaoViaTurma($db, $city, $filters);
+        if ($viaTurma !== null) {
+            return $viaTurma;
+        }
+
+        return self::escolasComMatriculasSemPosicaoViaJoinEscola($db, $city, $filters);
+    }
+
+    /**
+     * Mesmo âmbito do mapa (matrícula ativa → turma → escola).
+     *
+     * @return list<array{escola_id: string, escola: string, total: int}>|null null = usar fallback joinEscola
+     */
+    private static function escolasComMatriculasSemPosicaoViaTurma(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        if (! DiscrepanciesAvailability::canJoinTurma($db, $city)) {
+            return null;
+        }
+
+        try {
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            if ($tc['escola'] === '') {
+                return null;
+            }
+
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $escolaT = IeducarSchema::resolveTable('escola', $city);
+            $eId = (string) config('ieducar.columns.escola.id');
+            $eName = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'fantasia', 'nm_escola', (string) config('ieducar.columns.escola.name'), 'nome',
+            ], $city) ?? 'nome';
+            $latCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'latitude', 'lat', 'geo_lat', 'latitude_graus',
+            ], $city);
+            $lngCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'longitude', 'lng', 'lon', 'geo_lng', 'longitude_graus',
+            ], $city);
+
+            $grammar = $db->getQueryGrammar();
+            $mId = (string) config('ieducar.columns.matricula.id');
+            $distinctMat = 'COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).')';
+
+            $q = $db->table($mat.' as m');
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+            $q->join($escolaT.' as e', 't_filter.'.$tc['escola'], '=', 'e.'.$eId);
+
+            if ($filters->escola_id !== null) {
+                $q->where('e.'.$eId, (int) $filters->escola_id);
+            }
+
+            $selects = [
+                'e.'.$eId.' as eid',
+                'MAX(e.'.$grammar->wrap($eName).') as ename',
+                $distinctMat.' as c',
+            ];
+            if ($latCol !== null) {
+                $selects[] = 'MAX(e.'.$grammar->wrap($latCol).') as la';
+            }
+            if ($lngCol !== null) {
+                $selects[] = 'MAX(e.'.$grammar->wrap($lngCol).') as ln';
+            }
+
+            $q->selectRaw(implode(', ', $selects))
+                ->groupBy('e.'.$eId)
+                ->orderByDesc('c')
+                ->limit(80);
+
+            return self::filterEscolaRowsSemPosicaoPersistida($city, $q->get(), $latCol !== null, $lngCol !== null);
+        } catch (QueryException|\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * @return list<array{escola_id: string, escola: string, total: int}>
+     */
+    private static function escolasComMatriculasSemPosicaoViaJoinEscola(Connection $db, City $city, IeducarFilterState $filters): array
     {
         try {
             $escolaSpec = self::escolaJoinSpec($db, $city);
@@ -754,7 +841,69 @@ final class DiscrepanciesQueries
                 ->orderByDesc('c')
                 ->limit(80);
 
-            /** @var array<int, array{escola_id: string, escola: string, total: int}> $pending */
+            return self::filterEscolaRowsSemPosicaoPersistida($city, $q->get(), $latCol !== null, $lngCol !== null);
+        } catch (QueryException|\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * Unidades da rede (tabela escola) sem posição persistida — fallback do mapa sem matrículas no filtro.
+     *
+     * @return list<array{escola_id: string, escola: string, total: int}>
+     */
+    private static function escolasRedeSemPosicaoUtilizavel(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        try {
+            $escolaT = IeducarSchema::resolveTable('escola', $city);
+            $eId = (string) config('ieducar.columns.escola.id');
+            $eName = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'fantasia', 'nm_escola', (string) config('ieducar.columns.escola.name'), 'nome',
+            ], $city) ?? 'nome';
+            $latCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'latitude', 'lat', 'geo_lat', 'latitude_graus',
+            ], $city);
+            $lngCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
+                'longitude', 'lng', 'lon', 'geo_lng', 'longitude_graus',
+            ], $city);
+            $eActive = IeducarColumnInspector::firstExistingColumn($db, $escolaT, array_filter([
+                (string) config('ieducar.columns.escola.active'),
+                'ativo',
+            ]), $city);
+
+            $q = $db->table($escolaT.' as e');
+            if ($eActive !== null) {
+                $q->where(function ($w) use ($eActive) {
+                    $col = 'e.'.$eActive;
+                    $w->where($col, 1)
+                        ->orWhere($col, '1')
+                        ->orWhere($col, 't')
+                        ->orWhere($col, true)
+                        ->orWhereNull($col);
+                });
+            }
+
+            if ($filters->escola_id !== null) {
+                $q->where('e.'.$eId, (int) $filters->escola_id);
+            }
+
+            $grammar = $db->getQueryGrammar();
+            $we = $grammar->wrap('e');
+            $selects = [
+                $we.'.'.$grammar->wrap($eId).' as eid',
+                $we.'.'.$grammar->wrap($eName).' as ename',
+            ];
+            if ($latCol !== null) {
+                $selects[] = $we.'.'.$grammar->wrap($latCol).' as la';
+            }
+            if ($lngCol !== null) {
+                $selects[] = $we.'.'.$grammar->wrap($lngCol).' as ln';
+            }
+
+            $q->selectRaw(implode(', ', $selects))
+                ->orderBy('e.'.$eName)
+                ->limit(200);
+
             $pending = [];
             foreach ($q->get() as $row) {
                 $eid = (int) ($row->eid ?? 0);
@@ -769,7 +918,7 @@ final class DiscrepanciesQueries
                 $pending[$eid] = [
                     'escola_id' => (string) $eid,
                     'escola' => trim((string) ($row->ename ?? '')) ?: '—',
-                    'total' => (int) ($row->c ?? 0),
+                    'total' => 0,
                 ];
             }
 
@@ -781,7 +930,7 @@ final class DiscrepanciesQueries
             $out = [];
             foreach ($pending as $eid => $row) {
                 $geo = $geoByEid[$eid] ?? null;
-                if ($geo instanceof SchoolUnitGeo && SchoolGeoPositionResolver::schoolUnitGeoHasUsable($geo)) {
+                if (SchoolGeoPositionResolver::hasStoredMapPosition(null, null, $geo instanceof SchoolUnitGeo ? $geo : null)) {
                     continue;
                 }
                 $out[] = $row;
@@ -794,6 +943,55 @@ final class DiscrepanciesQueries
         } catch (QueryException|\Throwable) {
             return [];
         }
+    }
+
+    /**
+     * @param  iterable<object>  $rows
+     * @return list<array{escola_id: string, escola: string, total: int}>
+     */
+    private static function filterEscolaRowsSemPosicaoPersistida(
+        City $city,
+        iterable $rows,
+        bool $hasLatCol,
+        bool $hasLngCol,
+    ): array {
+        /** @var array<int, array{escola_id: string, escola: string, total: int}> $pending */
+        $pending = [];
+        foreach ($rows as $row) {
+            $eid = (int) ($row->eid ?? 0);
+            if ($eid <= 0) {
+                continue;
+            }
+            $la = $hasLatCol && isset($row->la) && is_numeric($row->la) ? (float) $row->la : null;
+            $ln = $hasLngCol && isset($row->ln) && is_numeric($row->ln) ? (float) $row->ln : null;
+            if (SchoolGeoPositionResolver::coordsAreUsable($la, $ln)) {
+                continue;
+            }
+            $pending[$eid] = [
+                'escola_id' => (string) $eid,
+                'escola' => trim((string) ($row->ename ?? '')) ?: '—',
+                'total' => (int) ($row->c ?? 0),
+            ];
+        }
+
+        if ($pending === []) {
+            return [];
+        }
+
+        $geoByEid = SchoolGeoPositionResolver::geoByEscolaIds($city, array_keys($pending));
+        $out = [];
+        foreach ($pending as $eid => $row) {
+            $geo = $geoByEid[$eid] ?? null;
+            if ($geo instanceof SchoolUnitGeo && SchoolGeoPositionResolver::schoolUnitGeoHasUsable($geo)) {
+                continue;
+            }
+            $out[] = $row;
+            if (count($out) >= 50) {
+                break;
+            }
+        }
+
+        return $out;
     }
 
     /**

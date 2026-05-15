@@ -52,4 +52,33 @@ final class DiscrepanciesRoutineStatusTest extends TestCase
 
         $this->assertSame(DiscrepanciesRoutineStatus::UNAVAILABLE, $resolved['status']);
     }
+
+    public function test_escola_sem_geo_warning_when_rows_present(): void
+    {
+        $city = new City(['id' => 6, 'name' => 'Central']);
+        $filters = new IeducarFilterState(ano_letivo: 'all', escola_id: null, curso_id: null, turno_id: null);
+
+        $resolved = DiscrepanciesRoutineStatus::resolve('escola_sem_geo', [
+            'availability' => 'available',
+            'has_issue' => true,
+            'rows' => [['escola_id' => '10', 'escola' => 'Escola X', 'total' => 3]],
+        ], 500, $city, $filters, 'warning');
+
+        $this->assertSame('warning', $resolved['status']);
+        $this->assertSame(__('Pendência'), $resolved['status_label']);
+    }
+
+    public function test_escola_sem_geo_no_data_without_matriculas_or_cache(): void
+    {
+        $city = new City(['id' => 99, 'name' => 'Vazio']);
+        $filters = new IeducarFilterState(ano_letivo: 'all', escola_id: null, curso_id: null, turno_id: null);
+
+        $resolved = DiscrepanciesRoutineStatus::resolve('escola_sem_geo', [
+            'availability' => 'available',
+            'has_issue' => false,
+            'rows' => [],
+        ], 0, $city, $filters);
+
+        $this->assertSame(DiscrepanciesRoutineStatus::NO_DATA, $resolved['status']);
+    }
 }

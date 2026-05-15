@@ -117,7 +117,8 @@ final class DiscrepanciesAvailability
     }
 
     /**
-     * Rotina de posição no mapa: colunas na escola i-Educar e/ou cache local school_unit_geos.
+     * Rotina de posição no mapa: colunas na escola i-Educar e/ou cache local school_unit_geos,
+     * com caminho para ligar matrícula → escola (turma ou coluna na matrícula).
      */
     public static function escolaPosicaoMapa(Connection $db, City $city): bool
     {
@@ -125,7 +126,25 @@ final class DiscrepanciesAvailability
             return false;
         }
 
-        return self::escolaGeoColumns($db, $city) || SchoolGeoPositionResolver::cacheTableUsable($city);
+        $hasCache = SchoolGeoPositionResolver::cacheTableUsable($city);
+        $hasGeoCols = self::escolaGeoColumns($db, $city);
+
+        if (! $hasCache && ! $hasGeoCols) {
+            return false;
+        }
+
+        if (self::canJoinTurma($db, $city)) {
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            if ($tc['escola'] !== '') {
+                return true;
+            }
+        }
+
+        if (self::matriculaEscolaColumn($db, $city) !== null) {
+            return true;
+        }
+
+        return $hasCache;
     }
 
     public static function recursoProvaCadastro(Connection $db, City $city): bool

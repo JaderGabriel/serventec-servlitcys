@@ -2,26 +2,43 @@
 
 namespace Tests\Unit;
 
+use App\Models\SchoolUnitGeo;
 use App\Support\Ieducar\SchoolGeoPositionResolver;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
-class SchoolGeoPositionResolverTest extends TestCase
+final class SchoolGeoPositionResolverTest extends TestCase
 {
     public function test_coords_are_usable_rejects_null_and_origin(): void
     {
-        $this->assertFalse(SchoolGeoPositionResolver::coordsAreUsable(null, -48.0));
-        $this->assertFalse(SchoolGeoPositionResolver::coordsAreUsable(-23.5, null));
+        $this->assertFalse(SchoolGeoPositionResolver::coordsAreUsable(null, -38.5));
+        $this->assertFalse(SchoolGeoPositionResolver::coordsAreUsable(-12.9, null));
         $this->assertFalse(SchoolGeoPositionResolver::coordsAreUsable(0.0, 0.0));
+        $this->assertFalse(SchoolGeoPositionResolver::coordsAreUsable(0.005, 0.005));
     }
 
     public function test_coords_are_usable_accepts_valid_brazil_coords(): void
     {
-        $this->assertTrue(SchoolGeoPositionResolver::coordsAreUsable(-23.5505, -46.6333));
+        $this->assertTrue(SchoolGeoPositionResolver::coordsAreUsable(-12.9714, -38.5014));
     }
 
-    public function test_coords_are_usable_rejects_out_of_range(): void
+    public function test_has_stored_map_position_uses_ieducar_or_cache(): void
     {
-        $this->assertFalse(SchoolGeoPositionResolver::coordsAreUsable(95.0, 0.0));
-        $this->assertFalse(SchoolGeoPositionResolver::coordsAreUsable(0.0, 200.0));
+        $geo = new SchoolUnitGeo([
+            'lat' => null,
+            'lng' => null,
+            'official_lat' => null,
+            'official_lng' => null,
+        ]);
+
+        $this->assertFalse(SchoolGeoPositionResolver::hasStoredMapPosition(null, null, $geo));
+        $this->assertTrue(SchoolGeoPositionResolver::hasStoredMapPosition(-12.9, -38.5, $geo));
+
+        $geoOfficial = new SchoolUnitGeo([
+            'lat' => null,
+            'lng' => null,
+            'official_lat' => -12.9,
+            'official_lng' => -38.5,
+        ]);
+        $this->assertTrue(SchoolGeoPositionResolver::hasStoredMapPosition(null, null, $geoOfficial));
     }
 }

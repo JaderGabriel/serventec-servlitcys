@@ -18,6 +18,8 @@ final class AdminSyncQueueService
         ?int $cityId = null,
         ?int $userId = null,
     ): AdminSyncTask {
+        $payload = AdminSyncTaskCitiesResolver::enrichPayload($payload, $cityId, $domain, $taskKey);
+
         $task = AdminSyncTask::query()->create([
             'domain' => $domain->value,
             'task_key' => $taskKey,

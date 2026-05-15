@@ -106,11 +106,10 @@ final class DiscrepanciesRoutineStatus
             if ($totalMat > 0) {
                 return null;
             }
-            $cacheUnits = SchoolGeoPositionResolver::countCacheUnits(
+            if (SchoolGeoPositionResolver::countCacheUnits(
                 $city,
                 $filters->escola_id !== null ? (int) $filters->escola_id : null,
-            );
-            if ($cacheUnits > 0) {
+            ) > 0) {
                 return null;
             }
 

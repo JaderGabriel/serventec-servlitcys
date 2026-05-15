@@ -98,6 +98,9 @@ final class IeducarCompatibilityProbe
         $routines = [];
 
         foreach ($catalog as $id => $meta) {
+            if ($id === 'nee_subnotificacao') {
+                continue;
+            }
             $spec = $queryMap[$id] ?? null;
             if ($spec === null) {
                 $routines[] = [

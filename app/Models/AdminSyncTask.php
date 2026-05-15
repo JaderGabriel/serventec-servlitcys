@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\AdminSyncDomain;
 use App\Enums\AdminSyncTaskStatus;
+use App\Services\AdminSync\AdminSyncTaskCitiesResolver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -68,13 +69,19 @@ class AdminSyncTask extends Model
 
     public function cityLabel(): string
     {
-        if ($this->relationLoaded('city') && $this->city !== null) {
-            return $this->city->name;
-        }
-        if ($this->city_id !== null) {
-            return __('Cidade #:id', ['id' => (string) $this->city_id]);
-        }
+        return AdminSyncTaskCitiesResolver::citiesLabelForTask($this);
+    }
 
-        return __('Todas / nacional');
+    /**
+     * @return list<string>
+     */
+    public function cityNames(): array
+    {
+        return AdminSyncTaskCitiesResolver::cityNamesForTask($this);
+    }
+
+    public function targetsAllCities(): bool
+    {
+        return AdminSyncTaskCitiesResolver::targetsAllCitiesForTask($this);
     }
 }

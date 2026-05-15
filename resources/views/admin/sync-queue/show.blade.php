@@ -25,16 +25,28 @@
                         </span>
                     </dd>
                 </div>
-                <div>
-                    <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Cidade') }}</dt>
+                <div class="sm:col-span-2">
+                    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                        {{ trans_choice('Município|Municípios', count($task->cityNames())) }}
+                        @if ($task->targetsAllCities())
+                            <span class="text-indigo-600 dark:text-indigo-400">({{ __('todas') }})</span>
+                        @endif
+                    </dt>
                     <dd class="font-medium">
-                        @if ($task->city)
-                            {{ $task->city->name }}
-                            @if ($task->city->ibge_municipio)
-                                <span class="text-gray-500">(IBGE {{ $task->city->ibge_municipio }})</span>
+                        @php $cityNames = $task->cityNames(); @endphp
+                        @if ($cityNames === [])
+                            —
+                        @elseif (count($cityNames) === 1)
+                            {{ $cityNames[0] }}
+                            @if ($task->city?->ibge_municipio)
+                                <span class="text-gray-500 font-normal">(IBGE {{ $task->city->ibge_municipio }})</span>
                             @endif
                         @else
-                            {{ __('Todas / nacional') }}
+                            <ul class="mt-1 flex flex-wrap gap-1.5 text-sm font-normal text-gray-800 dark:text-gray-200">
+                                @foreach ($cityNames as $name)
+                                    <li class="rounded-md bg-gray-100 dark:bg-gray-800 px-2 py-0.5">{{ $name }}</li>
+                                @endforeach
+                            </ul>
                         @endif
                     </dd>
                 </div>

@@ -77,7 +77,23 @@
                                 <td class="px-4 py-3 font-mono text-xs">{{ $task->id }}</td>
                                 <td class="px-4 py-3">{{ $task->domainEnum()->label() }}</td>
                                 <td class="px-4 py-3 max-w-xs truncate" title="{{ $task->label }}">{{ $task->label }}</td>
-                                <td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ $task->city?->name ?? '—' }}</td>
+                                <td class="px-4 py-3 text-gray-700 dark:text-gray-300 max-w-md">
+                                    @php $cityNames = $task->cityNames(); @endphp
+                                    @if ($cityNames === [])
+                                        —
+                                    @elseif (count($cityNames) === 1)
+                                        {{ $cityNames[0] }}
+                                    @else
+                                        <p class="text-xs leading-relaxed" title="{{ implode(', ', $cityNames) }}">
+                                            {{ implode(', ', $cityNames) }}
+                                        </p>
+                                        @if ($task->targetsAllCities())
+                                            <span class="mt-1 inline-block text-[10px] font-medium text-indigo-600 dark:text-indigo-400">
+                                                {{ trans_choice(':n município|:n municípios', count($cityNames), ['n' => count($cityNames)]) }}
+                                            </span>
+                                        @endif
+                                    @endif
+                                </td>
                                 <td class="px-4 py-3">
                                     <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium {{ $task->statusEnum()->badgeClass() }}">
                                         {{ $task->statusEnum()->label() }}
