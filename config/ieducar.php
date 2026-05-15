@@ -515,6 +515,26 @@ return [
          */
         'vaaf_por_ibge' => [],
 
+        /*
+         * Importação via API (CKAN FNDE ou JSON público). Grava em fundeb_municipio_references.
+         * IEDUCAR_FUNDEB_CKAN_RESOURCE_ID: ID do recurso CKAN (recomendado em produção).
+         * IEDUCAR_FUNDEB_JSON_URL: alternativa, URL com {ibge} e {ano}.
+         */
+        'open_data' => [
+            'ckan_base_url' => (string) env('IEDUCAR_FUNDEB_CKAN_URL', 'https://www.fnde.gov.br/dadosabertos'),
+            'resource_id' => (string) env('IEDUCAR_FUNDEB_CKAN_RESOURCE_ID', ''),
+            'json_url' => (string) env('IEDUCAR_FUNDEB_JSON_URL', ''),
+            'search_query' => (string) env('IEDUCAR_FUNDEB_CKAN_SEARCH', 'fundeb vaaf municipio'),
+            'timeout' => (int) env('IEDUCAR_FUNDEB_API_TIMEOUT', 30),
+            'fields' => [
+                'ibge' => ['co_municipio', 'codigo_ibge', 'ibge_municipio', 'ibge', 'cod_municipio', 'codigo_municipio'],
+                'ano' => ['nu_ano', 'ano', 'ano_referencia', 'ano_letivo', 'exercicio'],
+                'vaaf' => ['vaaf', 'vaa', 'vl_vaaf', 'valor_vaaf', 'valor_aluno_ano_fundeb'],
+                'vaat' => ['vaat', 'vl_vaat', 'valor_vaat'],
+                'complementacao_vaar' => ['complementacao_vaar', 'vaar', 'vl_complementacao_vaar', 'complementacao'],
+            ],
+        ],
+
         'aviso_previsao' => (string) env(
             'IEDUCAR_FUNDEB_AVISO_PREVISAO',
             'Previsão com base nas matrículas ativas do i-Educar no filtro e VAAF de referência (IEDUCAR_DISC_VAA_REFERENCIA). Não inclui receitas próprias, ICMS/ISS repassados nem valor oficial de complementação VAAR — consulte FNDE, Simec e Tesouro Transparente.'

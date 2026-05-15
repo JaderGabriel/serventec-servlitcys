@@ -16,22 +16,25 @@
 ### Credenciais MySQL por cidade
 
 - O campo `db_password` no modelo `City` usa cast **`encrypted`** (Laravel Encryption); requer `APP_KEY` estável — **fazer backup da chave** com o backup da base.
-- Quem pode criar/editar cidades: apenas utilizadores com **`is_admin`**.
+- Quem pode criar/editar cidades: apenas perfil **Administrador** (`role=admin`).
 
 ### Ficheiros e ambiente
 
 - `APP_KEY` — obrigatório; em produção deve ser único e guardado em segredo (gestor de secrets, variáveis do servidor).
 - `.env` em produção: `APP_DEBUG=false`, `APP_ENV=production` (ou equivalente).
 
-## Autorização (RBAC simplificado)
+## Autorização (RBAC)
 
-| Recurso | Política |
-|---------|----------|
-| Criar utilizadores | `UserPolicy::create` — só `is_admin` |
-| CRUD de cidades | `CityPolicy` — `viewAny`, `create`, `update`, `delete` só para `is_admin` |
-| Análise por cidade | `city` deve estar ativa e com dados configurados (`viewAnalytics`) |
+Perfis (`users.role`): **admin**, **user**, **municipal**. Municípios do perfil municipal: pivot `city_user`.
 
-A navegação (menu) reflete estas regras; o servidor **reaplica** autorização em controladores e `FormRequest`.
+| Recurso | Quem |
+|---------|------|
+| CRUD de cidades, sync, SMTP, sessões | `role=admin` (middleware `admin`) |
+| Criar utilizadores | Admin, Utilizador (só `user`), Municipal (só `municipal` no seu âmbito) — `UserPolicy` |
+| Análise / exportação | Admin e Utilizador: todos os municípios `forAnalytics`; Municipal: só vinculados — `CityPolicy::viewAnalytics` |
+| Histórico de logins | Gate `manageUserAudit` (admin) |
+
+A coluna legada `is_admin` é sincronizada automaticamente com `role` ao gravar. A navegação reflete as regras; controladores e `FormRequest` reaplicam autorização (incl. validação pós-sanitize de `city_ids`).
 
 ## Proteções HTTP comuns
 

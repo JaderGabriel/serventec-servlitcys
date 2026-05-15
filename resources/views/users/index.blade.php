@@ -58,10 +58,18 @@
                                     <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 font-mono">{{ $u->username }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 break-all">{{ $u->email }}</td>
                                     <td class="px-4 py-3 text-sm">
-                                        @if ($u->is_admin)
-                                            <span class="inline-flex rounded-full bg-violet-100 dark:bg-violet-900/40 px-2 py-0.5 text-xs font-medium text-violet-800 dark:text-violet-200">{{ __('Administrador') }}</span>
-                                        @else
-                                            <span class="inline-flex rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Utilizador') }}</span>
+                                        @php
+                                            $roleBadge = match ($u->role()) {
+                                                \App\Enums\UserRole::Admin => 'bg-violet-100 dark:bg-violet-900/40 text-violet-800 dark:text-violet-200',
+                                                \App\Enums\UserRole::Municipal => 'bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-200',
+                                                default => 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+                                            };
+                                        @endphp
+                                        <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium {{ $roleBadge }}">{{ $u->role()->label() }}</span>
+                                        @if ($u->isMunicipal() && $u->cities->isNotEmpty())
+                                            <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400 max-w-[14rem] truncate" title="{{ $u->cities->pluck('name')->join(', ') }}">
+                                                {{ $u->cities->pluck('name')->join(', ') }}
+                                            </span>
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-sm">
@@ -96,12 +104,14 @@
                                             </svg>
                                             </a>
 
-                                            <a href="{{ route('users.logins', $u) }}" class="inline-flex items-center justify-end text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Histórico de logins') }}" aria-label="{{ __('Histórico de logins') }}">
-                                                <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 19.5a7.5 7.5 0 0 1 15 0v.75a.75.75 0 0 1-.75.75H5.25a.75.75 0 0 1-.75-.75v-.75Z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v3l2.25 1.5" />
-                                                </svg>
-                                            </a>
+                                            @if (auth()->user()->isAdmin())
+                                                <a href="{{ route('users.logins', $u) }}" class="inline-flex items-center justify-end text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Histórico de logins') }}" aria-label="{{ __('Histórico de logins') }}">
+                                                    <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 19.5a7.5 7.5 0 0 1 15 0v.75a.75.75 0 0 1-.75.75H5.25a.75.75 0 0 1-.75-.75v-.75Z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v3l2.25 1.5" />
+                                                    </svg>
+                                                </a>
+                                            @endif
                                         </div>
                                         @if ($u->id === auth()->id())
                                             <span class="block mt-1">
@@ -125,6 +135,7 @@
                 @endif
             </div>
 
+            @if (auth()->user()->isAdmin())
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 dark:border-gray-700">
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40">
                     <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Registo de atividade') }}</h3>
@@ -181,6 +192,7 @@
                     </table>
                 </div>
             </div>
+            @endif
         </div>
     </div>
 </x-app-layout>

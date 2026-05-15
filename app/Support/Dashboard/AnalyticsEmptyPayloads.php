@@ -111,6 +111,11 @@ final class AnalyticsEmptyPayloads
                 'chart_distribuicao' => null,
                 'chart_etapa' => null,
             ],
+            'complementacao_informe' => [
+                'available' => false,
+                'aviso' => '',
+                'blocos' => [],
+            ],
         ];
     }
 

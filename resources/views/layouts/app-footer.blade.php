@@ -37,7 +37,7 @@
                         {{ __('Análise educacional') }}
                     </a>
                     @auth
-                        @if (Auth::user()->is_admin)
+                        @if (Auth::user()->isAdmin())
                             <a href="{{ route('pulse') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition {{ request()->routeIs('pulse') ? 'font-semibold text-indigo-600 dark:text-indigo-400' : '' }}">
                                 {{ __('Monitorização') }}
                             </a>

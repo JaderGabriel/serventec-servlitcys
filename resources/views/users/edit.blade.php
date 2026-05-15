@@ -45,18 +45,15 @@
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
 
-                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
-                            <div class="flex items-center gap-2">
-                                <input id="is_admin" type="checkbox" name="is_admin" value="1" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" {{ old('is_admin', $editUser->is_admin) ? 'checked' : '' }} />
-                                <x-input-label for="is_admin" :value="__('Administrador')" class="!mb-0" />
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <input id="is_active" type="checkbox" name="is_active" value="1" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" {{ old('is_active', $editUser->is_active) ? 'checked' : '' }} />
-                                <x-input-label for="is_active" :value="__('Conta ativa')" class="!mb-0" />
-                            </div>
-                        </div>
-                        <x-input-error :messages="$errors->get('is_admin')" class="mt-2" />
-                        <x-input-error :messages="$errors->get('is_active')" class="mt-2" />
+                        @include('users.partials.role-fields', [
+                            'creatableRoles' => $creatableRoles,
+                            'assignableCities' => $assignableCities,
+                            'selectedRole' => old('role', $editUser->role()->value),
+                            'selectedCityIds' => old('city_ids', $editUser->cityIds()),
+                            'actor' => $actor,
+                            'showActiveToggle' => true,
+                            'isActive' => old('is_active', $editUser->is_active),
+                        ])
 
                         <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
                             <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">{{ __('Nova senha') }}</p>

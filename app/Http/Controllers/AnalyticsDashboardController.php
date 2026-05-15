@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\City;
+use App\Support\Auth\UserCityAccess;
 use App\Repositories\Ieducar\AttendanceRepository;
 use App\Repositories\Ieducar\EnrollmentRepository;
 use App\Repositories\Ieducar\DiscrepanciesRepository;
@@ -42,14 +43,13 @@ class AnalyticsDashboardController extends Controller
         MunicipalityHealthRepository $municipalityHealthRepository,
         SchoolUnitsRepository $schoolUnitsRepository,
     ): View {
-        $cities = City::query()->forAnalytics()->orderBy('name')->get();
+        $cities = UserCityAccess::citiesQuery($request->user())->get();
 
         $filters = IeducarFilterState::fromRequest($request);
 
         $city = null;
         if ($request->filled('city_id')) {
-            $city = City::query()
-                ->forAnalytics()
+            $city = UserCityAccess::citiesQuery($request->user())
                 ->whereKey($request->integer('city_id'))
                 ->first();
         }
@@ -203,7 +203,7 @@ class AnalyticsDashboardController extends Controller
         }
 
         $city = $request->filled('city_id')
-            ? City::query()->forAnalytics()->whereKey($request->integer('city_id'))->first()
+            ? UserCityAccess::citiesQuery($request->user())->whereKey($request->integer('city_id'))->first()
             : null;
 
         if ($city === null) {
@@ -313,7 +313,7 @@ class AnalyticsDashboardController extends Controller
             'ano_letivo' => ['nullable', 'string', 'max:32'],
         ]);
 
-        $city = City::query()->forAnalytics()->whereKey($request->integer('city_id'))->firstOrFail();
+        $city = UserCityAccess::citiesQuery($request->user())->whereKey($request->integer('city_id'))->firstOrFail();
 
         $this->authorize('viewAnalytics', $city);
 

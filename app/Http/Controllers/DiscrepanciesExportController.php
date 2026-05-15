@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\City;
 use App\Repositories\Ieducar\DiscrepanciesRepository;
+use App\Support\Auth\UserCityAccess;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\DiscrepanciesCheckCatalog;
 use Illuminate\Http\Request;
@@ -20,13 +21,18 @@ class DiscrepanciesExportController extends Controller
 
     public function csv(Request $request): StreamedResponse
     {
-        $cities = City::query()->forAnalytics()->orderBy('name')->get();
+        $user = $request->user();
+        abort_if($user === null, 403);
+
+        $cities = UserCityAccess::citiesQuery($user)->get();
         $cityId = (int) $request->input('city_id', 0);
         $city = $cityId > 0 ? $cities->firstWhere('id', $cityId) : $cities->first();
 
         if ($city === null) {
             abort(404, __('Nenhuma cidade disponível para exportação.'));
         }
+
+        $this->authorize('viewAnalytics', $city);
 
         $filters = IeducarFilterState::fromRequest($request);
         if (! $filters->hasYearSelected()) {

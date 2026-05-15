@@ -2,22 +2,21 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\ValidatesManagedUserAttributes;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 
 class UpdateUserRequest extends FormRequest
 {
+    use ValidatesManagedUserAttributes;
+
     public function authorize(): bool
     {
         $target = $this->route('user');
-        if (! $target instanceof User) {
-            return false;
-        }
 
-        return (bool) $this->user()?->can('update', $target);
+        return $target instanceof User && ($this->user()?->can('update', $target) ?? false);
     }
 
     /**
@@ -25,17 +24,18 @@ class UpdateUserRequest extends FormRequest
      */
     public function rules(): array
     {
-        /** @var User $user */
-        $user = $this->route('user');
+        /** @var User $target */
+        $target = $this->route('user');
 
-        return [
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', Rule::unique(User::class, 'username')->ignore($user->id)],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)->ignore($user->id)],
-            'is_admin' => ['boolean'],
-            'is_active' => ['boolean'],
+        $rules = array_merge($this->managedUserAttributeRules($target), [
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
-        ];
+        ]);
+
+        if ($this->user()?->isAdmin()) {
+            $rules['is_active'] = ['boolean'];
+        }
+
+        return $rules;
     }
 
     protected function prepareForValidation(): void
@@ -48,9 +48,10 @@ class UpdateUserRequest extends FormRequest
             ]);
         }
 
-        $this->merge([
-            'is_admin' => $this->boolean('is_admin'),
-            'is_active' => $this->boolean('is_active'),
-        ]);
+        if ($this->user()?->isAdmin()) {
+            $this->merge([
+                'is_active' => $this->boolean('is_active'),
+            ]);
+        }
     }
 }

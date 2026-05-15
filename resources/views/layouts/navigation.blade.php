@@ -18,7 +18,7 @@
                     <x-nav-link :href="route('dashboard.analytics')" :active="request()->routeIs('dashboard.analytics')">
                         {{ __('Análise') }}
                     </x-nav-link>
-                    @if (Auth::user()->is_admin)
+                    @if (Auth::user()->isAdmin())
                         <x-nav-link :href="route('pulse')" :active="request()->routeIs('pulse')">
                             {{ __('Monitorização') }}
                         </x-nav-link>
@@ -49,7 +49,7 @@
                             {{ __('Perfil') }}
                         </x-dropdown-link>
 
-                        @if (Auth::user()->is_admin)
+                        @if (Auth::user()->canImportOrConfigure())
                             <div class="border-t border-gray-200 dark:border-gray-600"></div>
                             <div class="px-4 py-2">
                                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Sincronizações') }}</p>
@@ -63,6 +63,11 @@
                             <x-dropdown-link :href="route('admin.ieducar-compatibility.index')" :title="__('Probe de schema i-Educar e estado das rotinas de discrepância por cidade.')">
                                 {{ __('Compatibilidade i-Educar') }}
                             </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.artisan-commands.index')" :title="__('Referência CLI: geo, SAEB, FUNDEB, schema probe e deploy.')">
+                                {{ __('Comandos Artisan') }}
+                            </x-dropdown-link>
+                        @endif
+                        @if (Auth::user()->canManageUsers())
                             <div class="border-t border-gray-200 dark:border-gray-600"></div>
                             <div class="px-4 py-2">
                                 <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Usuários') }}</p>
@@ -73,9 +78,13 @@
                             <x-dropdown-link :href="route('users.create')">
                                 {{ __('Novo') }}
                             </x-dropdown-link>
-                            <x-dropdown-link :href="route('users.sessions.index')">
-                                {{ __('Sessões') }}
-                            </x-dropdown-link>
+                            @if (Auth::user()->isAdmin())
+                                <x-dropdown-link :href="route('users.sessions.index')">
+                                    {{ __('Sessões') }}
+                                </x-dropdown-link>
+                            @endif
+                        @endif
+                        @if (Auth::user()->isAdmin())
                             <div class="border-t border-gray-200 dark:border-gray-600"></div>
                             <x-dropdown-link :href="route('settings.mail.edit')">
                                 {{ __('E-mail (SMTP)') }}
@@ -119,7 +128,7 @@
             <x-responsive-nav-link :href="route('dashboard.analytics')" :active="request()->routeIs('dashboard.analytics')">
                 {{ __('Análise') }}
             </x-responsive-nav-link>
-            @if (Auth::user()->is_admin)
+            @if (Auth::user()->isAdmin())
                 <x-responsive-nav-link :href="route('pulse')" :active="request()->routeIs('pulse')">
                     {{ __('Monitorização') }}
                 </x-responsive-nav-link>
@@ -141,7 +150,7 @@
                     {{ __('Perfil') }}
                 </x-responsive-nav-link>
 
-                @if (Auth::user()->is_admin)
+                @if (Auth::user()->canImportOrConfigure())
                     <div class="px-4 py-2">
                         <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Sincronizações') }}</p>
                     </div>
@@ -154,6 +163,11 @@
                     <x-responsive-nav-link :href="route('admin.ieducar-compatibility.index')" :active="request()->routeIs('admin.ieducar-compatibility.*')" :title="__('Compatibilidade da base i-Educar.')">
                         {{ __('Compatibilidade i-Educar') }}
                     </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.artisan-commands.index')" :active="request()->routeIs('admin.artisan-commands.*')" :title="__('Comandos Artisan (referência CLI).')">
+                        {{ __('Comandos Artisan') }}
+                    </x-responsive-nav-link>
+                @endif
+                @if (Auth::user()->canManageUsers())
                     <div class="border-t border-gray-200 dark:border-gray-600 my-2"></div>
                     <div class="px-4 py-2">
                         <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Usuários') }}</p>
@@ -164,9 +178,13 @@
                     <x-responsive-nav-link :href="route('users.create')" :active="request()->routeIs('users.create')">
                         {{ __('Novo utilizador') }}
                     </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('users.sessions.index')" :active="request()->routeIs('users.sessions.*')">
-                        {{ __('Sessões ativas') }}
-                    </x-responsive-nav-link>
+                    @if (Auth::user()->isAdmin())
+                        <x-responsive-nav-link :href="route('users.sessions.index')" :active="request()->routeIs('users.sessions.*')">
+                            {{ __('Sessões ativas') }}
+                        </x-responsive-nav-link>
+                    @endif
+                @endif
+                @if (Auth::user()->isAdmin())
                     <div class="border-t border-gray-200 dark:border-gray-600 my-2"></div>
                     <x-responsive-nav-link :href="route('settings.mail.edit')" :active="request()->routeIs('settings.mail.*')">
                         {{ __('E-mail (SMTP)') }}

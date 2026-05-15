@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
+            'manage.users' => \App\Http\Middleware\EnsureCanManageUsers::class,
             'profile.complete' => EnsureProfileComplete::class,
         ]);
 

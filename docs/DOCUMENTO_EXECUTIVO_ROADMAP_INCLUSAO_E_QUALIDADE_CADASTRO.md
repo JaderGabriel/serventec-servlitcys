@@ -103,7 +103,7 @@ Comando ou probe admin (reutilizar padrão `DiscrepanciesAvailability` / página
 ],
 ```
 
-4. Entregável: relatório JSON por cidade (`schema_probe.json`) anexo ao onboarding do município.
+4. Entregável: relatório JSON por cidade (`schema_probe.json`) — export na admin ou `php artisan ieducar:schema-probe {city_id}`.
 
 ### 4.4 Fase 1 — Camada de dados
 
@@ -177,6 +177,7 @@ Priorização sugerida: **impacto Censo/VAAR** × **esforço técnico** × **já
 | A1 | **Recurso de prova sem NEE** | Este documento, fases 0–3 | Médio | **Implementado** (backend + aba Inclusão + discrepâncias) |
 | A2 | **Geo: escola sem posição utilizável** | Rotina `escola_sem_geo` alinhada ao mapa | Médio | **Implementado** |
 | A3 | **Probe único de schema** | Página admin «Compatibilidade da base» listando rotinas available/unavailable por cidade | Baixo–médio | **Implementado** |
+| D3 | **Export `schema_probe.json`** | Download JSON na admin + `php artisan ieducar:schema-probe {city}` | Baixo | **Implementado** |
 
 #### A2 — Implementação (maio/2026)
 
@@ -217,7 +218,7 @@ Ver documentação técnica: [`docs/FUNDEB_VAAF_E_ONDA1.md`](FUNDEB_VAAF_E_ONDA1
 | D1 | Gráfico recursos de prova por tipo (Inclusão) | **Implementado** |
 | D2 | Tipos de recurso na rotina `recurso_prova_sem_nee` e export CSV | **Implementado** |
 | D4 | KPI «Recurso sem NEE» no Diagnóstico Geral | **Implementado** |
-| F2 | Informes narrativos VAAR/VAAT com valores oficiais | Planeado (Onda 3) |
+| F2 | Informes narrativos VAAR/VAAT com valores oficiais | Implementado — ver `FUNDEB_VAAF_E_ONDA1.md` |
 
 ---
 

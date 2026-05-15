@@ -44,11 +44,13 @@
                             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
                         </div>
 
-                        <div class="flex items-center gap-2">
-                            <input id="is_admin" type="checkbox" name="is_admin" value="1" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" {{ old('is_admin') ? 'checked' : '' }} />
-                            <x-input-label for="is_admin" :value="__('Administrador')" class="!mb-0" />
-                        </div>
-                        <x-input-error :messages="$errors->get('is_admin')" class="mt-2" />
+                        @include('users.partials.role-fields', [
+                            'creatableRoles' => $creatableRoles,
+                            'assignableCities' => $assignableCities,
+                            'selectedRole' => old('role', $creatableRoles[0]->value ?? 'user'),
+                            'selectedCityIds' => old('city_ids', []),
+                            'actor' => $actor,
+                        ])
 
                         <div class="flex items-center justify-end gap-4">
                             <a href="{{ route('users.index') }}" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">

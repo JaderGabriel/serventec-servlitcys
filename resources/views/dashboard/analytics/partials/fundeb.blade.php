@@ -37,6 +37,8 @@
             $distLegal = is_array($proj['distribuicao_legal'] ?? null) ? $proj['distribuicao_legal'] : [];
             $distItens = is_array($distLegal['itens'] ?? null) ? $distLegal['itens'] : [];
             $porEtapa = is_array($proj['por_etapa'] ?? null) ? $proj['por_etapa'] : [];
+            $informe = is_array($fundebData['complementacao_informe'] ?? null) ? $fundebData['complementacao_informe'] : [];
+            $informeBlocos = is_array($informe['blocos'] ?? null) ? $informe['blocos'] : [];
         @endphp
         @if (count($publicSources['categories'] ?? []) > 0)
             <x-dashboard.consultoria-public-sources
@@ -183,6 +185,76 @@
                 @endif
             </div>
         </section>
+
+        @if (count($informeBlocos) > 0)
+            <section id="fundeb-complementacao-informe" class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/30 dark:bg-indigo-950/20 shadow-sm overflow-hidden">
+                <header class="px-4 py-3 border-b border-indigo-200/80 dark:border-indigo-800/80">
+                    <h3 class="text-base font-semibold text-indigo-950 dark:text-indigo-100">{{ __('Informes VAAF, VAAT e complementação VAAR') }}</h3>
+                    <p class="text-xs text-indigo-900/90 dark:text-indigo-200/90 mt-1 leading-relaxed">
+                        {{ $informe['aviso'] ?? '' }}
+                    </p>
+                </header>
+                <div class="px-4 py-4 space-y-4">
+                    @foreach ($informeBlocos as $bloco)
+                        @php
+                            $bRing = match ($bloco['status'] ?? 'neutral') {
+                                'success' => 'border-l-emerald-500',
+                                'warning' => 'border-l-amber-500',
+                                'danger' => 'border-l-red-500',
+                                default => 'border-l-indigo-400',
+                            };
+                            $bBadge = match ($bloco['status'] ?? 'neutral') {
+                                'success' => 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100',
+                                'warning' => 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100',
+                                'danger' => 'bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100',
+                                default => 'bg-indigo-100 text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-100',
+                            };
+                            $indicadores = is_array($bloco['indicadores'] ?? null) ? $bloco['indicadores'] : [];
+                            $acoes = is_array($bloco['acoes'] ?? null) ? $bloco['acoes'] : [];
+                        @endphp
+                        <article class="rounded-md border border-indigo-100 dark:border-indigo-900/50 border-l-4 {{ $bRing }} bg-white/80 dark:bg-gray-900/40 px-4 py-3">
+                            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                                <div>
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $bloco['titulo'] ?? '' }}</h4>
+                                    @if (filled($bloco['subtitulo'] ?? null))
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $bloco['subtitulo'] }}</p>
+                                    @endif
+                                </div>
+                                @if (filled($bloco['status_label'] ?? null))
+                                    <span class="inline-flex shrink-0 px-2 py-0.5 rounded text-[11px] font-medium {{ $bBadge }}">{{ $bloco['status_label'] }}</span>
+                                @endif
+                            </div>
+                            @foreach ($bloco['paragrafos'] ?? [] as $par)
+                                <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-2">{{ $par }}</p>
+                            @endforeach
+                            @if (count($indicadores) > 0)
+                                <dl class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+                                    @foreach ($indicadores as $ind)
+                                        <div class="rounded-md bg-gray-50 dark:bg-gray-800/60 px-3 py-2 border border-gray-100 dark:border-gray-700">
+                                            <dt class="text-[11px] text-gray-500 dark:text-gray-400">{{ $ind['label'] ?? '' }}</dt>
+                                            <dd class="font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ $ind['value'] ?? '' }}</dd>
+                                            @if (filled($ind['hint'] ?? null))
+                                                <dd class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{{ $ind['hint'] }}</dd>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </dl>
+                            @endif
+                            @if (count($acoes) > 0)
+                                <div class="mt-3">
+                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">{{ __('Recomendações') }}</p>
+                                    <ul class="list-disc list-inside text-xs text-gray-700 dark:text-gray-300 space-y-0.5">
+                                        @foreach ($acoes as $acao)
+                                            <li>{{ $acao }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+                        </article>
+                    @endforeach
+                </div>
+            </section>
+        @endif
 
         <div class="space-y-5">
             @foreach ($fundebData['modules'] ?? [] as $mod)

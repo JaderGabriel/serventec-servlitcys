@@ -18,7 +18,7 @@ class CityAuthorizationTest extends TestCase
 
     public function test_non_admin_cannot_access_cities_index(): void
     {
-        $user = User::factory()->create(['is_admin' => false]);
+        $user = User::factory()->utilizador()->create();
 
         $this->actingAs($user)->get(route('cities.index'))->assertForbidden();
     }
@@ -32,7 +32,7 @@ class CityAuthorizationTest extends TestCase
 
     public function test_non_admin_cannot_update_city(): void
     {
-        $user = User::factory()->create(['is_admin' => false]);
+        $user = User::factory()->utilizador()->create();
         $city = City::factory()->create([
             'name' => 'Cidade Teste',
             'uf' => 'SP',

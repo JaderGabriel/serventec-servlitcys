@@ -11,6 +11,76 @@ use Illuminate\Database\Connection;
  */
 final class IeducarCompatibilityProbe
 {
+    public const SCHEMA_PROBE_VERSION = '1.0';
+
+    /**
+     * Documento JSON para onboarding (`schema_probe.json`).
+     *
+     * @return array<string, mixed>
+     */
+    public static function exportDocument(Connection $db, City $city, ?IeducarFilterState $filters = null): array
+    {
+        $filters ??= new IeducarFilterState(ano_letivo: 'all', escola_id: null, curso_id: null, turno_id: null);
+
+        return self::wrapExportEnvelope(self::report($db, $city, $filters), $city, $filters);
+    }
+
+    /**
+     * @param  array{
+     *   city_id: int,
+     *   city_name: string,
+     *   total_matriculas?: int,
+     *   recurso_prova_schema: array<string, mixed>,
+     *   routines: list<array<string, mixed>>
+     * }  $report
+     * @return array<string, mixed>
+     */
+    public static function wrapExportEnvelope(array $report, City $city, IeducarFilterState $filters): array
+    {
+        $routines = is_array($report['routines'] ?? null) ? $report['routines'] : [];
+        $available = 0;
+        $withIssue = 0;
+        foreach ($routines as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            if (($row['availability'] ?? '') === 'available') {
+                $available++;
+            }
+            if (! empty($row['has_issue'])) {
+                $withIssue++;
+            }
+        }
+
+        $schema = is_array($report['recurso_prova_schema'] ?? null) ? $report['recurso_prova_schema'] : [];
+
+        return [
+            'schema_probe_version' => self::SCHEMA_PROBE_VERSION,
+            'generated_at' => now()->toIso8601String(),
+            'city' => [
+                'id' => (int) $city->id,
+                'name' => (string) $city->name,
+                'ibge_municipio' => $city->ibge_municipio,
+                'ieducar_schema' => $city->ieducar_schema,
+            ],
+            'filters' => [
+                'ano_letivo' => $filters->ano_letivo,
+                'escola_id' => $filters->escola_id,
+                'curso_id' => $filters->curso_id,
+                'turno_id' => $filters->turno_id,
+            ],
+            'summary' => [
+                'total_matriculas' => (int) ($report['total_matriculas'] ?? 0),
+                'routines_total' => count($routines),
+                'routines_available' => $available,
+                'routines_with_issue' => $withIssue,
+                'recurso_prova_schema_available' => (bool) ($schema['available'] ?? false),
+            ],
+            'recurso_prova_schema' => $schema,
+            'routines' => $routines,
+        ];
+    }
+
     /**
      * @return array{
      *   city_id: int,

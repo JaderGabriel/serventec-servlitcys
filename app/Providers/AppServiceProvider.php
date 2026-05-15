@@ -72,7 +72,8 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Login::class, LogSuccessfulUserLogin::class);
 
         $this->app->booted(function (): void {
-            Gate::define('viewPulse', fn (?User $user): bool => $user !== null && $user->is_admin === true);
+            Gate::define('viewPulse', fn (?User $user): bool => $user !== null && $user->isAdmin());
+            Gate::define('manageUserAudit', fn (?User $user): bool => $user !== null && $user->isAdmin());
         });
 
         /*

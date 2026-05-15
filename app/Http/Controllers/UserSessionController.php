@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AdminUserLog;
 use App\Models\DatabaseSession;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -13,7 +13,7 @@ class UserSessionController extends Controller
 {
     public function index(): View
     {
-        $this->authorize('viewAny', User::class);
+        Gate::authorize('manageUserAudit');
 
         $sessions = DatabaseSession::query()
             ->with(['user:id,name,email,username'])
@@ -29,7 +29,7 @@ class UserSessionController extends Controller
 
     public function destroy(DatabaseSession $session): RedirectResponse
     {
-        $this->authorize('viewAny', User::class);
+        Gate::authorize('manageUserAudit');
 
         $subjectUserId = $session->user_id;
         $sessionId = $session->getKey();

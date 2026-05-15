@@ -19,8 +19,9 @@ O **servlitcys** é uma aplicação web que consolida **informação educacional
 
 ## Modelo de governação de acesso
 
-- **Utilizador standard**: acede ao painel e à análise conforme as cidades disponíveis e ativas.
-- **Administrador (`is_admin`)**: gere cidades (incluindo credenciais) e cria novos utilizadores.
+- **Administrador** (`role=admin`): acesso total — cidades, sincronizações, configurações e gestão de todos os perfis.
+- **Utilizador** (`role=user`): painel e análise em todos os municípios com dados; pode criar outros utilizadores do mesmo perfil.
+- **Municipal** (`role=municipal`): análise apenas nos municípios vinculados; pode criar outros municipais no seu âmbito.
 
 Não existe auto-registo: reduz superfície de ataque e permite controlo explícito de quem entra no sistema.
 
@@ -44,4 +45,4 @@ Não existe auto-registo: reduz superfície de ataque e permite controlo explíc
 
 ---
 
-*Documento orientado a decisores e gestão de projeto; detalhes técnicos de segurança e operação estão em [SEGURANCA.md](SEGURANCA.md).*
+*Documento orientado a decisores e gestão de projeto; detalhes técnicos de segurança e operação estão em [SEGURANCA.md](SEGURANCA.md). Comandos CLI e deploy: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md).*

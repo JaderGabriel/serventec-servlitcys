@@ -92,7 +92,7 @@
                         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ __('Resumo (aplicação)') }}</h3>
                         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ __('Últimas cidades registradas na aplicação (cadastro local, não dados do iEducar).') }}</p>
                     </div>
-                    @if (Auth::user()->is_admin)
+                    @if (Auth::user()->isAdmin())
                         <a href="{{ route('cities.index') }}" class="inline-flex items-center justify-center px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
                             {{ __('Gerenciar cidades') }}
                         </a>
@@ -118,7 +118,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-4 py-6 text-sm text-center text-gray-500 dark:text-gray-400">{{ Auth::user()->is_admin ? __('Ainda não há cidades. Adicione na seção Cidades.') : __('Ainda não há cidades. Peça a um administrador para cadastrar.') }}</td>
+                                    <td colspan="4" class="px-4 py-6 text-sm text-center text-gray-500 dark:text-gray-400">{{ Auth::user()->isAdmin() ? __('Ainda não há cidades. Adicione na seção Cidades.') : __('Ainda não há cidades. Peça a um administrador para cadastrar.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>

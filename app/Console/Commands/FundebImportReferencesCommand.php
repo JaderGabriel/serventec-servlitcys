@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Models\City;
 use App\Models\FundebMunicipioReference;
+use App\Repositories\FundebMunicipioReferenceRepository;
 use Illuminate\Console\Command;
 
 class FundebImportReferencesCommand extends Command
@@ -62,9 +64,14 @@ class FundebImportReferencesCommand extends Command
                 continue;
             }
 
+            $cityId = City::query()
+                ->where('ibge_municipio', $ibge)
+                ->value('id');
+
             FundebMunicipioReference::query()->updateOrCreate(
                 ['ibge_municipio' => $ibge, 'ano' => $ano],
                 [
+                    'city_id' => $cityId,
                     'vaaf' => $vaaf,
                     'vaat' => $this->parseMoney($assoc['vaat'] ?? null),
                     'complementacao_vaar' => $this->parseMoney($assoc['complementacao_vaar'] ?? $assoc['vaar'] ?? null),

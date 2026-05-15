@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FundebMunicipioReference extends Model
 {
     protected $fillable = [
+        'city_id',
         'ibge_municipio',
         'ano',
         'vaaf',
@@ -29,5 +31,13 @@ class FundebMunicipioReference extends Model
             'complementacao_vaar' => 'float',
             'imported_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return BelongsTo<City, $this>
+     */
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
     }
 }

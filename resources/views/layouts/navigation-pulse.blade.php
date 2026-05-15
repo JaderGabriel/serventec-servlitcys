@@ -13,7 +13,7 @@
                     <a href="{{ route('dashboard.analytics') }}" class="inline-flex items-center justify-center px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition {{ request()->routeIs('dashboard.analytics') ? 'ring-2 ring-indigo-500' : '' }}">
                         {{ __('Análise') }}
                     </a>
-                    @if (Auth::user()->is_admin)
+                    @if (Auth::user()->isAdmin())
                         <a href="{{ route('cities.index') }}" class="inline-flex items-center justify-center px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition {{ request()->routeIs('cities.*') ? 'ring-2 ring-indigo-500' : '' }}">
                             {{ __('Cidades') }}
                         </a>
@@ -44,7 +44,7 @@
                                 {{ __('Perfil') }}
                             </x-dropdown-link>
 
-                            @if (Auth::user()->is_admin)
+                            @if (Auth::user()->canImportOrConfigure())
                                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
                                 <div class="px-4 py-2">
                                     <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Sincronizações') }}</p>
@@ -58,6 +58,11 @@
                                 <x-dropdown-link :href="route('admin.ieducar-compatibility.index')">
                                     {{ __('Compatibilidade i-Educar') }}
                                 </x-dropdown-link>
+                                <x-dropdown-link :href="route('admin.artisan-commands.index')">
+                                    {{ __('Comandos Artisan') }}
+                                </x-dropdown-link>
+                            @endif
+                            @if (Auth::user()->canManageUsers())
                                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
                                 <div class="px-4 py-2">
                                     <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Usuários') }}</p>
@@ -68,9 +73,13 @@
                                 <x-dropdown-link :href="route('users.create')">
                                     {{ __('Novo') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="route('users.sessions.index')">
-                                    {{ __('Sessões') }}
-                                </x-dropdown-link>
+                                @if (Auth::user()->isAdmin())
+                                    <x-dropdown-link :href="route('users.sessions.index')">
+                                        {{ __('Sessões') }}
+                                    </x-dropdown-link>
+                                @endif
+                            @endif
+                            @if (Auth::user()->isAdmin())
                                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
                                 <x-dropdown-link :href="route('settings.mail.edit')">
                                     {{ __('E-mail (SMTP)') }}
