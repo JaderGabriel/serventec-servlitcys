@@ -87,6 +87,19 @@ class User extends Authenticatable
         return $this->is_active && $this->isAdmin();
     }
 
+    public function canViewAdminDashboard(): bool
+    {
+        return $this->is_active && $this->isAdmin();
+    }
+
+    /**
+     * Rota de destino após login ou clique no logótipo.
+     */
+    public function homeRouteName(): string
+    {
+        return $this->canViewAdminDashboard() ? 'dashboard' : 'dashboard.analytics';
+    }
+
     /**
      * @return BelongsToMany<City, $this>
      */

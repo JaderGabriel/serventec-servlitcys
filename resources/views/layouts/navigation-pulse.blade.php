@@ -3,13 +3,15 @@
     <div class="mx-auto max-w-[min(100%,100rem)] px-4 sm:px-6 lg:px-10 xl:px-12">
         <div class="flex min-h-14 flex-nowrap items-center justify-between gap-x-4 py-3 sm:min-h-16 sm:py-4">
             <div class="flex min-w-0 flex-1 flex-nowrap items-center gap-x-4 overflow-x-auto sm:gap-x-6 [scrollbar-width:thin]">
-                <a href="{{ route('dashboard') }}" class="flex shrink-0 items-center gap-2 group" title="{{ config('app.name') }}">
+                <a href="{{ route(Auth::user()->homeRouteName()) }}" class="flex shrink-0 items-center gap-2 group" title="{{ config('app.name') }}">
                     <x-application-logo class="block h-9 w-[3.25rem] shrink-0 text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition" />
                 </a>
                 <div class="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-2">
-                    <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition {{ request()->routeIs('dashboard') ? 'ring-2 ring-indigo-500' : '' }}">
-                        {{ __('Painel') }}
-                    </a>
+                    @if (Auth::user()->canViewAdminDashboard())
+                        <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition {{ request()->routeIs('dashboard') ? 'ring-2 ring-indigo-500' : '' }}">
+                            {{ __('Painel') }}
+                        </a>
+                    @endif
                     <a href="{{ route('dashboard.analytics') }}" class="inline-flex items-center justify-center px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition {{ request()->routeIs('dashboard.analytics') ? 'ring-2 ring-indigo-500' : '' }}">
                         {{ __('Análise') }}
                     </a>

@@ -27,6 +27,19 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
+        $response->assertRedirect(route('dashboard.analytics', absolute: false));
+    }
+
+    public function test_admin_is_redirected_to_dashboard_after_login(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->post('/login', [
+            'username' => $admin->username,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 

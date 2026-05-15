@@ -29,12 +29,13 @@ Perfis (`users.role`): **admin**, **user**, **municipal**. Municípios do perfil
 
 | Recurso | Quem |
 |---------|------|
+| Painel `/dashboard` (estatísticas, probe) | `role=admin` — outros perfis são redireccionados para Análise |
 | CRUD de cidades, sync, SMTP, sessões | `role=admin` (middleware `admin`) |
 | Criar utilizadores | Admin, Utilizador (só `user`), Municipal (só `municipal` no seu âmbito) — `UserPolicy` |
 | Análise / exportação | Admin e Utilizador: todos os municípios `forAnalytics`; Municipal: só vinculados — `CityPolicy::viewAnalytics` |
 | Histórico de logins | Gate `manageUserAudit` (admin) |
 
-A coluna legada `is_admin` é sincronizada automaticamente com `role` ao gravar. A navegação reflete as regras; controladores e `FormRequest` reaplicam autorização (incl. validação pós-sanitize de `city_ids`).
+A coluna legada `is_admin` é sincronizada automaticamente com `role` ao gravar. A navegação reflete as regras; controladores e `FormRequest` reaplicam autorização (incl. validação pós-sanitize de `city_ids`). Guia completo: [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md).
 
 ## Proteções HTTP comuns
 

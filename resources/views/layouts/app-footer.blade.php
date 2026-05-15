@@ -30,9 +30,11 @@
                     </p>
                 </div>
                 <nav class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm" aria-label="{{ __('Links rápidos') }}">
-                    <a href="{{ route('dashboard') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
-                        {{ __('Painel') }}
-                    </a>
+                    @if (Auth::user()->canViewAdminDashboard())
+                        <a href="{{ route('dashboard') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                            {{ __('Painel') }}
+                        </a>
+                    @endif
                     <a href="{{ route('dashboard.analytics') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
                         {{ __('Análise educacional') }}
                     </a>

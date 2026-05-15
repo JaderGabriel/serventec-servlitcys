@@ -4,7 +4,9 @@
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 {{ __('Análise educacional') }}
             </h2>
-            <a href="{{ route('dashboard') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('← Painel geral') }}</a>
+            @if (Auth::user()->canViewAdminDashboard())
+                <a href="{{ route('dashboard') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('← Painel geral') }}</a>
+            @endif
         </div>
     </x-slot>
 

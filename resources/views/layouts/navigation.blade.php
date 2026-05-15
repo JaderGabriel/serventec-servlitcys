@@ -5,16 +5,18 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2 group" title="{{ config('app.name') }}">
+                    <a href="{{ route(Auth::user()->homeRouteName()) }}" class="flex items-center gap-2 group" title="{{ config('app.name') }}">
                         <x-application-logo class="block h-9 w-[3.25rem] shrink-0 text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition" />
                     </a>
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Painel') }}
-                    </x-nav-link>
+                    @if (Auth::user()->canViewAdminDashboard())
+                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                            {{ __('Painel') }}
+                        </x-nav-link>
+                    @endif
                     <x-nav-link :href="route('dashboard.analytics')" :active="request()->routeIs('dashboard.analytics')">
                         {{ __('Análise') }}
                     </x-nav-link>
@@ -122,9 +124,11 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Painel') }}
-            </x-responsive-nav-link>
+            @if (Auth::user()->canViewAdminDashboard())
+                <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                    {{ __('Painel') }}
+                </x-responsive-nav-link>
+            @endif
             <x-responsive-nav-link :href="route('dashboard.analytics')" :active="request()->routeIs('dashboard.analytics')">
                 {{ __('Análise') }}
             </x-responsive-nav-link>

@@ -11,9 +11,14 @@ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request, CityDataConnection $cityData): View
+    public function index(Request $request, CityDataConnection $cityData): View|\Illuminate\Http\RedirectResponse
     {
         $user = $request->user();
+
+        if ($user !== null && ! $user->canViewAdminDashboard()) {
+            return redirect()->route('dashboard.analytics');
+        }
+
         $now = now();
 
         $stats = [
