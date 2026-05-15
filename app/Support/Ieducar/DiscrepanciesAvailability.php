@@ -116,6 +116,24 @@ final class DiscrepanciesAvailability
         return $lat !== null || $lng !== null;
     }
 
+    /**
+     * Rotina de posição no mapa: colunas na escola i-Educar e/ou cache local school_unit_geos.
+     */
+    public static function escolaPosicaoMapa(Connection $db, City $city): bool
+    {
+        if (! self::escolaComMatricula($db, $city)) {
+            return false;
+        }
+
+        return self::escolaGeoColumns($db, $city) || SchoolGeoPositionResolver::cacheTableUsable($city);
+    }
+
+    public static function recursoProvaCadastro(Connection $db, City $city): bool
+    {
+        return self::matriculaAluno($db, $city)
+            && InclusionRecursoProvaQueries::canQuery($db, $city);
+    }
+
     public static function matriculaSituacao(Connection $db, City $city): bool
     {
         return self::matriculaCore($db, $city)

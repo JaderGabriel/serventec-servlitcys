@@ -30,6 +30,7 @@
         </div>
     @endif
     <form
+        id="analytics-ieducar-filters"
         method="get"
         action="{{ $formAction }}"
         class="p-4"

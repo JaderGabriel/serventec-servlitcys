@@ -15,7 +15,19 @@ final class IeducarFilterState
         public ?string $escola_id,
         public ?string $curso_id,
         public ?string $turno_id,
+        public bool $inclusion_somente_nee = false,
+        public bool $inclusion_somente_inconsistencias = false,
     ) {}
+
+    public function inclusionSomenteNee(): bool
+    {
+        return $this->inclusion_somente_nee;
+    }
+
+    public function inclusionSomenteInconsistencias(): bool
+    {
+        return $this->inclusion_somente_inconsistencias;
+    }
 
     public static function fromRequest(Request $request): self
     {
@@ -36,6 +48,8 @@ final class IeducarFilterState
             escola_id: self::nullableString($request->input('escola_id')),
             curso_id: self::nullableString($request->input('curso_id')),
             turno_id: self::nullableString($request->input('turno_id')),
+            inclusion_somente_nee: $request->boolean('inclusion_somente_nee'),
+            inclusion_somente_inconsistencias: $request->boolean('inclusion_somente_inconsistencias'),
         );
     }
 
@@ -69,12 +83,21 @@ final class IeducarFilterState
      */
     public function toQueryParams(): array
     {
-        return array_filter([
+        $params = array_filter([
             'ano_letivo' => $this->ano_letivo,
             'escola_id' => $this->escola_id,
             'curso_id' => $this->curso_id,
             'turno_id' => $this->turno_id,
         ], fn ($v) => $v !== null && $v !== '');
+
+        if ($this->inclusion_somente_nee) {
+            $params['inclusion_somente_nee'] = '1';
+        }
+        if ($this->inclusion_somente_inconsistencias) {
+            $params['inclusion_somente_inconsistencias'] = '1';
+        }
+
+        return $params;
     }
 
     /**
@@ -92,10 +115,10 @@ final class IeducarFilterState
     public function withAnoLetivoOverride(?int $year): self
     {
         if ($year === null) {
-            return new self('all', $this->escola_id, $this->curso_id, $this->turno_id);
+            return new self('all', $this->escola_id, $this->curso_id, $this->turno_id, $this->inclusion_somente_nee, $this->inclusion_somente_inconsistencias);
         }
 
-        return new self((string) $year, $this->escola_id, $this->curso_id, $this->turno_id);
+        return new self((string) $year, $this->escola_id, $this->curso_id, $this->turno_id, $this->inclusion_somente_nee, $this->inclusion_somente_inconsistencias);
     }
 
     private static function nullableString(mixed $value): ?string

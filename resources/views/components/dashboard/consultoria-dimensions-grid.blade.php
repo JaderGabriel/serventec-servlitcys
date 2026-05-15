@@ -5,6 +5,8 @@
 ])
 
 @php
+    use App\Support\Ieducar\DiscrepanciesRoutineStatus;
+
     $gridCols = match ((string) $columns) {
         '2' => 'lg:grid-cols-2',
         default => 'lg:grid-cols-3',
@@ -16,26 +18,26 @@
     <div {{ $attributes->merge(['class' => 'grid grid-cols-1 sm:grid-cols-2 '.$gridCols.' gap-2']) }}>
         @foreach ($dimensions as $dim)
             @php
-                $st = (string) ($dim['status'] ?? 'unavailable');
-                $chip = match ($st) {
-                    'danger' => 'border-red-400 bg-red-50 text-red-950 dark:bg-red-950/40 dark:text-red-100',
-                    'warning' => 'border-amber-400 bg-amber-50 text-amber-950 dark:bg-amber-950/40 dark:text-amber-100',
-                    'ok' => 'border-emerald-400 bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100',
-                    default => 'border-slate-300 bg-slate-100 text-slate-600 dark:bg-slate-800/50 dark:text-slate-300',
-                };
-                $icon = match ($st) {
-                    'danger' => '✕',
-                    'warning' => '!',
-                    'ok' => '✓',
-                    default => '—',
-                };
+                $st = (string) ($dim['status'] ?? DiscrepanciesRoutineStatus::UNAVAILABLE);
+                $ui = DiscrepanciesRoutineStatus::presentation($st);
+                $chip = $ui['chip'];
+                $icon = $ui['icon'];
+                $statusLabel = (string) ($dim['status_label'] ?? $ui['label']);
+                $statusHint = $dim['status_hint'] ?? ($st === DiscrepanciesRoutineStatus::UNAVAILABLE
+                    ? ($dim['unavailable_reason'] ?? null)
+                    : null);
             @endphp
             <div class="rounded-md border px-2.5 py-2 text-xs flex gap-2 {{ $chip }}">
                 <span class="font-bold shrink-0" aria-hidden="true">{{ $icon }}</span>
                 <div class="min-w-0">
                     <p class="font-medium leading-snug">{{ $dim['title'] ?? '' }}</p>
-                    @if ($st === 'unavailable')
+                    @if ($st === DiscrepanciesRoutineStatus::UNAVAILABLE)
                         <p class="mt-0.5 opacity-90">{{ $dim['unavailable_reason'] ?? __('Rotina indisponível') }}</p>
+                    @elseif ($st === DiscrepanciesRoutineStatus::NO_DATA)
+                        <p class="mt-0.5 font-medium">{{ $statusLabel }}</p>
+                        @if (filled($statusHint))
+                            <p class="mt-0.5 text-[11px] leading-snug opacity-90">{{ $statusHint }}</p>
+                        @endif
                     @elseif ($dim['has_issue'] ?? $dim['detected'] ?? false)
                         <p class="mt-0.5 tabular-nums font-semibold">
                             {{ number_format((int) ($dim['total'] ?? 0)) }} {{ __('ocorr.') }}
@@ -55,7 +57,12 @@
                             </div>
                         @endif
                     @else
-                        <p class="mt-0.5">{{ __('Sem pendência no filtro') }}</p>
+                        <p class="mt-0.5 font-medium">{{ $statusLabel }}</p>
+                        @if (filled($statusHint))
+                            <p class="mt-0.5 text-[11px] leading-snug opacity-90">{{ $statusHint }}</p>
+                        @else
+                            <p class="mt-0.5 opacity-90">{{ __('Cadastro verificado no filtro; nenhuma ocorrência.') }}</p>
+                        @endif
                     @endif
                 </div>
             </div>

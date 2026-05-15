@@ -88,12 +88,23 @@
                         <span class="tabular-nums font-medium">{{ number_format((int) $d['total_matriculas']) }}</span>
                     @endif
                     @if ($fundingRef !== null && isset($fundingRef['vaa_label']))
-                        · {{ __('VAAF referência:') }} <span class="font-medium">{{ $fundingRef['vaa_label'] }}</span>
+                        · {{ __('VAAF:') }} <span class="font-medium">{{ $fundingRef['vaa_label'] }}</span>
+                        @if (filled($fundingRef['vaa_fonte_label'] ?? null))
+                            <span class="text-gray-500 dark:text-gray-400">({{ $fundingRef['vaa_fonte_label'] }})</span>
+                        @endif
                     @endif
                 </p>
             </div>
-            <div class="shrink-0">
+            <div class="shrink-0 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
                 <x-dashboard.funding-loss-conditions-button :activeCheckIds="$activeCheckIds" />
+                @if ($yearFilterReady)
+                    <a
+                        href="{{ route('dashboard.analytics.discrepancies.export', request()->only(['city_id', 'ano_letivo', 'escola_id', 'curso_id', 'turno_id'])) }}"
+                        class="inline-flex items-center justify-center rounded-lg border border-rose-300 dark:border-rose-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-semibold text-rose-800 dark:text-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                    >
+                        {{ __('Exportar CSV') }}
+                    </a>
+                @endif
             </div>
         </div>
 
@@ -212,7 +223,7 @@
                             $resumoBox = match ($resumoStatus) {
                                 'danger' => 'border-rose-300/80 bg-rose-50/90 text-rose-950 dark:border-rose-700 dark:bg-rose-950/35 dark:text-rose-100',
                                 'warning' => 'border-amber-300/80 bg-amber-50/90 text-amber-950 dark:border-amber-700 dark:bg-amber-950/35 dark:text-amber-100',
-                                'neutral' => 'border-slate-300/80 bg-slate-50/90 text-slate-800 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-200',
+                                'neutral', 'no_data' => 'border-sky-300/80 bg-sky-50/90 text-sky-950 dark:border-sky-700 dark:bg-sky-950/35 dark:text-sky-100',
                                 default => 'border-emerald-300/80 bg-emerald-50/90 text-emerald-950 dark:border-emerald-700 dark:bg-emerald-950/35 dark:text-emerald-100',
                             };
                         @endphp
@@ -245,7 +256,7 @@
                 :step="$discStep['disc-mapa'] ?? null"
                 anchor="disc-mapa"
                 :title="__('Mapa de rotinas')"
-                :subtitle="__('Verde = sem pendência; cinza = indisponível; amarelo/vermelho = pendência (mesma base do Diagnóstico Geral).')"
+                :subtitle="__('Verde = cadastro analisado sem pendência; azul = sem dados no filtro (não é «tudo certo»); cinza = rotina indisponível; amarelo/vermelho = pendência.')"
             >
                 <x-dashboard.consultoria-dimensions-grid :dimensions="$dimensions" :fmt-brl="$fmtBrl" />
             </x-dashboard.consultoria-section>

@@ -12,7 +12,9 @@ use App\Support\Ieducar\DiscrepanciesCheckCatalog;
 use App\Support\Ieducar\DiscrepanciesCheckRunner;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\DiscrepanciesQueries;
+use App\Support\Ieducar\DiscrepanciesRoutineStatus;
 use App\Support\Ieducar\InclusionDashboardQueries;
+use App\Support\Ieducar\InclusionRecursoProvaQueries;
 use App\Support\Ieducar\MatriculaChartQueries;
 use Illuminate\Database\Connection;
 
@@ -80,7 +82,7 @@ class DiscrepanciesRepository
                             'has_issue' => false,
                             'rows' => [],
                             'unavailable_reason' => __('Rotina não implementada.'),
-                        ], $totalMat);
+                        ], $totalMat, $city, $filters);
 
                         continue;
                     }
@@ -93,10 +95,19 @@ class DiscrepanciesRepository
                         $spec['probe'],
                         isset($spec['hint']) ? (string) $spec['hint'] : null,
                     );
-                    $dimensions[] = $this->buildDimension($meta, $eval, $totalMat);
+                    $dimensions[] = $this->buildDimension($meta, $eval, $totalMat, $city, $filters);
 
                     if ($eval['has_issue']) {
-                        $checks[] = $this->buildCheck($meta, $eval['rows'], $totalMat);
+                        $rows = $eval['rows'];
+                        if ($id === 'recurso_prova_sem_nee' && $rows !== []) {
+                            $rows = InclusionRecursoProvaQueries::enriquecerLinhasEscolaComTiposRecurso(
+                                $db,
+                                $city,
+                                $filters,
+                                $rows,
+                            );
+                        }
+                        $checks[] = $this->buildCheck($meta, $rows, $totalMat, $city, $filters);
                     }
                 }
 
@@ -119,8 +130,8 @@ class DiscrepanciesRepository
                         'rows' => [$neeRow],
                         'unavailable_reason' => null,
                     ];
-                    $dimensions[] = $this->buildDimension($meta, $neeEval, $totalMat);
-                    $checks[] = $this->buildCheck($meta, [$neeRow], $totalMat);
+                    $dimensions[] = $this->buildDimension($meta, $neeEval, $totalMat, $city, $filters);
+                    $checks[] = $this->buildCheck($meta, [$neeRow], $totalMat, $city, $filters);
                 }
 
                 $networkKpis = null;
@@ -160,7 +171,7 @@ class DiscrepanciesRepository
                         (int) ($fromChecks['corrigiveis'] ?? 0)
                     );
                 }
-                $vaaRef = DiscrepanciesFundingImpact::vaaReferencia();
+                $fundingRefPayload = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
                 $tiposComProblema = count(array_filter($dimensions, static fn (array $d): bool => (bool) ($d['has_issue'] ?? false)));
 
                 return [
@@ -174,11 +185,8 @@ class DiscrepanciesRepository
                     'year_label' => $this->yearLabel($filters),
                     'city_name' => $city->name,
                     'total_matriculas' => $totalMat > 0 ? $totalMat : null,
-                    'funding_reference' => [
-                        'vaa_anual' => $vaaRef,
-                        'vaa_label' => DiscrepanciesFundingImpact::formatBrl($vaaRef),
-                    ],
-                    'funding_metodologia' => DiscrepanciesFundingImpact::metodologiaResumo(),
+                    'funding_reference' => $fundingRefPayload,
+                    'funding_metodologia' => DiscrepanciesFundingImpact::metodologiaResumo($city, $filters),
                     'funding_resumo_explicacao' => DiscrepanciesFundingImpact::explicacaoResumoAgregado(
                         (int) ($summary['com_problema'] ?? 0),
                         (float) ($summary['perda_estimada_anual'] ?? 0),
@@ -214,23 +222,25 @@ class DiscrepanciesRepository
      * @param  array{availability: string, has_issue: bool, rows: list<array<string, mixed>>, unavailable_reason: ?string}  $eval
      * @return array<string, mixed>
      */
-    private function buildDimension(array $meta, array $eval, int $totalMat): array
+    private function buildDimension(array $meta, array $eval, int $totalMat, ?City $city = null, ?IeducarFilterState $filters = null): array
     {
         $id = (string) ($meta['id'] ?? '');
-        $availability = (string) ($eval['availability'] ?? 'unavailable');
         $hasIssue = (bool) ($eval['has_issue'] ?? false);
         $total = $hasIssue ? array_sum(array_column($eval['rows'], 'total')) : 0;
         $severity = (string) ($meta['severity'] ?? 'warning');
 
-        $status = match (true) {
-            $availability === 'unavailable' => 'unavailable',
-            $hasIssue && $severity === 'danger' => 'danger',
-            $hasIssue => 'warning',
-            default => 'ok',
-        };
+        $resolved = ($city !== null && $filters !== null)
+            ? DiscrepanciesRoutineStatus::resolve($id, $eval, $totalMat, $city, $filters, $severity)
+            : self::legacyResolveStatus($eval, $severity);
+
+        $status = (string) $resolved['status'];
+        $availability = (string) $resolved['availability'];
+        $analyzed = $status === DiscrepanciesRoutineStatus::OK
+            || $status === 'warning'
+            || $status === 'danger';
 
         $pct = $totalMat > 0 && $hasIssue ? round(100.0 * $total / $totalMat, 1) : null;
-        $funding = $hasIssue ? DiscrepanciesFundingImpact::estimate($id, $total) : null;
+        $funding = $hasIssue ? DiscrepanciesFundingImpact::estimate($id, $total, $city, $filters) : null;
         $ganho = (float) ($funding['ganho_potencial_anual'] ?? 0);
         $perda = (float) ($funding['perda_anual'] ?? 0);
 
@@ -241,6 +251,7 @@ class DiscrepanciesRepository
             'availability' => $availability,
             'has_issue' => $hasIssue,
             'detected' => $hasIssue,
+            'analyzed' => $analyzed,
             'total' => $total,
             'pct_rede' => $pct,
             'ganho_potencial_anual' => $ganho,
@@ -248,8 +259,47 @@ class DiscrepanciesRepository
             'funding_formula' => $funding['formula'] ?? null,
             'funding_explicacao' => $funding['explicacao'] ?? null,
             'status' => $status,
-            'unavailable_reason' => $eval['unavailable_reason'] ?? null,
+            'status_label' => (string) $resolved['status_label'],
+            'status_hint' => $resolved['status_hint'] ?? null,
+            'unavailable_reason' => $status === DiscrepanciesRoutineStatus::UNAVAILABLE
+                ? ($eval['unavailable_reason'] ?? $resolved['status_hint'])
+                : null,
             'severity' => $severity,
+        ];
+    }
+
+    /**
+     * @param  array{availability: string, has_issue: bool, unavailable_reason?: ?string}  $eval
+     * @return array{status: string, status_label: string, status_hint: ?string, availability: string}
+     */
+    private static function legacyResolveStatus(array $eval, string $severity): array
+    {
+        $availability = (string) ($eval['availability'] ?? DiscrepanciesRoutineStatus::UNAVAILABLE);
+        $hasIssue = (bool) ($eval['has_issue'] ?? false);
+
+        if ($availability === DiscrepanciesRoutineStatus::UNAVAILABLE) {
+            return [
+                'status' => DiscrepanciesRoutineStatus::UNAVAILABLE,
+                'status_label' => __('Indisponível'),
+                'status_hint' => $eval['unavailable_reason'] ?? null,
+                'availability' => DiscrepanciesRoutineStatus::UNAVAILABLE,
+            ];
+        }
+
+        if ($hasIssue) {
+            return [
+                'status' => $severity === 'danger' ? 'danger' : 'warning',
+                'status_label' => __('Pendência'),
+                'status_hint' => null,
+                'availability' => 'available',
+            ];
+        }
+
+        return [
+            'status' => DiscrepanciesRoutineStatus::OK,
+            'status_label' => __('Sem pendência'),
+            'status_hint' => null,
+            'availability' => 'available',
         ];
     }
 
@@ -282,13 +332,18 @@ class DiscrepanciesRepository
      * @param  list<array{escola_id: string, escola: string, total: int}>  $schoolRows
      * @return array<string, mixed>
      */
-    private function buildCheck(array $meta, array $schoolRows, int $totalMat): array
-    {
+    private function buildCheck(
+        array $meta,
+        array $schoolRows,
+        int $totalMat,
+        ?City $city = null,
+        ?IeducarFilterState $filters = null,
+    ): array {
         $id = (string) ($meta['id'] ?? '');
         $total = array_sum(array_column($schoolRows, 'total'));
         $corrigivel = $total;
         $pct = $totalMat > 0 ? round(100.0 * $total / $totalMat, 1) : null;
-        $funding = DiscrepanciesFundingImpact::estimate($id, $total);
+        $funding = DiscrepanciesFundingImpact::estimate($id, $total, $city, $filters);
 
         $top = array_slice($schoolRows, 0, 12);
         $labelsEsc = array_map(static fn (array $r): string => (string) $r['escola'], $top);
@@ -427,14 +482,8 @@ class DiscrepanciesRepository
             }
             $total = (int) ($d['total'] ?? 0);
             $comProblema += $total;
-            $id = (string) ($d['id'] ?? '');
-            if ($id !== '') {
-                $est = DiscrepanciesFundingImpact::estimate($id, $total);
-                $perda += $est['perda_anual'];
-                $ganho += $est['ganho_potencial_anual'];
-            } else {
-                $ganho += (float) ($d['ganho_potencial_anual'] ?? 0);
-            }
+            $perda += (float) ($d['perda_estimada_anual'] ?? 0);
+            $ganho += (float) ($d['ganho_potencial_anual'] ?? 0);
         }
 
         return [

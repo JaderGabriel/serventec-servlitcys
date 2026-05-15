@@ -55,6 +55,9 @@
                                 <x-dropdown-link :href="route('admin.pedagogical-sync.index')">
                                     {{ __('Pedagógicas') }}
                                 </x-dropdown-link>
+                                <x-dropdown-link :href="route('admin.ieducar-compatibility.index')">
+                                    {{ __('Compatibilidade i-Educar') }}
+                                </x-dropdown-link>
                                 <div class="border-t border-gray-200 dark:border-gray-600"></div>
                                 <div class="px-4 py-2">
                                     <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Usuários') }}</p>

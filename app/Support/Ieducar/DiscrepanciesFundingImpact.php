@@ -2,6 +2,9 @@
 
 namespace App\Support\Ieducar;
 
+use App\Models\City;
+use App\Support\Dashboard\IeducarFilterState;
+
 /**
  * Estimativa indicativa de perda / ganho potencial (FUNDEB, VAAR, Censo) por tipo de discrepância.
  *
@@ -21,10 +24,14 @@ final class DiscrepanciesFundingImpact
      *   explicacao: array<string, mixed>
      * }
      */
-    public static function estimate(string $checkId, int $occurrences): array
-    {
+    public static function estimate(
+        string $checkId,
+        int $occurrences,
+        ?City $city = null,
+        ?IeducarFilterState $filters = null,
+    ): array {
         $occurrences = max(0, $occurrences);
-        $vaa = self::vaaReferencia();
+        $vaa = self::vaaReferencia($city, $filters);
         $peso = self::pesoParaCheck($checkId);
         $valorUnit = $vaa * $peso;
         $perda = round($occurrences * $valorUnit, 2);
@@ -51,9 +58,26 @@ final class DiscrepanciesFundingImpact
         ];
     }
 
-    public static function vaaReferencia(): float
+    public static function vaaReferencia(?City $city = null, ?IeducarFilterState $filters = null): float
     {
-        return (float) config('ieducar.discrepancies.vaa_referencia_anual', 4500);
+        return self::resolveReference($city, $filters)['vaaf'];
+    }
+
+    /**
+     * @return array{
+     *   vaaf: float,
+     *   vaat: ?float,
+     *   complementacao_vaar: ?float,
+     *   fonte: string,
+     *   fonte_label: string,
+     *   ano: ?int,
+     *   ibge: ?string,
+     *   notas: ?string
+     * }
+     */
+    public static function resolveReference(?City $city = null, ?IeducarFilterState $filters = null): array
+    {
+        return FundebMunicipalReferenceResolver::resolve($city, $filters);
     }
 
     public static function avisoGeral(): string
@@ -76,21 +100,46 @@ final class DiscrepanciesFundingImpact
      *
      * @return array{titulo: string, passos: list<string>, aviso: string, vaa_label: string}
      */
-    public static function metodologiaResumo(): array
+    public static function metodologiaResumo(?City $city = null, ?IeducarFilterState $filters = null): array
     {
-        $vaa = self::vaaReferencia();
+        $ref = self::resolveReference($city, $filters);
+        $vaa = $ref['vaaf'];
 
         return [
             'titulo' => __('Como são calculados os valores financeiros indicativos'),
             'passos' => [
                 __('1. Contagem de ocorrências — cada rotina soma matrículas, escolas ou vagas com o problema no filtro actual (ano, escola, curso).'),
-                __('2. Valor unitário de referência — VAAF municipal configurável (:vaa por aluno/ano) × peso do tipo de problema (ex.: NEE e Censo pesam mais que distorção idade/série).', ['vaa' => self::formatBrl($vaa)]),
+                __('2. Valor unitário de referência — VAAF (:vaa por aluno/ano; :fonte) × peso do tipo de problema.', [
+                    'vaa' => self::formatBrl($vaa),
+                    'fonte' => $ref['fonte_label'],
+                ]),
                 __('3. Perda estimada anual = ocorrências × valor unitário. Representa ordem de grandeza do que pode deixar de ser contabilizado ou financiado se o cadastro não for corrigido antes do Censo/VAAR.'),
                 __('4. Ganho potencial anual — neste modelo, igual à perda: valor que a rede poderia recuperar ou deixar de arriscar após corrigir o cadastro no i-Educar.'),
                 __('5. Previsão FUNDEB (aba FUNDEB) — usa outra fórmula: matrículas ativas × VAAF, sem peso por tipo; refere-se ao volume total do fundo, não a uma discrepância isolada.'),
             ],
             'aviso' => self::avisoGeral(),
             'vaa_label' => self::formatBrl($vaa),
+            'vaa_fonte' => $ref['fonte'],
+            'vaa_fonte_label' => $ref['fonte_label'],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function fundingReferencePayload(?City $city = null, ?IeducarFilterState $filters = null): array
+    {
+        $ref = self::resolveReference($city, $filters);
+
+        return [
+            'vaa_anual' => $ref['vaaf'],
+            'vaa_label' => self::formatBrl($ref['vaaf']),
+            'vaa_fonte' => $ref['fonte'],
+            'vaa_fonte_label' => $ref['fonte_label'],
+            'vaa_ano' => $ref['ano'],
+            'vaat' => $ref['vaat'],
+            'vaat_label' => $ref['vaat'] !== null ? self::formatBrl($ref['vaat']) : null,
+            'complementacao_vaar' => $ref['complementacao_vaar'],
         ];
     }
 
@@ -229,7 +278,7 @@ final class DiscrepanciesFundingImpact
     ): array {
         $pillarChecks = [
             'fundeb-base' => ['sem_raca', 'sem_sexo', 'sem_data_nascimento', 'matricula_duplicada', 'matricula_situacao_invalida', 'distorcao_idade_serie'],
-            'vaar-inclusao' => ['nee_sem_aee', 'aee_sem_nee', 'nee_subnotificacao', 'sem_raca', 'sem_sexo'],
+            'vaar-inclusao' => ['nee_sem_aee', 'aee_sem_nee', 'nee_subnotificacao', 'recurso_prova_sem_nee', 'nee_sem_recurso_prova', 'recurso_prova_incompativel', 'sem_raca', 'sem_sexo'],
             'vaar-indicadores' => ['escola_sem_inep', 'escola_inativa_matricula', 'distorcao_idade_serie'],
             'pnae-transporte' => ['escola_sem_geo', 'matricula_duplicada', 'matricula_situacao_invalida', 'rede_vagas_ociosas'],
         ];
@@ -251,6 +300,7 @@ final class DiscrepanciesFundingImpact
             $linked = $pillarChecks[$pid] ?? [];
             $tipos = 0;
             $indisponiveis = 0;
+            $semDados = 0;
             $ocorrencias = 0;
             $ganho = 0.0;
             $perda = 0.0;
@@ -259,8 +309,14 @@ final class DiscrepanciesFundingImpact
                 if ($c === null) {
                     continue;
                 }
-                if (($c['availability'] ?? 'available') === 'unavailable') {
+                $avail = (string) ($c['availability'] ?? 'available');
+                if ($avail === 'unavailable') {
                     $indisponiveis++;
+
+                    continue;
+                }
+                if ($avail === 'no_data' || ($c['status'] ?? '') === 'no_data') {
+                    $semDados++;
 
                     continue;
                 }
@@ -276,7 +332,7 @@ final class DiscrepanciesFundingImpact
             $status = match (true) {
                 $tipos >= 2 || $ocorrencias >= 50 => 'danger',
                 $tipos > 0 => 'warning',
-                $indisponiveis > 0 => 'neutral',
+                $indisponiveis > 0 || $semDados > 0 => 'neutral',
                 default => 'ok',
             };
 
@@ -289,10 +345,17 @@ final class DiscrepanciesFundingImpact
                     'perda' => self::formatBrl($perda),
                     'ganho' => self::formatBrl($ganho),
                 ]),
+                $indisponiveis > 0 && $semDados > 0 => __('Sem pendências nas rotinas com dados analisados; :indis rotina(s) indisponível(eis) e :sem dados sem universo no filtro (ver mapa).', [
+                    'indis' => number_format($indisponiveis),
+                    'sem' => number_format($semDados),
+                ]),
                 $indisponiveis > 0 => __('Sem pendências nas rotinas verificadas; :n rotina(s) deste eixo não pôde ser executada nesta base (ver mapa).', [
                     'n' => number_format($indisponiveis),
                 ]),
-                default => __('Nenhuma pendência detectada neste eixo para o filtro actual.'),
+                $semDados > 0 => __('Sem pendências onde houve cadastro para analisar; :n rotina(s) sem dados no filtro actual (azul no mapa — não equivale a «tudo certo»).', [
+                    'n' => number_format($semDados),
+                ]),
+                default => __('Cadastro analisado neste eixo: nenhuma pendência detectada no filtro actual.'),
             };
 
             $out[] = array_merge($pillar, [

@@ -23,9 +23,20 @@
     $fundingResumo = is_array($h['funding_resumo_explicacao'] ?? null) ? $h['funding_resumo_explicacao'] : null;
     $perdaAgreg = (float) ($summary['perda_estimada_anual'] ?? 0);
     $ganhoAgreg = (float) ($summary['ganho_potencial_anual'] ?? 0);
+    $recursoSemNee = (int) ($summary['recurso_prova_sem_nee'] ?? 0);
     $healthKpis = [
         ['label' => __('Pendências de cadastro'), 'value' => number_format((int) ($summary['pendencias_cadastro'] ?? 0)), 'tone' => 'rose'],
         ['label' => __('Módulos FUNDEB em alerta'), 'value' => number_format((int) ($summary['modulos_fundeb_alerta'] ?? 0)), 'tone' => 'amber'],
+    ];
+    if ($recursoSemNee > 0) {
+        $healthKpis[] = [
+            'label' => __('Recurso de prova sem NEE'),
+            'value' => number_format($recursoSemNee),
+            'tone' => 'violet',
+            'explicacao_resumo' => __('Matrículas com apoio INEP declarado sem cadastro de deficiência/NEE — ver Discrepâncias.'),
+        ];
+    }
+    $healthKpis = array_merge($healthKpis, [
         [
             'label' => __('Perda estimada / ano'),
             'value' => $fmtBrl($perdaAgreg),
@@ -52,7 +63,7 @@
                 'passos' => is_array($fundingResumo['passos'] ?? null) ? $fundingResumo['passos'] : [],
             ] : null,
         ],
-    ];
+    ]);
     $publicSources = is_array($h['public_data_sources'] ?? null) ? $h['public_data_sources'] : [];
     $hasPublicSources = count($publicSources['categories'] ?? []) > 0;
     $flowSteps = ConsultoriaFlow::numberedSteps([

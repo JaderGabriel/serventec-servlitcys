@@ -174,7 +174,9 @@ class MunicipalityHealthRepository
                 'ganho_potencial_anual' => (float) ($discSummary['ganho_potencial_anual'] ?? 0),
                 'escolas_afetadas' => (int) ($discSummary['escolas_afetadas'] ?? 0),
                 'total_matriculas' => $totalMat > 0 ? $totalMat : ($disc['total_matriculas'] ?? null),
+                'recurso_prova_sem_nee' => (int) data_get($inclusion, 'recurso_prova.sem_nee', 0),
             ],
+            'funding_reference' => is_array($disc['funding_reference'] ?? null) ? $disc['funding_reference'] : null,
             'cadastro_dimensions' => $cadastroDimensions,
             'active_check_ids' => is_array($disc['active_check_ids'] ?? null) ? $disc['active_check_ids'] : [],
             'thematic_blocks' => ConsultoriaThematicBridge::buildBlocks(
@@ -197,7 +199,7 @@ class MunicipalityHealthRepository
             'chart_pendencias' => $chartPendencias,
             'funding_metodologia' => is_array($disc['funding_metodologia'] ?? null)
                 ? $disc['funding_metodologia']
-                : DiscrepanciesFundingImpact::metodologiaResumo(),
+                : DiscrepanciesFundingImpact::metodologiaResumo($city, $filters),
             'funding_resumo_explicacao' => is_array($disc['funding_resumo_explicacao'] ?? null)
                 ? $disc['funding_resumo_explicacao']
                 : DiscrepanciesFundingImpact::explicacaoResumoAgregado(
@@ -218,7 +220,8 @@ class MunicipalityHealthRepository
     {
         $score = 100.0;
         foreach ($dimensions as $d) {
-            if (($d['availability'] ?? '') === 'unavailable') {
+            $avail = (string) ($d['availability'] ?? '');
+            if ($avail === 'unavailable' || $avail === 'no_data' || ($d['status'] ?? '') === 'no_data') {
                 continue;
             }
             if (! ($d['has_issue'] ?? false)) {

@@ -74,7 +74,10 @@ final class AnalyticsEmptyPayloads
             'methodology' => [],
             'nee_grupo_resumo' => null,
             'chart_raca_por_escola_stacked' => null,
+            'chart_nee_por_raca_stacked' => null,
             'nee_matriculas_por_escola' => [],
+            'recurso_prova' => null,
+            'inclusion_filters_active' => [],
         ];
     }
 

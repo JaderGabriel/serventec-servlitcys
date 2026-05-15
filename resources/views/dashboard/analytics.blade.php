@@ -55,6 +55,37 @@
                     >
                         <x-slot name="filtersExtras">
                             <input type="hidden" name="tab" :value="tab" />
+                            <template x-if="tab === 'inclusion'">
+                                <div class="col-span-full mt-1 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                                    <p class="text-xs font-semibold text-violet-800 dark:text-violet-200">{{ __('Filtros da aba Inclusão') }}</p>
+                                    <div class="flex flex-col sm:flex-row flex-wrap gap-4 text-sm">
+                                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                                            <input type="hidden" name="inclusion_somente_nee" value="0" />
+                                            <input
+                                                type="checkbox"
+                                                name="inclusion_somente_nee"
+                                                value="1"
+                                                @checked($filters->inclusionSomenteNee())
+                                                class="rounded border-gray-300 text-violet-600 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-900"
+                                                x-on:change="$el.form.querySelector('[name=inclusion_somente_inconsistencias][type=checkbox]').checked = false"
+                                            />
+                                            <span>{{ __('Só matrículas NEE') }}</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                                            <input type="hidden" name="inclusion_somente_inconsistencias" value="0" />
+                                            <input
+                                                type="checkbox"
+                                                name="inclusion_somente_inconsistencias"
+                                                value="1"
+                                                @checked($filters->inclusionSomenteInconsistencias())
+                                                class="rounded border-gray-300 text-violet-600 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-900"
+                                                x-on:change="$el.form.querySelector('[name=inclusion_somente_nee][type=checkbox]').checked = false"
+                                            />
+                                            <span>{{ __('Só inconsistências recurso × NEE') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </template>
                         </x-slot>
                     </x-dashboard.ieducar-filter-bar>
 

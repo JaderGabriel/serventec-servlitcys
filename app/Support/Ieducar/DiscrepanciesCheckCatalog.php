@@ -166,16 +166,55 @@ final class DiscrepanciesCheckCatalog
                 'severity' => 'danger',
                 'vaar_refs' => ['Censo — situação da escola', 'FUNDEB — matrícula'],
             ],
-            'escola_sem_geo' => [
-                'id' => 'escola_sem_geo',
-                'title' => __('Escola sem geolocalização com matrículas'),
+            'recurso_prova_sem_nee' => [
+                'id' => 'recurso_prova_sem_nee',
+                'title' => __('Recurso de prova INEP sem cadastro de NEE'),
                 'explanation' => __(
-                    'Unidades com matrículas no filtro sem latitude/longitude na tabela escola (quando as colunas existem na base).'
+                    'Matrículas com recurso de prova registado (aba Recursos prova INEP / tabela detectada na base) sem vínculo em fisica_deficiencia ou aluno_deficiencia. Ex.: óculos ou tempo adicional na prova sem caracterização de deficiência — pode ser legítimo ou omissão no Censo; requer revisão pedagógica.'
                 ),
                 'impact' => __(
-                    'Afeta mapas, transporte e cruzamentos territoriais; dificulta comprovação de oferta por território.'
+                    'Inconsistência entre apoio declarado para avaliações INEP e educação especial no cadastro; risco em validação do Educacenso e no eixo inclusão do VAAR.'
                 ),
-                'correction' => __('Preencher coordenadas na escola ou vincular INEP para geocodificação.'),
+                'correction' => __('Confirmar se o aluno tem NEE e registar deficiência, ou remover recurso se não aplicável; alinhar antes da exportação ao Censo.'),
+                'severity' => 'warning',
+                'vaar_refs' => ['Censo — recursos de avaliação', 'VAAR — inclusão'],
+            ],
+            'nee_sem_recurso_prova' => [
+                'id' => 'nee_sem_recurso_prova',
+                'title' => __('NEE cadastrado sem recurso de prova INEP'),
+                'explanation' => __(
+                    'Alunos com deficiência/NEE no cadastro mas sem recurso de prova registado, quando a rede exige coerência Censo (IEDUCAR_INCLUSION_RECURSO_EXIGIR_COM_NEE=true).'
+                ),
+                'impact' => __(
+                    'Possível omissão de recursos necessários na avaliação INEP; pode afetar prestação de apoio e consistência do Educacenso.'
+                ),
+                'correction' => __('Registar recursos de prova na ficha do aluno ou rever cadastro NEE se incorreto.'),
+                'severity' => 'warning',
+                'vaar_refs' => ['Censo — recursos de avaliação', 'VAAR — inclusão'],
+            ],
+            'recurso_prova_incompativel' => [
+                'id' => 'recurso_prova_incompativel',
+                'title' => __('Recurso de prova incompatível com deficiência cadastrada'),
+                'explanation' => __(
+                    'Combinação de tipo de recurso e deficiência que não corresponde às regras configuradas (ex.: recurso de surdez sem deficiência auditiva no catálogo).'
+                ),
+                'impact' => __(
+                    'Sinal de erro de cadastro ou troca de vínculos; pode gerar questionamento em auditoria do Censo.'
+                ),
+                'correction' => __('Ajustar recurso de prova ou tipo de deficiência para refletir o perfil do aluno.'),
+                'severity' => 'warning',
+                'vaar_refs' => ['Censo — recursos de avaliação', 'Censo — deficiência'],
+            ],
+            'escola_sem_geo' => [
+                'id' => 'escola_sem_geo',
+                'title' => __('Escola sem posição no mapa'),
+                'explanation' => __(
+                    'Unidades sem coordenadas utilizáveis no mapa: sem lat/lng válidos na tabela escola do i-Educar e sem posição em school_unit_geos (lat/lng ou oficial INEP em cache). Com matrículas no filtro, lista escolas com alunos; sem matrículas no âmbito, lista unidades do cache local sem posição (mesmo critério da aba Unidades escolares em modo cache).'
+                ),
+                'impact' => __(
+                    'Afeta mapas, transporte e cruzamentos territoriais; dificulta comprovação de oferta por território e alinha com a distribuição geográfica do painel.'
+                ),
+                'correction' => __('Preencher coordenadas na escola, sincronizar INEP (Admin → Geo) ou importar coordenadas oficiais para school_unit_geos.'),
                 'severity' => 'warning',
                 'vaar_refs' => ['Censo — localização', 'Programas — transporte'],
             ],

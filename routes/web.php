@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\GeoSyncController;
+use App\Http\Controllers\Admin\IeducarCompatibilityController;
 use App\Http\Controllers\Admin\PedagogicalSyncController;
+use App\Http\Controllers\DiscrepanciesExportController;
 use App\Http\Controllers\AnalyticsDashboardController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\DashboardController;
@@ -27,6 +29,7 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
     Route::get('/dashboard/analytics', [AnalyticsDashboardController::class, 'index'])->name('dashboard.analytics');
     Route::get('/dashboard/analytics/tab', [AnalyticsDashboardController::class, 'tabPartial'])->name('dashboard.analytics.tab');
     Route::get('/dashboard/analytics/filter-options', [AnalyticsDashboardController::class, 'filterOptions'])->name('dashboard.analytics.filter-options');
+    Route::get('/dashboard/analytics/discrepancies/export', [DiscrepanciesExportController::class, 'csv'])->name('dashboard.analytics.discrepancies.export');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -56,6 +59,8 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(func
 
     Route::get('/admin/pedagogical-sync', [PedagogicalSyncController::class, 'index'])->name('admin.pedagogical-sync.index');
     Route::post('/admin/pedagogical-sync', [PedagogicalSyncController::class, 'run'])->name('admin.pedagogical-sync.run');
+
+    Route::get('/admin/ieducar-compatibility', [IeducarCompatibilityController::class, 'index'])->name('admin.ieducar-compatibility.index');
 });
 
 require __DIR__.'/auth.php';

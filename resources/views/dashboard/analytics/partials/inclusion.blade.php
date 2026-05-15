@@ -17,7 +17,12 @@
     $neeGrupoResumoTotal = is_array($neeGrupoResumo)
         ? (int) (($neeGrupoResumo['deficiencias'] ?? 0) + ($neeGrupoResumo['sindromes_tea'] ?? 0) + ($neeGrupoResumo['ne_altas_habilidades'] ?? 0))
         : 0;
+    $recursoProva = is_array($inclusionData['recurso_prova'] ?? null) ? $inclusionData['recurso_prova'] : null;
+    $recursoSchema = is_array($recursoProva['schema'] ?? null) ? $recursoProva['schema'] : null;
+    $recursoDisponivel = (bool) ($recursoSchema['available'] ?? false);
     $chartRacaPorEscolaStacked = is_array($inclusionData['chart_raca_por_escola_stacked'] ?? null) ? $inclusionData['chart_raca_por_escola_stacked'] : null;
+    $chartNeePorRacaStacked = is_array($inclusionData['chart_nee_por_raca_stacked'] ?? null) ? $inclusionData['chart_nee_por_raca_stacked'] : null;
+    $inclusionFiltersActive = is_array($inclusionData['inclusion_filters_active'] ?? null) ? $inclusionData['inclusion_filters_active'] : [];
     $neeMatriculasPorEscola = is_array($inclusionData['nee_matriculas_por_escola'] ?? null)
         ? $inclusionData['nee_matriculas_por_escola']
         : [];
@@ -51,6 +56,16 @@
                 {{ __('Gráfico de equidade por etapa:') }} <span class="font-medium text-gray-800 dark:text-gray-200">{{ $eqLabel }}</span>
             </p>
         @endif
+        @if ($inclusionFiltersActive !== [])
+            <p class="mt-2 text-xs text-violet-800 dark:text-violet-200 bg-violet-50/80 dark:bg-violet-950/30 border border-violet-200/60 dark:border-violet-800/40 rounded-md px-3 py-2">
+                <span class="font-semibold">{{ __('Filtros activos:') }}</span>
+                {{ implode(' · ', $inclusionFiltersActive) }}
+            </p>
+        @else
+            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                {{ __('Filtros opcionais «Só NEE» e «Só inconsistências» na barra de filtros (com esta aba seleccionada).') }}
+            </p>
+        @endif
     </div>
 
     @if (! empty($methodology))
@@ -75,6 +90,76 @@
             @foreach ($inclusionData['notes'] as $note)
                 <p>{{ $note }}</p>
             @endforeach
+        </div>
+    @endif
+
+    @if ($recursoProva !== null)
+        <div class="rounded-lg border border-teal-200/80 dark:border-teal-800/50 bg-white dark:bg-gray-900/40 px-4 py-4 space-y-4">
+            <div>
+                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Recursos de prova INEP (Censo)') }}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                    {{ __('Distintos do cadastro de deficiência/NEE. O painel sinaliza cruzamentos para revisão pedagógica — ex.: óculos na prova sem baixa visão cadastrada pode ser legítimo.') }}
+                </p>
+                @if (! $recursoDisponivel)
+                    <p class="mt-2 text-xs text-amber-800 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
+                        {{ $recursoProva['schema_note'] ?? __('Tabela de recursos de prova não detectada nesta base. Configure IEDUCAR_TABLE_ALUNO_RECURSO_PROVA ou SQL personalizado.') }}
+                    </p>
+                @endif
+            </div>
+            @if ($recursoDisponivel)
+                <dl class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                    <div class="rounded-md bg-teal-50/80 dark:bg-teal-950/30 border border-teal-200/60 dark:border-teal-800/40 px-3 py-2">
+                        <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Com recurso de prova') }}</dt>
+                        <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($recursoProva['com_recurso'] ?? 0)) }}</dd>
+                    </div>
+                    <div class="rounded-md bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2">
+                        <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Recurso sem NEE') }}</dt>
+                        <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($recursoProva['sem_nee'] ?? 0)) }}</dd>
+                    </div>
+                    <div class="rounded-md bg-violet-50/80 dark:bg-violet-950/30 border border-violet-200/60 dark:border-violet-800/40 px-3 py-2">
+                        <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('NEE sem recurso') }}</dt>
+                        <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($recursoProva['nee_sem_recurso'] ?? 0)) }}</dd>
+                    </div>
+                    <div class="flex items-end">
+                        <button type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">
+                            {{ __('Ver rotinas em Discrepâncias') }}
+                        </button>
+                    </div>
+                </dl>
+                @if (! empty($recursoProva['chart_catalogo']['labels']))
+                    <div class="w-full min-w-0">
+                        <x-dashboard.chart-panel
+                            :chart="$recursoProva['chart_catalogo']"
+                            :exportFilename="'inclusao-recursos-prova-catalogo'"
+                            :exportMeta="$chartExportContext"
+                            :compact="true"
+                        />
+                    </div>
+                @endif
+                @if (! empty($recursoProva['catalogo']))
+                    <div>
+                        <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-2">{{ __('Catálogo de recursos (amostra)') }}</h4>
+                        <div class="overflow-x-auto rounded-md border border-gray-200 dark:border-gray-600 max-h-48 overflow-y-auto">
+                            <table class="min-w-full text-sm">
+                                <thead class="sticky top-0 bg-gray-50 dark:bg-gray-800/95 text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+                                    <tr>
+                                        <th class="px-3 py-2 font-medium">{{ __('Recurso') }}</th>
+                                        <th class="px-3 py-2 font-medium tabular-nums text-right">{{ __('Registos') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                    @foreach (array_slice($recursoProva['catalogo'], 0, 15) as $row)
+                                        <tr>
+                                            <td class="px-3 py-2 text-gray-800 dark:text-gray-200">{{ $row['nome'] ?? '—' }}</td>
+                                            <td class="px-3 py-2 tabular-nums text-right text-gray-900 dark:text-gray-100">{{ number_format((int) ($row['total'] ?? 0)) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endif
+            @endif
         </div>
     @endif
 
@@ -125,7 +210,7 @@
         </div>
     @endif
 
-    @if (! empty($inclusionData['charts']) || is_array($aeeCross) || $hasNeeDetalheCatalogo || is_array($chartRacaPorEscolaStacked) || ! empty($neeMatriculasPorEscola))
+    @if (! empty($inclusionData['charts']) || is_array($aeeCross) || $hasNeeDetalheCatalogo || is_array($chartRacaPorEscolaStacked) || is_array($chartNeePorRacaStacked) || ! empty($neeMatriculasPorEscola))
         @if ($neeChartsCount > 0 || $hasNeeDetalheCatalogo)
             <div class="mb-8">
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('NEE — cadastro (deficiências, síndromes e altas habilidades)') }}</h3>
@@ -304,8 +389,18 @@
         @php
             $tailAfterNee = array_slice($inclusionData['charts'] ?? [], $neeChartsCount);
         @endphp
-        @if (count($tailAfterNee) > 0 || is_array($chartRacaPorEscolaStacked))
+        @if (count($tailAfterNee) > 0 || is_array($chartRacaPorEscolaStacked) || is_array($chartNeePorRacaStacked))
             <div class="space-y-6">
+                @if (is_array($chartNeePorRacaStacked) && ! empty($chartNeePorRacaStacked['labels']))
+                    <div class="w-full min-w-0">
+                        <x-dashboard.chart-panel
+                            :chart="$chartNeePorRacaStacked"
+                            :exportFilename="'inclusao-nee-por-raca-empilhado'"
+                            :exportMeta="$chartExportContext"
+                            :compact="false"
+                        />
+                    </div>
+                @endif
                 @if (count($tailAfterNee) >= 1)
                     {{-- Sexo e cor/raça: mesma altura de cartão em ecrã largo --}}
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 min-w-0 items-stretch [&>div]:flex [&>div]:flex-col [&>div]:min-h-0 xl:[&>div]:min-h-[min(32rem,75vh)] [&_.chart-panel-host]:flex-1 [&_.chart-panel-host]:flex [&_.chart-panel-host]:flex-col [&_.chart-panel-host]:min-h-0">

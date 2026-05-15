@@ -77,7 +77,7 @@ final class ConsultoriaThematicBridge
             $status = 'neutral';
         }
 
-        foreach (['nee_sem_aee', 'nee_subnotificacao'] as $cid) {
+        foreach (['nee_sem_aee', 'nee_subnotificacao', 'recurso_prova_sem_nee', 'nee_sem_recurso_prova', 'recurso_prova_incompativel'] as $cid) {
             $item = self::findDiscItem($disc, $cid);
             if ($item === null || ! ($item['has_issue'] ?? false)) {
                 continue;
@@ -123,6 +123,12 @@ final class ConsultoriaThematicBridge
             }
             if (($item['availability'] ?? '') === 'unavailable') {
                 $items[] = __(':t — rotina indisponível nesta base.', ['t' => (string) ($item['title'] ?? '')]);
+                $status = self::mergeStatus($status, 'neutral');
+
+                continue;
+            }
+            if (self::isNoDataDimension($item)) {
+                $items[] = __(':t — sem dados no filtro para analisar (não equivale a «sem pendência»).', ['t' => (string) ($item['title'] ?? '')]);
                 $status = self::mergeStatus($status, 'neutral');
 
                 continue;
@@ -186,6 +192,12 @@ final class ConsultoriaThematicBridge
                 continue;
             }
             if (($item['availability'] ?? '') === 'unavailable') {
+                continue;
+            }
+            if (self::isNoDataDimension($item)) {
+                $items[] = __(':t — sem dados no filtro para analisar.', ['t' => (string) ($item['title'] ?? '')]);
+                $status = self::mergeStatus($status, 'neutral');
+
                 continue;
             }
             if (! ($item['has_issue'] ?? false)) {
@@ -359,17 +371,30 @@ final class ConsultoriaThematicBridge
      */
     private static function itemStatus(array $item): string
     {
-        if (($item['availability'] ?? '') === 'unavailable') {
+        $st = (string) ($item['status'] ?? '');
+        if (($item['availability'] ?? '') === 'unavailable' || $st === 'unavailable') {
+            return 'neutral';
+        }
+        if (($item['availability'] ?? '') === 'no_data' || $st === 'no_data') {
             return 'neutral';
         }
         if (! ($item['has_issue'] ?? false)) {
             return 'success';
         }
 
-        return match ((string) ($item['status'] ?? $item['severity'] ?? 'warning')) {
+        return match ($st !== '' ? $st : (string) ($item['severity'] ?? 'warning')) {
             'danger' => 'danger',
             default => 'warning',
         };
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     */
+    private static function isNoDataDimension(array $item): bool
+    {
+        return ($item['availability'] ?? '') === 'no_data'
+            || ($item['status'] ?? '') === 'no_data';
     }
 
     private static function mergeStatus(string $current, string $next): string

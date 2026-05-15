@@ -10,6 +10,8 @@ use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\IeducarSqlPlaceholders;
 use App\Support\Ieducar\InclusionDashboardQueries;
+use App\Support\Ieducar\InclusionMatriculaScope;
+use App\Support\Ieducar\InclusionRecursoProvaQueries;
 use App\Support\Ieducar\InclusionSpecialEducationGauges;
 use App\Support\Ieducar\MatriculaAtivoFilter;
 use App\Support\Ieducar\MatriculaChartQueries;
@@ -64,7 +66,10 @@ class InclusionRepository
                 'methodology' => [],
                 'nee_grupo_resumo' => null,
                 'chart_raca_por_escola_stacked' => null,
+                'chart_nee_por_raca_stacked' => null,
                 'nee_matriculas_por_escola' => [],
+                'recurso_prova' => null,
+                'inclusion_filters_active' => [],
             ];
         }
 
@@ -78,10 +83,12 @@ class InclusionRepository
         $equidadeFonte = null;
         $neeGrupoResumo = null;
         $chartRacaPorEscolaStacked = null;
+        $chartNeePorRacaStacked = null;
         $neeMatriculasPorEscola = [];
+        $recursoProva = null;
 
         try {
-            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo, &$chartRacaPorEscolaStacked, &$neeMatriculasPorEscola) {
+            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo, &$chartRacaPorEscolaStacked, &$chartNeePorRacaStacked, &$neeMatriculasPorEscola, &$recursoProva) {
                 $totalMatriculas = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
 
                 try {
@@ -101,6 +108,20 @@ class InclusionRepository
                     $aeeCross = InclusionDashboardQueries::buildAeeCrossEnrollment($db, $city, $filters);
                 } catch (\Throwable) {
                     $aeeCross = null;
+                }
+
+                try {
+                    $cruzamento = InclusionRecursoProvaQueries::resumoCruzamento($db, $city, $filters);
+                    $catalogo = is_array($cruzamento['catalogo'] ?? null) ? $cruzamento['catalogo'] : [];
+                    $recursoProva = array_merge(
+                        $cruzamento,
+                        [
+                            'schema' => InclusionRecursoProvaQueries::schema($db, $city),
+                            'chart_catalogo' => InclusionRecursoProvaQueries::catalogoChart($catalogo),
+                        ],
+                    );
+                } catch (\Throwable) {
+                    $recursoProva = null;
                 }
 
                 try {
@@ -178,6 +199,12 @@ class InclusionRepository
                     $chartRacaPorEscolaStacked = null;
                 }
 
+                try {
+                    $chartNeePorRacaStacked = $this->neePorRacaStackedChart($db, $city, $filters);
+                } catch (\Throwable) {
+                    $chartNeePorRacaStacked = null;
+                }
+
                 $escolaRacaNee = $this->escolaRacaENeeMultiLineChart($db, $city, $filters);
                 $charts = array_merge(
                     $neeCharts,
@@ -216,7 +243,10 @@ class InclusionRepository
                 'methodology' => [],
                 'nee_grupo_resumo' => null,
                 'chart_raca_por_escola_stacked' => null,
+                'chart_nee_por_raca_stacked' => null,
                 'nee_matriculas_por_escola' => [],
+                'recurso_prova' => null,
+                'inclusion_filters_active' => [],
             ];
         }
 
@@ -235,8 +265,27 @@ class InclusionRepository
             'methodology' => $methodology,
             'nee_grupo_resumo' => $neeGrupoResumo,
             'chart_raca_por_escola_stacked' => $chartRacaPorEscolaStacked,
+            'chart_nee_por_raca_stacked' => $chartNeePorRacaStacked,
             'nee_matriculas_por_escola' => $neeMatriculasPorEscola,
+            'recurso_prova' => $recursoProva,
+            'inclusion_filters_active' => $this->inclusionFiltersActiveLabels($filters),
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function inclusionFiltersActiveLabels(IeducarFilterState $filters): array
+    {
+        $out = [];
+        if ($filters->inclusionSomenteNee()) {
+            $out[] = __('Só matrículas de alunos com NEE (aluno_deficiência / fisica_deficiência)');
+        }
+        if ($filters->inclusionSomenteInconsistencias()) {
+            $out[] = __('Só matrículas com inconsistência recurso de prova × NEE');
+        }
+
+        return $out;
     }
 
     /**
@@ -256,6 +305,8 @@ class InclusionRepository
             __('Distorção idade/série: em PostgreSQL com física e série, mostra-se a contagem por unidade escolar (referência 1 de março); caso contrário usa-se o gráfico de barras por série com quantidades de alunos com distorção (critério INEP +2 anos).'),
             __('Educação especial: com SQL personalizado (IEDUCAR_SQL_INCLUSION_GAUGE_*), as percentagens seguem a regra definida pelo município; sem SQL, usa-se o pivô aluno_deficiência (procurado em vários schemas) e o nome no cadastro de deficiências — pode divergir de outros relatórios.'),
             __('Cruzamento AEE: turmas «AEE» são identificadas por palavras-chave no nome da turma e do curso (config/ieducar.php, inclusão). Os segmentos das outras matrículas do mesmo aluno são heurísticos; ajuste IEDUCAR_INCLUSION_* se os rótulos não coincidirem com a rede.'),
+            __('Recursos de prova INEP (Censo): distintos do cadastro de deficiência/NEE. O painel detecta tabelas/colunas na base ou usa SQL em IEDUCAR_SQL_INCLUSION_RECURSO_PROVA_*; um aluno pode ter recurso (ex.: óculos na prova) sem deficiência — sinaliza-se para revisão, não como erro automático.'),
+            __('Filtros da aba: «Só NEE» restringe todas as contagens a alunos com registo em aluno_deficiência; «Só inconsistências recurso × NEE» limita a matrículas em cruzamentos recurso de prova sem NEE (e, se configurado, NEE sem recurso).'),
             $eq,
         ];
     }
@@ -430,6 +481,7 @@ class InclusionRepository
 
             MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
             MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
+            InclusionMatriculaScope::apply($q, $db, $city, $filters);
 
             $rows = $q->orderByDesc('c')->limit(16)->get();
             if ($rows->isEmpty()) {
@@ -1040,6 +1092,7 @@ class InclusionRepository
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+            InclusionMatriculaScope::apply($q, $db, $city, $filters);
 
             $escolaSpec = self::resolveEscolaJoinSpec($db, $city);
             if ($escolaSpec === null) {
@@ -1155,6 +1208,141 @@ class InclusionRepository
                 'outrosLabel' => $outrosLabel,
                 'eids_order' => array_keys($cell),
             ];
+        } catch (QueryException|\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Barras empilhadas por cor/raça: segmentos «Com NEE» e «Sem NEE» (rede no filtro).
+     *
+     * @return ?array<string, mixed>
+     */
+    private function neePorRacaStackedChart(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $aluno = IeducarSchema::resolveTable('aluno', $city);
+            $pessoa = IeducarSchema::resolveTable('pessoa', $city);
+
+            if (! IeducarColumnInspector::tableExists($db, $mat, $city)
+                || ! IeducarColumnInspector::tableExists($db, $aluno, $city)) {
+                return null;
+            }
+
+            $racaSpec = self::resolveRacaJoinSpec($db, $city);
+            if ($racaSpec === null) {
+                return null;
+            }
+
+            $adTable = IeducarColumnInspector::findQualifiedTableByNames($db, ['aluno_deficiencia', 'aluno_deficiencias'], $city);
+            if ($adTable === null) {
+                return null;
+            }
+            $adAluno = IeducarColumnInspector::firstExistingColumn($db, $adTable, [
+                'ref_cod_aluno',
+                'cod_aluno',
+                (string) config('ieducar.columns.aluno_deficiencia.aluno'),
+            ], $city);
+            if ($adAluno === null) {
+                return null;
+            }
+
+            $racaT = $racaSpec['qualified'];
+            $rIdCol = $racaSpec['idCol'];
+            $rNameCol = $racaSpec['nameCol'];
+            $mAluno = (string) config('ieducar.columns.matricula.aluno');
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $mId = (string) config('ieducar.columns.matricula.id');
+            $aId = (string) config('ieducar.columns.aluno.id');
+            $grammar = $db->getQueryGrammar();
+            $wMid = $grammar->wrap('m').'.'.$grammar->wrap($mId);
+            $wAid = $grammar->wrap('a').'.'.$grammar->wrap($aId);
+
+            $aPessoa = IeducarColumnInspector::firstExistingColumn($db, $aluno, [
+                'ref_cod_pessoa', 'ref_idpes', 'idpes',
+                (string) config('ieducar.columns.aluno.pessoa'),
+            ], $city);
+            if ($aPessoa === null) {
+                return null;
+            }
+
+            $aIdpes = IeducarColumnInspector::firstExistingColumn($db, $aluno, ['ref_idpes', 'idpes'], $city);
+            $fisicaRacaPivot = self::resolveFisicaRacaPivotSpec($db, $city);
+            $pRaca = null;
+            $pId = null;
+            if (IeducarColumnInspector::tableExists($db, $pessoa, $city)) {
+                $pId = IeducarColumnInspector::firstExistingColumn($db, $pessoa, ['idpes', 'id', 'cod_pessoa'], $city);
+                $pRaca = IeducarColumnInspector::firstExistingColumn($db, $pessoa, [
+                    'ref_cod_raca', 'cod_raca', 'id_raca', 'raca_id', 'cor_raca',
+                ], $city);
+            }
+            $aRaca = $pRaca === null
+                ? IeducarColumnInspector::firstExistingColumn($db, $aluno, ['ref_cod_raca', 'cod_raca'], $city)
+                : null;
+
+            $q = $db->table($mat.' as m')->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
+
+            if ($fisicaRacaPivot !== null && $aIdpes !== null) {
+                $q->leftJoin($fisicaRacaPivot['qualified'].' as fr', 'a.'.$aIdpes, '=', 'fr.'.$fisicaRacaPivot['idpesCol']);
+                self::leftJoinRacaCatalogOnFk($db, $q, 'fr', $fisicaRacaPivot['racaFkCol'], $racaT, 'r', $rIdCol);
+            } elseif ($pRaca !== null && $pId !== null) {
+                $q->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId);
+                self::leftJoinRacaCatalogOnFk($db, $q, 'p', $pRaca, $racaT, 'r', $rIdCol);
+            } elseif ($aRaca !== null) {
+                self::leftJoinRacaCatalogOnFk($db, $q, 'a', $aRaca, $racaT, 'r', $rIdCol);
+            } else {
+                return null;
+            }
+
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
+            InclusionMatriculaScope::apply($q, $db, $city, $filters);
+
+            $neeExists = 'EXISTS (SELECT 1 FROM '.$adTable.' ad_nee WHERE ad_nee.'.$adAluno.' = '.$wAid.')';
+            if ($db->getDriverName() === 'pgsql') {
+                $comNeeExpr = 'COUNT(DISTINCT '.$wMid.') FILTER (WHERE '.$neeExists.')';
+                $semNeeExpr = 'COUNT(DISTINCT '.$wMid.') FILTER (WHERE NOT ('.$neeExists.'))';
+            } else {
+                $comNeeExpr = 'COUNT(DISTINCT CASE WHEN '.$neeExists.' THEN '.$wMid.' END)';
+                $semNeeExpr = 'COUNT(DISTINCT CASE WHEN NOT ('.$neeExists.') THEN '.$wMid.' END)';
+            }
+
+            $q->selectRaw('r.'.$rIdCol.' as rid')
+                ->selectRaw('MAX(r.'.$rNameCol.') as rname')
+                ->selectRaw($comNeeExpr.' as com_nee')
+                ->selectRaw($semNeeExpr.' as sem_nee')
+                ->groupBy('r.'.$rIdCol)
+                ->havingRaw('('.$comNeeExpr.' + '.$semNeeExpr.') > 0');
+
+            $rows = $q->orderByRaw('('.$comNeeExpr.' + '.$semNeeExpr.') DESC')->limit(14)->get();
+            if ($rows->isEmpty()) {
+                return null;
+            }
+
+            $labels = [];
+            $comNee = [];
+            $semNee = [];
+            foreach ($rows as $row) {
+                $nm = $row->rname ?? null;
+                $labels[] = $nm !== null && (string) $nm !== '' ? (string) $nm : __('Não declarado');
+                $comNee[] = (float) ($row->com_nee ?? 0);
+                $semNee[] = (float) ($row->sem_nee ?? 0);
+            }
+
+            $chart = ChartPayload::barHorizontalStacked(
+                __('Matrículas por cor ou raça — NEE × não NEE (empilhado)'),
+                __('Matrículas'),
+                $labels,
+                [
+                    ['label' => __('Com NEE (aluno_deficiência)'), 'data' => $comNee],
+                    ['label' => __('Sem NEE no cadastro'), 'data' => $semNee],
+                ],
+            );
+            $chart['panel_layout'] = 'full';
+            $chart['footnote'] = __('Cada barra é uma categoria de cor/raça no cadastro (mesma lógica do gráfico global de raça). Segmentos: matrículas distintas de alunos com e sem registo em aluno_deficiência. Respeita os filtros da aba, incluindo «só NEE» ou «só inconsistências» quando activos.');
+
+            return $chart;
         } catch (QueryException|\Throwable) {
             return null;
         }

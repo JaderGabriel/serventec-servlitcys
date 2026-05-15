@@ -2,7 +2,9 @@
 
 namespace App\Support\Ieducar;
 
+use App\Models\City;
 use App\Support\Dashboard\ChartPayload;
+use App\Support\Dashboard\IeducarFilterState;
 
 /**
  * Previsão indicativa de recursos FUNDEB (matrículas × VAAF de referência) e pisos legais de aplicação.
@@ -21,9 +23,11 @@ final class FundebResourceProjection
         string $yearLabel,
         array $enrollmentData,
         ?array $discrepanciesData = null,
+        ?City $city = null,
+        ?IeducarFilterState $filters = null,
     ): array {
         if ($matriculas <= 0) {
-            return self::empty($yearLabel);
+            return self::empty($yearLabel, $city, $filters);
         }
 
         $cfg = config('ieducar.fundeb', []);
@@ -31,7 +35,8 @@ final class FundebResourceProjection
             $cfg = [];
         }
 
-        $vaa = (float) config('ieducar.discrepancies.vaa_referencia_anual', 4500);
+        $ref = DiscrepanciesFundingImpact::resolveReference($city, $filters);
+        $vaa = $ref['vaaf'];
         $aviso = (string) ($cfg['aviso_previsao'] ?? config('ieducar.discrepancies.aviso_financeiro', ''));
 
         $base = round($matriculas * $vaa, 2);
@@ -59,6 +64,11 @@ final class FundebResourceProjection
             'matriculas_base' => $matriculas,
             'vaa_referencia' => $vaa,
             'vaa_label' => $fmt($vaa),
+            'vaa_fonte' => $ref['fonte'],
+            'vaa_fonte_label' => $ref['fonte_label'],
+            'vaa_ano' => $ref['ano'],
+            'vaat_label' => $ref['vaat'] !== null ? $fmt($ref['vaat']) : null,
+            'complementacao_vaar_oficial' => $ref['complementacao_vaar'],
             'formula_base' => __(
                 ':mat matrícula(s) ativa(s) × :vaa (VAAF de referência configurável) = :total.',
                 [
@@ -87,7 +97,8 @@ final class FundebResourceProjection
                             'total' => $fmt($previsaoReferencia),
                         ]),
                         'formula_expandida' => __(
-                            'Previsão base = matrículas ativas no filtro × VAAF de referência (IEDUCAR_DISC_VAA_REFERENCIA), sem peso por tipo de discrepância.',
+                            'Previsão base = matrículas ativas no filtro × VAAF (:fonte), sem peso por tipo de discrepância.',
+                            ['fonte' => $ref['fonte_label']],
                         ),
                         'passos' => [
                             __('Matrículas no filtro: :n.', ['n' => number_format($matriculas, 0, ',', '.')]),
@@ -170,15 +181,22 @@ final class FundebResourceProjection
     /**
      * @return array<string, mixed>
      */
-    private static function empty(string $yearLabel): array
+    private static function empty(string $yearLabel, ?City $city = null, ?IeducarFilterState $filters = null): array
     {
+        $ref = DiscrepanciesFundingImpact::resolveReference($city, $filters);
+
         return [
             'available' => false,
             'year_label' => $yearLabel,
             'aviso' => (string) config('ieducar.discrepancies.aviso_financeiro', ''),
             'matriculas_base' => 0,
-            'vaa_referencia' => (float) config('ieducar.discrepancies.vaa_referencia_anual', 4500),
-            'vaa_label' => DiscrepanciesFundingImpact::formatBrl((float) config('ieducar.discrepancies.vaa_referencia_anual', 4500)),
+            'vaa_referencia' => $ref['vaaf'],
+            'vaa_label' => DiscrepanciesFundingImpact::formatBrl($ref['vaaf']),
+            'vaa_fonte' => $ref['fonte'],
+            'vaa_fonte_label' => $ref['fonte_label'],
+            'vaa_ano' => $ref['ano'],
+            'vaat_label' => $ref['vaat'] !== null ? DiscrepanciesFundingImpact::formatBrl($ref['vaat']) : null,
+            'complementacao_vaar_oficial' => $ref['complementacao_vaar'],
             'formula_base' => __('Sem matrículas ativas no filtro — não é possível estimar recursos.'),
             'kpis' => [],
             'totais' => [],

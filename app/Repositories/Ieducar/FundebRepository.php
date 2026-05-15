@@ -59,6 +59,8 @@ class FundebRepository
                 $yearLabel,
                 $enrollmentData,
                 $discrepanciesData,
+                $city,
+                $filters,
             ),
             'intro' => __(
                 'O FUNDEB financia a manutenção e o desenvolvimento da educação básica. O MEC acompanha condicionalidades ligadas ao Valor-Aluno-Ano-Resultado (VAAR), com registro e documentação no Sistema Simec. Este painel não substitui o módulo oficial: organiza um roteiro por «módulos» temáticos, explica o que costuma ser exigido e cruza, quando possível, indicadores da base i-Educar da cidade (respeitando os filtros actuais).'

@@ -112,6 +112,10 @@ return [
         'deficiencia' => env('IEDUCAR_TABLE_DEFICIENCIA', 'cadastro.deficiencia'),
         /** Pessoa ↔ deficiência (Portabilis / BIS); prioridade na aba Inclusão em relação a aluno_deficiência. */
         'fisica_deficiencia' => env('IEDUCAR_TABLE_FISICA_DEFICIENCIA', ''),
+        /** Pivô aluno/pessoa ↔ recurso de prova INEP (se vazio, detecção automática). */
+        'aluno_recurso_prova' => env('IEDUCAR_TABLE_ALUNO_RECURSO_PROVA', ''),
+        /** Catálogo de tipos de recurso de prova INEP. */
+        'recurso_prova_catalogo' => env('IEDUCAR_TABLE_RECURSO_PROVA_CATALOGO', ''),
         /**
          * Educacenso (i-Educar 2.x PostgreSQL): ligação escola interna ↔ código INEP.
          * Ver migration legacy `create_modules_educacenso_cod_escola_table` no repositório portabilis/i-educar.
@@ -260,6 +264,10 @@ return [
             'id' => env('IEDUCAR_COL_DEFICIENCIA_ID', 'cod_deficiencia'),
             'name' => env('IEDUCAR_COL_DEFICIENCIA_NAME', 'nm_deficiencia'),
         ],
+        'recurso_prova' => [
+            'id' => env('IEDUCAR_COL_RECURSO_PROVA_ID', 'cod_recurso'),
+            'name' => env('IEDUCAR_COL_RECURSO_PROVA_NAME', 'nm_recurso'),
+        ],
         'nivel_ensino' => [
             'id' => env('IEDUCAR_COL_NIVEL_ID', 'cod_nivel_ensino'),
             'name' => env('IEDUCAR_COL_NIVEL_NAME', 'nm_nivel'),
@@ -344,6 +352,10 @@ return [
         'inclusion_gauge_deficiencia' => env('IEDUCAR_SQL_INCLUSION_GAUGE_DEF'),
         'inclusion_gauge_sindrome' => env('IEDUCAR_SQL_INCLUSION_GAUGE_SINDROME'),
         'inclusion_gauge_altas_habilidades' => env('IEDUCAR_SQL_INCLUSION_GAUGE_ALTAS_HABILIDADES'),
+        /** Subquery: devolve coluna cod_aluno (ou ref_cod_aluno). Placeholders como inclusion_raca. */
+        'inclusion_recurso_prova_alunos' => env('IEDUCAR_SQL_INCLUSION_RECURSO_PROVA_ALUNOS'),
+        /** Várias linhas: nome, total — catálogo de recursos por matrículas no filtro. */
+        'inclusion_recurso_prova_catalogo' => env('IEDUCAR_SQL_INCLUSION_RECURSO_PROVA_CATALOGO'),
         /** Uma linha com índice ou percentual de distorção idade/série na rede (opcional). Ex.: SELECT 12.5 AS percentual */
         'distorcao_rede' => env('IEDUCAR_SQL_DISTORCAO_REDE'),
         /**
@@ -496,6 +508,13 @@ return [
     */
 
     'fundeb' => [
+        /*
+         * VAAF por IBGE (7 dígitos). Valor numérico ou mapa por ano:
+         * '2910800' => 5120.50
+         * '2910800' => ['2024' => ['vaaf' => 5120.50, 'vaat' => 4800, 'complementacao_vaar' => 1200000]]
+         */
+        'vaaf_por_ibge' => [],
+
         'aviso_previsao' => (string) env(
             'IEDUCAR_FUNDEB_AVISO_PREVISAO',
             'Previsão com base nas matrículas ativas do i-Educar no filtro e VAAF de referência (IEDUCAR_DISC_VAA_REFERENCIA). Não inclui receitas próprias, ICMS/ISS repassados nem valor oficial de complementação VAAR — consulte FNDE, Simec e Tesouro Transparente.'
@@ -546,6 +565,9 @@ return [
             'escola_sem_inep' => 1.8,
             'escola_inativa_matricula' => 1.6,
             'escola_sem_geo' => 0.5,
+            'recurso_prova_sem_nee' => 1.1,
+            'nee_sem_recurso_prova' => 0.9,
+            'recurso_prova_incompativel' => 1.0,
             'matricula_duplicada' => 1.4,
             'matricula_situacao_invalida' => 1.3,
             'distorcao_idade_serie' => 0.4,
@@ -576,6 +598,25 @@ return [
     ],
 
     'inclusion' => [
+        'recurso_prova_exigir_com_nee' => filter_var(env('IEDUCAR_INCLUSION_RECURSO_EXIGIR_COM_NEE', false), FILTER_VALIDATE_BOOL),
+        'recurso_prova_column_patterns' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'IEDUCAR_INCLUSION_RECURSO_PROVA_COLUMN_PATTERNS',
+            '%recurso%,%prova%,%oculos%,%lupa%,%ledor%,%interprete%,%braille%'
+        ))))),
+        'recurso_alto_impacto_keywords' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'IEDUCAR_INCLUSION_RECURSO_ALTO_IMPACTO',
+            'ledor,intérprete,interprete,braille,surdo,cegueira,prova em braille,libras'
+        ))))),
+        'recurso_deficiencia_incompatibilidades' => [
+            [
+                'recurso' => ['ledor', 'braille', 'prova ampliada', 'fonte ampliada'],
+                'deficiencia' => ['visual', 'cegueira', 'baixa vis', 'visão'],
+            ],
+            [
+                'recurso' => ['intérprete', 'interprete', 'libras', 'surdo'],
+                'deficiencia' => ['audit', 'surdez', 'surdo'],
+            ],
+        ],
         'aee_keywords' => array_values(array_filter(array_map('trim', explode(',', (string) env(
             'IEDUCAR_INCLUSION_AEE_KEYWORDS',
             'aee,atendimento educacional especializado,atendimento especializado,sala de recurso,sala multifuncional,multifuncional'

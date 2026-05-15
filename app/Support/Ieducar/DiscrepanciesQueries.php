@@ -3,6 +3,7 @@
 namespace App\Support\Ieducar;
 
 use App\Models\City;
+use App\Models\SchoolUnitGeo;
 use App\Support\Dashboard\IeducarFilterState;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
@@ -455,6 +456,14 @@ final class DiscrepanciesQueries
         return ['qualified' => $qualified, 'idCol' => $idCol, 'nameCol' => $nameCol];
     }
 
+    /**
+     * @return \Closure(Builder): void|null
+     */
+    public static function alunosComNeeSubqueryPublic(Connection $db, City $city): ?\Closure
+    {
+        return self::alunosComNeeSubquery($db, $city);
+    }
+
     private static function applyNeeAlunoExists(Builder $q, Connection $db, City $city, string $alunoAlias, string $aIdCol): bool
     {
         $sub = self::alunosComNeeSubquery($db, $city);
@@ -677,11 +686,35 @@ final class DiscrepanciesQueries
     }
 
     /**
-     * Escolas com matrículas e sem latitude/longitude na tabela escola.
+     * Escolas sem posição utilizável no mapa (alinhado a Unidades escolares).
+     *
+     * Com matrículas no filtro: sem lat/lng válidos na escola i-Educar e sem coordenadas em school_unit_geos.
+     * Sem matrículas no âmbito: unidades no cache local sem coordenadas utilizáveis (modo geo_cache).
      *
      * @return list<array{escola_id: string, escola: string, total: int}>
      */
-    public static function escolasSemGeolocalizacaoComMatriculas(Connection $db, City $city, IeducarFilterState $filters): array
+    public static function escolasSemPosicaoUtilizavelParaMapa(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        $comMatricula = self::escolasComMatriculasSemPosicaoUtilizavel($db, $city, $filters);
+        if ($comMatricula !== []) {
+            return $comMatricula;
+        }
+
+        $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
+        if ($totalMat > 0) {
+            return [];
+        }
+
+        return SchoolGeoPositionResolver::escolasCacheSemPosicaoUtilizavel(
+            $city,
+            $filters->escola_id !== null ? (int) $filters->escola_id : null,
+        );
+    }
+
+    /**
+     * @return list<array{escola_id: string, escola: string, total: int}>
+     */
+    private static function escolasComMatriculasSemPosicaoUtilizavel(Connection $db, City $city, IeducarFilterState $filters): array
     {
         try {
             $escolaSpec = self::escolaJoinSpec($db, $city);
@@ -695,9 +728,6 @@ final class DiscrepanciesQueries
             $lngCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
                 'longitude', 'lng', 'lon', 'geo_lng', 'longitude_graus',
             ], $city);
-            if ($latCol === null && $lngCol === null) {
-                return [];
-            }
 
             $grammar = $db->getQueryGrammar();
             $mId = (string) config('ieducar.columns.matricula.id');
@@ -707,36 +737,57 @@ final class DiscrepanciesQueries
                 return [];
             }
 
-            $q->where(function (Builder $w) use ($grammar, $latCol, $lngCol): void {
-                if ($latCol !== null) {
-                    $la = $grammar->wrap('e').'.'.$grammar->wrap($latCol);
-                    $w->where(function (Builder $x) use ($la): void {
-                        $x->whereNull($la)->orWhere($la, '')->orWhere($la, 0);
-                    });
-                }
-                if ($lngCol !== null) {
-                    $ln = $grammar->wrap('e').'.'.$grammar->wrap($lngCol);
-                    $method = $latCol !== null ? 'orWhere' : 'where';
-                    $w->{$method}(function (Builder $x) use ($ln): void {
-                        $x->whereNull($ln)->orWhere($ln, '')->orWhere($ln, 0);
-                    });
-                }
-            });
+            $selects = [
+                'e.'.$eId.' as eid',
+                'MAX(e.'.$eName.') as ename',
+                $distinctMat.' as c',
+            ];
+            if ($latCol !== null) {
+                $selects[] = 'MAX(e.'.$grammar->wrap($latCol).') as la';
+            }
+            if ($lngCol !== null) {
+                $selects[] = 'MAX(e.'.$grammar->wrap($lngCol).') as ln';
+            }
 
-            $q->selectRaw('e.'.$eId.' as eid')
-                ->selectRaw('MAX(e.'.$eName.') as ename')
-                ->selectRaw($distinctMat.' as c')
+            $q->selectRaw(implode(', ', $selects))
                 ->groupBy('e.'.$eId)
                 ->orderByDesc('c')
-                ->limit(50);
+                ->limit(80);
 
-            $out = [];
+            /** @var array<int, array{escola_id: string, escola: string, total: int}> $pending */
+            $pending = [];
             foreach ($q->get() as $row) {
-                $out[] = [
-                    'escola_id' => (string) ($row->eid ?? ''),
+                $eid = (int) ($row->eid ?? 0);
+                if ($eid <= 0) {
+                    continue;
+                }
+                $la = $latCol !== null && isset($row->la) && is_numeric($row->la) ? (float) $row->la : null;
+                $ln = $lngCol !== null && isset($row->ln) && is_numeric($row->ln) ? (float) $row->ln : null;
+                if (SchoolGeoPositionResolver::coordsAreUsable($la, $ln)) {
+                    continue;
+                }
+                $pending[$eid] = [
+                    'escola_id' => (string) $eid,
                     'escola' => trim((string) ($row->ename ?? '')) ?: '—',
                     'total' => (int) ($row->c ?? 0),
                 ];
+            }
+
+            if ($pending === []) {
+                return [];
+            }
+
+            $geoByEid = SchoolGeoPositionResolver::geoByEscolaIds($city, array_keys($pending));
+            $out = [];
+            foreach ($pending as $eid => $row) {
+                $geo = $geoByEid[$eid] ?? null;
+                if ($geo instanceof SchoolUnitGeo && SchoolGeoPositionResolver::schoolUnitGeoHasUsable($geo)) {
+                    continue;
+                }
+                $out[] = $row;
+                if (count($out) >= 50) {
+                    break;
+                }
             }
 
             return $out;

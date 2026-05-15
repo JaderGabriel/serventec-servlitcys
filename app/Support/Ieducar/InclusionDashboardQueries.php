@@ -386,6 +386,7 @@ final class InclusionDashboardQueries
         MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
         MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
         MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+        self::applyInclusionScope($q, $db, $city, $filters);
 
         if (! self::joinEscolaOnMatriculaTurmaQuery($db, $city, $q, $escolaT, $eId)) {
             return [];
@@ -457,6 +458,7 @@ final class InclusionDashboardQueries
         MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
         MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
         MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+        self::applyInclusionScope($q, $db, $city, $filters);
 
         if (! self::joinEscolaOnMatriculaTurmaQuery($db, $city, $q, $escolaT, $eId)) {
             return [];
@@ -632,6 +634,7 @@ final class InclusionDashboardQueries
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+        self::applyInclusionScope($q, $db, $city, $filters);
             $q->join($escolaT.' as e', function ($join) use ($db, $tEsc, $ePk) {
                 if ($db->getDriverName() === 'pgsql') {
                     $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
@@ -665,6 +668,7 @@ final class InclusionDashboardQueries
         MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
         MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
         MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+        self::applyInclusionScope($q, $db, $city, $filters);
         $q->join($escolaT.' as e', 'm.'.$mEsc, '=', 'e.'.$eId)
             ->selectRaw('e.'.$eId.' as eid')
             ->selectRaw('COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).') as c')
@@ -737,6 +741,7 @@ final class InclusionDashboardQueries
                 MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
                 MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
                 MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+        self::applyInclusionScope($q, $db, $city, $filters);
                 $q->join($escolaT.' as e', function ($join) use ($db, $tEsc, $ePk) {
                     if ($db->getDriverName() === 'pgsql') {
                         $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
@@ -770,6 +775,7 @@ final class InclusionDashboardQueries
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+        self::applyInclusionScope($q, $db, $city, $filters);
             $q->join($escolaT.' as e', 'm.'.$mEsc, '=', 'e.'.$eId)
                 ->selectRaw('e.'.$eId.' as eid')
                 ->selectRaw('COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).') as c')
@@ -948,6 +954,7 @@ final class InclusionDashboardQueries
         MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
         MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
         MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+        self::applyInclusionScope($q, $db, $city, $filters);
 
         $q->leftJoin($cursoT.' as c', 't_filter.'.$tCurso, '=', 'c.'.$cId)
             ->selectRaw('a.'.$aId.' as aluno_id')
@@ -1049,6 +1056,7 @@ final class InclusionDashboardQueries
                     ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
                 MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
                 MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
+        self::applyInclusionScope($q, $db, $city, $filters);
 
                 return $q;
             };
@@ -1401,6 +1409,7 @@ final class InclusionDashboardQueries
             ->join($defTable.' as d', 'fd.'.$fisica['def_fk'], '=', 'd.'.$defPk);
         MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
         MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
+        self::applyInclusionScope($q, $db, $city, $filters);
 
         $q->selectRaw('MAX(COALESCE(d.'.$wNm.', \'Não informado\')) as deficiencia')
             ->selectRaw('COUNT(DISTINCT m.'.$g->wrap($mId).') as total')
@@ -1464,6 +1473,7 @@ final class InclusionDashboardQueries
             ->join($defTable.' as d', 'ad.'.$adDef, '=', 'd.'.$defPk);
         MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
         MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
+        self::applyInclusionScope($q, $db, $city, $filters);
 
         $q->selectRaw('MAX(d.'.$g->wrap($nmCol).') as deficiencia')
             ->selectRaw('COUNT(DISTINCT m.'.$g->wrap($mId).') as total')
@@ -1474,5 +1484,17 @@ final class InclusionDashboardQueries
         }
 
         return $q->get()->all();
+    }
+
+    private static function applyInclusionScope(
+        Builder $q,
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        string $alunoAlias = 'a',
+    ): void {
+        if (InclusionMatriculaScope::isActive($filters)) {
+            InclusionMatriculaScope::apply($q, $db, $city, $filters, $alunoAlias);
+        }
     }
 }

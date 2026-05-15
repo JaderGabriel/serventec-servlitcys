@@ -57,6 +57,14 @@
                     <p class="text-sm text-amber-800 dark:text-amber-200">{{ $proj['formula_base'] ?? __('Sem matrículas no filtro para calcular a previsão.') }}</p>
                 @else
                     <p class="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{{ $proj['formula_base'] ?? '' }}</p>
+                    @if (filled($proj['vaa_fonte_label'] ?? null))
+                        <p class="text-xs text-indigo-800 dark:text-indigo-200 bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-800/50 rounded-md px-3 py-2">
+                            {{ __('Fonte do VAAF:') }} {{ $proj['vaa_fonte_label'] }}
+                            @if (filled($proj['vaa_ano'] ?? null))
+                                · {{ __('ano :y', ['y' => $proj['vaa_ano']]) }}
+                            @endif
+                        </p>
+                    @endif
 
                     @if (filled($proj['aviso'] ?? null))
                         <p class="text-xs text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 rounded-md px-3 py-2">{{ $proj['aviso'] }}</p>

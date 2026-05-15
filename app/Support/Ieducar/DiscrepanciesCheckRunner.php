@@ -102,9 +102,27 @@ final class DiscrepanciesCheckRunner
                 'hint' => __('Requer coluna de situação ativa/inativa na tabela escola.'),
             ],
             'escola_sem_geo' => [
-                'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => DiscrepanciesQueries::escolasSemGeolocalizacaoComMatriculas($db, $city, $f),
-                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::escolaGeoColumns($db, $city),
-                'hint' => __('Requer colunas de latitude/longitude na tabela escola.'),
+                'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => DiscrepanciesQueries::escolasSemPosicaoUtilizavelParaMapa($db, $city, $f),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::escolaPosicaoMapa($db, $city),
+                'hint' => __('Requer matrícula↔escola e colunas lat/lng na escola e/ou cache school_unit_geos.'),
+            ],
+            'recurso_prova_sem_nee' => [
+                'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => InclusionRecursoProvaQueries::matriculasRecursoProvaSemNeePorEscola($db, $city, $f),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::recursoProvaCadastro($db, $city),
+                'hint' => __('Requer tabela ou colunas de recursos de prova INEP (detecção automática ou IEDUCAR_TABLE_ALUNO_RECURSO_PROVA).'),
+            ],
+            'nee_sem_recurso_prova' => [
+                'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => InclusionRecursoProvaQueries::matriculasNeeSemRecursoProvaPorEscola($db, $city, $f),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::recursoProvaCadastro($db, $city)
+                    && DiscrepanciesAvailability::neeComTurma($db, $city)
+                    && (bool) config('ieducar.inclusion.recurso_prova_exigir_com_nee', false),
+                'hint' => __('Ative IEDUCAR_INCLUSION_RECURSO_EXIGIR_COM_NEE e confirme tabelas de recurso e NEE.'),
+            ],
+            'recurso_prova_incompativel' => [
+                'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => InclusionRecursoProvaQueries::matriculasRecursoIncompativelPorEscola($db, $city, $f),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::recursoProvaCadastro($db, $city)
+                    && DiscrepanciesAvailability::neeComTurma($db, $city),
+                'hint' => __('Requer recursos de prova, NEE e regras em inclusion.recurso_deficiencia_incompatibilidades.'),
             ],
             'matricula_duplicada' => [
                 'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => DiscrepanciesQueries::matriculaDuplicadaAtivoPorEscola($db, $city, $f),
