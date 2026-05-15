@@ -828,4 +828,21 @@ return [
 
     'max_rows' => (int) env('IEDUCAR_MAX_ROWS', 2000),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Fila de sincronização administrativa (geo, pedagógico, FUNDEB, i-Educar)
+    |--------------------------------------------------------------------------
+    |
+    | Use QUEUE_CONNECTION=database (ou redis) em produção e execute:
+    | php artisan admin-sync:work
+    |
+    */
+
+    'admin_sync' => [
+        'queue' => (string) env('ADMIN_SYNC_QUEUE', 'admin-sync'),
+        'connection' => env('ADMIN_SYNC_QUEUE_CONNECTION'),
+        'job_timeout' => max(60, (int) env('ADMIN_SYNC_JOB_TIMEOUT', 3600)),
+        'tries' => max(1, (int) env('ADMIN_SYNC_TRIES', 1)),
+    ],
+
 ];

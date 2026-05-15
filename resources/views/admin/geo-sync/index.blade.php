@@ -5,7 +5,7 @@
                 {{ __('Sincronização geográfica') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ __('Ferramentas administrativas para carregar coordenadas locais (i-Educar), coordenadas oficiais (INEP/ArcGIS e fallbacks) e diagnosticar a cadeia de geocodificação.') }}
+                {{ __('Coordenadas i-Educar, INEP e microdados. Cada envio vai para a fila — não bloqueia esta página.') }}
             </p>
         </div>
     </x-slot>
@@ -23,8 +23,8 @@
                         <div>
                             <p class="text-[11px] font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">{{ __('Administração') }}</p>
                             <h1 class="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{{ __('Sincronização geográfica') }}</h1>
-                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed">
-                                {{ __('Ciclo completo: ler o cadastro i-Educar, gravar em school_unit_geos, puxar coordenadas oficiais INEP (ArcGIS e fallbacks), aplicar o fallback MICRODADOS_CADASTRO_ESCOLAS do INEP para INEPs ainda sem coordenadas, validar com o probe e consumir no mapa das Unidades Escolares — tudo a partir desta página.') }}
+                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 max-w-2xl leading-relaxed">
+                                {{ __('Passos 1–4 gravam em school_unit_geos; o passo 5 só diagnostica. Resultado e log na fila.') }}
                             </p>
                         </div>
                         @if ($cityCount > 0)
@@ -41,7 +41,16 @@
 
                 <div class="p-6 sm:p-8 space-y-8">
 
-            <div class="rounded-xl border border-slate-200/90 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/40 p-4 sm:p-5 space-y-4">
+            @include('admin.partials.sync-queued-alert')
+
+            <x-admin.queue-banner />
+
+            <details class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 px-4 py-3 text-sm">
+                <summary class="cursor-pointer font-medium text-slate-900 dark:text-slate-100">{{ __('Ordem dos passos (referência)') }}</summary>
+                <p class="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{{ __('1 i-Educar → 2 INEP oficial → 3 microdados → 4 pipeline → 5 probe (só diagnóstico). Log e resultado na fila.') }}</p>
+            </details>
+
+            <div class="hidden rounded-xl border border-slate-200/90 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/40 p-4 sm:p-5 space-y-4">
                 <div class="flex items-start gap-3">
                     <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-800 dark:ring-slate-600">
                         <svg class="h-5 w-5 text-slate-700 dark:text-slate-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
@@ -96,7 +105,7 @@
                 </div>
             </div>
 
-            <div class="rounded-xl border border-blue-200/80 bg-blue-50/70 dark:border-blue-900/50 dark:bg-blue-950/25 p-4 sm:p-5">
+            <div class="hidden rounded-xl border border-blue-200/80 bg-blue-50/70 dark:border-blue-900/50 dark:bg-blue-950/25 p-4 sm:p-5">
                 <p class="text-sm font-semibold text-blue-950 dark:text-blue-100">{{ __('Na leitura (runtime): ordem dos fallbacks INEP + camadas ArcGIS') }}</p>
                 <p class="mt-1 text-sm text-blue-900/90 dark:text-blue-200/90 leading-relaxed">
                     {{ __('Ordem interna usada pelo catálogo e pelo mapa (além das coordenadas já guardadas na escola no i-Educar e em school_unit_geos):') }}
@@ -136,42 +145,6 @@
                 </div>
             @endif
 
-            @if (session('geo_sync_result'))
-                @php $r = session('geo_sync_result'); @endphp
-                @php $ok = (int) ($r['exit_code'] ?? 1) === 0; @endphp
-                <div class="rounded-xl border {{ $ok ? 'border-emerald-200/90 dark:border-emerald-800 bg-emerald-50/90 dark:bg-emerald-950/30' : 'border-amber-200/90 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/30' }} shadow-sm overflow-hidden">
-                    <div class="border-b {{ $ok ? 'border-emerald-200/80 dark:border-emerald-800/60' : 'border-amber-200/80 dark:border-amber-800/60' }} px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex items-start gap-3 min-w-0">
-                            <div class="mt-0.5">
-                                @if ($ok)
-                                    <svg class="h-5 w-5 text-emerald-700 dark:text-emerald-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                    </svg>
-                                @else
-                                    <svg class="h-5 w-5 text-amber-700 dark:text-amber-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3h.007M10.29 3.86l-7.5 13A1.5 1.5 0 0 0 4.09 19.5h15.82a1.5 1.5 0 0 0 1.3-2.24l-7.5-13a1.5 1.5 0 0 0-2.42 0Z" />
-                                    </svg>
-                                @endif
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-sm font-semibold {{ $ok ? 'text-emerald-950 dark:text-emerald-100' : 'text-amber-950 dark:text-amber-100' }} break-words">
-                                    {{ $r['title'] ?? '' }}
-                                </p>
-                                <p class="mt-0.5 text-xs {{ $ok ? 'text-emerald-800/90 dark:text-emerald-200/90' : 'text-amber-800/90 dark:text-amber-200/90' }}">
-                                    {{ __('Código de saída') }}: <span class="font-mono tabular-nums">{{ (int) ($r['exit_code'] ?? -1) }}</span>
-                                    <span class="opacity-90">— {{ $ok ? __('sucesso') : __('verifique o log') }}</span>
-                                </p>
-                            </div>
-                        </div>
-                        <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold {{ $ok ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100' : 'bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-100' }}">
-                            {{ __('Saída do comando') }}
-                        </span>
-                    </div>
-                    <div class="p-4 max-h-[min(70vh,32rem)] overflow-y-auto bg-white/60 dark:bg-gray-900/20">
-                        <pre class="text-xs font-mono whitespace-pre-wrap break-words text-gray-800 dark:text-gray-200 leading-relaxed">{{ $r['output'] ?? '' }}</pre>
-                    </div>
-                </div>
-            @endif
 
             <div class="space-y-10">
                 <div>
@@ -218,7 +191,8 @@
                             <input type="checkbox" name="ieducar_only_missing" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
                             <span class="text-sm text-gray-700 dark:text-gray-300 group-hover:text-indigo-700 dark:group-hover:text-indigo-300">{{ __('Apenas escolas sem linha em school_unit_geos') }}</span>
                         </label>
-                        <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Executar') }}</x-primary-button>
+                        <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Enfileirar passo 1') }}</x-primary-button>
+                        <x-admin.queue-submit-hint />
                     </form>
                 </div>
 
@@ -269,7 +243,8 @@
                             <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Dry-run (simular)') }}</span>
                         </label>
                         <div class="md:col-span-2">
-                            <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Puxar dados oficiais / atualizar divergência') }}</x-primary-button>
+                            <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Enfileirar passo 2') }}</x-primary-button>
+                            <x-admin.queue-submit-hint />
                         </div>
                     </form>
                 </div>
@@ -320,7 +295,8 @@
                             <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Descarregar ZIP do INEP se o CSV ainda não existir') }}</span>
                         </label>
                         <div class="md:col-span-2">
-                            <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Executar import MICRODADOS') }}</x-primary-button>
+                            <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Enfileirar passo 3') }}</x-primary-button>
+                            <x-admin.queue-submit-hint />
                         </div>
                     </form>
                 </div>
@@ -405,7 +381,8 @@
                             </label>
                         </div>
                         <div class="md:col-span-2">
-                            <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Executar pipeline') }}</x-primary-button>
+                            <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Enfileirar pipeline') }}</x-primary-button>
+                            <x-admin.queue-submit-hint />
                         </div>
                     </form>
                 </div>
@@ -441,7 +418,10 @@
                                 @endforeach
                             </select>
                         </div>
-                        <x-secondary-button type="submit" :disabled="$cityCount === 0">{{ __('Executar diagnóstico') }}</x-secondary-button>
+                        <div>
+                            <x-secondary-button type="submit" :disabled="$cityCount === 0">{{ __('Enfileirar diagnóstico') }}</x-secondary-button>
+                            <x-admin.queue-submit-hint />
+                        </div>
                     </form>
                 </div>
                     </div>

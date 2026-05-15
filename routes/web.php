@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminSyncQueueController;
 use App\Http\Controllers\Admin\ArtisanCommandsController;
 use App\Http\Controllers\Admin\GeoSyncController;
 use App\Http\Controllers\Admin\IeducarCompatibilityController;
@@ -72,6 +73,10 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(func
     Route::post('/admin/ieducar-compatibility/fundeb-sync-all', [IeducarCompatibilityController::class, 'syncFundebAll'])->name('admin.ieducar-compatibility.fundeb-sync-all');
 
     Route::get('/admin/artisan-commands', [ArtisanCommandsController::class, 'index'])->name('admin.artisan-commands.index');
+
+    Route::get('/admin/sync-queue', [AdminSyncQueueController::class, 'index'])->name('admin.sync-queue.index');
+    Route::get('/admin/sync-queue/{task}', [AdminSyncQueueController::class, 'show'])->name('admin.sync-queue.show');
+    Route::get('/admin/sync-queue/{task}/download', [AdminSyncQueueController::class, 'download'])->name('admin.sync-queue.download');
 });
 
 require __DIR__.'/auth.php';

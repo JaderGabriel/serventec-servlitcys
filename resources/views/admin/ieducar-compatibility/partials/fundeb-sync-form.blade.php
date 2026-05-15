@@ -25,7 +25,7 @@
             alert(@js(__('Selecione ao menos um município ou marque «Todas as cidades com IBGE».')));
             return false;
         }
-        return confirm(@js(__('Executar :ops importação(ões) (:cidades município(s) × :anos ano(s))? Pode levar vários minutos.'))
+        return confirm(@js(__('Enfileirar :ops importação(ões) (:cidades município(s) × :anos ano(s))? O processamento corre na fila em segundo plano.'))
             .replace(':ops', String(this.ops))
             .replace(':cidades', String(this.cityCount))
             .replace(':anos', String(this.yearCount)));
@@ -43,7 +43,7 @@
 
         <div>
             <p class="text-sm font-semibold text-teal-950 dark:text-teal-50">{{ __('Importação FUNDEB') }}</p>
-            <p class="text-xs text-teal-900/90 dark:text-teal-200/80 mt-1">{{ __('Escolha anos e municípios; o painel de resultados aparece acima após executar.') }}</p>
+            <p class="text-xs text-teal-900/90 dark:text-teal-200/80 mt-1">{{ __('Escolha anos e municípios; cada envio vai para a fila. Resultado na tarefa concluída.') }}</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -94,8 +94,9 @@
         </div>
 
         <button type="submit" class="inline-flex items-center rounded-lg bg-teal-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 shadow-sm">
-            {{ __('Executar importação') }}
+            {{ __('Enfileirar importação') }}
         </button>
+        <x-admin.queue-submit-hint class="mt-2" />
     </form>
 
     <details class="rounded-lg border border-teal-200/60 dark:border-teal-800/60 p-3 bg-white/60 dark:bg-gray-900/30">
@@ -115,7 +116,7 @@
                     {{ __('Ano mais recente na API') }}
                 </label>
                 <button type="submit" class="inline-flex items-center rounded-lg bg-teal-700 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-600 disabled:opacity-50" @disabled(! ($city ?? null) || ! $cityIbge)>
-                    {{ __('Importar este município') }}
+                    {{ __('Enfileirar este município') }}
                 </button>
             </form>
 
@@ -127,7 +128,7 @@
                     {{ __('Ano mais recente na API') }}
                 </label>
                 <button type="submit" class="inline-flex items-center rounded-lg border border-teal-700 px-3 py-2 text-sm font-semibold text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-teal-950/50">
-                    {{ __('Todos — só ano :ano', ['ano' => $fundebImportYear]) }}
+                    {{ __('Enfileirar todos — ano :ano', ['ano' => $fundebImportYear]) }}
                 </button>
             </form>
         </div>

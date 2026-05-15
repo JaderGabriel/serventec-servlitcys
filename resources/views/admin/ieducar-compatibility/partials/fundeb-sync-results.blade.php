@@ -193,4 +193,10 @@
             </details>
         @endif
     </div>
+@else
+    <p class="rounded-lg border border-dashed border-teal-300/60 dark:border-teal-700 px-3 py-2 text-xs text-teal-900/90 dark:text-teal-200/90">
+        {{ __('Resultados das importações aparecem na') }}
+        <a href="{{ route('admin.sync-queue.index') }}" class="font-medium underline">{{ __('fila de sincronização') }}</a>
+        {{ __('quando a tarefa concluir (ou atualize esta página após enfileirar).') }}
+    </p>
 @endif

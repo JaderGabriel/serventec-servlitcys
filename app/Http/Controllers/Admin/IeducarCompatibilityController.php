@@ -2,20 +2,19 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AdminSyncDomain;
 use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\CityDataConnection;
 use App\Services\Fundeb\FundebOpenDataImportService;
-use App\Services\Fundeb\FundebImportProgress;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\FundebMunicipalReferenceResolver;
 use App\Support\Ieducar\IeducarCompatibilityProbe;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\Response;
 
 class IeducarCompatibilityController extends Controller
 {
@@ -23,6 +22,7 @@ class IeducarCompatibilityController extends Controller
         private CityDataConnection $cityData,
         private FundebMunicipioReferenceRepository $fundebReferences,
         private FundebOpenDataImportService $fundebImport,
+        private AdminSyncQueueService $syncQueue,
     ) {}
 
     public function index(Request $request): View
@@ -135,18 +135,27 @@ class IeducarCompatibilityController extends Controller
         ]);
 
         $city = City::query()->findOrFail((int) $validated['city_id']);
-        $result = $this->fundebImport->importForCityYear(
-            $city,
-            (int) $validated['ano'],
-            $request->boolean('use_nearest_year'),
+        $task = $this->syncQueue->dispatch(
+            AdminSyncDomain::Fundeb,
+            'import_city_year',
+            __('FUNDEB — :city, ano :ano', ['city' => $city->name, 'ano' => (string) $validated['ano']]),
+            [
+                'city_id' => $city->id,
+                'ano' => (int) $validated['ano'],
+                'use_nearest_year' => $request->boolean('use_nearest_year'),
+            ],
+            $city->id,
         );
 
         return redirect()
             ->route('admin.ieducar-compatibility.index', [
                 'city_id' => $city->id,
-                'fundeb_ano' => (int) ($result['imported_ano'] ?? $validated['ano']),
+                'fundeb_ano' => (int) $validated['ano'],
             ])
-            ->with($result['success'] ? 'fundeb_import_success' : 'fundeb_import_error', $result['message']);
+            ->with('admin_sync_queued', [
+                'task_id' => $task->id,
+                'message' => AdminSyncQueueService::flashQueuedMessage($task),
+            ]);
     }
 
     public function importFundebBulk(Request $request): RedirectResponse
@@ -157,10 +166,20 @@ class IeducarCompatibilityController extends Controller
             'city_id' => 'nullable|integer|exists:cities,id',
         ]);
 
-        $result = $this->fundebImport->importBulk(
-            (int) $validated['ano'],
-            $request->boolean('use_nearest_year'),
-            isset($validated['city_id']) ? (int) $validated['city_id'] : null,
+        $cityId = isset($validated['city_id']) ? (int) $validated['city_id'] : null;
+        $city = $cityId !== null ? City::query()->find($cityId) : null;
+        $task = $this->syncQueue->dispatch(
+            AdminSyncDomain::Fundeb,
+            'import_bulk_year',
+            $city !== null
+                ? __('FUNDEB em lote — :city, ano :ano', ['city' => $city->name, 'ano' => (string) $validated['ano']])
+                : __('FUNDEB em lote — todas as cidades, ano :ano', ['ano' => (string) $validated['ano']]),
+            [
+                'ano' => (int) $validated['ano'],
+                'use_nearest_year' => $request->boolean('use_nearest_year'),
+                'city_id' => $cityId,
+            ],
+            $cityId,
         );
 
         return redirect()
@@ -168,8 +187,10 @@ class IeducarCompatibilityController extends Controller
                 'city_id' => $validated['city_id'] ?? $request->input('city_id'),
                 'fundeb_ano' => (int) $validated['ano'],
             ])
-            ->with('fundeb_bulk_result', $result)
-            ->with($result['success'] ? 'fundeb_import_success' : 'fundeb_import_error', $result['message']);
+            ->with('admin_sync_queued', [
+                'task_id' => $task->id,
+                'message' => AdminSyncQueueService::flashQueuedMessage($task),
+            ]);
     }
 
     public function syncFundebAll(Request $request): RedirectResponse
@@ -215,19 +236,6 @@ class IeducarCompatibilityController extends Controller
                 ->with('fundeb_import_error', __('Nenhum ano elegível para sincronização. Ajuste o intervalo ou IEDUCAR_FUNDEB_SYNC_YEARS.'));
         }
 
-        $maxYears = max(1, (int) config('ieducar.fundeb.open_data.sync_max_years', 30));
-        $cityCount = $cityIds !== null ? count($cityIds) : City::query()->count();
-        $timeLimit = min(3600, max(600, 120 + (count($years) * max(1, $cityCount) * 2)));
-        @set_time_limit($timeLimit);
-
-        $progress = new FundebImportProgress();
-        $result = $this->fundebImport->importBulkForYears(
-            $years,
-            $request->boolean('use_nearest_year'),
-            $cityIds,
-            $progress,
-        );
-
         $syncForm = [
             'all_cities' => $request->boolean('all_cities'),
             'city_ids' => $cityIds ?? [],
@@ -235,40 +243,75 @@ class IeducarCompatibilityController extends Controller
             'ano_to' => (int) $validated['ano_to'],
         ];
 
+        $cityIdForLabel = $request->input('city_id');
+        $cityLabel = $cityIds !== null && count($cityIds) === 1
+            ? (City::query()->find((int) $cityIds[0])?->name ?? __('1 município'))
+            : ($cityIds !== null ? __(':n municípios', ['n' => (string) count($cityIds)]) : __('Todas as cidades'));
+
+        $task = $this->syncQueue->dispatch(
+            AdminSyncDomain::Fundeb,
+            'sync_all_years',
+            __('FUNDEB — sincronização :cities, anos :from–:to', [
+                'cities' => $cityLabel,
+                'from' => (string) $validated['ano_from'],
+                'to' => (string) $validated['ano_to'],
+            ]),
+            [
+                'years' => $years,
+                'ano_from' => (int) $validated['ano_from'],
+                'ano_to' => (int) $validated['ano_to'],
+                'use_nearest_year' => $request->boolean('use_nearest_year'),
+                'include_cached_years' => $request->boolean('include_cached_years', true),
+                'include_database_years' => $request->boolean('include_database_years', true),
+                'city_ids' => $cityIds,
+            ],
+            $cityIdForLabel !== null && $cityIdForLabel !== '' ? (int) $cityIdForLabel : null,
+        );
+
         return redirect()
             ->route('admin.ieducar-compatibility.index', [
                 'city_id' => $request->input('city_id'),
                 'fundeb_ano' => $years[0] ?? FundebOpenDataImportService::suggestedImportYear(),
             ])
             ->with('fundeb_sync_form', $syncForm)
-            ->with('fundeb_bulk_result', $result)
-            ->with($result['success'] ? 'fundeb_import_success' : 'fundeb_import_error', $result['message']);
+            ->with('admin_sync_queued', [
+                'task_id' => $task->id,
+                'message' => AdminSyncQueueService::flashQueuedMessage($task),
+            ]);
     }
 
-    public function export(Request $request): JsonResponse
+    public function export(Request $request): RedirectResponse
     {
         $cityId = (int) $request->input('city_id', 0);
         $city = City::query()->find($cityId);
         if ($city === null) {
-            abort(Response::HTTP_NOT_FOUND, __('Cidade não encontrada.'));
+            return redirect()
+                ->route('admin.ieducar-compatibility.index')
+                ->with('fundeb_import_error', __('Cidade não encontrada.'));
         }
 
         $filters = $this->filtersFromRequest($request);
 
-        try {
-            $document = $this->cityData->run($city, function ($db) use ($city, $filters) {
-                return IeducarCompatibilityProbe::exportDocument($db, $city, $filters);
-            });
-        } catch (\Throwable $e) {
-            abort(Response::HTTP_BAD_GATEWAY, $e->getMessage());
-        }
+        $task = $this->syncQueue->dispatch(
+            AdminSyncDomain::Ieducar,
+            'schema_probe',
+            __('Export schema probe — :city', ['city' => $city->name]),
+            [
+                'city_id' => $city->id,
+                'ano_letivo' => $filters->ano_letivo,
+                'escola_id' => $filters->escola_id,
+                'curso_id' => $filters->curso_id,
+                'turno_id' => $filters->turno_id,
+            ],
+            $city->id,
+        );
 
-        $ibge = preg_replace('/\D+/', '', (string) ($city->ibge_municipio ?? '')) ?: 'city_'.$city->id;
-        $filename = 'schema_probe_'.$ibge.'_'.now()->format('Y-m-d').'.json';
-
-        return response()->json($document, Response::HTTP_OK, [
-            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
-        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        return redirect()
+            ->route('admin.sync-queue.show', $task)
+            ->with('admin_sync_queued', [
+                'task_id' => $task->id,
+                'message' => AdminSyncQueueService::flashQueuedMessage($task),
+            ]);
     }
 
     /**

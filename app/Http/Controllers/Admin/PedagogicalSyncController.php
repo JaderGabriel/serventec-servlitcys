@@ -2,19 +2,21 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AdminSyncDomain;
 use App\Http\Controllers\Controller;
 use App\Models\City;
-use App\Services\Inep\SaebCsvPedagogicalImportService;
+use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\Inep\SaebHistoricoDatabase;
-use App\Services\Inep\SaebMicrodadosOpenDataImportService;
-use App\Services\Inep\SaebOfficialMunicipalImportService;
-use App\Services\Inep\SaebPedagogicalImportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class PedagogicalSyncController extends Controller
 {
+    public function __construct(
+        private AdminSyncQueueService $syncQueue,
+    ) {}
+
     public function index(): View
     {
         $historico = app(SaebHistoricoDatabase::class);
@@ -65,13 +67,8 @@ class PedagogicalSyncController extends Controller
         ]);
     }
 
-    public function run(
-        Request $request,
-        SaebPedagogicalImportService $import,
-        SaebOfficialMunicipalImportService $official,
-        SaebCsvPedagogicalImportService $csvImport,
-        SaebMicrodadosOpenDataImportService $microdados,
-    ): RedirectResponse {
+    public function run(Request $request): RedirectResponse
+    {
         $validated = $request->validate([
             'action' => 'required|string|in:import_official,import_urls,import_csv,import_microdados',
             'csv_file' => 'exclude_unless:action,import_csv|required|file|max:15360',
@@ -86,51 +83,18 @@ class PedagogicalSyncController extends Controller
             'official_url_override' => 'exclude_unless:action,import_official|nullable|string|max:2048',
         ]);
 
-        @set_time_limit(300);
+        $action = $validated['action'];
+        $label = match ($action) {
+            'import_official' => __('SAEB — importação oficial por município'),
+            'import_urls' => __('SAEB — importação por URLs configuradas'),
+            'import_csv' => __('SAEB — importação CSV'),
+            'import_microdados' => __('SAEB — microdados INEP'),
+            default => $action,
+        };
 
-        if ($validated['action'] === 'import_microdados') {
-            @set_time_limit(0);
-            $merge = $request->boolean('md_merge', true);
-            $resolveInep = $request->boolean('md_resolve_inep', true);
-            $purgeExtract = ! $request->boolean('md_keep_cache', false);
+        $payload = ['action' => $action];
 
-            $fallbackYear = isset($validated['md_year']) && is_numeric($validated['md_year'])
-                ? (int) $validated['md_year']
-                : max(2000, (int) date('Y') - 1);
-            $fallbackYear = max(2000, min(2100, $fallbackYear));
-
-            $url = trim((string) ($validated['md_url'] ?? ''));
-            if ($url === '') {
-                $configured = trim((string) config('ieducar.saeb.microdados_opendata_csv_url', ''));
-                if ($configured !== '') {
-                    $url = $configured;
-                }
-            }
-
-            if ($url !== '') {
-                $result = $microdados->syncFromMicrodadosFormUrl($url, $merge, $resolveInep, $purgeExtract, $fallbackYear);
-            } else {
-                $result = $microdados->syncFromInepZip($fallbackYear, $merge, $resolveInep, $purgeExtract, null);
-            }
-
-            $message = $result['message'];
-            if (! empty($result['avisos']) && is_array($result['avisos'])) {
-                $slice = array_slice($result['avisos'], 0, 25);
-                $message .= "\n\n".implode("\n", $slice);
-                if (count($result['avisos']) > 25) {
-                    $message .= "\n".__('… e mais :n avisos.', ['n' => (string) (count($result['avisos']) - 25)]);
-                }
-            }
-
-            return redirect()
-                ->route('admin.pedagogical-sync.index')
-                ->with(
-                    $result['ok'] ? 'pedagogical_sync_success' : 'pedagogical_sync_error',
-                    $message
-                );
-        }
-
-        if ($validated['action'] === 'import_csv') {
+        if ($action === 'import_csv') {
             $upload = $request->file('csv_file');
             if ($upload === null || ! $upload->isValid()) {
                 return redirect()
@@ -153,60 +117,51 @@ class PedagogicalSyncController extends Controller
             $absolute = $dir.'/'.$safe;
             $upload->move($dir, $safe);
 
-            try {
-                $merge = $request->boolean('csv_merge', true);
-                $resolveInep = $request->boolean('csv_resolve_inep', true);
-                $result = $csvImport->importFromCsvFile($absolute, $merge, $resolveInep);
-            } finally {
-                if (is_file($absolute)) {
-                    @unlink($absolute);
-                }
-            }
-
-            $message = $result['message'];
-            if (! empty($result['avisos']) && is_array($result['avisos']) && count($result['avisos']) > 0) {
-                $slice = array_slice($result['avisos'], 0, 25);
-                $message .= "\n\n".implode("\n", $slice);
-                if (count($result['avisos']) > 25) {
-                    $message .= "\n".__('… e mais :n avisos.', ['n' => (string) (count($result['avisos']) - 25)]);
-                }
-            }
-
-            return redirect()
-                ->route('admin.pedagogical-sync.index')
-                ->with(
-                    $result['ok'] ? 'pedagogical_sync_success' : 'pedagogical_sync_error',
-                    $message
-                );
+            $payload['csv_path'] = $absolute;
+            $payload['csv_merge'] = $request->boolean('csv_merge', true);
+            $payload['csv_resolve_inep'] = $request->boolean('csv_resolve_inep', true);
         }
 
-        if ($validated['action'] === 'import_official') {
-            $override = null;
-            if ($request->boolean('use_custom_official_url')) {
-                $override = trim((string) $request->input('official_url_override', ''));
-                if ($override === '' || ! str_contains($override, '{ibge}')) {
-                    return redirect()
-                        ->route('admin.pedagogical-sync.index')
-                        ->withInput()
-                        ->with('pedagogical_sync_error', __('Indique uma URL modelo com o placeholder {ibge}.'));
-                }
-                if (! str_starts_with($override, 'http://') && ! str_starts_with($override, 'https://')) {
-                    return redirect()
-                        ->route('admin.pedagogical-sync.index')
-                        ->withInput()
-                        ->with('pedagogical_sync_error', __('A URL deve começar por http:// ou https://.'));
-                }
+        if ($action === 'import_official' && $request->boolean('use_custom_official_url')) {
+            $override = trim((string) $request->input('official_url_override', ''));
+            if ($override === '' || ! str_contains($override, '{ibge}')) {
+                return redirect()
+                    ->route('admin.pedagogical-sync.index')
+                    ->withInput()
+                    ->with('pedagogical_sync_error', __('Indique uma URL modelo com o placeholder {ibge}.'));
             }
-            $result = $official->importFromOfficialTemplate($override);
-        } else {
-            $result = $import->importFromConfiguredSources();
+            if (! str_starts_with($override, 'http://') && ! str_starts_with($override, 'https://')) {
+                return redirect()
+                    ->route('admin.pedagogical-sync.index')
+                    ->withInput()
+                    ->with('pedagogical_sync_error', __('A URL deve começar por http:// ou https://.'));
+            }
+            $payload['official_url_override'] = $override;
         }
+
+        if ($action === 'import_microdados') {
+            $payload['md_year'] = isset($validated['md_year']) && is_numeric($validated['md_year'])
+                ? (int) $validated['md_year']
+                : max(2000, (int) date('Y') - 1);
+            $payload['md_url'] = trim((string) ($validated['md_url'] ?? ''));
+            $payload['md_merge'] = $request->boolean('md_merge', true);
+            $payload['md_resolve_inep'] = $request->boolean('md_resolve_inep', true);
+            $payload['md_keep_cache'] = $request->boolean('md_keep_cache', false);
+        }
+
+        $task = $this->syncQueue->dispatch(
+            AdminSyncDomain::Pedagogical,
+            $action,
+            $label,
+            $payload,
+            null,
+        );
 
         return redirect()
             ->route('admin.pedagogical-sync.index')
-            ->with(
-                $result['ok'] ? 'pedagogical_sync_success' : 'pedagogical_sync_error',
-                $result['message']
-            );
+            ->with('admin_sync_queued', [
+                'task_id' => $task->id,
+                'message' => AdminSyncQueueService::flashQueuedMessage($task),
+            ]);
     }
 }

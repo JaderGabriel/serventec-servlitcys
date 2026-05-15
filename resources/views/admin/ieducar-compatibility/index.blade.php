@@ -5,7 +5,7 @@
                 {{ __('Compatibilidade da base i-Educar') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ __('Probe de schema, referências FUNDEB (VAAF/VAAT por ano) e rotinas de discrepância por município.') }}
+                {{ __('Probe na hora; importações FUNDEB e export JSON vão para a fila.') }}
             </p>
         </div>
     </x-slot>
@@ -20,11 +20,10 @@
     <div class="py-10">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
-            @if (session('fundeb_import_success'))
-                <div class="rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-4 py-3 text-sm text-emerald-900 dark:text-emerald-100">
-                    {{ session('fundeb_import_success') }}
-                </div>
-            @endif
+            @include('admin.partials.sync-queued-alert')
+
+            <x-admin.queue-banner compact />
+
             @if (session('fundeb_import_error'))
                 <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
                     {{ session('fundeb_import_error') }}
@@ -50,8 +49,8 @@
                             {{ __('Executar probe') }}
                         </button>
                         @if ($city)
-                            <a href="{{ route('admin.ieducar-compatibility.export', ['city_id' => $city->id]) }}" class="inline-flex items-center rounded-lg border border-indigo-300 dark:border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-800 dark:text-indigo-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40">
-                                {{ __('Exportar schema_probe.json') }}
+                            <a href="{{ route('admin.ieducar-compatibility.export', ['city_id' => $city->id]) }}" class="inline-flex items-center rounded-lg border border-indigo-300 dark:border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-800 dark:text-indigo-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40" title="{{ __('Cria tarefa na fila; descarregue o JSON quando concluir.') }}">
+                                {{ __('Enfileirar export JSON') }}
                             </a>
                         @endif
                         <a href="{{ route('dashboard.analytics', ['city_id' => $city?->id, 'tab' => 'discrepancies']) }}" class="inline-flex items-center rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">

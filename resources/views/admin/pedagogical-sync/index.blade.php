@@ -10,7 +10,7 @@
                 {{ __('Sincronização pedagógica (SAEB)') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ __('Importe dados SAEB por passos (ficheiro na rede, CSV, por município ou microdados). Os gráficos só aparecem depois de guardar o ficheiro no servidor.') }}
+                {{ __('Importações SAEB em fila — acompanhe o progresso em Fila de sincronização.') }}
             </p>
         </div>
     </x-slot>
@@ -23,8 +23,8 @@
                         <div>
                             <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">{{ __('Administração') }}</p>
                             <h1 class="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{{ __('Sincronização pedagógica') }}</h1>
-                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed">
-                                {{ __('Ligue cada escola/município ao código IBGE nas cidades. Depois siga os passos abaixo — a ordem depende da fonte que tiver disponível.') }}
+                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 max-w-2xl leading-relaxed">
+                                {{ __('Cada importação abaixo cria uma tarefa na fila (não bloqueia esta página).') }}
                             </p>
                         </div>
                         @if ($cityCount > 0)
@@ -42,6 +42,10 @@
                 </div>
 
                 <div class="p-6 sm:p-8 space-y-8">
+
+                    @include('admin.partials.sync-queued-alert')
+
+                    <x-admin.queue-banner compact />
 
                     <details id="saeb-historico-resumo" class="rounded-xl border border-emerald-200/90 bg-emerald-50/40 dark:border-emerald-800/50 dark:bg-emerald-950/20 [&_summary::-webkit-details-marker]:hidden">
                         <summary class="cursor-pointer list-none px-4 py-3 flex flex-wrap items-center justify-between gap-3 font-medium text-emerald-900 dark:text-emerald-100">
@@ -98,16 +102,15 @@
                         </div>
                     </details>
 
-                    <div class="rounded-xl border border-amber-200/90 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/20 px-4 py-3 text-sm text-amber-950 dark:text-amber-100 space-y-2">
-                        <p class="font-semibold">{{ __('Descarga INEP e SSL') }}</p>
-                        <ul class="list-disc pl-5 space-y-1.5 text-xs leading-relaxed">
-                            <li>{{ __('O INEP não publica ZIP por município: o ficheiro é nacional (tipicamente >600MB). O filtro pelas cidades do sistema acontece só depois de extrair.') }}</li>
-                            <li>{{ __('Para menos dados na rede, prefira os passos 1–3 ou um CSV (passo 4) em vez do ZIP oficial.') }}</li>
-                            <li>{{ __('Erro cURL 60: atualize o pacote ca-certificates no servidor ou defina IEDUCAR_SAEB_HTTP_CA_BUNDLE. Último recurso (dev): IEDUCAR_SAEB_HTTP_INSECURE_FALLBACK=true') }}</li>
+                    <details class="rounded-lg border border-amber-200/80 dark:border-amber-900/50 px-4 py-3 text-sm text-amber-950 dark:text-amber-100">
+                        <summary class="cursor-pointer font-medium">{{ __('Notas INEP / SSL (microdados)') }}</summary>
+                        <ul class="mt-2 list-disc pl-5 space-y-1 text-xs leading-relaxed">
+                            <li>{{ __('ZIP nacional (>600 MB); filtro por cidade após extrair.') }}</li>
+                            <li>{{ __('Erro cURL 60: ca-certificates ou IEDUCAR_SAEB_HTTP_CA_BUNDLE.') }}</li>
                         </ul>
-                    </div>
+                    </details>
 
-                    <div class="rounded-xl border border-slate-200/90 bg-white dark:bg-slate-900/40 dark:border-slate-700 p-4 text-sm">
+                    <div class="hidden rounded-xl border border-slate-200/90 bg-white dark:bg-slate-900/40 dark:border-slate-700 p-4 text-sm">
                         <p class="font-semibold text-slate-900 dark:text-slate-100">{{ __('Obrigatório, opcional e pesado') }}</p>
                         <dl class="mt-3 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                             <div class="flex flex-wrap gap-x-2 gap-y-1">
@@ -266,7 +269,8 @@
                                     <form method="post" action="{{ route('admin.pedagogical-sync.run') }}" class="space-y-3">
                                         @csrf
                                         <input type="hidden" name="action" value="import_urls" />
-                                        <x-primary-button type="submit">{{ __('Executar importação por URL') }}</x-primary-button>
+                                        <x-primary-button type="submit">{{ __('Enfileirar importação por URL') }}</x-primary-button>
+                                        <x-admin.queue-submit-hint />
                                     </form>
                                 </div>
 
@@ -305,7 +309,8 @@
                                                 <span>{{ __('INEP → cod_escola') }}</span>
                                             </label>
                                         </div>
-                                        <x-primary-button type="submit">{{ __('Importar CSV') }}</x-primary-button>
+                                        <x-primary-button type="submit">{{ __('Enfileirar importação CSV') }}</x-primary-button>
+                                        <x-admin.queue-submit-hint />
                                     </form>
                                 </div>
 
@@ -340,7 +345,8 @@
                                             <label for="official_url_override" class="block text-xs font-medium text-emerald-900 dark:text-emerald-200">{{ __('URL modelo (obrigatório {ibge}; opcional {uf}, {city_id})') }}</label>
                                             <input id="official_url_override" name="official_url_override" type="url" value="{{ old('official_url_override') }}" placeholder="https://exemplo.gov.br/api/saeb/{ibge}.json" class="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-mono text-gray-900 dark:text-gray-100 px-3 py-2" />
                                         </div>
-                                        <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Sincronizar por IBGE') }}</x-primary-button>
+                                        <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Enfileirar por IBGE') }}</x-primary-button>
+                                        <x-admin.queue-submit-hint />
                                     </form>
                                 </div>
 
@@ -395,7 +401,8 @@
                                                 </label>
                                             </div>
                                             <div class="sm:col-span-2">
-                                                <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Sincronizar microdados') }}</x-primary-button>
+                                                <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Enfileirar microdados') }}</x-primary-button>
+                                                <x-admin.queue-submit-hint />
                                             </div>
                                         </form>
                                     </div>

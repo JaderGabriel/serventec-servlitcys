@@ -68,6 +68,9 @@
                             <x-dropdown-link :href="route('admin.artisan-commands.index')" :title="__('Referência CLI: geo, SAEB, FUNDEB, schema probe e deploy.')">
                                 {{ __('Comandos Artisan') }}
                             </x-dropdown-link>
+                            <x-dropdown-link :href="route('admin.sync-queue.index')" :title="__('Fila de sincronização: geo, pedagógico, FUNDEB e i-Educar.')">
+                                {{ __('Fila de sincronização') }}
+                            </x-dropdown-link>
                         @endif
                         @if (Auth::user()->canManageUsers())
                             <div class="border-t border-gray-200 dark:border-gray-600"></div>
@@ -169,6 +172,9 @@
                     </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('admin.artisan-commands.index')" :active="request()->routeIs('admin.artisan-commands.*')" :title="__('Comandos Artisan (referência CLI).')">
                         {{ __('Comandos Artisan') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('admin.sync-queue.index')" :active="request()->routeIs('admin.sync-queue.*')" :title="__('Fila de sincronização administrativa.')">
+                        {{ __('Fila de sincronização') }}
                     </x-responsive-nav-link>
                 @endif
                 @if (Auth::user()->canManageUsers())

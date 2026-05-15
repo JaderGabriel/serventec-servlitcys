@@ -2,14 +2,18 @@
 
 namespace App\Observers;
 
+use App\Enums\AdminSyncDomain;
 use App\Models\City;
 use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\Fundeb\FundebOpenDataImportService;
-use App\Services\Fundeb\FundebImportProgress;
-use Illuminate\Support\Facades\Log;
 
 final class CityFundebSyncObserver
 {
+    public function __construct(
+        private AdminSyncQueueService $syncQueue,
+    ) {}
+
     public function saved(City $city): void
     {
         if (! (bool) config('ieducar.fundeb.open_data.sync_on_city_save', true)) {
@@ -24,18 +28,17 @@ final class CityFundebSyncObserver
             return;
         }
 
-        $cityId = (int) $city->id;
         $years = FundebOpenDataImportService::yearsForNewCitySync();
 
-        dispatch(static function () use ($cityId, $years): void {
-            $progress = new FundebImportProgress(static function (string $level, string $message): void {
-                Log::info('[fundeb:city-save] '.$message, ['level' => $level]);
-            });
-            $progress->info(__('Cadastro cidade #:id — importação automática anos :anos', [
-                'id' => (string) $cityId,
-                'anos' => implode(', ', array_map('strval', $years)),
-            ]));
-            app(FundebOpenDataImportService::class)->importBulkForYears($years, false, [$cityId], $progress);
-        })->afterResponse();
+        $this->syncQueue->dispatch(
+            AdminSyncDomain::Fundeb,
+            'new_city_auto',
+            __('FUNDEB automático — nova cidade :name', ['name' => $city->name]),
+            [
+                'city_id' => (int) $city->id,
+                'years' => $years,
+            ],
+            (int) $city->id,
+        );
     }
 }

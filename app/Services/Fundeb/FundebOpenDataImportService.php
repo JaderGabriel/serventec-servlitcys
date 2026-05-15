@@ -929,6 +929,21 @@ final class FundebOpenDataImportService
     }
 
     /**
+     * Apenas lê ficheiro em cache (sem HTTP nem gravação na base).
+     *
+     * @return array{vaaf: float, vaat?: float, complementacao_vaar?: float, fonte?: string, notas?: string}|null
+     */
+    public function readCachedRowOnly(string $ibge, int $ano): ?array
+    {
+        $template = $this->cachePathTemplate();
+        if ($template === '') {
+            return null;
+        }
+
+        return $this->fetchFromJsonUrl($template, $ibge, $ano);
+    }
+
+    /**
      * @return array{vaaf: float, vaat?: float, complementacao_vaar?: float, fonte?: string, notas?: string}|null
      */
     private function fetchRow(string $ibge, int $ano): ?array

@@ -44,7 +44,7 @@
     <div>
         <h3 class="text-sm font-semibold text-teal-950 dark:text-teal-100">{{ __('Referências FUNDEB (VAAF / VAAT)') }}</h3>
         <p class="text-xs text-teal-900/90 dark:text-teal-200/90 mt-1 leading-relaxed">
-            {{ __('Escolha o intervalo de anos e os municípios. Ao cadastrar cidade com IBGE, importa automaticamente o ano vigente e o anterior (:y1 e :y2).', [
+            {{ __('Envios vão para a fila. Nova cidade com IBGE enfileira automaticamente :y1 e :y2.', [
                 'y1' => \App\Services\Fundeb\FundebOpenDataImportService::suggestedImportYear(),
                 'y2' => \App\Services\Fundeb\FundebOpenDataImportService::suggestedImportYear() - 1,
             ]) }}
@@ -220,6 +220,6 @@
             </div>
         </div>
     @elseif ($city)
-        <p class="text-sm text-amber-800 dark:text-amber-200">{{ __('Nenhuma referência gravada para este município. Use «Sincronizar todos» ou importe por ano.') }}</p>
+        <p class="text-sm text-amber-800 dark:text-amber-200">{{ __('Nenhuma referência gravada. Enfileire a importação abaixo ou consulte a fila.') }}</p>
     @endif
 </section>

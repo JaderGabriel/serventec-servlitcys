@@ -63,6 +63,9 @@
                                 <x-dropdown-link :href="route('admin.artisan-commands.index')">
                                     {{ __('Comandos Artisan') }}
                                 </x-dropdown-link>
+                                <x-dropdown-link :href="route('admin.sync-queue.index')">
+                                    {{ __('Fila de sincronização') }}
+                                </x-dropdown-link>
                             @endif
                             @if (Auth::user()->canManageUsers())
                                 <div class="border-t border-gray-200 dark:border-gray-600"></div>

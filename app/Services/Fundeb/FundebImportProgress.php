@@ -60,4 +60,14 @@ final class FundebImportProgress
     {
         return $this->entries === [];
     }
+
+    public function formatForDisplay(): string
+    {
+        $lines = [];
+        foreach ($this->entries as $entry) {
+            $lines[] = '['.($entry['at'] ?? '').'] ['.($entry['level'] ?? 'info').'] '.($entry['message'] ?? '');
+        }
+
+        return implode("\n", $lines);
+    }
 }

@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AdminSyncDomain;
 use App\Http\Controllers\Controller;
 use App\Models\City;
+use App\Services\AdminSync\AdminSyncGeoPayloadBuilder;
+use App\Services\AdminSync\AdminSyncQueueService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\View\View;
 
 class GeoSyncController extends Controller
 {
+    public function __construct(
+        private AdminSyncQueueService $syncQueue,
+    ) {}
+
     public function index(): View
     {
         $cities = City::query()->forAnalytics()->orderBy('name')->get(['id', 'name']);
@@ -28,23 +34,7 @@ class GeoSyncController extends Controller
             'threshold' => 'nullable|numeric|min:0|max:50000',
         ]);
 
-        @set_time_limit(600);
-
         $cityId = isset($validated['city_id']) ? (int) $validated['city_id'] : null;
-
-        $threshold = isset($validated['threshold']) && $validated['threshold'] !== null
-            ? (float) $validated['threshold']
-            : (float) config('ieducar.inep_geocoding.divergence_threshold_meters', 100);
-        if ($threshold <= 0) {
-            $threshold = (float) config('ieducar.inep_geocoding.divergence_threshold_meters', 100);
-        }
-
-        $ieducarOnlyMissing = $request->boolean('ieducar_only_missing');
-        $officialOnlyMissing = $request->boolean('official_only_missing');
-        $pipelineSkipIeducar = $request->boolean('pipeline_skip_ieducar');
-        $pipelineSkipMicrodadosIfMissing = $request->boolean('pipeline_skip_microdados_if_missing');
-        $pipelineMicrodadosMapCoords = $request->boolean('pipeline_microdados_map_coords');
-        $dryRun = $request->boolean('dry_run');
 
         if ($validated['step'] === 'probe' && $cityId === null) {
             return redirect()
@@ -52,93 +42,21 @@ class GeoSyncController extends Controller
                 ->with('geo_sync_error', __('Para o diagnóstico (probe), selecione uma cidade — são usados os códigos INEP de school_unit_geos dessa cidade.'));
         }
 
-        $exitCode = 1;
-        $title = '';
+        $payload = AdminSyncGeoPayloadBuilder::fromRequest($request, $validated['step']);
 
-        try {
-            switch ($validated['step']) {
-                case 'ieducar':
-                    $title = __('i-Educar → school_unit_geos');
-                    $args = ['--only-missing' => $ieducarOnlyMissing ? '1' : '0'];
-                    if ($cityId !== null) {
-                        $args['--city'] = (string) $cityId;
-                    }
-                    $exitCode = Artisan::call('app:sync-school-unit-geos', $args);
-                    break;
-
-                case 'microdados':
-                    $title = __('Import MICRODADOS INEP (cadastro de escolas)');
-                    $args = [
-                        '--also-map-coords' => $request->boolean('microdados_also_map_coords') ? '1' : '0',
-                        '--skip-if-missing' => '1',
-                        '--only-missing' => '1',
-                        '--threshold' => (string) $threshold,
-                        '--fetch' => $request->boolean('microdados_fetch', true) ? '1' : '0',
-                    ];
-                    if ($cityId !== null) {
-                        $args['--city'] = (string) $cityId;
-                    }
-                    $exitCode = Artisan::call('app:import-inep-microdados-cadastro-escolas-geo', $args);
-                    break;
-
-                case 'official':
-                    $title = __('Coordenadas oficiais INEP + divergência');
-                    $args = [
-                        '--only-missing' => $officialOnlyMissing ? '1' : '0',
-                        '--threshold' => (string) $threshold,
-                        '--dry-run' => $dryRun ? '1' : '0',
-                    ];
-                    if ($cityId !== null) {
-                        $args['--city'] = (string) $cityId;
-                    }
-                    $exitCode = Artisan::call('app:sync-school-unit-geos-official', $args);
-                    break;
-
-                case 'pipeline':
-                    $title = __('Pipeline completo');
-                    $args = [
-                        '--skip-ieducar' => $pipelineSkipIeducar ? '1' : '0',
-                        '--ieducar-only-missing' => $ieducarOnlyMissing ? '1' : '0',
-                        '--official-only-missing' => $officialOnlyMissing ? '1' : '0',
-                        '--threshold' => (string) $threshold,
-                        '--dry-run' => $dryRun ? '1' : '0',
-                        '--skip-microdados-if-missing' => $pipelineSkipMicrodadosIfMissing ? '1' : '0',
-                        '--microdados-also-map-coords' => $pipelineMicrodadosMapCoords ? '1' : '0',
-                        '--microdados-fetch' => $request->boolean('pipeline_microdados_fetch', true) ? '1' : '0',
-                    ];
-                    if ($cityId !== null) {
-                        $args['--city'] = (string) $cityId;
-                    }
-                    $exitCode = Artisan::call('app:sync-school-unit-geos-pipeline', $args);
-                    break;
-
-                case 'probe':
-                    $title = __('Diagnóstico fontes INEP');
-                    $args = [];
-                    if ($cityId !== null) {
-                        $args['--city'] = (string) $cityId;
-                    }
-                    $exitCode = Artisan::call('app:probe-inep-geo-fallbacks', $args);
-                    break;
-
-                default:
-                    $exitCode = 1;
-            }
-        } catch (\Throwable $e) {
-            return redirect()
-                ->route('admin.geo-sync.index')
-                ->with('geo_sync_error', $e->getMessage());
-        }
-
-        $output = Artisan::output();
+        $task = $this->syncQueue->dispatch(
+            AdminSyncDomain::Geo,
+            $validated['step'],
+            $payload['title'],
+            $payload,
+            $cityId,
+        );
 
         return redirect()
             ->route('admin.geo-sync.index')
-            ->with('geo_sync_result', [
-                'step' => $validated['step'],
-                'title' => $title,
-                'exit_code' => $exitCode,
-                'output' => $output,
+            ->with('admin_sync_queued', [
+                'task_id' => $task->id,
+                'message' => AdminSyncQueueService::flashQueuedMessage($task),
             ]);
     }
 }
