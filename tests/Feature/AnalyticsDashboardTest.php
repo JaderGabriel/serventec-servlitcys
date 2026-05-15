@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\City;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -48,5 +49,16 @@ class AnalyticsDashboardTest extends TestCase
         $this->actingAs($user)
             ->get(route('dashboard.analytics.tab', ['tab' => 'invalid']))
             ->assertNotFound();
+    }
+
+    public function test_municipal_analytics_auto_selects_single_linked_city(): void
+    {
+        $city = City::factory()->create();
+        $municipal = User::factory()->municipal()->create();
+        $municipal->cities()->attach($city->id);
+
+        $this->actingAs($municipal)
+            ->get(route('dashboard.analytics'))
+            ->assertRedirect(route('dashboard.analytics', ['city_id' => $city->id]));
     }
 }

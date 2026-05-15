@@ -30,9 +30,31 @@
                     {{ session('fundeb_import_error') }}
                 </div>
             @endif
+            @php $bulkResult = session('fundeb_bulk_result'); @endphp
+            @if (is_array($bulkResult))
+                <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 text-sm space-y-2">
+                    <p class="font-medium text-gray-900 dark:text-gray-100">{{ $bulkResult['message'] ?? '' }}</p>
+                    @if (! empty($bulkResult['failed']))
+                        <details class="text-red-800 dark:text-red-200">
+                            <summary class="cursor-pointer font-medium">{{ __('Falhas (:n)', ['n' => count($bulkResult['failed'])]) }}</summary>
+                            <ul class="mt-2 list-disc ps-5 text-xs space-y-1 max-h-48 overflow-y-auto">
+                                @foreach ($bulkResult['failed'] as $f)
+                                    <li><span class="font-medium">{{ $f['city'] ?? '' }}</span> (IBGE {{ $f['ibge'] ?? '—' }}): {{ \Illuminate\Support\Str::limit($f['message'] ?? '', 140) }}</li>
+                                @endforeach
+                            </ul>
+                        </details>
+                    @endif
+                    @if (! empty($bulkResult['ok']))
+                        <p class="text-xs text-emerald-800 dark:text-emerald-200">{{ __('Gravados: :n município(s).', ['n' => count($bulkResult['ok'])]) }}</p>
+                    @endif
+                    @if (! empty($bulkResult['skipped']))
+                        <p class="text-xs text-amber-800 dark:text-amber-200">{{ __('Sem IBGE: :n cidade(s).', ['n' => count($bulkResult['skipped'])]) }}</p>
+                    @endif
+                </div>
+            @endif
 
             <form method="get" action="{{ route('admin.ieducar-compatibility.index') }}" class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 sm:p-6 shadow-sm">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                     <div>
                         <label for="city_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Cidade') }}</label>
                         <select id="city_id" name="city_id" class="{{ $selectClass }}">
@@ -40,6 +62,10 @@
                                 <option value="{{ $c->id }}" @selected($city && (int) $city->id === (int) $c->id)>{{ $c->name }}</option>
                             @endforeach
                         </select>
+                    </div>
+                    <div>
+                        <label for="fundeb_ano_filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Ano FUNDEB') }}</label>
+                        <input type="number" id="fundeb_ano_filter" name="fundeb_ano" min="2000" max="{{ (int) date('Y') + 1 }}" value="{{ $fundebImportYear ?? $fundebSuggestedYear ?? (int) date('Y') - 1 }}" class="{{ $selectClass }} w-full">
                     </div>
                     <div class="sm:col-span-2 flex flex-wrap gap-2">
                         <button type="submit" class="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">
@@ -57,70 +83,17 @@
                 </div>
             </form>
 
-            @if ($city)
-                <section class="rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50/40 dark:bg-teal-950/20 p-4 sm:p-6 shadow-sm space-y-4">
-                    <div>
-                        <h3 class="text-sm font-semibold text-teal-950 dark:text-teal-100">{{ __('Referências FUNDEB (VAAF / VAAT) — base local') }}</h3>
-                        <p class="text-xs text-teal-900/90 dark:text-teal-200/90 mt-1 leading-relaxed">
-                            {{ __('Valores gravados por município e ano. O painel Analytics (Discrepâncias e FUNDEB) usa o registo do ano letivo do filtro; se não existir, o ano mais recente na base; depois o fallback global.') }}
-                        </p>
-                    </div>
-
-                    @if (is_array($fundebResolved))
-                        <p class="text-xs rounded-md border border-teal-200/80 dark:border-teal-800/60 bg-white/70 dark:bg-gray-900/40 px-3 py-2 text-teal-900 dark:text-teal-100">
-                            <span class="font-medium">{{ __('Resolução actual (exemplo ano :y):', ['y' => $fundebResolved['ano'] ?? $fundebImportYear]) }}</span>
-                            VAAF {{ $fmtBrl($fundebResolved['vaaf'] ?? 0) }}
-                            — {{ $fundebResolved['fonte_label'] ?? '' }}
-                        </p>
-                    @endif
-
-                    <form method="post" action="{{ route('admin.ieducar-compatibility.fundeb-import') }}" class="flex flex-wrap items-end gap-3">
-                        @csrf
-                        <input type="hidden" name="city_id" value="{{ $city->id }}">
-                        <div>
-                            <label for="fundeb_ano" class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Ano de referência') }}</label>
-                            <input type="number" id="fundeb_ano" name="ano" min="2000" max="{{ (int) date('Y') + 1 }}" value="{{ $fundebImportYear }}" class="{{ $selectClass }} w-28" required>
-                        </div>
-                        <button type="submit" class="inline-flex items-center rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-600">
-                            {{ __('Buscar na API e gravar') }}
-                        </button>
-                    </form>
-                    <p class="text-[11px] text-gray-600 dark:text-gray-400">
-                        {{ __('API: CKAN FNDE (IEDUCAR_FUNDEB_CKAN_RESOURCE_ID) ou URL JSON (IEDUCAR_FUNDEB_JSON_URL com {ibge} e {ano}). CLI: php artisan fundeb:import-api :id --ano=', ['id' => $city->id]) }}{{ $fundebImportYear }}
-                    </p>
-
-                    @if (count($fundebStored ?? []) > 0)
-                        <div class="overflow-x-auto rounded-lg border border-teal-100 dark:border-teal-900/50">
-                            <table class="min-w-full text-sm">
-                                <thead class="bg-teal-100/60 dark:bg-teal-950/40 text-left text-xs uppercase text-teal-800 dark:text-teal-200">
-                                    <tr>
-                                        <th class="px-3 py-2">{{ __('Ano') }}</th>
-                                        <th class="px-3 py-2 text-right">{{ __('VAAF') }}</th>
-                                        <th class="px-3 py-2 text-right">{{ __('VAAT') }}</th>
-                                        <th class="px-3 py-2 text-right">{{ __('Compl. VAAR') }}</th>
-                                        <th class="px-3 py-2">{{ __('Fonte') }}</th>
-                                        <th class="px-3 py-2">{{ __('Importado') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-teal-50 dark:divide-teal-900/30 bg-white/80 dark:bg-gray-900/30">
-                                    @foreach ($fundebStored as $ref)
-                                        <tr>
-                                            <td class="px-3 py-2 font-medium tabular-nums">{{ $ref['ano'] }}</td>
-                                            <td class="px-3 py-2 text-right tabular-nums">{{ $fmtBrl($ref['vaaf']) }}</td>
-                                            <td class="px-3 py-2 text-right tabular-nums">{{ isset($ref['vaat']) ? $fmtBrl($ref['vaat']) : '—' }}</td>
-                                            <td class="px-3 py-2 text-right tabular-nums">{{ isset($ref['complementacao_vaar']) ? $fmtBrl($ref['complementacao_vaar']) : '—' }}</td>
-                                            <td class="px-3 py-2 text-xs">{{ $ref['fonte'] ?? '—' }}</td>
-                                            <td class="px-3 py-2 text-xs text-gray-500">{{ $ref['imported_at'] ?? '—' }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @else
-                        <p class="text-sm text-amber-800 dark:text-amber-200">{{ __('Nenhuma referência gravada para este município. Use «Buscar na API e gravar» ou importe anos anteriores.') }}</p>
-                    @endif
-                </section>
-            @endif
+            @include('admin.ieducar-compatibility.partials.fundeb-card', [
+                'city' => $city,
+                'fundebStored' => $fundebStored ?? [],
+                'fundebResolved' => $fundebResolved ?? null,
+                'fundebImportYear' => $fundebImportYear,
+                'fundebApiDiagnostics' => $fundebApiDiagnostics ?? [],
+                'fundebCoverage' => $fundebCoverage ?? [],
+                'fundebSuggestedYear' => $fundebSuggestedYear ?? null,
+                'selectClass' => $selectClass,
+                'fmtBrl' => $fmtBrl,
+            ])
 
             @if ($error)
                 <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">

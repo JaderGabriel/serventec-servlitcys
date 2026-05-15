@@ -10,6 +10,7 @@ use App\Support\Dashboard\PublicDataSourcesCatalog;
 use App\Support\Ieducar\ConsultoriaOperationalSignals;
 use App\Support\Ieducar\DiscrepanciesCheckCatalog;
 use App\Support\Ieducar\DiscrepanciesCheckRunner;
+use App\Support\Ieducar\DiscrepanciesCsvRowsBuilder;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\DiscrepanciesQueries;
 use App\Support\Ieducar\DiscrepanciesRoutineStatus;
@@ -55,6 +56,7 @@ class DiscrepanciesRepository
             'checks' => [],
             'notes' => [],
             'public_data_sources' => PublicDataSourcesCatalog::build($city, 'financeiro'),
+            'export_params' => [],
             'error' => null,
         ];
 
@@ -207,6 +209,7 @@ class DiscrepanciesRepository
                     'checks' => $checks,
                     'notes' => $notes,
                     'public_data_sources' => PublicDataSourcesCatalog::build($city, 'financeiro'),
+                    'export_params' => $filters->toQueryParamsWithCity((int) $city->id),
                     'error' => null,
                 ];
             });
@@ -345,34 +348,47 @@ class DiscrepanciesRepository
         $pct = $totalMat > 0 ? round(100.0 * $total / $totalMat, 1) : null;
         $funding = DiscrepanciesFundingImpact::estimate($id, $total, $city, $filters);
 
-        $top = array_slice($schoolRows, 0, 12);
-        $labelsEsc = array_map(static fn (array $r): string => (string) $r['escola'], $top);
+        $top = array_slice($schoolRows, 0, 6);
+        $labelsEsc = array_map(
+            fn (array $r): string => $this->truncateChartLabel((string) $r['escola'], 26),
+            $top
+        );
         $valsAtual = array_map(static fn (array $r): int => (int) $r['total'], $top);
 
-        $chartEscolas = ChartPayload::barHorizontalGrouped(
-            __('Por escola — atual vs. após correção'),
-            __('Matrículas / ocorrências'),
-            $labelsEsc,
-            [
-                ['label' => __('Com discrepância (atual)'), 'data' => $valsAtual],
-                ['label' => __('Após correção no cadastro'), 'data' => array_fill(0, count($valsAtual), 0)],
-            ]
+        $chartEscolas = $this->applyConsultoriaChartOptions(
+            ChartPayload::barHorizontalGrouped(
+                __('Top escolas'),
+                __('Ocorrências'),
+                $labelsEsc,
+                [
+                    ['label' => __('Atual'), 'data' => $valsAtual],
+                    ['label' => __('Após correção'), 'data' => array_fill(0, count($valsAtual), 0)],
+                ]
+            ),
+            horizontal: true,
+            panelHeight: 'sm',
         );
 
-        $chartRede = ChartPayload::bar(
-            __('Rede — situação agregada'),
-            __('Matrículas'),
-            [__('Com discrepância'), __('Após correção')],
-            [(float) $total, 0.0]
+        $chartRede = $this->applyConsultoriaChartOptions(
+            ChartPayload::bar(
+                __('Rede'),
+                __('Matrículas'),
+                [__('Com discrepância'), __('Após correção')],
+                [(float) $total, 0.0]
+            ),
+            panelHeight: 'xs',
         );
         $chartRede['datasets'][0]['backgroundColor'] = ['#ef4444', '#22c55e'];
         $chartRede['datasets'][0]['borderColor'] = ['#ef4444', '#22c55e'];
 
-        $chartFinanceiro = ChartPayload::bar(
-            __('Impacto financeiro indicativo'),
-            __('R$ / ano (estimativa)'),
-            [__('Perda estimada'), __('Ganho potencial')],
-            [(float) $funding['perda_anual'], (float) $funding['ganho_potencial_anual']]
+        $chartFinanceiro = $this->applyConsultoriaChartOptions(
+            ChartPayload::bar(
+                __('Impacto (R$/ano)'),
+                __('Estimativa'),
+                [__('Perda'), __('Ganho pot.')],
+                [(float) $funding['perda_anual'], (float) $funding['ganho_potencial_anual']]
+            ),
+            panelHeight: 'xs',
         );
         $chartFinanceiro['datasets'][0]['backgroundColor'] = ['#f97316', '#10b981'];
         $chartFinanceiro['datasets'][0]['borderColor'] = ['#f97316', '#10b981'];
@@ -504,21 +520,29 @@ class DiscrepanciesRepository
         if ($checks === []) {
             return null;
         }
+        $sorted = $checks;
+        usort($sorted, static fn (array $a, array $b): int => ((int) ($b['total'] ?? 0)) <=> ((int) ($a['total'] ?? 0)));
+        $sorted = array_slice($sorted, 0, 8);
+
         $labels = [];
         $atual = [];
-        foreach ($checks as $c) {
-            $labels[] = (string) ($c['title'] ?? '');
+        foreach ($sorted as $c) {
+            $labels[] = $this->truncateChartLabel((string) ($c['title'] ?? ''), 36);
             $atual[] = (float) ($c['total'] ?? 0);
         }
 
-        return ChartPayload::barHorizontalGrouped(
-            __('Resumo — ocorrências por tipo de discrepância'),
-            __('Quantidade'),
-            $labels,
-            [
-                ['label' => __('Situação atual'), 'data' => $atual],
-                ['label' => __('Após correções'), 'data' => array_fill(0, count($atual), 0.0)],
-            ]
+        return $this->applyConsultoriaChartOptions(
+            ChartPayload::barHorizontalGrouped(
+                __('Ocorrências por rotina'),
+                __('Quantidade'),
+                $labels,
+                [
+                    ['label' => __('Atual'), 'data' => $atual],
+                    ['label' => __('Após correção'), 'data' => array_fill(0, count($atual), 0.0)],
+                ]
+            ),
+            horizontal: true,
+            panelHeight: 'sm',
         );
     }
 
@@ -531,24 +555,75 @@ class DiscrepanciesRepository
         if ($checks === []) {
             return null;
         }
+        $sorted = $checks;
+        usort($sorted, static fn (array $a, array $b): int => ((float) ($b['perda_estimada_anual'] ?? 0)) <=> ((float) ($a['perda_estimada_anual'] ?? 0)));
+        $sorted = array_slice($sorted, 0, 8);
+
         $labels = [];
         $perda = [];
         $ganho = [];
-        foreach ($checks as $c) {
-            $labels[] = (string) ($c['title'] ?? '');
+        foreach ($sorted as $c) {
+            $labels[] = $this->truncateChartLabel((string) ($c['title'] ?? ''), 36);
             $perda[] = (float) ($c['perda_estimada_anual'] ?? 0);
             $ganho[] = (float) ($c['ganho_potencial_anual'] ?? 0);
         }
 
-        return ChartPayload::barHorizontalGrouped(
-            __('Impacto financeiro indicativo por discrepância'),
-            __('R$ / ano (estimativa)'),
-            $labels,
-            [
-                ['label' => __('Perda estimada'), 'data' => $perda],
-                ['label' => __('Ganho potencial após correção'), 'data' => $ganho],
-            ]
+        return $this->applyConsultoriaChartOptions(
+            ChartPayload::barHorizontalGrouped(
+                __('Impacto por rotina (R$/ano)'),
+                __('Estimativa'),
+                $labels,
+                [
+                    ['label' => __('Perda'), 'data' => $perda],
+                    ['label' => __('Ganho pot.'), 'data' => $ganho],
+                ]
+            ),
+            horizontal: true,
+            panelHeight: 'sm',
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $chart
+     * @return array<string, mixed>
+     */
+    private function applyConsultoriaChartOptions(
+        array $chart,
+        bool $horizontal = false,
+        string $panelHeight = 'sm',
+    ): array {
+        $chart['options'] = array_merge(
+            is_array($chart['options'] ?? null) ? $chart['options'] : [],
+            [
+                'panelHeight' => $panelHeight,
+                'skipHorizontalBarAutoHeight' => $horizontal,
+            ],
+        );
+
+        if ($horizontal) {
+            $n = count($chart['labels'] ?? []);
+            $chart['options']['layout'] = array_merge(
+                is_array($chart['options']['layout'] ?? null) ? $chart['options']['layout'] : [],
+                [
+                    'padding' => ['left' => 4, 'right' => 28, 'top' => 6, 'bottom' => 6],
+                ],
+            );
+            if ($n > 0 && $n <= 8) {
+                $chart['options']['minChartHeight'] = max(140, 56 + $n * 36);
+            }
+        }
+
+        return $chart;
+    }
+
+    private function truncateChartLabel(string $label, int $max = 32): string
+    {
+        $label = trim($label);
+        if ($label === '') {
+            return '—';
+        }
+
+        return mb_strlen($label) > $max ? mb_substr($label, 0, $max - 1).'…' : $label;
     }
 
     /**

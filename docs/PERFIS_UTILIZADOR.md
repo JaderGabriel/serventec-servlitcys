@@ -8,7 +8,7 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 |--------|-------------|---------------------------|
 | Administrador | `admin` | Painel (`/dashboard`) |
 | Utilizador | `user` | Análise educacional (`/dashboard/analytics`) |
-| Municipal | `municipal` | Análise educacional (`/dashboard/analytics`) |
+| Municipal | `municipal` | Análise educacional (`/dashboard/analytics`; com um só município vinculado, `?city_id=` automático) |
 
 ---
 
@@ -25,8 +25,10 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 - Configurar **e-mail (SMTP)**
 - Ver **Monitorização (Pulse)**, sessões activas e histórico de logins
 - Criar e editar utilizadores de **qualquer perfil**, incluindo vincular municípios a municipais
+- **Desactivar**, **reactivar** e **excluir** utilizadores na lista `/users` (com confirmação)
+- Consultar **histórico de logins** por utilizador
 
-**Não pode:** (sem restrições adicionais além das regras de negócio, ex. último admin activo)
+**Não pode:** desactivar ou excluir a própria conta; remover o único administrador activo ou a única conta admin do sistema.
 
 ---
 
@@ -81,6 +83,7 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 | Criar Admin | Sim | Não | Não |
 | Criar Utilizador | Sim | Sim | Não |
 | Criar Municipal | Sim | Não | Sim* |
+| Desactivar / excluir utilizadores | Sim | Não | Não |
 
 \* Municipal só com municípios ⊆ dos do editor.
 
@@ -93,6 +96,9 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 | Enum de perfis | `app/Enums/UserRole.php` |
 | Modelo e scopes | `app/Models/User.php` — `hasCityAccess()`, `scopeVisibleTo()` |
 | Filtro de cidades | `app/Support/Auth/UserCityAccess.php` |
+| Auditoria admin | `app/Support/Auth/AdminUserAuditLogger.php` |
+| Sessões | `app/Support/Auth/UserSessionTerminator.php` |
+| Destino após login | `User::homeRouteName()`, `User::homeUrl()` |
 | Policies | `app/Policies/UserPolicy.php`, `app/Policies/CityPolicy.php` |
 | Middleware | `admin`, `manage.users` em `bootstrap/app.php` |
 | Formulários | `app/Http/Requests/Concerns/ValidatesManagedUserAttributes.php` |

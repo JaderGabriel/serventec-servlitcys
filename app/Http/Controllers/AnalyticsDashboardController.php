@@ -42,8 +42,20 @@ class AnalyticsDashboardController extends Controller
         DiscrepanciesRepository $discrepanciesRepository,
         MunicipalityHealthRepository $municipalityHealthRepository,
         SchoolUnitsRepository $schoolUnitsRepository,
-    ): View {
-        $cities = UserCityAccess::citiesQuery($request->user())->get();
+    ): View|\Illuminate\Http\RedirectResponse {
+        $user = $request->user();
+
+        if ($user?->isMunicipal() && ! $request->filled('city_id')) {
+            $homeParams = $user->homeRouteParameters();
+            if ($homeParams !== []) {
+                return redirect()->route('dashboard.analytics', array_merge(
+                    $request->query(),
+                    $homeParams,
+                ));
+            }
+        }
+
+        $cities = UserCityAccess::citiesQuery($user)->get();
 
         $filters = IeducarFilterState::fromRequest($request);
 

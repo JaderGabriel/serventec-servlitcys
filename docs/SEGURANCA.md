@@ -32,6 +32,8 @@ Perfis (`users.role`): **admin**, **user**, **municipal**. Municípios do perfil
 | Painel `/dashboard` (estatísticas, probe) | `role=admin` — outros perfis são redireccionados para Análise |
 | CRUD de cidades, sync, SMTP, sessões | `role=admin` (middleware `admin`) |
 | Criar utilizadores | Admin, Utilizador (só `user`), Municipal (só `municipal` no seu âmbito) — `UserPolicy` |
+| Desactivar / reactivar / excluir utilizadores | Só `role=admin`; não sobre a própria conta; não desactivar nem excluir o único admin — `UserPolicy::updateStatus`, `UserPolicy::delete` |
+| Contas inactivas (`is_active=false`) | Login recusado (`LoginRequest`); sessão terminada em cada pedido (`EnsureUserIsActive`) |
 | Análise / exportação | Admin e Utilizador: todos os municípios `forAnalytics`; Municipal: só vinculados — `CityPolicy::viewAnalytics` |
 | Histórico de logins | Gate `manageUserAudit` (admin) |
 
@@ -60,6 +62,10 @@ A coluna legada `is_admin` é sincronizada automaticamente com `role` ao gravar.
 
 - Mantenha **Composer** e **npm** atualizados; execute `composer audit` e `npm audit` regularmente.
 - Subscreva alertas de segurança do Laravel e PHP.
+
+## Auditoria de utilizadores
+
+Acções registadas em `admin_user_logs` (via `AdminUserAuditLogger`): criação, actualização, activação, desactivação, exclusão, encerramento de sessões, logins.
 
 ## Reportar problemas
 

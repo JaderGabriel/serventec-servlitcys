@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Enums\UserRole;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Http\Requests\UpdateUserStatusRequest;
 use App\Models\AdminUserLog;
 use App\Models\User;
+use App\Support\Auth\AdminUserAuditLogger;
 use App\Support\Auth\UserCityAccess;
+use App\Support\Auth\UserSessionTerminator;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class UserController extends Controller
@@ -77,21 +79,12 @@ class UserController extends Controller
             $user->cities()->sync($request->resolvedCityIds());
         }
 
-        if ($request->user()?->isAdmin()) {
-            AdminUserLog::query()->create([
-                'actor_id' => $request->user()->id,
-                'subject_user_id' => $user->id,
-                'action' => 'user_created',
-                'ip_address' => $request->ip(),
-                'user_agent' => Str::limit((string) $request->userAgent(), 1000),
-                'metadata' => [
-                    'email' => $user->email,
-                    'username' => $user->username,
-                    'role' => $user->role()->value,
-                    'city_ids' => $user->cityIds(),
-                ],
-            ]);
-        }
+        AdminUserAuditLogger::log($request->user(), 'user_created', $user->id, [
+            'email' => $user->email,
+            'username' => $user->username,
+            'role' => $user->role()->value,
+            'city_ids' => $user->cityIds(),
+        ], $request);
 
         return redirect()->route('users.index')->with('success', __('Usuário criado com sucesso.'));
     }
@@ -162,27 +155,18 @@ class UserController extends Controller
             $user->cities()->detach();
         }
 
-        if ($request->user()?->isAdmin()) {
-            AdminUserLog::query()->create([
-                'actor_id' => $request->user()->id,
-                'subject_user_id' => $user->id,
-                'action' => 'user_updated',
-                'ip_address' => $request->ip(),
-                'user_agent' => Str::limit((string) $request->userAgent(), 1000),
-                'metadata' => [
-                    'before' => $before,
-                    'after' => [
-                        'name' => $user->name,
-                        'username' => $user->username,
-                        'email' => $user->email,
-                        'role' => $user->role()->value,
-                        'is_active' => $user->is_active,
-                        'city_ids' => $user->cityIds(),
-                    ],
-                    'password_changed' => $passwordChanged,
-                ],
-            ]);
-        }
+        AdminUserAuditLogger::log($request->user(), 'user_updated', $user->id, [
+            'before' => $before,
+            'after' => [
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $user->role()->value,
+                'is_active' => $user->is_active,
+                'city_ids' => $user->cityIds(),
+            ],
+            'password_changed' => $passwordChanged,
+        ], $request);
 
         return redirect()->route('users.index')->with('success', __('Utilizador atualizado.'));
     }
@@ -191,31 +175,74 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
 
-        $currentId = session()->getId();
+        $exceptId = $user->id === auth()->id() ? session()->getId() : null;
+        $deleted = UserSessionTerminator::destroyForUser($user->id, $exceptId);
 
-        $query = DB::table('sessions')->where('user_id', $user->id);
-
-        if ($user->id === auth()->id()) {
-            $query->where('id', '!=', $currentId);
-        }
-
-        $deleted = $query->delete();
-
-        if (auth()->user()?->isAdmin()) {
-            AdminUserLog::query()->create([
-                'actor_id' => request()->user()->id,
-                'subject_user_id' => $user->id,
-                'action' => 'sessions_terminated',
-                'ip_address' => request()->ip(),
-                'user_agent' => Str::limit((string) request()->userAgent(), 1000),
-                'metadata' => [
-                    'sessions_removed' => $deleted,
-                ],
-            ]);
-        }
+        AdminUserAuditLogger::log(auth()->user(), 'sessions_terminated', $user->id, [
+            'sessions_removed' => $deleted,
+        ]);
 
         return redirect()
             ->route('users.edit', $user)
             ->with('success', __('Sessões noutros dispositivos foram encerradas.'));
+    }
+
+    public function updateStatus(UpdateUserStatusRequest $request, User $user): RedirectResponse
+    {
+        $newIsActive = $request->boolean('is_active');
+
+        if (! $newIsActive && $user->soleActiveAdminWouldBeRemoved($user->role(), false)) {
+            return redirect()
+                ->route('users.index')
+                ->withErrors(['status' => __('Não é possível desativar o único administrador ativo.')]);
+        }
+
+        $wasActive = $user->is_active;
+        $user->is_active = $newIsActive;
+        $user->save();
+
+        if (! $newIsActive) {
+            UserSessionTerminator::destroyAllForUser($user->id);
+        }
+
+        AdminUserAuditLogger::log(
+            $request->user(),
+            $newIsActive ? 'user_activated' : 'user_deactivated',
+            $user->id,
+            ['email' => $user->email, 'was_active' => $wasActive],
+            $request,
+        );
+
+        $message = $newIsActive
+            ? __('Utilizador reativado.')
+            : __('Utilizador desativado. Não poderá iniciar sessão até ser reativado.');
+
+        return redirect()->route('users.index')->with('success', $message);
+    }
+
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        $this->authorize('delete', $user);
+
+        if ($user->isLastAdminAccount()) {
+            return redirect()
+                ->route('users.index')
+                ->withErrors(['delete' => __('Não é possível excluir a única conta de administrador.')]);
+        }
+
+        $snapshot = [
+            'name' => $user->name,
+            'email' => $user->email,
+            'username' => $user->username,
+            'role' => $user->role()->value,
+        ];
+
+        UserSessionTerminator::destroyAllForUser($user->id);
+        $user->cities()->detach();
+        $user->delete();
+
+        AdminUserAuditLogger::log($request->user(), 'user_deleted', null, $snapshot, $request);
+
+        return redirect()->route('users.index')->with('success', __('Utilizador excluído.'));
     }
 }

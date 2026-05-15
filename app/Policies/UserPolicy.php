@@ -27,6 +27,20 @@ class UserPolicy
         return $this->canManageTarget($user, $model);
     }
 
+    public function delete(User $user, User $model): bool
+    {
+        if (! $user->isAdmin() || $user->id === $model->id) {
+            return false;
+        }
+
+        return ! $model->isLastAdminAccount();
+    }
+
+    public function updateStatus(User $user, User $model): bool
+    {
+        return $user->isAdmin() && $user->id !== $model->id;
+    }
+
     private function canManageTarget(User $actor, User $target): bool
     {
         if (! $actor->canManageUsers()) {

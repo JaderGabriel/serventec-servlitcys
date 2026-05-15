@@ -3,7 +3,10 @@
 namespace App\Services\Fundeb;
 
 use App\Models\City;
+use App\Models\FundebMunicipioReference;
 use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Support\Ieducar\FundebReferenceYearOrder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -18,15 +21,117 @@ final class FundebOpenDataImportService
     ) {}
 
     /**
-     * @return array{success: bool, message: string, reference?: array<string, mixed>}
+     * Ano sugerido para importação (FNDE costuma publicar com defasagem).
      */
-    public function importForCityYear(City $city, int $ano): array
+    public static function suggestedImportYear(): int
+    {
+        return max(2000, (int) date('Y') - 1);
+    }
+
+    /**
+     * Estado da configuração e ligação CKAN (para a UI admin).
+     *
+     * @return array{
+     *     resource_id_configured: bool,
+     *     json_url_configured: bool,
+     *     resource_id: string,
+     *     discovered_resource_id: string,
+     *     ckan_reachable: bool,
+     *     ckan_base_url: string,
+     *     hint: string
+     * }
+     */
+    public function apiDiagnostics(): array
+    {
+        $configuredId = trim((string) config('ieducar.fundeb.open_data.resource_id', ''));
+        $jsonUrl = trim((string) config('ieducar.fundeb.open_data.json_url', ''));
+        $base = rtrim((string) config('ieducar.fundeb.open_data.ckan_base_url', 'https://www.fnde.gov.br/dadosabertos'), '/');
+        $timeout = max(5, (int) config('ieducar.fundeb.open_data.timeout', 30));
+
+        $discovered = '';
+        $reachable = false;
+        if ($jsonUrl === '') {
+            $response = Http::timeout(min($timeout, 10))
+                ->acceptJson()
+                ->withOptions(['allow_redirects' => true])
+                ->get($base.'/api/3/action/package_search', ['q' => 'fundeb', 'rows' => 1]);
+            $reachable = $response->successful() && ($response->json('success') === true);
+            if ($configuredId === '' && $reachable) {
+                $discovered = $this->discoverResourceId($base, $timeout);
+            }
+        } else {
+            $reachable = true;
+        }
+
+        $effectiveId = $configuredId !== '' ? $configuredId : $discovered;
+        $hint = match (true) {
+            str_starts_with($jsonUrl, 'storage://') => __('Fonte: JSON local (storage/app/…).'),
+            $jsonUrl !== '' => __('Fonte: URL JSON (IEDUCAR_FUNDEB_JSON_URL).'),
+            $effectiveId !== '' => __('Fonte: CKAN FNDE (recurso :id).', ['id' => Str::limit($effectiveId, 12)]),
+            ! $reachable => __('CKAN FNDE inacessível ou sem resposta. Defina IEDUCAR_FUNDEB_CKAN_RESOURCE_ID ou IEDUCAR_FUNDEB_JSON_URL no .env.'),
+            default => __('Nenhum recurso CKAN encontrado automaticamente. Defina IEDUCAR_FUNDEB_CKAN_RESOURCE_ID no .env.'),
+        };
+
+        return [
+            'resource_id_configured' => $configuredId !== '',
+            'json_url_configured' => $jsonUrl !== '',
+            'resource_id' => $configuredId,
+            'discovered_resource_id' => $discovered,
+            'ckan_reachable' => $reachable || $jsonUrl !== '',
+            'ckan_base_url' => $base,
+            'effective_resource_id' => $effectiveId,
+            'hint' => $hint,
+        ];
+    }
+
+    /**
+     * Cobertura local por município para um ano.
+     *
+     * @return list<array{city_id: int, name: string, uf: ?string, ibge: ?string, has_ibge: bool, has_reference: bool, vaaf: ?float}>
+     */
+    public function localCoverageForYear(int $ano): array
+    {
+        $cities = City::query()->orderBy('name')->get(['id', 'name', 'uf', 'ibge_municipio']);
+        $refsByIbge = [];
+        $refsByCity = [];
+
+        foreach (FundebMunicipioReference::query()->where('ano', $ano)->get(['city_id', 'ibge_municipio', 'vaaf']) as $ref) {
+            if ($ref->city_id) {
+                $refsByCity[(int) $ref->city_id] = (float) $ref->vaaf;
+            }
+            if ($ref->ibge_municipio) {
+                $refsByIbge[(string) $ref->ibge_municipio] = (float) $ref->vaaf;
+            }
+        }
+
+        $rows = [];
+        foreach ($cities as $city) {
+            $ibge = FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio);
+            $vaaf = $refsByCity[(int) $city->id] ?? ($ibge !== null ? ($refsByIbge[$ibge] ?? null) : null);
+            $rows[] = [
+                'city_id' => (int) $city->id,
+                'name' => $city->name,
+                'uf' => $city->uf,
+                'ibge' => $ibge,
+                'has_ibge' => $ibge !== null,
+                'has_reference' => $vaaf !== null,
+                'vaaf' => $vaaf,
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @return array{success: bool, message: string, reference?: array<string, mixed>, imported_ano?: int}
+     */
+    public function importForCityYear(City $city, int $ano, bool $useNearestYear = false): array
     {
         $ibge = FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio);
         if ($ibge === null) {
             return [
                 'success' => false,
-                'message' => __('Cadastre o código IBGE do município (7 dígitos) na ficha da cidade.'),
+                'message' => __('Cadastre o código IBGE do município (7 dígitos) na ficha da cidade «:name».', ['name' => $city->name]),
             ];
         }
 
@@ -37,18 +142,54 @@ final class FundebOpenDataImportService
             ];
         }
 
-        $row = $this->fetchRow($ibge, $ano);
-        if ($row === null) {
+        $match = null;
+        $importAno = $ano;
+
+        foreach (FundebReferenceYearOrder::candidateYears($ano) as $tryAno) {
+            $row = $this->fetchRow($ibge, $tryAno);
+            if ($row !== null) {
+                $match = $row;
+                $importAno = $tryAno;
+                break;
+            }
+        }
+
+        if ($match === null && $useNearestYear) {
+            $nearest = $this->findNearestRow($ibge, $ano);
+            if ($nearest !== null) {
+                $match = $nearest['row'];
+                $importAno = $nearest['ano'];
+            }
+        }
+
+        if ($match === null) {
+            $available = $this->findAvailableYears($ibge, 8);
+            $diag = $this->apiDiagnostics();
+            $parts = [
+                __('Nenhum VAAF/VAAT na API para IBGE :ibge e ano :ano.', ['ibge' => $ibge, 'ano' => (string) $ano]),
+            ];
+            if ($available !== []) {
+                $parts[] = __('Anos encontrados na API para este município: :anos. O sistema já tentou :ano e anos anteriores; active «usar ano mais recente disponível» para varrer a API.', [
+                    'anos' => implode(', ', $available),
+                    'ano' => (string) $ano,
+                ]);
+            } else {
+                $parts[] = __('Nenhum ano localizado na API para este IBGE. :hint', ['hint' => $diag['hint']]);
+            }
+            if ($ano >= (int) date('Y')) {
+                $parts[] = __('O FNDE pode ainda não ter publicado dados para :ano; use o ano anterior (:sugestao).', [
+                    'ano' => (string) $ano,
+                    'sugestao' => (string) self::suggestedImportYear(),
+                ]);
+            }
+
             return [
                 'success' => false,
-                'message' => __('Nenhum registo VAAF/VAAT encontrado na API para IBGE :ibge e ano :ano. Verifique IEDUCAR_FUNDEB_CKAN_RESOURCE_ID ou o conjunto de dados FNDE.', [
-                    'ibge' => $ibge,
-                    'ano' => (string) $ano,
-                ]),
+                'message' => implode(' ', $parts),
             ];
         }
 
-        $vaaf = (float) ($row['vaaf'] ?? 0);
+        $vaaf = (float) ($match['vaaf'] ?? 0);
         if ($vaaf <= 0) {
             return [
                 'success' => false,
@@ -56,21 +197,39 @@ final class FundebOpenDataImportService
             ];
         }
 
-        $model = $this->references->upsert($city, $ano, [
+        $notas = (string) ($match['notas'] ?? '');
+        if ($importAno !== $ano) {
+            $notas = trim($notas.' '.__('Solicitado :pedido; gravado ano :gravado (mais recente ≤ pedido na API).', [
+                'pedido' => (string) $ano,
+                'gravado' => (string) $importAno,
+            ]));
+        }
+
+        $model = $this->references->upsert($city, $importAno, [
             'vaaf' => $vaaf,
-            'vaat' => isset($row['vaat']) ? (float) $row['vaat'] : null,
-            'complementacao_vaar' => isset($row['complementacao_vaar']) ? (float) $row['complementacao_vaar'] : null,
-            'fonte' => (string) ($row['fonte'] ?? 'api_ckan_fnde'),
-            'notas' => isset($row['notas']) ? (string) $row['notas'] : null,
+            'vaat' => isset($match['vaat']) ? (float) $match['vaat'] : null,
+            'complementacao_vaar' => isset($match['complementacao_vaar']) ? (float) $match['complementacao_vaar'] : null,
+            'fonte' => (string) ($match['fonte'] ?? 'api_ckan_fnde'),
+            'notas' => $notas !== '' ? $notas : null,
         ]);
+
+        $msg = $importAno === $ano
+            ? __('VAAF :vaaf gravado para :ano (fonte: :fonte).', [
+                'vaaf' => number_format($vaaf, 2, ',', '.'),
+                'ano' => (string) $importAno,
+                'fonte' => $model->fonte,
+            ])
+            : __('VAAF :vaaf gravado para :ano (pedido :pedido; fonte: :fonte).', [
+                'vaaf' => number_format($vaaf, 2, ',', '.'),
+                'ano' => (string) $importAno,
+                'pedido' => (string) $ano,
+                'fonte' => $model->fonte,
+            ]);
 
         return [
             'success' => true,
-            'message' => __('VAAF :vaaf gravado para :ano (fonte: :fonte).', [
-                'vaaf' => number_format($vaaf, 2, ',', '.'),
-                'ano' => (string) $ano,
-                'fonte' => $model->fonte,
-            ]),
+            'message' => $msg,
+            'imported_ano' => $importAno,
             'reference' => [
                 'ano' => $model->ano,
                 'vaaf' => (float) $model->vaaf,
@@ -80,6 +239,147 @@ final class FundebOpenDataImportService
                 'imported_at' => $model->imported_at?->toIso8601String(),
             ],
         ];
+    }
+
+    /**
+     * Importa todos os municípios com IBGE (ou só um city_id).
+     *
+     * @return array{
+     *     success: bool,
+     *     message: string,
+     *     ok: list<array{city: string, ibge: string, ano: int, vaaf: float}>,
+     *     failed: list<array{city: string, ibge: ?string, message: string}>,
+     *     skipped: list<array{city: string, message: string}>
+     * }
+     */
+    public function importBulk(int $ano, bool $useNearestYear = false, ?int $onlyCityId = null): array
+    {
+        $query = City::query()->orderBy('name');
+        if ($onlyCityId !== null) {
+            $query->whereKey($onlyCityId);
+        }
+
+        /** @var Collection<int, City> $cities */
+        $cities = $query->get();
+        $ok = [];
+        $failed = [];
+        $skipped = [];
+
+        foreach ($cities as $city) {
+            $ibge = FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio);
+            if ($ibge === null) {
+                $skipped[] = [
+                    'city' => $city->name,
+                    'message' => __('Sem IBGE cadastrado'),
+                ];
+
+                continue;
+            }
+
+            $result = $this->importForCityYear($city, $ano, $useNearestYear);
+            if ($result['success']) {
+                $ok[] = [
+                    'city' => $city->name,
+                    'ibge' => $ibge,
+                    'ano' => (int) ($result['imported_ano'] ?? $ano),
+                    'vaaf' => (float) ($result['reference']['vaaf'] ?? 0),
+                ];
+            } else {
+                $failed[] = [
+                    'city' => $city->name,
+                    'ibge' => $ibge,
+                    'message' => $result['message'],
+                ];
+            }
+        }
+
+        $message = __('Importação em lote: :ok sucesso, :fail falha, :skip ignorados (sem IBGE).', [
+            'ok' => (string) count($ok),
+            'fail' => (string) count($failed),
+            'skip' => (string) count($skipped),
+        ]);
+
+        return [
+            'success' => count($failed) === 0 && count($ok) > 0,
+            'message' => $message,
+            'ok' => $ok,
+            'failed' => $failed,
+            'skipped' => $skipped,
+        ];
+    }
+
+    /**
+     * @return list<int> anos disponíveis na API para o IBGE (desc)
+     */
+    public function findAvailableYears(string $ibge, int $max = 10): array
+    {
+        $years = [];
+        foreach ($this->scanRecordsForIbge($ibge, 3000) as $record) {
+            $parsed = $this->mapRecordFlexible($record, $ibge);
+            if ($parsed !== null && ! in_array($parsed['ano'], $years, true)) {
+                $years[] = $parsed['ano'];
+            }
+        }
+        rsort($years);
+
+        return array_slice($years, 0, $max);
+    }
+
+    /**
+     * @return array{row: array{vaaf: float, vaat?: float, complementacao_vaar?: float, fonte?: string, notas?: string}, ano: int}|null
+     */
+    private function findNearestRow(string $ibge, int $preferredAno): ?array
+    {
+        $best = null;
+        $bestAno = 0;
+
+        foreach ($this->scanRecordsForIbge($ibge, 5000) as $record) {
+            $parsed = $this->mapRecordFlexible($record, $ibge);
+            if ($parsed === null || $parsed['ano'] > $preferredAno) {
+                continue;
+            }
+            if ($parsed['ano'] > $bestAno) {
+                $bestAno = $parsed['ano'];
+                $best = $parsed;
+            }
+        }
+
+        if ($best === null) {
+            return null;
+        }
+
+        return ['row' => $best['row'], 'ano' => $bestAno];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function scanRecordsForIbge(string $ibge, int $limit): array
+    {
+        $jsonUrl = trim((string) config('ieducar.fundeb.open_data.json_url', ''));
+        if ($jsonUrl !== '') {
+            return [];
+        }
+
+        $base = rtrim((string) config('ieducar.fundeb.open_data.ckan_base_url', 'https://www.fnde.gov.br/dadosabertos'), '/');
+        $resourceId = $this->resolveResourceId($base);
+        if ($resourceId === '') {
+            return [];
+        }
+
+        $timeout = max(5, (int) config('ieducar.fundeb.open_data.timeout', 30));
+
+        return $this->ckanDatastoreSearch($base, $resourceId, null, $timeout, $limit, $ibge);
+    }
+
+    private function resolveResourceId(string $base): string
+    {
+        $resourceId = trim((string) config('ieducar.fundeb.open_data.resource_id', ''));
+        if ($resourceId !== '') {
+            return $resourceId;
+        }
+
+        return $this->discoverResourceId($base, max(5, (int) config('ieducar.fundeb.open_data.timeout', 30)));
     }
 
     /**
@@ -104,12 +404,8 @@ final class FundebOpenDataImportService
     private function fetchFromCkan(string $ibge, int $ano): ?array
     {
         $base = rtrim((string) config('ieducar.fundeb.open_data.ckan_base_url', 'https://www.fnde.gov.br/dadosabertos'), '/');
-        $resourceId = trim((string) config('ieducar.fundeb.open_data.resource_id', ''));
+        $resourceId = $this->resolveResourceId($base);
         $timeout = max(5, (int) config('ieducar.fundeb.open_data.timeout', 30));
-
-        if ($resourceId === '') {
-            $resourceId = $this->discoverResourceId($base, $timeout);
-        }
 
         if ($resourceId === '') {
             return null;
@@ -130,14 +426,6 @@ final class FundebOpenDataImportService
                 if ($parsed !== null) {
                     return $parsed;
                 }
-            }
-        }
-
-        $records = $this->ckanDatastoreSearch($base, $resourceId, null, $timeout, 5000);
-        foreach ($records as $record) {
-            $parsed = $this->mapRecord($record, $ibge, $ano);
-            if ($parsed !== null) {
-                return $parsed;
             }
         }
 
@@ -176,6 +464,7 @@ final class FundebOpenDataImportService
 
         $response = Http::timeout($timeout)
             ->acceptJson()
+            ->withOptions(['allow_redirects' => true])
             ->get($base.'/api/3/action/datastore_search', $query);
 
         if (! $response->successful()) {
@@ -194,38 +483,52 @@ final class FundebOpenDataImportService
 
     private function discoverResourceId(string $base, int $timeout): string
     {
-        $response = Http::timeout($timeout)
-            ->acceptJson()
-            ->get($base.'/api/3/action/package_search', [
-                'q' => (string) config('ieducar.fundeb.open_data.search_query', 'fundeb vaaf municipio'),
-                'rows' => 5,
-            ]);
+        $queries = [
+            (string) config('ieducar.fundeb.open_data.search_query', 'fundeb vaaf municipio'),
+            'vaaf municipio',
+            'fundeb',
+        ];
 
-        if (! $response->successful()) {
-            return '';
-        }
+        foreach (array_unique($queries) as $q) {
+            $response = Http::timeout($timeout)
+                ->acceptJson()
+                ->withOptions(['allow_redirects' => true])
+                ->get($base.'/api/3/action/package_search', [
+                    'q' => $q,
+                    'rows' => 8,
+                ]);
 
-        $results = $response->json('result.results') ?? [];
-        if (! is_array($results)) {
-            return '';
-        }
-
-        foreach ($results as $pkg) {
-            if (! is_array($pkg)) {
+            if (! $response->successful()) {
                 continue;
             }
-            $resources = $pkg['resources'] ?? [];
-            if (! is_array($resources)) {
+
+            $results = $response->json('result.results') ?? [];
+            if (! is_array($results)) {
                 continue;
             }
-            foreach ($resources as $res) {
-                if (! is_array($res)) {
+
+            foreach ($results as $pkg) {
+                if (! is_array($pkg)) {
                     continue;
                 }
-                $id = (string) ($res['id'] ?? '');
-                $format = strtolower((string) ($res['format'] ?? ''));
-                if ($id !== '' && in_array($format, ['csv', 'xlsx', 'json', ''], true)) {
-                    return $id;
+                $resources = $pkg['resources'] ?? [];
+                if (! is_array($resources)) {
+                    continue;
+                }
+                foreach ($resources as $res) {
+                    if (! is_array($res)) {
+                        continue;
+                    }
+                    $id = (string) ($res['id'] ?? '');
+                    $format = strtolower((string) ($res['format'] ?? ''));
+                    $name = strtolower((string) ($res['name'] ?? '').' '.($pkg['title'] ?? ''));
+                    if ($id === '') {
+                        continue;
+                    }
+                    if (in_array($format, ['csv', 'xlsx', 'json', ''], true)
+                        && (str_contains($name, 'vaaf') || str_contains($name, 'fundeb') || str_contains($name, 'aluno'))) {
+                        return $id;
+                    }
                 }
             }
         }
@@ -254,9 +557,9 @@ final class FundebOpenDataImportService
 
     /**
      * @param  array<string, mixed>  $record
-     * @return array{vaaf: float, vaat?: float, complementacao_vaar?: float, fonte?: string, notas?: string}|null
+     * @return array{ano: int, row: array{vaaf: float, vaat?: float, complementacao_vaar?: float, fonte?: string, notas?: string}}|null
      */
-    private function mapRecord(array $record, string $ibge, int $ano): ?array
+    private function mapRecordFlexible(array $record, string $ibge): ?array
     {
         $normalized = [];
         foreach ($record as $key => $value) {
@@ -269,7 +572,7 @@ final class FundebOpenDataImportService
         }
 
         $rowAno = (int) preg_replace('/\D/', '', (string) $this->firstValue($normalized, config('ieducar.fundeb.open_data.fields.ano', [])));
-        if ($rowAno !== $ano) {
+        if ($rowAno < 2000 || $rowAno > (int) date('Y') + 1) {
             return null;
         }
 
@@ -278,13 +581,30 @@ final class FundebOpenDataImportService
             return null;
         }
 
-        return array_filter([
-            'vaaf' => $vaaf,
-            'vaat' => $this->parseMoney($this->firstValue($normalized, config('ieducar.fundeb.open_data.fields.vaat', []))),
-            'complementacao_vaar' => $this->parseMoney($this->firstValue($normalized, config('ieducar.fundeb.open_data.fields.complementacao_vaar', []))),
-            'fonte' => 'api_ckan_fnde',
-            'notas' => __('Importado via CKAN em :date', ['date' => now()->format('Y-m-d H:i')]),
-        ], static fn ($v) => $v !== null);
+        return [
+            'ano' => $rowAno,
+            'row' => array_filter([
+                'vaaf' => $vaaf,
+                'vaat' => $this->parseMoney($this->firstValue($normalized, config('ieducar.fundeb.open_data.fields.vaat', []))),
+                'complementacao_vaar' => $this->parseMoney($this->firstValue($normalized, config('ieducar.fundeb.open_data.fields.complementacao_vaar', []))),
+                'fonte' => 'api_ckan_fnde',
+                'notas' => __('Importado via CKAN em :date', ['date' => now()->format('Y-m-d H:i')]),
+            ], static fn ($v) => $v !== null),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $record
+     * @return array{vaaf: float, vaat?: float, complementacao_vaar?: float, fonte?: string, notas?: string}|null
+     */
+    private function mapRecord(array $record, string $ibge, int $ano): ?array
+    {
+        $flex = $this->mapRecordFlexible($record, $ibge);
+        if ($flex === null || $flex['ano'] !== $ano) {
+            return null;
+        }
+
+        return $flex['row'];
     }
 
     /**
@@ -304,24 +624,59 @@ final class FundebOpenDataImportService
     }
 
     /**
-     * URL JSON: array de objetos ou { "records": [...] } com placeholders {ibge} {ano}
-     *
      * @return array{vaaf: float, vaat?: float, complementacao_vaar?: float, fonte?: string, notas?: string}|null
      */
     private function fetchFromJsonUrl(string $urlTemplate, string $ibge, int $ano): ?array
     {
-        $url = str_replace(['{ibge}', '{ano}'], [$ibge, (string) $ano], $urlTemplate);
-        $timeout = max(5, (int) config('ieducar.fundeb.open_data.timeout', 30));
+        $resolved = str_replace(['{ibge}', '{ano}'], [$ibge, (string) $ano], $urlTemplate);
 
-        $response = Http::timeout($timeout)->acceptJson()->get($url);
+        $data = $this->readJsonSource($resolved);
+        if ($data === null) {
+            return null;
+        }
+
+        $records = is_array($data['records'] ?? null) ? $data['records'] : (is_array($data) && array_is_list($data) ? $data : []);
+
+        return $this->parseFirstRecord($records, $ibge, $ano);
+    }
+
+    /**
+     * @return array<string, mixed>|list<mixed>|null
+     */
+    private function readJsonSource(string $source): ?array
+    {
+        if (str_starts_with($source, 'storage://')) {
+            $path = storage_path(substr($source, strlen('storage://')));
+            if (! is_readable($path)) {
+                return null;
+            }
+            $decoded = json_decode((string) file_get_contents($path), true);
+
+            return is_array($decoded) ? $decoded : null;
+        }
+
+        if (str_starts_with($source, 'file://')) {
+            $path = substr($source, 7);
+            if (! is_readable($path)) {
+                return null;
+            }
+            $decoded = json_decode((string) file_get_contents($path), true);
+
+            return is_array($decoded) ? $decoded : null;
+        }
+
+        $timeout = max(5, (int) config('ieducar.fundeb.open_data.timeout', 30));
+        $response = Http::timeout($timeout)
+            ->acceptJson()
+            ->withOptions(['allow_redirects' => true])
+            ->get($source);
         if (! $response->successful()) {
             return null;
         }
 
-        $data = $response->json();
-        $records = is_array($data['records'] ?? null) ? $data['records'] : (is_array($data) && array_is_list($data) ? $data : []);
+        $decoded = $response->json();
 
-        return $this->parseFirstRecord($records, $ibge, $ano);
+        return is_array($decoded) ? $decoded : null;
     }
 
     private function parseMoney(mixed $raw): ?float

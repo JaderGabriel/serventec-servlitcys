@@ -108,7 +108,7 @@ composer run phpstan
 
 ```bash
 composer install
-cp .env.example .env   # se necessário
+# Configure o .env na raiz do projeto (único ficheiro de ambiente)
 php artisan key:generate
 php artisan migrate
 php artisan db:seed --class=AdminUserSeeder

@@ -57,6 +57,7 @@
     ];
     $publicSources = is_array($d['public_data_sources'] ?? null) ? $d['public_data_sources'] : [];
     $hasPublicSources = count($publicSources['categories'] ?? []) > 0;
+    $exportParams = is_array($d['export_params'] ?? null) ? $d['export_params'] : request()->only(['city_id', 'ano_letivo', 'escola_id', 'curso_id', 'turno_id']);
     $flowSteps = ConsultoriaFlow::numberedSteps([
         ['label' => __('Prioridades'), 'anchor' => 'disc-prioridades'],
         ['label' => __('Referências'), 'anchor' => 'disc-referencias', 'visible' => count($pillars) > 0],
@@ -99,7 +100,7 @@
                 <x-dashboard.funding-loss-conditions-button :activeCheckIds="$activeCheckIds" />
                 @if ($yearFilterReady)
                     <a
-                        href="{{ route('dashboard.analytics.discrepancies.export', request()->only(['city_id', 'ano_letivo', 'escola_id', 'curso_id', 'turno_id'])) }}"
+                        href="{{ route('dashboard.analytics.discrepancies.export', $exportParams) }}"
                         class="inline-flex items-center justify-center rounded-lg border border-rose-300 dark:border-rose-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-semibold text-rose-800 dark:text-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                     >
                         {{ __('Exportar CSV') }}
@@ -267,31 +268,34 @@
                 :step="$discStep['disc-detalhe'] ?? null"
                 anchor="disc-detalhe"
                 :title="__('Detalhe por escola')"
-                :subtitle="__('Explicação, impacto, gráficos e localização por unidade.')"
+                :subtitle="__('Visão resumida por rotina; expanda cada bloco para orientação de correção e lista de unidades.')"
             >
-                @if ($chartFinanceiro !== null)
-                    <x-dashboard.chart-panel
-                        :chart="$chartFinanceiro"
-                        exportFilename="discrepancias-financeiro"
-                        :exportMeta="$chartExportContext"
-                        :compact="false"
-                        chartPanelId="chart-discrepancias-financeiro"
-                        panelTone="amber"
-                    />
+                @if ($chartFinanceiro !== null || $chartResumo !== null)
+                    <div class="disc-charts-overview grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
+                        @if ($chartResumo !== null)
+                            <x-dashboard.chart-panel
+                                :chart="$chartResumo"
+                                exportFilename="discrepancias-resumo"
+                                :exportMeta="$chartExportContext"
+                                :compact="true"
+                                chartPanelId="chart-discrepancias-resumo"
+                                panelTone="indigo"
+                            />
+                        @endif
+                        @if ($chartFinanceiro !== null)
+                            <x-dashboard.chart-panel
+                                :chart="$chartFinanceiro"
+                                exportFilename="discrepancias-financeiro"
+                                :exportMeta="$chartExportContext"
+                                :compact="true"
+                                chartPanelId="chart-discrepancias-financeiro"
+                                panelTone="amber"
+                            />
+                        @endif
+                    </div>
                 @endif
 
-                @if ($chartResumo !== null)
-                    <x-dashboard.chart-panel
-                        :chart="$chartResumo"
-                        exportFilename="discrepancias-resumo"
-                        :exportMeta="$chartExportContext"
-                        :compact="false"
-                        chartPanelId="chart-discrepancias-resumo"
-                        panelTone="indigo"
-                    />
-                @endif
-
-                <div class="space-y-6">
+                <div class="space-y-4">
                     @foreach (array_merge($errosCriticos, $demaisChecks) as $idx => $check)
                         @php
                             $isErro = ! empty($check['is_erro']);
@@ -308,26 +312,33 @@
                             $vaarRefs = is_array($check['vaar_refs'] ?? null) ? $check['vaar_refs'] : [];
                         @endphp
                         <article class="rounded-lg border border-gray-200 dark:border-gray-700 border-l-4 {{ $ring }} shadow-sm overflow-hidden">
-                            <header class="px-4 py-3 border-b border-gray-200/80 dark:border-gray-600/80 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                                <div>
-                                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ $check['title'] ?? '' }}</h3>
-                                    <p class="mt-1 text-sm tabular-nums text-gray-700 dark:text-gray-300">
-                                        {{ __('Total: :n', ['n' => number_format((int) ($check['total'] ?? 0))]) }}
-                                        @if (($check['pct_rede'] ?? null) !== null)
-                                            <span class="text-gray-500 dark:text-gray-400">({{ number_format((float) $check['pct_rede'], 1, ',', '.') }}% {{ __('da rede') }})</span>
-                                        @endif
-                                    </p>
-                                    <p class="mt-1 text-sm font-medium text-orange-700 dark:text-orange-300 tabular-nums">
-                                        {{ __('Perda estimada:') }} {{ $fmtBrl((float) ($check['perda_estimada_anual'] ?? 0)) }}
-                                        <span class="text-gray-500 dark:text-gray-400 font-normal">·</span>
-                                        {{ __('Ganho potencial:') }} {{ $fmtBrl((float) ($check['ganho_potencial_anual'] ?? 0)) }}
-                                    </p>
+                            <header class="px-4 py-2.5 border-b border-gray-200/80 dark:border-gray-600/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <div class="min-w-0">
+                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-snug">{{ $check['title'] ?? '' }}</h3>
+                                    <dl class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs tabular-nums text-gray-600 dark:text-gray-400">
+                                        <div>
+                                            <dt class="sr-only">{{ __('Ocorrências') }}</dt>
+                                            <dd><span class="font-medium text-gray-800 dark:text-gray-200">{{ number_format((int) ($check['total'] ?? 0)) }}</span> {{ __('ocorr.') }}
+                                                @if (($check['pct_rede'] ?? null) !== null)
+                                                    <span class="text-gray-500">({{ number_format((float) $check['pct_rede'], 1, ',', '.') }}% {{ __('rede') }})</span>
+                                                @endif
+                                            </dd>
+                                        </div>
+                                        <div>
+                                            <dt class="sr-only">{{ __('Perda') }}</dt>
+                                            <dd class="text-orange-700 dark:text-orange-300"><span class="text-gray-500 dark:text-gray-500 font-normal">{{ __('Perda') }}</span> {{ $fmtBrl((float) ($check['perda_estimada_anual'] ?? 0)) }}</dd>
+                                        </div>
+                                        <div>
+                                            <dt class="sr-only">{{ __('Ganho') }}</dt>
+                                            <dd class="text-emerald-700 dark:text-emerald-300"><span class="text-gray-500 font-normal">{{ __('Ganho') }}</span> {{ $fmtBrl((float) ($check['ganho_potencial_anual'] ?? 0)) }}</dd>
+                                        </div>
+                                    </dl>
                                 </div>
                                 <span class="inline-flex items-center gap-1.5 shrink-0">
                                     @if ($isErro)
                                         <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-600 text-white">{{ __('Erro') }}</span>
                                     @endif
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium {{ $badge }}">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium {{ $badge }}">
                                         {{ $check['consultoria_prioridade'] ?? match ($check['severity'] ?? '') {
                                             'danger' => __('Alta prioridade'),
                                             'warning' => __('Média prioridade'),
@@ -336,33 +347,8 @@
                                     </span>
                                 </span>
                             </header>
-                            <div class="px-4 py-3 space-y-4 text-sm text-gray-700 dark:text-gray-300">
-                                @if (count($vaarRefs) > 0)
-                                    <p class="text-xs text-indigo-800 dark:text-indigo-200">
-                                        <span class="font-semibold">{{ __('Eixos:') }}</span>
-                                        {{ implode(' · ', $vaarRefs) }}
-                                    </p>
-                                @endif
-                                <div>
-                                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">{{ __('O que é') }}</p>
-                                    <p class="leading-relaxed">{{ $check['explanation'] ?? '' }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300 mb-1">{{ __('Impacto financeiro / Censo') }}</p>
-                                    <p class="leading-relaxed">{{ $check['impact'] ?? '' }}</p>
-                                    @if (is_array($check['funding_explicacao'] ?? null))
-                                        <div class="mt-2">
-                                            <x-dashboard.consultoria-funding-explanation :explicacao="$check['funding_explicacao']" />
-                                        </div>
-                                    @elseif (filled($check['funding_formula'] ?? null))
-                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 italic">{{ $check['funding_formula'] }}</p>
-                                    @endif
-                                </div>
-                                <div>
-                                    <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300 mb-1">{{ __('Correção possível') }}</p>
-                                    <p class="leading-relaxed">{{ $check['correction'] ?? '' }}</p>
-                                </div>
-                                <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                            <div class="px-3 py-3 space-y-3 text-sm text-gray-700 dark:text-gray-300">
+                                <div class="disc-charts-mini grid grid-cols-1 sm:grid-cols-3 gap-2">
                                     @if (! empty($check['chart_financeiro']))
                                         <x-dashboard.chart-panel :chart="$check['chart_financeiro']" :exportFilename="'discrepancia-fin-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-fin-'.$idx" panelTone="amber" />
                                     @endif
@@ -370,13 +356,50 @@
                                         <x-dashboard.chart-panel :chart="$check['chart_rede']" :exportFilename="'discrepancia-rede-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-rede-'.$idx" panelTone="indigo" />
                                     @endif
                                     @if (! empty($check['chart_escolas']))
-                                        <x-dashboard.chart-panel :chart="$check['chart_escolas']" :exportFilename="'discrepancia-escolas-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-esc-'.$idx" panelTone="indigo" />
+                                        <div class="sm:col-span-3 lg:col-span-1">
+                                            <x-dashboard.chart-panel :chart="$check['chart_escolas']" :exportFilename="'discrepancia-escolas-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-esc-'.$idx" panelTone="indigo" />
+                                        </div>
                                     @endif
                                 </div>
+
+                                <details class="group rounded-md border border-gray-200/90 dark:border-gray-600/80 bg-gray-50/50 dark:bg-gray-900/30">
+                                    <summary class="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center justify-between gap-2 select-none">
+                                        <span>{{ __('Orientação e impacto') }}</span>
+                                        <span class="text-gray-400 group-open:rotate-180 transition-transform" aria-hidden="true">▾</span>
+                                    </summary>
+                                    <div class="px-3 pb-3 pt-0 space-y-3 text-xs leading-relaxed border-t border-gray-200/80 dark:border-gray-600/60">
+                                        @if (count($vaarRefs) > 0)
+                                            <p class="text-indigo-800 dark:text-indigo-200 pt-2">
+                                                <span class="font-semibold">{{ __('Eixos:') }}</span>
+                                                {{ implode(' · ', $vaarRefs) }}
+                                            </p>
+                                        @endif
+                                        <div>
+                                            <p class="font-semibold text-gray-500 dark:text-gray-400 mb-0.5">{{ __('O que é') }}</p>
+                                            <p>{{ $check['explanation'] ?? '' }}</p>
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold text-rose-700 dark:text-rose-300 mb-0.5">{{ __('Impacto financeiro / Censo') }}</p>
+                                            <p>{{ $check['impact'] ?? '' }}</p>
+                                            @if (is_array($check['funding_explicacao'] ?? null))
+                                                <div class="mt-2">
+                                                    <x-dashboard.consultoria-funding-explanation :explicacao="$check['funding_explicacao']" />
+                                                </div>
+                                            @elseif (filled($check['funding_formula'] ?? null))
+                                                <p class="mt-1 text-gray-500 dark:text-gray-400 italic">{{ $check['funding_formula'] }}</p>
+                                            @endif
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold text-emerald-700 dark:text-emerald-300 mb-0.5">{{ __('Correção possível') }}</p>
+                                            <p>{{ $check['correction'] ?? '' }}</p>
+                                        </div>
+                                    </div>
+                                </details>
+
                                 @if (! empty($check['school_rows']) && is_array($check['school_rows']))
                                     <div>
-                                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">{{ __('Onde ocorre (escola)') }}</p>
-                                        <div class="overflow-x-auto max-h-72 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">{{ __('Unidades com ocorrência') }}</p>
+                                        <div class="overflow-x-auto max-h-52 overflow-y-auto rounded-md border border-gray-200 dark:border-gray-700">
                                             <table class="min-w-full text-xs text-left">
                                                 <thead class="bg-gray-50 dark:bg-gray-900/60 sticky top-0">
                                                     <tr>

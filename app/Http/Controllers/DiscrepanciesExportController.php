@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\City;
 use App\Repositories\Ieducar\DiscrepanciesRepository;
 use App\Support\Auth\UserCityAccess;
 use App\Support\Dashboard\IeducarFilterState;
-use App\Support\Ieducar\DiscrepanciesCheckCatalog;
+use App\Support\Ieducar\DiscrepanciesCsvRowsBuilder;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -40,8 +39,7 @@ class DiscrepanciesExportController extends Controller
         }
 
         $snapshot = $this->discrepancies->snapshot($city, $filters);
-        $checks = is_array($snapshot['checks'] ?? null) ? $snapshot['checks'] : [];
-        $catalog = DiscrepanciesCheckCatalog::definitions();
+        $exportRows = DiscrepanciesCsvRowsBuilder::fromSnapshot($snapshot);
         $checkFilter = trim((string) $request->input('check_id', ''));
 
         $filename = sprintf(
@@ -50,7 +48,7 @@ class DiscrepanciesExportController extends Controller
             preg_replace('/[^a-z0-9_-]+/i', '-', (string) ($filters->ano_letivo ?? 'ano')),
         );
 
-        return response()->streamDownload(function () use ($checks, $catalog, $checkFilter, $city, $filters): void {
+        return response()->streamDownload(function () use ($exportRows, $checkFilter, $city, $filters): void {
             $out = fopen('php://output', 'w');
             if ($out === false) {
                 return;
@@ -65,32 +63,30 @@ class DiscrepanciesExportController extends Controller
                 'escola',
                 'total',
                 'tipos_recurso',
+                'perda_estimada',
+                'ganho_potencial',
+                'agregado',
                 'sugestao_correcao',
             ], ';');
 
-            foreach ($checks as $check) {
-                $id = (string) ($check['id'] ?? '');
-                if ($checkFilter !== '' && $id !== $checkFilter) {
+            foreach ($exportRows as $row) {
+                if ($checkFilter !== '' && $row['check_id'] !== $checkFilter) {
                     continue;
                 }
-                $meta = $catalog[$id] ?? [];
-                $sugestao = (string) ($meta['correction'] ?? $check['correction'] ?? '');
-                $titulo = (string) ($check['title'] ?? $meta['title'] ?? $id);
-                $rows = is_array($check['school_rows'] ?? null) ? $check['school_rows'] : [];
-
-                foreach ($rows as $row) {
-                    fputcsv($out, [
-                        $city->name,
-                        (string) ($filters->ano_letivo ?? ''),
-                        $id,
-                        $titulo,
-                        (string) ($row['escola_id'] ?? ''),
-                        (string) ($row['escola'] ?? ''),
-                        (int) ($row['total'] ?? 0),
-                        (string) ($row['tipos_recurso'] ?? ''),
-                        $sugestao,
-                    ], ';');
-                }
+                fputcsv($out, [
+                    $city->name,
+                    (string) ($filters->ano_letivo ?? ''),
+                    $row['check_id'],
+                    $row['check_titulo'],
+                    $row['escola_id'],
+                    $row['escola'],
+                    $row['total'],
+                    $row['tipos_recurso'],
+                    number_format($row['perda_estimada'], 2, '.', ''),
+                    number_format($row['ganho_potencial'], 2, '.', ''),
+                    $row['agregado'] ? '1' : '0',
+                    $row['sugestao_correcao'],
+                ], ';');
             }
 
             fclose($out);

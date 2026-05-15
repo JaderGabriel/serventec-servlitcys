@@ -14,7 +14,7 @@ O **servlitcys** é uma aplicação web que consolida **informação educacional
 
 1. **Painel e análise** — Visualização de métricas e filtros associados a cidades com configuração ativa e ligação a dados (ex.: ecossistema iEducar).
 2. **Gestão de cidades** — Cadastro de municípios e credenciais de acesso às respetivas bases (restrito a administradores).
-3. **Gestão de utilizadores** — Criação de contas no sistema após autenticação, sem registo público na Internet.
+3. **Gestão de utilizadores** — Criação de contas após autenticação (sem registo público); administradores podem desactivar, reactivar ou excluir contas; inactivos não autenticam.
 4. **Página institucional** — Apresentação da plataforma e acesso ao login.
 
 ## Modelo de governação de acesso
@@ -47,4 +47,4 @@ Não existe auto-registo: reduz superfície de ataque e permite controlo explíc
 
 ---
 
-*Documento orientado a decisores e gestão de projeto; perfis de acesso em [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md); segurança em [SEGURANCA.md](SEGURANCA.md); comandos CLI: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md).*
+*Documento orientado a decisores e gestão de projeto. Estado actual e mapa de docs: [STATUS_PROJETO.md](STATUS_PROJETO.md). Perfis: [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md). Segurança: [SEGURANCA.md](SEGURANCA.md). CLI: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md).*

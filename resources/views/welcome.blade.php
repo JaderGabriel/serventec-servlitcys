@@ -39,8 +39,8 @@
                     @if (Route::has('login'))
                         <nav class="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
                             @auth
-                                <a href="{{ url('/dashboard') }}" class="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-white/25 hover:bg-white/10">
-                                    {{ __('Painel') }}
+                                <a href="{{ Auth::user()->homeUrl() }}" class="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-white/25 hover:bg-white/10">
+                                    {{ Auth::user()->canViewAdminDashboard() ? __('Painel') : __('Análise') }}
                                 </a>
                             @else
                                 <a href="{{ route('login') }}" class="rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400">

@@ -403,7 +403,7 @@ document.addEventListener("alpine:init", () => {
                     typeof extraEarly.panelHeight === "string"
                         ? extraEarly.panelHeight.trim().toLowerCase()
                         : "";
-                this._panelHeight = ["sm", "md", "lg", "xl", "xxl", "xxxl"].includes(
+                this._panelHeight = ["xs", "sm", "md", "lg", "xl", "xxl", "xxxl"].includes(
                     phRaw,
                 )
                     ? phRaw
@@ -1119,7 +1119,13 @@ document.addEventListener("alpine:init", () => {
                     src.options &&
                     typeof src.options === "object" &&
                     src.options.skipHorizontalBarAutoHeight === true;
-                if (isH && n > 0 && !skipHAuto) {
+                if (isH && n > 0 && skipHAuto) {
+                    const minCustom = Number(src.options?.minChartHeight);
+                    this.panelBodyStyle =
+                        Number.isFinite(minCustom) && minCustom > 0
+                            ? `min-height: ${Math.round(minCustom)}px`
+                            : "";
+                } else if (isH && n > 0 && !skipHAuto) {
                     const rowPx = ["xxxl"].includes(this._panelHeight)
                         ? 104
                         : 52;
@@ -1135,12 +1141,17 @@ document.addEventListener("alpine:init", () => {
                 let body =
                     "p-2 sm:p-4 relative w-full overflow-x-auto overflow-y-auto transition-all duration-200 ease-out ";
                 if (c) {
-                    // Compacto: usado em medidores e gráficos pequenos. Evitar crescer demais em mobile.
-                    body += "min-h-[280px] h-[min(28rem,calc(100vw-2rem))] sm:h-[26rem] md:min-h-[22rem]";
+                    if (ph === "xs") {
+                        body += "min-h-[9.5rem] h-[min(12rem,calc(100vw-2rem))] sm:h-[11rem] md:min-h-[10rem]";
+                    } else {
+                        body += "min-h-[280px] h-[min(28rem,calc(100vw-2rem))] sm:h-[26rem] md:min-h-[22rem]";
+                    }
                 } else {
                     // Não-compacto: usado na maioria dos gráficos do painel analítico.
                     // panelHeight controla o "respiro" vertical quando há muitos rótulos/linhas.
-                    if (ph === "sm") {
+                    if (ph === "xs") {
+                        body += "min-h-[min(14rem,42vh)] w-full";
+                    } else if (ph === "sm") {
                         body += "min-h-[min(22rem,52vh)] w-full";
                     } else if (ph === "lg") {
                         body += "min-h-[min(40rem,78vh)] w-full";
@@ -1159,9 +1170,15 @@ document.addEventListener("alpine:init", () => {
                 let cv =
                     "block w-full max-w-full chart-panel-canvas transition-all duration-200 ";
                 if (c) {
-                    cv += "max-h-[min(26rem,72vw)] sm:max-h-[22rem] md:max-h-96";
+                    if (ph === "xs") {
+                        cv += "max-h-[min(11rem,38vw)] sm:max-h-[10.5rem] md:max-h-44";
+                    } else {
+                        cv += "max-h-[min(26rem,72vw)] sm:max-h-[22rem] md:max-h-96";
+                    }
                 } else {
-                    if (ph === "sm") {
+                    if (ph === "xs") {
+                        cv += "min-h-[9rem] w-full max-h-none";
+                    } else if (ph === "sm") {
                         cv += "min-h-[14rem] w-full max-h-none";
                     } else if (ph === "xl") {
                         cv += "min-h-[26rem] w-full max-h-none";

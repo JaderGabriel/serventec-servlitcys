@@ -3,7 +3,7 @@
     <div class="mx-auto max-w-[min(100%,100rem)] px-4 sm:px-6 lg:px-10 xl:px-12">
         <div class="flex min-h-14 flex-nowrap items-center justify-between gap-x-4 py-3 sm:min-h-16 sm:py-4">
             <div class="flex min-w-0 flex-1 flex-nowrap items-center gap-x-4 overflow-x-auto sm:gap-x-6 [scrollbar-width:thin]">
-                <a href="{{ route(Auth::user()->homeRouteName()) }}" class="flex shrink-0 items-center gap-2 group" title="{{ config('app.name') }}">
+                <a href="{{ Auth::user()->homeUrl() }}" class="flex shrink-0 items-center gap-2 group" title="{{ config('app.name') }}">
                     <x-application-logo class="block h-9 w-[3.25rem] shrink-0 text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition" />
                 </a>
                 <div class="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-2">

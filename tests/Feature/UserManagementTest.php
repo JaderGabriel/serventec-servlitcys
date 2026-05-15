@@ -149,4 +149,80 @@ class UserManagementTest extends TestCase
 
         $this->actingAs($municipal)->get(route('admin.geo-sync.index'))->assertForbidden();
     }
+
+    public function test_admin_can_deactivate_user(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $target = User::factory()->utilizador()->create(['is_active' => true]);
+
+        $this->actingAs($admin)
+            ->patch(route('users.update-status', $target), ['is_active' => 0])
+            ->assertRedirect(route('users.index'));
+
+        $this->assertFalse($target->fresh()->is_active);
+    }
+
+    public function test_admin_can_reactivate_user(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $target = User::factory()->utilizador()->create(['is_active' => false]);
+
+        $this->actingAs($admin)
+            ->patch(route('users.update-status', $target), ['is_active' => 1])
+            ->assertRedirect(route('users.index'));
+
+        $this->assertTrue($target->fresh()->is_active);
+    }
+
+    public function test_admin_can_delete_user(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $target = User::factory()->utilizador()->create();
+
+        $this->actingAs($admin)
+            ->delete(route('users.destroy', $target))
+            ->assertRedirect(route('users.index'));
+
+        $this->assertDatabaseMissing('users', ['id' => $target->id]);
+    }
+
+    public function test_admin_cannot_delete_self(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->delete(route('users.destroy', $admin))
+            ->assertForbidden();
+    }
+
+    public function test_admin_cannot_deactivate_self(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->patch(route('users.update-status', $admin), ['is_active' => 0])
+            ->assertForbidden();
+    }
+
+    public function test_inactive_user_cannot_login(): void
+    {
+        $user = User::factory()->utilizador()->create(['is_active' => false]);
+
+        $this->post('/login', [
+            'username' => $user->username,
+            'password' => 'password',
+        ])->assertSessionHasErrors('username');
+
+        $this->assertGuest();
+    }
+
+    public function test_utilizador_cannot_deactivate_users(): void
+    {
+        $actor = User::factory()->utilizador()->create();
+        $target = User::factory()->utilizador()->create();
+
+        $this->actingAs($actor)
+            ->patch(route('users.update-status', $target), ['is_active' => 0])
+            ->assertForbidden();
+    }
 }

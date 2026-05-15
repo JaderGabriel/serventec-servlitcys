@@ -35,7 +35,7 @@ class IeducarCompatibilityController extends Controller
         $filters = null;
         $fundebStored = [];
         $fundebResolved = null;
-        $fundebImportYear = (int) $request->input('fundeb_ano', (int) date('Y'));
+        $fundebImportYear = (int) $request->input('fundeb_ano', FundebOpenDataImportService::suggestedImportYear());
 
         if ($city !== null) {
             $filters = $this->filtersFromRequest($request);
@@ -70,6 +70,9 @@ class IeducarCompatibilityController extends Controller
             }
         }
 
+        $fundebApiDiagnostics = $this->fundebImport->apiDiagnostics();
+        $fundebCoverage = $this->fundebImport->localCoverageForYear($fundebImportYear);
+
         return view('admin.ieducar-compatibility.index', [
             'cities' => $cities,
             'city' => $city,
@@ -79,6 +82,9 @@ class IeducarCompatibilityController extends Controller
             'fundebStored' => $fundebStored,
             'fundebResolved' => $fundebResolved,
             'fundebImportYear' => $fundebImportYear,
+            'fundebApiDiagnostics' => $fundebApiDiagnostics,
+            'fundebCoverage' => $fundebCoverage,
+            'fundebSuggestedYear' => FundebOpenDataImportService::suggestedImportYear(),
         ]);
     }
 
@@ -87,16 +93,44 @@ class IeducarCompatibilityController extends Controller
         $validated = $request->validate([
             'city_id' => 'required|integer|exists:cities,id',
             'ano' => 'required|integer|min:2000|max:'.((int) date('Y') + 1),
+            'use_nearest_year' => 'sometimes|boolean',
         ]);
 
         $city = City::query()->findOrFail((int) $validated['city_id']);
-        $result = $this->fundebImport->importForCityYear($city, (int) $validated['ano']);
+        $result = $this->fundebImport->importForCityYear(
+            $city,
+            (int) $validated['ano'],
+            $request->boolean('use_nearest_year'),
+        );
 
         return redirect()
             ->route('admin.ieducar-compatibility.index', [
                 'city_id' => $city->id,
+                'fundeb_ano' => (int) ($result['imported_ano'] ?? $validated['ano']),
+            ])
+            ->with($result['success'] ? 'fundeb_import_success' : 'fundeb_import_error', $result['message']);
+    }
+
+    public function importFundebBulk(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ano' => 'required|integer|min:2000|max:'.((int) date('Y') + 1),
+            'use_nearest_year' => 'sometimes|boolean',
+            'city_id' => 'nullable|integer|exists:cities,id',
+        ]);
+
+        $result = $this->fundebImport->importBulk(
+            (int) $validated['ano'],
+            $request->boolean('use_nearest_year'),
+            isset($validated['city_id']) ? (int) $validated['city_id'] : null,
+        );
+
+        return redirect()
+            ->route('admin.ieducar-compatibility.index', [
+                'city_id' => $validated['city_id'] ?? $request->input('city_id'),
                 'fundeb_ano' => (int) $validated['ano'],
             ])
+            ->with('fundeb_bulk_result', $result)
             ->with($result['success'] ? 'fundeb_import_success' : 'fundeb_import_error', $result['message']);
     }
 

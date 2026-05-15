@@ -5,7 +5,7 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route(Auth::user()->homeRouteName()) }}" class="flex items-center gap-2 group" title="{{ config('app.name') }}">
+                    <a href="{{ Auth::user()->homeUrl() }}" class="flex items-center gap-2 group" title="{{ config('app.name') }}">
                         <x-application-logo class="block h-9 w-[3.25rem] shrink-0 text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition" />
                     </a>
                 </div>

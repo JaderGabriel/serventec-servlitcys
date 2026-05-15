@@ -180,6 +180,7 @@ final class AnalyticsEmptyPayloads
             'checks' => [],
             'notes' => [],
             'public_data_sources' => ['intro' => '', 'categories' => []],
+            'export_params' => [],
             'error' => null,
         ];
     }

@@ -3,6 +3,9 @@
         'login' => __('Início de sessão'),
         'user_created' => __('Utilizador criado'),
         'user_updated' => __('Conta atualizada'),
+        'user_activated' => __('Conta reativada'),
+        'user_deactivated' => __('Conta desativada'),
+        'user_deleted' => __('Utilizador excluído'),
         'sessions_terminated' => __('Sessões encerradas (admin)'),
         'session_revoked' => __('Sessão revogada'),
     ];
@@ -28,6 +31,16 @@
             @if (session('success'))
                 <div class="rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-4 py-3 text-sm text-green-800 dark:text-green-200">
                     {{ session('success') }}
+                </div>
+            @endif
+
+            @if ($errors->any())
+                <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
+                    <ul class="list-disc list-inside space-y-1">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
                 </div>
             @endif
 
@@ -97,7 +110,7 @@
                                         {{ $u->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') }}
                                     </td>
                                     <td class="px-4 py-3 text-sm text-right">
-                                        <div class="inline-flex items-center justify-end gap-2">
+                                        <div class="inline-flex flex-wrap items-center justify-end gap-2 max-w-[18rem] ml-auto">
                                             <a href="{{ route('users.edit', $u) }}" class="inline-flex items-center justify-end text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Editar utilizador') }}" aria-label="{{ __('Editar utilizador') }}">
                                             <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
@@ -111,6 +124,38 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v3l2.25 1.5" />
                                                     </svg>
                                                 </a>
+
+                                                @can('updateStatus', $u)
+                                                    @if ($u->is_active)
+                                                        <form method="POST" action="{{ route('users.update-status', $u) }}" class="inline" onsubmit="return confirm(@js(__('Desativar esta conta? O utilizador não poderá iniciar sessão.')));">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <input type="hidden" name="is_active" value="0" />
+                                                            <button type="submit" class="inline-flex items-center rounded px-2 py-1 text-xs font-medium text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/40 hover:bg-amber-200 dark:hover:bg-amber-900/60 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800" title="{{ __('Desativar utilizador') }}">
+                                                                {{ __('Desativar') }}
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <form method="POST" action="{{ route('users.update-status', $u) }}" class="inline">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <input type="hidden" name="is_active" value="1" />
+                                                            <button type="submit" class="inline-flex items-center rounded px-2 py-1 text-xs font-medium text-emerald-800 dark:text-emerald-200 bg-emerald-100 dark:bg-emerald-900/40 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800" title="{{ __('Reativar utilizador') }}">
+                                                                {{ __('Ativar') }}
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                @endcan
+
+                                                @can('delete', $u)
+                                                    <form method="POST" action="{{ route('users.destroy', $u) }}" class="inline" onsubmit="return confirm(@js(__('Excluir permanentemente este utilizador? Esta ação não pode ser desfeita.')));">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="inline-flex items-center rounded px-2 py-1 text-xs font-medium text-red-800 dark:text-red-200 bg-red-100 dark:bg-red-900/40 hover:bg-red-200 dark:hover:bg-red-900/60 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800" title="{{ __('Excluir utilizador') }}">
+                                                            {{ __('Excluir') }}
+                                                        </button>
+                                                    </form>
+                                                @endcan
                                             @endif
                                         </div>
                                         @if ($u->id === auth()->id())

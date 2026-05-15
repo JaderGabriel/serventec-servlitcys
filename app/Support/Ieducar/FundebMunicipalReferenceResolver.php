@@ -9,7 +9,10 @@ use App\Support\Dashboard\IeducarFilterState;
 /**
  * Resolve VAAF (e opcionalmente VAAT / complementação VAAR) por município e ano.
  *
- * Prioridade: base app (fundeb_municipio_references) → config por IBGE → fallback global.
+ * Prioridade por ano: vigente (filtro ou ano corrente) → anos anteriores → registo mais recente na base
+ * → fallback global (IEDUCAR_DISC_VAA_REFERENCIA).
+ *
+ * Em cada ano: base app (fundeb_municipio_references) → config por IBGE.
  */
 final class FundebMunicipalReferenceResolver
 {
@@ -33,36 +36,45 @@ final class FundebMunicipalReferenceResolver
      */
     public static function resolve(?City $city, ?IeducarFilterState $filters = null): array
     {
-        $fallback = self::fallbackGlobal();
-        $ano = self::resolveAno($filters);
         $ibge = self::normalizeIbge($city?->ibge_municipio);
-
-        if ($ibge !== null && $ano !== null) {
-            $row = self::findReferenceRow($ibge, $ano);
-
-            if ($row !== null && (float) $row->vaaf > 0) {
-                return self::buildPayload(
-                    (float) $row->vaaf,
-                    $row->vaat !== null ? (float) $row->vaat : null,
-                    $row->complementacao_vaar !== null ? (float) $row->complementacao_vaar : null,
-                    self::FONTE_OFICIAL_DB,
-                    __('VAAF oficial importado (:fonte, :ano)', [
-                        'fonte' => $row->fonte ?: __('FNDE/dados municipais'),
-                        'ano' => (string) $ano,
-                    ]),
-                    $ano,
-                    $ibge,
-                    $row->notas,
-                );
-            }
-
-            $fromConfig = self::fromConfigIbge($ibge, $ano);
-            if ($fromConfig !== null) {
-                return $fromConfig;
-            }
-        }
+        $anchorAno = self::resolveAnchorAno($filters);
 
         if ($ibge !== null) {
+            foreach (FundebReferenceYearOrder::candidateYears($anchorAno) as $ano) {
+                $row = self::findReferenceRow($ibge, $ano);
+
+                if ($row !== null && (float) $row->vaaf > 0) {
+                    return self::buildPayload(
+                        (float) $row->vaaf,
+                        $row->vaat !== null ? (float) $row->vaat : null,
+                        $row->complementacao_vaar !== null ? (float) $row->complementacao_vaar : null,
+                        self::FONTE_OFICIAL_DB,
+                        self::labelForResolvedYear(
+                            __('VAAF oficial importado (:fonte, :ano)', [
+                                'fonte' => $row->fonte ?: __('FNDE/dados municipais'),
+                                'ano' => (string) $ano,
+                            ]),
+                            $ano,
+                            $anchorAno,
+                        ),
+                        $ano,
+                        $ibge,
+                        $row->notas,
+                    );
+                }
+
+                $fromConfig = self::fromConfigIbge($ibge, $ano);
+                if ($fromConfig !== null) {
+                    $fromConfig['fonte_label'] = self::labelForResolvedYear(
+                        (string) $fromConfig['fonte_label'],
+                        $ano,
+                        $anchorAno,
+                    );
+
+                    return $fromConfig;
+                }
+            }
+
             $latest = self::findLatestReferenceRow($ibge);
 
             if ($latest !== null && (float) $latest->vaaf > 0) {
@@ -71,7 +83,11 @@ final class FundebMunicipalReferenceResolver
                     $latest->vaat !== null ? (float) $latest->vaat : null,
                     $latest->complementacao_vaar !== null ? (float) $latest->complementacao_vaar : null,
                     self::FONTE_OFICIAL_DB,
-                    __('VAAF oficial (:ano mais recente na base)', ['ano' => (string) $latest->ano]),
+                    self::labelForResolvedYear(
+                        __('VAAF oficial (:ano mais recente na base)', ['ano' => (string) $latest->ano]),
+                        (int) $latest->ano,
+                        $anchorAno,
+                    ),
                     (int) $latest->ano,
                     $ibge,
                     $latest->notas,
@@ -79,7 +95,7 @@ final class FundebMunicipalReferenceResolver
             }
         }
 
-        return $fallback;
+        return self::fallbackGlobal();
     }
 
     /**
@@ -223,15 +239,28 @@ final class FundebMunicipalReferenceResolver
         ];
     }
 
-    private static function resolveAno(?IeducarFilterState $filters): ?int
+    private static function resolveAnchorAno(?IeducarFilterState $filters): int
     {
-        if ($filters === null || ! $filters->hasYearSelected() || $filters->isAllSchoolYears()) {
-            return null;
+        if ($filters !== null && $filters->hasYearSelected() && ! $filters->isAllSchoolYears()) {
+            $y = $filters->yearFilterValue();
+            if ($y !== null && $y > 0) {
+                return $y;
+            }
         }
 
-        $y = $filters->yearFilterValue();
+        return (int) date('Y');
+    }
 
-        return $y !== null && $y > 0 ? $y : null;
+    private static function labelForResolvedYear(string $baseLabel, int $resolvedAno, int $anchorAno): string
+    {
+        if ($resolvedAno === $anchorAno) {
+            return $baseLabel;
+        }
+
+        return $baseLabel.' '.__('(referência :ref; sem dado para :anchor)', [
+            'ref' => (string) $resolvedAno,
+            'anchor' => (string) $anchorAno,
+        ]);
     }
 
     private static function normalizeIbge(mixed $raw): ?string

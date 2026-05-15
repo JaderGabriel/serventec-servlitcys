@@ -78,6 +78,13 @@ php artisan fundeb:import-references storage/app/fundeb_references.csv
 
 **Env API:** `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID`, `IEDUCAR_FUNDEB_CKAN_URL`, ou `IEDUCAR_FUNDEB_JSON_URL` (com `{ibge}` e `{ano}`).
 
+**UI admin:** em Compatibilidade i-Educar, card FUNDEB — importar um município ou **todos**; ano sugerido = ano anterior (FNDE raramente tem o ano corrente, ex. 2026). Opção «usar ano mais recente na API» quando o ano pedido não existir.
+
+```bash
+php artisan fundeb:import-api {city_id} --ano=2024 --nearest
+php artisan fundeb:import-api 0 --all --ano=2024 --nearest
+```
+
 ---
 
 ## 4. Onda 1 — itens

@@ -101,6 +101,27 @@ class User extends Authenticatable
     }
 
     /**
+     * Parâmetros da rota inicial (ex.: municipal com um único município → city_id).
+     *
+     * @return array<string, int|string>
+     */
+    public function homeRouteParameters(): array
+    {
+        if (! $this->isMunicipal()) {
+            return [];
+        }
+
+        $ids = $this->cityIds();
+
+        return count($ids) === 1 ? ['city_id' => $ids[0]] : [];
+    }
+
+    public function homeUrl(bool $absolute = true): string
+    {
+        return route($this->homeRouteName(), $this->homeRouteParameters(), $absolute);
+    }
+
+    /**
      * @return BelongsToMany<City, $this>
      */
     public function cities(): BelongsToMany
@@ -191,6 +212,15 @@ class User extends Authenticatable
         }
 
         return static::activeAdminCount() === 1;
+    }
+
+    public function isLastAdminAccount(): bool
+    {
+        if ($this->role() !== UserRole::Admin) {
+            return false;
+        }
+
+        return static::query()->where('role', UserRole::Admin->value)->count() === 1;
     }
 
     public function needsProfileCompletion(): bool

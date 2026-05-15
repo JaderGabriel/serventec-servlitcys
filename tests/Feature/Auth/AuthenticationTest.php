@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\City;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -41,6 +42,30 @@ class AuthenticationTest extends TestCase
 
         $this->assertAuthenticated();
         $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_municipal_is_redirected_to_analytics_with_city_after_login(): void
+    {
+        $city = City::factory()->create();
+        $municipal = User::factory()->municipal()->create();
+        $municipal->cities()->attach($city->id);
+
+        $response = $this->post('/login', [
+            'username' => $municipal->username,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('dashboard.analytics', ['city_id' => $city->id], absolute: false));
+    }
+
+    public function test_municipal_cannot_access_admin_dashboard(): void
+    {
+        $municipal = User::factory()->municipal()->create();
+
+        $this->actingAs($municipal)
+            ->get(route('dashboard'))
+            ->assertRedirect(route('dashboard.analytics'));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void

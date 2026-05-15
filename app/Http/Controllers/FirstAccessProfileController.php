@@ -12,7 +12,7 @@ class FirstAccessProfileController extends Controller
     public function edit(Request $request): View|RedirectResponse
     {
         if (! $request->user()->needsProfileCompletion()) {
-            return redirect()->route($request->user()->homeRouteName());
+            return redirect()->route($request->user()->homeRouteName(), $request->user()->homeRouteParameters());
         }
 
         return view('profile.first-access', [
@@ -27,6 +27,7 @@ class FirstAccessProfileController extends Controller
         $user->cpf = $request->validated('cpf');
         $user->save();
 
-        return redirect()->route($user->homeRouteName())->with('success', __('Cadastro complementado. Bem-vindo!'));
+        return redirect()->route($user->homeRouteName(), $user->homeRouteParameters())
+            ->with('success', __('Cadastro complementado. Bem-vindo!'));
     }
 }
