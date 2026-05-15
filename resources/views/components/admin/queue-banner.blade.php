@@ -13,7 +13,14 @@
                 <a href="{{ route('admin.sync-queue.index') }}" class="font-medium underline underline-offset-2 hover:text-indigo-700 dark:hover:text-indigo-100">{{ __('Fila de sincronização') }}</a>.
             </p>
             @if (! $compact)
-                <p class="mt-1.5 text-xs text-indigo-800/80 dark:text-indigo-300/80 font-mono">{{ __('Servidor: php artisan admin-sync:work') }}</p>
+                <p class="mt-1.5 text-xs text-indigo-800/80 dark:text-indigo-300/80">
+                    @if (config('ieducar.admin_sync.schedule.enabled', true))
+                        {{ __('Cron:') }} <span class="font-mono">php artisan schedule:run</span>
+                        {{ __('(cada minuto) processa a fila automaticamente.') }}
+                    @else
+                        <span class="font-mono">php artisan admin-sync:work</span>
+                    @endif
+                </p>
             @endif
         </div>
         <a href="{{ route('admin.sync-queue.index') }}" class="shrink-0 inline-flex items-center rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-500">

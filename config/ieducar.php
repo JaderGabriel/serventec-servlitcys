@@ -843,6 +843,15 @@ return [
         'connection' => env('ADMIN_SYNC_QUEUE_CONNECTION'),
         'job_timeout' => max(60, (int) env('ADMIN_SYNC_JOB_TIMEOUT', 3600)),
         'tries' => max(1, (int) env('ADMIN_SYNC_TRIES', 1)),
+        /*
+         * Processamento via `php artisan schedule:run` (cron cada minuto).
+         * Desactive se usar `admin-sync:work` contínuo em Supervisor.
+         */
+        'schedule' => [
+            'enabled' => filter_var(env('ADMIN_SYNC_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
+            'max_seconds' => max(10, (int) env('ADMIN_SYNC_SCHEDULE_MAX_SECONDS', 55)),
+            'overlap_minutes' => max(1, (int) env('ADMIN_SYNC_SCHEDULE_OVERLAP_MINUTES', 120)),
+        ],
     ],
 
 ];

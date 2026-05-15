@@ -17,9 +17,15 @@
 
     <div class="py-10">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 text-sm">
-                <p class="font-medium text-gray-900 dark:text-gray-100">{{ __('Worker no servidor') }}</p>
-                <code class="mt-1 block text-xs text-gray-600 dark:text-gray-400">php artisan admin-sync:work</code>
+            <div class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 text-sm space-y-2">
+                @if (config('ieducar.admin_sync.schedule.enabled', true))
+                    <p class="font-medium text-gray-900 dark:text-gray-100">{{ __('Agendador (recomendado)') }}</p>
+                    <code class="block text-xs text-gray-600 dark:text-gray-400">* * * * * php artisan schedule:run</code>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('A cada minuto processa jobs pendentes (até :s s por execução).', ['s' => (string) config('ieducar.admin_sync.schedule.max_seconds', 55)]) }}</p>
+                @else
+                    <p class="font-medium text-gray-900 dark:text-gray-100">{{ __('Worker manual / Supervisor') }}</p>
+                    <code class="block text-xs text-gray-600 dark:text-gray-400">php artisan admin-sync:work</code>
+                @endif
             </div>
 
             <form method="get" class="flex flex-wrap gap-3 items-end text-sm">

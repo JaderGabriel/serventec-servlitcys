@@ -33,29 +33,41 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withSchedule(function (Schedule $schedule): void {
-        if (! config('pulse.enabled', true) || ! config('pulse.schedule.enabled', true)) {
-            return;
+        if (config('pulse.enabled', true) && config('pulse.schedule.enabled', true)) {
+            /*
+             * Separar `pulse:check` e `pulse:work`: se ficarem na mesma closure com um único
+             * `withoutOverlapping`, um digest longo pode atrasar ou impedir snapshots de sistema
+             * e o cartão Servers mostra “offline” apesar do schedule:list estar correcto.
+             */
+            $schedule->call(function (): void {
+                Artisan::call('pulse:check', ['--once' => true]);
+            })
+                ->name('pulse-scheduled-check')
+                ->everyMinute()
+                ->withoutOverlapping(120);
+
+            if (config('pulse.schedule.run_digest_tick', true)) {
+                $schedule->call(function (): void {
+                    Artisan::call('pulse:work', ['--stop-when-empty' => true]);
+                })
+                    ->name('pulse-scheduled-work')
+                    ->everyMinute()
+                    ->withoutOverlapping(300);
+            }
         }
 
-        /*
-         * Separar `pulse:check` e `pulse:work`: se ficarem na mesma closure com um único
-         * `withoutOverlapping`, um digest longo pode atrasar ou impedir snapshots de sistema
-         * e o cartão Servers mostra “offline” apesar do schedule:list estar correcto.
-         */
-        $schedule->call(function (): void {
-            Artisan::call('pulse:check', ['--once' => true]);
-        })
-            ->name('pulse-scheduled-check')
-            ->everyMinute()
-            ->withoutOverlapping(120);
+        if (config('ieducar.admin_sync.schedule.enabled', true)) {
+            $maxSeconds = max(10, (int) config('ieducar.admin_sync.schedule.max_seconds', 55));
+            $overlap = max(1, (int) config('ieducar.admin_sync.schedule.overlap_minutes', 120));
 
-        if (config('pulse.schedule.run_digest_tick', true)) {
-            $schedule->call(function (): void {
-                Artisan::call('pulse:work', ['--stop-when-empty' => true]);
-            })
-                ->name('pulse-scheduled-work')
+            $schedule->command('admin-sync:work', [
+                '--stop-when-empty' => true,
+                '--max-time' => $maxSeconds,
+            ])
+                ->name('admin-sync-scheduled-work')
                 ->everyMinute()
-                ->withoutOverlapping(300);
+                ->withoutOverlapping($overlap)
+                ->runInBackground();
         }
     })
     ->create();

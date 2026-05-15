@@ -8,6 +8,8 @@ class AdminSyncWorkCommand extends Command
 {
     protected $signature = 'admin-sync:work
                             {--once : Processar apenas um job e terminar}
+                            {--stop-when-empty : Parar quando a fila estiver vazia (usado pelo schedule:run)}
+                            {--max-time=0 : Tempo máximo do worker em segundos (0 = sem limite)}
                             {--timeout= : Timeout por job em segundos (default: config ieducar)}
                             {--tries= : Tentativas por job (default: config ieducar)}';
 
@@ -29,8 +31,15 @@ class AdminSyncWorkCommand extends Command
         $this->line(__('  Fila: :queue', ['queue' => $queue]));
         $this->line(__('  Timeout: :s s · Tentativas: :t', ['s' => (string) $timeout, 't' => (string) $tries]));
         $this->newLine();
-        $this->comment(__('Em produção, use supervisor/systemd para manter este comando activo.'));
-        $this->newLine();
+        if (! $this->option('once') && ! $this->option('stop-when-empty')) {
+            $this->comment(__('Em produção contínua, use Supervisor. Com cron, active ADMIN_SYNC_SCHEDULE_ENABLED e schedule:run cada minuto.'));
+            $this->newLine();
+        }
+
+        $maxTime = $this->option('max-time');
+        $maxTime = $maxTime !== null && $maxTime !== '' && $maxTime !== '0'
+            ? (int) $maxTime
+            : 0;
 
         $params = [
             'connection' => $connection,
@@ -38,11 +47,15 @@ class AdminSyncWorkCommand extends Command
             '--timeout' => $timeout,
             '--tries' => $tries,
             '--sleep' => 3,
-            '--max-time' => 0,
+            '--max-time' => $maxTime,
         ];
 
         if ($this->option('once')) {
             $params['--once'] = true;
+        }
+
+        if ($this->option('stop-when-empty')) {
+            $params['--stop-when-empty'] = true;
         }
 
         return $this->call('queue:work', $params);
