@@ -44,6 +44,7 @@ final class AnalyticsEmptyPayloads
                 'denominador_texto' => '',
                 'alerta_ano_encerrado' => null,
             ],
+            'public_data_sources' => ['intro' => '', 'categories' => []],
         ];
     }
 
@@ -96,6 +97,17 @@ final class AnalyticsEmptyPayloads
             'intro' => '',
             'footnote' => '',
             'modules' => [],
+            'public_data_sources' => ['intro' => '', 'categories' => []],
+            'resource_projection' => [
+                'available' => false,
+                'kpis' => [],
+                'totais' => [],
+                'distribuicao_legal' => ['itens' => [], 'chart' => null],
+                'por_etapa' => [],
+                'chart_previsao' => null,
+                'chart_distribuicao' => null,
+                'chart_etapa' => null,
+            ],
         ];
     }
 
@@ -126,6 +138,9 @@ final class AnalyticsEmptyPayloads
             'top_problems' => [],
             'chart_pendencias' => null,
             'active_check_ids' => [],
+            'funding_metodologia' => null,
+            'funding_resumo_explicacao' => null,
+            'public_data_sources' => ['intro' => '', 'categories' => []],
             'error' => null,
         ];
     }
@@ -140,6 +155,8 @@ final class AnalyticsEmptyPayloads
             'city_name' => '',
             'total_matriculas' => null,
             'funding_reference' => null,
+            'funding_metodologia' => null,
+            'funding_resumo_explicacao' => null,
             'summary' => [
                 'com_problema' => 0,
                 'corrigiveis' => 0,
@@ -154,6 +171,7 @@ final class AnalyticsEmptyPayloads
             'active_check_ids' => [],
             'checks' => [],
             'notes' => [],
+            'public_data_sources' => ['intro' => '', 'categories' => []],
             'error' => null,
         ];
     }

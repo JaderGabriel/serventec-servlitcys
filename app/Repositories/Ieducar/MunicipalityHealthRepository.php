@@ -5,6 +5,7 @@ namespace App\Repositories\Ieducar;
 use App\Models\City;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Dashboard\PublicDataSourcesCatalog;
 use App\Support\Ieducar\ConsultoriaThematicBridge;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 
@@ -46,6 +47,7 @@ class MunicipalityHealthRepository
             'cadastro_dimensions' => [],
             'thematic_blocks' => [],
             'active_check_ids' => [],
+            'public_data_sources' => PublicDataSourcesCatalog::build(null, 'all'),
             'fundeb_modules' => [],
             'top_problems' => [],
             'chart_pendencias' => null,
@@ -77,7 +79,7 @@ class MunicipalityHealthRepository
 
             $totalMat = (int) ($disc['total_matriculas'] ?? $overview['kpis']['matriculas'] ?? 0);
 
-            return $this->assemble($city, $filters, $disc, $fundeb, $inclusion, $performance, $totalMat);
+            return $this->assemble($city, $filters, $disc, $fundeb, $inclusion, $performance, $network, $totalMat);
         } catch (\Throwable $e) {
             return array_merge($empty, [
                 'city_name' => $city->name,
@@ -100,6 +102,7 @@ class MunicipalityHealthRepository
         array $fundeb,
         array $inclusion,
         array $performance,
+        array $network,
         int $totalMat,
     ): array {
         $checks = is_array($disc['checks'] ?? null) ? $disc['checks'] : [];
@@ -117,9 +120,7 @@ class MunicipalityHealthRepository
             default => ['danger', __('Situação crítica')],
         };
 
-        $topProblems = $checks;
-        usort($topProblems, static fn (array $a, array $b): int => ((float) ($b['ganho_potencial_anual'] ?? 0)) <=> ((float) ($a['ganho_potencial_anual'] ?? 0)));
-        $topProblems = array_slice($topProblems, 0, 8);
+        $topProblems = self::buildTopProblems($checks, $cadastroDimensions);
 
         $pendencias = count(array_filter(
             $cadastroDimensions,
@@ -176,7 +177,15 @@ class MunicipalityHealthRepository
             ],
             'cadastro_dimensions' => $cadastroDimensions,
             'active_check_ids' => is_array($disc['active_check_ids'] ?? null) ? $disc['active_check_ids'] : [],
-            'thematic_blocks' => ConsultoriaThematicBridge::buildBlocks($inclusion, $fundeb, $performance, $disc, $totalMat),
+            'thematic_blocks' => ConsultoriaThematicBridge::buildBlocks(
+                $inclusion,
+                $fundeb,
+                $performance,
+                $disc,
+                $totalMat,
+                is_array($network['kpis'] ?? null) ? $network['kpis'] : null,
+            ),
+            'public_data_sources' => PublicDataSourcesCatalog::build($city, 'all'),
             'fundeb_modules' => array_map(static fn (array $m): array => [
                 'id' => (string) ($m['id'] ?? ''),
                 'title' => (string) ($m['title'] ?? ''),
@@ -186,6 +195,17 @@ class MunicipalityHealthRepository
             ], $modules),
             'top_problems' => $topProblems,
             'chart_pendencias' => $chartPendencias,
+            'funding_metodologia' => is_array($disc['funding_metodologia'] ?? null)
+                ? $disc['funding_metodologia']
+                : DiscrepanciesFundingImpact::metodologiaResumo(),
+            'funding_resumo_explicacao' => is_array($disc['funding_resumo_explicacao'] ?? null)
+                ? $disc['funding_resumo_explicacao']
+                : DiscrepanciesFundingImpact::explicacaoResumoAgregado(
+                    (int) ($discSummary['com_problema'] ?? $pendencias),
+                    (float) ($discSummary['perda_estimada_anual'] ?? 0),
+                    (float) ($discSummary['ganho_potencial_anual'] ?? 0),
+                    count(array_filter($cadastroDimensions, static fn (array $d): bool => (bool) ($d['has_issue'] ?? false))),
+                ),
             'error' => $disc['error'] ?? null,
         ];
     }
@@ -253,6 +273,45 @@ class MunicipalityHealthRepository
         }
 
         return $out;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $checks
+     * @param  list<array<string, mixed>>  $dimensions
+     * @return list<array<string, mixed>>
+     */
+    private function buildTopProblems(array $checks, array $dimensions): array
+    {
+        $byId = [];
+        foreach ($checks as $c) {
+            $byId[(string) ($c['id'] ?? '')] = $c;
+        }
+        foreach ($dimensions as $d) {
+            if (! ($d['has_issue'] ?? false)) {
+                continue;
+            }
+            $id = (string) ($d['id'] ?? '');
+            if ($id === '' || isset($byId[$id])) {
+                continue;
+            }
+            $total = (int) ($d['total'] ?? 0);
+            $byId[$id] = [
+                'id' => $id,
+                'title' => (string) ($d['title'] ?? ''),
+                'total' => $total,
+                'perda_estimada_anual' => (float) ($d['perda_estimada_anual'] ?? 0),
+                'ganho_potencial_anual' => (float) ($d['ganho_potencial_anual'] ?? 0),
+                'funding_explicacao' => is_array($d['funding_explicacao'] ?? null) ? $d['funding_explicacao'] : null,
+                'severity' => (string) ($d['severity'] ?? 'warning'),
+                'is_erro' => ($d['severity'] ?? '') === 'danger',
+            ];
+        }
+
+        $top = array_values($byId);
+        usort($top, static fn (array $a, array $b): int => ((float) ($b['perda_estimada_anual'] ?? $b['ganho_potencial_anual'] ?? 0))
+            <=> ((float) ($a['perda_estimada_anual'] ?? $a['ganho_potencial_anual'] ?? 0)));
+
+        return array_slice($top, 0, 8);
     }
 
     private function yearLabel(IeducarFilterState $filters): string

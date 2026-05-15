@@ -4,6 +4,8 @@ namespace App\Repositories\Ieducar;
 
 use App\Models\City;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Dashboard\PublicDataSourcesCatalog;
+use App\Support\Ieducar\FundebResourceProjection;
 
 /**
  * Relatório temático alinhado às condicionalidades do FUNDEB / VAAR (referência pedagógica).
@@ -44,6 +46,7 @@ class FundebRepository
         array $attendanceData,
         array $inclusionData,
         array $networkData,
+        ?array $discrepanciesData = null,
     ): array {
         $yearLabel = $this->yearLabel($filters);
         $matTotal = (int) data_get($overviewData, 'kpis.matriculas', data_get($enrollmentData, 'kpis.matriculas', 0));
@@ -51,12 +54,19 @@ class FundebRepository
         return [
             'year_label' => $yearLabel,
             'city_name' => $city->name,
+            'resource_projection' => FundebResourceProjection::build(
+                $matTotal,
+                $yearLabel,
+                $enrollmentData,
+                $discrepanciesData,
+            ),
             'intro' => __(
                 'O FUNDEB financia a manutenção e o desenvolvimento da educação básica. O MEC acompanha condicionalidades ligadas ao Valor-Aluno-Ano-Resultado (VAAR), com registro e documentação no Sistema Simec. Este painel não substitui o módulo oficial: organiza um roteiro por «módulos» temáticos, explica o que costuma ser exigido e cruza, quando possível, indicadores da base i-Educar da cidade (respeitando os filtros actuais).'
             ),
             'footnote' => __(
                 'Condicionalidade IV (ICMS) aplica-se às redes estaduais na comprovação específica; municípios e o Distrito Federal seguem outras regras do VAAR. Dúvidas sobre prazos e documentos: canal oficial do MEC / Simec.'
             ),
+            'public_data_sources' => PublicDataSourcesCatalog::build($city, 'financeiro'),
             'modules' => [
                 $this->moduleGestaoDemocratica(),
                 $this->moduleBncc(),

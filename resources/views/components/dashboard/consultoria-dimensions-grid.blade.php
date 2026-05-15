@@ -39,10 +39,21 @@
                     @elseif ($dim['has_issue'] ?? $dim['detected'] ?? false)
                         <p class="mt-0.5 tabular-nums font-semibold">
                             {{ number_format((int) ($dim['total'] ?? 0)) }} {{ __('ocorr.') }}
+                            @if (($dim['perda_estimada_anual'] ?? 0) > 0)
+                                · {{ __('perda') }} {{ $formatBrl((float) $dim['perda_estimada_anual']) }}
+                            @endif
                             @if (($dim['ganho_potencial_anual'] ?? 0) > 0)
-                                · {{ $formatBrl((float) $dim['ganho_potencial_anual']) }}
+                                · {{ __('ganho') }} {{ $formatBrl((float) $dim['ganho_potencial_anual']) }}
                             @endif
                         </p>
+                        @if (filled($dim['operational_note'] ?? null))
+                            <p class="mt-0.5 text-[11px] leading-snug opacity-90">{{ $dim['operational_note'] }}</p>
+                        @endif
+                        @if (is_array($dim['funding_explicacao'] ?? null) && (($dim['perda_estimada_anual'] ?? 0) > 0 || ($dim['ganho_potencial_anual'] ?? 0) > 0))
+                            <div class="mt-1.5">
+                                <x-dashboard.consultoria-funding-explanation :explicacao="$dim['funding_explicacao']" compact />
+                            </div>
+                        @endif
                     @else
                         <p class="mt-0.5">{{ __('Sem pendência no filtro') }}</p>
                     @endif

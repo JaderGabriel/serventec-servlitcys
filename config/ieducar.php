@@ -456,6 +456,78 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Fontes públicas — extração e relatórios (consultoria)
+    |--------------------------------------------------------------------------
+    |
+    | Catálogo de links oficiais (FNDE, Tesouro, INEP, Simec). extra_categories
+    | permite acrescentar categorias no formato do PublicDataSourcesCatalog.
+    |
+    */
+
+    'public_data_sources' => [
+        'enabled' => filter_var(env('IEDUCAR_PUBLIC_SOURCES_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'extra_categories' => [],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Consultoria — sinais operacionais e limiares
+    |--------------------------------------------------------------------------
+    */
+
+    'consultoria' => [
+        'rede_ociosidade_alerta_pct' => (float) env('IEDUCAR_CONSULTORIA_REDE_OCIOSIDADE_PCT', 15),
+        'raca_nao_declarado_keywords' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'IEDUCAR_CONSULTORIA_RACA_NAO_DECLARADO',
+            'não declarado,nao declarado,sem informação,sem informacao,ignorado,não informado,nao informado'
+        ))))),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | FUNDEB — previsão de recursos e distribuição legal (indicativo)
+    |--------------------------------------------------------------------------
+    |
+    | Usa matrículas do filtro × vaa_referencia_anual (mesma referência das discrepâncias).
+    | complementacao_vaar_pct_base: ordem de grandeza opcional de complementação VAAR sobre a base.
+    |
+    */
+
+    'fundeb' => [
+        'aviso_previsao' => (string) env(
+            'IEDUCAR_FUNDEB_AVISO_PREVISAO',
+            'Previsão com base nas matrículas ativas do i-Educar no filtro e VAAF de referência (IEDUCAR_DISC_VAA_REFERENCIA). Não inclui receitas próprias, ICMS/ISS repassados nem valor oficial de complementação VAAR — consulte FNDE, Simec e Tesouro Transparente.'
+        ),
+        'complementacao_vaar_pct_base' => (float) env('IEDUCAR_FUNDEB_VAAR_PCT_BASE', 0),
+        'distribuicao_legal' => [
+            'referencia' => 'Lei nº 14.113/2020, art. 31 — aplicação mínima anual dos recursos do FUNDEB.',
+            'nota' => 'Pisos para planejamento e controle social; a execução orçamentária deve respeitar normas do fundo e prestação de contas.',
+            'pisos' => [
+                [
+                    'id' => 'remuneracao',
+                    'titulo' => 'Remuneração dos profissionais da educação básica',
+                    'descricao' => 'Folha de pagamento e encargos dos profissionais da educação básica da rede.',
+                    'percentual_minimo' => 70,
+                ],
+                [
+                    'id' => 'docentes_efetivos',
+                    'titulo' => 'Docentes em efetivo exercício',
+                    'descricao' => 'Parcela mínima paga a docentes em efetivo exercício na educação básica.',
+                    'percentual_minimo' => 49,
+                    'nota' => 'Corresponde a no mínimo 70% do montante de remuneração (49% do total anual do FUNDEB).',
+                ],
+                [
+                    'id' => 'qualidade',
+                    'titulo' => 'Demais despesas de manutenção e desenvolvimento',
+                    'descricao' => 'Infraestrutura, materiais didáticos, formação e demais despesas permitidas.',
+                    'percentual_maximo' => 30,
+                ],
+            ],
+        ],
+    ],
+
     'discrepancies' => [
         'vaa_referencia_anual' => (float) env('IEDUCAR_DISC_VAA_REFERENCIA', 4500),
         'nee_benchmark_pct_min' => (float) env('IEDUCAR_DISC_NEE_BENCHMARK_PCT', 1.5),
@@ -477,6 +549,7 @@ return [
             'matricula_duplicada' => 1.4,
             'matricula_situacao_invalida' => 1.3,
             'distorcao_idade_serie' => 0.4,
+            'rede_vagas_ociosas' => 0.25,
         ],
         'funding_pillars' => [
             [

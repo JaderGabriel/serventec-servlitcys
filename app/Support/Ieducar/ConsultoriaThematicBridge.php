@@ -19,12 +19,14 @@ final class ConsultoriaThematicBridge
         array $fundeb,
         array $performance,
         array $disc,
-        int $totalMat
+        int $totalMat,
+        ?array $networkKpis = null,
     ): array {
         $blocks = [];
 
         $blocks[] = self::blockInclusao($inclusion, $disc, $totalMat);
         $blocks[] = self::blockEquidade($inclusion, $disc, $totalMat);
+        $blocks[] = self::blockRedeOferta($disc, $networkKpis);
         $blocks[] = self::blockRecursosPublicos($disc, $fundeb);
         $blocks[] = self::blockIndicadoresExternos($performance);
 
@@ -75,21 +77,13 @@ final class ConsultoriaThematicBridge
             $status = 'neutral';
         }
 
-        $neeCheck = self::findDiscCheck($disc, 'nee_sem_aee');
-        if ($neeCheck !== null) {
-            $items[] = __('Discrepância alinhada: :t — :n ocorrência(s).', [
-                't' => (string) ($neeCheck['title'] ?? ''),
-                'n' => number_format((int) ($neeCheck['total'] ?? 0)),
-            ]);
-            $status = 'danger';
-        }
-
-        $sub = self::findDiscCheck($disc, 'nee_subnotificacao');
-        if ($sub !== null) {
-            $items[] = __('Subnotificação NEE (rotina discrepâncias): :n caso(s) estimado(s).', [
-                'n' => number_format((int) ($sub['total'] ?? 0)),
-            ]);
-            $status = 'danger';
+        foreach (['nee_sem_aee', 'nee_subnotificacao'] as $cid) {
+            $item = self::findDiscItem($disc, $cid);
+            if ($item === null || ! ($item['has_issue'] ?? false)) {
+                continue;
+            }
+            $items[] = self::formatDiscItemLine($item);
+            $status = self::mergeStatus($status, self::itemStatus($item));
         }
 
         return [
@@ -122,16 +116,22 @@ final class ConsultoriaThematicBridge
             $items[] = __('Gráfico de equidade por série disponível na aba Inclusão (mesmo filtro).');
         }
 
-        foreach (['sem_raca', 'sem_sexo'] as $cid) {
-            $c = self::findDiscCheck($disc, $cid);
-            if ($c !== null) {
-                $items[] = __(':t: :n ocorrência(s) (:pct% da rede).', [
-                    't' => (string) ($c['title'] ?? ''),
-                    'n' => number_format((int) ($c['total'] ?? 0)),
-                    'pct' => number_format((float) ($c['pct_rede'] ?? 0), 1, ',', '.'),
-                ]);
-                $status = (string) ($c['severity'] ?? '') === 'danger' ? 'danger' : 'warning';
+        foreach (['sem_raca', 'sem_sexo', 'sem_data_nascimento'] as $cid) {
+            $item = self::findDiscItem($disc, $cid);
+            if ($item === null) {
+                continue;
             }
+            if (($item['availability'] ?? '') === 'unavailable') {
+                $items[] = __(':t — rotina indisponível nesta base.', ['t' => (string) ($item['title'] ?? '')]);
+                $status = self::mergeStatus($status, 'neutral');
+
+                continue;
+            }
+            if (! ($item['has_issue'] ?? false)) {
+                continue;
+            }
+            $items[] = self::formatDiscItemLine($item, true);
+            $status = self::mergeStatus($status, self::itemStatus($item));
         }
 
         $racaChart = $inclusion['chart_raca_por_escola_stacked'] ?? null;
@@ -147,6 +147,62 @@ final class ConsultoriaThematicBridge
             'status' => $status,
             'items' => $items,
             'tab_link' => 'inclusion',
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $disc
+     * @param  array<string, mixed>|null  $networkKpis
+     * @return array<string, mixed>
+     */
+    private static function blockRedeOferta(array $disc, ?array $networkKpis): array
+    {
+        $items = [];
+        $status = 'success';
+
+        if (is_array($networkKpis)) {
+            $cap = (int) ($networkKpis['capacidade_total'] ?? 0);
+            $mat = (int) ($networkKpis['matriculas'] ?? 0);
+            $vagas = (int) ($networkKpis['vagas_ociosas'] ?? 0);
+            $taxa = $networkKpis['taxa_ociosidade_pct'] ?? null;
+            if ($cap > 0) {
+                $items[] = __('Capacidade nas turmas: :c · Matrículas: :m · Vagas ociosas: :v.', [
+                    'c' => number_format($cap),
+                    'm' => number_format($mat),
+                    'v' => number_format($vagas),
+                ]);
+            }
+            if ($taxa !== null) {
+                $items[] = __('Taxa de ociosidade: :p%.', ['p' => number_format((float) $taxa, 1, ',', '.')]);
+            }
+        } else {
+            $items[] = __('Indicadores de vagas por turma não calculados nesta base (capacidade / ligação matrícula↔turma).');
+            $status = 'neutral';
+        }
+
+        foreach (['rede_vagas_ociosas', 'escola_sem_geo', 'escola_sem_inep', 'escola_inativa_matricula'] as $cid) {
+            $item = self::findDiscItem($disc, $cid);
+            if ($item === null) {
+                continue;
+            }
+            if (($item['availability'] ?? '') === 'unavailable') {
+                continue;
+            }
+            if (! ($item['has_issue'] ?? false)) {
+                continue;
+            }
+            $items[] = self::formatDiscItemLine($item, true);
+            $status = self::mergeStatus($status, self::itemStatus($item));
+        }
+
+        return [
+            'id' => 'rede-oferta',
+            'titulo' => __('Rede, unidades escolares e oferta'),
+            'fonte' => 'ieducar',
+            'fonte_label' => __('Base i-Educar (turmas, escolas, capacidade)'),
+            'status' => $status,
+            'items' => $items,
+            'tab_link' => 'network',
         ];
     }
 
@@ -173,16 +229,13 @@ final class ConsultoriaThematicBridge
             ]);
         }
 
-        $criticos = ['escola_sem_inep', 'escola_inativa_matricula', 'matricula_duplicada'];
-        foreach ($criticos as $cid) {
-            $c = self::findDiscCheck($disc, $cid);
-            if ($c !== null) {
-                $items[] = __('Crítico — :t: :n ocorrência(s).', [
-                    't' => (string) ($c['title'] ?? ''),
-                    'n' => number_format((int) ($c['total'] ?? 0)),
-                ]);
-                $status = 'danger';
+        foreach (['escola_sem_inep', 'escola_inativa_matricula', 'matricula_duplicada', 'sem_raca'] as $cid) {
+            $item = self::findDiscItem($disc, $cid);
+            if ($item === null || ! ($item['has_issue'] ?? false)) {
+                continue;
             }
+            $items[] = __('Crítico — :line', ['line' => self::formatDiscItemLine($item)]);
+            $status = 'danger';
         }
 
         $mods = is_array($fundeb['modules'] ?? null) ? $fundeb['modules'] : [];
@@ -198,6 +251,8 @@ final class ConsultoriaThematicBridge
                 $status = 'warning';
             }
         }
+
+        $items[] = __('Extração oficial: use a secção «Fontes públicas» no Diagnóstico ou FUNDEB (FNDE, Tesouro, Simec, INEP).');
 
         return [
             'id' => 'recursos',
@@ -250,6 +305,21 @@ final class ConsultoriaThematicBridge
      * @param  array<string, mixed>  $disc
      * @return ?array<string, mixed>
      */
+    private static function findDiscItem(array $disc, string $id): ?array
+    {
+        foreach ($disc['dimensions'] ?? [] as $d) {
+            if (is_array($d) && ($d['id'] ?? '') === $id) {
+                return $d;
+            }
+        }
+
+        return self::findDiscCheck($disc, $id);
+    }
+
+    /**
+     * @param  array<string, mixed>  $disc
+     * @return ?array<string, mixed>
+     */
     private static function findDiscCheck(array $disc, string $id): ?array
     {
         foreach ($disc['checks'] ?? [] as $c) {
@@ -259,6 +329,54 @@ final class ConsultoriaThematicBridge
         }
 
         return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     */
+    private static function formatDiscItemLine(array $item, bool $withFinance = false): string
+    {
+        $line = __(':t: :n ocorrência(s)', [
+            't' => (string) ($item['title'] ?? ''),
+            'n' => number_format((int) ($item['total'] ?? 0)),
+        ]);
+        $pct = $item['pct_rede'] ?? null;
+        if ($pct !== null) {
+            $line .= ' ('.number_format((float) $pct, 1, ',', '.').'% '.__('da rede').')';
+        }
+        if ($withFinance) {
+            $perda = (float) ($item['perda_estimada_anual'] ?? $item['ganho_potencial_anual'] ?? 0);
+            if ($perda > 0) {
+                $line .= ' · '.__('perda est.').' '.DiscrepanciesFundingImpact::formatBrl($perda);
+            }
+        }
+
+        return $line;
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     */
+    private static function itemStatus(array $item): string
+    {
+        if (($item['availability'] ?? '') === 'unavailable') {
+            return 'neutral';
+        }
+        if (! ($item['has_issue'] ?? false)) {
+            return 'success';
+        }
+
+        return match ((string) ($item['status'] ?? $item['severity'] ?? 'warning')) {
+            'danger' => 'danger',
+            default => 'warning',
+        };
+    }
+
+    private static function mergeStatus(string $current, string $next): string
+    {
+        $order = ['success' => 0, 'neutral' => 1, 'warning' => 2, 'danger' => 3];
+
+        return ($order[$next] ?? 0) > ($order[$current] ?? 0) ? $next : $current;
     }
 
     /**

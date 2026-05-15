@@ -19,15 +19,46 @@
         }
     }
     $fmtBrl = static fn (float $v): string => 'R$ ' . number_format($v, 2, ',', '.');
+    $fundingMet = is_array($h['funding_metodologia'] ?? null) ? $h['funding_metodologia'] : null;
+    $fundingResumo = is_array($h['funding_resumo_explicacao'] ?? null) ? $h['funding_resumo_explicacao'] : null;
+    $perdaAgreg = (float) ($summary['perda_estimada_anual'] ?? 0);
+    $ganhoAgreg = (float) ($summary['ganho_potencial_anual'] ?? 0);
     $healthKpis = [
         ['label' => __('Pendências de cadastro'), 'value' => number_format((int) ($summary['pendencias_cadastro'] ?? 0)), 'tone' => 'rose'],
         ['label' => __('Módulos FUNDEB em alerta'), 'value' => number_format((int) ($summary['modulos_fundeb_alerta'] ?? 0)), 'tone' => 'amber'],
-        ['label' => __('Perda estimada / ano'), 'value' => $fmtBrl((float) ($summary['perda_estimada_anual'] ?? 0)), 'tone' => 'orange', 'size' => 'xl'],
-        ['label' => __('Ganho potencial / ano'), 'value' => $fmtBrl((float) ($summary['ganho_potencial_anual'] ?? 0)), 'tone' => 'emerald', 'size' => 'xl'],
+        [
+            'label' => __('Perda estimada / ano'),
+            'value' => $fmtBrl($perdaAgreg),
+            'tone' => 'orange',
+            'size' => 'xl',
+            'explicacao_resumo' => filled($fundingResumo['detalhe'] ?? null) ? $fundingResumo['detalhe'] : null,
+            'funding_explicacao' => $fundingResumo !== null ? [
+                'formula_curta' => (string) ($fundingResumo['titulo'] ?? __('Soma das rotinas com pendência')),
+                'formula_expandida' => (string) ($fundingResumo['detalhe'] ?? ''),
+                'passos' => is_array($fundingResumo['passos'] ?? null) ? $fundingResumo['passos'] : [],
+            ] : null,
+        ],
+        [
+            'label' => __('Ganho potencial / ano'),
+            'value' => $fmtBrl($ganhoAgreg),
+            'tone' => 'emerald',
+            'size' => 'xl',
+            'explicacao_resumo' => $ganhoAgreg > 0
+                ? __('Igual à perda neste modelo: valor indicativo recuperável após corrigir cadastro no i-Educar.')
+                : null,
+            'funding_explicacao' => $ganhoAgreg > 0 && $fundingResumo !== null ? [
+                'formula_curta' => __('Ganho potencial = perda estimada (modelo indicativo)'),
+                'ganho_texto' => __('Se todas as pendências forem resolvidas antes do Censo, a soma das estimativas por rotina indica :ganho/ano.', ['ganho' => $fmtBrl($ganhoAgreg)]),
+                'passos' => is_array($fundingResumo['passos'] ?? null) ? $fundingResumo['passos'] : [],
+            ] : null,
+        ],
     ];
+    $publicSources = is_array($h['public_data_sources'] ?? null) ? $h['public_data_sources'] : [];
+    $hasPublicSources = count($publicSources['categories'] ?? []) > 0;
     $flowSteps = ConsultoriaFlow::numberedSteps([
         ['label' => __('Prioridades'), 'anchor' => 'diag-prioridades'],
         ['label' => __('Leitura temática'), 'anchor' => 'diag-tematico', 'visible' => count($thematicBlocks) > 0],
+        ['label' => __('Fontes públicas'), 'anchor' => 'diag-fontes-publicas', 'visible' => $hasPublicSources],
         ['label' => __('Mapa de rotinas'), 'anchor' => 'diag-mapa', 'visible' => count($cadastro) > 0],
         ['label' => __('Roteiro FUNDEB'), 'anchor' => 'diag-roteiro', 'visible' => count($fundebMods) > 0],
     ]);
@@ -97,8 +128,14 @@
                             <button type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'fundeb')">{{ __('Ver FUNDEB') }}</button>
                         </div>
                     </div>
-                    <div class="lg:col-span-2">
+                    <div class="lg:col-span-2 space-y-2">
                         <x-dashboard.consultoria-kpi-grid :items="$healthKpis" class="lg:grid-cols-2" />
+                        @if ($fundingMet !== null)
+                            <x-dashboard.consultoria-funding-explanation
+                                :metodologia="$fundingMet"
+                                :resumo="$fundingResumo"
+                            />
+                        @endif
                     </div>
                 </div>
                 @if (! empty($h['chart_pendencias']))
@@ -132,9 +169,14 @@
                                         @endif
                                     </p>
                                 </div>
-                                <p class="text-sm font-semibold tabular-nums text-emerald-700 dark:text-emerald-300 shrink-0">
-                                    {{ $fmtBrl((float) ($problem['ganho_potencial_anual'] ?? 0)) }}
-                                </p>
+                                <div class="shrink-0 text-right space-y-1">
+                                    <p class="text-sm font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
+                                        {{ $fmtBrl((float) ($problem['ganho_potencial_anual'] ?? 0)) }}
+                                    </p>
+                                    @if (is_array($problem['funding_explicacao'] ?? null))
+                                        <x-dashboard.consultoria-funding-explanation :explicacao="$problem['funding_explicacao']" compact class="max-w-xs ml-auto" />
+                                    @endif
+                                </div>
                             </li>
                         @endforeach
                     </ul>
@@ -150,6 +192,17 @@
                 :subtitle="__('Consolida i-Educar com indicadores públicos quando disponíveis.')"
             >
                 <x-dashboard.consultoria-thematic-blocks :blocks="$thematicBlocks" />
+            </x-dashboard.consultoria-section>
+        @endif
+
+        @if ($hasPublicSources)
+            <x-dashboard.consultoria-section
+                :step="$diagStep['diag-fontes-publicas'] ?? null"
+                anchor="diag-fontes-publicas"
+                :title="__('Extração e relatórios oficiais')"
+                :subtitle="__('Painéis, dados abertos e sistemas de comprovação (FNDE, Tesouro, Simec, INEP).')"
+            >
+                <x-dashboard.consultoria-public-sources :catalog="$publicSources" :anchor="null" />
             </x-dashboard.consultoria-section>
         @endif
 

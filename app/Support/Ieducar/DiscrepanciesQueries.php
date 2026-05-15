@@ -20,57 +20,25 @@ final class DiscrepanciesQueries
      */
     public static function matriculasSemRacaPorEscola(Connection $db, City $city, IeducarFilterState $filters): array
     {
-        try {
-            $mat = IeducarSchema::resolveTable('matricula', $city);
-            $aluno = IeducarSchema::resolveTable('aluno', $city);
-            if (! IeducarColumnInspector::tableExists($db, $mat, $city)
-                || ! IeducarColumnInspector::tableExists($db, $aluno, $city)) {
-                return [];
-            }
+        return MatriculaRacaCadastroQueries::matriculasSemRacaDeclaradaPorEscola($db, $city, $filters);
+    }
 
-            $mAluno = (string) config('ieducar.columns.matricula.aluno');
-            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
-            $mId = (string) config('ieducar.columns.matricula.id');
-            $aId = (string) config('ieducar.columns.aluno.id');
-            $grammar = $db->getQueryGrammar();
-            $distinctMat = 'COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).')';
+    public static function baseMatriculaComTurmaPublic(Connection $db, City $city, IeducarFilterState $filters): Builder
+    {
+        return self::baseMatriculaComTurma($db, $city, $filters);
+    }
 
-            $q = self::baseMatriculaComTurma($db, $city, $filters)
-                ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
-
-            $pivot = self::fisicaRacaPivotSpec($db, $city);
-            $aIdpes = IeducarColumnInspector::firstExistingColumn($db, $aluno, ['ref_idpes', 'idpes'], $city);
-
-            if ($pivot !== null && $aIdpes !== null) {
-                $q->leftJoin($pivot['qualified'].' as fr', 'a.'.$aIdpes, '=', 'fr.'.$pivot['idpesCol']);
-                $fk = $grammar->wrap('fr').'.'.$grammar->wrap($pivot['racaFkCol']);
-                $q->where(function (Builder $w) use ($fk): void {
-                    $w->whereNull($fk)->orWhere($fk, 0)->orWhere($fk, '');
-                });
-            } else {
-                $pessoa = IeducarSchema::resolveTable('pessoa', $city);
-                $aPessoa = IeducarColumnInspector::firstExistingColumn($db, $aluno, [
-                    'ref_cod_pessoa', 'ref_idpes', 'idpes',
-                ], $city);
-                $pId = IeducarColumnInspector::firstExistingColumn($db, $pessoa, ['idpes', 'id', 'cod_pessoa'], $city);
-                $pRaca = IeducarColumnInspector::firstExistingColumn($db, $pessoa, [
-                    'ref_cod_raca', 'cod_raca', 'cor_raca',
-                ], $city);
-                if ($aPessoa === null || $pId === null || $pRaca === null
-                    || ! IeducarColumnInspector::tableExists($db, $pessoa, $city)) {
-                    return [];
-                }
-                $q->join($pessoa.' as p', 'a.'.$aPessoa, '=', 'p.'.$pId);
-                $pr = $grammar->wrap('p').'.'.$grammar->wrap($pRaca);
-                $q->where(function (Builder $w) use ($pr): void {
-                    $w->whereNull($pr)->orWhere($pr, 0)->orWhere($pr, '');
-                });
-            }
-
-            return self::aggregatePorEscola($db, $city, $filters, $q, $distinctMat);
-        } catch (QueryException|\Throwable) {
-            return [];
-        }
+    /**
+     * @return list<array{escola_id: string, escola: string, total: int}>
+     */
+    public static function aggregatePorEscolaPublic(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        Builder $q,
+        string $distinctMat,
+    ): array {
+        return self::aggregatePorEscola($db, $city, $filters, $q, $distinctMat);
     }
 
     /**
@@ -248,19 +216,9 @@ final class DiscrepanciesQueries
             $distinctMat = 'COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).')';
 
             $q = self::baseMatriculaComTurma($db, $city, $filters);
-            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
-            if ($tc['escola'] === '') {
+            if (DiscrepanciesAvailability::joinEscola($q, $db, $city) === null) {
                 return [];
             }
-            $tEsc = $grammar->wrap('t_filter').'.'.$grammar->wrap($tc['escola']);
-            $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
-            $q->join($escolaT.' as e', function ($join) use ($db, $tEsc, $ePk): void {
-                if ($db->getDriverName() === 'pgsql') {
-                    $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
-                } else {
-                    $join->whereRaw('CAST('.$tEsc.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
-                }
-            });
 
             if ($hasInep) {
                 $inepSql = $grammar->wrap('e').'.'.$grammar->wrap($inepCol);
@@ -327,19 +285,9 @@ final class DiscrepanciesQueries
             $mId = (string) config('ieducar.columns.matricula.id');
             $distinctMat = 'COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).')';
             $q = self::baseMatriculaComTurma($db, $city, $filters);
-            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
-            if ($tc['escola'] === '') {
+            if (DiscrepanciesAvailability::joinEscola($q, $db, $city) === null) {
                 return [];
             }
-            $tEsc = $grammar->wrap('t_filter').'.'.$grammar->wrap($tc['escola']);
-            $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
-            $q->join($escolaT.' as e', function ($join) use ($db, $tEsc, $ePk): void {
-                if ($db->getDriverName() === 'pgsql') {
-                    $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
-                } else {
-                    $join->whereRaw('CAST('.$tEsc.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
-                }
-            });
             if ($db->getDriverName() === 'pgsql') {
                 $q->whereRaw('NOT ('.MatriculaAtivoFilter::pgsqlActiveExpression('e.'.$activeCol).')');
             } else {
@@ -368,17 +316,54 @@ final class DiscrepanciesQueries
         }
     }
 
+    /**
+     * Base de matrículas ativas com filtros — turma quando existir vínculo; senão ano/escola na matrícula.
+     */
     private static function baseMatriculaComTurma(Connection $db, City $city, IeducarFilterState $filters): Builder
     {
         $mat = IeducarSchema::resolveTable('matricula', $city);
         $mAtivo = (string) config('ieducar.columns.matricula.ativo');
         $q = $db->table($mat.' as m');
         MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
-        MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
-        MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
-        MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+
+        if (DiscrepanciesAvailability::canJoinTurma($db, $city)) {
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+        } else {
+            $yearVal = $filters->yearFilterValue();
+            $mAno = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
+                (string) config('ieducar.columns.matricula.ano'),
+                'ano',
+            ]), $city);
+            if ($yearVal !== null && $mAno !== null) {
+                $q->where('m.'.$mAno, $yearVal);
+            }
+            $mEsc = DiscrepanciesAvailability::matriculaEscolaColumn($db, $city);
+            if ($mEsc !== null) {
+                MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 'm', $mEsc, $filters->escola_id);
+            }
+        }
 
         return $q;
+    }
+
+    public static function hasCorRacaCadastroPath(Connection $db, City $city): bool
+    {
+        return MatriculaRacaCadastroQueries::canQuery($db, $city);
+    }
+
+    public static function hasPessoaAlunoCadastroPath(Connection $db, City $city): bool
+    {
+        return self::resolvePessoaAlunoJoin($db, $city) !== null;
+    }
+
+    /**
+     * @return ?array{qualified: string, idCol: string, nameCol: string}
+     */
+    public static function escolaJoinSpecPublic(Connection $db, City $city): ?array
+    {
+        return self::escolaJoinSpec($db, $city);
     }
 
     /**
@@ -391,25 +376,12 @@ final class DiscrepanciesQueries
         Builder $q,
         string $distinctMat
     ): array {
-        $escolaSpec = self::escolaJoinSpec($db, $city);
+        $escolaSpec = DiscrepanciesAvailability::joinEscola($q, $db, $city);
         if ($escolaSpec === null) {
             return [];
         }
-        ['qualified' => $escolaT, 'idCol' => $eId, 'nameCol' => $eName] = $escolaSpec;
-        $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
-        if ($tc['escola'] === '') {
-            return [];
-        }
-        $grammar = $db->getQueryGrammar();
-        $tEsc = $grammar->wrap('t_filter').'.'.$grammar->wrap($tc['escola']);
-        $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
-        $q->join($escolaT.' as e', function ($join) use ($db, $tEsc, $ePk): void {
-            if ($db->getDriverName() === 'pgsql') {
-                $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
-            } else {
-                $join->whereRaw('CAST('.$tEsc.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
-            }
-        });
+        $eId = $escolaSpec['idCol'];
+        $eName = $escolaSpec['nameCol'];
 
         $rows = $q->selectRaw('e.'.$eId.' as eid')
             ->selectRaw('MAX(e.'.$eName.') as ename')
@@ -731,19 +703,9 @@ final class DiscrepanciesQueries
             $mId = (string) config('ieducar.columns.matricula.id');
             $distinctMat = 'COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).')';
             $q = self::baseMatriculaComTurma($db, $city, $filters);
-            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
-            if ($tc['escola'] === '') {
+            if (DiscrepanciesAvailability::joinEscola($q, $db, $city) === null) {
                 return [];
             }
-            $tEsc = $grammar->wrap('t_filter').'.'.$grammar->wrap($tc['escola']);
-            $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
-            $q->join($escolaT.' as e', function ($join) use ($db, $tEsc, $ePk): void {
-                if ($db->getDriverName() === 'pgsql') {
-                    $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
-                } else {
-                    $join->whereRaw('CAST('.$tEsc.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
-                }
-            });
 
             $q->where(function (Builder $w) use ($grammar, $latCol, $lngCol): void {
                 if ($latCol !== null) {

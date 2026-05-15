@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Services\CityDataConnection;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Dashboard\PublicDataSourcesCatalog;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\IeducarSqlPlaceholders;
 use App\Support\Ieducar\MatriculaAtivoFilter;
@@ -83,6 +84,7 @@ class PerformanceRepository
                 'source_hint' => null,
                 'explicacao_modal' => null,
             ],
+            'public_data_sources' => PublicDataSourcesCatalog::build($city, 'pedagogico'),
         ];
 
         if ($city === null) {
@@ -268,6 +270,7 @@ class PerformanceRepository
                     'distorcao_note' => $distorcaoNote,
                     'inep_panel' => $inepPanel,
                     'saeb_series' => $saebSeries,
+                    'public_data_sources' => PublicDataSourcesCatalog::build($city, 'pedagogico'),
                 ];
             });
         } catch (\Throwable $e) {
@@ -297,6 +300,7 @@ class PerformanceRepository
                     'source_hint' => null,
                     'explicacao_modal' => null,
                 ],
+                'public_data_sources' => PublicDataSourcesCatalog::build($city, 'pedagogico'),
             ];
         }
     }

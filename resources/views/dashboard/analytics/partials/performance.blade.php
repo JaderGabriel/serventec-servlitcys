@@ -23,9 +23,12 @@
     $hasExternos = $inepPanel !== null || $hasSaebBlock;
     $hasIeducar = $perfCharts !== [] || ! empty($performanceData['rows']);
 
+    $publicSources = is_array($performanceData['public_data_sources'] ?? null) ? $performanceData['public_data_sources'] : [];
+    $hasPublicSources = count($publicSources['categories'] ?? []) > 0;
     $flowSteps = ConsultoriaFlow::numberedSteps([
         ['label' => __('Prioridades (rede)'), 'anchor' => 'perf-prioridades', 'visible' => $hasPrioridades],
         ['label' => __('Fontes externas (INEP)'), 'anchor' => 'perf-externos', 'visible' => $hasExternos],
+        ['label' => __('Extração oficial'), 'anchor' => 'perf-fontes-publicas', 'visible' => $hasPublicSources],
         ['label' => __('Situação no i-Educar'), 'anchor' => 'perf-ieducar', 'visible' => $hasIeducar],
     ]);
     $perfStep = ConsultoriaFlow::stepMap($flowSteps);
@@ -55,9 +58,7 @@
             :title="__('Prioridades na rede (i-Educar)')"
             :subtitle="__('Taxas de situação de matrícula e distorção idade/série no filtro actual.')"
         >
-    @endif
-
-    @if ($hasPrioridades && ! empty($performanceData['kpis']))
+    @if (! empty($performanceData['kpis']))
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
             @foreach ($performanceData['kpis'] as $kpi)
                 <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 flex flex-col gap-2 min-h-[13rem]">
@@ -87,16 +88,14 @@
                 </div>
             @endforeach
         </div>
-        @if (($performanceData['distorcao_pct'] ?? null) !== null)
+            @endif
+            @if (($performanceData['distorcao_pct'] ?? null) !== null)
             <div class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/30 px-3 py-2 text-sm text-indigo-900 dark:text-indigo-100">
                 {{ __('Distorção idade/série (rede)') }}:
                 <span class="font-semibold">{{ number_format((float) $performanceData['distorcao_pct'], 1, ',', '.') }}%</span>
                 <span class="text-xs text-indigo-700 dark:text-indigo-300">({{ __('critério de rede ou definição personalizada') }})</span>
             </div>
         @endif
-    @endif
-
-    @if ($hasPrioridades)
         </x-dashboard.consultoria-section>
     @endif
 
@@ -107,8 +106,6 @@
             :title="__('Fontes externas (INEP / SAEB)')"
             :subtitle="__('Dados públicos ou importados — não substituem o cadastro no i-Educar.')"
         >
-    @endif
-
     @if ($inepPanel !== null)
         @if (! empty($inepPanel['sql_error']))
             <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
@@ -427,8 +424,6 @@
             </template>
         </div>
     @endif
-
-    @if ($hasExternos)
         </x-dashboard.consultoria-section>
     @endif
 
@@ -556,8 +551,17 @@
             </table>
         </div>
     @endif
+        </x-dashboard.consultoria-section>
+    @endif
 
-    @if ($hasIeducar)
+    @if ($hasPublicSources)
+        <x-dashboard.consultoria-section
+            :step="$perfStep['perf-fontes-publicas'] ?? null"
+            anchor="perf-fontes-publicas"
+            :title="__('Extração e relatórios (INEP / microdados)')"
+            :subtitle="__('Portais e downloads para análises que complementam o SAEB importado no painel.')"
+        >
+            <x-dashboard.consultoria-public-sources :catalog="$publicSources" :anchor="null" />
         </x-dashboard.consultoria-section>
     @endif
 </div>

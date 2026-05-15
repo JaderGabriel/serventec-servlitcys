@@ -112,6 +112,7 @@ class AnalyticsDashboardController extends Controller
             $attendanceData = $attendanceRepository->snapshot($city, $filters);
             $inclusionData = $inclusionRepository->snapshot($city, $filters);
             $networkData = $networkRepository->snapshot($city, $filters);
+            $discrepanciesData = $discrepanciesRepository->snapshot($city, $filters);
             $fundebData = $fundebRepository->buildReport(
                 $city,
                 $filters,
@@ -121,8 +122,8 @@ class AnalyticsDashboardController extends Controller
                 $attendanceData,
                 $inclusionData,
                 $networkData,
+                $discrepanciesData,
             );
-            $discrepanciesData = $discrepanciesRepository->snapshot($city, $filters);
             $municipalityHealthData = $municipalityHealthRepository->snapshot($city, $filters);
         } else {
             $enrollmentData = AnalyticsEmptyPayloads::enrollment();
@@ -277,6 +278,7 @@ class AnalyticsDashboardController extends Controller
                         $attendanceRepository->snapshot($city, $filters),
                         $inclusionRepository->snapshot($city, $filters),
                         $networkRepository->snapshot($city, $filters),
+                        $discrepanciesRepository->snapshot($city, $filters),
                     ),
                     'yearFilterReady' => true,
                     'chartExportContext' => $chartExportContext,

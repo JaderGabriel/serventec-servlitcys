@@ -27,13 +27,14 @@ final class DiscrepanciesCheckRunner
         IeducarFilterState $filters,
         callable $queryFn,
         callable $canRunFn,
+        ?string $unavailableHint = null,
     ): array {
         if (! $canRunFn($db, $city)) {
             return [
                 'availability' => 'unavailable',
                 'has_issue' => false,
                 'rows' => [],
-                'unavailable_reason' => __('Rotina indisponível: tabelas ou colunas necessárias não existem nesta base i-Educar.'),
+                'unavailable_reason' => $unavailableHint ?? __('Rotina indisponível: tabelas ou colunas necessárias não existem nesta base i-Educar.'),
             ];
         }
 
@@ -54,7 +55,7 @@ final class DiscrepanciesCheckRunner
                 'availability' => 'unavailable',
                 'has_issue' => false,
                 'rows' => [],
-                'unavailable_reason' => $e->getMessage(),
+                'unavailable_reason' => __('Erro ao executar a rotina: :msg', ['msg' => $e->getMessage()]),
             ];
         }
     }
@@ -67,125 +68,59 @@ final class DiscrepanciesCheckRunner
         return [
             'sem_raca' => [
                 'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => DiscrepanciesQueries::matriculasSemRacaPorEscola($db, $city, $f),
-                'probe' => static fn (Connection $db, City $city): bool => self::probeMatriculaAlunoPessoa($db, $city),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::corRacaCadastro($db, $city),
+                'hint' => __('Requer matrícula, aluno e cadastro de cor/raça (mesma lógica da aba Inclusão: fisica_raca → raca ou pessoa).'),
             ],
             'sem_sexo' => [
                 'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => DiscrepanciesQueries::matriculasSemSexoPorEscola($db, $city, $f),
-                'probe' => static fn (Connection $db, City $city): bool => self::probeMatriculaAlunoPessoa($db, $city),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::pessoaCadastro($db, $city),
+                'hint' => __('Requer vínculo aluno↔pessoa (ou fisica) com coluna de sexo.'),
             ],
             'sem_data_nascimento' => [
                 'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => DiscrepanciesQueries::matriculasSemDataNascimentoPorEscola($db, $city, $f),
-                'probe' => static fn (Connection $db, City $city): bool => self::probeMatriculaAlunoPessoa($db, $city),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::pessoaCadastro($db, $city),
+                'hint' => __('Requer data de nascimento em pessoa ou fisica.'),
             ],
             'nee_sem_aee' => [
                 'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => DiscrepanciesQueries::neeSemTurmaAeePorEscola($db, $city, $f),
-                'probe' => static fn (Connection $db, City $city): bool => self::probeMatriculaAluno($db, $city),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::neeComTurma($db, $city),
+                'hint' => __('Requer matrícula, aluno, turma e cadastro de NEE.'),
             ],
             'aee_sem_nee' => [
                 'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => DiscrepanciesQueries::turmaAeeSemCadastroNeePorEscola($db, $city, $f),
-                'probe' => static fn (Connection $db, City $city): bool => self::probeMatriculaAluno($db, $city),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::neeComTurma($db, $city),
+                'hint' => __('Requer matrícula, aluno, turma e cadastro de NEE.'),
             ],
             'escola_sem_inep' => [
                 'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => DiscrepanciesQueries::escolasSemInepComMatriculas($db, $city, $f),
-                'probe' => static fn (Connection $db, City $city): bool => self::probeMatriculaEscola($db, $city),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::escolaComMatricula($db, $city),
+                'hint' => __('Requer matrícula ligada à escola e coluna INEP ou educacenso_cod_escola.'),
             ],
             'escola_inativa_matricula' => [
                 'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => DiscrepanciesQueries::escolasInativasComMatriculas($db, $city, $f),
-                'probe' => static fn (Connection $db, City $city): bool => self::probeMatriculaEscolaActive($db, $city),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::escolaAtivoColumn($db, $city),
+                'hint' => __('Requer coluna de situação ativa/inativa na tabela escola.'),
             ],
             'escola_sem_geo' => [
                 'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => DiscrepanciesQueries::escolasSemGeolocalizacaoComMatriculas($db, $city, $f),
-                'probe' => static fn (Connection $db, City $city): bool => self::probeEscolaGeo($db, $city),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::escolaGeoColumns($db, $city),
+                'hint' => __('Requer colunas de latitude/longitude na tabela escola.'),
             ],
             'matricula_duplicada' => [
                 'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => DiscrepanciesQueries::matriculaDuplicadaAtivoPorEscola($db, $city, $f),
-                'probe' => static fn (Connection $db, City $city): bool => self::probeMatriculaAluno($db, $city),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::matriculaCore($db, $city),
+                'hint' => __('Requer tabela matricula com vínculo a turma ou escola.'),
             ],
             'matricula_situacao_invalida' => [
                 'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => DiscrepanciesQueries::matriculasSituacaoNaoEmCursoPorEscola($db, $city, $f),
-                'probe' => static fn (Connection $db, City $city): bool => self::probeMatriculaSituacao($db, $city),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::matriculaSituacao($db, $city),
+                'hint' => __('Requer campo de situação da matrícula (catálogo ou legado).'),
             ],
             'distorcao_idade_serie' => [
                 'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => MatriculaChartQueries::distorcaoMatriculasPorEscolaRows($db, $city, $f),
-                'probe' => static fn (Connection $db, City $city): bool => self::probeMatriculaTurma($db, $city),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::canJoinTurma($db, $city),
+                'hint' => __('Requer vínculo matrícula↔turma e série para cálculo de idade.'),
             ],
         ];
-    }
-
-    private static function probeMatriculaAluno(Connection $db, City $city): bool
-    {
-        try {
-            $mat = IeducarSchema::resolveTable('matricula', $city);
-            $aluno = IeducarSchema::resolveTable('aluno', $city);
-
-            return IeducarColumnInspector::tableExists($db, $mat, $city)
-                && IeducarColumnInspector::tableExists($db, $aluno, $city);
-        } catch (\Throwable) {
-            return false;
-        }
-    }
-
-    private static function probeMatriculaAlunoPessoa(Connection $db, City $city): bool
-    {
-        if (! self::probeMatriculaAluno($db, $city)) {
-            return false;
-        }
-        try {
-            $pessoa = IeducarSchema::resolveTable('pessoa', $city);
-
-            return IeducarColumnInspector::tableExists($db, $pessoa, $city);
-        } catch (\Throwable) {
-            return false;
-        }
-    }
-
-    private static function probeMatriculaEscola(Connection $db, City $city): bool
-    {
-        return self::probeMatriculaTurma($db, $city) && IeducarColumnInspector::tableExists(
-            $db,
-            IeducarSchema::resolveTable('escola', $city),
-            $city
-        );
-    }
-
-    private static function probeMatriculaEscolaActive(Connection $db, City $city): bool
-    {
-        if (! self::probeMatriculaEscola($db, $city)) {
-            return false;
-        }
-        $escola = IeducarSchema::resolveTable('escola', $city);
-        $activeCol = (string) config('ieducar.columns.escola.active', 'ativo');
-
-        return $activeCol !== '' && IeducarColumnInspector::columnExists($db, $escola, $activeCol, $city);
-    }
-
-    private static function probeMatriculaTurma(Connection $db, City $city): bool
-    {
-        try {
-            $mat = IeducarSchema::resolveTable('matricula', $city);
-
-            return IeducarColumnInspector::tableExists($db, $mat, $city)
-                && MatriculaTurmaJoin::turmaFilterColumns($db, $city)['escola'] !== '';
-        } catch (\Throwable) {
-            return false;
-        }
-    }
-
-    private static function probeMatriculaSituacao(Connection $db, City $city): bool
-    {
-        return self::probeMatriculaTurma($db, $city)
-            && MatriculaSituacaoResolver::resolveChaveAgrupamento($db, $city) !== null;
-    }
-
-    private static function probeEscolaGeo(Connection $db, City $city): bool
-    {
-        if (! self::probeMatriculaEscola($db, $city)) {
-            return false;
-        }
-        $escola = IeducarSchema::resolveTable('escola', $city);
-        $lat = IeducarColumnInspector::firstExistingColumn($db, $escola, ['latitude', 'lat', 'geo_lat'], $city);
-        $lng = IeducarColumnInspector::firstExistingColumn($db, $escola, ['longitude', 'lng', 'lon', 'geo_lng'], $city);
-
-        return $lat !== null || $lng !== null;
     }
 }

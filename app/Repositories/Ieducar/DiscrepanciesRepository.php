@@ -6,6 +6,8 @@ use App\Models\City;
 use App\Services\CityDataConnection;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Dashboard\PublicDataSourcesCatalog;
+use App\Support\Ieducar\ConsultoriaOperationalSignals;
 use App\Support\Ieducar\DiscrepanciesCheckCatalog;
 use App\Support\Ieducar\DiscrepanciesCheckRunner;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
@@ -50,6 +52,7 @@ class DiscrepanciesRepository
             'dimensions' => [],
             'checks' => [],
             'notes' => [],
+            'public_data_sources' => PublicDataSourcesCatalog::build($city, 'financeiro'),
             'error' => null,
         ];
 
@@ -88,6 +91,7 @@ class DiscrepanciesRepository
                         $filters,
                         $spec['fn'],
                         $spec['probe'],
+                        isset($spec['hint']) ? (string) $spec['hint'] : null,
                     );
                     $dimensions[] = $this->buildDimension($meta, $eval, $totalMat);
 
@@ -119,6 +123,17 @@ class DiscrepanciesRepository
                     $checks[] = $this->buildCheck($meta, [$neeRow], $totalMat);
                 }
 
+                $networkKpis = null;
+                try {
+                    $networkKpis = MatriculaChartQueries::redeVagasResumoKpis($db, $city, $filters);
+                } catch (\Throwable) {
+                    $networkKpis = null;
+                }
+
+                $dimensions = ConsultoriaOperationalSignals::append($dimensions, $networkKpis, $totalMat);
+
+                $checks = $this->sortChecksForConsultoria($checks);
+                $checks = ConsultoriaOperationalSignals::enrichChecksFromDimensions($dimensions, $checks);
                 $checks = $this->sortChecksForConsultoria($checks);
 
                 $aee = InclusionDashboardQueries::buildAeeCrossEnrollment($db, $city, $filters);
@@ -131,11 +146,22 @@ class DiscrepanciesRepository
                     }
                 }
 
-                $summary = $this->buildSummary($checks);
-                if ($checks === [] && $dimensions !== []) {
-                    $summary = $this->buildSummaryFromDimensions($dimensions);
+                $summary = $dimensions !== []
+                    ? $this->buildSummaryFromDimensions($dimensions)
+                    : $this->buildSummary($checks);
+                if ($checks !== [] && $dimensions !== []) {
+                    $fromChecks = $this->buildSummary($checks);
+                    $summary['escolas_afetadas'] = max(
+                        (int) ($summary['escolas_afetadas'] ?? 0),
+                        (int) ($fromChecks['escolas_afetadas'] ?? 0)
+                    );
+                    $summary['corrigiveis'] = max(
+                        (int) ($summary['corrigiveis'] ?? 0),
+                        (int) ($fromChecks['corrigiveis'] ?? 0)
+                    );
                 }
-                $vaaRef = (float) config('ieducar.discrepancies.vaa_referencia_anual', 4500);
+                $vaaRef = DiscrepanciesFundingImpact::vaaReferencia();
+                $tiposComProblema = count(array_filter($dimensions, static fn (array $d): bool => (bool) ($d['has_issue'] ?? false)));
 
                 return [
                     'intro' => __(
@@ -152,6 +178,13 @@ class DiscrepanciesRepository
                         'vaa_anual' => $vaaRef,
                         'vaa_label' => DiscrepanciesFundingImpact::formatBrl($vaaRef),
                     ],
+                    'funding_metodologia' => DiscrepanciesFundingImpact::metodologiaResumo(),
+                    'funding_resumo_explicacao' => DiscrepanciesFundingImpact::explicacaoResumoAgregado(
+                        (int) ($summary['com_problema'] ?? 0),
+                        (float) ($summary['perda_estimada_anual'] ?? 0),
+                        (float) ($summary['ganho_potencial_anual'] ?? 0),
+                        $tiposComProblema,
+                    ),
                     'summary' => $summary,
                     'chart_resumo' => $this->chartResumoRede($checks),
                     'chart_financeiro' => $this->chartFinanceiro($checks),
@@ -165,6 +198,7 @@ class DiscrepanciesRepository
                     'dimensions' => $dimensions,
                     'checks' => $checks,
                     'notes' => $notes,
+                    'public_data_sources' => PublicDataSourcesCatalog::build($city, 'financeiro'),
                     'error' => null,
                 ];
             });
@@ -196,7 +230,9 @@ class DiscrepanciesRepository
         };
 
         $pct = $totalMat > 0 && $hasIssue ? round(100.0 * $total / $totalMat, 1) : null;
-        $ganho = $hasIssue ? DiscrepanciesFundingImpact::estimate($id, $total)['ganho_potencial_anual'] : 0.0;
+        $funding = $hasIssue ? DiscrepanciesFundingImpact::estimate($id, $total) : null;
+        $ganho = (float) ($funding['ganho_potencial_anual'] ?? 0);
+        $perda = (float) ($funding['perda_anual'] ?? 0);
 
         return [
             'id' => $id,
@@ -208,6 +244,9 @@ class DiscrepanciesRepository
             'total' => $total,
             'pct_rede' => $pct,
             'ganho_potencial_anual' => $ganho,
+            'perda_estimada_anual' => $perda,
+            'funding_formula' => $funding['formula'] ?? null,
+            'funding_explicacao' => $funding['explicacao'] ?? null,
             'status' => $status,
             'unavailable_reason' => $eval['unavailable_reason'] ?? null,
             'severity' => $severity,
@@ -316,6 +355,7 @@ class DiscrepanciesRepository
             'perda_estimada_anual' => $funding['perda_anual'],
             'ganho_potencial_anual' => $funding['ganho_potencial_anual'],
             'funding_formula' => $funding['formula'],
+            'funding_explicacao' => $funding['explicacao'],
             'funding' => $funding,
             'school_rows' => $enrichedRows,
             'chart_rede' => $chartRede,

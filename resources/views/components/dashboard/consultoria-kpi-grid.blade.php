@@ -34,9 +34,15 @@
                 };
                 $size = (string) ($item['size'] ?? 'lg');
             @endphp
-            <div class="rounded-lg border {{ $border }} bg-white dark:bg-gray-900/40 p-4 shadow-sm">
+            <div class="rounded-lg border {{ $border }} bg-white dark:bg-gray-900/40 p-4 shadow-sm space-y-2">
                 <p class="text-xs font-semibold uppercase tracking-wide {{ $labelTone }}">{{ $item['label'] ?? '' }}</p>
-                <p class="mt-1 font-semibold tabular-nums {{ $valueTone }} {{ $size === 'xl' ? 'text-xl' : 'text-2xl' }}">{{ $item['value'] ?? '' }}</p>
+                <p class="font-semibold tabular-nums {{ $valueTone }} {{ $size === 'xl' ? 'text-xl' : 'text-2xl' }}">{{ $item['value'] ?? '' }}</p>
+                @if (filled($item['explicacao_resumo'] ?? null))
+                    <p class="text-[10px] leading-snug text-slate-600 dark:text-slate-400">{{ $item['explicacao_resumo'] }}</p>
+                @endif
+                @if (is_array($item['funding_explicacao'] ?? null))
+                    <x-dashboard.consultoria-funding-explanation :explicacao="$item['funding_explicacao']" compact />
+                @endif
             </div>
         @endforeach
     </div>

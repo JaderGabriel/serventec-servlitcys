@@ -18,17 +18,49 @@
     $pendenciaDims = array_values(array_filter($dimensions, static fn (array $d): bool => (bool) ($d['has_issue'] ?? false)));
     usort($pendenciaDims, static fn (array $a, array $b): int => ((int) ($b['total'] ?? 0)) <=> ((int) ($a['total'] ?? 0)));
     $priorityDims = array_values(array_filter($pendenciaDims, static fn (array $d): bool => ($d['status'] ?? '') === 'danger'));
+    $atencaoDims = array_values(array_filter($pendenciaDims, static fn (array $d): bool => ($d['status'] ?? '') === 'warning'));
     $showKpis = count($dimensions) > 0 || count($checks) > 0;
+    $fundingMet = is_array($d['funding_metodologia'] ?? null) ? $d['funding_metodologia'] : null;
+    $fundingResumo = is_array($d['funding_resumo_explicacao'] ?? null) ? $d['funding_resumo_explicacao'] : null;
+    $perdaAgreg = (float) ($summary['perda_estimada_anual'] ?? 0);
+    $ganhoAgreg = (float) ($summary['ganho_potencial_anual'] ?? 0);
     $discKpis = [
         ['label' => __('Ocorrências (soma)'), 'value' => number_format((int) ($summary['com_problema'] ?? 0)), 'tone' => 'rose'],
-        ['label' => __('Perda estimada / ano'), 'value' => $fmtBrl((float) ($summary['perda_estimada_anual'] ?? 0)), 'tone' => 'orange', 'size' => 'xl'],
-        ['label' => __('Ganho potencial / ano'), 'value' => $fmtBrl((float) ($summary['ganho_potencial_anual'] ?? 0)), 'tone' => 'emerald', 'size' => 'xl'],
+        [
+            'label' => __('Perda estimada / ano'),
+            'value' => $fmtBrl($perdaAgreg),
+            'tone' => 'orange',
+            'size' => 'xl',
+            'explicacao_resumo' => filled($fundingResumo['detalhe'] ?? null) ? $fundingResumo['detalhe'] : null,
+            'funding_explicacao' => $fundingResumo !== null ? [
+                'formula_curta' => (string) ($fundingResumo['titulo'] ?? __('Soma das rotinas com pendência')),
+                'formula_expandida' => (string) ($fundingResumo['detalhe'] ?? ''),
+                'passos' => is_array($fundingResumo['passos'] ?? null) ? $fundingResumo['passos'] : [],
+            ] : null,
+        ],
+        [
+            'label' => __('Ganho potencial / ano'),
+            'value' => $fmtBrl($ganhoAgreg),
+            'tone' => 'emerald',
+            'size' => 'xl',
+            'explicacao_resumo' => $ganhoAgreg > 0
+                ? __('Igual à perda neste modelo: valor indicativo recuperável após corrigir cadastro no i-Educar.')
+                : null,
+            'funding_explicacao' => $ganhoAgreg > 0 && $fundingResumo !== null ? [
+                'formula_curta' => __('Ganho potencial = perda estimada (modelo indicativo)'),
+                'ganho_texto' => __('Se todas as pendências forem resolvidas antes do Censo, a soma das estimativas por rotina indica :ganho/ano.', ['ganho' => $fmtBrl($ganhoAgreg)]),
+                'passos' => is_array($fundingResumo['passos'] ?? null) ? $fundingResumo['passos'] : [],
+            ] : null,
+        ],
         ['label' => __('Corrigíveis no i-Educar'), 'value' => number_format((int) ($summary['corrigiveis'] ?? 0)), 'tone' => 'emerald'],
         ['label' => __('Escolas afetadas'), 'value' => number_format((int) ($summary['escolas_afetadas'] ?? 0)), 'tone' => 'indigo'],
     ];
+    $publicSources = is_array($d['public_data_sources'] ?? null) ? $d['public_data_sources'] : [];
+    $hasPublicSources = count($publicSources['categories'] ?? []) > 0;
     $flowSteps = ConsultoriaFlow::numberedSteps([
         ['label' => __('Prioridades'), 'anchor' => 'disc-prioridades'],
         ['label' => __('Referências'), 'anchor' => 'disc-referencias', 'visible' => count($pillars) > 0],
+        ['label' => __('Fontes públicas'), 'anchor' => 'disc-fontes-publicas', 'visible' => $hasPublicSources],
         ['label' => __('Mapa de rotinas'), 'anchor' => 'disc-mapa', 'visible' => count($dimensions) > 0],
         ['label' => __('Detalhe por escola'), 'anchor' => 'disc-detalhe', 'visible' => count($checks) > 0],
     ]);
@@ -99,32 +131,64 @@
         >
             @if ($showKpis)
                 <x-dashboard.consultoria-kpi-grid :items="$discKpis" />
+                @if ($fundingMet !== null)
+                    <x-dashboard.consultoria-funding-explanation
+                        :metodologia="$fundingMet"
+                        :resumo="$fundingResumo"
+                        class="mt-2"
+                    />
+                @endif
             @endif
 
             @if (count($errosCriticos) > 0 || count($priorityDims) > 0)
                 <div class="rounded-lg border-2 border-red-500/80 dark:border-red-600 bg-red-50/50 dark:bg-red-950/30 px-4 py-3 space-y-2">
                     <h4 class="text-sm font-bold text-red-900 dark:text-red-100 uppercase tracking-wide">{{ __('Erros críticos') }}</h4>
                     @if (count($errosCriticos) > 0)
-                        <ul class="text-xs text-red-900/95 dark:text-red-100 space-y-1">
+                        <ul class="text-xs text-red-900/95 dark:text-red-100 space-y-1.5">
                             @foreach ($errosCriticos as $c)
-                                <li class="flex justify-between gap-2">
+                                <li class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5">
                                     <span>{{ $c['title'] ?? '' }}</span>
-                                    <span class="tabular-nums font-semibold shrink-0">{{ number_format((int) ($c['total'] ?? 0)) }}</span>
+                                    <span class="tabular-nums font-semibold shrink-0 text-right">
+                                        {{ number_format((int) ($c['total'] ?? 0)) }} {{ __('ocorr.') }}
+                                        · {{ __('perda') }} {{ $fmtBrl((float) ($c['perda_estimada_anual'] ?? 0)) }}
+                                    </span>
                                 </li>
                             @endforeach
                         </ul>
                     @endif
                     @if (count($priorityDims) > 0 && count($errosCriticos) === 0)
-                        <ul class="text-xs text-red-900/95 dark:text-red-100 space-y-1">
+                        <ul class="text-xs text-red-900/95 dark:text-red-100 space-y-1.5">
                             @foreach (array_slice($priorityDims, 0, 6) as $dim)
-                                <li class="flex justify-between gap-2">
+                                <li class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5">
                                     <span>{{ $dim['title'] ?? '' }}</span>
-                                    <span class="tabular-nums font-semibold shrink-0">{{ number_format((int) ($dim['total'] ?? 0)) }}</span>
+                                    <span class="tabular-nums font-semibold shrink-0 text-right">
+                                        {{ number_format((int) ($dim['total'] ?? 0)) }} {{ __('ocorr.') }}
+                                        · {{ __('perda') }} {{ $fmtBrl((float) ($dim['perda_estimada_anual'] ?? 0)) }}
+                                    </span>
                                 </li>
                             @endforeach
                         </ul>
                     @endif
                     <p class="text-[11px] text-red-800/90 dark:text-red-200/90">{{ __('Impacto elevado em Censo, FUNDEB ou integridade da matrícula.') }}</p>
+                </div>
+            @endif
+
+            @if (count($atencaoDims) > 0)
+                <div class="rounded-lg border border-amber-400/80 dark:border-amber-600 bg-amber-50/40 dark:bg-amber-950/25 px-4 py-3 space-y-2">
+                    <h4 class="text-sm font-bold text-amber-900 dark:text-amber-100 uppercase tracking-wide">{{ __('Pontos de atenção') }}</h4>
+                    <ul class="text-xs text-amber-950/95 dark:text-amber-100 space-y-1.5">
+                        @foreach (array_slice($atencaoDims, 0, 8) as $dim)
+                            <li class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5">
+                                <span>{{ $dim['title'] ?? '' }}</span>
+                                <span class="tabular-nums font-semibold shrink-0 text-right">
+                                    {{ number_format((int) ($dim['total'] ?? 0)) }} {{ __('ocorr.') }}
+                                    @if ((float) ($dim['perda_estimada_anual'] ?? 0) > 0)
+                                        · {{ __('perda est.') }} {{ $fmtBrl((float) $dim['perda_estimada_anual']) }}
+                                    @endif
+                                </span>
+                            </li>
+                        @endforeach
+                    </ul>
                 </div>
             @endif
 
@@ -148,6 +212,7 @@
                             $resumoBox = match ($resumoStatus) {
                                 'danger' => 'border-rose-300/80 bg-rose-50/90 text-rose-950 dark:border-rose-700 dark:bg-rose-950/35 dark:text-rose-100',
                                 'warning' => 'border-amber-300/80 bg-amber-50/90 text-amber-950 dark:border-amber-700 dark:bg-amber-950/35 dark:text-amber-100',
+                                'neutral' => 'border-slate-300/80 bg-slate-50/90 text-slate-800 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-200',
                                 default => 'border-emerald-300/80 bg-emerald-50/90 text-emerald-950 dark:border-emerald-700 dark:bg-emerald-950/35 dark:text-emerald-100',
                             };
                         @endphp
@@ -161,6 +226,17 @@
                         </li>
                     @endforeach
                 </ul>
+            </x-dashboard.consultoria-section>
+        @endif
+
+        @if ($hasPublicSources)
+            <x-dashboard.consultoria-section
+                :step="$discStep['disc-fontes-publicas'] ?? null"
+                anchor="disc-fontes-publicas"
+                :title="__('Extração e relatórios oficiais')"
+                :subtitle="__('FNDE, Tesouro, Simec e INEP — para cruzar com as estimativas desta aba.')"
+            >
+                <x-dashboard.consultoria-public-sources :catalog="$publicSources" :anchor="null" />
             </x-dashboard.consultoria-section>
         @endif
 
@@ -231,7 +307,9 @@
                                         @endif
                                     </p>
                                     <p class="mt-1 text-sm font-medium text-orange-700 dark:text-orange-300 tabular-nums">
-                                        {{ __('Ganho potencial indicativo:') }} {{ $fmtBrl((float) ($check['ganho_potencial_anual'] ?? 0)) }}
+                                        {{ __('Perda estimada:') }} {{ $fmtBrl((float) ($check['perda_estimada_anual'] ?? 0)) }}
+                                        <span class="text-gray-500 dark:text-gray-400 font-normal">·</span>
+                                        {{ __('Ganho potencial:') }} {{ $fmtBrl((float) ($check['ganho_potencial_anual'] ?? 0)) }}
                                     </p>
                                 </div>
                                 <span class="inline-flex items-center gap-1.5 shrink-0">
@@ -261,7 +339,11 @@
                                 <div>
                                     <p class="text-xs font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300 mb-1">{{ __('Impacto financeiro / Censo') }}</p>
                                     <p class="leading-relaxed">{{ $check['impact'] ?? '' }}</p>
-                                    @if (filled($check['funding_formula'] ?? null))
+                                    @if (is_array($check['funding_explicacao'] ?? null))
+                                        <div class="mt-2">
+                                            <x-dashboard.consultoria-funding-explanation :explicacao="$check['funding_explicacao']" />
+                                        </div>
+                                    @elseif (filled($check['funding_formula'] ?? null))
                                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 italic">{{ $check['funding_formula'] }}</p>
                                     @endif
                                 </div>
@@ -289,7 +371,8 @@
                                                     <tr>
                                                         <th class="px-3 py-2 font-medium">{{ __('Unidade escolar') }}</th>
                                                         <th class="px-3 py-2 font-medium text-right">{{ __('Ocorrências') }}</th>
-                                                        <th class="px-3 py-2 font-medium text-right">{{ __('Ganho pot. indicativo') }}</th>
+                                                        <th class="px-3 py-2 font-medium text-right">{{ __('Perda est.') }}</th>
+                                                        <th class="px-3 py-2 font-medium text-right">{{ __('Ganho pot.') }}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -297,6 +380,12 @@
                                                         <tr>
                                                             <td class="px-3 py-1.5 break-words max-w-[18rem]">{{ $row['escola'] ?? '—' }}</td>
                                                             <td class="px-3 py-1.5 text-right tabular-nums font-medium">{{ number_format((int) ($row['total'] ?? 0)) }}</td>
+                                                            @php
+                                                                $unitPerda = (int) ($row['total'] ?? 0) > 0
+                                                                    ? ((float) ($check['perda_estimada_anual'] ?? 0)) / (int) ($check['total'] ?? 1)
+                                                                    : 0.0;
+                                                            @endphp
+                                                            <td class="px-3 py-1.5 text-right tabular-nums text-orange-700 dark:text-orange-300">{{ $fmtBrl($unitPerda * (int) ($row['total'] ?? 0)) }}</td>
                                                             <td class="px-3 py-1.5 text-right tabular-nums text-emerald-700 dark:text-emerald-300">{{ $fmtBrl((float) ($row['ganho_potencial_anual'] ?? 0)) }}</td>
                                                         </tr>
                                                     @endforeach
