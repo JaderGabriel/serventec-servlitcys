@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\City;
 use App\Repositories\Ieducar\AttendanceRepository;
 use App\Repositories\Ieducar\EnrollmentRepository;
+use App\Repositories\Ieducar\DiscrepanciesRepository;
 use App\Repositories\Ieducar\FundebRepository;
+use App\Repositories\Ieducar\MunicipalityHealthRepository;
+use App\Support\Ieducar\DiscrepanciesCheckCatalog;
 use App\Repositories\Ieducar\InclusionRepository;
 use App\Repositories\Ieducar\NetworkRepository;
 use App\Repositories\Ieducar\OverviewRepository;
@@ -35,6 +38,8 @@ class AnalyticsDashboardController extends Controller
         InclusionRepository $inclusionRepository,
         NetworkRepository $networkRepository,
         FundebRepository $fundebRepository,
+        DiscrepanciesRepository $discrepanciesRepository,
+        MunicipalityHealthRepository $municipalityHealthRepository,
         SchoolUnitsRepository $schoolUnitsRepository,
     ): View {
         $cities = City::query()->forAnalytics()->orderBy('name')->get();
@@ -117,6 +122,8 @@ class AnalyticsDashboardController extends Controller
                 $inclusionData,
                 $networkData,
             );
+            $discrepanciesData = $discrepanciesRepository->snapshot($city, $filters);
+            $municipalityHealthData = $municipalityHealthRepository->snapshot($city, $filters);
         } else {
             $enrollmentData = AnalyticsEmptyPayloads::enrollment();
             $performanceData = AnalyticsEmptyPayloads::performance();
@@ -124,6 +131,8 @@ class AnalyticsDashboardController extends Controller
             $inclusionData = AnalyticsEmptyPayloads::inclusion();
             $networkData = AnalyticsEmptyPayloads::network();
             $fundebData = AnalyticsEmptyPayloads::fundeb();
+            $discrepanciesData = AnalyticsEmptyPayloads::discrepancies();
+            $municipalityHealthData = AnalyticsEmptyPayloads::municipalityHealth();
         }
 
         $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
@@ -137,6 +146,8 @@ class AnalyticsDashboardController extends Controller
             'performance' => __('Desempenho'),
             'attendance' => __('Frequência'),
             'fundeb' => __('FUNDEB'),
+            'municipality_health' => __('Saúde do município'),
+            'discrepancies' => __('Discrepâncias e Erros'),
         ];
         $tabKeys = array_keys($tabs);
         $qTab = (string) $request->query('tab', '');
@@ -157,6 +168,9 @@ class AnalyticsDashboardController extends Controller
             'inclusionData' => $inclusionData,
             'networkData' => $networkData,
             'fundebData' => $fundebData,
+            'discrepanciesData' => $discrepanciesData,
+            'municipalityHealthData' => $municipalityHealthData,
+            'fundingLossModalData' => DiscrepanciesCheckCatalog::modalPayload(),
             'chartExportContext' => $chartExportContext,
             'tabs' => $tabs,
             'analyticsInitialTab' => $analyticsInitialTab,
@@ -178,9 +192,11 @@ class AnalyticsDashboardController extends Controller
         InclusionRepository $inclusionRepository,
         NetworkRepository $networkRepository,
         FundebRepository $fundebRepository,
+        DiscrepanciesRepository $discrepanciesRepository,
+        MunicipalityHealthRepository $municipalityHealthRepository,
     ): Response {
         $tab = (string) $request->query('tab', '');
-        $allowed = ['enrollment', 'network', 'inclusion', 'performance', 'attendance', 'fundeb'];
+        $allowed = ['enrollment', 'network', 'inclusion', 'performance', 'attendance', 'fundeb', 'municipality_health', 'discrepancies'];
         if (! in_array($tab, $allowed, true)) {
             abort(404);
         }
@@ -262,6 +278,20 @@ class AnalyticsDashboardController extends Controller
                         $inclusionRepository->snapshot($city, $filters),
                         $networkRepository->snapshot($city, $filters),
                     ),
+                    'yearFilterReady' => true,
+                    'chartExportContext' => $chartExportContext,
+                ])
+                ->withHeaders($headers),
+            'municipality_health' => response()
+                ->view('dashboard.analytics.partials.municipality-health', [
+                    'healthData' => $municipalityHealthRepository->snapshot($city, $filters),
+                    'yearFilterReady' => true,
+                    'chartExportContext' => $chartExportContext,
+                ])
+                ->withHeaders($headers),
+            'discrepancies' => response()
+                ->view('dashboard.analytics.partials.discrepancies', [
+                    'discrepanciesData' => $discrepanciesRepository->snapshot($city, $filters),
                     'yearFilterReady' => true,
                     'chartExportContext' => $chartExportContext,
                 ])

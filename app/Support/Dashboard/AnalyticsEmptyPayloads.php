@@ -98,4 +98,60 @@ final class AnalyticsEmptyPayloads
             'modules' => [],
         ];
     }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function municipalityHealth(): array
+    {
+        return [
+            'intro' => '',
+            'footnote' => '',
+            'year_label' => '',
+            'city_name' => '',
+            'compliance_score' => null,
+            'compliance_status' => 'neutral',
+            'compliance_label' => '',
+            'summary' => [
+                'pendencias_cadastro' => 0,
+                'modulos_fundeb_alerta' => 0,
+                'perda_estimada_anual' => 0.0,
+                'ganho_potencial_anual' => 0.0,
+                'escolas_afetadas' => 0,
+                'total_matriculas' => null,
+            ],
+            'cadastro_dimensions' => [],
+            'fundeb_modules' => [],
+            'top_problems' => [],
+            'chart_score' => null,
+            'chart_pendencias' => null,
+            'error' => null,
+        ];
+    }
+
+    public static function discrepancies(): array
+    {
+        return [
+            'intro' => '',
+            'footnote' => '',
+            'funding_aviso' => '',
+            'year_label' => '',
+            'city_name' => '',
+            'total_matriculas' => null,
+            'funding_reference' => null,
+            'summary' => [
+                'com_problema' => 0,
+                'corrigiveis' => 0,
+                'escolas_afetadas' => 0,
+                'perda_estimada_anual' => 0.0,
+                'ganho_potencial_anual' => 0.0,
+            ],
+            'chart_resumo' => null,
+            'chart_financeiro' => null,
+            'funding_pillars' => [],
+            'checks' => [],
+            'notes' => [],
+            'error' => null,
+        ];
+    }
 }

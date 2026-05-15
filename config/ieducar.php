@@ -445,6 +445,63 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Discrepâncias e Erros — impacto financeiro indicativo (FUNDEB / VAAR / Censo)
+    |--------------------------------------------------------------------------
+    |
+    | vaa_referencia_anual: ordem de grandeza do VAAF municipal (R$/aluno/ano) para estimar
+    | perda por matrícula não contabilizada ou com cadastro inválido no Censo.
+    | peso_por_check: multiplicador por tipo de discrepância (NEE e Censo costumam pesar mais).
+    |
+    */
+
+    'discrepancies' => [
+        'vaa_referencia_anual' => (float) env('IEDUCAR_DISC_VAA_REFERENCIA', 4500),
+        'nee_benchmark_pct_min' => (float) env('IEDUCAR_DISC_NEE_BENCHMARK_PCT', 1.5),
+        'min_matriculas_nee_benchmark' => (int) env('IEDUCAR_DISC_NEE_MIN_MAT', 80),
+        'aviso_financeiro' => (string) env(
+            'IEDUCAR_DISC_AVISO_FINANCEIRO',
+            'Estimativa indicativa com base em referência VAAF configurável; não substitui cálculo FNDE/Simec nem valor exato de complementação VAAR.'
+        ),
+        'peso_por_check' => [
+            'sem_raca' => 0.35,
+            'sem_sexo' => 0.35,
+            'sem_data_nascimento' => 0.45,
+            'nee_sem_aee' => 1.2,
+            'aee_sem_nee' => 1.0,
+            'nee_subnotificacao' => 1.5,
+            'escola_sem_inep' => 1.8,
+            'escola_inativa_matricula' => 1.6,
+            'escola_sem_geo' => 0.5,
+            'matricula_duplicada' => 1.4,
+            'matricula_situacao_invalida' => 1.3,
+            'distorcao_idade_serie' => 0.4,
+        ],
+        'funding_pillars' => [
+            [
+                'id' => 'fundeb-base',
+                'titulo' => 'FUNDEB — matrícula no Censo',
+                'descricao' => 'Financiamento básico da educação vinculado a matrículas válidas declaradas no Censo Escolar (Educacenso). Cadastro incompleto ou inconsistente pode reduzir repasse ou gerar glosa.',
+            ],
+            [
+                'id' => 'vaar-inclusao',
+                'titulo' => 'VAAR — Inclusão e equidade',
+                'descricao' => 'Condicionalidades ligadas a educação especial, equidade (raça/cor, gênero) e políticas de inclusão. Subnotificação de NEE ou ausência de AEE impacta comprovação.',
+            ],
+            [
+                'id' => 'vaar-indicadores',
+                'titulo' => 'VAAR — Indicadores (INEP)',
+                'descricao' => 'Metas de aprendizagem e indicadores educacionais (IDEB, SAEB). Escola sem INEP ou unidade inativa distorce a rede.',
+            ],
+            [
+                'id' => 'pnae-transporte',
+                'titulo' => 'Programas complementares',
+                'descricao' => 'PNAE, transporte e outros repasses usam cadastro escolar e aluno; erros de situação da matrícula ou duplicidade afetam planejamento e custos.',
+            ],
+        ],
+    ],
+
     'inclusion' => [
         'aee_keywords' => array_values(array_filter(array_map('trim', explode(',', (string) env(
             'IEDUCAR_INCLUSION_AEE_KEYWORDS',

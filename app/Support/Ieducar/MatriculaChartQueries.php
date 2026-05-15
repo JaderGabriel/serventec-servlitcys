@@ -3332,15 +3332,50 @@ final class MatriculaChartQueries
 
             $labels = [];
             $values = [];
+            $detail = [];
             foreach ($rows as $row) {
-                $labels[] = (string) (($row->ename ?? '') !== '' ? $row->ename : ('#'.($row->eid ?? '')));
-                $values[] = (float) ($row->cnt ?? 0);
+                $eid = (string) ($row->eid ?? '');
+                $ename = (string) (($row->ename ?? '') !== '' ? $row->ename : ('#'.$eid));
+                $cnt = (int) ($row->cnt ?? 0);
+                $labels[] = $ename;
+                $values[] = (float) $cnt;
+                $detail[] = ['eid' => $eid, 'ename' => $ename, 'cnt' => $cnt];
             }
 
-            return ['labels' => $labels, 'values' => $values];
+            return ['labels' => $labels, 'values' => $values, 'detail' => $detail];
         } catch (QueryException|\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Matrículas com distorção idade/série por escola (para diagnóstico de discrepâncias / Censo).
+     *
+     * @return list<array{escola_id: string, escola: string, total: int}>
+     */
+    public static function distorcaoMatriculasPorEscolaRows(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        $by = self::distorcaoComDistorsaoPorEscolaAutomatico($db, $city, $filters);
+        if ($by === null || ! isset($by['detail']) || ! is_array($by['detail'])) {
+            return [];
+        }
+        $out = [];
+        foreach ($by['detail'] as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $cnt = (int) ($row['cnt'] ?? 0);
+            if ($cnt <= 0) {
+                continue;
+            }
+            $out[] = [
+                'escola_id' => (string) ($row['eid'] ?? ''),
+                'escola' => (string) ($row['ename'] ?? '—'),
+                'total' => $cnt,
+            ];
+        }
+
+        return $out;
     }
 
     /**

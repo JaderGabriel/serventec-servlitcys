@@ -172,6 +172,8 @@ document.addEventListener("alpine:init", () => {
                     performance: "panelPerformance",
                     attendance: "panelAttendance",
                     fundeb: "panelFundeb",
+                    municipality_health: "panelMunicipalityHealth",
+                    discrepancies: "panelDiscrepancies",
                 };
                 const refName = refMap[t];
                 if (!refName || !this.tabFetchUrl) {

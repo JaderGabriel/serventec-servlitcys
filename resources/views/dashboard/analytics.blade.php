@@ -42,6 +42,7 @@
                 @endphp
                 <div
                     x-data="analyticsTabs(@js(array_keys($tabs)), @js($analyticsInitialTab ?? 'overview'), @js($lazyTabLoading), @js(route('dashboard.analytics.tab')))"
+                    x-on:set-analytics-tab.window="if ($event.detail && @js(array_keys($tabs)).includes($event.detail)) { tab = $event.detail; afterTabChange(); }"
                     class="space-y-6"
                 >
                     <x-dashboard.ieducar-filter-bar
@@ -61,6 +62,8 @@
                         <div class="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
                             {{ __('Selecione o ano letivo (ou «Todos os anos») e clique em Aplicar filtros para carregar os indicadores e gráficos.') }}
                         </div>
+                    @else
+                        <x-dashboard.funding-loss-conditions-modal :data="$fundingLossModalData ?? []" />
                     @endif
 
                     <div
@@ -183,6 +186,36 @@
                                     <div class="relative min-h-[12rem]" x-ref="panelFundeb">
                                         <div x-show="loadingTab === 'fundeb'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
                                             <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar indicadores…') }}</span>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                            <div x-show="tab === 'municipality_health'" x-cloak class="analytics-tab-panel">
+                                @if (! $lazyTabLoading)
+                                    @include('dashboard.analytics.partials.municipality-health', [
+                                        'healthData' => $municipalityHealthData,
+                                        'yearFilterReady' => $yearFilterReady,
+                                        'chartExportContext' => $chartExportContext,
+                                    ])
+                                @else
+                                    <div class="relative min-h-[12rem]" x-ref="panelMunicipalityHealth">
+                                        <div x-show="loadingTab === 'municipality_health'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
+                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar saúde do município…') }}</span>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                            <div x-show="tab === 'discrepancies'" x-cloak class="analytics-tab-panel">
+                                @if (! $lazyTabLoading)
+                                    @include('dashboard.analytics.partials.discrepancies', [
+                                        'discrepanciesData' => $discrepanciesData,
+                                        'yearFilterReady' => $yearFilterReady,
+                                        'chartExportContext' => $chartExportContext,
+                                    ])
+                                @else
+                                    <div class="relative min-h-[12rem]" x-ref="panelDiscrepancies">
+                                        <div x-show="loadingTab === 'discrepancies'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
+                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar análises…') }}</span>
                                         </div>
                                     </div>
                                 @endif
