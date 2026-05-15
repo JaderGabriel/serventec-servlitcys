@@ -252,6 +252,35 @@ final class FundebOpenDataImportServiceTest extends TestCase
     }
 
     #[Test]
+    public function import_for_city_regista_logs_de_andamento(): void
+    {
+        config([
+            'ieducar.fundeb.open_data.json_url' => 'https://api.example/fundeb/{ibge}/{ano}',
+            'ieducar.fundeb.open_data.resource_id' => '',
+        ]);
+
+        Http::fake(['api.example/*' => Http::response([
+            ['codigo_ibge' => '2910800', 'ano' => 2024, 'vaaf' => 5100.0],
+        ], 200)]);
+
+        $city = new City(['id' => 1, 'name' => 'Teste', 'ibge_municipio' => '2910800']);
+        $saved = new FundebMunicipioReference(['ibge_municipio' => '2910800', 'ano' => 2024, 'vaaf' => 5100.0, 'fonte' => 'api']);
+        $saved->id = 1;
+
+        $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $repo->shouldReceive('upsert')->once()->andReturn($saved);
+
+        $progress = new \App\Services\Fundeb\FundebImportProgress();
+        $service = new FundebOpenDataImportService($repo);
+        $service->importForCityYear($city, 2024, false, $progress);
+
+        $this->assertGreaterThanOrEqual(2, count($progress->entries()));
+        $messages = implode(' ', array_column($progress->entries(), 'message'));
+        $this->assertStringContainsString('Teste', $messages);
+        $this->assertStringContainsString('✓', $messages);
+    }
+
+    #[Test]
     public function falha_sem_ibge_na_cidade(): void
     {
         $city = new City(['id' => 2, 'name' => 'Sem IBGE', 'ibge_municipio' => null]);

@@ -10,6 +10,7 @@
         $skippedRows = is_array($summary['skipped'] ?? null) ? $summary['skipped'] : ($bulkResult['skipped'] ?? []);
         $byCity = is_array($summary['by_city'] ?? null) ? $summary['by_city'] : [];
         $byFonte = is_array($summary['by_fonte'] ?? null) ? $summary['by_fonte'] : [];
+        $logs = is_array($bulkResult['logs'] ?? null) ? $bulkResult['logs'] : [];
         $hasFailures = count($failedRows) > 0;
         $borderClass = $hasFailures && count($okRows) > 0
             ? 'border-amber-300 dark:border-amber-700'
@@ -56,6 +57,31 @@
                 <p class="text-[10px] text-sky-700/80">{{ __('de ~:n previstas', ['n' => $summary['operations_planned'] ?? '—']) }}</p>
             </div>
         </div>
+
+        @if (count($logs) > 0)
+            <details class="border-t border-gray-100 dark:border-gray-800" open>
+                <summary class="cursor-pointer px-4 py-2 text-xs font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    {{ __('Log de andamento (:n)', ['n' => count($logs)]) }}
+                </summary>
+                <div class="max-h-64 overflow-y-auto bg-gray-950 text-gray-100 font-mono text-[11px] leading-relaxed px-3 py-2 space-y-0.5">
+                    @foreach ($logs as $entry)
+                        @php
+                            $lvl = (string) ($entry['level'] ?? 'info');
+                            $color = match ($lvl) {
+                                'success' => 'text-emerald-400',
+                                'warn' => 'text-amber-400',
+                                'error' => 'text-red-400',
+                                default => 'text-gray-300',
+                            };
+                        @endphp
+                        <div class="{{ $color }}">
+                            <span class="text-gray-500">{{ $entry['at'] ?? '' }}</span>
+                            {{ $entry['message'] ?? '' }}
+                        </div>
+                    @endforeach
+                </div>
+            </details>
+        @endif
 
         @if ($byFonte !== [])
             <div class="px-4 py-2 border-t border-gray-100 dark:border-gray-800">

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\City;
 use App\Services\Fundeb\FundebOpenDataImportService;
+use App\Services\Fundeb\FundebImportProgress;
 use Illuminate\Console\Command;
 
 class FundebImportApiCommand extends Command
@@ -44,6 +45,9 @@ class FundebImportApiCommand extends Command
             return self::FAILURE;
         }
 
+        $progress = $this->makeConsoleProgress();
+        $this->printRunHeader($years, $cityIds);
+
         $singleCityId = is_array($cityIds) && count($cityIds) === 1 ? $cityIds[0] : null;
         if ($singleCityId !== null && count($years) === 1 && ! $this->option('all') && ! $this->option('cities')) {
             $city = City::query()->find($singleCityId);
@@ -53,7 +57,8 @@ class FundebImportApiCommand extends Command
                 return self::FAILURE;
             }
 
-            $result = $this->import->importForCityYear($city, $years[0], $useNearest);
+            $result = $this->import->importForCityYear($city, $years[0], $useNearest, $progress);
+            $this->newLine();
             if ($result['success']) {
                 $this->info($result['message']);
 
@@ -65,10 +70,65 @@ class FundebImportApiCommand extends Command
             return self::FAILURE;
         }
 
-        $result = $this->import->importBulkForYears($years, $useNearest, $cityIds);
+        $result = $this->import->importBulkForYears($years, $useNearest, $cityIds, $progress);
+        $this->newLine();
         $this->displayBulkResult($result);
 
         return ($result['success'] ?? false) ? self::SUCCESS : self::FAILURE;
+    }
+
+    private function makeConsoleProgress(): FundebImportProgress
+    {
+        return new FundebImportProgress(function (string $level, string $message): void {
+            match ($level) {
+                'success' => $this->info($message),
+                'warn' => $this->warn($message),
+                'error' => $this->error($message),
+                default => $this->line($message),
+            };
+        });
+    }
+
+    /**
+     * @param  list<int>  $years
+     * @param  list<int>|null|false  $cityIds
+     */
+    private function printRunHeader(array $years, array|null|false $cityIds): void
+    {
+        $flags = [];
+        if ($this->option('new-city-years')) {
+            $flags[] = '--new-city-years';
+        }
+        if ($this->option('nearest')) {
+            $flags[] = '--nearest';
+        }
+        if ($this->option('all')) {
+            $flags[] = '--all';
+        }
+        if ($this->option('cities')) {
+            $flags[] = '--cities='.$this->option('cities');
+        }
+        if ($this->option('years')) {
+            $flags[] = '--years='.$this->option('years');
+        }
+        if ($this->option('from') || $this->option('to')) {
+            $flags[] = '--from='.($this->option('from') ?: '…').' --to='.($this->option('to') ?: '…');
+        }
+        if ($this->option('ano')) {
+            $flags[] = '--ano='.$this->option('ano');
+        }
+
+        $this->info(__('Comando fundeb:import-api'));
+        if ($flags !== []) {
+            $this->line(__('Opções: :opts', ['opts' => implode(' ', $flags)]));
+        }
+        $this->line(__('Anos: :anos', ['anos' => implode(', ', array_map('strval', $years))]));
+        if ($cityIds === null) {
+            $this->line(__('Municípios: todos com IBGE'));
+        } elseif (is_array($cityIds)) {
+            $this->line(__('Municípios (IDs): :ids', ['ids' => implode(', ', array_map('strval', $cityIds))]));
+        }
+        $this->newLine();
     }
 
     /**
@@ -105,7 +165,7 @@ class FundebImportApiCommand extends Command
     }
 
     /**
-     * @return list<int>|null|false null = todas (--all), list = IDs, false = inválido
+     * @return list<int>|null|false
      */
     private function resolveCityIds(): array|null|false
     {
@@ -146,13 +206,13 @@ class FundebImportApiCommand extends Command
             );
         }
 
-        foreach ($result['failed'] ?? [] as $fail) {
-            $this->warn(sprintf(
-                '%s (ano %s): %s',
-                $fail['city'] ?? '',
-                $fail['ano'] ?? $fail['requested_ano'] ?? '—',
-                $fail['message'] ?? '',
-            ));
+        $logs = is_array($result['logs'] ?? null) ? $result['logs'] : [];
+        if ($logs !== [] && $this->output->isVerbose()) {
+            $this->newLine();
+            $this->line(__('<comment>Log completo (--verbose):</comment>'));
+            foreach ($logs as $entry) {
+                $this->line(sprintf('[%s] %s', $entry['at'] ?? '', $entry['message'] ?? ''));
+            }
         }
     }
 }

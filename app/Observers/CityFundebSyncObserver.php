@@ -5,6 +5,8 @@ namespace App\Observers;
 use App\Models\City;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\Fundeb\FundebOpenDataImportService;
+use App\Services\Fundeb\FundebImportProgress;
+use Illuminate\Support\Facades\Log;
 
 final class CityFundebSyncObserver
 {
@@ -26,7 +28,14 @@ final class CityFundebSyncObserver
         $years = FundebOpenDataImportService::yearsForNewCitySync();
 
         dispatch(static function () use ($cityId, $years): void {
-            app(FundebOpenDataImportService::class)->importBulkForYears($years, false, [$cityId]);
+            $progress = new FundebImportProgress(static function (string $level, string $message): void {
+                Log::info('[fundeb:city-save] '.$message, ['level' => $level]);
+            });
+            $progress->info(__('Cadastro cidade #:id — importação automática anos :anos', [
+                'id' => (string) $cityId,
+                'anos' => implode(', ', array_map('strval', $years)),
+            ]));
+            app(FundebOpenDataImportService::class)->importBulkForYears($years, false, [$cityId], $progress);
         })->afterResponse();
     }
 }

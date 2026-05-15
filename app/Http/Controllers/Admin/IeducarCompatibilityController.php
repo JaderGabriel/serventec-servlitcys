@@ -7,6 +7,7 @@ use App\Models\City;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\CityDataConnection;
 use App\Services\Fundeb\FundebOpenDataImportService;
+use App\Services\Fundeb\FundebImportProgress;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\FundebMunicipalReferenceResolver;
 use App\Support\Ieducar\IeducarCompatibilityProbe;
@@ -219,10 +220,12 @@ class IeducarCompatibilityController extends Controller
         $timeLimit = min(3600, max(600, 120 + (count($years) * max(1, $cityCount) * 2)));
         @set_time_limit($timeLimit);
 
+        $progress = new FundebImportProgress();
         $result = $this->fundebImport->importBulkForYears(
             $years,
             $request->boolean('use_nearest_year'),
             $cityIds,
+            $progress,
         );
 
         $syncForm = [
