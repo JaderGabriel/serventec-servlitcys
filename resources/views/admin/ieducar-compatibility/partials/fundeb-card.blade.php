@@ -24,17 +24,29 @@
         })
         : collect($coverage)->where('has_reference', true);
     $cityIbge = $city ? \App\Repositories\FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio) : null;
-    $formFrom = $fundebSyncFrom ?? (min($syncYears) ?: 2020);
-    $formTo = $fundebSyncTo ?? (max($syncYears) ?: (int) date('Y') - 1);
+    $syncForm = session('fundeb_sync_form', []);
+    $formFrom = (int) ($syncForm['ano_from'] ?? $fundebSyncFrom ?? (min($syncYears) ?: 2020));
+    $formTo = (int) ($syncForm['ano_to'] ?? $fundebSyncTo ?? (max($syncYears) ?: (int) date('Y') - 1));
+    $cityChoices = is_array($fundebCityChoices ?? null) ? $fundebCityChoices : [];
+    $selectedCityIds = is_array($fundebSelectedCityIds ?? null) ? $fundebSelectedCityIds : [];
+    $selectAllCities = (bool) ($fundebSelectAllCities ?? true);
+    $previewYearCount = max(0, $formTo - $formFrom + 1);
+    $citiesWithIbgeCount = collect($cityChoices)->where('has_ibge', true)->count();
+    $previewCityCount = $selectAllCities ? $citiesWithIbgeCount : count(array_intersect(
+        $selectedCityIds,
+        collect($cityChoices)->where('has_ibge', true)->pluck('id')->all(),
+    ));
+    $previewOps = $previewYearCount * $previewCityCount;
 @endphp
 
 <section class="rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50/40 dark:bg-teal-950/20 p-4 sm:p-6 shadow-sm space-y-5">
+    @include('admin.ieducar-compatibility.partials.fundeb-sync-results', ['fmtBrl' => $fmtBrl])
     <div>
         <h3 class="text-sm font-semibold text-teal-950 dark:text-teal-100">{{ __('Referências FUNDEB (VAAF / VAAT)') }}</h3>
         <p class="text-xs text-teal-900/90 dark:text-teal-200/90 mt-1 leading-relaxed">
-            {{ __('Importação completa: todos os municípios com IBGE × todos os anos elegíveis (:anos). Configuração base: :cfg. Novas cidades sincronizam o intervalo configurado ao salvar.', [
-                'anos' => $syncYearsLabel ?: (string) ($fundebSuggestedYear ?? ''),
-                'cfg' => $configuredLabel ?: __('intervalo no .env'),
+            {{ __('Escolha o intervalo de anos e os municípios. Ao cadastrar cidade com IBGE, importa automaticamente o ano vigente e o anterior (:y1 e :y2).', [
+                'y1' => \App\Services\Fundeb\FundebOpenDataImportService::suggestedImportYear(),
+                'y2' => \App\Services\Fundeb\FundebOpenDataImportService::suggestedImportYear() - 1,
             ]) }}
         </p>
     </div>
@@ -77,86 +89,19 @@
         @endif
     @endif
 
-    <div class="flex flex-col gap-4">
-        <form method="post" action="{{ route('admin.ieducar-compatibility.fundeb-sync-all') }}" class="rounded-lg border-2 border-teal-600 dark:border-teal-500 p-4 bg-teal-100/50 dark:bg-teal-950/40 space-y-3"
-            onsubmit="return confirm(@js(__('Sincronizar FUNDEB: todos os municípios com IBGE × :n ano(s) (:anos)? Pode levar vários minutos.', ['n' => $syncYearCount, 'anos' => $syncYearsLabel])));">
-            @csrf
-            @if ($city)
-                <input type="hidden" name="city_id" value="{{ $city->id }}">
-            @endif
-            <div>
-                <p class="text-sm font-semibold text-teal-950 dark:text-teal-50">{{ __('Sincronização completa (cidades × anos)') }}</p>
-                <p class="text-xs text-teal-900/90 dark:text-teal-200/80 mt-1">
-                    {{ __('Percorre cada município com IBGE e cada ano do intervalo; lê cache, CKAN/JSON, grava JSON e a base local.') }}
-                </p>
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
-                <div>
-                    <label for="fundeb_sync_from" class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Ano inicial') }}</label>
-                    <input type="number" id="fundeb_sync_from" name="ano_from" min="2000" max="{{ (int) date('Y') + 1 }}" value="{{ $formFrom }}" class="{{ $selectClass }} w-full">
-                </div>
-                <div>
-                    <label for="fundeb_sync_to" class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Ano final') }}</label>
-                    <input type="number" id="fundeb_sync_to" name="ano_to" min="2000" max="{{ (int) date('Y') + 1 }}" value="{{ $formTo }}" class="{{ $selectClass }} w-full">
-                </div>
-            </div>
-            <div class="flex flex-col sm:flex-row flex-wrap gap-3 text-xs text-gray-800 dark:text-gray-200">
-                <label class="flex items-center gap-2 leading-tight">
-                    <input type="checkbox" name="include_cached_years" value="1" class="rounded border-gray-300 text-teal-600 shrink-0" checked>
-                    {{ __('Incluir anos em cache') }}
-                </label>
-                <label class="flex items-center gap-2 leading-tight">
-                    <input type="checkbox" name="include_database_years" value="1" class="rounded border-gray-300 text-teal-600 shrink-0" checked>
-                    {{ __('Incluir anos na base') }}
-                </label>
-                <label class="flex items-center gap-2 leading-tight max-w-xl">
-                    <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-teal-600 shrink-0">
-                    {{ __('Ano mais recente na API se o pedido não existir') }}
-                </label>
-            </div>
-            <p class="text-xs text-teal-800 dark:text-teal-200">
-                {{ __('Anos previstos nesta execução: :anos', ['anos' => $syncYearsLabel]) }}
-            </p>
-            <button type="submit" class="inline-flex items-center rounded-lg bg-teal-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 shadow-sm">
-                {{ __('Sincronizar todos — :n anos', ['n' => $syncYearCount]) }}
-            </button>
-        </form>
+    @include('admin.ieducar-compatibility.partials.fundeb-sync-form', [
+        'cityChoices' => $cityChoices,
+        'selectedCityIds' => $selectedCityIds,
+        'selectAllCities' => $selectAllCities,
+        'formFrom' => $formFrom,
+        'formTo' => $formTo,
+        'citiesWithIbgeCount' => $citiesWithIbgeCount,
+        'selectClass' => $selectClass,
+        'city' => $city,
+        'cityIbge' => $cityIbge,
+        'fundebImportYear' => $fundebImportYear,
+    ])
 
-        <details class="rounded-lg border border-teal-200/60 dark:border-teal-800/60 p-3 bg-white/60 dark:bg-gray-900/30">
-            <summary class="cursor-pointer text-xs font-medium text-teal-900 dark:text-teal-100">{{ __('Importação avançada (um município ou um ano)') }}</summary>
-            <div class="flex flex-col lg:flex-row flex-wrap gap-4 lg:items-end mt-3">
-                <form method="post" action="{{ route('admin.ieducar-compatibility.fundeb-import') }}" class="flex flex-wrap items-end gap-3">
-                    @csrf
-                    @if ($city)
-                        <input type="hidden" name="city_id" value="{{ $city->id }}">
-                    @endif
-                    <div>
-                        <label for="fundeb_ano" class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Ano') }}</label>
-                        <input type="number" id="fundeb_ano" name="ano" min="2000" max="{{ (int) date('Y') + 1 }}" value="{{ $fundebImportYear }}" class="{{ $selectClass }} w-24" required>
-                    </div>
-                    <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 max-w-[13rem] leading-tight">
-                        <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-teal-600 shrink-0">
-                        {{ __('Ano mais recente na API') }}
-                    </label>
-                    <button type="submit" class="inline-flex items-center rounded-lg bg-teal-700 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-600 disabled:opacity-50" @disabled(! $city || ! $cityIbge)>
-                        {{ __('Importar este município') }}
-                    </button>
-                </form>
-
-                <form method="post" action="{{ route('admin.ieducar-compatibility.fundeb-import-bulk') }}" class="flex flex-wrap items-end gap-3">
-                    @csrf
-                    <input type="hidden" name="ano" value="{{ $fundebImportYear }}">
-                    <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 max-w-[11rem] leading-tight">
-                        <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-teal-600 shrink-0">
-                        {{ __('Ano mais recente na API') }}
-                    </label>
-                    <button type="submit" class="inline-flex items-center rounded-lg border border-teal-700 px-3 py-2 text-sm font-semibold text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-teal-950/50">
-                        {{ __('Todos — só ano :ano', ['ano' => $fundebImportYear]) }}
-                    </button>
-                </form>
-            </div>
-        </details>
-    </div>
 
     @if (count($coverage) > 0)
         <details class="rounded-lg border border-teal-100 dark:border-teal-900/50 bg-white/80 dark:bg-gray-900/30">

@@ -30,34 +30,6 @@
                     {{ session('fundeb_import_error') }}
                 </div>
             @endif
-            @php $bulkResult = session('fundeb_bulk_result'); @endphp
-            @if (is_array($bulkResult))
-                <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 text-sm space-y-2">
-                    <p class="font-medium text-gray-900 dark:text-gray-100">{{ $bulkResult['message'] ?? '' }}</p>
-                    @if (! empty($bulkResult['failed']))
-                        <details class="text-red-800 dark:text-red-200">
-                            <summary class="cursor-pointer font-medium">{{ __('Falhas (:n)', ['n' => count($bulkResult['failed'])]) }}</summary>
-                            <ul class="mt-2 list-disc ps-5 text-xs space-y-1 max-h-48 overflow-y-auto">
-                                @foreach ($bulkResult['failed'] as $f)
-                                    <li>
-                                        <span class="font-medium">{{ $f['city'] ?? '' }}</span>
-                                        @if (! empty($f['ano']))
-                                            ({{ $f['ano'] }})
-                                        @endif
-                                        (IBGE {{ $f['ibge'] ?? '—' }}): {{ \Illuminate\Support\Str::limit($f['message'] ?? '', 140) }}
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </details>
-                    @endif
-                    @if (! empty($bulkResult['ok']))
-                        <p class="text-xs text-emerald-800 dark:text-emerald-200">{{ __('Gravados: :n município(s).', ['n' => count($bulkResult['ok'])]) }}</p>
-                    @endif
-                    @if (! empty($bulkResult['skipped']))
-                        <p class="text-xs text-amber-800 dark:text-amber-200">{{ __('Sem IBGE: :n cidade(s).', ['n' => count($bulkResult['skipped'])]) }}</p>
-                    @endif
-                </div>
-            @endif
 
             <form method="get" action="{{ route('admin.ieducar-compatibility.index') }}" class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 sm:p-6 shadow-sm">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">

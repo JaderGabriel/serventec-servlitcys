@@ -154,6 +154,15 @@ final class FundebOpenDataImportServiceTest extends TestCase
     }
 
     #[Test]
+    public function years_for_new_city_sync_usa_vigente_e_anterior(): void
+    {
+        $years = FundebOpenDataImportService::yearsForNewCitySync();
+        $vigente = FundebOpenDataImportService::suggestedImportYear();
+
+        $this->assertSame([$vigente, $vigente - 1], $years);
+    }
+
+    #[Test]
     public function configured_sync_years_usa_intervalo_quando_lista_vazia(): void
     {
         config([

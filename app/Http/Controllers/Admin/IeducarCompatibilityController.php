@@ -80,6 +80,27 @@ class IeducarCompatibilityController extends Controller
         }
         $fundebCoverage = $this->fundebImport->localCoverageForYears($fundebSyncYears);
         $fundebNationalFloor = (bool) config('ieducar.fundeb.open_data.national_floor.enabled', false);
+        $fundebCityChoices = $cities->map(static function (City $c) {
+            $ibge = FundebMunicipioReferenceRepository::normalizeIbge($c->ibge_municipio);
+
+            return [
+                'id' => (int) $c->id,
+                'name' => $c->name,
+                'uf' => $c->uf,
+                'ibge' => $ibge,
+                'has_ibge' => $ibge !== null,
+            ];
+        })->all();
+        $syncForm = session('fundeb_sync_form', []);
+        $fundebSelectedCityIds = is_array($syncForm['city_ids'] ?? null)
+            ? array_map('intval', $syncForm['city_ids'])
+            : array_values(array_filter(array_map(
+                static fn (array $row): ?int => ($row['has_ibge'] ?? false) ? (int) $row['id'] : null,
+                $fundebCityChoices,
+            )));
+        $fundebSelectAllCities = ! array_key_exists('all_cities', $syncForm)
+            ? true
+            : (bool) $syncForm['all_cities'];
 
         return view('admin.ieducar-compatibility.index', [
             'cities' => $cities,
@@ -98,6 +119,9 @@ class IeducarCompatibilityController extends Controller
             'fundebSyncTo' => $fundebSyncTo,
             'fundebNationalFloor' => $fundebNationalFloor,
             'fundebSuggestedYear' => FundebOpenDataImportService::suggestedImportYear(),
+            'fundebCityChoices' => $fundebCityChoices,
+            'fundebSelectedCityIds' => $fundebSelectedCityIds,
+            'fundebSelectAllCities' => $fundebSelectAllCities,
         ]);
     }
 
@@ -149,22 +173,37 @@ class IeducarCompatibilityController extends Controller
 
     public function syncFundebAll(Request $request): RedirectResponse
     {
-        $maxYears = max(1, (int) config('ieducar.fundeb.open_data.sync_max_years', 30));
-        $timeLimit = min(3600, max(600, 120 + ($maxYears * 30)));
-
-        @set_time_limit($timeLimit);
-
         $validated = $request->validate([
             'use_nearest_year' => 'sometimes|boolean',
-            'ano_from' => 'nullable|integer|min:2000|max:'.((int) date('Y') + 1),
-            'ano_to' => 'nullable|integer|min:2000|max:'.((int) date('Y') + 1),
+            'ano_from' => 'required|integer|min:2000|max:'.((int) date('Y') + 1),
+            'ano_to' => 'required|integer|min:2000|max:'.((int) date('Y') + 1),
             'include_cached_years' => 'sometimes|boolean',
             'include_database_years' => 'sometimes|boolean',
+            'all_cities' => 'sometimes|boolean',
+            'city_ids' => 'nullable|array',
+            'city_ids.*' => 'integer|exists:cities,id',
+            'city_id' => 'nullable|integer|exists:cities,id',
         ]);
 
+        if ((int) $validated['ano_from'] > (int) $validated['ano_to']) {
+            return redirect()
+                ->route('admin.ieducar-compatibility.index', ['city_id' => $request->input('city_id')])
+                ->with('fundeb_import_error', __('O ano inicial não pode ser maior que o ano final.'));
+        }
+
+        $cityIds = null;
+        if (! $request->boolean('all_cities')) {
+            $cityIds = array_values(array_unique(array_map('intval', $validated['city_ids'] ?? [])));
+            if ($cityIds === []) {
+                return redirect()
+                    ->route('admin.ieducar-compatibility.index', ['city_id' => $request->input('city_id')])
+                    ->with('fundeb_import_error', __('Selecione ao menos um município ou marque «Todas as cidades».'));
+            }
+        }
+
         $years = $this->fundebImport->resolveSyncYears(
-            isset($validated['ano_from']) ? (int) $validated['ano_from'] : null,
-            isset($validated['ano_to']) ? (int) $validated['ano_to'] : null,
+            (int) $validated['ano_from'],
+            (int) $validated['ano_to'],
             $request->boolean('include_cached_years', true),
             $request->boolean('include_database_years', true),
         );
@@ -175,17 +214,30 @@ class IeducarCompatibilityController extends Controller
                 ->with('fundeb_import_error', __('Nenhum ano elegível para sincronização. Ajuste o intervalo ou IEDUCAR_FUNDEB_SYNC_YEARS.'));
         }
 
+        $maxYears = max(1, (int) config('ieducar.fundeb.open_data.sync_max_years', 30));
+        $cityCount = $cityIds !== null ? count($cityIds) : City::query()->count();
+        $timeLimit = min(3600, max(600, 120 + (count($years) * max(1, $cityCount) * 2)));
+        @set_time_limit($timeLimit);
+
         $result = $this->fundebImport->importBulkForYears(
             $years,
             $request->boolean('use_nearest_year'),
-            null,
+            $cityIds,
         );
+
+        $syncForm = [
+            'all_cities' => $request->boolean('all_cities'),
+            'city_ids' => $cityIds ?? [],
+            'ano_from' => (int) $validated['ano_from'],
+            'ano_to' => (int) $validated['ano_to'],
+        ];
 
         return redirect()
             ->route('admin.ieducar-compatibility.index', [
                 'city_id' => $request->input('city_id'),
                 'fundeb_ano' => $years[0] ?? FundebOpenDataImportService::suggestedImportYear(),
             ])
+            ->with('fundeb_sync_form', $syncForm)
             ->with('fundeb_bulk_result', $result)
             ->with($result['success'] ? 'fundeb_import_success' : 'fundeb_import_error', $result['message']);
     }

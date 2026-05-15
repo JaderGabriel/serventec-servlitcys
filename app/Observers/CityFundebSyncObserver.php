@@ -23,10 +23,10 @@ final class CityFundebSyncObserver
         }
 
         $cityId = (int) $city->id;
-        $years = FundebOpenDataImportService::configuredSyncYears();
+        $years = FundebOpenDataImportService::yearsForNewCitySync();
 
         dispatch(static function () use ($cityId, $years): void {
-            app(FundebOpenDataImportService::class)->importBulkForYears($years, false, $cityId);
+            app(FundebOpenDataImportService::class)->importBulkForYears($years, false, [$cityId]);
         })->afterResponse();
     }
 }

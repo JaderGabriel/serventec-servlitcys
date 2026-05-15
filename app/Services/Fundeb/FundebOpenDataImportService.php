@@ -29,7 +29,20 @@ final class FundebOpenDataImportService
     }
 
     /**
-     * Anos configurados (lista .env ou intervalo from/to) — usado ao cadastrar cidade.
+     * Anos importados automaticamente ao cadastrar ou ao informar IBGE de um município:
+     * ano vigente (referência FUNDEB = ano civil anterior, defasagem FNDE) e o ano imediatamente anterior.
+     *
+     * @return list<int>
+     */
+    public static function yearsForNewCitySync(): array
+    {
+        $vigente = self::suggestedImportYear();
+
+        return self::normalizeYearList([$vigente, $vigente - 1]);
+    }
+
+    /**
+     * Anos configurados (lista .env ou intervalo from/to) — usado na sincronização manual em lote.
      *
      * @return list<int>
      */
@@ -524,35 +537,43 @@ final class FundebOpenDataImportService
      */
     public function importBulk(int $ano, bool $useNearestYear = false, ?int $onlyCityId = null): array
     {
-        return $this->importBulkForYears([$ano], $useNearestYear, $onlyCityId);
+        $cityIds = $onlyCityId !== null ? [$onlyCityId] : null;
+
+        return $this->importBulkForYears([$ano], $useNearestYear, $cityIds);
     }
 
     /**
-     * Sincroniza todos os municípios com IBGE para cada ano pedido (cache + API + piso nacional).
+     * Sincroniza municípios com IBGE para cada ano pedido (cache + API + piso nacional).
      *
      * @param  list<int>  $anos
+     * @param  list<int>|null  $cityIds  null = todas as cidades cadastradas
      * @return array{
      *     success: bool,
      *     message: string,
      *     anos: list<int>,
-     *     ok: list<array{city: string, ibge: string, ano: int, vaaf: float}>,
-     *     failed: list<array{city: string, ibge: ?string, ano: int, message: string}>,
-     *     skipped: list<array{city: string, message: string}>
+     *     ok: list<array<string, mixed>>,
+     *     failed: list<array<string, mixed>>,
+     *     skipped: list<array<string, mixed>>,
+     *     summary: array<string, mixed>
      * }
      */
-    public function importBulkForYears(array $anos, bool $useNearestYear = false, ?int $onlyCityId = null): array
+    public function importBulkForYears(array $anos, bool $useNearestYear = false, ?array $cityIds = null): array
     {
         $anos = array_values(array_unique(array_map('intval', $anos)));
         if ($anos === []) {
             $anos = $this->resolveSyncYears();
         }
 
+        $cityIds = $cityIds !== null
+            ? array_values(array_unique(array_map('intval', $cityIds)))
+            : null;
+
         $ok = [];
         $failed = [];
         $skipped = [];
 
         foreach ($anos as $ano) {
-            $batch = $this->importBulkSingleYear($ano, $useNearestYear, $onlyCityId);
+            $batch = $this->importBulkSingleYear($ano, $useNearestYear, $cityIds);
             foreach ($batch['ok'] as $row) {
                 $ok[] = $row;
             }
@@ -564,6 +585,8 @@ final class FundebOpenDataImportService
             }
         }
 
+        $summary = $this->summarizeBulkResult($anos, $cityIds, $ok, $failed, $skipped);
+
         $anosLabel = count($anos) <= 6
             ? implode(', ', array_map('strval', $anos))
             : __(':n anos (:min–:max)', [
@@ -571,8 +594,10 @@ final class FundebOpenDataImportService
                 'min' => (string) min($anos),
                 'max' => (string) max($anos),
             ]);
-        $message = __('Sincronização FUNDEB (:anos): :ok gravado(s), :fail falha(s), :skip sem IBGE.', [
-            'anos' => $anosLabel,
+
+        $message = __('Sincronização FUNDEB — :cities cidade(s), :anosLabel: :ok gravado(s), :fail falha(s), :skip sem IBGE.', [
+            'cities' => (string) ($summary['cities_selected'] ?? 0),
+            'anosLabel' => $anosLabel,
             'ok' => (string) count($ok),
             'fail' => (string) count($failed),
             'skip' => (string) count($skipped),
@@ -585,21 +610,100 @@ final class FundebOpenDataImportService
             'ok' => $ok,
             'failed' => $failed,
             'skipped' => $skipped,
+            'summary' => $summary,
         ];
     }
 
     /**
+     * @param  list<int>  $anos
+     * @param  list<int>|null  $cityIds
+     * @param  list<array<string, mixed>>  $ok
+     * @param  list<array<string, mixed>>  $failed
+     * @param  list<array<string, mixed>>  $skipped
+     * @return array<string, mixed>
+     */
+    private function summarizeBulkResult(array $anos, ?array $cityIds, array $ok, array $failed, array $skipped): array
+    {
+        $byFonte = [];
+        foreach ($ok as $row) {
+            $fonte = (string) ($row['fonte'] ?? 'desconhecida');
+            $byFonte[$fonte] = ($byFonte[$fonte] ?? 0) + 1;
+        }
+        arsort($byFonte);
+
+        $byCity = [];
+        foreach ($ok as $row) {
+            $key = (string) ($row['city'] ?? '');
+            if ($key === '') {
+                continue;
+            }
+            if (! isset($byCity[$key])) {
+                $byCity[$key] = ['city' => $key, 'city_id' => $row['city_id'] ?? null, 'ibge' => $row['ibge'] ?? null, 'ok' => 0, 'failed' => 0];
+            }
+            $byCity[$key]['ok']++;
+        }
+        foreach ($failed as $row) {
+            $key = (string) ($row['city'] ?? '');
+            if ($key === '') {
+                continue;
+            }
+            if (! isset($byCity[$key])) {
+                $byCity[$key] = ['city' => $key, 'city_id' => $row['city_id'] ?? null, 'ibge' => $row['ibge'] ?? null, 'ok' => 0, 'failed' => 0];
+            }
+            $byCity[$key]['failed']++;
+        }
+
+        $skippedUnique = [];
+        foreach ($skipped as $row) {
+            $key = (string) ($row['city'] ?? '');
+            $skippedUnique[$key] = $row;
+        }
+
+        $citiesFilter = static function ($query) use ($cityIds): void {
+            if ($cityIds !== null && $cityIds !== []) {
+                $query->whereIn('id', $cityIds);
+            }
+        };
+        $citiesSelected = (int) City::query()->tap($citiesFilter)->count();
+        $citiesWithIbge = (int) City::query()
+            ->tap($citiesFilter)
+            ->whereNotNull('ibge_municipio')
+            ->where('ibge_municipio', '!=', '')
+            ->count();
+
+        return [
+            'ran_at' => now()->format('d/m/Y H:i:s'),
+            'anos' => $anos,
+            'ano_from' => $anos !== [] ? min($anos) : null,
+            'ano_to' => $anos !== [] ? max($anos) : null,
+            'ano_count' => count($anos),
+            'city_ids' => $cityIds,
+            'cities_selected' => $citiesSelected,
+            'cities_with_ibge' => $citiesWithIbge,
+            'operations_planned' => $citiesWithIbge * max(1, count($anos)),
+            'ok_count' => count($ok),
+            'failed_count' => count($failed),
+            'skipped_count' => count($skippedUnique),
+            'unique_cities_ok' => count(array_filter($byCity, static fn (array $r): bool => $r['ok'] > 0)),
+            'by_fonte' => $byFonte,
+            'by_city' => array_values($byCity),
+            'skipped' => array_values($skippedUnique),
+        ];
+    }
+
+    /**
+     * @param  list<int>|null  $cityIds
      * @return array{
-     *     ok: list<array{city: string, ibge: string, ano: int, vaaf: float}>,
-     *     failed: list<array{city: string, ibge: ?string, ano: int, message: string}>,
-     *     skipped: list<array{city: string, message: string}>
+     *     ok: list<array<string, mixed>>,
+     *     failed: list<array<string, mixed>>,
+     *     skipped: list<array<string, mixed>>
      * }
      */
-    private function importBulkSingleYear(int $ano, bool $useNearestYear, ?int $onlyCityId): array
+    private function importBulkSingleYear(int $ano, bool $useNearestYear, ?array $cityIds): array
     {
         $query = City::query()->orderBy('name');
-        if ($onlyCityId !== null) {
-            $query->whereKey($onlyCityId);
+        if ($cityIds !== null && $cityIds !== []) {
+            $query->whereIn('id', $cityIds);
         }
 
         /** @var Collection<int, City> $cities */
@@ -607,14 +711,19 @@ final class FundebOpenDataImportService
         $ok = [];
         $failed = [];
         $skipped = [];
+        $skippedCityIds = [];
 
         foreach ($cities as $city) {
             $ibge = FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio);
             if ($ibge === null) {
-                $skipped[] = [
-                    'city' => $city->name,
-                    'message' => __('Sem IBGE cadastrado'),
-                ];
+                if (! isset($skippedCityIds[(int) $city->id])) {
+                    $skippedCityIds[(int) $city->id] = true;
+                    $skipped[] = [
+                        'city_id' => (int) $city->id,
+                        'city' => $city->name,
+                        'message' => __('Sem IBGE cadastrado'),
+                    ];
+                }
 
                 continue;
             }
@@ -622,15 +731,20 @@ final class FundebOpenDataImportService
             $result = $this->importForCityYear($city, $ano, $useNearestYear);
             if ($result['success']) {
                 $ok[] = [
+                    'city_id' => (int) $city->id,
                     'city' => $city->name,
                     'ibge' => $ibge,
+                    'requested_ano' => $ano,
                     'ano' => (int) ($result['imported_ano'] ?? $ano),
                     'vaaf' => (float) ($result['reference']['vaaf'] ?? 0),
+                    'fonte' => (string) ($result['reference']['fonte'] ?? ''),
                 ];
             } else {
                 $failed[] = [
+                    'city_id' => (int) $city->id,
                     'city' => $city->name,
                     'ibge' => $ibge,
+                    'requested_ano' => $ano,
                     'ano' => $ano,
                     'message' => $result['message'],
                 ];
