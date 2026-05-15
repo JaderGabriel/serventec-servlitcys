@@ -57,7 +57,7 @@ Abas: Visão Geral, Matrículas, Rede & Oferta, Unidades Escolares, Inclusão, D
 | UI admin | Compatibilidade i-Educar → card FUNDEB |
 | Config `.env` | `IEDUCAR_FUNDEB_JSON_URL`, `storage://`, `file://` |
 
-Produção CKAN FNDE pode devolver HTML (SPA); usar CSV (`fundeb:import-references`) ou JSON real. Ver [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md).
+Importação: **cache** `storage/app/fundeb/api/{ibge}/{ano}.json` → se ausente, **CKAN** → grava cache + BD. Exige `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` para preencher automaticamente (CKAN FNDE pode devolver HTML sem resource id). Ver [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md).
 
 ---
 

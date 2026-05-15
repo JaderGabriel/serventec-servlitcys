@@ -76,7 +76,23 @@ php artisan fundeb:import-api {city_id} --ano=2024
 php artisan fundeb:import-references storage/app/fundeb_references.csv
 ```
 
-**Env API:** `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID`, `IEDUCAR_FUNDEB_CKAN_URL`, ou `IEDUCAR_FUNDEB_JSON_URL` (com `{ibge}` e `{ano}`).
+**Env API:**
+
+| Variável | Uso |
+|----------|-----|
+| `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` | Recurso CKAN FNDE (obrigatório para preencher cache automaticamente) |
+| `IEDUCAR_FUNDEB_CKAN_URL` | Base CKAN (default FNDE dados abertos) |
+| `IEDUCAR_FUNDEB_JSON_URL` | `storage://app/fundeb/api/{ibge}/{ano}.json` = **cache em disco**; ou URL `https://…` = JSON remoto por município/ano |
+| `IEDUCAR_FUNDEB_CACHE_PATH` | Opcional; sobrescreve o caminho do cache |
+
+**Fluxo de importação (`fundeb:import-api` / botão na admin):**
+
+1. Lê `storage/app/fundeb/api/{ibge}/{ano}.json` se existir.
+2. Se não existir, consulta CKAN (ou URL HTTP em `IEDUCAR_FUNDEB_JSON_URL`).
+3. **Grava o JSON no cache** e persiste VAAF/VAAT em `fundeb_municipio_references`.
+4. Próximas leituras usam o cache (útil quando o CKAN está instável).
+
+Sem `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` e sem ficheiros em `storage/app/fundeb/…`, a importação falha para todos os municípios — o cache não se preenche sozinho.
 
 **UI admin:** em Compatibilidade i-Educar, card FUNDEB — importar um município ou **todos**; ano sugerido = ano anterior (FNDE raramente tem o ano corrente, ex. 2026). Opção «usar ano mais recente na API» quando o ano pedido não existir.
 

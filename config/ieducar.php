@@ -518,12 +518,15 @@ return [
         /*
          * Importação via API (CKAN FNDE ou JSON público). Grava em fundeb_municipio_references.
          * IEDUCAR_FUNDEB_CKAN_RESOURCE_ID: ID do recurso CKAN (recomendado em produção).
-         * IEDUCAR_FUNDEB_JSON_URL: alternativa, URL com {ibge} e {ano}.
+         * IEDUCAR_FUNDEB_JSON_URL: URL HTTP(S) com {ibge}/{ano} OU padrão storage:// (cache em disco).
+         * IEDUCAR_FUNDEB_CACHE_PATH: opcional; se vazio, usa storage:// de JSON_URL ou default abaixo.
+         * Fluxo: lê cache → se falhar, CKAN/HTTP → grava JSON no cache → upsert na BD.
          */
         'open_data' => [
             'ckan_base_url' => (string) env('IEDUCAR_FUNDEB_CKAN_URL', 'https://www.fnde.gov.br/dadosabertos'),
             'resource_id' => (string) env('IEDUCAR_FUNDEB_CKAN_RESOURCE_ID', ''),
             'json_url' => (string) env('IEDUCAR_FUNDEB_JSON_URL', ''),
+            'cache_path' => (string) env('IEDUCAR_FUNDEB_CACHE_PATH', ''),
             'search_query' => (string) env('IEDUCAR_FUNDEB_CKAN_SEARCH', 'fundeb vaaf municipio'),
             'timeout' => (int) env('IEDUCAR_FUNDEB_API_TIMEOUT', 30),
             'fields' => [

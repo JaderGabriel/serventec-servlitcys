@@ -20,8 +20,8 @@
             <span class="font-medium">{{ __('Cobertura local (ano :ano):', ['ano' => $fundebImportYear]) }}</span>
             {{ __(':com de :total municípios com IBGE têm VAAF gravado.', ['com' => $covWithRef->count(), 'total' => $covWithIbge->count()]) }}
         </p>
-        @if (! ($diag['ckan_reachable'] ?? false) && ! ($diag['json_url_configured'] ?? false))
-            <p class="text-amber-700 dark:text-amber-300">{{ __('Defina IEDUCAR_FUNDEB_CKAN_RESOURCE_ID ou IEDUCAR_FUNDEB_JSON_URL no .env.') }}</p>
+        @if (trim((string) ($diag['effective_resource_id'] ?? '')) === '')
+            <p class="text-amber-700 dark:text-amber-300">{{ __('Defina IEDUCAR_FUNDEB_CKAN_RESOURCE_ID para a importação buscar na API e gravar JSON em storage/app/fundeb/api/{ibge}/{ano}.json.') }}</p>
         @endif
     </div>
 

@@ -64,12 +64,19 @@ final class FundebOpenDataImportService
         }
 
         $effectiveId = $configuredId !== '' ? $configuredId : $discovered;
+        $cacheTpl = $this->cachePathTemplate();
         $hint = match (true) {
-            str_starts_with($jsonUrl, 'storage://') => __('Fonte: JSON local (storage/app/…).'),
-            $jsonUrl !== '' => __('Fonte: URL JSON (IEDUCAR_FUNDEB_JSON_URL).'),
+            $effectiveId !== '' && $cacheTpl !== '' => __('CKAN FNDE (:id) + cache em disco (:cache). Importação grava JSON e usa na leitura seguinte.', [
+                'id' => Str::limit($effectiveId, 12),
+                'cache' => Str::limit($cacheTpl, 40),
+            ]),
+            $cacheTpl !== '' && $effectiveId === '' => __('Cache em disco (:cache). Defina IEDUCAR_FUNDEB_CKAN_RESOURCE_ID para preencher automaticamente via API.', [
+                'cache' => Str::limit($cacheTpl, 40),
+            ]),
+            $jsonUrl !== '' && $this->isRemoteJsonUrl($jsonUrl) => __('URL JSON remota (IEDUCAR_FUNDEB_JSON_URL) + cache opcional.'),
             $effectiveId !== '' => __('Fonte: CKAN FNDE (recurso :id).', ['id' => Str::limit($effectiveId, 12)]),
-            ! $reachable => __('CKAN FNDE inacessível ou sem resposta. Defina IEDUCAR_FUNDEB_CKAN_RESOURCE_ID ou IEDUCAR_FUNDEB_JSON_URL no .env.'),
-            default => __('Nenhum recurso CKAN encontrado automaticamente. Defina IEDUCAR_FUNDEB_CKAN_RESOURCE_ID no .env.'),
+            ! $reachable => __('CKAN FNDE inacessível. Defina IEDUCAR_FUNDEB_CKAN_RESOURCE_ID ou URL JSON HTTP no .env.'),
+            default => __('Nenhum recurso CKAN encontrado. Defina IEDUCAR_FUNDEB_CKAN_RESOURCE_ID no .env.'),
         };
 
         return [
@@ -165,16 +172,28 @@ final class FundebOpenDataImportService
         if ($match === null) {
             $available = $this->findAvailableYears($ibge, 8);
             $diag = $this->apiDiagnostics();
+            $cachePath = $this->cachePathTemplate();
             $parts = [
-                __('Nenhum VAAF/VAAT na API para IBGE :ibge e ano :ano.', ['ibge' => $ibge, 'ano' => (string) $ano]),
+                __('Nenhum VAAF/VAAT para IBGE :ibge e ano :ano (após tentar cache local e fonte remota).', [
+                    'ibge' => $ibge,
+                    'ano' => (string) $ano,
+                ]),
             ];
+            if ($cachePath !== '') {
+                $parts[] = __('Cache: :path — :status.', [
+                    'path' => $this->resolvePathFromTemplate($cachePath, $ibge, $ano),
+                    'status' => is_readable($this->resolvePathFromTemplate($cachePath, $ibge, $ano))
+                        ? __('ficheiro existe mas sem VAAF válido')
+                        : __('ficheiro inexistente; execute importação com CKAN configurado'),
+                ]);
+            }
             if ($available !== []) {
-                $parts[] = __('Anos encontrados na API para este município: :anos. O sistema já tentou :ano e anos anteriores; active «usar ano mais recente disponível» para varrer a API.', [
+                $parts[] = __('Anos disponíveis (cache ou API): :anos. Já tentou :ano e anos anteriores; use «ano mais recente» na importação em lote.', [
                     'anos' => implode(', ', $available),
                     'ano' => (string) $ano,
                 ]);
             } else {
-                $parts[] = __('Nenhum ano localizado na API para este IBGE. :hint', ['hint' => $diag['hint']]);
+                $parts[] = $diag['hint'];
             }
             if ($ano >= (int) date('Y')) {
                 $parts[] = __('O FNDE pode ainda não ter publicado dados para :ano; use o ano anterior (:sugestao).', [
@@ -313,7 +332,8 @@ final class FundebOpenDataImportService
      */
     public function findAvailableYears(string $ibge, int $max = 10): array
     {
-        $years = [];
+        $years = $this->findCacheYears($ibge);
+
         foreach ($this->scanRecordsForIbge($ibge, 3000) as $record) {
             $parsed = $this->mapRecordFlexible($record, $ibge);
             if ($parsed !== null && ! in_array($parsed['ano'], $years, true)) {
@@ -322,7 +342,7 @@ final class FundebOpenDataImportService
         }
         rsort($years);
 
-        return array_slice($years, 0, $max);
+        return array_slice(array_values(array_unique($years)), 0, $max);
     }
 
     /**
@@ -356,11 +376,6 @@ final class FundebOpenDataImportService
      */
     private function scanRecordsForIbge(string $ibge, int $limit): array
     {
-        $jsonUrl = trim((string) config('ieducar.fundeb.open_data.json_url', ''));
-        if ($jsonUrl !== '') {
-            return [];
-        }
-
         $base = rtrim((string) config('ieducar.fundeb.open_data.ckan_base_url', 'https://www.fnde.gov.br/dadosabertos'), '/');
         $resourceId = $this->resolveResourceId($base);
         if ($resourceId === '') {
@@ -387,15 +402,130 @@ final class FundebOpenDataImportService
      */
     private function fetchRow(string $ibge, int $ano): ?array
     {
+        $cacheTemplate = $this->cachePathTemplate();
+
+        if ($cacheTemplate !== '') {
+            $cached = $this->fetchFromJsonUrl($cacheTemplate, $ibge, $ano);
+            if ($cached !== null) {
+                return $cached;
+            }
+        }
+
         $jsonUrl = trim((string) config('ieducar.fundeb.open_data.json_url', ''));
-        if ($jsonUrl !== '') {
+        if ($jsonUrl !== '' && $this->isRemoteJsonUrl($jsonUrl)) {
             $row = $this->fetchFromJsonUrl($jsonUrl, $ibge, $ano);
             if ($row !== null) {
+                $this->writeCacheJson($ibge, $ano, $row);
+
                 return $row;
             }
         }
 
-        return $this->fetchFromCkan($ibge, $ano);
+        $row = $this->fetchFromCkan($ibge, $ano);
+        if ($row !== null) {
+            $this->writeCacheJson($ibge, $ano, $row);
+        }
+
+        return $row;
+    }
+
+    private function cachePathTemplate(): string
+    {
+        $explicit = trim((string) config('ieducar.fundeb.open_data.cache_path', ''));
+        if ($explicit !== '') {
+            return $explicit;
+        }
+
+        $jsonUrl = trim((string) config('ieducar.fundeb.open_data.json_url', ''));
+        if ($jsonUrl !== '' && $this->isCachePathTemplate($jsonUrl)) {
+            return $jsonUrl;
+        }
+
+        if (trim((string) config('ieducar.fundeb.open_data.resource_id', '')) !== '') {
+            return 'storage://app/fundeb/api/{ibge}/{ano}.json';
+        }
+
+        return '';
+    }
+
+    private function isCachePathTemplate(string $url): bool
+    {
+        return str_starts_with($url, 'storage://') || str_starts_with($url, 'file://');
+    }
+
+    private function isRemoteJsonUrl(string $url): bool
+    {
+        return str_starts_with($url, 'http://') || str_starts_with($url, 'https://');
+    }
+
+    private function resolvePathFromTemplate(string $template, string $ibge, int $ano): string
+    {
+        $resolved = str_replace(['{ibge}', '{ano}'], [$ibge, (string) $ano], $template);
+        if (str_starts_with($resolved, 'storage://')) {
+            return storage_path(substr($resolved, strlen('storage://')));
+        }
+        if (str_starts_with($resolved, 'file://')) {
+            return substr($resolved, 7);
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * @param  array{vaaf: float, vaat?: float, complementacao_vaar?: float, fonte?: string, notas?: string}  $row
+     */
+    private function writeCacheJson(string $ibge, int $ano, array $row): void
+    {
+        $template = $this->cachePathTemplate();
+        if ($template === '') {
+            return;
+        }
+
+        $path = $this->resolvePathFromTemplate($template, $ibge, $ano);
+        $dir = dirname($path);
+        if (! is_dir($dir) && ! @mkdir($dir, 0755, true) && ! is_dir($dir)) {
+            return;
+        }
+
+        $payload = [[
+            'codigo_ibge' => $ibge,
+            'ano' => $ano,
+            'vaaf' => $row['vaaf'],
+            'vaat' => $row['vaat'] ?? null,
+            'complementacao_vaar' => $row['complementacao_vaar'] ?? null,
+            'fonte' => $row['fonte'] ?? 'api_ckan_fnde',
+            'notas' => $row['notas'] ?? __('Gravado em cache local em :date', ['date' => now()->format('Y-m-d H:i')]),
+            'cached_at' => now()->toIso8601String(),
+        ]];
+
+        file_put_contents($path, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function findCacheYears(string $ibge): array
+    {
+        $template = $this->cachePathTemplate();
+        if ($template === '') {
+            return [];
+        }
+
+        $dir = dirname($this->resolvePathFromTemplate($template, $ibge, 0));
+        if (! is_dir($dir)) {
+            return [];
+        }
+
+        $years = [];
+        foreach (glob($dir.'/*.json') ?: [] as $file) {
+            if (preg_match('/(\d{4})\.json$/', $file, $m)) {
+                $years[] = (int) $m[1];
+            }
+        }
+
+        rsort($years);
+
+        return array_values(array_unique($years));
     }
 
     /**
@@ -581,14 +711,19 @@ final class FundebOpenDataImportService
             return null;
         }
 
+        $fonte = $this->firstValue($normalized, ['fonte', 'source']);
+        $notas = $this->firstValue($normalized, ['notas', 'notes', 'observacao']);
+
         return [
             'ano' => $rowAno,
             'row' => array_filter([
                 'vaaf' => $vaaf,
                 'vaat' => $this->parseMoney($this->firstValue($normalized, config('ieducar.fundeb.open_data.fields.vaat', []))),
                 'complementacao_vaar' => $this->parseMoney($this->firstValue($normalized, config('ieducar.fundeb.open_data.fields.complementacao_vaar', []))),
-                'fonte' => 'api_ckan_fnde',
-                'notas' => __('Importado via CKAN em :date', ['date' => now()->format('Y-m-d H:i')]),
+                'fonte' => is_string($fonte) && $fonte !== '' ? $fonte : 'api_ckan_fnde',
+                'notas' => is_string($notas) && $notas !== ''
+                    ? $notas
+                    : __('Importado via CKAN em :date', ['date' => now()->format('Y-m-d H:i')]),
             ], static fn ($v) => $v !== null),
         ];
     }

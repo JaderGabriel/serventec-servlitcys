@@ -99,6 +99,61 @@ final class FundebOpenDataImportServiceTest extends TestCase
     }
 
     #[Test]
+    public function busca_ckan_e_grava_cache_quando_json_local_ausente(): void
+    {
+        $ibge = '2913309';
+        $cacheRel = 'fundeb/api/'.$ibge.'/2024.json';
+        $cacheAbs = storage_path('app/'.$cacheRel);
+        if (is_file($cacheAbs)) {
+            unlink($cacheAbs);
+        }
+        @mkdir(dirname($cacheAbs), 0755, true);
+
+        config([
+            'ieducar.fundeb.open_data.json_url' => 'storage://app/fundeb/api/{ibge}/{ano}.json',
+            'ieducar.fundeb.open_data.cache_path' => '',
+            'ieducar.fundeb.open_data.resource_id' => 'test-resource',
+            'ieducar.fundeb.open_data.ckan_base_url' => 'https://ckan.test',
+        ]);
+
+        Http::fake([
+            'ckan.test/*' => Http::response([
+                'success' => true,
+                'result' => [
+                    'records' => [
+                        ['codigo_ibge' => $ibge, 'ano' => 2024, 'vaaf' => 5200.0, 'vaat' => 8100.0],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $city = new City(['id' => 3, 'name' => 'Cidade Modelo', 'ibge_municipio' => $ibge]);
+        $saved = new FundebMunicipioReference([
+            'ibge_municipio' => $ibge,
+            'ano' => 2024,
+            'vaaf' => 5200.0,
+            'fonte' => 'api_ckan_fnde',
+        ]);
+        $saved->id = 101;
+
+        $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $repo->shouldReceive('upsert')->once()->andReturn($saved);
+
+        $service = new FundebOpenDataImportService($repo);
+        $result = $service->importForCityYear($city, 2024);
+
+        $this->assertTrue($result['success']);
+        $this->assertFileExists($cacheAbs);
+        $cached = json_decode((string) file_get_contents($cacheAbs), true);
+        $this->assertIsArray($cached);
+        $this->assertSame($ibge, (string) ($cached[0]['codigo_ibge'] ?? ''));
+
+        if (is_file($cacheAbs)) {
+            unlink($cacheAbs);
+        }
+    }
+
+    #[Test]
     public function falha_sem_ibge_na_cidade(): void
     {
         $city = new City(['id' => 2, 'name' => 'Sem IBGE', 'ibge_municipio' => null]);
