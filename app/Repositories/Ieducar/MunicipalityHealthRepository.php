@@ -5,7 +5,8 @@ namespace App\Repositories\Ieducar;
 use App\Models\City;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
-use App\Support\Ieducar\DiscrepanciesCheckCatalog;
+use App\Support\Ieducar\ConsultoriaThematicBridge;
+use App\Support\Ieducar\DiscrepanciesFundingImpact;
 
 /**
  * Diagnóstico Geral: conformidade consolidada (cadastro/Censo + eixos FUNDEB/VAAR) no ano filtrado.
@@ -43,9 +44,10 @@ class MunicipalityHealthRepository
                 'ganho_potencial_anual' => 0.0,
             ],
             'cadastro_dimensions' => [],
+            'thematic_blocks' => [],
+            'active_check_ids' => [],
             'fundeb_modules' => [],
             'top_problems' => [],
-            'chart_score' => null,
             'chart_pendencias' => null,
             'error' => null,
         ];
@@ -73,7 +75,9 @@ class MunicipalityHealthRepository
                 $network,
             );
 
-            return $this->assemble($city, $filters, $disc, $fundeb);
+            $totalMat = (int) ($disc['total_matriculas'] ?? $overview['kpis']['matriculas'] ?? 0);
+
+            return $this->assemble($city, $filters, $disc, $fundeb, $inclusion, $performance, $totalMat);
         } catch (\Throwable $e) {
             return array_merge($empty, [
                 'city_name' => $city->name,
@@ -85,35 +89,27 @@ class MunicipalityHealthRepository
     /**
      * @param  array<string, mixed>  $disc
      * @param  array<string, mixed>  $fundeb
+     * @param  array<string, mixed>  $inclusion
+     * @param  array<string, mixed>  $performance
      * @return array<string, mixed>
      */
-    private function assemble(City $city, IeducarFilterState $filters, array $disc, array $fundeb): array
-    {
+    private function assemble(
+        City $city,
+        IeducarFilterState $filters,
+        array $disc,
+        array $fundeb,
+        array $inclusion,
+        array $performance,
+        int $totalMat,
+    ): array {
         $checks = is_array($disc['checks'] ?? null) ? $disc['checks'] : [];
+        $dimensions = is_array($disc['dimensions'] ?? null) ? $disc['dimensions'] : [];
         $discSummary = is_array($disc['summary'] ?? null) ? $disc['summary'] : [];
         $modules = is_array($fundeb['modules'] ?? null) ? $fundeb['modules'] : [];
 
-        $score = 100.0;
-        foreach ($checks as $c) {
-            $pct = (float) ($c['pct_rede'] ?? 0);
-            $score -= match ((string) ($c['severity'] ?? 'warning')) {
-                'danger' => min(35.0, $pct * 1.15),
-                'warning' => min(22.0, $pct * 0.75),
-                default => min(12.0, $pct * 0.35),
-            };
-        }
-        $modulosAlerta = 0;
-        foreach ($modules as $m) {
-            $st = (string) ($m['status'] ?? 'neutral');
-            if ($st === 'danger') {
-                $score -= 10.0;
-                $modulosAlerta++;
-            } elseif ($st === 'warning') {
-                $score -= 5.0;
-                $modulosAlerta++;
-            }
-        }
-        $score = (int) max(0, min(100, round($score)));
+        $cadastroDimensions = $dimensions !== [] ? $dimensions : $this->legacyDimensionsFromChecks($checks);
+
+        $score = $this->computeComplianceScore($cadastroDimensions, $modules);
 
         [$status, $label] = match (true) {
             $score >= 80 => ['success', __('Boa conformidade')],
@@ -121,41 +117,21 @@ class MunicipalityHealthRepository
             default => ['danger', __('Situação crítica')],
         };
 
-        $checksById = [];
-        foreach ($checks as $c) {
-            $checksById[(string) ($c['id'] ?? '')] = $c;
-        }
-
-        $cadastroDimensions = [];
-        foreach (DiscrepanciesCheckCatalog::definitions() as $id => $def) {
-            $found = $checksById[$id] ?? null;
-            $cadastroDimensions[] = [
-                'id' => $id,
-                'title' => (string) ($def['title'] ?? ''),
-                'vaar_refs' => is_array($def['vaar_refs'] ?? null) ? $def['vaar_refs'] : [],
-                'detected' => $found !== null,
-                'total' => (int) ($found['total'] ?? 0),
-                'pct_rede' => $found['pct_rede'] ?? null,
-                'ganho_potencial_anual' => (float) ($found['ganho_potencial_anual'] ?? 0),
-                'status' => $found === null
-                    ? 'success'
-                    : ((string) ($found['severity'] ?? 'warning') === 'danger' ? 'danger' : 'warning'),
-            ];
-        }
-
         $topProblems = $checks;
         usort($topProblems, static fn (array $a, array $b): int => ((float) ($b['ganho_potencial_anual'] ?? 0)) <=> ((float) ($a['ganho_potencial_anual'] ?? 0)));
         $topProblems = array_slice($topProblems, 0, 8);
 
-        $pendencias = count(array_filter($cadastroDimensions, static fn (array $d): bool => ($d['detected'] ?? false) === true));
-        $okCadastro = count($cadastroDimensions) - $pendencias;
+        $pendencias = count(array_filter(
+            $cadastroDimensions,
+            static fn (array $d): bool => ($d['has_issue'] ?? false) === true
+        ));
 
         $chartPendencias = null;
         if ($pendencias > 0) {
             $labels = [];
             $vals = [];
             foreach ($cadastroDimensions as $d) {
-                if (! ($d['detected'] ?? false)) {
+                if (! ($d['has_issue'] ?? false)) {
                     continue;
                 }
                 $labels[] = (string) ($d['title'] ?? '');
@@ -171,12 +147,19 @@ class MunicipalityHealthRepository
             }
         }
 
+        $modulosAlerta = 0;
+        foreach ($modules as $m) {
+            if (in_array((string) ($m['status'] ?? ''), ['danger', 'warning'], true)) {
+                $modulosAlerta++;
+            }
+        }
+
         return [
             'intro' => __(
-                'Visão consolidada da conformidade municipal no ano letivo e filtros seleccionados. Cruza rotinas automáticas de cadastro (Censo / VAAR) com o roteiro FUNDEB. Use as abas «Discrepâncias e Erros» e «FUNDEB» para detalhar cada eixo.'
+                'Painel de consultoria municipal: consolida cadastro (mesmas rotinas da aba Discrepâncias), inclusão, equidade, FUNDEB/VAAR e indicadores públicos INEP quando disponíveis. Use as ligações para aprofundar por tema.'
             ),
             'footnote' => __(
-                'O índice de conformidade é indicativo (0–100), baseado na gravidade e volume das pendências detectadas na base i-Educar e nos módulos FUNDEB com alerta. Não substitui parecer do Simec/MEC.'
+                'Índice 0–100: mesma base das discrepâncias (volume + gravidade) e alertas FUNDEB. Verde = rotina executada sem pendências; cinza = rotina indisponível nesta base; amarelo/vermelho = pendência detectada.'
             ),
             'year_label' => $this->yearLabel($filters),
             'city_name' => $city->name,
@@ -189,9 +172,11 @@ class MunicipalityHealthRepository
                 'perda_estimada_anual' => (float) ($discSummary['perda_estimada_anual'] ?? 0),
                 'ganho_potencial_anual' => (float) ($discSummary['ganho_potencial_anual'] ?? 0),
                 'escolas_afetadas' => (int) ($discSummary['escolas_afetadas'] ?? 0),
-                'total_matriculas' => $disc['total_matriculas'] ?? null,
+                'total_matriculas' => $totalMat > 0 ? $totalMat : ($disc['total_matriculas'] ?? null),
             ],
             'cadastro_dimensions' => $cadastroDimensions,
+            'active_check_ids' => is_array($disc['active_check_ids'] ?? null) ? $disc['active_check_ids'] : [],
+            'thematic_blocks' => ConsultoriaThematicBridge::buildBlocks($inclusion, $fundeb, $performance, $disc, $totalMat),
             'fundeb_modules' => array_map(static fn (array $m): array => [
                 'id' => (string) ($m['id'] ?? ''),
                 'title' => (string) ($m['title'] ?? ''),
@@ -203,6 +188,71 @@ class MunicipalityHealthRepository
             'chart_pendencias' => $chartPendencias,
             'error' => $disc['error'] ?? null,
         ];
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $dimensions
+     * @param  list<array<string, mixed>>  $modules
+     */
+    private function computeComplianceScore(array $dimensions, array $modules): int
+    {
+        $score = 100.0;
+        foreach ($dimensions as $d) {
+            if (($d['availability'] ?? '') === 'unavailable') {
+                continue;
+            }
+            if (! ($d['has_issue'] ?? false)) {
+                continue;
+            }
+            $pct = (float) ($d['pct_rede'] ?? 0);
+            $severity = (string) ($d['severity'] ?? 'warning');
+            $score -= match ($severity) {
+                'danger' => min(35.0, $pct * 1.15),
+                'warning' => min(22.0, $pct * 0.75),
+                default => min(12.0, $pct * 0.35),
+            };
+        }
+        foreach ($modules as $m) {
+            $score -= match ((string) ($m['status'] ?? 'neutral')) {
+                'danger' => 8.0,
+                'warning' => 4.0,
+                default => 0.0,
+            };
+        }
+
+        return (int) max(0, min(100, round($score)));
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $checks
+     * @return list<array<string, mixed>>
+     */
+    private function legacyDimensionsFromChecks(array $checks): array
+    {
+        $byId = [];
+        foreach ($checks as $c) {
+            $byId[(string) ($c['id'] ?? '')] = $c;
+        }
+        $out = [];
+        foreach (\App\Support\Ieducar\DiscrepanciesCheckCatalog::definitions() as $id => $def) {
+            $found = $byId[$id] ?? null;
+            $out[] = [
+                'id' => $id,
+                'title' => (string) ($def['title'] ?? ''),
+                'vaar_refs' => $def['vaar_refs'] ?? [],
+                'availability' => $found !== null ? 'available' : 'unavailable',
+                'has_issue' => $found !== null,
+                'detected' => $found !== null,
+                'total' => (int) ($found['total'] ?? 0),
+                'pct_rede' => $found['pct_rede'] ?? null,
+                'ganho_potencial_anual' => (float) ($found['ganho_potencial_anual'] ?? 0),
+                'status' => $found === null ? 'unavailable' : ((string) ($found['severity'] ?? '') === 'danger' ? 'danger' : 'warning'),
+                'unavailable_reason' => null,
+                'severity' => (string) ($def['severity'] ?? 'warning'),
+            ];
+        }
+
+        return $out;
     }
 
     private function yearLabel(IeducarFilterState $filters): string

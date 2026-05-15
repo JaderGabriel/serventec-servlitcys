@@ -33,6 +33,13 @@
         <p class="text-sm text-gray-700 dark:text-gray-300 mt-1 leading-relaxed">
             {{ __('Indicadores para acompanhar educação especial, equidade por etapa e cor ou raça, com o mesmo denominador de matrículas ativas sujeitas aos filtros (turma). Os dados refletem o registo na base escolar; para critérios oficiais do Censo ou do VAAR utilize os relatórios do INEP/MEC.') }}
         </p>
+        <p class="mt-2 text-xs text-teal-800/90 dark:text-teal-200/90">
+            {{ __('Consultoria municipal:') }}
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Diagnóstico Geral') }}</button>
+            ·
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Discrepâncias') }}</button>
+            {{ __('(cadastro Censo/VAAR alinhado a esta aba).') }}
+        </p>
         @if ($totalMat !== null)
             <p class="mt-2 text-sm font-medium text-gray-800 dark:text-gray-200">
                 {{ __('Matrículas ativas no filtro (denominador comum):') }}

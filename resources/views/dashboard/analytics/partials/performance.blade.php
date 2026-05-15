@@ -1,14 +1,114 @@
 @props(['performanceData', 'chartExportContext' => []])
 
 @php
+    use App\Support\Dashboard\ConsultoriaFlow;
+
     $perfCharts = $performanceData['charts'] ?? [];
     if ($perfCharts === [] && ! empty($performanceData['chart'])) {
         $perfCharts = [$performanceData['chart']];
     }
+    $inepPanel = $performanceData['inep_panel'] ?? null;
+    $saebSeries = $performanceData['saeb_series'] ?? null;
+    $hasSaebBlock = $saebSeries !== null && (
+        ($saebSeries['error'] ?? null)
+        || ($saebSeries['charts'] ?? []) !== []
+        || ($saebSeries['notes'] ?? []) !== []
+        || ($saebSeries['source_hint'] ?? null)
+        || ! empty($saebSeries['explicacao_modal'] ?? null)
+        || ! empty($saebSeries['summary'])
+        || ! empty($saebSeries['school_table'])
+        || ! empty($saebSeries['extra_charts'])
+    );
+    $hasPrioridades = ! empty($performanceData['kpis']) || ($performanceData['distorcao_pct'] ?? null) !== null;
+    $hasExternos = $inepPanel !== null || $hasSaebBlock;
+    $hasIeducar = $perfCharts !== [] || ! empty($performanceData['rows']);
+
+    $flowSteps = ConsultoriaFlow::numberedSteps([
+        ['label' => __('Prioridades (rede)'), 'anchor' => 'perf-prioridades', 'visible' => $hasPrioridades],
+        ['label' => __('Fontes externas (INEP)'), 'anchor' => 'perf-externos', 'visible' => $hasExternos],
+        ['label' => __('Situação no i-Educar'), 'anchor' => 'perf-ieducar', 'visible' => $hasIeducar],
+    ]);
+    $perfStep = ConsultoriaFlow::stepMap($flowSteps);
+    $saebExplicacao = is_array($saebSeries) ? ($saebSeries['explicacao_modal'] ?? null) : null;
 @endphp
 
-<div class="space-y-4">
-    @php $inepPanel = $performanceData['inep_panel'] ?? null; @endphp
+<div class="space-y-6">
+    <div class="rounded-lg border border-violet-200 dark:border-violet-900/50 bg-violet-50/60 dark:bg-violet-950/20 px-4 py-3 text-sm space-y-2">
+        <h2 class="font-semibold text-violet-950 dark:text-violet-100">{{ __('Desempenho e aprendizagem') }}</h2>
+        <p class="text-xs text-violet-800/90 dark:text-violet-200/90 leading-relaxed">
+            {{ __('Consultoria municipal:') }}
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Diagnóstico Geral') }}</button>
+            ·
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Discrepâncias') }}</button>
+            {{ __('(cadastro) · Fontes externas assinaladas abaixo.') }}
+        </p>
+    </div>
+
+    @if (count($flowSteps) > 0)
+        <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="slate" />
+    @endif
+
+    @if ($hasPrioridades)
+        <x-dashboard.consultoria-section
+            :step="$perfStep['perf-prioridades'] ?? null"
+            anchor="perf-prioridades"
+            :title="__('Prioridades na rede (i-Educar)')"
+            :subtitle="__('Taxas de situação de matrícula e distorção idade/série no filtro actual.')"
+        >
+    @endif
+
+    @if ($hasPrioridades && ! empty($performanceData['kpis']))
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
+            @foreach ($performanceData['kpis'] as $kpi)
+                <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 flex flex-col gap-2 min-h-[13rem]">
+                    <p class="text-sm font-bold text-gray-900 dark:text-gray-100 leading-snug">
+                        {{ $kpi['chart_label'] ?? $kpi['label'] ?? '—' }}
+                    </p>
+                    <div class="text-[11px] text-gray-600 dark:text-gray-400 space-y-2 text-justify flex-1">
+                        @if (! empty($kpi['formula']))
+                            <p class="font-mono text-gray-700 dark:text-gray-300 leading-relaxed">{{ $kpi['formula'] }}</p>
+                        @endif
+                        @if (! empty($kpi['description']))
+                            <p class="leading-relaxed">{{ $kpi['description'] }}</p>
+                        @endif
+                    </div>
+                    <div class="mt-auto pt-3 border-t border-gray-200 dark:border-gray-600 space-y-1">
+                        <p class="text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+                            @if (array_key_exists('percent', $kpi) && is_numeric($kpi['percent']))
+                                {{ number_format((float) $kpi['percent'], 1, ',', '.') }}%
+                            @else
+                                —
+                            @endif
+                        </p>
+                        <p class="text-xs text-gray-600 dark:text-gray-300 tabular-nums">
+                            {{ isset($kpi['quantidade']) ? number_format((int) $kpi['quantidade']) : '—' }} {{ __('matrículas') }}
+                        </p>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+        @if (($performanceData['distorcao_pct'] ?? null) !== null)
+            <div class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/30 px-3 py-2 text-sm text-indigo-900 dark:text-indigo-100">
+                {{ __('Distorção idade/série (rede)') }}:
+                <span class="font-semibold">{{ number_format((float) $performanceData['distorcao_pct'], 1, ',', '.') }}%</span>
+                <span class="text-xs text-indigo-700 dark:text-indigo-300">({{ __('critério de rede ou definição personalizada') }})</span>
+            </div>
+        @endif
+    @endif
+
+    @if ($hasPrioridades)
+        </x-dashboard.consultoria-section>
+    @endif
+
+    @if ($hasExternos)
+        <x-dashboard.consultoria-section
+            :step="$perfStep['perf-externos'] ?? null"
+            anchor="perf-externos"
+            :title="__('Fontes externas (INEP / SAEB)')"
+            :subtitle="__('Dados públicos ou importados — não substituem o cadastro no i-Educar.')"
+        >
+    @endif
+
     @if ($inepPanel !== null)
         @if (! empty($inepPanel['sql_error']))
             <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
@@ -63,12 +163,6 @@
         </div>
     @endif
 
-    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Cada taxa = (matrículas na categoria) ÷ (total de matrículas ativas no filtro) × 100. Os filtros de ano, escola, curso e turno aplicam-se pela turma. Entre os indicadores destacam-se reclassificação (cód. 10), abandono (11), remanejamento (16) e taxas de aprovação e reprovação. O gráfico de distorção idade/série, quando presente, segue o critério INEP (idade à 31/03 e limite etário + 2 anos).') }}
-    </p>
-
-    @php $saebSeries = $performanceData['saeb_series'] ?? null; @endphp
-    @php $saebExplicacao = is_array($saebSeries) ? ($saebSeries['explicacao_modal'] ?? null) : null; @endphp
     @if ($saebSeries !== null && ($saebSeries['error'] ?? null))
         <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
             {{ $saebSeries['error'] }}
@@ -334,6 +428,21 @@
         </div>
     @endif
 
+    @if ($hasExternos)
+        </x-dashboard.consultoria-section>
+    @endif
+
+    @if ($hasIeducar)
+        <x-dashboard.consultoria-section
+            :step="$perfStep['perf-ieducar'] ?? null"
+            anchor="perf-ieducar"
+            :title="__('Situação de matrícula (i-Educar)')"
+            :subtitle="__('Taxas, gráficos e tabela de situações no filtro actual.')"
+        >
+            <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                {{ __('Cada taxa = (matrículas na categoria) ÷ (total de matrículas ativas no filtro) × 100. Os filtros de ano, escola, curso e turno aplicam-se pela turma. Entre os indicadores destacam-se reclassificação (cód. 10), abandono (11), remanejamento (16) e taxas de aprovação e reprovação. O gráfico de distorção idade/série, quando presente, segue o critério INEP (idade à 31/03 e limite etário + 2 anos).') }}
+            </p>
+
     @if (! empty($performanceData['error']))
         <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
             {{ $performanceData['error'] }}
@@ -356,45 +465,6 @@
         <div class="rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-3 py-2 text-sm text-amber-950 dark:text-amber-100">
             {{ data_get($performanceData, 'kpi_meta.alerta_ano_encerrado') }}
         </div>
-    @endif
-
-    @if (! empty($performanceData['kpis']))
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
-            @foreach ($performanceData['kpis'] as $kpi)
-                <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 p-4 flex flex-col gap-2 min-h-[13rem]">
-                    <p class="text-sm font-bold text-gray-900 dark:text-gray-100 leading-snug">
-                        {{ $kpi['chart_label'] ?? $kpi['label'] ?? '—' }}
-                    </p>
-                    <div class="text-[11px] text-gray-600 dark:text-gray-400 space-y-2 text-justify flex-1">
-                        @if (! empty($kpi['formula']))
-                            <p class="font-mono text-gray-700 dark:text-gray-300 leading-relaxed">{{ $kpi['formula'] }}</p>
-                        @endif
-                        @if (! empty($kpi['description']))
-                            <p class="leading-relaxed">{{ $kpi['description'] }}</p>
-                        @endif
-                    </div>
-                    <div class="mt-auto pt-3 border-t border-gray-200 dark:border-gray-600 space-y-1">
-                        <p class="text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">
-                            @if (array_key_exists('percent', $kpi) && is_numeric($kpi['percent']))
-                                {{ number_format((float) $kpi['percent'], 1, ',', '.') }}%
-                            @else
-                                —
-                            @endif
-                        </p>
-                        <p class="text-xs text-gray-600 dark:text-gray-300 tabular-nums">
-                            {{ isset($kpi['quantidade']) ? number_format((int) $kpi['quantidade']) : '—' }} {{ __('matrículas') }}
-                        </p>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-        @if (($performanceData['distorcao_pct'] ?? null) !== null)
-            <div class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/30 px-3 py-2 text-sm text-indigo-900 dark:text-indigo-100">
-                {{ __('Distorção idade/série (rede)') }}:
-                <span class="font-semibold">{{ number_format((float) $performanceData['distorcao_pct'], 1, ',', '.') }}%</span>
-                <span class="text-xs text-indigo-700 dark:text-indigo-300">({{ __('critério de rede ou definição personalizada') }})</span>
-            </div>
-        @endif
     @endif
 
     @if ($perfCharts !== [])
@@ -485,5 +555,9 @@
                 </tbody>
             </table>
         </div>
+    @endif
+
+    @if ($hasIeducar)
+        </x-dashboard.consultoria-section>
     @endif
 </div>

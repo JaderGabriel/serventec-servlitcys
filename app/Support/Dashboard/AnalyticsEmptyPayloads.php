@@ -121,9 +121,11 @@ final class AnalyticsEmptyPayloads
                 'total_matriculas' => null,
             ],
             'cadastro_dimensions' => [],
+            'thematic_blocks' => [],
             'fundeb_modules' => [],
             'top_problems' => [],
             'chart_pendencias' => null,
+            'active_check_ids' => [],
             'error' => null,
         ];
     }
@@ -148,6 +150,8 @@ final class AnalyticsEmptyPayloads
             'chart_resumo' => null,
             'chart_financeiro' => null,
             'funding_pillars' => [],
+            'dimensions' => [],
+            'active_check_ids' => [],
             'checks' => [],
             'notes' => [],
             'error' => null,

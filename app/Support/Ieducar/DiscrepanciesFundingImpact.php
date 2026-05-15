@@ -70,12 +70,12 @@ final class DiscrepanciesFundingImpact
 
     /**
      * @param  list<array<string, mixed>>  $pillars
-     * @param  list<array<string, mixed>>  $checks
+     * @param  list<array<string, mixed>>  $dimensions
      * @return list<array<string, mixed>>
      */
     public static function pillarsWithMunicipioSummary(
         array $pillars,
-        array $checks,
+        array $dimensions,
         string $cityName,
         string $yearLabel
     ): array {
@@ -87,7 +87,7 @@ final class DiscrepanciesFundingImpact
         ];
 
         $checksById = [];
-        foreach ($checks as $c) {
+        foreach ($dimensions as $c) {
             if (! is_array($c)) {
                 continue;
             }
@@ -106,7 +106,7 @@ final class DiscrepanciesFundingImpact
             $ganho = 0.0;
             foreach ($linked as $checkId) {
                 $c = $checksById[$checkId] ?? null;
-                if ($c === null) {
+                if ($c === null || ! ($c['has_issue'] ?? $c['detected'] ?? false)) {
                     continue;
                 }
                 $tipos++;
