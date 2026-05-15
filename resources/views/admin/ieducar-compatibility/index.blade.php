@@ -39,7 +39,13 @@
                             <summary class="cursor-pointer font-medium">{{ __('Falhas (:n)', ['n' => count($bulkResult['failed'])]) }}</summary>
                             <ul class="mt-2 list-disc ps-5 text-xs space-y-1 max-h-48 overflow-y-auto">
                                 @foreach ($bulkResult['failed'] as $f)
-                                    <li><span class="font-medium">{{ $f['city'] ?? '' }}</span> (IBGE {{ $f['ibge'] ?? '—' }}): {{ \Illuminate\Support\Str::limit($f['message'] ?? '', 140) }}</li>
+                                    <li>
+                                        <span class="font-medium">{{ $f['city'] ?? '' }}</span>
+                                        @if (! empty($f['ano']))
+                                            ({{ $f['ano'] }})
+                                        @endif
+                                        (IBGE {{ $f['ibge'] ?? '—' }}): {{ \Illuminate\Support\Str::limit($f['message'] ?? '', 140) }}
+                                    </li>
                                 @endforeach
                             </ul>
                         </details>

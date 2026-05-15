@@ -69,6 +69,7 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(func
     Route::get('/admin/ieducar-compatibility/export', [IeducarCompatibilityController::class, 'export'])->name('admin.ieducar-compatibility.export');
     Route::post('/admin/ieducar-compatibility/fundeb-import', [IeducarCompatibilityController::class, 'importFundeb'])->name('admin.ieducar-compatibility.fundeb-import');
     Route::post('/admin/ieducar-compatibility/fundeb-import-bulk', [IeducarCompatibilityController::class, 'importFundebBulk'])->name('admin.ieducar-compatibility.fundeb-import-bulk');
+    Route::post('/admin/ieducar-compatibility/fundeb-sync-all', [IeducarCompatibilityController::class, 'syncFundebAll'])->name('admin.ieducar-compatibility.fundeb-sync-all');
 
     Route::get('/admin/artisan-commands', [ArtisanCommandsController::class, 'index'])->name('admin.artisan-commands.index');
 });

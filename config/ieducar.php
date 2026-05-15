@@ -536,6 +536,33 @@ return [
                 'vaat' => ['vaat', 'vl_vaat', 'valor_vaat'],
                 'complementacao_vaar' => ['complementacao_vaar', 'vaar', 'vl_complementacao_vaar', 'complementacao'],
             ],
+            /*
+             * Anos sincronizados: lista explícita OU intervalo (from/to).
+             * IEDUCAR_FUNDEB_SYNC_YEARS=2020,2021,2022 — tem prioridade sobre o intervalo.
+             * Se a lista estiver vazia: de SYNC_FROM_YEAR (default 2020) até SYNC_TO_YEAR (0 = ano anterior).
+             * Importação completa (botão admin) pode somar anos já em cache/BD (sync_include_*).
+             */
+            'sync_years' => array_values(array_filter(array_map(
+                static fn (string $y): int => (int) trim($y),
+                explode(',', (string) env('IEDUCAR_FUNDEB_SYNC_YEARS', ''))
+            ), static fn (int $y): bool => $y >= 2000)),
+            'sync_from_year' => (int) env('IEDUCAR_FUNDEB_SYNC_FROM_YEAR', 2020),
+            'sync_to_year' => (int) env('IEDUCAR_FUNDEB_SYNC_TO_YEAR', 0),
+            'sync_max_years' => max(1, (int) env('IEDUCAR_FUNDEB_SYNC_MAX_YEARS', 30)),
+            'sync_include_cached_years' => filter_var(env('IEDUCAR_FUNDEB_SYNC_INCLUDE_CACHED', true), FILTER_VALIDATE_BOOL),
+            'sync_include_database_years' => filter_var(env('IEDUCAR_FUNDEB_SYNC_INCLUDE_DATABASE', true), FILTER_VALIDATE_BOOL),
+            'sync_on_city_save' => filter_var(env('IEDUCAR_FUNDEB_SYNC_ON_CITY_SAVE', true), FILTER_VALIDATE_BOOL),
+            /*
+             * Quando cache/CKAN/JSON remoto não retornam VAAF municipal, grava piso nacional
+             * (referência para planejamento — substitua quando houver dado oficial por IBGE).
+             */
+            'national_floor' => [
+                'enabled' => filter_var(env('IEDUCAR_FUNDEB_NATIONAL_FLOOR', true), FILTER_VALIDATE_BOOL),
+                'vaaf_by_year' => [
+                    2024 => (float) env('IEDUCAR_FUNDEB_NATIONAL_VAAF_2024', 0) ?: null,
+                    2025 => (float) env('IEDUCAR_FUNDEB_NATIONAL_VAAF_2025', 0) ?: null,
+                ],
+            ],
         ],
 
         'aviso_previsao' => (string) env(

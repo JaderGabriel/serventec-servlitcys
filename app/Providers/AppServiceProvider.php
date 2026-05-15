@@ -13,6 +13,7 @@ use App\Livewire\Pulse\ServerStatusStrip;
 use App\Livewire\Pulse\SyncAdminPulseCard;
 use App\Models\City;
 use App\Models\User;
+use App\Observers\CityFundebSyncObserver;
 use App\Policies\CityPolicy;
 use App\Policies\UserPolicy;
 use App\Services\MailConfigService;
@@ -46,6 +47,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(City::class, CityPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
+
+        City::observe(CityFundebSyncObserver::class);
 
         Livewire::component('pulse.institution-traffic-card', InstitutionTrafficCard::class);
         Livewire::component('pulse.redis-overview-card', RedisOverviewCard::class);

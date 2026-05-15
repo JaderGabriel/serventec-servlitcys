@@ -71,7 +71,15 @@ class IeducarCompatibilityController extends Controller
         }
 
         $fundebApiDiagnostics = $this->fundebImport->apiDiagnostics();
-        $fundebCoverage = $this->fundebImport->localCoverageForYear($fundebImportYear);
+        $fundebSyncYears = $this->fundebImport->resolveSyncYears();
+        $fundebConfiguredYears = FundebOpenDataImportService::configuredSyncYears();
+        $fundebSyncFrom = (int) config('ieducar.fundeb.open_data.sync_from_year', 2020);
+        $fundebSyncTo = (int) config('ieducar.fundeb.open_data.sync_to_year', 0);
+        if ($fundebSyncTo <= 0) {
+            $fundebSyncTo = (int) date('Y') - 1;
+        }
+        $fundebCoverage = $this->fundebImport->localCoverageForYears($fundebSyncYears);
+        $fundebNationalFloor = (bool) config('ieducar.fundeb.open_data.national_floor.enabled', false);
 
         return view('admin.ieducar-compatibility.index', [
             'cities' => $cities,
@@ -84,6 +92,11 @@ class IeducarCompatibilityController extends Controller
             'fundebImportYear' => $fundebImportYear,
             'fundebApiDiagnostics' => $fundebApiDiagnostics,
             'fundebCoverage' => $fundebCoverage,
+            'fundebSyncYears' => $fundebSyncYears,
+            'fundebConfiguredYears' => $fundebConfiguredYears,
+            'fundebSyncFrom' => $fundebSyncFrom,
+            'fundebSyncTo' => $fundebSyncTo,
+            'fundebNationalFloor' => $fundebNationalFloor,
             'fundebSuggestedYear' => FundebOpenDataImportService::suggestedImportYear(),
         ]);
     }
@@ -129,6 +142,49 @@ class IeducarCompatibilityController extends Controller
             ->route('admin.ieducar-compatibility.index', [
                 'city_id' => $validated['city_id'] ?? $request->input('city_id'),
                 'fundeb_ano' => (int) $validated['ano'],
+            ])
+            ->with('fundeb_bulk_result', $result)
+            ->with($result['success'] ? 'fundeb_import_success' : 'fundeb_import_error', $result['message']);
+    }
+
+    public function syncFundebAll(Request $request): RedirectResponse
+    {
+        $maxYears = max(1, (int) config('ieducar.fundeb.open_data.sync_max_years', 30));
+        $timeLimit = min(3600, max(600, 120 + ($maxYears * 30)));
+
+        @set_time_limit($timeLimit);
+
+        $validated = $request->validate([
+            'use_nearest_year' => 'sometimes|boolean',
+            'ano_from' => 'nullable|integer|min:2000|max:'.((int) date('Y') + 1),
+            'ano_to' => 'nullable|integer|min:2000|max:'.((int) date('Y') + 1),
+            'include_cached_years' => 'sometimes|boolean',
+            'include_database_years' => 'sometimes|boolean',
+        ]);
+
+        $years = $this->fundebImport->resolveSyncYears(
+            isset($validated['ano_from']) ? (int) $validated['ano_from'] : null,
+            isset($validated['ano_to']) ? (int) $validated['ano_to'] : null,
+            $request->boolean('include_cached_years', true),
+            $request->boolean('include_database_years', true),
+        );
+
+        if ($years === []) {
+            return redirect()
+                ->route('admin.ieducar-compatibility.index', ['city_id' => $request->input('city_id')])
+                ->with('fundeb_import_error', __('Nenhum ano elegível para sincronização. Ajuste o intervalo ou IEDUCAR_FUNDEB_SYNC_YEARS.'));
+        }
+
+        $result = $this->fundebImport->importBulkForYears(
+            $years,
+            $request->boolean('use_nearest_year'),
+            null,
+        );
+
+        return redirect()
+            ->route('admin.ieducar-compatibility.index', [
+                'city_id' => $request->input('city_id'),
+                'fundeb_ano' => $years[0] ?? FundebOpenDataImportService::suggestedImportYear(),
             ])
             ->with('fundeb_bulk_result', $result)
             ->with($result['success'] ? 'fundeb_import_success' : 'fundeb_import_error', $result['message']);

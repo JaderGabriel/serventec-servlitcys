@@ -29,6 +29,188 @@ final class FundebOpenDataImportService
     }
 
     /**
+     * Anos configurados (lista .env ou intervalo from/to) — usado ao cadastrar cidade.
+     *
+     * @return list<int>
+     */
+    public static function configuredSyncYears(): array
+    {
+        $explicit = config('ieducar.fundeb.open_data.sync_years', []);
+        if (is_array($explicit) && $explicit !== []) {
+            return self::normalizeYearList(array_map('intval', $explicit));
+        }
+
+        $from = (int) config('ieducar.fundeb.open_data.sync_from_year', 2020);
+        $to = (int) config('ieducar.fundeb.open_data.sync_to_year', 0);
+        if ($to <= 0) {
+            $to = (int) date('Y') - 1;
+        }
+
+        return self::yearsInRange($from, $to);
+    }
+
+    /**
+     * @deprecated Use configuredSyncYears() ou resolveSyncYears()
+     *
+     * @return list<int>
+     */
+    public static function defaultSyncYears(): array
+    {
+        return self::configuredSyncYears();
+    }
+
+    /**
+     * Anos para importação completa (config + cache + BD + intervalo do formulário).
+     *
+     * @return list<int>
+     */
+    public function resolveSyncYears(
+        ?int $anoFrom = null,
+        ?int $anoTo = null,
+        bool $includeCached = true,
+        bool $includeDatabase = true,
+    ): array {
+        $explicit = config('ieducar.fundeb.open_data.sync_years', []);
+        $hasExplicit = is_array($explicit) && $explicit !== [];
+
+        $from = $anoFrom ?? (int) config('ieducar.fundeb.open_data.sync_from_year', 2020);
+        $to = $anoTo ?? (int) config('ieducar.fundeb.open_data.sync_to_year', 0);
+        if ($to <= 0) {
+            $to = (int) date('Y') - 1;
+        }
+
+        $years = $hasExplicit
+            ? self::normalizeYearList(array_map('intval', $explicit))
+            : self::yearsInRange($from, $to);
+
+        if ($anoFrom !== null || $anoTo !== null) {
+            $years = array_merge($years, self::yearsInRange($from, $to));
+        }
+
+        if ($includeCached && (bool) config('ieducar.fundeb.open_data.sync_include_cached_years', true)) {
+            $years = array_merge($years, $this->discoverCachedYears());
+        }
+
+        if ($includeDatabase && (bool) config('ieducar.fundeb.open_data.sync_include_database_years', true)) {
+            $years = array_merge($years, $this->discoverDatabaseYears());
+        }
+
+        $years = array_merge($years, self::nationalFloorYears());
+
+        if ($anoFrom !== null && $anoFrom > 0) {
+            $years = array_values(array_filter($years, static fn (int $y): bool => $y >= $anoFrom));
+        }
+        if ($anoTo !== null && $anoTo > 0) {
+            $years = array_values(array_filter($years, static fn (int $y): bool => $y <= $anoTo));
+        }
+
+        $years = self::normalizeYearList($years);
+        $max = max(1, (int) config('ieducar.fundeb.open_data.sync_max_years', 30));
+        if (count($years) > $max) {
+            $years = array_slice($years, 0, $max);
+        }
+
+        return $years;
+    }
+
+    /**
+     * @return list<int>
+     */
+    public static function yearsInRange(int $from, int $to): array
+    {
+        if ($from > $to) {
+            [$from, $to] = [$to, $from];
+        }
+
+        $years = [];
+        for ($y = $to; $y >= $from; $y--) {
+            $years[] = $y;
+        }
+
+        return self::normalizeYearList($years);
+    }
+
+    /**
+     * @param  list<int>  $years
+     * @return list<int>
+     */
+    public static function normalizeYearList(array $years): array
+    {
+        $maxAllowed = (int) date('Y') + 1;
+        $years = array_values(array_unique(array_map('intval', $years)));
+        $years = array_values(array_filter(
+            $years,
+            static fn (int $y): bool => $y >= 2000 && $y <= $maxAllowed,
+        ));
+        rsort($years);
+
+        return $years;
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function discoverCachedYears(): array
+    {
+        $template = $this->cachePathTemplate();
+        if ($template === '') {
+            return [];
+        }
+
+        $root = storage_path('app/fundeb/api');
+        if (! is_dir($root)) {
+            return [];
+        }
+
+        $years = [];
+        foreach (glob($root.'/*/*.json') ?: [] as $file) {
+            if (preg_match('/(\d{4})\.json$/', $file, $m)) {
+                $years[] = (int) $m[1];
+            }
+        }
+
+        return self::normalizeYearList($years);
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function discoverDatabaseYears(): array
+    {
+        try {
+            return self::normalizeYearList(
+                FundebMunicipioReference::query()->distinct()->orderByDesc('ano')->pluck('ano')->all(),
+            );
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * @return list<int>
+     */
+    private static function nationalFloorYears(): array
+    {
+        if (! (bool) config('ieducar.fundeb.open_data.national_floor.enabled', false)) {
+            return [];
+        }
+
+        $byYear = config('ieducar.fundeb.open_data.national_floor.vaaf_by_year', []);
+        if (! is_array($byYear)) {
+            return [];
+        }
+
+        $years = [];
+        foreach ($byYear as $year => $vaaf) {
+            if ($vaaf !== null && (float) $vaaf > 0) {
+                $years[] = (int) $year;
+            }
+        }
+
+        return self::normalizeYearList($years);
+    }
+
+    /**
      * Estado da configuração e ligação CKAN (para a UI admin).
      *
      * @return array{
@@ -50,16 +232,15 @@ final class FundebOpenDataImportService
 
         $discovered = '';
         $reachable = false;
-        if ($jsonUrl === '') {
-            $response = Http::timeout(min($timeout, 10))
-                ->acceptJson()
-                ->withOptions(['allow_redirects' => true])
-                ->get($base.'/api/3/action/package_search', ['q' => 'fundeb', 'rows' => 1]);
-            $reachable = $response->successful() && ($response->json('success') === true);
-            if ($configuredId === '' && $reachable) {
-                $discovered = $this->discoverResourceId($base, $timeout);
-            }
-        } else {
+        $response = Http::timeout(min($timeout, 10))
+            ->acceptJson()
+            ->withOptions(['allow_redirects' => true])
+            ->get($base.'/api/3/action/package_search', ['q' => 'fundeb', 'rows' => 1]);
+        $reachable = $response->successful() && ($response->json('success') === true);
+        if ($configuredId === '' && $reachable) {
+            $discovered = $this->discoverResourceId($base, $timeout);
+        }
+        if ($jsonUrl !== '' && ! $reachable) {
             $reachable = true;
         }
 
@@ -130,6 +311,67 @@ final class FundebOpenDataImportService
     }
 
     /**
+     * Cobertura por município para vários anos (painel admin).
+     *
+     * @param  list<int>  $anos
+     * @return list<array{
+     *     city_id: int,
+     *     name: string,
+     *     uf: ?string,
+     *     ibge: ?string,
+     *     has_ibge: bool,
+     *     years: array<int, array{has_reference: bool, vaaf: ?float}>
+     * }>
+     */
+    public function localCoverageForYears(array $anos): array
+    {
+        $anos = array_values(array_unique(array_map('intval', $anos)));
+        if ($anos === []) {
+            $anos = $this->resolveSyncYears();
+        }
+
+        $cities = City::query()->orderBy('name')->get(['id', 'name', 'uf', 'ibge_municipio']);
+        $refsByCity = [];
+        $refsByIbge = [];
+
+        foreach (FundebMunicipioReference::query()->whereIn('ano', $anos)->get(['city_id', 'ibge_municipio', 'ano', 'vaaf']) as $ref) {
+            $ano = (int) $ref->ano;
+            if ($ref->city_id) {
+                $refsByCity[(int) $ref->city_id][$ano] = (float) $ref->vaaf;
+            }
+            if ($ref->ibge_municipio) {
+                $refsByIbge[(string) $ref->ibge_municipio][$ano] = (float) $ref->vaaf;
+            }
+        }
+
+        $rows = [];
+        foreach ($cities as $city) {
+            $ibge = FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio);
+            $years = [];
+            foreach ($anos as $ano) {
+                $vaaf = $refsByCity[(int) $city->id][$ano] ?? ($ibge !== null ? ($refsByIbge[$ibge][$ano] ?? null) : null);
+                $years[$ano] = [
+                    'has_reference' => $vaaf !== null,
+                    'vaaf' => $vaaf,
+                ];
+            }
+            $withRef = count(array_filter($years, static fn (array $y): bool => $y['has_reference']));
+            $rows[] = [
+                'city_id' => (int) $city->id,
+                'name' => $city->name,
+                'uf' => $city->uf,
+                'ibge' => $ibge,
+                'has_ibge' => $ibge !== null,
+                'years' => $years,
+                'years_with_reference' => $withRef,
+                'years_total' => count($anos),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
      * @return array{success: bool, message: string, reference?: array<string, mixed>, imported_ano?: int}
      */
     public function importForCityYear(City $city, int $ano, bool $useNearestYear = false): array
@@ -166,6 +408,15 @@ final class FundebOpenDataImportService
             if ($nearest !== null) {
                 $match = $nearest['row'];
                 $importAno = $nearest['ano'];
+            }
+        }
+
+        if ($match === null) {
+            $floor = $this->nationalFloorRow($ibge, $ano);
+            if ($floor !== null) {
+                $match = $floor;
+                $importAno = $ano;
+                $this->writeCacheJson($ibge, $ano, $floor);
             }
         }
 
@@ -273,6 +524,79 @@ final class FundebOpenDataImportService
      */
     public function importBulk(int $ano, bool $useNearestYear = false, ?int $onlyCityId = null): array
     {
+        return $this->importBulkForYears([$ano], $useNearestYear, $onlyCityId);
+    }
+
+    /**
+     * Sincroniza todos os municípios com IBGE para cada ano pedido (cache + API + piso nacional).
+     *
+     * @param  list<int>  $anos
+     * @return array{
+     *     success: bool,
+     *     message: string,
+     *     anos: list<int>,
+     *     ok: list<array{city: string, ibge: string, ano: int, vaaf: float}>,
+     *     failed: list<array{city: string, ibge: ?string, ano: int, message: string}>,
+     *     skipped: list<array{city: string, message: string}>
+     * }
+     */
+    public function importBulkForYears(array $anos, bool $useNearestYear = false, ?int $onlyCityId = null): array
+    {
+        $anos = array_values(array_unique(array_map('intval', $anos)));
+        if ($anos === []) {
+            $anos = $this->resolveSyncYears();
+        }
+
+        $ok = [];
+        $failed = [];
+        $skipped = [];
+
+        foreach ($anos as $ano) {
+            $batch = $this->importBulkSingleYear($ano, $useNearestYear, $onlyCityId);
+            foreach ($batch['ok'] as $row) {
+                $ok[] = $row;
+            }
+            foreach ($batch['failed'] as $row) {
+                $failed[] = $row;
+            }
+            foreach ($batch['skipped'] as $row) {
+                $skipped[] = $row;
+            }
+        }
+
+        $anosLabel = count($anos) <= 6
+            ? implode(', ', array_map('strval', $anos))
+            : __(':n anos (:min–:max)', [
+                'n' => (string) count($anos),
+                'min' => (string) min($anos),
+                'max' => (string) max($anos),
+            ]);
+        $message = __('Sincronização FUNDEB (:anos): :ok gravado(s), :fail falha(s), :skip sem IBGE.', [
+            'anos' => $anosLabel,
+            'ok' => (string) count($ok),
+            'fail' => (string) count($failed),
+            'skip' => (string) count($skipped),
+        ]);
+
+        return [
+            'success' => count($failed) === 0 && count($ok) > 0,
+            'message' => $message,
+            'anos' => $anos,
+            'ok' => $ok,
+            'failed' => $failed,
+            'skipped' => $skipped,
+        ];
+    }
+
+    /**
+     * @return array{
+     *     ok: list<array{city: string, ibge: string, ano: int, vaaf: float}>,
+     *     failed: list<array{city: string, ibge: ?string, ano: int, message: string}>,
+     *     skipped: list<array{city: string, message: string}>
+     * }
+     */
+    private function importBulkSingleYear(int $ano, bool $useNearestYear, ?int $onlyCityId): array
+    {
         $query = City::query()->orderBy('name');
         if ($onlyCityId !== null) {
             $query->whereKey($onlyCityId);
@@ -307,20 +631,13 @@ final class FundebOpenDataImportService
                 $failed[] = [
                     'city' => $city->name,
                     'ibge' => $ibge,
+                    'ano' => $ano,
                     'message' => $result['message'],
                 ];
             }
         }
 
-        $message = __('Importação em lote: :ok sucesso, :fail falha, :skip ignorados (sem IBGE).', [
-            'ok' => (string) count($ok),
-            'fail' => (string) count($failed),
-            'skip' => (string) count($skipped),
-        ]);
-
         return [
-            'success' => count($failed) === 0 && count($ok) > 0,
-            'message' => $message,
             'ok' => $ok,
             'failed' => $failed,
             'skipped' => $skipped,
@@ -427,6 +744,43 @@ final class FundebOpenDataImportService
         }
 
         return $row;
+    }
+
+    /**
+     * Piso VAAF nacional quando não há dado municipal (configurável; ver IEDUCAR_FUNDEB_NATIONAL_FLOOR).
+     *
+     * @return array{vaaf: float, fonte?: string, notas?: string}|null
+     */
+    private function nationalFloorRow(string $ibge, int $ano): ?array
+    {
+        $enabled = (bool) config('ieducar.fundeb.open_data.national_floor.enabled', false);
+        if (! $enabled) {
+            return null;
+        }
+
+        $byYear = config('ieducar.fundeb.open_data.national_floor.vaaf_by_year', []);
+        $vaaf = null;
+        if (is_array($byYear) && isset($byYear[$ano]) && $byYear[$ano] !== null && (float) $byYear[$ano] > 0) {
+            $vaaf = (float) $byYear[$ano];
+        }
+
+        if ($vaaf === null || $vaaf <= 0) {
+            $vaaf = (float) config('ieducar.discrepancies.vaa_referencia_anual', 0);
+        }
+
+        if ($vaaf <= 0) {
+            return null;
+        }
+
+        return [
+            'vaaf' => $vaaf,
+            'fonte' => 'referencia_nacional_config',
+            'notas' => __('VAAF nacional de referência (:valor) — sem dado municipal para IBGE :ibge/ano :ano. Atualize quando importar dados oficiais FNDE.', [
+                'valor' => number_format($vaaf, 2, ',', '.'),
+                'ibge' => $ibge,
+                'ano' => (string) $ano,
+            ]),
+        ];
     }
 
     private function cachePathTemplate(): string

@@ -154,6 +154,95 @@ final class FundebOpenDataImportServiceTest extends TestCase
     }
 
     #[Test]
+    public function configured_sync_years_usa_intervalo_quando_lista_vazia(): void
+    {
+        config([
+            'ieducar.fundeb.open_data.sync_years' => [],
+            'ieducar.fundeb.open_data.sync_from_year' => 2022,
+            'ieducar.fundeb.open_data.sync_to_year' => 2024,
+        ]);
+        $years = FundebOpenDataImportService::configuredSyncYears();
+
+        $this->assertSame([2024, 2023, 2022], $years);
+    }
+
+    #[Test]
+    public function configured_sync_years_respeita_lista_explicita(): void
+    {
+        config(['ieducar.fundeb.open_data.sync_years' => [2020, 2024, 2025]]);
+        $years = FundebOpenDataImportService::configuredSyncYears();
+
+        $this->assertSame([2025, 2024, 2020], $years);
+    }
+
+    #[Test]
+    public function years_in_range_gera_lista_descendente(): void
+    {
+        $years = FundebOpenDataImportService::yearsInRange(2019, 2021);
+
+        $this->assertSame([2021, 2020, 2019], $years);
+    }
+
+    #[Test]
+    public function resolve_sync_years_unifica_config_e_cache(): void
+    {
+        $ibge = '2999999';
+        $cacheDir = storage_path('app/fundeb/api/'.$ibge);
+        @mkdir($cacheDir, 0755, true);
+        file_put_contents($cacheDir.'/2018.json', '[]');
+
+        config([
+            'ieducar.fundeb.open_data.sync_years' => [2024],
+            'ieducar.fundeb.open_data.sync_include_cached_years' => true,
+            'ieducar.fundeb.open_data.sync_include_database_years' => false,
+            'ieducar.fundeb.open_data.national_floor.enabled' => false,
+            'ieducar.fundeb.open_data.json_url' => 'storage://app/fundeb/api/{ibge}/{ano}.json',
+        ]);
+
+        $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $service = new FundebOpenDataImportService($repo);
+        $years = $service->resolveSyncYears();
+
+        $this->assertContains(2024, $years);
+        $this->assertContains(2018, $years);
+
+        @unlink($cacheDir.'/2018.json');
+        @rmdir($cacheDir);
+    }
+
+    #[Test]
+    public function usa_piso_nacional_quando_api_indisponivel(): void
+    {
+        config([
+            'ieducar.fundeb.open_data.json_url' => '',
+            'ieducar.fundeb.open_data.cache_path' => '',
+            'ieducar.fundeb.open_data.resource_id' => '',
+            'ieducar.fundeb.open_data.national_floor.enabled' => true,
+            'ieducar.discrepancies.vaa_referencia_anual' => 5559.73,
+        ]);
+
+        $city = new City(['id' => 4, 'name' => 'Novo', 'ibge_municipio' => '3550308']);
+        $saved = new FundebMunicipioReference([
+            'ibge_municipio' => '3550308',
+            'ano' => 2024,
+            'vaaf' => 5559.73,
+            'fonte' => 'referencia_nacional_config',
+        ]);
+        $saved->id = 103;
+
+        $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $repo->shouldReceive('upsert')
+            ->once()
+            ->with($city, 2024, Mockery::on(static fn (array $d) => $d['vaaf'] === 5559.73 && $d['fonte'] === 'referencia_nacional_config'))
+            ->andReturn($saved);
+
+        $service = new FundebOpenDataImportService($repo);
+        $result = $service->importForCityYear($city, 2024, false);
+
+        $this->assertTrue($result['success']);
+    }
+
+    #[Test]
     public function falha_sem_ibge_na_cidade(): void
     {
         $city = new City(['id' => 2, 'name' => 'Sem IBGE', 'ibge_municipio' => null]);
