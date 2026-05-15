@@ -67,4 +67,75 @@ final class DiscrepanciesFundingImpact
 
         return is_array($pillars) ? array_values(array_filter($pillars, is_array(...))) : [];
     }
+
+    /**
+     * @param  list<array<string, mixed>>  $pillars
+     * @param  list<array<string, mixed>>  $checks
+     * @return list<array<string, mixed>>
+     */
+    public static function pillarsWithMunicipioSummary(
+        array $pillars,
+        array $checks,
+        string $cityName,
+        string $yearLabel
+    ): array {
+        $pillarChecks = [
+            'fundeb-base' => ['sem_raca', 'sem_sexo', 'sem_data_nascimento', 'matricula_duplicada', 'matricula_situacao_invalida', 'distorcao_idade_serie'],
+            'vaar-inclusao' => ['nee_sem_aee', 'aee_sem_nee', 'nee_subnotificacao', 'sem_raca', 'sem_sexo'],
+            'vaar-indicadores' => ['escola_sem_inep', 'escola_inativa_matricula', 'distorcao_idade_serie'],
+            'pnae-transporte' => ['escola_sem_geo', 'matricula_duplicada', 'matricula_situacao_invalida'],
+        ];
+
+        $checksById = [];
+        foreach ($checks as $c) {
+            if (! is_array($c)) {
+                continue;
+            }
+            $checksById[(string) ($c['id'] ?? '')] = $c;
+        }
+
+        $out = [];
+        foreach ($pillars as $pillar) {
+            if (! is_array($pillar)) {
+                continue;
+            }
+            $pid = (string) ($pillar['id'] ?? '');
+            $linked = $pillarChecks[$pid] ?? [];
+            $tipos = 0;
+            $ocorrencias = 0;
+            $ganho = 0.0;
+            foreach ($linked as $checkId) {
+                $c = $checksById[$checkId] ?? null;
+                if ($c === null) {
+                    continue;
+                }
+                $tipos++;
+                $ocorrencias += (int) ($c['total'] ?? 0);
+                $ganho += (float) ($c['ganho_potencial_anual'] ?? 0);
+            }
+
+            $status = $tipos === 0 ? 'ok' : ($tipos >= 2 || $ocorrencias >= 50 ? 'danger' : 'warning');
+            $texto = $tipos === 0
+                ? __('Nenhuma pendência detectada neste eixo para o filtro actual.')
+                : __(':city — :year: :tipos tipo(s) de problema, :n ocorrência(s), ganho potencial indicativo :ganho.', [
+                    'city' => $cityName,
+                    'year' => $yearLabel !== '' ? $yearLabel : __('filtro actual'),
+                    'tipos' => number_format($tipos),
+                    'n' => number_format($ocorrencias),
+                    'ganho' => self::formatBrl($ganho),
+                ]);
+
+            $out[] = array_merge($pillar, [
+                'municipio_resumo' => [
+                    'texto' => $texto,
+                    'status' => $status,
+                    'tipos_afetados' => $tipos,
+                    'ocorrencias' => $ocorrencias,
+                    'ganho_potencial' => $ganho,
+                ],
+            ]);
+        }
+
+        return $out;
+    }
 }

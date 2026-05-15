@@ -190,21 +190,6 @@
                                     </div>
                                 @endif
                             </div>
-                            <div x-show="tab === 'municipality_health'" x-cloak class="analytics-tab-panel">
-                                @if (! $lazyTabLoading)
-                                    @include('dashboard.analytics.partials.municipality-health', [
-                                        'healthData' => $municipalityHealthData,
-                                        'yearFilterReady' => $yearFilterReady,
-                                        'chartExportContext' => $chartExportContext,
-                                    ])
-                                @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelMunicipalityHealth">
-                                        <div x-show="loadingTab === 'municipality_health'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
-                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar saúde do município…') }}</span>
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
                             <div x-show="tab === 'discrepancies'" x-cloak class="analytics-tab-panel">
                                 @if (! $lazyTabLoading)
                                     @include('dashboard.analytics.partials.discrepancies', [
@@ -216,6 +201,21 @@
                                     <div class="relative min-h-[12rem]" x-ref="panelDiscrepancies">
                                         <div x-show="loadingTab === 'discrepancies'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
                                             <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar análises…') }}</span>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                            <div x-show="tab === 'municipality_health'" x-cloak class="analytics-tab-panel">
+                                @if (! $lazyTabLoading)
+                                    @include('dashboard.analytics.partials.municipality-health', [
+                                        'healthData' => $municipalityHealthData,
+                                        'yearFilterReady' => $yearFilterReady,
+                                        'chartExportContext' => $chartExportContext,
+                                    ])
+                                @else
+                                    <div class="relative min-h-[12rem]" x-ref="panelMunicipalityHealth">
+                                        <div x-show="loadingTab === 'municipality_health'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
+                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar diagnóstico geral…') }}</span>
                                         </div>
                                     </div>
                                 @endif

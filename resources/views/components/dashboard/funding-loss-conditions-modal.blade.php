@@ -7,7 +7,11 @@
 @endphp
 
 <x-modal name="funding-loss-conditions" maxWidth="2xl" focusable>
-    <div class="flex flex-col max-h-[min(90vh,52rem)]">
+    <div
+        class="flex flex-col max-h-[min(90vh,52rem)]"
+        x-data="{ activeIds: [] }"
+        x-on:funding-loss-set-active.window="activeIds = Array.isArray($event.detail?.ids) ? $event.detail.ids : []"
+    >
         <div class="flex items-start justify-between gap-4 px-6 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
             <div class="pr-2">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -15,6 +19,9 @@
                 </h2>
                 <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                     {{ __('Referência FUNDEB, VAAR e Censo. VAAF de referência: :vaa por ocorrência (configurável).', ['vaa' => $modal['vaa_label'] ?? '—']) }}
+                </p>
+                <p class="mt-2 text-xs text-rose-700 dark:text-rose-300 font-medium" x-show="activeIds.length > 0" x-cloak>
+                    {{ __('Destaque: condições detectadas no município para o filtro actual.') }}
                 </p>
             </div>
             <button
@@ -55,6 +62,7 @@
                 <div class="space-y-3">
                     @foreach ($conditions as $cond)
                         @php
+                            $condId = (string) ($cond['id'] ?? '');
                             $sev = (string) ($cond['severity'] ?? 'warning');
                             $badge = match ($sev) {
                                 'danger' => 'bg-red-100 text-red-900 dark:bg-red-900/50 dark:text-red-100',
@@ -62,9 +70,21 @@
                                 default => 'bg-slate-200 text-slate-800',
                             };
                         @endphp
-                        <article class="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                        <article
+                            class="rounded-lg border p-3 transition-all duration-200"
+                            x-bind:class="activeIds.includes(@js($condId))
+                                ? 'border-rose-500 bg-rose-50 ring-2 ring-rose-400/70 dark:border-rose-600 dark:bg-rose-950/50 dark:ring-rose-500/50'
+                                : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/20'"
+                        >
                             <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                                <h4 class="font-semibold text-gray-900 dark:text-gray-100">{{ $cond['title'] ?? '' }}</h4>
+                                <div class="flex items-start gap-2 min-w-0">
+                                    <span
+                                        x-show="activeIds.includes(@js($condId))"
+                                        x-cloak
+                                        class="shrink-0 mt-0.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-rose-600 text-white"
+                                    >{{ __('No município') }}</span>
+                                    <h4 class="font-semibold text-gray-900 dark:text-gray-100">{{ $cond['title'] ?? '' }}</h4>
+                                </div>
                                 <span class="inline-flex shrink-0 items-center px-2 py-0.5 rounded text-xs font-medium {{ $badge }}">
                                     {{ __('Peso :p', ['p' => $cond['peso_label'] ?? '1']) }}
                                 </span>
@@ -88,7 +108,7 @@
             </section>
 
             <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed border-t border-gray-200 dark:border-gray-700 pt-3">
-                {{ __('A aba «Saúde do município» resume o detectado na base; «Discrepâncias e Erros» detalha por escola no filtro actual.') }}
+                {{ __('A aba «Diagnóstico Geral» resume o detectado na base; «Discrepâncias e Erros» detalha por escola no filtro actual.') }}
             </p>
         </div>
 

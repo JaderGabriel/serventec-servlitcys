@@ -123,7 +123,6 @@ final class AnalyticsEmptyPayloads
             'cadastro_dimensions' => [],
             'fundeb_modules' => [],
             'top_problems' => [],
-            'chart_score' => null,
             'chart_pendencias' => null,
             'error' => null,
         ];

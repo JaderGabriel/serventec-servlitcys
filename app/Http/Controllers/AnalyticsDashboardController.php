@@ -146,8 +146,8 @@ class AnalyticsDashboardController extends Controller
             'performance' => __('Desempenho'),
             'attendance' => __('Frequência'),
             'fundeb' => __('FUNDEB'),
-            'municipality_health' => __('Saúde do município'),
             'discrepancies' => __('Discrepâncias e Erros'),
+            'municipality_health' => __('Diagnóstico Geral'),
         ];
         $tabKeys = array_keys($tabs);
         $qTab = (string) $request->query('tab', '');
@@ -196,7 +196,7 @@ class AnalyticsDashboardController extends Controller
         MunicipalityHealthRepository $municipalityHealthRepository,
     ): Response {
         $tab = (string) $request->query('tab', '');
-        $allowed = ['enrollment', 'network', 'inclusion', 'performance', 'attendance', 'fundeb', 'municipality_health', 'discrepancies'];
+        $allowed = ['enrollment', 'network', 'inclusion', 'performance', 'attendance', 'fundeb', 'discrepancies', 'municipality_health'];
         if (! in_array($tab, $allowed, true)) {
             abort(404);
         }

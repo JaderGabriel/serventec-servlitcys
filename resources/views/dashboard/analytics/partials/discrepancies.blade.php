@@ -8,6 +8,7 @@
     $chartFinanceiro = is_array($d['chart_financeiro'] ?? null) ? $d['chart_financeiro'] : null;
     $fundingRef = is_array($d['funding_reference'] ?? null) ? $d['funding_reference'] : null;
     $pillars = is_array($d['funding_pillars'] ?? null) ? $d['funding_pillars'] : [];
+    $activeCheckIds = is_array($d['active_check_ids'] ?? null) ? $d['active_check_ids'] : [];
     $fmtBrl = static fn (float $v): string => 'R$ ' . number_format($v, 2, ',', '.');
 @endphp
 
@@ -37,7 +38,7 @@
                 </p>
             </div>
             <div class="shrink-0">
-                <x-dashboard.funding-loss-conditions-button />
+                <x-dashboard.funding-loss-conditions-button :activeCheckIds="$activeCheckIds" />
             </div>
         </div>
 
@@ -56,9 +57,22 @@
                 <h3 class="text-sm font-semibold text-indigo-950 dark:text-indigo-100 mb-2">{{ __('Referências FUNDEB / VAAR / Censo') }}</h3>
                 <ul class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-indigo-900/95 dark:text-indigo-200/90">
                     @foreach ($pillars as $pillar)
-                        <li class="rounded-md border border-indigo-200/60 dark:border-indigo-700/50 bg-white/60 dark:bg-gray-900/30 px-3 py-2">
+                        @php
+                            $resumo = is_array($pillar['municipio_resumo'] ?? null) ? $pillar['municipio_resumo'] : [];
+                            $resumoStatus = (string) ($resumo['status'] ?? 'ok');
+                            $resumoBox = match ($resumoStatus) {
+                                'danger' => 'border-rose-300/80 bg-rose-50/90 text-rose-950 dark:border-rose-700 dark:bg-rose-950/35 dark:text-rose-100',
+                                'warning' => 'border-amber-300/80 bg-amber-50/90 text-amber-950 dark:border-amber-700 dark:bg-amber-950/35 dark:text-amber-100',
+                                default => 'border-emerald-300/80 bg-emerald-50/90 text-emerald-950 dark:border-emerald-700 dark:bg-emerald-950/35 dark:text-emerald-100',
+                            };
+                        @endphp
+                        <li class="rounded-md border border-indigo-200/60 dark:border-indigo-700/50 bg-white/60 dark:bg-gray-900/30 px-3 py-2 space-y-2">
                             <p class="font-semibold">{{ $pillar['titulo'] ?? '' }}</p>
-                            <p class="mt-1 leading-relaxed">{{ $pillar['descricao'] ?? '' }}</p>
+                            <p class="leading-relaxed">{{ $pillar['descricao'] ?? '' }}</p>
+                            <p class="text-[11px] leading-relaxed rounded-md border px-2 py-1.5 {{ $resumoBox }}">
+                                <span class="font-semibold uppercase tracking-wide">{{ __('Resumo do município') }}:</span>
+                                {{ $resumo['texto'] ?? '' }}
+                            </p>
                         </li>
                     @endforeach
                 </ul>
@@ -247,10 +261,6 @@
                     </article>
                 @endforeach
             </div>
-        @elseif (empty($d['error']))
-            <p class="text-sm text-gray-600 dark:text-gray-400 rounded-md border border-dashed border-gray-300 dark:border-gray-600 px-4 py-6 text-center">
-                {{ __('Nenhuma discrepância detectada com as rotinas disponíveis para estes filtros — ou a base não expõe as tabelas necessárias.') }}
-            </p>
         @endif
     @endif
 </div>

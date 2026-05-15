@@ -7,6 +7,12 @@
     $fundebMods = is_array($h['fundeb_modules'] ?? null) ? $h['fundeb_modules'] : [];
     $topProblems = is_array($h['top_problems'] ?? null) ? $h['top_problems'] : [];
     $score = $h['compliance_score'] ?? null;
+    $activeCheckIds = [];
+    foreach ($cadastro as $dim) {
+        if (($dim['detected'] ?? false) && filled($dim['id'] ?? null)) {
+            $activeCheckIds[] = (string) $dim['id'];
+        }
+    }
     $fmtBrl = static fn (float $v): string => 'R$ ' . number_format($v, 2, ',', '.');
     $scoreRing = match ($h['compliance_status'] ?? 'neutral') {
         'success' => 'border-emerald-400 bg-emerald-50/60 dark:bg-emerald-950/25',
@@ -19,12 +25,12 @@
 <div class="space-y-6">
     @if (! $yearFilterReady)
         <p class="text-sm text-amber-800 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
-            {{ __('Seleccione o ano letivo e aplique os filtros para ver a saúde de conformidade do município.') }}
+            {{ __('Seleccione o ano letivo e aplique os filtros para ver o diagnóstico geral de conformidade do município.') }}
         </p>
     @else
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div class="rounded-lg border border-teal-200 dark:border-teal-900/50 bg-teal-50/60 dark:bg-teal-950/20 px-4 py-3 text-sm space-y-2 flex-1">
-                <h2 class="font-semibold text-teal-950 dark:text-teal-100">{{ __('Saúde do município') }}</h2>
+                <h2 class="font-semibold text-teal-950 dark:text-teal-100">{{ __('Diagnóstico Geral') }}</h2>
                 <p class="leading-relaxed text-teal-900/95 dark:text-teal-200/95">{{ $h['intro'] ?? '' }}</p>
                 <p class="text-xs text-teal-800/90 dark:text-teal-300/90">
                     <span class="font-medium">{{ __('Contexto') }}:</span>
@@ -35,7 +41,7 @@
                 </p>
             </div>
             <div class="shrink-0">
-                <x-dashboard.funding-loss-conditions-button />
+                <x-dashboard.funding-loss-conditions-button :activeCheckIds="$activeCheckIds" />
             </div>
         </div>
 
@@ -52,10 +58,14 @@
         @if ($score !== null)
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div class="lg:col-span-1 rounded-xl border-2 {{ $scoreRing }} p-6 flex flex-col items-center justify-center text-center shadow-sm">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">{{ __('Índice de saúde') }}</p>
-                    <p class="mt-2 text-5xl font-bold tabular-nums text-gray-900 dark:text-gray-100">{{ (int) $score }}</p>
-                    <p class="mt-1 text-sm font-medium">{{ $h['compliance_label'] ?? '' }}</p>
-                    <div class="mt-4 flex flex-wrap gap-2 justify-center">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-1">{{ __('Índice de conformidade') }}</p>
+                    <x-dashboard.compliance-speedometer
+                        :score="(int) $score"
+                        :status="(string) ($h['compliance_status'] ?? 'neutral')"
+                        :label="(string) ($h['compliance_label'] ?? '')"
+                        class="w-full"
+                    />
+                    <div class="mt-3 flex flex-wrap gap-2 justify-center">
                         <button
                             type="button"
                             class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
@@ -93,18 +103,8 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                @if (! empty($h['chart_score']))
-                    <x-dashboard.chart-panel
-                        :chart="$h['chart_score']"
-                        exportFilename="saude-municipio-score"
-                        :exportMeta="$chartExportContext"
-                        :compact="true"
-                        chartPanelId="chart-saude-score"
-                        panelTone="teal"
-                    />
-                @endif
-                @if (! empty($h['chart_pendencias']))
+            @if (! empty($h['chart_pendencias']))
+            <div class="max-w-3xl">
                     <x-dashboard.chart-panel
                         :chart="$h['chart_pendencias']"
                         exportFilename="saude-municipio-pendencias"
@@ -113,8 +113,8 @@
                         chartPanelId="chart-saude-pendencias"
                         panelTone="rose"
                     />
-                @endif
             </div>
+            @endif
         @endif
 
         @if (count($topProblems) > 0)

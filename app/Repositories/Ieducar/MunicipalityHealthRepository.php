@@ -8,7 +8,7 @@ use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\DiscrepanciesCheckCatalog;
 
 /**
- * Saúde do município: conformidade consolidada (cadastro/Censo + eixos FUNDEB/VAAR) no ano filtrado.
+ * Diagnóstico Geral: conformidade consolidada (cadastro/Censo + eixos FUNDEB/VAAR) no ano filtrado.
  */
 class MunicipalityHealthRepository
 {
@@ -150,12 +150,6 @@ class MunicipalityHealthRepository
         $pendencias = count(array_filter($cadastroDimensions, static fn (array $d): bool => ($d['detected'] ?? false) === true));
         $okCadastro = count($cadastroDimensions) - $pendencias;
 
-        $chartScore = ChartPayload::doughnut(
-            __('Índice de saúde do cadastro (automático)'),
-            [__('Sem pendência detectada'), __('Com pendência')],
-            [(float) $okCadastro, (float) $pendencias]
-        );
-
         $chartPendencias = null;
         if ($pendencias > 0) {
             $labels = [];
@@ -182,7 +176,7 @@ class MunicipalityHealthRepository
                 'Visão consolidada da conformidade municipal no ano letivo e filtros seleccionados. Cruza rotinas automáticas de cadastro (Censo / VAAR) com o roteiro FUNDEB. Use as abas «Discrepâncias e Erros» e «FUNDEB» para detalhar cada eixo.'
             ),
             'footnote' => __(
-                'O índice de saúde é indicativo (0–100), baseado na gravidade e volume das pendências detectadas na base i-Educar e nos módulos FUNDEB com alerta. Não substitui parecer do Simec/MEC.'
+                'O índice de conformidade é indicativo (0–100), baseado na gravidade e volume das pendências detectadas na base i-Educar e nos módulos FUNDEB com alerta. Não substitui parecer do Simec/MEC.'
             ),
             'year_label' => $this->yearLabel($filters),
             'city_name' => $city->name,
@@ -206,7 +200,6 @@ class MunicipalityHealthRepository
                 'situacao' => (string) ($m['situacao'] ?? ''),
             ], $modules),
             'top_problems' => $topProblems,
-            'chart_score' => $chartScore,
             'chart_pendencias' => $chartPendencias,
             'error' => $disc['error'] ?? null,
         ];
