@@ -4,9 +4,9 @@ namespace App\Repositories\Ieducar;
 
 use App\Models\City;
 use App\Services\CityDataConnection;
+use App\Services\Funding\MunicipalFundingPublicSnapshotService;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
-use App\Support\Dashboard\PublicDataSourcesCatalog;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
@@ -22,6 +22,7 @@ class OtherFundingRepository
 {
     public function __construct(
         private CityDataConnection $cityData,
+        private MunicipalFundingPublicSnapshotService $publicSnapshot,
     ) {}
 
     /**
@@ -40,7 +41,7 @@ class OtherFundingRepository
             'total_matriculas' => null,
             'funding_pillars' => [],
             'chart_programas' => null,
-            'public_data_sources' => PublicDataSourcesCatalog::build($city, 'other_funding'),
+            'public_municipal' => $this->publicSnapshot->build($city, $filters),
             'error' => null,
         ];
 
@@ -70,14 +71,14 @@ class OtherFundingRepository
                         'Programas federais e complementares de educação (transporte, alimentação, PDDE e correlatos) dependem de matrículas e escolas consistentes no Censo Escolar. Esta aba cruza o cadastro do i-Educar com referências FNDE e com o pilar «Programas complementares» das discrepâncias.'
                     ),
                     'footnote' => __(
-                        'Valores de repasse não são calculados aqui — use o Portal FNDE, Simec e prestação de contas municipal. Os indicadores abaixo mostram cobertura de campos no i-Educar quando existirem na base.'
+                        'Valores de repasse não são calculados aqui. A secção «Consultas públicas» obtém prévias e relatórios por IBGE/ano; links oficiais (FNDE, Simec, Tesouro) estão na aba FUNDEB. Os indicadores de i-Educar mostram cobertura de campos quando existirem na base.'
                     ),
                     'programs' => $programs,
                     'transport' => $transport,
                     'total_matriculas' => $totalMat,
                     'funding_pillars' => $pillarComplement,
                     'chart_programas' => $this->chartProgramCoverage($programs),
-                    'public_data_sources' => PublicDataSourcesCatalog::build($city, 'other_funding'),
+                    'public_municipal' => $this->publicSnapshot->build($city, $filters),
                     'error' => null,
                 ];
             });

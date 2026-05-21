@@ -74,6 +74,12 @@ Importação: **cache** `storage/app/fundeb/api/{ibge}/{ano}.json` → se ausent
 
 ---
 
+## Deploy
+
+Guia operacional para publicar alterações no servidor: [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md).
+
+---
+
 ## Testes
 
 ```bash

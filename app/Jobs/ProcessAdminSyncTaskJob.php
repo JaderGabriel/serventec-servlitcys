@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\AdminSyncTaskStatus;
 use App\Models\AdminSyncTask;
 use App\Services\AdminSync\AdminSyncTaskRunner;
+use App\Services\Notifications\NotificationDispatcher;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -33,7 +34,7 @@ class ProcessAdminSyncTaskJob implements ShouldQueue
         }
     }
 
-    public function handle(AdminSyncTaskRunner $runner): void
+    public function handle(AdminSyncTaskRunner $runner, NotificationDispatcher $notifications): void
     {
         $task = AdminSyncTask::query()->find($this->adminSyncTaskId);
         if ($task === null) {
@@ -60,6 +61,7 @@ class ProcessAdminSyncTaskJob implements ShouldQueue
                 'completed_at' => now(),
                 'output_log' => $output !== null && $output !== '' ? $output : $task->output_log,
             ]);
+            $notifications->adminSyncFinished($task->fresh());
         } catch (Throwable $e) {
             $task->update([
                 'status' => AdminSyncTaskStatus::Failed->value,
@@ -84,6 +86,7 @@ class ProcessAdminSyncTaskJob implements ShouldQueue
                 'error_message' => $exception?->getMessage() ?? __('Falha desconhecida na fila.'),
                 'completed_at' => $task->completed_at ?? now(),
             ]);
+            app(NotificationDispatcher::class)->adminSyncFinished($task->fresh());
         }
     }
 }

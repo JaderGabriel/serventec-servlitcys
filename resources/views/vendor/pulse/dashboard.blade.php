@@ -1,23 +1,26 @@
 <x-pulse cols="12">
+    <livewire:pulse.monitoring-executive-strip />
+
     <x-pulse-dashboard.section
-        :title="__('Negócio & tráfego')"
-        :subtitle="__('Pedidos agregados por cidade e totais — contexto i-Educar / instituições.')"
-        accent="emerald"
+        :title="__('Municípios e decisão operacional')"
+        :subtitle="__('Inventário das bases i-Educar, volume de uso por cidade e fila de sincronização — priorize municípios incompletos ou com falhas.')"
+        accent="cyan"
         icon="chart-bar"
     />
+    <livewire:pulse.municipal-infrastructure-card cols="full" rows="3" />
     <livewire:pulse.institution-traffic-card cols="full" rows="2" />
 
     <x-pulse-dashboard.section
-        :title="__('Sincronização (admin)')"
-        :subtitle="__('Volume nas rotas de geo e pedagógico (métrica própria) e pedidos lentos registados pelo Pulse nas mesmas URLs.')"
+        :title="__('Sincronização administrativa')"
+        :subtitle="__('Rotas de geo e pedagógico: volume próprio e pedidos lentos nas mesmas URLs.')"
         accent="teal"
         icon="cloud-arrow-up"
     />
     <livewire:pulse.sync-admin-pulse-card cols="full" rows="1" />
 
     <x-pulse-dashboard.section
-        :title="__('Infraestrutura & recursos')"
-        :subtitle="__('Uso da aplicação, runtime, filas, espaço em disco e saúde da base de dados. Servidor e gráficos ficam no painel no final da página.')"
+        :title="__('Infraestrutura de TI')"
+        :subtitle="__('Runtime da aplicação, filas, disco, base de dados e estado do servidor em tempo real.')"
         accent="slate"
         icon="server"
     />
@@ -28,8 +31,8 @@
     <livewire:pulse.queue-and-failures-card cols="6" rows="1" />
 
     <x-pulse-dashboard.section
-        :title="__('Cache & armazenamento chave-valor')"
-        :subtitle="__('Interações de cache da aplicação e estado do Redis (pulse / sessão / filas).')"
+        :title="__('Cache e Redis')"
+        :subtitle="__('Interações de cache e estado das ligações chave-valor (sessão, filas, Pulse).')"
         accent="violet"
         icon="circle-stack"
     />
@@ -37,8 +40,8 @@
     <livewire:pulse.redis-overview-card cols="full" rows="2" />
 
     <x-pulse-dashboard.section
-        :title="__('HTTP & redes')"
-        :subtitle="__('Latência de pedidos à aplicação e pedidos HTTP de saída (APIs, ArcGIS, INEP, etc.).')"
+        :title="__('Latência HTTP e saída')"
+        :subtitle="__('Pedidos lentos à aplicação e chamadas HTTP externas (APIs, ArcGIS, INEP, etc.).')"
         accent="sky"
         icon="globe-alt"
     />
@@ -46,34 +49,27 @@
     <livewire:pulse.slow-outgoing-requests cols="6" />
 
     <x-pulse-dashboard.section
-        :title="__('Base de dados & consultas lentas')"
-        :subtitle="__('Consultas SQL acima do limiar configurado (`PULSE_SLOW_QUERIES_THRESHOLD`).')"
-        accent="rose"
-        icon="circle-stack"
-    />
-    <livewire:pulse.slow-queries cols="full" rows="2" />
-
-    <x-pulse-dashboard.section
-        :title="__('Filas & jobs')"
-        :subtitle="__('Processamento em segundo plano: jobs lentos e cargas de trabalho pesadas.')"
+        :title="__('SQL e jobs em segundo plano')"
+        :subtitle="__('Consultas acima do limiar (`PULSE_SLOW_QUERIES_THRESHOLD`) e jobs lentos na fila.')"
         accent="amber"
         icon="queue"
     />
-    <livewire:pulse.slow-jobs cols="full" rows="2" />
+    <livewire:pulse.slow-queries cols="6" rows="2" />
+    <livewire:pulse.slow-jobs cols="6" rows="2" />
 
     <x-pulse-dashboard.section
-        :title="__('Erros & estabilidade')"
-        :subtitle="__('Excepções não tratadas registadas pelos recorders do Pulse.')"
-        accent="red"
+        :title="__('Estabilidade e erros')"
+        :subtitle="__('Excepções não tratadas — investigar antes de escalar análises municipais.')"
+        accent="rose"
         icon="exclamation"
     />
     <livewire:pulse.exceptions cols="full" rows="2" />
 
     <x-pulse-dashboard.section
-        :title="__('Servidor & métricas em tempo real')"
-        :subtitle="__('Resumo (estado, CPU, memória, disco) e histórico com gráficos — mesma fonte Pulse Servers.')"
+        :title="__('Servidor — métricas e histórico')"
+        :subtitle="__('CPU, memória, disco e gráficos de série temporal (Pulse Servers).')"
         accent="slate"
-        icon="server"
+        icon="cpu"
     />
     <x-pulse-dashboard.merged-server-panel />
 </x-pulse>

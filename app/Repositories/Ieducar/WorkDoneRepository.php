@@ -59,6 +59,7 @@ class WorkDoneRepository
                 'summary' => ['total_escolas' => 0, 'exportadas' => 0, 'fechadas' => 0, 'pendentes' => 0],
             ],
             'chart_censo' => null,
+            'year_closure' => null,
             'error' => null,
         ];
 
@@ -88,20 +89,27 @@ class WorkDoneRepository
                         $dateCol,
                         $ctx['user_col'] ?? null
                     );
-                    if (filled($ctx['user_col'] ?? null)) {
-                        $byUser = IeducarWorkActivityQueries::matriculaByUserSince(
-                            $db,
-                            $city,
-                            $filters,
-                            $dateCol,
-                            (string) $ctx['user_col'],
-                            (int) config('ieducar.work_tracking.periods_days.fortnight', 15)
-                        );
+                    if (filled($ctx['user_col'] ?? null) && IeducarUsuarioScope::resolve($db, $city) !== null) {
+                        try {
+                            $byUser = IeducarWorkActivityQueries::matriculaByUserSince(
+                                $db,
+                                $city,
+                                $filters,
+                                $dateCol,
+                                (string) $ctx['user_col'],
+                                (int) config('ieducar.work_tracking.periods_days.fortnight', 15)
+                            );
+                        } catch (\Throwable $e) {
+                            $activityNote = ($activityNote ? $activityNote.' ' : '')
+                                .__('Tabela por utilizador indisponível: :msg', ['msg' => $e->getMessage()]);
+                        }
                     }
                 }
 
                 $estimativa = IeducarWorkActivityQueries::buildEstimate($baseline, $periods, $currentMat);
                 $censo = IeducarCensoEscolaQueries::schoolStatuses($db, $city, $filters);
+                $anoStatus = IeducarWorkActivityQueries::anoLetivoStatus($db, $city, $filters);
+                $yearClosure = IeducarWorkActivityQueries::yearClosureInsight($filters, $censo, $periods, $anoStatus);
 
                 $methodology = [
                     __('Contagem de matrículas cuja data de cadastro cai no período, com filtros aplicados (escola, curso, turno).'),
@@ -141,14 +149,16 @@ class WorkDoneRepository
                     'chart_users' => $this->chartUsers($byUser),
                     'censo' => $censo,
                     'chart_censo' => $this->chartCenso($censo),
+                    'year_closure' => $yearClosure,
                     'methodology' => $methodology,
                     'error' => null,
                 ]);
             });
         } catch (QueryException|\Throwable $e) {
-            $base['error'] = $e->getMessage();
-
-            return $base;
+            return array_merge($base, [
+                'city_name' => (string) $city->name,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 

@@ -58,7 +58,7 @@ class AnalyticsDashboardTest extends TestCase
         $this->actingAs($user)
             ->get(route('dashboard.analytics'))
             ->assertOk()
-            ->assertSee(__('Financiamos'), false)
+            ->assertSee(__('Financiamentos'), false)
             ->assertSee(__('Censo'), false)
             ->assertSee(__('Serventec'), false);
     }

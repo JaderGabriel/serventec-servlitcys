@@ -6,7 +6,7 @@
     $transport = is_array($d['transport'] ?? null) ? $d['transport'] : null;
     $pillars = is_array($d['funding_pillars'] ?? null) ? $d['funding_pillars'] : [];
     $chartProgramas = is_array($d['chart_programas'] ?? null) ? $d['chart_programas'] : null;
-    $publicSources = is_array($d['public_data_sources'] ?? null) ? $d['public_data_sources'] : [];
+    $publicMunicipal = is_array($d['public_municipal'] ?? null) ? $d['public_municipal'] : [];
     $statusBorder = static fn (string $s): string => match ($s) {
         'success' => 'border-emerald-200 dark:border-emerald-800',
         'warning' => 'border-amber-200 dark:border-amber-800',
@@ -28,7 +28,7 @@
         </p>
     @else
         <div class="rounded-lg border border-teal-200 dark:border-teal-800 bg-teal-50/70 dark:bg-teal-950/25 px-4 py-3 text-sm text-teal-950 dark:text-teal-100 space-y-2">
-            <p class="font-semibold">{{ __('Financiamos — programas complementares') }}</p>
+            <p class="font-semibold">{{ __('Financiamentos — programas complementares') }}</p>
             <p class="leading-relaxed">{{ $d['intro'] ?? '' }}</p>
             <p class="text-xs text-teal-800/90 dark:text-teal-300/90">
                 {{ $d['city_name'] ?? '' }}
@@ -58,12 +58,10 @@
             </div>
         @endif
 
-        @if (count($publicSources['categories'] ?? []) > 0)
-            <x-dashboard.consultoria-public-sources
-                :catalog="$publicSources"
-                anchor="other-funding-fontes"
-            />
-        @endif
+        <x-dashboard.municipal-public-queries
+            :snapshot="$publicMunicipal"
+            anchor="financiamentos-consultas-publicas"
+        />
 
         @if ($chartProgramas !== null)
             <x-dashboard.chart-panel

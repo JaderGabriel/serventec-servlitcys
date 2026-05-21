@@ -12,6 +12,7 @@
     $censo = is_array($d['censo'] ?? null) ? $d['censo'] : [];
     $censoSummary = is_array($censo['summary'] ?? null) ? $censo['summary'] : [];
     $chartCenso = is_array($d['chart_censo'] ?? null) ? $d['chart_censo'] : null;
+    $yearClosure = is_array($d['year_closure'] ?? null) ? $d['year_closure'] : null;
 @endphp
 
 <div class="space-y-6">
@@ -38,6 +39,20 @@
         @if (! empty($d['error']))
             <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
                 {{ $d['error'] }}
+            </div>
+        @endif
+
+        @if ($yearClosure !== null)
+            <div class="rounded-lg border px-4 py-3 text-sm {{ ($yearClosure['consolidated'] ?? false) ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/30 text-emerald-950 dark:text-emerald-100' : 'border-amber-200 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/30 text-amber-950 dark:text-amber-100' }}">
+                <p class="font-semibold">{{ $yearClosure['title'] ?? '' }}</p>
+                <p class="mt-1 leading-relaxed">{{ $yearClosure['message'] ?? '' }}</p>
+                @if (count($yearClosure['hints'] ?? []) > 0)
+                    <ul class="mt-2 list-disc pl-5 text-xs space-y-1 opacity-90">
+                        @foreach ($yearClosure['hints'] as $hint)
+                            <li>{{ $hint }}</li>
+                        @endforeach
+                    </ul>
+                @endif
             </div>
         @endif
 
@@ -82,7 +97,18 @@
             @endif
         </section>
 
-        <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">{{ __('Cadastro recente (ritmo)') }}</h3>
+        <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">
+            {{ __('Cadastro recente (ritmo)') }}
+            @if ($yearClosure['consolidated'] ?? false)
+                <span class="normal-case font-normal text-emerald-700 dark:text-emerald-300">— {{ __('ano consolidado') }}</span>
+            @endif
+        </h3>
+
+        @if ($yearClosure['consolidated'] ?? false)
+            <p class="text-xs text-gray-600 dark:text-gray-400 italic">
+                {{ __('Os indicadores de cadastro recente tendem a zero em anos já fechados no Educacenso; use o bloco acima para o estado por escola.') }}
+            </p>
+        @endif
 
         @if (! ($d['activity_available'] ?? false) && filled($d['activity_note'] ?? null))
             <div class="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">

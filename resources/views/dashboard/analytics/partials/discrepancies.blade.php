@@ -129,7 +129,7 @@
             {{ __('Painéis relacionados:') }}
             <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'fundeb')">{{ __('FUNDEB') }}</button>
             ·
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'other_funding')">{{ __('Financiamos') }}</button>
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'other_funding')">{{ __('Financiamentos') }}</button>
             ·
             <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'work_done')">{{ __('Censo') }}</button>
             ·

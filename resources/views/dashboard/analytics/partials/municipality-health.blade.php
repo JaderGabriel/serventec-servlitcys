@@ -1,4 +1,11 @@
-@props(['healthData', 'yearFilterReady' => false, 'chartExportContext' => []])
+@props([
+    'healthData',
+    'yearFilterReady' => false,
+    'chartExportContext' => [],
+    'selectedCity' => null,
+    'filters' => null,
+    'pdfExportsRecent' => [],
+])
 
 @php
     use App\Support\Dashboard\ConsultoriaFlow;
@@ -101,6 +108,13 @@
             {{ __('Seleccione o ano letivo e aplique os filtros para ver o diagnóstico geral de conformidade do município.') }}
         </p>
     @else
+        @include('dashboard.analytics.partials.serventec-pdf-export', [
+            'selectedCity' => $selectedCity,
+            'filters' => $filters,
+            'yearFilterReady' => $yearFilterReady,
+            'pdfExportsRecent' => $pdfExportsRecent,
+        ])
+
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div class="rounded-lg border border-teal-200 dark:border-teal-900/50 bg-teal-50/60 dark:bg-teal-950/20 px-4 py-3 text-sm space-y-2 flex-1">
                 <h2 class="font-semibold text-teal-950 dark:text-teal-100">{{ __('Serventec') }}</h2>
@@ -134,7 +148,7 @@
             ·
             <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'fundeb')">{{ __('FUNDEB') }}</button>
             ·
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'other_funding')">{{ __('Financiamos') }}</button>
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'other_funding')">{{ __('Financiamentos') }}</button>
             ·
             <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'work_done')">{{ __('Censo') }}</button>
         </p>
@@ -231,7 +245,7 @@
             <x-dashboard.consultoria-section
                 :step="$diagStep['diag-vaaf'] ?? null"
                 anchor="diag-vaaf"
-                :title="__('Medidores financeiros (VAAF e previsão)')
+                :title="__('Medidores financeiros (VAAF e previsão)')"
                 :subtitle="__('Valor municipal usado nos cálculos × prévia federal para comparação com painéis do governo.')"
             >
                 <x-dashboard.consultoria-vaaf-comparacao

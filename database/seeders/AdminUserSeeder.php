@@ -10,9 +10,9 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        $email = (string) '';
-        $plainPassword = (string) '';
-        $username = (string) '';
+        $email = (string) env('ADMIN_EMAIL', '');
+        $plainPassword = (string) env('ADMIN_PASSWORD', '');
+        $username = (string) env('ADMIN_USERNAME', 'admin');
 
         User::query()->updateOrCreate(
             ['email' => $email],

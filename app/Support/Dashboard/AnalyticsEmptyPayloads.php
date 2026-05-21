@@ -165,7 +165,7 @@ final class AnalyticsEmptyPayloads
             'total_matriculas' => null,
             'funding_pillars' => [],
             'chart_programas' => null,
-            'public_data_sources' => ['intro' => '', 'categories' => []],
+            'public_municipal' => ['enabled' => true, 'available' => false, 'queries' => []],
             'error' => null,
         ];
     }

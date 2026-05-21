@@ -150,12 +150,12 @@ final class ConsultoriaThematicBridge
         }
 
         if ($items === []) {
-            $items[] = __('Consulte PNAE, PNATE e PDDE na aba Financiamos.');
+            $items[] = __('Consulte PNAE, PNATE e PDDE na aba Financiamentos.');
         }
 
         return [
             'id' => 'programas-complementares',
-            'titulo' => __('Financiamos (PNAE, PNATE, PDDE)'),
+            'titulo' => __('Financiamentos (PNAE, PNATE, PDDE)'),
             'fonte' => 'ieducar',
             'fonte_label' => __('Cadastro i-Educar + pilares Discrepâncias'),
             'status' => $status,

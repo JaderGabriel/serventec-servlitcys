@@ -15,6 +15,7 @@
         'red' => 'border border-red-200/90 bg-gradient-to-r from-red-50/95 to-red-50/35 text-red-950 shadow-md ring-2 ring-red-200/50 dark:border-red-900/50 dark:from-red-950/45 dark:to-red-950/20 dark:text-red-100 dark:ring-red-900/35',
         'indigo' => 'border border-indigo-200/90 bg-gradient-to-r from-indigo-50/95 to-indigo-50/35 text-indigo-950 shadow-md ring-2 ring-indigo-200/55 dark:border-indigo-800/55 dark:from-indigo-950/50 dark:to-indigo-950/20 dark:text-indigo-100 dark:ring-indigo-700/40',
         'teal' => 'border border-teal-200/90 bg-gradient-to-r from-teal-50/95 to-teal-50/35 text-teal-950 shadow-md ring-2 ring-teal-200/50 dark:border-teal-800/55 dark:from-teal-950/50 dark:to-teal-950/20 dark:text-teal-100 dark:ring-teal-800/40',
+        'cyan' => 'border border-cyan-200/80 bg-slate-50/90 text-slate-900 shadow-sm ring-1 ring-cyan-300/40 dark:border-cyan-800/50 dark:bg-slate-900/70 dark:text-slate-100 dark:ring-cyan-700/30',
     ];
     $cardClass = $styles[$accent] ?? $styles['indigo'];
 
@@ -28,6 +29,7 @@
         'red' => 'bg-gradient-to-b from-red-500 to-rose-700',
         'indigo' => 'bg-gradient-to-b from-indigo-500 to-violet-600',
         'teal' => 'bg-gradient-to-b from-teal-500 to-cyan-600',
+        'cyan' => 'bg-gradient-to-b from-cyan-500 to-sky-600',
     ];
     $barClass = $bar[$accent] ?? $bar['indigo'];
 
@@ -47,9 +49,9 @@
     $path = $icons[$icon] ?? $icons['rectangle-group'];
 @endphp
 
-<div {{ $attributes->merge(['class' => 'pulse-dashboard-theme default:col-span-full pt-10 first:pt-2 sm:pt-11 sm:first:pt-2']) }}>
+<div {{ $attributes->merge(['class' => 'pulse-dashboard-theme default:col-span-full pt-8 first:pt-0 sm:pt-9 sm:first:pt-0']) }}>
     {{-- Mesmo padding horizontal que <x-pulse::card> (p-3 sm:p-6) para alinhar títulos com os cartões de dados. --}}
-    <div class="flex items-stretch gap-3 rounded-2xl p-3 sm:gap-3.5 sm:p-6 {{ $cardClass }}">
+    <div class="flex items-stretch gap-3 rounded-xl border border-slate-200/70 p-3 sm:gap-3 sm:p-5 {{ $cardClass }}">
         <div class="w-1.5 shrink-0 rounded-full {{ $barClass }}" aria-hidden="true"></div>
         <div class="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
             <div class="shrink-0 rounded-xl bg-white/70 p-2 shadow-sm ring-1 ring-white/60 dark:bg-black/25 dark:ring-white/10">
@@ -58,9 +60,9 @@
                 </svg>
             </div>
             <div class="min-w-0 pb-px">
-                <h2 class="text-base font-bold uppercase leading-snug tracking-wide sm:text-lg">{{ $title }}</h2>
+                <h2 class="text-sm font-semibold uppercase leading-snug tracking-wider text-slate-800 dark:text-slate-100 sm:text-base">{{ $title }}</h2>
                 @if ($subtitle)
-                    <p class="mt-1.5 max-w-4xl text-sm italic leading-relaxed opacity-90">{{ $subtitle }}</p>
+                    <p class="mt-1 max-w-4xl text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">{{ $subtitle }}</p>
                 @endif
             </div>
         </div>

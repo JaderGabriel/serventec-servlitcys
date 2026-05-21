@@ -5,12 +5,14 @@ use App\Http\Controllers\Admin\ArtisanCommandsController;
 use App\Http\Controllers\Admin\GeoSyncController;
 use App\Http\Controllers\Admin\IeducarCompatibilityController;
 use App\Http\Controllers\Admin\PedagogicalSyncController;
-use App\Http\Controllers\DiscrepanciesExportController;
 use App\Http\Controllers\AnalyticsDashboardController;
+use App\Http\Controllers\AnalyticsReportExportController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DiscrepanciesExportController;
 use App\Http\Controllers\FirstAccessProfileController;
 use App\Http\Controllers\MailSettingsController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserLoginHistoryController;
@@ -32,6 +34,13 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
     Route::get('/dashboard/analytics/tab', [AnalyticsDashboardController::class, 'tabPartial'])->name('dashboard.analytics.tab');
     Route::get('/dashboard/analytics/filter-options', [AnalyticsDashboardController::class, 'filterOptions'])->name('dashboard.analytics.filter-options');
     Route::get('/dashboard/analytics/discrepancies/export', [DiscrepanciesExportController::class, 'csv'])->name('dashboard.analytics.discrepancies.export');
+    Route::post('/dashboard/analytics/pdf-export', [AnalyticsReportExportController::class, 'store'])->name('dashboard.analytics.pdf.store');
+    Route::get('/dashboard/analytics/pdf-export/{export}/status', [AnalyticsReportExportController::class, 'status'])->name('dashboard.analytics.pdf.status');
+    Route::get('/dashboard/analytics/pdf-export/{export}/download', [AnalyticsReportExportController::class, 'download'])->name('dashboard.analytics.pdf.download');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

@@ -14,6 +14,7 @@ use App\Repositories\Ieducar\OverviewRepository;
 use App\Repositories\Ieducar\PerformanceRepository;
 use App\Repositories\Ieducar\SchoolUnitsRepository;
 use App\Repositories\Ieducar\WorkDoneRepository;
+use App\Services\Analytics\AnalyticsReportExportService;
 use App\Services\Ieducar\FilterOptionsService;
 use App\Support\Auth\UserCityAccess;
 use App\Support\Dashboard\AnalyticsEmptyPayloads;
@@ -46,6 +47,7 @@ class AnalyticsDashboardController extends Controller
         DiscrepanciesRepository $discrepanciesRepository,
         MunicipalityHealthRepository $municipalityHealthRepository,
         SchoolUnitsRepository $schoolUnitsRepository,
+        AnalyticsReportExportService $pdfExportService,
     ): View|RedirectResponse {
         $user = $request->user();
 
@@ -171,7 +173,7 @@ class AnalyticsDashboardController extends Controller
             'performance' => __('Desempenho'),
             'attendance' => __('Frequência'),
             'fundeb' => __('FUNDEB'),
-            'other_funding' => __('Financiamos'),
+            'other_funding' => __('Financiamentos'),
             'work_done' => __('Censo'),
             'discrepancies' => __('Discrepâncias e Erros'),
             'municipality_health' => __('Serventec'),
@@ -179,6 +181,10 @@ class AnalyticsDashboardController extends Controller
         $tabKeys = array_keys($tabs);
         $qTab = (string) $request->query('tab', '');
         $analyticsInitialTab = in_array($qTab, $tabKeys, true) ? $qTab : 'overview';
+
+        $pdfExportsRecent = ($city !== null && $user !== null)
+            ? $pdfExportService->recentForUserCity($user, $city, 6)
+            : [];
 
         return view('dashboard.analytics', [
             'cities' => $cities,
@@ -204,6 +210,7 @@ class AnalyticsDashboardController extends Controller
             'tabs' => $tabs,
             'analyticsInitialTab' => $analyticsInitialTab,
             'lazyTabLoading' => $lazyTabLoading,
+            'pdfExportsRecent' => $pdfExportsRecent,
         ]);
     }
 
@@ -225,6 +232,7 @@ class AnalyticsDashboardController extends Controller
         WorkDoneRepository $workDoneRepository,
         DiscrepanciesRepository $discrepanciesRepository,
         MunicipalityHealthRepository $municipalityHealthRepository,
+        AnalyticsReportExportService $pdfExportService,
     ): Response {
         $tab = (string) $request->query('tab', '');
         $allowed = ['enrollment', 'network', 'inclusion', 'performance', 'attendance', 'fundeb', 'other_funding', 'work_done', 'discrepancies', 'municipality_health'];
@@ -333,6 +341,9 @@ class AnalyticsDashboardController extends Controller
                     'healthData' => $municipalityHealthRepository->snapshot($city, $filters),
                     'yearFilterReady' => true,
                     'chartExportContext' => $chartExportContext,
+                    'selectedCity' => $city,
+                    'filters' => $filters,
+                    'pdfExportsRecent' => $pdfExportService->recentForUserCity($request->user(), $city, 6),
                 ])
                 ->withHeaders($headers),
             'discrepancies' => response()

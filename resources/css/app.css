@@ -81,6 +81,149 @@
     #pulse-main-grid > section header hgroup p {
         @apply italic;
     }
+
+    /* Header NOC (Monitorização) */
+    .pulse-noc-header {
+        @apply bg-gradient-to-r from-slate-900 via-slate-900 to-slate-800;
+    }
+
+    .pulse-noc-pill {
+        @apply inline-flex items-center gap-1.5 rounded-md border border-slate-600/80 bg-slate-800/80 px-2.5 py-1 text-[11px] font-medium text-slate-200;
+    }
+
+    /* Faixa executiva de KPIs */
+    .pulse-exec-strip {
+        @apply rounded-xl border border-slate-200/90 bg-white shadow-md ring-1 ring-slate-900/5 dark:border-slate-700 dark:bg-slate-900/90 dark:ring-cyan-500/10;
+    }
+
+    .pulse-exec-strip__inner {
+        @apply p-4 sm:p-5;
+    }
+
+    .pulse-exec-strip__head {
+        @apply mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-3 dark:border-slate-700/80;
+    }
+
+    .pulse-exec-strip__eyebrow {
+        @apply text-[11px] font-semibold uppercase tracking-widest text-cyan-600 dark:text-cyan-400;
+    }
+
+    .pulse-exec-strip__period {
+        @apply mt-0.5 text-xs text-slate-500 dark:text-slate-400;
+    }
+
+    .pulse-exec-strip__link {
+        @apply text-xs font-medium text-indigo-600 hover:underline dark:text-cyan-400;
+    }
+
+    .pulse-exec-strip__meta {
+        @apply mt-3 text-[11px] text-slate-500 dark:text-slate-400;
+    }
+
+    .pulse-exec-kpi-grid {
+        @apply grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6;
+    }
+
+    .pulse-exec-kpi {
+        @apply rounded-lg border px-3 py-2.5;
+    }
+
+    .pulse-exec-kpi__label {
+        @apply text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    }
+
+    .pulse-exec-kpi__value {
+        @apply mt-1 text-xl font-bold tabular-nums text-slate-900 dark:text-white;
+    }
+
+    .pulse-exec-kpi__hint {
+        @apply mt-0.5 text-[10px] text-slate-500 dark:text-slate-400;
+    }
+
+    .pulse-exec-kpi--emerald {
+        @apply border-emerald-200/80 bg-emerald-50/50 dark:border-emerald-800/50 dark:bg-emerald-950/30;
+    }
+
+    .pulse-exec-kpi--cyan {
+        @apply border-cyan-200/80 bg-cyan-50/40 dark:border-cyan-800/50 dark:bg-cyan-950/25;
+    }
+
+    .pulse-exec-kpi--rose {
+        @apply border-rose-200/80 bg-rose-50/40 dark:border-rose-800/50 dark:bg-rose-950/25;
+    }
+
+    .pulse-exec-kpi--amber {
+        @apply border-amber-200/80 bg-amber-50/40 dark:border-amber-800/50 dark:bg-amber-950/25;
+    }
+
+    .pulse-exec-kpi--violet {
+        @apply border-violet-200/80 bg-violet-50/40 dark:border-violet-800/50 dark:bg-violet-950/25;
+    }
+
+    .pulse-exec-kpi--slate {
+        @apply border-slate-200/80 bg-slate-50/60 dark:border-slate-700 dark:bg-slate-800/40;
+    }
+
+    /* Gráficos de barras (municípios) */
+    .pulse-bar-row {
+        @apply grid grid-cols-[1fr_minmax(4rem,5rem)_3rem] items-center gap-2 text-xs;
+    }
+
+    .pulse-bar-row__meta {
+        @apply min-w-0;
+    }
+
+    .pulse-bar-row__name {
+        @apply block truncate font-medium text-slate-800 dark:text-slate-100;
+    }
+
+    .pulse-bar-row__tags {
+        @apply mt-0.5 flex flex-wrap gap-1;
+    }
+
+    .pulse-bar-row__track {
+        @apply h-2 overflow-hidden rounded-full bg-slate-200/90 dark:bg-slate-700/80;
+    }
+
+    .pulse-bar-row__fill {
+        @apply h-full rounded-full bg-gradient-to-r from-cyan-500 to-indigo-500 transition-[width] duration-500;
+    }
+
+    .pulse-bar-row__value {
+        @apply text-right font-semibold text-slate-700 dark:text-slate-200;
+    }
+
+    .pulse-tag {
+        @apply inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide;
+    }
+
+    .pulse-tag--ok {
+        @apply bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200;
+    }
+
+    .pulse-tag--warn {
+        @apply bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200;
+    }
+
+    .pulse-tag--danger {
+        @apply bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-200;
+    }
+
+    .pulse-tag--info {
+        @apply bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-200;
+    }
+
+    .pulse-tag--neutral {
+        @apply bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300;
+    }
+
+    .pulse-card-pro__subtitle {
+        @apply text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    }
+
+    #pulse-main-grid .pulse-exec-strip {
+        @apply default:col-span-full;
+    }
 }
 
 /* Landing: padrão de grelha suave (usado na welcome) */

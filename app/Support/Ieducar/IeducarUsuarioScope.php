@@ -39,8 +39,18 @@ final class IeducarUsuarioScope
         return [
             'table' => $table,
             'id_col' => $idCol,
-            'login_col' => IeducarColumnInspector::firstExistingColumn($db, $table, ['login', 'usuario', 'user_login'], $city),
-            'name_col' => IeducarColumnInspector::firstExistingColumn($db, $table, ['nome', 'nm_usuario', 'name'], $city),
+            'login_col' => IeducarColumnInspector::firstExistingColumn($db, $table, [
+                'login',
+                'usuario',
+                'user_login',
+                'email',
+            ], $city),
+            'name_col' => IeducarColumnInspector::firstExistingColumn($db, $table, [
+                'nome',
+                'nm_usuario',
+                'name',
+                'nm_pessoa',
+            ], $city),
             'nivel_col' => IeducarColumnInspector::firstExistingColumn($db, $table, ['nivel', 'ref_cod_tipo_usuario', 'tipo_usuario'], $city),
         ];
     }

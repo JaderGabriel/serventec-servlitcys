@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Http\Requests\UpdateUserStatusRequest;
 use App\Models\AdminUserLog;
 use App\Models\User;
+use App\Services\Notifications\NotificationDispatcher;
 use App\Support\Auth\AdminUserAuditLogger;
 use App\Support\Auth\UserCityAccess;
 use App\Support\Auth\UserSessionTerminator;
@@ -17,6 +18,10 @@ use Illuminate\View\View;
 
 class UserController extends Controller
 {
+    public function __construct(
+        private NotificationDispatcher $notifications,
+    ) {}
+
     public function index(): View
     {
         $this->authorize('viewAny', User::class);
@@ -85,6 +90,8 @@ class UserController extends Controller
             'role' => $user->role()->value,
             'city_ids' => $user->cityIds(),
         ], $request);
+
+        $this->notifications->accountCreated($user, $request->user());
 
         return redirect()->route('users.index')->with('success', __('Usuário criado com sucesso.'));
     }
@@ -168,6 +175,18 @@ class UserController extends Controller
             'password_changed' => $passwordChanged,
         ], $request);
 
+        $after = [
+            'name' => $user->name,
+            'username' => $user->username,
+            'email' => $user->email,
+            'role' => $user->role()->value,
+            'is_active' => $user->is_active,
+            'city_ids' => $user->cityIds(),
+        ];
+        $profileChanged = $before !== $after || $passwordChanged;
+        $deactivated = $before['is_active'] && ! $user->is_active;
+        $this->notifications->accountUpdated($user, $request->user(), $deactivated, $profileChanged);
+
         return redirect()->route('users.index')->with('success', __('Utilizador atualizado.'));
     }
 
@@ -212,6 +231,12 @@ class UserController extends Controller
             ['email' => $user->email, 'was_active' => $wasActive],
             $request,
         );
+
+        if ($newIsActive && ! $wasActive) {
+            $this->notifications->accountReactivated($user);
+        } elseif (! $newIsActive && $wasActive) {
+            $this->notifications->accountUpdated($user, $request->user(), true, false);
+        }
 
         $message = $newIsActive
             ? __('Utilizador reativado.')

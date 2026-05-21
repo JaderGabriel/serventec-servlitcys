@@ -69,7 +69,7 @@ final class PublicDataSourcesCatalog
      */
     private static function categoryFundebFnde(string $context): ?array
     {
-        if (! self::matchesContext($context, ['all', 'financeiro', 'compliance', 'other_funding'])) {
+        if (! self::matchesContext($context, ['all', 'financeiro', 'compliance'])) {
             return null;
         }
 
@@ -115,7 +115,7 @@ final class PublicDataSourcesCatalog
      */
     private static function categoryProgramasComplementares(string $context): ?array
     {
-        if (! self::matchesContext($context, ['all', 'financeiro', 'other_funding'])) {
+        if (! self::matchesContext($context, ['all', 'financeiro'])) {
             return null;
         }
 
@@ -159,7 +159,7 @@ final class PublicDataSourcesCatalog
 
     private static function categoryRepasses(string $context, ?string $ibge, ?string $uf): ?array
     {
-        if (! self::matchesContext($context, ['all', 'financeiro', 'other_funding'])) {
+        if (! self::matchesContext($context, ['all', 'financeiro'])) {
             return null;
         }
 

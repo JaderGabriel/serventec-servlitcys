@@ -281,6 +281,9 @@
                                         'healthData' => $municipalityHealthData,
                                         'yearFilterReady' => $yearFilterReady,
                                         'chartExportContext' => $chartExportContext,
+                                        'selectedCity' => $selectedCity,
+                                        'filters' => $filters,
+                                        'pdfExportsRecent' => $pdfExportsRecent ?? [],
                                     ])
                                 @else
                                     <div class="relative min-h-[12rem]" x-ref="panelMunicipalityHealth">

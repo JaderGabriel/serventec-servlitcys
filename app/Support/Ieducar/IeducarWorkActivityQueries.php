@@ -5,7 +5,6 @@ namespace App\Support\Ieducar;
 use App\Models\City;
 use App\Support\Dashboard\IeducarFilterState;
 use Illuminate\Database\Connection;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Carbon;
 
 /**
@@ -117,19 +116,26 @@ final class IeducarWorkActivityQueries
 
         $q->where('m.'.$dateCol, '>=', $since->toDateString());
 
-        $loginExpr = filled($usuario['login_col'] ?? null)
-            ? 'u.'.$usuario['login_col']
-            : "''";
-        $nameExpr = filled($usuario['name_col'] ?? null)
-            ? 'u.'.$usuario['name_col']
-            : "''";
+        $q->selectRaw('u.'.$usuario['id_col'].' as usuario_id');
+        $groupBy = ['u.'.$usuario['id_col']];
+
+        if (filled($usuario['login_col'] ?? null)) {
+            $q->selectRaw('u.'.$usuario['login_col'].' as login');
+            $groupBy[] = 'u.'.$usuario['login_col'];
+        } else {
+            $q->selectRaw("'' as login");
+        }
+
+        if (filled($usuario['name_col'] ?? null)) {
+            $q->selectRaw('u.'.$usuario['name_col'].' as nome');
+            $groupBy[] = 'u.'.$usuario['name_col'];
+        } else {
+            $q->selectRaw("'' as nome");
+        }
 
         $rows = $q
-            ->selectRaw('u.'.$usuario['id_col'].' as usuario_id')
-            ->selectRaw($loginExpr.' as login')
-            ->selectRaw($nameExpr.' as nome')
             ->selectRaw('COUNT(*) as total')
-            ->groupBy('u.'.$usuario['id_col'], $loginExpr, $nameExpr)
+            ->groupBy(...$groupBy)
             ->orderByDesc('total')
             ->limit($limit)
             ->get();
@@ -254,6 +260,165 @@ final class IeducarWorkActivityQueries
             'dias_pessoa_equivalente' => $fteDays,
             'usa_ritmo_observado' => $pace > 0,
         ];
+    }
+
+    /**
+     * Indica se o ano letivo filtrado parece consolidado (Censo fechado/exportado e sem cadastro recente).
+     *
+     * @param  array<string, mixed>  $censo
+     * @param  array{day: int, week: int, fortnight: int}  $periods
+     * @return ?array{consolidated: bool, title: string, message: string, hints: list<string>}
+     */
+    public static function yearClosureInsight(
+        IeducarFilterState $filters,
+        array $censo,
+        array $periods,
+        ?array $anoLetivoRow = null,
+    ): ?array {
+        if (! $filters->hasYearSelected() || $filters->isAllSchoolYears()) {
+            return null;
+        }
+
+        $year = (string) $filters->ano_letivo;
+        $summary = is_array($censo['summary'] ?? null) ? $censo['summary'] : [];
+        $total = (int) ($summary['total_escolas'] ?? 0);
+        $exportadas = (int) ($summary['exportadas'] ?? 0);
+        $fechadas = (int) ($summary['fechadas'] ?? 0);
+        $pendentes = (int) ($summary['pendentes'] ?? 0);
+        $recent = (int) ($periods['day'] ?? 0) + (int) ($periods['week'] ?? 0) + (int) ($periods['fortnight'] ?? 0);
+
+        $hints = [];
+        $censoConsolidated = $total > 0 && $pendentes === 0 && ($exportadas + $fechadas) >= max(1, (int) ceil($total * 0.85));
+        $noRecentCadastro = $recent === 0;
+
+        if (is_array($anoLetivoRow) && ($anoLetivoRow['fechado'] ?? false)) {
+            $hints[] = __('Situação do ano letivo na base i-Educar: :s', ['s' => (string) ($anoLetivoRow['label'] ?? __('fechado'))]);
+        }
+
+        if ($censoConsolidated) {
+            $hints[] = __(':e escola(s) exportada(s) e :f fechada(s) no Educacenso — nenhuma pendente no filtro.', [
+                'e' => number_format($exportadas, 0, ',', '.'),
+                'f' => number_format($fechadas, 0, ',', '.'),
+            ]);
+        }
+
+        if ($noRecentCadastro) {
+            $hints[] = __('Nenhuma matrícula com data de cadastro nos últimos 15 dias (equipa municipal, filtros aplicados).');
+        }
+
+        if (! $censoConsolidated && ! ($anoLetivoRow['fechado'] ?? false)) {
+            return null;
+        }
+
+        if (! $censoConsolidated && ($anoLetivoRow['fechado'] ?? false) && $recent > 0) {
+            return [
+                'consolidated' => false,
+                'title' => __('Ano letivo marcado como fechado na base'),
+                'message' => __(
+                    'O ano :ano consta fechado no i-Educar, mas ainda há cadastros recentes de matrícula — verifique se o fecho é só do Censo ou se a secretaria reabriu alterações.',
+                    ['ano' => $year]
+                ),
+                'hints' => $hints,
+            ];
+        }
+
+        if ($censoConsolidated && $noRecentCadastro) {
+            return [
+                'consolidated' => true,
+                'title' => __('Ano letivo consolidado'),
+                'message' => __(
+                    'O ano letivo :ano está fechado/consolidado no Educacenso e não há cadastros recentes na matrícula. Não se esperam mudanças de cadastro até nova abertura ou reexportação.',
+                    ['ano' => $year]
+                ),
+                'hints' => $hints,
+            ];
+        }
+
+        if (($anoLetivoRow['fechado'] ?? false) && $noRecentCadastro) {
+            return [
+                'consolidated' => true,
+                'title' => __('Ano letivo fechado na base'),
+                'message' => __(
+                    'O ano :ano aparece como fechado no i-Educar e sem movimentação recente de cadastro. Trate o painel como leitura histórica/consolidada.',
+                    ['ano' => $year]
+                ),
+                'hints' => $hints,
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Tenta ler situação do ano letivo na base (tabela ano_letivo ou escola_ano_letivo).
+     *
+     * @return ?array{fechado: bool, label: string}
+     */
+    public static function anoLetivoStatus(Connection $db, City $city, IeducarFilterState $filters): ?array
+    {
+        $year = $filters->yearFilterValue();
+        if ($year === null) {
+            return null;
+        }
+
+        $candidates = config('ieducar.work_tracking.ano_letivo_table_candidates', [
+            'escola_ano_letivo',
+            'ano_letivo',
+            'educacenso_ano_letivo',
+        ]);
+        if (! is_array($candidates)) {
+            $candidates = ['escola_ano_letivo', 'ano_letivo'];
+        }
+
+        foreach ($candidates as $name) {
+            $table = IeducarColumnInspector::findQualifiedTableByNames($db, [(string) $name], $city);
+            if ($table === null) {
+                continue;
+            }
+
+            $yearCol = IeducarColumnInspector::firstExistingColumn($db, $table, [
+                'ano', 'ano_letivo', 'ref_cod_ano_letivo', 'nu_ano',
+            ], $city);
+            $statusCol = IeducarColumnInspector::firstExistingColumn($db, $table, [
+                'situacao', 'andamento', 'situacao_ano_letivo', 'status', 'fechado',
+            ], $city);
+
+            if ($yearCol === null) {
+                continue;
+            }
+
+            $q = $db->table($table)->where($yearCol, $year);
+            if ($statusCol !== null) {
+                $row = $q->select($statusCol.' as st')->limit(1)->first();
+                if ($row === null) {
+                    continue;
+                }
+                $st = strtolower(trim((string) ($row->st ?? '')));
+                $fechado = in_array($st, ['1', 't', 'true', 'fechado', 'encerrado', 'concluido', 'finalizado'], true)
+                    || str_contains($st, 'fech')
+                    || str_contains($st, 'encerr');
+
+                return [
+                    'fechado' => $fechado,
+                    'label' => (string) ($row->st ?? $st),
+                ];
+            }
+
+            $boolCol = IeducarColumnInspector::firstExistingColumn($db, $table, ['fechado', 'encerrado', 'finalizado'], $city);
+            if ($boolCol !== null) {
+                $row = $q->select($boolCol.' as f')->limit(1)->first();
+                if ($row !== null) {
+                    $v = $row->f ?? null;
+
+                    return [
+                        'fechado' => in_array((string) $v, ['1', 't', 'true'], true) || $v === 1 || $v === true,
+                        'label' => $v ? __('fechado') : __('aberto'),
+                    ];
+                }
+            }
+        }
+
+        return null;
     }
 
     private static function countMatriculasSince(

@@ -839,6 +839,33 @@ return [
     */
 
     'other_funding' => [
+        /*
+         * Consultas automáticas a bases públicas na aba Financiamentos (por IBGE/ano).
+         * PORTAL_TRANSPARENCIA_API_KEY: cadastro em portaldatransparencia.gov.br/pagina-api
+         */
+        'public_queries' => [
+            'enabled' => filter_var(env('IEDUCAR_OTHER_FUNDING_PUBLIC_QUERIES', true), FILTER_VALIDATE_BOOL),
+            'cache_ttl_seconds' => max(60, (int) env('IEDUCAR_OTHER_FUNDING_PUBLIC_CACHE_TTL', 3600)),
+            'timeout' => max(5, (int) env('IEDUCAR_OTHER_FUNDING_PUBLIC_TIMEOUT', 12)),
+            'live_fnde_fetch' => filter_var(env('IEDUCAR_OTHER_FUNDING_LIVE_FNDE', false), FILTER_VALIDATE_BOOL),
+            'portal_transparencia' => [
+                'enabled' => filter_var(env('IEDUCAR_PORTAL_TRANSPARENCIA_ENABLED', true), FILTER_VALIDATE_BOOL),
+                'api_key' => (string) env('PORTAL_TRANSPARENCIA_API_KEY', ''),
+                'base_url' => (string) env('IEDUCAR_PORTAL_TRANSPARENCIA_URL', 'https://api.portaldatransparencia.gov.br'),
+                'max_rows' => max(3, (int) env('IEDUCAR_PORTAL_TRANSPARENCIA_MAX_ROWS', 8)),
+                'education_keywords' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+                    'IEDUCAR_PORTAL_TRANSPARENCIA_KEYWORDS',
+                    'educacao,educação,fnde,pnae,pnate,pdde,fundeb,escolar,merenda,transporte escolar'
+                ))))),
+            ],
+            'tesouro_ckan' => [
+                'enabled' => filter_var(env('IEDUCAR_TESOURO_CKAN_ENABLED', true), FILTER_VALIDATE_BOOL),
+                'base_url' => (string) env('IEDUCAR_TESOURO_CKAN_URL', 'https://www.tesourotransparente.gov.br/ckan'),
+                'resource_id' => (string) env('IEDUCAR_TESOURO_TRANSFERENCIAS_RESOURCE_ID', ''),
+                'package_id' => (string) env('IEDUCAR_TESOURO_TRANSFERENCIAS_PACKAGE', 'transferencias-obrigatorias-da-uniao-por-municipio'),
+            ],
+        ],
+
         'programs' => [
             [
                 'id' => 'pnate',
@@ -959,6 +986,10 @@ return [
             'id_usuario_cad',
             'usuario_cad',
         ],
+        'ano_letivo_table_candidates' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'IEDUCAR_WORK_ANO_LETIVO_TABLES',
+            'escola_ano_letivo,ano_letivo,educacenso_ano_letivo'
+        ))))),
     ],
 
     /*

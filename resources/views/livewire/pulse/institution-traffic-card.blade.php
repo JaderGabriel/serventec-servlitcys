@@ -23,29 +23,28 @@
                     <x-pulse::no-results />
                     <p class="mt-2 text-xs italic text-gray-500 dark:text-gray-400">{{ __('Ainda não há dados: use o painel com uma cidade seleccionada (parâmetro city_id) ou rotas de gestão de cidades.') }}</p>
                 @else
-                    <x-pulse::table>
-                        <x-pulse::thead>
-                            <tr>
-                                <x-pulse::th>{{ __('Cidade / ID') }}</x-pulse::th>
-                                <x-pulse::th class="text-right">{{ __('Pedidos') }}</x-pulse::th>
-                            </tr>
-                        </x-pulse::thead>
-                        <tbody>
-                            @foreach ($cityRows as $row)
-                                <tr wire:key="city-{{ $row->city_id }}-{{ $row->city_name }}">
-                                    <x-pulse::td>
-                                        <span class="font-medium text-gray-800 dark:text-gray-100">{{ $row->city_name }}</span>
-                                        @if ($row->city_id > 0)
-                                            <span class="text-xs text-gray-500 dark:text-gray-400">· id {{ $row->city_id }}</span>
-                                        @endif
-                                    </x-pulse::td>
-                                    <x-pulse::td numeric class="font-bold tabular-nums text-gray-700 dark:text-gray-200">
-                                        {{ number_format($row->count) }}
-                                    </x-pulse::td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </x-pulse::table>
+                    @php
+                        $maxCity = max(1, (int) $cityRows->max('count'));
+                    @endphp
+                    <div class="space-y-2">
+                        @foreach ($cityRows->take(15) as $row)
+                            @php
+                                $pct = min(100, round(100 * ($row->count / $maxCity)));
+                            @endphp
+                            <div class="pulse-bar-row" wire:key="inst-bar-{{ $row->city_id }}">
+                                <div class="pulse-bar-row__meta">
+                                    <span class="pulse-bar-row__name">{{ $row->city_name }}</span>
+                                    @if ($row->city_id > 0)
+                                        <span class="text-[10px] text-gray-500 dark:text-gray-400">id {{ $row->city_id }}</span>
+                                    @endif
+                                </div>
+                                <div class="pulse-bar-row__track" aria-hidden="true">
+                                    <div class="pulse-bar-row__fill" style="width: {{ $pct }}%"></div>
+                                </div>
+                                <span class="pulse-bar-row__value">{{ number_format($row->count) }}</span>
+                            </div>
+                        @endforeach
+                    </div>
                 @endif
             </div>
         </div>
