@@ -93,6 +93,10 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(func
         ->name('admin.documentation.index');
     Route::get('/admin/documentacao/ver', [\App\Http\Controllers\Admin\DocumentationController::class, 'show'])
         ->name('admin.documentation.show');
+
+    Route::get('/admin/analytics-diagnostics', \App\Http\Controllers\Admin\AnalyticsDiagnosticsController::class)
+        ->middleware('analytics.diagnostics')
+        ->name('admin.analytics-diagnostics');
 });
 
 require __DIR__.'/auth.php';

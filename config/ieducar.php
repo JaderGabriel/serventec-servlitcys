@@ -1028,14 +1028,22 @@ return [
         'tries' => max(1, (int) env('ADMIN_SYNC_TRIES', 1)),
         /*
          * Processamento via `php artisan schedule:run` (cron a cada SCHEDULE_RUN_INTERVAL_MINUTES).
-         * Por defeito a fila admin-sync corre de hora em hora; Pulse corre na mesma cadência do cron (ex. 3 min).
+         * Por defeito: admin-sync:work 2×/dia (ADMIN_SYNC_SCHEDULE_TIMES) e, entre execuções,
+         * schedule:run dispara o worker quando há jobs/tarefas pendentes (on_demand).
          * Desactive se usar `admin-sync:work` contínuo em Supervisor.
          */
         'schedule' => [
             'enabled' => filter_var(env('ADMIN_SYNC_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
+            'times' => array_values(array_filter(array_map(
+                static fn (string $part): string => trim($part),
+                explode(',', (string) env('ADMIN_SYNC_SCHEDULE_TIMES', '06:00,18:00')),
+            ))),
+            'on_demand' => filter_var(env('ADMIN_SYNC_SCHEDULE_ON_DEMAND', true), FILTER_VALIDATE_BOOL),
+            'on_demand_max_seconds' => max(60, (int) env('ADMIN_SYNC_SCHEDULE_ON_DEMAND_MAX_SECONDS', 900)),
+            /** @deprecated Use ADMIN_SYNC_SCHEDULE_TIMES. Mantido só se `times` estiver vazio. */
             'interval_minutes' => max(1, (int) env('ADMIN_SYNC_SCHEDULE_INTERVAL_MINUTES', 60)),
             'max_seconds' => max(10, (int) env('ADMIN_SYNC_SCHEDULE_MAX_SECONDS', 3300)),
-            'overlap_minutes' => max(1, (int) env('ADMIN_SYNC_SCHEDULE_OVERLAP_MINUTES', 65)),
+            'overlap_minutes' => max(1, (int) env('ADMIN_SYNC_SCHEDULE_OVERLAP_MINUTES', 720)),
         ],
     ],
 

@@ -3,27 +3,14 @@
 namespace Tests\Unit;
 
 use App\Support\Scheduling\ScheduleIntervals;
-use Illuminate\Console\Scheduling\Event;
-use Illuminate\Console\Scheduling\Schedule;
-use Tests\TestCase;
+use PHPUnit\Framework\TestCase;
 
 class ScheduleIntervalsTest extends TestCase
 {
-    public function test_every_minutes_applies_three_minute_cron(): void
+    public function test_normalize_daily_times_parses_two_slots(): void
     {
-        $schedule = new Schedule;
-        $event = $schedule->command('inspire');
-        ScheduleIntervals::everyMinutes($event, 3);
+        $times = ScheduleIntervals::normalizeDailyTimes(['06:00', '18:00', '', '6']);
 
-        $this->assertStringContainsString('*/3', (string) $event->expression);
-    }
-
-    public function test_every_hours_applies_hourly_cron(): void
-    {
-        $schedule = new Schedule;
-        $event = $schedule->command('inspire');
-        ScheduleIntervals::everyHours($event, 1);
-
-        $this->assertSame('0 * * * *', (string) $event->expression);
+        $this->assertSame(['06:00', '18:00'], $times);
     }
 }

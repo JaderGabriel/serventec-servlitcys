@@ -54,6 +54,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Rota de diagnóstico (erro 500 / timeout)
+    |--------------------------------------------------------------------------
+    |
+    | GET /admin/analytics-diagnostics — bateria de testes com debug completo.
+    | Activar em local/staging ou com ANALYTICS_DIAGNOSTICS_FORCE=true.
+    | Opcional: ANALYTICS_DIAGNOSTICS_TOKEN na query ?token=
+    |
+    */
+
+    'diagnostics_route_enabled' => filter_var(env('ANALYTICS_DIAGNOSTICS_FORCE', false), FILTER_VALIDATE_BOOL)
+        || filter_var(env('ANALYTICS_DIAGNOSTICS_ROUTE', false), FILTER_VALIDATE_BOOL),
+
+    'diagnostics_token' => (string) env('ANALYTICS_DIAGNOSTICS_TOKEN', ''),
+
+    'diagnostics_max_step_seconds' => max(30, (int) env('ANALYTICS_DIAGNOSTICS_MAX_STEP_SECONDS', 120)),
+
+    /*
+    |--------------------------------------------------------------------------
     | Resumo financeiro no carregamento inicial do painel
     |--------------------------------------------------------------------------
     |

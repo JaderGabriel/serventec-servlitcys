@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureProfileComplete;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\RecordPulseInstitutionContext;
+use App\Support\Scheduling\AdminSyncScheduleGate;
 use App\Support\Scheduling\ScheduleIntervals;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
+            'analytics.diagnostics' => \App\Http\Middleware\EnsureAnalyticsDiagnostics::class,
             'manage.users' => \App\Http\Middleware\EnsureCanManageUsers::class,
             'profile.complete' => EnsureProfileComplete::class,
         ]);
@@ -64,9 +66,12 @@ return Application::configure(basePath: dirname(__DIR__))
         }
 
         if (config('ieducar.admin_sync.schedule.enabled', true)) {
-            $syncIntervalMinutes = max(1, (int) config('ieducar.admin_sync.schedule.interval_minutes', 60));
+            $timezone = (string) config('app.timezone', 'UTC');
             $maxSeconds = max(10, (int) config('ieducar.admin_sync.schedule.max_seconds', 3300));
-            $overlapMinutes = max(1, (int) config('ieducar.admin_sync.schedule.overlap_minutes', 65));
+            $overlapMinutes = max(1, (int) config('ieducar.admin_sync.schedule.overlap_minutes', 720));
+            $times = ScheduleIntervals::normalizeDailyTimes(
+                config('ieducar.admin_sync.schedule.times', ['06:00', '18:00']),
+            );
 
             $adminSync = $schedule->command('admin-sync:work', [
                 '--stop-when-empty' => true,
@@ -74,12 +79,37 @@ return Application::configure(basePath: dirname(__DIR__))
             ])
                 ->name('admin-sync-scheduled-work')
                 ->withoutOverlapping($overlapMinutes)
+                ->timezone($timezone)
                 ->runInBackground();
 
-            if ($syncIntervalMinutes >= 60) {
-                ScheduleIntervals::everyHours($adminSync, (int) ceil($syncIntervalMinutes / 60));
+            if ($times !== []) {
+                ScheduleIntervals::dailyAtTimes($adminSync, $times);
             } else {
-                ScheduleIntervals::everyMinutes($adminSync, min(59, $syncIntervalMinutes));
+                $syncIntervalMinutes = max(1, (int) config('ieducar.admin_sync.schedule.interval_minutes', 60));
+                if ($syncIntervalMinutes >= 60) {
+                    ScheduleIntervals::everyHours($adminSync, (int) ceil($syncIntervalMinutes / 60));
+                } else {
+                    ScheduleIntervals::everyMinutes($adminSync, min(59, $syncIntervalMinutes));
+                }
+            }
+
+            if (config('ieducar.admin_sync.schedule.on_demand', true)) {
+                $onDemandMax = max(60, (int) config('ieducar.admin_sync.schedule.on_demand_max_seconds', 900));
+                $onDemand = $schedule->call(function () use ($onDemandMax): void {
+                    if (! AdminSyncScheduleGate::hasPendingWork()) {
+                        return;
+                    }
+
+                    Artisan::call('admin-sync:work', [
+                        '--stop-when-empty' => true,
+                        '--max-time' => $onDemandMax,
+                    ]);
+                })
+                    ->name('admin-sync-on-demand')
+                    ->withoutOverlapping(max(10, min(30, $runnerMinutes * 2)))
+                    ->timezone($timezone);
+
+                ScheduleIntervals::everyMinutes($onDemand, $runnerMinutes);
             }
         }
     })

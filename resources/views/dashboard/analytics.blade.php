@@ -140,6 +140,14 @@
                         </details>
                     @endif
 
+                    @if (config('analytics.diagnostics_route_enabled') || app()->environment(['local', 'development']))
+                        <p class="text-xs">
+                            <a href="{{ route('admin.analytics-diagnostics', ['city_id' => $selectedCity->id, 'ano_letivo' => $filters->ano_letivo ?? '2024']) }}" class="serv-link font-medium">
+                                {{ __('Diagnóstico completo de erro 500') }}
+                            </a>
+                        </p>
+                    @endif
+
                     @if (! $yearFilterReady)
                         <div class="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
                             {{ __('Selecione o ano letivo (ou «Todos os anos») e clique em Aplicar filtros para carregar os indicadores e gráficos.') }}
