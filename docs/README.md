@@ -12,7 +12,7 @@ Este ficheiro é o **ponto de entrada** da documentação. Use-o para saber o qu
 |--------|----------------|
 | Gestão / secretaria | [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) → [STATUS_PROJETO.md](STATUS_PROJETO.md) |
 | Desenvolvimento | [STATUS_PROJETO.md](STATUS_PROJETO.md) → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) → [README do repositório](../README.md) |
-| Operações / deploy | [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) → [SEGURANCA.md](SEGURANCA.md) → [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) |
+| Operações / deploy | [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) → [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) → [SEGURANCA.md](SEGURANCA.md) → [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) |
 | Priorização de produto | [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) |
 
 ---
@@ -73,7 +73,8 @@ Os restantes ficheiros são **aprofundamento** por tema. Itens de backlog que ap
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) | Deploy, filas, cron, `.env` produção |
+| [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) | **Referência `.env` em produção** (checklist por secção) |
+| [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) | Deploy, filas, cron |
 | [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) | CLI: geo, SAEB, FUNDEB, sincronizações |
 
 ### Notas de entrega pontuais (arquivo)

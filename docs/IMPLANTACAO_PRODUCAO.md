@@ -1,6 +1,6 @@
 # Implantação em produção — servlitcys
 
-> **Índice:** [README.md](README.md) · Variáveis: [README do repositório](../README.md).
+> **Índice:** [README.md](README.md) · Variáveis de produção: **[VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md)** (editar só `.env` no servidor).
 
 Guia passo a passo para publicar no servidor as alterações recentes (monitorização, notificações, financiamentos, correções de abas e modelo `.env`).
 
@@ -17,7 +17,7 @@ Guia passo a passo para publicar no servidor as alterações recentes (monitoriz
 | **Financiamentos** | Consultas FNDE/Tesouro/Portal Transparência; rótulo «Financiamentos» | Variáveis `PORTAL_TRANSPARENCIA_API_KEY`, cache — ver [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) |
 | **Censo** | Correcção SQL `groupBy` + aviso ano letivo consolidado | Sem migração |
 | **Serventec** | Correcção Blade/AJAX (aba deixava de ficar em branco) | `view:cache` após deploy |
-| **`.env`** | Modelo completo (`.env.example` + secções documentadas) | Actualizar `.env` no servidor |
+| **`.env`** | Checklist em [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) | Editar **apenas** `.env` no servidor (não há `.env.example` em produção) |
 | **Seeder admin** | `AdminUserSeeder` lê `ADMIN_*` do `.env` | Só na 1.ª instalação |
 
 ---
@@ -64,18 +64,22 @@ composer install --no-dev --optimize-autoloader
 
 ### 4.3 Variáveis de ambiente
 
-```bash
-# Se for servidor novo:
-cp .env.example .env
-php artisan key:generate   # só instalação nova — ver nota APP_KEY abaixo
+Em produção existe **apenas** o ficheiro `.env` no servidor. O repositório traz `.env.example` só para instalação nova ou desenvolvimento — **não** o use como referência no deploy de um servidor já em funcionamento.
 
-# Se já existe produção: comparar com .env.example e acrescentar variáveis em falta
-diff -u .env.example .env | less
+**Referência canónica:** [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) — compare secção a secção com o `.env` actual e acrescente o que faltar.
+
+```bash
+# Instalação nova (clone no servidor pela primeira vez):
+cp .env.example .env
+php artisan key:generate   # só neste caso — ver nota APP_KEY abaixo
+
+# Servidor já em produção (caso habitual):
+nano .env   # ou o editor habitual — NÃO sobrescrever com .env.example
 ```
 
 **Crítico — não alterar `APP_KEY` em servidor que já tem cidades cadastradas** (campo `db_password` encriptado no modelo `City`).
 
-Valores mínimos a confirmar ou adicionar:
+Valores mínimos a confirmar ou adicionar (detalhe em [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md)):
 
 ```env
 APP_ENV=production
@@ -89,11 +93,14 @@ QUEUE_CONNECTION=database
 
 APP_NOTIFICATIONS_ENABLED=true
 ANALYTICS_LAZY_TABS=true
+ANALYTICS_INDEX_LIGHT_FILTERS=true
+ANALYTICS_INDEX_LOAD_OVERVIEW=false
 ANALYTICS_PDF_QUEUE=default
 
 ADMIN_SYNC_QUEUE=admin-sync
 ADMIN_SYNC_SCHEDULE_ENABLED=true
-ADMIN_SYNC_SCHEDULE_INTERVAL_MINUTES=60
+ADMIN_SYNC_SCHEDULE_TIMES=06:00,18:00
+ADMIN_SYNC_SCHEDULE_ON_DEMAND=true
 ADMIN_SYNC_SCHEDULE_MAX_SECONDS=3300
 
 SCHEDULE_RUN_INTERVAL_MINUTES=3
@@ -107,7 +114,7 @@ IEDUCAR_OTHER_FUNDING_PUBLIC_QUERIES=true
 PORTAL_TRANSPARENCIA_API_KEY=   # preencher para despesas na aba Financiamentos
 ```
 
-Lista completa: [README.md](../README.md) (tabela de variáveis), [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) (consultas na aba Financiamentos) e [`.env.example`](../.env.example).
+Consultas na aba Financiamentos: [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md). Desenvolvimento local: [README.md](../README.md) e `.env.example`.
 
 Depois de editar o `.env`:
 
@@ -206,7 +213,8 @@ Confirme que o cron do sistema executa o scheduler Laravel:
 Alinhe a expressão cron com `SCHEDULE_RUN_INTERVAL_MINUTES` (defeito **3**). O scheduler inclui (ver `bootstrap/app.php`):
 
 - `pulse:check --once` e `pulse:work --stop-when-empty` — cadência `PULSE_SCHEDULE_INTERVAL_MINUTES` (defeito **3** min)
-- `admin-sync:work --stop-when-empty` — cadência `ADMIN_SYNC_SCHEDULE_INTERVAL_MINUTES` (defeito **60** min / hora em hora)
+- `admin-sync-scheduled-work` — **2×/dia** (`ADMIN_SYNC_SCHEDULE_TIMES`, ex. `06:00,18:00` em `APP_TIMEZONE`)
+- `admin-sync-on-demand` — em cada `schedule:run`, se houver jobs pendentes (`ADMIN_SYNC_SCHEDULE_ON_DEMAND=true`)
 
 ### 4.9 Modo manutenção (se activou)
 

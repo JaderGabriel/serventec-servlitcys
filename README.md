@@ -31,7 +31,9 @@ npm run dev
 
 Noutro terminal: `php artisan serve` (ou use o script `composer run dev` se configurado).
 
-### Variáveis essenciais no `.env`
+**Produção:** edite apenas o `.env` no servidor. Lista completa e checklist de deploy: **[docs/VARIAVEIS_AMBIENTE.md](docs/VARIAVEIS_AMBIENTE.md)** (não copie `.env.example` por cima do `.env` existente).
+
+### Variáveis essenciais no `.env` (desenvolvimento)
 
 | Variável | Descrição |
 |----------|-----------|

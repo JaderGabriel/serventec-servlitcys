@@ -277,7 +277,7 @@ flowchart LR
 | Tesouro: lote limitado sem filtro server-side por IBGE | Documentar; futuro: import CSV nacional ([ROADMAP](ROADMAP_BASES_CALCULOS_FINANCEIROS.md)) |
 | Portal Transparência: paginação e rate limit | Cache TTL; amostra na UI |
 | Confundir estimativa com repasse oficial | Avisos em `IEDUCAR_DISC_AVISO_FINANCEIRO` e `IEDUCAR_FUNDEB_AVISO_PREVISAO` |
-| Chaves API em `.env` | Não commitar; usar `.env.example` como modelo |
+| Chaves API em `.env` | Não commitar; ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) (produção) ou `.env.example` (dev) |
 
 ---
 

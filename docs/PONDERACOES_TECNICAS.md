@@ -169,7 +169,7 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 
 1. Descrever o **risco** da mudança (Censo, VAAR, performance, falso positivo).
 2. Indicar **municípios piloto** e prova em staging (Pulse + query plan se possível).
-3. Actualizar este ficheiro e, se aplicável, `config/ieducar.php` + `.env.example` + [STATUS_PROJETO.md](STATUS_PROJETO.md).
+3. Actualizar este ficheiro e, se aplicável, `config/ieducar.php` + [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) + `.env.example` + [STATUS_PROJETO.md](STATUS_PROJETO.md).
 
 ---
 

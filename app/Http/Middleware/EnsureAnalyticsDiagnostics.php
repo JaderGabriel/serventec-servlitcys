@@ -17,7 +17,9 @@ class EnsureAnalyticsDiagnostics
             || app()->environment(['local', 'development']);
 
         if (! $allowed) {
-            abort(404);
+            abort(403, __(
+                'Diagnóstico analítico desactivado. No .env defina ANALYTICS_DIAGNOSTICS_FORCE=true (ou ANALYTICS_DIAGNOSTICS_ROUTE=true), execute php artisan config:clear e tente de novo. Em produção remova a variável após o diagnóstico.'
+            ));
         }
 
         $expectedToken = (string) config('analytics.diagnostics_token', '');
