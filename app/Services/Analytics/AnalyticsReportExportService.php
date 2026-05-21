@@ -7,6 +7,7 @@ use App\Jobs\GenerateAnalyticsReportPdfJob;
 use App\Models\AnalyticsReportExport;
 use App\Models\City;
 use App\Models\User;
+use App\Services\Notifications\NotificationDispatcher;
 use App\Support\Dashboard\IeducarFilterState;
 use Illuminate\Support\Facades\Storage;
 
@@ -31,6 +32,8 @@ final class AnalyticsReportExportService
         $connection = config('analytics.pdf_report.connection') ?? config('queue.default');
 
         GenerateAnalyticsReportPdfJob::dispatch($export->id);
+
+        app(NotificationDispatcher::class)->pdfExportQueued($export->fresh(['user', 'city']));
 
         return [
             'export' => $export,

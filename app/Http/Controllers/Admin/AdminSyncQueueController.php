@@ -7,6 +7,7 @@ use App\Enums\AnalyticsReportExportStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AdminSyncTask;
 use App\Models\AnalyticsReportExport;
+use App\Services\Notifications\OperationalAlertsNotifier;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -14,8 +15,12 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AdminSyncQueueController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, OperationalAlertsNotifier $operationalAlerts): View
     {
+        if ($request->user()?->canImportOrConfigure()) {
+            $operationalAlerts->notifyAdminsIfNeeded($request->user());
+        }
+
         $status = trim((string) $request->input('status', ''));
         $domain = trim((string) $request->input('domain', ''));
 

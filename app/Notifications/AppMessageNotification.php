@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Support\Notifications\NotificationPayload;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
@@ -13,8 +14,10 @@ use Illuminate\Notifications\Notification;
  *   title: string,
  *   body: string,
  *   icon?: string,
+ *   priority?: string,
  *   action_url?: ?string,
- *   kind?: ?string
+ *   kind?: ?string,
+ *   dedupe_key?: ?string
  * }  $payload
  */
 class AppMessageNotification extends Notification implements ShouldQueue
@@ -22,7 +25,7 @@ class AppMessageNotification extends Notification implements ShouldQueue
     use Queueable;
 
     /**
-     * @param  array{title: string, body: string, icon?: string, action_url?: ?string, kind?: ?string}  $payload
+     * @param  array<string, mixed>  $payload
      */
     public function __construct(
         public array $payload,
@@ -43,12 +46,6 @@ class AppMessageNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
-        return [
-            'title' => (string) ($this->payload['title'] ?? ''),
-            'body' => (string) ($this->payload['body'] ?? ''),
-            'icon' => (string) ($this->payload['icon'] ?? 'info'),
-            'action_url' => filled($this->payload['action_url'] ?? null) ? (string) $this->payload['action_url'] : null,
-            'kind' => filled($this->payload['kind'] ?? null) ? (string) $this->payload['kind'] : null,
-        ];
+        return NotificationPayload::normalize($this->payload);
     }
 }

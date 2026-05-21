@@ -21,19 +21,22 @@ final class AdminHomeMunicipalityMap
      *     status_label: string,
      *     driver: string,
      *     ibge: ?string,
-     *     summary: string,
+     *     is_active: bool,
+     *     implemented_at: ?string,
+     *     implemented_at_label: ?string,
+     *     school_years_url: string,
      *     analytics_url: string
      * }>
      */
     public function markers(): array
     {
         return City::query()
-            ->active()
             ->orderBy('uf')
             ->orderBy('name')
             ->get()
             ->map(function (City $city): array {
-                $ready = $city->hasDataSetup();
+                $hasSetup = $city->hasDataSetup();
+                $isActive = (bool) $city->is_active;
                 [$lat, $lng] = BrazilUfCentroids::latLng(
                     (string) $city->uf,
                     (int) $city->id,
@@ -43,10 +46,21 @@ final class AdminHomeMunicipalityMap
                     ? 'PostgreSQL'
                     : 'MySQL';
 
-                $status = $ready ? 'ready' : 'incomplete';
-                $statusLabel = $ready
-                    ? __('Base configurada')
-                    : __('Credenciais incompletas');
+                $status = match (true) {
+                    $isActive && $hasSetup => 'ready',
+                    $isActive && ! $hasSetup => 'incomplete',
+                    ! $isActive && $hasSetup => 'inactive_setup',
+                    default => 'inactive',
+                };
+
+                $statusLabel = match ($status) {
+                    'ready' => __('Activo · base configurada'),
+                    'incomplete' => __('Activo · credenciais incompletas'),
+                    'inactive_setup' => __('Inactivo · base configurada'),
+                    default => __('Inactivo'),
+                };
+
+                $implementedAt = $city->created_at;
 
                 return [
                     'id' => (int) $city->id,
@@ -58,12 +72,10 @@ final class AdminHomeMunicipalityMap
                     'status_label' => $statusLabel,
                     'driver' => $driver,
                     'ibge' => filled($city->ibge_municipio) ? (string) $city->ibge_municipio : null,
-                    'summary' => implode(' · ', array_filter([
-                        $city->name.' / '.$city->uf,
-                        $driver,
-                        $statusLabel,
-                        filled($city->ibge_municipio) ? 'IBGE '.$city->ibge_municipio : null,
-                    ])),
+                    'is_active' => $isActive,
+                    'implemented_at' => $implementedAt?->toIso8601String(),
+                    'implemented_at_label' => $implementedAt?->format('d/m/Y'),
+                    'school_years_url' => route('dashboard.municipality-map.school-years', $city),
                     'analytics_url' => route('dashboard.analytics', ['city_id' => $city->id]),
                 ];
             })

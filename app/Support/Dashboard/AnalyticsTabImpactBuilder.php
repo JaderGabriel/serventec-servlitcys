@@ -75,6 +75,17 @@ final class AnalyticsTabImpactBuilder
         $perda = (float) ($ctx['perda_estimada_anual'] ?? 0);
         $ganho = (float) ($ctx['ganho_potencial_anual'] ?? 0);
         $liquido = (float) ($ctx['saldo_liquido'] ?? ($ganho - $perda));
+        $saldoFootnote = __('VAAF municipal × pesos Discrepâncias — não é repasse oficial.');
+
+        if ($tab === 'network') {
+            $networkSaldo = self::saldoFromNetworkOffer($tabData);
+            if ($networkSaldo !== null) {
+                $perda = $networkSaldo['perda'];
+                $ganho = $networkSaldo['ganho'];
+                $liquido = $networkSaldo['liquido'];
+                $saldoFootnote = $networkSaldo['footnote'];
+            }
+        }
 
         return [
             'ready' => true,
@@ -100,6 +111,7 @@ final class AnalyticsTabImpactBuilder
                 'liquido' => $liquido,
                 'liquido_fmt' => AnalyticsMunicipalityContext::formatSaldo($liquido),
                 'liquido_tone' => $liquido >= 0 ? 'success' : 'danger',
+                'footnote' => $saldoFootnote,
                 'tab_share_label' => $tabStatus['share_label'],
                 'tab_share_value' => $tabStatus['share_value'],
             ],
@@ -270,6 +282,45 @@ final class AnalyticsTabImpactBuilder
             'score' => $score,
             'share_label' => __('Impacto Censo/VAAR'),
             'share_value' => $pct >= 15 ? __('Elevado') : ($pct >= 8 ? __('Moderado') : __('Baixo')),
+        ];
+    }
+
+    /**
+     * Impacto indicativo da ociosidade (vagas × VAAF × peso), alinhado a Discrepâncias «rede_vagas_ociosas».
+     *
+     * @param  array<string, mixed>  $tabData
+     * @return array{perda: float, ganho: float, liquido: float, footnote: string}|null
+     */
+    private static function saldoFromNetworkOffer(array $tabData): ?array
+    {
+        $data = self::tabPayload($tabData, 'network');
+        $k = is_array($data['kpis'] ?? null) ? $data['kpis'] : [];
+        $vagas = (int) ($k['vagas_ociosas'] ?? 0);
+
+        if ($vagas <= 0) {
+            return null;
+        }
+
+        $funding = DiscrepanciesFundingImpact::estimate('rede_vagas_ociosas', $vagas);
+        $perda = (float) $funding['perda_anual'];
+        $ganho = (float) $funding['ganho_potencial_anual'];
+        $liquido = round($ganho - $perda, 2);
+        $taxa = ($k['taxa_ociosidade_pct'] ?? null) !== null
+            ? number_format((float) $k['taxa_ociosidade_pct'], 1, ',', '.').'%'
+            : '—';
+
+        return [
+            'perda' => $perda,
+            'ganho' => $ganho,
+            'liquido' => $liquido,
+            'footnote' => __(
+                ':vagas vagas ociosas × VAAF × peso :peso (taxa de ociosidade :taxa). Eficiência da oferta — não é repasse FNDE.',
+                [
+                    'vagas' => number_format($vagas, 0, ',', '.'),
+                    'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
+                    'taxa' => $taxa,
+                ]
+            ),
         ];
     }
 

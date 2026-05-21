@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\NotificationPriority;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Notifications\AppMessageNotification;
@@ -33,12 +34,27 @@ final class NotificationControllerTest extends TestCase
             'body' => 'Corpo',
             'icon' => 'info',
             'kind' => 'test',
+            'priority' => NotificationPriority::Normal->value,
+        ]));
+
+        $user->notify(new AppMessageNotification([
+            'title' => 'Crítico',
+            'body' => 'Atenção',
+            'icon' => 'error',
+            'priority' => NotificationPriority::Critical->value,
         ]));
 
         $this->actingAs($user)
             ->getJson(route('notifications.index'))
             ->assertOk()
-            ->assertJsonPath('unread_count', 1)
+            ->assertJsonPath('unread_count', 2)
+            ->assertJsonPath('critical_unread_count', 1)
+            ->assertJsonCount(2, 'items')
+            ->assertJsonPath('items.0.is_critical', true);
+
+        $this->actingAs($user)
+            ->getJson(route('notifications.index', ['critical' => 1]))
+            ->assertOk()
             ->assertJsonCount(1, 'items');
 
         $id = $user->unreadNotifications->first()->id;
@@ -46,7 +62,8 @@ final class NotificationControllerTest extends TestCase
         $this->actingAs($user)
             ->postJson(route('notifications.read', ['id' => $id]))
             ->assertOk()
-            ->assertJsonPath('unread_count', 0);
+            ->assertJsonPath('unread_count', 0)
+            ->assertJsonPath('critical_unread_count', 0);
 
         $this->assertSame(0, $user->fresh()->unreadNotifications()->count());
     }

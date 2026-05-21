@@ -108,4 +108,31 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         $this->assertStringContainsString('Erro', $strip['status_label']);
         $this->assertNotEmpty($strip['status_issues']);
     }
+
+    public function test_network_strip_uses_idle_vacancies_for_saldo_when_discrepancies_zero(): void
+    {
+        $ctx = AnalyticsMunicipalityContext::fromFundingSnapshot([
+            'summary' => [
+                'perda_estimada_anual' => 0.0,
+                'ganho_potencial_anual' => 0.0,
+            ],
+        ], []);
+
+        $strip = AnalyticsTabImpactBuilder::build('network', true, $ctx, [
+            'networkData' => [
+                'kpis' => [
+                    'vagas_ociosas' => 100,
+                    'taxa_ociosidade_pct' => 12.5,
+                    'capacidade_total' => 800,
+                    'matriculas' => 700,
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($strip['ready']);
+        $this->assertGreaterThan(0.0, $strip['saldo']['perda']);
+        $this->assertGreaterThan(0.0, $strip['saldo']['ganho']);
+        $this->assertStringContainsString('vagas ociosas', (string) ($strip['saldo']['footnote'] ?? ''));
+        $this->assertSame('100', $strip['saldo']['tab_share_value']);
+    }
 }

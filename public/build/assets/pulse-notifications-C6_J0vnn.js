@@ -1,1 +1,0 @@
-import{n as e,t}from"./scroll-to-top-BRvIHkcG.js";function n(){let n=window.Alpine;n&&(e(n),t(n),typeof n.initTree==`function`&&document.querySelectorAll(`[x-data*="notificationBell"], [x-data*="scrollToTop"]`).forEach(e=>n.initTree(e)))}document.addEventListener(`alpine:init`,n),document.readyState===`loading`?document.addEventListener(`DOMContentLoaded`,n):n();

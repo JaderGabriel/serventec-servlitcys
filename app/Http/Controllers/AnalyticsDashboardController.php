@@ -17,6 +17,7 @@ use App\Repositories\Ieducar\SchoolUnitsRepository;
 use App\Repositories\Ieducar\WorkDoneRepository;
 use App\Services\Analytics\AnalyticsReportExportService;
 use App\Services\Ieducar\FilterOptionsService;
+use App\Services\Notifications\NotificationDispatcher;
 use App\Support\Auth\UserCityAccess;
 use App\Support\Dashboard\AnalyticsEmptyPayloads;
 use App\Support\Dashboard\AnalyticsLoadProfiler;
@@ -78,7 +79,7 @@ class AnalyticsDashboardController extends Controller
                 ->first();
         }
 
-        $profiler = new AnalyticsLoadProfiler();
+        $profiler = new AnalyticsLoadProfiler;
         $analyticsDebugEnabled = AnalyticsLoadProfiler::enabled() || (bool) config('app.debug');
         $indexLightFilters = (bool) config('analytics.index_light_filters', true);
 
@@ -559,7 +560,7 @@ class AnalyticsDashboardController extends Controller
         $tabWarnings = [];
 
         try {
-            return $this->renderAnalyticsTabPartial(
+            $response = $this->renderAnalyticsTabPartial(
                 $tab,
                 $request,
                 $city,
@@ -580,6 +581,17 @@ class AnalyticsDashboardController extends Controller
                 $pdfExportService,
                 $tabWarnings,
             );
+
+            if ($tabWarnings !== [] && $request->user() !== null) {
+                app(NotificationDispatcher::class)->analyticsTabPartialWarnings(
+                    $request->user(),
+                    $city,
+                    $tab,
+                    $tabWarnings,
+                );
+            }
+
+            return $response;
         } catch (Throwable $e) {
             Log::error('analytics.tab_partial_failed', [
                 'tab' => $tab,
@@ -912,7 +924,7 @@ class AnalyticsDashboardController extends Controller
         $this->authorize('viewAnalytics', $city);
 
         $filters = IeducarFilterState::fromRequest($request);
-        $profiler = new AnalyticsLoadProfiler();
+        $profiler = new AnalyticsLoadProfiler;
 
         try {
             $payload = $profiler->measure('bootstrap', fn () => $filterOptionsService->loadBootstrap(

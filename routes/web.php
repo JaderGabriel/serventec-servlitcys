@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminConnectionsController;
 use App\Http\Controllers\Admin\AdminSyncQueueController;
+use App\Http\Controllers\Admin\AnalyticsDiagnosticsController;
 use App\Http\Controllers\Admin\ArtisanCommandsController;
+use App\Http\Controllers\Admin\DocumentationController;
 use App\Http\Controllers\Admin\GeoSyncController;
 use App\Http\Controllers\Admin\IeducarCompatibilityController;
 use App\Http\Controllers\Admin\PedagogicalSyncController;
@@ -9,6 +12,7 @@ use App\Http\Controllers\AnalyticsDashboardController;
 use App\Http\Controllers\AnalyticsReportExportController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DashboardMunicipalityMapController;
 use App\Http\Controllers\DiscrepanciesExportController;
 use App\Http\Controllers\FirstAccessProfileController;
 use App\Http\Controllers\MailSettingsController;
@@ -30,6 +34,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/municipality-map/{city}/school-years', [DashboardMunicipalityMapController::class, 'schoolYears'])
+        ->name('dashboard.municipality-map.school-years');
     Route::get('/dashboard/analytics', [AnalyticsDashboardController::class, 'index'])->name('dashboard.analytics');
     Route::get('/dashboard/analytics/tab', [AnalyticsDashboardController::class, 'tabPartial'])->name('dashboard.analytics.tab');
     Route::get('/dashboard/analytics/filter-options', [AnalyticsDashboardController::class, 'filterOptions'])->name('dashboard.analytics.filter-options');
@@ -89,15 +95,15 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(func
     Route::get('/admin/sync-queue/{task}', [AdminSyncQueueController::class, 'show'])->name('admin.sync-queue.show');
     Route::get('/admin/sync-queue/{task}/download', [AdminSyncQueueController::class, 'download'])->name('admin.sync-queue.download');
 
-    Route::get('/admin/conexoes', [\App\Http\Controllers\Admin\AdminConnectionsController::class, 'index'])
+    Route::get('/admin/conexoes', [AdminConnectionsController::class, 'index'])
         ->name('admin.connections.index');
 
-    Route::get('/admin/documentacao', [\App\Http\Controllers\Admin\DocumentationController::class, 'index'])
+    Route::get('/admin/documentacao', [DocumentationController::class, 'index'])
         ->name('admin.documentation.index');
-    Route::get('/admin/documentacao/ver', [\App\Http\Controllers\Admin\DocumentationController::class, 'show'])
+    Route::get('/admin/documentacao/ver', [DocumentationController::class, 'show'])
         ->name('admin.documentation.show');
 
-    Route::get('/admin/analytics-diagnostics', \App\Http\Controllers\Admin\AnalyticsDiagnosticsController::class)
+    Route::get('/admin/analytics-diagnostics', AnalyticsDiagnosticsController::class)
         ->middleware('analytics.diagnostics')
         ->name('admin.analytics-diagnostics');
 });

@@ -17,9 +17,12 @@ final class AdminSystemFlowStatus
 
     /**
      * @return array{
+     *     summary: array{status: string, label: string, detail: string},
+     *     zones: list<array{id: string, title: string, description: string}>,
      *     nodes: list<array<string, mixed>>,
      *     edges: list<array<string, mixed>>,
-     *     legend: list<array{status: string, label: string}>
+     *     outputs: list<array{label: string, description: string, route: string}>,
+     *     legend: list<array{status: string, label: string, description: string}>
      * }
      */
     public function diagram(int $citiesReady, int $citiesActive): array
@@ -44,34 +47,41 @@ final class AdminSystemFlowStatus
             filter_var(config('ieducar.other_funding.public_queries.tesouro_ckan.enabled'), FILTER_VALIDATE_BOOL),
             __('CKAN Tesouro Transparente'),
         );
-        $arcgis = $this->configStatus(true, __('ArcGIS / catálogo INEP (geocodificação)'));
+        $arcgis = $this->configStatus(
+            true,
+            __('ArcGIS / catálogo INEP (geocodificação)'),
+        );
 
         $hub = [
             'id' => 'servlitcys',
             'label' => config('app.name'),
-            'sublabel' => __('Consultoria municipal'),
+            'sublabel' => __('Motor de consultoria'),
             'status' => 'ok',
-            'hint' => __('Agrega dados locais e públicos por município'),
+            'hint' => __('Cruza cadastro municipal com referências federais e INEP por cidade/ano.'),
             'row' => 'hub',
+            'zone' => 'platform',
         ];
 
         $nodes = [
             [
                 'id' => 'ieducar',
                 'label' => __('i-Educar'),
-                'sublabel' => __('BD municipal'),
+                'sublabel' => __('PostgreSQL / MySQL'),
                 'status' => $ieducar['status'],
                 'hint' => $ieducar['hint'],
                 'metric' => $ieducar['metric'],
-                'row' => 'sources',
+                'metric_label' => __('Municípios prontos'),
+                'row' => 'municipal',
+                'zone' => 'municipal',
             ],
             [
                 'id' => 'fnde',
                 'label' => __('FNDE'),
-                'sublabel' => __('FUNDEB / VAAT'),
+                'sublabel' => __('FUNDEB · VAAT'),
                 'status' => $fnde['status'],
                 'hint' => $fnde['hint'],
-                'row' => 'externals',
+                'row' => 'external',
+                'zone' => 'external',
             ],
             [
                 'id' => 'inep',
@@ -79,15 +89,17 @@ final class AdminSystemFlowStatus
                 'sublabel' => __('SAEB · IDEB'),
                 'status' => $inep['status'],
                 'hint' => $inep['hint'],
-                'row' => 'externals',
+                'row' => 'external',
+                'zone' => 'external',
             ],
             [
                 'id' => 'portal',
                 'label' => __('Transparência'),
-                'sublabel' => __('Despesas federais'),
+                'sublabel' => __('Portal federal'),
                 'status' => $portal['status'],
                 'hint' => $portal['hint'],
-                'row' => 'externals',
+                'row' => 'external',
+                'zone' => 'external',
             ],
             [
                 'id' => 'tesouro',
@@ -95,36 +107,131 @@ final class AdminSystemFlowStatus
                 'sublabel' => __('Transferências'),
                 'status' => $tesouro['status'],
                 'hint' => $tesouro['hint'],
-                'row' => 'externals',
+                'row' => 'external',
+                'zone' => 'external',
             ],
             [
                 'id' => 'arcgis',
                 'label' => __('INEP / ArcGIS'),
-                'sublabel' => __('Escolas · geo'),
+                'sublabel' => __('Geografia escolar'),
                 'status' => $arcgis['status'],
                 'hint' => $arcgis['hint'],
-                'row' => 'externals',
+                'row' => 'external',
+                'zone' => 'external',
             ],
             $hub,
         ];
 
         $edges = [
-            $this->edge('ieducar', 'servlitcys', $ieducar['status'], __('Cadastro, matrículas, Censo')),
-            $this->edge('fnde', 'servlitcys', $fnde['status'], __('VAAF · repasses')),
-            $this->edge('inep', 'servlitcys', $inep['status'], __('Desempenho · SAEB')),
-            $this->edge('portal', 'servlitcys', $portal['status'], __('Financiamentos')),
-            $this->edge('tesouro', 'servlitcys', $tesouro['status'], __('Financiamentos')),
-            $this->edge('arcgis', 'servlitcys', 'ok', __('Mapa de unidades')),
+            $this->edge('ieducar', 'servlitcys', $ieducar['status'], __('Matrículas, turmas, Censo'), true),
+            $this->edge('fnde', 'servlitcys', $fnde['status'], __('VAAF e repasses indicativos')),
+            $this->edge('inep', 'servlitcys', $inep['status'], __('Desempenho e SAEB')),
+            $this->edge('portal', 'servlitcys', $portal['status'], __('Programas e despesas')),
+            $this->edge('tesouro', 'servlitcys', $tesouro['status'], __('Financiamentos complementares')),
+            $this->edge('arcgis', 'servlitcys', 'ok', __('Mapa e catálogo de escolas')),
         ];
 
+        $statuses = array_merge(
+            [$ieducar['status']],
+            array_column(array_filter($nodes, fn (array $n): bool => ($n['zone'] ?? '') === 'external'), 'status'),
+        );
+        $summary = $this->buildSummary($statuses, $citiesReady, $citiesActive);
+
         return [
+            'summary' => $summary,
+            'zones' => [
+                [
+                    'id' => 'external',
+                    'title' => __('1 · Fontes públicas e federais'),
+                    'description' => __('APIs e bases abertas consultadas por município — não substituem o cadastro local.'),
+                ],
+                [
+                    'id' => 'platform',
+                    'title' => __('2 · Plataforma de consultoria'),
+                    'description' => __('Agrega, valida e expõe indicadores no painel analítico e relatórios.'),
+                ],
+                [
+                    'id' => 'municipal',
+                    'title' => __('3 · Base municipal (i-Educar)'),
+                    'description' => __('Fonte de verdade do cadastro: matrículas, turmas, Censo e rotinas de discrepância.'),
+                ],
+            ],
             'nodes' => $nodes,
             'edges' => $edges,
-            'legend' => [
-                ['status' => 'ok', 'label' => __('Ligação activa')],
-                ['status' => 'partial', 'label' => __('Parcial / configurar')],
-                ['status' => 'off', 'label' => __('Indisponível')],
+            'outputs' => [
+                [
+                    'label' => __('Consultoria municipal'),
+                    'description' => __('Painel por município/ano'),
+                    'route' => 'dashboard.analytics',
+                ],
+                [
+                    'label' => __('Relatório PDF'),
+                    'description' => __('Exportação Serventec em fila'),
+                    'route' => 'admin.sync-queue.index',
+                ],
+                [
+                    'label' => __('Filas e sync'),
+                    'description' => __('Geo, FUNDEB, pedagógico'),
+                    'route' => 'admin.sync-queue.index',
+                ],
+                [
+                    'label' => __('Monitorização'),
+                    'description' => __('Pulse e diagnóstico'),
+                    'route' => 'pulse',
+                ],
             ],
+            'legend' => [
+                [
+                    'status' => 'ok',
+                    'label' => __('Operacional'),
+                    'description' => __('Integração activa; dados ou ligação disponíveis para o recorte actual.'),
+                ],
+                [
+                    'status' => 'partial',
+                    'label' => __('A configurar'),
+                    'description' => __('Chaves no .env em falta ou apenas parte dos municípios com base pronta.'),
+                ],
+                [
+                    'status' => 'off',
+                    'label' => __('Indisponível'),
+                    'description' => __('Sem município activo, ligação remota falhou ou fonte desactivada.'),
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @param  list<string>  $statuses
+     * @return array{status: string, label: string, detail: string}
+     */
+    private function buildSummary(array $statuses, int $ready, int $active): array
+    {
+        $hasOff = in_array('off', $statuses, true);
+        $hasPartial = in_array('partial', $statuses, true);
+
+        if ($hasOff || ($active > 0 && $ready === 0)) {
+            return [
+                'status' => 'off',
+                'label' => __('Integrações com bloqueio'),
+                'detail' => __('Revise credenciais i-Educar ou municípios activos antes de auditar repasses.'),
+            ];
+        }
+
+        if ($hasPartial) {
+            return [
+                'status' => 'partial',
+                'label' => __('Operação parcial'),
+                'detail' => __(':ready de :active município(s) prontos; complete .env ou bases em falta.', [
+                    'ready' => number_format($ready),
+                    'active' => number_format($active),
+                ]),
+            ];
+        }
+
+        return [
+            'status' => 'ok',
+            'label' => __('Fluxo operacional'),
+            'detail' => __('Fontes alinhadas ao painel. Use Consultoria para validar cada município/ano.'),
         ];
     }
 
@@ -136,8 +243,8 @@ final class AdminSystemFlowStatus
         if ($active === 0) {
             return [
                 'status' => 'off',
-                'hint' => __('Nenhum município activo cadastrado'),
-                'metric' => '0',
+                'hint' => __('Cadastre e active municípios em Cidades.'),
+                'metric' => '0 / 0',
             ];
         }
 
@@ -145,15 +252,14 @@ final class AdminSystemFlowStatus
 
         $status = match (true) {
             $ready === $active && $probe === 'ok' => 'ok',
-            $ready > 0 && $probe !== 'fail' => 'partial',
             $ready > 0 => 'partial',
             default => 'off',
         };
 
         $hint = match ($probe) {
-            'ok' => __('Amostra: ligação remota OK'),
-            'fail' => __('Amostra: falha na ligação remota'),
-            default => __('Sem teste recente de ligação'),
+            'ok' => __('Teste de ligação remota: OK (amostra)'),
+            'fail' => __('Teste de ligação remota: falhou — ver Conexões i-Educar'),
+            default => __('Ligação não testada recentemente'),
         };
 
         return [
@@ -185,21 +291,22 @@ final class AdminSystemFlowStatus
         return [
             'status' => $configured ? 'ok' : 'partial',
             'hint' => $configured
-                ? __('Integração configurada')
-                : __('Configurar no .env — :label', ['label' => $label]),
+                ? __('Variáveis configuradas no ambiente')
+                : __('Definir no .env: :label', ['label' => $label]),
         ];
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function edge(string $from, string $to, string $status, string $label): array
+    private function edge(string $from, string $to, string $status, string $label, bool $bidirectional = false): array
     {
         return [
             'from' => $from,
             'to' => $to,
             'status' => $status,
             'label' => $label,
+            'bidirectional' => $bidirectional,
         ];
     }
 }

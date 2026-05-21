@@ -107,17 +107,9 @@ final class MatriculaChartQueries
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
 
-            $spec = self::escolaJoinSpec($db, $city);
-            if ($spec !== null) {
-                ['qualified' => $escola, 'idCol' => $eId] = $spec;
-                $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
-                $q->join($escola.' as e', function ($join) use ($db, $tEsc, $ePk) {
-                    if ($db->getDriverName() === 'pgsql') {
-                        $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
-                    } else {
-                        $join->whereRaw('CAST('.$tEsc.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
-                    }
-                });
+            $joinSpec = EscolaTurmaJoin::joinTurmaEscolaFk($q, $db, $city, 't_filter', 'e');
+            if ($joinSpec !== null) {
+                $eId = $joinSpec['idCol'];
                 $q->whereIn('e.'.$eId, $eids);
                 $q->selectRaw('e.'.$eId.' as eid')
                     ->selectRaw('COUNT(*) as c')
@@ -603,23 +595,17 @@ final class MatriculaChartQueries
                 return null;
             }
 
-            $grammar = $db->getQueryGrammar();
-            $tEsc = $grammar->wrap('t_filter').'.'.$grammar->wrap($refEscola);
-            $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
-
             $q = $db->table($mat.' as m');
             MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
-            $q->join($escola.' as e', function ($join) use ($db, $tEsc, $ePk) {
-                if ($db->getDriverName() === 'pgsql') {
-                    $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
-                } else {
-                    $join->whereRaw('CAST('.$tEsc.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
-                }
-            })
-                ->selectRaw('e.'.$eId.' as eid')
+            $joinSpec = EscolaTurmaJoin::joinTurmaEscolaFk($q, $db, $city, 't_filter', 'e');
+            if ($joinSpec === null) {
+                return self::matriculasPorEscolaGroupedRowsEscolaIdOnly($db, $city, $filters, $sqlLimit);
+            }
+            $eId = $joinSpec['idCol'];
+            $q->selectRaw('e.'.$eId.' as eid')
                 ->selectRaw('MAX(e.'.$eName.') as ename')
                 ->selectRaw('COUNT(*) as cnt')
                 ->groupBy('e.'.$eId)
@@ -1253,13 +1239,24 @@ final class MatriculaChartQueries
                 MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
                 MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
                 MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['turno'], $filters->turno_id);
-                $q->whereIn('t.'.$tc['escola'], $eids);
 
-                $rows = $q->select([
-                    't.'.$tId.' as tid',
-                    't.'.$maxCol.' as cap',
-                    't.'.$tc['escola'].' as eid',
-                ])->get();
+                $joinSpec = EscolaTurmaJoin::joinTurmaEscolaFk($q, $db, $city, 't', 'e_cap');
+                if ($joinSpec !== null) {
+                    $ePkCol = $joinSpec['idCol'];
+                    $q->whereIn('e_cap.'.$ePkCol, $eids);
+                    $rows = $q->select([
+                        't.'.$tId.' as tid',
+                        't.'.$maxCol.' as cap',
+                        'e_cap.'.$ePkCol.' as eid',
+                    ])->get();
+                } else {
+                    $q->whereIn('t.'.$tc['escola'], $eids);
+                    $rows = $q->select([
+                        't.'.$tId.' as tid',
+                        't.'.$maxCol.' as cap',
+                        't.'.$tc['escola'].' as eid',
+                    ])->get();
+                }
             } else {
                 $mat = IeducarSchema::resolveTable('matricula', $city);
                 $mEsc = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
@@ -1308,7 +1305,9 @@ final class MatriculaChartQueries
                 $out[$eid]['vagas_disponiveis'] += $vac;
             }
         } catch (QueryException|\Throwable) {
-            return [];
+            foreach ($eids as $eid) {
+                $out[$eid] = ['capacidade_declarada' => 0, 'vagas_disponiveis' => 0];
+            }
         }
 
         return $out;
@@ -3687,17 +3686,12 @@ final class MatriculaChartQueries
      */
     private static function escolaJoinSpec(Connection $db, City $city): ?array
     {
-        $qualified = IeducarSchema::resolveTable('escola', $city);
-        if (! IeducarColumnInspector::tableExists($db, $qualified, $city)) {
+        $pk = EscolaTurmaJoin::pkSpec($db, $city);
+        if ($pk === null) {
             return null;
         }
 
-        $idCol = IeducarColumnInspector::firstExistingColumn($db, $qualified, array_filter([
-            (string) config('ieducar.columns.escola.id'),
-            'cod_escola',
-            'id',
-        ]), $city);
-        $nameCol = IeducarColumnInspector::firstExistingColumn($db, $qualified, array_filter([
+        $nameCol = IeducarColumnInspector::firstExistingColumn($db, $pk['qualified'], array_filter([
             (string) config('ieducar.columns.escola.name'),
             'nome',
             'nm_escola',
@@ -3706,11 +3700,15 @@ final class MatriculaChartQueries
             'sigla',
         ]), $city);
 
-        if ($idCol === null || $nameCol === null) {
+        if ($nameCol === null) {
             return null;
         }
 
-        return ['qualified' => $qualified, 'idCol' => $idCol, 'nameCol' => $nameCol];
+        return [
+            'qualified' => $pk['qualified'],
+            'idCol' => $pk['idCol'],
+            'nameCol' => $nameCol,
+        ];
     }
 
     /**

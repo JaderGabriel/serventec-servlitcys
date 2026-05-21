@@ -9,6 +9,7 @@ use App\Services\Inep\InepCatalogoEscolasGeoService;
 use App\Services\Inep\InepCensoEscolaGeoAggService;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\EscolaSubstatusResolver;
+use App\Support\Ieducar\EscolaTurmaJoin;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\MatriculaAtivoFilter;
@@ -383,7 +384,8 @@ class SchoolUnitsRepository
             $mat = IeducarSchema::resolveTable('matricula', $city);
             $mAtivo = (string) config('ieducar.columns.matricula.ativo');
             $escolaT = IeducarSchema::resolveTable('escola', $city);
-            $eId = (string) config('ieducar.columns.escola.id');
+            $pk = EscolaTurmaJoin::pkSpec($db, $city);
+            $eId = $pk['idCol'] ?? (string) config('ieducar.columns.escola.id');
             $en = $this->escolaNomeSql($db, $city, 'e', $eId);
             $eActive = IeducarColumnInspector::firstExistingColumn($db, $escolaT, array_filter([
                 (string) config('ieducar.columns.escola.active'),
@@ -399,7 +401,12 @@ class SchoolUnitsRepository
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
 
             $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
-            $q->join($escolaT.' as e', 't_filter.'.$tc['escola'], '=', 'e.'.$eId);
+            $joinSpec = EscolaTurmaJoin::joinTurmaEscolaFk($q, $db, $city, 't_filter', 'e');
+            if ($joinSpec === null) {
+                $q->join($escolaT.' as e', 't_filter.'.$tc['escola'], '=', 'e.'.$eId);
+            } else {
+                $eId = $joinSpec['idCol'];
+            }
             if ($subSpec !== null) {
                 EscolaSubstatusResolver::applyLeftJoinCatalog($q, $db, 'e', 'ssub', $subSpec);
             }
@@ -555,7 +562,8 @@ class SchoolUnitsRepository
             $mat = IeducarSchema::resolveTable('matricula', $city);
             $mAtivo = (string) config('ieducar.columns.matricula.ativo');
             $escolaT = IeducarSchema::resolveTable('escola', $city);
-            $eId = (string) config('ieducar.columns.escola.id');
+            $pk = EscolaTurmaJoin::pkSpec($db, $city);
+            $eId = $pk['idCol'] ?? (string) config('ieducar.columns.escola.id');
             $en = $this->escolaNomeSql($db, $city, 'e', $eId);
 
             $latCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
@@ -575,7 +583,12 @@ class SchoolUnitsRepository
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
 
             $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
-            $q->join($escolaT.' as e', 't_filter.'.$tc['escola'], '=', 'e.'.$eId);
+            $joinSpec = EscolaTurmaJoin::joinTurmaEscolaFk($q, $db, $city, 't_filter', 'e');
+            if ($joinSpec === null) {
+                $q->join($escolaT.' as e', 't_filter.'.$tc['escola'], '=', 'e.'.$eId);
+            } else {
+                $eId = $joinSpec['idCol'];
+            }
 
             if ($filters->escola_id !== null) {
                 $q->where('e.'.$eId, (int) $filters->escola_id);
@@ -613,7 +626,8 @@ class SchoolUnitsRepository
     {
         try {
             $escolaT = IeducarSchema::resolveTable('escola', $city);
-            $eId = (string) config('ieducar.columns.escola.id');
+            $pk = EscolaTurmaJoin::pkSpec($db, $city);
+            $eId = $pk['idCol'] ?? (string) config('ieducar.columns.escola.id');
             $en = $this->escolaNomeSql($db, $city, 'e', $eId);
 
             $latCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
@@ -1107,7 +1121,8 @@ class SchoolUnitsRepository
         }
         try {
             $escolaT = IeducarSchema::resolveTable('escola', $city);
-            $eId = (string) config('ieducar.columns.escola.id');
+            $pk = EscolaTurmaJoin::pkSpec($db, $city);
+            $eId = $pk['idCol'] ?? (string) config('ieducar.columns.escola.id');
             $en = $this->escolaNomeSql($db, $city, 'e', $eId);
             $tel = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
                 'telefone', 'fone', 'fone_1', 'nr_telefone', 'tel', 'tel_comercial',
@@ -1285,9 +1300,16 @@ class SchoolUnitsRepository
             MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
             MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
             MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['turno'], $filters->turno_id);
-            $q->whereIn('t.'.$tc['escola'], $eids);
 
-            $cols = ['t.'.$tc['escola'].' as eid', 't.'.$tc['curso'].' as cid'];
+            $joinSpec = EscolaTurmaJoin::joinTurmaEscolaFk($q, $db, $city, 't', 'e_of');
+            if ($joinSpec !== null) {
+                $ePkCol = $joinSpec['idCol'];
+                $q->whereIn('e_of.'.$ePkCol, $eids);
+                $cols = ['e_of.'.$ePkCol.' as eid', 't.'.$tc['curso'].' as cid'];
+            } else {
+                $q->whereIn('t.'.$tc['escola'], $eids);
+                $cols = ['t.'.$tc['escola'].' as eid', 't.'.$tc['curso'].' as cid'];
+            }
             if ($tc['serie'] !== '') {
                 $cols[] = 't.'.$tc['serie'].' as sid';
             }

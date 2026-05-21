@@ -4,6 +4,8 @@ import "leaflet/dist/leaflet.css";
 const STATUS_COLORS = {
     ready: "#10b981",
     incomplete: "#f59e0b",
+    inactive_setup: "#64748b",
+    inactive: "#94a3b8",
 };
 
 export default function createBrazilMunicipalitiesMap(markers = []) {
@@ -14,15 +16,18 @@ export default function createBrazilMunicipalitiesMap(markers = []) {
         active: null,
         tooltipPinned: false,
         tooltipStyle: "",
+        yearsLoading: false,
+        yearsError: null,
+        schoolYears: [],
 
         init() {
-            if (!this.$refs.map || this.markers.length === 0) {
+            if (!this.$refs.map) {
                 return;
             }
 
             this.map = L.map(this.$refs.map, {
                 zoomControl: true,
-                scrollWheelZoom: false,
+                scrollWheelZoom: true,
                 attributionControl: true,
             });
 
@@ -50,27 +55,79 @@ export default function createBrazilMunicipalitiesMap(markers = []) {
                     color: "#ffffff",
                     weight: 2,
                     opacity: 1,
-                    fillOpacity: 0.9,
+                    fillOpacity: 0.92,
                 });
 
-                circle.on("mouseover", (e) => {
-                    this.active = m;
-                    this.positionTooltip(e);
-                });
-                circle.on("mousemove", (e) => this.positionTooltip(e));
-                circle.on("mouseout", () => {
-                    if (!this.tooltipPinned) {
-                        this.active = null;
-                    }
+                circle.on("click", (e) => {
+                    L.DomEvent.stopPropagation(e);
+                    this.selectMarker(m, e);
                 });
 
                 circle.addTo(this.layer);
+            });
+
+            this.map.on("click", () => {
+                this.closeTooltip();
             });
 
             if (bounds.length > 0) {
                 this.map.fitBounds(bounds, { padding: [36, 36], maxZoom: 5 });
             } else {
                 this.map.setView([-14.5, -52], 4);
+            }
+        },
+
+        selectMarker(marker, event) {
+            this.active = marker;
+            this.tooltipPinned = true;
+            this.schoolYears = [];
+            this.yearsError = null;
+            this.positionTooltip(event);
+            this.loadSchoolYears(marker);
+        },
+
+        closeTooltip() {
+            this.tooltipPinned = false;
+            this.active = null;
+            this.schoolYears = [];
+            this.yearsLoading = false;
+            this.yearsError = null;
+        },
+
+        async loadSchoolYears(marker) {
+            if (!marker?.school_years_url) {
+                return;
+            }
+            this.yearsLoading = true;
+            this.yearsError = null;
+            try {
+                const r = await fetch(marker.school_years_url, {
+                    headers: {
+                        Accept: "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    credentials: "same-origin",
+                });
+                if (!r.ok) {
+                    this.yearsError = "Não foi possível carregar os anos letivos.";
+                    return;
+                }
+                const data = await r.json();
+                if (this.active?.id === marker.id) {
+                    this.schoolYears = Array.isArray(data.school_years)
+                        ? data.school_years
+                        : [];
+                    if (data.implemented_at_label && this.active) {
+                        this.active = {
+                            ...this.active,
+                            implemented_at_label: data.implemented_at_label,
+                        };
+                    }
+                }
+            } catch {
+                this.yearsError = "Erro de rede ao carregar anos letivos.";
+            } finally {
+                this.yearsLoading = false;
             }
         },
 
@@ -82,7 +139,17 @@ export default function createBrazilMunicipalitiesMap(markers = []) {
             const rect = el.getBoundingClientRect();
             const x = rect.left + event.containerPoint.x;
             const y = rect.top + event.containerPoint.y;
-            this.tooltipStyle = `left:${Math.min(x + 12, window.innerWidth - 280)}px;top:${Math.min(y + 12, window.innerHeight - 160)}px`;
+            this.tooltipStyle = `left:${Math.min(x + 12, window.innerWidth - 300)}px;top:${Math.min(y + 12, window.innerHeight - 280)}px`;
+        },
+
+        yearStateIcon(state) {
+            if (state === "open") {
+                return "open";
+            }
+            if (state === "closed") {
+                return "closed";
+            }
+            return "unknown";
         },
 
         destroy() {

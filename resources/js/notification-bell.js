@@ -14,11 +14,13 @@ export function registerNotificationBellData(Alpine) {
         open: false,
         items: [],
         unread: 0,
+        criticalUnread: 0,
+        filterCritical: false,
         loading: false,
         indexUrl: config.indexUrl,
         readUrlTemplate: config.readUrlTemplate,
         readAllUrl: config.readAllUrl,
-        pollMs: config.pollMs ?? 45000,
+        pollMs: config.pollMs ?? 30000,
         _timer: null,
         init() {
             this.fetch();
@@ -29,6 +31,40 @@ export function registerNotificationBellData(Alpine) {
                 clearInterval(this._timer);
             }
         },
+        bellTitle() {
+            const base = "Notificações";
+            if (this.unread === 0) {
+                return base;
+            }
+            if (this.criticalUnread > 0) {
+                return `${base} (${this.unread}, ${this.criticalUnread} críticas)`;
+            }
+            return `${base} (${this.unread})`;
+        },
+        rowClass(item) {
+            if (item.read) {
+                return "opacity-75";
+            }
+            if (item.is_critical) {
+                return "bg-rose-50/80 dark:bg-rose-950/40 border-s-2 border-s-rose-500";
+            }
+            if (item.priority === "high") {
+                return "bg-amber-50/50 dark:bg-amber-950/25";
+            }
+            return "bg-indigo-50/50 dark:bg-indigo-950/30";
+        },
+        dotClass(item) {
+            if (item.is_critical || item.icon === "error") {
+                return "bg-rose-500";
+            }
+            if (item.priority === "high" || item.icon === "warning") {
+                return "bg-amber-500";
+            }
+            if (item.icon === "success") {
+                return "bg-emerald-500";
+            }
+            return "bg-sky-500";
+        },
         toggle() {
             this.open = !this.open;
             if (this.open) {
@@ -38,13 +74,24 @@ export function registerNotificationBellData(Alpine) {
         close() {
             this.open = false;
         },
+        setFilter(critical) {
+            this.filterCritical = critical;
+            this.fetch();
+        },
         readUrl(id) {
             return this.readUrlTemplate.replace("__ID__", encodeURIComponent(id));
+        },
+        fetchUrl() {
+            const url = new URL(this.indexUrl, window.location.origin);
+            if (this.filterCritical) {
+                url.searchParams.set("critical", "1");
+            }
+            return url.toString();
         },
         async fetch() {
             this.loading = true;
             try {
-                const r = await fetch(this.indexUrl, {
+                const r = await fetch(this.fetchUrl(), {
                     headers: {
                         Accept: "application/json",
                         "X-Requested-With": "XMLHttpRequest",
@@ -57,6 +104,7 @@ export function registerNotificationBellData(Alpine) {
                 const j = await r.json();
                 this.items = Array.isArray(j.items) ? j.items : [];
                 this.unread = Number(j.unread_count) || 0;
+                this.criticalUnread = Number(j.critical_unread_count) || 0;
             } catch (e) {
                 console.error("notifications", e);
             } finally {
@@ -79,6 +127,7 @@ export function registerNotificationBellData(Alpine) {
                 if (r.ok) {
                     const j = await r.json();
                     this.unread = Number(j.unread_count) || 0;
+                    this.criticalUnread = Number(j.critical_unread_count) || 0;
                     this.items = this.items.map((item) =>
                         item.id === id ? { ...item, read: true } : item,
                     );
@@ -102,6 +151,7 @@ export function registerNotificationBellData(Alpine) {
                 });
                 if (r.ok) {
                     this.unread = 0;
+                    this.criticalUnread = 0;
                     this.items = this.items.map((item) => ({
                         ...item,
                         read: true,

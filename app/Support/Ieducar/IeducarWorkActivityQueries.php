@@ -4,7 +4,6 @@ namespace App\Support\Ieducar;
 
 use App\Models\City;
 use App\Support\Dashboard\IeducarFilterState;
-use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Carbon;
 

@@ -6,6 +6,7 @@ use App\Enums\AdminSyncDomain;
 use App\Enums\AdminSyncTaskStatus;
 use App\Jobs\ProcessAdminSyncTaskJob;
 use App\Models\AdminSyncTask;
+use App\Services\Notifications\NotificationDispatcher;
 use Illuminate\Support\Facades\Auth;
 
 final class AdminSyncQueueService
@@ -38,7 +39,11 @@ final class AdminSyncQueueService
             $pending->onConnection((string) $connection);
         }
 
-        return $task->fresh(['city']);
+        $task = $task->fresh(['city', 'queuedBy']);
+
+        app(NotificationDispatcher::class)->adminSyncQueued($task);
+
+        return $task;
     }
 
     public static function flashQueuedMessage(AdminSyncTask $task): string

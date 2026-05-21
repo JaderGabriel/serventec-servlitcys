@@ -218,31 +218,74 @@
         @apply rounded-xl border border-slate-200/90 bg-gradient-to-br from-slate-50 via-white to-teal-50/30 dark:from-slate-900/60 dark:via-slate-900/40 dark:to-teal-950/20 dark:border-slate-700 shadow-sm overflow-hidden;
     }
 
-    .serv-tab-status-inline {
-        @apply text-right;
+    .serv-tab-status-panel {
+        @apply rounded-xl border-2 shadow-sm overflow-hidden;
     }
 
-    .serv-tab-status-help {
-        @apply relative;
+    .serv-tab-status-panel--success {
+        @apply border-emerald-300/90 bg-gradient-to-r from-emerald-50/95 via-white to-white
+            dark:from-emerald-950/40 dark:via-slate-900/50 dark:to-slate-950/60 dark:border-emerald-700/70;
+    }
+
+    .serv-tab-status-panel--warning {
+        @apply border-amber-300/90 bg-gradient-to-r from-amber-50/95 via-white to-white
+            dark:from-amber-950/35 dark:via-slate-900/50 dark:to-slate-950/60 dark:border-amber-700/70;
+    }
+
+    .serv-tab-status-panel--danger {
+        @apply border-rose-300/90 bg-gradient-to-r from-rose-50/95 via-white to-white
+            dark:from-rose-950/35 dark:via-slate-900/50 dark:to-slate-950/60 dark:border-rose-700/70;
+    }
+
+    .serv-tab-status-panel--neutral {
+        @apply border-slate-300/80 bg-gradient-to-r from-slate-50/95 via-white to-white
+            dark:from-slate-900/60 dark:via-slate-900/40 dark:to-slate-950/60 dark:border-slate-600;
+    }
+
+    .serv-tab-status-panel__inner {
+        @apply flex items-center gap-3 px-4 py-3.5;
+    }
+
+    .serv-tab-status-panel__main {
+        @apply flex items-center gap-4 min-w-0 flex-1;
+    }
+
+    .serv-tab-status-panel__ring {
+        @apply relative shrink-0;
+    }
+
+    .serv-tab-status-panel__score {
+        @apply absolute inset-0 flex items-center justify-center text-sm font-bold;
+    }
+
+    .serv-tab-status-panel__mode {
+        @apply inline-flex rounded-md px-1.5 py-0.5 text-[10px] font-medium
+            bg-white/80 text-slate-600 ring-1 ring-slate-200/80
+            dark:bg-slate-800/80 dark:text-slate-300 dark:ring-slate-600;
     }
 
     .serv-tab-status-help__btn {
-        @apply flex h-8 w-8 shrink-0 cursor-pointer list-none items-center justify-center rounded-full
-            border border-slate-200/90 bg-white/90 text-slate-500 shadow-sm
-            hover:border-teal-300 hover:text-teal-700 hover:bg-teal-50/80
-            dark:border-slate-600 dark:bg-slate-800/90 dark:text-slate-400
-            dark:hover:border-teal-600 dark:hover:text-teal-300 dark:hover:bg-teal-950/40
-            transition-colors;
+        @apply flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full
+            border-2 border-slate-200/90 bg-white text-slate-600 shadow-md
+            hover:border-teal-400 hover:text-teal-800 hover:bg-teal-50
+            focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2
+            dark:border-slate-500 dark:bg-slate-800 dark:text-slate-300
+            dark:hover:border-teal-500 dark:hover:text-teal-200 dark:hover:bg-teal-950/50
+            dark:focus:ring-offset-slate-900 transition-colors;
     }
 
-    .serv-tab-status-help__btn::-webkit-details-marker {
-        display: none;
+    .serv-tab-status-modal {
+        @apply fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6;
     }
 
-    .serv-tab-status-help__panel {
-        @apply absolute end-0 top-full z-20 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-lg border border-slate-200/90
-            bg-white/98 p-3 shadow-lg backdrop-blur-sm
-            dark:border-slate-600 dark:bg-slate-900/98;
+    .serv-tab-status-modal__backdrop {
+        @apply absolute inset-0 bg-slate-900/60 backdrop-blur-[2px];
+    }
+
+    .serv-tab-status-modal__dialog {
+        @apply relative z-10 flex w-full max-w-lg flex-col max-h-[min(92vh,32rem)]
+            rounded-xl border border-slate-200/90 bg-white shadow-2xl
+            dark:border-slate-600 dark:bg-slate-900;
     }
 
     .serv-nav-brand {
@@ -699,13 +742,52 @@
         @apply serv-panel p-5 space-y-1;
     }
 
+    .serv-home-kpi--link {
+        @apply block transition hover:border-teal-200/90 hover:shadow-md hover:ring-teal-600/10
+            dark:hover:border-teal-800/60 no-underline;
+    }
+
     .serv-home-kpi--teal {
         @apply border-teal-200/90 bg-gradient-to-br from-teal-50/90 via-white to-slate-50/80
             dark:from-teal-950/35 dark:via-slate-900/50 dark:to-slate-950/80 dark:border-teal-800/50;
     }
 
     .serv-home-kpi--amber {
-        @apply border-amber-200/90 dark:border-amber-800/50;
+        @apply border-amber-200/90 bg-gradient-to-br from-amber-50/50 via-white to-white
+            dark:from-amber-950/20 dark:via-slate-900/40 dark:to-slate-950/60 dark:border-amber-800/50;
+    }
+
+    .serv-home-kpi__head {
+        @apply flex items-center gap-2;
+    }
+
+    .serv-home-kpi__icon {
+        @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600
+            dark:bg-slate-800 dark:text-slate-300;
+    }
+
+    .serv-home-kpi__icon--teal {
+        @apply bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300;
+    }
+
+    .serv-home-kpi__icon--violet {
+        @apply bg-violet-100 text-violet-800 dark:bg-violet-950/50 dark:text-violet-300;
+    }
+
+    .serv-home-kpi__icon--amber {
+        @apply bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200;
+    }
+
+    .serv-home-kpi__bar {
+        @apply mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-slate-700/80;
+    }
+
+    .serv-home-kpi__bar-fill {
+        @apply block h-full rounded-full transition-all;
+    }
+
+    .serv-home-kpi__bar-fill--teal {
+        @apply bg-teal-500 dark:bg-teal-400;
     }
 
     .serv-home-kpi__label {
@@ -724,8 +806,44 @@
         @apply text-xs text-slate-500 dark:text-slate-400 leading-relaxed;
     }
 
+    .serv-home-action-group {
+        @apply space-y-3;
+    }
+
+    .serv-home-action-group__label {
+        @apply flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-home-action-group__dot {
+        @apply h-2 w-2 shrink-0 rounded-full;
+    }
+
+    .serv-home-action-group__dot--teal {
+        @apply bg-teal-500;
+    }
+
+    .serv-home-action-group__dot--violet {
+        @apply bg-violet-500;
+    }
+
+    .serv-home-action-group__dot--sky {
+        @apply bg-sky-500;
+    }
+
+    .serv-home-action-group__dot--slate {
+        @apply bg-slate-400 dark:bg-slate-500;
+    }
+
     .serv-home-action-grid {
         @apply grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3;
+    }
+
+    .serv-home-action-grid--featured {
+        @apply lg:grid-cols-1;
+    }
+
+    .serv-home-action-grid--compact {
+        @apply sm:grid-cols-1 lg:max-w-md;
     }
 
     .serv-home-action {
@@ -739,6 +857,10 @@
             dark:from-teal-950/25 dark:via-slate-900/40 dark:to-slate-950/60 dark:border-teal-800/50;
     }
 
+    .serv-home-action--alert {
+        @apply border-amber-200/90 ring-1 ring-amber-500/10 dark:border-amber-800/50;
+    }
+
     .serv-home-action__icon {
         @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600
             dark:bg-slate-800 dark:text-slate-300;
@@ -746,6 +868,22 @@
 
     .serv-home-action__icon--teal {
         @apply bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300;
+    }
+
+    .serv-home-action__icon--violet {
+        @apply bg-violet-100 text-violet-800 dark:bg-violet-950/50 dark:text-violet-300;
+    }
+
+    .serv-home-action__icon--sky {
+        @apply bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300;
+    }
+
+    .serv-home-action__icon--amber {
+        @apply bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200;
+    }
+
+    .serv-home-action__icon--slate {
+        @apply bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300;
     }
 
     .serv-home-action__body {
@@ -760,122 +898,261 @@
         @apply block text-xs text-slate-500 dark:text-slate-400 leading-snug;
     }
 
-    /* Fluxograma de integrações (Início) */
-    .serv-system-flow {
-        @apply flex flex-col items-center gap-0 max-w-4xl mx-auto;
+    .serv-home-action__ref {
+        @apply block text-[10px] font-medium text-teal-700/90 dark:text-teal-400/90 mt-1;
     }
 
-    .serv-system-flow__externals {
-        @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 w-full;
+    /* Fluxo de dados (Início) — diagrama de integrações */
+    .serv-data-flow-summary {
+        @apply rounded-xl border px-4 py-3 max-w-sm;
     }
 
-    .serv-system-flow__node {
-        @apply relative rounded-xl border-2 px-3 py-3 text-center shadow-sm transition;
+    .serv-data-flow-summary--ok {
+        @apply border-teal-200/90 bg-teal-50/90 dark:border-teal-800/60 dark:bg-teal-950/35;
     }
 
-    .serv-system-flow__node--ok {
-        @apply border-emerald-400/90 bg-emerald-50/90 dark:border-emerald-600/70 dark:bg-emerald-950/35;
+    .serv-data-flow-summary--partial {
+        @apply border-amber-200/90 bg-amber-50/90 dark:border-amber-800/60 dark:bg-amber-950/30;
     }
 
-    .serv-system-flow__node--partial {
-        @apply border-amber-400/90 bg-amber-50/90 dark:border-amber-600/70 dark:bg-amber-950/30;
+    .serv-data-flow-summary--off {
+        @apply border-slate-200/90 bg-slate-50/90 dark:border-slate-700 dark:bg-slate-900/50;
     }
 
-    .serv-system-flow__node--off {
-        @apply border-slate-300/90 bg-slate-100/80 dark:border-slate-600 dark:bg-slate-800/50 opacity-80;
+    .serv-data-flow-summary__label {
+        @apply text-sm font-semibold text-slate-900 dark:text-slate-100;
     }
 
-    .serv-system-flow__node--hub {
-        @apply border-teal-500/90 bg-gradient-to-br from-teal-50 via-white to-slate-50
-            dark:from-teal-950/50 dark:via-slate-900/60 dark:to-slate-950/80 px-6 py-4 min-w-[12rem];
+    .serv-data-flow-summary--ok .serv-data-flow-summary__label {
+        @apply text-teal-900 dark:text-teal-100;
     }
 
-    .serv-system-flow__node--ieducar {
-        @apply min-w-[10rem] max-w-xs;
+    .serv-data-flow-summary--partial .serv-data-flow-summary__label {
+        @apply text-amber-900 dark:text-amber-100;
     }
 
-    .serv-system-flow__status-dot {
-        @apply absolute top-2 right-2 h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-slate-900;
+    .serv-data-flow-summary__detail {
+        @apply mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed;
     }
 
-    .serv-system-flow__node--ok .serv-system-flow__status-dot {
-        @apply bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)];
+    .serv-data-flow__zone-head {
+        @apply mb-3;
     }
 
-    .serv-system-flow__node--partial .serv-system-flow__status-dot {
-        @apply bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)];
+    .serv-data-flow__zone-head--spaced {
+        @apply mt-8 pt-6 border-t border-slate-200/80 dark:border-slate-700/80;
     }
 
-    .serv-system-flow__node--off .serv-system-flow__status-dot {
+    .serv-data-flow__zone-title {
+        @apply text-xs font-semibold uppercase tracking-wide text-teal-800/90 dark:text-teal-300/90;
+    }
+
+    .serv-data-flow__zone-desc {
+        @apply mt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-3xl;
+    }
+
+    .serv-data-flow__externals {
+        @apply grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3;
+    }
+
+    .serv-data-flow__card {
+        @apply relative rounded-xl border-l-4 border border-slate-200/90 dark:border-slate-700/90
+            bg-white/80 dark:bg-slate-900/50 px-4 py-3 shadow-sm;
+    }
+
+    .serv-data-flow__card--ok {
+        @apply border-l-teal-500 bg-teal-50/40 dark:bg-teal-950/20;
+    }
+
+    .serv-data-flow__card--partial {
+        @apply border-l-amber-500 bg-amber-50/40 dark:bg-amber-950/15;
+    }
+
+    .serv-data-flow__card--off {
+        @apply border-l-slate-400 bg-slate-50/60 dark:bg-slate-900/40 opacity-90;
+    }
+
+    .serv-data-flow__card--hub {
+        @apply border-l-teal-600 border-teal-200/80 dark:border-teal-800/70
+            bg-gradient-to-br from-teal-50/90 via-white to-slate-50/80
+            dark:from-teal-950/40 dark:via-slate-900/60 dark:to-slate-950/80
+            shadow-md ring-1 ring-teal-200/50 dark:ring-teal-800/40;
+    }
+
+    .serv-data-flow__card--municipal {
+        @apply max-w-md;
+    }
+
+    .serv-data-flow__badge {
+        @apply absolute top-3 right-3 h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-slate-900;
+    }
+
+    .serv-data-flow__badge--ok {
+        @apply bg-teal-500 shadow-[0_0_0_3px_rgba(20,184,166,0.25)];
+    }
+
+    .serv-data-flow__badge--partial {
+        @apply bg-amber-500 shadow-[0_0_0_3px_rgba(245,158,11,0.2)];
+    }
+
+    .serv-data-flow__badge--off {
         @apply bg-slate-400;
     }
 
-    .serv-system-flow__node-label {
-        @apply font-display text-sm font-semibold text-slate-900 dark:text-slate-100;
+    .serv-data-flow__card-label {
+        @apply font-display text-sm font-semibold text-slate-900 dark:text-slate-100 pe-6;
     }
 
-    .serv-system-flow__node-sub {
-        @apply text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mt-0.5;
+    .serv-data-flow__card-label--hub {
+        @apply text-base text-teal-900 dark:text-teal-50;
     }
 
-    .serv-system-flow__node-hint,
-    .serv-system-flow__node-metric {
-        @apply text-[10px] text-slate-600 dark:text-slate-400 mt-1 leading-snug;
+    .serv-data-flow__card-sub {
+        @apply text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-0.5;
     }
 
-    .serv-system-flow__node-metric {
-        @apply font-semibold tabular-nums text-teal-800 dark:text-teal-300;
+    .serv-data-flow__card-hint {
+        @apply text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed;
     }
 
-    .serv-system-flow__connectors {
-        @apply grid gap-2 w-full py-1;
+    .serv-data-flow__metric {
+        @apply mt-2 flex items-baseline gap-2 text-xs;
     }
 
-    .serv-system-flow__connectors--down {
-        @apply grid-cols-2 sm:grid-cols-3 lg:grid-cols-5;
+    .serv-data-flow__metric-label {
+        @apply text-slate-500 dark:text-slate-400;
     }
 
-    .serv-system-flow__connectors--single {
-        @apply grid-cols-1 max-w-[4rem] mx-auto;
+    .serv-data-flow__metric-value {
+        @apply font-bold tabular-nums text-teal-800 dark:text-teal-300;
     }
 
-    .serv-system-flow__connector {
-        @apply flex flex-col items-center justify-center min-h-[2rem];
+    .serv-data-flow__edge-label {
+        @apply mt-3 pt-2 border-t border-dashed border-slate-200/80 dark:border-slate-600/80
+            text-[11px] text-slate-600 dark:text-slate-400 flex items-center gap-1.5;
     }
 
-    .serv-system-flow__connector-line {
-        @apply w-0.5 flex-1 min-h-[1.25rem] rounded-full;
+    .serv-data-flow__edge-label--ok {
+        @apply text-teal-800/90 dark:text-teal-300/90 border-teal-200/60 dark:border-teal-800/40;
     }
 
-    .serv-system-flow__connector--ok .serv-system-flow__connector-line {
-        @apply bg-emerald-500/80;
+    .serv-data-flow__edge-label--partial {
+        @apply text-amber-800/90 dark:text-amber-300/90;
     }
 
-    .serv-system-flow__connector--partial .serv-system-flow__connector-line {
-        @apply bg-amber-500/70;
+    .serv-data-flow__edge-label--off {
+        @apply text-slate-500;
     }
 
-    .serv-system-flow__connector--off .serv-system-flow__connector-line {
-        @apply bg-slate-300 dark:bg-slate-600;
+    .serv-data-flow__edge-arrow {
+        @apply font-bold text-teal-600 dark:text-teal-400 shrink-0;
     }
 
-    .serv-system-flow__connector-arrows {
-        @apply text-xs text-teal-700 dark:text-teal-400 font-bold leading-none;
+    .serv-data-flow__hub-wrap {
+        @apply flex justify-center py-2;
     }
 
-    .serv-system-flow__legend-dot {
-        @apply h-2.5 w-2.5 rounded-full shrink-0;
+    .serv-data-flow__hub-wrap .serv-data-flow__card {
+        @apply w-full max-w-md text-center;
     }
 
-    .serv-system-flow__legend-dot--ok {
-        @apply bg-emerald-500;
+    .serv-data-flow__municipal-wrap {
+        @apply flex flex-col items-center gap-2;
     }
 
-    .serv-system-flow__legend-dot--partial {
+    .serv-data-flow__bridge {
+        @apply flex flex-col items-center w-full max-w-xs;
+    }
+
+    .serv-data-flow__bridge-line {
+        @apply w-px h-6 bg-gradient-to-b from-teal-400/80 to-teal-600/80 dark:from-teal-600/60 dark:to-teal-400/60;
+    }
+
+    .serv-data-flow__bridge--partial .serv-data-flow__bridge-line {
+        @apply from-amber-400/70 to-amber-500/70;
+    }
+
+    .serv-data-flow__bridge--off .serv-data-flow__bridge-line {
+        @apply from-slate-300 to-slate-400 dark:from-slate-600 dark:to-slate-500;
+    }
+
+    .serv-data-flow__bridge-label {
+        @apply text-[11px] font-medium text-center text-teal-800 dark:text-teal-200
+            bg-teal-50/80 dark:bg-teal-950/40 border border-teal-200/70 dark:border-teal-800/50
+            rounded-full px-3 py-1 mt-1;
+    }
+
+    .serv-data-flow__bridge--partial .serv-data-flow__bridge-label {
+        @apply text-amber-900 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 border-amber-200/70;
+    }
+
+    .serv-data-flow__bridge-arrows {
+        @apply font-bold me-0.5;
+    }
+
+    .serv-data-flow__outputs {
+        @apply mt-8 pt-6 border-t border-slate-200/80 dark:border-slate-700/80;
+    }
+
+    .serv-data-flow__outputs-title {
+        @apply text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3;
+    }
+
+    .serv-data-flow__outputs-list {
+        @apply grid grid-cols-1 sm:grid-cols-2 gap-2;
+    }
+
+    .serv-data-flow__output-link {
+        @apply block rounded-lg border border-slate-200/90 dark:border-slate-700/90
+            bg-slate-50/50 dark:bg-slate-900/40 px-3 py-2.5 hover:border-teal-300/80 hover:bg-teal-50/50
+            dark:hover:border-teal-700 dark:hover:bg-teal-950/25 transition;
+    }
+
+    .serv-data-flow__output-label {
+        @apply block text-sm font-medium text-slate-800 dark:text-slate-100;
+    }
+
+    .serv-data-flow__output-desc {
+        @apply block text-[11px] text-slate-500 dark:text-slate-400 mt-0.5;
+    }
+
+    .serv-data-flow-aside__panel {
+        @apply rounded-xl border border-slate-200/90 dark:border-slate-700/90 bg-slate-50/50 dark:bg-slate-900/40 p-4;
+    }
+
+    .serv-data-flow-aside__panel--muted {
+        @apply bg-white/60 dark:bg-slate-900/30;
+    }
+
+    .serv-data-flow-aside__title {
+        @apply text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-3;
+    }
+
+    .serv-data-flow-aside__legend-item {
+        @apply flex gap-3;
+    }
+
+    .serv-data-flow-aside__legend-label {
+        @apply text-sm font-medium text-slate-800 dark:text-slate-200;
+    }
+
+    .serv-data-flow-aside__legend-desc {
+        @apply text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed;
+    }
+
+    .serv-data-flow__legend-swatch {
+        @apply mt-1 h-3 w-3 shrink-0 rounded-sm ring-1 ring-black/5 dark:ring-white/10;
+    }
+
+    .serv-data-flow__legend-swatch--ok {
+        @apply bg-teal-500;
+    }
+
+    .serv-data-flow__legend-swatch--partial {
         @apply bg-amber-500;
     }
 
-    .serv-system-flow__legend-dot--off {
+    .serv-data-flow__legend-swatch--off {
         @apply bg-slate-400;
     }
 
@@ -888,7 +1165,7 @@
     }
 
     .serv-brazil-map-tooltip {
-        @apply fixed z-[200] w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200/90
+        @apply fixed z-[200] w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200/90
             bg-white/95 dark:bg-slate-900/95 dark:border-slate-600 shadow-lg p-4 pointer-events-auto;
     }
 }
