@@ -188,13 +188,11 @@ document.addEventListener("alpine:init", () => {
                 if (!this.lazy) {
                     return;
                 }
-                if (t === "overview") {
-                    return;
-                }
                 if (this.tabLoaded[t]) {
                     return;
                 }
                 const refMap = {
+                    overview: "panelOverview",
                     school_units: "panelSchoolUnits",
                     enrollment: "panelEnrollment",
                     network: "panelNetwork",
@@ -227,6 +225,7 @@ document.addEventListener("alpine:init", () => {
                     return;
                 }
                 const refMap = {
+                    overview: "panelOverview",
                     school_units: "panelSchoolUnits",
                     enrollment: "panelEnrollment",
                     network: "panelNetwork",

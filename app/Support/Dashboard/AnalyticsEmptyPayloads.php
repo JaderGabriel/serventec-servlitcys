@@ -11,6 +11,34 @@ final class AnalyticsEmptyPayloads
     /**
      * @return array<string, mixed>
      */
+    /**
+     * @return array{overview: array<string, mixed>, tab: array<string, mixed>, error: null}
+     */
+    public static function schoolUnits(): array
+    {
+        return [
+            'overview' => [
+                'year_global_rows' => [],
+                'school_year_rows' => [],
+                'units_rows' => [],
+                'notes' => [],
+            ],
+            'tab' => [
+                'markers' => [],
+                'transport' => null,
+                'waiting' => null,
+                'geo_note' => null,
+                'geo_source' => null,
+                'geo_attribution' => [],
+                'geo_distribution' => null,
+                'map_scope' => 'matricula',
+                'show_waiting_capacity' => true,
+                'error' => null,
+            ],
+            'error' => null,
+        ];
+    }
+
     public static function enrollment(): array
     {
         return [

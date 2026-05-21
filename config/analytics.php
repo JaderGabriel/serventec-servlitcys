@@ -30,6 +30,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Visão geral no «Aplicar filtros»
+    |--------------------------------------------------------------------------
+    |
+    | Quando false (recomendado com ANALYTICS_LAZY_TABS), o index não consulta a
+    | BD remota para a aba Visão geral — evita 500/timeout; a aba carrega via AJAX.
+    |
+    */
+
+    'index_load_overview' => filter_var(env('ANALYTICS_INDEX_LOAD_OVERVIEW', false), FILTER_VALIDATE_BOOL),
+
+    /*
+    |--------------------------------------------------------------------------
     | Log de performance do painel analítico
     |--------------------------------------------------------------------------
     |

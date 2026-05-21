@@ -36,4 +36,65 @@ final class ScheduleIntervals
 
         return $event->cron('0 */'.$hours.' * * *');
     }
+
+    /**
+     * @param  list<string>  $times  Horários «H:i» no fuso da aplicação (ex. 06:00, 18:00).
+     */
+    public static function dailyAtTimes(Event $event, array $times): Event
+    {
+        $parsed = self::normalizeDailyTimes($times);
+
+        if ($parsed === []) {
+            return $event->hourly();
+        }
+
+        if (count($parsed) === 1) {
+            return $event->dailyAt($parsed[0]);
+        }
+
+        if (count($parsed) === 2) {
+            [$h1, $h2] = array_map(
+                static fn (string $t): int => (int) substr($t, 0, 2),
+                $parsed,
+            );
+
+            return $event->twiceDaily($h1, $h2);
+        }
+
+        $cronMinutes = implode(',', array_map(
+            static fn (string $t): string => (string) (int) substr($t, 3, 2),
+            $parsed,
+        ));
+        $cronHours = implode(',', array_map(
+            static fn (string $t): string => (string) (int) substr($t, 0, 2),
+            $parsed,
+        ));
+
+        return $event->cron($cronMinutes.' '.$cronHours.' * * *');
+    }
+
+    /**
+     * @param  list<string>  $times
+     * @return list<string>
+     */
+    public static function normalizeDailyTimes(array $times): array
+    {
+        $out = [];
+        foreach ($times as $raw) {
+            $raw = trim((string) $raw);
+            if ($raw === '') {
+                continue;
+            }
+            if (preg_match('/^(\d{1,2}):(\d{2})$/', $raw, $m)) {
+                $h = max(0, min(23, (int) $m[1]));
+                $min = max(0, min(59, (int) $m[2]));
+                $out[] = sprintf('%02d:%02d', $h, $min);
+            } elseif (ctype_digit($raw)) {
+                $h = max(0, min(23, (int) $raw));
+                $out[] = sprintf('%02d:00', $h);
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
 }

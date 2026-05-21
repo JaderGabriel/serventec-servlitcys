@@ -131,6 +131,8 @@ class AnalyticsDashboardController extends Controller
 
         $yearFilterReady = $city !== null && $filters->hasYearSelected();
         $lazyTabLoading = (bool) config('analytics.lazy_tab_loading', true);
+        $loadOverviewOnIndex = ! $lazyTabLoading || (bool) config('analytics.index_load_overview', false);
+        $deferOverviewOnIndex = $lazyTabLoading && ! $loadOverviewOnIndex;
 
         $overviewData = ['kpis' => null, 'charts' => [], 'filter_note' => null, 'error' => null];
         $schoolUnitsData = [
@@ -167,7 +169,7 @@ class AnalyticsDashboardController extends Controller
         $municipalityHealthData = AnalyticsEmptyPayloads::municipalityHealth();
         $municipalityContext = null;
 
-        if ($yearFilterReady && $city !== null) {
+        if ($yearFilterReady && $city !== null && $loadOverviewOnIndex) {
             try {
                 $overviewData = $profiler->measure('overview', fn () => $this->safeAnalyticsLoad(
                     fn () => $overviewRepository->summary($city, $filters),
@@ -339,6 +341,7 @@ class AnalyticsDashboardController extends Controller
                 $municipalityContext,
                 $analyticsLoadWarnings,
                 $indexLightFilters,
+                $deferOverviewOnIndex,
                 $analyticsDebugEnabled,
                 $analyticsDebugSteps,
                 $analyticsDebugTotalMs,
@@ -387,6 +390,7 @@ class AnalyticsDashboardController extends Controller
                 $municipalityContext,
                 $analyticsLoadWarnings,
                 $indexLightFilters,
+                $deferOverviewOnIndex,
                 $analyticsDebugEnabled,
                 $analyticsDebugSteps,
                 $profiler->totalMs(),
@@ -427,6 +431,7 @@ class AnalyticsDashboardController extends Controller
         ?array $municipalityContext,
         array $analyticsLoadWarnings,
         bool $indexLightFilters,
+        bool $deferOverviewOnIndex,
         bool $analyticsDebugEnabled,
         array $analyticsDebugSteps,
         float $analyticsDebugTotalMs,
@@ -461,6 +466,7 @@ class AnalyticsDashboardController extends Controller
             'municipalityContext' => $municipalityContext,
             'analyticsLoadWarnings' => $analyticsLoadWarnings,
             'deferSecondaryFilters' => $indexLightFilters && $city !== null,
+            'deferOverviewOnIndex' => $deferOverviewOnIndex && $yearFilterReady,
             'analyticsDebugEnabled' => $analyticsDebugEnabled,
             'analyticsDebugSteps' => $analyticsDebugSteps,
             'analyticsDebugTotalMs' => $analyticsDebugTotalMs,
@@ -520,11 +526,7 @@ class AnalyticsDashboardController extends Controller
         AnalyticsReportExportService $pdfExportService,
     ): Response {
         $tab = (string) $request->query('tab', '');
-        $allowed = array_values(array_filter(
-            AnalyticsTabCatalog::tabKeys(),
-            static fn (string $k): bool => $k !== 'overview',
-        ));
-        if (! AnalyticsTabCatalog::isValidTab($tab) || ! in_array($tab, $allowed, true)) {
+        if (! AnalyticsTabCatalog::isValidTab($tab)) {
             abort(404);
         }
 
@@ -660,6 +662,17 @@ class AnalyticsDashboardController extends Controller
         ];
 
         return match ($tab) {
+            'overview' => response()
+                ->view('dashboard.analytics.partials.overview', array_merge($viewBase, $yearReady, [
+                    'overviewData' => $this->safeAnalyticsLoad(
+                        fn () => $overviewRepository->summary($city, $filters),
+                        ['kpis' => null, 'charts' => [], 'filter_note' => null, 'error' => null],
+                        __('Visão geral'),
+                        $tabWarnings,
+                    ),
+                    'schoolUnits' => null,
+                ]))
+                ->withHeaders($headers),
             'school_units' => response()
                 ->view('dashboard.analytics.partials.school-units', array_merge($viewBase, $yearReady, [
                     'schoolUnitsData' => $this->safeAnalyticsLoad(

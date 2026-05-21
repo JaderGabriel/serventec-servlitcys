@@ -161,13 +161,22 @@
 
                         <div class="p-4 sm:p-6 min-h-[min(38rem,88vh)] relative min-w-0 bg-white/50 dark:bg-slate-900/30">
                             <div x-show="tab === 'overview'" x-cloak class="analytics-tab-panel">
-                                @include('dashboard.analytics.partials.overview', [
-                                    'overviewData' => $overviewData,
-                                    'schoolUnits' => $schoolUnitsData,
-                                    'yearFilterReady' => $yearFilterReady,
-                                    'chartExportContext' => $chartExportContext,
-                                    'municipalityContext' => $municipalityContext ?? null,
-                                ])
+                                @if ($yearFilterReady && ($deferOverviewOnIndex ?? false))
+                                    <div class="relative min-h-[14rem]" x-ref="panelOverview">
+                                        <div x-show="loadingTab === 'overview'" x-cloak class="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
+                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar visão geral…') }}</span>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('Consulta à base i-Educar do município; pode demorar alguns minutos.') }}</span>
+                                        </div>
+                                    </div>
+                                @else
+                                    @include('dashboard.analytics.partials.overview', [
+                                        'overviewData' => $overviewData,
+                                        'schoolUnits' => $schoolUnitsData,
+                                        'yearFilterReady' => $yearFilterReady,
+                                        'chartExportContext' => $chartExportContext,
+                                        'municipalityContext' => $municipalityContext ?? null,
+                                    ])
+                                @endif
                             </div>
                             <div x-show="tab === 'enrollment'" x-cloak class="analytics-tab-panel">
                                 @if (! $lazyTabLoading)
