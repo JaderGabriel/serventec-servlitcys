@@ -2,72 +2,11 @@
 
 namespace App\Services\Fundeb;
 
+use App\Services\AdminSync\AdminSyncTaskProgress;
+
 /**
- * Registo de andamento da importação FUNDEB (CLI, admin, observer).
+ * @deprecated Use {@see AdminSyncTaskProgress}; mantido para type-hints nos serviços FUNDEB.
  */
-final class FundebImportProgress
+final class FundebImportProgress extends AdminSyncTaskProgress
 {
-    /** @var list<array{level: string, message: string, at: string}> */
-    private array $entries = [];
-
-    public function __construct(
-        private readonly ?\Closure $listener = null,
-    ) {}
-
-    public function info(string $message): void
-    {
-        $this->line('info', $message);
-    }
-
-    public function success(string $message): void
-    {
-        $this->line('success', $message);
-    }
-
-    public function warn(string $message): void
-    {
-        $this->line('warn', $message);
-    }
-
-    public function error(string $message): void
-    {
-        $this->line('error', $message);
-    }
-
-    public function line(string $level, string $message): void
-    {
-        $entry = [
-            'level' => $level,
-            'message' => $message,
-            'at' => now()->format('H:i:s'),
-        ];
-        $this->entries[] = $entry;
-
-        if ($this->listener !== null) {
-            ($this->listener)($level, $message, $entry);
-        }
-    }
-
-    /**
-     * @return list<array{level: string, message: string, at: string}>
-     */
-    public function entries(): array
-    {
-        return $this->entries;
-    }
-
-    public function isEmpty(): bool
-    {
-        return $this->entries === [];
-    }
-
-    public function formatForDisplay(): string
-    {
-        $lines = [];
-        foreach ($this->entries as $entry) {
-            $lines[] = '['.($entry['at'] ?? '').'] ['.($entry['level'] ?? 'info').'] '.($entry['message'] ?? '');
-        }
-
-        return implode("\n", $lines);
-    }
 }

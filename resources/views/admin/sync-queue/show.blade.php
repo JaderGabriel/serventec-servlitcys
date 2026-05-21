@@ -91,12 +91,16 @@
             @endif
         </div>
 
-        @if (filled($task->output_log))
-            <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-slate-950 text-slate-100 p-4">
-                <p class="text-xs font-semibold text-slate-400 mb-2">{{ __('Log de andamento') }}</p>
+        <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-slate-950 text-slate-100 p-4">
+            <p class="text-xs font-semibold text-slate-400 mb-2">{{ __('Log de andamento') }}</p>
+            @if (filled($task->output_log))
                 <pre class="text-xs overflow-x-auto whitespace-pre-wrap max-h-96">{{ $task->output_log }}</pre>
-            </div>
-        @endif
+            @elseif ($task->status === 'processing' || $task->status === 'pending')
+                <p class="text-xs text-slate-400 leading-relaxed">{{ __('A tarefa está na fila ou a correr — actualize a página para ver novas linhas (passos, notas e saída de comandos).') }}</p>
+            @else
+                <p class="text-xs text-slate-500">{{ __('Sem registo de andamento para esta tarefa.') }}</p>
+            @endif
+        </div>
 
         @if ($task->payload)
             <details class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 text-xs">

@@ -50,10 +50,16 @@ class ProcessAdminSyncTaskJob implements ShouldQueue
             'started_at' => $task->started_at ?? now(),
             'attempts' => $task->attempts + 1,
             'error_message' => null,
+            'output_log' => $this->appendLogLine(
+                (string) ($task->output_log ?? ''),
+                'info',
+                __('Estado: a processar na fila :queue…', ['queue' => (string) config('ieducar.admin_sync.queue', 'admin-sync')]),
+            ),
         ]);
 
         try {
             $result = $runner->run($task);
+            $task->refresh();
             $output = isset($result['output']) && is_string($result['output']) ? $result['output'] : null;
             $task->update([
                 'status' => AdminSyncTaskStatus::Completed->value,
@@ -63,14 +69,27 @@ class ProcessAdminSyncTaskJob implements ShouldQueue
             ]);
             $notifications->adminSyncFinished($task->fresh());
         } catch (Throwable $e) {
+            $task->refresh();
             $task->update([
                 'status' => AdminSyncTaskStatus::Failed->value,
                 'error_message' => $e->getMessage(),
                 'completed_at' => now(),
+                'output_log' => $this->appendLogLine(
+                    (string) ($task->output_log ?? ''),
+                    'error',
+                    __('Falha na fila: :msg', ['msg' => $e->getMessage()]),
+                ),
             ]);
 
             throw $e;
         }
+    }
+
+    private function appendLogLine(string $existing, string $level, string $message): string
+    {
+        $line = '['.now()->format('H:i:s').'] ['.$level.'] '.$message;
+
+        return $existing === '' ? $line : $existing."\n".$line;
     }
 
     public function failed(?Throwable $exception): void
