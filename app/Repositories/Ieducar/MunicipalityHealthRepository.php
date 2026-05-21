@@ -8,6 +8,7 @@ use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Dashboard\PublicDataSourcesCatalog;
 use App\Support\Ieducar\ConsultoriaThematicBridge;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
+use App\Support\Ieducar\FundebReferenceDisplay;
 
 /**
  * Diagnóstico Geral: conformidade consolidada (cadastro/Censo + eixos FUNDEB/VAAR) no ano filtrado.
@@ -17,6 +18,8 @@ class MunicipalityHealthRepository
     public function __construct(
         private DiscrepanciesRepository $discrepancies,
         private FundebRepository $fundeb,
+        private OtherFundingRepository $otherFunding,
+        private WorkDoneRepository $workDone,
         private OverviewRepository $overview,
         private EnrollmentRepository $enrollment,
         private PerformanceRepository $performance,
@@ -75,11 +78,14 @@ class MunicipalityHealthRepository
                 $attendance,
                 $inclusion,
                 $network,
+                $disc,
             );
+            $otherFunding = $this->otherFunding->buildReport($city, $filters);
+            $workDone = $this->workDone->buildReport($city, $filters);
 
             $totalMat = (int) ($disc['total_matriculas'] ?? $overview['kpis']['matriculas'] ?? 0);
 
-            return $this->assemble($city, $filters, $disc, $fundeb, $inclusion, $performance, $network, $totalMat);
+            return $this->assemble($city, $filters, $disc, $fundeb, $otherFunding, $workDone, $inclusion, $performance, $network, $totalMat);
         } catch (\Throwable $e) {
             return array_merge($empty, [
                 'city_name' => $city->name,
@@ -91,6 +97,8 @@ class MunicipalityHealthRepository
     /**
      * @param  array<string, mixed>  $disc
      * @param  array<string, mixed>  $fundeb
+     * @param  array<string, mixed>  $otherFunding
+     * @param  array<string, mixed>  $workDone
      * @param  array<string, mixed>  $inclusion
      * @param  array<string, mixed>  $performance
      * @return array<string, mixed>
@@ -100,6 +108,8 @@ class MunicipalityHealthRepository
         IeducarFilterState $filters,
         array $disc,
         array $fundeb,
+        array $otherFunding,
+        array $workDone,
         array $inclusion,
         array $performance,
         array $network,
@@ -155,9 +165,24 @@ class MunicipalityHealthRepository
             }
         }
 
+        $proj = is_array($fundeb['resource_projection'] ?? null) ? $fundeb['resource_projection'] : [];
+        $fundebRef = is_array($fundeb['fundeb_reference'] ?? null)
+            ? $fundeb['fundeb_reference']
+            : (is_array($disc['funding_reference'] ?? null) ? $disc['funding_reference'] : null);
+        $vaafComparacao = is_array($proj['vaaf_comparacao'] ?? null)
+            ? $proj['vaaf_comparacao']
+            : ($fundebRef !== null ? FundebReferenceDisplay::vaafComparacao($fundebRef) : null);
+        $previsaoComparacao = is_array($proj['previsao_comparacao'] ?? null) ? $proj['previsao_comparacao'] : null;
+        $divergenciaVaaf = is_array($proj['divergencia_vaaf'] ?? null)
+            ? $proj['divergencia_vaaf']
+            : (is_array($fundebRef) && is_array($fundebRef['divergencia'] ?? null) ? $fundebRef['divergencia'] : null);
+
+        $workPeriods = is_array($workDone['periods'] ?? null) ? $workDone['periods'] : [];
+        $cadastrosQuinzena = (int) ($workPeriods['fortnight'] ?? 0);
+
         return [
             'intro' => __(
-                'Painel de consultoria municipal: consolida cadastro (mesmas rotinas da aba Discrepâncias), inclusão, equidade, FUNDEB/VAAR e indicadores públicos INEP quando disponíveis. Use as ligações para aprofundar por tema.'
+                'Painel de consultoria municipal: consolida cadastro (Discrepâncias), VAAF municipal × prévia federal, programas complementares (PNAE/PNATE), ritmo de cadastro no i-Educar, FUNDEB/VAAR e indicadores INEP quando disponíveis.'
             ),
             'footnote' => __(
                 'Índice 0–100: mesma base das discrepâncias (volume + gravidade) e alertas FUNDEB. Verde = rotina executada sem pendências; cinza = rotina indisponível nesta base; amarelo/vermelho = pendência detectada.'
@@ -175,8 +200,15 @@ class MunicipalityHealthRepository
                 'escolas_afetadas' => (int) ($discSummary['escolas_afetadas'] ?? 0),
                 'total_matriculas' => $totalMat > 0 ? $totalMat : ($disc['total_matriculas'] ?? null),
                 'recurso_prova_sem_nee' => (int) data_get($inclusion, 'recurso_prova.sem_nee', 0),
+                'cadastros_quinzena' => $cadastrosQuinzena,
+                'ritmo_cadastro_dia' => (float) ($workDone['estimativa']['ritmo_por_dia'] ?? 0),
             ],
-            'funding_reference' => is_array($disc['funding_reference'] ?? null) ? $disc['funding_reference'] : null,
+            'funding_reference' => $fundebRef,
+            'vaaf_comparacao' => $vaafComparacao,
+            'previsao_comparacao' => $previsaoComparacao,
+            'divergencia_vaaf' => $divergenciaVaaf,
+            'other_funding_programs' => count(is_array($otherFunding['programs'] ?? null) ? $otherFunding['programs'] : []),
+            'work_done_available' => (bool) ($workDone['activity_available'] ?? false),
             'cadastro_dimensions' => $cadastroDimensions,
             'active_check_ids' => is_array($disc['active_check_ids'] ?? null) ? $disc['active_check_ids'] : [],
             'thematic_blocks' => ConsultoriaThematicBridge::buildBlocks(
@@ -186,6 +218,8 @@ class MunicipalityHealthRepository
                 $disc,
                 $totalMat,
                 is_array($network['kpis'] ?? null) ? $network['kpis'] : null,
+                $otherFunding,
+                $workDone,
             ),
             'public_data_sources' => PublicDataSourcesCatalog::build($city, 'all'),
             'fundeb_modules' => array_map(static fn (array $m): array => [

@@ -37,6 +37,19 @@
             <div class="rounded-lg border {{ $border }} bg-white dark:bg-gray-900/40 p-4 shadow-sm space-y-2">
                 <p class="text-xs font-semibold uppercase tracking-wide {{ $labelTone }}">{{ $item['label'] ?? '' }}</p>
                 <p class="font-semibold tabular-nums {{ $valueTone }} {{ $size === 'xl' ? 'text-xl' : 'text-2xl' }}">{{ $item['value'] ?? '' }}</p>
+                @if (is_array($item['comparacao'] ?? null))
+                    @php $cmp = $item['comparacao']; @endphp
+                    <div class="mt-2 pt-2 border-t border-slate-200/80 dark:border-slate-600/60 grid grid-cols-1 gap-2 text-[11px]">
+                        <div>
+                            <span class="font-medium text-slate-600 dark:text-slate-400">{{ $cmp['real']['label'] ?? __('Real') }}:</span>
+                            <span class="tabular-nums text-slate-900 dark:text-slate-100">{{ $cmp['real']['value'] ?? '—' }}</span>
+                        </div>
+                        <div>
+                            <span class="font-medium text-slate-600 dark:text-slate-400">{{ $cmp['previa']['label'] ?? __('Prévia') }}:</span>
+                            <span class="tabular-nums text-slate-900 dark:text-slate-100">{{ $cmp['previa']['value'] ?? '—' }}</span>
+                        </div>
+                    </div>
+                @endif
                 @if (filled($item['explicacao_resumo'] ?? null))
                     <p class="text-[10px] leading-snug text-slate-600 dark:text-slate-400">{{ $item['explicacao_resumo'] }}</p>
                 @endif

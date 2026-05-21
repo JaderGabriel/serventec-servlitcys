@@ -30,6 +30,9 @@ final class FundebComplementacaoInformeBuilder
      *   }>
      * }
      */
+    /**
+     * @param  array<string, mixed>|null  $fundebReference
+     */
     public static function build(
         City $city,
         IeducarFilterState $filters,
@@ -37,8 +40,9 @@ final class FundebComplementacaoInformeBuilder
         ?array $discrepanciesData = null,
         ?array $inclusionData = null,
         ?array $resourceProjection = null,
+        ?array $fundebReference = null,
     ): array {
-        $ref = DiscrepanciesFundingImpact::resolveReference($city, $filters);
+        $ref = $fundebReference ?? DiscrepanciesFundingImpact::resolveReference($city, $filters);
         $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
         $yearLabel = self::yearLabel($filters);
         $disc = is_array($discrepanciesData) ? $discrepanciesData : [];
@@ -134,19 +138,52 @@ final class FundebComplementacaoInformeBuilder
             );
         }
 
-        $indicadores = [
-            [
+        $vaafComp = FundebReferenceDisplay::vaafComparacao($ref);
+        $prevComp = $matriculas > 0 ? FundebReferenceDisplay::previsaoComparacao($matriculas, $ref) : null;
+
+        $indicadores = [];
+        if ($vaafComp !== null) {
+            $indicadores[] = [
+                'label' => $vaafComp['real']['label'],
+                'value' => $vaafComp['real']['value'],
+                'hint' => $vaafComp['real']['hint'],
+                'comparacao' => $vaafComp,
+            ];
+            $indicadores[] = [
+                'label' => $vaafComp['previa']['label'],
+                'value' => $vaafComp['previa']['value'],
+                'hint' => $vaafComp['previa']['hint'],
+            ];
+        } else {
+            $indicadores[] = [
                 'label' => __('VAAF utilizado'),
                 'value' => $fmt($ref['vaaf']),
                 'hint' => $ref['fonte_label'],
-            ],
-        ];
+            ];
+        }
 
         if ($matriculas > 0) {
+            if ($prevComp !== null) {
+                $indicadores[] = [
+                    'label' => $prevComp['real']['label'],
+                    'value' => $prevComp['real']['value'],
+                    'hint' => $prevComp['real']['hint'],
+                    'comparacao' => $prevComp,
+                ];
+            } else {
+                $indicadores[] = [
+                    'label' => __('Previsão base (matrículas × VAAF)'),
+                    'value' => $fmt($baseFundeb),
+                    'hint' => __(':n matrícula(s) no filtro', ['n' => number_format($matriculas, 0, ',', '.')]),
+                ];
+            }
+        }
+
+        if (is_array($ref['divergencia'] ?? null) && filled($ref['divergencia']['mensagem'] ?? null)) {
             $indicadores[] = [
-                'label' => __('Previsão base (matrículas × VAAF)'),
-                'value' => $fmt($baseFundeb),
-                'hint' => __(':n matrícula(s) no filtro', ['n' => number_format($matriculas, 0, ',', '.')]),
+                'label' => __('Diferença municipal × prévia'),
+                'value' => (string) $ref['divergencia']['mensagem'],
+                'hint' => null,
             ];
         }
 

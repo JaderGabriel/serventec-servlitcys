@@ -51,6 +51,17 @@ class AnalyticsDashboardTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_analytics_index_includes_new_tabs(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('dashboard.analytics'))
+            ->assertOk()
+            ->assertSee(__('Demais financiamentos'), false)
+            ->assertSee(__('Trabalho realizado'), false);
+    }
+
     public function test_municipal_analytics_auto_selects_single_linked_city(): void
     {
         $city = City::factory()->create();

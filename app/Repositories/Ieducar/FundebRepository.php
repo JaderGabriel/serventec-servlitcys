@@ -5,7 +5,9 @@ namespace App\Repositories\Ieducar;
 use App\Models\City;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Dashboard\PublicDataSourcesCatalog;
+use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\FundebComplementacaoInformeBuilder;
+use App\Support\Ieducar\FundebReferenceDisplay;
 use App\Support\Ieducar\FundebResourceProjection;
 
 /**
@@ -51,6 +53,7 @@ class FundebRepository
     ): array {
         $yearLabel = $this->yearLabel($filters);
         $matTotal = (int) data_get($overviewData, 'kpis.matriculas', data_get($enrollmentData, 'kpis.matriculas', 0));
+        $fundebReference = DiscrepanciesFundingImpact::resolveReference($city, $filters);
 
         $resourceProjection = FundebResourceProjection::build(
             $matTotal,
@@ -59,11 +62,13 @@ class FundebRepository
             $discrepanciesData,
             $city,
             $filters,
+            $fundebReference,
         );
 
         return [
             'year_label' => $yearLabel,
             'city_name' => $city->name,
+            'fundeb_reference' => $fundebReference,
             'resource_projection' => $resourceProjection,
             'complementacao_informe' => FundebComplementacaoInformeBuilder::build(
                 $city,
@@ -72,6 +77,7 @@ class FundebRepository
                 $discrepanciesData,
                 $inclusionData,
                 $resourceProjection,
+                $fundebReference,
             ),
             'intro' => __(
                 'O FUNDEB financia a manutenção e o desenvolvimento da educação básica. O MEC acompanha condicionalidades ligadas ao Valor-Aluno-Ano-Resultado (VAAR), com registro e documentação no Sistema Simec. Este painel não substitui o módulo oficial: organiza um roteiro por «módulos» temáticos, explica o que costuma ser exigido e cruza, quando possível, indicadores da base i-Educar da cidade (respeitando os filtros actuais).'

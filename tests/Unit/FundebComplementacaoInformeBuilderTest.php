@@ -75,8 +75,10 @@ final class FundebComplementacaoInformeBuilderTest extends TestCase
         config([
             'ieducar.discrepancies.vaa_referencia_anual' => 4500,
             'ieducar.fundeb.vaaf_por_ibge' => [],
+            'ieducar.fundeb.open_data.national_floor.enabled' => false,
         ]);
 
+        \App\Support\Ieducar\FundebMunicipalReferenceResolver::clearCache();
         $city = new City(['name' => 'Teste', 'ibge_municipio' => '9999999']);
         $filters = new IeducarFilterState(ano_letivo: '2024', escola_id: null, curso_id: null, turno_id: null);
 

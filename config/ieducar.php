@@ -830,6 +830,110 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Demais financiamentos (PNAE, PNATE, PDDE, etc.)
+    |--------------------------------------------------------------------------
+    |
+    | Programas exibidos na aba «Demais financiamentos». Cada item pode declarar
+    | colunas candidatas em matricula, aluno ou escola para leitura automática.
+    |
+    */
+
+    'other_funding' => [
+        'programs' => [
+            [
+                'id' => 'pnate',
+                'titulo' => 'PNATE — Programa Nacional de Apoio ao Transporte do Escolar',
+                'descricao' => 'Repasses e prestação de contas ligados ao transporte escolar; dependem do cadastro de utilização de transporte nas matrículas e da oferta declarada no Censo.',
+                'matricula_columns' => [
+                    'transporte_escolar',
+                    'uso_transporte_escolar',
+                    'veiculo_transporte_escolar',
+                    'ref_cod_transporte_escolar',
+                ],
+                'fnde_url' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/programas/programa-nacional-de-apoio-ao-transporte-do-escolar-pnate',
+            ],
+            [
+                'id' => 'pnae',
+                'titulo' => 'PNAE — Programa Nacional de Alimentação Escolar',
+                'descricao' => 'Merenda escolar e alimentação escolar; o i-Educar raramente centraliza cardápios — o cadastro de matrículas e escolas alimenta planejamento e Censo.',
+                'matricula_columns' => [
+                    'alimentacao_escolar',
+                    'recebe_escolarizacao_em_outro_espaco',
+                    'tipo_atendimento',
+                ],
+                'fnde_url' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/programas/programa-nacional-de-alimentacao-escolar',
+            ],
+            [
+                'id' => 'pdde',
+                'titulo' => 'PDDE — Programa Dinheiro Direto na Escola',
+                'descricao' => 'Recursos de custeio e capital repassados às escolas; exige escolas com INEP válido e matrículas consistentes no Censo.',
+                'matricula_columns' => [],
+                'fnde_url' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/programas/programa-dinheiro-direto-na-escola',
+            ],
+            [
+                'id' => 'pdde-qualidade',
+                'titulo' => 'PDDE — Qualidade (ações prioritárias)',
+                'descricao' => 'Complemento do PDDE para ações de qualidade; comprovação no Simec/FNDE, com reflexo em indicadores e cadastro escolar.',
+                'matricula_columns' => [],
+                'fnde_url' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/programas/pdde-qualidade',
+            ],
+            [
+                'id' => 'salario-educacao',
+                'titulo' => 'Salário-educação e programas correlatos',
+                'descricao' => 'Financiamento da educação básica via contribuição social; não depende de campos específicos no i-Educar, mas de matrículas válidas no Censo.',
+                'matricula_columns' => [],
+                'fnde_url' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/salario-educacao',
+            ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Trabalho realizado (cadastro recente no i-Educar)
+    |--------------------------------------------------------------------------
+    |
+    | Exclusão de utilizadores administrativos na contagem (login, IDs, níveis).
+    | minutos_por_registro: fallback quando não há timestamps suficientes na base.
+    |
+    */
+
+    'work_tracking' => [
+        'exclude_login_patterns' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'IEDUCAR_WORK_EXCLUDE_LOGINS',
+            'admin,administrador,suporte,portabilis'
+        ))))),
+        'exclude_usuario_ids' => array_values(array_filter(array_map('intval', explode(',', (string) env(
+            'IEDUCAR_WORK_EXCLUDE_USER_IDS',
+            '1'
+        ))))),
+        'exclude_nivel_usuario' => array_values(array_filter(array_map('intval', explode(',', (string) env(
+            'IEDUCAR_WORK_EXCLUDE_NIVEL',
+            '1'
+        ))))),
+        'default_minutes_per_record' => max(0.5, (float) env('IEDUCAR_WORK_MINUTES_PER_RECORD', 3.5)),
+        'working_hours_per_day' => max(1, (float) env('IEDUCAR_WORK_HOURS_PER_DAY', 6)),
+        'periods_days' => [
+            'day' => 1,
+            'week' => 7,
+            'fortnight' => 15,
+        ],
+        'matricula_date_columns' => [
+            'data_cad',
+            'data_cadastro',
+            'data_matricula',
+            'data_matricula_inicial',
+            'data_registro',
+        ],
+        'matricula_user_columns' => [
+            'ref_usuario_cad',
+            'ref_usuario',
+            'id_usuario_cad',
+            'usuario_cad',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Fila de sincronização administrativa (geo, pedagógico, FUNDEB, i-Educar)
     |--------------------------------------------------------------------------
     |

@@ -109,7 +109,7 @@ final class DiscrepanciesFundingImpact
             'titulo' => __('Como são calculados os valores financeiros indicativos'),
             'passos' => [
                 __('1. Contagem de ocorrências — cada rotina soma matrículas, escolas ou vagas com o problema no filtro actual (ano, escola, curso).'),
-                __('2. Valor unitário de referência — VAAF (:vaa por aluno/ano; :fonte) × peso do tipo de problema.', [
+                __('2. Valor unitário de referência — VAAF municipal (:vaa por aluno/ano; :fonte) × peso do tipo de problema. A prévia federal (quando configurada) aparece nas abas FUNDEB e Diagnóstico só para comparação.', [
                     'vaa' => self::formatBrl($vaa),
                     'fonte' => $ref['fonte_label'],
                 ]),
@@ -131,15 +131,25 @@ final class DiscrepanciesFundingImpact
     {
         $ref = self::resolveReference($city, $filters);
 
+        $municipalVaaf = is_array($ref['municipal'] ?? null)
+            ? (float) ($ref['municipal']['vaaf'] ?? $ref['vaaf'])
+            : (float) $ref['vaaf'];
+
         return [
-            'vaa_anual' => $ref['vaaf'],
-            'vaa_label' => self::formatBrl($ref['vaaf']),
+            'vaa_anual' => $municipalVaaf,
+            'vaa_label' => self::formatBrl($municipalVaaf),
+            'vaa_previa_label' => is_array($ref['previa'] ?? null)
+                ? self::formatBrl((float) $ref['previa']['vaaf'])
+                : null,
             'vaa_fonte' => $ref['fonte'],
             'vaa_fonte_label' => $ref['fonte_label'],
             'vaa_ano' => $ref['ano'],
             'vaat' => $ref['vaat'],
             'vaat_label' => $ref['vaat'] !== null ? self::formatBrl($ref['vaat']) : null,
             'complementacao_vaar' => $ref['complementacao_vaar'],
+            'vaaf_comparacao' => FundebReferenceDisplay::vaafComparacao($ref),
+            'divergencia' => is_array($ref['divergencia'] ?? null) ? $ref['divergencia'] : null,
+            'divergencia_vaaf' => is_array($ref['divergencia'] ?? null) ? $ref['divergencia'] : null,
         ];
     }
 

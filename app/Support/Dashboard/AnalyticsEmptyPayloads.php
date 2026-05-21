@@ -153,6 +153,45 @@ final class AnalyticsEmptyPayloads
         ];
     }
 
+    public static function otherFunding(): array
+    {
+        return [
+            'year_label' => '',
+            'city_name' => '',
+            'intro' => '',
+            'footnote' => '',
+            'programs' => [],
+            'transport' => null,
+            'total_matriculas' => null,
+            'funding_pillars' => [],
+            'chart_programas' => null,
+            'public_data_sources' => ['intro' => '', 'categories' => []],
+            'error' => null,
+        ];
+    }
+
+    public static function workDone(): array
+    {
+        return [
+            'year_label' => '',
+            'city_name' => '',
+            'intro' => '',
+            'footnote' => '',
+            'period_labels' => [],
+            'periods' => ['day' => 0, 'week' => 0, 'fortnight' => 0],
+            'by_user' => [],
+            'baseline' => ['turmas' => 0, 'matriculas' => 0, 'ano' => 0],
+            'estimativa' => [],
+            'exclusion_notes' => [],
+            'activity_available' => false,
+            'activity_note' => null,
+            'chart_periods' => null,
+            'chart_users' => null,
+            'methodology' => [],
+            'error' => null,
+        ];
+    }
+
     public static function discrepancies(): array
     {
         return [

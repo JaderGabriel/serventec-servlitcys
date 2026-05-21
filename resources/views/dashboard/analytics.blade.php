@@ -223,6 +223,36 @@
                                     </div>
                                 @endif
                             </div>
+                            <div x-show="tab === 'other_funding'" x-cloak class="analytics-tab-panel">
+                                @if (! $lazyTabLoading)
+                                    @include('dashboard.analytics.partials.other-funding', [
+                                        'otherFundingData' => $otherFundingData,
+                                        'yearFilterReady' => $yearFilterReady,
+                                        'chartExportContext' => $chartExportContext,
+                                    ])
+                                @else
+                                    <div class="relative min-h-[12rem]" x-ref="panelOtherFunding">
+                                        <div x-show="loadingTab === 'other_funding'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
+                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar programas…') }}</span>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                            <div x-show="tab === 'work_done'" x-cloak class="analytics-tab-panel">
+                                @if (! $lazyTabLoading)
+                                    @include('dashboard.analytics.partials.work-done', [
+                                        'workDoneData' => $workDoneData,
+                                        'yearFilterReady' => $yearFilterReady,
+                                        'chartExportContext' => $chartExportContext,
+                                    ])
+                                @else
+                                    <div class="relative min-h-[12rem]" x-ref="panelWorkDone">
+                                        <div x-show="loadingTab === 'work_done'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
+                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar produtividade…') }}</span>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
                             <div x-show="tab === 'discrepancies'" x-cloak class="analytics-tab-panel">
                                 @if (! $lazyTabLoading)
                                     @include('dashboard.analytics.partials.discrepancies', [

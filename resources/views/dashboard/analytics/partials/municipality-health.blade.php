@@ -21,6 +21,10 @@
     $fmtBrl = static fn (float $v): string => 'R$ ' . number_format($v, 2, ',', '.');
     $fundingMet = is_array($h['funding_metodologia'] ?? null) ? $h['funding_metodologia'] : null;
     $fundingResumo = is_array($h['funding_resumo_explicacao'] ?? null) ? $h['funding_resumo_explicacao'] : null;
+    $vaafComparacao = is_array($h['vaaf_comparacao'] ?? null) ? $h['vaaf_comparacao'] : null;
+    $previsaoComparacao = is_array($h['previsao_comparacao'] ?? null) ? $h['previsao_comparacao'] : null;
+    $divergenciaVaaf = is_array($h['divergencia_vaaf'] ?? null) ? $h['divergencia_vaaf'] : null;
+    $fundingRef = is_array($h['funding_reference'] ?? null) ? $h['funding_reference'] : null;
     $perdaAgreg = (float) ($summary['perda_estimada_anual'] ?? 0);
     $ganhoAgreg = (float) ($summary['ganho_potencial_anual'] ?? 0);
     $recursoSemNee = (int) ($summary['recurso_prova_sem_nee'] ?? 0);
@@ -34,6 +38,14 @@
             'value' => number_format($recursoSemNee),
             'tone' => 'violet',
             'explicacao_resumo' => __('Matrículas com apoio INEP declarado sem cadastro de deficiência/NEE — ver Discrepâncias.'),
+        ];
+    }
+    if ((int) ($summary['cadastros_quinzena'] ?? 0) > 0) {
+        $healthKpis[] = [
+            'label' => __('Cadastros (quinzena)'),
+            'value' => number_format((int) $summary['cadastros_quinzena']),
+            'tone' => 'sky',
+            'explicacao_resumo' => __('Matrículas com data de cadastro recente, por utilizadores municipais (exc. admin).'),
         ];
     }
     $healthKpis = array_merge($healthKpis, [
@@ -68,6 +80,7 @@
     $hasPublicSources = count($publicSources['categories'] ?? []) > 0;
     $flowSteps = ConsultoriaFlow::numberedSteps([
         ['label' => __('Prioridades'), 'anchor' => 'diag-prioridades'],
+        ['label' => __('VAAF e previsão'), 'anchor' => 'diag-vaaf', 'visible' => $vaafComparacao !== null],
         ['label' => __('Leitura temática'), 'anchor' => 'diag-tematico', 'visible' => count($thematicBlocks) > 0],
         ['label' => __('Fontes públicas'), 'anchor' => 'diag-fontes-publicas', 'visible' => $hasPublicSources],
         ['label' => __('Mapa de rotinas'), 'anchor' => 'diag-mapa', 'visible' => count($cadastro) > 0],
@@ -98,6 +111,12 @@
                     @if (filled($h['year_label'] ?? null))
                         — {{ $h['year_label'] }}
                     @endif
+                    @if ($fundingRef !== null && isset($fundingRef['vaa_label']))
+                        · {{ __('VAAF municipal:') }} <span class="font-medium">{{ $fundingRef['vaa_label'] }}</span>
+                        @if (filled($fundingRef['vaa_previa_label'] ?? null))
+                            · {{ __('prévia:') }} {{ $fundingRef['vaa_previa_label'] }}
+                        @endif
+                    @endif
                 </p>
             </div>
             <div class="shrink-0">
@@ -107,6 +126,17 @@
 
         <p class="text-xs text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 leading-relaxed">
             {{ $h['footnote'] ?? '' }}
+        </p>
+
+        <p class="text-xs text-gray-600 dark:text-gray-400">
+            {{ __('Aprofundar:') }}
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Discrepâncias') }}</button>
+            ·
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'fundeb')">{{ __('FUNDEB') }}</button>
+            ·
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'other_funding')">{{ __('Demais financiamentos') }}</button>
+            ·
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'work_done')">{{ __('Trabalho realizado') }}</button>
         </p>
 
         <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="teal" />
@@ -134,9 +164,11 @@
                             class="w-full"
                         />
                         <div class="mt-3 flex flex-wrap gap-2 justify-center">
-                            <button type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Ver discrepâncias') }}</button>
+                            <button type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Discrepâncias') }}</button>
                             <span class="text-gray-300 dark:text-gray-600">·</span>
-                            <button type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'fundeb')">{{ __('Ver FUNDEB') }}</button>
+                            <button type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'fundeb')">{{ __('FUNDEB') }}</button>
+                            <span class="text-gray-300 dark:text-gray-600">·</span>
+                            <button type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'work_done')">{{ __('Trabalho') }}</button>
                         </div>
                     </div>
                     <div class="lg:col-span-2 space-y-2">
@@ -194,6 +226,21 @@
                 </div>
             @endif
         </x-dashboard.consultoria-section>
+
+        @if ($vaafComparacao !== null)
+            <x-dashboard.consultoria-section
+                :step="$diagStep['diag-vaaf'] ?? null"
+                anchor="diag-vaaf"
+                :title="__('Medidores financeiros (VAAF e previsão)')
+                :subtitle="__('Valor municipal usado nos cálculos × prévia federal para comparação com painéis do governo.')"
+            >
+                <x-dashboard.consultoria-vaaf-comparacao
+                    :comparacao="$vaafComparacao"
+                    :divergencia="$divergenciaVaaf"
+                    :previsaoComparacao="$previsaoComparacao"
+                />
+            </x-dashboard.consultoria-section>
+        @endif
 
         @if (count($thematicBlocks) > 0)
             <x-dashboard.consultoria-section

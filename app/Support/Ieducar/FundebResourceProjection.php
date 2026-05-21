@@ -18,6 +18,9 @@ final class FundebResourceProjection
      * @param  array<string, mixed>|null  $discrepanciesData
      * @return array<string, mixed>
      */
+    /**
+     * @param  array<string, mixed>|null  $referenceResolved  Resultado de {@see DiscrepanciesFundingImpact::resolveReference}
+     */
     public static function build(
         int $matriculas,
         string $yearLabel,
@@ -25,9 +28,10 @@ final class FundebResourceProjection
         ?array $discrepanciesData = null,
         ?City $city = null,
         ?IeducarFilterState $filters = null,
+        ?array $referenceResolved = null,
     ): array {
         if ($matriculas <= 0) {
-            return self::empty($yearLabel, $city, $filters);
+            return self::empty($yearLabel, $city, $filters, $referenceResolved);
         }
 
         $cfg = config('ieducar.fundeb', []);
@@ -35,11 +39,16 @@ final class FundebResourceProjection
             $cfg = [];
         }
 
-        $ref = DiscrepanciesFundingImpact::resolveReference($city, $filters);
-        $vaa = $ref['vaaf'];
+        $ref = $referenceResolved ?? DiscrepanciesFundingImpact::resolveReference($city, $filters);
+        $vaa = (float) $ref['vaaf'];
+        $previaVaaf = is_array($ref['previa'] ?? null) ? (float) ($ref['previa']['vaaf'] ?? 0) : 0.0;
+        $municipalVaaf = is_array($ref['municipal'] ?? null)
+            ? (float) ($ref['municipal']['vaaf'] ?? $vaa)
+            : $vaa;
         $aviso = (string) ($cfg['aviso_previsao'] ?? config('ieducar.discrepancies.aviso_financeiro', ''));
 
-        $base = round($matriculas * $vaa, 2);
+        $base = round($matriculas * $municipalVaaf, 2);
+        $basePrevia = $previaVaaf > 0 ? round($matriculas * $previaVaaf, 2) : null;
         $summary = is_array($discrepanciesData['summary'] ?? null) ? $discrepanciesData['summary'] : [];
         $perda = round((float) ($summary['perda_estimada_anual'] ?? 0), 2);
         $ganho = round((float) ($summary['ganho_potencial_anual'] ?? 0), 2);
@@ -53,7 +62,9 @@ final class FundebResourceProjection
         $totalComComplemento = round($previsaoReferencia + $complementIndicativa, 2);
 
         $distribuicao = self::buildLegalDistribution($previsaoReferencia, $cfg);
-        $porEtapa = self::extractEtapaBreakdown($enrollmentData, $vaa, $matriculas);
+        $porEtapa = self::extractEtapaBreakdown($enrollmentData, $municipalVaaf, $matriculas);
+        $vaafComparacao = FundebReferenceDisplay::vaafComparacao($ref);
+        $previsaoComparacao = FundebReferenceDisplay::previsaoComparacao($matriculas, $ref);
 
         $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
 
@@ -63,10 +74,16 @@ final class FundebResourceProjection
             'aviso' => $aviso,
             'matriculas_base' => $matriculas,
             'vaa_referencia' => $vaa,
-            'vaa_label' => $fmt($vaa),
+            'vaa_municipal' => $municipalVaaf,
+            'vaa_previa' => $previaVaaf > 0 ? $previaVaaf : null,
+            'vaa_label' => $fmt($municipalVaaf),
+            'vaa_previa_label' => $previaVaaf > 0 ? $fmt($previaVaaf) : null,
             'vaa_fonte' => $ref['fonte'],
             'vaa_fonte_label' => $ref['fonte_label'],
             'vaa_ano' => $ref['ano'],
+            'vaaf_comparacao' => $vaafComparacao,
+            'previsao_comparacao' => $previsaoComparacao,
+            'divergencia_vaaf' => is_array($ref['divergencia'] ?? null) ? $ref['divergencia'] : null,
             'vaat_label' => $ref['vaat'] !== null ? $fmt($ref['vaat']) : null,
             'complementacao_vaar_oficial' => $ref['complementacao_vaar'],
             'formula_base' => __(
@@ -82,14 +99,17 @@ final class FundebResourceProjection
                     'label' => __('Previsão base (ano)'),
                     'value' => $fmt($previsaoReferencia),
                     'tone' => 'indigo',
+                    'comparacao' => $previsaoComparacao,
                     'explicacao_resumo' => __(
-                        ':mat matrícula(s) × :vaa (VAAF referência) = :total.',
+                        ':mat matrícula(s) × :vaa (VAAF municipal) = :total.',
                         [
                             'mat' => number_format($matriculas, 0, ',', '.'),
-                            'vaa' => $fmt($vaa),
+                            'vaa' => $fmt($municipalVaaf),
                             'total' => $fmt($previsaoReferencia),
                         ]
-                    ),
+                    ).($basePrevia !== null
+                        ? ' '.__('Prévia federal: :total.', ['total' => $fmt($basePrevia)])
+                        : ''),
                     'funding_explicacao' => [
                         'formula_curta' => __(':mat × :vaa = :total', [
                             'mat' => number_format($matriculas, 0, ',', '.'),
@@ -154,6 +174,7 @@ final class FundebResourceProjection
             ],
             'totais' => [
                 'fundeb_base_anual' => $previsaoReferencia,
+                'fundeb_base_previa_anual' => $basePrevia,
                 'complementacao_vaar_indicativa' => $complementIndicativa,
                 'total_com_complemento_indicativa' => $totalComComplemento,
                 'perda_risco_anual' => $perda,
@@ -181,9 +202,9 @@ final class FundebResourceProjection
     /**
      * @return array<string, mixed>
      */
-    private static function empty(string $yearLabel, ?City $city = null, ?IeducarFilterState $filters = null): array
+    private static function empty(string $yearLabel, ?City $city = null, ?IeducarFilterState $filters = null, ?array $referenceResolved = null): array
     {
-        $ref = DiscrepanciesFundingImpact::resolveReference($city, $filters);
+        $ref = $referenceResolved ?? DiscrepanciesFundingImpact::resolveReference($city, $filters);
 
         return [
             'available' => false,
@@ -191,10 +212,18 @@ final class FundebResourceProjection
             'aviso' => (string) config('ieducar.discrepancies.aviso_financeiro', ''),
             'matriculas_base' => 0,
             'vaa_referencia' => $ref['vaaf'],
-            'vaa_label' => DiscrepanciesFundingImpact::formatBrl($ref['vaaf']),
+            'vaa_municipal' => is_array($ref['municipal'] ?? null) ? (float) ($ref['municipal']['vaaf'] ?? $ref['vaaf']) : (float) $ref['vaaf'],
+            'vaa_previa' => is_array($ref['previa'] ?? null) ? (float) ($ref['previa']['vaaf'] ?? 0) : null,
+            'vaa_label' => DiscrepanciesFundingImpact::formatBrl((float) $ref['vaaf']),
+            'vaa_previa_label' => is_array($ref['previa'] ?? null)
+                ? DiscrepanciesFundingImpact::formatBrl((float) $ref['previa']['vaaf'])
+                : null,
             'vaa_fonte' => $ref['fonte'],
             'vaa_fonte_label' => $ref['fonte_label'],
             'vaa_ano' => $ref['ano'],
+            'vaaf_comparacao' => FundebReferenceDisplay::vaafComparacao($ref),
+            'previsao_comparacao' => null,
+            'divergencia_vaaf' => is_array($ref['divergencia'] ?? null) ? $ref['divergencia'] : null,
             'vaat_label' => $ref['vaat'] !== null ? DiscrepanciesFundingImpact::formatBrl($ref['vaat']) : null,
             'complementacao_vaar_oficial' => $ref['complementacao_vaar'],
             'formula_base' => __('Sem matrículas ativas no filtro — não é possível estimar recursos.'),

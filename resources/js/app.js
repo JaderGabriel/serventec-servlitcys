@@ -172,6 +172,8 @@ document.addEventListener("alpine:init", () => {
                     performance: "panelPerformance",
                     attendance: "panelAttendance",
                     fundeb: "panelFundeb",
+                    other_funding: "panelOtherFunding",
+                    work_done: "panelWorkDone",
                     municipality_health: "panelMunicipalityHealth",
                     discrepancies: "panelDiscrepancies",
                 };

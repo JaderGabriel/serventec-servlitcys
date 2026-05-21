@@ -61,12 +61,43 @@
                     <p class="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{{ $proj['formula_base'] ?? '' }}</p>
                     @if (filled($proj['vaa_fonte_label'] ?? null))
                         <p class="text-xs text-indigo-800 dark:text-indigo-200 bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-800/50 rounded-md px-3 py-2">
-                            {{ __('Fonte do VAAF:') }} {{ $proj['vaa_fonte_label'] }}
+                            {{ __('Fonte do VAAF (cálculo):') }} {{ $proj['vaa_fonte_label'] }}
                             @if (filled($proj['vaa_ano'] ?? null))
                                 · {{ __('ano :y', ['y' => $proj['vaa_ano']]) }}
                             @endif
                         </p>
                     @endif
+
+                    @if (is_array($proj['vaaf_comparacao'] ?? null))
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <div class="rounded-md border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 px-3 py-2">
+                                <p class="text-[10px] font-semibold uppercase text-emerald-800 dark:text-emerald-300">{{ $proj['vaaf_comparacao']['real']['label'] ?? '' }}</p>
+                                <p class="text-lg font-semibold tabular-nums text-emerald-950 dark:text-emerald-100">{{ $proj['vaaf_comparacao']['real']['value'] ?? '—' }}</p>
+                                @if (filled($proj['vaaf_comparacao']['real']['hint'] ?? null))
+                                    <p class="text-[11px] text-emerald-900/80 dark:text-emerald-200/80">{{ $proj['vaaf_comparacao']['real']['hint'] }}</p>
+                                @endif
+                            </div>
+                            <div class="rounded-md border border-sky-200 dark:border-sky-800 bg-sky-50/50 dark:bg-sky-950/20 px-3 py-2">
+                                <p class="text-[10px] font-semibold uppercase text-sky-800 dark:text-sky-300">{{ $proj['vaaf_comparacao']['previa']['label'] ?? '' }}</p>
+                                <p class="text-lg font-semibold tabular-nums text-sky-950 dark:text-sky-100">{{ $proj['vaaf_comparacao']['previa']['value'] ?? '—' }}</p>
+                                @if (filled($proj['vaaf_comparacao']['previa']['hint'] ?? null))
+                                    <p class="text-[11px] text-sky-900/80 dark:text-sky-200/80">{{ $proj['vaaf_comparacao']['previa']['hint'] }}</p>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
+                    @if (filled($proj['divergencia_vaaf']['mensagem'] ?? null))
+                        <p class="text-xs text-amber-900 dark:text-amber-100 bg-amber-50/90 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
+                            {{ $proj['divergencia_vaaf']['mensagem'] }}
+                        </p>
+                    @endif
+
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400">
+                        {{ __('Risco e ganho de cadastro:') }}
+                        <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('aba Discrepâncias') }}</button>
+                        {{ __('(a aba FUNDEB carrega sem essas rotinas para responder mais rápido).') }}
+                    </p>
 
                     @if (filled($proj['aviso'] ?? null))
                         <p class="text-xs text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-600 rounded-md px-3 py-2">{{ $proj['aviso'] }}</p>
@@ -233,6 +264,12 @@
                                         <div class="rounded-md bg-gray-50 dark:bg-gray-800/60 px-3 py-2 border border-gray-100 dark:border-gray-700">
                                             <dt class="text-[11px] text-gray-500 dark:text-gray-400">{{ $ind['label'] ?? '' }}</dt>
                                             <dd class="font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ $ind['value'] ?? '' }}</dd>
+                                            @if (is_array($ind['comparacao'] ?? null))
+                                                <dd class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600 space-y-1 text-[10px]">
+                                                    <p><span class="text-emerald-700 dark:text-emerald-400">{{ __('Real') }}:</span> {{ $ind['comparacao']['real']['value'] ?? '—' }}</p>
+                                                    <p><span class="text-sky-700 dark:text-sky-400">{{ __('Prévia') }}:</span> {{ $ind['comparacao']['previa']['value'] ?? '—' }}</p>
+                                                </dd>
+                                            @endif
                                             @if (filled($ind['hint'] ?? null))
                                                 <dd class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{{ $ind['hint'] }}</dd>
                                             @endif

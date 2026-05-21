@@ -9,6 +9,8 @@ use App\Repositories\Ieducar\EnrollmentRepository;
 use App\Repositories\Ieducar\DiscrepanciesRepository;
 use App\Repositories\Ieducar\FundebRepository;
 use App\Repositories\Ieducar\MunicipalityHealthRepository;
+use App\Repositories\Ieducar\OtherFundingRepository;
+use App\Repositories\Ieducar\WorkDoneRepository;
 use App\Support\Ieducar\DiscrepanciesCheckCatalog;
 use App\Repositories\Ieducar\InclusionRepository;
 use App\Repositories\Ieducar\NetworkRepository;
@@ -39,6 +41,8 @@ class AnalyticsDashboardController extends Controller
         InclusionRepository $inclusionRepository,
         NetworkRepository $networkRepository,
         FundebRepository $fundebRepository,
+        OtherFundingRepository $otherFundingRepository,
+        WorkDoneRepository $workDoneRepository,
         DiscrepanciesRepository $discrepanciesRepository,
         MunicipalityHealthRepository $municipalityHealthRepository,
         SchoolUnitsRepository $schoolUnitsRepository,
@@ -137,6 +141,8 @@ class AnalyticsDashboardController extends Controller
                 $discrepanciesData,
             );
             $municipalityHealthData = $municipalityHealthRepository->snapshot($city, $filters);
+            $otherFundingData = $otherFundingRepository->buildReport($city, $filters);
+            $workDoneData = $workDoneRepository->buildReport($city, $filters);
         } else {
             $enrollmentData = AnalyticsEmptyPayloads::enrollment();
             $performanceData = AnalyticsEmptyPayloads::performance();
@@ -144,6 +150,8 @@ class AnalyticsDashboardController extends Controller
             $inclusionData = AnalyticsEmptyPayloads::inclusion();
             $networkData = AnalyticsEmptyPayloads::network();
             $fundebData = AnalyticsEmptyPayloads::fundeb();
+            $otherFundingData = AnalyticsEmptyPayloads::otherFunding();
+            $workDoneData = AnalyticsEmptyPayloads::workDone();
             $discrepanciesData = AnalyticsEmptyPayloads::discrepancies();
             $municipalityHealthData = AnalyticsEmptyPayloads::municipalityHealth();
         }
@@ -159,6 +167,8 @@ class AnalyticsDashboardController extends Controller
             'performance' => __('Desempenho'),
             'attendance' => __('Frequência'),
             'fundeb' => __('FUNDEB'),
+            'other_funding' => __('Demais financiamentos'),
+            'work_done' => __('Trabalho realizado'),
             'discrepancies' => __('Discrepâncias e Erros'),
             'municipality_health' => __('Diagnóstico Geral'),
         ];
@@ -181,6 +191,8 @@ class AnalyticsDashboardController extends Controller
             'inclusionData' => $inclusionData,
             'networkData' => $networkData,
             'fundebData' => $fundebData,
+            'otherFundingData' => $otherFundingData,
+            'workDoneData' => $workDoneData,
             'discrepanciesData' => $discrepanciesData,
             'municipalityHealthData' => $municipalityHealthData,
             'fundingLossModalData' => DiscrepanciesCheckCatalog::modalPayload(),
@@ -205,11 +217,13 @@ class AnalyticsDashboardController extends Controller
         InclusionRepository $inclusionRepository,
         NetworkRepository $networkRepository,
         FundebRepository $fundebRepository,
+        OtherFundingRepository $otherFundingRepository,
+        WorkDoneRepository $workDoneRepository,
         DiscrepanciesRepository $discrepanciesRepository,
         MunicipalityHealthRepository $municipalityHealthRepository,
     ): Response {
         $tab = (string) $request->query('tab', '');
-        $allowed = ['enrollment', 'network', 'inclusion', 'performance', 'attendance', 'fundeb', 'discrepancies', 'municipality_health'];
+        $allowed = ['enrollment', 'network', 'inclusion', 'performance', 'attendance', 'fundeb', 'other_funding', 'work_done', 'discrepancies', 'municipality_health'];
         if (! in_array($tab, $allowed, true)) {
             abort(404);
         }
@@ -290,8 +304,22 @@ class AnalyticsDashboardController extends Controller
                         $attendanceRepository->snapshot($city, $filters),
                         $inclusionRepository->snapshot($city, $filters),
                         $networkRepository->snapshot($city, $filters),
-                        $discrepanciesRepository->snapshot($city, $filters),
+                        null,
                     ),
+                    'yearFilterReady' => true,
+                    'chartExportContext' => $chartExportContext,
+                ])
+                ->withHeaders($headers),
+            'other_funding' => response()
+                ->view('dashboard.analytics.partials.other-funding', [
+                    'otherFundingData' => $otherFundingRepository->buildReport($city, $filters),
+                    'yearFilterReady' => true,
+                    'chartExportContext' => $chartExportContext,
+                ])
+                ->withHeaders($headers),
+            'work_done' => response()
+                ->view('dashboard.analytics.partials.work-done', [
+                    'workDoneData' => $workDoneRepository->buildReport($city, $filters),
                     'yearFilterReady' => true,
                     'chartExportContext' => $chartExportContext,
                 ])

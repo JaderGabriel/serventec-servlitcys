@@ -21,16 +21,227 @@ final class ConsultoriaThematicBridge
         array $disc,
         int $totalMat,
         ?array $networkKpis = null,
+        array $otherFunding = [],
+        array $workDone = [],
     ): array {
         $blocks = [];
 
+        $blocks[] = self::blockFinanciamentoVaaf($fundeb, $disc, $totalMat);
         $blocks[] = self::blockInclusao($inclusion, $disc, $totalMat);
         $blocks[] = self::blockEquidade($inclusion, $disc, $totalMat);
         $blocks[] = self::blockRedeOferta($disc, $networkKpis);
+        $blocks[] = self::blockProgramasComplementares($disc, $otherFunding);
+        $blocks[] = self::blockTrabalhoCadastro($workDone);
         $blocks[] = self::blockRecursosPublicos($disc, $fundeb);
         $blocks[] = self::blockIndicadoresExternos($performance);
 
         return array_values(array_filter($blocks));
+    }
+
+    /**
+     * @param  array<string, mixed>  $fundeb
+     * @param  array<string, mixed>  $disc
+     * @return array<string, mixed>
+     */
+    private static function blockFinanciamentoVaaf(array $fundeb, array $disc, int $totalMat): array
+    {
+        $items = [];
+        $status = 'success';
+        $proj = is_array($fundeb['resource_projection'] ?? null) ? $fundeb['resource_projection'] : [];
+        $ref = is_array($fundeb['fundeb_reference'] ?? null)
+            ? $fundeb['fundeb_reference']
+            : (is_array($disc['funding_reference'] ?? null) ? $disc['funding_reference'] : null);
+
+        if ($ref !== null) {
+            $municipal = is_array($ref['municipal'] ?? null) ? $ref['municipal'] : null;
+            $previa = is_array($ref['previa'] ?? null) ? $ref['previa'] : null;
+            if ($municipal !== null) {
+                $items[] = __('VAAF municipal (cálculo): :v — :fonte', [
+                    'v' => DiscrepanciesFundingImpact::formatBrl((float) $municipal['vaaf']),
+                    'fonte' => (string) ($municipal['fonte_label'] ?? ''),
+                ]);
+            }
+            if ($previa !== null) {
+                $items[] = __('Prévia federal: :v — :fonte', [
+                    'v' => DiscrepanciesFundingImpact::formatBrl((float) $previa['vaaf']),
+                    'fonte' => (string) ($previa['fonte_label'] ?? ''),
+                ]);
+            }
+            if (is_array($ref['divergencia'] ?? null) && filled($ref['divergencia']['mensagem'] ?? null)) {
+                $items[] = (string) $ref['divergencia']['mensagem'];
+                $status = 'warning';
+            }
+        }
+
+        if ($totalMat > 0 && (bool) ($proj['available'] ?? false)) {
+            $base = (float) ($proj['totais']['fundeb_base_anual'] ?? 0);
+            $basePrevia = $proj['totais']['fundeb_base_previa_anual'] ?? null;
+            $items[] = __('Previsão base (municipal × matrículas): :v/ano.', ['v' => DiscrepanciesFundingImpact::formatBrl($base)]);
+            if ($basePrevia !== null && (float) $basePrevia > 0) {
+                $items[] = __('Previsão com prévia federal: :v/ano.', ['v' => DiscrepanciesFundingImpact::formatBrl((float) $basePrevia)]);
+            }
+        }
+
+        $summary = is_array($disc['summary'] ?? null) ? $disc['summary'] : [];
+        if (($summary['perda_estimada_anual'] ?? 0) > 0) {
+            $items[] = __('Impacto de cadastro (Discrepâncias): perda est. :v/ano — usa VAAF municipal nos pesos.', [
+                'v' => DiscrepanciesFundingImpact::formatBrl((float) $summary['perda_estimada_anual']),
+            ]);
+            $status = self::mergeStatus($status, 'warning');
+        }
+
+        if ($items === []) {
+            $items[] = __('Configure VAAF municipal (import FNDE) ou prévia em IEDUCAR_FUNDEB_NATIONAL_VAAF_*.');
+
+            return [
+                'id' => 'financiamento-vaaf',
+                'titulo' => __('FUNDEB — VAAF e previsão'),
+                'fonte' => 'ieducar',
+                'fonte_label' => __('Referência configurável'),
+                'status' => 'neutral',
+                'items' => $items,
+                'tab_link' => 'fundeb',
+            ];
+        }
+
+        return [
+            'id' => 'financiamento-vaaf',
+            'titulo' => __('FUNDEB — VAAF municipal × prévia federal'),
+            'fonte' => 'ieducar',
+            'fonte_label' => __('Base importada + prévia configurada'),
+            'status' => $status,
+            'items' => $items,
+            'tab_link' => 'fundeb',
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $disc
+     * @param  array<string, mixed>  $otherFunding
+     * @return array<string, mixed>
+     */
+    private static function blockProgramasComplementares(array $disc, array $otherFunding): array
+    {
+        $items = [];
+        $status = 'success';
+        $programs = is_array($otherFunding['programs'] ?? null) ? $otherFunding['programs'] : [];
+
+        foreach ($programs as $prog) {
+            if (! is_array($prog)) {
+                continue;
+            }
+            $st = (string) ($prog['status'] ?? 'neutral');
+            if ($st === 'danger' || $st === 'warning') {
+                $items[] = __(':titulo — cobertura de campos no i-Educar a rever.', ['titulo' => (string) ($prog['titulo'] ?? '')]);
+                $status = self::mergeStatus($status, $st);
+            }
+        }
+
+        foreach (['pnae-transporte', 'vaar-inclusao'] as $pillarId) {
+            $item = self::findDiscPillar($disc, $pillarId);
+            if ($item !== null && filled($item['resumo_texto'] ?? $item['texto'] ?? null)) {
+                $items[] = (string) ($item['resumo_texto'] ?? $item['texto']);
+                if (($item['status'] ?? '') === 'danger') {
+                    $status = 'danger';
+                } elseif (($item['status'] ?? '') === 'warning' && $status !== 'danger') {
+                    $status = 'warning';
+                }
+            }
+        }
+
+        if ($items === []) {
+            $items[] = __('Consulte PNAE, PNATE e PDDE na aba Demais financiamentos.');
+        }
+
+        return [
+            'id' => 'programas-complementares',
+            'titulo' => __('Demais financiamentos (PNAE, PNATE, PDDE)'),
+            'fonte' => 'ieducar',
+            'fonte_label' => __('Cadastro i-Educar + pilares Discrepâncias'),
+            'status' => $status,
+            'items' => $items,
+            'tab_link' => 'other_funding',
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $workDone
+     * @return array<string, mixed>
+     */
+    private static function blockTrabalhoCadastro(array $workDone): array
+    {
+        $items = [];
+        $status = 'neutral';
+        $periods = is_array($workDone['periods'] ?? null) ? $workDone['periods'] : [];
+        $est = is_array($workDone['estimativa'] ?? null) ? $workDone['estimativa'] : [];
+
+        if (! ($workDone['activity_available'] ?? false)) {
+            $items[] = $workDone['activity_note'] ?? __('Sem coluna de data de cadastro em matrícula nesta base — ritmo não mensurável.');
+
+            return [
+                'id' => 'trabalho-cadastro',
+                'titulo' => __('Trabalho de cadastro (i-Educar)'),
+                'fonte' => 'ieducar',
+                'fonte_label' => __('Utilizadores municipais'),
+                'status' => 'neutral',
+                'items' => $items,
+                'tab_link' => 'work_done',
+            ];
+        }
+
+        $items[] = __('Último dia: :d · semana: :s · quinzena: :q matrícula(s) cadastrada(s).', [
+            'd' => number_format((int) ($periods['day'] ?? 0)),
+            's' => number_format((int) ($periods['week'] ?? 0)),
+            'q' => number_format((int) ($periods['fortnight'] ?? 0)),
+        ]);
+
+        $ritmo = (float) ($est['ritmo_por_dia'] ?? 0);
+        if ($ritmo > 0) {
+            $items[] = __('Ritmo observado: :r cadastro(s)/dia (quinzena, exc. admin).', ['r' => number_format($ritmo, 1, ',', '.')]);
+            $status = 'success';
+        }
+
+        $restantes = (int) ($est['registros_restantes_estimados'] ?? 0);
+        if ($restantes > 0) {
+            $dias = $est['dias_para_concluir_ritmo_atual'] ?? null;
+            $items[] = __('Meta vs ano anterior: ~:n registos restantes', ['n' => number_format($restantes)]).($dias !== null
+                ? ' · '.__('~:d dias ao ritmo actual', ['d' => number_format((int) $dias)])
+                : '');
+            $status = self::mergeStatus($status, 'warning');
+        }
+
+        return [
+            'id' => 'trabalho-cadastro',
+            'titulo' => __('Trabalho realizado no cadastro'),
+            'fonte' => 'ieducar',
+            'fonte_label' => __('Datas de cadastro × utilizadores'),
+            'status' => $status,
+            'items' => $items,
+            'tab_link' => 'work_done',
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $disc
+     * @return ?array<string, mixed>
+     */
+    private static function findDiscPillar(array $disc, string $id): ?array
+    {
+        foreach ($disc['funding_pillars'] ?? [] as $p) {
+            if (is_array($p) && ($p['id'] ?? '') === $id) {
+                $resumo = is_array($p['municipio_resumo'] ?? null) ? $p['municipio_resumo'] : [];
+                if ($resumo !== []) {
+                    return [
+                        'resumo_texto' => (string) ($resumo['texto'] ?? ''),
+                        'status' => (string) ($resumo['status'] ?? 'ok'),
+                    ];
+                }
+
+                return ['resumo_texto' => (string) ($p['descricao'] ?? ''), 'status' => 'ok'];
+            }
+        }
+
+        return null;
     }
 
     /**

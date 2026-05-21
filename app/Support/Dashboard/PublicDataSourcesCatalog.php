@@ -40,6 +40,7 @@ final class PublicDataSourcesCatalog
 
         $categories = array_values(array_filter([
             self::categoryFundebFnde($context),
+            self::categoryProgramasComplementares($context),
             self::categoryRepasses($context, $ibge, $uf),
             self::categorySimecVaar($context),
             self::categoryInepPedagogico($context),
@@ -68,7 +69,7 @@ final class PublicDataSourcesCatalog
      */
     private static function categoryFundebFnde(string $context): ?array
     {
-        if (! self::matchesContext($context, ['all', 'financeiro', 'compliance'])) {
+        if (! self::matchesContext($context, ['all', 'financeiro', 'compliance', 'other_funding'])) {
             return null;
         }
 
@@ -112,9 +113,53 @@ final class PublicDataSourcesCatalog
     /**
      * @return ?array<string, mixed>
      */
+    private static function categoryProgramasComplementares(string $context): ?array
+    {
+        if (! self::matchesContext($context, ['all', 'financeiro', 'other_funding'])) {
+            return null;
+        }
+
+        return [
+            'id' => 'programas-complementares',
+            'titulo' => __('PNAE, PNATE, PDDE e correlatos'),
+            'descricao' => __('Programas de alimentação, transporte e recursos diretos às escolas — relatórios e prestação de contas no FNDE.'),
+            'links' => [
+                self::link(
+                    'fnde-pnae',
+                    __('PNAE — Alimentação escolar'),
+                    'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/programas/programa-nacional-de-alimentacao-escolar',
+                    'relatorio',
+                    __('Cardápios, licitações e prestação de contas da merenda.')
+                ),
+                self::link(
+                    'fnde-pnate',
+                    __('PNATE — Transporte escolar'),
+                    'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/programas/programa-nacional-de-apoio-ao-transporte-do-escolar-pnate',
+                    'relatorio',
+                    __('Rotas, frotas e comprovação de transporte.')
+                ),
+                self::link(
+                    'fnde-pdde',
+                    __('PDDE'),
+                    'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/programas/programa-dinheiro-direto-na-escola',
+                    'relatorio',
+                    __('Recursos de custeio e capital nas escolas.')
+                ),
+                self::link(
+                    'fnde-simec-prestacao',
+                    __('Prestação de contas (FNDE)'),
+                    'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/prestacao-de-contas',
+                    'sistema',
+                    __('Combine com o Simec para diligências e envios.'),
+                    true
+                ),
+            ],
+        ];
+    }
+
     private static function categoryRepasses(string $context, ?string $ibge, ?string $uf): ?array
     {
-        if (! self::matchesContext($context, ['all', 'financeiro'])) {
+        if (! self::matchesContext($context, ['all', 'financeiro', 'other_funding'])) {
             return null;
         }
 

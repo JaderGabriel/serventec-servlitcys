@@ -12,6 +12,8 @@
     $chartResumo = is_array($d['chart_resumo'] ?? null) ? $d['chart_resumo'] : null;
     $chartFinanceiro = is_array($d['chart_financeiro'] ?? null) ? $d['chart_financeiro'] : null;
     $fundingRef = is_array($d['funding_reference'] ?? null) ? $d['funding_reference'] : null;
+    $vaafComparacao = is_array($fundingRef['vaaf_comparacao'] ?? null) ? $fundingRef['vaaf_comparacao'] : null;
+    $divergenciaVaaf = is_array($fundingRef['divergencia_vaaf'] ?? null) ? $fundingRef['divergencia_vaaf'] : (is_array($fundingRef['divergencia'] ?? null) ? $fundingRef['divergencia'] : null);
     $pillars = is_array($d['funding_pillars'] ?? null) ? $d['funding_pillars'] : [];
     $activeCheckIds = is_array($d['active_check_ids'] ?? null) ? $d['active_check_ids'] : [];
     $fmtBrl = static fn (float $v): string => 'R$ ' . number_format($v, 2, ',', '.');
@@ -59,6 +61,7 @@
     $hasPublicSources = count($publicSources['categories'] ?? []) > 0;
     $exportParams = is_array($d['export_params'] ?? null) ? $d['export_params'] : request()->only(['city_id', 'ano_letivo', 'escola_id', 'curso_id', 'turno_id']);
     $flowSteps = ConsultoriaFlow::numberedSteps([
+        ['label' => __('VAAF e previsão'), 'anchor' => 'disc-vaaf', 'visible' => $vaafComparacao !== null],
         ['label' => __('Prioridades'), 'anchor' => 'disc-prioridades'],
         ['label' => __('Referências'), 'anchor' => 'disc-referencias', 'visible' => count($pillars) > 0],
         ['label' => __('Fontes públicas'), 'anchor' => 'disc-fontes-publicas', 'visible' => $hasPublicSources],
@@ -89,7 +92,10 @@
                         <span class="tabular-nums font-medium">{{ number_format((int) $d['total_matriculas']) }}</span>
                     @endif
                     @if ($fundingRef !== null && isset($fundingRef['vaa_label']))
-                        · {{ __('VAAF:') }} <span class="font-medium">{{ $fundingRef['vaa_label'] }}</span>
+                        · {{ __('VAAF municipal:') }} <span class="font-medium">{{ $fundingRef['vaa_label'] }}</span>
+                        @if (filled($fundingRef['vaa_previa_label'] ?? null))
+                            · {{ __('prévia:') }} <span class="font-medium">{{ $fundingRef['vaa_previa_label'] }}</span>
+                        @endif
                         @if (filled($fundingRef['vaa_fonte_label'] ?? null))
                             <span class="text-gray-500 dark:text-gray-400">({{ $fundingRef['vaa_fonte_label'] }})</span>
                         @endif
@@ -119,7 +125,32 @@
             {{ $d['footnote'] ?? '' }}
         </p>
 
+        <p class="text-xs text-gray-600 dark:text-gray-400">
+            {{ __('Painéis relacionados:') }}
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'fundeb')">{{ __('FUNDEB') }}</button>
+            ·
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'other_funding')">{{ __('Demais financiamentos') }}</button>
+            ·
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'work_done')">{{ __('Trabalho realizado') }}</button>
+            ·
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Diagnóstico Geral') }}</button>
+        </p>
+
         <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="rose" />
+
+        @if ($vaafComparacao !== null)
+            <x-dashboard.consultoria-section
+                :step="$discStep['disc-vaaf'] ?? null"
+                anchor="disc-vaaf"
+                :title="__('Medidor VAAF — municipal × prévia federal')"
+                :subtitle="__('Base dos cálculos de perda e ganho indicativos desta aba.')"
+            >
+                <x-dashboard.consultoria-vaaf-comparacao
+                    :comparacao="$vaafComparacao"
+                    :divergencia="$divergenciaVaaf"
+                />
+            </x-dashboard.consultoria-section>
+        @endif
 
         @if (! empty($d['error']))
             <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
