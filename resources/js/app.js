@@ -21,6 +21,7 @@ import {
 import { initAnalyticsFilterTurno } from "./analyticsFilterTurno.js";
 import createSchoolUnitsMap from "./schoolUnitsMap.js";
 import "./notification-bell.js";
+import { registerScrollToTopData } from "./scroll-to-top.js";
 
 registerChartVisualPlugins(Chart);
 
@@ -186,13 +187,14 @@ document.addEventListener("alpine:init", () => {
                 if (!this.lazy) {
                     return;
                 }
-                if (t === "overview" || t === "school_units") {
+                if (t === "overview") {
                     return;
                 }
                 if (this.tabLoaded[t]) {
                     return;
                 }
                 const refMap = {
+                    school_units: "panelSchoolUnits",
                     enrollment: "panelEnrollment",
                     network: "panelNetwork",
                     inclusion: "panelInclusion",
@@ -224,6 +226,7 @@ document.addEventListener("alpine:init", () => {
                     return;
                 }
                 const refMap = {
+                    school_units: "panelSchoolUnits",
                     enrollment: "panelEnrollment",
                     network: "panelNetwork",
                     inclusion: "panelInclusion",
@@ -1506,6 +1509,8 @@ document.addEventListener("alpine:init", () => {
 });
 
 window.Alpine = Alpine;
+
+registerScrollToTopData(Alpine);
 
 Alpine.start();
 

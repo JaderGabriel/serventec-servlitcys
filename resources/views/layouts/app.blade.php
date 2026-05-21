@@ -19,18 +19,18 @@
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-slate-100 dark:bg-slate-950 flex flex-col">
-            @include('layouts.navigation')
+            <header class="serv-app-header">
+                @include('layouts.navigation')
 
-            <!-- Page Heading -->
-            @isset($header)
-                <header class="bg-white dark:bg-gray-800 shadow shrink-0">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
+                @isset($header)
+                    <div class="serv-page-heading">
+                        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+                            {{ $header }}
+                        </div>
                     </div>
-                </header>
-            @endisset
+                @endisset
+            </header>
 
-            <!-- Page Content -->
             <main class="flex-1 w-full min-w-0">
                 @if (session('success'))
                     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 pt-4">
@@ -43,6 +43,8 @@
             </main>
 
             @include('layouts.app-footer')
+
+            <x-scroll-to-top />
         </div>
     </body>
 </html>

@@ -1,6 +1,6 @@
 <section>
     <header>
-        <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+        <h2 class="text-lg font-medium text-slate-900 dark:text-slate-100">
             {{ __('Dados do perfil') }}
         </h2>
 
@@ -39,7 +39,7 @@
                     <p class="text-sm mt-2 text-gray-800 dark:text-gray-200">
                         {{ __('Seu e-mail ainda não foi verificado.') }}
 
-                        <button form="send-verification" class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                        <button form="send-verification" class="serv-link text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500/40 dark:focus:ring-offset-slate-900">
                             {{ __('Clique aqui para reenviar o e-mail de verificação.') }}
                         </button>
                     </p>

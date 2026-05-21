@@ -7,10 +7,9 @@ return [
     | Carregamento lazy das abas do painel de análise educacional
     |--------------------------------------------------------------------------
     |
-    | Quando true, a página inicial só executa os repositórios necessários à
-    | aba «Visão geral» e «Unidades escolares» (dados partilhados). As restantes
-    | abas são obtidas via GET /dashboard/analytics/tab?tab=… (aparecem no Pulse
-    | como pedidos separados para análise de tempo por aba).
+    | Quando true, a página inicial só executa o repositório da aba «Visão geral».
+    | Unidades escolares (mapa/geo pesado) e as demais abas vêm via
+    | GET /dashboard/analytics/tab?tab=… (pedidos separados no Pulse).
     |
     */
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Services\UserProfilePhotoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,10 @@ use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
+    public function __construct(
+        private UserProfilePhotoService $profilePhotos,
+    ) {}
+
     /**
      * Display the user's profile form.
      */
@@ -26,15 +31,35 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $user->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    public function updatePhoto(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp,gif', 'max:2048'],
+            'remove_photo' => ['nullable', 'boolean'],
+        ]);
+
+        $user = $request->user();
+
+        if ($request->boolean('remove_photo')) {
+            $this->profilePhotos->delete($user);
+        } elseif ($request->hasFile('photo')) {
+            $path = $this->profilePhotos->store($user, $request->file('photo'));
+            $user->forceFill(['profile_photo_path' => $path])->save();
+        }
+
+        return Redirect::route('profile.edit')->with('status', 'profile-photo-updated');
     }
 
     /**
@@ -47,6 +72,8 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+
+        $this->profilePhotos->purge($user);
 
         Auth::logout();
 

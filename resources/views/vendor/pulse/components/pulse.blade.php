@@ -23,8 +23,6 @@
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
         {{--
             Só CSS da app (Tailwind para navegação/rodapé). Não carregar resources/js/app.js aqui:
             Pulse::js() já inclui livewire.js + pulse.js inline; app.js importa Alpine e Chart.js e
@@ -39,21 +37,22 @@
         {!! Pulse::js() !!}
         @livewireScriptConfig
     </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
-            @include('layouts.navigation-pulse')
+    <body class="font-sans antialiased min-h-screen flex flex-col bg-slate-100 dark:bg-slate-950">
+        <div class="flex flex-1 flex-col min-h-0 w-full">
+            <header class="serv-app-header">
+                @include('layouts.navigation-pulse')
 
-            <header class="pulse-noc-header shrink-0 border-b border-cyan-500/20">
+                <div class="pulse-noc-header shrink-0 border-b border-teal-500/25 border-t-0">
                 <div class="mx-auto max-w-[min(100%,100rem)] px-4 py-5 sm:px-6 sm:py-6 lg:px-10 xl:px-12">
                     <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                         <div class="flex items-start gap-4 min-w-0">
-                            <div class="shrink-0 rounded-lg border border-cyan-500/30 bg-cyan-500/10 p-2.5">
-                                <svg class="h-7 w-7 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                            <div class="shrink-0 rounded-lg border border-teal-500/35 bg-teal-500/15 p-2.5">
+                                <svg class="h-7 w-7 text-teal-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                                 </svg>
                             </div>
                             <div class="min-w-0">
-                                <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-400/90">{{ __('Centro de monitorização') }}</p>
+                                <p class="serv-eyebrow text-teal-300/95">{{ __('Centro de monitorização') }}</p>
                                 <h1 class="mt-1 text-xl font-semibold leading-tight text-white sm:text-2xl">
                                     {{ __('Monitorização — municípios e infraestrutura') }}
                                 </h1>
@@ -74,21 +73,24 @@
                         </div>
                     </div>
                 </div>
+                </div>
             </header>
 
-            <main class="flex flex-1 flex-col w-full min-w-0 bg-slate-100 dark:bg-slate-950">
+            <main class="flex-1 flex flex-col w-full min-w-0">
                 <div
                     id="pulse-main-grid"
                     style="--pulse-dashboard-cols: {{ (int) $cols }};"
-                    {{ $attributes->merge(['class' => "pulse-main-grid-gaps flex-1 mx-auto w-full max-w-[min(100%,100rem)] grid default:grid-cols-{$cols} px-4 py-5 sm:px-6 sm:py-8 lg:px-10 xl:px-12 pb-10 sm:pb-12"]) }}
+                    {{ $attributes->merge(['class' => "pulse-main-grid-gaps flex-1 mx-auto w-full max-w-[min(100%,100rem)] grid default:grid-cols-{$cols} px-4 py-5 sm:px-6 sm:py-8 lg:px-10 xl:px-12"]) }}
                 >
                     {{ $slot }}
                 </div>
             </main>
 
-            <div class="shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/90">
+            <footer class="mt-auto shrink-0 w-full border-t border-slate-200/90 dark:border-slate-700/90 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm">
                 @include('layouts.app-footer', ['pulseFooter' => true])
-            </div>
+            </footer>
+
+            <x-scroll-to-top />
         </div>
 
         {{-- Sino de notificações: Alpine do Pulse não carrega app.js — registo dedicado. --}}

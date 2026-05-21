@@ -11,27 +11,28 @@
 
         @include('partials.theme-init')
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
-        <!-- Scripts -->
+        <!-- Scripts (fontes DM Sans / Outfit em resources/css/app.css) -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans text-gray-900 antialiased">
+    <body class="font-sans antialiased text-slate-800 dark:text-slate-200">
         <div class="fixed end-4 top-4 z-50 sm:end-6 sm:top-6">
             <x-theme-toggle />
         </div>
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100 dark:bg-gray-900">
+        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-slate-100 dark:bg-slate-950">
             <div>
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 text-indigo-600 dark:text-indigo-400" />
+                <a href="/" class="group flex flex-col items-center gap-2">
+                    <span class="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-teal-800 shadow-md ring-1 ring-teal-900/10 transition group-hover:scale-105 dark:from-teal-500 dark:to-teal-800 dark:ring-teal-500/20">
+                        <x-application-logo class="h-8 w-8 text-white shrink-0" />
+                    </span>
+                    <span class="font-display text-sm font-semibold text-slate-700 dark:text-slate-200">{{ config('app.name') }}</span>
                 </a>
             </div>
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white dark:bg-gray-800 shadow-md overflow-hidden sm:rounded-lg">
+            <div class="serv-panel w-full sm:max-w-md mt-6 mx-4 sm:mx-0 px-6 py-5">
                 {{ $slot }}
             </div>
+
+            <x-scroll-to-top />
         </div>
     </body>
 </html>

@@ -152,12 +152,20 @@
                                 @endif
                             </div>
                             <div x-show="tab === 'school_units'" x-cloak class="analytics-tab-panel">
-                                @include('dashboard.analytics.partials.school-units', [
-                                    'schoolUnitsData' => $schoolUnitsData,
-                                    'yearFilterReady' => $yearFilterReady,
-                                    'chartExportContext' => $chartExportContext,
-                                    'municipalityContext' => $municipalityContext ?? null,
-                                ])
+                                @if (! $lazyTabLoading)
+                                    @include('dashboard.analytics.partials.school-units', [
+                                        'schoolUnitsData' => $schoolUnitsData,
+                                        'yearFilterReady' => $yearFilterReady,
+                                        'chartExportContext' => $chartExportContext,
+                                        'municipalityContext' => $municipalityContext ?? null,
+                                    ])
+                                @else
+                                    <div class="relative min-h-[12rem]" x-ref="panelSchoolUnits">
+                                        <div x-show="loadingTab === 'school_units'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
+                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar unidades e mapa…') }}</span>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                             <div x-show="tab === 'network'" x-cloak class="analytics-tab-panel">
                                 @if (! $lazyTabLoading)

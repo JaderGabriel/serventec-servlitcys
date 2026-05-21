@@ -21,7 +21,7 @@
         </div>
 
         <div class="relative flex min-h-screen flex-col">
-            <header class="border-b border-slate-200/80 bg-white/70 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/40">
+            <header class="serv-nav-brand sticky top-0 z-50 shrink-0 shadow-sm">
                 <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
                     <a href="{{ url('/') }}" class="group flex items-center gap-3">
                         <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-indigo-600 shadow-lg shadow-indigo-500/20 ring-1 ring-slate-900/10 transition group-hover:scale-105 dark:from-cyan-400 dark:to-indigo-600 dark:shadow-indigo-500/25 dark:ring-white/20">
@@ -213,6 +213,8 @@
                     </p>
                 </div>
             </footer>
+
+            <x-scroll-to-top />
         </div>
     </body>
 </html>

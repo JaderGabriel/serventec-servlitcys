@@ -23,7 +23,7 @@
         <form method="POST" action="{{ route('logout') }}">
             @csrf
 
-            <button type="submit" class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+            <button type="submit" class="serv-link text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500/40 dark:focus:ring-offset-slate-900">
                 Sair
             </button>
         </form>

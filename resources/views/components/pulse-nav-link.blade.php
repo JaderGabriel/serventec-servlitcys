@@ -1,9 +1,9 @@
 @props(['active' => false, 'icon' => null])
 
 @php
-$base = 'inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition';
+$base = 'inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg border border-transparent text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-white/80 dark:hover:text-slate-100 dark:hover:bg-slate-800/60 transition';
 $classes = $active
-    ? $base.' ring-2 ring-indigo-500'
+    ? $base.' serv-tab--active border-teal-200 bg-white text-teal-900 shadow-sm dark:border-teal-800 dark:bg-slate-900 dark:text-teal-100'
     : $base;
 @endphp
 

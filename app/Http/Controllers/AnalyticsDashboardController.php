@@ -149,105 +149,121 @@ class AnalyticsDashboardController extends Controller
         $municipalityContext = null;
 
         if ($yearFilterReady && $city !== null) {
-            $overviewData = $this->safeAnalyticsLoad(
-                fn () => $overviewRepository->summary($city, $filters),
-                $overviewData,
-                __('Visão geral'),
-                $analyticsLoadWarnings,
-            );
-
-            $schoolUnitsData = $this->safeAnalyticsLoad(
-                fn () => $schoolUnitsRepository->snapshot($city, $filters),
-                $schoolUnitsData,
-                __('Unidades escolares'),
-                $analyticsLoadWarnings,
-            );
-
-            if (! $lazyTabLoading) {
-                $otherFundingData = $this->safeAnalyticsLoad(
-                    fn () => $otherFundingRepository->buildReport($city, $filters),
-                    $otherFundingData,
-                    __('Financiamentos'),
-                    $analyticsLoadWarnings,
-                );
-
-                $workDoneData = $this->safeAnalyticsLoad(
-                    fn () => $workDoneRepository->buildReport($city, $filters),
-                    $workDoneData,
-                    __('Censo'),
-                    $analyticsLoadWarnings,
-                );
-                $enrollmentData = $this->safeAnalyticsLoad(
-                    fn () => $enrollmentRepository->sample($city, $filters),
-                    $enrollmentData,
-                    __('Matrículas'),
-                    $analyticsLoadWarnings,
-                );
-                $performanceData = $this->safeAnalyticsLoad(
-                    fn () => $performanceRepository->snapshot($city, $filters),
-                    $performanceData,
-                    __('Desempenho'),
-                    $analyticsLoadWarnings,
-                );
-                $attendanceData = $this->safeAnalyticsLoad(
-                    fn () => $attendanceRepository->snapshot($city, $filters),
-                    $attendanceData,
-                    __('Frequência'),
-                    $analyticsLoadWarnings,
-                );
-                $inclusionData = $this->safeAnalyticsLoad(
-                    fn () => $inclusionRepository->snapshot($city, $filters),
-                    $inclusionData,
-                    __('Inclusão'),
-                    $analyticsLoadWarnings,
-                );
-                $networkData = $this->safeAnalyticsLoad(
-                    fn () => $networkRepository->snapshot($city, $filters),
-                    $networkData,
-                    __('Rede'),
-                    $analyticsLoadWarnings,
-                );
-                $discrepanciesData = $this->safeAnalyticsLoad(
-                    fn () => $discrepanciesRepository->snapshot($city, $filters),
-                    $discrepanciesData,
-                    __('Discrepâncias'),
-                    $analyticsLoadWarnings,
-                );
-                $fundebData = $this->safeAnalyticsLoad(
-                    fn () => $fundebRepository->buildReport(
-                        $city,
-                        $filters,
-                        $overviewData,
-                        $enrollmentData,
-                        $performanceData,
-                        $attendanceData,
-                        $inclusionData,
-                        $networkData,
-                        $discrepanciesData,
-                    ),
-                    $fundebData,
-                    __('FUNDEB'),
-                    $analyticsLoadWarnings,
-                );
-                $municipalityHealthData = $this->safeAnalyticsLoad(
-                    fn () => $municipalityHealthRepository->snapshot($city, $filters),
-                    $municipalityHealthData,
-                    __('Diagnóstico'),
-                    $analyticsLoadWarnings,
-                );
-            }
-
-            if (config('analytics.index_funding_context', false)) {
-                $fundingSnapshot = $this->safeAnalyticsLoad(
-                    fn () => $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
-                    null,
-                    __('Resumo financeiro'),
-                    $analyticsLoadWarnings,
-                );
-                $municipalityContext = AnalyticsMunicipalityContext::fromFundingSnapshot(
-                    is_array($fundingSnapshot) ? $fundingSnapshot : null,
+            try {
+                $overviewData = $this->safeAnalyticsLoad(
+                    fn () => $overviewRepository->summary($city, $filters),
                     $overviewData,
+                    __('Visão geral'),
+                    $analyticsLoadWarnings,
                 );
+
+                // Com lazy activo, unidades (mapa/geo pesado) só na aba dedicada — evita 500/timeout no «Aplicar filtros».
+                if (! $lazyTabLoading) {
+                    $schoolUnitsData = $this->safeAnalyticsLoad(
+                        fn () => $schoolUnitsRepository->snapshot($city, $filters),
+                        $schoolUnitsData,
+                        __('Unidades escolares'),
+                        $analyticsLoadWarnings,
+                    );
+                }
+
+                if (! $lazyTabLoading) {
+                    $otherFundingData = $this->safeAnalyticsLoad(
+                        fn () => $otherFundingRepository->buildReport($city, $filters),
+                        $otherFundingData,
+                        __('Financiamentos'),
+                        $analyticsLoadWarnings,
+                    );
+
+                    $workDoneData = $this->safeAnalyticsLoad(
+                        fn () => $workDoneRepository->buildReport($city, $filters),
+                        $workDoneData,
+                        __('Censo'),
+                        $analyticsLoadWarnings,
+                    );
+                    $enrollmentData = $this->safeAnalyticsLoad(
+                        fn () => $enrollmentRepository->sample($city, $filters),
+                        $enrollmentData,
+                        __('Matrículas'),
+                        $analyticsLoadWarnings,
+                    );
+                    $performanceData = $this->safeAnalyticsLoad(
+                        fn () => $performanceRepository->snapshot($city, $filters),
+                        $performanceData,
+                        __('Desempenho'),
+                        $analyticsLoadWarnings,
+                    );
+                    $attendanceData = $this->safeAnalyticsLoad(
+                        fn () => $attendanceRepository->snapshot($city, $filters),
+                        $attendanceData,
+                        __('Frequência'),
+                        $analyticsLoadWarnings,
+                    );
+                    $inclusionData = $this->safeAnalyticsLoad(
+                        fn () => $inclusionRepository->snapshot($city, $filters),
+                        $inclusionData,
+                        __('Inclusão'),
+                        $analyticsLoadWarnings,
+                    );
+                    $networkData = $this->safeAnalyticsLoad(
+                        fn () => $networkRepository->snapshot($city, $filters),
+                        $networkData,
+                        __('Rede'),
+                        $analyticsLoadWarnings,
+                    );
+                    $discrepanciesData = $this->safeAnalyticsLoad(
+                        fn () => $discrepanciesRepository->snapshot($city, $filters),
+                        $discrepanciesData,
+                        __('Discrepâncias'),
+                        $analyticsLoadWarnings,
+                    );
+                    $fundebData = $this->safeAnalyticsLoad(
+                        fn () => $fundebRepository->buildReport(
+                            $city,
+                            $filters,
+                            $overviewData,
+                            $enrollmentData,
+                            $performanceData,
+                            $attendanceData,
+                            $inclusionData,
+                            $networkData,
+                            $discrepanciesData,
+                        ),
+                        $fundebData,
+                        __('FUNDEB'),
+                        $analyticsLoadWarnings,
+                    );
+                    $municipalityHealthData = $this->safeAnalyticsLoad(
+                        fn () => $municipalityHealthRepository->snapshot($city, $filters),
+                        $municipalityHealthData,
+                        __('Diagnóstico'),
+                        $analyticsLoadWarnings,
+                    );
+                }
+
+                if (config('analytics.index_funding_context', false)) {
+                    $fundingSnapshot = $this->safeAnalyticsLoad(
+                        fn () => $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
+                        null,
+                        __('Resumo financeiro'),
+                        $analyticsLoadWarnings,
+                    );
+                    $municipalityContext = AnalyticsMunicipalityContext::fromFundingSnapshot(
+                        is_array($fundingSnapshot) ? $fundingSnapshot : null,
+                        $overviewData,
+                    );
+                }
+            } catch (Throwable $e) {
+                Log::error('analytics.index_load_failed', [
+                    'city_id' => $city->id,
+                    'message' => $e->getMessage(),
+                ]);
+                $analyticsLoadWarnings[] = __('Não foi possível carregar todos os indicadores: :msg', [
+                    'msg' => $e->getMessage(),
+                ]);
+                if (is_array($overviewData)) {
+                    $overviewData['error'] = $overviewData['error'] ?? $e->getMessage();
+                }
             }
         }
 
@@ -345,12 +361,13 @@ class AnalyticsDashboardController extends Controller
         WorkDoneRepository $workDoneRepository,
         DiscrepanciesRepository $discrepanciesRepository,
         MunicipalityHealthRepository $municipalityHealthRepository,
+        SchoolUnitsRepository $schoolUnitsRepository,
         AnalyticsReportExportService $pdfExportService,
     ): Response {
         $tab = (string) $request->query('tab', '');
         $allowed = array_values(array_filter(
             AnalyticsTabCatalog::tabKeys(),
-            static fn (string $k): bool => $k !== 'overview' && $k !== 'school_units',
+            static fn (string $k): bool => $k !== 'overview',
         ));
         if (! AnalyticsTabCatalog::isValidTab($tab) || ! in_array($tab, $allowed, true)) {
             abort(404);
@@ -402,6 +419,7 @@ class AnalyticsDashboardController extends Controller
                 $workDoneRepository,
                 $discrepanciesRepository,
                 $municipalityHealthRepository,
+                $schoolUnitsRepository,
                 $pdfExportService,
                 $tabWarnings,
             );
@@ -441,6 +459,7 @@ class AnalyticsDashboardController extends Controller
         WorkDoneRepository $workDoneRepository,
         DiscrepanciesRepository $discrepanciesRepository,
         MunicipalityHealthRepository $municipalityHealthRepository,
+        SchoolUnitsRepository $schoolUnitsRepository,
         AnalyticsReportExportService $pdfExportService,
         array &$tabWarnings,
     ): Response {
@@ -484,6 +503,16 @@ class AnalyticsDashboardController extends Controller
         ];
 
         return match ($tab) {
+            'school_units' => response()
+                ->view('dashboard.analytics.partials.school-units', array_merge($viewBase, $yearReady, [
+                    'schoolUnitsData' => $this->safeAnalyticsLoad(
+                        fn () => $schoolUnitsRepository->snapshot($city, $filters),
+                        AnalyticsEmptyPayloads::schoolUnits(),
+                        __('Unidades escolares'),
+                        $tabWarnings,
+                    ),
+                ]))
+                ->withHeaders($headers),
             'enrollment' => response()
                 ->view('dashboard.analytics.partials.enrollment', array_merge($viewBase, $yearReady, [
                     'enrollmentData' => $this->safeAnalyticsLoad(
@@ -537,33 +566,13 @@ class AnalyticsDashboardController extends Controller
             'fundeb' => response()
                 ->view('dashboard.analytics.partials.fundeb', array_merge($viewBase, $yearReady, [
                     'fundebData' => $this->safeAnalyticsLoad(
-                        function () use (
+                        fn () => $this->buildFundebReportForTab(
                             $fundebRepository,
+                            $overviewRepository,
+                            $discrepanciesRepository,
                             $city,
                             $filters,
-                            $overviewRepository,
-                            $enrollmentRepository,
-                            $performanceRepository,
-                            $attendanceRepository,
-                            $inclusionRepository,
-                            $networkRepository,
-                            $discrepanciesRepository,
-                        ) {
-                            $overviewData = $overviewRepository->summary($city, $filters);
-                            $disc = $discrepanciesRepository->fundingImpactSnapshot($city, $filters);
-
-                            return $fundebRepository->buildReport(
-                                $city,
-                                $filters,
-                                $overviewData,
-                                $enrollmentRepository->sample($city, $filters),
-                                $performanceRepository->snapshot($city, $filters),
-                                $attendanceRepository->snapshot($city, $filters),
-                                $inclusionRepository->snapshot($city, $filters),
-                                $networkRepository->snapshot($city, $filters),
-                                is_array($disc) ? $disc : [],
-                            );
-                        },
+                        ),
                         AnalyticsEmptyPayloads::fundeb(),
                         __('FUNDEB'),
                         $tabWarnings,
@@ -617,6 +626,41 @@ class AnalyticsDashboardController extends Controller
                 ->withHeaders($headers),
             default => abort(404),
         };
+    }
+
+    /**
+     * FUNDEB em lazy: só visão geral + resumo financeiro leve (sem matrículas/desempenho/etc.).
+     *
+     * @return array<string, mixed>
+     */
+    private function buildFundebReportForTab(
+        FundebRepository $fundebRepository,
+        OverviewRepository $overviewRepository,
+        DiscrepanciesRepository $discrepanciesRepository,
+        City $city,
+        IeducarFilterState $filters,
+    ): array {
+        $overviewData = $overviewRepository->summary($city, $filters);
+
+        $discrepanciesForFundeb = null;
+        if (config('analytics.fundeb_load_discrepancies_summary', true)) {
+            $snap = $discrepanciesRepository->fundingImpactSnapshot($city, $filters);
+            if (is_array($snap)) {
+                $discrepanciesForFundeb = $snap;
+            }
+        }
+
+        return $fundebRepository->buildReport(
+            $city,
+            $filters,
+            $overviewData,
+            AnalyticsEmptyPayloads::enrollment(),
+            AnalyticsEmptyPayloads::performance(),
+            AnalyticsEmptyPayloads::attendance(),
+            AnalyticsEmptyPayloads::inclusion(),
+            AnalyticsEmptyPayloads::network(),
+            $discrepanciesForFundeb,
+        );
     }
 
     /**

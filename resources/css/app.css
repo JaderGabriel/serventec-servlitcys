@@ -17,6 +17,10 @@
         --serv-gold: 180 134 40;
     }
 
+    html {
+        scroll-padding-top: 5.5rem;
+    }
+
     body {
         @apply text-slate-800 dark:text-slate-200;
     }
@@ -215,7 +219,34 @@
     }
 
     .serv-nav-brand {
-        @apply border-b border-slate-200/90 bg-white/95 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95;
+        @apply border-b border-slate-200/90 bg-white/95 backdrop-blur-md dark:border-slate-700 dark:bg-slate-900/95;
+    }
+
+    /* Cabeçalho fixo: navegação + título da página */
+    .serv-app-header {
+        @apply sticky top-0 z-50 shrink-0 border-b border-slate-200/90 bg-white/95 shadow-sm backdrop-blur-md
+            dark:border-slate-700/90 dark:bg-slate-900/95;
+    }
+
+    .serv-app-header .serv-nav-brand {
+        @apply border-b-0 shadow-none;
+    }
+
+    .serv-page-heading {
+        @apply border-t border-slate-200/80 bg-slate-50/95 dark:border-slate-700/80 dark:bg-slate-900/90;
+    }
+
+    .serv-scroll-top {
+        @apply fixed bottom-6 end-6 z-40 flex h-11 w-11 items-center justify-center rounded-full
+            bg-teal-700 text-white shadow-lg ring-2 ring-white/90
+            hover:bg-teal-800 hover:shadow-xl
+            focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-slate-100
+            dark:bg-teal-600 dark:ring-slate-900/90 dark:hover:bg-teal-500 dark:focus:ring-offset-slate-950
+            transition;
+    }
+
+    .serv-scroll-top:hover {
+        @apply -translate-y-0.5;
     }
 
     .serv-nav-link-active {
@@ -224,6 +255,101 @@
 
     .serv-nav-link-idle {
         @apply border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900 dark:text-slate-400 dark:hover:border-slate-600 dark:hover:text-slate-100;
+    }
+
+    /* Documentação admin — leitura Markdown */
+    .serv-docs-prose {
+        @apply text-sm leading-relaxed text-slate-800 dark:text-slate-200 max-w-none;
+    }
+
+    .serv-docs-prose > :first-child {
+        @apply mt-0;
+    }
+
+    .serv-docs-prose > :last-child {
+        @apply mb-0;
+    }
+
+    .serv-docs-prose h1 {
+        @apply font-display text-2xl font-bold text-slate-900 dark:text-white mt-8 mb-4 pb-2 border-b border-slate-200 dark:border-slate-700;
+    }
+
+    .serv-docs-prose h2 {
+        @apply font-display text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-3;
+    }
+
+    .serv-docs-prose h3 {
+        @apply text-base font-semibold text-teal-900 dark:text-teal-200 mt-6 mb-2;
+    }
+
+    .serv-docs-prose h4 {
+        @apply text-sm font-semibold text-slate-800 dark:text-slate-200 mt-4 mb-2;
+    }
+
+    .serv-docs-prose p {
+        @apply my-3;
+    }
+
+    .serv-docs-prose a {
+        @apply text-teal-700 underline decoration-teal-600/40 underline-offset-2 hover:text-teal-900 dark:text-teal-400 dark:hover:text-teal-300;
+    }
+
+    .serv-docs-prose ul,
+    .serv-docs-prose ol {
+        @apply my-3 ps-6 space-y-1;
+    }
+
+    .serv-docs-prose ul {
+        @apply list-disc;
+    }
+
+    .serv-docs-prose ol {
+        @apply list-decimal;
+    }
+
+    .serv-docs-prose li {
+        @apply ps-1;
+    }
+
+    .serv-docs-prose blockquote {
+        @apply my-4 border-s-4 border-teal-500/50 bg-teal-50/50 dark:bg-teal-950/30 ps-4 py-2 text-slate-700 dark:text-slate-300 italic;
+    }
+
+    .serv-docs-prose code {
+        @apply serv-code text-teal-900 dark:text-teal-200;
+    }
+
+    .serv-docs-prose pre {
+        @apply my-4 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-900 p-4 text-xs text-slate-100;
+    }
+
+    .serv-docs-prose pre code {
+        @apply bg-transparent p-0 text-inherit;
+    }
+
+    .serv-docs-prose table {
+        @apply my-4 w-full text-xs border-collapse overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700;
+    }
+
+    .serv-docs-prose thead {
+        @apply bg-slate-100 dark:bg-slate-800;
+    }
+
+    .serv-docs-prose th,
+    .serv-docs-prose td {
+        @apply border border-slate-200 dark:border-slate-700 px-3 py-2 text-left align-top;
+    }
+
+    .serv-docs-prose hr {
+        @apply my-8 border-slate-200 dark:border-slate-700;
+    }
+
+    .serv-docs-prose img {
+        @apply max-w-full h-auto rounded-lg my-4;
+    }
+
+    .serv-docs-prose input[type='checkbox'] {
+        @apply me-2 rounded border-slate-300 text-teal-600;
     }
 }
 
@@ -293,16 +419,65 @@
     #pulse-main-grid > section,
     #pulse-main-grid .pulse-dashboard-theme,
     #pulse-main-grid .pulse-exec-strip,
-    #pulse-main-grid .pulse-merged-server-panel {
+    #pulse-main-grid .pulse-merged-server-panel,
+    #pulse-main-grid .pulse-tab-nav,
+    #pulse-main-grid .pulse-tab-panel {
         @apply col-span-full min-w-0 max-w-full;
     }
 
+    .pulse-tab-panel {
+        column-gap: var(--pulse-col-gap, 0.75rem);
+        row-gap: var(--pulse-col-gap, 0.75rem);
+        grid-auto-rows: minmax(min-content, auto);
+        align-content: start;
+    }
+
+    #pulse-main-grid .pulse-tab-panel > section,
+    #pulse-main-grid .pulse-tab-panel .pulse-dashboard-theme,
+    #pulse-main-grid .pulse-tab-panel .pulse-merged-server-panel {
+        @apply col-span-full min-w-0 max-w-full;
+    }
+
+    #pulse-main-grid .pulse-tab-panel > section {
+        @apply rounded-2xl border border-slate-200/95 bg-white/80 shadow-md ring-1 ring-teal-950/[0.06] dark:border-slate-600/85 dark:bg-slate-900/55 dark:shadow-lg dark:ring-teal-500/10;
+    }
+
+    .pulse-tab-nav {
+        @apply serv-panel p-3 sm:p-4 mb-1;
+    }
+
+    .pulse-tab-btn {
+        @apply inline-flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition
+            hover:border-slate-300 hover:bg-slate-50
+            dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:bg-slate-800/80;
+    }
+
+    .pulse-tab-btn--active {
+        @apply shadow-md ring-2 ring-offset-1 ring-offset-white dark:ring-offset-slate-900;
+    }
+
+    .pulse-tab-btn--active.pulse-tab-btn--teal {
+        @apply border-teal-300 bg-teal-50 text-teal-900 ring-teal-500/30 dark:border-teal-700 dark:bg-teal-950/40 dark:text-teal-100;
+    }
+
+    .pulse-tab-btn--active.pulse-tab-btn--slate {
+        @apply border-slate-400 bg-slate-50 text-slate-900 ring-slate-400/35 dark:border-slate-500 dark:bg-slate-800/60 dark:text-slate-100;
+    }
+
+    .pulse-tab-btn--active.pulse-tab-btn--sky {
+        @apply border-sky-300 bg-sky-50 text-sky-950 ring-sky-500/30 dark:border-sky-700 dark:bg-sky-950/40 dark:text-sky-100;
+    }
+
+    .pulse-tab-btn--active.pulse-tab-btn--rose {
+        @apply border-rose-300 bg-rose-50 text-rose-950 ring-rose-500/30 dark:border-rose-700 dark:bg-rose-950/40 dark:text-rose-100;
+    }
+
     #pulse-main-grid > section {
-        @apply rounded-2xl border border-gray-200/95 bg-white/80 shadow-md ring-1 ring-indigo-950/[0.06] dark:border-gray-600/85 dark:bg-gray-900/55 dark:shadow-lg dark:ring-indigo-400/10;
+        @apply rounded-2xl border border-slate-200/95 bg-white/80 shadow-md ring-1 ring-teal-950/[0.06] dark:border-slate-600/85 dark:bg-slate-900/55 dark:shadow-lg dark:ring-teal-500/10;
     }
 
     #pulse-main-grid .pulse-merged-server-panel {
-        @apply rounded-2xl border border-gray-200/95 bg-white/80 shadow-md ring-1 ring-indigo-950/[0.06] dark:border-gray-600/85 dark:bg-gray-900/55 dark:shadow-lg dark:ring-indigo-400/10;
+        @apply rounded-2xl border border-slate-200/95 bg-white/80 shadow-md ring-1 ring-teal-950/[0.06] dark:border-slate-600/85 dark:bg-slate-900/55 dark:shadow-lg dark:ring-teal-500/10;
     }
 
     #pulse-main-grid > section,
@@ -357,7 +532,7 @@
     }
 
     .pulse-exec-strip__link {
-        @apply text-xs font-medium text-indigo-600 hover:underline dark:text-cyan-400;
+        @apply text-xs font-medium text-teal-700 hover:underline dark:text-teal-400;
     }
 
     .pulse-exec-strip__meta {

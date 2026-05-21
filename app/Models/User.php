@@ -13,8 +13,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['name', 'username', 'email', 'birth_date', 'cpf', 'password', 'role', 'is_active'])]
+#[Fillable(['name', 'username', 'email', 'profile_photo_path', 'birth_date', 'cpf', 'password', 'role', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -125,6 +126,40 @@ class User extends Authenticatable
     public function homeUrl(bool $absolute = true): string
     {
         return route($this->homeRouteName(), $this->homeRouteParameters(), $absolute);
+    }
+
+    public function hasProfilePhoto(): bool
+    {
+        return filled($this->profile_photo_path);
+    }
+
+    public function profilePhotoUrl(): ?string
+    {
+        $path = $this->profile_photo_path;
+        if (! is_string($path) || $path === '') {
+            return null;
+        }
+
+        if (! Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($path);
+    }
+
+    public function profileInitials(): string
+    {
+        $parts = preg_split('/\s+/u', trim((string) $this->name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if ($parts === []) {
+            return strtoupper(substr((string) $this->username, 0, 2));
+        }
+
+        $initials = '';
+        foreach (array_slice($parts, 0, 2) as $part) {
+            $initials .= mb_strtoupper(mb_substr($part, 0, 1));
+        }
+
+        return $initials !== '' ? $initials : '?';
     }
 
     /**

@@ -1,7 +1,7 @@
 {
-  "_notification-bell-Cv0vi_Wg.js": {
-    "file": "assets/notification-bell-Cv0vi_Wg.js",
-    "name": "notification-bell"
+  "_scroll-to-top-BRvIHkcG.js": {
+    "file": "assets/scroll-to-top-BRvIHkcG.js",
+    "name": "scroll-to-top"
   },
   "node_modules/leaflet/dist/images/layers-2x.png": {
     "file": "assets/layers-2x-Bpkbi35X.png",
@@ -16,7 +16,7 @@
     "src": "node_modules/leaflet/dist/images/marker-icon.png"
   },
   "resources/css/app.css": {
-    "file": "assets/app-CdOg0Viv.css",
+    "file": "assets/app-DPAr2und.css",
     "name": "app",
     "names": [
       "app.css"
@@ -25,12 +25,12 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-BTTMDB9M.js",
+    "file": "assets/app-Co5D6C07.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
-      "_notification-bell-Cv0vi_Wg.js"
+      "_scroll-to-top-BRvIHkcG.js"
     ],
     "css": [
       "assets/app-BYfHiZ-E.css"
@@ -42,12 +42,12 @@
     ]
   },
   "resources/js/pulse-notifications.js": {
-    "file": "assets/pulse-notifications-Dr4jyVkJ.js",
+    "file": "assets/pulse-notifications-C6_J0vnn.js",
     "name": "pulse-notifications",
     "src": "resources/js/pulse-notifications.js",
     "isEntry": true,
     "imports": [
-      "_notification-bell-Cv0vi_Wg.js"
+      "_scroll-to-top-BRvIHkcG.js"
     ]
   }
 }

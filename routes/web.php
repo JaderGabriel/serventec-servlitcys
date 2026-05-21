@@ -44,6 +44,7 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::middleware('manage.users')->group(function () {
@@ -89,6 +90,8 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(func
 
     Route::get('/admin/documentacao', [\App\Http\Controllers\Admin\DocumentationController::class, 'index'])
         ->name('admin.documentation.index');
+    Route::get('/admin/documentacao/ver', [\App\Http\Controllers\Admin\DocumentationController::class, 'show'])
+        ->name('admin.documentation.show');
 });
 
 require __DIR__.'/auth.php';

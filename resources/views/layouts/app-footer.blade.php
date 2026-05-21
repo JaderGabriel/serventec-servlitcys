@@ -2,7 +2,7 @@
 @php
     $pulseFooter = $pulseFooter ?? false;
 @endphp
-<footer @class(['border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/90', 'mt-auto' => ! ($pulseFooter ?? false)])>
+<footer @class(['border-t border-slate-200/90 dark:border-slate-700/90 bg-white/95 dark:bg-slate-900/90 backdrop-blur-sm', 'mt-auto' => ! ($pulseFooter ?? false)])>
     <div @class([
         'mx-auto py-4 sm:py-5',
         'max-w-[min(100%,100rem)] px-4 sm:px-6 lg:px-10 xl:px-12' => $pulseFooter,
@@ -31,19 +31,19 @@
                 </div>
                 <nav class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm" aria-label="{{ __('Links rápidos') }}">
                     @if (Auth::user()->canViewAdminDashboard())
-                        <a href="{{ route('dashboard') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                        <a href="{{ route('dashboard') }}" class="serv-link text-sm">
                             {{ __('Painel') }}
                         </a>
                     @endif
-                    <a href="{{ route('dashboard.analytics') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                    <a href="{{ route('dashboard.analytics') }}" class="serv-link text-sm">
                         {{ __('Análise educacional') }}
                     </a>
                     @auth
                         @if (Auth::user()->isAdmin())
-                            <a href="{{ route('pulse') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition {{ request()->routeIs('pulse') ? 'font-semibold text-indigo-600 dark:text-indigo-400' : '' }}">
+                            <a href="{{ route('pulse') }}" @class(['serv-link text-sm', 'font-semibold underline' => request()->routeIs('pulse')])>
                                 {{ __('Monitorização') }}
                             </a>
-                            <a href="{{ route('cities.index') }}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                            <a href="{{ route('cities.index') }}" class="serv-link text-sm">
                                 {{ __('Cidades') }}
                             </a>
                         @endif

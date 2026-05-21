@@ -2,6 +2,7 @@
  * Regista o sino de notificações no Alpine do Livewire/Pulse (sem carregar app.js).
  */
 import { registerNotificationBellData } from "./notification-bell.js";
+import { registerScrollToTopData } from "./scroll-to-top.js";
 
 function boot() {
     const Alpine = window.Alpine;
@@ -10,10 +11,11 @@ function boot() {
     }
 
     registerNotificationBellData(Alpine);
+    registerScrollToTopData(Alpine);
 
     if (typeof Alpine.initTree === "function") {
         document
-            .querySelectorAll('[x-data*="notificationBell"]')
+            .querySelectorAll('[x-data*="notificationBell"], [x-data*="scrollToTop"]')
             .forEach((el) => Alpine.initTree(el));
     }
 }

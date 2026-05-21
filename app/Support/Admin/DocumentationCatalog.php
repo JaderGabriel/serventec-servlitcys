@@ -9,6 +9,78 @@ namespace App\Support\Admin;
  */
 final class DocumentationCatalog
 {
+    public static function defaultPath(): string
+    {
+        return 'docs/README.md';
+    }
+
+    public static function isAllowedPath(string $path): bool
+    {
+        $path = str_replace('\\', '/', trim($path));
+
+        return in_array($path, self::allowedPaths(), true);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function allowedPaths(): array
+    {
+        $paths = [];
+        foreach (self::sections() as $section) {
+            foreach ($section['items'] as $item) {
+                $paths[] = $item['path'];
+            }
+        }
+
+        return array_values(array_unique($paths));
+    }
+
+    /**
+     * @return array{label: string, path: string, hint?: string, section_title: string}|null
+     */
+    public static function findItemByPath(string $path): ?array
+    {
+        $path = str_replace('\\', '/', trim($path));
+
+        foreach (self::sections() as $section) {
+            foreach ($section['items'] as $item) {
+                if ($item['path'] === $path) {
+                    return array_merge($item, ['section_title' => $section['title']]);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static function githubRepositoryUrl(): string
+    {
+        return (string) config('documentation.github.repository', '');
+    }
+
+    public static function githubBranch(): string
+    {
+        return (string) config('documentation.github.branch', 'main');
+    }
+
+    public static function githubBlobUrl(string $path): string
+    {
+        $repo = self::githubRepositoryUrl();
+        $branch = self::githubBranch();
+        $path = str_replace('\\', '/', $path);
+
+        return $repo.'/blob/'.$branch.'/'.$path;
+    }
+
+    public static function githubTreeUrl(): string
+    {
+        $repo = self::githubRepositoryUrl();
+        $branch = self::githubBranch();
+
+        return $repo.'/tree/'.$branch.'/docs';
+    }
+
     public static function sections(): array
     {
         return [
