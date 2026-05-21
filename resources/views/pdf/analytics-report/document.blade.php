@@ -3,10 +3,6 @@
     $colors = is_array($colors ?? null) ? $colors : config('analytics.pdf_report.colors', []);
     $primary = $colors['primary'] ?? '#0f766e';
     $secondary = $colors['secondary'] ?? '#4338ca';
-    $serventecName = $brand['serventec_name'] ?? 'Serventec Assessoria';
-    $serventecUrl = $brand['serventec_url'] ?? '';
-    $devName = $brand['developer_name'] ?? '';
-    $devGithub = $brand['developer_github'] ?? '';
     $cover = is_array($cover ?? null) ? $cover : [];
     $health = is_array($health ?? null) ? $health : [];
     $disc = is_array($discrepancies ?? null) ? $discrepancies : [];
@@ -23,19 +19,47 @@
     <meta charset="utf-8">
     <title>Relatório {{ $cover['municipality'] ?? '' }}</title>
     <style>
-        @page { margin: 72px 42px 58px 42px; }
+        @page { margin: 72px 42px 68px 42px; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 10.5pt; color: #1e293b; line-height: 1.45; }
         h1 { color: {{ $primary }}; font-size: 20pt; margin: 0 0 8px; }
         h2 { color: {{ $secondary }}; font-size: 13pt; margin: 22px 0 8px; border-bottom: 2px solid {{ $primary }}; padding-bottom: 4px; page-break-after: avoid; }
         h3 { font-size: 11pt; color: {{ $primary }}; margin: 14px 0 6px; }
         p { margin: 0 0 8px; }
-        .cover { page-break-after: always; min-height: 90vh; }
-        .cover-header { background: linear-gradient(135deg, {{ $primary }} 0%, {{ $secondary }} 100%); color: #fff; padding: 28px 32px; border-radius: 8px; }
-        .cover-header h1 { color: #fff; font-size: 26pt; }
-        .cover-meta { margin-top: 16px; font-size: 11pt; color: #ecfdf5; }
-        .cover-grid { margin-top: 20px; }
-        .cover-grid td { vertical-align: top; padding: 6px; }
-        .cover-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; }
+        .cover-page { page-break-after: always; padding: 0 0 12px; }
+        .cover-hero { margin-bottom: 14px; border-radius: 10px; overflow: hidden; }
+        .cover-hero__main { padding: 26px 28px 22px; color: #fff; }
+        .cover-eyebrow { margin: 0 0 6px; font-size: 9pt; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.92; }
+        .cover-report-type { margin: 0 0 4px; font-size: 11pt; font-weight: bold; color: {{ $primaryLight }}; }
+        .cover-city { margin: 0; font-size: 28pt; line-height: 1.15; font-weight: bold; color: #fff; }
+        .cover-region { margin: 10px 0 0; font-size: 10pt; color: #ecfdf5; opacity: 0.95; }
+        .cover-year-badge { display: inline-block; background: rgba(255,255,255,0.18); border: 2px solid rgba(255,255,255,0.55); border-radius: 10px; padding: 12px 16px; text-align: center; min-width: 120px; }
+        .cover-year-badge__label { display: block; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.9; }
+        .cover-year-badge__value { display: block; font-size: 22pt; font-weight: bold; line-height: 1.2; margin-top: 4px; }
+        .cover-facts { margin: 0 0 12px; border-collapse: separate; border-spacing: 6px 0; }
+        .cover-fact-cell { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; vertical-align: top; }
+        .cover-fact-label { display: block; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; font-weight: bold; }
+        .cover-fact-value { display: block; font-size: 11pt; font-weight: bold; color: {{ $primary }}; margin-top: 3px; }
+        .cover-fact-value--small { font-size: 8.5pt; font-weight: normal; color: #475569; }
+        .cover-filters { margin: 0 0 14px; background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; }
+        .cover-filters__title { padding: 8px 12px 4px; font-size: 8pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.06em; color: {{ $primary }}; }
+        .cover-filter-chip { padding: 6px 12px 10px; vertical-align: top; border-right: 1px solid #ccfbf1; }
+        .cover-filter-chip:last-child { border-right: none; }
+        .cover-filter-chip__label { display: block; font-size: 7.5pt; color: #64748b; text-transform: uppercase; }
+        .cover-filter-chip__value { display: block; font-size: 11pt; font-weight: bold; color: #0f172a; margin-top: 2px; }
+        .cover-filters-empty { margin: 0 0 12px; font-size: 10pt; color: #64748b; }
+        .cover-maps { margin: 0 0 14px; }
+        .cover-map-main, .cover-map-side { vertical-align: top; padding: 0 4px 0 0; }
+        .cover-map-img { width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; display: block; }
+        .cover-map-img--main { max-height: 240px; }
+        .cover-map-img--regional, .cover-map-img--brand { max-height: 200px; }
+        .cover-map-caption { margin: 6px 0 0; font-size: 8pt; color: #64748b; line-height: 1.35; }
+        .cover-map-caption__muted { font-size: 7.5pt; }
+        .cover-map-placeholder { background: #f1f5f9; border: 1px dashed #94a3b8; border-radius: 8px; padding: 28px 16px; text-align: center; font-size: 9.5pt; color: #64748b; min-height: 120px; }
+        .cover-summary { background: linear-gradient(90deg, {{ $primaryLight }} 0%, #fff 100%); border-left: 5px solid {{ $primary }}; padding: 14px 16px; border-radius: 0 8px 8px 0; margin-bottom: 8px; }
+        .cover-summary__title { margin: 0 0 6px; font-size: 11pt; font-weight: bold; color: {{ $primary }}; }
+        .cover-summary__text { margin: 0; font-size: 10pt; line-height: 1.45; color: #334155; }
+        .cover-summary__kpi { margin: 10px 0 0; font-size: 10.5pt; font-weight: bold; color: {{ $secondary }}; }
+        .cover-footer-note { margin: 0; font-size: 8pt; color: #94a3b8; text-align: center; }
         .kpi-row { width: 100%; border-collapse: collapse; margin: 10px 0; }
         .kpi-row td { border: 1px solid #e2e8f0; padding: 8px 10px; background: #f8fafc; }
         .kpi-label { font-size: 8pt; color: #64748b; text-transform: uppercase; }
@@ -46,86 +70,47 @@
         .box { background: #f0fdfa; border-left: 4px solid {{ $primary }}; padding: 10px 12px; margin: 10px 0; }
         .chart-block { text-align: center; margin: 12px 0; page-break-inside: avoid; }
         .section { page-break-inside: avoid; }
-        .footer {
+        .pdf-footer {
             position: fixed;
-            bottom: -42px;
+            bottom: -52px;
             left: 0;
             right: 0;
-            height: 36px;
-            font-size: 7.5pt;
-            color: #64748b;
-            border-top: 1px solid #cbd5e1;
-            padding-top: 6px;
+            height: 48px;
+            background: #f8fafc;
+            border-top: 2px solid {{ $primary }};
+            padding: 7px 0 0;
         }
-        .footer table { width: 100%; }
+        .pdf-footer__table { width: 100%; border-collapse: collapse; }
+        .pdf-footer__icon { display: block; border-radius: 6px; }
+        .pdf-footer__icon-fallback { width: 24px; height: 24px; border-radius: 6px; }
+        .pdf-footer__system { display: block; font-size: 9.5pt; font-weight: bold; color: {{ $primary }}; line-height: 1.2; }
+        .pdf-footer__tagline { display: block; font-size: 6.5pt; color: #64748b; margin-top: 1px; line-height: 1.25; }
+        .pdf-footer__context-city { display: block; font-size: 8pt; font-weight: bold; color: #334155; line-height: 1.25; }
+        .pdf-footer__context-year { display: block; font-size: 7pt; color: #64748b; margin-top: 2px; }
+        .pdf-footer__serventec-name { display: block; font-size: 7.5pt; font-weight: bold; color: {{ $secondary }}; line-height: 1.2; }
+        .pdf-footer__serventec-link { display: block; font-size: 7pt; color: {{ $primary }}; text-decoration: none; margin-top: 1px; }
+        .pdf-footer__dev { display: block; font-size: 6pt; color: #94a3b8; margin-top: 2px; }
+        .pdf-footer__dev-link { color: #64748b; text-decoration: none; }
+        .pdf-footer__page-slot { display: block; font-size: 7pt; color: #64748b; margin-top: 3px; min-height: 9px; }
         .muted { color: #64748b; font-size: 9pt; }
         ul.compact { margin: 4px 0; padding-left: 18px; }
         ul.compact li { margin-bottom: 4px; }
     </style>
 </head>
 <body>
-    <div class="footer">
-        <table>
-            <tr>
-                <td style="width: 55%;">
-                    <strong>{{ $serventecName }}</strong>
-                    @if (filled($serventecUrl))
-                        — <a href="{{ $serventecUrl }}" style="color: {{ $primary }};">{{ $serventecUrl }}</a>
-                    @endif
-                </td>
-                <td style="width: 45%; text-align: right;">
-                    @if (filled($devName) && filled($devGithub))
-                        {{ $devName }} — <a href="{{ $devGithub }}" style="color: {{ $secondary }};">GitHub</a>
-                    @endif
-                </td>
-            </tr>
-        </table>
-    </div>
+    @include('pdf.analytics-report.footer', [
+        'brand' => $brand,
+        'colors' => $colors,
+        'cover' => $cover,
+    ])
 
-    {{-- Capa --}}
-    <div class="cover">
-        <div class="cover-header">
-            <p style="font-size: 10pt; opacity: 0.9; margin: 0;">{{ $serventecName }}</p>
-            <h1>{{ $cover['municipality'] ?? ($city['name'] ?? '') }}</h1>
-            <div class="cover-meta">
-                <strong>{{ __('UF') }}:</strong> {{ $cover['uf'] ?? '' }}
-                @if (filled($cover['ibge'] ?? null))
-                    · <strong>IBGE:</strong> {{ $cover['ibge'] }}
-                @endif
-                <br>
-                <strong>{{ $cover['year_label'] ?? $year_label ?? '' }}</strong>
-                · {{ __('Gerado em') }} {{ $generated_at ?? now()->format('d/m/Y H:i') }}
-                @if (filled($cover['region_label'] ?? null))
-                    <br>{{ $cover['region_label'] }}
-                @endif
-            </div>
-        </div>
-        <table class="cover-grid" style="width:100%; margin-top: 20px;">
-            <tr>
-                <td style="width: 55%;">
-                    @if (filled($cover['map_image_url'] ?? null))
-                        <img src="{{ $cover['map_image_url'] }}" alt="Mapa" class="cover-img">
-                        <p class="muted">{{ __('Mapa OpenStreetMap (centro das escolas georreferenciadas)') }}</p>
-                    @else
-                        <div class="box">{{ __('Mapa indisponível — sincronize coordenadas das unidades escolares.') }}</div>
-                    @endif
-                </td>
-                <td style="width: 45%;">
-                    @if (filled($cover['regional_image_data_uri'] ?? null))
-                        <img src="{{ $cover['regional_image_data_uri'] }}" alt="Regional" class="cover-img" style="max-height: 180px;">
-                    @endif
-                    <p class="muted">{{ __('Imagem regional / identidade visual do relatório') }}</p>
-                </td>
-            </tr>
-        </table>
-        <div class="box" style="margin-top: 24px;">
-            <p style="margin:0;"><strong>{{ __('Resumo executivo') }}</strong></p>
-            <p style="margin:6px 0 0;">{{ $health['intro'] ?? '' }}</p>
-            @if (isset($health['compliance_score']))
-                <p style="margin-top:8px;"><strong>{{ __('Índice de conformidade') }}:</strong> {{ $health['compliance_score'] }}/100 — {{ $health['compliance_label'] ?? '' }}</p>
-            @endif
-        </div>
-    </div>
+    @include('pdf.analytics-report.cover', [
+        'cover' => $cover,
+        'brand' => $brand,
+        'colors' => $colors,
+        'health' => $health,
+        'generated_at' => $generated_at ?? null,
+    ])
 
     {{-- Serventec --}}
     <h2>{{ __('1. Serventec — diagnóstico consolidado') }}</h2>
@@ -249,8 +234,9 @@
 
     <script type="text/php">
         if (isset($pdf)) {
-            $text = "{{ __('Página') }} {PAGE_NUM} / {PAGE_COUNT}";
-            $pdf->page_text(480, 820, $text, null, 8, array(100, 116, 139));
+            $primaryRgb = [15, 118, 110];
+            $pageLabel = "{{ __('Página') }} {PAGE_NUM} {{ __('de') }} {PAGE_COUNT}";
+            $pdf->page_text(468, 808, $pageLabel, null, 7.5, $primaryRgb);
         }
     </script>
 </body>

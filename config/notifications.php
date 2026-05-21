@@ -33,6 +33,13 @@ return [
         'pdf_stale_hours' => max(1, (int) env('APP_NOTIFICATIONS_PDF_STALE_HOURS', 2)),
         /** Jobs na fila (tabela jobs) acima deste valor. */
         'queue_pending_threshold' => max(10, (int) env('APP_NOTIFICATIONS_QUEUE_PENDING_THRESHOLD', 25)),
+        /**
+         * Avaliação automática via `php artisan schedule:run` (não depende de abrir a dashboard).
+         */
+        'schedule' => [
+            'enabled' => filter_var(env('APP_NOTIFICATIONS_OPERATIONAL_SCHEDULE', true), FILTER_VALIDATE_BOOL),
+            'interval_minutes' => max(5, min(120, (int) env('APP_NOTIFICATIONS_OPERATIONAL_INTERVAL_MINUTES', 15))),
+        ],
     ],
 
     /** Notificar utilizador ao abrir painel analítico com erros parciais. */

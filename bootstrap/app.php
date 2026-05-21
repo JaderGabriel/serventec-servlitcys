@@ -136,5 +136,18 @@ return Application::configure(basePath: dirname(__DIR__))
 
             ScheduleIntervals::everyMinutes($pdfOnDemand, $runnerMinutes);
         }
+
+        if ((bool) config('notifications.operational_alerts.enabled', true)
+            && (bool) config('notifications.operational_alerts.schedule.enabled', true)) {
+            $opsMinutes = max(5, min(120, (int) config('notifications.operational_alerts.schedule.interval_minutes', 15)));
+            $timezone = (string) config('app.timezone', 'UTC');
+
+            $opsAlerts = $schedule->command('notifications:operational-alerts')
+                ->name('operational-alerts-check')
+                ->withoutOverlapping(max(5, $opsMinutes - 1))
+                ->timezone($timezone);
+
+            ScheduleIntervals::everyMinutes($opsAlerts, $opsMinutes);
+        }
     })
     ->create();

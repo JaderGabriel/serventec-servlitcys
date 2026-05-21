@@ -6,6 +6,6 @@
     </linearGradient>
   </defs>
   <rect width="640" height="200" fill="url(#g)"/>
-  <text x="32" y="88" fill="#ecfdf5" font-family="DejaVu Sans, sans-serif" font-size="28" font-weight="bold">Educação pública municipal</text>
-  <text x="32" y="120" fill="#ccfbf1" font-family="DejaVu Sans, sans-serif" font-size="14">Relatório analítico · Censo · FUNDEB · i-Educar</text>
+  <text x="32" y="88" fill="#ecfdf5" font-family="DejaVu Sans, sans-serif" font-size="24" font-weight="bold">Educacao publica municipal</text>
+  <text x="32" y="118" fill="#ccfbf1" font-family="DejaVu Sans, sans-serif" font-size="13">Relatorio analitico ? Censo ? FUNDEB ? i-Educar</text>
 </svg>

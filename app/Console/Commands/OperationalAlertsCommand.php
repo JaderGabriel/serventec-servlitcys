@@ -12,7 +12,7 @@ class OperationalAlertsCommand extends Command
 
     protected $description = 'Avalia filas, sync e PDFs e envia alertas operacionais aos administradores (sem depender de visita ao painel)';
 
-    public function handle(OperationalAlertsNotifier $notifier): int
+    public function handle(OperationalAlertsNotifier $notifier, NotificationDispatcher $dispatcher): int
     {
         if (! (bool) config('notifications.operational_alerts.enabled', true)) {
             $this->comment(__('Alertas operacionais desactivados (APP_NOTIFICATIONS_OPERATIONAL).'));
@@ -20,7 +20,7 @@ class OperationalAlertsCommand extends Command
             return self::SUCCESS;
         }
 
-        if (! app(OperationalAlertsNotifier::class)->getDispatcher()->isEnabled()) {
+        if (! $dispatcher->isEnabled()) {
             $this->comment(__('Centro de notificações desactivado (APP_NOTIFICATIONS_ENABLED).'));
 
             return self::SUCCESS;

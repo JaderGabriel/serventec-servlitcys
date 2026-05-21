@@ -43,19 +43,32 @@ final class BrazilUfCentroids
      */
     public static function latLng(string $uf, int $scatterSeed = 0): array
     {
+        return self::latLngForIndex($uf, $scatterSeed > 0 ? 1 : 0, $scatterSeed > 0 ? max(2, ($scatterSeed % 12) + 2) : 1, $scatterSeed);
+    }
+
+    /**
+     * Dispersa municípios da mesma UF em anel, para não sobrepor no mapa.
+     *
+     * @return array{0: float, 1: float}
+     */
+    public static function latLngForIndex(string $uf, int $index, int $total, int $extraSeed = 0): array
+    {
         $uf = strtoupper(trim($uf));
         $base = self::CENTROIDS[$uf] ?? [-14.5, -52.0];
 
-        if ($scatterSeed === 0) {
+        if ($total <= 1 && $extraSeed === 0) {
             return $base;
         }
 
-        $angle = ($scatterSeed % 360) * M_PI / 180;
-        $radius = 0.12 + (($scatterSeed >> 8) % 12) * 0.06;
+        $slot = $index + ($extraSeed % max(1, $total));
+        $angle = (2 * M_PI * $slot) / max(1, $total);
+        $rings = (int) ceil($total / 8);
+        $ring = (int) floor($slot / 8);
+        $radius = 0.28 + ($ring * 0.22) + min(0.9, 0.08 * sqrt($total));
 
         return [
             round($base[0] + $radius * cos($angle), 5),
-            round($base[1] + $radius * sin($angle) * 1.15, 5),
+            round($base[1] + $radius * sin($angle) * 1.12, 5),
         ];
     }
 }

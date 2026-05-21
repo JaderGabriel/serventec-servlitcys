@@ -18,7 +18,7 @@ final class AdminHomeMunicipalityMapTest extends TestCase
         City::factory()->create(['name' => 'Activa', 'uf' => 'SP', 'is_active' => true, 'db_host' => 'h', 'db_database' => 'd', 'db_username' => 'u']);
         City::factory()->create(['name' => 'Inactiva', 'uf' => 'RJ', 'is_active' => false]);
 
-        $markers = (new AdminHomeMunicipalityMap)->markers();
+        $markers = app(AdminHomeMunicipalityMap::class)->markers();
 
         $this->assertCount(2, $markers);
         $names = array_column($markers, 'name');
@@ -36,7 +36,7 @@ final class AdminHomeMunicipalityMapTest extends TestCase
             'db_username' => 'user',
         ]);
 
-        $markers = (new AdminHomeMunicipalityMap)->markers();
+        $markers = app(AdminHomeMunicipalityMap::class)->markers();
         $marker = collect($markers)->firstWhere('id', $city->id);
 
         $this->assertNotNull($marker);

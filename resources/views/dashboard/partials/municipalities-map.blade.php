@@ -1,12 +1,18 @@
+@php
+    $mapSummary = is_array($mapSummary ?? null) ? $mapSummary : ['total' => count($mapMarkers ?? []), 'by_status' => []];
+    $totalOnMap = (int) ($mapSummary['total'] ?? count($mapMarkers ?? []));
+    $readyCount = (int) ($mapSummary['by_status']['ready'] ?? 0);
+@endphp
 <section class="serv-panel overflow-hidden" aria-labelledby="home-map">
     <div class="px-5 py-4 border-b border-slate-200/90 dark:border-slate-700/90 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
             <h3 id="home-map" class="font-display text-lg font-semibold text-serv-navy dark:text-slate-100">{{ __('Municípios implementados') }}</h3>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                {{ __('Clique num ponto para ver a data de implementação e os anos letivos cadastrados na base i-Educar.') }}
+                {{ __(':total município(s) no mapa — coordenadas por escolas, IBGE ou posição na UF. Clique num ponto para anos letivos.', ['total' => number_format($totalOnMap)]) }}
             </p>
         </div>
         <div class="flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-400">
+            <span class="tabular-nums font-medium text-slate-600 dark:text-slate-300">{{ __(':n activos', ['n' => number_format($readyCount)]) }}</span>
             <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>{{ __('Activo') }}</span>
             <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>{{ __('Incompleto') }}</span>
             <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-slate-400"></span>{{ __('Inactivo') }}</span>

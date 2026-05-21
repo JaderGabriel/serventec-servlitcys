@@ -65,6 +65,7 @@ final class AdminHomeMetrics
             'ops' => $ops,
             'system_flow' => $this->systemFlow->diagram($ready, $activeCities->count()),
             'map_markers' => $this->municipalityMap->markers(),
+            'map_summary' => $this->municipalityMap->summary(),
         ];
     }
 }

@@ -48,7 +48,7 @@
 
             @include('dashboard.partials.data-flow', ['systemFlow' => $systemFlow])
 
-            @include('dashboard.partials.municipalities-map', ['mapMarkers' => $mapMarkers])
+            @include('dashboard.partials.municipalities-map', ['mapMarkers' => $mapMarkers, 'mapSummary' => $mapSummary])
 
             @include('dashboard.partials.quick-actions', ['ops' => $ops])
         </div>

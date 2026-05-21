@@ -13,7 +13,7 @@ $width = match ($width) {
 };
 @endphp
 
-<div {{ $attributes->merge(['class' => 'relative']) }} x-data="{ open: false }" @click.outside="open = false" @close.stop="open = false">
+<div {{ $attributes->merge(['class' => 'relative']) }} x-data="{ open: false }" @click.outside="open = false" @close-dropdown.window="open = false">
     <div @click="open = ! open">
         {{ $trigger }}
     </div>
@@ -27,7 +27,7 @@ $width = match ($width) {
             x-transition:leave-end="opacity-0 scale-95"
             class="absolute z-50 mt-2 {{ $width }} rounded-xl shadow-lg shadow-slate-900/10 dark:shadow-black/30 {{ $alignmentClasses }}"
             style="display: none;"
-            @click="open = false">
+            @click.self="open = false">
         <div class="rounded-xl ring-1 ring-slate-200/90 dark:ring-gray-600/90 {{ $contentClasses }}">
             {{ $content }}
         </div>

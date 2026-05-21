@@ -33,6 +33,7 @@ class DashboardController extends Controller
             'ops' => $data['ops'],
             'systemFlow' => $data['system_flow'],
             'mapMarkers' => $data['map_markers'],
+            'mapSummary' => $data['map_summary'],
         ]);
     }
 }

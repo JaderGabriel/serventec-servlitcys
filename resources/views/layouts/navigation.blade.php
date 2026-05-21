@@ -35,7 +35,7 @@
             <div class="hidden sm:flex sm:items-center sm:ms-6 gap-1 sm:gap-3">
                 <x-theme-toggle />
                 <x-notification-bell />
-                <x-dropdown align="right" width="w-72" contentClasses="py-1.5 bg-white dark:bg-gray-800" class="shrink-0">
+                <x-dropdown align="right" width="w-64" contentClasses="py-1 bg-white dark:bg-gray-800" class="shrink-0">
                     <x-slot name="trigger">
                         <button type="button" class="inline-flex max-w-full items-center gap-2 rounded-lg border border-transparent px-2 py-1.5 text-sm leading-4 font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/80 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500/40 transition ease-in-out duration-150">
                             <x-user-avatar :user="Auth::user()" size="md" />
@@ -80,7 +80,7 @@
                 @endif
             </x-responsive-nav-link>
             <p class="px-4 pt-3 pb-1 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {{ __('Mais opções no menu do utilizador (grupos como na dashboard).') }}
+                {{ __('Mais opções no menu do utilizador (submenus expansíveis).') }}
             </p>
         </div>
 

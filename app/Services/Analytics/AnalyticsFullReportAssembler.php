@@ -17,6 +17,7 @@ use App\Repositories\Ieducar\PerformanceRepository;
 use App\Repositories\Ieducar\WorkDoneRepository;
 use App\Services\CityDataConnection;
 use App\Support\Analytics\AnalyticsReportChartSvg;
+use App\Support\Analytics\PdfBrandAssets;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\MatriculaChartQueries;
 use Illuminate\Support\Facades\DB;
@@ -45,7 +46,7 @@ final class AnalyticsFullReportAssembler
     public function assemble(City $city, IeducarFilterState $filters): array
     {
         $yearLabel = $this->yearLabel($filters);
-        $cover = $this->coverBuilder->build($city, $yearLabel);
+        $cover = $this->coverBuilder->build($city, $yearLabel, $filters);
 
         $overview = $this->overview->summary($city, $filters);
         $enrollment = $this->enrollment->sample($city, $filters);
@@ -82,7 +83,7 @@ final class AnalyticsFullReportAssembler
             'year_comparison' => $this->yearComparison($city, $filters),
             'municipal_vs_state' => $this->municipalVsState($city, $filters),
             'charts' => $charts,
-            'brand' => config('analytics.pdf_report.brand', []),
+            'brand' => PdfBrandAssets::enrich(config('analytics.pdf_report.brand', [])),
             'colors' => config('analytics.pdf_report.colors', []),
         ];
     }

@@ -951,6 +951,125 @@
         @apply mt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-3xl;
     }
 
+    /* Fontes públicas e federais — diagrama por eixo */
+    .serv-federal-flow {
+        @apply rounded-2xl border border-slate-200/90 dark:border-slate-700/90
+            bg-gradient-to-b from-slate-50/90 via-white to-teal-50/30
+            dark:from-slate-900/60 dark:via-slate-900/40 dark:to-teal-950/20 p-4 sm:p-5;
+    }
+
+    .serv-federal-flow__head {
+        @apply flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4 pb-4
+            border-b border-slate-200/80 dark:border-slate-700/80;
+    }
+
+    .serv-federal-flow__step {
+        @apply font-display text-sm font-semibold text-indigo-900 dark:text-indigo-200;
+    }
+
+    .serv-federal-flow__desc {
+        @apply mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl;
+    }
+
+    .serv-federal-flow__stats {
+        @apply shrink-0 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-teal-200/70
+            dark:border-teal-800/50 px-4 py-2 text-center shadow-sm;
+    }
+
+    .serv-federal-flow__stat-value {
+        @apply block text-xl font-bold tabular-nums text-teal-800 dark:text-teal-300;
+    }
+
+    .serv-federal-flow__stat-label {
+        @apply block text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-federal-flow__lanes {
+        @apply grid grid-cols-1 md:grid-cols-3 gap-4;
+    }
+
+    .serv-federal-flow__lane-title {
+        @apply text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2;
+    }
+
+    .serv-federal-flow__cards {
+        @apply flex flex-col gap-2;
+    }
+
+    .serv-federal-flow__card {
+        @apply rounded-xl border border-slate-200/90 dark:border-slate-700/90 bg-white/90
+            dark:bg-slate-900/70 px-3 py-2.5 shadow-sm transition-shadow hover:shadow-md;
+    }
+
+    .serv-federal-flow__card--ok {
+        @apply ring-1 ring-teal-200/80 dark:ring-teal-800/50;
+    }
+
+    .serv-federal-flow__card--partial {
+        @apply ring-1 ring-amber-200/80 dark:ring-amber-800/40;
+    }
+
+    .serv-federal-flow__card-top {
+        @apply flex items-center justify-between gap-2 mb-1.5;
+    }
+
+    .serv-federal-flow__acronym {
+        @apply inline-flex h-8 min-w-[2.5rem] items-center justify-center rounded-lg
+            bg-indigo-100 text-[11px] font-bold tracking-wide text-indigo-800
+            dark:bg-indigo-950/60 dark:text-indigo-200;
+    }
+
+    .serv-federal-flow__pill {
+        @apply rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide;
+    }
+
+    .serv-federal-flow__pill--ok {
+        @apply bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300;
+    }
+
+    .serv-federal-flow__pill--partial {
+        @apply bg-amber-100 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200;
+    }
+
+    .serv-federal-flow__pill--off {
+        @apply bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400;
+    }
+
+    .serv-federal-flow__name {
+        @apply text-sm font-semibold text-slate-900 dark:text-slate-100 leading-tight;
+    }
+
+    .serv-federal-flow__sub {
+        @apply text-[10px] text-slate-500 dark:text-slate-400 mt-0.5;
+    }
+
+    .serv-federal-flow__flow {
+        @apply mt-2 flex items-start gap-1.5 text-[10px] leading-snug text-teal-800/90 dark:text-teal-300/90
+            border-t border-dashed border-slate-200/80 dark:border-slate-600/80 pt-2;
+    }
+
+    .serv-federal-flow__flow--partial {
+        @apply text-amber-800/90 dark:text-amber-300/90;
+    }
+
+    .serv-federal-flow__flow-icon {
+        @apply h-3.5 w-3.5 shrink-0 mt-0.5 opacity-70;
+    }
+
+    .serv-federal-flow__converge {
+        @apply relative mt-5 pt-4 text-center;
+    }
+
+    .serv-federal-flow__converge-lines {
+        @apply mx-auto h-8 w-px bg-gradient-to-b from-indigo-300/80 via-teal-400/90 to-teal-600
+            dark:from-indigo-600/50 dark:via-teal-500/70 dark:to-teal-400;
+    }
+
+    .serv-federal-flow__converge-label {
+        @apply mt-2 inline-block rounded-full border border-teal-200/80 dark:border-teal-800/60
+            bg-teal-50/90 dark:bg-teal-950/40 px-3 py-1 text-[11px] font-medium text-teal-900 dark:text-teal-200;
+    }
+
     .serv-data-flow__externals {
         @apply grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3;
     }

@@ -128,7 +128,8 @@ php artisan queue:work database --queue=default,admin-sync --sleep=3 --tries=3
 | `ANALYTICS_PDF_JOB_TIMEOUT` | `900` |
 | `ANALYTICS_PDF_DISK` | `local` |
 | `ANALYTICS_PDF_MAX_PER_USER` | `10` |
-| `ANALYTICS_PDF_SERVENTEC_NAME` / `ANALYTICS_PDF_SERVENTEC_URL` | Rodapé do PDF |
+| `ANALYTICS_PDF_SERVENTEC_NAME` / `ANALYTICS_PDF_SERVENTEC_URL` | Rodapé do PDF (URL padrão: `https://analise.serventecassessoria.com.br`) |
+| `ANALYTICS_PDF_SYSTEM_NAME` / `ANALYTICS_PDF_ICON_PATH` | Nome e ícone do sistema no rodapé |
 
 ### Diagnóstico de erro 500 (temporário)
 

@@ -18,7 +18,10 @@ final class OperationalAlertsNotifier
         private readonly NotificationDispatcher $dispatcher,
     ) {}
 
-    /** Avalia o ambiente operacional e notifica administradores (com deduplicação). */
+    /**
+     * Avalia o ambiente operacional e notifica administradores (com deduplicação).
+     * Também é invocado por `php artisan notifications:operational-alerts` no agendador.
+     */
     public function notifyAdminsIfNeeded(?User $triggeredBy = null): void
     {
         if (! $this->dispatcher->isEnabled() || ! (bool) config('notifications.operational_alerts.enabled', true)) {

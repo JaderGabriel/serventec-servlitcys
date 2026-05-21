@@ -30,33 +30,12 @@
         <div class="lg:grid lg:grid-cols-[1fr_min(18rem,32%)] lg:gap-8 lg:items-start">
             <div class="serv-data-flow min-w-0">
                 @if ($zoneExternal)
-                    <header class="serv-data-flow__zone-head">
-                        <p class="serv-data-flow__zone-title">{{ $zoneExternal['title'] }}</p>
-                        <p class="serv-data-flow__zone-desc">{{ $zoneExternal['description'] }}</p>
-                    </header>
+                    @include('dashboard.partials.data-flow-federal', [
+                        'zone' => $zoneExternal,
+                        'externals' => $externals,
+                        'edgesByFrom' => $edgesByFrom,
+                    ])
                 @endif
-
-                <div class="serv-data-flow__externals" role="list">
-                    @foreach ($externals as $node)
-                        @php $edge = $edgesByFrom->get($node['id']); @endphp
-                        <article
-                            role="listitem"
-                            class="serv-data-flow__card serv-data-flow__card--{{ $node['status'] }}"
-                            title="{{ $node['hint'] }}"
-                        >
-                            <span class="serv-data-flow__badge serv-data-flow__badge--{{ $node['status'] }}" aria-hidden="true"></span>
-                            <p class="serv-data-flow__card-label">{{ $node['label'] }}</p>
-                            <p class="serv-data-flow__card-sub">{{ $node['sublabel'] }}</p>
-                            <p class="serv-data-flow__card-hint">{{ $node['hint'] }}</p>
-                            @if ($edge)
-                                <p class="serv-data-flow__edge-label serv-data-flow__edge-label--{{ $edge['status'] }}">
-                                    <span class="serv-data-flow__edge-arrow" aria-hidden="true">↓</span>
-                                    {{ $edge['label'] }}
-                                </p>
-                            @endif
-                        </article>
-                    @endforeach
-                </div>
 
                 @if ($zonePlatform && $hub)
                     <header class="serv-data-flow__zone-head serv-data-flow__zone-head--spaced">

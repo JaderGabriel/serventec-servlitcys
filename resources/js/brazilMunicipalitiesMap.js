@@ -40,6 +40,9 @@ export default function createBrazilMunicipalitiesMap(markers = []) {
 
             const bounds = [];
 
+            const count = this.markers.length;
+            const radius = count > 40 ? 5 : count > 15 ? 6 : 7;
+
             this.markers.forEach((m) => {
                 const lat = Number(m.lat);
                 const lng = Number(m.lng);
@@ -50,10 +53,10 @@ export default function createBrazilMunicipalitiesMap(markers = []) {
                 bounds.push([lat, lng]);
 
                 const circle = L.circleMarker([lat, lng], {
-                    radius: 7,
+                    radius,
                     fillColor: STATUS_COLORS[m.status] || "#64748b",
                     color: "#ffffff",
-                    weight: 2,
+                    weight: count > 30 ? 1.5 : 2,
                     opacity: 1,
                     fillOpacity: 0.92,
                 });
@@ -71,7 +74,8 @@ export default function createBrazilMunicipalitiesMap(markers = []) {
             });
 
             if (bounds.length > 0) {
-                this.map.fitBounds(bounds, { padding: [36, 36], maxZoom: 5 });
+                const maxZoom = count <= 3 ? 8 : count <= 12 ? 6 : 5;
+                this.map.fitBounds(bounds, { padding: [40, 40], maxZoom });
             } else {
                 this.map.setView([-14.5, -52], 4);
             }

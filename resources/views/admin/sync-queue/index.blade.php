@@ -48,6 +48,9 @@
                             @if (config('analytics.pdf_report.schedule.enabled', true) && config('analytics.pdf_report.schedule.on_demand', true))
                                 <li>{{ __('PDF analítico: worker automático quando há exportações na fila (até :s s).', ['s' => (string) config('analytics.pdf_report.schedule.on_demand_max_seconds', 900)]) }}</li>
                             @endif
+                            @if (config('notifications.operational_alerts.enabled', true) && config('notifications.operational_alerts.schedule.enabled', true))
+                                <li>{{ __('Alertas operacionais: a cada :n min (`notifications:operational-alerts`).', ['n' => (string) config('notifications.operational_alerts.schedule.interval_minutes', 15)]) }}</li>
+                            @endif
                             @if (config('pulse.enabled', true) && config('pulse.schedule.enabled', true))
                                 <li>{{ __('Pulse: :pulse min.', ['pulse' => (string) config('pulse.schedule.interval_minutes', 3)]) }}</li>
                             @endif

@@ -115,16 +115,16 @@
                     </span>
                     <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
                 </a>
-            </div>
-        </div>
-
-        {{-- Equipa --}}
-        <div class="serv-home-action-group">
-            <p class="serv-home-action-group__label">
-                <span class="serv-home-action-group__dot serv-home-action-group__dot--slate" aria-hidden="true"></span>
-                {{ __('Equipa') }}
-            </p>
-            <div class="serv-home-action-grid serv-home-action-grid--compact">
+                <a href="{{ route('admin.geo-sync.index') }}" class="serv-home-action group">
+                    <span class="serv-home-action__icon serv-home-action__icon--sky" aria-hidden="true">
+                        <x-ui.icon name="map" class="h-6 w-6" />
+                    </span>
+                    <span class="serv-home-action__body">
+                        <span class="serv-home-action__title">{{ __('Sincronização geográfica') }}</span>
+                        <span class="serv-home-action__desc">{{ __('Coordenadas i-Educar, INEP e microdados para o mapa.') }}</span>
+                    </span>
+                    <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
+                </a>
                 <a href="{{ route('users.index') }}" class="serv-home-action group">
                     <span class="serv-home-action__icon serv-home-action__icon--slate" aria-hidden="true">
                         <x-ui.icon name="users" class="h-6 w-6" />
@@ -132,6 +132,7 @@
                     <span class="serv-home-action__body">
                         <span class="serv-home-action__title">{{ __('Utilizadores') }}</span>
                         <span class="serv-home-action__desc">{{ __('Contas, perfis, municípios associados e sessões.') }}</span>
+                        <span class="serv-home-action__ref">{{ __('Gestão de equipa') }}</span>
                     </span>
                     <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
                 </a>

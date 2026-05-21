@@ -77,6 +77,8 @@ final class AdminSystemFlowStatus
             [
                 'id' => 'fnde',
                 'label' => __('FNDE'),
+                'acronym' => 'FNDE',
+                'category' => 'financeiro',
                 'sublabel' => __('FUNDEB · VAAT'),
                 'status' => $fnde['status'],
                 'hint' => $fnde['hint'],
@@ -86,6 +88,8 @@ final class AdminSystemFlowStatus
             [
                 'id' => 'inep',
                 'label' => __('MEC / INEP'),
+                'acronym' => 'INEP',
+                'category' => 'pedagogico',
                 'sublabel' => __('SAEB · IDEB'),
                 'status' => $inep['status'],
                 'hint' => $inep['hint'],
@@ -95,6 +99,8 @@ final class AdminSystemFlowStatus
             [
                 'id' => 'portal',
                 'label' => __('Transparência'),
+                'acronym' => 'CGU',
+                'category' => 'transparencia',
                 'sublabel' => __('Portal federal'),
                 'status' => $portal['status'],
                 'hint' => $portal['hint'],
@@ -104,6 +110,8 @@ final class AdminSystemFlowStatus
             [
                 'id' => 'tesouro',
                 'label' => __('Tesouro'),
+                'acronym' => 'STN',
+                'category' => 'financeiro',
                 'sublabel' => __('Transferências'),
                 'status' => $tesouro['status'],
                 'hint' => $tesouro['hint'],
@@ -113,6 +121,8 @@ final class AdminSystemFlowStatus
             [
                 'id' => 'arcgis',
                 'label' => __('INEP / ArcGIS'),
+                'acronym' => 'GEO',
+                'category' => 'geografia',
                 'sublabel' => __('Geografia escolar'),
                 'status' => $arcgis['status'],
                 'hint' => $arcgis['hint'],

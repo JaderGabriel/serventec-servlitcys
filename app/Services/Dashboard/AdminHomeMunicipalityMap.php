@@ -3,13 +3,17 @@
 namespace App\Services\Dashboard;
 
 use App\Models\City;
-use App\Support\Brazil\BrazilUfCentroids;
+use App\Support\Brazil\MunicipalityMapCoordinates;
 
 /**
  * Marcadores para o mapa de municípios implementados no Início.
  */
 final class AdminHomeMunicipalityMap
 {
+    public function __construct(
+        private readonly MunicipalityMapCoordinates $coordinates,
+    ) {}
+
     /**
      * @return list<array{
      *     id: int,
@@ -17,6 +21,7 @@ final class AdminHomeMunicipalityMap
      *     uf: string,
      *     lat: float,
      *     lng: float,
+     *     coord_source: string,
      *     status: string,
      *     status_label: string,
      *     driver: string,
@@ -30,17 +35,25 @@ final class AdminHomeMunicipalityMap
      */
     public function markers(): array
     {
-        return City::query()
+        $cities = City::query()
             ->orderBy('uf')
             ->orderBy('name')
-            ->get()
-            ->map(function (City $city): array {
+            ->get();
+
+        $byUf = $cities->groupBy(fn (City $c): string => strtoupper(trim((string) $c->uf)));
+
+        return $cities
+            ->map(function (City $city) use ($byUf): array {
+                $uf = strtoupper(trim((string) $city->uf));
+                $inUf = $byUf->get($uf, collect());
+                $index = $inUf->search(fn (City $c): bool => (int) $c->id === (int) $city->id);
+                $index = $index === false ? 0 : (int) $index;
+                $total = $inUf->count();
+
+                [$lat, $lng, $coordSource] = $this->coordinates->forCity($city, $index, $total);
+
                 $hasSetup = $city->hasDataSetup();
                 $isActive = (bool) $city->is_active;
-                [$lat, $lng] = BrazilUfCentroids::latLng(
-                    (string) $city->uf,
-                    (int) $city->id,
-                );
 
                 $driver = $city->effectiveIeducarDriver() === City::DRIVER_PGSQL
                     ? 'PostgreSQL'
@@ -65,9 +78,10 @@ final class AdminHomeMunicipalityMap
                 return [
                     'id' => (int) $city->id,
                     'name' => $city->name,
-                    'uf' => (string) $city->uf,
+                    'uf' => $uf,
                     'lat' => $lat,
                     'lng' => $lng,
+                    'coord_source' => $coordSource,
                     'status' => $status,
                     'status_label' => $statusLabel,
                     'driver' => $driver,
@@ -81,5 +95,25 @@ final class AdminHomeMunicipalityMap
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * @return array{total: int, on_map: int, by_status: array<string, int>}
+     */
+    public function summary(): array
+    {
+        $markers = $this->markers();
+        $byStatus = [];
+
+        foreach ($markers as $m) {
+            $st = (string) ($m['status'] ?? 'inactive');
+            $byStatus[$st] = ($byStatus[$st] ?? 0) + 1;
+        }
+
+        return [
+            'total' => count($markers),
+            'on_map' => count($markers),
+            'by_status' => $byStatus,
+        ];
     }
 }
