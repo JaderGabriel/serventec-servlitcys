@@ -14,7 +14,9 @@
         $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm';
         $schema = is_array($report['recurso_prova_schema'] ?? null) ? $report['recurso_prova_schema'] : null;
         $routines = is_array($report['routines'] ?? null) ? $report['routines'] : [];
+        $discSummary = is_array($report['discrepancy_summary'] ?? null) ? $report['discrepancy_summary'] : [];
         $fmtBrl = [\App\Support\Ieducar\DiscrepanciesFundingImpact::class, 'formatBrl'];
+        $anoLetivo = $filters?->ano_letivo ?? 'all';
     @endphp
 
     <div class="py-10">
@@ -41,10 +43,19 @@
                         </select>
                     </div>
                     <div>
+                        <label for="ano_letivo" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Ano letivo (probe)') }}</label>
+                        <select id="ano_letivo" name="ano_letivo" class="{{ $selectClass }}">
+                            <option value="all" @selected($anoLetivo === 'all')>{{ __('Todos (consolidado)') }}</option>
+                            @for ($y = (int) date('Y') + 1; $y >= 2018; $y--)
+                                <option value="{{ $y }}" @selected((string) $anoLetivo === (string) $y)>{{ $y }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                    <div>
                         <label for="fundeb_ano_filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Ano FUNDEB') }}</label>
                         <input type="number" id="fundeb_ano_filter" name="fundeb_ano" min="2000" max="{{ (int) date('Y') + 1 }}" value="{{ $fundebImportYear ?? $fundebSuggestedYear ?? (int) date('Y') - 1 }}" class="{{ $selectClass }} w-full">
                     </div>
-                    <div class="sm:col-span-2 flex flex-wrap gap-2">
+                    <div class="sm:col-span-2 lg:col-span-1 flex flex-wrap gap-2">
                         <button type="submit" class="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">
                             {{ __('Executar probe') }}
                         </button>
@@ -53,7 +64,7 @@
                                 {{ __('Enfileirar export JSON') }}
                             </a>
                         @endif
-                        <a href="{{ route('dashboard.analytics', ['city_id' => $city?->id, 'tab' => 'discrepancies']) }}" class="inline-flex items-center rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <a href="{{ route('dashboard.analytics', array_filter(['city_id' => $city?->id, 'tab' => 'discrepancies', 'ano_letivo' => $anoLetivo !== 'all' ? $anoLetivo : null])) }}" class="inline-flex items-center rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
                             {{ __('Abrir Discrepâncias') }}
                         </a>
                     </div>
@@ -107,31 +118,106 @@
             @endif
 
             @if ($report !== null && $routines !== [])
-                <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden shadow-sm">
-                    <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden shadow-sm space-y-0">
+                    <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 space-y-1">
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
                             {{ __('Rotinas de discrepância') }} — {{ $report['city_name'] ?? '' }}
                         </h3>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">
+                            {{ $report['filters_label'] ?? '' }}
+                            @if (($report['total_matriculas'] ?? 0) > 0)
+                                · {{ number_format((int) $report['total_matriculas'], 0, ',', '.') }} {{ __('matrículas activas no filtro') }}
+                            @endif
+                        </p>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-500">
+                            {{ __('Métricas alinhadas à aba Discrepâncias: ocorrências = soma por escola; escolas = linhas com pendência; impacto = VAAF × peso × ocorrências.') }}
+                        </p>
                     </div>
+
+                    @if ($discSummary !== [])
+                        <div class="px-4 py-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 border-b border-gray-100 dark:border-gray-800 bg-slate-50/60 dark:bg-slate-900/40">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wide text-gray-500">{{ __('Ocorrências') }}</p>
+                                <p class="text-lg font-semibold tabular-nums text-rose-800 dark:text-rose-200">{{ number_format((int) ($discSummary['com_problema'] ?? 0), 0, ',', '.') }}</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wide text-gray-500">{{ __('Escolas afetadas') }}</p>
+                                <p class="text-lg font-semibold tabular-nums text-indigo-800 dark:text-indigo-200">{{ number_format((int) ($discSummary['escolas_afetadas'] ?? 0), 0, ',', '.') }}</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wide text-gray-500">{{ __('Rotinas c/ pendência') }}</p>
+                                <p class="text-lg font-semibold tabular-nums">{{ number_format((int) ($discSummary['rotinas_com_pendencia'] ?? 0), 0, ',', '.') }}</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wide text-gray-500">{{ __('Perda est. / ano') }}</p>
+                                <p class="text-sm font-semibold tabular-nums text-orange-800 dark:text-orange-200">{{ $fmtBrl((float) ($discSummary['perda_estimada_anual'] ?? 0)) }}</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wide text-gray-500">{{ __('Ganho pot. / ano') }}</p>
+                                <p class="text-sm font-semibold tabular-nums text-emerald-800 dark:text-emerald-200">{{ $fmtBrl((float) ($discSummary['ganho_potencial_anual'] ?? 0)) }}</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wide text-gray-500">{{ __('Rotinas analisadas') }}</p>
+                                <p class="text-lg font-semibold tabular-nums">{{ number_format((int) ($discSummary['rotinas_analisadas'] ?? 0), 0, ',', '.') }}/{{ count($routines) }}</p>
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-sm">
                             <thead class="bg-gray-50 dark:bg-gray-800/80 text-left text-xs uppercase text-gray-500 dark:text-gray-400">
                                 <tr>
-                                    <th class="px-4 py-2 font-medium">{{ __('ID') }}</th>
-                                    <th class="px-4 py-2 font-medium">{{ __('Título') }}</th>
+                                    <th class="px-4 py-2 font-medium">{{ __('Rotina') }}</th>
                                     <th class="px-4 py-2 font-medium">{{ __('Estado') }}</th>
-                                    <th class="px-4 py-2 font-medium tabular-nums text-right">{{ __('Escolas c/ pendência') }}</th>
-                                    <th class="px-4 py-2 font-medium">{{ __('Hint') }}</th>
+                                    <th class="px-4 py-2 font-medium tabular-nums text-right">{{ __('Ocorrências') }}</th>
+                                    <th class="px-4 py-2 font-medium tabular-nums text-right">{{ __('Escolas') }}</th>
+                                    <th class="px-4 py-2 font-medium tabular-nums text-right">{{ __('% rede') }}</th>
+                                    <th class="px-4 py-2 font-medium tabular-nums text-right">{{ __('Perda est.') }}</th>
+                                    <th class="px-4 py-2 font-medium">{{ __('Correlação / nota') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                                 @foreach ($routines as $row)
                                     <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-800/40">
-                                        <td class="px-4 py-2 font-mono text-xs text-gray-600 dark:text-gray-400">{{ $row['id'] ?? '' }}</td>
-                                        <td class="px-4 py-2 text-gray-900 dark:text-gray-100">{{ $row['title'] ?? '' }}</td>
+                                        <td class="px-4 py-2">
+                                            <span class="font-mono text-[10px] text-gray-500 block">{{ $row['id'] ?? '' }}</span>
+                                            <span class="text-gray-900 dark:text-gray-100">{{ $row['title'] ?? '' }}</span>
+                                        </td>
                                         <td class="px-4 py-2 font-medium {{ $row['ui_status_class'] ?? 'text-gray-500' }}">{{ $row['status_label'] ?? __('Indisponível') }}</td>
-                                        <td class="px-4 py-2 tabular-nums text-right text-gray-900 dark:text-gray-100">{{ (int) ($row['row_count'] ?? 0) }}</td>
-                                        <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400 max-w-md">{{ $row['hint'] ?? '—' }}</td>
+                                        <td class="px-4 py-2 tabular-nums text-right font-semibold text-gray-900 dark:text-gray-100">
+                                            @if ($row['has_issue'] ?? false)
+                                                {{ number_format((int) ($row['occurrences_total'] ?? 0), 0, ',', '.') }}
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-2 tabular-nums text-right text-gray-900 dark:text-gray-100">
+                                            @if ($row['has_issue'] ?? false)
+                                                {{ number_format((int) ($row['schools_count'] ?? $row['row_count'] ?? 0), 0, ',', '.') }}
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-2 tabular-nums text-right text-gray-700 dark:text-gray-300">
+                                            @if (($row['pct_rede'] ?? null) !== null)
+                                                {{ number_format((float) $row['pct_rede'], 1, ',', '.') }}%
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-2 tabular-nums text-right text-xs text-orange-800 dark:text-orange-200">
+                                            @if ((float) ($row['perda_estimada_anual'] ?? 0) > 0)
+                                                {{ $fmtBrl((float) $row['perda_estimada_anual']) }}
+                                            @else
+                                                —
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-2 text-xs text-gray-600 dark:text-gray-400 max-w-sm">
+                                            @if (filled($row['correlacao_resumo'] ?? null))
+                                                <span class="block text-gray-800 dark:text-gray-200">{{ $row['correlacao_resumo'] }}</span>
+                                            @endif
+                                            <span class="block mt-0.5">{{ $row['hint'] ?? '—' }}</span>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>

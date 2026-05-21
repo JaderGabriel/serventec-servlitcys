@@ -1,7 +1,10 @@
 # Documento executivo — revisão técnica do projeto (servlitcys)
 
-**Data de referência:** 16 de abril de 2026  
+**Data de referência:** 16 de abril de 2026 (actualizado maio/2026)  
 **Âmbito:** revisão de arquitetura, gargalos, padrão Laravel, dívida técnica e recomendações priorizadas.
+
+> **Backlog técnico:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (secção **E**).  
+> **Decisões vivas:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md). **Índice:** [README.md](README.md).
 
 ---
 

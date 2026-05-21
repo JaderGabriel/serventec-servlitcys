@@ -63,9 +63,6 @@ class IeducarCompatibilityController extends Controller
 
             try {
                 $report = $this->runReport($city, $filters);
-                if (is_array($report['routines'] ?? null)) {
-                    $report['routines'] = $this->enrichRoutineRows($report['routines']);
-                }
             } catch (\Throwable $e) {
                 $error = $e->getMessage();
             }
@@ -339,38 +336,4 @@ class IeducarCompatibilityController extends Controller
         return $filters;
     }
 
-    /**
-     * @param  list<array<string, mixed>>  $routines
-     * @return list<array<string, mixed>>
-     */
-    private function enrichRoutineRows(array $routines): array
-    {
-        foreach ($routines as $i => $row) {
-            if (! is_array($row)) {
-                continue;
-            }
-            $st = (string) ($row['status'] ?? $row['availability'] ?? 'unavailable');
-            if ((bool) ($row['has_issue'] ?? false) && $st === 'ok') {
-                $st = 'warning';
-                $routines[$i]['status'] = $st;
-            }
-            $routines[$i]['ui_status_class'] = match ($st) {
-                'danger' => 'text-red-700 dark:text-red-300',
-                'warning' => 'text-amber-700 dark:text-amber-300',
-                'ok' => 'text-emerald-700 dark:text-emerald-300',
-                'no_data' => 'text-sky-700 dark:text-sky-300',
-                default => 'text-gray-500 dark:text-gray-400',
-            };
-            if (! filled($row['status_label'] ?? null)) {
-                $routines[$i]['status_label'] = match ($st) {
-                    'danger', 'warning' => __('Com pendência'),
-                    'ok' => __('Sem pendência'),
-                    'no_data' => __('Sem dados para analisar'),
-                    default => __('Indisponível'),
-                };
-            }
-        }
-
-        return $routines;
-    }
 }

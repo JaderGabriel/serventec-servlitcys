@@ -62,7 +62,7 @@
                                 </p>
                             </div>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2 lg:justify-end">
+                        <div class="flex flex-wrap items-center justify-start gap-2 lg:justify-end">
                             <span class="pulse-noc-pill">
                                 <span class="h-1.5 w-1.5 rounded-full {{ $env === 'production' ? 'bg-emerald-400' : 'bg-amber-400' }}"></span>
                                 {{ strtoupper($env) }}
@@ -88,6 +88,9 @@
 
             @include('layouts.app-footer', ['pulseFooter' => true])
         </div>
+
+        {{-- Sino de notificações: Alpine do Pulse não carrega app.js — registo dedicado. --}}
+        @vite(['resources/js/pulse-notifications.js'])
 
         @php
             app(\Livewire\Mechanisms\FrontendAssets\FrontendAssets::class)->hasRenderedScripts = true;

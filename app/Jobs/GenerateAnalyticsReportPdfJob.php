@@ -83,6 +83,7 @@ class GenerateAnalyticsReportPdfJob implements ShouldQueue
                 'error_message' => $e->getMessage(),
                 'completed_at' => now(),
             ]);
+            $notifications->pdfExportFinished($export->fresh());
 
             throw $e;
         }

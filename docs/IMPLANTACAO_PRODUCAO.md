@@ -1,5 +1,7 @@
 # Implantação em produção — servlitcys
 
+> **Índice:** [README.md](README.md) · Variáveis: [README do repositório](../README.md).
+
 Guia passo a passo para publicar no servidor as alterações recentes (monitorização, notificações, financiamentos, correções de abas e modelo `.env`).
 
 **Versão de referência:** 2.0.1 · **Última actualização:** maio/2026
@@ -12,7 +14,7 @@ Guia passo a passo para publicar no servidor as alterações recentes (monitoriz
 |------|-----------|---------------------|
 | **Monitorização (Pulse)** | Novo layout NOC, KPIs executivos, cartão de municípios/infraestrutura | Só admins; rota `/pulse` (ou `PULSE_PATH`) |
 | **Notificações** | Sino na barra, tabela `notifications`, jobs PDF/sync | Migração nova; fila `default` |
-| **Financiamentos** | Consultas FNDE/Tesouro/Portal Transparência; rótulo «Financiamentos» | Variáveis `PORTAL_TRANSPARENCIA_API_KEY`, cache |
+| **Financiamentos** | Consultas FNDE/Tesouro/Portal Transparência; rótulo «Financiamentos» | Variáveis `PORTAL_TRANSPARENCIA_API_KEY`, cache — ver [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) |
 | **Censo** | Correcção SQL `groupBy` + aviso ano letivo consolidado | Sem migração |
 | **Serventec** | Correcção Blade/AJAX (aba deixava de ficar em branco) | `view:cache` após deploy |
 | **`.env`** | Modelo completo (`.env.example` + secções documentadas) | Actualizar `.env` no servidor |
@@ -91,16 +93,21 @@ ANALYTICS_PDF_QUEUE=default
 
 ADMIN_SYNC_QUEUE=admin-sync
 ADMIN_SYNC_SCHEDULE_ENABLED=true
+ADMIN_SYNC_SCHEDULE_INTERVAL_MINUTES=60
+ADMIN_SYNC_SCHEDULE_MAX_SECONDS=3300
+
+SCHEDULE_RUN_INTERVAL_MINUTES=3
 
 PULSE_ENABLED=true
 PULSE_DB_CONNECTION=mysql
 PULSE_SCHEDULE_ENABLED=true
+PULSE_SCHEDULE_INTERVAL_MINUTES=3
 
 IEDUCAR_OTHER_FUNDING_PUBLIC_QUERIES=true
 PORTAL_TRANSPARENCIA_API_KEY=   # preencher para despesas na aba Financiamentos
 ```
 
-Lista completa: [README.md](../README.md) (tabela de variáveis) e ficheiro [`.env.example`](../.env.example).
+Lista completa: [README.md](../README.md) (tabela de variáveis), [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) (consultas na aba Financiamentos) e [`.env.example`](../.env.example).
 
 Depois de editar o `.env`:
 
@@ -193,13 +200,13 @@ sudo supervisorctl restart servlitcys-queue
 Confirme que o cron do sistema executa o scheduler Laravel:
 
 ```cron
-* * * * * cd /caminho/para/servlitcys && php artisan schedule:run >> /dev/null 2>&1
+*/3 * * * * cd /caminho/para/servlitcys && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-O scheduler inclui (ver `bootstrap/app.php`):
+Alinhe a expressão cron com `SCHEDULE_RUN_INTERVAL_MINUTES` (defeito **3**). O scheduler inclui (ver `bootstrap/app.php`):
 
-- `pulse:check --once` e `pulse:work --stop-when-empty` (métricas Pulse)
-- `admin-sync:work --stop-when-empty` (fila de sincronização)
+- `pulse:check --once` e `pulse:work --stop-when-empty` — cadência `PULSE_SCHEDULE_INTERVAL_MINUTES` (defeito **3** min)
+- `admin-sync:work --stop-when-empty` — cadência `ADMIN_SYNC_SCHEDULE_INTERVAL_MINUTES` (defeito **60** min / hora em hora)
 
 ### 4.9 Modo manutenção (se activou)
 

@@ -1,9 +1,12 @@
-@props(['networkData', 'chartExportContext' => []])
+@props(['networkData', 'chartExportContext' => [], 'municipalityContext' => null, 'yearFilterReady' => true])
 
 <div class="space-y-6 network-offer-tab">
-    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Oferta por turno e segmento, distribuição de vagas por unidade e matrículas por série e escola — útil para planear expansão e uso da rede.') }}
-    </p>
+    @include('dashboard.analytics.partials.tab-impact-strip', [
+        'tab' => 'network',
+        'yearFilterReady' => $yearFilterReady,
+        'municipalityContext' => $municipalityContext,
+        'tabData' => ['networkData' => $networkData],
+    ])
 
     @if (! empty($networkData['kpis']) && is_array($networkData['kpis']))
         @php

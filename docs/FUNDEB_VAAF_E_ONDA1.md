@@ -1,7 +1,7 @@
 # FUNDEB, VAAF, VAAR/VAAT e Onda 1 — documentação técnica
 
 **Data:** maio de 2026  
-**Relacionado:** `DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md`, `config/ieducar.php`
+**Relacionado:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §6 · [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) §C · `config/ieducar.php`
 
 ---
 

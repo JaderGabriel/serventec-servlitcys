@@ -1,4 +1,4 @@
-@props(['performanceData', 'chartExportContext' => []])
+@props(['performanceData', 'chartExportContext' => [], 'municipalityContext' => null, 'yearFilterReady' => true])
 
 @php
     use App\Support\Dashboard\ConsultoriaFlow;
@@ -36,8 +36,13 @@
 @endphp
 
 <div class="space-y-6">
+    @include('dashboard.analytics.partials.tab-impact-strip', [
+        'tab' => 'performance',
+        'yearFilterReady' => $yearFilterReady,
+        'municipalityContext' => $municipalityContext,
+        'tabData' => ['performanceData' => $performanceData],
+    ])
     <div class="rounded-lg border border-violet-200 dark:border-violet-900/50 bg-violet-50/60 dark:bg-violet-950/20 px-4 py-3 text-sm space-y-2">
-        <h2 class="font-semibold text-violet-950 dark:text-violet-100">{{ __('Desempenho e aprendizagem') }}</h2>
         <p class="text-xs text-violet-800/90 dark:text-violet-200/90 leading-relaxed">
             {{ __('Consultoria municipal:') }}
             <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Serventec') }}</button>

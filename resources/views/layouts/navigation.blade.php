@@ -1,4 +1,4 @@
-<nav x-data="{ open: false }" class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+<nav x-data="{ open: false }" class="serv-nav-brand">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
@@ -6,7 +6,7 @@
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ Auth::user()->homeUrl() }}" class="flex items-center gap-2 group" title="{{ config('app.name') }}">
-                        <x-application-logo class="block h-9 w-[3.25rem] shrink-0 text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition" />
+                        <x-application-logo class="block h-9 w-[3.25rem] shrink-0 text-teal-700 dark:text-teal-400 group-hover:text-teal-900 dark:group-hover:text-teal-300 transition" />
                     </a>
                 </div>
 
@@ -17,8 +17,12 @@
                             {{ __('Painel') }}
                         </x-nav-link>
                     @endif
-                    <x-nav-link :href="route('dashboard.analytics')" :active="request()->routeIs('dashboard.analytics')">
-                        {{ __('Análise') }}
+                    <x-nav-link :href="route('dashboard.analytics')" :active="request()->routeIs('dashboard.analytics*')">
+                        @if (Auth::user()->canViewAdminDashboard())
+                            {{ __('Consultoria municipal') }}
+                        @else
+                            {{ __('Meu município') }}
+                        @endif
                     </x-nav-link>
                     @if (Auth::user()->isAdmin())
                         <x-nav-link :href="route('pulse')" :active="request()->routeIs('pulse')">
@@ -32,9 +36,9 @@
             </div>
 
             <!-- Notificações + utilizador -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6 gap-2">
+            <div class="hidden sm:flex sm:items-center sm:ms-6 gap-1 sm:gap-3">
                 <x-notification-bell />
-                <x-dropdown align="right" width="w-64">
+                <x-dropdown align="right" width="w-64" class="shrink-0">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
                             <div>{{ Auth::user()->name }}</div>
@@ -92,6 +96,12 @@
                         @endif
                         @if (Auth::user()->isAdmin())
                             <div class="border-t border-gray-200 dark:border-gray-600"></div>
+                            <div class="px-4 py-2">
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Documentação') }}</p>
+                            </div>
+                            <x-dropdown-link :href="route('admin.documentation.index')" :title="__('Índice da documentação técnica e de produto.')">
+                                {{ __('Documentação do sistema') }}
+                            </x-dropdown-link>
                             <x-dropdown-link :href="route('settings.mail.edit')">
                                 {{ __('E-mail (SMTP)') }}
                             </x-dropdown-link>
@@ -133,8 +143,12 @@
                     {{ __('Painel') }}
                 </x-responsive-nav-link>
             @endif
-            <x-responsive-nav-link :href="route('dashboard.analytics')" :active="request()->routeIs('dashboard.analytics')">
-                {{ __('Análise') }}
+            <x-responsive-nav-link :href="route('dashboard.analytics')" :active="request()->routeIs('dashboard.analytics*')">
+                @if (Auth::user()->canViewAdminDashboard())
+                    {{ __('Consultoria municipal') }}
+                @else
+                    {{ __('Meu município') }}
+                @endif
             </x-responsive-nav-link>
             @if (Auth::user()->isAdmin())
                 <x-responsive-nav-link :href="route('pulse')" :active="request()->routeIs('pulse')">
@@ -148,12 +162,14 @@
 
         <!-- Responsive Settings Options -->
         <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
-            <div class="px-4 flex items-center justify-between gap-3">
-                <div class="min-w-0">
+            <div class="px-4 flex items-center justify-between gap-4">
+                <div class="min-w-0 flex-1">
                 <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
                 <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
                 </div>
-                <x-notification-bell />
+                <div class="shrink-0 ps-1">
+                    <x-notification-bell />
+                </div>
             </div>
 
             <div class="mt-3 space-y-1">
@@ -200,6 +216,12 @@
                 @endif
                 @if (Auth::user()->isAdmin())
                     <div class="border-t border-gray-200 dark:border-gray-600 my-2"></div>
+                    <div class="px-4 py-2">
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Documentação') }}</p>
+                    </div>
+                    <x-responsive-nav-link :href="route('admin.documentation.index')" :active="request()->routeIs('admin.documentation.*')">
+                        {{ __('Documentação do sistema') }}
+                    </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('settings.mail.edit')" :active="request()->routeIs('settings.mail.*')">
                         {{ __('E-mail (SMTP)') }}
                     </x-responsive-nav-link>

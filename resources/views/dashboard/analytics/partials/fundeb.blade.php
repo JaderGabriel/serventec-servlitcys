@@ -1,4 +1,4 @@
-@props(['fundebData', 'yearFilterReady' => false, 'chartExportContext' => []])
+@props(['fundebData', 'yearFilterReady' => false, 'chartExportContext' => [], 'municipalityContext' => null])
 
 <div class="space-y-6">
     @if (! $yearFilterReady)
@@ -6,17 +6,25 @@
             {{ __('Seleccione o ano letivo (ou «Todos os anos») e aplique os filtros para gerar o relatório FUNDEB com base nos dados do i-Educar.') }}
         </p>
     @else
-        <div class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-950/25 px-4 py-3 text-sm text-indigo-950 dark:text-indigo-100 space-y-2">
-            <p class="font-semibold">{{ __('FUNDEB — condicionalidades e situação municipal') }}</p>
-            <p class="leading-relaxed text-indigo-900/95 dark:text-indigo-200/95">{{ $fundebData['intro'] ?? '' }}</p>
-            <p class="text-xs text-indigo-800/90 dark:text-indigo-300/90">
-                <span class="font-medium">{{ __('Contexto') }}:</span>
-                {{ $fundebData['city_name'] ?? '' }}
-                @if (filled($fundebData['year_label'] ?? null))
-                    — {{ $fundebData['year_label'] }}
+        @include('dashboard.analytics.partials.tab-impact-strip', [
+            'tab' => 'fundeb',
+            'yearFilterReady' => $yearFilterReady,
+            'municipalityContext' => $municipalityContext,
+            'tabData' => ['fundebData' => $fundebData],
+        ])
+        @if (filled($fundebData['intro'] ?? null))
+            <p class="text-xs text-indigo-800/90 dark:text-indigo-300/90 border border-indigo-100 dark:border-indigo-900/50 rounded-md px-3 py-2 leading-relaxed">
+                {{ $fundebData['intro'] }}
+                @if (filled($fundebData['city_name'] ?? null))
+                    <span class="block mt-1 text-indigo-700/80 dark:text-indigo-300/80">
+                        {{ $fundebData['city_name'] }}
+                        @if (filled($fundebData['year_label'] ?? null))
+                            — {{ $fundebData['year_label'] }}
+                        @endif
+                    </span>
                 @endif
             </p>
-        </div>
+        @endif
 
         <p class="text-xs text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 leading-relaxed">
             {{ $fundebData['footnote'] ?? '' }}

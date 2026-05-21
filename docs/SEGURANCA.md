@@ -1,5 +1,7 @@
 # Segurança e operações — servlitcys
 
+> **Índice:** [README.md](README.md) · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §10.
+
 ## Senhas e segredos
 
 ### Utilizadores da aplicação

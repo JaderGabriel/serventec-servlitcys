@@ -1,5 +1,7 @@
 # Métricas: queries lentas no painel de analytics
 
+> **Índice:** [README.md](README.md) · **Ponderações performance:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §9.
+
 Objetivo: identificar as consultas SQL mais pesadas ao carregar **`/dashboard/analytics`** e, com **carregamento lazy por aba** activo (`ANALYTICS_LAZY_TABS=true` em `.env`), os pedidos adicionais **`GET /dashboard/analytics/tab?tab=…`**, num ambiente de **staging** com volume realista. Dados pessoais devem estar **anonimizados** ou usar cópia da base com política de privacidade acordada.
 
 ## Carregamento lazy e Pulse

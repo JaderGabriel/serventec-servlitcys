@@ -1,5 +1,7 @@
 ## Documento executivo — teste do mapa de Unidades Escolares
 
+> **Índice:** [README.md](README.md) · Arquivo de testes pontuais (mapa implementado em produção).
+
 ### Objetivo
 Validar, com evidência de execução, por que o card **“MAPA (CONSULTA RÁPIDA)”** está a exibir:
 

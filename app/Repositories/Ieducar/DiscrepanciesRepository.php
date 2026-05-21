@@ -12,6 +12,7 @@ use App\Support\Ieducar\DiscrepanciesCheckCatalog;
 use App\Support\Ieducar\DiscrepanciesCheckRunner;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\DiscrepanciesQueries;
+use App\Support\Ieducar\DiscrepanciesRoutineMetrics;
 use App\Support\Ieducar\DiscrepanciesRoutineStatus;
 use App\Support\Ieducar\InclusionDashboardQueries;
 use App\Support\Ieducar\InclusionRecursoProvaQueries;
@@ -274,39 +275,35 @@ class DiscrepanciesRepository
     private function buildDimension(array $meta, array $eval, int $totalMat, ?City $city = null, ?IeducarFilterState $filters = null): array
     {
         $id = (string) ($meta['id'] ?? '');
-        $hasIssue = (bool) ($eval['has_issue'] ?? false);
-        $total = $hasIssue ? array_sum(array_column($eval['rows'], 'total')) : 0;
+
+        if ($city !== null && $filters !== null) {
+            return DiscrepanciesRoutineMetrics::dimensionFromEval($id, $meta, $eval, $totalMat, $city, $filters);
+        }
+
         $severity = (string) ($meta['severity'] ?? 'warning');
-
-        $resolved = ($city !== null && $filters !== null)
-            ? DiscrepanciesRoutineStatus::resolve($id, $eval, $totalMat, $city, $filters, $severity)
-            : self::legacyResolveStatus($eval, $severity);
-
+        $resolved = self::legacyResolveStatus($eval, $severity);
+        $hasIssue = (bool) ($eval['has_issue'] ?? false);
+        $totals = DiscrepanciesRoutineMetrics::occurrenceTotals($eval);
+        $total = $totals['occurrences_total'];
         $status = (string) $resolved['status'];
-        $availability = (string) $resolved['availability'];
-        $analyzed = $status === DiscrepanciesRoutineStatus::OK
-            || $status === 'warning'
-            || $status === 'danger';
-
-        $pct = $totalMat > 0 && $hasIssue ? round(100.0 * $total / $totalMat, 1) : null;
-        $funding = $hasIssue ? DiscrepanciesFundingImpact::estimate($id, $total, $city, $filters) : null;
-        $ganho = (float) ($funding['ganho_potencial_anual'] ?? 0);
-        $perda = (float) ($funding['perda_anual'] ?? 0);
 
         return [
             'id' => $id,
             'title' => (string) ($meta['title'] ?? ''),
             'vaar_refs' => is_array($meta['vaar_refs'] ?? null) ? $meta['vaar_refs'] : [],
-            'availability' => $availability,
+            'availability' => (string) $resolved['availability'],
             'has_issue' => $hasIssue,
             'detected' => $hasIssue,
-            'analyzed' => $analyzed,
+            'analyzed' => $status === DiscrepanciesRoutineStatus::OK || $status === 'warning' || $status === 'danger',
+            'schools_count' => $totals['schools_count'],
+            'occurrences_total' => $total,
             'total' => $total,
-            'pct_rede' => $pct,
-            'ganho_potencial_anual' => $ganho,
-            'perda_estimada_anual' => $perda,
-            'funding_formula' => $funding['formula'] ?? null,
-            'funding_explicacao' => $funding['explicacao'] ?? null,
+            'row_count' => $totals['schools_count'],
+            'pct_rede' => null,
+            'ganho_potencial_anual' => 0.0,
+            'perda_estimada_anual' => 0.0,
+            'funding_formula' => null,
+            'funding_explicacao' => null,
             'status' => $status,
             'status_label' => (string) $resolved['status_label'],
             'status_hint' => $resolved['status_hint'] ?? null,

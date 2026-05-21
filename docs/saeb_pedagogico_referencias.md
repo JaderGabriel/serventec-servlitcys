@@ -1,5 +1,7 @@
 # SAEB / IDEB — referências de outras plataformas e boas práticas
 
+> **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`GRA-05`, `GRA-07`) · **Índice:** [README.md](README.md).
+
 Este documento resume modelos visuais e analíticos usados em produtos públicos brasileiros e como o painel local pode evoluir (sem substituir o portal oficial do INEP).
 
 ## Plataformas de referência
@@ -26,6 +28,8 @@ Este documento resume modelos visuais e analíticos usados em produtos públicos
 - O ficheiro `saeb/historico.json` deve ser produzido por **ETL próprio** (Python/R/Laravel) a partir de bases oficiais, com revisão técnica.
 
 ## Próximos passos sugeridos no código
+
+Ver [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`GRA-07` e evoluções SAEB). Resumo:
 
 - Metas configuráveis (`config` ou JSON) para cor verde/âmbar no quadro escolar.
 - Export CSV da tabela por escola a partir do mesmo payload do painel.

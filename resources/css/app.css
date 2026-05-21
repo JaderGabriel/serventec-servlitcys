@@ -8,6 +8,114 @@
     display: none !important;
 }
 
+/* —— Identidade Serventec / consultoria municipal —— */
+@layer base {
+    :root {
+        --serv-navy: 15 23 42;
+        --serv-teal: 13 148 136;
+        --serv-teal-dark: 15 118 110;
+        --serv-gold: 180 134 40;
+    }
+
+    body {
+        @apply text-slate-800 dark:text-slate-200;
+    }
+}
+
+@layer components {
+    .serv-eyebrow {
+        @apply text-[10px] font-semibold uppercase tracking-[0.2em] text-teal-700 dark:text-teal-400;
+    }
+
+    .font-display {
+        font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    }
+
+    .text-serv-navy {
+        @apply text-slate-900 dark:text-slate-100;
+    }
+
+    .serv-code {
+        @apply rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[11px] font-mono;
+    }
+
+    .serv-link {
+        @apply font-medium text-teal-700 hover:text-teal-900 hover:underline dark:text-teal-400 dark:hover:text-teal-300;
+    }
+
+    .serv-inline-tab-link {
+        @apply text-teal-700 dark:text-teal-400 hover:underline font-medium text-inherit;
+    }
+
+    .serv-panel {
+        @apply rounded-xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-900/5 dark:border-slate-700/90 dark:bg-slate-900/40 dark:ring-teal-500/10 overflow-hidden;
+    }
+
+    .serv-panel--info {
+        @apply border-teal-200/80 bg-gradient-to-br from-teal-50/80 via-white to-slate-50/90 dark:from-teal-950/30 dark:via-slate-900/50 dark:to-slate-950/80 dark:border-teal-900/50;
+    }
+
+    .serv-municipality-strip {
+        @apply rounded-xl bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 px-4 py-4 sm:px-5 sm:py-5 shadow-md ring-1 ring-teal-500/20;
+    }
+
+    .serv-tab {
+        @apply px-3 py-2 text-sm font-medium rounded-lg border border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-white/80 dark:hover:text-slate-100 dark:hover:bg-slate-800/60 transition;
+    }
+
+    .serv-tab--active {
+        @apply border-teal-200 bg-white text-teal-900 shadow-sm ring-1 ring-teal-600/15 dark:border-teal-800 dark:bg-slate-900 dark:text-teal-100 dark:ring-teal-500/25;
+    }
+
+    .serv-tab-pill {
+        @apply inline-flex items-center rounded-md border border-teal-700/40 bg-teal-900/40 px-2.5 py-1 text-xs font-medium text-teal-50 hover:bg-teal-800/60 transition;
+    }
+
+    .serv-tab-pill--on-dark {
+        @apply border-teal-400/30 bg-white/10 text-teal-50 hover:bg-white/15;
+    }
+
+    .serv-status-pill {
+        @apply inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide;
+    }
+
+    .serv-status-pill--success {
+        @apply bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200;
+    }
+
+    .serv-status-pill--warning {
+        @apply bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200;
+    }
+
+    .serv-status-pill--danger {
+        @apply bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-200;
+    }
+
+    .serv-status-pill--info {
+        @apply bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200;
+    }
+
+    .serv-status-pill--neutral {
+        @apply bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300;
+    }
+
+    .serv-impact-card {
+        @apply rounded-xl border border-slate-200/90 bg-gradient-to-br from-slate-50 via-white to-teal-50/30 dark:from-slate-900/60 dark:via-slate-900/40 dark:to-teal-950/20 dark:border-slate-700 shadow-sm overflow-hidden;
+    }
+
+    .serv-nav-brand {
+        @apply border-b border-slate-200/90 bg-white/95 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95;
+    }
+
+    .serv-nav-link-active {
+        @apply border-teal-600 text-teal-900 dark:border-teal-500 dark:text-teal-100;
+    }
+
+    .serv-nav-link-idle {
+        @apply border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900 dark:text-slate-400 dark:hover:border-slate-600 dark:hover:text-slate-100;
+    }
+}
+
 /* Painel analítico: espaçamento consistente entre blocos dentro de cada aba */
 @layer components {
     .analytics-tab-panel {
@@ -61,15 +169,30 @@
         );
         column-gap: var(--pulse-col-gap);
         row-gap: var(--pulse-col-gap);
+        grid-auto-flow: row dense;
+    }
+
+    /* Cartões Pulse + blocos full-width (secções, KPIs, servidor) alinhados na grelha de 12 colunas. */
+    #pulse-main-grid > section,
+    #pulse-main-grid .pulse-dashboard-theme,
+    #pulse-main-grid .pulse-exec-strip,
+    #pulse-main-grid .pulse-merged-server-panel {
+        @apply col-span-full min-w-0 max-w-full;
     }
 
     #pulse-main-grid > section {
         @apply rounded-2xl border border-gray-200/95 bg-white/80 shadow-md ring-1 ring-indigo-950/[0.06] dark:border-gray-600/85 dark:bg-gray-900/55 dark:shadow-lg dark:ring-indigo-400/10;
     }
 
-    /* Painel fundido (faixa de resumo + cartão Servers) — mesmo aspeto que os cartões. */
     #pulse-main-grid .pulse-merged-server-panel {
         @apply rounded-2xl border border-gray-200/95 bg-white/80 shadow-md ring-1 ring-indigo-950/[0.06] dark:border-gray-600/85 dark:bg-gray-900/55 dark:shadow-lg dark:ring-indigo-400/10;
+    }
+
+    #pulse-main-grid > section,
+    #pulse-main-grid .pulse-exec-strip,
+    #pulse-main-grid .pulse-merged-server-panel,
+    #pulse-main-grid .pulse-dashboard-theme > div {
+        @apply w-full max-w-full;
     }
 
     /* Cartões Pulse: título do cabeçalho em maiúsculas (já em negrito no pacote). */
@@ -101,7 +224,11 @@
     }
 
     .pulse-exec-strip__head {
-        @apply mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-3 dark:border-slate-700/80;
+        @apply mb-4 flex flex-col gap-3 border-b border-slate-200/80 pb-3 dark:border-slate-700/80 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between;
+    }
+
+    .pulse-exec-strip__links {
+        @apply flex flex-wrap items-center gap-x-3 gap-y-1 shrink-0;
     }
 
     .pulse-exec-strip__eyebrow {
@@ -164,9 +291,10 @@
         @apply border-slate-200/80 bg-slate-50/60 dark:border-slate-700 dark:bg-slate-800/40;
     }
 
-    /* Gráficos de barras (municípios) */
+    /* Gráficos de barras (municípios) — colunas fixas para alinhar valores entre linhas */
     .pulse-bar-row {
-        @apply grid grid-cols-[1fr_minmax(4rem,5rem)_3rem] items-center gap-2 text-xs;
+        @apply grid w-full max-w-full items-center gap-x-3 gap-y-1 text-xs;
+        grid-template-columns: minmax(0, 1fr) minmax(5rem, 7.5rem) 2.75rem;
     }
 
     .pulse-bar-row__meta {
@@ -221,8 +349,26 @@
         @apply text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
     }
 
-    #pulse-main-grid .pulse-exec-strip {
-        @apply default:col-span-full;
+    /* Navegação Pulse: uma linha alinhada, sem blocos soltos em larguras intermédias */
+    .pulse-nav-shell {
+        @apply grid w-full grid-cols-1 items-center gap-3 lg:grid-cols-[minmax(0,1fr)_auto];
+    }
+
+    .pulse-nav-primary {
+        @apply flex min-w-0 items-center gap-3 overflow-x-auto sm:gap-4 lg:gap-6;
+        scrollbar-width: thin;
+    }
+
+    .pulse-nav-links {
+        @apply flex shrink-0 flex-nowrap items-center gap-2;
+    }
+
+    .pulse-nav-actions {
+        @apply flex shrink-0 flex-nowrap items-center justify-end gap-2 sm:gap-3 lg:justify-self-end;
+    }
+
+    .pulse-nav-user {
+        @apply flex shrink-0 flex-nowrap items-center gap-2 border-s border-gray-200 ps-2 dark:border-gray-600 sm:gap-3 sm:ps-3;
     }
 }
 

@@ -32,7 +32,7 @@ class AdminSyncWorkCommand extends Command
         $this->line(__('  Timeout: :s s · Tentativas: :t', ['s' => (string) $timeout, 't' => (string) $tries]));
         $this->newLine();
         if (! $this->option('once') && ! $this->option('stop-when-empty')) {
-            $this->comment(__('Em produção contínua, use Supervisor. Com cron, active ADMIN_SYNC_SCHEDULE_ENABLED e schedule:run cada minuto.'));
+            $this->comment(__('Em produção contínua, use Supervisor. Com cron, active ADMIN_SYNC_SCHEDULE_ENABLED e schedule:run (ex. a cada 3 min); a fila agenda-se de hora em hora por defeito.'));
             $this->newLine();
         }
 

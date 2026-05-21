@@ -1,5 +1,7 @@
 # Documentação executiva — servlitcys
 
+> **Índice central:** [README.md](README.md) · Estado actual: [STATUS_PROJETO.md](STATUS_PROJETO.md) · Backlog: [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md)
+
 ## Propósito
 
 O **servlitcys** é uma aplicação web que consolida **informação educacional ao nível municipal**, permitindo explorar indicadores, painéis analíticos e comparações entre territórios. O objetivo é apoiar **análise, planeamento e decisão** com dados organizados e acessíveis a equipas autorizadas.
@@ -41,10 +43,8 @@ Não existe auto-registo: reduz superfície de ataque e permite controlo explíc
 
 ## Próximos passos (produto)
 
-- Integração com repositório remoto (GitHub) para CI/CD e revisão de código
-- Monitorização de erros e performance em ambiente cloud
-- Política de backup e recuperação documentada com a equipa de infraestruturas
+Itens priorizados em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (secção **A. Produto e infraestrutura**): CI/CD, monitorização de erros, backup.
 
 ---
 
-*Documento orientado a decisores e gestão de projeto. Estado actual e mapa de docs: [STATUS_PROJETO.md](STATUS_PROJETO.md). Perfis: [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md). Segurança: [SEGURANCA.md](SEGURANCA.md). CLI: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md).*
+*Documento orientado a decisores. Índice: [README.md](README.md). Decisões técnicas: [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).*

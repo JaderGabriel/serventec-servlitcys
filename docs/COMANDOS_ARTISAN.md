@@ -1,5 +1,7 @@
 # Comandos Artisan — servlitcys
 
+> **Índice:** [README.md](README.md).
+
 **Data:** maio de 2026  
 **Interface admin:** menu **Sincronizações → Comandos Artisan** (`/admin/artisan-commands`)
 

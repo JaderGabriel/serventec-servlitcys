@@ -1,0 +1,1 @@
+import{t as e}from"./notification-bell-Cv0vi_Wg.js";function t(){let t=window.Alpine;t&&(e(t),typeof t.initTree==`function`&&document.querySelectorAll(`[x-data*="notificationBell"]`).forEach(e=>t.initTree(e)))}document.addEventListener(`alpine:init`,t),document.readyState===`loading`?document.addEventListener(`DOMContentLoaded`,t):t();

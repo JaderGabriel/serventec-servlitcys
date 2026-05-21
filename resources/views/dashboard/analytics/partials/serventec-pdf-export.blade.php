@@ -10,8 +10,10 @@
 
     $exports = is_array($pdfExportsRecent) ? $pdfExportsRecent : [];
     $cityId = $selectedCity?->id;
+    $canExportPdf = auth()->user()?->canExportAnalyticsPdf() ?? false;
 @endphp
 
+@if ($canExportPdf)
 <section
     class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/40 dark:bg-indigo-950/25 px-4 py-4 space-y-3"
     x-data="{
@@ -136,3 +138,4 @@
         </p>
     @endif
 </section>
+@endif

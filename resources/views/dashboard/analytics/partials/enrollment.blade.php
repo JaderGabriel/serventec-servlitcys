@@ -1,9 +1,12 @@
-@props(['enrollmentData', 'chartExportContext' => []])
+@props(['enrollmentData', 'chartExportContext' => [], 'municipalityContext' => null, 'yearFilterReady' => true])
 
 <div class="space-y-4">
-    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('KPIs: matrículas ativas, turmas e ocupação média (quando existir capacidade na turma). Taxas de abandono e evasão usam o mesmo denominador da aba Desempenho. Gráficos em duas colunas em ecrãs largos; após o fluxo escolar, distorção idade/série por turno/curso e por escola.') }}
-    </p>
+    @include('dashboard.analytics.partials.tab-impact-strip', [
+        'tab' => 'enrollment',
+        'yearFilterReady' => $yearFilterReady,
+        'municipalityContext' => $municipalityContext,
+        'tabData' => ['enrollmentData' => $enrollmentData],
+    ])
 
     @if (! empty($enrollmentData['kpis']))
         @php $k = $enrollmentData['kpis']; @endphp

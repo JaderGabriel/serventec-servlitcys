@@ -1,4 +1,8 @@
 {
+  "_notification-bell-Cv0vi_Wg.js": {
+    "file": "assets/notification-bell-Cv0vi_Wg.js",
+    "name": "notification-bell"
+  },
   "node_modules/leaflet/dist/images/layers-2x.png": {
     "file": "assets/layers-2x-Bpkbi35X.png",
     "src": "node_modules/leaflet/dist/images/layers-2x.png"
@@ -12,7 +16,7 @@
     "src": "node_modules/leaflet/dist/images/marker-icon.png"
   },
   "resources/css/app.css": {
-    "file": "assets/app-TohB_tU0.css",
+    "file": "assets/app-BCeEcFPC.css",
     "name": "app",
     "names": [
       "app.css"
@@ -21,10 +25,13 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-Bnvy1VRi.js",
+    "file": "assets/app-DbRYH9g0.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
+    "imports": [
+      "_notification-bell-Cv0vi_Wg.js"
+    ],
     "css": [
       "assets/app-BYfHiZ-E.css"
     ],
@@ -32,6 +39,15 @@
       "assets/layers-BWBAp2CZ.png",
       "assets/layers-2x-Bpkbi35X.png",
       "assets/marker-icon-hN30_KVU.png"
+    ]
+  },
+  "resources/js/pulse-notifications.js": {
+    "file": "assets/pulse-notifications-Dr4jyVkJ.js",
+    "name": "pulse-notifications",
+    "src": "resources/js/pulse-notifications.js",
+    "isEntry": true,
+    "imports": [
+      "_notification-bell-Cv0vi_Wg.js"
     ]
   }
 }

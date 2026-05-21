@@ -27,13 +27,14 @@ final class AnalyticsReportExportService
             'file_disk' => (string) config('analytics.pdf_report.disk', 'local'),
         ]);
 
-        $job = GenerateAnalyticsReportPdfJob::dispatch($export->id);
         $queue = (string) config('analytics.pdf_report.queue', 'default');
-        $job->onQueue($queue);
         $connection = config('analytics.pdf_report.connection');
+
+        $pending = GenerateAnalyticsReportPdfJob::dispatch($export->id)->onQueue($queue);
         if ($connection !== null && $connection !== '') {
-            $job->onConnection((string) $connection);
+            $pending->onConnection((string) $connection);
         }
+        $pending->afterResponse();
 
         return [
             'export' => $export,
@@ -59,18 +60,22 @@ final class AnalyticsReportExportService
 
     private function pruneOldExports(User $user): void
     {
-        $max = (int) config('analytics.pdf_report.max_exports_per_user', 10);
-        $ids = AnalyticsReportExport::query()
+        $max = max(1, (int) config('analytics.pdf_report.max_exports_per_user', 10));
+
+        $keepIds = AnalyticsReportExport::query()
             ->where('user_id', $user->id)
             ->orderByDesc('id')
-            ->skip($max - 1)
+            ->limit($max)
             ->pluck('id');
 
-        if ($ids->isEmpty()) {
+        if ($keepIds->isEmpty()) {
             return;
         }
 
-        $exports = AnalyticsReportExport::query()->whereIn('id', $ids)->get();
+        $exports = AnalyticsReportExport::query()
+            ->where('user_id', $user->id)
+            ->whereNotIn('id', $keepIds->all())
+            ->get();
         foreach ($exports as $export) {
             if (filled($export->file_path)) {
                 Storage::disk($export->file_disk)->delete($export->file_path);

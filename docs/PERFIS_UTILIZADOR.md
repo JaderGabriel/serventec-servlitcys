@@ -1,5 +1,7 @@
 # Perfis de utilizador — servlitcys
 
+> **Índice:** [README.md](README.md) · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §10.
+
 ## Visão geral
 
 O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, `municipal`). A coluna legada `is_admin` é sincronizada automaticamente com `role` ao gravar e não deve ser editada manualmente.

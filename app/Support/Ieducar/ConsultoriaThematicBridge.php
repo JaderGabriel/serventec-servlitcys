@@ -221,8 +221,12 @@ final class ConsultoriaThematicBridge
         $restantes = (int) ($est['registros_restantes_estimados'] ?? 0);
         if ($restantes > 0) {
             $dias = $est['dias_para_concluir_ritmo_atual'] ?? null;
-            $items[] = __('Meta vs ano anterior: ~:n registos restantes', ['n' => number_format($restantes)]).($dias !== null
-                ? ' · '.__('~:d dias ao ritmo actual', ['d' => number_format((int) $dias)])
+            $items[] = __('Falta cadastrar (meta ano anterior): :t turma(s), :m matrícula(s), :e enturmação(ões).', [
+                't' => number_format((int) ($est['turmas_restantes'] ?? 0)),
+                'm' => number_format((int) ($est['matriculas_restantes'] ?? 0)),
+                'e' => number_format((int) ($est['enturmacoes_restantes'] ?? 0)),
+            ]).($dias !== null
+                ? ' · '.__('~:d dias estimados', ['d' => number_format((int) $dias)])
                 : '');
             $status = self::mergeStatus($status, 'warning');
         }

@@ -25,8 +25,8 @@
         icon="server"
     />
     <livewire:pulse.usage cols="4" rows="2" />
-    <livewire:pulse.application-insights-card cols="6" rows="1" />
-    <livewire:pulse.database-health-card cols="6" rows="1" />
+    <livewire:pulse.application-insights-card cols="4" rows="1" />
+    <livewire:pulse.database-health-card cols="4" rows="1" />
     <livewire:pulse.disk-space-card cols="6" rows="1" />
     <livewire:pulse.queue-and-failures-card cols="6" rows="1" />
 
@@ -36,8 +36,8 @@
         accent="violet"
         icon="circle-stack"
     />
-    <livewire:pulse.cache cols="4" />
-    <livewire:pulse.redis-overview-card cols="full" rows="2" />
+    <livewire:pulse.cache cols="4" rows="2" />
+    <livewire:pulse.redis-overview-card cols="8" rows="2" />
 
     <x-pulse-dashboard.section
         :title="__('Latência HTTP e saída')"

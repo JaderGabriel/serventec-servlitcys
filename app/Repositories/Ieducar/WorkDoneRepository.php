@@ -41,8 +41,12 @@ class WorkDoneRepository
             'period_labels' => $periodLabels,
             'periods' => ['day' => 0, 'week' => 0, 'fortnight' => 0],
             'by_user' => [],
-            'baseline' => ['turmas' => 0, 'matriculas' => 0, 'ano' => 0],
+            'baseline' => ['turmas' => 0, 'matriculas' => 0, 'enturmacoes' => 0, 'ano' => 0],
+            'turmas_ano_atual' => 0,
+            'enturmacoes_ano_atual' => 0,
+            'matriculas_ativas' => 0,
             'estimativa' => [],
+            'chart_cadastro_meta' => null,
             'exclusion_notes' => IeducarUsuarioScope::exclusionLabels(),
             'activity_available' => false,
             'activity_note' => null,
@@ -75,6 +79,7 @@ class WorkDoneRepository
                 $currentMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
                 $baseline = IeducarWorkActivityQueries::baselineFromPreviousYear($db, $city, $filters);
                 $turmasAtual = IeducarWorkActivityQueries::countTurmasForYear($db, $city, $filters);
+                $enturmacoesAtual = IeducarWorkActivityQueries::countEnturmacoesForYear($db, $city, $filters);
 
                 $periods = ['day' => 0, 'week' => 0, 'fortnight' => 0];
                 $byUser = [];
@@ -106,25 +111,40 @@ class WorkDoneRepository
                     }
                 }
 
-                $estimativa = IeducarWorkActivityQueries::buildEstimate($baseline, $periods, $currentMat);
+                $estimativa = IeducarWorkActivityQueries::buildEstimate(
+                    $baseline,
+                    $periods,
+                    $turmasAtual,
+                    $currentMat,
+                    $enturmacoesAtual,
+                    $byUser,
+                );
                 $censo = IeducarCensoEscolaQueries::schoolStatuses($db, $city, $filters);
                 $anoStatus = IeducarWorkActivityQueries::anoLetivoStatus($db, $city, $filters);
                 $yearClosure = IeducarWorkActivityQueries::yearClosureInsight($filters, $censo, $periods, $anoStatus);
 
                 $methodology = [
-                    __('Contagem de matrículas cuja data de cadastro cai no período, com filtros aplicados (escola, curso, turno).'),
+                    __('Turmas: turmas distintas no ano letivo do filtro. Matrículas: vínculos activos em matricula. Enturmações: vínculos matrícula↔turma (pivô matricula_turma ou coluna directa).'),
+                    __('Cadastro recente: matrículas com data de cadastro no período (dia/semana/quinzena), com filtros aplicados.'),
                     __('Utilizadores administrativos são excluídos conforme configuração (login, ID, nível).'),
-                    __('Meta de esforço: matrículas ativas do ano letivo anterior (:ano) como referência de volume municipal.', ['ano' => $baseline['ano'] ?: '—']),
-                    __('Turmas no ano anterior: :t — turmas no filtro actual: :ta.', [
-                        't' => number_format($baseline['turmas'], 0, ',', '.'),
-                        'ta' => number_format($turmasAtual, 0, ',', '.'),
+                    __('Meta de volume: totais do ano letivo anterior (:ano) — turmas :t, matrículas :m, enturmações :e.', [
+                        'ano' => $baseline['ano'] ?: '—',
+                        't' => number_format((int) $baseline['turmas'], 0, ',', '.'),
+                        'm' => number_format((int) $baseline['matriculas'], 0, ',', '.'),
+                        'e' => number_format((int) ($baseline['enturmacoes'] ?? 0), 0, ',', '.'),
                     ]),
                     $estimativa['usa_ritmo_observado']
-                        ? __('Tempo estimado usa o ritmo observado na quinzena (cadastros/dia) e :h h/dia de trabalho.', [
+                        ? __('Tempo: minutos por tipo derivados do ritmo municipal (:ritmo cad./dia, :q na quinzena); prazo em dias usa ritmo da equipa (:ritmo_eq/dia, :u utilizador(es)). Turmas ponderadas em relação à matrícula (peso relativo da configuração). :h h/dia de capacidade por pessoa.', [
+                            'ritmo' => number_format((float) ($estimativa['ritmo_por_dia'] ?? 0), 1, ',', '.'),
+                            'q' => number_format((int) ($estimativa['cadastros_ultima_quinzena'] ?? 0), 0, ',', '.'),
+                            'ritmo_eq' => number_format((float) ($estimativa['ritmo_equipe_por_dia'] ?? 0), 1, ',', '.'),
+                            'u' => (int) ($estimativa['utilizadores_ativos_quinzena'] ?? 0),
                             'h' => config('ieducar.work_tracking.working_hours_per_day', 6),
                         ])
-                        : __('Tempo estimado usa :min min/registro (configuração) por falta de ritmo observável na quinzena.', [
-                            'min' => config('ieducar.work_tracking.default_minutes_per_record', 3.5),
+                        : __('Tempo: referência fixa (:mt min/turma, :mm min/matricula, :me min/enturmação) só quando não há cadastro recente mensurável na base.', [
+                            'mt' => number_format((float) ($estimativa['minutos_por_turma'] ?? 8), 1, ',', '.'),
+                            'mm' => number_format((float) ($estimativa['minutos_por_matricula'] ?? 3.5), 1, ',', '.'),
+                            'me' => number_format((float) ($estimativa['minutos_por_enturmacao'] ?? 2.5), 1, ',', '.'),
                         ]),
                 ];
 
@@ -141,8 +161,10 @@ class WorkDoneRepository
                     'by_user' => $byUser,
                     'baseline' => $baseline,
                     'turmas_ano_atual' => $turmasAtual,
+                    'enturmacoes_ano_atual' => $enturmacoesAtual,
                     'matriculas_ativas' => $currentMat,
                     'estimativa' => $estimativa,
+                    'chart_cadastro_meta' => $this->chartCadastroMeta($estimativa),
                     'activity_available' => (bool) $ctx['available'],
                     'activity_note' => $activityNote,
                     'chart_periods' => $this->chartPeriods($periods, $periodLabels),
@@ -252,6 +274,37 @@ class WorkDoneRepository
             __('Unidades'),
             [__('Exportado'), __('Fechado'), __('Pendente')],
             $data
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $est
+     * @return ?array<string, mixed>
+     */
+    private function chartCadastroMeta(array $est): ?array
+    {
+        $meta = [
+            (int) ($est['meta_turmas_ano_anterior'] ?? 0),
+            (int) ($est['meta_matriculas_ano_anterior'] ?? 0),
+            (int) ($est['meta_enturmacoes_ano_anterior'] ?? 0),
+        ];
+        $atual = [
+            (int) ($est['turmas_filtro_atual'] ?? 0),
+            (int) ($est['matriculas_ativas_filtro'] ?? 0),
+            (int) ($est['enturmacoes_filtro_atual'] ?? 0),
+        ];
+        if (array_sum($meta) === 0 && array_sum($atual) === 0) {
+            return null;
+        }
+
+        return ChartPayload::barHorizontalGrouped(
+            __('Meta (ano anterior) vs cadastro actual'),
+            __('Quantidade'),
+            [__('Turmas'), __('Matrículas'), __('Enturmações')],
+            [
+                ['label' => __('Ano anterior (meta)'), 'data' => $meta],
+                ['label' => __('Ano actual (filtro)'), 'data' => $atual],
+            ]
         );
     }
 }

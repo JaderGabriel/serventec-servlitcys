@@ -1,9 +1,12 @@
-@props(['attendanceData', 'chartExportContext' => []])
+@props(['attendanceData', 'chartExportContext' => [], 'municipalityContext' => null, 'yearFilterReady' => true])
 
 <div class="space-y-4">
-    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Total de registos de faltas agrupados por mês, com os filtros aplicados pela matrícula e turma.') }}
-    </p>
+    @include('dashboard.analytics.partials.tab-impact-strip', [
+        'tab' => 'attendance',
+        'yearFilterReady' => $yearFilterReady,
+        'municipalityContext' => $municipalityContext,
+        'tabData' => ['attendanceData' => $attendanceData],
+    ])
     @if (! empty($attendanceData['error']))
         <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
             {{ $attendanceData['error'] }}

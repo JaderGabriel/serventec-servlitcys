@@ -1,4 +1,4 @@
-@props(['schoolUnitsData', 'yearFilterReady' => true, 'chartExportContext' => []])
+@props(['schoolUnitsData', 'yearFilterReady' => true, 'chartExportContext' => [], 'municipalityContext' => null])
 
 @php
     $tab = is_array($schoolUnitsData) ? ($schoolUnitsData['tab'] ?? []) : [];
@@ -21,15 +21,12 @@
 @endphp
 
 <div class="space-y-6">
-    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        @if ($mapScope === 'rede_escola')
-            {{ __('Mapa OpenStreetMap com unidades da tabela escola. Coordenadas: cadastro local e, quando existir código INEP, Catálogo INEP (ArcGIS). Secções abaixo resumem capacidade, geografia e cobertura — evite comparar totais duplicados entre blocos; use o mapa principal para detalhe por unidade (modal).') }}
-        @elseif ($mapScope === 'geo_cache')
-            {{ __('Mapa a partir do cache local (school_unit_geos): não há matrículas no âmbito do filtro ou a consulta não devolveu escolas; posições vêm das coordenadas/INEP já guardados. Indicadores de turma/lista podem estar vazios.') }}
-        @else
-            {{ __('Mapa OpenStreetMap; prioridade a coordenadas na escola (i-Educar), depois INEP/ArcGIS. As secções seguintes condensam listas de espera, distribuição geográfica e cobertura; o mapa grande e o modal concentram a leitura por escola.') }}
-        @endif
-    </p>
+    @include('dashboard.analytics.partials.tab-impact-strip', [
+        'tab' => 'school_units',
+        'yearFilterReady' => $yearFilterReady,
+        'municipalityContext' => $municipalityContext,
+        'tabData' => ['schoolUnitsData' => $schoolUnitsData],
+    ])
 
     @if ($topErr)
         <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">

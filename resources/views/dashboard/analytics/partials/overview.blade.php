@@ -1,4 +1,4 @@
-@props(['overviewData', 'schoolUnits' => null, 'yearFilterReady' => true, 'chartExportContext' => []])
+@props(['overviewData', 'schoolUnits' => null, 'yearFilterReady' => true, 'chartExportContext' => [], 'municipalityContext' => null])
 
 @php
     $suOv = is_array($schoolUnits) && isset($schoolUnits['overview']) ? $schoolUnits['overview'] : null;
@@ -9,9 +9,12 @@
 @endphp
 
 <div class="space-y-4">
-    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-        {{ __('Esta aba mostra totais na base do município (escola, turma, matrícula). Inclui resumos de NEE (educação especial) e de rede/oferta (capacidade e vagas), alinhados às abas correspondentes. O ano letivo é obrigatório; depois pode filtrar escola, tipo/segmento e turno. Os gráficos usam até três colunas em ecrãs largos, no mesmo estilo visual das abas.') }}
-    </p>
+    @include('dashboard.analytics.partials.tab-impact-strip', [
+        'tab' => 'overview',
+        'yearFilterReady' => $yearFilterReady,
+        'municipalityContext' => $municipalityContext,
+        'tabData' => ['overviewData' => $overviewData],
+    ])
 
     @if ($yearFilterReady && ! empty($overviewData['filter_note']))
         <p class="text-xs text-indigo-800 dark:text-indigo-200 bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 rounded-md px-3 py-2">

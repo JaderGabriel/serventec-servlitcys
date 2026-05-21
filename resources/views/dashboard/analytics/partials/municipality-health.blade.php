@@ -18,6 +18,8 @@
     $topProblems = is_array($h['top_problems'] ?? null) ? $h['top_problems'] : [];
     $score = $h['compliance_score'] ?? null;
     $activeCheckIds = is_array($h['active_check_ids'] ?? null) ? $h['active_check_ids'] : [];
+    $activeProgramIds = is_array($h['active_program_ids'] ?? null) ? $h['active_program_ids'] : [];
+    $complementaryPrograms = is_array($h['complementary_programs'] ?? null) ? $h['complementary_programs'] : [];
     if ($activeCheckIds === []) {
         foreach ($cadastro as $dim) {
             if (($dim['has_issue'] ?? $dim['detected'] ?? false) && filled($dim['id'] ?? null)) {
@@ -35,10 +37,27 @@
     $perdaAgreg = (float) ($summary['perda_estimada_anual'] ?? 0);
     $ganhoAgreg = (float) ($summary['ganho_potencial_anual'] ?? 0);
     $recursoSemNee = (int) ($summary['recurso_prova_sem_nee'] ?? 0);
+    $programasAlerta = (int) ($h['programas_alerta'] ?? 0);
     $healthKpis = [
         ['label' => __('Pendências de cadastro'), 'value' => number_format((int) ($summary['pendencias_cadastro'] ?? 0)), 'tone' => 'rose'],
         ['label' => __('Módulos FUNDEB em alerta'), 'value' => number_format((int) ($summary['modulos_fundeb_alerta'] ?? 0)), 'tone' => 'amber'],
     ];
+    if ($programasAlerta > 0) {
+        $healthKpis[] = [
+            'label' => __('Programas (PNAE/PNATE/…) em alerta'),
+            'value' => number_format($programasAlerta),
+            'tone' => 'teal',
+            'explicacao_resumo' => __('Cobertura baixa de campos no i-Educar — ver Financiamentos e modal de condições.'),
+        ];
+    }
+    if ((int) ($h['public_queries_success'] ?? 0) > 0) {
+        $healthKpis[] = [
+            'label' => __('Consultas públicas OK'),
+            'value' => number_format((int) $h['public_queries_success']),
+            'tone' => 'sky',
+            'explicacao_resumo' => __('Fontes FNDE/Tesouro/Transparência com dados na última consulta (cache).'),
+        ];
+    }
     if ($recursoSemNee > 0) {
         $healthKpis[] = [
             'label' => __('Recurso de prova sem NEE'),
@@ -88,6 +107,7 @@
     $flowSteps = ConsultoriaFlow::numberedSteps([
         ['label' => __('Prioridades'), 'anchor' => 'diag-prioridades'],
         ['label' => __('VAAF e previsão'), 'anchor' => 'diag-vaaf', 'visible' => $vaafComparacao !== null],
+        ['label' => __('Programas complementares'), 'anchor' => 'diag-programas', 'visible' => count($complementaryPrograms) > 0],
         ['label' => __('Leitura temática'), 'anchor' => 'diag-tematico', 'visible' => count($thematicBlocks) > 0],
         ['label' => __('Fontes públicas'), 'anchor' => 'diag-fontes-publicas', 'visible' => $hasPublicSources],
         ['label' => __('Mapa de rotinas'), 'anchor' => 'diag-mapa', 'visible' => count($cadastro) > 0],
@@ -134,7 +154,7 @@
                 </p>
             </div>
             <div class="shrink-0">
-                <x-dashboard.funding-loss-conditions-button :activeCheckIds="$activeCheckIds" />
+                <x-dashboard.funding-loss-conditions-button :activeCheckIds="$activeCheckIds" :activeProgramIds="$activeProgramIds" />
             </div>
         </div>
 
@@ -253,6 +273,47 @@
                     :divergencia="$divergenciaVaaf"
                     :previsaoComparacao="$previsaoComparacao"
                 />
+            </x-dashboard.consultoria-section>
+        @endif
+
+        @if (count($complementaryPrograms) > 0)
+            <x-dashboard.consultoria-section
+                :step="$diagStep['diag-programas'] ?? null"
+                anchor="diag-programas"
+                :title="__('Financiamentos complementares (análise municipal)')"
+                :subtitle="__('PNAE, PNATE, PDDE e correlatos — cobertura de cadastro no i-Educar (não é valor de repasse FNDE).')"
+            >
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    @foreach ($complementaryPrograms as $prog)
+                        @php
+                            $pst = (string) ($prog['status'] ?? 'neutral');
+                            $pborder = match ($pst) {
+                                'success' => 'border-emerald-300 dark:border-emerald-800',
+                                'warning' => 'border-amber-300 dark:border-amber-800',
+                                'danger' => 'border-rose-300 dark:border-rose-800',
+                                default => 'border-gray-200 dark:border-gray-700',
+                            };
+                        @endphp
+                        <article class="rounded-lg border {{ $pborder }} bg-white/70 dark:bg-gray-900/40 px-3 py-3 text-sm">
+                            <div class="flex flex-wrap items-start justify-between gap-2">
+                                <h4 class="font-semibold text-gray-900 dark:text-gray-100 text-xs leading-snug">{{ $prog['titulo'] ?? '' }}</h4>
+                                <span class="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded
+                                    @if ($pst === 'success') bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200
+                                    @elseif ($pst === 'danger') bg-rose-100 text-rose-900 dark:bg-rose-950/50 dark:text-rose-200
+                                    @elseif ($pst === 'warning') bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200
+                                    @else bg-gray-100 text-gray-700 @endif">
+                                    {{ $prog['status_label'] ?? '' }}
+                                </span>
+                            </div>
+                            <p class="mt-2 text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ $prog['resumo'] ?? '' }}</p>
+                        </article>
+                    @endforeach
+                </div>
+                <p class="text-xs text-gray-600 dark:text-gray-400 flex flex-wrap gap-x-2 gap-y-1">
+                    <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'other_funding')">{{ __('Detalhe na aba Financiamentos') }}</button>
+                    <span class="text-gray-300 dark:text-gray-600">·</span>
+                    <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('funding-loss-set-active', { ids: @js($activeCheckIds), programIds: @js($activeProgramIds) }); $dispatch('open-modal', 'funding-loss-conditions')">{{ __('Condições de perda (todos os programas)') }}</button>
+                </p>
             </x-dashboard.consultoria-section>
         @endif
 

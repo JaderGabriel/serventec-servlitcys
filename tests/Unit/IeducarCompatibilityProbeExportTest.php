@@ -44,7 +44,7 @@ final class IeducarCompatibilityProbeExportTest extends TestCase
 
         $doc = IeducarCompatibilityProbe::wrapExportEnvelope($report, $city, $filters);
 
-        $this->assertSame(IeducarCompatibilityProbe::SCHEMA_PROBE_VERSION, $doc['schema_probe_version']);
+        $this->assertSame('1.1', $doc['schema_probe_version']);
         $this->assertNotEmpty($doc['generated_at']);
         $this->assertSame('2910800', $doc['city']['ibge_municipio']);
         $this->assertSame('2024', $doc['filters']['ano_letivo']);

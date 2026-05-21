@@ -4,24 +4,29 @@
     $modal = is_array($data) ? $data : [];
     $conditions = is_array($modal['conditions'] ?? null) ? $modal['conditions'] : [];
     $pillars = is_array($modal['pillars'] ?? null) ? $modal['pillars'] : [];
+    $programs = is_array($modal['complementary_programs'] ?? null) ? $modal['complementary_programs'] : [];
+    $repasses = is_array($modal['public_repasses'] ?? null) ? $modal['public_repasses'] : [];
 @endphp
 
-<x-modal name="funding-loss-conditions" maxWidth="2xl" focusable>
+<x-modal name="funding-loss-conditions" maxWidth="3xl" focusable>
     <div
-        class="flex flex-col max-h-[min(90vh,52rem)]"
-        x-data="{ activeIds: [] }"
-        x-on:funding-loss-set-active.window="activeIds = Array.isArray($event.detail?.ids) ? $event.detail.ids : []"
+        class="flex flex-col max-h-[min(92vh,56rem)]"
+        x-data="{ activeIds: [], activeProgramIds: [] }"
+        x-on:funding-loss-set-active.window="
+            activeIds = Array.isArray($event.detail?.ids) ? $event.detail.ids : [];
+            activeProgramIds = Array.isArray($event.detail?.programIds) ? $event.detail.programIds : [];
+        "
     >
         <div class="flex items-start justify-between gap-4 px-6 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
-            <div class="pr-2">
+            <div class="pr-2 min-w-0">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    {{ __('Condições que podem implicar perda ou redução de recursos') }}
+                    {{ __('Financiamentos públicos — condições de perda ou redução') }}
                 </h2>
                 <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                    {{ __('Referência FUNDEB, VAAR e Censo. VAAF de referência: :vaa por ocorrência (configurável).', ['vaa' => $modal['vaa_label'] ?? '—']) }}
+                    {{ __('FUNDEB, VAAR, Censo e programas complementares (PNAE, PNATE, PDDE). VAAF de referência nas discrepâncias: :vaa por ocorrência (configurável).', ['vaa' => $modal['vaa_label'] ?? '—']) }}
                 </p>
-                <p class="mt-2 text-xs text-rose-700 dark:text-rose-300 font-medium" x-show="activeIds.length > 0" x-cloak>
-                    {{ __('Destaque: condições detectadas no município para o filtro actual.') }}
+                <p class="mt-2 text-xs text-rose-700 dark:text-rose-300 font-medium" x-show="activeIds.length > 0 || activeProgramIds.length > 0" x-cloak>
+                    {{ __('Destaque: itens com alerta detectado no município (filtro actual).') }}
                 </p>
             </div>
             <button
@@ -43,8 +48,8 @@
 
             @if (count($pillars) > 0)
                 <section>
-                    <h3 class="text-xs font-semibold uppercase tracking-wide text-indigo-800 dark:text-indigo-200 mb-2">{{ __('Marco legal e repasses') }}</h3>
-                    <ul class="grid grid-cols-1 gap-2">
+                    <h3 class="text-xs font-semibold uppercase tracking-wide text-indigo-800 dark:text-indigo-200 mb-2">{{ __('FUNDEB, VAAR e matrícula no Censo') }}</h3>
+                    <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         @foreach ($pillars as $pillar)
                             <li class="rounded-md border border-indigo-200/70 dark:border-indigo-800/50 bg-indigo-50/50 dark:bg-indigo-950/20 px-3 py-2">
                                 <p class="font-medium text-indigo-950 dark:text-indigo-100">{{ $pillar['titulo'] ?? '' }}</p>
@@ -55,10 +60,83 @@
                 </section>
             @endif
 
+            @if (count($programs) > 0)
+                <section>
+                    <h3 class="text-xs font-semibold uppercase tracking-wide text-teal-800 dark:text-teal-200 mb-2">
+                        {{ __('Programas complementares (:n)', ['n' => count($programs)]) }}
+                    </h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mb-3 leading-relaxed">
+                        {{ __('Repasses FNDE além do FUNDEB base. O painel mede cobertura de cadastro no i-Educar; valores de repasse exactos estão na aba Financiamentos e em fontes oficiais.') }}
+                    </p>
+                    <div class="space-y-3">
+                        @foreach ($programs as $prog)
+                            @php $progId = (string) ($prog['id'] ?? ''); @endphp
+                            <article
+                                class="rounded-lg border p-3 transition-all duration-200"
+                                x-bind:class="activeProgramIds.includes(@js($progId))
+                                    ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-400/60 dark:border-teal-600 dark:bg-teal-950/40 dark:ring-teal-500/40'
+                                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/20'"
+                            >
+                                <div class="flex flex-wrap items-start justify-between gap-2">
+                                    <div class="min-w-0">
+                                        <span
+                                            x-show="activeProgramIds.includes(@js($progId))"
+                                            x-cloak
+                                            class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-teal-600 text-white mr-1"
+                                        >{{ __('Alerta cadastro') }}</span>
+                                        <h4 class="font-semibold text-gray-900 dark:text-gray-100">{{ $prog['titulo'] ?? '' }}</h4>
+                                        <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{{ $prog['repasse_fonte'] ?? '' }}</p>
+                                    </div>
+                                    @if (filled($prog['fnde_url'] ?? null))
+                                        <a href="{{ $prog['fnde_url'] }}" target="_blank" rel="noopener noreferrer" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline shrink-0">{{ __('FNDE') }}</a>
+                                    @endif
+                                </div>
+                                <p class="mt-2 text-gray-700 dark:text-gray-300 leading-relaxed">{{ $prog['explanation'] ?? '' }}</p>
+                                @if (filled($prog['cadastro_ligacao'] ?? null))
+                                    <p class="mt-1 text-xs text-sky-800 dark:text-sky-200"><span class="font-medium">{{ __('Cadastro:') }}</span> {{ $prog['cadastro_ligacao'] }}</p>
+                                @endif
+                                <p class="mt-2 text-rose-800/95 dark:text-rose-200/95 leading-relaxed">
+                                    <span class="font-medium">{{ __('Risco / impacto:') }}</span> {{ $prog['impact'] ?? '' }}
+                                </p>
+                                <p class="mt-2 text-emerald-800 dark:text-emerald-200 leading-relaxed">
+                                    <span class="font-medium">{{ __('Correção:') }}</span> {{ $prog['correction'] ?? '' }}
+                                </p>
+                                @if (! empty($prog['related_checks']) && is_array($prog['related_checks']))
+                                    <p class="mt-1 text-[11px] text-indigo-700 dark:text-indigo-300">
+                                        {{ __('Rotinas relacionadas em Discrepâncias:') }}
+                                        {{ implode(', ', array_map('strval', $prog['related_checks'])) }}
+                                    </p>
+                                @endif
+                            </article>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
+            @if (count($repasses) > 0)
+                <section>
+                    <h3 class="text-xs font-semibold uppercase tracking-wide text-sky-800 dark:text-sky-200 mb-2">{{ __('Repasses e consultas públicas no painel') }}</h3>
+                    <ul class="space-y-2">
+                        @foreach ($repasses as $rep)
+                            <li class="rounded-md border border-sky-200/70 dark:border-sky-800/50 bg-sky-50/40 dark:bg-sky-950/20 px-3 py-2">
+                                <p class="font-medium text-sky-950 dark:text-sky-100">{{ $rep['titulo'] ?? '' }}</p>
+                                <p class="mt-0.5 text-xs leading-relaxed text-sky-900/90 dark:text-sky-200/85">{{ $rep['descricao'] ?? '' }}</p>
+                                @if (filled($rep['onde'] ?? null))
+                                    <p class="mt-1 text-[11px] text-gray-600 dark:text-gray-400"><span class="font-medium">{{ __('No servlitcys:') }}</span> {{ $rep['onde'] }}</p>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                </section>
+            @endif
+
             <section>
                 <h3 class="text-xs font-semibold uppercase tracking-wide text-rose-800 dark:text-rose-200 mb-2">
                     {{ __('Rotinas de cadastro monitoradas (:n)', ['n' => count($conditions)]) }}
                 </h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                    {{ __('Cada rotina com pendência gera estimativa indicativa (ocorrências × VAAF × peso). Detalhe por escola na aba Discrepâncias.') }}
+                </p>
                 <div class="space-y-3">
                     @foreach ($conditions as $cond)
                         @php
@@ -108,11 +186,26 @@
             </section>
 
             <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed border-t border-gray-200 dark:border-gray-700 pt-3">
-                {{ __('A aba «Serventec» resume o detectado na base; «Discrepâncias e Erros» detalha por escola no filtro actual.') }}
+                {{ __('Serventec consolida FUNDEB, programas e Censo. Financiamentos detalha cobertura de cadastro e consultas CKAN/API. Discrepâncias lista ocorrências por escola.') }}
+                <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline ml-1" x-on:click="$dispatch('close-modal', 'funding-loss-conditions'); $dispatch('set-analytics-tab', 'other_funding')">{{ __('Abrir Financiamentos') }}</button>
             </p>
         </div>
 
-        <div class="px-6 py-3 border-t border-gray-200 dark:border-gray-700 flex justify-end shrink-0">
+        <div class="px-6 py-3 border-t border-gray-200 dark:border-gray-700 flex flex-wrap justify-end gap-2 shrink-0">
+            <button
+                type="button"
+                class="px-3 py-2 rounded-md text-xs font-medium text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
+                x-on:click="$dispatch('close-modal', 'funding-loss-conditions'); $dispatch('set-analytics-tab', 'fundeb')"
+            >
+                {{ __('Aba FUNDEB') }}
+            </button>
+            <button
+                type="button"
+                class="px-3 py-2 rounded-md text-xs font-medium text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-950/30"
+                x-on:click="$dispatch('close-modal', 'funding-loss-conditions'); $dispatch('set-analytics-tab', 'other_funding')"
+            >
+                {{ __('Aba Financiamentos') }}
+            </button>
             <button
                 type="button"
                 class="px-4 py-2 rounded-md text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"

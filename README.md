@@ -169,11 +169,21 @@ composer run phpstan
 
 ## Documentação
 
-- [**Implantação em produção**](docs/IMPLANTACAO_PRODUCAO.md) — passos para deploy das alterações recentes (Pulse, notificações, `.env`, filas, cron)
+**Entrada central:** [**docs/README.md**](docs/README.md) — índice, estado, ponderações técnicas e backlog único.
+
+| Âncora | Ficheiro |
+|--------|----------|
+| Estado actual | [docs/STATUS_PROJETO.md](docs/STATUS_PROJETO.md) |
+| Design system (UI) | [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) |
+| Decisões técnicas («porquê») | [docs/PONDERACOES_TECNICAS.md](docs/PONDERACOES_TECNICAS.md) |
+| Novas implementações (backlog) | [docs/BACKLOG_IMPLEMENTACOES.md](docs/BACKLOG_IMPLEMENTACOES.md) |
+
+- [**Implantação em produção**](docs/IMPLANTACAO_PRODUCAO.md) — deploy (Pulse, notificações, `.env`, filas, cron)
 - [Documentação executiva](docs/DOCUMENTACAO_EXECUTIVA.md) — visão de negócio e stakeholders
-- [Estado do projeto](docs/STATUS_PROJETO.md) — funcionalidades implementadas, mapa de docs e alterações recentes
 - [Comandos Artisan](docs/COMANDOS_ARTISAN.md) — CLI (geo, SAEB, FUNDEB, schema probe, deploy); tela admin em `/admin/artisan-commands`
 - [FUNDEB / VAAF e Onda 1](docs/FUNDEB_VAAF_E_ONDA1.md) — referências por município/ano na base
+- [**Consultas externas**](docs/CONSULTAS_EXTERNAS.md) — FNDE, Tesouro, Portal da Transparência; necessidade, impacto e uso por aba
+- [**Roadmap financeiro**](docs/ROADMAP_BASES_CALCULOS_FINANCEIROS.md) — bases e cálculos futuros (repasses, programas, VAAR)
 - [Segurança e operações](docs/SEGURANCA.md) — senhas, permissões e checklist de deploy
 - [Métricas: queries lentas no analytics](docs/METRICAS_QUERIES_ANALYTICS.md) — Pulse, staging e anonimização
 

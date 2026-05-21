@@ -1,5 +1,7 @@
 # Documento executivo — Rede & Oferta e desempenho analítico
 
+> **Índice:** [README.md](README.md) · Estado: [STATUS_PROJETO.md](STATUS_PROJETO.md) (aba Rede & Oferta implementada).
+
 ## 1. Objetivo deste documento
 
 Apoiar decisões de **produto e infraestrutura** sobre o painel **Rede & Oferta**, em particular o indicador **«Distribuição de vagas na cidade»**, alinhando a solução a **padrões de BI de mercado** e a **boas práticas** de aplicações Laravel que consultam bases municipais (i-Educar).

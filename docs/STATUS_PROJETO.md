@@ -2,7 +2,7 @@
 
 **Versão:** 2.0.1 · **Ramo:** `main` · **Última revisão:** maio/2026
 
-Documento de referência rápida do que está implementado, em evolução e como navegar na documentação.
+Referência do que está **implementado** hoje. Para **decisões técnicas**, ver [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md). Para **próximas entregas**, ver [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md). **Índice completo:** [README.md](README.md).
 
 ---
 
@@ -11,12 +11,15 @@ Documento de referência rápida do que está implementado, em evolução e como
 | Área | Estado |
 |------|--------|
 | RBAC (admin / user / municipal) | Implementado |
-| Painel de análise i-Educar (abas lazy) | Implementado |
+| Painel de análise i-Educar (abas lazy + faixa impacto) | Implementado |
 | Discrepâncias + export CSV | Implementado |
 | FUNDEB / VAAF (import + cascata de anos) | Implementado |
+| Financiamentos (consultas públicas FNDE/Tesouro/Transparência) | Implementado (requer `.env`; ver [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md)) |
+| Censo (ritmo, meta ano anterior, enturmações) | Implementado |
+| Serventec (diagnóstico + PDF) | Implementado |
 | Gestão de utilizadores (ativar / desativar / excluir) | Implementado |
 | Pulse / monitorização | Implementado |
-| CI/CD remoto | Planeado (ver DOCUMENTACAO_EXECUTIVA) |
+| CI/CD remoto | Planeado — ver backlog INF-01 |
 
 ---
 
@@ -36,14 +39,23 @@ Documento de referência rápida do que está implementado, em evolução e como
 
 ## Painel de análise (`/dashboard/analytics`)
 
-Abas: Visão Geral, Matrículas, Rede & Oferta, Unidades Escolares, Inclusão, Desempenho, Frequência, FUNDEB, Discrepâncias e Erros, Diagnóstico Geral.
+| Aba (ordem consultoria) | Notas |
+|-------------------------|-------|
+| Diagnóstico | Consultoria municipal, PDF, blocos temáticos |
+| Discrepâncias | Cadastro, impacto indicativo, export CSV |
+| FUNDEB | VAAF, previsão, condicionalidades |
+| Financiamentos | Programas + consultas públicas |
+| Censo | Meta vs. ano anterior, ritmo cadastro |
+| Visão geral / Matrículas / Rede / Unidades | Cadastro e rede |
+| Inclusão / Desempenho / Frequência | Indicadores pedagógicos |
 
 | Funcionalidade | Notas |
 |----------------|-------|
-| Lazy load por aba | `ANALYTICS_LAZY_TABS` (default `true`) — ver [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) |
+| Lazy load por aba | `ANALYTICS_LAZY_TABS` — [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) |
+| Faixa impacto (até Censo) | Saldo indicativo + status aba + velocímetro municipal (`AnalyticsTabImpactBuilder`) |
 | Filtros i-Educar | Cidade, ano letivo, escola, curso, turno |
-| Export discrepâncias | `GET /dashboard/analytics/discrepancies/export` — linhas por escola + agregado rede (`DiscrepanciesCsvRowsBuilder`) |
-| `export_params` no snapshot | URL de export alinhada aos filtros da consulta |
+| Export discrepâncias | `GET /dashboard/analytics/discrepancies/export` |
+| Modal condições FUNDEB | Programas complementares + repasses públicos |
 
 ---
 
@@ -55,78 +67,46 @@ Abas: Visão Geral, Matrículas, Rede & Oferta, Unidades Escolares, Inclusão, D
 | Resolver municipal | `FundebMunicipalReferenceResolver` |
 | Import API / ficheiro | `FundebOpenDataImportService`, `fundeb:import-api` |
 | UI admin | Compatibilidade i-Educar → card FUNDEB |
-| Config `.env` | `IEDUCAR_FUNDEB_JSON_URL`, `storage://`, `file://` |
 
-Importação: **cache** `storage/app/fundeb/api/{ibge}/{ano}.json` → se ausente, **CKAN** → grava cache + BD. Exige `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` para preencher automaticamente (CKAN FNDE pode devolver HTML sem resource id). Ver [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md).
+Ver [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md) e [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
 
 ---
 
-## Código — organização recomendada
+## Código — organização
 
 | Camada | Convenção |
 |--------|-----------|
 | Controllers | Finos; autorização + orquestração |
-| Form requests | Validação e `authorize()` |
 | Repositories `app/Repositories/Ieducar/` | Consultas pesadas ao i-Educar |
-| Support `app/Support/` | Regras de negócio reutilizáveis |
+| Support `app/Support/` | Regras de negócio, builders de UI (ex. tab impact) |
 | Services `app/Services/` | Integrações (FUNDEB, INEP, geo) |
-| Auth helpers | `UserCityAccess`, `AdminUserAuditLogger`, `UserSessionTerminator` |
+
+Ponderações: [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
 
 ---
 
-## Deploy
+## Deploy e testes
 
-Guia operacional para publicar alterações no servidor: [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md).
-
----
-
-## Testes
-
-```bash
-php artisan test
-```
-
-| Suíte | Cobertura recente |
-|-------|-------------------|
-| Feature | Auth, RBAC, analytics, gestão utilizadores |
-| Unit | FUNDEB, `DiscrepanciesCsvRowsBuilder` |
-
-Requer extensão `pdo_sqlite` para testes com `RefreshDatabase`.
+- Deploy: [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md)
+- CLI: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md)
+- Testes: `php artisan test` (requer `pdo_sqlite`)
 
 ---
 
-## Ambiente
+## Interface (consultoria)
 
-- **Um único `.env`** na raiz (não versionado; sem `.env.example` no repositório).
-- Variáveis documentadas no [README.md](../README.md).
-- Assets: `public/build/` versionados; `npm run build` após alterar `resources/js` ou `resources/css`.
+- Identidade **slate + teal** (`resources/css/app.css`, [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)).
+- Abas reordenadas: finanças → cadastro → pedagógico (`AnalyticsTabCatalog`).
+- Menu: **Meu município** / **Consultoria municipal**; admin → **Documentação do sistema** (`/admin/documentacao`).
 
----
+## Alterações recentes (maio/2026)
 
-## Mapa da documentação
-
-| Documento | Conteúdo |
-|-----------|----------|
-| [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) | Visão para decisores |
-| [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) | RBAC e operação |
-| [SEGURANCA.md](SEGURANCA.md) | Senhas, autorização, checklist produção |
-| [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) | CLI (geo, SAEB, FUNDEB, deploy) |
-| [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md) | VAAF e onda 1 inclusão |
-| [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) | Performance por aba / Pulse |
-| [DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md](DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md) | Roadmap pedagógico |
-| [DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md](DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md) | Revisão técnica |
+1. Documentação centralizada: [README.md](README.md), [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md), [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md), [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
+2. Faixa visual impacto saldo + status municipal nas abas até Censo.
+3. Financiamentos/Censo com consultas públicas e modal condições ampliado.
+4. PDF analytics (fila, permissões, prune fix MariaDB).
+5. RBAC municipal, FUNDEB cascata, CSV discrepâncias, gestão utilizadores.
 
 ---
 
-## Alterações recentes (lote maio/2026)
-
-1. RBAC completo + redireccionamento por perfil (`homeRouteName`, `homeUrl`).
-2. Municipal: entrada directa na Análise; auto-selecção de cidade única.
-3. Discrepâncias: UI compacta; CSV com linhas agregadas; `export_params`.
-4. FUNDEB: cascata de anos; import `storage://` / `file://`.
-5. Utilizadores: desactivar / activar / excluir (admin); auditoria centralizada.
-6. Refactor: `AdminUserAuditLogger`, `UserSessionTerminator`, `DiscrepanciesCsvRowsBuilder`.
-
----
-
-*Manter este ficheiro actualizado em commits que alterem comportamento visível ou contratos de API/CLI.*
+*Actualizar este ficheiro quando comportamento visível ou contratos API/CLI mudarem.*

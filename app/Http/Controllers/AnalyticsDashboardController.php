@@ -18,6 +18,8 @@ use App\Services\Analytics\AnalyticsReportExportService;
 use App\Services\Ieducar\FilterOptionsService;
 use App\Support\Auth\UserCityAccess;
 use App\Support\Dashboard\AnalyticsEmptyPayloads;
+use App\Support\Dashboard\AnalyticsMunicipalityContext;
+use App\Support\Dashboard\AnalyticsTabCatalog;
 use App\Support\Dashboard\ChartExportMeta;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\DiscrepanciesCheckCatalog;
@@ -164,25 +166,23 @@ class AnalyticsDashboardController extends Controller
 
         $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
 
-        $tabs = [
-            'overview' => __('Visão Geral'),
-            'enrollment' => __('Matrículas'),
-            'network' => __('Rede & Oferta'),
-            'school_units' => __('Unidades Escolares'),
-            'inclusion' => __('Inclusão & Diversidade'),
-            'performance' => __('Desempenho'),
-            'attendance' => __('Frequência'),
-            'fundeb' => __('FUNDEB'),
-            'other_funding' => __('Financiamentos'),
-            'work_done' => __('Censo'),
-            'discrepancies' => __('Discrepâncias e Erros'),
-            'municipality_health' => __('Serventec'),
-        ];
-        $tabKeys = array_keys($tabs);
-        $qTab = (string) $request->query('tab', '');
-        $analyticsInitialTab = in_array($qTab, $tabKeys, true) ? $qTab : 'overview';
+        $municipalityContext = ($yearFilterReady && $city !== null)
+            ? AnalyticsMunicipalityContext::fromFundingSnapshot(
+                $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
+                $overviewData,
+            )
+            : null;
 
-        $pdfExportsRecent = ($city !== null && $user !== null)
+        $tabs = AnalyticsTabCatalog::tabsOrdered();
+        $tabKeys = AnalyticsTabCatalog::tabKeys();
+        $qTab = (string) $request->query('tab', '');
+        $analyticsInitialTab = AnalyticsTabCatalog::resolveInitialTab(
+            $qTab,
+            $user,
+            $yearFilterReady,
+        );
+
+        $pdfExportsRecent = ($city !== null && $user !== null && $user->canExportAnalyticsPdf())
             ? $pdfExportService->recentForUserCity($user, $city, 6)
             : [];
 
@@ -208,9 +208,11 @@ class AnalyticsDashboardController extends Controller
             'fundingLossModalData' => DiscrepanciesCheckCatalog::modalPayload(),
             'chartExportContext' => $chartExportContext,
             'tabs' => $tabs,
+            'tabGroups' => AnalyticsTabCatalog::groups(),
             'analyticsInitialTab' => $analyticsInitialTab,
             'lazyTabLoading' => $lazyTabLoading,
             'pdfExportsRecent' => $pdfExportsRecent,
+            'municipalityContext' => $municipalityContext,
         ]);
     }
 
@@ -235,8 +237,11 @@ class AnalyticsDashboardController extends Controller
         AnalyticsReportExportService $pdfExportService,
     ): Response {
         $tab = (string) $request->query('tab', '');
-        $allowed = ['enrollment', 'network', 'inclusion', 'performance', 'attendance', 'fundeb', 'other_funding', 'work_done', 'discrepancies', 'municipality_health'];
-        if (! in_array($tab, $allowed, true)) {
+        $allowed = array_values(array_filter(
+            AnalyticsTabCatalog::tabKeys(),
+            static fn (string $k): bool => $k !== 'overview' && $k !== 'school_units',
+        ));
+        if (! AnalyticsTabCatalog::isValidTab($tab) || ! in_array($tab, $allowed, true)) {
             abort(404);
         }
 
@@ -268,6 +273,11 @@ class AnalyticsDashboardController extends Controller
 
         $ieducarOptions = $filterOptionsService->loadAll($city, $filters);
         $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
+        $overviewData = $overviewRepository->summary($city, $filters);
+        $municipalityContext = AnalyticsMunicipalityContext::fromFundingSnapshot(
+            $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
+            $overviewData,
+        );
 
         $headers = [
             'X-Analytics-Tab' => $tab,
@@ -279,30 +289,40 @@ class AnalyticsDashboardController extends Controller
                 ->view('dashboard.analytics.partials.enrollment', [
                     'enrollmentData' => $enrollmentRepository->sample($city, $filters),
                     'chartExportContext' => $chartExportContext,
+                    'municipalityContext' => $municipalityContext,
+                    'yearFilterReady' => true,
                 ])
                 ->withHeaders($headers),
             'network' => response()
                 ->view('dashboard.analytics.partials.network', [
                     'networkData' => $networkRepository->snapshot($city, $filters),
                     'chartExportContext' => $chartExportContext,
+                    'municipalityContext' => $municipalityContext,
+                    'yearFilterReady' => true,
                 ])
                 ->withHeaders($headers),
             'inclusion' => response()
                 ->view('dashboard.analytics.partials.inclusion', [
                     'inclusionData' => $inclusionRepository->snapshot($city, $filters),
                     'chartExportContext' => $chartExportContext,
+                    'municipalityContext' => $municipalityContext,
+                    'yearFilterReady' => true,
                 ])
                 ->withHeaders($headers),
             'performance' => response()
                 ->view('dashboard.analytics.partials.performance', [
                     'performanceData' => $performanceRepository->snapshot($city, $filters),
                     'chartExportContext' => $chartExportContext,
+                    'municipalityContext' => $municipalityContext,
+                    'yearFilterReady' => true,
                 ])
                 ->withHeaders($headers),
             'attendance' => response()
                 ->view('dashboard.analytics.partials.attendance', [
                     'attendanceData' => $attendanceRepository->snapshot($city, $filters),
                     'chartExportContext' => $chartExportContext,
+                    'municipalityContext' => $municipalityContext,
+                    'yearFilterReady' => true,
                 ])
                 ->withHeaders($headers),
             'fundeb' => response()
@@ -310,7 +330,7 @@ class AnalyticsDashboardController extends Controller
                     'fundebData' => $fundebRepository->buildReport(
                         $city,
                         $filters,
-                        $overviewRepository->summary($city, $filters),
+                        $overviewData,
                         $enrollmentRepository->sample($city, $filters),
                         $performanceRepository->snapshot($city, $filters),
                         $attendanceRepository->snapshot($city, $filters),
@@ -320,6 +340,7 @@ class AnalyticsDashboardController extends Controller
                     ),
                     'yearFilterReady' => true,
                     'chartExportContext' => $chartExportContext,
+                    'municipalityContext' => $municipalityContext,
                 ])
                 ->withHeaders($headers),
             'other_funding' => response()
@@ -327,6 +348,7 @@ class AnalyticsDashboardController extends Controller
                     'otherFundingData' => $otherFundingRepository->buildReport($city, $filters),
                     'yearFilterReady' => true,
                     'chartExportContext' => $chartExportContext,
+                    'municipalityContext' => $municipalityContext,
                 ])
                 ->withHeaders($headers),
             'work_done' => response()
@@ -334,6 +356,7 @@ class AnalyticsDashboardController extends Controller
                     'workDoneData' => $workDoneRepository->buildReport($city, $filters),
                     'yearFilterReady' => true,
                     'chartExportContext' => $chartExportContext,
+                    'municipalityContext' => $municipalityContext,
                 ])
                 ->withHeaders($headers),
             'municipality_health' => response()
@@ -343,7 +366,9 @@ class AnalyticsDashboardController extends Controller
                     'chartExportContext' => $chartExportContext,
                     'selectedCity' => $city,
                     'filters' => $filters,
-                    'pdfExportsRecent' => $pdfExportService->recentForUserCity($request->user(), $city, 6),
+                    'pdfExportsRecent' => $request->user()->canExportAnalyticsPdf()
+                        ? $pdfExportService->recentForUserCity($request->user(), $city, 6)
+                        : [],
                 ])
                 ->withHeaders($headers),
             'discrepancies' => response()

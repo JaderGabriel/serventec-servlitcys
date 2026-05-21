@@ -7,8 +7,17 @@ use App\Models\User;
 
 class AnalyticsReportExportPolicy
 {
+    public function create(User $user): bool
+    {
+        return $user->is_active && $user->canExportAnalyticsPdf();
+    }
+
     public function download(User $user, AnalyticsReportExport $export): bool
     {
+        if (! $user->canExportAnalyticsPdf()) {
+            return false;
+        }
+
         if ($user->id !== $export->user_id && ! $user->isAdmin()) {
             return false;
         }
@@ -18,6 +27,6 @@ class AnalyticsReportExportPolicy
             return false;
         }
 
-        return app(CityPolicy::class)->viewAnalytics($user, $city);
+        return $user->hasCityAccess($city);
     }
 }

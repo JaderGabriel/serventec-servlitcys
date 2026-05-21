@@ -155,7 +155,7 @@ final class IeducarWorkActivityQueries
     }
 
     /**
-     * @return array{turmas: int, matriculas: int, ano: int}
+     * @return array{turmas: int, matriculas: int, enturmacoes: int, ano: int}
      */
     public static function baselineFromPreviousYear(
         Connection $db,
@@ -164,7 +164,7 @@ final class IeducarWorkActivityQueries
     ): array {
         $year = $filters->yearFilterValue();
         if ($year === null || $year <= 1) {
-            return ['turmas' => 0, 'matriculas' => 0, 'ano' => 0];
+            return ['turmas' => 0, 'matriculas' => 0, 'enturmacoes' => 0, 'ano' => 0];
         }
 
         $prevYear = $year - 1;
@@ -177,12 +177,55 @@ final class IeducarWorkActivityQueries
 
         $matriculas = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $prevFilters) ?? 0;
         $turmas = self::countTurmasForYear($db, $city, $prevFilters);
+        $enturmacoes = self::countEnturmacoesForYear($db, $city, $prevFilters);
 
         return [
             'turmas' => $turmas,
             'matriculas' => $matriculas,
+            'enturmacoes' => $enturmacoes,
             'ano' => $prevYear,
         ];
+    }
+
+    /**
+     * Vínculos matrícula ↔ turma (enturmações activas no filtro).
+     */
+    public static function countEnturmacoesForYear(Connection $db, City $city, IeducarFilterState $filters): int
+    {
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $mId = (string) config('ieducar.columns.matricula.id');
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $turma = IeducarSchema::resolveTable('turma', $city);
+            $tId = (string) config('ieducar.columns.turma.id');
+
+            if (MatriculaTurmaJoin::usePivotTable($db, $city)) {
+                $mt = IeducarSchema::resolveTable('matricula_turma', $city);
+                $mtMat = (string) config('ieducar.columns.matricula_turma.matricula');
+                $mtTurma = (string) config('ieducar.columns.matricula_turma.turma');
+                $mtAtivo = (string) config('ieducar.columns.matricula_turma.ativo');
+
+                $q = $db->table($mt.' as mt');
+                $q->join($mat.' as m', 'mt.'.$mtMat, '=', 'm.'.$mId);
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+                if ($mtAtivo !== '' && IeducarColumnInspector::columnExists($db, $mt, $mtAtivo, $city)) {
+                    MatriculaAtivoFilter::apply($q, $db, 'mt.'.$mtAtivo, $city);
+                }
+                $q->join($turma.' as t_ent', 'mt.'.$mtTurma, '=', 't_ent.'.$tId);
+                MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_ent');
+
+                return (int) $q->count();
+            }
+
+            $q = $db->table($mat.' as m');
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+
+            return (int) $q->count();
+        } catch (\Throwable) {
+            return 0;
+        }
     }
 
     public static function countTurmasForYear(Connection $db, City $city, IeducarFilterState $filters): int
@@ -209,57 +252,272 @@ final class IeducarWorkActivityQueries
     }
 
     /**
-     * Ritmo médio (registos/dia) com base no período de quinzena.
+     * Ritmo médio (matrículas com data de cadastro / dia) a partir do que o município registou.
+     *
+     * @param  array{day: int, week: int, fortnight: int}  $periodCounts
+     * @return array{pace: float, fonte: string, cadastros_dia: int, cadastros_semana: int, cadastros_quinzena: int}
      */
-    public static function pacePerDay(int $fortnightCount): float
+    public static function observedCadastroPace(array $periodCounts): array
     {
-        $days = (int) (config('ieducar.work_tracking.periods_days.fortnight', 15));
+        $day = max(0, (int) ($periodCounts['day'] ?? 0));
+        $week = max(0, (int) ($periodCounts['week'] ?? 0));
+        $fortnight = max(0, (int) ($periodCounts['fortnight'] ?? 0));
 
-        return $days > 0 ? round($fortnightCount / $days, 2) : 0.0;
+        $daysDay = max(1, (int) config('ieducar.work_tracking.periods_days.day', 1));
+        $daysWeek = max(1, (int) config('ieducar.work_tracking.periods_days.week', 7));
+        $daysFortnight = max(1, (int) config('ieducar.work_tracking.periods_days.fortnight', 15));
+
+        $paceDay = $day / $daysDay;
+        $paceWeek = $week / $daysWeek;
+        $paceFortnight = $fortnight / $daysFortnight;
+
+        if ($fortnight >= 3) {
+            $pace = round(0.65 * $paceFortnight + 0.35 * $paceWeek, 2);
+
+            return [
+                'pace' => $pace,
+                'fonte' => 'quinzena_semana',
+                'cadastros_dia' => $day,
+                'cadastros_semana' => $week,
+                'cadastros_quinzena' => $fortnight,
+            ];
+        }
+
+        if ($week >= 2) {
+            return [
+                'pace' => round($paceWeek, 2),
+                'fonte' => 'semana',
+                'cadastros_dia' => $day,
+                'cadastros_semana' => $week,
+                'cadastros_quinzena' => $fortnight,
+            ];
+        }
+
+        if ($day >= 1) {
+            return [
+                'pace' => round($paceDay, 2),
+                'fonte' => 'dia',
+                'cadastros_dia' => $day,
+                'cadastros_semana' => $week,
+                'cadastros_quinzena' => $fortnight,
+            ];
+        }
+
+        return [
+            'pace' => 0.0,
+            'fonte' => 'sem_cadastro_recente',
+            'cadastros_dia' => $day,
+            'cadastros_semana' => $week,
+            'cadastros_quinzena' => $fortnight,
+        ];
     }
 
     /**
-     * @param  array{turmas: int, matriculas: int, ano: int}  $baseline
+     * Minutos por matrícula implícitos num ritmo observado (1 pessoa, :h h/dia de capacidade).
+     */
+    public static function minutesPerMatriculaFromPace(float $pacePerDay, float $hoursPerDay): float
+    {
+        if ($pacePerDay <= 0) {
+            return 0.0;
+        }
+
+        return round((60.0 * max(1.0, $hoursPerDay)) / $pacePerDay, 1);
+    }
+
+    /**
+     * Pesos relativos turma/mat./enturmação a partir da config (só razão entre tipos, não tempo absoluto).
+     *
+     * @return array{turma: float, matricula: float, enturmacao: float}
+     */
+    public static function relativeTypeWeights(): array
+    {
+        $cfgMat = max(0.5, (float) config('ieducar.work_tracking.minutes_per_matricula', 3.5));
+        $cfgTurma = max(0.5, (float) config('ieducar.work_tracking.minutes_per_turma', 8));
+        $cfgEnt = max(0.5, (float) config('ieducar.work_tracking.minutes_per_enturmacao', 2.5));
+
+        return [
+            'turma' => round($cfgTurma / $cfgMat, 2),
+            'matricula' => 1.0,
+            'enturmacao' => round($cfgEnt / $cfgMat, 2),
+        ];
+    }
+
+    /**
+     * @param  array{turmas: int, matriculas: int, enturmacoes: int, ano: int}  $baseline
      * @param  array{day: int, week: int, fortnight: int}  $periodCounts
+     * @param  list<array{total: int}>  $byUser
      * @return array<string, mixed>
      */
     public static function buildEstimate(
         array $baseline,
         array $periodCounts,
+        int $currentTurmas,
         int $currentMatriculas,
+        int $currentEnturmacoes,
+        array $byUser = [],
     ): array {
-        $target = max((int) $baseline['matriculas'], 1);
-        $remaining = max(0, $target - $currentMatriculas);
-        $pace = self::pacePerDay((int) ($periodCounts['fortnight'] ?? 0));
-        $defaultMin = (float) config('ieducar.work_tracking.default_minutes_per_record', 3.5);
-        $hoursPerDay = (float) config('ieducar.work_tracking.working_hours_per_day', 6);
+        $metaTurmas = max(0, (int) $baseline['turmas']);
+        $metaMatriculas = max(0, (int) $baseline['matriculas']);
+        $metaEnturmacoes = max(0, (int) ($baseline['enturmacoes'] ?? $metaMatriculas));
 
-        $minutesPerRecord = $defaultMin;
-        if ($pace > 0) {
-            $recordsPerHour = $pace / max($hoursPerDay, 0.5) * $hoursPerDay;
-            if ($recordsPerHour > 0) {
-                $minutesPerRecord = round(60.0 / $recordsPerHour, 1);
-            }
+        $restTurmas = max(0, $metaTurmas - $currentTurmas);
+        $restMatriculas = max(0, $metaMatriculas - $currentMatriculas);
+        $restEnturmacoes = max(0, $metaEnturmacoes - $currentEnturmacoes);
+        $restTotal = $restTurmas + $restMatriculas + $restEnturmacoes;
+
+        $hoursPerDay = (float) config('ieducar.work_tracking.working_hours_per_day', 6);
+        $cfgMinTurma = (float) config('ieducar.work_tracking.minutes_per_turma', 8);
+        $cfgMinMatricula = (float) config('ieducar.work_tracking.minutes_per_matricula', 3.5);
+        $cfgMinEnturmacao = (float) config('ieducar.work_tracking.minutes_per_enturmacao', 2.5);
+        $defaultMin = (float) config('ieducar.work_tracking.default_minutes_per_record', 3.5);
+
+        $observed = self::observedCadastroPace($periodCounts);
+        $pace = (float) $observed['pace'];
+        $usaRitmo = $pace > 0;
+
+        $weights = self::relativeTypeWeights();
+        $activeUsers = count(array_filter($byUser, static fn (array $u): bool => (int) ($u['total'] ?? 0) > 0));
+        $teamPace = $pace;
+        if ($usaRitmo && $activeUsers > 1) {
+            $teamPace = round($pace * min($activeUsers, 5), 2);
         }
 
-        $totalMinutes = $remaining * $minutesPerRecord;
+        if ($usaRitmo) {
+            $minMatricula = self::minutesPerMatriculaFromPace($pace, $hoursPerDay);
+            $minTurma = round($minMatricula * $weights['turma'], 1);
+            $minEnturmacao = round($minMatricula * $weights['enturmacao'], 1);
+            $minutesPerRecord = $minMatricula;
+        } else {
+            $minTurma = $cfgMinTurma;
+            $minMatricula = $cfgMinMatricula;
+            $minEnturmacao = $cfgMinEnturmacao;
+            $minutesPerRecord = $defaultMin;
+        }
+
+        $minutesTurmas = $restTurmas * $minTurma;
+        $minutesMatriculas = $restMatriculas * $minMatricula;
+        $minutesEnturmacoes = $restEnturmacoes * $minEnturmacao;
+        $totalMinutes = $minutesTurmas + $minutesMatriculas + $minutesEnturmacoes;
         $totalHours = round($totalMinutes / 60.0, 1);
-        $daysToFinish = $pace > 0 ? (int) ceil($remaining / $pace) : null;
         $fteDays = $hoursPerDay > 0 ? round($totalHours / $hoursPerDay, 1) : null;
 
+        $cadastroRestantes = $restMatriculas + $restEnturmacoes;
+        $paceForDays = $teamPace > 0 ? $teamPace : $pace;
+
+        $daysCadastroPace = $paceForDays > 0 && $cadastroRestantes > 0
+            ? (int) ceil($cadastroRestantes / $paceForDays)
+            : null;
+        $daysTurmasPace = $restTurmas > 0 && $paceForDays > 0
+            ? (int) ceil(($restTurmas * $weights['turma']) / max($paceForDays, 0.01))
+            : null;
+        $daysTurmasFixed = ! $usaRitmo && $restTurmas > 0 && $minTurma > 0
+            ? (int) ceil(($restTurmas * $minTurma) / (60 * max($hoursPerDay, 1)))
+            : 0;
+
+        $daysToFinish = null;
+        if ($usaRitmo) {
+            $parts = array_filter([$daysCadastroPace, $daysTurmasPace], static fn (?int $d): bool => $d !== null && $d > 0);
+            $daysToFinish = $parts !== [] ? max($parts) : null;
+        } elseif ($daysCadastroPace !== null || $daysTurmasFixed > 0) {
+            $daysToFinish = max($daysCadastroPace ?? 0, $daysTurmasFixed);
+        }
+
+        $progressTurmas = $metaTurmas > 0 ? round(100.0 * min($currentTurmas, $metaTurmas) / $metaTurmas, 1) : null;
+        $progressMatriculas = $metaMatriculas > 0 ? round(100.0 * min($currentMatriculas, $metaMatriculas) / $metaMatriculas, 1) : null;
+        $progressEnturmacoes = $metaEnturmacoes > 0 ? round(100.0 * min($currentEnturmacoes, $metaEnturmacoes) / $metaEnturmacoes, 1) : null;
+
+        $formulaResumo = self::estimateFormulaSummary($usaRitmo, $observed, $baseline, $minMatricula, $minTurma, $minEnturmacao, $activeUsers, $cfgMinMatricula, $cfgMinTurma, $cfgMinEnturmacao);
+
         return [
-            'meta_matriculas_ano_anterior' => $target,
-            'matriculas_ativas_filtro' => $currentMatriculas,
-            'registros_restantes_estimados' => $remaining,
-            'turmas_ano_anterior' => (int) $baseline['turmas'],
             'ano_referencia' => (int) $baseline['ano'],
+            'meta_turmas_ano_anterior' => $metaTurmas,
+            'meta_matriculas_ano_anterior' => $metaMatriculas,
+            'meta_enturmacoes_ano_anterior' => $metaEnturmacoes,
+            'turmas_filtro_atual' => $currentTurmas,
+            'matriculas_ativas_filtro' => $currentMatriculas,
+            'enturmacoes_filtro_atual' => $currentEnturmacoes,
+            'turmas_restantes' => $restTurmas,
+            'matriculas_restantes' => $restMatriculas,
+            'enturmacoes_restantes' => $restEnturmacoes,
+            'registros_restantes_estimados' => $restTotal,
+            'registros_restantes_cadastro' => $cadastroRestantes,
+            'progresso_turmas_pct' => $progressTurmas,
+            'progresso_matriculas_pct' => $progressMatriculas,
+            'progresso_enturmacoes_pct' => $progressEnturmacoes,
+            'turmas_ano_anterior' => $metaTurmas,
             'ritmo_por_dia' => $pace,
+            'ritmo_equipe_por_dia' => $teamPace,
+            'ritmo_fonte' => (string) $observed['fonte'],
+            'cadastros_ultimo_dia' => (int) $observed['cadastros_dia'],
+            'cadastros_ultima_semana' => (int) $observed['cadastros_semana'],
+            'cadastros_ultima_quinzena' => (int) $observed['cadastros_quinzena'],
+            'utilizadores_ativos_quinzena' => $activeUsers,
             'minutos_por_registro' => $minutesPerRecord,
+            'minutos_por_turma' => $minTurma,
+            'minutos_por_matricula' => $minMatricula,
+            'minutos_por_enturmacao' => $minEnturmacao,
+            'minutos_derivados_do_ritmo' => $usaRitmo,
+            'horas_turmas_estimadas' => round($minutesTurmas / 60.0, 1),
+            'horas_matriculas_estimadas' => round($minutesMatriculas / 60.0, 1),
+            'horas_enturmacoes_estimadas' => round($minutesEnturmacoes / 60.0, 1),
             'horas_totais_estimadas' => $totalHours,
             'dias_para_concluir_ritmo_atual' => $daysToFinish,
+            'dias_cadastro_ritmo_atual' => $daysCadastroPace,
+            'dias_turmas_ritmo_atual' => $daysTurmasPace,
             'dias_pessoa_equivalente' => $fteDays,
-            'usa_ritmo_observado' => $pace > 0,
+            'usa_ritmo_observado' => $usaRitmo,
+            'formula_resumo' => $formulaResumo,
         ];
+    }
+
+    /**
+     * @param  array{pace: float, fonte: string, cadastros_dia: int, cadastros_semana: int, cadastros_quinzena: int}  $observed
+     */
+    private static function estimateFormulaSummary(
+        bool $usaRitmo,
+        array $observed,
+        array $baseline,
+        float $minMatricula,
+        float $minTurma,
+        float $minEnturmacao,
+        int $activeUsers,
+        float $cfgMinMatricula,
+        float $cfgMinTurma,
+        float $cfgMinEnturmacao,
+    ): string {
+        if ($usaRitmo) {
+            $fonteLabel = match ($observed['fonte']) {
+                'quinzena_semana' => __('última quinzena e semana de cadastro na base'),
+                'semana' => __('última semana de cadastro'),
+                'dia' => __('cadastro de ontem (amostra curta)'),
+                default => __('cadastro recente'),
+            };
+
+            return __('Meta = ano :ano anterior. Tempo derivado do ritmo municipal (:fonte): :q matrículas na quinzena → :ritmo/dia; minutos por tipo calculados desse ritmo (turma × :wt, matrícula ×1, enturmação × :we). :users utilizador(es) activos na quinzena aceleram o prazo.', [
+                'ano' => (int) $baseline['ano'],
+                'fonte' => $fonteLabel,
+                'q' => number_format((int) $observed['cadastros_quinzena'], 0, ',', '.'),
+                'ritmo' => number_format((float) $observed['pace'], 1, ',', '.'),
+                'wt' => number_format($minTurma / max(0.1, $minMatricula), 1, ',', '.'),
+                'we' => number_format($minEnturmacao / max(0.1, $minMatricula), 1, ',', '.'),
+                'users' => $activeUsers,
+            ]);
+        }
+
+        return __('Meta = ano :ano anterior. Sem cadastro recente mensurável — tempo de referência usa valores padrão de configuração (:mt min/turma, :mm min/mat., :me min/enturmação). Cadastre matrículas no i-Educar para o sistema passar a usar o ritmo real do município.', [
+            'ano' => (int) $baseline['ano'],
+            'mt' => number_format($cfgMinTurma, 1, ',', '.'),
+            'mm' => number_format($cfgMinMatricula, 1, ',', '.'),
+            'me' => number_format($cfgMinEnturmacao, 1, ',', '.'),
+        ]);
+    }
+
+    /**
+     * @deprecated Use observedCadastroPace()
+     */
+    public static function pacePerDay(int $fortnightCount): float
+    {
+        return self::observedCadastroPace(['fortnight' => $fortnightCount])['pace'];
     }
 
     /**

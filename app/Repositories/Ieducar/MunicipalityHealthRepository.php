@@ -179,6 +179,19 @@ class MunicipalityHealthRepository
 
         $workPeriods = is_array($workDone['periods'] ?? null) ? $workDone['periods'] : [];
         $cadastrosQuinzena = (int) ($workPeriods['fortnight'] ?? 0);
+        $complementaryPrograms = self::summarizeComplementaryPrograms($otherFunding);
+        $activeProgramIds = array_values(array_filter(
+            array_map(
+                static fn (array $p): string => (string) ($p['id'] ?? ''),
+                array_filter($complementaryPrograms, static fn (array $p): bool => in_array((string) ($p['status'] ?? ''), ['warning', 'danger'], true))
+            ),
+            static fn (string $id): bool => $id !== ''
+        ));
+        $publicQueries = is_array($otherFunding['public_municipal'] ?? null) ? $otherFunding['public_municipal'] : [];
+        $publicQueriesOk = (int) count(array_filter(
+            is_array($publicQueries['queries'] ?? null) ? $publicQueries['queries'] : [],
+            static fn ($q): bool => is_array($q) && ($q['status'] ?? '') === 'success'
+        ));
 
         return [
             'intro' => __(
@@ -207,7 +220,11 @@ class MunicipalityHealthRepository
             'vaaf_comparacao' => $vaafComparacao,
             'previsao_comparacao' => $previsaoComparacao,
             'divergencia_vaaf' => $divergenciaVaaf,
-            'other_funding_programs' => count(is_array($otherFunding['programs'] ?? null) ? $otherFunding['programs'] : []),
+            'other_funding_programs' => count($complementaryPrograms),
+            'programas_alerta' => count($activeProgramIds),
+            'complementary_programs' => $complementaryPrograms,
+            'active_program_ids' => $activeProgramIds,
+            'public_queries_success' => $publicQueriesOk,
             'work_done_available' => (bool) ($workDone['activity_available'] ?? false),
             'cadastro_dimensions' => $cadastroDimensions,
             'active_check_ids' => is_array($disc['active_check_ids'] ?? null) ? $disc['active_check_ids'] : [],
@@ -349,6 +366,55 @@ class MunicipalityHealthRepository
             <=> ((float) ($a['perda_estimada_anual'] ?? $a['ganho_potencial_anual'] ?? 0)));
 
         return array_slice($top, 0, 8);
+    }
+
+    /**
+     * @param  array<string, mixed>  $otherFunding
+     * @return list<array<string, mixed>>
+     */
+    private static function summarizeComplementaryPrograms(array $otherFunding): array
+    {
+        $programs = is_array($otherFunding['programs'] ?? null) ? $otherFunding['programs'] : [];
+        $out = [];
+        foreach ($programs as $prog) {
+            if (! is_array($prog)) {
+                continue;
+            }
+            $kpis = is_array($prog['kpis'] ?? null) ? $prog['kpis'] : [];
+            $status = (string) ($prog['status'] ?? 'neutral');
+            $cobertura = null;
+            foreach ($kpis as $k) {
+                if (is_array($k) && ($k['label'] ?? '') === __('Preenchimento indicativo')) {
+                    $v = (string) ($k['value'] ?? '');
+                    $cobertura = str_ends_with($v, '%') ? (float) rtrim($v, '%') : null;
+                    break;
+                }
+            }
+            $resumo = match ($status) {
+                'success' => __('Cobertura de cadastro adequada no i-Educar.'),
+                'warning' => __('Cobertura parcial — rever campos antes do Censo.'),
+                'danger' => __('Cobertura baixa ou campo não detectado na base.'),
+                default => filled($prog['descricao'] ?? null) ? (string) $prog['descricao'] : __('Sem colunas configuradas detectadas.'),
+            };
+            if ($cobertura !== null) {
+                $resumo = __('Cobertura indicativa :pct% das matrículas no filtro.', ['pct' => number_format($cobertura, 1, ',', '.')]);
+            }
+            $out[] = [
+                'id' => (string) ($prog['id'] ?? ''),
+                'titulo' => (string) ($prog['titulo'] ?? ''),
+                'status' => $status,
+                'status_label' => match ($status) {
+                    'success' => __('Adequado'),
+                    'warning' => __('Atenção'),
+                    'danger' => __('Crítico'),
+                    default => __('Neutro'),
+                },
+                'resumo' => $resumo,
+                'cobertura_pct' => $cobertura,
+            ];
+        }
+
+        return $out;
     }
 
     private function yearLabel(IeducarFilterState $filters): string

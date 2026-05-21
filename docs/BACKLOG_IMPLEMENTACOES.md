@@ -1,0 +1,115 @@
+# Backlog de implementações — servlitcys
+
+**Última revisão:** maio/2026
+
+Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento** | **Concluído** (mover para [STATUS_PROJETO.md](STATUS_PROJETO.md) quando entrar em produção).
+
+**Decisões já tomadas (não repetir aqui):** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
+
+---
+
+## Legenda de prioridade
+
+| Prioridade | Critério |
+|------------|----------|
+| **P0** | Bloqueia valor em produção ou conformidade Censo/FUNDEB |
+| **P1** | Alto impacto gestão municipal; esforço razoável |
+| **P2** | Melhoria analítica ou técnica; pode esperar |
+| **P3** | Pesquisa / nice-to-have |
+
+---
+
+## A. Produto e infraestrutura
+
+| ID | Prioridade | Item | Estado | Referência |
+|----|------------|------|--------|------------|
+| INF-01 | P2 | CI/CD remoto (GitHub Actions) + revisão de código | Pendente | [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) |
+| INF-02 | P2 | Monitorização de erros (Sentry ou similar) em cloud | Pendente | Idem |
+| INF-03 | P2 | Política de backup/recuperação documentada com infra | Pendente | Idem |
+| INF-04 | P1 | CI com `pdo_sqlite` ou MySQL de testes dedicado | Em andamento | [DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md](DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md) |
+
+---
+
+## B. Painel — gráficos e inferências (MEC / INEP)
+
+| ID | Prioridade | Item | Estado | Referência |
+|----|------------|------|--------|------------|
+| GRA-01 | P2 | Série histórica abandono/evasão (vários anos letivos) | Pendente | [SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md](SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md) §9 |
+| GRA-02 | P2 | Sankey / tabela de transição entre séries | Pendente | Idem |
+| GRA-03 | P2 | Dispersão IDEB/SAEB × taxas de fluxo por escola | Pendente | Idem |
+| GRA-04 | P3 | Gráfico mix por dependência administrativa | Pendente | Idem |
+| GRA-05 | P2 | Série temporal IDEB municipal com bandas de referência | Pendente | [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) |
+| GRA-06 | P2 | Ranking taxa de aprovação por escola (só i-Educar) | Pendente | Sugestões §2 |
+| GRA-07 | P2 | Metas PNE/semáforo no quadro SAEB (config ou JSON) | Em andamento | saeb_pedagogico_referencias |
+
+---
+
+## C. Financiamento e repasses (dados públicos)
+
+| ID | Prioridade | Item | Estado | Referência |
+|----|------------|------|--------|------------|
+| FIN-01 | P1 | Import repasse observado (Tesouro/Transparência) — séries históricas | Pendente | [ROADMAP_BASES_CALCULOS_FINANCEIROS.md](ROADMAP_BASES_CALCULOS_FINANCEIROS.md) §3.1 |
+| FIN-02 | P1 | VAAR/VAAT/complementação por import FNDE (substituir % fixo) | Pendente | Idem §3.1 |
+| FIN-03 | P2 | Tabelas `municipal_transfer_snapshots`, jobs `admin-sync` | Pendente | Idem |
+| FIN-04 | P2 | Repasse PNAE/PNATE/PDDE vs matrículas elegíveis | Pendente | Idem §3.1 |
+| FIN-05 | P2 | Check `matricula_censo_vs_ieducar` (microdados INEP) | Pendente | Idem §3.2 |
+| FIN-06 | P3 | Simulador custo hora secretaria na aba Censo | Pendente | Idem §3.3 |
+
+*Produção hoje:* consultas públicas activáveis via `.env` — [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
+
+---
+
+## D. Qualidade de cadastro e inclusão
+
+| ID | Prioridade | Item | Estado | Referência |
+|----|------------|------|--------|------------|
+| CAD-01 | P2 | `nee_sem_recurso_prova` (check opcional) | Pendente | [DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md](DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md) §6 |
+| CAD-02 | P3 | Ficha médica × NEE (schema variável) | Pendente | Idem §6.3 C1 |
+| CAD-03 | P3 | Benefícios / PNAE × NEE | Pendente | C2 |
+| CAD-04 | P3 | Sincronização pós-export Educacenso (validação recurso) | Pendente | C4 |
+
+*MVP recurso × NEE, geo A2, VAAF F1, gráficos D1–D4:* **Concluído** — ver STATUS e FUNDEB_VAAF_E_ONDA1.
+
+---
+
+## E. Arquitectura e refactor técnico
+
+| ID | Prioridade | Item | Estado | Referência |
+|----|------------|------|--------|------------|
+| TEC-01 | P2 | `BuildAnalyticsPageData` (extrair do controlador) | Pendente | [DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md](DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md) §5 |
+| TEC-02 | P1 | Particionar `MatriculaChartQueries` (+ testes) | Pendente | Idem §4.2 |
+| TEC-03 | P2 | Cache por aba `(city, filtros)` TTL curto | Pendente | Revisão §4.1 |
+| TEC-04 | P3 | DTOs / `spatie/laravel-data` nos repositórios | Pendente | Idem longo prazo |
+| TEC-05 | P3 | Cache Redis com tags por `city_id` | Pendente | Idem |
+| TEC-06 | P2 | Reduzir baseline PHPStan gradualmente | Em andamento | `composer run phpstan` |
+| TEC-07 | P2 | Form Request para `filterOptions` analytics | Pendente | Revisão §5 |
+
+---
+
+## F. Concluídos recentemente (arquivo — não reabrir)
+
+| ID | Item | Notas |
+|----|------|-------|
+| DONE-01 | Lazy load por aba + Pulse por `tab=` | `ANALYTICS_LAZY_TABS` |
+| DONE-02 | Resumo financeiro em cache para FUNDEB/faixa abas | `fundingImpactSnapshot` |
+| DONE-03 | Faixa impacto saldo + status municipal (abas até Censo) | `AnalyticsTabImpactBuilder` |
+| DONE-04 | Export PDF Serventec (fila + permissões) | Job `afterResponse` |
+| DONE-05 | Financiamentos: consultas públicas + modal condições | FNDE/Transparência |
+| DONE-06 | Censo: meta ano anterior, turmas/mat./enturmações | `WorkDoneRepository` |
+| DONE-07 | RBAC municipal + gestão utilizadores activar/desactivar | maio/2026 |
+
+---
+
+## Como adicionar um item
+
+```markdown
+| NOVO-XX | P? | Descrição curta | Pendente | Origem (issue, reunião, doc) |
+```
+
+1. Inserir na secção correcta (A–E).
+2. Se for decisão de desenho, documentar em [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
+3. Ao concluir, mover linha para **F** e actualizar [STATUS_PROJETO.md](STATUS_PROJETO.md).
+
+---
+
+*Índice: [README.md](README.md).*

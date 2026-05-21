@@ -967,6 +967,9 @@ return [
             '1'
         ))))),
         'default_minutes_per_record' => max(0.5, (float) env('IEDUCAR_WORK_MINUTES_PER_RECORD', 3.5)),
+        'minutes_per_turma' => max(1.0, (float) env('IEDUCAR_WORK_MINUTES_PER_TURMA', 8)),
+        'minutes_per_matricula' => max(0.5, (float) env('IEDUCAR_WORK_MINUTES_PER_MATRICULA', 3.5)),
+        'minutes_per_enturmacao' => max(0.5, (float) env('IEDUCAR_WORK_MINUTES_PER_ENTURMACAO', 2.5)),
         'working_hours_per_day' => max(1, (float) env('IEDUCAR_WORK_HOURS_PER_DAY', 6)),
         'periods_days' => [
             'day' => 1,
@@ -1008,13 +1011,15 @@ return [
         'job_timeout' => max(60, (int) env('ADMIN_SYNC_JOB_TIMEOUT', 3600)),
         'tries' => max(1, (int) env('ADMIN_SYNC_TRIES', 1)),
         /*
-         * Processamento via `php artisan schedule:run` (cron cada minuto).
+         * Processamento via `php artisan schedule:run` (cron a cada SCHEDULE_RUN_INTERVAL_MINUTES).
+         * Por defeito a fila admin-sync corre de hora em hora; Pulse corre na mesma cadência do cron (ex. 3 min).
          * Desactive se usar `admin-sync:work` contínuo em Supervisor.
          */
         'schedule' => [
             'enabled' => filter_var(env('ADMIN_SYNC_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
-            'max_seconds' => max(10, (int) env('ADMIN_SYNC_SCHEDULE_MAX_SECONDS', 55)),
-            'overlap_minutes' => max(1, (int) env('ADMIN_SYNC_SCHEDULE_OVERLAP_MINUTES', 120)),
+            'interval_minutes' => max(1, (int) env('ADMIN_SYNC_SCHEDULE_INTERVAL_MINUTES', 60)),
+            'max_seconds' => max(10, (int) env('ADMIN_SYNC_SCHEDULE_MAX_SECONDS', 3300)),
+            'overlap_minutes' => max(1, (int) env('ADMIN_SYNC_SCHEDULE_OVERLAP_MINUTES', 65)),
         ],
     ],
 

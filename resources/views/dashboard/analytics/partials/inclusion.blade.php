@@ -1,4 +1,4 @@
-@props(['inclusionData', 'chartExportContext' => []])
+@props(['inclusionData', 'chartExportContext' => [], 'municipalityContext' => null, 'yearFilterReady' => true])
 
 @php
     $methodology = $inclusionData['methodology'] ?? [];
@@ -33,12 +33,14 @@
 @endphp
 
 <div class="space-y-6">
+    @include('dashboard.analytics.partials.tab-impact-strip', [
+        'tab' => 'inclusion',
+        'yearFilterReady' => $yearFilterReady,
+        'municipalityContext' => $municipalityContext,
+        'tabData' => ['inclusionData' => $inclusionData],
+    ])
     <div class="rounded-lg border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-3">
-        <h2 class="text-sm font-semibold text-indigo-900 dark:text-indigo-100">{{ __('Inclusão & Diversidade') }}</h2>
-        <p class="text-sm text-gray-700 dark:text-gray-300 mt-1 leading-relaxed">
-            {{ __('Indicadores para acompanhar educação especial, equidade por etapa e cor ou raça, com o mesmo denominador de matrículas ativas sujeitas aos filtros (turma). Os dados refletem o registo na base escolar; para critérios oficiais do Censo ou do VAAR utilize os relatórios do INEP/MEC.') }}
-        </p>
-        <p class="mt-2 text-xs text-teal-800/90 dark:text-teal-200/90">
+        <p class="text-xs text-teal-800/90 dark:text-teal-200/90">
             {{ __('Consultoria municipal:') }}
             <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Serventec') }}</button>
             ·

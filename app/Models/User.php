@@ -92,6 +92,12 @@ class User extends Authenticatable
         return $this->is_active && $this->isAdmin();
     }
 
+    /** Relatório PDF completo (aba Serventec): administrador e utilizador da plataforma. */
+    public function canExportAnalyticsPdf(): bool
+    {
+        return $this->is_active && ($this->isAdmin() || $this->isUtilizador());
+    }
+
     /**
      * Rota de destino após login ou clique no logótipo.
      */

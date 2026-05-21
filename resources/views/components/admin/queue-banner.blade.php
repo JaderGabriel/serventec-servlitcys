@@ -15,8 +15,11 @@
             @if (! $compact)
                 <p class="mt-1.5 text-xs text-indigo-800/80 dark:text-indigo-300/80">
                     @if (config('ieducar.admin_sync.schedule.enabled', true))
-                        {{ __('Cron:') }} <span class="font-mono">php artisan schedule:run</span>
-                        {{ __('(cada minuto) processa a fila automaticamente.') }}
+                        {{ __('Cron:') }} <span class="font-mono">*/{{ config('schedule.runner_interval_minutes', 3) }} * * * * php artisan schedule:run</span>
+                        {{ __('— fila admin-sync de :h em :h h; Pulse a cada :p min.', [
+                            'h' => (int) ceil((int) config('ieducar.admin_sync.schedule.interval_minutes', 60) / 60),
+                            'p' => (string) config('pulse.schedule.interval_minutes', 3),
+                        ]) }}
                     @else
                         <span class="font-mono">php artisan admin-sync:work</span>
                     @endif

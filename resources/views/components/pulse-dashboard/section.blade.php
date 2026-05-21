@@ -49,9 +49,9 @@
     $path = $icons[$icon] ?? $icons['rectangle-group'];
 @endphp
 
-<div {{ $attributes->merge(['class' => 'pulse-dashboard-theme default:col-span-full pt-8 first:pt-0 sm:pt-9 sm:first:pt-0']) }}>
-    {{-- Mesmo padding horizontal que <x-pulse::card> (p-3 sm:p-6) para alinhar títulos com os cartões de dados. --}}
-    <div class="flex items-stretch gap-3 rounded-xl border border-slate-200/70 p-3 sm:gap-3 sm:p-5 {{ $cardClass }}">
+<div {{ $attributes->merge(['class' => 'pulse-dashboard-theme col-span-full w-full max-w-full min-w-0 pt-6 first:pt-0 sm:pt-8 sm:first:pt-0']) }}>
+    {{-- Largura e padding alinhados aos cartões Pulse (p-3 sm:p-6). --}}
+    <div class="flex w-full max-w-full items-stretch gap-3 rounded-xl border border-slate-200/70 p-3 sm:gap-3 sm:p-5 {{ $cardClass }}">
         <div class="w-1.5 shrink-0 rounded-full {{ $barClass }}" aria-hidden="true"></div>
         <div class="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
             <div class="shrink-0 rounded-xl bg-white/70 p-2 shadow-sm ring-1 ring-white/60 dark:bg-black/25 dark:ring-white/10">

@@ -1,4 +1,4 @@
-@props(['otherFundingData', 'yearFilterReady' => false, 'chartExportContext' => []])
+@props(['otherFundingData', 'yearFilterReady' => false, 'chartExportContext' => [], 'municipalityContext' => null])
 
 @php
     $d = is_array($otherFundingData) ? $otherFundingData : [];
@@ -27,19 +27,15 @@
             {{ __('Seleccione o ano letivo e aplique os filtros para consultar demais financiamentos.') }}
         </p>
     @else
-        <div class="rounded-lg border border-teal-200 dark:border-teal-800 bg-teal-50/70 dark:bg-teal-950/25 px-4 py-3 text-sm text-teal-950 dark:text-teal-100 space-y-2">
-            <p class="font-semibold">{{ __('Financiamentos — programas complementares') }}</p>
-            <p class="leading-relaxed">{{ $d['intro'] ?? '' }}</p>
-            <p class="text-xs text-teal-800/90 dark:text-teal-300/90">
-                {{ $d['city_name'] ?? '' }}
-                @if (filled($d['year_label'] ?? null))
-                    — {{ $d['year_label'] }}
-                @endif
-                @if (($d['total_matriculas'] ?? null) !== null)
-                    · {{ number_format((int) $d['total_matriculas'], 0, ',', '.') }} {{ __('matrículas no filtro') }}
-                @endif
-            </p>
-        </div>
+        @include('dashboard.analytics.partials.tab-impact-strip', [
+            'tab' => 'other_funding',
+            'yearFilterReady' => $yearFilterReady,
+            'municipalityContext' => $municipalityContext,
+            'tabData' => ['otherFundingData' => $otherFundingData],
+        ])
+        @if (filled($d['intro'] ?? null))
+            <p class="text-xs text-teal-800/90 dark:text-teal-300/90 border border-teal-200/60 dark:border-teal-800/50 rounded-md px-3 py-2 leading-relaxed">{{ $d['intro'] }}</p>
+        @endif
 
         <p class="text-xs text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 leading-relaxed">
             {{ $d['footnote'] ?? '' }}

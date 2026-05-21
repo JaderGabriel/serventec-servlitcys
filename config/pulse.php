@@ -116,13 +116,12 @@ return [
     |
     | Em `bootstrap/app.php` há duas tarefas: `pulse-scheduled-check` (`pulse:check --once`)
     | e `pulse-scheduled-work` (`pulse:work --stop-when-empty`), cada uma com o seu mutex.
-    | Configure o cron do servidor para correr **cada minuto**, por exemplo:
-    | `* * * * * cd /caminho/para/a/app && php artisan schedule:run >> /dev/null 2>&1`
-    | Assim `pulse:check --once` e (opcionalmente) `pulse:work --stop-when-empty`
-    | executam de forma fiável. Nunca agende `pulse:check` sem `--once` no cron.
+    | Configure o cron do servidor alinhado a `SCHEDULE_RUN_INTERVAL_MINUTES` (defeito 3), por exemplo
+    | a cada 3 minutos: `cd /caminho/para/a/app && php artisan schedule:run >> /dev/null 2>&1`
+    | Nunca agende `pulse:check` sem `--once` directamente no cron.
     |
-    | `interval_minutes` define sobretudo a janela “servidor online” na UI (cartão
-    | Servers / faixa de estado), não o intervalo do agendador.
+    | `interval_minutes` define a cadência do Pulse no scheduler e a janela “servidor online”
+    | na UI (cartão Servers / faixa de estado). Alinhe com `SCHEDULE_RUN_INTERVAL_MINUTES`.
     |
     | Desative `run_digest_tick` se já tiver `pulse:work` contínuo em Supervisor.
     |
@@ -130,7 +129,7 @@ return [
 
     'schedule' => [
         'enabled' => env('PULSE_SCHEDULE_ENABLED', true),
-        'interval_minutes' => max(1, min(59, (int) env('PULSE_SCHEDULE_INTERVAL_MINUTES', 5))),
+        'interval_minutes' => max(1, min(59, (int) env('PULSE_SCHEDULE_INTERVAL_MINUTES', 3))),
         'run_digest_tick' => env('PULSE_SCHEDULE_DIGEST_TICK', true),
     ],
 

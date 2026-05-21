@@ -20,8 +20,13 @@
             <div class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 text-sm space-y-2">
                 @if (config('ieducar.admin_sync.schedule.enabled', true))
                     <p class="font-medium text-gray-900 dark:text-gray-100">{{ __('Agendador (recomendado)') }}</p>
-                    <code class="block text-xs text-gray-600 dark:text-gray-400">* * * * * php artisan schedule:run</code>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('A cada minuto processa jobs pendentes (até :s s por execução).', ['s' => (string) config('ieducar.admin_sync.schedule.max_seconds', 55)]) }}</p>
+                    <code class="block text-xs text-gray-600 dark:text-gray-400">*/{{ config('schedule.runner_interval_minutes', 3) }} * * * * php artisan schedule:run</code>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('O scheduler corre a cada :run min; a fila admin-sync processa de :sync em :sync min (até :s s por execução). Pulse na mesma cadência (:pulse min).', [
+                        'run' => (string) config('schedule.runner_interval_minutes', 3),
+                        'sync' => (string) config('ieducar.admin_sync.schedule.interval_minutes', 60),
+                        's' => (string) config('ieducar.admin_sync.schedule.max_seconds', 3300),
+                        'pulse' => (string) config('pulse.schedule.interval_minutes', 3),
+                    ]) }}</p>
                 @else
                     <p class="font-medium text-gray-900 dark:text-gray-100">{{ __('Worker manual / Supervisor') }}</p>
                     <code class="block text-xs text-gray-600 dark:text-gray-400">php artisan admin-sync:work</code>

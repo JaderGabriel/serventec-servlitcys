@@ -13,6 +13,8 @@ final class DiscrepanciesCheckCatalog
      * @return array{
      *   conditions: list<array<string, mixed>>,
      *   pillars: list<array<string, mixed>>,
+     *   complementary_programs: list<array<string, mixed>>,
+     *   public_repasses: list<array<string, mixed>>,
      *   vaa_label: string,
      *   aviso: string
      * }
@@ -43,8 +45,169 @@ final class DiscrepanciesCheckCatalog
         return [
             'conditions' => $conditions,
             'pillars' => DiscrepanciesFundingImpact::fundingPillars(),
+            'complementary_programs' => self::complementaryProgramsForModal(),
+            'public_repasses' => self::publicRepassesForModal(),
             'vaa_label' => DiscrepanciesFundingImpact::formatBrl($vaa),
             'aviso' => (string) config('ieducar.discrepancies.aviso_financeiro', ''),
+        ];
+    }
+
+    /**
+     * Programas complementares ao FUNDEB (PNAE, PNATE, PDDE, etc.) — texto pedagógico do modal.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function complementaryProgramsForModal(): array
+    {
+        $extras = self::complementaryProgramPedagogy();
+        $config = config('ieducar.other_funding.programs', []);
+        if (! is_array($config)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($config as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            $id = (string) ($item['id'] ?? '');
+            $extra = is_array($extras[$id] ?? null) ? $extras[$id] : [];
+            $out[] = [
+                'id' => $id,
+                'titulo' => (string) ($item['titulo'] ?? $id),
+                'descricao' => (string) ($item['descricao'] ?? ''),
+                'explanation' => (string) ($extra['explanation'] ?? $item['descricao'] ?? ''),
+                'impact' => (string) ($extra['impact'] ?? ''),
+                'correction' => (string) ($extra['correction'] ?? ''),
+                'cadastro_ligacao' => (string) ($extra['cadastro_ligacao'] ?? ''),
+                'repasse_fonte' => (string) ($extra['repasse_fonte'] ?? 'FNDE'),
+                'fnde_url' => (string) ($item['fnde_url'] ?? ''),
+                'related_checks' => is_array($extra['related_checks'] ?? null) ? $extra['related_checks'] : [],
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Repasses e consultas públicas referenciadas no painel (informativo).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function publicRepassesForModal(): array
+    {
+        return [
+            [
+                'id' => 'fnde-fundeb',
+                'titulo' => __('FUNDEB — financiamento básico'),
+                'descricao' => __(
+                    'Principal fonte por aluno/ano (VAAF). Depende de matrículas válidas no Censo. Complementação VAAR/VAAT exige condicionalidades (inclusão, equidade, indicadores).'
+                ),
+                'onde' => __('Abas FUNDEB, Serventec, Discrepâncias; import FNDE no admin.'),
+            ],
+            [
+                'id' => 'tesouro',
+                'titulo' => __('Tesouro Transparente — transferências'),
+                'descricao' => __(
+                    'Repasses constitucionais e obrigatórios da União ao município (podem incluir parcelas de educação). O painel amostra registos filtrados por IBGE — não substitui o portal oficial.'
+                ),
+                'onde' => __('Aba Financiamentos — consulta automática CKAN.'),
+            ],
+            [
+                'id' => 'portal-transparencia',
+                'titulo' => __('Portal da Transparência — despesas federais'),
+                'descricao' => __(
+                    'Despesas e transferências com órgãos federais no município. Requer chave de API. Útil para cruzar execução com programas FNDE (PNAE, PNATE, etc.).'
+                ),
+                'onde' => __('Aba Financiamentos — requer PORTAL_TRANSPARENCIA_API_KEY.'),
+            ],
+            [
+                'id' => 'simec',
+                'titulo' => __('Simec / VAAR — comprovação'),
+                'descricao' => __(
+                    'Não há API pública: gestor municipal comprova condicionalidades no Simec. Cadastro incompleto no i-Educar antecipa diligências e risco de perda de complementação.'
+                ),
+                'onde' => __('Links na aba Serventec e Financiamentos; sem leitura automática.'),
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{explanation: string, impact: string, correction: string, cadastro_ligacao: string, repasse_fonte: string, related_checks: list<string>}>
+     */
+    private static function complementaryProgramPedagogy(): array
+    {
+        return [
+            'pnate' => [
+                'explanation' => __(
+                    'O PNATE financia transporte escolar. O FNDE e o Censo usam o cadastro de utilização de transporte nas matrículas e a oferta de rotas/turmas. Campos vazios ou incoerentes impedem planeamento e podem gerar glosa na prestação de contas.'
+                ),
+                'impact' => __(
+                    'Subnotificação de alunos elegíveis → subdimensionamento de repasse de transporte; inconsistência com Censo pode bloquear contagem de alunos transportados.'
+                ),
+                'correction' => __(
+                    'Preencher transporte escolar nas matrículas; validar rotas e frota no processo municipal; alinhar com exportação Educacenso.'
+                ),
+                'cadastro_ligacao' => __('Matrícula: transporte_escolar, uso_transporte_escolar (quando existirem na base).'),
+                'repasse_fonte' => 'FNDE / PNATE',
+                'related_checks' => ['escola_sem_geo', 'matricula_situacao_invalida'],
+            ],
+            'pnae' => [
+                'explanation' => __(
+                    'O PNAE financia alimentação escolar. A elegibilidade depende de matrículas activas e, em muitos municípios, de campos de alimentação ou tipo de atendimento no i-Educar e no Censo.'
+                ),
+                'impact' => __(
+                    'Alunos sem vínculo de alimentação no cadastro podem ficar fora do planeamento de merenda; risco de questionamento em auditoria do FNDE e custos municipais não reembolsados.'
+                ),
+                'correction' => __(
+                    'Actualizar campos de alimentação/atendimento nas matrículas; conferir cardápio e prestação de contas no FNDE (fora do i-Educar).'
+                ),
+                'cadastro_ligacao' => __('Matrícula: alimentacao_escolar, tipo_atendimento (detecção automática por coluna).'),
+                'repasse_fonte' => 'FNDE / PNAE',
+                'related_checks' => ['sem_data_nascimento', 'matricula_duplicada'],
+            ],
+            'pdde' => [
+                'explanation' => __(
+                    'O PDDE repassa recursos directamente às escolas (custeio e capital). Exige escola com código INEP válido, situação activa e matrículas consistentes no Censo.'
+                ),
+                'impact' => __(
+                    'Escola sem INEP ou com matrículas inválidas pode não receber PDDE ou ter prestação de contas rejeitada; afecta autonomia financeira da unidade.'
+                ),
+                'correction' => __(
+                    'Regularizar INEP e situação da escola; corrigir matrículas antes do fecho do Censo; prestação de contas no Simec/FNDE.'
+                ),
+                'cadastro_ligacao' => __('Escola INEP + matrículas activas (rotinas escola_sem_inep, matricula_situacao_invalida).'),
+                'repasse_fonte' => 'FNDE / PDDE',
+                'related_checks' => ['escola_sem_inep', 'escola_inativa_matricula', 'matricula_duplicada'],
+            ],
+            'pdde-qualidade' => [
+                'explanation' => __(
+                    'O PDDE Qualidade complementa o PDDE para acções prioritárias de qualidade. A comprovação passa pelo Simec/FNDE e pressupõe o mesmo cadastro escolar/matrícula fiável do PDDE base.'
+                ),
+                'impact' => __(
+                    'Indicadores e planos de acção incoerentes com o cadastro municipal podem impedir liberação ou gerar devolução de recursos.'
+                ),
+                'correction' => __(
+                    'Alinhar plano da escola ao cadastro i-Educar; corrigir pendências de INEP e matrícula antes de solicitar recursos.'
+                ),
+                'cadastro_ligacao' => __('Mesmas exigências do PDDE + indicadores pedagógicos (aba Desempenho quando disponível).'),
+                'repasse_fonte' => 'FNDE / PDDE Qualidade',
+                'related_checks' => ['escola_sem_inep', 'distorcao_idade_serie'],
+            ],
+            'salario-educacao' => [
+                'explanation' => __(
+                    'O Salário-educação financia a educação básica via contribuição social. Não depende de campos específicos no i-Educar, mas o volume de matrículas válidas no Censo influencia a distribuição entre entes.'
+                ),
+                'impact' => __(
+                    'Matrículas não declaradas ou duplicadas no Censo reduzem a base de distribuição per capita e a credibilidade da rede perante o FNDE.'
+                ),
+                'correction' => __(
+                    'Priorizar cadastro completo e Censo exportado; corrigir duplicidades e situação «em curso» das matrículas.'
+                ),
+                'cadastro_ligacao' => __('Todas as rotinas de matrícula válida no Censo (FUNDEB base).'),
+                'repasse_fonte' => __('Contribuição social / FNDE'),
+                'related_checks' => ['matricula_duplicada', 'sem_raca', 'sem_sexo'],
+            ],
         ];
     }
 

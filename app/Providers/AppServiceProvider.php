@@ -13,9 +13,11 @@ use App\Livewire\Pulse\QueueAndFailuresCard;
 use App\Livewire\Pulse\RedisOverviewCard;
 use App\Livewire\Pulse\ServerStatusStrip;
 use App\Livewire\Pulse\SyncAdminPulseCard;
+use App\Models\AnalyticsReportExport;
 use App\Models\City;
 use App\Models\User;
 use App\Observers\CityFundebSyncObserver;
+use App\Policies\AnalyticsReportExportPolicy;
 use App\Policies\CityPolicy;
 use App\Policies\UserPolicy;
 use App\Services\MailConfigService;
@@ -49,6 +51,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(City::class, CityPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(AnalyticsReportExport::class, AnalyticsReportExportPolicy::class);
 
         City::observe(CityFundebSyncObserver::class);
 

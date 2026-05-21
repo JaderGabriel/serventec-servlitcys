@@ -1,39 +1,39 @@
-{{-- Barra superior do Pulse: uma linha — logo/links à esquerda; período, tema e utilizador à direita. --}}
+{{-- Barra superior do Pulse: logo/links à esquerda; período, tema e utilizador à direita (grelha alinhada). --}}
 <nav class="border-b border-indigo-200/60 bg-gradient-to-r from-white via-indigo-50/40 to-white shadow-sm dark:border-indigo-900/50 dark:from-gray-800 dark:via-indigo-950/35 dark:to-gray-800">
     <div class="mx-auto max-w-[min(100%,100rem)] px-4 sm:px-6 lg:px-10 xl:px-12">
-        <div class="flex min-h-14 flex-nowrap items-center justify-between gap-x-4 py-3 sm:min-h-16 sm:py-4">
-            <div class="flex min-w-0 flex-1 flex-nowrap items-center gap-x-4 overflow-x-auto sm:gap-x-6 [scrollbar-width:thin]">
+        <div class="pulse-nav-shell min-h-14 py-3 sm:min-h-16 sm:py-4">
+            <div class="pulse-nav-primary">
                 <a href="{{ Auth::user()->homeUrl() }}" class="flex shrink-0 items-center gap-2 group" title="{{ config('app.name') }}">
                     <x-application-logo class="block h-9 w-[3.25rem] shrink-0 text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition" />
                 </a>
-                <div class="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-2">
+                <div class="pulse-nav-links">
                     @if (Auth::user()->canViewAdminDashboard())
-                        <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition {{ request()->routeIs('dashboard') ? 'ring-2 ring-indigo-500' : '' }}">
+                        <a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition {{ request()->routeIs('dashboard') ? 'ring-2 ring-indigo-500' : '' }}">
                             {{ __('Painel') }}
                         </a>
                     @endif
-                    <a href="{{ route('dashboard.analytics') }}" class="inline-flex items-center justify-center px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition {{ request()->routeIs('dashboard.analytics') ? 'ring-2 ring-indigo-500' : '' }}">
+                    <a href="{{ route('dashboard.analytics') }}" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition {{ request()->routeIs('dashboard.analytics') ? 'ring-2 ring-indigo-500' : '' }}">
                         {{ __('Análise') }}
                     </a>
                     @if (Auth::user()->isAdmin())
-                        <a href="{{ route('cities.index') }}" class="inline-flex items-center justify-center px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition {{ request()->routeIs('cities.*') ? 'ring-2 ring-indigo-500' : '' }}">
+                        <a href="{{ route('cities.index') }}" class="inline-flex items-center justify-center whitespace-nowrap px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition {{ request()->routeIs('cities.*') ? 'ring-2 ring-indigo-500' : '' }}">
                             {{ __('Cidades') }}
                         </a>
                     @endif
                 </div>
             </div>
 
-            <div class="flex shrink-0 items-center justify-end gap-3 ps-1 sm:gap-4 sm:ps-2">
-                <div class="flex items-center gap-3 sm:gap-4">
+            <div class="pulse-nav-actions">
+                <div class="flex flex-nowrap items-center gap-2 sm:gap-3">
                     <livewire:pulse.period-selector />
                     <x-pulse::theme-switcher />
                 </div>
-                <div class="flex items-center gap-2 border-s border-gray-200 dark:border-gray-600 ps-3 sm:ps-4">
+                <div class="pulse-nav-user">
                     <x-notification-bell />
-                    <x-dropdown align="right" width="w-64">
+                    <x-dropdown align="right" width="w-64" class="shrink-0">
                         <x-slot name="trigger">
-                            <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
-                                <span class="truncate max-w-[10rem] sm:max-w-xs">{{ Auth::user()->name }}</span>
+                            <button type="button" class="inline-flex max-w-full items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                                <span class="truncate max-w-[8rem] sm:max-w-[10rem] lg:max-w-xs">{{ Auth::user()->name }}</span>
                                 <div class="ms-1 shrink-0">
                                     <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />

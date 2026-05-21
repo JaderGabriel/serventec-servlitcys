@@ -22,6 +22,8 @@ class AnalyticsReportExportController extends Controller
             'city_id' => ['required', 'integer'],
         ]);
 
+        $this->authorize('create', AnalyticsReportExport::class);
+
         $city = UserCityAccess::citiesQuery($request->user())
             ->whereKey($request->integer('city_id'))
             ->firstOrFail();

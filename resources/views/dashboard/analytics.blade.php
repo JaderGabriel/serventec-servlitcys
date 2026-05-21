@@ -1,30 +1,39 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Análise educacional') }}
-            </h2>
+            <div>
+                <p class="serv-eyebrow">{{ __('Consultoria educacional') }}</p>
+                <h2 class="font-display font-semibold text-xl text-serv-navy dark:text-white leading-tight">
+                    @if (Auth::user()->isMunicipal())
+                        {{ __('Painel do município') }}
+                    @elseif (Auth::user()->canViewAdminDashboard())
+                        {{ __('Consultoria municipal') }}
+                    @else
+                        {{ __('Análise por município') }}
+                    @endif
+                </h2>
+            </div>
             @if (Auth::user()->canViewAdminDashboard())
-                <a href="{{ route('dashboard') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('← Painel geral') }}</a>
+                <a href="{{ route('dashboard') }}" class="serv-link text-sm">{{ __('← Administração') }}</a>
             @endif
         </div>
     </x-slot>
 
     <div class="py-8">
         <div class="max-w-[1600px] mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="rounded-lg border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/80 dark:bg-indigo-950/30 px-4 py-3 text-sm text-indigo-900 dark:text-indigo-100">
-                <p class="font-medium">{{ __('O que este painel pesquisa') }}</p>
-                <p class="mt-1 text-indigo-800/90 dark:text-indigo-200/90 leading-relaxed">
-                    {{ __('Os dados vêm da base do iEducar do município seleccionado. Os filtros restringem ano letivo, escola, tipo ou segmento de curso e turno. Cada gráfico pode ser exportado em PNG (fundo branco, legenda e cabeçalho com cidade e filtros).') }}
+            <div class="serv-panel serv-panel--info px-4 py-3 text-sm">
+                <p class="font-medium text-serv-navy dark:text-teal-100">{{ __('Foco no município seleccionado') }}</p>
+                <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">
+                    {{ __('Indicadores e valores indicativos de saldo usam o cadastro i-Educar do município e os filtros aplicados. Comece pelo Diagnóstico ou FUNDEB; use Discrepâncias para corrigir cadastro com impacto em repasses.') }}
                 </p>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
-                <x-input-label for="analytics_city" :value="__('Cidade (cadastro ativo com banco de dados)')" />
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Só aparecem cidades ativas e com credenciais de banco completas. A escolha define a qual base o iEducar será consultado.') }}</p>
+            <div class="serv-panel p-6">
+                <x-input-label for="analytics_city" :value="__('Município')" />
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Seleccione o município cuja base i-Educar será analisada (cadastro activo com ligação à base).') }}</p>
                 <form method="get" action="{{ route('dashboard.analytics') }}" class="mt-2 flex flex-col sm:flex-row gap-4 sm:items-end">
                     <div class="flex-1 max-w-xl">
-                        <select id="analytics_city" name="city_id" class="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" onchange="this.form.submit()">
+                        <select id="analytics_city" name="city_id" class="block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 shadow-sm focus:border-teal-600 focus:ring-teal-600" onchange="this.form.submit()">
                             <option value="">{{ __('— Selecione uma cidade —') }}</option>
                             @foreach ($cities as $c)
                                 <option value="{{ $c->id }}" @selected((string) ($selectedCity?->id) === (string) $c->id)>{{ $c->name }} ({{ $c->uf }}) — {{ $c->dataDriver() === 'pgsql' ? __('PostgreSQL') : __('MySQL') }}</option>
@@ -50,6 +59,12 @@
                     x-on:set-analytics-tab.window="if ($event.detail && @js(array_keys($tabs)).includes($event.detail)) { tab = $event.detail; afterTabChange(); }"
                     class="space-y-6"
                 >
+                    <x-dashboard.consultoria-municipality-strip
+                        :city="$selectedCity"
+                        :filters="$filters"
+                        :yearFilterReady="$yearFilterReady"
+                    />
+
                     <x-dashboard.ieducar-filter-bar
                         :city="$selectedCity"
                         :filters="$filters"
@@ -102,36 +117,17 @@
                         <x-dashboard.funding-loss-conditions-modal :data="$fundingLossModalData ?? []" />
                     @endif
 
-                    <div
-                        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-x-hidden overflow-y-visible"
-                    >
-                        <div class="border-b border-gray-200 dark:border-gray-700 px-4 pt-4 bg-gray-50 dark:bg-gray-900/40">
-                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">{{ __('Áreas de análise (estilo Power BI / iEducar)') }}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Cada aba agrupa visualizações diferentes. Os números respeitam os filtros acima (quando aplicável ao repositório).') }}</p>
-                            <nav class="flex flex-wrap gap-1 -mb-px" role="tablist">
-                                @foreach ($tabs as $key => $label)
-                                    <button
-                                        type="button"
-                                        role="tab"
-                                        @click="tab = '{{ $key }}'"
-                                        :class="tab === '{{ $key }}'
-                                            ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-gray-800'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
-                                        class="px-4 py-2.5 text-sm font-medium border-b-2 rounded-t-md transition"
-                                    >
-                                        {{ $label }}
-                                    </button>
-                                @endforeach
-                            </nav>
-                        </div>
+                    <div class="serv-panel overflow-x-hidden overflow-y-visible">
+                        <x-dashboard.analytics-tabs-nav :groups="$tabGroups ?? []" :tabs="$tabs" />
 
-                        <div class="p-4 sm:p-6 min-h-[min(38rem,88vh)] relative min-w-0">
+                        <div class="p-4 sm:p-6 min-h-[min(38rem,88vh)] relative min-w-0 bg-white/50 dark:bg-slate-900/30">
                             <div x-show="tab === 'overview'" x-cloak class="analytics-tab-panel">
                                 @include('dashboard.analytics.partials.overview', [
                                     'overviewData' => $overviewData,
                                     'schoolUnits' => $schoolUnitsData,
                                     'yearFilterReady' => $yearFilterReady,
                                     'chartExportContext' => $chartExportContext,
+                                    'municipalityContext' => $municipalityContext ?? null,
                                 ])
                             </div>
                             <div x-show="tab === 'enrollment'" x-cloak class="analytics-tab-panel">
@@ -139,6 +135,8 @@
                                     @include('dashboard.analytics.partials.enrollment', [
                                         'enrollmentData' => $enrollmentData,
                                         'chartExportContext' => $chartExportContext,
+                                        'municipalityContext' => $municipalityContext ?? null,
+                                        'yearFilterReady' => $yearFilterReady,
                                     ])
                                 @else
                                     <div class="relative min-h-[12rem]" x-ref="panelEnrollment">
@@ -153,6 +151,7 @@
                                     'schoolUnitsData' => $schoolUnitsData,
                                     'yearFilterReady' => $yearFilterReady,
                                     'chartExportContext' => $chartExportContext,
+                                    'municipalityContext' => $municipalityContext ?? null,
                                 ])
                             </div>
                             <div x-show="tab === 'network'" x-cloak class="analytics-tab-panel">
@@ -160,6 +159,8 @@
                                     @include('dashboard.analytics.partials.network', [
                                         'networkData' => $networkData,
                                         'chartExportContext' => $chartExportContext,
+                                        'municipalityContext' => $municipalityContext ?? null,
+                                        'yearFilterReady' => $yearFilterReady,
                                     ])
                                 @else
                                     <div class="relative min-h-[12rem]" x-ref="panelNetwork">
@@ -174,6 +175,8 @@
                                     @include('dashboard.analytics.partials.inclusion', [
                                         'inclusionData' => $inclusionData,
                                         'chartExportContext' => $chartExportContext,
+                                        'municipalityContext' => $municipalityContext ?? null,
+                                        'yearFilterReady' => $yearFilterReady,
                                     ])
                                 @else
                                     <div class="relative min-h-[12rem]" x-ref="panelInclusion">
@@ -188,6 +191,8 @@
                                     @include('dashboard.analytics.partials.performance', [
                                         'performanceData' => $performanceData,
                                         'chartExportContext' => $chartExportContext,
+                                        'municipalityContext' => $municipalityContext ?? null,
+                                        'yearFilterReady' => $yearFilterReady,
                                     ])
                                 @else
                                     <div class="relative min-h-[12rem]" x-ref="panelPerformance">
@@ -202,6 +207,8 @@
                                     @include('dashboard.analytics.partials.attendance', [
                                         'attendanceData' => $attendanceData,
                                         'chartExportContext' => $chartExportContext,
+                                        'municipalityContext' => $municipalityContext ?? null,
+                                        'yearFilterReady' => $yearFilterReady,
                                     ])
                                 @else
                                     <div class="relative min-h-[12rem]" x-ref="panelAttendance">
@@ -217,6 +224,7 @@
                                         'fundebData' => $fundebData,
                                         'yearFilterReady' => $yearFilterReady,
                                         'chartExportContext' => $chartExportContext,
+                                        'municipalityContext' => $municipalityContext ?? null,
                                     ])
                                 @else
                                     <div class="relative min-h-[12rem]" x-ref="panelFundeb">
@@ -232,6 +240,7 @@
                                         'otherFundingData' => $otherFundingData,
                                         'yearFilterReady' => $yearFilterReady,
                                         'chartExportContext' => $chartExportContext,
+                                        'municipalityContext' => $municipalityContext ?? null,
                                     ])
                                 @else
                                     <div class="relative min-h-[12rem]" x-ref="panelOtherFunding" data-analytics-tab-ssr="other_funding">
@@ -239,6 +248,7 @@
                                             'otherFundingData' => $otherFundingData,
                                             'yearFilterReady' => $yearFilterReady,
                                             'chartExportContext' => $chartExportContext,
+                                            'municipalityContext' => $municipalityContext ?? null,
                                         ])
                                     </div>
                                 @endif
@@ -249,6 +259,7 @@
                                         'workDoneData' => $workDoneData,
                                         'yearFilterReady' => $yearFilterReady,
                                         'chartExportContext' => $chartExportContext,
+                                        'municipalityContext' => $municipalityContext ?? null,
                                     ])
                                 @else
                                     <div class="relative min-h-[12rem]" x-ref="panelWorkDone" data-analytics-tab-ssr="work_done">
@@ -256,6 +267,7 @@
                                             'workDoneData' => $workDoneData,
                                             'yearFilterReady' => $yearFilterReady,
                                             'chartExportContext' => $chartExportContext,
+                                            'municipalityContext' => $municipalityContext ?? null,
                                         ])
                                     </div>
                                 @endif
