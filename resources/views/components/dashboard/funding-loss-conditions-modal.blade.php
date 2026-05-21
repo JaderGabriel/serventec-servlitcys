@@ -108,7 +108,7 @@
             </section>
 
             <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed border-t border-gray-200 dark:border-gray-700 pt-3">
-                {{ __('A aba «Diagnóstico Geral» resume o detectado na base; «Discrepâncias e Erros» detalha por escola no filtro actual.') }}
+                {{ __('A aba «Serventec» resume o detectado na base; «Discrepâncias e Erros» detalha por escola no filtro actual.') }}
             </p>
         </div>
 

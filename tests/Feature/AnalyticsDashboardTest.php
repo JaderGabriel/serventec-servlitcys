@@ -58,8 +58,9 @@ class AnalyticsDashboardTest extends TestCase
         $this->actingAs($user)
             ->get(route('dashboard.analytics'))
             ->assertOk()
-            ->assertSee(__('Demais financiamentos'), false)
-            ->assertSee(__('Trabalho realizado'), false);
+            ->assertSee(__('Financiamos'), false)
+            ->assertSee(__('Censo'), false)
+            ->assertSee(__('Serventec'), false);
     }
 
     public function test_municipal_analytics_auto_selects_single_linked_city(): void

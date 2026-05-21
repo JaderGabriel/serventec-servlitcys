@@ -2,26 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\City;
-use App\Support\Auth\UserCityAccess;
 use App\Repositories\Ieducar\AttendanceRepository;
-use App\Repositories\Ieducar\EnrollmentRepository;
 use App\Repositories\Ieducar\DiscrepanciesRepository;
+use App\Repositories\Ieducar\EnrollmentRepository;
 use App\Repositories\Ieducar\FundebRepository;
-use App\Repositories\Ieducar\MunicipalityHealthRepository;
-use App\Repositories\Ieducar\OtherFundingRepository;
-use App\Repositories\Ieducar\WorkDoneRepository;
-use App\Support\Ieducar\DiscrepanciesCheckCatalog;
 use App\Repositories\Ieducar\InclusionRepository;
+use App\Repositories\Ieducar\MunicipalityHealthRepository;
 use App\Repositories\Ieducar\NetworkRepository;
+use App\Repositories\Ieducar\OtherFundingRepository;
 use App\Repositories\Ieducar\OverviewRepository;
 use App\Repositories\Ieducar\PerformanceRepository;
 use App\Repositories\Ieducar\SchoolUnitsRepository;
+use App\Repositories\Ieducar\WorkDoneRepository;
 use App\Services\Ieducar\FilterOptionsService;
+use App\Support\Auth\UserCityAccess;
 use App\Support\Dashboard\AnalyticsEmptyPayloads;
 use App\Support\Dashboard\ChartExportMeta;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Ieducar\DiscrepanciesCheckCatalog;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
@@ -46,7 +46,7 @@ class AnalyticsDashboardController extends Controller
         DiscrepanciesRepository $discrepanciesRepository,
         MunicipalityHealthRepository $municipalityHealthRepository,
         SchoolUnitsRepository $schoolUnitsRepository,
-    ): View|\Illuminate\Http\RedirectResponse {
+    ): View|RedirectResponse {
         $user = $request->user();
 
         if ($user?->isMunicipal() && ! $request->filled('city_id')) {
@@ -122,38 +122,42 @@ class AnalyticsDashboardController extends Controller
                 'error' => null,
             ];
 
-        if ($yearFilterReady && $city !== null && ! $lazyTabLoading) {
-            $enrollmentData = $enrollmentRepository->sample($city, $filters);
-            $performanceData = $performanceRepository->snapshot($city, $filters);
-            $attendanceData = $attendanceRepository->snapshot($city, $filters);
-            $inclusionData = $inclusionRepository->snapshot($city, $filters);
-            $networkData = $networkRepository->snapshot($city, $filters);
-            $discrepanciesData = $discrepanciesRepository->snapshot($city, $filters);
-            $fundebData = $fundebRepository->buildReport(
-                $city,
-                $filters,
-                $overviewData,
-                $enrollmentData,
-                $performanceData,
-                $attendanceData,
-                $inclusionData,
-                $networkData,
-                $discrepanciesData,
-            );
-            $municipalityHealthData = $municipalityHealthRepository->snapshot($city, $filters);
+        $enrollmentData = AnalyticsEmptyPayloads::enrollment();
+        $performanceData = AnalyticsEmptyPayloads::performance();
+        $attendanceData = AnalyticsEmptyPayloads::attendance();
+        $inclusionData = AnalyticsEmptyPayloads::inclusion();
+        $networkData = AnalyticsEmptyPayloads::network();
+        $fundebData = AnalyticsEmptyPayloads::fundeb();
+        $otherFundingData = AnalyticsEmptyPayloads::otherFunding();
+        $workDoneData = AnalyticsEmptyPayloads::workDone();
+        $discrepanciesData = AnalyticsEmptyPayloads::discrepancies();
+        $municipalityHealthData = AnalyticsEmptyPayloads::municipalityHealth();
+
+        if ($yearFilterReady && $city !== null) {
+            // Abas leves: sempre no HTML inicial (evita painel em branco com lazy + JS desatualizado).
             $otherFundingData = $otherFundingRepository->buildReport($city, $filters);
             $workDoneData = $workDoneRepository->buildReport($city, $filters);
-        } else {
-            $enrollmentData = AnalyticsEmptyPayloads::enrollment();
-            $performanceData = AnalyticsEmptyPayloads::performance();
-            $attendanceData = AnalyticsEmptyPayloads::attendance();
-            $inclusionData = AnalyticsEmptyPayloads::inclusion();
-            $networkData = AnalyticsEmptyPayloads::network();
-            $fundebData = AnalyticsEmptyPayloads::fundeb();
-            $otherFundingData = AnalyticsEmptyPayloads::otherFunding();
-            $workDoneData = AnalyticsEmptyPayloads::workDone();
-            $discrepanciesData = AnalyticsEmptyPayloads::discrepancies();
-            $municipalityHealthData = AnalyticsEmptyPayloads::municipalityHealth();
+
+            if (! $lazyTabLoading) {
+                $enrollmentData = $enrollmentRepository->sample($city, $filters);
+                $performanceData = $performanceRepository->snapshot($city, $filters);
+                $attendanceData = $attendanceRepository->snapshot($city, $filters);
+                $inclusionData = $inclusionRepository->snapshot($city, $filters);
+                $networkData = $networkRepository->snapshot($city, $filters);
+                $discrepanciesData = $discrepanciesRepository->snapshot($city, $filters);
+                $fundebData = $fundebRepository->buildReport(
+                    $city,
+                    $filters,
+                    $overviewData,
+                    $enrollmentData,
+                    $performanceData,
+                    $attendanceData,
+                    $inclusionData,
+                    $networkData,
+                    $discrepanciesData,
+                );
+                $municipalityHealthData = $municipalityHealthRepository->snapshot($city, $filters);
+            }
         }
 
         $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
@@ -167,10 +171,10 @@ class AnalyticsDashboardController extends Controller
             'performance' => __('Desempenho'),
             'attendance' => __('Frequência'),
             'fundeb' => __('FUNDEB'),
-            'other_funding' => __('Demais financiamentos'),
-            'work_done' => __('Trabalho realizado'),
+            'other_funding' => __('Financiamos'),
+            'work_done' => __('Censo'),
             'discrepancies' => __('Discrepâncias e Erros'),
-            'municipality_health' => __('Diagnóstico Geral'),
+            'municipality_health' => __('Serventec'),
         ];
         $tabKeys = array_keys($tabs);
         $qTab = (string) $request->query('tab', '');
@@ -304,7 +308,7 @@ class AnalyticsDashboardController extends Controller
                         $attendanceRepository->snapshot($city, $filters),
                         $inclusionRepository->snapshot($city, $filters),
                         $networkRepository->snapshot($city, $filters),
-                        null,
+                        $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
                     ),
                     'yearFilterReady' => true,
                     'chartExportContext' => $chartExportContext,

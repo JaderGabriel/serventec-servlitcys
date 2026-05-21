@@ -103,7 +103,7 @@
     @else
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div class="rounded-lg border border-teal-200 dark:border-teal-900/50 bg-teal-50/60 dark:bg-teal-950/20 px-4 py-3 text-sm space-y-2 flex-1">
-                <h2 class="font-semibold text-teal-950 dark:text-teal-100">{{ __('Diagnóstico Geral') }}</h2>
+                <h2 class="font-semibold text-teal-950 dark:text-teal-100">{{ __('Serventec') }}</h2>
                 <p class="leading-relaxed text-teal-900/95 dark:text-teal-200/95">{{ $h['intro'] ?? '' }}</p>
                 <p class="text-xs text-teal-800/90 dark:text-teal-300/90">
                     <span class="font-medium">{{ __('Contexto') }}:</span>
@@ -134,9 +134,9 @@
             ·
             <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'fundeb')">{{ __('FUNDEB') }}</button>
             ·
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'other_funding')">{{ __('Demais financiamentos') }}</button>
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'other_funding')">{{ __('Financiamos') }}</button>
             ·
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'work_done')">{{ __('Trabalho realizado') }}</button>
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'work_done')">{{ __('Censo') }}</button>
         </p>
 
         <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="teal" />
@@ -168,7 +168,7 @@
                             <span class="text-gray-300 dark:text-gray-600">·</span>
                             <button type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'fundeb')">{{ __('FUNDEB') }}</button>
                             <span class="text-gray-300 dark:text-gray-600">·</span>
-                            <button type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'work_done')">{{ __('Trabalho') }}</button>
+                            <button type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'work_done')">{{ __('Censo') }}</button>
                         </div>
                     </div>
                     <div class="lg:col-span-2 space-y-2">

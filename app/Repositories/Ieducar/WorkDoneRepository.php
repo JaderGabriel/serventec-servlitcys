@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Services\CityDataConnection;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Ieducar\IeducarCensoEscolaQueries;
 use App\Support\Ieducar\IeducarUsuarioScope;
 use App\Support\Ieducar\IeducarWorkActivityQueries;
 use App\Support\Ieducar\MatriculaChartQueries;
@@ -48,11 +49,21 @@ class WorkDoneRepository
             'chart_periods' => null,
             'chart_users' => null,
             'methodology' => [],
+            'censo' => [
+                'available' => false,
+                'source_label' => null,
+                'note' => null,
+                'exported' => [],
+                'closed' => [],
+                'pending' => [],
+                'summary' => ['total_escolas' => 0, 'exportadas' => 0, 'fechadas' => 0, 'pendentes' => 0],
+            ],
+            'chart_censo' => null,
             'error' => null,
         ];
 
         if ($city === null || ! $filters->hasYearSelected()) {
-            $base['intro'] = __('Seleccione cidade e ano letivo para medir o trabalho de cadastro.');
+            $base['intro'] = __('Seleccione cidade e ano letivo para acompanhar o Censo e o ritmo de cadastro.');
 
             return $base;
         }
@@ -90,6 +101,7 @@ class WorkDoneRepository
                 }
 
                 $estimativa = IeducarWorkActivityQueries::buildEstimate($baseline, $periods, $currentMat);
+                $censo = IeducarCensoEscolaQueries::schoolStatuses($db, $city, $filters);
 
                 $methodology = [
                     __('Contagem de matrículas cuja data de cadastro cai no período, com filtros aplicados (escola, curso, turno).'),
@@ -112,10 +124,10 @@ class WorkDoneRepository
                     'year_label' => $yearLabel,
                     'city_name' => (string) $city->name,
                     'intro' => __(
-                        'Acompanhamento do que foi cadastrado recentemente no i-Educar, por equipa municipal (exceto perfis administrativos), e estimativa de tempo para alinhar o cadastro ao volume do ano anterior — apoio à decisão sobre reforço de mão de obra.'
+                        'Situação do Educacenso por escola (exportado ou fechado no i-Educar, quando a base regista esse estado) e ritmo de cadastro recente por equipa municipal — apoio ao fecho do Censo e à alocação de esforço.'
                     ),
                     'footnote' => __(
-                        'Não substitui relatórios de produtividade do RH nem logs de auditoria completos. Se a base não guardar data de cadastro em matrícula, os períodos ficam zerados.'
+                        'Exportação/fecho depende das tabelas do módulo Educacenso na instalação (detecção automática). Cadastro recente usa data em matrícula; não substitui auditoria completa do i-Educar.'
                     ),
                     'periods' => $periods,
                     'by_user' => $byUser,
@@ -127,6 +139,8 @@ class WorkDoneRepository
                     'activity_note' => $activityNote,
                     'chart_periods' => $this->chartPeriods($periods, $periodLabels),
                     'chart_users' => $this->chartUsers($byUser),
+                    'censo' => $censo,
+                    'chart_censo' => $this->chartCenso($censo),
                     'methodology' => $methodology,
                     'error' => null,
                 ]);
@@ -200,6 +214,33 @@ class WorkDoneRepository
             __('Cadastros na quinzena por utilizador i-Educar'),
             __('Matrículas'),
             $labels,
+            $data
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $censo
+     * @return ?array<string, mixed>
+     */
+    private function chartCenso(array $censo): ?array
+    {
+        if (! ($censo['available'] ?? false)) {
+            return null;
+        }
+        $s = is_array($censo['summary'] ?? null) ? $censo['summary'] : [];
+        $data = [
+            (int) ($s['exportadas'] ?? 0),
+            (int) ($s['fechadas'] ?? 0),
+            (int) ($s['pendentes'] ?? 0),
+        ];
+        if (array_sum($data) === 0) {
+            return null;
+        }
+
+        return ChartPayload::bar(
+            __('Escolas no filtro — situação Censo/Educacenso'),
+            __('Unidades'),
+            [__('Exportado'), __('Fechado'), __('Pendente')],
             $data
         );
     }

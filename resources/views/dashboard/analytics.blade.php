@@ -44,6 +44,9 @@
                 @endphp
                 <div
                     x-data="analyticsTabs(@js(array_keys($tabs)), @js($analyticsInitialTab ?? 'overview'), @js($lazyTabLoading), @js(route('dashboard.analytics.tab')))"
+                    @if ($lazyTabLoading && $yearFilterReady)
+                        x-init="tabLoaded['other_funding'] = true; tabLoaded['work_done'] = true"
+                    @endif
                     x-on:set-analytics-tab.window="if ($event.detail && @js(array_keys($tabs)).includes($event.detail)) { tab = $event.detail; afterTabChange(); }"
                     class="space-y-6"
                 >
@@ -231,10 +234,12 @@
                                         'chartExportContext' => $chartExportContext,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelOtherFunding">
-                                        <div x-show="loadingTab === 'other_funding'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
-                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar programas…') }}</span>
-                                        </div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelOtherFunding" data-analytics-tab-ssr="other_funding">
+                                        @include('dashboard.analytics.partials.other-funding', [
+                                            'otherFundingData' => $otherFundingData,
+                                            'yearFilterReady' => $yearFilterReady,
+                                            'chartExportContext' => $chartExportContext,
+                                        ])
                                     </div>
                                 @endif
                             </div>
@@ -246,10 +251,12 @@
                                         'chartExportContext' => $chartExportContext,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelWorkDone">
-                                        <div x-show="loadingTab === 'work_done'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
-                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar produtividade…') }}</span>
-                                        </div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelWorkDone" data-analytics-tab-ssr="work_done">
+                                        @include('dashboard.analytics.partials.work-done', [
+                                            'workDoneData' => $workDoneData,
+                                            'yearFilterReady' => $yearFilterReady,
+                                            'chartExportContext' => $chartExportContext,
+                                        ])
                                     </div>
                                 @endif
                             </div>

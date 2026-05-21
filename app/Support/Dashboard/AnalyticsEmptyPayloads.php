@@ -187,6 +187,16 @@ final class AnalyticsEmptyPayloads
             'activity_note' => null,
             'chart_periods' => null,
             'chart_users' => null,
+            'chart_censo' => null,
+            'censo' => [
+                'available' => false,
+                'source_label' => null,
+                'note' => null,
+                'exported' => [],
+                'closed' => [],
+                'pending' => [],
+                'summary' => ['total_escolas' => 0, 'exportadas' => 0, 'fechadas' => 0, 'pendentes' => 0],
+            ],
             'methodology' => [],
             'error' => null,
         ];

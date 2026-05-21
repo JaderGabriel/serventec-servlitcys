@@ -48,6 +48,51 @@ Noutro terminal: `php artisan serve` (ou use o script `composer run dev` se conf
 | `IEDUCAR_MATRICULA_SITUACAO_INEP_ATIVAS` | Opcional: lista separada por vírgulas de códigos INEP tratados como matrícula ativa em conjunto com o filtro de `ativo` (default: `1`) |
 | `IEDUCAR_TABLE_FISICA_RACA` / `IEDUCAR_MYSQL_TABLE_FISICA_RACA` | Opcional: tabela pivô física ↔ raça (default PostgreSQL: `cadastro.fisica_raca`); usada no gráfico «cor ou raça» da aba Inclusão |
 
+#### Painel de análise — FUNDEB, VAAF e novas abas
+
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `ANALYTICS_LAZY_TABS` | `true` | Abas pesadas carregam via `GET /dashboard/analytics/tab?tab=…` |
+| `ANALYTICS_FUNDEB_DISC_SUMMARY` | `true` | Na aba FUNDEB (lazy), calcular perda/ganho de cadastro sem abrir a aba Discrepâncias completa |
+| `ANALYTICS_FUNDING_SUMMARY_CACHE` | `600` | Cache (segundos) do resumo financeiro; `0` desativa. Reaproveita após visitar Discrepâncias |
+| `IEDUCAR_DISC_VAA_REFERENCIA` | `4500` | VAAF de referência (R$/aluno/ano) para estimativas e fallback da **prévia federal** |
+| `IEDUCAR_DISC_AVISO_FINANCEIRO` | (texto em `config/ieducar.php`) | Aviso legal nas abas com valores indicativos |
+| `IEDUCAR_FUNDEB_NATIONAL_FLOOR` | `true` | Gravar piso nacional em `fundeb_municipio_references` quando não houver VAAF municipal |
+| `IEDUCAR_FUNDEB_NATIONAL_VAAF_2024` | — | Prévia federal por ano (sobrepõe `IEDUCAR_DISC_VAA_REFERENCIA` quando > 0) |
+| `IEDUCAR_FUNDEB_NATIONAL_VAAF_2025` | — | Idem para 2025 |
+| `IEDUCAR_FUNDEB_VAAR_PCT_BASE` | `0` | % opcional de complementação VAAR sobre a base (ordem de grandeza) |
+| `IEDUCAR_FUNDEB_AVISO_PREVISAO` | (texto em config) | Aviso na aba FUNDEB |
+| `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` | — | Recurso CKAN FNDE para importar VAAF municipal (admin) |
+| `IEDUCAR_FUNDEB_JSON_URL` | — | URL alternativa com dados `{ibge}/{ano}` |
+| `IEDUCAR_FUNDEB_CACHE_PATH` | — | Caminho de cache local do JSON FNDE |
+| `IEDUCAR_WORK_EXCLUDE_LOGINS` | `admin,administrador,suporte,portabilis` | Logins excluídos da contagem de cadastro na aba **Censo** |
+| `IEDUCAR_WORK_EXCLUDE_USER_IDS` | `1` | IDs de utilizador excluídos |
+| `IEDUCAR_WORK_EXCLUDE_NIVEL` | `1` | Níveis de utilizador excluídos (ex.: admin) |
+| `IEDUCAR_WORK_MINUTES_PER_RECORD` | `3.5` | Minutos por matrícula quando não há timestamps na base |
+| `IEDUCAR_WORK_HOURS_PER_DAY` | `6` | Jornada para converter minutos em «dias de trabalho» |
+| `IEDUCAR_CENSO_STATUS_TABLE` | — | Tabela qualificada com estado exportado/fechado por escola (ex.: módulo Educacenso) |
+| `IEDUCAR_CENSO_TABLE_CANDIDATES` | (lista em config) | Tabelas a tentar automaticamente se `STATUS_TABLE` vazio |
+| `IEDUCAR_CENSO_EXPORTED_TEXT` / `IEDUCAR_CENSO_CLOSED_TEXT` | — | Palavras-chave em colunas de situação textual |
+
+**VAAF municipal vs prévia federal:** os cálculos usam o valor **municipal** (`fundeb_municipio_references` ou importação FNDE). A prévia aparece nos cards para comparação (`IEDUCAR_FUNDEB_NATIONAL_VAAF_*` ou `IEDUCAR_DISC_VAA_REFERENCIA`).
+
+Exemplo mínimo para produção com FUNDEB e trabalho realizado:
+
+```env
+ANALYTICS_LAZY_TABS=true
+ANALYTICS_FUNDEB_DISC_SUMMARY=true
+ANALYTICS_FUNDING_SUMMARY_CACHE=600
+
+IEDUCAR_DISC_VAA_REFERENCIA=4500
+IEDUCAR_FUNDEB_NATIONAL_FLOOR=true
+IEDUCAR_FUNDEB_NATIONAL_VAAF_2025=4500
+# IEDUCAR_FUNDEB_CKAN_RESOURCE_ID=...   # após importação admin
+
+IEDUCAR_WORK_EXCLUDE_LOGINS=admin,administrador,suporte,portabilis
+IEDUCAR_WORK_EXCLUDE_USER_IDS=1
+IEDUCAR_WORK_EXCLUDE_NIVEL=1
+```
+
 Credenciais de ligação à base i-Educar por cidade (`db_*` no modelo `City`) são guardadas **encriptadas** na base (cast `encrypted`).
 
 ## Produção (sem Node no servidor)

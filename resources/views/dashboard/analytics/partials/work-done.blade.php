@@ -9,16 +9,19 @@
     $est = is_array($d['estimativa'] ?? null) ? $d['estimativa'] : [];
     $chartPeriods = is_array($d['chart_periods'] ?? null) ? $d['chart_periods'] : null;
     $chartUsers = is_array($d['chart_users'] ?? null) ? $d['chart_users'] : null;
+    $censo = is_array($d['censo'] ?? null) ? $d['censo'] : [];
+    $censoSummary = is_array($censo['summary'] ?? null) ? $censo['summary'] : [];
+    $chartCenso = is_array($d['chart_censo'] ?? null) ? $d['chart_censo'] : null;
 @endphp
 
 <div class="space-y-6">
     @if (! $yearFilterReady)
         <p class="text-sm text-amber-800 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
-            {{ __('Seleccione o ano letivo e aplique os filtros para medir o trabalho de cadastro.') }}
+            {{ __('Seleccione o ano letivo e aplique os filtros para acompanhar o Censo e o cadastro.') }}
         </p>
     @else
         <div class="rounded-lg border border-sky-200 dark:border-sky-800 bg-sky-50/70 dark:bg-sky-950/25 px-4 py-3 text-sm text-sky-950 dark:text-sky-100 space-y-2">
-            <p class="font-semibold">{{ __('Trabalho realizado — cadastro no i-Educar') }}</p>
+            <p class="font-semibold">{{ __('Censo — exportação e cadastro no i-Educar') }}</p>
             <p class="leading-relaxed">{{ $d['intro'] ?? '' }}</p>
             <p class="text-xs text-sky-800/90 dark:text-sky-300/90">
                 {{ $d['city_name'] ?? '' }}
@@ -37,6 +40,49 @@
                 {{ $d['error'] }}
             </div>
         @endif
+
+        <section class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/30 dark:bg-indigo-950/20 px-4 py-4 space-y-4">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-indigo-950 dark:text-indigo-100">{{ __('Escolas — Censo / Educacenso') }}</h3>
+            @if (filled($censo['source_label'] ?? null))
+                <p class="text-xs text-indigo-800/90 dark:text-indigo-300/90">{{ __('Fonte na base:') }} <span class="font-mono">{{ $censo['source_label'] }}</span></p>
+            @endif
+            @if (! ($censo['available'] ?? false) && filled($censo['note'] ?? null))
+                <p class="text-sm text-amber-900 dark:text-amber-100">{{ $censo['note'] }}</p>
+            @else
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                    <div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Total (filtro)') }}</p>
+                        <p class="font-semibold">{{ number_format((int) ($censoSummary['total_escolas'] ?? 0), 0, ',', '.') }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Exportado') }}</p>
+                        <p class="font-semibold text-emerald-700 dark:text-emerald-300">{{ number_format((int) ($censoSummary['exportadas'] ?? 0), 0, ',', '.') }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Fechado') }}</p>
+                        <p class="font-semibold text-sky-700 dark:text-sky-300">{{ number_format((int) ($censoSummary['fechadas'] ?? 0), 0, ',', '.') }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Pendente') }}</p>
+                        <p class="font-semibold text-amber-700 dark:text-amber-300">{{ number_format((int) ($censoSummary['pendentes'] ?? 0), 0, ',', '.') }}</p>
+                    </div>
+                </div>
+                @if ($chartCenso !== null)
+                    <x-dashboard.chart-panel
+                        :chart="$chartCenso"
+                        exportFilename="censo-situacao-escolas"
+                        :exportMeta="$chartExportContext"
+                        chartPanelId="chart-censo-situacao"
+                        panelTone="indigo"
+                    />
+                @endif
+                @include('dashboard.analytics.partials.censo-escolas-table', ['titulo' => __('Exportadas ou enviadas'), 'escolas' => $censo['exported'] ?? [], 'tone' => 'emerald'])
+                @include('dashboard.analytics.partials.censo-escolas-table', ['titulo' => __('Fechadas no i-Educar'), 'escolas' => $censo['closed'] ?? [], 'tone' => 'sky'])
+                @include('dashboard.analytics.partials.censo-escolas-table', ['titulo' => __('Sem exportação/fecho detectado'), 'escolas' => $censo['pending'] ?? [], 'tone' => 'amber'])
+            @endif
+        </section>
+
+        <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">{{ __('Cadastro recente (ritmo)') }}</h3>
 
         @if (! ($d['activity_available'] ?? false) && filled($d['activity_note'] ?? null))
             <div class="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">

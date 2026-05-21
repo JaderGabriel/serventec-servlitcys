@@ -129,11 +129,11 @@
             {{ __('Painéis relacionados:') }}
             <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'fundeb')">{{ __('FUNDEB') }}</button>
             ·
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'other_funding')">{{ __('Demais financiamentos') }}</button>
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'other_funding')">{{ __('Financiamos') }}</button>
             ·
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'work_done')">{{ __('Trabalho realizado') }}</button>
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'work_done')">{{ __('Censo') }}</button>
             ·
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Diagnóstico Geral') }}</button>
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Serventec') }}</button>
         </p>
 
         <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="rose" />
@@ -236,7 +236,7 @@
             @endif
 
             <p class="text-xs">
-                <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Ver consolidação no Diagnóstico Geral') }}</button>
+                <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Ver consolidação em Serventec') }}</button>
             </p>
         </x-dashboard.consultoria-section>
 
@@ -465,7 +465,7 @@
                 </div>
             </x-dashboard.consultoria-section>
         @elseif ($showKpis && count($pendenciaDims) > 0)
-            <p class="text-xs text-gray-500 dark:text-gray-400 italic">{{ __('Sem detalhe por escola nesta base — consulte o mapa de rotinas ou o Diagnóstico Geral.') }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 italic">{{ __('Sem detalhe por escola nesta base — consulte o mapa de rotinas ou Serventec.') }}</p>
         @endif
     @endif
 </div>

@@ -10,7 +10,6 @@ use App\Support\Dashboard\PublicDataSourcesCatalog;
 use App\Support\Ieducar\ConsultoriaOperationalSignals;
 use App\Support\Ieducar\DiscrepanciesCheckCatalog;
 use App\Support\Ieducar\DiscrepanciesCheckRunner;
-use App\Support\Ieducar\DiscrepanciesCsvRowsBuilder;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\DiscrepanciesQueries;
 use App\Support\Ieducar\DiscrepanciesRoutineStatus;
@@ -18,6 +17,7 @@ use App\Support\Ieducar\InclusionDashboardQueries;
 use App\Support\Ieducar\InclusionRecursoProvaQueries;
 use App\Support\Ieducar\MatriculaChartQueries;
 use Illuminate\Database\Connection;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Aba «Discrepâncias e Erros»: inconsistências de cadastro com impacto em Censo, VAAR/FUNDEB e repasses.
@@ -29,9 +29,43 @@ class DiscrepanciesRepository
     ) {}
 
     /**
+     * Agregado leve para a aba FUNDEB (perda/ganho), sem checks por escola nem gráficos.
+     *
+     * @return array{summary: array<string, mixed>, funding_reference: ?array<string, mixed>}|null
+     */
+    public function fundingImpactSnapshot(?City $city, IeducarFilterState $filters): ?array
+    {
+        if ($city === null || ! config('analytics.fundeb_load_discrepancies_summary', true)) {
+            return null;
+        }
+
+        $ttl = (int) config('analytics.funding_summary_cache_seconds', 600);
+        $params = $filters->toQueryParamsWithCity((int) $city->id);
+        ksort($params);
+        $cacheKey = 'analytics:funding_impact:'.(int) $city->id.':'.md5(json_encode($params));
+
+        $load = function () use ($city, $filters): array {
+            $payload = $this->snapshot($city, $filters, fundingOnly: true);
+
+            return [
+                'summary' => is_array($payload['summary'] ?? null) ? $payload['summary'] : [],
+                'funding_reference' => is_array($payload['funding_reference'] ?? null)
+                    ? $payload['funding_reference']
+                    : null,
+            ];
+        };
+
+        if ($ttl <= 0) {
+            return $load();
+        }
+
+        return Cache::remember($cacheKey, $ttl, $load);
+    }
+
+    /**
      * @return array<string, mixed>
      */
-    public function snapshot(?City $city, IeducarFilterState $filters): array
+    public function snapshot(?City $city, IeducarFilterState $filters, bool $fundingOnly = false): array
     {
         $empty = [
             'intro' => '',
@@ -65,7 +99,7 @@ class DiscrepanciesRepository
         }
 
         try {
-            return $this->cityData->run($city, function (Connection $db) use ($city, $filters) {
+            return $this->cityData->run($city, function (Connection $db) use ($city, $filters, $fundingOnly) {
                 $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
                 $checks = [];
                 $dimensions = [];
@@ -99,7 +133,7 @@ class DiscrepanciesRepository
                     );
                     $dimensions[] = $this->buildDimension($meta, $eval, $totalMat, $city, $filters);
 
-                    if ($eval['has_issue']) {
+                    if (! $fundingOnly && $eval['has_issue']) {
                         $rows = $eval['rows'];
                         if ($id === 'recurso_prova_sem_nee' && $rows !== []) {
                             $rows = InclusionRecursoProvaQueries::enriquecerLinhasEscolaComTiposRecurso(
@@ -133,29 +167,33 @@ class DiscrepanciesRepository
                         'unavailable_reason' => null,
                     ];
                     $dimensions[] = $this->buildDimension($meta, $neeEval, $totalMat, $city, $filters);
-                    $checks[] = $this->buildCheck($meta, [$neeRow], $totalMat, $city, $filters);
+                    if (! $fundingOnly) {
+                        $checks[] = $this->buildCheck($meta, [$neeRow], $totalMat, $city, $filters);
+                    }
                 }
 
-                $networkKpis = null;
-                try {
-                    $networkKpis = MatriculaChartQueries::redeVagasResumoKpis($db, $city, $filters);
-                } catch (\Throwable) {
+                if (! $fundingOnly) {
                     $networkKpis = null;
-                }
+                    try {
+                        $networkKpis = MatriculaChartQueries::redeVagasResumoKpis($db, $city, $filters);
+                    } catch (\Throwable) {
+                        $networkKpis = null;
+                    }
 
-                $dimensions = ConsultoriaOperationalSignals::append($dimensions, $networkKpis, $totalMat);
+                    $dimensions = ConsultoriaOperationalSignals::append($dimensions, $networkKpis, $totalMat);
 
-                $checks = $this->sortChecksForConsultoria($checks);
-                $checks = ConsultoriaOperationalSignals::enrichChecksFromDimensions($dimensions, $checks);
-                $checks = $this->sortChecksForConsultoria($checks);
+                    $checks = $this->sortChecksForConsultoria($checks);
+                    $checks = ConsultoriaOperationalSignals::enrichChecksFromDimensions($dimensions, $checks);
+                    $checks = $this->sortChecksForConsultoria($checks);
 
-                $aee = InclusionDashboardQueries::buildAeeCrossEnrollment($db, $city, $filters);
-                if (is_array($aee) && (int) ($aee['nee_matriculas_total'] ?? 0) > 0) {
-                    $neeTotal = (int) $aee['nee_matriculas_total'];
-                    $emAee = (int) ($aee['matriculas_em_turmas_aee'] ?? 0);
-                    $semAee = max(0, $neeTotal - $emAee);
-                    if ($semAee > 0 && ! $this->hasCheckId($checks, 'nee_sem_aee')) {
-                        $notes[] = __('Cruzamento AEE (rede): :n matrícula(s) NEE sem turma AEE identificada.', ['n' => number_format($semAee)]);
+                    $aee = InclusionDashboardQueries::buildAeeCrossEnrollment($db, $city, $filters);
+                    if (is_array($aee) && (int) ($aee['nee_matriculas_total'] ?? 0) > 0) {
+                        $neeTotal = (int) $aee['nee_matriculas_total'];
+                        $emAee = (int) ($aee['matriculas_em_turmas_aee'] ?? 0);
+                        $semAee = max(0, $neeTotal - $emAee);
+                        if ($semAee > 0 && ! $this->hasCheckId($checks, 'nee_sem_aee')) {
+                            $notes[] = __('Cruzamento AEE (rede): :n matrícula(s) NEE sem turma AEE identificada.', ['n' => number_format($semAee)]);
+                        }
                     }
                 }
 
@@ -175,6 +213,14 @@ class DiscrepanciesRepository
                 }
                 $fundingRefPayload = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
                 $tiposComProblema = count(array_filter($dimensions, static fn (array $d): bool => (bool) ($d['has_issue'] ?? false)));
+
+                if ($fundingOnly) {
+                    return [
+                        'summary' => $summary,
+                        'funding_reference' => $fundingRefPayload,
+                        'error' => null,
+                    ];
+                }
 
                 return [
                     'intro' => __(

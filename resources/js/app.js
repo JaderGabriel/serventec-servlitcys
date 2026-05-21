@@ -159,6 +159,31 @@ document.addEventListener("alpine:init", () => {
                 if (this.tabLoaded[t]) {
                     return;
                 }
+                const refMap = {
+                    enrollment: "panelEnrollment",
+                    network: "panelNetwork",
+                    inclusion: "panelInclusion",
+                    performance: "panelPerformance",
+                    attendance: "panelAttendance",
+                    fundeb: "panelFundeb",
+                    other_funding: "panelOtherFunding",
+                    work_done: "panelWorkDone",
+                    municipality_health: "panelMunicipalityHealth",
+                    discrepancies: "panelDiscrepancies",
+                };
+                const refName = refMap[t];
+                const el = refName ? this.$refs[refName] : null;
+                if (
+                    el?.dataset?.analyticsTabSsr === t &&
+                    el.querySelector(".space-y-6, [data-analytics-panel-root]")
+                ) {
+                    this.tabLoaded[t] = true;
+                    return;
+                }
+                if (el?.dataset?.analyticsTabSsr === t && el.children.length > 0) {
+                    this.tabLoaded[t] = true;
+                    return;
+                }
                 this.loadTabLazy(t);
             },
             async loadTabLazy(t) {
@@ -181,6 +206,11 @@ document.addEventListener("alpine:init", () => {
                 if (!refName || !this.tabFetchUrl) {
                     return;
                 }
+                const panel = this.$refs[refName];
+                if (!panel) {
+                    console.warn("analytics tab: ref ausente", t, refName);
+                    return;
+                }
                 this.loadingTab = t;
                 try {
                     const u = new URL(this.tabFetchUrl, window.location.origin);
@@ -198,17 +228,13 @@ document.addEventListener("alpine:init", () => {
                         throw new Error(text || `HTTP ${r.status}`);
                     }
                     const html = await r.text();
-                    const el = this.$refs[refName];
-                    if (!el) {
-                        return;
-                    }
+                    const el = panel;
                     el.innerHTML = html;
                     Alpine.initTree(el);
                     this.tabLoaded[t] = true;
                 } catch (e) {
                     console.error("analytics tab lazy", e);
-                    const el = this.$refs[refName];
-                    if (el) {
+                    if (panel) {
                         const p = document.createElement("p");
                         p.className =
                             "text-sm text-red-600 dark:text-red-400 px-2 py-4";

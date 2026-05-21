@@ -24,7 +24,7 @@
 
         <p class="text-xs text-teal-800/90 dark:text-teal-200/90 border border-teal-200/80 dark:border-teal-800/60 rounded-md px-3 py-2">
             {{ __('Consultoria municipal:') }}
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Diagnóstico Geral') }}</button>
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Serventec') }}</button>
             ·
             <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Discrepâncias e erros de cadastro') }}</button>
             {{ __('(impacto financeiro indicativo e rotinas Censo).') }}
@@ -94,9 +94,11 @@
                     @endif
 
                     <p class="text-[11px] text-gray-500 dark:text-gray-400">
-                        {{ __('Risco e ganho de cadastro:') }}
-                        <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('aba Discrepâncias') }}</button>
-                        {{ __('(a aba FUNDEB carrega sem essas rotinas para responder mais rápido).') }}
+                        {{ __('Detalhe por escola e rotinas completas:') }}
+                        <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('aba Discrepâncias') }}</button>.
+                        @if (! config('analytics.fundeb_load_discrepancies_summary', true))
+                            {{ __('Resumo de risco/ganho desativado (ANALYTICS_FUNDEB_DISC_SUMMARY=false).') }}
+                        @endif
                     </p>
 
                     @if (filled($proj['aviso'] ?? null))

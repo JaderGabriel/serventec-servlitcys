@@ -889,6 +889,35 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Censo / Educacenso por escola (aba «Censo»)
+    |--------------------------------------------------------------------------
+    |
+    | Detecção automática de tabelas educacenso_* ou colunas exportado/fechado.
+    | IEDUCAR_CENSO_STATUS_TABLE: tabela qualificada (ex.: modules.educacenso_exportacao).
+    |
+    */
+
+    'censo_tracking' => [
+        'status_table' => (string) env('IEDUCAR_CENSO_STATUS_TABLE', ''),
+        'table_candidates' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'IEDUCAR_CENSO_TABLE_CANDIDATES',
+            'educacenso_exportacao,educacenso_exportacoes,exportacao_educacenso,educacenso_registro,educacenso_ano_letivo,escola_educacenso'
+        ))))),
+        'export_columns' => array_values(array_filter(array_map('trim', explode(',', (string) env('IEDUCAR_CENSO_EXPORT_COLUMNS', ''))))),
+        'closed_columns' => array_values(array_filter(array_map('trim', explode(',', (string) env('IEDUCAR_CENSO_CLOSED_COLUMNS', ''))))),
+        'status_columns' => array_values(array_filter(array_map('trim', explode(',', (string) env('IEDUCAR_CENSO_STATUS_COLUMNS', ''))))),
+        'exported_text_values' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'IEDUCAR_CENSO_EXPORTED_TEXT',
+            'exportado,exportada,concluido,concluída,finalizado,enviado'
+        ))))),
+        'closed_text_values' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'IEDUCAR_CENSO_CLOSED_TEXT',
+            'fechado,fechada,encerrado,encerrada,fecho,concluido'
+        ))))),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Trabalho realizado (cadastro recente no i-Educar)
     |--------------------------------------------------------------------------
     |

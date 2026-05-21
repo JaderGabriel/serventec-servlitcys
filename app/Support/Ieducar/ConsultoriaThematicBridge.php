@@ -150,12 +150,12 @@ final class ConsultoriaThematicBridge
         }
 
         if ($items === []) {
-            $items[] = __('Consulte PNAE, PNATE e PDDE na aba Demais financiamentos.');
+            $items[] = __('Consulte PNAE, PNATE e PDDE na aba Financiamos.');
         }
 
         return [
             'id' => 'programas-complementares',
-            'titulo' => __('Demais financiamentos (PNAE, PNATE, PDDE)'),
+            'titulo' => __('Financiamos (PNAE, PNATE, PDDE)'),
             'fonte' => 'ieducar',
             'fonte_label' => __('Cadastro i-Educar + pilares Discrepâncias'),
             'status' => $status,
@@ -174,16 +174,33 @@ final class ConsultoriaThematicBridge
         $status = 'neutral';
         $periods = is_array($workDone['periods'] ?? null) ? $workDone['periods'] : [];
         $est = is_array($workDone['estimativa'] ?? null) ? $workDone['estimativa'] : [];
+        $censo = is_array($workDone['censo'] ?? null) ? $workDone['censo'] : [];
+        $censoSum = is_array($censo['summary'] ?? null) ? $censo['summary'] : [];
+
+        if ($censo['available'] ?? false) {
+            $items[] = __('Censo: :e exportada(s), :f fechada(s), :p pendente(s) no filtro.', [
+                'e' => number_format((int) ($censoSum['exportadas'] ?? 0)),
+                'f' => number_format((int) ($censoSum['fechadas'] ?? 0)),
+                'p' => number_format((int) ($censoSum['pendentes'] ?? 0)),
+            ]);
+            if ((int) ($censoSum['pendentes'] ?? 0) > 0) {
+                $status = 'warning';
+            } elseif ((int) ($censoSum['exportadas'] ?? 0) + (int) ($censoSum['fechadas'] ?? 0) > 0) {
+                $status = 'success';
+            }
+        } elseif (filled($censo['note'] ?? null)) {
+            $items[] = (string) $censo['note'];
+        }
 
         if (! ($workDone['activity_available'] ?? false)) {
             $items[] = $workDone['activity_note'] ?? __('Sem coluna de data de cadastro em matrícula nesta base — ritmo não mensurável.');
 
             return [
                 'id' => 'trabalho-cadastro',
-                'titulo' => __('Trabalho de cadastro (i-Educar)'),
+                'titulo' => __('Censo e cadastro recente'),
                 'fonte' => 'ieducar',
-                'fonte_label' => __('Utilizadores municipais'),
-                'status' => 'neutral',
+                'fonte_label' => __('Educacenso + utilizadores municipais'),
+                'status' => $status,
                 'items' => $items,
                 'tab_link' => 'work_done',
             ];
@@ -212,7 +229,7 @@ final class ConsultoriaThematicBridge
 
         return [
             'id' => 'trabalho-cadastro',
-            'titulo' => __('Trabalho realizado no cadastro'),
+            'titulo' => __('Censo e cadastro recente'),
             'fonte' => 'ieducar',
             'fonte_label' => __('Datas de cadastro × utilizadores'),
             'status' => $status,

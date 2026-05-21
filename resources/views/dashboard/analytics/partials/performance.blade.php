@@ -40,7 +40,7 @@
         <h2 class="font-semibold text-violet-950 dark:text-violet-100">{{ __('Desempenho e aprendizagem') }}</h2>
         <p class="text-xs text-violet-800/90 dark:text-violet-200/90 leading-relaxed">
             {{ __('Consultoria municipal:') }}
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Diagnóstico Geral') }}</button>
+            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Serventec') }}</button>
             ·
             <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Discrepâncias') }}</button>
             {{ __('(cadastro) · Fontes externas assinaladas abaixo.') }}

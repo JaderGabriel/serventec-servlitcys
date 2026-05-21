@@ -28,7 +28,7 @@
         </p>
     @else
         <div class="rounded-lg border border-teal-200 dark:border-teal-800 bg-teal-50/70 dark:bg-teal-950/25 px-4 py-3 text-sm text-teal-950 dark:text-teal-100 space-y-2">
-            <p class="font-semibold">{{ __('Demais financiamentos — programas complementares') }}</p>
+            <p class="font-semibold">{{ __('Financiamos — programas complementares') }}</p>
             <p class="leading-relaxed">{{ $d['intro'] ?? '' }}</p>
             <p class="text-xs text-teal-800/90 dark:text-teal-300/90">
                 {{ $d['city_name'] ?? '' }}
@@ -87,6 +87,12 @@
                     </ul>
                 @endif
             </section>
+        @endif
+
+        @if (count($programs) === 0)
+            <p class="text-sm text-amber-800 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
+                {{ __('Nenhum programa configurado em ieducar.other_funding.programs.') }}
+            </p>
         @endif
 
         @foreach ($programs as $prog)
