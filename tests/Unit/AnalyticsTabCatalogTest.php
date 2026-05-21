@@ -87,5 +87,22 @@ final class AnalyticsTabCatalogTest extends TestCase
 
         $this->assertSame('consultoria', $groups[0]['id']);
         $this->assertContains('discrepancies', $groups[0]['tabs']);
+        $this->assertStringContainsString('Finanças', (string) $groups[0]['label']);
+    }
+
+    /**
+     * Cenário: payload Alpine para menu em dois níveis (área → sub-aba).
+     */
+    #[Test]
+    public function navigation_payload_agrupa_abas_e_mapeia_grupo(): void
+    {
+        $payload = AnalyticsTabCatalog::navigationPayload();
+
+        $this->assertCount(3, $payload['groups']);
+        $this->assertSame('consultoria', $payload['tabToGroup']['fundeb']);
+        $this->assertSame('cadastro', $payload['tabToGroup']['overview']);
+        $this->assertArrayHasKey('municipality_health', $payload['tabHints']);
+        $this->assertNotEmpty($payload['groups'][0]['short']);
+        $this->assertNotEmpty($payload['groups'][0]['tone']);
     }
 }

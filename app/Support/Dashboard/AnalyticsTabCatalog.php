@@ -17,7 +17,7 @@ final class AnalyticsTabCatalog
         return [
             [
                 'id' => 'consultoria',
-                'label' => __('Consultoria & finanças'),
+                'label' => __('Finanças e repasses'),
                 'tabs' => [
                     'municipality_health',
                     'discrepancies',
@@ -28,7 +28,7 @@ final class AnalyticsTabCatalog
             ],
             [
                 'id' => 'cadastro',
-                'label' => __('Cadastro & rede'),
+                'label' => __('Cadastro e rede'),
                 'tabs' => [
                     'overview',
                     'enrollment',
@@ -38,13 +38,128 @@ final class AnalyticsTabCatalog
             ],
             [
                 'id' => 'pedagogico',
-                'label' => __('Pedagógico'),
+                'label' => __('Indicadores pedagógicos'),
                 'tabs' => [
                     'inclusion',
                     'performance',
                     'attendance',
                 ],
             ],
+        ];
+    }
+
+    /**
+     * Metadados para navegação em dois níveis (área temática → sub-aba).
+     *
+     * @return array<string, array{step: string, short: string, hint: string, tone: string}>
+     */
+    public static function groupPresentation(): array
+    {
+        return [
+            'consultoria' => [
+                'step' => '1',
+                'short' => __('Finanças'),
+                'hint' => __('Diagnóstico, discrepâncias, FUNDEB e Censo'),
+                'tone' => 'teal',
+            ],
+            'cadastro' => [
+                'step' => '2',
+                'short' => __('Cadastro'),
+                'hint' => __('Visão da rede, matrículas e unidades'),
+                'tone' => 'indigo',
+            ],
+            'pedagogico' => [
+                'step' => '3',
+                'short' => __('Pedagógico'),
+                'hint' => __('Inclusão, desempenho e frequência'),
+                'tone' => 'violet',
+            ],
+        ];
+    }
+
+    /**
+     * Frase curta por sub-aba (tooltip / legenda sob o menu).
+     *
+     * @return array<string, string>
+     */
+    public static function tabHints(): array
+    {
+        return [
+            'municipality_health' => __('Resumo executivo e prioridades'),
+            'discrepancies' => __('Erros de cadastro com impacto financeiro'),
+            'fundeb' => __('VAAF, VAAR e previsão de repasse'),
+            'other_funding' => __('PNAE, PNATE, PDDE e fontes públicas'),
+            'work_done' => __('Ritmo de cadastro e exportação Censo'),
+            'overview' => __('Totais de escolas, turmas e matrículas'),
+            'enrollment' => __('Matrículas, distorção e ocupação'),
+            'network' => __('Vagas, turnos e oferta da rede'),
+            'school_units' => __('Mapa, unidades e lista de espera'),
+            'inclusion' => __('NEE, equidade e recurso de prova'),
+            'performance' => __('Aprovação, evasão e SAEB'),
+            'attendance' => __('Frequência por período'),
+        ];
+    }
+
+    /**
+     * @return array<string, string> tab_id => group_id
+     */
+    public static function tabToGroupMap(): array
+    {
+        $map = [];
+        foreach (self::groups() as $group) {
+            $gid = (string) ($group['id'] ?? '');
+            foreach ($group['tabs'] ?? [] as $tabId) {
+                $map[(string) $tabId] = $gid;
+            }
+        }
+
+        return $map;
+    }
+
+    public static function groupIdForTab(string $tab): ?string
+    {
+        return self::tabToGroupMap()[$tab] ?? null;
+    }
+
+    /**
+     * Payload para Alpine (navegação do painel).
+     *
+     * @return array{
+     *   groups: list<array{id: string, label: string, short: string, step: string, hint: string, tone: string, tabs: list<string>}>,
+     *   tabLabels: array<string, string>,
+     *   tabHints: array<string, string>,
+     *   tabToGroup: array<string, string>
+     * }
+     */
+    public static function navigationPayload(): array
+    {
+        $presentation = self::groupPresentation();
+        $labels = self::labels();
+        $hints = self::tabHints();
+        $groups = [];
+
+        foreach (self::groups() as $group) {
+            $id = (string) ($group['id'] ?? '');
+            $pres = $presentation[$id] ?? [];
+            $groups[] = [
+                'id' => $id,
+                'label' => (string) ($group['label'] ?? ''),
+                'short' => (string) ($pres['short'] ?? $group['label'] ?? ''),
+                'step' => (string) ($pres['step'] ?? ''),
+                'hint' => (string) ($pres['hint'] ?? ''),
+                'tone' => (string) ($pres['tone'] ?? 'teal'),
+                'tabs' => array_values(array_filter(
+                    $group['tabs'] ?? [],
+                    static fn (string $k): bool => isset($labels[$k]),
+                )),
+            ];
+        }
+
+        return [
+            'groups' => $groups,
+            'tabLabels' => $labels,
+            'tabHints' => $hints,
+            'tabToGroup' => self::tabToGroupMap(),
         ];
     }
 

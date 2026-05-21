@@ -37,7 +37,7 @@ O produto comunica **consultoria profissional** com foco em **finanças educacio
 | Componente | Quando usar |
 |------------|-------------|
 | `x-dashboard.consultoria-municipality-strip` | Painel analytics com cidade seleccionada |
-| `x-dashboard.analytics-tabs-nav` | Navegação por abas agrupadas |
+| `x-dashboard.analytics-tabs-nav` | Navegação em 2 níveis: área temática (3 segmentos) → sub-abas da área activa |
 | `x-dashboard.analytics-tab-impact-header` | Topo das abas até Censo (saldo + status) |
 | `x-consultoria-tab-link` | Links internos «ir para aba X» (Alpine `set-analytics-tab`) |
 | `x-status-pill` | Estados success / warning / danger uniformes |
@@ -60,9 +60,11 @@ Rota documentação admin: `GET /admin/documentacao` → `admin.documentation.in
 
 ## 5. Ordem das abas (consultoria)
 
-1. **Consultoria & finanças:** Diagnóstico → Discrepâncias → FUNDEB → Financiamentos → Censo  
-2. **Cadastro & rede:** Visão geral → Matrículas → Rede → Unidades  
-3. **Pedagógico:** Inclusão → Desempenho → Frequência  
+1. **Finanças e repasses:** Diagnóstico → Discrepâncias → FUNDEB → Financiamentos → Censo  
+2. **Cadastro e rede:** Visão geral → Matrículas → Rede → Unidades  
+3. **Indicadores pedagógicos:** Inclusão → Desempenho → Frequência  
+
+No painel, o utilizador escolhe primeiro a área (segmentos numerados 1–3) e depois a sub-aba; o indicador «Você está em» mostra área → análise activa.
 
 Aba inicial (sem `?tab=`): **Diagnóstico** para user/municipal com ano aplicado; **Visão geral** para admin.
 

@@ -105,12 +105,17 @@ document.addEventListener("alpine:init", () => {
             initialFromServer = "overview",
             lazy = false,
             tabFetchUrl = "",
+            navPayload = null,
         ) => ({
             tab: "overview",
             lazy: lazy === true,
             tabFetchUrl: typeof tabFetchUrl === "string" ? tabFetchUrl : "",
             tabLoaded: {},
             loadingTab: null,
+            navGroups: Array.isArray(navPayload?.groups) ? navPayload.groups : [],
+            tabLabels: navPayload?.tabLabels ?? {},
+            tabHints: navPayload?.tabHints ?? {},
+            tabToGroup: navPayload?.tabToGroup ?? {},
             init() {
                 const allowed = Array.isArray(allowedKeys) ? allowedKeys : [];
                 let next = "overview";
@@ -149,6 +154,32 @@ document.addEventListener("alpine:init", () => {
                 this.tab = next;
                 this.$watch("tab", () => this.afterTabChange());
                 this.$nextTick(() => this.afterTabChange());
+            },
+            activeGroupId() {
+                return this.tabToGroup[this.tab] ?? this.navGroups[0]?.id ?? "consultoria";
+            },
+            activeGroup() {
+                const gid = this.activeGroupId();
+                return (
+                    this.navGroups.find((g) => g.id === gid) ?? this.navGroups[0] ?? null
+                );
+            },
+            activeGroupLabel() {
+                const g = this.activeGroup();
+                return g?.short ?? g?.label ?? "";
+            },
+            activeTabLabel() {
+                return this.tabLabels[this.tab] ?? this.tab;
+            },
+            switchGroup(groupId) {
+                const g = this.navGroups.find((x) => x.id === groupId);
+                if (!g?.tabs?.length) {
+                    return;
+                }
+                if (g.tabs.includes(this.tab)) {
+                    return;
+                }
+                this.tab = g.tabs[0];
             },
             maybeLoadTab(t) {
                 if (!this.lazy) {

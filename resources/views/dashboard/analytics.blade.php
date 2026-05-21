@@ -52,7 +52,7 @@
                     $lazyTabLoading = $lazyTabLoading ?? false;
                 @endphp
                 <div
-                    x-data="analyticsTabs(@js(array_keys($tabs)), @js($analyticsInitialTab ?? 'overview'), @js($lazyTabLoading), @js(route('dashboard.analytics.tab')))"
+                    x-data="analyticsTabs(@js(array_keys($tabs)), @js($analyticsInitialTab ?? 'overview'), @js($lazyTabLoading), @js(route('dashboard.analytics.tab')), @js(\App\Support\Dashboard\AnalyticsTabCatalog::navigationPayload()))"
                     @if ($lazyTabLoading && $yearFilterReady)
                         x-init="tabLoaded['other_funding'] = true; tabLoaded['work_done'] = true"
                     @endif
