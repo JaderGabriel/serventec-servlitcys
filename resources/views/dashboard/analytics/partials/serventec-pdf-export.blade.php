@@ -47,7 +47,7 @@
         <div>
             <h3 class="text-sm font-semibold text-indigo-950 dark:text-indigo-100">{{ __('Relatório PDF completo') }}</h3>
             <p class="text-xs text-indigo-900/90 dark:text-indigo-200/90 mt-1 leading-relaxed">
-                {{ __('Enfileira a geração do PDF (Serventec, discrepâncias, FUNDEB, Censo e gráficos). O worker deve escutar a fila :queue.', ['queue' => $pdfQueue]) }}
+                {{ __('Enfileira a geração do PDF (Serventec, discrepâncias, FUNDEB, Censo e gráficos). Com QUEUE_CONNECTION=database/redis, o cron `schedule:run` dispara o worker da fila :queue; em alternativa: `php artisan analytics-pdf:work`.', ['queue' => $pdfQueue]) }}
                 <a href="{{ route('admin.sync-queue.index', ['pdf_status' => 'pending']) }}#fila-pdf" class="font-medium text-indigo-700 dark:text-indigo-300 hover:underline">{{ __('Ver fila de processamento') }}</a>
             </p>
             @if ($queueIsSync)

@@ -1,10 +1,13 @@
 <?php
 
+use App\Http\Middleware\EnsureAnalyticsDiagnostics;
+use App\Http\Middleware\EnsureCanManageUsers;
 use App\Http\Middleware\EnsureProfileComplete;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\RecordPulseInstitutionContext;
 use App\Support\Scheduling\AdminSyncScheduleGate;
+use App\Support\Scheduling\AnalyticsPdfScheduleGate;
 use App\Support\Scheduling\ScheduleIntervals;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
@@ -22,8 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
-            'analytics.diagnostics' => \App\Http\Middleware\EnsureAnalyticsDiagnostics::class,
-            'manage.users' => \App\Http\Middleware\EnsureCanManageUsers::class,
+            'analytics.diagnostics' => EnsureAnalyticsDiagnostics::class,
+            'manage.users' => EnsureCanManageUsers::class,
             'profile.complete' => EnsureProfileComplete::class,
         ]);
 
@@ -111,6 +114,27 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 ScheduleIntervals::everyMinutes($onDemand, $runnerMinutes);
             }
+        }
+
+        if (config('analytics.pdf_report.schedule.enabled', true)
+            && config('analytics.pdf_report.schedule.on_demand', true)) {
+            $timezone = (string) config('app.timezone', 'UTC');
+            $pdfOnDemandMax = max(60, (int) config('analytics.pdf_report.schedule.on_demand_max_seconds', 900));
+            $pdfOnDemand = $schedule->call(function () use ($pdfOnDemandMax): void {
+                if (! AnalyticsPdfScheduleGate::hasPendingWork()) {
+                    return;
+                }
+
+                Artisan::call('analytics-pdf:work', [
+                    '--stop-when-empty' => true,
+                    '--max-time' => $pdfOnDemandMax,
+                ]);
+            })
+                ->name('analytics-pdf-on-demand')
+                ->withoutOverlapping(max(10, min(30, $runnerMinutes * 2)))
+                ->timezone($timezone);
+
+            ScheduleIntervals::everyMinutes($pdfOnDemand, $runnerMinutes);
         }
     })
     ->create();

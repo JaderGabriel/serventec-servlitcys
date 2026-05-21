@@ -37,15 +37,21 @@
                         <code class="font-mono text-[11px]">php artisan queue:work {{ $queueDefault }} --queue={{ $syncQueueName }},{{ $pdfQueueName }}</code>
                     </p>
                 </div>
-                @if (config('ieducar.admin_sync.schedule.enabled', true))
+                @if (config('ieducar.admin_sync.schedule.enabled', true) || config('analytics.pdf_report.schedule.enabled', true))
                     <div class="border-t border-slate-200/80 dark:border-slate-700 pt-3">
-                        <p class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ __('Agendador') }}</p>
+                        <p class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ __('Agendador (schedule:run)') }}</p>
                         <code class="block text-xs text-gray-600 dark:text-gray-400 mt-1">*/{{ config('schedule.runner_interval_minutes', 3) }} * * * * php artisan schedule:run</code>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ __('admin-sync: cada :sync min (até :s s). Pulse: :pulse min.', [
-                            'sync' => (string) config('ieducar.admin_sync.schedule.interval_minutes', 60),
-                            's' => (string) config('ieducar.admin_sync.schedule.max_seconds', 3300),
-                            'pulse' => (string) config('pulse.schedule.interval_minutes', 3),
-                        ]) }}</p>
+                        <ul class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 space-y-0.5 list-disc list-inside">
+                            @if (config('ieducar.admin_sync.schedule.enabled', true))
+                                <li>{{ __('Sincronização admin (on_demand + horários configurados).') }}</li>
+                            @endif
+                            @if (config('analytics.pdf_report.schedule.enabled', true) && config('analytics.pdf_report.schedule.on_demand', true))
+                                <li>{{ __('PDF analítico: worker automático quando há exportações na fila (até :s s).', ['s' => (string) config('analytics.pdf_report.schedule.on_demand_max_seconds', 900)]) }}</li>
+                            @endif
+                            @if (config('pulse.enabled', true) && config('pulse.schedule.enabled', true))
+                                <li>{{ __('Pulse: :pulse min.', ['pulse' => (string) config('pulse.schedule.interval_minutes', 3)]) }}</li>
+                            @endif
+                        </ul>
                     </div>
                 @endif
             </div>

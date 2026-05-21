@@ -110,6 +110,16 @@ return [
         'connection' => env('ANALYTICS_PDF_QUEUE_CONNECTION'),
         'job_timeout' => max(120, (int) env('ANALYTICS_PDF_JOB_TIMEOUT', 900)),
         'tries' => max(1, (int) env('ANALYTICS_PDF_TRIES', 2)),
+        /*
+         * Processamento via `php artisan schedule:run` (cron a cada SCHEDULE_RUN_INTERVAL_MINUTES).
+         * Quando há exportações pendentes ou jobs na fila, dispara analytics-pdf:work (on_demand).
+         * Desactive se usar `analytics-pdf:work` ou `queue:work` contínuo em Supervisor.
+         */
+        'schedule' => [
+            'enabled' => filter_var(env('ANALYTICS_PDF_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
+            'on_demand' => filter_var(env('ANALYTICS_PDF_SCHEDULE_ON_DEMAND', true), FILTER_VALIDATE_BOOL),
+            'on_demand_max_seconds' => max(60, (int) env('ANALYTICS_PDF_SCHEDULE_ON_DEMAND_MAX_SECONDS', 900)),
+        ],
         'disk' => (string) env('ANALYTICS_PDF_DISK', 'local'),
         'path_prefix' => 'analytics-reports',
         'max_exports_per_user' => max(1, (int) env('ANALYTICS_PDF_MAX_PER_USER', 10)),
