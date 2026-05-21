@@ -14,7 +14,7 @@
                 </h2>
             </div>
             @if (Auth::user()->canViewAdminDashboard())
-                <a href="{{ route('dashboard') }}" class="serv-link text-sm">{{ __('← Administração') }}</a>
+                <a href="{{ route('dashboard') }}" class="serv-link text-sm">{{ __('← Início') }}</a>
             @endif
         </div>
     </x-slot>
@@ -140,7 +140,7 @@
                         </details>
                     @endif
 
-                    @if (config('analytics.diagnostics_route_enabled') || app()->environment(['local', 'development']))
+                    @if (Auth::user()->isAdmin())
                         <p class="text-xs">
                             <a href="{{ route('admin.analytics-diagnostics', ['city_id' => $selectedCity->id, 'ano_letivo' => $filters->ano_letivo ?? '2024']) }}" class="serv-link font-medium">
                                 {{ __('Diagnóstico completo de erro 500') }}

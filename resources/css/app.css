@@ -662,6 +662,137 @@
     .pulse-nav-user {
         @apply flex shrink-0 flex-nowrap items-center gap-2 border-s border-gray-200 ps-2 dark:border-gray-600 sm:gap-3 sm:ps-3;
     }
+
+    /* Dashboard inicial (admin) */
+    .serv-home-kpi-grid {
+        @apply grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4;
+    }
+
+    .serv-home-kpi {
+        @apply serv-panel p-5 space-y-1;
+    }
+
+    .serv-home-kpi--teal {
+        @apply border-teal-200/90 bg-gradient-to-br from-teal-50/90 via-white to-slate-50/80
+            dark:from-teal-950/35 dark:via-slate-900/50 dark:to-slate-950/80 dark:border-teal-800/50;
+    }
+
+    .serv-home-kpi--amber {
+        @apply border-amber-200/90 dark:border-amber-800/50;
+    }
+
+    .serv-home-kpi__label {
+        @apply text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-home-kpi__value {
+        @apply font-display text-3xl font-semibold tabular-nums text-slate-900 dark:text-slate-50;
+    }
+
+    .serv-home-kpi__suffix {
+        @apply text-lg font-medium text-slate-400 dark:text-slate-500;
+    }
+
+    .serv-home-kpi__hint {
+        @apply text-xs text-slate-500 dark:text-slate-400 leading-relaxed;
+    }
+
+    .serv-home-action-grid {
+        @apply grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3;
+    }
+
+    .serv-home-action {
+        @apply serv-panel flex items-center gap-4 p-4 transition
+            hover:border-teal-200/90 hover:shadow-md hover:ring-teal-600/10
+            dark:hover:border-teal-800/60;
+    }
+
+    .serv-home-action--primary {
+        @apply border-teal-200/90 ring-1 ring-teal-600/10 bg-gradient-to-br from-teal-50/50 via-white to-white
+            dark:from-teal-950/25 dark:via-slate-900/40 dark:to-slate-950/60 dark:border-teal-800/50;
+    }
+
+    .serv-home-action__icon {
+        @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600
+            dark:bg-slate-800 dark:text-slate-300;
+    }
+
+    .serv-home-action__icon--teal {
+        @apply bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300;
+    }
+
+    .serv-home-action__body {
+        @apply min-w-0 flex-1 space-y-0.5;
+    }
+
+    .serv-home-action__title {
+        @apply block font-display text-sm font-semibold text-slate-900 dark:text-slate-100;
+    }
+
+    .serv-home-action__desc {
+        @apply block text-xs text-slate-500 dark:text-slate-400 leading-snug;
+    }
+
+    .serv-home-flow-chart {
+        @apply relative h-56 sm:h-64 w-full;
+    }
+
+    .serv-home-flow-chart canvas {
+        @apply h-full w-full;
+    }
+
+    .serv-data-flow-pipeline {
+        @apply space-y-2;
+    }
+
+    .serv-data-flow-pipeline__row {
+        @apply flex flex-wrap items-stretch justify-center gap-2;
+    }
+
+    .serv-data-flow-pipeline__row--branches {
+        @apply gap-1.5;
+    }
+
+    .serv-data-flow-pipeline__arrow {
+        @apply self-center text-lg font-medium text-teal-600/70 dark:text-teal-400/80 px-0.5;
+    }
+
+    .serv-data-flow-pipeline__fork {
+        @apply text-center text-xl text-slate-400 dark:text-slate-500 leading-none py-0.5;
+    }
+
+    .serv-data-flow-pipeline__node {
+        @apply flex-1 min-w-[5.5rem] max-w-[9rem] rounded-lg border border-slate-200/90 bg-slate-50/80 px-2.5 py-2 text-center
+            dark:border-slate-600/80 dark:bg-slate-800/50;
+    }
+
+    .serv-data-flow-pipeline__node--teal {
+        @apply border-teal-200/90 bg-teal-50/60 dark:border-teal-800/50 dark:bg-teal-950/30;
+    }
+
+    .serv-data-flow-pipeline__node--indigo {
+        @apply border-indigo-200/90 bg-indigo-50/50 dark:border-indigo-800/50 dark:bg-indigo-950/25;
+    }
+
+    .serv-data-flow-pipeline__node--amber {
+        @apply border-amber-200/90 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-950/25;
+    }
+
+    .serv-data-flow-pipeline__node--compact {
+        @apply min-w-[4.5rem] max-w-[6.5rem] py-1.5;
+    }
+
+    .serv-data-flow-pipeline__label {
+        @apply text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 leading-tight;
+    }
+
+    .serv-data-flow-pipeline__value {
+        @apply font-display text-sm font-bold tabular-nums text-slate-900 dark:text-slate-50 mt-0.5;
+    }
+
+    .serv-data-flow-pipeline__hint {
+        @apply text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug hidden sm:block;
+    }
 }
 
 /* Landing: padrão de grelha suave (usado na welcome) */

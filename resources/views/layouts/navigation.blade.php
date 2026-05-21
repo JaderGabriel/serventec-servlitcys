@@ -11,7 +11,7 @@
                 <div class="hidden space-x-6 sm:-my-px sm:ms-10 sm:flex">
                     @if (Auth::user()->canViewAdminDashboard())
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">
-                            {{ __('Painel') }}
+                            {{ __('Início') }}
                         </x-nav-link>
                     @endif
                     <x-nav-link :href="route('dashboard.analytics')" :active="request()->routeIs('dashboard.analytics*')" icon="chart-bar">
@@ -69,7 +69,7 @@
         <div class="pt-1.5 pb-2 space-y-0">
             @if (Auth::user()->canViewAdminDashboard())
                 <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">
-                    {{ __('Painel') }}
+                    {{ __('Início') }}
                 </x-responsive-nav-link>
             @endif
             <x-responsive-nav-link :href="route('dashboard.analytics')" :active="request()->routeIs('dashboard.analytics*')" icon="chart-bar">

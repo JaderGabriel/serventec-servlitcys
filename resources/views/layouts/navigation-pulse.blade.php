@@ -9,7 +9,7 @@
                 <div class="pulse-nav-links">
                     @if (Auth::user()->canViewAdminDashboard())
                         <x-pulse-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">
-                            {{ __('Painel') }}
+                            {{ __('Início') }}
                         </x-pulse-nav-link>
                     @endif
                     <x-pulse-nav-link :href="route('dashboard.analytics')" :active="request()->routeIs('dashboard.analytics*')" icon="chart-bar">

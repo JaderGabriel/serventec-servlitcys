@@ -52,7 +52,7 @@ O produto comunica **consultoria profissional** com foco em **finanças educacio
 |--------|----------------|-----------------|
 | **Municipal** | Meu município | Perfil, Sair |
 | **User** (consultor) | Meu município / Consultoria municipal | Idem |
-| **Admin** | Painel + Consultoria municipal | Sincronizações, Utilizadores, **Documentação do sistema**, SMTP |
+| **Admin** | Início (dashboard) + Consultoria municipal | **Conexões** (ligações i-Educar), Sincronizações, Utilizadores, Documentação, SMTP |
 
 Rota documentação admin: `GET /admin/documentacao` → `admin.documentation.index`.
 

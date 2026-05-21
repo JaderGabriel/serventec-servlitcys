@@ -32,7 +32,7 @@
                 <nav class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm" aria-label="{{ __('Links rápidos') }}">
                     @if (Auth::user()->canViewAdminDashboard())
                         <a href="{{ route('dashboard') }}" class="serv-link text-sm">
-                            {{ __('Painel') }}
+                            {{ __('Início') }}
                         </a>
                     @endif
                     <a href="{{ route('dashboard.analytics') }}" class="serv-link text-sm">

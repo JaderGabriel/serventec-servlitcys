@@ -40,12 +40,21 @@
 
 @if (Auth::user()->isAdmin())
     <div class="my-1 border-t border-gray-200/90 dark:border-gray-600/90 mx-3" role="separator"></div>
+    <x-responsive-nav-section icon="circle-stack" tone="slate">{{ __('Conexões') }}</x-responsive-nav-section>
+    <x-responsive-nav-link :href="route('admin.connections.index')" :active="request()->routeIs('admin.connections.*')" icon="circle-stack" :title="__('Ligações i-Educar.')">
+        {{ __('Ligações i-Educar') }}
+    </x-responsive-nav-link>
+
+    <div class="my-1 border-t border-gray-200/90 dark:border-gray-600/90 mx-3" role="separator"></div>
     <x-responsive-nav-section icon="document-text" tone="amber">{{ __('Administração') }}</x-responsive-nav-section>
     <x-responsive-nav-link :href="route('admin.documentation.index')" :active="request()->routeIs('admin.documentation.*')" icon="document-text" :title="__('Documentação técnica.')">
         {{ __('Documentação') }}
     </x-responsive-nav-link>
     <x-responsive-nav-link :href="route('settings.mail.edit')" :active="request()->routeIs('settings.mail.*')" icon="envelope" :title="__('Configuração SMTP.')">
         {{ __('E-mail') }}
+    </x-responsive-nav-link>
+    <x-responsive-nav-link :href="route('admin.analytics-diagnostics')" :active="request()->routeIs('admin.analytics-diagnostics')" icon="signal" :title="__('Diagnóstico do painel analítico.')">
+        {{ __('Diagnóstico analítico') }}
     </x-responsive-nav-link>
 @endif
 

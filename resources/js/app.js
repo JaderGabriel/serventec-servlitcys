@@ -1508,6 +1508,81 @@ document.addEventListener("alpine:init", () => {
     );
 });
 
+/** Gráfico empilhado do Início (admin) — fluxo HTTP, sync, PDF e notificações. */
+function hexToRgba(hex, alpha) {
+    const h = String(hex || "#0d9488").replace("#", "");
+    if (h.length !== 6) {
+        return `rgba(13, 148, 136, ${alpha})`;
+    }
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+document.addEventListener("alpine:init", () => {
+    Alpine.data("homeDataFlowChart", (config) => ({
+        chart: null,
+        init() {
+            const canvas = this.$refs.canvas;
+            if (!canvas || !config?.labels?.length || !config?.datasets?.length) {
+                return;
+            }
+            const datasets = config.datasets.map((ds) => ({
+                label: ds.label,
+                data: ds.data,
+                borderColor: ds.color,
+                backgroundColor: hexToRgba(ds.color, 0.35),
+                fill: true,
+                tension: 0.35,
+                pointRadius: 2,
+                pointHoverRadius: 4,
+                borderWidth: 2,
+            }));
+            this.chart = new Chart(canvas.getContext("2d"), {
+                type: "line",
+                data: {
+                    labels: config.labels,
+                    datasets,
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: "index", intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { display: false },
+                        tooltip: {
+                            mode: "index",
+                            intersect: false,
+                        },
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            grid: { color: chartGridColor() },
+                            ticks: { color: chartTextColor(), maxRotation: 0 },
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            grid: { color: chartGridColor() },
+                            ticks: {
+                                color: chartTextColor(),
+                                precision: 0,
+                            },
+                        },
+                    },
+                },
+            });
+        },
+        destroy() {
+            this.chart?.destroy();
+            this.chart = null;
+        },
+    }));
+});
+
 window.Alpine = Alpine;
 
 registerScrollToTopData(Alpine);

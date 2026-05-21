@@ -1,130 +1,196 @@
+@php
+    $queueTotal = (int) ($ops['sync_pending'] ?? 0) + (int) ($ops['pdf_pending'] ?? 0);
+    $hasAlerts = ($ops['sync_failed_24h'] ?? 0) > 0 || $queueTotal > 0;
+@endphp
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Painel') }}
-            </h2>
-            <a href="{{ route('dashboard.analytics') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('Análise educacional →') }}</a>
+        <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+                <p class="serv-eyebrow">{{ __('Início') }}</p>
+                <h2 class="font-display font-semibold text-xl sm:text-2xl text-serv-navy leading-tight">
+                    {{ __('Olá, :name', ['name' => $user->name]) }}
+                </h2>
+                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                    {{ __('Resumo operacional de :app — consultoria, municípios e filas.', ['app' => config('app.name')]) }}
+                </p>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                {{ now()->timezone(config('app.timezone'))->translatedFormat('l, d \d\e F Y') }}
+            </p>
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-8 sm:py-10">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
-            <div class="rounded-lg border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/80 dark:bg-indigo-950/30 px-4 py-3 text-sm text-indigo-900 dark:text-indigo-100">
-                <p class="font-medium">{{ __('O que este painel mostra') }}</p>
-                <p class="mt-1 text-indigo-800/90 dark:text-indigo-200/90 leading-relaxed">
-                    {{ __('Os números abaixo contam apenas registros nesta aplicação (cadastro de cidades e usuários). A seção «Dados da cidade» serve para testar se a conexão com o banco do município (iEducar) está correta: ao escolher uma cidade, o sistema mede a conexão e exibe a versão do servidor e quantas tabelas existem no schema — é um diagnóstico, ainda não as métricas pedagógicas.') }}
-                </p>
-            </div>
-
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 dark:border-gray-700 p-6">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ __('Dados da cidade (teste de conexão)') }}</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ __('Escolha uma cidade cadastrada e ativa com banco configurado. O sistema abre uma conexão temporária (MySQL/MariaDB ou PostgreSQL) e consulta informações gerais da base. Isso não altera dados; apenas confirma se host, porta, usuário e nome da base estão corretos.') }}</p>
-                <form method="get" action="{{ route('dashboard') }}" class="mt-4 flex flex-col sm:flex-row gap-4 sm:items-end">
-                    <div class="flex-1">
-                        <x-input-label for="city_id" :value="__('Cidade')" />
-                        <select id="city_id" name="city_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" onchange="this.form.submit()">
-                            <option value="">{{ __('— Selecione —') }}</option>
-                            @foreach ($citiesForFilter as $c)
-                                <option value="{{ $c->id }}" @selected((string) $selectedCityId === (string) $c->id)>{{ $c->name }} ({{ $c->uf }}) — {{ $c->dataDriver() === 'pgsql' ? __('PostgreSQL') : __('MySQL') }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <x-primary-button type="submit">{{ __('Atualizar') }}</x-primary-button>
-                </form>
-
-                @if ($selectedCity)
-                    <div class="mt-6 rounded-lg border border-gray-200 dark:border-gray-600 p-4 bg-gray-50 dark:bg-gray-900/40">
-                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $selectedCity->name }} — {{ $selectedCity->dataDriver() === 'pgsql' ? 'PostgreSQL' : 'MySQL' }} — {{ $selectedCity->db_host }} / {{ $selectedCity->db_database }}</p>
-                        @if ($cityDataProbe)
-                            @if ($cityDataProbe['ok'])
-                                <ul class="mt-3 text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                                    <li><span class="font-medium text-green-700 dark:text-green-400">{{ __('Conexão') }}:</span> {{ __('OK') }}</li>
-                                    @if ($cityDataProbe['mysql_version'])
-                                        <li><span class="font-medium">{{ ($cityDataProbe['driver'] ?? $selectedCity->dataDriver()) === 'pgsql' ? __('PostgreSQL') : __('MySQL') }}:</span> {{ $cityDataProbe['mysql_version'] }}</li>
-                                    @endif
-                                    @if ($cityDataProbe['table_count'] !== null)
-                                        <li><span class="font-medium">{{ __('Tabelas no schema') }}:</span> {{ number_format($cityDataProbe['table_count']) }}</li>
-                                    @endif
-                                </ul>
-                            @else
-                                <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ $cityDataProbe['message'] }}</p>
-                            @endif
-                        @endif
-                    </div>
-                @endif
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 dark:border-gray-700">
-                    <div class="p-6">
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Cidades cadastradas') }}</p>
-                        <p class="mt-2 text-3xl font-semibold text-gray-900 dark:text-gray-100">{{ number_format($stats['cities']) }}</p>
-                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ __('Total de municípios cadastrados nesta aplicação.') }}</p>
-                    </div>
-                </div>
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 dark:border-gray-700">
-                    <div class="p-6">
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Cidades ativas') }}</p>
-                        <p class="mt-2 text-3xl font-semibold text-emerald-600 dark:text-emerald-400">{{ number_format($stats['cities_active']) }}</p>
-                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ __('Marcadas como ativas e elegíveis para painéis e consultas.') }}</p>
-                    </div>
-                </div>
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 dark:border-gray-700">
-                    <div class="p-6">
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Novas cidades este mês') }}</p>
-                        <p class="mt-2 text-3xl font-semibold text-indigo-600 dark:text-indigo-400">{{ number_format($stats['cities_this_month']) }}</p>
-                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ __('Cadastros com data de criação no mês corrente.') }}</p>
-                    </div>
-                </div>
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 dark:border-gray-700">
-                    <div class="p-6">
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Usuários') }}</p>
-                        <p class="mt-2 text-3xl font-semibold text-gray-900 dark:text-gray-100">{{ number_format($stats['users']) }}</p>
-                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ __('Contas com acesso a esta aplicação (admin ou não).') }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 dark:border-gray-700">
-                    <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            @if ($hasAlerts)
+                <div class="serv-callout serv-callout--warning flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm">
                     <div>
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ __('Resumo (aplicação)') }}</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ __('Últimas cidades registradas na aplicação (cadastro local, não dados do iEducar).') }}</p>
+                        <p class="font-semibold text-amber-950 dark:text-amber-100">{{ __('Atenção operacional') }}</p>
+                        <p class="mt-0.5">
+                            @if (($ops['sync_failed_24h'] ?? 0) > 0)
+                                {{ __(':n sincronização(ões) falharam nas últimas 24 h.', ['n' => number_format($ops['sync_failed_24h'])]) }}
+                            @endif
+                            @if ($queueTotal > 0)
+                                {{ __(':n item(ns) em fila (sync ou PDF).', ['n' => number_format($queueTotal)]) }}
+                            @endif
+                        </p>
                     </div>
-                    @if (Auth::user()->isAdmin())
-                        <a href="{{ route('cities.index') }}" class="inline-flex items-center justify-center px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
-                            {{ __('Gerenciar cidades') }}
-                        </a>
-                    @endif
+                    <a href="{{ route('admin.sync-queue.index') }}" class="serv-btn-secondary shrink-0 text-sm">{{ __('Ver fila') }}</a>
                 </div>
-                <div class="p-6 overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead>
-                            <tr>
-                                <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Cidade') }}</th>
-                                <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('UF') }}</th>
-                                <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('País') }}</th>
-                                <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Registrado em') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            @forelse ($recentCities as $city)
-                                <tr>
-                                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ $city->name }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $city->uf }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $city->country }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ $city->created_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="px-4 py-6 text-sm text-center text-gray-500 dark:text-gray-400">{{ Auth::user()->isAdmin() ? __('Ainda não há cidades. Adicione na seção Cidades.') : __('Ainda não há cidades. Peça a um administrador para cadastrar.') }}</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+            @endif
+
+            <section aria-labelledby="home-kpis">
+                <h3 id="home-kpis" class="sr-only">{{ __('Indicadores') }}</h3>
+                <div class="serv-home-kpi-grid">
+                    <article class="serv-home-kpi serv-home-kpi--teal">
+                        <p class="serv-home-kpi__label">{{ __('Municípios prontos') }}</p>
+                        <p class="serv-home-kpi__value">{{ number_format($stats['cities_ready']) }}<span class="serv-home-kpi__suffix">/ {{ number_format($stats['cities_active']) }}</span></p>
+                        <p class="serv-home-kpi__hint">{{ __('Activos com base i-Educar configurada') }}</p>
+                    </article>
+                    <article class="serv-home-kpi">
+                        <p class="serv-home-kpi__label">{{ __('Cidades cadastradas') }}</p>
+                        <p class="serv-home-kpi__value">{{ number_format($stats['cities']) }}</p>
+                        <p class="serv-home-kpi__hint">{{ __('+:n este mês', ['n' => number_format($stats['cities_this_month'])]) }}</p>
+                    </article>
+                    <article class="serv-home-kpi">
+                        <p class="serv-home-kpi__label">{{ __('Utilizadores activos') }}</p>
+                        <p class="serv-home-kpi__value">{{ number_format($stats['users_active']) }}</p>
+                        <p class="serv-home-kpi__hint">{{ __(':total contas no total', ['total' => number_format($stats['users'])]) }}</p>
+                    </article>
+                    <article class="serv-home-kpi @if ($queueTotal > 0) serv-home-kpi--amber @endif">
+                        <p class="serv-home-kpi__label">{{ __('Filas') }}</p>
+                        <p class="serv-home-kpi__value">{{ number_format($queueTotal) }}</p>
+                        <p class="serv-home-kpi__hint">{{ __(':sync sync · :pdf PDF', ['sync' => number_format($ops['sync_pending']), 'pdf' => number_format($ops['pdf_pending'])]) }}</p>
+                    </article>
                 </div>
-            </div>
+                <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                    {{ __('Bases activas:') }}
+                    <span class="font-mono">PG {{ number_format($ops['pgsql']) }}</span>
+                    ·
+                    <span class="font-mono">MySQL {{ number_format($ops['mysql']) }}</span>
+                </p>
+            </section>
+
+            @include('dashboard.partials.data-flow', [
+                'flowChart' => $flowChart,
+                'flowPipeline' => $flowPipeline,
+                'recentNotifications' => $recentNotifications,
+            ])
+
+            <section aria-labelledby="home-actions">
+                <div class="flex items-center justify-between gap-2 mb-4">
+                    <h3 id="home-actions" class="font-display text-lg font-semibold text-serv-navy">{{ __('Acesso rápido') }}</h3>
+                </div>
+                <div class="serv-home-action-grid">
+                    <a href="{{ route('dashboard.analytics') }}" class="serv-home-action serv-home-action--primary group">
+                        <span class="serv-home-action__icon serv-home-action__icon--teal" aria-hidden="true">
+                            <x-ui.icon name="chart-bar" class="h-6 w-6" />
+                        </span>
+                        <span class="serv-home-action__body">
+                            <span class="serv-home-action__title">{{ __('Consultoria municipal') }}</span>
+                            <span class="serv-home-action__desc">{{ __('Painel analítico por município — FUNDEB, matrículas, Censo.') }}</span>
+                        </span>
+                        <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 text-teal-600/70 group-hover:text-teal-700 dark:text-teal-400" />
+                    </a>
+                    <a href="{{ route('cities.index') }}" class="serv-home-action group">
+                        <span class="serv-home-action__icon" aria-hidden="true">
+                            <x-ui.icon name="map-pin" class="h-6 w-6" />
+                        </span>
+                        <span class="serv-home-action__body">
+                            <span class="serv-home-action__title">{{ __('Cidades') }}</span>
+                            <span class="serv-home-action__desc">{{ __('Cadastro, credenciais e estado das ligações.') }}</span>
+                        </span>
+                        <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
+                    </a>
+                    <a href="{{ route('pulse') }}" class="serv-home-action group">
+                        <span class="serv-home-action__icon" aria-hidden="true">
+                            <x-ui.icon name="signal" class="h-6 w-6" />
+                        </span>
+                        <span class="serv-home-action__body">
+                            <span class="serv-home-action__title">{{ __('Monitorização') }}</span>
+                            <span class="serv-home-action__desc">{{ __('Pulse — desempenho, erros e tráfego.') }}</span>
+                        </span>
+                        <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
+                    </a>
+                    <a href="{{ route('admin.connections.index') }}" class="serv-home-action group">
+                        <span class="serv-home-action__icon" aria-hidden="true">
+                            <x-ui.icon name="circle-stack" class="h-6 w-6" />
+                        </span>
+                        <span class="serv-home-action__body">
+                            <span class="serv-home-action__title">{{ __('Conexões i-Educar') }}</span>
+                            <span class="serv-home-action__desc">{{ __('Testar ligação e versão do banco por município.') }}</span>
+                        </span>
+                        <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
+                    </a>
+                    <a href="{{ route('users.index') }}" class="serv-home-action group">
+                        <span class="serv-home-action__icon" aria-hidden="true">
+                            <x-ui.icon name="users" class="h-6 w-6" />
+                        </span>
+                        <span class="serv-home-action__body">
+                            <span class="serv-home-action__title">{{ __('Utilizadores') }}</span>
+                            <span class="serv-home-action__desc">{{ __('Contas, perfis e sessões activas.') }}</span>
+                        </span>
+                        <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
+                    </a>
+                    <a href="{{ route('admin.sync-queue.index') }}" class="serv-home-action group">
+                        <span class="serv-home-action__icon" aria-hidden="true">
+                            <x-ui.icon name="queue-list" class="h-6 w-6" />
+                        </span>
+                        <span class="serv-home-action__body">
+                            <span class="serv-home-action__title">{{ __('Fila de sincronização') }}</span>
+                            <span class="serv-home-action__desc">{{ __('Jobs admin-sync, geo, pedagógico e FUNDEB.') }}</span>
+                        </span>
+                        <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
+                    </a>
+                    <a href="{{ route('admin.analytics-diagnostics') }}" class="serv-home-action group">
+                        <span class="serv-home-action__icon" aria-hidden="true">
+                            <x-ui.icon name="signal" class="h-6 w-6" />
+                        </span>
+                        <span class="serv-home-action__body">
+                            <span class="serv-home-action__title">{{ __('Diagnóstico analítico') }}</span>
+                            <span class="serv-home-action__desc">{{ __('Testes de ligação, filtros e renderização do painel.') }}</span>
+                        </span>
+                        <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
+                    </a>
+                </div>
+            </section>
+
+            <section class="serv-panel overflow-hidden" aria-labelledby="home-recent">
+                <div class="px-5 py-4 border-b border-slate-200/90 dark:border-slate-700/90 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h3 id="home-recent" class="font-display text-lg font-semibold text-serv-navy">{{ __('Municípios recentes') }}</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{{ __('Últimos cadastros activos — abra a consultoria com um clique.') }}</p>
+                    </div>
+                    <a href="{{ route('cities.create') }}" class="serv-btn-secondary text-sm">{{ __('Nova cidade') }}</a>
+                </div>
+                <div class="divide-y divide-slate-200/90 dark:divide-slate-700/90">
+                    @forelse ($recentCities as $city)
+                        <div class="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition">
+                            <div class="min-w-0">
+                                <p class="font-medium text-slate-900 dark:text-slate-100 truncate">{{ $city->name }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    {{ $city->uf }} · {{ $city->dataDriver() === 'pgsql' ? 'PostgreSQL' : 'MySQL' }}
+                                    @if ($city->hasDataSetup())
+                                        · <span class="text-emerald-600 dark:text-emerald-400">{{ __('Base configurada') }}</span>
+                                    @else
+                                        · <span class="text-amber-600 dark:text-amber-400">{{ __('Base incompleta') }}</span>
+                                    @endif
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap gap-2 shrink-0">
+                                <a href="{{ route('dashboard.analytics', ['city_id' => $city->id]) }}" class="serv-btn-secondary text-xs">{{ __('Consultoria') }}</a>
+                                <a href="{{ route('admin.connections.index', ['city_id' => $city->id]) }}" class="serv-btn-secondary text-xs">{{ __('Testar ligação') }}</a>
+                                <a href="{{ route('cities.edit', $city) }}" class="serv-link text-xs self-center">{{ __('Editar') }}</a>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="px-5 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                            {{ __('Nenhuma cidade activa. ') }}
+                            <a href="{{ route('cities.create') }}" class="serv-link">{{ __('Cadastrar município') }}</a>
+                        </p>
+                    @endforelse
+                </div>
+            </section>
         </div>
     </div>
 </x-app-layout>

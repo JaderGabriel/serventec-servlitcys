@@ -89,6 +89,9 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(func
     Route::get('/admin/sync-queue/{task}', [AdminSyncQueueController::class, 'show'])->name('admin.sync-queue.show');
     Route::get('/admin/sync-queue/{task}/download', [AdminSyncQueueController::class, 'download'])->name('admin.sync-queue.download');
 
+    Route::get('/admin/conexoes', [\App\Http\Controllers\Admin\AdminConnectionsController::class, 'index'])
+        ->name('admin.connections.index');
+
     Route::get('/admin/documentacao', [\App\Http\Controllers\Admin\DocumentationController::class, 'index'])
         ->name('admin.documentation.index');
     Route::get('/admin/documentacao/ver', [\App\Http\Controllers\Admin\DocumentationController::class, 'show'])

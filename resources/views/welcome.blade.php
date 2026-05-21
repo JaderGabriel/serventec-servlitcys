@@ -43,7 +43,7 @@
                             <nav class="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
                                 @auth
                                     <a href="{{ Auth::user()->homeUrl() }}" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:border-white/25 dark:hover:bg-white/10">
-                                        {{ Auth::user()->canViewAdminDashboard() ? __('Painel') : __('Análise') }}
+                                        {{ Auth::user()->canViewAdminDashboard() ? __('Início') : __('Análise') }}
                                     </a>
                                 @else
                                     <a href="{{ route('login') }}" class="rounded-lg border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 dark:border-white/20 dark:bg-white/5 dark:hover:border-white/30 dark:hover:bg-white/10 dark:focus-visible:outline-cyan-400">
