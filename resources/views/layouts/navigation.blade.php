@@ -35,7 +35,7 @@
             <div class="hidden sm:flex sm:items-center sm:ms-6 gap-1 sm:gap-3">
                 <x-theme-toggle />
                 <x-notification-bell />
-                <x-dropdown align="right" width="w-52" contentClasses="py-0.5 bg-white dark:bg-gray-700" class="shrink-0">
+                <x-dropdown align="right" width="w-64" contentClasses="py-1.5 bg-white dark:bg-gray-800" class="shrink-0">
                     <x-slot name="trigger">
                         <button type="button" class="inline-flex max-w-full items-center gap-2 rounded-lg border border-transparent px-2 py-1.5 text-sm leading-4 font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/80 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500/40 transition ease-in-out duration-150">
                             <x-user-avatar :user="Auth::user()" size="md" />
@@ -76,12 +76,12 @@
                 @if (Auth::user()->canViewAdminDashboard())
                     {{ __('Consultoria') }}
                 @else
-                    {{ __('Município') }}
+                    {{ __('Meu município') }}
                 @endif
             </x-responsive-nav-link>
             @if (Auth::user()->isAdmin())
                 <x-responsive-nav-link :href="route('pulse')" :active="request()->routeIs('pulse')" icon="signal">
-                    {{ __('Pulse') }}
+                    {{ __('Monitorização') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('cities.index')" :active="request()->routeIs('cities.*')" icon="map-pin">
                     {{ __('Cidades') }}
@@ -91,9 +91,12 @@
 
         <div class="pt-2 pb-2 border-t border-gray-200 dark:border-gray-600">
             <div class="px-3 flex items-center justify-between gap-2">
-                <div class="min-w-0 flex-1 flex items-center gap-2.5">
-                    <x-user-avatar :user="Auth::user()" size="sm" />
-                    <div class="min-w-0 text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{{ Auth::user()->name }}</div>
+                <div class="min-w-0 flex-1 flex items-center gap-3">
+                    <x-user-avatar :user="Auth::user()" size="md" />
+                    <div class="min-w-0">
+                        <div class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{{ Auth::user()->name }}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ Auth::user()->email }}</div>
+                    </div>
                 </div>
                 <div class="shrink-0">
                     <x-notification-bell />
