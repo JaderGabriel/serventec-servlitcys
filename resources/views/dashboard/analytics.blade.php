@@ -4,16 +4,16 @@
             <div>
                 <p class="serv-eyebrow">{{ __('Consultoria educacional') }}</p>
                 <h2 class="font-display font-semibold text-xl text-serv-navy dark:text-white leading-tight">
-                    @if (Auth::user()->isMunicipal())
+                    @if (Auth::user()?->isMunicipal())
                         {{ __('Painel do município') }}
-                    @elseif (Auth::user()->canViewAdminDashboard())
+                    @elseif (Auth::user()?->canViewAdminDashboard())
                         {{ __('Consultoria municipal') }}
                     @else
                         {{ __('Análise por município') }}
                     @endif
                 </h2>
             </div>
-            @if (Auth::user()->canViewAdminDashboard())
+            @if (Auth::user()?->canViewAdminDashboard())
                 <a href="{{ route('dashboard') }}" class="serv-link text-sm">{{ __('← Início') }}</a>
             @endif
         </div>
@@ -140,7 +140,7 @@
                         </details>
                     @endif
 
-                    @if (Auth::user()->isAdmin())
+                    @if (Auth::user()?->isAdmin())
                         <p class="text-xs">
                             <a href="{{ route('admin.analytics-diagnostics', ['city_id' => $selectedCity->id, 'ano_letivo' => $filters->ano_letivo ?? '2024']) }}" class="serv-link font-medium">
                                 {{ __('Diagnóstico completo de erro 500') }}

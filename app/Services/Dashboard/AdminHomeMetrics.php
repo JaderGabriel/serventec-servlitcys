@@ -12,7 +12,8 @@ use App\Models\User;
 final class AdminHomeMetrics
 {
     public function __construct(
-        private readonly AdminHomeDataFlow $dataFlow,
+        private readonly AdminSystemFlowStatus $systemFlow,
+        private readonly AdminHomeMunicipalityMap $municipalityMap,
     ) {}
 
     /**
@@ -59,17 +60,11 @@ final class AdminHomeMetrics
             'mysql' => City::query()->active()->where('db_driver', City::DRIVER_MYSQL)->count(),
         ];
 
-        $recentCities = City::query()->active()->latest()->limit(6)->get();
-
-        $flowChart = $this->dataFlow->chartPayload();
-
         return [
             'stats' => $stats,
             'ops' => $ops,
-            'recent_cities' => $recentCities,
-            'flow_chart' => $flowChart,
-            'flow_pipeline' => $this->dataFlow->pipelineNodes($ready, $activeCities->count(), $flowChart['totals']),
-            'recent_notifications' => $this->dataFlow->recentNotifications(),
+            'system_flow' => $this->systemFlow->diagram($ready, $activeCities->count()),
+            'map_markers' => $this->municipalityMap->markers(),
         ];
     }
 }

@@ -733,65 +733,136 @@
         @apply block text-xs text-slate-500 dark:text-slate-400 leading-snug;
     }
 
-    .serv-home-flow-chart {
-        @apply relative h-56 sm:h-64 w-full;
+    /* Fluxograma de integrações (Início) */
+    .serv-system-flow {
+        @apply flex flex-col items-center gap-0 max-w-4xl mx-auto;
     }
 
-    .serv-home-flow-chart canvas {
-        @apply h-full w-full;
+    .serv-system-flow__externals {
+        @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 w-full;
     }
 
-    .serv-data-flow-pipeline {
-        @apply space-y-2;
+    .serv-system-flow__node {
+        @apply relative rounded-xl border-2 px-3 py-3 text-center shadow-sm transition;
     }
 
-    .serv-data-flow-pipeline__row {
-        @apply flex flex-wrap items-stretch justify-center gap-2;
+    .serv-system-flow__node--ok {
+        @apply border-emerald-400/90 bg-emerald-50/90 dark:border-emerald-600/70 dark:bg-emerald-950/35;
     }
 
-    .serv-data-flow-pipeline__row--branches {
-        @apply gap-1.5;
+    .serv-system-flow__node--partial {
+        @apply border-amber-400/90 bg-amber-50/90 dark:border-amber-600/70 dark:bg-amber-950/30;
     }
 
-    .serv-data-flow-pipeline__arrow {
-        @apply self-center text-lg font-medium text-teal-600/70 dark:text-teal-400/80 px-0.5;
+    .serv-system-flow__node--off {
+        @apply border-slate-300/90 bg-slate-100/80 dark:border-slate-600 dark:bg-slate-800/50 opacity-80;
     }
 
-    .serv-data-flow-pipeline__fork {
-        @apply text-center text-xl text-slate-400 dark:text-slate-500 leading-none py-0.5;
+    .serv-system-flow__node--hub {
+        @apply border-teal-500/90 bg-gradient-to-br from-teal-50 via-white to-slate-50
+            dark:from-teal-950/50 dark:via-slate-900/60 dark:to-slate-950/80 px-6 py-4 min-w-[12rem];
     }
 
-    .serv-data-flow-pipeline__node {
-        @apply flex-1 min-w-[5.5rem] max-w-[9rem] rounded-lg border border-slate-200/90 bg-slate-50/80 px-2.5 py-2 text-center
-            dark:border-slate-600/80 dark:bg-slate-800/50;
+    .serv-system-flow__node--ieducar {
+        @apply min-w-[10rem] max-w-xs;
     }
 
-    .serv-data-flow-pipeline__node--teal {
-        @apply border-teal-200/90 bg-teal-50/60 dark:border-teal-800/50 dark:bg-teal-950/30;
+    .serv-system-flow__status-dot {
+        @apply absolute top-2 right-2 h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-slate-900;
     }
 
-    .serv-data-flow-pipeline__node--indigo {
-        @apply border-indigo-200/90 bg-indigo-50/50 dark:border-indigo-800/50 dark:bg-indigo-950/25;
+    .serv-system-flow__node--ok .serv-system-flow__status-dot {
+        @apply bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)];
     }
 
-    .serv-data-flow-pipeline__node--amber {
-        @apply border-amber-200/90 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-950/25;
+    .serv-system-flow__node--partial .serv-system-flow__status-dot {
+        @apply bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)];
     }
 
-    .serv-data-flow-pipeline__node--compact {
-        @apply min-w-[4.5rem] max-w-[6.5rem] py-1.5;
+    .serv-system-flow__node--off .serv-system-flow__status-dot {
+        @apply bg-slate-400;
     }
 
-    .serv-data-flow-pipeline__label {
-        @apply text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 leading-tight;
+    .serv-system-flow__node-label {
+        @apply font-display text-sm font-semibold text-slate-900 dark:text-slate-100;
     }
 
-    .serv-data-flow-pipeline__value {
-        @apply font-display text-sm font-bold tabular-nums text-slate-900 dark:text-slate-50 mt-0.5;
+    .serv-system-flow__node-sub {
+        @apply text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mt-0.5;
     }
 
-    .serv-data-flow-pipeline__hint {
-        @apply text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug hidden sm:block;
+    .serv-system-flow__node-hint,
+    .serv-system-flow__node-metric {
+        @apply text-[10px] text-slate-600 dark:text-slate-400 mt-1 leading-snug;
+    }
+
+    .serv-system-flow__node-metric {
+        @apply font-semibold tabular-nums text-teal-800 dark:text-teal-300;
+    }
+
+    .serv-system-flow__connectors {
+        @apply grid gap-2 w-full py-1;
+    }
+
+    .serv-system-flow__connectors--down {
+        @apply grid-cols-2 sm:grid-cols-3 lg:grid-cols-5;
+    }
+
+    .serv-system-flow__connectors--single {
+        @apply grid-cols-1 max-w-[4rem] mx-auto;
+    }
+
+    .serv-system-flow__connector {
+        @apply flex flex-col items-center justify-center min-h-[2rem];
+    }
+
+    .serv-system-flow__connector-line {
+        @apply w-0.5 flex-1 min-h-[1.25rem] rounded-full;
+    }
+
+    .serv-system-flow__connector--ok .serv-system-flow__connector-line {
+        @apply bg-emerald-500/80;
+    }
+
+    .serv-system-flow__connector--partial .serv-system-flow__connector-line {
+        @apply bg-amber-500/70;
+    }
+
+    .serv-system-flow__connector--off .serv-system-flow__connector-line {
+        @apply bg-slate-300 dark:bg-slate-600;
+    }
+
+    .serv-system-flow__connector-arrows {
+        @apply text-xs text-teal-700 dark:text-teal-400 font-bold leading-none;
+    }
+
+    .serv-system-flow__legend-dot {
+        @apply h-2.5 w-2.5 rounded-full shrink-0;
+    }
+
+    .serv-system-flow__legend-dot--ok {
+        @apply bg-emerald-500;
+    }
+
+    .serv-system-flow__legend-dot--partial {
+        @apply bg-amber-500;
+    }
+
+    .serv-system-flow__legend-dot--off {
+        @apply bg-slate-400;
+    }
+
+    .serv-brazil-map {
+        @apply h-[22rem] sm:h-[26rem] w-full z-0;
+    }
+
+    .serv-brazil-map .leaflet-container {
+        @apply h-full w-full rounded-b-xl font-sans;
+    }
+
+    .serv-brazil-map-tooltip {
+        @apply fixed z-[200] w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200/90
+            bg-white/95 dark:bg-slate-900/95 dark:border-slate-600 shadow-lg p-4 pointer-events-auto;
     }
 }
 

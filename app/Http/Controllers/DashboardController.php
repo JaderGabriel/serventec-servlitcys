@@ -22,10 +22,8 @@ class DashboardController extends Controller
             'user' => $user,
             'stats' => $data['stats'],
             'ops' => $data['ops'],
-            'recentCities' => $data['recent_cities'],
-            'flowChart' => $data['flow_chart'],
-            'flowPipeline' => $data['flow_pipeline'],
-            'recentNotifications' => $data['recent_notifications'],
+            'systemFlow' => $data['system_flow'],
+            'mapMarkers' => $data['map_markers'],
         ]);
     }
 }

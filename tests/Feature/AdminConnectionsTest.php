@@ -49,6 +49,7 @@ class AdminConnectionsTest extends TestCase
             ->assertOk()
             ->assertSee(__('Consultoria municipal'), false)
             ->assertSee(__('Fluxo de dados'), false)
+            ->assertSee(__('Municípios implementados'), false)
             ->assertSee(__('Acesso rápido'), false);
     }
 }

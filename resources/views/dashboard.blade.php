@@ -71,11 +71,9 @@
                 </p>
             </section>
 
-            @include('dashboard.partials.data-flow', [
-                'flowChart' => $flowChart,
-                'flowPipeline' => $flowPipeline,
-                'recentNotifications' => $recentNotifications,
-            ])
+            @include('dashboard.partials.data-flow', ['systemFlow' => $systemFlow])
+
+            @include('dashboard.partials.municipalities-map', ['mapMarkers' => $mapMarkers])
 
             <section aria-labelledby="home-actions">
                 <div class="flex items-center justify-between gap-2 mb-4">
@@ -155,42 +153,6 @@
                 </div>
             </section>
 
-            <section class="serv-panel overflow-hidden" aria-labelledby="home-recent">
-                <div class="px-5 py-4 border-b border-slate-200/90 dark:border-slate-700/90 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div>
-                        <h3 id="home-recent" class="font-display text-lg font-semibold text-serv-navy">{{ __('Municípios recentes') }}</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{{ __('Últimos cadastros activos — abra a consultoria com um clique.') }}</p>
-                    </div>
-                    <a href="{{ route('cities.create') }}" class="serv-btn-secondary text-sm">{{ __('Nova cidade') }}</a>
-                </div>
-                <div class="divide-y divide-slate-200/90 dark:divide-slate-700/90">
-                    @forelse ($recentCities as $city)
-                        <div class="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition">
-                            <div class="min-w-0">
-                                <p class="font-medium text-slate-900 dark:text-slate-100 truncate">{{ $city->name }}</p>
-                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                    {{ $city->uf }} · {{ $city->dataDriver() === 'pgsql' ? 'PostgreSQL' : 'MySQL' }}
-                                    @if ($city->hasDataSetup())
-                                        · <span class="text-emerald-600 dark:text-emerald-400">{{ __('Base configurada') }}</span>
-                                    @else
-                                        · <span class="text-amber-600 dark:text-amber-400">{{ __('Base incompleta') }}</span>
-                                    @endif
-                                </p>
-                            </div>
-                            <div class="flex flex-wrap gap-2 shrink-0">
-                                <a href="{{ route('dashboard.analytics', ['city_id' => $city->id]) }}" class="serv-btn-secondary text-xs">{{ __('Consultoria') }}</a>
-                                <a href="{{ route('admin.connections.index', ['city_id' => $city->id]) }}" class="serv-btn-secondary text-xs">{{ __('Testar ligação') }}</a>
-                                <a href="{{ route('cities.edit', $city) }}" class="serv-link text-xs self-center">{{ __('Editar') }}</a>
-                            </div>
-                        </div>
-                    @empty
-                        <p class="px-5 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
-                            {{ __('Nenhuma cidade activa. ') }}
-                            <a href="{{ route('cities.create') }}" class="serv-link">{{ __('Cadastrar município') }}</a>
-                        </p>
-                    @endforelse
-                </div>
-            </section>
         </div>
     </div>
 </x-app-layout>
