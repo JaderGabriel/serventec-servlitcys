@@ -45,6 +45,20 @@
 
                     @include('admin.partials.sync-queued-alert')
 
+                    @if (($officialUrlUsesAppDefault ?? false) && ($pontosCount ?? 0) === 0)
+                        <div class="rounded-xl border border-amber-300/90 bg-amber-50 px-4 py-4 text-sm text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100" role="alert">
+                            <p class="font-semibold">{{ __('Primeira carga SAEB: não use só o Passo 3') }}</p>
+                            <p class="mt-2 leading-relaxed text-amber-900/90 dark:text-amber-200/90">
+                                {{ __('Com IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE vazio, o Passo 3 chama a API desta aplicação (:url). Essa rota só devolve JSON depois de já existirem pontos na base — por isso falha na primeira vez.', ['url' => $effectiveOfficialTemplate ?? '']) }}
+                            </p>
+                            <ul class="mt-3 list-disc space-y-1 pl-5 text-xs leading-relaxed text-amber-900/85 dark:text-amber-200/80">
+                                <li><strong>{{ __('Recomendado:') }}</strong> {{ __('Passo 4 (microdados INEP) ou Passo 2 (CSV), depois os gráficos Desempenho passam a ter dados.') }}</li>
+                                <li>{{ __('Alternativa:') }} {{ __('Passo 1 com IEDUCAR_SAEB_IMPORT_URLS apontando para um JSON externo com chave «pontos».') }}</li>
+                                <li>{{ __('Ou defina IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE no .env com uma URL externa real (placeholder {ibge}).') }}</li>
+                            </ul>
+                        </div>
+                    @endif
+
                     <x-admin.queue-banner compact />
 
                     <details id="saeb-historico-resumo" class="rounded-xl border border-emerald-200/90 bg-emerald-50/40 dark:border-emerald-800/50 dark:bg-emerald-950/20 [&_summary::-webkit-details-marker]:hidden">
@@ -106,7 +120,7 @@
                         <summary class="cursor-pointer font-medium">{{ __('Notas INEP / SSL (microdados)') }}</summary>
                         <ul class="mt-2 list-disc pl-5 space-y-1 text-xs leading-relaxed">
                             <li>{{ __('ZIP nacional (>600 MB); filtro por cidade após extrair.') }}</li>
-                            <li>{{ __('Erro cURL 60: ca-certificates ou IEDUCAR_SAEB_HTTP_CA_BUNDLE.') }}</li>
+                            <li>{{ __('Erro cURL 60 (RNP/INEP): php artisan saeb:refresh-ca-bundle, IEDUCAR_SAEB_HTTP_CA_BUNDLE, actualizar ca-certificates no servidor, ou IEDUCAR_SAEB_HTTP_INSECURE_FALLBACK=true (só dev).') }}</li>
                         </ul>
                     </details>
 
@@ -328,8 +342,13 @@
                                             </div>
                                             <h3 class="mt-2 text-base font-semibold text-emerald-950 dark:text-emerald-100">{{ __('Sincronizar dados oficiais por município (IBGE)') }}</h3>
                                             <p class="mt-2 text-xs text-emerald-900/85 dark:text-emerald-200/80 leading-relaxed">
-                                                {{ __('Por defeito usa o template oficial indicado na caixa azul acima. Marque a opção abaixo apenas se precisar de uma URL de modelo diferente (teste ou espelho) sem alterar o .env.') }}
+                                                {{ __('Atualiza/agrega por IBGE a partir do template na caixa azul. Na primeira carga use o Passo 4 ou 2 — o Passo 3 com API interna só funciona depois de já haver pontos importados.') }}
                                             </p>
+                                            @if (($officialUrlUsesAppDefault ?? false) && ($pontosCount ?? 0) === 0)
+                                                <p class="mt-2 rounded-md border border-amber-300/70 bg-amber-50/90 px-2.5 py-2 text-[11px] leading-relaxed text-amber-950 dark:border-amber-700/50 dark:bg-amber-950/25 dark:text-amber-100">
+                                                    {{ __('Aviso: o template actual é a API desta app — execute primeiro microdados/CSV ou configure URL externa no .env.') }}
+                                                </p>
+                                            @endif
                                             <p class="mt-2 text-[11px] font-mono text-emerald-900/80 dark:text-emerald-300/90 break-all bg-white/60 dark:bg-emerald-950/20 rounded-md px-2 py-1.5 border border-emerald-200/60 dark:border-emerald-800/50">{{ __('Actual:') }} {{ $effectiveOfficialTemplate !== '' ? $effectiveOfficialTemplate : '—' }}</p>
                                         </div>
                                     </div>

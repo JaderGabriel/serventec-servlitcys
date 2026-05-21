@@ -44,6 +44,7 @@ php artisan app:probe-inep-geo-fallbacks --city=1
 | Comando | Descrição |
 |---------|-----------|
 | `saeb:sync-microdados` | ZIP INEP ou CSV por URL → `historico.json` |
+| `saeb:refresh-ca-bundle` | Actualiza PEM para SSL do download.inep.gov.br (erro cURL 60) |
 | `saeb:import-official` | Séries oficiais por IBGE |
 | `saeb:import-csv` | CSV manual |
 

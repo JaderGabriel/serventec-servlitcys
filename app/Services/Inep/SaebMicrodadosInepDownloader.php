@@ -119,12 +119,7 @@ final class SaebMicrodadosInepDownloader
             $variants[] = $opts;
         };
 
-        $configured = trim((string) config('ieducar.saeb.microdados_http_ca_bundle', ''));
-        if ($configured !== '' && is_readable($configured)) {
-            $push($this->verifyOptionsForCaFile($configured));
-        }
-
-        foreach (self::collectSystemCaBundleCandidates() as $path) {
+        foreach (SaebInepDownloadCaBundle::candidatePaths() as $path) {
             $push($this->verifyOptionsForCaFile($path));
         }
 
@@ -197,11 +192,20 @@ final class SaebMicrodadosInepDownloader
                     continue;
                 }
 
-                throw $e instanceof \RuntimeException ? $e : new \RuntimeException($e->getMessage(), 0, $e);
+                $final = $e instanceof \RuntimeException ? $e : new \RuntimeException($e->getMessage(), 0, $e);
+                if ($this->isSslConnectionError($final)) {
+                    throw new \RuntimeException(
+                        $final->getMessage()."\n\n".SaebInepDownloadCaBundle::sslFailureHint(),
+                        0,
+                        $final
+                    );
+                }
+
+                throw $final;
             }
         }
 
-        throw new \RuntimeException(__('Download falhou após tentativas SSL.'));
+        throw new \RuntimeException(__('Download falhou após tentativas SSL.')."\n\n".SaebInepDownloadCaBundle::sslFailureHint());
     }
 
     /**

@@ -34,7 +34,8 @@ $recentWindowSec = max(120, min(3600, ($intervalMin * 60) + 90));
     :class="loading && 'opacity-25 animate-pulse'"
 >
     @if ($servers->isNotEmpty())
-        <div class="grid grid-cols-[max-content,minmax(max-content,1fr),max-content,minmax(min-content,2fr),max-content,minmax(min-content,2fr),minmax(max-content,1fr)]">
+        <div class="min-w-0 overflow-x-auto">
+        <div class="grid min-w-[52rem] grid-cols-[max-content,minmax(max-content,1fr),max-content,minmax(min-content,2fr),max-content,minmax(min-content,2fr),minmax(max-content,1fr)]">
             <div></div>
             <div></div>
             <div class="text-xs uppercase text-left text-gray-500 dark:text-gray-400 font-bold">CPU</div>
@@ -123,6 +124,9 @@ $recentWindowSec = max(120, min(3600, ($intervalMin * 60) + 90));
                 </div>
             @endforeach
         </div>
+        </div>
+    @else
+        <x-pulse-dashboard.servers-empty />
     @endif
 </section>
 

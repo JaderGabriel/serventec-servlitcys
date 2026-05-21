@@ -35,8 +35,9 @@
                 </div>
             </div>
 
-            <!-- Notificações + utilizador -->
+            <!-- Tema, notificações + utilizador -->
             <div class="hidden sm:flex sm:items-center sm:ms-6 gap-1 sm:gap-3">
+                <x-theme-toggle />
                 <x-notification-bell />
                 <x-dropdown align="right" width="w-64" class="shrink-0">
                     <x-slot name="trigger">
@@ -167,7 +168,8 @@
                 <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
                 <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
                 </div>
-                <div class="shrink-0 ps-1">
+                <div class="flex shrink-0 items-center gap-1 ps-1">
+                    <x-theme-toggle />
                     <x-notification-bell />
                 </div>
             </div>

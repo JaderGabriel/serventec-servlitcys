@@ -7,7 +7,7 @@
         accent="cyan"
         icon="chart-bar"
     />
-    <livewire:pulse.municipal-infrastructure-card cols="full" rows="3" />
+    <livewire:pulse.municipal-infrastructure-card cols="full" rows="2" />
     <livewire:pulse.institution-traffic-card cols="full" rows="2" />
 
     <x-pulse-dashboard.section
@@ -20,15 +20,16 @@
 
     <x-pulse-dashboard.section
         :title="__('Infraestrutura de TI')"
-        :subtitle="__('Runtime da aplicação, filas, disco, base de dados e estado do servidor em tempo real.')"
+        :subtitle="__('Runtime, filas, disco, base de dados e servidor — métricas em tempo real e série temporal.')"
         accent="slate"
         icon="server"
     />
-    <livewire:pulse.usage cols="4" rows="2" />
-    <livewire:pulse.application-insights-card cols="4" rows="1" />
-    <livewire:pulse.database-health-card cols="4" rows="1" />
-    <livewire:pulse.disk-space-card cols="6" rows="1" />
-    <livewire:pulse.queue-and-failures-card cols="6" rows="1" />
+    <x-pulse-dashboard.merged-server-panel />
+    <livewire:pulse.usage cols="3" rows="2" />
+    <livewire:pulse.application-insights-card cols="3" rows="1" />
+    <livewire:pulse.database-health-card cols="3" rows="1" />
+    <livewire:pulse.disk-space-card cols="3" rows="1" />
+    <livewire:pulse.queue-and-failures-card cols="3" rows="1" />
 
     <x-pulse-dashboard.section
         :title="__('Cache e Redis')"
@@ -36,8 +37,8 @@
         accent="violet"
         icon="circle-stack"
     />
-    <livewire:pulse.cache cols="4" rows="2" />
-    <livewire:pulse.redis-overview-card cols="8" rows="2" />
+    <livewire:pulse.cache cols="3" rows="2" />
+    <livewire:pulse.redis-overview-card cols="9" rows="2" />
 
     <x-pulse-dashboard.section
         :title="__('Latência HTTP e saída')"
@@ -45,17 +46,17 @@
         accent="sky"
         icon="globe-alt"
     />
-    <livewire:pulse.slow-requests cols="6" />
-    <livewire:pulse.slow-outgoing-requests cols="6" />
+    <livewire:pulse.slow-requests cols="4" />
+    <livewire:pulse.slow-outgoing-requests cols="4" />
+    <livewire:pulse.slow-queries cols="4" rows="2" />
 
     <x-pulse-dashboard.section
-        :title="__('SQL e jobs em segundo plano')"
-        :subtitle="__('Consultas acima do limiar (`PULSE_SLOW_QUERIES_THRESHOLD`) e jobs lentos na fila.')"
+        :title="__('Jobs em segundo plano')"
+        :subtitle="__('Jobs lentos na fila (`PULSE_SLOW_JOBS_THRESHOLD`).')"
         accent="amber"
         icon="queue"
     />
-    <livewire:pulse.slow-queries cols="6" rows="2" />
-    <livewire:pulse.slow-jobs cols="6" rows="2" />
+    <livewire:pulse.slow-jobs cols="full" rows="2" />
 
     <x-pulse-dashboard.section
         :title="__('Estabilidade e erros')"
@@ -64,12 +65,4 @@
         icon="exclamation"
     />
     <livewire:pulse.exceptions cols="full" rows="2" />
-
-    <x-pulse-dashboard.section
-        :title="__('Servidor — métricas e histórico')"
-        :subtitle="__('CPU, memória, disco e gráficos de série temporal (Pulse Servers).')"
-        accent="slate"
-        icon="cpu"
-    />
-    <x-pulse-dashboard.merged-server-panel />
 </x-pulse>

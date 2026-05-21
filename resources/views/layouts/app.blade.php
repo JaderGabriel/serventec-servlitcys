@@ -9,6 +9,8 @@
 
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
 
+        @include('partials.theme-init')
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
 

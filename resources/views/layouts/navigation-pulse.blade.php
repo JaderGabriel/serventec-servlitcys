@@ -26,7 +26,7 @@
             <div class="pulse-nav-actions">
                 <div class="flex flex-nowrap items-center gap-2 sm:gap-3">
                     <livewire:pulse.period-selector />
-                    <x-pulse::theme-switcher />
+                    <x-theme-toggle />
                 </div>
                 <div class="pulse-nav-user">
                     <x-notification-bell />

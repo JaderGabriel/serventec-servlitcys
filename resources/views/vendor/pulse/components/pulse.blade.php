@@ -76,17 +76,19 @@
                 </div>
             </header>
 
-            <main class="flex-1 w-full min-w-0 bg-slate-100 py-5 sm:py-8 dark:bg-slate-950">
+            <main class="flex flex-1 flex-col w-full min-w-0 bg-slate-100 dark:bg-slate-950">
                 <div
                     id="pulse-main-grid"
                     style="--pulse-dashboard-cols: {{ (int) $cols }};"
-                    {{ $attributes->merge(['class' => "pulse-main-grid-gaps mx-auto w-full max-w-[min(100%,100rem)] grid default:grid-cols-{$cols} px-4 sm:px-6 lg:px-10 xl:px-12"]) }}
+                    {{ $attributes->merge(['class' => "pulse-main-grid-gaps flex-1 mx-auto w-full max-w-[min(100%,100rem)] grid default:grid-cols-{$cols} px-4 py-5 sm:px-6 sm:py-8 lg:px-10 xl:px-12 pb-10 sm:pb-12"]) }}
                 >
                     {{ $slot }}
                 </div>
             </main>
 
-            @include('layouts.app-footer', ['pulseFooter' => true])
+            <div class="shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/90">
+                @include('layouts.app-footer', ['pulseFooter' => true])
+            </div>
         </div>
 
         {{-- Sino de notificações: Alpine do Pulse não carrega app.js — registo dedicado. --}}

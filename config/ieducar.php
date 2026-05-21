@@ -425,7 +425,7 @@ return [
         'microdados_download_timeout_seconds' => (int) env('IEDUCAR_SAEB_MICRODADOS_TIMEOUT', 900),
         /** cURL/Guzzle: verificar certificado SSL (false só em dev com CA em falta). */
         'microdados_http_verify' => filter_var(env('IEDUCAR_SAEB_HTTP_VERIFY', true), FILTER_VALIDATE_BOOL),
-        /** Caminho opcional para cacert.pem (ex.: /etc/ssl/certs/ca-certificates.crt). */
+        /** Caminho opcional para PEM (vazio = resources/certs/inep-download-chain.pem + CA do SO). */
         'microdados_http_ca_bundle' => trim((string) env('IEDUCAR_SAEB_HTTP_CA_BUNDLE', '')),
         /**
          * Último recurso: descarregar sem verificar SSL (apenas dev/rede fechada).

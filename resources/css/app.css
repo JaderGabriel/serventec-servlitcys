@@ -280,7 +280,13 @@
         );
         column-gap: var(--pulse-col-gap);
         row-gap: var(--pulse-col-gap);
-        grid-auto-flow: row dense;
+        grid-auto-rows: minmax(min-content, auto);
+        align-content: start;
+    }
+
+    /* Cartões Pulse (3 colunas de 12 = 4 cartões por linha em desktop). */
+    #pulse-main-grid > section[class*='col-span'] {
+        @apply min-w-0;
     }
 
     /* Cartões Pulse + blocos full-width (secções, KPIs, servidor) alinhados na grelha de 12 colunas. */
@@ -359,7 +365,7 @@
     }
 
     .pulse-exec-kpi-grid {
-        @apply grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6;
+        @apply grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6;
     }
 
     .pulse-exec-kpi {
@@ -487,8 +493,14 @@
 @layer utilities {
     .bg-grid-edu {
         background-image:
+            linear-gradient(to right, rgb(15 23 42 / 0.06) 1px, transparent 1px),
+            linear-gradient(to bottom, rgb(15 23 42 / 0.06) 1px, transparent 1px);
+        background-size: 48px 48px;
+    }
+
+    .dark .bg-grid-edu {
+        background-image:
             linear-gradient(to right, rgb(255 255 255 / 0.04) 1px, transparent 1px),
             linear-gradient(to bottom, rgb(255 255 255 / 0.04) 1px, transparent 1px);
-        background-size: 48px 48px;
     }
 }
