@@ -2,6 +2,7 @@
     'healthData',
     'yearFilterReady' => false,
     'chartExportContext' => [],
+    'municipalityContext' => null,
     'selectedCity' => null,
     'filters' => null,
     'pdfExportsRecent' => [],
@@ -115,19 +116,26 @@
     ]);
     $diagStep = ConsultoriaFlow::stepMap($flowSteps);
     $scoreRing = match ($h['compliance_status'] ?? 'neutral') {
-        'success' => 'border-emerald-400 bg-emerald-50/60 dark:bg-emerald-950/25',
-        'warning' => 'border-amber-400 bg-amber-50/60 dark:bg-amber-950/25',
-        'danger' => 'border-red-400 bg-red-50/60 dark:bg-red-950/25',
-        default => 'border-slate-300 bg-slate-50/60',
+        'success' => 'serv-panel border-emerald-300/80 dark:border-emerald-700',
+        'warning' => 'serv-panel border-amber-300/80 dark:border-amber-700',
+        'danger' => 'serv-panel border-rose-300/80 dark:border-rose-700',
+        default => 'serv-panel',
     };
 @endphp
 
 <div class="space-y-6">
     @if (! $yearFilterReady)
-        <p class="text-sm text-amber-800 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
+        <p class="serv-callout serv-callout--warning text-sm">
             {{ __('Seleccione o ano letivo e aplique os filtros para ver o diagnóstico geral de conformidade do município.') }}
         </p>
     @else
+        @include('dashboard.analytics.partials.tab-impact-strip', [
+            'tab' => 'municipality_health',
+            'yearFilterReady' => $yearFilterReady,
+            'municipalityContext' => $municipalityContext,
+            'tabData' => ['healthData' => $healthData],
+        ])
+
         @include('dashboard.analytics.partials.serventec-pdf-export', [
             'selectedCity' => $selectedCity,
             'filters' => $filters,
@@ -136,10 +144,9 @@
         ])
 
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div class="rounded-lg border border-teal-200 dark:border-teal-900/50 bg-teal-50/60 dark:bg-teal-950/20 px-4 py-3 text-sm space-y-2 flex-1">
-                <h2 class="font-semibold text-teal-950 dark:text-teal-100">{{ __('Serventec') }}</h2>
-                <p class="leading-relaxed text-teal-900/95 dark:text-teal-200/95">{{ $h['intro'] ?? '' }}</p>
-                <p class="text-xs text-teal-800/90 dark:text-teal-300/90">
+            <x-dashboard.serv-tab-intro :title="__('Diagnóstico municipal')" tone="teal">
+                {{ $h['intro'] ?? '' }}
+                <x-slot name="meta">
                     <span class="font-medium">{{ __('Contexto') }}:</span>
                     {{ $h['city_name'] ?? '' }}
                     @if (filled($h['year_label'] ?? null))
@@ -151,32 +158,32 @@
                             · {{ __('prévia:') }} {{ $fundingRef['vaa_previa_label'] }}
                         @endif
                     @endif
-                </p>
-            </div>
+                </x-slot>
+            </x-dashboard.serv-tab-intro>
             <div class="shrink-0">
                 <x-dashboard.funding-loss-conditions-button :activeCheckIds="$activeCheckIds" :activeProgramIds="$activeProgramIds" />
             </div>
         </div>
 
-        <p class="text-xs text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 leading-relaxed">
-            {{ $h['footnote'] ?? '' }}
-        </p>
+        @if (filled($h['footnote'] ?? null))
+            <p class="serv-callout">{{ $h['footnote'] }}</p>
+        @endif
 
-        <p class="text-xs text-gray-600 dark:text-gray-400">
+        <p class="serv-callout">
             {{ __('Aprofundar:') }}
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Discrepâncias') }}</button>
+            <x-consultoria-tab-link tab="discrepancies" class="text-xs" />
             ·
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'fundeb')">{{ __('FUNDEB') }}</button>
+            <x-consultoria-tab-link tab="fundeb" class="text-xs" />
             ·
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'other_funding')">{{ __('Financiamentos') }}</button>
+            <x-consultoria-tab-link tab="other_funding" :label="__('Financiamentos')" class="text-xs" />
             ·
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'work_done')">{{ __('Censo') }}</button>
+            <x-consultoria-tab-link tab="work_done" :label="__('Censo')" class="text-xs" />
         </p>
 
         <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="teal" />
 
         @if (! empty($h['error']))
-            <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
+            <div class="serv-callout serv-callout--danger text-sm">
                 {{ $h['error'] }}
             </div>
         @endif
@@ -189,20 +196,20 @@
         >
             @if ($score !== null)
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <div class="lg:col-span-1 rounded-xl border-2 {{ $scoreRing }} p-6 flex flex-col items-center justify-center text-center shadow-sm">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-1">{{ __('Índice de conformidade') }}</p>
+                    <div class="lg:col-span-1 {{ $scoreRing }} p-6 flex flex-col items-center justify-center text-center">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-1">{{ __('Índice de conformidade') }}</p>
                         <x-dashboard.compliance-speedometer
                             :score="(int) $score"
                             :status="(string) ($h['compliance_status'] ?? 'neutral')"
                             :label="(string) ($h['compliance_label'] ?? '')"
                             class="w-full"
                         />
-                        <div class="mt-3 flex flex-wrap gap-2 justify-center">
-                            <button type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Discrepâncias') }}</button>
-                            <span class="text-gray-300 dark:text-gray-600">·</span>
-                            <button type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'fundeb')">{{ __('FUNDEB') }}</button>
-                            <span class="text-gray-300 dark:text-gray-600">·</span>
-                            <button type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'work_done')">{{ __('Censo') }}</button>
+                        <div class="mt-3 flex flex-wrap gap-2 justify-center text-xs">
+                            <x-consultoria-tab-link tab="discrepancies" />
+                            <span class="text-slate-300 dark:text-slate-600">·</span>
+                            <x-consultoria-tab-link tab="fundeb" />
+                            <span class="text-slate-300 dark:text-slate-600">·</span>
+                            <x-consultoria-tab-link tab="work_done" :label="__('Censo')" />
                         </div>
                     </div>
                     <div class="lg:col-span-2 space-y-2">
@@ -230,16 +237,16 @@
             @endif
 
             @if (count($topProblems) > 0)
-                <div class="rounded-lg border border-rose-200 dark:border-rose-800/60 overflow-hidden">
-                    <header class="px-4 py-3 bg-rose-50/80 dark:bg-rose-950/30 border-b border-rose-200/80 dark:border-rose-800/50">
-                        <h4 class="text-sm font-semibold text-rose-950 dark:text-rose-100">{{ __('Principais problemas (impacto financeiro indicativo)') }}</h4>
+                <div class="serv-panel overflow-hidden">
+                    <header class="px-4 py-3 border-b border-slate-200/80 dark:border-slate-700/80 bg-rose-50/50 dark:bg-rose-950/20">
+                        <h4 class="text-sm font-semibold font-display text-rose-950 dark:text-rose-100">{{ __('Principais problemas (impacto financeiro indicativo)') }}</h4>
                     </header>
-                    <ul class="divide-y divide-gray-100 dark:divide-gray-800">
+                    <ul class="divide-y divide-slate-100 dark:divide-slate-800">
                         @foreach ($topProblems as $problem)
                             <li class="px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
                                 <div>
-                                    <p class="font-medium text-gray-900 dark:text-gray-100">{{ $problem['title'] ?? '' }}</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    <p class="font-medium text-serv-navy dark:text-slate-100">{{ $problem['title'] ?? '' }}</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                                         {{ __(':n ocorrências', ['n' => number_format((int) ($problem['total'] ?? 0))]) }}
                                         @if (($problem['pct_rede'] ?? null) !== null)
                                             · {{ number_format((float) $problem['pct_rede'], 1, ',', '.') }}% {{ __('da rede') }}
@@ -291,28 +298,28 @@
                                 'success' => 'border-emerald-300 dark:border-emerald-800',
                                 'warning' => 'border-amber-300 dark:border-amber-800',
                                 'danger' => 'border-rose-300 dark:border-rose-800',
-                                default => 'border-gray-200 dark:border-gray-700',
+                                default => '',
                             };
                         @endphp
-                        <article class="rounded-lg border {{ $pborder }} bg-white/70 dark:bg-gray-900/40 px-3 py-3 text-sm">
+                        <article class="serv-panel {{ $pborder }} px-3 py-3 text-sm">
                             <div class="flex flex-wrap items-start justify-between gap-2">
-                                <h4 class="font-semibold text-gray-900 dark:text-gray-100 text-xs leading-snug">{{ $prog['titulo'] ?? '' }}</h4>
-                                <span class="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded
-                                    @if ($pst === 'success') bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200
-                                    @elseif ($pst === 'danger') bg-rose-100 text-rose-900 dark:bg-rose-950/50 dark:text-rose-200
-                                    @elseif ($pst === 'warning') bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200
-                                    @else bg-gray-100 text-gray-700 @endif">
+                                <h4 class="font-semibold text-serv-navy dark:text-slate-100 text-xs leading-snug">{{ $prog['titulo'] ?? '' }}</h4>
+                                <span class="serv-status-pill
+                                    @if ($pst === 'success') serv-status-pill--success
+                                    @elseif ($pst === 'danger') serv-status-pill--danger
+                                    @elseif ($pst === 'warning') serv-status-pill--warning
+                                    @else serv-status-pill--neutral @endif">
                                     {{ $prog['status_label'] ?? '' }}
                                 </span>
                             </div>
-                            <p class="mt-2 text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ $prog['resumo'] ?? '' }}</p>
+                            <p class="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{{ $prog['resumo'] ?? '' }}</p>
                         </article>
                     @endforeach
                 </div>
-                <p class="text-xs text-gray-600 dark:text-gray-400 flex flex-wrap gap-x-2 gap-y-1">
-                    <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'other_funding')">{{ __('Detalhe na aba Financiamentos') }}</button>
+                <p class="serv-callout flex flex-wrap gap-x-2 gap-y-1">
+                    <x-consultoria-tab-link tab="other_funding" :label="__('Detalhe na aba Financiamentos')" class="text-xs" />
                     <span class="text-gray-300 dark:text-gray-600">·</span>
-                    <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('funding-loss-set-active', { ids: @js($activeCheckIds), programIds: @js($activeProgramIds) }); $dispatch('open-modal', 'funding-loss-conditions')">{{ __('Condições de perda (todos os programas)') }}</button>
+                    <button type="button" class="serv-inline-tab-link text-xs" x-on:click="$dispatch('funding-loss-set-active', { ids: @js($activeCheckIds), programIds: @js($activeProgramIds) }); $dispatch('open-modal', 'funding-loss-conditions')">{{ __('Condições de perda (todos os programas)') }}</button>
                 </p>
             </x-dashboard.consultoria-section>
         @endif
@@ -347,8 +354,8 @@
                 :subtitle="__('Alinhado à aba Discrepâncias — verde = sem pendência; cinza = indisponível.')"
             >
                 <x-dashboard.consultoria-dimensions-grid :dimensions="$cadastro" :fmt-brl="$fmtBrl" columns="2" />
-                <p class="text-xs">
-                    <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Detalhar por escola em Discrepâncias') }}</button>
+                <p class="serv-callout">
+                    <x-consultoria-tab-link tab="discrepancies" :label="__('Detalhar por escola em Discrepâncias')" class="text-xs" />
                 </p>
             </x-dashboard.consultoria-section>
         @endif
@@ -371,15 +378,15 @@
                                 default => 'border-l-slate-400',
                             };
                         @endphp
-                        <article class="rounded-md border border-gray-200 dark:border-gray-700 border-l-4 {{ $mchip }} px-3 py-2 text-xs">
-                            <p class="font-medium text-gray-900 dark:text-gray-100">{{ $mod['title'] ?? '' }}</p>
-                            <p class="text-gray-500 dark:text-gray-400 mt-0.5">{{ $mod['reference'] ?? '' }}</p>
-                            <p class="mt-1 text-gray-700 dark:text-gray-300 leading-relaxed">{{ $mod['situacao'] ?? '' }}</p>
+                        <article class="serv-panel border-l-4 {{ $mchip }} px-3 py-2 text-xs">
+                            <p class="font-medium text-serv-navy dark:text-slate-100">{{ $mod['title'] ?? '' }}</p>
+                            <p class="text-slate-500 dark:text-slate-400 mt-0.5">{{ $mod['reference'] ?? '' }}</p>
+                            <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">{{ $mod['situacao'] ?? '' }}</p>
                         </article>
                     @endforeach
                 </div>
-                <p class="text-xs">
-                    <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'fundeb')">{{ __('Abrir aba FUNDEB completa') }}</button>
+                <p class="serv-callout">
+                    <x-consultoria-tab-link tab="fundeb" :label="__('Abrir aba FUNDEB completa')" class="text-xs" />
                 </p>
             </x-dashboard.consultoria-section>
         @endif

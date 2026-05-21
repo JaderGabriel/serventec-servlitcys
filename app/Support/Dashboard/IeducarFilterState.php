@@ -78,6 +78,20 @@ final class IeducarFilterState
         return (int) $this->ano_letivo;
     }
 
+    /** Rótulo para faixa do município e cabeçalhos de relatório. */
+    public function yearLabelForDisplay(): string
+    {
+        if (! $this->hasYearSelected()) {
+            return '';
+        }
+
+        if ($this->isAllSchoolYears()) {
+            return __('Todos os anos');
+        }
+
+        return (string) $this->ano_letivo;
+    }
+
     /**
      * @return array<string, string|int|null>
      */

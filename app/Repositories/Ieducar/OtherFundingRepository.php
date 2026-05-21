@@ -41,12 +41,15 @@ class OtherFundingRepository
             'total_matriculas' => null,
             'funding_pillars' => [],
             'chart_programas' => null,
-            'public_municipal' => $this->publicSnapshot->build($city, $filters),
+            'public_municipal' => [],
             'error' => null,
         ];
 
         if ($city === null || ! $filters->hasYearSelected()) {
             $empty['intro'] = __('Seleccione cidade e ano letivo para consultar demais financiamentos.');
+            if ($city !== null) {
+                $empty['public_municipal'] = $this->publicSnapshot->build($city, $filters);
+            }
 
             return $empty;
         }

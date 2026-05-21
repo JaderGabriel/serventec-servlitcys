@@ -10,8 +10,7 @@
                     'orange' => 'border-orange-200/90 dark:border-orange-800/60',
                     'amber' => 'border-amber-200/90 dark:border-amber-800/60',
                     'emerald' => 'border-emerald-200/90 dark:border-emerald-800/60',
-                    'indigo' => 'border-indigo-200/90 dark:border-indigo-800/60',
-                    'teal' => 'border-teal-200/90 dark:border-teal-800/60',
+                    'indigo', 'teal' => 'border-teal-200/90 dark:border-teal-800/60',
                     default => 'border-slate-200/90 dark:border-slate-700/60',
                 };
                 $labelTone = match ($tone) {
@@ -19,8 +18,7 @@
                     'orange' => 'text-orange-800/90 dark:text-orange-200/90',
                     'amber' => 'text-amber-800/90 dark:text-amber-200/90',
                     'emerald' => 'text-emerald-800/90 dark:text-emerald-200/90',
-                    'indigo' => 'text-indigo-800/90 dark:text-indigo-200/90',
-                    'teal' => 'text-teal-800/90 dark:text-teal-200/90',
+                    'indigo', 'teal' => 'text-teal-800/90 dark:text-teal-200/90',
                     default => 'text-slate-700 dark:text-slate-300',
                 };
                 $valueTone = match ($tone) {
@@ -28,13 +26,12 @@
                     'orange' => 'text-orange-700 dark:text-orange-300',
                     'amber' => 'text-amber-700 dark:text-amber-300',
                     'emerald' => 'text-emerald-700 dark:text-emerald-300',
-                    'indigo' => 'text-indigo-700 dark:text-indigo-300',
-                    'teal' => 'text-teal-700 dark:text-teal-300',
+                    'indigo', 'teal' => 'text-teal-700 dark:text-teal-300',
                     default => 'text-slate-800 dark:text-slate-100',
                 };
                 $size = (string) ($item['size'] ?? 'lg');
             @endphp
-            <div class="rounded-lg border {{ $border }} bg-white dark:bg-gray-900/40 p-4 shadow-sm space-y-2">
+            <div class="serv-panel {{ $border }} p-4 space-y-2">
                 <p class="text-xs font-semibold uppercase tracking-wide {{ $labelTone }}">{{ $item['label'] ?? '' }}</p>
                 <p class="font-semibold tabular-nums {{ $valueTone }} {{ $size === 'xl' ? 'text-xl' : 'text-2xl' }}">{{ $item['value'] ?? '' }}</p>
                 @if (is_array($item['comparacao'] ?? null))

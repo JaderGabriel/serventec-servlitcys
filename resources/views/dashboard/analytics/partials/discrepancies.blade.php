@@ -1,4 +1,4 @@
-@props(['discrepanciesData', 'yearFilterReady' => false, 'chartExportContext' => []])
+@props(['discrepanciesData', 'yearFilterReady' => false, 'chartExportContext' => [], 'municipalityContext' => null])
 
 @php
     use App\Support\Dashboard\ConsultoriaFlow;
@@ -55,7 +55,7 @@
             ] : null,
         ],
         ['label' => __('Corrigíveis no i-Educar'), 'value' => number_format((int) ($summary['corrigiveis'] ?? 0)), 'tone' => 'emerald'],
-        ['label' => __('Escolas afetadas'), 'value' => number_format((int) ($summary['escolas_afetadas'] ?? 0)), 'tone' => 'indigo'],
+        ['label' => __('Escolas afetadas'), 'value' => number_format((int) ($summary['escolas_afetadas'] ?? 0)), 'tone' => 'teal'],
     ];
     $publicSources = is_array($d['public_data_sources'] ?? null) ? $d['public_data_sources'] : [];
     $hasPublicSources = count($publicSources['categories'] ?? []) > 0;
@@ -73,15 +73,21 @@
 
 <div class="space-y-6">
     @if (! $yearFilterReady)
-        <p class="text-sm text-amber-800 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
+        <p class="serv-callout serv-callout--warning text-sm">
             {{ __('Seleccione o ano letivo e aplique os filtros para executar as rotinas de discrepâncias.') }}
         </p>
     @else
+        @include('dashboard.analytics.partials.tab-impact-strip', [
+            'tab' => 'discrepancies',
+            'yearFilterReady' => $yearFilterReady,
+            'municipalityContext' => $municipalityContext,
+            'tabData' => ['discrepanciesData' => $discrepanciesData],
+        ])
+
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div class="rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50/60 dark:bg-rose-950/20 px-4 py-3 text-sm space-y-2 flex-1">
-                <h2 class="font-semibold text-rose-950 dark:text-rose-100">{{ __('Discrepâncias e Erros de cadastro') }}</h2>
-                <p class="leading-relaxed text-rose-900/95 dark:text-rose-200/95">{{ $d['intro'] ?? '' }}</p>
-                <p class="text-xs text-rose-800/90 dark:text-rose-300/90">
+            <x-dashboard.serv-tab-intro :title="__('Discrepâncias e erros de cadastro')" tone="rose">
+                {{ $d['intro'] ?? '' }}
+                <x-slot name="meta">
                     <span class="font-medium">{{ __('Contexto') }}:</span>
                     {{ $d['city_name'] ?? '' }}
                     @if (filled($d['year_label'] ?? null))
@@ -97,17 +103,17 @@
                             · {{ __('prévia:') }} <span class="font-medium">{{ $fundingRef['vaa_previa_label'] }}</span>
                         @endif
                         @if (filled($fundingRef['vaa_fonte_label'] ?? null))
-                            <span class="text-gray-500 dark:text-gray-400">({{ $fundingRef['vaa_fonte_label'] }})</span>
+                            <span class="opacity-80">({{ $fundingRef['vaa_fonte_label'] }})</span>
                         @endif
                     @endif
-                </p>
-            </div>
+                </x-slot>
+            </x-dashboard.serv-tab-intro>
             <div class="shrink-0 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
                 <x-dashboard.funding-loss-conditions-button :activeCheckIds="$activeCheckIds" />
                 @if ($yearFilterReady)
                     <a
                         href="{{ route('dashboard.analytics.discrepancies.export', $exportParams) }}"
-                        class="inline-flex items-center justify-center rounded-lg border border-rose-300 dark:border-rose-700 bg-white dark:bg-gray-900 px-3 py-2 text-xs font-semibold text-rose-800 dark:text-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                        class="serv-btn-secondary serv-btn-secondary--rose"
                     >
                         {{ __('Exportar CSV') }}
                     </a>
@@ -116,24 +122,24 @@
         </div>
 
         @if (filled($d['funding_aviso'] ?? null))
-            <p class="text-xs text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 bg-amber-50/70 dark:bg-amber-950/30 rounded-md px-3 py-2 leading-relaxed">
+            <p class="serv-callout serv-callout--warning">
                 {{ $d['funding_aviso'] }}
             </p>
         @endif
 
-        <p class="text-xs text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 leading-relaxed">
-            {{ $d['footnote'] ?? '' }}
-        </p>
+        @if (filled($d['footnote'] ?? null))
+            <p class="serv-callout">{{ $d['footnote'] }}</p>
+        @endif
 
-        <p class="text-xs text-gray-600 dark:text-gray-400">
+        <p class="serv-callout">
             {{ __('Painéis relacionados:') }}
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'fundeb')">{{ __('FUNDEB') }}</button>
+            <x-consultoria-tab-link tab="fundeb" class="text-xs" />
             ·
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'other_funding')">{{ __('Financiamentos') }}</button>
+            <x-consultoria-tab-link tab="other_funding" :label="__('Financiamentos')" class="text-xs" />
             ·
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'work_done')">{{ __('Censo') }}</button>
+            <x-consultoria-tab-link tab="work_done" :label="__('Censo')" class="text-xs" />
             ·
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Serventec') }}</button>
+            <x-consultoria-tab-link tab="municipality_health" :label="__('Diagnóstico')" class="text-xs" />
         </p>
 
         <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="rose" />
@@ -153,13 +159,13 @@
         @endif
 
         @if (! empty($d['error']))
-            <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
+            <div class="serv-callout serv-callout--danger text-sm">
                 {{ $d['error'] }}
             </div>
         @endif
 
         @if (! empty($d['notes']))
-            <div class="rounded-md bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-600 px-4 py-3 text-xs text-slate-700 dark:text-slate-300 space-y-1.5">
+            <div class="serv-callout space-y-1.5">
                 @foreach ($d['notes'] as $note)
                     <p>{{ $note }}</p>
                 @endforeach
@@ -184,8 +190,8 @@
             @endif
 
             @if (count($errosCriticos) > 0 || count($priorityDims) > 0)
-                <div class="rounded-lg border-2 border-red-500/80 dark:border-red-600 bg-red-50/50 dark:bg-red-950/30 px-4 py-3 space-y-2">
-                    <h4 class="text-sm font-bold text-red-900 dark:text-red-100 uppercase tracking-wide">{{ __('Erros críticos') }}</h4>
+                <div class="serv-alert-panel serv-alert-panel--critical">
+                    <h4 class="text-sm font-bold font-display text-rose-950 dark:text-rose-100 uppercase tracking-wide">{{ __('Erros críticos') }}</h4>
                     @if (count($errosCriticos) > 0)
                         <ul class="text-xs text-red-900/95 dark:text-red-100 space-y-1.5">
                             @foreach ($errosCriticos as $c)
@@ -217,8 +223,8 @@
             @endif
 
             @if (count($atencaoDims) > 0)
-                <div class="rounded-lg border border-amber-400/80 dark:border-amber-600 bg-amber-50/40 dark:bg-amber-950/25 px-4 py-3 space-y-2">
-                    <h4 class="text-sm font-bold text-amber-900 dark:text-amber-100 uppercase tracking-wide">{{ __('Pontos de atenção') }}</h4>
+                <div class="serv-alert-panel serv-alert-panel--warning">
+                    <h4 class="text-sm font-bold font-display text-amber-950 dark:text-amber-100 uppercase tracking-wide">{{ __('Pontos de atenção') }}</h4>
                     <ul class="text-xs text-amber-950/95 dark:text-amber-100 space-y-1.5">
                         @foreach (array_slice($atencaoDims, 0, 8) as $dim)
                             <li class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5">
@@ -235,8 +241,8 @@
                 </div>
             @endif
 
-            <p class="text-xs">
-                <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Ver consolidação em Serventec') }}</button>
+            <p class="serv-callout">
+                <x-consultoria-tab-link tab="municipality_health" :label="__('Ver consolidação no Diagnóstico')" class="text-xs" />
             </p>
         </x-dashboard.consultoria-section>
 
@@ -247,7 +253,7 @@
                 :title="__('Referências FUNDEB / VAAR / Censo')"
                 :subtitle="__('Contexto normativo e resumo municipal por pilar.')"
             >
-                <ul class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-indigo-900/95 dark:text-indigo-200/90">
+                <ul class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-700 dark:text-slate-300">
                     @foreach ($pillars as $pillar)
                         @php
                             $resumo = is_array($pillar['municipio_resumo'] ?? null) ? $pillar['municipio_resumo'] : [];
@@ -259,8 +265,8 @@
                                 default => 'border-emerald-300/80 bg-emerald-50/90 text-emerald-950 dark:border-emerald-700 dark:bg-emerald-950/35 dark:text-emerald-100',
                             };
                         @endphp
-                        <li class="rounded-md border border-indigo-200/60 dark:border-indigo-700/50 bg-indigo-50/40 dark:bg-indigo-950/25 px-3 py-2 space-y-2">
-                            <p class="font-semibold text-indigo-950 dark:text-indigo-100">{{ $pillar['titulo'] ?? '' }}</p>
+                        <li class="serv-panel px-3 py-2 space-y-2">
+                            <p class="font-semibold font-display text-serv-navy dark:text-slate-100">{{ $pillar['titulo'] ?? '' }}</p>
                             <p class="leading-relaxed">{{ $pillar['descricao'] ?? '' }}</p>
                             <p class="text-[11px] leading-relaxed rounded-md border px-2 py-1.5 {{ $resumoBox }}">
                                 <span class="font-semibold uppercase tracking-wide">{{ __('Resumo do município') }}:</span>
@@ -310,7 +316,7 @@
                                 :exportMeta="$chartExportContext"
                                 :compact="true"
                                 chartPanelId="chart-discrepancias-resumo"
-                                panelTone="indigo"
+                                panelTone="teal"
                             />
                         @endif
                         @if ($chartFinanceiro !== null)
@@ -342,26 +348,26 @@
                             };
                             $vaarRefs = is_array($check['vaar_refs'] ?? null) ? $check['vaar_refs'] : [];
                         @endphp
-                        <article class="rounded-lg border border-gray-200 dark:border-gray-700 border-l-4 {{ $ring }} shadow-sm overflow-hidden">
-                            <header class="px-4 py-2.5 border-b border-gray-200/80 dark:border-gray-600/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <article class="serv-panel border-l-4 {{ $ring }} overflow-hidden">
+                            <header class="px-4 py-2.5 border-b border-slate-200/80 dark:border-slate-700/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                 <div class="min-w-0">
-                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-snug">{{ $check['title'] ?? '' }}</h3>
-                                    <dl class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs tabular-nums text-gray-600 dark:text-gray-400">
+                                    <h3 class="text-sm font-semibold text-serv-navy dark:text-slate-100 leading-snug">{{ $check['title'] ?? '' }}</h3>
+                                    <dl class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs tabular-nums text-slate-600 dark:text-slate-400">
                                         <div>
                                             <dt class="sr-only">{{ __('Ocorrências') }}</dt>
-                                            <dd><span class="font-medium text-gray-800 dark:text-gray-200">{{ number_format((int) ($check['total'] ?? 0)) }}</span> {{ __('ocorr.') }}
+                                            <dd><span class="font-medium text-slate-800 dark:text-slate-200">{{ number_format((int) ($check['total'] ?? 0)) }}</span> {{ __('ocorr.') }}
                                                 @if (($check['pct_rede'] ?? null) !== null)
-                                                    <span class="text-gray-500">({{ number_format((float) $check['pct_rede'], 1, ',', '.') }}% {{ __('rede') }})</span>
+                                                    <span class="text-slate-500">({{ number_format((float) $check['pct_rede'], 1, ',', '.') }}% {{ __('rede') }})</span>
                                                 @endif
                                             </dd>
                                         </div>
                                         <div>
                                             <dt class="sr-only">{{ __('Perda') }}</dt>
-                                            <dd class="text-orange-700 dark:text-orange-300"><span class="text-gray-500 dark:text-gray-500 font-normal">{{ __('Perda') }}</span> {{ $fmtBrl((float) ($check['perda_estimada_anual'] ?? 0)) }}</dd>
+                                            <dd class="text-orange-700 dark:text-orange-300"><span class="text-slate-500 dark:text-slate-500 font-normal">{{ __('Perda') }}</span> {{ $fmtBrl((float) ($check['perda_estimada_anual'] ?? 0)) }}</dd>
                                         </div>
                                         <div>
                                             <dt class="sr-only">{{ __('Ganho') }}</dt>
-                                            <dd class="text-emerald-700 dark:text-emerald-300"><span class="text-gray-500 font-normal">{{ __('Ganho') }}</span> {{ $fmtBrl((float) ($check['ganho_potencial_anual'] ?? 0)) }}</dd>
+                                            <dd class="text-emerald-700 dark:text-emerald-300"><span class="text-slate-500 font-normal">{{ __('Ganho') }}</span> {{ $fmtBrl((float) ($check['ganho_potencial_anual'] ?? 0)) }}</dd>
                                         </div>
                                     </dl>
                                 </div>
@@ -378,35 +384,35 @@
                                     </span>
                                 </span>
                             </header>
-                            <div class="px-3 py-3 space-y-3 text-sm text-gray-700 dark:text-gray-300">
+                            <div class="px-3 py-3 space-y-3 text-sm text-slate-700 dark:text-slate-300">
                                 <div class="disc-charts-mini grid grid-cols-1 sm:grid-cols-3 gap-2">
                                     @if (! empty($check['chart_financeiro']))
                                         <x-dashboard.chart-panel :chart="$check['chart_financeiro']" :exportFilename="'discrepancia-fin-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-fin-'.$idx" panelTone="amber" />
                                     @endif
                                     @if (! empty($check['chart_rede']))
-                                        <x-dashboard.chart-panel :chart="$check['chart_rede']" :exportFilename="'discrepancia-rede-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-rede-'.$idx" panelTone="indigo" />
+                                        <x-dashboard.chart-panel :chart="$check['chart_rede']" :exportFilename="'discrepancia-rede-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-rede-'.$idx" panelTone="teal" />
                                     @endif
                                     @if (! empty($check['chart_escolas']))
                                         <div class="sm:col-span-3 lg:col-span-1">
-                                            <x-dashboard.chart-panel :chart="$check['chart_escolas']" :exportFilename="'discrepancia-escolas-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-esc-'.$idx" panelTone="indigo" />
+                                            <x-dashboard.chart-panel :chart="$check['chart_escolas']" :exportFilename="'discrepancia-escolas-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-esc-'.$idx" panelTone="teal" />
                                         </div>
                                     @endif
                                 </div>
 
-                                <details class="group rounded-md border border-gray-200/90 dark:border-gray-600/80 bg-gray-50/50 dark:bg-gray-900/30">
-                                    <summary class="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center justify-between gap-2 select-none">
+                                <details class="group serv-panel bg-slate-50/50 dark:bg-slate-900/30">
+                                    <summary class="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between gap-2 select-none">
                                         <span>{{ __('Orientação e impacto') }}</span>
-                                        <span class="text-gray-400 group-open:rotate-180 transition-transform" aria-hidden="true">▾</span>
+                                        <span class="text-slate-400 group-open:rotate-180 transition-transform" aria-hidden="true">▾</span>
                                     </summary>
-                                    <div class="px-3 pb-3 pt-0 space-y-3 text-xs leading-relaxed border-t border-gray-200/80 dark:border-gray-600/60">
+                                    <div class="px-3 pb-3 pt-0 space-y-3 text-xs leading-relaxed border-t border-slate-200/80 dark:border-slate-700/60">
                                         @if (count($vaarRefs) > 0)
-                                            <p class="text-indigo-800 dark:text-indigo-200 pt-2">
+                                            <p class="text-teal-800 dark:text-teal-200 pt-2">
                                                 <span class="font-semibold">{{ __('Eixos:') }}</span>
                                                 {{ implode(' · ', $vaarRefs) }}
                                             </p>
                                         @endif
                                         <div>
-                                            <p class="font-semibold text-gray-500 dark:text-gray-400 mb-0.5">{{ __('O que é') }}</p>
+                                            <p class="font-semibold text-slate-500 dark:text-slate-400 mb-0.5">{{ __('O que é') }}</p>
                                             <p>{{ $check['explanation'] ?? '' }}</p>
                                         </div>
                                         <div>
@@ -417,7 +423,7 @@
                                                     <x-dashboard.consultoria-funding-explanation :explicacao="$check['funding_explicacao']" />
                                                 </div>
                                             @elseif (filled($check['funding_formula'] ?? null))
-                                                <p class="mt-1 text-gray-500 dark:text-gray-400 italic">{{ $check['funding_formula'] }}</p>
+                                                <p class="mt-1 text-slate-500 dark:text-slate-400 italic">{{ $check['funding_formula'] }}</p>
                                             @endif
                                         </div>
                                         <div>
@@ -429,10 +435,10 @@
 
                                 @if (! empty($check['school_rows']) && is_array($check['school_rows']))
                                     <div>
-                                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">{{ __('Unidades com ocorrência') }}</p>
-                                        <div class="overflow-x-auto max-h-52 overflow-y-auto rounded-md border border-gray-200 dark:border-gray-700">
+                                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">{{ __('Unidades com ocorrência') }}</p>
+                                        <div class="serv-panel overflow-x-auto max-h-52 overflow-y-auto">
                                             <table class="min-w-full text-xs text-left">
-                                                <thead class="bg-gray-50 dark:bg-gray-900/60 sticky top-0">
+                                                <thead class="bg-slate-50/90 dark:bg-slate-900/60 sticky top-0">
                                                     <tr>
                                                         <th class="px-3 py-2 font-medium">{{ __('Unidade escolar') }}</th>
                                                         <th class="px-3 py-2 font-medium text-right">{{ __('Ocorrências') }}</th>
@@ -440,7 +446,7 @@
                                                         <th class="px-3 py-2 font-medium text-right">{{ __('Ganho pot.') }}</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                                     @foreach ($check['school_rows'] as $row)
                                                         <tr>
                                                             <td class="px-3 py-1.5 break-words max-w-[18rem]">{{ $row['escola'] ?? '—' }}</td>
@@ -465,7 +471,7 @@
                 </div>
             </x-dashboard.consultoria-section>
         @elseif ($showKpis && count($pendenciaDims) > 0)
-            <p class="text-xs text-gray-500 dark:text-gray-400 italic">{{ __('Sem detalhe por escola nesta base — consulte o mapa de rotinas ou Serventec.') }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 italic">{{ __('Sem detalhe por escola nesta base — consulte o mapa de rotinas ou Serventec.') }}</p>
         @endif
     @endif
 </div>

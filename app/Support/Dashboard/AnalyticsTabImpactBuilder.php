@@ -21,6 +21,8 @@ final class AnalyticsTabImpactBuilder
         'fundeb',
         'other_funding',
         'work_done',
+        'municipality_health',
+        'discrepancies',
     ];
 
     /**
@@ -143,6 +145,16 @@ final class AnalyticsTabImpactBuilder
                 'purpose' => __('Turmas, matrículas, enturmações, ritmo de cadastro e meta vs. ano anterior.'),
                 'impact_note' => __('Pendências de exportação Censo ligam directamente ao fundeb-base e repasse.'),
             ],
+            'municipality_health' => [
+                'title' => __('Diagnóstico'),
+                'purpose' => __('Índice de conformidade, prioridades de cadastro, VAAF e leitura temática do município.'),
+                'impact_note' => __('Consolida Discrepâncias, FUNDEB e fontes públicas numa visão executiva.'),
+            ],
+            'discrepancies' => [
+                'title' => __('Discrepâncias'),
+                'purpose' => __('Rotinas de cadastro com impacto indicativo em FUNDEB, VAAR e Censo — por escola e tipo.'),
+                'impact_note' => __('Perda e ganho potencial usam o VAAF municipal do filtro (ou prévia federal).'),
+            ],
             default => [
                 'title' => $tab,
                 'purpose' => '',
@@ -172,6 +184,8 @@ final class AnalyticsTabImpactBuilder
             'fundeb' => self::statusFundeb($tabData),
             'other_funding' => self::statusOtherFunding($tabData),
             'work_done' => self::statusWorkDone($tabData),
+            'municipality_health' => self::statusMunicipalityHealth($tabData, $ctx),
+            'discrepancies' => self::statusDiscrepancies($tabData, $ctx),
             default => ['status' => $municipalStatus, 'label' => (string) ($ctx['compliance_label'] ?? ''), 'score' => $municipalScore, 'share_label' => null, 'share_value' => null],
         };
 
@@ -466,6 +480,69 @@ final class AnalyticsTabImpactBuilder
             'score' => $score,
             'share_label' => __('Programas monitorados'),
             'share_value' => (string) count($programs),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @param  array<string, mixed>  $ctx
+     * @return array{status: string, label: string, score: ?int, share_label: ?string, share_value: ?string}
+     */
+    private static function statusMunicipalityHealth(array $tabData, array $ctx): array
+    {
+        $data = is_array($tabData['health'] ?? null) ? $tabData['health'] : ($tabData['healthData'] ?? $tabData['municipalityHealthData'] ?? []);
+        $score = (int) ($data['compliance_score'] ?? $ctx['compliance_score'] ?? 0);
+        $status = (string) ($data['compliance_status'] ?? $ctx['compliance_status'] ?? 'neutral');
+        $label = (string) ($data['compliance_label'] ?? $ctx['compliance_label'] ?? '');
+        $pend = (int) ($ctx['pendencias_cadastro'] ?? 0);
+        $modAlert = (int) data_get($data, 'summary.modulos_fundeb_alerta', 0);
+
+        if ($score <= 0 && $label === '') {
+            return ['status' => 'neutral', 'label' => __('Diagnóstico indisponível'), 'score' => null, 'share_label' => null, 'share_value' => null];
+        }
+
+        return [
+            'status' => $status !== 'neutral' ? $status : AnalyticsMunicipalityContext::statusFromScore($score),
+            'label' => $label !== '' ? $label : __('Índice :n', ['n' => $score]),
+            'score' => $score > 0 ? $score : null,
+            'share_label' => __('Pendências cadastro'),
+            'share_value' => $pend > 0 ? (string) $pend : ($modAlert > 0 ? __(':n FUNDEB', ['n' => $modAlert]) : __('Nenhuma')),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @param  array<string, mixed>  $ctx
+     * @return array{status: string, label: string, score: ?int, share_label: ?string, share_value: ?string}
+     */
+    private static function statusDiscrepancies(array $tabData, array $ctx): array
+    {
+        $data = is_array($tabData['discrepancies'] ?? null) ? $tabData['discrepancies'] : ($tabData['discrepanciesData'] ?? []);
+        $summary = is_array($data['summary'] ?? null) ? $data['summary'] : [];
+        $comProblema = (int) ($summary['com_problema'] ?? 0);
+        $escolas = (int) ($summary['escolas_afetadas'] ?? 0);
+        $perda = (float) ($summary['perda_estimada_anual'] ?? $ctx['perda_estimada_anual'] ?? 0);
+
+        if ($comProblema <= 0) {
+            return [
+                'status' => 'success',
+                'label' => __('Sem ocorrências no filtro'),
+                'score' => 92,
+                'share_label' => __('Escolas afetadas'),
+                'share_value' => '0',
+            ];
+        }
+
+        $matriculas = max(1, (int) ($ctx['total_matriculas'] ?? 1));
+        $score = max(15, min(95, 100 - (int) min(60, (int) round($comProblema / ($matriculas / 50)))));
+        $status = $comProblema > 500 ? 'danger' : ($comProblema > 80 ? 'warning' : 'warning');
+
+        return [
+            'status' => $status,
+            'label' => __(':n ocorrência(s) — :e escola(s)', ['n' => $comProblema, 'e' => $escolas]),
+            'score' => $score,
+            'share_label' => __('Perda est./ano'),
+            'share_value' => $perda > 0 ? DiscrepanciesFundingImpact::formatBrl($perda) : null,
         ];
     }
 

@@ -530,7 +530,10 @@ return [
             'search_query' => (string) env('IEDUCAR_FUNDEB_CKAN_SEARCH', 'fundeb vaaf municipio'),
             'timeout' => (int) env('IEDUCAR_FUNDEB_API_TIMEOUT', 30),
             'fields' => [
-                'ibge' => ['co_municipio', 'codigo_ibge', 'ibge_municipio', 'ibge', 'cod_municipio', 'codigo_municipio'],
+                'ibge' => [
+                    'co_municipio', 'codigo_ibge', 'ibge_municipio', 'ibge', 'cod_municipio', 'codigo_municipio',
+                    'cod_ibge', 'cd_municipio', 'id_municipio', 'codigoibge', 'cod_mun_ibge',
+                ],
                 'ano' => ['nu_ano', 'ano', 'ano_referencia', 'ano_letivo', 'exercicio'],
                 'vaaf' => ['vaaf', 'vaa', 'vl_vaaf', 'valor_vaaf', 'valor_aluno_ano_fundeb'],
                 'vaat' => ['vaat', 'vl_vaat', 'valor_vaat'],
@@ -556,8 +559,21 @@ return [
              * Quando cache/CKAN/JSON remoto não retornam VAAF municipal, grava piso nacional
              * (referência para planejamento — substitua quando houver dado oficial por IBGE).
              */
+            /*
+             * CSV «Receita total do Fundeb por ente federado» (Portaria FNDE em gov.br).
+             * Descoberta automática em fundeb/{ano}; override por ano, ex.:
+             * 'fnde_receita_csv_urls' => [2025 => 'https://www.gov.br/fnde/.../1.Receitatotal....csv']
+             */
+            'fnde_receita_csv_urls' => [],
+
+            /** VAAF estimado = receita total FNDE ÷ matrículas i-Educar (limites de sanidade). */
+            'vaaf_estimate_min' => (float) env('IEDUCAR_FUNDEB_VAAF_ESTIMATE_MIN', 2500),
+            'vaaf_estimate_max' => (float) env('IEDUCAR_FUNDEB_VAAF_ESTIMATE_MAX', 18000),
+
             'national_floor' => [
                 'enabled' => filter_var(env('IEDUCAR_FUNDEB_NATIONAL_FLOOR', true), FILTER_VALIDATE_BOOL),
+                /** Se false, importação falha em vez de gravar piso nacional (recomendado). */
+                'write_on_import' => filter_var(env('IEDUCAR_FUNDEB_NATIONAL_FLOOR_ON_IMPORT', false), FILTER_VALIDATE_BOOL),
                 'vaaf_by_year' => [
                     2024 => (float) env('IEDUCAR_FUNDEB_NATIONAL_VAAF_2024', 0) ?: null,
                     2025 => (float) env('IEDUCAR_FUNDEB_NATIONAL_VAAF_2025', 0) ?: null,

@@ -16,7 +16,7 @@
 
 @if ($hasContent)
     <details
-        {{ $attributes->merge(['class' => 'rounded-md border border-slate-200 dark:border-slate-600 bg-slate-50/80 dark:bg-slate-900/40 text-xs']) }}
+        {{ $attributes->merge(['class' => 'serv-panel text-xs']) }}
         @if ($defaultOpen) open @endif
     >
         <summary class="cursor-pointer select-none px-3 py-2 font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/50 rounded-md">

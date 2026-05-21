@@ -27,7 +27,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Throwable;
 
 /**
  * Painel de análise educacional: dados da base iEducar da cidade via repositórios e filtros.
@@ -97,34 +99,30 @@ class AnalyticsDashboardController extends Controller
 
         $yearFilterReady = $city !== null && $filters->hasYearSelected();
         $lazyTabLoading = (bool) config('analytics.lazy_tab_loading', true);
+        $analyticsLoadWarnings = [];
 
-        $overviewData = $yearFilterReady
-            ? $overviewRepository->summary($city, $filters)
-            : ['kpis' => null, 'charts' => [], 'filter_note' => null, 'error' => null];
-
-        $schoolUnitsData = $yearFilterReady && $city !== null
-            ? $schoolUnitsRepository->snapshot($city, $filters)
-            : [
-                'overview' => [
-                    'year_global_rows' => [],
-                    'school_year_rows' => [],
-                    'units_rows' => [],
-                    'notes' => [],
-                ],
-                'tab' => [
-                    'markers' => [],
-                    'transport' => null,
-                    'waiting' => null,
-                    'geo_note' => null,
-                    'geo_source' => null,
-                    'geo_attribution' => [],
-                    'geo_distribution' => null,
-                    'map_scope' => 'matricula',
-                    'show_waiting_capacity' => true,
-                    'error' => null,
-                ],
+        $overviewData = ['kpis' => null, 'charts' => [], 'filter_note' => null, 'error' => null];
+        $schoolUnitsData = [
+            'overview' => [
+                'year_global_rows' => [],
+                'school_year_rows' => [],
+                'units_rows' => [],
+                'notes' => [],
+            ],
+            'tab' => [
+                'markers' => [],
+                'transport' => null,
+                'waiting' => null,
+                'geo_note' => null,
+                'geo_source' => null,
+                'geo_attribution' => [],
+                'geo_distribution' => null,
+                'map_scope' => 'matricula',
+                'show_waiting_capacity' => true,
                 'error' => null,
-            ];
+            ],
+            'error' => null,
+        ];
 
         $enrollmentData = AnalyticsEmptyPayloads::enrollment();
         $performanceData = AnalyticsEmptyPayloads::performance();
@@ -136,42 +134,112 @@ class AnalyticsDashboardController extends Controller
         $workDoneData = AnalyticsEmptyPayloads::workDone();
         $discrepanciesData = AnalyticsEmptyPayloads::discrepancies();
         $municipalityHealthData = AnalyticsEmptyPayloads::municipalityHealth();
+        $municipalityContext = null;
 
         if ($yearFilterReady && $city !== null) {
+            $overviewData = $this->safeAnalyticsLoad(
+                fn () => $overviewRepository->summary($city, $filters),
+                $overviewData,
+                __('Visão geral'),
+                $analyticsLoadWarnings,
+            );
+
+            $schoolUnitsData = $this->safeAnalyticsLoad(
+                fn () => $schoolUnitsRepository->snapshot($city, $filters),
+                $schoolUnitsData,
+                __('Unidades escolares'),
+                $analyticsLoadWarnings,
+            );
+
             // Abas leves: sempre no HTML inicial (evita painel em branco com lazy + JS desatualizado).
-            $otherFundingData = $otherFundingRepository->buildReport($city, $filters);
-            $workDoneData = $workDoneRepository->buildReport($city, $filters);
+            $otherFundingData = $this->safeAnalyticsLoad(
+                fn () => $otherFundingRepository->buildReport($city, $filters),
+                $otherFundingData,
+                __('Financiamentos'),
+                $analyticsLoadWarnings,
+            );
+
+            $workDoneData = $this->safeAnalyticsLoad(
+                fn () => $workDoneRepository->buildReport($city, $filters),
+                $workDoneData,
+                __('Censo'),
+                $analyticsLoadWarnings,
+            );
 
             if (! $lazyTabLoading) {
-                $enrollmentData = $enrollmentRepository->sample($city, $filters);
-                $performanceData = $performanceRepository->snapshot($city, $filters);
-                $attendanceData = $attendanceRepository->snapshot($city, $filters);
-                $inclusionData = $inclusionRepository->snapshot($city, $filters);
-                $networkData = $networkRepository->snapshot($city, $filters);
-                $discrepanciesData = $discrepanciesRepository->snapshot($city, $filters);
-                $fundebData = $fundebRepository->buildReport(
-                    $city,
-                    $filters,
-                    $overviewData,
+                $enrollmentData = $this->safeAnalyticsLoad(
+                    fn () => $enrollmentRepository->sample($city, $filters),
                     $enrollmentData,
-                    $performanceData,
-                    $attendanceData,
-                    $inclusionData,
-                    $networkData,
-                    $discrepanciesData,
+                    __('Matrículas'),
+                    $analyticsLoadWarnings,
                 );
-                $municipalityHealthData = $municipalityHealthRepository->snapshot($city, $filters);
+                $performanceData = $this->safeAnalyticsLoad(
+                    fn () => $performanceRepository->snapshot($city, $filters),
+                    $performanceData,
+                    __('Desempenho'),
+                    $analyticsLoadWarnings,
+                );
+                $attendanceData = $this->safeAnalyticsLoad(
+                    fn () => $attendanceRepository->snapshot($city, $filters),
+                    $attendanceData,
+                    __('Frequência'),
+                    $analyticsLoadWarnings,
+                );
+                $inclusionData = $this->safeAnalyticsLoad(
+                    fn () => $inclusionRepository->snapshot($city, $filters),
+                    $inclusionData,
+                    __('Inclusão'),
+                    $analyticsLoadWarnings,
+                );
+                $networkData = $this->safeAnalyticsLoad(
+                    fn () => $networkRepository->snapshot($city, $filters),
+                    $networkData,
+                    __('Rede'),
+                    $analyticsLoadWarnings,
+                );
+                $discrepanciesData = $this->safeAnalyticsLoad(
+                    fn () => $discrepanciesRepository->snapshot($city, $filters),
+                    $discrepanciesData,
+                    __('Discrepâncias'),
+                    $analyticsLoadWarnings,
+                );
+                $fundebData = $this->safeAnalyticsLoad(
+                    fn () => $fundebRepository->buildReport(
+                        $city,
+                        $filters,
+                        $overviewData,
+                        $enrollmentData,
+                        $performanceData,
+                        $attendanceData,
+                        $inclusionData,
+                        $networkData,
+                        $discrepanciesData,
+                    ),
+                    $fundebData,
+                    __('FUNDEB'),
+                    $analyticsLoadWarnings,
+                );
+                $municipalityHealthData = $this->safeAnalyticsLoad(
+                    fn () => $municipalityHealthRepository->snapshot($city, $filters),
+                    $municipalityHealthData,
+                    __('Diagnóstico'),
+                    $analyticsLoadWarnings,
+                );
             }
+
+            $fundingSnapshot = $this->safeAnalyticsLoad(
+                fn () => $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
+                null,
+                __('Resumo financeiro'),
+                $analyticsLoadWarnings,
+            );
+            $municipalityContext = AnalyticsMunicipalityContext::fromFundingSnapshot(
+                is_array($fundingSnapshot) ? $fundingSnapshot : null,
+                $overviewData,
+            );
         }
 
         $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
-
-        $municipalityContext = ($yearFilterReady && $city !== null)
-            ? AnalyticsMunicipalityContext::fromFundingSnapshot(
-                $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
-                $overviewData,
-            )
-            : null;
 
         $tabs = AnalyticsTabCatalog::tabsOrdered();
         $tabKeys = AnalyticsTabCatalog::tabKeys();
@@ -213,7 +281,38 @@ class AnalyticsDashboardController extends Controller
             'lazyTabLoading' => $lazyTabLoading,
             'pdfExportsRecent' => $pdfExportsRecent,
             'municipalityContext' => $municipalityContext,
+            'analyticsLoadWarnings' => $analyticsLoadWarnings,
         ]);
+    }
+
+    /**
+     * @template T
+     *
+     * @param  callable(): T  $load
+     * @param  T  $fallback
+     * @param  list<string>  $warnings
+     * @return T
+     */
+    private function safeAnalyticsLoad(callable $load, mixed $fallback, string $section, array &$warnings): mixed
+    {
+        try {
+            return $load();
+        } catch (Throwable $e) {
+            Log::warning('analytics.section_load_failed', [
+                'section' => $section,
+                'message' => $e->getMessage(),
+            ]);
+            $warnings[] = __(':section: não foi possível carregar os dados (:msg).', [
+                'section' => $section,
+                'msg' => $e->getMessage(),
+            ]);
+
+            if (is_array($fallback)) {
+                return array_merge($fallback, ['error' => $e->getMessage()]);
+            }
+
+            return $fallback;
+        }
     }
 
     /**
@@ -364,6 +463,7 @@ class AnalyticsDashboardController extends Controller
                     'healthData' => $municipalityHealthRepository->snapshot($city, $filters),
                     'yearFilterReady' => true,
                     'chartExportContext' => $chartExportContext,
+                    'municipalityContext' => $municipalityContext,
                     'selectedCity' => $city,
                     'filters' => $filters,
                     'pdfExportsRecent' => $request->user()->canExportAnalyticsPdf()
@@ -376,6 +476,7 @@ class AnalyticsDashboardController extends Controller
                     'discrepanciesData' => $discrepanciesRepository->snapshot($city, $filters),
                     'yearFilterReady' => true,
                     'chartExportContext' => $chartExportContext,
+                    'municipalityContext' => $municipalityContext,
                 ])
                 ->withHeaders($headers),
             default => abort(404),

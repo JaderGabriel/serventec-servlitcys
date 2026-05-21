@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\City;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -98,7 +99,16 @@ class CityDataConnection
      */
     public function run(City $city, callable $callback): mixed
     {
-        $this->configure($city);
+        try {
+            $this->configure($city);
+        } catch (DecryptException $e) {
+            throw new \RuntimeException(
+                __('Não foi possível desencriptar a palavra-passe da base da cidade. Verifique APP_KEY e actualize as credenciais em Cidades.'),
+                0,
+                $e
+            );
+        }
+
         $name = $this->connectionName($city);
 
         try {

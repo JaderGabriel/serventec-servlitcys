@@ -5,7 +5,10 @@ namespace Tests\Unit;
 use App\Models\City;
 use App\Models\FundebMunicipioReference;
 use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Services\CityDataConnection;
+use App\Services\Fundeb\FundebFndeReceitaCsvService;
 use App\Services\Fundeb\FundebOpenDataImportService;
+use App\Support\Fundeb\FundebReferenceSource;
 use Illuminate\Support\Facades\Http;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
@@ -17,6 +20,35 @@ final class FundebOpenDataImportServiceTest extends TestCase
     {
         Mockery::close();
         parent::tearDown();
+    }
+
+    private function cityDataReturningMatriculas(int $total): CityDataConnection
+    {
+        $cityData = Mockery::mock(CityDataConnection::class);
+        $cityData->shouldReceive('run')->andReturn($total);
+
+        return $cityData;
+    }
+
+    private function fndeReceitaWithoutNetwork(): FundebFndeReceitaCsvService
+    {
+        $fnde = Mockery::mock(FundebFndeReceitaCsvService::class);
+        $fnde->shouldReceive('rowForIbge')->andReturn(null);
+        $fnde->shouldReceive('estimateVaafFromReceitaAndMatriculas')->andReturn(null);
+
+        return $fnde;
+    }
+
+    private function makeService(
+        FundebMunicipioReferenceRepository $repo,
+        ?FundebFndeReceitaCsvService $fndeReceita = null,
+        ?CityDataConnection $cityData = null,
+    ): FundebOpenDataImportService {
+        return new FundebOpenDataImportService(
+            $repo,
+            $fndeReceita ?? $this->fndeReceitaWithoutNetwork(),
+            $cityData ?? $this->cityDataReturningMatriculas(0),
+        );
     }
 
     #[Test]
@@ -49,7 +81,7 @@ final class FundebOpenDataImportServiceTest extends TestCase
             ->with($city, 2024, Mockery::on(static fn (array $d) => $d['vaaf'] === 5120.50 && $d['vaat'] === 4800.0))
             ->andReturn($saved);
 
-        $service = new FundebOpenDataImportService($repo);
+        $service = $this->makeService($repo);
         $result = $service->importForCityYear($city, 2024);
 
         $this->assertTrue($result['success']);
@@ -91,7 +123,7 @@ final class FundebOpenDataImportServiceTest extends TestCase
             ->with($city, 2023, Mockery::on(static fn (array $d) => $d['vaaf'] === 5050.0))
             ->andReturn($saved);
 
-        $service = new FundebOpenDataImportService($repo);
+        $service = $this->makeService($repo);
         $result = $service->importForCityYear($city, 2024);
 
         $this->assertTrue($result['success']);
@@ -139,7 +171,7 @@ final class FundebOpenDataImportServiceTest extends TestCase
         $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
         $repo->shouldReceive('upsert')->once()->andReturn($saved);
 
-        $service = new FundebOpenDataImportService($repo);
+        $service = $this->makeService($repo);
         $result = $service->importForCityYear($city, 2024);
 
         $this->assertTrue($result['success']);
@@ -209,7 +241,7 @@ final class FundebOpenDataImportServiceTest extends TestCase
         ]);
 
         $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
-        $service = new FundebOpenDataImportService($repo);
+        $service = $this->makeService($repo);
         $years = $service->resolveSyncYears();
 
         $this->assertContains(2024, $years);
@@ -220,13 +252,14 @@ final class FundebOpenDataImportServiceTest extends TestCase
     }
 
     #[Test]
-    public function usa_piso_nacional_quando_api_indisponivel(): void
+    public function usa_piso_nacional_quando_api_indisponivel_e_write_on_import_ativo(): void
     {
         config([
             'ieducar.fundeb.open_data.json_url' => '',
             'ieducar.fundeb.open_data.cache_path' => '',
             'ieducar.fundeb.open_data.resource_id' => '',
             'ieducar.fundeb.open_data.national_floor.enabled' => true,
+            'ieducar.fundeb.open_data.national_floor.write_on_import' => true,
             'ieducar.discrepancies.vaa_referencia_anual' => 5559.73,
         ]);
 
@@ -245,7 +278,7 @@ final class FundebOpenDataImportServiceTest extends TestCase
             ->with($city, 2024, Mockery::on(static fn (array $d) => $d['vaaf'] === 5559.73 && $d['fonte'] === 'referencia_nacional_config'))
             ->andReturn($saved);
 
-        $service = new FundebOpenDataImportService($repo);
+        $service = $this->makeService($repo);
         $result = $service->importForCityYear($city, 2024, false);
 
         $this->assertTrue($result['success']);
@@ -271,7 +304,7 @@ final class FundebOpenDataImportServiceTest extends TestCase
         $repo->shouldReceive('upsert')->once()->andReturn($saved);
 
         $progress = new \App\Services\Fundeb\FundebImportProgress();
-        $service = new FundebOpenDataImportService($repo);
+        $service = $this->makeService($repo);
         $service->importForCityYear($city, 2024, false, $progress);
 
         $this->assertGreaterThanOrEqual(2, count($progress->entries()));
@@ -287,9 +320,86 @@ final class FundebOpenDataImportServiceTest extends TestCase
         $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
         $repo->shouldNotReceive('upsert');
 
-        $service = new FundebOpenDataImportService($repo);
+        $service = $this->makeService($repo);
         $result = $service->importForCityYear($city, 2024);
 
         $this->assertFalse($result['success']);
+    }
+
+    #[Test]
+    public function nao_grava_piso_nacional_por_padrao_quando_fontes_falham(): void
+    {
+        config([
+            'ieducar.fundeb.open_data.json_url' => '',
+            'ieducar.fundeb.open_data.cache_path' => '',
+            'ieducar.fundeb.open_data.resource_id' => '',
+            'ieducar.fundeb.open_data.national_floor.enabled' => true,
+            'ieducar.fundeb.open_data.national_floor.write_on_import' => false,
+            'ieducar.discrepancies.vaa_referencia_anual' => 5559.73,
+        ]);
+
+        $fnde = Mockery::mock(FundebFndeReceitaCsvService::class);
+        $fnde->shouldReceive('rowForIbge')->andReturn(null);
+
+        $city = new City(['id' => 5, 'name' => 'Novo', 'ibge_municipio' => '3550308']);
+        $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $repo->shouldNotReceive('upsert');
+
+        $result = $this->makeService($repo, $fnde)->importForCityYear($city, 2024, false);
+
+        $this->assertFalse($result['success']);
+    }
+
+    #[Test]
+    public function importa_vaaf_estimado_via_csv_fnde_e_matriculas_ieducar(): void
+    {
+        config([
+            'ieducar.fundeb.open_data.json_url' => '',
+            'ieducar.fundeb.open_data.cache_path' => '',
+            'ieducar.fundeb.open_data.resource_id' => '',
+            'ieducar.fundeb.open_data.national_floor.write_on_import' => false,
+        ]);
+
+        $ibge = '2910800';
+        $city = new City(['id' => 6, 'name' => 'Feira', 'ibge_municipio' => $ibge]);
+
+        $fnde = Mockery::mock(FundebFndeReceitaCsvService::class);
+        $fnde->shouldReceive('rowForIbge')
+            ->with($ibge, 2024)
+            ->andReturn([
+                'ibge' => $ibge,
+                'total_receita' => 15_000_000.0,
+                'complementacao_vaat' => 100.0,
+                'complementacao_vaar' => 200.0,
+                'ano_publicacao' => 2025,
+                'csv_url' => 'https://www.gov.br/fnde/test.csv',
+            ]);
+        $fnde->shouldReceive('estimateVaafFromReceitaAndMatriculas')
+            ->with(15_000_000.0, 2500)
+            ->andReturn(6000.0);
+
+        $cityData = Mockery::mock(CityDataConnection::class);
+        $cityData->shouldReceive('run')
+            ->once()
+            ->andReturnUsing(static fn () => 2500);
+
+        $saved = new FundebMunicipioReference([
+            'ibge_municipio' => $ibge,
+            'ano' => 2024,
+            'vaaf' => 6000.0,
+            'fonte' => FundebReferenceSource::FONTE_FNDE_RECEITA_IEDUCAR,
+        ]);
+        $saved->id = 200;
+
+        $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $repo->shouldReceive('upsert')
+            ->once()
+            ->with($city, 2024, Mockery::on(static fn (array $d) => $d['vaaf'] === 6000.0
+                && $d['fonte'] === FundebReferenceSource::FONTE_FNDE_RECEITA_IEDUCAR))
+            ->andReturn($saved);
+
+        $result = $this->makeService($repo, $fnde, $cityData)->importForCityYear($city, 2024, false);
+
+        $this->assertTrue($result['success']);
     }
 }

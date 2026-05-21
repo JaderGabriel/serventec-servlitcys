@@ -12,6 +12,19 @@ class AdminSyncTaskCitiesResolverTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        if (! extension_loaded('pdo_sqlite')) {
+            $this->markTestSkipped('Extensão pdo_sqlite necessária para testes com RefreshDatabase.');
+        }
+
+        parent::setUp();
+    }
+
+    /**
+     * Cenário: sync FUNDEB em massa sem city_ids explícitos.
+     * Esperado: apenas cidades com IBGE preenchido entram no payload.
+     */
     public function test_enrich_payload_lists_all_fundeb_cities_with_ibge(): void
     {
         $withIbge = City::factory()->create(['name' => 'Alpha', 'ibge_municipio' => '2901106']);

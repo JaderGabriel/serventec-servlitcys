@@ -5,6 +5,7 @@ namespace App\Support\Ieducar;
 use App\Models\City;
 use App\Models\FundebMunicipioReference;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Fundeb\FundebReferenceSource;
 use Illuminate\Support\Collection;
 
 /**
@@ -122,7 +123,7 @@ final class FundebMunicipalReferenceResolver
 
         foreach ($years as $ano) {
             $row = $byYear->get($ano);
-            if ($row !== null && (float) $row->vaaf > 0) {
+            if ($row !== null && (float) $row->vaaf > 0 && ! FundebReferenceSource::isPlaceholder($row->fonte)) {
                 return [
                     'vaaf' => (float) $row->vaaf,
                     'vaat' => $row->vaat !== null ? (float) $row->vaat : null,
@@ -164,7 +165,7 @@ final class FundebMunicipalReferenceResolver
             $latest = self::findLatestReferenceRow($ibge);
         }
 
-        if ($latest !== null && (float) $latest->vaaf > 0) {
+        if ($latest !== null && (float) $latest->vaaf > 0 && ! FundebReferenceSource::isPlaceholder($latest->fonte)) {
             $ano = (int) $latest->ano;
 
             return [
@@ -173,7 +174,10 @@ final class FundebMunicipalReferenceResolver
                 'complementacao_vaar' => $latest->complementacao_vaar !== null ? (float) $latest->complementacao_vaar : null,
                 'fonte' => self::FONTE_OFICIAL_DB,
                 'fonte_label' => self::labelForResolvedYear(
-                    __('VAAF municipal (:ano mais recente na base)', ['ano' => (string) $ano]),
+                    __('VAAF municipal (:fonte, :ano mais recente na base)', [
+                        'fonte' => $latest->fonte ?: __('FNDE/dados importados'),
+                        'ano' => (string) $ano,
+                    ]),
                     $ano,
                     $anchorAno,
                 ),
@@ -481,10 +485,15 @@ final class FundebMunicipalReferenceResolver
     private static function findLatestReferenceRow(string $ibge): ?FundebMunicipioReference
     {
         try {
-            return FundebMunicipioReference::query()
+            $query = FundebMunicipioReference::query()
                 ->where('ibge_municipio', $ibge)
-                ->orderByDesc('ano')
-                ->first();
+                ->orderByDesc('ano');
+
+            foreach (FundebReferenceSource::PLACEHOLDER_FONTES as $placeholder) {
+                $query->where('fonte', '!=', $placeholder);
+            }
+
+            return $query->first();
         } catch (\Throwable) {
             return null;
         }

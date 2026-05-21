@@ -27,7 +27,7 @@
                     ? ($dim['unavailable_reason'] ?? null)
                     : null);
             @endphp
-            <div class="rounded-md border px-2.5 py-2 text-xs flex gap-2 {{ $chip }}">
+            <div class="serv-panel px-2.5 py-2 text-xs flex gap-2 {{ $chip }}">
                 <span class="font-bold shrink-0" aria-hidden="true">{{ $icon }}</span>
                 <div class="min-w-0">
                     <p class="font-medium leading-snug">{{ $dim['title'] ?? '' }}</p>

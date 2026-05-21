@@ -114,6 +114,14 @@
                             {{ __('Selecione o ano letivo (ou «Todos os anos») e clique em Aplicar filtros para carregar os indicadores e gráficos.') }}
                         </div>
                     @else
+                        @if (! empty($analyticsLoadWarnings ?? []))
+                            <div class="serv-callout serv-callout--warning text-sm space-y-1">
+                                <p class="font-medium">{{ __('Alguns blocos não carregaram por completo') }}</p>
+                                @foreach ($analyticsLoadWarnings as $warn)
+                                    <p>{{ $warn }}</p>
+                                @endforeach
+                            </div>
+                        @endif
                         <x-dashboard.funding-loss-conditions-modal :data="$fundingLossModalData ?? []" />
                     @endif
 
@@ -278,6 +286,7 @@
                                         'discrepanciesData' => $discrepanciesData,
                                         'yearFilterReady' => $yearFilterReady,
                                         'chartExportContext' => $chartExportContext,
+                                        'municipalityContext' => $municipalityContext ?? null,
                                     ])
                                 @else
                                     <div class="relative min-h-[12rem]" x-ref="panelDiscrepancies">
@@ -293,6 +302,7 @@
                                         'healthData' => $municipalityHealthData,
                                         'yearFilterReady' => $yearFilterReady,
                                         'chartExportContext' => $chartExportContext,
+                                        'municipalityContext' => $municipalityContext ?? null,
                                         'selectedCity' => $selectedCity,
                                         'filters' => $filters,
                                         'pdfExportsRecent' => $pdfExportsRecent ?? [],

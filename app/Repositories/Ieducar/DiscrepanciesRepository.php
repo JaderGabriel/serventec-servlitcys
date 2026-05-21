@@ -19,6 +19,7 @@ use App\Support\Ieducar\InclusionRecursoProvaQueries;
 use App\Support\Ieducar\MatriculaChartQueries;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Aba «Discrepâncias e Erros»: inconsistências de cadastro com impacto em Censo, VAAR/FUNDEB e repasses.
@@ -56,11 +57,20 @@ class DiscrepanciesRepository
             ];
         };
 
-        if ($ttl <= 0) {
-            return $load();
-        }
+        try {
+            if ($ttl <= 0) {
+                return $load();
+            }
 
-        return Cache::remember($cacheKey, $ttl, $load);
+            return Cache::remember($cacheKey, $ttl, $load);
+        } catch (\Throwable $e) {
+            Log::warning('analytics.funding_impact_snapshot_failed', [
+                'city_id' => $city->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     /**

@@ -5,7 +5,12 @@ namespace App\Services\Fundeb;
 use App\Models\City;
 use App\Models\FundebMunicipioReference;
 use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Services\CityDataConnection;
+use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Fundeb\FundebIbgeMatcher;
+use App\Support\Fundeb\FundebReferenceSource;
 use App\Support\Ieducar\FundebReferenceYearOrder;
+use App\Support\Ieducar\MatriculaChartQueries;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -18,6 +23,8 @@ final class FundebOpenDataImportService
 {
     public function __construct(
         private FundebMunicipioReferenceRepository $references,
+        private FundebFndeReceitaCsvService $fndeReceita,
+        private CityDataConnection $cityData,
     ) {}
 
     /**
@@ -437,6 +444,14 @@ final class FundebOpenDataImportService
             if ($nearest !== null) {
                 $match = $nearest['row'];
                 $importAno = $nearest['ano'];
+            }
+        }
+
+        if ($match === null) {
+            $match = $this->fetchFromFndeReceitaPortaria($city, $ibge, $ano);
+            if ($match !== null) {
+                $importAno = $ano;
+                $this->writeCacheJson($ibge, $ano, $match);
             }
         }
 
@@ -980,8 +995,67 @@ final class FundebOpenDataImportService
      *
      * @return array{vaaf: float, fonte?: string, notas?: string}|null
      */
+    /**
+     * CSV oficial FNDE (receita total por município) + matrículas i-Educar → VAAF municipal estimado.
+     *
+     * @return array{vaaf: float, vaat?: float, complementacao_vaar?: float, fonte?: string, notas?: string}|null
+     */
+    private function fetchFromFndeReceitaPortaria(City $city, string $ibge, int $ano): ?array
+    {
+        $receita = $this->fndeReceita->rowForIbge($ibge, $ano);
+        if ($receita === null) {
+            return null;
+        }
+
+        $filters = new IeducarFilterState(
+            ano_letivo: (string) $ano,
+            escola_id: null,
+            curso_id: null,
+            turno_id: null,
+        );
+
+        $matriculas = 0;
+        try {
+            $matriculas = (int) $this->cityData->run(
+                $city,
+                static fn ($db) => MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0,
+            );
+        } catch (\Throwable) {
+            $matriculas = 0;
+        }
+
+        $vaaf = $this->fndeReceita->estimateVaafFromReceitaAndMatriculas(
+            (float) $receita['total_receita'],
+            $matriculas,
+        );
+
+        if ($vaaf === null || $vaaf <= 0) {
+            return null;
+        }
+
+        $pubAno = (int) ($receita['ano_publicacao'] ?? $ano);
+
+        return [
+            'vaaf' => $vaaf,
+            'vaat' => isset($receita['complementacao_vaat']) ? (float) $receita['complementacao_vaat'] : null,
+            'complementacao_vaar' => isset($receita['complementacao_vaar']) ? (float) $receita['complementacao_vaar'] : null,
+            'fonte' => FundebReferenceSource::FONTE_FNDE_RECEITA_IEDUCAR,
+            'notas' => __('VAAF estimado: receita total FNDE (:rec) ÷ :mat matrículas activas i-Educar (ano :ano). Publicação Portaria FNDE :pub. CSV: :url', [
+                'rec' => number_format((float) $receita['total_receita'], 2, ',', '.'),
+                'mat' => number_format($matriculas, 0, ',', '.'),
+                'ano' => (string) $ano,
+                'pub' => (string) $pubAno,
+                'url' => Str::limit((string) ($receita['csv_url'] ?? ''), 120),
+            ]),
+        ];
+    }
+
     private function nationalFloorRow(string $ibge, int $ano): ?array
     {
+        if (! (bool) config('ieducar.fundeb.open_data.national_floor.write_on_import', false)) {
+            return null;
+        }
+
         $enabled = (bool) config('ieducar.fundeb.open_data.national_floor.enabled', false);
         if (! $enabled) {
             return null;
@@ -1003,7 +1077,7 @@ final class FundebOpenDataImportService
 
         return [
             'vaaf' => $vaaf,
-            'fonte' => 'referencia_nacional_config',
+            'fonte' => FundebReferenceSource::FONTE_NACIONAL,
             'notas' => __('VAAF nacional de referência (:valor) — sem dado municipal para IBGE :ibge/ano :ano. Atualize quando importar dados oficiais FNDE.', [
                 'valor' => number_format($vaaf, 2, ',', '.'),
                 'ibge' => $ibge,
@@ -1127,17 +1201,25 @@ final class FundebOpenDataImportService
         $ibgeFields = config('ieducar.fundeb.open_data.fields.ibge', []);
         $anoFields = config('ieducar.fundeb.open_data.fields.ano', []);
 
+        $filterVariants = [
+            ['ibge' => $ibge, 'ano' => $ano],
+            ['ibge' => (int) $ibge, 'ano' => $ano],
+            ['ibge' => $ibge, 'ano' => (string) $ano],
+        ];
+
         foreach (is_array($ibgeFields) ? $ibgeFields : [] as $ibgeField) {
             foreach (is_array($anoFields) ? $anoFields : [] as $anoField) {
-                $filters = json_encode([
-                    $ibgeField => $ibge,
-                    $anoField => $ano,
-                ], JSON_THROW_ON_ERROR);
+                foreach ($filterVariants as $variant) {
+                    $filters = json_encode([
+                        $ibgeField => $variant['ibge'],
+                        $anoField => $variant['ano'],
+                    ], JSON_THROW_ON_ERROR);
 
-                $records = $this->ckanDatastoreSearch($base, $resourceId, $filters, $timeout, 5);
-                $parsed = $this->parseFirstRecord($records, $ibge, $ano);
-                if ($parsed !== null) {
-                    return $parsed;
+                    $records = $this->ckanDatastoreSearch($base, $resourceId, $filters, $timeout, 5);
+                    $parsed = $this->parseFirstRecord($records, $ibge, $ano);
+                    if ($parsed !== null) {
+                        return $parsed;
+                    }
                 }
             }
         }
@@ -1279,8 +1361,7 @@ final class FundebOpenDataImportService
             $normalized[Str::lower((string) $key)] = $value;
         }
 
-        $rowIbge = preg_replace('/\D/', '', (string) $this->firstValue($normalized, config('ieducar.fundeb.open_data.fields.ibge', [])));
-        if (strlen($rowIbge) !== 7 || $rowIbge !== $ibge) {
+        if (! FundebIbgeMatcher::recordMatchesIbge($record, $ibge)) {
             return null;
         }
 

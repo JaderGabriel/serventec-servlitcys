@@ -42,10 +42,11 @@ Esta secção concentra o que mais impacta **repasse, planeamento financeiro e c
 
 | Item | Detalhe |
 |------|---------|
-| **Serviço** | `App\Services\Fundeb\FundebOpenDataImportService` |
+| **Serviço** | `App\Services\Fundeb\FundebOpenDataImportService` + `FundebFndeReceitaCsvService` |
 | **Endpoint** | `GET {IEDUCAR_FUNDEB_CKAN_URL}/api/3/action/datastore_search` (default: `https://www.fnde.gov.br/dadosabertos`) |
 | **Descoberta** | `package_search` com `IEDUCAR_FUNDEB_CKAN_SEARCH` se `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` estiver vazio |
 | **Alternativa** | JSON remoto ou ficheiro `storage://app/fundeb/api/{ibge}/{ano}.json` (`IEDUCAR_FUNDEB_JSON_URL`) |
+| **Portaria FNDE (CSV)** | «Receita total do Fundeb por ente federado» em gov.br/fnde — VAAF **estimado** = receita total ÷ matrículas activas i-Educar (`fnde_portaria_receita_ieducar`) |
 
 **Por que é necessário**
 
@@ -75,7 +76,14 @@ IEDUCAR_FUNDEB_JSON_URL=storage://app/fundeb/api/{ibge}/{ano}.json
 IEDUCAR_FUNDEB_API_TIMEOUT=30
 IEDUCAR_FUNDEB_SYNC_YEARS=2020,2021,2022,2023,2024,2025
 IEDUCAR_DISC_VAA_REFERENCIA=5559.73       # fallback se não houver import
+IEDUCAR_FUNDEB_NATIONAL_FLOOR_ON_IMPORT=false  # evita gravar piso nacional como VAAF municipal
+IEDUCAR_FUNDEB_VAAF_ESTIMATE_MIN=2500
+IEDUCAR_FUNDEB_VAAF_ESTIMATE_MAX=18000
 ```
+
+**Ordem de importação (por município/ano):** cache/JSON → CKAN → CSV Portaria FNDE + matrículas i-Educar → (opcional) piso nacional se `IEDUCAR_FUNDEB_NATIONAL_FLOOR_ON_IMPORT=true`.
+
+Registos com `fonte` `referencia_nacional_config` são **ignorados** pelo resolver municipal; reimporte após activar a nova cadeia (`fundeb:import-api` ou admin FUNDEB).
 
 **Mensagem típica na UI:** «Nenhum registo em cache para IBGE/ano» → activar `IEDUCAR_OTHER_FUNDING_LIVE_FNDE=true` **e** configurar `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID`, ou sincronizar FUNDEB no admin.
 

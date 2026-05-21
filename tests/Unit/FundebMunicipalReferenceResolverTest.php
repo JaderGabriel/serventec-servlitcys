@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Models\City;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Fundeb\FundebReferenceSource;
 use App\Support\Ieducar\FundebMunicipalReferenceResolver;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -104,5 +105,14 @@ final class FundebMunicipalReferenceResolverTest extends TestCase
         $this->assertEqualsWithDelta(5000.0, $ref['previa']['vaaf'], 0.01);
         $this->assertIsArray($ref['divergencia']);
         $this->assertGreaterThan(0, $ref['divergencia']['pct']);
+    }
+
+    #[Test]
+    public function classifica_fontes_placeholder_vs_municipal_oficial(): void
+    {
+        $this->assertTrue(FundebReferenceSource::isPlaceholder(FundebReferenceSource::FONTE_NACIONAL));
+        $this->assertTrue(FundebReferenceSource::isPlaceholder('referencia_nacional'));
+        $this->assertFalse(FundebReferenceSource::isPlaceholder(FundebReferenceSource::FONTE_FNDE_RECEITA_IEDUCAR));
+        $this->assertTrue(FundebReferenceSource::isMunicipalOfficial(FundebReferenceSource::FONTE_FNDE_RECEITA_IEDUCAR));
     }
 }

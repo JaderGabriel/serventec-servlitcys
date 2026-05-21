@@ -26,14 +26,18 @@ class RecordPulseInstitutionContext
             return $next($request);
         }
 
-        Pulse::record('trafego_app', 'total', null)->count();
+        try {
+            Pulse::record('trafego_app', 'total', null)->count();
 
-        $cityId = $this->resolveCityId($request);
-        if ($cityId !== null && $cityId > 0) {
-            Pulse::record('instituicao_request', 'cid:'.$cityId, null)->count();
+            $cityId = $this->resolveCityId($request);
+            if ($cityId !== null && $cityId > 0) {
+                Pulse::record('instituicao_request', 'cid:'.$cityId, null)->count();
+            }
+
+            $this->recordSyncAdminEndpoints($request);
+        } catch (\Throwable) {
+            // Pulse não deve derrubar o painel se migrações/ingest falharem.
         }
-
-        $this->recordSyncAdminEndpoints($request);
 
         return Pulse::ignore(fn () => $next($request));
     }
