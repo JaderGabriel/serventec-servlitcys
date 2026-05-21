@@ -4,6 +4,7 @@ namespace App\Services\Ieducar;
 
 use App\Models\City;
 use App\Services\CityDataConnection;
+use App\Support\Dashboard\AnalyticsLoadProfiler;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\EscolaSubstatusResolver;
 use App\Support\Ieducar\IeducarColumnInspector;
@@ -44,16 +45,57 @@ class FilterOptionsService
      */
     public function loadAll(City $city, ?IeducarFilterState $filterState = null): array
     {
+        return $this->loadForAnalyticsIndex($city, $filterState, light: false);
+    }
+
+    /**
+     * Opções para o index do painel. Com $light=true só consulta anos (escolas/cursos/turnos via AJAX).
+     *
+     * @return array{
+     *   years: array<int|string, int|string>,
+     *   escolas: list<array{id: string, name: string, inep?: string|null, active?: bool|null, substatus?: string|null}>,
+     *   cursos: list<array{id: string, name: string}>,
+     *   series: list<array{id: string, name: string}>,
+     *   segmentos: list<array{id: string, name: string}>,
+     *   etapas: list<array{id: string, name: string}>,
+     *   turnos: list<array{id: string, name: string}>,
+     *   errors: list<string>,
+     * }
+     */
+    public function loadForAnalyticsIndex(
+        City $city,
+        ?IeducarFilterState $filterState = null,
+        bool $light = false,
+        ?AnalyticsLoadProfiler $profiler = null,
+    ): array {
         $errors = [];
 
-        $years = $this->mergeYearOptions($city, $errors);
-        $escolas = $this->loadPairs($city, 'escola', $errors);
-        $cursos = $this->loadPairs($city, 'curso', $errors);
+        $years = $this->runFilterStep($profiler, 'filter_years', fn () => $this->mergeYearOptions($city, $errors));
+
+        if ($light) {
+            if (AnalyticsLoadProfiler::enabled()) {
+                Log::info('analytics.filter_options_light', ['city_id' => $city->id]);
+            }
+
+            return [
+                'years' => $years,
+                'escolas' => [],
+                'cursos' => [],
+                'series' => [],
+                'segmentos' => [],
+                'etapas' => [],
+                'turnos' => [],
+                'errors' => $errors,
+            ];
+        }
+
+        $escolas = $this->runFilterStep($profiler, 'filter_escolas', fn () => $this->loadPairs($city, 'escola', $errors));
+        $cursos = $this->runFilterStep($profiler, 'filter_cursos', fn () => $this->loadPairs($city, 'curso', $errors));
         $anoTurno = null;
         if ($filterState !== null && $filterState->hasYearSelected() && ! $filterState->isAllSchoolYears()) {
             $anoTurno = $filterState->yearFilterValue();
         }
-        $turnos = $this->loadPairs($city, 'turno', $errors, $anoTurno);
+        $turnos = $this->runFilterStep($profiler, 'filter_turnos', fn () => $this->loadPairs($city, 'turno', $errors, $anoTurno));
 
         return [
             'years' => $years,
@@ -65,6 +107,53 @@ class FilterOptionsService
             'turnos' => $turnos,
             'errors' => $errors,
         ];
+    }
+
+    /**
+     * Escolas, cursos e turnos num único pedido AJAX (após o index em modo light).
+     *
+     * @return array{
+     *   escolas: list<array{id: string, name: string, inep?: string|null, active?: bool|null, substatus?: string|null}>,
+     *   cursos: list<array{id: string, name: string}>,
+     *   turnos: list<array{id: string, name: string}>,
+     *   errors: list<string>,
+     * }
+     */
+    public function loadBootstrap(
+        City $city,
+        ?IeducarFilterState $filterState = null,
+        ?AnalyticsLoadProfiler $profiler = null,
+    ): array {
+        $errors = [];
+        $escolas = $this->runFilterStep($profiler, 'bootstrap_escolas', fn () => $this->loadPairs($city, 'escola', $errors));
+        $cursos = $this->runFilterStep($profiler, 'bootstrap_cursos', fn () => $this->loadPairs($city, 'curso', $errors));
+        $anoTurno = null;
+        if ($filterState !== null && $filterState->hasYearSelected() && ! $filterState->isAllSchoolYears()) {
+            $anoTurno = $filterState->yearFilterValue();
+        }
+        $turnos = $this->runFilterStep($profiler, 'bootstrap_turnos', fn () => $this->loadPairs($city, 'turno', $errors, $anoTurno));
+
+        return [
+            'escolas' => $escolas,
+            'cursos' => $cursos,
+            'turnos' => $turnos,
+            'errors' => $errors,
+        ];
+    }
+
+    /**
+     * @template T
+     *
+     * @param  callable(): T  $fn
+     * @return T
+     */
+    private function runFilterStep(?AnalyticsLoadProfiler $profiler, string $step, callable $fn): mixed
+    {
+        if ($profiler !== null) {
+            return $profiler->measure($step, $fn);
+        }
+
+        return $fn();
     }
 
     /**

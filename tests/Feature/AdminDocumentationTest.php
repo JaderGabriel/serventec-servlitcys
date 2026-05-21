@@ -10,14 +10,13 @@ class AdminDocumentationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_can_read_documentation_index(): void
+    public function test_admin_documentation_index_redirects_to_default_reader(): void
     {
         $admin = User::factory()->admin()->create();
 
         $this->actingAs($admin)
             ->get(route('admin.documentation.index'))
-            ->assertOk()
-            ->assertSee(__('Documentação do sistema'), false);
+            ->assertRedirect(route('admin.documentation.show', ['doc' => 'docs/README.md']));
     }
 
     public function test_admin_can_render_markdown_document(): void
@@ -27,7 +26,8 @@ class AdminDocumentationTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.documentation.show', ['doc' => 'docs/README.md']))
             ->assertOk()
-            ->assertSee(__('Índice da documentação'), false);
+            ->assertSee(__('Índice da documentação'), false)
+            ->assertSee(__('Ler no GitHub'), false);
     }
 
     public function test_disallowed_document_path_returns_404(): void

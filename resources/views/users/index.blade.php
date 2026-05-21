@@ -67,7 +67,12 @@
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                             @forelse ($users as $u)
                                 <tr>
-                                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ $u->name }}</td>
+                                    <td class="px-4 py-3 text-sm">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <x-user-avatar :user="$u" size="sm" />
+                                            <span class="text-gray-900 dark:text-gray-100 truncate">{{ $u->name }}</span>
+                                        </div>
+                                    </td>
                                     <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 font-mono">{{ $u->username }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 break-all">{{ $u->email }}</td>
                                     <td class="px-4 py-3 text-sm">
@@ -131,8 +136,10 @@
                                                             @csrf
                                                             @method('PATCH')
                                                             <input type="hidden" name="is_active" value="0" />
-                                                            <button type="submit" class="inline-flex items-center rounded px-2 py-1 text-xs font-medium text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/40 hover:bg-amber-200 dark:hover:bg-amber-900/60 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800" title="{{ __('Desativar utilizador') }}">
-                                                                {{ __('Desativar') }}
+                                                            <button type="submit" class="inline-flex items-center justify-end text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Desativar utilizador') }}" aria-label="{{ __('Desativar utilizador') }}">
+                                                                <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                                                                </svg>
                                                             </button>
                                                         </form>
                                                     @else
@@ -140,8 +147,10 @@
                                                             @csrf
                                                             @method('PATCH')
                                                             <input type="hidden" name="is_active" value="1" />
-                                                            <button type="submit" class="inline-flex items-center rounded px-2 py-1 text-xs font-medium text-emerald-800 dark:text-emerald-200 bg-emerald-100 dark:bg-emerald-900/40 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800" title="{{ __('Reativar utilizador') }}">
-                                                                {{ __('Ativar') }}
+                                                            <button type="submit" class="inline-flex items-center justify-end text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Reativar utilizador') }}" aria-label="{{ __('Reativar utilizador') }}">
+                                                                <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                                                </svg>
                                                             </button>
                                                         </form>
                                                     @endif
@@ -151,8 +160,10 @@
                                                     <form method="POST" action="{{ route('users.destroy', $u) }}" class="inline" onsubmit="return confirm(@js(__('Excluir permanentemente este utilizador? Esta ação não pode ser desfeita.')));">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="inline-flex items-center rounded px-2 py-1 text-xs font-medium text-red-800 dark:text-red-200 bg-red-100 dark:bg-red-900/40 hover:bg-red-200 dark:hover:bg-red-900/60 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800" title="{{ __('Excluir utilizador') }}">
-                                                            {{ __('Excluir') }}
+                                                        <button type="submit" class="inline-flex items-center justify-end text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Excluir utilizador') }}" aria-label="{{ __('Excluir utilizador') }}">
+                                                            <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9.346-.346 9m-1.788 0L9.26 9.346m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                                            </svg>
                                                         </button>
                                                     </form>
                                                 @endcan

@@ -19,6 +19,7 @@ use App\Services\Analytics\AnalyticsReportExportService;
 use App\Services\Ieducar\FilterOptionsService;
 use App\Support\Auth\UserCityAccess;
 use App\Support\Dashboard\AnalyticsEmptyPayloads;
+use App\Support\Dashboard\AnalyticsLoadProfiler;
 use App\Support\Dashboard\AnalyticsMunicipalityContext;
 use App\Support\Dashboard\AnalyticsTabCatalog;
 use App\Support\Dashboard\ChartExportMeta;
@@ -77,6 +78,10 @@ class AnalyticsDashboardController extends Controller
                 ->first();
         }
 
+        $profiler = new AnalyticsLoadProfiler();
+        $analyticsDebugEnabled = AnalyticsLoadProfiler::enabled() || (bool) config('app.debug');
+        $indexLightFilters = (bool) config('analytics.index_light_filters', true);
+
         $yearOptions = $this->schoolYearOptionsFallback();
         $ieducarOptions = [
             'years' => [],
@@ -89,12 +94,26 @@ class AnalyticsDashboardController extends Controller
             'errors' => [],
         ];
         $analyticsLoadWarnings = [];
+        $indexFatalMessage = null;
 
         if ($city) {
             $this->authorize('viewAnalytics', $city);
 
             try {
-                $ieducarOptions = $filterOptionsService->loadAll($city, $filters);
+                $ieducarOptions = $profiler->measure('filter_options', function () use (
+                    $filterOptionsService,
+                    $city,
+                    $filters,
+                    $indexLightFilters,
+                    $profiler,
+                ) {
+                    return $filterOptionsService->loadForAnalyticsIndex(
+                        $city,
+                        $filters,
+                        $indexLightFilters,
+                        $profiler,
+                    );
+                }, ['light' => $indexLightFilters]);
             } catch (Throwable $e) {
                 Log::warning('analytics.filter_options_failed', [
                     'city_id' => $city->id,
@@ -150,12 +169,12 @@ class AnalyticsDashboardController extends Controller
 
         if ($yearFilterReady && $city !== null) {
             try {
-                $overviewData = $this->safeAnalyticsLoad(
+                $overviewData = $profiler->measure('overview', fn () => $this->safeAnalyticsLoad(
                     fn () => $overviewRepository->summary($city, $filters),
                     $overviewData,
                     __('Visão geral'),
                     $analyticsLoadWarnings,
-                );
+                ));
 
                 // Com lazy activo, unidades (mapa/geo pesado) só na aba dedicada — evita 500/timeout no «Aplicar filtros».
                 if (! $lazyTabLoading) {
@@ -256,7 +275,9 @@ class AnalyticsDashboardController extends Controller
             } catch (Throwable $e) {
                 Log::error('analytics.index_load_failed', [
                     'city_id' => $city->id,
+                    'ano_letivo' => $filters->ano_letivo,
                     'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
                 ]);
                 $analyticsLoadWarnings[] = __('Não foi possível carregar todos os indicadores: :msg', [
                     'msg' => $e->getMessage(),
@@ -267,22 +288,151 @@ class AnalyticsDashboardController extends Controller
             }
         }
 
-        $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
+        $analyticsDebugSteps = $profiler->steps();
+        $analyticsDebugTotalMs = $profiler->totalMs();
+        $profiler->flush('index', [
+            'city_id' => $city?->id,
+            'ano_letivo' => $filters->ano_letivo,
+            'year_filter_ready' => $yearFilterReady,
+            'light_filters' => $indexLightFilters,
+        ]);
 
-        $tabs = AnalyticsTabCatalog::tabsOrdered();
-        $tabKeys = AnalyticsTabCatalog::tabKeys();
-        $qTab = (string) $request->query('tab', '');
-        $analyticsInitialTab = AnalyticsTabCatalog::resolveInitialTab(
-            $qTab,
-            $user,
-            $yearFilterReady,
-        );
+        try {
+            $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
 
-        $pdfExportsRecent = ($city !== null && $user !== null && $user->canExportAnalyticsPdf())
-            ? $pdfExportService->recentForUserCity($user, $city, 6)
-            : [];
+            $tabs = AnalyticsTabCatalog::tabsOrdered();
+            $qTab = (string) $request->query('tab', '');
+            $analyticsInitialTab = AnalyticsTabCatalog::resolveInitialTab(
+                $qTab,
+                $user,
+                $yearFilterReady,
+            );
 
-        return view('dashboard.analytics', [
+            $pdfExportsRecent = ($city !== null && $user !== null && $user->canExportAnalyticsPdf())
+                ? $pdfExportService->recentForUserCity($user, $city, 6)
+                : [];
+
+            return view('dashboard.analytics', $this->analyticsIndexViewData(
+                $cities,
+                $city,
+                $filters,
+                $yearOptions,
+                $yearFilterReady,
+                $ieducarOptions,
+                $overviewData,
+                $schoolUnitsData,
+                $enrollmentData,
+                $performanceData,
+                $attendanceData,
+                $inclusionData,
+                $networkData,
+                $fundebData,
+                $otherFundingData,
+                $workDoneData,
+                $discrepanciesData,
+                $municipalityHealthData,
+                $chartExportContext,
+                $tabs,
+                $analyticsInitialTab,
+                $lazyTabLoading,
+                $pdfExportsRecent,
+                $municipalityContext,
+                $analyticsLoadWarnings,
+                $indexLightFilters,
+                $analyticsDebugEnabled,
+                $analyticsDebugSteps,
+                $analyticsDebugTotalMs,
+                $indexFatalMessage,
+            ));
+        } catch (Throwable $e) {
+            Log::error('analytics.index_fatal', [
+                'city_id' => $city?->id,
+                'ano_letivo' => $filters->ano_letivo,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            $profiler->flush('index_fatal', ['error' => $e->getMessage()]);
+            $indexFatalMessage = $e->getMessage();
+            $analyticsLoadWarnings[] = __('Erro ao renderizar o painel: :msg', ['msg' => $e->getMessage()]);
+            $analyticsDebugSteps = $profiler->steps();
+
+            return view('dashboard.analytics', $this->analyticsIndexViewData(
+                $cities,
+                $city,
+                $filters,
+                $yearOptions,
+                $yearFilterReady,
+                $ieducarOptions,
+                $overviewData,
+                $schoolUnitsData,
+                $enrollmentData,
+                $performanceData,
+                $attendanceData,
+                $inclusionData,
+                $networkData,
+                $fundebData,
+                $otherFundingData,
+                $workDoneData,
+                $discrepanciesData,
+                $municipalityHealthData,
+                ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions),
+                AnalyticsTabCatalog::tabsOrdered(),
+                AnalyticsTabCatalog::resolveInitialTab(
+                    (string) $request->query('tab', ''),
+                    $user,
+                    $yearFilterReady,
+                ),
+                $lazyTabLoading,
+                [],
+                $municipalityContext,
+                $analyticsLoadWarnings,
+                $indexLightFilters,
+                $analyticsDebugEnabled,
+                $analyticsDebugSteps,
+                $profiler->totalMs(),
+                $indexFatalMessage,
+            ));
+        }
+    }
+
+    /**
+     * @param  list<string>  $analyticsLoadWarnings
+     * @param  list<array{step: string, ms: float, meta?: array<string, mixed>}>  $analyticsDebugSteps
+     * @return array<string, mixed>
+     */
+    private function analyticsIndexViewData(
+        $cities,
+        ?City $city,
+        IeducarFilterState $filters,
+        array $yearOptions,
+        bool $yearFilterReady,
+        array $ieducarOptions,
+        array $overviewData,
+        array $schoolUnitsData,
+        array $enrollmentData,
+        array $performanceData,
+        array $attendanceData,
+        array $inclusionData,
+        array $networkData,
+        array $fundebData,
+        array $otherFundingData,
+        array $workDoneData,
+        array $discrepanciesData,
+        array $municipalityHealthData,
+        array $chartExportContext,
+        array $tabs,
+        string $analyticsInitialTab,
+        bool $lazyTabLoading,
+        array $pdfExportsRecent,
+        ?array $municipalityContext,
+        array $analyticsLoadWarnings,
+        bool $indexLightFilters,
+        bool $analyticsDebugEnabled,
+        array $analyticsDebugSteps,
+        float $analyticsDebugTotalMs,
+        ?string $indexFatalMessage,
+    ): array {
+        return [
             'cities' => $cities,
             'selectedCity' => $city,
             'filters' => $filters,
@@ -310,7 +460,12 @@ class AnalyticsDashboardController extends Controller
             'pdfExportsRecent' => $pdfExportsRecent,
             'municipalityContext' => $municipalityContext,
             'analyticsLoadWarnings' => $analyticsLoadWarnings,
-        ]);
+            'deferSecondaryFilters' => $indexLightFilters && $city !== null,
+            'analyticsDebugEnabled' => $analyticsDebugEnabled,
+            'analyticsDebugSteps' => $analyticsDebugSteps,
+            'analyticsDebugTotalMs' => $analyticsDebugTotalMs,
+            'indexFatalMessage' => $indexFatalMessage,
+        ];
     }
 
     /**
@@ -469,16 +624,18 @@ class AnalyticsDashboardController extends Controller
             'cursos' => [],
             'turnos' => [],
         ];
-        try {
-            $loaded = $filterOptionsService->loadAll($city, $filters);
-            $ieducarOptions = array_merge($ieducarOptions, $loaded);
-        } catch (Throwable $e) {
-            Log::warning('analytics.tab_filter_options_failed', [
-                'tab' => $tab,
-                'city_id' => $city->id,
-                'message' => $e->getMessage(),
-            ]);
-            $tabWarnings[] = $e->getMessage();
+        if (! config('analytics.index_light_filters', true)) {
+            try {
+                $loaded = $filterOptionsService->loadAll($city, $filters);
+                $ieducarOptions = array_merge($ieducarOptions, $loaded);
+            } catch (Throwable $e) {
+                Log::warning('analytics.tab_filter_options_failed', [
+                    'tab' => $tab,
+                    'city_id' => $city->id,
+                    'message' => $e->getMessage(),
+                ]);
+                $tabWarnings[] = $e->getMessage();
+            }
         }
 
         $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
@@ -724,6 +881,52 @@ class AnalyticsDashboardController extends Controller
         $data = $filterOptionsService->loadByKind($city, $request->string('kind')->toString(), $anoFiltro);
 
         return response()->json(['data' => $data]);
+    }
+
+    /**
+     * Escolas, cursos e turnos após o index (modo ANALYTICS_INDEX_LIGHT_FILTERS).
+     */
+    public function filterOptionsBootstrap(Request $request, FilterOptionsService $filterOptionsService): JsonResponse
+    {
+        $request->validate([
+            'city_id' => ['required', 'integer'],
+            'ano_letivo' => ['nullable', 'string', 'max:32'],
+        ]);
+
+        $city = UserCityAccess::citiesQuery($request->user())->whereKey($request->integer('city_id'))->firstOrFail();
+        $this->authorize('viewAnalytics', $city);
+
+        $filters = IeducarFilterState::fromRequest($request);
+        $profiler = new AnalyticsLoadProfiler();
+
+        try {
+            $payload = $profiler->measure('bootstrap', fn () => $filterOptionsService->loadBootstrap(
+                $city,
+                $filters,
+                $profiler,
+            ));
+            $profiler->flush('filter_bootstrap', [
+                'city_id' => $city->id,
+                'ano_letivo' => $filters->ano_letivo,
+            ]);
+
+            return response()
+                ->json($payload)
+                ->header('X-Analytics-Bootstrap-Ms', (string) $profiler->totalMs());
+        } catch (Throwable $e) {
+            Log::warning('analytics.filter_bootstrap_failed', [
+                'city_id' => $city->id,
+                'message' => $e->getMessage(),
+            ]);
+            $profiler->flush('filter_bootstrap_failed', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'escolas' => [],
+                'cursos' => [],
+                'turnos' => [],
+                'errors' => [$e->getMessage()],
+            ], 500);
+        }
     }
 
     /**

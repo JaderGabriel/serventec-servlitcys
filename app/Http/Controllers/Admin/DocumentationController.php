@@ -13,18 +13,10 @@ use RuntimeException;
 
 class DocumentationController extends Controller
 {
-    public function index(Request $request): View|RedirectResponse
+    public function index(): RedirectResponse
     {
-        $default = DocumentationCatalog::defaultPath();
-        if ($request->boolean('ler')) {
-            return redirect()->route('admin.documentation.show', ['doc' => $default]);
-        }
-
-        return view('admin.documentation.index', [
-            'sections' => DocumentationCatalog::sections(),
-            'defaultDoc' => $default,
-            'githubTreeUrl' => DocumentationCatalog::githubTreeUrl(),
-            'githubRepositoryUrl' => DocumentationCatalog::githubRepositoryUrl(),
+        return redirect()->route('admin.documentation.show', [
+            'doc' => DocumentationCatalog::defaultPath(),
         ]);
     }
 
@@ -54,8 +46,7 @@ class DocumentationController extends Controller
             'htmlContent' => $renderer->toHtml($file['markdown'], $path),
             'modifiedAt' => $file['modified_at'],
             'githubBlobUrl' => DocumentationCatalog::githubBlobUrl($path),
-            'githubTreeUrl' => DocumentationCatalog::githubTreeUrl(),
-            'githubRepositoryUrl' => DocumentationCatalog::githubRepositoryUrl(),
+            'defaultDoc' => DocumentationCatalog::defaultPath(),
         ]);
     }
 }

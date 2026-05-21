@@ -17,6 +17,31 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Filtros secundários no «Aplicar filtros» (index)
+    |--------------------------------------------------------------------------
+    |
+    | Quando true (recomendado), o pedido inicial só carrega anos letivos na BD
+    | remota; escolas, cursos e turnos vêm via AJAX após a página abrir.
+    | Evita timeout/500 ao seleccionar ano letivo em bases i-Educar lentas.
+    |
+    */
+
+    'index_light_filters' => filter_var(env('ANALYTICS_INDEX_LIGHT_FILTERS', true), FILTER_VALIDATE_BOOL),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Log de performance do painel analítico
+    |--------------------------------------------------------------------------
+    |
+    | Quando true, regista analytics.profile e analytics.profile_summary no log
+    | (storage/logs). Útil para diagnosticar 500/timeout ao filtrar por ano.
+    |
+    */
+
+    'debug_log' => filter_var(env('ANALYTICS_DEBUG_LOG', false), FILTER_VALIDATE_BOOL),
+
+    /*
+    |--------------------------------------------------------------------------
     | Resumo financeiro no carregamento inicial do painel
     |--------------------------------------------------------------------------
     |

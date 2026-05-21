@@ -69,6 +69,8 @@
                         :ieducarOptions="$ieducarOptions"
                         :formAction="route('dashboard.analytics')"
                         :filterOptionsTurnoUrl="route('dashboard.analytics.filter-options')"
+                        :filterBootstrapUrl="route('dashboard.analytics.filter-options-bootstrap')"
+                        :deferSecondaryFilters="$deferSecondaryFilters ?? false"
                     >
                         <x-slot name="filtersExtras">
                             <input type="hidden" name="tab" :value="tab" />
@@ -105,6 +107,38 @@
                             </template>
                         </x-slot>
                     </x-dashboard.ieducar-filter-bar>
+
+                    @if (! empty($indexFatalMessage ?? null))
+                        <div class="rounded-lg border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-900 dark:text-red-100">
+                            <p class="font-medium">{{ __('Erro ao abrir o painel') }}</p>
+                            <p class="mt-1 font-mono text-xs break-all">{{ $indexFatalMessage }}</p>
+                        </div>
+                    @endif
+
+                    @if (($analyticsDebugEnabled ?? false) && ! empty($analyticsDebugSteps ?? []))
+                        <details class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 text-xs font-mono text-slate-700 dark:text-slate-300">
+                            <summary class="cursor-pointer font-sans font-medium text-slate-800 dark:text-slate-200">
+                                {{ __('Debug de carregamento') }} ({{ number_format($analyticsDebugTotalMs ?? 0, 1, ',', '.') }} ms total)
+                            </summary>
+                            <table class="mt-2 w-full border-collapse">
+                                <thead>
+                                    <tr class="text-left border-b border-slate-200 dark:border-slate-600">
+                                        <th class="py-1 pr-2">{{ __('Etapa') }}</th>
+                                        <th class="py-1">{{ __('ms') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($analyticsDebugSteps as $row)
+                                        <tr class="border-b border-slate-100 dark:border-slate-800">
+                                            <td class="py-1 pr-2">{{ $row['step'] ?? '—' }}</td>
+                                            <td class="py-1">{{ $row['ms'] ?? '—' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                            <p class="mt-2 font-sans text-[11px] text-slate-500">{{ __('Active ANALYTICS_DEBUG_LOG=true e consulte storage/logs/laravel.log (analytics.profile).') }}</p>
+                        </details>
+                    @endif
 
                     @if (! $yearFilterReady)
                         <div class="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">

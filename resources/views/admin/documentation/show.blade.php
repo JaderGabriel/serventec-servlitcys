@@ -11,19 +11,25 @@
                 </h2>
                 <p class="mt-1 text-xs font-mono text-teal-800/80 dark:text-teal-300/80">{{ $currentPath }}</p>
             </div>
-            <div class="flex flex-wrap items-center gap-2 text-sm shrink-0">
-                <a href="{{ route('admin.documentation.index') }}" class="serv-btn-secondary text-xs">
-                    {{ __('Índice') }}
+            <div class="flex flex-wrap items-center gap-1 shrink-0">
+                <a
+                    href="{{ route('admin.documentation.show', ['doc' => $defaultDoc ?? 'docs/README.md']) }}"
+                    class="inline-flex items-center text-teal-700 dark:text-teal-400 hover:text-teal-900 dark:hover:text-teal-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-1"
+                    title="{{ __('Índice da documentação') }}"
+                    aria-label="{{ __('Índice da documentação') }}"
+                >
+                    <x-ui.icon name="queue-list" class="h-5 w-5 shrink-0" />
                 </a>
                 @if ($githubBlobUrl !== '')
-                    <a href="{{ $githubBlobUrl }}" target="_blank" rel="noopener noreferrer" class="serv-btn-secondary text-xs inline-flex items-center gap-1.5">
-                        <x-ui.icon name="document-text" class="h-4 w-4" />
-                        {{ __('Ver no GitHub') }}
-                    </a>
-                @endif
-                @if ($githubTreeUrl !== '')
-                    <a href="{{ $githubTreeUrl }}" target="_blank" rel="noopener noreferrer" class="serv-link text-xs">
-                        {{ __('Repositório') }}
+                    <a
+                        href="{{ $githubBlobUrl }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-1"
+                        title="{{ __('Ler no GitHub') }}"
+                        aria-label="{{ __('Ler no GitHub') }}"
+                    >
+                        <x-ui.icon name="document-text" class="h-5 w-5 shrink-0" />
                     </a>
                 @endif
             </div>

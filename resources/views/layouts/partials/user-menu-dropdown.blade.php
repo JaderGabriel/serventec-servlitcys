@@ -1,55 +1,55 @@
-<x-dropdown-link :href="route('profile.edit')" icon="user-circle">
+<x-dropdown-link :href="route('profile.edit')" icon="user-circle" :title="__('Editar perfil e foto.')">
     {{ __('Perfil') }}
 </x-dropdown-link>
 
 @if (Auth::user()->canImportOrConfigure())
-    <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-    <x-dropdown-section icon="squares-2x2" tone="teal">{{ __('Sincronizações') }}</x-dropdown-section>
-    <x-dropdown-link :href="route('admin.geo-sync.index')" icon="map" :title="__('Coordenadas i-Educar, INEP ArcGIS, microdados e pipeline.')">
-        {{ __('Geográficas') }}
+    <div class="border-t border-gray-200/90 dark:border-gray-600/90 my-0.5"></div>
+    <x-dropdown-section icon="squares-2x2" tone="teal">{{ __('Sync') }}</x-dropdown-section>
+    <x-dropdown-link :href="route('admin.geo-sync.index')" icon="map" :title="__('Sincronizações geográficas: i-Educar, INEP, microdados.')">
+        {{ __('Geo') }}
     </x-dropdown-link>
-    <x-dropdown-link :href="route('admin.pedagogical-sync.index')" icon="academic-cap" :title="__('Sincronização SAEB por IBGE ou URL.')">
-        {{ __('Pedagógicas') }}
+    <x-dropdown-link :href="route('admin.pedagogical-sync.index')" icon="academic-cap" :title="__('Sincronização pedagógica SAEB.')">
+        {{ __('SAEB') }}
     </x-dropdown-link>
-    <x-dropdown-link :href="route('admin.ieducar-compatibility.index')" icon="circle-stack" :title="__('Probe de schema i-Educar e FUNDEB.')">
-        {{ __('Compatibilidade i-Educar') }}
+    <x-dropdown-link :href="route('admin.ieducar-compatibility.index')" icon="circle-stack" :title="__('Compatibilidade i-Educar e FUNDEB.')">
+        {{ __('i-Educar') }}
     </x-dropdown-link>
-    <x-dropdown-link :href="route('admin.artisan-commands.index')" icon="command-line" :title="__('Referência CLI: geo, SAEB, FUNDEB.')">
-        {{ __('Comandos Artisan') }}
+    <x-dropdown-link :href="route('admin.artisan-commands.index')" icon="command-line" :title="__('Comandos Artisan: geo, SAEB, FUNDEB.')">
+        {{ __('CLI') }}
     </x-dropdown-link>
-    <x-dropdown-link :href="route('admin.sync-queue.index')" icon="queue-list" :title="__('Fila admin-sync com log de andamento.')">
-        {{ __('Fila de sincronização') }}
+    <x-dropdown-link :href="route('admin.sync-queue.index')" icon="queue-list" :title="__('Fila admin-sync.')">
+        {{ __('Fila') }}
     </x-dropdown-link>
 @endif
 
 @if (Auth::user()->canManageUsers())
-    <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-    <x-dropdown-section icon="users" tone="indigo">{{ __('Usuários') }}</x-dropdown-section>
-    <x-dropdown-link :href="route('users.index')" icon="users">
-        {{ __('Gerenciar') }}
+    <div class="border-t border-gray-200/90 dark:border-gray-600/90 my-0.5"></div>
+    <x-dropdown-section icon="users" tone="indigo">{{ __('Contas') }}</x-dropdown-section>
+    <x-dropdown-link :href="route('users.index')" icon="users" :title="__('Gerir utilizadores.')">
+        {{ __('Lista') }}
     </x-dropdown-link>
-    <x-dropdown-link :href="route('users.create')" icon="user-plus">
+    <x-dropdown-link :href="route('users.create')" icon="user-plus" :title="__('Novo utilizador.')">
         {{ __('Novo') }}
     </x-dropdown-link>
     @if (Auth::user()->isAdmin())
-        <x-dropdown-link :href="route('users.sessions.index')" icon="computer-desktop">
+        <x-dropdown-link :href="route('users.sessions.index')" icon="computer-desktop" :title="__('Sessões ativas.')">
             {{ __('Sessões') }}
         </x-dropdown-link>
     @endif
 @endif
 
 @if (Auth::user()->isAdmin())
-    <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-    <x-dropdown-section icon="document-text" tone="amber">{{ __('Documentação') }}</x-dropdown-section>
-    <x-dropdown-link :href="route('admin.documentation.index')" icon="document-text" :title="__('Índice da documentação técnica.')">
-        {{ __('Documentação do sistema') }}
+    <div class="border-t border-gray-200/90 dark:border-gray-600/90 my-0.5"></div>
+    <x-dropdown-section icon="document-text" tone="amber">{{ __('Sistema') }}</x-dropdown-section>
+    <x-dropdown-link :href="route('admin.documentation.index')" icon="document-text" :title="__('Documentação técnica.')">
+        {{ __('Docs') }}
     </x-dropdown-link>
-    <x-dropdown-link :href="route('settings.mail.edit')" icon="envelope">
-        {{ __('E-mail (SMTP)') }}
+    <x-dropdown-link :href="route('settings.mail.edit')" icon="envelope" :title="__('Configuração SMTP.')">
+        {{ __('SMTP') }}
     </x-dropdown-link>
 @endif
 
-<div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+<div class="border-t border-gray-200/90 dark:border-gray-600/90 my-0.5"></div>
 
 <form method="POST" action="{{ route('logout') }}">
     @csrf

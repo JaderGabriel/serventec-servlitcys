@@ -33,7 +33,7 @@
                 </div>
                 <div class="pulse-nav-user">
                     <x-notification-bell />
-                    <x-dropdown align="right" width="w-72" class="shrink-0">
+                    <x-dropdown align="right" width="w-52" contentClasses="py-0.5 bg-white dark:bg-gray-700" class="shrink-0">
                         <x-slot name="trigger">
                             <button type="button" class="inline-flex max-w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm leading-4 font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/80 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500/40 transition ease-in-out duration-150">
                                 <x-user-avatar :user="Auth::user()" size="md" />

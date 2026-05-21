@@ -18,6 +18,7 @@ import {
     buildCompositeExport,
     triggerPngDownload,
 } from "./chartExportHelpers.js";
+import { initAnalyticsFilterBootstrap } from "./analyticsFilterBootstrap.js";
 import { initAnalyticsFilterTurno } from "./analyticsFilterTurno.js";
 import createSchoolUnitsMap from "./schoolUnitsMap.js";
 import "./notification-bell.js";
@@ -1514,10 +1515,13 @@ registerScrollToTopData(Alpine);
 
 Alpine.start();
 
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () =>
-        initAnalyticsFilterTurno(),
-    );
-} else {
+function initAnalyticsFilters() {
+    initAnalyticsFilterBootstrap();
     initAnalyticsFilterTurno();
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initAnalyticsFilters);
+} else {
+    initAnalyticsFilters();
 }

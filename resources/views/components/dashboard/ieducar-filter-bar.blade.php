@@ -5,6 +5,8 @@
     'ieducarOptions' => [],
     'formAction',
     'filterOptionsTurnoUrl' => null,
+    'filterBootstrapUrl' => null,
+    'deferSecondaryFilters' => false,
 ])
 
 @php
@@ -34,6 +36,12 @@
         method="get"
         action="{{ $formAction }}"
         class="p-4"
+        @if ($deferSecondaryFilters && is_string($filterBootstrapUrl) && $filterBootstrapUrl !== '')
+            data-analytics-filter-bootstrap
+            data-analytics-filter-bootstrap-url="{{ $filterBootstrapUrl }}"
+            data-analytics-filter-todos-label="{{ __('Todos os dados') }}"
+            data-analytics-filter-loading-label="{{ __('A carregar opções…') }}"
+        @endif
         @if (is_string($filterOptionsTurnoUrl) && $filterOptionsTurnoUrl !== '')
             data-analytics-turno-cascade
             data-analytics-filter-options-url="{{ $filterOptionsTurnoUrl }}"

@@ -18,7 +18,7 @@
     };
 @endphp
 
-<div {{ $attributes->merge(['class' => 'flex items-center gap-1.5 px-2 pt-1.5 pb-0.5']) }}>
+<div {{ $attributes->merge(['class' => 'flex items-center gap-1.5 ps-3 pe-3 pt-2 pb-0.5']) }}>
     @if ($icon)
         <x-ui.icon :name="$icon" class="h-3.5 w-3.5 shrink-0 {{ $iconTone }}" />
     @endif

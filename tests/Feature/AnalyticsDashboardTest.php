@@ -36,6 +36,15 @@ class AnalyticsDashboardTest extends TestCase
             ->assertUnprocessable();
     }
 
+    public function test_filter_options_bootstrap_requires_city_id(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->getJson(route('dashboard.analytics.filter-options-bootstrap'))
+            ->assertUnprocessable();
+    }
+
     public function test_guest_is_redirected_from_analytics_tab(): void
     {
         $this->get(route('dashboard.analytics.tab', ['tab' => 'enrollment']))
