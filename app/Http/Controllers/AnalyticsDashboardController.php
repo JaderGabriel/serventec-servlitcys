@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\City;
 use App\Repositories\Ieducar\AttendanceRepository;
 use App\Repositories\Ieducar\DiscrepanciesRepository;
 use App\Repositories\Ieducar\EnrollmentRepository;
@@ -87,11 +88,23 @@ class AnalyticsDashboardController extends Controller
             'turnos' => [],
             'errors' => [],
         ];
+        $analyticsLoadWarnings = [];
 
         if ($city) {
             $this->authorize('viewAnalytics', $city);
 
-            $ieducarOptions = $filterOptionsService->loadAll($city, $filters);
+            try {
+                $ieducarOptions = $filterOptionsService->loadAll($city, $filters);
+            } catch (Throwable $e) {
+                Log::warning('analytics.filter_options_failed', [
+                    'city_id' => $city->id,
+                    'message' => $e->getMessage(),
+                ]);
+                $analyticsLoadWarnings[] = __('Filtros i-Educar: não foi possível carregar todas as opções (:msg).', [
+                    'msg' => $e->getMessage(),
+                ]);
+                $ieducarOptions['errors'][] = $e->getMessage();
+            }
             if (! empty($ieducarOptions['years'])) {
                 $yearOptions = $ieducarOptions['years'];
             }
@@ -99,7 +112,6 @@ class AnalyticsDashboardController extends Controller
 
         $yearFilterReady = $city !== null && $filters->hasYearSelected();
         $lazyTabLoading = (bool) config('analytics.lazy_tab_loading', true);
-        $analyticsLoadWarnings = [];
 
         $overviewData = ['kpis' => null, 'charts' => [], 'filter_note' => null, 'error' => null];
         $schoolUnitsData = [
@@ -151,22 +163,20 @@ class AnalyticsDashboardController extends Controller
                 $analyticsLoadWarnings,
             );
 
-            // Abas leves: sempre no HTML inicial (evita painel em branco com lazy + JS desatualizado).
-            $otherFundingData = $this->safeAnalyticsLoad(
-                fn () => $otherFundingRepository->buildReport($city, $filters),
-                $otherFundingData,
-                __('Financiamentos'),
-                $analyticsLoadWarnings,
-            );
-
-            $workDoneData = $this->safeAnalyticsLoad(
-                fn () => $workDoneRepository->buildReport($city, $filters),
-                $workDoneData,
-                __('Censo'),
-                $analyticsLoadWarnings,
-            );
-
             if (! $lazyTabLoading) {
+                $otherFundingData = $this->safeAnalyticsLoad(
+                    fn () => $otherFundingRepository->buildReport($city, $filters),
+                    $otherFundingData,
+                    __('Financiamentos'),
+                    $analyticsLoadWarnings,
+                );
+
+                $workDoneData = $this->safeAnalyticsLoad(
+                    fn () => $workDoneRepository->buildReport($city, $filters),
+                    $workDoneData,
+                    __('Censo'),
+                    $analyticsLoadWarnings,
+                );
                 $enrollmentData = $this->safeAnalyticsLoad(
                     fn () => $enrollmentRepository->sample($city, $filters),
                     $enrollmentData,
@@ -227,16 +237,18 @@ class AnalyticsDashboardController extends Controller
                 );
             }
 
-            $fundingSnapshot = $this->safeAnalyticsLoad(
-                fn () => $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
-                null,
-                __('Resumo financeiro'),
-                $analyticsLoadWarnings,
-            );
-            $municipalityContext = AnalyticsMunicipalityContext::fromFundingSnapshot(
-                is_array($fundingSnapshot) ? $fundingSnapshot : null,
-                $overviewData,
-            );
+            if (config('analytics.index_funding_context', false)) {
+                $fundingSnapshot = $this->safeAnalyticsLoad(
+                    fn () => $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
+                    null,
+                    __('Resumo financeiro'),
+                    $analyticsLoadWarnings,
+                );
+                $municipalityContext = AnalyticsMunicipalityContext::fromFundingSnapshot(
+                    is_array($fundingSnapshot) ? $fundingSnapshot : null,
+                    $overviewData,
+                );
+            }
         }
 
         $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
@@ -370,12 +382,94 @@ class AnalyticsDashboardController extends Controller
                 ->header('X-Analytics-Tab-Status', 'no-year');
         }
 
-        $ieducarOptions = $filterOptionsService->loadAll($city, $filters);
+        $tabWarnings = [];
+
+        try {
+            return $this->renderAnalyticsTabPartial(
+                $tab,
+                $request,
+                $city,
+                $filters,
+                $filterOptionsService,
+                $overviewRepository,
+                $enrollmentRepository,
+                $performanceRepository,
+                $attendanceRepository,
+                $inclusionRepository,
+                $networkRepository,
+                $fundebRepository,
+                $otherFundingRepository,
+                $workDoneRepository,
+                $discrepanciesRepository,
+                $municipalityHealthRepository,
+                $pdfExportService,
+                $tabWarnings,
+            );
+        } catch (Throwable $e) {
+            Log::error('analytics.tab_partial_failed', [
+                'tab' => $tab,
+                'city_id' => $city->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()
+                ->view('dashboard.analytics.partials.tab-fetch-notice', [
+                    'message' => __('Não foi possível carregar esta aba: :msg', ['msg' => $e->getMessage()]),
+                ])
+                ->header('X-Analytics-Tab', $tab)
+                ->header('X-Analytics-Tab-Status', 'error');
+        }
+    }
+
+    /**
+     * @param  list<string>  $tabWarnings
+     */
+    private function renderAnalyticsTabPartial(
+        string $tab,
+        Request $request,
+        City $city,
+        IeducarFilterState $filters,
+        FilterOptionsService $filterOptionsService,
+        OverviewRepository $overviewRepository,
+        EnrollmentRepository $enrollmentRepository,
+        PerformanceRepository $performanceRepository,
+        AttendanceRepository $attendanceRepository,
+        InclusionRepository $inclusionRepository,
+        NetworkRepository $networkRepository,
+        FundebRepository $fundebRepository,
+        OtherFundingRepository $otherFundingRepository,
+        WorkDoneRepository $workDoneRepository,
+        DiscrepanciesRepository $discrepanciesRepository,
+        MunicipalityHealthRepository $municipalityHealthRepository,
+        AnalyticsReportExportService $pdfExportService,
+        array &$tabWarnings,
+    ): Response {
+        $ieducarOptions = [
+            'years' => [],
+            'escolas' => [],
+            'cursos' => [],
+            'turnos' => [],
+        ];
+        try {
+            $loaded = $filterOptionsService->loadAll($city, $filters);
+            $ieducarOptions = array_merge($ieducarOptions, $loaded);
+        } catch (Throwable $e) {
+            Log::warning('analytics.tab_filter_options_failed', [
+                'tab' => $tab,
+                'city_id' => $city->id,
+                'message' => $e->getMessage(),
+            ]);
+            $tabWarnings[] = $e->getMessage();
+        }
+
         $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
-        $overviewData = $overviewRepository->summary($city, $filters);
-        $municipalityContext = AnalyticsMunicipalityContext::fromFundingSnapshot(
-            $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
-            $overviewData,
+        $municipalityContext = $this->resolveMunicipalityContextForTab(
+            $tab,
+            $city,
+            $filters,
+            $overviewRepository,
+            $discrepanciesRepository,
+            $tabWarnings,
         );
 
         $headers = [
@@ -383,104 +477,183 @@ class AnalyticsDashboardController extends Controller
             'X-Analytics-Tab-Status' => 'ok',
         ];
 
+        $yearReady = ['yearFilterReady' => true];
+        $viewBase = [
+            'chartExportContext' => $chartExportContext,
+            'municipalityContext' => $municipalityContext,
+        ];
+
         return match ($tab) {
             'enrollment' => response()
-                ->view('dashboard.analytics.partials.enrollment', [
-                    'enrollmentData' => $enrollmentRepository->sample($city, $filters),
-                    'chartExportContext' => $chartExportContext,
-                    'municipalityContext' => $municipalityContext,
-                    'yearFilterReady' => true,
-                ])
+                ->view('dashboard.analytics.partials.enrollment', array_merge($viewBase, $yearReady, [
+                    'enrollmentData' => $this->safeAnalyticsLoad(
+                        fn () => $enrollmentRepository->sample($city, $filters),
+                        AnalyticsEmptyPayloads::enrollment(),
+                        __('Matrículas'),
+                        $tabWarnings,
+                    ),
+                ]))
                 ->withHeaders($headers),
             'network' => response()
-                ->view('dashboard.analytics.partials.network', [
-                    'networkData' => $networkRepository->snapshot($city, $filters),
-                    'chartExportContext' => $chartExportContext,
-                    'municipalityContext' => $municipalityContext,
-                    'yearFilterReady' => true,
-                ])
+                ->view('dashboard.analytics.partials.network', array_merge($viewBase, $yearReady, [
+                    'networkData' => $this->safeAnalyticsLoad(
+                        fn () => $networkRepository->snapshot($city, $filters),
+                        AnalyticsEmptyPayloads::network(),
+                        __('Rede'),
+                        $tabWarnings,
+                    ),
+                ]))
                 ->withHeaders($headers),
             'inclusion' => response()
-                ->view('dashboard.analytics.partials.inclusion', [
-                    'inclusionData' => $inclusionRepository->snapshot($city, $filters),
-                    'chartExportContext' => $chartExportContext,
-                    'municipalityContext' => $municipalityContext,
-                    'yearFilterReady' => true,
-                ])
+                ->view('dashboard.analytics.partials.inclusion', array_merge($viewBase, $yearReady, [
+                    'inclusionData' => $this->safeAnalyticsLoad(
+                        fn () => $inclusionRepository->snapshot($city, $filters),
+                        AnalyticsEmptyPayloads::inclusion(),
+                        __('Inclusão'),
+                        $tabWarnings,
+                    ),
+                ]))
                 ->withHeaders($headers),
             'performance' => response()
-                ->view('dashboard.analytics.partials.performance', [
-                    'performanceData' => $performanceRepository->snapshot($city, $filters),
-                    'chartExportContext' => $chartExportContext,
-                    'municipalityContext' => $municipalityContext,
-                    'yearFilterReady' => true,
-                ])
+                ->view('dashboard.analytics.partials.performance', array_merge($viewBase, $yearReady, [
+                    'performanceData' => $this->safeAnalyticsLoad(
+                        fn () => $performanceRepository->snapshot($city, $filters),
+                        AnalyticsEmptyPayloads::performance(),
+                        __('Desempenho'),
+                        $tabWarnings,
+                    ),
+                ]))
                 ->withHeaders($headers),
             'attendance' => response()
-                ->view('dashboard.analytics.partials.attendance', [
-                    'attendanceData' => $attendanceRepository->snapshot($city, $filters),
-                    'chartExportContext' => $chartExportContext,
-                    'municipalityContext' => $municipalityContext,
-                    'yearFilterReady' => true,
-                ])
+                ->view('dashboard.analytics.partials.attendance', array_merge($viewBase, $yearReady, [
+                    'attendanceData' => $this->safeAnalyticsLoad(
+                        fn () => $attendanceRepository->snapshot($city, $filters),
+                        AnalyticsEmptyPayloads::attendance(),
+                        __('Frequência'),
+                        $tabWarnings,
+                    ),
+                ]))
                 ->withHeaders($headers),
             'fundeb' => response()
-                ->view('dashboard.analytics.partials.fundeb', [
-                    'fundebData' => $fundebRepository->buildReport(
-                        $city,
-                        $filters,
-                        $overviewData,
-                        $enrollmentRepository->sample($city, $filters),
-                        $performanceRepository->snapshot($city, $filters),
-                        $attendanceRepository->snapshot($city, $filters),
-                        $inclusionRepository->snapshot($city, $filters),
-                        $networkRepository->snapshot($city, $filters),
-                        $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
+                ->view('dashboard.analytics.partials.fundeb', array_merge($viewBase, $yearReady, [
+                    'fundebData' => $this->safeAnalyticsLoad(
+                        function () use (
+                            $fundebRepository,
+                            $city,
+                            $filters,
+                            $overviewRepository,
+                            $enrollmentRepository,
+                            $performanceRepository,
+                            $attendanceRepository,
+                            $inclusionRepository,
+                            $networkRepository,
+                            $discrepanciesRepository,
+                        ) {
+                            $overviewData = $overviewRepository->summary($city, $filters);
+                            $disc = $discrepanciesRepository->fundingImpactSnapshot($city, $filters);
+
+                            return $fundebRepository->buildReport(
+                                $city,
+                                $filters,
+                                $overviewData,
+                                $enrollmentRepository->sample($city, $filters),
+                                $performanceRepository->snapshot($city, $filters),
+                                $attendanceRepository->snapshot($city, $filters),
+                                $inclusionRepository->snapshot($city, $filters),
+                                $networkRepository->snapshot($city, $filters),
+                                is_array($disc) ? $disc : [],
+                            );
+                        },
+                        AnalyticsEmptyPayloads::fundeb(),
+                        __('FUNDEB'),
+                        $tabWarnings,
                     ),
-                    'yearFilterReady' => true,
-                    'chartExportContext' => $chartExportContext,
-                    'municipalityContext' => $municipalityContext,
-                ])
+                ]))
                 ->withHeaders($headers),
             'other_funding' => response()
-                ->view('dashboard.analytics.partials.other-funding', [
-                    'otherFundingData' => $otherFundingRepository->buildReport($city, $filters),
-                    'yearFilterReady' => true,
-                    'chartExportContext' => $chartExportContext,
-                    'municipalityContext' => $municipalityContext,
-                ])
+                ->view('dashboard.analytics.partials.other-funding', array_merge($viewBase, $yearReady, [
+                    'otherFundingData' => $this->safeAnalyticsLoad(
+                        fn () => $otherFundingRepository->buildReport($city, $filters),
+                        AnalyticsEmptyPayloads::otherFunding(),
+                        __('Financiamentos'),
+                        $tabWarnings,
+                    ),
+                ]))
                 ->withHeaders($headers),
             'work_done' => response()
-                ->view('dashboard.analytics.partials.work-done', [
-                    'workDoneData' => $workDoneRepository->buildReport($city, $filters),
-                    'yearFilterReady' => true,
-                    'chartExportContext' => $chartExportContext,
-                    'municipalityContext' => $municipalityContext,
-                ])
+                ->view('dashboard.analytics.partials.work-done', array_merge($viewBase, $yearReady, [
+                    'workDoneData' => $this->safeAnalyticsLoad(
+                        fn () => $workDoneRepository->buildReport($city, $filters),
+                        AnalyticsEmptyPayloads::workDone(),
+                        __('Censo'),
+                        $tabWarnings,
+                    ),
+                ]))
                 ->withHeaders($headers),
             'municipality_health' => response()
-                ->view('dashboard.analytics.partials.municipality-health', [
-                    'healthData' => $municipalityHealthRepository->snapshot($city, $filters),
-                    'yearFilterReady' => true,
-                    'chartExportContext' => $chartExportContext,
-                    'municipalityContext' => $municipalityContext,
+                ->view('dashboard.analytics.partials.municipality-health', array_merge($viewBase, $yearReady, [
+                    'healthData' => $this->safeAnalyticsLoad(
+                        fn () => $municipalityHealthRepository->snapshot($city, $filters),
+                        AnalyticsEmptyPayloads::municipalityHealth(),
+                        __('Diagnóstico'),
+                        $tabWarnings,
+                    ),
                     'selectedCity' => $city,
                     'filters' => $filters,
                     'pdfExportsRecent' => $request->user()->canExportAnalyticsPdf()
                         ? $pdfExportService->recentForUserCity($request->user(), $city, 6)
                         : [],
-                ])
+                ]))
                 ->withHeaders($headers),
             'discrepancies' => response()
-                ->view('dashboard.analytics.partials.discrepancies', [
-                    'discrepanciesData' => $discrepanciesRepository->snapshot($city, $filters),
-                    'yearFilterReady' => true,
-                    'chartExportContext' => $chartExportContext,
-                    'municipalityContext' => $municipalityContext,
-                ])
+                ->view('dashboard.analytics.partials.discrepancies', array_merge($viewBase, $yearReady, [
+                    'discrepanciesData' => $this->safeAnalyticsLoad(
+                        fn () => $discrepanciesRepository->snapshot($city, $filters),
+                        AnalyticsEmptyPayloads::discrepancies(),
+                        __('Discrepâncias'),
+                        $tabWarnings,
+                    ),
+                ]))
                 ->withHeaders($headers),
             default => abort(404),
         };
+    }
+
+    /**
+     * Contexto de saldo indicativo só nas abas financeiras (evita Discrepâncias em cada lazy-load).
+     *
+     * @param  list<string>  $warnings
+     * @return array<string, mixed>|null
+     */
+    private function resolveMunicipalityContextForTab(
+        string $tab,
+        City $city,
+        IeducarFilterState $filters,
+        OverviewRepository $overviewRepository,
+        DiscrepanciesRepository $discrepanciesRepository,
+        array &$warnings,
+    ): ?array {
+        if (! in_array($tab, ['discrepancies', 'fundeb', 'municipality_health'], true)) {
+            return null;
+        }
+
+        $overviewData = $this->safeAnalyticsLoad(
+            fn () => $overviewRepository->summary($city, $filters),
+            ['kpis' => null, 'charts' => [], 'filter_note' => null, 'error' => null],
+            __('Visão geral'),
+            $warnings,
+        );
+        $fundingSnapshot = $this->safeAnalyticsLoad(
+            fn () => $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
+            null,
+            __('Resumo financeiro'),
+            $warnings,
+        );
+
+        return AnalyticsMunicipalityContext::fromFundingSnapshot(
+            is_array($fundingSnapshot) ? $fundingSnapshot : null,
+            is_array($overviewData) ? $overviewData : [],
+        );
     }
 
     /**

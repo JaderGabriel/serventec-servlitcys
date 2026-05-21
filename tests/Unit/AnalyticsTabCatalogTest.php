@@ -40,16 +40,16 @@ final class AnalyticsTabCatalogTest extends TestCase
     }
 
     /**
-     * Cenário: utilizador municipal com filtros aplicados — abrir em Diagnóstico (fluxo consultoria).
+     * Cenário: tab inválida com filtros prontos — abrir em Visão geral (primeira aba de cadastro).
      */
     #[Test]
-    public function resolve_initial_tab_municipal_com_ano_vai_para_diagnostico(): void
+    public function resolve_initial_tab_com_ano_usa_overview(): void
     {
         $user = new User(['role' => UserRole::Municipal]);
 
         $tab = AnalyticsTabCatalog::resolveInitialTab('tab_invalida', $user, true);
 
-        $this->assertSame('municipality_health', $tab);
+        $this->assertSame('overview', $tab);
     }
 
     /**
@@ -78,16 +78,18 @@ final class AnalyticsTabCatalogTest extends TestCase
     }
 
     /**
-     * Cenário: grupos de navegação — consultoria antes de cadastro no menu.
+     * Cenário: grupos de navegação — cadastro antes de pedagógico e finanças.
      */
     #[Test]
-    public function groups_consultoria_lista_financas_primeiro(): void
+    public function groups_cadastro_lista_primeiro(): void
     {
         $groups = AnalyticsTabCatalog::groups();
 
-        $this->assertSame('consultoria', $groups[0]['id']);
-        $this->assertContains('discrepancies', $groups[0]['tabs']);
-        $this->assertStringContainsString('Finanças', (string) $groups[0]['label']);
+        $this->assertSame('cadastro', $groups[0]['id']);
+        $this->assertContains('overview', $groups[0]['tabs']);
+        $this->assertSame('pedagogico', $groups[1]['id']);
+        $this->assertSame('consultoria', $groups[2]['id']);
+        $this->assertContains('fundeb', $groups[2]['tabs']);
     }
 
     /**
@@ -99,6 +101,7 @@ final class AnalyticsTabCatalogTest extends TestCase
         $payload = AnalyticsTabCatalog::navigationPayload();
 
         $this->assertCount(3, $payload['groups']);
+        $this->assertSame('cadastro', $payload['groups'][0]['id']);
         $this->assertSame('consultoria', $payload['tabToGroup']['fundeb']);
         $this->assertSame('cadastro', $payload['tabToGroup']['overview']);
         $this->assertArrayHasKey('municipality_health', $payload['tabHints']);

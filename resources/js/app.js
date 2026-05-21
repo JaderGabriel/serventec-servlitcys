@@ -156,7 +156,7 @@ document.addEventListener("alpine:init", () => {
                 this.$nextTick(() => this.afterTabChange());
             },
             activeGroupId() {
-                return this.tabToGroup[this.tab] ?? this.navGroups[0]?.id ?? "consultoria";
+                return this.tabToGroup[this.tab] ?? this.navGroups[0]?.id ?? "cadastro";
             },
             activeGroup() {
                 const gid = this.activeGroupId();

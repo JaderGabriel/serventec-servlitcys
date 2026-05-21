@@ -14,7 +14,20 @@ return [
     |
     */
 
-    'lazy_tab_loading' => env('ANALYTICS_LAZY_TABS', true),
+    'lazy_tab_loading' => filter_var(env('ANALYTICS_LAZY_TABS', true), FILTER_VALIDATE_BOOL),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Resumo financeiro no carregamento inicial do painel
+    |--------------------------------------------------------------------------
+    |
+    | Quando false (recomendado), «Aplicar filtros» não executa o agregado pesado
+    | de Discrepâncias — evita timeout/500. A faixa de saldo fica disponível nas
+    | abas Diagnóstico, Discrepâncias e FUNDEB (lazy ou eager).
+    |
+    */
+
+    'index_funding_context' => filter_var(env('ANALYTICS_INDEX_FUNDING_CONTEXT', false), FILTER_VALIDATE_BOOL),
 
     /*
     |--------------------------------------------------------------------------

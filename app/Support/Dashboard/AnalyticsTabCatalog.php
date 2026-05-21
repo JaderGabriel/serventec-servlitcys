@@ -5,7 +5,7 @@ namespace App\Support\Dashboard;
 use App\Models\User;
 
 /**
- * Ordem e agrupamento das abas do painel — fluxo consultoria municipal (finanças → cadastro → pedagógico).
+ * Ordem e agrupamento das abas do painel — cadastro → pedagógico → finanças.
  */
 final class AnalyticsTabCatalog
 {
@@ -15,17 +15,6 @@ final class AnalyticsTabCatalog
     public static function groups(): array
     {
         return [
-            [
-                'id' => 'consultoria',
-                'label' => __('Finanças e repasses'),
-                'tabs' => [
-                    'municipality_health',
-                    'discrepancies',
-                    'fundeb',
-                    'other_funding',
-                    'work_done',
-                ],
-            ],
             [
                 'id' => 'cadastro',
                 'label' => __('Cadastro e rede'),
@@ -45,6 +34,17 @@ final class AnalyticsTabCatalog
                     'attendance',
                 ],
             ],
+            [
+                'id' => 'consultoria',
+                'label' => __('Finanças e repasses'),
+                'tabs' => [
+                    'municipality_health',
+                    'discrepancies',
+                    'fundeb',
+                    'other_funding',
+                    'work_done',
+                ],
+            ],
         ];
     }
 
@@ -56,23 +56,23 @@ final class AnalyticsTabCatalog
     public static function groupPresentation(): array
     {
         return [
-            'consultoria' => [
-                'step' => '1',
-                'short' => __('Finanças'),
-                'hint' => __('Diagnóstico, discrepâncias, FUNDEB e Censo'),
-                'tone' => 'teal',
-            ],
             'cadastro' => [
-                'step' => '2',
+                'step' => '1',
                 'short' => __('Cadastro'),
                 'hint' => __('Visão da rede, matrículas e unidades'),
                 'tone' => 'indigo',
             ],
             'pedagogico' => [
-                'step' => '3',
+                'step' => '2',
                 'short' => __('Pedagógico'),
                 'hint' => __('Inclusão, desempenho e frequência'),
                 'tone' => 'violet',
+            ],
+            'consultoria' => [
+                'step' => '3',
+                'short' => __('Finanças'),
+                'hint' => __('Diagnóstico, discrepâncias, FUNDEB e Censo'),
+                'tone' => 'teal',
             ],
         ];
     }
@@ -219,10 +219,6 @@ final class AnalyticsTabCatalog
     {
         if (self::isValidTab($requestedTab)) {
             return $requestedTab;
-        }
-
-        if ($yearFilterReady && ! $user->isAdmin()) {
-            return 'municipality_health';
         }
 
         return 'overview';

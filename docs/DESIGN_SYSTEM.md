@@ -60,9 +60,9 @@ Rota documentação admin: `GET /admin/documentacao` → `admin.documentation.in
 
 ## 5. Ordem das abas (consultoria)
 
-1. **Finanças e repasses:** Diagnóstico → Discrepâncias → FUNDEB → Financiamentos → Censo  
-2. **Cadastro e rede:** Visão geral → Matrículas → Rede → Unidades  
-3. **Indicadores pedagógicos:** Inclusão → Desempenho → Frequência  
+1. **Cadastro e rede:** Visão geral → Matrículas → Rede → Unidades  
+2. **Indicadores pedagógicos:** Inclusão → Desempenho → Frequência  
+3. **Finanças e repasses:** Diagnóstico → Discrepâncias → FUNDEB → Financiamentos → Censo  
 
 No painel, o utilizador escolhe primeiro a área (segmentos numerados 1–3) e depois a sub-aba; o indicador «Você está em» mostra área → análise activa.
 
