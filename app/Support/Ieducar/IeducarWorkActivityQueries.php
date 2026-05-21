@@ -4,6 +4,7 @@ namespace App\Support\Ieducar;
 
 use App\Models\City;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Carbon;
 
@@ -605,6 +606,171 @@ final class IeducarWorkActivityQueries
         }
 
         return null;
+    }
+
+    /**
+     * Anos letivos cadastrados na base com indicação fechado / em andamento (quando a coluna existir).
+     *
+     * @return list<array{year: int, state: string, state_label: string}>
+     */
+    public static function schoolYearsCatalog(Connection $db, City $city, array $fallbackYears = []): array
+    {
+        $fromTable = self::schoolYearsFromStatusTable($db, $city);
+        if ($fromTable !== []) {
+            return $fromTable;
+        }
+
+        $years = $fallbackYears !== [] ? $fallbackYears : self::schoolYearsFromTurma($db, $city);
+        $current = (int) date('Y');
+        $out = [];
+        foreach ($years as $year) {
+            $y = (int) $year;
+            if ($y <= 0) {
+                continue;
+            }
+            $filters = new IeducarFilterState((string) $y, null, null, null);
+            $status = self::anoLetivoStatus($db, $city, $filters);
+            if ($status !== null) {
+                $out[] = [
+                    'year' => $y,
+                    'state' => $status['fechado'] ? 'closed' : 'open',
+                    'state_label' => $status['fechado']
+                        ? __('Fechado')
+                        : __('Em andamento'),
+                ];
+
+                continue;
+            }
+            $inferredOpen = $y >= $current - 1;
+            $out[] = [
+                'year' => $y,
+                'state' => $inferredOpen ? 'open' : 'closed',
+                'state_label' => $inferredOpen
+                    ? __('Em andamento (estimado)')
+                    : __('Fechado (estimado)'),
+            ];
+        }
+
+        usort($out, static fn (array $a, array $b): int => $b['year'] <=> $a['year']);
+
+        return $out;
+    }
+
+    /**
+     * @return list<array{year: int, state: string, state_label: string}>
+     */
+    private static function schoolYearsFromStatusTable(Connection $db, City $city): array
+    {
+        $candidates = config('ieducar.work_tracking.ano_letivo_table_candidates', [
+            'escola_ano_letivo',
+            'ano_letivo',
+            'educacenso_ano_letivo',
+        ]);
+        if (! is_array($candidates)) {
+            $candidates = ['escola_ano_letivo', 'ano_letivo'];
+        }
+
+        foreach ($candidates as $name) {
+            $table = IeducarColumnInspector::findQualifiedTableByNames($db, [(string) $name], $city);
+            if ($table === null) {
+                continue;
+            }
+
+            $yearCol = IeducarColumnInspector::firstExistingColumn($db, $table, [
+                'ano', 'ano_letivo', 'ref_cod_ano_letivo', 'nu_ano',
+            ], $city);
+            $statusCol = IeducarColumnInspector::firstExistingColumn($db, $table, [
+                'situacao', 'andamento', 'situacao_ano_letivo', 'status', 'fechado',
+            ], $city);
+            $boolCol = $statusCol === null
+                ? IeducarColumnInspector::firstExistingColumn($db, $table, ['fechado', 'encerrado', 'finalizado'], $city)
+                : null;
+
+            if ($yearCol === null || ($statusCol === null && $boolCol === null)) {
+                continue;
+            }
+
+            $col = $statusCol ?? $boolCol;
+            $rows = $db->table($table)
+                ->select($yearCol.' as y', $col.' as st')
+                ->whereNotNull($yearCol)
+                ->distinct()
+                ->orderByDesc($yearCol)
+                ->limit(40)
+                ->get();
+
+            if ($rows->isEmpty()) {
+                continue;
+            }
+
+            $byYear = [];
+            foreach ($rows as $row) {
+                $y = (int) ($row->y ?? 0);
+                if ($y <= 0) {
+                    continue;
+                }
+                $fechado = self::interpretYearStatusValue($row->st ?? null);
+                if (! isset($byYear[$y])) {
+                    $byYear[$y] = ! $fechado;
+
+                    continue;
+                }
+                if (! $fechado) {
+                    $byYear[$y] = true;
+                }
+            }
+
+            $out = [];
+            foreach ($byYear as $y => $open) {
+                $out[] = [
+                    'year' => $y,
+                    'state' => $open ? 'open' : 'closed',
+                    'state_label' => $open ? __('Em andamento') : __('Fechado'),
+                ];
+            }
+            usort($out, static fn (array $a, array $b): int => $b['year'] <=> $a['year']);
+
+            return $out;
+        }
+
+        return [];
+    }
+
+    /**
+     * @return list<int>
+     */
+    private static function schoolYearsFromTurma(Connection $db, City $city): array
+    {
+        try {
+            $table = IeducarSchema::resolveTable('turma', $city);
+            $col = MatriculaTurmaJoin::turmaFilterColumns($db, $city)['year'];
+
+            return $db->table($table)
+                ->select($col)
+                ->whereNotNull($col)
+                ->distinct()
+                ->orderByDesc($col)
+                ->limit(40)
+                ->pluck($col)
+                ->map(fn ($v) => (int) $v)
+                ->filter(fn (int $v) => $v > 0)
+                ->unique()
+                ->values()
+                ->all();
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    private static function interpretYearStatusValue(mixed $value): bool
+    {
+        $st = strtolower(trim((string) $value));
+
+        return in_array($st, ['1', 't', 'true', 'fechado', 'encerrado', 'concluido', 'finalizado'], true)
+            || str_contains($st, 'fech')
+            || str_contains($st, 'encerr')
+            || $value === 1
+            || $value === true;
     }
 
     /**

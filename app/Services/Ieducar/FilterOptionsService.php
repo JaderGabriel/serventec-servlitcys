@@ -159,6 +159,18 @@ class FilterOptionsService
     /**
      * @return list<array{id: string, name: string}>
      */
+    /**
+     * Anos letivos distintos na base da cidade (ordenados desc).
+     *
+     * @return list<int>
+     */
+    public function distinctSchoolYears(City $city): array
+    {
+        $errors = [];
+
+        return array_values($this->loadYearsFromDatabase($city, $errors));
+    }
+
     public function loadByKind(City $city, string $kind, ?int $anoLetivo = null): array
     {
         $errors = [];

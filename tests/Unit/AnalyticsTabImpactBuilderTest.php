@@ -69,11 +69,43 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         $ctx = ['compliance_score' => 72, 'compliance_status' => 'warning', 'compliance_label' => 'Atenção'];
 
         $strip = AnalyticsTabImpactBuilder::build('municipality_health', true, $ctx, [
-            'healthData' => ['compliance_score' => 72, 'compliance_status' => 'warning', 'compliance_label' => 'Atenção'],
+            'healthData' => [
+                'compliance_score' => 72,
+                'compliance_status' => 'warning',
+                'compliance_label' => 'Atenção',
+                'summary' => ['pendencias_cadastro' => 2, 'modulos_fundeb_alerta' => 1],
+            ],
         ]);
 
         $this->assertTrue($strip['ready']);
+        $this->assertTrue($strip['show_status']);
+        $this->assertSame('system', $strip['status_mode']);
         $this->assertSame(72, $strip['tab_score']);
+        $this->assertNotEmpty($strip['status_issues']);
         $this->assertContains('municipality_health', AnalyticsTabImpactBuilder::TABS_WITH_STRIP);
+    }
+
+    public function test_overview_strip_hides_status(): void
+    {
+        $ctx = ['compliance_score' => 80, 'compliance_status' => 'success', 'total_matriculas' => 500, 'pendencias_cadastro' => 0];
+
+        $strip = AnalyticsTabImpactBuilder::build('overview', true, $ctx, [
+            'overviewData' => ['kpis' => ['matriculas' => 500]],
+        ]);
+
+        $this->assertTrue($strip['ready']);
+        $this->assertFalse($strip['show_status']);
+        $this->assertContains('overview', AnalyticsTabImpactBuilder::TABS_WITHOUT_STATUS);
+    }
+
+    public function test_enrollment_error_surfaces_in_status(): void
+    {
+        $strip = AnalyticsTabImpactBuilder::build('enrollment', true, ['total_matriculas' => 100], [
+            'enrollmentData' => ['error' => 'timeout', 'distorcao' => ['pct' => 5]],
+        ]);
+
+        $this->assertSame('danger', $strip['status']);
+        $this->assertStringContainsString('Erro', $strip['status_label']);
+        $this->assertNotEmpty($strip['status_issues']);
     }
 }

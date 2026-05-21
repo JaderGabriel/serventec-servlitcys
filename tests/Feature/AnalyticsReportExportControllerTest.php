@@ -39,12 +39,45 @@ final class AnalyticsReportExportControllerTest extends TestCase
             'ano_letivo' => '2024',
         ]);
 
-        $response->assertRedirect();
+        $response->assertRedirect(route('dashboard.analytics', [
+            'city_id' => $city->id,
+            'ano_letivo' => '2024',
+            'tab' => 'municipality_health',
+        ]));
         $response->assertSessionHas('pdf_export_id');
 
         $this->assertDatabaseCount('analytics_report_exports', 1);
 
         Queue::assertPushed(\App\Jobs\GenerateAnalyticsReportPdfJob::class);
+    }
+
+    #[Test]
+    public function pdf_job_is_persisted_on_database_queue(): void
+    {
+        config(['queue.default' => 'database']);
+
+        $city = City::factory()->create([
+            'is_active' => true,
+            'db_host' => '127.0.0.1',
+            'db_database' => 'ieducar',
+            'db_username' => 'user',
+            'db_password' => 'secret',
+        ]);
+
+        $admin = User::factory()->create([
+            'role' => UserRole::Admin,
+            'is_active' => true,
+            'email_verified_at' => now(),
+        ]);
+
+        $this->actingAs($admin)->post(route('dashboard.analytics.pdf.store'), [
+            'city_id' => $city->id,
+            'ano_letivo' => '2024',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('jobs', [
+            'queue' => config('analytics.pdf_report.queue', 'default'),
+        ]);
     }
 
     #[Test]

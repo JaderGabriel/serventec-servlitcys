@@ -74,37 +74,6 @@
                     >
                         <x-slot name="filtersExtras">
                             <input type="hidden" name="tab" :value="tab" />
-                            <template x-if="tab === 'inclusion'">
-                                <div class="col-span-full mt-1 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
-                                    <p class="text-xs font-semibold text-violet-800 dark:text-violet-200">{{ __('Filtros da aba Inclusão') }}</p>
-                                    <div class="flex flex-col sm:flex-row flex-wrap gap-4 text-sm">
-                                        <label class="inline-flex items-center gap-2 cursor-pointer">
-                                            <input type="hidden" name="inclusion_somente_nee" value="0" />
-                                            <input
-                                                type="checkbox"
-                                                name="inclusion_somente_nee"
-                                                value="1"
-                                                @checked($filters->inclusionSomenteNee())
-                                                class="rounded border-gray-300 text-violet-600 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-900"
-                                                x-on:change="$el.form.querySelector('[name=inclusion_somente_inconsistencias][type=checkbox]').checked = false"
-                                            />
-                                            <span>{{ __('Só matrículas NEE') }}</span>
-                                        </label>
-                                        <label class="inline-flex items-center gap-2 cursor-pointer">
-                                            <input type="hidden" name="inclusion_somente_inconsistencias" value="0" />
-                                            <input
-                                                type="checkbox"
-                                                name="inclusion_somente_inconsistencias"
-                                                value="1"
-                                                @checked($filters->inclusionSomenteInconsistencias())
-                                                class="rounded border-gray-300 text-violet-600 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-900"
-                                                x-on:change="$el.form.querySelector('[name=inclusion_somente_nee][type=checkbox]').checked = false"
-                                            />
-                                            <span>{{ __('Só inconsistências recurso × NEE') }}</span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </template>
                         </x-slot>
                     </x-dashboard.ieducar-filter-bar>
 
@@ -113,39 +82,6 @@
                             <p class="font-medium">{{ __('Erro ao abrir o painel') }}</p>
                             <p class="mt-1 font-mono text-xs break-all">{{ $indexFatalMessage }}</p>
                         </div>
-                    @endif
-
-                    @if (($analyticsDebugEnabled ?? false) && ! empty($analyticsDebugSteps ?? []))
-                        <details class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 text-xs font-mono text-slate-700 dark:text-slate-300">
-                            <summary class="cursor-pointer font-sans font-medium text-slate-800 dark:text-slate-200">
-                                {{ __('Debug de carregamento') }} ({{ number_format($analyticsDebugTotalMs ?? 0, 1, ',', '.') }} ms total)
-                            </summary>
-                            <table class="mt-2 w-full border-collapse">
-                                <thead>
-                                    <tr class="text-left border-b border-slate-200 dark:border-slate-600">
-                                        <th class="py-1 pr-2">{{ __('Etapa') }}</th>
-                                        <th class="py-1">{{ __('ms') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($analyticsDebugSteps as $row)
-                                        <tr class="border-b border-slate-100 dark:border-slate-800">
-                                            <td class="py-1 pr-2">{{ $row['step'] ?? '—' }}</td>
-                                            <td class="py-1">{{ $row['ms'] ?? '—' }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                            <p class="mt-2 font-sans text-[11px] text-slate-500">{{ __('Active ANALYTICS_DEBUG_LOG=true e consulte storage/logs/laravel.log (analytics.profile).') }}</p>
-                        </details>
-                    @endif
-
-                    @if (Auth::user()?->isAdmin())
-                        <p class="text-xs">
-                            <a href="{{ route('admin.analytics-diagnostics', ['city_id' => $selectedCity->id, 'ano_letivo' => $filters->ano_letivo ?? '2024']) }}" class="serv-link font-medium">
-                                {{ __('Diagnóstico completo de erro 500') }}
-                            </a>
-                        </p>
                     @endif
 
                     @if (! $yearFilterReady)
@@ -241,6 +177,8 @@
                                         'chartExportContext' => $chartExportContext,
                                         'municipalityContext' => $municipalityContext ?? null,
                                         'yearFilterReady' => $yearFilterReady,
+                                        'selectedCity' => $selectedCity,
+                                        'filters' => $filters,
                                     ])
                                 @else
                                     <div class="relative min-h-[12rem]" x-ref="panelInclusion">

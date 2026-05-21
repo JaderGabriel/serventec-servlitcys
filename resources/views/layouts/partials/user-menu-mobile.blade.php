@@ -17,8 +17,8 @@
     <x-responsive-nav-link :href="route('admin.artisan-commands.index')" :active="request()->routeIs('admin.artisan-commands.*')" icon="command-line" :title="__('Comandos Artisan.')">
         {{ __('Comandos') }}
     </x-responsive-nav-link>
-    <x-responsive-nav-link :href="route('admin.sync-queue.index')" :active="request()->routeIs('admin.sync-queue.*')" icon="queue-list" :title="__('Fila admin-sync.')">
-        {{ __('Fila de sync') }}
+    <x-responsive-nav-link :href="route('admin.sync-queue.index')" :active="request()->routeIs('admin.sync-queue.*')" icon="queue-list" :title="__('Sincronização e PDF.')">
+        {{ __('Filas de processamento') }}
     </x-responsive-nav-link>
 @endif
 

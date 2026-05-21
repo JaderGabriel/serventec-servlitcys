@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\AdminSyncTaskStatus;
+use App\Enums\AnalyticsReportExportStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AdminSyncTask;
+use App\Models\AnalyticsReportExport;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -35,13 +37,36 @@ class AdminSyncQueueController extends Controller
             ->groupBy('status')
             ->pluck('aggregate', 'status');
 
+        $pdfStatus = trim((string) $request->input('pdf_status', ''));
+        $pdfQuery = AnalyticsReportExport::query()
+            ->with(['city:id,name,uf', 'user:id,name'])
+            ->orderByDesc('id');
+        if ($pdfStatus !== '' && AnalyticsReportExportStatus::tryFrom($pdfStatus) !== null) {
+            $pdfQuery->where('status', $pdfStatus);
+        }
+        $pdfExports = $pdfQuery->paginate(15, ['*'], 'pdf_page')->withQueryString();
+
+        $pdfCounts = AnalyticsReportExport::query()
+            ->selectRaw('status, count(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        $queueDefault = (string) config('queue.default', 'database');
+
         return view('admin.sync-queue.index', [
             'tasks' => $tasks,
             'counts' => $counts,
             'filterStatus' => $status,
             'filterDomain' => $domain,
-            'queueName' => (string) config('ieducar.admin_sync.queue', 'admin-sync'),
-            'queueConnection' => config('ieducar.admin_sync.connection') ?? config('queue.default'),
+            'syncQueueName' => (string) config('ieducar.admin_sync.queue', 'admin-sync'),
+            'syncQueueConnection' => config('ieducar.admin_sync.connection') ?? $queueDefault,
+            'pdfExports' => $pdfExports,
+            'pdfCounts' => $pdfCounts,
+            'filterPdfStatus' => $pdfStatus,
+            'pdfQueueName' => (string) config('analytics.pdf_report.queue', 'default'),
+            'pdfQueueConnection' => config('analytics.pdf_report.connection') ?? $queueDefault,
+            'queueDefault' => $queueDefault,
+            'queueIsSync' => $queueDefault === 'sync',
         ]);
     }
 

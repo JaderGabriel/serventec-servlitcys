@@ -43,14 +43,41 @@ final class IeducarFilterState
             }
         }
 
+        [$inclusionNee, $inclusionInconsistencias] = self::resolveInclusionScope($request);
+
         return new self(
             ano_letivo: $ano,
             escola_id: self::nullableString($request->input('escola_id')),
             curso_id: self::nullableString($request->input('curso_id')),
             turno_id: self::nullableString($request->input('turno_id')),
-            inclusion_somente_nee: $request->boolean('inclusion_somente_nee'),
-            inclusion_somente_inconsistencias: $request->boolean('inclusion_somente_inconsistencias'),
+            inclusion_somente_nee: $inclusionNee,
+            inclusion_somente_inconsistencias: $inclusionInconsistencias,
         );
+    }
+
+    /**
+     * Escopo da aba Inclusão: mutuamente exclusivo (NEE vs inconsistências).
+     *
+     * @return array{0: bool, 1: bool}
+     */
+    private static function resolveInclusionScope(Request $request): array
+    {
+        $scope = $request->input('inclusion_scope');
+        if (is_string($scope) && $scope !== '') {
+            return match ($scope) {
+                'nee' => [true, false],
+                'inconsistencias' => [false, true],
+                default => [false, false],
+            };
+        }
+
+        $nee = $request->boolean('inclusion_somente_nee');
+        $inconsistencias = $request->boolean('inclusion_somente_inconsistencias');
+        if ($nee && $inconsistencias) {
+            return [true, false];
+        }
+
+        return [$nee, $inconsistencias];
     }
 
     /**

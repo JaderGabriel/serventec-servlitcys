@@ -659,6 +659,8 @@ class AnalyticsDashboardController extends Controller
         $viewBase = [
             'chartExportContext' => $chartExportContext,
             'municipalityContext' => $municipalityContext,
+            'selectedCity' => $city,
+            'filters' => $filters,
         ];
 
         return match ($tab) {

@@ -6,42 +6,46 @@
     $title = (string) ($s['title'] ?? '');
     $purpose = (string) ($s['purpose'] ?? '');
     $impactNote = (string) ($s['impact_note'] ?? '');
+    $showStatus = (bool) ($s['show_status'] ?? true);
     $status = (string) ($s['status'] ?? 'neutral');
     $statusLabel = (string) ($s['status_label'] ?? '');
+    $statusMode = (string) ($s['status_mode'] ?? 'tab');
+    $statusHelp = (string) ($s['status_help'] ?? '');
+    $statusIssues = is_array($s['status_issues'] ?? null) ? $s['status_issues'] : [];
     $tabScore = $s['tab_score'] ?? null;
     $munScore = (int) ($s['municipality_score'] ?? 0);
     $munStatus = (string) ($s['municipality_status'] ?? 'neutral');
     $munLabel = (string) ($s['municipality_label'] ?? '');
     $saldo = is_array($s['saldo'] ?? null) ? $s['saldo'] : null;
     $metrics = is_array($s['metrics'] ?? null) ? $s['metrics'] : [];
-
-    $statusRing = match ($status) {
-        'success' => 'stroke-emerald-500 text-emerald-700 dark:text-emerald-300',
-        'warning' => 'stroke-amber-500 text-amber-700 dark:text-amber-300',
-        'danger' => 'stroke-rose-500 text-rose-700 dark:text-rose-300',
-        default => 'stroke-slate-400 text-slate-600 dark:text-slate-400',
-    };
-    $statusBg = match ($status) {
-        'success' => 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800',
-        'warning' => 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800',
-        'danger' => 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800',
-        default => 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700',
-    };
-    $tabPct = $tabScore !== null ? max(0, min(100, (int) $tabScore)) : null;
-    $tabCirc = $tabPct !== null ? round(2 * 3.14159 * 18 * (1 - $tabPct / 100), 1) : null;
 @endphp
 
 <div class="serv-impact-card">
     <div class="px-4 py-3 border-b border-slate-200/80 dark:border-slate-700/80">
-        @if ($title !== '')
-            <h2 class="text-sm font-semibold font-display text-serv-navy dark:text-teal-50">{{ $title }}</h2>
-        @endif
-        @if ($purpose !== '')
-            <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ $purpose }}</p>
-        @endif
-        @if ($impactNote !== '')
-            <p class="mt-2 text-xs text-teal-800/90 dark:text-teal-300/90 leading-relaxed">{{ $impactNote }}</p>
-        @endif
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div class="min-w-0 flex-1">
+                @if ($title !== '')
+                    <h2 class="text-sm font-semibold font-display text-serv-navy dark:text-teal-50">{{ $title }}</h2>
+                @endif
+                @if ($purpose !== '')
+                    <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ $purpose }}</p>
+                @endif
+                @if ($impactNote !== '')
+                    <p class="mt-2 text-xs text-teal-800/90 dark:text-teal-300/90 leading-relaxed">{{ $impactNote }}</p>
+                @endif
+            </div>
+            @if ($showStatus && $ready && $statusLabel !== '')
+                <x-dashboard.analytics-tab-status-inline
+                    :status="$status"
+                    :label="$statusLabel"
+                    :score="$tabScore"
+                    :help="$statusHelp"
+                    :issues="$statusIssues"
+                    :mode="$statusMode"
+                    class="lg:ms-4"
+                />
+            @endif
+        </div>
     </div>
 
     @if (! $ready)
@@ -49,8 +53,7 @@
             {{ __('Aplique cidade e ano letivo para ver o impacto no saldo e o status do município neste recorte.') }}
         </div>
     @else
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80 dark:divide-slate-700/80">
-            {{-- Saldo indicativo (municipal, filtro) --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80 dark:divide-slate-700/80">
             <div class="px-4 py-4 space-y-3">
                 <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Impacto no saldo (indicativo)') }}</p>
                 @if ($saldo !== null)
@@ -79,30 +82,6 @@
                 @endif
             </div>
 
-            {{-- Status desta aba --}}
-            <div class="px-4 py-4 flex flex-col sm:flex-row lg:flex-col gap-4 items-center lg:items-stretch">
-                <div class="flex-1 w-full">
-                    <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">{{ __('Status nesta aba (filtro)') }}</p>
-                    <div class="flex items-center gap-4">
-                        @if ($tabPct !== null && $tabCirc !== null)
-                            <div class="relative shrink-0 w-14 h-14" aria-hidden="true">
-                                <svg class="w-14 h-14 -rotate-90" viewBox="0 0 44 44">
-                                    <circle cx="22" cy="22" r="18" fill="none" stroke-width="4" class="stroke-gray-200 dark:stroke-gray-700"/>
-                                    <circle cx="22" cy="22" r="18" fill="none" stroke-width="4" stroke-linecap="round"
-                                        class="{{ $statusRing }}"
-                                        stroke-dasharray="113" stroke-dashoffset="{{ $tabCirc }}"/>
-                                </svg>
-                                <span class="absolute inset-0 flex items-center justify-center text-xs font-bold tabular-nums">{{ $tabPct }}</span>
-                            </div>
-                        @endif
-                        <div class="rounded-lg border px-3 py-2 flex-1 {{ $statusBg }}">
-                            <p class="text-sm font-medium leading-snug">{{ $statusLabel }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Conformidade municipal + métricas --}}
             <div class="px-4 py-4 space-y-3">
                 <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Município no filtro') }}</p>
                 @if ($munScore > 0 || $munLabel !== '')

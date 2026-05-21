@@ -28,18 +28,16 @@ final class AnalyticsReportExportService
         ]);
 
         $queue = (string) config('analytics.pdf_report.queue', 'default');
-        $connection = config('analytics.pdf_report.connection');
+        $connection = config('analytics.pdf_report.connection') ?? config('queue.default');
 
-        $pending = GenerateAnalyticsReportPdfJob::dispatch($export->id)->onQueue($queue);
-        if ($connection !== null && $connection !== '') {
-            $pending->onConnection((string) $connection);
-        }
-        $pending->afterResponse();
+        GenerateAnalyticsReportPdfJob::dispatch($export->id);
 
         return [
             'export' => $export,
-            'message' => __('Relatório PDF em geração (fila :queue). Actualize esta página em alguns minutos para descarregar.', [
+            'message' => __('Relatório PDF #:id enfileirado (fila :queue · ligação :connection). Acompanhe na fila de processamento ou actualize o Diagnóstico.', [
+                'id' => (string) $export->id,
                 'queue' => $queue,
+                'connection' => (string) $connection,
             ]),
         ];
     }

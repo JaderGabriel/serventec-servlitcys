@@ -1,4 +1,4 @@
-@props(['inclusionData', 'chartExportContext' => [], 'municipalityContext' => null, 'yearFilterReady' => true])
+@props(['inclusionData', 'chartExportContext' => [], 'municipalityContext' => null, 'yearFilterReady' => true, 'selectedCity' => null, 'filters' => null])
 
 @php
     $methodology = $inclusionData['methodology'] ?? [];
@@ -22,7 +22,6 @@
     $recursoDisponivel = (bool) ($recursoSchema['available'] ?? false);
     $chartRacaPorEscolaStacked = is_array($inclusionData['chart_raca_por_escola_stacked'] ?? null) ? $inclusionData['chart_raca_por_escola_stacked'] : null;
     $chartNeePorRacaStacked = is_array($inclusionData['chart_nee_por_raca_stacked'] ?? null) ? $inclusionData['chart_nee_por_raca_stacked'] : null;
-    $inclusionFiltersActive = is_array($inclusionData['inclusion_filters_active'] ?? null) ? $inclusionData['inclusion_filters_active'] : [];
     $neeMatriculasPorEscola = is_array($inclusionData['nee_matriculas_por_escola'] ?? null)
         ? $inclusionData['nee_matriculas_por_escola']
         : [];
@@ -39,6 +38,15 @@
         'municipalityContext' => $municipalityContext,
         'tabData' => ['inclusionData' => $inclusionData],
     ])
+
+    @if ($selectedCity && $filters)
+        <x-dashboard.inclusion-tab-filters
+            :city="$selectedCity"
+            :filters="$filters"
+            :yearFilterReady="$yearFilterReady"
+        />
+    @endif
+
     <div class="rounded-lg border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-3">
         <p class="text-xs text-teal-800/90 dark:text-teal-200/90">
             {{ __('Consultoria municipal:') }}
@@ -56,16 +64,6 @@
         @if ($eqLabel)
             <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">
                 {{ __('Gráfico de equidade por etapa:') }} <span class="font-medium text-gray-800 dark:text-gray-200">{{ $eqLabel }}</span>
-            </p>
-        @endif
-        @if ($inclusionFiltersActive !== [])
-            <p class="mt-2 text-xs text-violet-800 dark:text-violet-200 bg-violet-50/80 dark:bg-violet-950/30 border border-violet-200/60 dark:border-violet-800/40 rounded-md px-3 py-2">
-                <span class="font-semibold">{{ __('Filtros activos:') }}</span>
-                {{ implode(' · ', $inclusionFiltersActive) }}
-            </p>
-        @else
-            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                {{ __('Filtros opcionais «Só NEE» e «Só inconsistências» na barra de filtros (com esta aba seleccionada).') }}
             </p>
         @endif
     </div>

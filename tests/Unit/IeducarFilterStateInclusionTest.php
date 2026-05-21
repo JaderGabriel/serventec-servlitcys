@@ -25,6 +25,35 @@ final class IeducarFilterStateInclusionTest extends TestCase
     }
 
     #[Test]
+    public function inclusion_scope_radio_maps_to_flags(): void
+    {
+        $request = Request::create('/', 'GET', [
+            'ano_letivo' => '2024',
+            'inclusion_scope' => 'inconsistencias',
+        ]);
+
+        $filters = IeducarFilterState::fromRequest($request);
+
+        $this->assertFalse($filters->inclusionSomenteNee());
+        $this->assertTrue($filters->inclusionSomenteInconsistencias());
+    }
+
+    #[Test]
+    public function legacy_dual_flags_are_mutually_exclusive_with_nee_priority(): void
+    {
+        $request = Request::create('/', 'GET', [
+            'ano_letivo' => '2024',
+            'inclusion_somente_nee' => '1',
+            'inclusion_somente_inconsistencias' => '1',
+        ]);
+
+        $filters = IeducarFilterState::fromRequest($request);
+
+        $this->assertTrue($filters->inclusionSomenteNee());
+        $this->assertFalse($filters->inclusionSomenteInconsistencias());
+    }
+
+    #[Test]
     public function to_query_params_includes_active_inclusion_filters(): void
     {
         $filters = new IeducarFilterState(

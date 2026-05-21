@@ -9,6 +9,12 @@ use App\Support\Ieducar\DiscrepanciesFundingImpact;
  */
 final class AnalyticsTabImpactBuilder
 {
+    /** Abas sem status na faixa (ex.: Cadastro / Visão geral). */
+    public const TABS_WITHOUT_STATUS = ['overview'];
+
+    /** Abas com status consolidado do sistema (não só o recorte da aba). */
+    public const TABS_SYSTEM_STATUS = ['municipality_health'];
+
     /** @var list<string> */
     public const TABS_WITH_STRIP = [
         'overview',
@@ -38,14 +44,21 @@ final class AnalyticsTabImpactBuilder
     ): array {
         $def = self::definition($tab);
 
+        $showStatus = ! in_array($tab, self::TABS_WITHOUT_STATUS, true);
+        $statusMode = in_array($tab, self::TABS_SYSTEM_STATUS, true) ? 'system' : 'tab';
+
         if (! $yearFilterReady) {
             return [
                 'ready' => false,
                 'tab' => $tab,
                 'title' => $def['title'],
                 'purpose' => $def['purpose'],
+                'show_status' => $showStatus,
+                'status_mode' => $statusMode,
                 'status' => 'neutral',
                 'status_label' => __('Aguardando filtros'),
+                'status_help' => '',
+                'status_issues' => [],
                 'tab_score' => null,
                 'saldo' => null,
                 'metrics' => [],
@@ -54,6 +67,9 @@ final class AnalyticsTabImpactBuilder
 
         $ctx = $municipalityContext ?? [];
         $tabStatus = self::tabStatus($tab, $tabData, $ctx);
+        $tabStatus = self::applyQueryError($tab, $tabData, $tabStatus);
+        $statusIssues = self::collectStatusIssues($tab, $tabData, $ctx, $tabStatus);
+        $statusHelp = self::statusHelp($tab, $def, $ctx, $statusIssues, $statusMode);
         $metrics = self::tabMetrics($tab, $tabData, $ctx);
 
         $perda = (float) ($ctx['perda_estimada_anual'] ?? 0);
@@ -66,8 +82,12 @@ final class AnalyticsTabImpactBuilder
             'title' => $def['title'],
             'purpose' => $def['purpose'],
             'impact_note' => $def['impact_note'],
+            'show_status' => $showStatus,
+            'status_mode' => $statusMode,
             'status' => $tabStatus['status'],
             'status_label' => $tabStatus['label'],
+            'status_help' => $statusHelp,
+            'status_issues' => $statusIssues,
             'tab_score' => $tabStatus['score'],
             'municipality_score' => (int) ($ctx['compliance_score'] ?? 0),
             'municipality_status' => (string) ($ctx['compliance_status'] ?? 'neutral'),
@@ -184,7 +204,7 @@ final class AnalyticsTabImpactBuilder
             'fundeb' => self::statusFundeb($tabData),
             'other_funding' => self::statusOtherFunding($tabData),
             'work_done' => self::statusWorkDone($tabData),
-            'municipality_health' => self::statusMunicipalityHealth($tabData, $ctx),
+            'municipality_health' => self::statusSystemConsolidated($tabData, $ctx),
             'discrepancies' => self::statusDiscrepancies($tabData, $ctx),
             default => ['status' => $municipalStatus, 'label' => (string) ($ctx['compliance_label'] ?? ''), 'score' => $municipalScore, 'share_label' => null, 'share_value' => null],
         };
@@ -488,25 +508,72 @@ final class AnalyticsTabImpactBuilder
      * @param  array<string, mixed>  $ctx
      * @return array{status: string, label: string, score: ?int, share_label: ?string, share_value: ?string}
      */
-    private static function statusMunicipalityHealth(array $tabData, array $ctx): array
+    /**
+     * Status consolidado do sistema (Diagnóstico): índice + pendências/alertas agregados.
+     *
+     * @param  array<string, mixed>  $tabData
+     * @param  array<string, mixed>  $ctx
+     * @return array{status: string, label: string, score: ?int, share_label: ?string, share_value: ?string}
+     */
+    private static function statusSystemConsolidated(array $tabData, array $ctx): array
     {
-        $data = is_array($tabData['health'] ?? null) ? $tabData['health'] : ($tabData['healthData'] ?? $tabData['municipalityHealthData'] ?? []);
+        $data = self::tabPayload($tabData, 'health');
+        $summary = is_array($data['summary'] ?? null) ? $data['summary'] : [];
         $score = (int) ($data['compliance_score'] ?? $ctx['compliance_score'] ?? 0);
         $status = (string) ($data['compliance_status'] ?? $ctx['compliance_status'] ?? 'neutral');
-        $label = (string) ($data['compliance_label'] ?? $ctx['compliance_label'] ?? '');
-        $pend = (int) ($ctx['pendencias_cadastro'] ?? 0);
-        $modAlert = (int) data_get($data, 'summary.modulos_fundeb_alerta', 0);
+        $baseLabel = (string) ($data['compliance_label'] ?? $ctx['compliance_label'] ?? '');
 
-        if ($score <= 0 && $label === '') {
-            return ['status' => 'neutral', 'label' => __('Diagnóstico indisponível'), 'score' => null, 'share_label' => null, 'share_value' => null];
+        if ($score <= 0 && $baseLabel === '') {
+            return ['status' => 'neutral', 'label' => __('Consolidado indisponível'), 'score' => null, 'share_label' => null, 'share_value' => null];
+        }
+
+        $pendDims = (int) ($summary['pendencias_cadastro'] ?? $ctx['pendencias_cadastro'] ?? 0);
+        $modAlert = (int) ($summary['modulos_fundeb_alerta'] ?? 0);
+        $progAlert = (int) ($data['programas_alerta'] ?? 0);
+        $semNee = (int) ($summary['recurso_prova_sem_nee'] ?? 0);
+        $comProblema = (int) ($ctx['com_problema'] ?? 0);
+        $escolas = (int) ($summary['escolas_afetadas'] ?? $ctx['escolas_afetadas'] ?? 0);
+
+        $critical = $semNee > 0 || $comProblema > 200 || $pendDims >= 5;
+        $hasPending = $pendDims > 0 || $modAlert > 0 || $progAlert > 0 || $comProblema > 0;
+
+        if ($status === 'neutral' && $score > 0) {
+            $status = AnalyticsMunicipalityContext::statusFromScore($score);
+        }
+        if ($critical && $status === 'success') {
+            $status = 'danger';
+        } elseif ($hasPending && $status === 'success') {
+            $status = 'warning';
+        }
+
+        $parts = [];
+        if ($pendDims > 0) {
+            $parts[] = __(':n dim. cadastro', ['n' => $pendDims]);
+        }
+        if ($comProblema > 0) {
+            $parts[] = __(':n disc.', ['n' => $comProblema]);
+        }
+        if ($modAlert > 0) {
+            $parts[] = __(':n FUNDEB', ['n' => $modAlert]);
+        }
+        if ($progAlert > 0) {
+            $parts[] = __(':n prog.', ['n' => $progAlert]);
+        }
+        if ($semNee > 0) {
+            $parts[] = __('NEE inconsistente');
+        }
+
+        $label = $baseLabel !== '' ? $baseLabel : __('Índice :n', ['n' => $score]);
+        if ($parts !== []) {
+            $label = $label.' — '.implode(' · ', $parts);
         }
 
         return [
-            'status' => $status !== 'neutral' ? $status : AnalyticsMunicipalityContext::statusFromScore($score),
-            'label' => $label !== '' ? $label : __('Índice :n', ['n' => $score]),
+            'status' => $status,
+            'label' => $label,
             'score' => $score > 0 ? $score : null,
-            'share_label' => __('Pendências cadastro'),
-            'share_value' => $pend > 0 ? (string) $pend : ($modAlert > 0 ? __(':n FUNDEB', ['n' => $modAlert]) : __('Nenhuma')),
+            'share_label' => __('Escolas afetadas'),
+            'share_value' => $escolas > 0 ? (string) $escolas : __('Nenhuma'),
         ];
     }
 
@@ -581,6 +648,208 @@ final class AnalyticsTabImpactBuilder
             'share_label' => __('Impacto fundeb-base'),
             'share_value' => $pend > 200 ? __('Alto') : __('Moderado'),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @return array<string, mixed>
+     */
+    private static function tabPayload(array $tabData, string $tab): array
+    {
+        $keys = match ($tab) {
+            'overview' => ['overview', 'overviewData'],
+            'enrollment' => ['enrollment', 'enrollmentData'],
+            'network' => ['network', 'networkData'],
+            'school_units' => ['school_units', 'schoolUnitsData'],
+            'inclusion' => ['inclusion', 'inclusionData'],
+            'performance' => ['performance', 'performanceData'],
+            'attendance' => ['attendance', 'attendanceData'],
+            'fundeb' => ['fundeb', 'fundebData'],
+            'other_funding' => ['other_funding', 'otherFundingData'],
+            'work_done' => ['work_done', 'workDoneData'],
+            'municipality_health', 'health' => ['health', 'healthData', 'municipalityHealthData'],
+            'discrepancies' => ['discrepancies', 'discrepanciesData'],
+            default => [$tab, $tab.'Data'],
+        };
+
+        foreach ($keys as $key) {
+            if (is_array($tabData[$key] ?? null)) {
+                return $tabData[$key];
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @param  array{status: string, label: string, score: ?int, share_label: ?string, share_value: ?string}  $computed
+     * @return array{status: string, label: string, score: ?int, share_label: ?string, share_value: ?string}
+     */
+    private static function applyQueryError(string $tab, array $tabData, array $computed): array
+    {
+        $payload = self::tabPayload($tabData, $tab === 'municipality_health' ? 'health' : $tab);
+        if (empty($payload['error'])) {
+            return $computed;
+        }
+
+        $score = $computed['score'] ?? null;
+        if ($score === null) {
+            $score = 15;
+        } else {
+            $score = min((int) $score, 25);
+        }
+
+        return [
+            'status' => 'danger',
+            'label' => __('Erro ao carregar — verifique filtros e ligação'),
+            'score' => $score,
+            'share_label' => $computed['share_label'] ?? null,
+            'share_value' => $computed['share_value'] ?? null,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @param  array<string, mixed>  $ctx
+     * @param  array{status: string, label: string, score: ?int, share_label: ?string, share_value: ?string}  $computed
+     * @return list<array{type: string, label: string, count: int}>
+     */
+    private static function collectStatusIssues(string $tab, array $tabData, array $ctx, array $computed): array
+    {
+        $issues = [];
+        $payload = self::tabPayload($tabData, $tab === 'municipality_health' ? 'health' : $tab);
+
+        if (! empty($payload['error'])) {
+            $issues[] = ['type' => 'error', 'label' => __('Falha na consulta desta aba'), 'count' => 1];
+        }
+
+        if ($tab === 'municipality_health') {
+            $summary = is_array($payload['summary'] ?? null) ? $payload['summary'] : [];
+            $pendDims = (int) ($summary['pendencias_cadastro'] ?? $ctx['pendencias_cadastro'] ?? 0);
+            if ($pendDims > 0) {
+                $issues[] = ['type' => 'pending', 'label' => __('Dimensões de cadastro com pendência'), 'count' => $pendDims];
+            }
+            $modAlert = (int) ($summary['modulos_fundeb_alerta'] ?? 0);
+            if ($modAlert > 0) {
+                $issues[] = ['type' => 'pending', 'label' => __('Módulos FUNDEB em alerta'), 'count' => $modAlert];
+            }
+            $progAlert = (int) ($payload['programas_alerta'] ?? 0);
+            if ($progAlert > 0) {
+                $issues[] = ['type' => 'pending', 'label' => __('Programas complementares em alerta'), 'count' => $progAlert];
+            }
+            $semNee = (int) ($summary['recurso_prova_sem_nee'] ?? 0);
+            if ($semNee > 0) {
+                $issues[] = ['type' => 'error', 'label' => __('Recurso de prova sem NEE'), 'count' => $semNee];
+            }
+            $comProblema = (int) ($ctx['com_problema'] ?? 0);
+            if ($comProblema > 0) {
+                $issues[] = ['type' => 'pending', 'label' => __('Ocorrências em Discrepâncias'), 'count' => $comProblema];
+            }
+
+            return $issues;
+        }
+
+        $pend = (int) ($ctx['pendencias_cadastro'] ?? 0);
+        if ($pend > 0 && in_array($tab, ['enrollment', 'network', 'school_units', 'work_done', 'overview'], true)) {
+            $issues[] = ['type' => 'pending', 'label' => __('Pendências de cadastro no município'), 'count' => $pend];
+        }
+
+        if ($tab === 'discrepancies') {
+            $data = self::tabPayload($tabData, 'discrepancies');
+            $summary = is_array($data['summary'] ?? null) ? $data['summary'] : [];
+            $comProblema = (int) ($summary['com_problema'] ?? $ctx['com_problema'] ?? 0);
+            if ($comProblema > 0) {
+                $issues[] = ['type' => 'pending', 'label' => __('Ocorrências com impacto indicativo'), 'count' => $comProblema];
+            }
+        }
+
+        if ($tab === 'inclusion') {
+            $data = self::tabPayload($tabData, 'inclusion');
+            $semNee = (int) data_get($data, 'recurso_prova.sem_nee', 0);
+            if ($semNee > 0) {
+                $issues[] = ['type' => 'error', 'label' => __('Recurso de prova sem NEE'), 'count' => $semNee];
+            }
+        }
+
+        if ($tab === 'fundeb') {
+            $data = self::tabPayload($tabData, 'fundeb');
+            $modAlertas = 0;
+            foreach (is_array($data['modules'] ?? null) ? $data['modules'] : [] as $m) {
+                if (in_array((string) ($m['status'] ?? ''), ['danger', 'warning'], true)) {
+                    $modAlertas++;
+                }
+            }
+            if ($modAlertas > 0) {
+                $issues[] = ['type' => 'pending', 'label' => __('Módulos FUNDEB em alerta'), 'count' => $modAlertas];
+            }
+            if (! (bool) data_get($data, 'resource_projection.available', false)) {
+                $issues[] = ['type' => 'unavailable', 'label' => __('Previsão de recursos indisponível'), 'count' => 1];
+            }
+        }
+
+        if ($tab === 'other_funding') {
+            $data = self::tabPayload($tabData, 'other_funding');
+            $progAlertas = 0;
+            foreach (is_array($data['programs'] ?? null) ? $data['programs'] : [] as $p) {
+                if (in_array((string) ($p['status'] ?? ''), ['danger', 'warning'], true)) {
+                    $progAlertas++;
+                }
+            }
+            if ($progAlertas > 0) {
+                $issues[] = ['type' => 'pending', 'label' => __('Programas em alerta'), 'count' => $progAlertas];
+            }
+        }
+
+        if ($tab === 'work_done') {
+            $data = self::tabPayload($tabData, 'work_done');
+            $censo = is_array($data['censo'] ?? null) ? $data['censo'] : [];
+            $summary = is_array($censo['summary'] ?? null) ? $censo['summary'] : [];
+            $pendCenso = (int) ($summary['pendentes'] ?? $summary['pendentes_total'] ?? 0);
+            if ($pendCenso > 0) {
+                $issues[] = ['type' => 'pending', 'label' => __('Pendências Censo'), 'count' => $pendCenso];
+            }
+        }
+
+        if ($tab === 'enrollment') {
+            $data = self::tabPayload($tabData, 'enrollment');
+            $d = is_array($data['distorcao'] ?? null) ? $data['distorcao'] : [];
+            $pct = isset($d['pct']) ? (float) $d['pct'] : null;
+            if ($pct !== null && $pct >= 15) {
+                $issues[] = ['type' => 'pending', 'label' => __('Distorção idade-série elevada'), 'count' => (int) round($pct)];
+            }
+        }
+
+        if (($computed['status'] ?? '') === 'danger' && $issues === []) {
+            $issues[] = ['type' => 'error', 'label' => (string) ($computed['label'] ?? __('Situação crítica no filtro')), 'count' => 1];
+        }
+
+        return array_slice($issues, 0, 8);
+    }
+
+    /**
+     * @param  array{title: string, purpose: string, impact_note: string}  $def
+     * @param  array<string, mixed>  $ctx
+     * @param  list<array{type: string, label: string, count: int}>  $issues
+     */
+    private static function statusHelp(string $tab, array $def, array $ctx, array $issues, string $mode): string
+    {
+        $parts = [];
+        if ($mode === 'system') {
+            $parts[] = __('Consolidado do sistema: índice de conformidade, pendências de cadastro, Discrepâncias, FUNDEB e programas no mesmo recorte (cidade e ano).');
+        } else {
+            $parts[] = __('Status desta aba: calculado só com os dados visíveis no filtro atual.');
+        }
+        if (($def['impact_note'] ?? '') !== '') {
+            $parts[] = (string) $def['impact_note'];
+        }
+        if ($issues === [] && ($ctx['pendencias_cadastro'] ?? 0) > 0 && $tab !== 'municipality_health') {
+            $parts[] = __('Há :n pendência(s) municipais de cadastro — detalhe em Discrepâncias ou Diagnóstico.', [
+                'n' => (int) $ctx['pendencias_cadastro'],
+            ]);
+        }
+
+        return implode(' ', $parts);
     }
 
     /**

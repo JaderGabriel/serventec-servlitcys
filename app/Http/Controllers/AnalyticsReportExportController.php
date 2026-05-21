@@ -48,7 +48,13 @@ class AnalyticsReportExportController extends Controller
             ]);
         }
 
-        return back()
+        $redirectParams = array_merge(
+            $filters->toQueryParamsWithCity((int) $city->id),
+            ['tab' => 'municipality_health'],
+        );
+
+        return redirect()
+            ->route('dashboard.analytics', $redirectParams)
             ->with('status', $result['message'])
             ->with('pdf_export_id', $result['export']->id);
     }

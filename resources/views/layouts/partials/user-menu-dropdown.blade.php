@@ -17,8 +17,8 @@
     <x-dropdown-link :href="route('admin.artisan-commands.index')" icon="command-line" :title="__('Referência de comandos Artisan.')">
         {{ __('Comandos') }}
     </x-dropdown-link>
-    <x-dropdown-link :href="route('admin.sync-queue.index')" icon="queue-list" :title="__('Fila admin-sync e logs.')">
-        {{ __('Fila de sync') }}
+    <x-dropdown-link :href="route('admin.sync-queue.index')" icon="queue-list" :title="__('Sincronização admin e PDFs em fila.')">
+        {{ __('Filas de processamento') }}
     </x-dropdown-link>
 @endif
 
