@@ -21,7 +21,7 @@ return [
     */
 
     'product' => [
-        'version' => '2.3.0',
+        'version' => '2.3.1',
         'commit_short' => '2c8cf44',
         'commit_number' => 135,
         'revision_date' => '2026-05-21',

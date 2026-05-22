@@ -109,7 +109,7 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 | Prioridade coordenadas | Escola no i-Educar → Catálogo INEP (ArcGIS) → cache local | `map_scope` altera mensagens e totais |
 | Sem matrículas no filtro | Pode usar `geo_cache` só com posições guardadas | Não comparar totais com abas de matrícula |
 | Geo sem posição | Discrepância `escola_sem_geo` alinhada a cache + matrículas | Corrigido para não subnotificar escolas só no cache |
-| IDEB no mapa | Link Portal IDEB; **não** IDEB via ArcGIS | Evitar falsa precisão no popup |
+| IDEB no mapa | Link **QEdu** (`/escola/{inep}`) + Catálogo INEP gov.br; **não** IDEB via ArcGIS | Evitar falsa precisão no popup; URL `portalideb.org.br/resultado/escola/…` não é rota estável |
 
 **Código:** `SchoolUnitsRepository`, `InepCatalogoEscolasGeoService`.
 

@@ -247,6 +247,8 @@ Estes cálculos usam dados já carregados (i-Educar + referência FUNDEB importa
 | Censo escola exportada/fechada | **Censo** | `IeducarCensoEscolaQueries` (só i-Educar) |
 | Mapa INEP / Censo geo | Unidades Escolares | `SchoolUnitsRepository` |
 
+**Modal do mapa (Unidades escolares):** endereço via `escola`, `escola_complemento`, `escola_localizacao` e cadastro `pessoa`/`addresses`; matrículas e vagas com fallback ao **ano letivo** quando curso/turno/escola no filtro zeram o total; link externo por escola → **QEdu** (`IEDUCAR_QEDU_ESCOLA_BASE_URL`, padrão `https://www.qedu.org.br/escola/{inep}`), não `portalideb.org.br/resultado/escola/…`.
+
 ---
 
 ## 6. Fluxo operacional recomendado (produção)

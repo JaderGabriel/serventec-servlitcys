@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão actual (`main`):** **2.3.0** · commit `05a7410` (#151). Última tag: **v2.1.0** (`c3ec8b9`, #66). Histórico completo: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md).
+**Versão actual (`main`):** **2.3.1** · commit `4893801` (#155). Última tag: **v2.1.0** (`c3ec8b9`, #66). Histórico completo: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md).
 
 ## Requisitos
 
@@ -206,7 +206,8 @@ Detalhe: [docs/PERFIS_UTILIZADOR.md](docs/PERFIS_UTILIZADOR.md).
 
 | Versão | Commit | # | Notas |
 |--------|--------|---|--------|
-| **2.3.0** *(main)* | `05a7410` | 151 | VAAF ampliado, repasses Tesouro CSV, sync semanal, PDF quadros FUNDEB, Financiamentos — ver [HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md). |
+| **2.3.1** *(main)* | `4893801` | 155 | Modal mapa unidades (QEdu, endereço, métricas), FUNDEB e sync semanal — ver [HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md). |
+| **2.3.0** | `05a7410` | 151 | VAAF ampliado, repasses Tesouro CSV, sync semanal, PDF quadros FUNDEB, Financiamentos. |
 | **2.2.0** | `2c8cf44` | 135 | Matriz VAAF/VAAT, importações externas com guia de impacto, PDF comparativos, dashboard admin. |
 | **v2.1.0** | `c3ec8b9` | 66 | Sync geográfica INEP, pipeline microdados, mapa unidades. |
 | **v2.0.1** | `683510b` | 28 | Inclusão cor/raça; estabilização analytics 2.0.x. |

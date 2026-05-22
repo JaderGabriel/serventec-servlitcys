@@ -8,7 +8,7 @@ Este documento resume modelos visuais e analíticos usados em produtos públicos
 
 | Plataforma | O que destaca | Ideia reutilizável aqui |
 |------------|----------------|-------------------------|
-| **Portal IDEB (INEP)** | Séries por rede, ano de aplicação, notas de corte e download | Manter links no modal; JSON importado deve espelhar o recorte (município/rede/etapa) usado na divulgação |
+| **Portal IDEB (INEP)** | Séries por rede, ano de aplicação, notas de corte e download | Link geral no painel Desempenho; **modal do mapa** usa **QEdu** por escola (`IEDUCAR_QEDU_ESCOLA_BASE_URL`) |
 | **QEdu** | Ficha município/escola, IDEB, comparativos e evolução | Quadro por escola + gráfico comparativo LP/MAT (já suportado quando há `escola_id` no JSON) |
 | **Sala do Futuro / dashboards estaduais** | Metas, alertas por faixa de desempenho | Campos opcionais `meta.meta_nacional_lp` / metas PNE no JSON para “semáforo” futuro |
 | **Google Looker / Data Studio (secretarias)** | Painéis com filtros globais e cartões KPI | Cartões de resumo municipal + tabela por escola alinhados ao filtro de ano/escola do i-Educar |

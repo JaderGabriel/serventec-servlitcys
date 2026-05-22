@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto (`main`):** 2.3.0 · commit `05a7410` (#151) · **Última revisão deste índice:** maio/2026
+**Versão do produto (`main`):** 2.3.1 · commit `4893801` (#155) · **Última revisão deste índice:** maio/2026
 
 Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que o sistema faz hoje, **porque** certas decisões foram tomadas e **o que** está planejado implementar.
 

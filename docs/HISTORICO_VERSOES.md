@@ -1,6 +1,6 @@
 # Histórico de versões (resumo)
 
-**Versão em desenvolvimento (`main`):** **2.3.0** · maio/2026
+**Versão em desenvolvimento (`main`):** **2.3.1** · maio/2026
 
 > **Como ler:** cada linha indica a **tag ou marco**, o **commit** (hash curto Git) e o **contador** (`#N` = posição na história linear do ramo `main`, desde o primeiro commit). Links GitHub usam o repositório configurado em `DOCS_GITHUB_REPOSITORY`.
 
@@ -10,7 +10,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **2.3.0** *(main, sem tag)* | `05a7410` | **151** | mai/2026 | VAAF ampliado (perfil, matrículas, alertas FNDE); repasses CSV Tesouro; sync semanal retomável; PDF quadros FUNDEB; Financiamentos e hub importações corrigidos. |
+| **2.3.1** *(main, sem tag)* | `4893801` | **155** | mai/2026 | Modal mapa unidades: endereço (`escola_localizacao`), métricas com fallback ano letivo, link QEdu; correções FUNDEB (`CityDataConnection`) e sync semanal (checkpoint). |
+| **2.3.0** | `05a7410` | **151** | mai/2026 | VAAF ampliado (perfil, matrículas, alertas FNDE); repasses CSV Tesouro; sync semanal retomável; PDF quadros FUNDEB; Financiamentos e hub importações corrigidos. |
 | **2.2.0** | `2c8cf44` | **135** | mai/2026 | Importações externas com guia de impacto (FUNDEB/geo/SAEB); matriz VAAF/VAAT com legenda, filtros e CSV; modo replace/update FUNDEB; PDF analítico com comparativos; dashboard admin e mapas alinhados. |
 | | `48887a3` | 134 | mai/2026 | Matriz FUNDEB restaurada; apresentação matriz admin; comparativos no PDF; legenda mapa municípios. |
 | | `797efe1` | 133 | mai/2026 | Export matriz FUNDEB; repositório `yearlyMatrix`. |
@@ -77,6 +78,16 @@ Entrega focada em **bases financeiras públicas**, **sincronização semanal** e
 
 Documentação: [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md), [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md), [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md), [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
 
+### v2.3.1 — `4893801` (#155)
+
+Correções pós-2.3.0 no painel analítico e na fila admin:
+
+| Tema | Melhoria |
+|------|----------|
+| **Mapa / Unidades** | Endereço ampliado (`escola_localizacao`); matrículas/capacidade/vagas sem «0» enganoso; link **QEdu** por INEP + Catálogo gov.br. |
+| **FUNDEB** | `FundebMatriculasByYearService` usa `CityDataConnection` (aba FUNDEB/Diagnóstico). |
+| **Sync semanal** | Alias `WeeklyMassSyncCheckpoint` no autoload Composer (`compatibility_aliases.php`). |
+
 ---
 
 ## Tags Git no repositório
@@ -92,10 +103,10 @@ Documentação: [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md), [IMPORTACAO_DA
 
 ## Próxima etiqueta sugerida
 
-Ao fechar o ciclo **2.3.0** em produção:
+Ao fechar o ciclo **2.3.1** em produção:
 
 ```bash
-git tag -a v2.3.0 <commit-estável> -m "v2.3.0 — VAAF ampliado, repasses Tesouro CSV, sync semanal, PDF FUNDEB"
+git tag -a v2.3.1 <commit-estável> -m "v2.3.1 — mapa unidades, QEdu, FUNDEB e sync semanal"
 ```
 
 Atualizar neste arquivo, em [README.md](../README.md), [STATUS_PROJETO.md](STATUS_PROJETO.md) e `config/documentation.php` (`product.version`).
