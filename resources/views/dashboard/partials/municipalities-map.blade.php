@@ -1,7 +1,8 @@
 @php
-    $mapSummary = is_array($mapSummary ?? null) ? $mapSummary : ['total' => count($mapMarkers ?? []), 'by_status' => []];
+    $mapSummary = is_array($mapSummary ?? null) ? $mapSummary : ['total' => count($mapMarkers ?? []), 'by_status' => [], 'legend' => []];
     $totalOnMap = (int) ($mapSummary['total'] ?? count($mapMarkers ?? []));
-    $readyCount = (int) ($mapSummary['by_status']['ready'] ?? 0);
+    $mapLegend = is_array($mapSummary['legend'] ?? null) ? $mapSummary['legend'] : [];
+    $mapStatusColors = is_array($mapSummary['colors'] ?? null) ? $mapSummary['colors'] : \App\Support\Dashboard\MunicipalityMapStatus::colorsForJs();
 @endphp
 <section class="serv-panel overflow-hidden" aria-labelledby="home-map">
     <div class="px-5 py-4 border-b border-slate-200/90 dark:border-slate-700/90 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -11,18 +12,27 @@
                 {{ __(':total município(s) no mapa — coordenadas por escolas, IBGE ou posição na UF. Clique num ponto para anos letivos.', ['total' => number_format($totalOnMap)]) }}
             </p>
         </div>
-        <div class="flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-400">
-            <span class="tabular-nums font-medium text-slate-600 dark:text-slate-300">{{ __(':n activos', ['n' => number_format($readyCount)]) }}</span>
-            <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>{{ __('Activo') }}</span>
-            <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>{{ __('Incompleto') }}</span>
-            <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-slate-400"></span>{{ __('Inactivo') }}</span>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400" role="list" aria-label="{{ __('Legenda do mapa') }}">
+            @foreach ($mapLegend as $item)
+                <span class="inline-flex items-center gap-1.5" role="listitem" title="{{ $item['description'] ?? '' }}">
+                    <span
+                        class="h-2.5 w-2.5 rounded-full ring-1 ring-white/80 dark:ring-slate-900 shrink-0"
+                        style="background-color: {{ $item['color'] ?? '#94a3b8' }}"
+                        aria-hidden="true"
+                    ></span>
+                    <span class="text-slate-600 dark:text-slate-300">
+                        {{ $item['label'] ?? '' }}
+                        <span class="tabular-nums font-semibold text-slate-800 dark:text-slate-200">({{ number_format((int) ($item['count'] ?? 0)) }})</span>
+                    </span>
+                </span>
+            @endforeach
             <a href="{{ route('cities.create') }}" class="serv-link">{{ __('Nova cidade') }}</a>
         </div>
     </div>
 
     <div
         class="relative"
-        x-data="brazilMunicipalitiesMap(@js($mapMarkers))"
+        x-data="brazilMunicipalitiesMap(@js($mapMarkers), @js($mapStatusColors))"
         x-init="init()"
     >
         <div x-ref="map" class="serv-brazil-map" role="application" aria-label="{{ __('Mapa do Brasil com municípios cadastrados') }}"></div>
@@ -40,7 +50,22 @@
                     <div class="flex items-start justify-between gap-2">
                         <div>
                             <p class="font-semibold text-slate-900 dark:text-slate-100" x-text="active.name + ' — ' + active.uf"></p>
-                            <p class="mt-0.5 text-xs" :class="active.status === 'ready' ? 'text-emerald-600 dark:text-emerald-400' : (active.status === 'incomplete' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400')" x-text="active.status_label"></p>
+                            <p class="mt-0.5 text-xs flex items-center gap-1.5">
+                                <span
+                                    class="h-2 w-2 rounded-full shrink-0 ring-1 ring-white/80 dark:ring-slate-800"
+                                    :style="'background-color:' + (statusColors[active.status] || statusColors.inactive)"
+                                    aria-hidden="true"
+                                ></span>
+                                <span
+                                    :class="{
+                                        'text-emerald-600 dark:text-emerald-400': active.status === 'ready',
+                                        'text-amber-600 dark:text-amber-400': active.status === 'incomplete',
+                                        'text-slate-600 dark:text-slate-400': active.status === 'inactive_setup',
+                                        'text-slate-500 dark:text-slate-500': active.status === 'inactive',
+                                    }"
+                                    x-text="active.status_label"
+                                ></span>
+                            </p>
                         </div>
                         <button
                             type="button"

@@ -16,10 +16,8 @@
     <div class="px-5 py-4 border-b border-slate-200/90 dark:border-slate-700/90">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div class="min-w-0">
-                <p class="serv-eyebrow text-indigo-700/90 dark:text-indigo-300/90">{{ __('Mapa mental · Arquitectura') }}</p>
-                <h3 id="home-data-flow" class="font-display text-lg font-semibold text-serv-navy dark:text-slate-100 mt-0.5">
-                    {{ __('Fluxo de dados') }}
-                </h3>
+                <p class="serv-eyebrow text-indigo-700/90 dark:text-indigo-300/90">{{ __('Fluxo de dados · Mapa Mental') }}</p>
+                
                 <p class="text-sm text-slate-600 dark:text-slate-400 mt-1 leading-relaxed max-w-2xl">
                     {{ __('Do cadastro municipal e das fontes federais até ao motor de consultoria — leia do topo (público) ao centro (plataforma) e à base i-Educar.') }}
                 </p>
@@ -120,8 +118,11 @@
                         @foreach ($systemFlow['legend'] ?? [] as $item)
                             <li class="serv-data-flow-aside__legend-item">
                                 <span class="serv-data-flow__legend-swatch serv-data-flow__legend-swatch--{{ $item['status'] }}" aria-hidden="true"></span>
-                                <div>
-                                    <p class="serv-data-flow-aside__legend-label">{{ $item['label'] }}</p>
+                                <div class="min-w-0 flex-1">
+                                    <p class="serv-data-flow-aside__legend-label">
+                                        {{ $item['label'] }}
+                                        <span class="tabular-nums font-semibold text-slate-600 dark:text-slate-300">({{ number_format((int) ($item['count'] ?? 0)) }})</span>
+                                    </p>
                                     <p class="serv-data-flow-aside__legend-desc">{{ $item['description'] }}</p>
                                 </div>
                             </li>
@@ -145,7 +146,7 @@
                         </li>
                         <li class="flex gap-2">
                             <span class="serv-mm-tip-num serv-mm-tip-num--muted" aria-hidden="true">·</span>
-                            <span>{{ __('Pontos e bordas: verde = operacional, âmbar = a configurar, cinza = indisponível.') }}</span>
+                            <span>{{ __('Pontos no mapa: teal = operacional, âmbar = a configurar, cinza = indisponível — contagens na legenda reflectem nós e ligações.') }}</span>
                         </li>
                     </ul>
                 </div>

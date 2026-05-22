@@ -44,4 +44,28 @@ final class AdminHomeMunicipalityMapTest extends TestCase
         $this->assertStringContainsString('/dashboard/municipality-map/'.$city->id.'/school-years', $marker['school_years_url']);
         $this->assertSame('ready', $marker['status']);
     }
+
+    #[Test]
+    public function summary_legend_alinha_cores_e_contagens_com_marcadores(): void
+    {
+        City::factory()->create([
+            'name' => 'Pronta',
+            'uf' => 'BA',
+            'is_active' => true,
+            'db_host' => 'h',
+            'db_database' => 'd',
+            'db_username' => 'u',
+        ]);
+        City::factory()->create(['name' => 'Incompleta', 'uf' => 'BA', 'is_active' => true]);
+        City::factory()->create(['name' => 'Off', 'uf' => 'BA', 'is_active' => false]);
+
+        $summary = app(AdminHomeMunicipalityMap::class)->summary();
+
+        $this->assertCount(4, $summary['legend']);
+        $this->assertSame(1, $summary['by_status']['ready'] ?? 0);
+        $this->assertSame('#10b981', $summary['colors']['ready']);
+        $readyLegend = collect($summary['legend'])->firstWhere('status', 'ready');
+        $this->assertSame(1, $readyLegend['count']);
+        $this->assertSame('#10b981', $readyLegend['color']);
+    }
 }

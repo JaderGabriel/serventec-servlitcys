@@ -5,6 +5,7 @@ namespace App\Services\AdminSync;
 use App\Models\AdminSyncTask;
 use App\Models\City;
 use App\Services\CityDataConnection;
+use App\Services\Fundeb\FundebImportMode;
 use App\Services\Fundeb\FundebImportProgress;
 use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Services\Inep\SaebCsvPedagogicalImportService;
@@ -103,7 +104,13 @@ final class AdminSyncTaskRunner
         ]));
 
         $fundebLog = $this->fundebProgress($task);
-        $result = $this->fundebImport->importForCityYear($city, $ano, $useNearest, $fundebLog);
+        $result = $this->fundebImport->importForCityYear(
+            $city,
+            $ano,
+            $useNearest,
+            $fundebLog,
+            FundebImportMode::normalize($payload['import_mode'] ?? null),
+        );
 
         $progress->step(2, 2, __('Importação por município terminada.'));
 
@@ -130,6 +137,7 @@ final class AdminSyncTaskRunner
             (bool) ($payload['use_nearest_year'] ?? false),
             isset($payload['city_id']) ? (int) $payload['city_id'] : null,
             $fundebLog,
+            FundebImportMode::normalize($payload['import_mode'] ?? null),
         );
 
         $progress->step(2, 2, __('Lote FUNDEB terminado.'));
@@ -171,6 +179,7 @@ final class AdminSyncTaskRunner
             (bool) ($payload['use_nearest_year'] ?? false),
             $cityIds !== null ? array_map('intval', $cityIds) : null,
             $fundebLog,
+            FundebImportMode::normalize($payload['import_mode'] ?? null),
         );
 
         $progress->step(2, 2, __('Sincronização multi-ano terminada.'));

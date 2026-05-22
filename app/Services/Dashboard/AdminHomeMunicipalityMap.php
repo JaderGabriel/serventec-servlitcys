@@ -4,6 +4,7 @@ namespace App\Services\Dashboard;
 
 use App\Models\City;
 use App\Support\Brazil\MunicipalityMapCoordinates;
+use App\Support\Dashboard\MunicipalityMapStatus;
 
 /**
  * Marcadores para o mapa de municípios implementados no Início.
@@ -114,6 +115,8 @@ final class AdminHomeMunicipalityMap
             'total' => count($markers),
             'on_map' => count($markers),
             'by_status' => $byStatus,
+            'legend' => MunicipalityMapStatus::legendItems($byStatus),
+            'colors' => MunicipalityMapStatus::colorsForJs(),
         ];
     }
 }

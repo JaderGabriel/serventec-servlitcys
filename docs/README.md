@@ -53,6 +53,7 @@ Os restantes ficheiros são **aprofundamento** por tema. Itens de backlog que ap
 | Documento | Conteúdo |
 |-----------|----------|
 | [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md) | VAAF municipal, previsão, VAAR/VAAT, onda inclusão |
+| [COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md](COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md) | Auditoria: base local vs FNDE/MEC (piso nacional vs VAAF por município) |
 | [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) | APIs FNDE, Tesouro, Transparência — `.env` e abas |
 | [ROADMAP_BASES_CALCULOS_FINANCEIROS.md](ROADMAP_BASES_CALCULOS_FINANCEIROS.md) | Detalhe: bases públicas e motor de repasses (futuro) |
 

@@ -4,6 +4,8 @@ namespace App\Repositories;
 
 use App\Models\City;
 use App\Models\FundebMunicipioReference;
+use App\Services\Fundeb\FundebOpenDataImportService;
+use App\Support\Fundeb\FundebReferenceDisplay;
 use Illuminate\Support\Collection;
 
 class FundebMunicipioReferenceRepository
@@ -72,6 +74,56 @@ class FundebMunicipioReferenceRepository
         return strlen($ibge) === 7 ? $ibge : null;
     }
 
+    /**
+     * Remove referências do município para um ano (IBGE + city_id).
+     */
+    public function deleteForCityYear(City $city, int $ano): int
+    {
+        $ibge = self::normalizeIbge($city->ibge_municipio);
+
+        return FundebMunicipioReference::query()
+            ->where('ano', $ano)
+            ->where(function ($q) use ($city, $ibge): void {
+                $q->where('city_id', $city->id);
+                if ($ibge !== null) {
+                    $q->orWhere('ibge_municipio', $ibge);
+                }
+            })
+            ->delete();
+    }
+
+    /**
+     * @param  list<int>  $anos
+     */
+    public function deleteForBulk(?array $cityIds, array $anos): int
+    {
+        $anos = array_values(array_unique(array_map('intval', $anos)));
+        if ($anos === []) {
+            return 0;
+        }
+
+        $query = FundebMunicipioReference::query()->whereIn('ano', $anos);
+
+        if ($cityIds !== null && $cityIds !== []) {
+            $cityIds = array_values(array_unique(array_map('intval', $cityIds)));
+            $ibges = [];
+            foreach (City::query()->whereIn('id', $cityIds)->get(['id', 'ibge_municipio']) as $city) {
+                $ibge = self::normalizeIbge($city->ibge_municipio);
+                if ($ibge !== null) {
+                    $ibges[] = $ibge;
+                }
+            }
+            $query->where(function ($q) use ($cityIds, $ibges): void {
+                $q->whereIn('city_id', $cityIds);
+                if ($ibges !== []) {
+                    $q->orWhereIn('ibge_municipio', $ibges);
+                }
+            });
+        }
+
+        return (int) $query->delete();
+    }
+
     public function attachCityIdsFromIbge(): int
     {
         $updated = 0;
@@ -95,27 +147,57 @@ class FundebMunicipioReferenceRepository
     }
 
     /**
-     * Matriz município × ano com VAAF e VAAT gravados em fundeb_municipio_references.
+     * Ano de referência FUNDEB vigente e intervalo padrão (vigente + 2 anteriores).
+     *
+     * @return array{anchor: int, from: int, to: int}
+     */
+    public static function defaultMatrixYearRange(): array
+    {
+        $anchor = FundebOpenDataImportService::suggestedImportYear();
+        $from = max(2000, $anchor - 2);
+
+        return [
+            'anchor' => $anchor,
+            'from' => $from,
+            'to' => $anchor,
+        ];
+    }
+
+    /**
+     * @return array{from: int, to: int}
+     */
+    public static function normalizeMatrixYearRange(?int $from, ?int $to): array
+    {
+        $defaults = self::defaultMatrixYearRange();
+        $maxYear = (int) date('Y') + 1;
+        $to = $to ?? $defaults['to'];
+        $from = $from ?? $defaults['from'];
+        $to = max(2000, min($maxYear, (int) $to));
+        $from = max(2000, min($maxYear, (int) $from));
+        if ($from > $to) {
+            [$from, $to] = [$to, $from];
+        }
+
+        return ['from' => $from, 'to' => $to];
+    }
+
+    /**
+     * Matriz município × ano com VAAF, VAAT e classificação de fonte.
      *
      * @return array{
      *     year_from: int,
      *     year_to: int,
+     *     anchor_year: int,
      *     years: list<int>,
-     *     rows: list<array{
-     *         city_id: int,
-     *         name: string,
-     *         uf: ?string,
-     *         ibge: ?string,
-     *         has_ibge: bool,
-     *         is_active: bool,
-     *         years: array<int, array{has_reference: bool, vaaf: ?float, vaat: ?float, fonte: ?string}>
-     *     }>
+     *     legend: list<array<string, mixed>>,
+     *     rows: list<array<string, mixed>>
      * }
      */
     public function yearlyMatrix(int $yearFrom, int $yearTo): array
     {
-        $yearFrom = min($yearFrom, $yearTo);
-        $yearTo = max($yearFrom, $yearTo);
+        $range = self::normalizeMatrixYearRange($yearFrom, $yearTo);
+        $yearFrom = $range['from'];
+        $yearTo = $range['to'];
         $years = range($yearFrom, $yearTo);
 
         $cities = City::query()->orderBy('name')->get(['id', 'name', 'uf', 'ibge_municipio', 'is_active']);
@@ -127,12 +209,12 @@ class FundebMunicipioReferenceRepository
             ->whereBetween('ano', [$yearFrom, $yearTo])
             ->get(['city_id', 'ibge_municipio', 'ano', 'vaaf', 'vaat', 'fonte']) as $ref) {
             $ano = (int) $ref->ano;
-            $payload = [
-                'has_reference' => true,
-                'vaaf' => (float) $ref->vaaf,
-                'vaat' => $ref->vaat !== null ? (float) $ref->vaat : null,
-                'fonte' => $ref->fonte !== null && trim((string) $ref->fonte) !== '' ? trim((string) $ref->fonte) : null,
-            ];
+            $payload = self::enrichCell(
+                true,
+                (float) $ref->vaaf,
+                $ref->vaat !== null ? (float) $ref->vaat : null,
+                $ref->fonte !== null && trim((string) $ref->fonte) !== '' ? trim((string) $ref->fonte) : null,
+            );
             if ($ref->city_id) {
                 $refsByCity[(int) $ref->city_id][$ano] = $payload;
             }
@@ -141,18 +223,14 @@ class FundebMunicipioReferenceRepository
             }
         }
 
+        $emptyCell = self::enrichCell(false, null, null, null);
+
         $rows = [];
         foreach ($cities as $city) {
             $ibge = self::normalizeIbge($city->ibge_municipio);
             $yearCells = [];
             foreach ($years as $ano) {
-                $cell = $refsByCity[(int) $city->id][$ano] ?? ($ibge !== null ? ($refsByIbge[$ibge][$ano] ?? null) : null);
-                $yearCells[$ano] = $cell ?? [
-                    'has_reference' => false,
-                    'vaaf' => null,
-                    'vaat' => null,
-                    'fonte' => null,
-                ];
+                $yearCells[$ano] = $refsByCity[(int) $city->id][$ano] ?? ($ibge !== null ? ($refsByIbge[$ibge][$ano] ?? $emptyCell) : $emptyCell);
             }
 
             $rows[] = [
@@ -166,11 +244,49 @@ class FundebMunicipioReferenceRepository
             ];
         }
 
+        $defaults = self::defaultMatrixYearRange();
+
         return [
             'year_from' => $yearFrom,
             'year_to' => $yearTo,
+            'anchor_year' => $defaults['anchor'],
             'years' => $years,
+            'legend' => FundebReferenceDisplay::legendItems(),
             'rows' => $rows,
+        ];
+    }
+
+    /**
+     * @return array{
+     *     has_reference: bool,
+     *     vaaf: ?float,
+     *     vaat: ?float,
+     *     fonte: ?string,
+     *     display_kind: string,
+     *     display_label: string,
+     *     display_short: string,
+     *     display_title: string,
+     *     cell_class: string,
+     *     swatch_class: string,
+     *     display_icon: string
+     * }
+     */
+    private static function enrichCell(bool $hasReference, ?float $vaaf, ?float $vaat, ?string $fonte): array
+    {
+        $display = FundebReferenceDisplay::forFonte($fonte, $hasReference);
+
+        return [
+            'has_reference' => $hasReference,
+            'vaaf' => $vaaf,
+            'vaat' => $vaat,
+            'fonte' => $fonte,
+            'display_kind' => $display['kind'],
+            'display_label' => $display['label'],
+            'display_short' => $display['short'],
+            'display_title' => $display['title'],
+            'cell_class' => $display['cell_class'],
+            'swatch_class' => $display['swatch_class'],
+            'display_icon' => $display['icon'],
         ];
     }
 }

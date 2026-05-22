@@ -100,6 +100,7 @@
         'city' => $city,
         'cityIbge' => $cityIbge,
         'fundebImportYear' => $fundebImportYear,
+        'importMode' => $fundebImportMode ?? \App\Services\Fundeb\FundebImportMode::UPDATE,
     ])
 
 

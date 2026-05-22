@@ -3,6 +3,7 @@
     $colors = is_array($colors ?? null) ? $colors : config('analytics.pdf_report.colors', []);
     $primary = $colors['primary'] ?? '#0f766e';
     $secondary = $colors['secondary'] ?? '#4338ca';
+    $primaryLight = $colors['primary_light'] ?? '#ccfbf1';
     $cover = is_array($cover ?? null) ? $cover : [];
     $health = is_array($health ?? null) ? $health : [];
     $disc = is_array($discrepancies ?? null) ? $discrepancies : [];
@@ -93,6 +94,8 @@
         .pdf-footer__dev-link { color: #64748b; text-decoration: none; }
         .pdf-footer__page-slot { display: block; font-size: 7pt; color: #64748b; margin-top: 3px; min-height: 9px; }
         .muted { color: #64748b; font-size: 9pt; }
+        .legal-notice { background: #fffbeb; border-left-color: #d97706; }
+        .official-tag { display: inline-block; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.06em; color: {{ $secondary }}; font-weight: bold; margin-bottom: 4px; }
         ul.compact { margin: 4px 0; padding-left: 18px; }
         ul.compact li { margin-bottom: 4px; }
     </style>
@@ -140,62 +143,57 @@
         @endif
     </div>
 
-    @if (count($yearCmp) > 0)
-        <h2>{{ __('2. Comparativo entre anos letivos') }}</h2>
-        <table class="data">
-            <tr><th>{{ __('Ano') }}</th><th>{{ __('Matrículas activas (filtro)') }}</th><th></th></tr>
-            @foreach ($yearCmp as $row)
-                <tr>
-                    <td>{{ $row['ano'] ?? '' }}</td>
-                    <td>{{ isset($row['matriculas']) ? number_format((int) $row['matriculas'], 0, ',', '.') : '—' }}</td>
-                    <td>{{ $row['label'] ?? '' }}</td>
-                </tr>
-            @endforeach
-        </table>
-    @endif
+    @include('pdf.analytics-report.comparatives', [
+        'comparatives' => $comparatives ?? [],
+        'year_comparison' => $yearCmp,
+        'municipal_vs_state' => $munState,
+    ])
 
-    @if ($munState['available'] ?? false)
-        <h2>{{ __('3. Município × referência estadual (SAEB)') }}</h2>
-        <p class="muted">{{ $munState['note'] ?? '' }}</p>
-        <table class="data">
-            <tr>
-                <th>{{ __('Disciplina') }}</th>
-                <th>{{ __('Ano (munic.)') }}</th>
-                <th>{{ __('Município') }}</th>
-                <th>{{ __('Ano (UF)') }}</th>
-                <th>{{ __('Estado') }}</th>
-            </tr>
-            @foreach ($munState['rows'] ?? [] as $row)
-                <tr>
-                    <td>{{ $row['disciplina'] ?? '' }}</td>
-                    <td>{{ $row['ano_municipio'] ?? '' }}</td>
-                    <td>{{ $row['valor_municipio'] ?? '' }}</td>
-                    <td>{{ $row['ano_estado'] ?? '' }}</td>
-                    <td>{{ $row['valor_estado'] ?? '' }}</td>
-                </tr>
-            @endforeach
-        </table>
-    @endif
-
-    <h2>{{ __('4. Discrepâncias e impacto financeiro') }}</h2>
+    <h2>{{ __('6. Discrepâncias e impacto financeiro') }}</h2>
     <p>{{ $disc['intro'] ?? '' }}</p>
     <p class="muted">{{ $disc['funding_aviso'] ?? '' }}</p>
 
-    <h2>{{ __('5. FUNDEB e complementação') }}</h2>
-    @php $proj = is_array($fundeb['resource_projection'] ?? null) ? $fundeb['resource_projection'] : []; @endphp
+    <h2>{{ __('7. FUNDEB — previsão e complementação (VAAF / VAAT / VAAR)') }}</h2>
+    @php
+        $proj = is_array($fundeb['resource_projection'] ?? null) ? $fundeb['resource_projection'] : [];
+        $informe = is_array($fundeb['complementacao_informe'] ?? null) ? $fundeb['complementacao_informe'] : [];
+    @endphp
+    <span class="official-tag">{{ __('Referência Lei 14.113/2020 · portarias FNDE') }}</span>
     <p>{{ $proj['aviso'] ?? '' }}</p>
     @if (filled($proj['previsao_referencia_label'] ?? null))
-        <p><strong>{{ __('Previsão base') }}:</strong> {{ $proj['previsao_referencia_label'] }}</p>
+        <p><strong>{{ __('Previsão base (matrículas × VAAF)') }}:</strong> {{ $proj['previsao_referencia_label'] }}</p>
+    @endif
+    @if (is_array($proj['totais'] ?? null))
+        <table class="kpi-row">
+            <tr>
+                <td><div class="kpi-label">{{ __('Base Fundeb anual') }}</div><div class="kpi-value">@if (isset($proj['totais']['fundeb_base_anual'])) R$ {{ number_format((float) $proj['totais']['fundeb_base_anual'], 2, ',', '.') }} @else — @endif</div></td>
+                <td><div class="kpi-label">{{ __('Matrículas (filtro)') }}</div><div class="kpi-value">{{ isset($proj['matriculas']) ? number_format((int) $proj['matriculas'], 0, ',', '.') : '—' }}</div></td>
+            </tr>
+        </table>
+    @endif
+    @if (($informe['available'] ?? false) && count($informe['blocos'] ?? []) > 0)
+        <h3>{{ __('Informes por eixo (modelo consultoria municipal)') }}</h3>
+        @foreach ($informe['blocos'] as $bloco)
+            @if (is_array($bloco))
+                <div class="box">
+                    <p style="margin:0 0 4px;"><strong>{{ $bloco['titulo'] ?? '' }}</strong> — <span class="muted">{{ $bloco['status_label'] ?? '' }}</span></p>
+                    @foreach (is_array($bloco['indicadores'] ?? null) ? $bloco['indicadores'] : [] as $ind)
+                        <p style="margin:2px 0;font-size:9pt;"><strong>{{ $ind['label'] ?? '' }}:</strong> {{ $ind['value'] ?? '' }}</p>
+                    @endforeach
+                </div>
+            @endif
+        @endforeach
+        <p class="muted">{{ $informe['aviso'] ?? '' }}</p>
     @endif
 
-    <h2>{{ __('6. Financiamentos (programas complementares)') }}</h2>
+    <h2>{{ __('8. Financiamentos (programas complementares)') }}</h2>
     <p>{{ $other['intro'] ?? '' }}</p>
     @foreach (is_array($other['programs'] ?? null) ? $other['programs'] : [] as $prog)
         <h3>{{ $prog['titulo'] ?? '' }}</h3>
         <p>{{ $prog['descricao'] ?? '' }}</p>
     @endforeach
 
-    <h2>{{ __('7. Censo e cadastro') }}</h2>
+    <h2>{{ __('9. Censo e cadastro') }}</h2>
     <p>{{ $work['intro'] ?? '' }}</p>
     @php $censo = is_array($work['censo'] ?? null) ? $work['censo'] : []; @endphp
     @if ($censo['available'] ?? false)
@@ -209,7 +207,7 @@
     @endif
 
     @if (count($chartBlocks) > 0)
-        <h2>{{ __('8. Gráficos e indicadores visuais') }}</h2>
+        <h2>{{ __('10. Gráficos e indicadores visuais') }}</h2>
         @foreach ($chartBlocks as $block)
             <div class="chart-block section">
                 <p class="muted"><strong>{{ $block['section'] ?? '' }}</strong> — {{ $block['title'] ?? '' }}</p>
@@ -219,7 +217,7 @@
     @endif
 
     @if (count(is_array($health['thematic_blocks'] ?? null) ? $health['thematic_blocks'] : []) > 0)
-        <h2>{{ __('9. Leitura temática') }}</h2>
+        <h2>{{ __('11. Leitura temática') }}</h2>
         @foreach ($health['thematic_blocks'] as $block)
             @if (is_array($block))
                 <h3>{{ $block['titulo'] ?? '' }}</h3>

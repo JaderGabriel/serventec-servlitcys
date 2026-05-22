@@ -160,7 +160,7 @@
         ],
         [
             'show' => $user->canManageUsers(),
-            'title' => __('Equipa'),
+            'title' => __('Usuários'),
             'icon' => 'users',
             'tone' => 'slate',
             'routes' => ['users.*'],

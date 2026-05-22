@@ -1141,6 +1141,26 @@
         @apply bg-amber-500;
     }
 
+    .serv-mm-core__badge--off {
+        @apply bg-slate-400;
+    }
+
+    .serv-mm-core--off {
+        @apply border-slate-300/80 dark:border-slate-600/70;
+    }
+
+    .serv-mm-core__feed--off {
+        @apply border-slate-200/80 text-slate-600 dark:text-slate-400;
+    }
+
+    .serv-mm-municipal--off {
+        @apply border-slate-200/80 dark:border-slate-700/60 opacity-90;
+    }
+
+    .serv-mm-municipal--partial {
+        @apply border-amber-200/70 dark:border-amber-900/40;
+    }
+
     .serv-mm-core__step {
         @apply text-[10px] font-bold uppercase tracking-wider text-teal-800/90 dark:text-teal-300/90;
     }

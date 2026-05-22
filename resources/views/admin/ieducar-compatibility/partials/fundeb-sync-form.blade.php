@@ -1,9 +1,12 @@
 @php
+    use App\Services\Fundeb\FundebImportMode;
     $ibgeCityIds = collect($cityChoices)->where('has_ibge', true)->pluck('id')->values()->all();
+    $importMode = FundebImportMode::normalize($importMode ?? FundebImportMode::UPDATE);
 @endphp
 <div class="flex flex-col gap-4" x-data="{
     allCities: @js($selectAllCities),
     selected: @js($selectedCityIds),
+    importMode: @js($importMode),
     anoFrom: {{ $formFrom }},
     anoTo: {{ $formTo }},
     get yearCount() { return Math.max(0, this.anoTo - this.anoFrom + 1); },
@@ -25,10 +28,17 @@
             alert(@js(__('Selecione ao menos um município ou marque «Todas as cidades com IBGE».')));
             return false;
         }
-        return confirm(@js(__('Enfileirar :ops importação(ões) (:cidades município(s) × :anos ano(s))? O processamento corre na fila em segundo plano.'))
-            .replace(':ops', String(this.ops))
-            .replace(':cidades', String(this.cityCount))
-            .replace(':anos', String(this.yearCount)));
+        const modeHint = this.importMode === 'replace'
+            ? @js(__('Modo: apagar referências do âmbito e buscar novamente na FNDE/API.'))
+            : @js(__('Modo: atualizar só quando VAAF/VAAT/VAAR diferirem do gravado.'));
+        return confirm(
+            @js(__('Enfileirar :ops importação(ões) (:cidades município(s) × :anos ano(s))?'))
+                .replace(':ops', String(this.ops))
+                .replace(':cidades', String(this.cityCount))
+                .replace(':anos', String(this.yearCount))
+            + '\n\n' + modeHint
+            + '\n' + @js(__('O processamento corre na fila em segundo plano.'))
+        );
     }
 }">
     <form method="post" action="{{ route('admin.ieducar-compatibility.fundeb-sync-all') }}" class="rounded-lg border-2 border-teal-600 dark:border-teal-500 p-4 bg-teal-100/50 dark:bg-teal-950/40 space-y-4" @submit.prevent="if (confirmSubmit()) $el.submit()">
@@ -43,8 +53,26 @@
 
         <div>
             <p class="text-sm font-semibold text-teal-950 dark:text-teal-50">{{ __('Importação FUNDEB') }}</p>
-            <p class="text-xs text-teal-900/90 dark:text-teal-200/80 mt-1">{{ __('Escolha anos e municípios; cada envio vai para a fila. Resultado na tarefa concluída.') }}</p>
+            <p class="text-xs text-teal-900/90 dark:text-teal-200/80 mt-1">{{ __('Escolha anos, municípios e como tratar referências já gravadas. Cada envio vai para a fila.') }}</p>
         </div>
+
+        <fieldset class="rounded-lg border border-teal-200/70 dark:border-teal-800/70 p-3 bg-white/50 dark:bg-gray-900/30 space-y-2">
+            <legend class="text-xs font-semibold text-teal-900 dark:text-teal-100 px-1">{{ __('Referências existentes') }}</legend>
+            <label class="flex items-start gap-2 text-sm text-gray-800 dark:text-gray-200 cursor-pointer">
+                <input type="radio" name="import_mode" value="{{ FundebImportMode::UPDATE }}" class="mt-1 border-gray-300 text-teal-600" x-model="importMode">
+                <span>
+                    <span class="font-medium">{{ __('Atualizar se diferente') }}</span>
+                    <span class="block text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{ __('Mantém o registo quando VAAF, VAAT e complementação VAAR já coincidem com a fonte; grava só se o município/ano trouxer valores distintos.') }}</span>
+                </span>
+            </label>
+            <label class="flex items-start gap-2 text-sm text-gray-800 dark:text-gray-200 cursor-pointer">
+                <input type="radio" name="import_mode" value="{{ FundebImportMode::REPLACE }}" class="mt-1 border-gray-300 text-teal-600" x-model="importMode">
+                <span>
+                    <span class="font-medium">{{ __('Apagar e buscar novamente') }}</span>
+                    <span class="block text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{ __('Remove referências do município e dos anos seleccionados antes de importar (útil para limpar pisos nacionais ou dados antigos).') }}</span>
+                </span>
+            </label>
+        </fieldset>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <fieldset class="space-y-3 rounded-lg border border-teal-200/70 dark:border-teal-800/70 p-3 bg-white/50 dark:bg-gray-900/30">
@@ -104,6 +132,7 @@
         <div class="flex flex-col lg:flex-row flex-wrap gap-4 lg:items-end mt-3">
             <form method="post" action="{{ route('admin.ieducar-compatibility.fundeb-import') }}" class="flex flex-wrap items-end gap-3">
                 @csrf
+                <input type="hidden" name="import_mode" :value="importMode">
                 @if ($city ?? null)
                     <input type="hidden" name="city_id" value="{{ $city->id }}">
                 @endif
@@ -122,6 +151,7 @@
 
             <form method="post" action="{{ route('admin.ieducar-compatibility.fundeb-import-bulk') }}" class="flex flex-wrap items-end gap-3">
                 @csrf
+                <input type="hidden" name="import_mode" :value="importMode">
                 <input type="hidden" name="ano" value="{{ $fundebImportYear }}">
                 <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 max-w-[11rem] leading-tight">
                     <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-teal-600 shrink-0">

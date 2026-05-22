@@ -3,7 +3,6 @@
 namespace App\Services\Analytics;
 
 use App\Models\City;
-use App\Models\SaebIndicatorPoint;
 use App\Repositories\Ieducar\AttendanceRepository;
 use App\Repositories\Ieducar\DiscrepanciesRepository;
 use App\Repositories\Ieducar\EnrollmentRepository;
@@ -15,12 +14,10 @@ use App\Repositories\Ieducar\OtherFundingRepository;
 use App\Repositories\Ieducar\OverviewRepository;
 use App\Repositories\Ieducar\PerformanceRepository;
 use App\Repositories\Ieducar\WorkDoneRepository;
-use App\Services\CityDataConnection;
 use App\Support\Analytics\AnalyticsReportChartSvg;
+use App\Support\Analytics\AnalyticsReportComparatives;
 use App\Support\Analytics\PdfBrandAssets;
 use App\Support\Dashboard\IeducarFilterState;
-use App\Support\Ieducar\MatriculaChartQueries;
-use Illuminate\Support\Facades\DB;
 
 final class AnalyticsFullReportAssembler
 {
@@ -37,7 +34,7 @@ final class AnalyticsFullReportAssembler
         private NetworkRepository $network,
         private AttendanceRepository $attendance,
         private AnalyticsReportCoverBuilder $coverBuilder,
-        private CityDataConnection $cityData,
+        private AnalyticsReportComparatives $comparatives,
     ) {}
 
     /**
@@ -61,6 +58,7 @@ final class AnalyticsFullReportAssembler
         $health = $this->health->snapshot($city, $filters);
 
         $charts = $this->collectCharts($health, $disc, $fundeb, $other, $work, $overview, $performance, $enrollment);
+        $comparativeData = $this->comparatives->build($city, $filters, $fundeb, $health);
 
         return [
             'generated_at' => now()->format('d/m/Y H:i'),
@@ -80,8 +78,9 @@ final class AnalyticsFullReportAssembler
             'performance' => $performance,
             'inclusion' => $inclusion,
             'network' => $network,
-            'year_comparison' => $this->yearComparison($city, $filters),
-            'municipal_vs_state' => $this->municipalVsState($city, $filters),
+            'comparatives' => $comparativeData,
+            'year_comparison' => $comparativeData['year_comparison_enriched'],
+            'municipal_vs_state' => $comparativeData['municipal_vs_state_enriched'],
             'charts' => $charts,
             'brand' => PdfBrandAssets::enrich(config('analytics.pdf_report.brand', [])),
             'colors' => config('analytics.pdf_report.colors', []),
@@ -146,111 +145,6 @@ final class AnalyticsFullReportAssembler
         }
 
         return $out;
-    }
-
-    /**
-     * @return list<array{ano: string, matriculas: ?int, label: string}>
-     */
-    private function yearComparison(City $city, IeducarFilterState $filters): array
-    {
-        if (! $filters->hasYearSelected() || $filters->isAllSchoolYears()) {
-            return [];
-        }
-
-        $current = (int) $filters->ano_letivo;
-        $years = array_values(array_unique([$current, $current - 1, $current - 2]));
-        sort($years);
-        $rows = [];
-
-        foreach ($years as $year) {
-            if ($year < 2000) {
-                continue;
-            }
-            $f = new IeducarFilterState(
-                ano_letivo: (string) $year,
-                escola_id: $filters->escola_id,
-                curso_id: $filters->curso_id,
-                turno_id: $filters->turno_id,
-            );
-            $mat = null;
-            try {
-                $mat = $this->cityData->run($city, fn ($db) => MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $f));
-            } catch (\Throwable) {
-                $mat = null;
-            }
-            $ov = $this->overview->summary($city, $f);
-            $rows[] = [
-                'ano' => (string) $year,
-                'matriculas' => $mat ?? (isset($ov['kpis']['matriculas']) ? (int) $ov['kpis']['matriculas'] : null),
-                'label' => $year === $current ? __('Ano filtrado') : __('Comparativo'),
-            ];
-        }
-
-        return $rows;
-    }
-
-    /**
-     * @return array{available: bool, rows: list<array<string, string>>, note: ?string}
-     */
-    private function municipalVsState(City $city, IeducarFilterState $filters): array
-    {
-        $ibge = filled($city->ibge_municipio) ? str_pad(preg_replace('/\D/', '', (string) $city->ibge_municipio), 7, '0', STR_PAD_LEFT) : null;
-        if ($ibge === null) {
-            return [
-                'available' => false,
-                'rows' => [],
-                'note' => __('Código IBGE do município não configurado na cidade.'),
-            ];
-        }
-
-        $maxYear = $filters->hasYearSelected() && ! $filters->isAllSchoolYears()
-            ? (int) $filters->ano_letivo
-            : (int) date('Y');
-
-        $munPoints = SaebIndicatorPoint::query()
-            ->where('ibge_municipio', $ibge)
-            ->where('ano', '<=', $maxYear)
-            ->whereIn('disciplina', ['lp', 'mat', 'Língua Portuguesa', 'Matemática'])
-            ->orderByDesc('ano')
-            ->limit(20)
-            ->get();
-
-        $uf = strtoupper(trim((string) ($city->uf ?? '')));
-        $stateQuery = SaebIndicatorPoint::query()
-            ->where('ano', '<=', $maxYear)
-            ->whereNull('city_id')
-            ->orderByDesc('ano')
-            ->limit(40);
-        if ($uf !== '' && DB::connection()->getDriverName() === 'pgsql') {
-            $stateQuery->whereRaw('raw_point::text ilike ?', ['%'.$uf.'%']);
-        }
-        $statePoints = $stateQuery->get();
-
-        $rows = [];
-        foreach (['lp' => 'Língua Portuguesa', 'mat' => 'Matemática'] as $disc => $label) {
-            $m = $munPoints->first(fn ($p) => in_array((string) $p->disciplina, [$disc, $label], true));
-            $s = $statePoints->first(fn ($p) => in_array((string) $p->disciplina, [$disc, $label], true)
-                && (str_contains(strtolower((string) json_encode($p->raw_point)), 'uf')
-                    || str_contains(strtolower((string) json_encode($p->raw_point)), 'estado')));
-            if ($m === null && $s === null) {
-                continue;
-            }
-            $rows[] = [
-                'disciplina' => $label,
-                'ano_municipio' => $m !== null ? (string) $m->ano : '—',
-                'valor_municipio' => $m !== null && $m->valor !== null ? number_format((float) $m->valor, 1, ',', '.') : '—',
-                'ano_estado' => $s !== null ? (string) $s->ano : '—',
-                'valor_estado' => $s !== null && $s->valor !== null ? number_format((float) $s->valor, 1, ',', '.') : '—',
-            ];
-        }
-
-        return [
-            'available' => $rows !== [],
-            'rows' => $rows,
-            'note' => $rows === []
-                ? __('Importe séries SAEB municipais e estaduais em Admin → Sincronizações → Pedagógicas para preencher este quadro.')
-                : __('Valores da tabela saeb_indicator_points (rede municipal × referência estadual quando disponível na importação).'),
-        ];
     }
 
     /**

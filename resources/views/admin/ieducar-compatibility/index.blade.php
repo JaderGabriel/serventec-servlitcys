@@ -85,6 +85,9 @@
 
             @include('admin.ieducar-compatibility.partials.fundeb-yearly-matrix', [
                 'fundebYearlyMatrix' => $fundebYearlyMatrix ?? [],
+                'fundebMatrixFrom' => $fundebMatrixFrom ?? null,
+                'fundebMatrixTo' => $fundebMatrixTo ?? null,
+                'selectClass' => $selectClass,
                 'fmtBrl' => $fmtBrl,
             ])
 

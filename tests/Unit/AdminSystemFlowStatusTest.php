@@ -24,6 +24,8 @@ final class AdminSystemFlowStatusTest extends TestCase
         $this->assertArrayHasKey('legend', $diagram);
         $this->assertCount(3, $diagram['legend']);
         $this->assertNotEmpty($diagram['legend'][0]['description'] ?? '');
+        $legendTotal = array_sum(array_column($diagram['legend'], 'count'));
+        $this->assertSame(count($diagram['nodes']) + count($diagram['edges']), $legendTotal);
         $this->assertArrayHasKey('nodes', $diagram);
         $this->assertArrayHasKey('edges', $diagram);
         $this->assertGreaterThanOrEqual(5, count($diagram['nodes']));

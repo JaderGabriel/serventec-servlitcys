@@ -12,9 +12,9 @@ final class AdminSyncTaskExplainer
         $key = $task->domain.'::'.$task->task_key;
 
         return match ($key) {
-            'fundeb::import_city_year' => __('Importa referências FUNDEB (VAAF/VAAT/VAAR) de uma cidade e um ano, via API ou JSON configurado.'),
+            'fundeb::import_city_year' => __('Importa referências FUNDEB (VAAF/VAAT/VAAR) de uma cidade e um ano. Modo «atualizar» só grava se diferir; «apagar» remove o existente no âmbito antes de buscar.'),
             'fundeb::import_bulk_year' => __('Importação FUNDEB em lote para um ano (uma cidade ou todas com IBGE).'),
-            'fundeb::sync_all_years' => __('Sincroniza vários anos FUNDEB para os municípios seleccionados (pode demorar).'),
+            'fundeb::sync_all_years' => __('Sincroniza vários anos FUNDEB para os municípios seleccionados. Respeita o modo de importação (atualizar ou apagar e buscar).'),
             'fundeb::new_city_auto' => __('Disparado ao guardar cidade: preenche anos FUNDEB por defeito para o novo IBGE.'),
             'geo::ieducar' => __('Lê unidades no i-Educar municipal e grava/atualiza coordenadas em school_unit_geos.'),
             'geo::microdados' => __('Importa cadastro de escolas INEP (microdados) e opcionalmente mapeia coordenadas.'),

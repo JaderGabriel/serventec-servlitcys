@@ -8,6 +8,7 @@ use App\Models\City;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\CityDataConnection;
+use App\Services\Fundeb\FundebImportMode;
 use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\FundebMunicipalReferenceResolver;
@@ -15,7 +16,7 @@ use App\Support\Ieducar\IeducarCompatibilityProbe;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse as SymfonyStreamedResponse;
 
 class IeducarCompatibilityController extends Controller
 {
@@ -91,6 +92,7 @@ class IeducarCompatibilityController extends Controller
             ];
         })->all();
         $syncForm = session('fundeb_sync_form', []);
+        $fundebImportMode = FundebImportMode::normalize($syncForm['import_mode'] ?? FundebImportMode::UPDATE);
         $fundebSelectedCityIds = is_array($syncForm['city_ids'] ?? null)
             ? array_map('intval', $syncForm['city_ids'])
             : array_values(array_filter(array_map(
@@ -100,6 +102,15 @@ class IeducarCompatibilityController extends Controller
         $fundebSelectAllCities = ! array_key_exists('all_cities', $syncForm)
             ? true
             : (bool) $syncForm['all_cities'];
+
+        $matrixRange = FundebMunicipioReferenceRepository::normalizeMatrixYearRange(
+            $request->filled('fundeb_matrix_from') ? (int) $request->input('fundeb_matrix_from') : null,
+            $request->filled('fundeb_matrix_to') ? (int) $request->input('fundeb_matrix_to') : null,
+        );
+        $fundebYearlyMatrix = $this->fundebReferences->yearlyMatrix(
+            $matrixRange['from'],
+            $matrixRange['to'],
+        );
 
         return view('admin.ieducar-compatibility.index', [
             'cities' => $cities,
@@ -121,20 +132,22 @@ class IeducarCompatibilityController extends Controller
             'fundebCityChoices' => $fundebCityChoices,
             'fundebSelectedCityIds' => $fundebSelectedCityIds,
             'fundebSelectAllCities' => $fundebSelectAllCities,
-            'fundebYearlyMatrix' => $this->fundebReferences->yearlyMatrix(2022, 2026),
+            'fundebImportMode' => $fundebImportMode,
+            'fundebYearlyMatrix' => $fundebYearlyMatrix,
+            'fundebMatrixFrom' => $matrixRange['from'],
+            'fundebMatrixTo' => $matrixRange['to'],
         ]);
     }
 
-    public function exportFundebMatrix(Request $request): StreamedResponse
+    public function exportFundebMatrix(Request $request): SymfonyStreamedResponse
     {
-        $from = max(2000, (int) $request->input('from', 2022));
-        $to = min((int) date('Y') + 1, (int) $request->input('to', 2026));
-        if ($from > $to) {
-            [$from, $to] = [$to, $from];
-        }
+        $range = FundebMunicipioReferenceRepository::normalizeMatrixYearRange(
+            $request->filled('from') ? (int) $request->input('from') : null,
+            $request->filled('to') ? (int) $request->input('to') : null,
+        );
 
-        $matrix = $this->fundebReferences->yearlyMatrix($from, $to);
-        $filename = sprintf('fundeb-vaaf-vaat-%d-%d.csv', $from, $to);
+        $matrix = $this->fundebReferences->yearlyMatrix($range['from'], $range['to']);
+        $filename = sprintf('fundeb-vaaf-vaat-%d-%d.csv', $range['from'], $range['to']);
 
         return response()->streamDownload(function () use ($matrix): void {
             $out = fopen('php://output', 'w');
@@ -147,6 +160,7 @@ class IeducarCompatibilityController extends Controller
             foreach ($matrix['years'] as $y) {
                 $header[] = __('VAAF :ano', ['ano' => $y]);
                 $header[] = __('VAAT :ano', ['ano' => $y]);
+                $header[] = __('Tipo :ano', ['ano' => $y]);
             }
             fputcsv($out, $header, ';');
 
@@ -165,6 +179,9 @@ class IeducarCompatibilityController extends Controller
                     $line[] = ($cell['vaat'] ?? null) !== null
                         ? number_format((float) $cell['vaat'], 2, '.', '')
                         : '';
+                    $line[] = ($cell['has_reference'] ?? false)
+                        ? (string) ($cell['display_label'] ?? '')
+                        : '';
                 }
                 fputcsv($out, $line, ';');
             }
@@ -181,6 +198,7 @@ class IeducarCompatibilityController extends Controller
             'city_id' => 'required|integer|exists:cities,id',
             'ano' => 'required|integer|min:2000|max:'.((int) date('Y') + 1),
             'use_nearest_year' => 'sometimes|boolean',
+            'import_mode' => 'sometimes|string|in:'.FundebImportMode::REPLACE.','.FundebImportMode::UPDATE,
         ]);
 
         $city = City::query()->findOrFail((int) $validated['city_id']);
@@ -192,6 +210,7 @@ class IeducarCompatibilityController extends Controller
                 'city_id' => $city->id,
                 'ano' => (int) $validated['ano'],
                 'use_nearest_year' => $request->boolean('use_nearest_year'),
+                'import_mode' => FundebImportMode::normalize($validated['import_mode'] ?? null),
             ],
             $city->id,
         );
@@ -201,6 +220,7 @@ class IeducarCompatibilityController extends Controller
                 'city_id' => $city->id,
                 'fundeb_ano' => (int) $validated['ano'],
             ])
+            ->with('fundeb_sync_form', ['import_mode' => FundebImportMode::normalize($validated['import_mode'] ?? null)])
             ->with('admin_sync_queued', [
                 'task_id' => $task->id,
                 'message' => AdminSyncQueueService::flashQueuedMessage($task),
@@ -213,6 +233,7 @@ class IeducarCompatibilityController extends Controller
             'ano' => 'required|integer|min:2000|max:'.((int) date('Y') + 1),
             'use_nearest_year' => 'sometimes|boolean',
             'city_id' => 'nullable|integer|exists:cities,id',
+            'import_mode' => 'sometimes|string|in:'.FundebImportMode::REPLACE.','.FundebImportMode::UPDATE,
         ]);
 
         $cityId = isset($validated['city_id']) ? (int) $validated['city_id'] : null;
@@ -227,6 +248,7 @@ class IeducarCompatibilityController extends Controller
                 'ano' => (int) $validated['ano'],
                 'use_nearest_year' => $request->boolean('use_nearest_year'),
                 'city_id' => $cityId,
+                'import_mode' => FundebImportMode::normalize($validated['import_mode'] ?? null),
             ],
             $cityId,
         );
@@ -236,6 +258,7 @@ class IeducarCompatibilityController extends Controller
                 'city_id' => $validated['city_id'] ?? $request->input('city_id'),
                 'fundeb_ano' => (int) $validated['ano'],
             ])
+            ->with('fundeb_sync_form', ['import_mode' => FundebImportMode::normalize($validated['import_mode'] ?? null)])
             ->with('admin_sync_queued', [
                 'task_id' => $task->id,
                 'message' => AdminSyncQueueService::flashQueuedMessage($task),
@@ -254,6 +277,7 @@ class IeducarCompatibilityController extends Controller
             'city_ids' => 'nullable|array',
             'city_ids.*' => 'integer|exists:cities,id',
             'city_id' => 'nullable|integer|exists:cities,id',
+            'import_mode' => 'required|string|in:'.FundebImportMode::REPLACE.','.FundebImportMode::UPDATE,
         ]);
 
         if ((int) $validated['ano_from'] > (int) $validated['ano_to']) {
@@ -285,11 +309,14 @@ class IeducarCompatibilityController extends Controller
                 ->with('fundeb_import_error', __('Nenhum ano elegível para sincronização. Ajuste o intervalo ou IEDUCAR_FUNDEB_SYNC_YEARS.'));
         }
 
+        $importMode = FundebImportMode::normalize($validated['import_mode']);
+
         $syncForm = [
             'all_cities' => $request->boolean('all_cities'),
             'city_ids' => $cityIds ?? [],
             'ano_from' => (int) $validated['ano_from'],
             'ano_to' => (int) $validated['ano_to'],
+            'import_mode' => $importMode,
         ];
 
         $cityIdForLabel = $request->input('city_id');
@@ -313,6 +340,7 @@ class IeducarCompatibilityController extends Controller
                 'include_cached_years' => $request->boolean('include_cached_years', true),
                 'include_database_years' => $request->boolean('include_database_years', true),
                 'city_ids' => $cityIds,
+                'import_mode' => $importMode,
             ],
             $cityIdForLabel !== null && $cityIdForLabel !== '' ? (int) $cityIdForLabel : null,
         );

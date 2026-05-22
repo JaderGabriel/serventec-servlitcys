@@ -145,6 +145,7 @@ final class AdminSystemFlowStatus
             array_column(array_filter($nodes, fn (array $n): bool => ($n['zone'] ?? '') === 'external'), 'status'),
         );
         $summary = $this->buildSummary($statuses, $citiesReady, $citiesActive);
+        $statusCounts = $this->statusCounts($nodes, $edges);
 
         return [
             'summary' => $summary,
@@ -167,22 +168,53 @@ final class AdminSystemFlowStatus
             ],
             'nodes' => $nodes,
             'edges' => $edges,
-            'legend' => [
-                [
-                    'status' => 'ok',
-                    'label' => __('Operacional'),
-                    'description' => __('Integração activa; dados ou ligação disponíveis para o recorte actual.'),
-                ],
-                [
-                    'status' => 'partial',
-                    'label' => __('A configurar'),
-                    'description' => __('Chaves no .env em falta ou apenas parte dos municípios com base pronta.'),
-                ],
-                [
-                    'status' => 'off',
-                    'label' => __('Indisponível'),
-                    'description' => __('Sem município activo, ligação remota falhou ou fonte desactivada.'),
-                ],
+            'legend' => $this->legendItems($statusCounts),
+        ];
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $nodes
+     * @param  list<array<string, mixed>>  $edges
+     * @return array{ok: int, partial: int, off: int}
+     */
+    private function statusCounts(array $nodes, array $edges): array
+    {
+        $counts = ['ok' => 0, 'partial' => 0, 'off' => 0];
+        foreach (array_merge($nodes, $edges) as $item) {
+            $st = (string) ($item['status'] ?? 'partial');
+            if (! isset($counts[$st])) {
+                $counts[$st] = 0;
+            }
+            $counts[$st]++;
+        }
+
+        return $counts;
+    }
+
+    /**
+     * @param  array{ok: int, partial: int, off: int}  $counts
+     * @return list<array{status: string, label: string, description: string, count: int}>
+     */
+    private function legendItems(array $counts): array
+    {
+        return [
+            [
+                'status' => 'ok',
+                'label' => __('Operacional'),
+                'description' => __('Integração activa; dados ou ligação disponíveis para o recorte actual.'),
+                'count' => (int) ($counts['ok'] ?? 0),
+            ],
+            [
+                'status' => 'partial',
+                'label' => __('A configurar'),
+                'description' => __('Chaves no .env em falta ou apenas parte dos municípios com base pronta.'),
+                'count' => (int) ($counts['partial'] ?? 0),
+            ],
+            [
+                'status' => 'off',
+                'label' => __('Indisponível'),
+                'description' => __('Sem município activo, ligação remota falhou ou fonte desactivada.'),
+                'count' => (int) ($counts['off'] ?? 0),
             ],
         ];
     }

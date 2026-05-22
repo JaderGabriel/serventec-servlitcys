@@ -7,8 +7,11 @@ use App\Models\FundebMunicipioReference;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\CityDataConnection;
 use App\Services\Fundeb\FundebFndeReceitaCsvService;
+use App\Services\Fundeb\FundebImportMode;
+use App\Services\Fundeb\FundebImportProgress;
 use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Support\Fundeb\FundebReferenceSource;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
@@ -76,6 +79,7 @@ final class FundebOpenDataImportServiceTest extends TestCase
         $saved->id = 99;
 
         $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $repo->shouldReceive('findForCityYear')->with($city, 2024)->andReturn(null);
         $repo->shouldReceive('upsert')
             ->once()
             ->with($city, 2024, Mockery::on(static fn (array $d) => $d['vaaf'] === 5120.50 && $d['vaat'] === 4800.0))
@@ -95,7 +99,7 @@ final class FundebOpenDataImportServiceTest extends TestCase
             'ieducar.fundeb.open_data.resource_id' => '',
         ]);
 
-        Http::fake(function (\Illuminate\Http\Client\Request $request) {
+        Http::fake(function (Request $request) {
             if (str_contains($request->url(), '/2024')) {
                 return Http::response([], 404);
             }
@@ -118,6 +122,7 @@ final class FundebOpenDataImportServiceTest extends TestCase
         $saved->id = 100;
 
         $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $repo->shouldReceive('findForCityYear')->with($city, 2023)->andReturn(null);
         $repo->shouldReceive('upsert')
             ->once()
             ->with($city, 2023, Mockery::on(static fn (array $d) => $d['vaaf'] === 5050.0))
@@ -169,6 +174,7 @@ final class FundebOpenDataImportServiceTest extends TestCase
         $saved->id = 101;
 
         $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $repo->shouldReceive('findForCityYear')->with($city, 2024)->andReturn(null);
         $repo->shouldReceive('upsert')->once()->andReturn($saved);
 
         $service = $this->makeService($repo);
@@ -273,6 +279,7 @@ final class FundebOpenDataImportServiceTest extends TestCase
         $saved->id = 103;
 
         $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $repo->shouldReceive('findForCityYear')->with($city, 2024)->andReturn(null);
         $repo->shouldReceive('upsert')
             ->once()
             ->with($city, 2024, Mockery::on(static fn (array $d) => $d['vaaf'] === 5559.73 && $d['fonte'] === 'referencia_nacional_config'))
@@ -301,9 +308,10 @@ final class FundebOpenDataImportServiceTest extends TestCase
         $saved->id = 1;
 
         $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $repo->shouldReceive('findForCityYear')->with($city, 2024)->andReturn(null);
         $repo->shouldReceive('upsert')->once()->andReturn($saved);
 
-        $progress = new \App\Services\Fundeb\FundebImportProgress();
+        $progress = new FundebImportProgress;
         $service = $this->makeService($repo);
         $service->importForCityYear($city, 2024, false, $progress);
 
@@ -392,6 +400,7 @@ final class FundebOpenDataImportServiceTest extends TestCase
         $saved->id = 200;
 
         $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $repo->shouldReceive('findForCityYear')->with($city, 2024)->andReturn(null);
         $repo->shouldReceive('upsert')
             ->once()
             ->with($city, 2024, Mockery::on(static fn (array $d) => $d['vaaf'] === 6000.0
@@ -401,5 +410,74 @@ final class FundebOpenDataImportServiceTest extends TestCase
         $result = $this->makeService($repo, $fnde, $cityData)->importForCityYear($city, 2024, false);
 
         $this->assertTrue($result['success']);
+    }
+
+    #[Test]
+    public function modo_update_ignora_quando_valores_iguais(): void
+    {
+        config([
+            'ieducar.fundeb.open_data.json_url' => 'https://api.example/fundeb/{ibge}/{ano}',
+            'ieducar.fundeb.open_data.resource_id' => '',
+        ]);
+
+        Http::fake([
+            'api.example/*' => Http::response([
+                ['codigo_ibge' => '2910800', 'ano' => 2024, 'vaaf' => 5120.50, 'vaat' => 4800.0, 'fonte' => 'api_ckan_fnde'],
+            ], 200),
+        ]);
+
+        $city = new City(['id' => 1, 'name' => 'Teste', 'ibge_municipio' => '2910800']);
+        $existing = new FundebMunicipioReference([
+            'ibge_municipio' => '2910800',
+            'ano' => 2024,
+            'vaaf' => 5120.50,
+            'vaat' => 4800.0,
+            'complementacao_vaar' => null,
+            'fonte' => 'api_ckan_fnde',
+            'imported_at' => now(),
+        ]);
+        $existing->id = 50;
+
+        $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $repo->shouldReceive('findForCityYear')->with($city, 2024)->andReturn($existing);
+        $repo->shouldReceive('upsert')->never();
+
+        $result = $this->makeService($repo)->importForCityYear($city, 2024, false, null, FundebImportMode::UPDATE);
+
+        $this->assertTrue($result['success']);
+        $this->assertTrue($result['unchanged'] ?? false);
+    }
+
+    #[Test]
+    public function modo_replace_apaga_antes_de_gravar(): void
+    {
+        config([
+            'ieducar.fundeb.open_data.json_url' => 'https://api.example/fundeb/{ibge}/{ano}',
+            'ieducar.fundeb.open_data.resource_id' => '',
+        ]);
+
+        Http::fake([
+            'api.example/*' => Http::response([
+                ['codigo_ibge' => '2910800', 'ano' => 2024, 'vaaf' => 5200.0],
+            ], 200),
+        ]);
+
+        $city = new City(['id' => 1, 'name' => 'Teste', 'ibge_municipio' => '2910800']);
+        $saved = new FundebMunicipioReference([
+            'ibge_municipio' => '2910800',
+            'ano' => 2024,
+            'vaaf' => 5200.0,
+            'fonte' => 'api_ckan_fnde',
+        ]);
+        $saved->id = 51;
+
+        $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $repo->shouldReceive('deleteForCityYear')->once()->with($city, 2024)->andReturn(1);
+        $repo->shouldReceive('upsert')->once()->andReturn($saved);
+
+        $result = $this->makeService($repo)->importForCityYear($city, 2024, false, null, FundebImportMode::REPLACE);
+
+        $this->assertTrue($result['success']);
+        $this->assertFalse($result['unchanged'] ?? false);
     }
 }

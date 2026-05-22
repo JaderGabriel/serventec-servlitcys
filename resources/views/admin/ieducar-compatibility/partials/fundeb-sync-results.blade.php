@@ -43,6 +43,12 @@
                 <p class="text-lg font-semibold tabular-nums text-emerald-800 dark:text-emerald-200">{{ $summary['ok_count'] ?? count($okRows) }}</p>
                 <p class="text-[10px] text-emerald-700/80">{{ __(':n município(s)', ['n' => $summary['unique_cities_ok'] ?? 0]) }}</p>
             </div>
+            @if (($summary['unchanged_count'] ?? 0) > 0)
+                <div class="bg-slate-50 dark:bg-slate-950/30 px-3 py-3 text-center">
+                    <p class="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-400">{{ __('Inalterados') }}</p>
+                    <p class="text-lg font-semibold tabular-nums text-slate-800 dark:text-slate-200">{{ $summary['unchanged_count'] }}</p>
+                </div>
+            @endif
             <div class="bg-red-50 dark:bg-red-950/30 px-3 py-3 text-center">
                 <p class="text-[10px] uppercase tracking-wide text-red-700 dark:text-red-300">{{ __('Falhas') }}</p>
                 <p class="text-lg font-semibold tabular-nums text-red-800 dark:text-red-200">{{ $summary['failed_count'] ?? count($failedRows) }}</p>

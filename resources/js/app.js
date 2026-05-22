@@ -102,8 +102,8 @@ document.addEventListener("alpine:init", () => {
         createSchoolUnitsMap(markers, footnote, options),
     );
 
-    Alpine.data("brazilMunicipalitiesMap", (markers) =>
-        createBrazilMunicipalitiesMap(markers),
+    Alpine.data("brazilMunicipalitiesMap", (markers, statusColors = null) =>
+        createBrazilMunicipalitiesMap(markers, statusColors),
     );
 
     Alpine.data(

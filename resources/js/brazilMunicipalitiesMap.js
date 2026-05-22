@@ -1,18 +1,24 @@
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-const STATUS_COLORS = {
+const DEFAULT_STATUS_COLORS = {
     ready: "#10b981",
     incomplete: "#f59e0b",
     inactive_setup: "#64748b",
     inactive: "#94a3b8",
 };
 
-export default function createBrazilMunicipalitiesMap(markers = []) {
+export default function createBrazilMunicipalitiesMap(markers = [], statusColors = null) {
+    const colors =
+        statusColors && typeof statusColors === "object"
+            ? { ...DEFAULT_STATUS_COLORS, ...statusColors }
+            : DEFAULT_STATUS_COLORS;
+
     return {
         map: null,
         layer: null,
         markers: Array.isArray(markers) ? markers : [],
+        statusColors: colors,
         active: null,
         tooltipPinned: false,
         tooltipStyle: "",
@@ -54,7 +60,7 @@ export default function createBrazilMunicipalitiesMap(markers = []) {
 
                 const circle = L.circleMarker([lat, lng], {
                     radius,
-                    fillColor: STATUS_COLORS[m.status] || "#64748b",
+                    fillColor: colors[m.status] || colors.inactive,
                     color: "#ffffff",
                     weight: count > 30 ? 1.5 : 2,
                     opacity: 1,
