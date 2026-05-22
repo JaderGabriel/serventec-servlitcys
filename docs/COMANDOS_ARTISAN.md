@@ -86,6 +86,7 @@ Ver também: [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md)
 | Comando | Descrição |
 |---------|-----------|
 | `ieducar:schema-probe` | Gera `schema_probe.json` (rotinas + schema recurso prova) |
+| `ieducar:probe-falta` | Diagnóstico da tabela `falta_aluno` e colunas no município (`IEDUCAR_TABLE_FALTA_*`) |
 
 **Interface web:** `/admin/ieducar-compatibility` (export JSON na mesma página)
 
@@ -178,6 +179,7 @@ Sem `--password`, o comando pede a senha de forma oculta no terminal ou lê `CIT
 | FUNDEB | `fundeb:import-api` | ieducar-compatibility |
 | **Dados públicos (hub)** | vários (`fundeb`, `funding`, `system`) | `/admin/dados-publicos` |
 | Schema | `ieducar:schema-probe` | ieducar-compatibility |
+| Frequência | `ieducar:probe-falta` | — (CLI; aba Analytics Frequência) |
 | **Massiva semanal** | `weekly-mass-sync:run` | sync-queue (retomar) |
 
 O catálogo em código (`App\Support\Console\ArtisanCommandsCatalog`) alimenta a tela admin; ao acrescentar comandos novos, atualize o catálogo e este documento.

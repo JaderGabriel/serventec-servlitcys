@@ -256,6 +256,11 @@ Só necessárias se o schema do município divergir do Portabilis 2.x. Lista com
 - `IEDUCAR_SCHEMA`, `IEDUCAR_PGSQL_SEARCH_PATH`
 - `IEDUCAR_TABLE_*`, `IEDUCAR_COL_*`, `IEDUCAR_SQL_*`
 - `IEDUCAR_MATRICULA_INDICADORES_INCLUIR_SITUACAO_INEP`
+- **URL i-Educar (mapa Início):** `IEDUCAR_APP_URLS` (JSON `city_id` → URL), `IEDUCAR_APP_URL_TEMPLATE` (`{slug}`, `{ibge}`, `{uf}`, `{city_id}`) — ou campo `ieducar_app_url` na cidade
+- **Frequência / falta:** `IEDUCAR_TABLE_FALTA_ALUNO`, `IEDUCAR_COL_FALTA_MATRICULA`, `IEDUCAR_COL_FALTA_DATA` — diagnóstico: `php artisan ieducar:probe-falta {city_id}`
+- **FUNDEB estado (PDF FNDE):** `IEDUCAR_FUNDEB_ESTADO_VAAF_ENABLED`, `IEDUCAR_FUNDEB_ESTADO_VAAF_ON_IMPORT`
+
+**Painel RX:** `RX_VIGENTE_YEAR`, `RX_CENSO_COLLECT_END_DEFAULT`, `RX_CITY_QUERY_TIMEOUT` — ver `config/rx.php` e [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md).
 
 ---
 
