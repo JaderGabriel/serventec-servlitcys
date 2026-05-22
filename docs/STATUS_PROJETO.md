@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão:** 2.3.2 (`main`) · commit `4d3f5e8` (#157) · **Ramo:** `main` · **Última revisão:** maio/2026
+**Versão:** 2.3.6 · release `20260522-Janus` · commit `3cfe33c` (#174) · **Ramo:** `main` · **Última revisão:** 22/05/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 

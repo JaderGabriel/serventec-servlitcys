@@ -21,10 +21,11 @@ return [
     */
 
     'product' => [
-        'version' => '2.3.5',
-        'commit_short' => '2c8cf44',
-        'commit_number' => 135,
-        'revision_date' => '2026-05-21',
+        'version' => '2.3.6',
+        'release_tag' => '20260522-Janus',
+        'commit_short' => '3cfe33c',
+        'commit_number' => 174,
+        'revision_date' => '2026-05-22',
     ],
 
 ];

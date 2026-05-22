@@ -18,7 +18,9 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 10 | `17d3d6e` | RX: meta retroativa, semáforo, consultas resilientes |
 | 11 | `625b6a8` | Documentação v2.3.5 |
 | 12 | `0dbf65e` | RX: progresso, em falta e cores por coluna |
-| 13 | *(este commit)* | Documentação v2.3.6 |
+| 13 | `54bc365` | Documentação v2.3.6 (código) |
+| 14 | `3cfe33c` | Documentação release + contadores |
+| 15 | `20260522-Janus` | Release 2.3.6 (tag `YYYYMMDD-Janus`) |
 
 ---
 

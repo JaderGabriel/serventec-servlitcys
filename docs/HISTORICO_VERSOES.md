@@ -1,6 +1,6 @@
 # Histórico de versões (resumo)
 
-**Versão em desenvolvimento (`main`):** **2.3.6** · maio/2026
+**Versão em produção / `main`:** **2.3.6** · release **`20260522-Janus`** · commit `3cfe33c` (#174)
 
 > **Como ler:** cada linha indica a **tag ou marco**, o **commit** (hash curto Git) e o **contador** (`#N` = posição na história linear do ramo `main`, desde o primeiro commit). Links GitHub usam o repositório configurado em `DOCS_GITHUB_REPOSITORY`.
 >
@@ -12,10 +12,10 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **2.3.6** *(main, sem tag)* | `0dbf65e` | — | mai/2026 | RX: progresso e «em falta» (turmas + matrículas); cores vigente/comparativo/meta; fix filtro matrícula ativa. |
-| **2.3.5** | `17d3d6e` | — | mai/2026 | RX: meta retroativa (+5%/salto), semáforo por município, legenda de colunas; consultas resilientes (conexão ≠ erro SQL). |
-| **2.3.4** | `ccc5ad4`+ | — | mai/2026 | Inclusão: catálogos MEC+i-Educar completos (NEE e raça, zeros visíveis); totalizador `kpi_total` nos gráficos de alunos; fix URL i-Educar no mapa Início. |
-| **2.3.3** | *(commits escalonados)* | — | mai/2026 | Mapa Início (IBGE/anti-overlap); botão i-Educar por município; medidor status compacto; aba Matrículas (status holístico + saldo); painel RX; VAAF UF PDF + CSV FNDE 2026; `ieducar:probe-falta`. |
+| **2.3.6** | `20260522-Janus` → `3cfe33c` | **174** | 22/05/2026 | RX: progresso e «em falta» (turmas + matrículas); legenda visual por coluna; fix filtro matrícula ativa e sintaxe analytics. |
+| **2.3.5** | `17d3d6e` | **168** | mai/2026 | RX: meta retroativa (+5%/salto), semáforo por município, legenda de colunas; consultas resilientes (conexão ≠ erro SQL). |
+| **2.3.4** | `ccc5ad4` | **166** | mai/2026 | Inclusão: catálogos MEC+i-Educar completos (NEE e raça, zeros visíveis); totalizador `kpi_total` nos gráficos de alunos; fix URL i-Educar no mapa Início. |
+| **2.3.3** | `eb3837f`…`78fd0f4` | **159–165** | mai/2026 | Mapa Início (IBGE/anti-overlap); botão i-Educar; medidor status; Matrículas holísticas; painel RX; VAAF UF PDF + CSV FNDE 2026; `ieducar:probe-falta`. |
 | **2.3.2** | `4d3f5e8` | **157** | mai/2026 | Saldo pedagógico (Desempenho/Frequência/Inclusão); alertas frequência sem `falta_aluno`; medidor status 75/25; FUNDEB lazy com matrículas reais; alias `IeducarCityDataService`. |
 | **2.3.1** | `4893801` | **155** | mai/2026 | Modal mapa unidades: endereço (`escola_localizacao`), métricas com fallback ano letivo, link QEdu; correções FUNDEB (`CityDataConnection`) e sync semanal (checkpoint). |
 | **2.3.0** | `05a7410` | **151** | mai/2026 | VAAF ampliado (perfil, matrículas, alertas FNDE); repasses CSV Tesouro; sync semanal retomável; PDF quadros FUNDEB; Financiamentos e hub importações corrigidos. |
@@ -70,7 +70,7 @@ Trajetória após v2.1.0 (commits #67–#135), agrupada por tema:
 
 Documentação técnica alinhada: [COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md](COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md), [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
 
-### v2.3.0 — `main` (mai/2026)
+### v2.3.0 — `05a7410` (#151, mai/2026)
 
 Entrega focada em **bases financeiras públicas**, **sincronização semanal** e **relatório PDF**:
 
@@ -85,15 +85,19 @@ Entrega focada em **bases financeiras públicas**, **sincronização semanal** e
 
 Documentação: [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md), [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md), [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md), [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
 
-### v2.3.6 — `0dbf65e` (mai/2026)
+### v2.3.6 — `20260522-Janus` → `3cfe33c` (#174, 22/05/2026)
+
+**Janus** (mitologia romana): passagem entre o que foi e o que será — alinhado ao painel RX (ano vigente, ano anterior e comparativo).
 
 | Tema | Melhoria |
 |------|----------|
 | **RX — cálculos** | `RxCadastroGap`: progresso e em falta (turmas em cima, matrículas em baixo); não soma enturmações no total exibido; Δ «novo cadastro» quando Y−1 zerado. |
 | **RX — UI** | `RxColumnTone` + legenda de cores (vigente / anterior / comparativo / meta); cabeçalho agrupado na tabela. |
-| **RX — fix** | `MatriculaAtivoFilter` recebe `$db` na situação INEP; `buildEstimate` não duplica meta de enturmação. |
+| **RX / analytics — fix** | `MatriculaAtivoFilter` com `$db` na situação INEP (`7626ffb`); `matriculasPorSexo` sem chave extra (`37541a1`); `buildEstimate` sem meta de enturmação duplicada. |
 
-### v2.3.5 — `17d3d6e` (mai/2026)
+Inclui marcos **2.3.3–2.3.5** desde `v2.1.0` (commits #159–#172). Notas: [RELEASE_20260522_JANUS.md](RELEASE_20260522_JANUS.md).
+
+### v2.3.5 — `17d3d6e` (#168, mai/2026)
 
 | Tema | Melhoria |
 |------|----------|
@@ -101,7 +105,7 @@ Documentação: [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md), [IMPORTACAO_DA
 | **RX — UI** | Semáforo de cumprimento da meta; legenda «O que significa cada coluna?»; coluna Meta cadastro. |
 | **RX — fiabilidade** | Teste de conexão antes das consultas; falhas SQL isoladas (OK/Parcial/Consulta vs Conexão). |
 
-### v2.3.4 — `ccc5ad4` (mai/2026)
+### v2.3.4 — `ccc5ad4` (#166, mai/2026)
 
 | Tema | Melhoria |
 |------|----------|
@@ -136,24 +140,29 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 
 ## Tags Git no repositório
 
-| Tag | Commit | # |
-|-----|--------|---|
-| `v2.1.0` | `c3ec8b9` | 66 |
-| `v2.0.1` | `683510b` | 28 |
+| Tag | Commit | # | Notas |
+|-----|--------|---|--------|
+| **`20260522-Janus`** | `3cfe33c` | 174 | Release **2.3.6** (formato `YYYYMMDD-nome`). |
+| `v2.1.0` | `c3ec8b9` | 66 | Geografia Censo INEP. |
+| `v2.0.1` | `683510b` | 28 | Inclusão cor/raça. |
 
 *(Não existe tag `v1.0.0`; o marco inicial é o commit `8507c9a` #1.)*
 
+**Contador total em `main`:** `git rev-list --count main` → **174** (maio/2026).
+
 ---
 
-## Próxima etiqueta sugerida
+## Convenção de releases (a partir de 2.3.6)
 
-Ao fechar o ciclo **2.3.2** em produção:
+- **Nome da tag:** `YYYYMMDD-NomeMitologico` (ex.: `20260522-Janus`).
+- **Versão semântica** em docs/UI: `2.3.x` em [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) e `config/documentation.php`.
+- Ao publicar: actualizar tabela **Linha do tempo**, **Tags Git**, `README.md`, `STATUS_PROJETO.md` e `product.version`.
 
 ```bash
-git tag -a v2.3.2 4d3f5e8 -m "v2.3.2 — saldo pedagógico, frequência, FUNDEB e UI impact strip"
+git tag -a 20260522-Janus 3cfe33c -m "2.3.6 — RX progresso, em falta e legenda visual (Janus)"
+git push origin 20260522-Janus
+gh release create 20260522-Janus --title "20260522-Janus (2.3.6)" --notes-file docs/RELEASE_20260522_JANUS.md
 ```
-
-Atualizar neste arquivo, em [README.md](../README.md), [STATUS_PROJETO.md](STATUS_PROJETO.md) e `config/documentation.php` (`product.version`).
 
 ---
 
