@@ -5,6 +5,7 @@ namespace App\Services\Analytics;
 use App\Models\City;
 use App\Repositories\Ieducar\SchoolUnitsRepository;
 use App\Support\Analytics\AnalyticsReportMapProjection;
+use App\Support\Analytics\AnalyticsReportSchoolMapImageComposer;
 use App\Support\Analytics\AnalyticsReportSchoolUnitsMapSvg;
 use App\Support\Dashboard\IeducarFilterState;
 
@@ -41,6 +42,8 @@ final class AnalyticsReportSchoolMapBuilder
                 'geo_note' => $tab['geo_note'] ?? $snapshot['error'] ?? __('Sem coordenadas para exibir o mapa de unidades.'),
                 'stats' => [],
                 'map_scope' => $tab['map_scope'] ?? null,
+                'image_data_uri' => null,
+                'schools_table' => [],
             ];
         }
 
@@ -49,17 +52,30 @@ final class AnalyticsReportSchoolMapBuilder
         $secondary = (string) ($colors['secondary'] ?? '#4338ca');
 
         $baseMap = $this->baseMapForMarkers($city, $markers);
+        $schoolsTable = $this->buildSchoolsTable($markers);
 
-        $rendered = AnalyticsReportSchoolUnitsMapSvg::render(
+        $png = AnalyticsReportSchoolMapImageComposer::compose(
             $markers,
             $baseMap,
-            680,
-            360,
+            720,
+            400,
             $primary,
             $secondary,
         );
 
-        if ($rendered === null) {
+        $rendered = null;
+        if ($png === null) {
+            $rendered = AnalyticsReportSchoolUnitsMapSvg::render(
+                $markers,
+                $baseMap,
+                720,
+                400,
+                $primary,
+                $secondary,
+            );
+        }
+
+        if ($png === null && $rendered === null) {
             return [
                 'available' => false,
                 'svg' => null,
@@ -68,16 +84,23 @@ final class AnalyticsReportSchoolMapBuilder
                 'geo_note' => $tab['geo_note'] ?? null,
                 'stats' => [],
                 'map_scope' => $tab['map_scope'] ?? null,
+                'image_data_uri' => null,
+                'schools_table' => $schoolsTable,
             ];
         }
 
-        $stats = is_array($rendered['stats'] ?? null) ? $rendered['stats'] : [];
+        $stats = is_array($png['stats'] ?? null)
+            ? $png['stats']
+            : (is_array($rendered['stats'] ?? null) ? $rendered['stats'] : []);
+
+        $imageUri = $png['data_uri'] ?? $rendered['data_uri'] ?? null;
 
         return [
             'available' => true,
-            'svg' => $rendered['svg'],
-            'data_uri' => $rendered['data_uri'],
-            'caption' => __('Mesma base do painel «Unidades escolares»: :n escola(s), :m matrícula(s) no recorte. Centro de abrangência ponderado por matrículas.',
+            'svg' => $rendered['svg'] ?? null,
+            'data_uri' => $imageUri,
+            'image_data_uri' => $imageUri,
+            'caption' => __('Mapa territorial com fundo OpenStreetMap: :n escola(s) e :m matrícula(s) no recorte. Círculos proporcionais ao volume; anel tracejado = centro de abrangência ponderado.',
                 [
                     'n' => $stats['schools'] ?? count($markers),
                     'm' => number_format((int) ($stats['matriculas_total'] ?? 0), 0, ',', '.'),
@@ -85,7 +108,33 @@ final class AnalyticsReportSchoolMapBuilder
             'geo_note' => $tab['geo_note'] ?? null,
             'stats' => $stats,
             'map_scope' => $tab['map_scope'] ?? 'matricula',
+            'schools_table' => $schoolsTable,
         ];
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $markers
+     * @return list<array{escola: string, matriculas: int, lat: ?float, lng: ?float}>
+     */
+    private function buildSchoolsTable(array $markers): array
+    {
+        $rows = [];
+        foreach ($markers as $m) {
+            if (! isset($m['lat'], $m['lng'])) {
+                continue;
+            }
+            $school = is_array($m['school'] ?? null) ? $m['school'] : [];
+            $rows[] = [
+                'escola' => (string) ($m['label'] ?? $school['nome'] ?? __('Unidade')),
+                'matriculas' => max(0, (int) ($school['matriculas'] ?? 0)),
+                'lat' => round((float) $m['lat'], 5),
+                'lng' => round((float) $m['lng'], 5),
+            ];
+        }
+
+        usort($rows, static fn (array $a, array $b): int => $b['matriculas'] <=> $a['matriculas']);
+
+        return array_slice($rows, 0, 20);
     }
 
     /**

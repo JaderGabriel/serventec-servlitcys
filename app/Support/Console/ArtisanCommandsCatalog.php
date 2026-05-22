@@ -165,6 +165,16 @@ final class ArtisanCommandsCatalog
                         'doc_anchor' => 'fundeb',
                     ],
                     [
+                        'name' => 'fundeb:diagnose-matriculas',
+                        'summary' => __('Diagnóstico matrículas i-Educar e Censo por município/ano (base VAAF).'),
+                        'signature' => 'fundeb:diagnose-matriculas {city?} {--anos=}',
+                        'examples' => [
+                            'php artisan fundeb:diagnose-matriculas',
+                            'php artisan fundeb:diagnose-matriculas 1 --anos=2024,2025,2026',
+                        ],
+                        'doc_anchor' => 'fundeb',
+                    ],
+                    [
                         'name' => 'fundeb:import-references',
                         'summary' => __('Importa CSV (;) com ibge, ano, vaaf, vaat, complementacao_vaar.'),
                         'signature' => 'fundeb:import-references {path} {--delimiter=;}',

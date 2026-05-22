@@ -113,7 +113,23 @@ php artisan fundeb:import-api 0 --all --ano=2024 --nearest
 
 ---
 
-## 5. Estado da implementação (maio/2026)
+## 5. Perfil VAAF (planejamento + alertas FNDE)
+
+| Componente | Função |
+|------------|--------|
+| `FundebVaafProfileBuilder` | Perfil por município: receita Portaria FNDE, matrículas, VAAF estimado, distribuição legal, ano corrente + próximo |
+| `FundebMatriculasByYearService` | Matrículas i-Educar e fallback Censo INEP por ano |
+| `FundebFndePublicationAlerts` | Alertas (receita repetida, sem matrículas, placeholder, ano futuro, etc.) |
+| `FundebCkanVaafDiscovery` | Descobre recurso CKAN FNDE com VAAF (cache 24h) |
+| Aba FUNDEB | Secção «Perfil FUNDEB — receitas, VAAF e planejamento» |
+
+**CLI:** `php artisan fundeb:diagnose-matriculas` · **Env:** `IEDUCAR_FUNDEB_PLANNING_YEARS_AHEAD`, `IEDUCAR_FUNDEB_VAAF_CENSO_FALLBACK`
+
+**Metadados gravados na importação:** `receita_total`, `complementacao_vaaf`, `matriculas_base`, `url_portaria`, `tipo_valor` (`estimativa` \| `oficial` \| `placeholder`).
+
+---
+
+## 6. Estado da implementação (maio/2026)
 
 | Item | Estado |
 |------|--------|

@@ -15,6 +15,13 @@ class FundebMunicipioReference extends Model
         'vaat',
         'complementacao_vaar',
         'fonte',
+        'tipo_valor',
+        'receita_total',
+        'complementacao_vaaf',
+        'matriculas_base',
+        'matriculas_fonte',
+        'url_portaria',
+        'meta',
         'notas',
         'imported_at',
     ];
@@ -29,6 +36,10 @@ class FundebMunicipioReference extends Model
             'vaaf' => 'float',
             'vaat' => 'float',
             'complementacao_vaar' => 'float',
+            'receita_total' => 'float',
+            'complementacao_vaaf' => 'float',
+            'matriculas_base' => 'integer',
+            'meta' => 'array',
             'imported_at' => 'datetime',
         ];
     }

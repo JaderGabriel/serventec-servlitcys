@@ -41,11 +41,15 @@ final class AnalyticsReportComparatives
         $yearRows = $this->enrichYearComparison($city, $filters);
         $munState = $this->enrichMunicipalVsState($city, $filters);
 
+        $vaafProfile = is_array($fundeb['vaaf_profile'] ?? null) ? $fundeb['vaaf_profile'] : [];
+        $refTables = app(AnalyticsReportFundebReferenceTables::class)->build($vaafProfile, $fundeb);
+
         return [
             'legal_notice' => __(
                 'Documento de apoio à gestão municipal, elaborado a partir do cadastro i-Educar, referências importadas (FNDE/dados abertos) e indicadores pedagógicos. Não substitui portaria de complementação, extrato Simec/VAAR nem prestação de contas ao FNDE. Consulte sempre o material oficial em gov.br/fnde (Fundeb) e inep.gov.br (Educacenso/SAEB).'
             ),
             'fundeb_years' => $this->fundebYearSeries($city, $filters, $fundeb, $health),
+            'fundeb_reference_tables' => $refTables,
             'state_participation' => $this->stateFundebParticipation($city, $filters),
             'year_comparison_enriched' => $yearRows,
             'municipal_vs_state_enriched' => $munState,
@@ -81,10 +85,15 @@ final class AnalyticsReportComparatives
             if ($prevVaaf !== null && $prevVaaf > 0) {
                 $delta = round((($vaaf - $prevVaaf) / $prevVaaf) * 100, 1);
             }
+            $complVaaf = $ref->complementacao_vaaf !== null
+                ? (float) $ref->complementacao_vaaf
+                : null;
+
             $rows[] = [
                 'ano' => (string) $ref->ano,
                 'vaaf' => DiscrepanciesFundingImpact::formatBrl($vaaf),
                 'vaat' => $ref->vaat !== null ? DiscrepanciesFundingImpact::formatBrl((float) $ref->vaat) : '—',
+                'complementacao_vaaf' => $complVaaf !== null ? DiscrepanciesFundingImpact::formatBrl($complVaaf) : '—',
                 'complementacao_vaar' => $ref->complementacao_vaar !== null
                     ? DiscrepanciesFundingImpact::formatBrl((float) $ref->complementacao_vaar)
                     : '—',
@@ -180,15 +189,18 @@ final class AnalyticsReportComparatives
             ];
         }
 
-        if ($munRow !== null && isset($munRow['complementacao_vaaf'])) {
-            $compVaaf = (float) ($munRow['complementacao_vaaf'] ?? 0);
-            if ($compVaaf > 0) {
+        foreach ([
+            'complementacao_vaaf' => __('Complementação VAAF (anexo FNDE)'),
+            'complementacao_vaat' => __('Complementação VAAT (anexo FNDE)'),
+            'complementacao_vaar' => __('Complementação VAAR (anexo FNDE)'),
+        ] as $field => $label) {
+            if ($munRow !== null && isset($munRow[$field]) && is_numeric($munRow[$field]) && (float) $munRow[$field] > 0) {
                 $rows[] = [
-                    'indicador' => __('Complementação VAAF (anexo FNDE)'),
-                    'municipio' => $fmt($compVaaf),
+                    'indicador' => $label,
+                    'municipio' => $fmt((float) $munRow[$field]),
                     'referencia_uf' => '—',
                     'participacao' => '—',
-                    'fonte' => __('Coluna complementação VAFF/VAAT do CSV oficial'),
+                    'fonte' => __('CSV Portaria FNDE :ano', ['ano' => (string) $pubYear]),
                 ];
             }
         }

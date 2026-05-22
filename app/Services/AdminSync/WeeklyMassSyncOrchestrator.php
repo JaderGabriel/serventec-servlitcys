@@ -10,7 +10,7 @@ use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Services\Funding\MunicipalTransferImportService;
 use App\Services\Inep\InepCensoMunicipioMatriculasIndexer;
 use App\Services\Inep\SaebOfficialMunicipalImportService;
-use App\Support\Admin\WeeklyMassSyncCheckpoint;
+use App\Support\AdminSync\WeeklyMassSyncCheckpoint;
 use App\Support\InepMicrodadosCadastroEscolasPath;
 use Illuminate\Support\Facades\Artisan;
 
@@ -224,12 +224,16 @@ final class WeeklyMassSyncOrchestrator
         $payload = is_array($task->payload) ? $task->payload : [];
         $years = $payload['fundeb_years'] ?? null;
         if (! is_array($years) || $years === []) {
-            $years = $this->fundebImport->resolveSyncYears(
-                (int) ($payload['ano_from'] ?? 0),
-                (int) ($payload['ano_to'] ?? 0),
-                true,
-                true,
-            );
+            $years = array_values(array_unique(array_merge(
+                FundebOpenDataImportService::yearsForPlanningProfile(),
+                $this->fundebImport->resolveSyncYears(
+                    (int) ($payload['ano_from'] ?? 0),
+                    (int) ($payload['ano_to'] ?? 0),
+                    true,
+                    true,
+                ),
+            )));
+            sort($years);
         }
 
         $progress->explain(__('FUNDEB — anos: :anos · municípios: :n', [

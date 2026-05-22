@@ -311,6 +311,12 @@ final class AnalyticsReportSectionScopeAssembler
      */
     private function scopeFundeb(array $fundeb, array $health, array &$kpis, array &$tables, array &$gaps, array &$notes): void
     {
+        $vaafProfile = is_array($fundeb['vaaf_profile'] ?? null) ? $fundeb['vaaf_profile'] : [];
+        $refBundle = app(\App\Support\Analytics\AnalyticsReportFundebReferenceTables::class)->build($vaafProfile, $fundeb);
+        foreach (app(\App\Support\Analytics\AnalyticsReportFundebReferenceTables::class)->asScopeTables($refBundle) as $t) {
+            $tables[] = $t;
+        }
+
         $proj = is_array($fundeb['resource_projection'] ?? null) ? $fundeb['resource_projection'] : [];
         if (($proj['totais']['fundeb_base_anual'] ?? null) !== null) {
             $kpis[] = ['label' => __('Previsão base Fundeb'), 'value' => 'R$ '.number_format((float) $proj['totais']['fundeb_base_anual'], 2, ',', '.')];
@@ -506,6 +512,30 @@ final class AnalyticsReportSectionScopeAssembler
             $kpis[] = ['label' => __('Escolas no mapa'), 'value' => $this->fmtInt($stats['schools'] ?? 0)];
             $kpis[] = ['label' => __('Matrículas (mapa)'), 'value' => $this->fmtInt($stats['matriculas_total'] ?? 0)];
             $notes[] = (string) ($schoolMap['caption'] ?? '');
+
+            $schoolRows = is_array($schoolMap['schools_table'] ?? null) ? $schoolMap['schools_table'] : [];
+            if ($schoolRows !== []) {
+                $tableBody = [];
+                foreach ($schoolRows as $row) {
+                    if (! is_array($row)) {
+                        continue;
+                    }
+                    $tableBody[] = [
+                        (string) ($row['escola'] ?? ''),
+                        $this->fmtInt($row['matriculas'] ?? 0),
+                        isset($row['lat'], $row['lng'])
+                            ? number_format((float) $row['lat'], 5, ',', '').' / '.number_format((float) $row['lng'], 5, ',', '')
+                            : '—',
+                    ];
+                }
+                if ($tableBody !== []) {
+                    $tables[] = [
+                        'title' => __('Unidades escolares no recorte (ordenadas por matrículas)'),
+                        'headers' => [__('Escola'), __('Matrículas'), __('Coordenadas (lat/lng)')],
+                        'rows' => $tableBody,
+                    ];
+                }
+            }
         } else {
             $this->gap($gaps, 'territorio_rede', 'map_unavailable', (string) ($schoolMap['geo_note'] ?? __('Mapa indisponível — falta georreferenciação ou matrículas no filtro.')));
         }

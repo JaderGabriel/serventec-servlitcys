@@ -666,6 +666,11 @@ return [
             /** VAAF estimado = receita total FNDE ÷ matrículas i-Educar (limites de sanidade). */
             'vaaf_estimate_min' => (float) env('IEDUCAR_FUNDEB_VAAF_ESTIMATE_MIN', 2500),
             'vaaf_estimate_max' => (float) env('IEDUCAR_FUNDEB_VAAF_ESTIMATE_MAX', 18000),
+            /** Usar matrículas do Censo INEP quando i-Educar = 0 (estimativa VAAF portaria). */
+            'vaaf_use_censo_matriculas_fallback' => filter_var(env('IEDUCAR_FUNDEB_VAAF_CENSO_FALLBACK', true), FILTER_VALIDATE_BOOL),
+            /** Anos à frente no perfil de planejamento (ex.: 1 = ano civil + próximo). */
+            'planning_years_ahead' => max(0, (int) env('IEDUCAR_FUNDEB_PLANNING_YEARS_AHEAD', 1)),
+            'planning_include_suggested_import_year' => filter_var(env('IEDUCAR_FUNDEB_PLANNING_INCLUDE_IMPORT_YEAR', true), FILTER_VALIDATE_BOOL),
 
             'national_floor' => [
                 'enabled' => filter_var(env('IEDUCAR_FUNDEB_NATIONAL_FLOOR', true), FILTER_VALIDATE_BOOL),
@@ -1004,6 +1009,17 @@ return [
                 'base_url' => (string) env('IEDUCAR_TESOURO_CKAN_URL', 'https://www.tesourotransparente.gov.br/ckan'),
                 'resource_id' => (string) env('IEDUCAR_TESOURO_TRANSFERENCIAS_RESOURCE_ID', ''),
                 'package_id' => (string) env('IEDUCAR_TESOURO_TRANSFERENCIAS_PACKAGE', 'transferencias-obrigatorias-da-uniao-por-municipio'),
+                /** CSV municipal (COD_MUN + nome/UF); fallback quando datastore CKAN está inactivo. */
+                'csv_enabled' => filter_var(env('IEDUCAR_TESOURO_CSV_ENABLED', true), FILTER_VALIDATE_BOOL),
+                'csv_cache_ttl_seconds' => max(300, (int) env('IEDUCAR_TESOURO_CSV_CACHE_TTL', 86400)),
+                'csv_resources' => [
+                    'fundeb' => [
+                        'resource_id' => '18d5b0ae-8037-461e-8685-3f0d7752a287',
+                        'programa_id' => 'fundeb',
+                        'name' => 'FUNDEB por município',
+                        'url' => 'https://www.tesourotransparente.gov.br/ckan/dataset/transferencias-obrigatorias-da-uniao-por-municipio/resource/18d5b0ae-8037-461e-8685-3f0d7752a287/download/fundeb-por-municipio.csv',
+                    ],
+                ],
             ],
         ],
 

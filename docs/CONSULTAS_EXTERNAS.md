@@ -172,6 +172,7 @@ IEDUCAR_TESOURO_TRANSFERENCIAS_RESOURCE_ID=
 |------|---------|
 | **Tabela** | `municipal_transfer_snapshots` (IBGE, ano, fonte, programa_id, valor) |
 | **Import** | `MunicipalTransferImportService` — job `ImportMunicipalTransfersJob` / tarefa `funding::import_transfers_city_year` na fila `admin-sync` |
+| **Tesouro CSV** | `TesouroTransferenciasCsvService` — pacote CKAN `transferencias-obrigatorias-da-uniao-por-municipio` (ex.: `fundeb-por-municipio.csv`); mapeamento **COD_MUN → IBGE** por nome+UF; fonte `tesouro_csv` em `municipal_transfer_snapshots`. Env: `IEDUCAR_TESOURO_CSV_ENABLED` (default true). |
 | **UI** | Secção «Repasse observado (série histórica)» na aba Financiamentos |
 
 ### 3.5 Censo INEP × i-Educar (v2.3)

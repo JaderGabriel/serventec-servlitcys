@@ -127,7 +127,7 @@
             </x-dashboard.consultoria-section>
         @endif
 
-        @if (count($programs) === 0)
+        @if (count($programs) === 0 && empty($d['error']))
             <p class="serv-callout serv-callout--warning text-sm">
                 {{ __('Nenhum programa configurado em ieducar.other_funding.programs.') }}
             </p>

@@ -68,6 +68,10 @@
             />
         @endif
 
+        @include('dashboard.analytics.partials.fundeb-vaaf-profile', [
+            'profile' => $fundebData['vaaf_profile'] ?? [],
+        ])
+
         <x-dashboard.consultoria-section
             anchor="fundeb-previsao-recursos"
             :title="__('Previsão de recursos e distribuição legal')"

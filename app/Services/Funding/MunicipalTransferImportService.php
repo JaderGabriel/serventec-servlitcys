@@ -5,16 +5,16 @@ namespace App\Services\Funding;
 use App\Models\City;
 use App\Models\MunicipalTransferSnapshot;
 use App\Repositories\MunicipalTransferSnapshotRepository;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 
 /**
- * Importa repasses observados (Tesouro CKAN, Portal da Transparência) para municipal_transfer_snapshots.
+ * Importa repasses observados (Tesouro CKAN/CSV, Portal da Transparência) para municipal_transfer_snapshots.
  */
 final class MunicipalTransferImportService
 {
     public function __construct(
         private MunicipalTransferSnapshotRepository $snapshots,
+        private TesouroTransferenciasCsvService $tesouroCsv,
     ) {}
 
     /**
@@ -38,10 +38,13 @@ final class MunicipalTransferImportService
         $allRows = [];
         $byFonte = [];
 
-        $tesouro = $this->fetchTesouroRows($ibge, $year, $timeout);
+        $tesouro = $this->fetchTesouroRows($city, $ibge, $year, $timeout);
         if ($tesouro !== []) {
             $allRows = array_merge($allRows, $tesouro);
-            $byFonte['tesouro'] = count($tesouro);
+            foreach ($tesouro as $row) {
+                $fonte = (string) ($row['fonte'] ?? 'tesouro');
+                $byFonte[$fonte] = ($byFonte[$fonte] ?? 0) + 1;
+            }
         }
 
         $portal = $this->fetchPortalTransparenciaRows($ibge, $year, $timeout);
@@ -63,7 +66,7 @@ final class MunicipalTransferImportService
                 continue;
             }
             $extra = array_merge(
-                $this->fetchTesouroRows($ibge, $histYear, $timeout),
+                $this->fetchTesouroRows($city, $ibge, $histYear, $timeout),
                 $this->fetchPortalTransparenciaRows($ibge, $histYear, $timeout),
             );
             if ($extra !== []) {
@@ -100,17 +103,39 @@ final class MunicipalTransferImportService
     /**
      * @return list<array<string, mixed>>
      */
-    private function fetchTesouroRows(string $ibge, int $year, int $timeout): array
+    private function fetchTesouroRows(City $city, string $ibge, int $year, int $timeout): array
     {
         $cfg = config('ieducar.other_funding.public_queries.tesouro_ckan', []);
         if (! (bool) ($cfg['enabled'] ?? true)) {
             return [];
         }
 
+        $byProgram = [];
+
+        foreach ($this->tesouroCsv->fetchRowsForCityYear($city, $year, $timeout) as $row) {
+            $byProgram[(string) $row['programa_id']] = $row;
+        }
+
+        foreach ($this->fetchTesouroDatastoreRows($ibge, $year, $timeout) as $row) {
+            $pid = (string) ($row['programa_id'] ?? 'geral_educacao');
+            if (! isset($byProgram[$pid])) {
+                $byProgram[$pid] = $row;
+            }
+        }
+
+        return array_values($byProgram);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function fetchTesouroDatastoreRows(string $ibge, int $year, int $timeout): array
+    {
+        $cfg = config('ieducar.other_funding.public_queries.tesouro_ckan', []);
         $base = rtrim((string) ($cfg['base_url'] ?? 'https://www.tesourotransparente.gov.br/ckan'), '/');
         $resourceId = trim((string) ($cfg['resource_id'] ?? ''));
         if ($resourceId === '') {
-            $resourceId = $this->discoverTesouroResourceId($base, (string) ($cfg['package_id'] ?? ''), $timeout);
+            $resourceId = $this->discoverTesouroDatastoreResourceId($base, (string) ($cfg['package_id'] ?? ''), $timeout);
         }
         if ($resourceId === '') {
             return [];
@@ -317,7 +342,7 @@ final class MunicipalTransferImportService
         return null;
     }
 
-    private function discoverTesouroResourceId(string $base, string $packageId, int $timeout): string
+    private function discoverTesouroDatastoreResourceId(string $base, string $packageId, int $timeout): string
     {
         if ($packageId === '') {
             return '';
@@ -338,11 +363,6 @@ final class MunicipalTransferImportService
             }
             foreach ($resources as $res) {
                 if (is_array($res) && ($res['datastore_active'] ?? false) === true && filled($res['id'] ?? null)) {
-                    return (string) $res['id'];
-                }
-            }
-            foreach ($resources as $res) {
-                if (is_array($res) && filled($res['id'] ?? null)) {
                     return (string) $res['id'];
                 }
             }

@@ -21,6 +21,7 @@ final class MunicipalFundingPublicSnapshotService
     public function __construct(
         private FundebMunicipioReferenceRepository $fundebRefs,
         private FundebOpenDataImportService $fundebImport,
+        private MunicipalTransferSnapshotRepository $transferSnapshots,
     ) {}
 
     /**

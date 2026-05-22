@@ -53,9 +53,30 @@ Códigos registados no anexo do PDF (`data_gaps`):
 | `censo_export_status` | Cadastro | Exportação Censo i-Educar indisponível |
 | `map_unavailable` | Território | Geo ou matrículas insuficientes |
 
+## Layout PDF (maio/2026)
+
+- **Capa:** faixa institucional, métricas, mapa opcional e síntese executiva (`cover.blade.php` + `partials/pdf-styles.blade.php`).
+- **Rodapé:** barra de cor, marca SERVLITCYS, município/ano, referência bibliográfica e aviso legal (`footer.blade.php`).
+- **Secções ATM:** cabeçalho colorido por grupo (diagnóstico, financiamento, programas, gestão, publicação) e `page-break-before` entre secções.
+- **Território:** mapa composto em **PNG** (GD + fundo OSM) via `AnalyticsReportSchoolMapImageComposer` — evita SVG com pontos soltos no DomPDF; tabela das escolas no recorte.
+
 ## Apêndice Serventec
 
-O PDF mantém o **Apêndice A** com o detalhe legado (diagnóstico, comparativos, gráficos) para não perder profundidade operacional da plataforma.
+O PDF mantém o **Apêndice A** com o detalhe legado (diagnóstico, comparativos, gráficos) para não perder profundidade operacional da plataforma. Cada bloco do apêndice usa `page-break-before` para reduzir cortes de tabelas.
+
+### Quadros de referência FUNDEB (maio/2026)
+
+Gerados por `AnalyticsReportFundebReferenceTables` a partir de `FundebVaafProfileBuilder` + `FundebRepository`:
+
+| Quadro | Conteúdo |
+|--------|----------|
+| Receita e complementações (Portaria) | Receita total, Compl. VAAF/VAAT/VAAR, matrículas, VAAF est., previsão base, ano publicação FNDE |
+| Eixos de complementação | Portaria × valores gravados na BD por exercício |
+| Cenários de previsão | Base, VAAR, total, risco/ganho cadastro |
+| Distribuição legal | Pisos Lei 14.113/2020 (%) e valores planejados |
+| Alertas FNDE | Qualidade de publicação e matrículas |
+
+Secções no PDF: **§2 Comparativos** (2.2–2.5) e **§6 FUNDEB** (resumo + tabelas completas).
 
 ## Comandos
 

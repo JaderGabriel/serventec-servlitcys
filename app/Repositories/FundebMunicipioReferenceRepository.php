@@ -62,6 +62,13 @@ class FundebMunicipioReferenceRepository
             'vaat' => isset($data['vaat']) ? (float) $data['vaat'] : null,
             'complementacao_vaar' => isset($data['complementacao_vaar']) ? (float) $data['complementacao_vaar'] : null,
             'fonte' => trim((string) ($data['fonte'] ?? 'api_fnde')) ?: 'api_fnde',
+            'tipo_valor' => isset($data['tipo_valor']) ? trim((string) $data['tipo_valor']) : null,
+            'receita_total' => isset($data['receita_total']) ? (float) $data['receita_total'] : null,
+            'complementacao_vaaf' => isset($data['complementacao_vaaf']) ? (float) $data['complementacao_vaaf'] : null,
+            'matriculas_base' => isset($data['matriculas_base']) ? (int) $data['matriculas_base'] : null,
+            'matriculas_fonte' => isset($data['matriculas_fonte']) ? trim((string) $data['matriculas_fonte']) : null,
+            'url_portaria' => isset($data['url_portaria']) ? trim((string) $data['url_portaria']) : null,
+            'meta' => isset($data['meta']) && is_array($data['meta']) ? $data['meta'] : null,
             'notas' => isset($data['notas']) ? trim((string) $data['notas']) : null,
             'imported_at' => now(),
         ]);

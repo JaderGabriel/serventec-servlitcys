@@ -49,6 +49,27 @@ final class FundebOpenDataImportService
     }
 
     /**
+     * Anos para perfil de planejamento (gestor): exercício corrente + próximo(s).
+     *
+     * @return list<int>
+     */
+    public static function yearsForPlanningProfile(): array
+    {
+        $ahead = max(0, min(3, (int) config('ieducar.fundeb.open_data.planning_years_ahead', 1)));
+        $current = (int) date('Y');
+        $years = [$current];
+        for ($i = 1; $i <= $ahead; $i++) {
+            $years[] = $current + $i;
+        }
+        $includePast = (bool) config('ieducar.fundeb.open_data.planning_include_suggested_import_year', true);
+        if ($includePast) {
+            $years[] = self::suggestedImportYear();
+        }
+
+        return self::normalizeYearList($years);
+    }
+
+    /**
      * Anos configurados (lista .env ou intervalo from/to) — usado na sincronização manual em lote.
      *
      * @return list<int>
@@ -537,6 +558,13 @@ final class FundebOpenDataImportService
             'complementacao_vaar' => isset($match['complementacao_vaar']) ? (float) $match['complementacao_vaar'] : null,
             'fonte' => (string) ($match['fonte'] ?? 'api_ckan_fnde'),
             'notas' => $notas !== '' ? $notas : null,
+            'tipo_valor' => $match['tipo_valor'] ?? FundebReferenceSource::tipoFromFonte((string) ($match['fonte'] ?? '')),
+            'receita_total' => $match['receita_total'] ?? null,
+            'complementacao_vaaf' => $match['complementacao_vaaf'] ?? null,
+            'matriculas_base' => $match['matriculas_base'] ?? null,
+            'matriculas_fonte' => $match['matriculas_fonte'] ?? null,
+            'url_portaria' => $match['url_portaria'] ?? null,
+            'meta' => $match['meta'] ?? null,
         ];
 
         if (FundebImportMode::isReplace($importMode)) {
@@ -1143,22 +1171,10 @@ final class FundebOpenDataImportService
             return null;
         }
 
-        $filters = new IeducarFilterState(
-            ano_letivo: (string) $ano,
-            escola_id: null,
-            curso_id: null,
-            turno_id: null,
-        );
-
-        $matriculas = 0;
-        try {
-            $matriculas = (int) $this->cityData->run(
-                $city,
-                static fn ($db) => MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0,
-            );
-        } catch (\Throwable) {
-            $matriculas = 0;
-        }
+        $matSvc = app(FundebMatriculasByYearService::class);
+        $matRow = $matSvc->forCityYears($city, [$ano])[$ano] ?? null;
+        $matriculas = (int) ($matRow['usado'] ?? 0);
+        $fonteMat = (string) ($matRow['fonte_usada'] ?? 'indisponivel');
 
         $vaaf = $this->fndeReceita->estimateVaafFromReceitaAndMatriculas(
             (float) $receita['total_receita'],
@@ -1170,18 +1186,32 @@ final class FundebOpenDataImportService
         }
 
         $pubAno = (int) ($receita['ano_publicacao'] ?? $ano);
+        $matLabel = $fonteMat === 'censo_inep'
+            ? __('matrículas Censo INEP')
+            : __('matrículas activas i-Educar');
 
         return [
             'vaaf' => $vaaf,
             'vaat' => isset($receita['complementacao_vaat']) ? (float) $receita['complementacao_vaat'] : null,
             'complementacao_vaar' => isset($receita['complementacao_vaar']) ? (float) $receita['complementacao_vaar'] : null,
             'fonte' => FundebReferenceSource::FONTE_FNDE_RECEITA_IEDUCAR,
-            'notas' => __('VAAF estimado: receita total FNDE (:rec) ÷ :mat matrículas activas i-Educar (ano :ano). Publicação Portaria FNDE :pub. CSV: :url', [
+            'tipo_valor' => 'estimativa',
+            'receita_total' => (float) $receita['total_receita'],
+            'complementacao_vaaf' => isset($receita['complementacao_vaaf']) ? (float) $receita['complementacao_vaaf'] : null,
+            'matriculas_base' => $matriculas,
+            'matriculas_fonte' => $fonteMat,
+            'url_portaria' => (string) ($receita['csv_url'] ?? ''),
+            'meta' => [
+                'ano_publicacao' => $pubAno,
+                'ieducar_matriculas' => (int) ($matRow['ieducar'] ?? 0),
+                'censo_matriculas' => $matRow['censo'] ?? null,
+            ],
+            'notas' => __('VAAF estimado: receita total FNDE (:rec) ÷ :mat :tipo (ano :ano). Publicação Portaria FNDE :pub.', [
                 'rec' => number_format((float) $receita['total_receita'], 2, ',', '.'),
                 'mat' => number_format($matriculas, 0, ',', '.'),
+                'tipo' => $matLabel,
                 'ano' => (string) $ano,
                 'pub' => (string) $pubAno,
-                'url' => Str::limit((string) ($receita['csv_url'] ?? ''), 120),
             ]),
         ];
     }

@@ -33,4 +33,20 @@ final class FundebReferenceSource
 
         return $fonte !== '' && ! self::isPlaceholder($fonte);
     }
+
+    public static function tipoFromFonte(?string $fonte): string
+    {
+        $fonte = trim((string) $fonte);
+        if (self::isPlaceholder($fonte)) {
+            return 'placeholder';
+        }
+        if ($fonte === self::FONTE_FNDE_RECEITA_IEDUCAR) {
+            return 'estimativa';
+        }
+        if ($fonte === self::FONTE_API_CKAN) {
+            return 'oficial';
+        }
+
+        return 'oficial';
+    }
 }

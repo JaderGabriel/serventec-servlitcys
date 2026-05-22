@@ -10,6 +10,7 @@ use App\Support\Ieducar\IeducarAnalyticsMetricsScope;
 use App\Support\Ieducar\FundebComplementacaoInformeBuilder;
 use App\Support\Ieducar\FundebReferenceDisplay;
 use App\Support\Ieducar\FundebResourceProjection;
+use App\Support\Ieducar\FundebVaafProfileBuilder;
 
 /**
  * Relatório temático alinhado às condicionalidades do FUNDEB / VAAR (referência pedagógica).
@@ -69,10 +70,19 @@ class FundebRepository
             $fundebReference,
         );
 
+        $vaafProfile = app(FundebVaafProfileBuilder::class)->build(
+            $city,
+            $filters,
+            $matTotal,
+            $discrepanciesData,
+            $enrollmentData,
+        );
+
         return [
             'year_label' => $yearLabel,
             'city_name' => $city->name,
             'fundeb_reference' => $fundebReference,
+            'vaaf_profile' => $vaafProfile,
             'resource_projection' => $resourceProjection,
             'complementacao_informe' => FundebComplementacaoInformeBuilder::build(
                 $city,

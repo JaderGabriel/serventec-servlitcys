@@ -4,6 +4,7 @@
     $statePart = is_array($cmp['state_participation'] ?? null) ? $cmp['state_participation'] : [];
     $yearCmp = is_array($year_comparison ?? null) ? $year_comparison : [];
     $munState = is_array($municipal_vs_state ?? null) ? $municipal_vs_state : [];
+    $fundebRef = is_array($cmp['fundeb_reference_tables'] ?? null) ? $cmp['fundeb_reference_tables'] : [];
 @endphp
 
 <h2>{{ __('2. Comparativos e contexto territorial') }}</h2>
@@ -38,8 +39,29 @@
     </table>
 @endif
 
+@if (is_array($fundebRef['portaria_exercicios'] ?? null) && ($fundebRef['portaria_exercicios']['available'] ?? false))
+    <h3>{{ __('2.2 Receita e complementações — Portaria FNDE (por exercício)') }}</h3>
+    @include('pdf.analytics-report.partials.fundeb-reference-tables', [
+        'tables' => [
+            'portaria_exercicios' => $fundebRef['portaria_exercicios'],
+            'complementacao_eixos' => $fundebRef['complementacao_eixos'] ?? ['available' => false],
+        ],
+        'prefix' => '',
+    ])
+@endif
+
+@if (is_array($fundebRef['cenarios_previsao'] ?? null) && ($fundebRef['cenarios_previsao']['available'] ?? false))
+    <h3>{{ __('2.3 Cenários de previsão e distribuição legal') }}</h3>
+    @include('pdf.analytics-report.partials.fundeb-reference-tables', [
+        'tables' => [
+            'cenarios_previsao' => $fundebRef['cenarios_previsao'],
+            'distribuicao_legal' => $fundebRef['distribuicao_legal'] ?? ['available' => false],
+        ],
+    ])
+@endif
+
 @if ($fundebYears['available'] ?? false)
-    <h3>{{ __('2.2 Série VAAF/VAAT por exercício (referência municipal)') }}</h3>
+    <h3>{{ __('2.4 Série VAAF/VAAT gravada (referência municipal)') }}</h3>
     <p class="action-lead"><strong>{{ $fundebYears['title'] ?? '' }}</strong> — {{ $fundebYears['subtitle'] ?? __('Série histórica para validar premissas da previsão base e da complementação VAAR no exercício corrente.') }}</p>
     @if (filled($fundebYears['previsao_label'] ?? null))
         <p>{{ __('Previsão no painel') }}: {{ $fundebYears['previsao_label'] }}</p>
@@ -52,6 +74,7 @@
             <th>{{ __('Exercício') }}</th>
             <th>{{ __('VAAF') }}</th>
             <th>{{ __('VAAT') }}</th>
+            <th>{{ __('Compl. VAAF') }}</th>
             <th>{{ __('Compl. VAAR') }}</th>
             <th>{{ __('Δ VAAF') }}</th>
             <th>{{ __('Fonte') }}</th>
@@ -66,6 +89,7 @@
                 </td>
                 <td>{{ $row['vaaf'] ?? '—' }}</td>
                 <td>{{ $row['vaat'] ?? '—' }}</td>
+                <td>{{ $row['complementacao_vaaf'] ?? '—' }}</td>
                 <td>{{ $row['complementacao_vaar'] ?? '—' }}</td>
                 <td>{{ $row['variacao_vaaf_pct'] ?? '—' }}</td>
                 <td class="muted" style="font-size:8pt;">{{ $row['fonte'] ?? '' }}</td>
@@ -75,8 +99,13 @@
     <p class="muted">{{ $fundebYears['note'] ?? '' }}</p>
 @endif
 
+@if (is_array($fundebRef['alertas_fnde'] ?? null) && ($fundebRef['alertas_fnde']['available'] ?? false))
+    <h3>{{ __('2.5 Alertas FNDE / qualidade dos dados') }}</h3>
+    @include('pdf.analytics-report.partials.fundeb-reference-tables', ['tables' => ['alertas_fnde' => $fundebRef['alertas_fnde']]])
+@endif
+
 @if ($statePart['available'] ?? false)
-    <h3>{{ __('2.3 Participação do município no contexto da UF') }}</h3>
+    <h3>{{ __('2.6 Participação do município no contexto da UF') }}</h3>
     <p class="action-lead"><strong>{{ $statePart['title'] ?? '' }}</strong> — {{ $statePart['subtitle'] ?? __('Indica peso relativo do município na UF para matrículas e repasses de referência — útil em negociação política e planeamento regional.') }}</p>
     <p class="muted">
         {{ __('Exercício') }}: {{ $statePart['exercicio'] ?? '—' }}
@@ -106,7 +135,7 @@
 @endif
 
 @if ($munState['available'] ?? false)
-    <h3>{{ __('2.4 Desempenho SAEB — município × UF') }}</h3>
+    <h3>{{ __('2.7 Desempenho SAEB — município × UF') }}</h3>
     <p class="action-lead"><strong>{{ $munState['title'] ?? '' }}</strong> — {{ $munState['subtitle'] ?? __('Diferenças negativas persistentes orientam planos de formação e metas pedagógicas; confirme anos de referência antes de comparar com metas nacionais.') }}</p>
     <table class="data">
         <tr>

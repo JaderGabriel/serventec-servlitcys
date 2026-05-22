@@ -79,7 +79,7 @@ Detalhe: [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md), [CONSULTAS_EXTERNAS.md]
 1. **Geo** — microdados INEP no `storage` (passo 3 ou pipeline).
 2. **Censo** — indexar matrículas municipais (`funding::index_censo_matriculas`).
 3. **FUNDEB** — importar anos de referência (CKAN + CSV receita).
-4. **Repasses** — Tesouro por município/ano.
+4. **Repasses** — Tesouro CSV (`TesouroTransferenciasCsvService`, COD_MUN + nome/UF) e Portal da Transparência (com API key) por município/ano.
 5. **SAEB** — microdados ou CSV na sincronização pedagógica.
 6. Opcional: **sincronização massiva semanal** para repetir com checkpoint.
 
