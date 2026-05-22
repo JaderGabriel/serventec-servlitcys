@@ -22,7 +22,7 @@
     <div class="py-8">
         <div class="max-w-[1600px] mx-auto sm:px-6 lg:px-8 space-y-6">
             <div class="serv-panel serv-panel--info px-4 py-3 text-sm">
-                <p class="font-medium text-serv-navy dark:text-teal-100">{{ __('Foco no município seleccionado') }}</p>
+                <p class="font-medium text-serv-navy dark:text-teal-100">{{ __('Foco no município selecionado') }}</p>
                 <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">
                     {{ __('Indicadores e valores indicativos de saldo usam o cadastro i-Educar do município e os filtros aplicados. Comece pelo Diagnóstico ou FUNDEB; use Discrepâncias para corrigir cadastro com impacto em repasses.') }}
                 </p>
@@ -30,7 +30,7 @@
 
             <div class="serv-panel p-6">
                 <x-input-label for="analytics_city" :value="__('Município')" />
-                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Seleccione o município cuja base i-Educar será analisada (cadastro activo com ligação à base).') }}</p>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Selecione o município cuja base i-Educar será analisada (cadastro ativo com conexão à base).') }}</p>
                 <form method="get" action="{{ route('dashboard.analytics') }}" class="mt-2 flex flex-col sm:flex-row gap-4 sm:items-end">
                     <div class="flex-1 max-w-xl">
                         <select id="analytics_city" name="city_id" class="block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 shadow-sm focus:border-teal-600 focus:ring-teal-600" onchange="this.form.submit()">
@@ -91,7 +91,7 @@
                                     {{ __('Inclusão — recorte de matrículas') }}
                                 </label>
                                 <p class="mt-0.5 text-[11px] text-violet-800/90 dark:text-violet-200/80 leading-relaxed">
-                                    {{ __('Opcional. Afecta gráficos e tabelas de NEE; blocos de equidade, raça e recurso de prova mantêm a rede no filtro.') }}
+                                    {{ __('Opcional. Afeta gráficos e tabelas de NEE; blocos de equidade, raça e recurso de prova mantêm a rede no filtro.') }}
                                 </p>
                                 <select
                                     id="inclusion_scope"

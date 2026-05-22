@@ -7,7 +7,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Orquestra download de microdados SAEB (INEP ou CSV em dados.gov) e gravação na base (saeb_indicator_points),
- * apenas para municípios/UF das cidades com analytics activo.
+ * apenas para municípios/UF das cidades com analytics ativo.
  */
 final class SaebMicrodadosOpenDataImportService
 {
@@ -44,7 +44,7 @@ final class SaebMicrodadosOpenDataImportService
         if (! filter_var(config('ieducar.saeb.microdados_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             return [
                 'ok' => false,
-                'message' => __('Importação por microdados INEP desactivada (IEDUCAR_SAEB_MICRODADOS_ENABLED).'),
+                'message' => __('Importação por microdados INEP desativada (IEDUCAR_SAEB_MICRODADOS_ENABLED).'),
                 'fonte_efetiva' => null,
                 'path' => SaebHistoricoDatabase::STORAGE_LABEL,
             ];
@@ -89,7 +89,7 @@ final class SaebMicrodadosOpenDataImportService
 
             $canonicalPath = tempnam(sys_get_temp_dir(), 'saeb_canonical_');
             if ($canonicalPath === false) {
-                throw new \RuntimeException(__('Não foi possível criar ficheiro temporário.'));
+                throw new \RuntimeException(__('Não foi possível criar arquivo temporário.'));
             }
             $canonicalPath .= '.csv';
 
@@ -168,7 +168,7 @@ final class SaebMicrodadosOpenDataImportService
         if (! filter_var(config('ieducar.saeb.microdados_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             return [
                 'ok' => false,
-                'message' => __('Importação por microdados desactivada (IEDUCAR_SAEB_MICRODADOS_ENABLED).'),
+                'message' => __('Importação por microdados desativada (IEDUCAR_SAEB_MICRODADOS_ENABLED).'),
                 'fonte_efetiva' => null,
                 'path' => SaebHistoricoDatabase::STORAGE_LABEL,
             ];
@@ -201,7 +201,7 @@ final class SaebMicrodadosOpenDataImportService
             $downloaded = $this->downloader->downloadCsvToTemp($url);
             $canonicalPath = tempnam(sys_get_temp_dir(), 'saeb_canonical_url_');
             if ($canonicalPath === false) {
-                throw new \RuntimeException(__('Não foi possível criar ficheiro temporário.'));
+                throw new \RuntimeException(__('Não foi possível criar arquivo temporário.'));
             }
             $canonicalPath .= '.csv';
 

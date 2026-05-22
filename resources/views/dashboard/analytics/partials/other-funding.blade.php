@@ -19,7 +19,7 @@
 <div class="space-y-6">
     @if (! $yearFilterReady)
         <p class="serv-callout serv-callout--warning text-sm">
-            {{ __('Seleccione o ano letivo e aplique os filtros para consultar demais financiamentos.') }}
+            {{ __('Selecione o ano letivo e aplique os filtros para consultar demais financiamentos.') }}
         </p>
     @else
         @include('dashboard.analytics.partials.tab-impact-strip', [
@@ -201,7 +201,7 @@
             <x-dashboard.consultoria-section
                 anchor="financiamentos-pilares"
                 :title="__('Pilar «Programas complementares» (discrepâncias)')"
-                :subtitle="__('Ligação com checks de cadastro que afetam programas federais.')"
+                :subtitle="__('Conexão com checks de cadastro que afetam programas federais.')"
             >
                 @foreach ($pillars as $pillar)
                     <p class="text-sm text-slate-700 dark:text-slate-300">

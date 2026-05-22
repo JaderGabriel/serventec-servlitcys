@@ -10,7 +10,7 @@ final class AnalyticsReportPdfCopy
     public static function preamble(): string
     {
         return __(
-            'Este documento consolida o painel analítico municipal em formato de informe para gestão. Cada secção explica o que os números significam, de onde vêm os dados e que decisões administrativas podem ser apoiadas — sempre no recorte de cidade, ano letivo e filtros indicados na capa. Valores financeiros marcados como «estimativa» usam VAAF municipal e pesos de cadastro; não substituem repasses oficiais do FNDE, Simec ou Tesouro Transparente.'
+            'Este documento consolida o painel analítico municipal em formato de informe para gestão. Cada seção explica o que os números significam, de onde vêm os dados e que decisões administrativas podem ser apoiadas — sempre no recorte de cidade, ano letivo e filtros indicados na capa. Valores financeiros marcados como «estimativa» usam VAAF municipal e pesos de cadastro; não substituem repasses oficiais do FNDE, Simec ou Tesouro Transparente.'
         );
     }
 
@@ -18,7 +18,7 @@ final class AnalyticsReportPdfCopy
     {
         return match ($section) {
             'health' => __(
-                'Síntese do índice de conformidade: cruza cadastro (Discrepâncias), alertas FUNDEB/VAAR, programas complementares e ritmo de atualização no i-Educar. Use esta secção para alinhar equipe técnica e prioridades da Secretaria antes de aprofundar tabelas e gráficos.'
+                'Síntese do índice de conformidade: cruza cadastro (Discrepâncias), alertas FUNDEB/VAAR, programas complementares e ritmo de atualização no i-Educar. Use esta seção para alinhar equipe técnica e prioridades da Secretaria antes de aprofundar tabelas e gráficos.'
             ),
             'comparatives' => __(
                 'Comparativos históricos e territoriais para contextualizar o exercício em curso. Servem para perguntas do tipo «estamos a evoluir face ao ano anterior?» e «como nos posicionamos face à UF ou à prévia federal?».'
@@ -42,7 +42,7 @@ final class AnalyticsReportPdfCopy
                 'Ritmo de cadastro e exportação Censo. Decisão-chave: garantir capacidade operacional (pessoas × tempo) para fechar pendências antes dos prazos nacionais.'
             ),
             'charts' => __(
-                'Visualizações para apresentação em reunião de gestão. Compare magnitudes entre escolas, segmentos ou anos e volte às tabelas das secções anteriores para confirmar causas.'
+                'Visualizações para apresentação em reunião de gestão. Compare magnitudes entre escolas, segmentos ou anos e volte às tabelas das seções anteriores para confirmar causas.'
             ),
             'thematic' => __(
                 'Prioridades temáticas já agregadas no diagnóstico. Traduzem alertas técnicos em linguagem de gestão (financiamento, inclusão, rede, Censo).'
@@ -62,7 +62,7 @@ final class AnalyticsReportPdfCopy
         return match ($section) {
             'health' => [
                 __('Se o índice estiver abaixo de 55, convoque reunião de cadastro com prazo para top 3 pendências.'),
-                __('Cruze perda/ganho estimado com a secção Discrepâncias antes de comprometer metas financeiras.'),
+                __('Cruze perda/ganho estimado com a seção Discrepâncias antes de comprometer metas financeiras.'),
             ],
             'discrepancies' => [
                 __('Atribua responsável por escola para cada rotina com ocorrências > 0.'),

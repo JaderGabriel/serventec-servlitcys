@@ -41,7 +41,7 @@
 
     @if (! empty($inclusionData['inclusion_filters_active'] ?? []))
         <div class="rounded-md border border-violet-200/80 dark:border-violet-800/50 bg-violet-50/50 dark:bg-violet-950/25 px-4 py-2.5 text-xs text-violet-900 dark:text-violet-100">
-            <span class="font-semibold">{{ __('Recorte activo:') }}</span>
+            <span class="font-semibold">{{ __('Recorte ativo:') }}</span>
             {{ implode(' · ', $inclusionData['inclusion_filters_active']) }}
             <span class="text-violet-700/80 dark:text-violet-300/80"> — {{ __('altere em Filtros acima (aba Inclusão).') }}</span>
         </div>
@@ -187,7 +187,7 @@
         <div class="rounded-lg border border-violet-200/80 dark:border-violet-800/50 bg-white dark:bg-gray-900/40 px-4 py-4">
             <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('Matrículas NEE por escola') }}</h3>
             <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
-                {{ __('Matrículas ativas com registo em aluno_deficiência, por unidade escolar (ligação turma → escola ou, quando a turma não tem escola, pela FK de escola na matrícula). Ordenado por total decrescente.') }}
+                {{ __('Matrículas ativas com registro em aluno_deficiência, por unidade escolar (conexão turma → escola ou, quando a turma não tem escola, pela FK de escola na matrícula). Ordenado por total decrescente.') }}
             </p>
             <div class="overflow-x-auto rounded-md border border-gray-200 dark:border-gray-600 max-h-[min(28rem,60vh)] overflow-y-auto">
                 <table class="min-w-full text-sm">
@@ -336,7 +336,7 @@
                 <div>
                     <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('AEE e outras matrículas (alunos NEE)') }}</h3>
                     <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                        {{ __('Apenas alunos com registo em aluno_deficiência. Turmas AEE são identificadas por termos no nome da turma ou do curso. As outras matrículas do mesmo aluno são agrupadas por segmento de forma heurística.') }}
+                        {{ __('Apenas alunos com registro em aluno_deficiência. Turmas AEE são identificadas por termos no nome da turma ou do curso. As outras matrículas do mesmo aluno são agrupadas por segmento de forma heurística.') }}
                     </p>
                 </div>
                 @if (! empty($aeeCross['note']))

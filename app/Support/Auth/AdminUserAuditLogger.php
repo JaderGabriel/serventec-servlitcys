@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 /**
- * Registo centralizado de acções administrativas sobre utilizadores (auditoria).
+ * Registo centralizado de acções administrativas sobre usuários (auditoria).
  */
 final class AdminUserAuditLogger
 {

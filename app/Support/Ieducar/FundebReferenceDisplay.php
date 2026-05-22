@@ -2,6 +2,8 @@
 
 namespace App\Support\Ieducar;
 
+use App\Support\Finance\MoneyMath;
+
 /**
  * Formata comparação VAAF municipal (real/importado) × prévia federal para cartões do painel.
  */
@@ -63,8 +65,8 @@ final class FundebReferenceDisplay
             : (float) ($ref['vaaf'] ?? 0);
         $previaVaaf = is_array($ref['previa'] ?? null) ? (float) ($ref['previa']['vaaf'] ?? 0) : 0.0;
 
-        $realTotal = round($matriculas * $municipalVaaf, 2);
-        $previaTotal = $previaVaaf > 0 ? round($matriculas * $previaVaaf, 2) : null;
+        $realTotal = MoneyMath::multiplyVaaf($matriculas, $municipalVaaf);
+        $previaTotal = $previaVaaf > 0 ? MoneyMath::multiplyVaaf($matriculas, $previaVaaf) : null;
 
         return [
             'real' => [

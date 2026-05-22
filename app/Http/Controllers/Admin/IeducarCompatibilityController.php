@@ -156,7 +156,7 @@ class IeducarCompatibilityController extends Controller
             }
             fwrite($out, "\xEF\xBB\xBF");
 
-            $header = [__('Município'), __('UF'), __('IBGE'), __('Activo')];
+            $header = [__('Município'), __('UF'), __('IBGE'), __('Ativo')];
             foreach ($matrix['years'] as $y) {
                 $header[] = __('VAAF :ano', ['ano' => $y]);
                 $header[] = __('VAAT :ano', ['ano' => $y]);

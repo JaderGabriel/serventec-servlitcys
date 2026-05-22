@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\Storage;
 final class SaebMunicipioFilesWriter
 {
     /**
-     * Regista ficheiros por município após gravar o historico.json agregado.
-     * Remove ficheiros .json antigos nessa pasta antes de regravar (evita dados obsoletos).
+     * Regista arquivos por município após gravar o historico.json agregado.
+     * Remove arquivos .json antigos nessa pasta antes de regravar (evita dados obsoletos).
      *
      * @param  array<string, mixed>  $decoded  Payload completo (meta + pontos)
      */

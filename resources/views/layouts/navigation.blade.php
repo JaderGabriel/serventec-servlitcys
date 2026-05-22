@@ -80,7 +80,7 @@
                 @endif
             </x-responsive-nav-link>
             <p class="px-4 pt-3 pb-1 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {{ __('Mais opções no menu do utilizador (submenus expansíveis).') }}
+                {{ __('Mais opções no menu do usuário (submenus expansíveis).') }}
             </p>
         </div>
 

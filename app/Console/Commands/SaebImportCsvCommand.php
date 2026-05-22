@@ -8,7 +8,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 #[Signature('saeb:import-csv {file : Caminho do CSV (absoluto ou relativo ao projecto)} {--no-merge : Substituir historico.json em vez de fundir} {--no-resolve-inep : Não mapear INEP→cod_escola}')]
-#[Description('Importa SAEB real a partir de CSV: IBGE, ano, disciplina, etapa, valor; opcional INEP (escola) com ligação ao i-Educar.')]
+#[Description('Importa SAEB real a partir de CSV: IBGE, ano, disciplina, etapa, valor; opcional INEP (escola) com conexão ao i-Educar.')]
 class SaebImportCsvCommand extends Command
 {
     public function handle(SaebCsvPedagogicalImportService $service): int
@@ -25,7 +25,7 @@ class SaebImportCsvCommand extends Command
 
         $this->info(__('A importar :path …', ['path' => $path]));
         if (! $merge) {
-            $this->warn(__('Modo sem fusão: o ficheiro JSON será regravado só com os pontos deste CSV.'));
+            $this->warn(__('Modo sem fusão: o arquivo JSON será regravado só com os pontos deste CSV.'));
         }
 
         $result = $service->importFromCsvFile($path, $merge, $resolveInep);

@@ -8,7 +8,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
 
 /**
- * Ligação matrícula ↔ turma: coluna direta em matricula (ref_cod_turma) ou pivô pmieducar.matricula_turma.
+ * Conexão matrícula ↔ turma: coluna direta em matricula (ref_cod_turma) ou pivô pmieducar.matricula_turma.
  */
 final class MatriculaTurmaJoin
 {

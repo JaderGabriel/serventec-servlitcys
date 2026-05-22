@@ -115,7 +115,7 @@ final class DocumentationCatalog
                     ['label' => __('Implantação em produção'), 'path' => 'docs/IMPLANTACAO_PRODUCAO.md'],
                     ['label' => __('Segurança'), 'path' => 'docs/SEGURANCA.md'],
                     ['label' => __('Comandos Artisan'), 'path' => 'docs/COMANDOS_ARTISAN.md'],
-                    ['label' => __('Perfis de utilizador'), 'path' => 'docs/PERFIS_UTILIZADOR.md'],
+                    ['label' => __('Perfis de usuário'), 'path' => 'docs/PERFIS_UTILIZADOR.md'],
                     ['label' => __('README (instalação)'), 'path' => 'README.md'],
                 ],
             ],

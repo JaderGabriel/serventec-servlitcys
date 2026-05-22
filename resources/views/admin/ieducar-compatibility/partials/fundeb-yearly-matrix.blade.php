@@ -94,7 +94,7 @@
                     <th class="px-2 py-2 font-semibold whitespace-nowrap">{{ __('Município') }}</th>
                     <th class="px-2 py-2 font-semibold">{{ __('UF') }}</th>
                     <th class="px-2 py-2 font-semibold">{{ __('IBGE') }}</th>
-                    <th class="px-2 py-2 font-semibold text-center">{{ __('Activo') }}</th>
+                    <th class="px-2 py-2 font-semibold text-center">{{ __('Ativo') }}</th>
                     @foreach ($years as $y)
                         <th colspan="2" class="px-2 py-2 font-semibold text-center border-l border-slate-200/80 dark:border-slate-600/80">
                             {{ $y }}

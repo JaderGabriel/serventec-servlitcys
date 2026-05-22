@@ -32,7 +32,7 @@ class AnalyticsReportExportController extends Controller
 
         $filters = IeducarFilterState::fromRequest($request);
         if (! $filters->hasYearSelected()) {
-            $message = __('Seleccione o ano letivo e aplique os filtros antes de exportar o PDF.');
+            $message = __('Selecione o ano letivo e aplique os filtros antes de exportar o PDF.');
 
             return $request->expectsJson()
                 ? response()->json(['message' => $message], 422)

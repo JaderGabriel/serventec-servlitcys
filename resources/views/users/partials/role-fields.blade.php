@@ -28,7 +28,7 @@
     @if ($assignableCities->isNotEmpty())
         <div x-show="role === '{{ UserRole::Municipal->value }}'" x-cloak class="space-y-2">
             <x-input-label :value="__('Municípios vinculados')" />
-            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('O perfil Municipal só vê análises dos municípios seleccionados.') }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('O perfil Municipal só vê análises dos municípios selecionados.') }}</p>
             <div class="max-h-48 overflow-y-auto rounded-md border border-gray-200 dark:border-gray-600 p-3 space-y-2">
                 @foreach ($assignableCities as $city)
                     <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">

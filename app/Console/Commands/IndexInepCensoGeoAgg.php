@@ -30,7 +30,7 @@ class IndexInepCensoGeoAgg extends Command
         }
 
         $this->info('A indexar geografia Censo a partir de: '.$path);
-        $this->warn('Pode demorar vários minutos em ficheiros nacionais completos.');
+        $this->warn('Pode demorar vários minutos em arquivos nacionais completos.');
 
         $n = $svc->indexFromMicrodadosCsv($path);
         $this->info("Concluído. Linhas indexadas: {$n}.");

@@ -29,20 +29,20 @@ final class MunicipalityMapStatus
     {
         $definitions = [
             'ready' => [
-                'label' => __('Activo · base configurada'),
-                'description' => __('Município activo com ligação i-Educar (host, base e utilizador).'),
+                'label' => __('Ativo · base configurada'),
+                'description' => __('Município ativo com conexão i-Educar (host, base e usuário).'),
             ],
             'incomplete' => [
-                'label' => __('Activo · credenciais incompletas'),
-                'description' => __('Marcado activo, mas falta configurar a base de dados municipal.'),
+                'label' => __('Ativo · credenciais incompletas'),
+                'description' => __('Marcado ativo, mas falta configurar a base de dados municipal.'),
             ],
             'inactive_setup' => [
-                'label' => __('Inactivo · base configurada'),
-                'description' => __('Credenciais gravadas; município desactivado no cadastro.'),
+                'label' => __('Inativo · base configurada'),
+                'description' => __('Credenciais gravadas; município desativado no cadastro.'),
             ],
             'inactive' => [
-                'label' => __('Inactivo'),
-                'description' => __('Sem ligação i-Educar completa ou município desactivado.'),
+                'label' => __('Inativo'),
+                'description' => __('Sem conexão i-Educar completa ou município desativado.'),
             ],
         ];
 

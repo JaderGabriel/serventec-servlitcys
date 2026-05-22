@@ -10,7 +10,7 @@ final class FundebImportMode
     /** Apaga referências do município/ano no âmbito e grava o que a API/CSV devolver. */
     public const REPLACE = 'replace';
 
-    /** Mantém registos iguais; grava só quando o valor obtido difere do gravado (VAAF/VAAT/VAAR). */
+    /** Mantém registros iguais; grava só quando o valor obtido difere do gravado (VAAF/VAAT/VAAR). */
     public const UPDATE = 'update';
 
     public static function normalize(mixed $value): string

@@ -432,7 +432,7 @@ final class FundebComplementacaoInformeBuilder
                     'O FUNDEB municipal combina receitas próprias (ICMS, ISS, IPTU etc.), transferências constitucionais e complementações federais (VAAT, VAAR e outras). Este painel não integra extrato do Tesouro nem repasses diários do FNDE.'
                 ),
                 __(
-                    'Use a secção «Fontes públicas» desta aba e o Tesouro Transparente para cruzar transferências constitucionais e o cronograma de repasses do exercício.'
+                    'Use a seção «Fontes públicas» desta aba e o Tesouro Transparente para cruzar transferências constitucionais e o cronograma de repasses do exercício.'
                 ),
             ],
             'indicadores' => $matriculas > 0

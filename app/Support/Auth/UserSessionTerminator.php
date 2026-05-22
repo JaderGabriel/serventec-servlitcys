@@ -5,7 +5,7 @@ namespace App\Support\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Encerra sessões web (driver database) associadas a um utilizador.
+ * Encerra sessões web (driver database) associadas a um usuário.
  */
 final class UserSessionTerminator
 {

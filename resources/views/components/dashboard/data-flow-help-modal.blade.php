@@ -38,11 +38,11 @@
                 </li>
                 <li class="flex gap-2">
                     <span class="serv-mm-tip-num serv-mm-tip-num--teal" aria-hidden="true">3</span>
-                    <span>{{ __('Base: i-Educar é a fonte de verdade do cadastro municipal; a seta bidireccional indica leitura e confronto com o painel.') }}</span>
+                    <span>{{ __('Base: i-Educar é a fonte de verdade do cadastro municipal; a seta bidirecional indica leitura e confronto com o painel.') }}</span>
                 </li>
                 <li class="flex gap-2">
                     <span class="serv-mm-tip-num serv-mm-tip-num--muted" aria-hidden="true">·</span>
-                    <span>{{ __('Pontos no mapa: teal = operacional, âmbar = a configurar, cinza = indisponível — contagens na legenda reflectem nós e ligações.') }}</span>
+                    <span>{{ __('Pontos no mapa: teal = operacional, âmbar = a configurar, cinza = indisponível — contagens na legenda refletem nós e conexões.') }}</span>
                 </li>
             </ul>
         </div>

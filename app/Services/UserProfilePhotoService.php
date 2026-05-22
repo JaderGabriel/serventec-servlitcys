@@ -29,7 +29,7 @@ class UserProfilePhotoService
         $user->forceFill(['profile_photo_path' => null])->save();
     }
 
-    /** Remove ficheiro em disco (ex.: antes de apagar a conta). */
+    /** Remove arquivo em disco (ex.: antes de apagar a conta). */
     public function purge(User $user): void
     {
         $this->deleteFile($user);

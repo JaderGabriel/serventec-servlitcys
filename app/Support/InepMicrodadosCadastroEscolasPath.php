@@ -8,10 +8,10 @@ use Illuminate\Support\Facades\Storage;
  * Resolve o caminho absoluto do CSV de microdados do Censo (`microdados_ed_basica_*.csv`) ou
  * legado `MICRODADOS_CADASTRO_ESCOLAS_*.csv`.
  *
- * O ficheiro deve estar no disco `public` do Laravel (`storage/app/public`), servido via
+ * O arquivo deve estar no disco `public` do Laravel (`storage/app/public`), servido via
  * `php artisan storage:link` como `public/storage/...` quando necessário.
  *
- * Se o caminho configurado contiver `*`, usa-se `glob` e escolhe-se o ficheiro cujo nome
+ * Se o caminho configurado contiver `*`, usa-se `glob` e escolhe-se o arquivo cujo nome
  * contém o ano mais recente (ex.: 2024 vs 2023).
  */
 final class InepMicrodadosCadastroEscolasPath

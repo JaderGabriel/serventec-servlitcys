@@ -301,7 +301,7 @@ final class AnalyticsDiagnosticsRunner
     private function recommendationFor500(bool $loadOverview, array $overviewData, array $ieducarOptions): string
     {
         if (! empty($ieducarOptions['errors'])) {
-            return __('Falha ao carregar filtros i-Educar — verifique ligação à BD da cidade e config/ieducar.php.');
+            return __('Falha ao carregar filtros i-Educar — verifique conexão à BD da cidade e config/ieducar.php.');
         }
 
         if ($loadOverview && ! empty($overviewData['error'])) {
@@ -342,7 +342,7 @@ final class AnalyticsDiagnosticsRunner
             'workDoneData' => AnalyticsEmptyPayloads::workDone(),
             'discrepanciesData' => AnalyticsEmptyPayloads::discrepancies(),
             'municipalityHealthData' => AnalyticsEmptyPayloads::municipalityHealth(),
-            'fundingLossModalData' => DiscrepanciesCheckCatalog::modalPayload(),
+            'fundingLossModalData' => DiscrepanciesCheckCatalog::modalPayload($city, $filters),
             'chartExportContext' => ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions),
             'tabs' => AnalyticsTabCatalog::tabsOrdered(),
             'tabGroups' => AnalyticsTabCatalog::groups(),

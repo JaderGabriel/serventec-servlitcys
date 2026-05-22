@@ -16,7 +16,7 @@
     <div class="py-8">
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <div class="serv-panel serv-panel--info px-5 py-4 text-sm">
-                <p>{{ __('Executa a mesma cadeia do «Aplicar filtros» (ligação BD, filtros, overview, renderização) com tempos e erros. Em dev sem VPN/firewall à BD remota, os passos de BD falham — isso já indica a causa do 500 em local.') }}</p>
+                <p>{{ __('Executa a mesma cadeia do «Aplicar filtros» (conexão BD, filtros, overview, renderização) com tempos e erros. Em dev sem VPN/firewall à BD remota, os passos de BD falham — isso já indica a causa do 500 em local.') }}</p>
             </div>
 
             <form method="get" action="{{ route('admin.analytics-diagnostics') }}" class="serv-panel p-5 space-y-4">

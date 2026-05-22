@@ -54,7 +54,7 @@ class ExportInepGeoFallbackCsv extends Command
 
         $fh = fopen($path, 'wb');
         if ($fh === false) {
-            $this->error('Não foi possível criar o ficheiro: '.$path);
+            $this->error('Não foi possível criar o arquivo: '.$path);
 
             return self::FAILURE;
         }

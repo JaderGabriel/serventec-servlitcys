@@ -15,13 +15,13 @@ class OperationalAlertsCommand extends Command
     public function handle(OperationalAlertsNotifier $notifier, NotificationDispatcher $dispatcher): int
     {
         if (! (bool) config('notifications.operational_alerts.enabled', true)) {
-            $this->comment(__('Alertas operacionais desactivados (APP_NOTIFICATIONS_OPERATIONAL).'));
+            $this->comment(__('Alertas operacionais desativados (APP_NOTIFICATIONS_OPERATIONAL).'));
 
             return self::SUCCESS;
         }
 
         if (! $dispatcher->isEnabled()) {
-            $this->comment(__('Centro de notificações desactivado (APP_NOTIFICATIONS_ENABLED).'));
+            $this->comment(__('Centro de notificações desativado (APP_NOTIFICATIONS_ENABLED).'));
 
             return self::SUCCESS;
         }

@@ -13,7 +13,7 @@ use App\Support\Ieducar\MatriculaChartQueries;
 use Illuminate\Database\QueryException;
 
 /**
- * Mensura cadastros recentes no i-Educar por utilizador (excl. admin) e estima esforço restante.
+ * Mensura cadastros recentes no i-Educar por usuário (excl. admin) e estima esforço restante.
  */
 class WorkDoneRepository
 {
@@ -68,7 +68,7 @@ class WorkDoneRepository
         ];
 
         if ($city === null || ! $filters->hasYearSelected()) {
-            $base['intro'] = __('Seleccione cidade e ano letivo para acompanhar o Censo e o ritmo de cadastro.');
+            $base['intro'] = __('Selecione cidade e ano letivo para acompanhar o Censo e o ritmo de cadastro.');
 
             return $base;
         }
@@ -106,7 +106,7 @@ class WorkDoneRepository
                             );
                         } catch (\Throwable $e) {
                             $activityNote = ($activityNote ? $activityNote.' ' : '')
-                                .__('Tabela por utilizador indisponível: :msg', ['msg' => $e->getMessage()]);
+                                .__('Tabela por usuário indisponível: :msg', ['msg' => $e->getMessage()]);
                         }
                     }
                 }
@@ -124,9 +124,9 @@ class WorkDoneRepository
                 $yearClosure = IeducarWorkActivityQueries::yearClosureInsight($filters, $censo, $periods, $anoStatus);
 
                 $methodology = [
-                    __('Turmas: turmas distintas no ano letivo do filtro. Matrículas: vínculos activos em matricula. Enturmações: vínculos matrícula↔turma (pivô matricula_turma ou coluna directa).'),
+                    __('Turmas: turmas distintas no ano letivo do filtro. Matrículas: vínculos ativos em matricula. Enturmações: vínculos matrícula↔turma (pivô matricula_turma ou coluna directa).'),
                     __('Cadastro recente: matrículas com data de cadastro no período (dia/semana/quinzena), com filtros aplicados.'),
-                    __('Utilizadores administrativos são excluídos conforme configuração (login, ID, nível).'),
+                    __('Usuárioes administrativos são excluídos conforme configuração (login, ID, nível).'),
                     __('Meta de volume: totais do ano letivo anterior (:ano) — turmas :t, matrículas :m, enturmações :e.', [
                         'ano' => $baseline['ano'] ?: '—',
                         't' => number_format((int) $baseline['turmas'], 0, ',', '.'),
@@ -134,11 +134,11 @@ class WorkDoneRepository
                         'e' => number_format((int) ($baseline['enturmacoes'] ?? 0), 0, ',', '.'),
                     ]),
                     $estimativa['usa_ritmo_observado']
-                        ? __('Tempo: minutos por tipo derivados do ritmo municipal (:ritmo cad./dia, :q na quinzena); prazo em dias usa ritmo da equipa (:ritmo_eq/dia, :u utilizador(es)). Turmas ponderadas em relação à matrícula (peso relativo da configuração). :h h/dia de capacidade por pessoa.', [
+                        ? __('Tempo: minutos por tipo derivados do ritmo municipal (:ritmo cad./dia, :q na quinzena); prazo em dias usa ritmo da equipe (:ritmo_eq/dia, :u usuário(es)). Turmas ponderadas em relação à matrícula (peso relativo da configuração). :h h/dia de capacidade por pessoa.', [
                             'ritmo' => number_format((float) ($estimativa['ritmo_por_dia'] ?? 0), 1, ',', '.'),
                             'q' => number_format((int) ($estimativa['cadastros_ultima_quinzena'] ?? 0), 0, ',', '.'),
                             'ritmo_eq' => number_format((float) ($estimativa['ritmo_equipe_por_dia'] ?? 0), 1, ',', '.'),
-                            'u' => (int) ($estimativa['utilizadores_ativos_quinzena'] ?? 0),
+                            'u' => (int) ($estimativa['usuários_ativos_quinzena'] ?? 0),
                             'h' => config('ieducar.work_tracking.working_hours_per_day', 6),
                         ])
                         : __('Tempo: referência fixa (:mt min/turma, :mm min/matricula, :me min/enturmação) só quando não há cadastro recente mensurável na base.', [
@@ -152,7 +152,7 @@ class WorkDoneRepository
                     'year_label' => $yearLabel,
                     'city_name' => (string) $city->name,
                     'intro' => __(
-                        'Situação do Educacenso por escola (exportado ou fechado no i-Educar, quando a base regista esse estado) e ritmo de cadastro recente por equipa municipal — apoio ao fecho do Censo e à alocação de esforço.'
+                        'Situação do Educacenso por escola (exportado ou fechado no i-Educar, quando a base regista esse estado) e ritmo de cadastro recente por equipe municipal — apoio ao fecho do Censo e à alocação de esforço.'
                     ),
                     'footnote' => __(
                         'Exportação/fecho depende das tabelas do módulo Educacenso na instalação (detecção automática). Cadastro recente usa data em matrícula; não substitui auditoria completa do i-Educar.'
@@ -243,7 +243,7 @@ class WorkDoneRepository
         }
 
         return ChartPayload::barHorizontal(
-            __('Cadastros na quinzena por utilizador i-Educar'),
+            __('Cadastros na quinzena por usuário i-Educar'),
             __('Matrículas'),
             $labels,
             $data

@@ -30,7 +30,7 @@
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
 
-                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Data de nascimento e CPF serão solicitados ao utilizador no primeiro acesso.') }}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Data de nascimento e CPF serão solicitados ao usuário no primeiro acesso.') }}</p>
 
                         <div>
                             <x-input-label for="password" :value="__('Senha')" />

@@ -92,7 +92,7 @@ final class OperationalAlertsNotifier
                     $recipients,
                     [
                         'title' => __('Fila de jobs sobrecarregada'),
-                        'body' => __(':count job(s) aguardam processamento (limiar :limit). Confirme que o worker está activo.', [
+                        'body' => __(':count job(s) aguardam processamento (limiar :limit). Confirme que o worker está ativo.', [
                             'count' => $pendingJobs,
                             'limit' => $threshold,
                         ]),

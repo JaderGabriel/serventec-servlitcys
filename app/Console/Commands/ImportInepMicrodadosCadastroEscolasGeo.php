@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\DB;
     {--only-missing=1 : Se 1, só INEPs em school_unit_geos ainda sem coordenadas oficiais (ou mapa com --also-map-coords)}
     {--also-map-coords=0 : Se 1, também preenche lat/lng quando vazios e a linha do CSV tiver coordenadas}
     {--threshold=100 : Limiar de divergência em metros (0 = usar config ieducar.inep_geocoding.divergence_threshold_meters)}
-    {--skip-if-missing=0 : Se 1, termina com sucesso se o ficheiro não existir (apenas aviso)}
+    {--skip-if-missing=0 : Se 1, termina com sucesso se o arquivo não existir (apenas aviso)}
     {--fetch=1 : Se 1 e o CSV não existir, descarrega o ZIP oficial do INEP (apaga CSVs antigos do mesmo tipo antes)}'
 )]
 #[Description('Lê microdados do Censo (CSV local) e atualiza APENAS linhas school_unit_geos existentes (INEP válido)')]
@@ -80,7 +80,7 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
             return self::FAILURE;
         }
 
-        $this->info('A usar ficheiro: '.$path);
+        $this->info('A usar arquivo: '.$path);
 
         $allowedCityIds = City::query()->forAnalytics();
         if ($cityOpt !== null && $cityOpt !== '') {
@@ -107,7 +107,7 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
 
         $fh = fopen($path, 'rb');
         if ($fh === false) {
-            $this->error('Não foi possível abrir o ficheiro.');
+            $this->error('Não foi possível abrir o arquivo.');
 
             return self::FAILURE;
         }
@@ -142,8 +142,8 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
 
         if (! InepMicrodadosEscolasCsv::headerHasGeoColumns($map)) {
             fclose($fh);
-            $this->warn('Este ficheiro não contém colunas de latitude/longitude (comum nos microdados públicos do Censo após restrições de privacidade). Nada a atualizar em official_lat/lng; use o passo ArcGIS ou um CSV com coords.');
-            $this->info('Importação terminada sem alterações (0 registos).');
+            $this->warn('Este arquivo não contém colunas de latitude/longitude (comum nos microdados públicos do Censo após restrições de privacidade). Nada a atualizar em official_lat/lng; use o passo ArcGIS ou um CSV com coords.');
+            $this->info('Importação terminada sem alterações (0 registros).');
             $this->maybeIndexCensoGeoAggFromPath($path, $cityIdList);
 
             return self::SUCCESS;

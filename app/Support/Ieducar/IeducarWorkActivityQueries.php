@@ -8,7 +8,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Support\Carbon;
 
 /**
- * Contagem de cadastros recentes no i-Educar por período e utilizador (excl. admin).
+ * Contagem de cadastros recentes no i-Educar por período e usuário (excl. admin).
  */
 final class IeducarWorkActivityQueries
 {
@@ -252,7 +252,7 @@ final class IeducarWorkActivityQueries
     }
 
     /**
-     * Ritmo médio (matrículas com data de cadastro / dia) a partir do que o município registou.
+     * Ritmo médio (matrículas com data de cadastro / dia) a partir do que o município registrou.
      *
      * @param  array{day: int, week: int, fortnight: int}  $periodCounts
      * @return array{pace: float, fonte: string, cadastros_dia: int, cadastros_semana: int, cadastros_quinzena: int}
@@ -451,7 +451,7 @@ final class IeducarWorkActivityQueries
             'cadastros_ultimo_dia' => (int) $observed['cadastros_dia'],
             'cadastros_ultima_semana' => (int) $observed['cadastros_semana'],
             'cadastros_ultima_quinzena' => (int) $observed['cadastros_quinzena'],
-            'utilizadores_ativos_quinzena' => $activeUsers,
+            'usuários_ativos_quinzena' => $activeUsers,
             'minutos_por_registro' => $minutesPerRecord,
             'minutos_por_turma' => $minTurma,
             'minutos_por_matricula' => $minMatricula,
@@ -493,7 +493,7 @@ final class IeducarWorkActivityQueries
                 default => __('cadastro recente'),
             };
 
-            return __('Meta = ano :ano anterior. Tempo derivado do ritmo municipal (:fonte): :q matrículas na quinzena → :ritmo/dia; minutos por tipo calculados desse ritmo (turma × :wt, matrícula ×1, enturmação × :we). :users utilizador(es) activos na quinzena aceleram o prazo.', [
+            return __('Meta = ano :ano anterior. Tempo derivado do ritmo municipal (:fonte): :q matrículas na quinzena → :ritmo/dia; minutos por tipo calculados desse ritmo (turma × :wt, matrícula ×1, enturmação × :we). :users usuário(es) ativos na quinzena aceleram o prazo.', [
                 'ano' => (int) $baseline['ano'],
                 'fonte' => $fonteLabel,
                 'q' => number_format((int) $observed['cadastros_quinzena'], 0, ',', '.'),
@@ -561,7 +561,7 @@ final class IeducarWorkActivityQueries
         }
 
         if ($noRecentCadastro) {
-            $hints[] = __('Nenhuma matrícula com data de cadastro nos últimos 15 dias (equipa municipal, filtros aplicados).');
+            $hints[] = __('Nenhuma matrícula com data de cadastro nos últimos 15 dias (equipe municipal, filtros aplicados).');
         }
 
         if (! $censoConsolidated && ! ($anoLetivoRow['fechado'] ?? false)) {

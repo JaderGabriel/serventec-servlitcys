@@ -165,7 +165,7 @@ class PerformanceRepository
 
                     return [
                         'rows' => [],
-                        'message' => __('Sem matrículas ativas para os filtros seleccionados.'),
+                        'message' => __('Sem matrículas ativas para os filtros selecionados.'),
                         'error' => null,
                         'chart' => $chartsInep[0] ?? null,
                         'charts' => $chartsInep,
@@ -369,7 +369,7 @@ class PerformanceRepository
         $alertaAno = null;
         if ($yearVal !== null && $yearVal < $currentYear && $emPct !== null && $emPct >= 30.0) {
             $alertaAno = __(
-                'O ano letivo seleccionado já terminou, mas uma parte relevante das matrículas aparece como «em curso / exame / paralela» (códigos 1, 4 e 7). Isso costuma indicar que a situação final ainda não foi actualizada no i-Educar — não é uma taxa pedagógica de «andamento» do ano.'
+                'O ano letivo selecionado já terminou, mas uma parte relevante das matrículas aparece como «em curso / exame / paralela» (códigos 1, 4 e 7). Isso costuma indicar que a situação final ainda não foi actualizada no i-Educar — não é uma taxa pedagógica de «andamento» do ano.'
             );
         }
 
@@ -420,7 +420,7 @@ class PerformanceRepository
                 'reclassificacao',
                 __('Taxa de reclassificação'),
                 __('Reclassificação — cód. 10'),
-                __('Percentagem com situação «reclassificado» (código 10 INEP): mudança de série ou etapa sem concluir o ano letivo na série de origem, conforme registo na matrícula.'),
+                __('Percentagem com situação «reclassificado» (código 10 INEP): mudança de série ou etapa sem concluir o ano letivo na série de origem, conforme registro na matrícula.'),
                 __('(situação = 10) ÷ (total) × 100'),
                 $pct($reclass),
                 $reclass,
@@ -430,7 +430,7 @@ class PerformanceRepository
                 'em_curso',
                 __('Taxa «em curso / exame / paralela»'),
                 __('Em curso / exame / paralela — cód. 1, 4, 7'),
-                __('Percentagem com situação «em curso», «em exame» ou «paralela» (códigos 1, 4 e 7). O campo reflecte o estado no registo; em anos já encerrados, valores muito altos indicam sobretudo falta de fechamento ou atualização na base de dados.'),
+                __('Percentagem com situação «em curso», «em exame» ou «paralela» (códigos 1, 4 e 7). O campo reflete o estado no registro; em anos já encerrados, valores muito altos indicam sobretudo falta de fechamento ou atualização na base de dados.'),
                 __('(situação ∈ {1,4,7}) ÷ (total) × 100'),
                 $pct($emCurso),
                 $emCurso,

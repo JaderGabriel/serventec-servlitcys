@@ -969,7 +969,7 @@ class InepCatalogoEscolasGeoService
     }
 
     /**
-     * Microdados do Censo (ficheiro local `microdados_ed_basica_*.csv` ou legado). Só aplica se o CSV
+     * Microdados do Censo (arquivo local `microdados_ed_basica_*.csv` ou legado). Só aplica se o CSV
      * tiver colunas de latitude/longitude (em muitos anos públicos não existem — ver INEP/LGPD).
      *
      * @param  list<int>  $normalizedCodes

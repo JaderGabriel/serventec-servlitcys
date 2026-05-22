@@ -16,12 +16,12 @@
             <div class="serv-panel serv-panel--info px-4 py-3 text-sm">
                 <p class="font-medium text-slate-900 dark:text-slate-100">{{ __('Diagnóstico de infraestrutura') }}</p>
                 <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">
-                    {{ __('Os números contam registos nesta aplicação (cidades e utilizadores). O teste por município abre uma ligação temporária ao banco i-Educar e confirma host, credenciais e schema — não altera dados nem substitui a consultoria municipal.') }}
+                    {{ __('Os números contam registros nesta aplicação (cidades e usuários). O teste por município abre uma conexão temporária ao banco i-Educar e confirma host, credenciais e schema — não altera dados nem substitui a consultoria municipal.') }}
                 </p>
             </div>
 
             <div class="serv-panel p-6">
-                <h3 class="font-display text-lg font-semibold text-serv-navy">{{ __('Testar ligação por município') }}</h3>
+                <h3 class="font-display text-lg font-semibold text-serv-navy">{{ __('Testar conexão por município') }}</h3>
                 <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">{{ __('Escolha uma cidade activa com base configurada. O sistema consulta versão do servidor e quantidade de tabelas no schema.') }}</p>
                 <form method="get" action="{{ route('admin.connections.index') }}" class="mt-4 flex flex-col sm:flex-row gap-4 sm:items-end">
                     <div class="flex-1">
@@ -66,7 +66,7 @@
                     ['label' => __('Cidades cadastradas'), 'value' => $stats['cities'], 'hint' => __('Total na aplicação')],
                     ['label' => __('Cidades ativas'), 'value' => $stats['cities_active'], 'hint' => __('Elegíveis para painéis'), 'tone' => 'emerald'],
                     ['label' => __('Novas este mês'), 'value' => $stats['cities_this_month'], 'hint' => __('Cadastro no mês corrente')],
-                    ['label' => __('Utilizadores'), 'value' => $stats['users'], 'hint' => __('Contas com acesso')],
+                    ['label' => __('Usuárioes'), 'value' => $stats['users'], 'hint' => __('Contas com acesso')],
                 ] as $card)
                     <div class="serv-panel p-5">
                         <p class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ $card['label'] }}</p>
@@ -106,7 +106,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">{{ __('Ainda não há cidades. Adicione na secção Cidades.') }}</td>
+                                    <td colspan="4" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">{{ __('Ainda não há cidades. Adicione na seção Cidades.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>

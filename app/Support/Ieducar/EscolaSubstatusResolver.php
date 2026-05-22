@@ -7,7 +7,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
 
 /**
- * Ligação opcional escola → catálogo de «situação de funcionamento» / substatus (INEP / Educacenso).
+ * Conexão opcional escola → catálogo de «situação de funcionamento» / substatus (INEP / Educacenso).
  *
  * Em bases só com `escola.ativo`, o resolver devolve null e o painel mantém o binário ativa/inativa.
  */

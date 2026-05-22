@@ -7,7 +7,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
 
 /**
- * Resolve a tabela de utilizadores do i-Educar e filtros para excluir perfis administrativos.
+ * Resolve a tabela de usuários do i-Educar e filtros para excluir perfis administrativos.
  */
 final class IeducarUsuarioScope
 {
@@ -112,7 +112,7 @@ final class IeducarUsuarioScope
         }
         $ids = config('ieducar.work_tracking.exclude_usuario_ids', []);
         if (is_array($ids) && $ids !== []) {
-            $labels[] = __('IDs de utilizador excluídos: :ids', ['ids' => implode(', ', $ids)]);
+            $labels[] = __('IDs de usuário excluídos: :ids', ['ids' => implode(', ', $ids)]);
         }
         $niveis = config('ieducar.work_tracking.exclude_nivel_usuario', []);
         if (is_array($niveis) && $niveis !== []) {

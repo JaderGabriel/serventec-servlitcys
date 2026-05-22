@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\File;
  * - Etapa (anos iniciais/finais, EM, …): etapa, etapa_ensino, …
  * - Valor numérico (% proficientes ou escala conforme a fonte): valor, percentual, pc_proficientes, …
  * - Opcional — escola (INEP): inep_escola, co_escola, cod_escola_inep, … (--resolve-inep mapeia para cod_escola)
- * - Opcional — escola (i-Educar): escola_id ou cod_escola_ie (usa o id interno directamente, sem INEP)
+ * - Opcional — escola (i-Educar): escola_id ou cod_escola_ie (usa o id interno diretamente, sem INEP)
  * - Opcional: status (final|preliminar), unidade (ex.: %)
  */
 final class SaebCsvPedagogicalImportService

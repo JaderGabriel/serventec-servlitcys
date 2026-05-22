@@ -18,7 +18,7 @@ class EnsureAnalyticsDiagnostics
 
         if (! $allowed) {
             abort(403, __(
-                'Diagnóstico analítico desactivado. No .env defina ANALYTICS_DIAGNOSTICS_FORCE=true (ou ANALYTICS_DIAGNOSTICS_ROUTE=true), execute php artisan config:clear e tente de novo. Em produção remova a variável após o diagnóstico.'
+                'Diagnóstico analítico desativado. No .env defina ANALYTICS_DIAGNOSTICS_FORCE=true (ou ANALYTICS_DIAGNOSTICS_ROUTE=true), execute php artisan config:clear e tente de novo. Em produção remova a variável após o diagnóstico.'
             ));
         }
 

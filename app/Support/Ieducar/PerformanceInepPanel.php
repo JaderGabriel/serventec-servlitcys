@@ -28,7 +28,7 @@ final class PerformanceInepPanel
             'ideb' => self::sectionTemplate(
                 'ideb',
                 __('IDEB (Índice de Desenvolvimento da Educação Básica)'),
-                __('O IDEB agrega fluxo (aprovação) e notas médias da avaliação SAEB, divulgado pelo INEP por rede e ano de aplicação. O município compara-se à meta nacional/regional; não é calculado a partir apenas do registo local de situação de matrícula.')
+                __('O IDEB agrega fluxo (aprovação) e notas médias da avaliação SAEB, divulgado pelo INEP por rede e ano de aplicação. O município compara-se à meta nacional/regional; não é calculado a partir apenas do registro local de situação de matrícula.')
             ),
             'saeb' => self::sectionTemplate(
                 'saeb',

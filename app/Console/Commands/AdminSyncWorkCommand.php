@@ -29,7 +29,7 @@ class AdminSyncWorkCommand extends Command
             : max(1, (int) config('ieducar.admin_sync.tries', 1));
 
         $this->info(__('Worker da fila administrativa'));
-        $this->line(__('  Ligação: :conn', ['conn' => (string) $connection]));
+        $this->line(__('  Conexão: :conn', ['conn' => (string) $connection]));
         $this->line(__('  Fila: :queue', ['queue' => $queue]));
         $this->line(__('  Timeout: :s s · Tentativas: :t', ['s' => (string) $timeout, 't' => (string) $tries]));
         $this->newLine();

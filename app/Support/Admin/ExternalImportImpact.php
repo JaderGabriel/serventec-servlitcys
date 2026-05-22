@@ -5,7 +5,7 @@ namespace App\Support\Admin;
 use App\Models\AdminSyncTask;
 
 /**
- * Liga importações externas (admin) ao que o utilizador ganha no painel.
+ * Liga importações externas (admin) ao que o usuário ganha no painel.
  */
 final class ExternalImportImpact
 {

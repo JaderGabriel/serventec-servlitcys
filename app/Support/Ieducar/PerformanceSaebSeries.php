@@ -89,7 +89,7 @@ final class PerformanceSaebSeries
                 'extra_charts' => [],
                 'summary' => null,
                 'school_table' => [],
-                'notes' => [__('Não há dados SAEB para esta cidade no ficheiro importado (cada ponto deve incluir o id desta cidade em «city_ids»).')],
+                'notes' => [__('Não há dados SAEB para esta cidade no arquivo importado (cada ponto deve incluir o id desta cidade em «city_ids»).')],
                 'error' => null,
                 'source_hint' => $footnoteBase,
                 'explicacao_modal' => $explicacaoModal,
@@ -105,7 +105,7 @@ final class PerformanceSaebSeries
                 'extra_charts' => [],
                 'summary' => null,
                 'school_table' => [],
-                'notes' => [__('Não há resultados SAEB até ao ano seleccionado no filtro.')],
+                'notes' => [__('Não há resultados SAEB até o ano selecionado no filtro.')],
                 'error' => null,
                 'source_hint' => $footnoteBase,
                 'explicacao_modal' => $explicacaoModal,
@@ -115,8 +115,8 @@ final class PerformanceSaebSeries
         $pointsForCharts = self::filterPointsForSchoolFilter($pointsYear, $filters);
         if ($pointsForCharts === []) {
             $msg = $filters->escola_id !== null
-                ? __('Não há pontos SAEB para a escola seleccionada nos dados importados (use escola_id / escola_ids alinhados ao cod_escola do i-Educar).')
-                : __('Não há pontos de rede municipal importados (pontos sem escola_id). Importe dados agregados por município ou seleccione uma escola com série própria.');
+                ? __('Não há pontos SAEB para a escola selecionada nos dados importados (use escola_id / escola_ids alinhados ao cod_escola do i-Educar).')
+                : __('Não há pontos de rede municipal importados (pontos sem escola_id). Importe dados agregados por município ou selecione uma escola com série própria.');
 
             return [
                 'charts' => [],
@@ -169,7 +169,7 @@ final class PerformanceSaebSeries
             ? __('A série mostra todos os anos disponíveis até :ano (inclusive), conforme o filtro de ano letivo.', ['ano' => (string) $filters->ano_letivo])
             : __('A série mostra todos os anos disponíveis na fonte.');
         $schoolNote = $filters->escola_id !== null
-            ? __('Filtro de escola activo: séries por cod_escola :id (i-Educar).', ['id' => (string) $filters->escola_id])
+            ? __('Filtro de escola ativo: séries por cod_escola :id (i-Educar).', ['id' => (string) $filters->escola_id])
             : __('Sem filtro de escola: linhas temporais = rede municipal; quadro e gráfico comparativo usam escolas com pontos importados.');
 
         return [
@@ -651,7 +651,7 @@ final class PerformanceSaebSeries
         $yLabel = $unit !== '' && $unit !== '%' ? $unit : __('Percentagem / escala');
 
         $subtitle = __(
-            'Série histórica até ao ano do filtro. O INEP divulga resultados preliminares antes da versão final; use a legenda para distinguir.'
+            'Série histórica até o ano do filtro. O INEP divulga resultados preliminares antes da versão final; use a legenda para distinguir.'
         );
 
         return ChartPayload::lineSaebHistory(

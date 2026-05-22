@@ -87,7 +87,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         /*
-         * Em produção, o ficheiro public/hot (gerado por `npm run dev`) faz o @vite apontar
+         * Em produção, o arquivo public/hot (gerado por `npm run dev`) faz o @vite apontar
          * para o servidor de desenvolvimento (ex.: [::1]:5173), causando CORS no domínio real.
          * Remove-o para forçar o uso do manifest em public/build/.
          */

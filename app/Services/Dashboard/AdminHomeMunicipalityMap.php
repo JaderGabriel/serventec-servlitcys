@@ -68,10 +68,10 @@ final class AdminHomeMunicipalityMap
                 };
 
                 $statusLabel = match ($status) {
-                    'ready' => __('Activo · base configurada'),
-                    'incomplete' => __('Activo · credenciais incompletas'),
-                    'inactive_setup' => __('Inactivo · base configurada'),
-                    default => __('Inactivo'),
+                    'ready' => __('Ativo · base configurada'),
+                    'incomplete' => __('Ativo · credenciais incompletas'),
+                    'inactive_setup' => __('Inativo · base configurada'),
+                    default => __('Inativo'),
                 };
 
                 $implementedAt = $city->created_at;

@@ -213,7 +213,7 @@ final class IeducarCompatibilityProbe
             return __('Ano letivo :ano', ['ano' => $filters->ano_letivo]);
         }
 
-        return __('Ano letivo não seleccionado');
+        return __('Ano letivo não selecionado');
     }
 
     private static function uiStatusClass(string $status): string

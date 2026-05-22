@@ -6,7 +6,7 @@ use App\Services\Inep\SaebHistoricoDatabase;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Mesma lógica que GET /api/saeb/municipio/{ibge}: base de dados (principal) ou ficheiro legado por município.
+ * Mesma lógica que GET /api/saeb/municipio/{ibge}: base de dados (principal) ou arquivo legado por município.
  */
 final class SaebMunicipioPayloadReader
 {

@@ -2,6 +2,9 @@
 
 namespace App\Support\Ieducar;
 
+use App\Models\City;
+use App\Support\Dashboard\IeducarFilterState;
+
 /**
  * Metadados pedagógicos e de financiamento (FUNDEB / VAAR / Censo) por tipo de discrepância.
  */
@@ -19,10 +22,11 @@ final class DiscrepanciesCheckCatalog
      *   aviso: string
      * }
      */
-    public static function modalPayload(): array
+    public static function modalPayload(?City $city = null, ?IeducarFilterState $filters = null): array
     {
         $pesos = config('ieducar.discrepancies.peso_por_check', []);
-        $vaa = (float) config('ieducar.discrepancies.vaa_referencia_anual', 4500);
+        $ref = DiscrepanciesFundingImpact::resolveReference($city, $filters);
+        $vaa = (float) ($ref['vaaf'] ?? config('ieducar.discrepancies.vaa_referencia_anual', 4500));
         $conditions = [];
         foreach (self::definitions() as $id => $def) {
             $peso = 1.0;
@@ -48,6 +52,8 @@ final class DiscrepanciesCheckCatalog
             'complementary_programs' => self::complementaryProgramsForModal(),
             'public_repasses' => self::publicRepassesForModal(),
             'vaa_label' => DiscrepanciesFundingImpact::formatBrl($vaa),
+            'vaa_fonte_label' => (string) ($ref['fonte_label'] ?? ''),
+            'vaa_ano' => $ref['ano'] ?? null,
             'aviso' => (string) config('ieducar.discrepancies.aviso_financeiro', ''),
         ];
     }
@@ -109,7 +115,7 @@ final class DiscrepanciesCheckCatalog
                 'id' => 'tesouro',
                 'titulo' => __('Tesouro Transparente — transferências'),
                 'descricao' => __(
-                    'Repasses constitucionais e obrigatórios da União ao município (podem incluir parcelas de educação). O painel amostra registos filtrados por IBGE — não substitui o portal oficial.'
+                    'Repasses constitucionais e obrigatórios da União ao município (podem incluir parcelas de educação). O painel amostra registros filtrados por IBGE — não substitui o portal oficial.'
                 ),
                 'onde' => __('Aba Financiamentos — consulta automática CKAN.'),
             ],
@@ -160,7 +166,7 @@ final class DiscrepanciesCheckCatalog
                     'Alunos sem vínculo de alimentação no cadastro podem ficar fora do planeamento de merenda; risco de questionamento em auditoria do FNDE e custos municipais não reembolsados.'
                 ),
                 'correction' => __(
-                    'Actualizar campos de alimentação/atendimento nas matrículas; conferir cardápio e prestação de contas no FNDE (fora do i-Educar).'
+                    'Atualizar campos de alimentação/atendimento nas matrículas; conferir cardápio e prestação de contas no FNDE (fora do i-Educar).'
                 ),
                 'cadastro_ligacao' => __('Matrícula: alimentacao_escolar, tipo_atendimento (detecção automática por coluna).'),
                 'repasse_fonte' => 'FNDE / PNAE',
@@ -168,10 +174,10 @@ final class DiscrepanciesCheckCatalog
             ],
             'pdde' => [
                 'explanation' => __(
-                    'O PDDE repassa recursos directamente às escolas (custeio e capital). Exige escola com código INEP válido, situação activa e matrículas consistentes no Censo.'
+                    'O PDDE repassa recursos diretamente às escolas (custeio e capital). Exige escola com código INEP válido, situação activa e matrículas consistentes no Censo.'
                 ),
                 'impact' => __(
-                    'Escola sem INEP ou com matrículas inválidas pode não receber PDDE ou ter prestação de contas rejeitada; afecta autonomia financeira da unidade.'
+                    'Escola sem INEP ou com matrículas inválidas pode não receber PDDE ou ter prestação de contas rejeitada; afeta autonomia financeira da unidade.'
                 ),
                 'correction' => __(
                     'Regularizar INEP e situação da escola; corrigir matrículas antes do fecho do Censo; prestação de contas no Simec/FNDE.'
@@ -281,7 +287,7 @@ final class DiscrepanciesCheckCatalog
                 'id' => 'aee_sem_nee',
                 'title' => __('Turma AEE sem cadastro de NEE no aluno'),
                 'explanation' => __(
-                    'Matrículas em turmas AEE (heurística por nome) sem registo em fisica_deficiencia / aluno_deficiencia.'
+                    'Matrículas em turmas AEE (heurística por nome) sem registro em fisica_deficiencia / aluno_deficiencia.'
                 ),
                 'impact' => __(
                     'Inconsistência Censo (turma × deficiência) e risco de questionamento em auditoria de educação especial.'
@@ -403,7 +409,7 @@ final class DiscrepanciesCheckCatalog
                 'impact' => __(
                     'Matrícula não deve compor Censo como cursando; risco de glosa e distorção de indicadores de fluxo.'
                 ),
-                'correction' => __('Ajustar situação da matrícula ou encerrar registo conforme realidade.'),
+                'correction' => __('Ajustar situação da matrícula ou encerrar registro conforme realidade.'),
                 'severity' => 'warning',
                 'vaar_refs' => ['Censo — situação da matrícula', 'INEP'],
             ],

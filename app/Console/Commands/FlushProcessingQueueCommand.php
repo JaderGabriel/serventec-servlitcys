@@ -57,7 +57,7 @@ class FlushProcessingQueueCommand extends Command
         $includeCompleted = (bool) $this->option('include-completed');
 
         if ($includeCompleted && ! $dryRun && $confirm === '' && ! app()->environment('production')) {
-            if (! $this->confirm(__('Inclui registos concluídos — isto apaga histórico. Continuar?'), false)) {
+            if (! $this->confirm(__('Inclui registros concluídos — isto apaga histórico. Continuar?'), false)) {
                 $this->comment(__('Operação cancelada.'));
 
                 return self::SUCCESS;
@@ -84,7 +84,7 @@ class FlushProcessingQueueCommand extends Command
             $this->line(__('  Tarefas admin_sync: :n', ['n' => (string) $stats['sync_tasks']]));
             if (! $dryRun) {
                 $this->line(__('  Jobs na fila: :s', [
-                    's' => $stats['sync_jobs_cleared'] ? __('limpos') : __('não alterados (ligação sync ou fila indisponível)'),
+                    's' => $stats['sync_jobs_cleared'] ? __('limpos') : __('não alterados (conexão sync ou fila indisponível)'),
                 ]));
                 $this->line(__('  failed_jobs (fila sync): :n', ['n' => (string) $stats['sync_failed_jobs']]));
             }

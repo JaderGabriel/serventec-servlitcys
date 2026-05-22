@@ -4,6 +4,7 @@ namespace App\Support\Ieducar;
 
 use App\Models\City;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Finance\MoneyMath;
 
 /**
  * Estimativa indicativa de perda / ganho potencial (FUNDEB, VAAR, Censo) por tipo de discrepância.
@@ -33,8 +34,8 @@ final class DiscrepanciesFundingImpact
         $occurrences = max(0, $occurrences);
         $vaa = self::vaaReferencia($city, $filters);
         $peso = self::pesoParaCheck($checkId);
-        $valorUnit = $vaa * $peso;
-        $perda = round($occurrences * $valorUnit, 2);
+        $valorUnit = MoneyMath::roundMoney($vaa * $peso);
+        $perda = MoneyMath::impactFromOccurrences($occurrences, $vaa, $peso);
         $ganho = $perda;
 
         $formula = __(
@@ -262,7 +263,7 @@ final class DiscrepanciesFundingImpact
 
     public static function formatBrl(float $value): string
     {
-        return 'R$ '.number_format($value, 2, ',', '.');
+        return MoneyMath::formatBrl($value);
     }
 
     /**

@@ -65,7 +65,7 @@ class InepCensoEscolaGeoAggService
     /**
      * Lê o CSV de microdados (escola) e atualiza o índice agregado.
      * Com $onlyInepCodes, faz upsert incremental (sem truncar) — adequado ao pipeline por município.
-     * Sem filtro, trunca e reimporta o ficheiro completo (operação pesada).
+     * Sem filtro, trunca e reimporta o arquivo completo (operação pesada).
      *
      * @param  list<int>|null  $onlyInepCodes
      */

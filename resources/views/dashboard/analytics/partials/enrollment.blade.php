@@ -123,7 +123,7 @@
                 {{ $enrollmentData['distorcao_cartao_motivo'] }}
             </p>
             <p class="text-[11px] text-amber-800/80 dark:text-amber-300/75 mt-2 leading-relaxed">
-                {{ __('Se o indicador continuar indisponível, a equipa técnica pode configurar uma consulta personalizada ou rever o cadastro de séries e datas de nascimento.') }}
+                {{ __('Se o indicador continuar indisponível, a equipe técnica pode configurar uma consulta personalizada ou rever o cadastro de séries e datas de nascimento.') }}
             </p>
         </div>
     @endif

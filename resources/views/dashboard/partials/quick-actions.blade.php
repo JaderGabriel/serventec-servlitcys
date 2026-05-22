@@ -37,7 +37,7 @@
         <div class="serv-home-action-group">
             <p class="serv-home-action-group__label">
                 <span class="serv-home-action-group__dot serv-home-action-group__dot--violet" aria-hidden="true"></span>
-                {{ __('Municípios e ligações') }}
+                {{ __('Municípios e conexões') }}
             </p>
             <div class="serv-home-action-grid">
                 <a href="{{ route('cities.index') }}" class="serv-home-action group">
@@ -57,7 +57,7 @@
                     </span>
                     <span class="serv-home-action__body">
                         <span class="serv-home-action__title">{{ __('Conexões i-Educar') }}</span>
-                        <span class="serv-home-action__desc">{{ __('Testar ligação, driver e versão da base por município.') }}</span>
+                        <span class="serv-home-action__desc">{{ __('Testar conexão, driver e versão da base por município.') }}</span>
                         <span class="serv-home-action__ref">{{ __('Zona municipal no fluxo') }}</span>
                     </span>
                     <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
@@ -130,9 +130,9 @@
                         <x-ui.icon name="users" class="h-6 w-6" />
                     </span>
                     <span class="serv-home-action__body">
-                        <span class="serv-home-action__title">{{ __('Utilizadores') }}</span>
+                        <span class="serv-home-action__title">{{ __('Usuárioes') }}</span>
                         <span class="serv-home-action__desc">{{ __('Contas, perfis, municípios associados e sessões.') }}</span>
-                        <span class="serv-home-action__ref">{{ __('Gestão de equipa') }}</span>
+                        <span class="serv-home-action__ref">{{ __('Gestão de equipe') }}</span>
                     </span>
                     <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
                 </a>

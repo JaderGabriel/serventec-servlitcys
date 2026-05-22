@@ -113,7 +113,7 @@ final class DiscrepanciesRoutineStatus
                 return null;
             }
 
-            return __('Sem matrículas no filtro e sem unidades em school_unit_geos para esta cidade. Sincronize geo ou seleccione ano/escola com cadastro.');
+            return __('Sem matrículas no filtro e sem unidades em school_unit_geos para esta cidade. Sincronize geo ou selecione ano/escola com cadastro.');
         }
 
         if (! self::requiresMatriculasInScope($checkId)) {
@@ -125,7 +125,7 @@ final class DiscrepanciesRoutineStatus
         }
 
         if (! $filters->hasYearSelected()) {
-            return __('Seleccione o ano letivo para analisar matrículas activas nesta rotina.');
+            return __('Selecione o ano letivo para analisar matrículas activas nesta rotina.');
         }
 
         return __('Não há matrículas activas no filtro (ano, escola, curso ou turno). A rotina não pôde verificar o cadastro — diferente de «sem pendência».');

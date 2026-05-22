@@ -22,7 +22,7 @@
 <div class="space-y-6">
     @if (! $yearFilterReady)
         <p class="text-sm text-amber-800 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
-            {{ __('Seleccione o ano letivo e aplique os filtros para acompanhar o Censo e o cadastro.') }}
+            {{ __('Selecione o ano letivo e aplique os filtros para acompanhar o Censo e o cadastro.') }}
         </p>
     @else
         @include('dashboard.analytics.partials.tab-impact-strip', [
@@ -74,7 +74,7 @@
                 <table class="min-w-full text-sm">
                     <thead class="bg-violet-100/80 dark:bg-violet-950/50 text-xs uppercase text-violet-900 dark:text-violet-200">
                         <tr>
-                            <th class="px-3 py-2 text-left font-medium">{{ __('Tipo de registo') }}</th>
+                            <th class="px-3 py-2 text-left font-medium">{{ __('Tipo de registro') }}</th>
                             <th class="px-3 py-2 text-right font-medium">{{ __('Meta (:ano)', ['ano' => $anoRef > 0 ? $anoRef : '—']) }}</th>
                             <th class="px-3 py-2 text-right font-medium">{{ __('Ano actual') }}</th>
                             <th class="px-3 py-2 text-right font-medium">{{ __('Restante') }}</th>
@@ -95,7 +95,7 @@
                         <tr>
                             <td class="px-3 py-2.5">
                                 <span class="font-medium text-gray-900 dark:text-gray-100">{{ __('Matrículas') }}</span>
-                                <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ __('Alunos matriculados na rede (activos)') }}</p>
+                                <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ __('Alunos matriculados na rede (ativos)') }}</p>
                             </td>
                             <td class="px-3 py-2.5 text-right tabular-nums font-semibold">{{ $fmt((int) ($est['meta_matriculas_ano_anterior'] ?? $baseline['matriculas'] ?? 0)) }}</td>
                             <td class="px-3 py-2.5 text-right tabular-nums">{{ $fmt((int) ($est['matriculas_ativas_filtro'] ?? $d['matriculas_ativas'] ?? 0)) }}</td>
@@ -115,7 +115,7 @@
                     </tbody>
                     <tfoot class="bg-violet-50/80 dark:bg-violet-950/30 text-xs font-semibold">
                         <tr>
-                            <td class="px-3 py-2">{{ __('Total de registos em falta') }}</td>
+                            <td class="px-3 py-2">{{ __('Total de registros em falta') }}</td>
                             <td colspan="2" class="px-3 py-2 text-right text-gray-500 dark:text-gray-400">{{ __('Soma dos restantes') }}</td>
                             <td class="px-3 py-2 text-right tabular-nums text-amber-800 dark:text-amber-200">{{ $fmt((int) ($est['registros_restantes_estimados'] ?? 0)) }}</td>
                             <td></td>
@@ -201,7 +201,7 @@
                             @if ((int) ($est['cadastros_ultima_quinzena'] ?? 0) > 0)
                                 <span class="block text-[10px] text-gray-500">{{ __(':q cadastros na quinzena', ['q' => $fmt((int) ($est['cadastros_ultima_quinzena'] ?? 0))]) }}</span>
                             @endif
-                            @if ((int) ($est['utilizadores_ativos_quinzena'] ?? 0) > 1)
+                            @if ((int) ($est['usuários_ativos_quinzena'] ?? 0) > 1)
                                 <span class="block text-[10px] text-emerald-700 dark:text-emerald-400">{{ __('Equipa: ~:r/dia', ['r' => $fmt((float) ($est['ritmo_equipe_por_dia'] ?? 0))]) }}</span>
                             @endif
                         @else
@@ -236,7 +236,7 @@
 
             @if (! ($est['usa_ritmo_observado'] ?? false))
                 <p class="text-xs text-amber-800 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
-                    {{ __('Sem cadastros recentes mensuráveis na base — o tempo usa valores de referência da configuração. Assim que a equipa registar matrículas no i-Educar, a estimativa passará a reflectir o ritmo real do município.') }}
+                    {{ __('Sem cadastros recentes mensuráveis na base — o tempo usa valores de referência da configuração. Assim que a equipe registar matrículas no i-Educar, a estimativa passará a refletir o ritmo real do município.') }}
                 </p>
             @endif
         </section>
@@ -324,7 +324,7 @@
         @if ($chartUsers !== null)
             <x-dashboard.chart-panel
                 :chart="$chartUsers"
-                exportFilename="trabalho-realizado-utilizadores"
+                exportFilename="trabalho-realizado-usuários"
                 :exportMeta="$chartExportContext"
                 chartPanelId="chart-work-done-users"
                 panelTone="sky"
@@ -334,7 +334,7 @@
         @if (count($byUser) > 0)
             <section class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <h3 class="px-4 py-3 text-sm font-semibold bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
-                    {{ __('Por utilizador i-Educar (quinzena)') }}
+                    {{ __('Por usuário i-Educar (quinzena)') }}
                 </h3>
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm divide-y divide-gray-200 dark:divide-gray-700">
@@ -361,7 +361,7 @@
 
         @if (count($d['exclusion_notes'] ?? []) > 0)
             <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                <p class="font-medium text-gray-600 dark:text-gray-300">{{ __('Utilizadores excluídos da contagem') }}</p>
+                <p class="font-medium text-gray-600 dark:text-gray-300">{{ __('Usuárioes excluídos da contagem') }}</p>
                 @foreach ($d['exclusion_notes'] as $note)
                     <p>{{ $note }}</p>
                 @endforeach

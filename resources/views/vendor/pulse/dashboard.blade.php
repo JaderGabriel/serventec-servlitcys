@@ -98,7 +98,7 @@
         >
             <x-pulse-dashboard.section
                 :title="__('Cache e Redis')"
-                :subtitle="__('Interações de cache e estado das ligações chave-valor (sessão, filas, Pulse).')"
+                :subtitle="__('Interações de cache e estado das conexões chave-valor (sessão, filas, Pulse).')"
                 accent="violet"
                 icon="circle-stack"
             />

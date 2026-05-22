@@ -62,14 +62,14 @@
                 <input type="radio" name="import_mode" value="{{ FundebImportMode::UPDATE }}" class="mt-1 border-gray-300 text-teal-600" x-model="importMode">
                 <span>
                     <span class="font-medium">{{ __('Atualizar se diferente') }}</span>
-                    <span class="block text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{ __('Mantém o registo quando VAAF, VAAT e complementação VAAR já coincidem com a fonte; grava só se o município/ano trouxer valores distintos.') }}</span>
+                    <span class="block text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{ __('Mantém o registro quando VAAF, VAAT e complementação VAAR já coincidem com a fonte; grava só se o município/ano trouxer valores distintos.') }}</span>
                 </span>
             </label>
             <label class="flex items-start gap-2 text-sm text-gray-800 dark:text-gray-200 cursor-pointer">
                 <input type="radio" name="import_mode" value="{{ FundebImportMode::REPLACE }}" class="mt-1 border-gray-300 text-teal-600" x-model="importMode">
                 <span>
                     <span class="font-medium">{{ __('Apagar e buscar novamente') }}</span>
-                    <span class="block text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{ __('Remove referências do município e dos anos seleccionados antes de importar (útil para limpar pisos nacionais ou dados antigos).') }}</span>
+                    <span class="block text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{ __('Remove referências do município e dos anos selecionados antes de importar (útil para limpar pisos nacionais ou dados antigos).') }}</span>
                 </span>
             </label>
         </fieldset>

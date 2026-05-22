@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Mede etapas do carregamento do painel analítico (filtros, repositórios, view).
- * Logs em analytics.profile / analytics.profile_summary quando debug activo.
+ * Logs em analytics.profile / analytics.profile_summary quando debug ativo.
  */
 final class AnalyticsLoadProfiler
 {

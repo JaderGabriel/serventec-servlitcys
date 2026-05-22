@@ -151,7 +151,7 @@ final class AnalyticsTabImpactBuilder
             'work_done' => [
                 'title' => __('Censo'),
                 'purpose' => __('Turmas, matrículas, enturmações, ritmo de cadastro e meta vs. ano anterior.'),
-                'impact_note' => __('Pendências de exportação Censo ligam directamente ao fundeb-base e repasse.'),
+                'impact_note' => __('Pendências de exportação Censo ligam diretamente ao fundeb-base e repasse.'),
             ],
             'municipality_health' => [
                 'title' => __('Diagnóstico'),
@@ -731,7 +731,7 @@ final class AnalyticsTabImpactBuilder
         }
         $charts = $data['charts'] ?? [];
         if ($charts === [] && empty($data['chart'])) {
-            return ['status' => 'neutral', 'label' => __('Sem registos de falta no filtro'), 'score' => 60, 'share_label' => null, 'share_value' => null];
+            return ['status' => 'neutral', 'label' => __('Sem registros de falta no filtro'), 'score' => 60, 'share_label' => null, 'share_value' => null];
         }
 
         return [
@@ -1012,7 +1012,7 @@ final class AnalyticsTabImpactBuilder
 
         return [
             'status' => 'danger',
-            'label' => __('Erro ao carregar — verifique filtros e ligação'),
+            'label' => __('Erro ao carregar — verifique filtros e conexão'),
             'score' => $score,
             'share_label' => $computed['share_label'] ?? null,
             'share_value' => $computed['share_value'] ?? null,

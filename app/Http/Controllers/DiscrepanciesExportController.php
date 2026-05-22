@@ -35,7 +35,7 @@ class DiscrepanciesExportController extends Controller
 
         $filters = IeducarFilterState::fromRequest($request);
         if (! $filters->hasYearSelected()) {
-            abort(422, __('Seleccione o ano letivo antes de exportar.'));
+            abort(422, __('Selecione o ano letivo antes de exportar.'));
         }
 
         $snapshot = $this->discrepancies->snapshot($city, $filters);

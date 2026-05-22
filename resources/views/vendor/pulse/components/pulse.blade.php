@@ -93,7 +93,7 @@
             <x-scroll-to-top />
         </div>
 
-        {{-- Sino de notificações: Alpine do Pulse não carrega app.js — registo dedicado. --}}
+        {{-- Sino de notificações: Alpine do Pulse não carrega app.js — registro dedicado. --}}
         @vite(['resources/js/pulse-notifications.js'])
 
         @php

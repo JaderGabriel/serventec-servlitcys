@@ -33,7 +33,7 @@
                     </p>
                 @elseif (! $yearFilterReady)
                     <p class="mt-1 text-sm text-amber-100/95">
-                        {{ __('Seleccione o ano letivo e aplique os filtros para carregar indicadores e saldo indicativo.') }}
+                        {{ __('Selecione o ano letivo e aplique os filtros para carregar indicadores e saldo indicativo.') }}
                     </p>
                 @endif
             </div>

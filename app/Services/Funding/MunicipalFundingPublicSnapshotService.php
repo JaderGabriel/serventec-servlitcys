@@ -48,7 +48,7 @@ final class MunicipalFundingPublicSnapshotService
             $empty['intro'] = $ibge === null
                 ? __('Configure o código IBGE do município na cidade para consultar bases públicas automaticamente.')
                 : ($year === null
-                    ? __('Seleccione o ano letivo para consultar relatórios e prévias públicas do município.')
+                    ? __('Selecione o ano letivo para consultar relatórios e prévias públicas do município.')
                     : '');
 
             return $empty;
@@ -206,7 +206,7 @@ final class MunicipalFundingPublicSnapshotService
         }
 
         if ($rows === []) {
-            $note = __('Nenhum registo em cache para IBGE/ano. Active IEDUCAR_OTHER_FUNDING_LIVE_FNDE=true ou sincronize FUNDEB no admin.');
+            $note = __('Nenhum registro em cache para IBGE/ano. Active IEDUCAR_OTHER_FUNDING_LIVE_FNDE=true ou sincronize FUNDEB no admin.');
         }
 
         return $this->queryResult(
@@ -304,7 +304,7 @@ final class MunicipalFundingPublicSnapshotService
                 __('Tesouro CKAN'),
                 'https://www.tesourotransparente.gov.br/ckan',
                 [],
-                __('Consulta desactivada na configuração.')
+                __('Consulta desativada na configuração.')
             );
         }
 
@@ -409,7 +409,7 @@ final class MunicipalFundingPublicSnapshotService
                     'label' => mb_substr($label, 0, 80),
                     'value' => $valor !== null
                         ? DiscrepanciesFundingImpact::formatBrl($valor)
-                        : __('valor não identificado no registo'),
+                        : __('valor não identificado no registro'),
                 ];
             }
         }
@@ -538,7 +538,7 @@ final class MunicipalFundingPublicSnapshotService
                 __('API dados.gov.br / Transparência'),
                 'https://portaldatransparencia.gov.br',
                 [],
-                __('Consulta desactivada na configuração.')
+                __('Consulta desativada na configuração.')
             );
         }
 
@@ -695,7 +695,7 @@ final class MunicipalFundingPublicSnapshotService
     ): array {
         $statusLabel = match ($status) {
             'success' => __('Dados encontrados'),
-            'empty' => __('Sem registos'),
+            'empty' => __('Sem registros'),
             'error' => __('Erro na consulta'),
             'skipped' => __('Não consultado'),
             default => $status,

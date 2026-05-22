@@ -13,7 +13,7 @@ use Illuminate\Support\Collection;
 final class SaebMicrodadosCsvStreamConverter
 {
     /**
-     * Escolhe o ficheiro .csv mais provável dentro de um directório extraído (ZIP INEP).
+     * Escolhe o arquivo .csv mais provável dentro de um directório extraído (ZIP INEP).
      */
     public function pickBestCsv(string $extractDir): ?string
     {

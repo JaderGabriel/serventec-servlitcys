@@ -231,7 +231,7 @@
                             </p>
                         </div>
                         <div class="rounded-lg border border-emerald-200/80 bg-white/90 dark:bg-emerald-950/30 dark:border-emerald-800 px-3 py-2.5">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">{{ __('Pontos no ficheiro') }}</p>
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">{{ __('Pontos no arquivo') }}</p>
                             <p class="mt-1 text-xs tabular-nums text-emerald-950 dark:text-emerald-100">
                                 {{ __('Rede: :m · Por escola: :e · Escolas distintas: :s', ['m' => (string) ($saebSummary['pontos_municipais'] ?? '0'), 'e' => (string) ($saebSummary['pontos_escola'] ?? '0'), 's' => (string) ($saebSummary['escolas_distintas'] ?? '0')]) }}
                             </p>
@@ -329,7 +329,7 @@
                 </div>
             @elseif (empty($saebSeries['error']) && empty($saebSeries['summary']) && empty($saebSeries['school_table']))
                 <div class="px-4 py-6 text-sm text-emerald-900/90 dark:text-emerald-200/90">
-                    {{ __('Ainda não há dados SAEB importados. Em Administração → Sincronizações → Pedagógicas, importe os dados oficiais ou configure as fontes de JSON indicadas pela equipa técnica.') }}
+                    {{ __('Ainda não há dados SAEB importados. Em Administração → Sincronizações → Pedagógicas, importe os dados oficiais ou configure as fontes de JSON indicadas pela equipe técnica.') }}
                 </div>
             @endif
 
@@ -408,7 +408,7 @@
                                 @endif
                             @else
                                 <p class="text-gray-600 dark:text-gray-400">
-                                    {{ __('O texto explicativo detalhado é gravado em meta.explicacao_modal no ficheiro JSON após cada sincronização pedagógica bem-sucedida. Execute «Importar» ou «Copiar modelo» em Admin → Sincronizações → Pedagógicas para gerar ou actualizar esse conteúdo.') }}
+                                    {{ __('O texto explicativo detalhado é gravado em meta.explicacao_modal no arquivo JSON após cada sincronização pedagógica bem-sucedida. Execute «Importar» ou «Copiar modelo» em Admin → Sincronizações → Pedagógicas para gerar ou atualizar esse conteúdo.') }}
                                 </p>
                                 <p class="mt-3">
                                     <a href="https://www.gov.br/inep/pt-br/areas-de-atuacao/avaliacoes-e-exames-educacionais/saeb" class="font-medium text-emerald-800 dark:text-emerald-200 underline break-all" target="_blank" rel="noopener noreferrer">https://www.gov.br/inep/pt-br/areas-de-atuacao/avaliacoes-e-exames-educacionais/saeb</a>

@@ -14,7 +14,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
 
 /**
- * Frequência: agregação de registos de falta por mês (tabela falta_aluno).
+ * Frequência: agregação de registros de falta por mês (tabela falta_aluno).
  */
 class AttendanceRepository
 {
@@ -55,7 +55,7 @@ class AttendanceRepository
                 if (! IeducarColumnInspector::columnExists($db, $fa, $matCol, $city)) {
                     return [
                         'rows' => [],
-                        'message' => __('Coluna de ligação à matrícula não encontrada em falta_aluno. Defina IEDUCAR_COL_FALTA_MATRICULA.'),
+                        'message' => __('Coluna de conexão à matrícula não encontrada em falta_aluno. Defina IEDUCAR_COL_FALTA_MATRICULA.'),
                         'error' => null,
                         'chart' => null,
                         'charts' => [],
@@ -120,7 +120,7 @@ class AttendanceRepository
                 if ($rows->isEmpty()) {
                     return [
                         'rows' => [],
-                        'message' => __('Sem registos de falta para os filtros seleccionados.'),
+                        'message' => __('Sem registros de falta para os filtros selecionados.'),
                         'error' => null,
                         'chart' => null,
                         'charts' => [],

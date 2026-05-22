@@ -3,7 +3,7 @@
 namespace App\Support\Dashboard;
 
 /**
- * Numeração dinâmica dos passos do fluxo de consultoria (omite secções vazias).
+ * Numeração dinâmica dos passos do fluxo de consultoria (omite seções vazias).
  */
 final class ConsultoriaFlow
 {

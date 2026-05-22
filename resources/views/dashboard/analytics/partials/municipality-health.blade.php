@@ -72,7 +72,7 @@
             'label' => __('Cadastros (quinzena)'),
             'value' => number_format((int) $summary['cadastros_quinzena']),
             'tone' => 'sky',
-            'explicacao_resumo' => __('Matrículas com data de cadastro recente, por utilizadores municipais (exc. admin).'),
+            'explicacao_resumo' => __('Matrículas com data de cadastro recente, por usuários municipais (exc. admin).'),
         ];
     }
     $healthKpis = array_merge($healthKpis, [
@@ -126,7 +126,7 @@
 <div class="space-y-6">
     @if (! $yearFilterReady)
         <p class="serv-callout serv-callout--warning text-sm">
-            {{ __('Seleccione o ano letivo e aplique os filtros para ver o diagnóstico geral de conformidade do município.') }}
+            {{ __('Selecione o ano letivo e aplique os filtros para ver o diagnóstico geral de conformidade do município.') }}
         </p>
     @else
         @include('dashboard.analytics.partials.tab-impact-strip', [

@@ -34,7 +34,7 @@
                 <div class="rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50/70 dark:bg-sky-950/25 p-4 shadow-sm">
                     <h3 class="text-sm font-semibold text-sky-950 dark:text-sky-100">{{ __('Situação dos anos letivos (tabela ano letivo)') }}</h3>
                     <p class="mt-1 text-xs text-sky-900/90 dark:text-sky-200/90 leading-relaxed">
-                        {{ __('Com base no registo em «ano letivo» (quando existir). Andamento/ativo variam conforme a versão do i-Educar.') }}
+                        {{ __('Com base no registro em «ano letivo» (quando existir). Andamento/ativo variam conforme a versão do i-Educar.') }}
                     </p>
                     <div class="mt-3 overflow-x-auto max-h-64 sm:max-h-72 overflow-y-auto rounded-lg border border-sky-100 dark:border-sky-900/50">
                         <table class="min-w-full text-xs text-left">
@@ -191,7 +191,7 @@
                 </p>
             </div>
         </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Totais conforme os filtros aplicados; matrículas contam registos distintos de matrícula ativa no recorte (uma por aluno matriculado).') }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Totais conforme os filtros aplicados; matrículas contam registros distintos de matrícula ativa no recorte (uma por aluno matriculado).') }}</p>
     @elseif ($yearFilterReady && empty($overviewData['error']))
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Sem totais para estes filtros.') }}</p>
     @endif

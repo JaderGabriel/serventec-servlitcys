@@ -132,12 +132,17 @@ class FilterOptionsService
             $anoTurno = $filterState->yearFilterValue();
         }
         $turnos = $this->runFilterStep($profiler, 'bootstrap_turnos', fn () => $this->loadPairs($city, 'turno', $errors, $anoTurno));
+        $yearPayload = $this->runFilterStep($profiler, 'bootstrap_years', fn () => $this->loadYearOptions($city));
 
         return [
+            'years' => $yearPayload['years'],
             'escolas' => $escolas,
             'cursos' => $cursos,
             'turnos' => $turnos,
-            'errors' => $errors,
+            'errors' => array_values(array_unique(array_merge(
+                $errors,
+                $yearPayload['errors'],
+            ))),
         ];
     }
 
@@ -169,6 +174,36 @@ class FilterOptionsService
         $errors = [];
 
         return array_values($this->loadYearsFromDatabase($city, $errors));
+    }
+
+    /**
+     * Opções do select «Ano letivo» (placeholders + anos da base).
+     *
+     * @return array{years: array<string, string>, errors: list<string>}
+     */
+    public function loadYearOptions(City $city): array
+    {
+        $errors = [];
+
+        return [
+            'years' => $this->mergeYearOptions($city, $errors),
+            'errors' => $errors,
+        ];
+    }
+
+    /**
+     * @param  array<string, string>  $yearOptions
+     */
+    public static function hasNumericSchoolYears(array $yearOptions): bool
+    {
+        foreach (array_keys($yearOptions) as $key) {
+            $k = (string) $key;
+            if ($k !== '' && $k !== 'all' && ctype_digit($k)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function loadByKind(City $city, string $kind, ?int $anoLetivo = null): array

@@ -24,7 +24,7 @@ class WeeklyMassSyncRunCommand extends Command
         WeeklyMassSyncOrchestrator $orchestrator,
     ): int {
         if (! filter_var(config('ieducar.weekly_mass_sync.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
-            $this->warn(__('Sincronização massiva semanal desactivada (IEDUCAR_WEEKLY_MASS_SYNC_ENABLED=false).'));
+            $this->warn(__('Sincronização massiva semanal desativada (IEDUCAR_WEEKLY_MASS_SYNC_ENABLED=false).'));
 
             return self::SUCCESS;
         }

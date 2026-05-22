@@ -10,7 +10,7 @@ use Livewire\Attributes\Lazy;
 use Throwable;
 
 /**
- * Ligação à base de dados e latência de um ping simples.
+ * Conexão à base de dados e latência de um ping simples.
  */
 #[Lazy]
 class DatabaseHealthCard extends Card

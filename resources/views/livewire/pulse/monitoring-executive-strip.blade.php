@@ -1,7 +1,7 @@
 @php
     $kpis = [
         [
-            'label' => __('Municípios activos'),
+            'label' => __('Municípios ativos'),
             'value' => number_format((int) ($ops['ready'] ?? 0)).' / '.number_format((int) ($ops['active'] ?? 0)),
             'hint' => __('Com base i-Educar configurada'),
             'tone' => ($ops['ready'] ?? 0) >= ($ops['active'] ?? 1) ? 'emerald' : 'amber',

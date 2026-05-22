@@ -5,7 +5,7 @@ namespace App\Support\Fundeb;
 use App\Models\City;
 
 /**
- * Normalização e correspondência de códigos IBGE (7 dígitos) em registos heterogéneos.
+ * Normalização e correspondência de códigos IBGE (7 dígitos) em registros heterogéneos.
  */
 final class FundebIbgeMatcher
 {
@@ -108,7 +108,7 @@ final class FundebIbgeMatcher
     }
 
     /**
-     * Extrai 7 ou 6 dígitos de um valor de registo (CSV/CKAN).
+     * Extrai 7 ou 6 dígitos de um valor de registro (CSV/CKAN).
      * normalize() continua a rejeitar 6 dígitos em formulários; aqui aceitamos legado.
      */
     private static function extractDigitsFromValue(mixed $raw): ?string

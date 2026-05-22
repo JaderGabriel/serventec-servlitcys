@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
     {--path= : Caminho relativo ao disco public (storage/app/public), legado app/... sob storage/, ou absoluto}
     {--delimiter=; : Separador CSV}
     {--also-map-coords=0 : Se 1, também atualiza lat/lng do mapa quando preenchidos no CSV}
-    {--skip-if-missing=0 : Se 1, termina com sucesso se o ficheiro não existir (apenas aviso; útil em cron/produção)}'
+    {--skip-if-missing=0 : Se 1, termina com sucesso se o arquivo não existir (apenas aviso; útil em cron/produção)}'
 )]
 #[Description('Importa CSV e atualiza APENAS linhas school_unit_geos existentes (cidades forAnalytics + mesmo city_id/escola_id/inep)')]
 class ImportInepGeoFallbackCsv extends Command
@@ -37,7 +37,7 @@ class ImportInepGeoFallbackCsv extends Command
             if ((string) $this->option('skip-if-missing') === '1') {
                 $this->warn('CSV de fallback não encontrado; import omitido (passo opcional).');
                 $this->line('Caminho resolvido: '.$path);
-                $this->line('Para usar o import: coloque o ficheiro em storage/app/public/ (ou defina IEDUCAR_INEP_GEO_FALLBACK_CSV: nome relativo ao disco public ou caminho absoluto).');
+                $this->line('Para usar o import: coloque o arquivo em storage/app/public/ (ou defina IEDUCAR_INEP_GEO_FALLBACK_CSV: nome relativo ao disco public ou caminho absoluto).');
 
                 return self::SUCCESS;
             }
@@ -47,7 +47,7 @@ class ImportInepGeoFallbackCsv extends Command
             $this->line('O CSV de fallback é opcional (enriquecimento offline). Para corrigir:');
             $this->line('  • Colocar o CSV em storage/app/public/ (disco public) ou ajustar IEDUCAR_INEP_GEO_FALLBACK_CSV.');
             $this->line('  • Gerar/exportar noutro ambiente: php artisan app:export-inep-geo-fallback-csv');
-            $this->line('  • Em automação sem ficheiro: php artisan app:import-inep-geo-fallback-csv --skip-if-missing=1');
+            $this->line('  • Em automação sem arquivo: php artisan app:import-inep-geo-fallback-csv --skip-if-missing=1');
 
             return self::FAILURE;
         }
@@ -56,7 +56,7 @@ class ImportInepGeoFallbackCsv extends Command
 
         $fh = fopen($path, 'rb');
         if ($fh === false) {
-            $this->error('Não foi possível abrir o ficheiro.');
+            $this->error('Não foi possível abrir o arquivo.');
 
             return self::FAILURE;
         }

@@ -128,7 +128,7 @@
             @elseif ($task->status === 'processing' || $task->status === 'pending')
                 <p class="text-xs text-slate-400 leading-relaxed">{{ __('A tarefa está na fila ou a correr — actualize a página para ver novas linhas (passos, notas e saída de comandos).') }}</p>
             @else
-                <p class="text-xs text-slate-500">{{ __('Sem registo de andamento para esta tarefa.') }}</p>
+                <p class="text-xs text-slate-500">{{ __('Sem registro de andamento para esta tarefa.') }}</p>
             @endif
         </div>
 

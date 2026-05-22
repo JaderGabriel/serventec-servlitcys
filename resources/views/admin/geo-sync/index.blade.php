@@ -119,7 +119,7 @@
                 </p>
                 <ol class="mt-3 list-decimal list-outside space-y-2 pl-5 text-sm text-blue-950 dark:text-blue-100/95 leading-relaxed">
                     <li>{{ __('Tabela local legada `inep_school_geos` (se existir), com payload JSON quando disponível.') }}</li>
-                    <li>{{ __('Microdados locais (`microdados_ed_basica_*.csv` em `storage/app/public/inep/`), apenas se o ficheiro tiver colunas de latitude/longitude; INEPs no mesmo escopo local que o CSV manual.') }}</li>
+                    <li>{{ __('Microdados locais (`microdados_ed_basica_*.csv` em `storage/app/public/inep/`), apenas se o arquivo tiver colunas de latitude/longitude; INEPs no mesmo escopo local que o CSV manual.') }}</li>
                     <li>{{ __('CSV de fallback manual (`IEDUCAR_INEP_GEO_FALLBACK_CSV`), apenas INEPs já presentes no cache local exportado.') }}</li>
                     <li>{{ __('Cache Redis (`inep_geo_v2_*`) de consultas anteriores ao ArcGIS.') }}</li>
                     <li>{{ __('Primeira URL em `IEDUCAR_INEP_ARCGIS_QUERY_URLS` (ou `IEDUCAR_INEP_ARCGIS_QUERY_URL` legado) — query por Código_INEP.') }}</li>
@@ -195,7 +195,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <label class="flex items-start gap-2 cursor-pointer group" title="{{ __('Se marcado, só cria linhas em school_unit_geos onde ainda não existe registo para aquela escola; desmarcado reprocessa/atualiza conforme o comando.') }}">
+                        <label class="flex items-start gap-2 cursor-pointer group" title="{{ __('Se marcado, só cria linhas em school_unit_geos onde ainda não existe registro para aquela escola; desmarcado reprocessa/atualiza conforme o comando.') }}">
                             <input type="checkbox" name="ieducar_only_missing" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
                             <span class="text-sm text-gray-700 dark:text-gray-300 group-hover:text-indigo-700 dark:group-hover:text-indigo-300">{{ __('Apenas escolas sem linha em school_unit_geos') }}</span>
                         </label>
@@ -363,7 +363,7 @@
                                 <input type="checkbox" name="pipeline_skip_ieducar" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
                                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Ignorar passo i-Educar') }}</span>
                             </label>
-                            <label class="flex items-start gap-2 cursor-pointer group" title="{{ __('Se marcado e o ficheiro MICRODADOS não existir, o último passo apenas avisa e o pipeline termina com sucesso.') }}">
+                            <label class="flex items-start gap-2 cursor-pointer group" title="{{ __('Se marcado e o arquivo MICRODADOS não existir, o último passo apenas avisa e o pipeline termina com sucesso.') }}">
                                 <input type="checkbox" name="pipeline_skip_microdados_if_missing" value="1" checked class="rounded border-gray-300 dark:border-gray-600 mt-0.5" />
                                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ __('Se MICRODADOS ausente: avisar e continuar') }}</span>
                             </label>

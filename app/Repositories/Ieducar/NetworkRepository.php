@@ -64,7 +64,7 @@ class NetworkRepository
                         if ($fallback !== null && is_array($fallback)) {
                             $fallback['title'] = __('Matrículas por escola (rede — sem distribuição de vagas)');
                             $fallback['subtitle'] = __(
-                                'Não foi possível calcular a distribuição de vagas por turma (capacidade na turma, ligação matrícula↔turma↔escola ou turmas sem vaga livre). Este gráfico mostra o volume de matrículas ativas por unidade como leitura alternativa da rede.'
+                                'Não foi possível calcular a distribuição de vagas por turma (capacidade na turma, conexão matrícula↔turma↔escola ou turmas sem vaga livre). Este gráfico mostra o volume de matrículas ativas por unidade como leitura alternativa da rede.'
                             );
                             $fallback['options'] = array_merge($fallback['options'] ?? [], ['panelHeight' => 'xxl']);
                             $vagasPorUnidadeChart = $fallback;
@@ -118,7 +118,7 @@ class NetworkRepository
                     );
                     if (is_array($kpis) && (int) ($kpis['matriculas'] ?? 0) > 0) {
                         $notes[] = __(
-                            'Existem matrículas no filtro, mas as consultas de gráfico falharam (por exemplo ligação turma→turno/escola/série ou nomes de colunas diferentes de «nome» / «nm_curso» / «nm_serie»). Verifique os JOINs na base ou defina IEDUCAR_COL_* nas tabelas correspondentes.'
+                            'Existem matrículas no filtro, mas as consultas de gráfico falharam (por exemplo conexão turma→turno/escola/série ou nomes de colunas diferentes de «nome» / «nm_curso» / «nm_serie»). Verifique os JOINs na base ou defina IEDUCAR_COL_* nas tabelas correspondentes.'
                         );
                     }
                 }

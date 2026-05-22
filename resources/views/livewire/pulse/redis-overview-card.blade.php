@@ -36,7 +36,7 @@
             @foreach ($payload['connections'] as $c)
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <div class="px-3 py-2 bg-gray-50/80 dark:bg-gray-900/40 border-b border-gray-200 dark:border-gray-700 font-semibold text-gray-900 dark:text-gray-100">
-                        {{ __('Ligação') }} <code class="font-mono">{{ $c['name'] }}</code>
+                        {{ __('Conexão') }} <code class="font-mono">{{ $c['name'] }}</code>
                         @isset($c['db_index'])
                             <span class="font-normal text-gray-500 dark:text-gray-400">— DB {{ $c['db_index'] }}</span>
                         @endisset

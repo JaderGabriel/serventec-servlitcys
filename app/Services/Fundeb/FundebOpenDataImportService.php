@@ -231,7 +231,7 @@ final class FundebOpenDataImportService
     }
 
     /**
-     * Estado da configuração e ligação CKAN (para a UI admin).
+     * Estado da configuração e conexão CKAN (para a UI admin).
      *
      * @return array{
      *     resource_id_configured: bool,
@@ -480,8 +480,8 @@ final class FundebOpenDataImportService
                 $parts[] = __('Cache: :path — :status.', [
                     'path' => $this->resolvePathFromTemplate($cachePath, $ibge, $ano),
                     'status' => is_readable($this->resolvePathFromTemplate($cachePath, $ibge, $ano))
-                        ? __('ficheiro existe mas sem VAAF válido')
-                        : __('ficheiro inexistente; execute importação com CKAN configurado'),
+                        ? __('arquivo existe mas sem VAAF válido')
+                        : __('arquivo inexistente; execute importação com CKAN configurado'),
                 ]);
             }
             if ($available !== []) {
@@ -1080,7 +1080,7 @@ final class FundebOpenDataImportService
     }
 
     /**
-     * Apenas lê ficheiro em cache (sem HTTP nem gravação na base).
+     * Apenas lê arquivo em cache (sem HTTP nem gravação na base).
      *
      * @return array{vaaf: float, vaat?: float, complementacao_vaar?: float, fonte?: string, notas?: string}|null
      */

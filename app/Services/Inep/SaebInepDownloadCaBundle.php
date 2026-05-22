@@ -102,7 +102,7 @@ final class SaebInepDownloadCaBundle
     {
         $hints = [
             __('O INEP (download.inep.gov.br) usa certificados RNP recentes; o pacote ca-certificates do servidor pode estar desactualizado.'),
-            __('Soluções: (1) php artisan saeb:refresh-ca-bundle — (2) IEDUCAR_SAEB_HTTP_CA_BUNDLE=/caminho/para.pem — (3) actualizar ca-certificates no SO — (4) só em dev: IEDUCAR_SAEB_HTTP_INSECURE_FALLBACK=true.'),
+            __('Soluções: (1) php artisan saeb:refresh-ca-bundle — (2) IEDUCAR_SAEB_HTTP_CA_BUNDLE=/caminho/para.pem — (3) atualizar ca-certificates no SO — (4) só em dev: IEDUCAR_SAEB_HTTP_INSECURE_FALLBACK=true.'),
         ];
 
         return implode(' ', $hints);

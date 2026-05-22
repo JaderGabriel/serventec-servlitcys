@@ -109,7 +109,7 @@ class PedagogicalSyncController extends Controller
             if (! in_array($ext, ['csv', 'txt'], true)) {
                 return redirect()
                     ->route('admin.pedagogical-sync.index')
-                    ->with('pedagogical_sync_error', __('Use um ficheiro .csv ou .txt.'));
+                    ->with('pedagogical_sync_error', __('Use um arquivo .csv ou .txt.'));
             }
 
             $dir = storage_path('app/saeb/csv_imports');

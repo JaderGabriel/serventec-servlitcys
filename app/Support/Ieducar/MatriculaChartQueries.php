@@ -219,7 +219,7 @@ final class MatriculaChartQueries
     }
 
     /**
-     * Linha temporal de matrículas por ano (janela em torno do ano seleccionado ou últimos anos quando «todos»).
+     * Linha temporal de matrículas por ano (janela em torno do ano selecionado ou últimos anos quando «todos»).
      *
      * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}
      */
@@ -899,7 +899,7 @@ final class MatriculaChartQueries
     }
 
     /**
-     * Matrículas por série (ligação turma.ref_cod_serie), top 10.
+     * Matrículas por série (conexão turma.ref_cod_serie), top 10.
      *
      * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}
      */
@@ -1072,7 +1072,7 @@ final class MatriculaChartQueries
                 $values[] = (int) ($row->c ?? 0);
             }
 
-            return ChartPayload::doughnut(__('Matrículas por sexo (registo administrativo — Educacenso)'), $labels, $values);
+            return ChartPayload::doughnut(__('Matrículas por sexo (registro administrativo — Educacenso)'), $labels, $values);
         } catch (QueryException|\Throwable) {
             return null;
         }
@@ -2668,7 +2668,7 @@ final class MatriculaChartQueries
             'dt_nasc',
         ]), $city);
         if ($birthCol === null) {
-            return __('É necessário registo de data de nascimento dos alunos para este indicador.');
+            return __('É necessário registro de data de nascimento dos alunos para este indicador.');
         }
 
         $spec = self::serieJoinSpec($db, $city);

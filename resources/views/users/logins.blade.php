@@ -6,7 +6,7 @@
                     {{ __('Histórico de logins') }}
                 </h2>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('Utilizador:') }} <span class="font-medium text-gray-700 dark:text-gray-300">{{ $loginUser->name }}</span>
+                    {{ __('Usuário:') }} <span class="font-medium text-gray-700 dark:text-gray-300">{{ $loginUser->name }}</span>
                     <span class="text-gray-400 dark:text-gray-500">({{ $loginUser->email }})</span>
                 </p>
             </div>
@@ -49,7 +49,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="3" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('Nenhum login registado para este utilizador.') }}</td>
+                                    <td colspan="3" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('Nenhum login registado para este usuário.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>

@@ -148,7 +148,7 @@
                     <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
                         <div class="text-center">
                             <h2 class="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">{{ __('Feito para quem decide com dados') }}</h2>
-                            <p class="mx-auto mt-3 max-w-2xl text-slate-600 dark:text-slate-400">{{ __('Ferramentas pensadas para equipas educativas e gestão municipal.') }}</p>
+                            <p class="mx-auto mt-3 max-w-2xl text-slate-600 dark:text-slate-400">{{ __('Ferramentas pensadas para equipes educativas e gestão municipal.') }}</p>
                         </div>
                         <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                             <article class="group rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition hover:border-cyan-500/40 hover:shadow-lg hover:shadow-cyan-500/10 dark:border-white/10 dark:bg-gradient-to-b dark:from-white/5 dark:to-transparent dark:shadow-none dark:hover:border-cyan-500/30">
@@ -182,10 +182,10 @@
                         <p class="mx-auto mt-3 text-center text-sm text-slate-600 dark:text-slate-400">{{ __('Informação institucional — esta página não exibe valores da sua rede.') }}</p>
                         <ul class="mt-8 space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
                             @foreach ([
-                                __('Os indicadores do painel refletem o registo administrativo na base municipal (por exemplo, i-Educar), sujeito à qualidade do cadastro e às regras configuradas na plataforma.'),
+                                __('Os indicadores do painel refletem o registro administrativo na base municipal (por exemplo, i-Educar), sujeito à qualidade do cadastro e às regras configuradas na plataforma.'),
                                 __('Para fins legais ou oficiais (Censo Escolar, INEP, teses perante tribunais), use sempre as fontes e relatórios previstos na legislação.'),
                                 __('Os valores apresentados no painel correspondem ao estado da base no momento da consulta e aos filtros escolhidos (ano, escola, segmento, etc.).'),
-                                __('O tratamento de dados pessoais segue a legislação aplicável (incluindo LGPD no Brasil). O acesso ao painel é restrito a utilizadores autorizados.'),
+                                __('O tratamento de dados pessoais segue a legislação aplicável (incluindo LGPD no Brasil). O acesso ao painel é restrito a usuários autorizados.'),
                             ] as $i => $text)
                                 <li class="flex gap-3">
                                     <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-800 ring-1 ring-cyan-300/60 dark:bg-cyan-500/20 dark:text-cyan-300 dark:ring-cyan-400/30" aria-hidden="true">{{ $i + 1 }}</span>

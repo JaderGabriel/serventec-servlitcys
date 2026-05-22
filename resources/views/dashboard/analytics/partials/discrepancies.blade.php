@@ -74,7 +74,7 @@
 <div class="space-y-6">
     @if (! $yearFilterReady)
         <p class="serv-callout serv-callout--warning text-sm">
-            {{ __('Seleccione o ano letivo e aplique os filtros para executar as rotinas de discrepâncias.') }}
+            {{ __('Selecione o ano letivo e aplique os filtros para executar as rotinas de discrepâncias.') }}
         </p>
     @else
         @include('dashboard.analytics.partials.tab-impact-strip', [

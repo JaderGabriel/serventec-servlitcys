@@ -102,7 +102,7 @@ final class SaebExplicacaoModalBuilder
         $nPontos = count($pontos);
 
         $tentativasTxt = $tentativasUrls === []
-            ? __('Nenhuma URL HTTP configurada (IEDUCAR_SAEB_IMPORT_URLS); foi usada cópia local ou ficheiro modelo.')
+            ? __('Nenhuma URL HTTP configurada (IEDUCAR_SAEB_IMPORT_URLS); foi usada cópia local ou arquivo modelo.')
             : implode('; ', $tentativasUrls);
 
         $secoes = [];
@@ -110,7 +110,7 @@ final class SaebExplicacaoModalBuilder
         $secoes[] = [
             'titulo' => __('O que é o SAEB neste painel'),
             'paragrafos' => [
-                __('O SAEB (Sistema de Avaliação da Educação Básica) é conduzido pelo INEP/MEC, com provas amostrais e indicadores por rede e território. Os gráficos aqui usam apenas o ficheiro JSON importado em Admin → Sincronizações → Pedagógicas (não calculamos médias a partir do i-Educar).'),
+                __('O SAEB (Sistema de Avaliação da Educação Básica) é conduzido pelo INEP/MEC, com provas amostrais e indicadores por rede e território. Os gráficos aqui usam apenas o arquivo JSON importado em Admin → Sincronizações → Pedagógicas (não calculamos médias a partir do i-Educar).'),
                 __('O IDEB combina fluxo escolar e resultados SAEB; para o detalhe oficial por rede e ano consulte o Portal IDEB e as publicações do INEP.'),
             ],
         ];
@@ -119,8 +119,8 @@ final class SaebExplicacaoModalBuilder
             'titulo' => __('Dados disponíveis nesta importação'),
             'paragrafos' => array_values(array_filter([
                 $nPontos > 0
-                    ? __('Total de registos (pontos) no ficheiro: :n.', ['n' => $nPontos])
-                    : __('Ainda não há pontos numéricos no ficheiro.'),
+                    ? __('Total de registros (pontos) no arquivo: :n.', ['n' => $nPontos])
+                    : __('Ainda não há pontos numéricos no arquivo.'),
                 $anoMin !== null && $anoMax !== null
                     ? __('Anos presentes nos dados (eixo do gráfico): de :min a :max (anos de aplicação/divulgação conforme a fonte).', ['min' => $anoMin, 'max' => $anoMax])
                     : null,
@@ -134,7 +134,7 @@ final class SaebExplicacaoModalBuilder
                     'final' => (string) $nFinal,
                     'prelim' => (string) $nPre,
                 ]),
-                __('Pontos de rede municipal (sem escola_id): :m; pontos por escola (cod_escola i-Educar): :e. No painel, sem filtro de escola mostra-se só a rede; com escola seleccionada, só a série dessa escola.', [
+                __('Pontos de rede municipal (sem escola_id): :m; pontos por escola (cod_escola i-Educar): :e. No painel, sem filtro de escola mostra-se só a rede; com escola selecionada, só a série dessa escola.', [
                     'm' => (string) $nMunicipal,
                     'e' => (string) $nEscola,
                 ]),
@@ -146,7 +146,7 @@ final class SaebExplicacaoModalBuilder
             'paragrafos' => [
                 __('A linha verde contínua com círculos representa resultados finais oficiais; a linha laranja tracejada com triângulos representa divulgações preliminares, sujeitas a revisão pelo INEP.'),
                 __('No mesmo ano pode existir apenas um tipo por série, ou transição de preliminar para final em momentos diferentes do calendário de divulgação — não some os dois como se fossem dupla contagem do mesmo facto definitivo.'),
-                __('O filtro de ano letivo do painel limita os pontos a anos ≤ ao ano seleccionado; «Todos os anos» mostra toda a série importada.'),
+                __('O filtro de ano letivo do painel limita os pontos a anos ≤ ao ano selecionado; «Todos os anos» mostra toda a série importada.'),
             ],
         ];
 
@@ -154,7 +154,7 @@ final class SaebExplicacaoModalBuilder
             'titulo' => __('Fonte desta sincronização'),
             'paragrafos' => [
                 __('Fonte efectiva gravada no JSON: :f.', ['f' => $fonteEfetiva]),
-                __('URLs tentadas nesta ordem (APIs públicas ou ficheiros remotos configurados): :t', ['t' => $tentativasTxt]),
+                __('URLs tentadas nesta ordem (APIs públicas ou arquivos remotos configurados): :t', ['t' => $tentativasTxt]),
                 __('Este texto é gerado automaticamente após cada importação e só é reescrito quando o conjunto de pontos altera (hash de conteúdo).'),
             ],
         ];

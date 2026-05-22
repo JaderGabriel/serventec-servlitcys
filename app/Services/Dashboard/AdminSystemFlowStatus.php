@@ -7,7 +7,7 @@ use App\Services\CityDataConnection;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Fluxograma de integrações — estado visual das ligações entre sistemas.
+ * Fluxograma de integrações — estado visual das conexões entre sistemas.
  */
 final class AdminSystemFlowStatus
 {
@@ -201,7 +201,7 @@ final class AdminSystemFlowStatus
             [
                 'status' => 'ok',
                 'label' => __('Operacional'),
-                'description' => __('Integração activa; dados ou ligação disponíveis para o recorte actual.'),
+                'description' => __('Integração activa; dados ou conexão disponíveis para o recorte actual.'),
                 'count' => (int) ($counts['ok'] ?? 0),
             ],
             [
@@ -213,7 +213,7 @@ final class AdminSystemFlowStatus
             [
                 'status' => 'off',
                 'label' => __('Indisponível'),
-                'description' => __('Sem município activo, ligação remota falhou ou fonte desactivada.'),
+                'description' => __('Sem município ativo, conexão remota falhou ou fonte desativada.'),
                 'count' => (int) ($counts['off'] ?? 0),
             ],
         ];
@@ -232,7 +232,7 @@ final class AdminSystemFlowStatus
             return [
                 'status' => 'off',
                 'label' => __('Integrações com bloqueio'),
-                'detail' => __('Revise credenciais i-Educar ou municípios activos antes de auditar repasses.'),
+                'detail' => __('Revise credenciais i-Educar ou municípios ativos antes de auditar repasses.'),
             ];
         }
 
@@ -276,9 +276,9 @@ final class AdminSystemFlowStatus
         };
 
         $hint = match ($probe) {
-            'ok' => __('Teste de ligação remota: OK (amostra)'),
-            'fail' => __('Teste de ligação remota: falhou — ver Conexões i-Educar'),
-            default => __('Ligação não testada recentemente'),
+            'ok' => __('Teste de conexão remota: OK (amostra)'),
+            'fail' => __('Teste de conexão remota: falhou — ver Conexões i-Educar'),
+            default => __('Conexão não testada recentemente'),
         };
 
         return [

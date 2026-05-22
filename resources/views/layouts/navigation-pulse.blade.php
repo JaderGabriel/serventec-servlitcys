@@ -1,4 +1,4 @@
-{{-- Barra superior do Pulse: logo/links à esquerda; período, tema e utilizador à direita. --}}
+{{-- Barra superior do Pulse: logo/links à esquerda; período, tema e usuário à direita. --}}
 <nav class="serv-nav-brand border-b border-slate-200/90 dark:border-slate-700/90">
     <div class="mx-auto max-w-[min(100%,100rem)] px-4 sm:px-6 lg:px-10 xl:px-12">
         <div class="pulse-nav-shell min-h-14 py-3 sm:min-h-16 sm:py-4">

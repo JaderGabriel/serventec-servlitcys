@@ -33,7 +33,7 @@ class FundebBenchmarkImportCommand extends Command
                 'y' => (string) count($anos),
             ]));
             $written = $benchmark->warmFakeCache($cityIds, $anos);
-            $this->line(__('  :n registos gravados em cache.', ['n' => (string) $written]));
+            $this->line(__('  :n registros gravados em cache.', ['n' => (string) $written]));
         }
 
         $this->info(__('Benchmark FUNDEB — :c município(s), anos :y, :i iteração(ões) por modo', [

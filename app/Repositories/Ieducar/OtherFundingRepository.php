@@ -50,7 +50,7 @@ class OtherFundingRepository
         ];
 
         if ($city === null || ! $filters->hasYearSelected()) {
-            $empty['intro'] = __('Seleccione cidade e ano letivo para consultar demais financiamentos.');
+            $empty['intro'] = __('Selecione cidade e ano letivo para consultar demais financiamentos.');
             if ($city !== null) {
                 $empty['public_municipal'] = $this->publicSnapshot->build($city, $filters);
             }
@@ -84,7 +84,7 @@ class OtherFundingRepository
                         'Programas federais e complementares de educação (transporte, alimentação, PDDE e correlatos) dependem de matrículas e escolas consistentes no Censo Escolar. Esta aba cruza o cadastro do i-Educar com referências FNDE e com o pilar «Programas complementares» das discrepâncias.'
                     ),
                     'footnote' => __(
-                        'Valores de repasse não são calculados aqui. A secção «Consultas públicas» obtém prévias e relatórios por IBGE/ano; links oficiais (FNDE, Simec, Tesouro) estão na aba FUNDEB. Os indicadores de i-Educar mostram cobertura de campos quando existirem na base.'
+                        'Valores de repasse não são calculados aqui. A seção «Consultas públicas» obtém prévias e relatórios por IBGE/ano; links oficiais (FNDE, Simec, Tesouro) estão na aba FUNDEB. Os indicadores de i-Educar mostram cobertura de campos quando existirem na base.'
                     ),
                     'programs' => $programs,
                     'transport' => $transport,

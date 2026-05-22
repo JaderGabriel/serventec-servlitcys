@@ -404,7 +404,7 @@
                             <div>
                                 <h4 class="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">{{ __('Por que às vezes aparece “divergência”?') }}</h4>
                                 <p class="mt-2">
-                                    {{ __('A escola na base municipal e a mesma escola no cadastro nacional podem não coincidir exatamente no mapa (por exemplo atualização em datas diferentes ou pequenas diferenças de registo). O painel pode indicar a distância em metros entre os dois pontos e um limiar configurável: acima desse valor, considera-se uma divergência a merecer atenção para conferência do cadastro — não é um erro automático, é um alerta para decisão.') }}
+                                    {{ __('A escola na base municipal e a mesma escola no cadastro nacional podem não coincidir exatamente no mapa (por exemplo atualização em datas diferentes ou pequenas diferenças de registro). O painel pode indicar a distância em metros entre os dois pontos e um limiar configurável: acima desse valor, considera-se uma divergência a merecer atenção para conferência do cadastro — não é um erro automático, é um alerta para decisão.') }}
                                 </p>
                             </div>
 
@@ -416,7 +416,7 @@
                             </div>
 
                             <div>
-                                <h4 class="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">{{ __('Outras secções desta aba') }}</h4>
+                                <h4 class="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">{{ __('Outras seções desta aba') }}</h4>
                                 <p class="mt-2">
                                     {{ __('Abaixo do mapa pode haver resumos de capacidade das turmas, distribuição geográfica (totais), um mapa de “cobertura” com tamanho dos marcadores proporcional às matrículas, e transporte escolar — cada bloco responde a uma pergunta diferente; use o mapa principal para o detalhe por escola.') }}
                                 </p>
@@ -536,7 +536,7 @@
                 <h4 class="text-[11px] font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-200">{{ __('Leitura no mapa principal') }}</h4>
                 <p class="mt-1 text-[11px] text-violet-900/80 dark:text-violet-200/80 leading-relaxed">
                     @if ($markerCount > 0)
-                        {{ __('Use o mapa na secção «Mapa das unidades escolares» (acima): clicar no marcador abre o modal com contacto, matrículas/vagas e links INEP/QEdu. Evita-se aqui um segundo mapa com os mesmos dados.') }}
+                        {{ __('Use o mapa na seção «Mapa das unidades escolares» (acima): clicar no marcador abre o modal com contacto, matrículas/vagas e links INEP/QEdu. Evita-se aqui um segundo mapa com os mesmos dados.') }}
                     @else
                         {{ __('Quando existirem marcadores, o mapa principal acima concentra a navegação por unidade.') }}
                     @endif

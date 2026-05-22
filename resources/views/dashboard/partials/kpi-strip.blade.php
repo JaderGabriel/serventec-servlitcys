@@ -20,7 +20,7 @@
             <div class="serv-home-kpi__bar" role="presentation" aria-hidden="true">
                 <span class="serv-home-kpi__bar-fill serv-home-kpi__bar-fill--teal" style="width: {{ $readyPct }}%"></span>
             </div>
-            <p class="serv-home-kpi__hint">{{ __(':pct% activos com base i-Educar configurada', ['pct' => $readyPct]) }}</p>
+            <p class="serv-home-kpi__hint">{{ __(':pct% ativos com base i-Educar configurada', ['pct' => $readyPct]) }}</p>
         </a>
 
         <a href="{{ route('cities.index') }}" class="serv-home-kpi serv-home-kpi--link group">
@@ -46,7 +46,7 @@
                 <span class="serv-home-kpi__icon serv-home-kpi__icon--violet" aria-hidden="true">
                     <x-ui.icon name="users" class="h-5 w-5" />
                 </span>
-                <p class="serv-home-kpi__label">{{ __('Utilizadores activos') }}</p>
+                <p class="serv-home-kpi__label">{{ __('Usuárioes ativos') }}</p>
             </div>
             <p class="serv-home-kpi__value">{{ number_format($stats['users_active']) }}</p>
             <p class="serv-home-kpi__hint">{{ __(':total contas registadas', ['total' => number_format($stats['users'])]) }}</p>

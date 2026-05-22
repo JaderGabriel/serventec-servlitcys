@@ -56,7 +56,7 @@ final class IeducarCensoEscolaQueries
             return array_merge($empty, [
                 'available' => true,
                 'source_label' => $ctx['label'],
-                'note' => __('Nenhuma escola no filtro actual ou sem registos de Censo para o ano.'),
+                'note' => __('Nenhuma escola no filtro actual ou sem registros de Censo para o ano.'),
             ]);
         }
 

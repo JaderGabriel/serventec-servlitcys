@@ -10,7 +10,7 @@ use Livewire\Attributes\Lazy;
 use Throwable;
 
 /**
- * Resumo do servidor Redis (memória, chaves no DB lógico, versão) por ligação configurada.
+ * Resumo do servidor Redis (memória, chaves no DB lógico, versão) por conexão configurada.
  */
 #[Lazy]
 class RedisOverviewCard extends Card
@@ -89,7 +89,7 @@ class RedisOverviewCard extends Card
 
             if ($out['connections'] === []) {
                 $out['ok'] = false;
-                $out['error'] = __('Nenhuma ligação Redis configurada.');
+                $out['error'] = __('Nenhuma conexão Redis configurada.');
             }
         } catch (Throwable $e) {
             $out['ok'] = false;

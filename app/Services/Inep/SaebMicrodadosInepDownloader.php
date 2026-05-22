@@ -232,7 +232,7 @@ final class SaebMicrodadosInepDownloader
 
         $tmpZip = tempnam(sys_get_temp_dir(), 'saeb_microdados_');
         if ($tmpZip === false) {
-            throw new \RuntimeException(__('Não foi possível criar ficheiro temporário para o ZIP.'));
+            throw new \RuntimeException(__('Não foi possível criar arquivo temporário para o ZIP.'));
         }
 
         try {
@@ -260,7 +260,7 @@ final class SaebMicrodadosInepDownloader
     }
 
     /**
-     * Descarrega um CSV (dados.gov.br, link directo CKAN, etc.) para ficheiro temporário.
+     * Descarrega um CSV (dados.gov.br, link directo CKAN, etc.) para arquivo temporário.
      *
      * @throws \RuntimeException
      */
@@ -269,7 +269,7 @@ final class SaebMicrodadosInepDownloader
         $timeout = max(60, min(3600, (int) config('ieducar.saeb.microdados_download_timeout_seconds', 900)));
         $tmp = tempnam(sys_get_temp_dir(), 'saeb_opendata_');
         if ($tmp === false) {
-            throw new \RuntimeException(__('Não foi possível criar ficheiro temporário.'));
+            throw new \RuntimeException(__('Não foi possível criar arquivo temporário.'));
         }
         $path = $tmp.'.csv';
 

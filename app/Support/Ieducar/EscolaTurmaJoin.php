@@ -7,7 +7,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
 
 /**
- * Ligação turma → escola com PK canónica e colunas alternativas (cod_escola, id).
+ * Conexão turma → escola com PK canónica e colunas alternativas (cod_escola, id).
  */
 final class EscolaTurmaJoin
 {

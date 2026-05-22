@@ -27,7 +27,7 @@
                         <p class="serv-eyebrow text-indigo-700/90 dark:text-indigo-300/90">{{ __('Fluxo de dados · Mapa Mental') }}</p>
                     </div>
                     <p class="text-sm text-slate-600 dark:text-slate-400 mt-1 leading-relaxed max-w-2xl">
-                        {{ __('Do cadastro municipal e das fontes federais até ao motor de consultoria — leia do topo (público) ao centro (plataforma) e à base i-Educar.') }}
+                        {{ __('Do cadastro municipal e das fontes federais até o motor de consultoria — leia do topo (público) ao centro (plataforma) e à base i-Educar.') }}
                     </p>
                 </div>
                 <button
@@ -51,9 +51,9 @@
         </div>
     </div>
 
-    <div class="p-5 sm:p-6 lg:p-8 space-y-6">
+    <div class="p-5 sm:p-6 lg:p-8">
         <div class="serv-mindmap min-w-0" role="figure" aria-labelledby="home-data-flow">
-            <p class="sr-only">{{ __('Mapa mental: ramos de fontes federais convergem para a plataforma; i-Educar liga-se de forma bidireccional à plataforma.') }}</p>
+            <p class="sr-only">{{ __('Mapa mental: ramos de fontes federais convergem para a plataforma; i-Educar liga-se de forma bidirecional à plataforma.') }}</p>
 
             {{-- Ramo superior: fontes federais --}}
             @if ($zoneExternal)
@@ -131,27 +131,29 @@
                 </div>
             @endif
         </div>
+    </div>
 
-        @if (count($systemFlow['legend'] ?? []) > 0)
-            <footer class="serv-data-flow-legend" aria-label="{{ __('Legenda do mapa') }}">
+    @if (count($systemFlow['legend'] ?? []) > 0)
+        <footer class="serv-data-flow-legend" aria-label="{{ __('Legenda do mapa') }}">
+            <div class="serv-data-flow-legend__inner">
                 <h4 class="serv-data-flow-legend__title">{{ __('Legenda do mapa') }}</h4>
                 <ul class="serv-data-flow-legend__list">
                     @foreach ($systemFlow['legend'] ?? [] as $item)
                         <li class="serv-data-flow-legend__item">
                             <span class="serv-data-flow__legend-swatch serv-data-flow__legend-swatch--{{ $item['status'] }}" aria-hidden="true"></span>
-                            <div class="min-w-0">
+                            <div class="serv-data-flow-legend__text min-w-0">
                                 <p class="serv-data-flow-legend__label">
                                     {{ $item['label'] }}
-                                    <span class="tabular-nums font-semibold text-slate-600 dark:text-slate-300">({{ number_format((int) ($item['count'] ?? 0)) }})</span>
+                                    <span class="serv-data-flow-legend__count tabular-nums">({{ number_format((int) ($item['count'] ?? 0)) }})</span>
                                 </p>
                                 <p class="serv-data-flow-legend__desc">{{ $item['description'] }}</p>
                             </div>
                         </li>
                     @endforeach
                 </ul>
-            </footer>
-        @endif
-    </div>
+            </div>
+        </footer>
+    @endif
 
     <x-dashboard.data-flow-help-modal />
 </section>

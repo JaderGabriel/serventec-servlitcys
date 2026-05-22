@@ -63,7 +63,7 @@ class User extends Authenticatable
         return $this->role() === UserRole::Admin;
     }
 
-    public function isUtilizador(): bool
+    public function isUsuário(): bool
     {
         return $this->role() === UserRole::User;
     }
@@ -93,10 +93,10 @@ class User extends Authenticatable
         return $this->is_active && $this->isAdmin();
     }
 
-    /** Relatório PDF completo (aba Serventec): administrador e utilizador da plataforma. */
+    /** Relatório PDF completo (aba Serventec): administrador e usuário da plataforma. */
     public function canExportAnalyticsPdf(): bool
     {
-        return $this->is_active && ($this->isAdmin() || $this->isUtilizador());
+        return $this->is_active && ($this->isAdmin() || $this->isUsuário());
     }
 
     /**
@@ -184,7 +184,7 @@ class User extends Authenticatable
 
     public function hasCityAccess(City $city): bool
     {
-        if ($this->isAdmin() || $this->isUtilizador()) {
+        if ($this->isAdmin() || $this->isUsuário()) {
             return $city->is_active && $city->hasDataSetup();
         }
 
@@ -198,7 +198,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Utilizadores visíveis na gestão conforme o perfil de quem lista.
+     * Usuárioes visíveis na gestão conforme o perfil de quem lista.
      *
      * @param  Builder<User>  $query
      * @return Builder<User>
@@ -209,7 +209,7 @@ class User extends Authenticatable
             return $query;
         }
 
-        if ($viewer->isUtilizador()) {
+        if ($viewer->isUsuário()) {
             return $query->where('role', UserRole::User->value);
         }
 

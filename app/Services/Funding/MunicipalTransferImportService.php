@@ -76,7 +76,7 @@ final class MunicipalTransferImportService
         return [
             'success' => $written > 0,
             'message' => $written > 0
-                ? __(':n registo(s) de repasse gravados para IBGE :ibge.', ['n' => $written, 'ibge' => $ibge])
+                ? __(':n registro(s) de repasse gravados para IBGE :ibge.', ['n' => $written, 'ibge' => $ibge])
                 : __('Nenhum repasse identificado nas fontes configuradas para :ano.', ['ano' => $year]),
             'rows' => $written,
             'by_fonte' => $byFonte,
@@ -150,11 +150,11 @@ final class MunicipalTransferImportService
                     'programa_id' => $programaId,
                     'programa_label' => $this->programLabel($programaId),
                     'valor' => 0.0,
-                    'meta' => ['registos' => 0],
+                    'meta' => ['registros' => 0],
                 ];
             }
             $aggregated[$programaId]['valor'] += $valor;
-            $aggregated[$programaId]['meta']['registos']++;
+            $aggregated[$programaId]['meta']['registros']++;
         }
 
         if (isset($aggregated['geral']) && count($aggregated) > 1) {
@@ -240,11 +240,11 @@ final class MunicipalTransferImportService
                     'programa_id' => $programaId,
                     'programa_label' => $this->programLabel($programaId),
                     'valor' => 0.0,
-                    'meta' => ['registos' => 0],
+                    'meta' => ['registros' => 0],
                 ];
             }
             $aggregated[$programaId]['valor'] += (float) $valor;
-            $aggregated[$programaId]['meta']['registos']++;
+            $aggregated[$programaId]['meta']['registros']++;
         }
 
         return array_values($aggregated);

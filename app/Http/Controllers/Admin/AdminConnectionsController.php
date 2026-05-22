@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * Painel operacional: estatísticas da aplicação e teste de ligação i-Educar por município.
+ * Painel operacional: estatísticas da aplicação e teste de conexão i-Educar por município.
  */
 class AdminConnectionsController extends Controller
 {

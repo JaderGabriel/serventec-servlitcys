@@ -16,7 +16,7 @@ return [
 
     'queue' => env('APP_NOTIFICATIONS_QUEUE', 'default'),
 
-    /** Minutos sem repetir a mesma notificação (dedupe_key) para o mesmo utilizador. */
+    /** Minutos sem repetir a mesma notificação (dedupe_key) para o mesmo usuário. */
     'dedupe_ttl_minutes' => max(5, (int) env('APP_NOTIFICATIONS_DEDUPE_MINUTES', 360)),
 
     /*
@@ -42,7 +42,7 @@ return [
         ],
     ],
 
-    /** Notificar utilizador ao abrir painel analítico com erros parciais. */
+    /** Notificar usuário ao abrir painel analítico com erros parciais. */
     'analytics_partial_errors' => filter_var(env('APP_NOTIFICATIONS_ANALYTICS_ERRORS', true), FILTER_VALIDATE_BOOL),
 
 ];

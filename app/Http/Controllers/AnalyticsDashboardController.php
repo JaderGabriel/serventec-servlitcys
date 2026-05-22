@@ -125,9 +125,10 @@ class AnalyticsDashboardController extends Controller
                 ]);
                 $ieducarOptions['errors'][] = $e->getMessage();
             }
-            if (! empty($ieducarOptions['years'])) {
-                $yearOptions = $ieducarOptions['years'];
-            }
+
+            $yearOptions = $ieducarOptions['years'] !== []
+                ? $ieducarOptions['years']
+                : $this->schoolYearOptionsFallback();
         }
 
         $yearFilterReady = $city !== null && $filters->hasYearSelected();
@@ -179,7 +180,7 @@ class AnalyticsDashboardController extends Controller
                     $analyticsLoadWarnings,
                 ));
 
-                // Com lazy activo, unidades (mapa/geo pesado) só na aba dedicada — evita 500/timeout no «Aplicar filtros».
+                // Com lazy ativo, unidades (mapa/geo pesado) só na aba dedicada — evita 500/timeout no «Aplicar filtros».
                 if (! $lazyTabLoading) {
                     $schoolUnitsData = $this->safeAnalyticsLoad(
                         fn () => $schoolUnitsRepository->snapshot($city, $filters),
@@ -457,7 +458,7 @@ class AnalyticsDashboardController extends Controller
             'workDoneData' => $workDoneData,
             'discrepanciesData' => $discrepanciesData,
             'municipalityHealthData' => $municipalityHealthData,
-            'fundingLossModalData' => DiscrepanciesCheckCatalog::modalPayload(),
+            'fundingLossModalData' => DiscrepanciesCheckCatalog::modalPayload($city, $filters),
             'chartExportContext' => $chartExportContext,
             'tabs' => $tabs,
             'tabGroups' => AnalyticsTabCatalog::groups(),
@@ -538,7 +539,7 @@ class AnalyticsDashboardController extends Controller
         if ($city === null) {
             return response()
                 ->view('dashboard.analytics.partials.tab-fetch-notice', [
-                    'message' => __('Seleccione uma cidade no painel acima.'),
+                    'message' => __('Selecione uma cidade no painel acima.'),
                 ])
                 ->header('X-Analytics-Tab', $tab)
                 ->header('X-Analytics-Tab-Status', 'no-city');
@@ -948,6 +949,7 @@ class AnalyticsDashboardController extends Controller
             $profiler->flush('filter_bootstrap_failed', ['error' => $e->getMessage()]);
 
             return response()->json([
+                'years' => $this->schoolYearOptionsFallback(),
                 'escolas' => [],
                 'cursos' => [],
                 'turnos' => [],

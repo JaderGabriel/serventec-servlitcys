@@ -199,7 +199,7 @@ final class ConsultoriaThematicBridge
                 'id' => 'trabalho-cadastro',
                 'titulo' => __('Censo e cadastro recente'),
                 'fonte' => 'ieducar',
-                'fonte_label' => __('Educacenso + utilizadores municipais'),
+                'fonte_label' => __('Educacenso + usuários municipais'),
                 'status' => $status,
                 'items' => $items,
                 'tab_link' => 'work_done',
@@ -235,7 +235,7 @@ final class ConsultoriaThematicBridge
             'id' => 'trabalho-cadastro',
             'titulo' => __('Censo e cadastro recente'),
             'fonte' => 'ieducar',
-            'fonte_label' => __('Datas de cadastro × utilizadores'),
+            'fonte_label' => __('Datas de cadastro × usuários'),
             'status' => $status,
             'items' => $items,
             'tab_link' => 'work_done',
@@ -414,7 +414,7 @@ final class ConsultoriaThematicBridge
                 $items[] = __('Taxa de ociosidade: :p%.', ['p' => number_format((float) $taxa, 1, ',', '.')]);
             }
         } else {
-            $items[] = __('Indicadores de vagas por turma não calculados nesta base (capacidade / ligação matrícula↔turma).');
+            $items[] = __('Indicadores de vagas por turma não calculados nesta base (capacidade / conexão matrícula↔turma).');
             $status = 'neutral';
         }
 
@@ -496,7 +496,7 @@ final class ConsultoriaThematicBridge
             }
         }
 
-        $items[] = __('Extração oficial: use a secção «Fontes públicas» no Diagnóstico ou FUNDEB (FNDE, Tesouro, Simec, INEP).');
+        $items[] = __('Extração oficial: use a seção «Fontes públicas» no Diagnóstico ou FUNDEB (FNDE, Tesouro, Simec, INEP).');
 
         return [
             'id' => 'recursos',

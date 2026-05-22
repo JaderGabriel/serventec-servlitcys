@@ -12,7 +12,7 @@ class IeducarSchemaProbeCommand extends Command
 {
     protected $signature = 'ieducar:schema-probe
                             {city : ID da cidade}
-                            {--output= : Caminho do ficheiro JSON (default: storage/app/schema_probe_{id}.json)}
+                            {--output= : Caminho do arquivo JSON (default: storage/app/schema_probe_{id}.json)}
                             {--ano= : Ano letivo (default: all)}';
 
     protected $description = 'Gera schema_probe.json com compatibilidade da base i-Educar e rotinas de discrepância';

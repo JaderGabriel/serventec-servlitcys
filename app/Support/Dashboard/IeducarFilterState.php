@@ -81,7 +81,7 @@ final class IeducarFilterState
     }
 
     /**
-     * O utilizador escolheu «Todos os anos» ou um ano específico (não o placeholder vazio).
+     * O usuário escolheu «Todos os anos» ou um ano específico (não o placeholder vazio).
      */
     public function hasYearSelected(): bool
     {

@@ -219,7 +219,7 @@ final class NotificationDispatcher
 
         $this->notifyUser($user, [
             'title' => __('Painel analítico com avisos'),
-            'body' => __(':city — aba :tab: :count secção(ões) com dados incompletos. :preview', [
+            'body' => __(':city — aba :tab: :count seção(ões) com dados incompletos. :preview', [
                 'city' => $city->name,
                 'tab' => $tab,
                 'count' => $count,
@@ -244,7 +244,7 @@ final class NotificationDispatcher
 
         $this->notifyUser($user, [
             'title' => __('Conta criada'),
-            'body' => __('A sua conta no :app foi criada. Complete o perfil se solicitado e utilize as credenciais definidas pela equipa.', [
+            'body' => __('A sua conta no :app foi criada. Complete o perfil se solicitado e utilize as credenciais definidas pela equipe.', [
                 'app' => config('app.name', 'servlitcys'),
             ]),
             'icon' => 'info',
@@ -263,8 +263,8 @@ final class NotificationDispatcher
 
         if ($deactivated) {
             $this->notifyUser($user, [
-                'title' => __('Conta desactivada'),
-                'body' => __('O seu acesso foi desactivado por um administrador. Contacte a equipa se precisar de reactivação.'),
+                'title' => __('Conta desativada'),
+                'body' => __('O seu acesso foi desativado por um administrador. Contacte a equipe se precisar de reactivação.'),
                 'icon' => 'warning',
                 'priority' => NotificationPriority::Critical->value,
                 'kind' => NotificationKinds::ACCOUNT,

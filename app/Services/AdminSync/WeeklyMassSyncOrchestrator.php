@@ -39,7 +39,7 @@ final class WeeklyMassSyncOrchestrator
         if ($cityIds === []) {
             return [
                 'success' => false,
-                'message' => __('Nenhum município com analytics activo e base i-Educar configurada.'),
+                'message' => __('Nenhum município com analytics ativo e base i-Educar configurada.'),
                 'output' => (string) ($task->output_log ?? ''),
             ];
         }

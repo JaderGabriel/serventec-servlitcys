@@ -112,7 +112,7 @@
                             </template>
                         </ul>
                         <p x-show="!yearsLoading && !yearsError && schoolYears.length === 0 && active.status === 'ready'" class="text-xs text-slate-500">{{ __('Nenhum ano letivo encontrado na base.') }}</p>
-                        <p x-show="!yearsLoading && !yearsError && schoolYears.length === 0 && active.status !== 'ready'" class="text-xs text-slate-500">{{ __('Configure a ligação i-Educar para listar anos.') }}</p>
+                        <p x-show="!yearsLoading && !yearsError && schoolYears.length === 0 && active.status !== 'ready'" class="text-xs text-slate-500">{{ __('Configure a conexão i-Educar para listar anos.') }}</p>
                     </div>
 
                     <a :href="active.analytics_url" class="inline-flex serv-btn-secondary text-xs w-full justify-center">{{ __('Consultoria') }}</a>

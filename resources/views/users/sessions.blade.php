@@ -5,10 +5,10 @@
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                     {{ __('Sessões ativas') }}
                 </h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Sessões guardadas na base de dados (utilizador com sessão iniciada). Encerre uma sessão para desligar esse dispositivo.') }}</p>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Sessões guardadas na base de dados (usuário com sessão iniciada). Encerre uma sessão para desligar esse dispositivo.') }}</p>
             </div>
             <a href="{{ route('users.index') }}" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
-                {{ __('← Lista de utilizadores') }}
+                {{ __('← Lista de usuários') }}
             </a>
         </div>
     </x-slot>
@@ -26,7 +26,7 @@
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-900/50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Utilizador') }}</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Usuário') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('IP') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Última atividade') }}</th>
                                 <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Opções') }}</th>
@@ -63,7 +63,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('Nenhuma sessão com utilizador associado.') }}</td>
+                                    <td colspan="4" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('Nenhuma sessão com usuário associado.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>

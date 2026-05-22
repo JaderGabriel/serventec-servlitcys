@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 /**
  * Resolve VAAF (e opcionalmente VAAT / complementação VAAR) por município e ano.
  *
- * Prioridade municipal: vigente → anos anteriores → registo mais recente → config IBGE.
+ * Prioridade municipal: vigente → anos anteriores → registro mais recente → config IBGE.
  * Prévia federal: piso nacional configurável (painéis FNDE / IEDUCAR_FUNDEB_NATIONAL_VAAF_*).
  * Cálculos do painel usam o valor municipal quando existir; a prévia aparece sempre que disponível para comparação.
  */

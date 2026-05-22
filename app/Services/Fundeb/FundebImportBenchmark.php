@@ -56,7 +56,7 @@ final class FundebImportBenchmark
         }
 
         $sampleRow = [
-            'vaaf' => (float) config('ieducar.discrepancies.vaa_referencia_anual', 5500),
+            'vaaf' => (float) config('ieducar.discrepancies.vaa_referencia_anual', 4500),
             'vaat' => null,
             'complementacao_vaar' => null,
             'fonte' => 'benchmark_db_only',
@@ -144,7 +144,7 @@ final class FundebImportBenchmark
                     : null,
                 'full_overhead_ms' => max(0, $fullMs - $dbMs),
                 'note' => $fullMs > 500
-                    ? __('O gargalo costuma ser HTTP CKAN/timeout ou tentativas sem cache. Com cache quente, o fluxo completo aproxima-se da leitura de ficheiro + upsert.')
+                    ? __('O gargalo costuma ser HTTP CKAN/timeout ou tentativas sem cache. Com cache quente, o fluxo completo aproxima-se da leitura de arquivo + upsert.')
                     : __('Tempos medidos no ambiente actual; use --warm-cache após uma importação real.'),
             ],
         ];

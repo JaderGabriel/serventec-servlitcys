@@ -145,7 +145,7 @@ class SaebPedagogicalImportService
     }
 
     /**
-     * Apenas URLs explícitas em .env e, opcionalmente, import_url_defaults em config (sem APP_URL nem ficheiros de exemplo).
+     * Apenas URLs explícitas em .env e, opcionalmente, import_url_defaults em config (sem APP_URL nem arquivos de exemplo).
      *
      * @return list<string>
      */

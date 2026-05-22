@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Storage;
 /**
  * Resolve o caminho absoluto do CSV de fallback INEP (coordenadas offline).
  *
- * Padrão Laravel: ficheiro no disco public (`storage/app/public`), exposto via
+ * Padrão Laravel: arquivo no disco public (`storage/app/public`), exposto via
  * `php artisan storage:link` como `public/storage/...` quando necessário.
  *
  * Compatibilidade: valores antigos `app/...` (relativos a `storage/`) continuam a funcionar.

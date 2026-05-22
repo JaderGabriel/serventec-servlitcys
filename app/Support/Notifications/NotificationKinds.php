@@ -26,7 +26,7 @@ final class NotificationKinds
             self::ADMIN_SYNC => __('Sincronização'),
             self::ANALYTICS => __('Painel analítico'),
             self::OPERATIONS => __('Operações'),
-            self::CONNECTION => __('Ligação i-Educar'),
+            self::CONNECTION => __('Conexão i-Educar'),
             self::SECURITY => __('Segurança'),
             default => $kind !== null && $kind !== '' ? $kind : null,
         };

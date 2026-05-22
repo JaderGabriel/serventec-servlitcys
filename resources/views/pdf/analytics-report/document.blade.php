@@ -367,7 +367,7 @@
         <table class="kpi-row">
             <tr>
                 <td><div class="kpi-label">{{ __('Com problema') }}</div><div class="kpi-value">{{ number_format((int) ($discSummary['com_problema'] ?? 0), 0, ',', '.') }}</div></td>
-                <td><div class="kpi-label">{{ __('Escolas afectadas') }}</div><div class="kpi-value">{{ number_format((int) ($discSummary['escolas_afetadas'] ?? 0), 0, ',', '.') }}</div></td>
+                <td><div class="kpi-label">{{ __('Escolas afetadas') }}</div><div class="kpi-value">{{ number_format((int) ($discSummary['escolas_afetadas'] ?? 0), 0, ',', '.') }}</div></td>
                 <td><div class="kpi-label">{{ __('Perda estimada') }}</div><div class="kpi-value">R$ {{ number_format((float) ($discSummary['perda_estimada_anual'] ?? 0), 2, ',', '.') }}</div></td>
             </tr>
         </table>
@@ -491,7 +491,7 @@
                 <div class="chart-block__head">
                     <span class="chart-block__section">{{ $block['section'] ?? '' }}</span>
                     <span class="chart-block__title">{{ $block['title'] ?? '' }}</span>
-                    <span class="chart-block__hint">{{ $block['hint'] ?? __('Compare magnitudes com as tabelas das secções 1–8 antes de definir acções.') }}</span>
+                    <span class="chart-block__hint">{{ $block['hint'] ?? __('Compare magnitudes com as tabelas das seções 1–8 antes de definir acções.') }}</span>
                 </div>
                 {!! $block['svg'] ?? '' !!}
             </div>

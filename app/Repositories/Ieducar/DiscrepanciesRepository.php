@@ -163,7 +163,7 @@ class DiscrepanciesRepository
                     $meta = $catalog['nee_subnotificacao'];
                     $m = is_array($neeRow['meta'] ?? null) ? $neeRow['meta'] : [];
                     $meta['explanation'] = __(
-                        'A rede tem :nee matrícula(s) NEE (:pct% do total), abaixo do patamar de referência de :bench% (configurável). Estimativa de :gap registo(s) possivelmente omitidos — indicador de subnotificação no Censo e no VAAR de inclusão.',
+                        'A rede tem :nee matrícula(s) NEE (:pct% do total), abaixo do patamar de referência de :bench% (configurável). Estimativa de :gap registro(s) possivelmente omitidos — indicador de subnotificação no Censo e no VAAR de inclusão.',
                         [
                             'nee' => number_format((int) ($m['nee_matriculas'] ?? 0)),
                             'pct' => number_format((float) ($m['pct_atual'] ?? 0), 1, ',', '.'),

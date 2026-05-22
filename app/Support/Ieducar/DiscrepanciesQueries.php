@@ -115,7 +115,7 @@ final class DiscrepanciesQueries
     }
 
     /**
-     * Matrículas em turmas AEE (heurística) sem registo de deficiência/NEE no cadastro, por escola.
+     * Matrículas em turmas AEE (heurística) sem registro de deficiência/NEE no cadastro, por escola.
      *
      * @return list<array{escola_id: string, escola: string, total: int}>
      */

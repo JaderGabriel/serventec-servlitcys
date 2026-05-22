@@ -90,7 +90,7 @@ class CityDataConnection
     }
 
     /**
-     * Executa um callback com a ligação à base da cidade e liberta-a no fim.
+     * Executa um callback com a conexão à base da cidade e liberta-a no fim.
      *
      * @template T
      *
@@ -119,7 +119,7 @@ class CityDataConnection
     }
 
     /**
-     * Testa a ligação e devolve métricas genéricas para o painel.
+     * Testa a conexão e devolve métricas genéricas para o painel.
      *
      * @return array{ok: bool, message: ?string, driver: string, mysql_version: ?string, table_count: ?int}
      */
@@ -190,7 +190,7 @@ class CityDataConnection
     }
 
     /**
-     * Testa a ligação com medição de tempo para indicador (verde / amarelo / vermelho).
+     * Testa a conexão com medição de tempo para indicador (verde / amarelo / vermelho).
      *
      * @return array{status: 'setup_missing'|'ok'|'slow'|'error', ms: ?float, message: ?string}
      */

@@ -1,11 +1,11 @@
 @php
     $actionLabels = [
         'login' => __('Início de sessão'),
-        'user_created' => __('Utilizador criado'),
+        'user_created' => __('Usuário criado'),
         'user_updated' => __('Conta atualizada'),
         'user_activated' => __('Conta reativada'),
         'user_deactivated' => __('Conta desativada'),
-        'user_deleted' => __('Utilizador excluído'),
+        'user_deleted' => __('Usuário excluído'),
         'sessions_terminated' => __('Sessões encerradas (admin)'),
         'session_revoked' => __('Sessão revogada'),
     ];
@@ -21,7 +21,7 @@
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Gestão de contas: editar dados, senha, ativar ou desativar, encerrar sessões noutros dispositivos e consultar atividade.') }}</p>
             </div>
             <a href="{{ route('users.create') }}" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition">
-                {{ __('Novo utilizador') }}
+                {{ __('Novo usuário') }}
             </a>
         </div>
     </x-slot>
@@ -46,7 +46,7 @@
 
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 dark:border-gray-700">
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Utilizadores cadastrados') }}</h3>
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Usuárioes cadastrados') }}</h3>
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Contas com acesso à aplicação.') }}</p>
                 </div>
                 <div class="overflow-x-auto">
@@ -54,7 +54,7 @@
                         <thead class="bg-gray-50 dark:bg-gray-900/50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Nome') }}</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Utilizador') }}</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Usuário') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('E-mail') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Perfil') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Estado') }}</th>
@@ -116,7 +116,7 @@
                                     </td>
                                     <td class="px-4 py-3 text-sm text-right">
                                         <div class="inline-flex flex-wrap items-center justify-end gap-2 max-w-[18rem] ml-auto">
-                                            <a href="{{ route('users.edit', $u) }}" class="inline-flex items-center justify-end text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Editar utilizador') }}" aria-label="{{ __('Editar utilizador') }}">
+                                            <a href="{{ route('users.edit', $u) }}" class="inline-flex items-center justify-end text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Editar usuário') }}" aria-label="{{ __('Editar usuário') }}">
                                             <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                             </svg>
@@ -132,11 +132,11 @@
 
                                                 @can('updateStatus', $u)
                                                     @if ($u->is_active)
-                                                        <form method="POST" action="{{ route('users.update-status', $u) }}" class="inline" onsubmit="return confirm(@js(__('Desativar esta conta? O utilizador não poderá iniciar sessão.')));">
+                                                        <form method="POST" action="{{ route('users.update-status', $u) }}" class="inline" onsubmit="return confirm(@js(__('Desativar esta conta? O usuário não poderá iniciar sessão.')));">
                                                             @csrf
                                                             @method('PATCH')
                                                             <input type="hidden" name="is_active" value="0" />
-                                                            <button type="submit" class="inline-flex items-center justify-end text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Desativar utilizador') }}" aria-label="{{ __('Desativar utilizador') }}">
+                                                            <button type="submit" class="inline-flex items-center justify-end text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Desativar usuário') }}" aria-label="{{ __('Desativar usuário') }}">
                                                                 <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
                                                                 </svg>
@@ -147,7 +147,7 @@
                                                             @csrf
                                                             @method('PATCH')
                                                             <input type="hidden" name="is_active" value="1" />
-                                                            <button type="submit" class="inline-flex items-center justify-end text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Reativar utilizador') }}" aria-label="{{ __('Reativar utilizador') }}">
+                                                            <button type="submit" class="inline-flex items-center justify-end text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Reativar usuário') }}" aria-label="{{ __('Reativar usuário') }}">
                                                                 <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                                                 </svg>
@@ -157,10 +157,10 @@
                                                 @endcan
 
                                                 @can('delete', $u)
-                                                    <form method="POST" action="{{ route('users.destroy', $u) }}" class="inline" onsubmit="return confirm(@js(__('Excluir permanentemente este utilizador? Esta ação não pode ser desfeita.')));">
+                                                    <form method="POST" action="{{ route('users.destroy', $u) }}" class="inline" onsubmit="return confirm(@js(__('Excluir permanentemente este usuário? Esta ação não pode ser desfeita.')));">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="inline-flex items-center justify-end text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Excluir utilizador') }}" aria-label="{{ __('Excluir utilizador') }}">
+                                                        <button type="submit" class="inline-flex items-center justify-end text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Excluir usuário') }}" aria-label="{{ __('Excluir usuário') }}">
                                                             <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9.346-.346 9m-1.788 0L9.26 9.346m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                                                             </svg>
@@ -178,7 +178,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('Nenhum utilizador encontrado.') }}</td>
+                                    <td colspan="9" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('Nenhum usuário encontrado.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -195,7 +195,7 @@
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 dark:border-gray-700">
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40">
                     <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Registo de atividade') }}</h3>
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Últimos eventos: inícios de sessão e contas criadas por um administrador. Até 80 registos.') }}</p>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Últimos eventos: inícios de sessão e contas criadas por um administrador. Até 80 registros.') }}</p>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -230,7 +230,7 @@
                                             {{ $log->subject->name }}
                                             <span class="block text-xs text-gray-500 dark:text-gray-500 break-all">{{ $log->subject->email }}</span>
                                         @elseif ($log->action === 'login' && $log->subject)
-                                            <span class="text-gray-500 dark:text-gray-400">{{ __('mesmo utilizador') }}</span>
+                                            <span class="text-gray-500 dark:text-gray-400">{{ __('mesmo usuário') }}</span>
                                         @else
                                             —
                                         @endif
@@ -241,7 +241,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('Ainda não há registos. Os inícios de sessão e criações de utilizadores aparecerão aqui.') }}</td>
+                                    <td colspan="5" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('Ainda não há registros. Os inícios de sessão e criações de usuários aparecerão aqui.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>

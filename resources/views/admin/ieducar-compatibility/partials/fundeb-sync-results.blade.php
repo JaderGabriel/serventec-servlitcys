@@ -91,7 +91,7 @@
 
         @if ($byFonte !== [])
             <div class="px-4 py-2 border-t border-gray-100 dark:border-gray-800">
-                <p class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Por fonte (registos gravados)') }}</p>
+                <p class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Por fonte (registros gravados)') }}</p>
                 <div class="flex flex-wrap gap-2">
                     @foreach ($byFonte as $fonte => $count)
                         <span class="inline-flex items-center rounded-full bg-teal-100 dark:bg-teal-900/40 px-2 py-0.5 text-[11px] text-teal-900 dark:text-teal-100">

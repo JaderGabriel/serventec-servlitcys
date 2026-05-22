@@ -1003,7 +1003,7 @@ return [
     | Trabalho realizado (cadastro recente no i-Educar)
     |--------------------------------------------------------------------------
     |
-    | Exclusão de utilizadores administrativos na contagem (login, IDs, níveis).
+    | Exclusão de usuários administrativos na contagem (login, IDs, níveis).
     | minutos_por_registro: fallback quando não há timestamps suficientes na base.
     |
     */

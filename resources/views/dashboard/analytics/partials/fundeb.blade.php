@@ -26,7 +26,7 @@
 <div class="space-y-6">
     @if (! $yearFilterReady)
         <p class="serv-callout serv-callout--warning text-sm">
-            {{ __('Seleccione o ano letivo (ou «Todos os anos») e aplique os filtros para gerar o relatório FUNDEB com base nos dados do i-Educar.') }}
+            {{ __('Selecione o ano letivo (ou «Todos os anos») e aplique os filtros para gerar o relatório FUNDEB com base nos dados do i-Educar.') }}
         </p>
     @else
         @include('dashboard.analytics.partials.tab-impact-strip', [

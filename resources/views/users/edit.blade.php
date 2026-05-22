@@ -3,7 +3,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                    {{ __('Editar utilizador') }}
+                    {{ __('Editar usuário') }}
                 </h2>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $editUser->name }} — {{ $editUser->email }}</p>
             </div>

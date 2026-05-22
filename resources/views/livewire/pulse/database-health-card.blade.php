@@ -2,7 +2,7 @@
     <x-pulse::card-header
         name="{{ __('Base de dados') }}"
         x-bind:title="`{{ __('Consulta') }}: {{ number_format($time) }}ms @ {{ $runAt }}`"
-        details="{{ __('Ligação predefinida e latência PDO. Período:') }} {{ $this->periodForHumans() }}"
+        details="{{ __('Conexão predefinida e latência PDO. Período:') }} {{ $this->periodForHumans() }}"
     >
         <x-slot:icon>
             <x-pulse::icons.circle-stack />

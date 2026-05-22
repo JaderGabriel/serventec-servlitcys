@@ -55,7 +55,7 @@ class UserPolicy
             return true;
         }
 
-        if ($actor->isUtilizador()) {
+        if ($actor->isUsuário()) {
             return $target->role() === UserRole::User;
         }
 

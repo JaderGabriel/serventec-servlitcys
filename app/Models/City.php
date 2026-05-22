@@ -53,7 +53,7 @@ class City extends Model
     }
 
     /**
-     * Motor SQL usado na ligação dinâmica (mysql ou pgsql).
+     * Motor SQL usado na conexão dinâmica (mysql ou pgsql).
      */
     public function dataDriver(): string
     {

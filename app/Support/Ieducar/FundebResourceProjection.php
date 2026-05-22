@@ -5,6 +5,7 @@ namespace App\Support\Ieducar;
 use App\Models\City;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Finance\MoneyMath;
 
 /**
  * Previsão indicativa de recursos FUNDEB (matrículas × VAAF de referência) e pisos legais de aplicação.
@@ -56,9 +57,11 @@ final class FundebResourceProjection
         $complementPct = max(0.0, (float) ($cfg['complementacao_vaar_pct_base'] ?? 0));
         $useImportedVaar = filter_var($cfg['use_imported_vaar'] ?? true, FILTER_VALIDATE_BOOL);
         $complementOficial = $ref['complementacao_vaar'] ?? null;
-        $complementIndicativa = $complementPct > 0 ? round($base * ($complementPct / 100), 2) : 0.0;
+        $complementIndicativa = $complementPct > 0
+            ? MoneyMath::roundMoney($base * ($complementPct / 100))
+            : 0.0;
         $complementVaar = ($useImportedVaar && $complementOficial !== null && (float) $complementOficial > 0)
-            ? round((float) $complementOficial, 2)
+            ? MoneyMath::roundMoney((float) $complementOficial)
             : $complementIndicativa;
         $complementVaarFonte = ($useImportedVaar && $complementOficial !== null && (float) $complementOficial > 0)
             ? __('importação FNDE (fundeb_municipio_references)')
@@ -67,9 +70,9 @@ final class FundebResourceProjection
                 : null);
 
         $previsaoReferencia = $base;
-        $previsaoCorrigida = round(max(0, $base + $ganho), 2);
-        $previsaoRisco = round(max(0, $base - $perda), 2);
-        $totalComComplemento = round($previsaoReferencia + $complementVaar, 2);
+        $previsaoCorrigida = MoneyMath::roundMoney(max(0, $base + $ganho));
+        $previsaoRisco = MoneyMath::roundMoney(max(0, $base - $perda));
+        $totalComComplemento = MoneyMath::roundMoney($previsaoReferencia + $complementVaar);
 
         $distribuicao = self::buildLegalDistribution($previsaoReferencia, $cfg);
         $porEtapa = self::extractEtapaBreakdown($enrollmentData, $municipalVaaf, $matriculas);
@@ -97,10 +100,10 @@ final class FundebResourceProjection
             'vaat_label' => $ref['vaat'] !== null ? $fmt($ref['vaat']) : null,
             'complementacao_vaar_oficial' => $ref['complementacao_vaar'],
             'formula_base' => __(
-                ':mat matrícula(s) ativa(s) × :vaa (VAAF de referência configurável) = :total.',
+                ':mat matrícula(s) ativa(s) × :vaa (VAAF municipal de referência) = :total.',
                 [
                     'mat' => number_format($matriculas, 0, ',', '.'),
-                    'vaa' => $fmt($vaa),
+                    'vaa' => $fmt($municipalVaaf),
                     'total' => $fmt($base),
                 ]
             ),

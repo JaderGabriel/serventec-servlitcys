@@ -1,6 +1,6 @@
 {{--
     Grupos alinhados ao acesso rápido da dashboard (Início).
-    variant: dropdown (menu do utilizador) | mobile (menu expandido no telemóvel)
+    variant: dropdown (menu do usuário) | mobile (menu expandido no telemóvel)
 --}}
 @props(['variant' => 'dropdown'])
 
@@ -63,7 +63,7 @@
                     'label' => __('Conexões i-Educar'),
                     'icon' => 'circle-stack',
                     'active' => $req->routeIs('admin.connections.*'),
-                    'title' => __('Testar ligação i-Educar por município.'),
+                    'title' => __('Testar conexão i-Educar por município.'),
                 ],
                 [
                     'show' => true,
@@ -168,7 +168,7 @@
                 [
                     'show' => true,
                     'href' => route('users.index'),
-                    'label' => __('Utilizadores'),
+                    'label' => __('Usuárioes'),
                     'icon' => 'users',
                     'active' => $req->routeIs('users.index') || $req->routeIs('users.edit'),
                     'title' => __('Lista e gestão de contas.'),
@@ -176,10 +176,10 @@
                 [
                     'show' => true,
                     'href' => route('users.create'),
-                    'label' => __('Novo utilizador'),
+                    'label' => __('Novo usuário'),
                     'icon' => 'user-plus',
                     'active' => $req->routeIs('users.create'),
-                    'title' => __('Criar novo utilizador.'),
+                    'title' => __('Criar novo usuário.'),
                 ],
                 [
                     'show' => $user->isAdmin(),

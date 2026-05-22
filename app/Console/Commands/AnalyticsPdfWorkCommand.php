@@ -27,7 +27,7 @@ class AnalyticsPdfWorkCommand extends Command
             : max(1, (int) config('analytics.pdf_report.tries', 2));
 
         $this->info(__('Worker da fila de PDF analítico'));
-        $this->line(__('  Ligação: :conn', ['conn' => (string) $connection]));
+        $this->line(__('  Conexão: :conn', ['conn' => (string) $connection]));
         $this->line(__('  Fila: :queue', ['queue' => $queue]));
         $this->line(__('  Timeout: :s s · Tentativas: :t', ['s' => (string) $timeout, 't' => (string) $tries]));
         $this->newLine();

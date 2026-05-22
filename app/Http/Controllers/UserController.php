@@ -187,7 +187,7 @@ class UserController extends Controller
         $deactivated = $before['is_active'] && ! $user->is_active;
         $this->notifications->accountUpdated($user, $request->user(), $deactivated, $profileChanged);
 
-        return redirect()->route('users.index')->with('success', __('Utilizador atualizado.'));
+        return redirect()->route('users.index')->with('success', __('Usuário atualizado.'));
     }
 
     public function terminateSessions(User $user): RedirectResponse
@@ -239,8 +239,8 @@ class UserController extends Controller
         }
 
         $message = $newIsActive
-            ? __('Utilizador reativado.')
-            : __('Utilizador desativado. Não poderá iniciar sessão até ser reativado.');
+            ? __('Usuário reativado.')
+            : __('Usuário desativado. Não poderá iniciar sessão até ser reativado.');
 
         return redirect()->route('users.index')->with('success', $message);
     }
@@ -268,6 +268,6 @@ class UserController extends Controller
 
         AdminUserAuditLogger::log($request->user(), 'user_deleted', null, $snapshot, $request);
 
-        return redirect()->route('users.index')->with('success', __('Utilizador excluído.'));
+        return redirect()->route('users.index')->with('success', __('Usuário excluído.'));
     }
 }

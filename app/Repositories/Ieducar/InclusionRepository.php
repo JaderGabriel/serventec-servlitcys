@@ -307,7 +307,7 @@ class InclusionRepository
             __('Educação especial: com SQL personalizado (IEDUCAR_SQL_INCLUSION_GAUGE_*), as percentagens seguem a regra definida pelo município; sem SQL, usa-se o pivô aluno_deficiência (procurado em vários schemas) e o nome no cadastro de deficiências — pode divergir de outros relatórios.'),
             __('Cruzamento AEE: turmas «AEE» são identificadas por palavras-chave no nome da turma e do curso (config/ieducar.php, inclusão). Os segmentos das outras matrículas do mesmo aluno são heurísticos; ajuste IEDUCAR_INCLUSION_* se os rótulos não coincidirem com a rede.'),
             __('Recursos de prova INEP (Censo): distintos do cadastro de deficiência/NEE. O painel detecta tabelas/colunas na base ou usa SQL em IEDUCAR_SQL_INCLUSION_RECURSO_PROVA_*; um aluno pode ter recurso (ex.: óculos na prova) sem deficiência — sinaliza-se para revisão, não como erro automático.'),
-            __('Filtros da aba: «Só NEE» restringe todas as contagens a alunos com registo em aluno_deficiência; «Só inconsistências recurso × NEE» limita a matrículas em cruzamentos recurso de prova sem NEE (e, se configurado, NEE sem recurso).'),
+            __('Filtros da aba: «Só NEE» restringe todas as contagens a alunos com registro em aluno_deficiência; «Só inconsistências recurso × NEE» limita a matrículas em cruzamentos recurso de prova sem NEE (e, se configurado, NEE sem recurso).'),
             $eq,
         ];
     }
@@ -701,7 +701,7 @@ class InclusionRepository
     }
 
     /**
-     * Matrículas com registo em aluno_deficiência, por escola (turma → unidade, ou matrícula → escola).
+     * Matrículas com registro em aluno_deficiência, por escola (turma → unidade, ou matrícula → escola).
      *
      * @return array<string, int> chave = id escola em string
      */
@@ -1341,7 +1341,7 @@ class InclusionRepository
                 ],
             );
             $chart['panel_layout'] = 'full';
-            $chart['footnote'] = __('Cada barra é uma categoria de cor/raça no cadastro (mesma lógica do gráfico global de raça). Segmentos: matrículas distintas de alunos com e sem registo em aluno_deficiência. Respeita os filtros da aba, incluindo «só NEE» ou «só inconsistências» quando activos.');
+            $chart['footnote'] = __('Cada barra é uma categoria de cor/raça no cadastro (mesma lógica do gráfico global de raça). Segmentos: matrículas distintas de alunos com e sem registro em aluno_deficiência. Respeita os filtros da aba, incluindo «só NEE» ou «só inconsistências» quando ativos.');
 
             return $chart;
         } catch (QueryException|\Throwable) {
@@ -1383,7 +1383,7 @@ class InclusionRepository
             $series
         );
         $chart['panel_layout'] = 'full';
-        $footnote = __('Cada ponto no eixo horizontal é uma unidade escolar (turma→escola). As linhas de raça/cor usam as categorias mais frequentes na rede; as restantes entram em «:outros». NEE: contagem de matrículas de alunos com registo em aluno_deficiência.', ['outros' => $outrosLabel]);
+        $footnote = __('Cada ponto no eixo horizontal é uma unidade escolar (turma→escola). As linhas de raça/cor usam as categorias mais frequentes na rede; as restantes entram em «:outros». NEE: contagem de matrículas de alunos com registro em aluno_deficiência.', ['outros' => $outrosLabel]);
         if ($nSchoolsBefore > $maxSchools) {
             $footnote .= ' '.__('Mostram-se as :n escolas com maior volume de matrículas no filtro.', ['n' => $maxSchools]);
         }
@@ -1416,7 +1416,7 @@ class InclusionRepository
         );
         $chart['panel_layout'] = 'full';
         $chart['options'] = array_merge($chart['options'] ?? [], ['panelHeight' => 'xxl']);
-        $footnote = __('Cada barra horizontal é uma unidade escolar; os segmentos coloridos são as categorias de raça/cor (as mais frequentes na rede; as restantes em «:outros»). Mesmos filtros e critérios de ligação aluno↔raça que o gráfico de distribuição global por raça.', ['outros' => $outrosLabel]);
+        $footnote = __('Cada barra horizontal é uma unidade escolar; os segmentos coloridos são as categorias de raça/cor (as mais frequentes na rede; as restantes em «:outros»). Mesmos filtros e critérios de conexão aluno↔raça que o gráfico de distribuição global por raça.', ['outros' => $outrosLabel]);
         if ($nSchoolsBefore > $maxSchools) {
             $footnote .= ' '.__('Mostram-se as :n escolas com maior volume de matrículas no filtro.', ['n' => $maxSchools]);
         }

@@ -122,7 +122,7 @@
                         <summary class="cursor-pointer font-medium">{{ __('Notas INEP / SSL (microdados)') }}</summary>
                         <ul class="mt-2 list-disc pl-5 space-y-1 text-xs leading-relaxed">
                             <li>{{ __('ZIP nacional (>600 MB); filtro por cidade após extrair.') }}</li>
-                            <li>{{ __('Erro cURL 60 (RNP/INEP): php artisan saeb:refresh-ca-bundle, IEDUCAR_SAEB_HTTP_CA_BUNDLE, actualizar ca-certificates no servidor, ou IEDUCAR_SAEB_HTTP_INSECURE_FALLBACK=true (só dev).') }}</li>
+                            <li>{{ __('Erro cURL 60 (RNP/INEP): php artisan saeb:refresh-ca-bundle, IEDUCAR_SAEB_HTTP_CA_BUNDLE, atualizar ca-certificates no servidor, ou IEDUCAR_SAEB_HTTP_INSECURE_FALLBACK=true (só dev).') }}</li>
                         </ul>
                     </details>
 
@@ -144,7 +144,7 @@
                             </div>
                         </dl>
                         <p class="mt-3 text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                            {{ __('Os gráficos Desempenho (SAEB) leem directamente :table.', ['table' => 'saeb_indicator_points']) }}
+                            {{ __('Os gráficos Desempenho (SAEB) leem diretamente :table.', ['table' => 'saeb_indicator_points']) }}
                         </p>
                         </div>
                     </details>
@@ -228,7 +228,7 @@
                             <div>
                                 <dt class="text-[10px] font-sans font-semibold uppercase tracking-wide text-blue-800/90 dark:text-blue-300/90">{{ __('IEDUCAR_SAEB_MICRODADOS_ZIP_URL') }}</dt>
                                 <dd class="mt-1 space-y-1.5">
-                                    <p class="text-[11px] font-sans text-blue-900/85 dark:text-blue-100/85">{{ __('Modelo (substitua {year} pelo ano dos ficheiros INEP):') }}</p>
+                                    <p class="text-[11px] font-sans text-blue-900/85 dark:text-blue-100/85">{{ __('Modelo (substitua {year} pelo ano dos arquivos INEP):') }}</p>
                                     <p class="break-all">{{ $microdadosZipTemplate ?? '' }}</p>
                                     <p class="text-[11px] font-sans text-blue-900/85 dark:text-blue-100/85">{{ __('Exemplo com o ano sugerido no formulário (:year):', ['year' => $defaultMicrodadosYear ?? (int) date('Y') - 1]) }}</p>
                                     <p class="break-all">{{ $microdadosZipExample ?? '' }}</p>
@@ -281,7 +281,7 @@
                                                 <span class="inline-flex items-center rounded-full bg-emerald-100/90 px-2 py-0.5 text-[10px] font-semibold text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200">{{ __('Leve') }}</span>
                                             </div>
                                             <h3 class="mt-2 text-base font-semibold text-amber-950 dark:text-amber-100">{{ __('Importar JSON (IEDUCAR_SAEB_IMPORT_URLS)') }}</h3>
-                                            <p class="mt-2 text-xs text-amber-900/85 dark:text-amber-200/80 leading-relaxed">{{ __('Tenta cada URL até obter JSON com «pontos». Configure as URLs na secção de URLs acima.') }}</p>
+                                            <p class="mt-2 text-xs text-amber-900/85 dark:text-amber-200/80 leading-relaxed">{{ __('Tenta cada URL até obter JSON com «pontos». Configure as URLs na seção de URLs acima.') }}</p>
                                         </div>
                                     </div>
                                     <form method="post" action="{{ route('admin.pedagogical-sync.run') }}" class="space-y-3">
@@ -448,7 +448,7 @@
                     </div>
 
                     <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed border-t border-gray-200 dark:border-gray-700 pt-6">
-                        {{ __('Depois de importar, os gráficos usam este ficheiro. API interna: :url (só responde quando já há dados). Comandos: saeb:import-csv, saeb:sync-microdados, saeb:import-official.', ['url' => rtrim((string) config('app.url'), '/').'/api/saeb/municipio/{ibge}']) }}
+                        {{ __('Depois de importar, os gráficos usam este arquivo. API interna: :url (só responde quando já há dados). Comandos: saeb:import-csv, saeb:sync-microdados, saeb:import-official.', ['url' => rtrim((string) config('app.url'), '/').'/api/saeb/municipio/{ibge}']) }}
                     </p>
                 </div>
             </div>

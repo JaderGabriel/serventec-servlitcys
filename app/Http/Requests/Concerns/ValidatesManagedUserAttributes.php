@@ -66,7 +66,7 @@ trait ValidatesManagedUserAttributes
             if ($resolved === []) {
                 $validator->errors()->add(
                     'city_ids',
-                    __('Seleccione pelo menos um município válido para o perfil Municipal.')
+                    __('Selecione pelo menos um município válido para o perfil Municipal.')
                 );
 
                 return;

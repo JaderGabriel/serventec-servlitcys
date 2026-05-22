@@ -31,7 +31,7 @@ class SaebMunicipioController extends Controller
 
         if (! filter_var(config('ieducar.saeb.public_api_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             return response()->json([
-                'message' => __('Endpoint desactivado.'),
+                'message' => __('Endpoint desativado.'),
             ], Response::HTTP_NOT_FOUND);
         }
 

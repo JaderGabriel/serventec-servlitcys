@@ -11,13 +11,13 @@ use ZipArchive;
  * Descarrega o ZIP oficial do INEP (Censo Escolar), extrai `microdados_ed_basica_*.csv`
  * para o disco public (`storage/app/public/inep/`).
  *
- * Nota: nos ficheiros públicos recentes do Censo, as colunas de latitude/longitude podem
+ * Nota: nos arquivos públicos recentes do Censo, as colunas de latitude/longitude podem
  * estar ausentes (LGPD); nesse caso o import não preenche coordenadas a partir do CSV.
  */
 class InepMicrodadosCadastroEscolasDownloader
 {
     /**
-     * Remove CSVs anteriores do mesmo conjunto antes de gravar um novo (evita vários ficheiros).
+     * Remove CSVs anteriores do mesmo conjunto antes de gravar um novo (evita vários arquivos).
      */
     public function purgeExistingExtractedCsvs(): void
     {
@@ -67,7 +67,7 @@ class InepMicrodadosCadastroEscolasDownloader
     /**
      * Descarrega o ZIP do INEP, extrai o CSV de escolas e devolve o caminho absoluto.
      *
-     * @throws \RuntimeException em falha de rede ou ficheiro inválido
+     * @throws \RuntimeException em falha de rede ou arquivo inválido
      */
     public function downloadAndExtract(?int $year = null): string
     {
@@ -82,7 +82,7 @@ class InepMicrodadosCadastroEscolasDownloader
 
         $tmpZip = tempnam(sys_get_temp_dir(), 'inep_microdados_');
         if ($tmpZip === false) {
-            throw new \RuntimeException('Não foi possível criar ficheiro temporário.');
+            throw new \RuntimeException('Não foi possível criar arquivo temporário.');
         }
 
         try {

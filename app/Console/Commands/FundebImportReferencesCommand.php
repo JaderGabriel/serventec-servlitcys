@@ -27,7 +27,7 @@ class FundebImportReferencesCommand extends Command
         $delimiter = (string) $this->option('delimiter');
         $handle = fopen($path, 'r');
         if ($handle === false) {
-            $this->error(__('Não foi possível abrir o ficheiro.'));
+            $this->error(__('Não foi possível abrir o arquivo.'));
 
             return self::FAILURE;
         }

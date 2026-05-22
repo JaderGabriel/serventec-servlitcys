@@ -1,7 +1,6 @@
 <?php
 
-return [
-    'failed' => 'Nome de utilizador ou palavra-passe incorretos.',
-    'password' => 'A palavra-passe está incorreta.',
-    'throttle' => 'Demasiadas tentativas. Tente novamente dentro de :seconds segundos.',
-];
+/**
+ * Legado — alinhar a pt_BR. Preferir APP_LOCALE=pt_BR.
+ */
+return require __DIR__.'/../pt_BR/auth.php';
