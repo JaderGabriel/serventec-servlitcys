@@ -407,6 +407,19 @@ final class DiscrepanciesCheckCatalog
                 'severity' => 'warning',
                 'vaar_refs' => ['Censo — situação da matrícula', 'INEP'],
             ],
+            'matricula_censo_vs_ieducar' => [
+                'id' => 'matricula_censo_vs_ieducar',
+                'title' => __('Matrículas i-Educar acima do Censo INEP (município)'),
+                'explanation' => __(
+                    'Compara o total de matrículas activas no i-Educar (filtro) com a soma declarada no microdado Censo Escolar INEP para o município e ano. Divergência elevada pode indicar duplicidade, situação inadequada ou atraso de exportação ao Educacenso.'
+                ),
+                'impact' => __(
+                    'Contagem inflacionada no i-Educar reduz credibilidade do VAAF estimado e aumenta risco de glosa no FNDE; contagem abaixo do Censo pode indicar subnotificação.'
+                ),
+                'correction' => __('Regularizar matrículas (situação, duplicidade, exportação Censo) e reindexar microdados INEP no admin.'),
+                'severity' => 'danger',
+                'vaar_refs' => ['Censo — matrícula', 'FUNDEB — contagem'],
+            ],
             'distorcao_idade_serie' => [
                 'id' => 'distorcao_idade_serie',
                 'title' => __('Distorção idade/série (critério INEP)'),

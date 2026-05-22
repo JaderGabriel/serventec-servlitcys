@@ -1,6 +1,6 @@
 # Backlog de implementações — servlitcys
 
-**Última revisão:** maio/2026 · **Versão `main`:** 2.2.0 (`2c8cf44`, #135) — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
+**Última revisão:** maio/2026 · **Versão `main`:** 2.3.0 — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
 Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento** | **Concluído** (mover para [STATUS_PROJETO.md](STATUS_PROJETO.md) quando entrar em produção).
 
@@ -48,11 +48,11 @@ Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento
 
 | ID | Prioridade | Item | Estado | Referência |
 |----|------------|------|--------|------------|
-| FIN-01 | P1 | Import repasse observado (Tesouro/Transparência) — séries históricas | Pendente | [ROADMAP_BASES_CALCULOS_FINANCEIROS.md](ROADMAP_BASES_CALCULOS_FINANCEIROS.md) §3.1 |
-| FIN-02 | P1 | VAAR/VAAT/complementação por import FNDE (substituir % fixo) | Pendente | Idem §3.1 |
-| FIN-03 | P2 | Tabelas `municipal_transfer_snapshots`, jobs `admin-sync` | Pendente | Idem |
-| FIN-04 | P2 | Repasse PNAE/PNATE/PDDE vs matrículas elegíveis | Pendente | Idem §3.1 |
-| FIN-05 | P2 | Check `matricula_censo_vs_ieducar` (microdados INEP) | Pendente | Idem §3.2 |
+| FIN-01 | P1 | Import repasse observado (Tesouro/Transparência) — séries históricas | Concluído | `MunicipalTransferImportService`, fila `admin-sync` (`funding::import_transfers_city_year`) |
+| FIN-02 | P1 | VAAR/VAAT/complementação por import FNDE (substituir % fixo) | Concluído | `IEDUCAR_FUNDEB_USE_IMPORTED_VAAR`, `FundebResourceProjection` |
+| FIN-03 | P2 | Tabelas `municipal_transfer_snapshots`, jobs `admin-sync` | Concluído | Migração + `ImportMunicipalTransfersJob` |
+| FIN-04 | P2 | Repasse PNAE/PNATE/PDDE vs matrículas elegíveis | Concluído | `ProgramRepasseVsMatriculasService`, aba Financiamentos |
+| FIN-05 | P2 | Check `matricula_censo_vs_ieducar` (microdados INEP) | Concluído | `inep_censo_municipio_matriculas`, discrepâncias |
 | FIN-06 | P3 | Simulador custo hora secretaria na aba Censo | Pendente | Idem §3.3 |
 
 *Produção hoje:* consultas públicas activáveis via `.env` — [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).

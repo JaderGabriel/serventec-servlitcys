@@ -94,6 +94,18 @@ final class SaebOfficialPayloadParser
             if ($eid !== null && $eid > 0) {
                 $rowOut['escola_id'] = $eid;
             }
+            $inep = self::intish(
+                $row['inep_escola']
+                ?? $row['co_entidade']
+                ?? $row['codigo_inep']
+                ?? $row['nu_entidade']
+                ?? $row['inep']
+                ?? $row['cod_escola_inep']
+                ?? null
+            );
+            if ($inep !== null && $inep > 0 && ! isset($rowOut['escola_id'])) {
+                $rowOut['inep'] = $inep;
+            }
             $out[] = $rowOut;
         }
 

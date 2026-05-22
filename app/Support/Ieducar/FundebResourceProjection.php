@@ -54,12 +54,22 @@ final class FundebResourceProjection
         $ganho = round((float) ($summary['ganho_potencial_anual'] ?? 0), 2);
 
         $complementPct = max(0.0, (float) ($cfg['complementacao_vaar_pct_base'] ?? 0));
+        $useImportedVaar = filter_var($cfg['use_imported_vaar'] ?? true, FILTER_VALIDATE_BOOL);
+        $complementOficial = $ref['complementacao_vaar'] ?? null;
         $complementIndicativa = $complementPct > 0 ? round($base * ($complementPct / 100), 2) : 0.0;
+        $complementVaar = ($useImportedVaar && $complementOficial !== null && (float) $complementOficial > 0)
+            ? round((float) $complementOficial, 2)
+            : $complementIndicativa;
+        $complementVaarFonte = ($useImportedVaar && $complementOficial !== null && (float) $complementOficial > 0)
+            ? __('importação FNDE (fundeb_municipio_references)')
+            : ($complementPct > 0
+                ? __('IEDUCAR_FUNDEB_VAAR_PCT_BASE (ordem de grandeza)')
+                : null);
 
         $previsaoReferencia = $base;
         $previsaoCorrigida = round(max(0, $base + $ganho), 2);
         $previsaoRisco = round(max(0, $base - $perda), 2);
-        $totalComComplemento = round($previsaoReferencia + $complementIndicativa, 2);
+        $totalComComplemento = round($previsaoReferencia + $complementVaar, 2);
 
         $distribuicao = self::buildLegalDistribution($previsaoReferencia, $cfg);
         $porEtapa = self::extractEtapaBreakdown($enrollmentData, $municipalVaaf, $matriculas);
@@ -176,7 +186,10 @@ final class FundebResourceProjection
                 'fundeb_base_anual' => $previsaoReferencia,
                 'fundeb_base_previa_anual' => $basePrevia,
                 'complementacao_vaar_indicativa' => $complementIndicativa,
+                'complementacao_vaar' => $complementVaar,
+                'complementacao_vaar_fonte' => $complementVaarFonte,
                 'total_com_complemento_indicativa' => $totalComComplemento,
+                'total_com_complemento' => $totalComComplemento,
                 'perda_risco_anual' => $perda,
                 'ganho_potencial_anual' => $ganho,
                 'previsao_cenario_risco' => $previsaoRisco,

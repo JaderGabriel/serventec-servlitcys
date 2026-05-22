@@ -139,6 +139,11 @@ final class DiscrepanciesCheckRunner
                 'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::canJoinTurma($db, $city),
                 'hint' => __('Requer vínculo matrícula↔turma e série para cálculo de idade.'),
             ],
+            'matricula_censo_vs_ieducar' => [
+                'fn' => static fn (Connection $db, City $city, IeducarFilterState $f) => DiscrepanciesQueries::matriculaCensoVsIeducarPorRede($db, $city, $f),
+                'probe' => static fn (Connection $db, City $city): bool => DiscrepanciesAvailability::censoMatriculasMunicipal($city),
+                'hint' => __('Requer índice inep_censo_municipio_matriculas (admin → indexar matrículas Censo) e ano letivo no filtro.'),
+            ],
         ];
     }
 }

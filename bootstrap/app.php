@@ -76,10 +76,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 config('ieducar.admin_sync.schedule.times', ['06:00', '18:00']),
             );
 
-            $adminSync = $schedule->command('admin-sync:work', [
-                '--stop-when-empty' => true,
-                '--max-time' => $maxSeconds,
-            ])
+            $defaultJobTimeout = max(60, (int) config('ieducar.admin_sync.job_timeout', 3600));
+            $adminSync = $schedule->call(function () use ($maxSeconds, $defaultJobTimeout): void {
+                Artisan::call('admin-sync:work', [
+                    '--stop-when-empty' => true,
+                    '--max-time' => AdminSyncScheduleGate::workerMaxSeconds($maxSeconds),
+                    '--timeout' => AdminSyncScheduleGate::workerJobTimeout($defaultJobTimeout),
+                ]);
+            })
                 ->name('admin-sync-scheduled-work')
                 ->withoutOverlapping($overlapMinutes)
                 ->timezone($timezone)
@@ -98,14 +102,16 @@ return Application::configure(basePath: dirname(__DIR__))
 
             if (config('ieducar.admin_sync.schedule.on_demand', true)) {
                 $onDemandMax = max(60, (int) config('ieducar.admin_sync.schedule.on_demand_max_seconds', 900));
-                $onDemand = $schedule->call(function () use ($onDemandMax): void {
+                $defaultJobTimeout = max(60, (int) config('ieducar.admin_sync.job_timeout', 3600));
+                $onDemand = $schedule->call(function () use ($onDemandMax, $defaultJobTimeout): void {
                     if (! AdminSyncScheduleGate::hasPendingWork()) {
                         return;
                     }
 
                     Artisan::call('admin-sync:work', [
                         '--stop-when-empty' => true,
-                        '--max-time' => $onDemandMax,
+                        '--max-time' => AdminSyncScheduleGate::workerMaxSeconds($onDemandMax),
+                        '--timeout' => AdminSyncScheduleGate::workerJobTimeout($defaultJobTimeout),
                     ]);
                 })
                     ->name('admin-sync-on-demand')
@@ -148,6 +154,21 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->timezone($timezone);
 
             ScheduleIntervals::everyMinutes($opsAlerts, $opsMinutes);
+        }
+
+        if (filter_var(config('ieducar.weekly_mass_sync.enabled', true), FILTER_VALIDATE_BOOLEAN)
+            && filter_var(config('ieducar.weekly_mass_sync.schedule.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            $timezone = (string) config('app.timezone', 'UTC');
+            $day = max(0, min(6, (int) config('ieducar.weekly_mass_sync.schedule.day_of_week', 0)));
+            $time = trim((string) config('ieducar.weekly_mass_sync.schedule.time', '02:00')) ?: '02:00';
+            $overlap = max(60, (int) config('ieducar.weekly_mass_sync.schedule.overlap_minutes', 10080));
+
+            $schedule->command('weekly-mass-sync:run')
+                ->weeklyOn($day, $time)
+                ->name('weekly-mass-sync-enqueue')
+                ->withoutOverlapping($overlap)
+                ->timezone($timezone)
+                ->runInBackground();
         }
     })
     ->create();

@@ -5,23 +5,29 @@ namespace App\Services\Inep;
 use App\Models\City;
 use App\Support\Inep\SaebMunicipioPayloadReader;
 use App\Support\Inep\SaebOfficialPayloadParser;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 /**
  * Obtém séries SAEB por município (código IBGE) para cada cidade cadastrada e grava na base (saeb_indicator_points).
+ * Sem dados prévios e com template na API interna, tenta microdados INEP (INEP→cod_escola) antes de falhar.
  */
 class SaebOfficialMunicipalImportService
 {
     public function __construct(
         private SaebPedagogicalImportService $writer,
+        private SaebMicrodadosOpenDataImportService $microdados,
+        private SaebHistoricoDatabase $historicoDb,
+        private SaebInepToEscolaIdResolver $inepResolver,
     ) {}
 
     /**
      * @param  string|null  $templateOverride  URL com {ibge} (e opcionalmente {uf}, {city_id}); sobrescreve IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE quando preenchida.
+     * @param  array{city_id?: int|null, year?: int|null, auto_microdados?: bool|null, resolve_inep?: bool|null}  $options
      * @return array{ok: bool, message: string, fonte_efetiva: ?string, path: string, detalhes?: array<string, mixed>}
      */
-    public function importFromOfficialTemplate(?string $templateOverride = null): array
+    public function importFromOfficialTemplate(?string $templateOverride = null, array $options = []): array
     {
         $rel = SaebHistoricoDatabase::STORAGE_LABEL;
         $template = null;
@@ -43,11 +49,17 @@ class SaebOfficialMunicipalImportService
             ];
         }
 
-        $cities = City::query()
+        $query = City::query()
             ->forAnalytics()
             ->whereNotNull('ibge_municipio')
-            ->orderBy('id')
-            ->get();
+            ->orderBy('id');
+
+        $onlyCityId = isset($options['city_id']) ? (int) $options['city_id'] : 0;
+        if ($onlyCityId > 0) {
+            $query->where('id', $onlyCityId);
+        }
+
+        $cities = $query->get();
 
         if ($cities->isEmpty()) {
             return [
@@ -60,7 +72,45 @@ class SaebOfficialMunicipalImportService
             ];
         }
 
+        $resolveInep = array_key_exists('resolve_inep', $options)
+            ? (bool) $options['resolve_inep']
+            : filter_var(config('ieducar.saeb.official_resolve_inep', true), FILTER_VALIDATE_BOOLEAN);
+
+        $autoMicrodados = array_key_exists('auto_microdados', $options)
+            ? (bool) $options['auto_microdados']
+            : filter_var(config('ieducar.saeb.official_auto_microdados_fallback', true), FILTER_VALIDATE_BOOLEAN);
+
+        $preferYear = isset($options['year']) && is_numeric($options['year'])
+            ? max(2000, min(2100, (int) $options['year']))
+            : $this->defaultPreferYear();
+
         $useInternalFirst = filter_var(config('ieducar.saeb.official_use_internal_storage_first', true), FILTER_VALIDATE_BOOLEAN);
+        $usesInternalApiTemplate = $this->usesDefaultAppUrlTemplate($template, $trimOverride === '')
+            || $this->templatePointsToInternalApi($template);
+
+        $bootstrapNotes = [];
+        if ($autoMicrodados && ($usesInternalApiTemplate || $useInternalFirst)) {
+            $missing = $this->citiesWithoutSaebPoints($cities);
+            if ($missing->isNotEmpty()) {
+                $bootstrapNotes[] = __('A importar microdados INEP (:year) para :n município(s) sem dados SAEB…', [
+                    'year' => (string) $preferYear,
+                    'n' => (string) $missing->count(),
+                ]);
+                $md = $this->microdados->syncFromInepZipForCities(
+                    $missing,
+                    $preferYear,
+                    true,
+                    $resolveInep,
+                    true,
+                    null,
+                );
+                if ($md['ok']) {
+                    $bootstrapNotes[] = __('Microdados: :msg', ['msg' => (string) ($md['message'] ?? '')]);
+                } else {
+                    $bootstrapNotes[] = __('Microdados (aviso): :msg', ['msg' => (string) ($md['message'] ?? __('falha desconhecida'))]);
+                }
+            }
+        }
 
         $allPontos = [];
         $errors = [];
@@ -80,54 +130,59 @@ class SaebOfficialMunicipalImportService
                 $urlsTentadas[] = $url;
 
                 if ($this->isSameApplicationSaebEndpointUrl($url)) {
-                    $errors[] = __(':nome (IBGE :ibge): sem dados SAEB na base para este código; o endpoint da própria aplicação (:url) só devolve JSON já importado (HTTP 404 até lá). Importe primeiro (CSV, microdados ou IEDUCAR_SAEB_IMPORT_URLS) ou defina IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com uma URL externa.', [
-                        'nome' => $city->name,
-                        'ibge' => $ibge,
-                        'url' => $url,
-                    ]);
-
-                    continue;
-                }
-
-                try {
-                    $resp = Http::timeout($this->httpTimeoutSeconds())
-                        ->withHeaders([
-                            'User-Agent' => 'ServLitcys-SAEB-Official/1.0',
-                            'Accept' => 'application/json, text/plain;q=0.9, */*;q=0.8',
-                        ])
-                        ->acceptJson()
-                        ->get($url);
-
-                    if (! $resp->successful()) {
-                        $errors[] = __(':nome (IBGE :ibge): HTTP :code', [
+                    if ($useInternalFirst) {
+                        $decoded = SaebMunicipioPayloadReader::loadForIbge($ibge);
+                    }
+                    if ($decoded === null) {
+                        $errors[] = __(':nome (IBGE :ibge): sem dados SAEB após tentativa de microdados/CSV. Confira IEDUCAR_SAEB_MICRODADOS_ENABLED, ano (:year) e colunas do ZIP, ou defina IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE com URL externa.', [
                             'nome' => $city->name,
                             'ibge' => $ibge,
-                            'code' => (string) $resp->status(),
+                            'year' => (string) $preferYear,
                         ]);
 
                         continue;
                     }
+                } else {
+                    try {
+                        $resp = Http::timeout($this->httpTimeoutSeconds())
+                            ->withHeaders([
+                                'User-Agent' => 'ServLitcys-SAEB-Official/1.0',
+                                'Accept' => 'application/json, text/plain;q=0.9, */*;q=0.8',
+                            ])
+                            ->acceptJson()
+                            ->get($url);
 
-                    $decoded = json_decode($resp->body(), true);
-                    if (! is_array($decoded)) {
-                        $errors[] = __(':nome (IBGE :ibge): resposta não é JSON.', [
+                        if (! $resp->successful()) {
+                            $errors[] = __(':nome (IBGE :ibge): HTTP :code', [
+                                'nome' => $city->name,
+                                'ibge' => $ibge,
+                                'code' => (string) $resp->status(),
+                            ]);
+
+                            continue;
+                        }
+
+                        $decoded = json_decode($resp->body(), true);
+                        if (! is_array($decoded)) {
+                            $errors[] = __(':nome (IBGE :ibge): resposta não é JSON.', [
+                                'nome' => $city->name,
+                                'ibge' => $ibge,
+                            ]);
+
+                            continue;
+                        }
+                    } catch (\Throwable $e) {
+                        $errors[] = __(':nome (IBGE :ibge): :msg', [
                             'nome' => $city->name,
                             'ibge' => $ibge,
+                            'msg' => $e->getMessage(),
                         ]);
 
                         continue;
                     }
-                } catch (\Throwable $e) {
-                    $errors[] = __(':nome (IBGE :ibge): :msg', [
-                        'nome' => $city->name,
-                        'ibge' => $ibge,
-                        'msg' => $e->getMessage(),
-                    ]);
-
-                    continue;
                 }
             } else {
-                $urlsTentadas[] = __('Leitura interna (storage) para IBGE :ibge', ['ibge' => $ibge]);
+                $urlsTentadas[] = __('Leitura interna (base) para IBGE :ibge', ['ibge' => $ibge]);
             }
 
             $pontos = SaebOfficialPayloadParser::pontosForCity($decoded, $city);
@@ -140,24 +195,27 @@ class SaebOfficialMunicipalImportService
                 continue;
             }
 
-            foreach ($pontos as $p) {
+            foreach ($this->resolveEscolaIdsOnPontos($pontos, $city, $resolveInep) as $p) {
                 $allPontos[] = $p;
             }
         }
 
         if ($allPontos === []) {
             $hint = '';
-            if ($this->usesDefaultAppUrlTemplate($template, $trimOverride === '')) {
-                $hint = "\n\n".__('Nota: com IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE vazio, a importação usa APP_URL + /api/saeb/municipio/{ibge}.json — isso só responde depois de haver dados na base (importação prévia) ou use uma URL externa real no .env.');
+            if ($usesInternalApiTemplate) {
+                $hint = "\n\n".__(
+                    'Nota: com template na API interna, o sistema tenta microdados INEP automaticamente (IEDUCAR_SAEB_OFFICIAL_AUTO_MICRODADOS). Se falhou, execute o Passo 4 manualmente ou configure URL externa.'
+                );
             }
-            $msg = __('Nenhum município devolveu dados SAEB válidos.').$hint."\n".implode("\n", $errors);
+            $prefix = $bootstrapNotes !== [] ? implode("\n", $bootstrapNotes)."\n\n" : '';
+            $msg = $prefix.__('Nenhum município devolveu dados SAEB válidos.').$hint."\n".implode("\n", $errors);
 
             return [
                 'ok' => false,
                 'message' => $msg,
                 'fonte_efetiva' => null,
                 'path' => $rel,
-                'detalhes' => ['erros' => $errors, 'urls' => $urlsTentadas],
+                'detalhes' => ['erros' => $errors, 'urls' => $urlsTentadas, 'bootstrap' => $bootstrapNotes],
             ];
         }
 
@@ -168,6 +226,9 @@ class SaebOfficialMunicipalImportService
                 'cidades_processadas' => $cities->count(),
                 'pontos_gravados' => count($allPontos),
                 'erros_parciais' => $errors,
+                'microdados_bootstrap' => $bootstrapNotes,
+                'resolve_inep' => $resolveInep,
+                'ano_microdados' => $preferYear,
             ],
         ];
 
@@ -176,9 +237,11 @@ class SaebOfficialMunicipalImportService
             'pontos' => $allPontos,
         ];
 
-        $extra = $errors !== []
-            ? __('Gravado com avisos:')."\n".implode("\n", $errors)
-            : null;
+        $extraParts = $bootstrapNotes;
+        if ($errors !== []) {
+            $extraParts[] = __('Gravado com avisos:')."\n".implode("\n", $errors);
+        }
+        $extra = $extraParts !== [] ? implode("\n\n", $extraParts) : null;
 
         return $this->writer->persistHistoricoJson(
             $payload,
@@ -186,6 +249,62 @@ class SaebOfficialMunicipalImportService
             $urlsTentadas,
             $extra
         );
+    }
+
+    /**
+     * @param  Collection<int, City>  $cities
+     * @return Collection<int, City>
+     */
+    private function citiesWithoutSaebPoints(Collection $cities): Collection
+    {
+        return $cities->filter(function (City $city): bool {
+            $ibge = preg_replace('/\D/', '', (string) ($city->ibge_municipio ?? '')) ?? '';
+
+            return strlen($ibge) === 7 && ! $this->historicoDb->hasPointsForIbge($ibge);
+        })->values();
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $pontos
+     * @return list<array<string, mixed>>
+     */
+    private function resolveEscolaIdsOnPontos(array $pontos, City $city, bool $resolveInep): array
+    {
+        if (! $resolveInep) {
+            return $pontos;
+        }
+
+        $out = [];
+        foreach ($pontos as $p) {
+            if (! is_array($p)) {
+                continue;
+            }
+            $eid = isset($p['escola_id']) && is_numeric($p['escola_id']) ? (int) $p['escola_id'] : 0;
+            if ($eid <= 0) {
+                $inep = isset($p['inep']) && is_numeric($p['inep'])
+                    ? (int) $p['inep']
+                    : (isset($p['inep_escola']) && is_numeric($p['inep_escola']) ? (int) $p['inep_escola'] : 0);
+                if ($inep > 0) {
+                    $cod = $this->inepResolver->resolve($city, $inep);
+                    if ($cod !== null) {
+                        $p['escola_id'] = $cod;
+                    }
+                }
+            }
+            $out[] = $p;
+        }
+
+        return $out;
+    }
+
+    private function defaultPreferYear(): int
+    {
+        $cfg = config('ieducar.saeb.official_prefer_year');
+        if (is_int($cfg) && $cfg >= 2000 && $cfg <= 2100) {
+            return $cfg;
+        }
+
+        return max(2000, (int) date('Y') - 1);
     }
 
     /**
@@ -220,6 +339,22 @@ class SaebOfficialMunicipalImportService
         $teto = max(15, min(180, (int) config('ieducar.saeb.official_timeout_seconds', 60)));
 
         return $teto;
+    }
+
+    private function templatePointsToInternalApi(string $template): bool
+    {
+        if (! str_contains($template, '/api/saeb/municipio/')) {
+            return false;
+        }
+
+        $appUrl = rtrim((string) config('app.url', ''), '/');
+        if ($appUrl === '' || ! str_starts_with($appUrl, 'http')) {
+            return false;
+        }
+
+        $sample = str_replace('{ibge}', '0000000', $template);
+
+        return $this->isSameApplicationSaebEndpointUrl($sample);
     }
 
     /**

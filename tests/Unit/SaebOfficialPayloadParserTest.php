@@ -63,4 +63,29 @@ class SaebOfficialPayloadParserTest extends TestCase
         $this->assertSame(2021, $out[0]['ano']);
         $this->assertSame([7], $out[0]['city_ids']);
     }
+
+    #[Test]
+    public function resultados_rows_carry_inep_when_present(): void
+    {
+        $city = new City;
+        $city->forceFill(['id' => 3, 'name' => 'Y', 'uf' => 'BA', 'ibge_municipio' => '2911105']);
+
+        $decoded = [
+            'resultados' => [
+                [
+                    'ano' => 2019,
+                    'disciplina' => 'lp',
+                    'etapa' => 'efaf',
+                    'valor' => 10.0,
+                    'co_entidade' => '29258083',
+                ],
+            ],
+        ];
+
+        $out = SaebOfficialPayloadParser::pontosForCity($decoded, $city);
+
+        $this->assertCount(1, $out);
+        $this->assertSame(29258083, $out[0]['inep']);
+        $this->assertArrayNotHasKey('escola_id', $out[0]);
+    }
 }

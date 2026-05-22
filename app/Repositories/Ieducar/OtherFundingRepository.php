@@ -5,6 +5,8 @@ namespace App\Repositories\Ieducar;
 use App\Models\City;
 use App\Services\CityDataConnection;
 use App\Services\Funding\MunicipalFundingPublicSnapshotService;
+use App\Services\Funding\MunicipalTransferSeriesService;
+use App\Services\Funding\ProgramRepasseVsMatriculasService;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
@@ -23,6 +25,8 @@ class OtherFundingRepository
     public function __construct(
         private CityDataConnection $cityData,
         private MunicipalFundingPublicSnapshotService $publicSnapshot,
+        private MunicipalTransferSeriesService $transferSeries,
+        private ProgramRepasseVsMatriculasService $programRepasse,
     ) {}
 
     /**
@@ -58,14 +62,20 @@ class OtherFundingRepository
         $skeleton['city_name'] = (string) $city->name;
 
         try {
-            return $this->cityData->run($city, function ($db) use ($city, $filters, $yearLabel) {
+            $ano = $filters->hasYearSelected() && ! $filters->isAllSchoolYears()
+                ? (int) $filters->ano_letivo
+                : (int) date('Y');
+
+            return $this->cityData->run($city, function ($db) use ($city, $filters, $yearLabel, $ano) {
                 $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
                 $programs = $this->buildPrograms($db, $city, $filters);
+                $programs = $this->programRepasse->enrichPrograms($db, $city, $filters, $programs, $ano);
                 $transport = $this->transportBlock($db, $city, $filters);
                 $pillarComplement = array_values(array_filter(
                     DiscrepanciesFundingImpact::fundingPillars(),
                     static fn (array $p): bool => ($p['id'] ?? '') === 'pnae-transporte'
                 ));
+                $transferSeries = $this->transferSeries->build($city, $ano);
 
                 return [
                     'year_label' => $yearLabel,
@@ -82,6 +92,7 @@ class OtherFundingRepository
                     'funding_pillars' => $pillarComplement,
                     'chart_programas' => $this->chartProgramCoverage($programs),
                     'public_municipal' => $this->publicSnapshot->build($city, $filters),
+                    'transfer_series' => $transferSeries,
                     'error' => null,
                 ];
             });

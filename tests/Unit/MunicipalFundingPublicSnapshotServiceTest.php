@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\City;
 use App\Models\FundebMunicipioReference;
 use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Repositories\MunicipalTransferSnapshotRepository;
 use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Services\Funding\MunicipalFundingPublicSnapshotService;
 use App\Support\Dashboard\IeducarFilterState;
@@ -51,7 +52,9 @@ final class MunicipalFundingPublicSnapshotServiceTest extends TestCase
             '*' => Http::response(['success' => true, 'result' => ['records' => []]], 200),
         ]);
 
-        $service = new MunicipalFundingPublicSnapshotService($repo, app(FundebOpenDataImportService::class));
+        $snapRepo = Mockery::mock(MunicipalTransferSnapshotRepository::class);
+        $snapRepo->shouldReceive('forCityYear')->andReturn([]);
+        $service = new MunicipalFundingPublicSnapshotService($repo, app(FundebOpenDataImportService::class), $snapRepo);
         $payload = $service->build($city, new IeducarFilterState('2025', null, null, null));
 
         $this->assertTrue($payload['available']);
@@ -72,6 +75,7 @@ final class MunicipalFundingPublicSnapshotServiceTest extends TestCase
         $service = new MunicipalFundingPublicSnapshotService(
             Mockery::mock(FundebMunicipioReferenceRepository::class),
             app(FundebOpenDataImportService::class),
+            Mockery::mock(MunicipalTransferSnapshotRepository::class),
         );
 
         $payload = $service->build($city, new IeducarFilterState('2025', null, null, null));

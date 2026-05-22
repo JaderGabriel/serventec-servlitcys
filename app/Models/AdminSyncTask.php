@@ -84,4 +84,42 @@ class AdminSyncTask extends Model
     {
         return AdminSyncTaskCitiesResolver::targetsAllCitiesForTask($this);
     }
+
+    /**
+     * @return list<int>
+     */
+    public function checkpointCompletedCityIds(): array
+    {
+        $ids = $this->payload['checkpoint']['completed_city_ids'] ?? null;
+        if (! is_array($ids) || $ids === []) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map('intval', $ids)));
+    }
+
+    public function hasCheckpoint(): bool
+    {
+        return $this->checkpointCompletedCityIds() !== [];
+    }
+
+    public function isResumable(): bool
+    {
+        if ($this->status !== AdminSyncTaskStatus::Failed->value) {
+            return false;
+        }
+
+        if ($this->domain === AdminSyncDomain::System->value
+            && $this->task_key === 'weekly_mass_sync') {
+            return $this->hasCheckpoint() || is_array($this->payload['checkpoint'] ?? null);
+        }
+
+        if ($this->domain !== AdminSyncDomain::Geo->value) {
+            return true;
+        }
+
+        $cityIds = AdminSyncTaskCitiesResolver::resolveCityIdsForTask($this);
+
+        return count($cityIds) > 1 || $this->hasCheckpoint();
+    }
 }

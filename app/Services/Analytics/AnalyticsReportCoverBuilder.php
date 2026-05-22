@@ -22,7 +22,8 @@ final class AnalyticsReportCoverBuilder
         $uf = strtoupper(trim((string) ($city->uf ?? '')));
         $ufName = $this->ufDisplayName($uf);
 
-        $region = $this->regionLabel($city, $uf);
+        $regionMacro = $this->regionMacro($city, $uf);
+        $municipalityLine = $this->municipalityLine($city->name, $uf, $ufName);
         $maps = $this->mapResolver->resolve($city);
         $center = $this->mapResolver->resolveMunicipalityCenter($city);
 
@@ -74,11 +75,13 @@ final class AnalyticsReportCoverBuilder
             'municipality' => trim((string) $city->name),
             'uf' => $uf,
             'uf_name' => $ufName,
-            'municipality_line' => $this->municipalityLine($city->name, $uf, $ufName),
+            'municipality_line' => $municipalityLine,
+            'municipality_subtitle' => $this->municipalitySubtitle($ufName, $regionMacro),
             'ibge' => $ibge,
             'year_label' => $yearLabel,
             'year_value' => $this->yearValue($filters, $yearLabel),
-            'region_label' => $region,
+            'region_label' => $this->regionLabel($city, $uf),
+            'region_macro' => $regionMacro,
             'filter_details' => $this->filterDetails($filters),
             'coords_source' => $center['source'] ?? $maps['coords']['source'] ?? null,
             'map_image_data_uri' => $mapDataUri,
@@ -97,13 +100,41 @@ final class AnalyticsReportCoverBuilder
     {
         $n = trim($name);
         if ($n === '') {
-            return $uf !== '' ? $ufName.' ('.$uf.')' : '';
+            return $uf !== '' ? $uf : '';
         }
         if ($uf === '') {
             return $n;
         }
 
-        return $n.' — '.$uf.($ufName !== '' && $ufName !== $uf ? ' · '.$ufName : '');
+        return $n.' - '.$uf;
+    }
+
+    /**
+     * Subtítulo da capa: qualificadores após «Município - UF» (ex.: Bahia · Nordeste).
+     */
+    private function municipalitySubtitle(string $ufName, ?string $regionMacro): ?string
+    {
+        $parts = array_values(array_filter([
+            $ufName !== '' ? $ufName : null,
+            filled($regionMacro) ? $regionMacro : null,
+        ], static fn ($p) => is_string($p) && trim($p) !== ''));
+
+        return $parts === [] ? null : implode(' · ', array_unique($parts));
+    }
+
+    private function regionMacro(City $city, string $uf): ?string
+    {
+        $agg = InepCensoEscolaGeoAgg::query()
+            ->when($uf !== '', fn ($q) => $q->where('sg_uf', $uf))
+            ->when(filled($city->name), function ($q) use ($city): void {
+                $q->whereRaw('LOWER(no_municipio) LIKE ?', ['%'.mb_strtolower((string) $city->name).'%']);
+            })
+            ->orderByDesc('nu_ano_censo')
+            ->first();
+
+        $macro = trim((string) ($agg?->no_regiao ?? ''));
+
+        return $macro !== '' ? $macro : null;
     }
 
     private function yearValue(?IeducarFilterState $filters, string $yearLabel): string

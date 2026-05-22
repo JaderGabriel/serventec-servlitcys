@@ -346,13 +346,8 @@
                                             </div>
                                             <h3 class="mt-2 text-base font-semibold text-emerald-950 dark:text-emerald-100">{{ __('Sincronizar dados oficiais por município (IBGE)') }}</h3>
                                             <p class="mt-2 text-xs text-emerald-900/85 dark:text-emerald-200/80 leading-relaxed">
-                                                {{ __('Atualiza/agrega por IBGE a partir do template na caixa azul. Na primeira carga use o Passo 4 ou 2 — o Passo 3 com API interna só funciona depois de já haver pontos importados.') }}
+                                                {{ __('Atualiza/agrega por IBGE. Se a base estiver vazia, descarrega microdados INEP (ZIP), filtra pelo município cadastrado e tabela por INEP da escola (cod_escola no i-Educar) antes de usar a API interna.') }}
                                             </p>
-                                            @if (($officialUrlUsesAppDefault ?? false) && ($pontosCount ?? 0) === 0)
-                                                <p class="mt-2 rounded-md border border-amber-300/70 bg-amber-50/90 px-2.5 py-2 text-[11px] leading-relaxed text-amber-950 dark:border-amber-700/50 dark:bg-amber-950/25 dark:text-amber-100">
-                                                    {{ __('Aviso: o template actual é a API desta app — execute primeiro microdados/CSV ou configure URL externa no .env.') }}
-                                                </p>
-                                            @endif
                                             <p class="mt-2 text-[11px] font-mono text-emerald-900/80 dark:text-emerald-300/90 break-all bg-white/60 dark:bg-emerald-950/20 rounded-md px-2 py-1.5 border border-emerald-200/60 dark:border-emerald-800/50">{{ __('Actual:') }} {{ $effectiveOfficialTemplate !== '' ? $effectiveOfficialTemplate : '—' }}</p>
                                         </div>
                                     </div>
@@ -367,6 +362,24 @@
                                         <div x-show="customUrl" x-cloak class="space-y-2">
                                             <label for="official_url_override" class="block text-xs font-medium text-emerald-900 dark:text-emerald-200">{{ __('URL modelo (obrigatório {ibge}; opcional {uf}, {city_id})') }}</label>
                                             <input id="official_url_override" name="official_url_override" type="url" value="{{ old('official_url_override') }}" placeholder="https://exemplo.gov.br/api/saeb/{ibge}.json" class="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-mono text-gray-900 dark:text-gray-100 px-3 py-2" />
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label for="official_year" class="block text-xs font-medium text-emerald-900 dark:text-emerald-200">{{ __('Ano SAEB (microdados INEP)') }}</label>
+                                                <input id="official_year" name="official_year" type="number" min="2000" max="2100" value="{{ old('official_year', max(2000, (int) date('Y') - 1)) }}" class="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm px-3 py-2" />
+                                            </div>
+                                            <div class="flex flex-col justify-end gap-2">
+                                                <label class="inline-flex items-center gap-2 text-sm text-emerald-950 dark:text-emerald-100 cursor-pointer">
+                                                    <input type="hidden" name="official_auto_microdados" value="0" />
+                                                    <input type="checkbox" name="official_auto_microdados" value="1" checked class="rounded border-gray-300 dark:border-gray-600" />
+                                                    <span>{{ __('Microdados INEP se base vazia') }}</span>
+                                                </label>
+                                                <label class="inline-flex items-center gap-2 text-sm text-emerald-950 dark:text-emerald-100 cursor-pointer">
+                                                    <input type="hidden" name="official_resolve_inep" value="0" />
+                                                    <input type="checkbox" name="official_resolve_inep" value="1" checked class="rounded border-gray-300 dark:border-gray-600" />
+                                                    <span>{{ __('INEP → cod_escola') }}</span>
+                                                </label>
+                                            </div>
                                         </div>
                                         <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Enfileirar por IBGE') }}</x-primary-button>
                                         <x-admin.queue-submit-hint />

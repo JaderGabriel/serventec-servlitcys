@@ -94,6 +94,7 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(func
 
     Route::get('/admin/sync-queue', [AdminSyncQueueController::class, 'index'])->name('admin.sync-queue.index');
     Route::get('/admin/sync-queue/{task}', [AdminSyncQueueController::class, 'show'])->name('admin.sync-queue.show');
+    Route::post('/admin/sync-queue/{task}/resume', [AdminSyncQueueController::class, 'resume'])->name('admin.sync-queue.resume');
     Route::get('/admin/sync-queue/{task}/download', [AdminSyncQueueController::class, 'download'])->name('admin.sync-queue.download');
 
     Route::get('/admin/conexoes', [AdminConnectionsController::class, 'index'])

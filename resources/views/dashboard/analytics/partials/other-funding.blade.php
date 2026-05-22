@@ -7,6 +7,7 @@
     $pillars = is_array($d['funding_pillars'] ?? null) ? $d['funding_pillars'] : [];
     $chartProgramas = is_array($d['chart_programas'] ?? null) ? $d['chart_programas'] : null;
     $publicMunicipal = is_array($d['public_municipal'] ?? null) ? $d['public_municipal'] : [];
+    $transferSeries = is_array($d['transfer_series'] ?? null) ? $d['transfer_series'] : [];
     $programRing = static fn (string $s): string => match ($s) {
         'success' => 'border-l-teal-500',
         'warning' => 'border-l-amber-500',
@@ -54,6 +55,51 @@
             :snapshot="$publicMunicipal"
             anchor="financiamentos-consultas-publicas"
         />
+
+        @if ($transferSeries['available'] ?? false)
+            <x-dashboard.consultoria-section
+                anchor="financiamentos-repasse-observado"
+                :title="__('Repasse observado (série histórica)')"
+                :subtitle="$transferSeries['intro'] ?? ''"
+            >
+                @if (filled($transferSeries['total_ano'] ?? null))
+                    <p class="text-sm font-semibold text-serv-navy dark:text-slate-100">
+                        {{ __('Total no exercício') }}:
+                        {{ \App\Support\Ieducar\DiscrepanciesFundingImpact::formatBrl((float) $transferSeries['total_ano']) }}
+                    </p>
+                @endif
+                @if (count($transferSeries['rows'] ?? []) > 0)
+                    <div class="overflow-x-auto">
+                        <table class="serv-table w-full text-sm">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('Programa') }}</th>
+                                    <th class="text-right">{{ __('Valor') }}</th>
+                                    <th>{{ __('Fonte') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($transferSeries['rows'] as $row)
+                                    <tr>
+                                        <td>{{ $row['label'] ?? '' }}</td>
+                                        <td class="text-right tabular-nums">{{ $row['valor_fmt'] ?? '' }}</td>
+                                        <td class="text-xs text-slate-500">{{ $row['fonte'] ?? '' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+                @if (is_array($transferSeries['chart'] ?? null))
+                    <x-dashboard.chart-panel
+                        :chart="$transferSeries['chart']"
+                        exportFilename="repasse-observado-serie"
+                        :exportMeta="$chartExportContext"
+                        chartPanelId="chart-other-funding-repasse-serie"
+                    />
+                @endif
+            </x-dashboard.consultoria-section>
+        @endif
 
         @if ($chartProgramas !== null)
             <x-dashboard.chart-panel
@@ -118,6 +164,22 @@
                             :items="collect($prog['kpis'])->map(fn ($k) => array_merge($k, ['tone' => $k['tone'] ?? 'slate']))->all()"
                             class="!grid-cols-2 sm:!grid-cols-3 lg:!grid-cols-4"
                         />
+                    @endif
+                    @php $repasse = is_array($prog['repasse_observado'] ?? null) ? $prog['repasse_observado'] : null; @endphp
+                    @if ($repasse !== null)
+                        <div class="serv-callout text-sm">
+                            <p><strong>{{ __('Repasse observado') }}:</strong> {{ $repasse['valor_fmt'] ?? '—' }}</p>
+                            @if (isset($repasse['elegiveis']))
+                                <p class="mt-1">{{ __('Matrículas elegíveis (cadastro)') }}: {{ number_format((int) $repasse['elegiveis'], 0, ',', '.') }}
+                                    @if (filled($repasse['repasse_por_aluno_fmt'] ?? null))
+                                        · {{ $repasse['repasse_por_aluno_fmt'] }}
+                                    @endif
+                                </p>
+                            @endif
+                            @if (filled($repasse['nota'] ?? null))
+                                <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">{{ $repasse['nota'] }}</p>
+                            @endif
+                        </div>
                     @endif
                     @foreach ($prog['distributions'] ?? [] as $col => $dist)
                         @if (is_array($dist) && count($dist['rows'] ?? []) > 0)

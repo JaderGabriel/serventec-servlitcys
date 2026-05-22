@@ -408,6 +408,17 @@ return [
         'official_use_internal_storage_first' => filter_var(env('IEDUCAR_SAEB_OFFICIAL_USE_INTERNAL', true), FILTER_VALIDATE_BOOL),
         /** Timeout por pedido HTTP na importação oficial por município. */
         'official_timeout_seconds' => (int) env('IEDUCAR_SAEB_OFFICIAL_TIMEOUT', 60),
+        /**
+         * Quando o template aponta para a API interna (APP_URL) e não há pontos na base,
+         * descarrega microdados INEP (ZIP) e importa com INEP→cod_escola antes de falhar.
+         */
+        'official_auto_microdados_fallback' => filter_var(env('IEDUCAR_SAEB_OFFICIAL_AUTO_MICRODADOS', true), FILTER_VALIDATE_BOOL),
+        /** Ano preferido do ZIP INEP no fallback (vazio = ano civil anterior). */
+        'official_prefer_year' => env('IEDUCAR_SAEB_OFFICIAL_YEAR') !== null && env('IEDUCAR_SAEB_OFFICIAL_YEAR') !== ''
+            ? max(2000, min(2100, (int) env('IEDUCAR_SAEB_OFFICIAL_YEAR')))
+            : null,
+        /** No fallback e na agregação oficial: mapear INEP da escola para cod_escola no i-Educar. */
+        'official_resolve_inep' => filter_var(env('IEDUCAR_SAEB_OFFICIAL_RESOLVE_INEP', true), FILTER_VALIDATE_BOOL),
         /** Gravar storage/app/public/saeb/municipio/{ibge}.json após cada importação bem-sucedida (para GET /api/saeb/municipio/...). */
         'municipio_json_files_enabled' => filter_var(env('IEDUCAR_SAEB_MUNICIPIO_JSON_FILES', true), FILTER_VALIDATE_BOOL),
         /** Expor GET /api/saeb/municipio/{ibge}(.json) com dados agregados. */
@@ -586,6 +597,8 @@ return [
             'Previsão com base nas matrículas ativas do i-Educar no filtro e VAAF de referência (IEDUCAR_DISC_VAA_REFERENCIA). Não inclui receitas próprias, ICMS/ISS repassados nem valor oficial de complementação VAAR — consulte FNDE, Simec e Tesouro Transparente.'
         ),
         'complementacao_vaar_pct_base' => (float) env('IEDUCAR_FUNDEB_VAAR_PCT_BASE', 0),
+        /** Quando true e complementacao_vaar importada existir, substitui o % fixo na previsão FUNDEB. */
+        'use_imported_vaar' => filter_var(env('IEDUCAR_FUNDEB_USE_IMPORTED_VAAR', true), FILTER_VALIDATE_BOOL),
         'distribuicao_legal' => [
             'referencia' => 'Lei nº 14.113/2020, art. 31 — aplicação mínima anual dos recursos do FUNDEB.',
             'nota' => 'Pisos para planejamento e controle social; a execução orçamentária deve respeitar normas do fundo e prestação de contas.',
@@ -638,7 +651,10 @@ return [
             'matricula_situacao_invalida' => 1.3,
             'distorcao_idade_serie' => 0.4,
             'rede_vagas_ociosas' => 0.25,
+            'matricula_censo_vs_ieducar' => 1.6,
         ],
+        'censo_matricula_tolerance_pct' => (float) env('IEDUCAR_DISC_CENSO_MAT_TOLERANCE_PCT', 5),
+        'censo_matricula_min_diff' => (int) env('IEDUCAR_DISC_CENSO_MAT_MIN_DIFF', 10),
         'funding_pillars' => [
             [
                 'id' => 'fundeb-base',
@@ -828,6 +844,7 @@ return [
         'censo_geo_agg_modal_enabled' => filter_var(env('IEDUCAR_INEP_CENSO_GEO_AGG_MODAL', true), FILTER_VALIDATE_BOOL),
         /** Após import do microdados, reindexar tabela `inep_censo_escola_geo_agg` (pode demorar em ficheiros nacionais). */
         'censo_geo_agg_index_on_import' => filter_var(env('IEDUCAR_INEP_CENSO_GEO_AGG_INDEX_ON_IMPORT', true), FILTER_VALIDATE_BOOL),
+        'censo_matriculas_index_on_import' => filter_var(env('IEDUCAR_INEP_CENSO_MATRICULAS_INDEX_ON_IMPORT', true), FILTER_VALIDATE_BOOL),
         /** Distância mínima (Haversine) para marcar divergência entre i-Educar e coordenada oficial (INEP). */
         'divergence_threshold_meters' => max(1.0, (float) env('IEDUCAR_GEO_DIVERGENCE_THRESHOLD_M', 100)),
         /**
@@ -853,6 +870,28 @@ return [
     | colunas candidatas em matricula, aluno ou escola para leitura automática.
     |
     */
+
+    /*
+    |--------------------------------------------------------------------------
+    | Repasses observados (Tesouro / Transparência) — snapshots locais
+    |--------------------------------------------------------------------------
+    */
+
+    'funding' => [
+        'transfers' => [
+            'enabled' => filter_var(env('IEDUCAR_FUNDING_TRANSFERS_ENABLED', true), FILTER_VALIDATE_BOOL),
+            'timeout' => max(5, (int) env('IEDUCAR_FUNDING_TRANSFERS_TIMEOUT', 20)),
+            'historical_years' => max(1, (int) env('IEDUCAR_FUNDING_TRANSFERS_HISTORICAL_YEARS', 5)),
+            'job_timeout' => max(60, (int) env('IEDUCAR_FUNDING_TRANSFERS_JOB_TIMEOUT', 600)),
+            'program_keywords' => [
+                'fundeb' => ['fundeb', 'fnde', 'salario-educacao', 'salário-educação'],
+                'pnae' => ['pnae', 'alimentacao', 'alimentação', 'merenda'],
+                'pnate' => ['pnate', 'transporte escolar', 'transporte'],
+                'pdde' => ['pdde', 'dinheiro direto'],
+                'geral_educacao' => ['educacao', 'educação', 'escolar'],
+            ],
+        ],
+    ],
 
     'other_funding' => [
         /*
@@ -1026,6 +1065,8 @@ return [
         'connection' => env('ADMIN_SYNC_QUEUE_CONNECTION'),
         'job_timeout' => max(60, (int) env('ADMIN_SYNC_JOB_TIMEOUT', 3600)),
         'tries' => max(1, (int) env('ADMIN_SYNC_TRIES', 1)),
+        /** Slug exigido por `app:flush-processing-queue --confirm=` em APP_ENV=production. */
+        'flush_confirm_slug' => (string) env('ADMIN_PROCESSING_QUEUE_FLUSH_SLUG', 'zerar-fila-processamento'),
         /*
          * Processamento via `php artisan schedule:run` (cron a cada SCHEDULE_RUN_INTERVAL_MINUTES).
          * Por defeito: admin-sync:work 2×/dia (ADMIN_SYNC_SCHEDULE_TIMES) e, entre execuções,
@@ -1044,6 +1085,52 @@ return [
             'interval_minutes' => max(1, (int) env('ADMIN_SYNC_SCHEDULE_INTERVAL_MINUTES', 60)),
             'max_seconds' => max(10, (int) env('ADMIN_SYNC_SCHEDULE_MAX_SECONDS', 3300)),
             'overlap_minutes' => max(1, (int) env('ADMIN_SYNC_SCHEDULE_OVERLAP_MINUTES', 720)),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sincronização massiva semanal (system::weekly_mass_sync)
+    |--------------------------------------------------------------------------
+    |
+    | Comando: php artisan weekly-mass-sync:run
+    | Retomar: php artisan weekly-mass-sync:run --resume={task_id}
+    | Agenda: domingo (configurável) via schedule:run
+    |
+    */
+
+    'weekly_mass_sync' => [
+        'enabled' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_ENABLED', true), FILTER_VALIDATE_BOOL),
+        /** Timeout do job na fila admin-sync (segundos). */
+        'job_timeout' => max(3600, (int) env('IEDUCAR_WEEKLY_MASS_SYNC_JOB_TIMEOUT', 14400)),
+        /** Tempo máximo do `admin-sync:work` quando esta tarefa está pendente (cron on_demand). */
+        'worker_max_seconds' => max(3600, (int) env('IEDUCAR_WEEKLY_MASS_SYNC_WORKER_MAX_SECONDS', 14400)),
+        /** set_time_limit dentro do worker. */
+        'php_time_limit' => max(3600, (int) env('IEDUCAR_WEEKLY_MASS_SYNC_PHP_TIME_LIMIT', 14400)),
+        'schedule' => [
+            'enabled' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
+            /** 0=domingo … 6=sábado (Laravel weeklyOn). */
+            'day_of_week' => max(0, min(6, (int) env('IEDUCAR_WEEKLY_MASS_SYNC_DAY', 0))),
+            'time' => trim((string) env('IEDUCAR_WEEKLY_MASS_SYNC_TIME', '02:00')) ?: '02:00',
+            /** Mutex: não sobrepor execução anterior (minutos). */
+            'overlap_minutes' => max(60, (int) env('IEDUCAR_WEEKLY_MASS_SYNC_OVERLAP_MINUTES', 10080)),
+        ],
+        /** Anos de repasse Tesouro/Transparência (últimos N anos civis). */
+        'transfer_year_span' => max(1, min(10, (int) env('IEDUCAR_WEEKLY_MASS_SYNC_TRANSFER_YEARS', 3))),
+        'geo_ieducar_only_missing' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_GEO_IEDUCAR_ONLY_MISSING', true), FILTER_VALIDATE_BOOL),
+        'geo_official_only_missing' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_GEO_OFFICIAL_ONLY_MISSING', true), FILTER_VALIDATE_BOOL),
+        'geo_microdados_fetch' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_GEO_FETCH', true), FILTER_VALIDATE_BOOL),
+        'transfers_allow_partial_failures' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_TRANSFERS_PARTIAL_OK', true), FILTER_VALIDATE_BOOL),
+        'censo_matriculas_skip_if_missing' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_CENSO_SKIP_MISSING', true), FILTER_VALIDATE_BOOL),
+        'censo_matriculas_allow_empty' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_CENSO_ALLOW_EMPTY', false), FILTER_VALIDATE_BOOL),
+        /** Fases activas (chave => true/false). Vazio = todas. */
+        'phases' => [
+            'geo_pipeline' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_PHASE_GEO', true), FILTER_VALIDATE_BOOL),
+            'fundeb_sync' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_PHASE_FUNDEB', true), FILTER_VALIDATE_BOOL),
+            'funding_transfers' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_PHASE_TRANSFERS', true), FILTER_VALIDATE_BOOL),
+            'funding_censo_matriculas' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_PHASE_CENSO', true), FILTER_VALIDATE_BOOL),
+            'pedagogical_saeb' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_PHASE_SAEB', true), FILTER_VALIDATE_BOOL),
+            'censo_geo_agg' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_PHASE_CENSO_AGG', true), FILTER_VALIDATE_BOOL),
         ],
     ],
 

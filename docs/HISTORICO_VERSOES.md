@@ -1,6 +1,6 @@
 # Histórico de versões (resumo)
 
-**Versão em desenvolvimento (`main`):** **2.2.0** · commit **`2c8cf44`** · **#135** · maio/2026
+**Versão em desenvolvimento (`main`):** **2.3.0** · maio/2026
 
 > **Como ler:** cada linha indica a **tag ou marco**, o **commit** (hash curto Git) e o **contador** (`#N` = posição na história linear do ramo `main`, desde o primeiro commit). Links GitHub usam o repositório configurado em `DOCS_GITHUB_REPOSITORY`.
 
@@ -10,7 +10,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **2.2.0** *(main, sem tag)* | `2c8cf44` | **135** | mai/2026 | Importações externas com guia de impacto (FUNDEB/geo/SAEB); matriz VAAF/VAAT com legenda, filtros e CSV; modo replace/update FUNDEB; PDF analítico com comparativos; dashboard admin e mapas alinhados. |
+| **2.3.0** *(main, sem tag)* | — | — | mai/2026 | FIN-01…05: snapshots de repasse (Tesouro/Transparência), VAAR importado na previsão FUNDEB, repasse vs matrículas elegíveis, check Censo×i-Educar, jobs `admin-sync` funding. |
+| **2.2.0** | `2c8cf44` | **135** | mai/2026 | Importações externas com guia de impacto (FUNDEB/geo/SAEB); matriz VAAF/VAAT com legenda, filtros e CSV; modo replace/update FUNDEB; PDF analítico com comparativos; dashboard admin e mapas alinhados. |
 | | `48887a3` | 134 | mai/2026 | Matriz FUNDEB restaurada; `FundebReferenceDisplay`; comparativos no PDF; legenda mapa municípios. |
 | | `797efe1` | 133 | mai/2026 | Export matriz FUNDEB; repositório `yearlyMatrix`. |
 | | `b5ad612` | 127 | mai/2026 | Nova dashboard admin; menu Conexões; `DashboardController` consultoria. |

@@ -44,23 +44,43 @@ final class MatriculaTurmaJoin
     }
 
     /**
-     * Junta sempre matricula (alias m) à turma (aliases mt_filter + t_filter como no iEducar).
+     * Junta matricula (alias m) à turma (aliases mt_filter + t_filter como no iEducar).
+     *
+     * @param  bool  $left  Quando true, inclui matrículas ainda sem enturmação (LEFT JOIN).
      */
-    public static function joinMatriculaToTurma(Builder $q, Connection $db, City $city, string $matAlias = 'm'): void
+    public static function joinMatriculaToTurma(Builder $q, Connection $db, City $city, string $matAlias = 'm', bool $left = false): void
     {
         $turma = IeducarSchema::resolveTable('turma', $city);
         $mId = (string) config('ieducar.columns.matricula.id');
         $mTurma = (string) config('ieducar.columns.matricula.turma');
         $tId = (string) config('ieducar.columns.turma.id');
+        $join = $left ? 'leftJoin' : 'join';
 
         if (self::usePivotTable($db, $city)) {
             $mt = IeducarSchema::resolveTable('matricula_turma', $city);
             $mtMat = (string) config('ieducar.columns.matricula_turma.matricula');
             $mtTurma = (string) config('ieducar.columns.matricula_turma.turma');
-            $q->join($mt.' as mt_filter', $matAlias.'.'.$mId, '=', 'mt_filter.'.$mtMat)
-                ->join($turma.' as t_filter', 'mt_filter.'.$mtTurma, '=', 't_filter.'.$tId);
+            $q->{$join}($mt.' as mt_filter', $matAlias.'.'.$mId, '=', 'mt_filter.'.$mtMat)
+                ->{$join}($turma.' as t_filter', 'mt_filter.'.$mtTurma, '=', 't_filter.'.$tId);
         } else {
-            $q->join($turma.' as t_filter', $matAlias.'.'.$mTurma, '=', 't_filter.'.$tId);
+            $q->{$join}($turma.' as t_filter', $matAlias.'.'.$mTurma, '=', 't_filter.'.$tId);
+        }
+    }
+
+    /**
+     * Coluna «ano letivo» na matricula, quando existir na base.
+     */
+    public static function matriculaAnoColumn(Connection $db, City $city): ?string
+    {
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+
+            return IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
+                (string) config('ieducar.columns.matricula.ano'),
+                'ano',
+            ]), $city);
+        } catch (\InvalidArgumentException) {
+            return null;
         }
     }
 
@@ -160,17 +180,55 @@ final class MatriculaTurmaJoin
     /**
      * Filtros de dimensão na turma (ano letivo, escola, curso, turno).
      */
-    public static function applyTurmaFiltersWhere(Builder $q, Connection $db, City $city, IeducarFilterState $filters, string $turmaAlias = 't_filter'): void
+    public static function applyTurmaFiltersWhere(Builder $q, Connection $db, City $city, IeducarFilterState $filters, string $turmaAlias = 't_filter', string $matAlias = 'm'): void
     {
         $cols = self::turmaFilterColumns($db, $city);
-        $yearVal = $filters->yearFilterValue();
-
-        if ($yearVal !== null && $cols['year'] !== '') {
-            $q->where($turmaAlias.'.'.$cols['year'], $yearVal);
-        }
+        self::applyYearFilter($q, $db, $city, $filters, $turmaAlias, $matAlias);
         self::whereTurmaColumnEqualsFilterId($q, $db, $turmaAlias, $cols['escola'], $filters->escola_id);
         self::whereTurmaColumnEqualsFilterId($q, $db, $turmaAlias, $cols['curso'], $filters->curso_id);
         self::whereTurmaColumnEqualsFilterId($q, $db, $turmaAlias, $cols['turno'], $filters->turno_id);
+    }
+
+    /**
+     * Ano letivo: turma quando enturmado; senão coluna ano em matricula (matrículas recentes sem turma no ano).
+     */
+    public static function applyYearFilter(Builder $q, Connection $db, City $city, IeducarFilterState $filters, string $turmaAlias = 't_filter', string $matAlias = 'm'): void
+    {
+        $yearVal = $filters->yearFilterValue();
+        if ($yearVal === null) {
+            return;
+        }
+
+        $cols = self::turmaFilterColumns($db, $city);
+        $turmaYear = $cols['year'];
+        $mAno = self::matriculaAnoColumn($db, $city);
+        $tId = (string) config('ieducar.columns.turma.id');
+        $grammar = $db->getQueryGrammar();
+        $tPk = $grammar->wrap($turmaAlias).'.'.$grammar->wrap($tId);
+
+        if ($turmaYear !== '' && $mAno !== null) {
+            $tYear = $grammar->wrap($turmaAlias).'.'.$grammar->wrap($turmaYear);
+            $mYear = $grammar->wrap($matAlias).'.'.$grammar->wrap($mAno);
+            $q->where(function (Builder $w) use ($yearVal, $tYear, $mYear, $tPk): void {
+                $w->whereRaw($tYear.' = ?', [$yearVal])
+                    ->orWhere(function (Builder $w2) use ($yearVal, $mYear, $tPk): void {
+                        $w2->whereRaw($mYear.' = ?', [$yearVal])
+                            ->whereNull($tPk);
+                    });
+            });
+
+            return;
+        }
+
+        if ($turmaYear !== '') {
+            $q->where($turmaAlias.'.'.$turmaYear, $yearVal);
+
+            return;
+        }
+
+        if ($mAno !== null) {
+            $q->where($matAlias.'.'.$mAno, $yearVal);
+        }
     }
 
     /**
@@ -195,13 +253,40 @@ final class MatriculaTurmaJoin
 
     /**
      * Filtro ativo em matricula_turma quando há pivô (alinhado a OverviewRepository::countMatriculas).
+     *
+     * @param  bool  $allowNullPivot  Com LEFT JOIN, linhas sem pivô ou com ativo NULL continuam na contagem.
      */
-    public static function applyPivotAtivoIfNeeded(Builder $q, Connection $db, City $city): void
+    public static function applyPivotAtivoIfNeeded(Builder $q, Connection $db, City $city, bool $allowNullPivot = false): void
     {
         if (! self::usePivotTable($db, $city)) {
             return;
         }
         $mtAtivo = (string) config('ieducar.columns.matricula_turma.ativo');
-        MatriculaAtivoFilter::apply($q, $db, 'mt_filter.'.$mtAtivo, $city);
+        if ($mtAtivo === '') {
+            return;
+        }
+
+        $col = 'mt_filter.'.$mtAtivo;
+        if (! $allowNullPivot) {
+            MatriculaAtivoFilter::apply($q, $db, $col, $city);
+
+            return;
+        }
+
+        if ($db->getDriverName() === 'pgsql') {
+            $grammar = $db->getQueryGrammar();
+            $wrapped = $grammar->wrap('mt_filter').'.'.$grammar->wrap($mtAtivo);
+            $q->where(function (Builder $w) use ($wrapped, $col): void {
+                $w->whereNull($col)
+                    ->orWhereRaw(MatriculaAtivoFilter::pgsqlActiveExpression($wrapped));
+            });
+
+            return;
+        }
+
+        $q->where(function (Builder $w) use ($col): void {
+            $w->whereNull($col)
+                ->orWhereIn($col, [1, '1', true, 't', 'true']);
+        });
     }
 }

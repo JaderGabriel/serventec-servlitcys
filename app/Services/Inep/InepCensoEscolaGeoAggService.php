@@ -63,13 +63,27 @@ class InepCensoEscolaGeoAggService
     }
 
     /**
-     * Lê o CSV de microdados (escola), trunca a tabela e reimporta índice agregado.
-     * Pode demorar vários minutos em ficheiros nacionais completos.
+     * Lê o CSV de microdados (escola) e atualiza o índice agregado.
+     * Com $onlyInepCodes, faz upsert incremental (sem truncar) — adequado ao pipeline por município.
+     * Sem filtro, trunca e reimporta o ficheiro completo (operação pesada).
+     *
+     * @param  list<int>|null  $onlyInepCodes
      */
-    public function indexFromMicrodadosCsv(string $absolutePath): int
+    public function indexFromMicrodadosCsv(string $absolutePath, ?array $onlyInepCodes = null): int
     {
         if (! is_readable($absolutePath) || ! Schema::hasTable((new InepCensoEscolaGeoAgg)->getTable())) {
             return 0;
+        }
+
+        $inepFilter = null;
+        if ($onlyInepCodes !== null) {
+            $inepFilter = array_fill_keys(array_values(array_unique(array_filter(array_map(
+                static fn ($c) => is_numeric($c) ? (int) $c : 0,
+                $onlyInepCodes
+            ), static fn (int $v) => $v > 0))), true);
+            if ($inepFilter === []) {
+                return 0;
+            }
         }
 
         $fh = fopen($absolutePath, 'rb');
@@ -118,7 +132,9 @@ class InepCensoEscolaGeoAggService
         $iReg = $idx($map, ['no_regiao']);
         $iLoc = $idx($map, ['tp_localizacao']);
 
-        DB::table((new InepCensoEscolaGeoAgg)->getTable())->truncate();
+        if ($inepFilter === null) {
+            DB::table((new InepCensoEscolaGeoAgg)->getTable())->truncate();
+        }
 
         $batch = [];
         $totalIndexed = 0;
@@ -138,7 +154,7 @@ class InepCensoEscolaGeoAggService
         $now = now();
         while (($row = fgetcsv($fh, 0, $delimiter)) !== false) {
             $inep = InepMicrodadosEscolasCsv::parseInepCode($row[$inepIdx] ?? '');
-            if ($inep <= 0) {
+            if ($inep <= 0 || ($inepFilter !== null && ! isset($inepFilter[$inep]))) {
                 continue;
             }
 
@@ -178,7 +194,11 @@ class InepCensoEscolaGeoAggService
         fclose($fh);
         $flush();
 
-        Log::info('INEP censo geo agg indexados', ['rows' => $totalIndexed, 'file' => $absolutePath]);
+        Log::info('INEP censo geo agg indexados', [
+            'rows' => $totalIndexed,
+            'file' => $absolutePath,
+            'scoped' => $inepFilter !== null,
+        ]);
 
         return $totalIndexed;
     }
@@ -190,7 +210,26 @@ class InepCensoEscolaGeoAggService
             return null;
         }
 
-        return $s;
+        return $this->toUtf8($s);
+    }
+
+    private function toUtf8(string $value): string
+    {
+        if (mb_check_encoding($value, 'UTF-8')) {
+            return $value;
+        }
+
+        $fromLatin1 = @mb_convert_encoding($value, 'UTF-8', 'ISO-8859-1');
+        if (is_string($fromLatin1) && mb_check_encoding($fromLatin1, 'UTF-8')) {
+            return $fromLatin1;
+        }
+
+        $fromIconv = @iconv('ISO-8859-1', 'UTF-8//IGNORE', $value);
+        if (is_string($fromIconv) && $fromIconv !== '') {
+            return $fromIconv;
+        }
+
+        return mb_scrub($value, 'UTF-8');
     }
 
     private function localizacaoLabel(?int $tp): ?string

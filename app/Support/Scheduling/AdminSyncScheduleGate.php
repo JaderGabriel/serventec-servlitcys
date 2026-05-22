@@ -41,4 +41,43 @@ final class AdminSyncScheduleGate
             return 0;
         }
     }
+
+    public static function hasPendingWeeklyMassSync(): bool
+    {
+        return AdminSyncTask::query()
+            ->where('domain', 'system')
+            ->where('task_key', 'weekly_mass_sync')
+            ->whereIn('status', [
+                AdminSyncTaskStatus::Pending->value,
+                AdminSyncTaskStatus::Processing->value,
+            ])
+            ->exists();
+    }
+
+    /**
+     * Tempo máximo do worker admin-sync:work quando há sincronização massiva na fila.
+     */
+    public static function workerMaxSeconds(int $defaultMax): int
+    {
+        if (! self::hasPendingWeeklyMassSync()) {
+            return $defaultMax;
+        }
+
+        return max(
+            $defaultMax,
+            max(3600, (int) config('ieducar.weekly_mass_sync.worker_max_seconds', 14400)),
+        );
+    }
+
+    public static function workerJobTimeout(int $defaultTimeout): int
+    {
+        if (! self::hasPendingWeeklyMassSync()) {
+            return $defaultTimeout;
+        }
+
+        return max(
+            $defaultTimeout,
+            max(3600, (int) config('ieducar.weekly_mass_sync.job_timeout', 14400)),
+        );
+    }
 }

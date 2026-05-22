@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\AdminSyncTaskStatus;
 use App\Models\AdminSyncTask;
 use App\Services\AdminSync\AdminSyncTaskRunner;
+use App\Support\AdminSync\WeeklyMassSyncCheckpoint;
 use App\Services\Notifications\NotificationDispatcher;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -25,7 +26,14 @@ class ProcessAdminSyncTaskJob implements ShouldQueue
     public function __construct(
         public int $adminSyncTaskId,
     ) {
-        $this->timeout = max(60, (int) config('ieducar.admin_sync.job_timeout', 3600));
+        $task = AdminSyncTask::query()->find($adminSyncTaskId);
+        if ($task !== null
+            && $task->domain === 'system'
+            && $task->task_key === WeeklyMassSyncCheckpoint::TASK_KEY) {
+            $this->timeout = max(3600, (int) config('ieducar.weekly_mass_sync.job_timeout', 14400));
+        } else {
+            $this->timeout = max(60, (int) config('ieducar.admin_sync.job_timeout', 3600));
+        }
         $this->tries = max(1, (int) config('ieducar.admin_sync.tries', 1));
         $this->onQueue((string) config('ieducar.admin_sync.queue', 'admin-sync'));
         $connection = config('ieducar.admin_sync.connection');
@@ -64,6 +72,7 @@ class ProcessAdminSyncTaskJob implements ShouldQueue
             $task->update([
                 'status' => AdminSyncTaskStatus::Completed->value,
                 'result' => $result,
+                'error_message' => null,
                 'completed_at' => now(),
                 'output_log' => $output !== null && $output !== '' ? $output : $task->output_log,
             ]);

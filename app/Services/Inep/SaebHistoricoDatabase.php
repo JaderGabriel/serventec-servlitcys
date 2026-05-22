@@ -215,6 +215,14 @@ final class SaebHistoricoDatabase
         }
     }
 
+    /**
+     * Indica se já existem pontos SAEB para o município (IBGE ou city_ids).
+     */
+    public function hasPointsForIbge(string $ibge7): bool
+    {
+        return $this->buildMunicipioPayload($ibge7) !== null;
+    }
+
     public function pointsCount(): int
     {
         try {

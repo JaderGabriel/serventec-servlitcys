@@ -11,6 +11,8 @@
     <div class="py-10 max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-6">
         <a href="{{ route('admin.sync-queue.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">← {{ __('Voltar à fila') }}</a>
 
+        @include('admin.partials.sync-queued-alert')
+
         @if ($outcomeHint !== null)
             <div class="rounded-lg border border-indigo-200/90 bg-indigo-50/80 dark:border-indigo-800/60 dark:bg-indigo-950/25 px-4 py-3 text-sm">
                 <p class="font-semibold text-indigo-950 dark:text-indigo-100">{{ $outcomeHint['title'] }}</p>
@@ -81,10 +83,27 @@
                 </div>
             </dl>
 
-            @if ($task->error_message)
+            @if ($task->hasCheckpoint())
+                <div class="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 p-3 text-amber-950 dark:text-amber-100 text-xs">
+                    <p class="font-semibold">{{ __('Checkpoint') }}</p>
+                    <p class="mt-1">{{ __(':n município(s) já processados. Ao retomar, a fila continua nos restantes.', ['n' => count($task->checkpointCompletedCityIds())]) }}</p>
+                </div>
+            @endif
+
+            @if ($canResume ?? false)
+                <form method="post" action="{{ route('admin.sync-queue.resume', $task) }}" class="inline">
+                    @csrf
+                    <button type="submit" class="inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">
+                        {{ $task->hasCheckpoint() ? __('Retomar da fila (checkpoint)') : __('Reenfileirar tarefa') }}
+                    </button>
+                </form>
+            @endif
+
+            @if ($task->error_message && $task->status === 'failed')
                 <div class="rounded-lg border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/40 p-3 text-red-800 dark:text-red-200">
-                    <p class="font-semibold text-xs uppercase">{{ __('Erro') }}</p>
+                    <p class="font-semibold text-xs uppercase">{{ __('Erro da fila') }}</p>
                     <p class="mt-1">{{ $task->error_message }}</p>
+                    <p class="mt-2 text-xs opacity-90">{{ __('Tarefas geo com vários municípios passam a guardar progresso por cidade; use «Retomar» para continuar sem repetir o que já terminou.') }}</p>
                 </div>
             @endif
 

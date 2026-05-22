@@ -152,8 +152,11 @@ php artisan queue:work database --queue=default,admin-sync --sleep=3 --tries=3
 | `ADMIN_SYNC_SCHEDULE_MAX_SECONDS` | | `3300` | Limite na execução programada |
 | `ADMIN_SYNC_SCHEDULE_OVERLAP_MINUTES` | | `720` | Evita sobreposição (12 h) |
 | `ADMIN_SYNC_JOB_TIMEOUT` | | `3600` | Timeout por job |
+| `DB_QUEUE_RETRY_AFTER` | | *(auto)* | Se omitido: maior timeout de job longo + 120 s (evita «attempted too many times» em geo/PDF) |
 
 Legado (ignorar se `ADMIN_SYNC_SCHEDULE_TIMES` estiver definido): `ADMIN_SYNC_SCHEDULE_INTERVAL_MINUTES`.
+
+Tarefas geo com vários municípios guardam **checkpoint** por cidade; na fila, use **Retomar** na página da tarefa falhada.
 
 ---
 
@@ -190,6 +193,14 @@ Legado (ignorar se `ADMIN_SYNC_SCHEDULE_TIMES` estiver definido): `ADMIN_SYNC_SC
 | `IEDUCAR_OTHER_FUNDING_PUBLIC_QUERIES` | Consultas na aba Financiamentos |
 | `PORTAL_TRANSPARENCIA_API_KEY` | API Portal da Transparência (despesas) |
 | `IEDUCAR_TESOURO_TRANSFERENCIAS_RESOURCE_ID` | CKAN Tesouro (opcional) |
+| `IEDUCAR_FUNDEB_USE_IMPORTED_VAAR` | `true` — usa `complementacao_vaar` importada em vez de `IEDUCAR_FUNDEB_VAAR_PCT_BASE` |
+| `IEDUCAR_FUNDEB_VAAR_PCT_BASE` | % indicativo só quando não há VAAR importado |
+| `IEDUCAR_FUNDING_TRANSFERS_ENABLED` | Import de repasses para `municipal_transfer_snapshots` |
+| `IEDUCAR_FUNDING_TRANSFERS_HISTORICAL_YEARS` | `5` — anos anteriores no import |
+| `IEDUCAR_DISC_CENSO_MAT_TOLERANCE_PCT` | Tolerância % check Censo×i-Educar |
+| `IEDUCAR_INEP_CENSO_MATRICULAS_INDEX_ON_IMPORT` | Indexar matrículas municipais no import microdados |
+
+Tarefas admin-sync: `funding::import_transfers_city_year`, `funding::index_censo_matriculas`.
 
 Detalhe: [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
 

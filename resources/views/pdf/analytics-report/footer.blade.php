@@ -2,9 +2,9 @@
     $primary = $colors['primary'] ?? '#0f766e';
     $secondary = $colors['secondary'] ?? '#4338ca';
     $systemName = $brand['system_name'] ?? config('app.name', 'SERVLITCYS');
-    $systemTagline = $brand['system_tagline'] ?? __('Plataforma educacional municipal');
-    $serventecName = $brand['serventec_name'] ?? 'Serventec Assessoria';
-    $serventecUrl = $brand['serventec_url'] ?? 'https://analise.serventecassessoria.com.br';
+    $systemTagline = $brand['system_tagline'] ?? __('Plataforma Educacional Municipal');
+    $serventecName = 'Serventec Assessoria';
+    $serventecUrl = 'https://analise.serventecassessoria.com.br';
     $serventecDisplay = $brand['serventec_display_url'] ?? 'analise.serventecassessoria.com.br';
     $iconUri = $brand['icon_data_uri'] ?? null;
     $devName = $brand['developer_name'] ?? '';
@@ -36,8 +36,11 @@
                 @if (filled($municipalityLine))
                     <span class="pdf-footer__context-city">{{ $municipalityLine }}</span>
                 @endif
+                @if (filled($cover['municipality_subtitle'] ?? null))
+                    <span class="pdf-footer__context-sub">{{ $cover['municipality_subtitle'] }}</span>
+                @endif
                 @if (filled($yearValue))
-                    <span class="pdf-footer__context-year">{{ __('Ano letivo') }} {{ $yearValue }}</span>
+                    <span class="pdf-footer__context-year">{{ __('Ano letivo: ') }} {{ $yearValue }}</span>
                 @endif
             </td>
             <td class="pdf-footer__serventec" style="width: 30%; vertical-align: middle; text-align: right;">

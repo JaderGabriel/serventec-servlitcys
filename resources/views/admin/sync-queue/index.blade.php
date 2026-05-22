@@ -191,7 +191,12 @@
                                 <th class="px-4 py-3 font-medium">{{ __('Pedido por') }}</th>
                                 <th class="px-4 py-3 font-medium">{{ __('Estado') }}</th>
                                 <th class="px-4 py-3 font-medium">{{ __('Criado') }}</th>
-                                <th class="px-4 py-3 font-medium">{{ __('Acção') }}</th>
+                                <th class="px-4 py-3 font-medium text-center">
+                                    <span class="block">{{ __('ação') }}</span>
+                                    <span class="mt-1 inline-flex justify-center text-gray-400" title="{{ __('Descarregar PDF') }}">
+                                        <x-icons.pdf-download class="h-4 w-4" />
+                                    </span>
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -207,11 +212,18 @@
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">{{ $export->created_at?->format('d/m/Y H:i') }}</td>
-                                    <td class="px-4 py-3 text-right text-xs">
+                                    <td class="px-4 py-3 text-center">
                                         @if ($export->isDownloadable())
-                                            <a href="{{ route('dashboard.analytics.pdf.download', $export) }}" class="text-indigo-600 dark:text-indigo-400 font-medium hover:underline">{{ __('PDF') }}</a>
+                                            <a
+                                                href="{{ route('dashboard.analytics.pdf.download', $export) }}"
+                                                class="inline-flex items-center justify-center rounded-md p-1.5 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+                                                title="{{ __('Descarregar PDF') }}@if ($export->page_count) ({{ $export->page_count }} {{ __('pág.') }})@endif"
+                                            >
+                                                <x-icons.pdf-download />
+                                                <span class="sr-only">{{ __('Descarregar PDF') }}</span>
+                                            </a>
                                         @elseif ($st === \App\Enums\AnalyticsReportExportStatus::Failed && filled($export->error_message))
-                                            <span class="text-red-600 dark:text-red-400" title="{{ $export->error_message }}">{{ __('Erro') }}</span>
+                                            <span class="text-red-600 dark:text-red-400 text-xs" title="{{ $export->error_message }}">{{ __('Erro') }}</span>
                                         @else
                                             <span class="text-gray-400">—</span>
                                         @endif

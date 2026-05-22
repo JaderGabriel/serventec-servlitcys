@@ -328,9 +328,9 @@ final class DiscrepanciesQueries
         MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
 
         if (DiscrepanciesAvailability::canJoinTurma($db, $city)) {
-            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
-            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
-            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm', left: true);
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city, allowNullPivot: true);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter', 'm');
         } else {
             $yearVal = $filters->yearFilterValue();
             $mAno = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
@@ -1192,5 +1192,54 @@ final class DiscrepanciesQueries
         }
 
         return false;
+    }
+
+    /**
+     * Compara matrículas activas i-Educar com total Censo INEP municipal (microdados indexados).
+     *
+     * @return list<array{escola_id: string, escola: string, total: int}>
+     */
+    public static function matriculaCensoVsIeducarPorRede(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        if (! $filters->hasYearSelected() || $filters->isAllSchoolYears()) {
+            return [];
+        }
+
+        $ieducar = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
+        if ($ieducar <= 0) {
+            return [];
+        }
+
+        $repo = app(\App\Repositories\InepCensoMunicipioMatriculaRepository::class);
+        $censo = $repo->findForCityYear($city, (int) $filters->ano_letivo);
+        if ($censo === null || (int) $censo->matriculas_total <= 0) {
+            return [];
+        }
+
+        $censoTotal = (int) $censo->matriculas_total;
+        $tolerancePct = max(0.0, (float) config('ieducar.discrepancies.censo_matricula_tolerance_pct', 5));
+        $minDiff = max(1, (int) config('ieducar.discrepancies.censo_matricula_min_diff', 10));
+
+        $diff = $ieducar - $censoTotal;
+        $pct = $censoTotal > 0 ? round(100.0 * abs($diff) / $censoTotal, 1) : 100.0;
+
+        if (abs($diff) < $minDiff && $pct < $tolerancePct) {
+            return [];
+        }
+
+        if ($diff <= 0) {
+            return [];
+        }
+
+        return [[
+            'escola_id' => '0',
+            'escola' => __('Rede municipal (comparativo Censo)'),
+            'total' => $diff,
+            'meta' => [
+                'ieducar' => $ieducar,
+                'censo' => $censoTotal,
+                'pct' => $pct,
+            ],
+        ]];
     }
 }

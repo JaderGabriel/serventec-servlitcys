@@ -21,11 +21,12 @@ final class AdminSyncTaskExplainer
             'geo::official' => __('Aplica coordenadas oficiais INEP e calcula divergência em relação ao i-Educar.'),
             'geo::pipeline' => __('Executa em sequência: i-Educar → microdados (se existir) → oficial INEP.'),
             'geo::probe' => __('Diagnóstico: testa fontes INEP e códigos das escolas da cidade (sem alterar dados).'),
-            'pedagogical::import_official' => __('Descarrega JSON SAEB por código IBGE (URL externa ou API interna) e grava pontos na base.'),
+            'pedagogical::import_official' => __('Agrega SAEB por IBGE; se a base estiver vazia, importa microdados INEP e mapeia INEP→cod_escola antes de usar a API interna.'),
             'pedagogical::import_urls' => __('Tenta cada URL em IEDUCAR_SAEB_IMPORT_URLS até obter JSON com chave «pontos».'),
             'pedagogical::import_csv' => __('Importa ficheiro CSV tabular (IBGE, ano, disciplina, valor) para saeb_indicator_points.'),
             'pedagogical::import_microdados' => __('Descarrega ZIP/CSV INEP, filtra pelos municípios cadastrados e normaliza para a base SAEB.'),
             'ieducar::schema_probe' => __('Gera JSON de compatibilidade do schema i-Educar da cidade (tabelas/colunas usadas pelo painel).'),
+            'system::weekly_mass_sync' => __('Sincronização massiva semanal: geo (i-Educar+INEP), FUNDEB (VAAF/VAAT/VAAR), repasses, Censo e SAEB — com checkpoint retomável.'),
             default => __('Tarefa administrativa enfileirada (:key).', ['key' => $key]),
         };
     }

@@ -25,7 +25,10 @@ Serve de guia para priorização com secretarias, consultoria e TI — em especi
 | Capacidade | Maturidade | Limitação |
 |------------|------------|-----------|
 | VAAF municipal por ano | Import CKAN / CSV / admin | VAAR/VAAT oficiais só se vierem no dataset importado |
-| Previsão `matrículas × VAAF` | Implementado | Não é repasse liquidado |
+| Previsão `matrículas × VAAF` | Implementado | Complementação VAAR usa valor importado quando `IEDUCAR_FUNDEB_USE_IMPORTED_VAAR=true` |
+| Repasse observado (Tesouro/Transparência) | `municipal_transfer_snapshots` + import admin-sync | Série histórica na aba Financiamentos |
+| PNAE/PNATE/PDDE vs elegíveis | Repasse snapshot × cadastro i-Educar | Indicativo por programa |
+| Censo × i-Educar | `inep_censo_municipio_matriculas` + check discrepâncias | Requer indexação microdados |
 | Perda/ganho por discrepância | `VAAF × peso × ocorrências` | Pesos heurísticos, não norma FNDE |
 | Financiamentos — consultas públicas | 4 blocos (FUNDEB ref, CKAN, Tesouro, Transparência) | Amostras, cache, dependência de API keys |
 | PNAE/PNATE/PDDE — cobertura cadastro | Colunas i-Educar detectadas | Sem valor de repasse por aluno |

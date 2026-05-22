@@ -81,6 +81,9 @@ class PedagogicalSyncController extends Controller
             'md_keep_cache' => 'sometimes|boolean',
             'use_custom_official_url' => 'exclude_unless:action,import_official|sometimes|boolean',
             'official_url_override' => 'exclude_unless:action,import_official|nullable|string|max:2048',
+            'official_year' => 'exclude_unless:action,import_official|nullable|integer|min:2000|max:2100',
+            'official_auto_microdados' => 'exclude_unless:action,import_official|sometimes|boolean',
+            'official_resolve_inep' => 'exclude_unless:action,import_official|sometimes|boolean',
         ]);
 
         $action = $validated['action'];
@@ -137,6 +140,14 @@ class PedagogicalSyncController extends Controller
                     ->with('pedagogical_sync_error', __('A URL deve começar por http:// ou https://.'));
             }
             $payload['official_url_override'] = $override;
+        }
+
+        if ($action === 'import_official') {
+            if (isset($validated['official_year']) && is_numeric($validated['official_year'])) {
+                $payload['official_year'] = (int) $validated['official_year'];
+            }
+            $payload['official_auto_microdados'] = $request->boolean('official_auto_microdados', true);
+            $payload['official_resolve_inep'] = $request->boolean('official_resolve_inep', true);
         }
 
         if ($action === 'import_microdados') {

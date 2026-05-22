@@ -6,9 +6,11 @@ use App\Enums\AdminSyncTaskStatus;
 use App\Enums\AnalyticsReportExportStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AdminSyncTask;
-use App\Support\Admin\ExternalImportImpact;
 use App\Models\AnalyticsReportExport;
+use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\Notifications\OperationalAlertsNotifier;
+use App\Support\Admin\ExternalImportImpact;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -83,7 +85,26 @@ class AdminSyncQueueController extends Controller
         return view('admin.sync-queue.show', [
             'task' => $task,
             'outcomeHint' => ExternalImportImpact::taskOutcomeHint($task),
+            'canResume' => $task->isResumable(),
         ]);
+    }
+
+    public function resume(AdminSyncTask $task, AdminSyncQueueService $syncQueue): RedirectResponse
+    {
+        if (! $task->isResumable()) {
+            return redirect()
+                ->route('admin.sync-queue.show', $task)
+                ->with('geo_sync_error', __('Esta tarefa não pode ser retomada.'));
+        }
+
+        $syncQueue->resume($task);
+
+        return redirect()
+            ->route('admin.sync-queue.show', $task)
+            ->with('admin_sync_queued', [
+                'task_id' => $task->id,
+                'message' => AdminSyncQueueService::flashQueuedMessage($task->fresh()),
+            ]);
     }
 
     public function download(AdminSyncTask $task): BinaryFileResponse

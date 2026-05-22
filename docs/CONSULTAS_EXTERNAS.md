@@ -164,7 +164,22 @@ IEDUCAR_TESOURO_TRANSFERENCIAS_RESOURCE_ID=
 **Impacto**
 
 - KPIs e gráfico de % de preenchimento por programa na aba **Financiamentos**.
-- Não calcula valor de repasse PNAE/PNATE — apenas indica se o município regista os campos que o painel consegue ler.
+- Com snapshots importados (`municipal_transfer_snapshots`), compara **repasse observado** (Tesouro/Transparência) com **matrículas elegíveis** por programa (indicativo R$/aluno).
+
+### 3.4 Repasses persistidos (v2.3)
+
+| Item | Detalhe |
+|------|---------|
+| **Tabela** | `municipal_transfer_snapshots` (IBGE, ano, fonte, programa_id, valor) |
+| **Import** | `MunicipalTransferImportService` — job `ImportMunicipalTransfersJob` / tarefa `funding::import_transfers_city_year` na fila `admin-sync` |
+| **UI** | Secção «Repasse observado (série histórica)» na aba Financiamentos |
+
+### 3.5 Censo INEP × i-Educar (v2.3)
+
+| Item | Detalhe |
+|------|---------|
+| **Tabela** | `inep_censo_municipio_matriculas` (agregado do microdados por IBGE/ano) |
+| **Check** | `matricula_censo_vs_ieducar` em Discrepâncias quando i-Educar > Censo além da tolerância |
 
 ---
 

@@ -6,6 +6,9 @@
     $munState = is_array($municipal_vs_state ?? null) ? $municipal_vs_state : [];
 @endphp
 
+<h2>{{ __('2. Comparativos e contexto territorial') }}</h2>
+@include('pdf.analytics-report.partials.section-lead', ['section' => 'comparatives'])
+
 @if (filled($cmp['legal_notice'] ?? null))
     <div class="box legal-notice">
         <p class="muted" style="margin:0;"><strong>{{ __('Nota metodológica') }}</strong> — {{ $cmp['legal_notice'] }}</p>
@@ -13,8 +16,8 @@
 @endif
 
 @if (count($yearCmp) > 0)
-    <h2>{{ __('2. Evolução entre anos letivos (cadastro e Fundeb)') }}</h2>
-    <p class="muted">{{ __('Quadro no estilo de séries históricas dos cadernos FNDE/MEC — matrículas activas do i-Educar e VAAF municipal gravado por exercício.') }}</p>
+    <h3>{{ __('2.1 Evolução entre anos letivos (cadastro e Fundeb)') }}</h3>
+    <p class="action-lead">{{ __('Use para avaliar crescimento ou queda de matrículas e estabilidade do VAAF municipal. Variações abruptas sem explicação cadastral merecem auditoria antes de metas de expansão da rede.') }}</p>
     <table class="data">
         <tr>
             <th>{{ __('Ano letivo') }}</th>
@@ -36,8 +39,8 @@
 @endif
 
 @if ($fundebYears['available'] ?? false)
-    <h2>{{ __('3. Série VAAF/VAAT por exercício (referência municipal)') }}</h2>
-    <p class="muted"><strong>{{ $fundebYears['title'] ?? '' }}</strong> — {{ $fundebYears['subtitle'] ?? '' }}</p>
+    <h3>{{ __('2.2 Série VAAF/VAAT por exercício (referência municipal)') }}</h3>
+    <p class="action-lead"><strong>{{ $fundebYears['title'] ?? '' }}</strong> — {{ $fundebYears['subtitle'] ?? __('Série histórica para validar premissas da previsão base e da complementação VAAR no exercício corrente.') }}</p>
     @if (filled($fundebYears['previsao_label'] ?? null))
         <p>{{ __('Previsão no painel') }}: {{ $fundebYears['previsao_label'] }}</p>
     @endif
@@ -73,8 +76,8 @@
 @endif
 
 @if ($statePart['available'] ?? false)
-    <h2>{{ __('4. Participação do município no contexto da UF') }}</h2>
-    <p class="muted"><strong>{{ $statePart['title'] ?? '' }}</strong> — {{ $statePart['subtitle'] ?? '' }}</p>
+    <h3>{{ __('2.3 Participação do município no contexto da UF') }}</h3>
+    <p class="action-lead"><strong>{{ $statePart['title'] ?? '' }}</strong> — {{ $statePart['subtitle'] ?? __('Indica peso relativo do município na UF para matrículas e repasses de referência — útil em negociação política e planeamento regional.') }}</p>
     <p class="muted">
         {{ __('Exercício') }}: {{ $statePart['exercicio'] ?? '—' }}
         @if (filled($statePart['publicacao_fnde'] ?? null))
@@ -103,8 +106,8 @@
 @endif
 
 @if ($munState['available'] ?? false)
-    <h2>{{ __('5. Desempenho SAEB — município × UF') }}</h2>
-    <p class="muted"><strong>{{ $munState['title'] ?? '' }}</strong> — {{ $munState['subtitle'] ?? '' }}</p>
+    <h3>{{ __('2.4 Desempenho SAEB — município × UF') }}</h3>
+    <p class="action-lead"><strong>{{ $munState['title'] ?? '' }}</strong> — {{ $munState['subtitle'] ?? __('Diferenças negativas persistentes orientam planos de formação e metas pedagógicas; confirme anos de referência antes de comparar com metas nacionais.') }}</p>
     <table class="data">
         <tr>
             <th>{{ __('Disciplina') }}</th>

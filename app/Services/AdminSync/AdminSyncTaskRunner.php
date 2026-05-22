@@ -7,12 +7,16 @@ use App\Models\City;
 use App\Services\CityDataConnection;
 use App\Services\Fundeb\FundebImportMode;
 use App\Services\Fundeb\FundebImportProgress;
+use App\Services\Funding\MunicipalTransferImportService;
 use App\Services\Fundeb\FundebOpenDataImportService;
+use App\Services\Inep\InepCensoMunicipioMatriculasIndexer;
+use App\Support\InepMicrodadosCadastroEscolasPath;
 use App\Services\Inep\SaebCsvPedagogicalImportService;
 use App\Services\Inep\SaebMicrodadosOpenDataImportService;
 use App\Services\Inep\SaebOfficialMunicipalImportService;
 use App\Services\Inep\SaebPedagogicalImportService;
 use App\Support\Admin\ExternalImportImpact;
+use App\Support\AdminSync\WeeklyMassSyncCheckpoint;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarCompatibilityProbe;
 use Illuminate\Support\Facades\Artisan;
@@ -27,6 +31,9 @@ final class AdminSyncTaskRunner
         private SaebCsvPedagogicalImportService $saebCsv,
         private SaebMicrodadosOpenDataImportService $saebMicrodados,
         private CityDataConnection $cityData,
+        private MunicipalTransferImportService $transferImport,
+        private InepCensoMunicipioMatriculasIndexer $censoMatriculasIndexer,
+        private WeeklyMassSyncOrchestrator $weeklyMassSync,
     ) {}
 
     /**
@@ -34,7 +41,10 @@ final class AdminSyncTaskRunner
      */
     public function run(AdminSyncTask $task): array
     {
-        @set_time_limit(max(60, (int) config('ieducar.admin_sync.job_timeout', 3600)));
+        $timeLimit = $task->domain === 'system' && $task->task_key === WeeklyMassSyncCheckpoint::TASK_KEY
+            ? max(3600, (int) config('ieducar.weekly_mass_sync.php_time_limit', 14400))
+            : max(60, (int) config('ieducar.admin_sync.job_timeout', 3600));
+        @set_time_limit($timeLimit);
 
         $progress = $this->beginTaskLog($task);
 
@@ -44,12 +54,15 @@ final class AdminSyncTaskRunner
                 'fundeb::import_bulk_year' => $this->runFundebImportBulk($task, $progress),
                 'fundeb::sync_all_years' => $this->runFundebSyncAll($task, $progress),
                 'fundeb::new_city_auto' => $this->runFundebNewCity($task, $progress),
+                'funding::import_transfers_city_year' => $this->runFundingImportTransfers($task, $progress),
+                'funding::index_censo_matriculas' => $this->runFundingIndexCensoMatriculas($task, $progress),
                 'geo::ieducar', 'geo::microdados', 'geo::official', 'geo::pipeline', 'geo::probe' => $this->runGeoArtisan($task, $progress),
                 'pedagogical::import_official' => $this->runPedagogicalOfficial($task, $progress),
                 'pedagogical::import_urls' => $this->runPedagogicalUrls($task, $progress),
                 'pedagogical::import_csv' => $this->runPedagogicalCsv($task, $progress),
                 'pedagogical::import_microdados' => $this->runPedagogicalMicrodados($task, $progress),
                 'ieducar::schema_probe' => $this->runIeducarSchemaProbe($task, $progress),
+                'system::weekly_mass_sync' => $this->weeklyMassSync->run($task, $progress),
                 default => throw new InvalidArgumentException(__('Tarefa não suportada: :key', ['key' => $task->domain.'::'.$task->task_key])),
             };
 
@@ -242,6 +255,28 @@ final class AdminSyncTaskRunner
             throw new InvalidArgumentException(__('Comando Artisan em falta no payload geo.'));
         }
 
+        $cityIds = AdminSyncTaskCitiesResolver::resolveCityIdsForTask($task);
+        $singleCityArg = isset($args['--city']) && (string) $args['--city'] !== '';
+
+        if ($singleCityArg || count($cityIds) <= 1) {
+            return $this->runGeoArtisanOnce($task, $progress, $command, $args, $payload);
+        }
+
+        return $this->runGeoArtisanPerCity($task, $progress, $command, $args, $payload, $cityIds);
+    }
+
+    /**
+     * @param  array<string, string>  $args
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function runGeoArtisanOnce(
+        AdminSyncTask $task,
+        AdminSyncTaskProgress $progress,
+        string $command,
+        array $args,
+        array $payload,
+    ): array {
         $progress->step(1, 3, __('A executar comando Artisan…'));
         $progress->detail('php artisan '.$command.' '.json_encode($args, JSON_UNESCAPED_UNICODE));
 
@@ -266,6 +301,113 @@ final class AdminSyncTaskRunner
     }
 
     /**
+     * @param  array<string, string>  $args
+     * @param  array<string, mixed>  $payload
+     * @param  list<int>  $cityIds
+     * @return array<string, mixed>
+     */
+    private function runGeoArtisanPerCity(
+        AdminSyncTask $task,
+        AdminSyncTaskProgress $progress,
+        string $command,
+        array $args,
+        array $payload,
+        array $cityIds,
+    ): array {
+        $completed = $task->checkpointCompletedCityIds();
+        $pending = array_values(array_filter(
+            $cityIds,
+            static fn (int $id): bool => ! in_array($id, $completed, true),
+        ));
+        $total = count($cityIds);
+
+        if ($completed !== []) {
+            $progress->explain(__('Retomada do checkpoint: :done de :total município(s) já processados.', [
+                'done' => (string) count($completed),
+                'total' => (string) $total,
+            ]));
+        }
+
+        $progress->step(1, max(1, count($pending)), __('Processamento por município (:n pendente(s))…', [
+            'n' => (string) count($pending),
+        ]));
+
+        $index = 0;
+        foreach ($pending as $cityId) {
+            $index++;
+            $city = City::query()->find($cityId);
+            $cityLabel = $city !== null ? $city->name : '#'.$cityId;
+
+            $progress->step($index, count($pending), __(':city — a executar Artisan…', ['city' => $cityLabel]));
+
+            $cityArgs = array_merge($args, ['--city' => (string) $cityId]);
+            $progress->detail('php artisan '.$command.' '.json_encode($cityArgs, JSON_UNESCAPED_UNICODE));
+
+            $exitCode = Artisan::call($command, $cityArgs);
+            $output = Artisan::output();
+
+            if (trim($output) !== '') {
+                $progress->appendBlock($output);
+            }
+
+            if ($exitCode !== 0) {
+                $this->persistGeoCheckpoint($task, $completed);
+                $progress->error(__('Município :city terminou com código :code.', [
+                    'city' => $cityLabel,
+                    'code' => (string) $exitCode,
+                ]));
+
+                return [
+                    'success' => false,
+                    'exit_code' => $exitCode,
+                    'output' => (string) ($task->output_log ?? ''),
+                    'step' => $payload['step'] ?? $task->task_key,
+                    'checkpoint' => ['completed_city_ids' => $completed],
+                    'failed_city_id' => $cityId,
+                ];
+            }
+
+            $completed[] = $cityId;
+            $this->persistGeoCheckpoint($task, $completed);
+        }
+
+        $this->clearGeoCheckpoint($task);
+        $progress->success(__('Todos os municípios processados (:total).', ['total' => (string) $total]));
+
+        return [
+            'success' => true,
+            'exit_code' => 0,
+            'output' => (string) ($task->output_log ?? ''),
+            'step' => $payload['step'] ?? $task->task_key,
+            'cities_processed' => count($cityIds),
+        ];
+    }
+
+    /**
+     * @param  list<int>  $completedCityIds
+     */
+    private function persistGeoCheckpoint(AdminSyncTask $task, array $completedCityIds): void
+    {
+        $task->refresh();
+        $payload = is_array($task->payload) ? $task->payload : [];
+        $payload['checkpoint'] = [
+            'completed_city_ids' => array_values(array_unique(array_map('intval', $completedCityIds))),
+            'updated_at' => now()->toIso8601String(),
+        ];
+        $task->payload = $payload;
+        $task->saveQuietly();
+    }
+
+    private function clearGeoCheckpoint(AdminSyncTask $task): void
+    {
+        $task->refresh();
+        $payload = is_array($task->payload) ? $task->payload : [];
+        unset($payload['checkpoint']);
+        $task->payload = $payload;
+        $task->saveQuietly();
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function runPedagogicalOfficial(AdminSyncTask $task, AdminSyncTaskProgress $progress): array
@@ -275,12 +417,33 @@ final class AdminSyncTaskRunner
             ? (string) $payload['official_url_override']
             : null;
 
-        $progress->step(1, 3, __('A obter JSON SAEB por município (IBGE)…'));
         if ($override !== null) {
             $progress->detail(__('URL modelo personalizada (formulário).'));
         }
 
-        $result = $this->saebOfficial->importFromOfficialTemplate($override);
+        $options = [];
+        $cityId = (int) ($payload['city_id'] ?? $task->city_id ?? 0);
+        if ($cityId > 0) {
+            $options['city_id'] = $cityId;
+        }
+        if (isset($payload['official_year']) && is_numeric($payload['official_year'])) {
+            $options['year'] = (int) $payload['official_year'];
+        }
+        if (array_key_exists('official_auto_microdados', $payload)) {
+            $options['auto_microdados'] = (bool) $payload['official_auto_microdados'];
+        }
+        if (array_key_exists('official_resolve_inep', $payload)) {
+            $options['resolve_inep'] = (bool) $payload['official_resolve_inep'];
+        }
+
+        $progress->step(1, 3, __('A obter JSON SAEB por município (IBGE)…'));
+        if ($cityId > 0) {
+            $progress->detail(__('Município filtrado (city_id=:id). Microdados INEP automáticos se a base estiver vazia.', ['id' => (string) $cityId]));
+        } else {
+            $progress->explain(__('Sem dados na base, tenta microdados INEP (ZIP) com INEP→cod_escola antes de falhar.'));
+        }
+
+        $result = $this->saebOfficial->importFromOfficialTemplate($override, $options);
 
         $progress->step(2, 3, __('Resposta da importação oficial recebida.'));
         $this->logPedagogicalDetails($progress, $result);
@@ -492,5 +655,60 @@ final class AdminSyncTaskRunner
             $task->output_log = $existing === '' ? $line : $existing."\n".$line;
             $task->saveQuietly();
         });
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function runFundingImportTransfers(AdminSyncTask $task, AdminSyncTaskProgress $progress): array
+    {
+        $payload = $task->payload ?? [];
+        $city = City::query()->findOrFail((int) ($payload['city_id'] ?? $task->city_id));
+        $ano = (int) ($payload['ano'] ?? 0);
+
+        $progress->step(1, 1, __('A importar repasses Tesouro/Transparência para :city (:ano)…', [
+            'city' => $city->name,
+            'ano' => (string) $ano,
+        ]));
+
+        $result = $this->transferImport->importForCityYear($city, $ano);
+
+        return [
+            'success' => (bool) ($result['success'] ?? false),
+            'message' => (string) ($result['message'] ?? ''),
+            'rows' => (int) ($result['rows'] ?? 0),
+            'by_fonte' => $result['by_fonte'] ?? [],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function runFundingIndexCensoMatriculas(AdminSyncTask $task, AdminSyncTaskProgress $progress): array
+    {
+        $pathOpt = is_array($task->payload) ? (string) ($task->payload['path'] ?? '') : '';
+        $rel = $pathOpt !== ''
+            ? $pathOpt
+            : (string) config('ieducar.inep_geocoding.microdados_cadastro_escolas_path', 'inep/microdados_ed_basica_*.csv');
+        $path = InepMicrodadosCadastroEscolasPath::resolve($rel);
+
+        if ($path === null || ! is_readable($path)) {
+            return [
+                'success' => false,
+                'message' => __('Ficheiro de microdados INEP não encontrado para indexar matrículas municipais.'),
+            ];
+        }
+
+        $progress->step(1, 1, __('A indexar matrículas Censo por município (microdados)…'));
+
+        $indexed = $this->censoMatriculasIndexer->indexFromMicrodadosCsv($path);
+
+        return [
+            'success' => $indexed > 0,
+            'message' => $indexed > 0
+                ? __(':n combinações município/ano indexadas.', ['n' => $indexed])
+                : __('Nenhuma matrícula municipal agregada — verifique colunas qt_mat_* no CSV.'),
+            'indexed' => $indexed,
+        ];
     }
 }

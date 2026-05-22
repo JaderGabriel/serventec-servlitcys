@@ -16,6 +16,7 @@ use App\Repositories\Ieducar\PerformanceRepository;
 use App\Repositories\Ieducar\WorkDoneRepository;
 use App\Support\Analytics\AnalyticsReportChartSvg;
 use App\Support\Analytics\AnalyticsReportComparatives;
+use App\Support\Analytics\AnalyticsReportCoverPresentation;
 use App\Support\Analytics\PdfBrandAssets;
 use App\Support\Dashboard\IeducarFilterState;
 
@@ -44,7 +45,6 @@ final class AnalyticsFullReportAssembler
     public function assemble(City $city, IeducarFilterState $filters): array
     {
         $yearLabel = $this->yearLabel($filters);
-        $cover = $this->coverBuilder->build($city, $yearLabel, $filters);
 
         $overview = $this->overview->summary($city, $filters);
         $enrollment = $this->enrollment->sample($city, $filters);
@@ -57,6 +57,15 @@ final class AnalyticsFullReportAssembler
         $other = $this->otherFunding->buildReport($city, $filters);
         $work = $this->workDone->buildReport($city, $filters);
         $health = $this->health->snapshot($city, $filters);
+
+        $cover = AnalyticsReportCoverPresentation::enrich(
+            $this->coverBuilder->build($city, $yearLabel, $filters),
+            $city,
+            $filters,
+            $health,
+            $overview,
+            $disc,
+        );
 
         $charts = $this->collectCharts($health, $disc, $fundeb, $other, $work, $overview, $performance, $enrollment);
         $comparativeData = $this->comparatives->build($city, $filters, $fundeb, $health);
@@ -80,6 +89,8 @@ final class AnalyticsFullReportAssembler
             'performance' => $performance,
             'inclusion' => $inclusion,
             'network' => $network,
+            'enrollment' => $enrollment,
+            'attendance' => $attendance,
             'comparatives' => $comparativeData,
             'year_comparison' => $comparativeData['year_comparison_enriched'],
             'municipal_vs_state' => $comparativeData['municipal_vs_state_enriched'],

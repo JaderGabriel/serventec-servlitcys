@@ -54,4 +54,32 @@ final class AdminSyncQueueService
             'link' => route('admin.sync-queue.index'),
         ]);
     }
+
+    /**
+     * Reenfileira tarefa falhada ou interrompida; tarefas geo multi-município retomam do checkpoint.
+     */
+    public function resume(AdminSyncTask $task, ?int $userId = null): AdminSyncTask
+    {
+        if ($task->status !== AdminSyncTaskStatus::Failed->value) {
+            throw new \InvalidArgumentException(__('Só é possível retomar tarefas com estado «Falhou».'));
+        }
+
+        $task->update([
+            'status' => AdminSyncTaskStatus::Pending->value,
+            'error_message' => null,
+            'completed_at' => null,
+            'result' => null,
+            'queued_by' => $userId ?? Auth::id() ?? $task->queued_by,
+        ]);
+
+        $connection = config('ieducar.admin_sync.connection');
+        $queue = (string) config('ieducar.admin_sync.queue', 'admin-sync');
+
+        $pending = ProcessAdminSyncTaskJob::dispatch($task->id)->onQueue($queue);
+        if ($connection !== null && $connection !== '') {
+            $pending->onConnection((string) $connection);
+        }
+
+        return $task->fresh(['city', 'queuedBy']);
+    }
 }

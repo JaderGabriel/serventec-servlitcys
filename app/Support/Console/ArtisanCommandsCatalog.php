@@ -239,6 +239,17 @@ final class ArtisanCommandsCatalog
                         'env' => [],
                         'doc_anchor' => 'operacao',
                     ],
+                    [
+                        'name' => 'app:flush-processing-queue',
+                        'summary' => __('Esvazia filas admin (sync + PDF) e jobs pendentes; em production exige --confirm=slug.'),
+                        'signature' => 'app:flush-processing-queue {--confirm=} {--only-sync} {--only-pdf} ...',
+                        'examples' => [
+                            'php artisan app:flush-processing-queue --dry-run',
+                            'php artisan app:flush-processing-queue --confirm=zerar-fila-processamento',
+                        ],
+                        'env' => ['ADMIN_PROCESSING_QUEUE_FLUSH_SLUG'],
+                        'doc_anchor' => 'operacao',
+                    ],
                 ],
             ],
         ];

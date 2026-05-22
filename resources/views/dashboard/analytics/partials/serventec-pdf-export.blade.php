@@ -112,7 +112,12 @@
                         <th class="py-2 pr-3">#</th>
                         <th class="py-2 pr-3">{{ __('Estado') }}</th>
                         <th class="py-2 pr-3">{{ __('Criado') }}</th>
-                        <th class="py-2">{{ __('Acção') }}</th>
+                        <th class="py-2 text-center">
+                            <span class="block">{{ __('ação') }}</span>
+                            <span class="mt-0.5 inline-flex justify-center text-indigo-500/80" title="{{ __('Descarregar PDF') }}">
+                                <x-icons.pdf-download class="h-4 w-4" />
+                            </span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-indigo-100 dark:divide-indigo-900/50">
@@ -126,15 +131,16 @@
                                 </span>
                             </td>
                             <td class="py-2 pr-3">{{ $export->created_at?->format('d/m/Y H:i') }}</td>
-                            <td class="py-2">
+                            <td class="py-2 text-center">
                                 @if ($export->isDownloadable())
                                     <a
                                         href="{{ route('dashboard.analytics.pdf.download', $export) }}"
-                                        class="text-indigo-600 dark:text-indigo-400 font-medium hover:underline"
-                                    >{{ __('Descarregar') }}</a>
-                                    @if ($export->page_count)
-                                        <span class="text-slate-500">({{ $export->page_count }} {{ __('pág.') }})</span>
-                                    @endif
+                                        class="inline-flex items-center justify-center rounded-md p-1 text-indigo-600 hover:bg-indigo-100/80 dark:text-indigo-400 dark:hover:bg-indigo-900/40"
+                                        title="{{ __('Descarregar PDF') }}@if ($export->page_count) ({{ $export->page_count }} {{ __('pág.') }})@endif"
+                                    >
+                                        <x-icons.pdf-download />
+                                        <span class="sr-only">{{ __('Descarregar PDF') }}</span>
+                                    </a>
                                 @elseif ($st === AnalyticsReportExportStatus::Failed && filled($export->error_message))
                                     <span class="text-red-600" title="{{ $export->error_message }}">{{ __('Erro') }}</span>
                                 @elseif (in_array($st, [AnalyticsReportExportStatus::Pending, AnalyticsReportExportStatus::Processing], true))

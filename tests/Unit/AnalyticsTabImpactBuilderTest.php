@@ -153,6 +153,48 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         $this->assertSame(0.0, $strip['saldo']['perda']);
     }
 
+    public function test_school_units_zero_geo_scores_zero_not_fifty(): void
+    {
+        $strip = AnalyticsTabImpactBuilder::build('school_units', true, [], [
+            'schoolUnitsData' => [
+                'tab' => [
+                    'markers' => [],
+                    'waiting' => ['total' => 0],
+                    'geo_distribution' => [
+                        'escolas_no_escopo' => 12,
+                        'total_com_coordenadas' => 0,
+                        'marcadores_exibidos' => 0,
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($strip['ready']);
+        $this->assertSame(0, $strip['tab_score']);
+        $this->assertSame('danger', $strip['status']);
+        $this->assertStringContainsString('0 de', $strip['status_label']);
+    }
+
+    public function test_school_units_partial_geo_reflects_percentage(): void
+    {
+        $strip = AnalyticsTabImpactBuilder::build('school_units', true, [], [
+            'schoolUnitsData' => [
+                'tab' => [
+                    'markers' => array_fill(0, 4, ['id' => 1]),
+                    'waiting' => ['total' => 0],
+                    'geo_distribution' => [
+                        'escolas_no_escopo' => 10,
+                        'total_com_coordenadas' => 4,
+                        'marcadores_exibidos' => 4,
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertSame(40, $strip['tab_score']);
+        $this->assertSame('warning', $strip['status']);
+    }
+
     public function test_network_strip_uses_idle_vacancies_for_saldo_when_discrepancies_zero(): void
     {
         $ctx = AnalyticsMunicipalityContext::fromFundingSnapshot([

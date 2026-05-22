@@ -4,6 +4,7 @@ namespace App\Services\Funding;
 
 use App\Models\City;
 use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Repositories\MunicipalTransferSnapshotRepository;
 use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
@@ -73,7 +74,7 @@ final class MunicipalFundingPublicSnapshotService
         $queries = [
             $this->queryFundebReferencia($city, $filters, $ibge, $year),
             $this->queryFndeDadosAbertos($ibge, $year, $cfg, $timeout),
-            $this->queryTesouroTransferencias($ibge, $year, $cfg, $timeout),
+            $this->queryTesouroTransferencias($city, $ibge, $year, $cfg, $timeout),
             $this->queryPortalTransparencia($ibge, $year, $cfg, $timeout),
         ];
 
@@ -292,7 +293,7 @@ final class MunicipalFundingPublicSnapshotService
      * @param  array<string, mixed>  $cfg
      * @return array<string, mixed>
      */
-    private function queryTesouroTransferencias(string $ibge, int $year, array $cfg, int $timeout): array
+    private function queryTesouroTransferencias(City $city, string $ibge, int $year, array $cfg, int $timeout): array
     {
         $tesouro = is_array($cfg['tesouro_ckan'] ?? null) ? $cfg['tesouro_ckan'] : [];
         if (! (bool) ($tesouro['enabled'] ?? true)) {
@@ -325,9 +326,23 @@ final class MunicipalFundingPublicSnapshotService
             );
         }
 
+        $stored = $this->transferSnapshots->forCityYear($city, $year, 'tesouro');
+
         try {
             $records = $this->ckanDatastoreSearch($base, $resourceId, null, $timeout, 500, $ibge);
             $rows = $this->summarizeTesouroRecords($records, $ibge, $year);
+            if ($stored !== []) {
+                foreach ($stored as $snap) {
+                    $rows[] = [
+                        'label' => ($snap->programa_label ?? $snap->programa_id).' ('.__('base local').')',
+                        'value' => DiscrepanciesFundingImpact::formatBrl((float) $snap->valor),
+                    ];
+                }
+                $rows[] = [
+                    'label' => __('Importado em'),
+                    'value' => $stored[0]->imported_at?->format('d/m/Y H:i') ?? '—',
+                ];
+            }
 
             return $this->queryResult(
                 'tesouro_transferencias',

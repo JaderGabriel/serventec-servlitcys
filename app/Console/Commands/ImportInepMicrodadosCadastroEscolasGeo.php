@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\City;
 use App\Models\SchoolUnitGeo;
 use App\Services\Inep\InepCensoEscolaGeoAggService;
+use App\Services\Inep\InepCensoMunicipioMatriculasIndexer;
 use App\Services\Inep\InepMicrodadosCadastroEscolasDownloader;
 use App\Support\InepMicrodadosCadastroEscolasPath;
 use App\Support\InepMicrodadosEscolasCsv;
@@ -88,7 +89,7 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
         $cityIdList = $allowedCityIds->pluck('id')->all();
         if ($cityIdList === []) {
             $this->warn('Nenhuma cidade no escopo.');
-            $this->maybeIndexCensoGeoAggFromPath($path);
+            $this->maybeIndexCensoGeoAggFromPath($path, $cityIdList);
 
             return self::SUCCESS;
         }
@@ -96,7 +97,7 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
         $neededIneps = $this->queryNeededInepCodes($cityIdList, $onlyMissing, $alsoMap);
         if ($neededIneps === []) {
             $this->info('Nenhum código INEP em falta no escopo; nada a importar.');
-            $this->maybeIndexCensoGeoAggFromPath($path);
+            $this->maybeIndexCensoGeoAggFromPath($path, $cityIdList);
 
             return self::SUCCESS;
         }
@@ -143,7 +144,7 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
             fclose($fh);
             $this->warn('Este ficheiro não contém colunas de latitude/longitude (comum nos microdados públicos do Censo após restrições de privacidade). Nada a atualizar em official_lat/lng; use o passo ArcGIS ou um CSV com coords.');
             $this->info('Importação terminada sem alterações (0 registos).');
-            $this->maybeIndexCensoGeoAggFromPath($path);
+            $this->maybeIndexCensoGeoAggFromPath($path, $cityIdList);
 
             return self::SUCCESS;
         }
@@ -153,7 +154,7 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
         $lngIdx = $ll['lng'];
         if ($latIdx === null || $lngIdx === null) {
             fclose($fh);
-            $this->maybeIndexCensoGeoAggFromPath($path);
+            $this->maybeIndexCensoGeoAggFromPath($path, $cityIdList);
 
             return self::SUCCESS;
         }
@@ -228,20 +229,64 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
         }
 
         $this->info("Importação concluída. Registos atualizados: {$updated}; INEPs distintos no CSV (escopo): ".count($hits).'.');
-        $this->maybeIndexCensoGeoAggFromPath($path);
+        $this->maybeIndexCensoGeoAggFromPath($path, $cityIdList);
 
         return self::SUCCESS;
     }
 
-    private function maybeIndexCensoGeoAggFromPath(string $absolutePath): void
+    /**
+     * @param  list<int>  $cityIdList
+     */
+    private function maybeIndexCensoGeoAggFromPath(string $absolutePath, array $cityIdList = []): void
     {
         if (! filter_var(config('ieducar.inep_geocoding.censo_geo_agg_index_on_import', true), FILTER_VALIDATE_BOOLEAN)) {
             return;
         }
 
+        $inepScope = SchoolUnitGeo::query()
+            ->whereIn('city_id', $cityIdList)
+            ->whereNotNull('inep_code')
+            ->where('inep_code', '>', 0)
+            ->pluck('inep_code')
+            ->map(static fn ($v) => (int) $v)
+            ->unique()
+            ->values()
+            ->all();
+
         $this->line('A atualizar índice de geografia Censo (modal) a partir do mesmo CSV …');
-        $n = app(InepCensoEscolaGeoAggService::class)->indexFromMicrodadosCsv($absolutePath);
-        $this->info("Índice Censo (geo agregada): {$n} linhas.");
+        if ($inepScope !== []) {
+            $this->line('Escopo: '.count($inepScope).' código(s) INEP das cidades do pedido (sem reindexação nacional).');
+        }
+
+        try {
+            $n = app(InepCensoEscolaGeoAggService::class)->indexFromMicrodadosCsv(
+                $absolutePath,
+                $cityIdList !== [] ? $inepScope : null,
+            );
+            $this->info("Índice Censo (geo agregada): {$n} linhas.");
+        } catch (\Throwable $e) {
+            $this->warn('Índice Censo não atualizado (coords oficiais já gravadas): '.$e->getMessage());
+            report($e);
+        }
+
+        if (filter_var(config('ieducar.inep_geocoding.censo_matriculas_index_on_import', true), FILTER_VALIDATE_BOOLEAN)) {
+            try {
+                $ibges = City::query()
+                    ->whereIn('id', $cityIdList)
+                    ->pluck('ibge_municipio')
+                    ->filter()
+                    ->values()
+                    ->all();
+                $m = app(InepCensoMunicipioMatriculasIndexer::class)->indexFromMicrodadosCsv(
+                    $absolutePath,
+                    $ibges !== [] ? $ibges : null,
+                );
+                $this->info("Índice Censo (matrículas municipais): {$m} combinações IBGE/ano.");
+            } catch (\Throwable $e) {
+                $this->warn('Índice matrículas Censo não atualizado: '.$e->getMessage());
+                report($e);
+            }
+        }
     }
 
     /**

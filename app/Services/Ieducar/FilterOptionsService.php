@@ -223,14 +223,20 @@ class FilterOptionsService
                 }
 
                 try {
-                    return $this->yearsFromAnoLetivoTable($db, $max, $city);
+                    $years = $this->yearsFromAnoLetivoTable($db, $max, $city);
                 } catch (QueryException $e) {
                     if (! config('ieducar.fallbacks.ano_letivo_from_turma', true)) {
                         throw $e;
                     }
 
-                    return $this->yearsFromTurmaTable($db, $max, $city);
+                    $years = $this->yearsFromTurmaTable($db, $max, $city);
                 }
+
+                foreach ($this->yearsFromMatriculaTable($db, $max, $city) as $y => $v) {
+                    $years[$y] = $v;
+                }
+
+                return $years;
             });
         } catch (QueryException $e) {
             Log::debug('ieducar.ano_letivo', ['message' => $e->getMessage()]);
@@ -290,6 +296,46 @@ class FilterOptionsService
         }
 
         return $out;
+    }
+
+    /**
+     * Anos distintos em matricula.ano — alinha o select ao filtro de KPIs (matrículas sem turma no ano).
+     *
+     * @return array<int, int>
+     */
+    private function yearsFromMatriculaTable(Connection $db, int $max, City $city): array
+    {
+        $col = MatriculaTurmaJoin::matriculaAnoColumn($db, $city);
+        if ($col === null) {
+            return [];
+        }
+
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $years = $db->table($mat)
+                ->select($col)
+                ->whereNotNull($col)
+                ->distinct()
+                ->orderByDesc($col)
+                ->limit($max)
+                ->pluck($col)
+                ->filter()
+                ->map(fn ($v) => (int) $v)
+                ->unique()
+                ->sortDesc()
+                ->values();
+
+            $out = [];
+            foreach ($years as $y) {
+                if ($y > 0) {
+                    $out[$y] = $y;
+                }
+            }
+
+            return $out;
+        } catch (QueryException|\InvalidArgumentException) {
+            return [];
+        }
     }
 
     /**

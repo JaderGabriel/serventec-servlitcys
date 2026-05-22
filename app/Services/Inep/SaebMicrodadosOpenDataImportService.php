@@ -22,6 +22,25 @@ final class SaebMicrodadosOpenDataImportService
      */
     public function syncFromInepZip(int $year, bool $merge, bool $resolveInep, bool $purgeExtract = true, ?string $zipUrlOverride = null): array
     {
+        $cities = City::query()->forAnalytics()->whereNotNull('ibge_municipio')->orderBy('id')->get();
+
+        return $this->syncFromInepZipForCities($cities, $year, $merge, $resolveInep, $purgeExtract, $zipUrlOverride);
+    }
+
+    /**
+     * Microdados INEP filtrados apenas aos municípios indicados (ex.: fallback da importação oficial).
+     *
+     * @param  Collection<int, City>  $cities
+     * @return array{ok: bool, message: string, fonte_efetiva: ?string, path: string, detalhes?: array<string, mixed>}
+     */
+    public function syncFromInepZipForCities(
+        Collection $cities,
+        int $year,
+        bool $merge,
+        bool $resolveInep,
+        bool $purgeExtract = true,
+        ?string $zipUrlOverride = null,
+    ): array {
         if (! filter_var(config('ieducar.saeb.microdados_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             return [
                 'ok' => false,
@@ -31,7 +50,15 @@ final class SaebMicrodadosOpenDataImportService
             ];
         }
 
-        $cities = City::query()->forAnalytics()->whereNotNull('ibge_municipio')->orderBy('id')->get();
+        if ($cities->isEmpty()) {
+            return [
+                'ok' => false,
+                'message' => __('Nenhuma cidade com IBGE (7 dígitos) para importar microdados.'),
+                'fonte_efetiva' => null,
+                'path' => SaebHistoricoDatabase::STORAGE_LABEL,
+            ];
+        }
+
         $allowedIbge = $this->allowedIbgeSet($cities);
         if ($allowedIbge === []) {
             return [

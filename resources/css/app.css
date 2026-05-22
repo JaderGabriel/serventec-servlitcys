@@ -1242,27 +1242,28 @@
         @apply bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300;
     }
 
-    .serv-data-flow-aside__panel {
-        @apply rounded-xl border border-slate-200/90 dark:border-slate-700/90 bg-slate-50/50 dark:bg-slate-900/40 p-4;
+    .serv-data-flow-legend {
+        @apply rounded-xl border border-slate-200/90 dark:border-slate-700/90
+            bg-slate-50/50 dark:bg-slate-900/40 px-4 py-4 sm:px-5;
     }
 
-    .serv-data-flow-aside__panel--muted {
-        @apply bg-white/60 dark:bg-slate-900/30;
-    }
-
-    .serv-data-flow-aside__title {
+    .serv-data-flow-legend__title {
         @apply text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-3;
     }
 
-    .serv-data-flow-aside__legend-item {
-        @apply flex gap-3;
+    .serv-data-flow-legend__list {
+        @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4;
     }
 
-    .serv-data-flow-aside__legend-label {
-        @apply text-sm font-medium text-slate-800 dark:text-slate-200;
+    .serv-data-flow-legend__item {
+        @apply flex gap-3 min-w-0;
     }
 
-    .serv-data-flow-aside__legend-desc {
+    .serv-data-flow-legend__label {
+        @apply text-sm font-medium text-slate-800 dark:text-slate-200 leading-snug;
+    }
+
+    .serv-data-flow-legend__desc {
         @apply text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed;
     }
 

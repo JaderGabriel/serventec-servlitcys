@@ -572,21 +572,66 @@ final class AnalyticsTabImpactBuilder
     {
         $data = is_array($tabData['school_units'] ?? null) ? $tabData['school_units'] : ($tabData['schoolUnitsData'] ?? []);
         $tab = is_array($data['tab'] ?? null) ? $data['tab'] : [];
+        $dist = is_array($tab['geo_distribution'] ?? null) ? $tab['geo_distribution'] : [];
         $markers = is_array($tab['markers'] ?? null) ? count($tab['markers']) : 0;
         $waiting = is_array($tab['waiting'] ?? null) ? $tab['waiting'] : [];
         $lista = (int) ($waiting['total'] ?? $waiting['total_alunos'] ?? 0);
 
-        $status = $lista > 50 ? 'warning' : ($markers > 0 ? 'success' : 'neutral');
-        $score = $markers > 0 ? max(45, 100 - min(40, (int) round($lista / 5))) : 50;
+        $escopo = (int) ($dist['escolas_no_escopo'] ?? 0);
+        $comCoord = (int) ($dist['total_com_coordenadas'] ?? 0);
+        $exibidos = (int) ($dist['marcadores_exibidos'] ?? $markers);
+
+        $denominador = $escopo > 0 ? $escopo : ($markers > 0 ? $markers : 0);
+        $comGeo = $escopo > 0 ? $comCoord : $markers;
+
+        if ($denominador === 0) {
+            return [
+                'status' => 'neutral',
+                'label' => __('Nenhuma escola no escopo do filtro'),
+                'score' => null,
+                'share_label' => __('Cobertura geográfica'),
+                'share_value' => '—',
+            ];
+        }
+
+        $pct = (int) round(100 * min($comGeo, $denominador) / $denominador);
+        $score = max(0, min(100, $pct));
+
+        if ($comGeo <= 0) {
+            return [
+                'status' => 'danger',
+                'label' => __('0 de :e escola(s) com coordenadas no filtro', [
+                    'e' => number_format($denominador, 0, ',', '.'),
+                ]),
+                'score' => 0,
+                'share_label' => __('Cobertura geográfica'),
+                'share_value' => '0%',
+            ];
+        }
+
+        $status = $pct >= 80 ? 'success' : ($pct >= 40 ? 'warning' : 'danger');
+        if ($lista > 50 && $status === 'success') {
+            $status = 'warning';
+        }
+
+        $noMapa = $exibidos > 0 ? $exibidos : $comGeo;
+        $label = $lista > 0
+            ? __(':e de :t escola(s) no mapa — :l em lista de espera', [
+                'e' => number_format($noMapa, 0, ',', '.'),
+                't' => number_format($denominador, 0, ',', '.'),
+                'l' => number_format($lista, 0, ',', '.'),
+            ])
+            : __(':e de :t escola(s) com coordenadas no filtro', [
+                'e' => number_format($noMapa, 0, ',', '.'),
+                't' => number_format($denominador, 0, ',', '.'),
+            ]);
 
         return [
             'status' => $status,
-            'label' => $markers > 0
-                ? __(':e escola(s) no mapa — :l em lista de espera', ['e' => $markers, 'l' => $lista])
-                : __('Sem unidades georreferenciadas no filtro'),
+            'label' => $label,
             'score' => $score,
-            'share_label' => __('Unidades no mapa'),
-            'share_value' => (string) $markers,
+            'share_label' => __('Cobertura geográfica'),
+            'share_value' => $pct.'%',
         ];
     }
 
@@ -1104,6 +1149,9 @@ final class AnalyticsTabImpactBuilder
             $parts[] = __('Consolidado do sistema: índice de conformidade, pendências de cadastro, Discrepâncias, FUNDEB e programas no mesmo recorte (cidade e ano).');
         } else {
             $parts[] = __('Status desta aba: calculado só com os dados visíveis no filtro atual.');
+        }
+        if ($tab === 'school_units') {
+            $parts[] = __('O número do anel é a percentagem de escolas do filtro com coordenadas (mapa); 0 unidades no mapa corresponde a 0%, não a 50%.');
         }
         if (($def['impact_note'] ?? '') !== '') {
             $parts[] = (string) $def['impact_note'];

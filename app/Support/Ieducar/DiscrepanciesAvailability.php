@@ -213,4 +213,15 @@ final class DiscrepanciesAvailability
 
         return $escolaSpec;
     }
+
+    public static function censoMatriculasMunicipal(City $city): bool
+    {
+        if (! \Illuminate\Support\Facades\Schema::hasTable('inep_censo_municipio_matriculas')) {
+            return false;
+        }
+
+        $ibge = \App\Repositories\FundebMunicipioReferenceRepository::normalizeIbge((string) $city->ibge_municipio);
+
+        return $ibge !== null;
+    }
 }
