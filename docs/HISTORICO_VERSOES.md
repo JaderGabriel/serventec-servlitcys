@@ -1,10 +1,10 @@
 # Histórico de versões (resumo)
 
-**Versão em desenvolvimento (`main`):** **2.3.3** · maio/2026
+**Versão em desenvolvimento (`main`):** **2.3.4** · maio/2026
 
 > **Como ler:** cada linha indica a **tag ou marco**, o **commit** (hash curto Git) e o **contador** (`#N` = posição na história linear do ramo `main`, desde o primeiro commit). Links GitHub usam o repositório configurado em `DOCS_GITHUB_REPOSITORY`.
 >
-> **Entregas em série (mai/2026):** ver [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) — mapa municípios, URL i-Educar, status abas, Matrículas, RX, FUNDEB/FNDE.
+> **Entregas em série (mai/2026):** ver [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) — mapa municípios, URL i-Educar, status abas, Matrículas, RX, FUNDEB/FNDE, Inclusão (catálogos MEC).
 
 ---
 
@@ -12,7 +12,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **2.3.3** *(main, sem tag)* | *(commits escalonados)* | — | mai/2026 | Mapa Início (IBGE/anti-overlap); botão i-Educar por município; medidor status compacto; aba Matrículas (status holístico + saldo); painel RX; VAAF UF PDF + CSV FNDE 2026; `ieducar:probe-falta`. |
+| **2.3.4** *(main, sem tag)* | `ccc5ad4`+ | — | mai/2026 | Inclusão: catálogos MEC+i-Educar completos (NEE e raça, zeros visíveis); totalizador `kpi_total` nos gráficos de alunos; fix URL i-Educar no mapa Início. |
+| **2.3.3** | *(commits escalonados)* | — | mai/2026 | Mapa Início (IBGE/anti-overlap); botão i-Educar por município; medidor status compacto; aba Matrículas (status holístico + saldo); painel RX; VAAF UF PDF + CSV FNDE 2026; `ieducar:probe-falta`. |
 | **2.3.2** | `4d3f5e8` | **157** | mai/2026 | Saldo pedagógico (Desempenho/Frequência/Inclusão); alertas frequência sem `falta_aluno`; medidor status 75/25; FUNDEB lazy com matrículas reais; alias `IeducarCityDataService`. |
 | **2.3.1** | `4893801` | **155** | mai/2026 | Modal mapa unidades: endereço (`escola_localizacao`), métricas com fallback ano letivo, link QEdu; correções FUNDEB (`CityDataConnection`) e sync semanal (checkpoint). |
 | **2.3.0** | `05a7410` | **151** | mai/2026 | VAAF ampliado (perfil, matrículas, alertas FNDE); repasses CSV Tesouro; sync semanal retomável; PDF quadros FUNDEB; Financiamentos e hub importações corrigidos. |
@@ -81,6 +82,15 @@ Entrega focada em **bases financeiras públicas**, **sincronização semanal** e
 | **Testes** | Tesouro CSV, import repasses, tabelas FUNDEB no PDF, alertas FNDE, anos de planejamento. |
 
 Documentação: [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md), [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md), [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md), [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
+
+### v2.3.4 — `ccc5ad4` (mai/2026)
+
+| Tema | Melhoria |
+|------|----------|
+| **Inclusão — NEE** | Novo gráfico com catálogo completo MEC + i-Educar (barras com zero). |
+| **Inclusão — raça** | Gráfico de cor/raça com todas as opções Educacenso e da base. |
+| **KPIs de alunos** | `kpi_total` no cabeçalho do painel e na legenda («Ver lista»); Desempenho e medidores Inclusão. |
+| **Mapa Início** | Corrige `CityIeducarAppUrlResolver` não injetado em `AdminHomeMunicipalityMap`. |
 
 ### v2.3.1 — `4893801` (#155)
 

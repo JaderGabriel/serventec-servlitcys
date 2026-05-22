@@ -100,7 +100,8 @@ Recomendações por **área funcional** do Portabilis / i-Educar 2.x. Nem todos 
 
 | Módulo / subsistema | Estado desejado | Ligação ServLitcys |
 |---------------------|-----------------|-------------------|
-| **Cadastro deficiência / NEE** | Catálogo MEC atualizado | Inclusão, VAAR |
+| **Cadastro deficiência / NEE** | Catálogo MEC atualizado | Inclusão, VAAR — gráficos com `inclusion.deficiencia_mec_catalog` + `cadastro.deficiencia` (v2.3.4) |
+| **Cor/raça (Educacenso)** | Opções INEP no cadastro | Inclusão — `inclusion.raca_mec_catalog` + `cadastro.raca` (v2.3.4) |
 | **Recursos prova INEP** | Preenchido na ficha do aluno | Checks recurso × NEE |
 | **Turmas AEE / salas de recursos** | Oferta visível em turmas | `nee_sem_aee` |
 | **Avaliação institucional** (se usado) | Não substitui SAEB; útil para gestão local | Complementar Desempenho |

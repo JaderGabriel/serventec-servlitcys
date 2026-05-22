@@ -13,6 +13,8 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 5 | `7120e03` | Painel RX |
 | 6 | `78fd0f4` | FUNDEB/FNDE + probe-falta |
 | 7 | `682a0c6` | Documentação |
+| 8 | `ccc5ad4` | Inclusão: catálogos MEC+i-Educar + KPI totalizador |
+| 9 | *(este commit)* | Documentação (Inclusão + mapa) |
 
 ---
 
@@ -127,6 +129,29 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 - Este ficheiro (`ENTREGAS_ESCALONADAS_MAIO_2026.md`)
 - Atualização de `HISTORICO_VERSOES.md`, `VARIAVEIS_AMBIENTE.md`, `docs/README.md`
+
+---
+
+## 8. Aba Inclusão — catálogos Educacenso e totalizador de alunos
+
+**Objetivo:** Gráficos NEE e raça/cor mostram **todas** as opções MEC e i-Educar (valor 0 quando não há matrículas); KPIs que contam alunos exibem total no painel e na legenda.
+
+| Área | Ficheiros principais |
+|------|----------------------|
+| Catálogos | `InclusionEducacensoCatalog.php`, `config/ieducar.php` → `inclusion.raca_mec_catalog`, `inclusion.deficiencia_mec_catalog` |
+| Gráficos | `InclusionDashboardQueries.php` (`chartNeeCatalogoCompletoMecIeducar`), `InclusionRepository.php` (`raceDistributionChart`) |
+| UI | `inclusion.blade.php` (novo gráfico abaixo do resumo NEE), `chart-panel.blade.php`, `resources/js/app.js` |
+| KPI total | `ChartPayload::withKpiStudentTotal()` — `kpi_total`, `kpi_total_label` no modal «Ver lista» |
+| Desempenho | `PerformanceRepository.php` (gráficos de situação) |
+| Mapa (fix) | `AdminHomeMunicipalityMap.php` — injeção de `CityIeducarAppUrlResolver` |
+| Testes | `InclusionEducacensoCatalogTest.php` |
+
+**Comportamento:**
+- **NEE:** gráfico de 3 grupos inalterado; **novo** gráfico horizontal com catálogo completo (MEC + `cadastro.deficiencia`).
+- **Raça:** gráfico existente passa a incluir Branca/Preta/Parda/Amarela/Indígena/Não declarada + linhas da base.
+- **Totalizador:** denominador comum = matrículas ativas no filtro; em NEE com vínculos múltiplos, legenda pode mostrar também soma das barras.
+
+**Pós-deploy:** `npm run build` (se não usar `public/build` do repositório) · `php artisan config:clear`.
 
 ---
 
