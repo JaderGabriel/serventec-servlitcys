@@ -25,8 +25,10 @@ class CitiesReencryptDbPasswordsCommand extends Command
             return self::FAILURE;
         }
 
-        $password = $this->resolvePassword();
-        if ($password === null) {
+        $dryRun = (bool) $this->option('dry-run');
+
+        $password = $this->resolvePassword($dryRun);
+        if ($password === null && ! $dryRun) {
             return self::FAILURE;
         }
 
@@ -37,7 +39,6 @@ class CitiesReencryptDbPasswordsCommand extends Command
             return self::SUCCESS;
         }
 
-        $dryRun = (bool) $this->option('dry-run');
         $probe = (bool) $this->option('probe');
 
         if (app()->environment('production') && ! $dryRun) {
@@ -138,8 +139,12 @@ class CitiesReencryptDbPasswordsCommand extends Command
         return $failed > 0 ? self::FAILURE : self::SUCCESS;
     }
 
-    private function resolvePassword(): ?string
+    private function resolvePassword(bool $dryRun): ?string
     {
+        if ($dryRun) {
+            return '';
+        }
+
         $fromOption = (string) $this->option('password');
         if ($fromOption !== '') {
             return $fromOption;
