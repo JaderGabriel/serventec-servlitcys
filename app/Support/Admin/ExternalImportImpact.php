@@ -47,6 +47,19 @@ final class ExternalImportImpact
                     ['label' => __('Início → mapa de municípios'), 'hint' => __('dashboard')],
                 ],
             ],
+            'funding' => [
+                'title' => __('Para que serve a importação de financiamentos públicos'),
+                'intro' => __('Grava repasses observados (Tesouro/Transparência) e matrículas Censo INEP agregadas por município — dados que não vêm do i-Educar.'),
+                'improves' => [
+                    __('Comparativo Censo × matrículas i-Educar na consultoria'),
+                    __('Programas complementares (PNAE, PNATE, PDDE) na aba Financiamentos'),
+                    __('Secções indicadores e programas do relatório PDF ATM'),
+                ],
+                'consumers' => [
+                    ['label' => __('Consultoria → Financiamentos'), 'hint' => __('tab=funding')],
+                    ['label' => __('Consultoria → Matrículas'), 'hint' => __('tab=enrollment')],
+                ],
+            ],
             'pedagogical' => [
                 'title' => __('Para que serve a importação SAEB'),
                 'intro' => __('Preenche indicadores de desempenho (pontos SAEB) por município, escola e série. Na primeira carga use microdados INEP ou CSV — o passo HTTP por IBGE só funciona depois de já existirem pontos ou com URL externa.'),
@@ -92,6 +105,14 @@ final class ExternalImportImpact
                 'title' => __('Quando concluir'),
                 'detail' => __('Verifique o contador de pontos nesta página e abra Desempenho na consultoria do município.'),
             ],
+            'funding::import_transfers_city_year' => [
+                'title' => __('Quando concluir'),
+                'detail' => __('Abra Financiamentos na consultoria — repasses por programa devem aparecer para o município/ano importado.'),
+            ],
+            'funding::index_censo_matriculas' => [
+                'title' => __('Quando concluir'),
+                'detail' => __('Actualize a consultoria (Matrículas / indicadores) — lacunas «Censo municipal» no PDF devem reduzir.'),
+            ],
             default => null,
         };
     }
@@ -116,6 +137,11 @@ final class ExternalImportImpact
                 __('1. Primeira carga: passo 4 (microdados) ou 2 (CSV)'),
                 __('2. Passo 3 (HTTP/IBGE) para actualizações posteriores'),
                 __('3. Confirme pontos > 0 antes de abrir Desempenho'),
+            ],
+            'funding' => [
+                __('1. Garanta microdados INEP no storage (pipeline geo)'),
+                __('2. Indexe matrículas Censo por município'),
+                __('3. Importe repasses Tesouro por ano para cada município'),
             ],
             default => [],
         };

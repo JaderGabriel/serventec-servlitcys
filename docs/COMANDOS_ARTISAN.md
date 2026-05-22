@@ -176,6 +176,7 @@ Sem `--password`, o comando pede a senha de forma oculta no terminal ou lê `CIT
 | Geo | `app:sync-school-unit-geos-pipeline` | Geo-sync |
 | SAEB | `saeb:sync-microdados` | Pedagogical-sync |
 | FUNDEB | `fundeb:import-api` | ieducar-compatibility |
+| **Dados públicos (hub)** | vários (`fundeb`, `funding`, `system`) | `/admin/dados-publicos` |
 | Schema | `ieducar:schema-probe` | ieducar-compatibility |
 | **Massiva semanal** | `weekly-mass-sync:run` | sync-queue (retomar) |
 

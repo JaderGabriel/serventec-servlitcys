@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\DocumentationController;
 use App\Http\Controllers\Admin\GeoSyncController;
 use App\Http\Controllers\Admin\IeducarCompatibilityController;
 use App\Http\Controllers\Admin\PedagogicalSyncController;
+use App\Http\Controllers\Admin\PublicDataImportController;
 use App\Http\Controllers\AnalyticsDashboardController;
 use App\Http\Controllers\AnalyticsReportExportController;
 use App\Http\Controllers\AnalyticsReportPublicationController;
@@ -89,6 +90,9 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(func
 
     Route::get('/admin/pedagogical-sync', [PedagogicalSyncController::class, 'index'])->name('admin.pedagogical-sync.index');
     Route::post('/admin/pedagogical-sync', [PedagogicalSyncController::class, 'run'])->name('admin.pedagogical-sync.run');
+
+    Route::get('/admin/dados-publicos', [PublicDataImportController::class, 'index'])->name('admin.public-data.index');
+    Route::post('/admin/dados-publicos', [PublicDataImportController::class, 'run'])->name('admin.public-data.run');
 
     Route::get('/admin/ieducar-compatibility', [IeducarCompatibilityController::class, 'index'])->name('admin.ieducar-compatibility.index');
     Route::get('/admin/ieducar-compatibility/export', [IeducarCompatibilityController::class, 'export'])->name('admin.ieducar-compatibility.export');

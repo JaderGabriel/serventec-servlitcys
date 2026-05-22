@@ -105,8 +105,16 @@
             'title' => __('Sincronização'),
             'icon' => 'map',
             'tone' => 'sky',
-            'routes' => ['admin.geo-sync.*', 'admin.pedagogical-sync.*'],
+            'routes' => ['admin.public-data.*', 'admin.geo-sync.*', 'admin.pedagogical-sync.*'],
             'items' => [
+                [
+                    'show' => true,
+                    'href' => route('admin.public-data.index'),
+                    'label' => __('Dados públicos'),
+                    'icon' => 'globe-alt',
+                    'active' => $req->routeIs('admin.public-data.*'),
+                    'title' => __('FUNDEB, Censo INEP, repasses e SAEB — importação fora do i-Educar.'),
+                ],
                 [
                     'show' => true,
                     'href' => route('admin.geo-sync.index'),

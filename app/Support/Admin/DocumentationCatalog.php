@@ -103,6 +103,8 @@ final class DocumentationCatalog
                     ['label' => __('Design system (UI / consultoria)'), 'path' => 'docs/DESIGN_SYSTEM.md'],
                     ['label' => __('FUNDEB / VAAF'), 'path' => 'docs/FUNDEB_VAAF_E_ONDA1.md'],
                     ['label' => __('Consultas externas'), 'path' => 'docs/CONSULTAS_EXTERNAS.md'],
+                    ['label' => __('Importação dados públicos'), 'path' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md', 'hint' => __('Hub admin + PDF ATM')],
+                    ['label' => __('Exportação planilha FUNDEB'), 'path' => 'docs/EXPORTACAO_DADOS_FUNDEB_PLANILHA.md'],
                     ['label' => __('Métricas & Pulse (analytics)'), 'path' => 'docs/METRICAS_QUERIES_ANALYTICS.md'],
                     ['label' => __('Gráficos MEC/INEP'), 'path' => 'docs/SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md'],
                     ['label' => __('Plugins e cadastro i-Educar'), 'path' => 'docs/PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md', 'hint' => __('Dados a refinar, módulos e integrações')],

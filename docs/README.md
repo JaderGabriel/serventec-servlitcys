@@ -62,6 +62,7 @@ Os restantes arquivos são **aprofundamento** por tema. Itens de backlog que apa
 | Documento | Conteúdo |
 |-----------|----------|
 | [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md) | VAAF municipal, previsão, VAAR/VAAT, onda inclusão |
+| [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) | Hub admin `/admin/dados-publicos` — FUNDEB, Censo, repasses, SAEB (fora i-Educar) |
 | [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md) | Export matriz FUNDEB/VAAF (planilha ref., prévia vs publicado, portarias) |
 | [COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md](COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md) | VAAF na base vs referência FNDE/MEC |
 | [COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md](COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md) | Auditoria: base local vs FNDE/MEC (piso nacional vs VAAF por município) |
