@@ -218,6 +218,48 @@
         @apply rounded-xl border border-slate-200/90 bg-gradient-to-br from-slate-50 via-white to-teal-50/30 dark:from-slate-900/60 dark:via-slate-900/40 dark:to-teal-950/20 dark:border-slate-700 shadow-sm overflow-hidden;
     }
 
+    .serv-impact-card__header-row {
+        @apply grid grid-cols-1 gap-4 items-start;
+    }
+
+    @media (min-width: 1024px) {
+        .serv-impact-card__header-row:has(.serv-impact-card__status-slot) {
+            grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+        }
+    }
+
+    .serv-impact-card__status-slot {
+        @apply w-full lg:justify-self-end;
+    }
+
+    .serv-tab-status-panel--impact-slot .serv-tab-status-panel__inner {
+        @apply flex-col items-stretch gap-2 px-2.5 py-2.5 sm:px-3;
+    }
+
+    .serv-tab-status-panel--impact-slot .serv-tab-status-panel__main {
+        @apply flex-col items-center gap-2 text-center;
+    }
+
+    .serv-tab-status-panel--impact-slot .serv-tab-status-panel__ring svg {
+        @apply h-14 w-14;
+    }
+
+    .serv-tab-status-panel--impact-slot .serv-tab-status-panel__score {
+        @apply text-xs;
+    }
+
+    .serv-tab-status-panel--impact-slot .serv-tab-status-panel__main > div {
+        width: 100%;
+    }
+
+    .serv-tab-status-panel--impact-slot .serv-tab-status-panel__main .flex-wrap {
+        @apply justify-center;
+    }
+
+    .serv-tab-status-panel--impact-slot .serv-tab-status-help__btn {
+        @apply mx-auto h-9 w-9;
+    }
+
     .serv-tab-status-panel {
         @apply rounded-xl border-2 shadow-sm overflow-hidden;
     }

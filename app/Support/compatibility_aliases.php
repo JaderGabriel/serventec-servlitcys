@@ -12,3 +12,10 @@ if (! class_exists(\App\Support\Admin\WeeklyMassSyncCheckpoint::class, false)) {
         \App\Support\Admin\WeeklyMassSyncCheckpoint::class,
     );
 }
+
+if (! class_exists(\App\Services\Ieducar\IeducarCityDataService::class, false)) {
+    class_alias(
+        \App\Services\CityDataConnection::class,
+        \App\Services\Ieducar\IeducarCityDataService::class,
+    );
+}

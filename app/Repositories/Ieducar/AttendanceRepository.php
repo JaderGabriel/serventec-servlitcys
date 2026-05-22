@@ -27,6 +27,7 @@ class AttendanceRepository
      *   rows: list<array<string, mixed>>,
      *   message: string,
      *   error: ?string,
+     *   unavailable: bool,
      *   chart: ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>},
      *   charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}>
      * }
@@ -34,45 +35,33 @@ class AttendanceRepository
     public function snapshot(?City $city, IeducarFilterState $filters): array
     {
         if ($city === null) {
-            return ['rows' => [], 'message' => '', 'error' => null, 'chart' => null, 'charts' => []];
+            return ['rows' => [], 'message' => '', 'error' => null, 'unavailable' => false, 'chart' => null, 'charts' => []];
         }
 
         try {
             return $this->cityData->run($city, function (Connection $db) use ($city, $filters) {
                 $fa = IeducarSchema::resolveTable('falta_aluno', $city);
                 if (! IeducarColumnInspector::tableExists($db, $fa, $city)) {
-                    return [
-                        'rows' => [],
-                        'message' => __('A tabela de faltas não existe ou não está acessível. Ajuste IEDUCAR_TABLE_FALTA_ALUNO em config/ieducar.php.'),
-                        'error' => null,
-                        'chart' => null,
-                        'charts' => [],
-                    ];
+                    return self::unavailablePayload(
+                        __('A tabela de faltas não existe ou não está acessível. Ajuste IEDUCAR_TABLE_FALTA_ALUNO em config/ieducar.php.')
+                    );
                 }
 
                 $matCol = (string) config('ieducar.columns.falta_aluno.matricula');
                 $dataCol = (string) config('ieducar.columns.falta_aluno.data');
                 if (! IeducarColumnInspector::columnExists($db, $fa, $matCol, $city)) {
-                    return [
-                        'rows' => [],
-                        'message' => __('Coluna de conexão à matrícula não encontrada em falta_aluno. Defina IEDUCAR_COL_FALTA_MATRICULA.'),
-                        'error' => null,
-                        'chart' => null,
-                        'charts' => [],
-                    ];
+                    return self::unavailablePayload(
+                        __('Coluna de conexão à matrícula não encontrada em falta_aluno. Defina IEDUCAR_COL_FALTA_MATRICULA.')
+                    );
                 }
                 if (! IeducarColumnInspector::columnExists($db, $fa, $dataCol, $city)
                     && IeducarColumnInspector::columnExists($db, $fa, 'data', $city)) {
                     $dataCol = 'data';
                 }
                 if (! IeducarColumnInspector::columnExists($db, $fa, $dataCol, $city)) {
-                    return [
-                        'rows' => [],
-                        'message' => __('Coluna de data da falta não encontrada. Defina IEDUCAR_COL_FALTA_DATA (ex.: data_falta).'),
-                        'error' => null,
-                        'chart' => null,
-                        'charts' => [],
-                    ];
+                    return self::unavailablePayload(
+                        __('Coluna de data da falta não encontrada. Defina IEDUCAR_COL_FALTA_DATA (ex.: data_falta).')
+                    );
                 }
 
                 $mat = IeducarSchema::resolveTable('matricula', $city);
@@ -112,6 +101,7 @@ class AttendanceRepository
                         'rows' => [],
                         'message' => '',
                         'error' => $e->getMessage(),
+                        'unavailable' => false,
                         'chart' => null,
                         'charts' => [],
                     ];
@@ -122,6 +112,7 @@ class AttendanceRepository
                         'rows' => [],
                         'message' => __('Sem registros de falta para os filtros selecionados.'),
                         'error' => null,
+                        'unavailable' => false,
                         'chart' => null,
                         'charts' => [],
                     ];
@@ -149,6 +140,7 @@ class AttendanceRepository
                     'rows' => $tableRows,
                     'message' => '',
                     'error' => null,
+                    'unavailable' => false,
                     'chart' => $chart,
                     'charts' => $chart !== null ? [$chart] : [],
                 ];
@@ -158,9 +150,32 @@ class AttendanceRepository
                 'rows' => [],
                 'message' => '',
                 'error' => $e->getMessage(),
+                'unavailable' => false,
                 'chart' => null,
                 'charts' => [],
             ];
         }
+    }
+
+    /**
+     * @return array{
+     *   rows: list<array<string, mixed>>,
+     *   message: string,
+     *   error: ?string,
+     *   unavailable: bool,
+     *   chart: null,
+     *   charts: list<empty>
+     * }
+     */
+    private static function unavailablePayload(string $message): array
+    {
+        return [
+            'rows' => [],
+            'message' => $message,
+            'error' => null,
+            'unavailable' => true,
+            'chart' => null,
+            'charts' => [],
+        ];
     }
 }

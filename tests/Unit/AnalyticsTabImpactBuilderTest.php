@@ -178,7 +178,7 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         $this->assertStringContainsString('VAAR', (string) ($strip['saldo']['footnote'] ?? ''));
     }
 
-    public function test_performance_strip_shows_info_only_saldo(): void
+    public function test_performance_strip_usa_fatia_ctx_sem_fluxo(): void
     {
         $ctx = AnalyticsMunicipalityContext::fromFundingSnapshot([
             'summary' => ['perda_estimada_anual' => 5000.0, 'ganho_potencial_anual' => 5000.0],
@@ -190,8 +190,80 @@ class AnalyticsTabImpactBuilderTest extends TestCase
 
         $this->assertTrue($strip['ready']);
         $this->assertNotNull($strip['saldo']);
-        $this->assertTrue($strip['saldo']['info_only'] ?? false);
-        $this->assertSame(0.0, $strip['saldo']['perda']);
+        $this->assertFalse($strip['saldo']['info_only'] ?? true);
+        $this->assertSame(600.0, $strip['saldo']['perda']);
+        $this->assertStringContainsString('VAAR-indicadores', (string) ($strip['saldo']['footnote'] ?? ''));
+    }
+
+    public function test_performance_strip_estima_abandono_remanejamento(): void
+    {
+        $strip = AnalyticsTabImpactBuilder::build('performance', true, [], [
+            'performanceData' => [
+                'kpis' => [
+                    ['id' => 'abandono', 'quantidade' => 8],
+                    ['id' => 'remanejamento', 'quantidade' => 2],
+                ],
+            ],
+        ]);
+
+        $this->assertNotNull($strip['saldo']);
+        $this->assertGreaterThan(0.0, $strip['saldo']['perda']);
+        $this->assertStringContainsString('abandono', strtolower((string) ($strip['saldo']['footnote'] ?? '')));
+    }
+
+    public function test_attendance_strip_estima_faltas_em_lotes(): void
+    {
+        $strip = AnalyticsTabImpactBuilder::build('attendance', true, [], [
+            'attendanceData' => [
+                'rows' => [
+                    ['mes' => '2025-03', 'faltas' => 40],
+                    ['mes' => '2025-04', 'faltas' => 35],
+                ],
+                'charts' => [['type' => 'bar']],
+            ],
+        ]);
+
+        $this->assertTrue($strip['ready']);
+        $this->assertNotNull($strip['saldo']);
+        $this->assertGreaterThan(0.0, $strip['saldo']['perda']);
+        $this->assertStringContainsString('falta', strtolower((string) ($strip['saldo']['footnote'] ?? '')));
+        $this->assertSame('success', $strip['status']);
+    }
+
+    public function test_attendance_unavailable_scores_danger_and_estimates_saldo(): void
+    {
+        $strip = AnalyticsTabImpactBuilder::build('attendance', true, ['total_matriculas' => 400], [
+            'attendanceData' => [
+                'unavailable' => true,
+                'message' => 'A tabela de faltas não existe ou não está acessível.',
+                'rows' => [],
+                'charts' => [],
+            ],
+        ]);
+
+        $this->assertSame('danger', $strip['status']);
+        $this->assertSame(15, $strip['tab_score']);
+        $this->assertNotNull($strip['saldo']);
+        $this->assertFalse($strip['saldo']['info_only'] ?? true);
+        $this->assertGreaterThan(0.0, $strip['saldo']['perda']);
+        $this->assertStringContainsString('falta_aluno', strtolower((string) ($strip['saldo']['footnote'] ?? '')));
+        $this->assertNotEmpty($strip['status_issues']);
+    }
+
+    public function test_attendance_empty_sem_registos_alerta_nao_neutro(): void
+    {
+        $strip = AnalyticsTabImpactBuilder::build('attendance', true, ['total_matriculas' => 200], [
+            'attendanceData' => [
+                'message' => 'Sem registros de falta para os filtros selecionados.',
+                'rows' => [],
+                'charts' => [],
+            ],
+        ]);
+
+        $this->assertSame('warning', $strip['status']);
+        $this->assertSame(28, $strip['tab_score']);
+        $this->assertGreaterThan(0.0, $strip['saldo']['perda']);
+        $this->assertStringContainsString('lançamento', strtolower((string) ($strip['saldo']['footnote'] ?? '')));
     }
 
     public function test_school_units_zero_geo_scores_zero_not_fifty(): void

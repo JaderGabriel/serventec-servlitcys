@@ -813,6 +813,7 @@ class AnalyticsDashboardController extends Controller
                             $fundebRepository,
                             $overviewRepository,
                             $discrepanciesRepository,
+                            $enrollmentRepository,
                             $city,
                             $filters,
                         ),
@@ -872,7 +873,7 @@ class AnalyticsDashboardController extends Controller
     }
 
     /**
-     * FUNDEB em lazy: só visão geral + resumo financeiro leve (sem matrículas/desempenho/etc.).
+     * FUNDEB em lazy: visão geral + KPIs de matrículas (mesma base da aba Matrículas) + resumo Discrepâncias.
      *
      * @return array<string, mixed>
      */
@@ -880,10 +881,12 @@ class AnalyticsDashboardController extends Controller
         FundebRepository $fundebRepository,
         OverviewRepository $overviewRepository,
         DiscrepanciesRepository $discrepanciesRepository,
+        EnrollmentRepository $enrollmentRepository,
         City $city,
         IeducarFilterState $filters,
     ): array {
         $overviewData = $overviewRepository->summary($city, $filters);
+        $enrollmentData = $enrollmentRepository->sample($city, $filters);
 
         $discrepanciesForFundeb = null;
         if (config('analytics.fundeb_load_discrepancies_summary', true)) {
@@ -897,7 +900,7 @@ class AnalyticsDashboardController extends Controller
             $city,
             $filters,
             $overviewData,
-            AnalyticsEmptyPayloads::enrollment(),
+            $enrollmentData,
             AnalyticsEmptyPayloads::performance(),
             AnalyticsEmptyPayloads::attendance(),
             AnalyticsEmptyPayloads::inclusion(),

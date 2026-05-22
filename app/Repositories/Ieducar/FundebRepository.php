@@ -19,6 +19,40 @@ use App\Support\Ieducar\FundebVaafProfileBuilder;
 class FundebRepository
 {
     /**
+     * Matrículas ativas no filtro — alinha FUNDEB com Matrículas / Visão geral (scope + KPIs).
+     *
+     * @param  array<string, mixed>  $overviewData
+     * @param  array<string, mixed>  $enrollmentData
+     */
+    public static function resolveMatriculasAtivasForFilter(
+        City $city,
+        IeducarFilterState $filters,
+        array $overviewData = [],
+        array $enrollmentData = [],
+    ): int {
+        $counts = [];
+
+        $scope = IeducarAnalyticsMetricsScope::resolve();
+        if ($scope !== null && $scope->matches($city, $filters)) {
+            $fromScope = $scope->matriculasAtivas();
+            if ($fromScope !== null) {
+                $counts[] = (int) $fromScope;
+            }
+        }
+
+        foreach ([
+            data_get($overviewData, 'kpis.matriculas'),
+            data_get($enrollmentData, 'kpis.matriculas'),
+        ] as $value) {
+            if ($value !== null) {
+                $counts[] = (int) $value;
+            }
+        }
+
+        return $counts !== [] ? max($counts) : 0;
+    }
+
+    /**
      * @param  array<string, mixed>  $overviewData
      * @param  array<string, mixed>  $enrollmentData
      * @param  array<string, mixed>  $performanceData
@@ -54,10 +88,7 @@ class FundebRepository
         ?array $discrepanciesData = null,
     ): array {
         $yearLabel = $this->yearLabel($filters);
-        $scopeMat = IeducarAnalyticsMetricsScope::resolve()?->matriculasAtivas();
-        $matTotal = $scopeMat !== null && $scopeMat > 0
-            ? $scopeMat
-            : (int) data_get($overviewData, 'kpis.matriculas', data_get($enrollmentData, 'kpis.matriculas', 0));
+        $matTotal = self::resolveMatriculasAtivasForFilter($city, $filters, $overviewData, $enrollmentData);
         $fundebReference = DiscrepanciesFundingImpact::resolveReference($city, $filters);
 
         $resourceProjection = FundebResourceProjection::build(

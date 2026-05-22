@@ -311,7 +311,8 @@ final class AnalyticsTabImpactBuilder
             'inclusion' => self::saldoFromInclusion($tabData),
             'school_units' => self::saldoFromSchoolUnitsGeo($tabData),
             'overview' => self::saldoFromOverviewCadastro($ctx),
-            'performance', 'attendance' => self::saldoPedagogicoSemEstimativa(),
+            'performance' => self::saldoFromPerformance($tabData, $ctx),
+            'attendance' => self::saldoFromAttendance($tabData, $ctx),
             default => null,
         };
 
@@ -579,18 +580,209 @@ final class AnalyticsTabImpactBuilder
     }
 
     /**
-     * @return array{perda: float, ganho: float, liquido: float, footnote: string, info_only: bool}
+     * @param  array<string, mixed>  $tabData
+     * @param  array<string, mixed>  $ctx
+     * @return array{perda: float, ganho: float, liquido: float, footnote: string}|null
      */
-    private static function saldoPedagogicoSemEstimativa(): array
+    private static function saldoFromPerformance(array $tabData, array $ctx): ?array
     {
+        $data = self::tabPayload($tabData, 'performance');
+        $kpis = is_array($data['kpis'] ?? null) ? $data['kpis'] : [];
+        $abandono = 0;
+        $remanejamento = 0;
+        foreach ($kpis as $kpi) {
+            if (! is_array($kpi)) {
+                continue;
+            }
+            $id = (string) ($kpi['id'] ?? '');
+            $q = (int) ($kpi['quantidade'] ?? 0);
+            if ($id === 'abandono') {
+                $abandono = $q;
+            }
+            if ($id === 'remanejamento') {
+                $remanejamento = $q;
+            }
+        }
+
+        $fluxo = $abandono + $remanejamento;
+        if ($fluxo <= 0) {
+            return self::saldoPedagogicoCtxShare(
+                $ctx,
+                0.12,
+                __('Sem abandono/remanejamento no filtro. Fatia indicativa (~12%%) do saldo municipal das Discrepâncias (eixo VAAR-indicadores).')
+            );
+        }
+
+        $funding = DiscrepanciesFundingImpact::estimate('fluxo_abandono_remanejamento', $fluxo);
+
         return [
-            'perda' => 0.0,
-            'ganho' => 0.0,
-            'liquido' => 0.0,
-            'info_only' => true,
+            'perda' => (float) $funding['perda_anual'],
+            'ganho' => (float) $funding['ganho_potencial_anual'],
+            'liquido' => round((float) $funding['ganho_potencial_anual'] - (float) $funding['perda_anual'], 2),
             'footnote' => __(
-                'Esta aba não estima valores próprios. O impacto financeiro indicativo do cadastro está em Discrepâncias e FUNDEB; use Inclusão para o eixo VAAR-inclusão.'
+                ':aband matrícula(s) em abandono + :rem remanejamento × VAAF × peso :peso — risco de indicadores VAAR/Censo (não é repasse FNDE).',
+                [
+                    'aband' => number_format($abandono, 0, ',', '.'),
+                    'rem' => number_format($remanejamento, 0, ',', '.'),
+                    'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
+                ]
             ),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @param  array<string, mixed>  $ctx
+     * @return array{perda: float, ganho: float, liquido: float, footnote: string}|null
+     */
+    private static function saldoFromAttendance(array $tabData, array $ctx): ?array
+    {
+        $data = self::tabPayload($tabData, 'attendance');
+        $diag = self::attendanceDiagnostics($data);
+
+        if ($diag['mode'] === 'query_error') {
+            return self::saldoFromAttendanceGap($ctx, 'infrastructure', (string) ($data['error'] ?? ''));
+        }
+
+        if ($diag['mode'] === 'unavailable') {
+            return self::saldoFromAttendanceGap(
+                $ctx,
+                'infrastructure',
+                (string) ($diag['message'] ?? '')
+            );
+        }
+
+        if ($diag['mode'] === 'empty') {
+            return self::saldoFromAttendanceGap($ctx, 'empty', (string) ($diag['message'] ?? ''));
+        }
+
+        $totalFaltas = $diag['total_faltas'];
+        $lotes = max(1, (int) round($totalFaltas / 25));
+        $funding = DiscrepanciesFundingImpact::estimate('faltas_registro_mensal', $lotes);
+
+        return [
+            'perda' => (float) $funding['perda_anual'],
+            'ganho' => (float) $funding['ganho_potencial_anual'],
+            'liquido' => round((float) $funding['ganho_potencial_anual'] - (float) $funding['perda_anual'], 2),
+            'footnote' => __(
+                ':n registo(s) de falta no filtro (≈ :lotes lote(s) de 25) × VAAF × peso :peso — indicador operacional; não substitui glosa de programa.',
+                [
+                    'n' => number_format($totalFaltas, 0, ',', '.'),
+                    'lotes' => number_format($lotes, 0, ',', '.'),
+                    'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
+                ]
+            ),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{mode: string, message: string, total_faltas: int, has_charts: bool}
+     */
+    private static function attendanceDiagnostics(array $data): array
+    {
+        $message = trim((string) ($data['message'] ?? ''));
+        $error = trim((string) ($data['error'] ?? ''));
+        $unavailable = (bool) ($data['unavailable'] ?? false);
+        $charts = is_array($data['charts'] ?? null) ? $data['charts'] : [];
+        $hasCharts = $charts !== [] || ! empty($data['chart']);
+
+        $rows = is_array($data['rows'] ?? null) ? $data['rows'] : [];
+        $totalFaltas = 0;
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $totalFaltas += (int) ($row['faltas'] ?? 0);
+        }
+
+        if ($error !== '') {
+            return ['mode' => 'query_error', 'message' => $error, 'total_faltas' => 0, 'has_charts' => false];
+        }
+
+        if ($unavailable) {
+            return ['mode' => 'unavailable', 'message' => $message, 'total_faltas' => 0, 'has_charts' => false];
+        }
+
+        if ($totalFaltas > 0 || $hasCharts) {
+            return ['mode' => 'ok', 'message' => $message, 'total_faltas' => $totalFaltas, 'has_charts' => $hasCharts];
+        }
+
+        if ($message !== '') {
+            return ['mode' => 'empty', 'message' => $message, 'total_faltas' => 0, 'has_charts' => false];
+        }
+
+        return ['mode' => 'empty', 'message' => __('Sem registros de falta para os filtros selecionados.'), 'total_faltas' => 0, 'has_charts' => false];
+    }
+
+    /**
+     * @param  array<string, mixed>  $ctx
+     * @return array{perda: float, ganho: float, liquido: float, footnote: string}
+     */
+    private static function saldoFromAttendanceGap(array $ctx, string $kind, string $detail): array
+    {
+        $mat = max(0, (int) ($ctx['total_matriculas'] ?? 0));
+        $ratio = $kind === 'infrastructure' ? 0.25 : 0.12;
+        $occurrences = $mat > 0
+            ? min(800, max(1, (int) round($mat * $ratio)))
+            : ($kind === 'infrastructure' ? 80 : 40);
+
+        $checkId = $kind === 'infrastructure' ? 'frequencia_sem_base_faltas' : 'frequencia_nao_lancada';
+        $funding = DiscrepanciesFundingImpact::estimate($checkId, $occurrences);
+
+        $ctxShare = self::saldoPedagogicoCtxShare($ctx, $kind === 'infrastructure' ? 0.10 : 0.08, '');
+        $perda = (float) $funding['perda_anual'];
+        $ganho = (float) $funding['ganho_potencial_anual'];
+        if ($ctxShare !== null) {
+            $perda = max($perda, (float) $ctxShare['perda']);
+            $ganho = max($ganho, (float) $ctxShare['ganho']);
+        }
+
+        $footnote = $kind === 'infrastructure'
+            ? __(
+                'Sem trilha de falta_aluno no filtro (:n matrícula(s) estimadas sem base × VAAF × peso :peso). :detalhe Configure IEDUCAR_TABLE_FALTA_ALUNO ou corrija colunas — risco PNAE/transporte.',
+                [
+                    'n' => number_format($occurrences, 0, ',', '.'),
+                    'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
+                    'detalhe' => $detail !== '' ? $detail.' ' : '',
+                ]
+            )
+            : __(
+                'Nenhum lançamento de falta no período (:n matrícula(s) ativas no recorte × VAAF × peso :peso). Frequência não registada aumenta risco operacional e de programas (PNAE/transporte).',
+                [
+                    'n' => number_format($occurrences, 0, ',', '.'),
+                    'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
+                ]
+            );
+
+        return [
+            'perda' => round($perda, 2),
+            'ganho' => round($ganho, 2),
+            'liquido' => round($ganho - $perda, 2),
+            'footnote' => $footnote,
+        ];
+    }
+
+    /**
+     * Fatia do saldo consolidado das Discrepâncias quando a aba não tem contagem própria.
+     *
+     * @return array{perda: float, ganho: float, liquido: float, footnote: string}|null
+     */
+    private static function saldoPedagogicoCtxShare(array $ctx, float $sharePct, string $footnote): ?array
+    {
+        $perda = (float) ($ctx['perda_estimada_anual'] ?? 0);
+        $ganho = (float) ($ctx['ganho_potencial_anual'] ?? 0);
+        if ($perda <= 0 && $ganho <= 0) {
+            return null;
+        }
+
+        $factor = max(0.0, min(1.0, $sharePct));
+
+        return [
+            'perda' => round($perda * $factor, 2),
+            'ganho' => round($ganho * $factor, 2),
+            'liquido' => round(((float) ($ctx['saldo_liquido'] ?? ($ganho - $perda))) * $factor, 2),
+            'footnote' => $footnote,
         ];
     }
 
@@ -782,19 +974,52 @@ final class AnalyticsTabImpactBuilder
     private static function statusAttendance(array $tabData): array
     {
         $data = is_array($tabData['attendance'] ?? null) ? $tabData['attendance'] : ($tabData['attendanceData'] ?? []);
-        if (! empty($data['error'])) {
-            return ['status' => 'danger', 'label' => __('Erro ao ler faltas'), 'score' => 20, 'share_label' => null, 'share_value' => null];
-        }
-        $charts = $data['charts'] ?? [];
-        if ($charts === [] && empty($data['chart'])) {
-            return ['status' => 'neutral', 'label' => __('Sem registros de falta no filtro'), 'score' => 60, 'share_label' => null, 'share_value' => null];
+        $diag = self::attendanceDiagnostics($data);
+
+        if ($diag['mode'] === 'query_error') {
+            return [
+                'status' => 'danger',
+                'label' => __('Erro ao ler faltas — :msg', ['msg' => mb_strimwidth($diag['message'], 0, 120, '…')]),
+                'score' => 12,
+                'share_label' => null,
+                'share_value' => null,
+            ];
         }
 
+        if ($diag['mode'] === 'unavailable') {
+            $label = $diag['message'] !== ''
+                ? $diag['message']
+                : __('Base de faltas indisponível (falta_aluno)');
+
+            return [
+                'status' => 'danger',
+                'label' => $label,
+                'score' => 15,
+                'share_label' => __('Cadastro'),
+                'share_value' => __('Sem falta_aluno'),
+            ];
+        }
+
+        if ($diag['mode'] === 'empty') {
+            return [
+                'status' => 'warning',
+                'label' => __('Sem lançamento de faltas no filtro — risco PNAE/transporte'),
+                'score' => 28,
+                'share_label' => __('Registos'),
+                'share_value' => '0',
+            ];
+        }
+
+        $totalFaltas = $diag['total_faltas'];
+        $charts = is_array($data['charts'] ?? null) ? $data['charts'] : [];
+        $score = $totalFaltas >= 5000 ? 55 : ($totalFaltas >= 1500 ? 62 : 78);
+        $status = $totalFaltas >= 5000 ? 'warning' : 'success';
+
         return [
-            'status' => 'success',
-            'label' => __('Frequência registada no período'),
-            'score' => 72,
-            'share_label' => __('Gráficos'),
+            'status' => $status,
+            'label' => __(':n registo(s) de falta no período', ['n' => number_format($totalFaltas, 0, ',', '.')]),
+            'score' => $score,
+            'share_label' => __('Meses'),
             'share_value' => (string) max(1, count($charts) ?: 1),
         ];
     }
@@ -1055,6 +1280,9 @@ final class AnalyticsTabImpactBuilder
     private static function applyQueryError(string $tab, array $tabData, array $computed): array
     {
         $payload = self::tabPayload($tabData, $tab === 'municipality_health' ? 'health' : $tab);
+        if ($tab === 'attendance' && (bool) ($payload['unavailable'] ?? false)) {
+            return $computed;
+        }
         if (empty($payload['error'])) {
             return $computed;
         }
@@ -1138,6 +1366,18 @@ final class AnalyticsTabImpactBuilder
             }
         }
 
+        if ($tab === 'attendance') {
+            $data = self::tabPayload($tabData, 'attendance');
+            $diag = self::attendanceDiagnostics($data);
+            if ($diag['mode'] === 'unavailable') {
+                $issues[] = ['type' => 'unavailable', 'label' => __('Base falta_aluno inacessível'), 'count' => 1];
+            } elseif ($diag['mode'] === 'query_error') {
+                $issues[] = ['type' => 'error', 'label' => __('Falha ao agregar faltas'), 'count' => 1];
+            } elseif ($diag['mode'] === 'empty') {
+                $issues[] = ['type' => 'pending', 'label' => __('Frequência não lançada no filtro'), 'count' => 1];
+            }
+        }
+
         if ($tab === 'fundeb') {
             $data = self::tabPayload($tabData, 'fundeb');
             $modAlertas = 0;
@@ -1208,6 +1448,9 @@ final class AnalyticsTabImpactBuilder
         }
         if ($tab === 'school_units') {
             $parts[] = __('O número do anel é a percentagem de escolas do filtro com coordenadas (mapa); 0 unidades no mapa corresponde a 0%, não a 50%.');
+        }
+        if ($tab === 'attendance') {
+            $parts[] = __('Sem falta_aluno ou sem lançamentos no filtro, o status fica em alerta (não neutro) e o saldo estima matrículas sem trilha de frequência (PNAE/transporte).');
         }
         if (($def['impact_note'] ?? '') !== '') {
             $parts[] = (string) $def['impact_note'];

@@ -18,30 +18,35 @@
 @endphp
 
 <div class="serv-impact-card">
-    <div class="px-4 py-4 border-b border-slate-200/80 dark:border-slate-700/80 space-y-4">
-        <div class="min-w-0">
-            @if ($title !== '')
-                <h2 class="text-base font-semibold font-display text-serv-navy dark:text-teal-50">{{ $title }}</h2>
-            @endif
-            @if ($purpose !== '')
-                <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ $purpose }}</p>
-            @endif
-            @if ($impactNote !== '')
-                <p class="mt-2 text-xs text-teal-800/90 dark:text-teal-300/90 leading-relaxed">{{ $impactNote }}</p>
+    <div class="px-4 py-4 border-b border-slate-200/80 dark:border-slate-700/80">
+        <div class="serv-impact-card__header-row">
+            <div class="serv-impact-card__title-col min-w-0">
+                @if ($title !== '')
+                    <h2 class="text-base font-semibold font-display text-serv-navy dark:text-teal-50">{{ $title }}</h2>
+                @endif
+                @if ($purpose !== '')
+                    <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ $purpose }}</p>
+                @endif
+                @if ($impactNote !== '')
+                    <p class="mt-2 text-xs text-teal-800/90 dark:text-teal-300/90 leading-relaxed">{{ $impactNote }}</p>
+                @endif
+            </div>
+
+            @if ($showStatus && $ready && $statusLabel !== '')
+                <div class="serv-impact-card__status-slot min-w-0">
+                    <x-dashboard.analytics-tab-status-inline
+                        class="serv-tab-status-panel--impact-slot"
+                        :status="$status"
+                        :label="$statusLabel"
+                        :score="$tabScore"
+                        :help="$statusHelp"
+                        :issues="$statusIssues"
+                        :mode="$statusMode"
+                        :tab="$tab"
+                    />
+                </div>
             @endif
         </div>
-
-        @if ($showStatus && $ready && $statusLabel !== '')
-            <x-dashboard.analytics-tab-status-inline
-                :status="$status"
-                :label="$statusLabel"
-                :score="$tabScore"
-                :help="$statusHelp"
-                :issues="$statusIssues"
-                :mode="$statusMode"
-                :tab="$tab"
-            />
-        @endif
     </div>
 
     @if (! $ready)

@@ -743,6 +743,14 @@ return [
             'distorcao_idade_serie' => 0.4,
             'rede_vagas_ociosas' => 0.25,
             'matricula_censo_vs_ieducar' => 1.6,
+            /** Abandono + remanejamento (aba Desempenho) — eixo VAAR-indicadores. */
+            'fluxo_abandono_remanejamento' => (float) env('IEDUCAR_DISC_PESO_FLUXO_ABANDONO', 0.45),
+            /** Registos agregados em falta_aluno (aba Frequência), escala por lote de faltas. */
+            'faltas_registro_mensal' => (float) env('IEDUCAR_DISC_PESO_FALTAS', 0.08),
+            /** Tabela/colunas de falta_aluno inacessíveis — risco PNAE/transporte sem trilha. */
+            'frequencia_sem_base_faltas' => (float) env('IEDUCAR_DISC_PESO_FREQ_SEM_BASE', 0.35),
+            /** Base OK mas sem lançamentos no filtro — matrículas sem frequência registada. */
+            'frequencia_nao_lancada' => (float) env('IEDUCAR_DISC_PESO_FREQ_NAO_LANCADA', 0.22),
         ],
         'censo_matricula_tolerance_pct' => (float) env('IEDUCAR_DISC_CENSO_MAT_TOLERANCE_PCT', 5),
         'censo_matricula_min_diff' => (int) env('IEDUCAR_DISC_CENSO_MAT_MIN_DIFF', 10),
