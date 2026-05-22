@@ -78,6 +78,9 @@ class CityController extends Controller
 
         $data = $request->validated();
         $data['country'] = $data['country'] ?? 'Brasil';
+        $data['ieducar_app_url'] = filled($data['ieducar_app_url'] ?? null)
+            ? trim((string) $data['ieducar_app_url'])
+            : null;
         if (! array_key_exists('db_password', $data) || $data['db_password'] === null) {
             $data['db_password'] = '';
         }
@@ -100,6 +103,9 @@ class CityController extends Controller
 
         $data = $request->validated();
         $data['country'] = $data['country'] ?? 'Brasil';
+        $data['ieducar_app_url'] = filled($data['ieducar_app_url'] ?? null)
+            ? trim((string) $data['ieducar_app_url'])
+            : null;
         if (empty($data['db_password'])) {
             unset($data['db_password']);
         }

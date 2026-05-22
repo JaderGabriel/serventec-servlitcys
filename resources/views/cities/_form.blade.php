@@ -59,6 +59,13 @@
             </div>
 
             <div>
+                <x-input-label for="ieducar_app_url" :value="__('URL do i-Educar (portal web)')" />
+                <x-text-input id="ieducar_app_url" class="block mt-1 w-full" type="url" name="ieducar_app_url" maxlength="512" :value="old('ieducar_app_url', $city?->ieducar_app_url)" placeholder="https://municipio.exemplo.gov.br" />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Link público da instalação i-Educar do município. Usado no mapa do Início (botão «i-Educar»). Pode omitir https:// — será adicionado automaticamente.') }}</p>
+                <x-input-error :messages="$errors->get('ieducar_app_url')" class="mt-2" />
+            </div>
+
+            <div>
                 <x-input-label for="db_host" :value="__('Host')" />
                 <x-text-input id="db_host" class="block mt-1 w-full" type="text" name="db_host" :value="old('db_host', $city?->db_host)" required placeholder="ex.: db.exemplo.com" />
                 <x-input-error :messages="$errors->get('db_host')" class="mt-2" />

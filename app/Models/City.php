@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
     'country',
     'db_driver',
     'ieducar_schema',
+    'ieducar_app_url',
     'db_host',
     'db_port',
     'db_database',

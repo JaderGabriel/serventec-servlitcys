@@ -56,6 +56,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | URL pública do i-Educar por município
+    |--------------------------------------------------------------------------
+    |
+    | Prioridade: cities.ieducar_app_url → IEDUCAR_APP_URLS (JSON city_id => URL)
+    | → IEDUCAR_APP_URL_TEMPLATE com {city_id}, {slug}, {ibge}, {uf}.
+    |
+    */
+
+    'app_urls' => array_filter(
+        is_array($decoded = json_decode((string) env('IEDUCAR_APP_URLS', '{}'), true))
+            ? $decoded
+            : []
+    ),
+
+    'app_url_template' => trim((string) env('IEDUCAR_APP_URL_TEMPLATE', '')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Schemas PostgreSQL nomeados (placeholders em SQL customizado)
     |--------------------------------------------------------------------------
     |
@@ -661,7 +679,14 @@ return [
              * Descoberta automática em fundeb/{ano}; override por ano, ex.:
              * 'fnde_receita_csv_urls' => [2025 => 'https://www.gov.br/fnde/.../1.Receitatotal....csv']
              */
-            'fnde_receita_csv_urls' => [],
+            'fnde_receita_csv_urls' => [
+                2026 => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2026-1/publicacoes-2026/2-publicacao/1-receita-total-do-fundeb-por-ente-federado.csv',
+            ],
+
+            /** PDF «Valor aluno/ano e receita anual prevista» por UF/DF (Consultas FNDE). */
+            'fnde_estado_vaaf_enabled' => filter_var(env('IEDUCAR_FUNDEB_ESTADO_VAAF_ENABLED', true), FILTER_VALIDATE_BOOL),
+            'fnde_estado_vaaf_on_import' => filter_var(env('IEDUCAR_FUNDEB_ESTADO_VAAF_ON_IMPORT', true), FILTER_VALIDATE_BOOL),
+            'fnde_estado_vaaf_pdf_urls' => [],
 
             /** VAAF estimado = receita total FNDE ÷ matrículas i-Educar (limites de sanidade). */
             'vaaf_estimate_min' => (float) env('IEDUCAR_FUNDEB_VAAF_ESTIMATE_MIN', 2500),

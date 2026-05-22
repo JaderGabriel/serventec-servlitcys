@@ -68,6 +68,7 @@ class StoreCityRequest extends FormRequest
             'country' => ['nullable', 'string', 'max:100'],
             'db_driver' => ['required', 'string', Rule::in([City::DRIVER_MYSQL, City::DRIVER_PGSQL])],
             'ieducar_schema' => ['nullable', 'string', 'max:63', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]*$/'],
+            'ieducar_app_url' => ['nullable', 'string', 'max:512'],
             'db_host' => ['required', 'string', 'max:255'],
             'db_port' => ['nullable', 'integer', 'min:1', 'max:65535'],
             'db_database' => ['required', 'string', 'max:255'],
