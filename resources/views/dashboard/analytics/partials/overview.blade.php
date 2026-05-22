@@ -191,7 +191,7 @@
                 </p>
             </div>
         </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Totais conforme os filtros aplicados e a estrutura de turmas na base.') }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Totais conforme os filtros aplicados; matrículas contam registos distintos de matrícula ativa no recorte (uma por aluno matriculado).') }}</p>
     @elseif ($yearFilterReady && empty($overviewData['error']))
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Sem totais para estes filtros.') }}</p>
     @endif

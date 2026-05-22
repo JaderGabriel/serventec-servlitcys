@@ -16,60 +16,33 @@ use Illuminate\Support\Collection;
 final class MatriculaChartQueries
 {
     /**
-     * Contagem de matrículas ativas (mesma lógica da visão geral: junta turma quando há ano ou recortes dimensionais).
+     * Expressão SQL para contar matrículas distintas (evita duplicar linhas em matricula_turma).
+     */
+    private static function distinctMatriculaCountExpression(Connection $db): string
+    {
+        $grammar = $db->getQueryGrammar();
+        $mId = (string) config('ieducar.columns.matricula.id');
+
+        return 'COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).')';
+    }
+
+    /**
+     * Base de matrículas ativas com filtros (turma quando possível; senão ano/escola na matrícula).
+     */
+    private static function baseMatriculasAtivasFiltradas(Connection $db, City $city, IeducarFilterState $filters): Builder
+    {
+        return DiscrepanciesQueries::baseMatriculaComTurmaPublic($db, $city, $filters);
+    }
+
+    /**
+     * Contagem de matrículas ativas distintas no recorte (matrículas realizadas no filtro).
      */
     public static function totalMatriculasAtivasFiltradas(Connection $db, City $city, IeducarFilterState $filters): ?int
     {
         try {
-            $mat = IeducarSchema::resolveTable('matricula', $city);
-            $mId = (string) config('ieducar.columns.matricula.id');
-            $mTurma = (string) config('ieducar.columns.matricula.turma');
-            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $q = self::baseMatriculasAtivasFiltradas($db, $city, $filters);
 
-            $yearVal = $filters->yearFilterValue();
-            $needsTurma = $yearVal !== null
-                || $filters->escola_id !== null
-                || $filters->curso_id !== null
-                || $filters->turno_id !== null;
-
-            if (! $needsTurma) {
-                $q = $db->table($mat.' as m');
-                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
-
-                return (int) $q->count();
-            }
-
-            $turma = IeducarSchema::resolveTable('turma', $city);
-            $tId = (string) config('ieducar.columns.turma.id');
-            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
-
-            $usePivot = MatriculaTurmaJoin::usePivotTable($db, $city);
-
-            if ($usePivot) {
-                $mt = IeducarSchema::resolveTable('matricula_turma', $city);
-                $mtMat = (string) config('ieducar.columns.matricula_turma.matricula');
-                $mtTurma = (string) config('ieducar.columns.matricula_turma.turma');
-                $mtAtivo = (string) config('ieducar.columns.matricula_turma.ativo');
-                $q = $db->table($mat.' as m')
-                    ->join($mt.' as mt', 'm.'.$mId, '=', 'mt.'.$mtMat)
-                    ->join($turma.' as t', 'mt.'.$mtTurma, '=', 't.'.$tId);
-                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
-                if ($mtAtivo !== '') {
-                    MatriculaAtivoFilter::apply($q, $db, 'mt.'.$mtAtivo, $city);
-                }
-            } else {
-                $q = $db->table($mat.' as m')->join($turma.' as t', 'm.'.$mTurma, '=', 't.'.$tId);
-                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
-            }
-
-            if ($yearVal !== null && $tc['year'] !== '') {
-                $q->where('t.'.$tc['year'], $yearVal);
-            }
-            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
-            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
-            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['turno'], $filters->turno_id);
-
-            return (int) $q->count();
+            return (int) ($q->selectRaw(self::distinctMatriculaCountExpression($db).' as c')->value('c') ?? 0);
         } catch (QueryException|\InvalidArgumentException) {
             return null;
         }
@@ -111,13 +84,15 @@ final class MatriculaChartQueries
             if ($joinSpec !== null) {
                 $eId = $joinSpec['idCol'];
                 $q->whereIn('e.'.$eId, $eids);
+                $distinct = self::distinctMatriculaCountExpression($db);
                 $q->selectRaw('e.'.$eId.' as eid')
-                    ->selectRaw('COUNT(*) as c')
+                    ->selectRaw($distinct.' as c')
                     ->groupBy('e.'.$eId);
             } else {
+                $distinct = self::distinctMatriculaCountExpression($db);
                 $q->whereIn('t_filter.'.$refEscola, $eids);
                 $q->selectRaw($tEsc.' as eid')
-                    ->selectRaw('COUNT(*) as c')
+                    ->selectRaw($distinct.' as c')
                     ->groupBy($tEsc);
             }
 
@@ -185,8 +160,9 @@ final class MatriculaChartQueries
                 $q->where('m.'.$mAno, $filters->yearFilterValue());
             }
             $q->whereIn('m.'.$mEsc, $eids);
+            $distinct = self::distinctMatriculaCountExpression($db);
             $q->selectRaw('m.'.$mEsc.' as eid')
-                ->selectRaw('COUNT(*) as c')
+                ->selectRaw($distinct.' as c')
                 ->groupBy('m.'.$mEsc);
 
             $out = [];
@@ -396,7 +372,7 @@ final class MatriculaChartQueries
                 __('Quantidade'),
                 [
                     __('Capacidade (turmas)'),
-                    __('Matrículas no filtro'),
+                    __('Matrículas realizadas (filtro)'),
                     __('Vagas ociosas'),
                 ],
                 [(float) $cap, (float) $mat, (float) $vac]
@@ -542,10 +518,11 @@ final class MatriculaChartQueries
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+            $distinct = self::distinctMatriculaCountExpression($db);
             $q->join($curso.' as c', 't_filter.'.$refCurso, '=', 'c.'.$cId)
                 ->selectRaw('c.'.$cId.' as cid')
                 ->selectRaw('MAX(c.'.$cName.') as cname')
-                ->selectRaw('COUNT(*) as cnt')
+                ->selectRaw($distinct.' as cnt')
                 ->groupBy('c.'.$cId)
                 ->orderByDesc('cnt')
                 ->limit(10);
@@ -605,9 +582,10 @@ final class MatriculaChartQueries
                 return self::matriculasPorEscolaGroupedRowsEscolaIdOnly($db, $city, $filters, $sqlLimit);
             }
             $eId = $joinSpec['idCol'];
+            $distinct = self::distinctMatriculaCountExpression($db);
             $q->selectRaw('e.'.$eId.' as eid')
                 ->selectRaw('MAX(e.'.$eName.') as ename')
-                ->selectRaw('COUNT(*) as cnt')
+                ->selectRaw($distinct.' as cnt')
                 ->groupBy('e.'.$eId)
                 ->orderByDesc('cnt');
             if ($sqlLimit !== null && $sqlLimit > 0) {
@@ -653,9 +631,10 @@ final class MatriculaChartQueries
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
             $q->whereNotNull('t_filter.'.$refEscola);
+            $distinct = self::distinctMatriculaCountExpression($db);
             $q->selectRaw($tEsc.' as eid')
                 ->selectRaw("'' as ename")
-                ->selectRaw('COUNT(*) as cnt')
+                ->selectRaw($distinct.' as cnt')
                 ->groupBy($tEsc)
                 ->orderByDesc('cnt');
             if ($sqlLimit !== null && $sqlLimit > 0) {
@@ -1145,8 +1124,9 @@ final class MatriculaChartQueries
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+            $distinct = self::distinctMatriculaCountExpression($db);
             $q->selectRaw('t_filter.'.$tId.' as tid')
-                ->selectRaw('COUNT(*) as c')
+                ->selectRaw($distinct.' as c')
                 ->groupBy('t_filter.'.$tId);
 
             $out = [];
@@ -2153,7 +2133,7 @@ final class MatriculaChartQueries
                 return $q;
             };
 
-            $out['matriculas'] = (int) $base()->count();
+            $out['matriculas'] = self::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
             $rowT = $base()->selectRaw('COUNT(DISTINCT t_filter.'.$tId.') as c')->first();
             $out['turmas_distintas'] = (int) ($rowT->c ?? 0);
 

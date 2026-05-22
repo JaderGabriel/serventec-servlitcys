@@ -679,7 +679,7 @@ final class IeducarWorkActivityQueries
                 'ano', 'ano_letivo', 'ref_cod_ano_letivo', 'nu_ano',
             ], $city);
             $statusCol = IeducarColumnInspector::firstExistingColumn($db, $table, [
-                'situacao', 'andamento', 'situacao_ano_letivo', 'status', 'fechado',
+                'andamento', 'ativo', 'situacao', 'situacao_ano_letivo', 'status',
             ], $city);
             $boolCol = $statusCol === null
                 ? IeducarColumnInspector::firstExistingColumn($db, $table, ['fechado', 'encerrado', 'finalizado'], $city)
@@ -708,7 +708,7 @@ final class IeducarWorkActivityQueries
                 if ($y <= 0) {
                     continue;
                 }
-                $fechado = self::interpretYearStatusValue($row->st ?? null);
+                $fechado = self::isAnoLetivoFechado($row->st ?? null, $col);
                 if (! isset($byYear[$y])) {
                     $byYear[$y] = ! $fechado;
 
@@ -724,7 +724,9 @@ final class IeducarWorkActivityQueries
                 $out[] = [
                     'year' => $y,
                     'state' => $open ? 'open' : 'closed',
-                    'state_label' => $open ? __('Em andamento') : __('Fechado'),
+                    'state_label' => $open
+                        ? __('Em andamento')
+                        : __('Fechado'),
                 ];
             }
             usort($out, static fn (array $a, array $b): int => $b['year'] <=> $a['year']);
@@ -761,15 +763,118 @@ final class IeducarWorkActivityQueries
         }
     }
 
-    private static function interpretYearStatusValue(mixed $value): bool
+    /**
+     * Indica se o valor da coluna de estado do ano letivo significa «fechado» no i-Educar.
+     *
+     * Convenções típicas: andamento 1 = em andamento, 2 = finalizado; ativo 1 = aberto;
+     * colunas booleanas fechado/encerrado: 1 = fechado.
+     */
+    public static function isAnoLetivoFechado(mixed $value, ?string $columnName = null): bool
     {
+        $col = strtolower(trim((string) $columnName));
+
+        if ($col === 'andamento') {
+            if (is_numeric($value)) {
+                $n = (int) $value;
+
+                return $n === 2;
+            }
+
+            return self::interpretSituacaoTextAsFechado($value);
+        }
+
+        if ($col === 'ativo') {
+            if (is_numeric($value)) {
+                return (int) $value !== 1;
+            }
+
+            return self::interpretSituacaoTextAsFechado($value);
+        }
+
+        if (in_array($col, ['fechado', 'encerrado', 'finalizado'], true)) {
+            return self::interpretBooleanFlagAsFechado($value);
+        }
+
+        return self::interpretSituacaoTextAsFechado($value);
+    }
+
+    /**
+     * @return array{fechado: bool, label: string}
+     */
+    public static function anoLetivoStateFromValue(mixed $value, ?string $columnName = null): array
+    {
+        $fechado = self::isAnoLetivoFechado($value, $columnName);
+        $col = strtolower(trim((string) $columnName));
+
+        $label = match ($col) {
+            'andamento' => match (true) {
+                is_numeric($value) && (int) $value === 1 => __('Em andamento'),
+                is_numeric($value) && (int) $value === 2 => __('Finalizado'),
+                is_numeric($value) && (int) $value === 3 => __('Em elaboração'),
+                default => trim((string) $value) !== '' ? (string) $value : ($fechado ? __('Fechado') : __('Em andamento')),
+            },
+            'ativo' => is_numeric($value)
+                ? ((int) $value === 1 ? __('Ativo (ano letivo)') : __('Inativo / encerrado'))
+                : ($fechado ? __('Inativo / encerrado') : __('Ativo (ano letivo)')),
+            default => trim((string) $value) !== ''
+                ? (string) $value
+                : ($fechado ? __('Fechado') : __('Em andamento')),
+        };
+
+        return ['fechado' => $fechado, 'label' => $label];
+    }
+
+    private static function interpretBooleanFlagAsFechado(mixed $value): bool
+    {
+        if ($value === null || $value === '') {
+            return false;
+        }
+
         $st = strtolower(trim((string) $value));
 
-        return in_array($st, ['1', 't', 'true', 'fechado', 'encerrado', 'concluido', 'finalizado'], true)
-            || str_contains($st, 'fech')
-            || str_contains($st, 'encerr')
+        return in_array($st, ['1', 't', 'true', 'yes', 'sim', 's'], true)
             || $value === 1
             || $value === true;
+    }
+
+    private static function interpretSituacaoTextAsFechado(mixed $value): bool
+    {
+        if ($value === null || $value === '') {
+            return false;
+        }
+
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_numeric($value)) {
+            $n = (int) $value;
+
+            return $n === 2 || $n === 0;
+        }
+
+        $st = strtolower(trim((string) $value));
+
+        if ($st === '') {
+            return false;
+        }
+
+        if (in_array($st, ['aberto', 'ativo', 'em andamento', 'andamento', 'corrente', 'nao', 'n', 'false', 'f', '0'], true)) {
+            return false;
+        }
+
+        if (preg_match('/\b(em\s+)?andamento\b/u', $st) === 1) {
+            return false;
+        }
+
+        if (in_array($st, ['fechado', 'encerrado', 'concluido', 'finalizado', 'inativo', 'sim', 's', 'true', 't', 'yes', '1'], true)) {
+            return true;
+        }
+
+        return str_contains($st, 'fech')
+            || str_contains($st, 'encerr')
+            || str_contains($st, 'finaliz')
+            || str_contains($st, 'inativ');
     }
 
     /**
@@ -803,7 +908,7 @@ final class IeducarWorkActivityQueries
                 'ano', 'ano_letivo', 'ref_cod_ano_letivo', 'nu_ano',
             ], $city);
             $statusCol = IeducarColumnInspector::firstExistingColumn($db, $table, [
-                'situacao', 'andamento', 'situacao_ano_letivo', 'status', 'fechado',
+                'andamento', 'ativo', 'situacao', 'situacao_ano_letivo', 'status',
             ], $city);
 
             if ($yearCol === null) {
@@ -816,27 +921,15 @@ final class IeducarWorkActivityQueries
                 if ($row === null) {
                     continue;
                 }
-                $st = strtolower(trim((string) ($row->st ?? '')));
-                $fechado = in_array($st, ['1', 't', 'true', 'fechado', 'encerrado', 'concluido', 'finalizado'], true)
-                    || str_contains($st, 'fech')
-                    || str_contains($st, 'encerr');
 
-                return [
-                    'fechado' => $fechado,
-                    'label' => (string) ($row->st ?? $st),
-                ];
+                return self::anoLetivoStateFromValue($row->st ?? null, $statusCol);
             }
 
             $boolCol = IeducarColumnInspector::firstExistingColumn($db, $table, ['fechado', 'encerrado', 'finalizado'], $city);
             if ($boolCol !== null) {
                 $row = $q->select($boolCol.' as f')->limit(1)->first();
                 if ($row !== null) {
-                    $v = $row->f ?? null;
-
-                    return [
-                        'fechado' => in_array((string) $v, ['1', 't', 'true'], true) || $v === 1 || $v === true,
-                        'label' => $v ? __('fechado') : __('aberto'),
-                    ];
+                    return self::anoLetivoStateFromValue($row->f ?? null, $boolCol);
                 }
             }
         }

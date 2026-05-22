@@ -109,6 +109,50 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         $this->assertNotEmpty($strip['status_issues']);
     }
 
+    public function test_enrollment_strip_uses_distorcao_for_saldo(): void
+    {
+        $strip = AnalyticsTabImpactBuilder::build('enrollment', true, [], [
+            'enrollmentData' => [
+                'distorcao' => ['com' => 50, 'sem' => 200, 'total' => 250, 'pct' => 20.0],
+            ],
+        ]);
+
+        $this->assertTrue($strip['ready']);
+        $this->assertNotNull($strip['saldo']);
+        $this->assertGreaterThan(0.0, $strip['saldo']['perda']);
+        $this->assertStringContainsString('distorção', strtolower((string) ($strip['saldo']['footnote'] ?? '')));
+    }
+
+    public function test_inclusion_strip_uses_recurso_prova_saldo(): void
+    {
+        $strip = AnalyticsTabImpactBuilder::build('inclusion', true, [], [
+            'inclusionData' => [
+                'recurso_prova' => ['sem_nee' => 12, 'nee_sem_recurso' => 3],
+            ],
+        ]);
+
+        $this->assertTrue($strip['ready']);
+        $this->assertNotNull($strip['saldo']);
+        $this->assertGreaterThan(0.0, $strip['saldo']['perda']);
+        $this->assertStringContainsString('VAAR', (string) ($strip['saldo']['footnote'] ?? ''));
+    }
+
+    public function test_performance_strip_shows_info_only_saldo(): void
+    {
+        $ctx = AnalyticsMunicipalityContext::fromFundingSnapshot([
+            'summary' => ['perda_estimada_anual' => 5000.0, 'ganho_potencial_anual' => 5000.0],
+        ], []);
+
+        $strip = AnalyticsTabImpactBuilder::build('performance', true, $ctx, [
+            'performanceData' => ['kpis' => []],
+        ]);
+
+        $this->assertTrue($strip['ready']);
+        $this->assertNotNull($strip['saldo']);
+        $this->assertTrue($strip['saldo']['info_only'] ?? false);
+        $this->assertSame(0.0, $strip['saldo']['perda']);
+    }
+
     public function test_network_strip_uses_idle_vacancies_for_saldo_when_discrepancies_zero(): void
     {
         $ctx = AnalyticsMunicipalityContext::fromFundingSnapshot([

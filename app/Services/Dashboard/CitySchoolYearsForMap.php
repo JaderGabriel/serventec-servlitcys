@@ -28,7 +28,7 @@ final class CitySchoolYearsForMap
         }
 
         return Cache::remember(
-            'dashboard.map.school_years.'.$city->id,
+            'dashboard.map.school_years.v2.'.$city->id,
             now()->addHour(),
             function () use ($city): array {
                 try {

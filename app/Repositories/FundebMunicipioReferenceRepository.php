@@ -93,4 +93,84 @@ class FundebMunicipioReferenceRepository
 
         return $updated;
     }
+
+    /**
+     * Matriz município × ano com VAAF e VAAT gravados em fundeb_municipio_references.
+     *
+     * @return array{
+     *     year_from: int,
+     *     year_to: int,
+     *     years: list<int>,
+     *     rows: list<array{
+     *         city_id: int,
+     *         name: string,
+     *         uf: ?string,
+     *         ibge: ?string,
+     *         has_ibge: bool,
+     *         is_active: bool,
+     *         years: array<int, array{has_reference: bool, vaaf: ?float, vaat: ?float, fonte: ?string}>
+     *     }>
+     * }
+     */
+    public function yearlyMatrix(int $yearFrom, int $yearTo): array
+    {
+        $yearFrom = min($yearFrom, $yearTo);
+        $yearTo = max($yearFrom, $yearTo);
+        $years = range($yearFrom, $yearTo);
+
+        $cities = City::query()->orderBy('name')->get(['id', 'name', 'uf', 'ibge_municipio', 'is_active']);
+
+        $refsByCity = [];
+        $refsByIbge = [];
+
+        foreach (FundebMunicipioReference::query()
+            ->whereBetween('ano', [$yearFrom, $yearTo])
+            ->get(['city_id', 'ibge_municipio', 'ano', 'vaaf', 'vaat', 'fonte']) as $ref) {
+            $ano = (int) $ref->ano;
+            $payload = [
+                'has_reference' => true,
+                'vaaf' => (float) $ref->vaaf,
+                'vaat' => $ref->vaat !== null ? (float) $ref->vaat : null,
+                'fonte' => $ref->fonte !== null && trim((string) $ref->fonte) !== '' ? trim((string) $ref->fonte) : null,
+            ];
+            if ($ref->city_id) {
+                $refsByCity[(int) $ref->city_id][$ano] = $payload;
+            }
+            if ($ref->ibge_municipio) {
+                $refsByIbge[(string) $ref->ibge_municipio][$ano] = $payload;
+            }
+        }
+
+        $rows = [];
+        foreach ($cities as $city) {
+            $ibge = self::normalizeIbge($city->ibge_municipio);
+            $yearCells = [];
+            foreach ($years as $ano) {
+                $cell = $refsByCity[(int) $city->id][$ano] ?? ($ibge !== null ? ($refsByIbge[$ibge][$ano] ?? null) : null);
+                $yearCells[$ano] = $cell ?? [
+                    'has_reference' => false,
+                    'vaaf' => null,
+                    'vaat' => null,
+                    'fonte' => null,
+                ];
+            }
+
+            $rows[] = [
+                'city_id' => (int) $city->id,
+                'name' => $city->name,
+                'uf' => $city->uf,
+                'ibge' => $ibge,
+                'has_ibge' => $ibge !== null,
+                'is_active' => (bool) $city->is_active,
+                'years' => $yearCells,
+            ];
+        }
+
+        return [
+            'year_from' => $yearFrom,
+            'year_to' => $yearTo,
+            'years' => $years,
+            'rows' => $rows,
+        ];
+    }
 }

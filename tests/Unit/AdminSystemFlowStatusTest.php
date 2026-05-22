@@ -24,8 +24,9 @@ final class AdminSystemFlowStatusTest extends TestCase
         $this->assertArrayHasKey('legend', $diagram);
         $this->assertCount(3, $diagram['legend']);
         $this->assertNotEmpty($diagram['legend'][0]['description'] ?? '');
-        $this->assertArrayHasKey('outputs', $diagram);
-        $this->assertGreaterThanOrEqual(3, count($diagram['outputs']));
+        $this->assertArrayHasKey('nodes', $diagram);
+        $this->assertArrayHasKey('edges', $diagram);
+        $this->assertGreaterThanOrEqual(5, count($diagram['nodes']));
     }
 
     #[Test]

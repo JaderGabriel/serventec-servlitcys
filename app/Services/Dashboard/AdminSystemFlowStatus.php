@@ -21,7 +21,6 @@ final class AdminSystemFlowStatus
      *     zones: list<array{id: string, title: string, description: string}>,
      *     nodes: list<array<string, mixed>>,
      *     edges: list<array<string, mixed>>,
-     *     outputs: list<array{label: string, description: string, route: string}>,
      *     legend: list<array{status: string, label: string, description: string}>
      * }
      */
@@ -168,28 +167,6 @@ final class AdminSystemFlowStatus
             ],
             'nodes' => $nodes,
             'edges' => $edges,
-            'outputs' => [
-                [
-                    'label' => __('Consultoria municipal'),
-                    'description' => __('Painel por município/ano'),
-                    'route' => 'dashboard.analytics',
-                ],
-                [
-                    'label' => __('Relatório PDF'),
-                    'description' => __('Exportação Serventec em fila'),
-                    'route' => 'admin.sync-queue.index',
-                ],
-                [
-                    'label' => __('Filas e sync'),
-                    'description' => __('Geo, FUNDEB, pedagógico'),
-                    'route' => 'admin.sync-queue.index',
-                ],
-                [
-                    'label' => __('Monitorização'),
-                    'description' => __('Pulse e diagnóstico'),
-                    'route' => 'pulse',
-                ],
-            ],
             'legend' => [
                 [
                     'status' => 'ok',

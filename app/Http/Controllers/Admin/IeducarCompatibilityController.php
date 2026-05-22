@@ -15,6 +15,7 @@ use App\Support\Ieducar\IeducarCompatibilityProbe;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class IeducarCompatibilityController extends Controller
 {
@@ -120,6 +121,57 @@ class IeducarCompatibilityController extends Controller
             'fundebCityChoices' => $fundebCityChoices,
             'fundebSelectedCityIds' => $fundebSelectedCityIds,
             'fundebSelectAllCities' => $fundebSelectAllCities,
+            'fundebYearlyMatrix' => $this->fundebReferences->yearlyMatrix(2022, 2026),
+        ]);
+    }
+
+    public function exportFundebMatrix(Request $request): StreamedResponse
+    {
+        $from = max(2000, (int) $request->input('from', 2022));
+        $to = min((int) date('Y') + 1, (int) $request->input('to', 2026));
+        if ($from > $to) {
+            [$from, $to] = [$to, $from];
+        }
+
+        $matrix = $this->fundebReferences->yearlyMatrix($from, $to);
+        $filename = sprintf('fundeb-vaaf-vaat-%d-%d.csv', $from, $to);
+
+        return response()->streamDownload(function () use ($matrix): void {
+            $out = fopen('php://output', 'w');
+            if ($out === false) {
+                return;
+            }
+            fwrite($out, "\xEF\xBB\xBF");
+
+            $header = [__('Município'), __('UF'), __('IBGE'), __('Activo')];
+            foreach ($matrix['years'] as $y) {
+                $header[] = __('VAAF :ano', ['ano' => $y]);
+                $header[] = __('VAAT :ano', ['ano' => $y]);
+            }
+            fputcsv($out, $header, ';');
+
+            foreach ($matrix['rows'] as $row) {
+                $line = [
+                    $row['name'],
+                    $row['uf'] ?? '',
+                    $row['ibge'] ?? '',
+                    ($row['is_active'] ?? false) ? '1' : '0',
+                ];
+                foreach ($matrix['years'] as $y) {
+                    $cell = is_array($row['years'][$y] ?? null) ? $row['years'][$y] : [];
+                    $line[] = ($cell['has_reference'] ?? false)
+                        ? number_format((float) ($cell['vaaf'] ?? 0), 2, '.', '')
+                        : '';
+                    $line[] = ($cell['vaat'] ?? null) !== null
+                        ? number_format((float) $cell['vaat'], 2, '.', '')
+                        : '';
+                }
+                fputcsv($out, $line, ';');
+            }
+
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 
@@ -335,5 +387,4 @@ class IeducarCompatibilityController extends Controller
 
         return $filters;
     }
-
 }

@@ -302,6 +302,7 @@ class InclusionRepository
 
         return [
             __('Todos os indicadores respeitam os filtros atuais (ano letivo, escola, segmento, turno) através da turma, com matrícula considerada ativa conforme config/ieducar.php.'),
+            __('O recorte opcional «Inclusão — recorte de matrículas» na barra de filtros aplica-se aos gráficos e tabelas de NEE; equidade, raça, distorção e recurso de prova continuam na rede completa do filtro.'),
             __('Distorção idade/série: em PostgreSQL com física e série, mostra-se a contagem por unidade escolar (referência 1 de março); caso contrário usa-se o gráfico de barras por série com quantidades de alunos com distorção (critério INEP +2 anos).'),
             __('Educação especial: com SQL personalizado (IEDUCAR_SQL_INCLUSION_GAUGE_*), as percentagens seguem a regra definida pelo município; sem SQL, usa-se o pivô aluno_deficiência (procurado em vários schemas) e o nome no cadastro de deficiências — pode divergir de outros relatórios.'),
             __('Cruzamento AEE: turmas «AEE» são identificadas por palavras-chave no nome da turma e do curso (config/ieducar.php, inclusão). Os segmentos das outras matrículas do mesmo aluno são heurísticos; ajuste IEDUCAR_INCLUSION_* se os rótulos não coincidirem com a rede.'),

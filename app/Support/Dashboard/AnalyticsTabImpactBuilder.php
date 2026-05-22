@@ -72,20 +72,7 @@ final class AnalyticsTabImpactBuilder
         $statusHelp = self::statusHelp($tab, $def, $ctx, $statusIssues, $statusMode);
         $metrics = self::tabMetrics($tab, $tabData, $ctx);
 
-        $perda = (float) ($ctx['perda_estimada_anual'] ?? 0);
-        $ganho = (float) ($ctx['ganho_potencial_anual'] ?? 0);
-        $liquido = (float) ($ctx['saldo_liquido'] ?? ($ganho - $perda));
-        $saldoFootnote = __('VAAF municipal × pesos Discrepâncias — não é repasse oficial.');
-
-        if ($tab === 'network') {
-            $networkSaldo = self::saldoFromNetworkOffer($tabData);
-            if ($networkSaldo !== null) {
-                $perda = $networkSaldo['perda'];
-                $ganho = $networkSaldo['ganho'];
-                $liquido = $networkSaldo['liquido'];
-                $saldoFootnote = $networkSaldo['footnote'];
-            }
-        }
+        $saldo = self::resolveTabSaldo($tab, $tabData, $ctx, $tabStatus);
 
         return [
             'ready' => true,
@@ -103,18 +90,7 @@ final class AnalyticsTabImpactBuilder
             'municipality_score' => (int) ($ctx['compliance_score'] ?? 0),
             'municipality_status' => (string) ($ctx['compliance_status'] ?? 'neutral'),
             'municipality_label' => (string) ($ctx['compliance_label'] ?? ''),
-            'saldo' => [
-                'perda' => $perda,
-                'perda_fmt' => DiscrepanciesFundingImpact::formatBrl($perda),
-                'ganho' => $ganho,
-                'ganho_fmt' => DiscrepanciesFundingImpact::formatBrl($ganho),
-                'liquido' => $liquido,
-                'liquido_fmt' => AnalyticsMunicipalityContext::formatSaldo($liquido),
-                'liquido_tone' => $liquido >= 0 ? 'success' : 'danger',
-                'footnote' => $saldoFootnote,
-                'tab_share_label' => $tabStatus['share_label'],
-                'tab_share_value' => $tabStatus['share_value'],
-            ],
+            'saldo' => $saldo,
             'metrics' => $metrics,
             'pendencias' => (int) ($ctx['pendencias_cadastro'] ?? 0),
             'matriculas' => $ctx['total_matriculas'] ?? null,
@@ -254,7 +230,7 @@ final class AnalyticsTabImpactBuilder
                 ? __(':n pendência(s) de cadastro no recorte', ['n' => $pend])
                 : __('Rede cadastrada no filtro'),
             'score' => $score,
-            'share_label' => __('Matrículas no filtro'),
+            'share_label' => __('Matrículas realizadas (filtro)'),
             'share_value' => number_format($mat, 0, ',', '.'),
         ];
     }
@@ -291,6 +267,92 @@ final class AnalyticsTabImpactBuilder
      * @param  array<string, mixed>  $tabData
      * @return array{perda: float, ganho: float, liquido: float, footnote: string}|null
      */
+    /**
+     * Abas em que o saldo municipal (Discrepâncias) é o valor principal.
+     *
+     * @return list<string>
+     */
+    private static function tabsWithMunicipalSaldo(): array
+    {
+        return [
+            'fundeb',
+            'other_funding',
+            'work_done',
+            'municipality_health',
+            'discrepancies',
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @param  array<string, mixed>  $ctx
+     * @param  array{status: string, label: string, score: ?int, share_label: ?string, share_value: ?string}  $tabStatus
+     * @return array<string, mixed>|null
+     */
+    private static function resolveTabSaldo(string $tab, array $tabData, array $ctx, array $tabStatus): ?array
+    {
+        $raw = match ($tab) {
+            'network' => self::saldoFromNetworkOffer($tabData),
+            'enrollment' => self::saldoFromEnrollmentDistorcao($tabData),
+            'inclusion' => self::saldoFromInclusion($tabData),
+            'school_units' => self::saldoFromSchoolUnitsGeo($tabData),
+            'overview' => self::saldoFromOverviewCadastro($ctx),
+            'performance', 'attendance' => self::saldoPedagogicoSemEstimativa(),
+            default => null,
+        };
+
+        if ($raw !== null) {
+            return self::formatSaldoStrip($raw, $tabStatus);
+        }
+
+        if (! in_array($tab, self::tabsWithMunicipalSaldo(), true)) {
+            return null;
+        }
+
+        $perda = (float) ($ctx['perda_estimada_anual'] ?? 0);
+        $ganho = (float) ($ctx['ganho_potencial_anual'] ?? 0);
+        if ($perda <= 0 && $ganho <= 0) {
+            return null;
+        }
+
+        return self::formatSaldoStrip([
+            'perda' => $perda,
+            'ganho' => $ganho,
+            'liquido' => (float) ($ctx['saldo_liquido'] ?? ($ganho - $perda)),
+            'footnote' => __('Soma indicativa das Discrepâncias no filtro (VAAF municipal × peso por rotina) — não é repasse oficial.'),
+        ], $tabStatus);
+    }
+
+    /**
+     * @param  array{perda: float, ganho: float, liquido: float, footnote: string, info_only?: bool}  $raw
+     * @param  array{share_label: ?string, share_value: ?string}  $tabStatus
+     * @return array<string, mixed>
+     */
+    private static function formatSaldoStrip(array $raw, array $tabStatus): array
+    {
+        $perda = (float) ($raw['perda'] ?? 0);
+        $ganho = (float) ($raw['ganho'] ?? 0);
+        $liquido = (float) ($raw['liquido'] ?? ($ganho - $perda));
+
+        return [
+            'perda' => $perda,
+            'perda_fmt' => DiscrepanciesFundingImpact::formatBrl($perda),
+            'ganho' => $ganho,
+            'ganho_fmt' => DiscrepanciesFundingImpact::formatBrl($ganho),
+            'liquido' => $liquido,
+            'liquido_fmt' => AnalyticsMunicipalityContext::formatSaldo($liquido),
+            'liquido_tone' => $liquido >= 0 ? 'success' : 'danger',
+            'footnote' => (string) ($raw['footnote'] ?? ''),
+            'info_only' => (bool) ($raw['info_only'] ?? false),
+            'tab_share_label' => $tabStatus['share_label'] ?? null,
+            'tab_share_value' => $tabStatus['share_value'] ?? null,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @return array{perda: float, ganho: float, liquido: float, footnote: string}|null
+     */
     private static function saldoFromNetworkOffer(array $tabData): ?array
     {
         $data = self::tabPayload($tabData, 'network');
@@ -320,6 +382,158 @@ final class AnalyticsTabImpactBuilder
                     'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
                     'taxa' => $taxa,
                 ]
+            ),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @return array{perda: float, ganho: float, liquido: float, footnote: string}|null
+     */
+    private static function saldoFromEnrollmentDistorcao(array $tabData): ?array
+    {
+        $data = self::tabPayload($tabData, 'enrollment');
+        $d = is_array($data['distorcao'] ?? null) ? $data['distorcao'] : [];
+        $com = (int) ($d['com'] ?? 0);
+        if ($com <= 0) {
+            return null;
+        }
+
+        $funding = DiscrepanciesFundingImpact::estimate('distorcao_idade_serie', $com);
+        $perda = (float) $funding['perda_anual'];
+        $ganho = (float) $funding['ganho_potencial_anual'];
+        $pct = isset($d['pct']) ? number_format((float) $d['pct'], 1, ',', '.') : '—';
+
+        return [
+            'perda' => $perda,
+            'ganho' => $ganho,
+            'liquido' => round($ganho - $perda, 2),
+            'footnote' => __(
+                ':n matrícula(s) com distorção idade-série (:p% da rede no filtro) × VAAF × peso :peso — risco Censo/VAAR-indicadores.',
+                [
+                    'n' => number_format($com, 0, ',', '.'),
+                    'p' => $pct,
+                    'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
+                ]
+            ),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @return array{perda: float, ganho: float, liquido: float, footnote: string}|null
+     */
+    private static function saldoFromInclusion(array $tabData): ?array
+    {
+        $data = self::tabPayload($tabData, 'inclusion');
+        $rec = is_array($data['recurso_prova'] ?? null) ? $data['recurso_prova'] : [];
+        $semNee = (int) ($rec['sem_nee'] ?? 0);
+        $neeSem = (int) ($rec['nee_sem_recurso'] ?? 0);
+
+        $perda = 0.0;
+        $ganho = 0.0;
+        $parts = [];
+
+        if ($semNee > 0) {
+            $e = DiscrepanciesFundingImpact::estimate('recurso_prova_sem_nee', $semNee);
+            $perda += (float) $e['perda_anual'];
+            $ganho += (float) $e['ganho_potencial_anual'];
+            $parts[] = __(':n recurso de prova sem NEE', ['n' => number_format($semNee, 0, ',', '.')]);
+        }
+        if ($neeSem > 0) {
+            $e = DiscrepanciesFundingImpact::estimate('nee_sem_recurso_prova', $neeSem);
+            $perda += (float) $e['perda_anual'];
+            $ganho += (float) $e['ganho_potencial_anual'];
+            $parts[] = __(':n NEE sem recurso de prova', ['n' => number_format($neeSem, 0, ',', '.')]);
+        }
+
+        if ($parts === []) {
+            return null;
+        }
+
+        return [
+            'perda' => round($perda, 2),
+            'ganho' => round($ganho, 2),
+            'liquido' => round($ganho - $perda, 2),
+            'footnote' => __(
+                'Eixo VAAR-inclusão: :detalhe. VAAF × pesos por tipo — não é repasse FNDE.',
+                ['detalhe' => implode('; ', $parts)]
+            ),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @return array{perda: float, ganho: float, liquido: float, footnote: string}|null
+     */
+    private static function saldoFromSchoolUnitsGeo(array $tabData): ?array
+    {
+        $data = self::tabPayload($tabData, 'school_units');
+        $tab = is_array($data['tab'] ?? null) ? $data['tab'] : [];
+        $dist = is_array($tab['geo_distribution'] ?? null) ? $tab['geo_distribution'] : [];
+        $escopo = (int) ($dist['escolas_no_escopo'] ?? 0);
+        $comCoord = (int) ($dist['total_com_coordenadas'] ?? 0);
+        $semPosicao = max(0, $escopo - $comCoord);
+
+        if ($semPosicao <= 0) {
+            return null;
+        }
+
+        $funding = DiscrepanciesFundingImpact::estimate('escola_sem_geo', $semPosicao);
+        $perda = (float) $funding['perda_anual'];
+        $ganho = (float) $funding['ganho_potencial_anual'];
+
+        return [
+            'perda' => $perda,
+            'ganho' => $ganho,
+            'liquido' => round($ganho - $perda, 2),
+            'footnote' => __(
+                ':n escola(s) no filtro sem posição no mapa (de :e no escopo) × VAAF × peso :peso — georreferenciação e INEP para VAAR/Censo.',
+                [
+                    'n' => number_format($semPosicao, 0, ',', '.'),
+                    'e' => number_format($escopo, 0, ',', '.'),
+                    'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
+                ]
+            ),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $ctx
+     * @return array{perda: float, ganho: float, liquido: float, footnote: string}|null
+     */
+    private static function saldoFromOverviewCadastro(array $ctx): ?array
+    {
+        $perda = (float) ($ctx['perda_estimada_anual'] ?? 0);
+        $ganho = (float) ($ctx['ganho_potencial_anual'] ?? 0);
+        if ($perda <= 0 && $ganho <= 0) {
+            return null;
+        }
+
+        $ocorrencias = (int) ($ctx['pendencias_cadastro'] ?? 0);
+
+        return [
+            'perda' => $perda,
+            'ganho' => $ganho,
+            'liquido' => (float) ($ctx['saldo_liquido'] ?? ($ganho - $perda)),
+            'footnote' => $ocorrencias > 0
+                ? __('Consolidado das Discrepâncias no filtro (:n ocorrência(s) com peso VAAF) — use a aba homónima para detalhe por escola e rotina.', ['n' => number_format($ocorrencias, 0, ',', '.')])
+                : __('Referência municipal das Discrepâncias (VAAF × pesos) — não é repasse oficial.'),
+        ];
+    }
+
+    /**
+     * @return array{perda: float, ganho: float, liquido: float, footnote: string, info_only: bool}
+     */
+    private static function saldoPedagogicoSemEstimativa(): array
+    {
+        return [
+            'perda' => 0.0,
+            'ganho' => 0.0,
+            'liquido' => 0.0,
+            'info_only' => true,
+            'footnote' => __(
+                'Esta aba não estima valores próprios. O impacto financeiro indicativo do cadastro está em Discrepâncias e FUNDEB; use Inclusão para o eixo VAAR-inclusão.'
             ),
         ];
     }
@@ -911,35 +1125,138 @@ final class AnalyticsTabImpactBuilder
     private static function tabMetrics(string $tab, array $tabData, array $ctx): array
     {
         $out = [];
-        if (($ctx['pendencias_cadastro'] ?? 0) > 0) {
+
+        match ($tab) {
+            'enrollment' => self::pushEnrollmentMetrics($out, $tabData),
+            'network' => self::pushNetworkMetrics($out, $tabData),
+            'inclusion' => self::pushInclusionMetrics($out, $tabData),
+            'school_units' => self::pushSchoolUnitsMetrics($out, $tabData),
+            'overview' => self::pushOverviewMetrics($out, $ctx),
+            default => null,
+        };
+
+        $showMunicipalFinance = in_array($tab, self::tabsWithMunicipalSaldo(), true) || $tab === 'overview';
+
+        if ($showMunicipalFinance && ($ctx['perda_estimada_anual'] ?? 0) > 0) {
             $out[] = [
-                'label' => __('Pendências cadastro'),
-                'value' => (string) (int) $ctx['pendencias_cadastro'],
-                'tone' => 'warning',
-            ];
-        }
-        if (($ctx['perda_estimada_anual'] ?? 0) > 0) {
-            $out[] = [
-                'label' => __('Perda est. (ano)'),
+                'label' => $tab === 'overview' ? __('Perda est. municipal') : __('Perda est. (ano)'),
                 'value' => DiscrepanciesFundingImpact::formatBrl((float) $ctx['perda_estimada_anual']),
                 'tone' => 'danger',
             ];
         }
-        if (($ctx['ganho_potencial_anual'] ?? 0) > 0) {
+        if ($showMunicipalFinance && ($ctx['ganho_potencial_anual'] ?? 0) > 0) {
             $out[] = [
-                'label' => __('Ganho potencial'),
+                'label' => $tab === 'overview' ? __('Ganho pot. municipal') : __('Ganho potencial'),
                 'value' => DiscrepanciesFundingImpact::formatBrl((float) $ctx['ganho_potencial_anual']),
                 'tone' => 'success',
             ];
         }
-        if (($ctx['total_matriculas'] ?? null) !== null) {
+
+        if (($ctx['pendencias_cadastro'] ?? 0) > 0 && ! in_array($tab, ['discrepancies', 'municipality_health'], true)) {
             $out[] = [
-                'label' => __('Matrículas (filtro)'),
+                'label' => __('Ocorr. Discrepâncias'),
+                'value' => (string) (int) $ctx['pendencias_cadastro'],
+                'tone' => 'warning',
+            ];
+        }
+
+        if (($ctx['total_matriculas'] ?? null) !== null && in_array($tab, ['overview', 'enrollment', 'inclusion'], true)) {
+            $out[] = [
+                'label' => __('Matrículas realizadas (filtro)'),
                 'value' => number_format((int) $ctx['total_matriculas'], 0, ',', '.'),
                 'tone' => 'neutral',
             ];
         }
 
         return array_slice($out, 0, 4);
+    }
+
+    /**
+     * @param  list<array{label: string, value: string, tone?: string}>  $out
+     */
+    private static function pushEnrollmentMetrics(array &$out, array $tabData): void
+    {
+        $data = self::tabPayload($tabData, 'enrollment');
+        $d = is_array($data['distorcao'] ?? null) ? $data['distorcao'] : [];
+        if (isset($d['pct'])) {
+            $out[] = [
+                'label' => __('Distorção idade-série'),
+                'value' => number_format((float) $d['pct'], 1, ',', '.').'%',
+                'tone' => ((float) $d['pct']) >= 15 ? 'danger' : 'warning',
+            ];
+        }
+        $kpis = is_array($data['kpis'] ?? null) ? $data['kpis'] : [];
+        if (($kpis['matriculas'] ?? null) !== null) {
+            $out[] = [
+                'label' => __('Matrículas (aba)'),
+                'value' => number_format((int) $kpis['matriculas'], 0, ',', '.'),
+                'tone' => 'neutral',
+            ];
+        }
+    }
+
+    /**
+     * @param  list<array{label: string, value: string, tone?: string}>  $out
+     */
+    private static function pushNetworkMetrics(array &$out, array $tabData): void
+    {
+        $data = self::tabPayload($tabData, 'network');
+        $k = is_array($data['kpis'] ?? null) ? $data['kpis'] : [];
+        if (($k['vagas_ociosas'] ?? 0) > 0) {
+            $out[] = [
+                'label' => __('Vagas ociosas'),
+                'value' => number_format((int) $k['vagas_ociosas'], 0, ',', '.'),
+                'tone' => 'warning',
+            ];
+        }
+    }
+
+    /**
+     * @param  list<array{label: string, value: string, tone?: string}>  $out
+     */
+    private static function pushInclusionMetrics(array &$out, array $tabData): void
+    {
+        $data = self::tabPayload($tabData, 'inclusion');
+        $rec = is_array($data['recurso_prova'] ?? null) ? $data['recurso_prova'] : [];
+        if (($rec['sem_nee'] ?? 0) > 0) {
+            $out[] = [
+                'label' => __('Recurso sem NEE'),
+                'value' => number_format((int) $rec['sem_nee'], 0, ',', '.'),
+                'tone' => 'danger',
+            ];
+        }
+    }
+
+    /**
+     * @param  list<array{label: string, value: string, tone?: string}>  $out
+     */
+    private static function pushSchoolUnitsMetrics(array &$out, array $tabData): void
+    {
+        $data = self::tabPayload($tabData, 'school_units');
+        $tab = is_array($data['tab'] ?? null) ? $data['tab'] : [];
+        $dist = is_array($tab['geo_distribution'] ?? null) ? $tab['geo_distribution'] : [];
+        $sem = max(0, (int) ($dist['escolas_no_escopo'] ?? 0) - (int) ($dist['total_com_coordenadas'] ?? 0));
+        if ($sem > 0) {
+            $out[] = [
+                'label' => __('Sem posição no mapa'),
+                'value' => (string) $sem,
+                'tone' => 'warning',
+            ];
+        }
+    }
+
+    /**
+     * @param  list<array{label: string, value: string, tone?: string}>  $out
+     * @param  array<string, mixed>  $ctx
+     */
+    private static function pushOverviewMetrics(array &$out, array $ctx): void
+    {
+        if (($ctx['escolas_afetadas'] ?? 0) > 0) {
+            $out[] = [
+                'label' => __('Escolas afetadas'),
+                'value' => (string) (int) $ctx['escolas_afetadas'],
+                'tone' => 'warning',
+            ];
+        }
     }
 }

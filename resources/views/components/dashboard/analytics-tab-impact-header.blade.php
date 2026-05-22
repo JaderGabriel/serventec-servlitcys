@@ -51,7 +51,9 @@
     @else
         <div class="px-4 py-4 space-y-3">
             <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Impacto no saldo (indicativo)') }}</p>
-            @if ($saldo !== null)
+            @if ($saldo !== null && ($saldo['info_only'] ?? false))
+                <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ $saldo['footnote'] ?? '' }}</p>
+            @elseif ($saldo !== null)
                 <div class="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
                     <div class="rounded-lg border border-rose-200/80 dark:border-rose-900/50 bg-rose-50/60 dark:bg-rose-950/25 px-3 py-2">
                         <p class="text-[10px] uppercase text-rose-800/80 dark:text-rose-300/80">{{ __('Perda est./ano') }}</p>

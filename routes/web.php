@@ -85,6 +85,7 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(func
 
     Route::get('/admin/ieducar-compatibility', [IeducarCompatibilityController::class, 'index'])->name('admin.ieducar-compatibility.index');
     Route::get('/admin/ieducar-compatibility/export', [IeducarCompatibilityController::class, 'export'])->name('admin.ieducar-compatibility.export');
+    Route::get('/admin/ieducar-compatibility/fundeb-matrix-export', [IeducarCompatibilityController::class, 'exportFundebMatrix'])->name('admin.ieducar-compatibility.fundeb-matrix-export');
     Route::post('/admin/ieducar-compatibility/fundeb-import', [IeducarCompatibilityController::class, 'importFundeb'])->name('admin.ieducar-compatibility.fundeb-import');
     Route::post('/admin/ieducar-compatibility/fundeb-import-bulk', [IeducarCompatibilityController::class, 'importFundebBulk'])->name('admin.ieducar-compatibility.fundeb-import-bulk');
     Route::post('/admin/ieducar-compatibility/fundeb-sync-all', [IeducarCompatibilityController::class, 'syncFundebAll'])->name('admin.ieducar-compatibility.fundeb-sync-all');

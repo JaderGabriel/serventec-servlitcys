@@ -411,16 +411,19 @@ class SchoolUnitsRepository
                 EscolaSubstatusResolver::applyLeftJoinCatalog($q, $db, 'e', 'ssub', $subSpec);
             }
 
+            $mId = (string) config('ieducar.columns.matricula.id');
+            $distinctMat = 'COUNT(DISTINCT '.$g->wrap('m').'.'.$g->wrap($mId).')';
+
             if ($eActive !== null) {
                 $q->selectRaw('e.'.$eId.' as eid')
                     ->selectRaw('MAX('.$en['expr'].') as escola_nome')
                     ->selectRaw('e.'.$eActive.' as escola_ativo')
-                    ->selectRaw('COUNT(*) as c')
+                    ->selectRaw($distinctMat.' as c')
                     ->groupBy('e.'.$eId, 'e.'.$eActive);
             } else {
                 $q->selectRaw('e.'.$eId.' as eid')
                     ->selectRaw('MAX('.$en['expr'].') as escola_nome')
-                    ->selectRaw('COUNT(*) as c')
+                    ->selectRaw($distinctMat.' as c')
                     ->groupBy('e.'.$eId);
             }
 

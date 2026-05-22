@@ -39,12 +39,12 @@
         'tabData' => ['inclusionData' => $inclusionData],
     ])
 
-    @if ($selectedCity && $filters)
-        <x-dashboard.inclusion-tab-filters
-            :city="$selectedCity"
-            :filters="$filters"
-            :yearFilterReady="$yearFilterReady"
-        />
+    @if (! empty($inclusionData['inclusion_filters_active'] ?? []))
+        <div class="rounded-md border border-violet-200/80 dark:border-violet-800/50 bg-violet-50/50 dark:bg-violet-950/25 px-4 py-2.5 text-xs text-violet-900 dark:text-violet-100">
+            <span class="font-semibold">{{ __('Recorte activo:') }}</span>
+            {{ implode(' · ', $inclusionData['inclusion_filters_active']) }}
+            <span class="text-violet-700/80 dark:text-violet-300/80"> — {{ __('altere em Filtros acima (aba Inclusão).') }}</span>
+        </div>
     @endif
 
     <div class="rounded-lg border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-3">
