@@ -113,6 +113,138 @@
             hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-500 dark:hover:bg-slate-800;
     }
 
+    /* Painel RX — tons de coluna (vigente / anterior / comparativo / meta) */
+    .serv-rx-th {
+        @apply text-[11px] uppercase tracking-wide font-semibold border-b-2;
+    }
+
+    .serv-rx-th--neutral {
+        @apply bg-slate-50 text-slate-600 border-slate-200
+            dark:bg-slate-800/90 dark:text-slate-400 dark:border-slate-600;
+    }
+
+    .serv-rx-th--vigente {
+        @apply bg-teal-50/95 text-teal-900 border-teal-400
+            dark:bg-teal-950/50 dark:text-teal-100 dark:border-teal-600;
+    }
+
+    .serv-rx-th--anterior {
+        @apply bg-slate-100/95 text-slate-700 border-slate-400
+            dark:bg-slate-800/80 dark:text-slate-300 dark:border-slate-500;
+    }
+
+    .serv-rx-th--comparativo {
+        @apply bg-indigo-50/95 text-indigo-900 border-indigo-400
+            dark:bg-indigo-950/45 dark:text-indigo-100 dark:border-indigo-600;
+    }
+
+    .serv-rx-th--meta {
+        @apply bg-violet-50/95 text-violet-900 border-violet-400
+            dark:bg-violet-950/40 dark:text-violet-100 dark:border-violet-600;
+    }
+
+    .serv-rx-th-group {
+        @apply text-[10px] font-bold uppercase tracking-wider px-2 py-1 text-center border-b border-slate-200/80
+            dark:border-slate-700;
+    }
+
+    .serv-rx-th-group--neutral {
+        @apply bg-slate-50/80 text-slate-500 dark:bg-slate-800/60 dark:text-slate-400;
+    }
+
+    .serv-rx-th-group--vigente {
+        @apply bg-teal-50/70 text-teal-800/90 dark:bg-teal-950/35 dark:text-teal-200/90;
+    }
+
+    .serv-rx-th-group--comparativo {
+        @apply bg-indigo-50/70 text-indigo-800/90 dark:bg-indigo-950/30 dark:text-indigo-200/90;
+    }
+
+    .serv-rx-th-group--meta {
+        @apply bg-violet-50/70 text-violet-800/90 dark:bg-violet-950/30 dark:text-violet-200/90;
+    }
+
+    .serv-rx-td--neutral {
+        @apply bg-white dark:bg-slate-900/40;
+    }
+
+    .serv-rx-td--vigente {
+        @apply bg-teal-50/30 dark:bg-teal-950/20;
+    }
+
+    .serv-rx-td--comparativo {
+        @apply bg-indigo-50/30 dark:bg-indigo-950/20;
+    }
+
+    .serv-rx-td--meta {
+        @apply bg-violet-50/25 dark:bg-violet-950/20;
+    }
+
+    .serv-rx-val--vigente {
+        @apply font-semibold tabular-nums text-teal-950 dark:text-teal-50;
+    }
+
+    .serv-rx-val--anterior {
+        @apply block text-[10px] tabular-nums text-slate-600 dark:text-slate-400
+            border-t border-slate-200/80 dark:border-slate-600/60 mt-1 pt-1;
+    }
+
+    .serv-rx-val--meta-ref {
+        @apply text-[10px] text-slate-600 dark:text-slate-400;
+    }
+
+    .serv-rx-val--meta-alvo {
+        @apply block text-[10px] text-violet-800 dark:text-violet-200;
+    }
+
+    .serv-rx-chip {
+        @apply inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium;
+    }
+
+    .serv-rx-chip--vigente {
+        @apply border-teal-300/80 bg-teal-50 text-teal-900 dark:border-teal-700 dark:bg-teal-950/50 dark:text-teal-100;
+    }
+
+    .serv-rx-chip--anterior {
+        @apply border-slate-300/80 bg-slate-100 text-slate-700 dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-300;
+    }
+
+    .serv-rx-chip--comparativo {
+        @apply border-indigo-300/80 bg-indigo-50 text-indigo-900 dark:border-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-100;
+    }
+
+    .serv-rx-chip--meta {
+        @apply border-violet-300/80 bg-violet-50 text-violet-900 dark:border-violet-700 dark:bg-violet-950/50 dark:text-violet-100;
+    }
+
+    .serv-rx-chip-swatch--vigente {
+        @apply bg-teal-500 dark:bg-teal-400;
+    }
+
+    .serv-rx-chip-swatch--anterior {
+        @apply bg-slate-400 dark:bg-slate-500;
+    }
+
+    .serv-rx-chip-swatch--comparativo {
+        @apply bg-indigo-500 dark:bg-indigo-400;
+    }
+
+    .serv-rx-chip-swatch--meta {
+        @apply bg-violet-500 dark:bg-violet-400;
+    }
+
+    .serv-rx-table tbody tr:hover .serv-rx-td--vigente {
+        @apply bg-teal-50/50 dark:bg-teal-950/30;
+    }
+
+    .serv-rx-table tbody tr:hover .serv-rx-td--comparativo {
+        @apply bg-indigo-50/40 dark:bg-indigo-950/30;
+    }
+
+    .serv-rx-table tbody tr:hover .serv-rx-td--meta {
+        @apply bg-violet-50/40 dark:bg-violet-950/30;
+    }
+
     .serv-municipality-strip {
         @apply rounded-xl bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 px-4 py-4 sm:px-5 sm:py-5 shadow-md ring-1 ring-teal-500/20;
     }

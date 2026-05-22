@@ -30,9 +30,13 @@ final class RxSemaphore
 
         $prog = $row['progresso_cadastro_pct'] ?? null;
         $rest = (int) ($row['registros_restantes'] ?? 0);
+        $faltaTur = (int) ($row['falta_turmas'] ?? 0);
+        $faltaMat = (int) ($row['falta_matriculas'] ?? 0);
         $metaMat = (int) ($row['meta_matriculas_alvo'] ?? 0);
+        $metaTur = (int) ($row['meta_turmas_alvo'] ?? 0);
+        $hasMeta = $metaMat > 0 || $metaTur > 0;
 
-        if ($metaMat > 0 && ($prog !== null && (float) $prog >= 100.0 || $rest === 0)) {
+        if ($hasMeta && ($prog !== null && (float) $prog >= 100.0 || $rest === 0)) {
             return [
                 'status' => 'green',
                 'label' => __('Meta OK'),
@@ -54,9 +58,10 @@ final class RxSemaphore
         return [
             'status' => 'red',
             'label' => __('Atenção'),
-            'title' => __('Abaixo da meta de cadastro (:pct% concluído; :rest registos em falta).', [
+            'title' => __('Abaixo da meta (:pct% concluído). Em falta: :tur turma(s), :mat matrícula(s).', [
                 'pct' => $prog !== null ? number_format($progF, 1, ',', '.') : '0',
-                'rest' => number_format($rest, 0, ',', '.'),
+                'tur' => number_format($faltaTur, 0, ',', '.'),
+                'mat' => number_format($faltaMat, 0, ',', '.'),
             ]),
         ];
     }

@@ -385,7 +385,7 @@ final class IeducarWorkActivityQueries
     ): array {
         $metaTurmas = max(0, (int) $baseline['turmas']);
         $metaMatriculas = max(0, (int) $baseline['matriculas']);
-        $metaEnturmacoes = max(0, (int) ($baseline['enturmacoes'] ?? $metaMatriculas));
+        $metaEnturmacoes = max(0, (int) ($baseline['enturmacoes'] ?? 0));
 
         $restTurmas = max(0, $metaTurmas - $currentTurmas);
         $restMatriculas = max(0, $metaMatriculas - $currentMatriculas);

@@ -14,7 +14,22 @@
         </p>
         <dl class="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 text-xs">
             @foreach ($columns as $col)
-                <div class="rounded-md border border-slate-200/80 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 px-3 py-2.5">
+                @php
+                    $tone = \App\Support\Rx\RxColumnTone::forColumn((string) ($col['key'] ?? ''));
+                    $toneBorder = match ($tone) {
+                        'vigente' => 'border-teal-300/80 dark:border-teal-700',
+                        'comparativo' => 'border-indigo-300/80 dark:border-indigo-700',
+                        'meta' => 'border-violet-300/80 dark:border-violet-700',
+                        default => 'border-slate-200/80 dark:border-slate-700',
+                    };
+                    $toneBg = match ($tone) {
+                        'vigente' => 'bg-teal-50/40 dark:bg-teal-950/25',
+                        'comparativo' => 'bg-indigo-50/40 dark:bg-indigo-950/25',
+                        'meta' => 'bg-violet-50/40 dark:bg-violet-950/25',
+                        default => 'bg-slate-50/50 dark:bg-slate-800/40',
+                    };
+                @endphp
+                <div class="rounded-md border {{ $toneBorder }} {{ $toneBg }} px-3 py-2.5">
                     <dt class="font-semibold text-slate-800 dark:text-slate-100">{{ $col['title'] ?? '' }}</dt>
                     <dd class="mt-1 text-slate-600 dark:text-slate-400 leading-relaxed">{{ $col['description'] ?? '' }}</dd>
                 </div>

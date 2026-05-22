@@ -38,7 +38,7 @@ final class RxColumnHelp
             [
                 'key' => 'delta',
                 'title' => __('Δ vs :ano', ['ano' => $anteriorYear]),
-                'description' => __('Diferença absoluta e percentual das matrículas vigentes face ao ano :ano imediato (não usa a meta ajustada).', ['ano' => $anteriorYear]),
+                'description' => __('Diferença das matrículas vigentes face ao ano :ano imediato (não é a meta). Se :ano estiver zerado e houver matrículas no vigente, mostra «novo cadastro» em vez de percentual.', ['ano' => $anteriorYear]),
             ],
             [
                 'key' => 'turmas',
@@ -65,12 +65,12 @@ final class RxColumnHelp
             [
                 'key' => 'progresso',
                 'title' => __('Progresso cad.'),
-                'description' => __('Percentagem das matrículas vigentes face à meta de matrículas (após fator de saltos).'),
+                'description' => __('Percentagem face à meta (turmas e matrículas com alvo > 0): usa o menor progresso entre as dimensões — o gargalo define o semáforo.'),
             ],
             [
                 'key' => 'falta',
                 'title' => __('Em falta'),
-                'description' => __('Soma estimada de turmas, matrículas e enturmações ainda abaixo da meta.'),
+                'description' => __('Turmas e matrículas ainda abaixo da meta alvo (não soma enturmações, para evitar duplicar o mesmo cadastro).'),
             ],
             [
                 'key' => 'dias',

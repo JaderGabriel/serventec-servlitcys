@@ -213,13 +213,19 @@ final class RxCityMetricsCollector
         $concluidas = $exportadas + $fechadas;
         $pctCenso = $totalEsc > 0 ? round(100.0 * $concluidas / $totalEsc, 1) : null;
 
-        $delta = $matV - $matA;
-        $deltaPct = $matA > 0 ? round(100.0 * $delta / $matA, 1) : null;
-
+        $metaTurmas = (int) ($baselineResolved['turmas'] ?? 0);
         $metaMat = (int) ($baselineResolved['matriculas'] ?? 0);
-        $progresso = $metaMat > 0 && isset($estimativa['progresso_matriculas_pct'])
-            ? (float) $estimativa['progresso_matriculas_pct']
-            : null;
+        $metaEnt = (int) ($baselineResolved['enturmacoes'] ?? 0);
+
+        $gap = RxCadastroGap::compute(
+            $metaTurmas,
+            $metaMat,
+            $metaEnt,
+            $turmasV,
+            $matV,
+            $entV,
+        );
+        $deltaInfo = RxCadastroGap::matriculasDelta($matV, $matA);
 
         $row = array_merge($base, [
             'ok' => true,
@@ -231,10 +237,16 @@ final class RxCityMetricsCollector
             'turmas_anterior' => $turmasA,
             'enturmacoes_vigente' => $entV,
             'enturmacoes_anterior' => $entA,
-            'matriculas_delta' => $delta,
-            'matriculas_delta_pct' => $deltaPct,
-            'progresso_cadastro_pct' => $progresso,
-            'registros_restantes' => (int) ($estimativa['registros_restantes_estimados'] ?? 0),
+            'matriculas_delta' => $deltaInfo['delta'],
+            'matriculas_delta_pct' => $deltaInfo['delta_pct'],
+            'matriculas_delta_sem_base' => $deltaInfo['delta_sem_base'],
+            'progresso_cadastro_pct' => $gap['progresso_cadastro_pct'],
+            'progresso_turmas_pct' => $gap['progresso_turmas_pct'],
+            'progresso_matriculas_pct' => $gap['progresso_matriculas_pct'],
+            'falta_turmas' => $gap['falta_turmas'],
+            'falta_matriculas' => $gap['falta_matriculas'],
+            'falta_enturmacoes' => $gap['falta_enturmacoes'],
+            'registros_restantes' => $gap['registros_restantes'],
             'dias_para_meta' => $estimativa['dias_para_concluir_ritmo_atual'] ?? null,
             'horas_estimadas' => $estimativa['horas_totais_estimadas'] ?? null,
             'meta_referencia_ano' => (int) ($baselineResolved['referencia_ano'] ?? 0),
@@ -245,9 +257,9 @@ final class RxCityMetricsCollector
             'meta_fator' => (float) ($baselineResolved['fator_meta'] ?? 1.0),
             'meta_acrescimo_pct' => (float) ($baselineResolved['acrescimo_pct'] ?? 0.0),
             'meta_encontrou_referencia' => (bool) ($baselineResolved['encontrou_referencia'] ?? false),
-            'meta_turmas_alvo' => (int) ($baselineResolved['turmas'] ?? 0),
+            'meta_turmas_alvo' => $metaTurmas,
             'meta_matriculas_alvo' => $metaMat,
-            'meta_enturmacoes_alvo' => (int) ($baselineResolved['enturmacoes'] ?? 0),
+            'meta_enturmacoes_alvo' => $metaEnt,
             'censo' => [
                 'available' => (bool) ($censo['available'] ?? false),
                 'total_escolas' => $totalEsc,
@@ -294,7 +306,13 @@ final class RxCityMetricsCollector
             'enturmacoes_anterior' => 0,
             'matriculas_delta' => 0,
             'matriculas_delta_pct' => null,
+            'matriculas_delta_sem_base' => false,
             'progresso_cadastro_pct' => null,
+            'progresso_turmas_pct' => null,
+            'progresso_matriculas_pct' => null,
+            'falta_turmas' => 0,
+            'falta_matriculas' => 0,
+            'falta_enturmacoes' => 0,
             'registros_restantes' => 0,
             'dias_para_meta' => null,
             'horas_estimadas' => null,
