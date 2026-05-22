@@ -187,4 +187,18 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 
 ---
 
+## 15. Qualidade de cadastro e integrações (relatórios confiáveis)
+
+| Tema | Decisão | Implicação |
+|------|---------|------------|
+| Prioridade de dados | i-Educar administrativo alinhado ao Censo **antes** de interpretar VAAF/SAEB | Discrepâncias e PDF são ferramentas de **correcção**, não substituto de exportação |
+| INEP escola | `educacenso_cod_escola` obrigatório para unidades com alunos | Sem INEP: mapa, SAEB por escola e cruzamentos federais degradam |
+| NEE vs recurso prova | Domínios separados no produto e nos checks | Óculos na prova ≠ NEE automático — revisão pedagógica |
+| Sync massiva | `weekly-mass-sync:run` com checkpoint retomável | Geo + FUNDEB + repasses + SAEB; timeouts longos na fila |
+| Evolução de módulos | Lista viva em doc dedicado, não só backlog técnico | Secretaria e TI partilham o mesmo roteiro |
+
+**Doc:** [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md).
+
+---
+
 *Índice geral: [README.md](README.md).*

@@ -62,6 +62,7 @@ Os restantes ficheiros são **aprofundamento** por tema. Itens de backlog que ap
 
 | Documento | Conteúdo |
 |-----------|----------|
+| [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) | **O que plugar na app**, módulos i-Educar a fortalecer e **campos a preencher com rigor** (relatórios confiáveis) |
 | [DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md](DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md) | Histórico do roadmap NEE / recurso de prova / geo (muitos itens já entregues) |
 
 ### Arquitectura e revisão técnica
@@ -114,7 +115,8 @@ Faixa superior (até Censo): **impacto no saldo indicativo** + **status no filtr
 1. Alteração **visível** no produto → actualizar [STATUS_PROJETO.md](STATUS_PROJETO.md) e, se for release, [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) + `config/documentation.php` (`product.*`).
 2. Nova **decisão técnica** ou mudança de regra → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
 3. Nova **funcionalidade planeada** → [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (uma linha; link opcional para doc temático).
-4. Evitar criar novos ficheiros «roadmap» soltos; usar backlog central + doc temático só se o tema for grande (ex.: finanças).
+4. Sugestão de **cadastro i-Educar / integração** → [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) + linha no backlog §F.
+5. Evitar criar novos ficheiros «roadmap» soltos; usar backlog central + doc temático só se o tema for grande (ex.: finanças).
 
 ---
 

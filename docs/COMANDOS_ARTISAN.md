@@ -96,7 +96,31 @@ php artisan ieducar:schema-probe 1 --output=storage/app/schema_probe_1.json
 
 ---
 
-## 5. Operação (deploy / dev)
+## 5. Sincronização massiva e fila admin
+
+| Comando | Descrição |
+|---------|-----------|
+| `weekly-mass-sync:run` | Enfileira sync semanal: geo pipeline (por município), FUNDEB multi-ano, repasses, Censo matrículas, SAEB, agregados geo — **checkpoint retomável** |
+| `weekly-mass-sync:run --resume=ID` | Retoma tarefa falhada (`system::weekly_mass_sync`) |
+| `admin-sync:work` | Worker da fila `admin-sync` (geo, pedagógico, FUNDEB, massiva) |
+
+**Fila / UI:** `/admin/sync-queue`
+
+**Variáveis:** `IEDUCAR_WEEKLY_MASS_SYNC_*`, `ADMIN_SYNC_*` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md)
+
+**Agenda:** domingo (configurável) via `schedule:run` — ver [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md)
+
+```bash
+php artisan weekly-mass-sync:run
+php artisan weekly-mass-sync:run --resume=42
+php artisan admin-sync:work --stop-when-empty --max-time=14400
+```
+
+Ver roteiro de dados e cadastro: [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md).
+
+---
+
+## 6. Operação (deploy / dev)
 
 ```bash
 php artisan migrate --force          # produção
@@ -123,7 +147,7 @@ Ou: `composer run dev` (se configurado no `composer.json`).
 
 ---
 
-## 6. Relação comando ↔ interface
+## 7. Relação comando ↔ interface
 
 | Área | CLI principal | Admin |
 |------|----------------|-------|
@@ -131,5 +155,6 @@ Ou: `composer run dev` (se configurado no `composer.json`).
 | SAEB | `saeb:sync-microdados` | Pedagogical-sync |
 | FUNDEB | `fundeb:import-api` | ieducar-compatibility |
 | Schema | `ieducar:schema-probe` | ieducar-compatibility |
+| **Massiva semanal** | `weekly-mass-sync:run` | sync-queue (retomar) |
 
 O catálogo em código (`App\Support\Console\ArtisanCommandsCatalog`) alimenta a tela admin; ao acrescentar comandos novos, actualize o catálogo e este documento.

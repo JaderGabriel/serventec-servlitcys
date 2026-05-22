@@ -3,7 +3,7 @@
 **Data de referência:** maio de 2026  
 **Âmbito:** planeamento de evolução do painel servlitcys (i-Educar municipal) para capturar inconsistências pedagógicas e de Censo, com foco em educação especial e falhas de dados semelhantes às já identificadas em produção.
 
-**Documentos relacionados:** [README.md](README.md) (índice) · [STATUS_PROJETO.md](STATUS_PROJETO.md) · [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (secção **D**) · [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §7–8.
+**Documentos relacionados:** [README.md](README.md) (índice) · [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) (roteiro ampliado cadastro + integrações) · [STATUS_PROJETO.md](STATUS_PROJETO.md) · [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (secção **D** e **F**) · [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §7–8 e §15.
 
 > **Nota:** grande parte do roadmap abaixo está **concluída** (MVP recurso×NEE, geo, VAAF). Manter o ficheiro como histórico e especificação; novos itens vão para o backlog central.
 

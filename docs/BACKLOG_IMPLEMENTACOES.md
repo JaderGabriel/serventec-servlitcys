@@ -86,7 +86,23 @@ Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento
 
 ---
 
-## F. Concluídos recentemente (arquivo — não reabrir)
+## F. Plugins, integrações e cadastro i-Educar
+
+Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md).
+
+| ID | Prioridade | Item | Estado | Referência |
+|----|------------|------|--------|------------|
+| PLG-01 | P2 | Série histórica abandono/evasão (vários anos letivos) | Pendente | PLUGINS §5.3 |
+| PLG-02 | P2 | Série IDEB municipal no painel | Pendente | PLUGINS §5.3 |
+| PLG-03 | P2 | PNAE/transporte × NEE (se schema i-Educar existir) | Pendente | PLUGINS §5.3, backlog CAD-03 |
+| PLG-04 | P2 | Validação pós-export Educacenso (recurso×NEE) | Pendente | PLUGINS §5.3, CAD-04 |
+| PLG-05 | P2 | Ranking aprovação/reprovação por escola (i-Educar) | Pendente | PLUGINS §5.3, GRA-06 |
+| PLG-06 | P2 | Metas PNE/semáforo no quadro SAEB | Em andamento | PLUGINS §5.3, GRA-07 |
+| PLG-07 | P2 | Gráfico repasses históricos × matrícula | Pendente | PLUGINS §5.3 |
+
+---
+
+## G. Concluídos recentemente (arquivo — não reabrir)
 
 | ID | Item | Notas |
 |----|------|-------|
@@ -108,7 +124,8 @@ Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento
 
 1. Inserir na secção correcta (A–E).
 2. Se for decisão de desenho, documentar em [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
-3. Ao concluir, mover linha para **F** e actualizar [STATUS_PROJETO.md](STATUS_PROJETO.md).
+3. Ao concluir, mover linha para **G** e actualizar [STATUS_PROJETO.md](STATUS_PROJETO.md).
+4. Sugestão de cadastro/integração → [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) §F.
 
 ---
 
