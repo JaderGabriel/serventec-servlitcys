@@ -16,7 +16,9 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 8 | `ccc5ad4` | Inclusão: catálogos MEC+i-Educar + KPI totalizador |
 | 9 | `b3973e6` | Documentação v2.3.4 |
 | 10 | `17d3d6e` | RX: meta retroativa, semáforo, consultas resilientes |
-| 11 | *(este commit)* | Documentação v2.3.5 |
+| 11 | `625b6a8` | Documentação v2.3.5 |
+| 12 | `0dbf65e` | RX: progresso, em falta e cores por coluna |
+| 13 | *(este commit)* | Documentação v2.3.6 |
 
 ---
 
@@ -121,6 +123,26 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | UI | `rx.blade.php`, `RxOverviewService.php` |
 
 **Nota:** A aba **Conexões** só valida ligação PDO; o RX executa consultas completas ao i-Educar. Municípios com conexão verde podem aparecer como **Consulta** ou **Parcial** se falhar SQL/schema (Censo, ritmo, etc.).
+
+---
+
+## 6b. RX — progresso, em falta e legenda visual (v2.3.6)
+
+**Commit:** `0dbf65e`
+
+| Área | Ficheiros |
+|------|-----------|
+| Cálculos | `RxCadastroGap.php`, `RxCityMetricsCollector.php` — progresso pelo gargalo turmas/mat.; em falta separado (não soma enturmação) |
+| Cores | `RxColumnTone.php`, `data-tone-legend.blade.php`, `rx.blade.php`, `app.css` — vigente (teal), comparativo (índigo), meta (violeta), anterior (cinza na sublinha) |
+| Estimativa | `IeducarWorkActivityQueries.php` — meta de enturmação sem fallback duplicado às matrículas |
+| Testes | `RxCadastroGapTest.php` |
+
+**Comportamento:**
+- Coluna **Em falta:** `N turma(s)` e, abaixo, `N matrícula(s)` face à meta alvo.
+- Coluna **Progresso:** percentual geral + detalhe Mat./Tur. quando aplicável.
+- Coluna **Δ:** rótulo «novo cadastro» quando o ano anterior imediato está zerado.
+
+**Pós-deploy:** `npm run build` (classes `serv-rx-*` no CSS).
 
 ---
 
