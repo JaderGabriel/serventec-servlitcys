@@ -5,6 +5,7 @@ namespace App\Support\Ieducar;
 use App\Models\City;
 use App\Models\FundebMunicipioReference;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Services\Fundeb\FundebFndeEstadoVaafService;
 use App\Support\Fundeb\FundebReferenceSource;
 use Illuminate\Support\Collection;
 
@@ -40,6 +41,7 @@ final class FundebMunicipalReferenceResolver
      *   notas: ?string,
      *   municipal: ?array{vaaf: float, vaat: ?float, complementacao_vaar: ?float, fonte: string, fonte_label: string, ano: ?int},
      *   previa: ?array{vaaf: float, vaat: ?float, complementacao_vaar: ?float, fonte: string, fonte_label: string, ano: ?int},
+     *   referencia_estadual: ?array{vaaf: float, vaat: ?float, complementacao_vaar: ?float, fonte: string, fonte_label: string, ano: ?int, uf: ?string},
      *   divergencia: ?array{absoluto: float, pct: float, mensagem: string}
      * }
      */
@@ -68,7 +70,9 @@ final class FundebMunicipalReferenceResolver
     {
         $ibge = self::normalizeIbge($city?->ibge_municipio);
         $anchorAno = self::resolveAnchorAno($filters);
-        $previa = self::resolvePreviaNacional($anchorAno, $ibge);
+        $uf = self::normalizeUf($city?->uf);
+        $referenciaEstadual = $uf !== null ? self::resolveReferenciaEstadual($uf, $anchorAno) : null;
+        $previa = self::resolvePreviaNacional($anchorAno, $ibge, $referenciaEstadual);
 
         $municipal = null;
         if ($ibge !== null) {
@@ -87,7 +91,7 @@ final class FundebMunicipalReferenceResolver
                 null,
             );
 
-            return self::enrichWithComparison($primary, $previa, $ibge, $municipal);
+            return self::enrichWithComparison($primary, $previa, $ibge, $municipal, $referenciaEstadual);
         }
 
         if ($previa !== null) {
@@ -105,12 +109,13 @@ final class FundebMunicipalReferenceResolver
                 $previa,
                 $ibge,
                 municipal: null,
+                referenciaEstadual: $referenciaEstadual,
             );
         }
 
         $global = self::fallbackGlobal();
 
-        return self::enrichWithComparison($global, $previa, $ibge, municipal: null);
+        return self::enrichWithComparison($global, $previa, $ibge, municipal: null, referenciaEstadual: $referenciaEstadual);
     }
 
     /**
@@ -193,20 +198,16 @@ final class FundebMunicipalReferenceResolver
      *
      * @return ?array{vaaf: float, vaat: ?float, complementacao_vaar: ?float, fonte: string, fonte_label: string, ano: ?int}
      */
-    public static function resolvePreviaNacional(int $ano, ?string $ibge = null): ?array
+    public static function resolvePreviaNacional(int $ano, ?string $ibge = null, ?array $referenciaEstadual = null): ?array
     {
-        $enabled = (bool) config('ieducar.fundeb.open_data.national_floor.enabled', true);
-        if (! $enabled) {
-            return null;
-        }
-
         $byYear = config('ieducar.fundeb.open_data.national_floor.vaaf_by_year', []);
         $vaaf = null;
+        $resolvedAno = $ano;
         if (is_array($byYear)) {
             foreach (FundebReferenceYearOrder::candidateYears($ano, 3) as $y) {
                 if (isset($byYear[$y]) && $byYear[$y] !== null && (float) $byYear[$y] > 0) {
                     $vaaf = (float) $byYear[$y];
-                    $ano = $y;
+                    $resolvedAno = $y;
                     break;
                 }
             }
@@ -216,28 +217,73 @@ final class FundebMunicipalReferenceResolver
             $vaaf = (float) config('ieducar.discrepancies.vaa_referencia_anual', 0);
         }
 
-        if ($vaaf <= 0) {
+        if ($vaaf > 0 && (bool) config('ieducar.fundeb.open_data.national_floor.enabled', true)) {
+            $fonteDetalhe = is_array($byYear) && isset($byYear[$resolvedAno])
+                ? __('Prévia federal (IEDUCAR_FUNDEB_NATIONAL_VAAF_:ano)', ['ano' => (string) $resolvedAno])
+                : __('Prévia federal (IEDUCAR_DISC_VAA_REFERENCIA)');
+
+            return [
+                'vaaf' => $vaaf,
+                'vaat' => null,
+                'complementacao_vaar' => null,
+                'fonte' => self::FONTE_PREVIA_NACIONAL,
+                'fonte_label' => $fonteDetalhe,
+                'ano' => $resolvedAno,
+            ];
+        }
+
+        return $referenciaEstadual;
+    }
+
+    /**
+     * VAAF consolidado por UF/DF (PDF Consultas FNDE — valor aluno/ano e receita anual prevista).
+     *
+     * @return ?array{vaaf: float, vaat: ?float, complementacao_vaar: ?float, fonte: string, fonte_label: string, ano: ?int, uf: string}
+     */
+    public static function resolveReferenciaEstadual(string $uf, int $ano): ?array
+    {
+        if (! (bool) config('ieducar.fundeb.open_data.fnde_estado_vaaf_enabled', true)) {
             return null;
         }
 
-        $fonteDetalhe = is_array($byYear) && isset($byYear[$ano])
-            ? __('Prévia federal (IEDUCAR_FUNDEB_NATIONAL_VAAF_:ano)', ['ano' => (string) $ano])
-            : __('Prévia federal (IEDUCAR_DISC_VAA_REFERENCIA)');
+        try {
+            $row = app(FundebFndeEstadoVaafService::class)->rowForUf($uf, $ano);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($row === null || (float) ($row['vaaf'] ?? 0) <= 0) {
+            return null;
+        }
+
+        $pubAno = (int) ($row['ano_publicacao'] ?? $ano);
 
         return [
-            'vaaf' => $vaaf,
+            'vaaf' => (float) $row['vaaf'],
             'vaat' => null,
             'complementacao_vaar' => null,
-            'fonte' => self::FONTE_PREVIA_NACIONAL,
-            'fonte_label' => $fonteDetalhe,
-            'ano' => $ano,
+            'fonte' => FundebReferenceSource::FONTE_FNDE_ESTADO_VAAF,
+            'fonte_label' => __('VAAF estadual FNDE (:uf, publicação :ano)', [
+                'uf' => strtoupper($uf),
+                'ano' => (string) $pubAno,
+            ]),
+            'ano' => $pubAno,
+            'uf' => strtoupper($uf),
         ];
+    }
+
+    private static function normalizeUf(?string $uf): ?string
+    {
+        $uf = strtoupper(trim((string) $uf));
+
+        return strlen($uf) === 2 ? $uf : null;
     }
 
     /**
      * @param  array{vaaf: float, vaat: ?float, complementacao_vaar: ?float, fonte: string, fonte_label: string, ano: ?int, ibge: ?string, notas: ?string}  $primary
      * @param  ?array{vaaf: float, vaat: ?float, complementacao_vaar: ?float, fonte: string, fonte_label: string, ano: ?int}  $municipal
      * @param  ?array{vaaf: float, vaat: ?float, complementacao_vaar: ?float, fonte: string, fonte_label: string, ano: ?int}  $previa
+     * @param  ?array{vaaf: float, vaat: ?float, complementacao_vaar: ?float, fonte: string, fonte_label: string, ano: ?int, uf?: string}  $referenciaEstadual
      * @return array<string, mixed>
      */
     private static function enrichWithComparison(
@@ -245,6 +291,7 @@ final class FundebMunicipalReferenceResolver
         ?array $previa,
         ?string $ibge,
         ?array $municipal = null,
+        ?array $referenciaEstadual = null,
     ): array {
         $municipal ??= ($primary['fonte'] ?? '') !== self::FONTE_PREVIA_NACIONAL
             && ($primary['fonte'] ?? '') !== self::FONTE_CONFIG_GLOBAL
@@ -284,6 +331,7 @@ final class FundebMunicipalReferenceResolver
         return array_merge($primary, [
             'municipal' => $municipal,
             'previa' => $previa,
+            'referencia_estadual' => $referenciaEstadual,
             'divergencia' => $divergencia,
             'ibge' => $ibge ?? $primary['ibge'] ?? null,
         ]);

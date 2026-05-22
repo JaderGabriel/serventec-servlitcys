@@ -453,12 +453,20 @@ final class FundebOpenDataImportService
         $match = null;
         $importAno = $ano;
 
-        foreach (FundebReferenceYearOrder::candidateYears($ano) as $tryAno) {
-            $row = $this->fetchRow($ibge, $tryAno);
-            if ($row !== null) {
-                $match = $row;
-                $importAno = $tryAno;
-                break;
+        $match = $this->fetchFromFndeReceitaPortaria($city, $ibge, $ano);
+        if ($match !== null) {
+            $importAno = $ano;
+            $this->writeCacheJson($ibge, $ano, $match);
+        }
+
+        if ($match === null) {
+            foreach (FundebReferenceYearOrder::candidateYears($ano) as $tryAno) {
+                $row = $this->fetchRow($ibge, $tryAno);
+                if ($row !== null) {
+                    $match = $row;
+                    $importAno = $tryAno;
+                    break;
+                }
             }
         }
 
@@ -471,7 +479,7 @@ final class FundebOpenDataImportService
         }
 
         if ($match === null) {
-            $match = $this->fetchFromFndeReceitaPortaria($city, $ibge, $ano);
+            $match = $this->fetchFromFndeEstadoVaaf($city, $ibge, $ano);
             if ($match !== null) {
                 $importAno = $ano;
                 $this->writeCacheJson($ibge, $ano, $match);
@@ -1164,6 +1172,53 @@ final class FundebOpenDataImportService
      *
      * @return array{vaaf: float, vaat?: float, complementacao_vaar?: float, fonte?: string, notas?: string}|null
      */
+    /**
+     * Fallback: VAAF consolidado da UF/DF (PDF Consultas FNDE) — referência estadual, não municipal.
+     *
+     * @return array{vaaf: float, vaat?: float, complementacao_vaar?: float, fonte?: string, notas?: string}|null
+     */
+    private function fetchFromFndeEstadoVaaf(City $city, string $ibge, int $ano): ?array
+    {
+        if (! (bool) config('ieducar.fundeb.open_data.fnde_estado_vaaf_on_import', true)) {
+            return null;
+        }
+
+        $uf = strtoupper(trim((string) $city->uf));
+        if (strlen($uf) !== 2) {
+            return null;
+        }
+
+        try {
+            $row = app(FundebFndeEstadoVaafService::class)->rowForUf($uf, $ano);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($row === null || (float) ($row['vaaf'] ?? 0) <= 0) {
+            return null;
+        }
+
+        $pubAno = (int) ($row['ano_publicacao'] ?? $ano);
+
+        return [
+            'vaaf' => (float) $row['vaaf'],
+            'fonte' => FundebReferenceSource::FONTE_FNDE_ESTADO_VAAF,
+            'tipo_valor' => 'estimativa',
+            'url_portaria' => (string) ($row['pdf_url'] ?? ''),
+            'meta' => [
+                'ano_publicacao' => $pubAno,
+                'uf' => $uf,
+                'total_receita_vaaf' => $row['total_receita_vaaf'] ?? null,
+                'complementacao_vaaf' => $row['complementacao_vaaf'] ?? null,
+            ],
+            'notas' => __('VAAF estadual FNDE (:uf, :valor) — publicação Consultas :pub. Não substitui o VAAF municipal; importe a Portaria CSV por IBGE quando disponível.', [
+                'uf' => $uf,
+                'valor' => number_format((float) $row['vaaf'], 2, ',', '.'),
+                'pub' => (string) $pubAno,
+            ]),
+        ];
+    }
+
     private function fetchFromFndeReceitaPortaria(City $city, string $ibge, int $ano): ?array
     {
         $receita = $this->fndeReceita->rowForIbge($ibge, $ano);

@@ -11,6 +11,8 @@ final class FundebReferenceSource
 
     public const FONTE_FNDE_RECEITA_IEDUCAR = 'fnde_portaria_receita_ieducar';
 
+    public const FONTE_FNDE_ESTADO_VAAF = 'fnde_estado_vaaf_consultas';
+
     public const FONTE_API_CKAN = 'api_ckan_fnde';
 
     /** @var list<string> */
@@ -40,7 +42,7 @@ final class FundebReferenceSource
         if (self::isPlaceholder($fonte)) {
             return 'placeholder';
         }
-        if ($fonte === self::FONTE_FNDE_RECEITA_IEDUCAR) {
+        if ($fonte === self::FONTE_FNDE_RECEITA_IEDUCAR || $fonte === self::FONTE_FNDE_ESTADO_VAAF) {
             return 'estimativa';
         }
         if ($fonte === self::FONTE_API_CKAN) {

@@ -228,6 +228,33 @@ final class IeducarWorkActivityQueries
         }
     }
 
+    /**
+     * Alunos distintos com matrícula activa no ano letivo do filtro (rede municipal).
+     */
+    public static function countAlunosAtivosForYear(Connection $db, City $city, IeducarFilterState $filters): int
+    {
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $mAluno = (string) config('ieducar.columns.matricula.aluno');
+            if ($mAluno === '' || ! IeducarColumnInspector::columnExists($db, $mat, $mAluno, $city)) {
+                return 0;
+            }
+
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $q = $db->table($mat.' as m');
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+
+            $row = $q->selectRaw('COUNT(DISTINCT m.'.$mAluno.') as c')->first();
+
+            return (int) ($row->c ?? 0);
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
     public static function countTurmasForYear(Connection $db, City $city, IeducarFilterState $filters): int
     {
         try {

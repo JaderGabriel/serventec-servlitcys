@@ -101,13 +101,36 @@ class FundebFndeReceitaCsvService
             }
         }
 
+        $base = 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/';
+
         foreach ($this->pagePathsForYear($publicationYear) as $path) {
-            $html = $this->fetchHtml('https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/'.$path);
+            $html = $this->fetchHtml($base.$path);
             if ($html === null) {
                 continue;
             }
-            if (preg_match('/href="(https:\/\/www\.gov\.br\/fnde[^"]*ReceitatotaldoFundebporentefederado\.csv)"/i', $html, $m)) {
-                return html_entity_decode($m[1], ENT_QUOTES, 'UTF-8');
+            $url = $this->extractReceitaCsvUrlFromHtml($html);
+            if ($url !== null) {
+                return $url;
+            }
+        }
+
+        return null;
+    }
+
+    private function extractReceitaCsvUrlFromHtml(string $html): ?string
+    {
+        $patterns = [
+            '/href="(https:\/\/www\.gov\.br\/fnde[^"]*ReceitatotaldoFundebporentefederado\.csv[^"]*)"/i',
+            '/href="(https:\/\/www\.gov\.br\/fnde[^"]*receita-total-do-fundeb-por-ente-federado\.csv[^"]*)"/i',
+            '/href="(https:\/\/www\.gov\.br\/fnde[^"]*1-receita-total-do-fundeb-por-ente-federado\.csv[^"]*)"/i',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $html, $m)) {
+                $url = html_entity_decode($m[1], ENT_QUOTES, 'UTF-8');
+                $url = preg_replace('#/view$#i', '', $url) ?? $url;
+
+                return $url;
             }
         }
 
@@ -133,6 +156,7 @@ class FundebFndeReceitaCsvService
             (string) $year,
             $year.'-1',
             $year.'/'.($year + 1),
+            'consultas',
         ];
     }
 

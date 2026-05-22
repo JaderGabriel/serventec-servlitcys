@@ -5,6 +5,7 @@ namespace App\Support\Ieducar;
 use App\Models\City;
 use App\Models\FundebMunicipioReference;
 use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Services\Fundeb\FundebFndeEstadoVaafService;
 use App\Services\Fundeb\FundebFndePublicationAlerts;
 use App\Services\Fundeb\FundebFndeReceitaCsvService;
 use App\Services\Fundeb\FundebMatriculasByYearService;
@@ -20,6 +21,7 @@ final class FundebVaafProfileBuilder
 {
     public function __construct(
         private FundebFndeReceitaCsvService $fndeReceita,
+        private FundebFndeEstadoVaafService $fndeEstadoVaaf,
         private FundebMatriculasByYearService $matriculas,
         private FundebFndePublicationAlerts $alerts,
     ) {}
@@ -98,6 +100,9 @@ final class FundebVaafProfileBuilder
             : null;
 
         $receitaRow = $ibge !== null ? $this->fndeReceita->rowForIbge($ibge, $ano) : null;
+        $uf = strtoupper(trim((string) $city->uf));
+        $estadoRow = strlen($uf) === 2 ? $this->fndeEstadoVaaf->rowForUf($uf, $ano) : null;
+        $refEstadual = is_array($resolver['referencia_estadual'] ?? null) ? $resolver['referencia_estadual'] : null;
         $matUsado = (int) ($matRow['usado'] ?? 0);
         $totalReceita = $receitaRow !== null ? (float) $receitaRow['total_receita'] : null;
         $vaafEst = $totalReceita !== null && $matUsado > 0
@@ -154,6 +159,18 @@ final class FundebVaafProfileBuilder
                 'bruto' => $rawVaaf,
                 'fora_limites' => $rawVaaf !== null && ($rawVaaf < $min || $rawVaaf > $max),
                 'fonte' => FundebReferenceSource::FONTE_FNDE_RECEITA_IEDUCAR,
+            ],
+            'referencia_estadual' => [
+                'disponivel' => $estadoRow !== null || $refEstadual !== null,
+                'vaaf' => $estadoRow !== null
+                    ? (float) $estadoRow['vaaf']
+                    : ($refEstadual !== null ? (float) ($refEstadual['vaaf'] ?? 0) : null),
+                'total_receita' => $estadoRow['total_receita_vaaf'] ?? null,
+                'complementacao_vaaf' => $estadoRow['complementacao_vaaf'] ?? null,
+                'ano_publicacao' => $estadoRow['ano_publicacao'] ?? ($refEstadual['ano'] ?? null),
+                'pdf_url' => $estadoRow['pdf_url'] ?? null,
+                'uf' => $uf !== '' ? $uf : null,
+                'fonte_label' => $refEstadual['fonte_label'] ?? null,
             ],
             'previsao_recursos' => [
                 'base_anual' => $previsaoBase,
@@ -239,6 +256,7 @@ final class FundebVaafProfileBuilder
     {
         return [
             ['key' => 'fnde_portaria', 'label' => __('Portaria FNDE — CSV receita total por ente'), 'url' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/consultas'],
+            ['key' => 'fnde_estado_vaaf', 'label' => __('Consultas FNDE — VAAF estimado por UF/DF (PDF)'), 'url' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/consultas'],
             ['key' => 'ckan', 'label' => __('FNDE dados abertos (CKAN)'), 'url' => (string) config('ieducar.fundeb.open_data.ckan_base_url', 'https://www.fnde.gov.br/dadosabertos')],
             ['key' => 'ieducar', 'label' => __('Matrículas activas (i-Educar)'), 'url' => ''],
             ['key' => 'censo', 'label' => __('Censo INEP (agregado municipal)'), 'url' => 'https://www.gov.br/inep/pt-br/areas-de-atuacao/pesquisas-estatisticas-e-indicadores/censo-escolar/resultado'],

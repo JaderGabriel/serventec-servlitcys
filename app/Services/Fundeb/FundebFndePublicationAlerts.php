@@ -111,6 +111,31 @@ final class FundebFndePublicationAlerts
             );
         }
 
+        $est = $block['referencia_estadual'] ?? null;
+        $vaafMun = is_array($est) && is_array($block['vaaf_estimado'] ?? null)
+            ? (float) ($block['vaaf_estimado']['valor'] ?? 0)
+            : 0.0;
+        if (is_array($est) && ($est['disponivel'] ?? false) && $vaafMun > 0) {
+            $vaafUf = (float) ($est['vaaf'] ?? 0);
+            if ($vaafUf > 0) {
+                $pctUf = round(100.0 * abs($vaafMun - $vaafUf) / $vaafUf, 1);
+                if ($pctUf >= 20) {
+                    $alerts[] = $this->alert(
+                        'divergencia_vaaf_uf',
+                        'info',
+                        $ano,
+                        __('VAAF municipal estimado difere do consolidado da UF'),
+                        __('Estimativa portaria÷matrículas (:mun) vs VAAF UF FNDE (:uf) — :pct% de diferença. O valor municipal depende das matrículas locais.', [
+                            'mun' => number_format($vaafMun, 2, ',', '.'),
+                            'uf' => number_format($vaafUf, 2, ',', '.'),
+                            'pct' => number_format($pctUf, 1, ',', '.'),
+                        ]),
+                        __('Consultas FNDE → Valor aluno/ano por Estado.'),
+                    );
+                }
+            }
+        }
+
         $div = $block['resolver']['divergencia'] ?? null;
         if (is_array($div) && abs((float) ($div['pct'] ?? 0)) >= 15) {
             $alerts[] = $this->alert(

@@ -50,6 +50,7 @@
                         <th class="px-3 py-2 text-right">{{ __('Compl. VAAF') }}</th>
                         <th class="px-3 py-2 text-right">{{ __('Matrículas') }}</th>
                         <th class="px-3 py-2 text-right">{{ __('VAAF est.') }}</th>
+                        <th class="px-3 py-2 text-right">{{ __('VAAF UF') }}</th>
                         <th class="px-3 py-2 text-right">{{ __('Previsão base') }}</th>
                         <th class="px-3 py-2">{{ __('Publicação') }}</th>
                     </tr>
@@ -74,6 +75,16 @@
                             </td>
                             <td class="px-3 py-2 text-right tabular-nums">
                                 {{ isset($est['valor']) ? $fmtBrl((float) $est['valor']) : '—' }}
+                            </td>
+                            <td class="px-3 py-2 text-right tabular-nums text-xs">
+                                @if (! empty($ufRef['disponivel']) && isset($ufRef['vaaf']))
+                                    {{ $fmtBrl((float) $ufRef['vaaf']) }}
+                                    @if (filled($ufRef['uf'] ?? null))
+                                        <span class="block text-[10px] text-slate-500">{{ $ufRef['uf'] }}</span>
+                                    @endif
+                                @else
+                                    —
+                                @endif
                             </td>
                             <td class="px-3 py-2 text-right tabular-nums">{{ $fmtBrl(isset($prev['base_anual']) ? (float) $prev['base_anual'] : null) }}</td>
                             <td class="px-3 py-2 text-xs text-slate-600 dark:text-slate-400">
