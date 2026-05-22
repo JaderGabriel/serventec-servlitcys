@@ -148,7 +148,7 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 
 *(Não existe tag `v1.0.0`; o marco inicial é o commit `8507c9a` #1.)*
 
-**Contador total em `main`:** `git rev-list --count main` → **174** (maio/2026).
+**Contador total em `main`:** `git rev-list --count main` → **175** (maio/2026). A tag **`20260522-Janus`** aponta para **`9350e9d`** (#174).
 
 ---
 
