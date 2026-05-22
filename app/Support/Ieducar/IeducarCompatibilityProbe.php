@@ -79,6 +79,9 @@ final class IeducarCompatibilityProbe
                 'recurso_prova_schema_available' => (bool) ($schema['available'] ?? false),
             ], $discSummary),
             'recurso_prova_schema' => $schema,
+            'matricula_count_diagnostics' => is_array($report['matricula_count_diagnostics'] ?? null)
+                ? $report['matricula_count_diagnostics']
+                : [],
             'routines' => $routines,
         ];
     }
@@ -143,6 +146,7 @@ final class IeducarCompatibilityProbe
             'city_name' => (string) $city->name,
             'filters_label' => self::filtersLabel($filters),
             'total_matriculas' => $totalMat,
+            'matricula_count_diagnostics' => MatriculaCountDiagnostics::snapshot($db, $city, $filters),
             'discrepancy_summary' => DiscrepanciesRoutineMetrics::summaryFromRoutines($routines, $totalMat),
             'recurso_prova_schema' => RecursoProvaSchemaResolver::resolve($db, $city),
             'routines' => $routines,

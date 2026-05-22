@@ -46,10 +46,12 @@ final class MatriculaTurmaJoinYearFilterTest extends TestCase
             ['cod_matricula' => 1, 'ref_cod_turma' => 10, 'ano' => 2025, 'ativo' => 1],
             ['cod_matricula' => 2, 'ref_cod_turma' => null, 'ano' => 2025, 'ativo' => 1],
             ['cod_matricula' => 3, 'ref_cod_turma' => 11, 'ano' => 2024, 'ativo' => 1],
+            ['cod_matricula' => 4, 'ref_cod_turma' => 12, 'ano' => 2025, 'ativo' => 1],
         ]);
         DB::table('turma')->insert([
             ['cod_turma' => 10, 'ano' => 2025],
             ['cod_turma' => 11, 'ano' => 2024],
+            ['cod_turma' => 12, 'ano' => 2024],
         ]);
     }
 
@@ -71,5 +73,25 @@ final class MatriculaTurmaJoinYearFilterTest extends TestCase
         $count = (int) $q->distinct()->count('m.cod_matricula');
 
         $this->assertSame(2, $count);
+    }
+
+    #[Test]
+    public function conta_matricula_enturmada_pelo_ano_na_matricula_mesmo_com_turma_ano_diferente(): void
+    {
+        $city = \App\Models\City::factory()->make([
+            'ieducar_schema' => null,
+            'ieducar_driver' => 'mysql',
+        ]);
+
+        $filters = new IeducarFilterState('2025', null, null, null);
+        $db = DB::connection();
+
+        $q = $db->table('matricula as m');
+        MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm', left: true);
+        MatriculaTurmaJoin::applyYearFilter($q, $db, $city, $filters, 't_filter', 'm');
+
+        $count = (int) $q->distinct()->count('m.cod_matricula');
+
+        $this->assertSame(3, $count);
     }
 }

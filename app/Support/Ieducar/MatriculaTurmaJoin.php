@@ -78,6 +78,8 @@ final class MatriculaTurmaJoin
             return IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
                 (string) config('ieducar.columns.matricula.ano'),
                 'ano',
+                'ref_ano_letivo',
+                'ano_letivo',
             ]), $city);
         } catch (\InvalidArgumentException) {
             return null;
@@ -102,6 +104,8 @@ final class MatriculaTurmaJoin
             (string) config('ieducar.columns.turma.year'),
             'ano',
             'year',
+            'ref_ano_letivo',
+            'ano_letivo',
         ]), $city) ?? 'ano';
 
         $escola = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
@@ -190,7 +194,8 @@ final class MatriculaTurmaJoin
     }
 
     /**
-     * Ano letivo: turma quando enturmado; senão coluna ano em matricula (matrículas recentes sem turma no ano).
+     * Ano letivo: coincide com turma.ano ou matricula.ano (i-Educar costuma gravar o ano na matrícula
+     * mesmo com enturmação; turma.ano pode estar vazio ou desatualizado em bases PostgreSQL).
      */
     public static function applyYearFilter(Builder $q, Connection $db, City $city, IeducarFilterState $filters, string $turmaAlias = 't_filter', string $matAlias = 'm'): void
     {
@@ -202,19 +207,14 @@ final class MatriculaTurmaJoin
         $cols = self::turmaFilterColumns($db, $city);
         $turmaYear = $cols['year'];
         $mAno = self::matriculaAnoColumn($db, $city);
-        $tId = (string) config('ieducar.columns.turma.id');
         $grammar = $db->getQueryGrammar();
-        $tPk = $grammar->wrap($turmaAlias).'.'.$grammar->wrap($tId);
 
         if ($turmaYear !== '' && $mAno !== null) {
             $tYear = $grammar->wrap($turmaAlias).'.'.$grammar->wrap($turmaYear);
             $mYear = $grammar->wrap($matAlias).'.'.$grammar->wrap($mAno);
-            $q->where(function (Builder $w) use ($yearVal, $tYear, $mYear, $tPk): void {
+            $q->where(function (Builder $w) use ($yearVal, $tYear, $mYear): void {
                 $w->whereRaw($tYear.' = ?', [$yearVal])
-                    ->orWhere(function (Builder $w2) use ($yearVal, $mYear, $tPk): void {
-                        $w2->whereRaw($mYear.' = ?', [$yearVal])
-                            ->whereNull($tPk);
-                    });
+                    ->orWhereRaw($mYear.' = ?', [$yearVal]);
             });
 
             return;

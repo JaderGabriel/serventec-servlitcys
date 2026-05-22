@@ -159,7 +159,7 @@ class OverviewRepository
         }
 
         if (! $filters->isAllSchoolYears()) {
-            return __('Matrículas contam pelo ano da turma; se ainda não houver enturmação, usa o ano registado na matrícula.');
+            return __('Matrículas entram no ano se coincidirem com o ano da turma ou com o ano registado na matrícula.');
         }
 
         return null;

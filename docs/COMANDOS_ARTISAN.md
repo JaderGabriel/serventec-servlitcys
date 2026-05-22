@@ -92,6 +92,8 @@ Ver também: [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md)
 ```bash
 php artisan ieducar:schema-probe 1 --ano=2024
 php artisan ieducar:schema-probe 1 --output=storage/app/schema_probe_1.json
+# Saubara (ex. id 5): se matrículas = 0 no painel, compare matricula_count_diagnostics.counts
+php artisan ieducar:schema-probe 5 --ano=2025
 ```
 
 ---
