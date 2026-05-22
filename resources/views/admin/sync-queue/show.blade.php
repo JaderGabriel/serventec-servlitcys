@@ -8,12 +8,6 @@
         </div>
     </x-slot>
 
-    @php
-        use App\Support\Admin\ExternalImportImpact;
-        $taskImpact = ExternalImportImpact::forDomain($task->domain);
-        $outcomeHint = ExternalImportImpact::taskOutcomeHint($task);
-    @endphp
-
     <div class="py-10 max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-6">
         <a href="{{ route('admin.sync-queue.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">← {{ __('Voltar à fila') }}</a>
 

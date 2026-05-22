@@ -1,9 +1,8 @@
 @php
-    use App\Support\Admin\ExternalImportImpact;
     $domain = (string) ($domain ?? '');
     $cityId = isset($cityId) ? (int) $cityId : null;
-    $impact = ExternalImportImpact::forDomain($domain);
-    $order = ExternalImportImpact::recommendedOrder($domain);
+    $impact = \App\Support\Admin\ExternalImportImpact::forDomain($domain);
+    $order = \App\Support\Admin\ExternalImportImpact::recommendedOrder($domain);
     $analyticsBase = $cityId
         ? route('dashboard.analytics', ['city_id' => $cityId])
         : route('dashboard.analytics');

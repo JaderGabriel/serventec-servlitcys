@@ -4,6 +4,7 @@ namespace App\Services\Analytics;
 
 use App\Models\City;
 use App\Models\InepCensoEscolaGeoAgg;
+use App\Support\Analytics\AnalyticsReportMunicipalityOutlineSvg;
 use App\Support\Dashboard\IeducarFilterState;
 
 final class AnalyticsReportCoverBuilder
@@ -23,6 +24,7 @@ final class AnalyticsReportCoverBuilder
 
         $region = $this->regionLabel($city, $uf);
         $maps = $this->mapResolver->resolve($city);
+        $center = $this->mapResolver->resolveMunicipalityCenter($city);
 
         $municipalMap = $maps['municipal'] ?? null;
         $regionalMap = $maps['regional'] ?? null;
@@ -30,9 +32,33 @@ final class AnalyticsReportCoverBuilder
         $regionalPath = $this->regionalImagePath($uf);
         $regionalBrandUri = $this->fileToDataUri($regionalPath);
 
-        $mapDataUri = $municipalMap['data_uri'] ?? null;
-        $mapCaption = $municipalMap['caption'] ?? null;
-        $mapSource = $municipalMap['source'] ?? null;
+        $colors = config('analytics.pdf_report.colors', []);
+        $primary = (string) ($colors['primary'] ?? '#0f766e');
+        $caricatureUri = null;
+        $mapCaption = __('Recorte municipal ilustrativo (sem unidades escolares)');
+        $mapSource = 'municipality_outline';
+
+        if ($center !== null) {
+            $outline = AnalyticsReportMunicipalityOutlineSvg::render(
+                (string) $city->name,
+                $uf,
+                $center['lat'],
+                $center['lng'],
+                680,
+                280,
+                $primary,
+            );
+            $caricatureUri = $outline['data_uri'];
+        }
+
+        $osmBackdropUri = $municipalMap['data_uri'] ?? null;
+        $mapDataUri = $caricatureUri ?? $osmBackdropUri;
+        if ($mapDataUri === $caricatureUri) {
+            $mapSource = 'municipality_outline';
+        } elseif ($osmBackdropUri !== null) {
+            $mapCaption = $municipalMap['caption'] ?? __('OpenStreetMap (sem marcadores de escolas)');
+            $mapSource = $municipalMap['source'] ?? 'openstreetmap_static';
+        }
 
         $regionalMapUri = $regionalMap['data_uri'] ?? null;
         $regionalMapCaption = $regionalMap['caption'] ?? __('Recorte regional (OpenStreetMap)');
@@ -54,8 +80,9 @@ final class AnalyticsReportCoverBuilder
             'year_value' => $this->yearValue($filters, $yearLabel),
             'region_label' => $region,
             'filter_details' => $this->filterDetails($filters),
-            'coords_source' => $maps['coords']['source'] ?? null,
+            'coords_source' => $center['source'] ?? $maps['coords']['source'] ?? null,
             'map_image_data_uri' => $mapDataUri,
+            'map_osm_backdrop_uri' => $caricatureUri !== null ? $osmBackdropUri : null,
             'map_image_url' => null,
             'map_caption' => $mapCaption,
             'map_source' => $mapSource,

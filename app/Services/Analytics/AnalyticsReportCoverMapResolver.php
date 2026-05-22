@@ -52,7 +52,7 @@ final class AnalyticsReportCoverMapResolver
      */
     public function resolve(City $city): array
     {
-        $coords = $this->resolveCoordinates($city);
+        $coords = $this->resolveMunicipalityCenter($city);
         $municipalZoom = max(8, min(13, (int) config('analytics.pdf_report.cover.map_zoom', 10)));
         $regionalZoom = max(5, $municipalZoom - 3);
 
@@ -66,6 +66,7 @@ final class AnalyticsReportCoverMapResolver
                 $municipalZoom,
                 720,
                 320,
+                includeMarker: false,
             );
             $regional = $this->fetchStaticMapDataUri(
                 $coords['lat'],
@@ -73,6 +74,7 @@ final class AnalyticsReportCoverMapResolver
                 $regionalZoom,
                 720,
                 240,
+                includeMarker: false,
             );
         }
 
@@ -107,15 +109,12 @@ final class AnalyticsReportCoverMapResolver
     }
 
     /**
+     * Centro do município para a capa (sem média de escolas — evita viés no mapa caricato).
+     *
      * @return ?array{lat: float, lng: float, source: string}
      */
-    public function resolveCoordinates(City $city): ?array
+    public function resolveMunicipalityCenter(City $city): ?array
     {
-        $fromSchools = $this->coordsFromSchoolGeos($city);
-        if ($fromSchools !== null) {
-            return $fromSchools;
-        }
-
         $ibge = $this->normalizeIbge((string) ($city->ibge_municipio ?? ''));
         if ($ibge !== null) {
             $fromIbge = $this->coordsFromIbgeApi($ibge);
@@ -138,7 +137,28 @@ final class AnalyticsReportCoverMapResolver
             ];
         }
 
-        return null;
+        return $this->coordsFromSchoolGeos($city);
+    }
+
+    /**
+     * @return ?array{lat: float, lng: float, source: string}
+     */
+    public function resolveCoordinates(City $city): ?array
+    {
+        $fromSchools = $this->coordsFromSchoolGeos($city);
+        if ($fromSchools !== null) {
+            return $fromSchools;
+        }
+
+        return $this->resolveMunicipalityCenter($city);
+    }
+
+    /**
+     * @return ?array{data_uri: string, source: string, caption: string}
+     */
+    public function fetchStaticMapAt(float $lat, float $lng, int $zoom, int $width, int $height): ?array
+    {
+        return $this->fetchStaticMapDataUri($lat, $lng, $zoom, $width, $height, includeMarker: false);
     }
 
     /**
@@ -259,30 +279,23 @@ final class AnalyticsReportCoverMapResolver
     /**
      * @return ?array{data_uri: string, source: string, caption: string}
      */
-    private function fetchStaticMapDataUri(float $lat, float $lng, int $zoom, int $width, int $height): ?array
+    private function fetchStaticMapDataUri(float $lat, float $lng, int $zoom, int $width, int $height, bool $includeMarker = false): ?array
     {
         $latStr = number_format($lat, 5, '.', '');
         $lngStr = number_format($lng, 5, '.', '');
         $size = $width.'x'.$height;
 
-        $urls = [
-            sprintf(
-                'https://staticmap.openstreetmap.de/staticmap.php?center=%s,%s&zoom=%d&size=%s&maptype=mapnik&markers=%s,%s,red-pushpin',
-                $latStr,
-                $lngStr,
-                $zoom,
-                $size,
-                $latStr,
-                $lngStr,
-            ),
-            sprintf(
-                'https://staticmap.openstreetmap.de/staticmap.php?center=%s,%s&zoom=%d&size=%s',
-                $latStr,
-                $lngStr,
-                $zoom,
-                $size,
-            ),
-        ];
+        $base = sprintf(
+            'https://staticmap.openstreetmap.de/staticmap.php?center=%s,%s&zoom=%d&size=%s&maptype=mapnik',
+            $latStr,
+            $lngStr,
+            $zoom,
+            $size,
+        );
+
+        $urls = $includeMarker
+            ? [$base.'&markers='.$latStr.','.$lngStr.',red-pushpin', $base]
+            : [$base];
 
         foreach ($urls as $url) {
             $binary = $this->downloadImage($url);

@@ -7,6 +7,7 @@
     $filterDetails = is_array($cover['filter_details'] ?? null) ? $cover['filter_details'] : [];
     $yearValue = $cover['year_value'] ?? ($cover['year_label'] ?? '—');
     $mapUri = $cover['map_image_data_uri'] ?? null;
+    $osmBackdropUri = $cover['map_osm_backdrop_uri'] ?? null;
     $regionalMapUri = $cover['regional_map_data_uri'] ?? null;
     $brandUri = $cover['regional_image_data_uri'] ?? null;
 @endphp
@@ -85,10 +86,15 @@
         <tr>
             <td class="cover-map-main" style="width: {{ $regionalMapUri ? '62%' : '100%' }};">
                 @if (filled($mapUri))
-                    <img src="{{ $mapUri }}" alt="" class="cover-map-img cover-map-img--main">
+                    <div class="cover-map-stack">
+                        @if (filled($osmBackdropUri))
+                            <img src="{{ $osmBackdropUri }}" alt="" class="cover-map-img cover-map-img--backdrop">
+                        @endif
+                        <img src="{{ $mapUri }}" alt="" class="cover-map-img cover-map-img--main {{ filled($osmBackdropUri) ? 'cover-map-img--overlay' : '' }}">
+                    </div>
                     <p class="cover-map-caption">
                         <strong>{{ __('Município') }}</strong> —
-                        {{ $cover['map_caption'] ?? __('OpenStreetMap') }}
+                        {{ $cover['map_caption'] ?? __('Recorte municipal') }}
                         @if (filled($cover['map_source'] ?? null))
                             <span class="cover-map-caption__muted">({{ $cover['map_source'] }})</span>
                         @endif

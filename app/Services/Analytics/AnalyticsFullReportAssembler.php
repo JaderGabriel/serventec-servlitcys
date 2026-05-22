@@ -35,6 +35,7 @@ final class AnalyticsFullReportAssembler
         private AttendanceRepository $attendance,
         private AnalyticsReportCoverBuilder $coverBuilder,
         private AnalyticsReportComparatives $comparatives,
+        private AnalyticsReportSchoolMapBuilder $schoolMapBuilder,
     ) {}
 
     /**
@@ -59,6 +60,7 @@ final class AnalyticsFullReportAssembler
 
         $charts = $this->collectCharts($health, $disc, $fundeb, $other, $work, $overview, $performance, $enrollment);
         $comparativeData = $this->comparatives->build($city, $filters, $fundeb, $health);
+        $schoolMap = $this->schoolMapBuilder->build($city, $filters);
 
         return [
             'generated_at' => now()->format('d/m/Y H:i'),
@@ -82,6 +84,7 @@ final class AnalyticsFullReportAssembler
             'year_comparison' => $comparativeData['year_comparison_enriched'],
             'municipal_vs_state' => $comparativeData['municipal_vs_state_enriched'],
             'charts' => $charts,
+            'school_units_map' => $schoolMap,
             'brand' => PdfBrandAssets::enrich(config('analytics.pdf_report.brand', [])),
             'colors' => config('analytics.pdf_report.colors', []),
         ];

@@ -44,14 +44,16 @@ final class AnalyticsReportChartSvg
     private static function vertical(string $title, array $labels, array $values, array $colors, int $width, int $height): string
     {
         $max = max(1.0, max($values));
-        $padT = 36;
-        $padB = 48;
-        $padL = 40;
+        $padT = 40;
+        $padB = 52;
+        $padL = 44;
         $padR = 16;
         $plotH = $height - $padT - $padB;
         $plotW = $width - $padL - $padR;
         $n = count($values);
-        $barW = max(8, (int) floor($plotW / max(1, $n * 1.6)));
+        $barW = max(10, (int) floor($plotW / max(1, $n * 1.6)));
+
+        $grid = self::horizontalGrid($padL, $padT, $plotW, $plotH, 4);
 
         $bars = '';
         foreach ($values as $i => $v) {
@@ -59,12 +61,20 @@ final class AnalyticsReportChartSvg
             $x = $padL + (int) round($i * ($plotW / max(1, $n)) + ($plotW / $n - $barW) / 2);
             $y = $padT + $plotH - $h;
             $fill = $colors[$i % count($colors)];
-            $bars .= sprintf('<rect x="%d" y="%d" width="%d" height="%d" fill="%s" rx="3"/>', $x, $y, $barW, $h, $fill);
+            $bars .= sprintf('<rect x="%d" y="%d" width="%d" height="%d" fill="%s" stroke="#0f172a" stroke-width="0.4" rx="2"/>', $x, $y, $barW, $h, $fill);
+            if ($h > 14) {
+                $bars .= sprintf(
+                    '<text x="%d" y="%d" font-size="7.5" font-weight="bold" fill="#0f172a" text-anchor="middle">%s</text>',
+                    $x + (int) ($barW / 2),
+                    $y - 3,
+                    self::formatValue($v)
+                );
+            }
             $label = htmlspecialchars(mb_substr((string) ($labels[$i] ?? ''), 0, 14), ENT_QUOTES, 'UTF-8');
-            $bars .= sprintf('<text x="%d" y="%d" font-size="8" fill="#475569" text-anchor="middle">%s</text>', $x + (int) ($barW / 2), $height - 8, $label);
+            $bars .= sprintf('<text x="%d" y="%d" font-size="8" font-weight="bold" fill="#1e293b" text-anchor="middle">%s</text>', $x + (int) ($barW / 2), $height - 10, $label);
         }
 
-        return self::wrap($width, $height, $title, $bars);
+        return self::wrap($width, $height, $title, $grid.$bars);
     }
 
     /**
@@ -75,10 +85,10 @@ final class AnalyticsReportChartSvg
     private static function horizontal(string $title, array $labels, array $values, array $colors, int $width, int $height): string
     {
         $max = max(1.0, max($values));
-        $padT = 36;
-        $padL = 120;
-        $padR = 24;
-        $rowH = max(14, (int) floor(($height - $padT - 12) / max(1, count($values))));
+        $padT = 40;
+        $padL = 128;
+        $padR = 28;
+        $rowH = max(16, (int) floor(($height - $padT - 12) / max(1, count($values))));
         $plotW = $width - $padL - $padR;
 
         $bars = '';
@@ -86,10 +96,10 @@ final class AnalyticsReportChartSvg
             $w = (int) round(($v / $max) * $plotW);
             $y = $padT + $i * $rowH + 4;
             $fill = $colors[$i % count($colors)];
-            $bars .= sprintf('<rect x="%d" y="%d" width="%d" height="%d" fill="%s" rx="2"/>', $padL, $y, $w, $rowH - 6, $fill);
+            $bars .= sprintf('<rect x="%d" y="%d" width="%d" height="%d" fill="%s" stroke="#0f172a" stroke-width="0.4" rx="2"/>', $padL, $y, $w, $rowH - 6, $fill);
             $label = htmlspecialchars(mb_substr((string) ($labels[$i] ?? ''), 0, 22), ENT_QUOTES, 'UTF-8');
-            $bars .= sprintf('<text x="%d" y="%d" font-size="8" fill="#334155" text-anchor="end">%s</text>', $padL - 6, $y + ($rowH / 2) + 3, $label);
-            $bars .= sprintf('<text x="%d" y="%d" font-size="8" fill="#0f172a">%s</text>', $padL + $w + 4, $y + ($rowH / 2) + 3, self::formatValue($v));
+            $bars .= sprintf('<text x="%d" y="%d" font-size="8" font-weight="bold" fill="#0f172a" text-anchor="end">%s</text>', $padL - 6, $y + ($rowH / 2) + 3, $label);
+            $bars .= sprintf('<text x="%d" y="%d" font-size="8.5" font-weight="bold" fill="#0f172a">%s</text>', $padL + $w + 6, $y + ($rowH / 2) + 3, self::formatValue($v));
         }
 
         $h = max($height, $padT + count($values) * $rowH + 16);
@@ -97,10 +107,24 @@ final class AnalyticsReportChartSvg
         return self::wrap($width, $h, $title, $bars);
     }
 
+    private static function horizontalGrid(int $x, int $y, int $w, int $h, int $lines): string
+    {
+        $out = '';
+        for ($i = 0; $i <= $lines; $i++) {
+            $gy = $y + (int) round($i * ($h / $lines));
+            $out .= sprintf('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="#cbd5e1" stroke-width="1"/>', $x, $gy, $x + $w, $gy);
+        }
+
+        return $out;
+    }
+
     private static function wrap(int $width, int $height, string $title, string $body): string
     {
         return sprintf(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d"><rect width="100%%" height="100%%" fill="#f8fafc" rx="6"/><text x="12" y="20" font-size="11" font-weight="bold" fill="#0f766e">%s</text>%s</svg>',
+            '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d">'
+            .'<rect width="100%%" height="100%%" fill="#ffffff" stroke="#94a3b8" stroke-width="1" rx="6"/>'
+            .'<text x="14" y="22" font-size="11" font-weight="bold" fill="#0f172a">%s</text>'
+            .'%s</svg>',
             $width,
             $height,
             $width,

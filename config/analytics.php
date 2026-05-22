@@ -128,7 +128,8 @@ return [
             'system_tagline' => (string) env('ANALYTICS_PDF_SYSTEM_TAGLINE', 'Plataforma educacional municipal'),
             'icon_path' => (string) env('ANALYTICS_PDF_ICON_PATH', 'favicon.svg'),
             'serventec_name' => (string) env('ANALYTICS_PDF_SERVENTEC_NAME', 'Serventec Assessoria'),
-            'serventec_url' => (string) env('ANALYTICS_PDF_SERVENTEC_URL', 'https://analise.serventecassessoria.com.br'),
+            'serventec_url' => (string) env('ANALYTICS_PDF_SERVENTEC_URL', 'https://analise.serventecassessoria.com.br/'),
+            'serventec_display_url' => (string) env('ANALYTICS_PDF_SERVENTEC_DISPLAY_URL', 'analise.serventecassessoria.com.br'),
             'developer_name' => (string) env('ANALYTICS_PDF_DEVELOPER_NAME', 'Jader Gabriel'),
             'developer_github' => (string) env('ANALYTICS_PDF_DEVELOPER_GITHUB', 'https://github.com/jadergabriel'),
         ],
@@ -146,7 +147,7 @@ return [
         'cover' => [
             'regional_image_base' => (string) env('ANALYTICS_PDF_REGIONAL_IMAGE', 'images/pdf/regional'),
             'map_zoom' => max(5, min(14, (int) env('ANALYTICS_PDF_MAP_ZOOM', 10))),
-            'nominatim_user_agent' => (string) env('ANALYTICS_PDF_NOMINATIM_USER_AGENT', 'servlitcys-pdf-cover/1.0 (contact: serventec.com.br)'),
+            'nominatim_user_agent' => (string) env('ANALYTICS_PDF_NOMINATIM_USER_AGENT', 'servlitcys-pdf-cover/1.0 (contact: analise.serventecassessoria.com.br)'),
         ],
     ],
 

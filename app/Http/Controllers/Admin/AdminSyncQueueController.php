@@ -6,6 +6,7 @@ use App\Enums\AdminSyncTaskStatus;
 use App\Enums\AnalyticsReportExportStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AdminSyncTask;
+use App\Support\Admin\ExternalImportImpact;
 use App\Models\AnalyticsReportExport;
 use App\Services\Notifications\OperationalAlertsNotifier;
 use Illuminate\Http\Request;
@@ -81,6 +82,7 @@ class AdminSyncQueueController extends Controller
 
         return view('admin.sync-queue.show', [
             'task' => $task,
+            'outcomeHint' => ExternalImportImpact::taskOutcomeHint($task),
         ]);
     }
 
