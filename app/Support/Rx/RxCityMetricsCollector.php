@@ -378,9 +378,18 @@ final class RxCityMetricsCollector
      */
     private function safeInt(callable $fn, array &$warnings, string $label): ?int
     {
-        $v = $this->safe($fn, $warnings, $label, null);
+        try {
+            $v = $fn();
+            if ($v === null) {
+                $warnings[] = $label.': '.__('consulta indisponível (erro SQL ou esquema i-Educar).');
+            }
 
-        return $v === null ? null : (int) $v;
+            return $v === null ? null : (int) $v;
+        } catch (\Throwable $e) {
+            $warnings[] = $label.': '.$this->shortErrorMessage($e);
+
+            return null;
+        }
     }
 
     /**

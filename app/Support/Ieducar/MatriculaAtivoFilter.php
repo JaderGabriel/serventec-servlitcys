@@ -29,7 +29,7 @@ final class MatriculaAtivoFilter
         ) {
             $catalog = self::resolveMatriculaSituacaoCatalog($db, $city);
             if ($catalog !== null) {
-                self::applyMatriculaAtivoOrSituacaoInep($query, $columnRef, $catalog);
+                self::applyMatriculaAtivoOrSituacaoInep($query, $db, $columnRef, $catalog);
 
                 return;
             }
@@ -103,7 +103,7 @@ final class MatriculaAtivoFilter
     /**
      * @param  array{fk: string, msTable: string, msPk: string, codigoCol: string}  $catalog
      */
-    private static function applyMatriculaAtivoOrSituacaoInep(Builder $query, string $columnRef, array $catalog): void
+    private static function applyMatriculaAtivoOrSituacaoInep(Builder $query, Connection $db, string $columnRef, array $catalog): void
     {
         $codes = config('ieducar.matricula_indicadores.situacao_inep_como_ativa');
         if (! is_array($codes) || $codes === []) {

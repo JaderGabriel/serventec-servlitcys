@@ -95,6 +95,24 @@
         @apply border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-100 hover:bg-rose-50 dark:hover:bg-rose-950/40;
     }
 
+    /* Mapa Início — tooltip: Consultoria vs i-Educar */
+    .serv-btn-map-consultoria {
+        @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-indigo-500/80 bg-indigo-600 px-2.5 py-2 text-xs font-semibold text-white shadow-sm
+            hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-slate-900
+            dark:border-indigo-400 dark:bg-indigo-600 dark:hover:bg-indigo-500 transition;
+    }
+
+    .serv-btn-map-ieducar {
+        @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-sky-600/80 bg-sky-600 px-2.5 py-2 text-xs font-semibold text-white shadow-sm
+            hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 dark:focus:ring-offset-slate-900
+            dark:border-sky-500 dark:bg-sky-600 dark:hover:bg-sky-500 transition;
+    }
+
+    .serv-btn-map-ieducar--disabled {
+        @apply border-slate-200 bg-slate-100 text-slate-400 shadow-none cursor-not-allowed opacity-100
+            hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-500 dark:hover:bg-slate-800;
+    }
+
     .serv-municipality-strip {
         @apply rounded-xl bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 px-4 py-4 sm:px-5 sm:py-5 shadow-md ring-1 ring-teal-500/20;
     }
