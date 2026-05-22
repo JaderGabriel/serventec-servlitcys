@@ -110,8 +110,8 @@ final class AnalyticsTabImpactBuilder
             ],
             'enrollment' => [
                 'title' => __('Matrículas'),
-                'purpose' => __('Matrículas ativas, turmas, ocupação e distorção idade-série (critério INEP).'),
-                'impact_note' => __('Matrícula inconsistente ou distorção elevada aumentam risco de glosa no Censo e no VAAR.'),
+                'purpose' => __('Matrículas ativas, turmas, ocupação e secção de distorção idade-série (critério INEP) no mesmo recorte.'),
+                'impact_note' => __('O status resume o conjunto da aba; o saldo estima impacto nas matrículas já realizadas (cadastro/Censo e distorção, quando aplicável).'),
             ],
             'network' => [
                 'title' => __('Rede & Oferta'),
@@ -237,41 +237,133 @@ final class AnalyticsTabImpactBuilder
 
     /**
      * @param  array<string, mixed>  $tabData
+     * @param  array<string, mixed>  $ctx
      * @return array{status: string, label: string, score: ?int, share_label: ?string, share_value: ?string}
      */
     private static function statusEnrollment(array $tabData, array $ctx = []): array
     {
-        $data = is_array($tabData['enrollment'] ?? null) ? $tabData['enrollment'] : ($tabData['enrollmentData'] ?? []);
+        $snap = self::enrollmentTabSnapshot($tabData, $ctx);
+        $mat = $snap['mat'];
+        $turmas = $snap['turmas'];
+        $pend = $snap['pendencias'];
+        $pct = $snap['distorcao_pct'];
+        $ocup = $snap['ocupacao'];
+
+        if ($mat <= 0) {
+            return [
+                'status' => 'warning',
+                'label' => __('Sem matrículas ativas no filtro'),
+                'score' => 35,
+                'share_label' => __('Matrículas realizadas'),
+                'share_value' => '0',
+            ];
+        }
+
+        $score = 100.0;
+        $score -= min(28.0, $pend * 2.2);
+        if ($pct !== null) {
+            $score -= min(22.0, $pct * 0.85);
+        } elseif ($snap['distorcao_indisponivel']) {
+            $score -= 10.0;
+        }
+        if ($ocup !== null) {
+            if ($ocup < 20.0) {
+                $score -= 12.0;
+            } elseif ($ocup > 98.0) {
+                $score -= 6.0;
+            }
+        }
+        if ($turmas <= 0) {
+            $score -= 15.0;
+        }
+
+        $scoreInt = (int) max(0, min(100, round($score)));
+        $status = AnalyticsMunicipalityContext::statusFromScore($scoreInt);
+
+        $labelParts = [
+            __(':n matrículas', ['n' => number_format($mat, 0, ',', '.')]),
+        ];
+        if ($turmas > 0) {
+            $labelParts[] = __(':t turmas', ['t' => number_format($turmas, 0, ',', '.')]);
+        }
+        if ($ocup !== null) {
+            $labelParts[] = __('ocupação :p%', ['p' => number_format($ocup, 1, ',', '.')]);
+        }
+        if ($pend > 0) {
+            $labelParts[] = __(':p pend. cadastro', ['p' => number_format($pend, 0, ',', '.')]);
+        }
+        if ($pct !== null) {
+            $labelParts[] = __('distorção :d%', ['d' => number_format($pct, 1, ',', '.')]);
+        } elseif ($snap['distorcao_indisponivel']) {
+            $labelParts[] = __('distorção indisponível');
+        }
+
+        return [
+            'status' => $status,
+            'label' => implode(' · ', $labelParts),
+            'score' => $scoreInt,
+            'share_label' => __('Matrículas realizadas (filtro)'),
+            'share_value' => number_format($mat, 0, ',', '.'),
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function enrollmentDiscrepancyCheckIds(): array
+    {
+        return [
+            'matricula_duplicada',
+            'matricula_situacao_invalida',
+            'sem_data_nascimento',
+            'sem_raca',
+            'sem_sexo',
+            'distorcao_idade_serie',
+            'matricula_censo_vs_ieducar',
+            'escola_inativa_matricula',
+            'nee_sem_aee',
+            'turma_aee_sem_nee',
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @param  array<string, mixed>  $ctx
+     * @return array{
+     *     mat: int,
+     *     turmas: int,
+     *     ocupacao: ?float,
+     *     distorcao_pct: ?float,
+     *     distorcao_com: int,
+     *     pendencias: int,
+     *     distorcao_indisponivel: bool
+     * }
+     */
+    private static function enrollmentTabSnapshot(array $tabData, array $ctx): array
+    {
+        $data = self::tabPayload($tabData, 'enrollment');
+        $kpis = is_array($data['kpis'] ?? null) ? $data['kpis'] : [];
         $d = is_array($data['distorcao'] ?? null) ? $data['distorcao'] : [];
+
+        $mat = (int) ($kpis['matriculas'] ?? $ctx['total_matriculas'] ?? 0);
+        $turmas = (int) ($kpis['turmas_distintas'] ?? 0);
+        $ocup = isset($kpis['ocupacao_pct']) ? (float) $kpis['ocupacao_pct'] : null;
+
         $pct = isset($d['pct']) ? (float) $d['pct'] : null;
         if ($pct === null && isset($ctx['distorcao_pct'])) {
             $pct = (float) $ctx['distorcao_pct'];
         }
 
-        if ($pct === null) {
-            $mat = (int) ($ctx['total_matriculas'] ?? 0);
-            if ($mat > 0) {
-                return [
-                    'status' => 'warning',
-                    'label' => __('Matrículas no filtro, distorção ainda indisponível'),
-                    'score' => 55,
-                    'share_label' => __('Matrículas activas'),
-                    'share_value' => number_format($mat, 0, ',', '.'),
-                ];
-            }
-
-            return ['status' => 'neutral', 'label' => __('Distorção indisponível'), 'score' => null, 'share_label' => null, 'share_value' => null];
-        }
-
-        $score = (int) max(0, min(100, 100 - $pct * 1.8));
-        $status = $pct >= 25 ? 'danger' : ($pct >= 12 ? 'warning' : 'success');
+        $com = (int) ($d['com'] ?? $ctx['distorcao_com'] ?? 0);
 
         return [
-            'status' => $status,
-            'label' => __('Distorção idade-série: :p%', ['p' => number_format($pct, 1, ',', '.')]),
-            'score' => $score,
-            'share_label' => __('Impacto Censo/VAAR'),
-            'share_value' => $pct >= 15 ? __('Elevado') : ($pct >= 8 ? __('Moderado') : __('Baixo')),
+            'mat' => $mat,
+            'turmas' => $turmas,
+            'ocupacao' => $ocup,
+            'distorcao_pct' => $pct,
+            'distorcao_com' => $com,
+            'pendencias' => (int) ($ctx['pendencias_cadastro'] ?? 0),
+            'distorcao_indisponivel' => $mat > 0 && $pct === null && $com <= 0,
         ];
     }
 
@@ -307,7 +399,7 @@ final class AnalyticsTabImpactBuilder
     {
         $raw = match ($tab) {
             'network' => self::saldoFromNetworkOffer($tabData),
-            'enrollment' => self::saldoFromEnrollmentDistorcao($tabData, $ctx),
+            'enrollment' => self::saldoFromEnrollment($tabData, $ctx),
             'inclusion' => self::saldoFromInclusion($tabData),
             'school_units' => self::saldoFromSchoolUnitsGeo($tabData),
             'overview' => self::saldoFromOverviewCadastro($ctx),
@@ -403,57 +495,127 @@ final class AnalyticsTabImpactBuilder
 
     /**
      * @param  array<string, mixed>  $tabData
+     * @param  array<string, mixed>  $ctx
      * @return array{perda: float, ganho: float, liquido: float, footnote: string}|null
      */
-    private static function saldoFromEnrollmentDistorcao(array $tabData, array $ctx = []): ?array
+    private static function saldoFromEnrollment(array $tabData, array $ctx = []): ?array
     {
-        $data = self::tabPayload($tabData, 'enrollment');
-        $d = is_array($data['distorcao'] ?? null) ? $data['distorcao'] : [];
-        if ($d === [] && (int) ($ctx['distorcao_com'] ?? 0) > 0) {
-            $d = [
-                'com' => (int) $ctx['distorcao_com'],
-                'total' => (int) ($ctx['distorcao_elegivel_total'] ?? 0),
-                'pct' => $ctx['distorcao_pct'] ?? null,
-            ];
-        }
-
-        $com = (int) ($d['com'] ?? 0);
-        if ($com <= 0) {
+        $snap = self::enrollmentTabSnapshot($tabData, $ctx);
+        $mat = $snap['mat'];
+        if ($mat <= 0) {
             return null;
         }
 
-        $funding = DiscrepanciesFundingImpact::estimate('distorcao_idade_serie', $com);
-        $perda = (float) $funding['perda_anual'];
-        $ganho = (float) $funding['ganho_potencial_anual'];
-        $denom = (int) ($d['total'] ?? $ctx['distorcao_elegivel_total'] ?? 0);
-        $matRede = (int) ($ctx['total_matriculas'] ?? 0);
-        $pct = isset($d['pct']) ? number_format((float) $d['pct'], 1, ',', '.') : '—';
-        $cobertura = isset($ctx['distorcao_cobertura_pct'])
-            ? number_format((float) $ctx['distorcao_cobertura_pct'], 1, ',', '.').'%'
-            : null;
+        $perda = 0.0;
+        $ganho = 0.0;
+        $footnotes = [];
+        $distorcaoFromChecks = false;
 
-        $footnote = __(
-            ':n matrícula(s) com distorção idade-série (:p% do denominador com idade/série válida: :denom) × VAAF × peso :peso — risco Censo/VAAR-indicadores.',
-            [
-                'n' => number_format($com, 0, ',', '.'),
-                'p' => $pct,
-                'denom' => $denom > 0 ? number_format($denom, 0, ',', '.') : '—',
-                'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
-            ]
-        );
-        if ($matRede > 0 && $denom > 0 && $denom < $matRede) {
-            $footnote .= ' '.__(
-                'Matrículas activas no filtro: :mat; cobertura da apuração: :cov.',
-                ['mat' => number_format($matRede, 0, ',', '.'), 'cov' => $cobertura ?? '—']
+        $checks = self::discrepancyChecksFromTabData($tabData);
+        if ($checks !== []) {
+            $allowed = array_flip(self::enrollmentDiscrepancyCheckIds());
+            foreach ($checks as $check) {
+                if (! is_array($check)) {
+                    continue;
+                }
+                $id = (string) ($check['id'] ?? '');
+                if ($id === '' || ! isset($allowed[$id])) {
+                    continue;
+                }
+                $occurrences = (int) ($check['total'] ?? 0);
+                if ($occurrences <= 0) {
+                    continue;
+                }
+                if ($id === 'distorcao_idade_serie') {
+                    $distorcaoFromChecks = true;
+                }
+                $funding = DiscrepanciesFundingImpact::estimate($id, $occurrences);
+                $perda += (float) $funding['perda_anual'];
+                $ganho += (float) $funding['ganho_potencial_anual'];
+                $footnotes[] = __(':rotina: :n × VAAF × peso :peso', [
+                    'rotina' => (string) ($check['titulo'] ?? $check['title'] ?? $id),
+                    'n' => number_format($occurrences, 0, ',', '.'),
+                    'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
+                ]);
+            }
+        }
+
+        $com = $snap['distorcao_com'];
+        if (! $distorcaoFromChecks && $com > 0) {
+            $funding = DiscrepanciesFundingImpact::estimate('distorcao_idade_serie', $com);
+            $perda += (float) $funding['perda_anual'];
+            $ganho += (float) $funding['ganho_potencial_anual'];
+            $pct = $snap['distorcao_pct'];
+            $footnotes[] = __(
+                'Distorção idade-série: :n matrícula(s) (:p%) × VAAF × peso :peso.',
+                [
+                    'n' => number_format($com, 0, ',', '.'),
+                    'p' => $pct !== null ? number_format($pct, 1, ',', '.') : '—',
+                    'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
+                ]
             );
         }
 
+        if ($perda <= 0 && $ganho <= 0) {
+            $pend = $snap['pendencias'];
+            if ($pend > 0) {
+                $occurrences = min($pend, max(1, (int) round($mat * 0.04)));
+                $funding = DiscrepanciesFundingImpact::estimate('matricula_situacao_invalida', $occurrences);
+                $perda = (float) $funding['perda_anual'];
+                $ganho = (float) $funding['ganho_potencial_anual'];
+                $footnotes[] = __(
+                    ':mat matrícula(s) no filtro; :occ ocorrência(s) estimadas em cadastro/matricula (Discrepâncias) × VAAF × peso :peso.',
+                    [
+                        'mat' => number_format($mat, 0, ',', '.'),
+                        'occ' => number_format($occurrences, 0, ',', '.'),
+                        'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
+                    ]
+                );
+            } else {
+                return self::saldoPedagogicoCtxShare(
+                    $ctx,
+                    0.15,
+                    __('Fatia (~15%%) do saldo municipal das Discrepâncias atribuída às matrículas realizadas no filtro.')
+                );
+            }
+        }
+
+        if ($perda <= 0 && $ganho <= 0) {
+            return null;
+        }
+
+        $footnote = implode(' ', $footnotes);
+        $footnote .= ' '.__(
+            'Base: :n matrícula(s) activas no filtro — não é repasse FNDE.',
+            ['n' => number_format($mat, 0, ',', '.')]
+        );
+
         return [
-            'perda' => $perda,
-            'ganho' => $ganho,
+            'perda' => round($perda, 2),
+            'ganho' => round($ganho, 2),
             'liquido' => round($ganho - $perda, 2),
-            'footnote' => $footnote,
+            'footnote' => trim($footnote),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @return list<array<string, mixed>>
+     */
+    private static function discrepancyChecksFromTabData(array $tabData): array
+    {
+        foreach (['discrepancies', 'discrepanciesData'] as $key) {
+            $payload = $tabData[$key] ?? null;
+            if (! is_array($payload)) {
+                continue;
+            }
+            $checks = $payload['checks'] ?? null;
+            if (is_array($checks) && $checks !== []) {
+                return $checks;
+            }
+        }
+
+        return [];
     }
 
     /**
@@ -1418,11 +1580,23 @@ final class AnalyticsTabImpactBuilder
         }
 
         if ($tab === 'enrollment') {
-            $data = self::tabPayload($tabData, 'enrollment');
-            $d = is_array($data['distorcao'] ?? null) ? $data['distorcao'] : [];
-            $pct = isset($d['pct']) ? (float) $d['pct'] : null;
+            $snap = self::enrollmentTabSnapshot($tabData, $ctx);
+            if ($snap['mat'] <= 0) {
+                $issues[] = ['type' => 'unavailable', 'label' => __('Sem matrículas ativas no filtro'), 'count' => 1];
+            }
+            if ($snap['turmas'] <= 0 && $snap['mat'] > 0) {
+                $issues[] = ['type' => 'pending', 'label' => __('Matrículas sem turma distinta no recorte'), 'count' => $snap['mat']];
+            }
+            if ($snap['distorcao_indisponivel']) {
+                $issues[] = ['type' => 'unavailable', 'label' => __('Distorção idade-série indisponível'), 'count' => 1];
+            }
+            $pct = $snap['distorcao_pct'];
             if ($pct !== null && $pct >= 15) {
-                $issues[] = ['type' => 'pending', 'label' => __('Distorção idade-série elevada'), 'count' => (int) round($pct)];
+                $issues[] = ['type' => 'pending', 'label' => __('Distorção idade-série elevada (secção da aba)'), 'count' => (int) round($pct)];
+            }
+            $ocup = $snap['ocupacao'];
+            if ($ocup !== null && $ocup < 20.0) {
+                $issues[] = ['type' => 'pending', 'label' => __('Ocupação média muito baixa'), 'count' => (int) round($ocup)];
             }
         }
 
@@ -1451,6 +1625,9 @@ final class AnalyticsTabImpactBuilder
         }
         if ($tab === 'attendance') {
             $parts[] = __('Sem falta_aluno ou sem lançamentos no filtro, o status fica em alerta (não neutro) e o saldo estima matrículas sem trilha de frequência (PNAE/transporte).');
+        }
+        if ($tab === 'enrollment') {
+            $parts[] = __('O medidor resume matrículas, turmas, ocupação, pendências de cadastro e distorção (secção própria abaixo) — não usa só a distorção.');
         }
         if (($def['impact_note'] ?? '') !== '') {
             $parts[] = (string) $def['impact_note'];
@@ -1524,20 +1701,35 @@ final class AnalyticsTabImpactBuilder
     private static function pushEnrollmentMetrics(array &$out, array $tabData): void
     {
         $data = self::tabPayload($tabData, 'enrollment');
-        $d = is_array($data['distorcao'] ?? null) ? $data['distorcao'] : [];
-        if (isset($d['pct'])) {
-            $out[] = [
-                'label' => __('Distorção idade-série'),
-                'value' => number_format((float) $d['pct'], 1, ',', '.').'%',
-                'tone' => ((float) $d['pct']) >= 15 ? 'danger' : 'warning',
-            ];
-        }
         $kpis = is_array($data['kpis'] ?? null) ? $data['kpis'] : [];
         if (($kpis['matriculas'] ?? null) !== null) {
             $out[] = [
                 'label' => __('Matrículas (aba)'),
                 'value' => number_format((int) $kpis['matriculas'], 0, ',', '.'),
                 'tone' => 'neutral',
+            ];
+        }
+        if (($kpis['turmas_distintas'] ?? null) !== null) {
+            $out[] = [
+                'label' => __('Turmas'),
+                'value' => number_format((int) $kpis['turmas_distintas'], 0, ',', '.'),
+                'tone' => 'neutral',
+            ];
+        }
+        if (isset($kpis['ocupacao_pct']) && $kpis['ocupacao_pct'] !== null) {
+            $ocup = (float) $kpis['ocupacao_pct'];
+            $out[] = [
+                'label' => __('Ocupação média'),
+                'value' => number_format($ocup, 1, ',', '.').'%',
+                'tone' => $ocup < 20 ? 'warning' : 'neutral',
+            ];
+        }
+        $d = is_array($data['distorcao'] ?? null) ? $data['distorcao'] : [];
+        if (isset($d['pct'])) {
+            $out[] = [
+                'label' => __('Distorção (secção)'),
+                'value' => number_format((float) $d['pct'], 1, ',', '.').'%',
+                'tone' => ((float) $d['pct']) >= 15 ? 'danger' : 'warning',
             ];
         }
     }

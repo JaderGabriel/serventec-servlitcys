@@ -156,6 +156,7 @@
                                 @if (! $lazyTabLoading)
                                     @include('dashboard.analytics.partials.enrollment', [
                                         'enrollmentData' => $enrollmentData,
+                                        'discrepanciesData' => $discrepanciesData,
                                         'chartExportContext' => $chartExportContext,
                                         'municipalityContext' => $municipalityContext ?? null,
                                         'yearFilterReady' => $yearFilterReady,

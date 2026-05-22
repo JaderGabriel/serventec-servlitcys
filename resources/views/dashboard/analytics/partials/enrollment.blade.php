@@ -1,11 +1,14 @@
-@props(['enrollmentData', 'chartExportContext' => [], 'municipalityContext' => null, 'yearFilterReady' => true])
+@props(['enrollmentData', 'chartExportContext' => [], 'municipalityContext' => null, 'yearFilterReady' => true, 'discrepanciesData' => null])
 
 <div class="space-y-4">
     @include('dashboard.analytics.partials.tab-impact-strip', [
         'tab' => 'enrollment',
         'yearFilterReady' => $yearFilterReady,
         'municipalityContext' => $municipalityContext,
-        'tabData' => ['enrollmentData' => $enrollmentData],
+        'tabData' => array_filter([
+            'enrollmentData' => $enrollmentData,
+            'discrepanciesData' => is_array($discrepanciesData ?? null) ? $discrepanciesData : null,
+        ], static fn ($v) => $v !== null),
     ])
 
     @if (! empty($enrollmentData['kpis']))

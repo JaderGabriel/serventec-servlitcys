@@ -111,8 +111,9 @@ class AnalyticsTabImpactBuilderTest extends TestCase
 
     public function test_enrollment_strip_uses_distorcao_for_saldo(): void
     {
-        $strip = AnalyticsTabImpactBuilder::build('enrollment', true, [], [
+        $strip = AnalyticsTabImpactBuilder::build('enrollment', true, ['total_matriculas' => 300], [
             'enrollmentData' => [
+                'kpis' => ['matriculas' => 300, 'turmas_distintas' => 40],
                 'distorcao' => ['com' => 50, 'sem' => 200, 'total' => 250, 'pct' => 20.0],
             ],
         ]);
@@ -121,6 +122,43 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         $this->assertNotNull($strip['saldo']);
         $this->assertGreaterThan(0.0, $strip['saldo']['perda']);
         $this->assertStringContainsString('distorção', strtolower((string) ($strip['saldo']['footnote'] ?? '')));
+        $this->assertStringContainsString('matrícula', strtolower((string) ($strip['saldo']['footnote'] ?? '')));
+    }
+
+    public function test_enrollment_status_resume_aba_nao_so_distorcao(): void
+    {
+        $strip = AnalyticsTabImpactBuilder::build('enrollment', true, ['pendencias_cadastro' => 5, 'total_matriculas' => 800], [
+            'enrollmentData' => [
+                'kpis' => ['matriculas' => 800, 'turmas_distintas' => 120, 'ocupacao_pct' => 72.5],
+                'distorcao' => ['com' => 10, 'sem' => 90, 'total' => 100, 'pct' => 10.0],
+            ],
+        ]);
+
+        $this->assertStringContainsString('800', $strip['status_label']);
+        $this->assertStringContainsString('120', $strip['status_label']);
+        $this->assertStringNotContainsString(__('Distorção idade-série:'), $strip['status_label']);
+        $this->assertSame('800', $strip['saldo']['tab_share_value'] ?? null);
+    }
+
+    public function test_enrollment_saldo_usa_checks_matricula_quando_discrepancias_na_aba(): void
+    {
+        $strip = AnalyticsTabImpactBuilder::build('enrollment', true, ['total_matriculas' => 500], [
+            'enrollmentData' => [
+                'kpis' => ['matriculas' => 500, 'turmas_distintas' => 60],
+                'distorcao' => null,
+            ],
+            'discrepanciesData' => [
+                'checks' => [
+                    ['id' => 'matricula_duplicada', 'titulo' => 'Duplicadas', 'total' => 8],
+                    ['id' => 'escola_sem_geo', 'total' => 3],
+                ],
+            ],
+        ]);
+
+        $this->assertNotNull($strip['saldo']);
+        $this->assertGreaterThan(0.0, $strip['saldo']['perda']);
+        $this->assertStringContainsString('Duplicadas', (string) ($strip['saldo']['footnote'] ?? ''));
+        $this->assertStringNotContainsString('escola_sem_geo', (string) ($strip['saldo']['footnote'] ?? ''));
     }
 
     public function test_enrollment_saldo_usa_distorcao_do_contexto_quando_aba_ainda_nao_carregou(): void
@@ -139,7 +177,8 @@ class AnalyticsTabImpactBuilderTest extends TestCase
 
         $this->assertNotNull($strip['saldo']);
         $this->assertGreaterThan(0.0, $strip['saldo']['perda']);
-        $this->assertStringContainsString('500', (string) ($strip['saldo']['footnote'] ?? ''));
+        $this->assertStringContainsString('1.200', (string) ($strip['saldo']['footnote'] ?? ''));
+        $this->assertStringContainsString('40', (string) ($strip['saldo']['footnote'] ?? ''));
     }
 
     public function test_overview_saldo_menciona_matriculas_do_contexto(): void
