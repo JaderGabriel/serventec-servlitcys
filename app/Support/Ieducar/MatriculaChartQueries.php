@@ -978,7 +978,6 @@ final class MatriculaChartQueries
         IeducarFilterState $filters,
         ?int $kpiDenominator = null
     ): ?array {
-    {
         try {
             $pessoa = IeducarSchema::resolveTable('pessoa', $city);
             if (! IeducarColumnInspector::tableExists($db, $pessoa, $city)) {
