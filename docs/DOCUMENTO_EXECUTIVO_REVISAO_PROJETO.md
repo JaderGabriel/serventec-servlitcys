@@ -1,6 +1,6 @@
 # Documento executivo — revisão técnica do projeto (servlitcys)
 
-**Data de referência:** 16 de abril de 2026 (actualizado maio/2026)  
+**Data de referência:** 16 de abril de 2026 (atualizado maio/2026)  
 **Âmbito:** revisão de arquitetura, gargalos, padrão Laravel, dívida técnica e recomendações priorizadas.
 
 > **Backlog técnico:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (secção **E**).  
@@ -10,7 +10,7 @@
 
 ## 1. Resumo executivo
 
-O **servlitcys** é uma aplicação **Laravel 13** (PHP 8.3) focada em dados educacionais municipais, com ligação dinâmica a bases **iEducar** (MySQL/PostgreSQL) por cidade. A arquitetura geral segue boas práticas Laravel (**repositórios**, **policies**, **Form Requests** onde crítico, **middleware** de perfil e admin). Os principais riscos concentram-se em **ficheiros de suporte muito grandes** (consultas SQL e gráficos), **controlador de analytics denso** e **ausência de análise estática contínua** (PHPStan/Psalm). O desempenho em produção depende sobretudo da **latência e carga da base iEducar** por município e do número de consultas por pedido ao painel.
+O **servlitcys** é uma aplicação **Laravel 13** (PHP 8.3) focada em dados educacionais municipais, com conexão dinâmica a bases **iEducar** (MySQL/PostgreSQL) por cidade. A arquitetura geral segue boas práticas Laravel (**repositórios**, **policies**, **Form Requests** onde crítico, **middleware** de perfil e admin). Os principais riscos concentram-se em **arquivos de suporte muito grandes** (consultas SQL e gráficos), **controlador de analytics denso** e **ausência de análise estática contínua** (PHPStan/Psalm). O desempenho em produção depende sobretudo da **latência e carga da base iEducar** por município e do número de consultas por pedido ao painel.
 
 ---
 
@@ -19,7 +19,7 @@ O **servlitcys** é uma aplicação **Laravel 13** (PHP 8.3) focada em dados edu
 | Área | Situação |
 |------|----------|
 | Framework | Laravel 13, Breeze (auth), Pulse |
-| Dados app | SQLite/MySQL (configurável) para utilizadores, cidades, sessões |
+| Dados app | SQLite/MySQL (configurável) para usuários, cidades, sessões |
 | Dados educacionais | Conexões **dinâmicas** por cidade (`CityDataConnection`), threshold de lentidão documentado no serviço |
 | Front | Vite, Alpine.js (gráficos Chart.js no painel) |
 | API pública | Rota SAEB município com **throttle** (`routes/api.php`) |
@@ -50,7 +50,7 @@ O `AnalyticsDashboardController` orquestra **vários repositórios** por aba (vi
 
 ### 4.2 Classes de consulta monolíticas
 
-Ficheiros como `MatriculaChartQueries.php` concentram **milhares de linhas** de SQL e ramificações por schema. Isto não é um “bug”, mas é um **gargalo de manutenção e de revisão de performance**: qualquer alteração pode afetar vários gráficos.
+Arquivos como `MatriculaChartQueries.php` concentram **milhares de linhas** de SQL e ramificações por schema. Isto não é um “bug”, mas é um **gargalo de manutenção e de revisão de performance**: qualquer alteração pode afetar vários gráficos.
 
 **Recomendação:** particionar por domínio (ex.: `VagasQueries`, `MatriculaAgregadosQueries`, `TurmaCapacidadeQueries`) com traits ou serviços injetados, mantendo testes de regressão por consulta crítica.
 
@@ -79,7 +79,7 @@ Ficheiros como `MatriculaChartQueries.php` concentram **milhares de linhas** de 
 **A melhorar:**
 
 - **Único ponto de verdade** para “payload vazio” do painel: hoje os arrays default no controlador devem espelhar os repositórios (foi **corrigido** para inclusão — ver secção 8).
-- **API JSON** sem autenticação para ficheiros SAEB: adequado se o conteúdo for público; garantir **rate limit** (já existe throttle), **CORS** se consumido por browsers externos, e monitorização de abuso.
+- **API JSON** sem autenticação para arquivos SAEB: adequado se o conteúdo for público; garantir **rate limit** (já existe throttle), **CORS** se consumido por browsers externos, e monitorização de abuso.
 - **Comandos Artisan** longos: garantir **timeouts**, **memory limits** e idempotência nas importações (SAEB, geo, etc.).
 
 ---
@@ -107,7 +107,7 @@ Ficheiros como `MatriculaChartQueries.php` concentram **milhares de linhas** de 
 ## 8. Alterações aplicadas nesta revisão de código
 
 1. **`AnalyticsDashboardController`:** quando o ano letivo **não** está selecionado (`yearFilterReady === false`), o array default de `inclusionData` passou a incluir **`chart_raca_por_escola_stacked`** e **`nee_matriculas_por_escola`**, alinhado ao retorno de `InclusionRepository::snapshot()`, evitando divergência de contrato com as vistas.
-2. **PHPStan + Larastan:** dependência `larastan/larastan`, ficheiro `phpstan.neon` com análise de `app/Services` e `app/Repositories` ao **nível 5**, `phpstan-baseline.neon` gerado para dívida existente, comando `composer run phpstan`.
+2. **PHPStan + Larastan:** dependência `larastan/larastan`, arquivo `phpstan.neon` com análise de `app/Services` e `app/Repositories` ao **nível 5**, `phpstan-baseline.neon` gerado para dívida existente, comando `composer run phpstan`.
 3. **Métricas analytics:** guia operacional em **`docs/METRICAS_QUERIES_ANALYTICS.md`** (Pulse, limiares, staging, anonimização).
 4. **Lazy loading por aba:** `config/analytics.php`, rota `dashboard.analytics.tab`, payloads vazios em `AnalyticsEmptyPayloads`; Pulse distingue pedidos por `tab=` e cabeçalhos `X-Analytics-Tab`.
 

@@ -2,9 +2,9 @@
 
 **Versão do produto:** 2.2.0 (`2c8cf44`, #135) · **Última revisão:** maio/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
-Este documento é a **referência oficial** para configurar o ficheiro **`.env` no servidor de produção**.
+Este documento é a **referência oficial** para configurar o arquivo **`.env` no servidor de produção**.
 
-| Ficheiro | Uso |
+| Arquivo | Uso |
 |----------|-----|
 | **`.env`** (servidor) | Configuração real — **não versionar**, contém segredos |
 | **`.env.example`** (repositório Git) | Modelo só para **instalação nova** ou desenvolvimento local (`cp .env.example .env`) |
@@ -41,7 +41,7 @@ php artisan config:clear
 | Variável | Prod. | Default | Descrição |
 |----------|:-----:|---------|-----------|
 | `LOG_CHANNEL` | | `stack` | |
-| `LOG_STACK` | | `daily` | Ficheiros diários em `storage/logs/` |
+| `LOG_STACK` | | `daily` | Arquivos diários em `storage/logs/` |
 | `LOG_LEVEL` | | `warning` | `error` ou `warning` em produção |
 | `LOG_DAILY_DAYS` | | `14` | Retenção |
 
@@ -69,7 +69,7 @@ Bases **i-Educar por município** ficam na tabela `cities` (admin), não no `.en
 | `ADMIN_EMAIL` | `AdminUserSeeder` |
 | `ADMIN_USERNAME` | |
 | `ADMIN_PASSWORD` | Alterar antes do seed |
-| `ADMIN_BIRTH_DATE` | Recuperação de palavra-passe |
+| `ADMIN_BIRTH_DATE` | Recuperação de senha |
 | `ADMIN_CPF` | Opcional |
 
 ---
@@ -166,7 +166,7 @@ Tarefas geo com vários municípios guardam **checkpoint** por cidade; na fila, 
 |----------|:-----:|---------|
 | `PULSE_ENABLED` | | `true` |
 | `PULSE_PATH` | | `pulse` |
-| `PULSE_DB_CONNECTION` | sim | `mysql` (mesma ligação que `DB_*`) |
+| `PULSE_DB_CONNECTION` | sim | `mysql` (mesma conexão que `DB_*`) |
 | `PULSE_SCHEDULE_ENABLED` | sim | `true` |
 | `PULSE_SCHEDULE_INTERVAL_MINUTES` | | `3` (com cron de 3 min) |
 
@@ -257,10 +257,10 @@ Só necessárias se o schema do município divergir do Portabilis 2.x. Lista com
 
 ## 17. Checklist rápido pós-deploy
 
-1. `APP_DEBUG=false`, `APP_URL` correcto, `SESSION_SECURE_COOKIE=true`
+1. `APP_DEBUG=false`, `APP_URL` correto, `SESSION_SECURE_COOKIE=true`
 2. `php artisan migrate --force`
 3. `php artisan config:clear` e `php artisan storage:link`
-4. Cron `schedule:run` activo
+4. Cron `schedule:run` ativo
 5. Worker `default,admin-sync` ou confiar em `ADMIN_SYNC_SCHEDULE_*`
 6. Bloco **§7** (analytics) para evitar 500 ao filtrar ano letivo
 7. `PORTAL_TRANSPARENCIA_API_KEY` se usar Financiamentos com Transparência

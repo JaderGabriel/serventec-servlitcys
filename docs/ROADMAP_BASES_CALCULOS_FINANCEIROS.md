@@ -88,7 +88,7 @@ Prioridade sugerida para secretarias que querem visão financeira integrada.
 **Impacto**
 
 - Config: `IEDUCAR_COST_HOUR_SECRETARIA`, `IEDUCAR_PNATE_COST_PER_STUDENT`.
-- Censo: passar de minutos fixos por registo para cenário «custo financeiro de fechar cadastro».
+- Censo: passar de minutos fixos por registro para cenário «custo financeiro de fechar cadastro».
 
 ---
 
@@ -230,7 +230,7 @@ IEDUCAR_FUNDING_SNAPSHOT_RETENTION_YEARS=10
 
 - P3, P4 para PNAE/PNATE; C1/C2 para VAAR importado.
 - Checks `sem_transporte` / `sem_alimentacao` se colunas existirem na base.
-- **Impacto:** ligação directa entre aba Financiamentos e discrepâncias por programa.
+- **Impacto:** conexão directa entre aba Financiamentos e discrepâncias por programa.
 
 ### Fase F4 — Simulador e custo de cadastro (4+ meses)
 
@@ -255,7 +255,7 @@ IEDUCAR_FUNDING_SNAPSHOT_RETENTION_YEARS=10
 
 | Risco | Mitigação |
 |-------|-----------|
-| Utilizador tratar estimativa como dívida/crédito oficial | Avisos fixos + rótulo «indicativo» em todos os valores |
+| Usuário tratar estimativa como dívida/crédito oficial | Avisos fixos + rótulo «indicativo» em todos os valores |
 | Dados Tesouro sem desagregação educação | Manter keywords + nota metodológica |
 | Manutenção de APIs que mudam | Snapshots versionados + data `imported_at` |
 | Performance (CSV nacional grande) | Import em fila; agregados por IBGE na BD app |
@@ -264,7 +264,7 @@ IEDUCAR_FUNDING_SNAPSHOT_RETENTION_YEARS=10
 
 ## 9. Ligação ao código actual (pontos de extensão)
 
-| Extensão futura | Ficheiro / classe a estender |
+| Extensão futura | Arquivo / classe a estender |
 |-----------------|------------------------------|
 | Nova fonte de repasse | `MunicipalFundingPublicSnapshotService` ou serviço irmão `MunicipalTransferImportService` |
 | Persistência | `FundebMunicipioReferenceRepository` (padrão já usado) |

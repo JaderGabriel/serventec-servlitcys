@@ -112,7 +112,7 @@ Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IE
 | DONE-04 | Export PDF Serventec (fila + permissões) | Job `afterResponse` |
 | DONE-05 | Financiamentos: consultas públicas + modal condições | FNDE/Transparência |
 | DONE-06 | Censo: meta ano anterior, turmas/mat./enturmações | `WorkDoneRepository` |
-| DONE-07 | RBAC municipal + gestão utilizadores activar/desactivar | maio/2026 |
+| DONE-07 | RBAC municipal + gestão usuários ativar/desativar | maio/2026 |
 
 ---
 
@@ -124,7 +124,7 @@ Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IE
 
 1. Inserir na secção correcta (A–E).
 2. Se for decisão de desenho, documentar em [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
-3. Ao concluir, mover linha para **G** e actualizar [STATUS_PROJETO.md](STATUS_PROJETO.md).
+3. Ao concluir, mover linha para **G** e atualizar [STATUS_PROJETO.md](STATUS_PROJETO.md).
 4. Sugestão de cadastro/integração → [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) §F.
 
 ---

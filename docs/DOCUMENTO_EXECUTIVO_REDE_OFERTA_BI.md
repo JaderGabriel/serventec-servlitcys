@@ -39,7 +39,7 @@ Melhorias típicas em roadmaps de BI: **drill-down** (escola → turma), **compa
 
 - Bases i-Educar **sem índices** em chaves de junção (matrícula ↔ turma ↔ escola) degradam qualquer painel.
 - **Múltiplas passagens** sobre turmas e contagens por turma (por exemplo, contagens de matrícula e leitura de turmas) podem ser candidatas a **consolidação em uma única query** ou **vista/materialização** no lado municipal, se o volume for alto.
-- Utilizadores a mudar filtros com frequência repetem o mesmo trabalho — **cache por chave** `(cidade, ano, curso, turno)` com TTL curto (ex.: 2–15 minutos) é padrão em BI self-service.
+- Usuários a mudar filtros com frequência repetem o mesmo trabalho — **cache por chave** `(cidade, ano, curso, turno)` com TTL curto (ex.: 2–15 minutos) é padrão em BI self-service.
 
 ### 4.3 Recomendações priorizadas
 
@@ -57,4 +57,4 @@ Melhorias típicas em roadmaps de BI: **drill-down** (escola → turma), **compa
 
 ## 6. Conclusão
 
-O cartão **«Distribuição de vagas na cidade»** alinha o **discurso visual** (violeta / Rede) à **metodologia** já usada nas queries, com **definição de dados** visível para o utilizador final. A evolução natural para nível «BI maduro» passa por **cache**, **índices na origem** e, se necessário, **camada de agregados pré-calculados** — sem alterar o significado estatístico das vagas por turma descrito acima.
+O cartão **«Distribuição de vagas na cidade»** alinha o **discurso visual** (violeta / Rede) à **metodologia** já usada nas queries, com **definição de dados** visível para o usuário final. A evolução natural para nível «BI maduro» passa por **cache**, **índices na origem** e, se necessário, **camada de agregados pré-calculados** — sem alterar o significado estatístico das vagas por turma descrito acima.

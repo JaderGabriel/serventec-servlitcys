@@ -10,29 +10,29 @@ O **servlitcys** é uma aplicação web que consolida **informação educacional
 
 - Equipas de gestão educativa municipal ou regional
 - Analistas e responsáveis que necessitam de visão agregada por cidade
-- Administradores de sistema que configuram ligações a bases de dados por município
+- Administradores de sistema que configuram conexões a bases de dados por município
 
 ## Funcionalidades principais
 
-1. **Painel e análise** — Visualização de métricas e filtros associados a cidades com configuração ativa e ligação a dados (ex.: ecossistema iEducar).
+1. **Painel e análise** — Visualização de métricas e filtros associados a cidades com configuração ativa e conexão a dados (ex.: ecossistema iEducar).
 2. **Gestão de cidades** — Cadastro de municípios e credenciais de acesso às respetivas bases (restrito a administradores).
-3. **Gestão de utilizadores** — Criação de contas após autenticação (sem registo público); administradores podem desactivar, reactivar ou excluir contas; inactivos não autenticam.
+3. **Gestão de usuários** — Criação de contas após autenticação (sem registro público); administradores podem desativar, reativar ou excluir contas; inativos não autenticam.
 4. **Página institucional** — Apresentação da plataforma e acesso ao login.
 
 ## Modelo de governação de acesso
 
 - **Administrador** (`role=admin`): acesso total — cidades, sincronizações, configurações e gestão de todos os perfis.
-- **Utilizador** (`role=user`): análise em todos os municípios com dados; pode criar outros utilizadores do mesmo perfil.
+- **Usuário** (`role=user`): análise em todos os municípios com dados; pode criar outros usuários do mesmo perfil.
 - **Municipal** (`role=municipal`): análise apenas nos municípios vinculados; pode criar outros municipais no seu âmbito.
 
 Detalhe por perfil, matriz de permissões e operação: [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md).
 
-Não existe auto-registo: reduz superfície de ataque e permite controlo explícito de quem entra no sistema.
+Não existe auto-registro: reduz superfície de ataque e permite controlo explícito de quem entra no sistema.
 
 ## Dependências técnicas (alto nível)
 
 - Aplicação **Laravel** (PHP), com interface web e API interna para consultas.
-- **MySQL** como base principal e, por cidade, ligação configurável a bases de dados municipais.
+- **MySQL** como base principal e, por cidade, conexão configurável a bases de dados municipais.
 - **Frontend**: Vite, CSS (Tailwind), JavaScript (Alpine.js) para interatividade.
 
 ## Indicadores de sucesso (sugestão)

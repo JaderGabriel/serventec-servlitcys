@@ -28,7 +28,7 @@ Cada método de teste inclui comentário técnico (docblock) explicando **o que*
 ## Mapa de cobertura por domínio
 
 ### FUNDEB e referência municipal
-| Ficheiro de teste | Classe alvo | Cenários |
+| Arquivo de teste | Classe alvo | Cenários |
 |-------------------|-------------|----------|
 | `FundebReferenceSourceTest` | `FundebReferenceSource` | Placeholder vs fonte oficial |
 | `FundebIbgeMatcherTest` | `FundebIbgeMatcher` | Normalização IBGE, match em CSV/CKAN |
@@ -39,7 +39,7 @@ Cada método de teste inclui comentário técnico (docblock) explicando **o que*
 | `FundebComplementacaoInformeBuilderTest` | `FundebComplementacaoInformeBuilder` | Blocos do informe |
 
 ### Discrepâncias e impacto financeiro
-| Ficheiro | Classe | Cenários |
+| Arquivo | Classe | Cenários |
 |----------|--------|----------|
 | `DiscrepanciesRoutineStatusTest` | `DiscrepanciesRoutineStatus` | ok / no_data / unavailable |
 | `DiscrepanciesRoutineMetricsTest` | `DiscrepanciesRoutineMetrics` | Soma de ocorrências, resumo |
@@ -47,7 +47,7 @@ Cada método de teste inclui comentário técnico (docblock) explicando **o que*
 | `DiscrepanciesFundingImpactTest` | `DiscrepanciesFundingImpact` | Fórmula ocorrências × VAAF × peso |
 
 ### Painel analítico (consultoria)
-| Ficheiro | Classe | Cenários |
+| Arquivo | Classe | Cenários |
 |----------|--------|----------|
 | `AnalyticsTabImpactBuilderTest` | `AnalyticsTabImpactBuilder` | Faixa de impacto por aba |
 | `AnalyticsMunicipalityContextTest` | `AnalyticsMunicipalityContext` | Score de conformidade, saldo |
@@ -55,7 +55,7 @@ Cada método de teste inclui comentário técnico (docblock) explicando **o que*
 | `ConsultoriaFlowTest` | `ConsultoriaFlow` | Passos numerados omitindo vazios |
 
 ### Filtros, cadastro, agendamento
-| Ficheiro | Classe |
+| Arquivo | Classe |
 |----------|--------|
 | `IeducarFilterStateInclusionTest` | `IeducarFilterState` |
 | `IeducarFilterStateTest` | `IeducarFilterState` (ano letivo) |
@@ -63,7 +63,7 @@ Cada método de teste inclui comentário técnico (docblock) explicando **o que*
 | `IeducarWorkActivityQueriesTest` | Ritmo Censo (com mocks) |
 
 ### Utilitários
-| Ficheiro | Classe |
+| Arquivo | Classe |
 |----------|--------|
 | `CpfTest` | `Cpf` |
 | `ChartPayloadTest` | `ChartPayload` |

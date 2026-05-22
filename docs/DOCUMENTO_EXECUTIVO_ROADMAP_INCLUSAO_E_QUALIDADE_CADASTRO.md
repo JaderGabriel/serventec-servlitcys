@@ -5,7 +5,7 @@
 
 **Documentos relacionados:** [README.md](README.md) (índice) · [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) (roteiro ampliado cadastro + integrações) · [STATUS_PROJETO.md](STATUS_PROJETO.md) · [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (secção **D** e **F**) · [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §7–8 e §15.
 
-> **Nota:** grande parte do roadmap abaixo está **concluída** (MVP recurso×NEE, geo, VAAF). Manter o ficheiro como histórico e especificação; novos itens vão para o backlog central.
+> **Nota:** grande parte do roadmap abaixo está **concluída** (MVP recurso×NEE, geo, VAAF). Manter o arquivo como histórico e especificação; novos itens vão para o backlog central.
 
 ---
 
@@ -158,7 +158,7 @@ Responsabilidades:
 
 | Aba | Ajuste |
 |-----|--------|
-| **Inclusão** | Secção recursos de prova; filtro «só inconsistências»; metodologia actualizada |
+| **Inclusão** | Secção recursos de prova; filtro «só inconsistências»; metodologia atualizada |
 | **Discrepâncias** | Novos checks; agrupamento no mapa de rotinas sob dimensão «Educação especial / Censo» |
 | **Diagnóstico Geral** | KPI opcional «Matrículas com recurso sem NEE»; bloco temático expandido |
 | **Unidades escolares** | (Item relacionado) Alinhar `escola_sem_geo` com posição utilizável no mapa — ver secção 6 |
@@ -170,7 +170,7 @@ Responsabilidades:
 
 ## 6. Roadmap de itens semelhantes (além de recursos de prova)
 
-Priorização sugerida: **impacto Censo/VAAR** × **esforço técnico** × **já reportado por utilizadores**.
+Priorização sugerida: **impacto Censo/VAAR** × **esforço técnico** × **já reportado por usuários**.
 
 ### 6.1 Prioridade alta (próximo trimestre)
 
@@ -189,7 +189,7 @@ A rotina **`escola_sem_geo`** passou a usar `DiscrepanciesQueries::escolasSemPos
 2. **Sem matrículas no âmbito** (mapa em modo `geo_cache`): lista unidades em `school_unit_geos` da cidade **sem** coordenadas utilizáveis — alinhado ao resumo «Escolas no escopo» vs «Total com posição» na aba Unidades escolares.
 3. **Probe** `DiscrepanciesAvailability::escolaPosicaoMapa`: disponível se existirem colunas geo na escola **ou** cache local com linhas para o município.
 
-Ficheiros: `app/Support/Ieducar/SchoolGeoPositionResolver.php`, `DiscrepanciesQueries.php`, `DiscrepanciesAvailability.php`, `DiscrepanciesCheckRunner.php`, `DiscrepanciesCheckCatalog.php`.
+Arquivos: `app/Support/Ieducar/SchoolGeoPositionResolver.php`, `DiscrepanciesQueries.php`, `DiscrepanciesAvailability.php`, `DiscrepanciesCheckRunner.php`, `DiscrepanciesCheckCatalog.php`.
 
 ### 6.2 Prioridade média
 
@@ -262,7 +262,7 @@ Ver documentação técnica: [`docs/FUNDEB_VAAF_E_ONDA1.md`](FUNDEB_VAAF_E_ONDA1
 | **2 — UI Inclusão** | 1 semana | Gráficos, metodologia, filtro inconsistências |
 | **3 — Diagnóstico + VAAR** | 3–5 dias | Bridge temática, pilares, pesos financeiros indicativos |
 | **4 — Geo alinhado (A2)** | 1 semana | Paralelo ou imediato após fase 1 |
-| **5 — Hardening** | contínuo | PHPStan nos novos ficheiros; Pulse por aba `inclusion` / `discrepancies` |
+| **5 — Hardening** | contínuo | PHPStan nos novos arquivos; Pulse por aba `inclusion` / `discrepancies` |
 
 ---
 
@@ -299,6 +299,6 @@ Ver documentação técnica: [`docs/FUNDEB_VAAF_E_ONDA1.md`](FUNDEB_VAAF_E_ONDA1
 
 ## 12. Conclusão
 
-Ampliar a educação especial no painel não é apenas «mais gráficos de deficiência», mas **cruzar fontes de cadastro** que o i-Educar já separa (NEE vs recursos de prova INEP) e **alinhar alertas** com o que o utilizador vê no mapa e nas abas de consultoria. O MVP proposto fecha a lacuna mais pedida (**apoio na prova sem deficiência**); o roadmap da secção 6 trata **falhas semelhantes** de forma sistemática, evitando novas divergências entre indicadores visuais e rotinas de discrepância.
+Ampliar a educação especial no painel não é apenas «mais gráficos de deficiência», mas **cruzar fontes de cadastro** que o i-Educar já separa (NEE vs recursos de prova INEP) e **alinhar alertas** com o que o usuário vê no mapa e nas abas de consultoria. O MVP proposto fecha a lacuna mais pedida (**apoio na prova sem deficiência**); o roadmap da secção 6 trata **falhas semelhantes** de forma sistemática, evitando novas divergências entre indicadores visuais e rotinas de discrepância.
 
 Este documento pode ser usado para **priorização de sprint**, **alinhamento com secretarias** e **estimativa de orçamento** sem substituir especificação técnica detalhada por issue/ticket.

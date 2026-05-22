@@ -48,11 +48,11 @@ O produto comunica **consultoria profissional** com foco em **finanças educacio
 
 ## 4. Navegação global
 
-| Perfil | Item principal | Menu utilizador |
+| Perfil | Item principal | Menu usuário |
 |--------|----------------|-----------------|
 | **Municipal** | Meu município | Perfil, Sair |
 | **User** (consultor) | Meu município / Consultoria municipal | Idem |
-| **Admin** | Início (dashboard) + Consultoria municipal | **Conexões** (ligações i-Educar), Sincronizações, Utilizadores, Documentação, SMTP |
+| **Admin** | Início (dashboard) + Consultoria municipal | **Conexões** (conexões i-Educar), Sincronizações, Usuários, Documentação, SMTP |
 
 Rota documentação admin: `GET /admin/documentacao` → `admin.documentation.index`.
 
@@ -64,7 +64,7 @@ Rota documentação admin: `GET /admin/documentacao` → `admin.documentation.in
 2. **Indicadores pedagógicos:** Inclusão → Desempenho → Frequência  
 3. **Finanças e repasses:** Diagnóstico → Discrepâncias → FUNDEB → Financiamentos → Censo  
 
-No painel, o utilizador escolhe primeiro a área (segmentos numerados 1–3) e depois a sub-aba; o indicador «Você está em» mostra área → análise activa.
+No painel, o usuário escolhe primeiro a área (segmentos numerados 1–3) e depois a sub-aba; o indicador «Você está em» mostra área → análise activa.
 
 Aba inicial (sem `?tab=`): **Diagnóstico** para user/municipal com ano aplicado; **Visão geral** para admin.
 
@@ -78,7 +78,7 @@ Código: `App\Support\Dashboard\AnalyticsTabCatalog`.
 2. Links entre abas: `x-consultoria-tab-link`, nunca URL manual sem `tab=` + filtros.
 3. KPIs de risco: `x-status-pill` com `status` success|warning|danger.
 4. Textos: referir sempre **«no município»** / **«no filtro»**, não «na rede» genérica.
-5. Não introduzir nova cor primária sem actualizar este documento e `app.css`.
+5. Não introduzir nova cor primária sem atualizar este documento e `app.css`.
 
 ---
 

@@ -70,6 +70,7 @@
                         :formAction="route('dashboard.analytics')"
                         :filterOptionsTurnoUrl="route('dashboard.analytics.filter-options')"
                         :filterBootstrapUrl="route('dashboard.analytics.filter-options-bootstrap')"
+                        :filterYearsUrl="route('dashboard.analytics.filter-options-years')"
                         :deferSecondaryFilters="$deferSecondaryFilters ?? false"
                     >
                         <x-slot name="filtersExtras">

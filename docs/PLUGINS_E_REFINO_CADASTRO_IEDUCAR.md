@@ -16,7 +16,7 @@ O ServLitcys **não substitui** o i-Educar: lê a base municipal (PostgreSQL/MyS
 3. **Rotinas operacionais** (fecho de situação, exportação Educacenso, sincronização geo/SAEB/FUNDEB).
 4. **Integrações externas** activas e sincronizadas (`weekly-mass-sync:run`, admin-sync).
 
-Este documento lista **lacunas típicas**, **módulos i-Educar a priorizar** e **plugins/dados** recomendados — com ligação às abas do painel.
+Este documento lista **lacunas típicas**, **módulos i-Educar a priorizar** e **plugins/dados** recomendados — com conexão às abas do painel.
 
 ---
 
@@ -42,7 +42,7 @@ Prioridade para secretaria e equipes de escola. Campos mapeados em `config/ieduc
 | Área | Tabelas / fluxo i-Educar | O que preencher com rigor | Impacto no ServLitcys |
 |------|--------------------------|---------------------------|------------------------|
 | **Matrícula activa única** | `matricula`, `matricula_turma`, situação | Uma matrícula «em curso» por aluno; encerrar transferências; situação INEP coerente (cód. 1) | `matricula_duplicada`, `matricula_situacao_invalida`, totais FUNDEB, todas as abas |
-| **Situação da matrícula** | `matricula_situacao` + `ref_cod_matricula_situacao` | Actualizar após conselho de classe / transferência; não deixar «em curso» em ano encerrado | Desempenho, alerta ano encerrado, Censo |
+| **Situação da matrícula** | `matricula_situacao` + `ref_cod_matricula_situacao` | Atualizar após conselho de classe / transferência; não deixar «em curso» em ano encerrado | Desempenho, alerta ano encerrado, Censo |
 | **Pessoa / aluno** | `cadastro.pessoa`, `fisica`, `aluno` | **Data nascimento**, **sexo**, documentos | `sem_data_nascimento`, `sem_sexo`, distorção idade-série |
 | **Cor/raça** | `cadastro.fisica_raca` ou `pessoa.ref_cod_raca` | Declaração conforme Educacenso (não deixar em branco) | `sem_raca`, equidade, VAAR |
 | **Escola ↔ INEP** | `modules.educacenso_cod_escola` | `cod_escola` interno + `cod_escola_inep` (7 dígitos) para **todas** as unidades com alunos | `escola_sem_inep`, SAEB por escola, mapa, microdados |
@@ -52,19 +52,19 @@ Prioridade para secretaria e equipes de escola. Campos mapeados em `config/ieduc
 
 | Área | Tabelas / fluxo i-Educar | O que preencher com rigor | Impacto no ServLitcys |
 |------|--------------------------|---------------------------|------------------------|
-| **NEE (deficiência)** | `cadastro.deficiencia`, `fisica_deficiencia` / `aluno_deficiencia` | Tipos correctos no catálogo; não confundir com «recurso de prova» | Inclusão, VAAR inclusão, `nee_*` checks |
+| **NEE (deficiência)** | `cadastro.deficiencia`, `fisica_deficiencia` / `aluno_deficiencia` | Tipos corretos no catálogo; não confundir com «recurso de prova» | Inclusão, VAAR inclusão, `nee_*` checks |
 | **Recursos de prova INEP** | Aba «Recursos prova INEP» / tabelas detectadas | Coerência com NEE (tempo adicional, prova ampliada, etc.) | `recurso_prova_sem_nee`, `nee_sem_recurso_prova` |
 | **Turmas AEE** | `turma`, `curso` (nomenclatura) | Nomes que identifiquem AEE quando há atendimento | `nee_sem_aee`, `aee_sem_nee` |
 | **Coordenadas escola** | `escola` (lat/lng se existir) + Educacenso | Endereço e localização; depois sync geo no admin | `escola_sem_geo`, mapa, transporte |
 | **Capacidade / vagas** | `turma.max_aluno` (ou equivalente) | Capacidade real por turma | Rede & Oferta, lista de espera |
-| **Turno** | `turma.ref_cod_turno`, `cadastro.turno` | Turno correcto por turma | Filtros, gráficos por turno |
+| **Turno** | `turma.ref_cod_turno`, `cadastro.turno` | Turno correto por turma | Filtros, gráficos por turno |
 
 ### 3.3 Prioridade média (P2) — detalhe analítico e operação
 
 | Área | Tabelas / fluxo i-Educar | O que preencher com rigor | Impacto no ServLitcys |
 |------|--------------------------|---------------------------|------------------------|
 | **Série / etapa** | `serie`, vínculo turma↔série | `serie` / `etapa_educacenso` alinhados ao Censo | Distorção, Matrículas por etapa |
-| **Curso e nível** | `curso`, `nivel_ensino` | `ref_cod_nivel_ensino` correcto | Segmentação Educacenso |
+| **Curso e nível** | `curso`, `nivel_ensino` | `ref_cod_nivel_ensino` correto | Segmentação Educacenso |
 | **Frequência** | `falta_aluno` (ou módulo diário) | Lançamento regular de faltas | Aba Frequência |
 | **Contatos escola** | `escola`, `pessoa` (gestor) | Telefone, e-mail, gestor no cadastro escola | Modal mapa Unidades |
 | **Lista de espera / capacidade declarada** | Campos locais / módulos | Se o município regista vagas e fila | Rede & Oferta |
@@ -84,7 +84,7 @@ Prioridade para secretaria e equipes de escola. Campos mapeados em `config/ieduc
 
 ## 4. Módulos e subsistemas i-Educar a fortalecer
 
-Recomendações por **área funcional** do Portabilis / i-Educar 2.x. Nem todos os municípios têm todos os módulos activos — validar com `schema_probe` na primeira ligação.
+Recomendações por **área funcional** do Portabilis / i-Educar 2.x. Nem todos os municípios têm todos os módulos ativos — validar com `schema_probe` na primeira conexão.
 
 ### 4.1 Cadastro e Censo (núcleo)
 
@@ -100,7 +100,7 @@ Recomendações por **área funcional** do Portabilis / i-Educar 2.x. Nem todos 
 
 | Módulo / subsistema | Estado desejado | Ligação ServLitcys |
 |---------------------|-----------------|-------------------|
-| **Cadastro deficiência / NEE** | Catálogo MEC actualizado | Inclusão, VAAR |
+| **Cadastro deficiência / NEE** | Catálogo MEC atualizado | Inclusão, VAAR |
 | **Recursos prova INEP** | Preenchido na ficha do aluno | Checks recurso × NEE |
 | **Turmas AEE / salas de recursos** | Oferta visível em turmas | `nee_sem_aee` |
 | **Avaliação institucional** (se usado) | Não substitui SAEB; útil para gestão local | Complementar Desempenho |
@@ -133,7 +133,7 @@ Integrações **já previstas** no produto; esta secção indica **prioridade de
 |-------|------------------|----------------------|-------------------|
 | **FNDE / Fundeb** | `FundebOpenDataImportService`, referências VAAF/VAAT/VAAR | Import regular + `IEDUCAR_FUNDEB_USE_IMPORTED_VAAR` | FUNDEB, Discrepâncias |
 | **Tesouro / Transparência** | `MunicipalTransferImportService` | Sync semanal (`weekly-mass-sync`) | Financiamentos |
-| **Microdados INEP** (cadastro escolas, SAEB) | Geo pipeline, SAEB microdados | Manter ZIP/CSV actualizado | Geo, Desempenho, Censo |
+| **Microdados INEP** (cadastro escolas, SAEB) | Geo pipeline, SAEB microdados | Manter ZIP/CSV atualizado | Geo, Desempenho, Censo |
 | **Portal IDEB / SAEB** | Import JSON oficial + API município | Ano de aplicação alinhado ao Censo | Desempenho |
 | **ArcGIS / catálogo INEP** | Geo oficial | Divergência metros escola i-Educar vs oficial | Unidades, Discrepâncias |
 
@@ -227,7 +227,7 @@ Novas implementações de produto devem ser registadas em [BACKLOG_IMPLEMENTACOE
 
 ## 10. Manutenção deste documento
 
-- Alteração de **checks de discrepância** ou tabelas i-Educar → actualizar secções 3 e 6.
+- Alteração de **checks de discrepância** ou tabelas i-Educar → atualizar secções 3 e 6.
 - Nova **integração externa** → secção 5.1 + [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
 - Item de produto aceite no backlog → secção 5.3 e backlog §F.
 

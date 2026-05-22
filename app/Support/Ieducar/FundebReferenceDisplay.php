@@ -6,6 +6,8 @@ use App\Support\Finance\MoneyMath;
 
 /**
  * Formata comparação VAAF municipal (real/importado) × prévia federal para cartões do painel.
+ *
+ * @see \App\Support\Fundeb\FundebMatrixCellPresentation Cores/legenda da matriz admin (não confundir).
  */
 final class FundebReferenceDisplay
 {

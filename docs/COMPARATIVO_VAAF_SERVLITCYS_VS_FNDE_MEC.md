@@ -12,10 +12,10 @@
 | Aspecto | Base SERVLITCYS (`fundeb_municipio_references`) | Referência FNDE/MEC |
 |--------|--------------------------------------------------|---------------------|
 | **O que está gravado** | 26 linhas (2024–2026), **12 municípios** | VAAF **por município e ano** (distinto entre entes) |
-| **Valor de VAAF** | **R$ 5.559,73** em **100%** dos registos | Varia por receita, matrículas e complementação (ex.: municípios pequenos vs capitais) |
+| **Valor de VAAF** | **R$ 5.559,73** em **100%** dos registros | Varia por receita, matrículas e complementação (ex.: municípios pequenos vs capitais) |
 | **Fonte (`fonte`)** | `referencia_nacional_config` | Portarias, CSV «Receita total do Fundeb», painéis FNDE |
-| **VAAT** | **Nulo** em todos os registos | Publicado em anexos/cronogramas quando o ente é habilitado |
-| **Uso no painel analítico** | Estes registos são **ignorados** pelo `FundebMunicipalReferenceResolver` (classificados como *placeholder*) | Valores oficiais ou estimativa FNDE (receita ÷ matrículas) alimentam cálculos |
+| **VAAT** | **Nulo** em todos os registros | Publicado em anexos/cronogramas quando o ente é habilitado |
+| **Uso no painel analítico** | Estes registros são **ignorados** pelo `FundebMunicipalReferenceResolver` (classificados como *placeholder*) | Valores oficiais ou estimativa FNDE (receita ÷ matrículas) alimentam cálculos |
 
 **Interpretação:** a tabela removida dava a impressão de «VAAF municipal», mas mostrava apenas a **prévia nacional configurável** (`IEDUCAR_FUNDEB_NATIONAL_VAAF_2024` / `IEDUCAR_DISC_VAA_REFERENCIA` = 5.559,73), gravada quando a importação FNDE/CKAN **não obteve** dado por IBGE.
 
@@ -126,7 +126,7 @@ A matriz comparativa foi **restaurada** em `48887a3` (#134) com classificação 
 | Rota export | `GET /admin/ieducar-compatibility/fundeb-matrix-export` |
 | Método | `IeducarCompatibilityController::exportFundebMatrix()` |
 | Repositório | `FundebMunicipioReferenceRepository::yearlyMatrix()` |
-| Apresentação | `FundebReferenceDisplay` (consolidado / prévia / nacional) |
+| Apresentação | `FundebMatrixCellPresentation` na matriz admin (consolidado / prévia / nacional) |
 | View | `partials/fundeb-yearly-matrix.blade.php` — filtros de anos, legenda, CSV com coluna «Tipo» |
 
 **Também mantido:** card FUNDEB (import/sync, modo replace/update), histórico por cidade, cobertura, aba FUNDEB no painel analítico, resolver e importadores.

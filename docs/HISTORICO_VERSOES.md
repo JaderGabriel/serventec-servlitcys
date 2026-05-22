@@ -12,7 +12,7 @@
 |--------|--------|---|-------------|--------|
 | **2.3.0** *(main, sem tag)* | — | — | mai/2026 | FIN-01…05: snapshots de repasse (Tesouro/Transparência), VAAR importado na previsão FUNDEB, repasse vs matrículas elegíveis, check Censo×i-Educar, jobs `admin-sync` funding. |
 | **2.2.0** | `2c8cf44` | **135** | mai/2026 | Importações externas com guia de impacto (FUNDEB/geo/SAEB); matriz VAAF/VAAT com legenda, filtros e CSV; modo replace/update FUNDEB; PDF analítico com comparativos; dashboard admin e mapas alinhados. |
-| | `48887a3` | 134 | mai/2026 | Matriz FUNDEB restaurada; `FundebReferenceDisplay`; comparativos no PDF; legenda mapa municípios. |
+| | `48887a3` | 134 | mai/2026 | Matriz FUNDEB restaurada; apresentação matriz admin; comparativos no PDF; legenda mapa municípios. |
 | | `797efe1` | 133 | mai/2026 | Export matriz FUNDEB; repositório `yearlyMatrix`. |
 | | `b5ad612` | 127 | mai/2026 | Nova dashboard admin; menu Conexões; `DashboardController` consultoria. |
 | | `e84cfcb` | 129 | mai/2026 | Export PDF analítico (fila, UI). |
@@ -23,7 +23,7 @@
 | | `8e7ae69` | — | mar/2026 | Comando import microdados cadastro escolas; pipeline geo. |
 | **v2.0.1** | `683510b` | **28** | fev/2026 | Inclusão cor/raça via `fisica_raca`; alinhamento BI; estabilização 2.0.x. |
 | **v2.0.0** *(marco, sem tag dedicada)* | — | ~15–27 | 2026 | Matrículas alinhadas INEP (`IEDUCAR_MATRICULA_*`); suporte PostgreSQL i-Educar; evolução analytics. |
-| **v1.0.0** | `8507c9a` | **1** | 2025 | Plataforma inicial: Laravel, ligação i-Educar por município, painéis PT-BR, `public/build` versionado. |
+| **v1.0.0** | `8507c9a` | **1** | 2025 | Plataforma inicial: Laravel, conexão i-Educar por município, painéis PT-BR, `public/build` versionado. |
 
 ---
 
@@ -31,7 +31,7 @@
 
 ### v1.0.0 — `8507c9a` (#1)
 
-- Plataforma **servlitcys**: multi-município, ligação MySQL i-Educar, autenticação e painéis base.
+- Plataforma **servlitcys**: multi-município, conexão MySQL i-Educar, autenticação e painéis base.
 - Deploy sem Node em produção (`public/build` no Git).
 
 ### v2.0.0 → v2.0.1 — até `683510b` (#28)
@@ -50,9 +50,9 @@
 
 Trajetória após v2.1.0 (commits #67–#135), agrupada por tema:
 
-| Tema | Commits (ex.) | Melhoria para o utilizador |
+| Tema | Commits (ex.) | Melhoria para o usuário |
 |------|----------------|----------------------------|
-| **RBAC e segurança** | `094da72`, `2a9e01d` | Perfis admin/user/municipal; gestão utilizadores; entrada municipal na consultoria. |
+| **RBAC e segurança** | `094da72`, `2a9e01d` | Perfis admin/user/municipal; gestão usuários; entrada municipal na consultoria. |
 | **FUNDEB / VAAF** | `cd60694`…`797efe1`, `48887a3` | Import CKAN/portaria; fila admin; matriz municipal com tipo de dado (consolidado/prévia/nacional); export CSV; modo apagar/atualizar. |
 | **Discrepâncias e impacto** | `08c81a4`, `f6db57f` | Impacto financeiro indicativo (VAAF × peso); export CSV. |
 | **Analytics / consultoria** | `6ff3b75`, `b5ad612` | Abas FUNDEB, Censo, Financiamentos; faixa impacto saldo; dashboard admin moderna. |
@@ -83,7 +83,7 @@ Ao fechar o ciclo 2.2.0 em produção:
 git tag -a v2.2.0 <commit-estável> -m "v2.2.0 — matriz FUNDEB, importações UX, PDF comparativos"
 ```
 
-Actualizar neste ficheiro, em [README.md](../README.md), [STATUS_PROJETO.md](STATUS_PROJETO.md) e `config/documentation.php` (`product.version`).
+Atualizar neste arquivo, em [README.md](../README.md), [STATUS_PROJETO.md](STATUS_PROJETO.md) e `config/documentation.php` (`product.version`).
 
 ---
 
@@ -92,6 +92,6 @@ Actualizar neste ficheiro, em [README.md](../README.md), [STATUS_PROJETO.md](STA
 1. Cada entrega visível → uma linha na tabela **Linha do tempo** (versão, hash, #, resumo).
 2. Obter `#` local: `git rev-list --count <hash>`.
 3. Obter hash da tag: `git rev-parse --short v2.1.0`.
-4. Não duplicar listas longas noutros ficheiros — linkar para este documento.
+4. Não duplicar listas longas noutros arquivos — linkar para este documento.
 
 *Índice geral: [README.md](README.md) · Estado actual: [STATUS_PROJETO.md](STATUS_PROJETO.md)*

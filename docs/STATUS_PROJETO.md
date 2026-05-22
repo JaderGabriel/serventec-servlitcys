@@ -22,7 +22,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Financiamentos (consultas públicas FNDE/Tesouro/Transparência) | Implementado (requer `.env`; ver [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md)) |
 | Censo (ritmo, meta ano anterior, enturmações) | Implementado |
 | Serventec (diagnóstico + PDF) | Implementado |
-| Gestão de utilizadores (ativar / desativar / excluir) | Implementado |
+| Gestão de usuários (ativar / desativar / excluir) | Implementado |
 | Pulse / monitorização | Implementado |
 | CI/CD remoto | Planeado — ver backlog INF-01 |
 
@@ -66,14 +66,14 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 
 ## FUNDEB / VAAF
 
-| Componente | Ficheiro / comando |
+| Componente | Arquivo / comando |
 |------------|-------------------|
 | Ordem de anos (cascata) | `FundebReferenceYearOrder` |
 | Resolver municipal | `FundebMunicipalReferenceResolver` |
-| Import API / ficheiro | `FundebOpenDataImportService`, `fundeb:import-api` |
+| Import API / arquivo | `FundebOpenDataImportService`, `fundeb:import-api` |
 | UI admin | Compatibilidade i-Educar → card FUNDEB + matriz VAAF/VAAT (`fundeb-yearly-matrix`) |
 | Modo importação | `FundebImportMode`: atualizar se diferente / apagar e buscar |
-| Classificação visual | `FundebReferenceDisplay`: consolidado, prévia, nacional |
+| Classificação visual | `FundebMatrixCellPresentation` (admin) e `Ieducar\FundebReferenceDisplay` (painel): consolidado, prévia, nacional |
 
 Ver [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md) e [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
 
@@ -123,4 +123,4 @@ Anteriores (tag **v2.1.0**, `c3ec8b9` #66): pipeline geo INEP e mapa Censo.
 
 ---
 
-*Actualizar este ficheiro quando comportamento visível ou contratos API/CLI mudarem.*
+*Atualizar este arquivo quando comportamento visível ou contratos API/CLI mudarem.*

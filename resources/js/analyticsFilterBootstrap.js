@@ -1,7 +1,13 @@
 /**
- * Carrega escolas, cursos e turnos via AJAX quando o index usa filtros leves (só anos no SSR).
+ * Filtros da Consultoria: anos letivos (se o SSR não trouxe) e escolas/cursos/turnos (modo light).
  */
 export function initAnalyticsFilterBootstrap(root = document) {
+    root.querySelectorAll("form[data-analytics-filter-years-url]").forEach((form) => {
+        if (form.dataset.analyticsFilterYearsFetch === "1") {
+            void loadYears(form, form.dataset.analyticsFilterYearsUrl);
+        }
+    });
+
     root.querySelectorAll("form[data-analytics-filter-bootstrap]").forEach((form) => {
         const baseUrl = form.dataset.analyticsFilterBootstrapUrl;
         if (!baseUrl) {
@@ -9,6 +15,48 @@ export function initAnalyticsFilterBootstrap(root = document) {
         }
         void loadBootstrap(form, baseUrl);
     });
+}
+
+/**
+ * @param {HTMLFormElement} form
+ * @param {string} baseUrl
+ */
+async function loadYears(form, baseUrl) {
+    const cityInput = form.querySelector('input[name="city_id"]');
+    const ano = form.querySelector('[name="ano_letivo"]');
+    if (!cityInput || !ano || !baseUrl) {
+        return;
+    }
+
+    const loadingLabel =
+        form.dataset.analyticsFilterYearsLoadingLabel ??
+        "A carregar anos letivos…";
+    const selectedYear = ano.value;
+
+    setYearSelectLoading(ano, loadingLabel);
+
+    const url = new URL(baseUrl, window.location.origin);
+    url.searchParams.set("city_id", cityInput.value);
+
+    try {
+        const r = await fetch(url.toString(), {
+            headers: {
+                Accept: "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            credentials: "same-origin",
+        });
+        const body = await r.json();
+        if (body.years && typeof body.years === "object") {
+            populateYearSelect(ano, body.years, selectedYear);
+        }
+        showYearLoadErrors(form, Array.isArray(body.errors) ? body.errors : []);
+        if (!r.ok && (!body.years || !hasNumericYears(body.years))) {
+            ano.disabled = false;
+        }
+    } catch {
+        ano.disabled = false;
+    }
 }
 
 /**
@@ -44,6 +92,7 @@ async function loadBootstrap(form, baseUrl) {
     const selectedEscola = escola.value;
     const selectedCurso = curso.value;
     const selectedTurno = turno.value;
+    const selectedYear = ano?.value ?? "";
 
     try {
         const r = await fetch(url.toString(), {
@@ -60,6 +109,17 @@ async function loadBootstrap(form, baseUrl) {
             return;
         }
         const body = await r.json();
+
+        if (ano && body.years && typeof body.years === "object") {
+            if (
+                form.dataset.analyticsFilterYearsFetch === "1" ||
+                !hasNumericYears(yearSelectOptions(ano))
+            ) {
+                populateYearSelect(ano, body.years, selectedYear);
+            }
+        }
+        showYearLoadErrors(form, Array.isArray(body.errors) ? body.errors : []);
+
         populateEscolaSelect(
             escola,
             Array.isArray(body.escolas) ? body.escolas : [],
@@ -83,6 +143,84 @@ async function loadBootstrap(form, baseUrl) {
         resetSelectPlaceholder(curso, todosLabel);
         resetSelectPlaceholder(turno, todosLabel);
     }
+}
+
+/**
+ * @param {HTMLSelectElement} select
+ * @param {Record<string, string>} years
+ * @param {string} selectedYear
+ */
+function populateYearSelect(select, years, selectedYear) {
+    select.disabled = false;
+    select.innerHTML = "";
+
+    for (const [value, label] of Object.entries(years)) {
+        const opt = document.createElement("option");
+        opt.value = String(value);
+        opt.textContent = String(label);
+        if (selectedYear !== "" && selectedYear === String(value)) {
+            opt.selected = true;
+        }
+        select.appendChild(opt);
+    }
+}
+
+/**
+ * @param {HTMLSelectElement} select
+ * @param {string} loadingLabel
+ */
+function setYearSelectLoading(select, loadingLabel) {
+    select.disabled = true;
+    select.innerHTML = "";
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = loadingLabel;
+    select.appendChild(opt);
+}
+
+/**
+ * @param {HTMLFormElement} form
+ * @param {string[]} errors
+ */
+function showYearLoadErrors(form, errors) {
+    const box = form.querySelector("[data-analytics-year-errors]");
+    if (!box) {
+        return;
+    }
+    if (errors.length === 0) {
+        box.classList.add("hidden");
+        box.innerHTML = "";
+        return;
+    }
+    box.classList.remove("hidden");
+    box.innerHTML = "";
+    for (const err of errors) {
+        const p = document.createElement("p");
+        p.textContent = err;
+        box.appendChild(p);
+    }
+}
+
+/**
+ * @param {HTMLSelectElement} select
+ * @returns {Record<string, string>}
+ */
+function yearSelectOptions(select) {
+    /** @type {Record<string, string>} */
+    const out = {};
+    for (const opt of select.options) {
+        out[opt.value] = opt.textContent ?? "";
+    }
+    return out;
+}
+
+/**
+ * @param {Record<string, string>} years
+ */
+function hasNumericYears(years) {
+    return Object.keys(years).some(
+        (k) => k !== "" && k !== "all" && /^\d+$/.test(k),
+    );
 }
 
 /**

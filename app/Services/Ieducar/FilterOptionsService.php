@@ -113,6 +113,7 @@ class FilterOptionsService
      * Escolas, cursos e turnos num único pedido AJAX (após o index em modo light).
      *
      * @return array{
+     *   years: array<string, string>,
      *   escolas: list<array{id: string, name: string, inep?: string|null, active?: bool|null, substatus?: string|null}>,
      *   cursos: list<array{id: string, name: string}>,
      *   turnos: list<array{id: string, name: string}>,

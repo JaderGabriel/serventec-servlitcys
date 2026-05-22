@@ -25,7 +25,7 @@ Este documento resume modelos visuais e analíticos usados em produtos públicos
 
 - O INEP divulga **microdados** em arquivos (ex.: ZIP); não há API única em JSON no formato deste painel.
 - Resultados **por escola** dependem de divulgação e amostra; muitas unidades aparecem agregadas ou suprimidas por privacidade.
-- O ficheiro `saeb/historico.json` deve ser produzido por **ETL próprio** (Python/R/Laravel) a partir de bases oficiais, com revisão técnica.
+- O arquivo `saeb/historico.json` deve ser produzido por **ETL próprio** (Python/R/Laravel) a partir de bases oficiais, com revisão técnica.
 
 ## Próximos passos sugeridos no código
 

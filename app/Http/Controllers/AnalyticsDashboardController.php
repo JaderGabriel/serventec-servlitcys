@@ -912,6 +912,33 @@ class AnalyticsDashboardController extends Controller
     }
 
     /**
+     * Anos letivos (AJAX) — quando o index não trouxe anos numéricos ou a conexão falhou no SSR.
+     */
+    public function filterOptionsYears(Request $request, FilterOptionsService $filterOptionsService): JsonResponse
+    {
+        $request->validate([
+            'city_id' => ['required', 'integer'],
+        ]);
+
+        $city = UserCityAccess::citiesQuery($request->user())->whereKey($request->integer('city_id'))->firstOrFail();
+        $this->authorize('viewAnalytics', $city);
+
+        try {
+            return response()->json($filterOptionsService->loadYearOptions($city));
+        } catch (Throwable $e) {
+            Log::warning('analytics.filter_years_failed', [
+                'city_id' => $city->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'years' => $this->schoolYearOptionsFallback(),
+                'errors' => [$e->getMessage()],
+            ], 500);
+        }
+    }
+
+    /**
      * Escolas, cursos e turnos após o index (modo ANALYTICS_INDEX_LIGHT_FILTERS).
      */
     public function filterOptionsBootstrap(Request $request, FilterOptionsService $filterOptionsService): JsonResponse

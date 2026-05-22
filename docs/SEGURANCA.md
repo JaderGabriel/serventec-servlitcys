@@ -4,23 +4,24 @@
 
 ## Senhas e segredos
 
-### Utilizadores da aplicação
+### Usuários da aplicação
 
-- As palavras-passe são armazenadas com **hash** (cast `hashed` no modelo `User`), usando o driver configurado (tipicamente bcrypt).
-- O registo público está **desativado**; novos utilizadores são criados por um administrador autenticado, com validação de palavra-passe (regras Laravel `Password::defaults()`).
+- As senhas são armazenadas com **hash** (cast `hashed` no modelo `User`), usando o driver configurado (tipicamente bcrypt).
+- O registro público está **desativado**; novos usuários são criados por um administrador autenticado, com validação de senha (regras Laravel `Password::defaults()`).
 
 ### Administrador inicial (seeder)
 
 - `AdminUserSeeder` utiliza **`ADMIN_EMAIL`** e **`ADMIN_PASSWORD`** definidos no `.env`.
-- **Nunca** commite o ficheiro `.env` nem use palavras-passe fracas em produção.
-- Após o primeiro deploy, altere a palavra-passe do admin e considere desativar ou rever o seeder em pipelines automatizados.
+- **Nunca** commite o arquivo `.env` nem use senhas fracas em produção.
+- Após o primeiro deploy, altere a senha do admin e considere desativar ou rever o seeder em pipelines automatizados.
 
 ### Credenciais MySQL por cidade
 
 - O campo `db_password` no modelo `City` usa cast **`encrypted`** (Laravel Encryption); requer `APP_KEY` estável — **fazer backup da chave** com o backup da base.
+- **`php artisan key:generate` em ambiente com cidades cadastradas** invalida todas as senhas gravadas (erro de descriptografia na conexão). Corrija com `php artisan cities:reencrypt-db-passwords --password=...` (mesma senha em todas as cidades, se for o seu caso) ou cidade a cidade em **Cidades → Editar** (ver [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §7).
 - Quem pode criar/editar cidades: apenas perfil **Administrador** (`role=admin`).
 
-### Ficheiros e ambiente
+### Arquivos e ambiente
 
 - `APP_KEY` — obrigatório; em produção deve ser único e guardado em segredo (gestor de secrets, variáveis do servidor).
 - `.env` em produção: `APP_DEBUG=false`, `APP_ENV=production` (ou equivalente).
@@ -33,10 +34,10 @@ Perfis (`users.role`): **admin**, **user**, **municipal**. Municípios do perfil
 |---------|------|
 | Painel `/dashboard` (estatísticas, probe) | `role=admin` — outros perfis são redireccionados para Análise |
 | CRUD de cidades, sync, SMTP, sessões | `role=admin` (middleware `admin`) |
-| Criar utilizadores | Admin, Utilizador (só `user`), Municipal (só `municipal` no seu âmbito) — `UserPolicy` |
-| Desactivar / reactivar / excluir utilizadores | Só `role=admin`; não sobre a própria conta; não desactivar nem excluir o único admin — `UserPolicy::updateStatus`, `UserPolicy::delete` |
+| Criar usuários | Admin, Usuário (só `user`), Municipal (só `municipal` no seu âmbito) — `UserPolicy` |
+| Desativar / reativar / excluir usuários | Só `role=admin`; não sobre a própria conta; não desativar nem excluir o único admin — `UserPolicy::updateStatus`, `UserPolicy::delete` |
 | Contas inactivas (`is_active=false`) | Login recusado (`LoginRequest`); sessão terminada em cada pedido (`EnsureUserIsActive`) |
-| Análise / exportação | Admin e Utilizador: todos os municípios `forAnalytics`; Municipal: só vinculados — `CityPolicy::viewAnalytics` |
+| Análise / exportação | Admin e Usuário: todos os municípios `forAnalytics`; Municipal: só vinculados — `CityPolicy::viewAnalytics` |
 | Histórico de logins | Gate `manageUserAudit` (admin) |
 
 A coluna legada `is_admin` é sincronizada automaticamente com `role` ao gravar. A navegação reflete as regras; controladores e `FormRequest` reaplicam autorização (incl. validação pós-sanitize de `city_ids`). Guia completo: [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md).
@@ -47,17 +48,17 @@ A coluna legada `is_admin` é sincronizada automaticamente com `role` ao gravar.
 - **Sessão**: `SESSION_DRIVER=database` (ou `redis` em escala); considerar `SESSION_ENCRYPT=true` com HTTPS.
 - **Throttle** em rotas sensíveis:
   - `POST /login` — 5 tentativas por minuto (por IP)
-  - Pedidos de reset de palavra-passe — limitados da mesma forma
+  - Pedidos de reset de senha — limitados da mesma forma
 
 ## Checklist antes de produção
 
 - [ ] `APP_DEBUG=false`
 - [ ] HTTPS com certificado válido e `APP_URL` com `https://`
 - [ ] `php artisan config:cache` e `route:cache` após deploy
-- [ ] Permissões de ficheiros: `storage/` e `bootstrap/cache/` graváveis pelo web server
+- [ ] Permissões de arquivos: `storage/` e `bootstrap/cache/` graváveis pelo web server
 - [ ] Backup da base de dados e de `APP_KEY`
-- [ ] Rever utilizadores `is_admin` e palavras-passe iniciais
-- [ ] Logs: não expor stack traces a utilizadores finais
+- [ ] Rever usuários `is_admin` e senhas iniciais
+- [ ] Logs: não expor stack traces a usuários finais
 - [ ] (Opcional) Proxy reverso: cabeçalhos `X-Forwarded-*` e `TrustProxies` configurados no Laravel se aplicável
 
 ## Dependências e vulnerabilidades
@@ -65,9 +66,9 @@ A coluna legada `is_admin` é sincronizada automaticamente com `role` ao gravar.
 - Mantenha **Composer** e **npm** atualizados; execute `composer audit` e `npm audit` regularmente.
 - Subscreva alertas de segurança do Laravel e PHP.
 
-## Auditoria de utilizadores
+## Auditoria de usuários
 
-Acções registadas em `admin_user_logs` (via `AdminUserAuditLogger`): criação, actualização, activação, desactivação, exclusão, encerramento de sessões, logins.
+Acções registadas em `admin_user_logs` (via `AdminUserAuditLogger`): criação, atualização, activação, desactivação, exclusão, encerramento de sessões, logins.
 
 ## Reportar problemas
 

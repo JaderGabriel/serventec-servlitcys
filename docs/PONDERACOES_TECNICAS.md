@@ -10,7 +10,7 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 
 | Tema | Decisão | Implicação |
 |------|---------|------------|
-| Base da app | MySQL/MariaDB (utilizadores, cidades, referências FUNDEB, SAEB importado) | Um `.env` por instalação |
+| Base da app | MySQL/MariaDB (usuários, cidades, referências FUNDEB, SAEB importado) | Um `.env` por instalação |
 | Base educacional | Ligação **dinâmica** por cidade (`CityDataConnection`) | MySQL ou PostgreSQL conforme `City::dataDriver()` |
 | Isolamento | Cada pedido de analytics usa **uma** cidade autorizada (`viewAnalytics`) | Não há comparação automática entre municípios no mesmo ecrã |
 | Credenciais | `db_*` encriptados no modelo `City` | Rotação e backup são responsabilidade da operação |
@@ -131,9 +131,9 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 
 | Tema | Decisão | Implicação |
 |------|---------|------------|
-| Sem auto-registo | Contas criadas por admin/user/municipal | Superfície de ataque reduzida |
+| Sem auto-registro | Contas criadas por admin/user/municipal | Superfície de ataque reduzida |
 | Municipal | Só cidades em `city_user` | Redirect com `city_id` se uma só cidade |
-| Conta inactiva | `EnsureUserIsActive` + terminação de sessão | Admin pode reactivar |
+| Conta inactiva | `EnsureUserIsActive` + terminação de sessão | Admin pode reativar |
 | Último admin | Não pode ser excluído | Protecção em `UserController` |
 | Auditoria | `AdminUserAuditLogger` em acções sensíveis | Rasto em log/BD conforme implementação |
 | API SAEB pública | Throttle em `routes/api.php` | Conteúdo tratado como público pós-import |
@@ -169,7 +169,7 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 
 1. Descrever o **risco** da mudança (Censo, VAAR, performance, falso positivo).
 2. Indicar **municípios piloto** e prova em staging (Pulse + query plan se possível).
-3. Actualizar este ficheiro e, se aplicável, `config/ieducar.php` + [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) + `.env.example` + [STATUS_PROJETO.md](STATUS_PROJETO.md).
+3. Atualizar este arquivo e, se aplicável, `config/ieducar.php` + [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) + `.env.example` + [STATUS_PROJETO.md](STATUS_PROJETO.md).
 
 ---
 
@@ -181,7 +181,7 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 | Ordem das abas | `AnalyticsTabCatalog` — finanças → cadastro → pedagógico | Municipal/user entram no **Diagnóstico** com filtros prontos |
 | Foco município | Faixa `consultoria-municipality-strip` + copy «no filtro» | Evita leitura «rede nacional» |
 | Links entre abas | `x-consultoria-tab-link` + evento Alpine | Mantém cidade/ano nos filtros |
-| Admin documentação | Menu pessoal → `/admin/documentacao` | Índice de ficheiros `docs/` no servidor |
+| Admin documentação | Menu pessoal → `/admin/documentacao` | Índice de arquivos `docs/` no servidor |
 
 **Doc:** [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
 

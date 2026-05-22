@@ -5,7 +5,7 @@ namespace Tests\Unit;
 use App\Models\City;
 use App\Models\FundebMunicipioReference;
 use App\Repositories\FundebMunicipioReferenceRepository;
-use App\Support\Fundeb\FundebReferenceDisplay;
+use App\Support\Fundeb\FundebMatrixCellPresentation;
 use App\Support\Fundeb\FundebReferenceSource;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -51,8 +51,8 @@ final class FundebMunicipioReferenceRepositoryTest extends TestCase
         $this->assertCount(4, $matrix['legend']);
 
         $row = $matrix['rows'][0];
-        $this->assertSame(FundebReferenceDisplay::KIND_CONSOLIDATED, $row['years'][2024]['display_kind']);
-        $this->assertSame(FundebReferenceDisplay::KIND_NATIONAL, $row['years'][2023]['display_kind']);
+        $this->assertSame(FundebMatrixCellPresentation::KIND_CONSOLIDATED, $row['years'][2024]['display_kind']);
+        $this->assertSame(FundebMatrixCellPresentation::KIND_NATIONAL, $row['years'][2023]['display_kind']);
         $this->assertFalse($row['years'][2022]['has_reference'] ?? true);
     }
 

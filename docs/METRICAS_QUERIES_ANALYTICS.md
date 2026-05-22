@@ -2,7 +2,7 @@
 
 > **Índice:** [README.md](README.md) · **Ponderações performance:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §9.
 
-Objetivo: identificar as consultas SQL mais pesadas ao carregar **`/dashboard/analytics`** e, com **carregamento lazy por aba** activo (`ANALYTICS_LAZY_TABS=true` em `.env`), os pedidos adicionais **`GET /dashboard/analytics/tab?tab=…`**, num ambiente de **staging** com volume realista. Dados pessoais devem estar **anonimizados** ou usar cópia da base com política de privacidade acordada.
+Objetivo: identificar as consultas SQL mais pesadas ao carregar **`/dashboard/analytics`** e, com **carregamento lazy por aba** ativo (`ANALYTICS_LAZY_TABS=true` em `.env`), os pedidos adicionais **`GET /dashboard/analytics/tab?tab=…`**, num ambiente de **staging** com volume realista. Dados pessoais devem estar **anonimizados** ou usar cópia da base com política de privacidade acordada.
 
 ## Carregamento lazy e Pulse
 
@@ -12,7 +12,7 @@ Com **`config/analytics.php` → `lazy_tab_loading`**, a página inicial só exe
 - As respostas incluem cabeçalhos **`X-Analytics-Tab`** e **`X-Analytics-Tab-Status`** (`ok`, `no-city`, `no-year`) para cruzar com logs ou proxies, se necessário.
 - O pedido **`GET /dashboard/analytics`** fica mais leve; o custo desloca-se para os pedidos por aba — útil para decidir **cache**, **índices** ou **prioridade de optimização** (ex.: FUNDEB dispara vários repositórios num único `tab=fundeb`).
 
-Para desactivar o lazy e voltar ao carregamento completo num único HTML (útil para comparar antes/depois no Pulse): **`ANALYTICS_LAZY_TABS=false`**.
+Para desativar o lazy e voltar ao carregamento completo num único HTML (útil para comparar antes/depois no Pulse): **`ANALYTICS_LAZY_TABS=false`**.
 
 ## 1. Laravel Pulse (recomendado — já integrado)
 
@@ -30,7 +30,7 @@ Para desactivar o lazy e voltar ao carregamento completo num único HTML (útil 
 | `PULSE_SLOW_QUERIES_SAMPLE_RATE` | `1` | Em staging pode manter 100% para não perder ocorrências. |
 | `PULSE_SLOW_REQUESTS_THRESHOLD` | `750`–`1500` | Pedido completo ao analytics com muitos repositórios pode ser lento. |
 
-4. **Reproduzir** a carga: abrir analytics, selecionar cidade, ano letivo e percorrer **cada aba** (Visão geral, Matrículas, Rede, Inclusão, etc.). Com lazy activo, **cada aba pesada** gera pelo menos um pedido a `/dashboard/analytics/tab`. Voltar ao Pulse e ordenar por duração ou filtrar pela URI (página inicial vs. `.../tab?tab=...`).
+4. **Reproduzir** a carga: abrir analytics, selecionar cidade, ano letivo e percorrer **cada aba** (Visão geral, Matrículas, Rede, Inclusão, etc.). Com lazy ativo, **cada aba pesada** gera pelo menos um pedido a `/dashboard/analytics/tab`. Voltar ao Pulse e ordenar por duração ou filtrar pela URI (página inicial vs. `.../tab?tab=...`).
 
 5. **Registo** (para roadmap): anotar a SQL (ou o fingerprint), o tempo em ms e a aba/fluxo que a disparou.
 

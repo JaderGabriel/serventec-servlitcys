@@ -17,7 +17,7 @@ O painel usa o **VAAF** como valor de referência (R$/aluno/ano) em dois modelos
 Até maio/2026 o VAAF vinha só de `IEDUCAR_DISC_VAA_REFERENCIA` (default 4500). A partir desta evolução:
 
 1. **`FundebMunicipalReferenceResolver`** tenta, por município (IBGE) e ano:
-   - registo em `fundeb_municipio_references` (import CSV ou admin);
+   - registro em `fundeb_municipio_references` (import CSV ou admin);
    - override por cidade em `config/ieducar.php` → `fundeb.vaaf_por_ibge`;
    - fallback para `discrepancies.vaa_referencia_anual`.
 
@@ -92,7 +92,7 @@ php artisan fundeb:import-references storage/app/fundeb_references.csv
 3. **Grava o JSON no cache** e persiste VAAF/VAAT em `fundeb_municipio_references`.
 4. Próximas leituras usam o cache (útil quando o CKAN está instável).
 
-Sem `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` e sem ficheiros em `storage/app/fundeb/…`, a importação falha para todos os municípios — o cache não se preenche sozinho.
+Sem `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` e sem arquivos em `storage/app/fundeb/…`, a importação falha para todos os municípios — o cache não se preenche sozinho.
 
 **UI admin:** em Compatibilidade i-Educar, card FUNDEB — importar um município ou **todos**; ano sugerido = ano anterior (FNDE raramente tem o ano corrente, ex. 2026). Opção «usar ano mais recente na API» quando o ano pedido não existir.
 
@@ -105,7 +105,7 @@ php artisan fundeb:import-api 0 --all --ano=2024 --nearest
 
 ## 4. Onda 1 — itens
 
-| ID | Entregável | Ficheiros |
+| ID | Entregável | Arquivos |
 |----|------------|-----------|
 | D1 | Gráfico «Recursos de prova por tipo» | `InclusionRepository`, `inclusion.blade.php` |
 | D2 | Coluna `tipos_recurso` em `recurso_prova_sem_nee` + CSV | `InclusionRecursoProvaQueries`, `DiscrepanciesExportController` |

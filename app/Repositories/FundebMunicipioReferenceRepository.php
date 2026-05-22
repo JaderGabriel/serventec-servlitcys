@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\City;
 use App\Models\FundebMunicipioReference;
 use App\Services\Fundeb\FundebOpenDataImportService;
-use App\Support\Fundeb\FundebReferenceDisplay;
+use App\Support\Fundeb\FundebMatrixCellPresentation;
 use Illuminate\Support\Collection;
 
 class FundebMunicipioReferenceRepository
@@ -251,7 +251,7 @@ class FundebMunicipioReferenceRepository
             'year_to' => $yearTo,
             'anchor_year' => $defaults['anchor'],
             'years' => $years,
-            'legend' => FundebReferenceDisplay::legendItems(),
+            'legend' => FundebMatrixCellPresentation::legendItems(),
             'rows' => $rows,
         ];
     }
@@ -273,7 +273,7 @@ class FundebMunicipioReferenceRepository
      */
     private static function enrichCell(bool $hasReference, ?float $vaaf, ?float $vaat, ?string $fonte): array
     {
-        $display = FundebReferenceDisplay::forFonte($fonte, $hasReference);
+        $display = FundebMatrixCellPresentation::forFonte($fonte, $hasReference);
 
         return [
             'has_reference' => $hasReference,

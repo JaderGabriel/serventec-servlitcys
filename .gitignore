@@ -41,6 +41,9 @@ docker-compose.override.yml
 /database/data/*.example.json
 /public/saeb/*.example.json
 
+# Opcional: senha só para cities:reencrypt-db-passwords via .env (nunca commitar valor real)
+# CITIES_DB_DEFAULT_PASSWORD=
+
 # Bancos locais (nunca versionar dados reais)
 /database/*.sqlite
 /database/*.sqlite-journal

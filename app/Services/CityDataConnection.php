@@ -103,7 +103,7 @@ class CityDataConnection
             $this->configure($city);
         } catch (DecryptException $e) {
             throw new \RuntimeException(
-                __('Não foi possível desencriptar a palavra-passe da base da cidade. Verifique APP_KEY e actualize as credenciais em Cidades.'),
+                __('Não foi possível descriptografar a senha do banco da cidade. Verifique APP_KEY e atualize as credenciais em Cidades.'),
                 0,
                 $e
             );

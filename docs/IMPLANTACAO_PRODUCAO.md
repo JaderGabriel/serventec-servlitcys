@@ -4,7 +4,7 @@
 
 Guia passo a passo para publicar no servidor as alterações recentes (monitorização, notificações, financiamentos, correções de abas e modelo `.env`).
 
-**Versão de referência:** 2.2.0 (`2c8cf44`, #135) · **Última actualização:** maio/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
+**Versão de referência:** 2.2.0 (`2c8cf44`, #135) · **Última atualização:** maio/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
 ---
 
@@ -30,14 +30,14 @@ Guia passo a passo para publicar no servidor as alterações recentes (monitoriz
 - **Node não é obrigatório no servidor** se `public/build/` vier no Git
 - Backup antes do deploy:
   - Base de dados principal (`DB_*`)
-  - Ficheiro `.env` (em especial **`APP_KEY`** — necessário para passwords de cidades encriptadas)
+  - Arquivo `.env` (em especial **`APP_KEY`** — necessário para passwords de cidades encriptadas)
   - `storage/app/` (cache FUNDEB, SAEB, PDFs exportados)
 
 ---
 
 ## 3. Janela de manutenção (recomendado)
 
-1. Avisar utilizadores (análise e sync podem ficar lentos durante migrações).
+1. Avisar usuários (análise e sync podem ficar lentos durante migrações).
 2. Opcional: `php artisan down` com mensagem e bypass para admins.
 3. Garantir que **nenhum** `queue:work` antigo fica preso após o deploy (reiniciar Supervisor).
 
@@ -64,7 +64,7 @@ composer install --no-dev --optimize-autoloader
 
 ### 4.3 Variáveis de ambiente
 
-Em produção existe **apenas** o ficheiro `.env` no servidor. O repositório traz `.env.example` só para instalação nova ou desenvolvimento — **não** o use como referência no deploy de um servidor já em funcionamento.
+Em produção existe **apenas** o arquivo `.env` no servidor. O repositório traz `.env.example` só para instalação nova ou desenvolvimento — **não** o use como referência no deploy de um servidor já em funcionamento.
 
 **Referência canónica:** [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) — compare secção a secção com o `.env` actual e acrescente o que faltar.
 
@@ -130,7 +130,7 @@ php artisan migrate --force
 
 Migração **nova** neste ciclo (se ainda não existir em produção):
 
-| Ficheiro | Tabela |
+| Arquivo | Tabela |
 |----------|--------|
 | `2026_05_22_120000_create_notifications_table.php` | `notifications` |
 
@@ -149,7 +149,7 @@ php artisan view:cache
 No servidor **não** corra `npm run dev`.
 
 ```bash
-# Garantir que não há modo desenvolvimento Vite activo:
+# Garantir que não há modo desenvolvimento Vite ativo:
 rm -f public/hot
 
 # Confirmar build versionado:
@@ -171,7 +171,7 @@ chown -R www-data:www-data storage bootstrap/cache
 chmod -R ug+rwx storage bootstrap/cache
 ```
 
-(Ajuste `www-data` ao utilizador do PHP-FPM/Apache/Nginx.)
+(Ajuste `www-data` ao usuário do PHP-FPM/Apache/Nginx.)
 
 ### 4.8 Filas (obrigatório para notificações, PDF e sync)
 
@@ -216,7 +216,7 @@ Alinhe a expressão cron com `SCHEDULE_RUN_INTERVAL_MINUTES` (defeito **3**). O 
 - `admin-sync-scheduled-work` — **2×/dia** (`ADMIN_SYNC_SCHEDULE_TIMES`, ex. `06:00,18:00` em `APP_TIMEZONE`)
 - `admin-sync-on-demand` — em cada `schedule:run`, se houver jobs pendentes (`ADMIN_SYNC_SCHEDULE_ON_DEMAND=true`)
 
-### 4.9 Modo manutenção (se activou)
+### 4.9 Modo manutenção (se ativou)
 
 ```bash
 php artisan up
@@ -233,7 +233,7 @@ php artisan up
 | 3 | `/dashboard/analytics` | Abas carregam; Financiamentos com bloco de consultas públicas (se API key configurada) |
 | 4 | Aba **Censo** | Sem erro SQL; banner de ano letivo quando aplicável |
 | 5 | Aba **Serventec** | Conteúdo visível (não fica em branco após lazy load) |
-| 6 | Sino de notificações | Ícone ao lado do utilizador; lista após PDF/sync (com worker activo) |
+| 6 | Sino de notificações | Ícone ao lado do usuário; lista após PDF/sync (com worker ativo) |
 | 7 | `/pulse` (admin) | Painel executivo no topo, secção municípios, gráficos de servidor |
 | 8 | `php artisan schedule:list` | Tarefas `pulse-scheduled-*` e `admin-sync-scheduled-work` |
 | 9 | Consola do browser | Sem pedidos a `localhost:5173` / `[::1]:5173` |
@@ -248,7 +248,7 @@ php artisan about
 
 ---
 
-## 6. Primeira instalação vs actualização
+## 6. Primeira instalação vs atualização
 
 ### Instalação nova
 
@@ -257,11 +257,11 @@ php artisan migrate --force
 php artisan db:seed --class=AdminUserSeeder   # exige ADMIN_EMAIL e ADMIN_PASSWORD no .env
 ```
 
-Altere a palavra-passe do admin após o primeiro login.
+Altere a senha do admin após o primeiro login.
 
-### Actualização de servidor existente
+### Atualização de servidor existente
 
-- **Não** volte a correr o seeder de admin (sobrescreve utilizador pelo email do `.env`).
+- **Não** volte a correr o seeder de admin (sobrescreve usuário pelo email do `.env`).
 - **Não** regenere `APP_KEY` sem plano de re-encriptar credenciais das cidades.
 
 ---
@@ -273,7 +273,7 @@ Altere a palavra-passe do admin após o primeiro login.
 | CSS/JS quebrados; pedidos a porta 5173 | `public/hot` presente ou falta `public/build` | `rm -f public/hot`; confirmar `manifest.json` |
 | Aba Serventec em branco | Cache de views antiga | `php artisan view:clear && php artisan view:cache` |
 | Notificações/PDF não aparecem | Fila sem worker | Supervisor `queue:work` com `default,admin-sync` |
-| Pulse «Servers offline» | Cron sem `schedule:run` | Activar cron; `PULSE_SCHEDULE_ENABLED=true` |
+| Pulse «Servers offline» | Cron sem `schedule:run` | Ativar cron; `PULSE_SCHEDULE_ENABLED=true` |
 | Financiamentos sem Transparência | API key vazia | `PORTAL_TRANSPARENCIA_API_KEY` no `.env` + `config:cache` |
 | Erro ao ligar Redis | Extensão ausente | `REDIS_CLIENT=predis` ou instalar `phpredis`; cache/fila podem ficar em `database` |
 
@@ -307,7 +307,7 @@ A migração `notifications` pode ser revertida apenas com `php artisan migrate:
 cd /caminho/para/servlitcys
 git pull
 composer install --no-dev --optimize-autoloader
-# actualizar .env (ver secção 4.3)
+# atualizar .env (ver secção 4.3)
 php artisan migrate --force
 php artisan config:cache
 php artisan route:cache

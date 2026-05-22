@@ -2,7 +2,7 @@
 
 **Versão do produto (`main`):** 2.2.0 · commit `2c8cf44` (#135) · **Última revisão deste índice:** maio/2026
 
-Este ficheiro é o **ponto de entrada** da documentação. Use-o para saber o que o sistema faz hoje, **porque** certas decisões foram tomadas e **o que** está planeado implementar.
+Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que o sistema faz hoje, **porque** certas decisões foram tomadas e **o que** está planejado implementar.
 
 ---
 
@@ -27,7 +27,7 @@ Este ficheiro é o **ponto de entrada** da documentação. Use-o para saber o qu
 | **[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)** | **Identidade visual**, componentes UI e ordem das abas |
 | **[BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md)** | **Sugestões e evoluções** priorizadas (único backlog consolidado) |
 
-Os restantes ficheiros são **aprofundamento** por tema. Itens de backlog que aparecem noutros docs devem estar também em `BACKLOG_IMPLEMENTACOES.md` (com referência cruzada).
+Os restantes arquivos são **aprofundamento** por tema. Itens de backlog que aparecem noutros docs devem estar também em `BACKLOG_IMPLEMENTACOES.md` (com referência cruzada).
 
 ---
 
@@ -40,6 +40,14 @@ Os restantes ficheiros são **aprofundamento** por tema. Itens de backlog que ap
 | [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) | Propósito, público, governação de acesso (resumo) |
 | [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) | RBAC: admin, user, municipal — matriz e fluxos |
 | [SEGURANCA.md](SEGURANCA.md) | Senhas, sessões, checklist produção |
+
+### Idioma (pt-BR)
+
+| Recurso | Conteúdo |
+|---------|----------|
+| `lang/pt_BR/analytics.php` | Glossário Consultoria (abas, discrepâncias, filtros) |
+| `lang/pt_BR/fundeb.php` | Glossário FUNDEB e matriz admin |
+| `lang/pt_BR/admin.php` | Glossário admin, sync e conexões |
 
 ### Painel de análise (i-Educar)
 
@@ -112,11 +120,11 @@ Faixa superior (até Censo): **impacto no saldo indicativo** + **status no filtr
 
 ## Manutenção da documentação
 
-1. Alteração **visível** no produto → actualizar [STATUS_PROJETO.md](STATUS_PROJETO.md) e, se for release, [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) + `config/documentation.php` (`product.*`).
+1. Alteração **visível** no produto → atualizar [STATUS_PROJETO.md](STATUS_PROJETO.md) e, se for release, [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) + `config/documentation.php` (`product.*`).
 2. Nova **decisão técnica** ou mudança de regra → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
 3. Nova **funcionalidade planeada** → [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (uma linha; link opcional para doc temático).
 4. Sugestão de **cadastro i-Educar / integração** → [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) + linha no backlog §F.
-5. Evitar criar novos ficheiros «roadmap» soltos; usar backlog central + doc temático só se o tema for grande (ex.: finanças).
+5. Evitar criar novos arquivos «roadmap» soltos; usar backlog central + doc temático só se o tema for grande (ex.: finanças).
 
 ---
 

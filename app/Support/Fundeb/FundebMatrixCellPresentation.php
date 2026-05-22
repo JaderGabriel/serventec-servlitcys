@@ -3,9 +3,11 @@
 namespace App\Support\Fundeb;
 
 /**
- * Apresentação de células VAAF/VAAT (cores, rótulos) na matriz admin.
+ * Apresentação de células VAAF/VAAT (cores, rótulos) na matriz admin FUNDEB.
+ *
+ * @see \App\Support\Ieducar\FundebReferenceDisplay Comparação VAAF no painel municipal (analytics).
  */
-final class FundebReferenceDisplay
+final class FundebMatrixCellPresentation
 {
     public const KIND_EMPTY = 'empty';
 
@@ -72,36 +74,36 @@ final class FundebReferenceDisplay
         return match ($kind) {
             self::KIND_NATIONAL => [
                 'kind' => self::KIND_NATIONAL,
-                'label' => __('Referência nacional (piso)'),
-                'short' => __('Nacional'),
-                'title' => __('Prévia/piso nacional configurável — não é o VAAF municipal oficial do ente.'),
+                'label' => __('fundeb.matrix.national_label'),
+                'short' => __('fundeb.matrix.national_short'),
+                'title' => __('fundeb.matrix.national_title'),
                 'cell_class' => 'bg-amber-50 dark:bg-amber-950/30 text-amber-950 dark:text-amber-100',
                 'swatch_class' => 'bg-amber-400 ring-amber-600/40',
                 'icon' => '○',
             ],
             self::KIND_CONSOLIDATED => [
                 'kind' => self::KIND_CONSOLIDATED,
-                'label' => __('Municipal consolidado'),
-                'short' => __('Consolidado'),
-                'title' => __('Dado municipal importado (API/CSV FNDE ou fonte oficial gravada na base).'),
+                'label' => __('fundeb.matrix.consolidated_label'),
+                'short' => __('fundeb.matrix.consolidated_short'),
+                'title' => __('fundeb.matrix.consolidated_title'),
                 'cell_class' => 'bg-emerald-50 dark:bg-emerald-950/25 text-emerald-950 dark:text-emerald-100',
                 'swatch_class' => 'bg-emerald-500 ring-emerald-600/40',
                 'icon' => '●',
             ],
             self::KIND_PREVIEW => [
                 'kind' => self::KIND_PREVIEW,
-                'label' => __('Municipal estimado (prévia)'),
-                'short' => __('Prévia'),
-                'title' => __('VAAF estimado a partir da receita FNDE e matrículas i-Educar — indicativo, não extrato oficial.'),
+                'label' => __('fundeb.matrix.preview_label'),
+                'short' => __('fundeb.matrix.preview_short'),
+                'title' => __('fundeb.matrix.preview_title'),
                 'cell_class' => 'bg-indigo-50 dark:bg-indigo-950/25 text-indigo-950 dark:text-indigo-100',
                 'swatch_class' => 'bg-indigo-400 ring-indigo-500/40 ring-2 ring-dashed',
                 'icon' => '◆',
             ],
             default => [
                 'kind' => self::KIND_EMPTY,
-                'label' => __('Sem referência'),
+                'label' => __('fundeb.matrix.empty_label'),
                 'short' => '—',
-                'title' => __('Nenhum valor gravado para este município/ano.'),
+                'title' => __('fundeb.matrix.empty_title'),
                 'cell_class' => 'text-slate-400 dark:text-slate-500',
                 'swatch_class' => 'bg-slate-200 dark:bg-slate-600',
                 'icon' => '·',

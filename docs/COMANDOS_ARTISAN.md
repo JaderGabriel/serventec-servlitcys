@@ -44,7 +44,7 @@ php artisan app:probe-inep-geo-fallbacks --city=1
 | Comando | Descrição |
 |---------|-----------|
 | `saeb:sync-microdados` | ZIP INEP ou CSV por URL → `historico.json` |
-| `saeb:refresh-ca-bundle` | Actualiza PEM para SSL do download.inep.gov.br (erro cURL 60) |
+| `saeb:refresh-ca-bundle` | Atualiza PEM para SSL do download.inep.gov.br (erro cURL 60) |
 | `saeb:import-official` | Séries oficiais por IBGE |
 | `saeb:import-csv` | CSV manual |
 
@@ -135,7 +135,7 @@ composer run phpstan
 
 ```bash
 composer install
-# Configure o .env na raiz do projeto (único ficheiro de ambiente)
+# Configure o .env na raiz do projeto (único arquivo de ambiente)
 php artisan key:generate
 php artisan migrate
 php artisan db:seed --class=AdminUserSeeder
@@ -147,7 +147,26 @@ Ou: `composer run dev` (se configurado no `composer.json`).
 
 ---
 
-## 7. Relação comando ↔ interface
+## 7. Cidades (credenciais i-Educar)
+
+| Comando | Descrição |
+|---------|-----------|
+| `cities:reencrypt-db-passwords` | Aplica **a mesma senha padrão** em `db_password` de **todas** as cidades (criptografia com `APP_KEY` actual) |
+
+```bash
+php artisan cities:reencrypt-db-passwords --dry-run
+php artisan cities:reencrypt-db-passwords --password='SUA_SENHA_IEDUCAR'
+php artisan cities:reencrypt-db-passwords --password='...' --probe
+php artisan cities:reencrypt-db-passwords --password='...' --confirm=reencrypt-db-passwords   # production
+```
+
+Sem `--password`, o comando pede a senha de forma oculta no terminal ou lê `CITIES_DB_DEFAULT_PASSWORD` do `.env` (só para este comando — não commitar).
+
+**Atenção:** só use se **todas** as bases i-Educar dos municípios partilham a mesma senha. `php artisan key:generate` invalida senhas já gravadas; não rode em produção sem plano de reencrypt ou backup da chave antiga.
+
+---
+
+## 8. Relação comando ↔ interface
 
 | Área | CLI principal | Admin |
 |------|----------------|-------|
@@ -157,4 +176,4 @@ Ou: `composer run dev` (se configurado no `composer.json`).
 | Schema | `ieducar:schema-probe` | ieducar-compatibility |
 | **Massiva semanal** | `weekly-mass-sync:run` | sync-queue (retomar) |
 
-O catálogo em código (`App\Support\Console\ArtisanCommandsCatalog`) alimenta a tela admin; ao acrescentar comandos novos, actualize o catálogo e este documento.
+O catálogo em código (`App\Support\Console\ArtisanCommandsCatalog`) alimenta a tela admin; ao acrescentar comandos novos, atualize o catálogo e este documento.

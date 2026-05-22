@@ -6,15 +6,19 @@
     'formAction',
     'filterOptionsTurnoUrl' => null,
     'filterBootstrapUrl' => null,
+    'filterYearsUrl' => null,
     'deferSecondaryFilters' => false,
 ])
 
 @php
+    use App\Services\Ieducar\FilterOptionsService;
+
     $opts = is_array($ieducarOptions) ? $ieducarOptions : [];
     $escolas = $opts['escolas'] ?? [];
     $cursos = $opts['cursos'] ?? [];
     $turnos = $opts['turnos'] ?? [];
     $loadErrors = $opts['errors'] ?? [];
+    $needsYearFetch = ! FilterOptionsService::hasNumericSchoolYears($yearOptions);
 @endphp
 
 <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
@@ -36,6 +40,11 @@
         method="get"
         action="{{ $formAction }}"
         class="p-4"
+        @if (is_string($filterYearsUrl) && $filterYearsUrl !== '')
+            data-analytics-filter-years-url="{{ $filterYearsUrl }}"
+            data-analytics-filter-years-loading-label="{{ __('A carregar anos letivos…') }}"
+            @if ($needsYearFetch) data-analytics-filter-years-fetch="1" @endif
+        @endif
         @if ($deferSecondaryFilters && is_string($filterBootstrapUrl) && $filterBootstrapUrl !== '')
             data-analytics-filter-bootstrap
             data-analytics-filter-bootstrap-url="{{ $filterBootstrapUrl }}"
@@ -54,6 +63,20 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
                 <x-input-label for="ano_letivo" :value="__('Ano letivo (obrigatório)')" />
+                <div
+                    data-analytics-year-errors
+                    @class([
+                        'hidden' => empty($loadErrors),
+                        'mt-1 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/30 px-2 py-1.5 text-[11px] text-amber-900 dark:text-amber-100',
+                    ])
+                >
+                    @foreach ($loadErrors as $err)
+                        <p>{{ $err }}</p>
+                    @endforeach
+                </div>
+                @if ($needsYearFetch && empty($loadErrors))
+                    <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ __('A carregar anos letivos da base do município…') }}</p>
+                @endif
                 <select id="ano_letivo" name="ano_letivo" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     @foreach ($yearOptions as $value => $label)
                         <option

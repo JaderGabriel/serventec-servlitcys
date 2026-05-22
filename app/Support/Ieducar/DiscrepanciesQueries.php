@@ -1220,26 +1220,44 @@ final class DiscrepanciesQueries
         $tolerancePct = max(0.0, (float) config('ieducar.discrepancies.censo_matricula_tolerance_pct', 5));
         $minDiff = max(1, (int) config('ieducar.discrepancies.censo_matricula_min_diff', 10));
 
+        $row = self::buildCensoMatriculaDiffRow($ieducar, $censoTotal, $tolerancePct, $minDiff);
+
+        return $row !== null ? [$row] : [];
+    }
+
+    /**
+     * @return ?array{escola_id: string, escola: string, total: int, meta: array<string, mixed>}
+     */
+    public static function buildCensoMatriculaDiffRow(
+        int $ieducar,
+        int $censoTotal,
+        float $tolerancePct,
+        int $minDiff,
+    ): ?array {
+        if ($ieducar <= 0 || $censoTotal <= 0) {
+            return null;
+        }
+
         $diff = $ieducar - $censoTotal;
-        $pct = $censoTotal > 0 ? round(100.0 * abs($diff) / $censoTotal, 1) : 100.0;
+        $pct = round(100.0 * abs($diff) / $censoTotal, 1);
 
         if (abs($diff) < $minDiff && $pct < $tolerancePct) {
-            return [];
+            return null;
         }
 
-        if ($diff <= 0) {
-            return [];
-        }
+        $direction = $diff > 0 ? 'above_censo' : 'below_censo';
 
-        return [[
+        return [
             'escola_id' => '0',
-            'escola' => __('Rede municipal (comparativo Censo)'),
-            'total' => $diff,
+            'escola' => __('analytics.discrepancies.censo_compare_network_label'),
+            'total' => abs($diff),
             'meta' => [
                 'ieducar' => $ieducar,
                 'censo' => $censoTotal,
                 'pct' => $pct,
+                'diff' => $diff,
+                'direction' => $direction,
             ],
-        ]];
+        ];
     }
 }

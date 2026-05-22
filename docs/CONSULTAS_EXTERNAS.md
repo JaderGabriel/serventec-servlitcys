@@ -30,7 +30,7 @@ Todas as chamadas HTTP são **somente leitura**, filtradas por **IBGE do municí
 2. **Cache antes de rede:** FUNDEB grava `storage/app/fundeb/api/{ibge}/{ano}.json`; Financiamentos usa cache Laravel (`other_funding_public:{city}:{ibge}:{ano}`).
 3. **Indicativo, não oficial:** valores de «perda/ganho», previsão FUNDEB e horas de cadastro são **modelos configuráveis** para priorização — não para contabilidade.
 4. **Falha graciosa:** se API falhar ou chave faltar, a UI mostra nota explicativa (não bloqueia o painel).
-5. **Admin para carga pesada:** importações INEP/SAEB/FUNDEB em massa correm em `admin-sync` ou comandos Artisan, não no clique do utilizador analítico. Telas admin incluem guia **«Para que serve»** (ver `ExternalImportImpact`, commit `2c8cf44`).
+5. **Admin para carga pesada:** importações INEP/SAEB/FUNDEB em massa correm em `admin-sync` ou comandos Artisan, não no clique do usuário analítico. Telas admin incluem guia **«Para que serve»** (ver `ExternalImportImpact`, commit `2c8cf44`).
 
 ---
 
@@ -45,7 +45,7 @@ Esta secção concentra o que mais impacta **repasse, planeamento financeiro e c
 | **Serviço** | `App\Services\Fundeb\FundebOpenDataImportService` + `FundebFndeReceitaCsvService` |
 | **Endpoint** | `GET {IEDUCAR_FUNDEB_CKAN_URL}/api/3/action/datastore_search` (default: `https://www.fnde.gov.br/dadosabertos`) |
 | **Descoberta** | `package_search` com `IEDUCAR_FUNDEB_CKAN_SEARCH` se `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` estiver vazio |
-| **Alternativa** | JSON remoto ou ficheiro `storage://app/fundeb/api/{ibge}/{ano}.json` (`IEDUCAR_FUNDEB_JSON_URL`) |
+| **Alternativa** | JSON remoto ou arquivo `storage://app/fundeb/api/{ibge}/{ano}.json` (`IEDUCAR_FUNDEB_JSON_URL`) |
 | **Portaria FNDE (CSV)** | «Receita total do Fundeb por ente federado» em gov.br/fnde — VAAF **estimado** = receita total ÷ matrículas activas i-Educar (`fnde_portaria_receita_ieducar`) |
 
 **Por que é necessário**
@@ -83,9 +83,9 @@ IEDUCAR_FUNDEB_VAAF_ESTIMATE_MAX=18000
 
 **Ordem de importação (por município/ano):** cache/JSON → CKAN → CSV Portaria FNDE + matrículas i-Educar → (opcional) piso nacional se `IEDUCAR_FUNDEB_NATIONAL_FLOOR_ON_IMPORT=true`.
 
-Registos com `fonte` `referencia_nacional_config` são **ignorados** pelo resolver municipal; reimporte após activar a nova cadeia (`fundeb:import-api` ou admin FUNDEB).
+Registos com `fonte` `referencia_nacional_config` são **ignorados** pelo resolver municipal; reimporte após ativar a nova cadeia (`fundeb:import-api` ou admin FUNDEB).
 
-**Mensagem típica na UI:** «Nenhum registo em cache para IBGE/ano» → activar `IEDUCAR_OTHER_FUNDING_LIVE_FNDE=true` **e** configurar `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID`, ou sincronizar FUNDEB no admin.
+**Mensagem típica na UI:** «Nenhum registro em cache para IBGE/ano» → ativar `IEDUCAR_OTHER_FUNDING_LIVE_FNDE=true` **e** configurar `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID`, ou sincronizar FUNDEB no admin.
 
 ---
 
@@ -110,7 +110,7 @@ Quatro consultas são executadas em cada carregamento (após cache expirar):
 #### B) FNDE — dados abertos (CKAN) em tempo real ou cache
 
 - **Fonte:** `FundebOpenDataImportService::readCachedRowOnly` ou, se `IEDUCAR_OTHER_FUNDING_LIVE_FNDE=true`, `datastore_search` CKAN.
-- **Necessidade:** prévia quando ainda não há import admin nem ficheiro em `storage/app/fundeb/`.
+- **Necessidade:** prévia quando ainda não há import admin nem arquivo em `storage/app/fundeb/`.
 - **Impacto:** reduz «painel vazio»; depende de `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` para consulta live fiável.
 
 #### C) Tesouro Transparente — transferências ao município
@@ -121,7 +121,7 @@ Quatro consultas são executadas em cada carregamento (após cache expirar):
 
 - **Necessidade:** visão de **repasses da União** (inclui transferências constitucionais; pode conter rubricas ligadas à educação).
 - **Impacto:** amostra filtrada por IBGE e palavras-chave (`fundeb`, `fnde`, `pnae`, `pnate`, `pdde`, `educa`…); **não** separa automaticamente cada programa.
-- **Limitação:** mensagem «Nenhuma linha encontrada para o IBGE no limite da consulta» — o CKAN devolve lote limitado (500 registos); municípios grandes podem exigir resource ID correcto ou import offline.
+- **Limitação:** mensagem «Nenhuma linha encontrada para o IBGE no limite da consulta» — o CKAN devolve lote limitado (500 registros); municípios grandes podem exigir resource ID correto ou import offline.
 
 #### D) Portal da Transparência — despesas federais
 
@@ -179,7 +179,7 @@ IEDUCAR_TESOURO_TRANSFERENCIAS_RESOURCE_ID=
 | Item | Detalhe |
 |------|---------|
 | **Tabela** | `inep_censo_municipio_matriculas` (agregado do microdados por IBGE/ano) |
-| **Check** | `matricula_censo_vs_ieducar` em Discrepâncias quando i-Educar > Censo além da tolerância |
+| **Check** | `matricula_censo_vs_ieducar` em Discrepâncias quando i-Educar está acima **ou abaixo** do Censo além da tolerância (`IEDUCAR_DISC_CENSO_MAT_TOLERANCE_PCT`, `IEDUCAR_DISC_CENSO_MAT_MIN_DIFF`) |
 
 ---
 
@@ -279,7 +279,7 @@ flowchart LR
 
 1. Configurar `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` e `PORTAL_TRANSPARENCIA_API_KEY`.
 2. Importar FUNDEB por município/ano no admin (preenche cache + BD).
-3. Activar `IEDUCAR_OTHER_FUNDING_LIVE_FNDE=true` como rede de segurança.
+3. Ativar `IEDUCAR_OTHER_FUNDING_LIVE_FNDE=true` como rede de segurança.
 4. `php artisan config:cache` após alterar `.env`.
 
 ---
@@ -296,9 +296,9 @@ flowchart LR
 
 ---
 
-## 8. Referência rápida de ficheiros
+## 8. Referência rápida de arquivos
 
-| Ficheiro | Papel |
+| Arquivo | Papel |
 |----------|-------|
 | `app/Services/Funding/MunicipalFundingPublicSnapshotService.php` | Consultas HTTP Financiamentos |
 | `app/Services/Fundeb/FundebOpenDataImportService.php` | CKAN + cache FUNDEB |
@@ -311,4 +311,4 @@ flowchart LR
 
 ---
 
-*Documento vivo: actualizar quando novas APIs ou tabelas forem integradas.*
+*Documento vivo: atualizar quando novas APIs ou tabelas forem integradas.*
