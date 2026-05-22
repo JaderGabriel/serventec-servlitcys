@@ -45,12 +45,16 @@
 
             <x-admin.queue-banner />
 
+            @include('admin.partials.external-import-impact', ['domain' => 'geo'])
+
             <details class="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 px-4 py-3 text-sm">
                 <summary class="cursor-pointer font-medium text-slate-900 dark:text-slate-100">{{ __('Ordem dos passos (referência)') }}</summary>
                 <p class="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{{ __('1 i-Educar → 2 INEP oficial → 3 microdados → 4 pipeline → 5 probe (só diagnóstico). Log e resultado na fila.') }}</p>
             </details>
 
-            <div class="hidden rounded-xl border border-slate-200/90 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/40 p-4 sm:p-5 space-y-4">
+            <details class="rounded-xl border border-slate-200/90 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/40 p-4 sm:p-5 space-y-4">
+                <summary class="cursor-pointer text-sm font-semibold text-slate-900 dark:text-slate-100">{{ __('Fluxo completo (escrita → mapa)') }}</summary>
+                <div class="mt-4 space-y-4">
                 <div class="flex items-start gap-3">
                     <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-800 dark:ring-slate-600">
                         <svg class="h-5 w-5 text-slate-700 dark:text-slate-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
@@ -103,9 +107,12 @@
                         </div>
                     </div>
                 </div>
-            </div>
+                </div>
+            </details>
 
-            <div class="hidden rounded-xl border border-blue-200/80 bg-blue-50/70 dark:border-blue-900/50 dark:bg-blue-950/25 p-4 sm:p-5">
+            <details class="rounded-xl border border-blue-200/80 bg-blue-50/70 dark:border-blue-900/50 dark:bg-blue-950/25 p-4 sm:p-5">
+                <summary class="cursor-pointer text-sm font-semibold text-blue-950 dark:text-blue-100">{{ __('Ordem dos fallbacks INEP em runtime (mapa)') }}</summary>
+                <div class="mt-3">
                 <p class="text-sm font-semibold text-blue-950 dark:text-blue-100">{{ __('Na leitura (runtime): ordem dos fallbacks INEP + camadas ArcGIS') }}</p>
                 <p class="mt-1 text-sm text-blue-900/90 dark:text-blue-200/90 leading-relaxed">
                     {{ __('Ordem interna usada pelo catálogo e pelo mapa (além das coordenadas já guardadas na escola no i-Educar e em school_unit_geos):') }}
@@ -123,7 +130,8 @@
                 <p class="mt-3 text-xs text-blue-900/85 dark:text-blue-200/80 font-mono break-all leading-relaxed">
                     {{ __('Exemplo de duas camadas:') }} IEDUCAR_INEP_ARCGIS_QUERY_URLS={{ __('https://…/FeatureServer/1/query,https://…/FeatureServer/0/query') }}
                 </p>
-            </div>
+                </div>
+            </details>
 
             @if ($cityCount === 0)
                 <div class="rounded-xl border border-amber-200/90 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/25 dark:text-amber-100">

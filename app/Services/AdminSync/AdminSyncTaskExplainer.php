@@ -62,6 +62,13 @@ final class AdminSyncTaskExplainer
             $hints[] = __('Comando: php artisan :cmd', ['cmd' => (string) $payload['artisan_command']]);
         }
 
+        $importMode = (string) ($payload['import_mode'] ?? '');
+        if ($importMode !== '') {
+            $hints[] = $importMode === 'replace'
+                ? __('Modo: apagar referências do âmbito e buscar de novo')
+                : __('Modo: atualizar só se VAAF/VAAT/VAAR diferirem');
+        }
+
         return $hints;
     }
 }

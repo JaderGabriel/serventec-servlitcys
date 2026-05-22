@@ -8,8 +8,25 @@
         </div>
     </x-slot>
 
+    @php
+        use App\Support\Admin\ExternalImportImpact;
+        $taskImpact = ExternalImportImpact::forDomain($task->domain);
+        $outcomeHint = ExternalImportImpact::taskOutcomeHint($task);
+    @endphp
+
     <div class="py-10 max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-6">
         <a href="{{ route('admin.sync-queue.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">← {{ __('Voltar à fila') }}</a>
+
+        @if ($outcomeHint !== null)
+            <div class="rounded-lg border border-indigo-200/90 bg-indigo-50/80 dark:border-indigo-800/60 dark:bg-indigo-950/25 px-4 py-3 text-sm">
+                <p class="font-semibold text-indigo-950 dark:text-indigo-100">{{ $outcomeHint['title'] }}</p>
+                <p class="mt-1 text-xs text-indigo-900/90 dark:text-indigo-200/90 leading-relaxed">{{ $outcomeHint['detail'] }}</p>
+            </div>
+        @endif
+
+        @if (in_array($task->domain, ['fundeb', 'geo', 'pedagogical'], true))
+            @include('admin.partials.external-import-impact', ['domain' => $task->domain, 'cityId' => $task->city_id])
+        @endif
 
         <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 space-y-4 text-sm">
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">

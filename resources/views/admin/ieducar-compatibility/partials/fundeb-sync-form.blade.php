@@ -88,9 +88,18 @@
                     </div>
                 </div>
                 <div class="flex flex-col gap-2 text-xs text-gray-800 dark:text-gray-200">
-                    <label class="flex items-center gap-2"><input type="checkbox" name="include_cached_years" value="1" class="rounded border-gray-300 text-teal-600" checked> {{ __('Incluir anos em cache') }}</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" name="include_database_years" value="1" class="rounded border-gray-300 text-teal-600" checked> {{ __('Incluir anos na base') }}</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-teal-600"> {{ __('Ano mais recente na API se falhar') }}</label>
+                    <label class="flex items-start gap-2" title="{{ __('Anos já descarregados em cache local da API FNDE — evita repetir pedidos.') }}">
+                        <input type="checkbox" name="include_cached_years" value="1" class="rounded border-gray-300 text-teal-600 mt-0.5" checked>
+                        <span>{{ __('Incluir anos em cache da API') }}</span>
+                    </label>
+                    <label class="flex items-start gap-2" title="{{ __('Reimporta anos que já têm linha em fundeb_municipio_references (respeita o modo atualizar/apagar).') }}">
+                        <input type="checkbox" name="include_database_years" value="1" class="rounded border-gray-300 text-teal-600 mt-0.5" checked>
+                        <span>{{ __('Incluir anos já gravados na base') }}</span>
+                    </label>
+                    <label class="flex items-start gap-2" title="{{ __('Se o ano pedido não existir na fonte, usa o mais recente disponível.') }}">
+                        <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-teal-600 mt-0.5">
+                        <span>{{ __('Usar ano mais recente na API se falhar') }}</span>
+                    </label>
                 </div>
             </fieldset>
 

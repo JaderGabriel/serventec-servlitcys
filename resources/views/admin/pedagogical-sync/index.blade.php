@@ -61,6 +61,8 @@
 
                     <x-admin.queue-banner compact />
 
+                    @include('admin.partials.external-import-impact', ['domain' => 'pedagogical'])
+
                     <details id="saeb-historico-resumo" class="rounded-xl border border-emerald-200/90 bg-emerald-50/40 dark:border-emerald-800/50 dark:bg-emerald-950/20 [&_summary::-webkit-details-marker]:hidden">
                         <summary class="cursor-pointer list-none px-4 py-3 flex flex-wrap items-center justify-between gap-3 font-medium text-emerald-900 dark:text-emerald-100">
                             <span class="inline-flex min-w-0 items-center gap-2">
@@ -124,8 +126,9 @@
                         </ul>
                     </details>
 
-                    <div class="hidden rounded-xl border border-slate-200/90 bg-white dark:bg-slate-900/40 dark:border-slate-700 p-4 text-sm">
-                        <p class="font-semibold text-slate-900 dark:text-slate-100">{{ __('Obrigatório, opcional e pesado') }}</p>
+                    <details class="rounded-xl border border-slate-200/90 bg-white dark:bg-slate-900/40 dark:border-slate-700 p-4 text-sm">
+                        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-slate-100">{{ __('Obrigatório, opcional e pesado') }}</summary>
+                        <div class="mt-3">
                         <dl class="mt-3 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                             <div class="flex flex-wrap gap-x-2 gap-y-1">
                                 <dt class="shrink-0"><span class="inline-flex rounded-md bg-emerald-100 px-2 py-0.5 font-semibold text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200">{{ __('Obrigatório') }}</span></dt>
@@ -143,7 +146,8 @@
                         <p class="mt-3 text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                             {{ __('Os gráficos Desempenho (SAEB) leem directamente :table.', ['table' => 'saeb_indicator_points']) }}
                         </p>
-                    </div>
+                        </div>
+                    </details>
 
                     {{-- Fluxo em passos (espelho da página geográfica) --}}
                     <div class="rounded-xl border border-slate-200/90 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/40 p-4 sm:p-5 space-y-4">

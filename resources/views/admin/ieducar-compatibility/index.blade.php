@@ -33,6 +33,10 @@
             @endif
 
             <form method="get" action="{{ route('admin.ieducar-compatibility.index') }}" class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 sm:p-6 shadow-sm">
+                @if (request()->filled('fundeb_matrix_from') || request()->filled('fundeb_matrix_to'))
+                    <input type="hidden" name="fundeb_matrix_from" value="{{ request('fundeb_matrix_from') }}">
+                    <input type="hidden" name="fundeb_matrix_to" value="{{ request('fundeb_matrix_to') }}">
+                @endif
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                     <div>
                         <label for="city_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Cidade') }}</label>

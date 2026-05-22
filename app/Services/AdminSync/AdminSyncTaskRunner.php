@@ -12,6 +12,7 @@ use App\Services\Inep\SaebCsvPedagogicalImportService;
 use App\Services\Inep\SaebMicrodadosOpenDataImportService;
 use App\Services\Inep\SaebOfficialMunicipalImportService;
 use App\Services\Inep\SaebPedagogicalImportService;
+use App\Support\Admin\ExternalImportImpact;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarCompatibilityProbe;
 use Illuminate\Support\Facades\Artisan;
@@ -68,6 +69,10 @@ final class AdminSyncTaskRunner
         $progress->explain(AdminSyncTaskExplainer::summary($task));
         foreach (AdminSyncTaskExplainer::payloadHints($task) as $hint) {
             $progress->detail($hint);
+        }
+        $outcome = ExternalImportImpact::taskOutcomeHint($task);
+        if ($outcome !== null) {
+            $progress->detail($outcome['title'].': '.$outcome['detail']);
         }
 
         return $progress;
