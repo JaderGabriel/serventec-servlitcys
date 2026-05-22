@@ -397,7 +397,15 @@ final class AnalyticsReportSectionScopeAssembler
             'rows' => $rows,
         ];
         $notes[] = __('Programas federais específicos do modelo MEC (Pé-de-Meia, ENEC, PartiuIF, etc.) são descritos textualmente; dados operacionais dependem de API MEC não integrada.');
-        $this->gap($gaps, 'programas_universais', 'mec_programs_api', __('Catálogo completo de programas ATM (20+ políticas) sem API federal — apenas programas com repasse/snapshot na SERVLITCYS.'));
+        $this->gap(
+            $gaps,
+            'programas_universais',
+            'mec_programs_api',
+            __(
+                'Catálogo completo de programas ATM (:n políticas) sem API federal — apenas programas com repasse/snapshot na SERVLITCYS.',
+                ['n' => '20+']
+            )
+        );
     }
 
     /**
