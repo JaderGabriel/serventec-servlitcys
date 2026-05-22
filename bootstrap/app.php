@@ -77,13 +77,11 @@ return Application::configure(basePath: dirname(__DIR__))
             );
 
             $defaultJobTimeout = max(60, (int) config('ieducar.admin_sync.job_timeout', 3600));
-            $adminSync = $schedule->call(function () use ($maxSeconds, $defaultJobTimeout): void {
-                Artisan::call('admin-sync:work', [
-                    '--stop-when-empty' => true,
-                    '--max-time' => AdminSyncScheduleGate::workerMaxSeconds($maxSeconds),
-                    '--timeout' => AdminSyncScheduleGate::workerJobTimeout($defaultJobTimeout),
-                ]);
-            })
+            $adminSync = $schedule->command('admin-sync:work', [
+                '--stop-when-empty' => true,
+                '--max-time' => $maxSeconds,
+                '--timeout' => $defaultJobTimeout,
+            ])
                 ->name('admin-sync-scheduled-work')
                 ->withoutOverlapping($overlapMinutes)
                 ->timezone($timezone)
@@ -110,8 +108,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
                     Artisan::call('admin-sync:work', [
                         '--stop-when-empty' => true,
-                        '--max-time' => AdminSyncScheduleGate::workerMaxSeconds($onDemandMax),
-                        '--timeout' => AdminSyncScheduleGate::workerJobTimeout($defaultJobTimeout),
+                        '--max-time' => $onDemandMax,
+                        '--timeout' => $defaultJobTimeout,
                     ]);
                 })
                     ->name('admin-sync-on-demand')

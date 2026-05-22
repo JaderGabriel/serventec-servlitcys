@@ -135,8 +135,6 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 text-sm text-right space-x-2">
-                                        <a href="{{ route('dashboard', ['city_id' => $city->id]) }}" class="text-gray-600 dark:text-gray-300 hover:underline">{{ __('Painel') }}</a>
-                                        <span class="text-gray-300 dark:text-gray-600">|</span>
                                         <a href="{{ route('dashboard.analytics', ['city_id' => $city->id]) }}" class="text-gray-600 dark:text-gray-300 hover:underline">{{ __('Análise') }}</a>
                                         <span class="text-gray-300 dark:text-gray-600">|</span>
                                         <a href="{{ route('cities.edit', $city) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('Editar') }}</a>

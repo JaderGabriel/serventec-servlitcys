@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\Scheduling\AdminSyncScheduleGate;
 use Illuminate\Console\Command;
 
 class AdminSyncWorkCommand extends Command
@@ -22,6 +23,7 @@ class AdminSyncWorkCommand extends Command
         $timeout = $this->option('timeout') !== null
             ? (int) $this->option('timeout')
             : max(60, (int) config('ieducar.admin_sync.job_timeout', 3600));
+        $timeout = AdminSyncScheduleGate::workerJobTimeout($timeout);
         $tries = $this->option('tries') !== null
             ? (int) $this->option('tries')
             : max(1, (int) config('ieducar.admin_sync.tries', 1));
@@ -38,7 +40,7 @@ class AdminSyncWorkCommand extends Command
 
         $maxTime = $this->option('max-time');
         $maxTime = $maxTime !== null && $maxTime !== '' && $maxTime !== '0'
-            ? (int) $maxTime
+            ? AdminSyncScheduleGate::workerMaxSeconds((int) $maxTime)
             : 0;
 
         $params = [
