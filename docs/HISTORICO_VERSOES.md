@@ -1,6 +1,6 @@
 # Histórico de versões (resumo)
 
-**Versão em produção / `main`:** **2.3.6** · release **`20260522-Janus`** · commit `3cfe33c` (#174)
+**Versão em produção / `main`:** **2.3.6** · release **`20260522-Janus`** · commit `9350e9d` (#174)
 
 > **Como ler:** cada linha indica a **tag ou marco**, o **commit** (hash curto Git) e o **contador** (`#N` = posição na história linear do ramo `main`, desde o primeiro commit). Links GitHub usam o repositório configurado em `DOCS_GITHUB_REPOSITORY`.
 >
@@ -12,7 +12,7 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **2.3.6** | `20260522-Janus` → `3cfe33c` | **174** | 22/05/2026 | RX: progresso e «em falta» (turmas + matrículas); legenda visual por coluna; fix filtro matrícula ativa e sintaxe analytics. |
+| **2.3.6** | `20260522-Janus` → `9350e9d` | **174** | 22/05/2026 | RX: progresso e «em falta» (turmas + matrículas); legenda visual por coluna; fix filtro matrícula ativa e sintaxe analytics. |
 | **2.3.5** | `17d3d6e` | **168** | mai/2026 | RX: meta retroativa (+5%/salto), semáforo por município, legenda de colunas; consultas resilientes (conexão ≠ erro SQL). |
 | **2.3.4** | `ccc5ad4` | **166** | mai/2026 | Inclusão: catálogos MEC+i-Educar completos (NEE e raça, zeros visíveis); totalizador `kpi_total` nos gráficos de alunos; fix URL i-Educar no mapa Início. |
 | **2.3.3** | `eb3837f`…`78fd0f4` | **159–165** | mai/2026 | Mapa Início (IBGE/anti-overlap); botão i-Educar; medidor status; Matrículas holísticas; painel RX; VAAF UF PDF + CSV FNDE 2026; `ieducar:probe-falta`. |
@@ -85,7 +85,7 @@ Entrega focada em **bases financeiras públicas**, **sincronização semanal** e
 
 Documentação: [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md), [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md), [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md), [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
 
-### v2.3.6 — `20260522-Janus` → `3cfe33c` (#174, 22/05/2026)
+### v2.3.6 — `20260522-Janus` → `9350e9d` (#174, 22/05/2026)
 
 **Janus** (mitologia romana): passagem entre o que foi e o que será — alinhado ao painel RX (ano vigente, ano anterior e comparativo).
 
@@ -142,7 +142,7 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 
 | Tag | Commit | # | Notas |
 |-----|--------|---|--------|
-| **`20260522-Janus`** | `3cfe33c` | 174 | Release **2.3.6** (formato `YYYYMMDD-nome`). |
+| **`20260522-Janus`** | `9350e9d` | 174 | Release **2.3.6** (formato `YYYYMMDD-nome`). |
 | `v2.1.0` | `c3ec8b9` | 66 | Geografia Censo INEP. |
 | `v2.0.1` | `683510b` | 28 | Inclusão cor/raça. |
 
@@ -159,7 +159,7 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 - Ao publicar: actualizar tabela **Linha do tempo**, **Tags Git**, `README.md`, `STATUS_PROJETO.md` e `product.version`.
 
 ```bash
-git tag -a 20260522-Janus 3cfe33c -m "2.3.6 — RX progresso, em falta e legenda visual (Janus)"
+git tag -a 20260522-Janus 9350e9d -m "2.3.6 — RX progresso, em falta e legenda visual (Janus)"
 git push origin 20260522-Janus
 gh release create 20260522-Janus --title "20260522-Janus (2.3.6)" --notes-file docs/RELEASE_20260522_JANUS.md
 ```

@@ -23,7 +23,7 @@ return [
     'product' => [
         'version' => '2.3.6',
         'release_tag' => '20260522-Janus',
-        'commit_short' => '3cfe33c',
+        'commit_short' => '9350e9d',
         'commit_number' => 174,
         'revision_date' => '2026-05-22',
     ],

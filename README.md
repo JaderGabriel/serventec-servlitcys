@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão actual (`main`):** **2.3.6** · commit `3cfe33c` (#174). Última release: **`20260522-Janus`** (22/05/2026). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md).
+**Versão actual (`main`):** **2.3.6** · commit `9350e9d` (#174). Última release: **`20260522-Janus`** (22/05/2026). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md).
 
 ## Requisitos
 
@@ -206,7 +206,7 @@ Detalhe: [docs/PERFIS_UTILIZADOR.md](docs/PERFIS_UTILIZADOR.md).
 
 | Versão | Commit | # | Notas |
 |--------|--------|---|--------|
-| **2.3.6** | `20260522-Janus` → `3cfe33c` | 174 | RX, mapa, Inclusão, Matrículas — ver [RELEASE_20260522_JANUS.md](docs/RELEASE_20260522_JANUS.md). |
+| **2.3.6** | `20260522-Janus` → `9350e9d` | 174 | RX, mapa, Inclusão, Matrículas — ver [RELEASE_20260522_JANUS.md](docs/RELEASE_20260522_JANUS.md). |
 | **2.3.2** | `4d3f5e8` | 157 | Saldo pedagógico, frequência/falta_aluno, FUNDEB lazy matrículas, UI impact strip. |
 | **2.3.1** | `4893801` | 155 | Modal mapa unidades (QEdu, endereço, métricas), FUNDEB e sync semanal. |
 | **2.3.0** | `05a7410` | 151 | VAAF ampliado, repasses Tesouro CSV, sync semanal, PDF quadros FUNDEB, Financiamentos. |

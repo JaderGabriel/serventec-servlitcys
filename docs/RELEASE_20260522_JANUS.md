@@ -1,6 +1,6 @@
 # Release `20260522-Janus` — ServLitcys 2.3.6
 
-**Data:** 2026-05-22 · **Commit:** `3cfe33c` (#174) · **Figura:** *Janus* (transições entre passado e presente — adequado ao painel RX e comparativos de ano letivo).
+**Data:** 2026-05-22 · **Commit:** `9350e9d` (#174) · **Figura:** *Janus* (transições entre passado e presente — adequado ao painel RX e comparativos de ano letivo).
 
 ## Resumo
 
@@ -30,7 +30,7 @@ Entrega consolidada **2.3.3 → 2.3.6** no ramo `main`: mapa de municípios, con
 
 ```bash
 git fetch --tags
-git checkout 20260522-Janus   # ou deploy de main @ 3cfe33c
+git checkout 20260522-Janus   # ou deploy de main @ 9350e9d
 php artisan migrate --force
 php artisan config:clear
 npm run build   # se não usar public/build do repositório
