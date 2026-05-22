@@ -20,6 +20,15 @@
     $chartPanelDomId = $chartPanelId ?? 'chart-panel-'.str_replace('-', '', (string) \Illuminate\Support\Str::uuid());
     $chartSubtitle = is_array($chart) && ! empty($chart['subtitle']) ? (string) $chart['subtitle'] : null;
     $chartFootnote = is_array($chart) && ! empty($chart['footnote']) ? (string) $chart['footnote'] : null;
+    $kpiTotal = is_array($chart) && isset($chart['kpi_total']) && is_numeric($chart['kpi_total']) ? (int) $chart['kpi_total'] : null;
+    $kpiTotalLabel = is_array($chart) && ! empty($chart['kpi_total_label']) ? (string) $chart['kpi_total_label'] : __('Total de alunos no KPI');
+    $kpiTotalSecondary = is_array($chart) && isset($chart['kpi_total_secondary']) && is_numeric($chart['kpi_total_secondary'])
+        ? (int) $chart['kpi_total_secondary']
+        : null;
+    $kpiTotalSecondaryLabel = is_array($chart) && ! empty($chart['kpi_total_secondary_label'])
+        ? (string) $chart['kpi_total_secondary_label']
+        : null;
+    $kpiTotalHint = is_array($chart) && ! empty($chart['kpi_total_hint']) ? (string) $chart['kpi_total_hint'] : null;
     $toneIndigo = $panelTone === 'indigo';
     $panelRootClass = $toneIndigo
         ? 'border-indigo-200/90 dark:border-indigo-800/65 bg-white dark:bg-gray-800 ring-1 ring-indigo-100/70 dark:ring-indigo-900/45'
@@ -59,6 +68,20 @@
                 @endif
                 @if ($chartSubtitle)
                     <p class="{{ $suppressTitle ? '' : 'mt-1.5 ' }}text-xs leading-relaxed text-center {{ $panelSubtitleClass }}">{{ $chartSubtitle }}</p>
+                @endif
+                @if ($kpiTotal !== null)
+                    <p class="mt-1.5 text-xs leading-relaxed text-center {{ $panelSubtitleClass }}">
+                        <span class="font-medium">{{ $kpiTotalLabel }}:</span>
+                        <span class="tabular-nums font-semibold">{{ number_format($kpiTotal, 0, ',', '.') }}</span>
+                        @if ($kpiTotalSecondary !== null && $kpiTotalSecondaryLabel !== null)
+                            <span class="mx-1 text-gray-400 dark:text-gray-500">·</span>
+                            <span class="font-medium">{{ $kpiTotalSecondaryLabel }}:</span>
+                            <span class="tabular-nums font-semibold">{{ number_format($kpiTotalSecondary, 0, ',', '.') }}</span>
+                        @endif
+                    </p>
+                    @if ($kpiTotalHint)
+                        <p class="mt-0.5 text-[11px] leading-snug text-center text-gray-500 dark:text-gray-400">{{ $kpiTotalHint }}</p>
+                    @endif
                 @endif
             </div>
             <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-stretch sm:justify-end w-full sm:gap-2">
@@ -191,7 +214,10 @@
                     </div>
                     <ul class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-2 pb-6 text-sm text-gray-800 dark:text-gray-200 [scrollbar-gutter:stable]">
                         <template x-for="(row, idx) in legendRows()" :key="idx">
-                            <li class="border-b border-gray-100 py-2.5 last:border-0 dark:border-gray-700">
+                            <li
+                                class="py-2.5 border-b border-gray-100 last:border-0 dark:border-gray-700"
+                                :class="row.isTotal ? 'bg-indigo-50/80 dark:bg-indigo-950/35 font-semibold' : ''"
+                            >
                                 <span class="block break-words font-medium" x-text="row.label"></span>
                                 <span class="tabular-nums text-xs text-gray-600 dark:text-gray-400" x-show="row.value !== null && row.value !== undefined" x-text="row.valueText"></span>
                             </li>

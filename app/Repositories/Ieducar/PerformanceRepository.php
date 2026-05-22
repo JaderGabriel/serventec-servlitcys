@@ -223,6 +223,11 @@ class PerformanceRepository
                         $kpiBarLabels,
                         $kpiBarVals
                     );
+                    $kpiChart = ChartPayload::withKpiStudentTotal(
+                        $kpiChart,
+                        $total,
+                        __('Total de matrículas no filtro (denominador)')
+                    );
                     $kpiChart['pair_in_row'] = 'desempenho-taxas-situacao';
                     $kpiChart['options'] = array_merge(
                         is_array($kpiChart['options'] ?? null) ? $kpiChart['options'] : [],
@@ -237,6 +242,11 @@ class PerformanceRepository
                     __('Matrículas'),
                     $labels,
                     $values
+                );
+                $chart = ChartPayload::withKpiStudentTotal(
+                    $chart,
+                    $total,
+                    __('Total de matrículas no filtro (denominador)')
                 );
                 if ($hasKpiBar) {
                     $chart['pair_in_row'] = 'desempenho-taxas-situacao';

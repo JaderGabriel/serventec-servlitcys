@@ -835,6 +835,41 @@ return [
             'IEDUCAR_INCLUSION_INFANTIL_KEYWORDS',
             'educação infantil,educacao infantil,creche,berçário,bercario,pré-escola,pre-escola,infantil'
         ))))),
+
+        /**
+         * Cor/raça Educacenso (INEP) — ordem de exibição nos gráficos; unido ao catálogo cadastro.raca da base.
+         */
+        'raca_mec_catalog' => [
+            'Não declarada',
+            'Branca',
+            'Preta',
+            'Parda',
+            'Amarela',
+            'Indígena',
+        ],
+
+        /**
+         * Tipos de deficiência/NEE Educacenso (referência MEC) — unidos a cadastro.deficiencia (i-Educar).
+         */
+        'deficiencia_mec_catalog' => [
+            'Cegueira',
+            'Baixa visão',
+            'Surdez',
+            'Deficiência auditiva',
+            'Surdocegueira',
+            'Deficiência física',
+            'Deficiência intelectual',
+            'Deficiência múltipla',
+            'Transtorno do espectro autista',
+            'Altas habilidades/Superdotação',
+            'Síndrome de Down',
+            'Discalculia',
+            'Disgrafia',
+            'Dislalia',
+            'Dislexia',
+            'TDAH',
+            'TPAC',
+        ],
     ],
 
     /*

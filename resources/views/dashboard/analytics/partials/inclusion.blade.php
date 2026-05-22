@@ -245,6 +245,17 @@
                     </div>
                 @endif
 
+                @if ($neeChartsCount > 1 && ! empty($inclusionData['charts'][1]['labels'] ?? null))
+                    <div class="mt-6 min-w-0 w-full [&_.chart-panel-host]:min-h-[min(36rem,75vh)]">
+                        <x-dashboard.chart-panel
+                            :chart="$inclusionData['charts'][1]"
+                            :exportFilename="'inclusao-nee-catalogo-completo'"
+                            :exportMeta="$chartExportContext"
+                            :compact="false"
+                        />
+                    </div>
+                @endif
+
                 @if ($hasNeeDetalheCatalogo)
                     @php
                         $tot = $neeDetalheCatalogo['totais_por_secao'] ?? [];
@@ -307,9 +318,9 @@
                     </div>
                 @endif
 
-                @if ($neeChartsCount > 1)
+                @if ($neeChartsCount > 2)
                     @php
-                        $neeTailCharts = array_slice($inclusionData['charts'], 1, $neeChartsCount - 1);
+                        $neeTailCharts = array_slice($inclusionData['charts'], 2, $neeChartsCount - 2);
                         $neeTailCount = count($neeTailCharts);
                     @endphp
                     <div

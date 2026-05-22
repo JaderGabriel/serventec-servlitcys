@@ -972,7 +972,12 @@ final class MatriculaChartQueries
      *
      * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}
      */
-    public static function matriculasPorSexo(Connection $db, City $city, IeducarFilterState $filters): ?array
+    public static function matriculasPorSexo(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        ?int $kpiDenominator = null
+    ): ?array {
     {
         try {
             $pessoa = IeducarSchema::resolveTable('pessoa', $city);
@@ -1082,7 +1087,15 @@ final class MatriculaChartQueries
                 $values[] = (int) ($row->c ?? 0);
             }
 
-            return ChartPayload::doughnut(__('Matrículas por sexo (registro administrativo — Educacenso)'), $labels, $values);
+            $chart = ChartPayload::doughnut(__('Matrículas por sexo (registro administrativo — Educacenso)'), $labels, $values);
+
+            $den = $kpiDenominator ?? self::totalMatriculasAtivasFiltradas($db, $city, $filters);
+
+            return ChartPayload::withKpiStudentTotal(
+                $chart,
+                $den,
+                __('Total de matrículas no filtro (denominador)')
+            );
         } catch (QueryException|\Throwable) {
             return null;
         }

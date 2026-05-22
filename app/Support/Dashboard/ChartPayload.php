@@ -474,4 +474,48 @@ final class ChartPayload
             array_merge(array_slice($values, 0, $keep), [$rest]),
         ];
     }
+
+    /**
+     * Totalizador de alunos/matrículas do KPI (legenda do painel e modal «Ver lista»).
+     *
+     * @param  array<string, mixed>  $chart
+     * @return array<string, mixed>
+     */
+    public static function withKpiStudentTotal(
+        array $chart,
+        ?int $total,
+        ?string $label = null,
+        ?string $hint = null
+    ): array {
+        if ($total === null || $total < 0) {
+            return $chart;
+        }
+
+        $chart['kpi_total'] = $total;
+        $chart['kpi_total_label'] = $label ?? __('Total de alunos no KPI');
+
+        if ($hint !== null && trim($hint) !== '') {
+            $chart['kpi_total_hint'] = trim($hint);
+        }
+
+        return $chart;
+    }
+
+    /**
+     * Soma da primeira série (barras / rosca simples).
+     *
+     * @param  array<string, mixed>  $chart
+     */
+    public static function sumFirstDataset(array $chart): int
+    {
+        $data = $chart['datasets'][0]['data'] ?? [];
+        if (! is_array($data)) {
+            return 0;
+        }
+
+        return (int) round(array_sum(array_map(
+            static fn ($v) => is_numeric($v) ? (float) $v : 0.0,
+            $data
+        )));
+    }
 }

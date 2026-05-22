@@ -1268,12 +1268,12 @@ document.addEventListener("alpine:init", () => {
             legendRows() {
                 const src = this._sourcePayload;
                 if (!src?.labels?.length || !src?.datasets?.[0]) {
-                    return [];
+                    return this.kpiTotalLegendRows(src);
                 }
                 const labels = src.labels;
                 const ds0 = src.datasets[0];
                 const data = ds0?.data ?? [];
-                return labels.map((label, i) => {
+                const rows = labels.map((label, i) => {
                     const v = data[i];
                     let valueText = "";
                     if (v !== undefined && v !== null) {
@@ -1289,8 +1289,47 @@ document.addEventListener("alpine:init", () => {
                         label: String(label ?? ""),
                         value: v,
                         valueText,
+                        isTotal: false,
                     };
                 });
+
+                return rows.concat(this.kpiTotalLegendRows(src));
+            },
+            kpiTotalLegendRows(src) {
+                const out = [];
+                if (!src || typeof src !== "object") {
+                    return out;
+                }
+                const fmt = (n) =>
+                    Number(n).toLocaleString("pt-BR", {
+                        maximumFractionDigits: 0,
+                    });
+                if (src.kpi_total !== undefined && src.kpi_total !== null) {
+                    out.push({
+                        label: String(
+                            src.kpi_total_label ||
+                                "Total de alunos no KPI",
+                        ),
+                        value: src.kpi_total,
+                        valueText: fmt(src.kpi_total),
+                        isTotal: true,
+                    });
+                }
+                if (
+                    src.kpi_total_secondary !== undefined &&
+                    src.kpi_total_secondary !== null
+                ) {
+                    out.push({
+                        label: String(
+                            src.kpi_total_secondary_label || "Soma das barras",
+                        ),
+                        value: src.kpi_total_secondary,
+                        valueText: fmt(src.kpi_total_secondary),
+                        isTotal: true,
+                    });
+                }
+
+                return out;
             },
             filterRows() {
                 void this._filterNonce;

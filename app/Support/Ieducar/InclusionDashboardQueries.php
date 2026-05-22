@@ -68,23 +68,23 @@ final class InclusionDashboardQueries
     public static function buildNeeDetalheCatalogoPorCategoria(Connection $db, City $city, IeducarFilterState $filters): ?array
     {
         try {
-            $col = self::getMatriculasPorDeficiencia($db, $city, $filters, null);
-            if ($col->isEmpty()) {
+            $countsByNorm = InclusionEducacensoCatalog::countsByNormFromRows(
+                self::getMatriculasPorDeficiencia($db, $city, $filters, null),
+                static fn ($row) => (string) ($row->deficiencia ?? ''),
+                static fn ($row) => (int) ($row->total ?? 0)
+            );
+
+            $entries = InclusionEducacensoCatalog::mergedDeficienciaEntries($db, $city);
+            if ($entries === [] && $countsByNorm === []) {
                 return null;
             }
 
             $def = [];
             $sin = [];
             $ne = [];
-            foreach ($col as $row) {
-                $nm = trim((string) ($row->deficiencia ?? ''));
-                if ($nm === '') {
-                    $nm = __('Não informado');
-                }
-                $t = (int) ($row->total ?? 0);
-                if ($t <= 0) {
-                    continue;
-                }
+            foreach ($entries as $entry) {
+                $nm = $entry['label'];
+                $t = (int) ($countsByNorm[$entry['norm']] ?? 0);
                 $item = ['nome' => $nm, 'total' => $t];
                 $cat = self::classificarDesignacaoNee($nm);
                 if ($cat === 'ne') {
@@ -160,26 +160,86 @@ final class InclusionDashboardQueries
     public static function buildCharts(Connection $db, City $city, IeducarFilterState $filters): array
     {
         $out = [];
-        $g3 = self::chartTresGruposDeficienciaSindromeNe($db, $city, $filters);
+        $den = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
+
+        $g3 = self::chartTresGruposDeficienciaSindromeNe($db, $city, $filters, $den);
         if ($g3 !== null) {
             $out[] = $g3;
         }
+
+        $catalogoCompleto = self::chartNeeCatalogoCompletoMecIeducar($db, $city, $filters, $den);
+        if ($catalogoCompleto !== null) {
+            $out[] = $catalogoCompleto;
+        }
+
         // Total de matrículas NEE por unidade (barras simples) — em seguida ao resumo por grupos.
-        $porEscolaTotal = self::chartNeeMatriculasPorEscolaTop($db, $city, $filters);
+        $porEscolaTotal = self::chartNeeMatriculasPorEscolaTop($db, $city, $filters, $den);
         if ($porEscolaTotal !== null) {
             $out[] = $porEscolaTotal;
         }
-        $det = self::chartMatriculasPorNomeDeficiencia($db, $city, $filters);
+        $det = self::chartMatriculasPorNomeDeficiencia($db, $city, $filters, $den);
         if ($det !== null) {
             $out[] = $det;
         }
         // Detalhe por tipo de deficiência no catálogo (empilhado), além do total acima.
-        $porEscolaStacked = self::chartNeeDeficienciasPorEscolaStacked($db, $city, $filters);
+        $porEscolaStacked = self::chartNeeDeficienciasPorEscolaStacked($db, $city, $filters, $den);
         if ($porEscolaStacked !== null) {
             $out[] = $porEscolaStacked;
         }
 
         return $out;
+    }
+
+    /**
+     * Catálogo MEC + i-Educar com todas as designações (valor 0 quando não há matrículas).
+     *
+     * @return ?array<string, mixed>
+     */
+    public static function chartNeeCatalogoCompletoMecIeducar(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        ?int $denominator = null
+    ): ?array {
+        try {
+            $entries = InclusionEducacensoCatalog::mergedDeficienciaEntries($db, $city);
+            if ($entries === []) {
+                return null;
+            }
+
+            $countsByNorm = InclusionEducacensoCatalog::countsByNormFromRows(
+                self::getMatriculasPorDeficiencia($db, $city, $filters, null),
+                static fn ($row) => (string) ($row->deficiencia ?? ''),
+                static fn ($row) => (int) ($row->total ?? 0)
+            );
+
+            [$labels, $values] = InclusionEducacensoCatalog::mergeLabelsWithCounts($entries, $countsByNorm);
+
+            $den = $denominator ?? MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
+
+            $chart = ChartPayload::barHorizontal(
+                __('NEE — catálogo completo MEC e i-Educar (todas as opções)'),
+                __('Matrículas distintas'),
+                $labels,
+                $values
+            );
+            $chart['subtitle'] = __(
+                'Todas as designações previstas no Educacenso/MEC e no catálogo cadastro.deficiencia da base, incluindo opções com zero matrículas no filtro. Uma matrícula pode contar em mais do que uma barra.'
+            );
+            $chart['options'] = array_merge(
+                is_array($chart['options'] ?? null) ? $chart['options'] : [],
+                ['panelHeight' => 'xxl', 'skipHorizontalBarAutoHeight' => false]
+            );
+
+            return self::attachMatriculaKpiTotal(
+                $chart,
+                $den,
+                true,
+                __('Soma das barras (pode exceder o total por vínculos múltiplos)')
+            );
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**
@@ -208,8 +268,12 @@ final class InclusionDashboardQueries
      *
      * @return ?array<string, mixed>
      */
-    private static function chartNeeDeficienciasPorEscolaStacked(Connection $db, City $city, IeducarFilterState $filters): ?array
-    {
+    private static function chartNeeDeficienciasPorEscolaStacked(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        ?int $denominator = null
+    ): ?array {
         try {
             $rows = self::fetchNeeEscolaDeficienciaAggregationRows($db, $city, $filters);
             if ($rows === []) {
@@ -303,7 +367,9 @@ final class InclusionDashboardQueries
                 'Mesma origem que «Matrículas por tipo (cadastro)»: prioridade a cadastro.fisica_deficiência; senão aluno_deficiência. Uma matrícula pode contar em mais do que um segmento se o aluno tiver vários vínculos.'
             );
 
-            return $chart;
+            $den = $denominator ?? MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
+
+            return self::attachMatriculaKpiTotal($chart, $den, true);
         } catch (\Throwable) {
             return null;
         }
@@ -545,8 +611,12 @@ final class InclusionDashboardQueries
      *
      * @return ?array<string, mixed>
      */
-    private static function chartNeeMatriculasPorEscolaTop(Connection $db, City $city, IeducarFilterState $filters): ?array
-    {
+    private static function chartNeeMatriculasPorEscolaTop(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        ?int $denominator = null
+    ): ?array {
         try {
             $map = self::neeMatriculasDistinctCountByEscolaMap($db, $city, $filters);
             if ($map === []) {
@@ -576,7 +646,9 @@ final class InclusionDashboardQueries
             );
             $chart['options'] = array_merge($chart['options'] ?? [], ['panelHeight' => 'xxl']);
 
-            return $chart;
+            $den = $denominator ?? MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
+
+            return self::attachMatriculaKpiTotal($chart, $den, false);
         } catch (\Throwable) {
             return null;
         }
@@ -1016,10 +1088,14 @@ final class InclusionDashboardQueries
     /**
      * @return ?array<string, mixed>
      */
-    private static function chartTresGruposDeficienciaSindromeNe(Connection $db, City $city, IeducarFilterState $filters): ?array
-    {
+    private static function chartTresGruposDeficienciaSindromeNe(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        ?int $denominator = null
+    ): ?array {
         try {
-            $den = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
+            $den = $denominator ?? MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
             if ($den === null || $den <= 0) {
                 return null;
             }
@@ -1153,7 +1229,7 @@ final class InclusionDashboardQueries
             );
             $chart['subtitle'] = $sub;
 
-            return $chart;
+            return self::attachMatriculaKpiTotal($chart, $den, true);
         } catch (\Throwable) {
             return null;
         }
@@ -1162,8 +1238,12 @@ final class InclusionDashboardQueries
     /**
      * @return ?array<string, mixed>
      */
-    private static function chartMatriculasPorNomeDeficiencia(Connection $db, City $city, IeducarFilterState $filters): ?array
-    {
+    private static function chartMatriculasPorNomeDeficiencia(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        ?int $denominator = null
+    ): ?array {
         try {
             $col = self::getMatriculasPorDeficiencia($db, $city, $filters);
             if ($col->isEmpty()) {
@@ -1199,10 +1279,45 @@ final class InclusionDashboardQueries
                     'Cada barra representa uma designação no catálogo cadastro.deficiencia ligada a aluno_deficiência; a mesma matrícula pode aparecer em mais do que uma barra se o aluno tiver vários registros.'
                 );
 
-            return $chart;
+            $den = $denominator ?? MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
+
+            return self::attachMatriculaKpiTotal($chart, $den, true);
         } catch (QueryException|\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $chart
+     * @return array<string, mixed>
+     */
+    private static function attachMatriculaKpiTotal(
+        array $chart,
+        ?int $denominator,
+        bool $multiVinculoHint = false,
+        ?string $secondaryLabel = null
+    ): array {
+        if ($denominator === null || $denominator < 0) {
+            return $chart;
+        }
+
+        $hint = $multiVinculoHint
+            ? __('Uma matrícula pode contar em várias categorias; a soma das barras pode exceder o total de matrículas no filtro.')
+            : null;
+
+        $chart = ChartPayload::withKpiStudentTotal(
+            $chart,
+            $denominator,
+            __('Total de matrículas no filtro (denominador)'),
+            $hint
+        );
+
+        if ($secondaryLabel !== null) {
+            $chart['kpi_total_secondary'] = ChartPayload::sumFirstDataset($chart);
+            $chart['kpi_total_secondary_label'] = $secondaryLabel;
+        }
+
+        return $chart;
     }
 
     /**

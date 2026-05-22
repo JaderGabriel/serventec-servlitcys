@@ -16,6 +16,7 @@ final class AdminHomeMunicipalityMap
     public function __construct(
         private readonly MunicipalityMapCoordinates $coordinates,
         private readonly MunicipalityMapOverlapResolver $overlapResolver,
+        private readonly CityIeducarAppUrlResolver $ieducarAppUrl,
     ) {}
 
     /**

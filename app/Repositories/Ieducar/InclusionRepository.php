@@ -10,6 +10,7 @@ use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\IeducarSqlPlaceholders;
 use App\Support\Ieducar\InclusionDashboardQueries;
+use App\Support\Ieducar\InclusionEducacensoCatalog;
 use App\Support\Ieducar\InclusionMatriculaScope;
 use App\Support\Ieducar\InclusionRecursoProvaQueries;
 use App\Support\Ieducar\InclusionSpecialEducationGauges;
@@ -126,8 +127,16 @@ class InclusionRepository
 
                 try {
                     foreach (InclusionSpecialEducationGauges::build($db, $city, $filters) as $row) {
+                        $gaugeChart = ChartPayload::gaugePercent($row['title'], $row['percent']);
+                        if ($totalMatriculas !== null && $totalMatriculas > 0) {
+                            $gaugeChart = ChartPayload::withKpiStudentTotal(
+                                $gaugeChart,
+                                $totalMatriculas,
+                                __('Total de matrículas no filtro (denominador)')
+                            );
+                        }
                         $gauges[] = [
-                            'chart' => ChartPayload::gaugePercent($row['title'], $row['percent']),
+                            'chart' => $gaugeChart,
                             'caption' => $row['caption'],
                         ];
                     }
@@ -137,7 +146,7 @@ class InclusionRepository
 
                 $tailCharts = [];
 
-                $sex = MatriculaChartQueries::matriculasPorSexo($db, $city, $filters);
+                $sex = MatriculaChartQueries::matriculasPorSexo($db, $city, $filters, $totalMatriculas);
                 if ($sex !== null) {
                     $sex['options'] = array_merge($sex['options'] ?? [], [
                         'panelHeight' => 'lg',
@@ -159,7 +168,7 @@ class InclusionRepository
                         $tailCharts[] = $racaChart;
                     }
                 } else {
-                    $racaChart = $this->raceDistributionChart($db, $city, $filters);
+                    $racaChart = $this->raceDistributionChart($db, $city, $filters, $totalMatriculas);
                     if ($racaChart !== null) {
                         $racaChart['options'] = array_merge($racaChart['options'] ?? [], [
                             'panelHeight' => 'lg',
@@ -318,8 +327,12 @@ class InclusionRepository
      *
      * @return ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>}
      */
-    private function raceDistributionChart(Connection $db, City $city, IeducarFilterState $filters): ?array
-    {
+    private function raceDistributionChart(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        ?int $denominator = null
+    ): ?array {
         try {
             $mat = IeducarSchema::resolveTable('matricula', $city);
             $aluno = IeducarSchema::resolveTable('aluno', $city);
@@ -484,24 +497,41 @@ class InclusionRepository
             MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
             InclusionMatriculaScope::apply($q, $db, $city, $filters);
 
-            $rows = $q->orderByDesc('c')->limit(16)->get();
-            if ($rows->isEmpty()) {
+            $rows = $q->get();
+
+            $countsByNorm = InclusionEducacensoCatalog::countsByNormFromRows(
+                $rows,
+                static function ($row) {
+                    $nm = $row->rname ?? null;
+
+                    return $nm !== null && (string) $nm !== '' ? (string) $nm : (string) __('Não declarada');
+                },
+                static fn ($row) => (int) ($row->c ?? 0)
+            );
+
+            $entries = InclusionEducacensoCatalog::mergedRacaEntries($db, $city);
+            if ($entries === []) {
                 return null;
             }
 
-            $labels = [];
-            $values = [];
-            foreach ($rows as $row) {
-                $nm = $row->rname ?? null;
-                $labels[] = $nm !== null && (string) $nm !== '' ? (string) $nm : __('Não declarado');
-                $values[] = (int) ($row->c ?? 0);
-            }
+            [$labels, $values] = InclusionEducacensoCatalog::mergeLabelsWithCounts($entries, $countsByNorm);
 
-            return ChartPayload::barHorizontal(
+            $chart = ChartPayload::barHorizontal(
                 __('Matrículas por cor ou raça (cadastro — referência INEP)'),
                 __('Matrículas'),
                 $labels,
                 $values
+            );
+            $chart['subtitle'] = __(
+                'Todas as opções Educacenso/MEC e do catálogo cadastro.raca da base, incluindo categorias com zero matrículas no filtro.'
+            );
+
+            $den = $denominator ?? MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
+
+            return ChartPayload::withKpiStudentTotal(
+                $chart,
+                $den,
+                __('Total de matrículas no filtro (denominador)')
             );
         } catch (QueryException|\Throwable) {
             return null;
