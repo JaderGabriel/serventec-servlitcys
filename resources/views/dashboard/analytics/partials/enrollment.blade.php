@@ -64,8 +64,101 @@
                     </p>
                 </div>
             </div>
-            <p class="text-[11px] text-gray-500 dark:text-gray-500 mt-2">{{ __('Fonte do cálculo:') }} {{ $d['fonte'] === 'custom' ? __('definição personalizada') : __('cálculo automático (matrícula, turma e série)')}}</p>
+            <p class="text-[11px] text-gray-500 dark:text-gray-500 mt-2">
+                {{ __('Fonte do cálculo:') }}
+                {{ $d['fonte'] === 'custom' ? __('definição personalizada') : __('cálculo automático (matrícula, turma e série)') }}
+                @if (! empty($d['metodo'] ?? null))
+                    · {{ __('mecanismo:') }} <span class="font-mono text-[10px]">{{ $d['metodo'] }}</span>
+                @endif
+                @if (($d['cobertura_pct'] ?? null) !== null)
+                    · {{ __('cobertura:') }} {{ number_format((float) $d['cobertura_pct'], 1, ',', '.') }}% {{ __('das matrículas activas no filtro') }}
+                @endif
+            </p>
         </div>
+    @endif
+
+    @php $mecanismos = is_array($enrollmentData['distorcao_mecanismos'] ?? null) ? $enrollmentData['distorcao_mecanismos'] : []; @endphp
+    @if (count($mecanismos) > 0)
+        <details class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40 px-4 py-3 text-sm">
+            <summary class="cursor-pointer font-medium text-gray-800 dark:text-gray-200">
+                {{ __('Mecanismos de apuração (comparativo i-Educar)') }}
+            </summary>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
+                {{ __('O cartão principal usa o mecanismo com maior cobertura. Inclui nascimento híbrido (física+pessoa), limite em cadeia (idade da série → final → ideal → etapa Educacenso) e variantes INEP. Histogramas e situação×distorção usam o melhor caminho disponível quando faltar um dado.') }}
+            </p>
+            <div class="mt-3 overflow-x-auto">
+                <table class="min-w-full text-xs">
+                    <thead>
+                        <tr class="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                            <th class="py-1.5 pr-3 font-medium">{{ __('Mecanismo') }}</th>
+                            <th class="py-1.5 pr-3 font-medium text-right">{{ __('Com distorção') }}</th>
+                            <th class="py-1.5 pr-3 font-medium text-right">{{ __('Total') }}</th>
+                            <th class="py-1.5 font-medium text-right">{{ __('Taxa') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($mecanismos as $row)
+                            <tr class="border-b border-gray-100 dark:border-gray-800 {{ empty($row['disponivel']) ? 'opacity-60' : '' }}">
+                                <td class="py-1.5 pr-3 text-gray-800 dark:text-gray-200">{{ $row['label'] ?? $row['id'] ?? '—' }}</td>
+                                <td class="py-1.5 pr-3 text-right tabular-nums">{{ ! empty($row['disponivel']) ? number_format((int) ($row['com'] ?? 0)) : '—' }}</td>
+                                <td class="py-1.5 pr-3 text-right tabular-nums">{{ ! empty($row['disponivel']) ? number_format((int) ($row['total'] ?? 0)) : '—' }}</td>
+                                <td class="py-1.5 text-right tabular-nums">
+                                    @if (! empty($row['disponivel']) && ($row['pct'] ?? null) !== null)
+                                        {{ number_format((float) $row['pct'], 1, ',', '.') }}%
+                                    @elseif (! empty($row['motivo']))
+                                        <span class="text-gray-500">{{ \Illuminate\Support\Str::limit((string) $row['motivo'], 48) }}</span>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </details>
+    @endif
+
+    @php $sitCruz = is_array($enrollmentData['distorcao_situacao_cruzada'] ?? null) ? $enrollmentData['distorcao_situacao_cruzada'] : []; @endphp
+    @if (count($sitCruz) > 0)
+        <details class="rounded-lg border border-violet-200 dark:border-violet-900/50 bg-violet-50/60 dark:bg-violet-950/20 px-4 py-3 text-sm" open>
+            <summary class="cursor-pointer font-medium text-gray-800 dark:text-gray-200">
+                {{ __('Distorção × situação da matrícula (INEP)') }}
+            </summary>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">
+                {{ __('Cruzamento com o melhor mecanismo disponível (nascimento híbrido + limite em cadeia). Destaca reprovados, abandonos e em curso com distorção idade-série.') }}
+            </p>
+            <div class="mt-3 overflow-x-auto">
+                <table class="min-w-full text-xs">
+                    <thead>
+                        <tr class="text-left text-gray-500 dark:text-gray-400 border-b border-violet-200/80 dark:border-violet-800">
+                            <th class="py-1.5 pr-3 font-medium">{{ __('Situação') }}</th>
+                            <th class="py-1.5 pr-3 font-medium">{{ __('Cód.') }}</th>
+                            <th class="py-1.5 pr-3 font-medium text-right">{{ __('Total') }}</th>
+                            <th class="py-1.5 pr-3 font-medium text-right">{{ __('Com distorção') }}</th>
+                            <th class="py-1.5 font-medium text-right">{{ __('% distorção') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($sitCruz as $row)
+                            <tr class="border-b border-violet-100/80 dark:border-violet-900/40">
+                                <td class="py-1.5 pr-3">{{ $row['situacao'] ?? '—' }}</td>
+                                <td class="py-1.5 pr-3 font-mono text-[10px]">{{ $row['codigo'] ?? '—' }}</td>
+                                <td class="py-1.5 pr-3 text-right tabular-nums">{{ number_format((int) ($row['total'] ?? 0)) }}</td>
+                                <td class="py-1.5 pr-3 text-right tabular-nums">{{ number_format((int) ($row['com_distorcao'] ?? 0)) }}</td>
+                                <td class="py-1.5 text-right tabular-nums">
+                                    @if (($row['pct_distorcao'] ?? null) !== null)
+                                        {{ number_format((float) $row['pct_distorcao'], 1, ',', '.') }}%
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </details>
     @endif
 
     @if (! empty($enrollmentData['fluxo_taxas']))

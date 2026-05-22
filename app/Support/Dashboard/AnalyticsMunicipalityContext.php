@@ -3,6 +3,7 @@
 namespace App\Support\Dashboard;
 
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
+use App\Support\Ieducar\IeducarAnalyticsMetricsScope;
 
 /**
  * Contexto municipal leve (filtros aplicados) para faixas de impacto nas abas do painel.
@@ -28,12 +29,14 @@ final class AnalyticsMunicipalityContext
         $escolas = (int) ($summary['escolas_afetadas'] ?? 0);
 
         $kpis = is_array($overviewData['kpis'] ?? null) ? $overviewData['kpis'] : [];
-        $matriculas = (int) ($kpis['matriculas'] ?? $overviewData['total_matriculas'] ?? 0);
+        $metricExtras = IeducarAnalyticsMetricsScope::resolve()?->toMunicipalityContextExtras() ?? [];
+        $matriculas = (int) ($metricExtras['total_matriculas'] ?? $kpis['matriculas'] ?? $overviewData['total_matriculas'] ?? 0);
+        $distorcaoPct = isset($metricExtras['distorcao_pct']) ? (float) $metricExtras['distorcao_pct'] : null;
 
-        $score = self::estimateComplianceScore($pendencias, $corrigiveis, $perda, $ganho);
+        $score = self::estimateComplianceScore($pendencias, $corrigiveis, $perda, $ganho, $distorcaoPct);
         $status = self::statusFromScore($score);
 
-        return [
+        return array_merge([
             'perda_estimada_anual' => $perda,
             'ganho_potencial_anual' => $ganho,
             'saldo_liquido' => round($ganho - $perda, 2),
@@ -47,16 +50,24 @@ final class AnalyticsMunicipalityContext
             'funding_reference' => is_array($fundingSnapshot['funding_reference'] ?? null)
                 ? $fundingSnapshot['funding_reference']
                 : null,
-        ];
+        ], $metricExtras);
     }
 
-    public static function estimateComplianceScore(int $pendencias, int $corrigiveis, float $perda, float $ganho): int
-    {
+    public static function estimateComplianceScore(
+        int $pendencias,
+        int $corrigiveis,
+        float $perda,
+        float $ganho,
+        ?float $distorcaoPct = null,
+    ): int {
         $score = 100.0;
         $score -= min(45.0, $pendencias * 2.5);
         $score -= min(20.0, $corrigiveis * 0.8);
         if ($perda > 0) {
             $score -= min(25.0, log10(max(10.0, $perda)) * 4.0);
+        }
+        if ($distorcaoPct !== null && $distorcaoPct > 0) {
+            $score -= min(12.0, $distorcaoPct * 0.45);
         }
         if ($ganho > 0 && $pendencias > 0) {
             $score += min(8.0, $corrigiveis * 0.4);

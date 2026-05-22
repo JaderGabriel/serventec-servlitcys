@@ -94,6 +94,7 @@ php artisan ieducar:schema-probe 1 --ano=2024
 php artisan ieducar:schema-probe 1 --output=storage/app/schema_probe_1.json
 # Saubara (ex. id 5): se matrículas = 0 no painel, compare matricula_count_diagnostics.counts
 php artisan ieducar:schema-probe 5 --ano=2025
+# No JSON: distorcao_mecanismos (comparativo) + matricula_count_diagnostics; painel Matrículas inclui histogramas e cruzamento situação×distorção
 ```
 
 ---

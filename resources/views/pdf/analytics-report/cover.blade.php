@@ -38,8 +38,11 @@
                         <td style="vertical-align: top; width: 68%;">
                             <p class="cover-eyebrow">{{ $serventecName }}</p>
                             <p class="cover-audience">{{ $cover['audience_line'] ?? __('Documento institucional para gestão municipal') }}</p>
-                            <p class="cover-report-type">{{ $cover['report_title'] ?? __('Relatório de gestão educacional municipal') }}</p>
-                            <h1 class="cover-city">{{ $cover['municipality_line'] ?? ($cover['municipality'] ?? '') }}</h1>
+                            <p class="cover-report-type">{{ $cover['report_title'] ?? __('A educação no município de') }}</p>
+                            <h1 class="cover-city">{{ $cover['report_title_municipality_upper'] ?? mb_strtoupper((string) ($cover['municipality'] ?? $cover['municipality_line'] ?? ''), 'UTF-8') }}</h1>
+                            @if (filled($cover['version_line'] ?? null))
+                                <p class="cover-region" style="margin-top:10px;font-size:9pt;">{{ $cover['version_line'] }}</p>
+                            @endif
                             @if (filled($cover['municipality_subtitle'] ?? null))
                                 <p class="cover-region">{{ $cover['municipality_subtitle'] }}</p>
                             @elseif (filled($cover['region_label'] ?? null))

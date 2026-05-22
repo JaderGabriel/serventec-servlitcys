@@ -4,6 +4,7 @@ namespace App\Services\Analytics;
 
 use App\Models\AnalyticsReportExport;
 use App\Models\City;
+use App\Support\Analytics\AnalyticsReportBibliography;
 use App\Support\Dashboard\IeducarFilterState;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
@@ -20,8 +21,18 @@ final class AnalyticsReportPdfService
      */
     public function generate(AnalyticsReportExport $export, City $city, IeducarFilterState $filters): array
     {
-        $data = $this->assembler->assemble($city, $filters);
+        AnalyticsReportBibliography::assignPublicId($export);
+
+        $data = $this->assembler->assemble($city, $filters, $export);
         $data['export_id'] = $export->id;
+        $data['public_id'] = $export->public_id;
+
+        if (is_array($data['publication'] ?? null)) {
+            $data['publication']['public_url'] = route('analytics.report.public', ['publicId' => $export->public_id]);
+            $data['publication']['qr_data_uri'] = \App\Support\Analytics\AnalyticsReportQrCodeBuilder::forUrl(
+                (string) $data['publication']['public_url']
+            );
+        }
 
         $pdf = Pdf::loadView('pdf.analytics-report.document', $data)
             ->setPaper('a4', 'portrait')

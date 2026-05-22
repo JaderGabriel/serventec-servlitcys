@@ -8,6 +8,7 @@ use App\Models\AnalyticsReportExport;
 use App\Models\City;
 use App\Models\User;
 use App\Services\Notifications\NotificationDispatcher;
+use App\Support\Analytics\AnalyticsReportBibliography;
 use App\Support\Dashboard\IeducarFilterState;
 use Illuminate\Support\Facades\Storage;
 
@@ -21,6 +22,7 @@ final class AnalyticsReportExportService
         $this->pruneOldExports($user);
 
         $export = AnalyticsReportExport::query()->create([
+            'public_id' => AnalyticsReportBibliography::generatePublicId(),
             'user_id' => $user->id,
             'city_id' => $city->id,
             'status' => AnalyticsReportExportStatus::Pending->value,

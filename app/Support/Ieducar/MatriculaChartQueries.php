@@ -39,6 +39,16 @@ final class MatriculaChartQueries
      */
     public static function totalMatriculasAtivasFiltradas(Connection $db, City $city, IeducarFilterState $filters): ?int
     {
+        $scope = IeducarAnalyticsMetricsScope::resolve();
+        if ($scope !== null && $scope->matches($city, $filters)) {
+            return $scope->matriculasAtivas();
+        }
+
+        return self::totalMatriculasAtivasFiltradasUncached($db, $city, $filters);
+    }
+
+    public static function totalMatriculasAtivasFiltradasUncached(Connection $db, City $city, IeducarFilterState $filters): ?int
+    {
         try {
             $q = self::baseMatriculasAtivasFiltradas($db, $city, $filters);
 
@@ -2629,12 +2639,66 @@ final class MatriculaChartQueries
      */
     public static function distorcaoIdadeSerieContagens(Connection $db, City $city, IeducarFilterState $filters): ?array
     {
-        $fromCustom = self::distorcaoIdadeSerieContagensFromCustomSql($db, $city);
-        if ($fromCustom !== null) {
-            return $fromCustom;
+        $scope = IeducarAnalyticsMetricsScope::resolve();
+        if ($scope !== null && $scope->matches($city, $filters)) {
+            $pack = $scope->distorcaoPack();
+            if ($pack === null) {
+                return null;
+            }
+
+            return [
+                'com' => (int) $pack['com'],
+                'sem' => (int) $pack['sem'],
+                'total' => (int) $pack['total'],
+                'fonte' => (string) $pack['fonte'],
+                'metodo' => (string) ($pack['metodo'] ?? ''),
+                'cobertura_pct' => $pack['cobertura_pct'] ?? null,
+                'mecanismos' => $scope->distorcaoMecanismos(),
+            ];
         }
 
-        return self::distorcaoIdadeSerieContagensAutomatico($db, $city, $filters);
+        $pack = DistorcaoIdadeSerieEngine::contagens($db, $city, $filters);
+        if ($pack === null) {
+            return self::distorcaoIdadeSerieContagensAutomatico($db, $city, $filters);
+        }
+
+        return [
+            'com' => (int) $pack['com'],
+            'sem' => (int) $pack['sem'],
+            'total' => (int) $pack['total'],
+            'fonte' => (string) $pack['fonte'],
+            'metodo' => (string) ($pack['metodo'] ?? ''),
+            'cobertura_pct' => $pack['cobertura_pct'] ?? null,
+            'mecanismos' => $pack['mecanismos'] ?? [],
+        ];
+    }
+
+    /**
+     * Comparativo de mecanismos de apuração (schema-probe / diagnóstico).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function distorcaoIdadeSerieMecanismos(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        return DistorcaoIdadeSerieEngine::apurarTodosMecanismos($db, $city, $filters);
+    }
+
+    /**
+     * @return array{
+     *   histograma_faixas: ?array<string, mixed>,
+     *   histograma_serie: ?array<string, mixed>,
+     *   histograma_escola: ?array<string, mixed>,
+     *   situacao_cruzada: list<array<string, mixed>>
+     * }
+     */
+    public static function distorcaoIdadeSerieAnaliticos(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        $scope = IeducarAnalyticsMetricsScope::resolve();
+        if ($scope !== null && $scope->matches($city, $filters)) {
+            return $scope->distorcaoAnaliticos();
+        }
+
+        return DistorcaoIdadeSerieEngine::analiticos($db, $city, $filters);
     }
 
     /**
@@ -2642,58 +2706,7 @@ final class MatriculaChartQueries
      */
     public static function distorcaoIdadeSerieCartaoIndisponivelMotivo(Connection $db, City $city, IeducarFilterState $filters): ?string
     {
-        $custom = trim((string) config('ieducar.sql.distorcao_rede_chart', ''));
-        if ($custom !== '') {
-            return __('A consulta personalizada de distorção não devolveu dados utilizáveis.');
-        }
-
-        $aluno = IeducarSchema::resolveTable('aluno', $city);
-        $pessoa = IeducarSchema::resolveTable('pessoa', $city);
-        $serieT = IeducarSchema::resolveTable('serie', $city);
-        if (! IeducarColumnInspector::tableExists($db, $aluno, $city)
-            || ! IeducarColumnInspector::tableExists($db, $pessoa, $city)
-            || ! IeducarColumnInspector::tableExists($db, $serieT, $city)) {
-            return __('Faltam dados cadastrais necessários para calcular a distorção idade–série neste município.');
-        }
-
-        $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
-        if ($tc['year'] === '' || $tc['serie'] === '') {
-            return __('Verifique na turma o ano letivo e a série ligados às matrículas.');
-        }
-
-        $birthCol = IeducarColumnInspector::firstExistingColumn($db, $pessoa, array_filter([
-            'data_nasc',
-            'data_nascimento',
-            'dt_nascimento',
-            'dt_nasc',
-        ]), $city);
-        if ($birthCol === null) {
-            return __('É necessário registro de data de nascimento dos alunos para este indicador.');
-        }
-
-        $spec = self::serieJoinSpec($db, $city);
-        if ($spec === null) {
-            return __('Não foi possível associar turmas às séries para os dados actuais.');
-        }
-
-        $cfgMax = trim((string) config('ieducar.columns.serie.idade_limite_max', ''));
-        $maxCol = IeducarColumnInspector::firstExistingColumn($db, $serieT, array_filter([
-            $cfgMax !== '' ? $cfgMax : null,
-            'idade_maxima',
-            'idade_max',
-            'idade_maxima_escolar',
-            'idade_final',
-            'idade_fim',
-            'idade_ideal_max',
-            'idade_maxima_ideal',
-        ]), $city);
-        if ($maxCol === null) {
-            return __('Falta informação de idade prevista por série no cadastro escolar.');
-        }
-
-        return __(
-            'Ainda não foi possível calcular a distorção idade–série para este filtro: confirme datas de nascimento, série na turma e matrículas activas.'
-        );
+        return DistorcaoIdadeSerieEngine::motivoIndisponivel($db, $city, $filters);
     }
 
     /**
@@ -2809,7 +2822,8 @@ final class MatriculaChartQueries
 
             $refDateExpr = self::refDateCorteEscolarSql($db, 't_filter', $tc['year']);
             $idadeExpr = self::idadeAnosCompletosSql($db, $refDateExpr, 'p', $birthCol);
-            $distorcaoCond = '('.$idadeExpr.') > ('.$limiteExpr.' + 2)';
+            $margem = max(0, (int) config('ieducar.distorcao.margem_anos_inep', 2));
+            $distorcaoCond = '('.$idadeExpr.') > ('.$limiteExpr.' + '.$margem.')';
 
             $serieJoinCol = $tc['serie'];
             $base = function () use ($db, $city, $filters, $mat, $mAtivo, $mAluno, $aluno, $aId, $aPessoa, $pessoa, $pId, $serieT, $sId, $birthCol, $serieJoinCol, $limiteExpr, $grammar) {
@@ -2933,7 +2947,8 @@ final class MatriculaChartQueries
 
             $refDateExpr = self::refDateCorteEscolarSql($db, 't_filter', $tc['year']);
             $idadeExpr = self::idadeAnosCompletosSql($db, $refDateExpr, 'p', $birthCol);
-            $distorcaoCond = '('.$idadeExpr.') > ('.$limiteExpr.' + 2)';
+            $margem = max(0, (int) config('ieducar.distorcao.margem_anos_inep', 2));
+            $distorcaoCond = '('.$idadeExpr.') > ('.$limiteExpr.' + '.$margem.')';
 
             $serieJoinCol = $tc['serie'];
             $base = function () use ($db, $city, $filters, $mat, $mAtivo, $mAluno, $aluno, $aId, $aPessoa, $pessoa, $pId, $serieT, $sId, $birthCol, $serieJoinCol, $limiteExpr, $grammar) {
@@ -3084,7 +3099,8 @@ final class MatriculaChartQueries
 
             $refDateExpr = self::refDateCorteEscolarSql($db, 't_filter', $tc['year']);
             $idadeExpr = self::idadeAnosCompletosSql($db, $refDateExpr, 'p', $birthCol);
-            $distorcaoCond = '('.$idadeExpr.') > ('.$limiteExpr.' + 2)';
+            $margem = max(0, (int) config('ieducar.distorcao.margem_anos_inep', 2));
+            $distorcaoCond = '('.$idadeExpr.') > ('.$limiteExpr.' + '.$margem.')';
 
             $serieJoinCol = $tc['serie'];
             $cIdCol = $cursoSpec['idCol'];
@@ -3255,7 +3271,8 @@ final class MatriculaChartQueries
 
             $refDateExpr = self::refDateCorteEscolarSql($db, 't_filter', $tc['year']);
             $idadeExpr = self::idadeAnosCompletosSql($db, $refDateExpr, 'p', $birthCol);
-            $distorcaoCond = '('.$idadeExpr.') > ('.$limiteExpr.' + 2)';
+            $margem = max(0, (int) config('ieducar.distorcao.margem_anos_inep', 2));
+            $distorcaoCond = '('.$idadeExpr.') > ('.$limiteExpr.' + '.$margem.')';
 
             $serieJoinCol = $tc['serie'];
             $eIdCol = $escolaSpec['idCol'];
@@ -3638,12 +3655,7 @@ final class MatriculaChartQueries
      */
     private static function refDateCorteEscolarSql(Connection $db, string $turmaAlias, string $yearCol): string
     {
-        $y = $turmaAlias.'.'.$yearCol;
-        if ($db->getDriverName() === 'pgsql') {
-            return 'make_date(CAST('.$y.' AS integer), 3, 31)';
-        }
-
-        return 'STR_TO_DATE(CONCAT('.$y.", '-03-31'), '%Y-%m-%d')";
+        return DistorcaoIdadeSerieEngine::refDateCorteEscolarSql($db, $turmaAlias.'.'.$yearCol);
     }
 
     /**
@@ -3651,12 +3663,7 @@ final class MatriculaChartQueries
      */
     private static function idadeAnosCompletosSql(Connection $db, string $refDateExpr, string $pessoaAlias, string $birthCol): string
     {
-        $b = $pessoaAlias.'.'.$birthCol;
-        if ($db->getDriverName() === 'pgsql') {
-            return 'CAST(EXTRACT(YEAR FROM AGE(('.$refDateExpr.')::date, ('.$b.')::date)) AS integer)';
-        }
-
-        return 'TIMESTAMPDIFF(YEAR, '.$b.', '.$refDateExpr.')';
+        return DistorcaoIdadeSerieEngine::idadeAnosCompletosSql($db, $refDateExpr, $pessoaAlias.'.'.$birthCol);
     }
 
     /**

@@ -10,8 +10,28 @@ final class AnalyticsReportPdfCopy
     public static function preamble(): string
     {
         return __(
-            'Este documento consolida o painel analítico municipal em formato de informe para gestão. Cada seção explica o que os números significam, de onde vêm os dados e que decisões administrativas podem ser apoiadas — sempre no recorte de cidade, ano letivo e filtros indicados na capa. Valores financeiros marcados como «estimativa» usam VAAF municipal e pesos de cadastro; não substituem repasses oficiais do FNDE, Simec ou Tesouro Transparente.'
+            'Este relatório educacional foi concebido para apoiar a gestão da educação no município, reunindo de forma clara as principais informações sobre a realidade da rede no recorte indicado na capa — matrículas, cadastro, financiamento (FUNDEB e programas), equidade e ritmo de exportação ao Censo Escolar. Mais do que apresentar números isolados, o objetivo é oferecer uma visão integrada que ajude a identificar avanços, reconhecer desafios e orientar prioridades, com transparência sobre o que a plataforma consegue calcular automaticamente e o que ainda depende de integrações externas (IBGE, IDEB, programas MEC). Valores financeiros marcados como estimativa usam VAAF municipal e pesos de cadastro; não substituem repasses oficiais do FNDE, Simec ou Tesouro Transparente.'
         );
+    }
+
+    /**
+     * Prefácio institucional (tom alinhado ao relatório ATM MEC/EducaDados, adaptado à Serventec).
+     *
+     * @return list<string>
+     */
+    public static function prefaceParagraphs(): array
+    {
+        return [
+            __(
+                'A educação acontece no território — nas escolas, nas salas de aula e no trabalho cotidiano das equipes que garantem o direito de aprender. É também no município que os desafios da gestão educacional se tornam concretos e que as políticas públicas precisam se transformar em resultados.'
+            ),
+            __(
+                'O presente material consolida dados do i-Educar municipal, indicadores calculados pela SERVLITCYS, referências FUNDEB/VAAR e, quando disponíveis, microdados do Censo Escolar e SAEB. Secções sem dados exibem explicitamente a limitação técnica, para que a Secretaria saiba o que já pode decidir com evidência e o que exige nova fonte ou sincronização.'
+            ),
+            __(
+                'No contexto do Sistema Nacional de Educação e do Plano Nacional de Educação, relatórios orientados por evidências fortalecem o regime de colaboração entre entes federativos. Ao final deste documento, um identificador bibliográfico e um código QR permitem verificar a versão emitida e aceder ao painel interactivo para download e análise detalhada.'
+            ),
+        ];
     }
 
     public static function sectionLead(string $section): string

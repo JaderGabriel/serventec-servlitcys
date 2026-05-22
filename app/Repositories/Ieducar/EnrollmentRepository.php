@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Services\CityDataConnection;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Ieducar\IeducarAnalyticsMetricsScope;
 use App\Support\Ieducar\MatriculaChartQueries;
 use Illuminate\Database\QueryException;
 
@@ -21,7 +22,10 @@ class EnrollmentRepository
      * @return array{
      *   rows: list<object>,
      *   kpis: ?array{matriculas: int, turmas_distintas: int, ocupacao_pct: ?float},
-     *   distorcao: ?array{com: int, sem: int, total: int, pct: ?float, fonte: string},
+     *   distorcao: ?array{com: int, sem: int, total: int, pct: ?float, fonte: string, metodo?: string, cobertura_pct?: ?float},
+     *   distorcao_mecanismos: list<array<string, mixed>>,
+     *   distorcao_analiticos: array<string, mixed>,
+     *   distorcao_situacao_cruzada: list<array<string, mixed>>,
      *   distorcao_cartao_motivo: ?string,
      *   fluxo_taxas: ?array{total: int, abandono_q: int, remanejamento_q: int, evasao_q: int, abandono_pct: ?float, evasao_pct: ?float},
      *   unidades_escolares: ?list<array{nome: string, total: int}>,
@@ -37,6 +41,9 @@ class EnrollmentRepository
                 'rows' => [],
                 'kpis' => null,
                 'distorcao' => null,
+                'distorcao_mecanismos' => [],
+                'distorcao_analiticos' => [],
+                'distorcao_situacao_cruzada' => [],
                 'distorcao_cartao_motivo' => null,
                 'fluxo_taxas' => null,
                 'unidades_escolares' => null,
@@ -54,17 +61,43 @@ class EnrollmentRepository
 
                     $fluxoTaxas = MatriculaChartQueries::taxasAbandonoEvasaoFluxoEscolar($db, $city, $filters);
 
-                    $distCont = MatriculaChartQueries::distorcaoIdadeSerieContagens($db, $city, $filters);
+                    $scope = IeducarAnalyticsMetricsScope::resolve();
+                    $distorcaoMecanismos = ($scope !== null && $scope->matches($city, $filters))
+                        ? $scope->distorcaoMecanismos()
+                        : MatriculaChartQueries::distorcaoIdadeSerieMecanismos($db, $city, $filters);
+
                     $distorcao = null;
-                    if ($distCont !== null && ($distCont['total'] ?? 0) > 0) {
-                        $tot = (int) $distCont['total'];
-                        $com = (int) $distCont['com'];
+                    $kpi = ($scope !== null && $scope->matches($city, $filters))
+                        ? $scope->distorcaoKpi()
+                        : null;
+                    if ($kpi === null) {
+                        $distCont = MatriculaChartQueries::distorcaoIdadeSerieContagens($db, $city, $filters);
+                        if ($distCont !== null && ($distCont['total'] ?? 0) > 0) {
+                            $tot = (int) $distCont['total'];
+                            $com = (int) $distCont['com'];
+                            $kpi = [
+                                'com' => $com,
+                                'sem' => (int) $distCont['sem'],
+                                'total' => $tot,
+                                'pct' => round(100.0 * $com / $tot, 1),
+                                'fonte' => (string) $distCont['fonte'],
+                                'metodo' => (string) ($distCont['metodo'] ?? ''),
+                                'cobertura_pct' => $distCont['cobertura_pct'] ?? null,
+                            ];
+                            if ($distorcaoMecanismos === [] && is_array($distCont['mecanismos'] ?? null)) {
+                                $distorcaoMecanismos = $distCont['mecanismos'];
+                            }
+                        }
+                    }
+                    if ($kpi !== null) {
                         $distorcao = [
-                            'com' => $com,
-                            'sem' => (int) $distCont['sem'],
-                            'total' => $tot,
-                            'pct' => round(100.0 * $com / $tot, 1),
-                            'fonte' => (string) $distCont['fonte'],
+                            'com' => (int) $kpi['com'],
+                            'sem' => (int) $kpi['sem'],
+                            'total' => (int) $kpi['total'],
+                            'pct' => (float) $kpi['pct'],
+                            'fonte' => (string) $kpi['fonte'],
+                            'metodo' => (string) ($kpi['metodo'] ?? ''),
+                            'cobertura_pct' => $kpi['cobertura_pct'] ?? null,
                         ];
                     }
                     $distorcaoCartaoMotivo = null;
@@ -120,10 +153,24 @@ class EnrollmentRepository
                         $charts[] = $distEscolas;
                     }
 
+                    $analiticos = ($scope !== null && $scope->matches($city, $filters))
+                        ? $scope->distorcaoAnaliticos()
+                        : MatriculaChartQueries::distorcaoIdadeSerieAnaliticos($db, $city, $filters);
+                    foreach (['histograma_faixas', 'histograma_serie', 'histograma_escola'] as $chartKey) {
+                        if (is_array($analiticos[$chartKey] ?? null)) {
+                            $charts[] = $analiticos[$chartKey];
+                        }
+                    }
+
                     return [
                         'rows' => [],
                         'kpis' => $kpis,
                         'distorcao' => $distorcao,
+                        'distorcao_mecanismos' => $distorcaoMecanismos,
+                        'distorcao_analiticos' => $analiticos,
+                        'distorcao_situacao_cruzada' => is_array($analiticos['situacao_cruzada'] ?? null)
+                            ? $analiticos['situacao_cruzada']
+                            : [],
                         'distorcao_cartao_motivo' => $distorcaoCartaoMotivo,
                         'fluxo_taxas' => $fluxoTaxas,
                         'unidades_escolares' => $unidadesEscolares,
@@ -136,6 +183,9 @@ class EnrollmentRepository
                         'rows' => [],
                         'kpis' => null,
                         'distorcao' => null,
+                        'distorcao_mecanismos' => [],
+                        'distorcao_analiticos' => [],
+                        'distorcao_situacao_cruzada' => [],
                         'distorcao_cartao_motivo' => null,
                         'fluxo_taxas' => null,
                         'unidades_escolares' => null,
@@ -146,7 +196,20 @@ class EnrollmentRepository
                 }
             });
         } catch (\Throwable) {
-            return ['rows' => [], 'kpis' => null, 'distorcao' => null, 'distorcao_cartao_motivo' => null, 'fluxo_taxas' => null, 'unidades_escolares' => null, 'error' => __('Não foi possível carregar os dados de matrículas.'), 'chart' => null, 'charts' => []];
+            return [
+                'rows' => [],
+                'kpis' => null,
+                'distorcao' => null,
+                'distorcao_mecanismos' => [],
+                'distorcao_analiticos' => [],
+                'distorcao_situacao_cruzada' => [],
+                'distorcao_cartao_motivo' => null,
+                'fluxo_taxas' => null,
+                'unidades_escolares' => null,
+                'error' => __('Não foi possível carregar os dados de matrículas.'),
+                'chart' => null,
+                'charts' => [],
+            ];
         }
     }
 }

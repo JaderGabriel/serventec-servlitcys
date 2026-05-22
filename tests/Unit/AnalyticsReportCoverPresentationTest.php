@@ -36,7 +36,8 @@ final class AnalyticsReportCoverPresentationTest extends TestCase
             ['summary' => ['perda_estimada_anual' => 1000.0, 'com_problema' => 3]],
         );
 
-        $this->assertSame(__('Relatório de gestão educacional municipal'), $cover['report_title']);
+        $this->assertSame(__('A educação no município de'), $cover['report_title']);
+        $this->assertSame('ITAMARI', $cover['report_title_municipality_upper'] ?? '');
         $this->assertNotEmpty($cover['audience_line']);
         $this->assertCount(3, $cover['systemic_dimensions']);
         $this->assertCount(4, $cover['cultural_pillars']);

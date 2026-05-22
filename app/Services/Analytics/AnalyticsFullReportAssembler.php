@@ -2,6 +2,7 @@
 
 namespace App\Services\Analytics;
 
+use App\Models\AnalyticsReportExport;
 use App\Models\City;
 use App\Repositories\Ieducar\AttendanceRepository;
 use App\Repositories\Ieducar\DiscrepanciesRepository;
@@ -37,12 +38,13 @@ final class AnalyticsFullReportAssembler
         private AnalyticsReportCoverBuilder $coverBuilder,
         private AnalyticsReportComparatives $comparatives,
         private AnalyticsReportSchoolMapBuilder $schoolMapBuilder,
+        private AnalyticsReportSectionScopeAssembler $sectionScopes,
     ) {}
 
     /**
      * @return array<string, mixed>
      */
-    public function assemble(City $city, IeducarFilterState $filters): array
+    public function assemble(City $city, IeducarFilterState $filters, ?AnalyticsReportExport $export = null): array
     {
         $yearLabel = $this->yearLabel($filters);
 
@@ -71,10 +73,14 @@ final class AnalyticsFullReportAssembler
         $comparativeData = $this->comparatives->build($city, $filters, $fundeb, $health);
         $schoolMap = $this->schoolMapBuilder->build($city, $filters);
 
-        return [
+        $filtersQuery = $filters->toQueryParamsWithCity((int) $city->id);
+
+        $core = [
             'generated_at' => now()->format('d/m/Y H:i'),
+            'generated_at_short' => now()->format('d.m.Y'),
             'cover' => $cover,
             'year_label' => $yearLabel,
+            'filters_query' => $filtersQuery,
             'city' => [
                 'name' => $city->name,
                 'uf' => $city->uf,
@@ -99,6 +105,21 @@ final class AnalyticsFullReportAssembler
             'brand' => PdfBrandAssets::enrich(config('analytics.pdf_report.brand', [])),
             'colors' => config('analytics.pdf_report.colors', []),
         ];
+
+        $atm = $this->sectionScopes->assemble(
+            $city,
+            $filters,
+            $core,
+            $export?->id,
+            $export?->public_id,
+        );
+
+        return array_merge($core, [
+            'atm_report' => $atm,
+            'bibliography' => $atm['bibliography'],
+            'publication' => $atm['publication'],
+            'data_gaps' => $atm['gaps'],
+        ]);
     }
 
     /**

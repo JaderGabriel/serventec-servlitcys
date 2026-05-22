@@ -64,7 +64,7 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 | Tema | Decisão | Implicação |
 |------|---------|------------|
 | IDEB / SAEB | **Não** calculados a partir só do i-Educar | SAEB via **JSON importado** (admin); IDEB com texto + links oficiais |
-| Distorção | Critério INEP documentado (31/03, +2 anos) | Proxy local sobre matrículas com idade/série válidas |
+| Distorção | Motor multi-mecanismo (`DistorcaoIdadeSerieEngine` + `DistorcaoIdadeSerieApurador`): INEP 31/03 + margem; fallback de limite (idade série → final → **etapa Educacenso**); nascimento **COALESCE(física, pessoa)**; histograma defasagem; cruzamento **situação INEP × distorção** | KPI escolhe maior cobertura; tabela de mecanismos + analíticos na aba Matrículas (`IEDUCAR_DISTORCAO_MARGEM_ANOS`, mapa `etapa_educacenso_idade_maxima` em `config/ieducar.php`) |
 | Censo | Estado exportado quando tabela detectada (`IEDUCAR_CENSO_*`) | Senão: ritmo de cadastro e estimativas de esforço |
 | Export gráficos | PNG com cidade, filtros e fonte | Distingue leitura **oficial** de **administrativa** |
 
@@ -83,6 +83,7 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 | Programas (PNAE…) | Cobertura de **cadastro** (colunas detectadas) | Sem valor de repasse por aluno na maioria dos casos |
 | Consultas públicas | FNDE CKAN, Tesouro, Transparência — cache TTL | Amostras; dependem de API keys e resource IDs |
 | Resumo leve | `fundingImpactSnapshot` em cache para FUNDEB e faixa de abas | Evita carregar aba Discrepâncias inteira |
+| Métricas partilhadas | `IeducarAnalyticsMetricsScope` (uma leitura: matrículas activas + distorção) | Visão geral, Matrículas, Discrepâncias, FUNDEB e faixa de impacto usam o mesmo denominador |
 
 **Docs:** [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md), [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md). **Código:** `DiscrepanciesFundingImpact`, `FundebResourceProjection`.
 

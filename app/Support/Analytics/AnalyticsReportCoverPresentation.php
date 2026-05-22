@@ -41,8 +41,10 @@ final class AnalyticsReportCoverPresentation
         $perda = (float) ($discSummary['perda_estimada_anual'] ?? $healthSummary['perda_estimada_anual'] ?? 0);
         $ganho = (float) ($discSummary['ganho_potencial_anual'] ?? $healthSummary['ganho_potencial_anual'] ?? 0);
 
-        $cover['report_title'] = __('Relatório de gestão educacional municipal');
-        $cover['report_subtitle'] = __('Diagnóstico integrado · i-Educar · Censo Escolar · FUNDEB/VAAR');
+        $cover['report_title'] = __('A educação no município de');
+        $cover['report_title_municipality_upper'] = mb_strtoupper(trim((string) $city->name), 'UTF-8');
+        $cover['report_subtitle'] = __('Relatório educacional municipal · modelo integrado SERVLITCYS');
+        $cover['version_line'] = __('Versão gerada em :date', ['date' => now()->format('d.m.Y')]);
         $cover['audience_line'] = __('Documento institucional para Prefeitura Municipal e Secretaria de Educação');
         $cover['gestao_lead'] = self::executiveLead($city, $filters, $matriculas, $score, $health);
         $cover['headline_kpis'] = self::headlineKpis($matriculas, $escolas, $turmas, $score, $health, $perda, $ganho);

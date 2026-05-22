@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Dashboard\PublicDataSourcesCatalog;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
+use App\Support\Ieducar\IeducarAnalyticsMetricsScope;
 use App\Support\Ieducar\FundebComplementacaoInformeBuilder;
 use App\Support\Ieducar\FundebReferenceDisplay;
 use App\Support\Ieducar\FundebResourceProjection;
@@ -52,7 +53,10 @@ class FundebRepository
         ?array $discrepanciesData = null,
     ): array {
         $yearLabel = $this->yearLabel($filters);
-        $matTotal = (int) data_get($overviewData, 'kpis.matriculas', data_get($enrollmentData, 'kpis.matriculas', 0));
+        $scopeMat = IeducarAnalyticsMetricsScope::resolve()?->matriculasAtivas();
+        $matTotal = $scopeMat !== null && $scopeMat > 0
+            ? $scopeMat
+            : (int) data_get($overviewData, 'kpis.matriculas', data_get($enrollmentData, 'kpis.matriculas', 0));
         $fundebReference = DiscrepanciesFundingImpact::resolveReference($city, $filters);
 
         $resourceProjection = FundebResourceProjection::build(

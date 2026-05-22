@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AnalyticsReportExport extends Model
 {
     protected $fillable = [
+        'public_id',
         'user_id',
         'city_id',
         'status',

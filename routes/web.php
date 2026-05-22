@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\IeducarCompatibilityController;
 use App\Http\Controllers\Admin\PedagogicalSyncController;
 use App\Http\Controllers\AnalyticsDashboardController;
 use App\Http\Controllers\AnalyticsReportExportController;
+use App\Http\Controllers\AnalyticsReportPublicationController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardMunicipalityMapController;
@@ -26,6 +27,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/relatorio/{publicId}', [AnalyticsReportPublicationController::class, 'show'])
+    ->name('analytics.report.public');
+Route::get('/relatorio/{publicId}/pdf', [AnalyticsReportPublicationController::class, 'download'])
+    ->name('analytics.report.public.download');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile/first-access', [FirstAccessProfileController::class, 'edit'])->name('profile.first-access');

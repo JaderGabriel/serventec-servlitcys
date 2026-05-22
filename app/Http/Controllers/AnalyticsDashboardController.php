@@ -16,6 +16,7 @@ use App\Repositories\Ieducar\PerformanceRepository;
 use App\Repositories\Ieducar\SchoolUnitsRepository;
 use App\Repositories\Ieducar\WorkDoneRepository;
 use App\Services\Analytics\AnalyticsReportExportService;
+use App\Services\CityDataConnection;
 use App\Services\Ieducar\FilterOptionsService;
 use App\Services\Notifications\NotificationDispatcher;
 use App\Support\Auth\UserCityAccess;
@@ -26,6 +27,7 @@ use App\Support\Dashboard\AnalyticsTabCatalog;
 use App\Support\Dashboard\ChartExportMeta;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\DiscrepanciesCheckCatalog;
+use App\Support\Ieducar\IeducarAnalyticsMetricsScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -173,6 +175,7 @@ class AnalyticsDashboardController extends Controller
 
         if ($yearFilterReady && $city !== null && $loadOverviewOnIndex) {
             try {
+                $this->bindAnalyticsMetricsScope($city, $filters);
                 $overviewData = $profiler->measure('overview', fn () => $this->safeAnalyticsLoad(
                     fn () => $overviewRepository->summary($city, $filters),
                     $overviewData,
@@ -289,6 +292,8 @@ class AnalyticsDashboardController extends Controller
                 if (is_array($overviewData)) {
                     $overviewData['error'] = $overviewData['error'] ?? $e->getMessage();
                 }
+            } finally {
+                IeducarAnalyticsMetricsScope::forget();
             }
         }
 
@@ -613,6 +618,59 @@ class AnalyticsDashboardController extends Controller
      * @param  list<string>  $tabWarnings
      */
     private function renderAnalyticsTabPartial(
+        string $tab,
+        Request $request,
+        City $city,
+        IeducarFilterState $filters,
+        FilterOptionsService $filterOptionsService,
+        OverviewRepository $overviewRepository,
+        EnrollmentRepository $enrollmentRepository,
+        PerformanceRepository $performanceRepository,
+        AttendanceRepository $attendanceRepository,
+        InclusionRepository $inclusionRepository,
+        NetworkRepository $networkRepository,
+        FundebRepository $fundebRepository,
+        OtherFundingRepository $otherFundingRepository,
+        WorkDoneRepository $workDoneRepository,
+        DiscrepanciesRepository $discrepanciesRepository,
+        MunicipalityHealthRepository $municipalityHealthRepository,
+        SchoolUnitsRepository $schoolUnitsRepository,
+        AnalyticsReportExportService $pdfExportService,
+        array &$tabWarnings,
+    ): Response {
+        try {
+            $this->bindAnalyticsMetricsScope($city, $filters);
+
+            return $this->renderAnalyticsTabPartialInner(
+                $tab,
+                $request,
+                $city,
+                $filters,
+                $filterOptionsService,
+                $overviewRepository,
+                $enrollmentRepository,
+                $performanceRepository,
+                $attendanceRepository,
+                $inclusionRepository,
+                $networkRepository,
+                $fundebRepository,
+                $otherFundingRepository,
+                $workDoneRepository,
+                $discrepanciesRepository,
+                $municipalityHealthRepository,
+                $schoolUnitsRepository,
+                $pdfExportService,
+                $tabWarnings,
+            );
+        } finally {
+            IeducarAnalyticsMetricsScope::forget();
+        }
+    }
+
+    /**
+     * @param  list<string>  $tabWarnings
+     */
+    private function renderAnalyticsTabPartialInner(
         string $tab,
         Request $request,
         City $city,
@@ -994,5 +1052,15 @@ class AnalyticsDashboardController extends Controller
             '' => __('— Selecione o ano letivo —'),
             'all' => __('Todos os anos'),
         ];
+    }
+
+    private function bindAnalyticsMetricsScope(City $city, IeducarFilterState $filters): void
+    {
+        IeducarAnalyticsMetricsScope::bindForRequest(
+            app(CityDataConnection::class),
+            $city,
+            $filters,
+            warm: true,
+        );
     }
 }

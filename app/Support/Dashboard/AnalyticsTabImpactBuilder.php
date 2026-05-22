@@ -183,7 +183,7 @@ final class AnalyticsTabImpactBuilder
 
         $computed = match ($tab) {
             'overview' => self::statusOverview($tabData, $ctx),
-            'enrollment' => self::statusEnrollment($tabData),
+            'enrollment' => self::statusEnrollment($tabData, $ctx),
             'network' => self::statusNetwork($tabData),
             'school_units' => self::statusSchoolUnits($tabData),
             'inclusion' => self::statusInclusion($tabData),
@@ -239,13 +239,27 @@ final class AnalyticsTabImpactBuilder
      * @param  array<string, mixed>  $tabData
      * @return array{status: string, label: string, score: ?int, share_label: ?string, share_value: ?string}
      */
-    private static function statusEnrollment(array $tabData): array
+    private static function statusEnrollment(array $tabData, array $ctx = []): array
     {
         $data = is_array($tabData['enrollment'] ?? null) ? $tabData['enrollment'] : ($tabData['enrollmentData'] ?? []);
         $d = is_array($data['distorcao'] ?? null) ? $data['distorcao'] : [];
         $pct = isset($d['pct']) ? (float) $d['pct'] : null;
+        if ($pct === null && isset($ctx['distorcao_pct'])) {
+            $pct = (float) $ctx['distorcao_pct'];
+        }
 
         if ($pct === null) {
+            $mat = (int) ($ctx['total_matriculas'] ?? 0);
+            if ($mat > 0) {
+                return [
+                    'status' => 'warning',
+                    'label' => __('Matrículas no filtro, distorção ainda indisponível'),
+                    'score' => 55,
+                    'share_label' => __('Matrículas activas'),
+                    'share_value' => number_format($mat, 0, ',', '.'),
+                ];
+            }
+
             return ['status' => 'neutral', 'label' => __('Distorção indisponível'), 'score' => null, 'share_label' => null, 'share_value' => null];
         }
 
@@ -293,7 +307,7 @@ final class AnalyticsTabImpactBuilder
     {
         $raw = match ($tab) {
             'network' => self::saldoFromNetworkOffer($tabData),
-            'enrollment' => self::saldoFromEnrollmentDistorcao($tabData),
+            'enrollment' => self::saldoFromEnrollmentDistorcao($tabData, $ctx),
             'inclusion' => self::saldoFromInclusion($tabData),
             'school_units' => self::saldoFromSchoolUnitsGeo($tabData),
             'overview' => self::saldoFromOverviewCadastro($ctx),
@@ -390,10 +404,18 @@ final class AnalyticsTabImpactBuilder
      * @param  array<string, mixed>  $tabData
      * @return array{perda: float, ganho: float, liquido: float, footnote: string}|null
      */
-    private static function saldoFromEnrollmentDistorcao(array $tabData): ?array
+    private static function saldoFromEnrollmentDistorcao(array $tabData, array $ctx = []): ?array
     {
         $data = self::tabPayload($tabData, 'enrollment');
         $d = is_array($data['distorcao'] ?? null) ? $data['distorcao'] : [];
+        if ($d === [] && (int) ($ctx['distorcao_com'] ?? 0) > 0) {
+            $d = [
+                'com' => (int) $ctx['distorcao_com'],
+                'total' => (int) ($ctx['distorcao_elegivel_total'] ?? 0),
+                'pct' => $ctx['distorcao_pct'] ?? null,
+            ];
+        }
+
         $com = (int) ($d['com'] ?? 0);
         if ($com <= 0) {
             return null;
@@ -402,20 +424,34 @@ final class AnalyticsTabImpactBuilder
         $funding = DiscrepanciesFundingImpact::estimate('distorcao_idade_serie', $com);
         $perda = (float) $funding['perda_anual'];
         $ganho = (float) $funding['ganho_potencial_anual'];
+        $denom = (int) ($d['total'] ?? $ctx['distorcao_elegivel_total'] ?? 0);
+        $matRede = (int) ($ctx['total_matriculas'] ?? 0);
         $pct = isset($d['pct']) ? number_format((float) $d['pct'], 1, ',', '.') : '—';
+        $cobertura = isset($ctx['distorcao_cobertura_pct'])
+            ? number_format((float) $ctx['distorcao_cobertura_pct'], 1, ',', '.').'%'
+            : null;
+
+        $footnote = __(
+            ':n matrícula(s) com distorção idade-série (:p% do denominador com idade/série válida: :denom) × VAAF × peso :peso — risco Censo/VAAR-indicadores.',
+            [
+                'n' => number_format($com, 0, ',', '.'),
+                'p' => $pct,
+                'denom' => $denom > 0 ? number_format($denom, 0, ',', '.') : '—',
+                'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
+            ]
+        );
+        if ($matRede > 0 && $denom > 0 && $denom < $matRede) {
+            $footnote .= ' '.__(
+                'Matrículas activas no filtro: :mat; cobertura da apuração: :cov.',
+                ['mat' => number_format($matRede, 0, ',', '.'), 'cov' => $cobertura ?? '—']
+            );
+        }
 
         return [
             'perda' => $perda,
             'ganho' => $ganho,
             'liquido' => round($ganho - $perda, 2),
-            'footnote' => __(
-                ':n matrícula(s) com distorção idade-série (:p% da rede no filtro) × VAAF × peso :peso — risco Censo/VAAR-indicadores.',
-                [
-                    'n' => number_format($com, 0, ',', '.'),
-                    'p' => $pct,
-                    'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
-                ]
-            ),
+            'footnote' => $footnote,
         ];
     }
 
@@ -511,14 +547,34 @@ final class AnalyticsTabImpactBuilder
         }
 
         $ocorrencias = (int) ($ctx['pendencias_cadastro'] ?? 0);
+        $footnote = $ocorrencias > 0
+            ? __('Consolidado das Discrepâncias no filtro (:n ocorrência(s) com peso VAAF) — use a aba homónima para detalhe por escola e rotina.', ['n' => number_format($ocorrencias, 0, ',', '.')])
+            : __('Referência municipal das Discrepâncias (VAAF × pesos) — não é repasse oficial.');
+
+        $mat = (int) ($ctx['total_matriculas'] ?? 0);
+        $distCom = (int) ($ctx['distorcao_com'] ?? 0);
+        if ($mat > 0) {
+            $footnote .= ' '.__(
+                'Matrículas activas no filtro: :n.',
+                ['n' => number_format($mat, 0, ',', '.')]
+            );
+        }
+        if ($distCom > 0) {
+            $distFunding = DiscrepanciesFundingImpact::estimate('distorcao_idade_serie', $distCom);
+            $footnote .= ' '.__(
+                'Inclui :c matrícula(s) em distorção idade-série (est. :v/ano no eixo homónimo).',
+                [
+                    'c' => number_format($distCom, 0, ',', '.'),
+                    'v' => DiscrepanciesFundingImpact::formatBrl((float) $distFunding['perda_anual']),
+                ]
+            );
+        }
 
         return [
             'perda' => $perda,
             'ganho' => $ganho,
             'liquido' => (float) ($ctx['saldo_liquido'] ?? ($ganho - $perda)),
-            'footnote' => $ocorrencias > 0
-                ? __('Consolidado das Discrepâncias no filtro (:n ocorrência(s) com peso VAAF) — use a aba homónima para detalhe por escola e rotina.', ['n' => number_format($ocorrencias, 0, ',', '.')])
-                : __('Referência municipal das Discrepâncias (VAAF × pesos) — não é repasse oficial.'),
+            'footnote' => $footnote,
         ];
     }
 

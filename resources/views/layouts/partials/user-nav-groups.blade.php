@@ -168,7 +168,7 @@
                 [
                     'show' => true,
                     'href' => route('users.index'),
-                    'label' => __('Usuárioes'),
+                    'label' => __('Usuários'),
                     'icon' => 'users',
                     'active' => $req->routeIs('users.index') || $req->routeIs('users.edit'),
                     'title' => __('Lista e gestão de contas.'),

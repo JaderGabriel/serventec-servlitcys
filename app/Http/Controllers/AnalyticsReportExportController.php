@@ -94,6 +94,10 @@ class AnalyticsReportExportController extends Controller
     {
         return [
             'id' => $export->id,
+            'public_id' => $export->public_id,
+            'public_url' => filled($export->public_id)
+                ? route('analytics.report.public', ['publicId' => $export->public_id])
+                : null,
             'status' => $export->status,
             'error_message' => $export->error_message,
             'page_count' => $export->page_count,

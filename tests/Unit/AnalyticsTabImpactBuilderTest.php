@@ -123,6 +123,47 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         $this->assertStringContainsString('distorção', strtolower((string) ($strip['saldo']['footnote'] ?? '')));
     }
 
+    public function test_enrollment_saldo_usa_distorcao_do_contexto_quando_aba_ainda_nao_carregou(): void
+    {
+        $ctx = [
+            'total_matriculas' => 1200,
+            'distorcao_com' => 40,
+            'distorcao_pct' => 8.0,
+            'distorcao_elegivel_total' => 500,
+            'distorcao_cobertura_pct' => 41.7,
+        ];
+
+        $strip = AnalyticsTabImpactBuilder::build('enrollment', true, $ctx, [
+            'enrollmentData' => ['distorcao' => null],
+        ]);
+
+        $this->assertNotNull($strip['saldo']);
+        $this->assertGreaterThan(0.0, $strip['saldo']['perda']);
+        $this->assertStringContainsString('500', (string) ($strip['saldo']['footnote'] ?? ''));
+    }
+
+    public function test_overview_saldo_menciona_matriculas_do_contexto(): void
+    {
+        $ctx = AnalyticsMunicipalityContext::fromFundingSnapshot([
+            'summary' => [
+                'perda_estimada_anual' => 3000.0,
+                'ganho_potencial_anual' => 3000.0,
+                'com_problema' => 10,
+            ],
+        ], ['kpis' => ['matriculas' => 800]]);
+
+        $this->assertNotNull($ctx);
+        $ctx['total_matriculas'] = 1200;
+        $ctx['distorcao_com'] = 15;
+
+        $strip = AnalyticsTabImpactBuilder::build('overview', true, $ctx, [
+            'overviewData' => ['kpis' => ['matriculas' => 1200]],
+        ]);
+
+        $this->assertNotNull($strip['saldo']);
+        $this->assertStringContainsString('1.200', (string) ($strip['saldo']['footnote'] ?? ''));
+    }
+
     public function test_inclusion_strip_uses_recurso_prova_saldo(): void
     {
         $strip = AnalyticsTabImpactBuilder::build('inclusion', true, [], [

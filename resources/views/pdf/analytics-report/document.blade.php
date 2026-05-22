@@ -170,9 +170,21 @@
         'generated_at' => $generated_at ?? null,
     ])
 
+    @include('pdf.analytics-report.partials.preface')
+
+    @include('pdf.analytics-report.partials.toc', [
+        'table_of_contents' => data_get($atm_report, 'table_of_contents', []),
+    ])
+
+    @include('pdf.analytics-report.partials.atm-sections', [
+        'atm_report' => $atm_report ?? [],
+        'publication' => $publication ?? [],
+        'bibliography' => $bibliography ?? [],
+    ])
+
     @include('pdf.analytics-report.partials.preamble', ['health' => $health])
 
-    <h2>{{ __('1. Serventec — diagnóstico consolidado') }}</h2>
+    <h2>{{ __('Apêndice A — Diagnóstico Serventec (detalhe)') }}</h2>
     <div class="section">
         @include('pdf.analytics-report.partials.section-lead', ['section' => 'health'])
         @if (filled($health['footnote'] ?? null))
@@ -512,6 +524,8 @@
             @endif
         @endforeach
     @endif
+
+    @include('pdf.analytics-report.partials.data-gaps', ['data_gaps' => $data_gaps ?? []])
 
     @if ($schoolMap['available'] ?? false)
         <h2>{{ __('11. Território — unidades escolares e abrangência das matrículas') }}</h2>

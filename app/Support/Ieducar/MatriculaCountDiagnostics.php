@@ -91,6 +91,12 @@ final class MatriculaCountDiagnostics
             $out['counts']['ativas_filtro_ano_legado_turma_ou_matricula_sem_turma'] = null;
         }
 
+        try {
+            $out['distorcao_mecanismos'] = MatriculaChartQueries::distorcaoIdadeSerieMecanismos($db, $city, $filters);
+        } catch (\Throwable) {
+            $out['distorcao_mecanismos'] = [];
+        }
+
         return $out;
     }
 }
