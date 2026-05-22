@@ -30,7 +30,7 @@ Todas as chamadas HTTP são **somente leitura**, filtradas por **IBGE do municí
 2. **Cache antes de rede:** FUNDEB grava `storage/app/fundeb/api/{ibge}/{ano}.json`; Financiamentos usa cache Laravel (`other_funding_public:{city}:{ibge}:{ano}`).
 3. **Indicativo, não oficial:** valores de «perda/ganho», previsão FUNDEB e horas de cadastro são **modelos configuráveis** para priorização — não para contabilidade.
 4. **Falha graciosa:** se API falhar ou chave faltar, a UI mostra nota explicativa (não bloqueia o painel).
-5. **Admin para carga pesada:** importações INEP/SAEB/FUNDEB em massa correm em `admin-sync` ou comandos Artisan, não no clique do utilizador analítico.
+5. **Admin para carga pesada:** importações INEP/SAEB/FUNDEB em massa correm em `admin-sync` ou comandos Artisan, não no clique do utilizador analítico. Telas admin incluem guia **«Para que serve»** (ver `ExternalImportImpact`, commit `2c8cf44`).
 
 ---
 

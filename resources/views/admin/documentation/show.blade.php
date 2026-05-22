@@ -40,7 +40,23 @@
         <div class="max-w-[90rem] mx-auto sm:px-6 lg:px-8">
             <div class="lg:grid lg:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)] lg:gap-8 xl:gap-10">
                 <aside class="hidden lg:block">
-                    <div class="serv-panel p-4 sticky top-[5.5rem] max-h-[calc(100vh-7rem)] overflow-y-auto">
+                    <div class="serv-panel p-4 sticky top-[5.5rem] max-h-[calc(100vh-7rem)] overflow-y-auto space-y-4">
+                        @if (($productVersion ?? '') !== '')
+                            <div class="rounded-lg border border-teal-200/80 bg-teal-50/60 dark:border-teal-800/50 dark:bg-teal-950/25 px-3 py-2.5 text-xs">
+                                <p class="font-semibold text-teal-950 dark:text-teal-100">{{ __('Produto') }} v{{ $productVersion }}</p>
+                                @if (($productCommit ?? '') !== '' && ($productCommitNumber ?? 0) > 0)
+                                    <p class="mt-1 font-mono text-[11px] text-teal-900/85 dark:text-teal-200/85">
+                                        <code>{{ $productCommit }}</code> · #{{ $productCommitNumber }}
+                                    </p>
+                                @endif
+                                <a
+                                    href="{{ route('admin.documentation.show', ['doc' => 'docs/HISTORICO_VERSOES.md']) }}"
+                                    class="mt-2 inline-block text-teal-800 dark:text-teal-300 hover:underline font-medium"
+                                >
+                                    {{ __('Histórico de versões') }} →
+                                </a>
+                            </div>
+                        @endif
                         @include('admin.documentation.partials.sidebar', [
                             'sections' => $sections,
                             'currentPath' => $currentPath,
@@ -60,6 +76,21 @@
                             ])
                         </div>
                     </details>
+
+                    @if (($productVersion ?? '') !== '' && ($currentPath ?? '') === 'docs/HISTORICO_VERSOES.md')
+                        <p class="serv-panel px-4 py-2 text-xs text-slate-600 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                            {{ __('Versão documentada:') }} <strong>v{{ $productVersion }}</strong>
+                            @if (($productCommit ?? '') !== '')
+                                · <code class="font-mono">{{ $productCommit }}</code>
+                            @endif
+                            @if (($productCommitNumber ?? 0) > 0)
+                                · #{{ $productCommitNumber }}
+                            @endif
+                            @if (($productRevisionDate ?? '') !== '')
+                                · {{ $productRevisionDate }}
+                            @endif
+                        </p>
+                    @endif
 
                     <article class="serv-panel serv-docs-article">
                         @if ($modifiedAt)

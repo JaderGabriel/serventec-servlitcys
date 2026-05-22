@@ -27,7 +27,19 @@ class AdminDocumentationTest extends TestCase
             ->get(route('admin.documentation.show', ['doc' => 'docs/README.md']))
             ->assertOk()
             ->assertSee(__('Índice da documentação'), false)
-            ->assertSee(__('Ler no GitHub'), false);
+            ->assertSee(__('Ler no GitHub'), false)
+            ->assertSee('v'.config('documentation.product.version'), false);
+    }
+
+    public function test_admin_can_render_version_history_document(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->get(route('admin.documentation.show', ['doc' => 'docs/HISTORICO_VERSOES.md']))
+            ->assertOk()
+            ->assertSee('2c8cf44', false)
+            ->assertSee('#135', false);
     }
 
     public function test_disallowed_document_path_returns_404(): void

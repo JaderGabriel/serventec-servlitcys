@@ -4,7 +4,7 @@
 
 Guia passo a passo para publicar no servidor as alterações recentes (monitorização, notificações, financiamentos, correções de abas e modelo `.env`).
 
-**Versão de referência:** 2.0.1 · **Última actualização:** maio/2026
+**Versão de referência:** 2.2.0 (`2c8cf44`, #135) · **Última actualização:** maio/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
 ---
 

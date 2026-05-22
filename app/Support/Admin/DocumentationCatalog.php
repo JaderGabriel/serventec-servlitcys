@@ -89,6 +89,7 @@ final class DocumentationCatalog
                 'description' => __('Visão, estado e planeamento.'),
                 'items' => [
                     ['label' => __('Índice da documentação'), 'path' => 'docs/README.md', 'hint' => __('Ponto de entrada')],
+                    ['label' => __('Histórico de versões'), 'path' => 'docs/HISTORICO_VERSOES.md', 'hint' => __('Tags, commits e trajetória')],
                     ['label' => __('Estado do projeto'), 'path' => 'docs/STATUS_PROJETO.md'],
                     ['label' => __('Backlog de implementações'), 'path' => 'docs/BACKLOG_IMPLEMENTACOES.md'],
                     ['label' => __('Documentação executiva'), 'path' => 'docs/DOCUMENTACAO_EXECUTIVA.md'],

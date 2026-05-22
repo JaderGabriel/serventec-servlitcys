@@ -117,17 +117,19 @@ O resolver municipal (`FundebMunicipalReferenceResolver`) **não utiliza** linha
 
 ---
 
-## 6. O que foi removido do projeto (maio/2026)
+## 6. Matriz administrativa VAAF/VAAT (maio/2026)
+
+A matriz comparativa foi **restaurada** em `48887a3` (#134) com classificação visual por tipo de dado (não confundir piso nacional com VAAF municipal oficial).
 
 | Item | Descrição |
 |------|-----------|
-| Rota | `GET /admin/ieducar-compatibility/fundeb-matrix-export` |
+| Rota export | `GET /admin/ieducar-compatibility/fundeb-matrix-export` |
 | Método | `IeducarCompatibilityController::exportFundebMatrix()` |
 | Repositório | `FundebMunicipioReferenceRepository::yearlyMatrix()` |
-| View | `resources/views/admin/ieducar-compatibility/partials/fundeb-yearly-matrix.blade.php` |
-| Teste | `tests/Unit/FundebMunicipioReferenceRepositoryTest.php` |
+| Apresentação | `FundebReferenceDisplay` (consolidado / prévia / nacional) |
+| View | `partials/fundeb-yearly-matrix.blade.php` — filtros de anos, legenda, CSV com coluna «Tipo» |
 
-**Mantido:** card FUNDEB na compatibilidade (import/sync), histórico por cidade, cobertura por ano, aba FUNDEB no painel analítico, resolver e importadores.
+**Também mantido:** card FUNDEB (import/sync, modo replace/update), histórico por cidade, cobertura, aba FUNDEB no painel analítico, resolver e importadores.
 
 ---
 
@@ -139,7 +141,7 @@ O resolver municipal (`FundebMunicipalReferenceResolver`) **não utiliza** linha
 | Alta | Apagar ou não regravar `referencia_nacional_config` em produção |
 | Média | Documentar no `.env` de cada ambiente: `IEDUCAR_FUNDEB_NATIONAL_VAAF_2024=5559.73` só para **prévia**, não para persistência |
 | Média | Validar 2–3 municípios piloto contra PDF/CSV FNDE e registrar no informe da aba FUNDEB |
-| Baixa | Script pontual de auditoria (Artisan) que liste divergência IBGE a IBGE — **sem** UI de matriz fixa |
+| Baixa | Script pontual de auditoria (Artisan) complementar à matriz já existente na compatibilidade i-Educar |
 
 ---
 
@@ -150,4 +152,4 @@ O resolver municipal (`FundebMunicipalReferenceResolver`) **não utiliza** linha
 - **INEP / Educacenso** — base de matrículas para coeficientes e habilitação.  
 - **SERVLITCYS** — `FundebReferenceSource`, `FundebMunicipalReferenceResolver`, `FundebOpenDataImportService`, `FundebFndeReceitaCsvService`.
 
-Este documento substitui a função da tabela administrativa removida: serve como **comparativo estático** até existirem importações oficiais por município na base.
+Este documento complementa a **matriz na UI** e a aba FUNDEB: use-o para auditoria conceitual (piso nacional vs VAAF municipal) e para validar importações oficiais por IBGE.

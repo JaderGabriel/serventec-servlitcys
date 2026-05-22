@@ -38,6 +38,8 @@ class DocumentationController extends Controller
 
         $item = DocumentationCatalog::findItemByPath($path);
 
+        $product = config('documentation.product', []);
+
         return view('admin.documentation.show', [
             'sections' => DocumentationCatalog::sections(),
             'currentPath' => $path,
@@ -47,6 +49,10 @@ class DocumentationController extends Controller
             'modifiedAt' => $file['modified_at'],
             'githubBlobUrl' => DocumentationCatalog::githubBlobUrl($path),
             'defaultDoc' => DocumentationCatalog::defaultPath(),
+            'productVersion' => (string) ($product['version'] ?? ''),
+            'productCommit' => (string) ($product['commit_short'] ?? ''),
+            'productCommitNumber' => (int) ($product['commit_number'] ?? 0),
+            'productRevisionDate' => (string) ($product['revision_date'] ?? ''),
         ]);
     }
 }

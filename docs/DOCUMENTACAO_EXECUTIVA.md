@@ -1,6 +1,6 @@
 # Documentação executiva — servlitcys
 
-> **Índice central:** [README.md](README.md) · Estado actual: [STATUS_PROJETO.md](STATUS_PROJETO.md) · Backlog: [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md)
+> **Índice central:** [README.md](README.md) · Estado actual: [STATUS_PROJETO.md](STATUS_PROJETO.md) · Versões: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · Backlog: [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md)
 
 ## Propósito
 

@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 2.0.1 · **Última revisão deste índice:** maio/2026
+**Versão do produto (`main`):** 2.2.0 · commit `2c8cf44` (#135) · **Última revisão deste índice:** maio/2026
 
 Este ficheiro é o **ponto de entrada** da documentação. Use-o para saber o que o sistema faz hoje, **porque** certas decisões foram tomadas e **o que** está planeado implementar.
 
@@ -10,7 +10,7 @@ Este ficheiro é o **ponto de entrada** da documentação. Use-o para saber o qu
 
 | Perfil | Leia primeiro |
 |--------|----------------|
-| Gestão / secretaria | [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) → [STATUS_PROJETO.md](STATUS_PROJETO.md) |
+| Gestão / secretaria | [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) → [STATUS_PROJETO.md](STATUS_PROJETO.md) → [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) |
 | Desenvolvimento | [STATUS_PROJETO.md](STATUS_PROJETO.md) → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) → [README do repositório](../README.md) |
 | Operações / deploy | [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) → [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) → [SEGURANCA.md](SEGURANCA.md) → [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) |
 | Priorização de produto | [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) |
@@ -21,6 +21,7 @@ Este ficheiro é o **ponto de entrada** da documentação. Use-o para saber o qu
 
 | Documento | Função |
 |-----------|--------|
+| **[HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)** | **Tags, commits (#N) e trajetória** de releases |
 | **[STATUS_PROJETO.md](STATUS_PROJETO.md)** | O que está **implementado** agora (funcionalidades, abas, componentes) |
 | **[PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md)** | **Decisões e limites** do sistema (cadastro, VAAF, lazy, geo, NEE, etc.) |
 | **[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)** | **Identidade visual**, componentes UI e ordem das abas |
@@ -110,7 +111,7 @@ Faixa superior (até Censo): **impacto no saldo indicativo** + **status no filtr
 
 ## Manutenção da documentação
 
-1. Alteração **visível** no produto → actualizar [STATUS_PROJETO.md](STATUS_PROJETO.md).
+1. Alteração **visível** no produto → actualizar [STATUS_PROJETO.md](STATUS_PROJETO.md) e, se for release, [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) + `config/documentation.php` (`product.*`).
 2. Nova **decisão técnica** ou mudança de regra → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
 3. Nova **funcionalidade planeada** → [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (uma linha; link opcional para doc temático).
 4. Evitar criar novos ficheiros «roadmap» soltos; usar backlog central + doc temático só se o tema for grande (ex.: finanças).

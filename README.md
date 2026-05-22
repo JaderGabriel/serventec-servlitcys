@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão actual:** **2.0.1** (tag `v2.0.1` no repositório).
+**Versão actual (`main`):** **2.2.0** · commit `2c8cf44` (#135). Última tag: **v2.1.0** (`c3ec8b9`, #66). Histórico completo: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md).
 
 ## Requisitos
 
@@ -204,11 +204,15 @@ Detalhe: [docs/PERFIS_UTILIZADOR.md](docs/PERFIS_UTILIZADOR.md).
 
 ## Histórico de versões (resumo)
 
-| Tag | Notas |
-|-----|--------|
-| **v2.0.1** | RBAC; FUNDEB/VAAF em cascata; export CSV discrepâncias; gestão de utilizadores (activar/desactivar/excluir); entrada municipal directa na Análise; ver [STATUS_PROJETO.md](docs/STATUS_PROJETO.md). |
-| v2.0 | Indicadores de matrícula alinhados com situação INEP quando `ativo` está indefinido; variáveis `IEDUCAR_MATRICULA_*` acima. Documentação de requisitos actualizada (`pdo_pgsql` para i-Educar em PostgreSQL). |
-| v1.0 | Versão inicial etiquetada. |
+| Versão | Commit | # | Notas |
+|--------|--------|---|--------|
+| **2.2.0** *(main)* | `2c8cf44` | 135 | Matriz VAAF/VAAT, importações externas com guia de impacto, PDF comparativos, dashboard admin — ver [HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md). |
+| **v2.1.0** | `c3ec8b9` | 66 | Sync geográfica INEP, pipeline microdados, mapa unidades. |
+| **v2.0.1** | `683510b` | 28 | Inclusão cor/raça; estabilização analytics 2.0.x. |
+| **v2.0.0** | — | ~15–27 | Matrículas INEP, `pdo_pgsql`, evolução painel. |
+| **v1.0.0** | `8507c9a` | 1 | Plataforma inicial Laravel + i-Educar. |
+
+Detalhe, marcos intermédios e instruções de tag: **[docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md)** · estado funcional: **[docs/STATUS_PROJETO.md](docs/STATUS_PROJETO.md)**.
 
 ## Licença
 

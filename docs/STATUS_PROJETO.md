@@ -1,6 +1,8 @@
 # Estado do projeto — servlitcys
 
-**Versão:** 2.0.1 · **Ramo:** `main` · **Última revisão:** maio/2026
+**Versão:** 2.2.0 (`main`) · commit `2c8cf44` (#135) · **Ramo:** `main` · **Última revisão:** maio/2026
+
+Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
 Referência do que está **implementado** hoje. Para **decisões técnicas**, ver [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md). Para **próximas entregas**, ver [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md). **Índice completo:** [README.md](README.md).
 
@@ -13,7 +15,10 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | RBAC (admin / user / municipal) | Implementado |
 | Painel de análise i-Educar (abas lazy + faixa impacto) | Implementado |
 | Discrepâncias + export CSV | Implementado |
-| FUNDEB / VAAF (import + cascata de anos) | Implementado |
+| FUNDEB / VAAF (import + cascata + matriz + export CSV) | Implementado |
+| Importações externas (guias UX admin) | Implementado |
+| PDF analítico (fila + comparativos) | Implementado |
+| Dashboard admin / Conexões | Implementado |
 | Financiamentos (consultas públicas FNDE/Tesouro/Transparência) | Implementado (requer `.env`; ver [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md)) |
 | Censo (ritmo, meta ano anterior, enturmações) | Implementado |
 | Serventec (diagnóstico + PDF) | Implementado |
@@ -66,7 +71,9 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Ordem de anos (cascata) | `FundebReferenceYearOrder` |
 | Resolver municipal | `FundebMunicipalReferenceResolver` |
 | Import API / ficheiro | `FundebOpenDataImportService`, `fundeb:import-api` |
-| UI admin | Compatibilidade i-Educar → card FUNDEB |
+| UI admin | Compatibilidade i-Educar → card FUNDEB + matriz VAAF/VAAT (`fundeb-yearly-matrix`) |
+| Modo importação | `FundebImportMode`: atualizar se diferente / apagar e buscar |
+| Classificação visual | `FundebReferenceDisplay`: consolidado, prévia, nacional |
 
 Ver [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md) e [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
 
@@ -101,11 +108,18 @@ Ponderações: [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
 
 ## Alterações recentes (maio/2026)
 
-1. Documentação centralizada: [README.md](README.md), [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md), [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md), [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
-2. Faixa visual impacto saldo + status municipal nas abas até Censo.
-3. Financiamentos/Censo com consultas públicas e modal condições ampliado.
-4. PDF analytics (fila, permissões, prune fix MariaDB).
-5. RBAC municipal, FUNDEB cascata, CSV discrepâncias, gestão utilizadores.
+Commits de referência — detalhe em [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
+
+| Commit | # | Entrega |
+|--------|---|---------|
+| `2c8cf44` | 135 | Guias «Para que serve» em FUNDEB, geo, SAEB e fila; fluxos admin visíveis |
+| `48887a3` | 134 | Matriz VAAF/VAAT, legenda por tipo, filtros de anos, export CSV, modo replace/update |
+| `b5ad612` | 127 | Dashboard admin moderna; menu Conexões |
+| `e84cfcb` | 129 | PDF analítico em fila com comparativos |
+| `20208c4` | 108 | Fila `admin-sync` para importações pesadas |
+| `094da72` | 100 | RBAC, FUNDEB tooling, segurança |
+
+Anteriores (tag **v2.1.0**, `c3ec8b9` #66): pipeline geo INEP e mapa Censo.
 
 ---
 
