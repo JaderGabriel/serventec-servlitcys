@@ -829,6 +829,86 @@ class SchoolUnitsRepository
             }
         }
 
+        $locT = $this->firstExistingQualifiedTable($db, $city, [
+            $mainSchema.'.escola_localizacao',
+            'escola_localizacao',
+        ]);
+        if ($locT !== null) {
+            try {
+                $locFk = IeducarColumnInspector::firstExistingColumn($db, $locT, ['ref_cod_escola', 'cod_escola'], $city) ?? 'ref_cod_escola';
+                $locLog = IeducarColumnInspector::firstExistingColumn($db, $locT, [
+                    'logradouro', 'endereco', 'nm_logradouro', 'descricao_endereco', 'endereco_completo',
+                ], $city);
+                $locNum = IeducarColumnInspector::firstExistingColumn($db, $locT, ['numero', 'nr_numero', 'num'], $city);
+                $locBai = IeducarColumnInspector::firstExistingColumn($db, $locT, ['bairro', 'nm_bairro'], $city);
+                $locMun = IeducarColumnInspector::firstExistingColumn($db, $locT, ['municipio', 'cidade', 'nm_municipio'], $city);
+                $locCep = IeducarColumnInspector::firstExistingColumn($db, $locT, ['cep', 'nr_cep'], $city);
+                $locComp = IeducarColumnInspector::firstExistingColumn($db, $locT, ['complemento', 'nm_complemento'], $city);
+                if ($locLog !== null || $locNum !== null || $locBai !== null) {
+                    $sel = [$locFk];
+                    if ($locLog !== null) {
+                        $sel[] = $locLog;
+                    }
+                    if ($locNum !== null) {
+                        $sel[] = $locNum;
+                    }
+                    if ($locComp !== null) {
+                        $sel[] = $locComp;
+                    }
+                    if ($locBai !== null) {
+                        $sel[] = $locBai;
+                    }
+                    if ($locMun !== null) {
+                        $sel[] = $locMun;
+                    }
+                    if ($locCep !== null) {
+                        $sel[] = $locCep;
+                    }
+                    foreach ($db->table($locT)->whereIn($locFk, $eids)->get($sel) as $lr) {
+                        $la = (array) $lr;
+                        $eid = (int) ($la[$locFk] ?? 0);
+                        if ($eid <= 0 || ! isset($cards[$eid])) {
+                            continue;
+                        }
+                        $parts = [];
+                        $lrTxt = $locLog !== null ? trim((string) ($la[$locLog] ?? '')) : '';
+                        $nrTxt = $locNum !== null ? trim((string) ($la[$locNum] ?? '')) : '';
+                        if ($lrTxt !== '') {
+                            $parts[] = $lrTxt.($nrTxt !== '' ? ', '.$nrTxt : '');
+                        }
+                        if ($locComp !== null) {
+                            $coTxt = trim((string) ($la[$locComp] ?? ''));
+                            if ($coTxt !== '') {
+                                $parts[] = $coTxt;
+                            }
+                        }
+                        if ($locBai !== null) {
+                            $bTxt = trim((string) ($la[$locBai] ?? ''));
+                            if ($bTxt !== '') {
+                                $parts[] = $bTxt;
+                            }
+                        }
+                        if ($locMun !== null) {
+                            $mTxt = trim((string) ($la[$locMun] ?? ''));
+                            if ($mTxt !== '') {
+                                $parts[] = $mTxt;
+                            }
+                        }
+                        if ($locCep !== null) {
+                            $cepDigits = preg_replace('/\D+/', '', (string) ($la[$locCep] ?? '')) ?? '';
+                            if (strlen($cepDigits) === 8) {
+                                $parts[] = __('CEP').' '.substr($cepDigits, 0, 5).'-'.substr($cepDigits, 5, 3);
+                            }
+                        }
+                        if ($parts !== []) {
+                            $cards[$eid]['endereco'] = $this->preferNonEmpty($cards[$eid]['endereco'] ?? null, implode(' — ', $parts));
+                        }
+                    }
+                }
+            } catch (QueryException|\Throwable) {
+            }
+        }
+
         $refPesCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, ['ref_idpes', 'ref_cod_pessoa'], $city);
         $refGestCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, ['ref_idpes_gestor', 'ref_cod_pessoa_gestor'], $city);
         $emailGestCol = IeducarColumnInspector::firstExistingColumn($db, $escolaT, ['email_gestor'], $city);
@@ -1412,6 +1492,32 @@ class SchoolUnitsRepository
         }
         $matBy = $this->matriculasCountByEscolaIds($db, $city, $filters, $eids);
         $capVagasBy = MatriculaChartQueries::capacidadeEVagasPorEscolaIds($db, $city, $filters, $eids);
+        $metricasNota = null;
+        if ($filters->escola_id !== null || $filters->curso_id !== null || $filters->turno_id !== null) {
+            $filtersAno = new IeducarFilterState(
+                $filters->ano_letivo,
+                null,
+                null,
+                null,
+                $filters->inclusion_somente_nee,
+                $filters->inclusion_somente_inconsistencias,
+            );
+            $matAno = $this->matriculasCountByEscolaIds($db, $city, $filtersAno, $eids);
+            $capAno = MatriculaChartQueries::capacidadeEVagasPorEscolaIds($db, $city, $filtersAno, $eids);
+            foreach ($eids as $eid) {
+                if (($matBy[$eid] ?? 0) === 0 && ($matAno[$eid] ?? 0) > 0) {
+                    $matBy[$eid] = $matAno[$eid];
+                    $metricasNota ??= __('Matrículas e vagas referem-se ao ano letivo (sem filtro de curso/turno/escola no painel).');
+                }
+                $bundleAno = $capAno[$eid] ?? null;
+                $capStrict = $capVagasBy[$eid]['capacidade_declarada'] ?? null;
+                $capAnoVal = is_array($bundleAno) ? ($bundleAno['capacidade_declarada'] ?? null) : null;
+                if ($capStrict === null && $capAnoVal !== null && $capAnoVal > 0) {
+                    $capVagasBy[$eid] = $bundleAno;
+                    $metricasNota ??= __('Matrículas e vagas referem-se ao ano letivo (sem filtro de curso/turno/escola no painel).');
+                }
+            }
+        }
         $cardBy = $this->fetchEscolaCardFieldsByIds($db, $city, $eids);
         $ofertaBy = $this->ofertaCursoSeriePorEscolaIds($db, $city, $filters, $eids);
 
@@ -1442,10 +1548,14 @@ class SchoolUnitsRepository
             }
             $out[$eid] = array_merge([
                 'eid' => $eid,
-                'matriculas' => $mat,
+                'matriculas' => $mat > 0 ? $mat : null,
                 'capacidade_declarada' => $cap,
                 'vagas_disponiveis' => $vagas,
+                'metricas_nota' => $metricasNota,
             ], $card);
+            if ($mat === 0) {
+                $out[$eid]['matriculas'] = null;
+            }
             $out[$eid]['oferta_curso_serie'] = $ofertaBy[$eid] ?? [];
         }
 
@@ -1762,9 +1872,15 @@ class SchoolUnitsRepository
         if ($inep <= 0) {
             return '';
         }
+
+        $qedu = rtrim((string) config('ieducar.inep_geocoding.qedu_escola_base_url', 'https://www.qedu.org.br/escola'), '/');
+        if ($qedu !== '' && str_starts_with($qedu, 'http')) {
+            return $qedu.'/'.(string) $inep;
+        }
+
         $t = trim((string) config('ieducar.inep_geocoding.inep_portal_escola_url_template', ''));
         if ($t === '') {
-            $t = 'https://www.portalideb.org.br/resultado/escola/{inep}';
+            $t = 'https://www.qedu.org.br/escola/{inep}';
         }
         if (str_contains($t, '{inep}')) {
             return str_replace('{inep}', (string) $inep, $t);
@@ -1849,8 +1965,13 @@ class SchoolUnitsRepository
                 if ($portalUrl !== '') {
                     $m['inep_links'][] = [
                         'id' => 'inep_portal',
-                        'label' => __('Portal IDEB (INEP) — indicadores e painel pedagógico da escola'),
+                        'label' => __('QEdu — IDEB, SAEB e indicadores da escola (INEP)'),
                         'url' => $portalUrl,
+                    ];
+                    $m['inep_links'][] = [
+                        'id' => 'inep_catalogo',
+                        'label' => __('Catálogo de Escolas (gov.br / INEP)'),
+                        'url' => 'https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/inep-data/catalogo-de-escolas',
                     ];
                 }
             }

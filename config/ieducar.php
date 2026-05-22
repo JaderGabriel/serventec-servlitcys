@@ -896,7 +896,7 @@ return [
          */
         'inep_portal_escola_url_template' => (string) env(
             'IEDUCAR_INEP_PORTAL_ESCOLA_URL_TEMPLATE',
-            'https://www.portalideb.org.br/resultado/escola/{inep}'
+            'https://www.qedu.org.br/escola/{inep}'
         ),
         /**
          * Fallback offline: CSV com coordenadas apenas para INEPs já presentes em school_unit_geos

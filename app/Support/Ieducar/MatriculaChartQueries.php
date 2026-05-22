@@ -1187,7 +1187,7 @@ final class MatriculaChartQueries
      * por turma usa-se min(capacidade, matrículas ativas) e vagas ociosas = capacidade − essa ocupação (somado por escola).
      *
      * @param  list<int>  $eids
-     * @return array<int, array{capacidade_declarada: int, vagas_disponiveis: int}>
+     * @return array<int, array{capacidade_declarada: ?int, vagas_disponiveis: ?int}>
      */
     public static function capacidadeEVagasPorEscolaIds(Connection $db, City $city, IeducarFilterState $filters, array $eids): array
     {
@@ -1198,7 +1198,7 @@ final class MatriculaChartQueries
 
         $out = [];
         foreach ($eids as $eid) {
-            $out[$eid] = ['capacidade_declarada' => 0, 'vagas_disponiveis' => 0];
+            $out[$eid] = ['capacidade_declarada' => null, 'vagas_disponiveis' => null];
         }
 
         try {
@@ -1296,7 +1296,7 @@ final class MatriculaChartQueries
             }
         } catch (QueryException|\Throwable) {
             foreach ($eids as $eid) {
-                $out[$eid] = ['capacidade_declarada' => 0, 'vagas_disponiveis' => 0];
+                $out[$eid] = ['capacidade_declarada' => null, 'vagas_disponiveis' => null];
             }
         }
 

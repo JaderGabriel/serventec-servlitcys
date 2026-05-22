@@ -15,9 +15,9 @@
     $topErr = is_array($schoolUnitsData) ? ($schoolUnitsData['error'] ?? null) : null;
     $inepCatalogUrl = 'https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/inep-data/catalogo-de-escolas';
     $markerCount = is_array($markers) ? count($markers) : 0;
-    $mapPopupFootnote = __('O IDEB e o SAEB não são fornecidos pelo serviço ArcGIS; use o link do Portal IDEB (INEP) no rodapé do modal para indicadores oficiais por escola.');
-    $inepPortalEscolaTemplate = (string) config('ieducar.inep_geocoding.inep_portal_escola_url_template', 'https://www.portalideb.org.br/resultado/escola/{inep}');
-    $qeduEscolaBaseUrl = $inepPortalEscolaTemplate;
+    $mapPopupFootnote = __('O IDEB e o SAEB não vêm do ArcGIS; use o link QEdu (INEP) no rodapé do modal ou o Catálogo de Escolas no gov.br.');
+    $qeduEscolaBaseUrl = rtrim((string) config('ieducar.inep_geocoding.qedu_escola_base_url', 'https://www.qedu.org.br/escola'), '/');
+    $inepPortalEscolaTemplate = (string) config('ieducar.inep_geocoding.inep_portal_escola_url_template', 'https://www.qedu.org.br/escola/{inep}');
 @endphp
 
 <div class="space-y-6">
@@ -89,7 +89,7 @@
                             <h3 class="text-base font-semibold uppercase tracking-wide text-emerald-950 dark:text-emerald-100">{{ __('MAPA DAS UNIDADES ESCOLARES') }}</h3>
                             <p class="mt-1 text-xs text-emerald-900/85 dark:text-emerald-200/90 leading-relaxed">
                                 @if ($markerCount > 0)
-                                    {{ __('Clique num marcador para ver dados da base local, Catálogo INEP (ArcGIS) quando existir e link ao Portal IDEB (INEP). Com várias unidades, linhas tracejadas discretas ligam cada escola aos vizinhos mais próximos (grafo leve).') }}
+                                    {{ __('Clique num marcador para ver dados da base local, Catálogo INEP (ArcGIS) quando existir e link ao QEdu (indicadores oficiais por escola). Com várias unidades, linhas tracejadas discretas ligam cada escola aos vizinhos mais próximos (grafo leve).') }}
                                 @else
                                     {{ __('Sem coordenadas para posicionar unidades. Verifique latitude/longitude na base ou código INEP para geocodificação.') }}
                                 @endif
@@ -325,7 +325,7 @@
                                         rel="noopener noreferrer"
                                         :href="modal.inepPortal.page_url"
                                     >
-                                        {{ __('Portal IDEB (INEP) — painel pedagógico e indicadores (nova aba)') }}
+                                        {{ __('QEdu — IDEB e indicadores da escola (nova aba)') }}
                                     </a>
                                     <button
                                         type="button"

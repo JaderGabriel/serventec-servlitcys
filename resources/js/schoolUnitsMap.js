@@ -282,9 +282,9 @@ function buildSchoolModalPayload(mk, qeduBaseFallback) {
           )
         : null;
     const templateCfg = String(
-        mk?.inep_portal_escola_base_url ||
-            qeduBaseFallback ||
-            "https://www.portalideb.org.br/resultado/escola/{inep}",
+        qeduBaseFallback ||
+            mk?.inep_portal_escola_base_url ||
+            "https://www.qedu.org.br/escola/{inep}",
     ).trim();
     let pageUrl = portalLink?.url ? safeExternalHref(portalLink.url) : "";
     if ((!pageUrl || pageUrl === "#") && inep && templateCfg.startsWith("http")) {
@@ -317,6 +317,7 @@ function buildSchoolModalPayload(mk, qeduBaseFallback) {
             matriculas: s?.matriculas ?? null,
             capacidade_declarada: s?.capacidade_declarada ?? null,
             vagas_disponiveis: s?.vagas_disponiveis ?? null,
+            metricas_nota: String(s?.metricas_nota || ""),
             endereco: String(s?.endereco || ""),
             endereco_cadastro: String(
                 s?.endereco_cadastro ?? s?.endereco ?? "",
