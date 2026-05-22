@@ -42,6 +42,13 @@ class AppServiceProvider extends ServiceProvider
         if (config('database.redis.client') === 'phpredis' && ! class_exists(\Redis::class)) {
             config(['database.redis.client' => 'predis']);
         }
+
+        if (! class_exists(\App\Support\Admin\WeeklyMassSyncCheckpoint::class, false)) {
+            class_alias(
+                \App\Support\AdminSync\WeeklyMassSyncCheckpoint::class,
+                \App\Support\Admin\WeeklyMassSyncCheckpoint::class,
+            );
+        }
     }
 
     /**
@@ -49,14 +56,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Import legado em WeeklyMassSyncOrchestrator (App\Support\Admin\…) até deploy uniforme.
-        if (! class_exists(\App\Support\Admin\WeeklyMassSyncCheckpoint::class, false)) {
-            class_alias(
-                \App\Support\AdminSync\WeeklyMassSyncCheckpoint::class,
-                \App\Support\Admin\WeeklyMassSyncCheckpoint::class,
-            );
-        }
-
         Gate::policy(City::class, CityPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(AnalyticsReportExport::class, AnalyticsReportExportPolicy::class);
