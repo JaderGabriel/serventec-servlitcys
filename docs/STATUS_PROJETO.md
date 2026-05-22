@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão:** 2.2.0 (`main`) · commit `2c8cf44` (#135) · **Ramo:** `main` · **Última revisão:** maio/2026
+**Versão:** 2.3.0 (`main`) · commit `05a7410` (#151) · **Ramo:** `main` · **Última revisão:** maio/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -15,9 +15,11 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | RBAC (admin / user / municipal) | Implementado |
 | Painel de análise i-Educar (abas lazy + faixa impacto) | Implementado |
 | Discrepâncias + export CSV | Implementado |
-| FUNDEB / VAAF (import + cascata + matriz + export CSV) | Implementado |
-| Importações externas (guias UX admin) | Implementado |
-| PDF analítico (fila + comparativos) | Implementado |
+| FUNDEB / VAAF (import + cascata + matriz + export CSV + perfil planejamento) | Implementado |
+| Importações externas (guias UX admin + hub público) | Implementado |
+| Sync massiva semanal (`system::weekly_mass_sync`, checkpoint) | Implementado |
+| Repasses Tesouro CSV + snapshots municipais | Implementado |
+| PDF analítico (fila + comparativos + quadros FUNDEB) | Implementado |
 | Dashboard admin / Conexões | Implementado |
 | Financiamentos (consultas públicas FNDE/Tesouro/Transparência) | Implementado (requer `.env`; ver [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md)) |
 | Censo (ritmo, meta ano anterior, enturmações) | Implementado |

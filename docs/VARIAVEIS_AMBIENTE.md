@@ -1,6 +1,6 @@
 # Variáveis de ambiente — servlitcys
 
-**Versão do produto:** 2.2.0 (`2c8cf44`, #135) · **Última revisão:** maio/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
+**Versão do produto:** 2.3.0 (`05a7410`, #151) · **Última revisão:** maio/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
 Este documento é a **referência oficial** para configurar o arquivo **`.env` no servidor de produção**.
 

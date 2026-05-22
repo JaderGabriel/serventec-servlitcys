@@ -10,7 +10,7 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **2.3.0** *(main, sem tag)* | — | — | mai/2026 | FIN-01…05: snapshots de repasse (Tesouro/Transparência), VAAR importado na previsão FUNDEB, repasse vs matrículas elegíveis, check Censo×i-Educar, jobs `admin-sync` funding. |
+| **2.3.0** *(main, sem tag)* | `05a7410` | **151** | mai/2026 | VAAF ampliado (perfil, matrículas, alertas FNDE); repasses CSV Tesouro; sync semanal retomável; PDF quadros FUNDEB; Financiamentos e hub importações corrigidos. |
 | **2.2.0** | `2c8cf44` | **135** | mai/2026 | Importações externas com guia de impacto (FUNDEB/geo/SAEB); matriz VAAF/VAAT com legenda, filtros e CSV; modo replace/update FUNDEB; PDF analítico com comparativos; dashboard admin e mapas alinhados. |
 | | `48887a3` | 134 | mai/2026 | Matriz FUNDEB restaurada; apresentação matriz admin; comparativos no PDF; legenda mapa municípios. |
 | | `797efe1` | 133 | mai/2026 | Export matriz FUNDEB; repositório `yearlyMatrix`. |
@@ -62,6 +62,21 @@ Trajetória após v2.1.0 (commits #67–#135), agrupada por tema:
 
 Documentação técnica alinhada: [COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md](COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md), [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
 
+### v2.3.0 — `main` (mai/2026)
+
+Entrega focada em **bases financeiras públicas**, **sincronização semanal** e **relatório PDF**:
+
+| Tema | Melhoria para o usuário |
+|------|-------------------------|
+| **Sync semanal** | Correção `WeeklyMassSyncCheckpoint` (`AdminSync`); alias de compatibilidade; FUNDEB inclui anos de planejamento na orquestração. |
+| **FUNDEB / VAAF** | Perfil municipal (ano civil + próximo); matrículas por ano (i-Educar + fallback Censo INEP); alertas de publicação FNDE; metadados de receita, complementação e portaria; `fundeb:diagnose-matriculas`. |
+| **Repasses** | Import **CSV Tesouro** (FUNDEB por município, `COD_MUN`); snapshots na aba Financiamentos e na sync `funding`. |
+| **Financiamentos** | Consultas públicas estáveis (`transferSnapshots` injetado); aviso de programas vazio só sem erro de API. |
+| **PDF analítico** | Quadros objetivos FUNDEB (portaria, complementação, cenários, distribuição legal); mapa territorial composto; tema visual por secção. |
+| **Testes** | Tesouro CSV, import repasses, tabelas FUNDEB no PDF, alertas FNDE, anos de planejamento. |
+
+Documentação: [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md), [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md), [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md), [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
+
 ---
 
 ## Tags Git no repositório
@@ -77,10 +92,10 @@ Documentação técnica alinhada: [COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md](C
 
 ## Próxima etiqueta sugerida
 
-Ao fechar o ciclo 2.2.0 em produção:
+Ao fechar o ciclo **2.3.0** em produção:
 
 ```bash
-git tag -a v2.2.0 <commit-estável> -m "v2.2.0 — matriz FUNDEB, importações UX, PDF comparativos"
+git tag -a v2.3.0 <commit-estável> -m "v2.3.0 — VAAF ampliado, repasses Tesouro CSV, sync semanal, PDF FUNDEB"
 ```
 
 Atualizar neste arquivo, em [README.md](../README.md), [STATUS_PROJETO.md](STATUS_PROJETO.md) e `config/documentation.php` (`product.version`).
