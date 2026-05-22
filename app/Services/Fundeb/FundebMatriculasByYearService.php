@@ -5,7 +5,7 @@ namespace App\Services\Fundeb;
 use App\Models\City;
 use App\Models\InepCensoMunicipioMatricula;
 use App\Repositories\FundebMunicipioReferenceRepository;
-use App\Services\Ieducar\IeducarCityDataService;
+use App\Services\CityDataConnection;
 use App\Support\Ieducar\IeducarFilterState;
 use App\Support\Ieducar\MatriculaChartQueries;
 
@@ -15,7 +15,7 @@ use App\Support\Ieducar\MatriculaChartQueries;
 final class FundebMatriculasByYearService
 {
     public function __construct(
-        private IeducarCityDataService $cityData,
+        private CityDataConnection $cityData,
     ) {}
 
     /**
