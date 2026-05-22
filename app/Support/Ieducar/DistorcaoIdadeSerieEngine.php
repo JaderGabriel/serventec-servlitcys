@@ -640,6 +640,16 @@ final class DistorcaoIdadeSerieEngine
                 'dt_nasc',
             ]), $city);
 
+            $fisica = self::resolveFisicaTable($db, $city);
+            $fisicaBirth = null;
+            $fisicaLink = null;
+            if ($fisica !== null) {
+                $fisicaLink = IeducarColumnInspector::firstExistingColumn($db, $fisica, ['idpes', 'ref_idpes'], $city);
+                $fisicaBirth = IeducarColumnInspector::firstExistingColumn($db, $fisica, [
+                    'data_nasc', 'data_nascimento', 'dt_nascimento',
+                ], $city);
+            }
+
             $matriculaAnoCol = MatriculaTurmaJoin::matriculaAnoColumn($db, $city);
             $serieJoinMatricula = IeducarColumnInspector::firstExistingColumn($db, $matTable, array_filter([
                 (string) config('ieducar.columns.matricula.serie'),
@@ -689,16 +699,6 @@ final class DistorcaoIdadeSerieEngine
 
             if ($aPessoa === null || $pId === null) {
                 return null;
-            }
-
-            $fisica = self::resolveFisicaTable($db, $city);
-            $fisicaBirth = null;
-            $fisicaLink = null;
-            if ($fisica !== null) {
-                $fisicaLink = IeducarColumnInspector::firstExistingColumn($db, $fisica, ['idpes', 'ref_idpes'], $city);
-                $fisicaBirth = IeducarColumnInspector::firstExistingColumn($db, $fisica, [
-                    'data_nasc', 'data_nascimento', 'dt_nascimento',
-                ], $city);
             }
 
             return new DistorcaoIdadeSerieContext(
