@@ -43,6 +43,53 @@ final class AdminHomeMunicipalityMapTest extends TestCase
         $this->assertNotNull($marker['implemented_at_label']);
         $this->assertStringContainsString('/dashboard/municipality-map/'.$city->id.'/school-years', $marker['school_years_url']);
         $this->assertSame('ready', $marker['status']);
+        $this->assertArrayHasKey('ieducar_url', $marker);
+    }
+
+    #[Test]
+    public function marker_inclui_ieducar_url_quando_cadastrada(): void
+    {
+        $city = City::factory()->create([
+            'is_active' => true,
+            'db_host' => 'h',
+            'db_database' => 'd',
+            'db_username' => 'u',
+            'ieducar_app_url' => 'https://municipio.test/ieducar',
+        ]);
+
+        $marker = collect(app(AdminHomeMunicipalityMap::class)->markers())->firstWhere('id', $city->id);
+
+        $this->assertSame('https://municipio.test/ieducar', $marker['ieducar_url']);
+    }
+
+    #[Test]
+    public function marcadores_na_mesma_uf_sem_ibge_nao_ficam_sobrepostos(): void
+    {
+        foreach (['Alpha', 'Beta', 'Gamma'] as $name) {
+            City::factory()->create([
+                'name' => $name,
+                'uf' => 'BA',
+                'is_active' => true,
+                'ibge_municipio' => null,
+                'db_host' => 'h',
+                'db_database' => 'd',
+                'db_username' => 'u',
+            ]);
+        }
+
+        $markers = app(AdminHomeMunicipalityMap::class)->markers();
+        $this->assertCount(3, $markers);
+
+        foreach ($markers as $a) {
+            foreach ($markers as $b) {
+                if ($a['id'] === $b['id']) {
+                    continue;
+                }
+                $dLat = abs((float) $a['lat'] - (float) $b['lat']);
+                $dLng = abs((float) $a['lng'] - (float) $b['lng']);
+                $this->assertTrue($dLat >= 0.1 || $dLng >= 0.1, 'Marcadores BA devem estar separados');
+            }
+        }
     }
 
     #[Test]

@@ -47,14 +47,25 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
             const bounds = [];
 
             const count = this.markers.length;
-            const radius = count > 40 ? 5 : count > 15 ? 6 : 7;
+            const radius = count > 40 ? 5 : count > 15 ? 6 : 8;
+            const placedAt = new Map();
 
-            this.markers.forEach((m) => {
-                const lat = Number(m.lat);
-                const lng = Number(m.lng);
+            this.markers.forEach((m, idx) => {
+                let lat = Number(m.lat);
+                let lng = Number(m.lng);
                 if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
                     return;
                 }
+
+                const key = `${lat.toFixed(4)}:${lng.toFixed(4)}`;
+                const hits = placedAt.get(key) ?? 0;
+                if (hits > 0) {
+                    const angle = (2 * Math.PI * hits) / 8;
+                    const step = 0.1 + hits * 0.02;
+                    lat += step * Math.cos(angle);
+                    lng += step * Math.sin(angle) * 1.12;
+                }
+                placedAt.set(key, hits + 1);
 
                 bounds.push([lat, lng]);
 

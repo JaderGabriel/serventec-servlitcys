@@ -1,6 +1,7 @@
 @php
     $mapSummary = is_array($mapSummary ?? null) ? $mapSummary : ['total' => count($mapMarkers ?? []), 'by_status' => [], 'legend' => []];
-    $totalOnMap = (int) ($mapSummary['total'] ?? count($mapMarkers ?? []));
+    $totalCities = (int) ($mapSummary['total'] ?? count($mapMarkers ?? []));
+    $plottedOnMap = (int) ($mapSummary['on_map'] ?? $totalCities);
     $mapLegend = is_array($mapSummary['legend'] ?? null) ? $mapSummary['legend'] : [];
     $mapStatusColors = is_array($mapSummary['colors'] ?? null) ? $mapSummary['colors'] : \App\Support\Dashboard\MunicipalityMapStatus::colorsForJs();
 @endphp
@@ -9,7 +10,10 @@
         <div>
             <h3 id="home-map" class="font-display text-lg font-semibold text-serv-navy dark:text-slate-100">{{ __('Municípios implementados') }}</h3>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                {{ __(':total município(s) no mapa — coordenadas por escolas, IBGE ou posição na UF. Clique num ponto para anos letivos.', ['total' => number_format($totalOnMap)]) }}
+                {{ __(':total município(s) cadastrados · :plotted marcador(es) visível(is). Posição: média das escolas (geos), centroide IBGE ou dispersão na UF. Cores = estado da conexão (verde = ativo com base).', [
+                    'total' => number_format($totalCities),
+                    'plotted' => number_format($plottedOnMap),
+                ]) }}
             </p>
         </div>
         <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400" role="list" aria-label="{{ __('Legenda do mapa') }}">
@@ -115,7 +119,19 @@
                         <p x-show="!yearsLoading && !yearsError && schoolYears.length === 0 && active.status !== 'ready'" class="text-xs text-slate-500">{{ __('Configure a conexão i-Educar para listar anos.') }}</p>
                     </div>
 
-                    <a :href="active.analytics_url" class="inline-flex serv-btn-secondary text-xs w-full justify-center">{{ __('Consultoria') }}</a>
+                    <div class="grid grid-cols-2 gap-2">
+                        <a :href="active.analytics_url" class="inline-flex serv-btn-secondary text-xs justify-center min-w-0">{{ __('Consultoria') }}</a>
+                        <a
+                            :href="active.ieducar_url || '#'"
+                            :target="active.ieducar_url ? '_blank' : null"
+                            :rel="active.ieducar_url ? 'noopener noreferrer' : null"
+                            @click="!active.ieducar_url && $event.preventDefault()"
+                            :class="active.ieducar_url ? '' : 'opacity-50 cursor-not-allowed'"
+                            :aria-disabled="!active.ieducar_url"
+                            :title="active.ieducar_url ? '{{ __('Abrir o i-Educar do município numa nova aba') }}' : '{{ __('Defina a URL do i-Educar no cadastro da cidade (ou IEDUCAR_APP_URLS no .env).') }}'"
+                            class="inline-flex serv-btn-secondary text-xs justify-center min-w-0"
+                        >{{ __('i-Educar') }}</a>
+                    </div>
                 </div>
             </template>
         </div>

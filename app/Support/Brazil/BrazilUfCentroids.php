@@ -64,7 +64,7 @@ final class BrazilUfCentroids
         $angle = (2 * M_PI * $slot) / max(1, $total);
         $rings = (int) ceil($total / 8);
         $ring = (int) floor($slot / 8);
-        $radius = 0.28 + ($ring * 0.22) + min(0.9, 0.08 * sqrt($total));
+        $radius = 0.42 + ($ring * 0.28) + min(1.1, 0.12 * sqrt($total));
 
         return [
             round($base[0] + $radius * cos($angle), 5),

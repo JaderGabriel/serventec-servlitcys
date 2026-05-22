@@ -4,7 +4,9 @@ namespace App\Services\Dashboard;
 
 use App\Models\City;
 use App\Support\Brazil\MunicipalityMapCoordinates;
+use App\Support\Brazil\MunicipalityMapOverlapResolver;
 use App\Support\Dashboard\MunicipalityMapStatus;
+use App\Support\Ieducar\CityIeducarAppUrlResolver;
 
 /**
  * Marcadores para o mapa de municípios implementados no Início.
@@ -13,6 +15,7 @@ final class AdminHomeMunicipalityMap
 {
     public function __construct(
         private readonly MunicipalityMapCoordinates $coordinates,
+        private readonly MunicipalityMapOverlapResolver $overlapResolver,
     ) {}
 
     /**
@@ -31,7 +34,8 @@ final class AdminHomeMunicipalityMap
      *     implemented_at: ?string,
      *     implemented_at_label: ?string,
      *     school_years_url: string,
-     *     analytics_url: string
+     *     analytics_url: string,
+     *     ieducar_url: ?string
      * }>
      */
     public function markers(): array
@@ -92,10 +96,13 @@ final class AdminHomeMunicipalityMap
                     'implemented_at_label' => $implementedAt?->format('d/m/Y'),
                     'school_years_url' => route('dashboard.municipality-map.school-years', $city),
                     'analytics_url' => route('dashboard.analytics', ['city_id' => $city->id]),
+                    'ieducar_url' => $this->ieducarAppUrl->resolve($city),
                 ];
             })
             ->values()
             ->all();
+
+        return $this->overlapResolver->separate($markers);
     }
 
     /**
@@ -111,9 +118,18 @@ final class AdminHomeMunicipalityMap
             $byStatus[$st] = ($byStatus[$st] ?? 0) + 1;
         }
 
+        $plotted = 0;
+        foreach ($markers as $m) {
+            $lat = (float) ($m['lat'] ?? 0);
+            $lng = (float) ($m['lng'] ?? 0);
+            if (is_finite($lat) && is_finite($lng)) {
+                $plotted++;
+            }
+        }
+
         return [
             'total' => count($markers),
-            'on_map' => count($markers),
+            'on_map' => $plotted,
             'by_status' => $byStatus,
             'legend' => MunicipalityMapStatus::legendItems($byStatus),
             'colors' => MunicipalityMapStatus::colorsForJs(),
