@@ -32,4 +32,15 @@ return [
     /** Timeout por município ao consultar a base i-Educar (segundos). */
     'city_query_timeout' => max(5, (int) env('RX_CITY_QUERY_TIMEOUT', 25)),
 
+    /** Anos máximos para trás ao procurar meta quando Y-1 tem turmas e matrículas zeradas. */
+    'meta_lookback_years' => max(1, (int) env('RX_META_LOOKBACK_YEARS', 10)),
+
+    /** Acréscimo percentual na meta por cada «salto» (ano a mais para trás face a Y-1). Ex.: 5 → ×1,05 por salto. */
+    'meta_pct_per_salto' => (float) env('RX_META_PCT_PER_SALTO', 5),
+
+    /** Limiares do semáforo de cumprimento da meta (progresso sobre matrículas). */
+    'semaphore' => [
+        'yellow_min_progress' => (float) env('RX_SEMAPHORE_YELLOW_MIN', 75),
+    ],
+
 ];

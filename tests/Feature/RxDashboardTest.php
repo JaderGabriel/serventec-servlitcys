@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Models\City;
 use App\Models\User;
+use App\Support\Rx\RxSemaphore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -22,7 +23,9 @@ final class RxDashboardTest extends TestCase
             ->get(route('dashboard.rx'))
             ->assertOk()
             ->assertSee('RX', false)
-            ->assertSee(__('Painel operacional'), false);
+            ->assertSee(__('Painel operacional'), false)
+            ->assertSee(__('O que significa cada coluna?'), false)
+            ->assertSee(__('Semáforo'), false);
     }
 
     #[Test]
@@ -39,6 +42,20 @@ final class RxDashboardTest extends TestCase
             ->assertOk()
             ->assertSee('Cidade Vinculada RX', false)
             ->assertDontSee('Cidade Outra RX', false);
+    }
+
+    #[Test]
+    public function semaforo_verde_quando_meta_cumprida(): void
+    {
+        $sem = RxSemaphore::fromRow([
+            'ok' => true,
+            'meta_encontrou_referencia' => true,
+            'meta_matriculas_alvo' => 100,
+            'progresso_cadastro_pct' => 100.0,
+            'registros_restantes' => 0,
+        ]);
+
+        $this->assertSame('green', $sem['status']);
     }
 
     #[Test]

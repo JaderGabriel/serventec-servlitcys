@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Support\Auth\UserCityAccess;
 use App\Support\Rx\RxCensoDeadline;
 use App\Support\Rx\RxCityMetricsCollector;
+use App\Support\Rx\RxColumnHelp;
 
 /**
  * Painel RX: todas as cidades visíveis ao utilizador, ano vigente vs anterior.
@@ -28,6 +29,9 @@ final class RxOverviewService
         $cities = UserCityAccess::citiesQuery($user)->get();
         $rows = [];
         $errors = 0;
+        $connectionErrors = 0;
+        $queryErrors = 0;
+        $partialCount = 0;
         $okCount = 0;
 
         /** @var \App\Models\City $city */
@@ -37,10 +41,20 @@ final class RxOverviewService
             }
             $row = $this->collector->collect($city, $vigenteYear);
             $rows[] = $row;
+            $codigo = (string) ($row['situacao_codigo'] ?? '');
+
             if ($row['ok'] ?? false) {
                 $okCount++;
+                if ($codigo === 'parcial') {
+                    $partialCount++;
+                }
             } elseif (filled($row['error'] ?? null)) {
                 $errors++;
+                if ($codigo === 'conexao' || ($row['conexao_ok'] ?? null) === false) {
+                    $connectionErrors++;
+                } else {
+                    $queryErrors++;
+                }
             }
         }
 
@@ -55,6 +69,7 @@ final class RxOverviewService
         });
 
         $totals = $this->aggregateTotals($rows);
+        $semaphoreSummary = $this->aggregateSemaphore($rows);
 
         return [
             'vigente_ano' => $vigenteYear,
@@ -63,10 +78,34 @@ final class RxOverviewService
             'cities_total' => count($rows),
             'cities_ok' => $okCount,
             'cities_error' => $errors,
+            'cities_connection_error' => $connectionErrors,
+            'cities_query_error' => $queryErrors,
+            'cities_partial' => $partialCount,
             'rows' => $rows,
             'totals' => $totals,
+            'semaphore_summary' => $semaphoreSummary,
+            'column_help' => RxColumnHelp::columns($vigenteYear, $anteriorYear),
+            'meta_pct_per_salto' => (float) config('rx.meta_pct_per_salto', 5),
             'scope_label' => $this->scopeLabel($user),
         ];
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     * @return array{green: int, yellow: int, red: int, neutral: int, error: int}
+     */
+    private function aggregateSemaphore(array $rows): array
+    {
+        $out = ['green' => 0, 'yellow' => 0, 'red' => 0, 'neutral' => 0, 'error' => 0];
+        foreach ($rows as $row) {
+            $st = (string) ($row['semaforo'] ?? 'neutral');
+            if (! array_key_exists($st, $out)) {
+                $st = 'neutral';
+            }
+            $out[$st]++;
+        }
+
+        return $out;
     }
 
     /**
