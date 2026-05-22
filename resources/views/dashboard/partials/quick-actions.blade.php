@@ -19,6 +19,17 @@
                 {{ __('Consultoria e relatórios') }}
             </p>
             <div class="serv-home-action-grid serv-home-action-grid--featured">
+                <a href="{{ route('dashboard.rx') }}" class="serv-home-action group">
+                    <span class="serv-home-action__icon serv-home-action__icon--teal" aria-hidden="true">
+                        <x-ui.icon name="clipboard-document-list" class="h-6 w-6" />
+                    </span>
+                    <span class="serv-home-action__body">
+                        <span class="serv-home-action__title">RX</span>
+                        <span class="serv-home-action__desc">{{ __('Cadastro e Censo em todos os municípios — força de trabalho e prazos.') }}</span>
+                        <span class="serv-home-action__ref">{{ __('Multi-município, ano vigente') }}</span>
+                    </span>
+                    <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 text-teal-600/70 group-hover:text-teal-700 dark:text-teal-400" />
+                </a>
                 <a href="{{ route('dashboard.analytics') }}" class="serv-home-action serv-home-action--primary group">
                     <span class="serv-home-action__icon serv-home-action__icon--teal" aria-hidden="true">
                         <x-ui.icon name="chart-bar" class="h-6 w-6" />

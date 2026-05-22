@@ -21,6 +21,9 @@
                             {{ __('Meu município') }}
                         @endif
                     </x-nav-link>
+                    <x-nav-link :href="route('dashboard.rx')" :active="request()->routeIs('dashboard.rx*')" icon="clipboard-document-list">
+                        RX
+                    </x-nav-link>
                     @if (Auth::user()->isAdmin())
                         <x-nav-link :href="route('pulse')" :active="request()->routeIs('pulse')" icon="signal">
                             {{ __('Monitorização') }}
@@ -78,6 +81,9 @@
                 @else
                     {{ __('Meu município') }}
                 @endif
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('dashboard.rx')" :active="request()->routeIs('dashboard.rx*')" icon="clipboard-document-list">
+                RX
             </x-responsive-nav-link>
             <p class="px-4 pt-3 pb-1 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {{ __('Mais opções no menu do usuário (submenus expansíveis).') }}

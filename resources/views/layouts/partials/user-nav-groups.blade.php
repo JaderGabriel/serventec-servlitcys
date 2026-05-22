@@ -22,7 +22,7 @@
             'title' => __('Consultoria'),
             'icon' => 'chart-bar',
             'tone' => 'teal',
-            'routes' => ['dashboard.analytics*', 'admin.analytics-diagnostics'],
+            'routes' => ['dashboard.analytics*', 'dashboard.rx*', 'admin.analytics-diagnostics'],
             'items' => array_values(array_filter([
                 [
                     'show' => true,
@@ -31,6 +31,14 @@
                     'icon' => 'chart-bar',
                     'active' => $req->routeIs('dashboard.analytics*'),
                     'title' => __('Painel analítico — FUNDEB, matrículas, rede e Censo.'),
+                ],
+                [
+                    'show' => true,
+                    'href' => route('dashboard.rx'),
+                    'label' => __('RX — cadastro e Censo'),
+                    'icon' => 'clipboard-document-list',
+                    'active' => $req->routeIs('dashboard.rx*'),
+                    'title' => __('Todos os municípios: volume digitado, status Censo e trabalho restante.'),
                 ],
                 [
                     'show' => $user->isAdmin(),

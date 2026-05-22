@@ -20,6 +20,7 @@ use App\Http\Controllers\FirstAccessProfileController;
 use App\Http\Controllers\MailSettingsController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RxDashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserLoginHistoryController;
 use App\Http\Controllers\UserSessionController;
@@ -44,6 +45,7 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
     Route::get('/dashboard/municipality-map/{city}/school-years', [DashboardMunicipalityMapController::class, 'schoolYears'])
         ->name('dashboard.municipality-map.school-years');
     Route::get('/dashboard/analytics', [AnalyticsDashboardController::class, 'index'])->name('dashboard.analytics');
+    Route::get('/dashboard/rx', [RxDashboardController::class, 'index'])->name('dashboard.rx');
     Route::get('/dashboard/analytics/tab', [AnalyticsDashboardController::class, 'tabPartial'])->name('dashboard.analytics.tab');
     Route::get('/dashboard/analytics/filter-options', [AnalyticsDashboardController::class, 'filterOptions'])->name('dashboard.analytics.filter-options');
     Route::get('/dashboard/analytics/filter-options-bootstrap', [AnalyticsDashboardController::class, 'filterOptionsBootstrap'])->name('dashboard.analytics.filter-options-bootstrap');
