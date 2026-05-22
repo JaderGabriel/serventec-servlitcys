@@ -8,6 +8,8 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 
 #[Signature('cities:reencrypt-db-passwords
     {--password= : Senha padrão do banco i-Educar (aplicada a todas as cidades cadastradas)}
@@ -32,7 +34,20 @@ class CitiesReencryptDbPasswordsCommand extends Command
             return self::FAILURE;
         }
 
-        $cities = City::query()->orderBy('name')->orderBy('uf')->get();
+        try {
+            $encryptedPayload = $dryRun ? null : Crypt::encryptString($password);
+        } catch (\Throwable $e) {
+            $this->error(__('Não foi possível criptografar com a APP_KEY actual: :msg', ['msg' => $e->getMessage()]));
+
+            return self::FAILURE;
+        }
+
+        $cities = City::query()
+            ->select(['id', 'name', 'uf', 'db_host', 'db_database', 'db_username'])
+            ->orderBy('name')
+            ->orderBy('uf')
+            ->get();
+
         if ($cities->isEmpty()) {
             $this->warn(__('Nenhuma cidade cadastrada na base da aplicação.'));
 
@@ -83,14 +98,31 @@ class CitiesReencryptDbPasswordsCommand extends Command
                 continue;
             }
 
-            $city->db_password = $password;
-            $city->save();
+            $rows = DB::table('cities')
+                ->where('id', $city->id)
+                ->update([
+                    'db_password' => $encryptedPayload,
+                    'updated_at' => now(),
+                ]);
+
+            if ($rows !== 1) {
+                $failed++;
+                $this->error(__('[:line] :name — não foi possível atualizar o registro.', [
+                    'line' => $lineNo,
+                    'name' => $city->name,
+                ]));
+
+                continue;
+            }
 
             try {
-                $city->refresh();
-                $plain = $city->db_password;
+                $fresh = City::query()->findOrFail($city->id);
+                $plain = $fresh->db_password;
                 if (! is_string($plain) || $plain === '') {
                     throw new DecryptException('empty');
+                }
+                if (! hash_equals($password, $plain)) {
+                    throw new DecryptException('mismatch');
                 }
             } catch (DecryptException) {
                 $failed++;
@@ -110,8 +142,8 @@ class CitiesReencryptDbPasswordsCommand extends Command
                 'id' => $city->id,
             ]);
 
-            if ($probe && $city->hasDataSetup()) {
-                $status = $cityData->connectionStatus($city);
+            if ($probe && $fresh->hasDataSetup()) {
+                $status = $cityData->connectionStatus($fresh);
                 if ($status['status'] === 'ok' || $status['status'] === 'slow') {
                     $msg .= ' '.__('Conexão: :st (:ms ms).', [
                         'st' => $status['status'],

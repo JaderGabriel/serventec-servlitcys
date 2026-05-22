@@ -18,7 +18,7 @@
 ### Credenciais MySQL por cidade
 
 - O campo `db_password` no modelo `City` usa cast **`encrypted`** (Laravel Encryption); requer `APP_KEY` estável — **fazer backup da chave** com o backup da base.
-- **`php artisan key:generate` em ambiente com cidades cadastradas** invalida todas as senhas gravadas (erro de descriptografia na conexão). Corrija com `php artisan cities:reencrypt-db-passwords --password=...` (mesma senha em todas as cidades, se for o seu caso) ou cidade a cidade em **Cidades → Editar** (ver [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §7).
+- **`php artisan key:generate` em ambiente com cidades cadastradas** invalida todas as senhas gravadas (erro «The MAC is invalid» / descriptografia na conexão). Corrija com `php artisan cities:reencrypt-db-passwords --password='...' --confirm=reencrypt-db-passwords` (mesma senha em todas as cidades, se for o seu caso). O comando grava direto na base sem ler a senha antiga. Alternativa: **Cidades → Editar** cidade a cidade (ver [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §7).
 - Quem pode criar/editar cidades: apenas perfil **Administrador** (`role=admin`).
 
 ### Arquivos e ambiente

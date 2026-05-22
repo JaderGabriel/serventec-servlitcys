@@ -49,20 +49,28 @@ return Application::configure(basePath: dirname(__DIR__))
              * `withoutOverlapping`, um digest longo pode atrasar snapshots de sistema
              * e o cartão Servers mostra “offline” apesar do schedule:list estar correcto.
              */
-            $pulseCheck = $schedule->call(function (): void {
-                Artisan::call('pulse:check', ['--once' => true]);
-            })
+            $scheduleLog = config('schedule.log_to_file', false)
+                ? (string) config('schedule.log_path', storage_path('logs/scheduler.log'))
+                : null;
+
+            $pulseCheck = $schedule->command('pulse:check', ['--once' => true])
                 ->name('pulse-scheduled-check')
                 ->withoutOverlapping(max(90, $pulseMinutes * 60 - 30));
+
+            if (is_string($scheduleLog) && $scheduleLog !== '') {
+                $pulseCheck->appendOutputTo($scheduleLog);
+            }
 
             ScheduleIntervals::everyMinutes($pulseCheck, $pulseMinutes);
 
             if (config('pulse.schedule.run_digest_tick', true)) {
-                $pulseWork = $schedule->call(function (): void {
-                    Artisan::call('pulse:work', ['--stop-when-empty' => true]);
-                })
+                $pulseWork = $schedule->command('pulse:work', ['--stop-when-empty' => true])
                     ->name('pulse-scheduled-work')
                     ->withoutOverlapping(max(300, $pulseMinutes * 60 * 2));
+
+                if (is_string($scheduleLog) && $scheduleLog !== '') {
+                    $pulseWork->appendOutputTo($scheduleLog);
+                }
 
                 ScheduleIntervals::everyMinutes($pulseWork, $pulseMinutes);
             }

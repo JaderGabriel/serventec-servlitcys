@@ -207,10 +207,15 @@ sudo supervisorctl restart servlitcys-queue
 Confirme que o cron do sistema executa o scheduler Laravel:
 
 ```cron
-*/3 * * * * cd /caminho/para/servlitcys && php artisan schedule:run >> /dev/null 2>&1
+# Recomendado: invocar o scheduler a cada minuto (o Laravel decide o que está «due»)
+* * * * * cd /caminho/para/servlitcys && /usr/bin/php artisan schedule:run >> /caminho/para/servlitcys/storage/logs/scheduler.log 2>&1
 ```
 
-Alinhe a expressão cron com `SCHEDULE_RUN_INTERVAL_MINUTES` (defeito **3**). O scheduler inclui (ver `bootstrap/app.php`):
+Use o **mesmo utilizador** do PHP-FPM/deploy (ex.: `www-data`), caminho absoluto ao `php` e ao projeto. **Evite** `>> /dev/null` enquanto diagnosticar Pulse offline.
+
+Alternativa (menos fiável): `*/3 * * * *` — só funciona se o minuto do cron coincidir com tarefas `everyThreeMinutes` (0, 3, 6…); se o servidor ficar «offline» no Pulse mas `schedule:run` manual funciona, mude para `* * * * *` e rode `php artisan schedule:pulse-diagnose`.
+
+`SCHEDULE_RUN_INTERVAL_MINUTES` (defeito **3**) define a cadência das tarefas Pulse no scheduler, não precisa igualar ao intervalo do cron quando este corre **cada minuto**. O scheduler inclui (ver `bootstrap/app.php`):
 
 - `pulse:check --once` e `pulse:work --stop-when-empty` — cadência `PULSE_SCHEDULE_INTERVAL_MINUTES` (defeito **3** min)
 - `admin-sync-scheduled-work` — **2×/dia** (`ADMIN_SYNC_SCHEDULE_TIMES`, ex. `06:00,18:00` em `APP_TIMEZONE`)
@@ -273,7 +278,8 @@ Altere a senha do admin após o primeiro login.
 | CSS/JS quebrados; pedidos a porta 5173 | `public/hot` presente ou falta `public/build` | `rm -f public/hot`; confirmar `manifest.json` |
 | Aba Serventec em branco | Cache de views antiga | `php artisan view:clear && php artisan view:cache` |
 | Notificações/PDF não aparecem | Fila sem worker | Supervisor `queue:work` com `default,admin-sync` |
-| Pulse «Servers offline» | Cron sem `schedule:run` | Ativar cron; `PULSE_SCHEDULE_ENABLED=true` |
+| Pulse «Servers offline» no cron, OK no SSH | Cron com utilizador/permissões diferentes, `>> /dev/null`, ou cron `*/3` desalinhado | Cron `* * * * *` como utilizador da app; log em `storage/logs/scheduler.log`; `SCHEDULE_LOG_TO_FILE=true`; `php artisan schedule:pulse-diagnose`; `schedule:clear-cache` |
+| Pulse «Servers offline» | Cron inactivo ou `PULSE_SCHEDULE_ENABLED=false` | Ativar cron; `PULSE_SCHEDULE_ENABLED=true` |
 | Financiamentos sem Transparência | API key vazia | `PORTAL_TRANSPARENCIA_API_KEY` no `.env` + `config:cache` |
 | Erro ao ligar Redis | Extensão ausente | `REDIS_CLIENT=predis` ou instalar `phpredis`; cache/fila podem ficar em `database` |
 

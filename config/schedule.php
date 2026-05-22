@@ -15,4 +15,18 @@ return [
 
     'runner_interval_minutes' => max(1, min(59, (int) env('SCHEDULE_RUN_INTERVAL_MINUTES', 3))),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Log do scheduler (cron)
+    |--------------------------------------------------------------------------
+    |
+    | Quando true, pulse:check e pulse:work no schedule gravam saída em
+    | storage/logs/scheduler.log (útil se o cron redireciona para /dev/null).
+    |
+    */
+
+    'log_to_file' => filter_var(env('SCHEDULE_LOG_TO_FILE', false), FILTER_VALIDATE_BOOL),
+
+    'log_path' => env('SCHEDULE_LOG_PATH', storage_path('logs/scheduler.log')),
+
 ];

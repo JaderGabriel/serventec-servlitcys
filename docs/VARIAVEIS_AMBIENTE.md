@@ -92,13 +92,17 @@ Bases **i-Educar por município** ficam na tabela `cities` (admin), não no `.en
 | `QUEUE_CONNECTION` | sim | `database` (ou `redis`) |
 | `DB_QUEUE` | | Fila default Laravel |
 | `CACHE_STORE` | | `database` |
-| `SCHEDULE_RUN_INTERVAL_MINUTES` | sim | Deve coincidir com o cron: `*/N * * * * php artisan schedule:run` (ex. `N=3`) |
+| `SCHEDULE_RUN_INTERVAL_MINUTES` | sim | Cadência das tarefas Pulse no scheduler (ex. `3` = `pulse:check` a cada 3 min) |
+| `SCHEDULE_LOG_TO_FILE` | | `true` — anexa saída de `pulse:check` / `pulse:work` a `storage/logs/scheduler.log` |
+| `SCHEDULE_LOG_PATH` | | Caminho do log (opcional) |
 
-**Cron obrigatório em produção:**
+**Cron obrigatório em produção** (recomendado: **cada minuto**, mesmo utilizador do PHP):
 
 ```cron
-*/3 * * * * cd /caminho/servlitcys && php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /caminho/servlitcys && /usr/bin/php artisan schedule:run >> /caminho/servlitcys/storage/logs/scheduler.log 2>&1
 ```
+
+Diagnóstico Pulse offline: `php artisan schedule:pulse-diagnose`
 
 **Worker de filas** (recomendado Supervisor):
 
