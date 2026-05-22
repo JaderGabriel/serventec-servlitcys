@@ -233,31 +233,23 @@
     }
 
     .serv-tab-status-panel--impact-slot .serv-tab-status-panel__inner {
-        @apply flex-col items-stretch gap-2 px-2.5 py-2.5 sm:px-3;
+        @apply gap-2 px-2.5 py-2;
     }
 
     .serv-tab-status-panel--impact-slot .serv-tab-status-panel__main {
-        @apply flex-col items-center gap-2 text-center;
+        @apply gap-2.5;
     }
 
-    .serv-tab-status-panel--impact-slot .serv-tab-status-panel__ring svg {
-        @apply h-14 w-14;
+    .serv-tab-status-panel--impact-slot .serv-tab-status-panel__ring {
+        @apply h-11 w-11;
     }
 
-    .serv-tab-status-panel--impact-slot .serv-tab-status-panel__score {
-        @apply text-xs;
-    }
-
-    .serv-tab-status-panel--impact-slot .serv-tab-status-panel__main > div {
-        width: 100%;
-    }
-
-    .serv-tab-status-panel--impact-slot .serv-tab-status-panel__main .flex-wrap {
-        @apply justify-center;
+    .serv-tab-status-panel--impact-slot .serv-tab-status-panel__ring-svg {
+        @apply h-11 w-11;
     }
 
     .serv-tab-status-panel--impact-slot .serv-tab-status-help__btn {
-        @apply mx-auto h-9 w-9;
+        @apply h-9 w-9;
     }
 
     .serv-tab-status-panel {
@@ -307,7 +299,7 @@
     }
 
     .serv-tab-status-help__btn {
-        @apply flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full
+        @apply flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full
             border-2 border-slate-200/90 bg-white text-slate-600 shadow-md
             hover:border-teal-400 hover:text-teal-800 hover:bg-teal-50
             focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2

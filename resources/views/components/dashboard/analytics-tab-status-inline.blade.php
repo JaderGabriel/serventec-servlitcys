@@ -39,25 +39,27 @@
     <div class="serv-tab-status-panel__inner">
         <div class="serv-tab-status-panel__main">
             @if ($pct !== null && $circ !== null)
-                <div class="serv-tab-status-panel__ring" aria-hidden="true">
-                    <svg class="w-[4.5rem] h-[4.5rem] -rotate-90" viewBox="0 0 52 52">
+                <div
+                    class="serv-tab-status-panel__ring"
+                    role="img"
+                    aria-label="{{ __('Indicador de conformidade: :n por cento', ['n' => $pct]) }}"
+                >
+                    <svg class="serv-tab-status-panel__ring-svg -rotate-90" viewBox="0 0 52 52" aria-hidden="true">
                         <circle cx="26" cy="26" r="22" fill="none" stroke-width="4" class="stroke-slate-200/90 dark:stroke-slate-700"/>
                         <circle cx="26" cy="26" r="22" fill="none" stroke-width="4" stroke-linecap="round"
                             class="{{ $statusRing }}"
                             stroke-dasharray="138" stroke-dashoffset="{{ $circ }}"/>
                     </svg>
-                    <span class="serv-tab-status-panel__score tabular-nums">{{ $pct }}</span>
+                    <span class="serv-tab-status-panel__score tabular-nums" aria-hidden="true">{{ $pct }}</span>
                 </div>
             @endif
-            <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2">
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {{ __('Status') }}
-                    </p>
-                    <span class="serv-tab-status-panel__mode">{{ $modeLabel }}</span>
-                </div>
-                <p class="mt-1 text-sm sm:text-base font-semibold leading-snug text-slate-900 dark:text-slate-50">
+            <div class="min-w-0 flex-1 leading-tight">
+                <p class="text-sm font-semibold text-slate-900 dark:text-slate-50 line-clamp-2">
                     {{ $label }}
+                </p>
+                <p class="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0 text-[10px] text-slate-500 dark:text-slate-400">
+                    <span class="font-bold uppercase tracking-wider">{{ __('Status') }}</span>
+                    <span class="serv-tab-status-panel__mode">{{ $modeLabel }}</span>
                 </p>
             </div>
         </div>
