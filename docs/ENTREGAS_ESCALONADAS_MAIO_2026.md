@@ -14,7 +14,9 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 6 | `78fd0f4` | FUNDEB/FNDE + probe-falta |
 | 7 | `682a0c6` | Documentação |
 | 8 | `ccc5ad4` | Inclusão: catálogos MEC+i-Educar + KPI totalizador |
-| 9 | *(este commit)* | Documentação (Inclusão + mapa) |
+| 9 | `b3973e6` | Documentação v2.3.4 |
+| 10 | `17d3d6e` | RX: meta retroativa, semáforo, consultas resilientes |
+| 11 | *(este commit)* | Documentação v2.3.5 |
 
 ---
 
@@ -102,11 +104,27 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | UI | `dashboard/rx.blade.php`, `components/rx/*`, menu e atalhos |
 | Testes | `RxDashboardTest.php`, `RxCensoDeadlineTest.php` |
 
-**Variáveis:** `RX_VIGENTE_YEAR`, `RX_CENSO_COLLECT_END_DEFAULT`, `RX_CITY_QUERY_TIMEOUT` — ver `config/rx.php`.
+**Variáveis:** `RX_VIGENTE_YEAR`, `RX_CENSO_COLLECT_END_DEFAULT`, `RX_CITY_QUERY_TIMEOUT`, `RX_META_LOOKBACK_YEARS`, `RX_META_PCT_PER_SALTO`, `RX_SEMAPHORE_YELLOW_MIN` — ver `config/rx.php`.
 
 ---
 
-## 6. FUNDEB / FNDE e utilitários i-Educar
+## 6. RX — refinamento (meta, semáforo, consultas resilientes)
+
+**Commit:** `17d3d6e`
+
+| Área | Ficheiros |
+|------|-----------|
+| Meta retroativa | `RxBaselineResolver.php` — `RX_META_LOOKBACK_YEARS`, `RX_META_PCT_PER_SALTO` |
+| Semáforo | `RxSemaphore.php`, `semaphore-badge.blade.php` |
+| Legenda | `RxColumnHelp.php`, `column-legend.blade.php` |
+| Recolha | `RxCityMetricsCollector.php` — teste `connectionStatus` antes das queries; blocos isolados (OK/Parcial/Consulta/Conexão) |
+| UI | `rx.blade.php`, `RxOverviewService.php` |
+
+**Nota:** A aba **Conexões** só valida ligação PDO; o RX executa consultas completas ao i-Educar. Municípios com conexão verde podem aparecer como **Consulta** ou **Parcial** se falhar SQL/schema (Censo, ritmo, etc.).
+
+---
+
+## 7. FUNDEB / FNDE e utilitários i-Educar
 
 **Objetivo:** VAAF por UF (PDF Consultas FNDE), CSV receita 2026, import melhorado; comando de diagnóstico de faltas.
 
@@ -125,14 +143,14 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 ---
 
-## 7. Documentação e índices
+## 8. Documentação e índices
 
 - Este ficheiro (`ENTREGAS_ESCALONADAS_MAIO_2026.md`)
 - Atualização de `HISTORICO_VERSOES.md`, `VARIAVEIS_AMBIENTE.md`, `docs/README.md`
 
 ---
 
-## 8. Aba Inclusão — catálogos Educacenso e totalizador de alunos
+## 9. Aba Inclusão — catálogos Educacenso e totalizador de alunos
 
 **Objetivo:** Gráficos NEE e raça/cor mostram **todas** as opções MEC e i-Educar (valor 0 quando não há matrículas); KPIs que contam alunos exibem total no painel e na legenda.
 

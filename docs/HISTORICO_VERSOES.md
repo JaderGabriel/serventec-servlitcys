@@ -1,6 +1,6 @@
 # Histórico de versões (resumo)
 
-**Versão em desenvolvimento (`main`):** **2.3.4** · maio/2026
+**Versão em desenvolvimento (`main`):** **2.3.5** · maio/2026
 
 > **Como ler:** cada linha indica a **tag ou marco**, o **commit** (hash curto Git) e o **contador** (`#N` = posição na história linear do ramo `main`, desde o primeiro commit). Links GitHub usam o repositório configurado em `DOCS_GITHUB_REPOSITORY`.
 >
@@ -12,7 +12,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **2.3.4** *(main, sem tag)* | `ccc5ad4`+ | — | mai/2026 | Inclusão: catálogos MEC+i-Educar completos (NEE e raça, zeros visíveis); totalizador `kpi_total` nos gráficos de alunos; fix URL i-Educar no mapa Início. |
+| **2.3.5** *(main, sem tag)* | `17d3d6e` | — | mai/2026 | RX: meta retroativa (+5%/salto), semáforo por município, legenda de colunas; consultas resilientes (conexão ≠ erro SQL). |
+| **2.3.4** | `ccc5ad4`+ | — | mai/2026 | Inclusão: catálogos MEC+i-Educar completos (NEE e raça, zeros visíveis); totalizador `kpi_total` nos gráficos de alunos; fix URL i-Educar no mapa Início. |
 | **2.3.3** | *(commits escalonados)* | — | mai/2026 | Mapa Início (IBGE/anti-overlap); botão i-Educar por município; medidor status compacto; aba Matrículas (status holístico + saldo); painel RX; VAAF UF PDF + CSV FNDE 2026; `ieducar:probe-falta`. |
 | **2.3.2** | `4d3f5e8` | **157** | mai/2026 | Saldo pedagógico (Desempenho/Frequência/Inclusão); alertas frequência sem `falta_aluno`; medidor status 75/25; FUNDEB lazy com matrículas reais; alias `IeducarCityDataService`. |
 | **2.3.1** | `4893801` | **155** | mai/2026 | Modal mapa unidades: endereço (`escola_localizacao`), métricas com fallback ano letivo, link QEdu; correções FUNDEB (`CityDataConnection`) e sync semanal (checkpoint). |
@@ -82,6 +83,14 @@ Entrega focada em **bases financeiras públicas**, **sincronização semanal** e
 | **Testes** | Tesouro CSV, import repasses, tabelas FUNDEB no PDF, alertas FNDE, anos de planejamento. |
 
 Documentação: [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md), [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md), [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md), [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
+
+### v2.3.5 — `17d3d6e` (mai/2026)
+
+| Tema | Melhoria |
+|------|----------|
+| **RX — meta** | Busca ano de referência para trás quando Y−1 tem turmas/mat. zeradas; +5% por salto (configurável). |
+| **RX — UI** | Semáforo de cumprimento da meta; legenda «O que significa cada coluna?»; coluna Meta cadastro. |
+| **RX — fiabilidade** | Teste de conexão antes das consultas; falhas SQL isoladas (OK/Parcial/Consulta vs Conexão). |
 
 ### v2.3.4 — `ccc5ad4` (mai/2026)
 
