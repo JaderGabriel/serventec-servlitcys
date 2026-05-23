@@ -22,6 +22,8 @@ class FirstAccessProfileRequest extends FormRequest
     {
         return [
             'birth_date' => ['required', 'date', 'before:today'],
+            'phone' => ['nullable', 'string', 'max:32'],
+            'whatsapp' => ['nullable', 'string', 'max:32'],
             'cpf' => [
                 'required',
                 'string',
@@ -38,6 +40,13 @@ class FirstAccessProfileRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        foreach (['phone', 'whatsapp'] as $field) {
+            if ($this->has($field)) {
+                $v = trim((string) $this->input($field));
+                $this->merge([$field => $v !== '' ? $v : null]);
+            }
+        }
+
         $cpf = $this->input('cpf');
         if (is_string($cpf)) {
             $this->merge(['cpf' => Cpf::normalizeDigits($cpf)]);

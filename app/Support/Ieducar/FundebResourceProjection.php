@@ -43,9 +43,16 @@ final class FundebResourceProjection
         $ref = $referenceResolved ?? DiscrepanciesFundingImpact::resolveReference($city, $filters);
         $municipalBlock = is_array($ref['municipal'] ?? null) ? $ref['municipal'] : null;
         $usaVaafMunicipal = $municipalBlock !== null && (float) ($municipalBlock['vaaf'] ?? 0) > 0;
-        $vaafCalculo = $usaVaafMunicipal
-            ? (float) $municipalBlock['vaaf']
-            : (float) $ref['vaaf'];
+        if ($usaVaafMunicipal) {
+            $vaafCalculo = (float) $municipalBlock['vaaf'];
+            $fonteCalculo = (string) ($municipalBlock['fonte_label'] ?? $ref['fonte_label'] ?? '');
+            $anoCalculo = $municipalBlock['ano'] ?? $ref['ano'] ?? null;
+        } else {
+            $calc = FundebMunicipalReferenceResolver::vaafParaCalculo($city, $filters);
+            $vaafCalculo = (float) $calc['vaaf'];
+            $fonteCalculo = (string) $calc['fonte_label'];
+            $anoCalculo = $calc['ano'] ?? $ref['ano'] ?? null;
+        }
         $previaVaaf = is_array($ref['previa'] ?? null) ? (float) ($ref['previa']['vaaf'] ?? 0) : 0.0;
         $aviso = (string) ($cfg['aviso_previsao'] ?? config('ieducar.discrepancies.aviso_financeiro', ''));
 
@@ -78,7 +85,7 @@ final class FundebResourceProjection
         $distribuicao = self::buildLegalDistribution($previsaoReferencia, $cfg);
         $porEtapa = self::extractEtapaBreakdown($enrollmentData, $vaafCalculo, $matriculas);
         $vaafComparacao = FundebReferenceDisplay::vaafComparacao($ref);
-        $previsaoComparacao = FundebReferenceDisplay::previsaoComparacao($matriculas, $ref);
+        $previsaoComparacao = FundebReferenceDisplay::previsaoComparacao($matriculas, $ref, $city, $filters);
 
         $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
 
@@ -93,10 +100,8 @@ final class FundebResourceProjection
             'vaa_label' => $fmt($vaafCalculo),
             'vaa_previa_label' => $previaVaaf > 0 ? $fmt($previaVaaf) : null,
             'vaa_fonte' => $ref['fonte'],
-            'vaa_fonte_label' => $usaVaafMunicipal
-                ? (string) ($municipalBlock['fonte_label'] ?? $ref['fonte_label'])
-                : (string) $ref['fonte_label'],
-            'vaa_ano' => $usaVaafMunicipal ? ($municipalBlock['ano'] ?? $ref['ano']) : $ref['ano'],
+            'vaa_fonte_label' => $fonteCalculo,
+            'vaa_ano' => $anoCalculo,
             'vaaf_comparacao' => $vaafComparacao,
             'previsao_comparacao' => $previsaoComparacao,
             'divergencia_vaaf' => is_array($ref['divergencia'] ?? null) ? $ref['divergencia'] : null,
@@ -250,21 +255,23 @@ final class FundebResourceProjection
     private static function empty(string $yearLabel, ?City $city = null, ?IeducarFilterState $filters = null, ?array $referenceResolved = null): array
     {
         $ref = $referenceResolved ?? DiscrepanciesFundingImpact::resolveReference($city, $filters);
+        $calc = FundebMunicipalReferenceResolver::vaafParaCalculo($city, $filters);
+        $vaafCalculo = (float) $calc['vaaf'];
 
         return [
             'available' => false,
             'year_label' => $yearLabel,
             'aviso' => (string) config('ieducar.discrepancies.aviso_financeiro', ''),
             'matriculas_base' => 0,
-            'vaa_referencia' => $ref['vaaf'],
-            'vaa_municipal' => is_array($ref['municipal'] ?? null) ? (float) ($ref['municipal']['vaaf'] ?? $ref['vaaf']) : (float) $ref['vaaf'],
+            'vaa_referencia' => $vaafCalculo,
+            'vaa_municipal' => is_array($ref['municipal'] ?? null) ? (float) ($ref['municipal']['vaaf'] ?? $vaafCalculo) : $vaafCalculo,
             'vaa_previa' => is_array($ref['previa'] ?? null) ? (float) ($ref['previa']['vaaf'] ?? 0) : null,
-            'vaa_label' => DiscrepanciesFundingImpact::formatBrl((float) $ref['vaaf']),
+            'vaa_label' => DiscrepanciesFundingImpact::formatBrl($vaafCalculo),
             'vaa_previa_label' => is_array($ref['previa'] ?? null)
                 ? DiscrepanciesFundingImpact::formatBrl((float) $ref['previa']['vaaf'])
                 : null,
-            'vaa_fonte' => $ref['fonte'],
-            'vaa_fonte_label' => $ref['fonte_label'],
+            'vaa_fonte' => (string) $calc['origem'],
+            'vaa_fonte_label' => (string) $calc['fonte_label'],
             'vaa_ano' => $ref['ano'],
             'vaaf_comparacao' => FundebReferenceDisplay::vaafComparacao($ref),
             'previsao_comparacao' => null,

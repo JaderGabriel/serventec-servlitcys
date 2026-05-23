@@ -50,4 +50,18 @@ class InclusionEducacensoCatalogTest extends TestCase
 
         $this->assertSame(7, InclusionEducacensoCatalog::countForDeficienciaEntry($entry, $maps));
     }
+
+    public function test_count_for_deficiencia_entry_sums_fuzzy_norm_matches_for_mec_label(): void
+    {
+        $entry = ['id' => null, 'label' => 'Deficiência intelectual', 'norm' => 'deficiencia intelectual'];
+        $maps = [
+            'by_id' => [],
+            'by_norm' => [
+                'deficiencia intelectual leve' => 3,
+                'deficiencia intelectual moderada' => 2,
+            ],
+        ];
+
+        $this->assertSame(5, InclusionEducacensoCatalog::countForDeficienciaEntry($entry, $maps));
+    }
 }

@@ -25,7 +25,8 @@ final class RxDashboardTest extends TestCase
             ->assertSee('RX', false)
             ->assertSee(__('Painel operacional'), false)
             ->assertSee(__('O que significa cada coluna?'), false)
-            ->assertSee(__('Semáforo'), false);
+            ->assertSee(__('Indicador meta'), false)
+            ->assertSee(__('Leitura dos dados'), false);
     }
 
     #[Test]

@@ -38,6 +38,38 @@
     </div>
 
     <div>
+        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600 pb-2 mb-4">{{ __('Contato de referência') }}</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">{{ __('Pessoa responsável ou ponto focal do município. Exibido na Consultoria e no RX com atalhos para telefone, WhatsApp e e-mail.') }}</p>
+        <div class="space-y-6">
+            <div>
+                <x-input-label for="contact_name" :value="__('Nome')" />
+                <x-text-input id="contact_name" class="block mt-1 w-full" type="text" name="contact_name" :value="old('contact_name', $city?->contact_name)" placeholder="{{ __('Ex.: Maria Silva — Secretaria de Educação') }}" />
+                <x-input-error :messages="$errors->get('contact_name')" class="mt-2" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                    <x-input-label for="contact_phone" :value="__('Telefone')" />
+                    <x-text-input id="contact_phone" class="block mt-1 w-full" type="tel" name="contact_phone" inputmode="tel" :value="old('contact_phone', $city?->contact_phone)" placeholder="(00) 00000-0000" />
+                    <x-input-error :messages="$errors->get('contact_phone')" class="mt-2" />
+                </div>
+                <div>
+                    <x-input-label for="contact_whatsapp" :value="__('WhatsApp')" />
+                    <x-text-input id="contact_whatsapp" class="block mt-1 w-full" type="tel" name="contact_whatsapp" inputmode="tel" :value="old('contact_whatsapp', $city?->contact_whatsapp)" placeholder="(00) 00000-0000" />
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Com DDD. Se omitir o código do país, assume-se Brasil (+55).') }}</p>
+                    <x-input-error :messages="$errors->get('contact_whatsapp')" class="mt-2" />
+                </div>
+            </div>
+
+            <div>
+                <x-input-label for="contact_email" :value="__('E-mail')" />
+                <x-text-input id="contact_email" class="block mt-1 w-full" type="email" name="contact_email" :value="old('contact_email', $city?->contact_email)" placeholder="contato@municipio.gov.br" />
+                <x-input-error :messages="$errors->get('contact_email')" class="mt-2" />
+            </div>
+        </div>
+    </div>
+
+    <div>
         <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600 pb-2 mb-4">{{ __('Base de dados (consultas do painel)') }}</h3>
         <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">{{ __('Escolha o motor e as credenciais para conectar ao banco desta cidade. A senha é armazenada de forma criptografada.') }}</p>
         <div class="space-y-6">

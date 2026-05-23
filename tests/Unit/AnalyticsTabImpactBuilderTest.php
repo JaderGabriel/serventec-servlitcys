@@ -198,7 +198,14 @@ class AnalyticsTabImpactBuilderTest extends TestCase
 
     public function test_enrollment_strip_mostra_saldo_e_fundeb_sem_discrepancias(): void
     {
-        $strip = AnalyticsTabImpactBuilder::build('enrollment', true, ['total_matriculas' => 600], [
+        $strip = AnalyticsTabImpactBuilder::build('enrollment', true, [
+            'total_matriculas' => 600,
+            'funding_reference' => [
+                'vaa_anual' => 5123.45,
+                'vaa_label' => 'R$ 5.123,45',
+                'vaa_fonte_label' => 'VAAF importado (teste)',
+            ],
+        ], [
             'enrollmentData' => [
                 'kpis' => ['matriculas' => 600, 'turmas_distintas' => 80],
                 'distorcao' => ['com' => 0, 'sem' => 100, 'total' => 100, 'pct' => 0.0],

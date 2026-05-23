@@ -17,8 +17,8 @@
 
 @if ($cityName)
     <div class="serv-municipality-strip" role="region" aria-label="{{ __('Município em análise') }}">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div class="min-w-0">
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div class="min-w-0 flex-1">
                 <p class="serv-eyebrow text-teal-100/90">{{ __('Município em análise') }}</p>
                 <p class="font-display text-xl sm:text-2xl font-semibold text-white truncate">
                     {{ $cityName }}
@@ -37,7 +37,11 @@
                     </p>
                 @endif
             </div>
-            <div class="flex flex-wrap gap-2 shrink-0">
+            <div class="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0 lg:max-w-xs w-full sm:w-auto">
+                @if ($city)
+                    <x-city.reference-contact :city="$city" variant="strip" class="w-full" />
+                @endif
+                <div class="flex flex-wrap gap-2">
                 <button
                     type="button"
                     class="serv-tab-pill serv-tab-pill--on-dark"
@@ -59,6 +63,7 @@
                 >
                     {{ __('Discrepâncias') }}
                 </button>
+                </div>
             </div>
         </div>
     </div>

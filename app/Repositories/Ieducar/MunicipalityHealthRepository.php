@@ -155,7 +155,7 @@ class MunicipalityHealthRepository
             : FundebReferenceDisplay::vaafComparacao($fundebRef);
         $previsaoComparacao = is_array($proj['previsao_comparacao'] ?? null)
             ? $proj['previsao_comparacao']
-            : ($totalMat > 0 ? FundebReferenceDisplay::previsaoComparacao($totalMat, $fundebRef) : null);
+            : ($totalMat > 0 ? FundebReferenceDisplay::previsaoComparacao($totalMat, $fundebRef, $city, $filters) : null);
         $divergenciaVaaf = is_array($proj['divergencia_vaaf'] ?? null)
             ? $proj['divergencia_vaaf']
             : (is_array($fundingDisplay['divergencia_vaaf'] ?? null)
@@ -323,6 +323,9 @@ class MunicipalityHealthRepository
     {
         $byId = [];
         foreach ($checks as $c) {
+            if (! ($c['has_issue'] ?? $c['detected'] ?? false)) {
+                continue;
+            }
             $byId[(string) ($c['id'] ?? '')] = $c;
         }
         foreach ($dimensions as $d) {
@@ -330,7 +333,14 @@ class MunicipalityHealthRepository
                 continue;
             }
             $id = (string) ($d['id'] ?? '');
-            if ($id === '' || isset($byId[$id])) {
+            if ($id === '') {
+                continue;
+            }
+            if (isset($byId[$id])) {
+                if (($d['pct_rede'] ?? null) !== null && ! isset($byId[$id]['pct_rede'])) {
+                    $byId[$id]['pct_rede'] = $d['pct_rede'];
+                }
+
                 continue;
             }
             $total = (int) ($d['total'] ?? 0);
@@ -338,6 +348,7 @@ class MunicipalityHealthRepository
                 'id' => $id,
                 'title' => (string) ($d['title'] ?? ''),
                 'total' => $total,
+                'pct_rede' => $d['pct_rede'] ?? null,
                 'perda_estimada_anual' => (float) ($d['perda_estimada_anual'] ?? 0),
                 'ganho_potencial_anual' => (float) ($d['ganho_potencial_anual'] ?? 0),
                 'funding_explicacao' => is_array($d['funding_explicacao'] ?? null) ? $d['funding_explicacao'] : null,
@@ -346,7 +357,12 @@ class MunicipalityHealthRepository
             ];
         }
 
-        $top = array_values($byId);
+        $top = array_values(array_filter(
+            $byId,
+            static fn (array $row): bool => (int) ($row['total'] ?? 0) > 0
+                || (float) ($row['perda_estimada_anual'] ?? 0) > 0
+                || (float) ($row['ganho_potencial_anual'] ?? 0) > 0,
+        ));
         usort($top, static fn (array $a, array $b): int => ((float) ($b['perda_estimada_anual'] ?? $b['ganho_potencial_anual'] ?? 0))
             <=> ((float) ($a['perda_estimada_anual'] ?? $a['ganho_potencial_anual'] ?? 0)));
 

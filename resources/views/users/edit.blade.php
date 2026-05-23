@@ -45,6 +45,8 @@
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
 
+                        @include('users.partials.contact-fields', ['user' => $editUser])
+
                         @include('users.partials.role-fields', [
                             'creatableRoles' => $creatableRoles,
                             'assignableCities' => $assignableCities,
@@ -74,7 +76,7 @@
                                 {{ __('Cancelar') }}
                             </a>
                             <x-primary-button>
-                                {{ __('Guardar alterações') }}
+                                {{ __('Salvar alterações') }}
                             </x-primary-button>
                         </div>
                     </form>

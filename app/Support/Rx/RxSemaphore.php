@@ -3,7 +3,7 @@
 namespace App\Support\Rx;
 
 /**
- * Semáforo de cumprimento da meta de cadastro (por município no RX).
+ * Indicador visual de cumprimento da meta de cadastro (por município no RX).
  */
 final class RxSemaphore
 {

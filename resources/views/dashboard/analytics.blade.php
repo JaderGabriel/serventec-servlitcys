@@ -43,7 +43,7 @@
                         <select id="analytics_city" name="city_id" class="block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 shadow-sm focus:border-teal-600 focus:ring-teal-600" onchange="this.form.submit()">
                             <option value="">{{ __('— Selecione uma cidade —') }}</option>
                             @foreach ($cities as $c)
-                                <option value="{{ $c->id }}" @selected((string) ($selectedCity?->id) === (string) $c->id)>{{ $c->name }} ({{ $c->uf }}) — {{ $c->dataDriver() === 'pgsql' ? __('PostgreSQL') : __('MySQL') }}</option>
+                                <option value="{{ $c->id }}" @selected((string) ($selectedCity?->id) === (string) $c->id)>{{ $c->name }} ({{ $c->uf }})@if (filled($c->ibge_municipio)) — {{ __('IBGE') }} {{ $c->ibge_municipio }}@endif</option>
                             @endforeach
                         </select>
                     </div>

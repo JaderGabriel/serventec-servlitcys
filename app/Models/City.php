@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\City\CityReferenceContact;
 use Database\Factories\CityFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -13,6 +14,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
     'name',
     'uf',
     'ibge_municipio',
+    'contact_name',
+    'contact_phone',
+    'contact_whatsapp',
+    'contact_email',
     'country',
     'db_driver',
     'ieducar_schema',
@@ -109,6 +114,16 @@ class City extends Model
         return filled($this->db_host)
             && filled($this->db_database)
             && filled($this->db_username);
+    }
+
+    /**
+     * Contacto de referência para consultoria / RX (links prontos para telefone, WhatsApp e e-mail).
+     *
+     * @return array<string, mixed>
+     */
+    public function referenceContact(): array
+    {
+        return CityReferenceContact::from($this);
     }
 
     /**

@@ -26,7 +26,8 @@ final class DiscrepanciesCheckCatalog
     {
         $pesos = config('ieducar.discrepancies.peso_por_check', []);
         $ref = DiscrepanciesFundingImpact::resolveReference($city, $filters);
-        $vaa = (float) ($ref['vaaf'] ?? config('ieducar.discrepancies.vaa_referencia_anual', 4500));
+        $calc = FundebMunicipalReferenceResolver::vaafParaCalculo($city, $filters);
+        $vaa = (float) $calc['vaaf'];
         $conditions = [];
         foreach (self::definitions() as $id => $def) {
             $peso = 1.0;
@@ -52,7 +53,7 @@ final class DiscrepanciesCheckCatalog
             'complementary_programs' => self::complementaryProgramsForModal(),
             'public_repasses' => self::publicRepassesForModal(),
             'vaa_label' => DiscrepanciesFundingImpact::formatBrl($vaa),
-            'vaa_fonte_label' => (string) ($ref['fonte_label'] ?? ''),
+            'vaa_fonte_label' => (string) ($calc['fonte_label'] ?? $ref['fonte_label'] ?? ''),
             'vaa_ano' => $ref['ano'] ?? null,
             'aviso' => (string) config('ieducar.discrepancies.aviso_financeiro', ''),
         ];

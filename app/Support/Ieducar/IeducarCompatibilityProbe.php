@@ -141,6 +141,9 @@ final class IeducarCompatibilityProbe
             $routines[] = self::routineRow('nee_subnotificacao', $catalog['nee_subnotificacao'], $neeEval, $totalMat, $city, $filters);
         }
 
+        $routines = self::sortRoutinesForConsultoria($routines);
+        $fundingRef = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
+
         return [
             'city_id' => (int) $city->id,
             'city_name' => (string) $city->name,
@@ -148,6 +151,8 @@ final class IeducarCompatibilityProbe
             'total_matriculas' => $totalMat,
             'matricula_count_diagnostics' => MatriculaCountDiagnostics::snapshot($db, $city, $filters),
             'discrepancy_summary' => DiscrepanciesRoutineMetrics::summaryFromRoutines($routines, $totalMat),
+            'funding_reference' => $fundingRef,
+            'funding_metodologia' => DiscrepanciesFundingImpact::metodologiaResumo($city, $filters),
             'recurso_prova_schema' => RecursoProvaSchemaResolver::resolve($db, $city),
             'routines' => $routines,
         ];
@@ -169,12 +174,18 @@ final class IeducarCompatibilityProbe
         $dimension = DiscrepanciesRoutineMetrics::dimensionFromEval($id, $meta, $eval, $totalMat, $city, $filters);
         $totals = DiscrepanciesRoutineMetrics::occurrenceTotals($eval);
         $presentation = DiscrepanciesRoutineStatus::presentation((string) $dimension['status']);
+        $severity = (string) ($meta['severity'] ?? 'warning');
 
         return array_merge($dimension, [
+            'explanation' => (string) ($meta['explanation'] ?? ''),
+            'impact' => (string) ($meta['impact'] ?? ''),
+            'correction' => (string) ($meta['correction'] ?? ''),
+            'is_erro' => $severity === 'danger' && ($dimension['has_issue'] ?? false),
+            'consultoria_prioridade' => $severity === 'danger' ? __('Erro crítico') : __('Atenção'),
             'escola_ids' => $totals['escola_ids'],
             'hint' => $dimension['status_hint'] ?? ($eval['unavailable_reason'] ?? null),
             'ui_status_class' => self::uiStatusClass((string) $dimension['status']),
-            'correlacao_resumo' => self::correlacaoResumo($dimension, $totalMat),
+            'correlacao_resumo' => self::correlacaoResumo($dimension, $meta, $totalMat),
             'presentation_chip' => $presentation['chip'] ?? '',
             'presentation_icon' => $presentation['icon'] ?? '',
         ]);
@@ -233,8 +244,9 @@ final class IeducarCompatibilityProbe
 
     /**
      * @param  array<string, mixed>  $dimension
+     * @param  array<string, mixed>  $meta
      */
-    private static function correlacaoResumo(array $dimension, int $totalMat): ?string
+    private static function correlacaoResumo(array $dimension, array $meta, int $totalMat): ?string
     {
         if (! ($dimension['has_issue'] ?? false)) {
             return null;
@@ -260,6 +272,46 @@ final class IeducarCompatibilityProbe
             $parts[] = __('perda est. :v/ano', ['v' => DiscrepanciesFundingImpact::formatBrl($perda)]);
         }
 
+        $impact = trim((string) ($meta['impact'] ?? ''));
+        if ($impact !== '') {
+            $parts[] = \Illuminate\Support\Str::limit($impact, 120);
+        }
+
         return implode(' · ', $parts);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $routines
+     * @return list<array<string, mixed>>
+     */
+    private static function sortRoutinesForConsultoria(array $routines): array
+    {
+        usort($routines, static function (array $a, array $b): int {
+            $hasA = (bool) ($a['has_issue'] ?? false);
+            $hasB = (bool) ($b['has_issue'] ?? false);
+            if ($hasA !== $hasB) {
+                return $hasB <=> $hasA;
+            }
+
+            $order = static fn (array $r): int => match ((string) ($r['status'] ?? '')) {
+                'danger' => 0,
+                'warning' => 1,
+                default => 2,
+            };
+            $oa = $order($a);
+            $ob = $order($b);
+            if ($oa !== $ob) {
+                return $oa <=> $ob;
+            }
+
+            $perdaCmp = ((float) ($b['perda_estimada_anual'] ?? 0)) <=> ((float) ($a['perda_estimada_anual'] ?? 0));
+            if ($perdaCmp !== 0) {
+                return $perdaCmp;
+            }
+
+            return ((int) ($b['occurrences_total'] ?? 0)) <=> ((int) ($a['occurrences_total'] ?? 0));
+        });
+
+        return $routines;
     }
 }

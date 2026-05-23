@@ -95,6 +95,37 @@ final class InclusionEducacensoCatalog
     }
 
     /**
+     * Catálogo para gráficos: cadastro i-Educar primeiro (com ID), depois rótulos MEC sem duplicar norm.
+     *
+     * @return list<array{id: ?string, label: string, norm: string}>
+     */
+    public static function mergedDeficienciaEntriesForChart(Connection $db, City $city): array
+    {
+        $seen = [];
+        $out = [];
+
+        foreach (self::loadDeficienciaCatalogRows($db, $city) as $row) {
+            $norm = self::normalizeLabel($row['label']);
+            if ($norm === '' || isset($seen[$norm])) {
+                continue;
+            }
+            $seen[$norm] = true;
+            $out[] = ['id' => $row['id'], 'label' => $row['label'], 'norm' => $norm];
+        }
+
+        foreach (self::deficienciaMecLabels() as $label) {
+            $norm = self::normalizeLabel($label);
+            if ($norm === '' || isset($seen[$norm])) {
+                continue;
+            }
+            $seen[$norm] = true;
+            $out[] = ['id' => null, 'label' => $label, 'norm' => $norm];
+        }
+
+        return $out;
+    }
+
+    /**
      * @param  list<array{id: ?string, label: string, norm: string}>  $entries
      * @param  array<string, int|float>  $countsByNorm
      * @return array{0: list<string>, 1: list<float>}
@@ -197,18 +228,20 @@ final class InclusionEducacensoCatalog
         }
 
         $fuzzy = 0;
-        $matches = 0;
         foreach ($byNorm as $key => $value) {
             if ($key === '' || $value <= 0) {
                 continue;
             }
             if ($key === $norm || str_contains($key, $norm) || str_contains($norm, $key)) {
                 $fuzzy += (int) $value;
-                $matches++;
             }
         }
 
-        return $matches === 1 ? $fuzzy : 0;
+        if ($fuzzy > 0) {
+            return $fuzzy;
+        }
+
+        return 0;
     }
 
     public static function normalizeLabel(string $label): string

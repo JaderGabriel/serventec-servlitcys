@@ -140,8 +140,8 @@ final class InclusionDashboardQueries
             return ['available' => false];
         }
 
-        $ref = DiscrepanciesFundingImpact::resolveReference($city, $filters);
-        $vaaf = (float) ($ref['vaaf'] ?? 0);
+        $calc = FundebMunicipalReferenceResolver::vaafParaCalculo($city, $filters);
+        $vaaf = (float) ($calc['vaaf'] ?? 0);
         if ($vaaf <= 0) {
             return ['available' => false, 'matriculas_nee' => $nee];
         }
@@ -158,7 +158,8 @@ final class InclusionDashboardQueries
             'matriculas_nee' => $nee,
             'vaaf' => $vaaf,
             'vaaf_fmt' => $fmt($vaaf),
-            'vaaf_fonte' => (string) ($ref['fonte_label'] ?? ''),
+            'vaaf_fonte' => (string) ($calc['fonte_label'] ?? ''),
+            'vaaf_origem' => (string) ($calc['origem'] ?? ''),
             'base_anual' => $baseAnual,
             'base_anual_fmt' => $fmt($baseAnual),
             'peso_educacao_especial' => $pesoEsp,
@@ -192,7 +193,7 @@ final class InclusionDashboardQueries
                 static fn ($row) => (string) ($row->def_id ?? ''),
             );
 
-            $entries = InclusionEducacensoCatalog::mergedDeficienciaEntries($db, $city);
+            $entries = InclusionEducacensoCatalog::mergedDeficienciaEntriesForChart($db, $city);
             if ($entries === [] && $maps['by_norm'] === [] && $maps['by_id'] === []) {
                 return null;
             }
@@ -364,13 +365,14 @@ final class InclusionDashboardQueries
         ?int $denominator = null
     ): ?array {
         try {
-            $entries = InclusionEducacensoCatalog::mergedDeficienciaEntries($db, $city);
-            if ($entries === []) {
+            $rows = self::getMatriculasPorDeficiencia($db, $city, $filters, null);
+            $entries = InclusionEducacensoCatalog::mergedDeficienciaEntriesForChart($db, $city);
+            if ($entries === [] && $rows->isEmpty()) {
                 return null;
             }
 
             $maps = InclusionEducacensoCatalog::deficienciaCountMapsFromRows(
-                self::getMatriculasPorDeficiencia($db, $city, $filters, null),
+                $rows,
                 static fn ($row) => (string) ($row->deficiencia ?? ''),
                 static fn ($row) => (int) ($row->total ?? 0),
                 static fn ($row) => (string) ($row->def_id ?? ''),
@@ -378,9 +380,55 @@ final class InclusionDashboardQueries
 
             $labels = [];
             $values = [];
+            $seenNorm = [];
+            $seenIds = [];
+
+            foreach ($rows as $row) {
+                $nm = trim((string) ($row->deficiencia ?? ''));
+                if ($nm === '') {
+                    $nm = (string) __('Não informado');
+                }
+                $t = (int) ($row->total ?? 0);
+                if ($t <= 0) {
+                    continue;
+                }
+                $norm = InclusionEducacensoCatalog::normalizeLabel($nm);
+                $defId = trim((string) ($row->def_id ?? ''));
+                if ($norm !== '' && isset($seenNorm[$norm])) {
+                    continue;
+                }
+                if ($defId !== '' && $defId !== '0' && isset($seenIds[$defId])) {
+                    continue;
+                }
+                if ($norm !== '') {
+                    $seenNorm[$norm] = true;
+                }
+                if ($defId !== '' && $defId !== '0') {
+                    $seenIds[$defId] = true;
+                }
+                $labels[] = $nm;
+                $values[] = (float) $t;
+            }
+
             foreach ($entries as $entry) {
-                $labels[] = (string) ($entry['label'] ?? '');
-                $values[] = (float) InclusionEducacensoCatalog::countForDeficienciaEntry($entry, $maps);
+                $nm = (string) ($entry['label'] ?? '');
+                $norm = (string) ($entry['norm'] ?? InclusionEducacensoCatalog::normalizeLabel($nm));
+                $entryId = $entry['id'] ?? null;
+                if ($entryId !== null && $entryId !== '' && isset($seenIds[(string) $entryId])) {
+                    continue;
+                }
+                if ($norm !== '' && isset($seenNorm[$norm])) {
+                    continue;
+                }
+                $t = InclusionEducacensoCatalog::countForDeficienciaEntry($entry, $maps);
+                if ($norm !== '') {
+                    $seenNorm[$norm] = true;
+                }
+                if ($entryId !== null && $entryId !== '') {
+                    $seenIds[(string) $entryId] = true;
+                }
+                $labels[] = $nm;
+                $values[] = (float) $t;
             }
 
             $den = $denominator ?? MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);

@@ -40,6 +40,8 @@ class UpdateUserRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $this->prepareManagedContactFields();
+
         $pwd = $this->input('password');
         if ($pwd === null || (is_string($pwd) && trim($pwd) === '')) {
             $this->merge([

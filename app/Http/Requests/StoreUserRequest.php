@@ -17,6 +17,11 @@ class StoreUserRequest extends FormRequest
         return $this->user()?->can('create', User::class) ?? false;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->prepareManagedContactFields();
+    }
+
     /**
      * @return array<string, ValidationRule|array<mixed>|string>
      */

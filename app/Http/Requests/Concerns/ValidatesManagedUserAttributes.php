@@ -10,6 +10,16 @@ use Illuminate\Validation\Rule;
 
 trait ValidatesManagedUserAttributes
 {
+    protected function prepareManagedContactFields(): void
+    {
+        foreach (['phone', 'whatsapp'] as $field) {
+            if ($this->has($field)) {
+                $v = trim((string) $this->input($field));
+                $this->merge([$field => $v !== '' ? $v : null]);
+            }
+        }
+    }
+
     /**
      * @return list<string>
      */
@@ -30,6 +40,8 @@ trait ValidatesManagedUserAttributes
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', Rule::unique(User::class, 'username')->ignore($target?->id)],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)->ignore($target?->id)],
+            'phone' => ['nullable', 'string', 'max:32'],
+            'whatsapp' => ['nullable', 'string', 'max:32'],
             'role' => ['required', 'string', Rule::in($this->allowedRoleValues($target))],
             'city_ids' => ['nullable', 'array'],
             'city_ids.*' => ['integer', 'exists:cities,id'],

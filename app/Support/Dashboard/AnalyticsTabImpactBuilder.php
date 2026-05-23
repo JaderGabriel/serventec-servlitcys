@@ -694,10 +694,12 @@ final class AnalyticsTabImpactBuilder
             return [];
         }
 
-        $ref = is_array($ctx['funding_reference'] ?? null)
-            ? $ctx['funding_reference']
-            : DiscrepanciesFundingImpact::resolveReference();
-        $vaaf = (float) ($ref['vaaf'] ?? 0);
+        $funding = is_array($ctx['funding_reference'] ?? null) ? $ctx['funding_reference'] : null;
+        if ($funding === null || ! isset($funding['vaa_anual'])) {
+            return [];
+        }
+
+        $vaaf = (float) $funding['vaa_anual'];
         if ($vaaf <= 0) {
             return [];
         }
@@ -709,8 +711,8 @@ final class AnalyticsTabImpactBuilder
                 ':n matrícula(s) × :vaaf (VAAF ref., :fonte) ≈ :base/ano de base FUNDEB indicativa no filtro.',
                 [
                     'n' => number_format($matriculas, 0, ',', '.'),
-                    'vaaf' => DiscrepanciesFundingImpact::formatBrl($vaaf),
-                    'fonte' => (string) ($ref['fonte_label'] ?? __('configuração municipal')),
+                    'vaaf' => (string) ($funding['vaa_label'] ?? DiscrepanciesFundingImpact::formatBrl($vaaf)),
+                    'fonte' => (string) ($funding['vaa_fonte_label'] ?? __('referência municipal')),
                     'base' => DiscrepanciesFundingImpact::formatBrl($base),
                 ]
             ),

@@ -4,6 +4,7 @@ namespace App\Support\Rx;
 
 use App\Models\City;
 use App\Services\CityDataConnection;
+use App\Support\City\CityReferenceContact;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarCensoEscolaQueries;
 use App\Support\Ieducar\IeducarWorkActivityQueries;
@@ -30,7 +31,7 @@ final class RxCityMetricsCollector
         if (! $city->hasDataSetup()) {
             return $this->finalizeRow($base, [
                 'situacao_codigo' => 'setup',
-                'error' => __('Credenciais de base incompletas (host, base ou utilizador).'),
+                'error' => __('Credenciais de base incompletas (host, base ou usuário).'),
                 'conexao_ok' => false,
             ]);
         }
@@ -287,6 +288,7 @@ final class RxCityMetricsCollector
             'city_id' => (int) $city->id,
             'city_name' => (string) $city->name,
             'uf' => (string) $city->uf,
+            'reference_contact' => CityReferenceContact::from($city),
             'driver' => $city->effectiveIeducarDriver(),
             'ok' => false,
             'error' => null,
@@ -382,7 +384,7 @@ final class RxCityMetricsCollector
     private function situacaoLabel(array $row): string
     {
         return match ($row['situacao_codigo'] ?? '') {
-            'ok' => __('OK'),
+            'ok' => __('Completa'),
             'parcial' => __('Parcial'),
             'conexao' => __('Conexão'),
             'consulta' => __('Consulta'),

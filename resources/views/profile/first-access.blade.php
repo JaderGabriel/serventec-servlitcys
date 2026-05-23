@@ -10,7 +10,7 @@
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-amber-100 dark:border-amber-900/40">
                 <div class="p-6 text-gray-900 dark:text-gray-100 space-y-4">
                     <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                        {{ __('Para continuar, informe a sua data de nascimento e o CPF. Estes dados não são pedidos no cadastro pelo administrador; ficam associados à sua conta para recuperação de senha e conferência.') }}
+                        {{ __('Para continuar, informe sua data de nascimento e o CPF. Telefone e WhatsApp são opcionais e podem ser preenchidos agora ou depois no perfil.') }}
                     </p>
 
                     <form method="POST" action="{{ route('profile.first-access.update') }}" class="space-y-6"
@@ -54,6 +54,19 @@
                             />
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Usado com o e-mail na recuperação de senha.') }}</p>
                             <x-input-error :messages="$errors->get('cpf')" class="mt-2" />
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <x-input-label for="phone" :value="__('Telefone (opcional)')" />
+                                <x-text-input id="phone" class="block mt-1 w-full" type="tel" name="phone" inputmode="tel" :value="old('phone', $user->phone)" placeholder="(00) 00000-0000" />
+                                <x-input-error :messages="$errors->get('phone')" class="mt-2" />
+                            </div>
+                            <div>
+                                <x-input-label for="whatsapp" :value="__('WhatsApp (opcional)')" />
+                                <x-text-input id="whatsapp" class="block mt-1 w-full" type="tel" name="whatsapp" inputmode="tel" :value="old('whatsapp', $user->whatsapp)" placeholder="(00) 00000-0000" />
+                                <x-input-error :messages="$errors->get('whatsapp')" class="mt-2" />
+                            </div>
                         </div>
 
                         <div class="flex items-center justify-end">

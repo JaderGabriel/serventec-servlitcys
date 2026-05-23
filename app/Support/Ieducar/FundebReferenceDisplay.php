@@ -2,6 +2,8 @@
 
 namespace App\Support\Ieducar;
 
+use App\Models\City;
+use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Finance\MoneyMath;
 
 /**
@@ -55,8 +57,12 @@ final class FundebReferenceDisplay
     /**
      * @param  array<string, mixed>  $ref
      */
-    public static function previsaoComparacao(int $matriculas, array $ref): ?array
-    {
+    public static function previsaoComparacao(
+        int $matriculas,
+        array $ref,
+        ?City $city = null,
+        ?IeducarFilterState $filters = null,
+    ): ?array {
         if ($matriculas <= 0) {
             return null;
         }
@@ -64,7 +70,7 @@ final class FundebReferenceDisplay
         $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
         $municipalVaaf = is_array($ref['municipal'] ?? null)
             ? (float) ($ref['municipal']['vaaf'] ?? 0)
-            : (float) ($ref['vaaf'] ?? 0);
+            : (float) FundebMunicipalReferenceResolver::vaafParaCalculo($city, $filters)['vaaf'];
         $previaVaaf = is_array($ref['previa'] ?? null) ? (float) ($ref['previa']['vaaf'] ?? 0) : 0.0;
 
         $realTotal = MoneyMath::multiplyVaaf($matriculas, $municipalVaaf);

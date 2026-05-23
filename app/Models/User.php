@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
+use App\Support\Contact\ContactChannels;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -15,7 +16,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['name', 'username', 'email', 'profile_photo_path', 'birth_date', 'cpf', 'password', 'role', 'is_active'])]
+#[Fillable(['name', 'username', 'email', 'phone', 'whatsapp', 'profile_photo_path', 'birth_date', 'cpf', 'password', 'role', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -273,5 +274,13 @@ class User extends Authenticatable
         $cpf = $this->cpf;
 
         return $cpf === null || $cpf === '';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function contactChannels(): array
+    {
+        return ContactChannels::fromUser($this);
     }
 }

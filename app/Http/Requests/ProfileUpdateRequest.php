@@ -9,6 +9,16 @@ use Illuminate\Validation\Rule;
 
 class ProfileUpdateRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        foreach (['phone', 'whatsapp'] as $field) {
+            if ($this->has($field)) {
+                $v = trim((string) $this->input($field));
+                $this->merge([$field => $v !== '' ? $v : null]);
+            }
+        }
+    }
+
     /**
      * @return array<string, ValidationRule|array<mixed>|string>
      */
@@ -30,6 +40,8 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+            'phone' => ['nullable', 'string', 'max:32'],
+            'whatsapp' => ['nullable', 'string', 'max:32'],
         ];
     }
 }

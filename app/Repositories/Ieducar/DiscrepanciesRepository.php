@@ -191,10 +191,10 @@ class DiscrepanciesRepository
                         $networkKpis = null;
                     }
 
-                    $dimensions = ConsultoriaOperationalSignals::append($dimensions, $networkKpis, $totalMat);
+                    $dimensions = ConsultoriaOperationalSignals::append($dimensions, $networkKpis, $totalMat, $city, $filters);
 
                     $checks = $this->sortChecksForConsultoria($checks);
-                    $checks = ConsultoriaOperationalSignals::enrichChecksFromDimensions($dimensions, $checks);
+                    $checks = ConsultoriaOperationalSignals::enrichChecksFromDimensions($dimensions, $checks, $city, $filters);
                     $checks = $this->sortChecksForConsultoria($checks);
 
                     $aee = InclusionDashboardQueries::buildAeeCrossEnrollment($db, $city, $filters);

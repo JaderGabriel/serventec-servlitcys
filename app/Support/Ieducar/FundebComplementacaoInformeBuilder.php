@@ -51,9 +51,10 @@ final class FundebComplementacaoInformeBuilder
         $pillars = is_array($disc['funding_pillars'] ?? null) ? $disc['funding_pillars'] : [];
         $summary = is_array($disc['summary'] ?? null) ? $disc['summary'] : [];
 
+        $vaafCalculo = (float) FundebMunicipalReferenceResolver::vaafParaCalculo($city, $filters)['vaaf'];
         $baseFundeb = (float) ($proj['totais']['fundeb_base_anual'] ?? 0);
-        if ($baseFundeb <= 0 && $matriculas > 0) {
-            $baseFundeb = round($matriculas * $ref['vaaf'], 2);
+        if ($baseFundeb <= 0 && $matriculas > 0 && $vaafCalculo > 0) {
+            $baseFundeb = round($matriculas * $vaafCalculo, 2);
         }
 
         $complementPct = max(0.0, (float) config('ieducar.fundeb.complementacao_vaar_pct_base', 0));

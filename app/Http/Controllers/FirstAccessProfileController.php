@@ -23,8 +23,12 @@ class FirstAccessProfileController extends Controller
     public function update(FirstAccessProfileRequest $request): RedirectResponse
     {
         $user = $request->user();
-        $user->birth_date = $request->validated('birth_date');
-        $user->cpf = $request->validated('cpf');
+        $user->fill([
+            'birth_date' => $request->validated('birth_date'),
+            'cpf' => $request->validated('cpf'),
+            'phone' => $request->validated('phone'),
+            'whatsapp' => $request->validated('whatsapp'),
+        ]);
         $user->save();
 
         return redirect()->route($user->homeRouteName(), $user->homeRouteParameters())

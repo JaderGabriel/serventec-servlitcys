@@ -55,7 +55,7 @@
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Nome') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Usuário') }}</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('E-mail') }}</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Contatos') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Perfil') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Estado') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Sessões') }}</th>
@@ -74,7 +74,9 @@
                                         </div>
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 font-mono">{{ $u->username }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 break-all">{{ $u->email }}</td>
+                                    <td class="px-4 py-3 text-sm">
+                                        <x-contact.icon-row :user="$u" />
+                                    </td>
                                     <td class="px-4 py-3 text-sm">
                                         @php
                                             $roleBadge = match ($u->role()) {

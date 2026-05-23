@@ -1,67 +1,61 @@
-<section>
-    <header>
-        <h2 class="text-lg font-medium text-slate-900 dark:text-slate-100">
-            {{ __('Foto de perfil') }}
-        </h2>
-        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            {{ __('Aparece ao lado do seu nome no menu. Formatos: JPG, PNG ou WebP (máx. 2 MB).') }}
-        </p>
-    </header>
-
+<x-profile.section
+    id="perfil-foto"
+    icon="user-circle"
+    :title="__('Foto de perfil')"
+    :description="__('Aparece no menu e na identificação da sua conta. JPG, PNG ou WebP — máx. 2 MB.')"
+>
     <form
         method="post"
         action="{{ route('profile.photo.update') }}"
         enctype="multipart/form-data"
-        class="mt-6 space-y-5"
+        class="space-y-5"
         x-data="{ preview: @js($user->profilePhotoUrl()) }"
     >
         @csrf
 
-        <div class="flex flex-col sm:flex-row items-start gap-5">
-            <div class="shrink-0">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            <div class="shrink-0 relative">
                 <template x-if="preview">
-                    <img :src="preview" alt="" class="h-24 w-24 rounded-full object-cover ring-2 ring-teal-200 dark:ring-teal-700" />
+                    <img :src="preview" alt="" class="h-28 w-28 rounded-2xl object-cover ring-2 ring-teal-200/80 shadow-md dark:ring-teal-700/80" />
                 </template>
                 <template x-if="!preview">
-                    <x-user-avatar :user="$user" size="xl" class="ring-2" />
+                    <x-user-avatar :user="$user" size="xl" class="!h-28 !w-28 !text-3xl rounded-2xl ring-2 shadow-md" />
                 </template>
             </div>
 
-            <div class="flex-1 min-w-0 space-y-3 w-full">
-                <div>
-                    <x-input-label for="photo" :value="__('Escolher imagem')" />
+            <div class="flex-1 w-full min-w-0 space-y-4">
+                <label
+                    for="photo"
+                    class="serv-profile-upload flex flex-col items-center justify-center gap-2 px-4 py-8 cursor-pointer"
+                >
+                    <x-ui.icon name="user-circle" class="h-8 w-8 text-teal-600/70 dark:text-teal-400/80" />
+                    <span class="text-sm font-medium text-slate-700 dark:text-slate-200 text-center">
+                        {{ __('Clique para escolher uma imagem') }}
+                    </span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400">{{ __('ou arraste para esta área') }}</span>
                     <input
                         id="photo"
                         name="photo"
                         type="file"
                         accept="image/jpeg,image/png,image/webp,image/gif"
-                        class="mt-1 block w-full text-sm text-slate-600 dark:text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-teal-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-teal-800 hover:file:bg-teal-100 dark:file:bg-teal-950/50 dark:file:text-teal-200"
+                        class="sr-only"
                         @change="preview = $event.target.files?.[0] ? URL.createObjectURL($event.target.files[0]) : preview"
                     />
-                    <x-input-error class="mt-2" :messages="$errors->get('photo')" />
-                </div>
+                </label>
+                <x-input-error :messages="$errors->get('photo')" />
 
                 @if ($user->hasProfilePhoto())
-                    <label class="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                    <label class="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
                         <input type="checkbox" name="remove_photo" value="1" class="rounded border-slate-300 text-teal-600 focus:ring-teal-500 dark:border-slate-600 dark:bg-slate-900" />
-                        {{ __('Remover foto actual') }}
+                        {{ __('Remover foto atual') }}
                     </label>
                 @endif
             </div>
         </div>
 
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Guardar foto') }}</x-primary-button>
-
-            @if (session('status') === 'profile-photo-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2500)"
-                    class="text-sm text-slate-600 dark:text-slate-400"
-                >{{ __('Foto actualizada.') }}</p>
-            @endif
+        <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <x-primary-button>{{ __('Salvar foto') }}</x-primary-button>
+            <x-profile.save-hint status="profile-photo-updated">{{ __('Foto atualizada.') }}</x-profile.save-hint>
         </div>
     </form>
-</section>
+</x-profile.section>

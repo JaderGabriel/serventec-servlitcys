@@ -2,7 +2,8 @@
 
 namespace App\Support\Ieducar;
 
-use App\Support\Ieducar\DiscrepanciesFundingImpact;
+use App\Models\City;
+use App\Support\Dashboard\IeducarFilterState;
 
 /**
  * Sinais operacionais das abas Rede, Inclusão etc. integrados ao mapa de discrepâncias e ao Diagnóstico Geral.
@@ -14,15 +15,20 @@ final class ConsultoriaOperationalSignals
      * @param  array<string, mixed>|null  $networkKpis
      * @return list<array<string, mixed>>
      */
-    public static function append(array $dimensions, ?array $networkKpis, int $totalMat): array
-    {
+    public static function append(
+        array $dimensions,
+        ?array $networkKpis,
+        int $totalMat,
+        ?City $city = null,
+        ?IeducarFilterState $filters = null,
+    ): array {
         $out = $dimensions;
         $existingIds = [];
         foreach ($dimensions as $d) {
             $existingIds[(string) ($d['id'] ?? '')] = true;
         }
 
-        $rede = self::dimensionRedeVagasOciosas($networkKpis, $totalMat);
+        $rede = self::dimensionRedeVagasOciosas($networkKpis, $totalMat, $city, $filters);
         if ($rede !== null && ! isset($existingIds[$rede['id']])) {
             $out[] = $rede;
         }
@@ -34,8 +40,12 @@ final class ConsultoriaOperationalSignals
      * @param  array<string, mixed>|null  $networkKpis
      * @return ?array<string, mixed>
      */
-    private static function dimensionRedeVagasOciosas(?array $networkKpis, int $totalMat): ?array
-    {
+    private static function dimensionRedeVagasOciosas(
+        ?array $networkKpis,
+        int $totalMat,
+        ?City $city = null,
+        ?IeducarFilterState $filters = null,
+    ): ?array {
         if (! is_array($networkKpis)) {
             return null;
         }
@@ -56,7 +66,7 @@ final class ConsultoriaOperationalSignals
 
         $id = 'rede_vagas_ociosas';
         $peso = (float) config('ieducar.discrepancies.peso_por_check.'.$id, 0.25);
-        $vaa = (float) config('ieducar.discrepancies.vaa_referencia_anual', 4500);
+        $vaa = DiscrepanciesFundingImpact::vaaReferencia($city, $filters);
         $perda = round($vagas * $vaa * $peso, 2);
 
         return [
@@ -90,8 +100,12 @@ final class ConsultoriaOperationalSignals
      * @param  list<array<string, mixed>>  $dimensions
      * @return list<array<string, mixed>>
      */
-    public static function enrichChecksFromDimensions(array $dimensions, array $checks): array
-    {
+    public static function enrichChecksFromDimensions(
+        array $dimensions,
+        array $checks,
+        ?City $city = null,
+        ?IeducarFilterState $filters = null,
+    ): array {
         $checkIds = [];
         foreach ($checks as $c) {
             $checkIds[(string) ($c['id'] ?? '')] = true;
@@ -114,7 +128,7 @@ final class ConsultoriaOperationalSignals
             }
 
             $total = (int) ($d['total'] ?? 0);
-            $funding = DiscrepanciesFundingImpact::estimate($id, $total);
+            $funding = DiscrepanciesFundingImpact::estimate($id, $total, $city, $filters);
             $out[] = [
                 'id' => $id,
                 'title' => (string) ($d['title'] ?? ''),

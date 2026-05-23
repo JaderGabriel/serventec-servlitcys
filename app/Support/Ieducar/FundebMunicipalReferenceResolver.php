@@ -4,6 +4,8 @@ namespace App\Support\Ieducar;
 
 use App\Models\City;
 use App\Models\FundebMunicipioReference;
+use App\Services\Fundeb\FundebFndeReceitaCsvService;
+use App\Services\Fundeb\FundebMatriculasByYearService;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Services\Fundeb\FundebFndeEstadoVaafService;
 use App\Support\Fundeb\FundebReferenceSource;
@@ -61,6 +63,81 @@ final class FundebMunicipalReferenceResolver
     public static function clearCache(): void
     {
         self::$resolveCache = [];
+    }
+
+    /**
+     * VAAF usado em cálculos do painel (Inclusão, Discrepâncias, previsão): municipal importado,
+     * estimativa receita FNDE ÷ matrículas, ou referência configurada — nunca só o piso 4.500 se houver dado melhor.
+     *
+     * @return array{vaaf: float, fonte_label: string, ano: ?int, origem: string}
+     */
+    public static function vaafParaCalculo(?City $city, ?IeducarFilterState $filters = null): array
+    {
+        $ref = self::resolve($city, $filters);
+        $municipal = is_array($ref['municipal'] ?? null) ? $ref['municipal'] : null;
+
+        if ($municipal !== null && (float) ($municipal['vaaf'] ?? 0) > 0) {
+            return [
+                'vaaf' => (float) $municipal['vaaf'],
+                'fonte_label' => (string) ($municipal['fonte_label'] ?? $ref['fonte_label'] ?? ''),
+                'ano' => $municipal['ano'] ?? $ref['ano'] ?? null,
+                'origem' => 'municipal',
+            ];
+        }
+
+        if ($city !== null) {
+            $estimado = self::tryEstimateVaafFromReceita($city, $filters);
+            if ($estimado !== null) {
+                return $estimado;
+            }
+        }
+
+        return [
+            'vaaf' => (float) ($ref['vaaf'] ?? 0),
+            'fonte_label' => (string) ($ref['fonte_label'] ?? ''),
+            'ano' => $ref['ano'] ?? null,
+            'origem' => (string) ($ref['fonte'] ?? self::FONTE_CONFIG_GLOBAL),
+        ];
+    }
+
+    /**
+     * @return ?array{vaaf: float, fonte_label: string, ano: ?int, origem: string}
+     */
+    private static function tryEstimateVaafFromReceita(City $city, ?IeducarFilterState $filters): ?array
+    {
+        $ibge = self::normalizeIbge($city->ibge_municipio);
+        if ($ibge === null) {
+            return null;
+        }
+
+        $ano = self::resolveAnchorAno($filters);
+
+        try {
+            $receitaSvc = app(FundebFndeReceitaCsvService::class);
+            $matSvc = app(FundebMatriculasByYearService::class);
+            $receitaRow = $receitaSvc->rowForIbge($ibge, $ano);
+            $matRow = $matSvc->forCityYears($city, [$ano])[$ano] ?? null;
+            $matUsado = (int) ($matRow['usado'] ?? 0);
+            $totalReceita = $receitaRow !== null ? (float) ($receitaRow['total_receita'] ?? 0) : 0.0;
+
+            if ($totalReceita <= 0 || $matUsado <= 0) {
+                return null;
+            }
+
+            $vaafEst = $receitaSvc->estimateVaafFromReceitaAndMatriculas($totalReceita, $matUsado);
+            if ($vaafEst === null || $vaafEst <= 0) {
+                return null;
+            }
+
+            return [
+                'vaaf' => $vaafEst,
+                'fonte_label' => __('VAAF estimado (receita FNDE ÷ matrículas, :ano)', ['ano' => (string) $ano]),
+                'ano' => $ano,
+                'origem' => FundebReferenceSource::FONTE_FNDE_RECEITA_IEDUCAR,
+            ];
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

@@ -1,78 +1,87 @@
-<section>
-    <header>
-        <h2 class="text-lg font-medium text-slate-900 dark:text-slate-100">
-            {{ __('Dados do perfil') }}
-        </h2>
-
-        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {{ __('Atualize nome, nome de usuário e e-mail. A data de nascimento e o CPF foram definidos no primeiro acesso.') }}
-        </p>
-    </header>
-
+<x-profile.section
+    id="perfil-dados"
+    icon="envelope"
+    :title="__('Dados do perfil')"
+    :description="__('Nome, usuário, e-mail e contatos. CPF e data de nascimento vêm do primeiro acesso.')"
+>
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('profile.update') }}" class="space-y-5">
         @csrf
         @method('patch')
 
-        <div>
-            <x-input-label for="name" :value="__('Nome')" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
-            <x-input-error class="mt-2" :messages="$errors->get('name')" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="sm:col-span-2">
+                <x-input-label for="name" :value="__('Nome completo')" />
+                <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
+                <x-input-error class="mt-2" :messages="$errors->get('name')" />
+            </div>
+
+            <div>
+                <x-input-label for="username" :value="__('Nome de usuário')" />
+                <x-text-input id="username" name="username" type="text" class="mt-1 block w-full font-mono text-sm" :value="old('username', $user->username)" required autocomplete="username" />
+                <x-input-error class="mt-2" :messages="$errors->get('username')" />
+            </div>
+
+            <div>
+                <x-input-label for="email" :value="__('E-mail')" />
+                <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="email" />
+                <x-input-error class="mt-2" :messages="$errors->get('email')" />
+            </div>
         </div>
 
-        <div>
-            <x-input-label for="username" :value="__('Nome de usuário')" />
-            <x-text-input id="username" name="username" type="text" class="mt-1 block w-full" :value="old('username', $user->username)" required autocomplete="username" />
-            <x-input-error class="mt-2" :messages="$errors->get('username')" />
-        </div>
-
-        <div>
-            <x-input-label for="email" :value="__('E-mail')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="email" />
-            <x-input-error class="mt-2" :messages="$errors->get('email')" />
-
-            @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <div>
-                    <p class="text-sm mt-2 text-gray-800 dark:text-gray-200">
-                        {{ __('Seu e-mail ainda não foi verificado.') }}
-
-                        <button form="send-verification" class="serv-link text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500/40 dark:focus:ring-offset-slate-900">
-                            {{ __('Clique aqui para reenviar o e-mail de verificação.') }}
-                        </button>
+        @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+            <div class="serv-callout serv-callout--warning">
+                <p class="text-sm">
+                    {{ __('Seu e-mail ainda não foi verificado.') }}
+                    <button form="send-verification" type="submit" class="serv-link font-semibold">
+                        {{ __('Reenviar link de verificação') }}
+                    </button>
+                </p>
+                @if (session('status') === 'verification-link-sent')
+                    <p class="mt-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                        {{ __('Novo link enviado para seu e-mail.') }}
                     </p>
-
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-green-600 dark:text-green-400">
-                            {{ __('Um novo link de verificação foi enviado para o seu e-mail.') }}
-                        </p>
-                    @endif
-                </div>
-            @endif
-        </div>
-
-        @if ($user->birth_date && $user->cpf)
-            <div class="rounded-md border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 px-4 py-3 text-sm text-gray-700 dark:text-gray-200 space-y-1">
-                <p><span class="font-medium">{{ __('Data de nascimento') }}:</span> {{ $user->birth_date->format('d/m/Y') }}</p>
-                <p><span class="font-medium">{{ __('CPF') }}:</span> {{ \App\Support\Cpf::formatMasked($user->cpf) }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Estes dados não podem ser alterados aqui; foram registados no primeiro acesso.') }}</p>
+                @endif
             </div>
         @endif
 
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Salvar') }}</x-primary-button>
+        <div class="rounded-xl border border-slate-200/90 bg-slate-50/60 dark:border-slate-700/80 dark:bg-slate-900/30 p-4 space-y-4">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('Contatos opcionais') }}</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <x-input-label for="phone" :value="__('Telefone')" />
+                    <x-text-input id="phone" name="phone" type="tel" inputmode="tel" class="mt-1 block w-full" :value="old('phone', $user->phone)" placeholder="(00) 00000-0000" />
+                    <x-input-error class="mt-2" :messages="$errors->get('phone')" />
+                </div>
+                <div>
+                    <x-input-label for="whatsapp" :value="__('WhatsApp')" />
+                    <x-text-input id="whatsapp" name="whatsapp" type="tel" inputmode="tel" class="mt-1 block w-full" :value="old('whatsapp', $user->whatsapp)" placeholder="(00) 00000-0000" />
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Com DDD.') }}</p>
+                    <x-input-error class="mt-2" :messages="$errors->get('whatsapp')" />
+                </div>
+            </div>
+        </div>
 
-            @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600 dark:text-gray-400"
-                >{{ __('Salvo.') }}</p>
-            @endif
+        @if ($user->birth_date && $user->cpf)
+            <dl class="serv-profile-meta grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div class="serv-profile-meta__item">
+                    <dt class="serv-profile-meta__label">{{ __('Data de nascimento') }}</dt>
+                    <dd class="serv-profile-meta__value">{{ $user->birth_date->format('d/m/Y') }}</dd>
+                </div>
+                <div class="serv-profile-meta__item">
+                    <dt class="serv-profile-meta__label">{{ __('CPF') }}</dt>
+                    <dd class="serv-profile-meta__value font-mono">{{ \App\Support\Cpf::formatMasked($user->cpf) }}</dd>
+                </div>
+            </dl>
+            <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Cadastrados no primeiro acesso — não podem ser alterados aqui.') }}</p>
+        @endif
+
+        <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <x-primary-button>{{ __('Salvar alterações') }}</x-primary-button>
+            <x-profile.save-hint status="profile-updated">{{ __('Alterações salvas.') }}</x-profile.save-hint>
         </div>
     </form>
-</section>
+</x-profile.section>

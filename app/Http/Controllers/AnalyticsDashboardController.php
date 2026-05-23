@@ -923,7 +923,18 @@ class AnalyticsDashboardController extends Controller
         DiscrepanciesRepository $discrepanciesRepository,
         array &$warnings,
     ): ?array {
-        if (! in_array($tab, ['discrepancies', 'fundeb', 'municipality_health'], true)) {
+        $tabsWithFunding = [
+            'enrollment',
+            'network',
+            'school_units',
+            'inclusion',
+            'performance',
+            'attendance',
+            'fundeb',
+            'municipality_health',
+            'discrepancies',
+        ];
+        if (! in_array($tab, $tabsWithFunding, true)) {
             return null;
         }
 

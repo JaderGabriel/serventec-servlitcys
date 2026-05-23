@@ -86,6 +86,7 @@
             'label' => __('Perda estimada / ano'),
             'value' => $fmtBrl($perdaAgreg),
             'tone' => 'orange',
+            'size' => 'xl',
             'explicacao_resumo' => filled($fundingResumo['detalhe'] ?? null) ? $fundingResumo['detalhe'] : null,
             'funding_explicacao' => $fundingResumo !== null ? [
                 'formula_curta' => (string) ($fundingResumo['titulo'] ?? __('Soma das rotinas com pendência')),
@@ -97,6 +98,7 @@
             'label' => __('Ganho potencial / ano'),
             'value' => $fmtBrl($ganhoAgreg),
             'tone' => 'emerald',
+            'size' => 'xl',
             'explicacao_resumo' => $ganhoAgreg > 0
                 ? __('Igual à perda neste modelo: valor indicativo recuperável após corrigir cadastro no i-Educar.')
                 : null,
@@ -107,6 +109,7 @@
             ] : null,
         ],
     ];
+    $healthKpisPrioridades = array_merge($healthKpis, $healthKpisFinanceiro);
     $publicSources = is_array($h['public_data_sources'] ?? null) ? $h['public_data_sources'] : [];
     $hasPublicSources = count($publicSources['categories'] ?? []) > 0;
     $flowSteps = ConsultoriaFlow::numberedSteps([
@@ -205,16 +208,18 @@
             :subtitle="__('Visão executiva: conformidade, impacto financeiro e principais problemas.')"
         >
             @if ($score !== null)
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <div class="lg:col-span-1 {{ $scoreRing }} p-6 flex flex-col items-center justify-center text-center">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-1">{{ __('Índice de conformidade') }}</p>
-                        <x-dashboard.compliance-speedometer
-                            :score="(int) $score"
-                            :status="(string) ($h['compliance_status'] ?? 'neutral')"
-                            :label="(string) ($h['compliance_label'] ?? '')"
-                            class="w-full"
-                        />
-                        <div class="mt-3 flex flex-wrap gap-2 justify-center text-xs">
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 items-stretch">
+                    <div class="xl:col-span-4 {{ $scoreRing }} p-4 sm:p-5 flex flex-col justify-between gap-3 min-h-[14rem]">
+                        <div class="text-center">
+                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-2">{{ __('Índice de conformidade') }}</p>
+                            <x-dashboard.compliance-speedometer
+                                :score="(int) $score"
+                                :status="(string) ($h['compliance_status'] ?? 'neutral')"
+                                :label="(string) ($h['compliance_label'] ?? '')"
+                                class="w-full max-w-[280px] mx-auto"
+                            />
+                        </div>
+                        <div class="flex flex-wrap gap-x-2 gap-y-1 justify-center text-xs border-t border-slate-200/70 dark:border-slate-700/70 pt-3">
                             <x-consultoria-tab-link tab="discrepancies" />
                             <span class="text-slate-300 dark:text-slate-600">·</span>
                             <x-consultoria-tab-link tab="fundeb" />
@@ -222,62 +227,75 @@
                             <x-consultoria-tab-link tab="work_done" :label="__('Censo')" />
                         </div>
                     </div>
-                    <div class="lg:col-span-2 space-y-3">
-                        @if (count($healthKpis) > 0)
-                            <x-dashboard.consultoria-kpi-grid :items="$healthKpis" class="sm:grid-cols-2 lg:grid-cols-3" />
+                    <div class="xl:col-span-8 flex flex-col gap-3 min-h-0">
+                        @if (count($healthKpisPrioridades) > 0)
+                            <x-dashboard.consultoria-kpi-grid
+                                :items="$healthKpisPrioridades"
+                                class="grid-cols-2 md:grid-cols-3 2xl:grid-cols-4 flex-1 auto-rows-fr [&>.serv-panel]:h-full"
+                            />
                         @endif
-                        <x-dashboard.consultoria-kpi-grid :items="$healthKpisFinanceiro" class="grid-cols-1 sm:grid-cols-2" />
                         @if ($fundingMet !== null)
                             <x-dashboard.consultoria-funding-explanation
                                 :metodologia="$fundingMet"
                                 :resumo="$fundingResumo"
+                                class="shrink-0"
                             />
                         @endif
                     </div>
                 </div>
-                @if (count($pendenciasCadastro) > 0)
-                    <div class="mt-4 space-y-2">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-rose-800/90 dark:text-rose-300/90">
-                            {{ __('Principais pendências de cadastro (ocorrências)') }}
-                        </p>
-                        <x-dashboard.consultoria-dimensions-grid
-                            :dimensions="$pendenciasCadastro"
-                            :fmt-brl="$fmtBrl"
-                            columns="2"
-                        />
-                    </div>
-                @endif
             @endif
 
             @if (count($topProblems) > 0)
-                <div class="serv-panel overflow-hidden">
-                    <header class="px-4 py-3 border-b border-slate-200/80 dark:border-slate-700/80 bg-rose-50/50 dark:bg-rose-950/20">
-                        <h4 class="text-sm font-semibold font-display text-rose-950 dark:text-rose-100">{{ __('Principais problemas (impacto financeiro indicativo)') }}</h4>
-                    </header>
-                    <ul class="divide-y divide-slate-100 dark:divide-slate-800">
+                <div class="mt-4 space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+                        <div>
+                            <h4 class="text-sm font-semibold font-display text-rose-950 dark:text-rose-100">
+                                {{ __('Principais pendências de cadastro') }}
+                            </h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                {{ __('Ordenadas por impacto financeiro indicativo (VAAF municipal × peso). Detalhe por escola na aba Discrepâncias.') }}
+                            </p>
+                        </div>
+                        <x-consultoria-tab-link tab="discrepancies" :label="__('Ver todas em Discrepâncias')" class="text-xs shrink-0" />
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                         @foreach ($topProblems as $problem)
-                            <li class="px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
-                                <div>
-                                    <p class="font-medium text-serv-navy dark:text-slate-100">{{ $problem['title'] ?? '' }}</p>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            @php
+                                $perdaProb = (float) ($problem['perda_estimada_anual'] ?? 0);
+                                $ganhoProb = (float) ($problem['ganho_potencial_anual'] ?? 0);
+                            @endphp
+                            <article class="serv-panel border border-rose-200/70 dark:border-rose-900/50 px-3 py-2.5 text-sm h-full flex flex-col gap-2">
+                                <div class="min-w-0 flex-1">
+                                    <p class="font-medium text-serv-navy dark:text-slate-100 leading-snug">{{ $problem['title'] ?? '' }}</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 tabular-nums">
                                         {{ __(':n ocorrências', ['n' => number_format((int) ($problem['total'] ?? 0))]) }}
                                         @if (($problem['pct_rede'] ?? null) !== null)
-                                            · {{ number_format((float) $problem['pct_rede'], 1, ',', '.') }}% {{ __('da rede') }}
+                                            <span class="text-slate-400 dark:text-slate-500">·</span>
+                                            {{ number_format((float) $problem['pct_rede'], 1, ',', '.') }}% {{ __('da rede') }}
                                         @endif
                                     </p>
                                 </div>
-                                <div class="shrink-0 text-right space-y-1">
-                                    <p class="text-sm font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
-                                        {{ $fmtBrl((float) ($problem['ganho_potencial_anual'] ?? 0)) }}
-                                    </p>
-                                    @if (is_array($problem['funding_explicacao'] ?? null))
-                                        <x-dashboard.consultoria-funding-explanation :explicacao="$problem['funding_explicacao']" compact class="max-w-xs ml-auto" />
-                                    @endif
+                                <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs tabular-nums border-t border-slate-100 dark:border-slate-800 pt-2">
+                                    <span class="text-orange-800 dark:text-orange-300">
+                                        <span class="font-semibold uppercase tracking-wide text-[10px] text-orange-900/80 dark:text-orange-200/80">{{ __('Perda') }}</span>
+                                        {{ $fmtBrl($perdaProb) }}
+                                    </span>
+                                    <span class="text-emerald-800 dark:text-emerald-300">
+                                        <span class="font-semibold uppercase tracking-wide text-[10px] text-emerald-900/80 dark:text-emerald-200/80">{{ __('Ganho') }}</span>
+                                        {{ $fmtBrl($ganhoProb) }}
+                                    </span>
                                 </div>
-                            </li>
+                                @if (is_array($problem['funding_explicacao'] ?? null))
+                                    <x-dashboard.consultoria-funding-explanation :explicacao="$problem['funding_explicacao']" compact class="mt-auto" />
+                                @endif
+                            </article>
                         @endforeach
-                    </ul>
+                    </div>
                 </div>
+            @elseif (count($pendenciasCadastro) > 0)
+                <p class="mt-4 text-sm text-slate-600 dark:text-slate-400 serv-callout">
+                    {{ __('Há :n tipo(s) de pendência no mapa de rotinas abaixo; nenhuma com impacto financeiro calculável neste filtro.', ['n' => count($pendenciasCadastro)]) }}
+                </p>
             @endif
         </x-dashboard.consultoria-section>
 

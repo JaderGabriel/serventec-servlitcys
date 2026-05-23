@@ -61,7 +61,7 @@ final class DiscrepanciesFundingImpact
 
     public static function vaaReferencia(?City $city = null, ?IeducarFilterState $filters = null): float
     {
-        return self::resolveReference($city, $filters)['vaaf'];
+        return FundebMunicipalReferenceResolver::vaafParaCalculo($city, $filters)['vaaf'];
     }
 
     /**
@@ -103,8 +103,8 @@ final class DiscrepanciesFundingImpact
      */
     public static function metodologiaResumo(?City $city = null, ?IeducarFilterState $filters = null): array
     {
-        $ref = self::resolveReference($city, $filters);
-        $vaa = $ref['vaaf'];
+        $calc = FundebMunicipalReferenceResolver::vaafParaCalculo($city, $filters);
+        $vaa = (float) $calc['vaaf'];
 
         return [
             'titulo' => __('Como são calculados os valores financeiros indicativos'),
@@ -112,7 +112,7 @@ final class DiscrepanciesFundingImpact
                 __('1. Contagem de ocorrências — cada rotina soma matrículas, escolas ou vagas com o problema no filtro actual (ano, escola, curso).'),
                 __('2. Valor unitário de referência — VAAF municipal (:vaa por aluno/ano; :fonte) × peso do tipo de problema. A prévia federal (quando configurada) aparece nas abas FUNDEB e Diagnóstico só para comparação.', [
                     'vaa' => self::formatBrl($vaa),
-                    'fonte' => $ref['fonte_label'],
+                    'fonte' => (string) $calc['fonte_label'],
                 ]),
                 __('3. Perda estimada anual = ocorrências × valor unitário. Representa ordem de grandeza do que pode deixar de ser contabilizado ou financiado se o cadastro não for corrigido antes do Censo/VAAR.'),
                 __('4. Ganho potencial anual — neste modelo, igual à perda: valor que a rede poderia recuperar ou deixar de arriscar após corrigir o cadastro no i-Educar.'),
@@ -120,8 +120,8 @@ final class DiscrepanciesFundingImpact
             ],
             'aviso' => self::avisoGeral(),
             'vaa_label' => self::formatBrl($vaa),
-            'vaa_fonte' => $ref['fonte'],
-            'vaa_fonte_label' => $ref['fonte_label'],
+            'vaa_fonte' => (string) $calc['origem'],
+            'vaa_fonte_label' => (string) $calc['fonte_label'],
         ];
     }
 
@@ -131,12 +131,11 @@ final class DiscrepanciesFundingImpact
     public static function fundingReferencePayload(?City $city = null, ?IeducarFilterState $filters = null): array
     {
         $ref = self::resolveReference($city, $filters);
+        $calc = FundebMunicipalReferenceResolver::vaafParaCalculo($city, $filters);
 
         $municipalBlock = is_array($ref['municipal'] ?? null) ? $ref['municipal'] : null;
         $usaVaafMunicipal = $municipalBlock !== null && (float) ($municipalBlock['vaaf'] ?? 0) > 0;
-        $vaafCalculo = $usaVaafMunicipal
-            ? (float) $municipalBlock['vaaf']
-            : (float) $ref['vaaf'];
+        $vaafCalculo = (float) $calc['vaaf'];
 
         return [
             'vaa_anual' => $vaafCalculo,
@@ -145,9 +144,9 @@ final class DiscrepanciesFundingImpact
             'vaa_previa_label' => is_array($ref['previa'] ?? null)
                 ? self::formatBrl((float) $ref['previa']['vaaf'])
                 : null,
-            'vaa_fonte' => $ref['fonte'],
-            'vaa_fonte_label' => $ref['fonte_label'],
-            'vaa_ano' => $ref['ano'],
+            'vaa_fonte' => (string) $calc['origem'],
+            'vaa_fonte_label' => (string) $calc['fonte_label'],
+            'vaa_ano' => $calc['ano'] ?? $ref['ano'],
             'vaat' => $ref['vaat'],
             'vaat_label' => $ref['vaat'] !== null ? self::formatBrl($ref['vaat']) : null,
             'complementacao_vaar' => $ref['complementacao_vaar'],

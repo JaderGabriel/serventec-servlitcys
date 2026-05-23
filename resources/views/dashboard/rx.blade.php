@@ -23,7 +23,7 @@
             <div class="serv-panel serv-panel--info px-4 py-3 text-sm">
                 <p class="font-medium text-serv-navy dark:text-teal-100">{{ __('RX — força de trabalho e prazos') }}</p>
                 <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">
-                    {{ __('Visão consolidada por município: volumes digitados, Censo Escolar, meta de cadastro (com busca em anos anteriores quando necessário) e semáforo de cumprimento. Sem indicadores financeiros.') }}
+                    {{ __('Visão consolidada por município: volumes digitados, Censo Escolar, meta de cadastro (com busca em anos anteriores quando necessário) e indicador de cumprimento da meta. Sem indicadores financeiros.') }}
                 </p>
             </div>
 
@@ -85,9 +85,9 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-4 text-xs text-slate-600 dark:text-slate-400 px-1">
-                <span class="font-medium text-slate-700 dark:text-slate-300">{{ __('Semáforo — meta de cadastro:') }}</span>
-                <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>{{ $fmtN((int) ($sem['green'] ?? 0)) }} {{ __('OK') }}</span>
-                <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-amber-400"></span>{{ $fmtN((int) ($sem['yellow'] ?? 0)) }} {{ __('Em curso') }}</span>
+                <span class="font-medium text-slate-700 dark:text-slate-300">{{ __('Meta de cadastro — indicador:') }}</span>
+                <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>{{ $fmtN((int) ($sem['green'] ?? 0)) }} {{ __('Meta OK') }}</span>
+                <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-amber-400"></span>{{ $fmtN((int) ($sem['yellow'] ?? 0)) }} {{ __('Em andamento') }}</span>
                 <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-rose-500"></span>{{ $fmtN((int) ($sem['red'] ?? 0)) }} {{ __('Atenção') }}</span>
                 <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>{{ $fmtN((int) ($sem['neutral'] ?? 0)) }} {{ __('Sem base') }}</span>
             </div>
@@ -106,13 +106,13 @@
             @if ((int) ($rx['cities_error'] ?? 0) > 0)
                 <p class="text-sm text-amber-700 dark:text-amber-300">
                     @if ((int) ($rx['cities_connection_error'] ?? 0) > 0 && (int) ($rx['cities_query_error'] ?? 0) > 0)
-                        {{ __(':n município(s) com problema (:conn conexão, :q consulta SQL). A aba Conexões só testa ligação à base — o RX executa consultas completas ao i-Educar.', [
+                        {{ __(':n município(s) com problema (:conn conexão, :q consulta SQL). A aba Conexões só testa conexão com a base — o RX executa consultas completas ao i-Educar.', [
                             'n' => (int) $rx['cities_error'],
                             'conn' => (int) $rx['cities_connection_error'],
                             'q' => (int) $rx['cities_query_error'],
                         ]) }}
                     @elseif ((int) ($rx['cities_query_error'] ?? 0) > 0)
-                        {{ __(':n município(s) com falha na consulta i-Educar (a conexão na aba Conexões pode estar OK). Ver coluna «Situação».', ['n' => (int) $rx['cities_query_error']]) }}
+                        {{ __(':n município(s) com falha na consulta i-Educar (a conexão na aba Conexões pode estar OK). Ver coluna "Leitura dos dados".', ['n' => (int) $rx['cities_query_error']]) }}
                     @else
                         {{ __(':n município(s) sem conexão à base — configure em Cidades / Conexões.', ['n' => (int) $rx['cities_connection_error']]) }}
                     @endif
@@ -156,7 +156,7 @@
                                 <th class="serv-rx-th-group serv-rx-th-group--neutral"></th>
                             </tr>
                             <tr>
-                                <th class="{{ $rxTh('semaforo') }}" title="{{ $thTitle('semaforo') }}">{{ $th('semaforo', __('Semáforo')) }}</th>
+                                <th class="{{ $rxTh('semaforo') }}" title="{{ $thTitle('semaforo') }}">{{ $th('semaforo', __('Indicador meta')) }}</th>
                                 <th class="{{ $rxTh('municipio') }}" title="{{ $thTitle('municipio') }}">{{ $th('municipio', __('Município')) }}</th>
                                 <th class="{{ $rxTh('alunos', true) }}" title="{{ $thTitle('alunos') }}">{{ $th('alunos', __('Alunos')) }}</th>
                                 <th class="{{ $rxTh('matriculas', true) }}" title="{{ $thTitle('matriculas') }}">{{ $th('matriculas', __('Matrículas')) }}</th>
@@ -165,9 +165,9 @@
                                 <th class="{{ $rxTh('meta', true) }} min-w-[10rem]" title="{{ $thTitle('meta') }}">{{ $th('meta', __('Meta cadastro')) }}</th>
                                 <th class="{{ $rxTh('censo', true) }}" title="{{ $thTitle('censo') }}">{{ $th('censo', __('Censo')) }}</th>
                                 <th class="{{ $rxTh('progresso', true) }}" title="{{ $thTitle('progresso') }}">{{ $th('progresso', __('Progresso')) }}</th>
-                                <th class="{{ $rxTh('falta', true) }}" title="{{ $thTitle('falta') }}">{{ $th('falta', __('Em falta')) }}</th>
+                                <th class="{{ $rxTh('falta', true) }}" title="{{ $thTitle('falta') }}">{{ $th('falta', __('Pendente')) }}</th>
                                 <th class="{{ $rxTh('dias', true) }}" title="{{ $thTitle('dias') }}">{{ $th('dias', __('Dias p/ meta')) }}</th>
-                                <th class="{{ $rxTh('situacao') }}" title="{{ $thTitle('situacao') }}">{{ $th('situacao', __('Situação')) }}</th>
+                                <th class="{{ $rxTh('situacao') }}" title="{{ $thTitle('situacao') }}">{{ $th('situacao', __('Leitura dos dados')) }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -185,9 +185,17 @@
                                             :title="$row['semaforo_title'] ?? ''"
                                         />
                                     </td>
-                                    <td class="{{ $rxTd('municipio') }} font-medium text-slate-900 dark:text-slate-100">
-                                        {{ $row['city_name'] ?? '' }}
-                                        <span class="text-[10px] text-slate-500">({{ $row['uf'] ?? '' }})</span>
+                                    <td class="{{ $rxTd('municipio') }} font-medium text-slate-900 dark:text-slate-100 align-top">
+                                        <div>
+                                            {{ $row['city_name'] ?? '' }}
+                                            <span class="text-[10px] text-slate-500 font-normal">({{ $row['uf'] ?? '' }})</span>
+                                        </div>
+                                        @if (is_array($row['reference_contact'] ?? null) && ($row['reference_contact']['available'] ?? false))
+                                            <x-city.reference-contact
+                                                :contact="$row['reference_contact']"
+                                                variant="table"
+                                            />
+                                        @endif
                                     </td>
                                     <td class="{{ $rxTd('alunos', true) }}">
                                         <span class="serv-rx-val--vigente">{{ number_format((int) ($row['alunos_vigente'] ?? 0), 0, ',', '.') }}</span>

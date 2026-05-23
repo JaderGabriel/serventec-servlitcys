@@ -300,6 +300,193 @@
         @apply rounded-xl bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 px-4 py-4 sm:px-5 sm:py-5 shadow-md ring-1 ring-teal-500/20;
     }
 
+    .serv-city-contact {
+        @apply flex flex-col gap-2;
+    }
+
+    .serv-city-contact--strip {
+        @apply rounded-lg border border-teal-400/25 bg-white/5 px-3 py-2.5 backdrop-blur-sm;
+    }
+
+    .serv-city-contact--inline {
+        @apply rounded-lg border border-slate-200/90 bg-slate-50/90 px-3 py-2.5 dark:border-slate-600/80 dark:bg-slate-800/50;
+    }
+
+    .serv-city-contact--table {
+        @apply mt-2 gap-1.5;
+    }
+
+    .serv-city-contact__header {
+        @apply flex items-start gap-2 min-w-0;
+    }
+
+    .serv-city-contact__eyebrow {
+        @apply text-[10px] font-semibold uppercase tracking-wide opacity-80;
+    }
+
+    .serv-city-contact--strip .serv-city-contact__eyebrow {
+        @apply text-teal-100/80;
+    }
+
+    .serv-city-contact--inline .serv-city-contact__eyebrow,
+    .serv-city-contact--table .serv-city-contact__eyebrow {
+        @apply text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-city-contact__name {
+        @apply text-sm font-medium leading-snug;
+    }
+
+    .serv-city-contact--strip .serv-city-contact__name {
+        @apply text-white;
+    }
+
+    .serv-city-contact--inline .serv-city-contact__name,
+    .serv-city-contact--table .serv-city-contact__name {
+        @apply text-slate-900 dark:text-slate-100;
+    }
+
+    .serv-city-contact__name--muted {
+        @apply font-normal opacity-80;
+    }
+
+    .serv-city-contact__actions {
+        @apply flex flex-wrap items-center gap-1.5;
+    }
+
+    .serv-city-contact__action {
+        @apply inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1;
+    }
+
+    .serv-city-contact--strip .serv-city-contact__action {
+        @apply bg-white/10 text-teal-50 hover:bg-white/20 focus-visible:ring-teal-300/60 focus-visible:ring-offset-teal-950;
+    }
+
+    .serv-city-contact--inline .serv-city-contact__action {
+        @apply border border-slate-200/90 bg-white text-slate-700 hover:border-teal-300 hover:text-teal-800
+            dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-teal-600 dark:hover:text-teal-200
+            focus-visible:ring-teal-500/40 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900;
+    }
+
+    .serv-city-contact--table .serv-city-contact__action {
+        @apply border border-slate-200/80 bg-white px-1.5 py-0.5 text-[11px] text-slate-700 hover:border-teal-400 hover:text-teal-800
+            dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-teal-500;
+    }
+
+    .serv-city-contact__action--whatsapp {
+        @apply hover:border-emerald-400/80 hover:text-emerald-700 dark:hover:text-emerald-300;
+    }
+
+    .serv-city-contact--strip .serv-city-contact__action--whatsapp {
+        @apply hover:bg-emerald-500/20 hover:text-emerald-100;
+    }
+
+    .serv-city-contact__action-label {
+        @apply max-w-[9rem] truncate;
+    }
+
+    .serv-city-contact--table .serv-city-contact__action-label {
+        @apply max-w-[6rem];
+    }
+
+    .serv-contact-icons {
+        @apply inline-flex flex-wrap items-center gap-1;
+    }
+
+    .serv-contact-icons__btn {
+        @apply inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/90 bg-white text-slate-600
+            transition hover:border-teal-400 hover:bg-teal-50 hover:text-teal-800
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40 focus-visible:ring-offset-1
+            dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-teal-500 dark:hover:bg-teal-950/40 dark:hover:text-teal-200;
+    }
+
+    .serv-contact-icons__btn--whatsapp {
+        @apply hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700
+            dark:hover:border-emerald-600 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300;
+    }
+
+    .serv-profile-hero {
+        @apply relative;
+    }
+
+    .serv-profile-hero__glow {
+        @apply pointer-events-none absolute inset-0 bg-gradient-to-br from-teal-500/10 via-transparent to-indigo-500/10 dark:from-teal-500/5 dark:to-indigo-600/10;
+    }
+
+    .serv-profile-nav__label {
+        @apply text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-profile-nav__link {
+        @apply block rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition
+            hover:bg-teal-50 hover:text-teal-900
+            dark:text-slate-300 dark:hover:bg-teal-950/40 dark:hover:text-teal-100
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40;
+    }
+
+    .serv-profile-section {
+        @apply scroll-mt-24;
+    }
+
+    .serv-profile-section--danger {
+        @apply border-rose-200/80 bg-gradient-to-br from-rose-50/50 via-white to-slate-50/90
+            dark:from-rose-950/20 dark:via-slate-900/50 dark:to-slate-950/80 dark:border-rose-900/50;
+    }
+
+    .serv-profile-section__header {
+        @apply flex items-start gap-3 border-b border-slate-100 dark:border-slate-800 px-5 py-4 sm:px-6;
+    }
+
+    .serv-profile-section--danger .serv-profile-section__header {
+        @apply border-rose-100 dark:border-rose-900/50;
+    }
+
+    .serv-profile-section__icon {
+        @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl
+            bg-teal-500/10 text-teal-700 ring-1 ring-teal-500/20
+            dark:bg-teal-500/15 dark:text-teal-300 dark:ring-teal-500/25;
+    }
+
+    .serv-profile-section--danger .serv-profile-section__icon {
+        @apply bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:text-rose-300 dark:ring-rose-500/25;
+    }
+
+    .serv-profile-section__title {
+        @apply font-display text-base font-semibold text-slate-900 dark:text-slate-100;
+    }
+
+    .serv-profile-section__desc {
+        @apply mt-0.5 text-sm text-slate-600 dark:text-slate-400 leading-relaxed;
+    }
+
+    .serv-profile-section__body {
+        @apply px-5 py-5 sm:px-6 sm:py-6;
+    }
+
+    .serv-profile-upload {
+        @apply rounded-xl border-2 border-dashed border-slate-200/90 bg-slate-50/50
+            transition hover:border-teal-400/70 hover:bg-teal-50/40
+            dark:border-slate-600/80 dark:bg-slate-900/30 dark:hover:border-teal-600/60 dark:hover:bg-teal-950/20;
+    }
+
+    .serv-profile-meta__item {
+        @apply rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2.5 dark:border-slate-700/80 dark:bg-slate-900/40;
+    }
+
+    .serv-profile-meta__label {
+        @apply text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-profile-meta__value {
+        @apply mt-0.5 font-medium text-slate-900 dark:text-slate-100;
+    }
+
+    .serv-profile-save-hint {
+        @apply inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-800
+            ring-1 ring-inset ring-emerald-500/20 dark:text-emerald-200 dark:ring-emerald-500/30;
+    }
+
     .serv-tab {
         @apply px-3 py-2 text-sm font-medium rounded-lg border border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-white/80 dark:hover:text-slate-100 dark:hover:bg-slate-800/60 transition;
     }

@@ -17,8 +17,8 @@ final class RxColumnHelp
         return [
             [
                 'key' => 'semaforo',
-                'title' => __('Semáforo'),
-                'description' => __('Verde: meta de cadastro cumprida. Amarelo: em curso (≥ :pct% da meta). Vermelho: abaixo do limiar. Cinza: sem ano de referência com dados.', ['pct' => (int) config('rx.semaphore.yellow_min_progress', 75)]),
+                'title' => __('Indicador meta'),
+                'description' => __('Cumprimento da meta de cadastro (volume vigente em relação à meta). Verde: meta atingida. Amarelo: em andamento (≥ :pct% da meta). Vermelho: abaixo do limiar. Cinza: sem ano de referência com dados. Não mede qualidade cadastral nem Censo aprovado.', ['pct' => (int) config('rx.semaphore.yellow_min_progress', 75)]),
             ],
             [
                 'key' => 'municipio',
@@ -38,7 +38,7 @@ final class RxColumnHelp
             [
                 'key' => 'delta',
                 'title' => __('Δ vs :ano', ['ano' => $anteriorYear]),
-                'description' => __('Diferença das matrículas vigentes face ao ano :ano imediato (não é a meta). Se :ano estiver zerado e houver matrículas no vigente, mostra «novo cadastro» em vez de percentual.', ['ano' => $anteriorYear]),
+                'description' => __('Diferença das matrículas vigentes em relação ao ano :ano imediato (não é a meta). Se :ano estiver zerado e houver matrículas no vigente, mostra "novo cadastro" em vez de percentual.', ['ano' => $anteriorYear]),
             ],
             [
                 'key' => 'turmas',
@@ -65,11 +65,11 @@ final class RxColumnHelp
             [
                 'key' => 'progresso',
                 'title' => __('Progresso cad.'),
-                'description' => __('Percentagem face à meta (turmas e matrículas com alvo > 0): usa o menor progresso entre as dimensões — o gargalo define o semáforo.'),
+                'description' => __('Percentual em relação à meta (turmas e matrículas com alvo > 0): usa o menor progresso entre as dimensões — o gargalo define o indicador.'),
             ],
             [
                 'key' => 'falta',
-                'title' => __('Em falta'),
+                'title' => __('Pendente'),
                 'description' => __('Turmas e matrículas ainda abaixo da meta alvo (não soma enturmações, para evitar duplicar o mesmo cadastro).'),
             ],
             [
@@ -79,8 +79,8 @@ final class RxColumnHelp
             ],
             [
                 'key' => 'situacao',
-                'title' => __('Situação'),
-                'description' => __('OK: métricas principais obtidas. Parcial: conexão OK mas algum bloco (Censo, meta, ritmo) falhou. Conexão: host/credenciais. Consulta: SQL/schema i-Educar — diferente do teste rápido na aba Conexões.'),
+                'title' => __('Leitura dos dados'),
+                'description' => __('Se o RX conseguiu carregar as métricas do i-Educar neste município. Completa: blocos principais obtidos. Parcial: conexão OK mas algum bloco (Censo, meta, ritmo) falhou. Conexão: host/credenciais. Consulta: SQL/schema — diferente do teste rápido na aba Conexões. Não indica se o cadastro escolar está correto.'),
             ],
         ];
     }

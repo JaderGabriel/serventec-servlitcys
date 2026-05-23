@@ -74,6 +74,8 @@ class UserController extends Controller
             'name' => $request->validated('name'),
             'username' => $request->validated('username'),
             'email' => $request->validated('email'),
+            'phone' => $request->validated('phone'),
+            'whatsapp' => $request->validated('whatsapp'),
             'password' => $request->validated('password'),
             'role' => $role,
             'is_active' => true,
@@ -145,6 +147,8 @@ class UserController extends Controller
             'name' => $request->validated('name'),
             'username' => $request->validated('username'),
             'email' => $request->validated('email'),
+            'phone' => $request->validated('phone'),
+            'whatsapp' => $request->validated('whatsapp'),
             'role' => $newRole,
             'is_active' => $newIsActive,
         ]);

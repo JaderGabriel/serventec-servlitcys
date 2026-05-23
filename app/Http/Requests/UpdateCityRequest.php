@@ -46,6 +46,17 @@ class UpdateCityRequest extends FormRequest
             $ibge = preg_replace('/\D/', '', (string) $this->input('ibge_municipio'));
             $this->merge(['ibge_municipio' => ($ibge !== '' && strlen($ibge) === 7) ? $ibge : null]);
         }
+
+        foreach (['contact_name', 'contact_phone', 'contact_whatsapp', 'contact_email'] as $field) {
+            if ($this->has($field)) {
+                $v = trim((string) $this->input($field));
+                $this->merge([$field => $v !== '' ? $v : null]);
+            }
+        }
+
+        if ($this->has('contact_email') && filled($this->input('contact_email'))) {
+            $this->merge(['contact_email' => strtolower((string) $this->input('contact_email'))]);
+        }
     }
 
     /**
@@ -71,6 +82,10 @@ class UpdateCityRequest extends FormRequest
                 'regex:/^[0-9]{7}$/',
                 Rule::unique('cities', 'ibge_municipio')->ignore($city->id),
             ],
+            'contact_name' => ['nullable', 'string', 'max:255'],
+            'contact_phone' => ['nullable', 'string', 'max:32'],
+            'contact_whatsapp' => ['nullable', 'string', 'max:32'],
+            'contact_email' => ['nullable', 'string', 'max:255', 'email'],
             'country' => ['nullable', 'string', 'max:100'],
             'db_driver' => ['required', 'string', Rule::in([City::DRIVER_MYSQL, City::DRIVER_PGSQL])],
             'ieducar_schema' => ['nullable', 'string', 'max:63', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]*$/'],
