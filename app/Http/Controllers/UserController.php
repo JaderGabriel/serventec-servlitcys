@@ -84,6 +84,7 @@ class UserController extends Controller
 
         if ($role === UserRole::Municipal) {
             $user->cities()->sync($request->resolvedCityIds());
+            User::forgetCityIdsCache($user->id);
         }
 
         AdminUserAuditLogger::log($request->user(), 'user_created', $user->id, [
@@ -165,6 +166,8 @@ class UserController extends Controller
         } else {
             $user->cities()->detach();
         }
+
+        User::forgetCityIdsCache($user->id);
 
         AdminUserAuditLogger::log($request->user(), 'user_updated', $user->id, [
             'before' => $before,

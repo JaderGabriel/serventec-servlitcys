@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão atual (`main`):** **2.3.8.2** (patch visual; tag **`20260521-Mercury`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md).
+**Versão atual (`main`):** **2.3.8.3** (performance/Redis; tag **`20260521-Mercury`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md).
 
 ## Requisitos
 

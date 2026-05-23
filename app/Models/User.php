@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 #[Fillable(['name', 'username', 'email', 'phone', 'whatsapp', 'profile_photo_path', 'birth_date', 'cpf', 'password', 'role', 'is_active'])]
@@ -176,11 +177,32 @@ class User extends Authenticatable
      */
     public function cityIds(): array
     {
-        if (! $this->relationLoaded('cities')) {
+        if ($this->relationLoaded('cities')) {
+            return $this->cities->pluck('id')->map(static fn ($id) => (int) $id)->all();
+        }
+
+        $ttl = (int) config('performance.user_city_ids_cache', 3600);
+        if ($ttl <= 0) {
             return $this->cities()->pluck('cities.id')->map(static fn ($id) => (int) $id)->all();
         }
 
-        return $this->cities->pluck('id')->map(static fn ($id) => (int) $id)->all();
+        return Cache::remember(
+            self::cityIdsCacheKey((int) $this->getKey()),
+            $ttl,
+            fn () => $this->cities()->pluck('cities.id')->map(static fn ($id) => (int) $id)->all(),
+        );
+    }
+
+    public static function cityIdsCacheKey(int $userId): string
+    {
+        return "user:{$userId}:city_ids";
+    }
+
+    public static function forgetCityIdsCache(?int $userId): void
+    {
+        if ($userId !== null && $userId > 0) {
+            Cache::forget(self::cityIdsCacheKey($userId));
+        }
     }
 
     public function hasCityAccess(City $city): bool

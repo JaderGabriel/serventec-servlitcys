@@ -1,6 +1,6 @@
 # Variáveis de ambiente — servlitcys
 
-**Versão do produto:** 2.3.2 (`4d3f5e8`, #157) · **Última revisão:** maio/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
+**Versão do produto:** 2.3.8.3 · **Última revisão:** 21/05/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [PERFORMANCE.md](PERFORMANCE.md)
 
 Este documento é a **referência oficial** para configurar o arquivo **`.env` no servidor de produção**.
 
@@ -91,7 +91,21 @@ Bases **i-Educar por município** ficam na tabela `cities` (admin), não no `.en
 |----------|:-----:|-----------|
 | `QUEUE_CONNECTION` | sim | `database` (ou `redis`) |
 | `DB_QUEUE` | | Fila default Laravel |
-| `CACHE_STORE` | | `database` |
+| `CACHE_STORE` | | `database` — **recomendado `redis`** em produção (login, rate-limit, caches analíticos) |
+| `SESSION_DRIVER` | | Ver §5 — **recomendado `redis`** com Redis instalado |
+| `REDIS_*` | | Host/porta/cliente (`phpredis` ou fallback `predis`) |
+| `PULSE_CACHE_DRIVER` | | `redis` quando Redis disponível |
+| `PULSE_INGEST_DRIVER` | | `redis` — ingest Pulse fora do request |
+| `PERFORMANCE_*` | | Ver [PERFORMANCE.md](PERFORMANCE.md) e `config/performance.php` |
+
+Diagnóstico: `php artisan performance:check`
+
+| Variável performance | Default | Descrição |
+|---------------------|---------|-----------|
+| `PERFORMANCE_DEFER_LOGIN_AUDIT` | `true` | Log de login após enviar resposta HTTP |
+| `PERFORMANCE_USER_CITY_IDS_CACHE` | `3600` | Cache (s) dos IDs de município por user municipal |
+| `PERFORMANCE_MAIL_SETTINGS_CACHE` | `3600` | Cache SMTP no boot |
+| `PERFORMANCE_PULSE_SKIP_AUTH` | `true` | Não gravar Pulse em rotas de auth |
 | `SCHEDULE_RUN_INTERVAL_MINUTES` | sim | Cadência das tarefas Pulse no scheduler (ex. `3` = `pulse:check` a cada 3 min) |
 | `SCHEDULE_LOG_TO_FILE` | | `true` — anexa saída de `pulse:check` / `pulse:work` a `storage/logs/scheduler.log` |
 | `SCHEDULE_LOG_PATH` | | Caminho do log (opcional) |

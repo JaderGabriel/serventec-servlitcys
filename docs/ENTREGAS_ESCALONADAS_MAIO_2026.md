@@ -31,6 +31,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 23 | `20260521-Mercury` | Release 2.3.8 (tag `YYYYMMDD-Mercury`) |
 | 24 | `bd9d228` | Patch visual **2.3.8.1** (sem nova tag): perfil, `/users`, RX, Consultoria |
 | 25 | `30bc32d` | Patch visual **2.3.8.2**: largura perfil/usuários, contato RX empilhado |
+| 26 | `ef9bac8` | Patch **2.3.8.3**: performance login, Redis, `performance:check` |
 
 ---
 
@@ -235,6 +236,22 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | RX / Consultoria | `city/reference-contact.blade.php` (`agenda`, `tone=dark`), `rx.blade.php`, `consultoria-municipality-strip.blade.php` |
 
 **Pós-deploy:** `npm run build` (ou usar `public/build` do repositório) · **não** criar tag Git.
+
+---
+
+## 12. Patch performance 2.3.8.3 (sem release)
+
+**Escopo:** login e caches — ver [PERFORMANCE.md](PERFORMANCE.md).
+
+| Área | Ficheiros / comandos |
+|------|----------------------|
+| Login | `LogSuccessfulUserLogin.php`, `AuthenticatedSessionController.php`, `config/performance.php` |
+| Pulse | `RecordPulseInstitutionContext.php` |
+| Cache | `User.php` (`city_ids`), `MailConfigService.php`, `AppServiceProvider.php` |
+| Redis | `.env.example`, `RedisProbe.php`, `performance:check` |
+| BD | migração índice `admin_user_logs` |
+
+**Pós-deploy:** `php artisan migrate --force` · configurar Redis no `.env` (`CACHE_STORE`, `SESSION_DRIVER`, `QUEUE_CONNECTION`) · `php artisan performance:check` · **não** criar tag Git.
 
 ---
 

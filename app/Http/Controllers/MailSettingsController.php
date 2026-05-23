@@ -29,6 +29,7 @@ class MailSettingsController extends Controller
         $model->fill($payload);
         $model->save();
 
+        MailConfigService::forgetCache();
         $mailConfig->applyFromDatabase();
 
         return redirect()->route('settings.mail.edit')->with('status', __('Configurações de e-mail salvas.'));

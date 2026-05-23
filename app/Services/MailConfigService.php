@@ -3,16 +3,23 @@
 namespace App\Services;
 
 use App\Models\MailSetting;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 
 class MailConfigService
 {
+    public const CACHE_KEY = 'mail_settings:first';
+
     /**
      * Aplica configurações SMTP da base de dados (se existirem) sobre a configuração em memória.
      */
     public function applyFromDatabase(): void
     {
-        $row = MailSetting::query()->first();
+        $ttl = max(0, (int) config('performance.mail_settings_cache', 3600));
+        $row = $ttl > 0
+            ? Cache::remember(self::CACHE_KEY, $ttl, static fn () => MailSetting::query()->first())
+            : MailSetting::query()->first();
+
         if (! $row || ! filled($row->smtp_host)) {
             return;
         }
@@ -36,5 +43,10 @@ class MailConfigService
         if (filled($row->mail_from_name)) {
             Config::set('mail.from.name', $row->mail_from_name);
         }
+    }
+
+    public static function forgetCache(): void
+    {
+        Cache::forget(self::CACHE_KEY);
     }
 }

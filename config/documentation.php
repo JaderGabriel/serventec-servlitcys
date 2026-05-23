@@ -21,7 +21,7 @@ return [
     */
 
     'product' => [
-        'version' => '2.3.8.2',
+        'version' => '2.3.8.3',
         'release_tag' => '20260521-Mercury',
         'commit_short' => '30bc32d',
         'commit_number' => 186,

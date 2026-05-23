@@ -22,6 +22,7 @@ use App\Policies\CityPolicy;
 use App\Policies\UserPolicy;
 use App\Services\MailConfigService;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
@@ -113,7 +114,13 @@ class AppServiceProvider extends ServiceProvider
         }
 
         try {
-            if (Schema::hasTable('mail_settings')) {
+            $hasMailSettings = Cache::remember(
+                'bootstrap:has_mail_settings_table',
+                86400,
+                static fn (): bool => Schema::hasTable('mail_settings'),
+            );
+
+            if ($hasMailSettings) {
                 app(MailConfigService::class)->applyFromDatabase();
             }
         } catch (\Throwable) {

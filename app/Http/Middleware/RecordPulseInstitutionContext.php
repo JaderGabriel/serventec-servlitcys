@@ -20,6 +20,10 @@ class RecordPulseInstitutionContext
             return $next($request);
         }
 
+        if (config('performance.pulse_skip_auth_routes', true) && $this->shouldSkipForRequest($request)) {
+            return $next($request);
+        }
+
         $pulsePath = trim((string) config('pulse.path', 'pulse'), '/');
         $reqPath = trim($request->path(), '/');
         if ($pulsePath !== '' && (str_starts_with($reqPath, $pulsePath) || $reqPath === $pulsePath)) {
@@ -69,5 +73,26 @@ class RecordPulseInstitutionContext
         }
 
         return null;
+    }
+
+    private function shouldSkipForRequest(Request $request): bool
+    {
+        if ($request->user() === null) {
+            return true;
+        }
+
+        return $request->routeIs(
+            'login',
+            'logout',
+            'password.request',
+            'password.email',
+            'password.reset',
+            'password.store',
+            'password.confirm',
+            'password.update',
+            'verification.notice',
+            'verification.verify',
+            'verification.send',
+        );
     }
 }

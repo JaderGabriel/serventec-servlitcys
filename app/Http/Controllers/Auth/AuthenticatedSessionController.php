@@ -26,9 +26,14 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        $user = $request->user();
+        if ($user !== null && $user->isMunicipal()) {
+            $user->load('cities');
+        }
+
         $request->session()->regenerate();
 
-        return redirect()->intended($request->user()->homeUrl(absolute: false));
+        return redirect()->intended($user->homeUrl(absolute: false));
     }
 
     /**
