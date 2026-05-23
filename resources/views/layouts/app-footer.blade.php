@@ -29,25 +29,15 @@
                         {{ __('Acesso autenticado. Os dados de monitorização (Pulse) são agregados conforme a configuração do servidor.') }}
                     </p>
                 </div>
-                <nav class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm" aria-label="{{ __('Links rápidos') }}">
-                    @if (Auth::user()->canViewAdminDashboard())
-                        <a href="{{ route('dashboard') }}" class="serv-link text-sm">
-                            {{ __('Início') }}
-                        </a>
-                    @endif
-                    <a href="{{ route('dashboard.analytics') }}" class="serv-link text-sm">
-                        {{ __('Análise educacional') }}
+                <nav class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm" aria-label="{{ __('Módulos da plataforma') }}">
+                    <a href="{{ route('dashboard.analytics') }}" @class(['serv-link text-sm inline-flex items-center gap-1.5', 'font-semibold underline' => request()->routeIs('dashboard.analytics*')])>
+                        <x-ui.icon name="chart-bar" class="h-4 w-4 shrink-0 opacity-80" />
+                        {{ __('Análise') }}
                     </a>
-                    @auth
-                        @if (Auth::user()->isAdmin())
-                            <a href="{{ route('pulse') }}" @class(['serv-link text-sm', 'font-semibold underline' => request()->routeIs('pulse')])>
-                                {{ __('Monitorização') }}
-                            </a>
-                            <a href="{{ route('cities.index') }}" class="serv-link text-sm">
-                                {{ __('Cidades') }}
-                            </a>
-                        @endif
-                    @endauth
+                    <a href="{{ route('dashboard.rx') }}" @class(['serv-link text-sm inline-flex items-center gap-1.5', 'font-semibold underline' => request()->routeIs('dashboard.rx*')])>
+                        <x-ui.icon name="clipboard-document-list" class="h-4 w-4 shrink-0 opacity-80" />
+                        RX
+                    </a>
                 </nav>
             </div>
         @endif

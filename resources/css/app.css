@@ -77,28 +77,6 @@
             dark:from-cyan-500 dark:to-indigo-600 dark:shadow-indigo-900/40 dark:ring-offset-slate-950;
     }
 
-    .serv-auth-brand-mark--footer {
-        @apply h-14 w-14 rounded-xl shadow-lg ring-1 ring-white/80;
-    }
-
-    .serv-auth-footer {
-        @apply border-t border-slate-300/90 bg-white/95 py-8 backdrop-blur-xl
-            dark:border-white/10 dark:bg-slate-950/80;
-    }
-
-    .serv-auth-footer__nav-link {
-        @apply inline-flex items-center gap-2 rounded-lg border-2 border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800
-            shadow-sm transition hover:border-teal-500 hover:bg-teal-50 hover:text-teal-900
-            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600
-            dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-100 dark:hover:border-teal-500 dark:hover:bg-teal-950/50;
-    }
-
-    .serv-auth-footer__nav-link--rx {
-        @apply border-indigo-300/90 text-indigo-950 hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-950
-            focus-visible:outline-indigo-600
-            dark:border-indigo-700 dark:text-indigo-100 dark:hover:border-indigo-500 dark:hover:bg-indigo-950/50;
-    }
-
     .serv-auth-title {
         @apply font-display text-2xl font-bold text-slate-900 dark:text-white;
     }

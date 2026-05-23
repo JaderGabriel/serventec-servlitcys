@@ -57,43 +57,6 @@
                     {{ $slot }}
                 </div>
             </main>
-
-            <footer class="serv-auth-footer mt-auto">
-                <div class="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 sm:px-6 lg:px-8">
-                    <div class="flex flex-col items-center gap-3 text-center">
-                        <span class="serv-auth-brand-mark serv-auth-brand-mark--footer" aria-hidden="true">
-                            <x-application-logo class="h-8 w-8 text-white shrink-0" />
-                        </span>
-                        <p class="font-display text-base font-bold text-slate-900 dark:text-white">
-                            {{ config('app.name') }}
-                        </p>
-                    </div>
-                    <nav class="flex flex-wrap items-center justify-center gap-3" aria-label="{{ __('Módulos da plataforma') }}">
-                        <a href="{{ route('dashboard.analytics') }}" class="serv-auth-footer__nav-link">
-                            <x-ui.icon name="chart-bar" class="h-5 w-5 text-teal-700 dark:text-teal-400" />
-                            {{ __('Análise') }}
-                        </a>
-                        <a href="{{ route('dashboard.rx') }}" class="serv-auth-footer__nav-link serv-auth-footer__nav-link--rx">
-                            <x-ui.icon name="clipboard-document-list" class="h-5 w-5 text-indigo-700 dark:text-indigo-400" />
-                            RX
-                        </a>
-                    </nav>
-                    <p class="text-xs font-medium text-slate-500 dark:text-slate-500">
-                        {{ __('Acesso após autenticação · :year', ['year' => date('Y')]) }}
-                    </p>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">
-                        {{ __('Powered by: ') }}
-                        <a
-                            href="https://github.com/jadergabriel"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="font-semibold text-teal-800 underline decoration-teal-600/50 underline-offset-2 transition hover:text-teal-950 dark:text-cyan-300 dark:decoration-cyan-500/50 dark:hover:text-cyan-200"
-                        >
-                            Jader Gabriel
-                        </a>
-                    </p>
-                </div>
-            </footer>
         </div>
     </body>
 </html>
