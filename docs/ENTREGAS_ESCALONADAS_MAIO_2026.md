@@ -34,7 +34,8 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 26 | `a736e43` | Patch **2.3.8.3**: performance login, Redis, `performance:check` |
 | 27 | `4833160` | Patch **2.3.8.4**: mapa capacidade/vagas, saldo Matrículas/VAAF, Inclusão, predis |
 | 28 | `7c0297c` | Doc: estudo integrações setor público (sem bump de versão) |
-| 29 | `a2566aa` | Patch **2.3.8.5** (**em produção**): mapa capacidade, Matrículas saldo, NEE unificado |
+| 29 | `a2566aa` | Patch **2.3.8.5**: mapa capacidade, Matrículas saldo, NEE unificado |
+| 30 | `ac8c2ec` | Patch **2.3.8.6** (**em produção**): mapa Início semáforo RX + contato municipal |
 
 ---
 
@@ -273,7 +274,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 ---
 
-## 14. Patch consultoria 2.3.8.5 — **em produção**
+## 14. Patch consultoria 2.3.8.5
 
 **Versão semântica:** `2.3.8.5` · **tag deploy:** `20260521-Mercury` (inalterada) · **commit:** `a2566aa` (#195)
 
@@ -285,6 +286,20 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | Produção / docs | `config/documentation.php`, `HISTORICO_VERSOES.md`, selo «Em produção» em `/admin/documentacao` |
 
 **Pós-deploy:** `php artisan config:clear` · validar mapa (capacidade/vagas), aba Matrículas (cartões saldo) e Inclusão (grupo + catálogo alinhados) · **não** criar tag Git.
+
+---
+
+## 15. Patch mapa Início 2.3.8.6 — **em produção**
+
+**Versão semântica:** `2.3.8.6` · **tag deploy:** `20260521-Mercury` (inalterada)
+
+| Área | Ficheiros |
+|------|-----------|
+| Snapshot RX | `AdminHomeMapCadastroSnapshot.php`, `MunicipalityMapCadastroPresenter.php` |
+| Mapa | `AdminHomeMunicipalityMap.php`, `DashboardMunicipalityMapController.php`, `brazilMunicipalitiesMap.js`, `municipalities-map.blade.php` |
+| Produção / docs | `config/documentation.php`, `HISTORICO_VERSOES.md`, selo «Em produção» em `/admin/documentacao` |
+
+**Pós-deploy:** `php artisan config:clear` · `php artisan cache:clear` (invalidar snapshot RX do mapa) · validar `/dashboard` (cores RX, cartão com contato) · **não** criar tag Git.
 
 ---
 

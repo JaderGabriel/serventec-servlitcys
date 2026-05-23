@@ -6,19 +6,32 @@ const DEFAULT_STATUS_COLORS = {
     incomplete: "#f59e0b",
     inactive_setup: "#64748b",
     inactive: "#94a3b8",
+    cadastro_green: "#10b981",
+    cadastro_yellow: "#fbbf24",
+    cadastro_red: "#f43f5e",
+    cadastro_neutral: "#cbd5e1",
+    cadastro_error: "#64748b",
 };
 
-export default function createBrazilMunicipalitiesMap(markers = [], statusColors = null) {
+export default function createBrazilMunicipalitiesMap(markers = [], statusColors = null, options = null) {
     const colors =
         statusColors && typeof statusColors === "object"
             ? { ...DEFAULT_STATUS_COLORS, ...statusColors }
             : DEFAULT_STATUS_COLORS;
 
+    const cadastroSnapshotUrl =
+        options && typeof options.cadastroSnapshotUrl === "string" ? options.cadastroSnapshotUrl : null;
+
     return {
         map: null,
         layer: null,
+        markerLayers: [],
         markers: Array.isArray(markers) ? markers : [],
         statusColors: colors,
+        cadastroById: {},
+        cadastroSnapshotUrl,
+        cadastroLoading: false,
+        cadastroError: null,
         active: null,
         tooltipPinned: false,
         tooltipStyle: "",
@@ -29,6 +42,12 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
         init() {
             if (!this.$refs.map) {
                 return;
+            }
+
+            for (const m of this.markers) {
+                if (m?.cadastro && m.id != null) {
+                    this.cadastroById[m.id] = m.cadastro;
+                }
             }
 
             this.map = L.map(this.$refs.map, {
@@ -43,6 +62,7 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
             }).addTo(this.map);
 
             this.layer = L.layerGroup().addTo(this.map);
+            this.markerLayers = [];
 
             const bounds = [];
 
@@ -50,7 +70,7 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
             const radius = count > 40 ? 5 : count > 15 ? 6 : 8;
             const placedAt = new Map();
 
-            this.markers.forEach((m, idx) => {
+            this.markers.forEach((m) => {
                 let lat = Number(m.lat);
                 let lng = Number(m.lng);
                 if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
@@ -69,9 +89,10 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
 
                 bounds.push([lat, lng]);
 
+                const fillKey = this.markerFillKey(m);
                 const circle = L.circleMarker([lat, lng], {
                     radius,
-                    fillColor: colors[m.status] || colors.inactive,
+                    fillColor: colors[fillKey] || colors.inactive,
                     color: "#ffffff",
                     weight: count > 30 ? 1.5 : 2,
                     opacity: 1,
@@ -84,6 +105,7 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
                 });
 
                 circle.addTo(this.layer);
+                this.markerLayers.push({ circle, marker: m });
             });
 
             this.map.on("click", () => {
@@ -96,15 +118,104 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
             } else {
                 this.map.setView([-14.5, -52], 4);
             }
+
+            this.loadCadastroSnapshot();
+        },
+
+        markerFillKey(marker) {
+            const id = marker?.id;
+            const cadastro = id != null ? this.cadastroById[id] : null;
+            if (cadastro?.map_fill_key) {
+                if (marker.status === "ready" || marker.status === "inactive_setup") {
+                    return cadastro.map_fill_key;
+                }
+            }
+            return marker?.map_fill_key || marker?.status || "inactive";
+        },
+
+        applyMarkerColors() {
+            for (const { circle, marker } of this.markerLayers) {
+                const key = this.markerFillKey(marker);
+                circle.setStyle({
+                    fillColor: this.statusColors[key] || this.statusColors.inactive,
+                });
+            }
+        },
+
+        mergeCadastroSnapshot(data) {
+            const byId = data?.by_city_id;
+            if (!byId || typeof byId !== "object") {
+                return;
+            }
+            this.cadastroById = { ...this.cadastroById, ...byId };
+            this.markers = this.markers.map((m) => {
+                const cadastro = this.cadastroById[m.id] ?? m.cadastro ?? null;
+                return {
+                    ...m,
+                    cadastro,
+                    map_fill_key:
+                        m.status === "ready" || m.status === "inactive_setup"
+                            ? cadastro?.map_fill_key ?? m.map_fill_key
+                            : m.map_fill_key,
+                };
+            });
+            if (this.active?.id != null) {
+                const updated = this.markers.find((x) => x.id === this.active.id);
+                if (updated) {
+                    this.active = updated;
+                }
+            }
+            this.applyMarkerColors();
+        },
+
+        async loadCadastroSnapshot() {
+            if (!this.cadastroSnapshotUrl) {
+                return;
+            }
+            this.cadastroLoading = true;
+            this.cadastroError = null;
+            try {
+                const r = await fetch(this.cadastroSnapshotUrl, {
+                    headers: {
+                        Accept: "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    credentials: "same-origin",
+                });
+                if (!r.ok) {
+                    this.cadastroError = "Não foi possível carregar o status de cadastro (RX).";
+                    return;
+                }
+                const data = await r.json();
+                this.mergeCadastroSnapshot(data);
+            } catch {
+                this.cadastroError = "Erro de rede ao carregar cadastro RX.";
+            } finally {
+                this.cadastroLoading = false;
+            }
+        },
+
+        cadastroAttentionClass(level) {
+            if (level === "praise") {
+                return "text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800";
+            }
+            if (level === "watch") {
+                return "text-amber-900 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800";
+            }
+            if (level === "urgent") {
+                return "text-rose-800 dark:text-rose-200 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800";
+            }
+            return "text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700";
         },
 
         selectMarker(marker, event) {
-            this.active = marker;
+            const enriched = this.markers.find((m) => m.id === marker.id) ?? marker;
+            this.active = enriched;
             this.tooltipPinned = true;
             this.schoolYears = [];
             this.yearsError = null;
             this.positionTooltip(event);
-            this.loadSchoolYears(marker);
+            this.loadSchoolYears(enriched);
         },
 
         closeTooltip() {
@@ -160,7 +271,7 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
             const rect = el.getBoundingClientRect();
             const x = rect.left + event.containerPoint.x;
             const y = rect.top + event.containerPoint.y;
-            this.tooltipStyle = `left:${Math.min(x + 12, window.innerWidth - 300)}px;top:${Math.min(y + 12, window.innerHeight - 280)}px`;
+            this.tooltipStyle = `left:${Math.min(x + 12, window.innerWidth - 320)}px;top:${Math.min(y + 12, window.innerHeight - 360)}px`;
         },
 
         yearStateIcon(state) {

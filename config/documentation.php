@@ -22,10 +22,10 @@ return [
     */
 
     'product' => [
-        'version' => '2.3.8.5',
+        'version' => '2.3.8.6',
         'release_tag' => '20260521-Mercury',
-        'commit_short' => 'a2566aa',
-        'commit_number' => 195,
+        'commit_short' => 'ac8c2ec',
+        'commit_number' => 198,
         'revision_date' => '2026-05-21',
         'in_production' => true,
         'production_label' => 'Em produção',

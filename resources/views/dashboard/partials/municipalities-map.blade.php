@@ -3,40 +3,74 @@
     $totalCities = (int) ($mapSummary['total'] ?? count($mapMarkers ?? []));
     $plottedOnMap = (int) ($mapSummary['on_map'] ?? $totalCities);
     $mapLegend = is_array($mapSummary['legend'] ?? null) ? $mapSummary['legend'] : [];
-    $mapStatusColors = is_array($mapSummary['colors'] ?? null) ? $mapSummary['colors'] : \App\Support\Dashboard\MunicipalityMapStatus::colorsForJs();
+    $cadastroLegend = is_array($mapSummary['cadastro_legend'] ?? null) ? $mapSummary['cadastro_legend'] : [];
+    $vigenteAno = (int) ($mapSummary['vigente_ano'] ?? config('rx.vigente_year', (int) date('Y')));
+    $mapStatusColors = is_array($mapSummary['colors'] ?? null) ? $mapSummary['colors'] : array_merge(
+        \App\Support\Dashboard\MunicipalityMapStatus::colorsForJs(),
+        \App\Support\Dashboard\MunicipalityMapCadastroPresenter::fillColorsForJs(),
+    );
+    $cadastroSnapshotUrl = $mapSummary['cadastro_snapshot_url'] ?? route('dashboard.municipality-map.cadastro-snapshot');
 @endphp
 <section class="serv-panel overflow-hidden" aria-labelledby="home-map">
-    <div class="px-5 py-4 border-b border-slate-200/90 dark:border-slate-700/90 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-            <h3 id="home-map" class="font-display text-lg font-semibold text-serv-navy dark:text-slate-100">{{ __('Municípios implementados') }}</h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                {{ __(':total município(s) cadastrados · :plotted marcador(es) visível(is). Posição: média das escolas (geos), centroide IBGE ou dispersão na UF. Cores = estado da conexão (verde = ativo com base).', [
-                    'total' => number_format($totalCities),
-                    'plotted' => number_format($plottedOnMap),
-                ]) }}
-            </p>
+    <div class="px-5 py-4 border-b border-slate-200/90 dark:border-slate-700/90 flex flex-col gap-3">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div>
+                <h3 id="home-map" class="font-display text-lg font-semibold text-serv-navy dark:text-slate-100">{{ __('Municípios implementados') }}</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    {{ __(':total município(s) cadastrados · :plotted marcador(es). Cor do pin = cadastro :ano (meta RX, igual ao painel RX). Cinza/âmbar = conexão i-Educar incompleta ou inativa.', [
+                        'total' => number_format($totalCities),
+                        'plotted' => number_format($plottedOnMap),
+                        'ano' => $vigenteAno,
+                    ]) }}
+                </p>
+            </div>
+            <a href="{{ route('cities.create') }}" class="serv-link text-sm shrink-0 self-start">{{ __('Nova cidade') }}</a>
         </div>
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400" role="list" aria-label="{{ __('Legenda do mapa') }}">
-            @foreach ($mapLegend as $item)
-                <span class="inline-flex items-center gap-1.5" role="listitem" title="{{ $item['description'] ?? '' }}">
-                    <span
-                        class="h-2.5 w-2.5 rounded-full ring-1 ring-white/80 dark:ring-slate-900 shrink-0"
-                        style="background-color: {{ $item['color'] ?? '#94a3b8' }}"
-                        aria-hidden="true"
-                    ></span>
-                    <span class="text-slate-600 dark:text-slate-300">
-                        {{ $item['label'] ?? '' }}
-                        <span class="tabular-nums font-semibold text-slate-800 dark:text-slate-200">({{ number_format((int) ($item['count'] ?? 0)) }})</span>
+
+        <div class="flex flex-col gap-2 text-xs text-slate-500 dark:text-slate-400" aria-label="{{ __('Legendas do mapa') }}">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2" role="list" aria-label="{{ __('Conexão i-Educar') }}">
+                <span class="font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide text-[10px]">{{ __('Conexão') }}</span>
+                @foreach ($mapLegend as $item)
+                    <span class="inline-flex items-center gap-1.5" role="listitem" title="{{ $item['description'] ?? '' }}">
+                        <span
+                            class="h-2.5 w-2.5 rounded-full ring-1 ring-white/80 dark:ring-slate-900 shrink-0"
+                            style="background-color: {{ $item['color'] ?? '#94a3b8' }}"
+                            aria-hidden="true"
+                        ></span>
+                        <span class="text-slate-600 dark:text-slate-300">
+                            {{ $item['label'] ?? '' }}
+                            <span class="tabular-nums font-semibold text-slate-800 dark:text-slate-200">({{ number_format((int) ($item['count'] ?? 0)) }})</span>
+                        </span>
                     </span>
-                </span>
-            @endforeach
-            <a href="{{ route('cities.create') }}" class="serv-link">{{ __('Nova cidade') }}</a>
+                @endforeach
+            </div>
+            @if (count($cadastroLegend) > 0)
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-2" role="list" aria-label="{{ __('Cadastro ano vigente (RX)') }}">
+                    <span class="font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide text-[10px]">
+                        {{ __('Cadastro :ano (RX)', ['ano' => $vigenteAno]) }}
+                    </span>
+                    @foreach ($cadastroLegend as $item)
+                        <span class="inline-flex items-center gap-1.5" role="listitem" title="{{ $item['description'] ?? '' }}">
+                            <span
+                                class="h-2.5 w-2.5 rounded-full ring-1 ring-white/80 dark:ring-slate-900 shrink-0"
+                                style="background-color: {{ $item['color'] ?? '#94a3b8' }}"
+                                aria-hidden="true"
+                            ></span>
+                            <span class="text-slate-600 dark:text-slate-300">
+                                {{ $item['label'] ?? '' }}
+                                <span class="tabular-nums font-semibold text-slate-800 dark:text-slate-200">({{ number_format((int) ($item['count'] ?? 0)) }})</span>
+                            </span>
+                        </span>
+                    @endforeach
+                    <a href="{{ route('dashboard.rx') }}" class="serv-link">{{ __('Painel RX') }}</a>
+                </div>
+            @endif
         </div>
     </div>
 
     <div
         class="relative"
-        x-data="brazilMunicipalitiesMap(@js($mapMarkers), @js($mapStatusColors))"
+        x-data="brazilMunicipalitiesMap(@js($mapMarkers), @js($mapStatusColors), @js(['cadastroSnapshotUrl' => $cadastroSnapshotUrl]))"
         x-init="init()"
     >
         <div x-ref="map" class="serv-brazil-map" role="application" aria-label="{{ __('Mapa do Brasil com municípios cadastrados') }}"></div>
@@ -45,28 +79,35 @@
             x-show="active"
             x-cloak
             x-transition.opacity.duration.150ms
-            class="serv-brazil-map-tooltip"
+            class="serv-brazil-map-tooltip serv-brazil-map-tooltip--wide"
             :style="tooltipStyle"
             @click.outside="closeTooltip()"
         >
             <template x-if="active">
                 <div class="space-y-3">
                     <div class="flex items-start justify-between gap-2">
-                        <div>
+                        <div class="min-w-0">
                             <p class="font-semibold text-slate-900 dark:text-slate-100" x-text="active.name + ' — ' + active.uf"></p>
-                            <p class="mt-0.5 text-xs flex items-center gap-1.5">
+                            <p class="mt-0.5 text-xs flex items-center gap-1.5 flex-wrap">
                                 <span
                                     class="h-2 w-2 rounded-full shrink-0 ring-1 ring-white/80 dark:ring-slate-800"
-                                    :style="'background-color:' + (statusColors[active.status] || statusColors.inactive)"
+                                    :style="'background-color:' + (statusColors[markerFillKey(active)] || statusColors.inactive)"
                                     aria-hidden="true"
                                 ></span>
                                 <span
+                                    x-show="active.cadastro?.semaforo_label"
+                                    class="font-medium"
                                     :class="{
-                                        'text-emerald-600 dark:text-emerald-400': active.status === 'ready',
-                                        'text-amber-600 dark:text-amber-400': active.status === 'incomplete',
-                                        'text-slate-600 dark:text-slate-400': active.status === 'inactive_setup',
-                                        'text-slate-500 dark:text-slate-500': active.status === 'inactive',
+                                        'text-emerald-600 dark:text-emerald-400': active.cadastro?.semaforo === 'green',
+                                        'text-amber-700 dark:text-amber-300': active.cadastro?.semaforo === 'yellow',
+                                        'text-rose-700 dark:text-rose-300': active.cadastro?.semaforo === 'red',
+                                        'text-slate-600 dark:text-slate-400': !['green','yellow','red'].includes(active.cadastro?.semaforo),
                                     }"
+                                    x-text="active.cadastro ? (active.cadastro.semaforo_label + ' · ' + active.vigente_ano) : active.status_label"
+                                ></span>
+                                <span
+                                    x-show="!active.cadastro?.semaforo_label"
+                                    class="text-slate-500 dark:text-slate-400"
                                     x-text="active.status_label"
                                 ></span>
                             </p>
@@ -79,7 +120,81 @@
                         >&times;</button>
                     </div>
 
+                    <template x-if="active.cadastro && (active.status === 'ready' || active.status === 'inactive_setup')">
+                        <div class="space-y-2">
+                            <div
+                                class="rounded-lg border px-2.5 py-2 text-xs leading-snug"
+                                :class="cadastroAttentionClass(active.cadastro.attention_level)"
+                                :title="active.cadastro.semaforo_title || ''"
+                            >
+                                <p class="font-semibold" x-text="active.cadastro.attention_message"></p>
+                            </div>
+                            <div x-show="active.cadastro.progresso_label" class="space-y-1">
+                                <div class="flex justify-between text-[10px] text-slate-500 dark:text-slate-400">
+                                    <span>{{ __('Progresso meta cadastro') }}</span>
+                                    <span class="font-semibold tabular-nums text-slate-800 dark:text-slate-100" x-text="active.cadastro.progresso_label"></span>
+                                </div>
+                                <div class="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden" role="presentation">
+                                    <div
+                                        class="h-full rounded-full transition-all"
+                                        :class="{
+                                            'bg-emerald-500': active.cadastro.semaforo === 'green',
+                                            'bg-amber-400': active.cadastro.semaforo === 'yellow',
+                                            'bg-rose-500': active.cadastro.semaforo === 'red',
+                                            'bg-slate-400': !['green','yellow','red'].includes(active.cadastro.semaforo),
+                                        }"
+                                        :style="'width:' + Math.min(100, Math.max(0, active.cadastro.progresso_pct ?? 0)) + '%'"
+                                    ></div>
+                                </div>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400" x-show="active.cadastro.registros_restantes > 0">
+                                    <span x-text="active.cadastro.registros_restantes.toLocaleString('pt-BR')"></span>
+                                    {{ __('registo(s) em falta (turmas + matrículas + enturmações)') }}
+                                </p>
+                            </div>
+                            <a
+                                :href="active.cadastro.rx_url"
+                                class="text-xs serv-link inline-flex items-center gap-1"
+                            >{{ __('Ver detalhe no painel RX') }} →</a>
+                        </div>
+                    </template>
+
+                    <template x-if="active.reference_contact?.available">
+                        <div class="rounded-lg border border-slate-200/90 dark:border-slate-700/90 p-2.5 bg-slate-50/80 dark:bg-slate-800/40">
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">{{ __('Contato municipal') }}</p>
+                            <p class="text-xs font-medium text-slate-800 dark:text-slate-100 truncate" x-show="active.reference_contact.name" x-text="active.reference_contact.name"></p>
+                            <div class="mt-1.5 flex flex-wrap gap-2">
+                                <a
+                                    x-show="active.reference_contact.phone_href"
+                                    :href="active.reference_contact.phone_href"
+                                    class="text-xs text-serv-navy dark:text-sky-300 hover:underline"
+                                    x-text="active.reference_contact.phone"
+                                ></a>
+                                <a
+                                    x-show="active.reference_contact.whatsapp_href"
+                                    :href="active.reference_contact.whatsapp_href"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="text-xs text-emerald-700 dark:text-emerald-400 hover:underline"
+                                >WhatsApp</a>
+                                <a
+                                    x-show="active.reference_contact.email_href"
+                                    :href="active.reference_contact.email_href"
+                                    class="text-xs text-serv-navy dark:text-sky-300 hover:underline truncate max-w-full"
+                                    x-text="active.reference_contact.email"
+                                ></a>
+                            </div>
+                        </div>
+                    </template>
+                    <p
+                        x-show="active.reference_contact && !active.reference_contact.available"
+                        class="text-xs text-slate-500 dark:text-slate-400 italic"
+                    >{{ __('Sem contato cadastrado — edite o município para incluir gestor ou ponto focal.') }}</p>
+
                     <dl class="text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                        <div class="flex justify-between gap-2">
+                            <dt class="text-slate-500 dark:text-slate-400">{{ __('Conexão') }}</dt>
+                            <dd class="text-right" x-text="active.status_label"></dd>
+                        </div>
                         <div class="flex justify-between gap-2">
                             <dt class="text-slate-500 dark:text-slate-400">{{ __('Implementação') }}</dt>
                             <dd class="font-medium text-slate-800 dark:text-slate-100" x-text="active.implemented_at_label || '—'"></dd>

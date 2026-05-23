@@ -42,6 +42,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/municipality-map/cadastro-snapshot', [DashboardMunicipalityMapController::class, 'cadastroSnapshot'])
+        ->name('dashboard.municipality-map.cadastro-snapshot');
     Route::get('/dashboard/municipality-map/{city}/school-years', [DashboardMunicipalityMapController::class, 'schoolYears'])
         ->name('dashboard.municipality-map.school-years');
     Route::get('/dashboard/analytics', [AnalyticsDashboardController::class, 'index'])->name('dashboard.analytics');

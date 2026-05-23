@@ -44,6 +44,9 @@ final class AdminHomeMunicipalityMapTest extends TestCase
         $this->assertStringContainsString('/dashboard/municipality-map/'.$city->id.'/school-years', $marker['school_years_url']);
         $this->assertSame('ready', $marker['status']);
         $this->assertArrayHasKey('ieducar_url', $marker);
+        $this->assertArrayHasKey('reference_contact', $marker);
+        $this->assertArrayHasKey('map_fill_key', $marker);
+        $this->assertIsArray($marker['reference_contact']);
     }
 
     #[Test]
@@ -114,5 +117,7 @@ final class AdminHomeMunicipalityMapTest extends TestCase
         $readyLegend = collect($summary['legend'])->firstWhere('status', 'ready');
         $this->assertSame(1, $readyLegend['count']);
         $this->assertSame('#10b981', $readyLegend['color']);
+        $this->assertArrayHasKey('cadastro_legend', $summary);
+        $this->assertArrayHasKey('cadastro_snapshot_url', $summary);
     }
 }

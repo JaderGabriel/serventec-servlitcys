@@ -3,12 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\City;
+use App\Services\Dashboard\AdminHomeMapCadastroSnapshot;
 use App\Services\Dashboard\CitySchoolYearsForMap;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class DashboardMunicipalityMapController extends Controller
 {
+    public function cadastroSnapshot(Request $request, AdminHomeMapCadastroSnapshot $snapshot): JsonResponse
+    {
+        if ($request->user() === null || ! $request->user()->canViewAdminDashboard()) {
+            abort(403);
+        }
+
+        return response()->json($snapshot->forMap());
+    }
+
     public function schoolYears(Request $request, City $city, CitySchoolYearsForMap $catalog): JsonResponse
     {
         if ($request->user() === null || ! $request->user()->canViewAdminDashboard()) {

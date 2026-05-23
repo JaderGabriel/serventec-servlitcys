@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **2.3.8.5** · release `20260521-Mercury` · commit `a2566aa` (#195) · **Ramo:** `main` · **Última revisão:** 21/05/2026
+**Versão em produção:** **2.3.8.6** · release `20260521-Mercury` · **Ramo:** `main` · **Última revisão:** 21/05/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -18,6 +18,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Discrepâncias + export CSV | Implementado |
 | FUNDEB / VAAF (import + cascata + matriz + export CSV + perfil planejamento) | Implementado |
 | Importações externas (guias UX admin + hub público) | Implementado |
+| Mapa Início — semáforo cadastro RX + contato municipal | Implementado (2.3.8.6) |
 | Mapa unidades — capacidade/vagas (fallback ocupação) | Implementado (2.3.8.5) |
 | Matrículas — cartões saldo + fórmula VAAF indicativa | Implementado (2.3.8.5) |
 | Inclusão NEE — dataset unificado grupo + catálogo | Implementado (`InclusionNeeDesignacaoDataset`) |
