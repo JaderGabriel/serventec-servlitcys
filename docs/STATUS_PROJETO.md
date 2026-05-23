@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão:** 2.3.8.3 (performance/Redis) · release `20260521-Mercury` · commit `ef9bac8` (#188) · **Ramo:** `main` · **Última revisão:** 21/05/2026
+**Versão:** 2.3.8.3 (performance/Redis) · release `20260521-Mercury` · commit `a736e43` (#188) · **Ramo:** `main` · **Última revisão:** 21/05/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 

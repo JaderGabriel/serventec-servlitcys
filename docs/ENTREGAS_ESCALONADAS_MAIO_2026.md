@@ -31,7 +31,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 23 | `20260521-Mercury` | Release 2.3.8 (tag `YYYYMMDD-Mercury`) |
 | 24 | `bd9d228` | Patch visual **2.3.8.1** (sem nova tag): perfil, `/users`, RX, Consultoria |
 | 25 | `30bc32d` | Patch visual **2.3.8.2**: largura perfil/usuários, contato RX empilhado |
-| 26 | `ef9bac8` | Patch **2.3.8.3**: performance login, Redis, `performance:check` |
+| 26 | `a736e43` | Patch **2.3.8.3**: performance login, Redis, `performance:check` |
 
 ---
 
