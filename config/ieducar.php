@@ -878,6 +878,15 @@ return [
         ],
 
         /**
+         * Alias de designação local → rótulo MEC/INEP (chave e valor = texto como em cadastro.deficiencia).
+         * Usado no catálogo unificado NEE (gráfico agrupado + detalhado).
+         */
+        'deficiencia_label_aliases' => [
+            // 'TEA' => 'Transtorno do espectro autista',
+            // 'AH' => 'Altas habilidades/Superdotação',
+        ],
+
+        /**
          * Tipos frequentes no i-Educar que não são campo próprio do Censo/INEP — exibir como «complementar»
          * (podem ser mapeados para deficiência múltipla, intelectual ou outro código oficial na exportação).
          */

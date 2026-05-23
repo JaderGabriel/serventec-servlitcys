@@ -71,6 +71,15 @@
                     <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed {{ ! empty($saldo['fundeb_lines']) ? 'mt-2' : '' }}">{{ $saldo['footnote'] }}</p>
                 @endif
             @elseif ($saldo !== null)
+                @php
+                    $fc = is_array($saldo['fundeb_calculo'] ?? null) ? $saldo['fundeb_calculo'] : null;
+                    $saldoZeradoComFundeb = $fc !== null
+                        && (float) ($saldo['perda'] ?? 0) <= 0
+                        && (float) ($saldo['ganho'] ?? 0) <= 0;
+                @endphp
+                @if ($saldoZeradoComFundeb)
+                    <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ __('Sem perda ou ganho estimado por discrepâncias de matrícula neste recorte.') }}</p>
+                @endif
                 <div class="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
                     <div class="rounded-lg border border-rose-200/80 dark:border-rose-900/50 bg-rose-50/60 dark:bg-rose-950/25 px-3 py-2">
                         <p class="text-[10px] uppercase text-rose-800/80 dark:text-rose-300/80">{{ __('Perda est./ano') }}</p>
@@ -85,14 +94,29 @@
                         <p class="text-lg font-bold tabular-nums">{{ $saldo['liquido_fmt'] ?? '—' }}</p>
                     </div>
                 </div>
-                @if (! empty($saldo['fundeb_lines']))
+                @if ($fc !== null)
+                    <div class="rounded-lg border border-sky-200/80 dark:border-sky-900/50 bg-sky-50/50 dark:bg-sky-950/20 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 space-y-1">
+                        <p class="text-[10px] font-semibold uppercase tracking-wide text-sky-800/90 dark:text-sky-300/90">{{ __('Base FUNDEB indicativa (VAAF × matrículas)') }}</p>
+                        <p class="tabular-nums font-medium">
+                            {{ number_format((int) ($fc['matriculas'] ?? 0), 0, ',', '.') }}
+                            × {{ $fc['vaaf_fmt'] ?? '—' }}
+                            = <span class="text-sky-900 dark:text-sky-100">{{ $fc['total_fmt'] ?? '—' }}</span>/ano
+                        </p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">
+                            {{ $fc['rotulo'] ?? '' }}{{ $fc['origem'] ?? '' }}
+                        </p>
+                        @if (! empty($fc['aviso']))
+                            <p class="text-[11px] text-amber-800/90 dark:text-amber-200/90">{{ $fc['aviso'] }}</p>
+                        @endif
+                    </div>
+                @elseif (! empty($saldo['fundeb_lines']))
                     <ul class="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 space-y-1 leading-relaxed border-t border-slate-200/80 dark:border-slate-700/80 pt-2">
                         @foreach ($saldo['fundeb_lines'] as $line)
                             <li>{{ $line }}</li>
                         @endforeach
                     </ul>
                 @endif
-                <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed {{ ! empty($saldo['fundeb_lines']) ? 'mt-2' : '' }}">{{ $saldo['footnote'] ?? __('VAAF municipal × pesos Discrepâncias — não é repasse oficial.') }}</p>
+                <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed {{ ($fc !== null || ! empty($saldo['fundeb_lines'])) ? 'mt-2' : '' }}">{{ $saldo['footnote'] ?? __('VAAF municipal × pesos Discrepâncias — não é repasse oficial.') }}</p>
                 @if (filled($saldo['tab_share_label'] ?? null) && filled($saldo['tab_share_value'] ?? null))
                     <p class="text-xs text-gray-600 dark:text-gray-400 pt-1 border-t border-slate-200/80 dark:border-slate-700/80">
                         <span class="font-medium text-slate-700 dark:text-slate-300">{{ $saldo['tab_share_label'] }}:</span>

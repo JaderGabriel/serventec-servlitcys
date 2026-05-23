@@ -4,7 +4,7 @@
 
 Guia passo a passo para publicar no servidor as alterações recentes (monitorização, notificações, financiamentos, correções de abas e modelo `.env`).
 
-**Versão de referência:** 2.3.8.4 (analytics/VAAF/mapa; tag `20260521-Mercury` inalterada) · **Última atualização:** 21/05/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [PERFORMANCE.md](PERFORMANCE.md)
+**Versão em produção:** **2.3.8.5** (mapa, Matrículas, NEE; tag `20260521-Mercury` inalterada) · **Última atualização:** 21/05/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [PERFORMANCE.md](PERFORMANCE.md)
 
 ---
 

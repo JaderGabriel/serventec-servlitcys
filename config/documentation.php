@@ -18,14 +18,17 @@ return [
     | Versão do produto (exibida na UI de documentação admin)
     |--------------------------------------------------------------------------
     | Actualizar junto com docs/HISTORICO_VERSOES.md ao fechar uma release.
+    | `in_production` + selo na UI = referência oficial do que está em main/produção.
     */
 
     'product' => [
-        'version' => '2.3.8.4',
+        'version' => '2.3.8.5',
         'release_tag' => '20260521-Mercury',
-        'commit_short' => '30bc32d',
-        'commit_number' => 186,
+        'commit_short' => 'COMMIT_HASH',
+        'commit_number' => 0,
         'revision_date' => '2026-05-21',
+        'in_production' => true,
+        'production_label' => 'Em produção',
     ],
 
 ];

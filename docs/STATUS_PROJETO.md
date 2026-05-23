@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão:** 2.3.8.4 (analytics/VAAF/mapa) · release `20260521-Mercury` · commit `4833160` (#191) · **Ramo:** `main` · **Última revisão:** 21/05/2026
+**Versão em produção:** **2.3.8.5** · release `20260521-Mercury` · commit `COMMIT_HASH` (#COMMIT_N) · **Ramo:** `main` · **Última revisão:** 21/05/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -18,6 +18,9 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Discrepâncias + export CSV | Implementado |
 | FUNDEB / VAAF (import + cascata + matriz + export CSV + perfil planejamento) | Implementado |
 | Importações externas (guias UX admin + hub público) | Implementado |
+| Mapa unidades — capacidade/vagas (fallback ocupação) | Implementado (2.3.8.5) |
+| Matrículas — cartões saldo + fórmula VAAF indicativa | Implementado (2.3.8.5) |
+| Inclusão NEE — dataset unificado grupo + catálogo | Implementado (`InclusionNeeDesignacaoDataset`) |
 | Estudo integrações setor público + previsão demanda (doc) | Documentado — [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md); implementação Ondas 1–3 no backlog §H |
 | Sync massiva semanal (`system::weekly_mass_sync`, checkpoint) | Implementado |
 | Repasses Tesouro CSV + snapshots municipais | Implementado |

@@ -1326,14 +1326,18 @@ final class MatriculaChartQueries
                 continue;
             }
             $cap = (int) ($row->cap ?? 0);
-            if ($cap <= 0) {
-                continue;
-            }
             $eid = (int) ($row->eid ?? 0);
             if ($eid <= 0 || ! isset($out[$eid])) {
                 continue;
             }
             $enRaw = self::matriculaCountForTurma($counts, $tid);
+            if ($cap <= 0) {
+                if ($enRaw <= 0) {
+                    continue;
+                }
+                // Turma sem max_aluno preenchido: usa matrículas como piso de ocupação (vagas = 0).
+                $cap = $enRaw;
+            }
             $en = min($cap, $enRaw);
             $vac = max(0, $cap - $en);
             $out[$eid]['capacidade_declarada'] += $cap;
@@ -1399,6 +1403,21 @@ final class MatriculaChartQueries
                 $out[$eid] = [
                     'capacidade_declarada' => $cap,
                     'vagas_disponiveis' => $vac,
+                ];
+            }
+
+            $matByEscola = self::matriculasCountByEscolaIds($db, $city, $filters, $eids);
+            foreach ($eids as $eid) {
+                if ((int) ($out[$eid]['capacidade_declarada'] ?? 0) > 0) {
+                    continue;
+                }
+                $matEsc = (int) ($matByEscola[$eid] ?? 0);
+                if ($matEsc <= 0) {
+                    continue;
+                }
+                $out[$eid] = [
+                    'capacidade_declarada' => $matEsc,
+                    'vagas_disponiveis' => 0,
                 ];
             }
         } catch (QueryException|\Throwable) {

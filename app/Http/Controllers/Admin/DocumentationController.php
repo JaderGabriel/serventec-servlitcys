@@ -50,9 +50,12 @@ class DocumentationController extends Controller
             'githubBlobUrl' => DocumentationCatalog::githubBlobUrl($path),
             'defaultDoc' => DocumentationCatalog::defaultPath(),
             'productVersion' => (string) ($product['version'] ?? ''),
+            'productReleaseTag' => (string) ($product['release_tag'] ?? ''),
             'productCommit' => (string) ($product['commit_short'] ?? ''),
             'productCommitNumber' => (int) ($product['commit_number'] ?? 0),
             'productRevisionDate' => (string) ($product['revision_date'] ?? ''),
+            'productInProduction' => (bool) ($product['in_production'] ?? false),
+            'productProductionLabel' => (string) ($product['production_label'] ?? __('Em produção')),
         ]);
     }
 }

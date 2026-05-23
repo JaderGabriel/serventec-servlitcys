@@ -33,6 +33,8 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 25 | `30bc32d` | Patch visual **2.3.8.2**: largura perfil/usuários, contato RX empilhado |
 | 26 | `a736e43` | Patch **2.3.8.3**: performance login, Redis, `performance:check` |
 | 27 | `4833160` | Patch **2.3.8.4**: mapa capacidade/vagas, saldo Matrículas/VAAF, Inclusão, predis |
+| 28 | `7c0297c` | Doc: estudo integrações setor público (sem bump de versão) |
+| 29 | `COMMIT_HASH` | Patch **2.3.8.5** (**em produção**): mapa capacidade, Matrículas saldo, NEE unificado |
 
 ---
 
@@ -268,6 +270,21 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | Redis | `RedisProbe.php`, `PerformanceCheckCommand.php`, `tests/Unit/RedisProbeTest.php` |
 
 **Pós-deploy:** `php artisan config:clear` · `php artisan performance:check` (com `REDIS_CLIENT=predis` se não houver extensão phpredis) · **não** criar tag Git.
+
+---
+
+## 14. Patch consultoria 2.3.8.5 — **em produção**
+
+**Versão semântica:** `2.3.8.5` · **tag deploy:** `20260521-Mercury` (inalterada) · **commit:** `COMMIT_HASH` (#COMMIT_N)
+
+| Área | Ficheiros |
+|------|-----------|
+| Mapa capacidade/vagas | `MatriculaChartQueries.php`, `SchoolUnitsRepository.php` |
+| Matrículas saldo/VAAF | `AnalyticsTabImpactBuilder.php`, `FundebReferenceDisplay.php`, `analytics-tab-impact-header.blade.php` |
+| NEE unificado | `InclusionNeeDesignacaoDataset.php`, `InclusionDashboardQueries.php`, `inclusion.blade.php`, `config/ieducar.php` (`deficiencia_label_aliases`) |
+| Produção / docs | `config/documentation.php`, `HISTORICO_VERSOES.md`, selo «Em produção» em `/admin/documentacao` |
+
+**Pós-deploy:** `php artisan config:clear` · validar mapa (capacidade/vagas), aba Matrículas (cartões saldo) e Inclusão (grupo + catálogo alinhados) · **não** criar tag Git.
 
 ---
 

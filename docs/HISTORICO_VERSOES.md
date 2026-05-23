@@ -1,10 +1,18 @@
 # Histórico de versões (resumo)
 
-**Versão em produção / `main`:** **2.3.8.4** · release **`20260521-Mercury`** (patch consultoria/analytics, sem nova tag) · commit `4833160` (#191)
+> **▶ EM PRODUÇÃO (`main`):** versão **`2.3.8.5`** · tag de deploy **`20260521-Mercury`** (sem nova tag Git) · commit **`COMMIT_HASH`** (#**COMMIT_N**)
 
-> **Como ler:** cada linha indica a **tag ou marco**, o **commit** (hash curto Git) e o **contador** (`#N` = posição na história linear do ramo `main`, desde o primeiro commit). Links GitHub usam o repositório configurado em `DOCS_GITHUB_REPOSITORY`.
+| Indicador | Valor actual |
+|-----------|----------------|
+| **Versão semântica em produção** | **2.3.8.5** |
+| **Ramo** | `main` |
+| **Tag de deploy (servidor)** | `20260521-Mercury` |
+| **Último patch documentado** | Mapa capacidade/vagas; Matrículas (cartões saldo + VAAF); NEE unificado (grupo + catálogo) |
+| **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
+
+> **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
-> **Entregas em série (mai/2026):** ver [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) — mapa municípios, URL i-Educar, status abas, Matrículas, RX, FUNDEB/FNDE, Inclusão (catálogos MEC).
+> **Entregas em série (mai/2026):** ver [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md).
 
 ---
 
@@ -12,7 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **2.3.8.4** | `4833160` | **191** | 21/05/2026 | Mapa escolas: capacidade/vagas; Matrículas saldo/VAAF (prévia 4.500); Inclusão catálogo/recorte; Redis predis (`performance:check`). |
+| **▶ 2.3.8.5** | `COMMIT_HASH` | **COMMIT_N** | 21/05/2026 | **Produção:** mapa capacidade/vagas (fallback); Matrículas cartões saldo + fórmula VAAF; NEE dataset unificado (grupo + catálogo); alias deficiência. |
+| 2.3.8.4 | `4833160` | **191** | 21/05/2026 | Mapa escolas: capacidade/vagas; Matrículas saldo/VAAF (prévia 4.500); Inclusão catálogo/recorte; Redis predis (`performance:check`). |
 | **2.3.8.3** | `a736e43` | **188** | 21/05/2026 | Performance: login mais rápido (audit defer, Pulse em auth); cache city_ids/SMTP; Redis (`performance:check`); índice `admin_user_logs`. |
 | **2.3.8.2** | `30bc32d` | **186** | 21/05/2026 | Patch visual: `serv-page-shell` (perfil/usuários); contato RX empilhado (nome completo). |
 | **2.3.8.1** | `bd9d228` | **184** | 21/05/2026 | Ajustes visuais: perfil `/profile`, chips de contato em `/users`, cartão agenda no RX e na Consultoria; CSS/`public/build`. |
@@ -42,6 +51,16 @@
 ---
 
 ## Detalhe por versão
+
+### v2.3.8.5 — `COMMIT_HASH` (#COMMIT_N, 21/05/2026) — **em produção**
+
+Patch de consultoria (sem nova tag Git). Tag de deploy continua **`20260521-Mercury`**.
+
+| Área | Melhoria |
+|------|----------|
+| **Mapa unidades** | Capacidade/vagas quando `max_aluno` vazio: ocupação por turma e fallback por matrículas da escola; nota no pin. |
+| **Matrículas** | Cartões Perda/Ganho/Saldo sempre visíveis (zero quando sem discrepância); bloco «Base FUNDEB» com fórmula `matrículas × VAAF`; textos VAAF sem duplicar prévia federal. |
+| **Inclusão NEE** | `InclusionNeeDesignacaoDataset`: mesma consulta para gráfico **agrupado** (3 blocos) e **detalhado** (catálogo); designações órfãs no cadastro; `<details>` catálogo completo MEC; `deficiencia_label_aliases` em `config/ieducar.php`. |
 
 ### v2.3.8.4 — `4833160` (#191, 21/05/2026)
 
@@ -223,7 +242,7 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 
 *(Não existe tag `v1.0.0`; o marco inicial é o commit `8507c9a` #1.)*
 
-**Contador total em `main`:** `git rev-list --count main` → **192** (maio/2026, após patch 2.3.8.4). A tag **`20260521-Mercury`** continua em **`3c935ca`** (#182); patches **`bd9d228`** (#184), **`30bc32d`** (#186), performance **`a736e43`** (#189) e analytics **`4833160`** (#191).
+**Contador total em `main`:** `git rev-list --count main` → **COMMIT_TOTAL** (maio/2026, após patch **2.3.8.5** em produção). A tag **`20260521-Mercury`** continua em **`3c935ca`** (#182); último patch analytics **`COMMIT_HASH`** (#**COMMIT_N**).
 
 ---
 

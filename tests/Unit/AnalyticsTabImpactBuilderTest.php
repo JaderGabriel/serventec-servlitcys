@@ -214,8 +214,9 @@ class AnalyticsTabImpactBuilderTest extends TestCase
 
         $this->assertTrue($strip['show_saldo'] ?? true);
         $this->assertNotNull($strip['saldo']);
-        $this->assertTrue($strip['saldo']['info_only'] ?? false);
+        $this->assertFalse($strip['saldo']['info_only'] ?? true);
         $this->assertSame(0.0, $strip['saldo']['perda']);
+        $this->assertNotEmpty($strip['saldo']['fundeb_calculo'] ?? null);
         $this->assertNotEmpty($strip['saldo']['fundeb_lines'] ?? []);
         $line = (string) ($strip['saldo']['fundeb_lines'][0] ?? '');
         $this->assertStringContainsString('5.123', $line);

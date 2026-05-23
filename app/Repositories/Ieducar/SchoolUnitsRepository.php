@@ -1548,6 +1548,11 @@ class SchoolUnitsRepository
                 $cap = array_sum(array_map(static fn (array $r): int => (int) ($r['capacidade'] ?? 0), $segmentos));
                 $vagas = array_sum(array_map(static fn (array $r): int => (int) ($r['vagas'] ?? 0), $segmentos));
             }
+            if ((int) ($cap ?? 0) <= 0 && $mat > 0) {
+                $cap = $mat;
+                $vagas = 0;
+                $metricasNota ??= __('Capacidade máxima não informada nas turmas; exibida a ocupação (matrículas activas no filtro).');
+            }
             $card = $cardBy[$eid] ?? [];
             $geoRow = $inepFromGeoByEid[$eid] ?? null;
             if ($geoRow !== null) {

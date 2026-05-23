@@ -460,6 +460,7 @@ final class AnalyticsTabImpactBuilder
             'footnote' => (string) ($raw['footnote'] ?? ''),
             'info_only' => (bool) ($raw['info_only'] ?? false),
             'fundeb_lines' => is_array($raw['fundeb_lines'] ?? null) ? $raw['fundeb_lines'] : [],
+            'fundeb_calculo' => is_array($raw['fundeb_calculo'] ?? null) ? $raw['fundeb_calculo'] : null,
             'tab_share_label' => $tabStatus['share_label'] ?? null,
             'tab_share_value' => $tabStatus['share_value'] ?? null,
         ];
@@ -590,16 +591,19 @@ final class AnalyticsTabImpactBuilder
         $fundebLines = self::enrollmentFundebLines($mat, $ctx);
 
         if ($perda <= 0 && $ganho <= 0) {
+            $funding = is_array($ctx['funding_reference'] ?? null) ? $ctx['funding_reference'] : null;
+
             return [
                 'perda' => 0.0,
                 'ganho' => 0.0,
                 'liquido' => 0.0,
-                'info_only' => $fundebLines !== [],
+                'info_only' => false,
                 'footnote' => __(
-                    'Nenhuma discrepância de matrícula com peso financeiro no recorte. :n matrícula(s) activas — base FUNDEB indicativa abaixo; não é repasse FNDE.',
+                    'Nenhuma discrepância de matrícula com peso financeiro no recorte. :n matrícula(s) activas — cartões de perda/ganho/saldo em zero; base FUNDEB indicativa abaixo (não é repasse FNDE).',
                     ['n' => number_format($mat, 0, ',', '.')]
                 ),
                 'fundeb_lines' => $fundebLines,
+                'fundeb_calculo' => FundebReferenceDisplay::blocoCalculoMatriculasVaaf($mat, $funding),
             ];
         }
 

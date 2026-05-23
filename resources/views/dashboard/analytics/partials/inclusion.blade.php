@@ -8,7 +8,8 @@
         }
     }
     $chartNeeGrupo = $chartsById['nee_grupo'] ?? ($inclusionData['charts'][0] ?? null);
-    $chartNeeCatalogo = $chartsById['nee_catalogo_mec'] ?? null;
+    $chartNeeCatalogo = $chartsById['nee_catalogo'] ?? ($chartsById['nee_catalogo_mec'] ?? null);
+    $chartNeeCatalogoCompleto = $chartsById['nee_catalogo_completo'] ?? null;
     $methodology = $inclusionData['methodology'] ?? [];
     $totalMat = $inclusionData['total_matriculas'] ?? null;
     $eqFonte = $inclusionData['equidade_fonte'] ?? null;
@@ -225,13 +226,13 @@
         @if ($neeChartsCount > 0 || $hasNeeDetalheCatalogo)
             <div class="mb-8">
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('NEE — cadastro (deficiências, síndromes e altas habilidades)') }}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">{{ __('Resumo por grupo (critério alinhado ao Educacenso/INEP), catálogo completo com todas as opções MEC + i-Educar (cores: INEP, complementar adaptável, só cadastro local), matrículas por escola e listas por designação. Respeita o recorte de matrículas desta aba quando activo.') }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">{{ __('Os gráficos agrupado e por designação usam a mesma consulta (cadastro.deficiencia + vínculos NEE). O detalhado mostra só tipos com matrícula; expanda «Catálogo completo» para todas as opções MEC + i-Educar. Respeita o recorte desta aba quando activo.') }}</p>
                 @if ($neeGrupoResumo !== null && $neeGrupoResumoTotal > 0)
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 items-stretch">
                         <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
                             <p class="text-[11px] font-medium uppercase text-violet-700 dark:text-violet-300">{{ __('Deficiências (grupo)') }}</p>
                             <p class="mt-1 text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format((int) ($neeGrupoResumo['deficiencias'] ?? 0)) }}</p>
-                            <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400 flex-1">{{ __('Matrículas distintas no critério do gráfico «Matrículas por grupo».') }}</p>
+                            <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400 flex-1">{{ __('Soma das designações classificadas como deficiência (mesma base do catálogo).') }}</p>
                         </div>
                         <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
                             <p class="text-[11px] font-medium uppercase text-violet-700 dark:text-violet-300">{{ __('Síndromes e TEA') }}</p>
@@ -257,14 +258,30 @@
                 @endif
 
                 @if (is_array($chartNeeCatalogo) && ! empty($chartNeeCatalogo['labels'] ?? null))
-                    <div class="mt-6 min-w-0 w-full [&_.chart-panel-host]:min-h-[min(36rem,75vh)]">
+                    <div class="mt-6 min-w-0 w-full [&_.chart-panel-host]:min-h-[min(32rem,70vh)]">
                         <x-dashboard.chart-panel
                             :chart="$chartNeeCatalogo"
-                            :exportFilename="'inclusao-nee-catalogo-completo'"
+                            :exportFilename="'inclusao-nee-catalogo'"
                             :exportMeta="$chartExportContext"
                             :compact="false"
                         />
                     </div>
+                @endif
+
+                @if (is_array($chartNeeCatalogoCompleto) && ! empty($chartNeeCatalogoCompleto['labels'] ?? null))
+                    <details class="mt-4 group rounded-lg border border-violet-200/80 dark:border-violet-800/60 bg-white/60 dark:bg-gray-900/40">
+                        <summary class="cursor-pointer select-none px-4 py-3 text-sm font-medium text-violet-900 dark:text-violet-100 hover:bg-violet-50/80 dark:hover:bg-violet-950/30 rounded-lg">
+                            {{ __('Ver catálogo completo MEC e i-Educar (inclui opções com zero matrículas)') }}
+                        </summary>
+                        <div class="px-2 pb-4 min-w-0 w-full [&_.chart-panel-host]:min-h-[min(36rem,75vh)]">
+                            <x-dashboard.chart-panel
+                                :chart="$chartNeeCatalogoCompleto"
+                                :exportFilename="'inclusao-nee-catalogo-completo'"
+                                :exportMeta="$chartExportContext"
+                                :compact="false"
+                            />
+                        </div>
+                    </details>
                 @endif
 
                 @if ($hasNeeDetalheCatalogo)
@@ -276,7 +293,7 @@
                         <div>
                             <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Contagem por designação no catálogo (deficiências, síndromes/TEA e NE)') }}</h4>
                             <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                                {{ __('Contagem por designação em cadastro.deficiencia (mesma origem do catálogo completo). Só aparecem linhas com valor &gt; 0; opções INEP com zero no gráfico não se repetem aqui. A classificação em três blocos usa as mesmas palavras-chave do gráfico «Matrículas por grupo».') }}
+                                {{ __('Listas alinhadas ao gráfico por designação (mesma consulta e classificação em três blocos que o gráfico agrupado).') }}
                             </p>
                         </div>
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 min-w-0 items-stretch">

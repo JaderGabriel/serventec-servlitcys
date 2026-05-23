@@ -184,115 +184,9 @@ final class InclusionDashboardQueries
      */
     public static function buildNeeDetalheCatalogoPorCategoria(Connection $db, City $city, IeducarFilterState $filters): ?array
     {
-        try {
-            $rows = self::getMatriculasPorDeficiencia($db, $city, $filters, null);
-            $maps = InclusionEducacensoCatalog::deficienciaCountMapsFromRows(
-                $rows,
-                static fn ($row) => (string) ($row->deficiencia ?? ''),
-                static fn ($row) => (int) ($row->total ?? 0),
-                static fn ($row) => (string) ($row->def_id ?? ''),
-            );
+        $dataset = InclusionNeeDesignacaoDataset::build($db, $city, $filters);
 
-            $entries = InclusionEducacensoCatalog::mergedDeficienciaEntriesForChart($db, $city);
-            if ($entries === [] && $maps['by_norm'] === [] && $maps['by_id'] === []) {
-                return null;
-            }
-
-            $def = [];
-            $sin = [];
-            $ne = [];
-            $seenNorm = [];
-            $seenIds = [];
-
-            $pushItem = static function (array &$def, array &$sin, array &$ne, string $nome, int $total): void {
-                $item = ['nome' => $nome, 'total' => $total];
-                $cat = self::classificarDesignacaoNee($nome);
-                if ($cat === 'ne') {
-                    $ne[] = $item;
-                } elseif ($cat === 'sindrome') {
-                    $sin[] = $item;
-                } else {
-                    $def[] = $item;
-                }
-            };
-
-            foreach ($rows as $row) {
-                $nm = trim((string) ($row->deficiencia ?? ''));
-                if ($nm === '') {
-                    $nm = (string) __('Não informado');
-                }
-                $t = (int) ($row->total ?? 0);
-                if ($t <= 0) {
-                    continue;
-                }
-                $norm = InclusionEducacensoCatalog::normalizeLabel($nm);
-                if ($norm !== '' && isset($seenNorm[$norm])) {
-                    continue;
-                }
-                if ($norm !== '') {
-                    $seenNorm[$norm] = true;
-                }
-                $defId = trim((string) ($row->def_id ?? ''));
-                if ($defId !== '' && $defId !== '0') {
-                    $seenIds[$defId] = true;
-                }
-                $pushItem($def, $sin, $ne, $nm, $t);
-            }
-
-            foreach ($entries as $entry) {
-                $nm = (string) ($entry['label'] ?? '');
-                $norm = (string) ($entry['norm'] ?? InclusionEducacensoCatalog::normalizeLabel($nm));
-                $entryId = $entry['id'] ?? null;
-                if ($entryId !== null && $entryId !== '' && isset($seenIds[(string) $entryId])) {
-                    continue;
-                }
-                if ($norm !== '' && isset($seenNorm[$norm])) {
-                    continue;
-                }
-                $t = InclusionEducacensoCatalog::countForDeficienciaEntry($entry, $maps);
-                if ($norm !== '') {
-                    $seenNorm[$norm] = true;
-                }
-                if ($entryId !== null && $entryId !== '') {
-                    $seenIds[(string) $entryId] = true;
-                }
-                $pushItem($def, $sin, $ne, $nm, $t);
-            }
-
-            $sort = static fn (array $a, array $b): int => $b['total'] <=> $a['total'] ?: strcmp((string) $a['nome'], (string) $b['nome']);
-            usort($def, $sort);
-            usort($sin, $sort);
-            usort($ne, $sort);
-
-            $sum = static fn (array $rows): int => (int) array_sum(array_column($rows, 'total'));
-
-            $alunoT = IeducarSchema::resolveTable('aluno', $city);
-            $usesFisica = self::resolveFisicaDeficienciaJoinSpec($db, $city) !== null
-                && self::resolveDeficienciaCatalogTable($db, $city) !== null
-                && self::resolveAlunoIdpesColumn($db, $alunoT, $city) !== null;
-
-            $footnote = $usesFisica
-                ? __(
-                    'Contagens DISTINCT de matrículas ativas por designação em cadastro.deficiencia (vínculo fisica_deficiencia). Categorização por palavras-chave no nome, alinhada ao gráfico «Matrículas por grupo». Uma matrícula pode aparecer em mais do que uma linha se o aluno tiver vários vínculos.'
-                )
-                : __(
-                    'Contagens por designação em aluno_deficiencia + cadastro.deficiencia. Categorização por palavras-chave no nome (síndromes/TEA, altas habilidades, demais deficiências), como no gráfico de grupos.'
-                );
-
-            return [
-                'deficiencias' => $def,
-                'sindromes_tea' => $sin,
-                'ne_altas_habilidades' => $ne,
-                'totais_por_secao' => [
-                    'deficiencias' => $sum($def),
-                    'sindromes_tea' => $sum($sin),
-                    'ne_altas_habilidades' => $sum($ne),
-                ],
-                'footnote' => $footnote,
-            ];
-        } catch (\Throwable) {
-            return null;
-        }
+        return $dataset !== null ? InclusionNeeDesignacaoDataset::detalhePorCategoria($dataset) : null;
     }
 
     /**
@@ -320,19 +214,52 @@ final class InclusionDashboardQueries
     /**
      * @return list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>, subtitle?: string, footnote?: string}>
      */
+    public static function inclusionNeeUsesFisicaPath(Connection $db, City $city): bool
+    {
+        $alunoT = IeducarSchema::resolveTable('aluno', $city);
+
+        return self::resolveFisicaDeficienciaJoinSpec($db, $city) !== null
+            && self::resolveDeficienciaCatalogTable($db, $city) !== null
+            && self::resolveAlunoIdpesColumn($db, $alunoT, $city) !== null;
+    }
+
+    public static function classificarDesignacaoNeeGrupo(string $nome): string
+    {
+        return self::classificarDesignacaoNee($nome);
+    }
+
+    /**
+     * @param  array<string, mixed>  $chart
+     * @return array<string, mixed>
+     */
+    public static function attachMatriculaKpiTotalPublic(
+        array $chart,
+        ?int $denominator,
+        bool $multiVinculoHint = false,
+        ?string $secondaryLabel = null
+    ): array {
+        return self::attachMatriculaKpiTotal($chart, $denominator, $multiVinculoHint, $secondaryLabel);
+    }
+
     public static function buildCharts(Connection $db, City $city, IeducarFilterState $filters): array
     {
         $out = [];
         $den = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
 
-        $g3 = self::chartTresGruposDeficienciaSindromeNe($db, $city, $filters, $den);
-        if ($g3 !== null) {
-            $out[] = self::withChartId($g3, 'nee_grupo');
-        }
-
-        $catalogoCompleto = self::chartNeeCatalogoCompletoMecIeducar($db, $city, $filters, $den);
-        if ($catalogoCompleto !== null) {
-            $out[] = self::withChartId($catalogoCompleto, 'nee_catalogo_mec');
+        $neeDataset = InclusionNeeDesignacaoDataset::build($db, $city, $filters);
+        if ($neeDataset !== null) {
+            $g3 = InclusionNeeDesignacaoDataset::chartGrupo($neeDataset, $den);
+            if ($g3 !== null) {
+                $out[] = self::withChartId($g3, 'nee_grupo');
+            }
+            $catalogoAtivo = InclusionNeeDesignacaoDataset::chartCatalogo($neeDataset, $den, false);
+            if ($catalogoAtivo !== null) {
+                $out[] = self::withChartId($catalogoAtivo, 'nee_catalogo');
+            }
+            $catalogoCompleto = InclusionNeeDesignacaoDataset::chartCatalogo($neeDataset, $den, true);
+            if ($catalogoCompleto !== null) {
+                $out[] = self::withChartId($catalogoCompleto, 'nee_catalogo_completo');
+            }
         }
 
         // Total de matrículas NEE por unidade (barras simples) — em seguida ao resumo por grupos.
@@ -453,7 +380,8 @@ final class InclusionDashboardQueries
      */
     public static function chartNeeResumoVisaoGeral(Connection $db, City $city, IeducarFilterState $filters): ?array
     {
-        $chart = self::chartTresGruposDeficienciaSindromeNe($db, $city, $filters);
+        $dataset = InclusionNeeDesignacaoDataset::build($db, $city, $filters);
+        $chart = $dataset !== null ? InclusionNeeDesignacaoDataset::chartGrupo($dataset) : null;
         if ($chart === null) {
             return null;
         }

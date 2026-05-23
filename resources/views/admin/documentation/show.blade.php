@@ -42,11 +42,26 @@
                 <aside class="hidden lg:block">
                     <div class="serv-panel p-4 sticky top-[5.5rem] max-h-[calc(100vh-7rem)] overflow-y-auto space-y-4">
                         @if (($productVersion ?? '') !== '')
-                            <div class="rounded-lg border border-teal-200/80 bg-teal-50/60 dark:border-teal-800/50 dark:bg-teal-950/25 px-3 py-2.5 text-xs">
+                            <div class="rounded-lg border border-teal-200/80 bg-teal-50/60 dark:border-teal-800/50 dark:bg-teal-950/25 px-3 py-2.5 text-xs space-y-2">
+                                @if ($productInProduction ?? false)
+                                    <p class="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-200 animate-pulse" aria-hidden="true"></span>
+                                        {{ $productProductionLabel ?? __('Em produção') }}
+                                    </p>
+                                @endif
                                 <p class="font-semibold text-teal-950 dark:text-teal-100">{{ __('Produto') }} v{{ $productVersion }}</p>
+                                @if (($productReleaseTag ?? '') !== '')
+                                    <p class="text-[11px] text-teal-900/80 dark:text-teal-200/80">
+                                        {{ __('Deploy:') }} <code class="font-mono">{{ $productReleaseTag }}</code>
+                                    </p>
+                                @endif
                                 @if (($productCommit ?? '') !== '' && ($productCommitNumber ?? 0) > 0)
-                                    <p class="mt-1 font-mono text-[11px] text-teal-900/85 dark:text-teal-200/85">
+                                    <p class="font-mono text-[11px] text-teal-900/85 dark:text-teal-200/85">
                                         <code>{{ $productCommit }}</code> · #{{ $productCommitNumber }}
+                                    </p>
+                                @elseif (($productCommit ?? '') !== '')
+                                    <p class="font-mono text-[11px] text-teal-900/85 dark:text-teal-200/85">
+                                        <code>{{ $productCommit }}</code>
                                     </p>
                                 @endif
                                 <a
@@ -78,7 +93,13 @@
                     </details>
 
                     @if (($productVersion ?? '') !== '' && ($currentPath ?? '') === 'docs/HISTORICO_VERSOES.md')
-                        <p class="serv-panel px-4 py-2 text-xs text-slate-600 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                        <p class="serv-panel px-4 py-2 text-xs text-slate-600 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
+                            @if ($productInProduction ?? false)
+                                <span class="inline-flex items-center rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                                    {{ $productProductionLabel ?? __('Em produção') }} · v{{ $productVersion }}
+                                </span>
+                            @endif
+                            <span>
                             {{ __('Versão documentada:') }} <strong>v{{ $productVersion }}</strong>
                             @if (($productCommit ?? '') !== '')
                                 · <code class="font-mono">{{ $productCommit }}</code>
@@ -89,6 +110,7 @@
                             @if (($productRevisionDate ?? '') !== '')
                                 · {{ $productRevisionDate }}
                             @endif
+                            </span>
                         </p>
                     @endif
 

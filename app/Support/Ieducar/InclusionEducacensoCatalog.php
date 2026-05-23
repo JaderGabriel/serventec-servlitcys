@@ -364,6 +364,33 @@ final class InclusionEducacensoCatalog
     }
 
     /**
+     * Alias configurável (município → rótulo MEC/INEP) para cruzamento no catálogo unificado.
+     */
+    public static function resolveCatalogNorm(string $label): string
+    {
+        $norm = self::normalizeLabel($label);
+        if ($norm === '') {
+            return '';
+        }
+
+        $aliases = config('ieducar.inclusion.deficiencia_label_aliases', []);
+        if (! is_array($aliases)) {
+            return $norm;
+        }
+
+        foreach ($aliases as $from => $to) {
+            if (! is_string($from) || ! is_string($to)) {
+                continue;
+            }
+            if ($norm === self::normalizeLabel($from)) {
+                return self::normalizeLabel($to);
+            }
+        }
+
+        return $norm;
+    }
+
+    /**
      * @return list<mixed>
      */
     private static function configStringList(string $key): array

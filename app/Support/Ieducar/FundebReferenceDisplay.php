@@ -99,10 +99,10 @@ final class FundebReferenceDisplay
             $vaafFmt = $fmt($vaaf);
         }
 
-        $fonte = trim((string) ($funding['vaa_fonte_label'] ?? ''));
         $rotulo = self::rotuloVaafCurto($funding);
         $base = $fmt(MoneyMath::multiplyVaaf($matriculas, $vaaf));
         $n = number_format($matriculas, 0, ',', '.');
+        $origem = self::origemVaafResumida($funding);
 
         $avisoSemMunicipal = self::tipoVaafCalculo($funding) !== 'municipal'
             ? ' '.__('Sem VAAF municipal importado para este IBGE/ano; ordem de grandeza — não é repasse oficial FNDE/Simec.')
@@ -110,12 +110,12 @@ final class FundebReferenceDisplay
 
         if (! empty($opts['nee'])) {
             return __(
-                ':n matrícula(s) NEE × :vaaf/aluno/ano (:rotulo — :fonte) ≈ :base/ano de base FUNDEB indicativa por aluno.:extra',
+                ':n matrícula(s) NEE × :vaaf/aluno/ano (:rotulo:origem) ≈ :base/ano de base FUNDEB indicativa por aluno.:extra',
                 [
                     'n' => $n,
                     'vaaf' => $vaafFmt,
                     'rotulo' => $rotulo,
-                    'fonte' => $fonte !== '' ? $fonte : __('sem detalhe de fonte'),
+                    'origem' => $origem,
                     'base' => $base,
                     'extra' => $avisoSemMunicipal,
                 ]
@@ -123,16 +123,77 @@ final class FundebReferenceDisplay
         }
 
         return __(
-            ':n matrícula(s) × :vaaf/aluno/ano (:rotulo — :fonte) ≈ :base/ano de volume indicativo FUNDEB no filtro.:extra',
+            ':n matrícula(s) × :vaaf/aluno/ano (:rotulo:origem) ≈ :base/ano de volume indicativo FUNDEB no filtro.:extra',
             [
                 'n' => $n,
                 'vaaf' => $vaafFmt,
                 'rotulo' => $rotulo,
-                'fonte' => $fonte !== '' ? $fonte : __('sem detalhe de fonte'),
+                'origem' => $origem,
                 'base' => $base,
                 'extra' => $avisoSemMunicipal,
             ]
         );
+    }
+
+    /**
+     * Bloco estruturado para cartões da aba Matrículas (fórmula explícita).
+     *
+     * @param  array<string, mixed>|null  $funding
+     * @return ?array{matriculas: int, vaaf_fmt: string, total_fmt: string, rotulo: string, origem: string, aviso: ?string}
+     */
+    public static function blocoCalculoMatriculasVaaf(int $matriculas, ?array $funding): ?array
+    {
+        if ($matriculas <= 0 || $funding === null) {
+            return null;
+        }
+
+        $vaaf = (float) ($funding['vaa_anual'] ?? 0);
+        if ($vaaf <= 0) {
+            return null;
+        }
+
+        $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
+        $vaafFmt = trim((string) ($funding['vaa_label'] ?? ''));
+        if ($vaafFmt === '') {
+            $vaafFmt = $fmt($vaaf);
+        }
+
+        $aviso = self::tipoVaafCalculo($funding) !== 'municipal'
+            ? __('Sem VAAF municipal importado para este IBGE/ano — não é repasse FNDE/Simec.')
+            : null;
+
+        return [
+            'matriculas' => $matriculas,
+            'vaaf_fmt' => $vaafFmt,
+            'total_fmt' => $fmt(MoneyMath::multiplyVaaf($matriculas, $vaaf)),
+            'rotulo' => self::rotuloVaafCurto($funding),
+            'origem' => self::origemVaafResumida($funding),
+            'aviso' => $aviso,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $funding
+     */
+    private static function origemVaafResumida(?array $funding): string
+    {
+        $fonte = trim((string) ($funding['vaa_fonte_label'] ?? ''));
+        $rotulo = self::rotuloVaafCurto($funding);
+        if ($fonte === '') {
+            return ' '.__('sem detalhe de origem');
+        }
+
+        $normFonte = mb_strtolower($fonte);
+        $normRotulo = mb_strtolower($rotulo);
+        if (
+            $normFonte === $normRotulo
+            || str_contains($normFonte, $normRotulo)
+            || str_contains($normRotulo, 'prévia federal') && str_contains($normFonte, 'prévia federal')
+        ) {
+            return '';
+        }
+
+        return ' — '.$fonte;
     }
 
     /**
