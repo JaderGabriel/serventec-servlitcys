@@ -1,20 +1,46 @@
+import {
+    servDataLoadingFinish,
+    servDataLoadingStart,
+} from "./dataLoading.js";
+
 /**
  * Filtros da Consultoria: anos letivos (se o SSR não trouxe) e escolas/cursos/turnos (modo light).
  */
-export function initAnalyticsFilterBootstrap(root = document) {
+export async function initAnalyticsFilterBootstrap(root = document) {
+    const yearJobs = [];
     root.querySelectorAll("form[data-analytics-filter-years-url]").forEach((form) => {
         if (form.dataset.analyticsFilterYearsFetch === "1") {
-            void loadYears(form, form.dataset.analyticsFilterYearsUrl);
+            const url = form.dataset.analyticsFilterYearsUrl;
+            if (url) {
+                yearJobs.push(loadYears(form, url));
+            }
         }
     });
 
+    const bootstrapJobs = [];
     root.querySelectorAll("form[data-analytics-filter-bootstrap]").forEach((form) => {
         const baseUrl = form.dataset.analyticsFilterBootstrapUrl;
-        if (!baseUrl) {
-            return;
+        if (baseUrl) {
+            bootstrapJobs.push(loadBootstrap(form, baseUrl));
         }
-        void loadBootstrap(form, baseUrl);
     });
+
+    if (yearJobs.length === 0 && bootstrapJobs.length === 0) {
+        return;
+    }
+
+    const preset = window.servDataLoading?.presets?.prepare;
+    servDataLoadingStart(
+        preset?.title ?? "A preparar filtros",
+        preset?.message ??
+            "A carregar anos letivos, escolas, cursos e turnos na base do município…",
+    );
+
+    try {
+        await Promise.all([...yearJobs, ...bootstrapJobs]);
+    } finally {
+        servDataLoadingFinish();
+    }
 }
 
 /**

@@ -265,7 +265,7 @@
                         <div>
                             <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Contagem por designação no catálogo (deficiências, síndromes/TEA e NE)') }}</h4>
                             <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                                {{ __('Cada linha corresponde a uma designação em cadastro; sem agrupamento em «Outros». A classificação em três blocos segue as mesmas palavras-chave do gráfico «Matrículas por grupo».') }}
+                                {{ __('Designações com matrículas no recorte (cadastro.deficiencia, alinhado ao gráfico de catálogo completo). A classificação em três blocos segue as mesmas palavras-chave do gráfico «Matrículas por grupo».') }}
                             </p>
                         </div>
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 min-w-0 items-stretch">
@@ -276,10 +276,12 @@
                                 </div>
                                 <ul class="flex-1 max-h-[min(32rem,58vh)] min-h-[16rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
                                     @foreach ($neeDetalheCatalogo['deficiencias'] as $row)
-                                        <li class="px-3 py-1.5 flex justify-between gap-2">
-                                            <span class="text-gray-800 dark:text-gray-200 break-words">{{ $row['nome'] ?? '—' }}</span>
-                                            <span class="tabular-nums shrink-0 text-gray-900 dark:text-gray-100">{{ number_format((int) ($row['total'] ?? 0)) }}</span>
-                                        </li>
+                                        @if ((int) ($row['total'] ?? 0) > 0)
+                                            <li class="px-3 py-1.5 flex justify-between gap-2">
+                                                <span class="text-gray-800 dark:text-gray-200 break-words">{{ $row['nome'] ?? '—' }}</span>
+                                                <span class="tabular-nums shrink-0 text-gray-900 dark:text-gray-100">{{ number_format((int) ($row['total'] ?? 0)) }}</span>
+                                            </li>
+                                        @endif
                                     @endforeach
                                 </ul>
                             </div>
@@ -290,10 +292,12 @@
                                 </div>
                                 <ul class="flex-1 max-h-[min(24rem,46vh)] min-h-[11rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
                                     @foreach ($neeDetalheCatalogo['sindromes_tea'] as $row)
-                                        <li class="px-3 py-1.5 flex justify-between gap-2">
-                                            <span class="text-gray-800 dark:text-gray-200 break-words">{{ $row['nome'] ?? '—' }}</span>
-                                            <span class="tabular-nums shrink-0 text-gray-900 dark:text-gray-100">{{ number_format((int) ($row['total'] ?? 0)) }}</span>
-                                        </li>
+                                        @if ((int) ($row['total'] ?? 0) > 0)
+                                            <li class="px-3 py-1.5 flex justify-between gap-2">
+                                                <span class="text-gray-800 dark:text-gray-200 break-words">{{ $row['nome'] ?? '—' }}</span>
+                                                <span class="tabular-nums shrink-0 text-gray-900 dark:text-gray-100">{{ number_format((int) ($row['total'] ?? 0)) }}</span>
+                                            </li>
+                                        @endif
                                     @endforeach
                                 </ul>
                             </div>
@@ -304,10 +308,12 @@
                                 </div>
                                 <ul class="flex-1 max-h-[min(24rem,46vh)] min-h-[11rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
                                     @foreach ($neeDetalheCatalogo['ne_altas_habilidades'] as $row)
-                                        <li class="px-3 py-1.5 flex justify-between gap-2">
-                                            <span class="text-gray-800 dark:text-gray-200 break-words">{{ $row['nome'] ?? '—' }}</span>
-                                            <span class="tabular-nums shrink-0 text-gray-900 dark:text-gray-100">{{ number_format((int) ($row['total'] ?? 0)) }}</span>
-                                        </li>
+                                        @if ((int) ($row['total'] ?? 0) > 0)
+                                            <li class="px-3 py-1.5 flex justify-between gap-2">
+                                                <span class="text-gray-800 dark:text-gray-200 break-words">{{ $row['nome'] ?? '—' }}</span>
+                                                <span class="tabular-nums shrink-0 text-gray-900 dark:text-gray-100">{{ number_format((int) ($row['total'] ?? 0)) }}</span>
+                                            </li>
+                                        @endif
                                     @endforeach
                                 </ul>
                             </div>

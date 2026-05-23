@@ -34,7 +34,13 @@
     $vaafComparacao = is_array($h['vaaf_comparacao'] ?? null) ? $h['vaaf_comparacao'] : null;
     $previsaoComparacao = is_array($h['previsao_comparacao'] ?? null) ? $h['previsao_comparacao'] : null;
     $divergenciaVaaf = is_array($h['divergencia_vaaf'] ?? null) ? $h['divergencia_vaaf'] : null;
-    $fundingRef = is_array($h['funding_reference'] ?? null) ? $h['funding_reference'] : null;
+    $fundingRef = is_array($h['funding_display'] ?? null)
+        ? $h['funding_display']
+        : (is_array($h['funding_reference'] ?? null) ? $h['funding_reference'] : null);
+    $pendenciasCadastro = array_values(array_filter(
+        $cadastro,
+        static fn (array $d): bool => ($d['has_issue'] ?? false) === true
+    ));
     $perdaAgreg = (float) ($summary['perda_estimada_anual'] ?? 0);
     $ganhoAgreg = (float) ($summary['ganho_potencial_anual'] ?? 0);
     $recursoSemNee = (int) ($summary['recurso_prova_sem_nee'] ?? 0);
@@ -75,12 +81,11 @@
             'explicacao_resumo' => __('Matrículas com data de cadastro recente, por usuários municipais (exc. admin).'),
         ];
     }
-    $healthKpis = array_merge($healthKpis, [
+    $healthKpisFinanceiro = [
         [
             'label' => __('Perda estimada / ano'),
             'value' => $fmtBrl($perdaAgreg),
             'tone' => 'orange',
-            'size' => 'xl',
             'explicacao_resumo' => filled($fundingResumo['detalhe'] ?? null) ? $fundingResumo['detalhe'] : null,
             'funding_explicacao' => $fundingResumo !== null ? [
                 'formula_curta' => (string) ($fundingResumo['titulo'] ?? __('Soma das rotinas com pendência')),
@@ -92,7 +97,6 @@
             'label' => __('Ganho potencial / ano'),
             'value' => $fmtBrl($ganhoAgreg),
             'tone' => 'emerald',
-            'size' => 'xl',
             'explicacao_resumo' => $ganhoAgreg > 0
                 ? __('Igual à perda neste modelo: valor indicativo recuperável após corrigir cadastro no i-Educar.')
                 : null,
@@ -102,7 +106,7 @@
                 'passos' => is_array($fundingResumo['passos'] ?? null) ? $fundingResumo['passos'] : [],
             ] : null,
         ],
-    ]);
+    ];
     $publicSources = is_array($h['public_data_sources'] ?? null) ? $h['public_data_sources'] : [];
     $hasPublicSources = count($publicSources['categories'] ?? []) > 0;
     $flowSteps = ConsultoriaFlow::numberedSteps([
@@ -153,7 +157,13 @@
                         — {{ $h['year_label'] }}
                     @endif
                     @if ($fundingRef !== null && isset($fundingRef['vaa_label']))
-                        · {{ __('VAAF municipal:') }} <span class="font-medium">{{ $fundingRef['vaa_label'] }}</span>
+                        ·
+                        @if ($fundingRef['vaa_municipal_importado'] ?? false)
+                            {{ __('VAAF municipal:') }}
+                        @else
+                            {{ __('VAAF ref.:') }}
+                        @endif
+                        <span class="font-medium">{{ $fundingRef['vaa_label'] }}</span>
                         @if (filled($fundingRef['vaa_previa_label'] ?? null))
                             · {{ __('prévia:') }} {{ $fundingRef['vaa_previa_label'] }}
                         @endif
@@ -212,8 +222,11 @@
                             <x-consultoria-tab-link tab="work_done" :label="__('Censo')" />
                         </div>
                     </div>
-                    <div class="lg:col-span-2 space-y-2">
-                        <x-dashboard.consultoria-kpi-grid :items="$healthKpis" class="lg:grid-cols-2" />
+                    <div class="lg:col-span-2 space-y-3">
+                        @if (count($healthKpis) > 0)
+                            <x-dashboard.consultoria-kpi-grid :items="$healthKpis" class="sm:grid-cols-2 lg:grid-cols-3" />
+                        @endif
+                        <x-dashboard.consultoria-kpi-grid :items="$healthKpisFinanceiro" class="grid-cols-1 sm:grid-cols-2" />
                         @if ($fundingMet !== null)
                             <x-dashboard.consultoria-funding-explanation
                                 :metodologia="$fundingMet"
@@ -222,15 +235,15 @@
                         @endif
                     </div>
                 </div>
-                @if (! empty($h['chart_pendencias']))
-                    <div class="max-w-3xl">
-                        <x-dashboard.chart-panel
-                            :chart="$h['chart_pendencias']"
-                            exportFilename="saude-municipio-pendencias"
-                            :exportMeta="$chartExportContext"
-                            :compact="true"
-                            chartPanelId="chart-saude-pendencias"
-                            panelTone="rose"
+                @if (count($pendenciasCadastro) > 0)
+                    <div class="mt-4 space-y-2">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-rose-800/90 dark:text-rose-300/90">
+                            {{ __('Principais pendências de cadastro (ocorrências)') }}
+                        </p>
+                        <x-dashboard.consultoria-dimensions-grid
+                            :dimensions="$pendenciasCadastro"
+                            :fmt-brl="$fmtBrl"
+                            columns="2"
                         />
                     </div>
                 @endif

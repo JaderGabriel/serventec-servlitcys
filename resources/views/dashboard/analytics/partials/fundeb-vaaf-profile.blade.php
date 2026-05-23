@@ -101,27 +101,6 @@
             </table>
         </div>
 
-        @php $dist = is_array($profile['distribuicao_legal']['itens'] ?? null) ? $profile['distribuicao_legal']['itens'] : []; @endphp
-        @if (count($dist) > 0)
-            <div class="mt-4">
-                <p class="text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-2">{{ __('Distribuição legal planejada (ano do filtro)') }}</p>
-                <ul class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-                    @foreach ($dist as $item)
-                        <li class="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2">
-                            <p class="font-medium text-slate-900 dark:text-slate-100">{{ $item['titulo'] ?? '' }}</p>
-                            <p class="text-xs text-slate-600 dark:text-slate-400">{{ __('Mín. :pct%', ['pct' => number_format((float) ($item['percentual'] ?? 0), 0)]) }}</p>
-                            @if (isset($item['valor']))
-                                <p class="tabular-nums font-semibold mt-1">{{ $fmtBrl((float) $item['valor']) }}</p>
-                            @endif
-                        </li>
-                    @endforeach
-                </ul>
-                @if (filled($profile['distribuicao_legal']['referencia_legal'] ?? null))
-                    <p class="mt-2 text-[11px] text-slate-500">{{ $profile['distribuicao_legal']['referencia_legal'] }}</p>
-                @endif
-            </div>
-        @endif
-
         @php $pond = is_array($profile['ponderacoes_discrepancias'] ?? null) ? $profile['ponderacoes_discrepancias'] : []; @endphp
         @if ($pond !== [])
             <details class="mt-4 text-sm">

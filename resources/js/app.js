@@ -20,6 +20,12 @@ import {
 } from "./chartExportHelpers.js";
 import { initAnalyticsFilterBootstrap } from "./analyticsFilterBootstrap.js";
 import { initAnalyticsFilterTurno } from "./analyticsFilterTurno.js";
+import {
+    initDataLoadingForms,
+    registerDataLoadingStore,
+    servDataLoadingFinish,
+    servDataLoadingStart,
+} from "./dataLoading.js";
 import createSchoolUnitsMap from "./schoolUnitsMap.js";
 import createBrazilMunicipalitiesMap from "./brazilMunicipalitiesMap.js";
 import "./notification-bell.js";
@@ -252,6 +258,15 @@ document.addEventListener("alpine:init", () => {
                     console.warn("analytics tab: ref ausente", t, refName);
                     return;
                 }
+                const tabLabel =
+                    this.tabLabels?.[t] ??
+                    (typeof t === "string" ? t : "");
+                servDataLoadingStart(
+                    tabLabel
+                        ? `A carregar: ${tabLabel}`
+                        : "A carregar indicadores…",
+                    "Consulta à base i-Educar do município; pode demorar alguns minutos.",
+                );
                 this.loadingTab = t;
                 try {
                     const u = new URL(this.tabFetchUrl, window.location.origin);
@@ -291,6 +306,7 @@ document.addEventListener("alpine:init", () => {
                     }
                 } finally {
                     this.loadingTab = null;
+                    servDataLoadingFinish();
                 }
             },
             afterTabChange() {
@@ -387,6 +403,70 @@ document.addEventListener("alpine:init", () => {
             return "";
         },
     }));
+
+    function formatChartBrl(value) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) {
+            return String(value ?? "");
+        }
+
+        return n.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+    }
+
+    function applyChartBrlFormat(extra, mergedPlugins, scales) {
+        if (extra?.valueFormat !== "brl") {
+            return;
+        }
+        const valueAxisKey = extra.indexAxis === "y" ? "x" : "y";
+        const axis = scales?.[valueAxisKey];
+        if (axis?.ticks) {
+            axis.ticks.callback = (tickValue) => formatChartBrl(tickValue);
+        }
+        mergedPlugins.datalabels = {
+            ...(mergedPlugins.datalabels || {}),
+            formatter: (value, ctx) => {
+                if (value === null || value === undefined) {
+                    return "";
+                }
+                const t = ctx.chart?.config?.type;
+                if (t === "doughnut" || t === "pie") {
+                    const data = ctx.dataset?.data ?? [];
+                    const sum = data.reduce(
+                        (a, b) => a + Number(b),
+                        0,
+                    );
+                    const pct = sum
+                        ? Math.round((Number(value) / sum) * 1000) / 10
+                        : 0;
+
+                    return `${formatChartBrl(value)}\n(${pct}% do total)`;
+                }
+
+                return formatChartBrl(value);
+            },
+        };
+        mergedPlugins.tooltip = {
+            ...(mergedPlugins.tooltip || {}),
+            callbacks: {
+                ...(mergedPlugins.tooltip?.callbacks || {}),
+                label: (context) => {
+                    const label = context.dataset?.label || "";
+                    const raw =
+                        context.parsed?.y ??
+                        context.parsed?.x ??
+                        context.raw;
+                    const prefix = label ? `${label}: ` : "";
+
+                    return prefix + formatChartBrl(raw);
+                },
+            },
+        };
+    }
 
     Alpine.data(
         "chartPanel",
@@ -736,6 +816,8 @@ document.addEventListener("alpine:init", () => {
                             payload,
                             extra,
                         );
+
+                        applyChartBrlFormat(extra, mergedPlugins, scales);
 
                         const userLegendOnClick = mergedPlugins.legend?.onClick;
                         mergedPlugins.legend = {
@@ -1554,11 +1636,13 @@ document.addEventListener("alpine:init", () => {
 
 window.Alpine = Alpine;
 
+registerDataLoadingStore(Alpine);
 registerScrollToTopData(Alpine);
 
 Alpine.start();
 
 function initAnalyticsFilters() {
+    initDataLoadingForms();
     initAnalyticsFilterBootstrap();
     initAnalyticsFilterTurno();
 }

@@ -31,7 +31,14 @@
             <div class="serv-panel p-6">
                 <x-input-label for="analytics_city" :value="__('Município')" />
                 <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Selecione o município cuja base i-Educar será analisada (cadastro ativo com conexão à base).') }}</p>
-                <form method="get" action="{{ route('dashboard.analytics') }}" class="mt-2 flex flex-col sm:flex-row gap-4 sm:items-end">
+                <form
+                    method="get"
+                    action="{{ route('dashboard.analytics') }}"
+                    class="mt-2 flex flex-col sm:flex-row gap-4 sm:items-end"
+                    data-serv-loading-on-submit
+                    data-serv-loading-title="{{ __('A carregar município') }}"
+                    data-serv-loading-message="{{ __('A preparar o painel de consultoria para a cidade selecionada…') }}"
+                >
                     <div class="flex-1 max-w-xl">
                         <select id="analytics_city" name="city_id" class="block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 shadow-sm focus:border-teal-600 focus:ring-teal-600" onchange="this.form.submit()">
                             <option value="">{{ __('— Selecione uma cidade —') }}</option>
@@ -136,12 +143,7 @@
                         <div class="p-4 sm:p-6 min-h-[min(38rem,88vh)] relative min-w-0 bg-white/50 dark:bg-slate-900/30">
                             <div x-show="tab === 'overview'" x-cloak class="analytics-tab-panel">
                                 @if ($yearFilterReady && ($deferOverviewOnIndex ?? false))
-                                    <div class="relative min-h-[14rem]" x-ref="panelOverview">
-                                        <div x-show="loadingTab === 'overview'" x-cloak class="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
-                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar visão geral…') }}</span>
-                                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('Consulta à base i-Educar do município; pode demorar alguns minutos.') }}</span>
-                                        </div>
-                                    </div>
+                                    <div class="relative min-h-[14rem]" x-ref="panelOverview"></div>
                                 @else
                                     @include('dashboard.analytics.partials.overview', [
                                         'overviewData' => $overviewData,
@@ -162,11 +164,7 @@
                                         'yearFilterReady' => $yearFilterReady,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelEnrollment">
-                                        <div x-show="loadingTab === 'enrollment'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
-                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar indicadores…') }}</span>
-                                        </div>
-                                    </div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelEnrollment"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'school_units'" x-cloak class="analytics-tab-panel">
@@ -178,11 +176,7 @@
                                         'municipalityContext' => $municipalityContext ?? null,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelSchoolUnits">
-                                        <div x-show="loadingTab === 'school_units'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
-                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar unidades e mapa…') }}</span>
-                                        </div>
-                                    </div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelSchoolUnits"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'network'" x-cloak class="analytics-tab-panel">
@@ -194,11 +188,7 @@
                                         'yearFilterReady' => $yearFilterReady,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelNetwork">
-                                        <div x-show="loadingTab === 'network'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
-                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar indicadores…') }}</span>
-                                        </div>
-                                    </div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelNetwork"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'inclusion'" x-cloak class="analytics-tab-panel">
@@ -212,11 +202,7 @@
                                         'filters' => $filters,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelInclusion">
-                                        <div x-show="loadingTab === 'inclusion'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
-                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar indicadores…') }}</span>
-                                        </div>
-                                    </div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelInclusion"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'performance'" x-cloak class="analytics-tab-panel">
@@ -228,11 +214,7 @@
                                         'yearFilterReady' => $yearFilterReady,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelPerformance">
-                                        <div x-show="loadingTab === 'performance'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
-                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar indicadores…') }}</span>
-                                        </div>
-                                    </div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelPerformance"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'attendance'" x-cloak class="analytics-tab-panel">
@@ -244,11 +226,7 @@
                                         'yearFilterReady' => $yearFilterReady,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelAttendance">
-                                        <div x-show="loadingTab === 'attendance'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
-                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar indicadores…') }}</span>
-                                        </div>
-                                    </div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelAttendance"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'fundeb'" x-cloak class="analytics-tab-panel">
@@ -260,11 +238,7 @@
                                         'municipalityContext' => $municipalityContext ?? null,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelFundeb">
-                                        <div x-show="loadingTab === 'fundeb'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
-                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar indicadores…') }}</span>
-                                        </div>
-                                    </div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelFundeb"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'other_funding'" x-cloak class="analytics-tab-panel">
@@ -276,11 +250,7 @@
                                         'municipalityContext' => $municipalityContext ?? null,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelOtherFunding">
-                                        <div x-show="loadingTab === 'other_funding'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
-                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar financiamentos…') }}</span>
-                                        </div>
-                                    </div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelOtherFunding"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'work_done'" x-cloak class="analytics-tab-panel">
@@ -292,11 +262,7 @@
                                         'municipalityContext' => $municipalityContext ?? null,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelWorkDone">
-                                        <div x-show="loadingTab === 'work_done'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
-                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar Censo…') }}</span>
-                                        </div>
-                                    </div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelWorkDone"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'discrepancies'" x-cloak class="analytics-tab-panel">
@@ -308,11 +274,7 @@
                                         'municipalityContext' => $municipalityContext ?? null,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelDiscrepancies">
-                                        <div x-show="loadingTab === 'discrepancies'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
-                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar análises…') }}</span>
-                                        </div>
-                                    </div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelDiscrepancies"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'municipality_health'" x-cloak class="analytics-tab-panel">
@@ -327,11 +289,7 @@
                                         'pdfExportsRecent' => $pdfExportsRecent ?? [],
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelMunicipalityHealth">
-                                        <div x-show="loadingTab === 'municipality_health'" x-cloak class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/60 z-10">
-                                            <span class="text-sm text-gray-600 dark:text-gray-300">{{ __('A carregar diagnóstico geral…') }}</span>
-                                        </div>
-                                    </div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelMunicipalityHealth"></div>
                                 @endif
                             </div>
                         </div>

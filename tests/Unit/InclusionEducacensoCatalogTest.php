@@ -39,4 +39,15 @@ class InclusionEducacensoCatalogTest extends TestCase
         $this->assertSame(3, $map[InclusionEducacensoCatalog::normalizeLabel('Baixa visão')]);
         $this->assertSame(1, $map[InclusionEducacensoCatalog::normalizeLabel('Surdez')]);
     }
+
+    public function test_count_for_deficiencia_entry_matches_by_id(): void
+    {
+        $entry = ['id' => '12', 'label' => 'Transtorno do espectro autista', 'norm' => 'transtorno do espectro autista'];
+        $maps = [
+            'by_id' => ['12' => 7],
+            'by_norm' => ['tea' => 3],
+        ];
+
+        $this->assertSame(7, InclusionEducacensoCatalog::countForDeficienciaEntry($entry, $maps));
+    }
 }

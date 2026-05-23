@@ -5,6 +5,7 @@ namespace App\Support\Ieducar;
 use App\Models\City;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
@@ -36,6 +37,7 @@ final class InclusionDashboardQueries
                 $rows = self::queryMatriculasPorDeficienciaFisicaPath($db, $city, $filters, $fisica, $defTable, $limit);
                 if ($rows !== []) {
                     return collect($rows)->map(fn ($r) => (object) [
+                        'def_id' => (string) ($r->def_id ?? ''),
                         'deficiencia' => (string) ($r->deficiencia ?? ''),
                         'total' => (int) ($r->total ?? 0),
                     ]);
@@ -48,9 +50,123 @@ final class InclusionDashboardQueries
         $rows = self::queryMatriculasPorDeficienciaAlunoDefPath($db, $city, $filters, $limit);
 
         return collect($rows)->map(fn ($r) => (object) [
+            'def_id' => (string) ($r->def_id ?? ''),
             'deficiencia' => (string) ($r->deficiencia ?? ''),
             'total' => (int) ($r->total ?? 0),
         ]);
+    }
+
+    /**
+     * Matrículas activas distintas com qualquer vínculo NEE (fisica_deficiência ou aluno_deficiência).
+     */
+    public static function countMatriculasComNee(Connection $db, City $city, IeducarFilterState $filters): int
+    {
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $aluno = IeducarSchema::resolveTable('aluno', $city);
+            $mId = (string) config('ieducar.columns.matricula.id');
+            $mAluno = (string) config('ieducar.columns.matricula.aluno');
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $aId = (string) config('ieducar.columns.aluno.id');
+
+            $defTable = self::resolveDeficienciaCatalogTable($db, $city);
+            if ($defTable === null) {
+                return 0;
+            }
+
+            $defPk = IeducarColumnInspector::firstExistingColumn($db, $defTable, array_filter([
+                (string) config('ieducar.columns.deficiencia.id'),
+                'cod_deficiencia',
+            ]), $city);
+            if ($defPk === null) {
+                return 0;
+            }
+
+            $fisica = self::resolveFisicaDeficienciaJoinSpec($db, $city);
+            $aIdpes = self::resolveAlunoIdpesColumn($db, $aluno, $city);
+
+            $makeBase = static function () use ($db, $mat, $aluno, $mAluno, $aId, $mAtivo, $city, $filters): Builder {
+                $q = $db->table($mat.' as m')
+                    ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
+                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+                MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
+                self::applyInclusionScope($q, $db, $city, $filters);
+
+                return $q;
+            };
+
+            if ($fisica !== null && $aIdpes !== null) {
+                $q = $makeBase()
+                    ->join($fisica['table'].' as fd', 'a.'.$aIdpes, '=', 'fd.'.$fisica['idpes_col'])
+                    ->join($defTable.' as d', 'fd.'.$fisica['def_fk'], '=', 'd.'.$defPk);
+            } else {
+                $adTable = self::resolveAlunoDeficienciaTable($db, $city);
+                if ($adTable === null) {
+                    return 0;
+                }
+                $adAluno = IeducarColumnInspector::firstExistingColumn($db, $adTable, array_filter([
+                    (string) config('ieducar.columns.aluno_deficiencia.aluno'),
+                    'ref_cod_aluno',
+                ]), $city);
+                $adDef = IeducarColumnInspector::firstExistingColumn($db, $adTable, array_filter([
+                    (string) config('ieducar.columns.aluno_deficiencia.deficiencia'),
+                    'ref_cod_deficiencia',
+                ]), $city);
+                if ($adAluno === null || $adDef === null) {
+                    return 0;
+                }
+                $q = $makeBase()
+                    ->join($adTable.' as ad', 'a.'.$aId, '=', 'ad.'.$adAluno)
+                    ->join($defTable.' as d', 'ad.'.$adDef, '=', 'd.'.$defPk);
+            }
+
+            $row = $q->selectRaw('COUNT(DISTINCT m.'.$db->getQueryGrammar()->wrap($mId).') as c')->first();
+
+            return (int) ($row->c ?? 0);
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    /**
+     * Referência FUNDEB (VAAF) aplicada às matrículas NEE do filtro — base e adicional indicativo de educação especial.
+     *
+     * @return array<string, mixed>
+     */
+    public static function buildFundebNeeIndicativo(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        $nee = self::countMatriculasComNee($db, $city, $filters);
+        if ($nee <= 0) {
+            return ['available' => false];
+        }
+
+        $ref = DiscrepanciesFundingImpact::resolveReference($city, $filters);
+        $vaaf = (float) ($ref['vaaf'] ?? 0);
+        if ($vaaf <= 0) {
+            return ['available' => false, 'matriculas_nee' => $nee];
+        }
+
+        $pesoEsp = max(1.0, (float) config('ieducar.inclusion.fundeb_peso_educacao_especial', 1.2));
+        $baseAnual = round($nee * $vaaf, 2);
+        $adicionalAnual = $pesoEsp > 1.0
+            ? round($nee * $vaaf * ($pesoEsp - 1.0), 2)
+            : 0.0;
+        $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
+
+        return [
+            'available' => true,
+            'matriculas_nee' => $nee,
+            'vaaf' => $vaaf,
+            'vaaf_fmt' => $fmt($vaaf),
+            'vaaf_fonte' => (string) ($ref['fonte_label'] ?? ''),
+            'base_anual' => $baseAnual,
+            'base_anual_fmt' => $fmt($baseAnual),
+            'peso_educacao_especial' => $pesoEsp,
+            'adicional_anual' => $adicionalAnual,
+            'adicional_anual_fmt' => $adicionalAnual > 0 ? $fmt($adicionalAnual) : null,
+            'total_indicativo_anual' => round($baseAnual + $adicionalAnual, 2),
+            'total_indicativo_anual_fmt' => $fmt($baseAnual + $adicionalAnual),
+        ];
     }
 
     /**
@@ -68,25 +184,28 @@ final class InclusionDashboardQueries
     public static function buildNeeDetalheCatalogoPorCategoria(Connection $db, City $city, IeducarFilterState $filters): ?array
     {
         try {
-            $countsByNorm = InclusionEducacensoCatalog::countsByNormFromRows(
-                self::getMatriculasPorDeficiencia($db, $city, $filters, null),
+            $rows = self::getMatriculasPorDeficiencia($db, $city, $filters, null);
+            $maps = InclusionEducacensoCatalog::deficienciaCountMapsFromRows(
+                $rows,
                 static fn ($row) => (string) ($row->deficiencia ?? ''),
-                static fn ($row) => (int) ($row->total ?? 0)
+                static fn ($row) => (int) ($row->total ?? 0),
+                static fn ($row) => (string) ($row->def_id ?? ''),
             );
 
             $entries = InclusionEducacensoCatalog::mergedDeficienciaEntries($db, $city);
-            if ($entries === [] && $countsByNorm === []) {
+            if ($entries === [] && $maps['by_norm'] === [] && $maps['by_id'] === []) {
                 return null;
             }
 
             $def = [];
             $sin = [];
             $ne = [];
-            foreach ($entries as $entry) {
-                $nm = $entry['label'];
-                $t = (int) ($countsByNorm[$entry['norm']] ?? 0);
-                $item = ['nome' => $nm, 'total' => $t];
-                $cat = self::classificarDesignacaoNee($nm);
+            $seenNorm = [];
+            $seenIds = [];
+
+            $pushItem = static function (array &$def, array &$sin, array &$ne, string $nome, int $total): void {
+                $item = ['nome' => $nome, 'total' => $total];
+                $cat = self::classificarDesignacaoNee($nome);
                 if ($cat === 'ne') {
                     $ne[] = $item;
                 } elseif ($cat === 'sindrome') {
@@ -94,9 +213,52 @@ final class InclusionDashboardQueries
                 } else {
                     $def[] = $item;
                 }
+            };
+
+            foreach ($rows as $row) {
+                $nm = trim((string) ($row->deficiencia ?? ''));
+                if ($nm === '') {
+                    $nm = (string) __('Não informado');
+                }
+                $t = (int) ($row->total ?? 0);
+                if ($t <= 0) {
+                    continue;
+                }
+                $norm = InclusionEducacensoCatalog::normalizeLabel($nm);
+                if ($norm !== '' && isset($seenNorm[$norm])) {
+                    continue;
+                }
+                if ($norm !== '') {
+                    $seenNorm[$norm] = true;
+                }
+                $defId = trim((string) ($row->def_id ?? ''));
+                if ($defId !== '' && $defId !== '0') {
+                    $seenIds[$defId] = true;
+                }
+                $pushItem($def, $sin, $ne, $nm, $t);
             }
 
-            $sort = static fn (array $a, array $b): int => $b['total'] <=> $a['total'];
+            foreach ($entries as $entry) {
+                $nm = (string) ($entry['label'] ?? '');
+                $norm = (string) ($entry['norm'] ?? InclusionEducacensoCatalog::normalizeLabel($nm));
+                $entryId = $entry['id'] ?? null;
+                if ($entryId !== null && $entryId !== '' && isset($seenIds[(string) $entryId])) {
+                    continue;
+                }
+                if ($norm !== '' && isset($seenNorm[$norm])) {
+                    continue;
+                }
+                $t = InclusionEducacensoCatalog::countForDeficienciaEntry($entry, $maps);
+                if ($norm !== '') {
+                    $seenNorm[$norm] = true;
+                }
+                if ($entryId !== null && $entryId !== '') {
+                    $seenIds[(string) $entryId] = true;
+                }
+                $pushItem($def, $sin, $ne, $nm, $t);
+            }
+
+            $sort = static fn (array $a, array $b): int => $b['total'] <=> $a['total'] ?: strcmp((string) $a['nome'], (string) $b['nome']);
             usort($def, $sort);
             usort($sin, $sort);
             usort($ne, $sort);
@@ -207,13 +369,19 @@ final class InclusionDashboardQueries
                 return null;
             }
 
-            $countsByNorm = InclusionEducacensoCatalog::countsByNormFromRows(
+            $maps = InclusionEducacensoCatalog::deficienciaCountMapsFromRows(
                 self::getMatriculasPorDeficiencia($db, $city, $filters, null),
                 static fn ($row) => (string) ($row->deficiencia ?? ''),
-                static fn ($row) => (int) ($row->total ?? 0)
+                static fn ($row) => (int) ($row->total ?? 0),
+                static fn ($row) => (string) ($row->def_id ?? ''),
             );
 
-            [$labels, $values] = InclusionEducacensoCatalog::mergeLabelsWithCounts($entries, $countsByNorm);
+            $labels = [];
+            $values = [];
+            foreach ($entries as $entry) {
+                $labels[] = (string) ($entry['label'] ?? '');
+                $values[] = (float) InclusionEducacensoCatalog::countForDeficienciaEntry($entry, $maps);
+            }
 
             $den = $denominator ?? MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
 
@@ -1526,7 +1694,8 @@ final class InclusionDashboardQueries
         MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
         self::applyInclusionScope($q, $db, $city, $filters);
 
-        $q->selectRaw('MAX(COALESCE(d.'.$wNm.', \'Não informado\')) as deficiencia')
+        $q->selectRaw('d.'.$wPk.' as def_id')
+            ->selectRaw('MAX(COALESCE(d.'.$wNm.', \'Não informado\')) as deficiencia')
             ->selectRaw('COUNT(DISTINCT m.'.$g->wrap($mId).') as total')
             ->groupBy('d.'.$wPk)
             ->orderByDesc('total');
@@ -1590,7 +1759,8 @@ final class InclusionDashboardQueries
         MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
         self::applyInclusionScope($q, $db, $city, $filters);
 
-        $q->selectRaw('MAX(d.'.$g->wrap($nmCol).') as deficiencia')
+        $q->selectRaw('d.'.$g->wrap($defPk).' as def_id')
+            ->selectRaw('MAX(d.'.$g->wrap($nmCol).') as deficiencia')
             ->selectRaw('COUNT(DISTINCT m.'.$g->wrap($mId).') as total')
             ->groupBy('d.'.$g->wrap($defPk))
             ->orderByDesc('total');

@@ -54,6 +54,21 @@ final class ChartPayload
     }
 
     /**
+     * Eixo de valores e rótulos em real (BRL) — usado em repasses e previsões FUNDEB.
+     *
+     * @param  array<string, mixed>  $chart
+     * @return array<string, mixed>
+     */
+    public static function withValueFormatBrl(array $chart): array
+    {
+        $options = is_array($chart['options'] ?? null) ? $chart['options'] : [];
+        $options['valueFormat'] = 'brl';
+        $chart['options'] = $options;
+
+        return $chart;
+    }
+
+    /**
      * Barras horizontais (melhor para rótulos longos: cursos, escolas).
      *
      * @param  list<string|int|float>  $labels

@@ -130,6 +130,87 @@ final class InclusionEducacensoCatalog
         return $map;
     }
 
+    /**
+     * Agrega contagens por ID do catálogo (cadastro.deficiencia) e por rótulo normalizado.
+     *
+     * @param  iterable<mixed>  $rows
+     * @return array{by_id: array<string, int>, by_norm: array<string, int>}
+     */
+    public static function deficienciaCountMapsFromRows(
+        iterable $rows,
+        callable $labelResolver,
+        callable $countResolver,
+        ?callable $idResolver = null,
+    ): array {
+        $byId = [];
+        $byNorm = [];
+
+        foreach ($rows as $row) {
+            $count = (int) $countResolver($row);
+            if ($count <= 0) {
+                continue;
+            }
+
+            $rawLabel = trim((string) $labelResolver($row));
+            if ($rawLabel === '') {
+                $rawLabel = (string) __('Não informado');
+            }
+            $norm = self::normalizeLabel($rawLabel);
+            if ($norm !== '') {
+                $byNorm[$norm] = ($byNorm[$norm] ?? 0) + $count;
+            }
+
+            if ($idResolver !== null) {
+                $id = trim((string) $idResolver($row));
+                if ($id !== '' && $id !== '0') {
+                    $byId[$id] = ($byId[$id] ?? 0) + $count;
+                }
+            }
+        }
+
+        return ['by_id' => $byId, 'by_norm' => $byNorm];
+    }
+
+    /**
+     * Resolve contagem de uma entrada do catálogo (ID do i-Educar, rótulo exacto ou aproximado).
+     *
+     * @param  array{id: ?string, label: string, norm: string}  $entry
+     * @param  array{by_id: array<string, int>, by_norm: array<string, int>}  $maps
+     */
+    public static function countForDeficienciaEntry(array $entry, array $maps): int
+    {
+        $byId = $maps['by_id'] ?? [];
+        $byNorm = $maps['by_norm'] ?? [];
+
+        $id = $entry['id'] ?? null;
+        if ($id !== null && $id !== '' && isset($byId[(string) $id])) {
+            return (int) $byId[(string) $id];
+        }
+
+        $norm = (string) ($entry['norm'] ?? self::normalizeLabel((string) ($entry['label'] ?? '')));
+        if ($norm !== '' && isset($byNorm[$norm])) {
+            return (int) $byNorm[$norm];
+        }
+
+        if ($norm === '') {
+            return 0;
+        }
+
+        $fuzzy = 0;
+        $matches = 0;
+        foreach ($byNorm as $key => $value) {
+            if ($key === '' || $value <= 0) {
+                continue;
+            }
+            if ($key === $norm || str_contains($key, $norm) || str_contains($norm, $key)) {
+                $fuzzy += (int) $value;
+                $matches++;
+            }
+        }
+
+        return $matches === 1 ? $fuzzy : 0;
+    }
+
     public static function normalizeLabel(string $label): string
     {
         $t = trim($label);

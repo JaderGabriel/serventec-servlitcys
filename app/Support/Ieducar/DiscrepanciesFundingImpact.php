@@ -132,13 +132,16 @@ final class DiscrepanciesFundingImpact
     {
         $ref = self::resolveReference($city, $filters);
 
-        $municipalVaaf = is_array($ref['municipal'] ?? null)
-            ? (float) ($ref['municipal']['vaaf'] ?? $ref['vaaf'])
+        $municipalBlock = is_array($ref['municipal'] ?? null) ? $ref['municipal'] : null;
+        $usaVaafMunicipal = $municipalBlock !== null && (float) ($municipalBlock['vaaf'] ?? 0) > 0;
+        $vaafCalculo = $usaVaafMunicipal
+            ? (float) $municipalBlock['vaaf']
             : (float) $ref['vaaf'];
 
         return [
-            'vaa_anual' => $municipalVaaf,
-            'vaa_label' => self::formatBrl($municipalVaaf),
+            'vaa_anual' => $vaafCalculo,
+            'vaa_label' => self::formatBrl($vaafCalculo),
+            'vaa_municipal_importado' => $usaVaafMunicipal,
             'vaa_previa_label' => is_array($ref['previa'] ?? null)
                 ? self::formatBrl((float) $ref['previa']['vaaf'])
                 : null,

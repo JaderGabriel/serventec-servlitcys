@@ -87,9 +87,10 @@ class InclusionRepository
         $chartNeePorRacaStacked = null;
         $neeMatriculasPorEscola = [];
         $recursoProva = null;
+        $fundebNee = null;
 
         try {
-            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo, &$chartRacaPorEscolaStacked, &$chartNeePorRacaStacked, &$neeMatriculasPorEscola, &$recursoProva) {
+            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo, &$chartRacaPorEscolaStacked, &$chartNeePorRacaStacked, &$neeMatriculasPorEscola, &$recursoProva, &$fundebNee) {
                 $totalMatriculas = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
 
                 try {
@@ -237,6 +238,12 @@ class InclusionRepository
                 } catch (\Throwable) {
                     $neeMatriculasPorEscola = [];
                 }
+
+                try {
+                    $fundebNee = InclusionDashboardQueries::buildFundebNeeIndicativo($db, $city, $filters);
+                } catch (\Throwable) {
+                    $fundebNee = ['available' => false];
+                }
             });
         } catch (\Throwable $e) {
             return [
@@ -277,6 +284,7 @@ class InclusionRepository
             'chart_nee_por_raca_stacked' => $chartNeePorRacaStacked,
             'nee_matriculas_por_escola' => $neeMatriculasPorEscola,
             'recurso_prova' => $recursoProva,
+            'fundeb_nee' => $fundebNee,
             'inclusion_filters_active' => $this->inclusionFiltersActiveLabels($filters),
         ];
     }

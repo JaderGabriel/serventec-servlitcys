@@ -415,6 +415,70 @@
         @apply bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300;
     }
 
+    html.serv-data-loading-lock,
+    body.serv-data-loading-lock {
+        overflow: hidden;
+        touch-action: none;
+    }
+
+    .serv-data-loading-overlay {
+        @apply fixed inset-0 z-[200] flex items-center justify-center p-4;
+        background: rgb(15 23 42 / 0.45);
+        backdrop-filter: blur(2px);
+        pointer-events: all;
+        cursor: wait;
+    }
+
+    .serv-data-loading-overlay__panel {
+        @apply w-full max-w-md rounded-xl border border-slate-200/90 bg-white dark:bg-slate-900 shadow-2xl px-6 py-6 text-center;
+    }
+
+    .serv-data-loading-overlay__spinner {
+        @apply mx-auto h-10 w-10 rounded-full border-[3px] border-teal-200 dark:border-teal-900 border-t-teal-600 dark:border-t-teal-400;
+        animation: serv-data-loading-spin 0.85s linear infinite;
+    }
+
+    .serv-data-loading-overlay__title {
+        @apply mt-4 text-base font-semibold text-serv-navy dark:text-slate-100;
+    }
+
+    .serv-data-loading-overlay__message {
+        @apply mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed;
+    }
+
+    .serv-data-loading-overlay__bar {
+        @apply mt-5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700;
+    }
+
+    .serv-data-loading-overlay__bar-fill {
+        @apply h-full rounded-full bg-gradient-to-r from-teal-500 to-teal-600;
+        transition: width 0.28s ease-out;
+    }
+
+    .serv-data-loading-overlay__bar-fill--indeterminate {
+        @apply w-1/3;
+        animation: serv-data-loading-indeterminate 1.35s ease-in-out infinite;
+    }
+
+    .serv-data-loading-overlay__hint {
+        @apply mt-4 text-[11px] text-slate-500 dark:text-slate-400;
+    }
+
+    @keyframes serv-data-loading-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @keyframes serv-data-loading-indeterminate {
+        0% {
+            transform: translateX(-120%);
+        }
+        100% {
+            transform: translateX(420%);
+        }
+    }
+
     .serv-impact-card {
         @apply rounded-xl border border-slate-200/90 bg-gradient-to-br from-slate-50 via-white to-teal-50/30 dark:from-slate-900/60 dark:via-slate-900/40 dark:to-teal-950/20 dark:border-slate-700 shadow-sm overflow-hidden;
     }

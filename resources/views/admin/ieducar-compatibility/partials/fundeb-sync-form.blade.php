@@ -41,7 +41,7 @@
         );
     }
 }">
-    <form method="post" action="{{ route('admin.ieducar-compatibility.fundeb-sync-all') }}" class="rounded-lg border-2 border-teal-600 dark:border-teal-500 p-4 bg-teal-100/50 dark:bg-teal-950/40 space-y-4" @submit.prevent="if (confirmSubmit()) $el.submit()">
+    <form method="post" action="{{ route('admin.ieducar-compatibility.fundeb-sync-all') }}" class="rounded-lg border-2 border-teal-600 dark:border-teal-500 p-4 bg-teal-100/50 dark:bg-teal-950/40 space-y-4" @submit.prevent="if (confirmSubmit()) { window.servDataLoading?.start(@js(__('A enfileirar importações FUNDEB')), @js(__('A registar tarefas na fila de sincronização; a página será atualizada em seguida.'))); $el.submit(); }">
         @csrf
         @if ($city ?? null)
             <input type="hidden" name="city_id" value="{{ $city->id }}">

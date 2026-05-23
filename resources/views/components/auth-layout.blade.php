@@ -58,5 +58,7 @@
                 </div>
             </main>
         </div>
+
+        <x-ui.data-loading-overlay />
     </body>
 </html>

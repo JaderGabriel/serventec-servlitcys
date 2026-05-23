@@ -12,6 +12,15 @@ final class AnalyticsTabImpactBuilder
     /** Abas sem status na faixa (ex.: Cadastro / Visão geral). */
     public const TABS_WITHOUT_STATUS = ['overview'];
 
+    /** Abas sem bloco «Impacto no saldo» na faixa (conteúdo financeiro na própria aba). */
+    public const TABS_WITHOUT_SALDO = [
+        'overview',
+        'municipality_health',
+        'discrepancies',
+        'other_funding',
+        'work_done',
+    ];
+
     /** Abas com status consolidado do sistema (não só o recorte da aba). */
     public const TABS_SYSTEM_STATUS = ['municipality_health'];
 
@@ -45,6 +54,7 @@ final class AnalyticsTabImpactBuilder
         $def = self::definition($tab);
 
         $showStatus = ! in_array($tab, self::TABS_WITHOUT_STATUS, true);
+        $showSaldo = ! in_array($tab, self::TABS_WITHOUT_SALDO, true);
         $statusMode = in_array($tab, self::TABS_SYSTEM_STATUS, true) ? 'system' : 'tab';
 
         if (! $yearFilterReady) {
@@ -53,6 +63,7 @@ final class AnalyticsTabImpactBuilder
                 'tab' => $tab,
                 'title' => $def['title'],
                 'purpose' => $def['purpose'],
+                'show_saldo' => $showSaldo,
                 'show_status' => $showStatus,
                 'status_mode' => $statusMode,
                 'status' => 'neutral',
@@ -72,7 +83,7 @@ final class AnalyticsTabImpactBuilder
         $statusHelp = self::statusHelp($tab, $def, $ctx, $statusIssues, $statusMode);
         $metrics = self::tabMetrics($tab, $tabData, $ctx);
 
-        $saldo = self::resolveTabSaldo($tab, $tabData, $ctx, $tabStatus);
+        $saldo = $showSaldo ? self::resolveTabSaldo($tab, $tabData, $ctx, $tabStatus) : null;
 
         return [
             'ready' => true,
@@ -80,6 +91,7 @@ final class AnalyticsTabImpactBuilder
             'title' => $def['title'],
             'purpose' => $def['purpose'],
             'impact_note' => $def['impact_note'],
+            'show_saldo' => $showSaldo,
             'show_status' => $showStatus,
             'status_mode' => $statusMode,
             'status' => $tabStatus['status'],
@@ -161,7 +173,7 @@ final class AnalyticsTabImpactBuilder
             'discrepancies' => [
                 'title' => __('Discrepâncias'),
                 'purpose' => __('Rotinas de cadastro com impacto indicativo em FUNDEB, VAAR e Censo — por escola e tipo.'),
-                'impact_note' => __('Perda e ganho potencial usam o VAAF municipal do filtro (ou prévia federal).'),
+                'impact_note' => __('Totais por rotina e resumo financeiro na página; VAAF municipal do filtro (ou prévia federal).'),
             ],
             default => [
                 'title' => $tab,
@@ -382,10 +394,6 @@ final class AnalyticsTabImpactBuilder
     {
         return [
             'fundeb',
-            'other_funding',
-            'work_done',
-            'municipality_health',
-            'discrepancies',
         ];
     }
 
@@ -400,9 +408,8 @@ final class AnalyticsTabImpactBuilder
         $raw = match ($tab) {
             'network' => self::saldoFromNetworkOffer($tabData),
             'enrollment' => self::saldoFromEnrollment($tabData, $ctx),
-            'inclusion' => self::saldoFromInclusion($tabData),
+            'inclusion' => self::saldoFromInclusion($tabData, $ctx),
             'school_units' => self::saldoFromSchoolUnitsGeo($tabData),
-            'overview' => self::saldoFromOverviewCadastro($ctx),
             'performance' => self::saldoFromPerformance($tabData, $ctx),
             'attendance' => self::saldoFromAttendance($tabData, $ctx),
             default => null,
@@ -451,6 +458,7 @@ final class AnalyticsTabImpactBuilder
             'liquido_tone' => $liquido >= 0 ? 'success' : 'danger',
             'footnote' => (string) ($raw['footnote'] ?? ''),
             'info_only' => (bool) ($raw['info_only'] ?? false),
+            'fundeb_lines' => is_array($raw['fundeb_lines'] ?? null) ? $raw['fundeb_lines'] : [],
             'tab_share_label' => $tabStatus['share_label'] ?? null,
             'tab_share_value' => $tabStatus['share_value'] ?? null,
         ];
@@ -532,11 +540,11 @@ final class AnalyticsTabImpactBuilder
                 $funding = DiscrepanciesFundingImpact::estimate($id, $occurrences);
                 $perda += (float) $funding['perda_anual'];
                 $ganho += (float) $funding['ganho_potencial_anual'];
-                $footnotes[] = __(':rotina: :n × VAAF × peso :peso', [
-                    'rotina' => (string) ($check['titulo'] ?? $check['title'] ?? $id),
-                    'n' => number_format($occurrences, 0, ',', '.'),
-                    'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
-                ]);
+                $footnotes[] = self::enrollmentSaldoFootnoteLine(
+                    (string) ($check['titulo'] ?? $check['title'] ?? $id),
+                    $occurrences,
+                    $funding,
+                );
             }
         }
 
@@ -557,36 +565,45 @@ final class AnalyticsTabImpactBuilder
         }
 
         if ($perda <= 0 && $ganho <= 0) {
-            $pend = $snap['pendencias'];
-            if ($pend > 0) {
-                $occurrences = min($pend, max(1, (int) round($mat * 0.04)));
-                $funding = DiscrepanciesFundingImpact::estimate('matricula_situacao_invalida', $occurrences);
-                $perda = (float) $funding['perda_anual'];
-                $ganho = (float) $funding['ganho_potencial_anual'];
-                $footnotes[] = __(
-                    ':mat matrícula(s) no filtro; :occ ocorrência(s) estimadas em cadastro/matricula (Discrepâncias) × VAAF × peso :peso.',
-                    [
-                        'mat' => number_format($mat, 0, ',', '.'),
-                        'occ' => number_format($occurrences, 0, ',', '.'),
-                        'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
-                    ]
-                );
-            } else {
-                return self::saldoPedagogicoCtxShare(
-                    $ctx,
-                    0.15,
-                    __('Fatia (~15%%) do saldo municipal das Discrepâncias atribuída às matrículas realizadas no filtro.')
-                );
+            $estimated = self::enrollmentSaldoFromPendencias($snap['pendencias'], $mat);
+            if ($estimated !== null) {
+                $perda = $estimated['perda'];
+                $ganho = $estimated['ganho'];
+                $footnotes[] = $estimated['footnote'];
             }
         }
 
         if ($perda <= 0 && $ganho <= 0) {
-            return null;
+            $share = self::saldoPedagogicoCtxShare(
+                $ctx,
+                0.20,
+                __('Fatia (~20%%) do saldo municipal das Discrepâncias atribuída ao eixo matrículas/cadastro no filtro.')
+            );
+            if ($share !== null) {
+                $perda = $share['perda'];
+                $ganho = $share['ganho'];
+                $footnotes[] = $share['footnote'];
+            }
         }
 
-        $footnote = implode(' ', $footnotes);
+        $fundebLines = self::enrollmentFundebLines($mat, $ctx);
+
+        if ($perda <= 0 && $ganho <= 0) {
+            return [
+                'perda' => 0.0,
+                'ganho' => 0.0,
+                'liquido' => 0.0,
+                'footnote' => __(
+                    'Nenhuma discrepância de matrícula com peso financeiro no recorte. :n matrícula(s) activas — base FUNDEB indicativa abaixo; não é repasse FNDE.',
+                    ['n' => number_format($mat, 0, ',', '.')]
+                ),
+                'fundeb_lines' => $fundebLines,
+            ];
+        }
+
+        $footnote = implode(' ', array_filter($footnotes));
         $footnote .= ' '.__(
-            'Base: :n matrícula(s) activas no filtro — não é repasse FNDE.',
+            'Recorte: :n matrícula(s) activas no filtro — VAAF × pesos Discrepâncias (cadastro/Censo); não é repasse FNDE.',
             ['n' => number_format($mat, 0, ',', '.')]
         );
 
@@ -595,6 +612,108 @@ final class AnalyticsTabImpactBuilder
             'ganho' => round($ganho, 2),
             'liquido' => round($ganho - $perda, 2),
             'footnote' => trim($footnote),
+            'fundeb_lines' => $fundebLines,
+        ];
+    }
+
+    /**
+     * @param  array{perda_anual: float, ganho_potencial_anual: float, peso: float}  $funding
+     */
+    private static function enrollmentSaldoFootnoteLine(string $rotina, int $occurrences, array $funding): string
+    {
+        return __(':rotina: :n ocorrência(s) × VAAF × peso :peso.', [
+            'rotina' => $rotina,
+            'n' => number_format($occurrences, 0, ',', '.'),
+            'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
+        ]);
+    }
+
+    /**
+     * @return array{perda: float, ganho: float, footnote: string}|null
+     */
+    private static function enrollmentSaldoFromPendencias(int $pendencias, int $matriculas): ?array
+    {
+        if ($pendencias <= 0 || $matriculas <= 0) {
+            return null;
+        }
+
+        $budget = min($pendencias, max(1, (int) round($matriculas * 0.06)));
+        $checkIds = ['matricula_situacao_invalida', 'matricula_duplicada', 'sem_data_nascimento'];
+        $perCheck = max(1, (int) ceil($budget / count($checkIds)));
+
+        $perda = 0.0;
+        $ganho = 0.0;
+        $parts = [];
+        $remaining = $budget;
+
+        foreach ($checkIds as $checkId) {
+            if ($remaining <= 0) {
+                break;
+            }
+            $occurrences = min($perCheck, $remaining);
+            $remaining -= $occurrences;
+            $funding = DiscrepanciesFundingImpact::estimate($checkId, $occurrences);
+            $perda += (float) $funding['perda_anual'];
+            $ganho += (float) $funding['ganho_potencial_anual'];
+            $parts[] = self::enrollmentSaldoFootnoteLine(
+                match ($checkId) {
+                    'matricula_duplicada' => __('Matrículas duplicadas'),
+                    'sem_data_nascimento' => __('Sem data de nascimento'),
+                    default => __('Situação de matrícula inválida'),
+                },
+                $occurrences,
+                $funding,
+            );
+        }
+
+        if ($perda <= 0 && $ganho <= 0) {
+            return null;
+        }
+
+        return [
+            'perda' => $perda,
+            'ganho' => $ganho,
+            'footnote' => __(
+                ':pend pendência(s) no município; :budget ocorrência(s) repartidas no eixo matrícula (Discrepâncias): :detalhe.',
+                [
+                    'pend' => number_format($pendencias, 0, ',', '.'),
+                    'budget' => number_format($budget, 0, ',', '.'),
+                    'detalhe' => implode(' ', $parts),
+                ]
+            ),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $ctx
+     * @return list<string>
+     */
+    private static function enrollmentFundebLines(int $matriculas, array $ctx): array
+    {
+        if ($matriculas <= 0) {
+            return [];
+        }
+
+        $ref = is_array($ctx['funding_reference'] ?? null)
+            ? $ctx['funding_reference']
+            : DiscrepanciesFundingImpact::resolveReference();
+        $vaaf = (float) ($ref['vaaf'] ?? 0);
+        if ($vaaf <= 0) {
+            return [];
+        }
+
+        $base = round($matriculas * $vaaf, 2);
+
+        return [
+            __(
+                ':n matrícula(s) × :vaaf (VAAF ref., :fonte) ≈ :base/ano de base FUNDEB indicativa no filtro.',
+                [
+                    'n' => number_format($matriculas, 0, ',', '.'),
+                    'vaaf' => DiscrepanciesFundingImpact::formatBrl($vaaf),
+                    'fonte' => (string) ($ref['fonte_label'] ?? __('configuração municipal')),
+                    'base' => DiscrepanciesFundingImpact::formatBrl($base),
+                ]
+            ),
         ];
     }
 
@@ -622,16 +741,44 @@ final class AnalyticsTabImpactBuilder
      * @param  array<string, mixed>  $tabData
      * @return array{perda: float, ganho: float, liquido: float, footnote: string}|null
      */
-    private static function saldoFromInclusion(array $tabData): ?array
+    private static function saldoFromInclusion(array $tabData, array $ctx = []): ?array
     {
         $data = self::tabPayload($tabData, 'inclusion');
         $rec = is_array($data['recurso_prova'] ?? null) ? $data['recurso_prova'] : [];
         $semNee = (int) ($rec['sem_nee'] ?? 0);
         $neeSem = (int) ($rec['nee_sem_recurso'] ?? 0);
+        $fundebNee = is_array($data['fundeb_nee'] ?? null) ? $data['fundeb_nee'] : [];
 
         $perda = 0.0;
         $ganho = 0.0;
         $parts = [];
+        $fundebLines = [];
+
+        if (($fundebNee['available'] ?? false) && (int) ($fundebNee['matriculas_nee'] ?? 0) > 0) {
+            $nNee = (int) $fundebNee['matriculas_nee'];
+            $fundebLines[] = __(
+                ':n matrícula(s) NEE × :vaaf (VAAF ref., :fonte) = :base/ano de base FUNDEB indicativa por aluno.',
+                [
+                    'n' => number_format($nNee, 0, ',', '.'),
+                    'vaaf' => (string) ($fundebNee['vaaf_fmt'] ?? '—'),
+                    'fonte' => (string) ($fundebNee['vaaf_fonte'] ?? __('configuração municipal')),
+                    'base' => (string) ($fundebNee['base_anual_fmt'] ?? '—'),
+                ]
+            );
+            if ((float) ($fundebNee['adicional_anual'] ?? 0) > 0) {
+                $fundebLines[] = __(
+                    'Adicional indicativo de educação especial (peso :p × VAAF, eixo VAAR-inclusão): ≈ :adic/ano — não é acréscimo automático no repasse; serve para comparar o peso da matrícula NEE face à matrícula regular.',
+                    [
+                        'p' => number_format((float) ($fundebNee['peso_educacao_especial'] ?? 1.2), 2, ',', '.'),
+                        'adic' => (string) ($fundebNee['adicional_anual_fmt'] ?? '—'),
+                    ]
+                );
+                $fundebLines[] = __(
+                    'Total indicativo (base + adicional): :total/ano.',
+                    ['total' => (string) ($fundebNee['total_indicativo_anual_fmt'] ?? '—')]
+                );
+            }
+        }
 
         if ($semNee > 0) {
             $e = DiscrepanciesFundingImpact::estimate('recurso_prova_sem_nee', $semNee);
@@ -646,19 +793,29 @@ final class AnalyticsTabImpactBuilder
             $parts[] = __(':n NEE sem recurso de prova', ['n' => number_format($neeSem, 0, ',', '.')]);
         }
 
-        if ($parts === []) {
+        if ($parts === [] && $fundebLines === []) {
             return null;
         }
 
-        return [
+        $footnoteParts = $fundebLines;
+        if ($parts !== []) {
+            $footnoteParts[] = __(
+                'Risco cadastral (VAAR-inclusão): :detalhe. VAAF × pesos por tipo de discrepância — não é repasse FNDE.',
+                ['detalhe' => implode('; ', $parts)]
+            );
+        }
+        $footnoteParts[] = DiscrepanciesFundingImpact::avisoGeral();
+
+        $raw = [
             'perda' => round($perda, 2),
             'ganho' => round($ganho, 2),
             'liquido' => round($ganho - $perda, 2),
-            'footnote' => __(
-                'Eixo VAAR-inclusão: :detalhe. VAAF × pesos por tipo — não é repasse FNDE.',
-                ['detalhe' => implode('; ', $parts)]
-            ),
+            'footnote' => implode(' ', array_filter($footnoteParts)),
+            'fundeb_lines' => $fundebLines,
+            'info_only' => $perda <= 0 && $ganho <= 0 && $fundebLines !== [],
         ];
+
+        return $raw;
     }
 
     /**
@@ -694,50 +851,6 @@ final class AnalyticsTabImpactBuilder
                     'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
                 ]
             ),
-        ];
-    }
-
-    /**
-     * @param  array<string, mixed>  $ctx
-     * @return array{perda: float, ganho: float, liquido: float, footnote: string}|null
-     */
-    private static function saldoFromOverviewCadastro(array $ctx): ?array
-    {
-        $perda = (float) ($ctx['perda_estimada_anual'] ?? 0);
-        $ganho = (float) ($ctx['ganho_potencial_anual'] ?? 0);
-        if ($perda <= 0 && $ganho <= 0) {
-            return null;
-        }
-
-        $ocorrencias = (int) ($ctx['pendencias_cadastro'] ?? 0);
-        $footnote = $ocorrencias > 0
-            ? __('Consolidado das Discrepâncias no filtro (:n ocorrência(s) com peso VAAF) — use a aba homónima para detalhe por escola e rotina.', ['n' => number_format($ocorrencias, 0, ',', '.')])
-            : __('Referência municipal das Discrepâncias (VAAF × pesos) — não é repasse oficial.');
-
-        $mat = (int) ($ctx['total_matriculas'] ?? 0);
-        $distCom = (int) ($ctx['distorcao_com'] ?? 0);
-        if ($mat > 0) {
-            $footnote .= ' '.__(
-                'Matrículas activas no filtro: :n.',
-                ['n' => number_format($mat, 0, ',', '.')]
-            );
-        }
-        if ($distCom > 0) {
-            $distFunding = DiscrepanciesFundingImpact::estimate('distorcao_idade_serie', $distCom);
-            $footnote .= ' '.__(
-                'Inclui :c matrícula(s) em distorção idade-série (est. :v/ano no eixo homónimo).',
-                [
-                    'c' => number_format($distCom, 0, ',', '.'),
-                    'v' => DiscrepanciesFundingImpact::formatBrl((float) $distFunding['perda_anual']),
-                ]
-            );
-        }
-
-        return [
-            'perda' => $perda,
-            'ganho' => $ganho,
-            'liquido' => (float) ($ctx['saldo_liquido'] ?? ($ganho - $perda)),
-            'footnote' => $footnote,
         ];
     }
 

@@ -3,7 +3,6 @@
 namespace App\Repositories\Ieducar;
 
 use App\Models\City;
-use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Dashboard\PublicDataSourcesCatalog;
 use App\Support\Ieducar\ConsultoriaThematicBridge;
@@ -137,27 +136,6 @@ class MunicipalityHealthRepository
             static fn (array $d): bool => ($d['has_issue'] ?? false) === true
         ));
 
-        $chartPendencias = null;
-        if ($pendencias > 0) {
-            $labels = [];
-            $vals = [];
-            foreach ($cadastroDimensions as $d) {
-                if (! ($d['has_issue'] ?? false)) {
-                    continue;
-                }
-                $labels[] = (string) ($d['title'] ?? '');
-                $vals[] = (float) ($d['total'] ?? 0);
-            }
-            if ($labels !== []) {
-                $chartPendencias = ChartPayload::barHorizontal(
-                    __('Principais pendências de cadastro (ocorrências)'),
-                    __('Quantidade'),
-                    $labels,
-                    $vals
-                );
-            }
-        }
-
         $modulosAlerta = 0;
         foreach ($modules as $m) {
             if (in_array((string) ($m['status'] ?? ''), ['danger', 'warning'], true)) {
@@ -168,14 +146,21 @@ class MunicipalityHealthRepository
         $proj = is_array($fundeb['resource_projection'] ?? null) ? $fundeb['resource_projection'] : [];
         $fundebRef = is_array($fundeb['fundeb_reference'] ?? null)
             ? $fundeb['fundeb_reference']
-            : (is_array($disc['funding_reference'] ?? null) ? $disc['funding_reference'] : null);
+            : DiscrepanciesFundingImpact::resolveReference($city, $filters);
+        $fundingDisplay = is_array($disc['funding_reference'] ?? null)
+            ? $disc['funding_reference']
+            : DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
         $vaafComparacao = is_array($proj['vaaf_comparacao'] ?? null)
             ? $proj['vaaf_comparacao']
-            : ($fundebRef !== null ? FundebReferenceDisplay::vaafComparacao($fundebRef) : null);
-        $previsaoComparacao = is_array($proj['previsao_comparacao'] ?? null) ? $proj['previsao_comparacao'] : null;
+            : FundebReferenceDisplay::vaafComparacao($fundebRef);
+        $previsaoComparacao = is_array($proj['previsao_comparacao'] ?? null)
+            ? $proj['previsao_comparacao']
+            : ($totalMat > 0 ? FundebReferenceDisplay::previsaoComparacao($totalMat, $fundebRef) : null);
         $divergenciaVaaf = is_array($proj['divergencia_vaaf'] ?? null)
             ? $proj['divergencia_vaaf']
-            : (is_array($fundebRef) && is_array($fundebRef['divergencia'] ?? null) ? $fundebRef['divergencia'] : null);
+            : (is_array($fundingDisplay['divergencia_vaaf'] ?? null)
+                ? $fundingDisplay['divergencia_vaaf']
+                : (is_array($fundebRef['divergencia'] ?? null) ? $fundebRef['divergencia'] : null));
 
         $workPeriods = is_array($workDone['periods'] ?? null) ? $workDone['periods'] : [];
         $cadastrosQuinzena = (int) ($workPeriods['fortnight'] ?? 0);
@@ -217,6 +202,7 @@ class MunicipalityHealthRepository
                 'ritmo_cadastro_dia' => (float) ($workDone['estimativa']['ritmo_por_dia'] ?? 0),
             ],
             'funding_reference' => $fundebRef,
+            'funding_display' => $fundingDisplay,
             'vaaf_comparacao' => $vaafComparacao,
             'previsao_comparacao' => $previsaoComparacao,
             'divergencia_vaaf' => $divergenciaVaaf,
@@ -247,7 +233,6 @@ class MunicipalityHealthRepository
                 'situacao' => (string) ($m['situacao'] ?? ''),
             ], $modules),
             'top_problems' => $topProblems,
-            'chart_pendencias' => $chartPendencias,
             'funding_metodologia' => is_array($disc['funding_metodologia'] ?? null)
                 ? $disc['funding_metodologia']
                 : DiscrepanciesFundingImpact::metodologiaResumo($city, $filters),

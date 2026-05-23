@@ -60,8 +60,11 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         ]);
 
         $this->assertTrue($strip['ready']);
+        $this->assertFalse($strip['show_saldo']);
+        $this->assertNull($strip['saldo']);
         $this->assertStringContainsString('42', $strip['status_label']);
         $this->assertContains('discrepancies', AnalyticsTabImpactBuilder::TABS_WITH_STRIP);
+        $this->assertContains('discrepancies', AnalyticsTabImpactBuilder::TABS_WITHOUT_SALDO);
     }
 
     public function test_municipality_health_strip_uses_compliance_score(): void
@@ -78,24 +81,36 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         ]);
 
         $this->assertTrue($strip['ready']);
+        $this->assertFalse($strip['show_saldo']);
+        $this->assertNull($strip['saldo']);
         $this->assertTrue($strip['show_status']);
         $this->assertSame('system', $strip['status_mode']);
         $this->assertSame(72, $strip['tab_score']);
         $this->assertNotEmpty($strip['status_issues']);
         $this->assertContains('municipality_health', AnalyticsTabImpactBuilder::TABS_WITH_STRIP);
+        $this->assertContains('municipality_health', AnalyticsTabImpactBuilder::TABS_WITHOUT_SALDO);
     }
 
-    public function test_overview_strip_hides_status(): void
+    public function test_overview_strip_hides_status_and_saldo(): void
     {
-        $ctx = ['compliance_score' => 80, 'compliance_status' => 'success', 'total_matriculas' => 500, 'pendencias_cadastro' => 0];
+        $ctx = AnalyticsMunicipalityContext::fromFundingSnapshot([
+            'summary' => [
+                'perda_estimada_anual' => 3000.0,
+                'ganho_potencial_anual' => 3000.0,
+                'com_problema' => 10,
+            ],
+        ], ['kpis' => ['matriculas' => 1200]]);
 
         $strip = AnalyticsTabImpactBuilder::build('overview', true, $ctx, [
-            'overviewData' => ['kpis' => ['matriculas' => 500]],
+            'overviewData' => ['kpis' => ['matriculas' => 1200]],
         ]);
 
         $this->assertTrue($strip['ready']);
         $this->assertFalse($strip['show_status']);
+        $this->assertFalse($strip['show_saldo']);
+        $this->assertNull($strip['saldo']);
         $this->assertContains('overview', AnalyticsTabImpactBuilder::TABS_WITHOUT_STATUS);
+        $this->assertContains('overview', AnalyticsTabImpactBuilder::TABS_WITHOUT_SALDO);
     }
 
     public function test_enrollment_error_surfaces_in_status(): void
@@ -181,26 +196,20 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         $this->assertStringContainsString('40', (string) ($strip['saldo']['footnote'] ?? ''));
     }
 
-    public function test_overview_saldo_menciona_matriculas_do_contexto(): void
+    public function test_enrollment_strip_mostra_saldo_e_fundeb_sem_discrepancias(): void
     {
-        $ctx = AnalyticsMunicipalityContext::fromFundingSnapshot([
-            'summary' => [
-                'perda_estimada_anual' => 3000.0,
-                'ganho_potencial_anual' => 3000.0,
-                'com_problema' => 10,
+        $strip = AnalyticsTabImpactBuilder::build('enrollment', true, ['total_matriculas' => 600], [
+            'enrollmentData' => [
+                'kpis' => ['matriculas' => 600, 'turmas_distintas' => 80],
+                'distorcao' => ['com' => 0, 'sem' => 100, 'total' => 100, 'pct' => 0.0],
             ],
-        ], ['kpis' => ['matriculas' => 800]]);
-
-        $this->assertNotNull($ctx);
-        $ctx['total_matriculas'] = 1200;
-        $ctx['distorcao_com'] = 15;
-
-        $strip = AnalyticsTabImpactBuilder::build('overview', true, $ctx, [
-            'overviewData' => ['kpis' => ['matriculas' => 1200]],
         ]);
 
+        $this->assertTrue($strip['show_saldo'] ?? true);
         $this->assertNotNull($strip['saldo']);
-        $this->assertStringContainsString('1.200', (string) ($strip['saldo']['footnote'] ?? ''));
+        $this->assertFalse($strip['saldo']['info_only'] ?? true);
+        $this->assertNotEmpty($strip['saldo']['fundeb_lines'] ?? []);
+        $this->assertStringContainsString('VAAF', (string) ($strip['saldo']['fundeb_lines'][0] ?? ''));
     }
 
     public function test_inclusion_strip_uses_recurso_prova_saldo(): void
@@ -215,6 +224,31 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         $this->assertNotNull($strip['saldo']);
         $this->assertGreaterThan(0.0, $strip['saldo']['perda']);
         $this->assertStringContainsString('VAAR', (string) ($strip['saldo']['footnote'] ?? ''));
+    }
+
+    public function test_inclusion_strip_mostra_fundeb_nee_quando_sem_discrepancias(): void
+    {
+        $strip = AnalyticsTabImpactBuilder::build('inclusion', true, [], [
+            'inclusionData' => [
+                'recurso_prova' => ['sem_nee' => 0, 'nee_sem_recurso' => 0],
+                'fundeb_nee' => [
+                    'available' => true,
+                    'matriculas_nee' => 42,
+                    'vaaf_fmt' => 'R$ 5.000,00',
+                    'vaaf_fonte' => 'Config municipal',
+                    'base_anual_fmt' => 'R$ 210.000,00',
+                    'peso_educacao_especial' => 1.2,
+                    'adicional_anual' => 42000.0,
+                    'adicional_anual_fmt' => 'R$ 42.000,00',
+                    'total_indicativo_anual_fmt' => 'R$ 252.000,00',
+                ],
+            ],
+        ]);
+
+        $this->assertNotNull($strip['saldo']);
+        $this->assertTrue($strip['saldo']['info_only'] ?? false);
+        $this->assertNotEmpty($strip['saldo']['fundeb_lines'] ?? []);
+        $this->assertStringContainsString('VAAF', (string) ($strip['saldo']['fundeb_lines'][0] ?? ''));
     }
 
     public function test_performance_strip_usa_fatia_ctx_sem_fluxo(): void
@@ -345,6 +379,30 @@ class AnalyticsTabImpactBuilderTest extends TestCase
 
         $this->assertSame(40, $strip['tab_score']);
         $this->assertSame('warning', $strip['status']);
+    }
+
+    public function test_other_funding_and_work_done_strip_hide_saldo(): void
+    {
+        $ctx = AnalyticsMunicipalityContext::fromFundingSnapshot([
+            'summary' => [
+                'perda_estimada_anual' => 1000.0,
+                'ganho_potencial_anual' => 500.0,
+            ],
+        ], []);
+
+        $other = AnalyticsTabImpactBuilder::build('other_funding', true, $ctx, [
+            'otherFundingData' => ['programs' => []],
+        ]);
+        $censo = AnalyticsTabImpactBuilder::build('work_done', true, $ctx, [
+            'workDoneData' => ['kpis' => []],
+        ]);
+
+        $this->assertFalse($other['show_saldo']);
+        $this->assertNull($other['saldo']);
+        $this->assertFalse($censo['show_saldo']);
+        $this->assertNull($censo['saldo']);
+        $this->assertContains('other_funding', AnalyticsTabImpactBuilder::TABS_WITHOUT_SALDO);
+        $this->assertContains('work_done', AnalyticsTabImpactBuilder::TABS_WITHOUT_SALDO);
     }
 
     public function test_network_strip_uses_idle_vacancies_for_saldo_when_discrepancies_zero(): void

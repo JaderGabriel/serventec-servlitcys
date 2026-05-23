@@ -40,6 +40,9 @@
         method="get"
         action="{{ $formAction }}"
         class="p-4"
+        data-serv-loading-on-submit
+        data-serv-loading-title="{{ __('A aplicar filtros') }}"
+        data-serv-loading-message="{{ __('A carregar indicadores, gráficos e totais do município na base i-Educar. Aguarde…') }}"
         @if (is_string($filterYearsUrl) && $filterYearsUrl !== '')
             data-analytics-filter-years-url="{{ $filterYearsUrl }}"
             data-analytics-filter-years-loading-label="{{ __('A carregar anos letivos…') }}"

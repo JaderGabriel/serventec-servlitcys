@@ -15,6 +15,7 @@
     $statusIssues = is_array($s['status_issues'] ?? null) ? $s['status_issues'] : [];
     $tabScore = $s['tab_score'] ?? null;
     $saldo = is_array($s['saldo'] ?? null) ? $s['saldo'] : null;
+    $showSaldo = (bool) ($s['show_saldo'] ?? true);
 @endphp
 
 <div class="serv-impact-card">
@@ -54,10 +55,20 @@
             {{ __('Aplique cidade e ano letivo para ver o impacto no saldo e o status neste recorte.') }}
         </div>
     @else
+        @if ($showSaldo)
         <div class="px-4 py-4 space-y-3">
             <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Impacto no saldo (indicativo)') }}</p>
             @if ($saldo !== null && ($saldo['info_only'] ?? false))
-                <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ $saldo['footnote'] ?? '' }}</p>
+                @if (! empty($saldo['fundeb_lines']))
+                    <ul class="list-disc list-inside text-sm text-gray-700 dark:text-gray-300 space-y-1.5 leading-relaxed">
+                        @foreach ($saldo['fundeb_lines'] as $line)
+                            <li>{{ $line }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+                @if (! empty($saldo['footnote']))
+                    <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed {{ ! empty($saldo['fundeb_lines']) ? 'mt-2' : '' }}">{{ $saldo['footnote'] }}</p>
+                @endif
             @elseif ($saldo !== null)
                 <div class="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
                     <div class="rounded-lg border border-rose-200/80 dark:border-rose-900/50 bg-rose-50/60 dark:bg-rose-950/25 px-3 py-2">
@@ -73,7 +84,14 @@
                         <p class="text-lg font-bold tabular-nums">{{ $saldo['liquido_fmt'] ?? '—' }}</p>
                     </div>
                 </div>
-                <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed">{{ $saldo['footnote'] ?? __('VAAF municipal × pesos Discrepâncias — não é repasse oficial.') }}</p>
+                @if (! empty($saldo['fundeb_lines']))
+                    <ul class="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 space-y-1 leading-relaxed border-t border-slate-200/80 dark:border-slate-700/80 pt-2">
+                        @foreach ($saldo['fundeb_lines'] as $line)
+                            <li>{{ $line }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+                <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed {{ ! empty($saldo['fundeb_lines']) ? 'mt-2' : '' }}">{{ $saldo['footnote'] ?? __('VAAF municipal × pesos Discrepâncias — não é repasse oficial.') }}</p>
                 @if (filled($saldo['tab_share_label'] ?? null) && filled($saldo['tab_share_value'] ?? null))
                     <p class="text-xs text-gray-600 dark:text-gray-400 pt-1 border-t border-slate-200/80 dark:border-slate-700/80">
                         <span class="font-medium text-slate-700 dark:text-slate-300">{{ $saldo['tab_share_label'] }}:</span>
@@ -84,5 +102,6 @@
                 <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('Resumo financeiro indisponível.') }}</p>
             @endif
         </div>
+        @endif
     @endif
 </div>

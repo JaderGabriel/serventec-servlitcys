@@ -45,6 +45,8 @@
             @include('layouts.app-footer')
 
             <x-scroll-to-top />
+
+            <x-ui.data-loading-overlay />
         </div>
     </body>
 </html>

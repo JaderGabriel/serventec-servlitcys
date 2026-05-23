@@ -41,15 +41,16 @@ final class FundebResourceProjection
         }
 
         $ref = $referenceResolved ?? DiscrepanciesFundingImpact::resolveReference($city, $filters);
-        $vaa = (float) $ref['vaaf'];
+        $municipalBlock = is_array($ref['municipal'] ?? null) ? $ref['municipal'] : null;
+        $usaVaafMunicipal = $municipalBlock !== null && (float) ($municipalBlock['vaaf'] ?? 0) > 0;
+        $vaafCalculo = $usaVaafMunicipal
+            ? (float) $municipalBlock['vaaf']
+            : (float) $ref['vaaf'];
         $previaVaaf = is_array($ref['previa'] ?? null) ? (float) ($ref['previa']['vaaf'] ?? 0) : 0.0;
-        $municipalVaaf = is_array($ref['municipal'] ?? null)
-            ? (float) ($ref['municipal']['vaaf'] ?? $vaa)
-            : $vaa;
         $aviso = (string) ($cfg['aviso_previsao'] ?? config('ieducar.discrepancies.aviso_financeiro', ''));
 
-        $base = round($matriculas * $municipalVaaf, 2);
-        $basePrevia = $previaVaaf > 0 ? round($matriculas * $previaVaaf, 2) : null;
+        $base = MoneyMath::multiplyVaaf($matriculas, $vaafCalculo);
+        $basePrevia = $previaVaaf > 0 ? MoneyMath::multiplyVaaf($matriculas, $previaVaaf) : null;
         $summary = is_array($discrepanciesData['summary'] ?? null) ? $discrepanciesData['summary'] : [];
         $perda = round((float) ($summary['perda_estimada_anual'] ?? 0), 2);
         $ganho = round((float) ($summary['ganho_potencial_anual'] ?? 0), 2);
@@ -75,7 +76,7 @@ final class FundebResourceProjection
         $totalComComplemento = MoneyMath::roundMoney($previsaoReferencia + $complementVaar);
 
         $distribuicao = self::buildLegalDistribution($previsaoReferencia, $cfg);
-        $porEtapa = self::extractEtapaBreakdown($enrollmentData, $municipalVaaf, $matriculas);
+        $porEtapa = self::extractEtapaBreakdown($enrollmentData, $vaafCalculo, $matriculas);
         $vaafComparacao = FundebReferenceDisplay::vaafComparacao($ref);
         $previsaoComparacao = FundebReferenceDisplay::previsaoComparacao($matriculas, $ref);
 
@@ -86,56 +87,82 @@ final class FundebResourceProjection
             'year_label' => $yearLabel,
             'aviso' => $aviso,
             'matriculas_base' => $matriculas,
-            'vaa_referencia' => $vaa,
-            'vaa_municipal' => $municipalVaaf,
+            'vaa_referencia' => $vaafCalculo,
+            'vaa_municipal' => $usaVaafMunicipal ? $vaafCalculo : null,
             'vaa_previa' => $previaVaaf > 0 ? $previaVaaf : null,
-            'vaa_label' => $fmt($municipalVaaf),
+            'vaa_label' => $fmt($vaafCalculo),
             'vaa_previa_label' => $previaVaaf > 0 ? $fmt($previaVaaf) : null,
             'vaa_fonte' => $ref['fonte'],
-            'vaa_fonte_label' => $ref['fonte_label'],
-            'vaa_ano' => $ref['ano'],
+            'vaa_fonte_label' => $usaVaafMunicipal
+                ? (string) ($municipalBlock['fonte_label'] ?? $ref['fonte_label'])
+                : (string) $ref['fonte_label'],
+            'vaa_ano' => $usaVaafMunicipal ? ($municipalBlock['ano'] ?? $ref['ano']) : $ref['ano'],
             'vaaf_comparacao' => $vaafComparacao,
             'previsao_comparacao' => $previsaoComparacao,
             'divergencia_vaaf' => is_array($ref['divergencia'] ?? null) ? $ref['divergencia'] : null,
             'vaat_label' => $ref['vaat'] !== null ? $fmt($ref['vaat']) : null,
             'complementacao_vaar_oficial' => $ref['complementacao_vaar'],
-            'formula_base' => __(
-                ':mat matrícula(s) ativa(s) × :vaa (VAAF municipal de referência) = :total.',
-                [
-                    'mat' => number_format($matriculas, 0, ',', '.'),
-                    'vaa' => $fmt($municipalVaaf),
-                    'total' => $fmt($base),
-                ]
-            ),
+            'formula_base' => $usaVaafMunicipal
+                ? __(
+                    ':mat matrícula(s) ativa(s) × :vaa (VAAF municipal, :fonte) = :total.',
+                    [
+                        'mat' => number_format($matriculas, 0, ',', '.'),
+                        'vaa' => $fmt($vaafCalculo),
+                        'fonte' => (string) ($municipalBlock['fonte_label'] ?? $ref['fonte_label']),
+                        'total' => $fmt($base),
+                    ]
+                )
+                : __(
+                    ':mat matrícula(s) ativa(s) × :vaa (referência configurada — :fonte) = :total.',
+                    [
+                        'mat' => number_format($matriculas, 0, ',', '.'),
+                        'vaa' => $fmt($vaafCalculo),
+                        'fonte' => (string) $ref['fonte_label'],
+                        'total' => $fmt($base),
+                    ]
+                ),
             'kpis' => [
                 [
                     'label' => __('Previsão base (ano)'),
                     'value' => $fmt($previsaoReferencia),
                     'tone' => 'indigo',
                     'comparacao' => $previsaoComparacao,
-                    'explicacao_resumo' => __(
-                        ':mat matrícula(s) × :vaa (VAAF municipal) = :total.',
-                        [
-                            'mat' => number_format($matriculas, 0, ',', '.'),
-                            'vaa' => $fmt($municipalVaaf),
-                            'total' => $fmt($previsaoReferencia),
-                        ]
-                    ).($basePrevia !== null
+                    'explicacao_resumo' => ($usaVaafMunicipal
+                        ? __(
+                            ':mat matrícula(s) × :vaa (VAAF municipal, :fonte) = :total.',
+                            [
+                                'mat' => number_format($matriculas, 0, ',', '.'),
+                                'vaa' => $fmt($vaafCalculo),
+                                'fonte' => (string) ($municipalBlock['fonte_label'] ?? $ref['fonte_label']),
+                                'total' => $fmt($previsaoReferencia),
+                            ]
+                        )
+                        : __(
+                            ':mat matrícula(s) × :vaa (referência — :fonte) = :total.',
+                            [
+                                'mat' => number_format($matriculas, 0, ',', '.'),
+                                'vaa' => $fmt($vaafCalculo),
+                                'fonte' => (string) $ref['fonte_label'],
+                                'total' => $fmt($previsaoReferencia),
+                            ]
+                        )).($basePrevia !== null
                         ? ' '.__('Prévia federal: :total.', ['total' => $fmt($basePrevia)])
                         : ''),
                     'funding_explicacao' => [
                         'formula_curta' => __(':mat × :vaa = :total', [
                             'mat' => number_format($matriculas, 0, ',', '.'),
-                            'vaa' => $fmt($vaa),
+                            'vaa' => $fmt($vaafCalculo),
                             'total' => $fmt($previsaoReferencia),
                         ]),
                         'formula_expandida' => __(
                             'Previsão base = matrículas ativas no filtro × VAAF (:fonte), sem peso por tipo de discrepância.',
-                            ['fonte' => $ref['fonte_label']],
+                            ['fonte' => $usaVaafMunicipal
+                                ? (string) ($municipalBlock['fonte_label'] ?? $ref['fonte_label'])
+                                : (string) $ref['fonte_label']],
                         ),
                         'passos' => [
                             __('Matrículas no filtro: :n.', ['n' => number_format($matriculas, 0, ',', '.')]),
-                            __('VAAF referência: :vaa por aluno/ano.', ['vaa' => $fmt($vaa)]),
+                            __('VAAF no cálculo: :vaa por aluno/ano.', ['vaa' => $fmt($vaafCalculo)]),
                             __('Total indicativo: :total/ano.', ['total' => $fmt($previsaoReferencia)]),
                         ],
                     ],
@@ -200,7 +227,7 @@ final class FundebResourceProjection
             ],
             'distribuicao_legal' => $distribuicao,
             'por_etapa' => $porEtapa,
-            'chart_previsao' => ChartPayload::bar(
+            'chart_previsao' => ChartPayload::withValueFormatBrl(ChartPayload::bar(
                 __('Cenários de previsão anual (indicativo)'),
                 __('Valor (R$)'),
                 [
@@ -209,8 +236,10 @@ final class FundebResourceProjection
                     __('Após correções'),
                 ],
                 [$previsaoReferencia, $previsaoRisco, $previsaoCorrigida],
-            ),
-            'chart_distribuicao' => $distribuicao['chart'] ?? null,
+            )),
+            'chart_distribuicao' => isset($distribuicao['chart']) && is_array($distribuicao['chart'])
+                ? ChartPayload::withValueFormatBrl($distribuicao['chart'])
+                : null,
             'chart_etapa' => self::chartEtapa($porEtapa),
         ];
     }
@@ -439,7 +468,7 @@ final class FundebResourceProjection
                 continue;
             }
             $part = $matTotal > 0 ? round(100.0 * $mat / $matTotal, 1) : 0.0;
-            $fundeb = round($mat * $vaa, 2);
+            $fundeb = MoneyMath::multiplyVaaf($mat, $vaa);
             $out[] = [
                 'etapa' => (string) $label,
                 'matriculas' => $mat,
@@ -491,11 +520,11 @@ final class FundebResourceProjection
         $labels = array_map(static fn ($r) => (string) ($r['etapa'] ?? ''), $slice);
         $values = array_map(static fn ($r) => (float) ($r['fundeb_indicativo'] ?? 0), $slice);
 
-        return ChartPayload::barHorizontal(
+        return ChartPayload::withValueFormatBrl(ChartPayload::barHorizontal(
             __('Previsão indicativa por nível de ensino'),
             __('FUNDEB base (R$)'),
             $labels,
             $values,
-        );
+        ));
     }
 }

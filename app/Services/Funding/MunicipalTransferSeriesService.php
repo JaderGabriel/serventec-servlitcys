@@ -88,12 +88,12 @@ final class MunicipalTransferSeriesService
         $histYears = array_keys($byYear);
         $chart = null;
         if (count($histYears) >= 2) {
-            $chart = ChartPayload::bar(
+            $chart = ChartPayload::withValueFormatBrl(ChartPayload::bar(
                 __('Repasse observado — evolução por exercício'),
                 __('Valor (R$)'),
                 array_map(static fn (int $a): string => (string) $a, $histYears),
                 array_values($byYear),
-            );
+            ));
         }
 
         return [
