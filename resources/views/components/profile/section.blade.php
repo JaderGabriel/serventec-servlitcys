@@ -23,7 +23,7 @@
                 <x-ui.icon :name="$icon" class="h-5 w-5" />
             </span>
         @endif
-        <div class="min-w-0 flex-1">
+        <div class="min-w-0 flex-1 overflow-hidden">
             <h2 class="serv-profile-section__title">{{ $title }}</h2>
             @if ($description)
                 <p class="serv-profile-section__desc">{{ $description }}</p>

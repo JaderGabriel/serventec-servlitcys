@@ -10,14 +10,17 @@
         ['id' => 'perfil-senha', 'label' => __('Senha')],
         ['id' => 'perfil-conta', 'label' => __('Conta')],
     ];
+    $contact = $user->contactChannels();
+    $hasPhone = filled($contact['phone_href'] ?? null);
+    $hasWhatsapp = filled($contact['whatsapp_href'] ?? null);
 @endphp
 
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 min-w-0">
+            <div class="min-w-0">
                 <p class="serv-eyebrow">{{ __('Conta') }}</p>
-                <h2 class="font-display font-semibold text-xl text-slate-800 dark:text-slate-100 leading-tight">
+                <h2 class="font-display font-semibold text-xl text-slate-800 dark:text-slate-100 leading-tight truncate">
                     {{ __('Seu perfil') }}
                 </h2>
             </div>
@@ -27,22 +30,52 @@
         </div>
     </x-slot>
 
-    <div class="py-8 sm:py-10">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="serv-profile-hero serv-panel overflow-hidden">
+    <div
+        class="py-8 sm:py-10"
+        x-data="{
+            photoPreview: @js($user->profilePhotoUrl()),
+            activeSection: window.location.hash?.slice(1) || 'perfil-foto',
+            init() {
+                const ids = @js(collect($navItems)->pluck('id'));
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            this.activeSection = entry.target.id;
+                        }
+                    });
+                }, { rootMargin: '-30% 0px -55% 0px', threshold: 0.1 });
+                ids.forEach((id) => {
+                    const el = document.getElementById(id);
+                    if (el) observer.observe(el);
+                });
+            },
+            scrollTo(id) {
+                this.activeSection = id;
+                document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }"
+    >
+        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8 serv-profile-page">
+            <header class="serv-profile-hero">
                 <div class="serv-profile-hero__glow" aria-hidden="true"></div>
-                <div class="relative flex flex-col sm:flex-row sm:items-center gap-5 p-5 sm:p-6">
-                    <div class="shrink-0 mx-auto sm:mx-0">
-                        <x-user-avatar :user="$user" size="xl" class="!h-28 !w-28 !text-3xl ring-4 ring-white/80 dark:ring-slate-800/90 shadow-lg" />
+                <div class="serv-profile-hero__body">
+                    <div class="serv-profile-hero__avatar-wrap">
+                        <template x-if="photoPreview">
+                            <img :src="photoPreview" alt="" class="serv-profile-hero__avatar" />
+                        </template>
+                        <template x-if="!photoPreview">
+                            <x-user-avatar :user="$user" size="xl" class="serv-profile-hero__avatar-fallback" />
+                        </template>
                     </div>
-                    <div class="flex-1 min-w-0 text-center sm:text-left space-y-2">
-                        <p class="font-display text-2xl font-semibold text-slate-900 dark:text-white truncate">
-                            {{ $user->name }}
+
+                    <div class="serv-profile-hero__identity">
+                        <h3 class="serv-profile-hero__name" title="{{ $user->name }}">{{ $user->name }}</h3>
+                        <p class="serv-profile-hero__meta-line font-mono" title="{{ '@'.$user->username }}">{{ '@'.$user->username }}</p>
+                        <p class="serv-profile-hero__meta-line min-w-0">
+                            <a href="mailto:{{ $user->email }}" class="serv-profile-hero__email" title="{{ $user->email }}">{{ $user->email }}</a>
                         </p>
-                        <p class="text-sm text-slate-600 dark:text-slate-400 font-mono">
-                            {{ '@'.$user->username }}
-                        </p>
-                        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+
+                        <div class="serv-profile-hero__badges">
                             <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $roleBadge }}">
                                 {{ $user->role()->label() }}
                             </span>
@@ -57,28 +90,50 @@
                                 </span>
                             @endif
                         </div>
-                        <div class="flex justify-center sm:justify-start pt-1">
-                            <x-contact.icon-row :user="$user" />
-                        </div>
+
+                        @if ($hasPhone || $hasWhatsapp)
+                            <div class="serv-profile-hero__contacts">
+                                @if ($hasPhone)
+                                    <a href="{{ $contact['phone_href'] }}" class="serv-contact-icons__btn" title="{{ $contact['phone'] }}">
+                                        <x-ui.icon name="phone" class="h-4 w-4" />
+                                    </a>
+                                @endif
+                                @if ($hasWhatsapp)
+                                    <a href="{{ $contact['whatsapp_href'] }}" target="_blank" rel="noopener noreferrer" class="serv-contact-icons__btn serv-contact-icons__btn--whatsapp" title="{{ $contact['whatsapp'] }}">
+                                        <x-ui.icon name="chat-bubble-left" class="h-4 w-4" />
+                                    </a>
+                                @endif
+                            </div>
+                        @endif
+
+                        <button type="button" class="serv-profile-hero__edit-photo" x-on:click="scrollTo('perfil-foto')">
+                            <x-ui.icon name="user-circle" class="h-3.5 w-3.5" />
+                            {{ __('Alterar foto') }}
+                        </button>
                     </div>
                 </div>
-            </div>
+            </header>
 
-            <div class="lg:grid lg:grid-cols-[minmax(0,13rem)_1fr] gap-6 items-start">
-                <nav class="serv-profile-nav serv-panel p-3 lg:sticky lg:top-24 overflow-x-auto" aria-label="{{ __('Seções do perfil') }}">
-                    <p class="serv-profile-nav__label px-2 pb-2 hidden lg:block">{{ __('Seções') }}</p>
-                    <ul class="flex lg:flex-col gap-1 lg:gap-0.5 min-w-max lg:min-w-0">
+            <div class="serv-profile-layout">
+                <nav class="serv-profile-nav" aria-label="{{ __('Seções do perfil') }}">
+                    <p class="serv-profile-nav__label">{{ __('Seções') }}</p>
+                    <ul class="serv-profile-nav__scroll">
                         @foreach ($navItems as $item)
-                            <li class="shrink-0 lg:shrink">
-                                <a href="#{{ $item['id'] }}" class="serv-profile-nav__link whitespace-nowrap">
+                            <li>
+                                <button
+                                    type="button"
+                                    class="serv-profile-nav__link w-full text-left"
+                                    :class="{ 'serv-profile-nav__link--active': activeSection === @js($item['id']) }"
+                                    x-on:click="scrollTo(@js($item['id']))"
+                                >
                                     {{ $item['label'] }}
-                                </a>
+                                </button>
                             </li>
                         @endforeach
                     </ul>
                 </nav>
 
-                <div class="space-y-6 min-w-0">
+                <div class="serv-profile-main">
                     @include('profile.partials.update-profile-photo-form')
                     @include('profile.partials.update-profile-information-form')
                     @include('profile.partials.update-password-form')

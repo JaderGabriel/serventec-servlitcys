@@ -2,9 +2,9 @@
     id="perfil-senha"
     icon="key"
     :title="__('Segurança — senha')"
-    :description="__('Use uma senha longa e única. Recomendamos gerador de senhas do navegador.')"
+    :description="__('Use uma senha longa e única. Recomendamos o gerador do navegador.')"
 >
-    <form method="post" action="{{ route('password.update') }}" class="space-y-5">
+    <form method="post" action="{{ route('password.update') }}" class="space-y-5 min-w-0">
         @csrf
         @method('put')
 
@@ -28,7 +28,7 @@
             </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div class="serv-profile-actions">
             <x-primary-button>{{ __('Atualizar senha') }}</x-primary-button>
             <x-profile.save-hint status="password-updated">{{ __('Senha atualizada.') }}</x-profile.save-hint>
         </div>

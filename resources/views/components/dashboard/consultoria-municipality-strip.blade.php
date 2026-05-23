@@ -37,9 +37,9 @@
                     </p>
                 @endif
             </div>
-            <div class="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0 lg:max-w-xs w-full sm:w-auto">
+            <div class="flex flex-col gap-3 shrink-0 w-full lg:w-[17.5rem]">
                 @if ($city)
-                    <x-city.reference-contact :city="$city" variant="strip" class="w-full" />
+                    <x-city.reference-contact :city="$city" variant="agenda" tone="dark" class="w-full" />
                 @endif
                 <div class="flex flex-wrap gap-2">
                 <button

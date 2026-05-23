@@ -185,15 +185,16 @@
                                             :title="$row['semaforo_title'] ?? ''"
                                         />
                                     </td>
-                                    <td class="{{ $rxTd('municipio') }} font-medium text-slate-900 dark:text-slate-100 align-top">
-                                        <div>
+                                    <td class="{{ $rxTd('municipio') }} font-medium text-slate-900 dark:text-slate-100 align-top min-w-[10rem]">
+                                        <p class="leading-snug">
                                             {{ $row['city_name'] ?? '' }}
                                             <span class="text-[10px] text-slate-500 font-normal">({{ $row['uf'] ?? '' }})</span>
-                                        </div>
+                                        </p>
                                         @if (is_array($row['reference_contact'] ?? null) && ($row['reference_contact']['available'] ?? false))
                                             <x-city.reference-contact
                                                 :contact="$row['reference_contact']"
-                                                variant="table"
+                                                variant="agenda"
+                                                class="mt-1.5"
                                             />
                                         @endif
                                     </td>

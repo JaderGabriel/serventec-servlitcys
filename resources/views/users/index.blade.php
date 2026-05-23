@@ -18,7 +18,7 @@
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                     {{ __('Usuários') }}
                 </h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Gestão de contas: editar dados, senha, ativar ou desativar, encerrar sessões noutros dispositivos e consultar atividade.') }}</p>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Gestão de contas: editar dados, senha, ativar ou desativar, encerrar sessões em outros dispositivos e consultar atividade.') }}</p>
             </div>
             <a href="{{ route('users.create') }}" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition">
                 {{ __('Novo usuário') }}
@@ -46,7 +46,7 @@
 
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 dark:border-gray-700">
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Usuárioes cadastrados') }}</h3>
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Usuários cadastrados') }}</h3>
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Contas com acesso à aplicação.') }}</p>
                 </div>
                 <div class="overflow-x-auto">
@@ -55,7 +55,7 @@
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Nome') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Usuário') }}</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Contatos') }}</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase min-w-[11rem]">{{ __('Contatos') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Perfil') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Estado') }}</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ __('Sessões') }}</th>
@@ -74,8 +74,8 @@
                                         </div>
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 font-mono">{{ $u->username }}</td>
-                                    <td class="px-4 py-3 text-sm">
-                                        <x-contact.icon-row :user="$u" />
+                                    <td class="px-4 py-3 text-sm align-top">
+                                        <x-contact.icon-row :user="$u" variant="table" />
                                     </td>
                                     <td class="px-4 py-3 text-sm">
                                         @php
@@ -196,7 +196,7 @@
             @if (auth()->user()->isAdmin())
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 dark:border-gray-700">
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Registo de atividade') }}</h3>
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Registro de atividade') }}</h3>
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ __('Últimos eventos: inícios de sessão e contas criadas por um administrador. Até 80 registros.') }}</p>
                 </div>
                 <div class="overflow-x-auto">

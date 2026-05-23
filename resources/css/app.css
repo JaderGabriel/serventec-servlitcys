@@ -316,6 +316,92 @@
         @apply mt-2 gap-1.5;
     }
 
+    .serv-city-contact--agenda {
+        @apply mt-2 max-w-[15rem];
+    }
+
+    .serv-city-contact--agenda.serv-city-contact--on-dark {
+        @apply mt-0 max-w-none;
+    }
+
+    .serv-city-contact-agenda {
+        @apply flex items-center gap-2 rounded-xl border border-slate-200/90 bg-gradient-to-br from-white via-slate-50/80 to-teal-50/30
+            px-2 py-1.5 shadow-sm ring-1 ring-slate-900/5
+            dark:border-slate-600/80 dark:from-slate-800/90 dark:via-slate-800/70 dark:to-teal-950/20 dark:ring-teal-500/10;
+    }
+
+    .serv-city-contact-agenda__avatar {
+        @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full
+            bg-gradient-to-br from-teal-500/20 to-teal-600/10 text-teal-800 text-xs font-bold tracking-tight
+            ring-2 ring-white shadow-sm
+            dark:from-teal-500/25 dark:to-teal-900/30 dark:text-teal-200 dark:ring-slate-800;
+    }
+
+    .serv-city-contact-agenda__body {
+        @apply min-w-0 flex-1;
+    }
+
+    .serv-city-contact-agenda__name {
+        @apply text-xs font-semibold text-slate-800 dark:text-slate-100 truncate leading-tight;
+    }
+
+    .serv-city-contact-agenda__actions {
+        @apply flex shrink-0 items-center gap-0.5;
+    }
+
+    .serv-city-contact-agenda__btn {
+        @apply inline-flex h-8 w-8 items-center justify-center rounded-lg border transition
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1
+            dark:focus-visible:ring-offset-slate-900;
+    }
+
+    .serv-city-contact-agenda__btn--phone {
+        @apply border-sky-200/90 bg-sky-50 text-sky-800 hover:border-sky-300 hover:bg-sky-100 hover:shadow-sm
+            focus-visible:ring-sky-500/40
+            dark:border-sky-800/70 dark:bg-sky-950/40 dark:text-sky-200 dark:hover:bg-sky-950/60;
+    }
+
+    .serv-city-contact-agenda__btn--whatsapp {
+        @apply border-emerald-200/90 bg-emerald-50 text-emerald-800 hover:border-emerald-300 hover:bg-emerald-100 hover:shadow-sm
+            focus-visible:ring-emerald-500/40
+            dark:border-emerald-800/70 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:bg-emerald-950/60;
+    }
+
+    .serv-city-contact-agenda__btn--email {
+        @apply border-indigo-200/90 bg-indigo-50 text-indigo-800 hover:border-indigo-300 hover:bg-indigo-100 hover:shadow-sm
+            focus-visible:ring-indigo-500/40
+            dark:border-indigo-800/70 dark:bg-indigo-950/40 dark:text-indigo-200 dark:hover:bg-indigo-950/60;
+    }
+
+    .serv-city-contact-agenda--dark {
+        @apply border-teal-300/25 bg-white/10 shadow-md ring-1 ring-white/10 backdrop-blur-md
+            from-transparent via-transparent to-transparent;
+    }
+
+    .serv-city-contact-agenda--dark .serv-city-contact-agenda__avatar {
+        @apply from-white/25 to-teal-400/20 text-white ring-teal-300/40 shadow-none;
+    }
+
+    .serv-city-contact-agenda--dark .serv-city-contact-agenda__name {
+        @apply text-white;
+    }
+
+    .serv-city-contact-agenda--dark .serv-city-contact-agenda__btn {
+        @apply focus-visible:ring-offset-teal-950;
+    }
+
+    .serv-city-contact-agenda--dark .serv-city-contact-agenda__btn--phone {
+        @apply border-sky-300/35 bg-sky-400/15 text-sky-50 hover:border-sky-200/50 hover:bg-sky-400/25;
+    }
+
+    .serv-city-contact-agenda--dark .serv-city-contact-agenda__btn--whatsapp {
+        @apply border-emerald-300/35 bg-emerald-400/15 text-emerald-50 hover:border-emerald-200/50 hover:bg-emerald-400/25;
+    }
+
+    .serv-city-contact-agenda--dark .serv-city-contact-agenda__btn--email {
+        @apply border-indigo-300/35 bg-indigo-400/15 text-indigo-50 hover:border-indigo-200/50 hover:bg-indigo-400/25;
+    }
+
     .serv-city-contact__header {
         @apply flex items-start gap-2 min-w-0;
     }
@@ -401,32 +487,174 @@
             dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-teal-500 dark:hover:bg-teal-950/40 dark:hover:text-teal-200;
     }
 
+    .serv-contact-icons__btn--email {
+        @apply hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-800
+            dark:hover:border-indigo-500 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-200;
+    }
+
+    .serv-contact-icons__btn--phone {
+        @apply hover:border-sky-400 hover:bg-sky-50 hover:text-sky-900
+            dark:hover:border-sky-600 dark:hover:bg-sky-950/40 dark:hover:text-sky-200;
+    }
+
     .serv-contact-icons__btn--whatsapp {
         @apply hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700
             dark:hover:border-emerald-600 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300;
     }
 
+    .serv-contact-table {
+        @apply flex flex-col gap-1.5 min-w-[10.5rem] max-w-[15rem];
+    }
+
+    .serv-contact-table__chip {
+        @apply inline-flex w-full min-w-0 items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium
+            shadow-sm transition
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1
+            dark:focus-visible:ring-offset-gray-900;
+    }
+
+    .serv-contact-table__icon {
+        @apply flex h-7 w-7 shrink-0 items-center justify-center rounded-md;
+    }
+
+    .serv-contact-table__label {
+        @apply min-w-0 flex-1 truncate leading-snug;
+    }
+
+    .serv-contact-table__chip--email {
+        @apply border-indigo-200/90 bg-indigo-50/90 text-indigo-950
+            hover:border-indigo-300 hover:bg-indigo-100 hover:shadow
+            focus-visible:ring-indigo-500/40
+            dark:border-indigo-800/70 dark:bg-indigo-950/35 dark:text-indigo-100
+            dark:hover:border-indigo-600 dark:hover:bg-indigo-950/55;
+    }
+
+    .serv-contact-table__chip--email .serv-contact-table__icon {
+        @apply bg-indigo-500/15 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300;
+    }
+
+    .serv-contact-table__chip--phone {
+        @apply border-sky-200/90 bg-sky-50/90 text-sky-950
+            hover:border-sky-300 hover:bg-sky-100 hover:shadow
+            focus-visible:ring-sky-500/40
+            dark:border-sky-800/70 dark:bg-sky-950/35 dark:text-sky-100
+            dark:hover:border-sky-600 dark:hover:bg-sky-950/55;
+    }
+
+    .serv-contact-table__chip--phone .serv-contact-table__icon {
+        @apply bg-sky-500/15 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300;
+    }
+
+    .serv-contact-table__chip--whatsapp {
+        @apply border-emerald-200/90 bg-emerald-50/90 text-emerald-950
+            hover:border-emerald-300 hover:bg-emerald-100 hover:shadow
+            focus-visible:ring-emerald-500/40
+            dark:border-emerald-800/70 dark:bg-emerald-950/35 dark:text-emerald-100
+            dark:hover:border-emerald-600 dark:hover:bg-emerald-950/55;
+    }
+
+    .serv-contact-table__chip--whatsapp .serv-contact-table__icon {
+        @apply bg-emerald-500/15 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300;
+    }
+
+    .serv-contact-table__empty {
+        @apply text-sm text-gray-400 dark:text-gray-500;
+    }
+
+    .serv-profile-page {
+        @apply space-y-6;
+    }
+
     .serv-profile-hero {
-        @apply relative;
+        @apply relative serv-panel serv-panel--info;
     }
 
     .serv-profile-hero__glow {
-        @apply pointer-events-none absolute inset-0 bg-gradient-to-br from-teal-500/10 via-transparent to-indigo-500/10 dark:from-teal-500/5 dark:to-indigo-600/10;
+        @apply pointer-events-none absolute inset-0 bg-gradient-to-br from-teal-500/10 via-white/40 to-indigo-500/10
+            dark:from-teal-500/10 dark:via-transparent dark:to-indigo-600/10;
+    }
+
+    .serv-profile-hero__body {
+        @apply relative flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 p-5 sm:p-6 min-w-0;
+    }
+
+    .serv-profile-hero__avatar-wrap {
+        @apply shrink-0 mx-auto sm:mx-0;
+    }
+
+    .serv-profile-hero__avatar {
+        @apply h-20 w-20 sm:h-24 sm:w-24 rounded-2xl object-cover ring-2 ring-white/90 shadow-md
+            dark:ring-slate-800/90;
+    }
+
+    .serv-profile-hero__avatar-fallback {
+        @apply !h-20 !w-20 sm:!h-24 sm:!w-24 !text-2xl !rounded-2xl;
+    }
+
+    .serv-profile-hero__identity {
+        @apply min-w-0 flex-1 text-center sm:text-left space-y-1.5;
+    }
+
+    .serv-profile-hero__name {
+        @apply font-display text-xl sm:text-2xl font-semibold text-slate-900 dark:text-white truncate;
+    }
+
+    .serv-profile-hero__meta-line {
+        @apply text-sm text-slate-600 dark:text-slate-400 truncate;
+    }
+
+    .serv-profile-hero__email {
+        @apply inline-block max-w-full truncate text-sm text-teal-800 hover:text-teal-950 hover:underline
+            dark:text-teal-300 dark:hover:text-teal-100;
+    }
+
+    .serv-profile-hero__badges {
+        @apply flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1;
+    }
+
+    .serv-profile-hero__contacts {
+        @apply flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1 min-w-0;
+    }
+
+    .serv-profile-hero__edit-photo {
+        @apply mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-700 hover:text-teal-900
+            dark:text-teal-400 dark:hover:text-teal-200;
+    }
+
+    .serv-profile-layout {
+        @apply lg:grid lg:grid-cols-[12.5rem_minmax(0,1fr)] gap-5 lg:gap-6 items-start;
+    }
+
+    .serv-profile-nav {
+        @apply serv-panel p-2 sm:p-3 lg:sticky lg:top-24;
+    }
+
+    .serv-profile-nav__scroll {
+        @apply flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-0.5 lg:pb-0 -mx-0.5 px-0.5;
     }
 
     .serv-profile-nav__label {
-        @apply text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400;
+        @apply text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400 px-2 pb-2 hidden lg:block;
     }
 
     .serv-profile-nav__link {
-        @apply block rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition
+        @apply block shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition
             hover:bg-teal-50 hover:text-teal-900
             dark:text-slate-300 dark:hover:bg-teal-950/40 dark:hover:text-teal-100
             focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40;
     }
 
+    .serv-profile-nav__link--active {
+        @apply bg-teal-100 text-teal-900 ring-1 ring-teal-500/20
+            dark:bg-teal-950/50 dark:text-teal-100 dark:ring-teal-500/30;
+    }
+
+    .serv-profile-main {
+        @apply space-y-5 min-w-0;
+    }
+
     .serv-profile-section {
-        @apply scroll-mt-24;
+        @apply scroll-mt-28 overflow-hidden;
     }
 
     .serv-profile-section--danger {
@@ -435,7 +663,7 @@
     }
 
     .serv-profile-section__header {
-        @apply flex items-start gap-3 border-b border-slate-100 dark:border-slate-800 px-5 py-4 sm:px-6;
+        @apply flex items-start gap-3 border-b border-slate-100 dark:border-slate-800 px-5 py-4 sm:px-6 min-w-0;
     }
 
     .serv-profile-section--danger .serv-profile-section__header {
@@ -453,21 +681,67 @@
     }
 
     .serv-profile-section__title {
-        @apply font-display text-base font-semibold text-slate-900 dark:text-slate-100;
+        @apply font-display text-base font-semibold text-slate-900 dark:text-slate-100 break-words;
     }
 
     .serv-profile-section__desc {
-        @apply mt-0.5 text-sm text-slate-600 dark:text-slate-400 leading-relaxed;
+        @apply mt-0.5 text-sm text-slate-600 dark:text-slate-400 leading-relaxed break-words;
     }
 
     .serv-profile-section__body {
-        @apply px-5 py-5 sm:px-6 sm:py-6;
+        @apply px-5 py-5 sm:px-6 sm:py-6 min-w-0;
+    }
+
+    .serv-profile-actions {
+        @apply flex flex-wrap items-center gap-3 pt-4 mt-5 border-t border-slate-100 dark:border-slate-800;
+    }
+
+    .serv-profile-field-grid {
+        @apply grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0;
+    }
+
+    .serv-profile-field-grid > * {
+        @apply min-w-0;
+    }
+
+    .serv-profile-field-grid__full {
+        @apply sm:col-span-2;
+    }
+
+    .serv-profile-subpanel {
+        @apply rounded-xl border border-slate-200/90 bg-slate-50/60 p-4 space-y-4 min-w-0
+            dark:border-slate-700/80 dark:bg-slate-900/30;
+    }
+
+    .serv-profile-subpanel__title {
+        @apply text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-profile-photo-row {
+        @apply flex flex-col sm:flex-row items-stretch sm:items-center gap-4 min-w-0;
+    }
+
+    .serv-profile-photo-preview {
+        @apply shrink-0 mx-auto sm:mx-0 h-16 w-16 rounded-xl overflow-hidden ring-2 ring-teal-200/80 bg-teal-50
+            dark:ring-teal-800/80 dark:bg-teal-950/40;
+    }
+
+    .serv-profile-photo-preview img {
+        @apply h-full w-full object-cover;
     }
 
     .serv-profile-upload {
-        @apply rounded-xl border-2 border-dashed border-slate-200/90 bg-slate-50/50
+        @apply flex-1 min-w-0 rounded-xl border-2 border-dashed border-slate-200/90 bg-white/70 px-4 py-5
             transition hover:border-teal-400/70 hover:bg-teal-50/40
-            dark:border-slate-600/80 dark:bg-slate-900/30 dark:hover:border-teal-600/60 dark:hover:bg-teal-950/20;
+            dark:border-slate-600/80 dark:bg-slate-900/40 dark:hover:border-teal-600/60 dark:hover:bg-teal-950/20;
+    }
+
+    .serv-profile-upload__inner {
+        @apply flex flex-col items-center justify-center gap-1.5 text-center cursor-pointer min-w-0;
+    }
+
+    .serv-profile-upload__hint {
+        @apply text-xs text-slate-500 dark:text-slate-400;
     }
 
     .serv-profile-meta__item {

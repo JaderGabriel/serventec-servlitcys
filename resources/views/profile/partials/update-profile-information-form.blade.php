@@ -2,18 +2,18 @@
     id="perfil-dados"
     icon="envelope"
     :title="__('Dados do perfil')"
-    :description="__('Nome, usuário, e-mail e contatos. CPF e data de nascimento vêm do primeiro acesso.')"
+    :description="__('Atualize nome, usuário, e-mail e contatos. CPF e data de nascimento vêm do primeiro acesso.')"
 >
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="space-y-5">
+    <form method="post" action="{{ route('profile.update') }}" class="space-y-5 min-w-0">
         @csrf
         @method('patch')
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="sm:col-span-2">
+        <div class="serv-profile-field-grid">
+            <div class="serv-profile-field-grid__full">
                 <x-input-label for="name" :value="__('Nome completo')" />
                 <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
                 <x-input-error class="mt-2" :messages="$errors->get('name')" />
@@ -48,9 +48,9 @@
             </div>
         @endif
 
-        <div class="rounded-xl border border-slate-200/90 bg-slate-50/60 dark:border-slate-700/80 dark:bg-slate-900/30 p-4 space-y-4">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('Contatos opcionais') }}</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="serv-profile-subpanel">
+            <p class="serv-profile-subpanel__title">{{ __('Contatos opcionais') }}</p>
+            <div class="serv-profile-field-grid">
                 <div>
                     <x-input-label for="phone" :value="__('Telefone')" />
                     <x-text-input id="phone" name="phone" type="tel" inputmode="tel" class="mt-1 block w-full" :value="old('phone', $user->phone)" placeholder="(00) 00000-0000" />
@@ -66,20 +66,23 @@
         </div>
 
         @if ($user->birth_date && $user->cpf)
-            <dl class="serv-profile-meta grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <div class="serv-profile-meta__item">
-                    <dt class="serv-profile-meta__label">{{ __('Data de nascimento') }}</dt>
-                    <dd class="serv-profile-meta__value">{{ $user->birth_date->format('d/m/Y') }}</dd>
-                </div>
-                <div class="serv-profile-meta__item">
-                    <dt class="serv-profile-meta__label">{{ __('CPF') }}</dt>
-                    <dd class="serv-profile-meta__value font-mono">{{ \App\Support\Cpf::formatMasked($user->cpf) }}</dd>
-                </div>
-            </dl>
-            <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Cadastrados no primeiro acesso — não podem ser alterados aqui.') }}</p>
+            <div class="serv-profile-subpanel">
+                <p class="serv-profile-subpanel__title">{{ __('Dados do primeiro acesso') }}</p>
+                <dl class="serv-profile-meta grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div class="serv-profile-meta__item min-w-0">
+                        <dt class="serv-profile-meta__label">{{ __('Data de nascimento') }}</dt>
+                        <dd class="serv-profile-meta__value">{{ $user->birth_date->format('d/m/Y') }}</dd>
+                    </div>
+                    <div class="serv-profile-meta__item min-w-0">
+                        <dt class="serv-profile-meta__label">{{ __('CPF') }}</dt>
+                        <dd class="serv-profile-meta__value font-mono break-all">{{ \App\Support\Cpf::formatMasked($user->cpf) }}</dd>
+                    </div>
+                </dl>
+                <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Não podem ser alterados nesta tela.') }}</p>
+            </div>
         @endif
 
-        <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div class="serv-profile-actions">
             <x-primary-button>{{ __('Salvar alterações') }}</x-primary-button>
             <x-profile.save-hint status="profile-updated">{{ __('Alterações salvas.') }}</x-profile.save-hint>
         </div>
