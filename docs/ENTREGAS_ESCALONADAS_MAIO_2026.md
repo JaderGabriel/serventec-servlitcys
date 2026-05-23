@@ -35,7 +35,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 27 | `4833160` | Patch **2.3.8.4**: mapa capacidade/vagas, saldo Matrículas/VAAF, Inclusão, predis |
 | 28 | `7c0297c` | Doc: estudo integrações setor público (sem bump de versão) |
 | 29 | `a2566aa` | Patch **2.3.8.5**: mapa capacidade, Matrículas saldo, NEE unificado |
-| 30 | `ac8c2ec` | Patch **2.3.8.6** (**em produção**): mapa Início semáforo RX + contato municipal |
+| 30 | `0a0743e` | Patch **2.3.8.6** (**em produção**): mapa Início semáforo RX + contato municipal |
 
 ---
 
