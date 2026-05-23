@@ -2,8 +2,8 @@
 
 namespace App\Listeners;
 
-use App\Models\AdminUserLog;
 use App\Models\User;
+use App\Support\Performance\LoginAuditWriter;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Str;
 
@@ -17,21 +17,21 @@ class LogSuccessfulUserLogin
         }
 
         $payload = [
-            'actor_id' => $user->id,
-            'subject_user_id' => $user->id,
+            'actor_id' => (int) $user->id,
+            'subject_user_id' => (int) $user->id,
             'action' => 'login',
             'ip_address' => request()->ip(),
             'user_agent' => Str::limit((string) request()->userAgent(), 1000),
         ];
 
         if (! config('performance.defer_login_audit', true)) {
-            AdminUserLog::query()->create($payload);
+            LoginAuditWriter::insert($payload);
 
             return;
         }
 
         dispatch(static function () use ($payload): void {
-            AdminUserLog::query()->create($payload);
+            LoginAuditWriter::insert($payload);
         })->afterResponse();
     }
 }

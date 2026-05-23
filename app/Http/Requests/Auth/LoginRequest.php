@@ -5,7 +5,9 @@ namespace App\Http\Requests\Auth;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -35,7 +37,16 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('username', 'password'), $this->boolean('remember'))) {
+        $username = (string) $this->string('username');
+        $password = (string) $this->input('password');
+
+        /** Uma consulta indexada (username) + filtro is_active — sem Auth::attempt + verificação extra. */
+        $user = User::query()
+            ->where('username', $username)
+            ->where('is_active', true)
+            ->first();
+
+        if ($user === null || ! Hash::check($password, (string) $user->password)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -43,14 +54,7 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        $user = Auth::user();
-        if ($user !== null && ! $user->is_active) {
-            Auth::logout();
-
-            throw ValidationException::withMessages([
-                'username' => __('Esta conta está desativada. Contacte um administrador.'),
-            ]);
-        }
+        Auth::login($user, $this->boolean('remember'));
 
         RateLimiter::clear($this->throttleKey());
     }

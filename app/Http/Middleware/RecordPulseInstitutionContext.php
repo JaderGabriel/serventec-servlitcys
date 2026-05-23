@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\City;
+use App\Support\Performance\AuthRouteRegistry;
 use Closure;
 use Illuminate\Http\Request;
 use Laravel\Pulse\Facades\Pulse;
@@ -81,18 +82,6 @@ class RecordPulseInstitutionContext
             return true;
         }
 
-        return $request->routeIs(
-            'login',
-            'logout',
-            'password.request',
-            'password.email',
-            'password.reset',
-            'password.store',
-            'password.confirm',
-            'password.update',
-            'verification.notice',
-            'verification.verify',
-            'verification.send',
-        );
+        return AuthRouteRegistry::matches($request);
     }
 }

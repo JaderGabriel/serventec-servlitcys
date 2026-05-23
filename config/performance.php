@@ -15,6 +15,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Bootstrap SMTP em rotas de autenticação
+    |--------------------------------------------------------------------------
+    |
+    | Evita consulta/cache a mail_settings no GET/POST de login e recuperação
+    | de senha (o e-mail só é necessário ao enviar mensagens).
+    |
+    */
+    'skip_mail_on_auth_routes' => env('PERFORMANCE_SKIP_MAIL_ON_AUTH', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Cache de city_ids por utilizador municipal
     |--------------------------------------------------------------------------
     |

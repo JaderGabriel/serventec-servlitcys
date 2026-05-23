@@ -17,9 +17,19 @@ Em servidores **sem** extensão `phpredis`, use `REDIS_CLIENT=predis` (já inclu
 Com `SESSION_DRIVER=database` e `CACHE_STORE=database`, cada tentativa de login gera várias operações MySQL:
 
 - Leitura/escrita da **sessão** (incl. `regenerate` após sucesso)
-- **Rate limiter** (`tooManyAttempts` / `hit` / `clear`)
-- Insert em **`admin_user_logs`** (mitigado: gravação após resposta HTTP quando `PERFORMANCE_DEFER_LOGIN_AUDIT=true`)
-- Opcional: verificação da tabela `mail_settings` no boot (mitigado com cache de schema e de SMTP)
+- **Rate limiter** (`tooManyAttempts` / `hit` / `clear`) — usa o driver de `CACHE_STORE`
+- Insert em **`admin_user_logs`** (mitigado: após resposta HTTP + insert directo quando `PERFORMANCE_DEFER_LOGIN_AUDIT=true`)
+- Bootstrap **SMTP** (`mail_settings`) em cada pedido — mitigado com `PERFORMANCE_SKIP_MAIL_ON_AUTH=true` nas rotas de login/recuperação de senha
+
+### Otimizações no código (login, v2.3.8+)
+
+| Medida | Efeito |
+|--------|--------|
+| `PERFORMANCE_SKIP_MAIL_ON_AUTH=true` | Não carrega `mail_settings` no GET/POST `/login` |
+| Autenticação em **uma query** | `username` + `is_active` + `Hash::check` (sem `Auth::attempt` + logout para inactivos) |
+| Sem `load('cities')` no redirect | Municipal usa `cityIds()` em cache (`PERFORMANCE_USER_CITY_IDS_CACHE`) |
+| `LoginAuditWriter` | Insert SQL directo no audit (pós-resposta) |
+| `PERFORMANCE_PULSE_SKIP_AUTH` | Sem gravações Pulse em rotas de auth |
 
 ## Configuração recomendada (produção com Redis)
 
@@ -56,11 +66,12 @@ php artisan queue:work redis --queue=default,admin-sync --sleep=3 --tries=3
 | Medida | Efeito |
 |--------|--------|
 | `PERFORMANCE_DEFER_LOGIN_AUDIT=true` | Auditoria de login não bloqueia o redirect |
+| `PERFORMANCE_SKIP_MAIL_ON_AUTH=true` | Sem bootstrap SMTP nas rotas de autenticação |
 | `PERFORMANCE_PULSE_SKIP_AUTH=true` | Sem gravação Pulse em login/logout/recuperação de senha |
 | `PERFORMANCE_USER_CITY_IDS_CACHE` | Cache dos municípios do utilizador municipal |
-| `PERFORMANCE_MAIL_SETTINGS_CACHE` | Uma leitura de `mail_settings` por hora (boot) |
-| Eager-load `cities` no login municipal | Evita query extra no redirect para analytics |
+| `PERFORMANCE_MAIL_SETTINGS_CACHE` | Uma leitura de `mail_settings` por hora (pedidos autenticados) |
 | Índice `admin_user_logs` | Histórico de logins mais rápido para admins |
+| Índice único `users.username` | Lookup de credenciais indexado |
 
 ## Painel analítico
 

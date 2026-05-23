@@ -24,6 +24,7 @@ use App\Services\CityDataConnection;
 use App\Services\Ieducar\IeducarCityDataService;
 use App\Services\MailConfigService;
 use App\Support\Admin\WeeklyMassSyncCheckpoint;
+use App\Support\Performance\AuthRouteRegistry;
 use App\Support\Performance\RedisProbe;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Cache;
@@ -112,18 +113,36 @@ class AppServiceProvider extends ServiceProvider
             }
         }
 
-        try {
-            $hasMailSettings = Cache::remember(
-                'bootstrap:has_mail_settings_table',
-                86400,
-                static fn (): bool => Schema::hasTable('mail_settings'),
-            );
+        if ($this->shouldApplyMailFromDatabase()) {
+            try {
+                $hasMailSettings = Cache::remember(
+                    'bootstrap:has_mail_settings_table',
+                    86400,
+                    static fn (): bool => Schema::hasTable('mail_settings'),
+                );
 
-            if ($hasMailSettings) {
-                app(MailConfigService::class)->applyFromDatabase();
+                if ($hasMailSettings) {
+                    app(MailConfigService::class)->applyFromDatabase();
+                }
+            } catch (\Throwable) {
+                // Ambiente sem driver DB ou migrações pendentes — ignorar até a app estar pronta.
             }
-        } catch (\Throwable) {
-            // Ambiente sem driver DB ou migrações pendentes — ignorar até a app estar pronta.
         }
+    }
+
+    private function shouldApplyMailFromDatabase(): bool
+    {
+        if (! config('performance.skip_mail_on_auth_routes', true)) {
+            return true;
+        }
+
+        if (! $this->app->runningInConsole() && $this->app->bound('request')) {
+            $request = $this->app->make('request');
+            if ($request instanceof \Illuminate\Http\Request && AuthRouteRegistry::matches($request)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
