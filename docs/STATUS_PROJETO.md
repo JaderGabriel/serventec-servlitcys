@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão:** 2.3.8.4 (analytics/VAAF/mapa) · release `20260521-Mercury` · commit `COMMIT_HASH` (#189) · **Ramo:** `main` · **Última revisão:** 21/05/2026
+**Versão:** 2.3.8.4 (analytics/VAAF/mapa) · release `20260521-Mercury` · commit `4833160` (#189) · **Ramo:** `main` · **Última revisão:** 21/05/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 

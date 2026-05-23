@@ -32,7 +32,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 24 | `bd9d228` | Patch visual **2.3.8.1** (sem nova tag): perfil, `/users`, RX, Consultoria |
 | 25 | `30bc32d` | Patch visual **2.3.8.2**: largura perfil/usuários, contato RX empilhado |
 | 26 | `a736e43` | Patch **2.3.8.3**: performance login, Redis, `performance:check` |
-| 27 | `COMMIT_HASH` | Patch **2.3.8.4**: mapa capacidade/vagas, saldo Matrículas/VAAF, Inclusão, predis |
+| 27 | `4833160` | Patch **2.3.8.4**: mapa capacidade/vagas, saldo Matrículas/VAAF, Inclusão, predis |
 
 ---
 
