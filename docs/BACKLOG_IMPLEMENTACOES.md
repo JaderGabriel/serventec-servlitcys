@@ -86,6 +86,24 @@ Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento
 
 ---
 
+## H. Integrações setor público e previsão de demanda
+
+Estudo completo: [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md).
+
+| ID | Prioridade | Item | Estado | Janela |
+|----|------------|------|--------|--------|
+| INT-01 | P2 | Painel Demanda × Oferta (projeção 3 anos por segmento) | Pendente | Onda 1 |
+| INT-02 | P2 | Série matrícula + população IBGE municipal | Pendente | Onda 1 |
+| INT-03 | P2 | Alertas risco superlotação (capacidade vs. tendência) | Pendente | Onda 1 |
+| INT-04 | P3 | PDF: bloco contexto socioeconómico (IBGE + repasses) | Pendente | Onda 1 |
+| INT-05 | P3 | Import agregado IBGE SIDRA → `municipal_demography_snapshots` | Pendente | Onda 1 |
+| INT-06 | P3 | SICONFI indicadores por ente (API Tesouro) | Pendente | Onda 1 |
+| INT-07 | P3 | CadÚnico / SNAS — painéis agregados municipais (sem CPF em massa) | Pendente | Onda 2 |
+| INT-08 | P4 | DATASUS agregado + CNES proximidade escola–UBS | Pendente | Onda 2 |
+| INT-09 | P4 | Articulação e-SUS escola / vacinação (credencial SMS) | Pendente | Onda 3 |
+
+---
+
 ## F. Plugins, integrações e cadastro i-Educar
 
 Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md).

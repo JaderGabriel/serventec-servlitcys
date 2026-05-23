@@ -96,6 +96,16 @@ final class DocumentationCatalog
                 ],
             ],
             [
+                'title' => __('Integrações'),
+                'description' => __('Fontes públicas, ingestão e previsão de demanda educacional.'),
+                'items' => [
+                    ['label' => __('Estudo: setor público e demanda'), 'path' => 'docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md', 'hint' => __('Saúde, SUAS, Tesouro, janelas e APIs')],
+                    ['label' => __('Consultas externas (produção)'), 'path' => 'docs/CONSULTAS_EXTERNAS.md', 'hint' => __('FNDE, Tesouro, INEP — .env e abas')],
+                    ['label' => __('Importação dados públicos'), 'path' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md', 'hint' => __('Hub /admin/dados-publicos')],
+                    ['label' => __('Roadmap bases financeiras'), 'path' => 'docs/ROADMAP_BASES_CALCULOS_FINANCEIROS.md'],
+                ],
+            ],
+            [
                 'title' => __('Técnico & consultoria'),
                 'description' => __('Regras de cálculo, integrações e desenho.'),
                 'items' => [

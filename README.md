@@ -184,6 +184,7 @@ composer run phpstan
 - [Documentação executiva](docs/DOCUMENTACAO_EXECUTIVA.md) — visão de negócio e stakeholders
 - [Comandos Artisan](docs/COMANDOS_ARTISAN.md) — CLI (geo, SAEB, FUNDEB, schema probe, deploy); tela admin em `/admin/artisan-commands`
 - [FUNDEB / VAAF e Onda 1](docs/FUNDEB_VAAF_E_ONDA1.md) — referências por município/ano na base
+- [**Estudo: integrações setor público**](docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) — saúde, SUAS, tesouro, janelas de implementação, APIs e previsão de demanda educacional
 - [**Consultas externas**](docs/CONSULTAS_EXTERNAS.md) — FNDE, Tesouro, Portal da Transparência; necessidade, impacto e uso por aba
 - [**Roadmap financeiro**](docs/ROADMAP_BASES_CALCULOS_FINANCEIROS.md) — bases e cálculos futuros (repasses, programas, VAAR)
 - [Segurança e operações](docs/SEGURANCA.md) — senhas, permissões e checklist de deploy

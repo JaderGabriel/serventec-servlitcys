@@ -47,7 +47,10 @@
                             {{ __('Anos FUNDEB: :anos', ['anos' => implode(', ', array_map('strval', $syncYears))]) }}
                         </span>
                         <a href="{{ route('admin.documentation.show', ['doc' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md']) }}" class="rounded-full bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 font-medium text-indigo-800 dark:text-indigo-200 ring-1 ring-indigo-200/80 dark:ring-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50">
-                            {{ __('Documentação') }} →
+                            {{ __('Importação') }} →
+                        </a>
+                        <a href="{{ route('admin.documentation.show', ['doc' => 'docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md']) }}" class="rounded-full bg-violet-50 dark:bg-violet-950/40 px-3 py-1 font-medium text-violet-800 dark:text-violet-200 ring-1 ring-violet-200/80 dark:ring-violet-800 hover:bg-violet-100 dark:hover:bg-violet-900/50">
+                            {{ __('Integrações e previsão de demanda') }} →
                         </a>
                     </div>
                 </div>

@@ -138,7 +138,7 @@ Integrações **já previstas** no produto; esta secção indica **prioridade de
 | **Portal IDEB / SAEB** | Import JSON oficial + API município | Ano de aplicação alinhado ao Censo | Desempenho |
 | **ArcGIS / catálogo INEP** | Geo oficial | Divergência metros escola i-Educar vs oficial | Unidades, Discrepâncias |
 
-Ver detalhe de URLs e `.env` em [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
+Ver detalhe de URLs e `.env` em [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md). Mapa ampliado (saúde, SUAS, tesouro, previsão de demanda): [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md).
 
 ### 5.2 Sincronizações automáticas (operação)
 

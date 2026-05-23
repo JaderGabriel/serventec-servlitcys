@@ -58,6 +58,15 @@ Os restantes arquivos são **aprofundamento** por tema. Itens de backlog que apa
 | [SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md](SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md) | Guia MEC/INEP: gráficos cobertos vs. pendentes |
 | [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | SAEB/IDEB: referências visuais e evolução pedagógica |
 
+### Integrações e fontes públicas
+
+| Documento | Conteúdo |
+|-----------|----------|
+| [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) | **Estudo:** saúde, assistência social, tesouro, educação; janelas de implementação, APIs, esfera F/E/M, previsão de demanda |
+| [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) | Integrações **em produção** (FNDE, Tesouro, INEP) — `.env` e abas |
+| [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) | Hub admin `/admin/dados-publicos` — FUNDEB, Censo, repasses, SAEB |
+| [ROADMAP_BASES_CALCULOS_FINANCEIROS.md](ROADMAP_BASES_CALCULOS_FINANCEIROS.md) | Motor de repasses e bases públicas (futuro) |
+
 ### Financiamento e cadastro (impacto FUNDEB / Censo)
 
 | Documento | Conteúdo |

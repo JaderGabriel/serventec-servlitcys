@@ -18,6 +18,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Discrepâncias + export CSV | Implementado |
 | FUNDEB / VAAF (import + cascata + matriz + export CSV + perfil planejamento) | Implementado |
 | Importações externas (guias UX admin + hub público) | Implementado |
+| Estudo integrações setor público + previsão demanda (doc) | Documentado — [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md); implementação Ondas 1–3 no backlog §H |
 | Sync massiva semanal (`system::weekly_mass_sync`, checkpoint) | Implementado |
 | Repasses Tesouro CSV + snapshots municipais | Implementado |
 | PDF analítico (fila + comparativos + quadros FUNDEB) | Implementado |
