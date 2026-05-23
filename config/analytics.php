@@ -149,6 +149,9 @@ return [
             'map_zoom' => max(5, min(14, (int) env('ANALYTICS_PDF_MAP_ZOOM', 10))),
             'nominatim_user_agent' => (string) env('ANALYTICS_PDF_NOMINATIM_USER_AGENT', 'servlitcys-pdf-cover/1.0 (contact: analise.serventecassessoria.com.br)'),
         ],
+        /** Largura útil A4 retrato (pt) — evita mapas/tabelas a ultrapassar a margem no DomPDF. */
+        'content_width_pt' => max(400, (int) env('ANALYTICS_PDF_CONTENT_WIDTH_PT', 520)),
+        'school_map_height_pt' => max(220, (int) env('ANALYTICS_PDF_SCHOOL_MAP_HEIGHT_PT', 292)),
     ],
 
 ];

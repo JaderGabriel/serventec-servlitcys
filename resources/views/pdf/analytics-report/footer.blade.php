@@ -21,22 +21,14 @@
     <div class="pdf-footer__body">
         <table class="pdf-footer__table" cellpadding="0" cellspacing="0" width="100%">
             <tr>
-                <td style="width: 32%; vertical-align: middle;">
-                    <table cellpadding="0" cellspacing="0">
-                        <tr>
-                            @if (filled($iconUri))
-                                <td style="width: 26px; padding-right: 8px; vertical-align: middle;">
-                                    <img src="{{ $iconUri }}" alt="" width="22" height="22" style="display:block;border-radius:4px;">
-                                </td>
-                            @endif
-                            <td style="vertical-align: middle;">
-                                <span class="pdf-footer__brand-name">{{ $systemName }}</span>
-                                <span class="pdf-footer__brand-tag">{{ $systemTagline }}</span>
-                            </td>
-                        </tr>
-                    </table>
+                <td style="width: 28%; vertical-align: middle;">
+                    @if (filled($iconUri))
+                        <img src="{{ $iconUri }}" alt="" width="18" height="18" style="display:inline-block;vertical-align:middle;border-radius:3px;margin-right:6px;">
+                    @endif
+                    <span class="pdf-footer__brand-name">{{ $systemName }}</span>
+                    <span class="pdf-footer__brand-tag">{{ $systemTagline }}</span>
                 </td>
-                <td style="width: 38%; vertical-align: middle;">
+                <td style="width: 44%; vertical-align: middle;">
                     <span class="pdf-footer__doc-title">{{ $reportType }}</span>
                     @if (filled($municipality))
                         <span class="pdf-footer__doc-meta">{{ $municipality }}@if (filled($uf)) — {{ $uf }}@endif@if (filled($yearValue)) · {{ __('Ano') }} {{ $yearValue }}@endif</span>
@@ -45,19 +37,12 @@
                         <span class="pdf-footer__doc-meta">{{ __('Ref.') }} {{ $bibId }}</span>
                     @endif
                 </td>
-                <td style="width: 30%; vertical-align: middle;">
+                <td style="width: 28%; vertical-align: middle;">
                     <span class="pdf-footer__serventec">{{ $serventecName }}</span>
                     <a href="{{ $serventecUrl }}" class="pdf-footer__link">{{ $serventecDisplay }}</a>
                     <span class="pdf-footer__legal">
-                        {{ __('Emitido em') }} {{ $generatedAt }}
-                        @if (filled($cover['confidentiality_note'] ?? null))
-                            <br>{{ $cover['confidentiality_note'] }}
-                        @else
-                            <br>{{ __('Uso restrito à gestão municipal. Dados indicativos — validar em fontes oficiais.') }}
-                        @endif
-                        @if (filled($devName) && filled($devGithub))
-                            <br>{{ $devName }}
-                        @endif
+                        {{ __('Emitido em') }} {{ $generatedAt }}.
+                        {{ filled($cover['confidentiality_note'] ?? null) ? $cover['confidentiality_note'] : __('Uso restrito à gestão municipal.') }}
                     </span>
                 </td>
             </tr>

@@ -282,10 +282,8 @@
 
     <script type="text/php">
         if (isset($pdf)) {
-            $primaryRgb = [15, 118, 110];
             $mutedRgb = [100, 116, 139];
-            $pdf->page_text(40, 808, "{{ __('Página') }} {PAGE_NUM} / {PAGE_COUNT}", null, 7.5, $mutedRgb);
-            $pdf->page_text(400, 808, "{{ $cover['municipality'] ?? '' }}", null, 7, $primaryRgb);
+            $pdf->page_text(32, 24, "{{ __('Página') }} {PAGE_NUM} / {PAGE_COUNT}", null, 7, $mutedRgb);
         }
     </script>
 </body>

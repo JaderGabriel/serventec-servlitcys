@@ -84,7 +84,8 @@
                     @continue
                 @endif
                 <h3>{{ $table['title'] ?? '' }}</h3>
-                <table class="data">
+                @php $headerCount = count(is_array($table['headers'] ?? null) ? $table['headers'] : []); @endphp
+                <table @class(['data', 'data--compact' => $headerCount >= 5])>
                     <tr>
                         @foreach (is_array($table['headers'] ?? null) ? $table['headers'] : [] as $h)
                             <th>{{ $h }}</th>

@@ -14,7 +14,8 @@
     @if (filled($block['subtitle'] ?? null))
         <p class="action-lead">{{ $block['subtitle'] }}</p>
     @endif
-    <table class="data">
+    @php $headerCount = count(is_array($block['headers'] ?? null) ? $block['headers'] : []); @endphp
+    <table @class(['data', 'data--compact' => $headerCount >= 5])>
         <tr>
             @foreach (is_array($block['headers'] ?? null) ? $block['headers'] : [] as $h)
                 <th>{{ $h }}</th>

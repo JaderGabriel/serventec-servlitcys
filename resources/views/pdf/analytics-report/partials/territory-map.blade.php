@@ -6,12 +6,16 @@
     $imgUri = $map['image_data_uri'] ?? $map['data_uri'] ?? null;
     $stats = is_array($map['stats'] ?? null) ? $map['stats'] : [];
     $schoolRows = is_array($map['schools_table'] ?? null) ? $map['schools_table'] : [];
+    $mapW = (int) ($map['width'] ?? config('analytics.pdf_report.content_width_pt', 520));
+    $mapH = (int) ($map['height'] ?? config('analytics.pdf_report.school_map_height_pt', 292));
 @endphp
 <div class="territory-block">
     @if (filled($imgUri))
-        <img src="{{ $imgUri }}" alt="" class="territory-map" width="720">
+        <div class="territory-map-wrap">
+            <img src="{{ $imgUri }}" alt="" class="territory-map" width="{{ $mapW }}" height="{{ $mapH }}">
+        </div>
     @elseif (filled($map['svg'] ?? null))
-        <div style="text-align:center;border:1px solid #cbd5e1;border-radius:10px;padding:8px;background:#f8fafc;">
+        <div class="territory-map-wrap territory-map-svg">
             {!! $map['svg'] !!}
         </div>
     @endif
@@ -39,23 +43,49 @@
         </table>
     @endif
 
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;font-size:8pt;">
+    <table class="territory-legend-inline" cellpadding="0" cellspacing="0">
         <tr>
-            <td style="width:50%;vertical-align:top;">
-                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#0f766e;margin-right:6px;"></span>
-                {{ __('Círculo verde: escola (tamanho ∝ matrículas)') }}
+            <td style="width:50%;">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#0f766e;margin-right:4px;vertical-align:middle;"></span>
+                {{ __('Escola (tamanho ∝ matrículas)') }}
             </td>
-            <td style="width:50%;vertical-align:top;">
-                <span style="display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid #4338ca;margin-right:6px;"></span>
-                {{ __('Anel índigo: centro de abrangência das matrículas') }}
+            <td style="width:50%;">
+                <span style="display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid #4338ca;margin-right:4px;vertical-align:middle;"></span>
+                {{ __('Centro de abrangência das matrículas') }}
             </td>
         </tr>
         <tr>
-            <td colspan="2" style="padding-top:4px;color:#64748b;">
-                {{ __('Fundo: OpenStreetMap (quando disponível na geração). Consulte o painel interactivo para zoom e camadas adicionais.') }}
+            <td colspan="2" style="padding-top:3px;color:#64748b;font-size:7pt;">
+                {{ __('Fundo: OpenStreetMap quando disponível na geração.') }}
             </td>
         </tr>
     </table>
+
+    @if (count($schoolRows) > 0)
+        <h4>{{ __('Unidades no recorte (principais por matrículas)') }}</h4>
+        <table class="data data--schools">
+            <tr>
+                <th>{{ __('Unidade escolar') }}</th>
+                <th>{{ __('Matr.') }}</th>
+                <th>{{ __('Coordenadas') }}</th>
+            </tr>
+            @foreach ($schoolRows as $row)
+                @if (is_array($row))
+                    <tr>
+                        <td>{{ $row['escola'] ?? '' }}</td>
+                        <td>{{ number_format((int) ($row['matriculas'] ?? 0), 0, ',', '.') }}</td>
+                        <td class="muted">
+                            @if (isset($row['lat'], $row['lng']))
+                                {{ $row['lat'] }}, {{ $row['lng'] }}
+                            @else
+                                —
+                            @endif
+                        </td>
+                    </tr>
+                @endif
+            @endforeach
+        </table>
+    @endif
 
     @if (filled($map['geo_note'] ?? null))
         <p class="muted">{{ $map['geo_note'] }}</p>

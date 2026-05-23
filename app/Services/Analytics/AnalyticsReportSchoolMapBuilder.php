@@ -50,15 +50,17 @@ final class AnalyticsReportSchoolMapBuilder
         $colors = config('analytics.pdf_report.colors', []);
         $primary = (string) ($colors['primary'] ?? '#0f766e');
         $secondary = (string) ($colors['secondary'] ?? '#4338ca');
+        $mapWidth = max(400, (int) config('analytics.pdf_report.content_width_pt', 520));
+        $mapHeight = max(220, (int) config('analytics.pdf_report.school_map_height_pt', 292));
 
-        $baseMap = $this->baseMapForMarkers($city, $markers);
+        $baseMap = $this->baseMapForMarkers($city, $markers, $mapWidth, $mapHeight);
         $schoolsTable = $this->buildSchoolsTable($markers);
 
         $png = AnalyticsReportSchoolMapImageComposer::compose(
             $markers,
             $baseMap,
-            720,
-            400,
+            $mapWidth,
+            $mapHeight,
             $primary,
             $secondary,
         );
@@ -68,8 +70,8 @@ final class AnalyticsReportSchoolMapBuilder
             $rendered = AnalyticsReportSchoolUnitsMapSvg::render(
                 $markers,
                 $baseMap,
-                720,
-                400,
+                $mapWidth,
+                $mapHeight,
                 $primary,
                 $secondary,
             );
@@ -97,6 +99,8 @@ final class AnalyticsReportSchoolMapBuilder
 
         return [
             'available' => true,
+            'width' => $mapWidth,
+            'height' => $mapHeight,
             'svg' => $rendered['svg'] ?? null,
             'data_uri' => $imageUri,
             'image_data_uri' => $imageUri,
@@ -140,7 +144,7 @@ final class AnalyticsReportSchoolMapBuilder
     /**
      * @param  list<array<string, mixed>>  $markers
      */
-    private function baseMapForMarkers(City $city, array $markers): ?string
+    private function baseMapForMarkers(City $city, array $markers, int $mapWidth = 520, int $mapHeight = 292): ?string
     {
         $pts = [];
         foreach ($markers as $m) {
@@ -164,7 +168,7 @@ final class AnalyticsReportSchoolMapBuilder
             default => 12,
         };
 
-        $tile = $this->mapResolver->fetchStaticMapAt($centerLat, $centerLng, $zoom, 680, 360);
+        $tile = $this->mapResolver->fetchStaticMapAt($centerLat, $centerLng, $zoom, $mapWidth, $mapHeight);
         if ($tile !== null) {
             return $tile['data_uri'];
         }
