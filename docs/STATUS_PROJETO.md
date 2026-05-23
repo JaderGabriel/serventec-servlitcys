@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão:** 2.3.6 · release `20260522-Janus` · commit `9350e9d` (#174) · **Ramo:** `main` · **Última revisão:** 22/05/2026
+**Versão:** 2.3.7 · release `20260521-Minerva` · commit `a9a8c73` (#180) · **Ramo:** `main` · **Última revisão:** 21/05/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -13,7 +13,8 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Área | Estado |
 |------|--------|
 | RBAC (admin / user / municipal) | Implementado |
-| Painel de análise i-Educar (abas lazy + faixa impacto) | Implementado |
+| Painel de análise i-Educar (abas lazy + faixa impacto por aba) | Implementado |
+| Overlay global de carregamento (filtros, admin, auth) | Implementado |
 | Discrepâncias + export CSV | Implementado |
 | FUNDEB / VAAF (import + cascata + matriz + export CSV + perfil planejamento) | Implementado |
 | Importações externas (guias UX admin + hub público) | Implementado |

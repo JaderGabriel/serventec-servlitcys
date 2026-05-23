@@ -21,11 +21,11 @@ return [
     */
 
     'product' => [
-        'version' => '2.3.6',
-        'release_tag' => '20260522-Janus',
-        'commit_short' => '9350e9d',
-        'commit_number' => 174,
-        'revision_date' => '2026-05-22',
+        'version' => '2.3.7',
+        'release_tag' => '20260521-Minerva',
+        'commit_short' => 'a9a8c73',
+        'commit_number' => 180,
+        'revision_date' => '2026-05-21',
     ],
 
 ];

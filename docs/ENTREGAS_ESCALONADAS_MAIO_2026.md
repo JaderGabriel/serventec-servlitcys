@@ -21,6 +21,11 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 13 | `54bc365` | Documentação v2.3.6 (código) |
 | 14 | `9350e9d` | Documentação release + contadores |
 | 15 | `20260522-Janus` | Release 2.3.6 (tag `YYYYMMDD-Janus`) |
+| 16 | `63b6624` | PDF analítico: rodapé, tabelas e mapa |
+| 17 | `687b99f`…`27992b1` | Auth refinada; rodapé só área logada |
+| 18 | `a9a8c73` | Consultoria VAAF/saldo, overlay, diagnóstico |
+| 19 | *(doc)* | Documentação release 2.3.7 |
+| 20 | `20260521-Minerva` | Release 2.3.7 (tag `YYYYMMDD-Minerva`) |
 
 ---
 

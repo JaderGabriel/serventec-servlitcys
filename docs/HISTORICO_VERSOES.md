@@ -1,6 +1,6 @@
 # Histórico de versões (resumo)
 
-**Versão em produção / `main`:** **2.3.6** · release **`20260522-Janus`** · commit `9350e9d` (#174)
+**Versão em produção / `main`:** **2.3.7** · release **`20260521-Minerva`** · commit `a9a8c73` (#180)
 
 > **Como ler:** cada linha indica a **tag ou marco**, o **commit** (hash curto Git) e o **contador** (`#N` = posição na história linear do ramo `main`, desde o primeiro commit). Links GitHub usam o repositório configurado em `DOCS_GITHUB_REPOSITORY`.
 >
@@ -12,6 +12,7 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
+| **2.3.7** | `20260521-Minerva` → `a9a8c73` | **180** | 21/05/2026 | Consultoria: saldo por aba, VAAF FUNDEB/diagnóstico, gráficos R$, overlay de carregamento; PDF, auth e rodapé. |
 | **2.3.6** | `20260522-Janus` → `9350e9d` | **174** | 22/05/2026 | RX: progresso e «em falta» (turmas + matrículas); legenda visual por coluna; fix filtro matrícula ativa e sintaxe analytics. |
 | **2.3.5** | `17d3d6e` | **168** | mai/2026 | RX: meta retroativa (+5%/salto), semáforo por município, legenda de colunas; consultas resilientes (conexão ≠ erro SQL). |
 | **2.3.4** | `ccc5ad4` | **166** | mai/2026 | Inclusão: catálogos MEC+i-Educar completos (NEE e raça, zeros visíveis); totalizador `kpi_total` nos gráficos de alunos; fix URL i-Educar no mapa Início. |
@@ -36,6 +37,20 @@
 ---
 
 ## Detalhe por versão
+
+### v2.3.7 — `20260521-Minerva` → `a9a8c73` (#180, 21/05/2026)
+
+**Minerva** (mitologia romana): análise e estratégia — alinhada ao diagnóstico municipal, VAAF e leitura financeira da consultoria.
+
+| Tema | Melhoria |
+|------|----------|
+| **Saldo por aba** | `AnalyticsTabImpactBuilder`: remove impacto em abas sem saldo útil; Matrículas com KPIs e VAAF municipal; FUNDEB mantém saldo. |
+| **FUNDEB** | `FundebResourceProjection` com `vaafCalculo` real; gráficos em BRL; perfil sem bloco legal duplicado. |
+| **Diagnóstico** | `MunicipalityHealthRepository`: perda/ganho em linha, pendências informativas, VAAF/previsão da projeção. |
+| **Carregamento** | `dataLoading.js` + overlay em app/auth; inferência admin/sync/auth; lazy tabs analytics. |
+| **Inclusão / repasses** | Catálogo Educacenso; repasse observado em R$. |
+
+Inclui desde **2.3.6**: PDF analítico, rodapé logado, UI auth. Notas: [RELEASE_20260521_MINERVA.md](RELEASE_20260521_MINERVA.md).
 
 ### v1.0.0 — `8507c9a` (#1)
 
@@ -142,13 +157,14 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 
 | Tag | Commit | # | Notas |
 |-----|--------|---|--------|
+| **`20260521-Minerva`** | `a9a8c73` | 180 | Release **2.3.7** (consultoria VAAF, saldo, overlay). |
 | **`20260522-Janus`** | `9350e9d` | 174 | Release **2.3.6** (formato `YYYYMMDD-nome`). |
 | `v2.1.0` | `c3ec8b9` | 66 | Geografia Censo INEP. |
 | `v2.0.1` | `683510b` | 28 | Inclusão cor/raça. |
 
 *(Não existe tag `v1.0.0`; o marco inicial é o commit `8507c9a` #1.)*
 
-**Contador total em `main`:** `git rev-list --count main` → **175** (maio/2026). A tag **`20260522-Janus`** aponta para **`9350e9d`** (#174).
+**Contador total em `main`:** `git rev-list --count main` → **181** (maio/2026, após documentação 2.3.7). A tag **`20260521-Minerva`** aponta para **`a9a8c73`** (#180).
 
 ---
 
@@ -159,9 +175,9 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 - Ao publicar: actualizar tabela **Linha do tempo**, **Tags Git**, `README.md`, `STATUS_PROJETO.md` e `product.version`.
 
 ```bash
-git tag -a 20260522-Janus 9350e9d -m "2.3.6 — RX progresso, em falta e legenda visual (Janus)"
-git push origin 20260522-Janus
-gh release create 20260522-Janus --title "20260522-Janus (2.3.6)" --notes-file docs/RELEASE_20260522_JANUS.md
+git tag -a 20260521-Minerva a9a8c73 -m "2.3.7 — VAAF, saldo consultoria, overlay e diagnóstico (Minerva)"
+git push origin 20260521-Minerva
+gh release create 20260521-Minerva --title "20260521-Minerva (2.3.7)" --notes-file docs/RELEASE_20260521_MINERVA.md
 ```
 
 ---
