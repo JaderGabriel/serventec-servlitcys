@@ -192,7 +192,7 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 
 *(Não existe tag `v1.0.0`; o marco inicial é o commit `8507c9a` #1.)*
 
-**Contador total em `main`:** `git rev-list --count main` → **183** (maio/2026, após documentação 2.3.8). A tag **`20260521-Mercury`** aponta para **`3c935ca`** (#182).
+**Contador total em `main`:** `git rev-list --count main` → **185** (maio/2026, após patch 2.3.8.1). A tag **`20260521-Mercury`** continua em **`3c935ca`** (#182); o patch visual está em **`bd9d228`** (#184).
 
 ---
 
