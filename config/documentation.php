@@ -24,8 +24,8 @@ return [
     'product' => [
         'version' => '2.3.8.5',
         'release_tag' => '20260521-Mercury',
-        'commit_short' => 'COMMIT_HASH',
-        'commit_number' => 0,
+        'commit_short' => 'a2566aa',
+        'commit_number' => 195,
         'revision_date' => '2026-05-21',
         'in_production' => true,
         'production_label' => 'Em produção',

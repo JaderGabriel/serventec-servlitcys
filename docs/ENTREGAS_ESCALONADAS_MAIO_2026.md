@@ -34,7 +34,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 26 | `a736e43` | Patch **2.3.8.3**: performance login, Redis, `performance:check` |
 | 27 | `4833160` | Patch **2.3.8.4**: mapa capacidade/vagas, saldo Matrículas/VAAF, Inclusão, predis |
 | 28 | `7c0297c` | Doc: estudo integrações setor público (sem bump de versão) |
-| 29 | `COMMIT_HASH` | Patch **2.3.8.5** (**em produção**): mapa capacidade, Matrículas saldo, NEE unificado |
+| 29 | `a2566aa` | Patch **2.3.8.5** (**em produção**): mapa capacidade, Matrículas saldo, NEE unificado |
 
 ---
 
@@ -275,7 +275,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 ## 14. Patch consultoria 2.3.8.5 — **em produção**
 
-**Versão semântica:** `2.3.8.5` · **tag deploy:** `20260521-Mercury` (inalterada) · **commit:** `COMMIT_HASH` (#COMMIT_N)
+**Versão semântica:** `2.3.8.5` · **tag deploy:** `20260521-Mercury` (inalterada) · **commit:** `a2566aa` (#195)
 
 | Área | Ficheiros |
 |------|-----------|

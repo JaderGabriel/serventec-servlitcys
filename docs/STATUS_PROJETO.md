@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **2.3.8.5** · release `20260521-Mercury` · commit `COMMIT_HASH` (#COMMIT_N) · **Ramo:** `main` · **Última revisão:** 21/05/2026
+**Versão em produção:** **2.3.8.5** · release `20260521-Mercury` · commit `a2566aa` (#195) · **Ramo:** `main` · **Última revisão:** 21/05/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 

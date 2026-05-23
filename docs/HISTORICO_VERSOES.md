@@ -1,6 +1,6 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`2.3.8.5`** · tag de deploy **`20260521-Mercury`** (sem nova tag Git) · commit **`COMMIT_HASH`** (#**COMMIT_N**)
+> **▶ EM PRODUÇÃO (`main`):** versão **`2.3.8.5`** · tag de deploy **`20260521-Mercury`** (sem nova tag Git) · commit **`a2566aa`** (#**195**)
 
 | Indicador | Valor actual |
 |-----------|----------------|
@@ -20,7 +20,7 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 2.3.8.5** | `COMMIT_HASH` | **COMMIT_N** | 21/05/2026 | **Produção:** mapa capacidade/vagas (fallback); Matrículas cartões saldo + fórmula VAAF; NEE dataset unificado (grupo + catálogo); alias deficiência. |
+| **▶ 2.3.8.5** | `a2566aa` | **195** | 21/05/2026 | **Produção:** mapa capacidade/vagas (fallback); Matrículas cartões saldo + fórmula VAAF; NEE dataset unificado (grupo + catálogo); alias deficiência. |
 | 2.3.8.4 | `4833160` | **191** | 21/05/2026 | Mapa escolas: capacidade/vagas; Matrículas saldo/VAAF (prévia 4.500); Inclusão catálogo/recorte; Redis predis (`performance:check`). |
 | **2.3.8.3** | `a736e43` | **188** | 21/05/2026 | Performance: login mais rápido (audit defer, Pulse em auth); cache city_ids/SMTP; Redis (`performance:check`); índice `admin_user_logs`. |
 | **2.3.8.2** | `30bc32d` | **186** | 21/05/2026 | Patch visual: `serv-page-shell` (perfil/usuários); contato RX empilhado (nome completo). |
@@ -52,7 +52,7 @@
 
 ## Detalhe por versão
 
-### v2.3.8.5 — `COMMIT_HASH` (#COMMIT_N, 21/05/2026) — **em produção**
+### v2.3.8.5 — `a2566aa` (#195, 21/05/2026) — **em produção**
 
 Patch de consultoria (sem nova tag Git). Tag de deploy continua **`20260521-Mercury`**.
 
@@ -242,7 +242,7 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 
 *(Não existe tag `v1.0.0`; o marco inicial é o commit `8507c9a` #1.)*
 
-**Contador total em `main`:** `git rev-list --count main` → **COMMIT_TOTAL** (maio/2026, após patch **2.3.8.5** em produção). A tag **`20260521-Mercury`** continua em **`3c935ca`** (#182); último patch analytics **`COMMIT_HASH`** (#**COMMIT_N**).
+**Contador total em `main`:** `git rev-list --count main` → **195** (maio/2026, após patch **2.3.8.5** em produção). A tag **`20260521-Mercury`** continua em **`3c935ca`** (#182); último patch analytics **`a2566aa`** (#**195**).
 
 ---
 
