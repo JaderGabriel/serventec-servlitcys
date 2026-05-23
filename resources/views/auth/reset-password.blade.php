@@ -1,6 +1,6 @@
 <x-auth-layout title="Nova senha">
     <div class="mb-6 text-center">
-        <h1 class="font-display text-2xl font-bold text-white">Definir nova senha</h1>
+        <h1 class="serv-auth-title">{{ __('Definir nova senha') }}</h1>
         <p class="mt-2 text-sm text-slate-400">Escolha uma senha forte para sua conta.</p>
     </div>
 

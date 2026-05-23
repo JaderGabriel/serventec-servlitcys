@@ -46,7 +46,7 @@
                 <span class="serv-home-kpi__icon serv-home-kpi__icon--violet" aria-hidden="true">
                     <x-ui.icon name="users" class="h-5 w-5" />
                 </span>
-                <p class="serv-home-kpi__label">{{ __('Usuárioes ativos') }}</p>
+                <p class="serv-home-kpi__label">{{ __('Usuários ativos') }}</p>
             </div>
             <p class="serv-home-kpi__value">{{ number_format($stats['users_active']) }}</p>
             <p class="serv-home-kpi__hint">{{ __(':total contas registadas', ['total' => number_format($stats['users'])]) }}</p>

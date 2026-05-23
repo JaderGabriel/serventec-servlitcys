@@ -18,7 +18,7 @@
                 <span class="serv-home-action-group__dot serv-home-action-group__dot--teal" aria-hidden="true"></span>
                 {{ __('Consultoria e relatórios') }}
             </p>
-            <div class="serv-home-action-grid serv-home-action-grid--featured">
+            <div class="serv-home-action-grid--half">
                 <a href="{{ route('dashboard.rx') }}" class="serv-home-action group">
                     <span class="serv-home-action__icon serv-home-action__icon--teal" aria-hidden="true">
                         <x-ui.icon name="clipboard-document-list" class="h-6 w-6" />
@@ -113,7 +113,7 @@
                         </span>
                         <span class="serv-home-action__ref">{{ __('Saída do fluxo: Filas') }}</span>
                     </span>
-                    <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
+                    <x-ui.icon name="chevron-right" class="serv-home-action__chevron h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
                 </a>
                 <a href="{{ route('pulse') }}" class="serv-home-action group">
                     <span class="serv-home-action__icon serv-home-action__icon--sky" aria-hidden="true">
@@ -124,7 +124,7 @@
                         <span class="serv-home-action__desc">{{ __('Pedidos lentos, erros, filas e uso da aplicação em tempo real.') }}</span>
                         <span class="serv-home-action__ref">{{ __('Hub :app no fluxo', ['app' => config('app.name')]) }}</span>
                     </span>
-                    <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
+                    <x-ui.icon name="chevron-right" class="serv-home-action__chevron h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
                 </a>
                 <a href="{{ route('admin.geo-sync.index') }}" class="serv-home-action group">
                     <span class="serv-home-action__icon serv-home-action__icon--sky" aria-hidden="true">
@@ -134,18 +134,18 @@
                         <span class="serv-home-action__title">{{ __('Sincronização geográfica') }}</span>
                         <span class="serv-home-action__desc">{{ __('Coordenadas i-Educar, INEP e microdados para o mapa.') }}</span>
                     </span>
-                    <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
+                    <x-ui.icon name="chevron-right" class="serv-home-action__chevron h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
                 </a>
                 <a href="{{ route('users.index') }}" class="serv-home-action group">
                     <span class="serv-home-action__icon serv-home-action__icon--slate" aria-hidden="true">
                         <x-ui.icon name="users" class="h-6 w-6" />
                     </span>
                     <span class="serv-home-action__body">
-                        <span class="serv-home-action__title">{{ __('Usuárioes') }}</span>
+                        <span class="serv-home-action__title">{{ __('Usuários') }}</span>
                         <span class="serv-home-action__desc">{{ __('Contas, perfis, municípios associados e sessões.') }}</span>
                         <span class="serv-home-action__ref">{{ __('Gestão de equipe') }}</span>
                     </span>
-                    <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
+                    <x-ui.icon name="chevron-right" class="serv-home-action__chevron h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
                 </a>
             </div>
         </div>

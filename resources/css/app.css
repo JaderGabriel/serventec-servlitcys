@@ -47,6 +47,79 @@
         @apply font-medium text-teal-700 hover:text-teal-900 hover:underline dark:text-teal-400 dark:hover:text-teal-300;
     }
 
+    /* Autenticação (login) — contraste reforçado no modo claro */
+    .serv-auth-bg {
+        @apply bg-slate-100 dark:bg-slate-950;
+    }
+
+    .serv-auth-bg__gradient {
+        @apply absolute inset-0 bg-gradient-to-br from-teal-100/80 via-white to-indigo-100/70
+            dark:from-indigo-950 dark:via-slate-950 dark:to-cyan-950;
+    }
+
+    .serv-auth-bg__grid {
+        @apply absolute inset-0 bg-grid-edu opacity-25 dark:opacity-60;
+    }
+
+    .serv-auth-header {
+        @apply border-b border-slate-300/90 bg-white/95 shadow-sm backdrop-blur-xl
+            dark:border-white/10 dark:bg-slate-950/50;
+    }
+
+    .serv-auth-card {
+        @apply rounded-2xl border-2 border-slate-300/90 bg-white p-8 shadow-2xl shadow-slate-400/15 ring-1 ring-teal-600/10
+            dark:border-white/10 dark:bg-slate-900/80 dark:shadow-2xl dark:ring-teal-500/10;
+    }
+
+    .serv-auth-brand-mark {
+        @apply flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-600 to-indigo-700
+            shadow-xl shadow-teal-900/25 ring-2 ring-white ring-offset-2 ring-offset-slate-100
+            dark:from-cyan-500 dark:to-indigo-600 dark:shadow-indigo-900/40 dark:ring-offset-slate-950;
+    }
+
+    .serv-auth-brand-mark--footer {
+        @apply h-14 w-14 rounded-xl shadow-lg ring-1 ring-white/80;
+    }
+
+    .serv-auth-footer {
+        @apply border-t border-slate-300/90 bg-white/95 py-8 backdrop-blur-xl
+            dark:border-white/10 dark:bg-slate-950/80;
+    }
+
+    .serv-auth-footer__nav-link {
+        @apply inline-flex items-center gap-2 rounded-lg border-2 border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800
+            shadow-sm transition hover:border-teal-500 hover:bg-teal-50 hover:text-teal-900
+            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600
+            dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-100 dark:hover:border-teal-500 dark:hover:bg-teal-950/50;
+    }
+
+    .serv-auth-footer__nav-link--rx {
+        @apply border-indigo-300/90 text-indigo-950 hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-950
+            focus-visible:outline-indigo-600
+            dark:border-indigo-700 dark:text-indigo-100 dark:hover:border-indigo-500 dark:hover:bg-indigo-950/50;
+    }
+
+    .serv-auth-title {
+        @apply font-display text-2xl font-bold text-slate-900 dark:text-white;
+    }
+
+    .serv-auth-subtitle {
+        @apply mt-2 text-sm font-medium text-slate-600 dark:text-slate-400;
+    }
+
+    .serv-auth-label {
+        @apply text-sm font-semibold text-slate-800 dark:text-slate-200;
+    }
+
+    .serv-auth-muted {
+        @apply text-sm text-slate-600 dark:text-slate-400;
+    }
+
+    .serv-auth-link {
+        @apply text-sm font-semibold text-teal-800 underline decoration-teal-600/50 underline-offset-2
+            hover:text-teal-950 dark:text-cyan-300 dark:hover:text-cyan-200;
+    }
+
     .serv-inline-tab-link {
         @apply text-teal-700 dark:text-teal-400 hover:underline font-medium text-inherit;
     }
@@ -1022,8 +1095,26 @@
         @apply grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3;
     }
 
-    .serv-home-action-grid--featured {
-        @apply lg:grid-cols-1;
+    /** Consultoria e relatórios: 2 botões na mesma linha (50% / 50%). */
+    .serv-home-action-grid--half {
+        @apply grid grid-cols-2 gap-3;
+    }
+
+    /** Operação da plataforma: 4 botões na mesma linha (25% cada a partir de sm). */
+    .serv-home-action-grid--quarter {
+        @apply grid grid-cols-2 gap-3 sm:grid-cols-4;
+    }
+
+    .serv-home-action-grid--quarter .serv-home-action {
+        @apply gap-2 p-3 sm:flex-col sm:items-stretch sm:gap-2.5;
+    }
+
+    .serv-home-action-grid--quarter .serv-home-action__icon {
+        @apply h-10 w-10 sm:mx-auto;
+    }
+
+    .serv-home-action-grid--quarter .serv-home-action__chevron {
+        @apply sm:hidden;
     }
 
     .serv-home-action-grid--compact {
