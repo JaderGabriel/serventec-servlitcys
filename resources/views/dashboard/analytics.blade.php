@@ -82,35 +82,6 @@
                     >
                         <x-slot name="filtersExtras">
                             <input type="hidden" name="tab" :value="tab" />
-                            @php
-                                $inclusionScope = 'all';
-                                if ($filters->inclusionSomenteNee()) {
-                                    $inclusionScope = 'nee';
-                                } elseif ($filters->inclusionSomenteInconsistencias()) {
-                                    $inclusionScope = 'inconsistencias';
-                                }
-                            @endphp
-                            <div
-                                x-show="tab === 'inclusion'"
-                                x-cloak
-                                class="mt-3 rounded-md border border-violet-200/80 dark:border-violet-800/50 bg-violet-50/40 dark:bg-violet-950/25 px-3 py-3"
-                            >
-                                <label for="inclusion_scope" class="block text-xs font-semibold text-violet-900 dark:text-violet-100">
-                                    {{ __('Inclusão — recorte de matrículas') }}
-                                </label>
-                                <p class="mt-0.5 text-[11px] text-violet-800/90 dark:text-violet-200/80 leading-relaxed">
-                                    {{ __('Opcional. Afeta gráficos e tabelas de NEE; blocos de equidade, raça e recurso de prova mantêm a rede no filtro.') }}
-                                </p>
-                                <select
-                                    id="inclusion_scope"
-                                    name="inclusion_scope"
-                                    class="mt-2 block w-full max-w-md rounded-md border-violet-200 dark:border-violet-700 dark:bg-gray-900 text-sm shadow-sm focus:border-violet-500 focus:ring-violet-500"
-                                >
-                                    <option value="all" @selected($inclusionScope === 'all')>{{ __('Todas as matrículas do filtro') }}</option>
-                                    <option value="nee" @selected($inclusionScope === 'nee')>{{ __('Só alunos com NEE cadastrado') }}</option>
-                                    <option value="inconsistencias" @selected($inclusionScope === 'inconsistencias')>{{ __('Só inconsistências recurso × NEE') }}</option>
-                                </select>
-                            </div>
                         </x-slot>
                     </x-dashboard.ieducar-filter-bar>
 

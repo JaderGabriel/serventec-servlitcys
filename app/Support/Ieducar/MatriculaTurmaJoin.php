@@ -232,6 +232,61 @@ final class MatriculaTurmaJoin
     }
 
     /**
+     * Ano letivo em consultas que partem só da turma (ex.: capacidade no mapa).
+     * Alinha com {@see applyYearFilter}: turma.ano OU matrícula ativa no ano quando ambas existirem.
+     */
+    public static function applyYearFilterOnTurmaQuery(
+        Builder $q,
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        string $turmaAlias = 't',
+    ): void {
+        $yearVal = $filters->yearFilterValue();
+        if ($yearVal === null) {
+            return;
+        }
+
+        $cols = self::turmaFilterColumns($db, $city);
+        $turmaYear = $cols['year'];
+        $mAno = self::matriculaAnoColumn($db, $city);
+        $grammar = $db->getQueryGrammar();
+        $tId = (string) config('ieducar.columns.turma.id');
+        $tIdSql = $grammar->wrap($turmaAlias).'.'.$grammar->wrap($tId);
+
+        if ($turmaYear !== '' && $mAno !== null) {
+            $tYear = $grammar->wrap($turmaAlias).'.'.$grammar->wrap($turmaYear);
+            $q->where(function (Builder $w) use ($db, $city, $yearVal, $tYear, $tIdSql, $mAno): void {
+                $w->whereRaw($tYear.' = ?', [$yearVal]);
+                $w->orWhereExists(function (Builder $ex) use ($db, $city, $yearVal, $tIdSql, $mAno): void {
+                    $mat = IeducarSchema::resolveTable('matricula', $city);
+                    $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+                    $mId = (string) config('ieducar.columns.matricula.id');
+                    $ex->from($mat.' as m_yf');
+                    MatriculaAtivoFilter::apply($ex, $db, 'm_yf.'.$mAtivo, $city);
+                    $ex->where('m_yf.'.$mAno, $yearVal);
+                    if (self::usePivotTable($db, $city)) {
+                        $mt = IeducarSchema::resolveTable('matricula_turma', $city);
+                        $mtMat = (string) config('ieducar.columns.matricula_turma.matricula');
+                        $mtTurma = (string) config('ieducar.columns.matricula_turma.turma');
+                        $ex->join($mt.' as mt_yf', 'm_yf.'.$mId, '=', 'mt_yf.'.$mtMat)
+                            ->whereColumn('mt_yf.'.$mtTurma, '=', $tIdSql);
+                    } else {
+                        $mTurma = (string) config('ieducar.columns.matricula.turma');
+                        $ex->whereColumn('m_yf.'.$mTurma, '=', $tIdSql);
+                    }
+                });
+            });
+
+            return;
+        }
+
+        if ($turmaYear !== '') {
+            $q->where($turmaAlias.'.'.$turmaYear, $yearVal);
+        }
+    }
+
+    /**
      * Junta matricula (alias m) à turma quando ano/escola/curso/turno exigem recorte por turma.
      */
     public static function applyTurmaFiltersFromMatricula(Builder $q, Connection $db, City $city, IeducarFilterState $filters): void

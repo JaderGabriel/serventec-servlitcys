@@ -42,7 +42,8 @@ final class DiscrepanciesFundingImpactTest extends TestCase
         $this->assertEqualsWithDelta(75_000.0, $result['perda_anual'], 0.01);
         $this->assertEqualsWithDelta(75_000.0, $result['ganho_potencial_anual'], 0.01);
         $this->assertEqualsWithDelta(7500.0, $result['valor_unitario'], 0.01);
-        $this->assertStringContainsString('VAAF', $result['formula']);
+        $this->assertStringContainsString('aluno/ano', $result['formula']);
+        $this->assertStringContainsString('5.000', $result['formula']);
     }
 
     /**

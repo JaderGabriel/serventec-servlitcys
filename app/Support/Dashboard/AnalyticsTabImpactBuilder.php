@@ -3,6 +3,7 @@
 namespace App\Support\Dashboard;
 
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
+use App\Support\Ieducar\FundebReferenceDisplay;
 
 /**
  * Faixa visual no topo de cada aba (até Censo): impacto no saldo indicativo + status municipal no filtro.
@@ -438,7 +439,7 @@ final class AnalyticsTabImpactBuilder
     }
 
     /**
-     * @param  array{perda: float, ganho: float, liquido: float, footnote: string, info_only?: bool}  $raw
+     * @param  array{perda: float, ganho: float, liquido: float, footnote: string, info_only?: bool, fundeb_lines?: list<string>}  $raw
      * @param  array{share_label: ?string, share_value: ?string}  $tabStatus
      * @return array<string, mixed>
      */
@@ -593,6 +594,7 @@ final class AnalyticsTabImpactBuilder
                 'perda' => 0.0,
                 'ganho' => 0.0,
                 'liquido' => 0.0,
+                'info_only' => $fundebLines !== [],
                 'footnote' => __(
                     'Nenhuma discrepância de matrícula com peso financeiro no recorte. :n matrícula(s) activas — base FUNDEB indicativa abaixo; não é repasse FNDE.',
                     ['n' => number_format($mat, 0, ',', '.')]
@@ -695,28 +697,9 @@ final class AnalyticsTabImpactBuilder
         }
 
         $funding = is_array($ctx['funding_reference'] ?? null) ? $ctx['funding_reference'] : null;
-        if ($funding === null || ! isset($funding['vaa_anual'])) {
-            return [];
-        }
+        $line = FundebReferenceDisplay::linhaMatriculasVaafBase($matriculas, $funding);
 
-        $vaaf = (float) $funding['vaa_anual'];
-        if ($vaaf <= 0) {
-            return [];
-        }
-
-        $base = round($matriculas * $vaaf, 2);
-
-        return [
-            __(
-                ':n matrícula(s) × :vaaf (VAAF ref., :fonte) ≈ :base/ano de base FUNDEB indicativa no filtro.',
-                [
-                    'n' => number_format($matriculas, 0, ',', '.'),
-                    'vaaf' => (string) ($funding['vaa_label'] ?? DiscrepanciesFundingImpact::formatBrl($vaaf)),
-                    'fonte' => (string) ($funding['vaa_fonte_label'] ?? __('referência municipal')),
-                    'base' => DiscrepanciesFundingImpact::formatBrl($base),
-                ]
-            ),
-        ];
+        return $line !== null ? [$line] : [];
     }
 
     /**
@@ -758,15 +741,17 @@ final class AnalyticsTabImpactBuilder
 
         if (($fundebNee['available'] ?? false) && (int) ($fundebNee['matriculas_nee'] ?? 0) > 0) {
             $nNee = (int) $fundebNee['matriculas_nee'];
-            $fundebLines[] = __(
-                ':n matrícula(s) NEE × :vaaf (VAAF ref., :fonte) = :base/ano de base FUNDEB indicativa por aluno.',
-                [
-                    'n' => number_format($nNee, 0, ',', '.'),
-                    'vaaf' => (string) ($fundebNee['vaaf_fmt'] ?? '—'),
-                    'fonte' => (string) ($fundebNee['vaaf_fonte'] ?? __('configuração municipal')),
-                    'base' => (string) ($fundebNee['base_anual_fmt'] ?? '—'),
-                ]
-            );
+            $fundingNee = [
+                'vaa_anual' => (float) ($fundebNee['vaaf'] ?? 0),
+                'vaa_label' => (string) ($fundebNee['vaaf_fmt'] ?? ''),
+                'vaa_fonte_label' => (string) ($fundebNee['vaaf_fonte'] ?? ''),
+                'vaa_fonte' => (string) ($fundebNee['vaaf_origem'] ?? ''),
+                'vaa_municipal_importado' => (bool) ($fundebNee['vaa_municipal_importado'] ?? (($fundebNee['vaaf_origem'] ?? '') === 'municipal')),
+            ];
+            $lineNee = FundebReferenceDisplay::linhaMatriculasVaafBase($nNee, $fundingNee, ['nee' => true]);
+            if ($lineNee !== null) {
+                $fundebLines[] = $lineNee;
+            }
             if ((float) ($fundebNee['adicional_anual'] ?? 0) > 0) {
                 $fundebLines[] = __(
                     'Adicional indicativo de educação especial (peso :p × VAAF, eixo VAAR-inclusão): ≈ :adic/ano — não é acréscimo automático no repasse; serve para comparar o peso da matrícula NEE face à matrícula regular.',

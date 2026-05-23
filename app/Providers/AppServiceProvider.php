@@ -20,7 +20,11 @@ use App\Observers\CityFundebSyncObserver;
 use App\Policies\AnalyticsReportExportPolicy;
 use App\Policies\CityPolicy;
 use App\Policies\UserPolicy;
+use App\Services\CityDataConnection;
+use App\Services\Ieducar\IeducarCityDataService;
 use App\Services\MailConfigService;
+use App\Support\Admin\WeeklyMassSyncCheckpoint;
+use App\Support\Performance\RedisProbe;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
@@ -37,24 +41,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Se o ambiente estiver configurado com `REDIS_CLIENT=phpredis` mas a extensão
-        // não estiver disponível, o Laravel falha com "Class \"Redis\" not found".
-        // Fazemos fallback para Predis (via composer) para manter a app funcional.
-        if (config('database.redis.client') === 'phpredis' && ! class_exists(\Redis::class)) {
-            config(['database.redis.client' => 'predis']);
-        }
+        RedisProbe::applyClientConfig();
 
-        if (! class_exists(\App\Support\Admin\WeeklyMassSyncCheckpoint::class, false)) {
+        if (! class_exists(WeeklyMassSyncCheckpoint::class, false)) {
             class_alias(
                 \App\Support\AdminSync\WeeklyMassSyncCheckpoint::class,
-                \App\Support\Admin\WeeklyMassSyncCheckpoint::class,
+                WeeklyMassSyncCheckpoint::class,
             );
         }
 
-        if (! class_exists(\App\Services\Ieducar\IeducarCityDataService::class, false)) {
+        if (! class_exists(IeducarCityDataService::class, false)) {
             class_alias(
-                \App\Services\CityDataConnection::class,
-                \App\Services\Ieducar\IeducarCityDataService::class,
+                CityDataConnection::class,
+                IeducarCityDataService::class,
             );
         }
     }

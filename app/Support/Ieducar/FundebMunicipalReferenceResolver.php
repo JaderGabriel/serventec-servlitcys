@@ -4,10 +4,10 @@ namespace App\Support\Ieducar;
 
 use App\Models\City;
 use App\Models\FundebMunicipioReference;
+use App\Services\Fundeb\FundebFndeEstadoVaafService;
 use App\Services\Fundeb\FundebFndeReceitaCsvService;
 use App\Services\Fundeb\FundebMatriculasByYearService;
 use App\Support\Dashboard\IeducarFilterState;
-use App\Services\Fundeb\FundebFndeEstadoVaafService;
 use App\Support\Fundeb\FundebReferenceSource;
 use Illuminate\Support\Collection;
 
@@ -295,9 +295,15 @@ final class FundebMunicipalReferenceResolver
         }
 
         if ($vaaf > 0 && (bool) config('ieducar.fundeb.open_data.national_floor.enabled', true)) {
+            $vaafFmt = DiscrepanciesFundingImpact::formatBrl($vaaf);
             $fonteDetalhe = is_array($byYear) && isset($byYear[$resolvedAno])
-                ? __('Prévia federal (IEDUCAR_FUNDEB_NATIONAL_VAAF_:ano)', ['ano' => (string) $resolvedAno])
-                : __('Prévia federal (IEDUCAR_DISC_VAA_REFERENCIA)');
+                ? __('Prévia federal :valor/aluno/ano (IEDUCAR_FUNDEB_NATIONAL_VAAF_:ano)', [
+                    'valor' => $vaafFmt,
+                    'ano' => (string) $resolvedAno,
+                ])
+                : __('Prévia federal :valor/aluno/ano (piso em IEDUCAR_DISC_VAA_REFERENCIA; padrão R$ 4.500)', [
+                    'valor' => $vaafFmt,
+                ]);
 
             return [
                 'vaaf' => $vaaf,
@@ -456,7 +462,9 @@ final class FundebMunicipalReferenceResolver
             null,
             null,
             self::FONTE_CONFIG_GLOBAL,
-            __('Referência configurável (IEDUCAR_DISC_VAA_REFERENCIA)'),
+            __('Referência global :valor/aluno/ano (IEDUCAR_DISC_VAA_REFERENCIA)', [
+                'valor' => DiscrepanciesFundingImpact::formatBrl($vaa),
+            ]),
             null,
             null,
             null,

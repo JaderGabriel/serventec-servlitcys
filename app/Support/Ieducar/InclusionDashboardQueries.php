@@ -5,7 +5,6 @@ namespace App\Support\Ieducar;
 use App\Models\City;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
-use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
@@ -160,6 +159,7 @@ final class InclusionDashboardQueries
             'vaaf_fmt' => $fmt($vaaf),
             'vaaf_fonte' => (string) ($calc['fonte_label'] ?? ''),
             'vaaf_origem' => (string) ($calc['origem'] ?? ''),
+            'vaa_municipal_importado' => ($calc['origem'] ?? '') === 'municipal',
             'base_anual' => $baseAnual,
             'base_anual_fmt' => $fmt($baseAnual),
             'peso_educacao_especial' => $pesoEsp,
@@ -327,27 +327,27 @@ final class InclusionDashboardQueries
 
         $g3 = self::chartTresGruposDeficienciaSindromeNe($db, $city, $filters, $den);
         if ($g3 !== null) {
-            $out[] = $g3;
+            $out[] = self::withChartId($g3, 'nee_grupo');
         }
 
         $catalogoCompleto = self::chartNeeCatalogoCompletoMecIeducar($db, $city, $filters, $den);
         if ($catalogoCompleto !== null) {
-            $out[] = $catalogoCompleto;
+            $out[] = self::withChartId($catalogoCompleto, 'nee_catalogo_mec');
         }
 
         // Total de matrículas NEE por unidade (barras simples) — em seguida ao resumo por grupos.
         $porEscolaTotal = self::chartNeeMatriculasPorEscolaTop($db, $city, $filters, $den);
         if ($porEscolaTotal !== null) {
-            $out[] = $porEscolaTotal;
+            $out[] = self::withChartId($porEscolaTotal, 'nee_escola_top');
         }
         $det = self::chartMatriculasPorNomeDeficiencia($db, $city, $filters, $den);
         if ($det !== null) {
-            $out[] = $det;
+            $out[] = self::withChartId($det, 'nee_por_designacao');
         }
         // Detalhe por tipo de deficiência no catálogo (empilhado), além do total acima.
         $porEscolaStacked = self::chartNeeDeficienciasPorEscolaStacked($db, $city, $filters, $den);
         if ($porEscolaStacked !== null) {
-            $out[] = $porEscolaStacked;
+            $out[] = self::withChartId($porEscolaStacked, 'nee_escola_empilhado');
         }
 
         return $out;
@@ -378,57 +378,24 @@ final class InclusionDashboardQueries
                 static fn ($row) => (string) ($row->def_id ?? ''),
             );
 
-            $labels = [];
-            $values = [];
-            $seenNorm = [];
-            $seenIds = [];
-
-            foreach ($rows as $row) {
-                $nm = trim((string) ($row->deficiencia ?? ''));
-                if ($nm === '') {
-                    $nm = (string) __('Não informado');
-                }
-                $t = (int) ($row->total ?? 0);
-                if ($t <= 0) {
-                    continue;
-                }
-                $norm = InclusionEducacensoCatalog::normalizeLabel($nm);
-                $defId = trim((string) ($row->def_id ?? ''));
-                if ($norm !== '' && isset($seenNorm[$norm])) {
-                    continue;
-                }
-                if ($defId !== '' && $defId !== '0' && isset($seenIds[$defId])) {
-                    continue;
-                }
-                if ($norm !== '') {
-                    $seenNorm[$norm] = true;
-                }
-                if ($defId !== '' && $defId !== '0') {
-                    $seenIds[$defId] = true;
-                }
-                $labels[] = $nm;
-                $values[] = (float) $t;
+            $catalogRows = [];
+            foreach ($entries as $entry) {
+                $catalogRows[] = [
+                    'label' => InclusionEducacensoCatalog::deficienciaChartLabel($entry),
+                    'value' => (float) InclusionEducacensoCatalog::countForDeficienciaEntry($entry, $maps),
+                    'kind' => (string) ($entry['kind'] ?? InclusionEducacensoCatalog::classifyDeficienciaKind($entry)),
+                ];
             }
 
-            foreach ($entries as $entry) {
-                $nm = (string) ($entry['label'] ?? '');
-                $norm = (string) ($entry['norm'] ?? InclusionEducacensoCatalog::normalizeLabel($nm));
-                $entryId = $entry['id'] ?? null;
-                if ($entryId !== null && $entryId !== '' && isset($seenIds[(string) $entryId])) {
-                    continue;
-                }
-                if ($norm !== '' && isset($seenNorm[$norm])) {
-                    continue;
-                }
-                $t = InclusionEducacensoCatalog::countForDeficienciaEntry($entry, $maps);
-                if ($norm !== '') {
-                    $seenNorm[$norm] = true;
-                }
-                if ($entryId !== null && $entryId !== '') {
-                    $seenIds[(string) $entryId] = true;
-                }
-                $labels[] = $nm;
-                $values[] = (float) $t;
+            usort(
+                $catalogRows,
+                static fn (array $a, array $b): int => $b['value'] <=> $a['value']
+                    ?: strcmp((string) $a['label'], (string) $b['label'])
+            );
+
+            $series = InclusionEducacensoCatalog::neeCatalogChartSeries($catalogRows);
+            if ($series['labels'] === []) {
+                return null;
             }
 
             $den = $denominator ?? MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
@@ -436,16 +403,37 @@ final class InclusionDashboardQueries
             $chart = ChartPayload::barHorizontal(
                 __('NEE — catálogo completo MEC e i-Educar (todas as opções)'),
                 __('Matrículas distintas'),
-                $labels,
-                $values
+                $series['labels'],
+                $series['values']
             );
+            $chart['datasets'][0]['backgroundColor'] = $series['colors'];
+            $chart['datasets'][0]['borderColor'] = $series['colors'];
             $chart['subtitle'] = __(
-                'Todas as designações previstas no Educacenso/MEC e no catálogo cadastro.deficiencia da base, incluindo opções com zero matrículas no filtro. Uma matrícula pode contar em mais do que uma barra.'
+                'Barras com sufixo «INEP/Censo» seguem o Educacenso (campo deficiência). «Complementar» são tipos frequentes no i-Educar que devem ser mapeados para um código oficial na exportação. «Cadastro i-Educar» são designações só na base local. Valor zero significa nenhuma matrícula com aquele vínculo no ano/filtro — o resumo por grupo pode ser > 0 quando há NEE sem designação alinhada ao catálogo.'
+            );
+            $chart['footnote'] = __(
+                'Legenda de cores: índigo = INEP/Censo · violeta = complementar (adaptável) · âmbar = só i-Educar.'
             );
             $chart['options'] = array_merge(
                 is_array($chart['options'] ?? null) ? $chart['options'] : [],
                 ['panelHeight' => 'xxl', 'skipHorizontalBarAutoHeight' => false]
             );
+
+            if (array_sum($series['values']) <= 0.0) {
+                $grupo = self::chartTresGruposDeficienciaSindromeNe($db, $city, $filters, $den);
+                $grupoTotal = 0.0;
+                if (is_array($grupo['datasets'][0]['data'] ?? null)) {
+                    foreach ($grupo['datasets'][0]['data'] as $v) {
+                        $grupoTotal += (float) $v;
+                    }
+                }
+                if ($grupoTotal > 0.0) {
+                    $chart['footnote'] = ($chart['footnote'] ?? '').' '
+                        .__('O gráfico por grupo indica :n matrícula(s) NEE, mas nenhuma barra recebeu contagem por designação — revise vínculos em fisica_deficiencia/aluno_deficiencia e nomes em cadastro.deficiencia.', [
+                            'n' => (string) (int) $grupoTotal,
+                        ]);
+                }
+            }
 
             return self::attachMatriculaKpiTotal(
                 $chart,
@@ -922,7 +910,7 @@ final class InclusionDashboardQueries
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
-        self::applyInclusionScope($q, $db, $city, $filters);
+            self::applyInclusionScope($q, $db, $city, $filters);
             $q->join($escolaT.' as e', function ($join) use ($db, $tEsc, $ePk) {
                 if ($db->getDriverName() === 'pgsql') {
                     $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
@@ -1029,7 +1017,7 @@ final class InclusionDashboardQueries
                 MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
                 MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
                 MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
-        self::applyInclusionScope($q, $db, $city, $filters);
+                self::applyInclusionScope($q, $db, $city, $filters);
                 $q->join($escolaT.' as e', function ($join) use ($db, $tEsc, $ePk) {
                     if ($db->getDriverName() === 'pgsql') {
                         $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
@@ -1063,7 +1051,7 @@ final class InclusionDashboardQueries
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
-        self::applyInclusionScope($q, $db, $city, $filters);
+            self::applyInclusionScope($q, $db, $city, $filters);
             $q->join($escolaT.' as e', 'm.'.$mEsc, '=', 'e.'.$eId)
                 ->selectRaw('e.'.$eId.' as eid')
                 ->selectRaw('COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).') as c')
@@ -1348,7 +1336,7 @@ final class InclusionDashboardQueries
                     ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
                 MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
                 MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
-        self::applyInclusionScope($q, $db, $city, $filters);
+                self::applyInclusionScope($q, $db, $city, $filters);
 
                 return $q;
             };
@@ -1449,6 +1437,17 @@ final class InclusionDashboardQueries
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $chart
+     * @return array<string, mixed>
+     */
+    private static function withChartId(array $chart, string $chartId): array
+    {
+        $chart['chart_id'] = $chartId;
+
+        return $chart;
     }
 
     /**
@@ -1735,12 +1734,12 @@ final class InclusionDashboardQueries
         $wPk = $g->wrap($defPk);
 
         $q = $db->table($mat.' as m')
-            ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
-            ->join($fisica['table'].' as fd', 'a.'.$aIdpes, '=', 'fd.'.$fisica['idpes_col'])
-            ->join($defTable.' as d', 'fd.'.$fisica['def_fk'], '=', 'd.'.$defPk);
+            ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
         MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
         MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
         self::applyInclusionScope($q, $db, $city, $filters);
+        $q->join($fisica['table'].' as fd', 'a.'.$aIdpes, '=', 'fd.'.$fisica['idpes_col'])
+            ->join($defTable.' as d', 'fd.'.$fisica['def_fk'], '=', 'd.'.$defPk);
 
         $q->selectRaw('d.'.$wPk.' as def_id')
             ->selectRaw('MAX(COALESCE(d.'.$wNm.', \'Não informado\')) as deficiencia')
@@ -1800,12 +1799,12 @@ final class InclusionDashboardQueries
 
         $g = $db->getQueryGrammar();
         $q = $db->table($mat.' as m')
-            ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
-            ->join($adTable.' as ad', 'a.'.$aId, '=', 'ad.'.$adAluno)
-            ->join($defTable.' as d', 'ad.'.$adDef, '=', 'd.'.$defPk);
+            ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
         MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
         MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
         self::applyInclusionScope($q, $db, $city, $filters);
+        $q->join($adTable.' as ad', 'a.'.$aId, '=', 'ad.'.$adAluno)
+            ->join($defTable.' as d', 'ad.'.$adDef, '=', 'd.'.$defPk);
 
         $q->selectRaw('d.'.$g->wrap($defPk).' as def_id')
             ->selectRaw('MAX(d.'.$g->wrap($nmCol).') as deficiencia')

@@ -17,9 +17,7 @@ final class InclusionEducacensoCatalog
      */
     public static function racaMecLabels(): array
     {
-        $raw = config('ieducar.inclusion.raca_mec_catalog', []);
-
-        return self::stringListFromConfig($raw);
+        return self::stringListFromConfig(self::configStringList('ieducar.inclusion.raca_mec_catalog'));
     }
 
     /**
@@ -27,7 +25,15 @@ final class InclusionEducacensoCatalog
      */
     public static function deficienciaMecLabels(): array
     {
-        $raw = config('ieducar.inclusion.deficiencia_mec_catalog', []);
+        $raw = self::configStringList('ieducar.inclusion.deficiencia_mec_catalog');
+        if ($raw === []) {
+            $raw = [
+                'Cegueira', 'Baixa visão', 'Surdez', 'Deficiência auditiva', 'Surdocegueira',
+                'Deficiência física', 'Deficiência intelectual', 'Deficiência múltipla',
+                'Transtorno do espectro autista', 'Altas habilidades/Superdotação', 'Síndrome de Down',
+                'Discalculia', 'Disgrafia', 'Dislalia', 'Dislexia', 'TDAH', 'TPAC',
+            ];
+        }
 
         return self::stringListFromConfig($raw);
     }
@@ -110,7 +116,9 @@ final class InclusionEducacensoCatalog
                 continue;
             }
             $seen[$norm] = true;
-            $out[] = ['id' => $row['id'], 'label' => $row['label'], 'norm' => $norm];
+            $entry = ['id' => $row['id'], 'label' => $row['label'], 'norm' => $norm];
+            $entry['kind'] = self::classifyDeficienciaKind($entry);
+            $out[] = $entry;
         }
 
         foreach (self::deficienciaMecLabels() as $label) {
@@ -119,10 +127,111 @@ final class InclusionEducacensoCatalog
                 continue;
             }
             $seen[$norm] = true;
-            $out[] = ['id' => null, 'label' => $label, 'norm' => $norm];
+            $entry = ['id' => null, 'label' => $label, 'norm' => $norm];
+            $entry['kind'] = self::classifyDeficienciaKind($entry);
+            $out[] = $entry;
         }
 
         return $out;
+    }
+
+    /**
+     * Classificação para legenda do gráfico de catálogo NEE.
+     *
+     * @param  array{id: ?string, label: string, norm: string}  $entry
+     * @return 'inep'|'complementar'|'ieducar'
+     */
+    public static function classifyDeficienciaKind(array $entry): string
+    {
+        $norm = (string) ($entry['norm'] ?? self::normalizeLabel((string) ($entry['label'] ?? '')));
+        $complementar = self::complementarNormSet();
+
+        if ($norm !== '' && isset($complementar[$norm])) {
+            return 'complementar';
+        }
+
+        foreach (self::deficienciaMecLabels() as $mecLabel) {
+            if (self::normalizeLabel($mecLabel) === $norm) {
+                return 'inep';
+            }
+        }
+
+        $id = $entry['id'] ?? null;
+        if ($id !== null && $id !== '' && $id !== '0') {
+            return 'ieducar';
+        }
+
+        return 'inep';
+    }
+
+    /**
+     * @param  array{id: ?string, label: string, norm: string, kind?: string}  $entry
+     */
+    public static function deficienciaChartLabel(array $entry): string
+    {
+        $base = trim((string) ($entry['label'] ?? ''));
+        if ($base === '') {
+            $base = (string) __('Não informado');
+        }
+
+        return match ($entry['kind'] ?? self::classifyDeficienciaKind($entry)) {
+            'complementar' => $base.' — '.__('complementar (mapear no Censo)'),
+            'ieducar' => $base.' — '.__('cadastro i-Educar'),
+            default => $base.' — '.__('INEP/Censo'),
+        };
+    }
+
+    /**
+     * @return array<string, true>
+     */
+    public static function complementarNormSet(): array
+    {
+        static $set = null;
+        if ($set !== null) {
+            return $set;
+        }
+
+        $raw = self::configStringList('ieducar.inclusion.deficiencia_complementar_catalog');
+        if ($raw === []) {
+            $raw = ['Discalculia', 'Disgrafia', 'Dislalia', 'Dislexia', 'TDAH', 'TPAC'];
+        }
+
+        $set = [];
+        foreach (self::stringListFromConfig($raw) as $label) {
+            $norm = self::normalizeLabel($label);
+            if ($norm !== '') {
+                $set[$norm] = true;
+            }
+        }
+
+        return $set;
+    }
+
+    /**
+     * @param  list<array{label: string, value: float, kind: string}>  $rows
+     * @return array{labels: list<string>, values: list<float>, colors: list<string>}
+     */
+    public static function neeCatalogChartSeries(array $rows): array
+    {
+        $colorInep = '#4f46e5';
+        $colorComplementar = '#7c3aed';
+        $colorIeducar = '#d97706';
+
+        $labels = [];
+        $values = [];
+        $colors = [];
+
+        foreach ($rows as $row) {
+            $labels[] = (string) $row['label'];
+            $values[] = (float) $row['value'];
+            $colors[] = match ($row['kind'] ?? 'inep') {
+                'complementar' => $colorComplementar,
+                'ieducar' => $colorIeducar,
+                default => $colorInep,
+            };
+        }
+
+        return ['labels' => $labels, 'values' => $values, 'colors' => $colors];
     }
 
     /**
@@ -252,6 +361,20 @@ final class InclusionEducacensoCatalog
         }
 
         return Str::ascii(mb_strtolower($t));
+    }
+
+    /**
+     * @return list<mixed>
+     */
+    private static function configStringList(string $key): array
+    {
+        try {
+            $raw = config($key, []);
+
+            return is_array($raw) ? $raw : [];
+        } catch (\Throwable) {
+            return [];
+        }
     }
 
     /**

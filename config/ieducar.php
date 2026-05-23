@@ -710,7 +710,7 @@ return [
 
         'aviso_previsao' => (string) env(
             'IEDUCAR_FUNDEB_AVISO_PREVISAO',
-            'Previsão com base nas matrículas ativas do i-Educar no filtro e VAAF de referência (IEDUCAR_DISC_VAA_REFERENCIA). Não inclui receitas próprias, ICMS/ISS repassados nem valor oficial de complementação VAAR — consulte FNDE, Simec e Tesouro Transparente.'
+            'Previsão = matrículas ativas no filtro × valor-aluno/ano (VAAF municipal quando importado; senão prévia federal ou piso em IEDUCAR_DISC_VAA_REFERENCIA, padrão R$ 4.500/aluno/ano). Não inclui receitas próprias, ICMS/ISS repassados nem complementação VAAR oficial — consulte FNDE, Simec e Tesouro Transparente.'
         ),
         'complementacao_vaar_pct_base' => (float) env('IEDUCAR_FUNDEB_VAAR_PCT_BASE', 0),
         /** Quando true e complementacao_vaar importada existir, substitui o % fixo na previsão FUNDEB. */
@@ -748,7 +748,7 @@ return [
         'min_matriculas_nee_benchmark' => (int) env('IEDUCAR_DISC_NEE_MIN_MAT', 80),
         'aviso_financeiro' => (string) env(
             'IEDUCAR_DISC_AVISO_FINANCEIRO',
-            'Estimativa indicativa com base em referência VAAF configurável; não substitui cálculo FNDE/Simec nem valor exato de complementação VAAR.'
+            'Estimativa indicativa: ocorrências × (VAAF do cálculo × peso por tipo). Sem VAAF municipal importado, usa-se prévia federal ou IEDUCAR_DISC_VAA_REFERENCIA (padrão R$ 4.500/aluno/ano). Não substitui cálculo FNDE/Simec nem complementação VAAR oficial.'
         ),
         'peso_por_check' => [
             'sem_raca' => 0.35,
@@ -869,6 +869,19 @@ return [
             'Transtorno do espectro autista',
             'Altas habilidades/Superdotação',
             'Síndrome de Down',
+            'Discalculia',
+            'Disgrafia',
+            'Dislalia',
+            'Dislexia',
+            'TDAH',
+            'TPAC',
+        ],
+
+        /**
+         * Tipos frequentes no i-Educar que não são campo próprio do Censo/INEP — exibir como «complementar»
+         * (podem ser mapeados para deficiência múltipla, intelectual ou outro código oficial na exportação).
+         */
+        'deficiencia_complementar_catalog' => [
             'Discalculia',
             'Disgrafia',
             'Dislalia',

@@ -8,7 +8,9 @@ Guia para reduzir lentidão no **login** e em consultas repetidas, usando Redis 
 php artisan performance:check
 ```
 
-Mostra drivers actuais (`CACHE_STORE`, `SESSION_DRIVER`, filas) e se o Redis responde a `PING`.
+Mostra drivers actuais (`CACHE_STORE`, `SESSION_DRIVER`, filas), cliente Redis (`.env` vs efectivo), extensão **phpredis** / pacote **predis**, e se o Redis responde a `PING` (com fallback SET/GET quando o formato do PING varia).
+
+Em servidores **sem** extensão `phpredis`, use `REDIS_CLIENT=predis` (já incluído no `composer.json`). Se o `.env` tiver `REDIS_CLIENT=phpredis` sem a extensão, a aplicação faz fallback automático para predis; o comando avisa para alinhar o `.env`.
 
 ## Por que o login fica lento sem Redis
 
@@ -21,14 +23,14 @@ Com `SESSION_DRIVER=database` e `CACHE_STORE=database`, cada tentativa de login 
 
 ## Configuração recomendada (produção com Redis)
 
-No `.env` do servidor (após instalar Redis e extensão `phpredis` ou pacote `predis`):
+No `.env` do servidor (após instalar Redis; cliente **predis** já vem no Composer — use `phpredis` só se a extensão PHP estiver instalada):
 
 ```env
 CACHE_STORE=redis
 SESSION_DRIVER=redis
 QUEUE_CONNECTION=redis
 
-REDIS_CLIENT=phpredis
+REDIS_CLIENT=predis
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 

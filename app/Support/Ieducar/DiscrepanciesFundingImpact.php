@@ -38,11 +38,15 @@ final class DiscrepanciesFundingImpact
         $perda = MoneyMath::impactFromOccurrences($occurrences, $vaa, $peso);
         $ganho = $perda;
 
+        $funding = self::fundingReferencePayload($city, $filters);
+        $rotuloVaaf = FundebReferenceDisplay::rotuloVaafCurto($funding);
+
         $formula = __(
-            ':n ocorrência(s) × R$ :unit (VAAF referência :vaa × peso :p).',
+            ':n ocorrência(s) × :unit (:rotulo — :vaa/aluno/ano × peso :p).',
             [
                 'n' => number_format($occurrences, 0, ',', '.'),
                 'unit' => self::formatBrl($valorUnit),
+                'rotulo' => $rotuloVaaf,
                 'vaa' => self::formatBrl($vaa),
                 'p' => number_format($peso, 2, ',', '.'),
             ]
@@ -110,7 +114,8 @@ final class DiscrepanciesFundingImpact
             'titulo' => __('Como são calculados os valores financeiros indicativos'),
             'passos' => [
                 __('1. Contagem de ocorrências — cada rotina soma matrículas, escolas ou vagas com o problema no filtro actual (ano, escola, curso).'),
-                __('2. Valor unitário de referência — VAAF municipal (:vaa por aluno/ano; :fonte) × peso do tipo de problema. A prévia federal (quando configurada) aparece nas abas FUNDEB e Diagnóstico só para comparação.', [
+                __('2. Valor unitário de referência — :rotulo (:vaa por aluno/ano; :fonte) × peso do tipo de problema. Com VAAF municipal importado, esse valor é o da base local; caso contrário usa-se prévia federal ou piso configurável (ex.: IEDUCAR_DISC_VAA_REFERENCIA). A comparação municipal × prévia aparece nas abas FUNDEB e Diagnóstico.', [
+                    'rotulo' => FundebReferenceDisplay::rotuloVaafCurto(self::fundingReferencePayload($city, $filters)),
                     'vaa' => self::formatBrl($vaa),
                     'fonte' => (string) $calc['fonte_label'],
                 ]),
@@ -137,7 +142,7 @@ final class DiscrepanciesFundingImpact
         $usaVaafMunicipal = $municipalBlock !== null && (float) ($municipalBlock['vaaf'] ?? 0) > 0;
         $vaafCalculo = (float) $calc['vaaf'];
 
-        return [
+        $payload = [
             'vaa_anual' => $vaafCalculo,
             'vaa_label' => self::formatBrl($vaafCalculo),
             'vaa_municipal_importado' => $usaVaafMunicipal,
@@ -154,6 +159,9 @@ final class DiscrepanciesFundingImpact
             'divergencia' => is_array($ref['divergencia'] ?? null) ? $ref['divergencia'] : null,
             'divergencia_vaaf' => is_array($ref['divergencia'] ?? null) ? $ref['divergencia'] : null,
         ];
+        $payload['vaa_tipo_calculo'] = FundebReferenceDisplay::tipoVaafCalculo($payload);
+
+        return $payload;
     }
 
     /**

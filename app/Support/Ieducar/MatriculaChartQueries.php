@@ -1195,6 +1195,155 @@ final class MatriculaChartQueries
     }
 
     /**
+     * Coluna de capacidade máxima na turma, quando existir na base.
+     */
+    private static function turmaMaxAlunosColumn(Connection $db, City $city): ?string
+    {
+        $turma = IeducarSchema::resolveTable('turma', $city);
+
+        return IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
+            (string) config('ieducar.columns.turma.max_alunos'),
+            'max_aluno',
+            'max_alunos',
+            'nr_maximo_alunos',
+            'qtd_maxima_alunos',
+            'qtde_max_alunos',
+            'capacidade_maxima',
+        ]), $city);
+    }
+
+    /**
+     * Turmas com capacidade e escola (e opcionalmente curso/série) para agregações por unidade.
+     *
+     * @param  list<int>  $eids
+     * @return list<object>
+     */
+    private static function turmaCapacidadeRowsForEscolaIds(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        array $eids,
+        bool $withCursoSerie = false,
+        bool $viaMatriculaEscola = false,
+    ): array {
+        $eids = array_values(array_unique(array_map(static fn ($x) => (int) $x, array_filter($eids, static fn ($x) => (int) $x > 0))));
+        if ($eids === []) {
+            return [];
+        }
+
+        $maxCol = self::turmaMaxAlunosColumn($db, $city);
+        if ($maxCol === null) {
+            return [];
+        }
+
+        $turma = IeducarSchema::resolveTable('turma', $city);
+        $tId = (string) config('ieducar.columns.turma.id');
+        $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+
+        if (! $viaMatriculaEscola && $tc['escola'] !== '') {
+            $q = $db->table($turma.' as t');
+            MatriculaTurmaJoin::applyYearFilterOnTurmaQuery($q, $db, $city, $filters, 't');
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['turno'], $filters->turno_id);
+
+            $select = [
+                't.'.$tId.' as tid',
+                't.'.$maxCol.' as cap',
+            ];
+            if ($withCursoSerie && $tc['curso'] !== '') {
+                $select[] = 't.'.$tc['curso'].' as cid';
+                if ($tc['serie'] !== '') {
+                    $select[] = 't.'.$tc['serie'].' as sid';
+                }
+            }
+
+            $joinSpec = EscolaTurmaJoin::joinTurmaEscolaFk($q, $db, $city, 't', 'e_cap');
+            if ($joinSpec !== null) {
+                $ePkCol = $joinSpec['idCol'];
+                $q->whereIn('e_cap.'.$ePkCol, $eids);
+                $select[] = 'e_cap.'.$ePkCol.' as eid';
+            } else {
+                $q->whereIn('t.'.$tc['escola'], $eids);
+                $select[] = 't.'.$tc['escola'].' as eid';
+            }
+
+            return $q->select($select)->get()->all();
+        }
+
+        $mat = IeducarSchema::resolveTable('matricula', $city);
+        $mEsc = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
+            (string) config('ieducar.columns.matricula.escola'),
+            'ref_ref_cod_escola',
+            'ref_cod_escola',
+            'cod_escola',
+        ]), $city);
+        if ($mEsc === null) {
+            return [];
+        }
+
+        $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+        $q = $db->table($mat.' as m');
+        MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+        MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+        MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+        MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+        $g = $db->getQueryGrammar();
+        $q->whereIn('m.'.$mEsc, $eids);
+        $selectRaw = [
+            't_filter.'.$g->wrap($tId).' as tid',
+            'MAX(t_filter.'.$g->wrap($maxCol).') as cap',
+            'MAX(m.'.$g->wrap($mEsc).') as eid',
+        ];
+        if ($withCursoSerie && $tc['curso'] !== '') {
+            $selectRaw[] = 'MAX(t_filter.'.$g->wrap($tc['curso']).') as cid';
+            if ($tc['serie'] !== '') {
+                $selectRaw[] = 'MAX(t_filter.'.$g->wrap($tc['serie']).') as sid';
+            }
+        }
+        $q->groupBy('t_filter.'.$g->wrap($tId))
+            ->selectRaw(implode(', ', $selectRaw));
+
+        return $q->get()->all();
+    }
+
+    /**
+     * @param  list<object>  $rows
+     * @param  array<string, int>  $counts
+     * @param  list<int>  $eids
+     * @return array<int, array{capacidade_declarada: int, vagas_disponiveis: int}>
+     */
+    private static function aggregateCapacidadeVagasFromTurmaRows(array $rows, array $counts, array $eids): array
+    {
+        $out = [];
+        foreach ($eids as $eid) {
+            $out[$eid] = ['capacidade_declarada' => 0, 'vagas_disponiveis' => 0];
+        }
+
+        foreach ($rows as $row) {
+            $tid = self::normalizeTurmaIdKey($row->tid ?? '');
+            if ($tid === '') {
+                continue;
+            }
+            $cap = (int) ($row->cap ?? 0);
+            if ($cap <= 0) {
+                continue;
+            }
+            $eid = (int) ($row->eid ?? 0);
+            if ($eid <= 0 || ! isset($out[$eid])) {
+                continue;
+            }
+            $enRaw = self::matriculaCountForTurma($counts, $tid);
+            $en = min($cap, $enRaw);
+            $vac = max(0, $cap - $en);
+            $out[$eid]['capacidade_declarada'] += $cap;
+            $out[$eid]['vagas_disponiveis'] += $vac;
+        }
+
+        return $out;
+    }
+
+    /**
      * Capacidade declarada e vagas ociosas por escola, com a mesma regra do resumo/gráfico de vagas da rede:
      * por turma usa-se min(capacidade, matrículas ativas) e vagas ociosas = capacidade − essa ocupação (somado por escola).
      *
@@ -1208,87 +1357,127 @@ final class MatriculaChartQueries
             return [];
         }
 
+        $nullBundle = static fn (): array => ['capacidade_declarada' => null, 'vagas_disponiveis' => null];
         $out = [];
         foreach ($eids as $eid) {
-            $out[$eid] = ['capacidade_declarada' => null, 'vagas_disponiveis' => null];
+            $out[$eid] = $nullBundle();
+        }
+
+        if (self::turmaMaxAlunosColumn($db, $city) === null) {
+            return $out;
         }
 
         try {
-            $turma = IeducarSchema::resolveTable('turma', $city);
-            $maxCol = IeducarColumnInspector::firstExistingColumn($db, $turma, array_filter([
-                (string) config('ieducar.columns.turma.max_alunos'),
-                'max_aluno',
-                'max_alunos',
-                'nr_maximo_alunos',
-                'qtd_maxima_alunos',
-                'qtde_max_alunos',
-                'capacidade_maxima',
-            ]), $city);
-            $tId = (string) config('ieducar.columns.turma.id');
-            if ($maxCol === null) {
-                return [];
-            }
-
-            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
             $counts = self::matriculaCountByTurma($db, $city, $filters);
+            $rows = self::turmaCapacidadeRowsForEscolaIds($db, $city, $filters, $eids);
+            $agg = self::aggregateCapacidadeVagasFromTurmaRows($rows, $counts, $eids);
 
-            if ($tc['escola'] !== '') {
-                $q = $db->table($turma.' as t');
-                $yearVal = $filters->yearFilterValue();
-                if ($yearVal !== null && $tc['year'] !== '') {
-                    $q->where('t.'.$tc['year'], $yearVal);
+            $needMatriculaPath = $rows === [];
+            if (! $needMatriculaPath) {
+                foreach ($eids as $eid) {
+                    if (($agg[$eid]['capacidade_declarada'] ?? 0) <= 0) {
+                        $needMatriculaPath = true;
+                        break;
+                    }
                 }
-                MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
-                MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
-                MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['turno'], $filters->turno_id);
-
-                $joinSpec = EscolaTurmaJoin::joinTurmaEscolaFk($q, $db, $city, 't', 'e_cap');
-                if ($joinSpec !== null) {
-                    $ePkCol = $joinSpec['idCol'];
-                    $q->whereIn('e_cap.'.$ePkCol, $eids);
-                    $rows = $q->select([
-                        't.'.$tId.' as tid',
-                        't.'.$maxCol.' as cap',
-                        'e_cap.'.$ePkCol.' as eid',
-                    ])->get();
-                } else {
-                    $q->whereIn('t.'.$tc['escola'], $eids);
-                    $rows = $q->select([
-                        't.'.$tId.' as tid',
-                        't.'.$maxCol.' as cap',
-                        't.'.$tc['escola'].' as eid',
-                    ])->get();
+            }
+            if ($needMatriculaPath) {
+                $rowsMat = self::turmaCapacidadeRowsForEscolaIds($db, $city, $filters, $eids, false, true);
+                if ($rowsMat !== []) {
+                    $aggMat = self::aggregateCapacidadeVagasFromTurmaRows($rowsMat, $counts, $eids);
+                    foreach ($eids as $eid) {
+                        if (($agg[$eid]['capacidade_declarada'] ?? 0) <= 0 && ($aggMat[$eid]['capacidade_declarada'] ?? 0) > 0) {
+                            $agg[$eid] = $aggMat[$eid];
+                        }
+                    }
                 }
-            } else {
-                $mat = IeducarSchema::resolveTable('matricula', $city);
-                $mEsc = IeducarColumnInspector::firstExistingColumn($db, $mat, array_filter([
-                    (string) config('ieducar.columns.matricula.escola'),
-                    'ref_ref_cod_escola',
-                    'ref_cod_escola',
-                    'cod_escola',
-                ]), $city);
-                if ($mEsc === null) {
-                    return [];
-                }
-
-                $mAtivo = (string) config('ieducar.columns.matricula.ativo');
-                $q = $db->table($mat.' as m');
-                MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
-                MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
-                MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
-                MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
-                $g = $db->getQueryGrammar();
-                $q->whereIn('m.'.$mEsc, $eids);
-                $q->groupBy('t_filter.'.$g->wrap($tId))
-                    ->selectRaw('t_filter.'.$g->wrap($tId).' as tid')
-                    ->selectRaw('MAX(t_filter.'.$g->wrap($maxCol).') as cap')
-                    ->selectRaw('MAX(m.'.$g->wrap($mEsc).') as eid');
-
-                $rows = $q->get();
             }
 
+            foreach ($eids as $eid) {
+                $cap = (int) ($agg[$eid]['capacidade_declarada'] ?? 0);
+                $vac = (int) ($agg[$eid]['vagas_disponiveis'] ?? 0);
+                $out[$eid] = [
+                    'capacidade_declarada' => $cap,
+                    'vagas_disponiveis' => $vac,
+                ];
+            }
+        } catch (QueryException|\Throwable) {
+            foreach ($eids as $eid) {
+                $out[$eid] = $nullBundle();
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Matrículas, capacidade e vagas por curso/série (segmento) em cada escola — para o mapa e modal de unidades.
+     *
+     * @param  list<int>  $eids
+     * @return array<int, list<array{segmento: string, matriculas: int, capacidade: int, vagas: int}>>
+     */
+    public static function metricasOfertaPorEscolaSegmentoIds(Connection $db, City $city, IeducarFilterState $filters, array $eids): array
+    {
+        $eids = array_values(array_unique(array_map(static fn ($x) => (int) $x, array_filter($eids, static fn ($x) => (int) $x > 0))));
+        if ($eids === [] || self::turmaMaxAlunosColumn($db, $city) === null) {
+            return [];
+        }
+
+        $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+        if ($tc['curso'] === '') {
+            return [];
+        }
+
+        try {
+            $counts = self::matriculaCountByTurma($db, $city, $filters);
+            $rows = self::turmaCapacidadeRowsForEscolaIds($db, $city, $filters, $eids, true);
+            if ($rows === []) {
+                $rows = self::turmaCapacidadeRowsForEscolaIds($db, $city, $filters, $eids, true, true);
+            }
+
+            $cursoT = IeducarSchema::resolveTable('curso', $city);
+            $cIdCol = (string) config('ieducar.columns.curso.id');
+            $cNameCol = (string) config('ieducar.columns.curso.name');
+            $serieT = IeducarSchema::resolveTable('serie', $city);
+            $sIdCol = (string) config('ieducar.columns.serie.id');
+            $sNameCol = IeducarColumnInspector::firstExistingColumn($db, $serieT, [
+                (string) config('ieducar.columns.serie.name'),
+                'nm_serie',
+                'serie',
+            ], $city);
+
+            $cids = [];
+            $sids = [];
             foreach ($rows as $row) {
-                $tid = trim((string) ($row->tid ?? ''));
+                $cid = (int) ($row->cid ?? 0);
+                if ($cid > 0) {
+                    $cids[$cid] = true;
+                }
+                if (isset($row->sid)) {
+                    $sid = (int) ($row->sid ?? 0);
+                    if ($sid > 0) {
+                        $sids[$sid] = true;
+                    }
+                }
+            }
+
+            $cmap = [];
+            if ($cids !== []) {
+                foreach ($db->table($cursoT)->whereIn($cIdCol, array_keys($cids))->get() as $cr) {
+                    $cmap[(int) $cr->{$cIdCol}] = trim((string) ($cr->{$cNameCol} ?? ''));
+                }
+            }
+            $smap = [];
+            if ($sNameCol !== null && $sids !== []) {
+                foreach ($db->table($serieT)->whereIn($sIdCol, array_keys($sids))->get() as $sr) {
+                    $smap[(int) $sr->{$sIdCol}] = trim((string) ($sr->{$sNameCol} ?? ''));
+                }
+            }
+
+            /** @var array<int, array<string, array{matriculas: int, capacidade: int, vagas: int}>> $acc */
+            $acc = [];
+            foreach ($rows as $row) {
+                $tid = self::normalizeTurmaIdKey($row->tid ?? '');
                 if ($tid === '') {
                     continue;
                 }
@@ -1297,22 +1486,56 @@ final class MatriculaChartQueries
                     continue;
                 }
                 $eid = (int) ($row->eid ?? 0);
-                if ($eid <= 0 || ! isset($out[$eid])) {
+                if ($eid <= 0) {
                     continue;
                 }
                 $enRaw = self::matriculaCountForTurma($counts, $tid);
                 $en = min($cap, $enRaw);
                 $vac = max(0, $cap - $en);
-                $out[$eid]['capacidade_declarada'] += $cap;
-                $out[$eid]['vagas_disponiveis'] += $vac;
-            }
-        } catch (QueryException|\Throwable) {
-            foreach ($eids as $eid) {
-                $out[$eid] = ['capacidade_declarada' => null, 'vagas_disponiveis' => null];
-            }
-        }
 
-        return $out;
+                $cid = (int) ($row->cid ?? 0);
+                $cn = $cid > 0 ? ($cmap[$cid] ?? ('#'.$cid)) : __('Sem curso');
+                $sn = '';
+                if ($tc['serie'] !== '' && isset($row->sid)) {
+                    $sid = (int) ($row->sid ?? 0);
+                    $sn = $sid > 0 && $sNameCol !== null ? ($smap[$sid] ?? ('#'.$sid)) : '';
+                }
+                $segmento = $cn;
+                if ($sn !== '') {
+                    $segmento = $segmento !== '' && $segmento !== __('Sem curso') ? $segmento.' — '.$sn : $sn;
+                }
+
+                if (! isset($acc[$eid])) {
+                    $acc[$eid] = [];
+                }
+                if (! isset($acc[$eid][$segmento])) {
+                    $acc[$eid][$segmento] = ['matriculas' => 0, 'capacidade' => 0, 'vagas' => 0];
+                }
+                $acc[$eid][$segmento]['matriculas'] += $enRaw;
+                $acc[$eid][$segmento]['capacidade'] += $cap;
+                $acc[$eid][$segmento]['vagas'] += $vac;
+            }
+
+            $out = [];
+            foreach ($acc as $eid => $segments) {
+                $list = [];
+                foreach ($segments as $segmento => $vals) {
+                    $list[] = [
+                        'segmento' => $segmento,
+                        'matriculas' => (int) $vals['matriculas'],
+                        'capacidade' => (int) $vals['capacidade'],
+                        'vagas' => (int) $vals['vagas'],
+                    ];
+                }
+                usort($list, static fn (array $a, array $b): int => ($b['matriculas'] <=> $a['matriculas'])
+                    ?: strcmp($a['segmento'], $b['segmento']));
+                $out[$eid] = $list;
+            }
+
+            return $out;
+        } catch (QueryException|\Throwable) {
+            return [];
+        }
     }
 
     /**

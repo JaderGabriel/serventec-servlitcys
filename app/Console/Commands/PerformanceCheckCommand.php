@@ -13,6 +13,8 @@ class PerformanceCheckCommand extends Command
 
     public function handle(): int
     {
+        $diag = RedisProbe::diagnose();
+
         $this->info('Configuração actual');
         $this->table(
             ['Variável', 'Valor'],
@@ -22,20 +24,40 @@ class PerformanceCheckCommand extends Command
                 ['QUEUE_CONNECTION', (string) config('queue.default')],
                 ['PULSE_CACHE_DRIVER', (string) (config('pulse.cache') ?: '(default cache)')],
                 ['PULSE_INGEST_DRIVER', (string) config('pulse.ingest.driver')],
+                ['REDIS_CLIENT (.env)', $diag['client_env']],
+                ['REDIS_CLIENT (efectivo)', $diag['client_effective']],
+                ['REDIS_HOST:PORT', $diag['host'].':'.$diag['port']],
+                ['Ext. phpredis', RedisProbe::phpredisExtensionAvailable() ? 'sim' : 'não'],
+                ['Pacote predis', RedisProbe::predisPackageAvailable() ? 'sim' : 'não'],
             ],
         );
 
-        if (RedisProbe::isReachable()) {
-            $this->info('Redis: PONG — disponível.');
+        if ($diag['ok']) {
+            $this->info('Redis: PONG — disponível ('.$diag['client_effective'].' em '.$diag['host'].':'.$diag['port'].').');
             $this->newLine();
-            $this->line('Recomendações para produção (adicione ao .env se ainda não estiverem activas):');
+            $this->line('Variáveis já recomendadas para produção com Redis:');
             foreach (RedisProbe::recommendedEnvWhenAvailable() as $line) {
                 $this->line("  {$line}");
             }
         } else {
-            $this->warn('Redis: indisponível ou não configurado.');
-            $this->line('Com sessão/cache em `database`, cada login e rate-limit geram várias escritas/leituras MySQL.');
-            $this->line('Instale Redis e ajuste REDIS_* no .env, depois execute novamente este comando.');
+            if ($diag['uses_redis_drivers']) {
+                $this->error('Redis: configurado na aplicação, mas o servidor não respondeu.');
+            } else {
+                $this->warn('Redis: indisponível ou não configurado.');
+            }
+
+            if (filled($diag['error'])) {
+                $this->line('Erro: '.$diag['error']);
+            }
+
+            foreach ($diag['hints'] as $hint) {
+                $this->line('→ '.$hint);
+            }
+
+            if (! $diag['uses_redis_drivers']) {
+                $this->newLine();
+                $this->line('Sem Redis, sessão/cache em `database` geram mais I/O MySQL no login e rate-limit.');
+            }
         }
 
         return self::SUCCESS;

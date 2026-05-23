@@ -161,12 +161,9 @@
                     @endif
                     @if ($fundingRef !== null && isset($fundingRef['vaa_label']))
                         ·
-                        @if ($fundingRef['vaa_municipal_importado'] ?? false)
-                            {{ __('VAAF municipal:') }}
-                        @else
-                            {{ __('VAAF ref.:') }}
-                        @endif
+                        <span class="font-medium">{{ \App\Support\Ieducar\FundebReferenceDisplay::rotuloVaafCurto($fundingRef) }}:</span>
                         <span class="font-medium">{{ $fundingRef['vaa_label'] }}</span>
+                        <span class="text-gray-500 dark:text-gray-400">/aluno/ano</span>
                         @if (filled($fundingRef['vaa_previa_label'] ?? null))
                             · {{ __('prévia:') }} {{ $fundingRef['vaa_previa_label'] }}
                         @endif

@@ -1,6 +1,14 @@
 @props(['inclusionData', 'chartExportContext' => [], 'municipalityContext' => null, 'yearFilterReady' => true, 'selectedCity' => null, 'filters' => null])
 
 @php
+    $chartsById = [];
+    foreach ($inclusionData['charts'] ?? [] as $chartItem) {
+        if (is_array($chartItem) && filled($chartItem['chart_id'] ?? null)) {
+            $chartsById[(string) $chartItem['chart_id']] = $chartItem;
+        }
+    }
+    $chartNeeGrupo = $chartsById['nee_grupo'] ?? ($inclusionData['charts'][0] ?? null);
+    $chartNeeCatalogo = $chartsById['nee_catalogo_mec'] ?? null;
     $methodology = $inclusionData['methodology'] ?? [];
     $totalMat = $inclusionData['total_matriculas'] ?? null;
     $eqFonte = $inclusionData['equidade_fonte'] ?? null;
@@ -39,11 +47,14 @@
         'tabData' => ['inclusionData' => $inclusionData],
     ])
 
+    @if ($filters !== null)
+        @include('dashboard.analytics.partials.inclusion-scope', ['filters' => $filters])
+    @endif
+
     @if (! empty($inclusionData['inclusion_filters_active'] ?? []))
-        <div class="rounded-md border border-violet-200/80 dark:border-violet-800/50 bg-violet-50/50 dark:bg-violet-950/25 px-4 py-2.5 text-xs text-violet-900 dark:text-violet-100">
-            <span class="font-semibold">{{ __('Recorte ativo:') }}</span>
+        <div class="rounded-md border border-violet-300/80 dark:border-violet-700/50 bg-violet-100/40 dark:bg-violet-950/40 px-4 py-2.5 text-xs text-violet-950 dark:text-violet-100">
+            <span class="font-semibold">{{ __('Recorte NEE ativo nesta visualização:') }}</span>
             {{ implode(' · ', $inclusionData['inclusion_filters_active']) }}
-            <span class="text-violet-700/80 dark:text-violet-300/80"> — {{ __('altere em Filtros acima (aba Inclusão).') }}</span>
         </div>
     @endif
 
@@ -214,7 +225,7 @@
         @if ($neeChartsCount > 0 || $hasNeeDetalheCatalogo)
             <div class="mb-8">
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('NEE — cadastro (deficiências, síndromes e altas habilidades)') }}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Gráficos derivados de aluno_deficiência (ou fisica_deficiência) e do catálogo de deficiências. Após o resumo por grupo, mostra-se o total de matrículas NEE por escola e, quando a base permite, segmentos empilhados por designação no catálogo. O detalhe em lista segue as designações registadas na base.') }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">{{ __('Resumo por grupo (critério alinhado ao Educacenso/INEP), catálogo completo com todas as opções MEC + i-Educar (cores: INEP, complementar adaptável, só cadastro local), matrículas por escola e listas por designação. Respeita o recorte de matrículas desta aba quando activo.') }}</p>
                 @if ($neeGrupoResumo !== null && $neeGrupoResumoTotal > 0)
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 items-stretch">
                         <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
@@ -234,21 +245,21 @@
                         </div>
                     </div>
                 @endif
-                @if ($neeChartsCount > 0)
+                @if (is_array($chartNeeGrupo) && ! empty($chartNeeGrupo['labels'] ?? null))
                     <div class="min-w-0 w-full [&_.chart-panel-host]:min-h-[min(32rem,70vh)]">
                         <x-dashboard.chart-panel
-                            :chart="$inclusionData['charts'][0]"
-                            :exportFilename="'inclusao-nee-0'"
+                            :chart="$chartNeeGrupo"
+                            :exportFilename="'inclusao-nee-grupo'"
                             :exportMeta="$chartExportContext"
                             :compact="false"
                         />
                     </div>
                 @endif
 
-                @if ($neeChartsCount > 1 && ! empty($inclusionData['charts'][1]['labels'] ?? null))
+                @if (is_array($chartNeeCatalogo) && ! empty($chartNeeCatalogo['labels'] ?? null))
                     <div class="mt-6 min-w-0 w-full [&_.chart-panel-host]:min-h-[min(36rem,75vh)]">
                         <x-dashboard.chart-panel
-                            :chart="$inclusionData['charts'][1]"
+                            :chart="$chartNeeCatalogo"
                             :exportFilename="'inclusao-nee-catalogo-completo'"
                             :exportMeta="$chartExportContext"
                             :compact="false"
@@ -265,7 +276,7 @@
                         <div>
                             <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Contagem por designação no catálogo (deficiências, síndromes/TEA e NE)') }}</h4>
                             <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                                {{ __('Designações com matrículas no recorte (cadastro.deficiencia, alinhado ao gráfico de catálogo completo). A classificação em três blocos segue as mesmas palavras-chave do gráfico «Matrículas por grupo».') }}
+                                {{ __('Contagem por designação em cadastro.deficiencia (mesma origem do catálogo completo). Só aparecem linhas com valor &gt; 0; opções INEP com zero no gráfico não se repetem aqui. A classificação em três blocos usa as mesmas palavras-chave do gráfico «Matrículas por grupo».') }}
                             </p>
                         </div>
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 min-w-0 items-stretch">

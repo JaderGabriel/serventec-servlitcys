@@ -32,6 +32,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 24 | `bd9d228` | Patch visual **2.3.8.1** (sem nova tag): perfil, `/users`, RX, Consultoria |
 | 25 | `30bc32d` | Patch visual **2.3.8.2**: largura perfil/usuários, contato RX empilhado |
 | 26 | `a736e43` | Patch **2.3.8.3**: performance login, Redis, `performance:check` |
+| 27 | `COMMIT_HASH` | Patch **2.3.8.4**: mapa capacidade/vagas, saldo Matrículas/VAAF, Inclusão, predis |
 
 ---
 
@@ -252,6 +253,21 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | BD | migração índice `admin_user_logs` |
 
 **Pós-deploy:** `php artisan migrate --force` · configurar Redis no `.env` (`CACHE_STORE`, `SESSION_DRIVER`, `QUEUE_CONNECTION`) · `php artisan performance:check` · **não** criar tag Git.
+
+---
+
+## 13. Patch consultoria 2.3.8.4 (sem release)
+
+**Escopo:** mapa de unidades, aba Matrículas, Inclusão e textos VAAF (prévia federal R$ 4.500).
+
+| Área | Ficheiros |
+|------|-----------|
+| Mapa | `MatriculaChartQueries.php`, `SchoolUnitsRepository.php`, `schoolUnitsMap.js`, `school-units.blade.php` |
+| Saldo / VAAF | `AnalyticsTabImpactBuilder.php`, `FundebReferenceDisplay.php`, `FundebMunicipalReferenceResolver.php`, `analytics-tab-impact-header.blade.php` |
+| Inclusão | `InclusionDashboardQueries.php`, `InclusionEducacensoCatalog.php`, `inclusion-scope.blade.php`, `inclusion.blade.php` |
+| Redis | `RedisProbe.php`, `PerformanceCheckCommand.php`, `tests/Unit/RedisProbeTest.php` |
+
+**Pós-deploy:** `php artisan config:clear` · `php artisan performance:check` (com `REDIS_CLIENT=predis` se não houver extensão phpredis) · **não** criar tag Git.
 
 ---
 

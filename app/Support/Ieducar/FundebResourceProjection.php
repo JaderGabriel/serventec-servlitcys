@@ -88,6 +88,8 @@ final class FundebResourceProjection
         $previsaoComparacao = FundebReferenceDisplay::previsaoComparacao($matriculas, $ref, $city, $filters);
 
         $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
+        $fundingPayload = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
+        $formulaBase = FundebReferenceDisplay::formulaPrevisaoBase($matriculas, $vaafCalculo, $fundingPayload);
 
         return [
             'available' => true,
@@ -107,51 +109,16 @@ final class FundebResourceProjection
             'divergencia_vaaf' => is_array($ref['divergencia'] ?? null) ? $ref['divergencia'] : null,
             'vaat_label' => $ref['vaat'] !== null ? $fmt($ref['vaat']) : null,
             'complementacao_vaar_oficial' => $ref['complementacao_vaar'],
-            'formula_base' => $usaVaafMunicipal
-                ? __(
-                    ':mat matrícula(s) ativa(s) × :vaa (VAAF municipal, :fonte) = :total.',
-                    [
-                        'mat' => number_format($matriculas, 0, ',', '.'),
-                        'vaa' => $fmt($vaafCalculo),
-                        'fonte' => (string) ($municipalBlock['fonte_label'] ?? $ref['fonte_label']),
-                        'total' => $fmt($base),
-                    ]
-                )
-                : __(
-                    ':mat matrícula(s) ativa(s) × :vaa (referência configurada — :fonte) = :total.',
-                    [
-                        'mat' => number_format($matriculas, 0, ',', '.'),
-                        'vaa' => $fmt($vaafCalculo),
-                        'fonte' => (string) $ref['fonte_label'],
-                        'total' => $fmt($base),
-                    ]
-                ),
+            'formula_base' => $formulaBase,
             'kpis' => [
                 [
                     'label' => __('Previsão base (ano)'),
                     'value' => $fmt($previsaoReferencia),
                     'tone' => 'indigo',
                     'comparacao' => $previsaoComparacao,
-                    'explicacao_resumo' => ($usaVaafMunicipal
-                        ? __(
-                            ':mat matrícula(s) × :vaa (VAAF municipal, :fonte) = :total.',
-                            [
-                                'mat' => number_format($matriculas, 0, ',', '.'),
-                                'vaa' => $fmt($vaafCalculo),
-                                'fonte' => (string) ($municipalBlock['fonte_label'] ?? $ref['fonte_label']),
-                                'total' => $fmt($previsaoReferencia),
-                            ]
-                        )
-                        : __(
-                            ':mat matrícula(s) × :vaa (referência — :fonte) = :total.',
-                            [
-                                'mat' => number_format($matriculas, 0, ',', '.'),
-                                'vaa' => $fmt($vaafCalculo),
-                                'fonte' => (string) $ref['fonte_label'],
-                                'total' => $fmt($previsaoReferencia),
-                            ]
-                        )).($basePrevia !== null
-                        ? ' '.__('Prévia federal: :total.', ['total' => $fmt($basePrevia)])
+                    'explicacao_resumo' => FundebReferenceDisplay::formulaPrevisaoBase($matriculas, $vaafCalculo, $fundingPayload)
+                        .($basePrevia !== null && ! $usaVaafMunicipal
+                        ? ' '.__('Comparação — prévia federal × matrículas: :total.', ['total' => $fmt($basePrevia)])
                         : ''),
                     'funding_explicacao' => [
                         'formula_curta' => __(':mat × :vaa = :total', [

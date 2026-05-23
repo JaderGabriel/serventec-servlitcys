@@ -329,6 +329,9 @@ function buildSchoolModalPayload(mk, qeduBaseFallback) {
                 ? { ...s.geo_censo_agg }
                 : null,
         oferta: Array.isArray(s?.oferta_curso_serie) ? s.oferta_curso_serie : [],
+        oferta_segmento: Array.isArray(s?.oferta_segmento)
+            ? s.oferta_segmento
+            : [],
         inepPortal: {
             page_url: pageUrl,
         },

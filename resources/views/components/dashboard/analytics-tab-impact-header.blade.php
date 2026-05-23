@@ -59,8 +59,9 @@
         <div class="px-4 py-4 space-y-3">
             <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Impacto no saldo (indicativo)') }}</p>
             @if ($saldo !== null && ($saldo['info_only'] ?? false))
+                <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ __('Sem perda ou ganho estimado por discrepâncias de matrícula neste recorte. A referência abaixo usa VAAF × matrículas activas (não é repasse FNDE).') }}</p>
                 @if (! empty($saldo['fundeb_lines']))
-                    <ul class="list-disc list-inside text-sm text-gray-700 dark:text-gray-300 space-y-1.5 leading-relaxed">
+                    <ul class="list-disc list-inside text-sm text-gray-700 dark:text-gray-300 space-y-1.5 leading-relaxed mt-2">
                         @foreach ($saldo['fundeb_lines'] as $line)
                             <li>{{ $line }}</li>
                         @endforeach

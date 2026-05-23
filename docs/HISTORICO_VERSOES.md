@@ -1,6 +1,6 @@
 # Histórico de versões (resumo)
 
-**Versão em produção / `main`:** **2.3.8.3** · release **`20260521-Mercury`** (patch performance, sem nova tag) · commit `a736e43` (#188)
+**Versão em produção / `main`:** **2.3.8.4** · release **`20260521-Mercury`** (patch consultoria/analytics, sem nova tag) · commit `COMMIT_HASH` (#189)
 
 > **Como ler:** cada linha indica a **tag ou marco**, o **commit** (hash curto Git) e o **contador** (`#N` = posição na história linear do ramo `main`, desde o primeiro commit). Links GitHub usam o repositório configurado em `DOCS_GITHUB_REPOSITORY`.
 >
@@ -12,6 +12,7 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
+| **2.3.8.4** | `COMMIT_HASH` | **189** | 21/05/2026 | Mapa escolas: capacidade/vagas; Matrículas saldo/VAAF (prévia 4.500); Inclusão catálogo/recorte; Redis predis (`performance:check`). |
 | **2.3.8.3** | `a736e43` | **188** | 21/05/2026 | Performance: login mais rápido (audit defer, Pulse em auth); cache city_ids/SMTP; Redis (`performance:check`); índice `admin_user_logs`. |
 | **2.3.8.2** | `30bc32d` | **186** | 21/05/2026 | Patch visual: `serv-page-shell` (perfil/usuários); contato RX empilhado (nome completo). |
 | **2.3.8.1** | `bd9d228` | **184** | 21/05/2026 | Ajustes visuais: perfil `/profile`, chips de contato em `/users`, cartão agenda no RX e na Consultoria; CSS/`public/build`. |
@@ -41,6 +42,18 @@
 ---
 
 ## Detalhe por versão
+
+### v2.3.8.4 — `COMMIT_HASH` (#189, 21/05/2026)
+
+Patch de consultoria e analytics (sem nova tag Git). Tag de deploy continua **`20260521-Mercury`**.
+
+| Área | Melhoria |
+|------|----------|
+| **Mapa unidades** | Capacidade e vagas no pin/modal (filtro ano turma+matrícula); detalhe por curso/série. |
+| **Matrículas** | Impacto no saldo sem cartões zerados quando só há base FUNDEB indicativa; textos VAAF claros (municipal vs prévia federal / `IEDUCAR_DISC_VAA_REFERENCIA`). |
+| **Inclusão** | Catálogo MEC+i-Educar completo; recorte NEE na aba (fora dos filtros globais); joins alinhados aos gráficos. |
+| **Redis** | `RedisProbe` com predis, PING/SET fallback; `performance:check` mostra cliente efectivo e diagnóstico. |
+| **VAAF** | `FundebReferenceDisplay` centraliza rótulos e fórmulas «matrículas × valor-aluno/ano». |
 
 ### v2.3.8.3 — `a736e43` (#188, 21/05/2026)
 
@@ -210,7 +223,7 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 
 *(Não existe tag `v1.0.0`; o marco inicial é o commit `8507c9a` #1.)*
 
-**Contador total em `main`:** `git rev-list --count main` → **188** (maio/2026, após patch 2.3.8.3). A tag **`20260521-Mercury`** continua em **`3c935ca`** (#182); patches **`bd9d228`** (#184), **`30bc32d`** (#186) e performance **`a736e43`** (#188).
+**Contador total em `main`:** `git rev-list --count main` → **189** (maio/2026, após patch 2.3.8.4). A tag **`20260521-Mercury`** continua em **`3c935ca`** (#182); patches **`bd9d228`** (#184), **`30bc32d`** (#186), performance **`a736e43`** (#188) e analytics **`COMMIT_HASH`** (#189).
 
 ---
 

@@ -1377,9 +1377,7 @@ class SchoolUnitsRepository
             }
 
             $q = $db->table($turma.' as t');
-            if ($filters->yearFilterValue() !== null && $tc['year'] !== '') {
-                $q->where('t.'.$tc['year'], $filters->yearFilterValue());
-            }
+            MatriculaTurmaJoin::applyYearFilterOnTurmaQuery($q, $db, $city, $filters, 't');
             MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
             MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
             MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['turno'], $filters->turno_id);
@@ -1492,34 +1490,41 @@ class SchoolUnitsRepository
         }
         $matBy = $this->matriculasCountByEscolaIds($db, $city, $filters, $eids);
         $capVagasBy = MatriculaChartQueries::capacidadeEVagasPorEscolaIds($db, $city, $filters, $eids);
+        $segmentosBy = MatriculaChartQueries::metricasOfertaPorEscolaSegmentoIds($db, $city, $filters, $eids);
         $metricasNota = null;
-        if ($filters->escola_id !== null || $filters->curso_id !== null || $filters->turno_id !== null) {
-            $filtersAno = new IeducarFilterState(
-                $filters->ano_letivo,
-                null,
-                null,
-                null,
-                $filters->inclusion_somente_nee,
-                $filters->inclusion_somente_inconsistencias,
-            );
-            $matAno = $this->matriculasCountByEscolaIds($db, $city, $filtersAno, $eids);
-            $capAno = MatriculaChartQueries::capacidadeEVagasPorEscolaIds($db, $city, $filtersAno, $eids);
-            foreach ($eids as $eid) {
-                if (($matBy[$eid] ?? 0) === 0 && ($matAno[$eid] ?? 0) > 0) {
-                    $matBy[$eid] = $matAno[$eid];
-                    $metricasNota ??= __('Matrículas e vagas referem-se ao ano letivo (sem filtro de curso/turno/escola no painel).');
-                }
-                $bundleAno = $capAno[$eid] ?? null;
-                $capStrict = $capVagasBy[$eid]['capacidade_declarada'] ?? null;
-                $capAnoVal = is_array($bundleAno) ? ($bundleAno['capacidade_declarada'] ?? null) : null;
-                if ($capStrict === null && $capAnoVal !== null && $capAnoVal > 0) {
-                    $capVagasBy[$eid] = $bundleAno;
-                    $metricasNota ??= __('Matrículas e vagas referem-se ao ano letivo (sem filtro de curso/turno/escola no painel).');
+        $filtersAno = new IeducarFilterState(
+            $filters->ano_letivo,
+            null,
+            null,
+            null,
+            $filters->inclusion_somente_nee,
+            $filters->inclusion_somente_inconsistencias,
+        );
+        $matAno = $this->matriculasCountByEscolaIds($db, $city, $filtersAno, $eids);
+        $capAno = MatriculaChartQueries::capacidadeEVagasPorEscolaIds($db, $city, $filtersAno, $eids);
+        $segmentosAno = MatriculaChartQueries::metricasOfertaPorEscolaSegmentoIds($db, $city, $filtersAno, $eids);
+        $notaAno = __('Matrículas e vagas referem-se ao ano letivo (sem filtro de curso/turno/escola no painel).');
+        $strictDims = $filters->escola_id !== null || $filters->curso_id !== null || $filters->turno_id !== null;
+        foreach ($eids as $eid) {
+            if (($matBy[$eid] ?? 0) === 0 && ($matAno[$eid] ?? 0) > 0) {
+                $matBy[$eid] = $matAno[$eid];
+                $metricasNota ??= $notaAno;
+            }
+            $bundleAno = $capAno[$eid] ?? null;
+            $capStrict = (int) ($capVagasBy[$eid]['capacidade_declarada'] ?? 0);
+            $capAnoVal = is_array($bundleAno) ? (int) ($bundleAno['capacidade_declarada'] ?? 0) : 0;
+            if ($capStrict <= 0 && $capAnoVal > 0) {
+                $capVagasBy[$eid] = $bundleAno;
+                $metricasNota ??= $notaAno;
+            }
+            if (($segmentosBy[$eid] ?? []) === [] && ($segmentosAno[$eid] ?? []) !== []) {
+                $segmentosBy[$eid] = $segmentosAno[$eid];
+                if ($strictDims) {
+                    $metricasNota ??= $notaAno;
                 }
             }
         }
         $cardBy = $this->fetchEscolaCardFieldsByIds($db, $city, $eids);
-        $ofertaBy = $this->ofertaCursoSeriePorEscolaIds($db, $city, $filters, $eids);
 
         $inepFromGeoByEid = [];
         try {
@@ -1538,6 +1543,11 @@ class SchoolUnitsRepository
             $bundle = $capVagasBy[$eid] ?? null;
             $cap = $bundle !== null ? ($bundle['capacidade_declarada'] ?? null) : null;
             $vagas = $bundle !== null ? ($bundle['vagas_disponiveis'] ?? null) : null;
+            $segmentos = $segmentosBy[$eid] ?? [];
+            if ((int) ($cap ?? 0) <= 0 && $segmentos !== []) {
+                $cap = array_sum(array_map(static fn (array $r): int => (int) ($r['capacidade'] ?? 0), $segmentos));
+                $vagas = array_sum(array_map(static fn (array $r): int => (int) ($r['vagas'] ?? 0), $segmentos));
+            }
             $card = $cardBy[$eid] ?? [];
             $geoRow = $inepFromGeoByEid[$eid] ?? null;
             if ($geoRow !== null) {
@@ -1556,10 +1566,35 @@ class SchoolUnitsRepository
             if ($mat === 0) {
                 $out[$eid]['matriculas'] = null;
             }
-            $out[$eid]['oferta_curso_serie'] = $ofertaBy[$eid] ?? [];
+            $out[$eid]['oferta_segmento'] = $segmentos;
+            $out[$eid]['oferta_curso_serie'] = $this->formatOfertaSegmentoLines($segmentos);
         }
 
         return $out;
+    }
+
+    /**
+     * @param  list<array{segmento: string, matriculas: int, capacidade: int, vagas: int}>  $segmentos
+     * @return list<string>
+     */
+    private function formatOfertaSegmentoLines(array $segmentos): array
+    {
+        $lines = [];
+        foreach ($segmentos as $row) {
+            $seg = trim((string) ($row['segmento'] ?? ''));
+            if ($seg === '') {
+                continue;
+            }
+            $lines[] = sprintf(
+                '%s: %s matr., cap. %s, vagas %s',
+                $seg,
+                number_format((int) ($row['matriculas'] ?? 0), 0, ',', '.'),
+                number_format((int) ($row['capacidade'] ?? 0), 0, ',', '.'),
+                number_format((int) ($row['vagas'] ?? 0), 0, ',', '.'),
+            );
+        }
+
+        return $lines;
     }
 
     /**

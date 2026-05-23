@@ -287,13 +287,30 @@
                                         </div>
                                     </div>
 
-                                    <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800/40 p-3" x-show="Array.isArray(modal?.oferta) && modal.oferta.length">
-                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Cursos e anos/séries ofertados (turmas no ano e filtros)') }}</p>
-                                        <ul class="mt-2 list-disc list-outside space-y-1 pl-5 text-sm text-gray-800 dark:text-gray-200">
-                                            <template x-for="(line, oi) in (modal?.oferta || [])" :key="oi">
-                                                <li x-text="line"></li>
-                                            </template>
-                                        </ul>
+                                    <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800/40 p-3" x-show="Array.isArray(modal?.oferta_segmento) && modal.oferta_segmento.length">
+                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Por curso / segmento (matrículas, capacidade e vagas)') }}</p>
+                                        <div class="mt-2 overflow-x-auto">
+                                            <table class="w-full text-xs text-gray-800 dark:text-gray-200">
+                                                <thead>
+                                                    <tr class="text-left text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
+                                                        <th class="py-1 pr-2 font-semibold">{{ __('Curso / série') }}</th>
+                                                        <th class="py-1 px-1 font-semibold text-right tabular-nums">{{ __('Matr.') }}</th>
+                                                        <th class="py-1 px-1 font-semibold text-right tabular-nums">{{ __('Cap.') }}</th>
+                                                        <th class="py-1 pl-1 font-semibold text-right tabular-nums">{{ __('Vagas') }}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <template x-for="(row, oi) in (modal?.oferta_segmento || [])" :key="oi + '-' + (row?.segmento || '')">
+                                                        <tr class="border-b border-gray-100 dark:border-gray-700/80 last:border-0">
+                                                            <td class="py-1.5 pr-2 align-top" x-text="row?.segmento || '—'"></td>
+                                                            <td class="py-1.5 px-1 text-right tabular-nums align-top" x-text="Number(row?.matriculas ?? 0).toLocaleString('pt-BR')"></td>
+                                                            <td class="py-1.5 px-1 text-right tabular-nums align-top" x-text="Number(row?.capacidade ?? 0).toLocaleString('pt-BR')"></td>
+                                                            <td class="py-1.5 pl-1 text-right tabular-nums align-top" x-text="Number(row?.vagas ?? 0).toLocaleString('pt-BR')"></td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
 
                                     <div class="rounded-lg border border-amber-200/80 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/20 p-3" x-show="modal?.conciliation && modal?.conciliation?.catalogo_disponivel">

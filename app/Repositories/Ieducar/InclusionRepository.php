@@ -222,8 +222,11 @@ class InclusionRepository
                     $tailCharts
                 );
 
-                if ($neeCharts !== [] && isset($neeCharts[0]['datasets'][0]['data'])) {
-                    $data = $neeCharts[0]['datasets'][0]['data'];
+                foreach ($neeCharts as $neeChart) {
+                    if (($neeChart['chart_id'] ?? null) !== 'nee_grupo') {
+                        continue;
+                    }
+                    $data = $neeChart['datasets'][0]['data'] ?? null;
                     if (is_array($data) && count($data) === 3) {
                         $neeGrupoResumo = [
                             'deficiencias' => (int) round((float) ($data[0] ?? 0)),
@@ -231,6 +234,7 @@ class InclusionRepository
                             'ne_altas_habilidades' => (int) round((float) ($data[2] ?? 0)),
                         ];
                     }
+                    break;
                 }
 
                 try {

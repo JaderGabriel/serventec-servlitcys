@@ -64,4 +64,48 @@ class InclusionEducacensoCatalogTest extends TestCase
 
         $this->assertSame(5, InclusionEducacensoCatalog::countForDeficienciaEntry($entry, $maps));
     }
+
+    public function test_classify_deficiencia_kind(): void
+    {
+        $this->assertSame(
+            'inep',
+            InclusionEducacensoCatalog::classifyDeficienciaKind([
+                'id' => null,
+                'label' => 'Baixa visão',
+                'norm' => 'baixa visao',
+            ])
+        );
+
+        $this->assertSame(
+            'complementar',
+            InclusionEducacensoCatalog::classifyDeficienciaKind([
+                'id' => null,
+                'label' => 'TDAH',
+                'norm' => 'tdah',
+            ])
+        );
+
+        $this->assertSame(
+            'ieducar',
+            InclusionEducacensoCatalog::classifyDeficienciaKind([
+                'id' => '99',
+                'label' => 'Outro tipo municipal',
+                'norm' => 'outro tipo municipal',
+            ])
+        );
+    }
+
+    public function test_nee_catalog_chart_series_assigns_colors_by_kind(): void
+    {
+        $series = InclusionEducacensoCatalog::neeCatalogChartSeries([
+            ['label' => 'A — INEP/Censo', 'value' => 2.0, 'kind' => 'inep'],
+            ['label' => 'B — complementar', 'value' => 0.0, 'kind' => 'complementar'],
+            ['label' => 'C — cadastro i-Educar', 'value' => 1.0, 'kind' => 'ieducar'],
+        ]);
+
+        $this->assertCount(3, $series['labels']);
+        $this->assertSame('#4f46e5', $series['colors'][0]);
+        $this->assertSame('#7c3aed', $series['colors'][1]);
+        $this->assertSame('#d97706', $series['colors'][2]);
+    }
 }

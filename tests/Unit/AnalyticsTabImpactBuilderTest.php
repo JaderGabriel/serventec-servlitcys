@@ -214,9 +214,15 @@ class AnalyticsTabImpactBuilderTest extends TestCase
 
         $this->assertTrue($strip['show_saldo'] ?? true);
         $this->assertNotNull($strip['saldo']);
-        $this->assertFalse($strip['saldo']['info_only'] ?? true);
+        $this->assertTrue($strip['saldo']['info_only'] ?? false);
+        $this->assertSame(0.0, $strip['saldo']['perda']);
         $this->assertNotEmpty($strip['saldo']['fundeb_lines'] ?? []);
-        $this->assertStringContainsString('VAAF', (string) ($strip['saldo']['fundeb_lines'][0] ?? ''));
+        $line = (string) ($strip['saldo']['fundeb_lines'][0] ?? '');
+        $this->assertStringContainsString('5.123', $line);
+        $this->assertStringContainsString('/aluno/ano', $line);
+        $this->assertStringContainsString('volume indicativo FUNDEB', $line);
+        $this->assertStringNotContainsString('VAAF ref.', $line);
+        $this->assertStringContainsString('discrepância', strtolower((string) ($strip['saldo']['footnote'] ?? '')));
     }
 
     public function test_inclusion_strip_uses_recurso_prova_saldo(): void
