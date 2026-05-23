@@ -21,10 +21,10 @@ return [
     */
 
     'product' => [
-        'version' => '2.3.7',
-        'release_tag' => '20260521-Minerva',
-        'commit_short' => 'a9a8c73',
-        'commit_number' => 180,
+        'version' => '2.3.8',
+        'release_tag' => '20260521-Mercury',
+        'commit_short' => '3c935ca',
+        'commit_number' => 182,
         'revision_date' => '2026-05-21',
     ],
 

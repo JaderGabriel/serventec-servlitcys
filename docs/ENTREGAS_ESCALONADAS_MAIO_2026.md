@@ -26,6 +26,9 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 18 | `a9a8c73` | Consultoria VAAF/saldo, overlay, diagnóstico |
 | 19 | *(doc)* | Documentação release 2.3.7 |
 | 20 | `20260521-Minerva` | Release 2.3.7 (tag `YYYYMMDD-Minerva`) |
+| 21 | `3c935ca` | VAAF municipal, contatos, perfil, RX e admin i-Educar |
+| 22 | *(doc)* | Documentação release 2.3.8 |
+| 23 | `20260521-Mercury` | Release 2.3.8 (tag `YYYYMMDD-Mercury`) |
 
 ---
 
@@ -199,6 +202,23 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 - **Totalizador:** denominador comum = matrículas ativas no filtro; em NEE com vínculos múltiplos, legenda pode mostrar também soma das barras.
 
 **Pós-deploy:** `npm run build` (se não usar `public/build` do repositório) · `php artisan config:clear`.
+
+---
+
+## 10. VAAF municipal, contatos, perfil e RX (v2.3.8)
+
+**Commit:** `3c935ca`
+
+| Área | Ficheiros principais |
+|------|----------------------|
+| VAAF | `FundebMunicipalReferenceResolver.php`, `DiscrepanciesFundingImpact.php`, `AnalyticsTabImpactBuilder.php`, `IeducarCompatibilityProbe.php` |
+| Contatos cidade | migração `2026_05_21_120000_*`, `CityReferenceContact.php`, `cities/_form.blade.php`, `reference-contact.blade.php`, `consultoria-municipality-strip.blade.php` |
+| Contatos usuário | migração `2026_05_21_130000_*`, `ContactChannels.php`, `users/partials/contact-fields.blade.php`, `contact/icon-row.blade.php` |
+| Perfil | `profile/edit.blade.php`, `components/profile/*`, `app.css` (`.serv-profile-*`) |
+| RX | `RxColumnHelp.php`, `rx.blade.php` — Indicador meta, Leitura dos dados, Pendente |
+| Analytics | `analytics.blade.php` — seletor com IBGE |
+
+**Pós-deploy:** `php artisan migrate` · preencher contatos nas cidades e opcionalmente nos usuários.
 
 ---
 

@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão:** 2.3.7 · release `20260521-Minerva` · commit `a9a8c73` (#180) · **Ramo:** `main` · **Última revisão:** 21/05/2026
+**Versão:** 2.3.8 · release `20260521-Mercury` · commit `3c935ca` (#182) · **Ramo:** `main` · **Última revisão:** 21/05/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 

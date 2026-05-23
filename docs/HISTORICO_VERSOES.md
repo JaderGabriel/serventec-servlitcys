@@ -1,6 +1,6 @@
 # Histórico de versões (resumo)
 
-**Versão em produção / `main`:** **2.3.7** · release **`20260521-Minerva`** · commit `a9a8c73` (#180)
+**Versão em produção / `main`:** **2.3.8** · release **`20260521-Mercury`** · commit `3c935ca` (#182)
 
 > **Como ler:** cada linha indica a **tag ou marco**, o **commit** (hash curto Git) e o **contador** (`#N` = posição na história linear do ramo `main`, desde o primeiro commit). Links GitHub usam o repositório configurado em `DOCS_GITHUB_REPOSITORY`.
 >
@@ -12,6 +12,7 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
+| **2.3.8** | `20260521-Mercury` → `3c935ca` | **182** | 21/05/2026 | VAAF municipal unificado; contatos município/usuário; perfil redesenhado; RX (Indicador meta, Leitura dos dados); admin i-Educar; pt-BR. |
 | **2.3.7** | `20260521-Minerva` → `a9a8c73` | **180** | 21/05/2026 | Consultoria: saldo por aba, VAAF FUNDEB/diagnóstico, gráficos R$, overlay de carregamento; PDF, auth e rodapé. |
 | **2.3.6** | `20260522-Janus` → `9350e9d` | **174** | 22/05/2026 | RX: progresso e «em falta» (turmas + matrículas); legenda visual por coluna; fix filtro matrícula ativa e sintaxe analytics. |
 | **2.3.5** | `17d3d6e` | **168** | mai/2026 | RX: meta retroativa (+5%/salto), semáforo por município, legenda de colunas; consultas resilientes (conexão ≠ erro SQL). |
@@ -37,6 +38,20 @@
 ---
 
 ## Detalhe por versão
+
+### v2.3.8 — `20260521-Mercury` → `3c935ca` (#182, 21/05/2026)
+
+**Mercury** (mitologia romana): mensageiro e elo — alinhado a contatos municipais/usuário, perfil e leitura operacional no RX.
+
+| Tema | Melhoria |
+|------|----------|
+| **VAAF** | `vaafParaCalculo()` centralizado; impacto FUNDEB/discrepâncias e matrículas com referência municipal. |
+| **Contatos** | Migrações cidades/usuários; `CityReferenceContact`, `ContactChannels`; Consultoria, RX e `/users`. |
+| **Perfil** | Hero, seções, upload de foto; telefone/WhatsApp opcionais. |
+| **RX** | Indicador meta, Leitura dos dados, Pendente/Em andamento; tooltips pt-BR. |
+| **Admin** | `ieducar-compatibility` com VAAF, prioridades e impacto/correção. |
+
+Notas: [RELEASE_20260521_MERCURY.md](RELEASE_20260521_MERCURY.md).
 
 ### v2.3.7 — `20260521-Minerva` → `a9a8c73` (#180, 21/05/2026)
 
@@ -157,6 +172,7 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 
 | Tag | Commit | # | Notas |
 |-----|--------|---|--------|
+| **`20260521-Mercury`** | `3c935ca` | 182 | Release **2.3.8** (VAAF municipal, contatos, perfil, RX). |
 | **`20260521-Minerva`** | `a9a8c73` | 180 | Release **2.3.7** (consultoria VAAF, saldo, overlay). |
 | **`20260522-Janus`** | `9350e9d` | 174 | Release **2.3.6** (formato `YYYYMMDD-nome`). |
 | `v2.1.0` | `c3ec8b9` | 66 | Geografia Censo INEP. |
@@ -164,7 +180,7 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 
 *(Não existe tag `v1.0.0`; o marco inicial é o commit `8507c9a` #1.)*
 
-**Contador total em `main`:** `git rev-list --count main` → **181** (maio/2026, após documentação 2.3.7). A tag **`20260521-Minerva`** aponta para **`a9a8c73`** (#180).
+**Contador total em `main`:** `git rev-list --count main` → **183** (maio/2026, após documentação 2.3.8). A tag **`20260521-Mercury`** aponta para **`3c935ca`** (#182).
 
 ---
 
@@ -175,9 +191,9 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 - Ao publicar: actualizar tabela **Linha do tempo**, **Tags Git**, `README.md`, `STATUS_PROJETO.md` e `product.version`.
 
 ```bash
-git tag -a 20260521-Minerva a9a8c73 -m "2.3.7 — VAAF, saldo consultoria, overlay e diagnóstico (Minerva)"
-git push origin 20260521-Minerva
-gh release create 20260521-Minerva --title "20260521-Minerva (2.3.7)" --notes-file docs/RELEASE_20260521_MINERVA.md
+git tag -a 20260521-Mercury 3c935ca -m "2.3.8 — VAAF municipal, contatos, perfil e RX (Mercury)"
+git push origin 20260521-Mercury
+gh release create 20260521-Mercury --title "20260521-Mercury (2.3.8)" --notes-file docs/RELEASE_20260521_MERCURY.md
 ```
 
 ---

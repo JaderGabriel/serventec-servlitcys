@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão actual (`main`):** **2.3.7** · commit `a9a8c73` (#180). Última release: **`20260521-Minerva`** (21/05/2026). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md).
+**Versão atual (`main`):** **2.3.8** · commit `3c935ca` (#182). Última release: **`20260521-Mercury`** (21/05/2026). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md).
 
 ## Requisitos
 
@@ -206,6 +206,7 @@ Detalhe: [docs/PERFIS_UTILIZADOR.md](docs/PERFIS_UTILIZADOR.md).
 
 | Versão | Commit | # | Notas |
 |--------|--------|---|--------|
+| **2.3.8** | `20260521-Mercury` → `3c935ca` | 182 | VAAF municipal, contatos, perfil, RX — ver [RELEASE_20260521_MERCURY.md](docs/RELEASE_20260521_MERCURY.md). |
 | **2.3.7** | `20260521-Minerva` → `a9a8c73` | 180 | Consultoria VAAF/saldo, overlay, diagnóstico — ver [RELEASE_20260521_MINERVA.md](docs/RELEASE_20260521_MINERVA.md). |
 | **2.3.6** | `20260522-Janus` → `9350e9d` | 174 | RX, mapa, Inclusão, Matrículas — ver [RELEASE_20260522_JANUS.md](docs/RELEASE_20260522_JANUS.md). |
 | **2.3.2** | `4d3f5e8` | 157 | Saldo pedagógico, frequência/falta_aluno, FUNDEB lazy matrículas, UI impact strip. |
