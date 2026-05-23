@@ -26,8 +26,8 @@
         </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
+    <div class="py-8 sm:py-10">
+        <div class="serv-page-shell space-y-8">
             @if (session('success'))
                 <div class="rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-4 py-3 text-sm text-green-800 dark:text-green-200">
                     {{ session('success') }}
@@ -75,7 +75,7 @@
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 font-mono">{{ $u->username }}</td>
                                     <td class="px-4 py-3 text-sm align-top">
-                                        <x-contact.icon-row :user="$u" variant="table" />
+                                        <x-contact.icon-row :user="$u" variant="table" class="serv-contact-table--fluid" />
                                     </td>
                                     <td class="px-4 py-3 text-sm">
                                         @php

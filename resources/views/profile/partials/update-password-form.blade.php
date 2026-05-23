@@ -8,7 +8,7 @@
         @csrf
         @method('put')
 
-        <div class="space-y-4 max-w-md">
+        <div class="space-y-4 max-w-2xl">
             <div>
                 <x-input-label for="update_password_current_password" :value="__('Senha atual')" />
                 <x-text-input id="update_password_current_password" name="current_password" type="password" class="mt-1 block w-full" autocomplete="current-password" />

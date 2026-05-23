@@ -55,10 +55,10 @@
             }
         }"
     >
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8 serv-profile-page">
+        <div class="serv-page-shell serv-profile-page">
             <header class="serv-profile-hero">
                 <div class="serv-profile-hero__glow" aria-hidden="true"></div>
-                <div class="serv-profile-hero__body">
+                <div class="serv-profile-hero__body serv-profile-hero__body--wide">
                     <div class="serv-profile-hero__avatar-wrap">
                         <template x-if="photoPreview">
                             <img :src="photoPreview" alt="" class="serv-profile-hero__avatar" />
@@ -92,7 +92,7 @@
                         </div>
 
                         @if ($hasPhone || $hasWhatsapp)
-                            <div class="serv-profile-hero__contacts">
+                            <div class="serv-profile-hero__contacts serv-profile-hero__contacts--inline">
                                 @if ($hasPhone)
                                     <a href="{{ $contact['phone_href'] }}" class="serv-contact-icons__btn" title="{{ $contact['phone'] }}">
                                         <x-ui.icon name="phone" class="h-4 w-4" />
@@ -105,8 +105,28 @@
                                 @endif
                             </div>
                         @endif
+                        <button type="button" class="serv-profile-hero__edit-photo xl:hidden" x-on:click="scrollTo('perfil-foto')">
+                            <x-ui.icon name="user-circle" class="h-3.5 w-3.5" />
+                            {{ __('Alterar foto') }}
+                        </button>
+                    </div>
 
-                        <button type="button" class="serv-profile-hero__edit-photo" x-on:click="scrollTo('perfil-foto')">
+                    <div class="serv-profile-hero__aside">
+                        @if ($hasPhone || $hasWhatsapp)
+                            <div class="serv-profile-hero__contacts serv-profile-hero__contacts--aside">
+                                @if ($hasPhone)
+                                    <a href="{{ $contact['phone_href'] }}" class="serv-contact-icons__btn" title="{{ $contact['phone'] }}">
+                                        <x-ui.icon name="phone" class="h-4 w-4" />
+                                    </a>
+                                @endif
+                                @if ($hasWhatsapp)
+                                    <a href="{{ $contact['whatsapp_href'] }}" target="_blank" rel="noopener noreferrer" class="serv-contact-icons__btn serv-contact-icons__btn--whatsapp" title="{{ $contact['whatsapp'] }}">
+                                        <x-ui.icon name="chat-bubble-left" class="h-4 w-4" />
+                                    </a>
+                                @endif
+                            </div>
+                        @endif
+                        <button type="button" class="serv-profile-hero__edit-photo hidden xl:inline-flex" x-on:click="scrollTo('perfil-foto')">
                             <x-ui.icon name="user-circle" class="h-3.5 w-3.5" />
                             {{ __('Alterar foto') }}
                         </button>

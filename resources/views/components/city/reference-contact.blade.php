@@ -5,6 +5,8 @@
     'variant' => 'inline',
     /** light: cartão claro (RX) · dark: faixa consultoria */
     'tone' => 'light',
+    /** inline: nome e ícones na mesma linha · stacked: nome completo, ícones abaixo */
+    'layout' => 'inline',
 ])
 
 @php
@@ -17,6 +19,7 @@
     $tone = $variant === 'strip'
         ? 'dark'
         : (in_array($tone, ['light', 'dark'], true) ? $tone : 'light');
+    $layout = in_array($layout, ['inline', 'stacked'], true) ? $layout : 'inline';
     $displayName = filled($payload['name'] ?? null) ? $payload['name'] : null;
     $initials = '';
     if ($displayName !== null) {
@@ -43,53 +46,103 @@
             <div @class([
                 'serv-city-contact-agenda',
                 'serv-city-contact-agenda--dark' => $tone === 'dark',
+                'serv-city-contact-agenda--stacked' => $layout === 'stacked',
             ])>
-                <div class="serv-city-contact-agenda__avatar" aria-hidden="true">
-                    @if ($initials !== '')
-                        <span>{{ $initials }}</span>
-                    @else
-                        <x-ui.icon name="user-circle" class="h-5 w-5" />
-                    @endif
-                </div>
-                <div class="serv-city-contact-agenda__body">
-                    <p class="serv-city-contact-agenda__name" title="{{ $displayName ?? __('Contato municipal') }}">
-                        {{ $displayName ?? __('Contato municipal') }}
-                    </p>
-                </div>
-                <div class="serv-city-contact-agenda__actions">
-                    @if (filled($payload['phone_href'] ?? null))
-                        <a
-                            href="{{ $payload['phone_href'] }}"
-                            class="serv-city-contact-agenda__btn serv-city-contact-agenda__btn--phone"
-                            title="{{ __('Ligar: :n', ['n' => $payload['phone'] ?? '']) }}"
-                            aria-label="{{ __('Ligar para :n', ['n' => $payload['phone'] ?? '']) }}"
-                        >
-                            <x-ui.icon name="phone" class="h-4 w-4" />
-                        </a>
-                    @endif
-                    @if (filled($payload['whatsapp_href'] ?? null))
-                        <a
-                            href="{{ $payload['whatsapp_href'] }}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="serv-city-contact-agenda__btn serv-city-contact-agenda__btn--whatsapp"
-                            title="{{ __('WhatsApp: :n', ['n' => $payload['whatsapp'] ?? '']) }}"
-                            aria-label="{{ __('Abrir WhatsApp: :n', ['n' => $payload['whatsapp'] ?? '']) }}"
-                        >
-                            <x-ui.icon name="chat-bubble-left" class="h-4 w-4" />
-                        </a>
-                    @endif
-                    @if (filled($payload['email_href'] ?? null))
-                        <a
-                            href="{{ $payload['email_href'] }}"
-                            class="serv-city-contact-agenda__btn serv-city-contact-agenda__btn--email"
-                            title="{{ $payload['email'] }}"
-                            aria-label="{{ __('E-mail: :e', ['e' => $payload['email'] ?? '']) }}"
-                        >
-                            <x-ui.icon name="envelope" class="h-4 w-4" />
-                        </a>
-                    @endif
-                </div>
+                @if ($layout === 'stacked')
+                    <div class="serv-city-contact-agenda__row">
+                        <div class="serv-city-contact-agenda__avatar" aria-hidden="true">
+                            @if ($initials !== '')
+                                <span>{{ $initials }}</span>
+                            @else
+                                <x-ui.icon name="user-circle" class="h-5 w-5" />
+                            @endif
+                        </div>
+                        <p class="serv-city-contact-agenda__name serv-city-contact-agenda__name--wrap" title="{{ $displayName ?? __('Contato municipal') }}">
+                            {{ $displayName ?? __('Contato municipal') }}
+                        </p>
+                    </div>
+                    <div class="serv-city-contact-agenda__actions serv-city-contact-agenda__actions--stacked">
+                        @if (filled($payload['phone_href'] ?? null))
+                            <a
+                                href="{{ $payload['phone_href'] }}"
+                                class="serv-city-contact-agenda__btn serv-city-contact-agenda__btn--phone"
+                                title="{{ __('Ligar: :n', ['n' => $payload['phone'] ?? '']) }}"
+                                aria-label="{{ __('Ligar para :n', ['n' => $payload['phone'] ?? '']) }}"
+                            >
+                                <x-ui.icon name="phone" class="h-4 w-4" />
+                            </a>
+                        @endif
+                        @if (filled($payload['whatsapp_href'] ?? null))
+                            <a
+                                href="{{ $payload['whatsapp_href'] }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="serv-city-contact-agenda__btn serv-city-contact-agenda__btn--whatsapp"
+                                title="{{ __('WhatsApp: :n', ['n' => $payload['whatsapp'] ?? '']) }}"
+                                aria-label="{{ __('Abrir WhatsApp: :n', ['n' => $payload['whatsapp'] ?? '']) }}"
+                            >
+                                <x-ui.icon name="chat-bubble-left" class="h-4 w-4" />
+                            </a>
+                        @endif
+                        @if (filled($payload['email_href'] ?? null))
+                            <a
+                                href="{{ $payload['email_href'] }}"
+                                class="serv-city-contact-agenda__btn serv-city-contact-agenda__btn--email"
+                                title="{{ $payload['email'] }}"
+                                aria-label="{{ __('E-mail: :e', ['e' => $payload['email'] ?? '']) }}"
+                            >
+                                <x-ui.icon name="envelope" class="h-4 w-4" />
+                            </a>
+                        @endif
+                    </div>
+                @else
+                    <div class="serv-city-contact-agenda__avatar" aria-hidden="true">
+                        @if ($initials !== '')
+                            <span>{{ $initials }}</span>
+                        @else
+                            <x-ui.icon name="user-circle" class="h-5 w-5" />
+                        @endif
+                    </div>
+                    <div class="serv-city-contact-agenda__body">
+                        <p class="serv-city-contact-agenda__name" title="{{ $displayName ?? __('Contato municipal') }}">
+                            {{ $displayName ?? __('Contato municipal') }}
+                        </p>
+                    </div>
+                    <div class="serv-city-contact-agenda__actions">
+                        @if (filled($payload['phone_href'] ?? null))
+                            <a
+                                href="{{ $payload['phone_href'] }}"
+                                class="serv-city-contact-agenda__btn serv-city-contact-agenda__btn--phone"
+                                title="{{ __('Ligar: :n', ['n' => $payload['phone'] ?? '']) }}"
+                                aria-label="{{ __('Ligar para :n', ['n' => $payload['phone'] ?? '']) }}"
+                            >
+                                <x-ui.icon name="phone" class="h-4 w-4" />
+                            </a>
+                        @endif
+                        @if (filled($payload['whatsapp_href'] ?? null))
+                            <a
+                                href="{{ $payload['whatsapp_href'] }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="serv-city-contact-agenda__btn serv-city-contact-agenda__btn--whatsapp"
+                                title="{{ __('WhatsApp: :n', ['n' => $payload['whatsapp'] ?? '']) }}"
+                                aria-label="{{ __('Abrir WhatsApp: :n', ['n' => $payload['whatsapp'] ?? '']) }}"
+                            >
+                                <x-ui.icon name="chat-bubble-left" class="h-4 w-4" />
+                            </a>
+                        @endif
+                        @if (filled($payload['email_href'] ?? null))
+                            <a
+                                href="{{ $payload['email_href'] }}"
+                                class="serv-city-contact-agenda__btn serv-city-contact-agenda__btn--email"
+                                title="{{ $payload['email'] }}"
+                                aria-label="{{ __('E-mail: :e', ['e' => $payload['email'] ?? '']) }}"
+                            >
+                                <x-ui.icon name="envelope" class="h-4 w-4" />
+                            </a>
+                        @endif
+                    </div>
+                @endif
             </div>
         @else
             <div class="serv-city-contact__header">

@@ -24,7 +24,7 @@
 
                 @isset($header)
                     <div class="serv-page-heading">
-                        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+                        <div class="serv-page-shell py-4">
                             {{ $header }}
                         </div>
                     </div>
@@ -33,7 +33,7 @@
 
             <main class="flex-1 w-full min-w-0">
                 @if (session('success'))
-                    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 pt-4">
+                    <div class="serv-page-shell pt-4">
                         <div class="rounded-md bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 px-4 py-3 text-green-800 dark:text-green-200 text-sm">
                             {{ session('success') }}
                         </div>
