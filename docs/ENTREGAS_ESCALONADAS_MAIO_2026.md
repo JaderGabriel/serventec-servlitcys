@@ -30,6 +30,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 22 | *(doc)* | Documentação release 2.3.8 |
 | 23 | `20260521-Mercury` | Release 2.3.8 (tag `YYYYMMDD-Mercury`) |
 | 24 | `bd9d228` | Patch visual **2.3.8.1** (sem nova tag): perfil, `/users`, RX, Consultoria |
+| 25 | `30bc32d` | Patch visual **2.3.8.2**: largura perfil/usuários, contato RX empilhado |
 
 ---
 

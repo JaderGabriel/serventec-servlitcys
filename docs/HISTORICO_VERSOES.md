@@ -1,6 +1,6 @@
 # Histórico de versões (resumo)
 
-**Versão em produção / `main`:** **2.3.8.1** · release **`20260521-Mercury`** (patch visual, sem nova tag) · commit `bd9d228` (#184)
+**Versão em produção / `main`:** **2.3.8.2** · release **`20260521-Mercury`** (patch visual, sem nova tag) · commit `30bc32d` (#186)
 
 > **Como ler:** cada linha indica a **tag ou marco**, o **commit** (hash curto Git) e o **contador** (`#N` = posição na história linear do ramo `main`, desde o primeiro commit). Links GitHub usam o repositório configurado em `DOCS_GITHUB_REPOSITORY`.
 >
@@ -12,6 +12,7 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
+| **2.3.8.2** | `30bc32d` | **186** | 21/05/2026 | Patch visual: `serv-page-shell` (perfil/usuários); contato RX empilhado (nome completo). |
 | **2.3.8.1** | `bd9d228` | **184** | 21/05/2026 | Ajustes visuais: perfil `/profile`, chips de contato em `/users`, cartão agenda no RX e na Consultoria; CSS/`public/build`. |
 | **2.3.8** | `20260521-Mercury` → `3c935ca` | **182** | 21/05/2026 | VAAF municipal unificado; contatos município/usuário; perfil redesenhado; RX (Indicador meta, Leitura dos dados); admin i-Educar; pt-BR. |
 | **2.3.7** | `20260521-Minerva` → `a9a8c73` | **180** | 21/05/2026 | Consultoria: saldo por aba, VAAF FUNDEB/diagnóstico, gráficos R$, overlay de carregamento; PDF, auth e rodapé. |
@@ -39,6 +40,10 @@
 ---
 
 ## Detalhe por versão
+
+### v2.3.8.2 — `30bc32d` (#186, 21/05/2026)
+
+Patch visual (sem nova tag): largura útil até 96rem no cabeçalho, perfil e lista de usuários; cartão de contato no RX com layout empilhado para o nome não truncar.
 
 ### v2.3.8.1 — `bd9d228` (#184, 21/05/2026)
 
@@ -192,7 +197,7 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 
 *(Não existe tag `v1.0.0`; o marco inicial é o commit `8507c9a` #1.)*
 
-**Contador total em `main`:** `git rev-list --count main` → **185** (maio/2026, após patch 2.3.8.1). A tag **`20260521-Mercury`** continua em **`3c935ca`** (#182); o patch visual está em **`bd9d228`** (#184).
+**Contador total em `main`:** `git rev-list --count main` → **187** (maio/2026, após patch 2.3.8.2). A tag **`20260521-Mercury`** continua em **`3c935ca`** (#182); patches visuais em **`bd9d228`** (#184) e **`30bc32d`** (#186).
 
 ---
 
