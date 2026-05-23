@@ -1,6 +1,6 @@
 # Histórico de versões (resumo)
 
-**Versão em produção / `main`:** **2.3.8** · release **`20260521-Mercury`** · commit `3c935ca` (#182)
+**Versão em produção / `main`:** **2.3.8.1** · release **`20260521-Mercury`** (patch visual, sem nova tag) · commit `bd9d228` (#184)
 
 > **Como ler:** cada linha indica a **tag ou marco**, o **commit** (hash curto Git) e o **contador** (`#N` = posição na história linear do ramo `main`, desde o primeiro commit). Links GitHub usam o repositório configurado em `DOCS_GITHUB_REPOSITORY`.
 >
@@ -12,6 +12,7 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
+| **2.3.8.1** | `bd9d228` | **184** | 21/05/2026 | Ajustes visuais: perfil `/profile`, chips de contato em `/users`, cartão agenda no RX e na Consultoria; CSS/`public/build`. |
 | **2.3.8** | `20260521-Mercury` → `3c935ca` | **182** | 21/05/2026 | VAAF municipal unificado; contatos município/usuário; perfil redesenhado; RX (Indicador meta, Leitura dos dados); admin i-Educar; pt-BR. |
 | **2.3.7** | `20260521-Minerva` → `a9a8c73` | **180** | 21/05/2026 | Consultoria: saldo por aba, VAAF FUNDEB/diagnóstico, gráficos R$, overlay de carregamento; PDF, auth e rodapé. |
 | **2.3.6** | `20260522-Janus` → `9350e9d` | **174** | 22/05/2026 | RX: progresso e «em falta» (turmas + matrículas); legenda visual por coluna; fix filtro matrícula ativa e sintaxe analytics. |
@@ -38,6 +39,17 @@
 ---
 
 ## Detalhe por versão
+
+### v2.3.8.1 — `bd9d228` (#184, 21/05/2026)
+
+Sem nova tag Git nem release GitHub — continua **`20260521-Mercury`** para deploy por tag; o número **2.3.8.1** documenta apenas refinamentos de UI.
+
+| Área | Ajuste |
+|------|--------|
+| **Perfil** | Layout em cartão e seções; hero com prévia de foto; CSS `.serv-profile-*`; build Vite atualizado. |
+| **Usuários** | Coluna Contatos com chips coloridos (`variant="table"`). |
+| **RX** | Contato municipal estilo agenda (nome + botões ícone). |
+| **Consultoria** | Mesmo cartão agenda com tom escuro na faixa do município. |
 
 ### v2.3.8 — `20260521-Mercury` → `3c935ca` (#182, 21/05/2026)
 

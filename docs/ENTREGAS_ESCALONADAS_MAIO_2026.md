@@ -29,6 +29,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 21 | `3c935ca` | VAAF municipal, contatos, perfil, RX e admin i-Educar |
 | 22 | *(doc)* | Documentação release 2.3.8 |
 | 23 | `20260521-Mercury` | Release 2.3.8 (tag `YYYYMMDD-Mercury`) |
+| 24 | `bd9d228` | Patch visual **2.3.8.1** (sem nova tag): perfil, `/users`, RX, Consultoria |
 
 ---
 
@@ -219,6 +220,20 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | Analytics | `analytics.blade.php` — seletor com IBGE |
 
 **Pós-deploy:** `php artisan migrate` · preencher contatos nas cidades e opcionalmente nos usuários.
+
+---
+
+## 11. Patch visual 2.3.8.1 (sem release)
+
+**Escopo:** apenas UI/CSS — sem migrações nem alteração de regras de negócio.
+
+| Área | Ficheiros |
+|------|-----------|
+| Perfil | `profile/edit.blade.php`, partials, `app.css` (`.serv-profile-*`) |
+| Usuários | `contact/icon-row.blade.php` (`variant="table"`), `users/index.blade.php` |
+| RX / Consultoria | `city/reference-contact.blade.php` (`agenda`, `tone=dark`), `rx.blade.php`, `consultoria-municipality-strip.blade.php` |
+
+**Pós-deploy:** `npm run build` (ou usar `public/build` do repositório) · **não** criar tag Git.
 
 ---
 
