@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`2.3.8.6`** · tag de deploy **`20260521-Mercury`** (sem nova tag Git) · commit **`0a0743e`** (#**198**)
+> **▶ EM PRODUÇÃO (`main`):** versão **`2.3.8.7`** · tag de deploy **`20260521-Mercury`** (sem nova tag Git) · commit **`6eb94cf`** (#**202**)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **2.3.8.6** |
+| **Versão semântica em produção** | **2.3.8.7** |
 | **Ramo** | `main` |
 | **Tag de deploy (servidor)** | `20260521-Mercury` |
-| **Último patch documentado** | Mapa Início: semáforo cadastro RX (ano vigente), contato municipal no cartão |
+| **Último patch documentado** | Pulse: diagnóstico SQL + operações; Matrículas: ganho estimado (VAAF municipal), sem perdas |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -20,7 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 2.3.8.6** | `0a0743e` | **198** | 21/05/2026 | **Produção:** mapa municípios Início com cores/meta RX (cadastro ano vigente); cartão com contato municipal e progresso meta; snapshot em cache. |
+| **▶ 2.3.8.7** | `6eb94cf` | **202** | 21/05/2026 | **Produção:** Pulse diagnóstico SQL (sistema + municípios) e operações (HTTP, jobs, Analytics, RX); aba Matrículas com ganho VAAF e sem perdas. |
+| 2.3.8.6 | `0a0743e` | **198** | 21/05/2026 | Mapa municípios Início com cores/meta RX (cadastro ano vigente); cartão com contato municipal e progresso meta; snapshot em cache. |
 | 2.3.8.5 | `a2566aa` | **195** | 21/05/2026 | Mapa capacidade/vagas (fallback); Matrículas cartões saldo + fórmula VAAF; NEE dataset unificado (grupo + catálogo); alias deficiência. |
 | 2.3.8.4 | `4833160` | **191** | 21/05/2026 | Mapa escolas: capacidade/vagas; Matrículas saldo/VAAF (prévia 4.500); Inclusão catálogo/recorte; Redis predis (`performance:check`). |
 | **2.3.8.3** | `a736e43` | **188** | 21/05/2026 | Performance: login mais rápido (audit defer, Pulse em auth); cache city_ids/SMTP; Redis (`performance:check`); índice `admin_user_logs`. |
@@ -53,7 +54,21 @@
 
 ## Detalhe por versão
 
-### v2.3.8.6 — `0a0743e` (#198, 21/05/2026) — **em produção**
+### v2.3.8.7 — `6eb94cf` (#202, 21/05/2026) — **em produção**
+
+Patch de observabilidade Pulse e consultoria Matrículas (sem nova tag Git). Tag de deploy continua **`20260521-Mercury`**.
+
+| Área | Melhoria |
+|------|----------|
+| **Pulse — SQL** | Métricas `db_slow_scope`, `db_slow_fp`, `db_muni_run`, `db_muni_run_slow`, `db_request_total`; escuta `QueryExecuted`; contexto em `CityDataConnection::run`; cartões *Diagnóstico SQL* e *SQL por município*; limiares `PULSE_DB_DIAGNOSTICS_*`. |
+| **Pulse — operações** | Métricas `app_operation` / `app_operation_slow` / `app_operation_error`; middleware `RecordPulseOperations` (rotas HTTP); instrumentação em abas Analytics lazy, RX, Início, jobs sync/PDF, mapa RX, export CSV, probe i-Educar; cartão *Operações da aplicação*; KPI *Operações lentas* na faixa executiva; `PULSE_OPERATIONS_*`. |
+| **Pulse — UI** | Aba Desempenho em `/pulse` reorganizada; infraestrutura municipal com resumo SQL por município. |
+| **Matrículas** | Ganho estimado = matrículas realizadas × VAAF municipal (ou prévia configurada); **perda zero** na aba; ganho potencial só ao corrigir cadastro; `funding_reference` garantido no lazy-load. |
+| **Docs técnicas** | `METRICAS_QUERIES_ANALYTICS.md`, `PONDERACOES_TECNICAS.md` §9, `.env.example`. |
+
+**Pós-deploy:** `php artisan config:clear` · percorrer `/pulse` (aba Desempenho) e aba Matrículas com cidade/ano · variáveis opcionais em `.env` (ver `.env.example`).
+
+### v2.3.8.6 — `0a0743e` (#198, 21/05/2026)
 
 Patch do mapa de municípios no Início (sem nova tag Git). Tag de deploy continua **`20260521-Mercury`**.
 
@@ -253,7 +268,7 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 
 *(Não existe tag `v1.0.0`; o marco inicial é o commit `8507c9a` #1.)*
 
-**Contador total em `main`:** `git rev-list --count main` → **199** (maio/2026, após patch **2.3.8.6** em produção). A tag **`20260521-Mercury`** continua em **`3c935ca`** (#182); último patch **`0a0743e`** (#**198**).
+**Contador total em `main`:** `git rev-list --count main` → **202** (maio/2026, após patch **2.3.8.7** em produção). A tag **`20260521-Mercury`** continua em **`3c935ca`** (#182); último patch **`6eb94cf`** (#**202**).
 
 ---
 

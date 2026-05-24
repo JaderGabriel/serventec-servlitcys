@@ -35,7 +35,9 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 27 | `4833160` | Patch **2.3.8.4**: mapa capacidade/vagas, saldo Matrículas/VAAF, Inclusão, predis |
 | 28 | `7c0297c` | Doc: estudo integrações setor público (sem bump de versão) |
 | 29 | `a2566aa` | Patch **2.3.8.5**: mapa capacidade, Matrículas saldo, NEE unificado |
-| 30 | `0a0743e` | Patch **2.3.8.6** (**em produção**): mapa Início semáforo RX + contato municipal |
+| 30 | `0a0743e` | Patch **2.3.8.6**: mapa Início semáforo RX + contato municipal |
+| 31 | `9a33506` | Patch: otimizar login (SMTP auth, audit defer, query credenciais) |
+| 32 | `6eb94cf` | Patch **2.3.8.7** (**em produção**): Pulse SQL/operações + Matrículas ganho VAAF |
 
 ---
 
@@ -289,7 +291,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 ---
 
-## 15. Patch mapa Início 2.3.8.6 — **em produção**
+## 15. Patch mapa Início 2.3.8.6
 
 **Versão semântica:** `2.3.8.6` · **tag deploy:** `20260521-Mercury` (inalterada)
 
@@ -300,6 +302,48 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | Produção / docs | `config/documentation.php`, `HISTORICO_VERSOES.md`, selo «Em produção» em `/admin/documentacao` |
 
 **Pós-deploy:** `php artisan config:clear` · `php artisan cache:clear` (invalidar snapshot RX do mapa) · validar `/dashboard` (cores RX, cartão com contato) · **não** criar tag Git.
+
+---
+
+## 16. Patch Pulse + Matrículas 2.3.8.7 — **em produção**
+
+**Versão semântica:** `2.3.8.7` · **tag deploy:** `20260521-Mercury` (inalterada) · **commit:** `6eb94cf` (#202)
+
+### Pulse — diagnóstico SQL (sistema + municípios)
+
+| Item | Detalhe |
+|------|---------|
+| Config | `config/pulse_diagnostics.php`, `PULSE_DB_DIAGNOSTICS_ENABLED`, `PULSE_DB_DIAGNOSTICS_SLOW_MS`, `PULSE_DB_DIAGNOSTICS_SLOW_RUN_MS` |
+| Ingestão | `RecordPulseDatabaseQueries` (`QueryExecuted`), `PulseDatabaseRecorder`, `MunicipalDatabaseContext` em `CityDataConnection::run`, `RequestDbTimingAccumulator` (flush no `terminating`) |
+| Métricas | `db_slow_scope`, `db_slow_fp`, `db_muni_run`, `db_muni_run_slow`, `db_request_total` |
+| UI | `DatabaseDiagnosticsCard`, `MunicipalDatabaseDiagnosticsCard`, secção na aba **Desempenho** de `/pulse` |
+
+### Pulse — operações da aplicação
+
+| Item | Detalhe |
+|------|---------|
+| Config | `PULSE_OPERATIONS_ENABLED`, `PULSE_OPERATIONS_SLOW_MS`, `PULSE_OPERATIONS_HTTP` |
+| Ingestão | `PulseOperationRecorder`, middleware `RecordPulseOperations` (rotas autenticadas, exc. login/Pulse/livewire) |
+| Métricas | `app_operation`, `app_operation_slow`, `app_operation_error` |
+| Chaves típicas | `http:route:…`, `analytics:tab:…\|cid:…`, `rx:overview`, `sync:…`, `pdf:…`, `map:rx_snapshot\|cache:…`, `export:discrepancies:…`, `admin:home:gather` |
+| UI | `OperationsDiagnosticsCard`, KPI **Operações lentas** em `MonitoringExecutiveStrip` |
+
+### Consultoria — aba Matrículas (Cadastro)
+
+| Item | Detalhe |
+|------|---------|
+| Saldo | Ganho estimado = matrículas × VAAF do contexto; **perda = 0**; modo `gain_only` no cartão de impacto |
+| VAAF | `funding_reference` via `DiscrepanciesFundingImpact::fundingReferencePayload` no lazy-load; correções usam o mesmo VAAF (não piso 4.500 isolado) |
+| Ficheiros | `AnalyticsTabImpactBuilder.php`, `AnalyticsDashboardController.php`, `analytics-tab-impact-header.blade.php` |
+
+| Área | Ficheiros (resumo) |
+|------|-------------------|
+| Pulse core | `app/Support/Pulse/*`, `app/Listeners/RecordPulseDatabaseQueries.php`, `app/Http/Middleware/RecordPulseOperations.php` |
+| Pulse UI | `app/Livewire/Pulse/*DiagnosticsCard.php`, `resources/views/livewire/pulse/*`, `resources/views/vendor/pulse/dashboard.blade.php` |
+| Testes | `PulseDatabaseScopeTest.php`, `PulseDatabaseFingerprintTest.php`, `AnalyticsTabImpactBuilderTest.php` |
+| Produção / docs | `config/documentation.php`, `HISTORICO_VERSOES.md`, `METRICAS_QUERIES_ANALYTICS.md`, `.env.example` |
+
+**Pós-deploy:** `php artisan config:clear` · validar `/pulse` (Desempenho: SQL + Operações) · aba **Matrículas** com município/ano (ganho, sem perda) · preencher `PULSE_*` no `.env` se necessário · **não** criar tag Git.
 
 ---
 

@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão em produção (`main`):** **2.3.8.6** (mapa Início com semáforo cadastro RX e contato municipal; tag deploy **`20260521-Mercury`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md).
+**Versão em produção (`main`):** **2.3.8.7** (diagnóstico Pulse SQL/operações; Matrículas com ganho VAAF municipal; tag deploy **`20260521-Mercury`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md).
 
 ## Requisitos
 
