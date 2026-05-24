@@ -5,7 +5,7 @@
         details="{{ __('Abas Analytics, RX, sync, PDF, mapa e exports — limiar lento: :ms ms.', ['ms' => number_format($payload['slow_ms'])]) }}"
     >
         <x-slot:icon>
-            <x-pulse::icons.queue />
+            <x-pulse::icons.queue-list />
         </x-slot:icon>
     </x-pulse::card-header>
 
