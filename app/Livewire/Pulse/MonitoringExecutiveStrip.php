@@ -7,6 +7,8 @@ use App\Enums\AnalyticsReportExportStatus;
 use App\Models\AdminSyncTask;
 use App\Models\AnalyticsReportExport;
 use App\Models\City;
+use App\Support\Pulse\PulseDatabaseMetricsAggregator;
+use App\Support\Pulse\PulseOperationMetricsAggregator;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Support\Facades\View;
 use Laravel\Pulse\Livewire\Card;
@@ -41,11 +43,47 @@ class MonitoringExecutiveStrip extends Card
                 $globalRequests += (int) ($r->count ?? 0);
             }
 
+            $dbMetrics = PulseDatabaseMetricsAggregator::summarize(
+                fn (string $type, array|string $aggregate, ?string $orderBy, string $direction, int $limit) => $this->aggregate($type, $aggregate, $orderBy, $direction, $limit)
+            );
+
+            $systemSlow = (int) ($dbMetrics['system']['slow_count'] ?? 0);
+            $muniSlow = 0;
+            $muniWorstMs = null;
+            foreach ($dbMetrics['municipal_by_city'] as $row) {
+                $muniSlow += (int) ($row['slow_count'] ?? 0);
+                $candidate = max(
+                    (int) ($row['slow_max_ms'] ?? 0),
+                    (int) ($row['run_max_ms'] ?? 0),
+                );
+                if ($candidate > 0) {
+                    $muniWorstMs = $muniWorstMs === null ? $candidate : max($muniWorstMs, $candidate);
+                }
+            }
+
+            $opMetrics = PulseOperationMetricsAggregator::summarize(
+                fn (string $type, array|string $aggregate, ?string $orderBy, string $direction, int $limit) => $this->aggregate($type, $aggregate, $orderBy, $direction, $limit)
+            );
+            $slowOperations = 0;
+            $maxOpMs = null;
+            foreach ($opMetrics['slow_operations'] as $row) {
+                $slowOperations += (int) ($row['count'] ?? 0);
+                $m = (int) ($row['max_ms'] ?? 0);
+                if ($m > 0) {
+                    $maxOpMs = $maxOpMs === null ? $m : max($maxOpMs, $m);
+                }
+            }
+
             return [
                 'exceptions' => $exceptions,
                 'slow_requests' => $slowRequests,
                 'max_slow_ms' => $maxSlowMs,
                 'global_requests' => $globalRequests,
+                'system_slow_queries' => $systemSlow,
+                'municipal_slow_queries' => $muniSlow,
+                'municipal_worst_ms' => $muniWorstMs,
+                'slow_operations' => $slowOperations,
+                'max_operation_ms' => $maxOpMs,
             ];
         }, 'pulse-kpi');
 

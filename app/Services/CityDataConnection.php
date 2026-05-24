@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\City;
+use App\Support\Pulse\MunicipalDatabaseContext;
+use App\Support\Pulse\PulseDatabaseRecorder;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\Config;
@@ -110,10 +112,15 @@ class CityDataConnection
         }
 
         $name = $this->connectionName($city);
+        $driver = $city->effectiveIeducarDriver();
+        MunicipalDatabaseContext::enter((int) $city->getKey(), $driver);
+        $t0 = microtime(true);
 
         try {
             return $callback(DB::connection($name));
         } finally {
+            PulseDatabaseRecorder::recordMunicipalRun($city, (microtime(true) - $t0) * 1000);
+            MunicipalDatabaseContext::leave();
             $this->purge($city);
         }
     }

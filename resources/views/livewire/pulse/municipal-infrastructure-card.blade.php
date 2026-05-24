@@ -35,6 +35,16 @@
                                             {{ $setup ? __('OK') : __('Incompleto') }}
                                         </span>
                                         <span class="pulse-tag pulse-tag--neutral font-mono">{{ strtoupper($city['driver']) }}</span>
+                                        @if (($city['db_slow_count'] ?? 0) > 0)
+                                            <span class="pulse-tag pulse-tag--danger" title="{{ __('Queries lentas no período') }}">
+                                                SQL {{ number_format((int) $city['db_slow_count']) }}
+                                            </span>
+                                        @endif
+                                        @if (($city['db_run_max_ms'] ?? null) !== null)
+                                            <span class="pulse-tag pulse-tag--{{ ($city['db_run_max_ms'] ?? 0) >= 1500 ? 'warn' : 'neutral' }} font-mono" title="{{ __('Pior bloco CityDataConnection::run') }}">
+                                                {{ number_format((int) $city['db_run_max_ms']) }} ms
+                                            </span>
+                                        @endif
                                     </span>
                                 </div>
                                 <div class="pulse-bar-row__track" aria-hidden="true">

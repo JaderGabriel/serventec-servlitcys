@@ -19,7 +19,10 @@ Para desativar o lazy e voltar ao carregamento completo num único HTML (útil p
 1. Garantir `PULSE_ENABLED=true` e migrações Pulse aplicadas (`php artisan migrate`).
 2. Aceder a **`/pulse`** (apenas administradores, conforme a app).
 3. Rever os cartões:
-   - **Slow queries** — consultas acima do limiar (ms).
+   - **Diagnóstico SQL — sistema e municípios** — consultas lentas por âmbito (MySQL Laravel vs `city_data_{id}`), fingerprints e municípios em atenção.
+   - **Operações da aplicação** — etapas instrumentadas (`app_operation` / `app_operation_slow`): abas Analytics (`analytics:tab:*`), RX (`rx:overview`), sync (`sync:*`), PDF (`pdf:*`), mapa RX (`map:rx_snapshot`), exports CSV, compatibilidade i-Educar e pedidos HTTP por rota (`http:route:*`).
+   - **SQL por município (i-Educar)** — tabela com blocos `CityDataConnection::run`, queries lentas e tempo SQL por pedido.
+   - **Slow queries** — recorder nativo do Pulse (complementar; limiar `PULSE_SLOW_QUERIES_THRESHOLD`).
    - **Slow requests** — pedidos HTTP lentos (inclui a página de analytics se o tempo total exceder o limiar).
 
 ### Variáveis úteis (`.env`)
@@ -29,6 +32,11 @@ Para desativar o lazy e voltar ao carregamento completo num único HTML (útil p
 | `PULSE_SLOW_QUERIES_THRESHOLD` | `300`–`500` | Reduzir em relação à produção para captar mais queries “suspeitas” (default em `config/pulse.php` é 1000 ms). |
 | `PULSE_SLOW_QUERIES_SAMPLE_RATE` | `1` | Em staging pode manter 100% para não perder ocorrências. |
 | `PULSE_SLOW_REQUESTS_THRESHOLD` | `750`–`1500` | Pedido completo ao analytics com muitos repositórios pode ser lento. |
+| `PULSE_DB_DIAGNOSTICS_SLOW_MS` | `300`–`500` | Limiar das métricas `db_slow_*` (sistema + municipal). |
+| `PULSE_DB_DIAGNOSTICS_SLOW_RUN_MS` | `1500` | Bloco `CityDataConnection::run` considerado lento. |
+| `PULSE_OPERATIONS_ENABLED` | `true` | Métricas `app_operation*` (abas, jobs, RX, mapa). |
+| `PULSE_OPERATIONS_SLOW_MS` | `750` | Limiar para duplicar em `app_operation_slow`. |
+| `PULSE_OPERATIONS_HTTP` | `true` | Duração por rota nomeada (`http:route:…`). |
 
 4. **Reproduzir** a carga: abrir analytics, selecionar cidade, ano letivo e percorrer **cada aba** (Visão geral, Matrículas, Rede, Inclusão, etc.). Com lazy ativo, **cada aba pesada** gera pelo menos um pedido a `/dashboard/analytics/tab`. Voltar ao Pulse e ordenar por duração ou filtrar pela URI (página inicial vs. `.../tab?tab=...`).
 

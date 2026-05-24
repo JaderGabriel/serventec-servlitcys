@@ -120,7 +120,7 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 | Tema | Decisão | Implicação |
 |------|---------|------------|
 | Lazy por aba | `ANALYTICS_LAZY_TABS` (default true) | HTML inicial: Visão Geral + Unidades + Financiamentos + Censo (SSR); resto via `/analytics/tab` |
-| Pulse | URI `tab=` e headers `X-Analytics-Tab` | Medir custo **por aba** |
+| Pulse | URI `tab=` e headers `X-Analytics-Tab`; métricas `db_slow_*`, `db_muni_run`, `db_request_total`, `app_operation*` | Medir custo **por aba**, **por município/base** e **por etapa** (RX, sync, PDF) |
 | Cache resumo financeiro | `ANALYTICS_FUNDING_SUMMARY_CACHE` (ex. 600 s) | Invalidação implícita por TTL; params incluem cidade+filtros |
 | FUNDEB tab | Reúne vários repositórios num pedido | Aba mais pesada em lazy — candidata a cache adicional |
 

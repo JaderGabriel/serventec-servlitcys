@@ -31,6 +31,31 @@
             'icon' => 'clock',
         ],
         [
+            'label' => __('SQL lentas (sistema)'),
+            'value' => number_format((int) ($pulse['system_slow_queries'] ?? 0)),
+            'hint' => __('Base Laravel · limiar PULSE_DB_DIAGNOSTICS_SLOW_MS'),
+            'tone' => ($pulse['system_slow_queries'] ?? 0) > 0 ? 'amber' : 'emerald',
+            'icon' => 'database',
+        ],
+        [
+            'label' => __('SQL lentas (municípios)'),
+            'value' => number_format((int) ($pulse['municipal_slow_queries'] ?? 0)),
+            'hint' => ($pulse['municipal_worst_ms'] ?? null) !== null
+                ? __('Pior: :ms ms', ['ms' => number_format((int) $pulse['municipal_worst_ms'])])
+                : __('Bases i-Educar'),
+            'tone' => ($pulse['municipal_slow_queries'] ?? 0) > 0 ? 'rose' : 'emerald',
+            'icon' => 'server',
+        ],
+        [
+            'label' => __('Operações lentas'),
+            'value' => number_format((int) ($pulse['slow_operations'] ?? 0)),
+            'hint' => ($pulse['max_operation_ms'] ?? null) !== null
+                ? __('Pior: :ms ms', ['ms' => number_format((int) $pulse['max_operation_ms'])])
+                : __('Analytics, RX, sync, PDF'),
+            'tone' => ($pulse['slow_operations'] ?? 0) > 0 ? 'violet' : 'slate',
+            'icon' => 'queue',
+        ],
+        [
             'label' => __('Sync / PDF em fila'),
             'value' => number_format((int) ($ops['syncPending'] ?? 0) + (int) ($ops['pdfPending'] ?? 0)),
             'hint' => __(':sync sync · :pdf PDF', [

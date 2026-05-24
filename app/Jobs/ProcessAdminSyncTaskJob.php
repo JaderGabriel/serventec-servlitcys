@@ -6,6 +6,7 @@ use App\Enums\AdminSyncTaskStatus;
 use App\Models\AdminSyncTask;
 use App\Services\AdminSync\AdminSyncTaskRunner;
 use App\Support\AdminSync\WeeklyMassSyncCheckpoint;
+use App\Support\Pulse\PulseOperationRecorder;
 use App\Services\Notifications\NotificationDispatcher;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -66,7 +67,12 @@ class ProcessAdminSyncTaskJob implements ShouldQueue
         ]);
 
         try {
-            $result = $runner->run($task);
+            $syncKey = PulseOperationRecorder::syncJobKey(
+                (string) $task->domain,
+                (string) $task->task_key,
+                $task->city_id !== null ? (int) $task->city_id : null,
+            );
+            $result = PulseOperationRecorder::measure($syncKey, fn (): array => $runner->run($task));
             $task->refresh();
             $output = isset($result['output']) && is_string($result['output']) ? $result['output'] : null;
             $task->update([
@@ -78,6 +84,13 @@ class ProcessAdminSyncTaskJob implements ShouldQueue
             ]);
             $notifications->adminSyncFinished($task->fresh());
         } catch (Throwable $e) {
+            PulseOperationRecorder::recordFailure(
+                PulseOperationRecorder::syncJobKey(
+                    (string) $task->domain,
+                    (string) $task->task_key,
+                    $task->city_id !== null ? (int) $task->city_id : null,
+                ),
+            );
             $task->refresh();
             $task->update([
                 'status' => AdminSyncTaskStatus::Failed->value,

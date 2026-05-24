@@ -4,6 +4,7 @@ namespace App\Services\Dashboard;
 
 use App\Models\City;
 use App\Support\Dashboard\MunicipalityMapCadastroPresenter;
+use App\Support\Pulse\PulseOperationRecorder;
 use App\Support\Rx\RxCityMetricsCollector;
 use Illuminate\Support\Facades\Cache;
 
@@ -29,7 +30,14 @@ final class AdminHomeMapCadastroSnapshot
         $cacheKey = 'admin_home_map_rx:'.$vigenteYear;
         $ttlMinutes = 20;
 
-        return Cache::remember($cacheKey, now()->addMinutes($ttlMinutes), function () use ($vigenteYear): array {
+        $cached = Cache::get($cacheKey);
+        if ($cached !== null) {
+            PulseOperationRecorder::record('map:rx_snapshot|cache:hit', 1);
+
+            return $cached;
+        }
+
+        $payload = PulseOperationRecorder::measure('map:rx_snapshot|cache:miss', function () use ($vigenteYear): array {
             $byCityId = [];
 
             City::query()
@@ -49,5 +57,9 @@ final class AdminHomeMapCadastroSnapshot
                 'generated_at' => now()->toIso8601String(),
             ];
         });
+
+        Cache::put($cacheKey, $payload, now()->addMinutes($ttlMinutes));
+
+        return $payload;
     }
 }

@@ -250,7 +250,9 @@ final class DiscrepanciesFundingImpact
                 ]
             ),
             'passos' => [
-                __('VAAF de referência (IEDUCAR_DISC_VAA_REFERENCIA): :vaa — ordem de grandeza do valor-aluno-ano municipal.', ['vaa' => self::formatBrl($vaa)]),
+                __('VAAF de referência para o cálculo: :vaa/aluno/ano (municipal importado, estimado ou prévia federal conforme o município).', [
+                    'vaa' => self::formatBrl($vaa),
+                ]),
                 __('Peso para «:id»: :p — ajusta impacto relativo (Censo/VAAR costumam usar pesos maiores para NEE, INEP, duplicidade).', [
                     'id' => $checkId,
                     'p' => number_format($peso, 2, ',', '.'),

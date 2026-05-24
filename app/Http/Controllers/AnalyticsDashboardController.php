@@ -24,10 +24,12 @@ use App\Support\Dashboard\AnalyticsEmptyPayloads;
 use App\Support\Dashboard\AnalyticsLoadProfiler;
 use App\Support\Dashboard\AnalyticsMunicipalityContext;
 use App\Support\Dashboard\AnalyticsTabCatalog;
+use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Dashboard\ChartExportMeta;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\DiscrepanciesCheckCatalog;
 use App\Support\Ieducar\IeducarAnalyticsMetricsScope;
+use App\Support\Pulse\PulseOperationRecorder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -274,8 +276,16 @@ class AnalyticsDashboardController extends Controller
                         __('Resumo financeiro'),
                         $analyticsLoadWarnings,
                     );
+                    if (! is_array($fundingSnapshot)) {
+                        $fundingSnapshot = [
+                            'summary' => [],
+                            'funding_reference' => DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters),
+                        ];
+                    } elseif (! is_array($fundingSnapshot['funding_reference'] ?? null)) {
+                        $fundingSnapshot['funding_reference'] = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
+                    }
                     $municipalityContext = AnalyticsMunicipalityContext::fromFundingSnapshot(
-                        is_array($fundingSnapshot) ? $fundingSnapshot : null,
+                        $fundingSnapshot,
                         $overviewData,
                     );
                 }
@@ -564,9 +574,10 @@ class AnalyticsDashboardController extends Controller
         }
 
         $tabWarnings = [];
+        $tabKey = PulseOperationRecorder::analyticsTabKey($tab, (int) $city->id);
 
         try {
-            $response = $this->renderAnalyticsTabPartial(
+            $response = PulseOperationRecorder::measure($tabKey, fn (): Response => $this->renderAnalyticsTabPartial(
                 $tab,
                 $request,
                 $city,
@@ -586,7 +597,7 @@ class AnalyticsDashboardController extends Controller
                 $schoolUnitsRepository,
                 $pdfExportService,
                 $tabWarnings,
-            );
+            ));
 
             if ($tabWarnings !== [] && $request->user() !== null) {
                 app(NotificationDispatcher::class)->analyticsTabPartialWarnings(
@@ -599,6 +610,7 @@ class AnalyticsDashboardController extends Controller
 
             return $response;
         } catch (Throwable $e) {
+            PulseOperationRecorder::recordFailure($tabKey);
             Log::error('analytics.tab_partial_failed', [
                 'tab' => $tab,
                 'city_id' => $city->id,
@@ -951,8 +963,17 @@ class AnalyticsDashboardController extends Controller
             $warnings,
         );
 
+        if (! is_array($fundingSnapshot)) {
+            $fundingSnapshot = [
+                'summary' => [],
+                'funding_reference' => DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters),
+            ];
+        } elseif (! is_array($fundingSnapshot['funding_reference'] ?? null)) {
+            $fundingSnapshot['funding_reference'] = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
+        }
+
         return AnalyticsMunicipalityContext::fromFundingSnapshot(
-            is_array($fundingSnapshot) ? $fundingSnapshot : null,
+            $fundingSnapshot,
             is_array($overviewData) ? $overviewData : [],
         );
     }

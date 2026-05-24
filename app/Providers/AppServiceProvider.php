@@ -3,12 +3,16 @@
 namespace App\Providers;
 
 use App\Listeners\LogSuccessfulUserLogin;
+use App\Listeners\RecordPulseDatabaseQueries;
+use App\Livewire\Pulse\DatabaseDiagnosticsCard;
 use App\Livewire\Pulse\ApplicationInsightsCard;
 use App\Livewire\Pulse\DatabaseHealthCard;
 use App\Livewire\Pulse\DiskSpaceCard;
 use App\Livewire\Pulse\InstitutionTrafficCard;
 use App\Livewire\Pulse\MonitoringExecutiveStrip;
+use App\Livewire\Pulse\MunicipalDatabaseDiagnosticsCard;
 use App\Livewire\Pulse\MunicipalInfrastructureCard;
+use App\Livewire\Pulse\OperationsDiagnosticsCard;
 use App\Livewire\Pulse\QueueAndFailuresCard;
 use App\Livewire\Pulse\RedisOverviewCard;
 use App\Livewire\Pulse\ServerStatusStrip;
@@ -25,9 +29,11 @@ use App\Services\Ieducar\IeducarCityDataService;
 use App\Services\MailConfigService;
 use App\Support\Admin\WeeklyMassSyncCheckpoint;
 use App\Support\Performance\AuthRouteRegistry;
+use App\Support\Pulse\RequestDbTimingAccumulator;
 use App\Support\Performance\RedisProbe;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
@@ -79,7 +85,10 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('pulse.server-status-strip', ServerStatusStrip::class);
         Livewire::component('pulse.sync-admin-pulse-card', SyncAdminPulseCard::class);
         Livewire::component('pulse.monitoring-executive-strip', MonitoringExecutiveStrip::class);
+        Livewire::component('pulse.database-diagnostics-card', DatabaseDiagnosticsCard::class);
+        Livewire::component('pulse.municipal-database-diagnostics-card', MunicipalDatabaseDiagnosticsCard::class);
         Livewire::component('pulse.municipal-infrastructure-card', MunicipalInfrastructureCard::class);
+        Livewire::component('pulse.operations-diagnostics-card', OperationsDiagnosticsCard::class);
 
         /*
          * O Pulse regista o componente anónimo <x-pulse> com prefixo "pulse" (hash xxh128).
@@ -95,6 +104,8 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Event::listen(Login::class, LogSuccessfulUserLogin::class);
+
+        $this->registerPulseDatabaseDiagnostics();
 
         $this->app->booted(function (): void {
             Gate::define('viewPulse', fn (?User $user): bool => $user !== null && $user->isAdmin());
@@ -144,5 +155,18 @@ class AppServiceProvider extends ServiceProvider
         }
 
         return true;
+    }
+
+    private function registerPulseDatabaseDiagnostics(): void
+    {
+        if (! config('pulse.enabled', true) || ! config('pulse_diagnostics.enabled', true)) {
+            return;
+        }
+
+        Event::listen(QueryExecuted::class, RecordPulseDatabaseQueries::class);
+
+        $this->app->terminating(static function (): void {
+            RequestDbTimingAccumulator::flush();
+        });
     }
 }

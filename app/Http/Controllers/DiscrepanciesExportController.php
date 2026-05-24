@@ -6,6 +6,7 @@ use App\Repositories\Ieducar\DiscrepanciesRepository;
 use App\Support\Auth\UserCityAccess;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\DiscrepanciesCsvRowsBuilder;
+use App\Support\Pulse\PulseOperationRecorder;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -38,7 +39,10 @@ class DiscrepanciesExportController extends Controller
             abort(422, __('Selecione o ano letivo antes de exportar.'));
         }
 
-        $snapshot = $this->discrepancies->snapshot($city, $filters);
+        $snapshot = PulseOperationRecorder::measure(
+            'export:discrepancies:snapshot|cid:'.(int) $city->id,
+            fn () => $this->discrepancies->snapshot($city, $filters),
+        );
         $exportRows = DiscrepanciesCsvRowsBuilder::fromSnapshot($snapshot);
         $checkFilter = trim((string) $request->input('check_id', ''));
 
@@ -49,47 +53,52 @@ class DiscrepanciesExportController extends Controller
         );
 
         return response()->streamDownload(function () use ($exportRows, $checkFilter, $city, $filters): void {
-            $out = fopen('php://output', 'w');
-            if ($out === false) {
-                return;
-            }
-            fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF));
-            fputcsv($out, [
-                'cidade',
-                'ano_letivo',
-                'check_id',
-                'check_titulo',
-                'escola_id',
-                'escola',
-                'total',
-                'tipos_recurso',
-                'perda_estimada',
-                'ganho_potencial',
-                'agregado',
-                'sugestao_correcao',
-            ], ';');
+            PulseOperationRecorder::measure(
+                'export:discrepancies:stream|cid:'.(int) $city->id,
+                function () use ($exportRows, $checkFilter, $city, $filters): void {
+                    $out = fopen('php://output', 'w');
+                    if ($out === false) {
+                        return;
+                    }
+                    fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF));
+                    fputcsv($out, [
+                        'cidade',
+                        'ano_letivo',
+                        'check_id',
+                        'check_titulo',
+                        'escola_id',
+                        'escola',
+                        'total',
+                        'tipos_recurso',
+                        'perda_estimada',
+                        'ganho_potencial',
+                        'agregado',
+                        'sugestao_correcao',
+                    ], ';');
 
-            foreach ($exportRows as $row) {
-                if ($checkFilter !== '' && $row['check_id'] !== $checkFilter) {
-                    continue;
-                }
-                fputcsv($out, [
-                    $city->name,
-                    (string) ($filters->ano_letivo ?? ''),
-                    $row['check_id'],
-                    $row['check_titulo'],
-                    $row['escola_id'],
-                    $row['escola'],
-                    $row['total'],
-                    $row['tipos_recurso'],
-                    number_format($row['perda_estimada'], 2, '.', ''),
-                    number_format($row['ganho_potencial'], 2, '.', ''),
-                    $row['agregado'] ? '1' : '0',
-                    $row['sugestao_correcao'],
-                ], ';');
-            }
+                    foreach ($exportRows as $row) {
+                        if ($checkFilter !== '' && $row['check_id'] !== $checkFilter) {
+                            continue;
+                        }
+                        fputcsv($out, [
+                            $city->name,
+                            (string) ($filters->ano_letivo ?? ''),
+                            $row['check_id'],
+                            $row['check_titulo'],
+                            $row['escola_id'],
+                            $row['escola'],
+                            $row['total'],
+                            $row['tipos_recurso'],
+                            number_format($row['perda_estimada'], 2, '.', ''),
+                            number_format($row['ganho_potencial'], 2, '.', ''),
+                            $row['agregado'] ? '1' : '0',
+                            $row['sugestao_correcao'],
+                        ], ';');
+                    }
 
-            fclose($out);
+                    fclose($out);
+                },
+            );
         }, $filename, [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);

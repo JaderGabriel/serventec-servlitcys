@@ -106,6 +106,16 @@
             <livewire:pulse.redis-overview-card cols="9" rows="2" />
 
             <x-pulse-dashboard.section
+                :title="__('Diagnóstico SQL (sistema + municípios)')"
+                :subtitle="__('Consultas lentas, blocos i-Educar, tempo SQL por pedido e operações da aplicação (abas, RX, sync, PDF).')"
+                accent="indigo"
+                icon="circle-stack"
+            />
+            <livewire:pulse.database-diagnostics-card cols="full" rows="3" />
+            <livewire:pulse.municipal-database-diagnostics-card cols="full" rows="2" />
+            <livewire:pulse.operations-diagnostics-card cols="full" rows="3" />
+
+            <x-pulse-dashboard.section
                 :title="__('Latência HTTP e saída')"
                 :subtitle="__('Pedidos lentos à aplicação e chamadas HTTP externas (APIs, ArcGIS, INEP, etc.).')"
                 accent="sky"

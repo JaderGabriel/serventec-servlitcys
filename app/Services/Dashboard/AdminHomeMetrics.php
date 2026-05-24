@@ -8,6 +8,7 @@ use App\Models\AdminSyncTask;
 use App\Models\AnalyticsReportExport;
 use App\Models\City;
 use App\Models\User;
+use App\Support\Pulse\PulseOperationRecorder;
 
 final class AdminHomeMetrics
 {
@@ -24,6 +25,18 @@ final class AdminHomeMetrics
      * }
      */
     public function gather(): array
+    {
+        return PulseOperationRecorder::measure('admin:home:gather', fn (): array => $this->gatherMetrics());
+    }
+
+    /**
+     * @return array{
+     *     stats: array{cities: int, cities_active: int, cities_ready: int, cities_this_month: int, users: int, users_active: int},
+     *     ops: array{sync_pending: int, sync_failed_24h: int, pdf_pending: int, pgsql: int, mysql: int},
+     *     recent_cities: \Illuminate\Support\Collection<int, City>
+     * }
+     */
+    private function gatherMetrics(): array
     {
         $now = now();
 

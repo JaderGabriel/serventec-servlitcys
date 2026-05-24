@@ -13,6 +13,7 @@ use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\FundebMunicipalReferenceResolver;
 use App\Support\Ieducar\IeducarCompatibilityProbe;
+use App\Support\Pulse\PulseOperationRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -396,9 +397,12 @@ class IeducarCompatibilityController extends Controller
      */
     private function runReport(City $city, IeducarFilterState $filters): array
     {
-        return $this->cityData->run($city, function ($db) use ($city, $filters) {
-            return IeducarCompatibilityProbe::report($db, $city, $filters);
-        });
+        return PulseOperationRecorder::measure(
+            'ieducar:compatibility|cid:'.(int) $city->id,
+            fn (): array => $this->cityData->run($city, function ($db) use ($city, $filters) {
+                return IeducarCompatibilityProbe::report($db, $city, $filters);
+            }),
+        );
     }
 
     private function filtersFromRequest(Request $request): IeducarFilterState

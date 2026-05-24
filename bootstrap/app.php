@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureProfileComplete;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\RecordPulseInstitutionContext;
+use App\Http\Middleware\RecordPulseOperations;
 use App\Support\Scheduling\AdminSyncScheduleGate;
 use App\Support\Scheduling\AnalyticsPdfScheduleGate;
 use App\Support\Scheduling\ScheduleIntervals;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             EnsureUserIsActive::class,
             RecordPulseInstitutionContext::class,
+            RecordPulseOperations::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -4,6 +4,7 @@ namespace App\Services\Rx;
 
 use App\Models\User;
 use App\Support\Auth\UserCityAccess;
+use App\Support\Pulse\PulseOperationRecorder;
 use App\Support\Rx\RxCensoDeadline;
 use App\Support\Rx\RxCityMetricsCollector;
 use App\Support\Rx\RxColumnHelp;
@@ -21,6 +22,14 @@ final class RxOverviewService
      * @return array<string, mixed>
      */
     public function build(User $user): array
+    {
+        return PulseOperationRecorder::measure('rx:overview', fn (): array => $this->buildOverview($user));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildOverview(User $user): array
     {
         $vigenteYear = (int) config('rx.vigente_year', (int) date('Y'));
         $anteriorYear = $vigenteYear - 1;

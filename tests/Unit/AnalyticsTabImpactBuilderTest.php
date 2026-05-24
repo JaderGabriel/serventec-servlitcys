@@ -135,9 +135,11 @@ class AnalyticsTabImpactBuilderTest extends TestCase
 
         $this->assertTrue($strip['ready']);
         $this->assertNotNull($strip['saldo']);
-        $this->assertGreaterThan(0.0, $strip['saldo']['perda']);
+        $this->assertTrue($strip['saldo']['gain_only'] ?? false);
+        $this->assertSame(0.0, $strip['saldo']['perda']);
+        $this->assertGreaterThan(0.0, $strip['saldo']['ganho']);
+        $this->assertStringContainsString('matrículas realizadas', strtolower((string) ($strip['saldo']['footnote'] ?? '')));
         $this->assertStringContainsString('distorção', strtolower((string) ($strip['saldo']['footnote'] ?? '')));
-        $this->assertStringContainsString('matrícula', strtolower((string) ($strip['saldo']['footnote'] ?? '')));
     }
 
     public function test_enrollment_status_resume_aba_nao_so_distorcao(): void
@@ -171,7 +173,9 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         ]);
 
         $this->assertNotNull($strip['saldo']);
-        $this->assertGreaterThan(0.0, $strip['saldo']['perda']);
+        $this->assertTrue($strip['saldo']['gain_only'] ?? false);
+        $this->assertSame(0.0, $strip['saldo']['perda']);
+        $this->assertGreaterThan(0.0, $strip['saldo']['ganho']);
         $this->assertStringContainsString('Duplicadas', (string) ($strip['saldo']['footnote'] ?? ''));
         $this->assertStringNotContainsString('escola_sem_geo', (string) ($strip['saldo']['footnote'] ?? ''));
     }
@@ -191,7 +195,9 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         ]);
 
         $this->assertNotNull($strip['saldo']);
-        $this->assertGreaterThan(0.0, $strip['saldo']['perda']);
+        $this->assertTrue($strip['saldo']['gain_only'] ?? false);
+        $this->assertSame(0.0, $strip['saldo']['perda']);
+        $this->assertGreaterThan(0.0, $strip['saldo']['ganho']);
         $this->assertStringContainsString('1.200', (string) ($strip['saldo']['footnote'] ?? ''));
         $this->assertStringContainsString('40', (string) ($strip['saldo']['footnote'] ?? ''));
     }
@@ -214,8 +220,9 @@ class AnalyticsTabImpactBuilderTest extends TestCase
 
         $this->assertTrue($strip['show_saldo'] ?? true);
         $this->assertNotNull($strip['saldo']);
-        $this->assertFalse($strip['saldo']['info_only'] ?? true);
+        $this->assertTrue($strip['saldo']['gain_only'] ?? false);
         $this->assertSame(0.0, $strip['saldo']['perda']);
+        $this->assertGreaterThan(0.0, $strip['saldo']['ganho']);
         $this->assertNotEmpty($strip['saldo']['fundeb_calculo'] ?? null);
         $this->assertNotEmpty($strip['saldo']['fundeb_lines'] ?? []);
         $line = (string) ($strip['saldo']['fundeb_lines'][0] ?? '');
@@ -223,7 +230,7 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         $this->assertStringContainsString('/aluno/ano', $line);
         $this->assertStringContainsString('volume indicativo FUNDEB', $line);
         $this->assertStringNotContainsString('VAAF ref.', $line);
-        $this->assertStringContainsString('discrepância', strtolower((string) ($strip['saldo']['footnote'] ?? '')));
+        $this->assertStringContainsString('matrículas realizadas', strtolower((string) ($strip['saldo']['footnote'] ?? '')));
     }
 
     public function test_inclusion_strip_uses_recurso_prova_saldo(): void

@@ -57,7 +57,9 @@
     @else
         @if ($showSaldo)
         <div class="px-4 py-4 space-y-3">
-            <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Impacto no saldo (indicativo)') }}</p>
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                {{ ($saldo['gain_only'] ?? false) ? __('Ganho estimado (indicativo)') : __('Impacto no saldo (indicativo)') }}
+            </p>
             @if ($saldo !== null && ($saldo['info_only'] ?? false))
                 <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ __('Sem perda ou ganho estimado por discrepâncias de matrícula neste recorte. A referência abaixo usa VAAF × matrículas activas (não é repasse FNDE).') }}</p>
                 @if (! empty($saldo['fundeb_lines']))
@@ -77,21 +79,27 @@
                         && (float) ($saldo['perda'] ?? 0) <= 0
                         && (float) ($saldo['ganho'] ?? 0) <= 0;
                 @endphp
-                @if ($saldoZeradoComFundeb)
+                @if ($saldoZeradoComFundeb && ! ($saldo['gain_only'] ?? false))
                     <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ __('Sem perda ou ganho estimado por discrepâncias de matrícula neste recorte.') }}</p>
                 @endif
-                <div class="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
-                    <div class="rounded-lg border border-rose-200/80 dark:border-rose-900/50 bg-rose-50/60 dark:bg-rose-950/25 px-3 py-2">
-                        <p class="text-[10px] uppercase text-rose-800/80 dark:text-rose-300/80">{{ __('Perda est./ano') }}</p>
-                        <p class="mt-0.5 font-semibold tabular-nums text-rose-900 dark:text-rose-100">{{ $saldo['perda_fmt'] ?? '—' }}</p>
-                    </div>
+                <div class="grid grid-cols-2 gap-2 text-sm {{ ($saldo['gain_only'] ?? false) ? 'sm:grid-cols-2' : 'sm:grid-cols-3' }}">
+                    @if (! ($saldo['gain_only'] ?? false))
+                        <div class="rounded-lg border border-rose-200/80 dark:border-rose-900/50 bg-rose-50/60 dark:bg-rose-950/25 px-3 py-2">
+                            <p class="text-[10px] uppercase text-rose-800/80 dark:text-rose-300/80">{{ __('Perda est./ano') }}</p>
+                            <p class="mt-0.5 font-semibold tabular-nums text-rose-900 dark:text-rose-100">{{ $saldo['perda_fmt'] ?? '—' }}</p>
+                        </div>
+                    @endif
                     <div class="rounded-lg border border-emerald-200/80 dark:border-emerald-900/50 bg-emerald-50/60 dark:bg-emerald-950/25 px-3 py-2">
-                        <p class="text-[10px] uppercase text-emerald-800/80 dark:text-emerald-300/80">{{ __('Ganho potencial') }}</p>
+                        <p class="text-[10px] uppercase text-emerald-800/80 dark:text-emerald-300/80">
+                            {{ ($saldo['gain_only'] ?? false) ? __('Ganho estimado/ano') : __('Ganho potencial') }}
+                        </p>
                         <p class="mt-0.5 font-semibold tabular-nums text-emerald-900 dark:text-emerald-100">{{ $saldo['ganho_fmt'] ?? '—' }}</p>
                     </div>
-                    <div class="col-span-2 sm:col-span-1 rounded-lg border px-3 py-2.5 {{ ($saldo['liquido_tone'] ?? '') === 'success' ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20' : 'border-rose-300 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/20' }}">
-                        <p class="text-[10px] uppercase text-gray-600 dark:text-gray-400">{{ __('Saldo líquido') }}</p>
-                        <p class="text-lg font-bold tabular-nums">{{ $saldo['liquido_fmt'] ?? '—' }}</p>
+                    <div class="col-span-2 sm:col-span-1 rounded-lg border px-3 py-2.5 border-emerald-300 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/20">
+                        <p class="text-[10px] uppercase text-gray-600 dark:text-gray-400">
+                            {{ ($saldo['gain_only'] ?? false) ? __('Volume indicativo') : __('Saldo líquido') }}
+                        </p>
+                        <p class="text-lg font-bold tabular-nums text-emerald-900 dark:text-emerald-100">{{ $saldo['liquido_fmt'] ?? '—' }}</p>
                     </div>
                 </div>
                 @if ($fc !== null)

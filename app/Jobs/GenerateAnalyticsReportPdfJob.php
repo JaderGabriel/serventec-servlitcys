@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\AnalyticsReportExportStatus;
 use App\Models\AnalyticsReportExport;
 use App\Services\Analytics\AnalyticsReportPdfService;
+use App\Support\Pulse\PulseOperationRecorder;
 use App\Services\Notifications\NotificationDispatcher;
 use App\Support\Dashboard\IeducarFilterState;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -68,7 +69,11 @@ class GenerateAnalyticsReportPdfJob implements ShouldQueue
         $filters = $this->filtersFromExport($export);
 
         try {
-            $result = $pdfService->generate($export, $city, $filters);
+            $pdfKey = 'pdf:analytics|cid:'.(int) $city->id;
+            $result = PulseOperationRecorder::measure(
+                $pdfKey,
+                fn (): array => $pdfService->generate($export, $city, $filters),
+            );
             $export->update([
                 'status' => AnalyticsReportExportStatus::Completed->value,
                 'file_path' => $result['path'],
@@ -78,6 +83,7 @@ class GenerateAnalyticsReportPdfJob implements ShouldQueue
             ]);
             $notifications->pdfExportFinished($export->fresh());
         } catch (Throwable $e) {
+            PulseOperationRecorder::recordFailure('pdf:analytics|cid:'.(int) $city->id);
             $export->update([
                 'status' => AnalyticsReportExportStatus::Failed->value,
                 'error_message' => $e->getMessage(),
