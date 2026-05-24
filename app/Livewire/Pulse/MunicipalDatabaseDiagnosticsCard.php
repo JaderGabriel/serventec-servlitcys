@@ -17,7 +17,7 @@ class MunicipalDatabaseDiagnosticsCard extends Card
 {
     public function render(): Renderable
     {
-        [$rows, $time, $runAt] = $this->remember(function () {
+        [$municipalRows, $time, $runAt] = $this->remember(function () {
             $metrics = PulseDatabaseMetricsAggregator::summarize(
                 fn (string $type, array|string $aggregate, ?string $orderBy, string $direction, int $limit) => $this->aggregate($type, $aggregate, $orderBy, $direction, $limit)
             );
@@ -57,7 +57,7 @@ class MunicipalDatabaseDiagnosticsCard extends Card
         }, 'muni-db-v1');
 
         return View::make('livewire.pulse.municipal-database-diagnostics-card', [
-            'rows' => $rows,
+            'municipalRows' => $municipalRows,
             'time' => $time,
             'runAt' => $runAt,
             'slowRunMs' => (int) config('pulse_diagnostics.slow_municipal_run_ms', 1500),

@@ -10,7 +10,7 @@
     </x-pulse::card-header>
 
     <x-pulse::scroll :expand="$expand" wire:poll.20s="">
-        @if ($rows->isEmpty())
+        @if ($municipalRows->isEmpty())
             <x-pulse::no-results />
         @else
             <div class="overflow-x-auto">
@@ -27,7 +27,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                        @foreach ($rows as $row)
+                        @foreach ($municipalRows as $row)
                             @php
                                 $attention = (bool) ($row['attention'] ?? false);
                             @endphp
