@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **2.4.0** · release `20260524-Ceres` · **Ramo:** `main` · **Última revisão:** 25/05/2026
+**Versão em produção:** **3.0.0** · release `20260525-Apollo` · **Ramo:** `main` · **Última revisão:** 25/05/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -24,15 +24,15 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Mapa unidades — capacidade/vagas (fallback ocupação) | Implementado (2.3.8.5) |
 | Matrículas — cartões saldo + fórmula VAAF indicativa | Implementado (2.3.8.5) |
 | Inclusão NEE — dataset unificado grupo + catálogo | Implementado (`InclusionNeeDesignacaoDataset`) |
-| Inclusão NEE — cadastro + turma AEE (SQL alinhado gráficos/medidores) | Implementado (pós-2.4.0; `IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE`) |
-| Desempenho — gráficos SAEB em grelha 4 colunas | Implementado (pós-2.4.0) |
-| Rodapé área logada + política de privacidade (`/privacidade`) | Implementado (pós-2.4.0) |
-| Welcome / home — UI ícones, RX barra Censo, mapa mental | Implementado (pós-2.4.0) |
-| Consentimento LGPD (PP + cookies, versão, `/consentimento`) | Implementado (pós-2.4.0; `legal_consent_logs`) |
-| Admin — relatório consentimentos (`/admin/consentimentos-legais`) | Implementado (pós-2.4.0) |
-| Notificações — página `/notifications` + API `/notifications/feed` | Implementado (pós-2.4.0) |
-| Rodapé — selo versão (tag Ceres + data lançamento) | Implementado (`ProductVersion`, `x-product-version-badge`) |
-| Inclusão — gráfico catálogo completo NEE (INEP / i-Educar, com zeros) | Implementado (pós-2.4.0) |
+| Inclusão NEE — cadastro + turma AEE (SQL alinhado gráficos/medidores) | Implementado (3.0.0; `IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE`) |
+| Desempenho — gráficos SAEB em grelha 4 colunas | Implementado (3.0.0) |
+| Rodapé área logada + política de privacidade (`/privacidade`) | Implementado (3.0.0) |
+| Welcome / home — UI ícones, RX barra Censo, mapa mental | Implementado (3.0.0) |
+| Consentimento LGPD (PP + cookies, versão, `/consentimento`) | Implementado (3.0.0; `legal_consent_logs`; layout desktop) |
+| Admin — relatório consentimentos (`/admin/consentimentos-legais`) | Implementado (3.0.0) |
+| Notificações — página `/notifications` + API `/notifications/feed` | Implementado (3.0.0) |
+| Rodapé — selo versão (tag Apollo + data lançamento) | Implementado (`ProductVersion`, `x-product-version-badge`) |
+| Inclusão — gráfico catálogo completo NEE (INEP / i-Educar, com zeros) | Implementado (3.0.0) |
 | Estudo integrações setor público + previsão demanda (doc) | Documentado — [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md); implementação Ondas 1–3 no backlog §H |
 | Sync massiva semanal (`system::weekly_mass_sync`, checkpoint) | Implementado |
 | Repasses Tesouro CSV + snapshots municipais | Implementado |

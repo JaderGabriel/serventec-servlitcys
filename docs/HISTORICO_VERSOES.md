@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`2.4.0`** · tag de deploy **`20260524-Ceres`** · ver [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`3.0.0`** · tag de deploy **`20260525-Apollo`** · ver [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **2.4.0** |
+| **Versão semântica em produção** | **3.0.0** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260524-Ceres` |
-| **Último marco documentado** | Importações: planilhas SAEB INEP (Artisan), FUNDEB/receita, prioridade VAAF |
+| **Tag de deploy (servidor)** | `20260525-Apollo` |
+| **Último marco documentado** | LGPD (consentimento + privacidade), notificações, inclusão NEE catálogo INEP, UX consultoria/SAEB |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -20,7 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 2.4.0** | `20260524-Ceres` → `c25bc22` | **206** | 24/05/2026 | **Produção:** `saeb:import-planilhas-inep` (PhpSpreadsheet, RAR/XLSX INEP); FUNDEB receita + ordem VAAF; doc importações — [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md). |
+| **▶ 3.0.0** | `20260525-Apollo` → `main` | **212+** | 25/05/2026 | **Produção:** LGPD (`/consentimento`, logs), notificações, catálogo NEE INEP, rodapé/privacidade, SAEB 4 colunas, UX welcome/RX — [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md). |
+| 2.4.0 | `20260524-Ceres` → `c25bc22` | **206** | 24/05/2026 | `saeb:import-planilhas-inep` (PhpSpreadsheet, RAR/XLSX INEP); FUNDEB receita + ordem VAAF — [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md). |
 | 2.3.8.7 | `6eb94cf` | **202** | 21/05/2026 | Pulse diagnóstico SQL (sistema + municípios) e operações; aba Matrículas com ganho VAAF e sem perdas. |
 | 2.3.8.6 | `0a0743e` | **198** | 21/05/2026 | Mapa municípios Início com cores/meta RX (cadastro ano vigente); cartão com contato municipal e progresso meta; snapshot em cache. |
 | 2.3.8.5 | `a2566aa` | **195** | 21/05/2026 | Mapa capacidade/vagas (fallback); Matrículas cartões saldo + fórmula VAAF; NEE dataset unificado (grupo + catálogo); alias deficiência. |
@@ -55,7 +56,23 @@
 
 ## Detalhe por versão
 
-### v2.4.0 — `20260524-Ceres` (24/05/2026) — **em produção**
+### v3.0.0 — `20260525-Apollo` (25/05/2026) — **em produção**
+
+Marco de **conformidade**, **comunicação** e **pedagógico** (consolida entregas pós-2.4.0).
+
+| Área | Melhoria |
+|------|----------|
+| **LGPD** | `/privacidade`, `/consentimento`, banner cookies, `legal_consent_logs`, admin consentimentos; layout desktop no aceite. |
+| **Notificações** | `/notifications` + `/notifications/feed`. |
+| **Rodapé / versão** | `ProductVersion`, selo tag Apollo + data; links Perfil, Notificações, Privacidade. |
+| **Inclusão NEE** | SQL unificado + turma AEE; gráfico catálogo completo INEP (`includeZeros`). |
+| **Desempenho** | SAEB em grelha 4 colunas (compacto). |
+| **Consultoria / welcome** | Home 4 atalhos, RX barra Censo, welcome com ícones. |
+| **Base 2.4.0** | Importações SAEB planilhas, FUNDEB — mantidas. |
+
+**Pós-deploy:** `php artisan migrate` · `npm run build` · `php artisan route:clear` · validar `/consentimento` e **Pedagógico → Inclusão**.
+
+### v2.4.0 — `20260524-Ceres` (24/05/2026)
 
 Marco de **importações** públicas sem passo manual Python.
 

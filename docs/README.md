@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto (`main`):** 2.4.0 · tag `20260524-Ceres` · **Última revisão deste índice:** 24/05/2026
+**Versão do produto (`main`):** 3.0.0 · tag `20260525-Apollo` · **Última revisão deste índice:** 25/05/2026
 
 Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que o sistema faz hoje, **porque** certas decisões foram tomadas e **o que** está planejado implementar.
 

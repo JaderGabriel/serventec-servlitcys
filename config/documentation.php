@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '2.4.0',
-        'release_tag' => '20260524-Ceres',
-        'commit_short' => 'c25bc22',
-        'commit_number' => 206,
-        'revision_date' => '2026-05-24',
+        'version' => '3.0.0',
+        'release_tag' => '20260525-Apollo',
+        'commit_short' => '08f370e',
+        'commit_number' => 214,
+        'revision_date' => '2026-05-25',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

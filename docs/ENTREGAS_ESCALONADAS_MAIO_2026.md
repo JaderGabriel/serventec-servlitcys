@@ -42,8 +42,9 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 34 | *(doc)* | [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md), [IMPORTACAO_SAEB_PLANILHAS_INEP.md](IMPORTACAO_SAEB_PLANILHAS_INEP.md) |
 | 35 | *(patch)* | **Pós-2.4.0 (sem bump):** rodapé/privacidade, welcome/home/RX, inclusão NEE+AEE, SAEB 4 colunas |
 | 36 | *(patch)* | **Pós-2.4.0:** consentimento LGPD, `/notifications`, catálogo NEE completo INEP |
+| 37 | *(release)* | **3.0.0** — consolidação LGPD + consultoria + inclusão; tag **`20260525-Apollo`**; layout `/consentimento` desktop |
 
-**Em produção:** versão **2.4.0** · tag **`20260524-Ceres`**.
+**Em produção:** versão **3.0.0** · tag **`20260525-Apollo`** · [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md).
 
 ---
 
@@ -398,6 +399,20 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | Testes | `LegalConsentTest.php`, `ProductVersionTest.php`, `NotificationControllerTest.php` |
 
 **Pós-deploy:** `php artisan migrate` · `php artisan route:clear` · utilizadores existentes passam por `/consentimento` na primeira visita (ou preencher versão nas colunas `users`).
+
+---
+
+## 37. Release 3.0.0 — `20260525-Apollo`
+
+**Objetivo:** Fechar marco semântico **3.0.0** com `config/documentation.php`, documentação de release e tag de deploy; inclui responsividade desktop em `/consentimento` (`auth-layout` `wide`).
+
+| Área | Alteração |
+|------|-----------|
+| **Versão produto** | `3.0.0` · tag **`20260525-Apollo`** · data `2026-05-25` |
+| **Docs** | [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md), [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md), README, STATUS |
+| **UI consentimento** | `consent.blade.php` → `x-auth-layout` wide; `.serv-auth-card--wide` |
+
+**Pós-deploy:** `git tag 20260525-Apollo` · `npm run build` · validar selo no rodapé (**Apollo**).
 
 ---
 

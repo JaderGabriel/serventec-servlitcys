@@ -11,9 +11,9 @@ final class ProductVersionTest extends TestCase
     {
         config([
             'documentation.product' => [
-                'version' => '2.4.0',
-                'release_tag' => '20260524-Ceres',
-                'revision_date' => '2026-05-24',
+                'version' => '3.0.0',
+                'release_tag' => '20260525-Apollo',
+                'revision_date' => '2026-05-25',
                 'in_production' => true,
                 'production_label' => 'Em produção',
             ],
@@ -21,9 +21,9 @@ final class ProductVersionTest extends TestCase
 
         $badge = ProductVersion::badge();
 
-        $this->assertSame('2.4.0', $badge['version']);
-        $this->assertStringContainsString('2.4.0', $badge['display_label']);
-        $this->assertStringContainsString('Ceres', $badge['display_label']);
+        $this->assertSame('3.0.0', $badge['version']);
+        $this->assertStringContainsString('3.0.0', $badge['display_label']);
+        $this->assertStringContainsString('Apollo', $badge['display_label']);
         $this->assertSame('production', $badge['tone']);
         $this->assertNotSame('', $badge['revision_label']);
     }

@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão em produção (`main`):** **2.4.0** (importações SAEB planilhas INEP, FUNDEB/receita; tag deploy **`20260524-Ceres`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md) · release: [docs/RELEASE_20260524_CERES.md](docs/RELEASE_20260524_CERES.md).
+**Versão em produção (`main`):** **3.0.0** (LGPD, notificações, inclusão NEE, UX consultoria; tag deploy **`20260525-Apollo`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md) · release: [docs/RELEASE_20260525_APOLLO.md](docs/RELEASE_20260525_APOLLO.md).
 
 ## Requisitos
 
@@ -207,6 +207,7 @@ Detalhe: [docs/PERFIS_UTILIZADOR.md](docs/PERFIS_UTILIZADOR.md).
 
 | Versão | Commit | # | Notas |
 |--------|--------|---|--------|
+| **3.0.0** | `20260525-Apollo` | — | LGPD, notificações, NEE catálogo INEP, consultoria/SAEB — [RELEASE_20260525_APOLLO.md](docs/RELEASE_20260525_APOLLO.md). |
 | **2.4.0** | `20260524-Ceres` | — | Planilhas SAEB INEP (`saeb:import-planilhas-inep`), FUNDEB import — [RELEASE_20260524_CERES.md](docs/RELEASE_20260524_CERES.md). |
 | **2.3.8** | `20260521-Mercury` → `3c935ca` | 182 | VAAF municipal, contatos, perfil, RX — ver [RELEASE_20260521_MERCURY.md](docs/RELEASE_20260521_MERCURY.md). |
 | **2.3.7** | `20260521-Minerva` → `a9a8c73` | 180 | Consultoria VAAF/saldo, overlay, diagnóstico — ver [RELEASE_20260521_MINERVA.md](docs/RELEASE_20260521_MINERVA.md). |

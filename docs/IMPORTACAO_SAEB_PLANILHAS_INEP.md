@@ -1,7 +1,7 @@
 # Importação SAEB — planilhas oficiais INEP (sem Python)
 
 **Comando:** `php artisan saeb:import-planilhas-inep`  
-**Versão:** 2.4.0+ · **Release:** [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md)  
+**Versão:** 3.0.0 (base importações 2.4.0) · **Release:** [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md)  
 **Relacionado:** [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §2 · [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §12 · [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md)
 
 ---
