@@ -5,6 +5,7 @@ namespace App\Support\Ieducar;
 use App\Models\City;
 use App\Support\Dashboard\IeducarFilterState;
 use Illuminate\Database\Connection;
+use Illuminate\Database\Query\Builder;
 
 /**
  * Base detalhada NEE para exportação (matrícula × aluno × designações).
@@ -99,15 +100,13 @@ final class InclusionNeeExportQuery
     }
 
     /**
+     * Alinhado a {@see InclusionDashboardQueries::fetchNeeMatriculasComTurmaCurso()} (total NEE no painel).
+     * Escola e nome do aluno são opcionais — não abortam a exportação se o join falhar.
+     *
      * @return list<array{aluno_id: int, matricula_id: int, nome_aluno: string, escola: string, turma: string, curso: string, segmento: string, turma_aee: bool}>
      */
     private static function fetchMatriculasNee(Connection $db, City $city, IeducarFilterState $filters): array
     {
-        $nomeJoin = self::resolveNomeAlunoJoin($db, $city);
-        if ($nomeJoin === null) {
-            return [];
-        }
-
         $mat = IeducarSchema::resolveTable('matricula', $city);
         $aluno = IeducarSchema::resolveTable('aluno', $city);
         $turma = IeducarSchema::resolveTable('turma', $city);
@@ -116,37 +115,55 @@ final class InclusionNeeExportQuery
         $mAtivo = (string) config('ieducar.columns.matricula.ativo');
         $mId = (string) config('ieducar.columns.matricula.id');
         $aId = (string) config('ieducar.columns.aluno.id');
+        $grammar = $db->getQueryGrammar();
+        $wrapAid = $grammar->wrap('a').'.'.$grammar->wrap($aId);
         $tName = IeducarColumnInspector::firstExistingColumn($db, $turma, ['nm_turma', (string) config('ieducar.columns.turma.name')], $city) ?? 'nm_turma';
         $cName = IeducarColumnInspector::firstExistingColumn($db, $cursoT, ['nm_curso', (string) config('ieducar.columns.curso.name')], $city) ?? 'nm_curso';
         $cId = (string) config('ieducar.columns.curso.id');
         $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+        $tCurso = $tc['curso'];
 
         $q = $db->table($mat.' as m')
-            ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId)
-            ->join($nomeJoin['pessoa'].' as p_nome', 'a.'.$nomeJoin['aPessoa'], '=', 'p_nome.'.$nomeJoin['pId']);
+            ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
+
+        InclusionDashboardQueries::applyRecorteMatriculasNeeWhere($q, $db, $city, $filters);
         MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
         MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
         MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
         MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
         InclusionDashboardQueries::applyInclusionScopeForExport($q, $db, $city, $filters);
-        InclusionDashboardQueries::applyRecorteMatriculasNeeWhere($q, $db, $city, $filters);
 
-        if ($tc['curso'] !== '') {
-            $q->leftJoin($cursoT.' as c_exp', 't_filter.'.$tc['curso'], '=', 'c_exp.'.$cId);
+        if ($tCurso !== '') {
+            $q->leftJoin($cursoT.' as c_exp', 't_filter.'.$tCurso, '=', 'c_exp.'.$cId);
         }
 
-        $escolaSpec = DiscrepanciesAvailability::joinEscola($q, $db, $city);
-        if ($escolaSpec === null) {
-            return [];
+        $nomeJoin = self::resolveNomeAlunoJoin($db, $city);
+        if ($nomeJoin !== null) {
+            $q->leftJoin(
+                $nomeJoin['pessoa'].' as p_nome',
+                'a.'.$nomeJoin['aPessoa'],
+                '=',
+                'p_nome.'.$nomeJoin['pId']
+            );
+            $nomeExpr = $nomeJoin['nomeExpr'];
+        } else {
+            $nomeExpr = 'CONCAT(\''.__('Aluno #').'\', CAST('.$wrapAid.' AS TEXT))';
+        }
+
+        $escolaExpr = "''";
+        $escolaSpec = self::optionalLeftJoinEscola($q, $db, $city);
+        if ($escolaSpec !== null) {
+            $wrapEscolaNome = $grammar->wrap('e').'.'.$grammar->wrap($escolaSpec['nameCol']);
+            $escolaExpr = 'COALESCE(NULLIF(TRIM('.$wrapEscolaNome.'), \'\'), \'\')';
         }
 
         $rows = $q
             ->selectRaw('a.'.$aId.' as aluno_id')
             ->selectRaw('m.'.$mId.' as matricula_id')
-            ->selectRaw($nomeJoin['nomeExpr'].' as nome_aluno')
-            ->selectRaw('e.'.$escolaSpec['nameCol'].' as escola')
+            ->selectRaw($nomeExpr.' as nome_aluno')
+            ->selectRaw($escolaExpr.' as escola')
             ->selectRaw('t_filter.'.$tName.' as turma')
-            ->selectRaw($tc['curso'] !== '' ? 'c_exp.'.$cName.' as curso' : $db->raw("'' as curso"))
+            ->selectRaw($tCurso !== '' ? 'c_exp.'.$cName.' as curso' : $db->raw("'' as curso"))
             ->get();
 
         $out = [];
@@ -244,6 +261,55 @@ final class InclusionNeeExportQuery
         }
 
         return __('Outro critério NEE');
+    }
+
+    /**
+     * LEFT JOIN escola — não elimina matrículas quando FK/nome não batem (diferente de joinEscola).
+     *
+     * @return ?array{qualified: string, idCol: string, nameCol: string}
+     */
+    private static function optionalLeftJoinEscola(Builder $q, Connection $db, City $city): ?array
+    {
+        $escolaSpec = DiscrepanciesQueries::escolaJoinSpecPublic($db, $city);
+        if ($escolaSpec === null) {
+            return null;
+        }
+
+        ['qualified' => $escolaT, 'idCol' => $eId] = $escolaSpec;
+        $grammar = $db->getQueryGrammar();
+        $ePk = $grammar->wrap('e').'.'.$grammar->wrap($eId);
+        $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+        $sql = strtolower($q->toSql());
+        $usesTurma = str_contains($sql, 't_filter');
+
+        if ($usesTurma && $tc['escola'] !== '') {
+            $tEsc = $grammar->wrap('t_filter').'.'.$grammar->wrap($tc['escola']);
+            $q->leftJoin($escolaT.' as e', function ($join) use ($db, $tEsc, $ePk): void {
+                if ($db->getDriverName() === 'pgsql') {
+                    $join->whereRaw('('.$tEsc.')::text = ('.$ePk.')::text');
+                } else {
+                    $join->whereRaw('CAST('.$tEsc.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
+                }
+            });
+
+            return $escolaSpec;
+        }
+
+        $mEsc = DiscrepanciesAvailability::matriculaEscolaColumn($db, $city);
+        if ($mEsc === null) {
+            return null;
+        }
+
+        $mEscW = $grammar->wrap('m').'.'.$grammar->wrap($mEsc);
+        $q->leftJoin($escolaT.' as e', function ($join) use ($db, $mEscW, $ePk): void {
+            if ($db->getDriverName() === 'pgsql') {
+                $join->whereRaw('('.$mEscW.')::text = ('.$ePk.')::text');
+            } else {
+                $join->whereRaw('CAST('.$mEscW.' AS UNSIGNED) = CAST('.$ePk.' AS UNSIGNED)');
+            }
+        });
+
+        return $escolaSpec;
     }
 
     /**

@@ -6,9 +6,14 @@
                     {{ __('Filas de processamento') }}
                 </h2>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {{ __('Sincronizações admin (geo, pedagógico, FUNDEB) e relatórios PDF do painel analítico.') }}
+                    {{ __('Sincronizações admin, exportações NEE e relatórios PDF — por área temática.') }}
                 </p>
             </div>
+            @if ($filterDomain !== '' || $filterStatus !== '' || $filterPdfStatus !== '')
+                <a href="{{ route('admin.sync-queue.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline shrink-0">
+                    {{ __('Limpar todos os filtros') }}
+                </a>
+            @endif
         </div>
     </x-slot>
 
@@ -41,205 +46,86 @@
                     <div class="border-t border-slate-200/80 dark:border-slate-700 pt-3">
                         <p class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ __('Agendador (schedule:run)') }}</p>
                         <code class="block text-xs text-gray-600 dark:text-gray-400 mt-1">*/{{ config('schedule.runner_interval_minutes', 3) }} * * * * php artisan schedule:run</code>
-                        <ul class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 space-y-0.5 list-disc list-inside">
-                            @if (config('ieducar.admin_sync.schedule.enabled', true))
-                                <li>{{ __('Sincronização admin (on_demand + horários configurados).') }}</li>
-                            @endif
-                            @if (config('analytics.pdf_report.schedule.enabled', true) && config('analytics.pdf_report.schedule.on_demand', true))
-                                <li>{{ __('PDF analítico: worker automático quando há exportações na fila (até :s s).', ['s' => (string) config('analytics.pdf_report.schedule.on_demand_max_seconds', 900)]) }}</li>
-                            @endif
-                            @if (config('notifications.operational_alerts.enabled', true) && config('notifications.operational_alerts.schedule.enabled', true))
-                                <li>{{ __('Alertas operacionais: a cada :n min (`notifications:operational-alerts`).', ['n' => (string) config('notifications.operational_alerts.schedule.interval_minutes', 15)]) }}</li>
-                            @endif
-                            @if (config('pulse.enabled', true) && config('pulse.schedule.enabled', true))
-                                <li>{{ __('Pulse: :pulse min.', ['pulse' => (string) config('pulse.schedule.interval_minutes', 3)]) }}</li>
-                            @endif
-                        </ul>
                     </div>
                 @endif
             </div>
 
-            {{-- Sincronização admin --}}
-            <section class="space-y-4" id="fila-sync">
-                <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ __('Sincronização admin') }}</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">{{ $syncQueueConnection }} · {{ $syncQueueName }}</p>
-                    </div>
-                    <form method="get" class="flex flex-wrap gap-3 items-end text-sm">
-                        <input type="hidden" name="pdf_status" value="{{ $filterPdfStatus }}" />
-                        <input type="hidden" name="pdf_page" value="{{ request('pdf_page') }}" />
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('Estado') }}</label>
-                            <select name="status" class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 text-sm">
-                                <option value="">{{ __('Todos') }}</option>
-                                @foreach (\App\Enums\AdminSyncTaskStatus::cases() as $st)
-                                    <option value="{{ $st->value }}" @selected($filterStatus === $st->value)>{{ $st->label() }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('Domínio') }}</label>
-                            <select name="domain" class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 text-sm">
-                                <option value="">{{ __('Todos') }}</option>
-                                @foreach (\App\Enums\AdminSyncDomain::cases() as $dom)
-                                    <option value="{{ $dom->value }}" @selected($filterDomain === $dom->value)>{{ $dom->label() }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">{{ __('Filtrar') }}</button>
-                    </form>
-                </div>
-
-                <div class="flex flex-wrap gap-2 text-xs">
-                    @foreach (\App\Enums\AdminSyncTaskStatus::cases() as $st)
-                        <span class="rounded-full px-2.5 py-1 {{ $st->badgeClass() }}">
-                            {{ $st->label() }}: {{ (int) ($counts[$st->value] ?? 0) }}
-                        </span>
-                    @endforeach
-                </div>
-
-                <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                        <thead class="bg-gray-50 dark:bg-gray-800/80 text-left text-xs uppercase text-gray-500 dark:text-gray-400">
-                            <tr>
-                                <th class="px-4 py-3 font-medium">#</th>
-                                <th class="px-4 py-3 font-medium">{{ __('Área') }}</th>
-                                <th class="px-4 py-3 font-medium">{{ __('Tarefa') }}</th>
-                                <th class="px-4 py-3 font-medium">{{ __('Cidade') }}</th>
-                                <th class="px-4 py-3 font-medium">{{ __('Estado') }}</th>
-                                <th class="px-4 py-3 font-medium">{{ __('Criada') }}</th>
-                                <th class="px-4 py-3"></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                            @forelse ($tasks as $task)
-                                <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-800/40">
-                                    <td class="px-4 py-3 font-mono text-xs">{{ $task->id }}</td>
-                                    <td class="px-4 py-3">{{ $task->domainEnum()->label() }}</td>
-                                    <td class="px-4 py-3 max-w-xs truncate" title="{{ $task->label }}">{{ $task->label }}</td>
-                                    <td class="px-4 py-3 text-gray-700 dark:text-gray-300 max-w-md">
-                                        @php $cityNames = $task->cityNames(); @endphp
-                                        @if ($cityNames === [])
-                                            —
-                                        @elseif (count($cityNames) === 1)
-                                            {{ $cityNames[0] }}
-                                        @else
-                                            <p class="text-xs leading-relaxed" title="{{ implode(', ', $cityNames) }}">{{ implode(', ', $cityNames) }}</p>
-                                        @endif
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium {{ $task->statusEnum()->badgeClass() }}">
-                                            {{ $task->statusEnum()->label() }}
-                                        </span>
-                                    </td>
-                                    <td class="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">{{ $task->created_at?->format('d/m/Y H:i') }}</td>
-                                    <td class="px-4 py-3 text-right">
-                                        <a href="{{ route('admin.sync-queue.show', $task) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline text-xs">{{ __('Abrir') }}</a>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
-                                        {{ __('Nenhuma tarefa de sincronização.') }}
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-                {{ $tasks->links() }}
+            <section class="space-y-3">
+                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Filas por área') }}</h3>
+                @include('admin.sync-queue.partials.theme-overview')
             </section>
 
-            {{-- PDF analítico --}}
-            <section class="space-y-4" id="fila-pdf">
-                <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ __('Relatórios PDF (Diagnóstico)') }}</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">{{ $pdfQueueConnection }} · {{ $pdfQueueName }}</p>
-                    </div>
-                    <form method="get" class="flex flex-wrap gap-3 items-end text-sm">
-                        <input type="hidden" name="status" value="{{ $filterStatus }}" />
-                        <input type="hidden" name="domain" value="{{ $filterDomain }}" />
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ __('Estado PDF') }}</label>
-                            <select name="pdf_status" class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 text-sm">
-                                <option value="">{{ __('Todos') }}</option>
-                                @foreach (\App\Enums\AnalyticsReportExportStatus::cases() as $st)
-                                    <option value="{{ $st->value }}" @selected($filterPdfStatus === $st->value)>{{ $st->label() }}</option>
-                                @endforeach
-                            </select>
+            <div class="flex flex-wrap gap-2 text-xs">
+                @foreach (\App\Enums\AdminSyncTaskStatus::cases() as $st)
+                    <span class="rounded-full px-2.5 py-1 {{ $st->badgeClass() }}">
+                        {{ __('Sincronização') }} · {{ $st->label() }}: {{ (int) ($counts[$st->value] ?? 0) }}
+                    </span>
+                @endforeach
+            </div>
+
+            @if ($activeThemeSection !== null)
+                @include('admin.sync-queue.partials.sync-theme-panel', ['section' => $activeThemeSection])
+            @else
+                <section class="space-y-6" id="fila-sync">
+                    @forelse ($syncThemeSections as $section)
+                        @include('admin.sync-queue.partials.sync-theme-panel', ['section' => $section])
+                    @empty
+                        <div class="rounded-xl border border-dashed border-gray-300 dark:border-gray-600 px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                            {{ __('Nenhuma tarefa de sincronização enfileirada.') }}
                         </div>
-                        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">{{ __('Filtrar') }}</button>
-                    </form>
-                </div>
+                    @endforelse
+                </section>
+            @endif
 
-                <div class="flex flex-wrap gap-2 text-xs">
-                    @foreach (\App\Enums\AnalyticsReportExportStatus::cases() as $st)
-                        <span class="rounded-full px-2.5 py-1 {{ $st->badgeClass() }}">
-                            {{ $st->label() }}: {{ (int) ($pdfCounts[$st->value] ?? 0) }}
-                        </span>
-                    @endforeach
+            <section id="{{ $pdfThemeCard['anchor'] }}" class="sync-queue-panel sync-queue-panel--rose scroll-mt-6">
+                <header class="sync-queue-panel__header">
+                    <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div class="flex gap-3 min-w-0">
+                            <span class="sync-queue-panel__icon" aria-hidden="true">
+                                <x-ui.icon name="document-text" class="h-5 w-5" />
+                            </span>
+                            <div class="min-w-0">
+                                <h3 class="sync-queue-panel__title">{{ $pdfThemeCard['label'] }}</h3>
+                                <p class="sync-queue-panel__desc">{{ $pdfThemeCard['description'] }}</p>
+                                <p class="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">{{ $pdfQueueConnection }} · {{ $pdfQueueName }}</p>
+                            </div>
+                        </div>
+                        <form method="get" class="flex flex-wrap gap-2 items-end text-sm">
+                            <input type="hidden" name="domain" value="{{ $filterDomain }}" />
+                            <input type="hidden" name="status" value="{{ $filterStatus }}" />
+                            <div>
+                                <label class="block text-[10px] font-medium uppercase tracking-wide text-slate-500 mb-1">{{ __('Estado PDF') }}</label>
+                                <select name="pdf_status" class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 text-sm min-w-[8rem]">
+                                    <option value="">{{ __('Todos') }}</option>
+                                    @foreach (\App\Enums\AnalyticsReportExportStatus::cases() as $st)
+                                        <option value="{{ $st->value }}" @selected($filterPdfStatus === $st->value)>{{ $st->label() }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <button type="submit" class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500">{{ __('Filtrar') }}</button>
+                        </form>
+                    </div>
+                    <div class="flex flex-wrap gap-2 text-xs mt-3">
+                        @foreach (\App\Enums\AnalyticsReportExportStatus::cases() as $st)
+                            @php $n = (int) ($pdfThemeCard['counts'][$st->value] ?? 0); @endphp
+                            @if ($n > 0)
+                                <span class="rounded-full px-2.5 py-1 {{ $st->badgeClass() }}">{{ $st->label() }}: {{ $n }}</span>
+                            @endif
+                        @endforeach
+                    </div>
+                </header>
+                <div class="sync-queue-panel__body space-y-2">
+                    @forelse ($pdfExports as $export)
+                        @include('admin.sync-queue.partials.pdf-export-card', ['export' => $export])
+                    @empty
+                        <p class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                            {{ __('Nenhum relatório PDF. Use «Gerar PDF» na aba Diagnóstico do painel analítico.') }}
+                        </p>
+                    @endforelse
+                    @if ($pdfExports->hasPages())
+                        <div class="pt-2">{{ $pdfExports->links() }}</div>
+                    @endif
                 </div>
-
-                <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                        <thead class="bg-gray-50 dark:bg-gray-800/80 text-left text-xs uppercase text-gray-500 dark:text-gray-400">
-                            <tr>
-                                <th class="px-4 py-3 font-medium">#</th>
-                                <th class="px-4 py-3 font-medium">{{ __('Município') }}</th>
-                                <th class="px-4 py-3 font-medium">{{ __('Pedido por') }}</th>
-                                <th class="px-4 py-3 font-medium">{{ __('Estado') }}</th>
-                                <th class="px-4 py-3 font-medium">{{ __('Criado') }}</th>
-                                <th class="px-4 py-3 font-medium text-center">
-                                    <span class="block">{{ __('ação') }}</span>
-                                    <span class="mt-1 inline-flex justify-center text-gray-400" title="{{ __('Descarregar PDF') }}">
-                                        <x-icons.pdf-download class="h-4 w-4" />
-                                    </span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                            @forelse ($pdfExports as $export)
-                                @php $st = $export->statusEnum(); @endphp
-                                <tr class="hover:bg-gray-50/80 dark:hover:bg-gray-800/40">
-                                    <td class="px-4 py-3 font-mono text-xs">{{ $export->id }}</td>
-                                    <td class="px-4 py-3">{{ $export->city?->name ?? '—' }}@if ($export->city?->uf) <span class="text-gray-400">({{ $export->city->uf }})</span>@endif</td>
-                                    <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ $export->user?->name ?? '—' }}</td>
-                                    <td class="px-4 py-3">
-                                        <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium {{ $st->badgeClass() }}">
-                                            {{ $st->label() }}
-                                        </span>
-                                    </td>
-                                    <td class="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">{{ $export->created_at?->format('d/m/Y H:i') }}</td>
-                                    <td class="px-4 py-3 text-center">
-                                        @if ($export->isDownloadable())
-                                            <a
-                                                href="{{ route('dashboard.analytics.pdf.download', $export) }}"
-                                                class="inline-flex items-center justify-center rounded-md p-1.5 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
-                                                title="{{ __('Descarregar PDF') }}@if ($export->page_count) ({{ $export->page_count }} {{ __('pág.') }})@endif"
-                                            >
-                                                <x-icons.pdf-download />
-                                                <span class="sr-only">{{ __('Descarregar PDF') }}</span>
-                                            </a>
-                                        @elseif ($st === \App\Enums\AnalyticsReportExportStatus::Failed && filled($export->error_message))
-                                            <span class="text-red-600 dark:text-red-400 text-xs" title="{{ $export->error_message }}">{{ __('Erro') }}</span>
-                                        @else
-                                            <span class="text-gray-400">—</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" class="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
-                                        {{ __('Nenhum relatório PDF. Use «Gerar PDF» na aba Diagnóstico do painel analítico.') }}
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-                {{ $pdfExports->links() }}
             </section>
         </div>
     </div>

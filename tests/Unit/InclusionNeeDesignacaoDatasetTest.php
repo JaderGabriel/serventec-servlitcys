@@ -75,18 +75,22 @@ final class InclusionNeeDesignacaoDatasetTest extends TestCase
         );
     }
 
-    public function test_grupo_nao_inclui_barras_remanescentes_amber(): void
+    public function test_grupo_catalogo_exclui_barras_amber_mas_indicadores_incluem_cadastro_sem_match(): void
     {
         $catalog = [
             ['label' => 'Baixa visão', 'value' => 10.0, 'kind' => 'inep', 'norm' => 'baixa visao', 'grupo' => 'deficiencia'],
             ['label' => 'Só AEE', 'value' => 67.0, 'kind' => 'ieducar', 'norm' => '__sem_designacao_aee__', 'grupo' => 'deficiencia'],
             ['label' => 'Cadastro sem match', 'value' => 639.0, 'kind' => 'ieducar', 'norm' => '__sem_designacao_cadastro__', 'grupo' => 'deficiencia'],
         ];
-        $method = new \ReflectionMethod(InclusionNeeDesignacaoDataset::class, 'aggregateGruposFromCatalog');
-        $method->setAccessible(true);
-        $grupos = $method->invoke(null, $catalog);
+        $fromCatalog = new \ReflectionMethod(InclusionNeeDesignacaoDataset::class, 'aggregateGruposFromCatalog');
+        $fromCatalog->setAccessible(true);
+        $this->assertSame(10, $fromCatalog->invoke(null, $catalog)['deficiencias']);
 
-        $this->assertSame(10, $grupos['deficiencias']);
+        $forIndicators = new \ReflectionMethod(InclusionNeeDesignacaoDataset::class, 'aggregateGruposForIndicators');
+        $forIndicators->setAccessible(true);
+        $grupos = $forIndicators->invoke(null, $catalog, collect());
+
+        $this->assertSame(649, $grupos['deficiencias']);
         $this->assertSame(0, $grupos['sindromes_tea']);
 
         $dataset = [
@@ -98,7 +102,21 @@ final class InclusionNeeDesignacaoDatasetTest extends TestCase
         ];
         $chart = InclusionNeeDesignacaoDataset::chartGrupo($dataset, 1000);
         $this->assertNotNull($chart);
-        $this->assertSame([10.0, 0.0, 0.0], $chart['datasets'][0]['data']);
+        $this->assertSame([649.0, 0.0, 0.0], $chart['datasets'][0]['data']);
+    }
+
+    public function test_aggregate_grupos_from_matricula_rows_classifica_por_rotulo(): void
+    {
+        $rows = collect([
+            (object) ['deficiencia' => 'Transtorno do espectro autista', 'total' => 5],
+            (object) ['deficiencia' => 'Baixa visão', 'total' => 12],
+        ]);
+        $method = new \ReflectionMethod(InclusionNeeDesignacaoDataset::class, 'aggregateGruposFromMatriculaRows');
+        $method->setAccessible(true);
+        $grupos = $method->invoke(null, $rows);
+
+        $this->assertSame(12, $grupos['deficiencias']);
+        $this->assertSame(5, $grupos['sindromes_tea']);
     }
 
     public function test_append_sem_designacao_separa_somente_aee_e_cadastro_sem_match(): void

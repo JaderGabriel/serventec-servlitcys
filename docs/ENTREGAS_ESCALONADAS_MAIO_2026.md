@@ -49,8 +49,9 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 41 | `d439660` | **Pós-3.0.0 (sem bump):** banner cookies welcome — fechar após aceitar e dismiss automático |
 | 42 | `7ea0158` | **Pós-3.0.0 (sem bump):** inclusão — total NEE alinhado a AEE, grupos com 0, textos NEE vs cadastro |
 | 43 | `20260526-Boreas` | **3.1.0** — Inclusão (FUNDEB indicativo, inconsistências cadastro), leitor documentação admin |
+| 44 | `20260527-Notus` | **3.2.0** — export NEE (dados no Excel), medidores/risco AEE, fila admin cards temáticos |
 
-**Em produção:** versão **3.1.0** · tag **`20260526-Boreas`** · [RELEASE_20260526_BOREAS.md](RELEASE_20260526_BOREAS.md).
+**Em produção:** versão **3.2.0** · tag **`20260527-Notus`** · [RELEASE_20260527_NOTUS.md](RELEASE_20260527_NOTUS.md).
 
 ---
 
@@ -516,6 +517,22 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | Ficheiros principais | `InclusionFundebImpact.php`, `InclusionCadastroInconsistenciasQueries.php`, `DocumentationCatalog.php`, `AnalyticsTabImpactBuilder.php`, `inclusion.blade.php` |
 
 **Pós-deploy:** `npm run build` · `git tag 20260526-Boreas` · validar selo **3.1.0** no rodapé e `/admin/documentacao`.
+
+---
+
+## 44. Release 3.2.0 — `20260527-Notus`
+
+**Objetivo:** Exportação NEE utilizável em produção, medidores de inclusão coerentes com o painel e fila admin operável por área temática.
+
+| Área | Alteração |
+|------|-----------|
+| **Export NEE** | `InclusionNeeExportQuery` alinhada ao total do painel; LEFT JOIN escola/pessoa |
+| **Inclusão** | Medidores com barra sem designação; risco AEE sem cadastro (`InclusionFundebImpact`) |
+| **Fila admin** | Cards temáticos, filtros por domínio, download com ícone (`AdminSyncQueueIndexPresenter`) |
+
+| Ficheiros principais | `InclusionNeeExportQuery.php`, `InclusionNeeDesignacaoDataset.php`, `AdminSyncQueueIndexPresenter.php`, `admin/sync-queue/` |
+
+**Pós-deploy:** `npm run build` · `git tag 20260527-Notus` · validar export NEE e `/admin/sync-queue`.
 
 ---
 

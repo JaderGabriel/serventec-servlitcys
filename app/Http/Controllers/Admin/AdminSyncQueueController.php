@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AdminSyncDomain;
 use App\Enums\AdminSyncTaskStatus;
 use App\Enums\AnalyticsReportExportStatus;
 use App\Http\Controllers\Controller;
@@ -9,6 +10,7 @@ use App\Models\AdminSyncTask;
 use App\Models\AnalyticsReportExport;
 use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\Notifications\OperationalAlertsNotifier;
+use App\Support\Admin\AdminSyncQueueIndexPresenter;
 use App\Support\Admin\ExternalImportImpact;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,6 +47,12 @@ class AdminSyncQueueController extends Controller
             ->groupBy('status')
             ->pluck('aggregate', 'status');
 
+        $countsByDomainStatus = AdminSyncTask::query()
+            ->selectRaw('domain, status, count(*) as aggregate')
+            ->groupBy('domain', 'status')
+            ->get()
+            ->groupBy('domain');
+
         $pdfStatus = trim((string) $request->input('pdf_status', ''));
         $pdfQuery = AnalyticsReportExport::query()
             ->with(['city:id,name,uf', 'user:id,name'])
@@ -60,18 +68,52 @@ class AdminSyncQueueController extends Controller
             ->pluck('aggregate', 'status');
 
         $queueDefault = (string) config('queue.default', 'database');
+        $syncQueueName = (string) config('ieducar.admin_sync.queue', 'admin-sync');
+        $pdfQueueName = (string) config('analytics.pdf_report.queue', 'default');
+
+        $domainEnum = $domain !== '' ? AdminSyncDomain::tryFrom($domain) : null;
+        $activeTheme = $domainEnum !== null
+            ? AdminSyncQueueIndexPresenter::themeForDomain($domainEnum, $syncQueueName)
+            : null;
+
+        $activeThemeSection = null;
+        if ($domainEnum !== null && $activeTheme !== null) {
+            $statusCounts = $countsByDomainStatus->get($domainEnum->value, collect());
+            $domainCounts = [];
+            foreach (AdminSyncTaskStatus::cases() as $statusCase) {
+                $domainCounts[$statusCase->value] = (int) ($statusCounts->firstWhere('status', $statusCase->value)?->aggregate ?? 0);
+            }
+
+            $activeThemeSection = [
+                'theme' => array_merge($activeTheme, [
+                    'domain' => $domainEnum,
+                    'counts' => $domainCounts,
+                    'total' => (int) $tasks->total(),
+                    'active' => ($domainCounts[AdminSyncTaskStatus::Pending->value] ?? 0)
+                        + ($domainCounts[AdminSyncTaskStatus::Processing->value] ?? 0),
+                    'failed' => $domainCounts[AdminSyncTaskStatus::Failed->value] ?? 0,
+                ]),
+                'tasks' => $tasks,
+                'total' => (int) $tasks->total(),
+            ];
+        }
 
         return view('admin.sync-queue.index', [
-            'tasks' => $tasks,
             'counts' => $counts,
             'filterStatus' => $status,
             'filterDomain' => $domain,
-            'syncQueueName' => (string) config('ieducar.admin_sync.queue', 'admin-sync'),
+            'activeThemeSection' => $activeThemeSection,
+            'syncThemeCards' => AdminSyncQueueIndexPresenter::syncThemeCards($countsByDomainStatus, $syncQueueName),
+            'syncThemeSections' => $domain === ''
+                ? AdminSyncQueueIndexPresenter::syncThemeSections($countsByDomainStatus, $syncQueueName)
+                : [],
+            'pdfThemeCard' => AdminSyncQueueIndexPresenter::pdfThemeCard($pdfCounts, $pdfQueueName),
+            'syncQueueName' => $syncQueueName,
             'syncQueueConnection' => config('ieducar.admin_sync.connection') ?? $queueDefault,
             'pdfExports' => $pdfExports,
             'pdfCounts' => $pdfCounts,
             'filterPdfStatus' => $pdfStatus,
-            'pdfQueueName' => (string) config('analytics.pdf_report.queue', 'default'),
+            'pdfQueueName' => $pdfQueueName,
             'pdfQueueConnection' => config('analytics.pdf_report.connection') ?? $queueDefault,
             'queueDefault' => $queueDefault,
             'queueIsSync' => $queueDefault === 'sync',

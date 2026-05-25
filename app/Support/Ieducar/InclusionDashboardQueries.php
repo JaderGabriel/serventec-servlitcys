@@ -54,8 +54,9 @@ final class InclusionDashboardQueries
 
         $fisicaTotal = (int) array_sum(array_map(static fn ($r) => (int) ($r->total ?? 0), $fisicaRows));
         $alunoTotal = (int) array_sum(array_map(static fn ($r) => (int) ($r->total ?? 0), $alunoRows));
+        $usesFisica = self::inclusionNeeUsesFisicaPath($db, $city);
 
-        if ($fisicaTotal > 0 && $fisicaTotal >= $alunoTotal) {
+        if ($usesFisica && $fisicaTotal > 0) {
             return $mapRows($fisicaRows);
         }
 
@@ -63,7 +64,18 @@ final class InclusionDashboardQueries
             return $mapRows($alunoRows);
         }
 
-        return $mapRows($fisicaRows);
+        if ($fisicaTotal > 0) {
+            return $mapRows($fisicaRows);
+        }
+
+        $neeCadastro = self::countMatriculasNeeComCadastroDeficiencia($db, $city, $filters);
+        if ($neeCadastro > 0) {
+            $fallback = self::queryMatriculasPorDeficienciaNeeCadastroFallback($db, $city, $filters, $limit);
+
+            return $mapRows($fallback);
+        }
+
+        return collect();
     }
 
     public static function incluirTurmaAeeNoRecorteNee(): bool
@@ -1787,6 +1799,37 @@ final class InclusionDashboardQueries
     }
 
     /**
+     * Coluna de rótulo em cadastro.deficiencia (alinhada a InclusionEducacensoCatalog::loadDeficienciaCatalogRows).
+     */
+    private static function resolveDeficienciaNameColumn(Connection $db, string $defTable, City $city): ?string
+    {
+        return IeducarColumnInspector::firstExistingColumn($db, $defTable, array_filter([
+            (string) config('ieducar.columns.deficiencia.name'),
+            'nm_deficiencia',
+            'nome',
+            'descricao',
+        ]), $city);
+    }
+
+    /**
+     * Expressão SQL para o rótulo da deficiência (quando não há coluna de nome, usa o código).
+     */
+    private static function deficienciaLabelSelectExpression(
+        \Illuminate\Database\Query\Grammars\Grammar $grammar,
+        string $defPk,
+        ?string $nmCol,
+    ): string {
+        $wPk = 'd.'.$grammar->wrap($defPk);
+        if ($nmCol !== null) {
+            $wNm = 'd.'.$grammar->wrap($nmCol);
+
+            return 'MAX(COALESCE('.$wNm.', \'Não informado\'))';
+        }
+
+        return 'MAX(CONCAT(\'Designação #\', CAST('.$wPk.' AS TEXT)))';
+    }
+
+    /**
      * @return list<string>
      */
     private static function alunoDeficienciaCandidates(City $city): array
@@ -1880,6 +1923,57 @@ final class InclusionDashboardQueries
      * @param  array{table: string, idpes_col: string, def_fk: string}  $fisica
      * @return list<object|array<string, mixed>>
      */
+    /**
+     * Quando fisica_deficiencia e aluno_deficiencia devolvem 0 linhas mas há cadastro NEE,
+     * repete a consulta com o mesmo recorte de {@see countMatriculasNeeComCadastroDeficiencia()}.
+     *
+     * @return list<object|array<string, mixed>>
+     */
+    private static function queryMatriculasPorDeficienciaNeeCadastroFallback(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        ?int $limit,
+    ): array {
+        $cadastroSub = self::alunosComCadastroNeeSubquery($db, $city);
+        if ($cadastroSub === null) {
+            return [];
+        }
+
+        $defTable = self::resolveDeficienciaCatalogTable($db, $city);
+        if ($defTable === null) {
+            return [];
+        }
+
+        $fisica = self::resolveFisicaDeficienciaJoinSpec($db, $city);
+        $alunoT = IeducarSchema::resolveTable('aluno', $city);
+        $aIdpes = self::resolveAlunoIdpesColumn($db, $alunoT, $city);
+
+        if ($fisica !== null && $aIdpes !== null) {
+            try {
+                $rows = self::queryMatriculasPorDeficienciaFisicaPath($db, $city, $filters, $fisica, $defTable, $limit);
+                if ((int) array_sum(array_map(static fn ($r) => (int) ($r->total ?? 0), $rows)) > 0) {
+                    return $rows;
+                }
+            } catch (\Throwable) {
+                // tenta aluno_deficiencia
+            }
+        }
+
+        $rows = self::queryMatriculasPorDeficienciaAlunoDefPath($db, $city, $filters, $limit);
+        if ((int) array_sum(array_map(static fn ($r) => (int) ($r->total ?? 0), $rows)) > 0) {
+            return $rows;
+        }
+
+        return [];
+    }
+
+    /**
+     * Caminho BIS: matricula → aluno (ref_idpes) → fisica_deficiencia → deficiencia.
+     *
+     * @param  array{table: string, idpes_col: string, def_fk: string}  $fisica
+     * @return list<object|array<string, mixed>>
+     */
     private static function queryMatriculasPorDeficienciaFisicaPath(
         Connection $db,
         City $city,
@@ -1903,17 +1997,14 @@ final class InclusionDashboardQueries
             (string) config('ieducar.columns.deficiencia.id'),
             'cod_deficiencia',
         ]), $city);
-        $nmCol = IeducarColumnInspector::firstExistingColumn($db, $defTable, array_filter([
-            (string) config('ieducar.columns.deficiencia.name'),
-            'nm_deficiencia',
-        ]), $city);
-        if ($defPk === null || $nmCol === null) {
+        $nmCol = self::resolveDeficienciaNameColumn($db, $defTable, $city);
+        if ($defPk === null) {
             return [];
         }
 
         $g = $db->getQueryGrammar();
-        $wNm = $g->wrap($nmCol);
         $wPk = $g->wrap($defPk);
+        $defLabelExpr = self::deficienciaLabelSelectExpression($g, $defPk, $nmCol);
 
         $q = $db->table($mat.' as m')
             ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
@@ -1925,7 +2016,7 @@ final class InclusionDashboardQueries
             ->join($defTable.' as d', 'fd.'.$fisica['def_fk'], '=', 'd.'.$defPk);
 
         $q->selectRaw('d.'.$wPk.' as def_id')
-            ->selectRaw('MAX(COALESCE(d.'.$wNm.', \'Não informado\')) as deficiencia')
+            ->selectRaw($defLabelExpr.' as deficiencia')
             ->selectRaw('COUNT(DISTINCT m.'.$g->wrap($mId).') as total')
             ->groupBy('d.'.$wPk)
             ->orderByDesc('total');
@@ -1965,11 +2056,8 @@ final class InclusionDashboardQueries
             (string) config('ieducar.columns.deficiencia.id'),
             'cod_deficiencia',
         ]), $city);
-        $nmCol = IeducarColumnInspector::firstExistingColumn($db, $defTable, array_filter([
-            (string) config('ieducar.columns.deficiencia.name'),
-            'nm_deficiencia',
-        ]), $city);
-        if ($adAluno === null || $adDef === null || $defPk === null || $nmCol === null) {
+        $nmCol = self::resolveDeficienciaNameColumn($db, $defTable, $city);
+        if ($adAluno === null || $adDef === null || $defPk === null) {
             return [];
         }
 
@@ -1981,6 +2069,7 @@ final class InclusionDashboardQueries
         $aId = (string) config('ieducar.columns.aluno.id');
 
         $g = $db->getQueryGrammar();
+        $defLabelExpr = self::deficienciaLabelSelectExpression($g, $defPk, $nmCol);
         $q = $db->table($mat.' as m')
             ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
         MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
@@ -1991,7 +2080,7 @@ final class InclusionDashboardQueries
             ->join($defTable.' as d', 'ad.'.$adDef, '=', 'd.'.$defPk);
 
         $q->selectRaw('d.'.$g->wrap($defPk).' as def_id')
-            ->selectRaw('MAX(d.'.$g->wrap($nmCol).') as deficiencia')
+            ->selectRaw($defLabelExpr.' as deficiencia')
             ->selectRaw('COUNT(DISTINCT m.'.$g->wrap($mId).') as total')
             ->groupBy('d.'.$g->wrap($defPk))
             ->orderByDesc('total');
@@ -2062,17 +2151,18 @@ final class InclusionDashboardQueries
             (string) config('ieducar.columns.deficiencia.id'),
             'cod_deficiencia',
         ]), $city);
-        $nmCol = IeducarColumnInspector::firstExistingColumn($db, $defTable, array_filter([
-            (string) config('ieducar.columns.deficiencia.name'),
-            'nm_deficiencia',
-        ]), $city);
-        if ($defPk === null || $nmCol === null) {
+        $nmCol = self::resolveDeficienciaNameColumn($db, $defTable, $city);
+        if ($defPk === null) {
             return [];
         }
 
         $aluno = IeducarSchema::resolveTable('aluno', $city);
         $aId = (string) config('ieducar.columns.aluno.id');
         $map = [];
+        $g = $db->getQueryGrammar();
+        $defLabelExpr = $nmCol !== null
+            ? 'd.'.$g->wrap($nmCol)
+            : 'CONCAT(\'Designação #\', CAST(d.'.$g->wrap($defPk).' AS TEXT))';
 
         $fisica = self::resolveFisicaDeficienciaJoinSpec($db, $city);
         $aIdpes = self::resolveAlunoIdpesColumn($db, $aluno, $city);
@@ -2083,7 +2173,7 @@ final class InclusionDashboardQueries
                 ->join($defTable.' as d', 'fd.'.$fisica['def_fk'], '=', 'd.'.$defPk)
                 ->whereIn('a.'.$aId, $alunoIds)
                 ->selectRaw('a.'.$aId.' as aid')
-                ->selectRaw('d.'.$nmCol.' as deficiencia')
+                ->selectRaw($defLabelExpr.' as deficiencia')
                 ->distinct()
                 ->get();
             self::mergeDeficienciaExportRows($map, $rows);
@@ -2105,7 +2195,7 @@ final class InclusionDashboardQueries
                     ->join($defTable.' as d', 'ad.'.$adDef, '=', 'd.'.$defPk)
                     ->whereIn('a.'.$aId, $alunoIds)
                     ->selectRaw('a.'.$aId.' as aid')
-                    ->selectRaw('d.'.$nmCol.' as deficiencia')
+                    ->selectRaw($defLabelExpr.' as deficiencia')
                     ->distinct()
                     ->get();
                 self::mergeDeficienciaExportRows($map, $rows);

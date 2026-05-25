@@ -55,6 +55,10 @@
     $neeMatriculasPorEscola = is_array($inclusionData['nee_matriculas_por_escola'] ?? null)
         ? $inclusionData['nee_matriculas_por_escola']
         : [];
+    $fundebNee = is_array($inclusionData['fundeb_nee'] ?? null) ? $inclusionData['fundeb_nee'] : [];
+    $riscoAeeSemCadastro = is_array($fundebNee['risco_aee_sem_cadastro'] ?? null)
+        ? $fundebNee['risco_aee_sem_cadastro']
+        : [];
 @endphp
 
 <div class="space-y-6">
@@ -184,6 +188,11 @@
                     <div class="rounded-md bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-800/40 px-3 py-2">
                         <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Turma AEE sem deficiência no cadastro') }}</dt>
                         <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($recursoProva['aee_sem_cadastro_nee'] ?? 0)) }}</dd>
+                        @if (($riscoAeeSemCadastro['available'] ?? false) && (int) ($recursoProva['aee_sem_cadastro_nee'] ?? 0) > 0)
+                            <dd class="mt-1 text-[11px] text-rose-800 dark:text-rose-200 leading-snug">
+                                {{ __('Perda indicativa ≈ :v/ano', ['v' => (string) ($riscoAeeSemCadastro['perda_anual_fmt'] ?? '—')]) }}
+                            </dd>
+                        @endif
                     </div>
                     <div class="rounded-md bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2">
                         <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Recurso SAEB/INEP sem deficiência no cadastro') }}</dt>
@@ -231,6 +240,32 @@
                     <p class="text-xs text-emerald-800 dark:text-emerald-200 bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-md px-3 py-2">
                         {{ __('Nenhuma inconsistência deste tipo no filtro actual — cadastro AEE e recursos de prova alinhados à verificação automática.') }}
                     </p>
+                @endif
+                @if (($riscoAeeSemCadastro['available'] ?? false) && (int) ($riscoAeeSemCadastro['matriculas'] ?? 0) > 0)
+                    <div class="rounded-md border border-rose-300/80 dark:border-rose-800 bg-rose-50/70 dark:bg-rose-950/35 px-4 py-3 space-y-2 text-sm text-rose-950 dark:text-rose-100">
+                        <p class="font-semibold">{{ __('Impacto financeiro indicativo (turma AEE sem deficiência no cadastro)') }}</p>
+                        <p class="text-xs leading-relaxed">{{ $riscoAeeSemCadastro['observacao'] ?? '' }}</p>
+                        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <dt class="text-rose-800/80 dark:text-rose-300/80">{{ __('Perda estimada / ano') }}</dt>
+                                <dd class="tabular-nums font-semibold text-lg">{{ $riscoAeeSemCadastro['perda_anual_fmt'] ?? '—' }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-rose-800/80 dark:text-rose-300/80">{{ __('Ganho potencial ao corrigir cadastro') }}</dt>
+                                <dd class="tabular-nums font-semibold text-lg text-emerald-800 dark:text-emerald-200">{{ $riscoAeeSemCadastro['ganho_potencial_anual_fmt'] ?? '—' }}</dd>
+                            </div>
+                        </dl>
+                        @if (filled($riscoAeeSemCadastro['formula'] ?? null))
+                            <p class="text-[11px] text-rose-900/90 dark:text-rose-200/90">{{ $riscoAeeSemCadastro['formula'] }}</p>
+                        @endif
+                        @php $cnRiscoAee = $calcNote('risco_aee_sem_cadastro'); @endphp
+                        @if ($cnRiscoAee !== null)
+                            <x-dashboard.section-calc-note
+                                :formula="$cnRiscoAee['formula'] ?? null"
+                                :note="$cnRiscoAee['note'] ?? null"
+                            />
+                        @endif
+                    </div>
                 @endif
                 @if (! empty($recursoProva['chart_catalogo']['labels']))
                     <div class="w-full min-w-0">
@@ -535,6 +570,11 @@
                     <div class="rounded-md bg-white/80 dark:bg-gray-800/60 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2">
                         <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Só turma AEE (est.)') }}</dt>
                         <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($aeeCross['matriculas_somente_turma_aee'] ?? 0)) }}</dd>
+                        @if (($riscoAeeSemCadastro['available'] ?? false) && (int) ($aeeCross['matriculas_somente_turma_aee'] ?? 0) > 0)
+                            <dd class="mt-1 text-[11px] text-amber-900 dark:text-amber-200 leading-snug">
+                                {{ __('Sem cadastro NEE: risco de perda ≈ :v/ano (ver cálculo financeiro no topo).', ['v' => (string) ($riscoAeeSemCadastro['perda_anual_fmt'] ?? '—')]) }}
+                            </dd>
+                        @endif
                     </div>
                     <div class="rounded-md bg-white/80 dark:bg-gray-800/60 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2">
                         <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Matrículas em turmas AEE') }}</dt>

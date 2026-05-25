@@ -103,6 +103,44 @@ class AdminSyncTask extends Model
         return $this->checkpointCompletedCityIds() !== [];
     }
 
+    public function isExportDownloadable(): bool
+    {
+        if ($this->status !== AdminSyncTaskStatus::Completed->value) {
+            return false;
+        }
+
+        $path = (string) ($this->result['export_path'] ?? '');
+
+        return $path !== '' && is_readable($path);
+    }
+
+    public function exportFilename(): ?string
+    {
+        $filename = (string) ($this->result['export_filename'] ?? '');
+        if ($filename !== '') {
+            return $filename;
+        }
+
+        $path = (string) ($this->result['export_path'] ?? '');
+
+        return $path !== '' ? basename($path) : null;
+    }
+
+    public function exportFormatLabel(): ?string
+    {
+        $format = strtolower((string) ($this->payload['format'] ?? ''));
+        if ($format !== '') {
+            return strtoupper($format);
+        }
+
+        $filename = $this->exportFilename();
+        if ($filename === null) {
+            return null;
+        }
+
+        return strtoupper((string) pathinfo($filename, PATHINFO_EXTENSION));
+    }
+
     public function isResumable(): bool
     {
         if ($this->status !== AdminSyncTaskStatus::Failed->value) {

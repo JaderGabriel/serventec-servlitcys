@@ -2368,6 +2368,151 @@
     .serv-brazil-map-tooltip--wide {
         @apply w-80 sm:w-[22rem];
     }
+
+    /* Fila admin/sync-queue — cards temáticos */
+    .sync-queue-theme-card {
+        @apply block rounded-xl border border-slate-200/90 bg-white dark:bg-gray-900 p-4 shadow-sm transition hover:border-indigo-300/80 hover:shadow-md dark:border-slate-700 dark:hover:border-indigo-700/60;
+    }
+
+    .sync-queue-theme-card--active {
+        @apply ring-2 ring-indigo-500/40 border-indigo-300 dark:border-indigo-600;
+    }
+
+    .sync-queue-theme-card--alert {
+        @apply border-amber-300/80 dark:border-amber-800/60;
+    }
+
+    .sync-queue-theme-card__icon {
+        @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200;
+    }
+
+    .sync-queue-theme-card--amber .sync-queue-theme-card__icon {
+        @apply bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200;
+    }
+
+    .sync-queue-theme-card--emerald .sync-queue-theme-card__icon {
+        @apply bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200;
+    }
+
+    .sync-queue-theme-card--sky .sync-queue-theme-card__icon {
+        @apply bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200;
+    }
+
+    .sync-queue-theme-card--violet .sync-queue-theme-card__icon {
+        @apply bg-violet-100 text-violet-800 dark:bg-violet-950/50 dark:text-violet-200;
+    }
+
+    .sync-queue-theme-card--indigo .sync-queue-theme-card__icon {
+        @apply bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-200;
+    }
+
+    .sync-queue-theme-card--rose .sync-queue-theme-card__icon {
+        @apply bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-200;
+    }
+
+    .sync-queue-theme-card__title {
+        @apply text-sm font-semibold text-gray-900 dark:text-gray-100;
+    }
+
+    .sync-queue-theme-card__meta {
+        @apply text-[10px] text-slate-500 dark:text-slate-400;
+    }
+
+    .sync-queue-theme-card__desc {
+        @apply mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2;
+    }
+
+    .sync-queue-theme-card__stats {
+        @apply mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-600 dark:text-slate-400;
+    }
+
+    .sync-queue-theme-card__pill {
+        @apply rounded-full px-2 py-0.5 font-medium;
+    }
+
+    .sync-queue-theme-card__pill--sky {
+        @apply bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200;
+    }
+
+    .sync-queue-theme-card__pill--red {
+        @apply bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200;
+    }
+
+    .sync-queue-theme-card__pill--emerald {
+        @apply bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200;
+    }
+
+    .sync-queue-panel {
+        @apply rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-gray-900 shadow-sm overflow-hidden;
+    }
+
+    .sync-queue-panel__header {
+        @apply border-b border-slate-100 dark:border-slate-800 px-4 py-4 sm:px-5;
+    }
+
+    .sync-queue-panel__body {
+        @apply px-4 py-3 sm:px-5 sm:py-4;
+    }
+
+    .sync-queue-panel__icon {
+        @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-lg;
+    }
+
+    .sync-queue-panel--amber .sync-queue-panel__icon {
+        @apply bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200;
+    }
+
+    .sync-queue-panel--emerald .sync-queue-panel__icon {
+        @apply bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200;
+    }
+
+    .sync-queue-panel--sky .sync-queue-panel__icon {
+        @apply bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200;
+    }
+
+    .sync-queue-panel--violet .sync-queue-panel__icon {
+        @apply bg-violet-100 text-violet-800 dark:bg-violet-950/50 dark:text-violet-200;
+    }
+
+    .sync-queue-panel--indigo .sync-queue-panel__icon {
+        @apply bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-200;
+    }
+
+    .sync-queue-panel--slate .sync-queue-panel__icon {
+        @apply bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200;
+    }
+
+    .sync-queue-panel--rose .sync-queue-panel__icon {
+        @apply bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-200;
+    }
+
+    .sync-queue-panel__title {
+        @apply text-base font-semibold text-gray-900 dark:text-gray-100;
+    }
+
+    .sync-queue-panel__desc {
+        @apply text-xs text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed;
+    }
+
+    .sync-queue-task-card {
+        @apply rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 px-3 py-3 transition hover:border-slate-200 dark:hover:border-slate-700;
+    }
+
+    .sync-queue-download-btn {
+        @apply inline-flex items-center justify-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1.5 text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300 dark:hover:bg-indigo-900/60 min-h-9 min-w-9;
+    }
+
+    .sync-queue-download-btn--pdf {
+        @apply border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50;
+    }
+
+    .sync-queue-download-btn--lg {
+        @apply px-4 py-2 text-sm font-medium min-h-0 min-w-0;
+    }
+
+    .sync-queue-download-btn__fmt {
+        @apply text-[10px] font-bold uppercase leading-none;
+    }
 }
 
 /* Landing: padrão de grelha suave (usado na welcome) */

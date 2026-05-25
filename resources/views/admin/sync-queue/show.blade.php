@@ -107,9 +107,18 @@
                 </div>
             @endif
 
-            @if ($task->status === 'completed' && ($task->result['export_path'] ?? null))
-                <a href="{{ route('admin.sync-queue.download', $task) }}" class="inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">
-                    {{ __('Descarregar export JSON') }}
+            @if ($task->isExportDownloadable())
+                <a href="{{ route('admin.sync-queue.download', $task) }}" class="sync-queue-download-btn sync-queue-download-btn--lg">
+                    <x-icons.file-download class="h-5 w-5" />
+                    <span>
+                        {{ __('Descarregar') }}
+                        @if ($task->exportFormatLabel())
+                            {{ $task->exportFormatLabel() }}
+                        @endif
+                        @if ($task->exportFilename())
+                            <span class="font-normal opacity-90">({{ $task->exportFilename() }})</span>
+                        @endif
+                    </span>
                 </a>
             @endif
 

@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão em produção (`main`):** **3.1.0** (Inclusão NEE/AEE/FUNDEB indicativo, inconsistências cadastro, leitor doc admin; tag **`20260526-Boreas`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md) · release: [docs/RELEASE_20260526_BOREAS.md](docs/RELEASE_20260526_BOREAS.md).
+**Versão em produção (`main`):** **3.2.0** (export NEE, medidores/risco AEE, fila admin temática; tag **`20260527-Notus`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md) · release: [docs/RELEASE_20260527_NOTUS.md](docs/RELEASE_20260527_NOTUS.md).
 
 ## Requisitos
 

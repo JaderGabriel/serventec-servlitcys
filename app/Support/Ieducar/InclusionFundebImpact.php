@@ -25,6 +25,93 @@ final class InclusionFundebImpact
     }
 
     /**
+     * Perda indicativa: matrículas em turma AEE sem deficiência/NEE no cadastro (risco Censo e ponderação FUNDEB).
+     *
+     * @return array<string, mixed>
+     */
+    public static function riscoTurmaAeeSemCadastroDeficiencia(
+        int $matriculas,
+        City $city,
+        IeducarFilterState $filters,
+    ): array {
+        $matriculas = max(0, $matriculas);
+        if ($matriculas <= 0) {
+            return ['available' => false];
+        }
+
+        $calc = FundebMunicipalReferenceResolver::vaafParaCalculo($city, $filters);
+        $vaaf = (float) ($calc['vaaf'] ?? 0);
+        if ($vaaf <= 0) {
+            return [
+                'available' => false,
+                'matriculas' => $matriculas,
+            ];
+        }
+
+        $peso = self::pesoEducacaoEspecial();
+        $incremento = max(0.0, $peso - 1.0);
+        $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
+
+        $perdaPonderacao = $incremento > 0
+            ? MoneyMath::multiplyVaaf($matriculas, $vaaf * $incremento)
+            : 0.0;
+
+        $impactoVaar = DiscrepanciesFundingImpact::estimate('aee_sem_nee', $matriculas, $city, $filters);
+        $perdaVaar = (float) ($impactoVaar['perda_anual'] ?? 0);
+
+        $perdaIndicativa = MoneyMath::roundMoney(max($perdaPonderacao, $perdaVaar));
+        $ganhoPotencial = $perdaIndicativa;
+
+        $rotuloVaaf = FundebReferenceDisplay::rotuloVaafCurto(
+            DiscrepanciesFundingImpact::resolveReference($city, $filters)
+        );
+
+        return [
+            'available' => true,
+            'matriculas' => $matriculas,
+            'peso_educacao_especial' => $peso,
+            'incremento_ponderacao' => $incremento,
+            'vaaf' => $vaaf,
+            'vaaf_fmt' => $fmt($vaaf),
+            'vaaf_fonte' => (string) ($calc['fonte_label'] ?? ''),
+            'perda_ponderacao_anual' => $perdaPonderacao,
+            'perda_ponderacao_anual_fmt' => $perdaPonderacao > 0 ? $fmt($perdaPonderacao) : null,
+            'perda_vaar_anual' => $perdaVaar,
+            'perda_vaar_anual_fmt' => $perdaVaar > 0 ? $fmt($perdaVaar) : null,
+            'perda_anual' => $perdaIndicativa,
+            'perda_anual_fmt' => $fmt($perdaIndicativa),
+            'ganho_potencial_anual' => $ganhoPotencial,
+            'ganho_potencial_anual_fmt' => $fmt($ganhoPotencial),
+            'formula' => $incremento > 0
+                ? __(
+                    ':n matrícula(s) × :vaaf (:rotulo) × :inc (incremento ponderação educação especial :p) ≈ :valor/ano.',
+                    [
+                        'n' => number_format($matriculas, 0, ',', '.'),
+                        'vaaf' => $fmt($vaaf),
+                        'rotulo' => $rotuloVaaf,
+                        'inc' => number_format($incremento, 2, ',', '.'),
+                        'p' => number_format($peso, 2, ',', '.'),
+                        'valor' => $fmt($perdaPonderacao),
+                    ]
+                )
+                : __(
+                    ':n matrícula(s) × :vaaf (:rotulo) × peso VAAR-inclusão (:p) ≈ :valor/ano.',
+                    [
+                        'n' => number_format($matriculas, 0, ',', '.'),
+                        'vaaf' => $fmt($vaaf),
+                        'rotulo' => $rotuloVaaf,
+                        'p' => number_format((float) ($impactoVaar['peso'] ?? 1), 2, ',', '.'),
+                        'valor' => $fmt($perdaVaar),
+                    ]
+                ),
+            'observacao' => __(
+                'Matrículas em turma AEE (heurística) sem registo de deficiência/NEE em cadastro.deficiência: podem entrar no total NEE desta aba, mas no Educacenso e na auditoria VAAR-inclusão o município arrisca não comprovar a ponderação :p (Lei 14.113/2020) nem condicionalidades de educação especial. Corrija o cadastro ou a nomenclatura da turma; o ganho potencial ao regularizar é o valor indicado.',
+                ['p' => number_format($peso, 2, ',', '.')]
+            ),
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public static function build(

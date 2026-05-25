@@ -263,6 +263,21 @@ class InclusionRepository
                 } catch (\Throwable) {
                     $fundebNee = ['available' => false];
                 }
+
+                if (! is_array($fundebNee)) {
+                    $fundebNee = ['available' => false];
+                }
+
+                $matAeeSemCadastro = max(
+                    (int) (is_array($aeeCross) ? ($aeeCross['matriculas_somente_turma_aee'] ?? 0) : 0),
+                    (int) (is_array($recursoProva) ? ($recursoProva['aee_sem_cadastro_nee'] ?? 0) : 0),
+                );
+                $fundebNee['matriculas_aee_sem_cadastro'] = $matAeeSemCadastro;
+                $fundebNee['risco_aee_sem_cadastro'] = InclusionFundebImpact::riscoTurmaAeeSemCadastroDeficiencia(
+                    $matAeeSemCadastro,
+                    $city,
+                    $filters,
+                );
             });
         } catch (\Throwable $e) {
             return [
@@ -362,16 +377,20 @@ class InclusionRepository
 
         $calcNotes = [
             'impacto_fundeb' => [
-                'formula' => __('Incremento anual ≈ Matrículas NEE × VAAF × (:p − 1); VAAR proporcional quando importado.', ['p' => $peso]),
-                'note' => __('Indicativo (Lei 14.113/2020). Não duplica a base integral da aba Matrículas.'),
+                'formula' => __('Ganho: Matrículas NEE × VAAF × (:p − 1). Perda (AEE sem cadastro): matrículas só turma AEE × VAAF × (:p − 1).', ['p' => $peso]),
+                'note' => __('Indicativo (Lei 14.113/2020). Turma AEE sem deficiência registada arrisca perda da ponderação e questionamento VAAR/Censo.'),
+            ],
+            'risco_aee_sem_cadastro' => [
+                'formula' => __('Perda indicativa ≈ :n (só turma AEE) × VAAF × (:p − 1).', ['n' => __('matrículas'), 'p' => $peso]),
+                'note' => __('Valor na faixa financeira superior e junto aos cartões AEE / recurso de prova.'),
             ],
             'recurso_prova' => [
                 'formula' => __('Contagem de matrículas activas: com recurso INEP; turma AEE sem deficiência no cadastro; recurso sem NEE cadastrado.'),
                 'note' => __('Recurso de prova (SAEB/Censo) é independente do cadastro de deficiência.'),
             ],
             'gauges' => [
-                'formula' => __('% = matrículas com o indicador ÷ matrículas ativas no filtro × 100'),
-                'note' => __('Consultas SQL configuráveis; um aluno pode contar em mais do que um medidor.'),
+                'formula' => __('% = matrículas do grupo (designação no cadastro) ÷ matrículas ativas no filtro × 100; legenda: N do universo NEE.'),
+                'note' => __('Mesma classificação do gráfico por grupo (deficiência / síndrome-TEA / NE). Inclui cadastro sem match no catálogo MEC quando não há rótulo cruzado.'),
             ],
             'nee_escola' => [
                 'formula' => __('Por escola: COUNT(DISTINCT matrícula) no recorte NEE (cadastro e/ou turma AEE).'),
@@ -379,7 +398,7 @@ class InclusionRepository
             ],
             'nee_grupo' => [
                 'formula' => __('Soma de matrículas NEE por designação em cadastro.deficiencia, agrupadas em 3 blocos (palavras-chave no rótulo).'),
-                'note' => __('Não inclui barras âmbar de remanescente do catálogo.'),
+                'note' => __('Inclui designações do cadastro i-Educar; «só turma AEE» não entra nos três blocos (fica no catálogo âmbar).'),
             ],
             'nee_catalogo' => [
                 'formula' => __('Uma matrícula NEE → uma barra. Só AEE ≈ Total NEE − com cadastro. Sem match ≈ com cadastro − soma das designações.'),

@@ -35,4 +35,14 @@ class InclusionFundebImpactTest extends TestCase
 
         $this->assertEqualsWithDelta(20_000.0, $parcela, 0.01);
     }
+
+    public function test_risco_aee_sem_cadastro_usa_incremento_ponderacao(): void
+    {
+        $mat = 67;
+        $vaaf = 5000.0;
+        $incremento = 0.2;
+        $esperado = round($mat * $vaaf * $incremento, 2);
+
+        $this->assertEqualsWithDelta(67_000.0, $esperado, 0.01);
+    }
 }

@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto (`main`):** 3.1.0 · tag `20260526-Boreas` · **Última revisão deste índice:** 26/05/2026
+**Versão do produto (`main`):** 3.2.0 · tag `20260527-Notus` · **Última revisão deste índice:** 27/05/2026
 
 Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que o sistema faz hoje, **porque** certas decisões foram tomadas e **o que** está planejado implementar.
 

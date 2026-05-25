@@ -47,7 +47,7 @@ final class InclusionNeeDesignacaoDataset
             $catalog = self::buildCatalogRows($entries, $maps, $rows);
             $assignedCatalog = self::sumCatalogAssigned($catalog);
             $catalog = self::appendSemDesignacaoCatalogoRows($catalog, $matriculasNee, $matriculasComCadastroNee, $assignedCatalog);
-            $grupos = self::aggregateGruposFromCatalog($catalog);
+            $grupos = self::aggregateGruposForIndicators($catalog, $rows);
 
             $usesFisica = InclusionDashboardQueries::inclusionNeeUsesFisicaPath($db, $city);
             $pathNote = $usesFisica
@@ -55,9 +55,15 @@ final class InclusionNeeDesignacaoDataset
                 : __('aluno_deficiencia + deficiência');
 
             $catalogWarning = null;
-            if ($matriculasNee > 0 && $matriculasComCadastroNee > 0 && $assignedCatalog <= 0) {
+            $gruposSum = self::sumGrupos($grupos);
+            if ($matriculasNee > 0 && $matriculasComCadastroNee > 0 && $assignedCatalog <= 0 && $gruposSum <= 0) {
                 $catalogWarning = __(
                     'Há :n matrícula(s) NEE com cadastro de deficiência, mas nenhuma designação foi distribuída nas barras do catálogo. Verifique o vínculo cadastro.deficiência (fisica_deficiencia / aluno_deficiencia) e os aliases em ieducar.inclusion.deficiencia_label_aliases.',
+                    ['n' => number_format($matriculasComCadastroNee)]
+                );
+            } elseif ($matriculasNee > 0 && $matriculasComCadastroNee > 0 && $assignedCatalog <= 0 && $gruposSum > 0) {
+                $catalogWarning = __(
+                    'Há :n matrícula(s) com cadastro no i-Educar cujos rótulos não casaram com o catálogo MEC/INEP (barras índigo/violeta). Os totais por grupo e medidores usam as designações do cadastro; barras âmbar mostram o remanescente sem match.',
                     ['n' => number_format($matriculasComCadastroNee)]
                 );
             }
@@ -416,6 +422,66 @@ final class InclusionNeeDesignacaoDataset
             '__sem_designacao_aee__',
             '__sem_designacao_cadastro__',
         ], true);
+    }
+
+    /**
+     * Totais para medidores e gráfico por grupo: prioriza rótulos do cadastro; inclui cadastro sem match MEC.
+     *
+     * @param  list<array{label: string, value: float, kind: string, norm: string, grupo?: string}>  $catalog
+     */
+    private static function aggregateGruposForIndicators(array $catalog, Collection $rows): array
+    {
+        $fromRows = self::aggregateGruposFromMatriculaRows($rows);
+        if (self::sumGrupos($fromRows) > 0) {
+            return $fromRows;
+        }
+
+        $fromCatalog = self::aggregateGruposFromCatalog($catalog);
+        foreach ($catalog as $row) {
+            if ((string) ($row['norm'] ?? '') === '__sem_designacao_cadastro__') {
+                $fromCatalog['deficiencias'] += (int) round((float) ($row['value'] ?? 0));
+            }
+        }
+
+        return $fromCatalog;
+    }
+
+    /**
+     * @param  Collection<int, object{deficiencia?: string, total?: int}>  $rows
+     * @return array{deficiencias: int, sindromes_tea: int, ne_altas_habilidades: int}
+     */
+    private static function aggregateGruposFromMatriculaRows(Collection $rows): array
+    {
+        $out = [
+            'deficiencias' => 0,
+            'sindromes_tea' => 0,
+            'ne_altas_habilidades' => 0,
+        ];
+
+        foreach ($rows as $row) {
+            $nome = trim((string) ($row->deficiencia ?? ''));
+            $total = (int) ($row->total ?? 0);
+            if ($total <= 0) {
+                continue;
+            }
+            match (InclusionDashboardQueries::classificarDesignacaoNeeGrupo($nome)) {
+                'ne' => $out['ne_altas_habilidades'] += $total,
+                'sindrome' => $out['sindromes_tea'] += $total,
+                default => $out['deficiencias'] += $total,
+            };
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  array{deficiencias: int, sindromes_tea: int, ne_altas_habilidades: int}  $grupos
+     */
+    private static function sumGrupos(array $grupos): int
+    {
+        return (int) ($grupos['deficiencias'] ?? 0)
+            + (int) ($grupos['sindromes_tea'] ?? 0)
+            + (int) ($grupos['ne_altas_habilidades'] ?? 0);
     }
 
     /**
