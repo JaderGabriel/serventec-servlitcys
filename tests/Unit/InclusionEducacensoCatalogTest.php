@@ -3,7 +3,7 @@
 namespace Tests\Unit;
 
 use App\Support\Ieducar\InclusionEducacensoCatalog;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class InclusionEducacensoCatalogTest extends TestCase
 {
@@ -51,18 +51,40 @@ class InclusionEducacensoCatalogTest extends TestCase
         $this->assertSame(7, InclusionEducacensoCatalog::countForDeficienciaEntry($entry, $maps));
     }
 
-    public function test_count_for_deficiencia_entry_sums_fuzzy_norm_matches_for_mec_label(): void
+    public function test_assign_deficiencia_counts_exclusive_evita_duplicar_norm(): void
     {
-        $entry = ['id' => null, 'label' => 'Deficiência intelectual', 'norm' => 'deficiencia intelectual'];
+        $entries = [
+            ['id' => null, 'label' => 'Deficiência intelectual', 'norm' => 'deficiencia intelectual'],
+            ['id' => null, 'label' => 'Deficiência intelectual leve', 'norm' => 'deficiencia intelectual leve'],
+        ];
         $maps = [
             'by_id' => [],
-            'by_norm' => [
-                'deficiencia intelectual leve' => 3,
-                'deficiencia intelectual moderada' => 2,
-            ],
+            'by_norm' => ['deficiencia intelectual' => 5],
         ];
 
-        $this->assertSame(5, InclusionEducacensoCatalog::countForDeficienciaEntry($entry, $maps));
+        [$rows, $remaining] = InclusionEducacensoCatalog::assignDeficienciaCountsExclusive($entries, $maps);
+
+        $this->assertSame(5.0, $rows[0]['value']);
+        $this->assertSame(0.0, $rows[1]['value']);
+        $this->assertSame([], $remaining['by_norm']);
+    }
+
+    public function test_resolve_catalog_norm_usado_em_maps(): void
+    {
+        config(['ieducar.inclusion.deficiencia_label_aliases' => [
+            'TEA' => 'Transtorno do espectro autista',
+        ]]);
+
+        $rows = [(object) ['deficiencia' => 'TEA', 'def_id' => '7', 'total' => 4]];
+        $maps = InclusionEducacensoCatalog::deficienciaCountMapsFromRows(
+            $rows,
+            static fn ($r) => (string) $r->deficiencia,
+            static fn ($r) => (int) $r->total,
+            static fn ($r) => (string) $r->def_id,
+        );
+
+        $mecNorm = InclusionEducacensoCatalog::normalizeLabel('Transtorno do espectro autista');
+        $this->assertSame(4, $maps['by_norm'][$mecNorm] ?? 0);
     }
 
     public function test_classify_deficiencia_kind(): void

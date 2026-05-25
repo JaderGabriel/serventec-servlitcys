@@ -258,9 +258,9 @@
 
                 @if (is_array($chartNeeCatalogo) && ! empty($chartNeeCatalogo['labels'] ?? null))
                     <div class="mt-6 space-y-2">
-                        <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Alunos × necessidades especiais (catálogo completo)') }}</h4>
+                        <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('NEE — catálogo completo MEC e i-Educar (todas as opções)') }}</h4>
                         <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                            {{ __('Todas as opções do catálogo MEC/Educacenso e do i-Educar no recorte. Barras com sufixo «INEP/Censo» seguem o Educacenso; «Complementar» e «Cadastro i-Educar» indicam designações locais. Valor 0 = sem matrícula com aquele vínculo no filtro.') }}
+                            {{ __('Todas as opções do catálogo MEC/Educacenso e do i-Educar no recorte. Cada matrícula entra numa única barra (por código ou rótulo normalizado). Valor 0 = sem vínculo no filtro; a barra âmbar «sem designação» inclui matrículas NEE só em turma AEE.') }}
                         </p>
                         <div class="flex flex-wrap gap-2 text-[10px] font-medium">
                             <span class="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-indigo-900 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-100">
@@ -282,6 +282,7 @@
                                 :exportFilename="'inclusao-nee-catalogo'"
                                 :exportMeta="$chartExportContext"
                                 :compact="false"
+                                :suppressTitle="true"
                             />
                         </div>
                     </div>
@@ -291,7 +292,7 @@
                     </div>
                 @endif
 
-                @if ($hasNeeDetalheCatalogo)
+                @if ($hasNeeDetalheCatalogo && ! is_array($chartNeeCatalogo))
                     @php
                         $tot = $neeDetalheCatalogo['totais_por_secao'] ?? [];
                     @endphp

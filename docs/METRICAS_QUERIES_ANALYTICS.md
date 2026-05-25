@@ -25,7 +25,7 @@ Com **`IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE=true`** (defeito), matrículas ac
 
 Implementação: `InclusionDashboardQueries::alunosComCadastroNeeSubquery`, `countMatriculasComNee`, `medidoresEducacaoEspecialPorGrupo`; discrepâncias delegam à mesma subquery.
 
-**Gráfico «catálogo completo»:** `InclusionNeeDesignacaoDataset::chartCatalogo(..., includeZeros: true)` — lista todas as designações MEC/Educacenso e i-Educar (valor 0 quando não há vínculo). Cores no gráfico: índigo = INEP/Censo · violeta = complementar · âmbar = só i-Educar. O total de matrículas NEE pode incluir turmas AEE sem barra no catálogo.
+**Gráfico «catálogo completo»:** `InclusionNeeDesignacaoDataset::chartCatalogo(..., includeZeros: true)` — lista todas as designações MEC/Educacenso e i-Educar (valor 0 quando não há vínculo). Contagens via `InclusionEducacensoCatalog::deficienciaCountMapsFromRows` com `resolveCatalogNorm` (aliases em `ieducar.inclusion.deficiencia_label_aliases`) e `assignDeficienciaCountsExclusive` (cada matrícula numa única barra, sem correspondência fuzzy duplicada). Se o total NEE (`countMatriculasComNee`, incl. turma AEE) exceder a soma das barras por designação, aparece barra âmbar **«sem designação no catálogo»**. UI: um painel com legenda INEP / complementar / só i-Educar (`inclusion.blade.php`, `suppressTitle`); removido gráfico redundante «por tipo» quando o catálogo existe.
 
 ## 1. Laravel Pulse (recomendado — já integrado)
 

@@ -32,7 +32,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Admin — relatório consentimentos (`/admin/consentimentos-legais`) | Implementado (3.0.0) |
 | Notificações — página `/notifications` + API `/notifications/feed` | Implementado (3.0.0) |
 | Rodapé — selo versão (tag Apollo + data lançamento) | Implementado (`ProductVersion`, `x-product-version-badge`) |
-| Inclusão — gráfico catálogo completo NEE (INEP / i-Educar, com zeros) | Implementado (3.0.0) |
+| Inclusão — gráfico catálogo completo NEE (INEP / i-Educar, contagens exclusivas + barra AEE) | Implementado (3.0.0; patch pós-release) |
 | Estudo integrações setor público + previsão demanda (doc) | Documentado — [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md); implementação Ondas 1–3 no backlog §H |
 | Sync massiva semanal (`system::weekly_mass_sync`, checkpoint) | Implementado |
 | Repasses Tesouro CSV + snapshots municipais | Implementado |

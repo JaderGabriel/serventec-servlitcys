@@ -39,9 +39,10 @@ final class InclusionNeeDesignacaoDataset
                 static fn ($row) => (string) ($row->def_id ?? ''),
             );
 
-            $catalog = self::buildCatalogRows($entries, $maps, $rows);
-            $grupos = self::aggregateGruposFromCatalog($catalog);
             $matriculasNee = InclusionDashboardQueries::countMatriculasComNee($db, $city, $filters);
+            $catalog = self::buildCatalogRows($entries, $maps, $rows);
+            $catalog = self::appendSemDesignacaoCatalogoRow($catalog, $matriculasNee);
+            $grupos = self::aggregateGruposFromCatalog($catalog);
 
             $usesFisica = InclusionDashboardQueries::inclusionNeeUsesFisicaPath($db, $city);
 
@@ -145,14 +146,14 @@ final class InclusionNeeDesignacaoDataset
         $chart['datasets'][0]['borderColor'] = $series['colors'];
         $chart['subtitle'] = $includeZeros
             ? __(
-                'Todas as opções do catálogo (valor 0 = sem vínculo no filtro). Agrupado e detalhado usam a mesma consulta. Cores: índigo = INEP/Censo · violeta = complementar · âmbar = só i-Educar.'
+                'Todas as opções do catálogo (valor 0 = sem vínculo no filtro). Cada matrícula conta numa única barra (ID ou rótulo normalizado). A barra «sem designação» cobre NEE só em turma AEE ou sem vínculo em deficiência. Cores: índigo = INEP/Censo · violeta = complementar · âmbar = só i-Educar.'
             )
             : __(
                 'Apenas designações com matrícula no recorte. A soma pode exceder o total de matrículas NEE quando há vários vínculos no cadastro.'
             );
         $chart['footnote'] = trim(
             ((string) ($dataset['footnote'] ?? '')).' '
-            .__('Legenda de cores: índigo = INEP/Censo · violeta = complementar (adaptável) · âmbar = só i-Educar.')
+            .__('Legenda: índigo = INEP/Censo · violeta = complementar (mapear no Censo) · âmbar = só i-Educar / sem designação no catálogo.')
         );
         $chart['options'] = array_merge(
             is_array($chart['options'] ?? null) ? $chart['options'] : [],
@@ -194,6 +195,9 @@ final class InclusionNeeDesignacaoDataset
         $ne = [];
 
         foreach ($catalog as $row) {
+            if ((string) ($row['norm'] ?? '') === '__sem_designacao__') {
+                continue;
+            }
             $total = (int) round((float) ($row['value'] ?? 0));
             if ($total <= 0) {
                 continue;
@@ -237,44 +241,31 @@ final class InclusionNeeDesignacaoDataset
      */
     private static function buildCatalogRows(array $entries, array $maps, Collection $rawRows): array
     {
-        $catalog = [];
-        $consumedId = [];
-        $consumedNorm = [];
-
-        foreach ($entries as $entry) {
-            $value = (float) InclusionEducacensoCatalog::countForDeficienciaEntry($entry, $maps);
-            $norm = (string) ($entry['norm'] ?? InclusionEducacensoCatalog::normalizeLabel((string) ($entry['label'] ?? '')));
-            $catalog[] = [
-                'label' => InclusionEducacensoCatalog::deficienciaChartLabel($entry),
-                'value' => $value,
-                'kind' => (string) ($entry['kind'] ?? InclusionEducacensoCatalog::classifyDeficienciaKind($entry)),
-                'norm' => $norm,
-                'grupo' => InclusionDashboardQueries::classificarDesignacaoNeeGrupo((string) ($entry['label'] ?? '')),
-            ];
-            $id = $entry['id'] ?? null;
-            if ($id !== null && $id !== '' && $value > 0) {
-                $consumedId[(string) $id] = true;
-            }
-            if ($norm !== '' && $value > 0) {
-                $consumedNorm[$norm] = true;
-            }
-        }
+        [$catalog, $remaining] = InclusionEducacensoCatalog::assignDeficienciaCountsExclusive($entries, $maps);
 
         foreach ($rawRows as $row) {
             $nome = trim((string) ($row->deficiencia ?? ''));
             if ($nome === '') {
                 $nome = (string) __('Não informado');
             }
-            $total = (int) ($row->total ?? 0);
-            if ($total <= 0) {
-                continue;
-            }
             $defId = trim((string) ($row->def_id ?? ''));
             $norm = InclusionEducacensoCatalog::resolveCatalogNorm($nome);
-            if ($defId !== '' && isset($consumedId[$defId])) {
+            $total = 0;
+
+            if ($defId !== '' && isset($remaining['by_id'][$defId])) {
+                $total = (int) $remaining['by_id'][$defId];
+                unset($remaining['by_id'][$defId]);
+                if ($norm !== '' && isset($remaining['by_norm'][$norm])) {
+                    unset($remaining['by_norm'][$norm]);
+                }
+            } elseif ($norm !== '' && isset($remaining['by_norm'][$norm])) {
+                $total = (int) $remaining['by_norm'][$norm];
+                unset($remaining['by_norm'][$norm]);
+            } else {
                 continue;
             }
-            if ($norm !== '' && isset($consumedNorm[$norm])) {
+
+            if ($total <= 0) {
                 continue;
             }
 
@@ -291,13 +282,68 @@ final class InclusionNeeDesignacaoDataset
                 'norm' => $norm,
                 'grupo' => InclusionDashboardQueries::classificarDesignacaoNeeGrupo($nome),
             ];
-            if ($defId !== '') {
-                $consumedId[$defId] = true;
-            }
-            if ($norm !== '') {
-                $consumedNorm[$norm] = true;
-            }
         }
+
+        foreach ($remaining['by_id'] as $id => $count) {
+            if ($count <= 0) {
+                continue;
+            }
+            $entry = ['id' => (string) $id, 'label' => (string) __('Designação (cód. :id)', ['id' => $id]), 'norm' => ''];
+            $entry['kind'] = 'ieducar';
+            $catalog[] = [
+                'label' => InclusionEducacensoCatalog::deficienciaChartLabel($entry),
+                'value' => (float) $count,
+                'kind' => 'ieducar',
+                'norm' => '',
+                'grupo' => 'deficiencia',
+            ];
+        }
+
+        foreach ($remaining['by_norm'] as $norm => $count) {
+            if ($count <= 0 || $norm === '') {
+                continue;
+            }
+            $entry = ['id' => null, 'label' => $norm, 'norm' => $norm];
+            $entry['kind'] = InclusionEducacensoCatalog::classifyDeficienciaKind($entry);
+            $catalog[] = [
+                'label' => InclusionEducacensoCatalog::deficienciaChartLabel($entry),
+                'value' => (float) $count,
+                'kind' => (string) $entry['kind'],
+                'norm' => $norm,
+                'grupo' => InclusionDashboardQueries::classificarDesignacaoNeeGrupo($norm),
+            ];
+        }
+
+        return $catalog;
+    }
+
+    /**
+     * @param  list<array{label: string, value: float, kind: string, norm: string, grupo?: string}>  $catalog
+     * @return list<array{label: string, value: float, kind: string, norm: string, grupo: string}>
+     */
+    private static function appendSemDesignacaoCatalogoRow(array $catalog, int $matriculasNee): array
+    {
+        if ($matriculasNee <= 0) {
+            return $catalog;
+        }
+
+        $assigned = 0;
+        foreach ($catalog as $row) {
+            $assigned += (int) round((float) ($row['value'] ?? 0));
+        }
+
+        $gap = $matriculasNee - $assigned;
+        if ($gap <= 0) {
+            return $catalog;
+        }
+
+        $catalog[] = [
+            'label' => __('Matrículas sem designação no catálogo (ex.: só turma AEE)').' — '.__('cadastro i-Educar'),
+            'value' => (float) $gap,
+            'kind' => 'ieducar',
+            'norm' => '__sem_designacao__',
+            'grupo' => 'deficiencia',
+        ];
 
         return $catalog;
     }
@@ -315,6 +361,9 @@ final class InclusionNeeDesignacaoDataset
         ];
 
         foreach ($catalog as $row) {
+            if ((string) ($row['norm'] ?? '') === '__sem_designacao__') {
+                continue;
+            }
             $v = (int) round((float) ($row['value'] ?? 0));
             if ($v <= 0) {
                 continue;

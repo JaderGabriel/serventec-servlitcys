@@ -443,6 +443,7 @@ final class InclusionDashboardQueries
         $den = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
 
         $neeDataset = InclusionNeeDesignacaoDataset::build($db, $city, $filters);
+        $hasCatalogoNee = false;
         if ($neeDataset !== null) {
             $g3 = InclusionNeeDesignacaoDataset::chartGrupo($neeDataset, $den);
             if ($g3 !== null) {
@@ -451,11 +452,13 @@ final class InclusionDashboardQueries
             // Catálogo completo (inclui opções com zero) — cores INEP / complementar / só i-Educar.
             $catalogoCompleto = InclusionNeeDesignacaoDataset::chartCatalogo($neeDataset, $den, true);
             if ($catalogoCompleto !== null) {
+                $hasCatalogoNee = true;
                 $out[] = self::withChartId($catalogoCompleto, 'nee_catalogo');
             }
         } else {
             $catalogoFallback = self::chartNeeCatalogoCompletoMecIeducar($db, $city, $filters, $den);
             if ($catalogoFallback !== null) {
+                $hasCatalogoNee = true;
                 $out[] = self::withChartId($catalogoFallback, 'nee_catalogo');
             }
         }
@@ -465,9 +468,11 @@ final class InclusionDashboardQueries
         if ($porEscolaTotal !== null) {
             $out[] = self::withChartId($porEscolaTotal, 'nee_escola_top');
         }
-        $det = self::chartMatriculasPorNomeDeficiencia($db, $city, $filters, $den);
-        if ($det !== null) {
-            $out[] = self::withChartId($det, 'nee_por_designacao');
+        if (! $hasCatalogoNee) {
+            $det = self::chartMatriculasPorNomeDeficiencia($db, $city, $filters, $den);
+            if ($det !== null) {
+                $out[] = self::withChartId($det, 'nee_por_designacao');
+            }
         }
         // Detalhe por tipo de deficiência no catálogo (empilhado), além do total acima.
         $porEscolaStacked = self::chartNeeDeficienciasPorEscolaStacked($db, $city, $filters, $den);
@@ -489,86 +494,12 @@ final class InclusionDashboardQueries
         IeducarFilterState $filters,
         ?int $denominator = null
     ): ?array {
-        try {
-            $rows = self::getMatriculasPorDeficiencia($db, $city, $filters, null);
-            $entries = InclusionEducacensoCatalog::mergedDeficienciaEntriesForChart($db, $city);
-            if ($entries === [] && $rows->isEmpty()) {
-                return null;
-            }
+        $den = $denominator ?? MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
+        $dataset = InclusionNeeDesignacaoDataset::build($db, $city, $filters);
 
-            $maps = InclusionEducacensoCatalog::deficienciaCountMapsFromRows(
-                $rows,
-                static fn ($row) => (string) ($row->deficiencia ?? ''),
-                static fn ($row) => (int) ($row->total ?? 0),
-                static fn ($row) => (string) ($row->def_id ?? ''),
-            );
-
-            $catalogRows = [];
-            foreach ($entries as $entry) {
-                $catalogRows[] = [
-                    'label' => InclusionEducacensoCatalog::deficienciaChartLabel($entry),
-                    'value' => (float) InclusionEducacensoCatalog::countForDeficienciaEntry($entry, $maps),
-                    'kind' => (string) ($entry['kind'] ?? InclusionEducacensoCatalog::classifyDeficienciaKind($entry)),
-                ];
-            }
-
-            usort(
-                $catalogRows,
-                static fn (array $a, array $b): int => $b['value'] <=> $a['value']
-                    ?: strcmp((string) $a['label'], (string) $b['label'])
-            );
-
-            $series = InclusionEducacensoCatalog::neeCatalogChartSeries($catalogRows);
-            if ($series['labels'] === []) {
-                return null;
-            }
-
-            $den = $denominator ?? MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
-
-            $chart = ChartPayload::barHorizontal(
-                __('NEE — catálogo completo MEC e i-Educar (todas as opções)'),
-                __('Matrículas distintas'),
-                $series['labels'],
-                $series['values']
-            );
-            $chart['datasets'][0]['backgroundColor'] = $series['colors'];
-            $chart['datasets'][0]['borderColor'] = $series['colors'];
-            $chart['subtitle'] = __(
-                'Barras com sufixo «INEP/Censo» seguem o Educacenso (campo deficiência). «Complementar» são tipos frequentes no i-Educar que devem ser mapeados para um código oficial na exportação. «Cadastro i-Educar» são designações só na base local. Valor zero significa nenhuma matrícula com aquele vínculo no ano/filtro — o resumo por grupo pode ser > 0 quando há NEE sem designação alinhada ao catálogo.'
-            );
-            $chart['footnote'] = __(
-                'Legenda de cores: índigo = INEP/Censo · violeta = complementar (adaptável) · âmbar = só i-Educar.'
-            );
-            $chart['options'] = array_merge(
-                is_array($chart['options'] ?? null) ? $chart['options'] : [],
-                ['panelHeight' => 'xxl', 'skipHorizontalBarAutoHeight' => false]
-            );
-
-            if (array_sum($series['values']) <= 0.0) {
-                $grupo = self::chartTresGruposDeficienciaSindromeNe($db, $city, $filters, $den);
-                $grupoTotal = 0.0;
-                if (is_array($grupo['datasets'][0]['data'] ?? null)) {
-                    foreach ($grupo['datasets'][0]['data'] as $v) {
-                        $grupoTotal += (float) $v;
-                    }
-                }
-                if ($grupoTotal > 0.0) {
-                    $chart['footnote'] = ($chart['footnote'] ?? '').' '
-                        .__('O gráfico por grupo indica :n matrícula(s) NEE, mas nenhuma barra recebeu contagem por designação — revise vínculos em fisica_deficiencia/aluno_deficiencia e nomes em cadastro.deficiencia.', [
-                            'n' => (string) (int) $grupoTotal,
-                        ]);
-                }
-            }
-
-            return self::attachMatriculaKpiTotal(
-                $chart,
-                $den,
-                true,
-                __('Soma das barras (pode exceder o total por vínculos múltiplos)')
-            );
-        } catch (\Throwable) {
-            return null;
-        }
+        return $dataset !== null
+            ? InclusionNeeDesignacaoDataset::chartCatalogo($dataset, $den, true)
+            : null;
     }
 
     /**

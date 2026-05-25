@@ -295,7 +295,7 @@ final class InclusionEducacensoCatalog
             if ($rawLabel === '') {
                 $rawLabel = (string) __('Não informado');
             }
-            $norm = self::normalizeLabel($rawLabel);
+            $norm = self::resolveCatalogNorm($rawLabel);
             if ($norm !== '') {
                 $byNorm[$norm] = ($byNorm[$norm] ?? 0) + $count;
             }
@@ -332,25 +332,50 @@ final class InclusionEducacensoCatalog
             return (int) $byNorm[$norm];
         }
 
-        if ($norm === '') {
-            return 0;
-        }
-
-        $fuzzy = 0;
-        foreach ($byNorm as $key => $value) {
-            if ($key === '' || $value <= 0) {
-                continue;
-            }
-            if ($key === $norm || str_contains($key, $norm) || str_contains($norm, $key)) {
-                $fuzzy += (int) $value;
-            }
-        }
-
-        if ($fuzzy > 0) {
-            return $fuzzy;
-        }
-
         return 0;
+    }
+
+    /**
+     * Atribui contagens do mapa a entradas do catálogo sem duplicar a mesma matrícula em várias barras.
+     *
+     * @param  list<array{id: ?string, label: string, norm: string, kind?: string}>  $entries
+     * @param  array{by_id: array<string, int>, by_norm: array<string, int>}  $maps
+     * @return array{0: list<array{label: string, value: float, kind: string, norm: string}>, 1: array{by_id: array<string, int>, by_norm: array<string, int>}}
+     */
+    public static function assignDeficienciaCountsExclusive(array $entries, array $maps): array
+    {
+        $byId = $maps['by_id'] ?? [];
+        $byNorm = $maps['by_norm'] ?? [];
+        $rows = [];
+
+        foreach ($entries as $entry) {
+            $norm = (string) ($entry['norm'] ?? self::normalizeLabel((string) ($entry['label'] ?? '')));
+            $id = $entry['id'] ?? null;
+            $idKey = ($id !== null && $id !== '') ? (string) $id : '';
+            $value = 0;
+
+            if ($idKey !== '' && isset($byId[$idKey])) {
+                $value = (int) $byId[$idKey];
+                unset($byId[$idKey]);
+                if ($norm !== '' && isset($byNorm[$norm])) {
+                    unset($byNorm[$norm]);
+                }
+            } elseif ($norm !== '' && isset($byNorm[$norm])) {
+                $value = (int) $byNorm[$norm];
+                unset($byNorm[$norm]);
+            }
+
+            $entry['kind'] = (string) ($entry['kind'] ?? self::classifyDeficienciaKind($entry));
+            $rows[] = [
+                'label' => self::deficienciaChartLabel($entry),
+                'value' => (float) $value,
+                'kind' => (string) $entry['kind'],
+                'norm' => $norm,
+                'grupo' => InclusionDashboardQueries::classificarDesignacaoNeeGrupo((string) ($entry['label'] ?? '')),
+            ];
+        }
+
+        return [$rows, ['by_id' => $byId, 'by_norm' => $byNorm]];
     }
 
     public static function normalizeLabel(string $label): string

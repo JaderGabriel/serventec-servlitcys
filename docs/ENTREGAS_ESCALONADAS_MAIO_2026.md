@@ -43,6 +43,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 35 | *(patch)* | **Pós-2.4.0 (sem bump):** rodapé/privacidade, welcome/home/RX, inclusão NEE+AEE, SAEB 4 colunas |
 | 36 | *(patch)* | **Pós-2.4.0:** consentimento LGPD, `/notifications`, catálogo NEE completo INEP |
 | 37 | *(release)* | **3.0.0** — consolidação LGPD + consultoria + inclusão; tag **`20260525-Apollo`**; layout `/consentimento` desktop |
+| 38 | *(patch)* | **Pós-3.0.0 (sem bump):** catálogo NEE — contagens exclusivas, barra AEE sem designação, UI sem gráfico duplicado |
 
 **Em produção:** versão **3.0.0** · tag **`20260525-Apollo`** · [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md).
 
@@ -413,6 +414,22 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | **UI consentimento** | `consent.blade.php` → `x-auth-layout` wide; `.serv-auth-card--wide` |
 
 **Pós-deploy:** `git tag 20260525-Apollo` · `npm run build` · validar selo no rodapé (**Apollo**).
+
+---
+
+## 38. Patch catálogo NEE — contagens e UI (pós-3.0.0, sem nova versão)
+
+**Objetivo:** Corrigir gráfico «catálogo completo» zerado com KPIs NEE/AEE preenchidos; eliminar duplicata de painéis; manter legenda INEP / complementar / i-Educar.
+
+| Área | Alteração |
+|------|-----------|
+| **Contagens** | `resolveCatalogNorm` nos mapas SQL; `assignDeficienciaCountsExclusive`; barra «sem designação» (gap até `countMatriculasComNee`) |
+| **Gráficos** | Removido `nee_por_designacao` quando `nee_catalogo` existe; fallback `chartNeeCatalogoCompletoMecIeducar` delega ao dataset |
+| **UI** | `inclusion.blade.php`: legenda única, `suppressTitle`; listas `nee_detalhe_catalogo` só sem gráfico de catálogo |
+
+| Ficheiros | `InclusionEducacensoCatalog.php`, `InclusionNeeDesignacaoDataset.php`, `InclusionDashboardQueries.php`, testes unitários |
+
+**Pós-deploy:** `npm run build` · validar **Pedagógico → Inclusão** (barras > 0 ou barra âmbar coerente com 716 NEE / 315 AEE).
 
 ---
 

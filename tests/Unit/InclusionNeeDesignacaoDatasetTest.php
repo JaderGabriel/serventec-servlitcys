@@ -75,6 +75,20 @@ final class InclusionNeeDesignacaoDatasetTest extends TestCase
         );
     }
 
+    public function test_append_sem_designacao_quando_total_nee_excede_soma_barras(): void
+    {
+        $catalog = [
+            ['label' => 'Baixa visão — INEP/Censo', 'value' => 10.0, 'kind' => 'inep', 'norm' => 'baixa visao', 'grupo' => 'deficiencia'],
+        ];
+        $method = new \ReflectionMethod(InclusionNeeDesignacaoDataset::class, 'appendSemDesignacaoCatalogoRow');
+        $method->setAccessible(true);
+        $out = $method->invoke(null, $catalog, 716);
+
+        $this->assertCount(2, $out);
+        $this->assertSame('__sem_designacao__', $out[1]['norm']);
+        $this->assertSame(706.0, $out[1]['value']);
+    }
+
     public function test_classificar_designacao_grupo_alinha_com_palavras_chave(): void
     {
         $this->assertSame('sindrome', InclusionDashboardQueries::classificarDesignacaoNeeGrupo('Transtorno do espectro autista'));
