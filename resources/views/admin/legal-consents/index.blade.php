@@ -11,6 +11,9 @@
                 </p>
             </div>
             <div class="flex flex-wrap gap-2">
+                <a href="{{ route('admin.legal-documents.index') }}" class="serv-btn-primary text-sm">
+                    {{ __('Editar documentos legais') }}
+                </a>
                 <a
                     href="{{ route('admin.legal-consents.index') }}"
                     @class([
@@ -31,6 +34,35 @@
 
     <div class="py-8 sm:py-10">
         <div class="serv-page-shell space-y-8">
+            @if (session('status'))
+                <div class="rounded-lg border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
+                    {{ session('status') }}
+                </div>
+            @endif
+
+            <div class="serv-panel p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ __('Revogar aceites (forçar novo consentimento)') }}</h3>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {{ __('Limpa as versões aceites nos utilizadores activos. Na próxima visita serão redirecionados para /consentimento.') }}
+                    </p>
+                </div>
+                <form method="POST" action="{{ route('admin.legal-consents.revoke-all') }}" class="flex flex-wrap items-center gap-3" onsubmit="return confirm(@js(__('Revogar aceites de todos os utilizadores activos?')));">
+                    @csrf
+                    <label class="flex items-center gap-2 text-sm">
+                        <input type="checkbox" name="revoke_privacy" value="1" checked class="rounded border-slate-300 text-teal-600" />
+                        {{ __('PP') }}
+                    </label>
+                    <label class="flex items-center gap-2 text-sm">
+                        <input type="checkbox" name="revoke_cookies" value="1" checked class="rounded border-slate-300 text-teal-600" />
+                        {{ __('Cookies') }}
+                    </label>
+                    <button type="submit" class="serv-btn-secondary text-sm border-amber-300 text-amber-900 dark:border-amber-700 dark:text-amber-100">
+                        {{ __('Revogar todos') }}
+                    </button>
+                </form>
+            </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="serv-panel p-4">
                     <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Utilizadores activos') }}</p>
@@ -62,6 +94,7 @@
                                 <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">{{ __('PP aceite') }}</th>
                                 <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">{{ __('Cookies') }}</th>
                                 <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">{{ __('Última aceitação PP') }}</th>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600 dark:text-slate-400">{{ __('Ações') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900/30">
@@ -92,10 +125,20 @@
                                     <td class="px-4 py-2.5 text-slate-600 dark:text-slate-400 tabular-nums">
                                         {{ $u->privacy_policy_accepted_at?->format('d/m/Y H:i') ?? '—' }}
                                     </td>
+                                    <td class="px-4 py-2.5 text-right">
+                                        <form method="POST" action="{{ route('admin.legal-consents.revoke-user', $u) }}" class="inline" onsubmit="return confirm(@js(__('Revogar aceite de :name?', ['name' => $u->name])));">
+                                            @csrf
+                                            <input type="hidden" name="revoke_privacy" value="1" />
+                                            <input type="hidden" name="revoke_cookies" value="1" />
+                                            <button type="submit" class="text-xs font-medium text-amber-800 dark:text-amber-200 hover:underline">
+                                                {{ __('Revogar') }}
+                                            </button>
+                                        </form>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-4 py-8 text-center text-slate-500">{{ __('Nenhum utilizador neste filtro.') }}</td>
+                                    <td colspan="5" class="px-4 py-8 text-center text-slate-500">{{ __('Nenhum utilizador neste filtro.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>

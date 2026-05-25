@@ -44,6 +44,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 36 | *(patch)* | **Pós-2.4.0:** consentimento LGPD, `/notifications`, catálogo NEE completo INEP |
 | 37 | *(release)* | **3.0.0** — consolidação LGPD + consultoria + inclusão; tag **`20260525-Apollo`**; layout `/consentimento` desktop |
 | 38 | *(patch)* | **Pós-3.0.0 (sem bump):** catálogo NEE — contagens exclusivas, barra AEE sem designação, UI sem gráfico duplicado |
+| 39 | *(patch)* | **Pós-3.0.0 (sem bump):** admin — editor PP/cookies, versionamento, revogação e reconsentimento |
 
 **Em produção:** versão **3.0.0** · tag **`20260525-Apollo`** · [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md).
 
@@ -430,6 +431,24 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | Ficheiros | `InclusionEducacensoCatalog.php`, `InclusionNeeDesignacaoDataset.php`, `InclusionDashboardQueries.php`, testes unitários |
 
 **Pós-deploy:** `npm run build` · validar **Pedagógico → Inclusão** (barras > 0 ou barra âmbar coerente com 716 NEE / 315 AEE).
+
+---
+
+## 39. Admin — documentos legais e revogação de consentimentos (pós-3.0.0, sem nova versão)
+
+**Objetivo:** Permitir ao admin editar política de privacidade e cookies em Markdown, publicar versões nomeadas, detetar alterações por hash e forçar novo aceite; revogar consentimentos por utilizador ou em massa.
+
+| Área | Alteração |
+|------|-----------|
+| **Base** | Tabela `legal_document_versions` (`document_type`, `version`, `body_markdown`, `content_hash`, `is_current`) |
+| **Editor** | `/admin/documentos-legais` — publicar com versão sugerida (`AAAA-MM-DD` / `.N`) e opção «Forçar novo consentimento» |
+| **Revogação** | `/admin/consentimentos-legais` — revogar todos ou por utilizador; logs `revoked_*` em `legal_consent_logs` |
+| **Pública** | `/privacidade` renderiza Markdown da versão vigente; fallback texto estático na view |
+| **Runtime** | `LegalConsentService` lê versões da base; fallback `LEGAL_*` no `.env` |
+
+| Ficheiros | `LegalDocumentService`, `LegalDocumentAdminController`, `LegalConsentRevocationController`, migração, views admin, testes |
+
+**Pós-deploy:** `php artisan migrate` · `php artisan route:clear` · publicar PP em staging antes de forçar reconsentimento em produção.
 
 ---
 

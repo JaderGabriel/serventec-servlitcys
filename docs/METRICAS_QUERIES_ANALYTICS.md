@@ -25,6 +25,14 @@ Com **`IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE=true`** (defeito), matrículas ac
 
 Implementação: `InclusionDashboardQueries::alunosComCadastroNeeSubquery`, `countMatriculasComNee`, `medidoresEducacaoEspecialPorGrupo`; discrepâncias delegam à mesma subquery.
 
+## LGPD — documentos e consentimento (admin)
+
+- **Editor:** `/admin/documentos-legais` — política de privacidade e cookies em Markdown (`legal_document_versions`), publicação com versão e hash SHA-256.
+- **Reconsentimento:** ao publicar com «Forçar novo consentimento», limpa aceites em `users` e regista `revoked_*` em `legal_consent_logs`.
+- **Revogação manual:** `/admin/consentimentos-legais` — revogar por utilizador ou em massa (PP e/ou cookies).
+- **Página pública:** `/privacidade` lê a versão `is_current` da PP; sem publicação na base, mantém o texto estático da view.
+- Versões em runtime: `LegalConsentService::currentPrivacyVersion()` / `currentCookiesVersion()` leem a base; fallback `LEGAL_*` no `.env`.
+
 **Gráfico «catálogo completo»:** `InclusionNeeDesignacaoDataset::chartCatalogo(..., includeZeros: true)` — lista todas as designações MEC/Educacenso e i-Educar (valor 0 quando não há vínculo). Contagens via `InclusionEducacensoCatalog::deficienciaCountMapsFromRows` com `resolveCatalogNorm` (aliases em `ieducar.inclusion.deficiencia_label_aliases`) e `assignDeficienciaCountsExclusive` (cada matrícula numa única barra, sem correspondência fuzzy duplicada). Se o total NEE (`countMatriculasComNee`, incl. turma AEE) exceder a soma das barras por designação, aparece barra âmbar **«sem designação no catálogo»**. UI: um painel com legenda INEP / complementar / só i-Educar (`inclusion.blade.php`, `suppressTitle`); removido gráfico redundante «por tipo» quando o catálogo existe.
 
 ## 1. Laravel Pulse (recomendado — já integrado)

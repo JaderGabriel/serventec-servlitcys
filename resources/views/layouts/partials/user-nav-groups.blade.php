@@ -146,15 +146,23 @@
             'title' => __('Administração'),
             'icon' => 'command-line',
             'tone' => 'sky',
-            'routes' => ['admin.artisan-commands.*', 'admin.documentation.*', 'admin.legal-consents.*', 'settings.mail.*'],
+            'routes' => ['admin.artisan-commands.*', 'admin.documentation.*', 'admin.legal-consents.*', 'admin.legal-documents.*', 'settings.mail.*'],
             'items' => [
+                [
+                    'show' => true,
+                    'href' => route('admin.legal-documents.index'),
+                    'label' => __('Documentos legais'),
+                    'icon' => 'document-text',
+                    'active' => $req->routeIs('admin.legal-documents.*'),
+                    'title' => __('Editar política de privacidade e cookies; publicar versões.'),
+                ],
                 [
                     'show' => true,
                     'href' => route('admin.legal-consents.index'),
                     'label' => __('Consentimentos LGPD'),
                     'icon' => 'shield-check',
                     'active' => $req->routeIs('admin.legal-consents.*'),
-                    'title' => __('Aceites de política de privacidade e cookies por utilizador.'),
+                    'title' => __('Aceites, revogações e auditoria por utilizador.'),
                 ],
                 [
                     'show' => true,

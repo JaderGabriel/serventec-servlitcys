@@ -3,6 +3,7 @@
 namespace App\Support\Legal;
 
 use App\Models\LegalConsentLog;
+use App\Models\LegalDocumentVersion;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -11,10 +12,20 @@ final class LegalConsentService
 {
     public static function currentPrivacyVersion(): string
     {
-        return (string) config('legal.privacy_version', '2026-05-25');
+        return app(LegalDocumentService::class)->versionForType(LegalDocumentVersion::TYPE_PRIVACY);
     }
 
     public static function currentCookiesVersion(): string
+    {
+        return app(LegalDocumentService::class)->versionForType(LegalDocumentVersion::TYPE_COOKIES);
+    }
+
+    public static function fallbackPrivacyVersion(): string
+    {
+        return (string) config('legal.privacy_version', '2026-05-25');
+    }
+
+    public static function fallbackCookiesVersion(): string
     {
         return (string) config('legal.cookies_version', '2026-05-25');
     }

@@ -2,7 +2,7 @@
     <article class="serv-panel px-6 py-6 sm:px-8 sm:py-8">
         <p class="serv-eyebrow">{{ __('Proteção de dados') }}</p>
         <h1 class="font-display mt-2 text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">
-            {{ __('Política de privacidade') }}
+            {{ $documentTitle ?? __('Política de privacidade') }}
         </h1>
         <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
             {{ __('Última atualização:') }} {{ $lastUpdated }}
@@ -15,6 +15,11 @@
         </p>
 
         <div class="mt-8 space-y-6 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+            @if (filled($documentHtml ?? null))
+                <div class="serv-docs-prose">
+                    {!! $documentHtml !!}
+                </div>
+            @else
             <section>
                 <h2 class="font-display text-base font-semibold text-slate-900 dark:text-white">{{ __('1. Quem somos') }}</h2>
                 <p class="mt-2">
@@ -82,6 +87,7 @@
                     {{ __('Os indicadores do painel refletem cadastros administrativos e não substituem documentos oficiais do Censo Escolar ou do INEP. O uso da plataforma implica aceitação desta política na versão vigente na data de acesso.') }}
                 </p>
             </section>
+            @endif
         </div>
 
         <div class="mt-8 flex flex-wrap gap-3 border-t border-slate-200/90 pt-6 dark:border-slate-700/80">

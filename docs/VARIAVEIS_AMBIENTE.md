@@ -41,6 +41,8 @@ php artisan config:clear
 | `LEGAL_CONSENT_COOKIE_DAYS` | | `365` | Validade do cookie (visitantes) |
 | `LEGAL_PRIVACY_CONTACT_EMAIL` | | vazio | E-mail de contacto LGPD (opcional; senão usa contacto do município) |
 
+Com versão publicada em `/admin/documentos-legais`, as versões vigentes de PP e cookies vêm da tabela `legal_document_versions` (prioridade sobre `LEGAL_PRIVACY_VERSION` / `LEGAL_COOKIES_VERSION`). Ver [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) § LGPD.
+
 ---
 
 ## 2. Logs

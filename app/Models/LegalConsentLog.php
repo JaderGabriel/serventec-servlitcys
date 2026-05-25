@@ -13,6 +13,12 @@ class LegalConsentLog extends Model
 
     public const TYPE_BOTH = 'privacy_and_cookies';
 
+    public const TYPE_REVOKED_PRIVACY = 'revoked_privacy';
+
+    public const TYPE_REVOKED_COOKIES = 'revoked_cookies';
+
+    public const TYPE_REVOKED_BOTH = 'revoked_both';
+
     protected $fillable = [
         'user_id',
         'consent_type',

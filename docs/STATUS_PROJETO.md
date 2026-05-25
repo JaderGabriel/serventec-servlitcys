@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **3.0.0** · release `20260525-Apollo` · **Ramo:** `main` · **Última revisão:** 25/05/2026
+**Versão em produção:** **3.0.0** · release `20260525-Apollo` · **Ramo:** `main` · **Última revisão:** 26/05/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -30,6 +30,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Welcome / home — UI ícones, RX barra Censo, mapa mental | Implementado (3.0.0) |
 | Consentimento LGPD (PP + cookies, versão, `/consentimento`) | Implementado (3.0.0; `legal_consent_logs`; layout desktop) |
 | Admin — relatório consentimentos (`/admin/consentimentos-legais`) | Implementado (3.0.0) |
+| Admin — editor documentos legais + revogação/reconsentimento (`/admin/documentos-legais`) | Implementado (3.0.0; patch pós-release; `legal_document_versions`) |
 | Notificações — página `/notifications` + API `/notifications/feed` | Implementado (3.0.0) |
 | Rodapé — selo versão (tag Apollo + data lançamento) | Implementado (`ProductVersion`, `x-product-version-badge`) |
 | Inclusão — gráfico catálogo completo NEE (INEP / i-Educar, contagens exclusivas + barra AEE) | Implementado (3.0.0; patch pós-release) |

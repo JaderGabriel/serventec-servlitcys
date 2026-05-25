@@ -8,6 +8,8 @@ use App\Http\Controllers\Admin\DocumentationController;
 use App\Http\Controllers\Admin\GeoSyncController;
 use App\Http\Controllers\Admin\IeducarCompatibilityController;
 use App\Http\Controllers\Admin\LegalConsentReportController;
+use App\Http\Controllers\Admin\LegalConsentRevocationController;
+use App\Http\Controllers\Admin\LegalDocumentAdminController;
 use App\Http\Controllers\Admin\PedagogicalSyncController;
 use App\Http\Controllers\Admin\PublicDataImportController;
 use App\Http\Controllers\AnalyticsDashboardController;
@@ -141,6 +143,19 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'legal.consent', 'adm
 
     Route::get('/admin/consentimentos-legais', [LegalConsentReportController::class, 'index'])
         ->name('admin.legal-consents.index');
+    Route::post('/admin/consentimentos-legais/revogar-todos', [LegalConsentRevocationController::class, 'revokeAll'])
+        ->name('admin.legal-consents.revoke-all');
+    Route::post('/admin/consentimentos-legais/{user}/revogar', [LegalConsentRevocationController::class, 'revokeUser'])
+        ->name('admin.legal-consents.revoke-user');
+
+    Route::get('/admin/documentos-legais', [LegalDocumentAdminController::class, 'index'])
+        ->name('admin.legal-documents.index');
+    Route::get('/admin/documentos-legais/{type}', [LegalDocumentAdminController::class, 'edit'])
+        ->where('type', 'privacy|cookies')
+        ->name('admin.legal-documents.edit');
+    Route::post('/admin/documentos-legais/{type}/publicar', [LegalDocumentAdminController::class, 'publish'])
+        ->where('type', 'privacy|cookies')
+        ->name('admin.legal-documents.publish');
 });
 
 require __DIR__.'/auth.php';
