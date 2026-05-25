@@ -291,7 +291,10 @@ final class ConsultoriaThematicBridge
             }
         }
 
-        $gauges = is_array($inclusion['gauges'] ?? null) ? $inclusion['gauges'] : [];
+        $neeIndicators = is_array($inclusion['nee_indicators'] ?? null) ? $inclusion['nee_indicators'] : null;
+        $gauges = is_array($neeIndicators['gauges'] ?? null) && $neeIndicators['gauges'] !== []
+            ? $neeIndicators['gauges']
+            : (is_array($inclusion['gauges'] ?? null) ? $inclusion['gauges'] : []);
         if ($gauges !== []) {
             foreach ($gauges as $g) {
                 $chart = is_array($g['chart'] ?? null) ? $g['chart'] : [];

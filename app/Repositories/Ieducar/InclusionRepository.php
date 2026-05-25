@@ -13,6 +13,7 @@ use App\Support\Ieducar\InclusionDashboardQueries;
 use App\Support\Ieducar\InclusionFundebImpact;
 use App\Support\Ieducar\InclusionEducacensoCatalog;
 use App\Support\Ieducar\InclusionNeeDesignacaoDataset;
+use App\Support\Ieducar\InclusionNeeIndicatorsPanel;
 use App\Support\Ieducar\InclusionMatriculaScope;
 use App\Support\Ieducar\InclusionCadastroInconsistenciasQueries;
 use App\Support\Ieducar\InclusionRecursoProvaQueries;
@@ -45,6 +46,7 @@ class InclusionRepository
      *   nee_detalhe_catalogo: ?array<string, mixed>,
      *   aee_cross: ?array<string, mixed>,
      *   gauges: list<array{chart: array<string, mixed>, caption: string}>,
+     *   nee_indicators: ?array<string, mixed>,
      *   notes: list<string>,
      *   error: ?string,
      *   total_matriculas: ?int,
@@ -63,6 +65,7 @@ class InclusionRepository
                 'nee_detalhe_catalogo' => null,
                 'aee_cross' => null,
                 'gauges' => [],
+                'nee_indicators' => null,
                 'notes' => [],
                 'error' => null,
                 'total_matriculas' => null,
@@ -84,6 +87,7 @@ class InclusionRepository
 
         $charts = [];
         $neeCharts = [];
+        $neeDataset = null;
         $neeDetalheCatalogo = null;
         $aeeCross = null;
         $gauges = [];
@@ -100,7 +104,7 @@ class InclusionRepository
         $fundebNee = null;
 
         try {
-            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo, &$matriculasNee, &$neeCatalogWarning, &$chartRacaPorEscolaStacked, &$chartNeePorRacaStacked, &$neeMatriculasPorEscola, &$recursoProva, &$fundebNee) {
+            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDataset, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo, &$matriculasNee, &$neeCatalogWarning, &$chartRacaPorEscolaStacked, &$chartNeePorRacaStacked, &$neeMatriculasPorEscola, &$recursoProva, &$fundebNee) {
                 $totalMatriculas = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
                 $matriculasNee = InclusionDashboardQueries::countMatriculasComNee($db, $city, $filters);
 
@@ -125,7 +129,7 @@ class InclusionRepository
                 }
 
                 $neeDataset = InclusionNeeDesignacaoDataset::build($db, $city, $filters);
-                if (is_array($neeDataset['grupos'] ?? null)) {
+                if (is_array($neeDataset) && is_array($neeDataset['grupos'] ?? null)) {
                     $neeGrupoResumo = $neeDataset['grupos'];
                     $matriculasNee = (int) ($neeDataset['matriculas_nee'] ?? $matriculasNee);
                     $neeCatalogWarning = isset($neeDataset['catalog_warning']) && is_string($neeDataset['catalog_warning'])
@@ -158,17 +162,24 @@ class InclusionRepository
 
                 try {
                     foreach (InclusionSpecialEducationGauges::build($db, $city, $filters) as $row) {
-                        $gaugeChart = ChartPayload::gaugePercent($row['title'], $row['percent']);
+                        $gaugeChart = ChartPayload::gaugePercent($row['title'], (float) ($row['percent_rede'] ?? $row['percent'] ?? 0));
+                        $gaugeChart['gauge_dual'] = [
+                            'percent_rede' => (float) ($row['percent_rede'] ?? $row['percent'] ?? 0),
+                            'percent_nee' => (float) ($row['percent_nee'] ?? 0),
+                            'count' => (int) ($row['count'] ?? 0),
+                        ];
                         if ($totalMatriculas !== null && $totalMatriculas > 0) {
                             $gaugeChart = ChartPayload::withKpiStudentTotal(
                                 $gaugeChart,
                                 $totalMatriculas,
-                                __('Total de matrículas no filtro (denominador)')
+                                __('Total de matrículas no filtro (denominador rede)')
                             );
                         }
                         $gauges[] = [
                             'chart' => $gaugeChart,
                             'caption' => $row['caption'],
+                            'percent_rede' => (float) ($row['percent_rede'] ?? $row['percent'] ?? 0),
+                            'percent_nee' => (float) ($row['percent_nee'] ?? 0),
                         ];
                     }
                 } catch (\Throwable) {
@@ -245,6 +256,11 @@ class InclusionRepository
                     $chartNeePorRacaStacked = null;
                 }
 
+                $neeCharts = array_values(array_filter(
+                    $neeCharts,
+                    static fn (array $c): bool => ! in_array((string) ($c['chart_id'] ?? ''), ['nee_grupo'], true)
+                ));
+
                 $escolaRacaNee = $this->escolaRacaENeeMultiLineChart($db, $city, $filters);
                 $charts = array_merge(
                     $neeCharts,
@@ -286,6 +302,7 @@ class InclusionRepository
                 'nee_detalhe_catalogo' => null,
                 'aee_cross' => null,
                 'gauges' => [],
+                'nee_indicators' => null,
                 'notes' => [],
                 'error' => $e->getMessage(),
                 'total_matriculas' => null,
@@ -307,12 +324,22 @@ class InclusionRepository
 
         $tabCopy = $this->inclusionTabPresentation($equidadeFonte, $totalMatriculas, $matriculasNee);
 
+        $neeIndicators = InclusionNeeIndicatorsPanel::build(
+            is_array($neeDataset) ? $neeDataset : null,
+            $gauges,
+            $totalMatriculas,
+            $matriculasNee,
+            $neeCatalogWarning,
+            $neeCharts,
+        );
+
         return [
             'charts' => $charts,
             'nee_charts_count' => count($neeCharts),
             'nee_detalhe_catalogo' => $neeDetalheCatalogo,
             'aee_cross' => $aeeCross,
             'gauges' => $gauges,
+            'nee_indicators' => $neeIndicators,
             'notes' => $notes,
             'error' => null,
             'total_matriculas' => $totalMatriculas,
@@ -391,6 +418,10 @@ class InclusionRepository
             'gauges' => [
                 'formula' => __('% = matrículas do grupo (designação no cadastro) ÷ matrículas ativas no filtro × 100; legenda: N do universo NEE.'),
                 'note' => __('Mesma classificação do gráfico por grupo (deficiência / síndrome-TEA / NE). Inclui cadastro sem match no catálogo MEC quando não há rótulo cruzado.'),
+            ],
+            'nee_indicators' => [
+                'formula' => __('Cartões, medidores e catálogo partilham a mesma classificação por designação em cadastro.deficiencia.'),
+                'note' => __('Gráfico de barras por grupo foi unificado nesta secção para evitar repetição.'),
             ],
             'nee_escola' => [
                 'formula' => __('Por escola: COUNT(DISTINCT matrícula) no recorte NEE (cadastro e/ou turma AEE).'),

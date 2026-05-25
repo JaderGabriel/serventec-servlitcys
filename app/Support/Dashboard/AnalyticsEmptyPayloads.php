@@ -98,6 +98,7 @@ final class AnalyticsEmptyPayloads
             'nee_detalhe_catalogo' => null,
             'aee_cross' => null,
             'gauges' => [],
+            'nee_indicators' => null,
             'notes' => [],
             'error' => null,
             'total_matriculas' => null,

@@ -52,20 +52,9 @@ final class InclusionDashboardQueries
 
         $alunoRows = self::queryMatriculasPorDeficienciaAlunoDefPath($db, $city, $filters, $limit);
 
-        $fisicaTotal = (int) array_sum(array_map(static fn ($r) => (int) ($r->total ?? 0), $fisicaRows));
-        $alunoTotal = (int) array_sum(array_map(static fn ($r) => (int) ($r->total ?? 0), $alunoRows));
-        $usesFisica = self::inclusionNeeUsesFisicaPath($db, $city);
-
-        if ($usesFisica && $fisicaTotal > 0) {
-            return $mapRows($fisicaRows);
-        }
-
-        if ($alunoTotal > 0) {
-            return $mapRows($alunoRows);
-        }
-
-        if ($fisicaTotal > 0) {
-            return $mapRows($fisicaRows);
+        $merged = self::mergeDeficienciaAggregateRows($fisicaRows, $alunoRows);
+        if ($merged !== []) {
+            return $mapRows($merged);
         }
 
         $neeCadastro = self::countMatriculasNeeComCadastroDeficiencia($db, $city, $filters);
@@ -340,38 +329,28 @@ final class InclusionDashboardQueries
                     ? __('cadastro.fisica_deficiencia + deficiência (+ turma AEE quando configurado)')
                     : __('aluno_deficiencia + deficiência (+ turma AEE quando configurado)');
 
+                $gaugeRow = static function (string $title, int $count, int $neeTotal) use ($pctRede): array {
+                    $pctNee = $neeTotal > 0 ? round(100.0 * $count / $neeTotal, 1) : 0.0;
+                    $pctRedeVal = $pctRede($count);
+
+                    return [
+                        'title' => $title,
+                        'percent' => $pctRedeVal,
+                        'percent_rede' => $pctRedeVal,
+                        'percent_nee' => $pctNee,
+                        'count' => $count,
+                        'caption' => __(':n matrículas · :pct_nee% do universo NEE · :pct_rede% da rede.', [
+                            'n' => $count,
+                            'pct_nee' => $pctNee,
+                            'pct_rede' => $pctRedeVal,
+                        ]),
+                    ];
+                };
+
                 return [
-                    [
-                        'title' => __('Deficiências'),
-                        'percent' => $pctRede($nDef),
-                        'caption' => __(':n de :nee matrículas NEE (:pct% do universo NEE; :rede% da rede). Origem: :path.', [
-                            'n' => $nDef,
-                            'nee' => $nee,
-                            'pct' => $nee > 0 ? round(100.0 * $nDef / $nee, 1) : 0,
-                            'rede' => $pctRede($nDef),
-                            'path' => $pathNote,
-                        ]),
-                    ],
-                    [
-                        'title' => __('Síndromes e TEA'),
-                        'percent' => $pctRede($nSin),
-                        'caption' => __(':n de :nee matrículas NEE (:pct% do universo NEE; :rede% da rede).', [
-                            'n' => $nSin,
-                            'nee' => $nee,
-                            'pct' => $nee > 0 ? round(100.0 * $nSin / $nee, 1) : 0,
-                            'rede' => $pctRede($nSin),
-                        ]),
-                    ],
-                    [
-                        'title' => __('Altas habilidades / superdotação'),
-                        'percent' => $pctRede($nAh),
-                        'caption' => __(':n de :nee matrículas NEE (:pct% do universo NEE; :rede% da rede).', [
-                            'n' => $nAh,
-                            'nee' => $nee,
-                            'pct' => $nee > 0 ? round(100.0 * $nAh / $nee, 1) : 0,
-                            'rede' => $pctRede($nAh),
-                        ]),
-                    ],
+                    $gaugeRow(__('Deficiências'), $nDef, $nee),
+                    $gaugeRow(__('Síndromes e TEA'), $nSin, $nee),
+                    $gaugeRow(__('Altas habilidades / superdotação'), $nAh, $nee),
                 ];
             }
 
@@ -467,40 +446,32 @@ final class InclusionDashboardQueries
             $nSin = $countDistinct($base()?->whereRaw($sinExpr));
             $nAh = $countDistinct($base()?->whereRaw($ahExpr));
             $nDef = $countDistinct($base()?->whereRaw($defExpr));
-            $pct = static fn (int $n) => round(100.0 * $n / $den, 1);
+            $neeTotal = self::countMatriculasComNee($db, $city, $filters);
+            $pctRede = static fn (int $n): float => round(100.0 * $n / $den, 1);
+            $pctNee = static fn (int $n): float => $neeTotal > 0 ? round(100.0 * $n / $neeTotal, 1) : 0.0;
 
-            $pathNote = self::inclusionNeeUsesFisicaPath($db, $city)
-                ? __('cadastro.fisica_deficiencia + deficiência')
-                : __('aluno_deficiencia + deficiência');
+            $gaugeRow = static function (string $title, int $count) use ($pctRede, $pctNee): array {
+                $pctRedeVal = $pctRede($count);
+                $pctNeeVal = $pctNee($count);
+
+                return [
+                    'title' => $title,
+                    'percent' => $pctRedeVal,
+                    'percent_rede' => $pctRedeVal,
+                    'percent_nee' => $pctNeeVal,
+                    'count' => $count,
+                    'caption' => __(':n matrículas · :pct_nee% do universo NEE · :pct_rede% da rede.', [
+                        'n' => $count,
+                        'pct_nee' => $pctNeeVal,
+                        'pct_rede' => $pctRedeVal,
+                    ]),
+                ];
+            };
 
             return [
-                [
-                    'title' => __('Deficiências'),
-                    'percent' => $pct($nDef),
-                    'caption' => __(':n de :d matrículas com registro NEE classificado como deficiência (:path).', [
-                        'n' => $nDef,
-                        'd' => $den,
-                        'path' => $pathNote,
-                    ]),
-                ],
-                [
-                    'title' => __('Síndromes e TEA'),
-                    'percent' => $pct($nSin),
-                    'caption' => __(':n de :d matrículas (palavras-chave no nome da deficiência, :path).', [
-                        'n' => $nSin,
-                        'd' => $den,
-                        'path' => $pathNote,
-                    ]),
-                ],
-                [
-                    'title' => __('Altas habilidades / superdotação'),
-                    'percent' => $pct($nAh),
-                    'caption' => __(':n de :d matrículas (palavras-chave no nome da deficiência, :path).', [
-                        'n' => $nAh,
-                        'd' => $den,
-                        'path' => $pathNote,
-                    ]),
-                ],
+                $gaugeRow(__('Deficiências'), $nDef),
+                $gaugeRow(__('Síndromes e TEA'), $nSin),
+                $gaugeRow(__('Altas habilidades / superdotação'), $nAh),
             ];
         } catch (\Throwable) {
             return [];
@@ -579,6 +550,109 @@ final class InclusionDashboardQueries
         return self::classificarDesignacaoNee($nome);
     }
 
+    public static function grupoNeeLabel(string $grupoKey): string
+    {
+        return match ($grupoKey) {
+            'sindrome' => __('Síndromes e TEA'),
+            'ne' => __('NE — altas habilidades'),
+            default => __('Deficiências'),
+        };
+    }
+
+    /**
+     * Contagem de matrículas NEE por grupo — mesma classificação da exportação (fisica + aluno_deficiencia por aluno).
+     *
+     * @return array{deficiencias: int, sindromes_tea: int, ne_altas_habilidades: int}
+     */
+    public static function aggregateGruposPorMatriculaNeeExportAligned(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+    ): array {
+        $out = [
+            'deficiencias' => 0,
+            'sindromes_tea' => 0,
+            'ne_altas_habilidades' => 0,
+        ];
+
+        try {
+            $neeRows = self::fetchNeeMatriculasComTurmaCurso($db, $city, $filters);
+            if ($neeRows === []) {
+                return $out;
+            }
+
+            $alunoIds = array_values(array_unique(array_map(
+                static fn (array $r): int => (int) ($r['aluno_id'] ?? 0),
+                $neeRows,
+            )));
+            $alunoIds = array_values(array_filter($alunoIds, static fn (int $id): bool => $id > 0));
+            $byAluno = self::deficienciasPorAlunoIdsForExport($db, $city, $alunoIds);
+
+            foreach ($neeRows as $row) {
+                $aid = (int) ($row['aluno_id'] ?? 0);
+                if ($aid <= 0) {
+                    continue;
+                }
+                $keys = $byAluno[$aid]['grupo_keys'] ?? [];
+                if ($keys === []) {
+                    continue;
+                }
+                if (in_array('deficiencia', $keys, true)) {
+                    $out['deficiencias']++;
+                }
+                if (in_array('sindrome', $keys, true)) {
+                    $out['sindromes_tea']++;
+                }
+                if (in_array('ne', $keys, true)) {
+                    $out['ne_altas_habilidades']++;
+                }
+            }
+        } catch (\Throwable) {
+            return $out;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Junta contagens por designação dos caminhos fisica_deficiencia e aluno_deficiencia (como na exportação).
+     *
+     * @param  list<object|array<string, mixed>>  $fisicaRows
+     * @param  list<object|array<string, mixed>>  $alunoRows
+     * @return list<array{def_id: string, deficiencia: string, total: int}>
+     */
+    private static function mergeDeficienciaAggregateRows(array $fisicaRows, array $alunoRows): array
+    {
+        $byKey = [];
+
+        foreach (array_merge($fisicaRows, $alunoRows) as $row) {
+            $arr = (array) $row;
+            $defId = trim((string) ($arr['def_id'] ?? ''));
+            $nome = trim((string) ($arr['deficiencia'] ?? ''));
+            $total = (int) ($arr['total'] ?? 0);
+            if ($total <= 0) {
+                continue;
+            }
+            $key = $defId !== '' ? 'id:'.$defId : 'nome:'.$nome;
+            if ($key === 'nome:' || $key === 'id:') {
+                continue;
+            }
+            if (! isset($byKey[$key])) {
+                $byKey[$key] = [
+                    'def_id' => $defId,
+                    'deficiencia' => $nome,
+                    'total' => 0,
+                ];
+            }
+            $byKey[$key]['total'] += $total;
+        }
+
+        $rows = array_values($byKey);
+        usort($rows, static fn (array $a, array $b): int => $b['total'] <=> $a['total']);
+
+        return $rows;
+    }
+
     /**
      * @param  array<string, mixed>  $chart
      * @return array<string, mixed>
@@ -600,10 +674,7 @@ final class InclusionDashboardQueries
         $neeDataset = InclusionNeeDesignacaoDataset::build($db, $city, $filters);
         $hasCatalogoNee = false;
         if ($neeDataset !== null) {
-            $g3 = InclusionNeeDesignacaoDataset::chartGrupo($neeDataset, $den);
-            if ($g3 !== null) {
-                $out[] = self::withChartId($g3, 'nee_grupo');
-            }
+            // Gráfico por grupo omitido: mesmos dados nos medidores e cartões da secção «Indicadores NEE».
             // Catálogo completo (inclui opções com zero) — cores INEP / complementar / só i-Educar.
             $catalogoCompleto = InclusionNeeDesignacaoDataset::chartCatalogo($neeDataset, $den, true);
             if ($catalogoCompleto !== null) {
@@ -2134,7 +2205,7 @@ final class InclusionDashboardQueries
 
     /**
      * @param  list<int>  $alunoIds
-     * @return array<int, array{labels: list<string>, grupos: list<string>}>
+     * @return array<int, array{labels: list<string>, grupos: list<string>, grupo_keys: list<string>}>
      */
     public static function deficienciasPorAlunoIdsForExport(Connection $db, City $city, array $alunoIds): array
     {
@@ -2217,17 +2288,16 @@ final class InclusionDashboardQueries
             if ($aid <= 0 || $nome === '') {
                 continue;
             }
-            $map[$aid] ??= ['labels' => [], 'grupos' => []];
+            $map[$aid] ??= ['labels' => [], 'grupos' => [], 'grupo_keys' => []];
             if (! in_array($nome, $map[$aid]['labels'], true)) {
                 $map[$aid]['labels'][] = $nome;
-                $grupo = self::classificarDesignacaoNeeGrupo($nome);
-                $labelGrupo = match ($grupo) {
-                    'sindrome' => __('Síndromes e TEA'),
-                    'ne' => __('NE — altas habilidades'),
-                    default => __('Deficiências'),
-                };
+                $grupoKey = self::classificarDesignacaoNeeGrupo($nome);
+                $labelGrupo = self::grupoNeeLabel($grupoKey);
                 if (! in_array($labelGrupo, $map[$aid]['grupos'], true)) {
                     $map[$aid]['grupos'][] = $labelGrupo;
+                }
+                if (! in_array($grupoKey, $map[$aid]['grupo_keys'], true)) {
+                    $map[$aid]['grupo_keys'][] = $grupoKey;
                 }
             }
         }

@@ -162,7 +162,28 @@ final class InclusionNeeDesignacaoDatasetTest extends TestCase
     public function test_classificar_designacao_grupo_alinha_com_palavras_chave(): void
     {
         $this->assertSame('sindrome', InclusionDashboardQueries::classificarDesignacaoNeeGrupo('Transtorno do espectro autista'));
+        $this->assertSame('sindrome', InclusionDashboardQueries::classificarDesignacaoNeeGrupo('Autismo clássico'));
         $this->assertSame('ne', InclusionDashboardQueries::classificarDesignacaoNeeGrupo('Altas habilidades'));
         $this->assertSame('deficiencia', InclusionDashboardQueries::classificarDesignacaoNeeGrupo('Baixa visão'));
+    }
+
+    public function test_merge_deficiencia_aggregate_rows_soma_fisica_e_aluno(): void
+    {
+        $method = new \ReflectionMethod(InclusionDashboardQueries::class, 'mergeDeficienciaAggregateRows');
+        $method->setAccessible(true);
+        $merged = $method->invoke(null, [
+            (object) ['def_id' => '1', 'deficiencia' => 'Autismo clássico', 'total' => 3],
+        ], [
+            (object) ['def_id' => '1', 'deficiencia' => 'Autismo clássico', 'total' => 2],
+            (object) ['def_id' => '2', 'deficiencia' => 'Baixa visão', 'total' => 4],
+        ]);
+
+        $this->assertCount(2, $merged);
+        $byNome = [];
+        foreach ($merged as $row) {
+            $byNome[$row['deficiencia']] = $row['total'];
+        }
+        $this->assertSame(5, $byNome['Autismo clássico']);
+        $this->assertSame(4, $byNome['Baixa visão']);
     }
 }

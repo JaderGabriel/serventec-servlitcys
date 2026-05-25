@@ -15,7 +15,7 @@ use Illuminate\Database\QueryException;
  */
 final class InclusionSpecialEducationGauges
 {
-    /** @return list<array{title: string, percent: float, caption: string}> */
+    /** @return list<array{title: string, percent: float, percent_rede?: float, percent_nee?: float, count?: int, caption: string}> */
     public static function build(Connection $db, City $city, IeducarFilterState $filters): array
     {
         $out = [];
@@ -39,7 +39,9 @@ final class InclusionSpecialEducationGauges
                 $out[] = [
                     'title' => $titles[$key],
                     'percent' => $pct,
-                    'caption' => __('% sobre matrículas ativas no filtro.'),
+                    'percent_rede' => $pct,
+                    'percent_nee' => 0.0,
+                    'caption' => __('% sobre matrículas ativas no filtro (rede).'),
                 ];
             }
         }
@@ -191,24 +193,31 @@ final class InclusionSpecialEducationGauges
                     $mId
                 );
 
-                $pct = static fn (int $n) => round(100.0 * $n / $den, 1);
+                $neeTotal = InclusionDashboardQueries::countMatriculasComNee($db, $city, $filters);
+                $pctRede = static fn (int $n): float => round(100.0 * $n / $den, 1);
+                $pctNee = static fn (int $n): float => $neeTotal > 0 ? round(100.0 * $n / $neeTotal, 1) : 0.0;
+                $gaugeRow = static function (string $title, int $count) use ($pctRede, $pctNee): array {
+                    $pctRedeVal = $pctRede($count);
+                    $pctNeeVal = $pctNee($count);
+
+                    return [
+                        'title' => $title,
+                        'percent' => $pctRedeVal,
+                        'percent_rede' => $pctRedeVal,
+                        'percent_nee' => $pctNeeVal,
+                        'count' => $count,
+                        'caption' => __(':n matrículas · :pct_nee% do universo NEE · :pct_rede% da rede.', [
+                            'n' => $count,
+                            'pct_nee' => $pctNeeVal,
+                            'pct_rede' => $pctRedeVal,
+                        ]),
+                    ];
+                };
 
                 return [
-                    [
-                        'title' => __('Deficiências'),
-                        'percent' => $pct($nDef),
-                        'caption' => __(':n / :d matrículas (deficiências, excl. síndrome/TEA e NE no rótulo).', ['n' => $nDef, 'd' => $den]),
-                    ],
-                    [
-                        'title' => __('Síndromes e TEA'),
-                        'percent' => $pct($nSin),
-                        'caption' => __(':n / :d matrículas (palavras-chave síndrome/TEA no catálogo).', ['n' => $nSin, 'd' => $den]),
-                    ],
-                    [
-                        'title' => __('Altas habilidades / superdotação'),
-                        'percent' => $pct($nAh),
-                        'caption' => __(':n / :d matrículas (palavras-chave altas habilidades / superdotação).', ['n' => $nAh, 'd' => $den]),
-                    ],
+                    $gaugeRow(__('Deficiências'), $nDef),
+                    $gaugeRow(__('Síndromes e TEA'), $nSin),
+                    $gaugeRow(__('Altas habilidades / superdotação'), $nAh),
                 ];
             }
 
@@ -216,13 +225,22 @@ final class InclusionSpecialEducationGauges
                 $base()->join($adTable.' as ad', 'a.'.$aId, '=', 'ad.'.$adAluno),
                 $mId
             );
-            $pct = round(100.0 * $nAny / $den, 1);
+            $neeTotal = InclusionDashboardQueries::countMatriculasComNee($db, $city, $filters);
+            $pctRedeVal = round(100.0 * $nAny / $den, 1);
+            $pctNeeVal = $neeTotal > 0 ? round(100.0 * $nAny / $neeTotal, 1) : 0.0;
 
             return [
                 [
                     'title' => __('Registos em necessidades especiais'),
-                    'percent' => $pct,
-                    'caption' => __(':n / :d matrículas (qualquer vínculo em aluno_deficiencia).', ['n' => $nAny, 'd' => $den]),
+                    'percent' => $pctRedeVal,
+                    'percent_rede' => $pctRedeVal,
+                    'percent_nee' => $pctNeeVal,
+                    'count' => $nAny,
+                    'caption' => __(':n matrículas · :pct_nee% do universo NEE · :pct_rede% da rede.', [
+                        'n' => $nAny,
+                        'pct_nee' => $pctNeeVal,
+                        'pct_rede' => $pctRedeVal,
+                    ]),
                 ],
             ];
         } catch (\Throwable) {

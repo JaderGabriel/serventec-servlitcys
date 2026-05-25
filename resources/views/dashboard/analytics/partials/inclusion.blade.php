@@ -7,8 +7,7 @@
             $chartsById[(string) $chartItem['chart_id']] = $chartItem;
         }
     }
-    $chartNeeGrupo = $chartsById['nee_grupo'] ?? null;
-    $chartNeeCatalogo = $chartsById['nee_catalogo'] ?? ($chartsById['nee_catalogo_mec'] ?? null);
+    $neeIndicators = is_array($inclusionData['nee_indicators'] ?? null) ? $inclusionData['nee_indicators'] : null;
     $totalMat = $inclusionData['total_matriculas'] ?? null;
     $calcNotes = is_array($inclusionData['calc_notes'] ?? null) ? $inclusionData['calc_notes'] : [];
     $tabMeta = is_array($inclusionData['tab_meta'] ?? null) ? $inclusionData['tab_meta'] : [];
@@ -29,21 +28,6 @@
     }
     $aeeCross = $inclusionData['aee_cross'] ?? null;
     $neeDetalheCatalogo = $inclusionData['nee_detalhe_catalogo'] ?? null;
-    $hasNeeDetalheCatalogo = is_array($neeDetalheCatalogo)
-        && (
-            ! empty($neeDetalheCatalogo['deficiencias'])
-            || ! empty($neeDetalheCatalogo['sindromes_tea'])
-            || ! empty($neeDetalheCatalogo['ne_altas_habilidades'])
-        );
-    $neeGrupoResumo = is_array($inclusionData['nee_grupo_resumo'] ?? null) ? $inclusionData['nee_grupo_resumo'] : null;
-    $neeCatalogWarning = filled($inclusionData['nee_catalog_warning'] ?? null) ? (string) $inclusionData['nee_catalog_warning'] : null;
-    $showNeeCadastroSection = $neeChartsCount > 0
-        || $hasNeeDetalheCatalogo
-        || is_array($chartNeeCatalogo)
-        || is_array($chartNeeGrupo)
-        || $neeGrupoResumo !== null
-        || ($matriculasNee !== null && $matriculasNee > 0)
-        || (is_array($aeeCross) && (int) ($aeeCross['matriculas_aee'] ?? 0) > 0);
     $recursoProva = is_array($inclusionData['recurso_prova'] ?? null) ? $inclusionData['recurso_prova'] : null;
     $recursoSchema = is_array($recursoProva['schema'] ?? null) ? $recursoProva['schema'] : null;
     $recursoDisponivel = (bool) ($recursoSchema['available'] ?? false);
@@ -311,30 +295,14 @@
         </div>
     @endif
 
-    @if (! empty($inclusionData['gauges']))
-        <div>
-            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{{ __('Medidores (educação especial)') }}</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                @foreach ($inclusionData['gauges'] as $idx => $gauge)
-                    <div class="space-y-2">
-                        <x-dashboard.chart-panel
-                            :chart="$gauge['chart']"
-                            :exportFilename="'inclusao-medidor-'.$idx"
-                            :exportMeta="$chartExportContext"
-                            :compact="true"
-                        />
-                        <p class="text-xs text-gray-500 dark:text-gray-400 leading-snug">{{ $gauge['caption'] }}</p>
-                    </div>
-                @endforeach
-            </div>
-            @php $cnGauges = $calcNote('gauges'); @endphp
-            @if ($cnGauges !== null)
-                <x-dashboard.section-calc-note
-                    :formula="$cnGauges['formula'] ?? null"
-                    :note="$cnGauges['note'] ?? null"
-                />
-            @endif
-        </div>
+    @if ($neeIndicators !== null)
+        @include('dashboard.analytics.partials.inclusion-nee-indicators', [
+            'panel' => $neeIndicators,
+            'chartExportContext' => $chartExportContext,
+            'neeDetalheCatalogo' => $neeDetalheCatalogo,
+            'neeExtraCharts' => $neeExtraCharts,
+            'calcNote' => $neeIndicators['calc_note'] ?? $calcNote('nee_indicators') ?? $calcNote('gauges'),
+        ])
     @endif
 
     @if (! empty($neeMatriculasPorEscola))
@@ -368,187 +336,7 @@
         </div>
     @endif
 
-    @if (! empty($inclusionData['charts']) || is_array($aeeCross) || $hasNeeDetalheCatalogo || is_array($chartRacaPorEscolaStacked) || is_array($chartNeePorRacaStacked) || ! empty($neeMatriculasPorEscola))
-        @if ($showNeeCadastroSection)
-            <div class="mb-8 rounded-lg border border-violet-100 dark:border-violet-900/40 bg-white dark:bg-gray-900/30 px-4 py-4">
-                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('NEE — cadastro e catálogo Censo') }}</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">{{ __('Designações em cadastro.deficiencia (MEC/i-Educar), agrupadas e detalhadas.') }}</p>
-                @if ($neeCatalogWarning !== null)
-                    <div class="mb-3 rounded-md border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 text-xs text-amber-950 dark:text-amber-100 leading-relaxed" role="status">
-                        {{ $neeCatalogWarning }}
-                    </div>
-                @endif
-                @if ($neeGrupoResumo !== null)
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 items-stretch">
-                        <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
-                            <p class="text-[11px] font-medium uppercase text-violet-700 dark:text-violet-300">{{ __('Deficiências (grupo)') }}</p>
-                            <p class="mt-1 text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format((int) ($neeGrupoResumo['deficiencias'] ?? 0)) }}</p>
-                        </div>
-                        <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
-                            <p class="text-[11px] font-medium uppercase text-violet-700 dark:text-violet-300">{{ __('Síndromes e TEA') }}</p>
-                            <p class="mt-1 text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format((int) ($neeGrupoResumo['sindromes_tea'] ?? 0)) }}</p>
-                        </div>
-                        <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
-                            <p class="text-[11px] font-medium uppercase text-violet-700 dark:text-violet-300">{{ __('NE — altas habilidades') }}</p>
-                            <p class="mt-1 text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format((int) ($neeGrupoResumo['ne_altas_habilidades'] ?? 0)) }}</p>
-                        </div>
-                    </div>
-                @endif
-                @if (is_array($chartNeeGrupo))
-                    <div class="mt-4 min-w-0 w-full [&_.chart-panel-host]:min-h-[min(32rem,70vh)]">
-                        <x-dashboard.chart-panel
-                            :chart="$chartNeeGrupo"
-                            :exportFilename="'inclusao-nee-grupo'"
-                            :exportMeta="$chartExportContext"
-                            :compact="false"
-                        />
-                    </div>
-                    @php $cnGrupo = $calcNote('nee_grupo'); @endphp
-                    @if ($cnGrupo !== null)
-                        <x-dashboard.section-calc-note
-                            :formula="$cnGrupo['formula'] ?? null"
-                            :note="$cnGrupo['note'] ?? null"
-                        />
-                    @endif
-                @endif
-
-                @if (is_array($chartNeeCatalogo) && ! empty($chartNeeCatalogo['labels'] ?? null))
-                    <div class="mt-6 space-y-2">
-                        <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Catálogo completo (MEC / i-Educar)') }}</h4>
-                        <div class="flex flex-wrap gap-2 text-[10px] font-medium">
-                            <span class="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-indigo-900 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-100">
-                                <span class="h-2 w-2 rounded-sm bg-indigo-600" aria-hidden="true"></span>
-                                {{ __('INEP/Censo') }}
-                            </span>
-                            <span class="inline-flex items-center gap-1 rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-violet-900 dark:border-violet-800 dark:bg-violet-950/50 dark:text-violet-100">
-                                <span class="h-2 w-2 rounded-sm bg-violet-600" aria-hidden="true"></span>
-                                {{ __('Complementar') }}
-                            </span>
-                            <span class="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100">
-                                <span class="h-2 w-2 rounded-sm bg-amber-600" aria-hidden="true"></span>
-                                {{ __('Só i-Educar') }}
-                            </span>
-                        </div>
-                        <div class="min-w-0 w-full [&_.chart-panel-host]:min-h-[min(36rem,75vh)]">
-                            <x-dashboard.chart-panel
-                                :chart="$chartNeeCatalogo"
-                                :exportFilename="'inclusao-nee-catalogo'"
-                                :exportMeta="$chartExportContext"
-                                :compact="false"
-                                :suppressTitle="true"
-                            />
-                        </div>
-                        @php $cnCatalogo = $calcNote('nee_catalogo'); @endphp
-                        @if ($cnCatalogo !== null)
-                            <x-dashboard.section-calc-note
-                                :formula="$cnCatalogo['formula'] ?? null"
-                                :note="$cnCatalogo['note'] ?? null"
-                            />
-                        @endif
-                    </div>
-                @elseif ($neeChartsCount > 0 || is_array($chartNeeGrupo))
-                    <div class="mt-6 rounded-lg border border-dashed border-violet-200 dark:border-violet-800 px-4 py-3 text-xs text-violet-900/90 dark:text-violet-200/90 leading-relaxed">
-                        {{ __('O catálogo completo de designações não foi gerado (sem entradas MEC/i-Educar na base ou erro na consulta). Verifique cadastro.deficiencia e aluno_deficiencia / fisica_deficiencia.') }}
-                    </div>
-                @endif
-
-                @if ($hasNeeDetalheCatalogo && ! is_array($chartNeeCatalogo))
-                    @php
-                        $tot = $neeDetalheCatalogo['totais_por_secao'] ?? [];
-                    @endphp
-
-                    <div class="mt-6 rounded-lg border border-violet-100 dark:border-violet-900/40 bg-violet-50/40 dark:bg-violet-950/20 px-4 py-4 space-y-4">
-                        <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Detalhe por designação') }}</h4>
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 min-w-0 items-stretch">
-                            <div class="rounded-md border border-white/80 dark:border-gray-700 bg-white/90 dark:bg-gray-800/70 min-h-[min(28rem,58vh)] flex flex-col shadow-sm">
-                                <div class="px-3 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
-                                    <span class="text-xs font-semibold text-gray-700 dark:text-gray-200">{{ __('Deficiências') }}</span>
-                                    <span class="tabular-nums text-xs font-medium text-violet-700 dark:text-violet-300">{{ number_format((int) ($tot['deficiencias'] ?? 0)) }}</span>
-                                </div>
-                                <ul class="flex-1 max-h-[min(32rem,58vh)] min-h-[16rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
-                                    @foreach ($neeDetalheCatalogo['deficiencias'] as $row)
-                                        @if ((int) ($row['total'] ?? 0) > 0)
-                                            <li class="px-3 py-1.5 flex justify-between gap-2">
-                                                <span class="text-gray-800 dark:text-gray-200 break-words">{{ $row['nome'] ?? '—' }}</span>
-                                                <span class="tabular-nums shrink-0 text-gray-900 dark:text-gray-100">{{ number_format((int) ($row['total'] ?? 0)) }}</span>
-                                            </li>
-                                        @endif
-                                    @endforeach
-                                </ul>
-                            </div>
-                            <div class="rounded-md border border-white/80 dark:border-gray-700 bg-white/90 dark:bg-gray-800/70 min-h-[min(20rem,46vh)] flex flex-col shadow-sm">
-                                <div class="px-3 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
-                                    <span class="text-xs font-semibold text-gray-700 dark:text-gray-200">{{ __('Síndromes / TEA') }}</span>
-                                    <span class="tabular-nums text-xs font-medium text-violet-700 dark:text-violet-300">{{ number_format((int) ($tot['sindromes_tea'] ?? 0)) }}</span>
-                                </div>
-                                <ul class="flex-1 max-h-[min(24rem,46vh)] min-h-[11rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
-                                    @foreach ($neeDetalheCatalogo['sindromes_tea'] as $row)
-                                        @if ((int) ($row['total'] ?? 0) > 0)
-                                            <li class="px-3 py-1.5 flex justify-between gap-2">
-                                                <span class="text-gray-800 dark:text-gray-200 break-words">{{ $row['nome'] ?? '—' }}</span>
-                                                <span class="tabular-nums shrink-0 text-gray-900 dark:text-gray-100">{{ number_format((int) ($row['total'] ?? 0)) }}</span>
-                                            </li>
-                                        @endif
-                                    @endforeach
-                                </ul>
-                            </div>
-                            <div class="rounded-md border border-white/80 dark:border-gray-700 bg-white/90 dark:bg-gray-800/70 min-h-[min(20rem,46vh)] flex flex-col shadow-sm">
-                                <div class="px-3 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
-                                    <span class="text-xs font-semibold text-gray-700 dark:text-gray-200">{{ __('NE (altas habilidades)') }}</span>
-                                    <span class="tabular-nums text-xs font-medium text-violet-700 dark:text-violet-300">{{ number_format((int) ($tot['ne_altas_habilidades'] ?? 0)) }}</span>
-                                </div>
-                                <ul class="flex-1 max-h-[min(24rem,46vh)] min-h-[11rem] overflow-y-auto overscroll-y-contain pb-3 text-sm divide-y divide-gray-100 dark:divide-gray-700/80 [scrollbar-gutter:stable]">
-                                    @foreach ($neeDetalheCatalogo['ne_altas_habilidades'] as $row)
-                                        @if ((int) ($row['total'] ?? 0) > 0)
-                                            <li class="px-3 py-1.5 flex justify-between gap-2">
-                                                <span class="text-gray-800 dark:text-gray-200 break-words">{{ $row['nome'] ?? '—' }}</span>
-                                                <span class="tabular-nums shrink-0 text-gray-900 dark:text-gray-100">{{ number_format((int) ($row['total'] ?? 0)) }}</span>
-                                            </li>
-                                        @endif
-                                    @endforeach
-                                </ul>
-                            </div>
-                        </div>
-                        @php $cnCatalogoDet = $calcNote('nee_catalogo'); @endphp
-                        @if ($cnCatalogoDet !== null)
-                            <x-dashboard.section-calc-note
-                                :formula="$cnCatalogoDet['formula'] ?? null"
-                                :note="$cnCatalogoDet['note'] ?? null"
-                            />
-                        @endif
-                    </div>
-                @endif
-
-                @if (count($neeExtraCharts) > 0)
-                    @php
-                        $neeTailCount = count($neeExtraCharts);
-                    @endphp
-                    <div
-                        class="grid grid-cols-1 xl:grid-cols-2 gap-6 min-w-0 mt-6 items-start [&>.chart-panel-host]:flex [&>.chart-panel-host]:flex-col [&>.chart-panel-host]:min-h-0"
-                        @class([
-                            '[&>.chart-panel-host:nth-last-child(-n+2)]:max-h-[min(30rem,72vh)] [&>.chart-panel-host:nth-last-child(-n+2)]:overflow-hidden' => $neeTailCount >= 2,
-                        ])
-                    >
-                        @foreach ($neeExtraCharts as $idx => $chart)
-                            <x-dashboard.chart-panel
-                                :chart="$chart"
-                                :exportFilename="'inclusao-nee-'.($idx + 1)"
-                                :exportMeta="$chartExportContext"
-                                :compact="false"
-                            />
-                        @endforeach
-                    </div>
-                @endif
-                @php $cnGrupoSec = $calcNote('nee_grupo'); @endphp
-                @if ($cnGrupoSec !== null && ! is_array($chartNeeGrupo))
-                    <x-dashboard.section-calc-note
-                        :formula="$cnGrupoSec['formula'] ?? null"
-                        :note="$cnGrupoSec['note'] ?? null"
-                    />
-                @endif
-            </div>
-        @endif
-
+    @if (! empty($inclusionData['charts']) || is_array($aeeCross) || $neeIndicators !== null || is_array($chartRacaPorEscolaStacked) || is_array($chartNeePorRacaStacked) || ! empty($neeMatriculasPorEscola))
         @if (is_array($aeeCross))
             <div class="rounded-lg border border-amber-100 dark:border-amber-900/40 bg-amber-50/40 dark:bg-amber-950/15 px-4 py-4 space-y-4 mb-8">
                 <div>
@@ -697,7 +485,7 @@
                 @endif
             </div>
         @endif
-    @elseif (empty($inclusionData['error']) && empty($inclusionData['charts']) && empty($inclusionData['gauges'] ?? []) && ! is_array($aeeCross) && ! $hasNeeDetalheCatalogo && ! is_array($chartRacaPorEscolaStacked) && empty($neeMatriculasPorEscola))
+    @elseif (empty($inclusionData['error']) && empty($inclusionData['charts']) && $neeIndicators === null && ! is_array($aeeCross) && ! is_array($chartRacaPorEscolaStacked) && empty($neeMatriculasPorEscola))
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Sem indicadores disponíveis para esta base ou filtros.') }}</p>
     @endif
 </div>

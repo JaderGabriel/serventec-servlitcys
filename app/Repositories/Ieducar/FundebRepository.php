@@ -260,7 +260,10 @@ class FundebRepository
      */
     private function moduleInclusao(array $inclusionData, int $matTotal): array
     {
-        $gauges = $inclusionData['gauges'] ?? [];
+        $neeIndicators = is_array($inclusionData['nee_indicators'] ?? null) ? $inclusionData['nee_indicators'] : null;
+        $gauges = is_array($neeIndicators['gauges'] ?? null) && $neeIndicators['gauges'] !== []
+            ? $neeIndicators['gauges']
+            : ($inclusionData['gauges'] ?? []);
         $charts = $inclusionData['charts'] ?? [];
         $err = (string) ($inclusionData['error'] ?? '');
 

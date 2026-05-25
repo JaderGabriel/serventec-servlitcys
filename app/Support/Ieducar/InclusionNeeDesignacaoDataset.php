@@ -47,7 +47,11 @@ final class InclusionNeeDesignacaoDataset
             $catalog = self::buildCatalogRows($entries, $maps, $rows);
             $assignedCatalog = self::sumCatalogAssigned($catalog);
             $catalog = self::appendSemDesignacaoCatalogoRows($catalog, $matriculasNee, $matriculasComCadastroNee, $assignedCatalog);
-            $grupos = self::aggregateGruposForIndicators($catalog, $rows);
+
+            $grupos = InclusionDashboardQueries::aggregateGruposPorMatriculaNeeExportAligned($db, $city, $filters);
+            if (self::sumGrupos($grupos) === 0) {
+                $grupos = self::aggregateGruposForIndicators($catalog, $rows);
+            }
 
             $usesFisica = InclusionDashboardQueries::inclusionNeeUsesFisicaPath($db, $city);
             $pathNote = $usesFisica
@@ -161,7 +165,7 @@ final class InclusionNeeDesignacaoDataset
         }
 
         $title = $includeZeros
-            ? __('NEE — catálogo completo MEC e i-Educar (todas as opções)')
+            ? __('Catálogo completo (MEC / i-Educar)')
             : __('NEE — designações com matrículas (catálogo MEC / i-Educar)');
 
         $chart = ChartPayload::barHorizontal(
@@ -432,10 +436,6 @@ final class InclusionNeeDesignacaoDataset
     private static function aggregateGruposForIndicators(array $catalog, Collection $rows): array
     {
         $fromRows = self::aggregateGruposFromMatriculaRows($rows);
-        if (self::sumGrupos($fromRows) > 0) {
-            return $fromRows;
-        }
-
         $fromCatalog = self::aggregateGruposFromCatalog($catalog);
         foreach ($catalog as $row) {
             if ((string) ($row['norm'] ?? '') === '__sem_designacao_cadastro__') {
@@ -443,7 +443,11 @@ final class InclusionNeeDesignacaoDataset
             }
         }
 
-        return $fromCatalog;
+        return [
+            'deficiencias' => max($fromRows['deficiencias'], $fromCatalog['deficiencias']),
+            'sindromes_tea' => max($fromRows['sindromes_tea'], $fromCatalog['sindromes_tea']),
+            'ne_altas_habilidades' => max($fromRows['ne_altas_habilidades'], $fromCatalog['ne_altas_habilidades']),
+        ];
     }
 
     /**
