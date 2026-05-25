@@ -117,6 +117,7 @@ Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IE
 | PLG-05 | P2 | Ranking aprovação/reprovação por escola (i-Educar) | Pendente | PLUGINS §5.3, GRA-06 |
 | PLG-06 | P2 | Metas PNE/semáforo no quadro SAEB | Em andamento | PLUGINS §5.3, GRA-07 |
 | PLG-07 | P2 | Gráfico repasses históricos × matrícula | Pendente | PLUGINS §5.3 |
+| API-01 | P1 | Cliente HTTP i-Educar API v1 (híbrido SQL + endpoints analytics) | Documentado | [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) |
 
 ---
 

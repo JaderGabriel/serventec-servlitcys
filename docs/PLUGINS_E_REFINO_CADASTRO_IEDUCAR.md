@@ -3,7 +3,7 @@
 **Última revisão:** maio/2026  
 **Âmbito:** orientar secretarias, TI municipal e equipa ServLitcys sobre **o que ligar à aplicação**, **o que melhorar no i-Educar** e **quais campos exigem preenchimento mais rigoroso** para relatórios, PDF analítico, FUNDEB/VAAR, mapas e discrepâncias mais confiáveis.
 
-**Documentos relacionados:** [README.md](README.md) · [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) · [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) · [DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md](DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md) · [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) · [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md)
+**Documentos relacionados:** [README.md](README.md) · [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) · [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) · [DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md](DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md) · [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) · [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) · [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) (API analytics)
 
 ---
 
@@ -201,7 +201,17 @@ Use como **roteiro de qualidade** (pode ser impresso para rede):
 
 ---
 
-## 8. Configuração técnica por município (TI)
+## 8. Integração técnica: SQL directo vs API i-Educar
+
+O painel lê a base municipal com credenciais em `cities` (`CityDataConnection`). Para evitar acesso SQL pleno e estabilizar o contrato entre instalações Portabilis, existe um **catálogo de endpoints propostos** (filtros, matrículas, inclusão NEE, discrepâncias, rede/geo) com exemplos JSON de entrada/saída, ganhos de performance (cache, snapshot por aba) e segurança (scopes, agregados por escola):
+
+→ **[CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md)**
+
+Prioridade de negociação com o fornecedor i-Educar: `schema-capabilities`, `filter-options`, `discrepancies/snapshot`, `inclusion/snapshot`.
+
+---
+
+## 9. Configuração técnica por município (TI)
 
 Quando relatórios ficam «cinza» ou vazios:
 
@@ -213,7 +223,7 @@ Quando relatórios ficam «cinza» ou vazios:
 
 ---
 
-## 9. Priorização resumida
+## 10. Priorização resumida
 
 | Prioridade | Acção |
 |------------|--------|
@@ -226,7 +236,7 @@ Novas implementações de produto devem ser registadas em [BACKLOG_IMPLEMENTACOE
 
 ---
 
-## 10. Manutenção deste documento
+## 11. Manutenção deste documento
 
 - Alteração de **checks de discrepância** ou tabelas i-Educar → atualizar secções 3 e 6.
 - Nova **integração externa** → secção 5.1 + [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).

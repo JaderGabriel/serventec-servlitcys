@@ -25,6 +25,10 @@ Com **`IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE=true`** (defeito), matrículas ac
 
 Implementação: `InclusionDashboardQueries::alunosComCadastroNeeSubquery`, `countMatriculasComNee`, `medidoresEducacaoEspecialPorGrupo`; discrepâncias delegam à mesma subquery.
 
+## Integração i-Educar — SQL directo vs API proposta
+
+Consultas do painel mapeadas para endpoints `v1` (filtros, matrículas, inclusão, discrepâncias), com JSON de exemplo e ganhos de performance/segurança: [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md).
+
 ## LGPD — documentos e consentimento (admin)
 
 - **Editor:** `/admin/documentos-legais` — política de privacidade e cookies em Markdown (`legal_document_versions`), publicação com versão e hash SHA-256.

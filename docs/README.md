@@ -63,6 +63,7 @@ Os restantes arquivos são **aprofundamento** por tema. Itens de backlog que apa
 
 | Documento | Conteúdo |
 |-----------|----------|
+| [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) | **i-Educar:** catálogo de consultas SQL actuais → proposta de API (`v1`), JSON input/output, ganhos de performance e segurança |
 | [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) | **Estudo:** saúde, assistência social, tesouro, educação; janelas de implementação, APIs, esfera F/E/M, previsão de demanda |
 | [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) | Integrações **em produção** (FNDE, Tesouro, INEP) — `.env` e abas |
 | [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) | Hub admin `/admin/dados-publicos` — FUNDEB, Censo, repasses, SAEB |
@@ -85,6 +86,7 @@ Os restantes arquivos são **aprofundamento** por tema. Itens de backlog que apa
 | Documento | Conteúdo |
 |-----------|----------|
 | [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) | **O que plugar na app**, módulos i-Educar a fortalecer e **campos a preencher com rigor** (relatórios confiáveis) |
+| [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) | Consultas directas à base → endpoints API propostos (contrato JSON) |
 | [DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md](DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md) | Histórico do roadmap NEE / recurso de prova / geo (muitos itens já entregues) |
 
 ### Arquitectura e revisão técnica
