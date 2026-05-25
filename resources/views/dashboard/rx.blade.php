@@ -190,7 +190,8 @@
                                             {{ $row['city_name'] ?? '' }}
                                             <span class="text-[10px] text-slate-500 font-normal whitespace-nowrap">({{ $row['uf'] ?? '' }})</span>
                                         </p>
-                                        <x-rx.censo-municipio-detail :censo="$censo" />
+                                        <x-rx.censo-municipio-bar :censo="$censo" :vigenteAno="$rx['vigente_ano'] ?? null" />
+                                        <x-rx.censo-municipio-detail :censo="$censo" :compact="true" />
                                         @if (is_array($row['reference_contact'] ?? null) && ($row['reference_contact']['available'] ?? false))
                                             <x-city.reference-contact
                                                 :contact="$row['reference_contact']"

@@ -4,6 +4,7 @@ namespace App\Support\Ieducar;
 
 use App\Models\City;
 use App\Models\SchoolUnitGeo;
+use App\Repositories\InepCensoMunicipioMatriculaRepository;
 use App\Support\Dashboard\IeducarFilterState;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
@@ -404,7 +405,7 @@ final class DiscrepanciesQueries
         return $out;
     }
 
-  /**
+    /**
      * @return ?array{qualified: string, idpesCol: string, racaFkCol: string}
      */
     private static function fisicaRacaPivotSpec(Connection $db, City $city): ?array
@@ -480,34 +481,7 @@ final class DiscrepanciesQueries
      */
     private static function alunosComNeeSubquery(Connection $db, City $city): ?\Closure
     {
-        $aluno = IeducarSchema::resolveTable('aluno', $city);
-        $aId = (string) config('ieducar.columns.aluno.id');
-        $aIdpes = IeducarColumnInspector::firstExistingColumn($db, $aluno, ['ref_idpes', 'idpes'], $city);
-
-        $fisica = self::resolveFisicaDeficienciaTable($db, $city);
-        if ($fisica !== null && $aIdpes !== null) {
-            return static function ($sub) use ($fisica, $aIdpes, $aluno, $aId): void {
-                $sub->select('a_nee.'.$aId)
-                    ->from($aluno.' as a_nee')
-                    ->whereExists(function ($ex) use ($fisica, $aIdpes, $aId): void {
-                        $ex->from($fisica['table'].' as fd')
-                            ->whereColumn('fd.'.$fisica['idpes_col'], 'a_nee.'.$aIdpes);
-                    });
-            };
-        }
-
-        $adTable = IeducarColumnInspector::findQualifiedTableByNames($db, ['aluno_deficiencia', 'aluno_deficiencias'], $city);
-        if ($adTable === null) {
-            return null;
-        }
-        $adAluno = IeducarColumnInspector::firstExistingColumn($db, $adTable, ['ref_cod_aluno', 'cod_aluno'], $city);
-        if ($adAluno === null) {
-            return null;
-        }
-
-        return static function ($sub) use ($adTable, $adAluno): void {
-            $sub->from($adTable)->select($adAluno)->distinct();
-        };
+        return InclusionDashboardQueries::alunosComCadastroNeeSubquery($db, $city);
     }
 
     /**
@@ -1210,7 +1184,7 @@ final class DiscrepanciesQueries
             return [];
         }
 
-        $repo = app(\App\Repositories\InepCensoMunicipioMatriculaRepository::class);
+        $repo = app(InepCensoMunicipioMatriculaRepository::class);
         $censo = $repo->findForCityYear($city, (int) $filters->ano_letivo);
         if ($censo === null || (int) $censo->matriculas_total <= 0) {
             return [];

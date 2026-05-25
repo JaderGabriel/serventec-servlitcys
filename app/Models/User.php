@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use App\Support\Contact\ContactChannels;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -296,6 +295,39 @@ class User extends Authenticatable
         $cpf = $this->cpf;
 
         return $cpf === null || $cpf === '';
+    }
+
+    /**
+     * Rótulo de município(s) para o rodapé (perfis com território restrito).
+     */
+    public function footerMunicipalityLabel(): ?string
+    {
+        if ($this->isAdmin() || $this->isUsuário()) {
+            return null;
+        }
+
+        $names = $this->cities()
+            ->where('cities.is_active', true)
+            ->orderBy('cities.name')
+            ->get(['cities.name', 'cities.uf'])
+            ->map(static function (City $city): string {
+                $uf = trim((string) $city->uf);
+
+                return $uf !== '' ? "{$city->name} ({$uf})" : $city->name;
+            })
+            ->all();
+
+        if ($names === []) {
+            return $this->isMunicipal() ? __('Nenhum município vinculado') : null;
+        }
+
+        if (count($names) <= 3) {
+            return implode(' · ', $names);
+        }
+
+        return implode(' · ', array_slice($names, 0, 2))
+            .' · '
+            .__('+:n municípios', ['n' => count($names) - 2]);
     }
 
     /**

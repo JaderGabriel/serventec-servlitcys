@@ -93,7 +93,7 @@
                 <span class="serv-home-action-group__dot serv-home-action-group__dot--sky" aria-hidden="true"></span>
                 {{ __('Operação da plataforma') }}
             </p>
-            <div class="serv-home-action-grid">
+            <div class="serv-home-action-grid serv-home-action-grid--quarter">
                 <a href="{{ route('admin.sync-queue.index') }}" class="serv-home-action group @if ($queueTotal > 0 || $syncFailed > 0) serv-home-action--alert @endif">
                     <span class="serv-home-action__icon serv-home-action__icon--amber" aria-hidden="true">
                         <x-ui.icon name="queue-list" class="h-6 w-6" />

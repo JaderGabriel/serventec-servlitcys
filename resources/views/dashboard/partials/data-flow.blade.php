@@ -137,10 +137,20 @@
         <footer class="serv-data-flow-legend" aria-label="{{ __('Legenda do mapa') }}">
             <div class="serv-data-flow-legend__inner">
                 <h4 class="serv-data-flow-legend__title">{{ __('Legenda do mapa') }}</h4>
+                @php
+                    $legendIcons = [
+                        'ok' => 'check-circle',
+                        'partial' => 'exclamation-triangle',
+                        'off' => 'x-circle',
+                    ];
+                @endphp
                 <ul class="serv-data-flow-legend__list">
                     @foreach ($systemFlow['legend'] ?? [] as $item)
-                        <li class="serv-data-flow-legend__item">
-                            <span class="serv-data-flow__legend-swatch serv-data-flow__legend-swatch--{{ $item['status'] }}" aria-hidden="true"></span>
+                        @php $legendStatus = (string) ($item['status'] ?? 'partial'); @endphp
+                        <li class="serv-data-flow-legend__item serv-data-flow-legend__item--{{ $legendStatus }}">
+                            <span class="serv-data-flow-legend__icon serv-data-flow-legend__icon--{{ $legendStatus }}" aria-hidden="true">
+                                <x-ui.icon :name="$legendIcons[$legendStatus] ?? 'signal'" class="h-5 w-5" />
+                            </span>
                             <div class="serv-data-flow-legend__text min-w-0">
                                 <p class="serv-data-flow-legend__label">
                                     {{ $item['label'] }}

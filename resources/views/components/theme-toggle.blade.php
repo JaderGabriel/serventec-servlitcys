@@ -4,7 +4,7 @@
 
 @php
     $btnClass = match ($appearance) {
-        'landing' => 'rounded-lg border border-slate-200/90 bg-white/90 p-2 text-slate-600 shadow-sm hover:bg-slate-50 dark:border-white/15 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10',
+        'landing' => 'serv-landing-icon-btn',
         default => 'rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200',
     };
     $menuClass = match ($appearance) {

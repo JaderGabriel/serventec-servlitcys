@@ -148,7 +148,7 @@ final class InclusionNeeDesignacaoDataset
                 'Todas as opções do catálogo (valor 0 = sem vínculo no filtro). Agrupado e detalhado usam a mesma consulta. Cores: índigo = INEP/Censo · violeta = complementar · âmbar = só i-Educar.'
             )
             : __(
-                'Apenas designações com matrícula no recorte. A soma pode exceder o total de alunos NEE quando há vários vínculos. Use «Catálogo completo» abaixo para opções MEC sem matrícula.'
+                'Apenas designações com matrícula no recorte. A soma pode exceder o total de matrículas NEE quando há vários vínculos no cadastro.'
             );
         $chart['footnote'] = (string) ($dataset['footnote'] ?? '');
         $chart['options'] = array_merge(

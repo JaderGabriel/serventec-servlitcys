@@ -301,31 +301,33 @@
                 (! empty($saebSeries['charts']) && is_array($saebSeries['charts']))
                 || (! empty($saebSeries['extra_charts']) && is_array($saebSeries['extra_charts']))
             )
-                <div class="p-3 sm:p-4 space-y-4 bg-white/50 dark:bg-gray-900/40">
-                    @if (! empty($saebSeries['charts']) && is_array($saebSeries['charts']))
-                        @foreach ($saebSeries['charts'] as $sidx => $saebChart)
-                            <x-dashboard.chart-panel
-                                :chart="$saebChart"
-                                :exportFilename="'desempenho-saeb-'.$sidx"
-                                :exportMeta="$chartExportContext"
-                                :compact="false"
-                                :chartPanelId="'chart-saeb-' . $sidx"
-                                :suppressTitle="false"
-                            />
-                        @endforeach
-                    @endif
-                    @if (! empty($saebSeries['extra_charts']) && is_array($saebSeries['extra_charts']))
-                        @foreach ($saebSeries['extra_charts'] as $eidx => $saebExtra)
-                            <x-dashboard.chart-panel
-                                :chart="$saebExtra"
-                                :exportFilename="'desempenho-saeb-extra-' . $eidx"
-                                :exportMeta="$chartExportContext"
-                                :compact="false"
-                                :chartPanelId="'chart-saeb-extra-' . $eidx"
-                                :suppressTitle="false"
-                            />
-                        @endforeach
-                    @endif
+                <div class="p-3 sm:p-4 bg-white/50 dark:bg-gray-900/40">
+                    <div class="perf-saeb-charts grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 items-stretch min-w-0 [&>.chart-panel-host]:min-w-0 [&>.chart-panel-host]:h-full">
+                        @if (! empty($saebSeries['charts']) && is_array($saebSeries['charts']))
+                            @foreach ($saebSeries['charts'] as $sidx => $saebChart)
+                                <x-dashboard.chart-panel
+                                    :chart="$saebChart"
+                                    :exportFilename="'desempenho-saeb-'.$sidx"
+                                    :exportMeta="$chartExportContext"
+                                    :compact="true"
+                                    :chartPanelId="'chart-saeb-' . $sidx"
+                                    :suppressTitle="false"
+                                />
+                            @endforeach
+                        @endif
+                        @if (! empty($saebSeries['extra_charts']) && is_array($saebSeries['extra_charts']))
+                            @foreach ($saebSeries['extra_charts'] as $eidx => $saebExtra)
+                                <x-dashboard.chart-panel
+                                    :chart="$saebExtra"
+                                    :exportFilename="'desempenho-saeb-extra-' . $eidx"
+                                    :exportMeta="$chartExportContext"
+                                    :compact="true"
+                                    :chartPanelId="'chart-saeb-extra-' . $eidx"
+                                    :suppressTitle="false"
+                                />
+                            @endforeach
+                        @endif
+                    </div>
                 </div>
             @elseif (empty($saebSeries['error']) && empty($saebSeries['summary']) && empty($saebSeries['school_table']))
                 <div class="px-4 py-6 text-sm text-emerald-900/90 dark:text-emerald-200/90">

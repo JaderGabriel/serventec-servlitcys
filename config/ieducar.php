@@ -827,6 +827,12 @@ return [
     ],
 
     'inclusion' => [
+        /**
+         * Contar também matrículas activas em turma/curso identificados como AEE (palavras-chave),
+         * além do cadastro em fisica_deficiencia / aluno_deficiencia — evita omitir educação especial só na oferta AEE.
+         */
+        'nee_incluir_turma_aee' => filter_var(env('IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE', true), FILTER_VALIDATE_BOOL),
+
         'recurso_prova_exigir_com_nee' => filter_var(env('IEDUCAR_INCLUSION_RECURSO_EXIGIR_COM_NEE', false), FILTER_VALIDATE_BOOL),
         'recurso_prova_column_patterns' => array_values(array_filter(array_map('trim', explode(',', (string) env(
             'IEDUCAR_INCLUSION_RECURSO_PROVA_COLUMN_PATTERNS',

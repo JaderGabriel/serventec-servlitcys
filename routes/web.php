@@ -19,6 +19,7 @@ use App\Http\Controllers\DiscrepanciesExportController;
 use App\Http\Controllers\FirstAccessProfileController;
 use App\Http\Controllers\MailSettingsController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PrivacyPolicyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RxDashboardController;
 use App\Http\Controllers\UserController;
@@ -29,6 +30,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/privacidade', [PrivacyPolicyController::class, 'show'])
+    ->name('legal.privacy');
 
 Route::get('/relatorio/{publicId}', [AnalyticsReportPublicationController::class, 'show'])
     ->name('analytics.report.public');

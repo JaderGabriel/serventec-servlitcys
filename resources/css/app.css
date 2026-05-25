@@ -106,6 +106,46 @@
         @apply w-full max-w-[96rem] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-10;
     }
 
+    .serv-app-footer {
+        @apply mt-auto shrink-0 border-t border-slate-200/90 bg-white/95 backdrop-blur-sm dark:border-slate-700/90 dark:bg-slate-900/90;
+    }
+
+    .serv-app-footer--pulse {
+        @apply mt-0 border-t-0 bg-transparent backdrop-blur-none dark:bg-transparent;
+    }
+
+    .serv-app-footer__accent {
+        @apply h-0.5 bg-gradient-to-r from-teal-700 via-teal-500 to-indigo-600 dark:from-teal-500 dark:via-teal-600 dark:to-indigo-500;
+    }
+
+    .serv-app-footer__meta {
+        @apply inline-flex items-center rounded-md border border-slate-200/90 bg-slate-50/80 px-2 py-0.5 font-mono text-[11px] font-medium text-slate-600 dark:border-slate-600/80 dark:bg-slate-800/60 dark:text-slate-300;
+    }
+
+    .serv-app-footer__env {
+        @apply inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide;
+    }
+
+    .serv-app-footer__env--local {
+        @apply border border-slate-300/90 bg-slate-100 text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200;
+    }
+
+    .serv-app-footer__env--staging {
+        @apply border border-amber-300/90 bg-amber-50 text-amber-900 dark:border-amber-700/80 dark:bg-amber-950/40 dark:text-amber-100;
+    }
+
+    .serv-app-footer__nav {
+        @apply flex flex-wrap items-center gap-x-1 gap-y-1 text-xs text-slate-600 dark:text-slate-400;
+    }
+
+    .serv-app-footer__nav a {
+        @apply serv-link font-normal no-underline hover:underline;
+    }
+
+    .serv-app-footer__sep {
+        @apply select-none text-slate-300 dark:text-slate-600;
+    }
+
     .serv-panel {
         @apply rounded-xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-900/5 dark:border-slate-700/90 dark:bg-slate-900/40 dark:ring-teal-500/10 overflow-hidden;
     }
@@ -286,6 +326,63 @@
 
     .serv-rx-chip-swatch--meta {
         @apply bg-violet-500 dark:bg-violet-400;
+    }
+
+    .serv-rx-censo-bar {
+        @apply flex h-2 w-full overflow-hidden rounded-full bg-slate-200/90 ring-1 ring-slate-300/50 dark:bg-slate-800 dark:ring-slate-600/60;
+    }
+
+    .serv-rx-censo-bar__segment {
+        @apply h-full min-w-0 transition-[width] duration-300;
+    }
+
+    .serv-rx-censo-bar__segment--export {
+        @apply bg-emerald-500 dark:bg-emerald-500;
+    }
+
+    .serv-rx-censo-bar__segment--closed {
+        @apply bg-sky-500 dark:bg-sky-500;
+    }
+
+    .serv-rx-censo-bar__segment--pending {
+        @apply bg-amber-400 dark:bg-amber-500;
+    }
+
+    .serv-rx-censo-bar__segment--unknown {
+        @apply bg-slate-300 dark:bg-slate-600;
+    }
+
+    .serv-rx-censo-bar__segment--empty {
+        @apply bg-slate-200 dark:bg-slate-700;
+    }
+
+    .serv-landing-icon-btn {
+        @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200/90 bg-white/90 text-slate-600 shadow-sm transition
+            hover:border-teal-300 hover:bg-teal-50 hover:text-teal-800
+            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600
+            dark:border-white/15 dark:bg-white/5 dark:text-slate-300 dark:hover:border-teal-500/40 dark:hover:bg-teal-950/40 dark:hover:text-teal-200
+            dark:focus-visible:outline-teal-400;
+    }
+
+    .serv-landing-icon-btn--primary {
+        @apply border-teal-700/30 bg-teal-700 text-white hover:border-teal-800 hover:bg-teal-800 hover:text-white
+            dark:border-teal-500/40 dark:bg-teal-600 dark:hover:bg-teal-500;
+    }
+
+    .serv-landing-icon-btn--whatsapp {
+        @apply border-emerald-600/30 bg-[#25D366] text-white hover:brightness-110 hover:border-emerald-600
+            focus-visible:outline-emerald-600 dark:focus-visible:outline-emerald-400;
+    }
+
+    .serv-landing-icon-btn--disabled {
+        @apply cursor-not-allowed border-dashed border-slate-300 bg-slate-100 text-slate-400 opacity-70
+            hover:border-slate-300 hover:bg-slate-100 hover:text-slate-400
+            dark:border-white/20 dark:bg-white/5 dark:text-white/40;
+    }
+
+    .serv-landing-module {
+        @apply rounded-xl border p-4 text-left shadow-sm ring-1 ring-transparent transition hover:shadow-md
+            dark:shadow-none dark:hover:border-white/20;
     }
 
     .serv-rx-table tbody tr:hover .serv-rx-td--vigente {
@@ -1266,6 +1363,35 @@
     .disc-charts-mini .chart-panel-host > div:nth-child(2)[x-show] {
         @apply hidden;
     }
+
+    /* Desempenho — SAEB: 4 gráficos por linha (desktop) */
+    .perf-saeb-charts .chart-panel-host h4 {
+        @apply text-[11px] font-semibold normal-case tracking-normal leading-snug;
+    }
+
+    .perf-saeb-charts .chart-panel-host > div:first-of-type {
+        @apply py-1.5 px-2 gap-1.5;
+    }
+
+    .perf-saeb-charts .chart-panel-host > div:first-of-type p {
+        @apply text-[10px] leading-snug;
+    }
+
+    .perf-saeb-charts .chart-panel-host > div:first-of-type button {
+        @apply min-h-0 py-1 px-2 text-[10px];
+    }
+
+    .perf-saeb-charts .chart-panel-host > div.relative.isolate {
+        min-height: 11rem !important;
+        height: auto !important;
+    }
+
+    @media (min-width: 640px) {
+        .perf-saeb-charts .chart-panel-host > div.relative.isolate {
+            min-height: 12rem !important;
+            height: 13rem !important;
+        }
+    }
 }
 
 /* Pulse: cartões — borda e sombra visíveis (complementa o estilo do pacote sem “apagar” o UI). */
@@ -1649,21 +1775,34 @@
         @apply grid grid-cols-2 gap-3;
     }
 
-    /** Operação da plataforma: 4 botões na mesma linha (25% cada a partir de sm). */
+    /** Operação da plataforma: 4 botões na mesma linha (25% cada). */
     .serv-home-action-grid--quarter {
-        @apply grid grid-cols-2 gap-3 sm:grid-cols-4;
+        @apply grid grid-cols-4 gap-2 min-w-0 sm:gap-3;
     }
 
     .serv-home-action-grid--quarter .serv-home-action {
-        @apply gap-2 p-3 sm:flex-col sm:items-stretch sm:gap-2.5;
+        @apply flex-col items-center gap-2 p-2.5 text-center sm:p-3 sm:gap-2.5;
     }
 
     .serv-home-action-grid--quarter .serv-home-action__icon {
-        @apply h-10 w-10 sm:mx-auto;
+        @apply h-10 w-10 mx-auto;
+    }
+
+    .serv-home-action-grid--quarter .serv-home-action__body {
+        @apply w-full min-w-0 flex-none;
+    }
+
+    .serv-home-action-grid--quarter .serv-home-action__desc,
+    .serv-home-action-grid--quarter .serv-home-action__ref {
+        @apply hidden xl:block;
     }
 
     .serv-home-action-grid--quarter .serv-home-action__chevron {
-        @apply sm:hidden;
+        @apply hidden;
+    }
+
+    .serv-home-action-grid--quarter .serv-home-action__title {
+        @apply text-[11px] leading-tight sm:text-xs lg:text-sm;
     }
 
     .serv-home-action-grid--compact {
@@ -2083,42 +2222,82 @@
 
     .serv-data-flow-legend__list {
         @apply list-none m-0 p-0 grid grid-cols-1 gap-3
-            sm:grid-cols-2 lg:grid-cols-3 sm:gap-4;
+            sm:grid-cols-3 sm:gap-4;
     }
 
     .serv-data-flow-legend__item {
-        @apply flex gap-3 min-w-0 rounded-lg border border-slate-200/80
-            dark:border-slate-700/80 bg-white/70 dark:bg-slate-900/50
-            px-3 py-2.5 shadow-sm shadow-slate-900/[0.03]
-            dark:shadow-black/20;
+        @apply flex gap-3 min-w-0 rounded-xl border px-3 py-3 shadow-sm
+            shadow-slate-900/[0.04] dark:shadow-black/25;
+    }
+
+    .serv-data-flow-legend__item--ok {
+        @apply border-teal-200/90 bg-gradient-to-br from-teal-50/90 via-white to-white
+            dark:border-teal-800/60 dark:from-teal-950/40 dark:via-slate-900/50 dark:to-slate-950/60;
+    }
+
+    .serv-data-flow-legend__item--partial {
+        @apply border-amber-200/90 bg-gradient-to-br from-amber-50/90 via-white to-white
+            dark:border-amber-800/50 dark:from-amber-950/35 dark:via-slate-900/50 dark:to-slate-950/60;
+    }
+
+    .serv-data-flow-legend__item--off {
+        @apply border-slate-200/90 bg-gradient-to-br from-slate-50/90 via-white to-white
+            dark:border-slate-600/80 dark:from-slate-900/60 dark:via-slate-900/40 dark:to-slate-950/60;
+    }
+
+    .serv-data-flow-legend__icon {
+        @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1;
+    }
+
+    .serv-data-flow-legend__icon--ok {
+        @apply bg-teal-100 text-teal-700 ring-teal-300/60
+            dark:bg-teal-950/70 dark:text-teal-300 dark:ring-teal-700/50;
+    }
+
+    .serv-data-flow-legend__icon--partial {
+        @apply bg-amber-100 text-amber-800 ring-amber-300/60
+            dark:bg-amber-950/50 dark:text-amber-200 dark:ring-amber-700/50;
+    }
+
+    .serv-data-flow-legend__icon--off {
+        @apply bg-slate-100 text-slate-600 ring-slate-300/60
+            dark:bg-slate-800/80 dark:text-slate-300 dark:ring-slate-600/50;
+    }
+
+    .serv-data-flow-legend__item--ok .serv-data-flow-legend__label {
+        @apply text-teal-900 dark:text-teal-100;
+    }
+
+    .serv-data-flow-legend__item--partial .serv-data-flow-legend__label {
+        @apply text-amber-950 dark:text-amber-100;
+    }
+
+    .serv-data-flow-legend__item--off .serv-data-flow-legend__label {
+        @apply text-slate-800 dark:text-slate-200;
     }
 
     .serv-data-flow-legend__label {
-        @apply text-sm font-medium text-slate-800 dark:text-slate-100 leading-snug;
+        @apply text-sm font-semibold leading-snug;
     }
 
     .serv-data-flow-legend__count {
-        @apply font-semibold text-slate-600 dark:text-slate-300;
+        @apply font-bold tabular-nums;
+    }
+
+    .serv-data-flow-legend__item--ok .serv-data-flow-legend__count {
+        @apply text-teal-700 dark:text-teal-300;
+    }
+
+    .serv-data-flow-legend__item--partial .serv-data-flow-legend__count {
+        @apply text-amber-800 dark:text-amber-300;
+    }
+
+    .serv-data-flow-legend__item--off .serv-data-flow-legend__count {
+        @apply text-slate-600 dark:text-slate-400;
     }
 
     .serv-data-flow-legend__desc {
-        @apply text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed;
-    }
-
-    .serv-data-flow__legend-swatch {
-        @apply mt-1 h-3 w-3 shrink-0 rounded-sm ring-1 ring-black/5 dark:ring-white/10;
-    }
-
-    .serv-data-flow__legend-swatch--ok {
-        @apply bg-teal-500;
-    }
-
-    .serv-data-flow__legend-swatch--partial {
-        @apply bg-amber-500;
-    }
-
-    .serv-data-flow__legend-swatch--off {
-        @apply bg-slate-400;
+        @apply text-xs text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed;
     }
 
     .serv-brazil-map {

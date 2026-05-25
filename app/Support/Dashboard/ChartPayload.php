@@ -411,7 +411,7 @@ final class ChartPayload
                 ],
             ],
             'options' => [
-                'panelHeight' => 'lg',
+                'panelHeight' => 'xs',
                 'elements' => [
                     'line' => [
                         'spanGaps' => false,

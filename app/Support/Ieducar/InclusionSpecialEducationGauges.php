@@ -48,6 +48,11 @@ final class InclusionSpecialEducationGauges
             return $out;
         }
 
+        $fromQueries = InclusionDashboardQueries::medidoresEducacaoEspecialPorGrupo($db, $city, $filters);
+        if ($fromQueries !== []) {
+            return $fromQueries;
+        }
+
         return self::buildHeuristic($db, $city, $filters);
     }
 

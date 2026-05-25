@@ -406,6 +406,12 @@ final class PerformanceSaebSeries
         );
         $chart['subtitle'] = __('Valores do último ano com dados por escola na importação (até :ano do filtro).', ['ano' => (string) $maxYear]);
         $chart['footnote'] = $footnoteBase;
+        if (! isset($chart['options']) || ! is_array($chart['options'])) {
+            $chart['options'] = [];
+        }
+        $chart['options']['panelHeight'] = 'xs';
+        $chart['options']['skipHorizontalBarAutoHeight'] = true;
+        $chart['options']['minChartHeight'] = 176;
 
         return $chart;
     }
