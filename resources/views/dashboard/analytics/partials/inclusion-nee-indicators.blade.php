@@ -23,6 +23,16 @@
         'amber' => 'bg-amber-500',
         default => 'bg-slate-500',
     };
+    $catalogLegend = [];
+    $gruposLegend = null;
+    foreach ($legend as $item) {
+        $color = (string) ($item['color'] ?? '');
+        if ($color === 'slate') {
+            $gruposLegend = $item;
+        } elseif (in_array($color, ['indigo', 'violet', 'amber'], true)) {
+            $catalogLegend[] = $item;
+        }
+    }
 @endphp
 
 <x-dashboard.consultoria-section
@@ -36,31 +46,15 @@
         </div>
     @endif
 
-    @if (count($legend) > 0)
-        <div class="flex flex-wrap gap-2 text-[11px]">
-            @foreach ($legend as $item)
-                <span class="inline-flex items-start gap-1.5 rounded-md border border-slate-200/90 dark:border-slate-700 bg-white/80 dark:bg-slate-900/50 px-2.5 py-1.5 max-w-xs">
-                    <span class="mt-0.5 h-2 w-2 shrink-0 rounded-sm {{ $legendDot((string) ($item['color'] ?? '')) }}" aria-hidden="true"></span>
-                    <span>
-                        <span class="font-semibold text-gray-800 dark:text-gray-200">{{ $item['label'] ?? '' }}</span>
-                        @if (filled($item['hint'] ?? null))
-                            <span class="block text-gray-600 dark:text-gray-400 font-normal leading-snug">{{ $item['hint'] }}</span>
-                        @endif
-                    </span>
-                </span>
-            @endforeach
-        </div>
-    @endif
-
     @if (count($kpis) > 0)
-        <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 text-sm">
+        <dl class="flex flex-nowrap gap-2 w-full min-w-0 text-sm overflow-x-auto [scrollbar-gutter:stable]">
             @foreach ($kpis as $kpi)
-                <div class="serv-panel {{ $toneRing((string) ($kpi['tone'] ?? 'violet')) }} px-3 py-2.5">
-                    <dt class="text-[11px] font-medium text-slate-600 dark:text-slate-400 leading-snug">{{ $kpi['label'] ?? '' }}</dt>
-                    <dd class="mt-1 text-xl font-semibold tabular-nums text-serv-navy dark:text-slate-100">{{ $kpi['value'] ?? '—' }}</dd>
-                    @if (filled($kpi['hint'] ?? null))
-                        <dd class="mt-1 text-[11px] text-slate-600 dark:text-slate-400 leading-snug">{{ $kpi['hint'] }}</dd>
-                    @endif
+                <div
+                    class="serv-panel {{ $toneRing((string) ($kpi['tone'] ?? 'violet')) }} flex-1 min-w-[8.5rem] basis-0 px-2.5 py-2 shrink-0"
+                    @if (filled($kpi['hint'] ?? null)) title="{{ $kpi['hint'] }}" @endif
+                >
+                    <dt class="text-[10px] font-medium text-slate-600 dark:text-slate-400 leading-tight truncate">{{ $kpi['label'] ?? '' }}</dt>
+                    <dd class="mt-0.5 text-lg font-semibold tabular-nums leading-none text-serv-navy dark:text-slate-100">{{ $kpi['value'] ?? '—' }}</dd>
                 </div>
             @endforeach
         </dl>
@@ -96,6 +90,19 @@
                     </div>
                 @endforeach
             </div>
+            @if ($gruposLegend !== null)
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] pt-2 mt-1 border-t border-slate-200/70 dark:border-slate-700/70">
+                    <span class="inline-flex items-center gap-1.5 min-w-0">
+                        <span class="h-2.5 w-2.5 shrink-0 rounded-sm {{ $legendDot((string) ($gruposLegend['color'] ?? 'slate')) }}" aria-hidden="true"></span>
+                        <span class="text-gray-800 dark:text-gray-200">
+                            <span class="font-semibold">{{ $gruposLegend['label'] ?? '' }}</span>
+                            @if (filled($gruposLegend['hint'] ?? null))
+                                <span class="text-gray-600 dark:text-gray-400 font-normal"> — {{ $gruposLegend['hint'] }}</span>
+                            @endif
+                        </span>
+                    </span>
+                </div>
+            @endif
         </div>
     @endif
 
@@ -111,6 +118,21 @@
                     :suppressTitle="true"
                 />
             </div>
+            @if (count($catalogLegend) > 0)
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] pt-2 border-t border-slate-200/70 dark:border-slate-700/70">
+                    @foreach ($catalogLegend as $item)
+                        <span class="inline-flex items-center gap-1.5 min-w-0">
+                            <span class="h-2.5 w-2.5 shrink-0 rounded-sm {{ $legendDot((string) ($item['color'] ?? '')) }}" aria-hidden="true"></span>
+                            <span class="text-gray-800 dark:text-gray-200">
+                                <span class="font-semibold">{{ $item['label'] ?? '' }}</span>
+                                @if (filled($item['hint'] ?? null))
+                                    <span class="text-gray-600 dark:text-gray-400 font-normal"> — {{ $item['hint'] }}</span>
+                                @endif
+                            </span>
+                        </span>
+                    @endforeach
+                </div>
+            @endif
         </div>
     @elseif (is_array($neeDetalheCatalogo) && (
         ! empty($neeDetalheCatalogo['deficiencias'])

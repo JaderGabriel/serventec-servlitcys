@@ -1429,6 +1429,28 @@ final class InclusionDashboardQueries
     }
 
     /**
+     * Matrículas activas em turma/curso AEE (heurística) sem cadastro de deficiência/NEE no aluno.
+     * Alinhado a {@see DiscrepanciesQueries::turmaAeeSemCadastroNeePorEscola()} — conta só o vínculo AEE, não
+     * matrículas do mesmo aluno em segmento regular ou complementar.
+     */
+    public static function countMatriculasTurmaAeeSemCadastroNee(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+    ): int {
+        try {
+            $porEscola = DiscrepanciesQueries::turmaAeeSemCadastroNeePorEscola($db, $city, $filters);
+
+            return (int) array_sum(array_map(
+                static fn (array $row): int => (int) ($row['total'] ?? 0),
+                $porEscola,
+            ));
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    /**
      * @return ?array<string, mixed>
      */
     public static function buildAeeCrossEnrollment(Connection $db, City $city, IeducarFilterState $filters): ?array
@@ -1453,12 +1475,15 @@ final class InclusionDashboardQueries
                 if ($aid <= 0 || $mid <= 0) {
                     continue;
                 }
-                $t = strtolower((string) ($r['nm_turma'] ?? ''));
-                $c = strtolower((string) ($r['nm_curso'] ?? ''));
-                $isAee = self::matchKeywords($t.' '.$c, 'aee_keywords');
+                $turmaNome = trim((string) ($r['nm_turma'] ?? ''));
+                $cursoNome = trim((string) ($r['nm_curso'] ?? ''));
+                $isAee = self::matchKeywords(
+                    mb_strtolower($turmaNome.' '.$cursoNome),
+                    'aee_keywords'
+                );
                 $seg = $isAee
                     ? 'AEE'
-                    : self::segmentLabel($c !== '' ? $c : $t);
+                    : self::segmentLabelFromCursoTurma($cursoNome, $turmaNome);
                 $byAluno[$aid][$mid] = ['aee' => $isAee, 'seg' => $seg];
             }
 
@@ -1522,11 +1547,13 @@ final class InclusionDashboardQueries
 
             $comCadastro = self::countMatriculasComCadastroNee($db, $city, $filters);
             $somenteAee = max(0, $neeMatriculas - $comCadastro);
+            $matAeeSemCadastro = self::countMatriculasTurmaAeeSemCadastroNee($db, $city, $filters);
 
             return [
                 'nee_matriculas_total' => $neeMatriculas,
                 'matriculas_com_cadastro_nee' => $comCadastro,
                 'matriculas_somente_turma_aee' => $somenteAee,
+                'matriculas_aee_sem_cadastro' => $matAeeSemCadastro,
                 'matriculas_em_turmas_aee' => $matAee,
                 'alunos_com_aee' => $nAlunosAee,
                 'alunos_nee_com_aee_e_outro_segmento' => $alunosAeeEOutro,
@@ -1596,22 +1623,40 @@ final class InclusionDashboardQueries
         return $out;
     }
 
-    private static function segmentLabel(string $haystack): string
+    /**
+     * Rótulo de segmento para cruzamento AEE e exportação: agrupa EJA/infantil/fundamental/médio;
+     * caso contrário usa o nome do curso (cadastro.curso) ou, se vazio, o da turma.
+     */
+    public static function segmentLabelFromCursoTurma(string $curso, string $turma = ''): string
     {
-        if (self::matchKeywords($haystack, 'eja_keywords')) {
-            return __('EJA / Educação de jovens e adultos');
-        }
-        if (self::matchKeywords($haystack, 'infantil_keywords')) {
-            return __('Educação infantil');
-        }
-        if (preg_match('/fundamental|ensino fundamental|anos iniciais|anos finais/i', $haystack)) {
-            return __('Ensino fundamental (regular)');
-        }
-        if (preg_match('/m[eé]dio|ensino m[eé]dio/i', $haystack)) {
-            return __('Ensino médio');
+        $curso = trim($curso);
+        $turma = trim($turma);
+        $haystack = $curso !== '' ? $curso.' '.$turma : $turma;
+
+        if ($haystack !== '') {
+            if (self::matchKeywords($haystack, 'eja_keywords')) {
+                return __('EJA / Educação de jovens e adultos');
+            }
+            if (self::matchKeywords($haystack, 'infantil_keywords')) {
+                return __('Educação infantil');
+            }
+            if (preg_match('/fundamental|ensino fundamental|anos iniciais|anos finais/i', $haystack)) {
+                return __('Ensino fundamental (regular)');
+            }
+            if (preg_match('/m[eé]dio|ensino m[eé]dio/i', $haystack)) {
+                return __('Ensino médio');
+            }
         }
 
-        return __('Outros segmentos / não classificado');
+        if ($curso !== '') {
+            return $curso;
+        }
+
+        if ($turma !== '') {
+            return $turma;
+        }
+
+        return __('Sem curso informado');
     }
 
     private static function matchKeywords(string $haystack, string $configKey): bool
@@ -2276,9 +2321,9 @@ final class InclusionDashboardQueries
         self::applyInclusionScope($q, $db, $city, $filters, $alunoAlias);
     }
 
-    public static function segmentLabelForExport(string $haystack): string
+    public static function segmentLabelForExport(string $turma, string $curso = ''): string
     {
-        return self::segmentLabel($haystack);
+        return self::segmentLabelFromCursoTurma($curso, $turma);
     }
 
     /**

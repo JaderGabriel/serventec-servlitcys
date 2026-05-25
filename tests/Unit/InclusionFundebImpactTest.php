@@ -45,4 +45,15 @@ class InclusionFundebImpactTest extends TestCase
 
         $this->assertEqualsWithDelta(67_000.0, $esperado, 0.01);
     }
+
+    public function test_risco_aee_zero_matriculas_indisponivel(): void
+    {
+        $city = new \App\Models\City(['name' => 'Teste', 'slug' => 'teste']);
+        $filters = new \App\Support\Dashboard\IeducarFilterState('2025', null, null, null);
+
+        $this->assertSame(
+            ['available' => false],
+            InclusionFundebImpact::riscoTurmaAeeSemCadastroDeficiencia(0, $city, $filters)
+        );
+    }
 }

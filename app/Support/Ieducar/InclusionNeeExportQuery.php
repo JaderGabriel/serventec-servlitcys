@@ -177,7 +177,7 @@ final class InclusionNeeExportQuery
                 'escola' => (string) ($row->escola ?? ''),
                 'turma' => $turma,
                 'curso' => $curso,
-                'segmento' => InclusionDashboardQueries::segmentLabelForExport($turma.' '.$curso),
+                'segmento' => InclusionDashboardQueries::segmentLabelForExport($turma, $curso),
                 'turma_aee' => self::matchAeeKeywords($turma.' '.$curso),
             ];
         }

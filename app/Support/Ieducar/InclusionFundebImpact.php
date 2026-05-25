@@ -105,7 +105,7 @@ final class InclusionFundebImpact
                     ]
                 ),
             'observacao' => __(
-                'Matrículas em turma AEE (heurística) sem registo de deficiência/NEE em cadastro.deficiência: podem entrar no total NEE desta aba, mas no Educacenso e na auditoria VAAR-inclusão o município arrisca não comprovar a ponderação :p (Lei 14.113/2020) nem condicionalidades de educação especial. Corrija o cadastro ou a nomenclatura da turma; o ganho potencial ao regularizar é o valor indicado.',
+                'Cada matrícula em turma AEE (heurística) sem registo em cadastro.deficiência / fisica_deficiencia entra nesta conta — não se somam outras matrículas do mesmo aluno em ensino regular ou atividades complementares. No Educacenso e na VAAR-inclusão o município arrisca não comprovar a ponderação :p (Lei 14.113/2020). O ganho potencial ao regularizar o cadastro é o valor indicado.',
                 ['p' => number_format($peso, 2, ',', '.')]
             ),
         ];

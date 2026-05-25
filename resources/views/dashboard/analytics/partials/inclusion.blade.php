@@ -358,15 +358,20 @@
                     <div class="rounded-md bg-white/80 dark:bg-gray-800/60 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2">
                         <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Só turma AEE (est.)') }}</dt>
                         <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($aeeCross['matriculas_somente_turma_aee'] ?? 0)) }}</dd>
-                        @if (($riscoAeeSemCadastro['available'] ?? false) && (int) ($aeeCross['matriculas_somente_turma_aee'] ?? 0) > 0)
+                        @if (($riscoAeeSemCadastro['available'] ?? false) && (int) ($riscoAeeSemCadastro['matriculas'] ?? $aeeCross['matriculas_aee_sem_cadastro'] ?? 0) > 0)
                             <dd class="mt-1 text-[11px] text-amber-900 dark:text-amber-200 leading-snug">
-                                {{ __('Sem cadastro NEE: risco de perda ≈ :v/ano (ver cálculo financeiro no topo).', ['v' => (string) ($riscoAeeSemCadastro['perda_anual_fmt'] ?? '—')]) }}
+                                {{ __('Gap NEE vs cadastro (estimativa). Ganho/perda financeiro usa só matrículas em turma AEE sem cadastro — ver bloco abaixo.') }}
                             </dd>
                         @endif
                     </div>
                     <div class="rounded-md bg-white/80 dark:bg-gray-800/60 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2">
                         <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Matrículas em turmas AEE') }}</dt>
                         <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($aeeCross['matriculas_em_turmas_aee'] ?? 0)) }}</dd>
+                    </div>
+                    <div class="rounded-md bg-white/80 dark:bg-gray-800/60 border border-rose-200/60 dark:border-rose-800/40 px-3 py-2">
+                        <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Matrículas AEE sem cadastro NEE') }}</dt>
+                        <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($aeeCross['matriculas_aee_sem_cadastro'] ?? $riscoAeeSemCadastro['matriculas'] ?? 0)) }}</dd>
+                        <dd class="mt-0.5 text-[10px] text-gray-600 dark:text-gray-400 leading-snug">{{ __('Base do ganho/perda indicativo (só vínculo AEE, não matrículas regulares do aluno).') }}</dd>
                     </div>
                     <div class="rounded-md bg-white/80 dark:bg-gray-800/60 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2">
                         <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Alunos com pelo menos uma turma AEE') }}</dt>

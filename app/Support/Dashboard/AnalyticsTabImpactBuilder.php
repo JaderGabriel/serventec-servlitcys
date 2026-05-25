@@ -815,13 +815,7 @@ final class AnalyticsTabImpactBuilder
         $riscoAee = is_array($fundebNee['risco_aee_sem_cadastro'] ?? null)
             ? $fundebNee['risco_aee_sem_cadastro']
             : [];
-        $matAeeSemCadastro = (int) ($fundebNee['matriculas_aee_sem_cadastro'] ?? 0);
-        if ($matAeeSemCadastro <= 0) {
-            $matAeeSemCadastro = max(
-                (int) data_get($data, 'aee_cross.matriculas_somente_turma_aee', 0),
-                (int) data_get($data, 'recurso_prova.aee_sem_cadastro_nee', 0),
-            );
-        }
+        $matAeeSemCadastro = self::matriculasAeeSemCadastroFromInclusionTab($data);
         if (($riscoAee['available'] ?? false) && (float) ($riscoAee['perda_anual'] ?? 0) > 0) {
             $perdaAee = (float) $riscoAee['perda_anual'];
             $ganhoAee = (float) ($riscoAee['ganho_potencial_anual'] ?? $perdaAee);
@@ -1249,10 +1243,7 @@ final class AnalyticsTabImpactBuilder
         $data = is_array($tabData['inclusion'] ?? null) ? $tabData['inclusion'] : ($tabData['inclusionData'] ?? []);
         $rec = is_array($data['recurso_prova'] ?? null) ? $data['recurso_prova'] : [];
         $semNee = (int) data_get($rec, 'sem_nee', 0);
-        $aeeSemCadastro = max(
-            (int) data_get($data, 'aee_cross.matriculas_somente_turma_aee', 0),
-            (int) ($rec['aee_sem_cadastro_nee'] ?? 0),
-        );
+        $aeeSemCadastro = self::matriculasAeeSemCadastroFromInclusionTab($data);
         $neePct = null;
         $total = (int) ($data['total_matriculas'] ?? 0);
         $nee = is_array($data['nee_grupo_resumo'] ?? null) ? $data['nee_grupo_resumo'] : [];
@@ -1735,10 +1726,7 @@ final class AnalyticsTabImpactBuilder
             if ($semNee > 0) {
                 $issues[] = ['type' => 'error', 'label' => __('Recurso de prova sem NEE'), 'count' => $semNee];
             }
-            $aeeSem = max(
-                (int) data_get($data, 'aee_cross.matriculas_somente_turma_aee', 0),
-                (int) data_get($data, 'recurso_prova.aee_sem_cadastro_nee', 0),
-            );
+            $aeeSem = self::matriculasAeeSemCadastroFromInclusionTab($data);
             if ($aeeSem > 0) {
                 $issues[] = ['type' => 'warning', 'label' => __('Turma AEE sem deficiência no cadastro'), 'count' => $aeeSem];
             }
@@ -1980,10 +1968,7 @@ final class AnalyticsTabImpactBuilder
                 'tone' => 'danger',
             ];
         }
-        $aeeSem = max(
-            (int) data_get($data, 'aee_cross.matriculas_somente_turma_aee', 0),
-            (int) ($rec['aee_sem_cadastro_nee'] ?? 0),
-        );
+        $aeeSem = self::matriculasAeeSemCadastroFromInclusionTab($data);
         if ($aeeSem > 0) {
             $out[] = [
                 'label' => __('AEE sem cadastro NEE'),
@@ -2024,5 +2009,26 @@ final class AnalyticsTabImpactBuilder
                 'tone' => 'warning',
             ];
         }
+    }
+
+    /**
+     * Matrículas em turma AEE sem cadastro NEE (vínculo AEE exclusivo na contagem financeira).
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private static function matriculasAeeSemCadastroFromInclusionTab(array $data): int
+    {
+        $fundeb = is_array($data['fundeb_nee'] ?? null) ? $data['fundeb_nee'] : [];
+        $n = (int) ($fundeb['matriculas_aee_sem_cadastro'] ?? 0);
+        if ($n > 0) {
+            return $n;
+        }
+        $n = (int) data_get($data, 'aee_cross.matriculas_aee_sem_cadastro', 0);
+        if ($n > 0) {
+            return $n;
+        }
+        $rec = is_array($data['recurso_prova'] ?? null) ? $data['recurso_prova'] : [];
+
+        return (int) ($rec['aee_sem_cadastro_nee'] ?? 0);
     }
 }

@@ -284,10 +284,13 @@ class InclusionRepository
                     $fundebNee = ['available' => false];
                 }
 
-                $matAeeSemCadastro = max(
-                    (int) (is_array($aeeCross) ? ($aeeCross['matriculas_somente_turma_aee'] ?? 0) : 0),
-                    (int) (is_array($recursoProva) ? ($recursoProva['aee_sem_cadastro_nee'] ?? 0) : 0),
-                );
+                $matAeeSemCadastro = InclusionDashboardQueries::countMatriculasTurmaAeeSemCadastroNee($db, $city, $filters);
+                if ($matAeeSemCadastro <= 0 && is_array($aeeCross)) {
+                    $matAeeSemCadastro = (int) ($aeeCross['matriculas_aee_sem_cadastro'] ?? 0);
+                }
+                if ($matAeeSemCadastro <= 0 && is_array($recursoProva)) {
+                    $matAeeSemCadastro = (int) ($recursoProva['aee_sem_cadastro_nee'] ?? 0);
+                }
                 $fundebNee['matriculas_aee_sem_cadastro'] = $matAeeSemCadastro;
                 $fundebNee['risco_aee_sem_cadastro'] = InclusionFundebImpact::riscoTurmaAeeSemCadastroDeficiencia(
                     $matAeeSemCadastro,
@@ -404,12 +407,12 @@ class InclusionRepository
 
         $calcNotes = [
             'impacto_fundeb' => [
-                'formula' => __('Ganho: Matrículas NEE × VAAF × (:p − 1). Perda (AEE sem cadastro): matrículas só turma AEE × VAAF × (:p − 1).', ['p' => $peso]),
-                'note' => __('Indicativo (Lei 14.113/2020). Turma AEE sem deficiência registada arrisca perda da ponderação e questionamento VAAR/Censo.'),
+                'formula' => __('Ganho incremental NEE: total de matrículas NEE × VAAF × (:p − 1). Perda/ganho ao corrigir cadastro: matrículas em turma AEE (sem deficiência registada) × VAAF × (:p − 1).', ['p' => $peso]),
+                'note' => __('Indicativo (Lei 14.113/2020). O risco AEE não soma matrículas do mesmo aluno em ensino regular ou complementar — só o vínculo em turma AEE sem cadastro.'),
             ],
             'risco_aee_sem_cadastro' => [
-                'formula' => __('Perda indicativa ≈ :n (só turma AEE) × VAAF × (:p − 1).', ['n' => __('matrículas'), 'p' => $peso]),
-                'note' => __('Valor na faixa financeira superior e junto aos cartões AEE / recurso de prova.'),
+                'formula' => __('Perda/ganho indicativo ≈ :n matrícula(s) em turma AEE (sem cadastro NEE) × VAAF × (:p − 1).', ['n' => __('n'), 'p' => $peso]),
+                'note' => __('Contagem alinhada à discrepância «Turma AEE sem cadastro de NEE» (matrícula AEE, não o total NEE do aluno).'),
             ],
             'recurso_prova' => [
                 'formula' => __('Contagem de matrículas activas: com recurso INEP; turma AEE sem deficiência no cadastro; recurso sem NEE cadastrado.'),
@@ -436,8 +439,8 @@ class InclusionRepository
                 'note' => __('Índigo = INEP/Censo · violeta = complementar · âmbar = remanescente.'),
             ],
             'aee_cross' => [
-                'formula' => __('Só turma AEE (est.) = Matrículas NEE − matrículas NEE com cadastro de deficiência.'),
-                'note' => __('Turma AEE: palavras-chave no nome da turma ou do curso (config/ieducar.php).'),
+                'formula' => __('Só turma AEE (est.) = Matrículas NEE − com cadastro. Ganho/perda AEE = matrículas em turma AEE sem deficiência no cadastro (não inclui matrículas regulares do mesmo aluno).'),
+                'note' => __('Turma AEE: palavras-chave em config/ieducar.php. «Matrículas em turmas AEE» = vínculos AEE no recorte NEE.'),
             ],
             'distorcao' => [
                 'formula' => __('Distorção INEP: idade em 31/03 > limite da série + 2 anos.'),
