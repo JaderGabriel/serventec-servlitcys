@@ -34,6 +34,11 @@ php artisan config:clear
 | `BCRYPT_ROUNDS` | | `12` | |
 | `CHART_EXPORT_AUTHOR` | | vazio | Autor no rodapé de exportação de gráficos |
 | `LEGAL_PRIVACY_LAST_UPDATED` | | `2026-05-25` | Data exibida na página `/privacidade` |
+| `LEGAL_PRIVACY_VERSION` | | igual a `LEGAL_PRIVACY_LAST_UPDATED` | Versão da PP; alterar obriga novo aceite |
+| `LEGAL_COOKIES_VERSION` | | igual a `LEGAL_PRIVACY_VERSION` | Versão do aviso de cookies |
+| `LEGAL_REQUIRE_AUTHENTICATED_CONSENT` | | `true` | Redireciona para `/consentimento` se versão desatualizada |
+| `LEGAL_CONSENT_COOKIE_NAME` | | `servlitcys_legal_consent` | Cookie do banner na welcome |
+| `LEGAL_CONSENT_COOKIE_DAYS` | | `365` | Validade do cookie (visitantes) |
 | `LEGAL_PRIVACY_CONTACT_EMAIL` | | vazio | E-mail de contacto LGPD (opcional; senão usa contacto do município) |
 
 ---

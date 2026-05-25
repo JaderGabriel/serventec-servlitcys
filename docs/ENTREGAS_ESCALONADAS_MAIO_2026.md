@@ -41,6 +41,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 33 | *(release)* | **2.4.0** — `saeb:import-planilhas-inep`, FUNDEB receita, VAAF; tag **`20260524-Ceres`** |
 | 34 | *(doc)* | [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md), [IMPORTACAO_SAEB_PLANILHAS_INEP.md](IMPORTACAO_SAEB_PLANILHAS_INEP.md) |
 | 35 | *(patch)* | **Pós-2.4.0 (sem bump):** rodapé/privacidade, welcome/home/RX, inclusão NEE+AEE, SAEB 4 colunas |
+| 36 | *(patch)* | **Pós-2.4.0:** consentimento LGPD, `/notifications`, catálogo NEE completo INEP |
 
 **Em produção:** versão **2.4.0** · tag **`20260524-Ceres`**.
 
@@ -374,6 +375,29 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | Testes | `InclusionNeeQueryAlignmentTest.php`, `PrivacyPolicyTest.php`, `UserFooterMunicipalityLabelTest.php` |
 
 **Pós-deploy:** `npm run build` · `php artisan route:clear` (nova rota `legal.privacy`) · validar **Pedagógico → Inclusão** e **Desempenho** com município piloto.
+
+---
+
+## 36. Consentimento LGPD, notificações e catálogo NEE completo (pós-2.4.0)
+
+**Objetivo:** Aceite versionado de PP/cookies, centro de notificações e gráfico de designações NEE com catálogo MEC/i-Educar completo (cores INEP).
+
+| Área | Alteração |
+|------|-----------|
+| **LGPD** | `/consentimento` (middleware `legal.consent`), banner na welcome, colunas em `users`, tabela `legal_consent_logs` |
+| **Admin** | `/admin/consentimentos-legais` — pendentes, versões vigentes, auditoria |
+| **Notificações** | `GET /notifications` (view) · `GET /notifications/feed` (JSON do sino) |
+| **Rodapé** | `<x-product-version-badge />` — versão, tag Ceres, data de lançamento (teal em produção) |
+| **Inclusão** | `chartCatalogo(..., includeZeros: true)` — todas as opções do catálogo; legenda INEP na view |
+
+| Ficheiros (resumo) | |
+|--------------------|--|
+| Legal | `LegalConsentController`, `LegalConsentService`, `EnsureLegalConsentAccepted`, `LegalConsentReportController` |
+| Notificações | `NotificationController.php`, `resources/views/notifications/index.blade.php` |
+| Inclusão | `InclusionDashboardQueries.php`, `inclusion.blade.php`, `InclusionNeeDesignacaoDataset.php` |
+| Testes | `LegalConsentTest.php`, `ProductVersionTest.php`, `NotificationControllerTest.php` |
+
+**Pós-deploy:** `php artisan migrate` · `php artisan route:clear` · utilizadores existentes passam por `/consentimento` na primeira visita (ou preencher versão nas colunas `users`).
 
 ---
 

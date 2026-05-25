@@ -25,6 +25,8 @@ Com **`IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE=true`** (defeito), matrículas ac
 
 Implementação: `InclusionDashboardQueries::alunosComCadastroNeeSubquery`, `countMatriculasComNee`, `medidoresEducacaoEspecialPorGrupo`; discrepâncias delegam à mesma subquery.
 
+**Gráfico «catálogo completo»:** `InclusionNeeDesignacaoDataset::chartCatalogo(..., includeZeros: true)` — lista todas as designações MEC/Educacenso e i-Educar (valor 0 quando não há vínculo). Cores no gráfico: índigo = INEP/Censo · violeta = complementar · âmbar = só i-Educar. O total de matrículas NEE pode incluir turmas AEE sem barra no catálogo.
+
 ## 1. Laravel Pulse (recomendado — já integrado)
 
 1. Garantir `PULSE_ENABLED=true` e migrações Pulse aplicadas (`php artisan migrate`).

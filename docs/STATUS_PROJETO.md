@@ -28,6 +28,11 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Desempenho — gráficos SAEB em grelha 4 colunas | Implementado (pós-2.4.0) |
 | Rodapé área logada + política de privacidade (`/privacidade`) | Implementado (pós-2.4.0) |
 | Welcome / home — UI ícones, RX barra Censo, mapa mental | Implementado (pós-2.4.0) |
+| Consentimento LGPD (PP + cookies, versão, `/consentimento`) | Implementado (pós-2.4.0; `legal_consent_logs`) |
+| Admin — relatório consentimentos (`/admin/consentimentos-legais`) | Implementado (pós-2.4.0) |
+| Notificações — página `/notifications` + API `/notifications/feed` | Implementado (pós-2.4.0) |
+| Rodapé — selo versão (tag Ceres + data lançamento) | Implementado (`ProductVersion`, `x-product-version-badge`) |
+| Inclusão — gráfico catálogo completo NEE (INEP / i-Educar, com zeros) | Implementado (pós-2.4.0) |
 | Estudo integrações setor público + previsão demanda (doc) | Documentado — [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md); implementação Ondas 1–3 no backlog §H |
 | Sync massiva semanal (`system::weekly_mass_sync`, checkpoint) | Implementado |
 | Repasses Tesouro CSV + snapshots municipais | Implementado |
