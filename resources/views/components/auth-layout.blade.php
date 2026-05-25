@@ -1,4 +1,10 @@
-@props(['title' => 'Entrar'])
+@props([
+    'title' => 'Entrar',
+    /** Cartão mais largo (consentimento LGPD, formulários longos). */
+    'wide' => false,
+    /** Oculta o bloco central com logótipo grande (o cabeçalho mantém a marca). */
+    'hideHero' => false,
+])
 
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
@@ -40,20 +46,26 @@
                 </div>
             </header>
 
-            <main class="flex flex-1 flex-col items-center justify-center px-4 py-10 sm:px-6">
-                <div class="mb-8 flex flex-col items-center text-center">
-                    <span class="serv-auth-brand-mark" aria-hidden="true">
-                        <x-application-logo class="h-12 w-12 text-white shrink-0" />
-                    </span>
-                    <p class="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
-                        {{ config('app.name') }}
-                    </p>
-                    <p class="mt-1 max-w-sm text-sm font-semibold text-teal-800 dark:text-teal-300">
-                        {{ __('Consultoria e dados educacionais por município') }}
-                    </p>
-                </div>
+            <main class="flex flex-1 flex-col items-center justify-center px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+                @unless ($hideHero)
+                    <div class="mb-8 flex flex-col items-center text-center">
+                        <span class="serv-auth-brand-mark" aria-hidden="true">
+                            <x-application-logo class="h-12 w-12 text-white shrink-0" />
+                        </span>
+                        <p class="mt-5 font-display text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
+                            {{ config('app.name') }}
+                        </p>
+                        <p class="mt-1 max-w-sm text-sm font-semibold text-teal-800 dark:text-teal-300">
+                            {{ __('Consultoria e dados educacionais por município') }}
+                        </p>
+                    </div>
+                @endunless
 
-                <div class="serv-auth-card w-full max-w-md">
+                <div @class([
+                    'serv-auth-card w-full',
+                    'max-w-md' => ! $wide,
+                    'serv-auth-card--wide max-w-xl sm:max-w-2xl lg:max-w-3xl' => $wide,
+                ])>
                     {{ $slot }}
                 </div>
             </main>

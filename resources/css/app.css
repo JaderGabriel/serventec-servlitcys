@@ -71,6 +71,10 @@
             dark:border-white/10 dark:bg-slate-900/80 dark:shadow-2xl dark:ring-teal-500/10;
     }
 
+    .serv-auth-card--wide {
+        @apply p-6 sm:p-8 lg:p-10;
+    }
+
     .serv-auth-brand-mark {
         @apply flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-600 to-indigo-700
             shadow-xl shadow-teal-900/25 ring-2 ring-white ring-offset-2 ring-offset-slate-100
