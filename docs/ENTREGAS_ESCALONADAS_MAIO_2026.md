@@ -37,7 +37,11 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 29 | `a2566aa` | Patch **2.3.8.5**: mapa capacidade, Matrículas saldo, NEE unificado |
 | 30 | `0a0743e` | Patch **2.3.8.6**: mapa Início semáforo RX + contato municipal |
 | 31 | `9a33506` | Patch: otimizar login (SMTP auth, audit defer, query credenciais) |
-| 32 | `6eb94cf` | Patch **2.3.8.7** (**em produção**): Pulse SQL/operações + Matrículas ganho VAAF |
+| 32 | `6eb94cf` | Patch **2.3.8.7**: Pulse SQL/operações + Matrículas ganho VAAF |
+| 33 | *(release)* | **2.4.0** — `saeb:import-planilhas-inep`, FUNDEB receita, VAAF; tag **`20260524-Ceres`** |
+| 34 | *(doc)* | [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md), [IMPORTACAO_SAEB_PLANILHAS_INEP.md](IMPORTACAO_SAEB_PLANILHAS_INEP.md) |
+
+**Em produção:** versão **2.4.0** · tag **`20260524-Ceres`**.
 
 ---
 

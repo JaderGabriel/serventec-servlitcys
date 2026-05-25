@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`2.3.8.7`** · tag de deploy **`20260521-Mercury`** (sem nova tag Git) · commit **`6eb94cf`** (#**202**)
+> **▶ EM PRODUÇÃO (`main`):** versão **`2.4.0`** · tag de deploy **`20260524-Ceres`** · ver [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **2.3.8.7** |
+| **Versão semântica em produção** | **2.4.0** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260521-Mercury` |
-| **Último patch documentado** | Pulse: diagnóstico SQL + operações; Matrículas: ganho estimado (VAAF municipal), sem perdas |
+| **Tag de deploy (servidor)** | `20260524-Ceres` |
+| **Último marco documentado** | Importações: planilhas SAEB INEP (Artisan), FUNDEB/receita, prioridade VAAF |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -20,7 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 2.3.8.7** | `6eb94cf` | **202** | 21/05/2026 | **Produção:** Pulse diagnóstico SQL (sistema + municípios) e operações (HTTP, jobs, Analytics, RX); aba Matrículas com ganho VAAF e sem perdas. |
+| **▶ 2.4.0** | `20260524-Ceres` | — | 24/05/2026 | **Produção:** `saeb:import-planilhas-inep` (PhpSpreadsheet, RAR/XLSX INEP); FUNDEB receita + ordem VAAF; doc importações — [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md). |
+| 2.3.8.7 | `6eb94cf` | **202** | 21/05/2026 | Pulse diagnóstico SQL (sistema + municípios) e operações; aba Matrículas com ganho VAAF e sem perdas. |
 | 2.3.8.6 | `0a0743e` | **198** | 21/05/2026 | Mapa municípios Início com cores/meta RX (cadastro ano vigente); cartão com contato municipal e progresso meta; snapshot em cache. |
 | 2.3.8.5 | `a2566aa` | **195** | 21/05/2026 | Mapa capacidade/vagas (fallback); Matrículas cartões saldo + fórmula VAAF; NEE dataset unificado (grupo + catálogo); alias deficiência. |
 | 2.3.8.4 | `4833160` | **191** | 21/05/2026 | Mapa escolas: capacidade/vagas; Matrículas saldo/VAAF (prévia 4.500); Inclusão catálogo/recorte; Redis predis (`performance:check`). |
@@ -54,9 +55,22 @@
 
 ## Detalhe por versão
 
-### v2.3.8.7 — `6eb94cf` (#202, 21/05/2026) — **em produção**
+### v2.4.0 — `20260524-Ceres` (24/05/2026) — **em produção**
 
-Patch de observabilidade Pulse e consultoria Matrículas (sem nova tag Git). Tag de deploy continua **`20260521-Mercury`**.
+Marco de **importações** públicas sem passo manual Python.
+
+| Área | Melhoria |
+|------|----------|
+| **SAEB planilhas INEP** | Comando `saeb:import-planilhas-inep`; serviços `SaebPlanilhaInep*`; PhpSpreadsheet; RAR via `unrar`/`7z`; URLs 2021/2023 em config. |
+| **FUNDEB** | `FundebFndeReceitaCsvService`; `FundebMunicipalReferenceResolver::vaafParaCalculo` com ordem explícita de fontes. |
+| **Microdados SAEB** | Melhorias em downloader e conversor CSV em stream. |
+| **Docs** | [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md), [IMPORTACAO_SAEB_PLANILHAS_INEP.md](IMPORTACAO_SAEB_PLANILHAS_INEP.md). |
+
+**Pós-deploy:** `composer install` · `unrar` ou `p7zip` · `php artisan saeb:import-planilhas-inep --years=2021,2023` · hub `/admin/dados-publicos`.
+
+### v2.3.8.7 — `6eb94cf` (#202, 21/05/2026)
+
+Patch de observabilidade Pulse e consultoria Matrículas (sem nova tag Git). Tag de deploy **`20260521-Mercury`**.
 
 | Área | Melhoria |
 |------|----------|

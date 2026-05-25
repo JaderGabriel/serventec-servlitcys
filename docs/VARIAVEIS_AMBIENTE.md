@@ -229,7 +229,17 @@ Detalhe: [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
 | Variável | Default |
 |----------|---------|
 | `IEDUCAR_SAEB_MICRODADOS_ZIP_URL` | URL INEP microdados |
+| `IEDUCAR_SAEB_OPENDATA_CSV_URL` | CSV directo (dados.gov ou link público); vazio por defeito |
 | `IEDUCAR_SAEB_HTTP_VERIFY` | `true` |
+
+**Planilhas oficiais INEP** (aba «Municípios», `CO_MUNICIPIO` com IBGE real):
+
+```bash
+php artisan saeb:import-planilhas-inep --years=2021,2023
+php artisan saeb:import-planilhas-inep --no-download   # usa cache em storage/app/saeb/planilhas
+```
+
+Requer `unrar` ou `p7zip` no servidor para o RAR de 2023. URLs em `saeb.planilha_resultados_urls`; cache em `IEDUCAR_SAEB_PLANILHA_CACHE_PATH`. Os microdados ZIP (`TS_ESCOLA`) usam `ID_MUNICIPIO` mascarado (LGPD) — use planilhas, não só microdados.
 
 ---
 

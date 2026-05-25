@@ -28,6 +28,9 @@ final class FundebMunicipalReferenceResolver
 
     public const FONTE_PREVIA_NACIONAL = 'previa_nacional';
 
+    /** Último recurso: IEDUCAR_DISC_VAA_REFERENCIA (ex.: R$ 4.500/aluno/ano). */
+    public const FONTE_VALOR_CONFIGURADO = 'valor_configurado';
+
     /** @var array<string, array<string, mixed>> */
     private static array $resolveCache = [];
 
@@ -66,22 +69,45 @@ final class FundebMunicipalReferenceResolver
     }
 
     /**
-     * VAAF usado em cálculos do painel (Inclusão, Discrepâncias, previsão): municipal importado,
-     * estimativa receita FNDE ÷ matrículas, ou referência configurada — nunca só o piso 4.500 se houver dado melhor.
+     * VAAF usado em cálculos do painel (Matrículas, Rede, Discrepâncias, etc.).
+     *
+     * Ordem: (1) municipal oficial importado → (2) prévia federal (IEDUCAR_FUNDEB_NATIONAL_VAAF_*)
+     * → (3) estimativa receita÷matrículas → (4) VAAF por IBGE em config → (5) valor configurado
+     * IEDUCAR_DISC_VAA_REFERENCIA (ex.: 4.500), só após esgotar os anteriores.
      *
      * @return array{vaaf: float, fonte_label: string, ano: ?int, origem: string}
      */
     public static function vaafParaCalculo(?City $city, ?IeducarFilterState $filters = null): array
     {
         $ref = self::resolve($city, $filters);
-        $municipal = is_array($ref['municipal'] ?? null) ? $ref['municipal'] : null;
+        $anchorAno = self::resolveAnchorAno($filters);
+        $ibge = self::normalizeIbge($city?->ibge_municipio);
 
-        if ($municipal !== null && (float) ($municipal['vaaf'] ?? 0) > 0) {
+        $municipal = is_array($ref['municipal'] ?? null) ? $ref['municipal'] : null;
+        if (
+            $municipal !== null
+            && (float) ($municipal['vaaf'] ?? 0) > 0
+            && (string) ($municipal['fonte'] ?? '') === self::FONTE_OFICIAL_DB
+        ) {
             return [
                 'vaaf' => (float) $municipal['vaaf'],
                 'fonte_label' => (string) ($municipal['fonte_label'] ?? $ref['fonte_label'] ?? ''),
                 'ano' => $municipal['ano'] ?? $ref['ano'] ?? null,
                 'origem' => 'municipal',
+            ];
+        }
+
+        $previa = is_array($ref['previa'] ?? null) ? $ref['previa'] : null;
+        if (
+            $previa !== null
+            && (float) ($previa['vaaf'] ?? 0) > 0
+            && (string) ($previa['fonte'] ?? '') === self::FONTE_PREVIA_NACIONAL
+        ) {
+            return [
+                'vaaf' => (float) $previa['vaaf'],
+                'fonte_label' => (string) ($previa['fonte_label'] ?? ''),
+                'ano' => $previa['ano'] ?? null,
+                'origem' => self::FONTE_PREVIA_NACIONAL,
             ];
         }
 
@@ -92,11 +118,45 @@ final class FundebMunicipalReferenceResolver
             }
         }
 
+        if ($ibge !== null) {
+            $fromIbge = self::fromConfigIbge($ibge, $anchorAno);
+            if ($fromIbge !== null && (float) ($fromIbge['vaaf'] ?? 0) > 0) {
+                return [
+                    'vaaf' => (float) $fromIbge['vaaf'],
+                    'fonte_label' => (string) ($fromIbge['fonte_label'] ?? ''),
+                    'ano' => $fromIbge['ano'] ?? $anchorAno,
+                    'origem' => self::FONTE_CONFIG_IBGE,
+                ];
+            }
+        }
+
+        $estadual = is_array($ref['referencia_estadual'] ?? null) ? $ref['referencia_estadual'] : null;
+        if ($estadual !== null && (float) ($estadual['vaaf'] ?? 0) > 0) {
+            return [
+                'vaaf' => (float) $estadual['vaaf'],
+                'fonte_label' => (string) ($estadual['fonte_label'] ?? ''),
+                'ano' => $estadual['ano'] ?? null,
+                'origem' => FundebReferenceSource::FONTE_FNDE_ESTADO_VAAF,
+            ];
+        }
+
+        return self::resolveValorConfigurado();
+    }
+
+    /**
+     * @return array{vaaf: float, fonte_label: string, ano: ?int, origem: string}
+     */
+    public static function resolveValorConfigurado(): array
+    {
+        $vaa = max(0.0, (float) config('ieducar.discrepancies.vaa_referencia_anual', 4500));
+
         return [
-            'vaaf' => (float) ($ref['vaaf'] ?? 0),
-            'fonte_label' => (string) ($ref['fonte_label'] ?? ''),
-            'ano' => $ref['ano'] ?? null,
-            'origem' => (string) ($ref['fonte'] ?? self::FONTE_CONFIG_GLOBAL),
+            'vaaf' => $vaa,
+            'fonte_label' => __('Valor configurado :valor/aluno/ano (IEDUCAR_DISC_VAA_REFERENCIA)', [
+                'valor' => DiscrepanciesFundingImpact::formatBrl($vaa),
+            ]),
+            'ano' => null,
+            'origem' => self::FONTE_VALOR_CONFIGURADO,
         ];
     }
 
@@ -290,27 +350,18 @@ final class FundebMunicipalReferenceResolver
             }
         }
 
-        if ($vaaf === null || $vaaf <= 0) {
-            $vaaf = (float) config('ieducar.discrepancies.vaa_referencia_anual', 0);
-        }
-
-        if ($vaaf > 0 && (bool) config('ieducar.fundeb.open_data.national_floor.enabled', true)) {
+        if ($vaaf !== null && $vaaf > 0 && (bool) config('ieducar.fundeb.open_data.national_floor.enabled', true)) {
             $vaafFmt = DiscrepanciesFundingImpact::formatBrl($vaaf);
-            $fonteDetalhe = is_array($byYear) && isset($byYear[$resolvedAno])
-                ? __('Prévia federal :valor/aluno/ano (IEDUCAR_FUNDEB_NATIONAL_VAAF_:ano)', [
-                    'valor' => $vaafFmt,
-                    'ano' => (string) $resolvedAno,
-                ])
-                : __('Prévia federal :valor/aluno/ano (piso em IEDUCAR_DISC_VAA_REFERENCIA; padrão R$ 4.500)', [
-                    'valor' => $vaafFmt,
-                ]);
 
             return [
                 'vaaf' => $vaaf,
                 'vaat' => null,
                 'complementacao_vaar' => null,
                 'fonte' => self::FONTE_PREVIA_NACIONAL,
-                'fonte_label' => $fonteDetalhe,
+                'fonte_label' => __('Prévia federal :valor/aluno/ano (IEDUCAR_FUNDEB_NATIONAL_VAAF_:ano)', [
+                    'valor' => $vaafFmt,
+                    'ano' => (string) $resolvedAno,
+                ]),
                 'ano' => $resolvedAno,
             ];
         }
@@ -376,8 +427,12 @@ final class FundebMunicipalReferenceResolver
         ?array $municipal = null,
         ?array $referenciaEstadual = null,
     ): array {
-        $municipal ??= ($primary['fonte'] ?? '') !== self::FONTE_PREVIA_NACIONAL
-            && ($primary['fonte'] ?? '') !== self::FONTE_CONFIG_GLOBAL
+        $fontePrimary = (string) ($primary['fonte'] ?? '');
+        $municipal ??= ! in_array($fontePrimary, [
+            self::FONTE_PREVIA_NACIONAL,
+            self::FONTE_CONFIG_GLOBAL,
+            self::FONTE_VALOR_CONFIGURADO,
+        ], true)
             ? [
                 'vaaf' => (float) $primary['vaaf'],
                 'vaat' => $primary['vaat'] ?? null,
@@ -455,19 +510,17 @@ final class FundebMunicipalReferenceResolver
      */
     private static function fallbackGlobal(): array
     {
-        $vaa = (float) config('ieducar.discrepancies.vaa_referencia_anual', 4500);
+        $configured = self::resolveValorConfigurado();
 
         return self::buildPayload(
-            $vaa,
+            (float) $configured['vaaf'],
             null,
             null,
-            self::FONTE_CONFIG_GLOBAL,
-            __('Referência global :valor/aluno/ano (IEDUCAR_DISC_VAA_REFERENCIA)', [
-                'valor' => DiscrepanciesFundingImpact::formatBrl($vaa),
-            ]),
+            self::FONTE_VALOR_CONFIGURADO,
+            (string) $configured['fonte_label'],
             null,
             null,
-            null,
+            __('Sem VAAF municipal nem prévia federal por ano; usa-se o valor configurado em IEDUCAR_DISC_VAA_REFERENCIA.'),
         );
     }
 

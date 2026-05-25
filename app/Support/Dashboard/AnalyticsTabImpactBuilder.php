@@ -130,7 +130,7 @@ final class AnalyticsTabImpactBuilder
             'network' => [
                 'title' => __('Rede & Oferta'),
                 'purpose' => __('Capacidade, vagas ociosas e distribuição por turno, segmento e escola.'),
-                'impact_note' => __('Ociosidade e oferta desalinhada afetam planejamento e custos de transporte/PNAE.'),
+                'impact_note' => __('Saldo indicativo com o mesmo VAAF da aba Matrículas (municipal → prévia federal → valor configurado).'),
             ],
             'school_units' => [
                 'title' => __('Unidades Escolares'),
@@ -408,7 +408,7 @@ final class AnalyticsTabImpactBuilder
     private static function resolveTabSaldo(string $tab, array $tabData, array $ctx, array $tabStatus): ?array
     {
         $raw = match ($tab) {
-            'network' => self::saldoFromNetworkOffer($tabData),
+            'network' => self::saldoFromNetworkOffer($tabData, $ctx),
             'enrollment' => self::saldoFromEnrollment($tabData, $ctx),
             'inclusion' => self::saldoFromInclusion($tabData, $ctx),
             'school_units' => self::saldoFromSchoolUnitsGeo($tabData),
@@ -470,9 +470,10 @@ final class AnalyticsTabImpactBuilder
 
     /**
      * @param  array<string, mixed>  $tabData
+     * @param  array<string, mixed>  $ctx
      * @return array{perda: float, ganho: float, liquido: float, footnote: string}|null
      */
-    private static function saldoFromNetworkOffer(array $tabData): ?array
+    private static function saldoFromNetworkOffer(array $tabData, array $ctx = []): ?array
     {
         $data = self::tabPayload($tabData, 'network');
         $k = is_array($data['kpis'] ?? null) ? $data['kpis'] : [];
@@ -482,23 +483,25 @@ final class AnalyticsTabImpactBuilder
             return null;
         }
 
-        $funding = DiscrepanciesFundingImpact::estimate('rede_vagas_ociosas', $vagas);
-        $perda = (float) $funding['perda_anual'];
-        $ganho = (float) $funding['ganho_potencial_anual'];
+        $impact = self::tabFundingImpactFromReference('rede_vagas_ociosas', $vagas, self::resolveFundingReference($ctx));
+        $perda = (float) $impact['perda_anual'];
+        $ganho = (float) $impact['ganho_potencial_anual'];
         $liquido = round($ganho - $perda, 2);
         $taxa = ($k['taxa_ociosidade_pct'] ?? null) !== null
             ? number_format((float) $k['taxa_ociosidade_pct'], 1, ',', '.').'%'
             : '—';
+        $rotulo = FundebReferenceDisplay::rotuloVaafCurto(self::resolveFundingReference($ctx));
 
         return [
             'perda' => $perda,
             'ganho' => $ganho,
             'liquido' => $liquido,
             'footnote' => __(
-                ':vagas vagas ociosas × VAAF × peso :peso (taxa de ociosidade :taxa). Eficiência da oferta — não é repasse FNDE.',
+                ':vagas vagas ociosas × VAAF (:rotulo) × peso :peso (taxa de ociosidade :taxa). Eficiência da oferta — não é repasse FNDE.',
                 [
                     'vagas' => number_format($vagas, 0, ',', '.'),
-                    'peso' => number_format((float) $funding['peso'], 2, ',', '.'),
+                    'rotulo' => $rotulo,
+                    'peso' => number_format((float) $impact['peso'], 2, ',', '.'),
                     'taxa' => $taxa,
                 ]
             ),
@@ -544,7 +547,7 @@ final class AnalyticsTabImpactBuilder
                 if ($id === 'distorcao_idade_serie') {
                     $distorcaoFromChecks = true;
                 }
-                $impact = self::enrollmentImpactEstimate($id, $occurrences, $fundingRef);
+                $impact = self::tabFundingImpactFromReference($id, $occurrences, $fundingRef);
                 $ganhoCorrecao += (float) $impact['ganho_potencial_anual'];
                 $correcaoNotes[] = self::enrollmentCorrecaoFootnoteLine(
                     (string) ($check['titulo'] ?? $check['title'] ?? $id),
@@ -556,7 +559,7 @@ final class AnalyticsTabImpactBuilder
 
         $com = $snap['distorcao_com'];
         if (! $distorcaoFromChecks && $com > 0) {
-            $impact = DiscrepanciesFundingImpact::estimate('distorcao_idade_serie', $com);
+            $impact = self::tabFundingImpactFromReference('distorcao_idade_serie', $com, $fundingRef);
             $ganhoCorrecao += (float) $impact['ganho_potencial_anual'];
             $pct = $snap['distorcao_pct'];
             $correcaoNotes[] = __(
@@ -600,7 +603,7 @@ final class AnalyticsTabImpactBuilder
             );
         }
 
-        $footnoteParts[] = __('Referência indicativa (VAAF municipal importado ou prévia federal); não é repasse oficial FNDE/Simec.');
+        $footnoteParts[] = __('VAAF: municipal → prévia federal (config.) → estimativas → valor configurado (IEDUCAR_DISC_VAA_REFERENCIA). Não é repasse FNDE/Simec.');
 
         return [
             'perda' => 0.0,
@@ -614,26 +617,30 @@ final class AnalyticsTabImpactBuilder
     }
 
     /**
-     * Usa o VAAF do contexto municipal (evita piso 4.500 quando há importação FUNDEB).
+     * Impacto financeiro indicativo com o mesmo VAAF do contexto (Matrículas, Rede, etc.).
      *
-     * @return array{ganho_potencial_anual: float, peso: float}
+     * @return array{perda_anual: float, ganho_potencial_anual: float, peso: float}
      */
-    private static function enrollmentImpactEstimate(string $checkId, int $occurrences, ?array $fundingRef): array
+    private static function tabFundingImpactFromReference(string $checkId, int $occurrences, ?array $fundingRef): array
     {
         $vaaf = (float) ($fundingRef['vaa_anual'] ?? 0);
+        $peso = DiscrepanciesFundingImpact::pesoParaCheck($checkId);
+
         if ($vaaf <= 0) {
             $full = DiscrepanciesFundingImpact::estimate($checkId, $occurrences);
 
             return [
+                'perda_anual' => (float) $full['perda_anual'],
                 'ganho_potencial_anual' => (float) $full['ganho_potencial_anual'],
                 'peso' => (float) $full['peso'],
             ];
         }
 
-        $peso = DiscrepanciesFundingImpact::pesoParaCheck($checkId);
+        $impact = MoneyMath::impactFromOccurrences($occurrences, $vaaf, $peso);
 
         return [
-            'ganho_potencial_anual' => MoneyMath::impactFromOccurrences($occurrences, $vaaf, $peso),
+            'perda_anual' => $impact,
+            'ganho_potencial_anual' => $impact,
             'peso' => $peso,
         ];
     }

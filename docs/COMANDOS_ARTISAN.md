@@ -43,6 +43,7 @@ php artisan app:probe-inep-geo-fallbacks --city=1
 
 | Comando | Descrição |
 |---------|-----------|
+| `saeb:import-planilhas-inep` | Planilhas INEP (aba Municípios, `CO_MUNICIPIO`): download RAR/XLSX, conversão PhpSpreadsheet, import SAEB — **v2.4** |
 | `saeb:sync-microdados` | ZIP INEP ou CSV por URL → `historico.json` |
 | `saeb:refresh-ca-bundle` | Atualiza PEM para SSL do download.inep.gov.br (erro cURL 60) |
 | `saeb:import-official` | Séries oficiais por IBGE |
@@ -53,9 +54,13 @@ php artisan app:probe-inep-geo-fallbacks --city=1
 **Variáveis:** `IEDUCAR_SAEB_*`, `IEDUCAR_SAEB_JSON_PATH`
 
 ```bash
+php artisan saeb:import-planilhas-inep --years=2021,2023
+php artisan saeb:import-planilhas-inep --years=2023 --no-download
 php artisan saeb:sync-microdados --year=2023
 php artisan saeb:import-official --city=1 --year=2023
 ```
+
+Procedimento e requisitos (`unrar`/`p7zip`): [IMPORTACAO_SAEB_PLANILHAS_INEP.md](IMPORTACAO_SAEB_PLANILHAS_INEP.md).
 
 ---
 

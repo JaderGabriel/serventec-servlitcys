@@ -48,6 +48,8 @@ Classificação de dado (planilha Serventec / PDF): **publicado** (portaria/CKAN
 
 SAEB e geo: telas dedicadas (`admin.pedagogical-sync`, `admin.geo-sync`) — o hub mostra estado e atalhos.
 
+**CLI SAEB planilhas (2.4):** `saeb:import-planilhas-inep` — não depende da UI; ideal para primeira carga municipal antes de microdados.
+
 ---
 
 ## 4. Cobertura exibida (`PublicDataImportStatusService`)
@@ -80,8 +82,9 @@ Detalhe: [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md), [CONSULTAS_EXTERNAS.md]
 2. **Censo** — indexar matrículas municipais (`funding::index_censo_matriculas`).
 3. **FUNDEB** — importar anos de referência (CKAN + CSV receita).
 4. **Repasses** — Tesouro CSV (`TesouroTransferenciasCsvService`, COD_MUN + nome/UF) e Portal da Transparência (com API key) por município/ano.
-5. **SAEB** — microdados ou CSV na sincronização pedagógica.
-6. Opcional: **sincronização massiva semanal** para repetir com checkpoint.
+5. **SAEB municipal (IBGE)** — `php artisan saeb:import-planilhas-inep --years=2021,2023` (planilhas INEP; ver [IMPORTACAO_SAEB_PLANILHAS_INEP.md](IMPORTACAO_SAEB_PLANILHAS_INEP.md)).
+6. **SAEB complementar** — microdados ZIP ou CSV (`saeb:sync-microdados`) quando precisar de agregação escola/rede.
+7. Opcional: **sincronização massiva semanal** para repetir com checkpoint.
 
 Depois: gerar relatório PDF na consultoria — secções ATM consomem as tabelas acima; lacunas restantes aparecem em `data_gaps` (ver [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md)).
 

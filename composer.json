@@ -12,6 +12,7 @@
         "laravel/pulse": "^1.7",
         "laravel/tinker": "^3.0",
         "league/commonmark": "^2.7",
+        "phpoffice/phpspreadsheet": "^2.3",
         "predis/predis": "^3.4"
     },
     "require-dev": {

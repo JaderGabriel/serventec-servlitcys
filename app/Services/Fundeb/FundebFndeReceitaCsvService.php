@@ -104,7 +104,22 @@ class FundebFndeReceitaCsvService
         $base = 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/';
 
         foreach ($this->pagePathsForYear($publicationYear) as $path) {
-            $html = $this->fetchHtml($base.$path);
+            $url = $this->discoverReceitaCsvInListing($base.$path);
+            if ($url !== null) {
+                return $url;
+            }
+        }
+
+        return null;
+    }
+
+    private function discoverReceitaCsvInListing(string $listingUrl): ?string
+    {
+        foreach ([0, 20, 40, 60, 80, 100, 120, 140, 160] as $offset) {
+            $pageUrl = $offset === 0
+                ? $listingUrl
+                : $listingUrl.(str_contains($listingUrl, '?') ? '&' : '?').'b_start:int='.$offset;
+            $html = $this->fetchHtml($pageUrl);
             if ($html === null) {
                 continue;
             }
@@ -152,12 +167,20 @@ class FundebFndeReceitaCsvService
      */
     private function pagePathsForYear(int $year): array
     {
-        return [
+        $paths = [
             (string) $year,
             $year.'-1',
             $year.'/'.($year + 1),
-            'consultas',
         ];
+        if ($year >= 2025) {
+            $paths[] = (string) ($year + 1);
+            $paths[] = ($year + 1).'-1';
+        }
+        if ($year >= 2024) {
+            $paths[] = (string) ($year - 1).'-1';
+        }
+
+        return $paths;
     }
 
     private function yearCachePath(int $year): string

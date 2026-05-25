@@ -25,7 +25,7 @@ Este documento resume modelos visuais e analíticos usados em produtos públicos
 
 - O INEP divulga **microdados** em arquivos (ex.: ZIP); não há API única em JSON no formato deste painel.
 - Resultados **por escola** dependem de divulgação e amostra; muitas unidades aparecem agregadas ou suprimidas por privacidade.
-- O arquivo `saeb/historico.json` deve ser produzido por **ETL próprio** (Python/R/Laravel) a partir de bases oficiais, com revisão técnica.
+- O arquivo `saeb/historico.json` é alimentado por import Laravel: **`saeb:import-planilhas-inep`** (planilhas INEP, IBGE real) e/ou **`saeb:sync-microdados`** / CSV — ver [IMPORTACAO_SAEB_PLANILHAS_INEP.md](IMPORTACAO_SAEB_PLANILHAS_INEP.md).
 
 ## Próximos passos sugeridos no código
 
@@ -33,4 +33,4 @@ Ver [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`GRA-07` e evoluçõ
 
 - Metas configuráveis (`config` ou JSON) para cor verde/âmbar no quadro escolar.
 - Export CSV da tabela por escola a partir do mesmo payload do painel.
-- Opcional: job agendado que baixa CSV do dados.gov.br e regenera o JSON (pipeline separado).
+- Agendar `saeb:import-planilhas-inep` ou `saeb:sync-microdados` no cron após publicação INEP de cada ano.

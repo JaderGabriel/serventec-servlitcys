@@ -536,6 +536,29 @@ return [
             'IEDUCAR_SAEB_MICRODADOS_ZIP_URL',
             'https://download.inep.gov.br/microdados/microdados_saeb_{year}.zip'
         ),
+        /**
+         * URLs INEP por ano quando o template genérico devolve 404 (ex.: 2021 EF/Médio).
+         *
+         * @var array<int, string>
+         */
+        'microdados_inep_zip_url_overrides' => [
+            2021 => 'https://download.inep.gov.br/microdados/microdados_saeb_2021_ensino_fundamental_e_medio.zip',
+        ],
+        /**
+         * Planilhas oficiais (CO_MUNICIPIO IBGE) — `php artisan saeb:import-planilhas-inep`.
+         *
+         * @var array<int, string>
+         */
+        'planilha_resultados_urls' => [
+            2023 => 'https://download.inep.gov.br/saeb/resultados/planilha_de_resultados_2023.rar',
+            2021 => 'https://download.inep.gov.br/saeb/resultados/saeb_2021_brasil_estados_municipios.xlsx',
+        ],
+        /** Cache de planilhas INEP descarregadas (RAR/XLSX/XLSB). */
+        'planilha_cache_path' => trim((string) env('IEDUCAR_SAEB_PLANILHA_CACHE_PATH', 'saeb/planilhas')) ?: 'saeb/planilhas',
+        /**
+         * Dependência administrativa preferida na aba Municípios (ex.: Municipal, Total - Federal, Estadual, Municipal e Privada).
+         */
+        'planilha_prefer_dependencia' => trim((string) env('IEDUCAR_SAEB_PLANILHA_DEPENDENCIA', 'Municipal')) ?: 'Municipal',
         'microdados_cache_path' => trim((string) env('IEDUCAR_SAEB_MICRODADOS_CACHE_PATH', 'saeb/microdados_cache')) ?: 'saeb/microdados_cache',
         'microdados_download_timeout_seconds' => (int) env('IEDUCAR_SAEB_MICRODADOS_TIMEOUT', 900),
         /** cURL/Guzzle: verificar certificado SSL (false só em dev com CA em falta). */

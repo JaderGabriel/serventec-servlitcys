@@ -15,6 +15,11 @@ final class SaebMicrodadosInepDownloader
 {
     public function zipUrlForYear(int $year): string
     {
+        $overrides = config('ieducar.saeb.microdados_inep_zip_url_overrides', []);
+        if (is_array($overrides) && isset($overrides[$year]) && is_string($overrides[$year]) && $overrides[$year] !== '') {
+            return $overrides[$year];
+        }
+
         $template = (string) config(
             'ieducar.saeb.microdados_inep_zip_url_template',
             'https://download.inep.gov.br/microdados/microdados_saeb_{year}.zip'
@@ -256,6 +261,26 @@ final class SaebMicrodadosInepDownloader
             throw $e instanceof \RuntimeException ? $e : new \RuntimeException($e->getMessage(), 0, $e);
         } finally {
             @unlink($tmpZip);
+        }
+    }
+
+    /**
+     * Descarrega um ficheiro remoto para o caminho indicado (planilhas SAEB, CSV, etc.).
+     *
+     * @throws \RuntimeException
+     */
+    public function downloadFileToPath(string $url, string $absolutePath, string $userAgent = 'servlitcys/1.0 (SAEB planilhas INEP)'): void
+    {
+        $timeout = max(60, min(3600, (int) config('ieducar.saeb.microdados_download_timeout_seconds', 900)));
+        $dir = dirname($absolutePath);
+        if (! is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $this->getWithSinkRespectingSsl($url, $absolutePath, $timeout, $userAgent);
+
+        if (! is_readable($absolutePath) || filesize($absolutePath) < 100) {
+            throw new \RuntimeException(__('Ficheiro descarregado inválido ou vazio.'));
         }
     }
 

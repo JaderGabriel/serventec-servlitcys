@@ -84,8 +84,16 @@ final class SaebMicrodadosCsvStreamConverter
         }
 
         $spec = $this->resolveColumnSpec($norm);
+        $mediaColumns = $this->mediaColumnsFromHeaders($norm);
 
-        if ($spec['ibge'] === null || ($spec['year'] === null && $spec['year_fallback'] === null)) {
+        if (
+            $spec['ibge'] === null
+            || (
+                $spec['year'] === null
+                && $spec['year_fallback'] === null
+                && $mediaColumns === []
+            )
+        ) {
             fclose($in);
 
             return [
@@ -168,6 +176,18 @@ final class SaebMicrodadosCsvStreamConverter
                 }
             }
 
+            if ($emitted === 0 && $mediaColumns !== []) {
+                foreach ($mediaColumns as $media) {
+                    $valRaw = $this->cell($row, $media['idx']);
+                    if (! is_numeric($valRaw)) {
+                        continue;
+                    }
+                    $etapaMedia = $this->normalizeEtapa($media['etapa']);
+                    fwrite($out, $this->canonicalLine($ibge, $year, $media['disc'], $etapaMedia, (float) $valRaw, $status, $inep));
+                    $emitted++;
+                }
+            }
+
             if ($emitted === 0 && $spec['disc'] !== null && $spec['val'] !== null) {
                 $discRaw = (string) $this->cell($row, $spec['disc']);
                 $valRaw = $this->cell($row, $spec['val']);
@@ -219,8 +239,15 @@ final class SaebMicrodadosCsvStreamConverter
         $score = 0;
         foreach ($headers as $h) {
             $u = strtoupper($this->normalizeHeaderName((string) $h));
-            if (str_contains($u, 'MUNICIPIO') || str_contains($u, 'IBGE')) {
+            if ($u === 'CO_MUNICIPIO' || str_contains($u, 'CO_MUNICIPIO')) {
+                $score += 5;
+            } elseif (str_contains($u, 'MUNICIPIO') || str_contains($u, 'IBGE')) {
                 $score += 3;
+            } elseif ($u === 'ID_MUNICIPIO') {
+                $score += 1;
+            }
+            if (str_starts_with($u, 'MEDIA_') && (str_ends_with($u, '_LP') || str_ends_with($u, '_MT'))) {
+                $score += 2;
             }
             if (str_contains($u, 'ANO') || str_contains($u, 'SAEB')) {
                 $score += 2;
@@ -274,11 +301,12 @@ final class SaebMicrodadosCsvStreamConverter
             return null;
         };
 
+        // CO_MUNICIPIO (planilhas oficiais) antes de ID_MUNICIPIO (microdados mascarados LGPD).
         $ibge = $pick('ibge', [
-            'CO_MUNICIPIO', 'CO_MUNICIPIO_IBGE', 'CO_IBGE', 'CO_CODIGO_IBGE', 'IBGE_MUNICIPIO', 'CO_CODIGO_MUNICIPIO',
+            'CO_MUNICIPIO', 'CO_MUNICIPIO_IBGE', 'CO_IBGE', 'CO_CODIGO_IBGE', 'IBGE_MUNICIPIO', 'CO_CODIGO_MUNICIPIO', 'ID_MUNICIPIO',
         ]);
 
-        $year = $pick('year', ['NU_ANO_SAEB', 'ANO_SAEB', 'ANO_REFERENCIA', 'ANO_APLICACAO', 'ANO']);
+        $year = $pick('year', ['ID_SAEB', 'NU_ANO_SAEB', 'ANO_SAEB', 'ANO_REFERENCIA', 'ANO_APLICACAO', 'ANO']);
         $yearFallback = $pick('year_alt', ['NU_ANO']);
 
         $uf = $pick('uf', ['CO_UF', 'SG_UF', 'UF']);
@@ -294,7 +322,7 @@ final class SaebMicrodadosCsvStreamConverter
         $etapa = $pick('etapa', ['CO_ETAPA', 'DS_ETAPA', 'ETAPA', 'NM_ETAPA', 'TP_ETAPA']);
 
         $inep = $pick('inep_escola', [
-            'CO_ESCOLA', 'ID_ESCOLA', 'INEP', 'CODIGO_ESCOLA', 'CO_CODIGO_ESCOLA', 'INEP_ESCOLA',
+            'ID_ESCOLA', 'CO_ESCOLA', 'INEP', 'CODIGO_ESCOLA', 'CO_CODIGO_ESCOLA', 'INEP_ESCOLA',
         ]);
 
         $statusPre = $pick('preliminar_flag', ['IN_PRELIMINAR', 'FL_PRELIMINAR', 'PRELIMINAR']);
@@ -390,6 +418,29 @@ final class SaebMicrodadosCsvStreamConverter
         return $ibge.';'.$year.';'.$disc.';'.$etapa.';'.$valorStr.';'.$status.';'.$inep."\n";
     }
 
+    /**
+     * Microdados SAEB 2023+ (TS_ESCOLA): colunas MEDIA_{etapa}_{LP|MT}.
+     *
+     * @param  array<int, string>  $norm
+     * @return list<array{idx: int, disc: string, etapa: string}>
+     */
+    private function mediaColumnsFromHeaders(array $norm): array
+    {
+        $out = [];
+        foreach ($norm as $i => $h) {
+            if (! preg_match('/^MEDIA_([A-Z0-9]+)_(LP|MT)$/', $h, $m)) {
+                continue;
+            }
+            $out[] = [
+                'idx' => $i,
+                'disc' => strtolower($m[2]) === 'MT' ? 'mat' : 'lp',
+                'etapa' => strtolower($m[1]),
+            ];
+        }
+
+        return $out;
+    }
+
     private function normalizeHeaderName(string $h): string
     {
         $h = trim($h);
@@ -452,6 +503,15 @@ final class SaebMicrodadosCsvStreamConverter
         }
         if (str_contains($s, 'infantil')) {
             return 'ei';
+        }
+        if (preg_match('/^5ef$/', $s)) {
+            return 'efi';
+        }
+        if (preg_match('/^9ef$/', $s)) {
+            return 'efaf';
+        }
+        if (preg_match('/^emt|emi|em$/', $s)) {
+            return 'em';
         }
         if (ctype_digit($s)) {
             $n = (int) $s;

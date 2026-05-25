@@ -50,9 +50,10 @@ final class FundebReferenceDisplay
         }
 
         if (
-            $origem === FundebMunicipalReferenceResolver::FONTE_CONFIG_GLOBAL
+            $origem === FundebMunicipalReferenceResolver::FONTE_VALOR_CONFIGURADO
+            || $origem === FundebMunicipalReferenceResolver::FONTE_CONFIG_GLOBAL
+            || str_contains($fonte, 'valor configurado')
             || str_contains($fonte, 'ieducar_disc_vaa')
-            || str_contains($fonte, 'referência configurável')
         ) {
             return 'config';
         }
@@ -71,7 +72,7 @@ final class FundebReferenceDisplay
             'municipal' => __('VAAF municipal'),
             'previa' => __('Prévia federal (configurável)'),
             'estimado' => __('VAAF estimado (receita ÷ matrículas)'),
-            'config' => __('Referência configurável (piso indicativo)'),
+            'config' => __('Valor configurado (IEDUCAR_DISC_VAA_REFERENCIA)'),
             default => __('Valor-aluno/ano de referência'),
         };
     }
@@ -158,9 +159,11 @@ final class FundebReferenceDisplay
             $vaafFmt = $fmt($vaaf);
         }
 
-        $aviso = self::tipoVaafCalculo($funding) !== 'municipal'
-            ? __('Sem VAAF municipal importado para este IBGE/ano — não é repasse FNDE/Simec.')
-            : null;
+        $aviso = match (self::tipoVaafCalculo($funding)) {
+            'municipal' => null,
+            'config' => __('Valor configurado em IEDUCAR_DISC_VAA_REFERENCIA — não é repasse FNDE/Simec.'),
+            default => __('Sem VAAF municipal importado para este IBGE/ano — não é repasse FNDE/Simec.'),
+        };
 
         return [
             'matriculas' => $matriculas,
@@ -222,8 +225,12 @@ final class FundebReferenceDisplay
                 ':mat matrícula(s) × :vaa/aluno/ano (VAAF estimado — :fonte) = :total.',
                 ['mat' => $mat, 'vaa' => $vaa, 'fonte' => $fonte, 'total' => $total]
             ),
+            'config' => __(
+                ':mat matrícula(s) × :vaa/aluno/ano (valor configurado IEDUCAR_DISC_VAA_REFERENCIA — :fonte) = :total.',
+                ['mat' => $mat, 'vaa' => $vaa, 'fonte' => $fonte, 'total' => $total]
+            ),
             default => __(
-                ':mat matrícula(s) × :vaa/aluno/ano (referência configurável — :fonte) = :total.',
+                ':mat matrícula(s) × :vaa/aluno/ano (:fonte) = :total.',
                 ['mat' => $mat, 'vaa' => $vaa, 'fonte' => $fonte, 'total' => $total]
             ),
         };

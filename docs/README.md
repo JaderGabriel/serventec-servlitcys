@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto (`main`):** 2.3.2 · commit `4d3f5e8` (#157) · **Última revisão deste índice:** maio/2026
+**Versão do produto (`main`):** 2.4.0 · tag `20260524-Ceres` · **Última revisão deste índice:** 24/05/2026
 
 Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que o sistema faz hoje, **porque** certas decisões foram tomadas e **o que** está planejado implementar.
 
@@ -57,6 +57,7 @@ Os restantes arquivos são **aprofundamento** por tema. Itens de backlog que apa
 | [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) | Performance, Pulse, lazy por aba |
 | [SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md](SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md) | Guia MEC/INEP: gráficos cobertos vs. pendentes |
 | [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | SAEB/IDEB: referências visuais e evolução pedagógica |
+| [IMPORTACAO_SAEB_PLANILHAS_INEP.md](IMPORTACAO_SAEB_PLANILHAS_INEP.md) | Planilhas INEP → `saeb:import-planilhas-inep` (v2.4, sem Python) |
 
 ### Integrações e fontes públicas
 
