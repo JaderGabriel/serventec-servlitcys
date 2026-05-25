@@ -912,6 +912,7 @@ return [
          */
         'deficiencia_label_aliases' => [
             // 'TEA' => 'Transtorno do espectro autista',
+            // 'Autismo clássico' => 'Transtorno do espectro autista',
             // 'AH' => 'Altas habilidades/Superdotação',
         ],
 

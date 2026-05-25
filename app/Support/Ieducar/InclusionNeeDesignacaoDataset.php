@@ -37,12 +37,15 @@ final class InclusionNeeDesignacaoDataset
 
             $rows = InclusionDashboardQueries::getMatriculasPorDeficiencia($db, $city, $filters, null);
 
-            $maps = InclusionEducacensoCatalog::deficienciaCountMapsFromRows(
-                $rows,
-                static fn ($row) => (string) ($row->deficiencia ?? ''),
-                static fn ($row) => (int) ($row->total ?? 0),
-                static fn ($row) => (string) ($row->def_id ?? ''),
-            );
+            $maps = InclusionDashboardQueries::deficienciaCountMapsFromNeeExportAligned($db, $city, $filters);
+            if (($maps['by_id'] ?? []) === [] && ($maps['by_norm'] ?? []) === []) {
+                $maps = InclusionEducacensoCatalog::deficienciaCountMapsFromRows(
+                    $rows,
+                    static fn ($row) => (string) ($row->deficiencia ?? ''),
+                    static fn ($row) => (int) ($row->total ?? 0),
+                    static fn ($row) => (string) ($row->def_id ?? ''),
+                );
+            }
 
             $catalog = self::buildCatalogRows($entries, $maps, $rows);
             $assignedCatalog = self::sumCatalogAssigned($catalog);
@@ -177,8 +180,8 @@ final class InclusionNeeDesignacaoDataset
         $chart['datasets'][0]['backgroundColor'] = $series['colors'];
         $chart['datasets'][0]['borderColor'] = $series['colors'];
         $chart['subtitle'] = $includeZeros
-            ? __('Cálculo: 1 matrícula NEE → 1 barra (código ou rótulo normalizado). Valor 0 = sem vínculo no filtro.')
-            : __('Cálculo: só designações com matrícula no recorte.');
+            ? __('Cálculo: cada matrícula NEE soma +1 em cada designação catalogada (fisica_deficiencia + aluno_deficiencia, sem duplicar o mesmo código). Valor 0 = sem vínculo no filtro.')
+            : __('Cálculo: só designações com matrícula no recorte (vários vínculos por aluno geram várias barras).');
         $chart['footnote'] = __('Âmbar: só turma AEE (Total NEE − com cadastro) ou cadastro sem match no catálogo MEC/i-Educar.');
         $chart['options'] = array_merge(
             is_array($chart['options'] ?? null) ? $chart['options'] : [],

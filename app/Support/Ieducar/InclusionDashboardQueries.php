@@ -564,6 +564,84 @@ final class InclusionDashboardQueries
      *
      * @return array{deficiencias: int, sindromes_tea: int, ne_altas_habilidades: int}
      */
+    /**
+     * Contagens do catálogo NEE: 1 matrícula NEE → +1 por designação catalogada (fisica + aluno_deficiencia, sem duplicar o mesmo código).
+     *
+     * @return array{by_id: array<string, int>, by_norm: array<string, int>}
+     */
+    public static function deficienciaCountMapsFromNeeExportAligned(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+    ): array {
+        try {
+            $neeRows = self::fetchNeeMatriculasComTurmaCurso($db, $city, $filters);
+            if ($neeRows === []) {
+                return ['by_id' => [], 'by_norm' => []];
+            }
+
+            $alunoIds = array_values(array_unique(array_map(
+                static fn (array $r): int => (int) ($r['aluno_id'] ?? 0),
+                $neeRows,
+            )));
+            $alunoIds = array_values(array_filter($alunoIds, static fn (int $id): bool => $id > 0));
+            $byAluno = self::deficienciasPorAlunoIdsForExport($db, $city, $alunoIds);
+
+            return self::aggregateCatalogCountMapsFromNeeMatriculas($neeRows, $byAluno);
+        } catch (\Throwable) {
+            return ['by_id' => [], 'by_norm' => []];
+        }
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $neeRows
+     * @param  array<int, array{labels?: list<string>, designacoes?: list<array{nome: string, def_id: string, norm: string}>}>  $byAluno
+     * @return array{by_id: array<string, int>, by_norm: array<string, int>}
+     */
+    public static function aggregateCatalogCountMapsFromNeeMatriculas(array $neeRows, array $byAluno): array
+    {
+        $byId = [];
+        $byNorm = [];
+
+        foreach ($neeRows as $row) {
+            $aid = (int) ($row['aluno_id'] ?? 0);
+            if ($aid <= 0) {
+                continue;
+            }
+
+            $designacoes = $byAluno[$aid]['designacoes'] ?? [];
+            if ($designacoes === [] && isset($byAluno[$aid]['labels'])) {
+                foreach ($byAluno[$aid]['labels'] as $nome) {
+                    $nome = trim((string) $nome);
+                    if ($nome === '') {
+                        continue;
+                    }
+                    $designacoes[] = [
+                        'nome' => $nome,
+                        'def_id' => '',
+                        'norm' => InclusionEducacensoCatalog::resolveCatalogNorm($nome),
+                    ];
+                }
+            }
+
+            foreach ($designacoes as $d) {
+                $defId = trim((string) ($d['def_id'] ?? ''));
+                $norm = trim((string) ($d['norm'] ?? ''));
+                if ($norm === '' && trim((string) ($d['nome'] ?? '')) !== '') {
+                    $norm = InclusionEducacensoCatalog::resolveCatalogNorm((string) $d['nome']);
+                }
+
+                if ($defId !== '') {
+                    $byId[$defId] = ($byId[$defId] ?? 0) + 1;
+                } elseif ($norm !== '') {
+                    $byNorm[$norm] = ($byNorm[$norm] ?? 0) + 1;
+                }
+            }
+        }
+
+        return ['by_id' => $byId, 'by_norm' => $byNorm];
+    }
+
     public static function aggregateGruposPorMatriculaNeeExportAligned(
         Connection $db,
         City $city,
@@ -2205,7 +2283,12 @@ final class InclusionDashboardQueries
 
     /**
      * @param  list<int>  $alunoIds
-     * @return array<int, array{labels: list<string>, grupos: list<string>, grupo_keys: list<string>}>
+     * @return array<int, array{
+     *   labels: list<string>,
+     *   grupos: list<string>,
+     *   grupo_keys: list<string>,
+     *   designacoes: list<array{nome: string, def_id: string, norm: string}>
+     * }>
      */
     public static function deficienciasPorAlunoIdsForExport(Connection $db, City $city, array $alunoIds): array
     {
@@ -2231,9 +2314,10 @@ final class InclusionDashboardQueries
         $aId = (string) config('ieducar.columns.aluno.id');
         $map = [];
         $g = $db->getQueryGrammar();
+        $wPk = $g->wrap($defPk);
         $defLabelExpr = $nmCol !== null
             ? 'd.'.$g->wrap($nmCol)
-            : 'CONCAT(\'Designação #\', CAST(d.'.$g->wrap($defPk).' AS TEXT))';
+            : 'CONCAT(\'Designação #\', CAST(d.'.$wPk.' AS TEXT))';
 
         $fisica = self::resolveFisicaDeficienciaJoinSpec($db, $city);
         $aIdpes = self::resolveAlunoIdpesColumn($db, $aluno, $city);
@@ -2244,6 +2328,7 @@ final class InclusionDashboardQueries
                 ->join($defTable.' as d', 'fd.'.$fisica['def_fk'], '=', 'd.'.$defPk)
                 ->whereIn('a.'.$aId, $alunoIds)
                 ->selectRaw('a.'.$aId.' as aid')
+                ->selectRaw('d.'.$wPk.' as def_id')
                 ->selectRaw($defLabelExpr.' as deficiencia')
                 ->distinct()
                 ->get();
@@ -2266,6 +2351,7 @@ final class InclusionDashboardQueries
                     ->join($defTable.' as d', 'ad.'.$adDef, '=', 'd.'.$defPk)
                     ->whereIn('a.'.$aId, $alunoIds)
                     ->selectRaw('a.'.$aId.' as aid')
+                    ->selectRaw('d.'.$wPk.' as def_id')
                     ->selectRaw($defLabelExpr.' as deficiencia')
                     ->distinct()
                     ->get();
@@ -2277,7 +2363,7 @@ final class InclusionDashboardQueries
     }
 
     /**
-     * @param  array<int, array{labels: list<string>, grupos: list<string>}>  $map
+     * @param  array<int, array{labels: list<string>, grupos: list<string>, grupo_keys: list<string>, designacoes: list<array{nome: string, def_id: string, norm: string}>}>  $map
      * @param  iterable<object>  $rows
      */
     private static function mergeDeficienciaExportRows(array &$map, iterable $rows): void
@@ -2285,10 +2371,23 @@ final class InclusionDashboardQueries
         foreach ($rows as $row) {
             $aid = (int) ($row->aid ?? 0);
             $nome = trim((string) ($row->deficiencia ?? ''));
+            $defId = trim((string) ($row->def_id ?? ''));
             if ($aid <= 0 || $nome === '') {
                 continue;
             }
-            $map[$aid] ??= ['labels' => [], 'grupos' => [], 'grupo_keys' => []];
+
+            $map[$aid] ??= ['labels' => [], 'grupos' => [], 'grupo_keys' => [], 'designacoes' => []];
+            $dedupeKey = $defId !== '' ? 'id:'.$defId : 'nome:'.InclusionEducacensoCatalog::normalizeLabel($nome);
+            if (! isset($map[$aid]['_dedupe'][$dedupeKey])) {
+                $map[$aid]['_dedupe'][$dedupeKey] = true;
+                $norm = InclusionEducacensoCatalog::resolveCatalogNorm($nome);
+                $map[$aid]['designacoes'][] = [
+                    'nome' => $nome,
+                    'def_id' => $defId,
+                    'norm' => $norm,
+                ];
+            }
+
             if (! in_array($nome, $map[$aid]['labels'], true)) {
                 $map[$aid]['labels'][] = $nome;
                 $grupoKey = self::classificarDesignacaoNeeGrupo($nome);
@@ -2300,6 +2399,10 @@ final class InclusionDashboardQueries
                     $map[$aid]['grupo_keys'][] = $grupoKey;
                 }
             }
+        }
+
+        foreach ($map as $aid => $payload) {
+            unset($map[$aid]['_dedupe']);
         }
     }
 

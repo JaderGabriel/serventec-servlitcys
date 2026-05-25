@@ -84,7 +84,7 @@ final class InclusionNeeIndicatorsPanel
             'catalog_chart' => $catalogChart,
             'calc_note' => [
                 'formula' => __(
-                    'Grupos: matrículas NEE classificadas por designação (mesma lógica da exportação). Medidores: Rede % = grupo ÷ matrículas ativas no filtro; Universo NEE % = grupo ÷ total NEE. Catálogo: 1 matrícula → 1 barra.'
+                    'Grupos: matrículas NEE classificadas por designação (mesma lógica da exportação). Medidores: Rede % = grupo ÷ matrículas ativas no filtro; Universo NEE % = grupo ÷ total NEE. Catálogo: cada matrícula NEE conta em cada designação do cadastro (várias barras por aluno).'
                 ),
                 'note' => __(
                     'Inclui cadastro sem match no catálogo MEC (âmbar). «Só turma AEE» não entra nos três grupos — aparece no catálogo como remanescente.'
