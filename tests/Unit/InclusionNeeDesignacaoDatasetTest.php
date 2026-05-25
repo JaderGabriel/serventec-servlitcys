@@ -75,6 +75,31 @@ final class InclusionNeeDesignacaoDatasetTest extends TestCase
         );
     }
 
+    public function test_grupo_inclui_sem_designacao_no_bloco_deficiencias(): void
+    {
+        $catalog = [
+            ['label' => 'Baixa visão', 'value' => 10.0, 'kind' => 'inep', 'norm' => 'baixa visao', 'grupo' => 'deficiencia'],
+            ['label' => 'Sem designação', 'value' => 706.0, 'kind' => 'ieducar', 'norm' => '__sem_designacao__', 'grupo' => 'deficiencia'],
+        ];
+        $method = new \ReflectionMethod(InclusionNeeDesignacaoDataset::class, 'aggregateGruposFromCatalog');
+        $method->setAccessible(true);
+        $grupos = $method->invoke(null, $catalog);
+
+        $this->assertSame(716, $grupos['deficiencias']);
+        $this->assertSame(0, $grupos['sindromes_tea']);
+
+        $dataset = [
+            'footnote' => 'test',
+            'uses_fisica' => true,
+            'matriculas_nee' => 716,
+            'catalog' => $catalog,
+            'grupos' => $grupos,
+        ];
+        $chart = InclusionNeeDesignacaoDataset::chartGrupo($dataset, 1000);
+        $this->assertNotNull($chart);
+        $this->assertSame([716.0, 0.0, 0.0], $chart['datasets'][0]['data']);
+    }
+
     public function test_append_sem_designacao_quando_total_nee_excede_soma_barras(): void
     {
         $catalog = [

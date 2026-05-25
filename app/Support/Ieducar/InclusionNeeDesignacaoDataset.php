@@ -77,8 +77,12 @@ final class InclusionNeeDesignacaoDataset
         $nDef = (int) ($g['deficiencias'] ?? 0);
         $nSin = (int) ($g['sindromes_tea'] ?? 0);
         $nNe = (int) ($g['ne_altas_habilidades'] ?? 0);
+        $matriculasNee = (int) ($dataset['matriculas_nee'] ?? 0);
         if ($nDef + $nSin + $nNe <= 0) {
-            return null;
+            if ($matriculasNee <= 0) {
+                return null;
+            }
+            $nDef = $matriculasNee;
         }
 
         $chart = ChartPayload::bar(
@@ -94,7 +98,14 @@ final class InclusionNeeDesignacaoDataset
         $chart['subtitle'] = (string) ($dataset['footnote'] ?? '');
 
         if ($denominator !== null && $denominator > 0) {
-            $chart = InclusionDashboardQueries::attachMatriculaKpiTotalPublic($chart, $denominator, true);
+            $chart = InclusionDashboardQueries::attachMatriculaKpiTotalPublic(
+                $chart,
+                $denominator,
+                true,
+                $matriculasNee > 0
+                    ? __('Total matrículas NEE no filtro: :n', ['n' => number_format($matriculasNee)])
+                    : null
+            );
         }
 
         return $chart;
@@ -161,12 +172,15 @@ final class InclusionNeeDesignacaoDataset
         );
         $chart['catalog_include_zeros'] = $includeZeros;
 
+        $matriculasNee = (int) ($dataset['matriculas_nee'] ?? 0);
         if ($denominator !== null && $denominator > 0) {
             $chart = InclusionDashboardQueries::attachMatriculaKpiTotalPublic(
                 $chart,
                 $denominator,
                 true,
-                __('Soma das barras (pode exceder o total por vínculos múltiplos)')
+                $matriculasNee > 0
+                    ? __('Matrículas NEE no filtro: :n (soma das barras alinha ao catálogo; barra âmbar = só AEE/sem designação)', ['n' => number_format($matriculasNee)])
+                    : __('Soma das barras (pode exceder o total por vínculos múltiplos)')
             );
         }
 
@@ -361,11 +375,13 @@ final class InclusionNeeDesignacaoDataset
         ];
 
         foreach ($catalog as $row) {
-            if ((string) ($row['norm'] ?? '') === '__sem_designacao__') {
-                continue;
-            }
             $v = (int) round((float) ($row['value'] ?? 0));
             if ($v <= 0) {
+                continue;
+            }
+            if ((string) ($row['norm'] ?? '') === '__sem_designacao__') {
+                $out['deficiencias'] += $v;
+
                 continue;
             }
             match ((string) ($row['grupo'] ?? 'deficiencia')) {

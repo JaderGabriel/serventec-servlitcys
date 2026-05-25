@@ -7,12 +7,24 @@
             $chartsById[(string) $chartItem['chart_id']] = $chartItem;
         }
     }
-    $chartNeeGrupo = $chartsById['nee_grupo'] ?? ($inclusionData['charts'][0] ?? null);
+    $chartNeeGrupo = $chartsById['nee_grupo'] ?? null;
     $chartNeeCatalogo = $chartsById['nee_catalogo'] ?? ($chartsById['nee_catalogo_mec'] ?? null);
     $methodology = $inclusionData['methodology'] ?? [];
     $totalMat = $inclusionData['total_matriculas'] ?? null;
     $eqFonte = $inclusionData['equidade_fonte'] ?? null;
     $neeChartsCount = (int) ($inclusionData['nee_charts_count'] ?? 0);
+    $matriculasNee = isset($inclusionData['matriculas_nee']) ? (int) $inclusionData['matriculas_nee'] : null;
+    $neeExtraCharts = [];
+    foreach (array_slice($inclusionData['charts'] ?? [], 0, $neeChartsCount) as $chartItem) {
+        if (! is_array($chartItem)) {
+            continue;
+        }
+        $chartId = (string) ($chartItem['chart_id'] ?? '');
+        if (in_array($chartId, ['nee_grupo', 'nee_catalogo', 'nee_catalogo_mec'], true)) {
+            continue;
+        }
+        $neeExtraCharts[] = $chartItem;
+    }
     $aeeCross = $inclusionData['aee_cross'] ?? null;
     $neeDetalheCatalogo = $inclusionData['nee_detalhe_catalogo'] ?? null;
     $hasNeeDetalheCatalogo = is_array($neeDetalheCatalogo)
@@ -70,6 +82,12 @@
             <p class="mt-2 text-sm font-medium text-gray-800 dark:text-gray-200">
                 {{ __('Matrículas ativas no filtro (denominador comum):') }}
                 <span class="tabular-nums text-indigo-700 dark:text-indigo-300">{{ number_format($totalMat) }}</span>
+            </p>
+        @endif
+        @if ($matriculasNee !== null && $matriculasNee > 0)
+            <p class="mt-1 text-sm font-medium text-gray-800 dark:text-gray-200">
+                {{ __('Matrículas NEE no filtro (cadastro e/ou turma AEE):') }}
+                <span class="tabular-nums text-violet-700 dark:text-violet-300">{{ number_format($matriculasNee) }}</span>
             </p>
         @endif
         @if ($eqLabel)
@@ -360,10 +378,9 @@
                     </div>
                 @endif
 
-                @if ($neeChartsCount > 2)
+                @if (count($neeExtraCharts) > 0)
                     @php
-                        $neeTailCharts = array_slice($inclusionData['charts'], 2, $neeChartsCount - 2);
-                        $neeTailCount = count($neeTailCharts);
+                        $neeTailCount = count($neeExtraCharts);
                     @endphp
                     <div
                         class="grid grid-cols-1 xl:grid-cols-2 gap-6 min-w-0 mt-6 items-start [&>.chart-panel-host]:flex [&>.chart-panel-host]:flex-col [&>.chart-panel-host]:min-h-0"
@@ -371,7 +388,7 @@
                             '[&>.chart-panel-host:nth-last-child(-n+2)]:max-h-[min(30rem,72vh)] [&>.chart-panel-host:nth-last-child(-n+2)]:overflow-hidden' => $neeTailCount >= 2,
                         ])
                     >
-                        @foreach ($neeTailCharts as $idx => $chart)
+                        @foreach ($neeExtraCharts as $idx => $chart)
                             <x-dashboard.chart-panel
                                 :chart="$chart"
                                 :exportFilename="'inclusao-nee-'.($idx + 1)"
@@ -398,7 +415,7 @@
                 <dl class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
                     <div class="rounded-md bg-white/80 dark:bg-gray-800/60 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2">
                         <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Matrículas NEE (total)') }}</dt>
-                        <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($aeeCross['nee_matriculas_total'] ?? 0)) }}</dd>
+                        <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format($matriculasNee ?? (int) ($aeeCross['nee_matriculas_total'] ?? 0)) }}</dd>
                     </div>
                     <div class="rounded-md bg-white/80 dark:bg-gray-800/60 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2">
                         <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Matrículas em turmas AEE') }}</dt>

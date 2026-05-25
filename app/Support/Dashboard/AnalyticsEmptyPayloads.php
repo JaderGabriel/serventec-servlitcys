@@ -104,6 +104,7 @@ final class AnalyticsEmptyPayloads
             'equidade_fonte' => null,
             'methodology' => [],
             'nee_grupo_resumo' => null,
+            'matriculas_nee' => null,
             'chart_raca_por_escola_stacked' => null,
             'chart_nee_por_raca_stacked' => null,
             'nee_matriculas_por_escola' => [],

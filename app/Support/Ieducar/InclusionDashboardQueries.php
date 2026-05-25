@@ -191,6 +191,53 @@ final class InclusionDashboardQueries
                 return [];
             }
 
+            $dataset = InclusionNeeDesignacaoDataset::build($db, $city, $filters);
+            if ($dataset !== null && (int) ($dataset['matriculas_nee'] ?? 0) > 0) {
+                $nee = (int) $dataset['matriculas_nee'];
+                $g = $dataset['grupos'] ?? [];
+                $nDef = (int) ($g['deficiencias'] ?? 0);
+                $nSin = (int) ($g['sindromes_tea'] ?? 0);
+                $nAh = (int) ($g['ne_altas_habilidades'] ?? 0);
+                $pctRede = static fn (int $n): float => round(100.0 * $n / $den, 1);
+                $pathNote = ($dataset['uses_fisica'] ?? false)
+                    ? __('cadastro.fisica_deficiencia + deficiência (+ turma AEE quando configurado)')
+                    : __('aluno_deficiencia + deficiência (+ turma AEE quando configurado)');
+
+                return [
+                    [
+                        'title' => __('Deficiências'),
+                        'percent' => $pctRede($nDef),
+                        'caption' => __(':n de :nee matrículas NEE (:pct% do universo NEE; :rede% da rede). Origem: :path.', [
+                            'n' => $nDef,
+                            'nee' => $nee,
+                            'pct' => $nee > 0 ? round(100.0 * $nDef / $nee, 1) : 0,
+                            'rede' => $pctRede($nDef),
+                            'path' => $pathNote,
+                        ]),
+                    ],
+                    [
+                        'title' => __('Síndromes e TEA'),
+                        'percent' => $pctRede($nSin),
+                        'caption' => __(':n de :nee matrículas NEE (:pct% do universo NEE; :rede% da rede).', [
+                            'n' => $nSin,
+                            'nee' => $nee,
+                            'pct' => $nee > 0 ? round(100.0 * $nSin / $nee, 1) : 0,
+                            'rede' => $pctRede($nSin),
+                        ]),
+                    ],
+                    [
+                        'title' => __('Altas habilidades / superdotação'),
+                        'percent' => $pctRede($nAh),
+                        'caption' => __(':n de :nee matrículas NEE (:pct% do universo NEE; :rede% da rede).', [
+                            'n' => $nAh,
+                            'nee' => $nee,
+                            'pct' => $nee > 0 ? round(100.0 * $nAh / $nee, 1) : 0,
+                            'rede' => $pctRede($nAh),
+                        ]),
+                    ],
+                ];
+            }
+
             $defTable = self::resolveDeficienciaCatalogTable($db, $city);
             if ($defTable === null) {
                 return [];
@@ -1164,7 +1211,7 @@ final class InclusionDashboardQueries
                     $uniqueMid[$mid] = true;
                 }
             }
-            $neeMatriculas = count($uniqueMid);
+            $neeMatriculas = self::countMatriculasComNee($db, $city, $filters);
 
             $aeeMids = [];
             $alunosComAee = [];

@@ -11,6 +11,7 @@ use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\IeducarSqlPlaceholders;
 use App\Support\Ieducar\InclusionDashboardQueries;
 use App\Support\Ieducar\InclusionEducacensoCatalog;
+use App\Support\Ieducar\InclusionNeeDesignacaoDataset;
 use App\Support\Ieducar\InclusionMatriculaScope;
 use App\Support\Ieducar\InclusionRecursoProvaQueries;
 use App\Support\Ieducar\InclusionSpecialEducationGauges;
@@ -66,6 +67,7 @@ class InclusionRepository
                 'equidade_fonte' => null,
                 'methodology' => [],
                 'nee_grupo_resumo' => null,
+                'matriculas_nee' => null,
                 'chart_raca_por_escola_stacked' => null,
                 'chart_nee_por_raca_stacked' => null,
                 'nee_matriculas_por_escola' => [],
@@ -83,6 +85,7 @@ class InclusionRepository
         $totalMatriculas = null;
         $equidadeFonte = null;
         $neeGrupoResumo = null;
+        $matriculasNee = null;
         $chartRacaPorEscolaStacked = null;
         $chartNeePorRacaStacked = null;
         $neeMatriculasPorEscola = [];
@@ -90,8 +93,9 @@ class InclusionRepository
         $fundebNee = null;
 
         try {
-            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo, &$chartRacaPorEscolaStacked, &$chartNeePorRacaStacked, &$neeMatriculasPorEscola, &$recursoProva, &$fundebNee) {
+            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo, &$matriculasNee, &$chartRacaPorEscolaStacked, &$chartNeePorRacaStacked, &$neeMatriculasPorEscola, &$recursoProva, &$fundebNee) {
                 $totalMatriculas = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
+                $matriculasNee = InclusionDashboardQueries::countMatriculasComNee($db, $city, $filters);
 
                 try {
                     $neeCharts = InclusionDashboardQueries::buildCharts($db, $city, $filters);
@@ -100,10 +104,23 @@ class InclusionRepository
                     $neeCharts = [];
                 }
 
-                try {
-                    $neeDetalheCatalogo = InclusionDashboardQueries::buildNeeDetalheCatalogoPorCategoria($db, $city, $filters);
-                } catch (\Throwable) {
+                $hasCatalogoChart = collect($neeCharts)->contains(
+                    static fn (array $c): bool => in_array((string) ($c['chart_id'] ?? ''), ['nee_catalogo', 'nee_catalogo_mec'], true)
+                );
+                if (! $hasCatalogoChart) {
+                    try {
+                        $neeDetalheCatalogo = InclusionDashboardQueries::buildNeeDetalheCatalogoPorCategoria($db, $city, $filters);
+                    } catch (\Throwable) {
+                        $neeDetalheCatalogo = null;
+                    }
+                } else {
                     $neeDetalheCatalogo = null;
+                }
+
+                $neeDataset = InclusionNeeDesignacaoDataset::build($db, $city, $filters);
+                if (is_array($neeDataset['grupos'] ?? null)) {
+                    $neeGrupoResumo = $neeDataset['grupos'];
+                    $matriculasNee = (int) ($neeDataset['matriculas_nee'] ?? $matriculasNee);
                 }
 
                 try {
@@ -222,21 +239,6 @@ class InclusionRepository
                     $tailCharts
                 );
 
-                foreach ($neeCharts as $neeChart) {
-                    if (($neeChart['chart_id'] ?? null) !== 'nee_grupo') {
-                        continue;
-                    }
-                    $data = $neeChart['datasets'][0]['data'] ?? null;
-                    if (is_array($data) && count($data) === 3) {
-                        $neeGrupoResumo = [
-                            'deficiencias' => (int) round((float) ($data[0] ?? 0)),
-                            'sindromes_tea' => (int) round((float) ($data[1] ?? 0)),
-                            'ne_altas_habilidades' => (int) round((float) ($data[2] ?? 0)),
-                        ];
-                    }
-                    break;
-                }
-
                 try {
                     $neeMatriculasPorEscola = $this->neeMatriculasPorEscolaTableRows($db, $city, $filters);
                 } catch (\Throwable) {
@@ -262,6 +264,7 @@ class InclusionRepository
                 'equidade_fonte' => null,
                 'methodology' => [],
                 'nee_grupo_resumo' => null,
+                'matriculas_nee' => null,
                 'chart_raca_por_escola_stacked' => null,
                 'chart_nee_por_raca_stacked' => null,
                 'nee_matriculas_por_escola' => [],
@@ -284,6 +287,7 @@ class InclusionRepository
             'equidade_fonte' => $equidadeFonte,
             'methodology' => $methodology,
             'nee_grupo_resumo' => $neeGrupoResumo,
+            'matriculas_nee' => $matriculasNee,
             'chart_raca_por_escola_stacked' => $chartRacaPorEscolaStacked,
             'chart_nee_por_raca_stacked' => $chartNeePorRacaStacked,
             'nee_matriculas_por_escola' => $neeMatriculasPorEscola,

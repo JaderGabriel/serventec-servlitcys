@@ -45,6 +45,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 37 | *(release)* | **3.0.0** — consolidação LGPD + consultoria + inclusão; tag **`20260525-Apollo`**; layout `/consentimento` desktop |
 | 38 | *(patch)* | **Pós-3.0.0 (sem bump):** catálogo NEE — contagens exclusivas, barra AEE sem designação, UI sem gráfico duplicado |
 | 39 | `1acac6c` | **Pós-3.0.0 (sem bump):** admin — editor PP/cookies, versionamento, revogação e reconsentimento |
+| 40 | *(patch)* | **Pós-3.0.0 (sem bump):** inclusão — gráfico NEE por grupo vs catálogo (sem duplicata), contagem NEE/AEE unificada |
 
 **Em produção:** versão **3.0.0** · tag **`20260525-Apollo`** · [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md).
 
@@ -449,6 +450,22 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | Ficheiros | `LegalDocumentService`, `LegalDocumentAdminController`, `LegalConsentRevocationController`, migração, views admin, testes |
 
 **Pós-deploy:** `php artisan migrate` · `php artisan route:clear` · publicar PP em staging antes de forçar reconsentimento em produção.
+
+---
+
+## 40. Patch inclusão NEE — grupo vs catálogo e contagem unificada (pós-3.0.0, sem nova versão)
+
+**Objetivo:** Eliminar o segundo painel «catálogo completo» duplicado; restaurar o gráfico por **grupo** (deficiências / síndromes / NE); alinhar total NEE com bloco AEE e medidores.
+
+| Área | Alteração |
+|------|-----------|
+| **UI** | `inclusion.blade.php`: sem fallback `charts[0]` no grupo; extras NEE excluem `nee_grupo` e `nee_catalogo` |
+| **Dataset** | Barra «sem designação» conta no grupo Deficiências; `chartGrupo` quando só AEE |
+| **Contagem** | `countMatriculasComNee` em AEE cross, KPI `matriculas_nee`, medidores via `InclusionNeeDesignacaoDataset` |
+
+| Ficheiros | `InclusionNeeDesignacaoDataset.php`, `InclusionDashboardQueries.php`, `InclusionRepository.php`, `inclusion.blade.php`, testes |
+
+**Pós-deploy:** `npm run build` · validar **Pedagógico → Inclusão** (grupo + catálogo uma vez; 716 NEE coerente).
 
 ---
 
