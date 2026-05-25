@@ -45,7 +45,8 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 37 | *(release)* | **3.0.0** — consolidação LGPD + consultoria + inclusão; tag **`20260525-Apollo`**; layout `/consentimento` desktop |
 | 38 | *(patch)* | **Pós-3.0.0 (sem bump):** catálogo NEE — contagens exclusivas, barra AEE sem designação, UI sem gráfico duplicado |
 | 39 | `1acac6c` | **Pós-3.0.0 (sem bump):** admin — editor PP/cookies, versionamento, revogação e reconsentimento |
-| 40 | *(patch)* | **Pós-3.0.0 (sem bump):** inclusão — gráfico NEE por grupo vs catálogo (sem duplicata), contagem NEE/AEE unificada |
+| 40 | `08fb655` | **Pós-3.0.0 (sem bump):** inclusão — gráfico NEE por grupo vs catálogo (sem duplicata), contagem NEE/AEE unificada |
+| 41 | `d439660` | **Pós-3.0.0 (sem bump):** banner cookies welcome — fechar após aceitar e dismiss automático |
 
 **Em produção:** versão **3.0.0** · tag **`20260525-Apollo`** · [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md).
 
