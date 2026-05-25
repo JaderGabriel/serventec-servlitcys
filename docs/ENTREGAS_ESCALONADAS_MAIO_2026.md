@@ -470,6 +470,19 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 ---
 
+## 41. Banner cookies na welcome (pós-3.0.0, sem nova versão)
+
+**Objetivo:** Após «Aceitar e continuar», o rodapé fixo de cookies fecha e a página fica utilizável; botão **Fechar** activo após aceite.
+
+| Área | Alteração |
+|------|-----------|
+| **UI** | `legal-cookie-banner`: `dismiss()` ao aceitar, transição, `html.serv-legal-banner-open` com padding |
+| **API** | `POST legal.consent.guest` (JSON) — cookie HttpOnly |
+
+**Pós-deploy:** `npm run build` · testar `/` sem login (aceitar → banner some).
+
+---
+
 ## Checklist pós-merge (produção)
 
 ```bash
