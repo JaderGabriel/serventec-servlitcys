@@ -14,6 +14,17 @@ Com **`config/analytics.php` → `lazy_tab_loading`**, a página inicial só exe
 
 Para desativar o lazy e voltar ao carregamento completo num único HTML (útil para comparar antes/depois no Pulse): **`ANALYTICS_LAZY_TABS=false`**.
 
+## Inclusão — educação especial (NEE)
+
+Na aba **Inclusão**, o recorte NEE prioriza o mesmo caminho que o BI Portabilis:
+
+1. `cadastro.fisica_deficiencia` + `cadastro.deficiencia`, se existirem; senão
+2. `aluno_deficiencia` + `deficiencia`.
+
+Com **`IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE=true`** (defeito), matrículas activas em turma/curso identificados como AEE (palavras-chave em `config/ieducar.php` → `inclusion`) entram no total e nos medidores, mesmo sem cadastro NEE.
+
+Implementação: `InclusionDashboardQueries::alunosComCadastroNeeSubquery`, `countMatriculasComNee`, `medidoresEducacaoEspecialPorGrupo`; discrepâncias delegam à mesma subquery.
+
 ## 1. Laravel Pulse (recomendado — já integrado)
 
 1. Garantir `PULSE_ENABLED=true` e migrações Pulse aplicadas (`php artisan migrate`).

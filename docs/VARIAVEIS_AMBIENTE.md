@@ -1,6 +1,6 @@
 # Variáveis de ambiente — servlitcys
 
-**Versão do produto:** 2.3.8.4 · **Última revisão:** 21/05/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [PERFORMANCE.md](PERFORMANCE.md)
+**Versão do produto:** 2.4.0 · **Última revisão:** 25/05/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [PERFORMANCE.md](PERFORMANCE.md)
 
 Este documento é a **referência oficial** para configurar o arquivo **`.env` no servidor de produção**.
 
@@ -33,6 +33,8 @@ php artisan config:clear
 | `APP_LOCALE` | | `pt_BR` | |
 | `BCRYPT_ROUNDS` | | `12` | |
 | `CHART_EXPORT_AUTHOR` | | vazio | Autor no rodapé de exportação de gráficos |
+| `LEGAL_PRIVACY_LAST_UPDATED` | | `2026-05-25` | Data exibida na página `/privacidade` |
+| `LEGAL_PRIVACY_CONTACT_EMAIL` | | vazio | E-mail de contacto LGPD (opcional; senão usa contacto do município) |
 
 ---
 
@@ -240,6 +242,19 @@ php artisan saeb:import-planilhas-inep --no-download   # usa cache em storage/ap
 ```
 
 Requer `unrar` ou `p7zip` no servidor para o RAR de 2023. URLs em `saeb.planilha_resultados_urls`; cache em `IEDUCAR_SAEB_PLANILHA_CACHE_PATH`. Os microdados ZIP (`TS_ESCOLA`) usam `ID_MUNICIPIO` mascarado (LGPD) — use planilhas, não só microdados.
+
+**UI (aba Desempenho):** séries SAEB importadas aparecem em grelha responsiva (4 colunas em `xl`); altura compacta via `ChartPayload::lineSaebHistory` (`panelHeight: xs`).
+
+---
+
+## 12b. Inclusão / educação especial
+
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE` | `true` | Inclui matrículas activas em turma/curso AEE (palavras-chave em `config/ieducar.php`) no total NEE, além de `fisica_deficiencia` ou `aluno_deficiencia` + catálogo `deficiencia`. Medidores, gráficos e discrepâncias usam a mesma subquery. |
+| `IEDUCAR_INCLUSION_RECURSO_EXIGIR_COM_NEE` | `false` | Check discrepâncias: NEE sem recurso de prova |
+| `IEDUCAR_INCLUSION_AEE_KEYWORDS` | (config) | Palavras-chave turma/curso AEE |
+| `IEDUCAR_INCLUSION_EJA_KEYWORDS` / `IEDUCAR_INCLUSION_INFANTIL_KEYWORDS` | (config) | Heurística cruzamento AEE |
 
 ---
 

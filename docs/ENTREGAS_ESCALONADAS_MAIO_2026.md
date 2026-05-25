@@ -40,6 +40,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 32 | `6eb94cf` | Patch **2.3.8.7**: Pulse SQL/operações + Matrículas ganho VAAF |
 | 33 | *(release)* | **2.4.0** — `saeb:import-planilhas-inep`, FUNDEB receita, VAAF; tag **`20260524-Ceres`** |
 | 34 | *(doc)* | [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md), [IMPORTACAO_SAEB_PLANILHAS_INEP.md](IMPORTACAO_SAEB_PLANILHAS_INEP.md) |
+| 35 | *(patch)* | **Pós-2.4.0 (sem bump):** rodapé/privacidade, welcome/home/RX, inclusão NEE+AEE, SAEB 4 colunas |
 
 **Em produção:** versão **2.4.0** · tag **`20260524-Ceres`**.
 
@@ -348,6 +349,31 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | Produção / docs | `config/documentation.php`, `HISTORICO_VERSOES.md`, `METRICAS_QUERIES_ANALYTICS.md`, `.env.example` |
 
 **Pós-deploy:** `php artisan config:clear` · validar `/pulse` (Desempenho: SQL + Operações) · aba **Matrículas** com município/ano (ganho, sem perda) · preencher `PULSE_*` no `.env` se necessário · **não** criar tag Git.
+
+---
+
+## 35. Patch consultoria UI + inclusão NEE + SAEB (pós-2.4.0, sem nova versão)
+
+**Objetivo:** Melhorias de UX na consultoria e correção do recorte de educação especial no i-Educar, sem alterar `config/documentation.php` (`product.version` permanece **2.4.0**).
+
+| Área | Alteração |
+|------|-----------|
+| **Rodapé autenticado** | Versão, ambiente, município (perfis municipais), links (Perfil, Notificações, Documentação, Pulse, Suporte, Privacidade) |
+| **Privacidade** | Rota `/privacidade`, `PrivacyPolicyController`, `config/legal.php`, `LEGAL_PRIVACY_*` |
+| **Welcome** | Header com ícones (tema, entrar, WhatsApp); identidade visual alinhada |
+| **Home logada** | 4 atalhos «Operação da plataforma»; legenda do mapa mental com ícones |
+| **RX** | Barra segmentada Censo abaixo do nome do município (`censo-municipio-bar`) |
+| **Inclusão** | SQL unificado NEE (`fisica_deficiencia` ou `aluno_deficiencia` + turma AEE); remoção do bloco duplicado «catálogo completo»; `IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE` |
+| **Desempenho** | Gráficos SAEB em grelha `xl:grid-cols-4`, modo compacto, `.perf-saeb-charts` |
+
+| Ficheiros (resumo) | |
+|--------------------|--|
+| Inclusão | `InclusionDashboardQueries.php`, `InclusionSpecialEducationGauges.php`, `DiscrepanciesQueries.php`, `InclusionRepository.php` |
+| SAEB UI | `performance.blade.php`, `ChartPayload.php`, `PerformanceSaebSeries.php`, `app.css` |
+| Legal / layout | `app-footer.blade.php`, `PrivacyPolicyController.php`, `routes/web.php`, `User.php` |
+| Testes | `InclusionNeeQueryAlignmentTest.php`, `PrivacyPolicyTest.php`, `UserFooterMunicipalityLabelTest.php` |
+
+**Pós-deploy:** `npm run build` · `php artisan route:clear` (nova rota `legal.privacy`) · validar **Pedagógico → Inclusão** e **Desempenho** com município piloto.
 
 ---
 
