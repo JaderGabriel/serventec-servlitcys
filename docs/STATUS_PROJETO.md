@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **3.0.0** · release `20260525-Apollo` · **Ramo:** `main` · **Última revisão:** 26/05/2026
+**Versão em produção:** **3.1.0** · release `20260526-Boreas` · **Ramo:** `main` · **Última revisão:** 26/05/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -34,6 +34,9 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Notificações — página `/notifications` + API `/notifications/feed` | Implementado (3.0.0) |
 | Rodapé — selo versão (tag Apollo + data lançamento) | Implementado (`ProductVersion`, `x-product-version-badge`) |
 | Inclusão — gráfico catálogo completo NEE (INEP / i-Educar, contagens exclusivas + barra AEE) | Implementado (3.0.0; patch pós-release) |
+| Inclusão — impacto FUNDEB indicativo (ponderação 1,20 + VAAR proporcional) | Implementado (3.1.0) |
+| Inclusão — inconsistências cadastro (AEE / recurso prova INEP com nome do aluno) | Implementado (3.1.0) |
+| Admin — leitor documentação (todos os `.md` em `docs/`, links internos) | Implementado (3.1.0) |
 | Catálogo API i-Educar (consultas SQL → endpoints propostos, JSON, perf/seg) | Documentado — [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) |
 | Estudo integrações setor público + previsão demanda (doc) | Documentado — [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md); implementação Ondas 1–3 no backlog §H |
 | Sync massiva semanal (`system::weekly_mass_sync`, checkpoint) | Implementado |

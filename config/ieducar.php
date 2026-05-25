@@ -866,8 +866,8 @@ return [
         ))))),
 
         /**
-         * Peso indicativo sobre o VAAF para matrículas NEE (educação especial) no cartão «Impacto no saldo».
-         * Ex.: 1,2 → adicional de 20% sobre a base (matrículas NEE × VAAF). Não substitui cálculo oficial FNDE/VAAR.
+         * Ponderação «educação especial» no FUNDEB (Lei nº 14.113/2020, Anexo, alínea n): 1,20.
+         * O impacto na aba Inclusão usa só o incremento (peso − 1) × VAAF × matrículas NEE.
          */
         'fundeb_peso_educacao_especial' => max(1.0, (float) env('IEDUCAR_INCLUSION_FUNDEB_PESO_EDUCACAO_ESPECIAL', 1.2)),
 

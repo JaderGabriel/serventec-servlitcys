@@ -400,6 +400,16 @@ final class InclusionRecursoProvaQueries
     /**
      * @return array<int, list<string>>
      */
+    public static function recursoLabelsPorAlunoPublic(Connection $db, City $city, ?array $schema = null): array
+    {
+        $schema ??= self::schema($db, $city);
+
+        return self::recursoLabelsPorAluno($db, $city, $schema);
+    }
+
+    /**
+     * @return array<int, list<string>>
+     */
     private static function recursoLabelsPorAluno(Connection $db, City $city, array $schema): array
     {
         try {

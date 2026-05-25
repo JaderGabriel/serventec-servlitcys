@@ -44,6 +44,9 @@
     $recursoProva = is_array($inclusionData['recurso_prova'] ?? null) ? $inclusionData['recurso_prova'] : null;
     $recursoSchema = is_array($recursoProva['schema'] ?? null) ? $recursoProva['schema'] : null;
     $recursoDisponivel = (bool) ($recursoSchema['available'] ?? false);
+    $recursoInconsistencias = is_array($recursoProva['inconsistencias'] ?? null) ? $recursoProva['inconsistencias'] : null;
+    $recursoLinhasInconsistencia = is_array($recursoInconsistencias['linhas'] ?? null) ? $recursoInconsistencias['linhas'] : [];
+    $recursoLimiteInconsistencia = (int) ($recursoInconsistencias['limite'] ?? 150);
     $chartRacaPorEscolaStacked = is_array($inclusionData['chart_raca_por_escola_stacked'] ?? null) ? $inclusionData['chart_raca_por_escola_stacked'] : null;
     $chartNeePorRacaStacked = is_array($inclusionData['chart_nee_por_raca_stacked'] ?? null) ? $inclusionData['chart_nee_por_raca_stacked'] : null;
     $neeMatriculasPorEscola = is_array($inclusionData['nee_matriculas_por_escola'] ?? null)
@@ -129,9 +132,9 @@
     @if ($recursoProva !== null)
         <div class="rounded-lg border border-teal-200/80 dark:border-teal-800/50 bg-white dark:bg-gray-900/40 px-4 py-4 space-y-4">
             <div>
-                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Recursos de prova INEP (Censo)') }}</h3>
+                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Recursos de prova INEP (Censo) — revisão cadastral') }}</h3>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
-                    {{ __('Distintos do cadastro de deficiência/NEE. O painel sinaliza cruzamentos para revisão pedagógica — ex.: óculos na prova sem baixa visão cadastrada pode ser legítimo.') }}
+                    {{ __('Cruza apoios declarados para provas SAEB/INEP (ex.: óculos, ledor, prova ampliada) com o cadastro de deficiência/NEE no i-Educar. Também verifica matrículas em turmas AEE (palavras-chave no nome da turma ou do curso) sem tipo de deficiência registado. Nem todo recurso implica deficiência — a tabela abaixo destaca casos que costumam exigir conferência antes do fecho do Educacenso e do eixo VAAR-inclusão.') }}
                 </p>
                 @if (! $recursoDisponivel)
                     <p class="mt-2 text-xs text-amber-800 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
@@ -145,20 +148,67 @@
                         <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Com recurso de prova') }}</dt>
                         <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($recursoProva['com_recurso'] ?? 0)) }}</dd>
                     </div>
+                    <div class="rounded-md bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-800/40 px-3 py-2">
+                        <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Turma AEE sem deficiência no cadastro') }}</dt>
+                        <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($recursoProva['aee_sem_cadastro_nee'] ?? 0)) }}</dd>
+                    </div>
                     <div class="rounded-md bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2">
-                        <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Recurso sem NEE') }}</dt>
+                        <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Recurso SAEB/INEP sem deficiência no cadastro') }}</dt>
                         <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($recursoProva['sem_nee'] ?? 0)) }}</dd>
                     </div>
                     <div class="rounded-md bg-violet-50/80 dark:bg-violet-950/30 border border-violet-200/60 dark:border-violet-800/40 px-3 py-2">
-                        <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('NEE sem recurso') }}</dt>
+                        <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('NEE no cadastro sem recurso de prova') }}</dt>
                         <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($recursoProva['nee_sem_recurso'] ?? 0)) }}</dd>
                     </div>
-                    <div class="flex items-end">
-                        <button type="button" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">
-                            {{ __('Ver rotinas em Discrepâncias') }}
-                        </button>
-                    </div>
                 </dl>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                    <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">
+                        {{ __('Ver rotinas agregadas em Discrepâncias') }}
+                    </button>
+                    {{ __('(totais por escola e exportação CSV).') }}
+                </p>
+
+                @if ($recursoLinhasInconsistencia !== [])
+                    <div class="rounded-lg border border-amber-200/70 dark:border-amber-800/50 bg-amber-50/40 dark:bg-amber-950/20 px-4 py-3 space-y-3">
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Inconsistências para correção (nome do aluno)') }}</h4>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
+                                {{ __('Matrículas activas no filtro. «Turma AEE» = oferta identificada por palavras-chave, sem vínculo em fisica_deficiencia / aluno_deficiencia. «Recurso de prova» = apoio INEP/SAEB declarado sem o mesmo aluno ter deficiência cadastrada.') }}
+                            </p>
+                            @if (($recursoInconsistencias['truncado']['aee_sem_cadastro_nee'] ?? false) || ($recursoInconsistencias['truncado']['recurso_prova_sem_nee'] ?? false))
+                                <p class="mt-2 text-xs text-amber-900 dark:text-amber-100">
+                                    {{ __('Listagem limitada a :n linhas por tipo — use Discrepâncias para o universo completo.', ['n' => number_format($recursoLimiteInconsistencia)]) }}
+                                </p>
+                            @endif
+                        </div>
+                        <div class="overflow-x-auto rounded-md border border-amber-200/80 dark:border-amber-800/60 max-h-[min(28rem,55vh)] overflow-y-auto">
+                            <table class="min-w-full text-sm">
+                                <thead class="sticky top-0 z-10 bg-amber-50 dark:bg-amber-950/90 text-left text-xs uppercase text-gray-600 dark:text-gray-400 border-b border-amber-200 dark:border-amber-800">
+                                    <tr>
+                                        <th class="px-3 py-2 font-medium">{{ __('Aluno') }}</th>
+                                        <th class="px-3 py-2 font-medium">{{ __('Escola') }}</th>
+                                        <th class="px-3 py-2 font-medium">{{ __('Tipo') }}</th>
+                                        <th class="px-3 py-2 font-medium min-w-[14rem]">{{ __('Detalhe') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-amber-100/80 dark:divide-amber-900/50 bg-white/80 dark:bg-gray-900/40">
+                                    @foreach ($recursoLinhasInconsistencia as $row)
+                                        <tr class="hover:bg-amber-50/60 dark:hover:bg-amber-950/30">
+                                            <td class="px-3 py-2 text-gray-900 dark:text-gray-100 font-medium">{{ $row['nome'] ?? '—' }}</td>
+                                            <td class="px-3 py-2 text-gray-700 dark:text-gray-300">{{ $row['escola'] ?? '—' }}</td>
+                                            <td class="px-3 py-2 text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ $row['tipo_label'] ?? '—' }}</td>
+                                            <td class="px-3 py-2 text-gray-600 dark:text-gray-400 text-xs leading-relaxed">{{ $row['detalhe'] ?? '—' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @elseif ((int) ($recursoProva['aee_sem_cadastro_nee'] ?? 0) === 0 && (int) ($recursoProva['sem_nee'] ?? 0) === 0)
+                    <p class="text-xs text-emerald-800 dark:text-emerald-200 bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-md px-3 py-2">
+                        {{ __('Nenhuma inconsistência deste tipo no filtro actual — cadastro AEE e recursos de prova alinhados à verificação automática.') }}
+                    </p>
+                @endif
                 @if (! empty($recursoProva['chart_catalogo']['labels']))
                     <div class="w-full min-w-0">
                         <x-dashboard.chart-panel

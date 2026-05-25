@@ -42,11 +42,12 @@ class DocumentationMarkdownRenderer
                 }
 
                 $target = $this->resolveRelativeDocPath($href, $baseDir);
-                if ($target === null || ! DocumentationCatalog::isAllowedPath($target)) {
+                $resolved = $target !== null ? DocumentationCatalog::resolveReadablePath($target) : null;
+                if ($resolved === null) {
                     return $matches[0];
                 }
 
-                $url = route('admin.documentation.show', ['doc' => $target]);
+                $url = route('admin.documentation.show', ['doc' => $resolved]);
 
                 return '<a href="'.e($url).'"';
             },
@@ -67,16 +68,27 @@ class DocumentationMarkdownRenderer
             $path = ltrim($href, '/');
         } elseif (str_starts_with($href, 'docs/') || $href === 'README.md') {
             $path = $href;
+        } elseif ($baseDir === 'docs' || str_starts_with($baseDir, 'docs/')) {
+            $path = $baseDir !== '' ? $baseDir.'/'.$href : 'docs/'.$href;
         } else {
             $path = $baseDir !== '' ? $baseDir.'/'.$href : $href;
         }
 
         $path = str_replace(['\\', '//'], ['/', '/'], $path);
-        while (str_contains($path, '/../')) {
-            $path = (string) preg_replace('#/[^/]+/\.\./#', '/', '/'.$path.'/');
-            $path = ltrim($path, '/');
+        $segments = explode('/', $path);
+        $resolved = [];
+        foreach ($segments as $segment) {
+            if ($segment === '' || $segment === '.') {
+                continue;
+            }
+            if ($segment === '..') {
+                array_pop($resolved);
+
+                continue;
+            }
+            $resolved[] = $segment;
         }
-        $path = (string) preg_replace('#/\./#', '/', $path);
+        $path = implode('/', $resolved);
 
         return $path !== '' ? $path : null;
     }

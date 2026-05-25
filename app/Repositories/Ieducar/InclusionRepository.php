@@ -10,9 +10,11 @@ use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\IeducarSqlPlaceholders;
 use App\Support\Ieducar\InclusionDashboardQueries;
+use App\Support\Ieducar\InclusionFundebImpact;
 use App\Support\Ieducar\InclusionEducacensoCatalog;
 use App\Support\Ieducar\InclusionNeeDesignacaoDataset;
 use App\Support\Ieducar\InclusionMatriculaScope;
+use App\Support\Ieducar\InclusionCadastroInconsistenciasQueries;
 use App\Support\Ieducar\InclusionRecursoProvaQueries;
 use App\Support\Ieducar\InclusionSpecialEducationGauges;
 use App\Support\Ieducar\MatriculaAtivoFilter;
@@ -132,11 +134,14 @@ class InclusionRepository
                 try {
                     $cruzamento = InclusionRecursoProvaQueries::resumoCruzamento($db, $city, $filters);
                     $catalogo = is_array($cruzamento['catalogo'] ?? null) ? $cruzamento['catalogo'] : [];
+                    $inconsistencias = InclusionCadastroInconsistenciasQueries::painelDetalhes($db, $city, $filters);
                     $recursoProva = array_merge(
                         $cruzamento,
                         [
                             'schema' => InclusionRecursoProvaQueries::schema($db, $city),
                             'chart_catalogo' => InclusionRecursoProvaQueries::catalogoChart($catalogo),
+                            'inconsistencias' => $inconsistencias,
+                            'aee_sem_cadastro_nee' => (int) ($inconsistencias['contagens']['aee_sem_cadastro_nee'] ?? 0),
                         ],
                     );
                 } catch (\Throwable) {
@@ -246,7 +251,7 @@ class InclusionRepository
                 }
 
                 try {
-                    $fundebNee = InclusionDashboardQueries::buildFundebNeeIndicativo($db, $city, $filters);
+                    $fundebNee = InclusionDashboardQueries::buildFundebNeeIndicativo($db, $city, $filters, $totalMatriculas);
                 } catch (\Throwable) {
                     $fundebNee = ['available' => false];
                 }
@@ -332,8 +337,11 @@ class InclusionRepository
             __('O recorte opcional «Inclusão — recorte de matrículas» na barra de filtros aplica-se aos gráficos e tabelas de NEE; equidade, raça, distorção e recurso de prova continuam na rede completa do filtro.'),
             __('Distorção idade/série: em PostgreSQL com física e série, mostra-se a contagem por unidade escolar (referência 1 de março); caso contrário usa-se o gráfico de barras por série com quantidades de alunos com distorção (critério INEP +2 anos).'),
             __('Total «Matrículas NEE» = matrículas activas distintas com deficiência em cadastro (fisica_deficiencia ou aluno_deficiencia) ou matrícula em turma/curso cujo nome sugere AEE (IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE). Os gráficos por grupo e por designação contam vínculos no catálogo deficiência (podem ficar a 0 se só houver AEE sem cadastro).'),
+            __('Impacto financeiro (faixa superior): incremento FUNDEB por ponderação de educação especial (Lei 14.113/2020, Anexo — factor :p) = matrículas NEE × VAAF × (:p − 1); opcionalmente fatia proporcional da complementação VAAR importada. Não soma a base integral por aluno (ver aba Matrículas). Riscos cadastrais usam pesos VAAR-inclusão em Discrepâncias.', [
+                'p' => number_format(InclusionFundebImpact::pesoEducacaoEspecial(), 2, ',', '.'),
+            ]),
             __('Cruzamento AEE: detalha matrículas em turmas AEE e alunos que também frequentam outro segmento. «Matrículas só em turma AEE» é o total NEE menos matrículas com cadastro de deficiência (pode haver sobreposição em bases atípicas).'),
-            __('Recursos de prova INEP (Censo): distintos do cadastro de deficiência/NEE. O painel detecta tabelas/colunas na base ou usa SQL em IEDUCAR_SQL_INCLUSION_RECURSO_PROVA_*; um aluno pode ter recurso (ex.: óculos na prova) sem deficiência — sinaliza-se para revisão, não como erro automático.'),
+            __('Recursos de prova INEP (Censo): apoios declarados para SAEB/avaliações (óculos, ledor, etc.), distintos do cadastro de deficiência. A secção lista alunos em turma AEE sem deficiência registada e alunos com recurso de prova sem NEE no cadastro — com nome e detalhe para correção no i-Educar antes do Educacenso.'),
             __('Filtros da aba: «Só NEE» aplica o mesmo recorte do total (cadastro deficiência ou turma AEE); «Só inconsistências recurso × NEE» limita a cruzamentos recurso de prova sem cadastro NEE (e, se configurado, o inverso).'),
             $eq,
         ];

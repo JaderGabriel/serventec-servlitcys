@@ -48,8 +48,9 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 40 | `08fb655` | **Pós-3.0.0 (sem bump):** inclusão — gráfico NEE por grupo vs catálogo (sem duplicata), contagem NEE/AEE unificada |
 | 41 | `d439660` | **Pós-3.0.0 (sem bump):** banner cookies welcome — fechar após aceitar e dismiss automático |
 | 42 | `7ea0158` | **Pós-3.0.0 (sem bump):** inclusão — total NEE alinhado a AEE, grupos com 0, textos NEE vs cadastro |
+| 43 | `20260526-Boreas` | **3.1.0** — Inclusão (FUNDEB indicativo, inconsistências cadastro), leitor documentação admin |
 
-**Em produção:** versão **3.0.0** · tag **`20260525-Apollo`** · [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md).
+**Em produção:** versão **3.1.0** · tag **`20260526-Boreas`** · [RELEASE_20260526_BOREAS.md](RELEASE_20260526_BOREAS.md).
 
 ---
 
@@ -498,6 +499,23 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | Ficheiros | `InclusionDashboardQueries.php`, `InclusionMatriculaScope.php`, `InclusionNeeDesignacaoDataset.php`, `InclusionRepository.php`, `inclusion.blade.php`, testes |
 
 **Pós-deploy:** `npm run build` · **Pedagógico → Inclusão**: total NEE ≈ matrículas AEE quando só há turma AEE; grupos 0/0/0 visíveis; catálogo com barra âmbar se aplicável.
+
+---
+
+## 43. Release 3.1.0 — `20260526-Boreas`
+
+**Objetivo:** Marco semântico após 3.0.0: refinamento da aba Inclusão (cadastro, financiamento indicativo, revisão INEP) e documentação interna utilizável no painel admin.
+
+| Área | Alteração |
+|------|-----------|
+| **Inclusão NEE/AEE** | Contagem unificada; grupos zerados visíveis; KPIs AEE (com cadastro / só turma AEE) |
+| **Impacto FUNDEB** | `InclusionFundebImpact` — incremento ponderação 1,20 + fatia VAAR; faixa «ganho estimado» na aba |
+| **Recursos de prova** | `InclusionCadastroInconsistenciasQueries` — tabela com nome do aluno, escola, tipo e detalhe (AEE sem NEE; recurso sem cadastro) |
+| **Documentação admin** | `DocumentationCatalog` — todos os `.md` em `docs/`; links Markdown para o leitor; menu releases e integrações |
+
+| Ficheiros principais | `InclusionFundebImpact.php`, `InclusionCadastroInconsistenciasQueries.php`, `DocumentationCatalog.php`, `AnalyticsTabImpactBuilder.php`, `inclusion.blade.php` |
+
+**Pós-deploy:** `npm run build` · `git tag 20260526-Boreas` · validar selo **3.1.0** no rodapé e `/admin/documentacao`.
 
 ---
 

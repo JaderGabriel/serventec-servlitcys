@@ -13,57 +13,24 @@ class DocumentationFileReader
      */
     public function read(string $path): array
     {
-        if (! DocumentationCatalog::isAllowedPath($path)) {
+        $resolved = DocumentationCatalog::resolveReadablePath($path);
+        if ($resolved === null) {
             throw new RuntimeException(__('Documento não permitido.'));
         }
 
-        $absolute = $this->resolveAbsolutePath($path);
-        if ($absolute === null || ! is_readable($absolute)) {
+        $absolute = base_path($resolved);
+        if (! is_readable($absolute)) {
             throw new RuntimeException(__('Ficheiro não encontrado no servidor.'));
         }
 
         $markdown = File::get($absolute);
-        $item = DocumentationCatalog::findItemByPath($path);
+        $item = DocumentationCatalog::findItemByPath($resolved);
 
         return [
-            'path' => $path,
-            'label' => $item['label'] ?? $path,
+            'path' => $resolved,
+            'label' => $item['label'] ?? $resolved,
             'markdown' => $markdown,
             'modified_at' => @filemtime($absolute) ?: null,
         ];
-    }
-
-    private function resolveAbsolutePath(string $path): ?string
-    {
-        $root = realpath(base_path());
-        if ($root === false) {
-            return null;
-        }
-
-        $absolute = realpath(base_path($path));
-        if ($absolute === false || ! is_file($absolute)) {
-            return null;
-        }
-
-        if (! str_starts_with($absolute, $root.DIRECTORY_SEPARATOR) && $absolute !== $root) {
-            return null;
-        }
-
-        if (! str_ends_with(strtolower($absolute), '.md')) {
-            return null;
-        }
-
-        $docsDir = realpath(base_path('docs'));
-        $readme = realpath(base_path('README.md'));
-
-        if ($docsDir !== false && str_starts_with($absolute, $docsDir.DIRECTORY_SEPARATOR)) {
-            return $absolute;
-        }
-
-        if ($readme !== false && $absolute === $readme) {
-            return $absolute;
-        }
-
-        return null;
     }
 }

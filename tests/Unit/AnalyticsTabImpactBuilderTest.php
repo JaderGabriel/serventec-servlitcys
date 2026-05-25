@@ -247,7 +247,7 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         $this->assertStringContainsString('VAAR', (string) ($strip['saldo']['footnote'] ?? ''));
     }
 
-    public function test_inclusion_strip_mostra_fundeb_nee_quando_sem_discrepancias(): void
+    public function test_inclusion_strip_mostra_ganho_incremento_fundeb_nee(): void
     {
         $strip = AnalyticsTabImpactBuilder::build('inclusion', true, [], [
             'inclusionData' => [
@@ -257,19 +257,25 @@ class AnalyticsTabImpactBuilderTest extends TestCase
                     'matriculas_nee' => 42,
                     'vaaf_fmt' => 'R$ 5.000,00',
                     'vaaf_fonte' => 'Config municipal',
-                    'base_anual_fmt' => 'R$ 210.000,00',
                     'peso_educacao_especial' => 1.2,
+                    'incremento_ponderacao' => 0.2,
+                    'adicional_vaaf_anual' => 42000.0,
+                    'adicional_vaaf_anual_fmt' => 'R$ 42.000,00',
+                    'adicional_vaar_anual' => 0.0,
+                    'total_incremental_anual' => 42000.0,
+                    'total_incremental_anual_fmt' => 'R$ 42.000,00',
                     'adicional_anual' => 42000.0,
                     'adicional_anual_fmt' => 'R$ 42.000,00',
-                    'total_indicativo_anual_fmt' => 'R$ 252.000,00',
                 ],
             ],
         ]);
 
         $this->assertNotNull($strip['saldo']);
-        $this->assertTrue($strip['saldo']['info_only'] ?? false);
+        $this->assertFalse($strip['saldo']['info_only'] ?? true);
+        $this->assertTrue($strip['saldo']['gain_only'] ?? false);
+        $this->assertSame(42000.0, $strip['saldo']['ganho']);
         $this->assertNotEmpty($strip['saldo']['fundeb_lines'] ?? []);
-        $this->assertStringContainsString('VAAF', (string) ($strip['saldo']['fundeb_lines'][0] ?? ''));
+        $this->assertStringContainsString('Ponderação FUNDEB', (string) ($strip['saldo']['fundeb_lines'][0] ?? ''));
     }
 
     public function test_performance_strip_usa_fatia_ctx_sem_fluxo(): void

@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto (`main`):** 3.0.0 · tag `20260525-Apollo` · **Última revisão deste índice:** 25/05/2026
+**Versão do produto (`main`):** 3.1.0 · tag `20260526-Boreas` · **Última revisão deste índice:** 26/05/2026
 
 Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que o sistema faz hoje, **porque** certas decisões foram tomadas e **o que** está planejado implementar.
 
@@ -133,6 +133,10 @@ Os restantes arquivos são **aprofundamento** por tema. Itens de backlog que apa
 Faixa superior (até Censo): **impacto no saldo indicativo** + **status no filtro** — ver `AnalyticsTabImpactBuilder`.
 
 ---
+
+## Leitura na interface (admin)
+
+No painel: **Admin → Documentação** (`/admin/documentacao`). O leitor abre **todos** os ficheiros `.md` em `docs/` e o `README.md` da raiz; os links entre documentos no índice apontam para o leitor interno (não é necessário abrir só no GitHub). O botão «Ler no GitHub» permanece como alternativa.
 
 ## Manutenção da documentação
 

@@ -450,46 +450,17 @@ final class InclusionDashboardQueries
     }
 
     /**
-     * Referência FUNDEB (VAAF) aplicada às matrículas NEE do filtro — base e adicional indicativo de educação especial.
+     * Impacto FUNDEB/VAAR indicativo das matrículas NEE (ponderação Lei 14.113/2020).
      *
      * @return array<string, mixed>
      */
-    public static function buildFundebNeeIndicativo(Connection $db, City $city, IeducarFilterState $filters): array
-    {
-        $nee = self::countMatriculasComNee($db, $city, $filters);
-        if ($nee <= 0) {
-            return ['available' => false];
-        }
-
-        $calc = FundebMunicipalReferenceResolver::vaafParaCalculo($city, $filters);
-        $vaaf = (float) ($calc['vaaf'] ?? 0);
-        if ($vaaf <= 0) {
-            return ['available' => false, 'matriculas_nee' => $nee];
-        }
-
-        $pesoEsp = max(1.0, (float) config('ieducar.inclusion.fundeb_peso_educacao_especial', 1.2));
-        $baseAnual = round($nee * $vaaf, 2);
-        $adicionalAnual = $pesoEsp > 1.0
-            ? round($nee * $vaaf * ($pesoEsp - 1.0), 2)
-            : 0.0;
-        $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
-
-        return [
-            'available' => true,
-            'matriculas_nee' => $nee,
-            'vaaf' => $vaaf,
-            'vaaf_fmt' => $fmt($vaaf),
-            'vaaf_fonte' => (string) ($calc['fonte_label'] ?? ''),
-            'vaaf_origem' => (string) ($calc['origem'] ?? ''),
-            'vaa_municipal_importado' => ($calc['origem'] ?? '') === 'municipal',
-            'base_anual' => $baseAnual,
-            'base_anual_fmt' => $fmt($baseAnual),
-            'peso_educacao_especial' => $pesoEsp,
-            'adicional_anual' => $adicionalAnual,
-            'adicional_anual_fmt' => $adicionalAnual > 0 ? $fmt($adicionalAnual) : null,
-            'total_indicativo_anual' => round($baseAnual + $adicionalAnual, 2),
-            'total_indicativo_anual_fmt' => $fmt($baseAnual + $adicionalAnual),
-        ];
+    public static function buildFundebNeeIndicativo(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        ?int $totalMatriculas = null,
+    ): array {
+        return InclusionFundebImpact::build($db, $city, $filters, $totalMatriculas);
     }
 
     /**

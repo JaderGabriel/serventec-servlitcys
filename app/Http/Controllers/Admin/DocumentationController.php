@@ -26,28 +26,29 @@ class DocumentationController extends Controller
         DocumentationMarkdownRenderer $renderer,
     ): View {
         $path = (string) $request->query('doc', DocumentationCatalog::defaultPath());
-        if (! DocumentationCatalog::isAllowedPath($path)) {
+        $resolved = DocumentationCatalog::resolveReadablePath($path);
+        if ($resolved === null) {
             abort(404);
         }
 
         try {
-            $file = $reader->read($path);
+            $file = $reader->read($resolved);
         } catch (RuntimeException $e) {
             abort(404, $e->getMessage());
         }
 
-        $item = DocumentationCatalog::findItemByPath($path);
+        $item = DocumentationCatalog::findItemByPath($resolved);
 
         $product = config('documentation.product', []);
 
         return view('admin.documentation.show', [
             'sections' => DocumentationCatalog::sections(),
-            'currentPath' => $path,
+            'currentPath' => $resolved,
             'currentLabel' => $item['label'] ?? $file['label'],
             'currentSection' => $item['section_title'] ?? null,
-            'htmlContent' => $renderer->toHtml($file['markdown'], $path),
+            'htmlContent' => $renderer->toHtml($file['markdown'], $resolved),
             'modifiedAt' => $file['modified_at'],
-            'githubBlobUrl' => DocumentationCatalog::githubBlobUrl($path),
+            'githubBlobUrl' => DocumentationCatalog::githubBlobUrl($resolved),
             'defaultDoc' => DocumentationCatalog::defaultPath(),
             'productVersion' => (string) ($product['version'] ?? ''),
             'productReleaseTag' => (string) ($product['release_tag'] ?? ''),

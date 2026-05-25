@@ -140,7 +140,7 @@ final class AnalyticsTabImpactBuilder
             'inclusion' => [
                 'title' => __('Inclusão & Diversidade'),
                 'purpose' => __('NEE, equidade, recurso de prova e cruzamentos com matrículas ativas.'),
-                'impact_note' => __('Subnotificação de NEE e inconsistências VAAR-inclusão pesam no saldo indicativo.'),
+                'impact_note' => __('Incremento FUNDEB (ponderação 1,20 — Lei 14.113) nas matrículas NEE + riscos VAAR-inclusão (Discrepâncias).'),
             ],
             'performance' => [
                 'title' => __('Desempenho'),
@@ -714,76 +714,151 @@ final class AnalyticsTabImpactBuilder
         $semNee = (int) ($rec['sem_nee'] ?? 0);
         $neeSem = (int) ($rec['nee_sem_recurso'] ?? 0);
         $fundebNee = is_array($data['fundeb_nee'] ?? null) ? $data['fundeb_nee'] : [];
+        $fundingRef = self::resolveFundingReference($ctx);
 
         $perda = 0.0;
         $ganho = 0.0;
         $parts = [];
         $fundebLines = [];
+        $correcaoNotes = [];
 
         if (($fundebNee['available'] ?? false) && (int) ($fundebNee['matriculas_nee'] ?? 0) > 0) {
             $nNee = (int) $fundebNee['matriculas_nee'];
-            $fundingNee = [
-                'vaa_anual' => (float) ($fundebNee['vaaf'] ?? 0),
-                'vaa_label' => (string) ($fundebNee['vaaf_fmt'] ?? ''),
-                'vaa_fonte_label' => (string) ($fundebNee['vaaf_fonte'] ?? ''),
-                'vaa_fonte' => (string) ($fundebNee['vaaf_origem'] ?? ''),
-                'vaa_municipal_importado' => (bool) ($fundebNee['vaa_municipal_importado'] ?? (($fundebNee['vaaf_origem'] ?? '') === 'municipal')),
-            ];
-            $lineNee = FundebReferenceDisplay::linhaMatriculasVaafBase($nNee, $fundingNee, ['nee' => true]);
-            if ($lineNee !== null) {
-                $fundebLines[] = $lineNee;
-            }
-            if ((float) ($fundebNee['adicional_anual'] ?? 0) > 0) {
+            $peso = (float) ($fundebNee['peso_educacao_especial'] ?? 1.2);
+            $incremento = max(0.0, (float) ($fundebNee['incremento_ponderacao'] ?? ($peso - 1.0)));
+            $adicionalVaaf = (float) ($fundebNee['adicional_vaaf_anual'] ?? $fundebNee['adicional_anual'] ?? 0);
+            $adicionalVaar = (float) ($fundebNee['adicional_vaar_anual'] ?? 0);
+            $totalIncremental = (float) ($fundebNee['total_incremental_anual'] ?? ($adicionalVaaf + $adicionalVaar));
+
+            $ganho += $totalIncremental;
+
+            $vaafFmt = (string) ($fundebNee['vaaf_fmt'] ?? ($fundingRef['vaa_label'] ?? ''));
+            $rotulo = $fundingRef !== null
+                ? FundebReferenceDisplay::rotuloVaafCurto($fundingRef)
+                : __('VAAF');
+
+            if ($adicionalVaaf > 0 && $incremento > 0) {
                 $fundebLines[] = __(
-                    'Adicional indicativo de educação especial (peso :p × VAAF, eixo VAAR-inclusão): ≈ :adic/ano — não é acréscimo automático no repasse; serve para comparar o peso da matrícula NEE face à matrícula regular.',
+                    'Ponderação FUNDEB educação especial (:fonte, factor :p): :n matrícula(s) NEE × :vaaf × :inc ≈ :adic/ano (incremento sobre matrícula de referência 1,00).',
                     [
-                        'p' => number_format((float) ($fundebNee['peso_educacao_especial'] ?? 1.2), 2, ',', '.'),
-                        'adic' => (string) ($fundebNee['adicional_anual_fmt'] ?? '—'),
+                        'fonte' => (string) ($fundebNee['peso_fonte_label'] ?? __('Lei 14.113/2020')),
+                        'p' => number_format($peso, 2, ',', '.'),
+                        'n' => number_format($nNee, 0, ',', '.'),
+                        'vaaf' => $vaafFmt !== '' ? $vaafFmt : '—',
+                        'inc' => number_format($incremento, 2, ',', '.'),
+                        'adic' => (string) ($fundebNee['adicional_vaaf_anual_fmt'] ?? $fundebNee['adicional_anual_fmt'] ?? '—'),
                     ]
                 );
+            }
+
+            if ($adicionalVaar > 0) {
                 $fundebLines[] = __(
-                    'Total indicativo (base + adicional): :total/ano.',
-                    ['total' => (string) ($fundebNee['total_indicativo_anual_fmt'] ?? '—')]
+                    'Parcela indicativa da complementação VAAR (:fonte): ≈ :vaar/ano (proporcional ao incremento NEE no total de matrículas do filtro).',
+                    [
+                        'fonte' => (string) ($fundebNee['adicional_vaar_fonte'] ?? __('importação ou % configurado')),
+                        'vaar' => (string) ($fundebNee['adicional_vaar_anual_fmt'] ?? '—'),
+                    ]
+                );
+            }
+
+            if ($totalIncremental > 0) {
+                $fundebLines[] = __(
+                    'Ganho indicativo FUNDEB/VAAR (só incremento NEE, :rotulo): ≈ :total/ano — a base :base/aluno já entra na aba Matrículas.',
+                    [
+                        'rotulo' => $rotulo,
+                        'total' => (string) ($fundebNee['total_incremental_anual_fmt'] ?? DiscrepanciesFundingImpact::formatBrl($totalIncremental)),
+                        'base' => $vaafFmt !== '' ? $vaafFmt : '—',
+                    ]
+                );
+            }
+        }
+
+        $checks = self::discrepancyChecksFromTabData($tabData);
+        if ($checks !== []) {
+            $allowed = array_flip(self::inclusionDiscrepancyCheckIds());
+            foreach ($checks as $check) {
+                if (! is_array($check)) {
+                    continue;
+                }
+                $id = (string) ($check['id'] ?? '');
+                if ($id === '' || ! isset($allowed[$id])) {
+                    continue;
+                }
+                $occurrences = (int) ($check['total'] ?? 0);
+                if ($occurrences <= 0) {
+                    continue;
+                }
+                $impact = self::tabFundingImpactFromReference($id, $occurrences, $fundingRef);
+                $perda += (float) $impact['perda_anual'];
+                $ganho += (float) $impact['ganho_potencial_anual'];
+                $correcaoNotes[] = self::enrollmentCorrecaoFootnoteLine(
+                    (string) ($check['titulo'] ?? $check['title'] ?? $id),
+                    $occurrences,
+                    $impact,
                 );
             }
         }
 
         if ($semNee > 0) {
-            $e = DiscrepanciesFundingImpact::estimate('recurso_prova_sem_nee', $semNee);
+            $e = self::tabFundingImpactFromReference('recurso_prova_sem_nee', $semNee, $fundingRef);
             $perda += (float) $e['perda_anual'];
             $ganho += (float) $e['ganho_potencial_anual'];
             $parts[] = __(':n recurso de prova sem NEE', ['n' => number_format($semNee, 0, ',', '.')]);
         }
         if ($neeSem > 0) {
-            $e = DiscrepanciesFundingImpact::estimate('nee_sem_recurso_prova', $neeSem);
+            $e = self::tabFundingImpactFromReference('nee_sem_recurso_prova', $neeSem, $fundingRef);
             $perda += (float) $e['perda_anual'];
             $ganho += (float) $e['ganho_potencial_anual'];
             $parts[] = __(':n NEE sem recurso de prova', ['n' => number_format($neeSem, 0, ',', '.')]);
         }
 
-        if ($parts === [] && $fundebLines === []) {
+        if ($parts === [] && $fundebLines === [] && $correcaoNotes === []) {
             return null;
         }
 
         $footnoteParts = $fundebLines;
-        if ($parts !== []) {
+        if ($correcaoNotes !== []) {
             $footnoteParts[] = __(
-                'Risco cadastral (VAAR-inclusão): :detalhe. VAAF × pesos por tipo de discrepância — não é repasse FNDE.',
+                'Risco cadastral (Discrepâncias / VAAR-inclusão): :detalhe.',
+                ['detalhe' => implode(' ', $correcaoNotes)]
+            );
+        } elseif ($parts !== []) {
+            $footnoteParts[] = __(
+                'Risco cadastral (VAAR-inclusão): :detalhe.',
                 ['detalhe' => implode('; ', $parts)]
             );
         }
         $footnoteParts[] = DiscrepanciesFundingImpact::avisoGeral();
 
-        $raw = [
-            'perda' => round($perda, 2),
-            'ganho' => round($ganho, 2),
+        $ganho = round($ganho, 2);
+        $perda = round($perda, 2);
+        $temIncrementoFundeb = ($fundebNee['available'] ?? false)
+            && (float) ($fundebNee['total_incremental_anual'] ?? 0) > 0;
+
+        return [
+            'perda' => $perda,
+            'ganho' => $ganho,
             'liquido' => round($ganho - $perda, 2),
             'footnote' => implode(' ', array_filter($footnoteParts)),
             'fundeb_lines' => $fundebLines,
+            'gain_only' => $perda <= 0 && $ganho > 0 && $temIncrementoFundeb,
             'info_only' => $perda <= 0 && $ganho <= 0 && $fundebLines !== [],
         ];
+    }
 
-        return $raw;
+    /**
+     * @return list<string>
+     */
+    private static function inclusionDiscrepancyCheckIds(): array
+    {
+        return [
+            'nee_sem_aee',
+            'aee_sem_nee',
+            'nee_subnotificacao',
+            'recurso_prova_sem_nee',
+            'nee_sem_recurso_prova',
+            'recurso_prova_incompativel',
+        ];
     }
 
     /**

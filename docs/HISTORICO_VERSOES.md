@@ -1,12 +1,12 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`3.0.0`** · tag de deploy **`20260525-Apollo`** · ver [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`3.1.0`** · tag de deploy **`20260526-Boreas`** · ver [RELEASE_20260526_BOREAS.md](RELEASE_20260526_BOREAS.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **3.0.0** |
+| **Versão semântica em produção** | **3.1.0** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260525-Apollo` |
+| **Tag de deploy (servidor)** | `20260526-Boreas` |
 | **Último marco documentado** | LGPD (consentimento + privacidade), notificações, inclusão NEE catálogo INEP, UX consultoria/SAEB |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
@@ -20,7 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 3.0.0** | `20260525-Apollo` → `main` | **212+** | 25/05/2026 | **Produção:** LGPD (`/consentimento`, logs), notificações, catálogo NEE INEP, rodapé/privacidade, SAEB 4 colunas, UX welcome/RX — [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md). |
+| **▶ 3.1.0** | `20260526-Boreas` → `main` | — | 26/05/2026 | **Produção:** Inclusão (NEE/AEE, FUNDEB indicativo, inconsistências com nome do aluno); leitor doc admin sem 404 — [RELEASE_20260526_BOREAS.md](RELEASE_20260526_BOREAS.md). |
+| 3.0.0 | `20260525-Apollo` → `main` | **212+** | 25/05/2026 | LGPD (`/consentimento`, logs), notificações, catálogo NEE INEP, rodapé/privacidade, SAEB 4 colunas, UX welcome/RX — [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md). |
 | 2.4.0 | `20260524-Ceres` → `c25bc22` | **206** | 24/05/2026 | `saeb:import-planilhas-inep` (PhpSpreadsheet, RAR/XLSX INEP); FUNDEB receita + ordem VAAF — [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md). |
 | 2.3.8.7 | `6eb94cf` | **202** | 21/05/2026 | Pulse diagnóstico SQL (sistema + municípios) e operações; aba Matrículas com ganho VAAF e sem perdas. |
 | 2.3.8.6 | `0a0743e` | **198** | 21/05/2026 | Mapa municípios Início com cores/meta RX (cadastro ano vigente); cartão com contato municipal e progresso meta; snapshot em cache. |

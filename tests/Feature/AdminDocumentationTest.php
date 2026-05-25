@@ -51,6 +51,43 @@ class AdminDocumentationTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_admin_can_open_deliveries_doc_not_only_in_old_whitelist(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->get(route('admin.documentation.show', ['doc' => 'docs/ENTREGAS_ESCALONADAS_MAIO_2026.md']))
+            ->assertOk()
+            ->assertSee(__('Entregas escalonadas'), false);
+    }
+
+    public function test_admin_can_open_release_note_linked_from_history(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->get(route('admin.documentation.show', ['doc' => 'docs/RELEASE_20260525_APOLLO.md']))
+            ->assertOk();
+    }
+
+    public function test_readme_internal_links_point_to_documentation_reader(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->actingAs($admin)
+            ->get(route('admin.documentation.show', ['doc' => 'docs/README.md']));
+
+        $response->assertOk();
+        $response->assertSee(
+            route('admin.documentation.show', ['doc' => 'docs/ENTREGAS_ESCALONADAS_MAIO_2026.md']),
+            false
+        );
+        $response->assertSee(
+            route('admin.documentation.show', ['doc' => 'docs/HISTORICO_VERSOES.md']),
+            false
+        );
+    }
+
     public function test_non_admin_cannot_access_documentation(): void
     {
         $user = User::factory()->utilizador()->create();

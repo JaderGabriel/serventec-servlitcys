@@ -10,7 +10,10 @@
                 </p>
             </div>
             <p class="text-xs text-gray-500 dark:text-gray-400 shrink-0 mt-2 sm:mt-0 max-w-xs sm:text-right">
-                {{ __('Documentação completa:') }} <code class="text-indigo-700 dark:text-indigo-300">docs/COMANDOS_ARTISAN.md</code>
+                {{ __('Documentação completa:') }}
+                <a href="{{ \App\Support\Admin\DocumentationCatalog::readerUrl('docs/COMANDOS_ARTISAN.md') }}" class="text-indigo-700 dark:text-indigo-300 hover:underline font-medium">
+                    {{ __('Comandos Artisan') }}
+                </a>
             </p>
         </div>
     </x-slot>
