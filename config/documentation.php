@@ -24,8 +24,8 @@ return [
     'product' => [
         'version' => '2.4.0',
         'release_tag' => '20260524-Ceres',
-        'commit_short' => '',
-        'commit_number' => null,
+        'commit_short' => 'c25bc22',
+        'commit_number' => 206,
         'revision_date' => '2026-05-24',
         'in_production' => true,
         'production_label' => 'Em produção',

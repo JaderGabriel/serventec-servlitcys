@@ -1,6 +1,6 @@
 # Release `20260524-Ceres` — ServLitcys 2.4.0
 
-**Data:** 2026-05-24 · **Figura:** *Ceres* (colheita e provisão — adequado à consolidação de **importações** de fontes públicas).
+**Data:** 2026-05-24 · **Commit:** `c25bc22` (#206) · **Figura:** *Ceres* (colheita e provisão — adequado à consolidação de **importações** de fontes públicas).
 
 ## Resumo
 

@@ -20,7 +20,7 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 2.4.0** | `20260524-Ceres` | — | 24/05/2026 | **Produção:** `saeb:import-planilhas-inep` (PhpSpreadsheet, RAR/XLSX INEP); FUNDEB receita + ordem VAAF; doc importações — [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md). |
+| **▶ 2.4.0** | `20260524-Ceres` → `c25bc22` | **206** | 24/05/2026 | **Produção:** `saeb:import-planilhas-inep` (PhpSpreadsheet, RAR/XLSX INEP); FUNDEB receita + ordem VAAF; doc importações — [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md). |
 | 2.3.8.7 | `6eb94cf` | **202** | 21/05/2026 | Pulse diagnóstico SQL (sistema + municípios) e operações; aba Matrículas com ganho VAAF e sem perdas. |
 | 2.3.8.6 | `0a0743e` | **198** | 21/05/2026 | Mapa municípios Início com cores/meta RX (cadastro ano vigente); cartão com contato municipal e progresso meta; snapshot em cache. |
 | 2.3.8.5 | `a2566aa` | **195** | 21/05/2026 | Mapa capacidade/vagas (fallback); Matrículas cartões saldo + fórmula VAAF; NEE dataset unificado (grupo + catálogo); alias deficiência. |
