@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '3.1.0',
         'release_tag' => '20260526-Boreas',
-        'commit_short' => '82733a0',
+        'commit_short' => '8575133',
         'commit_number' => 227,
         'revision_date' => '2026-05-26',
         'in_production' => true,
