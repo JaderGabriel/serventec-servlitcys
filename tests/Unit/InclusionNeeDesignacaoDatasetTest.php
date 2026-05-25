@@ -114,6 +114,25 @@ final class InclusionNeeDesignacaoDatasetTest extends TestCase
         $this->assertSame(706.0, $out[1]['value']);
     }
 
+    public function test_chart_grupo_mostra_tres_barras_mesmo_zeradas(): void
+    {
+        $dataset = [
+            'footnote' => 'test',
+            'uses_fisica' => true,
+            'matriculas_nee' => 315,
+            'catalog' => [],
+            'grupos' => [
+                'deficiencias' => 0,
+                'sindromes_tea' => 0,
+                'ne_altas_habilidades' => 0,
+            ],
+        ];
+
+        $chart = InclusionNeeDesignacaoDataset::chartGrupo($dataset, 1000);
+        $this->assertNotNull($chart);
+        $this->assertSame([0.0, 0.0, 0.0], $chart['datasets'][0]['data']);
+    }
+
     public function test_classificar_designacao_grupo_alinha_com_palavras_chave(): void
     {
         $this->assertSame('sindrome', InclusionDashboardQueries::classificarDesignacaoNeeGrupo('Transtorno do espectro autista'));

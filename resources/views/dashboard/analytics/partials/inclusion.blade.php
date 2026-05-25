@@ -34,9 +34,13 @@
             || ! empty($neeDetalheCatalogo['ne_altas_habilidades'])
         );
     $neeGrupoResumo = is_array($inclusionData['nee_grupo_resumo'] ?? null) ? $inclusionData['nee_grupo_resumo'] : null;
-    $neeGrupoResumoTotal = is_array($neeGrupoResumo)
-        ? (int) (($neeGrupoResumo['deficiencias'] ?? 0) + ($neeGrupoResumo['sindromes_tea'] ?? 0) + ($neeGrupoResumo['ne_altas_habilidades'] ?? 0))
-        : 0;
+    $showNeeCadastroSection = $neeChartsCount > 0
+        || $hasNeeDetalheCatalogo
+        || is_array($chartNeeCatalogo)
+        || is_array($chartNeeGrupo)
+        || $neeGrupoResumo !== null
+        || ($matriculasNee !== null && $matriculasNee > 0)
+        || (is_array($aeeCross) && (int) ($aeeCross['matriculas_aee'] ?? 0) > 0);
     $recursoProva = is_array($inclusionData['recurso_prova'] ?? null) ? $inclusionData['recurso_prova'] : null;
     $recursoSchema = is_array($recursoProva['schema'] ?? null) ? $recursoProva['schema'] : null;
     $recursoDisponivel = (bool) ($recursoSchema['available'] ?? false);
@@ -240,11 +244,13 @@
     @endif
 
     @if (! empty($inclusionData['charts']) || is_array($aeeCross) || $hasNeeDetalheCatalogo || is_array($chartRacaPorEscolaStacked) || is_array($chartNeePorRacaStacked) || ! empty($neeMatriculasPorEscola))
-        @if ($neeChartsCount > 0 || $hasNeeDetalheCatalogo || is_array($chartNeeCatalogo))
+        @if ($showNeeCadastroSection)
             <div class="mb-8">
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('NEE — cadastro (deficiências, síndromes e altas habilidades)') }}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">{{ __('Os gráficos agrupado e por designação usam cadastro NEE (fisica_deficiencia ou aluno_deficiencia + deficiência). O total de matrículas em educação especial pode incluir turmas AEE identificadas por palavras-chave. Respeita o recorte desta aba quando activo.') }}</p>
-                @if ($neeGrupoResumo !== null && $neeGrupoResumoTotal > 0)
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+                    {{ __('O total NEE (cabeçalho) inclui cadastro de deficiência e/ou matrícula em turma AEE. Os três cartões e o gráfico por grupo contam apenas vínculos no catálogo de deficiências — podem aparecer a 0 quando os alunos estão só em turmas AEE sem tipo registado em cadastro.deficiencia. O catálogo completo mostra todas as designações MEC/i-Educar e a barra âmbar «sem designação» quando aplicável.') }}
+                </p>
+                @if ($neeGrupoResumo !== null)
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 items-stretch">
                         <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
                             <p class="text-[11px] font-medium uppercase text-violet-700 dark:text-violet-300">{{ __('Deficiências (grupo)') }}</p>
@@ -263,7 +269,7 @@
                         </div>
                     </div>
                 @endif
-                @if (is_array($chartNeeGrupo) && ! empty($chartNeeGrupo['labels'] ?? null))
+                @if (is_array($chartNeeGrupo))
                     <div class="min-w-0 w-full [&_.chart-panel-host]:min-h-[min(32rem,70vh)]">
                         <x-dashboard.chart-panel
                             :chart="$chartNeeGrupo"
@@ -406,16 +412,24 @@
                 <div>
                     <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('AEE e outras matrículas (alunos NEE)') }}</h3>
                     <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                        {{ __('Alunos com educação especial no cadastro (fisica_deficiencia ou aluno_deficiencia) ou matrícula em turma/curso AEE. Turmas AEE são identificadas por palavras-chave no nome da turma ou do curso. As outras matrículas do mesmo aluno são agrupadas por segmento de forma heurística.') }}
+                        {{ __('Complementa o bloco anterior: cruza o mesmo total NEE com turmas cujo nome de turma ou curso contém palavras-chave AEE (config/ieducar.php). «Matrículas em turmas AEE» pode ser menor que o total NEE quando o aluno também tem matrícula regular. «Alunos AEE também noutro segmento» indica quem tem pelo menos uma turma AEE e outra matrícula no mesmo ano (segmento heurístico).') }}
                     </p>
                 </div>
                 @if (! empty($aeeCross['note']))
                     <p class="text-xs text-amber-900 dark:text-amber-200/90 leading-relaxed">{{ $aeeCross['note'] }}</p>
                 @endif
-                <dl class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
+                <dl class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-sm">
                     <div class="rounded-md bg-white/80 dark:bg-gray-800/60 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2">
                         <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Matrículas NEE (total)') }}</dt>
                         <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format($matriculasNee ?? (int) ($aeeCross['nee_matriculas_total'] ?? 0)) }}</dd>
+                    </div>
+                    <div class="rounded-md bg-white/80 dark:bg-gray-800/60 border border-violet-200/60 dark:border-violet-800/40 px-3 py-2">
+                        <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Com cadastro deficiência') }}</dt>
+                        <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($aeeCross['matriculas_com_cadastro_nee'] ?? 0)) }}</dd>
+                    </div>
+                    <div class="rounded-md bg-white/80 dark:bg-gray-800/60 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2">
+                        <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Só turma AEE (est.)') }}</dt>
+                        <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($aeeCross['matriculas_somente_turma_aee'] ?? 0)) }}</dd>
                     </div>
                     <div class="rounded-md bg-white/80 dark:bg-gray-800/60 border border-amber-200/60 dark:border-amber-800/40 px-3 py-2">
                         <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Matrículas em turmas AEE') }}</dt>

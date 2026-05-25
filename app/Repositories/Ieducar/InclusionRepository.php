@@ -331,10 +331,10 @@ class InclusionRepository
             __('Todos os indicadores respeitam os filtros atuais (ano letivo, escola, segmento, turno) através da turma, com matrícula considerada ativa conforme config/ieducar.php.'),
             __('O recorte opcional «Inclusão — recorte de matrículas» na barra de filtros aplica-se aos gráficos e tabelas de NEE; equidade, raça, distorção e recurso de prova continuam na rede completa do filtro.'),
             __('Distorção idade/série: em PostgreSQL com física e série, mostra-se a contagem por unidade escolar (referência 1 de março); caso contrário usa-se o gráfico de barras por série com quantidades de alunos com distorção (critério INEP +2 anos).'),
-            __('Educação especial: prioridade cadastro.fisica_deficiencia + cadastro.deficiencia (como no BI Portabilis); senão aluno_deficiencia + deficiencia. Matrículas em turma/curso AEE (palavras-chave) entram no total quando IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE=true. Medidores e gráficos NEE usam a mesma origem SQL.'),
-            __('Cruzamento AEE: turmas «AEE» são identificadas por palavras-chave no nome da turma e do curso (config/ieducar.php, inclusão). Os segmentos das outras matrículas do mesmo aluno são heurísticos; ajuste IEDUCAR_INCLUSION_* se os rótulos não coincidirem com a rede.'),
+            __('Total «Matrículas NEE» = matrículas activas distintas com deficiência em cadastro (fisica_deficiencia ou aluno_deficiencia) ou matrícula em turma/curso cujo nome sugere AEE (IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE). Os gráficos por grupo e por designação contam vínculos no catálogo deficiência (podem ficar a 0 se só houver AEE sem cadastro).'),
+            __('Cruzamento AEE: detalha matrículas em turmas AEE e alunos que também frequentam outro segmento. «Matrículas só em turma AEE» é o total NEE menos matrículas com cadastro de deficiência (pode haver sobreposição em bases atípicas).'),
             __('Recursos de prova INEP (Censo): distintos do cadastro de deficiência/NEE. O painel detecta tabelas/colunas na base ou usa SQL em IEDUCAR_SQL_INCLUSION_RECURSO_PROVA_*; um aluno pode ter recurso (ex.: óculos na prova) sem deficiência — sinaliza-se para revisão, não como erro automático.'),
-            __('Filtros da aba: «Só NEE» restringe todas as contagens a alunos com registro em aluno_deficiência; «Só inconsistências recurso × NEE» limita a matrículas em cruzamentos recurso de prova sem NEE (e, se configurado, NEE sem recurso).'),
+            __('Filtros da aba: «Só NEE» aplica o mesmo recorte do total (cadastro deficiência ou turma AEE); «Só inconsistências recurso × NEE» limita a cruzamentos recurso de prova sem cadastro NEE (e, se configurado, o inverso).'),
             $eq,
         ];
     }

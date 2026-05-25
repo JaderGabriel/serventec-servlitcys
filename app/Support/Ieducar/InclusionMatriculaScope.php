@@ -31,10 +31,7 @@ final class InclusionMatriculaScope
         $col = $alunoAlias.'.'.$aId;
 
         if ($filters->inclusionSomenteNee()) {
-            $neeSub = DiscrepanciesQueries::alunosComNeeSubqueryPublic($db, $city);
-            if ($neeSub !== null) {
-                $q->whereIn($col, $neeSub);
-            }
+            InclusionDashboardQueries::applyRecorteMatriculasNeeWhere($q, $db, $city, $filters, 'm', $alunoAlias);
 
             return;
         }

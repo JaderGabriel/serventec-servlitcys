@@ -127,10 +127,36 @@ final class InclusionDashboardQueries
 
     /**
      * Matrículas activas distintas em educação especial: cadastro NEE e, se configurado, turma/curso AEE.
+     * Usa a mesma base SQL que {@see fetchNeeMatriculasComTurmaCurso()} (evita divergência com o bloco AEE).
      */
     public static function countMatriculasComNee(Connection $db, City $city, IeducarFilterState $filters): int
     {
         try {
+            $ids = [];
+            foreach (self::fetchNeeMatriculasComTurmaCurso($db, $city, $filters) as $row) {
+                $mid = (int) ($row['matricula_id'] ?? 0);
+                if ($mid > 0) {
+                    $ids[$mid] = true;
+                }
+            }
+
+            return count($ids);
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    /**
+     * Matrículas activas com vínculo em fisica_deficiencia / aluno_deficiencia (sem turma AEE por heurística).
+     */
+    public static function countMatriculasComCadastroNee(Connection $db, City $city, IeducarFilterState $filters): int
+    {
+        try {
+            $cadastroSub = self::alunosComCadastroNeeSubquery($db, $city);
+            if ($cadastroSub === null) {
+                return 0;
+            }
+
             $mat = IeducarSchema::resolveTable('matricula', $city);
             $aluno = IeducarSchema::resolveTable('aluno', $city);
             $mId = (string) config('ieducar.columns.matricula.id');
@@ -138,44 +164,97 @@ final class InclusionDashboardQueries
             $mAtivo = (string) config('ieducar.columns.matricula.ativo');
             $aId = (string) config('ieducar.columns.aluno.id');
 
-            $cadastroSub = self::alunosComCadastroNeeSubquery($db, $city);
-            $includeAee = self::incluirTurmaAeeNoRecorteNee();
-
-            if ($cadastroSub === null && ! $includeAee) {
-                return 0;
-            }
-
             $q = $db->table($mat.' as m')
                 ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
             MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
-            MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
             self::applyInclusionScope($q, $db, $city, $filters);
+            $q->whereIn('a.'.$aId, $cadastroSub);
 
-            $q->where(function (Builder $w) use ($db, $city, $filters, $mat, $mId, $mAluno, $mAtivo, $aId, $cadastroSub, $includeAee): void {
-                if ($cadastroSub !== null) {
-                    $w->whereIn('a.'.$aId, $cadastroSub);
-                }
-                if ($includeAee) {
-                    $clause = $cadastroSub !== null ? 'orWhereExists' : 'whereExists';
-                    $w->{$clause}(function ($ex) use ($db, $city, $filters, $mat, $aluno, $mId, $mAluno, $mAtivo, $aId): void {
-                        $ex->from($mat.' as m_aee')
-                            ->join($aluno.' as a_aee', 'm_aee.'.$mAluno, '=', 'a_aee.'.$aId)
-                            ->whereColumn('m_aee.'.$mId, 'm.'.$mId);
-                        MatriculaAtivoFilter::apply($ex, $db, 'm_aee.'.$mAtivo, $city);
-                        MatriculaTurmaJoin::joinMatriculaToTurma($ex, $db, $city, 'm_aee');
-                        MatriculaTurmaJoin::applyPivotAtivoIfNeeded($ex, $db, $city);
-                        MatriculaTurmaJoin::applyTurmaFiltersWhere($ex, $db, $city, $filters, 't_filter');
-                        self::applyTurmaAeeRawWhere($ex, $db, $city);
-                    });
-                }
-            });
-
-            $row = $q->selectRaw('COUNT(DISTINCT m.'.$db->getQueryGrammar()->wrap($mId).') as c')->first();
+            $grammar = $db->getQueryGrammar();
+            $row = $q->selectRaw(
+                'COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).') as c'
+            )->first();
 
             return (int) ($row->c ?? 0);
         } catch (\Throwable) {
             return 0;
         }
+    }
+
+    /**
+     * Predicado NEE (cadastro e/ou turma AEE) sobre query que já tem `m` (matrícula) e `a` (aluno).
+     */
+    public static function applyRecorteMatriculasNeeWhere(
+        Builder $q,
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        string $matAlias = 'm',
+        string $alunoAlias = 'a',
+    ): void {
+        $mat = IeducarSchema::resolveTable('matricula', $city);
+        $aluno = IeducarSchema::resolveTable('aluno', $city);
+        $mId = (string) config('ieducar.columns.matricula.id');
+        $mAluno = (string) config('ieducar.columns.matricula.aluno');
+        $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+        $aId = (string) config('ieducar.columns.aluno.id');
+
+        $cadastroSub = self::alunosComCadastroNeeSubquery($db, $city);
+        $includeAee = self::incluirTurmaAeeNoRecorteNee();
+
+        if ($cadastroSub === null && ! $includeAee) {
+            $q->whereRaw('0 = 1');
+
+            return;
+        }
+
+        $q->where(function (Builder $w) use (
+            $db,
+            $city,
+            $filters,
+            $mat,
+            $aluno,
+            $matAlias,
+            $alunoAlias,
+            $mId,
+            $mAluno,
+            $mAtivo,
+            $aId,
+            $cadastroSub,
+            $includeAee
+        ): void {
+            if ($cadastroSub !== null) {
+                $w->whereIn($alunoAlias.'.'.$aId, $cadastroSub);
+            }
+            if ($includeAee) {
+                $clause = $cadastroSub !== null ? 'orWhereExists' : 'whereExists';
+                $w->{$clause}(function ($ex) use (
+                    $db,
+                    $city,
+                    $filters,
+                    $mat,
+                    $aluno,
+                    $matAlias,
+                    $alunoAlias,
+                    $mId,
+                    $mAluno,
+                    $mAtivo,
+                    $aId
+                ): void {
+                    $ex->from($mat.' as m_aee')
+                        ->join($aluno.' as a_aee', 'm_aee.'.$mAluno, '=', 'a_aee.'.$aId)
+                        ->whereColumn('m_aee.'.$mId, $matAlias.'.'.$mId);
+                    MatriculaAtivoFilter::apply($ex, $db, 'm_aee.'.$mAtivo, $city);
+                    MatriculaTurmaJoin::joinMatriculaToTurma($ex, $db, $city, 'm_aee');
+                    MatriculaTurmaJoin::applyPivotAtivoIfNeeded($ex, $db, $city);
+                    MatriculaTurmaJoin::applyTurmaFiltersWhere($ex, $db, $city, $filters, 't_filter');
+                    self::applyTurmaAeeRawWhere($ex, $db, $city);
+                });
+            }
+        });
     }
 
     /**
@@ -192,7 +271,7 @@ final class InclusionDashboardQueries
             }
 
             $dataset = InclusionNeeDesignacaoDataset::build($db, $city, $filters);
-            if ($dataset !== null && (int) ($dataset['matriculas_nee'] ?? 0) > 0) {
+            if ($dataset !== null) {
                 $nee = (int) $dataset['matriculas_nee'];
                 $g = $dataset['grupos'] ?? [];
                 $nDef = (int) ($g['deficiencias'] ?? 0);
@@ -1263,8 +1342,13 @@ final class InclusionDashboardQueries
                 );
             }
 
+            $comCadastro = self::countMatriculasComCadastroNee($db, $city, $filters);
+            $somenteAee = max(0, $neeMatriculas - $comCadastro);
+
             return [
                 'nee_matriculas_total' => $neeMatriculas,
+                'matriculas_com_cadastro_nee' => $comCadastro,
+                'matriculas_somente_turma_aee' => $somenteAee,
                 'matriculas_em_turmas_aee' => $matAee,
                 'alunos_com_aee' => $nAlunosAee,
                 'alunos_nee_com_aee_e_outro_segmento' => $alunosAeeEOutro,
@@ -1305,30 +1389,7 @@ final class InclusionDashboardQueries
         $q = $db->table($mat.' as m')
             ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
 
-        $cadastroSub = self::alunosComCadastroNeeSubquery($db, $city);
-        $includeAee = self::incluirTurmaAeeNoRecorteNee();
-        if ($cadastroSub === null && ! $includeAee) {
-            return [];
-        }
-
-        $q->where(function (Builder $w) use ($db, $city, $filters, $mat, $aluno, $mId, $mAluno, $mAtivo, $aId, $cadastroSub, $includeAee): void {
-            if ($cadastroSub !== null) {
-                $w->whereIn('a.'.$aId, $cadastroSub);
-            }
-            if ($includeAee) {
-                $clause = $cadastroSub !== null ? 'orWhereExists' : 'whereExists';
-                $w->{$clause}(function ($ex) use ($db, $city, $filters, $mat, $aluno, $mId, $mAluno, $mAtivo, $aId): void {
-                    $ex->from($mat.' as m_aee')
-                        ->join($aluno.' as a_aee', 'm_aee.'.$mAluno, '=', 'a_aee.'.$aId)
-                        ->whereColumn('m_aee.'.$mId, 'm.'.$mId);
-                    MatriculaAtivoFilter::apply($ex, $db, 'm_aee.'.$mAtivo, $city);
-                    MatriculaTurmaJoin::joinMatriculaToTurma($ex, $db, $city, 'm_aee');
-                    MatriculaTurmaJoin::applyPivotAtivoIfNeeded($ex, $db, $city);
-                    MatriculaTurmaJoin::applyTurmaFiltersWhere($ex, $db, $city, $filters, 't_filter');
-                    self::applyTurmaAeeRawWhere($ex, $db, $city);
-                });
-            }
-        });
+        self::applyRecorteMatriculasNeeWhere($q, $db, $city, $filters);
 
         MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
         MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');

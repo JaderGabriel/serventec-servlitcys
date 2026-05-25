@@ -47,6 +47,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 39 | `1acac6c` | **Pós-3.0.0 (sem bump):** admin — editor PP/cookies, versionamento, revogação e reconsentimento |
 | 40 | `08fb655` | **Pós-3.0.0 (sem bump):** inclusão — gráfico NEE por grupo vs catálogo (sem duplicata), contagem NEE/AEE unificada |
 | 41 | `d439660` | **Pós-3.0.0 (sem bump):** banner cookies welcome — fechar após aceitar e dismiss automático |
+| 42 | `39263f7` | **Pós-3.0.0 (sem bump):** inclusão — total NEE alinhado a AEE, grupos com 0, textos NEE vs cadastro |
 
 **Em produção:** versão **3.0.0** · tag **`20260525-Apollo`** · [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md).
 
@@ -480,6 +481,23 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | **API** | `POST legal.consent.guest` (JSON) — cookie HttpOnly |
 
 **Pós-deploy:** `npm run build` · testar `/` sem login (aceitar → banner some).
+
+---
+
+## 42. Patch inclusão NEE — total alinhado a AEE e grupos zerados (pós-3.0.0, sem nova versão)
+
+**Objetivo:** Corrigir **Matrículas NEE (total) = 0** com bloco AEE preenchido; mostrar cartões e gráfico por **grupo** mesmo com contadores 0; clarificar diferença entre total NEE (cadastro + turma AEE) e contagens por designação no catálogo.
+
+| Área | Alteração |
+|------|-----------|
+| **Contagem** | `countMatriculasComNee` usa `fetchNeeMatriculasComTurmaCurso` (mesmo predicado que AEE); `countMatriculasComCadastroNee` só cadastro; `applyRecorteMatriculasNeeWhere` partilhado |
+| **Filtro «Só NEE»** | `InclusionMatriculaScope` aplica o recorte completo (cadastro ou turma AEE) |
+| **Dataset / UI** | `chartGrupo` com três barras sempre; secção NEE visível com AEE ou `nee_grupo_resumo`; KPIs AEE «com cadastro» e «só turma AEE (est.)» |
+| **Textos** | Metodologia e parágrafos na aba explicam total NEE vs vínculos no catálogo vs barra «sem designação» |
+
+| Ficheiros | `InclusionDashboardQueries.php`, `InclusionMatriculaScope.php`, `InclusionNeeDesignacaoDataset.php`, `InclusionRepository.php`, `inclusion.blade.php`, testes |
+
+**Pós-deploy:** `npm run build` · **Pedagógico → Inclusão**: total NEE ≈ matrículas AEE quando só há turma AEE; grupos 0/0/0 visíveis; catálogo com barra âmbar se aplicável.
 
 ---
 

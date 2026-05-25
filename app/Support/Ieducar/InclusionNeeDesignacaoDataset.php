@@ -25,12 +25,14 @@ final class InclusionNeeDesignacaoDataset
     public static function build(Connection $db, City $city, IeducarFilterState $filters): ?array
     {
         try {
-            $rows = InclusionDashboardQueries::getMatriculasPorDeficiencia($db, $city, $filters, null);
+            $matriculasNee = InclusionDashboardQueries::countMatriculasComNee($db, $city, $filters);
             $entries = InclusionEducacensoCatalog::mergedDeficienciaEntriesForChart($db, $city);
 
-            if ($entries === [] && $rows->isEmpty()) {
+            if ($entries === [] && $matriculasNee <= 0) {
                 return null;
             }
+
+            $rows = InclusionDashboardQueries::getMatriculasPorDeficiencia($db, $city, $filters, null);
 
             $maps = InclusionEducacensoCatalog::deficienciaCountMapsFromRows(
                 $rows,
@@ -39,22 +41,23 @@ final class InclusionNeeDesignacaoDataset
                 static fn ($row) => (string) ($row->def_id ?? ''),
             );
 
-            $matriculasNee = InclusionDashboardQueries::countMatriculasComNee($db, $city, $filters);
             $catalog = self::buildCatalogRows($entries, $maps, $rows);
             $catalog = self::appendSemDesignacaoCatalogoRow($catalog, $matriculasNee);
             $grupos = self::aggregateGruposFromCatalog($catalog);
 
             $usesFisica = InclusionDashboardQueries::inclusionNeeUsesFisicaPath($db, $city);
+            $pathNote = $usesFisica
+                ? __('cadastro.fisica_deficiencia + deficiência')
+                : __('aluno_deficiencia + deficiência');
+
+            $footnote = __(
+                'Total NEE (:total): matrículas activas com registo em :path ou em turma/curso AEE (palavras-chave). Os três grupos abaixo contam vínculos por designação no catálogo (podem ser 0 se todos os alunos estiverem só em AEE, sem deficiência cadastrada). O catálogo completo inclui barra âmbar «sem designação» para esse caso.',
+                ['total' => number_format($matriculasNee), 'path' => $pathNote]
+            );
 
             return [
                 'uses_fisica' => $usesFisica,
-                'footnote' => $usesFisica
-                    ? __(
-                        'Mesma origem nos dois gráficos: matrículas activas distintas por designação em cadastro.deficiencia (vínculo fisica_deficiencia). Os três grupos somam as barras do catálogo com a mesma classificação por palavras-chave; uma matrícula com vários vínculos pode aparecer em mais do que uma barra.'
-                    )
-                    : __(
-                        'Mesma origem nos dois gráficos: matrículas activas por designação em aluno_deficiencia + cadastro.deficiencia. Os grupos somam as contagens do catálogo com a mesma classificação por palavras-chave.'
-                    ),
+                'footnote' => $footnote,
                 'grupos' => $grupos,
                 'catalog' => $catalog,
                 'matriculas_nee' => $matriculasNee,
@@ -78,12 +81,6 @@ final class InclusionNeeDesignacaoDataset
         $nSin = (int) ($g['sindromes_tea'] ?? 0);
         $nNe = (int) ($g['ne_altas_habilidades'] ?? 0);
         $matriculasNee = (int) ($dataset['matriculas_nee'] ?? 0);
-        if ($nDef + $nSin + $nNe <= 0) {
-            if ($matriculasNee <= 0) {
-                return null;
-            }
-            $nDef = $matriculasNee;
-        }
 
         $chart = ChartPayload::bar(
             __('Matrículas por grupo: deficiências, síndromes/TEA e NE (altas habilidades)'),
