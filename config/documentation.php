@@ -24,8 +24,8 @@ return [
     'product' => [
         'version' => '3.0.0',
         'release_tag' => '20260525-Apollo',
-        'commit_short' => '3374e01',
-        'commit_number' => 214,
+        'commit_short' => 'f69918b',
+        'commit_number' => 215,
         'revision_date' => '2026-05-25',
         'in_production' => true,
         'production_label' => 'Em produção',
