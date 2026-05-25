@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Legal\LegalConsentService;
 use Illuminate\View\View;
 
 class PrivacyPolicyController extends Controller
@@ -15,6 +16,7 @@ class PrivacyPolicyController extends Controller
             'serventecName' => (string) ($brand['serventec_name'] ?? 'Serventec Assessoria'),
             'privacyContactEmail' => (string) config('legal.privacy_contact_email', ''),
             'lastUpdated' => (string) config('legal.privacy_last_updated', '2026-05-25'),
+            'privacyVersion' => LegalConsentService::currentPrivacyVersion(),
         ]);
     }
 }

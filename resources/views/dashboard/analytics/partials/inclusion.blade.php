@@ -222,7 +222,7 @@
     @endif
 
     @if (! empty($inclusionData['charts']) || is_array($aeeCross) || $hasNeeDetalheCatalogo || is_array($chartRacaPorEscolaStacked) || is_array($chartNeePorRacaStacked) || ! empty($neeMatriculasPorEscola))
-        @if ($neeChartsCount > 0 || $hasNeeDetalheCatalogo)
+        @if ($neeChartsCount > 0 || $hasNeeDetalheCatalogo || is_array($chartNeeCatalogo))
             <div class="mb-8">
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('NEE — cadastro (deficiências, síndromes e altas habilidades)') }}</h3>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">{{ __('Os gráficos agrupado e por designação usam cadastro NEE (fisica_deficiencia ou aluno_deficiencia + deficiência). O total de matrículas em educação especial pode incluir turmas AEE identificadas por palavras-chave. Respeita o recorte desta aba quando activo.') }}</p>
@@ -257,13 +257,37 @@
                 @endif
 
                 @if (is_array($chartNeeCatalogo) && ! empty($chartNeeCatalogo['labels'] ?? null))
-                    <div class="mt-6 min-w-0 w-full [&_.chart-panel-host]:min-h-[min(32rem,70vh)]">
-                        <x-dashboard.chart-panel
-                            :chart="$chartNeeCatalogo"
-                            :exportFilename="'inclusao-nee-catalogo'"
-                            :exportMeta="$chartExportContext"
-                            :compact="false"
-                        />
+                    <div class="mt-6 space-y-2">
+                        <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Alunos × necessidades especiais (catálogo completo)') }}</h4>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                            {{ __('Todas as opções do catálogo MEC/Educacenso e do i-Educar no recorte. Barras com sufixo «INEP/Censo» seguem o Educacenso; «Complementar» e «Cadastro i-Educar» indicam designações locais. Valor 0 = sem matrícula com aquele vínculo no filtro.') }}
+                        </p>
+                        <div class="flex flex-wrap gap-2 text-[10px] font-medium">
+                            <span class="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-indigo-900 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-100">
+                                <span class="h-2 w-2 rounded-sm bg-indigo-600" aria-hidden="true"></span>
+                                {{ __('INEP/Censo') }}
+                            </span>
+                            <span class="inline-flex items-center gap-1 rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-violet-900 dark:border-violet-800 dark:bg-violet-950/50 dark:text-violet-100">
+                                <span class="h-2 w-2 rounded-sm bg-violet-600" aria-hidden="true"></span>
+                                {{ __('Complementar') }}
+                            </span>
+                            <span class="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100">
+                                <span class="h-2 w-2 rounded-sm bg-amber-600" aria-hidden="true"></span>
+                                {{ __('Só i-Educar') }}
+                            </span>
+                        </div>
+                        <div class="min-w-0 w-full [&_.chart-panel-host]:min-h-[min(36rem,75vh)]">
+                            <x-dashboard.chart-panel
+                                :chart="$chartNeeCatalogo"
+                                :exportFilename="'inclusao-nee-catalogo'"
+                                :exportMeta="$chartExportContext"
+                                :compact="false"
+                            />
+                        </div>
+                    </div>
+                @elseif ($neeChartsCount > 0 || is_array($chartNeeGrupo))
+                    <div class="mt-6 rounded-lg border border-dashed border-violet-200 dark:border-violet-800 px-4 py-3 text-xs text-violet-900/90 dark:text-violet-200/90 leading-relaxed">
+                        {{ __('O catálogo completo de designações não foi gerado (sem entradas MEC/i-Educar na base ou erro na consulta). Verifique cadastro.deficiencia e aluno_deficiencia / fisica_deficiencia.') }}
                     </div>
                 @endif
 
@@ -364,7 +388,7 @@
                 <div>
                     <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('AEE e outras matrículas (alunos NEE)') }}</h3>
                     <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                        {{ __('Apenas alunos com registro em aluno_deficiência. Turmas AEE são identificadas por termos no nome da turma ou do curso. As outras matrículas do mesmo aluno são agrupadas por segmento de forma heurística.') }}
+                        {{ __('Alunos com educação especial no cadastro (fisica_deficiencia ou aluno_deficiencia) ou matrícula em turma/curso AEE. Turmas AEE são identificadas por palavras-chave no nome da turma ou do curso. As outras matrículas do mesmo aluno são agrupadas por segmento de forma heurística.') }}
                     </p>
                 </div>
                 @if (! empty($aeeCross['note']))

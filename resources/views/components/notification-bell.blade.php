@@ -6,7 +6,7 @@
     <div
         class="relative shrink-0 isolate z-20"
         x-data="notificationBell({
-            indexUrl: @js(route('notifications.index')),
+            indexUrl: @js(route('notifications.feed')),
             readUrlTemplate: @js(route('notifications.read', ['id' => '__ID__'])),
             readAllUrl: @js(route('notifications.read-all')),
             pollMs: @js((int) config('notifications.poll_interval_seconds', 30) * 1000),
@@ -90,6 +90,12 @@
                         @click="setFilter(true)"
                     >{{ __('Críticas') }}</button>
                 </div>
+            </div>
+
+            <div class="border-b border-gray-100 dark:border-gray-700 px-3 py-2">
+                <a href="{{ route('notifications.index') }}" class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                    {{ __('Ver todas as notificações') }}
+                </a>
             </div>
 
             <div class="max-h-80 overflow-y-auto">

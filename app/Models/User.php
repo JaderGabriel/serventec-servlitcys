@@ -16,7 +16,23 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['name', 'username', 'email', 'phone', 'whatsapp', 'profile_photo_path', 'birth_date', 'cpf', 'password', 'role', 'is_active'])]
+#[Fillable([
+    'name',
+    'username',
+    'email',
+    'phone',
+    'whatsapp',
+    'profile_photo_path',
+    'birth_date',
+    'cpf',
+    'password',
+    'role',
+    'is_active',
+    'privacy_policy_version_accepted',
+    'privacy_policy_accepted_at',
+    'cookies_consent_version',
+    'cookies_consent_accepted_at',
+])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -41,7 +57,14 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'birth_date' => 'date',
             'role' => UserRole::class,
+            'privacy_policy_accepted_at' => 'datetime',
+            'cookies_consent_accepted_at' => 'datetime',
         ];
+    }
+
+    public function legalConsentLogs(): HasMany
+    {
+        return $this->hasMany(LegalConsentLog::class);
     }
 
     public function role(): UserRole

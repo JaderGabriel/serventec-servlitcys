@@ -15,9 +15,27 @@ final class NotificationControllerTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function index_requer_autenticacao(): void
+    public function feed_requer_autenticacao(): void
     {
-        $this->getJson(route('notifications.index'))->assertUnauthorized();
+        $this->getJson(route('notifications.feed'))->assertUnauthorized();
+    }
+
+    #[Test]
+    public function index_mostra_pagina_de_notificacoes(): void
+    {
+        $user = User::factory()->create([
+            'role' => UserRole::User,
+            'email_verified_at' => now(),
+            'privacy_policy_version_accepted' => config('legal.privacy_version'),
+            'cookies_consent_version' => config('legal.cookies_version'),
+            'privacy_policy_accepted_at' => now(),
+            'cookies_consent_accepted_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('notifications.index'))
+            ->assertOk()
+            ->assertSee(__('Notificações'), false);
     }
 
     #[Test]
@@ -27,6 +45,10 @@ final class NotificationControllerTest extends TestCase
             'role' => UserRole::Municipal,
             'is_active' => true,
             'email_verified_at' => now(),
+            'privacy_policy_version_accepted' => config('legal.privacy_version'),
+            'cookies_consent_version' => config('legal.cookies_version'),
+            'privacy_policy_accepted_at' => now(),
+            'cookies_consent_accepted_at' => now(),
         ]);
 
         $user->notify(new AppMessageNotification([
@@ -45,7 +67,7 @@ final class NotificationControllerTest extends TestCase
         ]));
 
         $this->actingAs($user)
-            ->getJson(route('notifications.index'))
+            ->getJson(route('notifications.feed'))
             ->assertOk()
             ->assertJsonPath('unread_count', 2)
             ->assertJsonPath('critical_unread_count', 1)
@@ -53,7 +75,7 @@ final class NotificationControllerTest extends TestCase
             ->assertJsonPath('items.0.is_critical', true);
 
         $this->actingAs($user)
-            ->getJson(route('notifications.index', ['critical' => 1]))
+            ->getJson(route('notifications.feed', ['critical' => 1]))
             ->assertOk()
             ->assertJsonCount(1, 'items');
 
@@ -75,6 +97,10 @@ final class NotificationControllerTest extends TestCase
             'role' => UserRole::User,
             'is_active' => true,
             'email_verified_at' => now(),
+            'privacy_policy_version_accepted' => config('legal.privacy_version'),
+            'cookies_consent_version' => config('legal.cookies_version'),
+            'privacy_policy_accepted_at' => now(),
+            'cookies_consent_accepted_at' => now(),
         ]);
 
         $user->notify(new AppMessageNotification(['title' => 'A', 'body' => '1']));

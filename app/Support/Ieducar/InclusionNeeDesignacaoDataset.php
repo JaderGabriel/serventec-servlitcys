@@ -150,7 +150,10 @@ final class InclusionNeeDesignacaoDataset
             : __(
                 'Apenas designações com matrícula no recorte. A soma pode exceder o total de matrículas NEE quando há vários vínculos no cadastro.'
             );
-        $chart['footnote'] = (string) ($dataset['footnote'] ?? '');
+        $chart['footnote'] = trim(
+            ((string) ($dataset['footnote'] ?? '')).' '
+            .__('Legenda de cores: índigo = INEP/Censo · violeta = complementar (adaptável) · âmbar = só i-Educar.')
+        );
         $chart['options'] = array_merge(
             is_array($chart['options'] ?? null) ? $chart['options'] : [],
             ['panelHeight' => $includeZeros ? 'xxl' : 'xl', 'skipHorizontalBarAutoHeight' => false]

@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureAnalyticsDiagnostics;
 use App\Http\Middleware\EnsureCanManageUsers;
+use App\Http\Middleware\EnsureLegalConsentAccepted;
 use App\Http\Middleware\EnsureProfileComplete;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'analytics.diagnostics' => EnsureAnalyticsDiagnostics::class,
             'manage.users' => EnsureCanManageUsers::class,
             'profile.complete' => EnsureProfileComplete::class,
+            'legal.consent' => EnsureLegalConsentAccepted::class,
         ]);
 
         $middleware->web(append: [

@@ -146,8 +146,16 @@
             'title' => __('Administração'),
             'icon' => 'command-line',
             'tone' => 'sky',
-            'routes' => ['admin.artisan-commands.*', 'admin.documentation.*', 'settings.mail.*'],
+            'routes' => ['admin.artisan-commands.*', 'admin.documentation.*', 'admin.legal-consents.*', 'settings.mail.*'],
             'items' => [
+                [
+                    'show' => true,
+                    'href' => route('admin.legal-consents.index'),
+                    'label' => __('Consentimentos LGPD'),
+                    'icon' => 'shield-check',
+                    'active' => $req->routeIs('admin.legal-consents.*'),
+                    'title' => __('Aceites de política de privacidade e cookies por utilizador.'),
+                ],
                 [
                     'show' => true,
                     'href' => route('admin.artisan-commands.index'),

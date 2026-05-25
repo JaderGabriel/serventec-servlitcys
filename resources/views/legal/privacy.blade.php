@@ -6,6 +6,10 @@
         </h1>
         <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
             {{ __('Última atualização:') }} {{ $lastUpdated }}
+            @if (! empty($privacyVersion ?? null))
+                <span class="serv-app-footer__sep mx-1" aria-hidden="true">·</span>
+                {{ __('Versão documento:') }} <span class="font-mono">{{ $privacyVersion }}</span>
+            @endif
             <span class="serv-app-footer__sep mx-1" aria-hidden="true">·</span>
             {{ $systemName }}
         </p>

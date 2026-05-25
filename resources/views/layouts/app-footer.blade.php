@@ -7,6 +7,7 @@
     $serventecName = $brand['serventec_name'] ?? 'Serventec Assessoria';
     $serventecUrl = rtrim((string) ($brand['serventec_url'] ?? 'https://analise.serventecassessoria.com.br/'), '/') . '/';
     $productVersion = trim((string) config('documentation.product.version', ''));
+    $productBadge = \App\Support\Product\ProductVersion::badge();
     $appEnv = (string) config('app.env', 'production');
     $isProduction = $appEnv === 'production';
     $whatsAppDigits = preg_replace('/\D+/', '', (string) config('services.serventec.whatsapp', ''));
@@ -74,9 +75,9 @@
                 <p>
                     © {{ date('Y') }}
                     <span class="font-semibold text-slate-700 dark:text-slate-200">{{ $systemName }}</span>
-                    @if ($productVersion !== '')
+                    @if ($productVersion !== '' || filled($productBadge['release_tag'] ?? null))
                         <span class="serv-app-footer__sep" aria-hidden="true">·</span>
-                        <span class="serv-app-footer__meta">v{{ $productVersion }}</span>
+                        <x-product-version-badge />
                     @endif
                 </p>
                 <p class="text-[11px] text-slate-400 dark:text-slate-500 max-w-2xl mx-auto leading-relaxed">
@@ -112,8 +113,8 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2 shrink-0">
-                    @if ($productVersion !== '')
-                        <span class="serv-app-footer__meta" title="{{ __('Versão do produto') }}">v{{ $productVersion }}</span>
+                    @if ($productVersion !== '' || filled($productBadge['release_tag'] ?? null))
+                        <x-product-version-badge />
                     @endif
                     @unless ($isProduction)
                         <span

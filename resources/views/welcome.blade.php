@@ -8,6 +8,7 @@
             $systemTagline = $brand['system_tagline'] ?? __('Plataforma educacional municipal');
         @endphp
         <meta name="description" content="{{ config('app.name') }} — {{ $systemTagline }}. Consultoria municipal, cadastro i-Educar e Censo Escolar.">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ config('app.name', 'servlitcys') }}</title>
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
         @include('partials.theme-init')
@@ -258,7 +259,8 @@
                             {{ $brand['serventec_name'] ?? 'Serventec Assessoria' }}
                         </a>
                     </p>
-                    <p class="text-xs text-slate-500 dark:text-slate-500">
+                    <p class="text-xs text-slate-500 dark:text-slate-500 flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                        <x-product-version-badge class="mx-auto sm:mx-0" />
                         <a href="{{ route('legal.privacy') }}" class="text-teal-700 hover:underline dark:text-teal-400">{{ __('Política de privacidade') }}</a>
                         @if (filled($brand['developer_name'] ?? null))
                             <span aria-hidden="true"> · </span>
@@ -270,6 +272,8 @@
                     </p>
                 </div>
             </footer>
+
+            <x-legal-cookie-banner />
 
             <x-scroll-to-top />
         </div>

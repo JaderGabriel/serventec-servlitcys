@@ -19,7 +19,15 @@ class EnsureProfileComplete
             return $next($request);
         }
 
-        if ($request->routeIs('profile.first-access', 'profile.first-access.update', 'logout', 'verification.*')) {
+        if ($request->routeIs(
+            'profile.first-access',
+            'profile.first-access.update',
+            'legal.consent',
+            'legal.consent.store',
+            'legal.privacy',
+            'logout',
+            'verification.*'
+        )) {
             return $next($request);
         }
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ArtisanCommandsController;
 use App\Http\Controllers\Admin\DocumentationController;
 use App\Http\Controllers\Admin\GeoSyncController;
 use App\Http\Controllers\Admin\IeducarCompatibilityController;
+use App\Http\Controllers\Admin\LegalConsentReportController;
 use App\Http\Controllers\Admin\PedagogicalSyncController;
 use App\Http\Controllers\Admin\PublicDataImportController;
 use App\Http\Controllers\AnalyticsDashboardController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardMunicipalityMapController;
 use App\Http\Controllers\DiscrepanciesExportController;
 use App\Http\Controllers\FirstAccessProfileController;
+use App\Http\Controllers\LegalConsentController;
 use App\Http\Controllers\MailSettingsController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PrivacyPolicyController;
@@ -34,6 +36,9 @@ Route::get('/', function () {
 Route::get('/privacidade', [PrivacyPolicyController::class, 'show'])
     ->name('legal.privacy');
 
+Route::post('/legal/consentimento-visitante', [LegalConsentController::class, 'storeGuest'])
+    ->name('legal.consent.guest');
+
 Route::get('/relatorio/{publicId}', [AnalyticsReportPublicationController::class, 'show'])
     ->name('analytics.report.public');
 Route::get('/relatorio/{publicId}/pdf', [AnalyticsReportPublicationController::class, 'download'])
@@ -45,44 +50,50 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/dashboard/municipality-map/cadastro-snapshot', [DashboardMunicipalityMapController::class, 'cadastroSnapshot'])
-        ->name('dashboard.municipality-map.cadastro-snapshot');
-    Route::get('/dashboard/municipality-map/{city}/school-years', [DashboardMunicipalityMapController::class, 'schoolYears'])
-        ->name('dashboard.municipality-map.school-years');
-    Route::get('/dashboard/analytics', [AnalyticsDashboardController::class, 'index'])->name('dashboard.analytics');
-    Route::get('/dashboard/rx', [RxDashboardController::class, 'index'])->name('dashboard.rx');
-    Route::get('/dashboard/analytics/tab', [AnalyticsDashboardController::class, 'tabPartial'])->name('dashboard.analytics.tab');
-    Route::get('/dashboard/analytics/filter-options', [AnalyticsDashboardController::class, 'filterOptions'])->name('dashboard.analytics.filter-options');
-    Route::get('/dashboard/analytics/filter-options-bootstrap', [AnalyticsDashboardController::class, 'filterOptionsBootstrap'])->name('dashboard.analytics.filter-options-bootstrap');
-    Route::get('/dashboard/analytics/filter-options-years', [AnalyticsDashboardController::class, 'filterOptionsYears'])->name('dashboard.analytics.filter-options-years');
-    Route::get('/dashboard/analytics/discrepancies/export', [DiscrepanciesExportController::class, 'csv'])->name('dashboard.analytics.discrepancies.export');
-    Route::post('/dashboard/analytics/pdf-export', [AnalyticsReportExportController::class, 'store'])->name('dashboard.analytics.pdf.store');
-    Route::get('/dashboard/analytics/pdf-export/{export}/status', [AnalyticsReportExportController::class, 'status'])->name('dashboard.analytics.pdf.status');
-    Route::get('/dashboard/analytics/pdf-export/{export}/download', [AnalyticsReportExportController::class, 'download'])->name('dashboard.analytics.pdf.download');
+    Route::get('/consentimento', [LegalConsentController::class, 'show'])->name('legal.consent');
+    Route::post('/consentimento', [LegalConsentController::class, 'store'])->name('legal.consent.store');
 
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::middleware('legal.consent')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard/municipality-map/cadastro-snapshot', [DashboardMunicipalityMapController::class, 'cadastroSnapshot'])
+            ->name('dashboard.municipality-map.cadastro-snapshot');
+        Route::get('/dashboard/municipality-map/{city}/school-years', [DashboardMunicipalityMapController::class, 'schoolYears'])
+            ->name('dashboard.municipality-map.school-years');
+        Route::get('/dashboard/analytics', [AnalyticsDashboardController::class, 'index'])->name('dashboard.analytics');
+        Route::get('/dashboard/rx', [RxDashboardController::class, 'index'])->name('dashboard.rx');
+        Route::get('/dashboard/analytics/tab', [AnalyticsDashboardController::class, 'tabPartial'])->name('dashboard.analytics.tab');
+        Route::get('/dashboard/analytics/filter-options', [AnalyticsDashboardController::class, 'filterOptions'])->name('dashboard.analytics.filter-options');
+        Route::get('/dashboard/analytics/filter-options-bootstrap', [AnalyticsDashboardController::class, 'filterOptionsBootstrap'])->name('dashboard.analytics.filter-options-bootstrap');
+        Route::get('/dashboard/analytics/filter-options-years', [AnalyticsDashboardController::class, 'filterOptionsYears'])->name('dashboard.analytics.filter-options-years');
+        Route::get('/dashboard/analytics/discrepancies/export', [DiscrepanciesExportController::class, 'csv'])->name('dashboard.analytics.discrepancies.export');
+        Route::post('/dashboard/analytics/pdf-export', [AnalyticsReportExportController::class, 'store'])->name('dashboard.analytics.pdf.store');
+        Route::get('/dashboard/analytics/pdf-export/{export}/status', [AnalyticsReportExportController::class, 'status'])->name('dashboard.analytics.pdf.status');
+        Route::get('/dashboard/analytics/pdf-export/{export}/download', [AnalyticsReportExportController::class, 'download'])->name('dashboard.analytics.pdf.download');
 
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/notifications/feed', [NotificationController::class, 'feed'])->name('notifications.feed');
+        Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+        Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
 
-    Route::middleware('manage.users')->group(function () {
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
-        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-        Route::post('/users', [UserController::class, 'store'])->name('users.store');
-        Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-        Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
-        Route::patch('/users/{user}/status', [UserController::class, 'updateStatus'])->name('users.update-status');
-        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-        Route::post('/users/{user}/terminate-sessions', [UserController::class, 'terminateSessions'])->name('users.terminate-sessions');
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo.update');
+        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+        Route::middleware('manage.users')->group(function () {
+            Route::get('/users', [UserController::class, 'index'])->name('users.index');
+            Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+            Route::post('/users', [UserController::class, 'store'])->name('users.store');
+            Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+            Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
+            Route::patch('/users/{user}/status', [UserController::class, 'updateStatus'])->name('users.update-status');
+            Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+            Route::post('/users/{user}/terminate-sessions', [UserController::class, 'terminateSessions'])->name('users.terminate-sessions');
+        });
     });
 });
 
-Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'profile.complete', 'legal.consent', 'admin'])->group(function () {
     Route::get('/users/sessoes', [UserSessionController::class, 'index'])->name('users.sessions.index');
     Route::delete('/users/sessoes/{session}', [UserSessionController::class, 'destroy'])->name('users.sessions.destroy');
     Route::get('/users/{user}/logins', [UserLoginHistoryController::class, 'index'])->name('users.logins');
@@ -127,6 +138,9 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'admin'])->group(func
     Route::get('/admin/analytics-diagnostics', AnalyticsDiagnosticsController::class)
         ->middleware('analytics.diagnostics')
         ->name('admin.analytics-diagnostics');
+
+    Route::get('/admin/consentimentos-legais', [LegalConsentReportController::class, 'index'])
+        ->name('admin.legal-consents.index');
 });
 
 require __DIR__.'/auth.php';

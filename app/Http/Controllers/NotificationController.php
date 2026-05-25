@@ -8,10 +8,50 @@ use App\Support\Notifications\NotificationPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\View\View;
 
 class NotificationController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): View
+    {
+        $user = $request->user();
+        $enabled = (bool) config('notifications.enabled', true);
+        $limit = max(10, min(120, (int) config('notifications.index_limit', 40)));
+
+        $items = [];
+        $unreadCount = 0;
+        $criticalUnread = 0;
+
+        if ($enabled) {
+            $items = $user->notifications()
+                ->latest()
+                ->limit($limit)
+                ->get()
+                ->map(static fn (DatabaseNotification $n): array => NotificationPresenter::fromDatabaseNotification($n))
+                ->values()
+                ->all();
+
+            $unread = $user->unreadNotifications()->get();
+            $unreadCount = $unread->count();
+            $criticalUnread = $unread->filter(static function (DatabaseNotification $n): bool {
+                $data = is_array($n->data) ? $n->data : [];
+
+                return ($data['priority'] ?? '') === NotificationPriority::Critical->value;
+            })->count();
+        }
+
+        return view('notifications.index', [
+            'items' => $items,
+            'unreadCount' => $unreadCount,
+            'criticalUnreadCount' => $criticalUnread,
+            'enabled' => $enabled,
+            'feedUrl' => route('notifications.feed'),
+            'readAllUrl' => route('notifications.read-all'),
+            'readUrlTemplate' => route('notifications.read', ['id' => '__ID__']),
+        ]);
+    }
+
+    public function feed(Request $request): JsonResponse
     {
         if (! (bool) config('notifications.enabled', true)) {
             return response()->json([

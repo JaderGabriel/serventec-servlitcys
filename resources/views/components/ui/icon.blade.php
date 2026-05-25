@@ -99,6 +99,12 @@
     @case('x-circle')
         <svg {{ $attrs }} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
         @break
+    @case('bell')
+        <svg {{ $attrs }} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.031A7.967 7.967 0 0 1 18 9.75v-.75V8.25A4.5 4.5 0 0 0 14.25 4h-4.5A4.5 4.5 0 0 0 8.25 8.25v.75a7.967 7.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.454 1.031m-4.5 2.25h9" /></svg>
+        @break
+    @case('shield-check')
+        <svg {{ $attrs }} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>
+        @break
     @default
         <svg {{ $attrs }} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
 @endswitch

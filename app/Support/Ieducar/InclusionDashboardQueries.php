@@ -448,9 +448,15 @@ final class InclusionDashboardQueries
             if ($g3 !== null) {
                 $out[] = self::withChartId($g3, 'nee_grupo');
             }
-            $catalogoAtivo = InclusionNeeDesignacaoDataset::chartCatalogo($neeDataset, $den, false);
-            if ($catalogoAtivo !== null) {
-                $out[] = self::withChartId($catalogoAtivo, 'nee_catalogo');
+            // Catálogo completo (inclui opções com zero) — cores INEP / complementar / só i-Educar.
+            $catalogoCompleto = InclusionNeeDesignacaoDataset::chartCatalogo($neeDataset, $den, true);
+            if ($catalogoCompleto !== null) {
+                $out[] = self::withChartId($catalogoCompleto, 'nee_catalogo');
+            }
+        } else {
+            $catalogoFallback = self::chartNeeCatalogoCompletoMecIeducar($db, $city, $filters, $den);
+            if ($catalogoFallback !== null) {
+                $out[] = self::withChartId($catalogoFallback, 'nee_catalogo');
             }
         }
 
