@@ -35,6 +35,7 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
         active: null,
         tooltipPinned: false,
         tooltipStyle: "",
+        lastTooltipEvent: null,
         yearsLoading: false,
         yearsError: null,
         schoolYears: [],
@@ -212,6 +213,7 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
             const enriched = this.markers.find((m) => m.id === marker.id) ?? marker;
             this.active = enriched;
             this.tooltipPinned = true;
+            this.lastTooltipEvent = event;
             this.schoolYears = [];
             this.yearsError = null;
             this.positionTooltip(event);
@@ -221,6 +223,7 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
         closeTooltip() {
             this.tooltipPinned = false;
             this.active = null;
+            this.lastTooltipEvent = null;
             this.schoolYears = [];
             this.yearsLoading = false;
             this.yearsError = null;
@@ -260,18 +263,67 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
                 this.yearsError = "Erro de rede ao carregar anos letivos.";
             } finally {
                 this.yearsLoading = false;
+                if (this.active?.id === marker.id) {
+                    this.$nextTick(() => this.positionTooltip(this.lastTooltipEvent));
+                }
             }
         },
 
         positionTooltip(event) {
-            const el = this.$refs.map;
-            if (!el || !event?.containerPoint) {
+            const mapEl = this.$refs.map;
+            if (!mapEl || !event?.containerPoint) {
                 return;
             }
-            const rect = el.getBoundingClientRect();
-            const x = rect.left + event.containerPoint.x;
-            const y = rect.top + event.containerPoint.y;
-            this.tooltipStyle = `left:${Math.min(x + 12, window.innerWidth - 320)}px;top:${Math.min(y + 12, window.innerHeight - 360)}px`;
+
+            const margin = 16;
+            const gap = 12;
+            const rect = mapEl.getBoundingClientRect();
+            const pinX = rect.left + event.containerPoint.x;
+            const pinY = rect.top + event.containerPoint.y;
+
+            // Posição provisória para medir o cartão (evita corte com altura dinâmica).
+            this.tooltipStyle =
+                `left:${pinX + gap}px;top:${pinY + gap}px;visibility:hidden;max-height:calc(100dvh - ${margin * 2}px);overflow-y:auto;`;
+
+            this.$nextTick(() => {
+                const tooltip = this.$el?.querySelector?.(".serv-brazil-map-tooltip");
+                if (!tooltip || !this.active) {
+                    return;
+                }
+
+                const vw = window.innerWidth;
+                const vh = window.innerHeight;
+                const maxH = vh - margin * 2;
+                tooltip.style.maxHeight = `${maxH}px`;
+
+                const tw = tooltip.offsetWidth;
+                const th = Math.min(tooltip.scrollHeight, maxH);
+
+                let left = pinX + gap;
+                let top = pinY + gap;
+
+                if (left + tw + margin > vw) {
+                    left = pinX - tw - gap;
+                }
+                if (top + th + margin > vh) {
+                    top = pinY - th - gap;
+                }
+                if (top < margin) {
+                    top = margin;
+                }
+                if (left < margin) {
+                    left = margin;
+                }
+                if (left + tw + margin > vw) {
+                    left = Math.max(margin, vw - tw - margin);
+                }
+                if (top + th + margin > vh) {
+                    top = Math.max(margin, vh - th - margin);
+                }
+
+                this.tooltipStyle =
+                    `left:${Math.round(left)}px;top:${Math.round(top)}px;max-height:${Math.round(maxH)}px;overflow-y:auto;visibility:visible;`;
+            });
         },
 
         yearStateIcon(state) {
