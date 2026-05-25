@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '3.2.0',
         'release_tag' => '20260527-Notus',
-        'commit_short' => 'e2106b8',
+        'commit_short' => 'a99d34b',
         'commit_number' => 228,
         'revision_date' => '2026-05-27',
         'in_production' => true,
