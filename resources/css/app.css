@@ -233,6 +233,10 @@
         @apply flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:py-4;
     }
 
+    html.serv-legal-banner-open {
+        padding-bottom: max(5.5rem, calc(4.5rem + env(safe-area-inset-bottom, 0px)));
+    }
+
     .serv-btn-secondary--rose {
         @apply border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-100 hover:bg-rose-50 dark:hover:bg-rose-950/40;
     }

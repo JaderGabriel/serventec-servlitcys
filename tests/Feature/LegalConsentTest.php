@@ -75,6 +75,31 @@ final class LegalConsentTest extends TestCase
     }
 
     #[Test]
+    public function visitante_aceita_cookies_no_banner_e_recebe_cookie(): void
+    {
+        config([
+            'legal.privacy_version' => '2026-05-25',
+            'legal.cookies_version' => '2026-05-25',
+        ]);
+
+        $cookieName = (string) config('legal.consent_cookie_name', 'servlitcys_legal_consent');
+
+        $response = $this->postJson(route('legal.consent.guest'), [
+            'accept_privacy' => true,
+            'accept_cookies' => true,
+        ]);
+        $response->assertOk()
+            ->assertJson(['ok' => true])
+            ->assertCookie($cookieName);
+
+        $cookieValue = (string) $response->getCookie($cookieName)?->getValue();
+        $this->withUnencryptedCookie($cookieName, $cookieValue)
+            ->get('/')
+            ->assertOk()
+            ->assertDontSee(__('Aceitar e continuar'), false);
+    }
+
+    #[Test]
     public function admin_publica_nova_pp_e_forca_reconsentimento(): void
     {
         $admin = User::factory()->admin()->create([
