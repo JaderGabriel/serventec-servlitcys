@@ -68,8 +68,12 @@ class InclusionRepository
                 'total_matriculas' => null,
                 'equidade_fonte' => null,
                 'methodology' => [],
+                'intro' => null,
+                'tab_meta' => [],
+                'calc_notes' => [],
                 'nee_grupo_resumo' => null,
                 'matriculas_nee' => null,
+                'nee_catalog_warning' => null,
                 'chart_raca_por_escola_stacked' => null,
                 'chart_nee_por_raca_stacked' => null,
                 'nee_matriculas_por_escola' => [],
@@ -88,6 +92,7 @@ class InclusionRepository
         $equidadeFonte = null;
         $neeGrupoResumo = null;
         $matriculasNee = null;
+        $neeCatalogWarning = null;
         $chartRacaPorEscolaStacked = null;
         $chartNeePorRacaStacked = null;
         $neeMatriculasPorEscola = [];
@@ -95,7 +100,7 @@ class InclusionRepository
         $fundebNee = null;
 
         try {
-            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo, &$matriculasNee, &$chartRacaPorEscolaStacked, &$chartNeePorRacaStacked, &$neeMatriculasPorEscola, &$recursoProva, &$fundebNee) {
+            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo, &$matriculasNee, &$neeCatalogWarning, &$chartRacaPorEscolaStacked, &$chartNeePorRacaStacked, &$neeMatriculasPorEscola, &$recursoProva, &$fundebNee) {
                 $totalMatriculas = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
                 $matriculasNee = InclusionDashboardQueries::countMatriculasComNee($db, $city, $filters);
 
@@ -123,6 +128,9 @@ class InclusionRepository
                 if (is_array($neeDataset['grupos'] ?? null)) {
                     $neeGrupoResumo = $neeDataset['grupos'];
                     $matriculasNee = (int) ($neeDataset['matriculas_nee'] ?? $matriculasNee);
+                    $neeCatalogWarning = isset($neeDataset['catalog_warning']) && is_string($neeDataset['catalog_warning'])
+                        ? $neeDataset['catalog_warning']
+                        : null;
                 }
 
                 try {
@@ -268,8 +276,12 @@ class InclusionRepository
                 'total_matriculas' => null,
                 'equidade_fonte' => null,
                 'methodology' => [],
+                'intro' => null,
+                'tab_meta' => [],
+                'calc_notes' => [],
                 'nee_grupo_resumo' => null,
                 'matriculas_nee' => null,
+                'nee_catalog_warning' => null,
                 'chart_raca_por_escola_stacked' => null,
                 'chart_nee_por_raca_stacked' => null,
                 'nee_matriculas_por_escola' => [],
@@ -278,7 +290,7 @@ class InclusionRepository
             ];
         }
 
-        $methodology = $this->methodologyLines($equidadeFonte);
+        $tabCopy = $this->inclusionTabPresentation($equidadeFonte, $totalMatriculas, $matriculasNee);
 
         return [
             'charts' => $charts,
@@ -290,9 +302,13 @@ class InclusionRepository
             'error' => null,
             'total_matriculas' => $totalMatriculas,
             'equidade_fonte' => $equidadeFonte,
-            'methodology' => $methodology,
+            'intro' => $tabCopy['intro'],
+            'tab_meta' => $tabCopy['tab_meta'],
+            'calc_notes' => $tabCopy['calc_notes'],
+            'methodology' => [],
             'nee_grupo_resumo' => $neeGrupoResumo,
             'matriculas_nee' => $matriculasNee,
+            'nee_catalog_warning' => $neeCatalogWarning,
             'chart_raca_por_escola_stacked' => $chartRacaPorEscolaStacked,
             'chart_nee_por_raca_stacked' => $chartNeePorRacaStacked,
             'nee_matriculas_por_escola' => $neeMatriculasPorEscola,
@@ -321,29 +337,74 @@ class InclusionRepository
     }
 
     /**
-     * Textos de referência (Educacenso / INEP / LBI) para interpretação dos indicadores.
+     * Textos da aba para o cartão introdutório e notas de cálculo por secção.
      *
-     * @return list<string>
+     * @return array{
+     *   intro: string,
+     *   tab_meta: list<string>,
+     *   calc_notes: array<string, array{formula: string, note?: string}>
+     * }
      */
-    private function methodologyLines(?string $equidadeFonte): array
+    private function inclusionTabPresentation(?string $equidadeFonte, ?int $totalMatriculas, ?int $matriculasNee): array
     {
-        $eq = match ($equidadeFonte) {
-            'serie' => __('O gráfico complementar de equidade usa séries (turma → série). Nesta aba não se usa o gráfico por curso (top 10).'),
-            default => __('O gráfico de série (equidade) não foi gerado (dados insuficientes).'),
+        $peso = number_format(InclusionFundebImpact::pesoEducacaoEspecial(), 2, ',', '.');
+        $meta = [];
+        if ($totalMatriculas !== null) {
+            $meta[] = __('Matrículas ativas no filtro: :n', ['n' => number_format($totalMatriculas)]);
+        }
+        if ($matriculasNee !== null && $matriculasNee > 0) {
+            $meta[] = __('Matrículas NEE no filtro: :n', ['n' => number_format($matriculasNee)]);
+        }
+        $meta[] = match ($equidadeFonte) {
+            'serie' => __('Equidade por série (turma → série).'),
+            default => __('Equidade por série: dados insuficientes no filtro.'),
         };
 
+        $calcNotes = [
+            'impacto_fundeb' => [
+                'formula' => __('Incremento anual ≈ Matrículas NEE × VAAF × (:p − 1); VAAR proporcional quando importado.', ['p' => $peso]),
+                'note' => __('Indicativo (Lei 14.113/2020). Não duplica a base integral da aba Matrículas.'),
+            ],
+            'recurso_prova' => [
+                'formula' => __('Contagem de matrículas activas: com recurso INEP; turma AEE sem deficiência no cadastro; recurso sem NEE cadastrado.'),
+                'note' => __('Recurso de prova (SAEB/Censo) é independente do cadastro de deficiência.'),
+            ],
+            'gauges' => [
+                'formula' => __('% = matrículas com o indicador ÷ matrículas ativas no filtro × 100'),
+                'note' => __('Consultas SQL configuráveis; um aluno pode contar em mais do que um medidor.'),
+            ],
+            'nee_escola' => [
+                'formula' => __('Por escola: COUNT(DISTINCT matrícula) no recorte NEE (cadastro e/ou turma AEE).'),
+                'note' => __('Escola via turma enturmada ou FK na matrícula.'),
+            ],
+            'nee_grupo' => [
+                'formula' => __('Soma de matrículas NEE por designação em cadastro.deficiencia, agrupadas em 3 blocos (palavras-chave no rótulo).'),
+                'note' => __('Não inclui barras âmbar de remanescente do catálogo.'),
+            ],
+            'nee_catalogo' => [
+                'formula' => __('Uma matrícula NEE → uma barra. Só AEE ≈ Total NEE − com cadastro. Sem match ≈ com cadastro − soma das designações.'),
+                'note' => __('Índigo = INEP/Censo · violeta = complementar · âmbar = remanescente.'),
+            ],
+            'aee_cross' => [
+                'formula' => __('Só turma AEE (est.) = Matrículas NEE − matrículas NEE com cadastro de deficiência.'),
+                'note' => __('Turma AEE: palavras-chave no nome da turma ou do curso (config/ieducar.php).'),
+            ],
+            'distorcao' => [
+                'formula' => __('Distorção INEP: idade em 31/03 > limite da série + 2 anos.'),
+                'note' => __('Por escola (PostgreSQL + série) ou gráfico por série, conforme a base.'),
+            ],
+            'sexo_raca' => [
+                'formula' => __('Distribuição de matrículas activas no filtro por sexo ou cor/raça (cadastro).'),
+                'note' => __('NEE por raça: empilhado no recorte NEE quando disponível.'),
+            ],
+        ];
+
         return [
-            __('Todos os indicadores respeitam os filtros atuais (ano letivo, escola, segmento, turno) através da turma, com matrícula considerada ativa conforme config/ieducar.php.'),
-            __('O recorte opcional «Inclusão — recorte de matrículas» na barra de filtros aplica-se aos gráficos e tabelas de NEE; equidade, raça, distorção e recurso de prova continuam na rede completa do filtro.'),
-            __('Distorção idade/série: em PostgreSQL com física e série, mostra-se a contagem por unidade escolar (referência 1 de março); caso contrário usa-se o gráfico de barras por série com quantidades de alunos com distorção (critério INEP +2 anos).'),
-            __('Total «Matrículas NEE» = matrículas activas distintas com deficiência em cadastro (fisica_deficiencia ou aluno_deficiencia) ou matrícula em turma/curso cujo nome sugere AEE (IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE). Os gráficos por grupo e por designação contam vínculos no catálogo deficiência (podem ficar a 0 se só houver AEE sem cadastro).'),
-            __('Impacto financeiro (faixa superior): incremento FUNDEB por ponderação de educação especial (Lei 14.113/2020, Anexo — factor :p) = matrículas NEE × VAAF × (:p − 1); opcionalmente fatia proporcional da complementação VAAR importada. Não soma a base integral por aluno (ver aba Matrículas). Riscos cadastrais usam pesos VAAR-inclusão em Discrepâncias.', [
-                'p' => number_format(InclusionFundebImpact::pesoEducacaoEspecial(), 2, ',', '.'),
-            ]),
-            __('Cruzamento AEE: detalha matrículas em turmas AEE e alunos que também frequentam outro segmento. «Matrículas só em turma AEE» é o total NEE menos matrículas com cadastro de deficiência (pode haver sobreposição em bases atípicas).'),
-            __('Recursos de prova INEP (Censo): apoios declarados para SAEB/avaliações (óculos, ledor, etc.), distintos do cadastro de deficiência. A secção lista alunos em turma AEE sem deficiência registada e alunos com recurso de prova sem NEE no cadastro — com nome e detalhe para correção no i-Educar antes do Educacenso.'),
-            __('Filtros da aba: «Só NEE» aplica o mesmo recorte do total (cadastro deficiência ou turma AEE); «Só inconsistências recurso × NEE» limita a cruzamentos recurso de prova sem cadastro NEE (e, se configurado, o inverso).'),
-            $eq,
+            'intro' => __(
+                'Painel de educação especial e inclusão: cruza matrículas activas do filtro com NEE (cadastro de deficiência e/ou turma AEE), designações do Censo, apoios de prova INEP e indicadores de equidade. Serve para conferir o cadastro antes do Educacenso, alinhar com Discrepâncias e ver o efeito indicativo no FUNDEB (faixa superior). O recorte «Inclusão — recorte de matrículas» aplica-se só aos blocos NEE; sexo, raça e distorção usam a rede completa do filtro.'
+            ),
+            'tab_meta' => $meta,
+            'calc_notes' => $calcNotes,
         ];
     }
 

@@ -75,17 +75,18 @@ final class InclusionNeeDesignacaoDatasetTest extends TestCase
         );
     }
 
-    public function test_grupo_inclui_sem_designacao_no_bloco_deficiencias(): void
+    public function test_grupo_nao_inclui_barras_remanescentes_amber(): void
     {
         $catalog = [
             ['label' => 'Baixa visão', 'value' => 10.0, 'kind' => 'inep', 'norm' => 'baixa visao', 'grupo' => 'deficiencia'],
-            ['label' => 'Sem designação', 'value' => 706.0, 'kind' => 'ieducar', 'norm' => '__sem_designacao__', 'grupo' => 'deficiencia'],
+            ['label' => 'Só AEE', 'value' => 67.0, 'kind' => 'ieducar', 'norm' => '__sem_designacao_aee__', 'grupo' => 'deficiencia'],
+            ['label' => 'Cadastro sem match', 'value' => 639.0, 'kind' => 'ieducar', 'norm' => '__sem_designacao_cadastro__', 'grupo' => 'deficiencia'],
         ];
         $method = new \ReflectionMethod(InclusionNeeDesignacaoDataset::class, 'aggregateGruposFromCatalog');
         $method->setAccessible(true);
         $grupos = $method->invoke(null, $catalog);
 
-        $this->assertSame(716, $grupos['deficiencias']);
+        $this->assertSame(10, $grupos['deficiencias']);
         $this->assertSame(0, $grupos['sindromes_tea']);
 
         $dataset = [
@@ -97,21 +98,28 @@ final class InclusionNeeDesignacaoDatasetTest extends TestCase
         ];
         $chart = InclusionNeeDesignacaoDataset::chartGrupo($dataset, 1000);
         $this->assertNotNull($chart);
-        $this->assertSame([716.0, 0.0, 0.0], $chart['datasets'][0]['data']);
+        $this->assertSame([10.0, 0.0, 0.0], $chart['datasets'][0]['data']);
     }
 
-    public function test_append_sem_designacao_quando_total_nee_excede_soma_barras(): void
+    public function test_append_sem_designacao_separa_somente_aee_e_cadastro_sem_match(): void
     {
         $catalog = [
-            ['label' => 'Baixa visão — INEP/Censo', 'value' => 10.0, 'kind' => 'inep', 'norm' => 'baixa visao', 'grupo' => 'deficiencia'],
+            ['label' => 'Baixa visão — INEP/Censo', 'value' => 649.0, 'kind' => 'inep', 'norm' => 'baixa visao', 'grupo' => 'deficiencia'],
         ];
-        $method = new \ReflectionMethod(InclusionNeeDesignacaoDataset::class, 'appendSemDesignacaoCatalogoRow');
-        $method->setAccessible(true);
-        $out = $method->invoke(null, $catalog, 716);
+        $append = new \ReflectionMethod(InclusionNeeDesignacaoDataset::class, 'appendSemDesignacaoCatalogoRows');
+        $append->setAccessible(true);
+        $out = $append->invoke(null, $catalog, 716, 649, 649);
 
         $this->assertCount(2, $out);
-        $this->assertSame('__sem_designacao__', $out[1]['norm']);
-        $this->assertSame(706.0, $out[1]['value']);
+        $this->assertSame('__sem_designacao_aee__', $out[1]['norm']);
+        $this->assertSame(67.0, $out[1]['value']);
+
+        $out2 = $append->invoke(null, [], 716, 649, 0);
+        $this->assertCount(2, $out2);
+        $this->assertSame('__sem_designacao_aee__', $out2[0]['norm']);
+        $this->assertSame(67.0, $out2[0]['value']);
+        $this->assertSame('__sem_designacao_cadastro__', $out2[1]['norm']);
+        $this->assertSame(649.0, $out2[1]['value']);
     }
 
     public function test_chart_grupo_mostra_tres_barras_mesmo_zeradas(): void

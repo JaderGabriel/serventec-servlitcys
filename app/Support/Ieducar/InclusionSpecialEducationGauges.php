@@ -39,7 +39,7 @@ final class InclusionSpecialEducationGauges
                 $out[] = [
                     'title' => $titles[$key],
                     'percent' => $pct,
-                    'caption' => __('Percentagem sobre o denominador devolvido pelo SQL (matrículas ativas no filtro, salvo definição explícita na consulta).'),
+                    'caption' => __('% sobre matrículas ativas no filtro.'),
                 ];
             }
         }
@@ -197,17 +197,17 @@ final class InclusionSpecialEducationGauges
                     [
                         'title' => __('Deficiências'),
                         'percent' => $pct($nDef),
-                        'caption' => __(':n de :d matrículas com registro associado (exclui pelo nome do cadastro as categorias tratadas em «Síndromes/TEA» e «Altas habilidades»). Vários vínculos em aluno_deficiência podem contar o mesmo estudante em mais do que um medidor.', ['n' => $nDef, 'd' => $den]),
+                        'caption' => __(':n / :d matrículas (deficiências, excl. síndrome/TEA e NE no rótulo).', ['n' => $nDef, 'd' => $den]),
                     ],
                     [
                         'title' => __('Síndromes e TEA'),
                         'percent' => $pct($nSin),
-                        'caption' => __(':n de :d matrículas (palavras-chave no nome da deficiência). Ver metodologia na caixa «Referência metodológica».', ['n' => $nSin, 'd' => $den]),
+                        'caption' => __(':n / :d matrículas (palavras-chave síndrome/TEA no catálogo).', ['n' => $nSin, 'd' => $den]),
                     ],
                     [
                         'title' => __('Altas habilidades / superdotação'),
                         'percent' => $pct($nAh),
-                        'caption' => __(':n de :d matrículas (palavras-chave no nome da deficiência). O mesmo estudante pode entrar em mais do que um medidor se existirem vários registros em aluno_deficiência.', ['n' => $nAh, 'd' => $den]),
+                        'caption' => __(':n / :d matrículas (palavras-chave altas habilidades / superdotação).', ['n' => $nAh, 'd' => $den]),
                     ],
                 ];
             }
@@ -222,7 +222,7 @@ final class InclusionSpecialEducationGauges
                 [
                     'title' => __('Registos em necessidades especiais'),
                     'percent' => $pct,
-                    'caption' => __(':n de :d matrículas com linha em aluno_deficiencia (sem catálogo «deficiencia» para subdividir).', ['n' => $nAny, 'd' => $den]),
+                    'caption' => __(':n / :d matrículas (qualquer vínculo em aluno_deficiencia).', ['n' => $nAny, 'd' => $den]),
                 ],
             ];
         } catch (\Throwable) {

@@ -27,32 +27,43 @@ final class InclusionDashboardQueries
     public static function getMatriculasPorDeficiencia(Connection $db, City $city, IeducarFilterState $filters, ?int $limit = 22): Collection
     {
         $defTable = self::resolveDeficienciaCatalogTable($db, $city);
-        $fisica = self::resolveFisicaDeficienciaJoinSpec($db, $city);
-        $alunoT = IeducarSchema::resolveTable('aluno', $city);
-        $aIdpes = self::resolveAlunoIdpesColumn($db, $alunoT, $city);
-
-        if ($fisica !== null && $defTable !== null && $aIdpes !== null) {
-            try {
-                $rows = self::queryMatriculasPorDeficienciaFisicaPath($db, $city, $filters, $fisica, $defTable, $limit);
-                if ($rows !== []) {
-                    return collect($rows)->map(fn ($r) => (object) [
-                        'def_id' => (string) ($r->def_id ?? ''),
-                        'deficiencia' => (string) ($r->deficiencia ?? ''),
-                        'total' => (int) ($r->total ?? 0),
-                    ]);
-                }
-            } catch (\Throwable) {
-                // fallback aluno_deficiência
-            }
+        if ($defTable === null) {
+            return collect();
         }
 
-        $rows = self::queryMatriculasPorDeficienciaAlunoDefPath($db, $city, $filters, $limit);
-
-        return collect($rows)->map(fn ($r) => (object) [
+        $mapRows = static fn (array $rows): Collection => collect($rows)->map(fn ($r) => (object) [
             'def_id' => (string) ($r->def_id ?? ''),
             'deficiencia' => (string) ($r->deficiencia ?? ''),
             'total' => (int) ($r->total ?? 0),
         ]);
+
+        $fisica = self::resolveFisicaDeficienciaJoinSpec($db, $city);
+        $alunoT = IeducarSchema::resolveTable('aluno', $city);
+        $aIdpes = self::resolveAlunoIdpesColumn($db, $alunoT, $city);
+        $fisicaRows = [];
+
+        if ($fisica !== null && $aIdpes !== null) {
+            try {
+                $fisicaRows = self::queryMatriculasPorDeficienciaFisicaPath($db, $city, $filters, $fisica, $defTable, $limit);
+            } catch (\Throwable) {
+                $fisicaRows = [];
+            }
+        }
+
+        $alunoRows = self::queryMatriculasPorDeficienciaAlunoDefPath($db, $city, $filters, $limit);
+
+        $fisicaTotal = (int) array_sum(array_map(static fn ($r) => (int) ($r->total ?? 0), $fisicaRows));
+        $alunoTotal = (int) array_sum(array_map(static fn ($r) => (int) ($r->total ?? 0), $alunoRows));
+
+        if ($fisicaTotal > 0 && $fisicaTotal >= $alunoTotal) {
+            return $mapRows($fisicaRows);
+        }
+
+        if ($alunoTotal > 0) {
+            return $mapRows($alunoRows);
+        }
+
+        return $mapRows($fisicaRows);
     }
 
     public static function incluirTurmaAeeNoRecorteNee(): bool
@@ -167,10 +178,45 @@ final class InclusionDashboardQueries
             $q = $db->table($mat.' as m')
                 ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
             MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
-            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
-            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
-            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+            self::applyMatriculaTurmaScopeForInclusionCharts($q, $db, $city, $filters);
             self::applyInclusionScope($q, $db, $city, $filters);
+            $q->whereIn('a.'.$aId, $cadastroSub);
+
+            $grammar = $db->getQueryGrammar();
+            $row = $q->selectRaw(
+                'COUNT(DISTINCT '.$grammar->wrap('m').'.'.$grammar->wrap($mId).') as c'
+            )->first();
+
+            return (int) ($row->c ?? 0);
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    /**
+     * Matrículas NEE no recorte com cadastro de deficiência (intersecção total NEE × cadastro).
+     */
+    public static function countMatriculasNeeComCadastroDeficiencia(Connection $db, City $city, IeducarFilterState $filters): int
+    {
+        try {
+            $cadastroSub = self::alunosComCadastroNeeSubquery($db, $city);
+            if ($cadastroSub === null) {
+                return 0;
+            }
+
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $aluno = IeducarSchema::resolveTable('aluno', $city);
+            $mId = (string) config('ieducar.columns.matricula.id');
+            $mAluno = (string) config('ieducar.columns.matricula.aluno');
+            $mAtivo = (string) config('ieducar.columns.matricula.ativo');
+            $aId = (string) config('ieducar.columns.aluno.id');
+
+            $q = $db->table($mat.' as m')
+                ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
+            self::applyMatriculaTurmaScopeForInclusionCharts($q, $db, $city, $filters);
+            self::applyInclusionScope($q, $db, $city, $filters);
+            self::applyRecorteMatriculasNeeWhere($q, $db, $city, $filters);
             $q->whereIn('a.'.$aId, $cadastroSub);
 
             $grammar = $db->getQueryGrammar();
@@ -1872,8 +1918,9 @@ final class InclusionDashboardQueries
         $q = $db->table($mat.' as m')
             ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
         MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
-        MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
+        self::applyMatriculaTurmaScopeForInclusionCharts($q, $db, $city, $filters);
         self::applyInclusionScope($q, $db, $city, $filters);
+        self::applyRecorteMatriculasNeeWhere($q, $db, $city, $filters);
         $q->join($fisica['table'].' as fd', 'a.'.$aIdpes, '=', 'fd.'.$fisica['idpes_col'])
             ->join($defTable.' as d', 'fd.'.$fisica['def_fk'], '=', 'd.'.$defPk);
 
@@ -1937,8 +1984,9 @@ final class InclusionDashboardQueries
         $q = $db->table($mat.' as m')
             ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
         MatriculaAtivoFilter::apply($q, $db, 'm.'.$mAtivo, $city);
-        MatriculaTurmaJoin::applyTurmaFiltersFromMatricula($q, $db, $city, $filters);
+        self::applyMatriculaTurmaScopeForInclusionCharts($q, $db, $city, $filters);
         self::applyInclusionScope($q, $db, $city, $filters);
+        self::applyRecorteMatriculasNeeWhere($q, $db, $city, $filters);
         $q->join($adTable.' as ad', 'a.'.$aId, '=', 'ad.'.$adAluno)
             ->join($defTable.' as d', 'ad.'.$adDef, '=', 'd.'.$defPk);
 
@@ -1952,6 +2000,20 @@ final class InclusionDashboardQueries
         }
 
         return $q->get()->all();
+    }
+
+    /**
+     * Enturmação + filtros de turma alinhados a {@see countMatriculasComCadastroNee()} e ao total NEE.
+     */
+    private static function applyMatriculaTurmaScopeForInclusionCharts(
+        Builder $q,
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+    ): void {
+        MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+        MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+        MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
     }
 
     private static function applyInclusionScope(

@@ -9,8 +9,10 @@
     }
     $chartNeeGrupo = $chartsById['nee_grupo'] ?? null;
     $chartNeeCatalogo = $chartsById['nee_catalogo'] ?? ($chartsById['nee_catalogo_mec'] ?? null);
-    $methodology = $inclusionData['methodology'] ?? [];
     $totalMat = $inclusionData['total_matriculas'] ?? null;
+    $calcNotes = is_array($inclusionData['calc_notes'] ?? null) ? $inclusionData['calc_notes'] : [];
+    $tabMeta = is_array($inclusionData['tab_meta'] ?? null) ? $inclusionData['tab_meta'] : [];
+    $calcNote = static fn (string $key): ?array => isset($calcNotes[$key]) && is_array($calcNotes[$key]) ? $calcNotes[$key] : null;
     $eqFonte = $inclusionData['equidade_fonte'] ?? null;
     $neeChartsCount = (int) ($inclusionData['nee_charts_count'] ?? 0);
     $matriculasNee = isset($inclusionData['matriculas_nee']) ? (int) $inclusionData['matriculas_nee'] : null;
@@ -34,6 +36,7 @@
             || ! empty($neeDetalheCatalogo['ne_altas_habilidades'])
         );
     $neeGrupoResumo = is_array($inclusionData['nee_grupo_resumo'] ?? null) ? $inclusionData['nee_grupo_resumo'] : null;
+    $neeCatalogWarning = filled($inclusionData['nee_catalog_warning'] ?? null) ? (string) $inclusionData['nee_catalog_warning'] : null;
     $showNeeCadastroSection = $neeChartsCount > 0
         || $hasNeeDetalheCatalogo
         || is_array($chartNeeCatalogo)
@@ -52,10 +55,6 @@
     $neeMatriculasPorEscola = is_array($inclusionData['nee_matriculas_por_escola'] ?? null)
         ? $inclusionData['nee_matriculas_por_escola']
         : [];
-    $eqLabel = match ($eqFonte) {
-        'serie' => __('Série'),
-        default => null,
-    };
 @endphp
 
 <div class="space-y-6">
@@ -77,43 +76,23 @@
         </div>
     @endif
 
-    <div class="rounded-lg border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-3">
-        <p class="text-xs text-teal-800/90 dark:text-teal-200/90">
-            {{ __('Consultoria municipal:') }}
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Serventec') }}</button>
-            ·
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Discrepâncias') }}</button>
-            {{ __('(cadastro Censo/VAAR alinhado a esta aba).') }}
-        </p>
-        @if ($totalMat !== null)
-            <p class="mt-2 text-sm font-medium text-gray-800 dark:text-gray-200">
-                {{ __('Matrículas ativas no filtro (denominador comum):') }}
-                <span class="tabular-nums text-indigo-700 dark:text-indigo-300">{{ number_format($totalMat) }}</span>
-            </p>
+    <x-dashboard.serv-tab-intro :title="__('Inclusão e educação especial (NEE)')" tone="teal">
+        {{ $inclusionData['intro'] ?? __('Matrículas NEE, cadastro de deficiências, turmas AEE e recursos de prova INEP no recorte dos filtros.') }}
+        @if (count($tabMeta) > 0)
+            <x-slot name="meta">
+                {{ implode(' · ', $tabMeta) }}
+            </x-slot>
         @endif
-        @if ($matriculasNee !== null && $matriculasNee > 0)
-            <p class="mt-1 text-sm font-medium text-gray-800 dark:text-gray-200">
-                {{ __('Matrículas NEE no filtro (cadastro e/ou turma AEE):') }}
-                <span class="tabular-nums text-violet-700 dark:text-violet-300">{{ number_format($matriculasNee) }}</span>
-            </p>
-        @endif
-        @if ($eqLabel)
-            <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                {{ __('Gráfico de equidade por etapa:') }} <span class="font-medium text-gray-800 dark:text-gray-200">{{ $eqLabel }}</span>
-            </p>
-        @endif
-    </div>
+    </x-dashboard.serv-tab-intro>
 
-    @if (! empty($methodology))
-        <div class="rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800/50 px-4 py-3">
-            <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Referência metodológica') }}</h3>
-            <ul class="mt-2 list-disc list-inside text-xs text-gray-600 dark:text-gray-300 space-y-1.5 leading-relaxed">
-                @foreach ($methodology as $line)
-                    <li>{{ $line }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+    <p class="serv-callout text-sm">
+        {{ __('Aprofundar:') }}
+        <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Discrepâncias') }}</button>
+        {{ __('(rotinas Censo/VAAR)') }}
+        ·
+        <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Serventec') }}</button>
+        {{ __('(diagnóstico municipal)') }}
+    </p>
 
     @if (! empty($inclusionData['error']))
         <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
@@ -132,10 +111,8 @@
     @if ($recursoProva !== null)
         <div class="rounded-lg border border-teal-200/80 dark:border-teal-800/50 bg-white dark:bg-gray-900/40 px-4 py-4 space-y-4">
             <div>
-                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Recursos de prova INEP (Censo) — revisão cadastral') }}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
-                    {{ __('Cruza apoios declarados para provas SAEB/INEP (ex.: óculos, ledor, prova ampliada) com o cadastro de deficiência/NEE no i-Educar. Também verifica matrículas em turmas AEE (palavras-chave no nome da turma ou do curso) sem tipo de deficiência registado. Nem todo recurso implica deficiência — a tabela abaixo destaca casos que costumam exigir conferência antes do fecho do Educacenso e do eixo VAAR-inclusão.') }}
-                </p>
+                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Recursos de prova INEP (Censo)') }}</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">{{ __('Conferência cadastral: apoios de prova e turmas AEE sem deficiência registada.') }}</p>
                 @if (! $recursoDisponivel)
                     <p class="mt-2 text-xs text-amber-800 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
                         {{ $recursoProva['schema_note'] ?? __('Tabela de recursos de prova não detectada nesta base. Configure IEDUCAR_TABLE_ALUNO_RECURSO_PROVA ou SQL personalizado.') }}
@@ -161,20 +138,10 @@
                         <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($recursoProva['nee_sem_recurso'] ?? 0)) }}</dd>
                     </div>
                 </dl>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                    <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">
-                        {{ __('Ver rotinas agregadas em Discrepâncias') }}
-                    </button>
-                    {{ __('(totais por escola e exportação CSV).') }}
-                </p>
-
                 @if ($recursoLinhasInconsistencia !== [])
                     <div class="rounded-lg border border-amber-200/70 dark:border-amber-800/50 bg-amber-50/40 dark:bg-amber-950/20 px-4 py-3 space-y-3">
                         <div>
-                            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Inconsistências para correção (nome do aluno)') }}</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                                {{ __('Matrículas activas no filtro. «Turma AEE» = oferta identificada por palavras-chave, sem vínculo em fisica_deficiencia / aluno_deficiencia. «Recurso de prova» = apoio INEP/SAEB declarado sem o mesmo aluno ter deficiência cadastrada.') }}
-                            </p>
+                            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Inconsistências (nome do aluno)') }}</h4>
                             @if (($recursoInconsistencias['truncado']['aee_sem_cadastro_nee'] ?? false) || ($recursoInconsistencias['truncado']['recurso_prova_sem_nee'] ?? false))
                                 <p class="mt-2 text-xs text-amber-900 dark:text-amber-100">
                                     {{ __('Listagem limitada a :n linhas por tipo — use Discrepâncias para o universo completo.', ['n' => number_format($recursoLimiteInconsistencia)]) }}
@@ -242,14 +209,20 @@
                         </div>
                     </div>
                 @endif
+                @php $cnRecurso = $calcNote('recurso_prova'); @endphp
+                @if ($cnRecurso !== null)
+                    <x-dashboard.section-calc-note
+                        :formula="$cnRecurso['formula'] ?? null"
+                        :note="$cnRecurso['note'] ?? null"
+                    />
+                @endif
             @endif
         </div>
     @endif
 
     @if (! empty($inclusionData['gauges']))
         <div>
-            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('Educação especial e multidiversidade') }}</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ __('Percentagem sobre matrículas ativas no filtro; valores calculados a partir do cadastro quando disponível.') }}</p>
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{{ __('Medidores (educação especial)') }}</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 @foreach ($inclusionData['gauges'] as $idx => $gauge)
                     <div class="space-y-2">
@@ -263,15 +236,19 @@
                     </div>
                 @endforeach
             </div>
+            @php $cnGauges = $calcNote('gauges'); @endphp
+            @if ($cnGauges !== null)
+                <x-dashboard.section-calc-note
+                    :formula="$cnGauges['formula'] ?? null"
+                    :note="$cnGauges['note'] ?? null"
+                />
+            @endif
         </div>
     @endif
 
     @if (! empty($neeMatriculasPorEscola))
         <div class="rounded-lg border border-violet-200/80 dark:border-violet-800/50 bg-white dark:bg-gray-900/40 px-4 py-4">
-            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('Matrículas NEE por escola') }}</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
-                {{ __('Matrículas ativas com registro em aluno_deficiência, por unidade escolar (conexão turma → escola ou, quando a turma não tem escola, pela FK de escola na matrícula). Ordenado por total decrescente.') }}
-            </p>
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">{{ __('Matrículas NEE por escola') }}</h3>
             <div class="overflow-x-auto rounded-md border border-gray-200 dark:border-gray-600 max-h-[min(28rem,60vh)] overflow-y-auto">
                 <table class="min-w-full text-sm">
                     <thead class="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800/95 text-left text-xs uppercase text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
@@ -290,37 +267,44 @@
                     </tbody>
                 </table>
             </div>
+            @php $cnEscola = $calcNote('nee_escola'); @endphp
+            @if ($cnEscola !== null)
+                <x-dashboard.section-calc-note
+                    :formula="$cnEscola['formula'] ?? null"
+                    :note="$cnEscola['note'] ?? null"
+                />
+            @endif
         </div>
     @endif
 
     @if (! empty($inclusionData['charts']) || is_array($aeeCross) || $hasNeeDetalheCatalogo || is_array($chartRacaPorEscolaStacked) || is_array($chartNeePorRacaStacked) || ! empty($neeMatriculasPorEscola))
         @if ($showNeeCadastroSection)
-            <div class="mb-8">
-                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">{{ __('NEE — cadastro (deficiências, síndromes e altas habilidades)') }}</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
-                    {{ __('O total NEE (cabeçalho) inclui cadastro de deficiência e/ou matrícula em turma AEE. Os três cartões e o gráfico por grupo contam apenas vínculos no catálogo de deficiências — podem aparecer a 0 quando os alunos estão só em turmas AEE sem tipo registado em cadastro.deficiencia. O catálogo completo mostra todas as designações MEC/i-Educar e a barra âmbar «sem designação» quando aplicável.') }}
-                </p>
+            <div class="mb-8 rounded-lg border border-violet-100 dark:border-violet-900/40 bg-white dark:bg-gray-900/30 px-4 py-4">
+                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('NEE — cadastro e catálogo Censo') }}</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">{{ __('Designações em cadastro.deficiencia (MEC/i-Educar), agrupadas e detalhadas.') }}</p>
+                @if ($neeCatalogWarning !== null)
+                    <div class="mb-3 rounded-md border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 text-xs text-amber-950 dark:text-amber-100 leading-relaxed" role="status">
+                        {{ $neeCatalogWarning }}
+                    </div>
+                @endif
                 @if ($neeGrupoResumo !== null)
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 items-stretch">
                         <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
                             <p class="text-[11px] font-medium uppercase text-violet-700 dark:text-violet-300">{{ __('Deficiências (grupo)') }}</p>
                             <p class="mt-1 text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format((int) ($neeGrupoResumo['deficiencias'] ?? 0)) }}</p>
-                            <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400 flex-1">{{ __('Soma das designações classificadas como deficiência (mesma base do catálogo).') }}</p>
                         </div>
                         <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
                             <p class="text-[11px] font-medium uppercase text-violet-700 dark:text-violet-300">{{ __('Síndromes e TEA') }}</p>
                             <p class="mt-1 text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format((int) ($neeGrupoResumo['sindromes_tea'] ?? 0)) }}</p>
-                            <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400 flex-1">{{ __('Palavras-chave no nome da deficiência no catálogo.') }}</p>
                         </div>
                         <div class="rounded-lg border border-violet-200/90 dark:border-violet-800/60 bg-white/90 dark:bg-gray-900/50 px-4 py-3 shadow-sm min-h-[11rem] flex flex-col">
                             <p class="text-[11px] font-medium uppercase text-violet-700 dark:text-violet-300">{{ __('NE — altas habilidades') }}</p>
                             <p class="mt-1 text-xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format((int) ($neeGrupoResumo['ne_altas_habilidades'] ?? 0)) }}</p>
-                            <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400 flex-1">{{ __('Inclui superdotação quando configurado nas palavras-chave.') }}</p>
                         </div>
                     </div>
                 @endif
                 @if (is_array($chartNeeGrupo))
-                    <div class="min-w-0 w-full [&_.chart-panel-host]:min-h-[min(32rem,70vh)]">
+                    <div class="mt-4 min-w-0 w-full [&_.chart-panel-host]:min-h-[min(32rem,70vh)]">
                         <x-dashboard.chart-panel
                             :chart="$chartNeeGrupo"
                             :exportFilename="'inclusao-nee-grupo'"
@@ -328,14 +312,18 @@
                             :compact="false"
                         />
                     </div>
+                    @php $cnGrupo = $calcNote('nee_grupo'); @endphp
+                    @if ($cnGrupo !== null)
+                        <x-dashboard.section-calc-note
+                            :formula="$cnGrupo['formula'] ?? null"
+                            :note="$cnGrupo['note'] ?? null"
+                        />
+                    @endif
                 @endif
 
                 @if (is_array($chartNeeCatalogo) && ! empty($chartNeeCatalogo['labels'] ?? null))
                     <div class="mt-6 space-y-2">
-                        <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('NEE — catálogo completo MEC e i-Educar (todas as opções)') }}</h4>
-                        <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                            {{ __('Todas as opções do catálogo MEC/Educacenso e do i-Educar no recorte. Cada matrícula entra numa única barra (por código ou rótulo normalizado). Valor 0 = sem vínculo no filtro; a barra âmbar «sem designação» inclui matrículas NEE só em turma AEE.') }}
-                        </p>
+                        <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Catálogo completo (MEC / i-Educar)') }}</h4>
                         <div class="flex flex-wrap gap-2 text-[10px] font-medium">
                             <span class="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-indigo-900 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-100">
                                 <span class="h-2 w-2 rounded-sm bg-indigo-600" aria-hidden="true"></span>
@@ -359,6 +347,13 @@
                                 :suppressTitle="true"
                             />
                         </div>
+                        @php $cnCatalogo = $calcNote('nee_catalogo'); @endphp
+                        @if ($cnCatalogo !== null)
+                            <x-dashboard.section-calc-note
+                                :formula="$cnCatalogo['formula'] ?? null"
+                                :note="$cnCatalogo['note'] ?? null"
+                            />
+                        @endif
                     </div>
                 @elseif ($neeChartsCount > 0 || is_array($chartNeeGrupo))
                     <div class="mt-6 rounded-lg border border-dashed border-violet-200 dark:border-violet-800 px-4 py-3 text-xs text-violet-900/90 dark:text-violet-200/90 leading-relaxed">
@@ -372,12 +367,7 @@
                     @endphp
 
                     <div class="mt-6 rounded-lg border border-violet-100 dark:border-violet-900/40 bg-violet-50/40 dark:bg-violet-950/20 px-4 py-4 space-y-4">
-                        <div>
-                            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Contagem por designação no catálogo (deficiências, síndromes/TEA e NE)') }}</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                                {{ __('Listas alinhadas ao gráfico por designação (mesma consulta e classificação em três blocos que o gráfico agrupado).') }}
-                            </p>
-                        </div>
+                        <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Detalhe por designação') }}</h4>
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 min-w-0 items-stretch">
                             <div class="rounded-md border border-white/80 dark:border-gray-700 bg-white/90 dark:bg-gray-800/70 min-h-[min(28rem,58vh)] flex flex-col shadow-sm">
                                 <div class="px-3 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
@@ -428,8 +418,12 @@
                                 </ul>
                             </div>
                         </div>
-                        @if (! empty($neeDetalheCatalogo['footnote']))
-                            <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ $neeDetalheCatalogo['footnote'] }}</p>
+                        @php $cnCatalogoDet = $calcNote('nee_catalogo'); @endphp
+                        @if ($cnCatalogoDet !== null)
+                            <x-dashboard.section-calc-note
+                                :formula="$cnCatalogoDet['formula'] ?? null"
+                                :note="$cnCatalogoDet['note'] ?? null"
+                            />
                         @endif
                     </div>
                 @endif
@@ -454,16 +448,21 @@
                         @endforeach
                     </div>
                 @endif
+                @php $cnGrupoSec = $calcNote('nee_grupo'); @endphp
+                @if ($cnGrupoSec !== null && ! is_array($chartNeeGrupo))
+                    <x-dashboard.section-calc-note
+                        :formula="$cnGrupoSec['formula'] ?? null"
+                        :note="$cnGrupoSec['note'] ?? null"
+                    />
+                @endif
             </div>
         @endif
 
         @if (is_array($aeeCross))
             <div class="rounded-lg border border-amber-100 dark:border-amber-900/40 bg-amber-50/40 dark:bg-amber-950/15 px-4 py-4 space-y-4 mb-8">
                 <div>
-                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('AEE e outras matrículas (alunos NEE)') }}</h3>
-                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                        {{ __('Complementa o bloco anterior: cruza o mesmo total NEE com turmas cujo nome de turma ou curso contém palavras-chave AEE (config/ieducar.php). «Matrículas em turmas AEE» pode ser menor que o total NEE quando o aluno também tem matrícula regular. «Alunos AEE também noutro segmento» indica quem tem pelo menos uma turma AEE e outra matrícula no mesmo ano (segmento heurístico).') }}
-                    </p>
+                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Turmas AEE e matrículas NEE') }}</h3>
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">{{ __('Cruzamento do total NEE com oferta AEE e outras matrículas do mesmo aluno.') }}</p>
                 </div>
                 @if (! empty($aeeCross['note']))
                     <p class="text-xs text-amber-900 dark:text-amber-200/90 leading-relaxed">{{ $aeeCross['note'] }}</p>
@@ -517,6 +516,13 @@
                         </div>
                     </div>
                 @endif
+                @php $cnAee = $calcNote('aee_cross'); @endphp
+                @if ($cnAee !== null)
+                    <x-dashboard.section-calc-note
+                        :formula="$cnAee['formula'] ?? null"
+                        :note="$cnAee['note'] ?? null"
+                    />
+                @endif
             </div>
         @endif
 
@@ -524,7 +530,9 @@
             $tailAfterNee = array_slice($inclusionData['charts'] ?? [], $neeChartsCount);
         @endphp
         @if (count($tailAfterNee) > 0 || is_array($chartRacaPorEscolaStacked) || is_array($chartNeePorRacaStacked))
-            <div class="space-y-6">
+            <div class="space-y-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-900/20 px-4 py-4">
+                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Perfil, equidade e distorção') }}</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400 -mt-2">{{ __('Rede completa do filtro (salvo indicação no gráfico).') }}</p>
                 @if (is_array($chartNeePorRacaStacked) && ! empty($chartNeePorRacaStacked['labels']))
                     <div class="w-full min-w-0">
                         <x-dashboard.chart-panel
@@ -573,6 +581,23 @@
                             </div>
                         @endforeach
                     </div>
+                @endif
+                @php
+                    $cnSexoRaca = $calcNote('sexo_raca');
+                    $cnDistorcao = $calcNote('distorcao');
+                @endphp
+                @if ($cnSexoRaca !== null)
+                    <x-dashboard.section-calc-note
+                        :formula="$cnSexoRaca['formula'] ?? null"
+                        :note="$cnSexoRaca['note'] ?? null"
+                    />
+                @endif
+                @if ($cnDistorcao !== null && count($tailAfterNee) > 0)
+                    <x-dashboard.section-calc-note
+                        :formula="$cnDistorcao['formula'] ?? null"
+                        :note="$cnDistorcao['note'] ?? null"
+                        class="mt-0 pt-2 border-t-0"
+                    />
                 @endif
             </div>
         @endif

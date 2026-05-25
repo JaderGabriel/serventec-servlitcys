@@ -19,13 +19,16 @@ final class InclusionNeeDesignacaoDataset
      *   footnote: string,
      *   grupos: array{deficiencias: int, sindromes_tea: int, ne_altas_habilidades: int},
      *   catalog: list<array{label: string, value: float, kind: string, norm: string, grupo: string}>,
-     *   matriculas_nee: int
+     *   matriculas_nee: int,
+     *   matriculas_com_cadastro_nee: int,
+     *   catalog_warning: ?string
      * }
      */
     public static function build(Connection $db, City $city, IeducarFilterState $filters): ?array
     {
         try {
             $matriculasNee = InclusionDashboardQueries::countMatriculasComNee($db, $city, $filters);
+            $matriculasComCadastroNee = InclusionDashboardQueries::countMatriculasNeeComCadastroDeficiencia($db, $city, $filters);
             $entries = InclusionEducacensoCatalog::mergedDeficienciaEntriesForChart($db, $city);
 
             if ($entries === [] && $matriculasNee <= 0) {
@@ -42,7 +45,8 @@ final class InclusionNeeDesignacaoDataset
             );
 
             $catalog = self::buildCatalogRows($entries, $maps, $rows);
-            $catalog = self::appendSemDesignacaoCatalogoRow($catalog, $matriculasNee);
+            $assignedCatalog = self::sumCatalogAssigned($catalog);
+            $catalog = self::appendSemDesignacaoCatalogoRows($catalog, $matriculasNee, $matriculasComCadastroNee, $assignedCatalog);
             $grupos = self::aggregateGruposFromCatalog($catalog);
 
             $usesFisica = InclusionDashboardQueries::inclusionNeeUsesFisicaPath($db, $city);
@@ -50,8 +54,16 @@ final class InclusionNeeDesignacaoDataset
                 ? __('cadastro.fisica_deficiencia + deficiência')
                 : __('aluno_deficiencia + deficiência');
 
+            $catalogWarning = null;
+            if ($matriculasNee > 0 && $matriculasComCadastroNee > 0 && $assignedCatalog <= 0) {
+                $catalogWarning = __(
+                    'Há :n matrícula(s) NEE com cadastro de deficiência, mas nenhuma designação foi distribuída nas barras do catálogo. Verifique o vínculo cadastro.deficiência (fisica_deficiencia / aluno_deficiencia) e os aliases em ieducar.inclusion.deficiencia_label_aliases.',
+                    ['n' => number_format($matriculasComCadastroNee)]
+                );
+            }
+
             $footnote = __(
-                'Total NEE (:total): matrículas activas com registo em :path ou em turma/curso AEE (palavras-chave). Os três grupos abaixo contam vínculos por designação no catálogo (podem ser 0 se todos os alunos estiverem só em AEE, sem deficiência cadastrada). O catálogo completo inclui barra âmbar «sem designação» para esse caso.',
+                'Matrículas NEE (:total): COUNT(DISTINCT matrícula) com :path ou turma/curso AEE.',
                 ['total' => number_format($matriculasNee), 'path' => $pathNote]
             );
 
@@ -61,6 +73,8 @@ final class InclusionNeeDesignacaoDataset
                 'grupos' => $grupos,
                 'catalog' => $catalog,
                 'matriculas_nee' => $matriculasNee,
+                'matriculas_com_cadastro_nee' => $matriculasComCadastroNee,
+                'catalog_warning' => $catalogWarning,
             ];
         } catch (\Throwable) {
             return null;
@@ -92,7 +106,7 @@ final class InclusionNeeDesignacaoDataset
             ],
             [(float) $nDef, (float) $nSin, (float) $nNe]
         );
-        $chart['subtitle'] = (string) ($dataset['footnote'] ?? '');
+        $chart['subtitle'] = __('Cálculo: soma de matrículas NEE por grupo de designação (deficiência, síndrome/TEA, NE).');
 
         if ($denominator !== null && $denominator > 0) {
             $chart = InclusionDashboardQueries::attachMatriculaKpiTotalPublic(
@@ -153,21 +167,20 @@ final class InclusionNeeDesignacaoDataset
         $chart['datasets'][0]['backgroundColor'] = $series['colors'];
         $chart['datasets'][0]['borderColor'] = $series['colors'];
         $chart['subtitle'] = $includeZeros
-            ? __(
-                'Todas as opções do catálogo (valor 0 = sem vínculo no filtro). Cada matrícula conta numa única barra (ID ou rótulo normalizado). A barra «sem designação» cobre NEE só em turma AEE ou sem vínculo em deficiência. Cores: índigo = INEP/Censo · violeta = complementar · âmbar = só i-Educar.'
-            )
-            : __(
-                'Apenas designações com matrícula no recorte. A soma pode exceder o total de matrículas NEE quando há vários vínculos no cadastro.'
-            );
-        $chart['footnote'] = trim(
-            ((string) ($dataset['footnote'] ?? '')).' '
-            .__('Legenda: índigo = INEP/Censo · violeta = complementar (mapear no Censo) · âmbar = só i-Educar / sem designação no catálogo.')
-        );
+            ? __('Cálculo: 1 matrícula NEE → 1 barra (código ou rótulo normalizado). Valor 0 = sem vínculo no filtro.')
+            : __('Cálculo: só designações com matrícula no recorte.');
+        $chart['footnote'] = __('Âmbar: só turma AEE (Total NEE − com cadastro) ou cadastro sem match no catálogo MEC/i-Educar.');
         $chart['options'] = array_merge(
             is_array($chart['options'] ?? null) ? $chart['options'] : [],
             ['panelHeight' => $includeZeros ? 'xxl' : 'xl', 'skipHorizontalBarAutoHeight' => false]
         );
         $chart['catalog_include_zeros'] = $includeZeros;
+
+        $catalogWarning = trim((string) ($dataset['catalog_warning'] ?? ''));
+        if ($catalogWarning !== '') {
+            $chart['catalog_warning'] = $catalogWarning;
+            $chart['footnote'] = trim(((string) ($chart['footnote'] ?? '')).' '.$catalogWarning);
+        }
 
         $matriculasNee = (int) ($dataset['matriculas_nee'] ?? 0);
         if ($denominator !== null && $denominator > 0) {
@@ -176,7 +189,7 @@ final class InclusionNeeDesignacaoDataset
                 $denominator,
                 true,
                 $matriculasNee > 0
-                    ? __('Matrículas NEE no filtro: :n (soma das barras alinha ao catálogo; barra âmbar = só AEE/sem designação)', ['n' => number_format($matriculasNee)])
+                    ? __('Matrículas NEE no filtro: :n (soma das barras = total NEE; âmbar = só AEE ou cadastro sem match)', ['n' => number_format($matriculasNee)])
                     : __('Soma das barras (pode exceder o total por vínculos múltiplos)')
             );
         }
@@ -206,7 +219,7 @@ final class InclusionNeeDesignacaoDataset
         $ne = [];
 
         foreach ($catalog as $row) {
-            if ((string) ($row['norm'] ?? '') === '__sem_designacao__') {
+            if (self::isSemDesignacaoNorm((string) ($row['norm'] ?? ''))) {
                 continue;
             }
             $total = (int) round((float) ($row['value'] ?? 0));
@@ -332,31 +345,77 @@ final class InclusionNeeDesignacaoDataset
      * @param  list<array{label: string, value: float, kind: string, norm: string, grupo?: string}>  $catalog
      * @return list<array{label: string, value: float, kind: string, norm: string, grupo: string}>
      */
-    private static function appendSemDesignacaoCatalogoRow(array $catalog, int $matriculasNee): array
-    {
+    private static function appendSemDesignacaoCatalogoRows(
+        array $catalog,
+        int $matriculasNee,
+        int $matriculasComCadastroNee,
+        int $assignedCatalog,
+    ): array {
         if ($matriculasNee <= 0) {
             return $catalog;
         }
 
-        $assigned = 0;
-        foreach ($catalog as $row) {
-            $assigned += (int) round((float) ($row['value'] ?? 0));
+        $comCadastro = min($matriculasComCadastroNee, $matriculasNee);
+        $somenteAee = max(0, $matriculasNee - $comCadastro);
+        $cadastroSemMatch = max(0, $comCadastro - $assignedCatalog);
+        $residual = max(0, $matriculasNee - $assignedCatalog - $somenteAee - $cadastroSemMatch);
+
+        if ($somenteAee > 0) {
+            $catalog[] = [
+                'label' => __('Só turma AEE (sem cadastro de deficiência)').' — '.__('cadastro i-Educar'),
+                'value' => (float) $somenteAee,
+                'kind' => 'ieducar',
+                'norm' => '__sem_designacao_aee__',
+                'grupo' => 'deficiencia',
+            ];
         }
 
-        $gap = $matriculasNee - $assigned;
-        if ($gap <= 0) {
-            return $catalog;
+        if ($cadastroSemMatch > 0) {
+            $catalog[] = [
+                'label' => __('Com cadastro de deficiência, sem correspondência no catálogo unificado').' — '.__('cadastro i-Educar'),
+                'value' => (float) $cadastroSemMatch,
+                'kind' => 'ieducar',
+                'norm' => '__sem_designacao_cadastro__',
+                'grupo' => 'deficiencia',
+            ];
         }
 
-        $catalog[] = [
-            'label' => __('Matrículas sem designação no catálogo (ex.: só turma AEE)').' — '.__('cadastro i-Educar'),
-            'value' => (float) $gap,
-            'kind' => 'ieducar',
-            'norm' => '__sem_designacao__',
-            'grupo' => 'deficiencia',
-        ];
+        if ($residual > 0) {
+            $catalog[] = [
+                'label' => __('Outras matrículas NEE sem barra no catálogo').' — '.__('cadastro i-Educar'),
+                'value' => (float) $residual,
+                'kind' => 'ieducar',
+                'norm' => '__sem_designacao__',
+                'grupo' => 'deficiencia',
+            ];
+        }
 
         return $catalog;
+    }
+
+    /**
+     * @param  list<array{value: float, norm: string}>  $catalog
+     */
+    private static function sumCatalogAssigned(array $catalog): int
+    {
+        $sum = 0;
+        foreach ($catalog as $row) {
+            if (self::isSemDesignacaoNorm((string) ($row['norm'] ?? ''))) {
+                continue;
+            }
+            $sum += (int) round((float) ($row['value'] ?? 0));
+        }
+
+        return $sum;
+    }
+
+    private static function isSemDesignacaoNorm(string $norm): bool
+    {
+        return in_array($norm, [
+            '__sem_designacao__',
+            '__sem_designacao_aee__',
+            '__sem_designacao_cadastro__',
+        ], true);
     }
 
     /**
@@ -376,9 +435,7 @@ final class InclusionNeeDesignacaoDataset
             if ($v <= 0) {
                 continue;
             }
-            if ((string) ($row['norm'] ?? '') === '__sem_designacao__') {
-                $out['deficiencias'] += $v;
-
+            if (self::isSemDesignacaoNorm((string) ($row['norm'] ?? ''))) {
                 continue;
             }
             match ((string) ($row['grupo'] ?? 'deficiencia')) {
