@@ -2028,6 +2028,121 @@ final class InclusionDashboardQueries
         }
     }
 
+    public static function applyInclusionScopeForExport(
+        Builder $q,
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        string $alunoAlias = 'a',
+    ): void {
+        self::applyInclusionScope($q, $db, $city, $filters, $alunoAlias);
+    }
+
+    public static function segmentLabelForExport(string $haystack): string
+    {
+        return self::segmentLabel($haystack);
+    }
+
+    /**
+     * @param  list<int>  $alunoIds
+     * @return array<int, array{labels: list<string>, grupos: list<string>}>
+     */
+    public static function deficienciasPorAlunoIdsForExport(Connection $db, City $city, array $alunoIds): array
+    {
+        if ($alunoIds === []) {
+            return [];
+        }
+
+        $defTable = self::resolveDeficienciaCatalogTable($db, $city);
+        if ($defTable === null) {
+            return [];
+        }
+
+        $defPk = IeducarColumnInspector::firstExistingColumn($db, $defTable, array_filter([
+            (string) config('ieducar.columns.deficiencia.id'),
+            'cod_deficiencia',
+        ]), $city);
+        $nmCol = IeducarColumnInspector::firstExistingColumn($db, $defTable, array_filter([
+            (string) config('ieducar.columns.deficiencia.name'),
+            'nm_deficiencia',
+        ]), $city);
+        if ($defPk === null || $nmCol === null) {
+            return [];
+        }
+
+        $aluno = IeducarSchema::resolveTable('aluno', $city);
+        $aId = (string) config('ieducar.columns.aluno.id');
+        $map = [];
+
+        $fisica = self::resolveFisicaDeficienciaJoinSpec($db, $city);
+        $aIdpes = self::resolveAlunoIdpesColumn($db, $aluno, $city);
+
+        if ($fisica !== null && $aIdpes !== null) {
+            $rows = $db->table($aluno.' as a')
+                ->join($fisica['table'].' as fd', 'a.'.$aIdpes, '=', 'fd.'.$fisica['idpes_col'])
+                ->join($defTable.' as d', 'fd.'.$fisica['def_fk'], '=', 'd.'.$defPk)
+                ->whereIn('a.'.$aId, $alunoIds)
+                ->selectRaw('a.'.$aId.' as aid')
+                ->selectRaw('d.'.$nmCol.' as deficiencia')
+                ->distinct()
+                ->get();
+            self::mergeDeficienciaExportRows($map, $rows);
+        }
+
+        $adTable = self::resolveAlunoDeficienciaTable($db, $city);
+        if ($adTable !== null) {
+            $adAluno = IeducarColumnInspector::firstExistingColumn($db, $adTable, [
+                (string) config('ieducar.columns.aluno_deficiencia.aluno'),
+                'ref_cod_aluno',
+            ], $city);
+            $adDef = IeducarColumnInspector::firstExistingColumn($db, $adTable, [
+                (string) config('ieducar.columns.aluno_deficiencia.deficiencia'),
+                'ref_cod_deficiencia',
+            ], $city);
+            if ($adAluno !== null && $adDef !== null) {
+                $rows = $db->table($aluno.' as a')
+                    ->join($adTable.' as ad', 'a.'.$aId, '=', 'ad.'.$adAluno)
+                    ->join($defTable.' as d', 'ad.'.$adDef, '=', 'd.'.$defPk)
+                    ->whereIn('a.'.$aId, $alunoIds)
+                    ->selectRaw('a.'.$aId.' as aid')
+                    ->selectRaw('d.'.$nmCol.' as deficiencia')
+                    ->distinct()
+                    ->get();
+                self::mergeDeficienciaExportRows($map, $rows);
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * @param  array<int, array{labels: list<string>, grupos: list<string>}>  $map
+     * @param  iterable<object>  $rows
+     */
+    private static function mergeDeficienciaExportRows(array &$map, iterable $rows): void
+    {
+        foreach ($rows as $row) {
+            $aid = (int) ($row->aid ?? 0);
+            $nome = trim((string) ($row->deficiencia ?? ''));
+            if ($aid <= 0 || $nome === '') {
+                continue;
+            }
+            $map[$aid] ??= ['labels' => [], 'grupos' => []];
+            if (! in_array($nome, $map[$aid]['labels'], true)) {
+                $map[$aid]['labels'][] = $nome;
+                $grupo = self::classificarDesignacaoNeeGrupo($nome);
+                $labelGrupo = match ($grupo) {
+                    'sindrome' => __('Síndromes e TEA'),
+                    'ne' => __('NE — altas habilidades'),
+                    default => __('Deficiências'),
+                };
+                if (! in_array($labelGrupo, $map[$aid]['grupos'], true)) {
+                    $map[$aid]['grupos'][] = $labelGrupo;
+                }
+            }
+        }
+    }
+
     /**
      * Filtro SQL: turma ou curso com palavras-chave AEE (config/ieducar.php → inclusion.aee_keywords).
      */

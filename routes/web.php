@@ -19,6 +19,7 @@ use App\Http\Controllers\CityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardMunicipalityMapController;
 use App\Http\Controllers\DiscrepanciesExportController;
+use App\Http\Controllers\InclusionNeeExportController;
 use App\Http\Controllers\FirstAccessProfileController;
 use App\Http\Controllers\LegalConsentController;
 use App\Http\Controllers\MailSettingsController;
@@ -68,6 +69,12 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
         Route::get('/dashboard/analytics/filter-options-bootstrap', [AnalyticsDashboardController::class, 'filterOptionsBootstrap'])->name('dashboard.analytics.filter-options-bootstrap');
         Route::get('/dashboard/analytics/filter-options-years', [AnalyticsDashboardController::class, 'filterOptionsYears'])->name('dashboard.analytics.filter-options-years');
         Route::get('/dashboard/analytics/discrepancies/export', [DiscrepanciesExportController::class, 'csv'])->name('dashboard.analytics.discrepancies.export');
+        Route::get('/dashboard/analytics/inclusion/export', [InclusionNeeExportController::class, 'download'])
+            ->middleware('admin')
+            ->name('dashboard.analytics.inclusion.export');
+        Route::post('/dashboard/analytics/inclusion/export/queue', [InclusionNeeExportController::class, 'queue'])
+            ->middleware('admin')
+            ->name('dashboard.analytics.inclusion.export.queue');
         Route::post('/dashboard/analytics/pdf-export', [AnalyticsReportExportController::class, 'store'])->name('dashboard.analytics.pdf.store');
         Route::get('/dashboard/analytics/pdf-export/{export}/status', [AnalyticsReportExportController::class, 'status'])->name('dashboard.analytics.pdf.status');
         Route::get('/dashboard/analytics/pdf-export/{export}/download', [AnalyticsReportExportController::class, 'download'])->name('dashboard.analytics.pdf.download');

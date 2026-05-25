@@ -26,6 +26,7 @@ final class AdminSyncTaskExplainer
             'pedagogical::import_csv' => __('Importa arquivo CSV tabular (IBGE, ano, disciplina, valor) para saeb_indicator_points.'),
             'pedagogical::import_microdados' => __('Descarrega ZIP/CSV INEP, filtra pelos municípios cadastrados e normaliza para a base SAEB.'),
             'ieducar::schema_probe' => __('Gera JSON de compatibilidade do schema i-Educar da cidade (tabelas/colunas usadas pelo painel).'),
+            'ieducar::inclusion_nee_export' => __('Exporta CSV ou Excel com matrículas NEE, dados pessoais, designações e inconsistências (recorte dos filtros da aba Inclusão).'),
             'system::weekly_mass_sync' => __('Sincronização massiva semanal: geo (i-Educar+INEP), FUNDEB (VAAF/VAAT/VAAR), repasses, Censo e SAEB — com checkpoint retomável.'),
             default => __('Tarefa administrativa enfileirada (:key).', ['key' => $key]),
         };
@@ -49,6 +50,18 @@ final class AdminSyncTaskExplainer
 
         if (isset($payload['ano'])) {
             $hints[] = __('Ano: :ano', ['ano' => (string) $payload['ano']]);
+        }
+
+        if (isset($payload['ano_letivo'])) {
+            $hints[] = __('Ano letivo: :ano', ['ano' => (string) $payload['ano_letivo']]);
+        }
+
+        if (isset($payload['format'])) {
+            $hints[] = __('Formato: :fmt', ['fmt' => strtoupper((string) $payload['format'])]);
+        }
+
+        if (isset($payload['inclusion_scope'])) {
+            $hints[] = __('Recorte inclusão: :scope', ['scope' => (string) $payload['inclusion_scope']]);
         }
 
         if (isset($payload['years']) && is_array($payload['years'])) {

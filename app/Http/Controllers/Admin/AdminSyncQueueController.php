@@ -119,9 +119,17 @@ class AdminSyncQueueController extends Controller
         }
 
         $filename = (string) ($task->result['export_filename'] ?? basename($path));
+        $mime = (string) ($task->result['export_mime'] ?? '');
+        if ($mime === '') {
+            $mime = match (strtolower(pathinfo($filename, PATHINFO_EXTENSION))) {
+                'csv' => 'text/csv; charset=UTF-8',
+                'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                default => 'application/json',
+            };
+        }
 
         return response()->download($path, $filename, [
-            'Content-Type' => 'application/json',
+            'Content-Type' => $mime,
         ]);
     }
 }

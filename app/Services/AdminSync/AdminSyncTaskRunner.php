@@ -14,6 +14,7 @@ use App\Support\InepMicrodadosCadastroEscolasPath;
 use App\Services\Inep\SaebCsvPedagogicalImportService;
 use App\Services\Inep\SaebMicrodadosOpenDataImportService;
 use App\Services\Inep\SaebOfficialMunicipalImportService;
+use App\Services\Ieducar\InclusionNeeExportService;
 use App\Services\Inep\SaebPedagogicalImportService;
 use App\Support\Admin\ExternalImportImpact;
 use App\Support\AdminSync\WeeklyMassSyncCheckpoint;
@@ -34,6 +35,7 @@ final class AdminSyncTaskRunner
         private MunicipalTransferImportService $transferImport,
         private InepCensoMunicipioMatriculasIndexer $censoMatriculasIndexer,
         private WeeklyMassSyncOrchestrator $weeklyMassSync,
+        private InclusionNeeExportService $inclusionNeeExport,
     ) {}
 
     /**
@@ -62,6 +64,7 @@ final class AdminSyncTaskRunner
                 'pedagogical::import_csv' => $this->runPedagogicalCsv($task, $progress),
                 'pedagogical::import_microdados' => $this->runPedagogicalMicrodados($task, $progress),
                 'ieducar::schema_probe' => $this->runIeducarSchemaProbe($task, $progress),
+                'ieducar::inclusion_nee_export' => $this->runInclusionNeeExport($task, $progress),
                 'system::weekly_mass_sync' => $this->weeklyMassSync->run($task, $progress),
                 default => throw new InvalidArgumentException(__('Tarefa não suportada: :key', ['key' => $task->domain.'::'.$task->task_key])),
             };
@@ -544,6 +547,45 @@ final class AdminSyncTaskRunner
         $this->logPedagogicalDetails($progress, $result);
 
         return $this->pedagogicalResult($result, $task);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function runInclusionNeeExport(AdminSyncTask $task, AdminSyncTaskProgress $progress): array
+    {
+        $payload = $task->payload ?? [];
+        $city = City::query()->findOrFail((int) ($payload['city_id'] ?? $task->city_id));
+        $format = ($payload['format'] ?? 'csv') === 'xlsx' ? 'xlsx' : 'csv';
+        $scope = (string) ($payload['inclusion_scope'] ?? 'all');
+        [$inclusionNee, $inclusionInconsistencias] = match ($scope) {
+            'nee' => [true, false],
+            'inconsistencias' => [false, true],
+            default => [false, false],
+        };
+
+        $filters = new IeducarFilterState(
+            ano_letivo: (string) ($payload['ano_letivo'] ?? 'all'),
+            escola_id: isset($payload['escola_id']) ? (string) $payload['escola_id'] : null,
+            curso_id: isset($payload['curso_id']) ? (string) $payload['curso_id'] : null,
+            turno_id: isset($payload['turno_id']) ? (string) $payload['turno_id'] : null,
+            inclusion_somente_nee: $inclusionNee,
+            inclusion_somente_inconsistencias: $inclusionInconsistencias,
+        );
+
+        $progress->step(1, 3, __('A exportar base NEE de :city (:fmt)…', [
+            'city' => $city->name,
+            'fmt' => strtoupper($format),
+        ]));
+
+        $result = $this->inclusionNeeExport->generate($city, $filters, $format);
+
+        $progress->step(2, 3, __(':n linhas exportadas.', ['n' => number_format((int) ($result['row_count'] ?? 0))]));
+        $progress->step(3, 3, __('Ficheiro: :file', ['file' => (string) ($result['export_filename'] ?? '')]));
+
+        return array_merge($result, [
+            'output' => (string) ($task->output_log ?? ''),
+        ]);
     }
 
     /**

@@ -85,6 +85,62 @@
         @endif
     </x-dashboard.serv-tab-intro>
 
+    @if (auth()->user()?->isAdmin() && $yearFilterReady && $selectedCity !== null)
+        @php
+            $neeExportParams = request()->only(['city_id', 'ano_letivo', 'escola_id', 'curso_id', 'turno_id', 'inclusion_scope']);
+            if (! isset($neeExportParams['city_id'])) {
+                $neeExportParams['city_id'] = $selectedCity->id;
+            }
+        @endphp
+        @include('admin.partials.sync-queued-alert')
+        <div class="rounded-lg border border-indigo-200/80 dark:border-indigo-800/50 bg-indigo-50/40 dark:bg-indigo-950/25 px-4 py-4 space-y-3">
+            <div>
+                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Exportação administrativa (base NEE detalhada)') }}</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
+                    {{ __('Matrículas, alunos, escola/turma, designações NEE, cadastro de deficiência, turma AEE, recursos de prova INEP e inconsistências — alinhado aos gráficos desta aba. Apenas administradores.') }}
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-2 items-center">
+                <a
+                    href="{{ route('dashboard.analytics.inclusion.export', array_merge($neeExportParams, ['format' => 'csv'])) }}"
+                    class="serv-btn-secondary serv-btn-secondary--teal"
+                >
+                    {{ __('CSV agora') }}
+                </a>
+                <form method="post" action="{{ route('dashboard.analytics.inclusion.export.queue') }}" class="inline">
+                    @csrf
+                    @foreach ($neeExportParams as $key => $value)
+                        @if ($value !== null && $value !== '')
+                            <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                        @endif
+                    @endforeach
+                    <input type="hidden" name="format" value="csv">
+                    <button type="submit" class="serv-btn-secondary serv-btn-secondary--teal">
+                        {{ __('CSV (fila)') }}
+                    </button>
+                </form>
+                <form method="post" action="{{ route('dashboard.analytics.inclusion.export.queue') }}" class="inline">
+                    @csrf
+                    @foreach ($neeExportParams as $key => $value)
+                        @if ($value !== null && $value !== '')
+                            <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                        @endif
+                    @endforeach
+                    <input type="hidden" name="format" value="xlsx">
+                    <button type="submit" class="serv-btn-secondary serv-btn-secondary--indigo">
+                        {{ __('Excel (fila)') }}
+                    </button>
+                </form>
+                <a
+                    href="{{ route('admin.sync-queue.index') }}"
+                    class="text-xs text-indigo-700 dark:text-indigo-300 hover:underline font-medium"
+                >
+                    {{ __('Ver fila admin') }}
+                </a>
+            </div>
+        </div>
+    @endif
+
     <p class="serv-callout text-sm">
         {{ __('Aprofundar:') }}
         <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Discrepâncias') }}</button>
