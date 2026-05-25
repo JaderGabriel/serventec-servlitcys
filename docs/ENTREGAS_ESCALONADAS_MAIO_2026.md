@@ -47,7 +47,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 39 | `1acac6c` | **Pós-3.0.0 (sem bump):** admin — editor PP/cookies, versionamento, revogação e reconsentimento |
 | 40 | `08fb655` | **Pós-3.0.0 (sem bump):** inclusão — gráfico NEE por grupo vs catálogo (sem duplicata), contagem NEE/AEE unificada |
 | 41 | `d439660` | **Pós-3.0.0 (sem bump):** banner cookies welcome — fechar após aceitar e dismiss automático |
-| 42 | `39263f7` | **Pós-3.0.0 (sem bump):** inclusão — total NEE alinhado a AEE, grupos com 0, textos NEE vs cadastro |
+| 42 | `7ea0158` | **Pós-3.0.0 (sem bump):** inclusão — total NEE alinhado a AEE, grupos com 0, textos NEE vs cadastro |
 
 **Em produção:** versão **3.0.0** · tag **`20260525-Apollo`** · [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md).
 
