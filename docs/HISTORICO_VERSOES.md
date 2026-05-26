@@ -7,7 +7,7 @@
 | **Versão semântica em produção** | **3.4.0** |
 | **Ramo** | `main` |
 | **Tag de deploy (servidor)** | `20260531-Nemesis` |
-| **Último marco documentado** | Área Censo na navegação; UI Finanças unificada; Diagnóstico com qualidade do sistema |
+| **Último marco documentado** | 3.4.0 + patches Diagnóstico (consolidado, métricas por área, PDF) — ver [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -21,6 +21,8 @@
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
 | **▶ 3.4.0** | `20260531-Nemesis` → `main` | — | 31/05/2026 | **Produção:** Área Censo; UI Finanças/Censo; Diagnóstico qualidade + explorar; cache v2 — [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md). |
+| *(patch pós-3.4.0)* | `4b976f2` | — | 26/05/2026 | Diagnóstico: um velocímetro geral; consolidado operacional colapsável; roteiro no topo. |
+| *(patch pós-3.4.0)* | `e423808` | — | 26/05/2026 | Explorar em detalhe: métrica por área (`DiagnosisExploreCards`); UI com ícones; painel PDF; modo estratégico sem secções AJAX duplicadas. |
 | 3.3.2 | `20260530-Metis` → `main` | — | 30/05/2026 | Diagnóstico estratégico (um pedido leve, reutiliza cache de abas) — [RELEASE_20260530_METIS.md](RELEASE_20260530_METIS.md). |
 | 3.3.1 | `20260529-Helios` → `main` | — | 29/05/2026 | Otimização Analytics — Diagnóstico progressivo, cache, Finanças sem queries duplicadas — [RELEASE_20260529_HELIOS.md](RELEASE_20260529_HELIOS.md). |
 | 3.3.0 | `20260528-Eos` → `main` | — | 28/05/2026 | Monitor de módulos admin; doc/filas/export NEE — [RELEASE_20260528_EOS.md](RELEASE_20260528_EOS.md). |

@@ -57,8 +57,10 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 49 | `20260529-Helios` | **3.3.1** — otimização Analytics: Diagnóstico progressivo, cache, Finanças sem queries duplicadas |
 | 50 | `20260530-Metis` | **3.3.2** — Diagnóstico estratégico: modo leve, cache partilhado entre abas Finanças |
 | 51 | `20260531-Nemesis` | **3.4.0** — Área Censo na navegação; UI Finanças/Censo; Diagnóstico qualidade + explorar; cache conformidade v2 |
+| 52 | `4b976f2` | **Pós-3.4.0 (sem bump):** Diagnóstico — índice único, consolidado operacional, ordem visual |
+| 53 | `e423808` | **Pós-3.4.0 (sem bump):** Explorar — contador por área, ícones/legendas, PDF painel de áreas, modo estratégico sem AJAX extra |
 
-**Em produção:** versão **3.4.0** · tag **`20260531-Nemesis`** · [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md).
+**Em produção:** versão **3.4.0** · tag **`20260531-Nemesis`** · [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md). Patches documentados em [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) § Diagnóstico.
 
 ---
 

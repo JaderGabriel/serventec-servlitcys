@@ -16,7 +16,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Painel de análise i-Educar (abas lazy + faixa impacto por aba) | Implementado |
 | Analytics — navegação 4 áreas (Cadastro → Pedagógico → **Censo** → Finanças) | Implementado (3.4.0) |
 | Finanças / Censo — UI `consultoria-tab-frame` por tom temático | Implementado (3.4.0) |
-| Diagnóstico — qualidade do sistema + «Explorar em detalhe» | Implementado (3.4.0) |
+| Diagnóstico — qualidade do sistema + «Explorar em detalhe» | Implementado (3.4.0; refinado pós-release: métricas por área, PDF) |
 | Diagnóstico — modo estratégico (um pedido leve + cache partilhado entre abas) | Implementado (3.3.2) |
 | Diagnóstico — progressivo AJAX (legado) | Opcional (`mode=progressive`) |
 | Finanças — contexto municipal reutilizado (sem queries duplicadas no lazy) | Implementado (3.3.1+) |

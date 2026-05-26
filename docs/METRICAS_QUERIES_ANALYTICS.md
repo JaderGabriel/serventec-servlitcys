@@ -22,6 +22,10 @@ Desde a release **`20260531-Nemesis`**, o menu do Analytics tem **quatro** área
 - Preload Censo: `preloadCensoTab()` (separado de Finanças).
 - Guia de UI: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 
+### Explorar em detalhe (patch pós-3.4.0)
+
+Os cartões do Diagnóstico **não** repetem o índice global de conformidade. Cada área usa `DiagnosisExploreCards` com contador próprio (ocorrências, VAAR, programas, Censo, NEE, SAEB). O velocímetro 0–100 fica só em `#diag-qualidade-sistema`. Ver [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) § Explorar.
+
 ## Diagnóstico (`municipality_health`) — performance
 
 Com **`ANALYTICS_MUNICIPALITY_HEALTH_MODE=strategic`** (defeito desde 3.3.2):
@@ -56,6 +60,7 @@ Snapshot completo explícito: **`ANALYTICS_MUNICIPALITY_HEALTH_MODE=full`**. Pro
 | Sintoma | Causa habitual | Acção |
 |---------|----------------|-------|
 | Índice de conformidade fixo em 100% sem mudar dados | Cache de aba incompleto reutilizado (corrigido em 3.4.0, cache v2) | `php artisan cache:clear`; reabrir Diagnóstico após Discrepâncias |
+| Todos os cartões Explorar com o mesmo número (ex. 41) | Badge reutilizava `compliance_score` global (corrigido pós-3.4.0) | `git pull`, `npm run build`; confirmar métricas distintas por área |
 | Abas Finanças em branco após deploy | Views/CSS antigos | `npm run build`, `view:clear`, hard refresh |
 | Skeletons «A carregar VAAF/programas/temático» sem fim | Bundle JS antigo ou sessão bloqueada (corrigido em `83ff2b1`) | `npm run build`, `config:clear`, hard refresh; confirmar pedidos `health_section=` na rede do browser |
 | Outras abas lentas enquanto Diagnóstico abre | Pedido shell ainda a correr na BD i-Educar | Normal em bases grandes; secções passam a correr após libertar sessão |

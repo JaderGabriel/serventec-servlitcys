@@ -30,16 +30,51 @@ Cadastro (1) → Pedagógico (2) → Censo (3) → Finanças (4)
 | `x-dashboard.consultoria-tab-frame` | Moldura comum: impact strip, intro, links, flow nav, corpo |
 | `x-dashboard.serv-tab-intro` | Título + tom (`rose`, `teal`, `sky`, `amber`, `emerald`) |
 | `partials/municipality-health-executive` | Decisão + eixos (Diagnóstico) |
-| `partials/municipality-health-system-quality` | Índice e KPIs de qualidade do sistema |
-| `partials/municipality-health-explore` | Cartões para abrir análises em detalhe |
+| `partials/municipality-health-system-quality` | **Único** velocímetro / índice geral 0–100 |
+| `partials/municipality-health-explore` | Cartões «Explorar em detalhe» (métrica por área) |
+| `x-dashboard.diagnosis-explore-icon` | Ícones Heroicons nos cartões Explorar |
 
-## Diagnóstico — ligações às abas
+## Diagnóstico — fluxo na página (Finanças → Diagnóstico)
 
-1. **Painel executivo** — eixos com `consultoria-tab-link` (ex.: Censo → `work_done`).
-2. **Qualidade e status geral** — `#diag-qualidade-sistema`.
-3. **Explorar em detalhe** — `#diag-explorar` — uma entrada por aba relevante.
+Ordem recomendada na UI:
 
-Modo estratégico (3.3.2+) mantém-se: um pedido leve; detalhe pesado nas abas de destino.
+1. **Roteiro** (`consultoria-flow-nav`) — sticky no topo.
+2. **Painel de decisão** — `#diag-decisao` — headline + KPIs; badge com link para qualidade (sem segundo velocímetro).
+3. **Prioridades** — `#diag-prioridades` — tabela de rotinas (se houver).
+4. **Índice geral de qualidade** — `#diag-qualidade-sistema` — **único** medidor consolidado 0–100.
+5. **Explorar em detalhe** — `#diag-explorar` — cartões por área com contador **específico** (não repetir o índice global).
+6. **Consolidado operacional** — fontes públicas + mapa de rotinas (`details`, fechado por defeito).
+
+### Modo estratégico (`strategic_mode`)
+
+Com `ANALYTICS_MUNICIPALITY_HEALTH_MODE=strategic` (defeito desde 3.3.2):
+
+- **Um pedido** na aba; **não** renderiza secções AJAX legadas (FUNDEB/programas/temático embutidos) — o utilizador abre o detalhe pelos cartões Explorar.
+- Carregamento progressivo (`health_section`) só em `mode=progressive` ou legado explícito.
+
+## Explorar em detalhe — métricas por área
+
+Builder: `App\Support\Dashboard\DiagnosisExploreCards::build($healthData)`.
+
+| Tab | Métrica principal | Status derivado de |
+|-----|-------------------|-------------------|
+| `discrepancies` | Ocorrências ou rotinas c/ pendência | Dimensões + blocos temáticos |
+| `fundeb` | Módulos VAAR em alerta | `fundeb_modules` |
+| `other_funding` | Programas em alerta | `programas_alerta` |
+| `work_done` | Escolas pendentes Censo ou cadastros (quinzena) | `summary.censo_pendentes`, `cadastros_quinzena` |
+| `inclusion` | Recurso de prova sem NEE | `summary.recurso_prova_sem_nee` |
+| `performance` | SAEB disponível (OK / —) | Blocos temáticos |
+
+Testes: `tests/Unit/DiagnosisExploreCardsTest.php`.
+
+CSS: classes `diag-explore-*` em `resources/css/app.css` — requer `npm run build` após alterações.
+
+## PDF (Apêndice A — Diagnóstico)
+
+Partial: `pdf/analytics-report/partials/diagnosis-explore-board.blade.php`
+
+- Repete a lógica de `DiagnosisExploreCards` numa grelha 2 colunas.
+- Índice geral permanece na linha KPI acima; cartões mostram métricas por área + legenda de status.
 
 ## Índice de conformidade (3.4.0)
 
@@ -49,9 +84,20 @@ Calculado em `MunicipalityHealthRepository::computeComplianceScore()`:
 - Penalização por `status` `danger` / `warning` e por perda estimada agregada.
 - Cache de abas só entra se o payload estiver **completo** (`AnalyticsTabPayloadCache::isComplete()`).
 
+## Patches pós-3.4.0 (sem bump de versão)
+
+| Commit | Resumo |
+|--------|--------|
+| `4b976f2` | Diagnóstico consolidado: um velocímetro; mapa/fontes em bloco colapsável |
+| `e423808` | Explorar: contadores por área; ícones; PDF; modo estratégico sem duplicar secções |
+
+Versão em produção mantém-se **3.4.0** / tag **`20260531-Nemesis`**.
+
 ## Ficheiros principais
 
 - `app/Support/Dashboard/AnalyticsTabCatalog.php`
+- `app/Support/Dashboard/DiagnosisExploreCards.php`
 - `resources/views/components/dashboard/analytics-tabs-nav.blade.php`
 - `resources/views/components/dashboard/consultoria-tab-frame.blade.php`
-- `resources/css/app.css` — tons `serv-panel--*` e nav `--sky`
+- `resources/views/dashboard/analytics/partials/municipality-health-explore.blade.php`
+- `resources/css/app.css` — tons `serv-panel--*`, nav `--sky`, `diag-explore-*`

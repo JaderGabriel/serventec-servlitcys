@@ -4,7 +4,7 @@ Guia para reduzir lentidão no **login** e em consultas repetidas, usando Redis 
 
 ## Painel Analytics — Diagnóstico e Finanças (3.3.2+)
 
-Release **`20260531-Nemesis` (3.4.0):** área **Censo** separada na navegação; UI unificada Finanças/Censo; Diagnóstico com qualidade do sistema; cache de abas v2. Ver [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md) e [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
+Release **`20260531-Nemesis` (3.4.0):** área **Censo** separada na navegação; UI unificada Finanças/Censo; Diagnóstico com qualidade do sistema; cache de abas v2. Patches pós-release (sem bump): consolidado Diagnóstico, métricas por área em Explorar, painel PDF — ver [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 
 Release **`20260530-Metis` (3.3.2):** **Diagnóstico estratégico** (um pedido leve, cache partilhado entre abas). Legado progressivo/AJAX ainda disponível. Ver [RELEASE_20260530_METIS.md](RELEASE_20260530_METIS.md) e [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md).
 
