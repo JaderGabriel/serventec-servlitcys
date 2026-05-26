@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '3.3.2',
         'release_tag' => '20260530-Metis',
-        'commit_short' => '632c464',
+        'commit_short' => '0bc0e81',
         'commit_number' => 258,
         'revision_date' => '2026-05-30',
         'in_production' => true,
