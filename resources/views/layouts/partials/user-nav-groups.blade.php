@@ -115,8 +115,16 @@
             'title' => __('Monitorização'),
             'icon' => 'computer-desktop',
             'tone' => 'sky',
-            'routes' => ['admin.sync-queue.*', 'pulse'],
+            'routes' => ['admin.sync-queue.*', 'admin.module-monitor.*', 'pulse'],
             'items' => [
+                [
+                    'show' => true,
+                    'href' => route('admin.module-monitor.index'),
+                    'label' => __('Monitor de módulos'),
+                    'icon' => 'signal',
+                    'active' => $req->routeIs('admin.module-monitor.*'),
+                    'title' => __('Saúde por módulo, falhas e lentidões.'),
+                ],
                 [
                     'show' => true,
                     'href' => route($syncQueueRoutePrefix.'.index'),

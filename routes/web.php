@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\DocumentationController as AdminDocumentationCont
 use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\Admin\GeoSyncController;
 use App\Http\Controllers\Admin\IeducarCompatibilityController;
+use App\Http\Controllers\Admin\ModuleMonitorController;
 use App\Http\Controllers\Admin\LegalConsentReportController;
 use App\Http\Controllers\Admin\LegalConsentRevocationController;
 use App\Http\Controllers\Admin\LegalDocumentAdminController;
@@ -153,6 +154,9 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'legal.consent', 'adm
     Route::get('/admin/analytics-diagnostics', AnalyticsDiagnosticsController::class)
         ->middleware('analytics.diagnostics')
         ->name('admin.analytics-diagnostics');
+
+    Route::get('/admin/monitor-modulos', [ModuleMonitorController::class, 'index'])
+        ->name('admin.module-monitor.index');
 
     Route::get('/admin/consentimentos-legais', [LegalConsentReportController::class, 'index'])
         ->name('admin.legal-consents.index');
