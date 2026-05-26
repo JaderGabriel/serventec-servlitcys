@@ -1,81 +1,97 @@
 @php
     /** @var array<string, mixed> $module */
     $anchor = 'modulo-'.$module['id'];
+    $accent = $module['accent'] ?? 'slate';
+    $pillStatus = match ($module['status'] ?? 'unknown') {
+        'healthy' => 'success',
+        'warning' => 'warning',
+        'critical' => 'danger',
+        default => 'neutral',
+    };
+    $pillLabel = match ($module['status'] ?? 'unknown') {
+        'healthy' => __('Saudável'),
+        'warning' => __('Atenção'),
+        'critical' => __('Crítico'),
+        default => __('Sem dados'),
+    };
+    $hasAlert = in_array($module['status'] ?? '', ['critical', 'warning'], true);
 @endphp
 
 <article
     id="{{ $anchor }}"
-    class="module-monitor-card module-monitor-card--{{ $module['accent'] }} scroll-mt-6"
+    class="sync-queue-theme-card sync-queue-theme-card--{{ $accent }} @if ($hasAlert) sync-queue-theme-card--alert @endif scroll-mt-6"
 >
-    <header class="module-monitor-card__header">
-        <div class="flex items-start gap-3 min-w-0">
-            <span class="module-monitor-card__icon" aria-hidden="true">
-                <x-ui.icon :name="$module['icon']" class="h-5 w-5" />
-            </span>
-            <div class="min-w-0">
-                <h3 class="module-monitor-card__title">{{ $module['label'] }}</h3>
-                <p class="module-monitor-card__desc">{{ $module['description'] }}</p>
-            </div>
+    <div class="flex items-start gap-3">
+        <span class="sync-queue-theme-card__icon" aria-hidden="true">
+            <x-ui.icon :name="$module['icon']" class="h-5 w-5" />
+        </span>
+        <div class="min-w-0 flex-1 space-y-1.5">
+            <p class="sync-queue-theme-card__title">{{ $module['label'] }}</p>
+            <x-status-pill :status="$pillStatus" :label="$pillLabel" />
         </div>
-        @include('admin.module-monitor.partials.status-badge', ['status' => $module['status']])
-    </header>
+    </div>
 
-    <dl class="module-monitor-card__stats">
-        @if (($module['sync_failed'] ?? 0) > 0 || ($module['sync_active'] ?? 0) > 0 || ($module['sync_completed'] ?? 0) > 0)
-            <div>
-                <dt>{{ __('Fila sync') }}</dt>
-                <dd>
-                    @if (($module['sync_failed'] ?? 0) > 0)
-                        <span class="text-rose-700 dark:text-rose-300 font-medium">{{ (int) $module['sync_failed'] }} {{ __('falhas') }}</span>
-                    @endif
-                    @if (($module['sync_active'] ?? 0) > 0)
-                        <span class="text-sky-700 dark:text-sky-300">{{ (int) $module['sync_active'] }} {{ __('ativas') }}</span>
-                    @endif
-                    @if (($module['sync_completed'] ?? 0) > 0)
-                        <span class="text-emerald-700 dark:text-emerald-300">{{ (int) $module['sync_completed'] }} {{ __('ok') }}</span>
-                    @endif
-                </dd>
-            </div>
+    <p class="sync-queue-theme-card__desc">{{ $module['description'] }}</p>
+
+    <div class="sync-queue-theme-card__stats">
+        @if (($module['sync_failed'] ?? 0) > 0)
+            <span class="sync-queue-theme-card__pill sync-queue-theme-card__pill--red">
+                {{ (int) $module['sync_failed'] }} {{ __('falhas sync') }}
+            </span>
         @endif
-        @if (($module['pulse_errors'] ?? 0) > 0 || ($module['pulse_slow'] ?? 0) > 0)
-            <div>
-                <dt>{{ __('Pulse') }}</dt>
-                <dd>
-                    @if (($module['pulse_errors'] ?? 0) > 0)
-                        <span class="text-rose-700 dark:text-rose-300">{{ (int) $module['pulse_errors'] }} {{ __('erros') }}</span>
-                    @endif
-                    @if (($module['pulse_slow'] ?? 0) > 0)
-                        <span class="text-amber-700 dark:text-amber-300">{{ (int) $module['pulse_slow'] }} {{ __('lentos') }}</span>
-                        @if (($module['pulse_max_ms'] ?? 0) > 0)
-                            <span class="text-slate-500">· {{ number_format((int) $module['pulse_max_ms'], 0, ',', '.') }} ms</span>
-                        @endif
-                    @endif
-                </dd>
-            </div>
+        @if (($module['sync_active'] ?? 0) > 0)
+            <span class="sync-queue-theme-card__pill sync-queue-theme-card__pill--sky">
+                {{ (int) $module['sync_active'] }} {{ __('ativas') }}
+            </span>
+        @endif
+        @if (($module['sync_completed'] ?? 0) > 0)
+            <span class="sync-queue-theme-card__pill sync-queue-theme-card__pill--emerald">
+                {{ (int) $module['sync_completed'] }} {{ __('concluídas') }}
+            </span>
+        @endif
+        @if (($module['pulse_errors'] ?? 0) > 0)
+            <span class="sync-queue-theme-card__pill sync-queue-theme-card__pill--red">
+                {{ (int) $module['pulse_errors'] }} {{ __('erros Pulse') }}
+            </span>
+        @endif
+        @if (($module['pulse_slow'] ?? 0) > 0)
+            <span class="sync-queue-theme-card__pill sync-queue-theme-card__pill--sky">
+                {{ (int) $module['pulse_slow'] }} {{ __('lentos') }}
+                @if (($module['pulse_max_ms'] ?? 0) > 0)
+                    · {{ number_format((int) $module['pulse_max_ms'], 0, ',', '.') }} ms
+                @endif
+            </span>
         @endif
         @if (($module['incident_count'] ?? 0) > 0)
-            <div>
-                <dt>{{ __('Incidentes') }}</dt>
-                <dd class="font-medium">{{ (int) $module['incident_count'] }}</dd>
-            </div>
+            <span class="text-slate-600 dark:text-slate-400">
+                {{ (int) $module['incident_count'] }} {{ __('incidente(s)') }}
+            </span>
         @endif
-    </dl>
+        @if (
+            ($module['sync_failed'] ?? 0) === 0
+            && ($module['sync_active'] ?? 0) === 0
+            && ($module['sync_completed'] ?? 0) === 0
+            && ($module['pulse_errors'] ?? 0) === 0
+            && ($module['pulse_slow'] ?? 0) === 0
+            && ($module['incident_count'] ?? 0) === 0
+        )
+            <span class="text-slate-500 dark:text-slate-400">{{ __('Sem actividade no período') }}</span>
+        @endif
+    </div>
 
-    <footer class="module-monitor-card__footer">
-        @if (! empty($module['admin_url']))
-            <a href="{{ $module['admin_url'] }}" class="text-xs font-medium text-teal-700 dark:text-teal-300 hover:underline">
-                {{ __('Abrir módulo') }} →
-            </a>
-        @endif
-        @if (! empty($module['queue_url']))
-            <a href="{{ $module['queue_url'] }}" class="text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:underline">
-                {{ __('Ver fila') }} →
-            </a>
-        @endif
-        @if (($module['incident_count'] ?? 0) > 0)
-            <a href="#historico-incidentes" class="text-xs font-medium text-slate-600 dark:text-slate-400 hover:underline">
-                {{ __('Histórico') }} ↓
-            </a>
-        @endif
-    </footer>
+    @if (! empty($module['admin_url']) || ! empty($module['queue_url']) || ($module['incident_count'] ?? 0) > 0)
+        <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-100 dark:border-slate-800 pt-3 text-xs">
+            @if (! empty($module['admin_url']))
+                <a href="{{ $module['admin_url'] }}" class="serv-link font-medium">{{ __('Abrir módulo') }} →</a>
+            @endif
+            @if (! empty($module['queue_url']))
+                <a href="{{ $module['queue_url'] }}" class="serv-link font-medium">{{ __('Ver fila') }} →</a>
+            @endif
+            @if (($module['incident_count'] ?? 0) > 0)
+                <a href="#historico-incidentes" class="text-slate-600 dark:text-slate-400 hover:text-teal-700 dark:hover:text-teal-300 font-medium">
+                    {{ __('Histórico') }} ↓
+                </a>
+            @endif
+        </div>
+    @endif
 </article>
