@@ -1,12 +1,12 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`3.2.0`** · tag de deploy **`20260527-Notus`** · ver [RELEASE_20260527_NOTUS.md](RELEASE_20260527_NOTUS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`3.3.0`** · tag de deploy **`20260528-Eos`** · ver [RELEASE_20260528_EOS.md](RELEASE_20260528_EOS.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **3.2.0** |
+| **Versão semântica em produção** | **3.3.0** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260527-Notus` |
+| **Tag de deploy (servidor)** | `20260528-Eos` |
 | **Último marco documentado** | LGPD (consentimento + privacidade), notificações, inclusão NEE catálogo INEP, UX consultoria/SAEB |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
@@ -20,7 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 3.2.0** | `20260527-Notus` → `main` | — | 27/05/2026 | **Produção:** export NEE corrigido, medidores/risco AEE, fila admin com cards temáticos — [RELEASE_20260527_NOTUS.md](RELEASE_20260527_NOTUS.md). |
+| **▶ 3.3.0** | `20260528-Eos` → `main` | — | 28/05/2026 | **Produção:** monitor de módulos admin; doc/filas/export NEE para utilizador — [RELEASE_20260528_EOS.md](RELEASE_20260528_EOS.md). |
+| 3.2.0 | `20260527-Notus` → `main` | — | 27/05/2026 | Export NEE corrigido, medidores/risco AEE, fila admin com cards temáticos — [RELEASE_20260527_NOTUS.md](RELEASE_20260527_NOTUS.md). |
 | 3.1.0 | `20260526-Boreas` → `main` | — | 26/05/2026 | Inclusão (NEE/AEE, FUNDEB indicativo, inconsistências com nome do aluno); leitor doc admin sem 404 — [RELEASE_20260526_BOREAS.md](RELEASE_20260526_BOREAS.md). |
 | 3.0.0 | `20260525-Apollo` → `main` | **212+** | 25/05/2026 | LGPD (`/consentimento`, logs), notificações, catálogo NEE INEP, rodapé/privacidade, SAEB 4 colunas, UX welcome/RX — [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md). |
 | 2.4.0 | `20260524-Ceres` → `c25bc22` | **206** | 24/05/2026 | `saeb:import-planilhas-inep` (PhpSpreadsheet, RAR/XLSX INEP); FUNDEB receita + ordem VAAF — [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md). |

@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **3.2.0** · release `20260527-Notus` · **Ramo:** `main` · **Última revisão:** 27/05/2026
+**Versão em produção:** **3.3.0** · release `20260528-Eos` · **Ramo:** `main` · **Última revisão:** 28/05/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -40,6 +40,9 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Inclusão — exportação NEE CSV/Excel (admin, fila `inclusion_nee_export`) | Implementado (3.1.0–3.2.0; dados alinhados ao painel em 3.2.0) |
 | Inclusão — risco financeiro turma AEE sem cadastro deficiência | Implementado (3.2.0) |
 | Admin — fila processamento (cards temáticos, download com ícone) | Implementado (3.2.0) |
+| Admin — monitor de módulos (`/admin/monitor-modulos`, saúde + histórico incidentes) | Implementado (3.3.0) |
+| Utilizador/Municipal — documentação (`/documentacao`) e filas (`/filas`) | Implementado (3.3.0) |
+| Inclusão — exportação NEE para utilizador/municipal (não só admin) | Implementado (3.3.0) |
 | Catálogo API i-Educar (consultas SQL → endpoints propostos, JSON, perf/seg) | Documentado — [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) |
 | Estudo integrações setor público + previsão demanda (doc) | Documentado — [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md); implementação Ondas 1–3 no backlog §H |
 | Sync massiva semanal (`system::weekly_mass_sync`, checkpoint) | Implementado |

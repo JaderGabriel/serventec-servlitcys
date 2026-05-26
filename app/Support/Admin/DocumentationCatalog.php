@@ -252,6 +252,7 @@ final class DocumentationCatalog
                 'description' => __('Notas por tag de deploy (mais recentes primeiro).'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
+                    ['label' => __('Release 3.3.0 — Eos'), 'path' => 'docs/RELEASE_20260528_EOS.md'],
                     ['label' => __('Release 3.2.0 — Notus'), 'path' => 'docs/RELEASE_20260527_NOTUS.md'],
                     ['label' => __('Release 3.1.0 — Boreas'), 'path' => 'docs/RELEASE_20260526_BOREAS.md'],
                     ['label' => __('Release 3.0.0 — Apollo'), 'path' => 'docs/RELEASE_20260525_APOLLO.md'],
