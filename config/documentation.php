@@ -24,9 +24,9 @@ return [
     'product' => [
         'version' => '3.3.0',
         'release_tag' => '20260528-Eos',
-        'commit_short' => 'a41749c',
-        'commit_number' => 249,
-        'revision_date' => '2026-05-25',
+        'commit_short' => 'f93535f',
+        'commit_number' => 254,
+        'revision_date' => '2026-05-26',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],
