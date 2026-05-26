@@ -171,6 +171,7 @@ class MunicipalityHealthRepository
         try {
             $overview = $this->overview->summary($city, $filters);
             $disc = $this->discrepancies->snapshot($city, $filters);
+            $this->storeDiscInCache($city, $filters, $disc);
             $totalMat = (int) ($disc['total_matriculas'] ?? $overview['kpis']['matriculas'] ?? 0);
             $fundebRef = DiscrepanciesFundingImpact::resolveReference($city, $filters);
             $fundebStub = [
@@ -324,7 +325,8 @@ class MunicipalityHealthRepository
         $attendance = $this->attendance->snapshot($city, $filters);
         $inclusion = $this->inclusion->snapshot($city, $filters);
         $network = $this->network->snapshot($city, $filters);
-        $disc = $this->discrepancies->snapshot($city, $filters);
+        $disc = $this->cachedDiscPayload($city, $filters)
+            ?? $this->discrepancies->snapshot($city, $filters);
         $discForFundeb = [
             'summary' => is_array($disc['summary'] ?? null) ? $disc['summary'] : [],
             'funding_reference' => is_array($disc['funding_reference'] ?? null) ? $disc['funding_reference'] : null,
@@ -364,6 +366,51 @@ class MunicipalityHealthRepository
             ],
             'error' => null,
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    /**
+     * @param  array<string, mixed>  $disc
+     */
+    private function storeDiscInCache(City $city, IeducarFilterState $filters, array $disc): void
+    {
+        $ttl = (int) config('analytics.municipality_health_cache_seconds', 300);
+        if ($ttl <= 0) {
+            return;
+        }
+
+        try {
+            Cache::put($this->discCacheKey($city, $filters), $disc, $ttl);
+        } catch (\Throwable $e) {
+            Log::warning('analytics.municipality_health_disc_cache_failed', [
+                'city_id' => $city->id,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function cachedDiscPayload(City $city, IeducarFilterState $filters): ?array
+    {
+        try {
+            $cached = Cache::get($this->discCacheKey($city, $filters));
+
+            return is_array($cached) ? $cached : null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function discCacheKey(City $city, IeducarFilterState $filters): string
+    {
+        $params = $filters->toQueryParamsWithCity((int) $city->id);
+        ksort($params);
+
+        return 'analytics:municipality_health:disc:'.(int) $city->id.':'.md5(json_encode($params));
     }
 
     /**

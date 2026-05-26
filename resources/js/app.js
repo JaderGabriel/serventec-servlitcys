@@ -287,13 +287,13 @@ document.addEventListener("alpine:init", () => {
                     const el = panel;
                     el.innerHTML = html;
                     Alpine.initTree(el);
+                    this.tabLoaded[t] = true;
                     if (
                         t === "municipality_health" &&
                         el.querySelector("[data-municipality-health-progressive]")
                     ) {
-                        await this.loadMunicipalityHealthSections(el);
+                        void this.loadMunicipalityHealthSections(el);
                     }
-                    this.tabLoaded[t] = true;
                 } catch (e) {
                     console.error("analytics tab lazy", e);
                     if (panel) {
@@ -322,46 +322,66 @@ document.addEventListener("alpine:init", () => {
                     programas: "Programas complementares",
                     tematico: "Leitura temática",
                 };
-                await Promise.all(
-                    sections.map(async (section) => {
-                        const slot = panel.querySelector(
-                            `[data-municipality-health-section="${section}"]`,
+                const sectionTimeoutMs = 180_000;
+
+                for (const section of sections) {
+                    const slot = panel.querySelector(
+                        `[data-municipality-health-section="${section}"]`,
+                    );
+                    if (!slot) {
+                        continue;
+                    }
+                    const controller = new AbortController();
+                    const timeoutId = window.setTimeout(
+                        () => controller.abort(),
+                        sectionTimeoutMs,
+                    );
+                    try {
+                        const u = new URL(
+                            this.tabFetchUrl,
+                            window.location.origin,
                         );
-                        if (!slot) {
-                            return;
-                        }
-                        try {
-                            const u = new URL(
-                                this.tabFetchUrl,
-                                window.location.origin,
+                        u.search = window.location.search;
+                        u.searchParams.set("tab", "municipality_health");
+                        u.searchParams.set("health_section", section);
+                        const r = await fetch(u.toString(), {
+                            headers: {
+                                Accept: "text/html",
+                                "X-Requested-With": "XMLHttpRequest",
+                            },
+                            credentials: "same-origin",
+                            signal: controller.signal,
+                        });
+                        if (!r.ok) {
+                            const errText = await r.text();
+                            throw new Error(
+                                errText?.slice(0, 200) || `HTTP ${r.status}`,
                             );
-                            u.search = window.location.search;
-                            u.searchParams.set("tab", "municipality_health");
-                            u.searchParams.set("health_section", section);
-                            const r = await fetch(u.toString(), {
-                                headers: {
-                                    Accept: "text/html",
-                                    "X-Requested-With": "XMLHttpRequest",
-                                },
-                                credentials: "same-origin",
-                            });
-                            if (!r.ok) {
-                                throw new Error(`HTTP ${r.status}`);
-                            }
-                            const html = await r.text();
-                            slot.innerHTML = html;
-                            Alpine.initTree(slot);
-                            this.applyMunicipalityHealthPatches(panel, slot);
-                        } catch (e) {
-                            console.error(
-                                "municipality health section",
-                                section,
-                                e,
-                            );
-                            slot.innerHTML = `<p class="text-sm text-red-600 dark:text-red-400 px-2 py-4">${labels[section] ?? section}: erro ao carregar.</p>`;
                         }
-                    }),
-                );
+                        const html = await r.text();
+                        slot.innerHTML = html;
+                        Alpine.initTree(slot);
+                        this.applyMunicipalityHealthPatches(panel, slot);
+                    } catch (e) {
+                        console.error(
+                            "municipality health section",
+                            section,
+                            e,
+                        );
+                        const isAbort =
+                            e instanceof DOMException &&
+                            e.name === "AbortError";
+                        slot.innerHTML = `<p class="text-sm text-red-600 dark:text-red-400 px-2 py-4">${
+                            labels[section] ?? section
+                        }: ${
+                            isAbort
+                                ? "tempo esgotado — tente recarregar a aba."
+                                : "erro ao carregar."
+                        }</p>`;
+                    } finally {
+                        window.clearTimeout(timeoutId);
+                    }
+                }
             },
             applyMunicipalityHealthPatches(panel, sectionEl) {
                 const scoreScript = sectionEl.querySelector(

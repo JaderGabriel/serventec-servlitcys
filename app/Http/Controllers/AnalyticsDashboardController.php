@@ -574,6 +574,10 @@ class AnalyticsDashboardController extends Controller
 
         $filters = IeducarFilterState::fromRequest($request);
 
+        if ($tab === 'municipality_health' && $request->hasSession()) {
+            $request->session()->save();
+        }
+
         if (! $filters->hasYearSelected()) {
             return response()
                 ->view('dashboard.analytics.partials.tab-fetch-notice', [
