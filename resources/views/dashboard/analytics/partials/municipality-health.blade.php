@@ -112,6 +112,7 @@
     $healthKpisPrioridades = array_merge($healthKpis, $healthKpisFinanceiro);
     $publicSources = is_array($h['public_data_sources'] ?? null) ? $h['public_data_sources'] : [];
     $hasPublicSources = count($publicSources['categories'] ?? []) > 0;
+    $strategicMode = ! empty($h['strategic_mode'] ?? false);
     $flowSteps = ConsultoriaFlow::numberedSteps([
         ['label' => __('Decisão'), 'anchor' => 'diag-decisao'],
         ['label' => __('Qualidade'), 'anchor' => 'diag-qualidade-sistema'],
@@ -127,7 +128,6 @@
     $diagStep = ConsultoriaFlow::stepMap($flowSteps);
     $progressive = ! empty($h['sections_pending'] ?? []);
     $sectionsPending = is_array($h['sections_pending'] ?? null) ? $h['sections_pending'] : [];
-    $strategicMode = ! empty($h['strategic_mode'] ?? false);
     $showDetailSections = $progressive && ! $strategicMode;
     $scoreRing = match ($h['compliance_status'] ?? 'neutral') {
         'success' => 'serv-panel border-emerald-300/80 dark:border-emerald-700',
