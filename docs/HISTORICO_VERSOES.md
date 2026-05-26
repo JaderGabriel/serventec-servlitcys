@@ -21,6 +21,9 @@
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
 | **▶ 3.3.0** | `20260528-Eos` → `main` | — | 28/05/2026 | **Produção:** monitor de módulos admin; doc/filas/export NEE para utilizador — [RELEASE_20260528_EOS.md](RELEASE_20260528_EOS.md). |
+| *(patch pós-3.3.0)* | `d940332` | **252** | 26/05/2026 | Analytics: Diagnóstico progressivo (shell + secções AJAX `health_section`). |
+| *(patch pós-3.3.0)* | `8b11d0c` | **251** | 26/05/2026 | Analytics: cache Diagnóstico; contexto único nas abas Finanças. |
+| *(patch pós-3.3.0)* | `4a502e1` | **250** | 26/05/2026 | Analytics: Diagnóstico lazy sem repetir `fundingImpactSnapshot` na faixa de impacto. |
 | *(patch pós-3.3.0)* | `504d2f9` | **240** | 25/05/2026 | Monitor de módulos: UI alinhada ao design system `serv-*`. |
 | *(patch pós-3.3.0)* | `d6a1785` | **241** | 25/05/2026 | Monitor: cartões focam saúde (sem atalhos ao módulo/fila). |
 | *(patch pós-3.3.0)* | `f29b30b` | **242** | 25/05/2026 | RX: painel de legendas, guia de colunas, KPIs e comparativo sky (sem bump de versão). |

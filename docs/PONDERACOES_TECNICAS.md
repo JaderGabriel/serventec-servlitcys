@@ -120,9 +120,11 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 | Tema | Decisão | Implicação |
 |------|---------|------------|
 | Lazy por aba | `ANALYTICS_LAZY_TABS` (default true) | HTML inicial: Visão Geral + Unidades + Financiamentos + Censo (SSR); resto via `/analytics/tab` |
+| Diagnóstico progressivo | `ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE` + cache `ANALYTICS_MUNICIPALITY_HEALTH_CACHE` | Shell (Discrepâncias + visão geral) primeiro; blocos FUNDEB/programas/temático em AJAX (`health_section`) |
+| Contexto Finanças | `ANALYTICS_FINANCE_TABS_REUSE_CONTEXT` | Evita segunda passagem em Discrepâncias/visão geral na faixa de impacto (Diagnóstico, Discrepâncias, FUNDEB) |
 | Pulse | URI `tab=` e headers `X-Analytics-Tab`; métricas `db_slow_*`, `db_muni_run`, `db_request_total`, `app_operation*` | Medir custo **por aba**, **por município/base** e **por etapa** (RX, sync, PDF) |
 | Cache resumo financeiro | `ANALYTICS_FUNDING_SUMMARY_CACHE` (ex. 600 s) | Invalidação implícita por TTL; params incluem cidade+filtros |
-| FUNDEB tab | Reúne vários repositórios num pedido | Aba mais pesada em lazy — candidata a cache adicional |
+| FUNDEB tab | Reúne vários repositórios num pedido | Com reutilização de contexto, overview + fundingImpact não duplicam após `buildFundebTabBundle` |
 
 **Doc:** [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md).
 

@@ -14,6 +14,25 @@ Com **`config/analytics.php` → `lazy_tab_loading`**, a página inicial só exe
 
 Para desativar o lazy e voltar ao carregamento completo num único HTML (útil para comparar antes/depois no Pulse): **`ANALYTICS_LAZY_TABS=false`**.
 
+## Diagnóstico (`municipality_health`) — performance
+
+Com **`ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE=true`** (defeito em `config/analytics.php`):
+
+| Fase | Pedido | Conteúdo |
+|------|--------|----------|
+| Shell | `tab=municipality_health` | Visão geral + **Discrepâncias** (índice, KPIs, prioridades, mapa de rotinas, fontes públicas) |
+| Blocos | `tab=municipality_health&health_section=fundeb` | VAAF, previsão, roteiro FUNDEB (actualiza índice com módulos VAAR) |
+| Blocos | `…&health_section=programas` | PNAE, PNATE, PDDE (cobertura cadastro) |
+| Blocos | `…&health_section=tematico` | Leitura temática (desempenho, frequência, inclusão, rede, Censo) |
+
+No **Pulse → Operações**, filtre `analytics:tab:municipality_health` e `analytics:tab:municipality_health:section:*` para comparar tempos shell vs. blocos.
+
+**Cache:** `ANALYTICS_MUNICIPALITY_HEALTH_CACHE` (ex. 300 s) aplica-se ao shell e a cada secção (`section:fundeb`, etc.). Revisitas com os mesmos filtros reutilizam cache.
+
+**Contexto municipal (faixa de impacto):** com **`ANALYTICS_FINANCE_TABS_REUSE_CONTEXT`**, as abas **Discrepâncias** e **FUNDEB** não voltam a executar `overview` + `fundingImpactSnapshot` depois do relatório da aba. **Financiamentos** e **Censo** usam só o resumo financeiro em cache para a faixa (`ANALYTICS_FINANCE_TABS_STRIP_CONTEXT`).
+
+Desactivar progressivo (comportamento anterior — um único pedido pesado): **`ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE=false`**.
+
 ## Inclusão — educação especial (NEE)
 
 Na aba **Inclusão**, o recorte NEE prioriza o mesmo caminho que o BI Portabilis:
