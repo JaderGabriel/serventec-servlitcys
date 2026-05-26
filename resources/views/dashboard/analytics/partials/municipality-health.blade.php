@@ -117,9 +117,9 @@
         ['label' => __('Qualidade'), 'anchor' => 'diag-qualidade-sistema'],
         ['label' => __('Explorar'), 'anchor' => 'diag-explorar'],
         ['label' => __('Prioridades'), 'anchor' => 'diag-prioridades', 'visible' => count($topProblems) > 0],
-        ['label' => __('VAAF e previsão'), 'anchor' => 'diag-vaaf', 'visible' => $vaafComparacao !== null],
-        ['label' => __('Programas complementares'), 'anchor' => 'diag-programas', 'visible' => count($complementaryPrograms) > 0],
-        ['label' => __('Leitura temática'), 'anchor' => 'diag-tematico', 'visible' => count($thematicBlocks) > 0],
+        ['label' => __('VAAF e previsão'), 'anchor' => 'diag-vaaf', 'visible' => ! $strategicMode && $vaafComparacao !== null],
+        ['label' => __('Programas complementares'), 'anchor' => 'diag-programas', 'visible' => ! $strategicMode && count($complementaryPrograms) > 0],
+        ['label' => __('Leitura temática'), 'anchor' => 'diag-tematico', 'visible' => ! $strategicMode && count($thematicBlocks) > 0],
         ['label' => __('Fontes públicas'), 'anchor' => 'diag-fontes-publicas', 'visible' => $hasPublicSources],
         ['label' => __('Mapa de rotinas'), 'anchor' => 'diag-mapa', 'visible' => count($cadastro) > 0],
         ['label' => __('Roteiro FUNDEB'), 'anchor' => 'diag-roteiro', 'visible' => count($fundebMods) > 0],
@@ -127,6 +127,8 @@
     $diagStep = ConsultoriaFlow::stepMap($flowSteps);
     $progressive = ! empty($h['sections_pending'] ?? []);
     $sectionsPending = is_array($h['sections_pending'] ?? null) ? $h['sections_pending'] : [];
+    $strategicMode = ! empty($h['strategic_mode'] ?? false);
+    $showDetailSections = $progressive && ! $strategicMode;
     $scoreRing = match ($h['compliance_status'] ?? 'neutral') {
         'success' => 'serv-panel border-emerald-300/80 dark:border-emerald-700',
         'warning' => 'serv-panel border-amber-300/80 dark:border-amber-700',
@@ -187,16 +189,15 @@
             <p class="serv-callout">{{ $h['footnote'] }}</p>
         @endif
 
-        <p class="serv-callout text-xs">
-            {{ __('Use «Explorar em detalhe» abaixo para abrir cada análise na área temática (Cadastro, Censo ou Finanças).') }}
-            <a href="#diag-explorar" class="font-semibold text-teal-700 dark:text-teal-300 underline underline-offset-2 ml-1">{{ __('Ir para explorar →') }}</a>
-        </p>
-
         @if (! empty($h['error']))
             <div class="serv-callout serv-callout--danger text-sm">
                 {{ $h['error'] }}
             </div>
         @endif
+
+        <div class="sticky top-0 z-10 -mx-1 px-1 py-1 rounded-lg bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/60">
+            <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="teal" />
+        </div>
 
         @include('dashboard.analytics.partials.municipality-health-executive', [
             'h' => $h,
@@ -213,48 +214,46 @@
 
         @include('dashboard.analytics.partials.municipality-health-explore', ['h' => $h])
 
-        @if ($fundingMet !== null)
+        @if ($fundingMet !== null && ! $strategicMode)
             <x-dashboard.consultoria-funding-explanation
                 :metodologia="$fundingMet"
                 :resumo="$fundingResumo"
             />
         @endif
 
-        <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="teal" />
-
-        @if ($progressive && in_array('fundeb', $sectionsPending, true))
+        @if ($showDetailSections && in_array('fundeb', $sectionsPending, true))
             <div data-municipality-health-section="fundeb" class="space-y-6">
                 @include('dashboard.analytics.partials.municipality-health-section-skeleton', [
                     'message' => __('A carregar VAAF, previsão e roteiro FUNDEB…'),
                 ])
             </div>
-        @elseif ($vaafComparacao !== null || count($fundebMods) > 0)
+        @elseif (! $strategicMode && ($vaafComparacao !== null || count($fundebMods) > 0))
             @include('dashboard.analytics.partials.municipality-health-section-fundeb', [
                 'healthData' => $h,
                 'diagStep' => $diagStep,
             ])
         @endif
 
-        @if ($progressive && in_array('programas', $sectionsPending, true))
+        @if ($showDetailSections && in_array('programas', $sectionsPending, true))
             <div data-municipality-health-section="programas" class="space-y-6">
                 @include('dashboard.analytics.partials.municipality-health-section-skeleton', [
                     'message' => __('A carregar programas complementares…'),
                 ])
             </div>
-        @elseif (count($complementaryPrograms) > 0)
+        @elseif (! $strategicMode && count($complementaryPrograms) > 0)
             @include('dashboard.analytics.partials.municipality-health-section-programas', [
                 'healthData' => $h,
                 'diagStep' => $diagStep,
             ])
         @endif
 
-        @if ($progressive && in_array('tematico', $sectionsPending, true))
+        @if ($showDetailSections && in_array('tematico', $sectionsPending, true))
             <div data-municipality-health-section="tematico" class="space-y-6">
                 @include('dashboard.analytics.partials.municipality-health-section-skeleton', [
                     'message' => __('A carregar leitura temática e indicadores pedagógicos…'),
                 ])
             </div>
-        @elseif (count($thematicBlocks) > 0)
+        @elseif (! $strategicMode && count($thematicBlocks) > 0)
             @include('dashboard.analytics.partials.municipality-health-section-tematico', [
                 'healthData' => $h,
                 'diagStep' => $diagStep,
@@ -263,7 +262,7 @@
 
         @if ($hasPublicSources || count($cadastro) > 0)
             <section class="serv-panel overflow-hidden border border-slate-200/90 dark:border-slate-700">
-                <details class="group" open>
+                <details class="group">
                     <summary class="cursor-pointer list-none px-4 py-3 bg-slate-50/80 dark:bg-slate-900/50 border-b border-slate-200/80 dark:border-slate-700 flex items-center justify-between gap-2 select-none">
                         <div class="min-w-0">
                             <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">

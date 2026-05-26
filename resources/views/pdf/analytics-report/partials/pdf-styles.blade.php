@@ -155,4 +155,22 @@
     .official-tag { display: inline-block; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.06em; color: {{ $secondary }}; font-weight: bold; margin-bottom: 4px; }
     ul.compact { margin: 4px 0; padding-left: 18px; }
     ul.compact li { margin-bottom: 4px; }
+
+    /* Diagnóstico — painel de áreas (PDF) */
+    table.diag-board { width: 100%; border-collapse: separate; border-spacing: 8px 8px; margin: 10px 0 6px; table-layout: fixed; }
+    table.diag-board td.diag-board__cell {
+        width: 50%;
+        vertical-align: top;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: #f8fafc;
+        page-break-inside: avoid;
+    }
+    table.diag-board td.diag-board__cell--empty { background: transparent; border: none; }
+    .diag-board__group { margin: 0 0 2px; font-size: 7pt; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; font-weight: bold; }
+    .diag-board__title { margin: 0 0 6px; font-size: 10pt; font-weight: bold; color: #0f172a; }
+    .diag-board__metric { margin: 0 0 4px; font-size: 9pt; }
+    .diag-board__detail { margin: 0 0 4px; font-size: 8pt; color: #475569; line-height: 1.35; }
+    .diag-board__status { margin: 0; font-size: 8pt; font-weight: bold; }
 </style>

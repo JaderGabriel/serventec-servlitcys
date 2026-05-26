@@ -174,6 +174,148 @@
         @apply border-emerald-200/80 bg-gradient-to-br from-emerald-50/70 via-white to-slate-50/90 dark:from-emerald-950/25 dark:via-slate-900/50 dark:to-slate-950/80 dark:border-emerald-900/50;
     }
 
+    /* Diagnóstico — cartões Explorar em detalhe */
+    .diag-explore-section {
+        @apply serv-panel border border-slate-200/90 dark:border-slate-700 overflow-hidden;
+    }
+
+    .diag-explore-section__head {
+        @apply px-4 py-4 sm:px-5 sm:py-4 border-b border-slate-200/80 dark:border-slate-700 bg-gradient-to-r from-teal-50/60 via-white to-slate-50/80 dark:from-teal-950/20 dark:via-slate-900 dark:to-slate-900;
+    }
+
+    .diag-explore-card {
+        @apply flex flex-col gap-3 rounded-xl border p-4 shadow-sm transition-shadow hover:shadow-md;
+    }
+
+    .diag-explore-card--teal {
+        @apply border-teal-200/90 bg-gradient-to-br from-teal-50/50 via-white to-white dark:from-teal-950/20 dark:via-slate-900 dark:to-slate-900 dark:border-teal-800/60;
+    }
+
+    .diag-explore-card--rose {
+        @apply border-rose-200/90 bg-gradient-to-br from-rose-50/50 via-white to-white dark:from-rose-950/20 dark:via-slate-900 dark:to-slate-900 dark:border-rose-800/60;
+    }
+
+    .diag-explore-card--sky {
+        @apply border-sky-200/90 bg-gradient-to-br from-sky-50/50 via-white to-white dark:from-sky-950/20 dark:via-slate-900 dark:to-slate-900 dark:border-sky-800/60;
+    }
+
+    .diag-explore-card--amber {
+        @apply border-amber-200/90 bg-gradient-to-br from-amber-50/50 via-white to-white dark:from-amber-950/20 dark:via-slate-900 dark:to-slate-900 dark:border-amber-800/60;
+    }
+
+    .diag-explore-card--violet {
+        @apply border-violet-200/90 bg-gradient-to-br from-violet-50/50 via-white to-white dark:from-violet-950/20 dark:via-slate-900 dark:to-slate-900 dark:border-violet-800/60;
+    }
+
+    .diag-explore-card--indigo {
+        @apply border-indigo-200/90 bg-gradient-to-br from-indigo-50/50 via-white to-white dark:from-indigo-950/20 dark:via-slate-900 dark:to-slate-900 dark:border-indigo-800/60;
+    }
+
+    .diag-explore-card__top {
+        @apply flex items-start gap-3;
+    }
+
+    .diag-explore-card__icon-wrap {
+        @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/80 text-teal-700 ring-1 ring-slate-200/80 dark:bg-slate-800/80 dark:text-teal-300 dark:ring-slate-600;
+    }
+
+    .diag-explore-card--rose .diag-explore-card__icon-wrap {
+        @apply text-rose-700 dark:text-rose-300;
+    }
+
+    .diag-explore-card--sky .diag-explore-card__icon-wrap {
+        @apply text-sky-700 dark:text-sky-300;
+    }
+
+    .diag-explore-card--amber .diag-explore-card__icon-wrap {
+        @apply text-amber-800 dark:text-amber-300;
+    }
+
+    .diag-explore-card--violet .diag-explore-card__icon-wrap,
+    .diag-explore-card--indigo .diag-explore-card__icon-wrap {
+        @apply text-violet-700 dark:text-violet-300;
+    }
+
+    .diag-explore-card__group {
+        @apply text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    }
+
+    .diag-explore-card__title {
+        @apply text-sm font-semibold text-serv-navy dark:text-slate-100 leading-tight;
+    }
+
+    .diag-explore-card__metric {
+        @apply flex items-baseline gap-2 py-1;
+    }
+
+    .diag-explore-card__metric-value {
+        @apply text-2xl font-bold text-serv-navy dark:text-white leading-none;
+    }
+
+    .diag-explore-card__metric-label {
+        @apply text-xs font-medium text-slate-600 dark:text-slate-400;
+    }
+
+    .diag-explore-card__detail {
+        @apply text-xs text-slate-600 dark:text-slate-300 leading-relaxed;
+    }
+
+    .diag-explore-card__hint {
+        @apply text-[11px] text-slate-500 dark:text-slate-400 leading-snug flex-1;
+    }
+
+    .diag-explore-card__foot {
+        @apply flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 pt-2 border-t border-slate-200/70 dark:border-slate-700/70 mt-auto;
+    }
+
+    .diag-explore-card__legend {
+        @apply text-[10px] text-slate-500 dark:text-slate-400 line-clamp-2;
+    }
+
+    .diag-explore-badge {
+        @apply shrink-0 inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide;
+    }
+
+    .diag-explore-badge--success {
+        @apply bg-emerald-100 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-200;
+    }
+
+    .diag-explore-badge--warning {
+        @apply bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-200;
+    }
+
+    .diag-explore-badge--danger {
+        @apply bg-rose-100 text-rose-900 dark:bg-rose-950/60 dark:text-rose-200;
+    }
+
+    .diag-explore-badge--neutral {
+        @apply bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300;
+    }
+
+    .diag-explore-legend-bar {
+        @apply flex flex-wrap gap-x-4 gap-y-1 px-4 py-3 text-[10px] text-slate-600 dark:text-slate-400 border-t border-slate-200/80 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30;
+    }
+
+    .diag-explore-legend-bar__item {
+        @apply inline-flex items-center gap-1.5;
+    }
+
+    .diag-explore-dot {
+        @apply inline-block h-2 w-2 rounded-full;
+    }
+
+    .diag-explore-dot--success {
+        @apply bg-emerald-500;
+    }
+
+    .diag-explore-dot--warning {
+        @apply bg-amber-500;
+    }
+
+    .diag-explore-dot--danger {
+        @apply bg-rose-500;
+    }
+
     .serv-callout {
         @apply rounded-lg border border-slate-200/90 bg-slate-50/60 dark:border-slate-700/90 dark:bg-slate-900/40 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 leading-relaxed;
     }

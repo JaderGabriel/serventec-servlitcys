@@ -74,7 +74,7 @@
         <table class="kpi-row">
             <tr>
                 <td>
-                    <div class="kpi-label">{{ __('Índice de conformidade') }}</div>
+                    <div class="kpi-label">{{ __('Índice de conformidade (geral)') }}</div>
                     <div class="kpi-value">{{ isset($health['compliance_score']) ? (int) $health['compliance_score'].'/100' : '—' }}</div>
                     <span class="muted">{{ $health['compliance_label'] ?? '' }}</span>
                 </td>
@@ -83,6 +83,8 @@
                 <td><div class="kpi-label">{{ __('Ganho potencial/ano') }}</div><div class="kpi-value">R$ {{ number_format((float) data_get($health, 'summary.ganho_potencial_anual', 0), 2, ',', '.') }}</div></td>
             </tr>
         </table>
+
+        @include('pdf.analytics-report.partials.diagnosis-explore-board', ['health' => $health])
         @if (is_array($health['vaaf_comparacao'] ?? null))
             <h3>{{ __('VAAF municipal × prévia federal') }}</h3>
             <table class="data">

@@ -701,7 +701,10 @@ class MunicipalityHealthRepository
                     : (is_array($fundebRef['divergencia'] ?? null) ? $fundebRef['divergencia'] : null)));
 
         $workPeriods = is_array($workDone['periods'] ?? null) ? $workDone['periods'] : [];
+        $censoBlock = is_array($workDone['censo'] ?? null) ? $workDone['censo'] : [];
+        $censoSummary = is_array($censoBlock['summary'] ?? null) ? $censoBlock['summary'] : [];
         $cadastrosQuinzena = $shellOnly ? 0 : (int) ($workPeriods['fortnight'] ?? 0);
+        $censoPendentes = $shellOnly ? 0 : (int) ($censoSummary['pendentes'] ?? 0);
         $complementaryPrograms = $shellOnly ? [] : self::summarizeComplementaryPrograms($otherFunding);
         $activeProgramIds = array_values(array_filter(
             array_map(
@@ -747,6 +750,7 @@ class MunicipalityHealthRepository
                     ? 0
                     : (int) (data_get($inclusion, 'recurso_prova.sem_nee', 0) ?: self::dimensionOccurrenceTotal($disc, 'recurso_prova_sem_nee')),
                 'cadastros_quinzena' => $cadastrosQuinzena,
+                'censo_pendentes' => $censoPendentes,
                 'ritmo_cadastro_dia' => $shellOnly ? 0.0 : (float) ($workDone['estimativa']['ritmo_por_dia'] ?? 0),
             ],
             'funding_reference' => $fundebRef,

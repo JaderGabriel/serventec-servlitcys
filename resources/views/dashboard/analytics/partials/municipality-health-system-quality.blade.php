@@ -23,10 +23,10 @@
 <section id="diag-qualidade-sistema" class="serv-panel overflow-hidden border border-slate-200/90 dark:border-slate-700 scroll-mt-24">
     <div class="px-4 py-3 border-b border-slate-200/80 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/50">
         <h3 class="text-sm font-semibold text-serv-navy dark:text-slate-100">
-            {{ __('Qualidade e status geral (filtro actual)') }}
+            {{ __('Índice geral de qualidade (filtro actual)') }}
         </h3>
         <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {{ __('Síntese do motor de consultoria sobre cadastro, repasses e Censo — não substitui auditoria oficial.') }}
+            {{ __('Único velocímetro consolidado do município. Os cartões «Explorar» abaixo mostram métricas específicas por área.') }}
         </p>
     </div>
     <div class="p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-4">
