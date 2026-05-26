@@ -7,6 +7,38 @@ use Tests\TestCase;
 
 class InclusionEducacensoCatalogTest extends TestCase
 {
+    public function test_raca_mec_catalog_includes_quilombola(): void
+    {
+        $labels = InclusionEducacensoCatalog::racaMecLabels();
+
+        $this->assertContains('Quilombola', $labels);
+        $this->assertGreaterThan(
+            array_search('Indígena', $labels, true),
+            array_search('Quilombola', $labels, true),
+            'Quilombola deve vir após Indígena no catálogo INEP configurado'
+        );
+    }
+
+    public function test_merge_labels_with_counts_includes_quilombola_zero(): void
+    {
+        $entries = array_map(
+            static fn (string $label): array => [
+                'id' => null,
+                'label' => $label,
+                'norm' => InclusionEducacensoCatalog::normalizeLabel($label),
+            ],
+            InclusionEducacensoCatalog::racaMecLabels(),
+        );
+
+        [$labels, $values] = InclusionEducacensoCatalog::mergeLabelsWithCounts($entries, [
+            InclusionEducacensoCatalog::normalizeLabel('Parda') => 8,
+        ]);
+
+        $idx = array_search('Quilombola', $labels, true);
+        $this->assertNotFalse($idx);
+        $this->assertSame(0.0, $values[$idx]);
+    }
+
     public function test_merge_labels_with_counts_includes_zeros(): void
     {
         $entries = [

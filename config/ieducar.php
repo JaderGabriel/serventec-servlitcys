@@ -881,6 +881,7 @@ return [
             'Parda',
             'Amarela',
             'Indígena',
+            'Quilombola',
         ],
 
         /**
