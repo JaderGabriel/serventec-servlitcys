@@ -22,6 +22,7 @@ use App\Services\Notifications\NotificationDispatcher;
 use App\Support\Auth\UserCityAccess;
 use App\Support\Dashboard\AnalyticsEmptyPayloads;
 use App\Support\Dashboard\AnalyticsLoadProfiler;
+use App\Support\Dashboard\AnalyticsFinanceTabPreload;
 use App\Support\Dashboard\AnalyticsMunicipalityContext;
 use App\Support\Dashboard\AnalyticsTabCatalog;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
@@ -272,7 +273,7 @@ class AnalyticsDashboardController extends Controller
                 if (config('analytics.index_funding_context', false)) {
                     if (
                         is_array($municipalityHealthData)
-                        && config('analytics.municipality_health_reuse_funding_context', true)
+                        && AnalyticsFinanceTabPreload::municipalityHealthReuseEnabled()
                     ) {
                         $municipalityContext = AnalyticsMunicipalityContext::fromHealthSnapshot($municipalityHealthData);
                     } else {
@@ -731,27 +732,32 @@ class AnalyticsDashboardController extends Controller
         }
 
         $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
-        $healthDataForTab = null;
-        if ($tab === 'municipality_health' && config('analytics.municipality_health_reuse_funding_context', true)) {
-            $healthDataForTab = $this->safeAnalyticsLoad(
-                fn () => $municipalityHealthRepository->snapshot($city, $filters),
-                AnalyticsEmptyPayloads::municipalityHealth(),
-                __('Diagnóstico'),
-                $tabWarnings,
-            );
-            $municipalityContext = AnalyticsMunicipalityContext::fromHealthSnapshot(
-                is_array($healthDataForTab) ? $healthDataForTab : [],
-            );
-        } else {
-            $municipalityContext = $this->resolveMunicipalityContextForTab(
-                $tab,
-                $city,
-                $filters,
-                $overviewRepository,
-                $discrepanciesRepository,
-                $tabWarnings,
-            );
-        }
+        $financePreload = $this->preloadFinanceTab(
+            $tab,
+            $city,
+            $filters,
+            $overviewRepository,
+            $enrollmentRepository,
+            $discrepanciesRepository,
+            $fundebRepository,
+            $municipalityHealthRepository,
+            $otherFundingRepository,
+            $workDoneRepository,
+            $tabWarnings,
+        );
+        $healthDataForTab = $financePreload['healthData'];
+        $discrepanciesDataForTab = $financePreload['discrepanciesData'];
+        $fundebDataForTab = $financePreload['fundebData'];
+        $otherFundingDataForTab = $financePreload['otherFundingData'];
+        $workDoneDataForTab = $financePreload['workDoneData'];
+        $municipalityContext = $financePreload['context'] ?? $this->resolveMunicipalityContextForTab(
+            $tab,
+            $city,
+            $filters,
+            $overviewRepository,
+            $discrepanciesRepository,
+            $tabWarnings,
+        );
 
         $headers = [
             'X-Analytics-Tab' => $tab,
@@ -840,7 +846,7 @@ class AnalyticsDashboardController extends Controller
                 ->withHeaders($headers),
             'fundeb' => response()
                 ->view('dashboard.analytics.partials.fundeb', array_merge($viewBase, $yearReady, [
-                    'fundebData' => $this->safeAnalyticsLoad(
+                    'fundebData' => $fundebDataForTab ?? $this->safeAnalyticsLoad(
                         fn () => $this->buildFundebReportForTab(
                             $fundebRepository,
                             $overviewRepository,
@@ -857,7 +863,7 @@ class AnalyticsDashboardController extends Controller
                 ->withHeaders($headers),
             'other_funding' => response()
                 ->view('dashboard.analytics.partials.other-funding', array_merge($viewBase, $yearReady, [
-                    'otherFundingData' => $this->safeAnalyticsLoad(
+                    'otherFundingData' => $otherFundingDataForTab ?? $this->safeAnalyticsLoad(
                         fn () => $otherFundingRepository->buildReport($city, $filters),
                         AnalyticsEmptyPayloads::otherFunding(),
                         __('Financiamentos'),
@@ -867,7 +873,7 @@ class AnalyticsDashboardController extends Controller
                 ->withHeaders($headers),
             'work_done' => response()
                 ->view('dashboard.analytics.partials.work-done', array_merge($viewBase, $yearReady, [
-                    'workDoneData' => $this->safeAnalyticsLoad(
+                    'workDoneData' => $workDoneDataForTab ?? $this->safeAnalyticsLoad(
                         fn () => $workDoneRepository->buildReport($city, $filters),
                         AnalyticsEmptyPayloads::workDone(),
                         __('Censo'),
@@ -892,7 +898,7 @@ class AnalyticsDashboardController extends Controller
                 ->withHeaders($headers),
             'discrepancies' => response()
                 ->view('dashboard.analytics.partials.discrepancies', array_merge($viewBase, $yearReady, [
-                    'discrepanciesData' => $this->safeAnalyticsLoad(
+                    'discrepanciesData' => $discrepanciesDataForTab ?? $this->safeAnalyticsLoad(
                         fn () => $discrepanciesRepository->snapshot($city, $filters),
                         AnalyticsEmptyPayloads::discrepancies(),
                         __('Discrepâncias'),
@@ -917,18 +923,258 @@ class AnalyticsDashboardController extends Controller
         City $city,
         IeducarFilterState $filters,
     ): array {
+        return $this->buildFundebTabBundle(
+            $fundebRepository,
+            $overviewRepository,
+            $discrepanciesRepository,
+            $enrollmentRepository,
+            $city,
+            $filters,
+        )['fundeb'];
+    }
+
+    /**
+     * @param  list<string>  $warnings
+     * @return array{
+     *   context: ?array<string, mixed>,
+     *   healthData: ?array<string, mixed>,
+     *   discrepanciesData: ?array<string, mixed>,
+     *   fundebData: ?array<string, mixed>,
+     *   otherFundingData: ?array<string, mixed>,
+     *   workDoneData: ?array<string, mixed>
+     * }
+     */
+    private function preloadFinanceTab(
+        string $tab,
+        City $city,
+        IeducarFilterState $filters,
+        OverviewRepository $overviewRepository,
+        EnrollmentRepository $enrollmentRepository,
+        DiscrepanciesRepository $discrepanciesRepository,
+        FundebRepository $fundebRepository,
+        MunicipalityHealthRepository $municipalityHealthRepository,
+        OtherFundingRepository $otherFundingRepository,
+        WorkDoneRepository $workDoneRepository,
+        array &$warnings,
+    ): array {
+        $empty = [
+            'context' => null,
+            'healthData' => null,
+            'discrepanciesData' => null,
+            'fundebData' => null,
+            'otherFundingData' => null,
+            'workDoneData' => null,
+        ];
+
+        if (! AnalyticsFinanceTabPreload::shouldReuseFundingContext($tab)) {
+            return $empty;
+        }
+
+        return match ($tab) {
+            'municipality_health' => $this->preloadMunicipalityHealthTab($municipalityHealthRepository, $city, $filters, $warnings),
+            'discrepancies' => $this->preloadDiscrepanciesTab($discrepanciesRepository, $city, $filters, $warnings),
+            'fundeb' => $this->preloadFundebTab(
+                $fundebRepository,
+                $overviewRepository,
+                $discrepanciesRepository,
+                $enrollmentRepository,
+                $city,
+                $filters,
+                $warnings,
+            ),
+            'other_funding' => $this->preloadFinanceStripTab(
+                'other_funding',
+                $city,
+                $filters,
+                $discrepanciesRepository,
+                $warnings,
+                fn () => $otherFundingRepository->buildReport($city, $filters),
+                AnalyticsEmptyPayloads::otherFunding(),
+                __('Financiamentos'),
+            ),
+            'work_done' => $this->preloadFinanceStripTab(
+                'work_done',
+                $city,
+                $filters,
+                $discrepanciesRepository,
+                $warnings,
+                fn () => $workDoneRepository->buildReport($city, $filters),
+                AnalyticsEmptyPayloads::workDone(),
+                __('Censo'),
+            ),
+            default => $empty,
+        };
+    }
+
+    /**
+     * @param  list<string>  $warnings
+     * @return array{context: ?array, healthData: ?array, discrepanciesData: null, fundebData: null, otherFundingData: null, workDoneData: null}
+     */
+    private function preloadMunicipalityHealthTab(
+        MunicipalityHealthRepository $municipalityHealthRepository,
+        City $city,
+        IeducarFilterState $filters,
+        array &$warnings,
+    ): array {
+        $healthData = $this->safeAnalyticsLoad(
+            fn () => $municipalityHealthRepository->snapshot($city, $filters),
+            AnalyticsEmptyPayloads::municipalityHealth(),
+            __('Diagnóstico'),
+            $warnings,
+        );
+
+        return [
+            'context' => AnalyticsMunicipalityContext::fromHealthSnapshot(is_array($healthData) ? $healthData : []),
+            'healthData' => is_array($healthData) ? $healthData : null,
+            'discrepanciesData' => null,
+            'fundebData' => null,
+            'otherFundingData' => null,
+            'workDoneData' => null,
+        ];
+    }
+
+    /**
+     * @param  list<string>  $warnings
+     * @return array{context: ?array, healthData: null, discrepanciesData: ?array, fundebData: null, otherFundingData: null, workDoneData: null}
+     */
+    private function preloadDiscrepanciesTab(
+        DiscrepanciesRepository $discrepanciesRepository,
+        City $city,
+        IeducarFilterState $filters,
+        array &$warnings,
+    ): array {
+        $discrepanciesData = $this->safeAnalyticsLoad(
+            fn () => $discrepanciesRepository->snapshot($city, $filters),
+            AnalyticsEmptyPayloads::discrepancies(),
+            __('Discrepâncias'),
+            $warnings,
+        );
+
+        return [
+            'context' => is_array($discrepanciesData)
+                ? AnalyticsFinanceTabPreload::contextFromDiscrepancies($discrepanciesData)
+                : null,
+            'healthData' => null,
+            'discrepanciesData' => is_array($discrepanciesData) ? $discrepanciesData : null,
+            'fundebData' => null,
+            'otherFundingData' => null,
+            'workDoneData' => null,
+        ];
+    }
+
+    /**
+     * @param  list<string>  $warnings
+     * @return array{context: ?array, healthData: null, discrepanciesData: null, fundebData: ?array, otherFundingData: null, workDoneData: null}
+     */
+    private function preloadFundebTab(
+        FundebRepository $fundebRepository,
+        OverviewRepository $overviewRepository,
+        DiscrepanciesRepository $discrepanciesRepository,
+        EnrollmentRepository $enrollmentRepository,
+        City $city,
+        IeducarFilterState $filters,
+        array &$warnings,
+    ): array {
+        $bundle = $this->safeAnalyticsLoad(
+            fn () => $this->buildFundebTabBundle(
+                $fundebRepository,
+                $overviewRepository,
+                $discrepanciesRepository,
+                $enrollmentRepository,
+                $city,
+                $filters,
+            ),
+            ['fundeb' => AnalyticsEmptyPayloads::fundeb(), 'context' => null],
+            __('FUNDEB'),
+            $warnings,
+        );
+
+        return [
+            'context' => is_array($bundle['context'] ?? null) ? $bundle['context'] : null,
+            'healthData' => null,
+            'discrepanciesData' => null,
+            'fundebData' => is_array($bundle['fundeb'] ?? null) ? $bundle['fundeb'] : null,
+            'otherFundingData' => null,
+            'workDoneData' => null,
+        ];
+    }
+
+    /**
+     * @param  callable(): array<string, mixed>  $loadTab
+     * @param  array<string, mixed>  $emptyTab
+     * @param  list<string>  $warnings
+     * @return array{context: ?array, healthData: null, discrepanciesData: null, fundebData: null, otherFundingData: ?array, workDoneData: ?array}
+     */
+    private function preloadFinanceStripTab(
+        string $tab,
+        City $city,
+        IeducarFilterState $filters,
+        DiscrepanciesRepository $discrepanciesRepository,
+        array &$warnings,
+        callable $loadTab,
+        array $emptyTab,
+        string $label,
+    ): array {
+        $tabData = $this->safeAnalyticsLoad($loadTab, $emptyTab, $label, $warnings);
+        $fundingSnapshot = $this->safeAnalyticsLoad(
+            fn () => $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
+            null,
+            __('Resumo financeiro'),
+            $warnings,
+        );
+        if (! is_array($fundingSnapshot)) {
+            $fundingSnapshot = [
+                'summary' => [],
+                'funding_reference' => DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters),
+            ];
+        } elseif (! is_array($fundingSnapshot['funding_reference'] ?? null)) {
+            $fundingSnapshot['funding_reference'] = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
+        }
+
+        $totalMat = is_array($tabData) ? ($tabData['total_matriculas'] ?? null) : null;
+        $overviewData = [
+            'kpis' => ['matriculas' => $totalMat],
+            'total_matriculas' => $totalMat,
+        ];
+
+        return [
+            'context' => AnalyticsFinanceTabPreload::contextFromFundingSnapshot($fundingSnapshot, $overviewData),
+            'healthData' => null,
+            'discrepanciesData' => null,
+            'fundebData' => null,
+            'otherFundingData' => $tab === 'other_funding' && is_array($tabData) ? $tabData : null,
+            'workDoneData' => $tab === 'work_done' && is_array($tabData) ? $tabData : null,
+        ];
+    }
+
+    /**
+     * @return array{fundeb: array<string, mixed>, context: ?array<string, mixed>}
+     */
+    private function buildFundebTabBundle(
+        FundebRepository $fundebRepository,
+        OverviewRepository $overviewRepository,
+        DiscrepanciesRepository $discrepanciesRepository,
+        EnrollmentRepository $enrollmentRepository,
+        City $city,
+        IeducarFilterState $filters,
+    ): array {
         $overviewData = $overviewRepository->summary($city, $filters);
         $enrollmentData = $enrollmentRepository->sample($city, $filters);
 
-        $discrepanciesForFundeb = null;
+        $fundingSnapshot = null;
         if (config('analytics.fundeb_load_discrepancies_summary', true)) {
-            $snap = $discrepanciesRepository->fundingImpactSnapshot($city, $filters);
-            if (is_array($snap)) {
-                $discrepanciesForFundeb = $snap;
-            }
+            $fundingSnapshot = $discrepanciesRepository->fundingImpactSnapshot($city, $filters);
+        }
+        if (! is_array($fundingSnapshot)) {
+            $fundingSnapshot = [
+                'summary' => [],
+                'funding_reference' => DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters),
+            ];
+        } elseif (! is_array($fundingSnapshot['funding_reference'] ?? null)) {
+            $fundingSnapshot['funding_reference'] = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
         }
 
-        return $fundebRepository->buildReport(
+        $fundeb = $fundebRepository->buildReport(
             $city,
             $filters,
             $overviewData,
@@ -937,8 +1183,14 @@ class AnalyticsDashboardController extends Controller
             AnalyticsEmptyPayloads::attendance(),
             AnalyticsEmptyPayloads::inclusion(),
             AnalyticsEmptyPayloads::network(),
-            $discrepanciesForFundeb,
+            $fundingSnapshot,
         );
+
+        $context = AnalyticsFinanceTabPreload::financeTabsReuseEnabled()
+            ? AnalyticsFinanceTabPreload::contextFromFundingSnapshot($fundingSnapshot, $overviewData)
+            : null;
+
+        return ['fundeb' => $fundeb, 'context' => $context];
     }
 
     /**
@@ -969,7 +1221,7 @@ class AnalyticsDashboardController extends Controller
             return null;
         }
 
-        if ($tab === 'municipality_health') {
+        if (AnalyticsFinanceTabPreload::shouldReuseFundingContext($tab)) {
             return null;
         }
 

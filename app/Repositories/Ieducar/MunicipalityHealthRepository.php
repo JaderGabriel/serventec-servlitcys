@@ -8,6 +8,8 @@ use App\Support\Dashboard\PublicDataSourcesCatalog;
 use App\Support\Ieducar\ConsultoriaThematicBridge;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\FundebReferenceDisplay;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Diagnóstico Geral: conformidade consolidada (cadastro/Censo + eixos FUNDEB/VAAR) no ano filtrado.
@@ -60,6 +62,33 @@ class MunicipalityHealthRepository
             return $empty;
         }
 
+        $ttl = (int) config('analytics.municipality_health_cache_seconds', 300);
+        if ($ttl <= 0) {
+            return $this->snapshotFresh($city, $filters, $empty);
+        }
+
+        $params = $filters->toQueryParamsWithCity((int) $city->id);
+        ksort($params);
+        $cacheKey = 'analytics:municipality_health:'.(int) $city->id.':'.md5(json_encode($params));
+
+        try {
+            return Cache::remember($cacheKey, $ttl, fn (): array => $this->snapshotFresh($city, $filters, $empty));
+        } catch (\Throwable $e) {
+            Log::warning('analytics.municipality_health_cache_failed', [
+                'city_id' => $city->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return $this->snapshotFresh($city, $filters, $empty);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $empty
+     * @return array<string, mixed>
+     */
+    private function snapshotFresh(City $city, IeducarFilterState $filters, array $empty): array
+    {
         try {
             $overview = $this->overview->summary($city, $filters);
             $enrollment = $this->enrollment->sample($city, $filters);

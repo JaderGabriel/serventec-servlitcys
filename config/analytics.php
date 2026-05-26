@@ -111,6 +111,29 @@ return [
         FILTER_VALIDATE_BOOL,
     ),
 
+    /** Segundos de cache do snapshot do Diagnóstico (0 = sem cache). */
+    'municipality_health_cache_seconds' => max(0, (int) env('ANALYTICS_MUNICIPALITY_HEALTH_CACHE', 300)),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Abas de Finanças — reutilizar dados já carregados no contexto municipal
+    |--------------------------------------------------------------------------
+    |
+    | Discrepâncias e FUNDEB: evita segunda passagem em Visão geral + fundingImpact.
+    | Financiamentos / Censo: só o resumo financeiro em cache (faixa de impacto).
+    |
+    */
+
+    'finance_tabs_reuse_funding_context' => filter_var(
+        env('ANALYTICS_FINANCE_TABS_REUSE_CONTEXT', true),
+        FILTER_VALIDATE_BOOL,
+    ),
+
+    'finance_tabs_strip_funding_context' => filter_var(
+        env('ANALYTICS_FINANCE_TABS_STRIP_CONTEXT', true),
+        FILTER_VALIDATE_BOOL,
+    ),
+
     /** Segundos de cache do resumo (0 = sem cache). Reutiliza após visitar Discrepâncias. */
     'funding_summary_cache_seconds' => max(0, (int) env('ANALYTICS_FUNDING_SUMMARY_CACHE', 600)),
 
