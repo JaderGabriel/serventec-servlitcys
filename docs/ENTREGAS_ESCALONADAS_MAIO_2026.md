@@ -53,7 +53,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 45 | `20260528-Eos` | **3.3.0** — monitor de módulos admin; doc/filas/export NEE para utilizador |
 | 46 | `504d2f9` | **Pós-3.3.0 (sem bump):** monitor módulos — UI `serv-*` |
 | 47 | `d6a1785` | **Pós-3.3.0 (sem bump):** monitor — cartões só saúde |
-| 48 | *(patch)* | **Pós-3.3.0 (sem bump):** RX — legendas unificadas, KPIs, tons sky/teal |
+| 48 | `f29b30b` | **Pós-3.3.0 (sem bump):** RX — legendas unificadas, KPIs, tons sky/teal |
 
 **Em produção:** versão **3.3.0** · tag **`20260528-Eos`** · [RELEASE_20260528_EOS.md](RELEASE_20260528_EOS.md).
 

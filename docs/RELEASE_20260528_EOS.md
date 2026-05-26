@@ -44,7 +44,7 @@ Sem novas migrações obrigatórias nesta release.
 |--------|--------|
 | `504d2f9` | Monitor de módulos — visual alinhado ao design system `serv-*`. |
 | `d6a1785` | Monitor — cartões exibem só saúde/funcionamento (sem atalhos). |
-| *(main)* | RX (`/dashboard/rx`) — painel «Legendas e cores», guia completo das colunas, KPIs `serv-home-kpi`, comparativo em sky. |
+| `f29b30b` | RX (`/dashboard/rx`) — painel «Legendas e cores», guia completo das colunas, KPIs `serv-home-kpi`, comparativo em sky. |
 
 **Pós-deploy (RX):** `npm run build` (classes `serv-rx-*`).
 
