@@ -76,7 +76,7 @@ class DiscrepanciesRepository
     /**
      * @return array<string, mixed>
      */
-    public function snapshot(?City $city, IeducarFilterState $filters, bool $fundingOnly = false): array
+    public function snapshot(?City $city, IeducarFilterState $filters, bool $fundingOnly = false, bool $forDiagnosis = false): array
     {
         $empty = [
             'intro' => '',
@@ -110,7 +110,7 @@ class DiscrepanciesRepository
         }
 
         try {
-            return $this->cityData->run($city, function (Connection $db) use ($city, $filters, $fundingOnly) {
+            return $this->cityData->run($city, function (Connection $db) use ($city, $filters, $fundingOnly, $forDiagnosis) {
                 $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
                 $checks = [];
                 $dimensions = [];
@@ -144,7 +144,7 @@ class DiscrepanciesRepository
                     );
                     $dimensions[] = $this->buildDimension($meta, $eval, $totalMat, $city, $filters);
 
-                    if (! $fundingOnly && $eval['has_issue']) {
+                    if (! $fundingOnly && ! $forDiagnosis && $eval['has_issue']) {
                         $rows = $eval['rows'];
                         if ($id === 'recurso_prova_sem_nee' && $rows !== []) {
                             $rows = InclusionRecursoProvaQueries::enriquecerLinhasEscolaComTiposRecurso(
@@ -178,12 +178,12 @@ class DiscrepanciesRepository
                         'unavailable_reason' => null,
                     ];
                     $dimensions[] = $this->buildDimension($meta, $neeEval, $totalMat, $city, $filters);
-                    if (! $fundingOnly) {
+                    if (! $fundingOnly && ! $forDiagnosis) {
                         $checks[] = $this->buildCheck($meta, [$neeRow], $totalMat, $city, $filters);
                     }
                 }
 
-                if (! $fundingOnly) {
+                if (! $fundingOnly && ! $forDiagnosis) {
                     $networkKpis = null;
                     try {
                         $networkKpis = MatriculaChartQueries::redeVagasResumoKpis($db, $city, $filters);
@@ -229,6 +229,40 @@ class DiscrepanciesRepository
                     return [
                         'summary' => $summary,
                         'funding_reference' => $fundingRefPayload,
+                        'error' => null,
+                    ];
+                }
+
+                $activeFromDimensions = array_values(array_filter(array_map(
+                    static fn (array $d): string => (string) ($d['id'] ?? ''),
+                    array_filter($dimensions, static fn (array $d): bool => (bool) ($d['has_issue'] ?? false))
+                )));
+
+                if ($forDiagnosis) {
+                    return [
+                        'year_label' => $this->yearLabel($filters),
+                        'city_name' => $city->name,
+                        'total_matriculas' => $totalMat > 0 ? $totalMat : null,
+                        'funding_reference' => $fundingRefPayload,
+                        'funding_metodologia' => DiscrepanciesFundingImpact::metodologiaResumo($city, $filters),
+                        'funding_resumo_explicacao' => DiscrepanciesFundingImpact::explicacaoResumoAgregado(
+                            (int) ($summary['com_problema'] ?? 0),
+                            (float) ($summary['perda_estimada_anual'] ?? 0),
+                            (float) ($summary['ganho_potencial_anual'] ?? 0),
+                            $tiposComProblema,
+                        ),
+                        'summary' => $summary,
+                        'funding_pillars' => DiscrepanciesFundingImpact::pillarsWithMunicipioSummary(
+                            DiscrepanciesFundingImpact::fundingPillars(),
+                            $dimensions,
+                            $city->name,
+                            $this->yearLabel($filters),
+                        ),
+                        'active_check_ids' => $activeFromDimensions,
+                        'dimensions' => $dimensions,
+                        'checks' => [],
+                        'notes' => $notes,
+                        'public_data_sources' => PublicDataSourcesCatalog::build($city, 'financeiro'),
                         'error' => null,
                     ];
                 }

@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **3.3.1** · release `20260529-Helios` · **Ramo:** `main` · **Última revisão:** 29/05/2026
+**Versão em produção:** **3.3.2** · release `20260530-Metis` · **Ramo:** `main` · **Última revisão:** 30/05/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -14,8 +14,9 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 |------|--------|
 | RBAC (admin / user / municipal) | Implementado |
 | Painel de análise i-Educar (abas lazy + faixa impacto por aba) | Implementado |
-| Diagnóstico — carregamento progressivo (shell + blocos AJAX) + cache | Implementado (3.3.1) |
-| Finanças — contexto municipal reutilizado (sem queries duplicadas no lazy) | Implementado (3.3.1) |
+| Diagnóstico — modo estratégico (um pedido leve + cache partilhado entre abas) | Implementado (3.3.2) |
+| Diagnóstico — progressivo AJAX (legado) | Opcional (`mode=progressive`) |
+| Finanças — contexto municipal reutilizado (sem queries duplicadas no lazy) | Implementado (3.3.1+) |
 | Overlay global de carregamento (filtros, admin, auth) | Implementado |
 | Discrepâncias + export CSV | Implementado |
 | FUNDEB / VAAF (import + cascata + matriz + export CSV + perfil planejamento) | Implementado |

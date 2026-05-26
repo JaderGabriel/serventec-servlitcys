@@ -120,7 +120,8 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 | Tema | Decisão | Implicação |
 |------|---------|------------|
 | Lazy por aba | `ANALYTICS_LAZY_TABS` (default true) | HTML inicial: Visão Geral + Unidades + Financiamentos + Censo (SSR); resto via `/analytics/tab` |
-| Diagnóstico progressivo | `ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE` + cache `ANALYTICS_MUNICIPALITY_HEALTH_CACHE` | Shell (Discrepâncias + visão geral) primeiro; blocos FUNDEB/programas/temático em AJAX (`health_section`) |
+| Diagnóstico estratégico | `ANALYTICS_MUNICIPALITY_HEALTH_MODE=strategic` + `AnalyticsTabPayloadCache` | Um pedido leve; reutiliza payloads de Discrepâncias/FUNDEB/Financiamentos/Censo/Inclusão |
+| Diagnóstico progressivo (legado) | `mode=progressive` ou `PROGRESSIVE=true` | Shell + AJAX `health_section` (3.3.1) |
 | Contexto Finanças | `ANALYTICS_FINANCE_TABS_REUSE_CONTEXT` | Evita segunda passagem em Discrepâncias/visão geral na faixa de impacto (Diagnóstico, Discrepâncias, FUNDEB) |
 | Pulse | URI `tab=` e headers `X-Analytics-Tab`; métricas `db_slow_*`, `db_muni_run`, `db_request_total`, `app_operation*` | Medir custo **por aba**, **por município/base** e **por etapa** (RX, sync, PDF) |
 | Cache resumo financeiro | `ANALYTICS_FUNDING_SUMMARY_CACHE` (ex. 600 s) | Invalidação implícita por TTL; params incluem cidade+filtros |

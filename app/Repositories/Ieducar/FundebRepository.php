@@ -144,6 +144,52 @@ class FundebRepository
         ];
     }
 
+    /**
+     * Fatia leve para o Diagnóstico estratégico: projeção VAAF + roteiro VAAR sem perfil multi-ano FNDE.
+     *
+     * @param  array<string, mixed>|null  $discrepanciesData
+     * @return array{
+     *   fundeb_reference: array<string, mixed>,
+     *   resource_projection: array<string, mixed>,
+     *   modules: list<array<string, mixed>>
+     * }
+     */
+    public function buildDiagnosisSlice(
+        City $city,
+        IeducarFilterState $filters,
+        int $matTotal,
+        ?array $discrepanciesData = null,
+    ): array {
+        $yearLabel = $this->yearLabel($filters);
+        $fundebReference = DiscrepanciesFundingImpact::resolveReference($city, $filters);
+        $enrollmentStub = ['kpis' => ['matriculas' => max(0, $matTotal)]];
+
+        $resourceProjection = FundebResourceProjection::build(
+            max(0, $matTotal),
+            $yearLabel,
+            $enrollmentStub,
+            $discrepanciesData,
+            $city,
+            $filters,
+            $fundebReference,
+        );
+
+        return [
+            'fundeb_reference' => $fundebReference,
+            'resource_projection' => $resourceProjection,
+            'modules' => [
+                $this->moduleGestaoDemocratica(),
+                $this->moduleBncc(),
+                $this->moduleInepSaeb([], $matTotal),
+                $this->moduleInclusao([], $matTotal),
+                $this->moduleEiEfOferta($enrollmentStub, [], $matTotal),
+                $this->moduleFrequenciaFluxo([], $enrollmentStub, []),
+                $this->moduleTransporteAlimentacao(),
+                $this->moduleTransparenciaFundeb(),
+            ],
+        ];
+    }
+
     private function yearLabel(IeducarFilterState $filters): string
     {
         if (! $filters->hasYearSelected()) {

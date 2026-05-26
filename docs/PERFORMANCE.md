@@ -2,11 +2,11 @@
 
 Guia para reduzir lentidão no **login** e em consultas repetidas, usando Redis quando disponível no servidor.
 
-## Painel Analytics — Diagnóstico e Finanças (3.3.1+)
+## Painel Analytics — Diagnóstico e Finanças (3.3.2+)
 
-Release **`20260529-Helios`**: aba **Diagnóstico** com shell rápido e blocos AJAX; abas **Finanças** sem repetir resumo financeiro no lazy-load. Ver [RELEASE_20260529_HELIOS.md](RELEASE_20260529_HELIOS.md) e [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md).
+Release **`20260530-Metis`**: **Diagnóstico estratégico** (um pedido leve, cache partilhado entre abas). Legado progressivo/AJAX ainda disponível. Ver [RELEASE_20260530_METIS.md](RELEASE_20260530_METIS.md) e [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md).
 
-Variáveis: `ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE`, `ANALYTICS_MUNICIPALITY_HEALTH_CACHE`, `ANALYTICS_FINANCE_TABS_REUSE_CONTEXT` ([VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §7).
+Variáveis: `ANALYTICS_MUNICIPALITY_HEALTH_MODE`, `ANALYTICS_MUNICIPALITY_HEALTH_CACHE`, `ANALYTICS_FINANCE_TABS_REUSE_CONTEXT` ([VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §7).
 
 ## Diagnóstico rápido
 

@@ -24,6 +24,7 @@ use App\Support\Dashboard\AnalyticsEmptyPayloads;
 use App\Support\Dashboard\AnalyticsLoadProfiler;
 use App\Support\Dashboard\AnalyticsFinanceTabPreload;
 use App\Support\Dashboard\AnalyticsMunicipalityContext;
+use App\Support\Dashboard\AnalyticsTabPayloadCache;
 use App\Support\Dashboard\AnalyticsTabCatalog;
 use App\Support\Dashboard\ConsultoriaFlow;
 use App\Support\Dashboard\MunicipalityHealthSections;
@@ -841,7 +842,12 @@ class AnalyticsDashboardController extends Controller
             'inclusion' => response()
                 ->view('dashboard.analytics.partials.inclusion', array_merge($viewBase, $yearReady, [
                     'inclusionData' => $this->safeAnalyticsLoad(
-                        fn () => $inclusionRepository->snapshot($city, $filters),
+                        function () use ($inclusionRepository, $city, $filters): array {
+                            $data = $inclusionRepository->snapshot($city, $filters);
+                            AnalyticsTabPayloadCache::put(AnalyticsTabPayloadCache::INCLUSION, $city, $filters, $data);
+
+                            return $data;
+                        },
                         AnalyticsEmptyPayloads::inclusion(),
                         __('Inclusão'),
                         $tabWarnings,
@@ -1073,6 +1079,9 @@ class AnalyticsDashboardController extends Controller
             __('Discrepâncias'),
             $warnings,
         );
+        if (is_array($discrepanciesData)) {
+            AnalyticsTabPayloadCache::put(AnalyticsTabPayloadCache::DISCREPANCIES, $city, $filters, $discrepanciesData);
+        }
 
         return [
             'context' => is_array($discrepanciesData)
@@ -1113,11 +1122,16 @@ class AnalyticsDashboardController extends Controller
             $warnings,
         );
 
+        $fundebData = is_array($bundle['fundeb'] ?? null) ? $bundle['fundeb'] : null;
+        if (is_array($fundebData)) {
+            AnalyticsTabPayloadCache::put(AnalyticsTabPayloadCache::FUNDEB, $city, $filters, $fundebData);
+        }
+
         return [
             'context' => is_array($bundle['context'] ?? null) ? $bundle['context'] : null,
             'healthData' => null,
             'discrepanciesData' => null,
-            'fundebData' => is_array($bundle['fundeb'] ?? null) ? $bundle['fundeb'] : null,
+            'fundebData' => $fundebData,
             'otherFundingData' => null,
             'workDoneData' => null,
         ];
@@ -1140,6 +1154,16 @@ class AnalyticsDashboardController extends Controller
         string $label,
     ): array {
         $tabData = $this->safeAnalyticsLoad($loadTab, $emptyTab, $label, $warnings);
+        if (is_array($tabData)) {
+            $cacheTab = match ($tab) {
+                'other_funding' => AnalyticsTabPayloadCache::OTHER_FUNDING,
+                'work_done' => AnalyticsTabPayloadCache::WORK_DONE,
+                default => null,
+            };
+            if ($cacheTab !== null) {
+                AnalyticsTabPayloadCache::put($cacheTab, $city, $filters, $tabData);
+            }
+        }
         $fundingSnapshot = $this->safeAnalyticsLoad(
             fn () => $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
             null,

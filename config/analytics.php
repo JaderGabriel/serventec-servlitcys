@@ -116,16 +116,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Diagnóstico — carregamento progressivo (shell + secções AJAX)
+    | Diagnóstico — modo de carregamento
     |--------------------------------------------------------------------------
     |
-    | Shell rápido (Discrepâncias + visão geral); blocos FUNDEB, programas e
-    | leitura temática vêm em pedidos separados após a primeira pintura.
+    | strategic (defeito): um pedido leve — Discrepâncias (sem checks por escola),
+    | fatia FUNDEB (sem perfil VAAF multi-ano), reutiliza cache de outras abas.
+    | full: snapshot completo (pedagógico + Censo + INEP).
+    | progressive: shell + secções AJAX (legado).
     |
     */
 
+    'municipality_health_mode' => env('ANALYTICS_MUNICIPALITY_HEALTH_MODE', 'strategic'),
+
     'municipality_health_progressive_sections' => filter_var(
-        env('ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE', true),
+        env('ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE', false),
         FILTER_VALIDATE_BOOL,
     ),
 

@@ -3,6 +3,7 @@
 namespace App\Repositories\Ieducar;
 
 use App\Models\City;
+use App\Support\Dashboard\AnalyticsTabPayloadCache;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Dashboard\MunicipalityHealthSections;
 use App\Support\Dashboard\PublicDataSourcesCatalog;
@@ -63,11 +64,19 @@ class MunicipalityHealthRepository
             return $empty;
         }
 
-        $variant = MunicipalityHealthSections::progressiveEnabled() ? 'shell' : 'full';
+        $variant = match (true) {
+            MunicipalityHealthSections::progressiveEnabled() => 'shell',
+            MunicipalityHealthSections::mode() === MunicipalityHealthSections::MODE_FULL => 'full',
+            default => 'strategic',
+        };
 
         return $this->rememberSnapshot($city, $filters, $variant, $empty, function () use ($city, $filters, $empty, $variant): array {
             if ($variant === 'shell') {
                 return $this->snapshotShell($city, $filters, $empty);
+            }
+
+            if ($variant === 'strategic') {
+                return $this->snapshotStrategic($city, $filters, $empty);
             }
 
             return $this->snapshotFresh($city, $filters, $empty);
@@ -163,15 +172,139 @@ class MunicipalityHealthRepository
     }
 
     /**
+     * Diagnóstico estratégico: uma passagem leve, reutilizando cache de outras abas quando existir.
+     *
+     * @param  array<string, mixed>  $empty
+     * @return array<string, mixed>
+     */
+    private function snapshotStrategic(City $city, IeducarFilterState $filters, array $empty): array
+    {
+        try {
+            $disc = $this->resolveDiscrepanciesPayload($city, $filters);
+            $totalMat = (int) ($disc['total_matriculas'] ?? 0);
+            $discForFundeb = [
+                'summary' => is_array($disc['summary'] ?? null) ? $disc['summary'] : [],
+                'funding_reference' => is_array($disc['funding_reference'] ?? null) ? $disc['funding_reference'] : null,
+            ];
+
+            $fundeb = $this->resolveFundebPayload($city, $filters, $totalMat, $discForFundeb);
+            $otherFunding = $this->resolveOtherFundingPayload($city, $filters);
+            $workDone = $this->resolveWorkDonePayload($city, $filters);
+            $inclusion = AnalyticsTabPayloadCache::get(AnalyticsTabPayloadCache::INCLUSION, $city, $filters) ?? [];
+
+            $thematicBlocks = ConsultoriaThematicBridge::buildStrategicBlocks(
+                $disc,
+                $fundeb,
+                $totalMat,
+                $otherFunding,
+                $workDone,
+                is_array($inclusion) ? $inclusion : [],
+            );
+
+            $payload = $this->assemble(
+                $city,
+                $filters,
+                $disc,
+                $fundeb,
+                $otherFunding,
+                $workDone,
+                is_array($inclusion) ? $inclusion : [],
+                [],
+                [],
+                $totalMat,
+                strategicIntro: true,
+            );
+
+            return array_merge($payload, [
+                'thematic_blocks' => $thematicBlocks,
+                'strategic_mode' => true,
+            ]);
+        } catch (\Throwable $e) {
+            return array_merge($empty, [
+                'city_name' => $city->name,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolveDiscrepanciesPayload(City $city, IeducarFilterState $filters): array
+    {
+        $cached = AnalyticsTabPayloadCache::get(AnalyticsTabPayloadCache::DISCREPANCIES, $city, $filters);
+        if (is_array($cached) && ($cached['dimensions'] ?? []) !== []) {
+            return $cached;
+        }
+
+        $disc = $this->discrepancies->snapshot($city, $filters, forDiagnosis: true);
+        $this->storeDiscInCache($city, $filters, $disc);
+
+        return $disc;
+    }
+
+    /**
+     * @param  array<string, mixed>  $discForFundeb
+     * @return array<string, mixed>
+     */
+    private function resolveFundebPayload(
+        City $city,
+        IeducarFilterState $filters,
+        int $totalMat,
+        array $discForFundeb,
+    ): array {
+        $cached = AnalyticsTabPayloadCache::get(AnalyticsTabPayloadCache::FUNDEB, $city, $filters);
+        if (is_array($cached) && is_array($cached['modules'] ?? null)) {
+            return $cached;
+        }
+
+        return $this->fundeb->buildDiagnosisSlice($city, $filters, $totalMat, $discForFundeb);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolveOtherFundingPayload(City $city, IeducarFilterState $filters): array
+    {
+        $cached = AnalyticsTabPayloadCache::get(AnalyticsTabPayloadCache::OTHER_FUNDING, $city, $filters);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        return [
+            'programs' => [],
+            'public_municipal' => ['queries' => []],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolveWorkDonePayload(City $city, IeducarFilterState $filters): array
+    {
+        $cached = AnalyticsTabPayloadCache::get(AnalyticsTabPayloadCache::WORK_DONE, $city, $filters);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        return [
+            'periods' => [],
+            'estimativa' => [],
+            'activity_available' => false,
+            'activity_note' => __('Abra a aba Censo para ritmo de cadastro e exportação Educacenso.'),
+            'censo' => ['available' => false],
+        ];
+    }
+
+    /**
      * @param  array<string, mixed>  $empty
      * @return array<string, mixed>
      */
     private function snapshotShell(City $city, IeducarFilterState $filters, array $empty): array
     {
         try {
+            $disc = $this->resolveDiscrepanciesPayload($city, $filters);
             $overview = $this->overview->summary($city, $filters);
-            $disc = $this->discrepancies->snapshot($city, $filters);
-            $this->storeDiscInCache($city, $filters, $disc);
             $totalMat = (int) ($disc['total_matriculas'] ?? $overview['kpis']['matriculas'] ?? 0);
             $fundebRef = DiscrepanciesFundingImpact::resolveReference($city, $filters);
             $fundebStub = [
@@ -511,6 +644,7 @@ class MunicipalityHealthRepository
         array $network,
         int $totalMat,
         bool $shellOnly = false,
+        bool $strategicIntro = false,
     ): array {
         $checks = is_array($disc['checks'] ?? null) ? $disc['checks'] : [];
         $dimensions = is_array($disc['dimensions'] ?? null) ? $disc['dimensions'] : [];
@@ -582,10 +716,16 @@ class MunicipalityHealthRepository
             static fn ($q): bool => is_array($q) && ($q['status'] ?? '') === 'success'
         ));
 
-        return [
-            'intro' => __(
+        $intro = $strategicIntro
+            ? __(
+                'Visão estratégica: prioridades de cadastro (Discrepâncias), referência VAAF/FUNDEB e ligações às abas de detalhe. Dados de Financiamentos, Censo ou pedagógicos são reutilizados quando já abriu essas abas no mesmo filtro; caso contrário, aprofunde nelas sem repetir consultas aqui.'
+            )
+            : __(
                 'Painel de consultoria municipal: consolida cadastro (Discrepâncias), VAAF municipal × prévia federal, programas complementares (PNAE/PNATE), ritmo de cadastro no i-Educar, FUNDEB/VAAR e indicadores INEP quando disponíveis.'
-            ),
+            );
+
+        return [
+            'intro' => $intro,
             'footnote' => __(
                 'Índice 0–100: mesma base das discrepâncias (volume + gravidade) e alertas FUNDEB. Verde = rotina executada sem pendências; cinza = rotina indisponível nesta base; amarelo/vermelho = pendência detectada.'
             ),
@@ -603,7 +743,9 @@ class MunicipalityHealthRepository
                 'ganho_potencial_anual' => (float) ($discSummary['ganho_potencial_anual'] ?? 0),
                 'escolas_afetadas' => (int) ($discSummary['escolas_afetadas'] ?? 0),
                 'total_matriculas' => $totalMat > 0 ? $totalMat : ($disc['total_matriculas'] ?? null),
-                'recurso_prova_sem_nee' => $shellOnly ? 0 : (int) data_get($inclusion, 'recurso_prova.sem_nee', 0),
+                'recurso_prova_sem_nee' => $shellOnly
+                    ? 0
+                    : (int) (data_get($inclusion, 'recurso_prova.sem_nee', 0) ?: self::dimensionOccurrenceTotal($disc, 'recurso_prova_sem_nee')),
                 'cadastros_quinzena' => $cadastrosQuinzena,
                 'ritmo_cadastro_dia' => $shellOnly ? 0.0 : (float) ($workDone['estimativa']['ritmo_por_dia'] ?? 0),
             ],
@@ -775,6 +917,22 @@ class MunicipalityHealthRepository
             <=> ((float) ($a['perda_estimada_anual'] ?? $a['ganho_potencial_anual'] ?? 0)));
 
         return array_slice($top, 0, 8);
+    }
+
+    /**
+     * @param  array<string, mixed>  $disc
+     */
+    private static function dimensionOccurrenceTotal(array $disc, string $id): int
+    {
+        foreach ($disc['dimensions'] ?? [] as $d) {
+            if (! is_array($d) || ($d['id'] ?? '') !== $id) {
+                continue;
+            }
+
+            return (int) ($d['occurrences_total'] ?? $d['total'] ?? 0);
+        }
+
+        return 0;
     }
 
     /**

@@ -1,6 +1,6 @@
 # Variáveis de ambiente — servlitcys
 
-**Versão do produto:** 3.3.1 · **Última revisão:** 29/05/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [PERFORMANCE.md](PERFORMANCE.md)
+**Versão do produto:** 3.3.2 · **Última revisão:** 30/05/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [PERFORMANCE.md](PERFORMANCE.md)
 
 Este documento é a **referência oficial** para configurar o arquivo **`.env` no servidor de produção**.
 
@@ -149,14 +149,15 @@ php artisan queue:work database --queue=default,admin-sync --sleep=3 --tries=3
 | `ANALYTICS_MUNICIPALITY_HEALTH_REUSE_CONTEXT` | | `true` | Diagnóstico: contexto da faixa de impacto a partir do snapshot já carregado |
 | `ANALYTICS_FINANCE_TABS_REUSE_CONTEXT` | | `true` | Discrepâncias e FUNDEB: não repetir Visão geral + resumo financeiro no lazy-load |
 | `ANALYTICS_FINANCE_TABS_STRIP_CONTEXT` | | `true` | Financiamentos e Censo: faixa de impacto só com resumo em cache (sem Visão geral extra) |
-| `ANALYTICS_MUNICIPALITY_HEALTH_CACHE` | | `300` | Cache do snapshot do Diagnóstico (shell ou completo, conforme progressivo) |
-| `ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE` | | `true` | Diagnóstico: 1.º pedido = shell (Discrepâncias + visão geral); blocos `fundeb`, `programas`, `tematico` via `?health_section=` |
+| `ANALYTICS_MUNICIPALITY_HEALTH_CACHE` | | `300` | Cache do Diagnóstico e payloads partilhados entre abas Finanças (segundos; `0` = sem cache) |
+| `ANALYTICS_MUNICIPALITY_HEALTH_MODE` | | `strategic` | `strategic` (leve, defeito) · `full` (completo) · `progressive` (shell + AJAX) |
+| `ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE` | | `false` | Com `mode=strategic`: `true` activa legado shell + `?health_section=fundeb|programas|tematico` |
 
-Com **`ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE=true`**, após o HTML inicial da aba Diagnóstico o browser pede em paralelo:
+Com **`mode=progressive`** (ou `mode=strategic` + `PROGRESSIVE=true`), após o HTML inicial o browser pede:
 
 `GET /dashboard/analytics/tab?tab=municipality_health&health_section=fundeb|programas|tematico`
 
-(cabeçalho **`X-Analytics-Health-Section`** na resposta). Exportação PDF usa sempre snapshot **completo** (`snapshotFull`), independentemente desta flag.
+Exportação PDF usa sempre **`snapshotFull`**, independentemente do modo na UI.
 
 ### PDF (aba Serventec)
 

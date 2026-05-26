@@ -3,10 +3,16 @@
 namespace App\Support\Dashboard;
 
 /**
- * Secções do Diagnóstico carregadas progressivamente (AJAX).
+ * Modos do Diagnóstico: estratégico (defeito), completo ou progressivo (AJAX).
  */
 final class MunicipalityHealthSections
 {
+    public const MODE_STRATEGIC = 'strategic';
+
+    public const MODE_FULL = 'full';
+
+    public const MODE_PROGRESSIVE = 'progressive';
+
     public const FUNDEB = 'fundeb';
 
     public const PROGRAMAS = 'programas';
@@ -30,10 +36,32 @@ final class MunicipalityHealthSections
         return in_array($section, self::deferred(), true);
     }
 
+    public static function mode(): string
+    {
+        $mode = strtolower(trim((string) config('analytics.municipality_health_mode', self::MODE_STRATEGIC)));
+
+        return in_array($mode, [self::MODE_STRATEGIC, self::MODE_FULL, self::MODE_PROGRESSIVE], true)
+            ? $mode
+            : self::MODE_STRATEGIC;
+    }
+
+    public static function strategicEnabled(): bool
+    {
+        return self::mode() === self::MODE_STRATEGIC;
+    }
+
     public static function progressiveEnabled(): bool
     {
+        if (self::mode() === self::MODE_PROGRESSIVE) {
+            return true;
+        }
+
+        if (self::mode() !== self::MODE_STRATEGIC) {
+            return false;
+        }
+
         return filter_var(
-            config('analytics.municipality_health_progressive_sections', true),
+            config('analytics.municipality_health_progressive_sections', false),
             FILTER_VALIDATE_BOOL,
         );
     }

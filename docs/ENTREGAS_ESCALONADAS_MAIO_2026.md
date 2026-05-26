@@ -55,8 +55,9 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 47 | `d6a1785` | **Pós-3.3.0 (sem bump):** monitor — cartões só saúde |
 | 48 | `f29b30b` | **Pós-3.3.0 (sem bump):** RX — legendas unificadas, KPIs, tons sky/teal |
 | 49 | `20260529-Helios` | **3.3.1** — otimização Analytics: Diagnóstico progressivo, cache, Finanças sem queries duplicadas |
+| 50 | `20260530-Metis` | **3.3.2** — Diagnóstico estratégico: modo leve, cache partilhado entre abas Finanças |
 
-**Em produção:** versão **3.3.1** · tag **`20260529-Helios`** · [RELEASE_20260529_HELIOS.md](RELEASE_20260529_HELIOS.md).
+**Em produção:** versão **3.3.2** · tag **`20260530-Metis`** · [RELEASE_20260530_METIS.md](RELEASE_20260530_METIS.md).
 
 ---
 

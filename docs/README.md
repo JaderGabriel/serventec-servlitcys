@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto (`main`):** 3.3.1 · tag `20260529-Helios` · **Última revisão deste índice:** 29/05/2026
+**Versão do produto (`main`):** 3.3.2 · tag `20260530-Metis` · **Última revisão deste índice:** 30/05/2026
 
 Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que o sistema faz hoje, **porque** certas decisões foram tomadas e **o que** está planejado implementar.
 

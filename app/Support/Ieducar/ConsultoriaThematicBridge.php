@@ -39,6 +39,37 @@ final class ConsultoriaThematicBridge
     }
 
     /**
+     * Leitura temática para o Diagnóstico estratégico (sem snapshots pedagógicos).
+     *
+     * @param  array<string, mixed>  $disc
+     * @param  array<string, mixed>  $fundeb
+     * @param  array<string, mixed>  $otherFunding
+     * @param  array<string, mixed>  $workDone
+     * @param  array<string, mixed>  $inclusion
+     * @return list<array<string, mixed>>
+     */
+    public static function buildStrategicBlocks(
+        array $disc,
+        array $fundeb,
+        int $totalMat,
+        array $otherFunding = [],
+        array $workDone = [],
+        array $inclusion = [],
+    ): array {
+        $blocks = [];
+        $blocks[] = self::blockFinanciamentoVaaf($fundeb, $disc, $totalMat);
+        $blocks[] = self::blockInclusao($inclusion, $disc, $totalMat);
+        $blocks[] = self::blockEquidade($inclusion, $disc, $totalMat);
+        $blocks[] = self::blockRedeOferta($disc, null);
+        $blocks[] = self::blockProgramasComplementares($disc, $otherFunding);
+        $blocks[] = self::blockTrabalhoCadastro($workDone);
+        $blocks[] = self::blockRecursosPublicos($disc, $fundeb);
+        $blocks[] = self::blockIndicadoresExternos([]);
+
+        return array_values(array_filter($blocks));
+    }
+
+    /**
      * @param  array<string, mixed>  $fundeb
      * @param  array<string, mixed>  $disc
      * @return array<string, mixed>

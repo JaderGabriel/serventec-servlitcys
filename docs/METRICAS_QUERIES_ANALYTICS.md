@@ -16,7 +16,17 @@ Para desativar o lazy e voltar ao carregamento completo num único HTML (útil p
 
 ## Diagnóstico (`municipality_health`) — performance
 
-Com **`ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE=true`** (defeito em `config/analytics.php`):
+Com **`ANALYTICS_MUNICIPALITY_HEALTH_MODE=strategic`** (defeito desde 3.3.2):
+
+- **Um único pedido** na aba Diagnóstico: Discrepâncias em modo diagnóstico (dimensões + resumo financeiro, **sem** checks por escola nem sinais operacionais pesados), fatia FUNDEB (`buildDiagnosisSlice` — projeção VAAF + roteiro VAAR, **sem** perfil VAAF multi-ano FNDE), leitura temática estratégica (`buildStrategicBlocks`).
+- **Reutilização:** se o utilizador já abriu Discrepâncias, FUNDEB, Financiamentos, Censo ou Inclusão no mesmo filtro, o payload fica em cache (`AnalyticsTabPayloadCache`, TTL = `ANALYTICS_MUNICIPALITY_HEALTH_CACHE`) e o Diagnóstico **não repete** essas consultas.
+- Programas/Censo sem cache: resumo mínimo + links para as abas de detalhe.
+
+Modo **`full`**: snapshot completo (pedagógico + INEP + Censo), como antes do progressivo.
+
+Modo legado **`progressive`** ou `ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE=true` com `mode=strategic`:
+
+Com **`ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE=true`** e **`mode=progressive`**:
 
 | Fase | Pedido | Conteúdo |
 |------|--------|----------|
@@ -31,9 +41,9 @@ No **Pulse → Operações**, filtre `analytics:tab:municipality_health` e `anal
 
 **Contexto municipal (faixa de impacto):** com **`ANALYTICS_FINANCE_TABS_REUSE_CONTEXT`**, as abas **Discrepâncias** e **FUNDEB** não voltam a executar `overview` + `fundingImpactSnapshot` depois do relatório da aba. **Financiamentos** e **Censo** usam só o resumo financeiro em cache para a faixa (`ANALYTICS_FINANCE_TABS_STRIP_CONTEXT`).
 
-Desactivar progressivo (comportamento anterior — um único pedido pesado): **`ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE=false`**.
+Snapshot completo explícito: **`ANALYTICS_MUNICIPALITY_HEALTH_MODE=full`**. Progressivo legado: **`ANALYTICS_MUNICIPALITY_HEALTH_MODE=progressive`**.
 
-### Problemas conhecidos (3.3.1)
+### Problemas conhecidos (3.3.1–3.3.2)
 
 | Sintoma | Causa habitual | Acção |
 |---------|----------------|-------|
