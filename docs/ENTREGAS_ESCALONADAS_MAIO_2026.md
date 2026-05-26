@@ -50,8 +50,12 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 42 | `7ea0158` | **Pós-3.0.0 (sem bump):** inclusão — total NEE alinhado a AEE, grupos com 0, textos NEE vs cadastro |
 | 43 | `20260526-Boreas` | **3.1.0** — Inclusão (FUNDEB indicativo, inconsistências cadastro), leitor documentação admin |
 | 44 | `20260527-Notus` | **3.2.0** — export NEE (dados no Excel), medidores/risco AEE, fila admin cards temáticos |
+| 45 | `20260528-Eos` | **3.3.0** — monitor de módulos admin; doc/filas/export NEE para utilizador |
+| 46 | `504d2f9` | **Pós-3.3.0 (sem bump):** monitor módulos — UI `serv-*` |
+| 47 | `d6a1785` | **Pós-3.3.0 (sem bump):** monitor — cartões só saúde |
+| 48 | *(patch)* | **Pós-3.3.0 (sem bump):** RX — legendas unificadas, KPIs, tons sky/teal |
 
-**Em produção:** versão **3.2.0** · tag **`20260527-Notus`** · [RELEASE_20260527_NOTUS.md](RELEASE_20260527_NOTUS.md).
+**Em produção:** versão **3.3.0** · tag **`20260528-Eos`** · [RELEASE_20260528_EOS.md](RELEASE_20260528_EOS.md).
 
 ---
 
@@ -166,7 +170,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | Área | Ficheiros |
 |------|-----------|
 | Cálculos | `RxCadastroGap.php`, `RxCityMetricsCollector.php` — progresso pelo gargalo turmas/mat.; em falta separado (não soma enturmação) |
-| Cores | `RxColumnTone.php`, `data-tone-legend.blade.php`, `rx.blade.php`, `app.css` — vigente (teal), comparativo (índigo), meta (violeta), anterior (cinza na sublinha) |
+| Cores | `RxColumnTone.php`, `data-tone-legend.blade.php`, `legend-panel.blade.php`, `rx.blade.php`, `app.css` — vigente (teal), comparativo (sky), meta (violeta), anterior (cinza na sublinha) |
 | Estimativa | `IeducarWorkActivityQueries.php` — meta de enturmação sem fallback duplicado às matrículas |
 | Testes | `RxCadastroGapTest.php` |
 
@@ -176,6 +180,22 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 - Coluna **Δ:** rótulo «novo cadastro» quando o ano anterior imediato está zerado.
 
 **Pós-deploy:** `npm run build` (classes `serv-rx-*` no CSS).
+
+---
+
+## 6c. RX — legendas e visual (patch pós-3.3.0)
+
+**Objetivo:** Melhorar leitura do painel `/dashboard/rx` sem alterar versão semântica.
+
+| Área | Ficheiros |
+|------|-----------|
+| Legendas | `components/rx/legend-panel.blade.php`, `column-legend.blade.php`, `data-tone-legend.blade.php` |
+| KPIs / tabela | `dashboard/rx.blade.php`, `semaphore-badge.blade.php` (`x-status-pill`) |
+| Tons | `app.css`, `RxColumnTone.php` — comparativo **sky** (em vez de índigo) |
+
+**Comportamento:** painel «Legendas e cores» (semáforo meta, tons de coluna, barra Censo); guia completo das colunas em `<details>`; legenda rápida «Tons:» no cabeçalho da tabela.
+
+**Pós-deploy:** `npm run build`.
 
 ---
 

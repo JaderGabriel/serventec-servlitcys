@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **3.3.0** · release `20260528-Eos` · **Ramo:** `main` · **Última revisão:** 28/05/2026
+**Versão em produção:** **3.3.0** · release `20260528-Eos` · **Ramo:** `main` · **Última revisão:** 25/05/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -43,6 +43,8 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Admin — monitor de módulos (`/admin/monitor-modulos`, saúde + histórico incidentes) | Implementado (3.3.0) |
 | Utilizador/Municipal — documentação (`/documentacao`) e filas (`/filas`) | Implementado (3.3.0) |
 | Inclusão — exportação NEE para utilizador/municipal (não só admin) | Implementado (3.3.0) |
+| Painel RX (`/dashboard/rx`) — legendas unificadas, KPIs `serv-home-kpi`, tons sky/teal | Implementado (patch pós-3.3.0) |
+| Admin — monitor de módulos — UI `serv-*`, cartões só saúde (sem atalhos) | Implementado (patch pós-3.3.0) |
 | Catálogo API i-Educar (consultas SQL → endpoints propostos, JSON, perf/seg) | Documentado — [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) |
 | Estudo integrações setor público + previsão demanda (doc) | Documentado — [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md); implementação Ondas 1–3 no backlog §H |
 | Sync massiva semanal (`system::weekly_mass_sync`, checkpoint) | Implementado |

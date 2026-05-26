@@ -21,6 +21,9 @@
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
 | **▶ 3.3.0** | `20260528-Eos` → `main` | — | 28/05/2026 | **Produção:** monitor de módulos admin; doc/filas/export NEE para utilizador — [RELEASE_20260528_EOS.md](RELEASE_20260528_EOS.md). |
+| *(patch pós-3.3.0)* | `504d2f9` | **240** | 25/05/2026 | Monitor de módulos: UI alinhada ao design system `serv-*`. |
+| *(patch pós-3.3.0)* | `d6a1785` | **241** | 25/05/2026 | Monitor: cartões focam saúde (sem atalhos ao módulo/fila). |
+| *(patch pós-3.3.0)* | *(ver main)* | **242+** | 25/05/2026 | RX: painel de legendas, guia de colunas, KPIs e comparativo sky (sem bump de versão). |
 | 3.2.0 | `20260527-Notus` → `main` | — | 27/05/2026 | Export NEE corrigido, medidores/risco AEE, fila admin com cards temáticos — [RELEASE_20260527_NOTUS.md](RELEASE_20260527_NOTUS.md). |
 | 3.1.0 | `20260526-Boreas` → `main` | — | 26/05/2026 | Inclusão (NEE/AEE, FUNDEB indicativo, inconsistências com nome do aluno); leitor doc admin sem 404 — [RELEASE_20260526_BOREAS.md](RELEASE_20260526_BOREAS.md). |
 | 3.0.0 | `20260525-Apollo` → `main` | **212+** | 25/05/2026 | LGPD (`/consentimento`, logs), notificações, catálogo NEE INEP, rodapé/privacidade, SAEB 4 colunas, UX welcome/RX — [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md). |
@@ -254,7 +257,7 @@ Inclui marcos **2.3.3–2.3.5** desde `v2.1.0` (commits #159–#172). Notas: [RE
 | Tema | Melhoria |
 |------|----------|
 | **RX — meta** | Busca ano de referência para trás quando Y−1 tem turmas/mat. zeradas; +5% por salto (configurável). |
-| **RX — UI** | Semáforo de cumprimento da meta; legenda «O que significa cada coluna?»; coluna Meta cadastro. |
+| **RX — UI** | Semáforo de cumprimento da meta; guia de colunas (details); coluna Meta cadastro. Patch pós-3.3.0: `legend-panel`, KPIs `serv-home-kpi`, tons sky/teal. |
 | **RX — fiabilidade** | Teste de conexão antes das consultas; falhas SQL isoladas (OK/Parcial/Consulta vs Conexão). |
 
 ### v2.3.4 — `ccc5ad4` (#166, mai/2026)

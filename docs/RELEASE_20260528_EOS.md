@@ -38,7 +38,17 @@ npm run build
 
 Sem novas migrações obrigatórias nesta release.
 
+## Patch pós-release (sem bump de versão)
+
+| Commit | Resumo |
+|--------|--------|
+| `504d2f9` | Monitor de módulos — visual alinhado ao design system `serv-*`. |
+| `d6a1785` | Monitor — cartões exibem só saúde/funcionamento (sem atalhos). |
+| *(main)* | RX (`/dashboard/rx`) — painel «Legendas e cores», guia completo das colunas, KPIs `serv-home-kpi`, comparativo em sky. |
+
+**Pós-deploy (RX):** `npm run build` (classes `serv-rx-*`).
+
 ## Documentação
 
-- [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) — linha 3.3.0
+- [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) — linha 3.3.0 e patches
 - [STATUS_PROJETO.md](STATUS_PROJETO.md)

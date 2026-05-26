@@ -35,8 +35,8 @@ final class RxColumnTone
             ],
             [
                 'tone' => self::COMPARATIVO,
-                'label' => __('Comparativo'),
-                'description' => __('Δ face ao ano anterior, progresso e em falta face à meta alvo, dias estimados.'),
+                'label' => __('Face à meta'),
+                'description' => __('Δ face ao ano anterior, progresso cadastral, pendente face à meta e dias estimados.'),
             ],
             [
                 'tone' => self::META,

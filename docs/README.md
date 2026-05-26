@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto (`main`):** 3.3.0 · tag `20260528-Eos` · **Última revisão deste índice:** 28/05/2026
+**Versão do produto (`main`):** 3.3.0 · tag `20260528-Eos` · **Última revisão deste índice:** 25/05/2026
 
 Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que o sistema faz hoje, **porque** certas decisões foram tomadas e **o que** está planejado implementar.
 

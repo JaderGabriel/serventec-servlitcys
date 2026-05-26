@@ -1,13 +1,16 @@
 @props(['columns' => [], 'metaPctPerSalto' => 5.0, 'anteriorAno' => ''])
 
-<details class="serv-panel group">
-    <summary class="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-2 text-sm font-semibold text-serv-navy dark:text-white">
-        <span>{{ __('O que significa cada coluna?') }}</span>
-        <span class="text-slate-500 group-open:rotate-180 transition-transform" aria-hidden="true">▼</span>
+<details class="serv-panel serv-rx-column-guide group">
+    <summary class="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-3">
+        <div>
+            <p class="serv-eyebrow">{{ __('Referência') }}</p>
+            <span class="text-sm font-semibold text-serv-navy dark:text-white">{{ __('Guia completo das colunas') }}</span>
+        </div>
+        <x-ui.icon name="chevron-right" class="h-5 w-5 text-slate-400 shrink-0 transition-transform group-open:rotate-90" />
     </summary>
-    <div class="px-4 pb-4 border-t border-slate-200 dark:border-slate-700">
+    <div class="px-4 pb-4 border-t border-slate-200/80 dark:border-slate-700/80">
         <p class="mt-3 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            {{ __('Meta de cadastro: se o ano :a tiver turmas e matrículas zeradas, o sistema procura anos anteriores (até o limite configurado). Cada ano a mais para trás acrescenta :pct% ao volume de referência (acumulado).', [
+            {{ __('Se o ano :a tiver turmas e matrículas zeradas, o sistema procura anos anteriores. Cada ano adicional para trás acrescenta :pct% ao volume de referência da meta.', [
                 'a' => (string) $anteriorAno,
                 'pct' => number_format((float) $metaPctPerSalto, 0, ',', '.'),
             ]) }}
@@ -16,22 +19,16 @@
             @foreach ($columns as $col)
                 @php
                     $tone = \App\Support\Rx\RxColumnTone::forColumn((string) ($col['key'] ?? ''));
-                    $toneBorder = match ($tone) {
-                        'vigente' => 'border-teal-300/80 dark:border-teal-700',
-                        'comparativo' => 'border-indigo-300/80 dark:border-indigo-700',
-                        'meta' => 'border-violet-300/80 dark:border-violet-700',
-                        default => 'border-slate-200/80 dark:border-slate-700',
-                    };
-                    $toneBg = match ($tone) {
-                        'vigente' => 'bg-teal-50/40 dark:bg-teal-950/25',
-                        'comparativo' => 'bg-indigo-50/40 dark:bg-indigo-950/25',
-                        'meta' => 'bg-violet-50/40 dark:bg-violet-950/25',
-                        default => 'bg-slate-50/50 dark:bg-slate-800/40',
+                    $cardClass = match ($tone) {
+                        'vigente' => 'serv-rx-guide-card serv-rx-guide-card--vigente',
+                        'comparativo' => 'serv-rx-guide-card serv-rx-guide-card--comparativo',
+                        'meta' => 'serv-rx-guide-card serv-rx-guide-card--meta',
+                        default => 'serv-rx-guide-card serv-rx-guide-card--neutral',
                     };
                 @endphp
-                <div class="rounded-md border {{ $toneBorder }} {{ $toneBg }} px-3 py-2.5">
+                <div class="{{ $cardClass }}">
                     <dt class="font-semibold text-slate-800 dark:text-slate-100">{{ $col['title'] ?? '' }}</dt>
-                    <dd class="mt-1 text-slate-600 dark:text-slate-400 leading-relaxed">{{ $col['description'] ?? '' }}</dd>
+                    <dd class="mt-1.5 text-slate-600 dark:text-slate-400 leading-relaxed">{{ $col['description'] ?? '' }}</dd>
                 </div>
             @endforeach
         </dl>

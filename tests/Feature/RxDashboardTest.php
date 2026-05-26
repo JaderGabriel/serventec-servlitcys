@@ -22,9 +22,9 @@ final class RxDashboardTest extends TestCase
         $this->actingAs($admin)
             ->get(route('dashboard.rx'))
             ->assertOk()
-            ->assertSee('RX', false)
-            ->assertSee(__('Painel operacional'), false)
-            ->assertSee(__('O que significa cada coluna?'), false)
+            ->assertSee(__('Painel RX'), false)
+            ->assertSee(__('Legendas e cores'), false)
+            ->assertSee(__('Guia completo das colunas'), false)
             ->assertSee(__('Indicador meta'), false)
             ->assertSee(__('Leitura dos dados'), false);
     }
