@@ -211,7 +211,7 @@
 
         @include('dashboard.analytics.partials.municipality-health-system-quality', ['h' => $h])
 
-        @include('dashboard.analytics.partials.municipality-health-explore')
+        @include('dashboard.analytics.partials.municipality-health-explore', ['h' => $h])
 
         @if ($fundingMet !== null)
             <x-dashboard.consultoria-funding-explanation
@@ -261,29 +261,48 @@
             ])
         @endif
 
-        @if ($hasPublicSources)
-            <x-dashboard.consultoria-section
-                :step="$diagStep['diag-fontes-publicas'] ?? null"
-                anchor="diag-fontes-publicas"
-                :title="__('Extração e relatórios oficiais')"
-                :subtitle="__('Painéis, dados abertos e sistemas de comprovação (FNDE, Tesouro, Simec, INEP).')"
-            >
-                <x-dashboard.consultoria-public-sources :catalog="$publicSources" :anchor="null" />
-            </x-dashboard.consultoria-section>
-        @endif
+        @if ($hasPublicSources || count($cadastro) > 0)
+            <section class="serv-panel overflow-hidden border border-slate-200/90 dark:border-slate-700">
+                <details class="group" open>
+                    <summary class="cursor-pointer list-none px-4 py-3 bg-slate-50/80 dark:bg-slate-900/50 border-b border-slate-200/80 dark:border-slate-700 flex items-center justify-between gap-2 select-none">
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                {{ __('Consolidado operacional') }}
+                            </p>
+                            <p class="text-sm font-semibold text-serv-navy dark:text-slate-100">
+                                {{ __('Fontes públicas e mapa de rotinas') }}
+                            </p>
+                        </div>
+                        <span class="text-slate-400 group-open:rotate-180 transition-transform" aria-hidden="true">▾</span>
+                    </summary>
+                    <div class="p-4 sm:p-5 space-y-6">
+                        @if ($hasPublicSources)
+                            <x-dashboard.consultoria-section
+                                :step="$diagStep['diag-fontes-publicas'] ?? null"
+                                anchor="diag-fontes-publicas"
+                                :title="__('Extração e relatórios oficiais')"
+                                :subtitle="__('Painéis, dados abertos e sistemas de comprovação (FNDE, Tesouro, Simec, INEP).')"
+                            >
+                                <x-dashboard.consultoria-public-sources :catalog="$publicSources" :anchor="null" />
+                            </x-dashboard.consultoria-section>
+                        @endif
 
-        @if (count($cadastro) > 0)
-            <x-dashboard.consultoria-section
-                :step="$diagStep['diag-mapa'] ?? null"
-                anchor="diag-mapa"
-                :title="__('Mapa de rotinas de cadastro')"
-                :subtitle="__('Alinhado à aba Discrepâncias — verde = sem pendência; cinza = indisponível.')"
-            >
-                <x-dashboard.consultoria-dimensions-grid :dimensions="$cadastro" :fmt-brl="$fmtBrl" columns="2" />
-                <p class="serv-callout">
-                    <x-consultoria-tab-link tab="discrepancies" :label="__('Detalhar por escola em Discrepâncias')" class="text-xs" />
-                </p>
-            </x-dashboard.consultoria-section>
+                        @if (count($cadastro) > 0)
+                            <x-dashboard.consultoria-section
+                                :step="$diagStep['diag-mapa'] ?? null"
+                                anchor="diag-mapa"
+                                :title="__('Mapa de rotinas de cadastro')"
+                                :subtitle="__('Alinhado à aba Discrepâncias — verde = sem pendência; cinza = indisponível.')"
+                            >
+                                <x-dashboard.consultoria-dimensions-grid :dimensions="$cadastro" :fmt-brl="$fmtBrl" columns="2" />
+                                <p class="serv-callout">
+                                    <x-consultoria-tab-link tab="discrepancies" :label="__('Detalhar por escola em Discrepâncias')" class="text-xs" />
+                                </p>
+                            </x-dashboard.consultoria-section>
+                        @endif
+                    </div>
+                </details>
+            </section>
         @endif
 
     @endif

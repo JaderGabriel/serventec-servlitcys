@@ -1,7 +1,24 @@
+@props(['h' => null])
+
 @php
     use App\Support\Dashboard\AnalyticsTabCatalog;
 
     $hints = AnalyticsTabCatalog::tabHints();
+    $h = is_array($h) ? $h : [];
+    $score = $h['compliance_score'] ?? null;
+    $status = (string) ($h['compliance_status'] ?? 'neutral');
+    $statusChip = static fn (string $st): string => match ($st) {
+        'success' => 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-200',
+        'warning' => 'bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-200',
+        'danger' => 'bg-rose-100 text-rose-900 dark:bg-rose-950/60 dark:text-rose-200',
+        default => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+    };
+    $qualityLabel = match ($status) {
+        'success' => __('Adequado'),
+        'warning' => __('Atenção'),
+        'danger' => __('Crítico'),
+        default => __('Sem índice'),
+    };
     $exploreTabs = [
         ['tab' => 'discrepancies', 'tone' => 'rose', 'group' => __('Finanças')],
         ['tab' => 'fundeb', 'tone' => 'teal', 'group' => __('Finanças')],
@@ -33,7 +50,15 @@
                 $labels = AnalyticsTabCatalog::labels();
             @endphp
             <article class="serv-panel border p-4 flex flex-col gap-2 h-full {{ $chipClass($item['tone']) }}">
-                <p class="text-[10px] font-semibold uppercase tracking-wide opacity-80">{{ $item['group'] }}</p>
+                <div class="flex items-start justify-between gap-2">
+                    <p class="text-[10px] font-semibold uppercase tracking-wide opacity-80">{{ $item['group'] }}</p>
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold {{ $statusChip($status) }}">
+                        <span class="uppercase tracking-wide">{{ $qualityLabel }}</span>
+                        @if ($score !== null)
+                            <span class="tabular-nums">{{ (int) $score }}</span>
+                        @endif
+                    </span>
+                </div>
                 <h4 class="text-sm font-semibold leading-tight">{{ $labels[$tabId] ?? $tabId }}</h4>
                 <p class="text-xs opacity-90 flex-1">{{ $hints[$tabId] ?? '' }}</p>
                 <x-consultoria-tab-link :tab="$tabId" :label="__('Abrir análise →')" class="text-xs font-semibold mt-auto" />
