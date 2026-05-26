@@ -96,6 +96,21 @@ return [
 
     'fundeb_load_discrepancies_summary' => filter_var(env('ANALYTICS_FUNDEB_DISC_SUMMARY', true), FILTER_VALIDATE_BOOL),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Faixa de impacto na aba Diagnóstico (lazy)
+    |--------------------------------------------------------------------------
+    |
+    | Quando true, o contexto municipal (saldo, pendências) vem do snapshot do
+    | Diagnóstico já carregado — não repete Visão geral nem fundingImpactSnapshot.
+    |
+    */
+
+    'municipality_health_reuse_funding_context' => filter_var(
+        env('ANALYTICS_MUNICIPALITY_HEALTH_REUSE_CONTEXT', true),
+        FILTER_VALIDATE_BOOL,
+    ),
+
     /** Segundos de cache do resumo (0 = sem cache). Reutiliza após visitar Discrepâncias. */
     'funding_summary_cache_seconds' => max(0, (int) env('ANALYTICS_FUNDING_SUMMARY_CACHE', 600)),
 

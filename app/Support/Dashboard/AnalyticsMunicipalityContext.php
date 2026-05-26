@@ -11,6 +11,61 @@ use App\Support\Ieducar\IeducarAnalyticsMetricsScope;
 final class AnalyticsMunicipalityContext
 {
     /**
+     * Reutiliza o payload já montado pelo Diagnóstico (evita segunda passagem em Discrepâncias).
+     *
+     * @param  array<string, mixed>  $healthData
+     * @return array<string, mixed>|null
+     */
+    public static function fromHealthSnapshot(array $healthData): ?array
+    {
+        if ($healthData === []) {
+            return null;
+        }
+
+        $summary = is_array($healthData['summary'] ?? null) ? $healthData['summary'] : [];
+        $perda = (float) ($summary['perda_estimada_anual'] ?? 0);
+        $ganho = (float) ($summary['ganho_potencial_anual'] ?? 0);
+        $pendencias = (int) ($summary['pendencias_cadastro'] ?? 0);
+        $corrigiveis = (int) ($summary['corrigiveis'] ?? 0);
+        $comProblema = (int) ($summary['com_problema'] ?? 0);
+        $escolas = (int) ($summary['escolas_afetadas'] ?? 0);
+        $matriculas = $summary['total_matriculas'] ?? null;
+        $matriculas = is_numeric($matriculas) ? (int) $matriculas : null;
+
+        $score = (int) ($healthData['compliance_score'] ?? 0);
+        if ($score <= 0) {
+            $score = self::estimateComplianceScore($pendencias, $corrigiveis, $perda, $ganho);
+        }
+
+        $status = (string) ($healthData['compliance_status'] ?? '');
+        if ($status === '' || $status === 'neutral') {
+            $status = self::statusFromScore($score);
+        }
+
+        $label = (string) ($healthData['compliance_label'] ?? '');
+        if ($label === '') {
+            $label = self::labelFromScore($score);
+        }
+
+        return [
+            'perda_estimada_anual' => $perda,
+            'ganho_potencial_anual' => $ganho,
+            'saldo_liquido' => round($ganho - $perda, 2),
+            'pendencias_cadastro' => $pendencias,
+            'corrigiveis' => $corrigiveis,
+            'com_problema' => $comProblema,
+            'escolas_afetadas' => $escolas,
+            'total_matriculas' => $matriculas !== null && $matriculas > 0 ? $matriculas : null,
+            'compliance_score' => $score,
+            'compliance_status' => $status,
+            'compliance_label' => $label,
+            'funding_reference' => is_array($healthData['funding_reference'] ?? null)
+                ? $healthData['funding_reference']
+                : null,
+        ];
+    }
+
+    /**
      * @param  array{summary?: array<string, mixed>, funding_reference?: ?array<string, mixed>}|null  $fundingSnapshot
      * @param  array<string, mixed>  $overviewData
      * @return array<string, mixed>|null

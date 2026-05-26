@@ -193,6 +193,8 @@ class MunicipalityHealthRepository
             'summary' => [
                 'pendencias_cadastro' => $pendencias,
                 'modulos_fundeb_alerta' => $modulosAlerta,
+                'com_problema' => (int) ($discSummary['com_problema'] ?? 0),
+                'corrigiveis' => (int) ($discSummary['corrigiveis'] ?? 0),
                 'perda_estimada_anual' => (float) ($discSummary['perda_estimada_anual'] ?? 0),
                 'ganho_potencial_anual' => (float) ($discSummary['ganho_potencial_anual'] ?? 0),
                 'escolas_afetadas' => (int) ($discSummary['escolas_afetadas'] ?? 0),

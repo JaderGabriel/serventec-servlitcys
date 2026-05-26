@@ -46,6 +46,44 @@ final class AnalyticsMunicipalityContextTest extends TestCase
     }
 
     /**
+     * Cenário: aba Diagnóstico já calculou conformidade e resumo financeiro.
+     * Esperado: contexto para faixa de impacto sem reexecutar Discrepâncias.
+     */
+    #[Test]
+    public function from_health_snapshot_reutiliza_conformidade_e_financeiro(): void
+    {
+        $ctx = AnalyticsMunicipalityContext::fromHealthSnapshot([
+            'compliance_score' => 72,
+            'compliance_status' => 'warning',
+            'compliance_label' => __('Atenção — pendências relevantes'),
+            'funding_reference' => ['vaaf_municipal' => 100.0],
+            'summary' => [
+                'pendencias_cadastro' => 4,
+                'com_problema' => 120,
+                'corrigiveis' => 80,
+                'perda_estimada_anual' => 50_000.0,
+                'ganho_potencial_anual' => 20_000.0,
+                'escolas_afetadas' => 5,
+                'total_matriculas' => 800,
+            ],
+        ]);
+
+        $this->assertNotNull($ctx);
+        $this->assertSame(72, $ctx['compliance_score']);
+        $this->assertSame('warning', $ctx['compliance_status']);
+        $this->assertSame(120, $ctx['com_problema']);
+        $this->assertSame(-30_000.0, $ctx['saldo_liquido']);
+        $this->assertSame(800, $ctx['total_matriculas']);
+        $this->assertSame(100.0, $ctx['funding_reference']['vaaf_municipal']);
+    }
+
+    #[Test]
+    public function from_health_snapshot_retorna_null_sem_payload(): void
+    {
+        $this->assertNull(AnalyticsMunicipalityContext::fromHealthSnapshot([]));
+    }
+
+    /**
      * Cenário: município sem pendências e sem perda financeira.
      * Esperado: score alto (success).
      */

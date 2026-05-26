@@ -270,24 +270,31 @@ class AnalyticsDashboardController extends Controller
                 }
 
                 if (config('analytics.index_funding_context', false)) {
-                    $fundingSnapshot = $this->safeAnalyticsLoad(
-                        fn () => $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
-                        null,
-                        __('Resumo financeiro'),
-                        $analyticsLoadWarnings,
-                    );
-                    if (! is_array($fundingSnapshot)) {
-                        $fundingSnapshot = [
-                            'summary' => [],
-                            'funding_reference' => DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters),
-                        ];
-                    } elseif (! is_array($fundingSnapshot['funding_reference'] ?? null)) {
-                        $fundingSnapshot['funding_reference'] = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
+                    if (
+                        is_array($municipalityHealthData)
+                        && config('analytics.municipality_health_reuse_funding_context', true)
+                    ) {
+                        $municipalityContext = AnalyticsMunicipalityContext::fromHealthSnapshot($municipalityHealthData);
+                    } else {
+                        $fundingSnapshot = $this->safeAnalyticsLoad(
+                            fn () => $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
+                            null,
+                            __('Resumo financeiro'),
+                            $analyticsLoadWarnings,
+                        );
+                        if (! is_array($fundingSnapshot)) {
+                            $fundingSnapshot = [
+                                'summary' => [],
+                                'funding_reference' => DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters),
+                            ];
+                        } elseif (! is_array($fundingSnapshot['funding_reference'] ?? null)) {
+                            $fundingSnapshot['funding_reference'] = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
+                        }
+                        $municipalityContext = AnalyticsMunicipalityContext::fromFundingSnapshot(
+                            $fundingSnapshot,
+                            is_array($overviewData) ? $overviewData : [],
+                        );
                     }
-                    $municipalityContext = AnalyticsMunicipalityContext::fromFundingSnapshot(
-                        $fundingSnapshot,
-                        $overviewData,
-                    );
                 }
             } catch (Throwable $e) {
                 Log::error('analytics.index_load_failed', [
@@ -724,14 +731,27 @@ class AnalyticsDashboardController extends Controller
         }
 
         $chartExportContext = ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions);
-        $municipalityContext = $this->resolveMunicipalityContextForTab(
-            $tab,
-            $city,
-            $filters,
-            $overviewRepository,
-            $discrepanciesRepository,
-            $tabWarnings,
-        );
+        $healthDataForTab = null;
+        if ($tab === 'municipality_health' && config('analytics.municipality_health_reuse_funding_context', true)) {
+            $healthDataForTab = $this->safeAnalyticsLoad(
+                fn () => $municipalityHealthRepository->snapshot($city, $filters),
+                AnalyticsEmptyPayloads::municipalityHealth(),
+                __('Diagnóstico'),
+                $tabWarnings,
+            );
+            $municipalityContext = AnalyticsMunicipalityContext::fromHealthSnapshot(
+                is_array($healthDataForTab) ? $healthDataForTab : [],
+            );
+        } else {
+            $municipalityContext = $this->resolveMunicipalityContextForTab(
+                $tab,
+                $city,
+                $filters,
+                $overviewRepository,
+                $discrepanciesRepository,
+                $tabWarnings,
+            );
+        }
 
         $headers = [
             'X-Analytics-Tab' => $tab,
@@ -857,7 +877,7 @@ class AnalyticsDashboardController extends Controller
                 ->withHeaders($headers),
             'municipality_health' => response()
                 ->view('dashboard.analytics.partials.municipality-health', array_merge($viewBase, $yearReady, [
-                    'healthData' => $this->safeAnalyticsLoad(
+                    'healthData' => $healthDataForTab ?? $this->safeAnalyticsLoad(
                         fn () => $municipalityHealthRepository->snapshot($city, $filters),
                         AnalyticsEmptyPayloads::municipalityHealth(),
                         __('Diagnóstico'),
@@ -943,10 +963,13 @@ class AnalyticsDashboardController extends Controller
             'performance',
             'attendance',
             'fundeb',
-            'municipality_health',
             'discrepancies',
         ];
         if (! in_array($tab, $tabsWithFunding, true)) {
+            return null;
+        }
+
+        if ($tab === 'municipality_health') {
             return null;
         }
 
