@@ -24,8 +24,8 @@ return [
     'product' => [
         'version' => '3.4.0',
         'release_tag' => '20260531-Nemesis',
-        'commit_short' => '',
-        'commit_number' => null,
+        'commit_short' => '24e5f4c',
+        'commit_number' => 259,
         'revision_date' => '2026-05-31',
         'in_production' => true,
         'production_label' => 'Em produção',
