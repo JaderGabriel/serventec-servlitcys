@@ -122,6 +122,8 @@
         ['label' => __('Roteiro FUNDEB'), 'anchor' => 'diag-roteiro', 'visible' => count($fundebMods) > 0],
     ]);
     $diagStep = ConsultoriaFlow::stepMap($flowSteps);
+    $progressive = ! empty($h['sections_pending'] ?? []);
+    $sectionsPending = is_array($h['sections_pending'] ?? null) ? $h['sections_pending'] : [];
     $scoreRing = match ($h['compliance_status'] ?? 'neutral') {
         'success' => 'serv-panel border-emerald-300/80 dark:border-emerald-700',
         'warning' => 'serv-panel border-amber-300/80 dark:border-amber-700',
@@ -130,7 +132,10 @@
     };
 @endphp
 
-<div class="space-y-6">
+<div
+    class="space-y-6"
+    @if ($progressive) data-municipality-health-progressive="1" data-analytics-panel-root @endif
+>
     @if (! $yearFilterReady)
         <p class="serv-callout serv-callout--warning text-sm">
             {{ __('Selecione o ano letivo e aplique os filtros para ver o diagnóstico geral de conformidade do município.') }}
@@ -206,7 +211,7 @@
         >
             @if ($score !== null)
                 <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 items-stretch">
-                    <div class="xl:col-span-4 {{ $scoreRing }} p-4 sm:p-5 flex flex-col justify-between gap-3 min-h-[14rem]">
+                    <div class="xl:col-span-4 {{ $scoreRing }} p-4 sm:p-5 flex flex-col justify-between gap-3 min-h-[14rem]" data-health-compliance-root data-compliance-score="{{ (int) $score }}" data-compliance-status="{{ $h['compliance_status'] ?? 'neutral' }}" data-compliance-label="{{ $h['compliance_label'] ?? '' }}">
                         <div class="text-center">
                             <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-2">{{ __('Índice de conformidade') }}</p>
                             <x-dashboard.compliance-speedometer
@@ -296,71 +301,43 @@
             @endif
         </x-dashboard.consultoria-section>
 
-        @if ($vaafComparacao !== null)
-            <x-dashboard.consultoria-section
-                :step="$diagStep['diag-vaaf'] ?? null"
-                anchor="diag-vaaf"
-                :title="__('Medidores financeiros (VAAF e previsão)')"
-                :subtitle="__('Valor municipal usado nos cálculos × prévia federal para comparação com painéis do governo.')"
-            >
-                <x-dashboard.consultoria-vaaf-comparacao
-                    :comparacao="$vaafComparacao"
-                    :divergencia="$divergenciaVaaf"
-                    :previsaoComparacao="$previsaoComparacao"
-                />
-            </x-dashboard.consultoria-section>
+        @if ($progressive && in_array('fundeb', $sectionsPending, true))
+            <div data-municipality-health-section="fundeb" class="space-y-6">
+                @include('dashboard.analytics.partials.municipality-health-section-skeleton', [
+                    'message' => __('A carregar VAAF, previsão e roteiro FUNDEB…'),
+                ])
+            </div>
+        @elseif ($vaafComparacao !== null || count($fundebMods) > 0)
+            @include('dashboard.analytics.partials.municipality-health-section-fundeb', [
+                'healthData' => $h,
+                'diagStep' => $diagStep,
+            ])
         @endif
 
-        @if (count($complementaryPrograms) > 0)
-            <x-dashboard.consultoria-section
-                :step="$diagStep['diag-programas'] ?? null"
-                anchor="diag-programas"
-                :title="__('Financiamentos complementares (análise municipal)')"
-                :subtitle="__('PNAE, PNATE, PDDE e correlatos — cobertura de cadastro no i-Educar (não é valor de repasse FNDE).')"
-            >
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    @foreach ($complementaryPrograms as $prog)
-                        @php
-                            $pst = (string) ($prog['status'] ?? 'neutral');
-                            $pborder = match ($pst) {
-                                'success' => 'border-emerald-300 dark:border-emerald-800',
-                                'warning' => 'border-amber-300 dark:border-amber-800',
-                                'danger' => 'border-rose-300 dark:border-rose-800',
-                                default => '',
-                            };
-                        @endphp
-                        <article class="serv-panel {{ $pborder }} px-3 py-3 text-sm">
-                            <div class="flex flex-wrap items-start justify-between gap-2">
-                                <h4 class="font-semibold text-serv-navy dark:text-slate-100 text-xs leading-snug">{{ $prog['titulo'] ?? '' }}</h4>
-                                <span class="serv-status-pill
-                                    @if ($pst === 'success') serv-status-pill--success
-                                    @elseif ($pst === 'danger') serv-status-pill--danger
-                                    @elseif ($pst === 'warning') serv-status-pill--warning
-                                    @else serv-status-pill--neutral @endif">
-                                    {{ $prog['status_label'] ?? '' }}
-                                </span>
-                            </div>
-                            <p class="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{{ $prog['resumo'] ?? '' }}</p>
-                        </article>
-                    @endforeach
-                </div>
-                <p class="serv-callout flex flex-wrap gap-x-2 gap-y-1">
-                    <x-consultoria-tab-link tab="other_funding" :label="__('Detalhe na aba Financiamentos')" class="text-xs" />
-                    <span class="text-gray-300 dark:text-gray-600">·</span>
-                    <button type="button" class="serv-inline-tab-link text-xs" x-on:click="$dispatch('funding-loss-set-active', { ids: @js($activeCheckIds), programIds: @js($activeProgramIds) }); $dispatch('open-modal', 'funding-loss-conditions')">{{ __('Condições de perda (todos os programas)') }}</button>
-                </p>
-            </x-dashboard.consultoria-section>
+        @if ($progressive && in_array('programas', $sectionsPending, true))
+            <div data-municipality-health-section="programas" class="space-y-6">
+                @include('dashboard.analytics.partials.municipality-health-section-skeleton', [
+                    'message' => __('A carregar programas complementares…'),
+                ])
+            </div>
+        @elseif (count($complementaryPrograms) > 0)
+            @include('dashboard.analytics.partials.municipality-health-section-programas', [
+                'healthData' => $h,
+                'diagStep' => $diagStep,
+            ])
         @endif
 
-        @if (count($thematicBlocks) > 0)
-            <x-dashboard.consultoria-section
-                :step="$diagStep['diag-tematico'] ?? null"
-                anchor="diag-tematico"
-                :title="__('Leitura temática')"
-                :subtitle="__('Consolida i-Educar com indicadores públicos quando disponíveis.')"
-            >
-                <x-dashboard.consultoria-thematic-blocks :blocks="$thematicBlocks" />
-            </x-dashboard.consultoria-section>
+        @if ($progressive && in_array('tematico', $sectionsPending, true))
+            <div data-municipality-health-section="tematico" class="space-y-6">
+                @include('dashboard.analytics.partials.municipality-health-section-skeleton', [
+                    'message' => __('A carregar leitura temática e indicadores pedagógicos…'),
+                ])
+            </div>
+        @elseif (count($thematicBlocks) > 0)
+            @include('dashboard.analytics.partials.municipality-health-section-tematico', [
+                'healthData' => $h,
+                'diagStep' => $diagStep,
+            ])
         @endif
 
         @if ($hasPublicSources)
@@ -388,35 +365,5 @@
             </x-dashboard.consultoria-section>
         @endif
 
-        @if (count($fundebMods) > 0)
-            <x-dashboard.consultoria-section
-                :step="$diagStep['diag-roteiro'] ?? null"
-                anchor="diag-roteiro"
-                :title="__('Roteiro FUNDEB / VAAR')"
-                :subtitle="__('Eixos de condicionalidade e situação municipal.')"
-            >
-                <div class="space-y-2">
-                    @foreach ($fundebMods as $mod)
-                        @php
-                            $mst = (string) ($mod['status'] ?? 'neutral');
-                            $mchip = match ($mst) {
-                                'success' => 'border-l-emerald-500',
-                                'warning' => 'border-l-amber-500',
-                                'danger' => 'border-l-red-500',
-                                default => 'border-l-slate-400',
-                            };
-                        @endphp
-                        <article class="serv-panel border-l-4 {{ $mchip }} px-3 py-2 text-xs">
-                            <p class="font-medium text-serv-navy dark:text-slate-100">{{ $mod['title'] ?? '' }}</p>
-                            <p class="text-slate-500 dark:text-slate-400 mt-0.5">{{ $mod['reference'] ?? '' }}</p>
-                            <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">{{ $mod['situacao'] ?? '' }}</p>
-                        </article>
-                    @endforeach
-                </div>
-                <p class="serv-callout">
-                    <x-consultoria-tab-link tab="fundeb" :label="__('Abrir aba FUNDEB completa')" class="text-xs" />
-                </p>
-            </x-dashboard.consultoria-section>
-        @endif
     @endif
 </div>

@@ -58,7 +58,7 @@ final class AnalyticsFullReportAssembler
         $fundeb = $this->fundeb->buildReport($city, $filters, $overview, $enrollment, $performance, $attendance, $inclusion, $network, $disc);
         $other = $this->otherFunding->buildReport($city, $filters);
         $work = $this->workDone->buildReport($city, $filters);
-        $health = $this->health->snapshot($city, $filters);
+        $health = $this->health->snapshotFull($city, $filters);
 
         $cover = AnalyticsReportCoverPresentation::enrich(
             $this->coverBuilder->build($city, $yearLabel, $filters),

@@ -4,6 +4,7 @@ namespace App\Repositories\Ieducar;
 
 use App\Models\City;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Dashboard\MunicipalityHealthSections;
 use App\Support\Dashboard\PublicDataSourcesCatalog;
 use App\Support\Ieducar\ConsultoriaThematicBridge;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
@@ -62,25 +63,345 @@ class MunicipalityHealthRepository
             return $empty;
         }
 
+        $variant = MunicipalityHealthSections::progressiveEnabled() ? 'shell' : 'full';
+
+        return $this->rememberSnapshot($city, $filters, $variant, $empty, function () use ($city, $filters, $empty, $variant): array {
+            if ($variant === 'shell') {
+                return $this->snapshotShell($city, $filters, $empty);
+            }
+
+            return $this->snapshotFresh($city, $filters, $empty);
+        });
+    }
+
+    /**
+     * Snapshot completo (PDF / exportação) — ignora carregamento progressivo.
+     *
+     * @return array<string, mixed>
+     */
+    public function snapshotFull(?City $city, IeducarFilterState $filters): array
+    {
+        $empty = [
+            'intro' => '',
+            'footnote' => '',
+            'year_label' => '',
+            'city_name' => '',
+            'compliance_score' => null,
+            'compliance_status' => 'neutral',
+            'compliance_label' => '',
+            'summary' => [],
+            'cadastro_dimensions' => [],
+            'thematic_blocks' => [],
+            'active_check_ids' => [],
+            'public_data_sources' => PublicDataSourcesCatalog::build(null, 'all'),
+            'fundeb_modules' => [],
+            'top_problems' => [],
+            'chart_pendencias' => null,
+            'error' => null,
+        ];
+
+        if ($city === null) {
+            return $empty;
+        }
+
+        return $this->rememberSnapshot($city, $filters, 'full', $empty, fn (): array => $this->snapshotFresh($city, $filters, $empty));
+    }
+
+    /**
+     * HTML/JSON de uma secção diferida do Diagnóstico.
+     *
+     * @return array<string, mixed>
+     */
+    public function section(string $section, ?City $city, IeducarFilterState $filters): array
+    {
+        if ($city === null || ! MunicipalityHealthSections::isValid($section)) {
+            return ['error' => __('Secção inválida.')];
+        }
+
+        $empty = ['error' => null];
+
+        return $this->rememberSnapshot($city, $filters, 'section:'.$section, $empty, function () use ($section, $city, $filters): array {
+            return match ($section) {
+                MunicipalityHealthSections::FUNDEB => $this->loadSectionFundeb($city, $filters),
+                MunicipalityHealthSections::PROGRAMAS => $this->loadSectionProgramas($city, $filters),
+                MunicipalityHealthSections::TEMATICO => $this->loadSectionTematico($city, $filters),
+                default => ['error' => __('Secção inválida.')],
+            };
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $empty
+     */
+    private function rememberSnapshot(
+        City $city,
+        IeducarFilterState $filters,
+        string $variant,
+        array $empty,
+        callable $loader,
+    ): array {
         $ttl = (int) config('analytics.municipality_health_cache_seconds', 300);
         if ($ttl <= 0) {
-            return $this->snapshotFresh($city, $filters, $empty);
+            return $loader();
         }
 
         $params = $filters->toQueryParamsWithCity((int) $city->id);
         ksort($params);
-        $cacheKey = 'analytics:municipality_health:'.(int) $city->id.':'.md5(json_encode($params));
+        $cacheKey = 'analytics:municipality_health:'.$variant.':'.(int) $city->id.':'.md5(json_encode($params));
 
         try {
-            return Cache::remember($cacheKey, $ttl, fn (): array => $this->snapshotFresh($city, $filters, $empty));
+            return Cache::remember($cacheKey, $ttl, $loader);
         } catch (\Throwable $e) {
             Log::warning('analytics.municipality_health_cache_failed', [
                 'city_id' => $city->id,
+                'variant' => $variant,
                 'message' => $e->getMessage(),
             ]);
 
-            return $this->snapshotFresh($city, $filters, $empty);
+            return $loader();
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $empty
+     * @return array<string, mixed>
+     */
+    private function snapshotShell(City $city, IeducarFilterState $filters, array $empty): array
+    {
+        try {
+            $overview = $this->overview->summary($city, $filters);
+            $disc = $this->discrepancies->snapshot($city, $filters);
+            $totalMat = (int) ($disc['total_matriculas'] ?? $overview['kpis']['matriculas'] ?? 0);
+            $fundebRef = DiscrepanciesFundingImpact::resolveReference($city, $filters);
+            $fundebStub = [
+                'modules' => [],
+                'resource_projection' => [],
+                'fundeb_reference' => $fundebRef,
+            ];
+
+            $payload = $this->assemble(
+                $city,
+                $filters,
+                $disc,
+                $fundebStub,
+                ['programs' => [], 'public_municipal' => ['queries' => []]],
+                ['periods' => [], 'estimativa' => [], 'activity_available' => false],
+                [],
+                [],
+                [],
+                $totalMat,
+                shellOnly: true,
+            );
+
+            return array_merge($payload, [
+                'progressive' => true,
+                'sections_pending' => MunicipalityHealthSections::deferred(),
+            ]);
+        } catch (\Throwable $e) {
+            return array_merge($empty, [
+                'city_name' => $city->name,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function loadSectionFundeb(City $city, IeducarFilterState $filters): array
+    {
+        $overview = $this->overview->summary($city, $filters);
+        $enrollment = $this->enrollment->sample($city, $filters);
+        $discForFundeb = $this->discrepancies->fundingImpactSnapshot($city, $filters);
+        $fundeb = $this->fundeb->buildReport(
+            $city,
+            $filters,
+            $overview,
+            $enrollment,
+            [],
+            [],
+            [],
+            [],
+            is_array($discForFundeb) ? $discForFundeb : null,
+        );
+
+        $modules = is_array($fundeb['modules'] ?? null) ? $fundeb['modules'] : [];
+        $proj = is_array($fundeb['resource_projection'] ?? null) ? $fundeb['resource_projection'] : [];
+        $fundebRef = is_array($fundeb['fundeb_reference'] ?? null)
+            ? $fundeb['fundeb_reference']
+            : DiscrepanciesFundingImpact::resolveReference($city, $filters);
+        $fundingDisplay = is_array($discForFundeb) && is_array($discForFundeb['funding_reference'] ?? null)
+            ? $discForFundeb['funding_reference']
+            : DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
+
+        $shell = $this->cachedShellOrReload($city, $filters);
+        $cadastro = is_array($shell['cadastro_dimensions'] ?? null) ? $shell['cadastro_dimensions'] : [];
+        $score = $this->computeComplianceScore($cadastro, $modules);
+        [$status, $label] = match (true) {
+            $score >= 80 => ['success', __('Boa conformidade')],
+            $score >= 55 => ['warning', __('Atenção — pendências relevantes')],
+            default => ['danger', __('Situação crítica')],
+        };
+        $modulosAlerta = 0;
+        foreach ($modules as $m) {
+            if (in_array((string) ($m['status'] ?? ''), ['danger', 'warning'], true)) {
+                $modulosAlerta++;
+            }
+        }
+
+        return [
+            'vaaf_comparacao' => is_array($proj['vaaf_comparacao'] ?? null)
+                ? $proj['vaaf_comparacao']
+                : FundebReferenceDisplay::vaafComparacao($fundebRef),
+            'previsao_comparacao' => $proj['previsao_comparacao'] ?? null,
+            'divergencia_vaaf' => is_array($proj['divergencia_vaaf'] ?? null)
+                ? $proj['divergencia_vaaf']
+                : (is_array($fundingDisplay['divergencia_vaaf'] ?? null)
+                    ? $fundingDisplay['divergencia_vaaf']
+                    : (is_array($fundebRef['divergencia'] ?? null) ? $fundebRef['divergencia'] : null)),
+            'funding_reference' => $fundebRef,
+            'fundeb_modules' => array_map(static fn (array $m): array => [
+                'id' => (string) ($m['id'] ?? ''),
+                'title' => (string) ($m['title'] ?? ''),
+                'status' => (string) ($m['status'] ?? 'neutral'),
+                'reference' => (string) ($m['reference'] ?? ''),
+                'situacao' => (string) ($m['situacao'] ?? ''),
+            ], $modules),
+            'compliance_score' => $score,
+            'compliance_status' => $status,
+            'compliance_label' => $label,
+            'summary_patch' => [
+                'modulos_fundeb_alerta' => $modulosAlerta,
+            ],
+            'error' => null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function loadSectionProgramas(City $city, IeducarFilterState $filters): array
+    {
+        $otherFunding = $this->otherFunding->buildReport($city, $filters);
+        $complementaryPrograms = self::summarizeComplementaryPrograms($otherFunding);
+        $activeProgramIds = array_values(array_filter(
+            array_map(
+                static fn (array $p): string => (string) ($p['id'] ?? ''),
+                array_filter($complementaryPrograms, static fn (array $p): bool => in_array((string) ($p['status'] ?? ''), ['warning', 'danger'], true))
+            ),
+            static fn (string $id): bool => $id !== ''
+        ));
+        $publicQueries = is_array($otherFunding['public_municipal'] ?? null) ? $otherFunding['public_municipal'] : [];
+        $publicQueriesOk = (int) count(array_filter(
+            is_array($publicQueries['queries'] ?? null) ? $publicQueries['queries'] : [],
+            static fn ($q): bool => is_array($q) && ($q['status'] ?? '') === 'success'
+        ));
+
+        $shell = $this->cachedShellOrReload($city, $filters);
+
+        return [
+            'complementary_programs' => $complementaryPrograms,
+            'programas_alerta' => count($activeProgramIds),
+            'active_program_ids' => $activeProgramIds,
+            'active_check_ids' => is_array($shell['active_check_ids'] ?? null) ? $shell['active_check_ids'] : [],
+            'other_funding_programs' => count($complementaryPrograms),
+            'public_queries_success' => $publicQueriesOk,
+            'summary_patch' => [
+                'programas_alerta' => count($activeProgramIds),
+            ],
+            'error' => $otherFunding['error'] ?? null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function loadSectionTematico(City $city, IeducarFilterState $filters): array
+    {
+        $overview = $this->overview->summary($city, $filters);
+        $enrollment = $this->enrollment->sample($city, $filters);
+        $performance = $this->performance->snapshot($city, $filters);
+        $attendance = $this->attendance->snapshot($city, $filters);
+        $inclusion = $this->inclusion->snapshot($city, $filters);
+        $network = $this->network->snapshot($city, $filters);
+        $disc = $this->discrepancies->snapshot($city, $filters);
+        $discForFundeb = [
+            'summary' => is_array($disc['summary'] ?? null) ? $disc['summary'] : [],
+            'funding_reference' => is_array($disc['funding_reference'] ?? null) ? $disc['funding_reference'] : null,
+        ];
+        $fundeb = $this->fundeb->buildReport(
+            $city,
+            $filters,
+            $overview,
+            $enrollment,
+            $performance,
+            $attendance,
+            $inclusion,
+            $network,
+            $discForFundeb,
+        );
+        $otherFunding = $this->otherFunding->buildReport($city, $filters);
+        $workDone = $this->workDone->buildReport($city, $filters);
+        $totalMat = (int) ($disc['total_matriculas'] ?? $overview['kpis']['matriculas'] ?? 0);
+        $workPeriods = is_array($workDone['periods'] ?? null) ? $workDone['periods'] : [];
+
+        return [
+            'thematic_blocks' => ConsultoriaThematicBridge::buildBlocks(
+                $inclusion,
+                $fundeb,
+                $performance,
+                $disc,
+                $totalMat,
+                is_array($network['kpis'] ?? null) ? $network['kpis'] : null,
+                $otherFunding,
+                $workDone,
+            ),
+            'work_done_available' => (bool) ($workDone['activity_available'] ?? false),
+            'summary_patch' => [
+                'recurso_prova_sem_nee' => (int) data_get($inclusion, 'recurso_prova.sem_nee', 0),
+                'cadastros_quinzena' => (int) ($workPeriods['fortnight'] ?? 0),
+                'ritmo_cadastro_dia' => (float) ($workDone['estimativa']['ritmo_por_dia'] ?? 0),
+            ],
+            'error' => null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function cachedShellOrReload(City $city, IeducarFilterState $filters): array
+    {
+        if (! MunicipalityHealthSections::progressiveEnabled()) {
+            return [];
+        }
+
+        $params = $filters->toQueryParamsWithCity((int) $city->id);
+        ksort($params);
+        $cacheKey = 'analytics:municipality_health:shell:'.(int) $city->id.':'.md5(json_encode($params));
+        $cached = Cache::get($cacheKey);
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        return $this->snapshotShell($city, $filters, [
+            'intro' => '',
+            'footnote' => '',
+            'year_label' => '',
+            'city_name' => '',
+            'compliance_score' => null,
+            'compliance_status' => 'neutral',
+            'compliance_label' => '',
+            'summary' => [],
+            'cadastro_dimensions' => [],
+            'thematic_blocks' => [],
+            'active_check_ids' => [],
+            'public_data_sources' => [],
+            'fundeb_modules' => [],
+            'top_problems' => [],
+            'chart_pendencias' => null,
+            'error' => null,
+        ]);
     }
 
     /**
@@ -142,6 +463,7 @@ class MunicipalityHealthRepository
         array $performance,
         array $network,
         int $totalMat,
+        bool $shellOnly = false,
     ): array {
         $checks = is_array($disc['checks'] ?? null) ? $disc['checks'] : [];
         $dimensions = is_array($disc['dimensions'] ?? null) ? $disc['dimensions'] : [];
@@ -179,21 +501,27 @@ class MunicipalityHealthRepository
         $fundingDisplay = is_array($disc['funding_reference'] ?? null)
             ? $disc['funding_reference']
             : DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
-        $vaafComparacao = is_array($proj['vaaf_comparacao'] ?? null)
-            ? $proj['vaaf_comparacao']
-            : FundebReferenceDisplay::vaafComparacao($fundebRef);
-        $previsaoComparacao = is_array($proj['previsao_comparacao'] ?? null)
-            ? $proj['previsao_comparacao']
-            : ($totalMat > 0 ? FundebReferenceDisplay::previsaoComparacao($totalMat, $fundebRef, $city, $filters) : null);
-        $divergenciaVaaf = is_array($proj['divergencia_vaaf'] ?? null)
-            ? $proj['divergencia_vaaf']
-            : (is_array($fundingDisplay['divergencia_vaaf'] ?? null)
-                ? $fundingDisplay['divergencia_vaaf']
-                : (is_array($fundebRef['divergencia'] ?? null) ? $fundebRef['divergencia'] : null));
+        $vaafComparacao = $shellOnly
+            ? null
+            : (is_array($proj['vaaf_comparacao'] ?? null)
+                ? $proj['vaaf_comparacao']
+                : FundebReferenceDisplay::vaafComparacao($fundebRef));
+        $previsaoComparacao = $shellOnly
+            ? null
+            : (is_array($proj['previsao_comparacao'] ?? null)
+                ? $proj['previsao_comparacao']
+                : ($totalMat > 0 ? FundebReferenceDisplay::previsaoComparacao($totalMat, $fundebRef, $city, $filters) : null));
+        $divergenciaVaaf = $shellOnly
+            ? null
+            : (is_array($proj['divergencia_vaaf'] ?? null)
+                ? $proj['divergencia_vaaf']
+                : (is_array($fundingDisplay['divergencia_vaaf'] ?? null)
+                    ? $fundingDisplay['divergencia_vaaf']
+                    : (is_array($fundebRef['divergencia'] ?? null) ? $fundebRef['divergencia'] : null)));
 
         $workPeriods = is_array($workDone['periods'] ?? null) ? $workDone['periods'] : [];
-        $cadastrosQuinzena = (int) ($workPeriods['fortnight'] ?? 0);
-        $complementaryPrograms = self::summarizeComplementaryPrograms($otherFunding);
+        $cadastrosQuinzena = $shellOnly ? 0 : (int) ($workPeriods['fortnight'] ?? 0);
+        $complementaryPrograms = $shellOnly ? [] : self::summarizeComplementaryPrograms($otherFunding);
         $activeProgramIds = array_values(array_filter(
             array_map(
                 static fn (array $p): string => (string) ($p['id'] ?? ''),
@@ -228,9 +556,9 @@ class MunicipalityHealthRepository
                 'ganho_potencial_anual' => (float) ($discSummary['ganho_potencial_anual'] ?? 0),
                 'escolas_afetadas' => (int) ($discSummary['escolas_afetadas'] ?? 0),
                 'total_matriculas' => $totalMat > 0 ? $totalMat : ($disc['total_matriculas'] ?? null),
-                'recurso_prova_sem_nee' => (int) data_get($inclusion, 'recurso_prova.sem_nee', 0),
+                'recurso_prova_sem_nee' => $shellOnly ? 0 : (int) data_get($inclusion, 'recurso_prova.sem_nee', 0),
                 'cadastros_quinzena' => $cadastrosQuinzena,
-                'ritmo_cadastro_dia' => (float) ($workDone['estimativa']['ritmo_por_dia'] ?? 0),
+                'ritmo_cadastro_dia' => $shellOnly ? 0.0 : (float) ($workDone['estimativa']['ritmo_por_dia'] ?? 0),
             ],
             'funding_reference' => $fundebRef,
             'funding_display' => $fundingDisplay,
@@ -241,20 +569,22 @@ class MunicipalityHealthRepository
             'programas_alerta' => count($activeProgramIds),
             'complementary_programs' => $complementaryPrograms,
             'active_program_ids' => $activeProgramIds,
-            'public_queries_success' => $publicQueriesOk,
-            'work_done_available' => (bool) ($workDone['activity_available'] ?? false),
+            'public_queries_success' => $shellOnly ? 0 : $publicQueriesOk,
+            'work_done_available' => $shellOnly ? false : (bool) ($workDone['activity_available'] ?? false),
             'cadastro_dimensions' => $cadastroDimensions,
             'active_check_ids' => is_array($disc['active_check_ids'] ?? null) ? $disc['active_check_ids'] : [],
-            'thematic_blocks' => ConsultoriaThematicBridge::buildBlocks(
-                $inclusion,
-                $fundeb,
-                $performance,
-                $disc,
-                $totalMat,
-                is_array($network['kpis'] ?? null) ? $network['kpis'] : null,
-                $otherFunding,
-                $workDone,
-            ),
+            'thematic_blocks' => $shellOnly
+                ? []
+                : ConsultoriaThematicBridge::buildBlocks(
+                    $inclusion,
+                    $fundeb,
+                    $performance,
+                    $disc,
+                    $totalMat,
+                    is_array($network['kpis'] ?? null) ? $network['kpis'] : null,
+                    $otherFunding,
+                    $workDone,
+                ),
             'public_data_sources' => PublicDataSourcesCatalog::build($city, 'all'),
             'fundeb_modules' => array_map(static fn (array $m): array => [
                 'id' => (string) ($m['id'] ?? ''),

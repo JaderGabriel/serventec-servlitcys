@@ -116,6 +116,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Diagnóstico — carregamento progressivo (shell + secções AJAX)
+    |--------------------------------------------------------------------------
+    |
+    | Shell rápido (Discrepâncias + visão geral); blocos FUNDEB, programas e
+    | leitura temática vêm em pedidos separados após a primeira pintura.
+    |
+    */
+
+    'municipality_health_progressive_sections' => filter_var(
+        env('ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE', true),
+        FILTER_VALIDATE_BOOL,
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
     | Abas de Finanças — reutilizar dados já carregados no contexto municipal
     |--------------------------------------------------------------------------
     |

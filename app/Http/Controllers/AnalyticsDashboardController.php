@@ -25,6 +25,8 @@ use App\Support\Dashboard\AnalyticsLoadProfiler;
 use App\Support\Dashboard\AnalyticsFinanceTabPreload;
 use App\Support\Dashboard\AnalyticsMunicipalityContext;
 use App\Support\Dashboard\AnalyticsTabCatalog;
+use App\Support\Dashboard\ConsultoriaFlow;
+use App\Support\Dashboard\MunicipalityHealthSections;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Dashboard\ChartExportMeta;
 use App\Support\Dashboard\IeducarFilterState;
@@ -583,6 +585,24 @@ class AnalyticsDashboardController extends Controller
 
         $tabWarnings = [];
         $tabKey = PulseOperationRecorder::analyticsTabKey($tab, (int) $city->id);
+        $healthSection = (string) $request->query('health_section', '');
+
+        if ($tab === 'municipality_health' && $healthSection !== '') {
+            if (! MunicipalityHealthSections::isValid($healthSection)) {
+                abort(404);
+            }
+
+            return PulseOperationRecorder::measure(
+                $tabKey.':section:'.$healthSection,
+                fn (): Response => $this->renderMunicipalityHealthSection(
+                    $healthSection,
+                    $city,
+                    $filters,
+                    $municipalityHealthRepository,
+                    $tabWarnings,
+                ),
+            );
+        }
 
         try {
             $response = PulseOperationRecorder::measure($tabKey, fn (): Response => $this->renderAnalyticsTabPartial(
@@ -1191,6 +1211,57 @@ class AnalyticsDashboardController extends Controller
             : null;
 
         return ['fundeb' => $fundeb, 'context' => $context];
+    }
+
+    /**
+     * Fragmento HTML de uma secção diferida do Diagnóstico (AJAX progressivo).
+     *
+     * @param  list<string>  $warnings
+     */
+    private function renderMunicipalityHealthSection(
+        string $section,
+        City $city,
+        IeducarFilterState $filters,
+        MunicipalityHealthRepository $municipalityHealthRepository,
+        array &$warnings,
+    ): Response {
+        $sectionData = $this->safeAnalyticsLoad(
+            fn () => $municipalityHealthRepository->section($section, $city, $filters),
+            ['error' => __('Secção indisponível.')],
+            match ($section) {
+                MunicipalityHealthSections::FUNDEB => __('VAAF e FUNDEB'),
+                MunicipalityHealthSections::PROGRAMAS => __('Programas'),
+                MunicipalityHealthSections::TEMATICO => __('Leitura temática'),
+                default => $section,
+            },
+            $warnings,
+        );
+
+        $healthData = is_array($sectionData) ? $sectionData : [];
+        $diagStep = ConsultoriaFlow::stepMap(ConsultoriaFlow::numberedSteps([
+            ['label' => __('VAAF'), 'anchor' => 'diag-vaaf', 'visible' => $section === MunicipalityHealthSections::FUNDEB],
+            ['label' => __('Programas'), 'anchor' => 'diag-programas', 'visible' => $section === MunicipalityHealthSections::PROGRAMAS],
+            ['label' => __('Temático'), 'anchor' => 'diag-tematico', 'visible' => $section === MunicipalityHealthSections::TEMATICO],
+            ['label' => __('Roteiro'), 'anchor' => 'diag-roteiro', 'visible' => $section === MunicipalityHealthSections::FUNDEB],
+        ]));
+
+        $view = match ($section) {
+            MunicipalityHealthSections::FUNDEB => 'dashboard.analytics.partials.municipality-health-section-fundeb',
+            MunicipalityHealthSections::PROGRAMAS => 'dashboard.analytics.partials.municipality-health-section-programas',
+            MunicipalityHealthSections::TEMATICO => 'dashboard.analytics.partials.municipality-health-section-tematico',
+            default => abort(404),
+        };
+
+        $status = isset($healthData['error']) && filled($healthData['error']) ? 'partial-error' : 'ok';
+
+        return response()
+            ->view($view, [
+                'healthData' => $healthData,
+                'diagStep' => $diagStep,
+            ])
+            ->header('X-Analytics-Tab', 'municipality_health')
+            ->header('X-Analytics-Health-Section', $section)
+            ->header('X-Analytics-Tab-Status', $status);
     }
 
     /**

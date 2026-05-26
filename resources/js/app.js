@@ -287,6 +287,12 @@ document.addEventListener("alpine:init", () => {
                     const el = panel;
                     el.innerHTML = html;
                     Alpine.initTree(el);
+                    if (
+                        t === "municipality_health" &&
+                        el.querySelector("[data-municipality-health-progressive]")
+                    ) {
+                        await this.loadMunicipalityHealthSections(el);
+                    }
                     this.tabLoaded[t] = true;
                 } catch (e) {
                     console.error("analytics tab lazy", e);
@@ -307,6 +313,118 @@ document.addEventListener("alpine:init", () => {
                 } finally {
                     this.loadingTab = null;
                     servDataLoadingFinish();
+                }
+            },
+            async loadMunicipalityHealthSections(panel) {
+                const sections = ["fundeb", "programas", "tematico"];
+                const labels = {
+                    fundeb: "VAAF e FUNDEB",
+                    programas: "Programas complementares",
+                    tematico: "Leitura temática",
+                };
+                await Promise.all(
+                    sections.map(async (section) => {
+                        const slot = panel.querySelector(
+                            `[data-municipality-health-section="${section}"]`,
+                        );
+                        if (!slot) {
+                            return;
+                        }
+                        try {
+                            const u = new URL(
+                                this.tabFetchUrl,
+                                window.location.origin,
+                            );
+                            u.search = window.location.search;
+                            u.searchParams.set("tab", "municipality_health");
+                            u.searchParams.set("health_section", section);
+                            const r = await fetch(u.toString(), {
+                                headers: {
+                                    Accept: "text/html",
+                                    "X-Requested-With": "XMLHttpRequest",
+                                },
+                                credentials: "same-origin",
+                            });
+                            if (!r.ok) {
+                                throw new Error(`HTTP ${r.status}`);
+                            }
+                            const html = await r.text();
+                            slot.innerHTML = html;
+                            Alpine.initTree(slot);
+                            this.applyMunicipalityHealthPatches(panel, slot);
+                        } catch (e) {
+                            console.error(
+                                "municipality health section",
+                                section,
+                                e,
+                            );
+                            slot.innerHTML = `<p class="text-sm text-red-600 dark:text-red-400 px-2 py-4">${labels[section] ?? section}: erro ao carregar.</p>`;
+                        }
+                    }),
+                );
+            },
+            applyMunicipalityHealthPatches(panel, sectionEl) {
+                const scoreScript = sectionEl.querySelector(
+                    "[data-health-score-patch]",
+                );
+                if (scoreScript?.textContent) {
+                    try {
+                        const patch = JSON.parse(scoreScript.textContent);
+                        const root = panel.querySelector(
+                            "[data-health-compliance-root]",
+                        );
+                        if (root && patch.compliance_score != null) {
+                            root.dataset.complianceScore = String(
+                                patch.compliance_score,
+                            );
+                            root.dataset.complianceStatus =
+                                patch.compliance_status ?? "";
+                            root.dataset.complianceLabel =
+                                patch.compliance_label ?? "";
+                            window.dispatchEvent(
+                                new CustomEvent("health-compliance-patched", {
+                                    detail: patch,
+                                }),
+                            );
+                        }
+                        const modKpi = panel.querySelector(
+                            "[data-health-kpi-modulos-fundeb]",
+                        );
+                        const modVal =
+                            patch.summary_patch?.modulos_fundeb_alerta;
+                        if (modKpi && modVal != null) {
+                            modKpi.textContent = String(modVal);
+                            modKpi.closest("[data-health-kpi-row]")?.classList.remove(
+                                "hidden",
+                            );
+                        }
+                    } catch (e) {
+                        console.warn("health score patch", e);
+                    }
+                }
+                const summaryScript = sectionEl.querySelector(
+                    "[data-health-summary-patch]",
+                );
+                if (summaryScript?.textContent) {
+                    try {
+                        const patch = JSON.parse(summaryScript.textContent);
+                        Object.entries(patch).forEach(([key, val]) => {
+                            const node = panel.querySelector(
+                                `[data-health-summary-${key}]`,
+                            );
+                            if (node) {
+                                node.textContent =
+                                    typeof val === "number"
+                                        ? val.toLocaleString("pt-BR")
+                                        : String(val);
+                                node
+                                    .closest("[data-health-kpi-row]")
+                                    ?.classList.remove("hidden");
+                            }
+                        });
+                    } catch (e) {
+                        console.warn("health summary patch", e);
+                    }
                 }
             },
             afterTabChange() {
