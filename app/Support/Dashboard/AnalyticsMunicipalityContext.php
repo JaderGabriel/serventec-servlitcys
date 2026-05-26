@@ -66,6 +66,54 @@ final class AnalyticsMunicipalityContext
     }
 
     /**
+     * Contexto leve para a aba Censo (ritmo de cadastro / exportação Educacenso).
+     *
+     * @param  array<string, mixed>  $workDone
+     * @param  array<string, mixed>  $overviewData
+     * @return array<string, mixed>|null
+     */
+    public static function fromWorkDoneSnapshot(array $workDone, array $overviewData = []): ?array
+    {
+        if ($workDone === []) {
+            return null;
+        }
+
+        $censo = is_array($workDone['censo'] ?? null) ? $workDone['censo'] : [];
+        $censoSum = is_array($censo['summary'] ?? null) ? $censo['summary'] : [];
+        $pendentes = (int) ($censoSum['pendentes'] ?? 0);
+        $periods = is_array($workDone['periods'] ?? null) ? $workDone['periods'] : [];
+        $fortnight = (int) ($periods['fortnight'] ?? 0);
+        $kpis = is_array($overviewData['kpis'] ?? null) ? $overviewData['kpis'] : [];
+        $mat = (int) ($workDone['total_matriculas'] ?? $kpis['matriculas'] ?? 0);
+
+        $score = 92;
+        if ($pendentes > 0) {
+            $score = max(30, 100 - min(55, $pendentes * 4));
+        } elseif (! ($workDone['activity_available'] ?? false)) {
+            $score = 75;
+        } elseif ($fortnight <= 0) {
+            $score = 80;
+        }
+
+        $status = self::statusFromScore($score);
+
+        return [
+            'perda_estimada_anual' => 0.0,
+            'ganho_potencial_anual' => 0.0,
+            'saldo_liquido' => 0.0,
+            'pendencias_cadastro' => $pendentes,
+            'corrigiveis' => 0,
+            'com_problema' => $pendentes,
+            'escolas_afetadas' => 0,
+            'total_matriculas' => $mat > 0 ? $mat : null,
+            'compliance_score' => $score,
+            'compliance_status' => $status,
+            'compliance_label' => self::labelFromScore($score),
+            'funding_reference' => null,
+        ];
+    }
+
+    /**
      * @param  array{summary?: array<string, mixed>, funding_reference?: ?array<string, mixed>}|null  $fundingSnapshot
      * @param  array<string, mixed>  $overviewData
      * @return array<string, mixed>|null

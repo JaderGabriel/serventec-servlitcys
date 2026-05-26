@@ -14,6 +14,14 @@ Com **`config/analytics.php` → `lazy_tab_loading`**, a página inicial só exe
 
 Para desativar o lazy e voltar ao carregamento completo num único HTML (útil para comparar antes/depois no Pulse): **`ANALYTICS_LAZY_TABS=false`**.
 
+## Navegação em quatro áreas (3.4.0+)
+
+Desde a release **`20260531-Nemesis`**, o menu do Analytics tem **quatro** áreas: Cadastro → Pedagógico → **Censo** → Finanças. A aba Educacenso (`work_done`) pertence só ao grupo `censo`; Finanças agrupa Diagnóstico, Discrepâncias, FUNDEB e Financiamentos.
+
+- Catálogo: `AnalyticsTabCatalog::groups()` e `navigationPayload()`.
+- Preload Censo: `preloadCensoTab()` (separado de Finanças).
+- Guia de UI: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
+
 ## Diagnóstico (`municipality_health`) — performance
 
 Com **`ANALYTICS_MUNICIPALITY_HEALTH_MODE=strategic`** (defeito desde 3.3.2):
@@ -43,10 +51,12 @@ No **Pulse → Operações**, filtre `analytics:tab:municipality_health` e `anal
 
 Snapshot completo explícito: **`ANALYTICS_MUNICIPALITY_HEALTH_MODE=full`**. Progressivo legado: **`ANALYTICS_MUNICIPALITY_HEALTH_MODE=progressive`**.
 
-### Problemas conhecidos (3.3.1–3.3.2)
+### Problemas conhecidos (3.3.1–3.4.0)
 
 | Sintoma | Causa habitual | Acção |
 |---------|----------------|-------|
+| Índice de conformidade fixo em 100% sem mudar dados | Cache de aba incompleto reutilizado (corrigido em 3.4.0, cache v2) | `php artisan cache:clear`; reabrir Diagnóstico após Discrepâncias |
+| Abas Finanças em branco após deploy | Views/CSS antigos | `npm run build`, `view:clear`, hard refresh |
 | Skeletons «A carregar VAAF/programas/temático» sem fim | Bundle JS antigo ou sessão bloqueada (corrigido em `83ff2b1`) | `npm run build`, `config:clear`, hard refresh; confirmar pedidos `health_section=` na rede do browser |
 | Outras abas lentas enquanto Diagnóstico abre | Pedido shell ainda a correr na BD i-Educar | Normal em bases grandes; secções passam a correr após libertar sessão |
 | PDF diferente do ecrã | PDF usa `snapshotFull` | Esperado — exportação ignora modo progressivo |

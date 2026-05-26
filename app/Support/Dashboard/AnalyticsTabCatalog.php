@@ -5,10 +5,14 @@ namespace App\Support\Dashboard;
 use App\Models\User;
 
 /**
- * Ordem e agrupamento das abas do painel — cadastro → pedagógico → finanças.
+ * Ordem e agrupamento das abas do painel — cadastro → pedagógico → censo → finanças.
  */
 final class AnalyticsTabCatalog
 {
+    public const GROUP_CENSO = 'censo';
+
+    public const GROUP_FINANCE = 'consultoria';
+
     /**
      * @return list<array{id: string, label: string, tabs: list<string>}>
      */
@@ -35,14 +39,20 @@ final class AnalyticsTabCatalog
                 ],
             ],
             [
-                'id' => 'consultoria',
+                'id' => self::GROUP_CENSO,
+                'label' => __('Censo e cadastro'),
+                'tabs' => [
+                    'work_done',
+                ],
+            ],
+            [
+                'id' => self::GROUP_FINANCE,
                 'label' => __('Finanças e repasses'),
                 'tabs' => [
                     'municipality_health',
                     'discrepancies',
                     'fundeb',
                     'other_funding',
-                    'work_done',
                 ],
             ],
         ];
@@ -68,10 +78,16 @@ final class AnalyticsTabCatalog
                 'hint' => __('Inclusão, desempenho e frequência'),
                 'tone' => 'violet',
             ],
-            'consultoria' => [
+            'censo' => [
                 'step' => '3',
+                'short' => __('Censo'),
+                'hint' => __('Ritmo de cadastro e exportação Educacenso'),
+                'tone' => 'sky',
+            ],
+            'consultoria' => [
+                'step' => '4',
                 'short' => __('Finanças'),
-                'hint' => __('Diagnóstico, discrepâncias, FUNDEB e Censo'),
+                'hint' => __('Diagnóstico, discrepâncias, FUNDEB e financiamentos'),
                 'tone' => 'teal',
             ],
         ];
@@ -89,7 +105,7 @@ final class AnalyticsTabCatalog
             'discrepancies' => __('Erros de cadastro com impacto financeiro'),
             'fundeb' => __('VAAF, VAAR e previsão de repasse'),
             'other_funding' => __('PNAE, PNATE, PDDE e fontes públicas'),
-            'work_done' => __('Ritmo de cadastro e exportação Censo'),
+            'work_done' => __('Educacenso, ritmo de cadastro e fecho do ano'),
             'overview' => __('Totais de escolas, turmas e matrículas'),
             'enrollment' => __('Matrículas, distorção e ocupação'),
             'network' => __('Vagas, turnos e oferta da rede'),
@@ -225,7 +241,7 @@ final class AnalyticsTabCatalog
     }
 
     /**
-     * Abas com faixa de impacto no topo (até Censo).
+     * Abas com faixa de impacto no topo.
      *
      * @return list<string>
      */
@@ -239,9 +255,37 @@ final class AnalyticsTabCatalog
             'inclusion',
             'performance',
             'attendance',
+            'work_done',
+            'municipality_health',
+            'discrepancies',
             'fundeb',
             'other_funding',
-            'work_done',
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function financeGroupTabKeys(): array
+    {
+        $tabs = [];
+        foreach (self::groups() as $group) {
+            if (($group['id'] ?? '') === self::GROUP_FINANCE) {
+                $tabs = $group['tabs'] ?? [];
+                break;
+            }
+        }
+
+        return array_values($tabs);
+    }
+
+    public static function isFinanceGroupTab(string $tab): bool
+    {
+        return in_array($tab, self::financeGroupTabKeys(), true);
+    }
+
+    public static function isCensoGroupTab(string $tab): bool
+    {
+        return self::groupIdForTab($tab) === self::GROUP_CENSO;
     }
 }

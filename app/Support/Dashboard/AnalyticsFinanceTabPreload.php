@@ -3,22 +3,33 @@
 namespace App\Support\Dashboard;
 
 /**
- * Pré-carga das abas de Finanças: um snapshot por aba e contexto municipal derivado (sem queries duplicadas).
+ * Pré-carga das abas de Finanças e Censo: um snapshot por aba e contexto municipal derivado.
  */
 final class AnalyticsFinanceTabPreload
 {
     public static function shouldReuseFundingContext(string $tab): bool
     {
-        if (! self::financeTabsReuseEnabled()) {
+        if (! self::financeTabsReuseEnabled() && ! self::isCensoGroupTab($tab)) {
             return false;
         }
 
         return match ($tab) {
             'municipality_health' => self::municipalityHealthReuseEnabled(),
-            'discrepancies', 'fundeb' => true,
-            'other_funding', 'work_done' => self::financeStripContextEnabled(),
+            'discrepancies', 'fundeb' => self::financeTabsReuseEnabled(),
+            'other_funding' => self::financeStripContextEnabled(),
+            'work_done' => true,
             default => false,
         };
+    }
+
+    public static function isCensoGroupTab(string $tab): bool
+    {
+        return AnalyticsTabCatalog::isCensoGroupTab($tab);
+    }
+
+    public static function isFinanceGroupTab(string $tab): bool
+    {
+        return AnalyticsTabCatalog::isFinanceGroupTab($tab);
     }
 
     public static function financeTabsReuseEnabled(): bool

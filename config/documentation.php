@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '3.3.2',
-        'release_tag' => '20260530-Metis',
-        'commit_short' => '0bc0e81',
-        'commit_number' => 258,
-        'revision_date' => '2026-05-30',
+        'version' => '3.4.0',
+        'release_tag' => '20260531-Nemesis',
+        'commit_short' => '',
+        'commit_number' => null,
+        'revision_date' => '2026-05-31',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

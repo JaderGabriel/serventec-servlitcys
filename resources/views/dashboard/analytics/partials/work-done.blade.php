@@ -19,31 +19,49 @@
     $pct = static fn (?float $v): string => $v !== null ? $fmt($v).'%' : '—';
 @endphp
 
-<div class="space-y-6">
-    @if (! $yearFilterReady)
-        <p class="text-sm text-amber-800 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
-            {{ __('Selecione o ano letivo e aplique os filtros para acompanhar o Censo e o cadastro.') }}
-        </p>
-    @else
-        @include('dashboard.analytics.partials.tab-impact-strip', [
-            'tab' => 'work_done',
-            'yearFilterReady' => $yearFilterReady,
-            'municipalityContext' => $municipalityContext,
-            'tabData' => ['workDoneData' => $workDoneData],
-        ])
-        @if (filled($d['intro'] ?? null))
-            <p class="text-xs text-sky-800/90 dark:text-sky-300/90 border border-sky-200/60 dark:border-sky-800/50 rounded-md px-3 py-2 leading-relaxed">{{ $d['intro'] }}</p>
-        @endif
+@php
+    use App\Support\Dashboard\ConsultoriaFlow;
 
-        <p class="text-xs text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 leading-relaxed">
-            {{ $d['footnote'] ?? '' }}
-        </p>
+    $censoKpis = [];
+    if ((int) ($censoSummary['pendentes'] ?? 0) > 0) {
+        $censoKpis[] = ['label' => __('Escolas pendentes Censo'), 'value' => number_format((int) $censoSummary['pendentes']), 'tone' => 'amber'];
+    }
+    if ((int) ($periods['fortnight'] ?? 0) > 0) {
+        $censoKpis[] = ['label' => __('Cadastros (quinzena)'), 'value' => number_format((int) $periods['fortnight']), 'tone' => 'sky'];
+    }
+    $flowSteps = ConsultoriaFlow::numberedSteps([
+        ['label' => __('Meta de cadastro'), 'anchor' => 'censo-meta'],
+        ['label' => __('Educacenso'), 'anchor' => 'censo-export', 'visible' => (bool) ($censo['available'] ?? false)],
+        ['label' => __('Ritmo por usuário'), 'anchor' => 'censo-usuarios', 'visible' => count($byUser) > 0],
+    ]);
+@endphp
 
-        @if (! empty($d['error']))
-            <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
-                {{ $d['error'] }}
-            </div>
-        @endif
+<x-dashboard.consultoria-tab-frame
+    tab="work_done"
+    tone="sky"
+    :title="__('Censo e cadastro no i-Educar')"
+    :intro="$d['intro'] ?? __('Ritmo de cadastro, metas de volume e situação da exportação Educacenso no filtro aplicado.')"
+    :footnote="$d['footnote'] ?? null"
+    :error="$d['error'] ?? null"
+    :year-filter-ready="$yearFilterReady"
+    :municipality-context="$municipalityContext"
+    :tab-data="['workDoneData' => $workDoneData]"
+    :flow-steps="$flowSteps"
+    flow-tone="sky"
+    :no-year-message="__('Selecione o ano letivo e aplique os filtros para acompanhar o Censo e o cadastro.')"
+>
+    <x-slot name="links">
+        <span class="text-slate-600 dark:text-slate-400">{{ __('Relacionado:') }}</span>
+        <x-consultoria-tab-link tab="municipality_health" :label="__('Diagnóstico')" class="text-xs" />
+        <span class="text-slate-300">·</span>
+        <x-consultoria-tab-link tab="discrepancies" class="text-xs" />
+        <span class="text-slate-300">·</span>
+        <x-consultoria-tab-link tab="enrollment" :label="__('Matrículas')" class="text-xs" />
+    </x-slot>
+
+    @if (count($censoKpis) > 0)
+        <x-dashboard.consultoria-kpi-grid :items="$censoKpis" class="grid-cols-2 md:grid-cols-4 gap-2" />
+    @endif
 
         @if ($yearClosure !== null)
             <div class="rounded-lg border px-4 py-3 text-sm {{ ($yearClosure['consolidated'] ?? false) ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/30 text-emerald-950 dark:text-emerald-100' : 'border-amber-200 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/30 text-amber-950 dark:text-amber-100' }}">
@@ -60,9 +78,9 @@
         @endif
 
         {{-- Volume de cadastro: turmas, matrículas, enturmações --}}
-        <section class="rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50/30 dark:bg-violet-950/20 px-4 py-4 space-y-4">
+        <section id="censo-meta" class="serv-panel border-l-4 border-l-sky-500 px-4 py-4 space-y-4 scroll-mt-24">
             <div>
-                <h3 class="text-sm font-semibold uppercase tracking-wide text-violet-950 dark:text-violet-100">
+                <h3 class="text-sm font-semibold uppercase tracking-wide text-sky-950 dark:text-sky-100">
                     {{ __('Cadastro necessário — turmas, matrículas e enturmações') }}
                 </h3>
                 <p class="mt-1 text-xs text-violet-900/90 dark:text-violet-200/90 leading-relaxed">
@@ -378,5 +396,4 @@
                 </ul>
             </details>
         @endif
-    @endif
-</div>
+</x-dashboard.consultoria-tab-frame>

@@ -16,40 +16,26 @@
     };
 @endphp
 
-<div class="space-y-6">
-    @if (! $yearFilterReady)
-        <p class="serv-callout serv-callout--warning text-sm">
-            {{ __('Selecione o ano letivo e aplique os filtros para consultar demais financiamentos.') }}
-        </p>
-    @else
-        @include('dashboard.analytics.partials.tab-impact-strip', [
-            'tab' => 'other_funding',
-            'yearFilterReady' => $yearFilterReady,
-            'municipalityContext' => $municipalityContext,
-            'tabData' => ['otherFundingData' => $otherFundingData],
-        ])
-
-        <x-dashboard.serv-tab-intro :title="__('Financiamentos complementares')" tone="teal">
-            {{ $d['intro'] ?? __('PNAE, PNATE, PDDE e demais programas com cobertura de cadastro no i-Educar do município filtrado.') }}
-        </x-dashboard.serv-tab-intro>
-
-        @if (filled($d['footnote'] ?? null))
-            <p class="serv-callout">{{ $d['footnote'] }}</p>
-        @endif
-
-        <p class="serv-callout">
-            {{ __('Aprofundar:') }}
-            <x-consultoria-tab-link tab="fundeb" class="text-xs" />
-            ·
-            <x-consultoria-tab-link tab="discrepancies" class="text-xs" />
-            {{ __('(impacto de cadastro nos repasses).') }}
-        </p>
-
-        @if (! empty($d['error']))
-            <div class="serv-callout serv-callout--danger text-sm">
-                {{ $d['error'] }}
-            </div>
-        @endif
+<x-dashboard.consultoria-tab-frame
+    tab="other_funding"
+    tone="amber"
+    :title="__('Financiamentos complementares')"
+    :intro="$d['intro'] ?? __('PNAE, PNATE, PDDE e cobertura de campos no i-Educar.')"
+    :footnote="$d['footnote'] ?? null"
+    :error="$d['error'] ?? null"
+    :year-filter-ready="$yearFilterReady"
+    :municipality-context="$municipalityContext"
+    :tab-data="['otherFundingData' => $otherFundingData]"
+    :no-year-message="__('Selecione o ano letivo e aplique os filtros para consultar demais financiamentos.')"
+>
+    <x-slot name="links">
+        <span class="text-slate-600 dark:text-slate-400">{{ __('Aprofundar:') }}</span>
+        <x-consultoria-tab-link tab="municipality_health" :label="__('Diagnóstico')" class="text-xs" />
+        <span class="text-slate-300">·</span>
+        <x-consultoria-tab-link tab="fundeb" class="text-xs" />
+        <span class="text-slate-300">·</span>
+        <x-consultoria-tab-link tab="discrepancies" class="text-xs" />
+    </x-slot>
 
         <x-dashboard.municipal-public-queries
             :snapshot="$publicMunicipal"
@@ -214,5 +200,4 @@
                 </p>
             </x-dashboard.consultoria-section>
         @endif
-    @endif
-</div>
+</x-dashboard.consultoria-tab-frame>

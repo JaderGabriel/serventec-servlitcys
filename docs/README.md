@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto (`main`):** 3.3.2 · tag `20260530-Metis` · **Última revisão deste índice:** 30/05/2026
+**Versão do produto (`main`):** 3.4.0 · tag `20260531-Nemesis` · **Última revisão deste índice:** 31/05/2026
 
 Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que o sistema faz hoje, **porque** certas decisões foram tomadas e **o que** está planejado implementar.
 
@@ -46,6 +46,7 @@ Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que
 | Documento | Conteúdo |
 |-----------|----------|
 | [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) | Performance, Pulse, lazy por aba |
+| [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) | Navegação 4 áreas, UI consultoria (3.4.0+) |
 | [SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md](SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md) | Guia MEC/INEP: gráficos cobertos vs. pendentes |
 | [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | SAEB/IDEB: referências visuais e evolução pedagógica |
 | [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) | Dados a refinar, módulos e integrações |

@@ -88,8 +88,12 @@ final class AnalyticsTabCatalogTest extends TestCase
         $this->assertSame('cadastro', $groups[0]['id']);
         $this->assertContains('overview', $groups[0]['tabs']);
         $this->assertSame('pedagogico', $groups[1]['id']);
-        $this->assertSame('consultoria', $groups[2]['id']);
-        $this->assertContains('fundeb', $groups[2]['tabs']);
+        $this->assertSame('censo', $groups[2]['id']);
+        $this->assertContains('work_done', $groups[2]['tabs']);
+        $this->assertNotContains('work_done', $groups[3]['tabs']);
+        $this->assertSame('consultoria', $groups[3]['id']);
+        $this->assertContains('fundeb', $groups[3]['tabs']);
+        $this->assertContains('municipality_health', $groups[3]['tabs']);
     }
 
     /**
@@ -100,8 +104,9 @@ final class AnalyticsTabCatalogTest extends TestCase
     {
         $payload = AnalyticsTabCatalog::navigationPayload();
 
-        $this->assertCount(3, $payload['groups']);
+        $this->assertCount(4, $payload['groups']);
         $this->assertSame('cadastro', $payload['groups'][0]['id']);
+        $this->assertSame('censo', $payload['tabToGroup']['work_done']);
         $this->assertSame('consultoria', $payload['tabToGroup']['fundeb']);
         $this->assertSame('cadastro', $payload['tabToGroup']['overview']);
         $this->assertArrayHasKey('municipality_health', $payload['tabHints']);

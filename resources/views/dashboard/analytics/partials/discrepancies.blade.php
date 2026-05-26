@@ -71,78 +71,61 @@
     $discStep = ConsultoriaFlow::stepMap($flowSteps);
 @endphp
 
-<div class="space-y-6">
-    @if (! $yearFilterReady)
-        <p class="serv-callout serv-callout--warning text-sm">
-            {{ __('Selecione o ano letivo e aplique os filtros para executar as rotinas de discrepâncias.') }}
-        </p>
-    @else
-        @include('dashboard.analytics.partials.tab-impact-strip', [
-            'tab' => 'discrepancies',
-            'yearFilterReady' => $yearFilterReady,
-            'municipalityContext' => $municipalityContext,
-            'tabData' => ['discrepanciesData' => $discrepanciesData],
-        ])
+@php
+    $discMeta = '<span class="font-medium">'.e(__('Contexto')).':</span> '.e($d['city_name'] ?? '');
+    if (filled($d['year_label'] ?? null)) {
+        $discMeta .= ' — '.e($d['year_label']);
+    }
+    if (($d['total_matriculas'] ?? null) !== null) {
+        $discMeta .= ' · '.e(__('Matrículas ativas:')).' <span class="tabular-nums font-medium">'.number_format((int) $d['total_matriculas']).'</span>';
+    }
+    if ($fundingRef !== null && isset($fundingRef['vaa_label'])) {
+        $discMeta .= ' · '.e(__('VAAF:')).' <span class="font-medium">'.e($fundingRef['vaa_label']).'</span>';
+    }
+@endphp
 
-        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <x-dashboard.serv-tab-intro :title="__('Discrepâncias e erros de cadastro')" tone="rose">
-                {{ $d['intro'] ?? '' }}
-                <x-slot name="meta">
-                    <span class="font-medium">{{ __('Contexto') }}:</span>
-                    {{ $d['city_name'] ?? '' }}
-                    @if (filled($d['year_label'] ?? null))
-                        — {{ $d['year_label'] }}
-                    @endif
-                    @if (($d['total_matriculas'] ?? null) !== null)
-                        · {{ __('Matrículas ativas no filtro:') }}
-                        <span class="tabular-nums font-medium">{{ number_format((int) $d['total_matriculas']) }}</span>
-                    @endif
-                    @if ($fundingRef !== null && isset($fundingRef['vaa_label']))
-                        · {{ __('VAAF municipal:') }} <span class="font-medium">{{ $fundingRef['vaa_label'] }}</span>
-                        @if (filled($fundingRef['vaa_previa_label'] ?? null))
-                            · {{ __('prévia:') }} <span class="font-medium">{{ $fundingRef['vaa_previa_label'] }}</span>
-                        @endif
-                        @if (filled($fundingRef['vaa_fonte_label'] ?? null))
-                            <span class="opacity-80">({{ $fundingRef['vaa_fonte_label'] }})</span>
-                        @endif
-                    @endif
-                </x-slot>
-            </x-dashboard.serv-tab-intro>
-            <div class="shrink-0 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
-                <x-dashboard.funding-loss-conditions-button :activeCheckIds="$activeCheckIds" />
-                @if ($yearFilterReady)
-                    <a
-                        href="{{ route('dashboard.analytics.discrepancies.export', $exportParams) }}"
-                        class="serv-btn-secondary serv-btn-secondary--rose"
-                    >
-                        {{ __('Exportar CSV') }}
-                    </a>
-                @endif
-            </div>
-        </div>
+<x-dashboard.consultoria-tab-frame
+    tab="discrepancies"
+    tone="rose"
+    :title="__('Discrepâncias e erros de cadastro')"
+    :intro="$d['intro'] ?? ''"
+    :meta="$discMeta"
+    :footnote="$d['footnote'] ?? null"
+    :year-filter-ready="$yearFilterReady"
+    :municipality-context="$municipalityContext"
+    :tab-data="['discrepanciesData' => $discrepanciesData]"
+    :flow-steps="$flowSteps"
+    flow-tone="rose"
+    :no-year-message="__('Selecione o ano letivo e aplique os filtros para executar as rotinas de discrepâncias.')"
+>
+    <x-slot name="links">
+        <span class="text-slate-600 dark:text-slate-400">{{ __('Relacionado:') }}</span>
+        <x-consultoria-tab-link tab="municipality_health" :label="__('Diagnóstico')" class="text-xs" />
+        <span class="text-slate-300">·</span>
+        <x-consultoria-tab-link tab="fundeb" class="text-xs" />
+        <span class="text-slate-300">·</span>
+        <x-consultoria-tab-link tab="work_done" :label="__('Censo')" class="text-xs" />
+    </x-slot>
 
-        @if (filled($d['funding_aviso'] ?? null))
-            <p class="serv-callout serv-callout--warning">
-                {{ $d['funding_aviso'] }}
-            </p>
+    <div class="flex flex-wrap gap-2 items-center justify-end -mt-2">
+        <x-dashboard.funding-loss-conditions-button :activeCheckIds="$activeCheckIds" />
+        @if ($yearFilterReady)
+            <a
+                href="{{ route('dashboard.analytics.discrepancies.export', $exportParams) }}"
+                class="serv-btn-secondary serv-btn-secondary--rose"
+            >
+                {{ __('Exportar CSV') }}
+            </a>
         @endif
+    </div>
 
-        @if (filled($d['footnote'] ?? null))
-            <p class="serv-callout">{{ $d['footnote'] }}</p>
-        @endif
+    @if (filled($d['funding_aviso'] ?? null))
+        <p class="serv-callout serv-callout--warning">{{ $d['funding_aviso'] }}</p>
+    @endif
 
-        <p class="serv-callout">
-            {{ __('Painéis relacionados:') }}
-            <x-consultoria-tab-link tab="fundeb" class="text-xs" />
-            ·
-            <x-consultoria-tab-link tab="other_funding" :label="__('Financiamentos')" class="text-xs" />
-            ·
-            <x-consultoria-tab-link tab="work_done" :label="__('Censo')" class="text-xs" />
-            ·
-            <x-consultoria-tab-link tab="municipality_health" :label="__('Diagnóstico')" class="text-xs" />
-        </p>
-
-        <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="rose" />
+    @if ($showKpis)
+        <x-dashboard.consultoria-kpi-grid :items="$discKpis" class="grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-2" />
+    @endif
 
         @if ($vaafComparacao !== null)
             <x-dashboard.consultoria-section
@@ -178,15 +161,12 @@
             :title="__('Prioridades e impacto')"
             :subtitle="__('Resumo financeiro indicativo e rotinas com maior gravidade.')"
         >
-            @if ($showKpis)
-                <x-dashboard.consultoria-kpi-grid :items="$discKpis" />
-                @if ($fundingMet !== null)
-                    <x-dashboard.consultoria-funding-explanation
-                        :metodologia="$fundingMet"
-                        :resumo="$fundingResumo"
-                        class="mt-2"
-                    />
-                @endif
+            @if ($fundingMet !== null)
+                <x-dashboard.consultoria-funding-explanation
+                    :metodologia="$fundingMet"
+                    :resumo="$fundingResumo"
+                    class="mt-2"
+                />
             @endif
 
             @if (count($errosCriticos) > 0 || count($priorityDims) > 0)
@@ -473,5 +453,4 @@
         @elseif ($showKpis && count($pendenciaDims) > 0)
             <p class="text-xs text-slate-500 dark:text-slate-400 italic">{{ __('Sem detalhe por escola nesta base — consulte o mapa de rotinas ou Serventec.') }}</p>
         @endif
-    @endif
-</div>
+</x-dashboard.consultoria-tab-frame>

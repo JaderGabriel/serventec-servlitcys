@@ -21,13 +21,13 @@
         </div>
     </div>
 
-    {{-- Nível 1: três áreas temáticas --}}
+    {{-- Nível 1: quatro áreas temáticas --}}
     <div class="px-3 sm:px-5 py-3 bg-slate-50/80 dark:bg-slate-900/40">
         <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 px-0.5">
             {{ __('Área temática') }}
         </p>
         <div
-            class="grid grid-cols-1 sm:grid-cols-3 gap-2"
+            class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2"
             role="tablist"
             aria-label="{{ __('Áreas temáticas') }}"
         >
@@ -43,6 +43,7 @@
                         'serv-analytics-nav__segment--teal': group.tone === 'teal',
                         'serv-analytics-nav__segment--indigo': group.tone === 'indigo',
                         'serv-analytics-nav__segment--violet': group.tone === 'violet',
+                        'serv-analytics-nav__segment--sky': group.tone === 'sky',
                     }"
                 >
                     <span class="serv-analytics-nav__step" x-text="group.step"></span>

@@ -56,8 +56,9 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 48 | `f29b30b` | **Pós-3.3.0 (sem bump):** RX — legendas unificadas, KPIs, tons sky/teal |
 | 49 | `20260529-Helios` | **3.3.1** — otimização Analytics: Diagnóstico progressivo, cache, Finanças sem queries duplicadas |
 | 50 | `20260530-Metis` | **3.3.2** — Diagnóstico estratégico: modo leve, cache partilhado entre abas Finanças |
+| 51 | `20260531-Nemesis` | **3.4.0** — Área Censo na navegação; UI Finanças/Censo; Diagnóstico qualidade + explorar; cache conformidade v2 |
 
-**Em produção:** versão **3.3.2** · tag **`20260530-Metis`** · [RELEASE_20260530_METIS.md](RELEASE_20260530_METIS.md).
+**Em produção:** versão **3.4.0** · tag **`20260531-Nemesis`** · [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md).
 
 ---
 

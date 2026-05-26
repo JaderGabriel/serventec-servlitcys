@@ -239,6 +239,20 @@ class DiscrepanciesRepository
                 )));
 
                 if ($forDiagnosis) {
+                    $networkKpis = null;
+                    try {
+                        $networkKpis = MatriculaChartQueries::redeVagasResumoKpis($db, $city, $filters);
+                    } catch (\Throwable) {
+                        $networkKpis = null;
+                    }
+                    $dimensions = ConsultoriaOperationalSignals::append($dimensions, $networkKpis, $totalMat, $city, $filters);
+                    $summary = $this->buildSummaryFromDimensions($dimensions);
+                    $tiposComProblema = count(array_filter($dimensions, static fn (array $d): bool => (bool) ($d['has_issue'] ?? false)));
+                    $activeFromDimensions = array_values(array_filter(array_map(
+                        static fn (array $d): string => (string) ($d['id'] ?? ''),
+                        array_filter($dimensions, static fn (array $d): bool => (bool) ($d['has_issue'] ?? false))
+                    )));
+
                     return [
                         'year_label' => $this->yearLabel($filters),
                         'city_name' => $city->name,

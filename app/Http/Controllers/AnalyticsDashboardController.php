@@ -1022,15 +1022,12 @@ class AnalyticsDashboardController extends Controller
                 AnalyticsEmptyPayloads::otherFunding(),
                 __('Financiamentos'),
             ),
-            'work_done' => $this->preloadFinanceStripTab(
-                'work_done',
+            'work_done' => $this->preloadCensoTab(
+                $workDoneRepository,
+                $overviewRepository,
                 $city,
                 $filters,
-                $discrepanciesRepository,
                 $warnings,
-                fn () => $workDoneRepository->buildReport($city, $filters),
-                AnalyticsEmptyPayloads::workDone(),
-                __('Censo'),
             ),
             default => $empty,
         };
@@ -1134,6 +1131,51 @@ class AnalyticsDashboardController extends Controller
             'fundebData' => $fundebData,
             'otherFundingData' => null,
             'workDoneData' => null,
+        ];
+    }
+
+    /**
+     * @param  list<string>  $warnings
+     * @return array{context: ?array, healthData: null, discrepanciesData: null, fundebData: null, otherFundingData: null, workDoneData: ?array}
+     */
+    private function preloadCensoTab(
+        WorkDoneRepository $workDoneRepository,
+        OverviewRepository $overviewRepository,
+        City $city,
+        IeducarFilterState $filters,
+        array &$warnings,
+    ): array {
+        $workDoneData = $this->safeAnalyticsLoad(
+            fn () => $workDoneRepository->buildReport($city, $filters),
+            AnalyticsEmptyPayloads::workDone(),
+            __('Censo'),
+            $warnings,
+        );
+        if (is_array($workDoneData)) {
+            AnalyticsTabPayloadCache::put(AnalyticsTabPayloadCache::WORK_DONE, $city, $filters, $workDoneData);
+        }
+
+        $overviewData = $this->safeAnalyticsLoad(
+            fn () => $overviewRepository->summary($city, $filters),
+            ['kpis' => null, 'error' => null],
+            __('Visão geral'),
+            $warnings,
+        );
+        $totalMat = is_array($workDoneData) ? ($workDoneData['total_matriculas'] ?? null) : null;
+        if ($totalMat === null && is_array($overviewData)) {
+            $totalMat = $overviewData['kpis']['matriculas'] ?? null;
+        }
+
+        return [
+            'context' => AnalyticsMunicipalityContext::fromWorkDoneSnapshot(
+                is_array($workDoneData) ? $workDoneData : [],
+                is_array($overviewData) ? $overviewData : ['kpis' => ['matriculas' => $totalMat]],
+            ),
+            'healthData' => null,
+            'discrepanciesData' => null,
+            'fundebData' => null,
+            'otherFundingData' => null,
+            'workDoneData' => is_array($workDoneData) ? $workDoneData : null,
         ];
     }
 

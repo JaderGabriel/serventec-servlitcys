@@ -23,43 +23,37 @@
     };
 @endphp
 
-<div class="space-y-6">
-    @if (! $yearFilterReady)
-        <p class="serv-callout serv-callout--warning text-sm">
-            {{ __('Selecione o ano letivo (ou «Todos os anos») e aplique os filtros para gerar o relatório FUNDEB com base nos dados do i-Educar.') }}
-        </p>
-    @else
-        @include('dashboard.analytics.partials.tab-impact-strip', [
-            'tab' => 'fundeb',
-            'yearFilterReady' => $yearFilterReady,
-            'municipalityContext' => $municipalityContext,
-            'tabData' => ['fundebData' => $fundebData],
-        ])
+@php
+    $fundebMeta = null;
+    if (filled($fundebData['city_name'] ?? null) || filled($fundebData['year_label'] ?? null)) {
+        $fundebMeta = '<span class="font-medium">'.e(__('Contexto')).':</span> '
+            .e($fundebData['city_name'] ?? '');
+        if (filled($fundebData['year_label'] ?? null)) {
+            $fundebMeta .= ' — '.e($fundebData['year_label']);
+        }
+    }
+@endphp
 
-        <x-dashboard.serv-tab-intro :title="__('FUNDEB e repasses')" tone="teal">
-            {{ $fundebData['intro'] ?? __('Previsão de recursos, complementação e módulos de conformidade com base no cadastro filtrado.') }}
-            @if (filled($fundebData['city_name'] ?? null) || filled($fundebData['year_label'] ?? null))
-                <x-slot name="meta">
-                    <span class="font-medium">{{ __('Contexto') }}:</span>
-                    {{ $fundebData['city_name'] ?? '' }}
-                    @if (filled($fundebData['year_label'] ?? null))
-                        — {{ $fundebData['year_label'] }}
-                    @endif
-                </x-slot>
-            @endif
-        </x-dashboard.serv-tab-intro>
-
-        @if (filled($fundebData['footnote'] ?? null))
-            <p class="serv-callout">{{ $fundebData['footnote'] }}</p>
-        @endif
-
-        <p class="serv-callout">
-            {{ __('Aprofundar:') }}
-            <x-consultoria-tab-link tab="municipality_health" :label="__('Diagnóstico')" class="text-xs" />
-            ·
-            <x-consultoria-tab-link tab="discrepancies" class="text-xs" />
-            {{ __('(impacto financeiro indicativo e rotinas Censo).') }}
-        </p>
+<x-dashboard.consultoria-tab-frame
+    tab="fundeb"
+    tone="teal"
+    :title="__('FUNDEB e repasses')"
+    :intro="$fundebData['intro'] ?? __('Previsão de recursos, complementação VAAR e roteiro de condicionalidades.')"
+    :meta="$fundebMeta"
+    :footnote="$fundebData['footnote'] ?? null"
+    :year-filter-ready="$yearFilterReady"
+    :municipality-context="$municipalityContext"
+    :tab-data="['fundebData' => $fundebData]"
+    :no-year-message="__('Selecione o ano letivo (ou «Todos os anos») e aplique os filtros para gerar o relatório FUNDEB.')"
+>
+    <x-slot name="links">
+        <span class="text-slate-600 dark:text-slate-400">{{ __('Aprofundar:') }}</span>
+        <x-consultoria-tab-link tab="municipality_health" :label="__('Diagnóstico')" class="text-xs" />
+        <span class="text-slate-300">·</span>
+        <x-consultoria-tab-link tab="discrepancies" class="text-xs" />
+        <span class="text-slate-300">·</span>
+        <x-consultoria-tab-link tab="work_done" :label="__('Censo')" class="text-xs" />
+    </x-slot>
 
         @if (count($publicSources['categories'] ?? []) > 0)
             <x-dashboard.consultoria-public-sources
@@ -340,5 +334,4 @@
                 </article>
             @endforeach
         </div>
-    @endif
-</div>
+</x-dashboard.consultoria-tab-frame>

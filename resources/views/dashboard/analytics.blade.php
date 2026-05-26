@@ -24,7 +24,7 @@
             <div class="serv-panel serv-panel--info px-4 py-3 text-sm">
                 <p class="font-medium text-serv-navy dark:text-teal-100">{{ __('Foco no município selecionado') }}</p>
                 <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">
-                    {{ __('Indicadores e valores indicativos de saldo usam o cadastro i-Educar do município e os filtros aplicados. Comece pelo Diagnóstico ou FUNDEB; use Discrepâncias para corrigir cadastro com impacto em repasses.') }}
+                    {{ __('Navegue por área: Cadastro → Pedagógico → Censo → Finanças. O Diagnóstico consolida prioridades; Censo trata exportação Educacenso; Finanças detalha repasses e discrepâncias.') }}
                 </p>
             </div>
 

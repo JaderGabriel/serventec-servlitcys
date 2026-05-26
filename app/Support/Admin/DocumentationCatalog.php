@@ -252,6 +252,10 @@ final class DocumentationCatalog
                 'description' => __('Notas por tag de deploy (mais recentes primeiro).'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
+                    ['label' => __('Release 3.4.0 — Nemesis'), 'path' => 'docs/RELEASE_20260531_NEMESIS.md'],
+                    ['label' => __('Analytics — navegação e UI (3.4.0)'), 'path' => 'docs/ANALYTICS_NAVEGACAO_UI.md'],
+                    ['label' => __('Release 3.3.2 — Metis'), 'path' => 'docs/RELEASE_20260530_METIS.md'],
+                    ['label' => __('Release 3.3.1 — Helios'), 'path' => 'docs/RELEASE_20260529_HELIOS.md'],
                     ['label' => __('Release 3.3.0 — Eos'), 'path' => 'docs/RELEASE_20260528_EOS.md'],
                     ['label' => __('Release 3.2.0 — Notus'), 'path' => 'docs/RELEASE_20260527_NOTUS.md'],
                     ['label' => __('Release 3.1.0 — Boreas'), 'path' => 'docs/RELEASE_20260526_BOREAS.md'],

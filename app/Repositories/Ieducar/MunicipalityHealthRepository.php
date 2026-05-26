@@ -156,7 +156,7 @@ class MunicipalityHealthRepository
 
         $params = $filters->toQueryParamsWithCity((int) $city->id);
         ksort($params);
-        $cacheKey = 'analytics:municipality_health:'.$variant.':'.(int) $city->id.':'.md5(json_encode($params));
+        $cacheKey = 'analytics:municipality_health:v2:'.$variant.':'.(int) $city->id.':'.md5(json_encode($params));
 
         try {
             return Cache::remember($cacheKey, $ttl, $loader);
@@ -233,7 +233,7 @@ class MunicipalityHealthRepository
     private function resolveDiscrepanciesPayload(City $city, IeducarFilterState $filters): array
     {
         $cached = AnalyticsTabPayloadCache::get(AnalyticsTabPayloadCache::DISCREPANCIES, $city, $filters);
-        if (is_array($cached) && ($cached['dimensions'] ?? []) !== []) {
+        if (is_array($cached)) {
             return $cached;
         }
 
@@ -806,22 +806,40 @@ class MunicipalityHealthRepository
     {
         $score = 100.0;
         foreach ($dimensions as $d) {
+            if (! is_array($d)) {
+                continue;
+            }
             $avail = (string) ($d['availability'] ?? '');
             if ($avail === 'unavailable' || $avail === 'no_data' || ($d['status'] ?? '') === 'no_data') {
                 continue;
             }
-            if (! ($d['has_issue'] ?? false)) {
+            $status = (string) ($d['status'] ?? '');
+            $hasIssue = ($d['has_issue'] ?? false) === true
+                || in_array($status, ['danger', 'warning'], true);
+            if (! $hasIssue) {
                 continue;
             }
+            $occurrences = (int) ($d['occurrences_total'] ?? $d['total'] ?? 0);
             $pct = (float) ($d['pct_rede'] ?? 0);
+            if ($pct <= 0 && $occurrences > 0) {
+                $pct = min(100.0, (float) $occurrences);
+            }
+            $perda = (float) ($d['perda_estimada_anual'] ?? 0);
             $severity = (string) ($d['severity'] ?? 'warning');
-            $score -= match ($severity) {
-                'danger' => min(35.0, $pct * 1.15),
-                'warning' => min(22.0, $pct * 0.75),
-                default => min(12.0, $pct * 0.35),
+            $deduction = match ($severity) {
+                'danger' => min(35.0, max(8.0, $pct * 1.15)),
+                'warning' => min(22.0, max(5.0, $pct * 0.75)),
+                default => min(12.0, max(3.0, $pct * 0.35)),
             };
+            if ($perda > 0) {
+                $deduction = max($deduction, min(28.0, 6.0 + log10($perda + 1) * 4.0));
+            }
+            $score -= $deduction;
         }
         foreach ($modules as $m) {
+            if (! is_array($m)) {
+                continue;
+            }
             $score -= match ((string) ($m['status'] ?? 'neutral')) {
                 'danger' => 8.0,
                 'warning' => 4.0,

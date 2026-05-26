@@ -113,7 +113,10 @@
     $publicSources = is_array($h['public_data_sources'] ?? null) ? $h['public_data_sources'] : [];
     $hasPublicSources = count($publicSources['categories'] ?? []) > 0;
     $flowSteps = ConsultoriaFlow::numberedSteps([
-        ['label' => __('Prioridades'), 'anchor' => 'diag-prioridades'],
+        ['label' => __('Decisão'), 'anchor' => 'diag-decisao'],
+        ['label' => __('Qualidade'), 'anchor' => 'diag-qualidade-sistema'],
+        ['label' => __('Explorar'), 'anchor' => 'diag-explorar'],
+        ['label' => __('Prioridades'), 'anchor' => 'diag-prioridades', 'visible' => count($topProblems) > 0],
         ['label' => __('VAAF e previsão'), 'anchor' => 'diag-vaaf', 'visible' => $vaafComparacao !== null],
         ['label' => __('Programas complementares'), 'anchor' => 'diag-programas', 'visible' => count($complementaryPrograms) > 0],
         ['label' => __('Leitura temática'), 'anchor' => 'diag-tematico', 'visible' => count($thematicBlocks) > 0],
@@ -184,18 +187,10 @@
             <p class="serv-callout">{{ $h['footnote'] }}</p>
         @endif
 
-        <p class="serv-callout">
-            {{ __('Aprofundar:') }}
-            <x-consultoria-tab-link tab="discrepancies" class="text-xs" />
-            ·
-            <x-consultoria-tab-link tab="fundeb" class="text-xs" />
-            ·
-            <x-consultoria-tab-link tab="other_funding" :label="__('Financiamentos')" class="text-xs" />
-            ·
-            <x-consultoria-tab-link tab="work_done" :label="__('Censo')" class="text-xs" />
+        <p class="serv-callout text-xs">
+            {{ __('Use «Explorar em detalhe» abaixo para abrir cada análise na área temática (Cadastro, Censo ou Finanças).') }}
+            <a href="#diag-explorar" class="font-semibold text-teal-700 dark:text-teal-300 underline underline-offset-2 ml-1">{{ __('Ir para explorar →') }}</a>
         </p>
-
-        <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="teal" />
 
         @if (! empty($h['error']))
             <div class="serv-callout serv-callout--danger text-sm">
@@ -203,103 +198,29 @@
             </div>
         @endif
 
-        <x-dashboard.consultoria-section
-            :step="$diagStep['diag-prioridades'] ?? null"
-            anchor="diag-prioridades"
-            :title="__('Prioridades e índice')"
-            :subtitle="__('Visão executiva: conformidade, impacto financeiro e principais problemas.')"
-        >
-            @if ($score !== null)
-                <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 items-stretch">
-                    <div class="xl:col-span-4 {{ $scoreRing }} p-4 sm:p-5 flex flex-col justify-between gap-3 min-h-[14rem]" data-health-compliance-root data-compliance-score="{{ (int) $score }}" data-compliance-status="{{ $h['compliance_status'] ?? 'neutral' }}" data-compliance-label="{{ $h['compliance_label'] ?? '' }}">
-                        <div class="text-center">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-2">{{ __('Índice de conformidade') }}</p>
-                            <x-dashboard.compliance-speedometer
-                                :score="(int) $score"
-                                :status="(string) ($h['compliance_status'] ?? 'neutral')"
-                                :label="(string) ($h['compliance_label'] ?? '')"
-                                class="w-full max-w-[280px] mx-auto"
-                            />
-                        </div>
-                        <div class="flex flex-wrap gap-x-2 gap-y-1 justify-center text-xs border-t border-slate-200/70 dark:border-slate-700/70 pt-3">
-                            <x-consultoria-tab-link tab="discrepancies" />
-                            <span class="text-slate-300 dark:text-slate-600">·</span>
-                            <x-consultoria-tab-link tab="fundeb" />
-                            <span class="text-slate-300 dark:text-slate-600">·</span>
-                            <x-consultoria-tab-link tab="work_done" :label="__('Censo')" />
-                        </div>
-                    </div>
-                    <div class="xl:col-span-8 flex flex-col gap-3 min-h-0">
-                        @if (count($healthKpisPrioridades) > 0)
-                            <x-dashboard.consultoria-kpi-grid
-                                :items="$healthKpisPrioridades"
-                                class="grid-cols-2 md:grid-cols-3 2xl:grid-cols-4 flex-1 auto-rows-fr [&>.serv-panel]:h-full"
-                            />
-                        @endif
-                        @if ($fundingMet !== null)
-                            <x-dashboard.consultoria-funding-explanation
-                                :metodologia="$fundingMet"
-                                :resumo="$fundingResumo"
-                                class="shrink-0"
-                            />
-                        @endif
-                    </div>
-                </div>
-            @endif
+        @include('dashboard.analytics.partials.municipality-health-executive', [
+            'h' => $h,
+            'summary' => $summary,
+            'topProblems' => $topProblems,
+            'healthKpisPrioridades' => $healthKpisPrioridades,
+            'complementaryPrograms' => $complementaryPrograms,
+            'programasAlerta' => $programasAlerta,
+            'vaafComparacao' => $vaafComparacao,
+            'fmtBrl' => $fmtBrl,
+        ])
 
-            @if (count($topProblems) > 0)
-                <div class="mt-4 space-y-3">
-                    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
-                        <div>
-                            <h4 class="text-sm font-semibold font-display text-rose-950 dark:text-rose-100">
-                                {{ __('Principais pendências de cadastro') }}
-                            </h4>
-                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                {{ __('Ordenadas por impacto financeiro indicativo (VAAF municipal × peso). Detalhe por escola na aba Discrepâncias.') }}
-                            </p>
-                        </div>
-                        <x-consultoria-tab-link tab="discrepancies" :label="__('Ver todas em Discrepâncias')" class="text-xs shrink-0" />
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                        @foreach ($topProblems as $problem)
-                            @php
-                                $perdaProb = (float) ($problem['perda_estimada_anual'] ?? 0);
-                                $ganhoProb = (float) ($problem['ganho_potencial_anual'] ?? 0);
-                            @endphp
-                            <article class="serv-panel border border-rose-200/70 dark:border-rose-900/50 px-3 py-2.5 text-sm h-full flex flex-col gap-2">
-                                <div class="min-w-0 flex-1">
-                                    <p class="font-medium text-serv-navy dark:text-slate-100 leading-snug">{{ $problem['title'] ?? '' }}</p>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 tabular-nums">
-                                        {{ __(':n ocorrências', ['n' => number_format((int) ($problem['total'] ?? 0))]) }}
-                                        @if (($problem['pct_rede'] ?? null) !== null)
-                                            <span class="text-slate-400 dark:text-slate-500">·</span>
-                                            {{ number_format((float) $problem['pct_rede'], 1, ',', '.') }}% {{ __('da rede') }}
-                                        @endif
-                                    </p>
-                                </div>
-                                <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs tabular-nums border-t border-slate-100 dark:border-slate-800 pt-2">
-                                    <span class="text-orange-800 dark:text-orange-300">
-                                        <span class="font-semibold uppercase tracking-wide text-[10px] text-orange-900/80 dark:text-orange-200/80">{{ __('Perda') }}</span>
-                                        {{ $fmtBrl($perdaProb) }}
-                                    </span>
-                                    <span class="text-emerald-800 dark:text-emerald-300">
-                                        <span class="font-semibold uppercase tracking-wide text-[10px] text-emerald-900/80 dark:text-emerald-200/80">{{ __('Ganho') }}</span>
-                                        {{ $fmtBrl($ganhoProb) }}
-                                    </span>
-                                </div>
-                                @if (is_array($problem['funding_explicacao'] ?? null))
-                                    <x-dashboard.consultoria-funding-explanation :explicacao="$problem['funding_explicacao']" compact class="mt-auto" />
-                                @endif
-                            </article>
-                        @endforeach
-                    </div>
-                </div>
-            @elseif (count($pendenciasCadastro) > 0)
-                <p class="mt-4 text-sm text-slate-600 dark:text-slate-400 serv-callout">
-                    {{ __('Há :n tipo(s) de pendência no mapa de rotinas abaixo; nenhuma com impacto financeiro calculável neste filtro.', ['n' => count($pendenciasCadastro)]) }}
-                </p>
-            @endif
-        </x-dashboard.consultoria-section>
+        @include('dashboard.analytics.partials.municipality-health-system-quality', ['h' => $h])
+
+        @include('dashboard.analytics.partials.municipality-health-explore')
+
+        @if ($fundingMet !== null)
+            <x-dashboard.consultoria-funding-explanation
+                :metodologia="$fundingMet"
+                :resumo="$fundingResumo"
+            />
+        @endif
+
+        <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="teal" />
 
         @if ($progressive && in_array('fundeb', $sectionsPending, true))
             <div data-municipality-health-section="fundeb" class="space-y-6">
