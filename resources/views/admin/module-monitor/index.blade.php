@@ -35,7 +35,7 @@
                     {{ __('Monitor de módulos') }}
                 </h2>
                 <p class="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-                    {{ __('Saúde por área do sistema e histórico de falhas ou lentidões (Pulse + filas admin).') }}
+                    {{ __('Estado de funcionamento por área (saúde, filas e Pulse). O histórico abaixo detalha falhas e lentidões — não é um atalho para abrir cada módulo.') }}
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-2 shrink-0">
@@ -127,7 +127,7 @@
                     <section class="space-y-3">
                         <div>
                             <p class="serv-eyebrow">{{ $groupTitle }}</p>
-                            <h3 class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Módulos') }}</h3>
+                            <h3 class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Saúde por módulo') }}</h3>
                         </div>
                         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                             @foreach ($groupModules as $module)

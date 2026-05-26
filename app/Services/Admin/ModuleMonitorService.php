@@ -266,15 +266,6 @@ final class ModuleMonitorService
             }
         }
 
-        $adminUrl = null;
-        if ($def['admin_route'] !== null && \Illuminate\Support\Facades\Route::has($def['admin_route'])) {
-            $adminUrl = route($def['admin_route']);
-        }
-
-        $queueUrl = $def['sync_queue_anchor'] !== null
-            ? route('admin.sync-queue.index').'#'.$def['sync_queue_anchor']
-            : null;
-
         return [
             'id' => $def['id'],
             'label' => $def['label'],
@@ -283,6 +274,18 @@ final class ModuleMonitorService
             'accent' => $def['accent'],
             'group' => $def['group'],
             'status' => $status,
+            'operating_label' => $this->operatingLabelForStatus($status),
+            'status_detail' => $this->statusDetailForModule(
+                $status,
+                $syncFailed,
+                $pulse['error_count'],
+                $slowCount,
+                $syncActive,
+                $pulse['op_count'],
+                $hasActivity,
+                $def['id'] === 'queue',
+                $system,
+            ),
             'sync_failed' => $syncFailed,
             'sync_active' => $syncActive,
             'sync_completed' => $syncCompleted,
@@ -292,9 +295,87 @@ final class ModuleMonitorService
             'pulse_max_ms' => $pulse['max_ms'],
             'pulse_ops' => $pulse['op_count'],
             'incident_count' => count($moduleIncidents),
-            'admin_url' => $adminUrl,
-            'queue_url' => $queueUrl,
         ];
+    }
+
+    private function operatingLabelForStatus(string $status): string
+    {
+        return match ($status) {
+            'healthy' => __('Em funcionamento'),
+            'warning' => __('Degradado'),
+            'critical' => __('Com falhas'),
+            default => __('Indeterminado'),
+        };
+    }
+
+    /**
+     * @param  array<string, mixed>  $system
+     */
+    private function statusDetailForModule(
+        string $status,
+        int $syncFailed,
+        int $pulseErrors,
+        int $slowCount,
+        int $syncActive,
+        int $pulseOps,
+        bool $hasActivity,
+        bool $isQueueModule,
+        array $system,
+    ): string {
+        if ($isQueueModule) {
+            if ($status === 'critical') {
+                return __('Jobs ou sincronizações falharam no período.');
+            }
+            if ($status === 'warning') {
+                return __('Fila com volume elevado de jobs pendentes.');
+            }
+
+            return __('Workers e fila sem alertas no período.');
+        }
+
+        if ($status === 'critical') {
+            if ($syncFailed > 0 && $pulseErrors > 0) {
+                return __(':sync falha(s) na fila e :pulse erro(s) Pulse.', [
+                    'sync' => $syncFailed,
+                    'pulse' => $pulseErrors,
+                ]);
+            }
+            if ($syncFailed > 0) {
+                return __(':n falha(s) registada(s) na fila de sincronização.', ['n' => $syncFailed]);
+            }
+            if ($pulseErrors > 0) {
+                return __(':n erro(s) de operação no Pulse.', ['n' => $pulseErrors]);
+            }
+
+            return __('Falha operacional detectada no período.');
+        }
+
+        if ($status === 'warning') {
+            if ($slowCount > 0 && $syncActive > 0) {
+                return __('Lentidão em :slow operação(ões) e :active tarefa(s) activa(s).', [
+                    'slow' => $slowCount,
+                    'active' => $syncActive,
+                ]);
+            }
+            if ($slowCount > 0) {
+                return __(':n operação(ões) acima do limiar de lentidão.', ['n' => $slowCount]);
+            }
+            if ($syncActive > 5) {
+                return __(':n tarefas ainda em processamento na fila.', ['n' => $syncActive]);
+            }
+
+            return __('Funcionamento degradado — rever métricas abaixo.');
+        }
+
+        if ($status === 'healthy') {
+            if ($hasActivity) {
+                return __('Operações normais no período (:ops registos Pulse).', ['ops' => $pulseOps]);
+            }
+
+            return __('Sem alertas; sem actividade medida no período.');
+        }
+
+        return __('Sem telemetria suficiente para avaliar o período.');
     }
 
     /**
