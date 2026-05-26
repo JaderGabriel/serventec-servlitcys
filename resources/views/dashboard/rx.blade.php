@@ -37,51 +37,109 @@
                 $helpByKey = collect($help)->keyBy('key');
                 $th = static fn (string $key, string $fallback) => $helpByKey->get($key)['title'] ?? $fallback;
                 $thTitle = static fn (string $key) => $helpByKey->get($key)['description'] ?? '';
+                $citiesOk = (int) ($rx['cities_ok'] ?? 0);
+                $citiesTotal = (int) ($rx['cities_total'] ?? 0);
+                $citiesPct = $citiesTotal > 0 ? (int) min(100, round(100 * $citiesOk / $citiesTotal)) : 0;
+                $delta = (int) ($t['matriculas_delta'] ?? 0);
+                $pctCenso = $t['pct_censo_rede'] ?? null;
+                $censoBarPct = $pctCenso !== null ? min(100, max(0, (float) $pctCenso)) : 0;
             @endphp
 
-            <div class="serv-rx-kpi-grid">
-                <div class="serv-rx-kpi-card">
-                    <p class="serv-rx-kpi-card__label">{{ __('Municípios') }}</p>
-                    <p class="serv-rx-kpi-card__value">
-                        {{ (int) ($rx['cities_ok'] ?? 0) }}/{{ (int) ($rx['cities_total'] ?? 0) }}
-                    </p>
-                </div>
-                <div class="serv-rx-kpi-card">
-                    <p class="serv-rx-kpi-card__label">{{ __('Alunos :ano', ['ano' => $rx['vigente_ano'] ?? '']) }}</p>
-                    <p class="serv-rx-kpi-card__value">{{ $fmtN((int) ($t['alunos_vigente'] ?? 0)) }}</p>
-                    <p class="serv-rx-kpi-card__hint">{{ __(':a em :ano', ['a' => $fmtN((int) ($t['alunos_anterior'] ?? 0)), 'ano' => $rx['anterior_ano'] ?? '']) }}</p>
-                </div>
-                <div class="serv-rx-kpi-card">
-                    <p class="serv-rx-kpi-card__label">{{ __('Matrículas :ano', ['ano' => $rx['vigente_ano'] ?? '']) }}</p>
-                    <p class="serv-rx-kpi-card__value">{{ $fmtN((int) ($t['matriculas_vigente'] ?? 0)) }}</p>
-                    @php $delta = (int) ($t['matriculas_delta'] ?? 0); @endphp
-                    <p class="serv-rx-kpi-card__hint {{ $delta >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
-                        {{ $delta >= 0 ? '+' : '' }}{{ $fmtN($delta) }} {{ __('vs :ano', ['ano' => $rx['anterior_ano'] ?? '']) }}
-                    </p>
-                </div>
-                <div class="serv-rx-kpi-card">
-                    <p class="serv-rx-kpi-card__label">{{ __('Censo — escolas OK') }}</p>
-                    <p class="serv-rx-kpi-card__value">
-                        @if (($t['pct_censo_rede'] ?? null) !== null)
-                            {{ number_format((float) $t['pct_censo_rede'], 1, ',', '.') }}%
-                        @else
-                            —
+            <section aria-labelledby="rx-kpis">
+                <h3 id="rx-kpis" class="sr-only">{{ __('Indicadores RX') }}</h3>
+                <div class="serv-rx-kpi-grid">
+                    <div class="serv-home-kpi serv-home-kpi--teal">
+                        <div class="serv-home-kpi__head">
+                            <span class="serv-home-kpi__icon serv-home-kpi__icon--teal" aria-hidden="true">
+                                <x-ui.icon name="map-pin" class="h-5 w-5" />
+                            </span>
+                            <p class="serv-home-kpi__label">{{ __('Municípios') }}</p>
+                        </div>
+                        <p class="serv-home-kpi__value">
+                            {{ $fmtN($citiesOk) }}<span class="serv-home-kpi__suffix">/ {{ $fmtN($citiesTotal) }}</span>
+                        </p>
+                        @if ($citiesTotal > 0)
+                            <div class="serv-home-kpi__bar" role="presentation" aria-hidden="true">
+                                <span class="serv-home-kpi__bar-fill serv-home-kpi__bar-fill--teal" style="width: {{ $citiesPct }}%"></span>
+                            </div>
                         @endif
-                    </p>
-                    <p class="serv-rx-kpi-card__hint">
-                        {{ $fmtN((int) ($t['escolas_censo_concluidas'] ?? 0)) }}/{{ $fmtN((int) ($t['escolas_censo'] ?? 0)) }}
-                    </p>
+                        <p class="serv-home-kpi__hint">{{ __('Com leitura i-Educar no período') }}</p>
+                    </div>
+
+                    <div class="serv-home-kpi">
+                        <div class="serv-home-kpi__head">
+                            <span class="serv-home-kpi__icon" aria-hidden="true">
+                                <x-ui.icon name="academic-cap" class="h-5 w-5" />
+                            </span>
+                            <p class="serv-home-kpi__label">{{ __('Alunos :ano', ['ano' => $rx['vigente_ano'] ?? '']) }}</p>
+                        </div>
+                        <p class="serv-home-kpi__value">{{ $fmtN((int) ($t['alunos_vigente'] ?? 0)) }}</p>
+                        <p class="serv-home-kpi__hint">
+                            {{ __(':a em :ano', ['a' => $fmtN((int) ($t['alunos_anterior'] ?? 0)), 'ano' => $rx['anterior_ano'] ?? '']) }}
+                        </p>
+                    </div>
+
+                    <div class="serv-home-kpi">
+                        <div class="serv-home-kpi__head">
+                            <span class="serv-home-kpi__icon serv-home-kpi__icon--violet" aria-hidden="true">
+                                <x-ui.icon name="clipboard-document-list" class="h-5 w-5" />
+                            </span>
+                            <p class="serv-home-kpi__label">{{ __('Matrículas :ano', ['ano' => $rx['vigente_ano'] ?? '']) }}</p>
+                        </div>
+                        <p class="serv-home-kpi__value">{{ $fmtN((int) ($t['matriculas_vigente'] ?? 0)) }}</p>
+                        <p class="serv-home-kpi__hint {{ $delta >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300' }}">
+                            {{ $delta >= 0 ? '+' : '' }}{{ $fmtN($delta) }} {{ __('vs :ano', ['ano' => $rx['anterior_ano'] ?? '']) }}
+                        </p>
+                    </div>
+
+                    <div class="serv-home-kpi">
+                        <div class="serv-home-kpi__head">
+                            <span class="serv-home-kpi__icon" aria-hidden="true">
+                                <x-ui.icon name="check-circle" class="h-5 w-5" />
+                            </span>
+                            <p class="serv-home-kpi__label">{{ __('Censo — escolas OK') }}</p>
+                        </div>
+                        <p class="serv-home-kpi__value">
+                            @if ($pctCenso !== null)
+                                {{ number_format((float) $pctCenso, 1, ',', '.') }}%
+                            @else
+                                —
+                            @endif
+                        </p>
+                        @if ($pctCenso !== null)
+                            <div class="serv-home-kpi__bar" role="presentation" aria-hidden="true">
+                                <span class="serv-home-kpi__bar-fill serv-home-kpi__bar-fill--teal" style="width: {{ $censoBarPct }}%"></span>
+                            </div>
+                        @endif
+                        <p class="serv-home-kpi__hint">
+                            {{ $fmtN((int) ($t['escolas_censo_concluidas'] ?? 0)) }}/{{ $fmtN((int) ($t['escolas_censo'] ?? 0)) }}
+                            {{ __('exportadas ou fechadas') }}
+                        </p>
+                    </div>
+
+                    <div class="serv-home-kpi serv-home-kpi--amber">
+                        <div class="serv-home-kpi__head">
+                            <span class="serv-home-kpi__icon serv-home-kpi__icon--amber" aria-hidden="true">
+                                <x-ui.icon name="exclamation-triangle" class="h-5 w-5" />
+                            </span>
+                            <p class="serv-home-kpi__label">{{ __('Registos em falta') }}</p>
+                        </div>
+                        <p class="serv-home-kpi__value text-amber-800 dark:text-amber-200">{{ $fmtN((int) ($t['registros_restantes'] ?? 0)) }}</p>
+                        <p class="serv-home-kpi__hint">{{ __('Turmas e matrículas abaixo da meta') }}</p>
+                    </div>
+
+                    <div class="serv-home-kpi">
+                        <div class="serv-home-kpi__head">
+                            <span class="serv-home-kpi__icon" aria-hidden="true">
+                                <x-ui.icon name="command-line" class="h-5 w-5" />
+                            </span>
+                            <p class="serv-home-kpi__label">{{ __('Horas estimadas') }}</p>
+                        </div>
+                        <p class="serv-home-kpi__value">{{ number_format((float) ($t['horas_estimadas'] ?? 0), 1, ',', '.') }} h</p>
+                        <p class="serv-home-kpi__hint">{{ __('Ritmo da quinzena recente') }}</p>
+                    </div>
                 </div>
-                <div class="serv-rx-kpi-card border-amber-200/90 dark:border-amber-800/50">
-                    <p class="serv-rx-kpi-card__label">{{ __('Registos em falta') }}</p>
-                    <p class="serv-rx-kpi-card__value text-amber-700 dark:text-amber-300">{{ $fmtN((int) ($t['registros_restantes'] ?? 0)) }}</p>
-                </div>
-                <div class="serv-rx-kpi-card">
-                    <p class="serv-rx-kpi-card__label">{{ __('Horas estimadas') }}</p>
-                    <p class="serv-rx-kpi-card__value">{{ number_format((float) ($t['horas_estimadas'] ?? 0), 1, ',', '.') }} h</p>
-                    <p class="serv-rx-kpi-card__hint">{{ __('Ritmo quinzena recente') }}</p>
-                </div>
-            </div>
+            </section>
 
             <x-rx.legend-panel
                 :semaphore="$sem"
@@ -121,7 +179,7 @@
                 <div class="overflow-x-auto">
                     @php
                         $rxTh = static fn (string $key, bool $right = false): string => \App\Support\Rx\RxColumnTone::thClass(
-                            \App\Support\Rx\RxColumnTone::forColumn($key),
+                            \App\Support\Rx\RxColumnTone::headerToneForColumn($key),
                             $right,
                         );
                         $rxTd = static fn (string $key, bool $right = false): string => \App\Support\Rx\RxColumnTone::tdClass(
@@ -131,17 +189,10 @@
                     @endphp
                     <table class="serv-rx-table min-w-full text-sm text-left">
                         <thead>
-                            <tr>
-                                <th colspan="2" class="serv-rx-th-group serv-rx-th-group--neutral"></th>
-                                <th class="serv-rx-th-group serv-rx-th-group--vigente">{{ __('Vigente :ano', ['ano' => $rx['vigente_ano'] ?? '']) }}</th>
-                                <th class="serv-rx-th-group serv-rx-th-group--anterior">{{ __('Ref. :ano', ['ano' => $rx['anterior_ano'] ?? '']) }}</th>
-                                <th class="serv-rx-th-group serv-rx-th-group--comparativo">{{ __('Δ :ano', ['ano' => $rx['anterior_ano'] ?? '']) }}</th>
-                                <th class="serv-rx-th-group serv-rx-th-group--vigente">{{ __('Turmas') }}</th>
-                                <th class="serv-rx-th-group serv-rx-th-group--meta">{{ __('Meta') }}</th>
-                                <th class="serv-rx-th-group serv-rx-th-group--vigente">{{ __('Censo') }}</th>
-                                <th colspan="3" class="serv-rx-th-group serv-rx-th-group--comparativo">{{ __('Face à meta') }}</th>
-                                <th class="serv-rx-th-group serv-rx-th-group--neutral"></th>
-                            </tr>
+                            <x-rx.table-group-row
+                                :vigenteAno="$rx['vigente_ano'] ?? ''"
+                                :anteriorAno="$rx['anterior_ano'] ?? ''"
+                            />
                             <x-rx.table-tone-row
                                 :vigenteAno="$rx['vigente_ano'] ?? ''"
                                 :anteriorAno="$rx['anterior_ano'] ?? ''"
