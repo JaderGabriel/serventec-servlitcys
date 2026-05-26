@@ -1,5 +1,6 @@
 @props([
     'semaphore' => [],
+    'columns' => [],
     'vigenteAno' => '',
     'anteriorAno' => '',
     'metaPctPerSalto' => 5.0,
@@ -8,110 +9,109 @@
 @php
     $sem = is_array($semaphore) ? $semaphore : [];
     $fmtN = static fn (int $n): string => number_format($n, 0, ',', '.');
-    $toneItems = \App\Support\Rx\RxColumnTone::legend((int) $vigenteAno, (int) $anteriorAno);
     $yellowMin = (int) config('rx.semaphore.yellow_min_progress', 75);
 @endphp
 
-<div {{ $attributes->merge(['class' => 'serv-panel serv-rx-legend-panel']) }} role="region" aria-label="{{ __('Legendas do painel RX') }}">
-    <div class="px-4 py-3 border-b border-slate-200/80 dark:border-slate-700/80">
-        <p class="serv-eyebrow">{{ __('Como ler') }}</p>
-        <h3 class="font-display text-sm font-semibold text-serv-navy dark:text-white">
-            {{ __('Legendas e cores') }}
-        </h3>
-    </div>
-
-    <div class="p-4 grid gap-6 lg:grid-cols-3">
-        <section class="space-y-2.5">
-            <h4 class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
-                {{ __('Indicador da meta de cadastro') }}
-            </h4>
-            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                {{ __('Por município, na primeira coluna. Mede volume vigente face à meta (não avalia qualidade nem Censo aprovado).') }}
+<details class="serv-panel serv-rx-legend-panel group">
+    <summary class="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+            <p class="serv-eyebrow">{{ __('Como ler') }}</p>
+            <span class="text-sm font-semibold text-serv-navy dark:text-white">{{ __('Legendas e cores') }}</span>
+            <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400 truncate">
+                {{ __('Semáforo meta · tons da tabela · barra Censo — clique para expandir') }}
             </p>
-            <ul class="space-y-2 text-xs">
-                <li class="serv-rx-legend-item">
-                    <span class="serv-rx-legend-dot serv-rx-legend-dot--success" aria-hidden="true"></span>
-                    <span>
-                        <strong class="text-slate-800 dark:text-slate-100">{{ __('Meta OK') }}</strong>
-                        <span class="text-slate-600 dark:text-slate-400"> — {{ $fmtN((int) ($sem['green'] ?? 0)) }} {{ __('municípios') }}</span>
-                    </span>
-                </li>
-                <li class="serv-rx-legend-item">
-                    <span class="serv-rx-legend-dot serv-rx-legend-dot--warning" aria-hidden="true"></span>
-                    <span>
-                        <strong class="text-slate-800 dark:text-slate-100">{{ __('Em andamento') }}</strong>
-                        <span class="text-slate-600 dark:text-slate-400"> — ≥ {{ $yellowMin }}% {{ __('da meta') }} · {{ $fmtN((int) ($sem['yellow'] ?? 0)) }}</span>
-                    </span>
-                </li>
-                <li class="serv-rx-legend-item">
-                    <span class="serv-rx-legend-dot serv-rx-legend-dot--danger" aria-hidden="true"></span>
-                    <span>
-                        <strong class="text-slate-800 dark:text-slate-100">{{ __('Atenção') }}</strong>
-                        <span class="text-slate-600 dark:text-slate-400"> — {{ __('abaixo do limiar') }} · {{ $fmtN((int) ($sem['red'] ?? 0)) }}</span>
-                    </span>
-                </li>
-                <li class="serv-rx-legend-item">
-                    <span class="serv-rx-legend-dot serv-rx-legend-dot--neutral" aria-hidden="true"></span>
-                    <span>
-                        <strong class="text-slate-800 dark:text-slate-100">{{ __('Sem base') }}</strong>
-                        <span class="text-slate-600 dark:text-slate-400"> — {{ __('sem ano de referência') }} · {{ $fmtN((int) ($sem['neutral'] ?? 0)) }}</span>
-                    </span>
-                </li>
-            </ul>
-        </section>
+        </div>
+        <x-ui.icon name="chevron-right" class="h-5 w-5 text-slate-400 shrink-0 transition-transform group-open:rotate-90" />
+    </summary>
 
-        <section class="space-y-2.5">
-            <h4 class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
-                {{ __('Cores das colunas') }}
-            </h4>
-            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                {{ __('Fundo suave na tabela para separar ano vigente, comparativo e meta.') }}
-            </p>
-            <ul class="space-y-2">
-                @foreach ($toneItems as $item)
-                    <li>
-                        <span class="{{ \App\Support\Rx\RxColumnTone::chipClass($item['tone']) }} w-full justify-start">
-                            <span class="h-2.5 w-2.5 rounded-sm shrink-0 serv-rx-chip-swatch serv-rx-chip-swatch--{{ $item['tone'] }}" aria-hidden="true"></span>
-                            <span class="font-semibold">{{ $item['label'] }}</span>
-                        </span>
-                        <p class="mt-1 ps-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">{{ $item['description'] }}</p>
+    <div class="px-4 pb-4 border-t border-slate-200/80 dark:border-slate-700/80 space-y-6">
+        <div class="grid gap-6 lg:grid-cols-3 pt-4">
+            <section class="space-y-2.5">
+                <h4 class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                    {{ __('Indicador da meta de cadastro') }}
+                </h4>
+                <ul class="space-y-2 text-xs">
+                    <li class="serv-rx-legend-item">
+                        <span class="serv-rx-legend-dot serv-rx-legend-dot--success" aria-hidden="true"></span>
+                        <span><strong>{{ __('Meta OK') }}</strong> — {{ $fmtN((int) ($sem['green'] ?? 0)) }}</span>
                     </li>
-                @endforeach
-            </ul>
-        </section>
+                    <li class="serv-rx-legend-item">
+                        <span class="serv-rx-legend-dot serv-rx-legend-dot--warning" aria-hidden="true"></span>
+                        <span><strong>{{ __('Em andamento') }}</strong> — ≥ {{ $yellowMin }}% · {{ $fmtN((int) ($sem['yellow'] ?? 0)) }}</span>
+                    </li>
+                    <li class="serv-rx-legend-item">
+                        <span class="serv-rx-legend-dot serv-rx-legend-dot--danger" aria-hidden="true"></span>
+                        <span><strong>{{ __('Atenção') }}</strong> — {{ $fmtN((int) ($sem['red'] ?? 0)) }}</span>
+                    </li>
+                    <li class="serv-rx-legend-item">
+                        <span class="serv-rx-legend-dot serv-rx-legend-dot--neutral" aria-hidden="true"></span>
+                        <span><strong>{{ __('Sem base') }}</strong> — {{ $fmtN((int) ($sem['neutral'] ?? 0)) }}</span>
+                    </li>
+                </ul>
+            </section>
 
-        <section class="space-y-2.5">
-            <h4 class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
-                {{ __('Barra Censo (por município)') }}
-            </h4>
-            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                {{ __('Situação de exportação/fecho por escola no ano :ano.', ['ano' => $vigenteAno]) }}
-            </p>
-            <ul class="space-y-2 text-xs">
-                <li class="serv-rx-legend-item">
-                    <span class="serv-rx-legend-dot serv-rx-legend-dot--export" aria-hidden="true"></span>
-                    <span><strong>{{ __('Exportada') }}</strong> — {{ __('dados enviados ao INEP') }}</span>
-                </li>
-                <li class="serv-rx-legend-item">
-                    <span class="serv-rx-legend-dot serv-rx-legend-dot--closed" aria-hidden="true"></span>
-                    <span><strong>{{ __('Fechada') }}</strong> — {{ __('escola fechada no Censo') }}</span>
-                </li>
-                <li class="serv-rx-legend-item">
-                    <span class="serv-rx-legend-dot serv-rx-legend-dot--pending" aria-hidden="true"></span>
-                    <span><strong>{{ __('Não feito') }}</strong> — {{ __('pendente de exportação ou fecho') }}</span>
-                </li>
-                <li class="serv-rx-legend-item">
-                    <span class="serv-rx-legend-dot serv-rx-legend-dot--unknown" aria-hidden="true"></span>
-                    <span><strong>{{ __('Indisponível') }}</strong> — {{ __('sem leitura na base i-Educar') }}</span>
-                </li>
-            </ul>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-2">
-                {{ __('Meta: +:pct% por salto quando o ano :a está zerado (até :n anos para trás).', [
-                    'pct' => number_format((float) $metaPctPerSalto, 0, ',', '.'),
-                    'a' => (string) $anteriorAno,
-                    'n' => (int) config('rx.meta_lookback_years', 10),
-                ]) }}
-            </p>
-        </section>
+            <section class="space-y-2.5">
+                <h4 class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                    {{ __('Tons na tabela') }}
+                </h4>
+                <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    {{ __('A linha «Tons» no cabeçalho indica o significado de cada grupo de colunas.') }}
+                </p>
+                <ul class="space-y-2">
+                    @foreach (\App\Support\Rx\RxColumnTone::legend((int) $vigenteAno, (int) $anteriorAno) as $item)
+                        <li>
+                            <x-rx.partials.tone-chip :item="$item" class="w-full justify-start" />
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+
+            <section class="space-y-2.5">
+                <h4 class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                    {{ __('Barra Censo (por município)') }}
+                </h4>
+                <ul class="space-y-2 text-xs">
+                    <li class="serv-rx-legend-item">
+                        <span class="serv-rx-legend-dot serv-rx-legend-dot--export" aria-hidden="true"></span>
+                        <span><strong>{{ __('Exportada') }}</strong></span>
+                    </li>
+                    <li class="serv-rx-legend-item">
+                        <span class="serv-rx-legend-dot serv-rx-legend-dot--closed" aria-hidden="true"></span>
+                        <span><strong>{{ __('Fechada') }}</strong></span>
+                    </li>
+                    <li class="serv-rx-legend-item">
+                        <span class="serv-rx-legend-dot serv-rx-legend-dot--pending" aria-hidden="true"></span>
+                        <span><strong>{{ __('Não feito') }}</strong></span>
+                    </li>
+                </ul>
+            </section>
+        </div>
+
+        @if (count($columns) > 0)
+            <details class="rounded-lg border border-slate-200/90 dark:border-slate-700/80">
+                <summary class="cursor-pointer list-none px-3 py-2.5 text-sm font-semibold text-serv-navy dark:text-white">
+                    {{ __('Guia completo das colunas') }}
+                </summary>
+                <div class="px-3 pb-3 border-t border-slate-100 dark:border-slate-800">
+                    <dl class="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 text-xs">
+                        @foreach ($columns as $col)
+                            @php
+                                $tone = \App\Support\Rx\RxColumnTone::forColumn((string) ($col['key'] ?? ''));
+                                $cardClass = match ($tone) {
+                                    'vigente' => 'serv-rx-guide-card serv-rx-guide-card--vigente',
+                                    'comparativo' => 'serv-rx-guide-card serv-rx-guide-card--comparativo',
+                                    'meta' => 'serv-rx-guide-card serv-rx-guide-card--meta',
+                                    default => 'serv-rx-guide-card serv-rx-guide-card--neutral',
+                                };
+                            @endphp
+                            <div class="{{ $cardClass }}">
+                                <dt class="font-semibold text-slate-800 dark:text-slate-100">{{ $col['title'] ?? '' }}</dt>
+                                <dd class="mt-1.5 text-slate-600 dark:text-slate-400 leading-relaxed">{{ $col['description'] ?? '' }}</dd>
+                            </div>
+                        @endforeach
+                    </dl>
+                </div>
+            </details>
+        @endif
     </div>
-</div>
+</details>

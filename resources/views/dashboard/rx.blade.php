@@ -20,14 +20,14 @@
 
     <div class="py-8">
         <div class="max-w-[1680px] mx-auto sm:px-6 lg:px-8 space-y-6">
+            <x-rx.censo-deadline-banner :deadline="$rx['deadline'] ?? []" class="shadow-lg" />
+
             <div class="serv-panel serv-panel--info px-4 py-3 text-sm">
                 <p class="font-medium text-serv-navy dark:text-teal-100">{{ __('RX — força de trabalho e prazos') }}</p>
                 <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">
                     {{ __('Visão consolidada por município: volumes digitados, Censo Escolar, meta de cadastro (com busca em anos anteriores quando necessário) e indicador de cumprimento da meta. Sem indicadores financeiros.') }}
                 </p>
             </div>
-
-            <x-rx.censo-deadline-banner :deadline="$rx['deadline'] ?? []" />
 
             @php
                 $t = is_array($rx['totals'] ?? null) ? $rx['totals'] : [];
@@ -40,62 +40,55 @@
             @endphp
 
             <div class="serv-rx-kpi-grid">
-                <div class="serv-home-kpi serv-home-kpi--teal !p-4">
-                    <p class="serv-home-kpi__label">{{ __('Municípios com dados') }}</p>
-                    <p class="serv-home-kpi__value text-2xl">
-                        {{ (int) ($rx['cities_ok'] ?? 0) }}<span class="serv-home-kpi__suffix text-base">/ {{ (int) ($rx['cities_total'] ?? 0) }}</span>
+                <div class="serv-rx-kpi-card">
+                    <p class="serv-rx-kpi-card__label">{{ __('Municípios') }}</p>
+                    <p class="serv-rx-kpi-card__value">
+                        {{ (int) ($rx['cities_ok'] ?? 0) }}/{{ (int) ($rx['cities_total'] ?? 0) }}
                     </p>
-                    <p class="serv-home-kpi__hint">{{ __('Leitura completa ou parcial do i-Educar') }}</p>
                 </div>
-                <div class="serv-home-kpi !p-4">
-                    <p class="serv-home-kpi__label">{{ __('Alunos :ano', ['ano' => $rx['vigente_ano'] ?? '']) }}</p>
-                    <p class="serv-home-kpi__value text-2xl">{{ $fmtN((int) ($t['alunos_vigente'] ?? 0)) }}</p>
-                    <p class="serv-home-kpi__hint">{{ __(':a em :ano', ['a' => $fmtN((int) ($t['alunos_anterior'] ?? 0)), 'ano' => $rx['anterior_ano'] ?? '']) }}</p>
+                <div class="serv-rx-kpi-card">
+                    <p class="serv-rx-kpi-card__label">{{ __('Alunos :ano', ['ano' => $rx['vigente_ano'] ?? '']) }}</p>
+                    <p class="serv-rx-kpi-card__value">{{ $fmtN((int) ($t['alunos_vigente'] ?? 0)) }}</p>
+                    <p class="serv-rx-kpi-card__hint">{{ __(':a em :ano', ['a' => $fmtN((int) ($t['alunos_anterior'] ?? 0)), 'ano' => $rx['anterior_ano'] ?? '']) }}</p>
                 </div>
-                <div class="serv-home-kpi !p-4">
-                    <p class="serv-home-kpi__label">{{ __('Matrículas :ano', ['ano' => $rx['vigente_ano'] ?? '']) }}</p>
-                    <p class="serv-home-kpi__value text-2xl">{{ $fmtN((int) ($t['matriculas_vigente'] ?? 0)) }}</p>
+                <div class="serv-rx-kpi-card">
+                    <p class="serv-rx-kpi-card__label">{{ __('Matrículas :ano', ['ano' => $rx['vigente_ano'] ?? '']) }}</p>
+                    <p class="serv-rx-kpi-card__value">{{ $fmtN((int) ($t['matriculas_vigente'] ?? 0)) }}</p>
                     @php $delta = (int) ($t['matriculas_delta'] ?? 0); @endphp
-                    <p class="serv-home-kpi__hint {{ $delta >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300' }}">
+                    <p class="serv-rx-kpi-card__hint {{ $delta >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
                         {{ $delta >= 0 ? '+' : '' }}{{ $fmtN($delta) }} {{ __('vs :ano', ['ano' => $rx['anterior_ano'] ?? '']) }}
                     </p>
                 </div>
-                <div class="serv-home-kpi !p-4">
-                    <p class="serv-home-kpi__label">{{ __('Censo — escolas OK') }}</p>
-                    <p class="serv-home-kpi__value text-2xl">
+                <div class="serv-rx-kpi-card">
+                    <p class="serv-rx-kpi-card__label">{{ __('Censo — escolas OK') }}</p>
+                    <p class="serv-rx-kpi-card__value">
                         @if (($t['pct_censo_rede'] ?? null) !== null)
                             {{ number_format((float) $t['pct_censo_rede'], 1, ',', '.') }}%
                         @else
                             —
                         @endif
                     </p>
-                    <p class="serv-home-kpi__hint">
-                        {{ $fmtN((int) ($t['escolas_censo_concluidas'] ?? 0)) }}/{{ $fmtN((int) ($t['escolas_censo'] ?? 0)) }} {{ __('exportadas ou fechadas') }}
+                    <p class="serv-rx-kpi-card__hint">
+                        {{ $fmtN((int) ($t['escolas_censo_concluidas'] ?? 0)) }}/{{ $fmtN((int) ($t['escolas_censo'] ?? 0)) }}
                     </p>
                 </div>
-                <div class="serv-home-kpi serv-home-kpi--amber !p-4">
-                    <p class="serv-home-kpi__label">{{ __('Registos pendentes') }}</p>
-                    <p class="serv-home-kpi__value text-2xl text-amber-800 dark:text-amber-200">{{ $fmtN((int) ($t['registros_restantes'] ?? 0)) }}</p>
-                    <p class="serv-home-kpi__hint">{{ __('Turmas e matrículas abaixo da meta') }}</p>
+                <div class="serv-rx-kpi-card border-amber-200/90 dark:border-amber-800/50">
+                    <p class="serv-rx-kpi-card__label">{{ __('Registos em falta') }}</p>
+                    <p class="serv-rx-kpi-card__value text-amber-700 dark:text-amber-300">{{ $fmtN((int) ($t['registros_restantes'] ?? 0)) }}</p>
                 </div>
-                <div class="serv-home-kpi !p-4">
-                    <p class="serv-home-kpi__label">{{ __('Horas estimadas') }}</p>
-                    <p class="serv-home-kpi__value text-2xl">{{ number_format((float) ($t['horas_estimadas'] ?? 0), 1, ',', '.') }} h</p>
-                    <p class="serv-home-kpi__hint">{{ __('Ritmo da quinzena recente') }}</p>
+                <div class="serv-rx-kpi-card">
+                    <p class="serv-rx-kpi-card__label">{{ __('Horas estimadas') }}</p>
+                    <p class="serv-rx-kpi-card__value">{{ number_format((float) ($t['horas_estimadas'] ?? 0), 1, ',', '.') }} h</p>
+                    <p class="serv-rx-kpi-card__hint">{{ __('Ritmo quinzena recente') }}</p>
                 </div>
             </div>
 
             <x-rx.legend-panel
                 :semaphore="$sem"
+                :columns="$help"
                 :vigenteAno="$rx['vigente_ano'] ?? ''"
                 :anteriorAno="$rx['anterior_ano'] ?? ''"
                 :metaPctPerSalto="(float) ($rx['meta_pct_per_salto'] ?? 5)"
-            />
-
-            <x-rx.column-legend
-                :columns="$help"
-                :metaPctPerSalto="(float) ($rx['meta_pct_per_salto'] ?? 5)"
-                :anteriorAno="(string) ($rx['anterior_ano'] ?? '')"
             />
 
             @if ((int) ($rx['cities_partial'] ?? 0) > 0)
@@ -120,17 +113,10 @@
             @endif
 
             <div class="serv-panel overflow-hidden">
-                <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <p class="serv-eyebrow">{{ __('Tabela') }}</p>
-                        <h3 class="font-display font-semibold text-serv-navy dark:text-white">{{ __('Detalhe por município') }}</h3>
-                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Passe o rato sobre o cabeçalho para a descrição completa. Barra sob o nome = Censo por escola.') }}</p>
-                    </div>
-                    <x-rx.data-tone-legend
-                        class="sm:justify-end"
-                        :vigenteAno="$rx['vigente_ano'] ?? ''"
-                        :anteriorAno="$rx['anterior_ano'] ?? ''"
-                    />
+                <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+                    <p class="serv-eyebrow">{{ __('Tabela') }}</p>
+                    <h3 class="font-display font-semibold text-serv-navy dark:text-white">{{ __('Detalhe por município') }}</h3>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Tons alinhados às colunas. Passe o rato no cabeçalho para mais detalhe. Barra sob o nome = Censo por escola.') }}</p>
                 </div>
                 <div class="overflow-x-auto">
                     @php
@@ -147,9 +133,8 @@
                         <thead>
                             <tr>
                                 <th colspan="2" class="serv-rx-th-group serv-rx-th-group--neutral"></th>
-                                <th colspan="2" class="serv-rx-th-group serv-rx-th-group--vigente">
-                                    {{ __('Vigente :ano', ['ano' => $rx['vigente_ano'] ?? '']) }}
-                                </th>
+                                <th class="serv-rx-th-group serv-rx-th-group--vigente">{{ __('Vigente :ano', ['ano' => $rx['vigente_ano'] ?? '']) }}</th>
+                                <th class="serv-rx-th-group serv-rx-th-group--anterior">{{ __('Ref. :ano', ['ano' => $rx['anterior_ano'] ?? '']) }}</th>
                                 <th class="serv-rx-th-group serv-rx-th-group--comparativo">{{ __('Δ :ano', ['ano' => $rx['anterior_ano'] ?? '']) }}</th>
                                 <th class="serv-rx-th-group serv-rx-th-group--vigente">{{ __('Turmas') }}</th>
                                 <th class="serv-rx-th-group serv-rx-th-group--meta">{{ __('Meta') }}</th>
@@ -157,6 +142,10 @@
                                 <th colspan="3" class="serv-rx-th-group serv-rx-th-group--comparativo">{{ __('Face à meta') }}</th>
                                 <th class="serv-rx-th-group serv-rx-th-group--neutral"></th>
                             </tr>
+                            <x-rx.table-tone-row
+                                :vigenteAno="$rx['vigente_ano'] ?? ''"
+                                :anteriorAno="$rx['anterior_ano'] ?? ''"
+                            />
                             <tr>
                                 <th class="{{ $rxTh('semaforo') }}" title="{{ $thTitle('semaforo') }}">{{ $th('semaforo', __('Indicador meta')) }}</th>
                                 <th class="{{ $rxTh('municipio') }}" title="{{ $thTitle('municipio') }}">{{ $th('municipio', __('Município')) }}</th>

@@ -448,6 +448,62 @@
         @apply grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6;
     }
 
+    .serv-rx-kpi-card {
+        @apply serv-panel p-4 flex flex-col justify-between min-h-[5.5rem];
+    }
+
+    .serv-rx-kpi-card__label {
+        @apply text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-rx-kpi-card__value {
+        @apply mt-1 text-2xl font-bold tabular-nums text-serv-navy dark:text-white;
+    }
+
+    .serv-rx-kpi-card__hint {
+        @apply mt-1 text-[10px] text-slate-500 dark:text-slate-400 leading-snug;
+    }
+
+    .serv-rx-deadline {
+        @apply rounded-2xl border-2 px-5 py-5 shadow-md;
+    }
+
+    .serv-rx-deadline--ok {
+        @apply border-teal-400/90 bg-gradient-to-br from-teal-50 via-white to-slate-50 text-teal-950
+            dark:from-teal-950/50 dark:via-slate-900/60 dark:to-slate-950/80 dark:border-teal-600 dark:text-teal-50;
+    }
+
+    .serv-rx-deadline--warning {
+        @apply border-amber-400 bg-gradient-to-br from-amber-50 via-amber-50/80 to-white text-amber-950 shadow-amber-200/50
+            dark:from-amber-950/50 dark:via-amber-950/30 dark:to-slate-950/80 dark:border-amber-600 dark:text-amber-50 dark:shadow-none;
+    }
+
+    .serv-rx-deadline--danger {
+        @apply border-rose-500 bg-gradient-to-br from-rose-50 via-rose-50/90 to-white text-rose-950 shadow-rose-200/60 ring-2 ring-rose-400/40
+            dark:from-rose-950/55 dark:via-rose-950/35 dark:to-slate-950/80 dark:border-rose-600 dark:text-rose-50 dark:ring-rose-500/30;
+    }
+
+    .serv-rx-deadline--past {
+        @apply border-slate-400 bg-slate-100 text-slate-800
+            dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-200;
+    }
+
+    .serv-rx-th-group--anterior {
+        @apply bg-slate-100/70 text-slate-800/90 dark:bg-slate-800/50 dark:text-slate-200/90;
+    }
+
+    .serv-rx-tone-row .serv-rx-chip {
+        @apply text-[10px] py-0.5 px-1.5;
+    }
+
+    .serv-rx-legend-panel summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .serv-rx-column-guide summary::-webkit-details-marker {
+        display: none;
+    }
+
     .serv-rx-legend-panel {
         @apply overflow-hidden;
     }
