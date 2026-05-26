@@ -52,7 +52,7 @@
             <p class="serv-home-kpi__hint">{{ __(':total contas registadas', ['total' => number_format($stats['users'])]) }}</p>
         </a>
 
-        <a href="{{ route('admin.sync-queue.index') }}" class="serv-home-kpi serv-home-kpi--link group @if ($queueTotal > 0 || $syncFailed > 0) serv-home-kpi--amber @endif">
+        <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="serv-home-kpi serv-home-kpi--link group @if ($queueTotal > 0 || $syncFailed > 0) serv-home-kpi--amber @endif">
             <div class="serv-home-kpi__head">
                 <span class="serv-home-kpi__icon serv-home-kpi__icon--amber" aria-hidden="true">
                     <x-ui.icon name="queue-list" class="h-5 w-5" />

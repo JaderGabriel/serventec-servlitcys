@@ -23,7 +23,7 @@
                     <p class="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">{{ $syncQueueConnection }} · {{ $syncQueueName }}</p>
                 </div>
             </div>
-            <form method="get" action="{{ route('admin.sync-queue.index') }}" class="flex flex-wrap gap-2 items-end text-sm">
+            <form method="get" action="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="flex flex-wrap gap-2 items-end text-sm">
                 <input type="hidden" name="domain" value="{{ $domainValue }}" />
                 <input type="hidden" name="pdf_status" value="{{ $filterPdfStatus }}" />
                 <div>
@@ -37,7 +37,7 @@
                 </div>
                 <button type="submit" class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500">{{ __('Filtrar') }}</button>
                 @if ($filterStatus !== '' || $filterDomain === $domainValue)
-                    <a href="{{ route('admin.sync-queue.index', array_filter(['pdf_status' => $filterPdfStatus !== '' ? $filterPdfStatus : null])) }}#{{ $theme['anchor'] }}" class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">
+                    <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', array_filter(['pdf_status' => $filterPdfStatus !== '' ? $filterPdfStatus : null])) }}#{{ $theme['anchor'] }}" class="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">
                         {{ __('Limpar') }}
                     </a>
                 @endif
@@ -66,7 +66,7 @@
             <div class="pt-2">{{ $tasks->links() }}</div>
         @elseif (! $isPaginated && $total > $tasks->count())
             <div class="pt-2 text-center">
-                <a href="{{ route('admin.sync-queue.index', array_filter(['domain' => $domainValue, 'status' => $filterStatus !== '' ? $filterStatus : null, 'pdf_status' => $filterPdfStatus !== '' ? $filterPdfStatus : null])) }}#{{ $theme['anchor'] }}" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', array_filter(['domain' => $domainValue, 'status' => $filterStatus !== '' ? $filterStatus : null, 'pdf_status' => $filterPdfStatus !== '' ? $filterPdfStatus : null])) }}#{{ $theme['anchor'] }}" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
                     {{ __('Ver todas (:n)', ['n' => $total]) }}
                 </a>
             </div>

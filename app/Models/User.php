@@ -112,6 +112,24 @@ class User extends Authenticatable
         return $this->is_active && $this->isAdmin();
     }
 
+    /** Documentação interna (leitor Markdown). */
+    public function canViewDocumentation(): bool
+    {
+        return $this->is_active;
+    }
+
+    /** Fila de exportações e tarefas enfileiradas pelo próprio utilizador. */
+    public function canViewSyncQueue(): bool
+    {
+        return $this->is_active && ($this->isAdmin() || $this->isUsuário() || $this->isMunicipal());
+    }
+
+    /** Exportação detalhada NEE (CSV/Excel) na aba Inclusão. */
+    public function canExportInclusionNee(): bool
+    {
+        return $this->is_active && ($this->isAdmin() || $this->isUsuário() || $this->isMunicipal());
+    }
+
     public function canViewAdminDashboard(): bool
     {
         return $this->is_active && $this->isAdmin();

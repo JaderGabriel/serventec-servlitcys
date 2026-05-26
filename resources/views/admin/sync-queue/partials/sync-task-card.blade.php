@@ -20,7 +20,7 @@
                 @endif
             </div>
             <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-snug">
-                <a href="{{ route('admin.sync-queue.show', $task) }}" class="hover:text-indigo-600 dark:hover:text-indigo-400">
+                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.show', $task) }}" class="hover:text-indigo-600 dark:hover:text-indigo-400">
                     {{ $task->label }}
                 </a>
             </h4>
@@ -52,7 +52,7 @@
         <div class="flex shrink-0 items-center gap-1.5">
             @if ($canDownload)
                 <a
-                    href="{{ route('admin.sync-queue.download', $task) }}"
+                    href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.download', $task) }}"
                     class="sync-queue-download-btn"
                     title="{{ __('Descarregar :file', ['file' => $task->exportFilename() ?? __('exportação')]) }}"
                 >
@@ -64,7 +64,7 @@
                 </a>
             @endif
             <a
-                href="{{ route('admin.sync-queue.show', $task) }}"
+                href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.show', $task) }}"
                 class="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-600 px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
             >
                 {{ __('Detalhe') }}

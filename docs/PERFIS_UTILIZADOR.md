@@ -41,6 +41,9 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 **Pode:**
 - Ver **Análise educacional** em todos os municípios ativos com conexão a dados
 - Exportar discrepâncias (CSV) para municípios a que tem acesso analítico
+- **Exportar base NEE detalhada** (CSV/Excel) na aba Inclusão — imediato ou via fila (`/filas`)
+- Consultar **documentação** do sistema (`/documentacao`) — índice orientado ao painel
+- Acompanhar **filas de exportação** próprias (`/filas`) — NEE e PDF Serventec
 - **Gerir usuários** apenas do perfil **Usuário** (criar, editar, alterar senha)
 - Editar o próprio perfil
 
@@ -49,6 +52,7 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 - Importar dados, sincronizar, configurar cidades ou SMTP
 - Criar administradores ou municipais
 - Ver Pulse, sessões globais ou histórico de logins de outros
+- Ver tarefas de sincronização de outros utilizadores ou documentação de deploy/integração admin
 
 ---
 
@@ -59,6 +63,8 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 **Pode:**
 - Ver **Análise educacional** **somente** nos municípios associados na tabela `city_user`
 - Exportar discrepâncias desses municípios
+- **Exportar base NEE detalhada** nos municípios vinculados (aba Inclusão)
+- Consultar **documentação** e **filas** (`/documentacao`, `/filas`) — mesmo âmbito que o utilizador rede
 - **Gerir usuários** do perfil **Municipal**, desde que os municípios atribuídos sejam **subconjunto** dos seus
 - Editar o próprio perfil
 
@@ -80,6 +86,9 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 | Painel `/dashboard` | Sim | Não | Não |
 | Análise (todos `forAnalytics`) | Sim | Sim | — |
 | Análise (só vinculados) | Sim | — | Sim |
+| Documentação (`/documentacao`) | Sim | Sim | Sim |
+| Filas exportação (`/filas`, só as próprias) | Sim | Sim | Sim |
+| Exportação NEE detalhada (Inclusão) | Sim | Sim | Sim* |
 | Cidades / sync / FUNDEB / SMTP | Sim | Não | Não |
 | Pulse / sessões / logins | Sim | Não | Não |
 | Criar Admin | Sim | Não | Não |
@@ -87,7 +96,8 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 | Criar Municipal | Sim | Não | Sim* |
 | Desativar / excluir usuários | Sim | Não | Não |
 
-\* Municipal só com municípios ⊆ dos do editor.
+\* Municipal só com municípios ⊆ dos do editor.  
+\* Exportação NEE municipal: apenas municípios vinculados (`viewAnalytics`).
 
 ---
 
@@ -101,7 +111,9 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 | Auditoria admin | `app/Support/Auth/AdminUserAuditLogger.php` |
 | Sessões | `app/Support/Auth/UserSessionTerminator.php` |
 | Destino após login | `User::homeRouteName()`, `User::homeUrl()` |
-| Policies | `app/Policies/UserPolicy.php`, `app/Policies/CityPolicy.php` |
+| Policies | `UserPolicy`, `CityPolicy`, `AdminSyncTaskPolicy`, `AnalyticsReportExportPolicy` |
+| Documentação | `DocumentationCatalog`, rotas `documentation.*` / `admin.documentation.*` |
+| Filas | `SyncQueueUserScope`, rotas `sync-queue.*` / `admin.sync-queue.*` |
 | Middleware | `admin`, `manage.users` em `bootstrap/app.php` |
 | Formulários | `app/Http/Requests/Concerns/ValidatesManagedUserAttributes.php` |
 | Gate auditoria | `manageUserAudit` (só admin) em `AppServiceProvider` |

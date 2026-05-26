@@ -67,7 +67,7 @@
                     @if (session('public_data_bulk_queued'))
                         <div class="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100" role="status">
                             {{ session('public_data_bulk_queued.message') }}
-                            <a href="{{ route('admin.sync-queue.index') }}" class="ml-2 font-medium underline">{{ __('Ver fila') }}</a>
+                            <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="ml-2 font-medium underline">{{ __('Ver fila') }}</a>
                         </div>
                     @endif
 
@@ -249,7 +249,7 @@
                             <a href="{{ route('admin.ieducar-compatibility.index') }}" class="rounded-lg border border-indigo-300/80 px-3 py-1.5 font-medium text-indigo-900 dark:text-indigo-100 hover:bg-white/60 dark:hover:bg-indigo-950/40">{{ __('Compatibilidade i-Educar / FUNDEB') }}</a>
                             <a href="{{ route('admin.geo-sync.index') }}" class="rounded-lg border border-indigo-300/80 px-3 py-1.5 font-medium text-indigo-900 dark:text-indigo-100 hover:bg-white/60 dark:hover:bg-indigo-950/40">{{ __('Sincronização geográfica') }}</a>
                             <a href="{{ route('admin.pedagogical-sync.index') }}" class="rounded-lg border border-indigo-300/80 px-3 py-1.5 font-medium text-indigo-900 dark:text-indigo-100 hover:bg-white/60 dark:hover:bg-indigo-950/40">{{ __('SAEB pedagógico') }}</a>
-                            <a href="{{ route('admin.sync-queue.index') }}" class="rounded-lg border border-indigo-300/80 px-3 py-1.5 font-medium text-indigo-900 dark:text-indigo-100 hover:bg-white/60 dark:hover:bg-indigo-950/40">{{ __('Fila de processamento') }}</a>
+                            <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="rounded-lg border border-indigo-300/80 px-3 py-1.5 font-medium text-indigo-900 dark:text-indigo-100 hover:bg-white/60 dark:hover:bg-indigo-950/40">{{ __('Fila de processamento') }}</a>
                         </div>
                     </div>
                 </div>

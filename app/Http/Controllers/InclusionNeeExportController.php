@@ -23,7 +23,7 @@ final class InclusionNeeExportController extends Controller
     public function queue(Request $request): RedirectResponse
     {
         $user = $request->user();
-        abort_if($user === null || ! $user->isAdmin(), 403);
+        abort_if($user === null || ! $user->canExportInclusionNee(), 403);
 
         $validated = $request->validate([
             'format' => 'required|string|in:csv,xlsx',
@@ -77,7 +77,7 @@ final class InclusionNeeExportController extends Controller
     public function download(Request $request): StreamedResponse|BinaryFileResponse
     {
         $user = $request->user();
-        abort_if($user === null || ! $user->isAdmin(), 403);
+        abort_if($user === null || ! $user->canExportInclusionNee(), 403);
 
         $validated = $request->validate([
             'format' => 'nullable|string|in:csv,xlsx',

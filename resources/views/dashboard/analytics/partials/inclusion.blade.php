@@ -73,7 +73,7 @@
         @endif
     </x-dashboard.serv-tab-intro>
 
-    @if (auth()->user()?->isAdmin() && $yearFilterReady && $selectedCity !== null)
+    @if (auth()->user()?->canExportInclusionNee() && $yearFilterReady && $selectedCity !== null)
         @php
             $neeExportParams = request()->only(['city_id', 'ano_letivo', 'escola_id', 'curso_id', 'turno_id', 'inclusion_scope']);
             if (! isset($neeExportParams['city_id'])) {
@@ -83,9 +83,9 @@
         @include('admin.partials.sync-queued-alert')
         <div class="rounded-lg border border-indigo-200/80 dark:border-indigo-800/50 bg-indigo-50/40 dark:bg-indigo-950/25 px-4 py-4 space-y-3">
             <div>
-                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Exportação administrativa (base NEE detalhada)') }}</h3>
+                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Exportação NEE detalhada') }}</h3>
                 <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                    {{ __('Matrículas, alunos, escola/turma, designações NEE, cadastro de deficiência, turma AEE, recursos de prova INEP e inconsistências — alinhado aos gráficos desta aba. Apenas administradores.') }}
+                    {{ __('Matrículas, alunos, escola/turma, designações NEE, cadastro de deficiência, turma AEE, recursos de prova INEP e inconsistências — alinhado aos gráficos desta aba.') }}
                 </p>
             </div>
             <div class="flex flex-wrap gap-2 items-center">
@@ -120,10 +120,10 @@
                     </button>
                 </form>
                 <a
-                    href="{{ route('admin.sync-queue.index') }}"
+                    href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}"
                     class="text-xs text-indigo-700 dark:text-indigo-300 hover:underline font-medium"
                 >
-                    {{ __('Ver fila admin') }}
+                    {{ __('Ver fila de exportação') }}
                 </a>
             </div>
         </div>

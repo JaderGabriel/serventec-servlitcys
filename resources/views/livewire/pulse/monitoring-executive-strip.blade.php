@@ -83,7 +83,7 @@
                 <p class="pulse-exec-strip__period">{{ __('Período Pulse:') }} {{ $period }}</p>
             </div>
             <div class="pulse-exec-strip__links">
-                <a href="{{ route('admin.sync-queue.index') }}" class="pulse-exec-strip__link">{{ __('Fila de sincronização') }}</a>
+                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="pulse-exec-strip__link">{{ __('Fila de sincronização') }}</a>
                 <a href="{{ route('cities.index') }}" class="pulse-exec-strip__link">{{ __('Cidades') }}</a>
                 <a href="{{ route('dashboard.analytics') }}" class="pulse-exec-strip__link">{{ __('Análise') }}</a>
             </div>

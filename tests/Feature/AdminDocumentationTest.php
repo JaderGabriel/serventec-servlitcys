@@ -88,12 +88,21 @@ class AdminDocumentationTest extends TestCase
         );
     }
 
-    public function test_non_admin_cannot_access_documentation(): void
+    public function test_non_admin_cannot_access_admin_documentation_route(): void
     {
         $user = User::factory()->utilizador()->create();
 
         $this->actingAs($user)
             ->get(route('admin.documentation.index'))
             ->assertForbidden();
+    }
+
+    public function test_utilizador_can_access_public_documentation_route(): void
+    {
+        $user = User::factory()->utilizador()->create();
+
+        $this->actingAs($user)
+            ->get(route('documentation.index'))
+            ->assertRedirect(route('documentation.show', ['doc' => 'docs/README.md']));
     }
 }

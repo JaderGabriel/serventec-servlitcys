@@ -4,7 +4,8 @@ use App\Http\Controllers\Admin\AdminConnectionsController;
 use App\Http\Controllers\Admin\AdminSyncQueueController;
 use App\Http\Controllers\Admin\AnalyticsDiagnosticsController;
 use App\Http\Controllers\Admin\ArtisanCommandsController;
-use App\Http\Controllers\Admin\DocumentationController;
+use App\Http\Controllers\Admin\DocumentationController as AdminDocumentationController;
+use App\Http\Controllers\DocumentationController;
 use App\Http\Controllers\Admin\GeoSyncController;
 use App\Http\Controllers\Admin\IeducarCompatibilityController;
 use App\Http\Controllers\Admin\LegalConsentReportController;
@@ -70,11 +71,16 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
         Route::get('/dashboard/analytics/filter-options-years', [AnalyticsDashboardController::class, 'filterOptionsYears'])->name('dashboard.analytics.filter-options-years');
         Route::get('/dashboard/analytics/discrepancies/export', [DiscrepanciesExportController::class, 'csv'])->name('dashboard.analytics.discrepancies.export');
         Route::get('/dashboard/analytics/inclusion/export', [InclusionNeeExportController::class, 'download'])
-            ->middleware('admin')
             ->name('dashboard.analytics.inclusion.export');
         Route::post('/dashboard/analytics/inclusion/export/queue', [InclusionNeeExportController::class, 'queue'])
-            ->middleware('admin')
             ->name('dashboard.analytics.inclusion.export.queue');
+
+        Route::get('/documentacao', [DocumentationController::class, 'index'])->name('documentation.index');
+        Route::get('/documentacao/ver', [DocumentationController::class, 'show'])->name('documentation.show');
+
+        Route::get('/filas', [AdminSyncQueueController::class, 'index'])->name('sync-queue.index');
+        Route::get('/filas/{task}', [AdminSyncQueueController::class, 'show'])->name('sync-queue.show');
+        Route::get('/filas/{task}/download', [AdminSyncQueueController::class, 'download'])->name('sync-queue.download');
         Route::post('/dashboard/analytics/pdf-export', [AnalyticsReportExportController::class, 'store'])->name('dashboard.analytics.pdf.store');
         Route::get('/dashboard/analytics/pdf-export/{export}/status', [AnalyticsReportExportController::class, 'status'])->name('dashboard.analytics.pdf.status');
         Route::get('/dashboard/analytics/pdf-export/{export}/download', [AnalyticsReportExportController::class, 'download'])->name('dashboard.analytics.pdf.download');
@@ -139,9 +145,9 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'legal.consent', 'adm
     Route::get('/admin/conexoes', [AdminConnectionsController::class, 'index'])
         ->name('admin.connections.index');
 
-    Route::get('/admin/documentacao', [DocumentationController::class, 'index'])
+    Route::get('/admin/documentacao', [AdminDocumentationController::class, 'index'])
         ->name('admin.documentation.index');
-    Route::get('/admin/documentacao/ver', [DocumentationController::class, 'show'])
+    Route::get('/admin/documentacao/ver', [AdminDocumentationController::class, 'show'])
         ->name('admin.documentation.show');
 
     Route::get('/admin/analytics-diagnostics', AnalyticsDiagnosticsController::class)

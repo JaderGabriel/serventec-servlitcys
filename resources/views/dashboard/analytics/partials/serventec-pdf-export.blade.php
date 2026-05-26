@@ -48,7 +48,7 @@
             <h3 class="text-sm font-semibold text-indigo-950 dark:text-indigo-100">{{ __('Relatório PDF completo') }}</h3>
             <p class="text-xs text-indigo-900/90 dark:text-indigo-200/90 mt-1 leading-relaxed">
                 {{ __('Enfileira a geração do PDF (Serventec, discrepâncias, FUNDEB, Censo e gráficos). Com QUEUE_CONNECTION=database/redis, o cron `schedule:run` dispara o worker da fila :queue; em alternativa: `php artisan analytics-pdf:work`.', ['queue' => $pdfQueue]) }}
-                <a href="{{ route('admin.sync-queue.index', ['pdf_status' => 'pending']) }}#fila-pdf" class="font-medium text-indigo-700 dark:text-indigo-300 hover:underline">{{ __('Ver fila de processamento') }}</a>
+                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', ['pdf_status' => 'pending']) }}#fila-pdf" class="font-medium text-indigo-700 dark:text-indigo-300 hover:underline">{{ __('Ver fila de processamento') }}</a>
             </p>
             @if ($queueIsSync)
                 <p class="mt-2 text-xs text-amber-800 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800 rounded-md px-2.5 py-1.5">
@@ -94,7 +94,7 @@
             <p>{{ session('status') }}</p>
             @if (session('pdf_export_id'))
                 <p class="text-xs">
-                    <a href="{{ route('admin.sync-queue.index', ['pdf_status' => 'pending']) }}#fila-pdf" class="font-medium underline">{{ __('Acompanhar na fila') }}</a>
+                    <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', ['pdf_status' => 'pending']) }}#fila-pdf" class="font-medium underline">{{ __('Acompanhar na fila') }}</a>
                     · #{{ session('pdf_export_id') }}
                 </p>
             @endif

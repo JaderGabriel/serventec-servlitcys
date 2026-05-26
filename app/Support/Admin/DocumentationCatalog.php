@@ -2,16 +2,22 @@
 
 namespace App\Support\Admin;
 
+use App\Models\User;
 use Illuminate\Support\Str;
 
 /**
- * Entradas de documentação interna (menu admin) e validação de caminhos legíveis.
+ * Entradas de documentação interna (menu) e validação de caminhos legíveis.
  *
  * Qualquer ficheiro .md em docs/ (ou README.md na raiz) pode ser aberto no leitor;
- * o menu lista entradas curadas e acrescenta automaticamente os restantes ficheiros.
+ * o menu lista entradas curadas por percurso lógico do sistema; utilizadores não-admin
+ * não veem secções de operação/integração administrativa.
  */
 final class DocumentationCatalog
 {
+    public const AUDIENCE_ALL = 'all';
+
+    public const AUDIENCE_ADMIN = 'admin';
+
     public static function defaultPath(): string
     {
         return 'docs/README.md';
@@ -68,6 +74,40 @@ final class DocumentationCatalog
         return null;
     }
 
+    public static function canUserReadPath(User $user, string $path): bool
+    {
+        $resolved = self::resolveReadablePath($path);
+        if ($resolved === null) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return ! in_array($resolved, self::adminOnlyPaths(), true);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function adminOnlyPaths(): array
+    {
+        return [
+            'README.md',
+            'docs/VARIAVEIS_AMBIENTE.md',
+            'docs/IMPLANTACAO_PRODUCAO.md',
+            'docs/PERFORMANCE.md',
+            'docs/COMANDOS_ARTISAN.md',
+            'docs/PLANO_TESTES_UNITARIOS.md',
+            'docs/IMPORTACAO_DADOS_PUBLICOS.md',
+            'docs/IMPORTACAO_SAEB_PLANILHAS_INEP.md',
+            'docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md',
+            'docs/CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md',
+            'docs/ROADMAP_BASES_CALCULOS_FINANCEIROS.md',
+        ];
+    }
+
     /**
      * @return list<string>
      */
@@ -109,11 +149,32 @@ final class DocumentationCatalog
         ];
     }
 
-    public static function readerUrl(string $path): string
+    public static function readerUrl(string $path, ?string $routePrefix = null): string
     {
         $resolved = self::resolveReadablePath($path) ?? self::defaultPath();
+        $routePrefix ??= self::readerRoutePrefix();
 
-        return route('admin.documentation.show', ['doc' => $resolved]);
+        return route($routePrefix.'.show', ['doc' => $resolved]);
+    }
+
+    public static function readerRoutePrefix(?User $user = null): string
+    {
+        $user ??= auth()->user();
+
+        return ($user !== null && $user->isAdmin())
+            ? 'admin.documentation'
+            : 'documentation';
+    }
+
+    /**
+     * @return list<array{title: string, description: string, audience?: string, items: list<array{label: string, path: string, hint?: string, audience?: string}>}>
+     */
+    public static function sectionsForUser(?User $user = null): array
+    {
+        $user ??= auth()->user();
+        $isAdmin = $user?->isAdmin() ?? false;
+
+        return self::filterSectionsForAudience(self::sections(), $isAdmin);
     }
 
     public static function githubRepositoryUrl(): string
@@ -147,21 +208,52 @@ final class DocumentationCatalog
     {
         $sections = [
             [
-                'title' => __('Projeto'),
-                'description' => __('Visão, estado e planeamento.'),
+                'title' => __('Começar'),
+                'description' => __('Visão do produto, perfis e identidade visual.'),
+                'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Índice da documentação'), 'path' => 'docs/README.md', 'hint' => __('Ponto de entrada')],
-                    ['label' => __('Histórico de versões'), 'path' => 'docs/HISTORICO_VERSOES.md', 'hint' => __('Tags, commits e trajetória')],
-                    ['label' => __('Entregas escalonadas (mai/2026)'), 'path' => 'docs/ENTREGAS_ESCALONADAS_MAIO_2026.md', 'hint' => __('Commits e PRs por bloco')],
-                    ['label' => __('Estado do projeto'), 'path' => 'docs/STATUS_PROJETO.md'],
-                    ['label' => __('Backlog de implementações'), 'path' => 'docs/BACKLOG_IMPLEMENTACOES.md'],
                     ['label' => __('Documentação executiva'), 'path' => 'docs/DOCUMENTACAO_EXECUTIVA.md'],
+                    ['label' => __('Perfis de utilizador'), 'path' => 'docs/PERFIS_UTILIZADOR.md'],
+                    ['label' => __('Design system (UI)'), 'path' => 'docs/DESIGN_SYSTEM.md'],
+                    ['label' => __('Estado do projeto'), 'path' => 'docs/STATUS_PROJETO.md'],
+                    ['label' => __('Histórico de versões'), 'path' => 'docs/HISTORICO_VERSOES.md', 'hint' => __('Tags, commits e trajetória')],
+                    ['label' => __('Entregas escalonadas (mai/2026)'), 'path' => 'docs/ENTREGAS_ESCALONADAS_MAIO_2026.md'],
+                    ['label' => __('Backlog de implementações'), 'path' => 'docs/BACKLOG_IMPLEMENTACOES.md'],
+                ],
+            ],
+            [
+                'title' => __('Painel de análise'),
+                'description' => __('Abas, métricas, inclusão, relatórios e cadastro.'),
+                'audience' => self::AUDIENCE_ALL,
+                'items' => [
+                    ['label' => __('Métricas & Pulse (analytics)'), 'path' => 'docs/METRICAS_QUERIES_ANALYTICS.md'],
+                    ['label' => __('Gráficos MEC/INEP'), 'path' => 'docs/SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md'],
+                    ['label' => __('SAEB — referências pedagógicas'), 'path' => 'docs/saeb_pedagogico_referencias.md'],
+                    ['label' => __('Plugins e cadastro i-Educar'), 'path' => 'docs/PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md'],
+                    ['label' => __('Roadmap inclusão e cadastro NEE'), 'path' => 'docs/DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md'],
+                    ['label' => __('Relatório PDF ATM'), 'path' => 'docs/RELATORIO_PDF_ATM.md'],
+                    ['label' => __('Ponderações técnicas'), 'path' => 'docs/PONDERACOES_TECNICAS.md'],
+                ],
+            ],
+            [
+                'title' => __('Financiamento e Censo'),
+                'description' => __('FUNDEB, VAAF, exportações e consultas públicas.'),
+                'audience' => self::AUDIENCE_ALL,
+                'items' => [
+                    ['label' => __('FUNDEB / VAAF'), 'path' => 'docs/FUNDEB_VAAF_E_ONDA1.md'],
+                    ['label' => __('Exportação planilha FUNDEB'), 'path' => 'docs/EXPORTACAO_DADOS_FUNDEB_PLANILHA.md'],
+                    ['label' => __('Comparativo VAAF vs FNDE/MEC'), 'path' => 'docs/COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md'],
+                    ['label' => __('Consultas externas (produção)'), 'path' => 'docs/CONSULTAS_EXTERNAS.md', 'hint' => __('FNDE, Tesouro, INEP')],
                 ],
             ],
             [
                 'title' => __('Releases'),
-                'description' => __('Notas por tag de deploy.'),
+                'description' => __('Notas por tag de deploy (mais recentes primeiro).'),
+                'audience' => self::AUDIENCE_ALL,
                 'items' => [
+                    ['label' => __('Release 3.2.0 — Notus'), 'path' => 'docs/RELEASE_20260527_NOTUS.md'],
+                    ['label' => __('Release 3.1.0 — Boreas'), 'path' => 'docs/RELEASE_20260526_BOREAS.md'],
                     ['label' => __('Release 3.0.0 — Apollo'), 'path' => 'docs/RELEASE_20260525_APOLLO.md'],
                     ['label' => __('Release 2.4.0 — Ceres'), 'path' => 'docs/RELEASE_20260524_CERES.md'],
                     ['label' => __('Release 2.3.6 — Janus'), 'path' => 'docs/RELEASE_20260522_JANUS.md'],
@@ -170,44 +262,27 @@ final class DocumentationCatalog
                 ],
             ],
             [
-                'title' => __('Integrações'),
-                'description' => __('Fontes públicas, ingestão e previsão de demanda educacional.'),
+                'title' => __('Integrações e dados públicos'),
+                'description' => __('Ingestão administrativa, APIs e estudos de integração.'),
+                'audience' => self::AUDIENCE_ADMIN,
                 'items' => [
-                    ['label' => __('Estudo: setor público e demanda'), 'path' => 'docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md', 'hint' => __('Saúde, SUAS, Tesouro, janelas e APIs')],
+                    ['label' => __('Estudo: setor público e demanda'), 'path' => 'docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md'],
                     ['label' => __('Catálogo API i-Educar (proposta)'), 'path' => 'docs/CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md'],
-                    ['label' => __('Consultas externas (produção)'), 'path' => 'docs/CONSULTAS_EXTERNAS.md', 'hint' => __('FNDE, Tesouro, INEP — .env e abas')],
-                    ['label' => __('Importação dados públicos'), 'path' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md', 'hint' => __('Hub /admin/dados-publicos')],
+                    ['label' => __('Importação dados públicos'), 'path' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md'],
                     ['label' => __('Importação SAEB (planilhas INEP)'), 'path' => 'docs/IMPORTACAO_SAEB_PLANILHAS_INEP.md'],
                     ['label' => __('Roadmap bases financeiras'), 'path' => 'docs/ROADMAP_BASES_CALCULOS_FINANCEIROS.md'],
-                    ['label' => __('Comparativo VAAF vs FNDE/MEC'), 'path' => 'docs/COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md'],
                 ],
             ],
             [
-                'title' => __('Técnico & consultoria'),
-                'description' => __('Regras de cálculo, integrações e desenho.'),
-                'items' => [
-                    ['label' => __('Ponderações técnicas'), 'path' => 'docs/PONDERACOES_TECNICAS.md'],
-                    ['label' => __('Design system (UI / consultoria)'), 'path' => 'docs/DESIGN_SYSTEM.md'],
-                    ['label' => __('FUNDEB / VAAF'), 'path' => 'docs/FUNDEB_VAAF_E_ONDA1.md'],
-                    ['label' => __('Métricas & Pulse (analytics)'), 'path' => 'docs/METRICAS_QUERIES_ANALYTICS.md'],
-                    ['label' => __('Gráficos MEC/INEP'), 'path' => 'docs/SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md'],
-                    ['label' => __('SAEB — referências pedagógicas'), 'path' => 'docs/saeb_pedagogico_referencias.md'],
-                    ['label' => __('Plugins e cadastro i-Educar'), 'path' => 'docs/PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md', 'hint' => __('Dados a refinar, módulos e integrações')],
-                    ['label' => __('Roadmap inclusão e cadastro NEE'), 'path' => 'docs/DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md'],
-                    ['label' => __('Exportação planilha FUNDEB'), 'path' => 'docs/EXPORTACAO_DADOS_FUNDEB_PLANILHA.md'],
-                    ['label' => __('Relatório PDF ATM'), 'path' => 'docs/RELATORIO_PDF_ATM.md'],
-                ],
-            ],
-            [
-                'title' => __('Operação'),
-                'description' => __('Deploy, segurança e CLI.'),
+                'title' => __('Operação e deploy'),
+                'description' => __('Ambiente, segurança, filas e CLI (administradores).'),
+                'audience' => self::AUDIENCE_ADMIN,
                 'items' => [
                     ['label' => __('Variáveis de ambiente (.env)'), 'path' => 'docs/VARIAVEIS_AMBIENTE.md'],
                     ['label' => __('Implantação em produção'), 'path' => 'docs/IMPLANTACAO_PRODUCAO.md'],
                     ['label' => __('Performance e Redis'), 'path' => 'docs/PERFORMANCE.md'],
                     ['label' => __('Segurança'), 'path' => 'docs/SEGURANCA.md'],
                     ['label' => __('Comandos Artisan'), 'path' => 'docs/COMANDOS_ARTISAN.md'],
-                    ['label' => __('Perfis de usuário'), 'path' => 'docs/PERFIS_UTILIZADOR.md'],
                     ['label' => __('Plano de testes unitários'), 'path' => 'docs/PLANO_TESTES_UNITARIOS.md'],
                     ['label' => __('README (instalação)'), 'path' => 'README.md'],
                 ],
@@ -215,6 +290,7 @@ final class DocumentationCatalog
             [
                 'title' => __('Notas executivas (arquivo)'),
                 'description' => __('Documentos de desenho e revisão pontuais.'),
+                'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Revisão técnica do projeto'), 'path' => 'docs/DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md'],
                     ['label' => __('Rede & oferta — BI'), 'path' => 'docs/DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md'],
@@ -227,8 +303,43 @@ final class DocumentationCatalog
     }
 
     /**
-     * @param  list<array{title: string, description: string, items: list<array{label: string, path: string, hint?: string}>}>  $sections
-     * @return list<array{title: string, description: string, items: list<array{label: string, path: string, hint?: string}>}>
+     * @param  list<array{title: string, description: string, audience?: string, items: list<array{label: string, path: string, hint?: string, audience?: string}>}>  $sections
+     * @return list<array{title: string, description: string, audience?: string, items: list<array{label: string, path: string, hint?: string, audience?: string}>}>
+     */
+    private static function filterSectionsForAudience(array $sections, bool $isAdmin): array
+    {
+        $filtered = [];
+
+        foreach ($sections as $section) {
+            if (($section['audience'] ?? self::AUDIENCE_ALL) === self::AUDIENCE_ADMIN && ! $isAdmin) {
+                continue;
+            }
+
+            $items = [];
+            foreach ($section['items'] as $item) {
+                if (($item['audience'] ?? self::AUDIENCE_ALL) === self::AUDIENCE_ADMIN && ! $isAdmin) {
+                    continue;
+                }
+                if (! $isAdmin && in_array($item['path'], self::adminOnlyPaths(), true)) {
+                    continue;
+                }
+                $items[] = $item;
+            }
+
+            if ($items === []) {
+                continue;
+            }
+
+            $section['items'] = $items;
+            $filtered[] = $section;
+        }
+
+        return $filtered;
+    }
+
+    /**
+     * @param  list<array{title: string, description: string, audience?: string, items: list<array{label: string, path: string, hint?: string}>}>  $sections
+     * @return list<array{title: string, description: string, audience?: string, items: list<array{label: string, path: string, hint?: string}>}>
      */
     private static function appendDiscoveredSections(array $sections): array
     {
@@ -247,6 +358,9 @@ final class DocumentationCatalog
             $extras[] = [
                 'label' => self::labelFromPath($path),
                 'path' => $path,
+                'audience' => in_array($path, self::adminOnlyPaths(), true)
+                    ? self::AUDIENCE_ADMIN
+                    : self::AUDIENCE_ALL,
             ];
         }
 
@@ -258,7 +372,8 @@ final class DocumentationCatalog
 
         $sections[] = [
             'title' => __('Outros documentos'),
-            'description' => __('Ficheiros adicionais em docs/ (links do índice README).'),
+            'description' => __('Ficheiros adicionais em docs/.'),
+            'audience' => self::AUDIENCE_ALL,
             'items' => $extras,
         ];
 

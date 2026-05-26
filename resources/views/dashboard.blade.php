@@ -40,7 +40,7 @@
                             </p>
                         </div>
                     </div>
-                    <a href="{{ route('admin.sync-queue.index') }}" class="serv-btn-secondary shrink-0 text-sm">{{ __('Ver fila') }}</a>
+                    <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="serv-btn-secondary shrink-0 text-sm">{{ __('Ver fila') }}</a>
                 </div>
             @endif
 

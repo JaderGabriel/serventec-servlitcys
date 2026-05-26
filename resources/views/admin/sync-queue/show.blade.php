@@ -9,7 +9,7 @@
     </x-slot>
 
     <div class="py-10 max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-6">
-        <a href="{{ route('admin.sync-queue.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">← {{ __('Voltar à fila') }}</a>
+        <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">← {{ __('Voltar à fila') }}</a>
 
         @include('admin.partials.sync-queued-alert')
 
@@ -91,7 +91,7 @@
             @endif
 
             @if ($canResume ?? false)
-                <form method="post" action="{{ route('admin.sync-queue.resume', $task) }}" class="inline">
+                <form method="post" action="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.resume', $task) }}" class="inline">
                     @csrf
                     <button type="submit" class="inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">
                         {{ $task->hasCheckpoint() ? __('Retomar da fila (checkpoint)') : __('Reenfileirar tarefa') }}
@@ -108,7 +108,7 @@
             @endif
 
             @if ($task->isExportDownloadable())
-                <a href="{{ route('admin.sync-queue.download', $task) }}" class="sync-queue-download-btn sync-queue-download-btn--lg">
+                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.download', $task) }}" class="sync-queue-download-btn sync-queue-download-btn--lg">
                     <x-icons.file-download class="h-5 w-5" />
                     <span>
                         {{ __('Descarregar') }}

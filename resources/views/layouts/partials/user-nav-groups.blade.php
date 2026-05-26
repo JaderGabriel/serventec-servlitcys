@@ -15,6 +15,8 @@
 
     $user = Auth::user();
     $req = request();
+    $syncQueueRoutePrefix = \App\Support\SyncQueue\SyncQueueUserScope::routePrefix($user);
+    $documentationRoutePrefix = $user->isAdmin() ? 'admin.documentation' : 'documentation';
 
     $groups = array_values(array_filter([
         [
@@ -47,6 +49,31 @@
                     'icon' => 'signal',
                     'active' => $req->routeIs('admin.analytics-diagnostics'),
                     'title' => __('Diagnóstico do painel analítico.'),
+                ],
+            ])),
+        ],
+        [
+            'show' => ! $user->isAdmin() && ($user->canViewDocumentation() || $user->canViewSyncQueue()),
+            'title' => __('Recursos'),
+            'icon' => 'document-text',
+            'tone' => 'teal',
+            'routes' => ['documentation.*', 'sync-queue.*'],
+            'items' => array_values(array_filter([
+                [
+                    'show' => $user->canViewDocumentation(),
+                    'href' => route($documentationRoutePrefix.'.index'),
+                    'label' => __('Documentação'),
+                    'icon' => 'document-text',
+                    'active' => $req->routeIs(['admin.documentation.*', 'documentation.*']),
+                    'title' => __('Manual do sistema, métricas e releases.'),
+                ],
+                [
+                    'show' => $user->canViewSyncQueue(),
+                    'href' => route($syncQueueRoutePrefix.'.index'),
+                    'label' => __('Filas de exportação'),
+                    'icon' => 'queue-list',
+                    'active' => $req->routeIs(['admin.sync-queue.*', 'sync-queue.*']),
+                    'title' => __('Exportações NEE e relatórios PDF enfileirados por si.'),
                 ],
             ])),
         ],
@@ -92,10 +119,10 @@
             'items' => [
                 [
                     'show' => true,
-                    'href' => route('admin.sync-queue.index'),
+                    'href' => route($syncQueueRoutePrefix.'.index'),
                     'label' => __('Filas de processamento'),
                     'icon' => 'queue-list',
-                    'active' => $req->routeIs('admin.sync-queue.*'),
+                    'active' => $req->routeIs(['admin.sync-queue.*', 'sync-queue.*']),
                     'title' => __('Sincronização admin e exportação PDF em fila.'),
                 ],
                 [
@@ -174,10 +201,10 @@
                 ],
                 [
                     'show' => true,
-                    'href' => route('admin.documentation.index'),
+                    'href' => route($documentationRoutePrefix.'.index'),
                     'label' => __('Documentação'),
                     'icon' => 'document-text',
-                    'active' => $req->routeIs('admin.documentation.*'),
+                    'active' => $req->routeIs(['admin.documentation.*', 'documentation.*']),
                     'title' => __('Documentação técnica do sistema.'),
                 ],
                 [

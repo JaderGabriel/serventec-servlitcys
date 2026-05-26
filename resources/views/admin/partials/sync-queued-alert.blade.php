@@ -22,11 +22,11 @@
             </div>
             <div class="flex flex-wrap gap-2 shrink-0">
                 @if ($taskId > 0)
-                    <a href="{{ route('admin.sync-queue.show', $taskId) }}" class="inline-flex items-center rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600">
+                    <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.show', $taskId) }}" class="inline-flex items-center rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600">
                         {{ __('Ver tarefa') }}
                     </a>
                 @endif
-                <a href="{{ route('admin.sync-queue.index') }}" class="inline-flex items-center rounded-lg border border-emerald-400/80 dark:border-emerald-600 px-3 py-1.5 text-xs font-medium text-emerald-900 dark:text-emerald-100 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40">
+                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="inline-flex items-center rounded-lg border border-emerald-400/80 dark:border-emerald-600 px-3 py-1.5 text-xs font-medium text-emerald-900 dark:text-emerald-100 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40">
                     {{ __('Fila') }}
                 </a>
                 <button type="button" class="text-emerald-700 dark:text-emerald-300 text-lg leading-none px-1" x-on:click="show = false" aria-label="{{ __('Fechar') }}">×</button>

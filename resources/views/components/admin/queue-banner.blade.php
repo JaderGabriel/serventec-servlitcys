@@ -10,7 +10,7 @@
             </p>
             <p class="{{ $compact ? 'text-[11px] mt-0.5' : 'text-sm mt-1' }} text-indigo-900/90 dark:text-indigo-200/90 leading-relaxed">
                 {{ __('Os envios desta página não correm no browser: cada botão cria uma tarefa em segundo plano. Acompanhe o estado, a cidade e o log em') }}
-                <a href="{{ route('admin.sync-queue.index') }}" class="font-medium underline underline-offset-2 hover:text-indigo-700 dark:hover:text-indigo-100">{{ __('Fila de sincronização') }}</a>.
+                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="font-medium underline underline-offset-2 hover:text-indigo-700 dark:hover:text-indigo-100">{{ __('Fila de sincronização') }}</a>.
             </p>
             @if (! $compact)
                 <p class="mt-1.5 text-xs text-indigo-800/80 dark:text-indigo-300/80">
@@ -32,7 +32,7 @@
                 </p>
             @endif
         </div>
-        <a href="{{ route('admin.sync-queue.index') }}" class="shrink-0 inline-flex items-center rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-500">
+        <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="shrink-0 inline-flex items-center rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-500">
             {{ __('Ver fila') }}
         </a>
     </div>

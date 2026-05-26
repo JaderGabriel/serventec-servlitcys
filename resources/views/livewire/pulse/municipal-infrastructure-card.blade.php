@@ -81,7 +81,7 @@
                                 <p class="mt-1 text-gray-500 dark:text-gray-400">
                                     {{ $task['city'] ?? __('Várias cidades') }} · {{ $task['created'] }}
                                 </p>
-                                <a href="{{ route('admin.sync-queue.show', $task['id']) }}" class="mt-1 inline-block text-indigo-600 dark:text-indigo-400 hover:underline">
+                                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.show', $task['id']) }}" class="mt-1 inline-block text-indigo-600 dark:text-indigo-400 hover:underline">
                                     {{ __('Detalhe') }} #{{ $task['id'] }}
                                 </a>
                             </li>

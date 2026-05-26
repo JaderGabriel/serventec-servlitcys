@@ -28,10 +28,16 @@
             'active' => request()->routeIs('notifications.*'),
         ],
         [
-            'show' => $user->canImportOrConfigure(),
-            'href' => route('admin.documentation.index'),
+            'show' => $user->canViewDocumentation(),
+            'href' => route($user->isAdmin() ? 'admin.documentation.index' : 'documentation.index'),
             'label' => __('Documentação'),
-            'active' => request()->routeIs('admin.documentation.*'),
+            'active' => request()->routeIs(['admin.documentation.*', 'documentation.*']),
+        ],
+        [
+            'show' => $user->canViewSyncQueue(),
+            'href' => route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index'),
+            'label' => __('Filas'),
+            'active' => request()->routeIs(['admin.sync-queue.*', 'sync-queue.*']),
         ],
         [
             'show' => $user->isAdmin(),

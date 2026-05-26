@@ -10,7 +10,7 @@ use League\CommonMark\MarkdownConverter;
 
 class DocumentationMarkdownRenderer
 {
-    public function toHtml(string $markdown, string $currentPath): string
+    public function toHtml(string $markdown, string $currentPath, ?string $documentationRoutePrefix = null): string
     {
         $environment = new Environment([
             'html_input' => 'escape',
@@ -22,10 +22,14 @@ class DocumentationMarkdownRenderer
         $converter = new MarkdownConverter($environment);
         $html = $converter->convert($markdown)->getContent();
 
-        return $this->rewriteInternalDocLinks($html, $currentPath);
+        return $this->rewriteInternalDocLinks(
+            $html,
+            $currentPath,
+            $documentationRoutePrefix ?? DocumentationCatalog::readerRoutePrefix(),
+        );
     }
 
-    private function rewriteInternalDocLinks(string $html, string $currentPath): string
+    private function rewriteInternalDocLinks(string $html, string $currentPath, string $documentationRoutePrefix): string
     {
         $baseDir = dirname($currentPath);
         if ($baseDir === '.') {
@@ -34,7 +38,7 @@ class DocumentationMarkdownRenderer
 
         return (string) preg_replace_callback(
             '/<a\s+href="([^"]+)"/i',
-            function (array $matches) use ($baseDir): string {
+            function (array $matches) use ($baseDir, $documentationRoutePrefix): string {
                 $href = html_entity_decode($matches[1], ENT_QUOTES | ENT_HTML5);
 
                 if ($href === '' || str_contains($href, '://') || str_starts_with($href, '#') || str_starts_with($href, 'mailto:')) {
@@ -47,7 +51,7 @@ class DocumentationMarkdownRenderer
                     return $matches[0];
                 }
 
-                $url = route('admin.documentation.show', ['doc' => $resolved]);
+                $url = route($documentationRoutePrefix.'.show', ['doc' => $resolved]);
 
                 return '<a href="'.e($url).'"';
             },

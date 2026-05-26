@@ -12,6 +12,7 @@ use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\Notifications\OperationalAlertsNotifier;
 use App\Support\Admin\AdminSyncQueueIndexPresenter;
 use App\Support\Admin\ExternalImportImpact;
+use App\Support\SyncQueue\SyncQueueUserScope;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -22,16 +23,22 @@ class AdminSyncQueueController extends Controller
 {
     public function index(Request $request, OperationalAlertsNotifier $operationalAlerts): View
     {
-        if ($request->user()?->canImportOrConfigure()) {
-            $operationalAlerts->notifyAdminsIfNeeded($request->user());
+        $user = $request->user();
+        abort_if($user === null || ! $user->canViewSyncQueue(), 403);
+
+        if ($user->canImportOrConfigure()) {
+            $operationalAlerts->notifyAdminsIfNeeded($user);
         }
 
         $status = trim((string) $request->input('status', ''));
         $domain = trim((string) $request->input('domain', ''));
 
-        $query = AdminSyncTask::query()
-            ->with(['city:id,name,uf', 'queuedBy:id,name'])
-            ->orderByDesc('id');
+        $query = SyncQueueUserScope::applyToTasks(
+            AdminSyncTask::query()
+                ->with(['city:id,name,uf', 'queuedBy:id,name'])
+                ->orderByDesc('id'),
+            $user,
+        );
 
         if ($status !== '' && AdminSyncTaskStatus::tryFrom($status) !== null) {
             $query->where('status', $status);
@@ -42,27 +49,30 @@ class AdminSyncQueueController extends Controller
 
         $tasks = $query->paginate(25)->withQueryString();
 
-        $counts = AdminSyncTask::query()
+        $counts = SyncQueueUserScope::applyToTasks(AdminSyncTask::query(), $user)
             ->selectRaw('status, count(*) as aggregate')
             ->groupBy('status')
             ->pluck('aggregate', 'status');
 
-        $countsByDomainStatus = AdminSyncTask::query()
+        $countsByDomainStatus = SyncQueueUserScope::applyToTasks(AdminSyncTask::query(), $user)
             ->selectRaw('domain, status, count(*) as aggregate')
             ->groupBy('domain', 'status')
             ->get()
             ->groupBy('domain');
 
         $pdfStatus = trim((string) $request->input('pdf_status', ''));
-        $pdfQuery = AnalyticsReportExport::query()
-            ->with(['city:id,name,uf', 'user:id,name'])
-            ->orderByDesc('id');
+        $pdfQuery = SyncQueueUserScope::applyToPdfExports(
+            AnalyticsReportExport::query()
+                ->with(['city:id,name,uf', 'user:id,name'])
+                ->orderByDesc('id'),
+            $user,
+        );
         if ($pdfStatus !== '' && AnalyticsReportExportStatus::tryFrom($pdfStatus) !== null) {
             $pdfQuery->where('status', $pdfStatus);
         }
         $pdfExports = $pdfQuery->paginate(15, ['*'], 'pdf_page')->withQueryString();
 
-        $pdfCounts = AnalyticsReportExport::query()
+        $pdfCounts = SyncQueueUserScope::applyToPdfExports(AnalyticsReportExport::query(), $user)
             ->selectRaw('status, count(*) as aggregate')
             ->groupBy('status')
             ->pluck('aggregate', 'status');
@@ -99,6 +109,8 @@ class AdminSyncQueueController extends Controller
         }
 
         return view('admin.sync-queue.index', [
+            'syncQueueRoutePrefix' => SyncQueueUserScope::routePrefix($user),
+            'isAdminSyncQueue' => $user->isAdmin(),
             'counts' => $counts,
             'filterStatus' => $status,
             'filterDomain' => $domain,
@@ -122,17 +134,23 @@ class AdminSyncQueueController extends Controller
 
     public function show(AdminSyncTask $task): View
     {
+        $this->authorize('view', $task);
+
         $task->load(['city:id,name,uf,ibge_municipio', 'queuedBy:id,name']);
+        $user = request()->user();
 
         return view('admin.sync-queue.show', [
             'task' => $task,
             'outcomeHint' => ExternalImportImpact::taskOutcomeHint($task),
-            'canResume' => $task->isResumable(),
+            'canResume' => $user !== null && $user->can('resume', $task),
+            'syncQueueRoutePrefix' => SyncQueueUserScope::routePrefix($user),
         ]);
     }
 
     public function resume(AdminSyncTask $task, AdminSyncQueueService $syncQueue): RedirectResponse
     {
+        $this->authorize('resume', $task);
+
         if (! $task->isResumable()) {
             return redirect()
                 ->route('admin.sync-queue.show', $task)
@@ -151,6 +169,8 @@ class AdminSyncQueueController extends Controller
 
     public function download(AdminSyncTask $task): BinaryFileResponse
     {
+        $this->authorize('download', $task);
+
         if ($task->status !== AdminSyncTaskStatus::Completed->value) {
             abort(Response::HTTP_NOT_FOUND);
         }

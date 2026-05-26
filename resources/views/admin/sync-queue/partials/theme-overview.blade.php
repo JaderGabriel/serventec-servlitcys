@@ -8,8 +8,8 @@
             $isPdf = ($card['id'] ?? '') === 'pdf';
             $domainValue = $isPdf ? '' : ($card['domain']?->value ?? '');
             $href = $isPdf
-                ? route('admin.sync-queue.index', array_filter(['pdf_status' => $filterPdfStatus !== '' ? $filterPdfStatus : null])) . '#'.$card['anchor']
-                : route('admin.sync-queue.index', array_filter([
+                ? route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', array_filter(['pdf_status' => $filterPdfStatus !== '' ? $filterPdfStatus : null])) . '#'.$card['anchor']
+                : route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', array_filter([
                     'domain' => $domainValue,
                     'status' => $filterStatus !== '' ? $filterStatus : null,
                     'pdf_status' => $filterPdfStatus !== '' ? $filterPdfStatus : null,

@@ -49,7 +49,7 @@
                         {{ $link['label'] }} →
                     </a>
                 @endforeach
-                <a href="{{ route('admin.sync-queue.index') }}" class="inline-flex items-center rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
+                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="inline-flex items-center rounded-lg border border-slate-300 dark:border-slate-600 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
                     {{ __('Fila de sincronização') }}
                 </a>
             </div>
