@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '3.3.0',
-        'release_tag' => '20260528-Eos',
-        'commit_short' => 'f93535f',
-        'commit_number' => 254,
-        'revision_date' => '2026-05-26',
+        'version' => '3.3.1',
+        'release_tag' => '20260529-Helios',
+        'commit_short' => '83ff2b1',
+        'commit_number' => 256,
+        'revision_date' => '2026-05-29',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

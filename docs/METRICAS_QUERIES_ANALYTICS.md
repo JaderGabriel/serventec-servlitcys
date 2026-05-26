@@ -33,6 +33,14 @@ No **Pulse → Operações**, filtre `analytics:tab:municipality_health` e `anal
 
 Desactivar progressivo (comportamento anterior — um único pedido pesado): **`ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE=false`**.
 
+### Problemas conhecidos (3.3.1)
+
+| Sintoma | Causa habitual | Acção |
+|---------|----------------|-------|
+| Skeletons «A carregar VAAF/programas/temático» sem fim | Bundle JS antigo ou sessão bloqueada (corrigido em `83ff2b1`) | `npm run build`, `config:clear`, hard refresh; confirmar pedidos `health_section=` na rede do browser |
+| Outras abas lentas enquanto Diagnóstico abre | Pedido shell ainda a correr na BD i-Educar | Normal em bases grandes; secções passam a correr após libertar sessão |
+| PDF diferente do ecrã | PDF usa `snapshotFull` | Esperado — exportação ignora modo progressivo |
+
 ## Inclusão — educação especial (NEE)
 
 Na aba **Inclusão**, o recorte NEE prioriza o mesmo caminho que o BI Portabilis:

@@ -45,15 +45,11 @@ Sem novas migrações obrigatórias nesta release.
 | `504d2f9` | Monitor de módulos — visual alinhado ao design system `serv-*`. |
 | `d6a1785` | Monitor — cartões exibem só saúde/funcionamento (sem atalhos). |
 | `f29b30b` | RX (`/dashboard/rx`) — painel «Legendas e cores», guia completo das colunas, KPIs `serv-home-kpi`, comparativo em sky. |
-| `4a502e1` | Analytics — aba Diagnóstico lazy: faixa de impacto sem repetir `fundingImpactSnapshot`. |
-| `8b11d0c` | Analytics — cache do Diagnóstico; contexto municipal único nas abas Finanças (Discrepâncias, FUNDEB, etc.). |
-| `d940332` | Analytics — Diagnóstico progressivo: shell rápido + blocos `fundeb` / `programas` / `tematico` via AJAX. |
-
 **Pós-deploy (RX):** `npm run build` (classes `serv-rx-*`).
 
-**Pós-deploy (Analytics — opcional no `.env`):** ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §7 (`ANALYTICS_MUNICIPALITY_HEALTH_*`, `ANALYTICS_FINANCE_TABS_*`). Com progressivo activo, `npm run build` inclui o carregamento das secções no bundle JS.
+**Analytics (performance):** consolidado na release **3.3.1** — [RELEASE_20260529_HELIOS.md](RELEASE_20260529_HELIOS.md).
 
 ## Documentação
 
-- [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) — linha 3.3.0 e patches
+- [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) — linha 3.3.0
 - [STATUS_PROJETO.md](STATUS_PROJETO.md)

@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`3.3.0`** · tag de deploy **`20260528-Eos`** · ver [RELEASE_20260528_EOS.md](RELEASE_20260528_EOS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`3.3.1`** · tag de deploy **`20260529-Helios`** · ver [RELEASE_20260529_HELIOS.md](RELEASE_20260529_HELIOS.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **3.3.0** |
+| **Versão semântica em produção** | **3.3.1** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260528-Eos` |
-| **Último marco documentado** | LGPD (consentimento + privacidade), notificações, inclusão NEE catálogo INEP, UX consultoria/SAEB |
+| **Tag de deploy (servidor)** | `20260529-Helios` |
+| **Último marco documentado** | Otimização Analytics (Diagnóstico progressivo + Finanças sem queries duplicadas) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -20,10 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 3.3.0** | `20260528-Eos` → `main` | — | 28/05/2026 | **Produção:** monitor de módulos admin; doc/filas/export NEE para utilizador — [RELEASE_20260528_EOS.md](RELEASE_20260528_EOS.md). |
-| *(patch pós-3.3.0)* | `d940332` | **252** | 26/05/2026 | Analytics: Diagnóstico progressivo (shell + secções AJAX `health_section`). |
-| *(patch pós-3.3.0)* | `8b11d0c` | **251** | 26/05/2026 | Analytics: cache Diagnóstico; contexto único nas abas Finanças. |
-| *(patch pós-3.3.0)* | `4a502e1` | **250** | 26/05/2026 | Analytics: Diagnóstico lazy sem repetir `fundingImpactSnapshot` na faixa de impacto. |
+| **▶ 3.3.1** | `20260529-Helios` → `main` | — | 29/05/2026 | **Produção:** otimização Analytics — Diagnóstico progressivo, cache, Finanças sem queries duplicadas — [RELEASE_20260529_HELIOS.md](RELEASE_20260529_HELIOS.md). |
+| 3.3.0 | `20260528-Eos` → `main` | — | 28/05/2026 | Monitor de módulos admin; doc/filas/export NEE — [RELEASE_20260528_EOS.md](RELEASE_20260528_EOS.md). |
 | *(patch pós-3.3.0)* | `504d2f9` | **240** | 25/05/2026 | Monitor de módulos: UI alinhada ao design system `serv-*`. |
 | *(patch pós-3.3.0)* | `d6a1785` | **241** | 25/05/2026 | Monitor: cartões focam saúde (sem atalhos ao módulo/fila). |
 | *(patch pós-3.3.0)* | `f29b30b` | **242** | 25/05/2026 | RX: painel de legendas, guia de colunas, KPIs e comparativo sky (sem bump de versão). |
