@@ -36,21 +36,15 @@ Cadastro (1) → Pedagógico (2) → Censo (3) → Finanças (4)
 
 ## Diagnóstico — fluxo na página (Finanças → Diagnóstico)
 
-Ordem recomendada na UI:
+Ordem na UI (alinhada ao roteiro sticky no topo):
 
-1. **Roteiro** (`consultoria-flow-nav`) — sticky no topo.
-2. **Painel de decisão** — `#diag-decisao` — headline + KPIs; badge com link para qualidade (sem segundo velocímetro).
-3. **Prioridades** — `#diag-prioridades` — tabela de rotinas (se houver).
-4. **Índice geral de qualidade** — `#diag-qualidade-sistema` — **único** medidor consolidado 0–100.
-5. **Explorar em detalhe** — `#diag-explorar` — cartões por área com contador **específico** (não repetir o índice global).
-6. **Consolidado operacional** — fontes públicas + mapa de rotinas (`details`, fechado por defeito).
+1. **Decisão** — `#diag-decisao`
+2. **Prioridades** — `#diag-prioridades` (se houver rotinas)
+3. **Qualidade** — `#diag-qualidade-sistema`
+4. **Explorar** — `#diag-explorar`
+5. **Consolidado** — `#diag-consolidado` (fontes públicas + mapa de rotinas; subsecções sem número próprio)
 
-### Modo estratégico (`strategic_mode`)
-
-Com `ANALYTICS_MUNICIPALITY_HEALTH_MODE=strategic` (defeito desde 3.3.2):
-
-- **Um pedido** na aba; **não** renderiza secções AJAX legadas (FUNDEB/programas/temático embutidos) — o utilizador abre o detalhe pelos cartões Explorar.
-- Carregamento progressivo (`health_section`) só em `mode=progressive` ou legado explícito.
+Secções AJAX legadas (VAAF/programas/temático embutidos) e skeletons «A carregar…» foram removidos da view — detalhe nas abas via Explorar.
 
 ## Explorar em detalhe — métricas por área
 

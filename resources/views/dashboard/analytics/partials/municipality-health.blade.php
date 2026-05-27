@@ -112,23 +112,15 @@
     $healthKpisPrioridades = array_merge($healthKpis, $healthKpisFinanceiro);
     $publicSources = is_array($h['public_data_sources'] ?? null) ? $h['public_data_sources'] : [];
     $hasPublicSources = count($publicSources['categories'] ?? []) > 0;
-    $strategicMode = ! empty($h['strategic_mode'] ?? false);
+    $hasConsolidado = $hasPublicSources || count($cadastro) > 0;
     $flowSteps = ConsultoriaFlow::numberedSteps([
         ['label' => __('Decisão'), 'anchor' => 'diag-decisao'],
+        ['label' => __('Prioridades'), 'anchor' => 'diag-prioridades', 'visible' => count($topProblems) > 0],
         ['label' => __('Qualidade'), 'anchor' => 'diag-qualidade-sistema'],
         ['label' => __('Explorar'), 'anchor' => 'diag-explorar'],
-        ['label' => __('Prioridades'), 'anchor' => 'diag-prioridades', 'visible' => count($topProblems) > 0],
-        ['label' => __('VAAF e previsão'), 'anchor' => 'diag-vaaf', 'visible' => ! $strategicMode && $vaafComparacao !== null],
-        ['label' => __('Programas complementares'), 'anchor' => 'diag-programas', 'visible' => ! $strategicMode && count($complementaryPrograms) > 0],
-        ['label' => __('Leitura temática'), 'anchor' => 'diag-tematico', 'visible' => ! $strategicMode && count($thematicBlocks) > 0],
-        ['label' => __('Fontes públicas'), 'anchor' => 'diag-fontes-publicas', 'visible' => $hasPublicSources],
-        ['label' => __('Mapa de rotinas'), 'anchor' => 'diag-mapa', 'visible' => count($cadastro) > 0],
-        ['label' => __('Roteiro FUNDEB'), 'anchor' => 'diag-roteiro', 'visible' => count($fundebMods) > 0],
+        ['label' => __('Consolidado'), 'anchor' => 'diag-consolidado', 'visible' => $hasConsolidado],
     ]);
-    $diagStep = ConsultoriaFlow::stepMap($flowSteps);
-    $progressive = ! empty($h['sections_pending'] ?? []);
-    $sectionsPending = is_array($h['sections_pending'] ?? null) ? $h['sections_pending'] : [];
-    $showDetailSections = $progressive && ! $strategicMode;
+    $consolidadoStep = ConsultoriaFlow::stepNum($flowSteps, 'diag-consolidado');
     $scoreRing = match ($h['compliance_status'] ?? 'neutral') {
         'success' => 'serv-panel border-emerald-300/80 dark:border-emerald-700',
         'warning' => 'serv-panel border-amber-300/80 dark:border-amber-700',
@@ -137,10 +129,7 @@
     };
 @endphp
 
-<div
-    class="space-y-6"
-    @if ($progressive) data-municipality-health-progressive="1" data-analytics-panel-root @endif
->
+<div class="space-y-6">
     @if (! $yearFilterReady)
         <p class="serv-callout serv-callout--warning text-sm">
             {{ __('Selecione o ano letivo e aplique os filtros para ver o diagnóstico geral de conformidade do município.') }}
@@ -185,6 +174,13 @@
             </div>
         </div>
 
+        <div class="sticky top-0 z-10 -mx-1 px-1 py-1 rounded-lg bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/60">
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 px-1 mb-1.5">
+                {{ __('Ir para a secção') }}
+            </p>
+            <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="teal" />
+        </div>
+
         @if (filled($h['footnote'] ?? null))
             <p class="serv-callout">{{ $h['footnote'] }}</p>
         @endif
@@ -194,10 +190,6 @@
                 {{ $h['error'] }}
             </div>
         @endif
-
-        <div class="sticky top-0 z-10 -mx-1 px-1 py-1 rounded-lg bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/60">
-            <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="teal" />
-        </div>
 
         @include('dashboard.analytics.partials.municipality-health-executive', [
             'h' => $h,
@@ -214,70 +206,28 @@
 
         @include('dashboard.analytics.partials.municipality-health-explore', ['h' => $h])
 
-        @if ($fundingMet !== null && ! $strategicMode)
-            <x-dashboard.consultoria-funding-explanation
-                :metodologia="$fundingMet"
-                :resumo="$fundingResumo"
-            />
-        @endif
-
-        @if ($showDetailSections && in_array('fundeb', $sectionsPending, true))
-            <div data-municipality-health-section="fundeb" class="space-y-6">
-                @include('dashboard.analytics.partials.municipality-health-section-skeleton', [
-                    'message' => __('A carregar VAAF, previsão e roteiro FUNDEB…'),
-                ])
-            </div>
-        @elseif (! $strategicMode && ($vaafComparacao !== null || count($fundebMods) > 0))
-            @include('dashboard.analytics.partials.municipality-health-section-fundeb', [
-                'healthData' => $h,
-                'diagStep' => $diagStep,
-            ])
-        @endif
-
-        @if ($showDetailSections && in_array('programas', $sectionsPending, true))
-            <div data-municipality-health-section="programas" class="space-y-6">
-                @include('dashboard.analytics.partials.municipality-health-section-skeleton', [
-                    'message' => __('A carregar programas complementares…'),
-                ])
-            </div>
-        @elseif (! $strategicMode && count($complementaryPrograms) > 0)
-            @include('dashboard.analytics.partials.municipality-health-section-programas', [
-                'healthData' => $h,
-                'diagStep' => $diagStep,
-            ])
-        @endif
-
-        @if ($showDetailSections && in_array('tematico', $sectionsPending, true))
-            <div data-municipality-health-section="tematico" class="space-y-6">
-                @include('dashboard.analytics.partials.municipality-health-section-skeleton', [
-                    'message' => __('A carregar leitura temática e indicadores pedagógicos…'),
-                ])
-            </div>
-        @elseif (! $strategicMode && count($thematicBlocks) > 0)
-            @include('dashboard.analytics.partials.municipality-health-section-tematico', [
-                'healthData' => $h,
-                'diagStep' => $diagStep,
-            ])
-        @endif
-
-        @if ($hasPublicSources || count($cadastro) > 0)
-            <section class="serv-panel overflow-hidden border border-slate-200/90 dark:border-slate-700">
+        @if ($hasConsolidado)
+            <section id="diag-consolidado" class="serv-panel overflow-hidden border border-slate-200/90 dark:border-slate-700 scroll-mt-24">
                 <details class="group">
                     <summary class="cursor-pointer list-none px-4 py-3 bg-slate-50/80 dark:bg-slate-900/50 border-b border-slate-200/80 dark:border-slate-700 flex items-center justify-between gap-2 select-none">
-                        <div class="min-w-0">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                {{ __('Consolidado operacional') }}
-                            </p>
-                            <p class="text-sm font-semibold text-serv-navy dark:text-slate-100">
-                                {{ __('Fontes públicas e mapa de rotinas') }}
-                            </p>
+                        <div class="min-w-0 flex items-start gap-2">
+                            @if (filled($consolidadoStep))
+                                <span class="inline-flex h-6 min-w-[1.5rem] shrink-0 items-center justify-center rounded-md bg-teal-100/90 px-1.5 text-[11px] font-bold tabular-nums text-teal-900 dark:bg-teal-950/50 dark:text-teal-100">{{ $consolidadoStep }}</span>
+                            @endif
+                            <div>
+                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                    {{ __('Consolidado operacional') }}
+                                </p>
+                                <p class="text-sm font-semibold text-serv-navy dark:text-slate-100">
+                                    {{ __('Fontes públicas e mapa de rotinas') }}
+                                </p>
+                            </div>
                         </div>
                         <span class="text-slate-400 group-open:rotate-180 transition-transform" aria-hidden="true">▾</span>
                     </summary>
                     <div class="p-4 sm:p-5 space-y-6">
                         @if ($hasPublicSources)
                             <x-dashboard.consultoria-section
-                                :step="$diagStep['diag-fontes-publicas'] ?? null"
                                 anchor="diag-fontes-publicas"
                                 :title="__('Extração e relatórios oficiais')"
                                 :subtitle="__('Painéis, dados abertos e sistemas de comprovação (FNDE, Tesouro, Simec, INEP).')"
@@ -288,7 +238,6 @@
 
                         @if (count($cadastro) > 0)
                             <x-dashboard.consultoria-section
-                                :step="$diagStep['diag-mapa'] ?? null"
                                 anchor="diag-mapa"
                                 :title="__('Mapa de rotinas de cadastro')"
                                 :subtitle="__('Alinhado à aba Discrepâncias — verde = sem pendência; cinza = indisponível.')"
