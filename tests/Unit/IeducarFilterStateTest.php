@@ -51,6 +51,23 @@ final class IeducarFilterStateTest extends TestCase
     }
 
     /**
+     * Cenário: filtros gravados no export PDF (página pública /relatorio/{id}).
+     */
+    #[Test]
+    public function from_stored_params_reconstroi_estado_do_export(): void
+    {
+        $filters = IeducarFilterState::fromStoredParams([
+            'ano_letivo' => '2024',
+            'escola_id' => '7',
+            'city_id' => 99,
+        ]);
+
+        $this->assertSame('2024', $filters->ano_letivo);
+        $this->assertSame('7', $filters->escola_id);
+        $this->assertSame(2024, $filters->yearFilterValue());
+    }
+
+    /**
      * Cenário: request HTTP do formulário de filtros do painel.
      */
     #[Test]

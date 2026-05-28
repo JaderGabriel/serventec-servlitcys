@@ -29,6 +29,16 @@ final class IeducarFilterState
         return $this->inclusion_somente_inconsistencias;
     }
 
+    /**
+     * Restaura filtros persistidos (ex.: coluna JSON `filters` de AnalyticsReportExport).
+     *
+     * @param  array<string, mixed>  $params
+     */
+    public static function fromStoredParams(array $params): self
+    {
+        return self::fromRequest(Request::create('/', 'GET', $params));
+    }
+
     public static function fromRequest(Request $request): self
     {
         $raw = $request->input('ano_letivo');
