@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`3.4.0`** · tag de deploy **`20260531-Nemesis`** · ver [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`3.5.0`** · tag de deploy **`20260601-Atlas`** · ver [RELEASE_20260601_ATLAS.md](RELEASE_20260601_ATLAS.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **3.4.0** |
+| **Versão semântica em produção** | **3.5.0** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260531-Nemesis` |
-| **Último marco documentado** | 3.4.0 + patches Diagnóstico (consolidado, métricas por área, PDF) — ver [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) |
+| **Tag de deploy (servidor)** | `20260601-Atlas` |
+| **Último marco documentado** | Comparativo Finanças + CadÚnico (previsão, automação, export) — [RELEASE_20260601_ATLAS.md](RELEASE_20260601_ATLAS.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -20,7 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 3.4.0** | `20260531-Nemesis` → `main` | — | 31/05/2026 | **Produção:** Área Censo; UI Finanças/Censo; Diagnóstico qualidade + explorar; cache v2 — [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md). |
+| **▶ 3.5.0** | `20260601-Atlas` → `main` | — | 01/06/2026 | **Produção:** Comparativo Finanças; CadÚnico previsão + pipeline automático + export — [RELEASE_20260601_ATLAS.md](RELEASE_20260601_ATLAS.md). |
+| 3.4.0 | `20260531-Nemesis` → `main` | — | 31/05/2026 | Área Censo; UI Finanças/Censo; Diagnóstico qualidade + explorar; cache v2 — [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md). |
 | *(patch pós-3.4.0)* | `4b976f2` | — | 26/05/2026 | Diagnóstico: um velocímetro geral; consolidado operacional colapsável; roteiro no topo. |
 | *(patch pós-3.4.0)* | `e423808` | — | 26/05/2026 | Explorar em detalhe: métrica por área (`DiagnosisExploreCards`); UI com ícones; painel PDF; modo estratégico sem secções AJAX duplicadas. |
 | 3.3.2 | `20260530-Metis` → `main` | — | 30/05/2026 | Diagnóstico estratégico (um pedido leve, reutiliza cache de abas) — [RELEASE_20260530_METIS.md](RELEASE_20260530_METIS.md). |

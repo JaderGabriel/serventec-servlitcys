@@ -148,7 +148,7 @@
             'title' => __('Sincronização'),
             'icon' => 'map',
             'tone' => 'sky',
-            'routes' => ['admin.public-data.*', 'admin.geo-sync.*', 'admin.pedagogical-sync.*'],
+            'routes' => ['admin.public-data.*', 'admin.geo-sync.*', 'admin.pedagogical-sync.*', 'admin.cadunico-sync.*'],
             'items' => [
                 [
                     'show' => true,
@@ -156,7 +156,15 @@
                     'label' => __('Dados públicos'),
                     'icon' => 'globe-alt',
                     'active' => $req->routeIs('admin.public-data.*'),
-                    'title' => __('FUNDEB, Censo INEP, repasses e SAEB — importação fora do i-Educar.'),
+                    'title' => __('FUNDEB, Censo INEP, repasses, SAEB e CadÚnico — importação fora do i-Educar.'),
+                ],
+                [
+                    'show' => true,
+                    'href' => route('admin.cadunico-sync.index'),
+                    'label' => __('CadÚnico / Cecad'),
+                    'icon' => 'users',
+                    'active' => $req->routeIs('admin.cadunico-sync.*'),
+                    'title' => __('Agregados municipais — aba previsão fora da rede na consultoria.'),
                 ],
                 [
                     'show' => true,

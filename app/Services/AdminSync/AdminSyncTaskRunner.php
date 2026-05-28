@@ -4,6 +4,9 @@ namespace App\Services\AdminSync;
 
 use App\Models\AdminSyncTask;
 use App\Models\City;
+use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Services\Cadunico\CadunicoAutoSyncService;
+use App\Services\Cadunico\CadunicoOpenDataImportService;
 use App\Services\CityDataConnection;
 use App\Services\Fundeb\FundebImportMode;
 use App\Services\Fundeb\FundebImportProgress;
@@ -36,6 +39,8 @@ final class AdminSyncTaskRunner
         private InepCensoMunicipioMatriculasIndexer $censoMatriculasIndexer,
         private WeeklyMassSyncOrchestrator $weeklyMassSync,
         private InclusionNeeExportService $inclusionNeeExport,
+        private CadunicoOpenDataImportService $cadunicoImport,
+        private CadunicoAutoSyncService $cadunicoAutoSync,
     ) {}
 
     /**
@@ -63,6 +68,10 @@ final class AdminSyncTaskRunner
                 'pedagogical::import_urls' => $this->runPedagogicalUrls($task, $progress),
                 'pedagogical::import_csv' => $this->runPedagogicalCsv($task, $progress),
                 'pedagogical::import_microdados' => $this->runPedagogicalMicrodados($task, $progress),
+                'cadastro::import_city_year' => $this->runCadastroImportCity($task, $progress),
+                'cadastro::import_storage_year' => $this->runCadastroImportStorageYear($task, $progress),
+                'cadastro::import_csv' => $this->runCadastroImportCsv($task, $progress),
+                'cadastro::auto_sync' => $this->runCadastroAutoSync($task, $progress),
                 'ieducar::schema_probe' => $this->runIeducarSchemaProbe($task, $progress),
                 'ieducar::inclusion_nee_export' => $this->runInclusionNeeExport($task, $progress),
                 'system::weekly_mass_sync' => $this->weeklyMassSync->run($task, $progress),
@@ -751,6 +760,133 @@ final class AdminSyncTaskRunner
                 ? __(':n combinações município/ano indexadas.', ['n' => $indexed])
                 : __('Nenhuma matrícula municipal agregada — verifique colunas qt_mat_* no CSV.'),
             'indexed' => $indexed,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function runCadastroAutoSync(AdminSyncTask $task, AdminSyncTaskProgress $progress): array
+    {
+        $payload = $task->payload ?? [];
+        $allYears = (bool) ($payload['all_years'] ?? false);
+        $fillGaps = (bool) ($payload['fill_gaps'] ?? true);
+
+        if ($allYears) {
+            $progress->step(1, 1, __('CadÚnico — sincronização automática (anos configurados)…'));
+            $result = $this->cadunicoAutoSync->syncAllConfiguredYears();
+            foreach ($result['by_year'] ?? [] as $year => $yearResult) {
+                if (is_array($yearResult)) {
+                    foreach ($yearResult['log'] ?? [] as $line) {
+                        $progress->detail((string) $year.': '.$line);
+                    }
+                }
+            }
+
+            return [
+                'success' => (bool) ($result['success'] ?? false),
+                'message' => (string) ($result['message'] ?? ''),
+                'sync' => $result,
+            ];
+        }
+
+        $ano = (int) ($payload['ano'] ?? CadunicoOpenDataImportService::suggestedImportYear());
+        $progress->step(1, 1, __('CadÚnico — automático ano :ano…', ['ano' => (string) $ano]));
+        $result = $this->cadunicoAutoSync->syncYear($ano, $fillGaps);
+        foreach ($result['log'] ?? [] as $line) {
+            $progress->detail($line);
+        }
+
+        return [
+            'success' => (bool) ($result['success'] ?? false),
+            'message' => (string) ($result['message'] ?? ''),
+            'sync' => $result,
+        ];
+    }
+
+    private function runCadastroImportCity(AdminSyncTask $task, AdminSyncTaskProgress $progress): array
+    {
+        $payload = $task->payload ?? [];
+        $city = City::query()->findOrFail((int) ($payload['city_id'] ?? $task->city_id));
+        $ano = (int) ($payload['ano'] ?? CadunicoOpenDataImportService::suggestedImportYear());
+
+        $progress->step(1, 1, __('CadÚnico — :city, ano :ano (API → cache → CSV)…', [
+            'city' => $city->name,
+            'ano' => (string) $ano,
+        ]));
+
+        $result = $this->cadunicoImport->importForCity($city, $ano);
+        foreach ($result['attempts'] ?? [] as $attempt) {
+            $progress->detail($attempt);
+        }
+
+        return [
+            'success' => (bool) ($result['success'] ?? false),
+            'message' => (string) ($result['message'] ?? ''),
+            'source' => $result['source'] ?? null,
+            'import' => $result,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function runCadastroImportStorageYear(AdminSyncTask $task, AdminSyncTaskProgress $progress): array
+    {
+        $payload = $task->payload ?? [];
+        $ano = (int) ($payload['ano'] ?? CadunicoOpenDataImportService::suggestedImportYear());
+        $filterIbge = null;
+        if (! empty($payload['city_id'])) {
+            $city = City::query()->find((int) $payload['city_id']);
+            $filterIbge = $city !== null
+                ? FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio)
+                : null;
+        }
+
+        $progress->step(1, 1, __('CadÚnico — CSV storage, ano :ano…', ['ano' => (string) $ano]));
+
+        $result = $this->cadunicoImport->importFromStorageForYear($ano, $filterIbge);
+
+        return [
+            'success' => (bool) ($result['success'] ?? false),
+            'message' => (string) ($result['message'] ?? ''),
+            'imported' => (int) ($result['imported'] ?? 0),
+            'files' => $result['files'] ?? [],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function runCadastroImportCsv(AdminSyncTask $task, AdminSyncTaskProgress $progress): array
+    {
+        $payload = $task->payload ?? [];
+        $path = (string) ($payload['csv_path'] ?? '');
+        if ($path === '' || ! is_readable($path)) {
+            return [
+                'success' => false,
+                'message' => __('Ficheiro CSV não encontrado no payload da tarefa.'),
+            ];
+        }
+
+        $ano = isset($payload['ano']) ? (int) $payload['ano'] : null;
+        $filterIbge = null;
+        if (! empty($payload['city_id'])) {
+            $city = City::query()->find((int) $payload['city_id']);
+            $filterIbge = $city !== null
+                ? FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio)
+                : null;
+        }
+
+        $progress->step(1, 1, __('CadÚnico — importar CSV :file…', ['file' => basename($path)]));
+
+        $result = $this->cadunicoImport->importFromCsvPath($path, $ano, $filterIbge);
+
+        return [
+            'success' => (bool) ($result['success'] ?? false),
+            'message' => (string) ($result['message'] ?? ''),
+            'imported' => (int) ($result['imported'] ?? 0),
+            'errors' => $result['errors'] ?? [],
         ];
     }
 }

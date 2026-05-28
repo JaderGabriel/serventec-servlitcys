@@ -138,6 +138,20 @@
                                     <div class="relative min-h-[12rem]" x-ref="panelEnrollment"></div>
                                 @endif
                             </div>
+                            <div x-show="tab === 'cadunico_previsao'" x-cloak class="analytics-tab-panel">
+                                @if (! $lazyTabLoading)
+                                    @include('dashboard.analytics.partials.cadunico-previsao', [
+                                        'cadunicoPrevisaoData' => $cadunicoPrevisaoData,
+                                        'yearFilterReady' => $yearFilterReady,
+                                        'chartExportContext' => $chartExportContext,
+                                        'municipalityContext' => $municipalityContext ?? null,
+                                        'selectedCity' => $selectedCity,
+                                        'filters' => $filters,
+                                    ])
+                                @else
+                                    <div class="relative min-h-[12rem]" x-ref="panelCadunicoPrevisao"></div>
+                                @endif
+                            </div>
                             <div x-show="tab === 'school_units'" x-cloak class="analytics-tab-panel">
                                 @if (! $lazyTabLoading)
                                     @include('dashboard.analytics.partials.school-units', [
@@ -198,6 +212,24 @@
                                     ])
                                 @else
                                     <div class="relative min-h-[12rem]" x-ref="panelAttendance"></div>
+                                @endif
+                            </div>
+                            <div x-show="tab === 'comparativo'" x-cloak class="analytics-tab-panel">
+                                @if (! $lazyTabLoading)
+                                    @include('dashboard.analytics.partials.comparativo', [
+                                        'comparativoData' => $comparativoData,
+                                        'yearFilterReady' => $yearFilterReady,
+                                        'chartExportContext' => $chartExportContext,
+                                        'municipalityContext' => $municipalityContext ?? null,
+                                        'selectedCity' => $selectedCity,
+                                        'filters' => $filters,
+                                        'baseYear' => \App\Services\Analytics\FinanceComparativoService::resolveBaseYear(request(), $filters),
+                                        'pdfExportsRecent' => auth()->user()?->canExportAnalyticsPdf()
+                                            ? ($pdfExportsRecent ?? [])
+                                            : [],
+                                    ])
+                                @else
+                                    <div class="relative min-h-[12rem]" x-ref="panelComparativo"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'fundeb'" x-cloak class="analytics-tab-panel">

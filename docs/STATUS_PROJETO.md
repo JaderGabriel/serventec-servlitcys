@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **3.4.0** · release `20260531-Nemesis` · **Ramo:** `main` · **Última revisão:** 31/05/2026
+**Versão em produção:** **3.5.0** · release `20260601-Atlas` · **Ramo:** `main` · **Última revisão:** 01/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -14,6 +14,9 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 |------|--------|
 | RBAC (admin / user / municipal) | Implementado |
 | Painel de análise i-Educar (abas lazy + faixa impacto por aba) | Implementado |
+| Analytics — Comparativo (Finanças: ano base vs anterior, FUNDEB, export PDF/CSV/Excel) | Implementado (3.5.0) |
+| Analytics — CadÚnico previsão (lacuna rede, impacto VAAF, export consultoria) | Implementado (3.5.0) |
+| CadÚnico — importação automática (URL nacional, fila `cadastro`, cron, admin) | Implementado (3.5.0) |
 | Analytics — navegação 4 áreas (Cadastro → Pedagógico → **Censo** → Finanças) | Implementado (3.4.0) |
 | Finanças / Censo — UI `consultoria-tab-frame` por tom temático | Implementado (3.4.0) |
 | Diagnóstico — qualidade do sistema + «Explorar em detalhe» | Implementado (3.4.0; refinado pós-release: métricas por área, PDF) |

@@ -64,7 +64,27 @@ Procedimento e requisitos (`unrar`/`p7zip`): [IMPORTACAO_SAEB_PLANILHAS_INEP.md]
 
 ---
 
-## 3. FUNDEB / VAAF
+## 3. CadÚnico / Cecad
+
+| Comando | Descrição |
+|---------|-----------|
+| `cadunico:auto-sync` | Pipeline nacional + lacunas (API/CSV); `--queue`, `--ano=` |
+| `cadunico:sync-city` | Um município ou `--all` |
+| `cadunico:import-cecad` | CSV manual (`;`, colunas em `config/ieducar.php`) |
+
+**Interface web:** `/admin/cadunico-sync` · hub `/admin/dados-publicos`
+
+**Variáveis:** `IEDUCAR_CADUNICO_*` — ver [CADUNICO_AUTOMACAO.md](CADUNICO_AUTOMACAO.md)
+
+```bash
+php artisan cadunico:auto-sync --queue
+php artisan cadunico:sync-city 1 --ano=2024
+php artisan cadunico:import-cecad storage/app/cadunico/cecad/nacional_2024.csv --ano=2024
+```
+
+---
+
+## 4. FUNDEB / VAAF
 
 Referências gravadas em **`fundeb_municipio_references`** (`city_id`, `ibge_municipio`, `ano`, `vaaf`, `vaat`, `complementacao_vaar`). O painel Analytics usa o **ano do filtro**; se não existir linha, o ano mais recente; depois fallback global.
 
@@ -86,7 +106,7 @@ Ver também: [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md)
 
 ---
 
-## 4. Compatibilidade i-Educar
+## 5. Compatibilidade i-Educar
 
 | Comando | Descrição |
 |---------|-----------|
@@ -105,7 +125,7 @@ php artisan ieducar:schema-probe 5 --ano=2025
 
 ---
 
-## 5. Sincronização massiva e fila admin
+## 6. Sincronização massiva e fila admin
 
 | Comando | Descrição |
 |---------|-----------|
@@ -129,7 +149,7 @@ Ver roteiro de dados e cadastro: [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_
 
 ---
 
-## 6. Operação (deploy / dev)
+## 7. Operação (deploy / dev)
 
 ```bash
 php artisan migrate --force          # produção
@@ -156,7 +176,7 @@ Ou: `composer run dev` (se configurado no `composer.json`).
 
 ---
 
-## 7. Cidades (credenciais i-Educar)
+## 8. Cidades (credenciais i-Educar)
 
 | Comando | Descrição |
 |---------|-----------|
@@ -175,7 +195,7 @@ Sem `--password`, o comando pede a senha de forma oculta no terminal ou lê `CIT
 
 ---
 
-## 8. Relação comando ↔ interface
+## 9. Relação comando ↔ interface
 
 | Área | CLI principal | Admin |
 |------|----------------|-------|

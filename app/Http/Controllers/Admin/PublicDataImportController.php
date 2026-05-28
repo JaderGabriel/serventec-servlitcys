@@ -9,6 +9,7 @@ use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\Admin\PublicDataImportStatusService;
 use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\Fundeb\FundebImportMode;
+use App\Services\Cadunico\CadunicoOpenDataImportService;
 use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Support\Admin\PublicDataImportCatalog;
 use App\Support\AdminSync\WeeklyMassSyncCheckpoint;
@@ -89,6 +90,14 @@ class PublicDataImportController extends Controller
 
         if ($action['key'] === 'sync_all_years') {
             return $this->dispatchFundebSyncAll($request, $validated);
+        }
+
+        if ($action['key'] === 'auto_sync' && ($source['id'] ?? '') === 'cadunico_cecad') {
+            return $this->dispatchCadunicoAutoSync($validated);
+        }
+
+        if ($action['key'] === 'auto_sync_year' && ($source['id'] ?? '') === 'cadunico_cecad') {
+            return $this->dispatchCadunicoAutoSync($validated, singleYear: true);
         }
 
         if ($action['key'] === 'weekly_mass_sync') {
@@ -254,6 +263,36 @@ class PublicDataImportController extends Controller
             ->with('public_data_bulk_queued', [
                 'queued' => $queued,
                 'message' => $message,
+            ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function dispatchCadunicoAutoSync(array $validated, bool $singleYear = false): RedirectResponse
+    {
+        $ano = isset($validated['ano']) ? (int) $validated['ano'] : CadunicoOpenDataImportService::suggestedImportYear();
+        $label = $singleYear
+            ? __('CadÚnico automático — ano :ano', ['ano' => (string) $ano])
+            : __('CadÚnico automático — anos configurados');
+
+        $task = $this->syncQueue->dispatch(
+            AdminSyncDomain::Cadastro,
+            'auto_sync',
+            $label,
+            [
+                'ano' => $ano,
+                'all_years' => ! $singleYear,
+                'fill_gaps' => true,
+            ],
+            null,
+        );
+
+        return redirect()
+            ->route('admin.public-data.index')
+            ->with('admin_sync_queued', [
+                'task_id' => $task->id,
+                'message' => AdminSyncQueueService::flashQueuedMessage($task),
             ]);
     }
 }

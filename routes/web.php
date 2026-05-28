@@ -12,9 +12,12 @@ use App\Http\Controllers\Admin\ModuleMonitorController;
 use App\Http\Controllers\Admin\LegalConsentReportController;
 use App\Http\Controllers\Admin\LegalConsentRevocationController;
 use App\Http\Controllers\Admin\LegalDocumentAdminController;
+use App\Http\Controllers\Admin\CadunicoSyncController;
 use App\Http\Controllers\Admin\PedagogicalSyncController;
 use App\Http\Controllers\Admin\PublicDataImportController;
 use App\Http\Controllers\AnalyticsDashboardController;
+use App\Http\Controllers\CadunicoPrevisaoExportController;
+use App\Http\Controllers\ComparativoExportController;
 use App\Http\Controllers\AnalyticsReportExportController;
 use App\Http\Controllers\AnalyticsReportPublicationController;
 use App\Http\Controllers\CityController;
@@ -71,6 +74,10 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
         Route::get('/dashboard/analytics/filter-options-bootstrap', [AnalyticsDashboardController::class, 'filterOptionsBootstrap'])->name('dashboard.analytics.filter-options-bootstrap');
         Route::get('/dashboard/analytics/filter-options-years', [AnalyticsDashboardController::class, 'filterOptionsYears'])->name('dashboard.analytics.filter-options-years');
         Route::get('/dashboard/analytics/discrepancies/export', [DiscrepanciesExportController::class, 'csv'])->name('dashboard.analytics.discrepancies.export');
+        Route::get('/dashboard/analytics/comparativo/export', [ComparativoExportController::class, 'download'])
+            ->name('dashboard.analytics.comparativo.export');
+        Route::get('/dashboard/analytics/cadunico-previsao/export', [CadunicoPrevisaoExportController::class, 'download'])
+            ->name('dashboard.analytics.cadunico-previsao.export');
         Route::get('/dashboard/analytics/inclusion/export', [InclusionNeeExportController::class, 'download'])
             ->name('dashboard.analytics.inclusion.export');
         Route::post('/dashboard/analytics/inclusion/export/queue', [InclusionNeeExportController::class, 'queue'])
@@ -125,6 +132,9 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'legal.consent', 'adm
 
     Route::get('/admin/pedagogical-sync', [PedagogicalSyncController::class, 'index'])->name('admin.pedagogical-sync.index');
     Route::post('/admin/pedagogical-sync', [PedagogicalSyncController::class, 'run'])->name('admin.pedagogical-sync.run');
+
+    Route::get('/admin/cadunico-sync', [CadunicoSyncController::class, 'index'])->name('admin.cadunico-sync.index');
+    Route::post('/admin/cadunico-sync', [CadunicoSyncController::class, 'run'])->name('admin.cadunico-sync.run');
 
     Route::get('/admin/dados-publicos', [PublicDataImportController::class, 'index'])->name('admin.public-data.index');
     Route::post('/admin/dados-publicos', [PublicDataImportController::class, 'run'])->name('admin.public-data.run');

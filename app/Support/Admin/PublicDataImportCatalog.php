@@ -38,6 +38,7 @@ final class PublicDataImportCatalog
     {
         return [
             self::fundebSource(),
+            self::cadunicoCecadSource(),
             self::censoMatriculasSource(),
             self::repassesSource(),
             self::saebSource(),
@@ -141,6 +142,61 @@ final class PublicDataImportCatalog
                 ],
             ],
             'cli' => ['fundeb:import-api', 'fundeb:import-references'],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function cadunicoCecadSource(): array
+    {
+        return [
+            'id' => 'cadunico_cecad',
+            'title' => __('CadÚnico / Cecad — agregados municipais'),
+            'summary' => __('Sincronização automática (API/CKAN → cache → CSV Cecad). Alimenta a aba CadÚnico e a previsão de crianças fora da rede municipal.'),
+            'data_class' => 'publicado',
+            'domain' => 'cadastro',
+            'persistence' => 'cadunico_municipio_snapshots',
+            'official_sources' => [
+                'Cecad — Cadastro Único (MDS)',
+                'https://www.gov.br/mds/pt-br/acoes-e-programas/cadastro-unico',
+            ],
+            'pdf_sections' => ['cadastro_censo', 'indicadores_educacionais'],
+            'pdf_gaps' => ['cadunico_previsao_missing'],
+            'admin_route' => 'admin.cadunico-sync.index',
+            'actions' => [
+                [
+                    'key' => 'auto_sync',
+                    'label' => __('Sincronização automática (download URL + nacional + lacunas)'),
+                    'task_domain' => 'cadastro',
+                    'task_key' => 'auto_sync',
+                    'needs_city' => false,
+                    'needs_year' => false,
+                    'needs_years_range' => false,
+                    'hint' => __('Sem upload: descarrega IEDUCAR_CADUNICO_NACIONAL_CSV_URL, importa nacional_{ano}.csv e preenche municípios em falta via API.'),
+                ],
+                [
+                    'key' => 'import_city_year',
+                    'label' => __('Sincronizar um município e ano'),
+                    'task_domain' => 'cadastro',
+                    'task_key' => 'import_city_year',
+                    'needs_city' => true,
+                    'needs_year' => true,
+                    'needs_years_range' => false,
+                    'hint' => __('API/CKAN → cache → CSV local.'),
+                ],
+                [
+                    'key' => 'auto_sync_year',
+                    'label' => __('Automático para um ano'),
+                    'task_domain' => 'cadastro',
+                    'task_key' => 'auto_sync',
+                    'needs_city' => false,
+                    'needs_year' => true,
+                    'needs_years_range' => false,
+                    'hint' => __('Download + import nacional + lacunas para o ano indicado.'),
+                ],
+            ],
+            'cli' => ['cadunico:auto-sync', 'cadunico:sync-city', 'cadunico:import-cecad'],
         ];
     }
 

@@ -8,6 +8,7 @@ enum AdminSyncDomain: string
     case Funding = 'funding';
     case Geo = 'geo';
     case Pedagogical = 'pedagogical';
+    case Cadastro = 'cadastro';
     case Ieducar = 'ieducar';
     case System = 'system';
 
@@ -18,6 +19,7 @@ enum AdminSyncDomain: string
             self::Funding => __('Financiamentos / repasses'),
             self::Geo => __('Geográfico'),
             self::Pedagogical => __('Pedagógico'),
+            self::Cadastro => __('Cadastro público (CadÚnico)'),
             self::Ieducar => __('i-Educar'),
             self::System => __('Sistema'),
         };

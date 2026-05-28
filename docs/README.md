@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto (`main`):** 3.4.0 · tag `20260531-Nemesis` · **Última revisão deste índice:** 31/05/2026
+**Versão do produto (`main`):** 3.5.0 · tag `20260601-Atlas` · **Última revisão deste índice:** 01/06/2026
 
 Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que o sistema faz hoje, **porque** certas decisões foram tomadas e **o que** está planejado implementar.
 
@@ -47,6 +47,8 @@ Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que
 |-----------|----------|
 | [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) | Performance, Pulse, lazy por aba |
 | [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) | Navegação 4 áreas, UI consultoria (3.4.0+) |
+| [CADUNICO_CECAD.md](CADUNICO_CECAD.md) | CadÚnico/Cecad: importação, aba previsão, export |
+| [CADUNICO_AUTOMACAO.md](CADUNICO_AUTOMACAO.md) | Pipeline automático sem upload |
 | [SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md](SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md) | Guia MEC/INEP: gráficos cobertos vs. pendentes |
 | [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | SAEB/IDEB: referências visuais e evolução pedagógica |
 | [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) | Dados a refinar, módulos e integrações |
@@ -68,6 +70,8 @@ Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que
 
 | Documento | Versão |
 |-----------|--------|
+| [RELEASE_20260601_ATLAS.md](RELEASE_20260601_ATLAS.md) | 3.5.0 — Atlas |
+| [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md) | 3.4.0 — Nemesis |
 | [RELEASE_20260527_NOTUS.md](RELEASE_20260527_NOTUS.md) | 3.2.0 — Notus |
 | [RELEASE_20260526_BOREAS.md](RELEASE_20260526_BOREAS.md) | 3.1.0 — Boreas |
 | [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md) | 3.0.0 — Apollo |

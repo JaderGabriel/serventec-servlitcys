@@ -18,6 +18,12 @@ class PublicDataImportCatalogTest extends TestCase
         $this->assertContains('fundeb_fnde', $ids);
         $this->assertContains('censo_inep_matriculas', $ids);
         $this->assertContains('repasses_tesouro', $ids);
+        $this->assertContains('cadunico_cecad', $ids);
+
+        $cadunico = PublicDataImportCatalog::findSource('cadunico_cecad');
+        $this->assertNotNull($cadunico);
+        $this->assertSame('admin.cadunico-sync.index', $cadunico['admin_route']);
+        $this->assertNotEmpty($cadunico['actions']);
 
         $gaps = PublicDataImportCatalog::gapIndex();
         $this->assertNotEmpty($gaps);

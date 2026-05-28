@@ -60,6 +60,18 @@ final class ExternalImportImpact
                     ['label' => __('Consultoria → Matrículas'), 'hint' => __('tab=enrollment')],
                 ],
             ],
+            'cadastro' => [
+                'title' => __('Para que serve a importação CadÚnico / Cecad'),
+                'intro' => __('Grava agregados municipais (faixas 4–17 anos) para estimar crianças em idade escolar no CadÚnico não refletidas nas matrículas da rede municipal.'),
+                'improves' => [
+                    __('Aba CadÚnico no grupo Cadastro (lacuna e cobertura %)'),
+                    __('Impacto financeiro indicativo (lacuna × VAAF FUNDEB)'),
+                    __('Informes de busca ativa e planeamento de matrículas'),
+                ],
+                'consumers' => [
+                    ['label' => __('Consultoria → CadÚnico'), 'hint' => __('tab=cadunico_previsao')],
+                ],
+            ],
             'pedagogical' => [
                 'title' => __('Para que serve a importação SAEB'),
                 'intro' => __('Preenche indicadores de desempenho (pontos SAEB) por município, escola e série. Na primeira carga use microdados INEP ou CSV — o passo HTTP por IBGE só funciona depois de já existirem pontos ou com URL externa.'),
@@ -113,6 +125,10 @@ final class ExternalImportImpact
                 'title' => __('Quando concluir'),
                 'detail' => __('Actualize a consultoria (Matrículas / indicadores) — lacunas «Censo municipal» no PDF devem reduzir.'),
             ],
+            'cadastro::auto_sync', 'cadastro::import_city_year', 'cadastro::import_storage_year', 'cadastro::import_csv' => [
+                'title' => __('Quando concluir'),
+                'detail' => __('Abra a aba CadÚnico na consultoria com o mesmo município e ano letivo — lacuna e impacto FUNDEB devem aparecer.'),
+            ],
             default => null,
         };
     }
@@ -142,6 +158,11 @@ final class ExternalImportImpact
                 __('1. Garanta microdados INEP no storage (pipeline geo)'),
                 __('2. Indexe matrículas Censo por município'),
                 __('3. Importe repasses Tesouro por ano para cada município'),
+            ],
+            'cadastro' => [
+                __('1. Configure API/CKAN ou coloque CSV nacional em storage/app/cadunico/cecad/'),
+                __('2. Sincronize município + ano (automático API → cache → CSV)'),
+                __('3. Confirme cobertura nesta página antes de abrir a consultoria'),
             ],
             default => [],
         };

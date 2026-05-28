@@ -129,6 +129,48 @@ final class AnalyticsEmptyPayloads
     /**
      * @return array<string, mixed>
      */
+    public static function cadunicoPrevisao(): array
+    {
+        return [
+            'available' => false,
+            'city_name' => '',
+            'year_label' => '',
+            'intro' => '',
+            'footnote' => '',
+            'gap' => [],
+            'kpis' => [],
+            'metodologia' => [],
+            'informe' => ['available' => false, 'blocos' => []],
+            'alerts' => [],
+            'public_data_sources' => ['intro' => '', 'categories' => []],
+            'error' => null,
+        ];
+    }
+
+    public static function comparativo(): array
+    {
+        return [
+            'available' => false,
+            'city_name' => '',
+            'base_year' => null,
+            'prev_year' => null,
+            'next_year' => null,
+            'year_label' => '',
+            'intro' => '',
+            'footnote' => '',
+            'year_options' => [],
+            'alerts' => [],
+            'summary_kpis' => [],
+            'variacoes' => [],
+            'base_year_detail' => [],
+            'next_year_projection' => [],
+            'fundeb_series' => [],
+            'informe' => ['available' => false, 'aviso' => '', 'blocos' => []],
+            'export_params' => [],
+            'error' => null,
+        ];
+    }
+
     public static function fundeb(): array
     {
         return [

@@ -25,6 +25,8 @@ final class AnalyticsTabCatalogTest extends TestCase
         $this->assertContains('municipality_health', $keys);
         $this->assertContains('discrepancies', $keys);
         $this->assertContains('fundeb', $keys);
+        $this->assertContains('comparativo', $keys);
+        $this->assertContains('cadunico_previsao', $keys);
         $this->assertContains('overview', $keys);
     }
 
@@ -94,6 +96,11 @@ final class AnalyticsTabCatalogTest extends TestCase
         $this->assertSame('consultoria', $groups[3]['id']);
         $this->assertContains('fundeb', $groups[3]['tabs']);
         $this->assertContains('municipality_health', $groups[3]['tabs']);
+        $this->assertContains('comparativo', $groups[3]['tabs']);
+        $this->assertSame(
+            'comparativo',
+            $groups[3]['tabs'][array_search('municipality_health', $groups[3]['tabs'], true) + 1] ?? null,
+        );
     }
 
     /**

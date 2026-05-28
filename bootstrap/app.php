@@ -180,5 +180,18 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->timezone($timezone)
                 ->runInBackground();
         }
+
+        if (filter_var(config('ieducar.cadunico.auto_sync.enabled', true), FILTER_VALIDATE_BOOLEAN)
+            && filter_var(config('ieducar.cadunico.auto_sync.schedule.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            $cadDay = max(0, min(6, (int) config('ieducar.cadunico.auto_sync.schedule.day_of_week', 1)));
+            $cadTime = trim((string) config('ieducar.cadunico.auto_sync.schedule.time', '03:30')) ?: '03:30';
+
+            $schedule->command('cadunico:auto-sync --queue')
+                ->weeklyOn($cadDay, $cadTime)
+                ->name('cadunico-auto-sync-enqueue')
+                ->withoutOverlapping(120)
+                ->timezone($timezone)
+                ->runInBackground();
+        }
     })
     ->create();

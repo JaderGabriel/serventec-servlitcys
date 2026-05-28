@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\City;
 use App\Repositories\Ieducar\AttendanceRepository;
+use App\Repositories\Ieducar\CadunicoPrevisaoRepository;
 use App\Repositories\Ieducar\DiscrepanciesRepository;
 use App\Repositories\Ieducar\EnrollmentRepository;
 use App\Repositories\Ieducar\FundebRepository;
@@ -16,6 +17,7 @@ use App\Repositories\Ieducar\PerformanceRepository;
 use App\Repositories\Ieducar\SchoolUnitsRepository;
 use App\Repositories\Ieducar\WorkDoneRepository;
 use App\Services\Analytics\AnalyticsReportExportService;
+use App\Services\Analytics\FinanceComparativoService;
 use App\Services\CityDataConnection;
 use App\Services\Ieducar\FilterOptionsService;
 use App\Services\Notifications\NotificationDispatcher;
@@ -52,6 +54,7 @@ class AnalyticsDashboardController extends Controller
         FilterOptionsService $filterOptionsService,
         OverviewRepository $overviewRepository,
         EnrollmentRepository $enrollmentRepository,
+        CadunicoPrevisaoRepository $cadunicoPrevisaoRepository,
         PerformanceRepository $performanceRepository,
         AttendanceRepository $attendanceRepository,
         InclusionRepository $inclusionRepository,
@@ -168,6 +171,7 @@ class AnalyticsDashboardController extends Controller
         ];
 
         $enrollmentData = AnalyticsEmptyPayloads::enrollment();
+        $cadunicoPrevisaoData = AnalyticsEmptyPayloads::cadunicoPrevisao();
         $performanceData = AnalyticsEmptyPayloads::performance();
         $attendanceData = AnalyticsEmptyPayloads::attendance();
         $inclusionData = AnalyticsEmptyPayloads::inclusion();
@@ -176,6 +180,7 @@ class AnalyticsDashboardController extends Controller
         $otherFundingData = AnalyticsEmptyPayloads::otherFunding();
         $workDoneData = AnalyticsEmptyPayloads::workDone();
         $discrepanciesData = AnalyticsEmptyPayloads::discrepancies();
+        $comparativoData = AnalyticsEmptyPayloads::comparativo();
         $municipalityHealthData = AnalyticsEmptyPayloads::municipalityHealth();
         $municipalityContext = null;
 
@@ -217,6 +222,12 @@ class AnalyticsDashboardController extends Controller
                         fn () => $enrollmentRepository->sample($city, $filters),
                         $enrollmentData,
                         __('Matrículas'),
+                        $analyticsLoadWarnings,
+                    );
+                    $cadunicoPrevisaoData = $this->safeAnalyticsLoad(
+                        fn () => $cadunicoPrevisaoRepository->buildReport($city, $filters),
+                        $cadunicoPrevisaoData,
+                        __('CadÚnico'),
                         $analyticsLoadWarnings,
                     );
                     $performanceData = $this->safeAnalyticsLoad(
@@ -352,6 +363,7 @@ class AnalyticsDashboardController extends Controller
                 $overviewData,
                 $schoolUnitsData,
                 $enrollmentData,
+                $cadunicoPrevisaoData,
                 $performanceData,
                 $attendanceData,
                 $inclusionData,
@@ -360,6 +372,7 @@ class AnalyticsDashboardController extends Controller
                 $otherFundingData,
                 $workDoneData,
                 $discrepanciesData,
+                $comparativoData,
                 $municipalityHealthData,
                 $chartExportContext,
                 $tabs,
@@ -397,6 +410,7 @@ class AnalyticsDashboardController extends Controller
                 $overviewData,
                 $schoolUnitsData,
                 $enrollmentData,
+                $cadunicoPrevisaoData,
                 $performanceData,
                 $attendanceData,
                 $inclusionData,
@@ -405,6 +419,7 @@ class AnalyticsDashboardController extends Controller
                 $otherFundingData,
                 $workDoneData,
                 $discrepanciesData,
+                $comparativoData,
                 $municipalityHealthData,
                 ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions),
                 AnalyticsTabCatalog::tabsOrdered(),
@@ -442,6 +457,7 @@ class AnalyticsDashboardController extends Controller
         array $overviewData,
         array $schoolUnitsData,
         array $enrollmentData,
+        array $cadunicoPrevisaoData,
         array $performanceData,
         array $attendanceData,
         array $inclusionData,
@@ -450,6 +466,7 @@ class AnalyticsDashboardController extends Controller
         array $otherFundingData,
         array $workDoneData,
         array $discrepanciesData,
+        array $comparativoData,
         array $municipalityHealthData,
         array $chartExportContext,
         array $tabs,
@@ -475,6 +492,7 @@ class AnalyticsDashboardController extends Controller
             'overviewData' => $overviewData,
             'schoolUnitsData' => $schoolUnitsData,
             'enrollmentData' => $enrollmentData,
+            'cadunicoPrevisaoData' => $cadunicoPrevisaoData,
             'performanceData' => $performanceData,
             'attendanceData' => $attendanceData,
             'inclusionData' => $inclusionData,
@@ -483,6 +501,7 @@ class AnalyticsDashboardController extends Controller
             'otherFundingData' => $otherFundingData,
             'workDoneData' => $workDoneData,
             'discrepanciesData' => $discrepanciesData,
+            'comparativoData' => $comparativoData,
             'municipalityHealthData' => $municipalityHealthData,
             'fundingLossModalData' => DiscrepanciesCheckCatalog::modalPayload($city, $filters),
             'chartExportContext' => $chartExportContext,
@@ -541,6 +560,7 @@ class AnalyticsDashboardController extends Controller
         FilterOptionsService $filterOptionsService,
         OverviewRepository $overviewRepository,
         EnrollmentRepository $enrollmentRepository,
+        CadunicoPrevisaoRepository $cadunicoPrevisaoRepository,
         PerformanceRepository $performanceRepository,
         AttendanceRepository $attendanceRepository,
         InclusionRepository $inclusionRepository,
@@ -552,6 +572,7 @@ class AnalyticsDashboardController extends Controller
         MunicipalityHealthRepository $municipalityHealthRepository,
         SchoolUnitsRepository $schoolUnitsRepository,
         AnalyticsReportExportService $pdfExportService,
+        FinanceComparativoService $financeComparativoService,
     ): Response {
         $tab = (string) $request->query('tab', '');
         if (! AnalyticsTabCatalog::isValidTab($tab)) {
@@ -579,7 +600,11 @@ class AnalyticsDashboardController extends Controller
             $request->session()->save();
         }
 
-        if (! $filters->hasYearSelected()) {
+        $comparativoBaseYear = $tab === 'comparativo'
+            ? FinanceComparativoService::resolveBaseYear($request, $filters)
+            : null;
+
+        if (! $filters->hasYearSelected() && $comparativoBaseYear === null) {
             return response()
                 ->view('dashboard.analytics.partials.tab-fetch-notice', [
                     'message' => __('Aplique os filtros (ano letivo) no painel superior e confirme para carregar esta aba.'),
@@ -618,6 +643,7 @@ class AnalyticsDashboardController extends Controller
                 $filterOptionsService,
                 $overviewRepository,
                 $enrollmentRepository,
+                $cadunicoPrevisaoRepository,
                 $performanceRepository,
                 $attendanceRepository,
                 $inclusionRepository,
@@ -629,6 +655,7 @@ class AnalyticsDashboardController extends Controller
                 $municipalityHealthRepository,
                 $schoolUnitsRepository,
                 $pdfExportService,
+                $financeComparativoService,
                 $tabWarnings,
             ));
 
@@ -670,6 +697,7 @@ class AnalyticsDashboardController extends Controller
         FilterOptionsService $filterOptionsService,
         OverviewRepository $overviewRepository,
         EnrollmentRepository $enrollmentRepository,
+        CadunicoPrevisaoRepository $cadunicoPrevisaoRepository,
         PerformanceRepository $performanceRepository,
         AttendanceRepository $attendanceRepository,
         InclusionRepository $inclusionRepository,
@@ -681,6 +709,7 @@ class AnalyticsDashboardController extends Controller
         MunicipalityHealthRepository $municipalityHealthRepository,
         SchoolUnitsRepository $schoolUnitsRepository,
         AnalyticsReportExportService $pdfExportService,
+        FinanceComparativoService $financeComparativoService,
         array &$tabWarnings,
     ): Response {
         try {
@@ -694,6 +723,7 @@ class AnalyticsDashboardController extends Controller
                 $filterOptionsService,
                 $overviewRepository,
                 $enrollmentRepository,
+                $cadunicoPrevisaoRepository,
                 $performanceRepository,
                 $attendanceRepository,
                 $inclusionRepository,
@@ -705,6 +735,7 @@ class AnalyticsDashboardController extends Controller
                 $municipalityHealthRepository,
                 $schoolUnitsRepository,
                 $pdfExportService,
+                $financeComparativoService,
                 $tabWarnings,
             );
         } finally {
@@ -723,6 +754,7 @@ class AnalyticsDashboardController extends Controller
         FilterOptionsService $filterOptionsService,
         OverviewRepository $overviewRepository,
         EnrollmentRepository $enrollmentRepository,
+        CadunicoPrevisaoRepository $cadunicoPrevisaoRepository,
         PerformanceRepository $performanceRepository,
         AttendanceRepository $attendanceRepository,
         InclusionRepository $inclusionRepository,
@@ -734,6 +766,7 @@ class AnalyticsDashboardController extends Controller
         MunicipalityHealthRepository $municipalityHealthRepository,
         SchoolUnitsRepository $schoolUnitsRepository,
         AnalyticsReportExportService $pdfExportService,
+        FinanceComparativoService $financeComparativoService,
         array &$tabWarnings,
     ): Response {
         $ieducarOptions = [
@@ -768,6 +801,9 @@ class AnalyticsDashboardController extends Controller
             $municipalityHealthRepository,
             $otherFundingRepository,
             $workDoneRepository,
+            $request,
+            $financeComparativoService,
+            $filterOptionsService,
             $tabWarnings,
         );
         $healthDataForTab = $financePreload['healthData'];
@@ -775,6 +811,8 @@ class AnalyticsDashboardController extends Controller
         $fundebDataForTab = $financePreload['fundebData'];
         $otherFundingDataForTab = $financePreload['otherFundingData'];
         $workDoneDataForTab = $financePreload['workDoneData'];
+        $comparativoDataForTab = $financePreload['comparativoData'];
+        $comparativoBaseYear = FinanceComparativoService::resolveBaseYear($request, $filters);
         $municipalityContext = $financePreload['context'] ?? $this->resolveMunicipalityContextForTab(
             $tab,
             $city,
@@ -789,7 +827,9 @@ class AnalyticsDashboardController extends Controller
             'X-Analytics-Tab-Status' => 'ok',
         ];
 
-        $yearReady = ['yearFilterReady' => true];
+        $yearReady = [
+            'yearFilterReady' => $filters->hasYearSelected() || $comparativoBaseYear !== null,
+        ];
         $viewBase = [
             'chartExportContext' => $chartExportContext,
             'municipalityContext' => $municipalityContext,
@@ -825,6 +865,16 @@ class AnalyticsDashboardController extends Controller
                         fn () => $enrollmentRepository->sample($city, $filters),
                         AnalyticsEmptyPayloads::enrollment(),
                         __('Matrículas'),
+                        $tabWarnings,
+                    ),
+                ]))
+                ->withHeaders($headers),
+            'cadunico_previsao' => response()
+                ->view('dashboard.analytics.partials.cadunico-previsao', array_merge($viewBase, $yearReady, [
+                    'cadunicoPrevisaoData' => $this->safeAnalyticsLoad(
+                        fn () => $cadunicoPrevisaoRepository->buildReport($city, $filters),
+                        AnalyticsEmptyPayloads::cadunicoPrevisao(),
+                        __('CadÚnico'),
                         $tabWarnings,
                     ),
                 ]))
@@ -936,8 +986,114 @@ class AnalyticsDashboardController extends Controller
                     ),
                 ]))
                 ->withHeaders($headers),
+            'comparativo' => response()
+                ->view('dashboard.analytics.partials.comparativo', array_merge($viewBase, $yearReady, [
+                    'comparativoData' => $comparativoDataForTab ?? $this->safeAnalyticsLoad(
+                        fn () => $this->buildComparativoForTab(
+                            $financeComparativoService,
+                            $filterOptionsService,
+                            $city,
+                            $filters,
+                            $request,
+                        ),
+                        AnalyticsEmptyPayloads::comparativo(),
+                        __('Comparativo'),
+                        $tabWarnings,
+                    ),
+                    'baseYear' => $comparativoBaseYear,
+                    'pdfExportsRecent' => $request->user()->canExportAnalyticsPdf()
+                        ? $pdfExportService->recentForUserCity($request->user(), $city, 4)
+                        : [],
+                ]))
+                ->withHeaders($headers),
             default => abort(404),
         };
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildComparativoForTab(
+        FinanceComparativoService $financeComparativoService,
+        FilterOptionsService $filterOptionsService,
+        City $city,
+        IeducarFilterState $filters,
+        Request $request,
+    ): array {
+        $baseYear = FinanceComparativoService::resolveBaseYear($request, $filters);
+        if ($baseYear === null) {
+            return AnalyticsEmptyPayloads::comparativo();
+        }
+
+        $yearOptions = [];
+        try {
+            $loaded = $filterOptionsService->loadAll($city, $filters);
+            $yearOptions = is_array($loaded['years'] ?? null) ? $loaded['years'] : [];
+        } catch (Throwable) {
+            $yearOptions = [];
+        }
+
+        return $financeComparativoService->build($city, $baseYear, $filters, $yearOptions);
+    }
+
+    /**
+     * @param  list<string>  $warnings
+     * @return array{context: ?array, healthData: null, discrepanciesData: null, fundebData: null, comparativoData: ?array, otherFundingData: null, workDoneData: null}
+     */
+    private function preloadComparativoTab(
+        FinanceComparativoService $financeComparativoService,
+        FilterOptionsService $filterOptionsService,
+        DiscrepanciesRepository $discrepanciesRepository,
+        City $city,
+        IeducarFilterState $filters,
+        Request $request,
+        array &$warnings,
+    ): array {
+        $comparativoData = $this->safeAnalyticsLoad(
+            fn () => $this->buildComparativoForTab(
+                $financeComparativoService,
+                $filterOptionsService,
+                $city,
+                $filters,
+                $request,
+            ),
+            AnalyticsEmptyPayloads::comparativo(),
+            __('Comparativo'),
+            $warnings,
+        );
+
+        $fundingSnapshot = $this->safeAnalyticsLoad(
+            fn () => $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
+            null,
+            __('Resumo financeiro'),
+            $warnings,
+        );
+        if (! is_array($fundingSnapshot)) {
+            $fundingSnapshot = [
+                'summary' => [],
+                'funding_reference' => DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters),
+            ];
+        } elseif (! is_array($fundingSnapshot['funding_reference'] ?? null)) {
+            $fundingSnapshot['funding_reference'] = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
+        }
+
+        $totalMat = is_array($comparativoData)
+            ? ($comparativoData['base_year_detail']['matriculas'] ?? null)
+            : null;
+        $overviewData = [
+            'kpis' => ['matriculas' => $totalMat],
+            'total_matriculas' => $totalMat,
+        ];
+
+        return [
+            'context' => AnalyticsFinanceTabPreload::contextFromFundingSnapshot($fundingSnapshot, $overviewData),
+            'healthData' => null,
+            'discrepanciesData' => null,
+            'fundebData' => null,
+            'comparativoData' => is_array($comparativoData) ? $comparativoData : null,
+            'otherFundingData' => null,
+            'workDoneData' => null,
+        ];
     }
 
     /**
@@ -970,6 +1126,7 @@ class AnalyticsDashboardController extends Controller
      *   healthData: ?array<string, mixed>,
      *   discrepanciesData: ?array<string, mixed>,
      *   fundebData: ?array<string, mixed>,
+     *   comparativoData: ?array<string, mixed>,
      *   otherFundingData: ?array<string, mixed>,
      *   workDoneData: ?array<string, mixed>
      * }
@@ -985,6 +1142,9 @@ class AnalyticsDashboardController extends Controller
         MunicipalityHealthRepository $municipalityHealthRepository,
         OtherFundingRepository $otherFundingRepository,
         WorkDoneRepository $workDoneRepository,
+        Request $request,
+        FinanceComparativoService $financeComparativoService,
+        FilterOptionsService $filterOptionsService,
         array &$warnings,
     ): array {
         $empty = [
@@ -992,6 +1152,7 @@ class AnalyticsDashboardController extends Controller
             'healthData' => null,
             'discrepanciesData' => null,
             'fundebData' => null,
+            'comparativoData' => null,
             'otherFundingData' => null,
             'workDoneData' => null,
         ];
@@ -1010,6 +1171,15 @@ class AnalyticsDashboardController extends Controller
                 $enrollmentRepository,
                 $city,
                 $filters,
+                $warnings,
+            ),
+            'comparativo' => $this->preloadComparativoTab(
+                $financeComparativoService,
+                $filterOptionsService,
+                $discrepanciesRepository,
+                $city,
+                $filters,
+                $request,
                 $warnings,
             ),
             'other_funding' => $this->preloadFinanceStripTab(
@@ -1055,6 +1225,7 @@ class AnalyticsDashboardController extends Controller
             'healthData' => is_array($healthData) ? $healthData : null,
             'discrepanciesData' => null,
             'fundebData' => null,
+            'comparativoData' => null,
             'otherFundingData' => null,
             'workDoneData' => null,
         ];
@@ -1087,6 +1258,7 @@ class AnalyticsDashboardController extends Controller
             'healthData' => null,
             'discrepanciesData' => is_array($discrepanciesData) ? $discrepanciesData : null,
             'fundebData' => null,
+            'comparativoData' => null,
             'otherFundingData' => null,
             'workDoneData' => null,
         ];
@@ -1174,6 +1346,7 @@ class AnalyticsDashboardController extends Controller
             'healthData' => null,
             'discrepanciesData' => null,
             'fundebData' => null,
+            'comparativoData' => null,
             'otherFundingData' => null,
             'workDoneData' => is_array($workDoneData) ? $workDoneData : null,
         ];
@@ -1350,6 +1523,7 @@ class AnalyticsDashboardController extends Controller
     ): ?array {
         $tabsWithFunding = [
             'enrollment',
+            'cadunico_previsao',
             'network',
             'school_units',
             'inclusion',
@@ -1357,6 +1531,7 @@ class AnalyticsDashboardController extends Controller
             'attendance',
             'fundeb',
             'discrepancies',
+            'comparativo',
         ];
         if (! in_array($tab, $tabsWithFunding, true)) {
             return null;

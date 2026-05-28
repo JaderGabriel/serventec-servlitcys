@@ -22,6 +22,7 @@ use App\Models\AnalyticsReportExport;
 use App\Models\City;
 use App\Models\User;
 use App\Policies\AdminSyncTaskPolicy;
+use App\Observers\CityCadunicoSyncObserver;
 use App\Observers\CityFundebSyncObserver;
 use App\Policies\AnalyticsReportExportPolicy;
 use App\Policies\CityPolicy;
@@ -86,6 +87,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         City::observe(CityFundebSyncObserver::class);
+        City::observe(CityCadunicoSyncObserver::class);
 
         Livewire::component('pulse.institution-traffic-card', InstitutionTrafficCard::class);
         Livewire::component('pulse.redis-overview-card', RedisOverviewCard::class);

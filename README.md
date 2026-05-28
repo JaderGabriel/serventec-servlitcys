@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão em produção (`main`):** **3.2.0** (export NEE, medidores/risco AEE, fila admin temática; tag **`20260527-Notus`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md) · release: [docs/RELEASE_20260527_NOTUS.md](docs/RELEASE_20260527_NOTUS.md).
+**Versão em produção (`main`):** **3.5.0** (Comparativo Finanças, CadÚnico previsão e automação; tag **`20260601-Atlas`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md) · release: [docs/RELEASE_20260601_ATLAS.md](docs/RELEASE_20260601_ATLAS.md).
 
 ## Requisitos
 

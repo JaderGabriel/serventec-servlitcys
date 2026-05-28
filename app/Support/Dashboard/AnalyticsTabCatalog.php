@@ -25,6 +25,7 @@ final class AnalyticsTabCatalog
                 'tabs' => [
                     'overview',
                     'enrollment',
+                    'cadunico_previsao',
                     'network',
                     'school_units',
                 ],
@@ -50,6 +51,7 @@ final class AnalyticsTabCatalog
                 'label' => __('Finanças e repasses'),
                 'tabs' => [
                     'municipality_health',
+                    'comparativo',
                     'discrepancies',
                     'fundeb',
                     'other_funding',
@@ -69,7 +71,7 @@ final class AnalyticsTabCatalog
             'cadastro' => [
                 'step' => '1',
                 'short' => __('Cadastro'),
-                'hint' => __('Visão da rede, matrículas e unidades'),
+                'hint' => __('Visão da rede, matrículas, CadÚnico (previsão) e unidades'),
                 'tone' => 'indigo',
             ],
             'pedagogico' => [
@@ -87,7 +89,7 @@ final class AnalyticsTabCatalog
             'consultoria' => [
                 'step' => '4',
                 'short' => __('Finanças'),
-                'hint' => __('Diagnóstico, discrepâncias, FUNDEB e financiamentos'),
+                'hint' => __('Diagnóstico, comparativo, discrepâncias, FUNDEB e financiamentos'),
                 'tone' => 'teal',
             ],
         ];
@@ -102,12 +104,14 @@ final class AnalyticsTabCatalog
     {
         return [
             'municipality_health' => __('Resumo executivo e prioridades'),
+            'comparativo' => __('Evolução anual e projeção FUNDEB'),
             'discrepancies' => __('Erros de cadastro com impacto financeiro'),
             'fundeb' => __('VAAF, VAAR e previsão de repasse'),
             'other_funding' => __('PNAE, PNATE, PDDE e fontes públicas'),
             'work_done' => __('Educacenso, ritmo de cadastro e fecho do ano'),
             'overview' => __('Totais de escolas, turmas e matrículas'),
             'enrollment' => __('Matrículas, distorção e ocupação'),
+            'cadunico_previsao' => __('CadÚnico: previsão fora da rede e FUNDEB'),
             'network' => __('Vagas, turnos e oferta da rede'),
             'school_units' => __('Mapa, unidades e lista de espera'),
             'inclusion' => __('NEE, equidade e recurso de prova'),
@@ -186,12 +190,14 @@ final class AnalyticsTabCatalog
     {
         return [
             'municipality_health' => __('Diagnóstico'),
+            'comparativo' => __('Comparativo'),
             'discrepancies' => __('Discrepâncias'),
             'fundeb' => __('FUNDEB'),
             'other_funding' => __('Financiamentos'),
             'work_done' => __('Censo'),
             'overview' => __('Visão geral'),
             'enrollment' => __('Matrículas'),
+            'cadunico_previsao' => __('CadÚnico'),
             'network' => __('Rede & oferta'),
             'school_units' => __('Unidades'),
             'inclusion' => __('Inclusão'),
@@ -250,6 +256,7 @@ final class AnalyticsTabCatalog
         return [
             'overview',
             'enrollment',
+            'cadunico_previsao',
             'network',
             'school_units',
             'inclusion',
@@ -260,6 +267,7 @@ final class AnalyticsTabCatalog
             'discrepancies',
             'fundeb',
             'other_funding',
+            'comparativo',
         ];
     }
 

@@ -1,6 +1,6 @@
 # Analytics — navegação e UI de consultoria (3.4.0+)
 
-> **Release:** [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md) · **Índice:** [README.md](README.md)
+> **Release:** [RELEASE_20260601_ATLAS.md](RELEASE_20260601_ATLAS.md) (3.5.0) · [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md) · **Índice:** [README.md](README.md)
 
 ## Estrutura do painel
 
@@ -12,16 +12,20 @@ Cadastro (1) → Pedagógico (2) → Censo (3) → Finanças (4)
 
 | Grupo `id` | Label UI | Tom nav | Abas |
 |------------|----------|---------|------|
-| `cadastro` | Cadastro | indigo | `overview`, `enrollment`, `network`, `school_units` |
+| `cadastro` | Cadastro | indigo | `overview`, `enrollment`, `cadunico_previsao`, `network`, `school_units` |
 | `pedagogico` | Pedagógico | violet | `inclusion`, `performance`, `attendance` |
 | `censo` | Censo | sky | `work_done` |
-| `consultoria` | Finanças | teal | `municipality_health`, `discrepancies`, `fundeb`, `other_funding` |
+| `consultoria` | Finanças | teal | `municipality_health`, `comparativo`, `discrepancies`, `fundeb`, `other_funding` |
 
 ## Lazy-load e preload
 
 - Pedido por aba: `GET /dashboard/analytics/tab?tab=…`
 - **Censo:** `AnalyticsDashboardController::preloadCensoTab()` — não passa pelo preload de Finanças.
-- **Finanças:** `AnalyticsFinanceTabPreload` — Diagnóstico, Discrepâncias, FUNDEB, Financiamentos (sem `work_done`).
+- **Finanças:** `AnalyticsFinanceTabPreload` — Diagnóstico, Comparativo, Discrepâncias, FUNDEB, Financiamentos (sem `work_done`).
+- **Comparativo:** `FinanceComparativoService` + `FinanceComparativoInformeBuilder` — ano base (`ano_base` na query ou filtro global), variação matrículas/alunos/turmas/recursos, informes narrativos, detalhe por etapa FUNDEB e projeção do exercício seguinte.
+- **Exportação Comparativo:** `GET dashboard.analytics.comparativo.export?format=pdf|csv|xlsx` — download imediato; PDF dedicado em `pdf/comparativo-report/document.blade.php`. O bloco «Relatório PDF completo» (fila) permanece disponível para o dossiê Serventec integral.
+- **CadÚnico:** `CadunicoPrevisaoRepository` + `CadunicoRedeGapAnalyzer` — lacuna populacional 4–17 anos vs matrículas; impacto `gap × VAAF`.
+- **Exportação CadÚnico:** `GET dashboard.analytics.cadunico-previsao.export?format=pdf|csv|xlsx` — PDF em `pdf/cadunico-previsao-report/`. Dados em `cadunico_municipio_snapshots` (import admin ou automático).
 
 ## Componentes Blade
 

@@ -6,7 +6,10 @@ use App\Models\AdminSyncTask;
 use App\Models\City;
 use App\Services\Fundeb\FundebImportMode;
 use App\Services\Fundeb\FundebImportProgress;
+use App\Services\Cadunico\CadunicoAutoSyncService;
+use App\Services\Cadunico\CadunicoOpenDataImportService;
 use App\Services\Fundeb\FundebOpenDataImportService;
+use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\Funding\MunicipalTransferImportService;
 use App\Services\Inep\InepCensoMunicipioMatriculasIndexer;
 use App\Services\Inep\SaebOfficialMunicipalImportService;
@@ -25,6 +28,7 @@ final class WeeklyMassSyncOrchestrator
         private MunicipalTransferImportService $transferImport,
         private InepCensoMunicipioMatriculasIndexer $censoMatriculasIndexer,
         private SaebOfficialMunicipalImportService $saebOfficial,
+        private CadunicoAutoSyncService $cadunicoAutoSync,
     ) {}
 
     /**
@@ -71,6 +75,7 @@ final class WeeklyMassSyncOrchestrator
                 'funding_censo_matriculas' => $this->runFundingCensoPhase($task, $progress),
                 'pedagogical_saeb' => $this->runPedagogicalPhase($task, $progress),
                 'censo_geo_agg' => $this->runCensoGeoAggPhase($task, $progress),
+                'cadunico_snapshots' => $this->runCadunicoPhase($task, $progress, $cityIds),
                 default => ['success' => false, 'message' => __('Fase desconhecida: :k', ['k' => $phaseKey])],
             };
 
@@ -117,6 +122,7 @@ final class WeeklyMassSyncOrchestrator
             'funding_censo_matriculas' => __('Censo — matrículas por município (microdados)'),
             'pedagogical_saeb' => __('Pedagógico — SAEB (microdados + INEP→escola)'),
             'censo_geo_agg' => __('Censo — agregados geográficos'),
+            'cadunico_snapshots' => __('CadÚnico — agregados municipais (API → CSV)'),
         ];
 
         $enabled = config('ieducar.weekly_mass_sync.phases');
@@ -407,6 +413,36 @@ final class WeeklyMassSyncOrchestrator
                 ? __('Agregados geográficos Censo indexados.')
                 : __('Falha ao indexar agregados Censo (código :code).', ['code' => (string) $exitCode]),
             'exit_code' => $exitCode,
+        ];
+    }
+
+    /**
+     * @param  list<int>  $cityIds
+     * @return array<string, mixed>
+     */
+    private function runCadunicoPhase(AdminSyncTask $task, AdminSyncTaskProgress $progress, array $cityIds): array
+    {
+        unset($cityIds);
+        $progress->detail(__('CadÚnico — sincronização automática (download + nacional + lacunas)…'));
+        $result = $this->cadunicoAutoSync->syncAllConfiguredYears();
+        foreach ($result['by_year'] ?? [] as $year => $yearResult) {
+            if (! is_array($yearResult)) {
+                continue;
+            }
+            foreach ($yearResult['log'] ?? [] as $line) {
+                $progress->detail($year.': '.$line);
+            }
+        }
+
+        $allowPartial = filter_var(
+            config('ieducar.cadunico.weekly_allow_partial', true),
+            FILTER_VALIDATE_BOOL,
+        );
+
+        return [
+            'success' => (bool) ($result['success'] ?? false) || $allowPartial,
+            'message' => (string) ($result['message'] ?? __('Fase CadÚnico concluída.')),
+            'sync' => $result,
         ];
     }
 

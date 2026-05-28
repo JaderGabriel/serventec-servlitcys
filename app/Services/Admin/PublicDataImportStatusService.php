@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin;
 
+use App\Models\CadunicoMunicipioSnapshot;
 use App\Models\City;
 use App\Models\FundebMunicipioReference;
 use App\Models\InepCensoMunicipioMatricula;
@@ -73,6 +74,11 @@ final class PublicDataImportStatusService
         $transferPairs = $transferRows->count();
         $transferMunicipios = $transferRows->pluck('ibge_municipio')->unique()->count();
 
+        $cadunicoRows = CadunicoMunicipioSnapshot::query()
+            ->when($ibgeList !== [], fn ($q) => $q->whereIn('ibge_municipio', $ibgeList))
+            ->get(['ibge_municipio', 'ano_referencia']);
+        $cadunicoMunicipios = $cadunicoRows->pluck('ibge_municipio')->unique()->count();
+
         $saeb = app(SaebHistoricoDatabase::class);
         $rel = (string) config('ieducar.inep_geocoding.microdados_cadastro_escolas_path', 'inep/microdados_ed_basica_*.csv');
         $mdPath = InepMicrodadosCadastroEscolasPath::resolve($rel);
@@ -85,6 +91,7 @@ final class PublicDataImportStatusService
                     'with_any_fundeb' => $withAnyFundeb,
                     'censo_municipios' => $censoMunicipios,
                     'transfer_municipios' => $transferMunicipios,
+                    'cadunico_municipios' => $cadunicoMunicipios,
                     'saeb_points' => $saeb->pointsCount(),
                     'microdados_ok' => $mdPath !== null && is_readable($mdPath),
                 ]),
@@ -112,6 +119,11 @@ final class PublicDataImportStatusService
                 'municipios' => $transferMunicipios,
                 'latest_import' => MunicipalTransferSnapshot::query()->max('imported_at'),
             ],
+            'cadunico' => [
+                'municipios' => $cadunicoMunicipios,
+                'pairs' => $cadunicoRows->count(),
+                'latest_import' => CadunicoMunicipioSnapshot::query()->max('imported_at'),
+            ],
             'saeb' => [
                 'points' => $saeb->pointsCount(),
                 'meta' => $saeb->meta(),
@@ -133,6 +145,7 @@ final class PublicDataImportStatusService
     {
         return match ($id) {
             'fundeb_fnde' => $this->fundebStatus($ctx),
+            'cadunico_cecad' => $this->cadunicoStatus($ctx),
             'censo_inep_matriculas' => $this->censoStatus($ctx),
             'repasses_tesouro' => $this->transfersStatus($ctx),
             'saeb_inep' => $this->saebStatus($ctx),
@@ -198,6 +211,32 @@ final class PublicDataImportStatusService
      * @param  array<string, int|bool>  $ctx
      * @return array{level: string, label: string, detail: string}
      */
+    private function cadunicoStatus(array $ctx): array
+    {
+        $mun = (int) ($ctx['cadunico_municipios'] ?? 0);
+        $ibge = (int) ($ctx['cities_with_ibge'] ?? 0);
+        if ($mun === 0) {
+            return [
+                'level' => 'warn',
+                'label' => __('Sem snapshots'),
+                'detail' => __('Sincronize CadÚnico (API ou CSV Cecad) em Sincronização CadÚnico.'),
+            ];
+        }
+        if ($ibge > 0 && $mun < $ibge) {
+            return [
+                'level' => 'partial',
+                'label' => __('Parcial'),
+                'detail' => __(':n de :total municípios com dados CadÚnico.', ['n' => (string) $mun, 'total' => (string) $ibge]),
+            ];
+        }
+
+        return [
+            'level' => 'ok',
+            'label' => __('Com dados'),
+            'detail' => __(':n município(s) com agregados Cecad importados.', ['n' => (string) $mun]),
+        ];
+    }
+
     private function censoStatus(array $ctx): array
     {
         if (! ($ctx['microdados_ok'] ?? false)) {

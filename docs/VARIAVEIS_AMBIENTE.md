@@ -1,6 +1,6 @@
 # Variáveis de ambiente — servlitcys
 
-**Versão do produto:** 3.4.0 · **Última revisão:** 31/05/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [PERFORMANCE.md](PERFORMANCE.md)
+**Versão do produto:** 3.5.0 · **Última revisão:** 01/06/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [PERFORMANCE.md](PERFORMANCE.md)
 
 Este documento é a **referência oficial** para configurar o arquivo **`.env` no servidor de produção**.
 
@@ -277,6 +277,22 @@ Requer `unrar` ou `p7zip` no servidor para o RAR de 2023. URLs em `saeb.planilha
 
 ---
 
+## 12c. CadÚnico / Cecad (previsão fora da rede)
+
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `IEDUCAR_CADUNICO_ENABLED` | `true` | Motor e aba Analytics |
+| `IEDUCAR_CADUNICO_NACIONAL_CSV_URL` | — | **Recomendado:** URL com `{ano}` para CSV nacional |
+| `IEDUCAR_CADUNICO_AUTO_SYNC_ENABLED` | `true` | `cadunico:auto-sync` |
+| `IEDUCAR_CADUNICO_SYNC_ON_CITY_SAVE` | `true` | Fila ao gravar IBGE na cidade |
+| `IEDUCAR_CADUNICO_SCHEDULE_ENABLED` | `true` | Cron semanal (`cadunico:auto-sync --queue`) |
+| `IEDUCAR_CADUNICO_API_URL_TEMPLATE` | — | Lacuna por município: `{ibge}`, `{ano}` |
+| `IEDUCAR_CADUNICO_MUNICIPAL_CSV_URL` | — | CSV municipal alternativo |
+
+Detalhe: [CADUNICO_AUTOMACAO.md](CADUNICO_AUTOMACAO.md), [CADUNICO_CECAD.md](CADUNICO_CECAD.md). Admin: `/admin/cadunico-sync`.
+
+---
+
 ## 13. Censo (trabalho realizado)
 
 | Variável | Default |
@@ -330,6 +346,7 @@ Só necessárias se o schema do município divergir do Portabilis 2.x. Lista com
 4. Cron `schedule:run` ativo
 5. Worker `default,admin-sync` ou confiar em `ADMIN_SYNC_SCHEDULE_*`
 6. Bloco **§7** (analytics) para evitar 500 ao filtrar ano letivo
-7. `PORTAL_TRANSPARENCIA_API_KEY` se usar Financiamentos com Transparência
+7. `IEDUCAR_CADUNICO_NACIONAL_CSV_URL` se usar previsão CadÚnico automática (§12c)
+8. `PORTAL_TRANSPARENCIA_API_KEY` se usar Financiamentos com Transparência
 
 Ver também: [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md), [SEGURANCA.md](SEGURANCA.md).

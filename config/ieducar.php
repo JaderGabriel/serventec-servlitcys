@@ -1328,6 +1328,79 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | CadÚnico / Cecad — agregados municipais (previsão fora da rede)
+    |--------------------------------------------------------------------------
+    |
+    | Importe CSV exportado do Cecad (Consulta, Seleção e Extração) ou painéis MDs
+    | agregados por município. Não armazena CPF/NIS — apenas totais por faixa etária.
+    | Comando: php artisan cadunico:import-cecad {caminho} --ano=2024
+    |
+    */
+
+    'cadunico' => [
+        'enabled' => filter_var(env('IEDUCAR_CADUNICO_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'idade_escolar_min' => max(0, (int) env('IEDUCAR_CADUNICO_IDADE_MIN', 4)),
+        'idade_escolar_max' => max(4, (int) env('IEDUCAR_CADUNICO_IDADE_MAX', 17)),
+        'cobertura_alerta_pct' => max(50.0, (float) env('IEDUCAR_CADUNICO_COBERTURA_ALERTA_PCT', 92.0)),
+        'open_data' => [
+            'cache_enabled' => filter_var(env('IEDUCAR_CADUNICO_CACHE_ENABLED', true), FILTER_VALIDATE_BOOL),
+            'http_timeout' => max(5, (int) env('IEDUCAR_CADUNICO_HTTP_TIMEOUT', 30)),
+            'api_url_template' => (string) env('IEDUCAR_CADUNICO_API_URL_TEMPLATE', ''),
+            'ckan_base_url' => (string) env('IEDUCAR_CADUNICO_CKAN_URL', 'https://dados.gov.br'),
+            'resource_id' => (string) env('IEDUCAR_CADUNICO_CKAN_RESOURCE_ID', ''),
+        ],
+        'auto_sync' => [
+            'enabled' => filter_var(env('IEDUCAR_CADUNICO_AUTO_SYNC_ENABLED', true), FILTER_VALIDATE_BOOL),
+            'sync_on_city_save' => filter_var(env('IEDUCAR_CADUNICO_SYNC_ON_CITY_SAVE', true), FILTER_VALIDATE_BOOL),
+            'fill_api_gaps' => filter_var(env('IEDUCAR_CADUNICO_FILL_API_GAPS', true), FILTER_VALIDATE_BOOL),
+            /** Descarrega nacional_{ano}.csv de URL (sem upload). Placeholder {ano}. */
+            'nacional_csv_url_template' => (string) env('IEDUCAR_CADUNICO_NACIONAL_CSV_URL', ''),
+            'municipal_csv_url_template' => (string) env('IEDUCAR_CADUNICO_MUNICIPAL_CSV_URL', ''),
+            'refresh_csv_days' => max(1, (int) env('IEDUCAR_CADUNICO_REFRESH_CSV_DAYS', 30)),
+            'dados_gov_search' => filter_var(env('IEDUCAR_CADUNICO_DADOS_GOV_SEARCH', false), FILTER_VALIDATE_BOOL),
+            'dados_gov_query' => (string) env('IEDUCAR_CADUNICO_DADOS_GOV_QUERY', 'cadastro unico municipio'),
+            'years' => array_values(array_filter(array_map('intval', explode(',', (string) env('IEDUCAR_CADUNICO_SYNC_YEARS', ''))))),
+            'schedule' => [
+                'enabled' => filter_var(env('IEDUCAR_CADUNICO_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
+                'day_of_week' => max(0, min(6, (int) env('IEDUCAR_CADUNICO_SCHEDULE_DAY', 1))),
+                'time' => trim((string) env('IEDUCAR_CADUNICO_SCHEDULE_TIME', '03:30')) ?: '03:30',
+            ],
+        ],
+        'cecad' => [
+            'delimiter' => env('IEDUCAR_CADUNICO_CSV_DELIMITER', ';'),
+            'storage_path' => (string) env('IEDUCAR_CADUNICO_CSV_PATH', 'cadunico/cecad'),
+            'column_map' => [
+                'ibge' => [
+                    'codigo_ibge', 'ibge', 'ibge_municipio', 'co_ibge', 'cd_ibge', 'cod_ibge',
+                ],
+                'ano' => ['ano', 'ano_referencia', 'nu_ano', 'exercicio'],
+                'pessoas' => ['pessoas_cadastradas', 'total_pessoas', 'pop_cadastrada'],
+                'familias' => ['familias_cadastradas', 'total_familias', 'familias'],
+                'criancas_0_3' => ['criancas_0_3', 'pop_0_3', 'faixa_0_3'],
+                'criancas_4_5' => ['criancas_4_5', 'pop_4_5', 'pre_escola', 'faixa_4_5'],
+                'criancas_6_10' => ['criancas_6_10', 'pop_6_10', 'fund_inicial', 'faixa_6_10'],
+                'criancas_11_14' => ['criancas_11_14', 'pop_11_14', 'fund_final', 'faixa_11_14'],
+                'criancas_15_17' => ['criancas_15_17', 'pop_15_17', 'ensino_medio', 'faixa_15_17'],
+                'pop_escolar' => [
+                    'populacao_escolar', 'pop_escolar_4_17', 'criancas_4_17', 'escolaridade_obrigatoria',
+                ],
+            ],
+        ],
+        'faixas_etarias' => [
+            ['key' => 'criancas_4_5', 'label' => 'Pré-escola (4-5 anos)', 'etapa_keywords' => ['infantil', 'pré', 'pre', 'creche']],
+            ['key' => 'criancas_6_10', 'label' => 'Fundamental — anos iniciais', 'etapa_keywords' => ['iniciais', 'fundamental i']],
+            ['key' => 'criancas_11_14', 'label' => 'Fundamental — anos finais', 'etapa_keywords' => ['finais', 'fundamental ii', 'fundamental 2']],
+            ['key' => 'criancas_15_17', 'label' => 'Ensino médio', 'etapa_keywords' => ['médio', 'medio', 'eja']],
+        ],
+        'weekly_allow_partial' => filter_var(env('IEDUCAR_CADUNICO_WEEKLY_PARTIAL_OK', true), FILTER_VALIDATE_BOOL),
+        'fontes_oficiais' => [
+            'Cecad — CadÚnico (MDS)',
+            'https://www.gov.br/mds/pt-br/acoes-e-programas/cadastro-unico',
+        ],
+    ],
+
     'weekly_mass_sync' => [
         'enabled' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_ENABLED', true), FILTER_VALIDATE_BOOL),
         /** Timeout do job na fila admin-sync (segundos). */
@@ -1360,6 +1433,7 @@ return [
             'funding_censo_matriculas' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_PHASE_CENSO', true), FILTER_VALIDATE_BOOL),
             'pedagogical_saeb' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_PHASE_SAEB', true), FILTER_VALIDATE_BOOL),
             'censo_geo_agg' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_PHASE_CENSO_AGG', true), FILTER_VALIDATE_BOOL),
+            'cadunico_snapshots' => filter_var(env('IEDUCAR_WEEKLY_MASS_SYNC_PHASE_CADUNICO', true), FILTER_VALIDATE_BOOL),
         ],
     ],
 
