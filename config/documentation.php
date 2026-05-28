@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '3.5.0',
         'release_tag' => '20260601-Atlas',
-        'commit_short' => '1d9281c',
+        'commit_short' => '4cfb792',
         'commit_number' => 268,
         'revision_date' => '2026-06-01',
         'in_production' => true,
