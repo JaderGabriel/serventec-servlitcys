@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '3.6.0',
         'release_tag' => '20260603-Iris',
-        'commit_short' => '94666f4',
+        'commit_short' => '1892e73',
         'commit_number' => 272,
         'revision_date' => '2026-06-03',
         'in_production' => true,
