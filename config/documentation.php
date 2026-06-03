@@ -24,8 +24,8 @@ return [
     'product' => [
         'version' => '3.5.1',
         'release_tag' => '20260602-Hermes',
-        'commit_short' => 'pending',
-        'commit_number' => 269,
+        'commit_short' => 'ad7abd0',
+        'commit_number' => 270,
         'revision_date' => '2026-06-02',
         'in_production' => true,
         'production_label' => 'Em produção',
