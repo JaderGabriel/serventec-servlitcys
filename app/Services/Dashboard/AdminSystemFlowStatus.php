@@ -50,6 +50,7 @@ final class AdminSystemFlowStatus
             true,
             __('ArcGIS / catálogo INEP (geocodificação)'),
         );
+        $cadunico = $this->cadunicoLinkStatus();
 
         $hub = [
             'id' => 'servlitcys',
@@ -128,6 +129,17 @@ final class AdminSystemFlowStatus
                 'row' => 'external',
                 'zone' => 'external',
             ],
+            [
+                'id' => 'cadunico',
+                'label' => __('CadÚnico / Cecad'),
+                'acronym' => 'MDS',
+                'category' => 'social',
+                'sublabel' => __('Agregados 4–17 anos'),
+                'status' => $cadunico['status'],
+                'hint' => $cadunico['hint'],
+                'row' => 'external',
+                'zone' => 'external',
+            ],
             $hub,
         ];
 
@@ -138,6 +150,7 @@ final class AdminSystemFlowStatus
             $this->edge('portal', 'servlitcys', $portal['status'], __('Programas e despesas')),
             $this->edge('tesouro', 'servlitcys', $tesouro['status'], __('Financiamentos complementares')),
             $this->edge('arcgis', 'servlitcys', 'ok', __('Mapa e catálogo de escolas')),
+            $this->edge('cadunico', 'servlitcys', $cadunico['status'], __('Lacuna rede e previsão FUNDEB')),
         ];
 
         $statuses = array_merge(
@@ -153,7 +166,7 @@ final class AdminSystemFlowStatus
                 [
                     'id' => 'external',
                     'title' => __('1 · Fontes públicas e federais'),
-                    'description' => __('APIs e bases abertas consultadas por município — não substituem o cadastro local.'),
+                    'description' => __('APIs e bases abertas (FNDE, INEP, MDS/Cecad, Transparência) — não substituem o cadastro local.'),
                 ],
                 [
                     'id' => 'platform',
@@ -312,6 +325,44 @@ final class AdminSystemFlowStatus
             'hint' => $configured
                 ? __('Variáveis configuradas no ambiente')
                 : __('Definir no .env: :label', ['label' => $label]),
+        ];
+    }
+
+    /**
+     * @return array{status: string, hint: string}
+     */
+    private function cadunicoLinkStatus(): array
+    {
+        if (! filter_var(config('ieducar.cadunico.enabled', true), FILTER_VALIDATE_BOOL)) {
+            return [
+                'status' => 'off',
+                'hint' => __('CadÚnico desativado (IEDUCAR_CADUNICO_ENABLED=false).'),
+            ];
+        }
+
+        $hasPipeline = filled(config('ieducar.cadunico.auto_sync.nacional_csv_url_template'))
+            || filled(config('ieducar.cadunico.open_data.api_url_template'))
+            || filled(config('ieducar.cadunico.open_data.resource_id'));
+        $autoSync = filter_var(config('ieducar.cadunico.auto_sync.enabled', true), FILTER_VALIDATE_BOOL);
+        $scheduled = filter_var(config('ieducar.cadunico.auto_sync.schedule.enabled', true), FILTER_VALIDATE_BOOL);
+
+        if ($hasPipeline && $autoSync && $scheduled) {
+            return [
+                'status' => 'ok',
+                'hint' => __('Pipeline Cecad configurado; fila cadastro::auto_sync e cron semanal.'),
+            ];
+        }
+
+        if ($hasPipeline || $autoSync) {
+            return [
+                'status' => 'partial',
+                'hint' => __('Defina IEDUCAR_CADUNICO_NACIONAL_CSV_URL e mantenha cadunico:auto-sync no schedule:run.'),
+            ];
+        }
+
+        return [
+            'status' => 'partial',
+            'hint' => __('Configure URL nacional, API ou hub /admin/dados-publicos → CadÚnico.'),
         ];
     }
 

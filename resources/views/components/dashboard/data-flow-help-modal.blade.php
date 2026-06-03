@@ -30,7 +30,7 @@
             <ul class="space-y-3 text-slate-700 dark:text-slate-300 leading-relaxed">
                 <li class="flex gap-2">
                     <span class="serv-mm-tip-num" aria-hidden="true">1</span>
-                    <span>{{ __('Ramo superior: fontes públicas e federais, agrupadas por eixo (financiamento, indicadores, transparência, geografia).') }}</span>
+                    <span>{{ __('Ramo superior: fontes públicas e federais, agrupadas por eixo (financiamento, indicadores, assistência social/CadÚnico, transparência, geografia).') }}</span>
                 </li>
                 <li class="flex gap-2">
                     <span class="serv-mm-tip-num serv-mm-tip-num--hub" aria-hidden="true">2</span>

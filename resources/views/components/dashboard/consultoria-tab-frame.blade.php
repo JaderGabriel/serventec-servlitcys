@@ -19,7 +19,7 @@
     $noYearMessage = $noYearMessage ?? __('Selecione o ano letivo e aplique os filtros para carregar esta análise.');
 @endphp
 
-<div class="consultoria-tab-frame space-y-6" data-consultoria-tab="{{ $tab }}">
+<div class="consultoria-tab-frame space-y-6" data-consultoria-tab="{{ $tab }}" data-analytics-panel-root>
     @if (! $yearFilterReady)
         <p class="serv-callout serv-callout--warning text-sm">{{ $noYearMessage }}</p>
     @else

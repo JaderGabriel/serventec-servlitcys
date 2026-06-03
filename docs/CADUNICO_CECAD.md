@@ -21,6 +21,8 @@ Não são armazenados CPF, NIS ou dados individuais — apenas totais por munic�
 | Sincronização dedicada | `/admin/cadunico-sync` |
 | Hub dados públicos | `/admin/dados-publicos` → `cadunico_cecad` |
 
+**Visualização dos dados cadastrados:** na mesma tela (`#cadunico-snapshots-matrix`), matriz município × ano (população 4–17 e data de importação), filtro de intervalo e histórico detalhado por município — mesmo padrão da tabela VAAF/VAAT do FUNDEB em Compatibilidade i-Educar.
+
 **Upload Cecad na UI:** formulário «Upload Cecad (CSV)» grava em `storage/app/cadunico/cecad/` e pode enfileirar importação automaticamente.
 
 Tarefas: `cadastro::import_city_year`, `cadastro::import_storage_year`, `cadastro::import_csv`

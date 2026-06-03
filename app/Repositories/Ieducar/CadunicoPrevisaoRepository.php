@@ -9,6 +9,7 @@ use App\Services\Cadunico\CadunicoRedeGapAnalyzer;
 use App\Services\CityDataConnection;
 use App\Support\Analytics\CadunicoPrevisaoInformeBuilder;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Dashboard\PublicDataSourcesCatalog;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\FundebMunicipalReferenceResolver;
 use App\Support\Ieducar\IeducarWorkActivityQueries;
@@ -51,12 +52,14 @@ final class CadunicoPrevisaoRepository
         if (! $filters->hasYearSelected() || $filters->isAllSchoolYears()) {
             return array_merge($empty, [
                 'error' => __('Selecione um ano letivo específico para a previsão CadÚnico.'),
+                'metodologia' => $this->metodologiaSteps(),
             ]);
         }
 
         if (! $city->hasDataSetup()) {
             return array_merge($empty, [
                 'error' => __('Base i-Educar não configurada para este município.'),
+                'metodologia' => $this->metodologiaSteps(),
             ]);
         }
 
@@ -116,7 +119,10 @@ final class CadunicoPrevisaoRepository
 
             return $report;
         } catch (\Throwable $e) {
-            return array_merge($empty, ['error' => $e->getMessage()]);
+            return array_merge($empty, [
+                'error' => $e->getMessage(),
+                'metodologia' => $this->metodologiaSteps(),
+            ]);
         }
     }
 
@@ -268,16 +274,6 @@ final class CadunicoPrevisaoRepository
      */
     private function publicSourcesCatalog(): array
     {
-        $urls = config('ieducar.cadunico.fontes_oficiais', []);
-
-        return [
-            'intro' => __('Fontes para alimentar esta aba (dados agregados, LGPD).'),
-            'categories' => [
-                [
-                    'title' => __('CadÚnico / Cecad (MDS)'),
-                    'links' => is_array($urls) ? array_map(static fn ($u) => ['label' => $u, 'url' => str_starts_with($u, 'http') ? $u : null], $urls) : [],
-                ],
-            ],
-        ];
+        return PublicDataSourcesCatalog::build(null, 'cadastro');
     }
 }

@@ -7,6 +7,7 @@
     $categoryLabels = [
         'financeiro' => __('Financiamento'),
         'pedagogico' => __('Indicadores'),
+        'social' => __('Assistência social'),
         'transparencia' => __('Transparência'),
         'geografia' => __('Geografia'),
     ];

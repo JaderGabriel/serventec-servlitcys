@@ -149,7 +149,15 @@
                                         'filters' => $filters,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelCadunicoPrevisao"></div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelCadunicoPrevisao">
+                                        <p
+                                            x-show="loadingTab === 'cadunico_previsao'"
+                                            x-cloak
+                                            class="text-sm text-slate-600 dark:text-slate-400 px-2 py-6"
+                                        >
+                                            {{ __('A carregar previsão CadÚnico…') }}
+                                        </p>
+                                    </div>
                                 @endif
                             </div>
                             <div x-show="tab === 'school_units'" x-cloak class="analytics-tab-panel">

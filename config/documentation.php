@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '3.5.0',
-        'release_tag' => '20260601-Atlas',
-        'commit_short' => '4cfb792',
-        'commit_number' => 268,
-        'revision_date' => '2026-06-01',
+        'version' => '3.5.1',
+        'release_tag' => '20260602-Hermes',
+        'commit_short' => 'pending',
+        'commit_number' => 269,
+        'revision_date' => '2026-06-02',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

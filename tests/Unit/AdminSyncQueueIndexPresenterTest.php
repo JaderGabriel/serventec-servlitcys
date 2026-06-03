@@ -15,9 +15,13 @@ class AdminSyncQueueIndexPresenterTest extends TestCase
     {
         $cards = AdminSyncQueueIndexPresenter::syncThemeCards(collect(), 'admin-sync');
 
-        $this->assertCount(6, $cards);
+        $this->assertCount(7, $cards);
         $this->assertSame('fundeb', $cards[0]['id']);
         $this->assertSame(AdminSyncDomain::Fundeb, $cards[0]['domain']);
+        $cadastro = collect($cards)->firstWhere('id', 'cadastro');
+        $this->assertNotNull($cadastro);
+        $this->assertSame(AdminSyncDomain::Cadastro, $cadastro['domain']);
+        $this->assertSame('admin.cadunico-sync.index', $cadastro['admin_route'] ?? null);
     }
 
     public function test_task_context_lines_include_summary(): void

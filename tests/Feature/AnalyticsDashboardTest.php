@@ -69,6 +69,27 @@ class AnalyticsDashboardTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_analytics_tab_cadunico_previsao_returns_partial_html(): void
+    {
+        $city = City::factory()->create();
+        $user = User::factory()->create();
+        $user->cities()->attach($city->id);
+
+        $this->actingAs($user)
+            ->get(route('dashboard.analytics.tab', [
+                'tab' => 'cadunico_previsao',
+                'city_id' => $city->id,
+                'ano_letivo' => 2024,
+            ]), [
+                'Accept' => 'text/html',
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])
+            ->assertOk()
+            ->assertHeader('X-Analytics-Tab', 'cadunico_previsao')
+            ->assertSee('data-consultoria-tab="cadunico_previsao"', false)
+            ->assertSee(__('Previsão CadÚnico — fora da rede'), false);
+    }
+
     public function test_analytics_index_includes_new_tabs(): void
     {
         $user = User::factory()->create();

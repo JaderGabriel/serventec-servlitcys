@@ -228,6 +228,16 @@
                         </details>
                     @endif
 
+                    @include('admin.cadunico-sync.partials.snapshots-yearly-matrix', [
+                        'cadunicoYearlyMatrix' => $cadunicoYearlyMatrix ?? [],
+                        'cadunicoMatrixFrom' => $cadunicoMatrixFrom ?? null,
+                        'cadunicoMatrixTo' => $cadunicoMatrixTo ?? null,
+                        'filterCity' => $filterCity ?? null,
+                        'cadunicoStored' => $cadunicoStored ?? [],
+                        'cities' => $cities,
+                        'selectClass' => $selectClass,
+                    ])
+
                     <p class="text-xs text-gray-500">
                         <a href="{{ route('admin.public-data.index') }}#source-cadunico_cecad" class="text-violet-700 dark:text-violet-300 hover:underline">{{ __('Hub de dados públicos') }}</a>
                         ·

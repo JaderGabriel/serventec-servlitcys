@@ -201,8 +201,9 @@ Sem `--password`, o comando pede a senha de forma oculta no terminal ou lê `CIT
 |------|----------------|-------|
 | Geo | `app:sync-school-unit-geos-pipeline` | Geo-sync |
 | SAEB | `saeb:sync-microdados` | Pedagogical-sync |
+| **CadÚnico / Cecad** | `cadunico:auto-sync` | `/admin/cadunico-sync` · fila `#fila-cadastro` |
 | FUNDEB | `fundeb:import-api` | ieducar-compatibility |
-| **Dados públicos (hub)** | vários (`fundeb`, `funding`, `system`) | `/admin/dados-publicos` |
+| **Dados públicos (hub)** | vários (`fundeb`, `funding`, `cadastro`, `system`) | `/admin/dados-publicos` |
 | Schema | `ieducar:schema-probe` | ieducar-compatibility |
 | Frequência | `ieducar:probe-falta` | — (CLI; aba Analytics Frequência) |
 | **Massiva semanal** | `weekly-mass-sync:run` | sync-queue (retomar) |

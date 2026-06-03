@@ -6,6 +6,7 @@ use App\Enums\AdminSyncDomain;
 use App\Http\Controllers\Controller;
 use App\Models\CadunicoMunicipioSnapshot;
 use App\Models\City;
+use App\Repositories\CadunicoMunicipioSnapshotRepository;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\Cadunico\CadunicoOpenDataImportService;
@@ -20,13 +21,41 @@ class CadunicoSyncController extends Controller
     public function __construct(
         private AdminSyncQueueService $syncQueue,
         private CadunicoOpenDataImportService $import,
+        private CadunicoMunicipioSnapshotRepository $snapshots,
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $cities = City::query()->forAnalytics()->orderBy('name')->get(['id', 'name', 'uf', 'ibge_municipio']);
         $refYear = CadunicoOpenDataImportService::suggestedImportYear();
         $maxYear = (int) date('Y');
+
+        $matrixDefaults = CadunicoMunicipioSnapshotRepository::defaultMatrixYearRange();
+        $matrixRange = CadunicoMunicipioSnapshotRepository::normalizeMatrixYearRange(
+            $request->integer('cadunico_matrix_from') ?: null,
+            $request->integer('cadunico_matrix_to') ?: null,
+        );
+        $cadunicoYearlyMatrix = $this->snapshots->yearlyMatrix($matrixRange['from'], $matrixRange['to']);
+
+        $filterCityId = $request->integer('city_id') ?: null;
+        $filterCity = $filterCityId !== null ? $cities->firstWhere('id', $filterCityId) : null;
+        $cadunicoStored = [];
+        if ($filterCity instanceof City) {
+            $cadunicoStored = $this->snapshots->listForCity($filterCity)
+                ->map(static fn (CadunicoMunicipioSnapshot $row): array => [
+                    'ano' => (int) $row->ano_referencia,
+                    'pop_escolar' => $row->totalCriancasEscolaridade(),
+                    'pessoas' => (int) $row->pessoas_cadastradas,
+                    'familias' => (int) $row->familias_cadastradas,
+                    'criancas_4_5' => (int) $row->criancas_4_5,
+                    'criancas_6_10' => (int) $row->criancas_6_10,
+                    'criancas_11_14' => (int) $row->criancas_11_14,
+                    'criancas_15_17' => (int) $row->criancas_15_17,
+                    'fonte' => $row->fonte,
+                    'imported_at' => $row->imported_at?->format('d/m/Y H:i'),
+                ])
+                ->all();
+        }
 
         $ibgeList = [];
         foreach ($cities as $city) {
@@ -37,12 +66,12 @@ class CadunicoSyncController extends Controller
         }
         $ibgeList = array_values(array_unique($ibgeList));
 
-        $snapshots = CadunicoMunicipioSnapshot::query()
+        $snapshotRows = CadunicoMunicipioSnapshot::query()
             ->when($ibgeList !== [], fn ($q) => $q->whereIn('ibge_municipio', $ibgeList))
             ->get(['ibge_municipio', 'ano_referencia', 'imported_at']);
 
-        $municipiosComDados = $snapshots->pluck('ibge_municipio')->unique()->count();
-        $latestImport = $snapshots->max('imported_at');
+        $municipiosComDados = $snapshotRows->pluck('ibge_municipio')->unique()->count();
+        $latestImport = $snapshotRows->max('imported_at');
 
         $apiTemplate = trim((string) config('ieducar.cadunico.open_data.api_url_template', ''));
         $ckanId = trim((string) config('ieducar.cadunico.open_data.resource_id', ''));
@@ -59,8 +88,13 @@ class CadunicoSyncController extends Controller
             'storageFiles' => CadunicoStoragePaths::listStorageCsvFiles(),
             'municipiosComDados' => $municipiosComDados,
             'municipiosIbge' => count($ibgeList),
-            'snapshotsTotal' => $snapshots->count(),
+            'snapshotsTotal' => $snapshotRows->count(),
             'latestImport' => $latestImport,
+            'cadunicoYearlyMatrix' => $cadunicoYearlyMatrix,
+            'cadunicoMatrixFrom' => $matrixRange['from'],
+            'cadunicoMatrixTo' => $matrixRange['to'],
+            'filterCity' => $filterCity,
+            'cadunicoStored' => $cadunicoStored,
             'apiConfigured' => $apiTemplate !== '' && str_contains($apiTemplate, '{ibge}'),
             'ckanConfigured' => $ckanId !== '',
             'cacheDir' => CadunicoStoragePaths::apiCacheDir(),

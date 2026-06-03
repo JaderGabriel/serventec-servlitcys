@@ -87,6 +87,18 @@ final class ModuleMonitorCatalog
                 'sync_domains' => [AdminSyncDomain::Pedagogical->value],
             ],
             [
+                'id' => 'cadunico',
+                'label' => __('CadÚnico / Cecad'),
+                'description' => __('Snapshots agregados, sync automática e fila cadastro.'),
+                'icon' => 'users',
+                'accent' => 'violet',
+                'group' => 'sincronizacao',
+                'admin_route' => 'admin.cadunico-sync.index',
+                'sync_queue_anchor' => 'fila-cadastro',
+                'pulse_prefixes' => ['sync:cadastro', 'cadunico:', 'http:route:admin.cadunico-sync'],
+                'sync_domains' => [AdminSyncDomain::Cadastro->value],
+            ],
+            [
                 'id' => 'fundeb',
                 'label' => __('FUNDEB / VAAF'),
                 'description' => __('Importações FNDE e matriz de compatibilidade.'),

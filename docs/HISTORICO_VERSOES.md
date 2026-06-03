@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`3.5.0`** · tag de deploy **`20260601-Atlas`** · ver [RELEASE_20260601_ATLAS.md](RELEASE_20260601_ATLAS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`3.5.1`** · tag de deploy **`20260602-Hermes`** · ver [RELEASE_20260602_HERMES.md](RELEASE_20260602_HERMES.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **3.5.0** |
+| **Versão semântica em produção** | **3.5.1** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260601-Atlas` |
-| **Último marco documentado** | Comparativo Finanças + CadÚnico (previsão, automação, export) — [RELEASE_20260601_ATLAS.md](RELEASE_20260601_ATLAS.md) |
+| **Tag de deploy (servidor)** | `20260602-Hermes` |
+| **Último marco documentado** | Patch Analytics (CadÚnico, FUNDEB/Financiamentos) + admin CadÚnico/fila — [RELEASE_20260602_HERMES.md](RELEASE_20260602_HERMES.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -20,7 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 3.5.0** | `20260601-Atlas` → `main` | — | 01/06/2026 | **Produção:** Comparativo Finanças; CadÚnico previsão + pipeline automático + export — [RELEASE_20260601_ATLAS.md](RELEASE_20260601_ATLAS.md). |
+| **▶ 3.5.1** | `20260602-Hermes` → `main` | — | 02/06/2026 | **Produção:** fix aba CadÚnico; FUNDEB/Financiamentos (`comparativoData`); matriz admin CadÚnico; fila cadastro — [RELEASE_20260602_HERMES.md](RELEASE_20260602_HERMES.md). |
+| 3.5.0 | `20260601-Atlas` → `main` | — | 01/06/2026 | Comparativo Finanças; CadÚnico previsão + pipeline automático + export — [RELEASE_20260601_ATLAS.md](RELEASE_20260601_ATLAS.md). |
 | 3.4.0 | `20260531-Nemesis` → `main` | — | 31/05/2026 | Área Censo; UI Finanças/Censo; Diagnóstico qualidade + explorar; cache v2 — [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md). |
 | *(patch pós-3.4.0)* | `4b976f2` | — | 26/05/2026 | Diagnóstico: um velocímetro geral; consolidado operacional colapsável; roteiro no topo. |
 | *(patch pós-3.4.0)* | `e423808` | — | 26/05/2026 | Explorar em detalhe: métrica por área (`DiagnosisExploreCards`); UI com ícones; painel PDF; modo estratégico sem secções AJAX duplicadas. |

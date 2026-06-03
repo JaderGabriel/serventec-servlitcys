@@ -6,7 +6,7 @@
                     {{ __('Filas de processamento') }}
                 </h2>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {{ __('Sincronizações admin, exportações NEE e relatórios PDF — por área temática.') }}
+                    {{ __('Sincronizações admin (FUNDEB, geo, SAEB, CadÚnico/Cecad), exportações NEE e relatórios PDF — por área temática.') }}
                 </p>
             </div>
             @if ($filterDomain !== '' || $filterStatus !== '' || $filterPdfStatus !== '')

@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **3.5.0** · release `20260601-Atlas` · **Ramo:** `main` · **Última revisão:** 01/06/2026
+**Versão em produção:** **3.5.1** · release `20260602-Hermes` · **Ramo:** `main` · **Última revisão:** 02/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 

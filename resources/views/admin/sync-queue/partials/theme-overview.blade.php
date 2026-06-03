@@ -2,7 +2,7 @@
     $allCards = array_merge($syncThemeCards, [$pdfThemeCard]);
 @endphp
 
-<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
     @foreach ($allCards as $card)
         @php
             $isPdf = ($card['id'] ?? '') === 'pdf';

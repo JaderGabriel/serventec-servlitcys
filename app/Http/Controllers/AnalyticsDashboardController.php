@@ -806,12 +806,12 @@ class AnalyticsDashboardController extends Controller
             $filterOptionsService,
             $tabWarnings,
         );
-        $healthDataForTab = $financePreload['healthData'];
-        $discrepanciesDataForTab = $financePreload['discrepanciesData'];
-        $fundebDataForTab = $financePreload['fundebData'];
-        $otherFundingDataForTab = $financePreload['otherFundingData'];
-        $workDoneDataForTab = $financePreload['workDoneData'];
-        $comparativoDataForTab = $financePreload['comparativoData'];
+        $healthDataForTab = $financePreload['healthData'] ?? null;
+        $discrepanciesDataForTab = $financePreload['discrepanciesData'] ?? null;
+        $fundebDataForTab = $financePreload['fundebData'] ?? null;
+        $otherFundingDataForTab = $financePreload['otherFundingData'] ?? null;
+        $workDoneDataForTab = $financePreload['workDoneData'] ?? null;
+        $comparativoDataForTab = $financePreload['comparativoData'] ?? null;
         $comparativoBaseYear = FinanceComparativoService::resolveBaseYear($request, $filters);
         $municipalityContext = $financePreload['context'] ?? $this->resolveMunicipalityContextForTab(
             $tab,
@@ -1301,6 +1301,7 @@ class AnalyticsDashboardController extends Controller
             'healthData' => null,
             'discrepanciesData' => null,
             'fundebData' => $fundebData,
+            'comparativoData' => null,
             'otherFundingData' => null,
             'workDoneData' => null,
         ];
@@ -1405,6 +1406,7 @@ class AnalyticsDashboardController extends Controller
             'healthData' => null,
             'discrepanciesData' => null,
             'fundebData' => null,
+            'comparativoData' => null,
             'otherFundingData' => $tab === 'other_funding' && is_array($tabData) ? $tabData : null,
             'workDoneData' => $tab === 'work_done' && is_array($tabData) ? $tabData : null,
         ];
@@ -1523,7 +1525,6 @@ class AnalyticsDashboardController extends Controller
     ): ?array {
         $tabsWithFunding = [
             'enrollment',
-            'cadunico_previsao',
             'network',
             'school_units',
             'inclusion',

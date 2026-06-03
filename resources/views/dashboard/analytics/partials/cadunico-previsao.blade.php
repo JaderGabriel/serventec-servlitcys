@@ -75,10 +75,27 @@
 
     @if (! ($gap['available'] ?? false))
         <p class="serv-callout serv-callout--warning text-sm">
-            {{ __('Sincronize agregados Cecad em') }}
-            <a href="{{ route('admin.cadunico-sync.index') }}" class="font-medium underline">{{ __('Admin → CadÚnico / Cecad') }}</a>
-            {{ __('(API → cache → CSV) ou') }}
-            <code class="text-xs">php artisan cadunico:sync-city {id} --ano=2024</code>.
+            {{ __('Sincronize agregados Cecad (MDS) para o município e ano do filtro.') }}
+            @if (Auth::user()?->canViewAdminDashboard())
+                <a href="{{ route('admin.cadunico-sync.index') }}" class="font-medium underline">{{ __('Admin → CadÚnico / Cecad') }}</a>
+                {{ __('ou') }}
+            @endif
+            <code class="text-xs">php artisan cadunico:sync-city {id} --ano={{ $filters?->ano_letivo ?? 'AAAA' }}</code>.
+        </p>
+    @endif
+
+    @php
+        $hasBody = count($kpis) > 0
+            || count($informe['blocos'] ?? []) > 0
+            || count($porEtapa) > 0
+            || count($porFaixa) > 0
+            || count($alerts) > 0
+            || count($metodologia) > 0
+            || count($publicSources['categories'] ?? []) > 0;
+    @endphp
+    @if ($yearFilterReady && ! $hasBody && ! filled($d['error'] ?? null))
+        <p class="serv-callout text-sm text-slate-700 dark:text-slate-300">
+            {{ __('Não há dados para exibir neste recorte. Confirme ano letivo, importação Cecad e conexão i-Educar.') }}
         </p>
     @endif
 

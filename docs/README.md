@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto (`main`):** 3.5.0 · tag `20260601-Atlas` · **Última revisão deste índice:** 01/06/2026
+**Versão do produto (`main`):** 3.5.1 · tag `20260602-Hermes` · **Última revisão deste índice:** 02/06/2026
 
 Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que o sistema faz hoje, **porque** certas decisões foram tomadas e **o que** está planejado implementar.
 
@@ -70,6 +70,7 @@ Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que
 
 | Documento | Versão |
 |-----------|--------|
+| [RELEASE_20260602_HERMES.md](RELEASE_20260602_HERMES.md) | 3.5.1 — Hermes |
 | [RELEASE_20260601_ATLAS.md](RELEASE_20260601_ATLAS.md) | 3.5.0 — Atlas |
 | [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md) | 3.4.0 — Nemesis |
 | [RELEASE_20260527_NOTUS.md](RELEASE_20260527_NOTUS.md) | 3.2.0 — Notus |

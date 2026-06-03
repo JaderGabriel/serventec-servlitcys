@@ -127,6 +127,11 @@ final class AnalyticsTabImpactBuilder
                 'purpose' => __('Matrículas ativas, turmas, ocupação e secção de distorção idade-série (critério INEP) no mesmo recorte.'),
                 'impact_note' => __('O ganho estimado usa o VAAF municipal (ou prévia federal configurada) × matrículas já realizadas no filtro. Não há perda nesta aba — as matrículas existem; eventual ganho adicional ao corrigir cadastro aparece só como potencial.'),
             ],
+            'cadunico_previsao' => [
+                'title' => __('CadÚnico'),
+                'purpose' => __('Cruza agregados Cecad (4–17 anos) com matrículas i-Educar para estimar crianças fora da rede e impacto FUNDEB indicativo.'),
+                'impact_note' => __('Valores agregados (LGPD); importe Cecad em Admin ou via automação. Lacuna elevada sugere busca ativa.'),
+            ],
             'network' => [
                 'title' => __('Rede & Oferta'),
                 'purpose' => __('Capacidade, vagas ociosas e distribuição por turno, segmento e escola.'),
@@ -208,6 +213,7 @@ final class AnalyticsTabImpactBuilder
             'work_done' => self::statusWorkDone($tabData),
             'municipality_health' => self::statusSystemConsolidated($tabData, $ctx),
             'discrepancies' => self::statusDiscrepancies($tabData, $ctx),
+            'cadunico_previsao' => self::statusCadunicoPrevisao($tabData),
             default => ['status' => $municipalStatus, 'label' => (string) ($ctx['compliance_label'] ?? ''), 'score' => $municipalScore, 'share_label' => null, 'share_value' => null],
         };
 
@@ -318,6 +324,45 @@ final class AnalyticsTabImpactBuilder
             'score' => $scoreInt,
             'share_label' => __('Matrículas realizadas (filtro)'),
             'share_value' => number_format($mat, 0, ',', '.'),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @return array{status: string, label: string, score: ?int, share_label: ?string, share_value: ?string}
+     */
+    private static function statusCadunicoPrevisao(array $tabData): array
+    {
+        $data = self::tabPayload($tabData, 'cadunico_previsao');
+        $gap = is_array($data['gap'] ?? null) ? $data['gap'] : [];
+
+        if (! ($gap['available'] ?? false)) {
+            return [
+                'status' => 'warning',
+                'label' => __('Importe agregados Cecad para este município/ano'),
+                'score' => 40,
+                'share_label' => __('CadÚnico'),
+                'share_value' => '—',
+            ];
+        }
+
+        $gapTotal = (int) ($gap['gap_total'] ?? 0);
+        $status = (string) ($gap['status'] ?? 'neutral');
+        $score = match ($status) {
+            'success', 'emerald' => 88,
+            'warning', 'amber' => max(45, 78 - min(25, (int) round($gapTotal / 20))),
+            'danger', 'rose' => 42,
+            default => 65,
+        };
+
+        $label = (string) ($gap['cobertura_label'] ?? __('Lacuna :n', ['n' => $gap['gap_total_fmt'] ?? '0']));
+
+        return [
+            'status' => $status === 'success' ? 'success' : ($status === 'warning' ? 'warning' : ($status === 'danger' ? 'danger' : 'neutral')),
+            'label' => $label,
+            'score' => $score,
+            'share_label' => __('Fora da rede (est.)'),
+            'share_value' => (string) ($gap['gap_total_fmt'] ?? '0'),
         ];
     }
 
@@ -1622,6 +1667,7 @@ final class AnalyticsTabImpactBuilder
             'work_done' => ['work_done', 'workDoneData'],
             'municipality_health', 'health' => ['health', 'healthData', 'municipalityHealthData'],
             'discrepancies' => ['discrepancies', 'discrepanciesData'],
+            'cadunico_previsao' => ['cadunico_previsao', 'cadunicoPrevisaoData'],
             default => [$tab, $tab.'Data'],
         };
 
@@ -1783,6 +1829,16 @@ final class AnalyticsTabImpactBuilder
             }
         }
 
+        if ($tab === 'cadunico_previsao') {
+            $data = self::tabPayload($tabData, 'cadunico_previsao');
+            $gap = is_array($data['gap'] ?? null) ? $data['gap'] : [];
+            if (! ($gap['available'] ?? false)) {
+                $issues[] = ['type' => 'pending', 'label' => __('CadÚnico/Cecad não importado'), 'count' => 1];
+            } elseif ((int) ($gap['gap_total'] ?? 0) > 50) {
+                $issues[] = ['type' => 'warning', 'label' => __('Lacuna elevada na rede'), 'count' => 1];
+            }
+        }
+
         if ($tab === 'enrollment') {
             $snap = self::enrollmentTabSnapshot($tabData, $ctx);
             if ($snap['mat'] <= 0) {
@@ -1856,6 +1912,7 @@ final class AnalyticsTabImpactBuilder
 
         match ($tab) {
             'enrollment' => self::pushEnrollmentMetrics($out, $tabData),
+            'cadunico_previsao' => self::pushCadunicoPrevisaoMetrics($out, $tabData),
             'network' => self::pushNetworkMetrics($out, $tabData),
             'inclusion' => self::pushInclusionMetrics($out, $tabData),
             'school_units' => self::pushSchoolUnitsMetrics($out, $tabData),
@@ -1897,6 +1954,29 @@ final class AnalyticsTabImpactBuilder
         }
 
         return array_slice($out, 0, 4);
+    }
+
+    /**
+     * @param  list<array{label: string, value: string, tone?: string}>  $out
+     */
+    private static function pushCadunicoPrevisaoMetrics(array &$out, array $tabData): void
+    {
+        $data = self::tabPayload($tabData, 'cadunico_previsao');
+        $gap = is_array($data['gap'] ?? null) ? $data['gap'] : [];
+        if (($gap['cadunico_total_escolar'] ?? null) !== null) {
+            $out[] = [
+                'label' => __('CadÚnico (4-17)'),
+                'value' => number_format((int) $gap['cadunico_total_escolar'], 0, ',', '.'),
+                'tone' => 'neutral',
+            ];
+        }
+        if (filled($gap['gap_total_fmt'] ?? null)) {
+            $out[] = [
+                'label' => __('Fora da rede'),
+                'value' => (string) $gap['gap_total_fmt'],
+                'tone' => ((int) ($gap['gap_total'] ?? 0) > 50) ? 'warning' : 'neutral',
+            ];
+        }
     }
 
     /**

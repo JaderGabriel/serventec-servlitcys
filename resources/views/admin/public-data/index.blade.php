@@ -5,7 +5,7 @@
                 {{ __('Importação de dados públicos') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ __('Fontes oficiais (FNDE, INEP, Tesouro) fora do i-Educar — alimentam consultoria e relatório PDF.') }}
+                {{ __('Fontes oficiais (FNDE, INEP, MDS/Cecad, Tesouro) fora do i-Educar — alimentam consultoria e relatório PDF.') }}
             </p>
         </div>
     </x-slot>
@@ -23,6 +23,7 @@
         $censo = $snapshot['censo'] ?? [];
         $transfers = $snapshot['transfers'] ?? [];
         $saeb = $snapshot['saeb'] ?? [];
+        $cadunico = $snapshot['cadunico'] ?? [];
         $md = $snapshot['microdados'] ?? [];
         $syncYears = $snapshot['sync_years'] ?? [];
     @endphp
@@ -73,7 +74,7 @@
 
                     <x-admin.queue-banner />
 
-                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                         <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
                             <p class="text-[11px] font-semibold uppercase text-gray-500 dark:text-gray-400">FUNDEB</p>
                             <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ $fundeb['cities_with_any'] ?? 0 }}/{{ $snapshot['cities_with_ibge'] ?? 0 }}</p>
@@ -97,6 +98,14 @@
                             <p class="text-[11px] font-semibold uppercase text-gray-500 dark:text-gray-400">SAEB</p>
                             <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ $saeb['points'] ?? 0 }}</p>
                             <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">{{ __('pontos indicadores') }}</p>
+                        </div>
+                        <div class="rounded-xl border border-violet-200 dark:border-violet-800/60 p-4 bg-violet-50/30 dark:bg-violet-950/20">
+                            <p class="text-[11px] font-semibold uppercase text-violet-800 dark:text-violet-300">{{ __('CadÚnico / Cecad') }}</p>
+                            <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ $cadunico['municipios'] ?? 0 }}</p>
+                            <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">{{ __('municípios com snapshot') }}</p>
+                            <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', ['domain' => 'cadastro']) }}#fila-cadastro" class="mt-2 inline-block text-[11px] font-medium text-violet-700 dark:text-violet-300 hover:underline">
+                                {{ __('Fila cadastro') }} →
+                            </a>
                         </div>
                     </div>
 
@@ -145,11 +154,18 @@
                                         · {{ __('PDF:') }} {{ implode(', ', $source['pdf_sections'] ?? []) }}
                                     </p>
                                 </div>
-                                @if (filled($source['admin_route'] ?? null))
-                                    <a href="{{ route($source['admin_route']) }}" class="shrink-0 text-sm font-medium text-indigo-700 dark:text-indigo-300 hover:underline">
-                                        {{ __('Tela dedicada') }} →
-                                    </a>
-                                @endif
+                                <div class="flex shrink-0 flex-col items-end gap-1">
+                                    @if (filled($source['admin_route'] ?? null))
+                                        <a href="{{ route($source['admin_route']) }}" class="text-sm font-medium text-indigo-700 dark:text-indigo-300 hover:underline">
+                                            {{ __('Tela dedicada') }} →
+                                        </a>
+                                    @endif
+                                    @if (($source['domain'] ?? '') === 'cadastro')
+                                        <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', ['domain' => 'cadastro']) }}#fila-cadastro" class="text-xs font-medium text-violet-700 dark:text-violet-300 hover:underline">
+                                            {{ __('Fila Cecad') }} →
+                                        </a>
+                                    @endif
+                                </div>
                             </div>
 
                             <div class="p-5 space-y-4">

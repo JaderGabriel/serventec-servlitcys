@@ -40,6 +40,7 @@ final class PublicDataSourcesCatalog
 
         $categories = array_values(array_filter([
             self::categoryFundebFnde($context),
+            self::categoryCadunicoCecad($context),
             self::categoryProgramasComplementares($context),
             self::categoryRepasses($context, $ibge, $uf),
             self::categorySimecVaar($context),
@@ -107,6 +108,74 @@ final class PublicDataSourcesCatalog
                     __('Normas, comunicados e materiais de referência.')
                 ),
             ],
+        ];
+    }
+
+    /**
+     * @return ?array<string, mixed>
+     */
+    private static function categoryCadunicoCecad(string $context): ?array
+    {
+        if (! filter_var(config('ieducar.cadunico.enabled', true), FILTER_VALIDATE_BOOL)) {
+            return null;
+        }
+
+        if (! self::matchesContext($context, ['all', 'cadastro', 'financeiro', 'compliance'])) {
+            return null;
+        }
+
+        $fontes = config('ieducar.cadunico.fontes_oficiais', []);
+        $links = [
+            self::link(
+                'mds-cadunico',
+                __('Cadastro Único (MDS)'),
+                'https://www.gov.br/mds/pt-br/acoes-e-programas/cadastro-unico',
+                'relatorio',
+                __('Política e orientações oficiais do programa.')
+            ),
+        ];
+
+        $user = auth()->user();
+        if ($user !== null && $user->canViewAdminDashboard()) {
+            $links[] = self::link(
+                'cadunico-sync-admin',
+                __('Sincronização Cecad (admin)'),
+                route('admin.cadunico-sync.index'),
+                'sistema',
+                __('Pipeline automático na fila admin-sync (domínio cadastro). Sem CPF/NIS — apenas agregados municipais.')
+            );
+            $links[] = self::link(
+                'cadunico-hub',
+                __('Hub de dados públicos — CadÚnico'),
+                route('admin.public-data.index').'#source-cadunico_cecad',
+                'sistema',
+                __('Enfileirar cadastro::auto_sync ou importação por município/ano.')
+            );
+        }
+
+        if (is_array($fontes)) {
+            foreach ($fontes as $idx => $fonte) {
+                if (! is_string($fonte) || $fonte === '') {
+                    continue;
+                }
+                $url = str_starts_with($fonte, 'http') ? $fonte : null;
+                $links[] = self::link(
+                    'cadunico-fonte-'.$idx,
+                    $url !== null ? __('Fonte oficial') : $fonte,
+                    $url ?? '#',
+                    'dados_abertos',
+                    $url === null ? $fonte : null
+                );
+            }
+        }
+
+        return [
+            'id' => 'cadunico-cecad',
+            'titulo' => __('CadÚnico / Cecad (MDS)'),
+            'descricao' => __(
+                'Agregados municipais 4–17 anos para lacuna na rede e impacto FUNDEB indicativo. Importação via fila cadastro ou cron cadunico:auto-sync.'
+            ),
+            'links' => $links,
         ];
     }
 

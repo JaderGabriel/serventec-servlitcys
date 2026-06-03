@@ -21,6 +21,11 @@
                     <h3 class="sync-queue-panel__title">{{ $theme['label'] }}</h3>
                     <p class="sync-queue-panel__desc">{{ $theme['description'] }}</p>
                     <p class="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">{{ $syncQueueConnection }} · {{ $syncQueueName }}</p>
+                    @if (! empty($theme['admin_route']))
+                        <a href="{{ route($theme['admin_route']) }}" class="mt-2 inline-flex text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                            {{ __('Abrir módulo de sincronização') }} →
+                        </a>
+                    @endif
                 </div>
             </div>
             <form method="get" action="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="flex flex-wrap gap-2 items-end text-sm">
