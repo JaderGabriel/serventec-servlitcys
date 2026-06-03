@@ -8,11 +8,12 @@ Não são armazenados CPF, NIS ou dados individuais — apenas totais por munic�
 
 ## Importação (ordem automática)
 
-1. **API HTTP** — `IEDUCAR_CADUNICO_API_URL_TEMPLATE` (`{ibge}`, `{ano}`)
-2. **CKAN** — `IEDUCAR_CADUNICO_CKAN_RESOURCE_ID`
-3. **Cache** — `storage/app/cadunico/api/{ibge}/{ano}.json`
-4. **CSV em storage** — `storage/app/cadunico/cecad/{ibge}_{ano}.csv` ou `nacional_{ano}.csv`
-5. **Upload manual** — admin ou CLI
+1. **SAGI/Misocial (MDS)** — API Solr oficial (`IEDUCAR_CADUNICO_MISOGIAL_ENABLED=true` por defeito)
+2. **API HTTP** — `IEDUCAR_CADUNICO_API_URL_TEMPLATE` (`{ibge}`, `{ano}`)
+3. **CKAN** — descoberta em dados.gov.br ou `IEDUCAR_CADUNICO_CKAN_RESOURCE_ID`
+4. **Cache** — `storage/app/cadunico/api/{ibge}/{ano}.json`
+5. **CSV em storage** — `storage/app/cadunico/cecad/{ibge}_{ano}.csv` ou `nacional_{ano}.csv`
+6. **Upload manual** — admin ou CLI
 
 ### Admin (fila `admin-sync`)
 

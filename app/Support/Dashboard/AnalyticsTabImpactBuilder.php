@@ -4,6 +4,7 @@ namespace App\Support\Dashboard;
 
 use App\Support\Finance\MoneyMath;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
+use App\Support\Ieducar\FundebImpactMethodology;
 use App\Support\Ieducar\FundebReferenceDisplay;
 
 /**
@@ -20,7 +21,9 @@ final class AnalyticsTabImpactBuilder
         'municipality_health',
         'discrepancies',
         'other_funding',
+        'finance_realtime',
         'work_done',
+        'comparativo',
     ];
 
     /** Abas com status consolidado do sistema (não só o recorte da aba). */
@@ -36,10 +39,12 @@ final class AnalyticsTabImpactBuilder
         'performance',
         'attendance',
         'fundeb',
+        'finance_realtime',
         'other_funding',
         'work_done',
         'municipality_health',
         'discrepancies',
+        'comparativo',
     ];
 
     /**
@@ -105,6 +110,7 @@ final class AnalyticsTabImpactBuilder
             'municipality_status' => (string) ($ctx['compliance_status'] ?? 'neutral'),
             'municipality_label' => (string) ($ctx['compliance_label'] ?? ''),
             'saldo' => $saldo,
+            'fundeb_methodology' => FundebImpactMethodology::compactFromContext($ctx),
             'metrics' => $metrics,
             'pendencias' => (int) ($ctx['pendencias_cadastro'] ?? 0),
             'matriculas' => $ctx['total_matriculas'] ?? null,
@@ -161,6 +167,16 @@ final class AnalyticsTabImpactBuilder
                 'title' => __('FUNDEB'),
                 'purpose' => __('Condicionalidades, VAAF, previsão de recursos e distribuição legal no filtro.'),
                 'impact_note' => __('Previsão de repasse e perdas por cadastro (Discrepâncias) no mesmo recorte.'),
+            ],
+            'finance_realtime' => [
+                'title' => __('Tempo Real'),
+                'purpose' => __('Compara repasses públicos importados (Tesouro/Transparência) com a expectativa FUNDEB (matrículas × VAAF).'),
+                'impact_note' => __('Não substitui extrato bancário; opcional Open Finance BB com credenciais.'),
+            ],
+            'comparativo' => [
+                'title' => __('Comparativo'),
+                'purpose' => __('Evolução anual, projeção e detalhe FUNDEB por etapa.'),
+                'impact_note' => __('Usa VAAF e matrículas do mesmo contexto municipal.'),
             ],
             'other_funding' => [
                 'title' => __('Financiamentos'),

@@ -114,6 +114,7 @@ class FundebRepository
             'city_name' => $city->name,
             'fundeb_reference' => $fundebReference,
             'vaaf_profile' => $vaafProfile,
+            'impact_methodology' => \App\Support\Ieducar\FundebImpactMethodology::panel($city, $filters),
             'resource_projection' => $resourceProjection,
             'complementacao_informe' => FundebComplementacaoInformeBuilder::build(
                 $city,

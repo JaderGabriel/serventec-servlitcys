@@ -9,7 +9,7 @@
                 {{ __('Sincronização CadÚnico / Cecad') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ __('Importação automática: API ou CKAN → cache local → CSV em storage. Tarefas na fila admin-sync.') }}
+                {{ __('Fonte principal: SAGI/Misocial (MDS). Complementos: CKAN/dados.gov.br, API municipal, CSV Cecad. Tarefas na fila admin-sync.') }}
             </p>
         </div>
     </x-slot>
@@ -63,11 +63,11 @@
                             <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">{{ __('pares IBGE/ano') }}</p>
                         </div>
                         <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                            <p class="text-[11px] font-semibold uppercase text-gray-500">{{ __('API') }}</p>
-                            <p class="mt-1 text-sm font-semibold {{ $apiConfigured || $ckanConfigured ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300' }}">
-                                {{ $apiConfigured ? __('URL modelo OK') : ($ckanConfigured ? __('CKAN OK') : __('Não configurada')) }}
+                            <p class="text-[11px] font-semibold uppercase text-gray-500">{{ __('SAGI/Misocial') }}</p>
+                            <p class="mt-1 text-sm font-semibold {{ ($misocialProbe['ok'] ?? false) ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300' }}">
+                                {{ ($misocialProbe['ok'] ?? false) ? __('Oficial — acessível') : __('Indisponível ou desactivado') }}
                             </p>
-                            <p class="mt-1 text-[11px] text-gray-500">{{ __('CSV é fallback') }}</p>
+                            <p class="mt-1 text-[11px] text-gray-500">{{ $misocialProbe['message'] ?? '' }}</p>
                         </div>
                         <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
                             <p class="text-[11px] font-semibold uppercase text-gray-500">{{ __('Última importação') }}</p>
@@ -77,17 +77,41 @@
                         </div>
                     </div>
 
-                    @if (! ($nacionalUrlConfigured ?? false))
-                        <div class="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100" role="alert">
-                            <p class="font-semibold">{{ __('Configure a URL do CSV nacional no .env') }}</p>
-                            <p class="mt-1 font-mono text-xs">IEDUCAR_CADUNICO_NACIONAL_CSV_URL=https://…/nacional_{ano}.csv</p>
-                            <p class="mt-2 text-xs">{{ __('Sem esta URL, a sincronização automática só usa API/CKAN ou ficheiros já presentes em storage.') }}</p>
-                        </div>
-                    @else
-                        <p class="text-xs text-emerald-800 dark:text-emerald-200">
-                            {{ __('URL nacional:') }} <code class="text-[11px]">{{ $nacionalUrlTemplate ?? '' }}</code>
-                        </p>
-                    @endif
+                    <div class="rounded-lg border border-violet-200 bg-violet-50/60 px-4 py-3 text-sm text-violet-950 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-100">
+                        <p class="font-semibold">{{ __('Fontes oficiais (sem servidor próprio)') }}</p>
+                        <ul class="mt-2 list-disc pl-5 text-xs space-y-1">
+                            <li>
+                                <strong>Misocial (MDS/SAGI)</strong> —
+                                <a href="https://aplicacoes.mds.gov.br/sagi/servicos/misocial/" class="underline" target="_blank" rel="noopener">aplicacoes.mds.gov.br</a>
+                                @if ($misocialEnabled ?? true)
+                                    <span class="text-emerald-700 dark:text-emerald-300">({{ __('activo') }})</span>
+                                @else
+                                    <span class="text-amber-700">({{ __('IEDUCAR_CADUNICO_MISOGIAL_ENABLED=false') }})</span>
+                                @endif
+                            </li>
+                            <li>
+                                <strong>CKAN / dados.gov.br</strong>
+                                @if (! empty($ckanDiscovered))
+                                    — {{ $ckanDiscovered['package_title'] ?? '' }} / {{ $ckanDiscovered['resource_name'] ?? '' }}
+                                @elseif ($ckanConfigured ?? false)
+                                    — {{ __('resource_id manual') }}
+                                @else
+                                    — {{ __('descoberta automática na sincronização') }}
+                                @endif
+                            </li>
+                            @if ($nacionalUrlConfigured ?? false)
+                                <li>{{ __('CSV nacional opcional:') }} <code class="text-[11px]">{{ $nacionalUrlTemplate ?? '' }}</code></li>
+                            @endif
+                            @if ($apiConfigured ?? false)
+                                <li>{{ __('API municipal configurada (lacunas)') }}</li>
+                            @endif
+                        </ul>
+                        @if (! ($misocialProbe['ok'] ?? false) && ! ($nacionalUrlConfigured ?? false))
+                            <p class="mt-2 text-xs text-amber-800 dark:text-amber-200">
+                                {{ __('Misocial inacessível neste ambiente — verifique firewall/HTTPS ou use CSV Cecad em storage como complemento.') }}
+                            </p>
+                        @endif
+                    </div>
 
                     <form method="post" action="{{ route('admin.cadunico-sync.run') }}" class="rounded-xl border-2 border-emerald-400/80 dark:border-emerald-700/60 bg-emerald-50/40 dark:bg-emerald-950/20 p-5 space-y-4">
                         @csrf
@@ -95,7 +119,7 @@
                         <div>
                             <h3 class="text-base font-semibold text-emerald-950 dark:text-emerald-100">{{ __('Sincronização automática (sem upload)') }}</h3>
                             <p class="text-xs text-emerald-900/90 dark:text-emerald-200/90 mt-1 leading-relaxed">
-                                {{ __('Descarrega o CSV nacional (se configurado), importa todos os municípios do ficheiro e preenche lacunas via API. Anos: :anos.', ['anos' => implode(', ', $autoSyncYears ?? [])]) }}
+                                {{ __('Importa ~5 500 municípios via SAGI/Misocial (MDS); depois preenche lacunas com CKAN, API ou CSV. Anos: :anos.', ['anos' => implode(', ', $autoSyncYears ?? [])]) }}
                             </p>
                             @if ($scheduleEnabled ?? false)
                                 <p class="text-[11px] mt-2 text-emerald-800/80">{{ __('Agendamento activo (cron): `cadunico:auto-sync --queue` semanalmente.') }}</p>

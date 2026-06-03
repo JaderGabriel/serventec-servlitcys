@@ -282,7 +282,11 @@ Requer `unrar` ou `p7zip` no servidor para o RAR de 2023. URLs em `saeb.planilha
 | Variável | Default | Descrição |
 |----------|---------|-----------|
 | `IEDUCAR_CADUNICO_ENABLED` | `true` | Motor e aba Analytics |
-| `IEDUCAR_CADUNICO_NACIONAL_CSV_URL` | — | **Recomendado:** URL com `{ano}` para CSV nacional |
+| `IEDUCAR_CADUNICO_MISOGIAL_ENABLED` | `true` | Cliente Solr Misocial (MDS/SAGI) |
+| `IEDUCAR_CADUNICO_MISOGIAL_FROM_YEAR` | `2020` | Ano inicial de `cadunico:import-misocial` |
+| `IEDUCAR_CADUNICO_MISOGIAL_PAGE_SIZE` | `6000` | Paginação Solr na importação nacional |
+| `IEDUCAR_CADUNICO_MISOGIAL_FIELDS` | — | Lista `fl` custom; vazio = compacta (recomendado) |
+| `IEDUCAR_CADUNICO_NACIONAL_CSV_URL` | — | Complemento: URL com `{ano}` para CSV nacional |
 | `IEDUCAR_CADUNICO_AUTO_SYNC_ENABLED` | `true` | `cadunico:auto-sync` |
 | `IEDUCAR_CADUNICO_SYNC_ON_CITY_SAVE` | `true` | Fila ao gravar IBGE na cidade |
 | `IEDUCAR_CADUNICO_SCHEDULE_ENABLED` | `true` | Cron semanal (`cadunico:auto-sync --queue`) |

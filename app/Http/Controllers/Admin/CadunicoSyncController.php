@@ -9,7 +9,9 @@ use App\Models\City;
 use App\Repositories\CadunicoMunicipioSnapshotRepository;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\AdminSync\AdminSyncQueueService;
+use App\Services\Cadunico\CadunicoCkanDiscovery;
 use App\Services\Cadunico\CadunicoOpenDataImportService;
+use App\Services\Cadunico\CadunicoSagiMisocialClient;
 use App\Support\Cadunico\CadunicoCecadUpload;
 use App\Support\Cadunico\CadunicoStoragePaths;
 use Illuminate\Http\RedirectResponse;
@@ -22,6 +24,8 @@ class CadunicoSyncController extends Controller
         private AdminSyncQueueService $syncQueue,
         private CadunicoOpenDataImportService $import,
         private CadunicoMunicipioSnapshotRepository $snapshots,
+        private CadunicoSagiMisocialClient $misocial,
+        private CadunicoCkanDiscovery $ckanDiscovery,
     ) {}
 
     public function index(Request $request): View
@@ -78,6 +82,8 @@ class CadunicoSyncController extends Controller
         $nacionalUrl = trim((string) config('ieducar.cadunico.auto_sync.nacional_csv_url_template', ''));
         $scheduleEnabled = filter_var(config('ieducar.cadunico.auto_sync.schedule.enabled', true), FILTER_VALIDATE_BOOL);
         $autoYears = \App\Services\Cadunico\CadunicoAutoSyncService::yearsToSync();
+        $misocialProbe = $this->misocial->probe();
+        $ckanDiscovered = $this->ckanDiscovery->discover();
 
         return view('admin.cadunico-sync.index', [
             'cities' => $cities,
@@ -96,7 +102,11 @@ class CadunicoSyncController extends Controller
             'filterCity' => $filterCity,
             'cadunicoStored' => $cadunicoStored,
             'apiConfigured' => $apiTemplate !== '' && str_contains($apiTemplate, '{ibge}'),
-            'ckanConfigured' => $ckanId !== '',
+            'ckanConfigured' => $ckanId !== '' || $ckanDiscovered !== null,
+            'ckanDiscovered' => $ckanDiscovered,
+            'misocialEnabled' => CadunicoSagiMisocialClient::enabled(),
+            'misocialProbe' => $misocialProbe,
+            'misocialBaseUrl' => CadunicoSagiMisocialClient::baseUrl(),
             'cacheDir' => CadunicoStoragePaths::apiCacheDir(),
             'nacionalUrlConfigured' => $nacionalUrl !== '',
             'nacionalUrlTemplate' => $nacionalUrl,

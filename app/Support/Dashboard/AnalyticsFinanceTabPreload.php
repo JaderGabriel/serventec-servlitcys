@@ -15,7 +15,7 @@ final class AnalyticsFinanceTabPreload
 
         return match ($tab) {
             'municipality_health' => self::municipalityHealthReuseEnabled(),
-            'discrepancies', 'fundeb', 'comparativo' => self::financeTabsReuseEnabled(),
+            'discrepancies', 'fundeb', 'comparativo', 'finance_realtime' => self::financeTabsReuseEnabled(),
             'other_funding' => self::financeStripContextEnabled(),
             'work_done' => true,
             default => false,

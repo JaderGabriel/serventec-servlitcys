@@ -89,27 +89,39 @@ final class CadunicoRemoteCsvFetcher
         }
 
         $query = trim((string) config('ieducar.cadunico.auto_sync.dados_gov_query', 'cadastro unico municipio'));
-        $base = rtrim((string) config('ieducar.cadunico.open_data.ckan_base_url', 'https://dados.gov.br'), '/');
+        $bases = config('ieducar.cadunico.open_data.ckan_bases', [
+            'https://catalogo.dados.gov.br',
+            'https://dados.gov.br',
+        ]);
+        if (! is_array($bases)) {
+            $bases = ['https://catalogo.dados.gov.br'];
+        }
         $timeout = max(5, (int) config('ieducar.cadunico.open_data.http_timeout', 30));
+        $lastStatus = 0;
 
-        try {
-            $response = Http::timeout($timeout)->get($base.'/api/3/action/package_search', [
-                'q' => $query,
-                'rows' => 5,
-            ]);
+        foreach ($bases as $baseUrl) {
+            $base = rtrim((string) $baseUrl, '/');
+            if ($base === '') {
+                continue;
+            }
+
+            try {
+                $response = Http::timeout($timeout)->get($base.'/api/3/action/package_search', [
+                    'q' => $query,
+                    'rows' => 5,
+                ]);
+            } catch (\Throwable $e) {
+                continue;
+            }
 
             if (! $response->successful()) {
-                return [
-                    'ok' => false,
-                    'path' => null,
-                    'downloaded' => false,
-                    'message' => __('dados.gov.br: HTTP :status', ['status' => (string) $response->status()]),
-                ];
+                $lastStatus = $response->status();
+                continue;
             }
 
             $results = $response->json('result.results');
             if (! is_array($results)) {
-                return ['ok' => false, 'path' => null, 'downloaded' => false, 'message' => __('Sem pacotes CKAN.')];
+                continue;
             }
 
             foreach ($results as $pkg) {
@@ -138,21 +150,16 @@ final class CadunicoRemoteCsvFetcher
                     return $this->downloadTo($url, $dest);
                 }
             }
-
-            return [
-                'ok' => false,
-                'path' => null,
-                'downloaded' => false,
-                'message' => __('Nenhum recurso CSV encontrado no CKAN para: :q', ['q' => $query]),
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'ok' => false,
-                'path' => null,
-                'downloaded' => false,
-                'message' => $e->getMessage(),
-            ];
         }
+
+        return [
+            'ok' => false,
+            'path' => null,
+            'downloaded' => false,
+            'message' => $lastStatus > 0
+                ? __('CKAN dados.gov.br: HTTP :status (tentou catalogo.dados.gov.br e dados.gov.br).', ['status' => (string) $lastStatus])
+                : __('Nenhum recurso CSV encontrado no CKAN para: :q', ['q' => $query]),
+        ];
     }
 
     private function resolveNationalUrl(int $ano): ?string

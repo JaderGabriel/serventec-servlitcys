@@ -196,7 +196,12 @@ final class PublicDataImportCatalog
                     'hint' => __('Download + import nacional + lacunas para o ano indicado.'),
                 ],
             ],
-            'cli' => ['cadunico:auto-sync', 'cadunico:sync-city', 'cadunico:import-cecad'],
+            'cli' => [
+                'cadunico:import-misocial',
+                'cadunico:auto-sync',
+                'cadunico:sync-city',
+                'cadunico:import-cecad',
+            ],
         ];
     }
 

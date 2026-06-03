@@ -16,6 +16,7 @@
     $tabScore = $s['tab_score'] ?? null;
     $saldo = is_array($s['saldo'] ?? null) ? $s['saldo'] : null;
     $showSaldo = (bool) ($s['show_saldo'] ?? true);
+    $fundebMethodology = is_array($s['fundeb_methodology'] ?? null) ? $s['fundeb_methodology'] : null;
 @endphp
 
 <div class="serv-impact-card">
@@ -133,6 +134,16 @@
                 @endif
             @else
                 <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('Resumo financeiro indisponível.') }}</p>
+            @endif
+            @if ($fundebMethodology !== null)
+                <p class="text-[11px] text-teal-900/90 dark:text-teal-200/90 border-t border-slate-200/80 dark:border-slate-700/80 pt-2 leading-relaxed">
+                    <span class="font-semibold">{{ $fundebMethodology['rotulo_vaaf'] ?? __('VAAF') }}:</span>
+                    {{ $fundebMethodology['vaa_label'] ?? '' }}
+                    @if (filled($fundebMethodology['vaa_fonte_label'] ?? null))
+                        — {{ $fundebMethodology['vaa_fonte_label'] }}
+                    @endif
+                    · {{ $fundebMethodology['formula_curta'] ?? '' }}
+                </p>
             @endif
         </div>
         @endif

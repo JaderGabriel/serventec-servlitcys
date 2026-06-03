@@ -240,6 +240,17 @@
                                     <div class="relative min-h-[12rem]" x-ref="panelComparativo"></div>
                                 @endif
                             </div>
+                            <div x-show="tab === 'finance_realtime'" x-cloak class="analytics-tab-panel">
+                                @if (! $lazyTabLoading)
+                                    @include('dashboard.analytics.partials.finance-realtime', [
+                                        'realtimeData' => $financeRealtimeData ?? \App\Support\Dashboard\AnalyticsEmptyPayloads::financeRealtime(),
+                                        'yearFilterReady' => $yearFilterReady,
+                                        'municipalityContext' => $municipalityContext ?? null,
+                                    ])
+                                @else
+                                    <div class="relative min-h-[12rem]" x-ref="panelFinanceRealtime"></div>
+                                @endif
+                            </div>
                             <div x-show="tab === 'fundeb'" x-cloak class="analytics-tab-panel">
                                 @if (! $lazyTabLoading)
                                     @include('dashboard.analytics.partials.fundeb', [

@@ -6,7 +6,9 @@ use App\Models\CadunicoMunicipioSnapshot;
 use App\Models\City;
 use App\Repositories\CadunicoMunicipioSnapshotRepository;
 use App\Services\Cadunico\CadunicoCecadCsvImportService;
+use App\Services\Cadunico\CadunicoCkanDiscovery;
 use App\Services\Cadunico\CadunicoOpenDataImportService;
+use App\Services\Cadunico\CadunicoSagiMisocialClient;
 use App\Support\Cadunico\CadunicoStoragePaths;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
@@ -15,8 +17,10 @@ use Tests\TestCase;
 final class CadunicoOpenDataImportServiceTest extends TestCase
 {
     #[Test]
-    public function importa_a_partir_de_cache_json(): void
+    public function importa_a_partir_de_cache_json_quando_misocial_desactivado(): void
     {
+        config(['ieducar.cadunico.misocial.enabled' => false]);
+
         $ibge = '2910800';
         $ano = 2024;
         $path = CadunicoStoragePaths::apiCacheFile($ibge, $ano);
@@ -40,7 +44,12 @@ final class CadunicoOpenDataImportServiceTest extends TestCase
             ->with($ibge, $ano, Mockery::type('array'))
             ->andReturn(new CadunicoMunicipioSnapshot);
 
-        $service = new CadunicoOpenDataImportService($repo, new CadunicoCecadCsvImportService($repo));
+        $service = new CadunicoOpenDataImportService(
+            $repo,
+            new CadunicoCecadCsvImportService($repo),
+            app(CadunicoSagiMisocialClient::class),
+            app(CadunicoCkanDiscovery::class),
+        );
         $result = $service->importForIbge($ibge, $ano);
 
         $this->assertTrue($result['success']);
@@ -54,7 +63,12 @@ final class CadunicoOpenDataImportServiceTest extends TestCase
     {
         $city = new City(['name' => 'Teste', 'ibge_municipio' => null]);
         $repo = Mockery::mock(CadunicoMunicipioSnapshotRepository::class);
-        $service = new CadunicoOpenDataImportService($repo, new CadunicoCecadCsvImportService($repo));
+        $service = new CadunicoOpenDataImportService(
+            $repo,
+            new CadunicoCecadCsvImportService($repo),
+            app(CadunicoSagiMisocialClient::class),
+            app(CadunicoCkanDiscovery::class),
+        );
 
         $result = $service->importForCity($city, 2024);
 

@@ -171,6 +171,24 @@ final class AnalyticsEmptyPayloads
         ];
     }
 
+    public static function financeRealtime(): array
+    {
+        return [
+            'available' => false,
+            'city_name' => '',
+            'ano' => null,
+            'expected_annual_fmt' => '—',
+            'observed_annual_fmt' => '—',
+            'delta_fmt' => '—',
+            'alerts' => [],
+            'extrato' => [],
+            'lay_guide' => [],
+            'methodology' => null,
+            'formula' => '',
+            'aviso' => '',
+        ];
+    }
+
     public static function fundeb(): array
     {
         return [

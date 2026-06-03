@@ -9,6 +9,7 @@ use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\CityDataConnection;
 use App\Services\Fundeb\FundebImportMode;
+use App\Services\Fundeb\FundebOfficialSourcesService;
 use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\FundebMunicipalReferenceResolver;
@@ -25,6 +26,7 @@ class IeducarCompatibilityController extends Controller
         private CityDataConnection $cityData,
         private FundebMunicipioReferenceRepository $fundebReferences,
         private FundebOpenDataImportService $fundebImport,
+        private FundebOfficialSourcesService $fundebOfficialSources,
         private AdminSyncQueueService $syncQueue,
     ) {}
 
@@ -135,6 +137,7 @@ class IeducarCompatibilityController extends Controller
             'fundebSelectAllCities' => $fundebSelectAllCities,
             'fundebImportMode' => $fundebImportMode,
             'fundebYearlyMatrix' => $fundebYearlyMatrix,
+            'fundebOfficialSources' => $this->fundebOfficialSources->adminPanel(),
             'fundebMatrixFrom' => $matrixRange['from'],
             'fundebMatrixTo' => $matrixRange['to'],
         ]);

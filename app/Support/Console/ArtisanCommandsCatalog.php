@@ -187,6 +187,47 @@ final class ArtisanCommandsCatalog
                 ],
             ],
             [
+                'id' => 'cadunico',
+                'title' => __('CadÚnico / Misocial (MDS)'),
+                'description' => __('Agregados municipais CadÚnico — fonte principal SAGI/Misocial; Cecad/CSV como complemento.'),
+                'admin_route' => 'admin.cadunico-sync.index',
+                'commands' => [
+                    [
+                        'name' => 'cadunico:import-misocial',
+                        'summary' => __('Importação nacional multi-ano via Misocial (sem gap-fill).'),
+                        'signature' => 'cadunico:import-misocial {--from=2020} {--to=} {--years=}',
+                        'examples' => [
+                            'php artisan cadunico:import-misocial --from=2020',
+                            'php artisan cadunico:import-misocial --years=2024,2025,2026',
+                        ],
+                        'env' => [
+                            'IEDUCAR_CADUNICO_MISOGIAL_ENABLED',
+                            'IEDUCAR_CADUNICO_MISOGIAL_FROM_YEAR',
+                        ],
+                        'doc_anchor' => 'cadunico',
+                    ],
+                    [
+                        'name' => 'cadunico:auto-sync',
+                        'summary' => __('Pipeline nacional + lacunas (CKAN/API/CSV).'),
+                        'signature' => 'cadunico:auto-sync {--ano=} {--queue} {--no-gap-fill}',
+                        'examples' => [
+                            'php artisan cadunico:auto-sync --ano=2026',
+                            'php artisan cadunico:auto-sync --queue',
+                        ],
+                        'env' => ['IEDUCAR_CADUNICO_AUTO_SYNC_ENABLED', 'IEDUCAR_CADUNICO_NACIONAL_CSV_URL'],
+                        'doc_anchor' => 'cadunico',
+                    ],
+                    [
+                        'name' => 'cadunico:sync-city',
+                        'summary' => __('Um município ou --all (analytics).'),
+                        'signature' => 'cadunico:sync-city {city?} {--ano=} {--all}',
+                        'examples' => ['php artisan cadunico:sync-city 1 --ano=2026'],
+                        'env' => ['IEDUCAR_CADUNICO_MISOGIAL_ENABLED'],
+                        'doc_anchor' => 'cadunico',
+                    ],
+                ],
+            ],
+            [
                 'id' => 'ieducar',
                 'title' => __('Compatibilidade i-Educar'),
                 'description' => __('Probe de schema e rotinas de discrepância. Interface: Compatibilidade da base.'),

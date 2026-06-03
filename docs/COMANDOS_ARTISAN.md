@@ -69,6 +69,7 @@ Procedimento e requisitos (`unrar`/`p7zip`): [IMPORTACAO_SAEB_PLANILHAS_INEP.md]
 | Comando | Descrição |
 |---------|-----------|
 | `cadunico:auto-sync` | Pipeline nacional + lacunas (API/CSV); `--queue`, `--ano=` |
+| `cadunico:import-misocial` | Nacional SAGI/Misocial multi-ano; `--from=2020`, `--to=`, `--years=` |
 | `cadunico:sync-city` | Um município ou `--all` |
 | `cadunico:import-cecad` | CSV manual (`;`, colunas em `config/ieducar.php`) |
 

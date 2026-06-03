@@ -12,6 +12,7 @@ use App\Repositories\FundebMunicipioReferenceRepository;
 final class CadunicoAutoSyncService
 {
     public function __construct(
+        private CadunicoSagiMisocialClient $misocial,
         private CadunicoRemoteCsvFetcher $remoteCsv,
         private CadunicoOpenDataImportService $import,
     ) {}
@@ -38,15 +39,24 @@ final class CadunicoAutoSyncService
     {
         $log = [];
 
-        $national = $this->remoteCsv->ensureNationalCsv($ano);
-        $log[] = $national['message'];
-        if (! $national['ok']) {
-            $discover = $this->remoteCsv->tryDiscoverFromDadosGov($ano);
-            $log[] = $discover['message'];
-        }
+        $misocialImport = $this->misocial->importYear($ano);
+        $log[] = $misocialImport['message'];
+        $importedNacional = (int) ($misocialImport['imported'] ?? 0);
 
-        $storageImport = $this->import->importFromStorageForYear($ano);
-        $log[] = $storageImport['message'];
+        if ($importedNacional === 0) {
+            $national = $this->remoteCsv->ensureNationalCsv($ano);
+            $log[] = $national['message'];
+            if (! $national['ok'] && filter_var(config('ieducar.cadunico.auto_sync.dados_gov_search', true), FILTER_VALIDATE_BOOL)) {
+                $discover = $this->remoteCsv->tryDiscoverFromDadosGov($ano);
+                $log[] = $discover['message'];
+            }
+
+            $storageImport = $this->import->importFromStorageForYear($ano);
+            $log[] = $storageImport['message'];
+            $importedNacional = (int) ($storageImport['imported'] ?? 0);
+        } else {
+            $storageImport = ['imported' => 0, 'message' => __('CSV em storage ignorado — Misocial já importou o ano.')];
+        }
 
         $gapOk = 0;
         $gapFail = 0;
@@ -79,19 +89,19 @@ final class CadunicoAutoSyncService
             }
         }
 
-        $imported = (int) ($storageImport['imported'] ?? 0);
-        $success = $imported > 0 || $gapOk > 0;
+        $success = $importedNacional > 0 || $gapOk > 0;
 
         return [
             'success' => $success,
             'message' => $success
-                ? __('CadÚnico: :n registo(s) nacional(is); :ok município(s) via API/CSV local.', [
-                    'n' => (string) $imported,
+                ? __('CadÚnico: :n registo(s) nacional(is); :ok município(s) via fontes complementares.', [
+                    'n' => (string) $importedNacional,
                     'ok' => (string) $gapOk,
                 ])
-                : __('CadÚnico automático sem novos dados — configure IEDUCAR_CADUNICO_NACIONAL_CSV_URL ou API.'),
+                : __('CadÚnico automático sem novos dados — verifique conectividade SAGI/Misocial (MDS) ou fontes complementares.'),
             'ano' => $ano,
-            'imported_nacional' => $imported,
+            'imported_nacional' => $importedNacional,
+            'misocial_month' => $misocialImport['month'] ?? null,
             'gap_filled' => $gapOk,
             'gap_failed' => $gapFail,
             'log' => $log,

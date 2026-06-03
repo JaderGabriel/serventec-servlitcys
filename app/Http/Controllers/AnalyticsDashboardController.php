@@ -18,6 +18,7 @@ use App\Repositories\Ieducar\SchoolUnitsRepository;
 use App\Repositories\Ieducar\WorkDoneRepository;
 use App\Services\Analytics\AnalyticsReportExportService;
 use App\Services\Analytics\FinanceComparativoService;
+use App\Services\Analytics\FinanceRealtimeFundebService;
 use App\Services\CityDataConnection;
 use App\Services\Ieducar\FilterOptionsService;
 use App\Services\Notifications\NotificationDispatcher;
@@ -573,6 +574,7 @@ class AnalyticsDashboardController extends Controller
         SchoolUnitsRepository $schoolUnitsRepository,
         AnalyticsReportExportService $pdfExportService,
         FinanceComparativoService $financeComparativoService,
+        FinanceRealtimeFundebService $financeRealtimeService,
     ): Response {
         $tab = (string) $request->query('tab', '');
         if (! AnalyticsTabCatalog::isValidTab($tab)) {
@@ -656,6 +658,7 @@ class AnalyticsDashboardController extends Controller
                 $schoolUnitsRepository,
                 $pdfExportService,
                 $financeComparativoService,
+                $financeRealtimeService,
                 $tabWarnings,
             ));
 
@@ -710,6 +713,7 @@ class AnalyticsDashboardController extends Controller
         SchoolUnitsRepository $schoolUnitsRepository,
         AnalyticsReportExportService $pdfExportService,
         FinanceComparativoService $financeComparativoService,
+        FinanceRealtimeFundebService $financeRealtimeService,
         array &$tabWarnings,
     ): Response {
         try {
@@ -736,6 +740,7 @@ class AnalyticsDashboardController extends Controller
                 $schoolUnitsRepository,
                 $pdfExportService,
                 $financeComparativoService,
+                $financeRealtimeService,
                 $tabWarnings,
             );
         } finally {
@@ -767,6 +772,7 @@ class AnalyticsDashboardController extends Controller
         SchoolUnitsRepository $schoolUnitsRepository,
         AnalyticsReportExportService $pdfExportService,
         FinanceComparativoService $financeComparativoService,
+        FinanceRealtimeFundebService $financeRealtimeService,
         array &$tabWarnings,
     ): Response {
         $ieducarOptions = [
@@ -1006,6 +1012,16 @@ class AnalyticsDashboardController extends Controller
                         : [],
                 ]))
                 ->withHeaders($headers),
+            'finance_realtime' => response()
+                ->view('dashboard.analytics.partials.finance-realtime', array_merge($viewBase, $yearReady, [
+                    'realtimeData' => $this->safeAnalyticsLoad(
+                        fn () => $financeRealtimeService->buildReport($city, $filters),
+                        AnalyticsEmptyPayloads::financeRealtime(),
+                        __('Tempo Real'),
+                        $tabWarnings,
+                    ),
+                ]))
+                ->withHeaders($headers),
             default => abort(404),
         };
     }
@@ -1173,6 +1189,13 @@ class AnalyticsDashboardController extends Controller
                 $filters,
                 $warnings,
             ),
+            'finance_realtime' => $this->preloadFinanceRealtimeTab(
+                $discrepanciesRepository,
+                $overviewRepository,
+                $city,
+                $filters,
+                $warnings,
+            ),
             'comparativo' => $this->preloadComparativoTab(
                 $financeComparativoService,
                 $filterOptionsService,
@@ -1301,6 +1324,37 @@ class AnalyticsDashboardController extends Controller
             'healthData' => null,
             'discrepanciesData' => null,
             'fundebData' => $fundebData,
+            'comparativoData' => null,
+            'otherFundingData' => null,
+            'workDoneData' => null,
+        ];
+    }
+
+    /**
+     * @param  list<string>  $warnings
+     * @return array{context: ?array, healthData: null, discrepanciesData: null, fundebData: null, comparativoData: null, otherFundingData: null, workDoneData: null}
+     */
+    private function preloadFinanceRealtimeTab(
+        DiscrepanciesRepository $discrepanciesRepository,
+        OverviewRepository $overviewRepository,
+        City $city,
+        IeducarFilterState $filters,
+        array &$warnings,
+    ): array {
+        $discrepanciesData = $this->safeAnalyticsLoad(
+            fn () => $discrepanciesRepository->snapshot($city, $filters),
+            AnalyticsEmptyPayloads::discrepancies(),
+            __('Discrepâncias'),
+            $warnings,
+        );
+
+        return [
+            'context' => is_array($discrepanciesData)
+                ? AnalyticsFinanceTabPreload::contextFromDiscrepancies($discrepanciesData)
+                : null,
+            'healthData' => null,
+            'discrepanciesData' => null,
+            'fundebData' => null,
             'comparativoData' => null,
             'otherFundingData' => null,
             'workDoneData' => null,
@@ -1531,6 +1585,7 @@ class AnalyticsDashboardController extends Controller
             'performance',
             'attendance',
             'fundeb',
+            'finance_realtime',
             'discrepancies',
             'comparativo',
         ];

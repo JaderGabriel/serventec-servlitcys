@@ -66,6 +66,10 @@
             'profile' => $fundebData['vaaf_profile'] ?? [],
         ])
 
+        @if (is_array($fundebData['impact_methodology'] ?? null))
+            <x-dashboard.fundeb-methodology-panel :metodologia="$fundebData['impact_methodology']" class="mb-4" />
+        @endif
+
         <x-dashboard.consultoria-section
             anchor="fundeb-previsao-recursos"
             :title="__('Previsão de recursos e distribuição legal')"

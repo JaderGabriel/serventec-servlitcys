@@ -173,7 +173,7 @@ final class PublicDataSourcesCatalog
             'id' => 'cadunico-cecad',
             'titulo' => __('CadÚnico / Cecad (MDS)'),
             'descricao' => __(
-                'Agregados municipais 4–17 anos para lacuna na rede e impacto FUNDEB indicativo. Importação via fila cadastro ou cron cadunico:auto-sync.'
+                'Agregados municipais 4–17 anos (fonte principal SAGI/Misocial MDS). Importação via fila cadastro ou cron cadunico:auto-sync.'
             ),
             'links' => $links,
         ];

@@ -17,6 +17,8 @@ final class CadunicoOpenDataImportService
     public function __construct(
         private CadunicoMunicipioSnapshotRepository $repository,
         private CadunicoCecadCsvImportService $csvImport,
+        private CadunicoSagiMisocialClient $misocial,
+        private CadunicoCkanDiscovery $ckanDiscovery,
     ) {}
 
     public static function suggestedImportYear(): int
@@ -60,6 +62,11 @@ final class CadunicoOpenDataImportService
     public function importForIbge(string $ibge, int $ano): array
     {
         $attempts = [];
+
+        $misocial = $this->misocial->importForIbge($ibge, $ano, $attempts);
+        if ($misocial['success'] ?? false) {
+            return $misocial;
+        }
 
         if (! filter_var(config('ieducar.cadunico.enabled', true), FILTER_VALIDATE_BOOL)) {
             return [
@@ -121,7 +128,9 @@ final class CadunicoOpenDataImportService
 
         return [
             'success' => false,
-            'message' => __('Sem dados CadÚnico: configure API, coloque cache ou CSV em :path.', [
+            'message' => __('Sem dados CadÚnico para IBGE :ibge/:ano. Fonte principal: SAGI/Misocial (MDS). Complementos: API, CKAN/dados.gov.br ou CSV em :path.', [
+                'ibge' => $ibge,
+                'ano' => (string) $ano,
                 'path' => CadunicoStoragePaths::storageRoot(),
             ]),
             'source' => null,
@@ -202,12 +211,9 @@ final class CadunicoOpenDataImportService
      */
     private function fetchFromApi(string $ibge, int $ano, array &$attempts): ?array
     {
-        $ckanId = trim((string) config('ieducar.cadunico.open_data.resource_id', ''));
-        if ($ckanId !== '') {
-            $row = $this->fetchFromCkan($ibge, $ano, $attempts);
-            if ($row !== null) {
-                return $row;
-            }
+        $row = $this->fetchFromCkan($ibge, $ano, $attempts);
+        if ($row !== null) {
+            return $row;
         }
 
         $template = trim((string) config('ieducar.cadunico.open_data.api_url_template', ''));
@@ -257,24 +263,50 @@ final class CadunicoOpenDataImportService
      */
     private function fetchFromCkan(string $ibge, int $ano, array &$attempts): ?array
     {
-        $base = rtrim((string) config('ieducar.cadunico.open_data.ckan_base_url', 'https://dados.gov.br'), '/');
-        $resourceId = trim((string) config('ieducar.cadunico.open_data.resource_id', ''));
+        $discovered = $this->ckanDiscovery->discover();
+        if ($discovered === null) {
+            $attempts[] = __('CKAN: nenhum recurso municipal CadÚnico descoberto (dados.gov.br).');
+
+            return null;
+        }
+
+        $base = rtrim((string) ($discovered['base_url'] ?? config('ieducar.cadunico.open_data.ckan_base_url', 'https://dados.gov.br')), '/');
+        $resourceId = (string) ($discovered['resource_id'] ?? '');
         if ($resourceId === '') {
             return null;
         }
 
-        $filters = json_encode([
-            'codigo_ibge' => $ibge,
-            'ano' => $ano,
-        ], JSON_THROW_ON_ERROR);
+        $attempts[] = __('CKAN: :pkg — :res', [
+            'pkg' => $discovered['package_title'] ?? '',
+            'res' => $discovered['resource_name'] ?? $resourceId,
+        ]);
+
+        $filterVariants = [
+            json_encode(['codigo_ibge' => $ibge, 'ano' => $ano], JSON_THROW_ON_ERROR),
+            json_encode(['ibge' => $ibge, 'ano' => $ano], JSON_THROW_ON_ERROR),
+            json_encode(['ibge_municipio' => $ibge, 'ano_referencia' => $ano], JSON_THROW_ON_ERROR),
+        ];
 
         try {
-            $response = Http::timeout(max(5, (int) config('ieducar.cadunico.open_data.http_timeout', 30)))
-                ->get($base.'/api/3/action/datastore_search', [
-                    'resource_id' => $resourceId,
-                    'filters' => $filters,
-                    'limit' => 5,
-                ]);
+            $response = null;
+            foreach ($filterVariants as $filters) {
+                $response = Http::timeout(max(5, (int) config('ieducar.cadunico.open_data.http_timeout', 30)))
+                    ->get($base.'/api/3/action/datastore_search', [
+                        'resource_id' => $resourceId,
+                        'filters' => $filters,
+                        'limit' => 5,
+                    ]);
+                if ($response->successful()) {
+                    $records = $response->json('result.records');
+                    if (is_array($records) && $records !== []) {
+                        break;
+                    }
+                }
+            }
+
+            if ($response === null) {
+                return null;
+            }
 
             if (! $response->successful()) {
                 $attempts[] = __('CKAN: HTTP :status', ['status' => (string) $response->status()]);

@@ -765,6 +765,26 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Finanças — Tempo Real (repasses × expectativa FUNDEB)
+    |--------------------------------------------------------------------------
+    */
+
+    'finance_realtime' => [
+        'enabled' => filter_var(env('IEDUCAR_FINANCE_REALTIME_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'alert_threshold_pct' => max(1.0, (float) env('IEDUCAR_FINANCE_REALTIME_ALERT_PCT', 15)),
+        'program_keywords' => ['fundeb', 'fnde', 'educacao basica', 'educação básica', 'manutencao', 'manutenção', 'salario educacao'],
+        'sources_note' => (string) env('IEDUCAR_FINANCE_REALTIME_SOURCES_NOTE', ''),
+        'aviso' => (string) env(
+            'IEDUCAR_FINANCE_REALTIME_AVISO',
+            'Comparação indicativa entre repasses públicos importados e matrículas × VAAF. Não substitui extrato bancário nem prestação de contas no FNDE/Simec.'
+        ),
+        'bb_enabled' => filter_var(env('IEDUCAR_BB_OPEN_FINANCE_ENABLED', false), FILTER_VALIDATE_BOOL),
+        'bb_client_id' => (string) env('IEDUCAR_BB_OPEN_FINANCE_CLIENT_ID', ''),
+        'bb_base_url' => (string) env('IEDUCAR_BB_OPEN_FINANCE_BASE_URL', 'https://api.bb.com.br'),
+    ],
+
     'discrepancies' => [
         'vaa_referencia_anual' => (float) env('IEDUCAR_DISC_VAA_REFERENCIA', 4500),
         'nee_benchmark_pct_min' => (float) env('IEDUCAR_DISC_NEE_BENCHMARK_PCT', 1.5),
@@ -1344,12 +1364,22 @@ return [
         'idade_escolar_min' => max(0, (int) env('IEDUCAR_CADUNICO_IDADE_MIN', 4)),
         'idade_escolar_max' => max(4, (int) env('IEDUCAR_CADUNICO_IDADE_MAX', 17)),
         'cobertura_alerta_pct' => max(50.0, (float) env('IEDUCAR_CADUNICO_COBERTURA_ALERTA_PCT', 92.0)),
+        'misocial' => [
+            'enabled' => filter_var(env('IEDUCAR_CADUNICO_MISOGIAL_ENABLED', true), FILTER_VALIDATE_BOOL),
+            'base_url' => (string) env('IEDUCAR_CADUNICO_MISOGIAL_BASE_URL', 'https://aplicacoes.mds.gov.br/sagi/servicos/misocial'),
+            'page_size' => max(500, min(15000, (int) env('IEDUCAR_CADUNICO_MISOGIAL_PAGE_SIZE', 6000))),
+            'field_list' => array_values(array_filter(array_map('trim', explode(',', (string) env('IEDUCAR_CADUNICO_MISOGIAL_FIELDS', ''))))),
+            /** Ano inicial do `cadunico:import-misocial` sem --from/--years. */
+            'historical_from_year' => max(2000, (int) env('IEDUCAR_CADUNICO_MISOGIAL_FROM_YEAR', 2020)),
+        ],
         'open_data' => [
             'cache_enabled' => filter_var(env('IEDUCAR_CADUNICO_CACHE_ENABLED', true), FILTER_VALIDATE_BOOL),
-            'http_timeout' => max(5, (int) env('IEDUCAR_CADUNICO_HTTP_TIMEOUT', 30)),
+            'http_timeout' => max(5, (int) env('IEDUCAR_CADUNICO_HTTP_TIMEOUT', 45)),
             'api_url_template' => (string) env('IEDUCAR_CADUNICO_API_URL_TEMPLATE', ''),
             'ckan_base_url' => (string) env('IEDUCAR_CADUNICO_CKAN_URL', 'https://dados.gov.br'),
+            'ckan_bases' => array_values(array_filter(array_map('trim', explode(',', (string) env('IEDUCAR_CADUNICO_CKAN_BASES', 'https://dados.gov.br,https://catalogo.dados.gov.br'))))),
             'resource_id' => (string) env('IEDUCAR_CADUNICO_CKAN_RESOURCE_ID', ''),
+            'search_query' => (string) env('IEDUCAR_CADUNICO_CKAN_SEARCH_QUERY', 'cadastro unico municipio ibge'),
         ],
         'auto_sync' => [
             'enabled' => filter_var(env('IEDUCAR_CADUNICO_AUTO_SYNC_ENABLED', true), FILTER_VALIDATE_BOOL),
@@ -1359,7 +1389,7 @@ return [
             'nacional_csv_url_template' => (string) env('IEDUCAR_CADUNICO_NACIONAL_CSV_URL', ''),
             'municipal_csv_url_template' => (string) env('IEDUCAR_CADUNICO_MUNICIPAL_CSV_URL', ''),
             'refresh_csv_days' => max(1, (int) env('IEDUCAR_CADUNICO_REFRESH_CSV_DAYS', 30)),
-            'dados_gov_search' => filter_var(env('IEDUCAR_CADUNICO_DADOS_GOV_SEARCH', false), FILTER_VALIDATE_BOOL),
+            'dados_gov_search' => filter_var(env('IEDUCAR_CADUNICO_DADOS_GOV_SEARCH', true), FILTER_VALIDATE_BOOL),
             'dados_gov_query' => (string) env('IEDUCAR_CADUNICO_DADOS_GOV_QUERY', 'cadastro unico municipio'),
             'years' => array_values(array_filter(array_map('intval', explode(',', (string) env('IEDUCAR_CADUNICO_SYNC_YEARS', ''))))),
             'schedule' => [
@@ -1396,8 +1426,12 @@ return [
         ],
         'weekly_allow_partial' => filter_var(env('IEDUCAR_CADUNICO_WEEKLY_PARTIAL_OK', true), FILTER_VALIDATE_BOOL),
         'fontes_oficiais' => [
+            'SAGI/Misocial — Matriz de Informação Social (MDS)',
+            'https://aplicacoes.mds.gov.br/sagi/servicos/misocial/',
             'Cecad — CadÚnico (MDS)',
             'https://www.gov.br/mds/pt-br/acoes-e-programas/cadastro-unico',
+            'dados.gov.br — CKAN (descoberta automática)',
+            'https://dados.gov.br',
         ],
     ],
 

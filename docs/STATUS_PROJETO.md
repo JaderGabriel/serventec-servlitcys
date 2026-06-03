@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **3.5.1** · release `20260602-Hermes` · **Ramo:** `main` · **Última revisão:** 02/06/2026
+**Versão em produção:** **3.6.0** · release `20260603-Iris` · **Ramo:** `main` · **Última revisão:** 03/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -17,6 +17,9 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Analytics — Comparativo (Finanças: ano base vs anterior, FUNDEB, export PDF/CSV/Excel) | Implementado (3.5.0) |
 | Analytics — CadÚnico previsão (lacuna rede, impacto VAAF, export consultoria) | Implementado (3.5.0) |
 | CadÚnico — importação automática (URL nacional, fila `cadastro`, cron, admin) | Implementado (3.5.0) |
+| CadÚnico — SAGI/Misocial (MDS) nacional + `cadunico:import-misocial` histórico | Implementado (3.6.0) |
+| Analytics — Finanças «Tempo Real» (repasses vs FUNDEB) | Implementado (3.6.0) |
+| FUNDEB — metodologia de impacto + fontes/portarias no admin | Implementado (3.6.0) |
 | Analytics — navegação 4 áreas (Cadastro → Pedagógico → **Censo** → Finanças) | Implementado (3.4.0) |
 | Finanças / Censo — UI `consultoria-tab-frame` por tom temático | Implementado (3.4.0) |
 | Diagnóstico — qualidade do sistema + «Explorar em detalhe» | Implementado (3.4.0; refinado pós-release: métricas por área, PDF) |

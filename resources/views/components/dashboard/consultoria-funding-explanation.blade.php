@@ -57,7 +57,9 @@
                 @endif
             @endif
 
-            @if ($met !== null && ! $compact)
+            @if ($met !== null && ! empty($met['vaaf_calculo']))
+                <x-dashboard.fundeb-methodology-panel :metodologia="$met" :compact="true" class="border-0 shadow-none" />
+            @elseif ($met !== null && ! $compact)
                 <p class="font-medium text-slate-800 dark:text-slate-100 pt-1">{{ $met['titulo'] ?? '' }}</p>
                 @if (! empty($met['passos']) && is_array($met['passos']))
                     <ol class="list-decimal list-inside space-y-1 text-[11px]">

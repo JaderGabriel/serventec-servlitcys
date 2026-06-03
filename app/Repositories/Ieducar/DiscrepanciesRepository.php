@@ -258,7 +258,7 @@ class DiscrepanciesRepository
                         'city_name' => $city->name,
                         'total_matriculas' => $totalMat > 0 ? $totalMat : null,
                         'funding_reference' => $fundingRefPayload,
-                        'funding_metodologia' => DiscrepanciesFundingImpact::metodologiaResumo($city, $filters),
+                        'funding_metodologia' => \App\Support\Ieducar\FundebImpactMethodology::panel($city, $filters),
                         'funding_resumo_explicacao' => DiscrepanciesFundingImpact::explicacaoResumoAgregado(
                             (int) ($summary['com_problema'] ?? 0),
                             (float) ($summary['perda_estimada_anual'] ?? 0),
@@ -293,7 +293,7 @@ class DiscrepanciesRepository
                     'city_name' => $city->name,
                     'total_matriculas' => $totalMat > 0 ? $totalMat : null,
                     'funding_reference' => $fundingRefPayload,
-                    'funding_metodologia' => DiscrepanciesFundingImpact::metodologiaResumo($city, $filters),
+                    'funding_metodologia' => \App\Support\Ieducar\FundebImpactMethodology::panel($city, $filters),
                     'funding_resumo_explicacao' => DiscrepanciesFundingImpact::explicacaoResumoAgregado(
                         (int) ($summary['com_problema'] ?? 0),
                         (float) ($summary['perda_estimada_anual'] ?? 0),
