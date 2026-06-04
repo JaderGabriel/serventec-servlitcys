@@ -31,4 +31,10 @@ export default {
     },
 
     plugins: [forms],
+
+    safelist: [
+        { pattern: /^serv-qa-/ },
+        { pattern: /^serv-data-flow/ },
+        { pattern: /^serv-mm-/ },
+    ],
 };

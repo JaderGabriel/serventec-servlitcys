@@ -152,6 +152,9 @@ No servidor **não** corra `npm run dev`.
 # Garantir que não há modo desenvolvimento Vite ativo:
 rm -f public/hot
 
+# Após deploy de alterações ao Início (Acesso rápido / mapa mental), rebuild obrigatório:
+npm run build
+
 # Confirmar build versionado:
 test -f public/build/manifest.json && echo "OK: assets presentes"
 ```

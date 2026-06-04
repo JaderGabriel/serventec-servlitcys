@@ -45,3 +45,5 @@ Variáveis na view: `stats`, `ops`, `mapMarkers`, `mapSummary`, `systemFlow`, `q
 ## CSS
 
 Classes principais: `serv-qa-*` (acesso rápido), `serv-data-flow-panel`, `serv-mindmap`, `serv-home-kpi`.
+
+Após alterar `resources/css/app.css` ou vistas do Início, executar **`npm run build`** e publicar `public/build/` — sem rebuild, o bloco Acesso rápido fica sem estilo (o HTML usa também utilitários Tailwind de fallback desde 4.0.0).
