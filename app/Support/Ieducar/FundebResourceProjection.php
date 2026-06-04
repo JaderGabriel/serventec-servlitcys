@@ -30,10 +30,14 @@ final class FundebResourceProjection
         ?City $city = null,
         ?IeducarFilterState $filters = null,
         ?array $referenceResolved = null,
+        int $matriculasRegistos = 0,
+        ?int $alunosDistintos = null,
     ): array {
         if ($matriculas <= 0) {
             return self::empty($yearLabel, $city, $filters, $referenceResolved);
         }
+
+        $registos = $matriculasRegistos > 0 ? $matriculasRegistos : $matriculas;
 
         $cfg = config('ieducar.fundeb', []);
         if (! is_array($cfg)) {
@@ -89,13 +93,22 @@ final class FundebResourceProjection
 
         $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
         $fundingPayload = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
-        $formulaBase = FundebReferenceDisplay::formulaPrevisaoBase($matriculas, $vaafCalculo, $fundingPayload);
+        $formulaBase = FundebReferenceDisplay::formulaPrevisaoBase(
+            $matriculas,
+            $vaafCalculo,
+            $fundingPayload,
+            $registos,
+            $alunosDistintos,
+        );
 
         return [
             'available' => true,
             'year_label' => $yearLabel,
             'aviso' => $aviso,
             'matriculas_base' => $matriculas,
+            'matriculas_registos' => $registos,
+            'alunos_base' => $alunosDistintos,
+            'base_calculo' => $matriculas,
             'vaa_referencia' => $vaafCalculo,
             'vaa_municipal' => $usaVaafMunicipal ? $vaafCalculo : null,
             'vaa_previa' => $previaVaaf > 0 ? $previaVaaf : null,
@@ -116,7 +129,13 @@ final class FundebResourceProjection
                     'value' => $fmt($previsaoReferencia),
                     'tone' => 'indigo',
                     'comparacao' => $previsaoComparacao,
-                    'explicacao_resumo' => FundebReferenceDisplay::formulaPrevisaoBase($matriculas, $vaafCalculo, $fundingPayload)
+                    'explicacao_resumo' => FundebReferenceDisplay::formulaPrevisaoBase(
+                        $matriculas,
+                        $vaafCalculo,
+                        $fundingPayload,
+                        $registos,
+                        $alunosDistintos,
+                    )
                         .($basePrevia !== null && ! $usaVaafMunicipal
                         ? ' '.__('Comparação — prévia federal × matrículas: :total.', ['total' => $fmt($basePrevia)])
                         : ''),

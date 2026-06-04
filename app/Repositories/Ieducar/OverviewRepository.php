@@ -10,6 +10,7 @@ use App\Support\Ieducar\EscolaSubstatusResolver;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\InclusionDashboardQueries;
 use App\Support\Ieducar\MatriculaChartQueries;
+use App\Support\Ieducar\MatriculaVolumeCounts;
 use App\Support\Ieducar\MatriculaTurmaJoin;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
@@ -44,10 +45,14 @@ class OverviewRepository
 
         try {
             return $this->cityData->run($city, function (Connection $db) use ($city, $filters) {
+                $volume = MatriculaChartQueries::volumeCounts($db, $city, $filters);
+                $presentation = MatriculaVolumeCounts::presentation($volume);
                 $kpis = [
                     'escolas' => $this->countEscolas($db, $city, $filters),
                     'turmas' => $this->countTurmas($db, $city, $filters),
-                    'matriculas' => MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters),
+                    'matriculas' => $volume['matriculas'] > 0 ? $volume['matriculas'] : null,
+                    'alunos_distintos' => $volume['alunos_available'] ? (int) ($volume['alunos'] ?? 0) : null,
+                    'volume_hint' => $presentation['hint'],
                 ];
 
                 $escolasKpi = $this->countEscolasAtivasInativas($db, $city, $filters);

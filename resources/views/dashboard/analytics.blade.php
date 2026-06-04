@@ -114,7 +114,7 @@
                         <div class="p-4 sm:p-6 min-h-[min(38rem,88vh)] relative min-w-0 bg-white/50 dark:bg-slate-900/30">
                             <div x-show="tab === 'overview'" x-cloak class="analytics-tab-panel">
                                 @if ($yearFilterReady && ($deferOverviewOnIndex ?? false))
-                                    <div class="relative min-h-[14rem]" x-ref="panelOverview"></div>
+                                    <div class="relative min-h-[14rem]" x-ref="panelOverview" data-analytics-tab-panel="overview"></div>
                                 @else
                                     @include('dashboard.analytics.partials.overview', [
                                         'overviewData' => $overviewData,
@@ -135,7 +135,7 @@
                                         'yearFilterReady' => $yearFilterReady,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelEnrollment"></div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelEnrollment" data-analytics-tab-panel="enrollment"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'cadunico_previsao'" x-cloak class="analytics-tab-panel">
@@ -149,15 +149,7 @@
                                         'filters' => $filters,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelCadunicoPrevisao">
-                                        <p
-                                            x-show="loadingTab === 'cadunico_previsao'"
-                                            x-cloak
-                                            class="text-sm text-slate-600 dark:text-slate-400 px-2 py-6"
-                                        >
-                                            {{ __('A carregar previsão CadÚnico…') }}
-                                        </p>
-                                    </div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelCadunicoPrevisao" data-analytics-tab-panel="cadunico_previsao"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'school_units'" x-cloak class="analytics-tab-panel">
@@ -169,7 +161,7 @@
                                         'municipalityContext' => $municipalityContext ?? null,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelSchoolUnits"></div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelSchoolUnits" data-analytics-tab-panel="school_units"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'network'" x-cloak class="analytics-tab-panel">
@@ -181,7 +173,7 @@
                                         'yearFilterReady' => $yearFilterReady,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelNetwork"></div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelNetwork" data-analytics-tab-panel="network"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'inclusion'" x-cloak class="analytics-tab-panel">
@@ -195,7 +187,7 @@
                                         'filters' => $filters,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelInclusion"></div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelInclusion" data-analytics-tab-panel="inclusion"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'performance'" x-cloak class="analytics-tab-panel">
@@ -207,7 +199,7 @@
                                         'yearFilterReady' => $yearFilterReady,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelPerformance"></div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelPerformance" data-analytics-tab-panel="performance"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'attendance'" x-cloak class="analytics-tab-panel">
@@ -219,7 +211,7 @@
                                         'yearFilterReady' => $yearFilterReady,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelAttendance"></div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelAttendance" data-analytics-tab-panel="attendance"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'comparativo'" x-cloak class="analytics-tab-panel">
@@ -238,7 +230,7 @@
                                             : [],
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelComparativo"></div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelComparativo" data-analytics-tab-panel="comparativo"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'finance_realtime'" x-cloak class="analytics-tab-panel">
@@ -250,7 +242,7 @@
                                         'filters' => $filters,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelFinanceRealtime"></div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelFinanceRealtime" data-analytics-tab-panel="finance_realtime"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'fundeb'" x-cloak class="analytics-tab-panel">
@@ -262,7 +254,7 @@
                                         'municipalityContext' => $municipalityContext ?? null,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelFundeb"></div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelFundeb" data-analytics-tab-panel="fundeb"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'other_funding'" x-cloak class="analytics-tab-panel">
@@ -274,7 +266,7 @@
                                         'municipalityContext' => $municipalityContext ?? null,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelOtherFunding"></div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelOtherFunding" data-analytics-tab-panel="other_funding"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'work_done'" x-cloak class="analytics-tab-panel">
@@ -286,7 +278,7 @@
                                         'municipalityContext' => $municipalityContext ?? null,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelWorkDone"></div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelWorkDone" data-analytics-tab-panel="work_done"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'discrepancies'" x-cloak class="analytics-tab-panel">
@@ -298,7 +290,7 @@
                                         'municipalityContext' => $municipalityContext ?? null,
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelDiscrepancies"></div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelDiscrepancies" data-analytics-tab-panel="discrepancies"></div>
                                 @endif
                             </div>
                             <div x-show="tab === 'municipality_health'" x-cloak class="analytics-tab-panel">
@@ -313,7 +305,7 @@
                                         'pdfExportsRecent' => $pdfExportsRecent ?? [],
                                     ])
                                 @else
-                                    <div class="relative min-h-[12rem]" x-ref="panelMunicipalityHealth"></div>
+                                    <div class="relative min-h-[12rem]" x-ref="panelMunicipalityHealth" data-analytics-tab-panel="municipality_health"></div>
                                 @endif
                             </div>
                         </div>

@@ -17,6 +17,7 @@ use App\Support\Ieducar\DiscrepanciesRoutineStatus;
 use App\Support\Ieducar\InclusionDashboardQueries;
 use App\Support\Ieducar\InclusionRecursoProvaQueries;
 use App\Support\Ieducar\MatriculaChartQueries;
+use App\Support\Ieducar\MatriculaVolumeCounts;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -110,10 +111,15 @@ class DiscrepanciesRepository
 
         try {
             return $this->cityData->run($city, function ($db) use ($city, $filters, $emptySummary): array {
-                $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
+                $volume = MatriculaChartQueries::volumeCounts($db, $city, $filters);
+                $totalMat = $volume['matriculas'];
 
                 return [
                     'total_matriculas' => $totalMat > 0 ? $totalMat : null,
+                    'total_alunos_distintos' => ($volume['alunos_available'] && ($volume['alunos'] ?? 0) > 0)
+                        ? (int) $volume['alunos']
+                        : null,
+                    'base_calculo_fundeb' => MatriculaVolumeCounts::fundebCalculationBase($volume) ?: null,
                     'year_label' => $this->yearLabel($filters),
                     'funding_reference' => DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters),
                     'summary' => $emptySummary,

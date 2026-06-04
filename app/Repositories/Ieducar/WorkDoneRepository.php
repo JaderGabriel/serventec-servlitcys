@@ -45,6 +45,8 @@ class WorkDoneRepository
             'turmas_ano_atual' => 0,
             'enturmacoes_ano_atual' => 0,
             'matriculas_ativas' => 0,
+            'alunos_distintos' => null,
+            'total_matriculas' => null,
             'estimativa' => [],
             'chart_cadastro_meta' => null,
             'exclusion_notes' => IeducarUsuarioScope::exclusionLabels(),
@@ -76,7 +78,11 @@ class WorkDoneRepository
         try {
             return $this->cityData->run($city, function ($db) use ($city, $filters, $yearLabel, $periodLabels, $base) {
                 $ctx = IeducarWorkActivityQueries::matriculaActivityContext($db, $city);
-                $currentMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
+                $volume = MatriculaChartQueries::volumeCounts($db, $city, $filters);
+                $currentMat = $volume['matriculas'];
+                $alunosDistintos = $volume['alunos_available'] && ($volume['alunos'] ?? 0) > 0
+                    ? (int) $volume['alunos']
+                    : null;
                 $baseline = IeducarWorkActivityQueries::baselineFromPreviousYear($db, $city, $filters);
                 $turmasAtual = IeducarWorkActivityQueries::countTurmasForYear($db, $city, $filters);
                 $enturmacoesAtual = IeducarWorkActivityQueries::countEnturmacoesForYear($db, $city, $filters);
@@ -163,6 +169,8 @@ class WorkDoneRepository
                     'turmas_ano_atual' => $turmasAtual,
                     'enturmacoes_ano_atual' => $enturmacoesAtual,
                     'matriculas_ativas' => $currentMat,
+                    'alunos_distintos' => $alunosDistintos,
+                    'total_matriculas' => $currentMat > 0 ? $currentMat : null,
                     'estimativa' => $estimativa,
                     'chart_cadastro_meta' => $this->chartCadastroMeta($estimativa),
                     'activity_available' => (bool) $ctx['available'],

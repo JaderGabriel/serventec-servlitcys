@@ -653,13 +653,20 @@ class MunicipalityHealthRepository
 
         $cadastroDimensions = $dimensions !== [] ? $dimensions : $this->legacyDimensionsFromChecks($checks);
 
-        $score = $this->computeComplianceScore($cadastroDimensions, $modules);
+        $discLoadFailed = filled($disc['error'] ?? null) && $cadastroDimensions === [];
 
-        [$status, $label] = match (true) {
-            $score >= 80 => ['success', __('Boa conformidade')],
-            $score >= 55 => ['warning', __('Atenção — pendências relevantes')],
-            default => ['danger', __('Situação crítica')],
-        };
+        $score = $discLoadFailed ? null : $this->computeComplianceScore($cadastroDimensions, $modules);
+
+        if ($discLoadFailed) {
+            $status = 'neutral';
+            $label = __('Dados indisponíveis');
+        } else {
+            [$status, $label] = match (true) {
+                $score >= 80 => ['success', __('Boa conformidade')],
+                $score >= 55 => ['warning', __('Atenção — pendências relevantes')],
+                default => ['danger', __('Situação crítica')],
+            };
+        }
 
         $topProblems = self::buildTopProblems($checks, $cadastroDimensions);
 
@@ -798,7 +805,7 @@ class MunicipalityHealthRepository
                     (float) ($discSummary['ganho_potencial_anual'] ?? 0),
                     count(array_filter($cadastroDimensions, static fn (array $d): bool => (bool) ($d['has_issue'] ?? false))),
                 ),
-            'error' => $disc['error'] ?? null,
+            'error' => $discLoadFailed ? (string) $disc['error'] : null,
         ];
     }
 

@@ -11,6 +11,7 @@ use App\Support\Ieducar\FundebComplementacaoInformeBuilder;
 use App\Support\Ieducar\FundebReferenceDisplay;
 use App\Support\Ieducar\FundebResourceProjection;
 use App\Support\Ieducar\FundebVaafProfileBuilder;
+use App\Support\Ieducar\MatriculaVolumeCounts;
 
 /**
  * Relatório temático alinhado às condicionalidades do FUNDEB / VAAR (referência pedagógica).
@@ -29,27 +30,90 @@ class FundebRepository
         IeducarFilterState $filters,
         array $overviewData = [],
         array $enrollmentData = [],
+        ?array $discrepanciesOrFundingSnapshot = null,
     ): int {
         $counts = [];
 
         $scope = IeducarAnalyticsMetricsScope::resolve();
         if ($scope !== null && $scope->matches($city, $filters)) {
             $fromScope = $scope->matriculasAtivas();
-            if ($fromScope !== null) {
+            if ($fromScope !== null && $fromScope > 0) {
                 $counts[] = (int) $fromScope;
             }
         }
 
         foreach ([
             data_get($overviewData, 'kpis.matriculas'),
+            data_get($overviewData, 'total_matriculas'),
             data_get($enrollmentData, 'kpis.matriculas'),
+            is_array($discrepanciesOrFundingSnapshot) ? ($discrepanciesOrFundingSnapshot['total_matriculas'] ?? null) : null,
         ] as $value) {
-            if ($value !== null) {
+            if ($value !== null && is_numeric($value) && (int) $value > 0) {
                 $counts[] = (int) $value;
             }
         }
 
         return $counts !== [] ? max($counts) : 0;
+    }
+
+    /**
+     * Volume no filtro (matrículas, alunos distintos e base indicativa FUNDEB).
+     *
+     * @param  array<string, mixed>  $overviewData
+     * @param  array<string, mixed>  $enrollmentData
+     * @return array{matriculas: int, alunos: ?int, alunos_available: bool, base_calculo: int}
+     */
+    public static function resolveVolumeCountsForFilter(
+        City $city,
+        IeducarFilterState $filters,
+        array $overviewData = [],
+        array $enrollmentData = [],
+        ?array $discrepanciesOrFundingSnapshot = null,
+    ): array {
+        $matriculas = self::resolveMatriculasAtivasForFilter(
+            $city,
+            $filters,
+            $overviewData,
+            $enrollmentData,
+            $discrepanciesOrFundingSnapshot,
+        );
+
+        $alunos = null;
+        $alunosAvailable = false;
+
+        $scope = IeducarAnalyticsMetricsScope::resolve();
+        if ($scope !== null && $scope->matches($city, $filters)) {
+            $volume = $scope->volumeCounts();
+            if ($volume['alunos_available'] ?? false) {
+                $alunosAvailable = true;
+                $alunos = (int) ($volume['alunos'] ?? 0);
+            }
+            if (($volume['matriculas'] ?? 0) > $matriculas) {
+                $matriculas = (int) $volume['matriculas'];
+            }
+        }
+
+        foreach ([
+            data_get($overviewData, 'kpis.alunos_distintos'),
+            data_get($enrollmentData, 'kpis.alunos_distintos'),
+            is_array($discrepanciesOrFundingSnapshot) ? ($discrepanciesOrFundingSnapshot['total_alunos_distintos'] ?? null) : null,
+        ] as $value) {
+            if ($value !== null && is_numeric($value) && (int) $value > 0) {
+                $alunosAvailable = true;
+                $alunos = max((int) ($alunos ?? 0), (int) $value);
+            }
+        }
+
+        $counts = [
+            'matriculas' => max(0, $matriculas),
+            'alunos' => $alunosAvailable ? $alunos : null,
+            'alunos_available' => $alunosAvailable,
+        ];
+
+        return [
+            ...$counts,
+            'base_calculo' => MatriculaVolumeCounts::fundebCalculationBase($counts),
+        ];
     }
 
     /**
@@ -88,17 +152,21 @@ class FundebRepository
         ?array $discrepanciesData = null,
     ): array {
         $yearLabel = $this->yearLabel($filters);
-        $matTotal = self::resolveMatriculasAtivasForFilter($city, $filters, $overviewData, $enrollmentData);
+        $volume = self::resolveVolumeCountsForFilter($city, $filters, $overviewData, $enrollmentData, $discrepanciesData);
+        $matTotal = $volume['matriculas'];
+        $baseFundeb = $volume['base_calculo'];
         $fundebReference = DiscrepanciesFundingImpact::resolveReference($city, $filters);
 
         $resourceProjection = FundebResourceProjection::build(
-            $matTotal,
+            $baseFundeb,
             $yearLabel,
             $enrollmentData,
             $discrepanciesData,
             $city,
             $filters,
             $fundebReference,
+            $matTotal,
+            $volume['alunos_available'] ? (int) ($volume['alunos'] ?? 0) : null,
         );
 
         $skipVaafProfile = filter_var(config('analytics.fundeb_skip_vaaf_profile_on_tab', true), FILTER_VALIDATE_BOOL);
@@ -107,7 +175,7 @@ class FundebRepository
             : app(FundebVaafProfileBuilder::class)->build(
                 $city,
                 $filters,
-                $matTotal,
+                $baseFundeb,
                 $discrepanciesData,
                 $enrollmentData,
             );
@@ -122,12 +190,13 @@ class FundebRepository
             'complementacao_informe' => FundebComplementacaoInformeBuilder::build(
                 $city,
                 $filters,
-                $matTotal,
+                $baseFundeb,
                 $discrepanciesData,
                 $inclusionData,
                 $resourceProjection,
                 $fundebReference,
             ),
+            'volume' => $volume,
             'intro' => __(
                 'O FUNDEB financia a manutenção e o desenvolvimento da educação básica. O MEC acompanha condicionalidades ligadas ao Valor-Aluno-Ano-Resultado (VAAR), com registro e documentação no Sistema Simec. Este painel não substitui o módulo oficial: organiza um roteiro por «módulos» temáticos, explica o que costuma ser exigido e cruza, quando possível, indicadores da base i-Educar da cidade (respeitando os filtros actuais).'
             ),

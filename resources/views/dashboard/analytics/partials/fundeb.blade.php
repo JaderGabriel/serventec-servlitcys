@@ -73,7 +73,7 @@
         <x-dashboard.consultoria-section
             anchor="fundeb-previsao-recursos"
             :title="__('Previsão de recursos e distribuição legal')"
-            :subtitle="__('Estimativa anual com base nas matrículas ativas do filtro e nos pisos mínimos de aplicação do FUNDEB (Lei nº 14.113/2020). Valores indicativos para planejamento — não substituem repasse do FNDE nem prestação de contas.')"
+            :subtitle="__('Estimativa anual com base nos alunos distintos do filtro (ou matrículas, se o cadastro de aluno não estiver disponível) e nos pisos mínimos de aplicação do FUNDEB (Lei nº 14.113/2020). Valores indicativos para planejamento — não substituem repasse do FNDE nem prestação de contas.')"
         >
             @if (! $projAvailable)
                 <p class="serv-callout serv-callout--warning text-sm">{{ $proj['formula_base'] ?? __('Sem matrículas no filtro para calcular a previsão.') }}</p>

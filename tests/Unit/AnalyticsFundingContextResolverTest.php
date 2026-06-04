@@ -38,4 +38,31 @@ final class AnalyticsFundingContextResolverTest extends TestCase
         $this->assertSame($payload, $resolver->snapshot($city, $filters, $repo));
         $this->assertSame($payload, $resolver->snapshot($city, $filters, $repo));
     }
+
+    public function test_light_context_e_memoizado_no_mesmo_pedido(): void
+    {
+        $city = new City(['id' => 7, 'name' => 'Teste']);
+        $filters = IeducarFilterState::fromRequest(Request::create('/', 'GET', [
+            'city_id' => '7',
+            'ano_letivo' => '2024',
+        ]));
+        $payload = [
+            'summary' => [],
+            'total_matriculas' => 42,
+            'year_label' => '2024',
+            'funding_reference' => null,
+        ];
+
+        $repo = Mockery::mock(DiscrepanciesRepository::class);
+        $repo->shouldReceive('lightFundingContext')
+            ->once()
+            ->with($city, $filters)
+            ->andReturn($payload);
+        $repo->shouldReceive('fundingImpactSnapshot')->never();
+
+        $resolver = new AnalyticsFundingContextResolver;
+
+        $this->assertSame($payload, $resolver->lightContext($city, $filters, $repo));
+        $this->assertSame($payload, $resolver->lightContext($city, $filters, $repo));
+    }
 }

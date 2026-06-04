@@ -83,12 +83,31 @@ class AnalyticsTabImpactBuilderTest extends TestCase
         $this->assertTrue($strip['ready']);
         $this->assertFalse($strip['show_saldo']);
         $this->assertNull($strip['saldo']);
-        $this->assertTrue($strip['show_status']);
+        $this->assertFalse($strip['show_status']);
+        $this->assertContains('municipality_health', AnalyticsTabImpactBuilder::TABS_WITHOUT_STATUS);
         $this->assertSame('system', $strip['status_mode']);
         $this->assertSame(72, $strip['tab_score']);
         $this->assertNotEmpty($strip['status_issues']);
         $this->assertContains('municipality_health', AnalyticsTabImpactBuilder::TABS_WITH_STRIP);
         $this->assertContains('municipality_health', AnalyticsTabImpactBuilder::TABS_WITHOUT_SALDO);
+    }
+
+    public function test_municipality_health_strip_ignores_stale_error_when_index_present(): void
+    {
+        $strip = AnalyticsTabImpactBuilder::build('municipality_health', true, ['compliance_score' => 100], [
+            'healthData' => [
+                'compliance_score' => 100,
+                'compliance_status' => 'success',
+                'compliance_label' => __('Boa conformidade'),
+                'summary' => ['pendencias_cadastro' => 0],
+                'error' => 'SQLSTATE timeout',
+            ],
+        ]);
+
+        $this->assertFalse($strip['show_status']);
+        $this->assertSame(100, $strip['tab_score']);
+        $this->assertStringNotContainsString('Erro ao carregar', $strip['status_label']);
+        $this->assertSame('success', $strip['status']);
     }
 
     public function test_overview_strip_hides_status_and_saldo(): void

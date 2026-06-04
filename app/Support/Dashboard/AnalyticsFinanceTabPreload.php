@@ -85,6 +85,44 @@ final class AnalyticsFinanceTabPreload
     }
 
     /**
+     * @param  array<string, mixed>  $light  Payload de {@see DiscrepanciesRepository::lightFundingContext()}.
+     * @param  array<string, mixed>  $overviewData
+     * @return array<string, mixed>|null
+     */
+    public static function contextFromLightFunding(array $light, array $overviewData = []): ?array
+    {
+        if ($light === []) {
+            return null;
+        }
+
+        return self::contextFromFundingSnapshot(self::normalizeLightFunding($light), $overviewData);
+    }
+
+    /**
+     * @param  array<string, mixed>  $light
+     * @return array{summary: array<string, mixed>, funding_reference: ?array<string, mixed>, total_matriculas: ?int, year_label: ?string}
+     */
+    public static function normalizeLightFunding(array $light): array
+    {
+        return [
+            'summary' => is_array($light['summary'] ?? null) ? $light['summary'] : [],
+            'funding_reference' => is_array($light['funding_reference'] ?? null)
+                ? $light['funding_reference']
+                : null,
+            'total_matriculas' => isset($light['total_matriculas']) && is_numeric($light['total_matriculas'])
+                ? (int) $light['total_matriculas']
+                : null,
+            'total_alunos_distintos' => isset($light['total_alunos_distintos']) && is_numeric($light['total_alunos_distintos'])
+                ? (int) $light['total_alunos_distintos']
+                : null,
+            'base_calculo_fundeb' => isset($light['base_calculo_fundeb']) && is_numeric($light['base_calculo_fundeb'])
+                ? (int) $light['base_calculo_fundeb']
+                : null,
+            'year_label' => filled($light['year_label'] ?? null) ? (string) $light['year_label'] : null,
+        ];
+    }
+
+    /**
      * @param  array{summary?: array<string, mixed>, funding_reference?: ?array<string, mixed>}|null  $fundingSnapshot
      * @param  array<string, mixed>  $overviewData
      * @return array<string, mixed>|null

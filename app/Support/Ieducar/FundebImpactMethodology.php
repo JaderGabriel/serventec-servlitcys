@@ -155,7 +155,7 @@ final class FundebImpactMethodology
             }
         }
 
-        $ref = $city !== null ? FundebMunicipioReferenceResolver::resolve($city, $filters) : [];
+        $ref = $city !== null ? FundebMunicipalReferenceResolver::resolve($city, $filters) : [];
         $municipal = is_array($ref['municipal'] ?? null) ? $ref['municipal'] : null;
         if ($municipal !== null && filled($municipal['url_portaria'] ?? null)) {
             $links[] = [

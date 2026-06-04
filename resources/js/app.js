@@ -168,6 +168,13 @@ document.addEventListener("alpine:init", () => {
                 this.tab = next;
                 this.$watch("tab", () => this.afterTabChange());
                 this.$nextTick(() => this.afterTabChange());
+                this.$el
+                    ?.querySelectorAll?.("form[data-serv-loading-on-submit]")
+                    ?.forEach((form) => {
+                        form.addEventListener("submit", () => {
+                            this.invalidateLoadedTabs();
+                        });
+                    });
             },
             activeGroupId() {
                 return this.tabToGroup[this.tab] ?? this.navGroups[0]?.id ?? "cadastro";
@@ -195,14 +202,8 @@ document.addEventListener("alpine:init", () => {
                 }
                 this.tab = g.tabs[0];
             },
-            maybeLoadTab(t) {
-                if (!this.lazy) {
-                    return;
-                }
-                if (this.tabLoaded[t]) {
-                    return;
-                }
-                const refMap = {
+            tabPanelRefMap() {
+                return {
                     overview: "panelOverview",
                     school_units: "panelSchoolUnits",
                     enrollment: "panelEnrollment",
@@ -219,17 +220,69 @@ document.addEventListener("alpine:init", () => {
                     municipality_health: "panelMunicipalityHealth",
                     discrepancies: "panelDiscrepancies",
                 };
-                const refName = refMap[t];
-                const el = refName ? this.$refs[refName] : null;
-                if (
-                    el?.dataset?.analyticsTabSsr === t &&
-                    el.querySelector(".space-y-6, [data-analytics-panel-root]")
-                ) {
-                    this.tabLoaded[t] = true;
+            },
+            resolveTabPanel(t) {
+                const refName = this.tabPanelRefMap()[t];
+                if (refName && this.$refs[refName]) {
+                    return this.$refs[refName];
+                }
+
+                const root = this.$el;
+                if (root?.querySelector) {
+                    const byData = root.querySelector(
+                        `[data-analytics-tab-panel="${t}"]`,
+                    );
+                    if (byData) {
+                        return byData;
+                    }
+                }
+
+                return refName ? this.$refs[refName] ?? null : null;
+            },
+            async resolveTabPanelWhenVisible(t, maxAttempts = 6) {
+                for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                    const panel = this.resolveTabPanel(t);
+                    if (panel) {
+                        return panel;
+                    }
+                    await new Promise((resolve) => this.$nextTick(resolve));
+                }
+
+                return null;
+            },
+            invalidateLoadedTabs(tabs = null) {
+                if (tabs === null) {
+                    this.tabLoaded = {};
+
                     return;
                 }
-                if (el?.dataset?.analyticsTabSsr === t && el.children.length > 0) {
+                const list = Array.isArray(tabs) ? tabs : [tabs];
+                list.forEach((key) => {
+                    if (typeof key === "string") {
+                        delete this.tabLoaded[key];
+                    }
+                });
+            },
+            tabPanelHasHydratedContent(el, t) {
+                if (!el || el.dataset?.analyticsTabSsr !== t) {
+                    return false;
+                }
+
+                return !!el.querySelector(
+                    `[data-consultoria-tab="${t}"], [data-analytics-panel-root]`,
+                );
+            },
+            maybeLoadTab(t) {
+                if (!this.lazy) {
+                    return;
+                }
+                if (this.tabLoaded[t]) {
+                    return;
+                }
+                const el = this.resolveTabPanel(t);
+                if (this.tabPanelHasHydratedContent(el, t)) {
                     this.tabLoaded[t] = true;
+
                     return;
                 }
                 this.loadTabLazy(t);
@@ -238,30 +291,16 @@ document.addEventListener("alpine:init", () => {
                 if (!this.lazy) {
                     return;
                 }
-                const refMap = {
-                    overview: "panelOverview",
-                    school_units: "panelSchoolUnits",
-                    enrollment: "panelEnrollment",
-                    cadunico_previsao: "panelCadunicoPrevisao",
-                    network: "panelNetwork",
-                    inclusion: "panelInclusion",
-                    performance: "panelPerformance",
-                    attendance: "panelAttendance",
-                    fundeb: "panelFundeb",
-                    finance_realtime: "panelFinanceRealtime",
-                    comparativo: "panelComparativo",
-                    other_funding: "panelOtherFunding",
-                    work_done: "panelWorkDone",
-                    municipality_health: "panelMunicipalityHealth",
-                    discrepancies: "panelDiscrepancies",
-                };
-                const refName = refMap[t];
-                if (!refName || !this.tabFetchUrl) {
+                if (this.tabLoaded[t] || this.loadingTab === t) {
                     return;
                 }
-                const panel = this.$refs[refName];
+                if (!this.tabFetchUrl) {
+                    return;
+                }
+                const panel = await this.resolveTabPanelWhenVisible(t);
                 if (!panel) {
-                    console.warn("analytics tab: ref ausente", t, refName);
+                    console.warn("analytics tab: ref ausente", t);
+
                     return;
                 }
                 const tabLabel =
@@ -463,7 +502,7 @@ document.addEventListener("alpine:init", () => {
                     /* ignore */
                 }
                 if (this.lazy) {
-                    this.maybeLoadTab(this.tab);
+                    this.$nextTick(() => this.maybeLoadTab(this.tab));
                 }
                 const pulseResize = () =>
                     window.dispatchEvent(new Event("resize"));

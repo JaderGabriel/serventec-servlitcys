@@ -31,10 +31,11 @@ Cadastro (1) → Pedagógico (2) → Censo (3) → Finanças (4)
 
 | Componente | Uso |
 |------------|-----|
+| `x-dashboard.enrollment-volume-display` | Matrículas + alunos distintos + hint (duplicidade) — Visão geral, Matrículas |
 | `x-dashboard.consultoria-tab-frame` | Moldura comum: impact strip, intro, links, flow nav, corpo |
 | `x-dashboard.serv-tab-intro` | Título + tom (`rose`, `teal`, `sky`, `amber`, `emerald`) |
 | `partials/municipality-health-executive` | Decisão + eixos (Diagnóstico) |
-| `partials/municipality-health-system-quality` | **Único** velocímetro / índice geral 0–100 |
+| `partials/municipality-health-system-quality` | **Único** velocímetro / índice geral 0–100 (sem medidor duplicado na faixa de impacto) |
 | `partials/municipality-health-explore` | Cartões «Explorar em detalhe» (métrica por área) |
 | `x-dashboard.diagnosis-explore-icon` | Ícones Heroicons nos cartões Explorar |
 
@@ -90,6 +91,18 @@ Calculado em `MunicipalityHealthRepository::computeComplianceScore()`:
 | `e423808` | Explorar: contadores por área; ícones; PDF; modo estratégico sem duplicar secções |
 
 Versão em produção mantém-se **3.4.0** / tag **`20260531-Nemesis`**.
+
+## Volume: matrículas vs alunos distintos (3.8.0)
+
+Classe central: `App\Support\Ieducar\MatriculaVolumeCounts`.
+
+| Métrica | SQL / regra | Onde aparece |
+|---------|-------------|--------------|
+| Matrículas | `COUNT(DISTINCT matricula.id)` no filtro | KPIs, gráficos por escola/série (denominador operacional) |
+| Alunos distintos | `COUNT(DISTINCT matricula.aluno)` se coluna existir | KPIs, faixa de impacto (Visão geral, Matrículas, Inclusão) |
+| Base FUNDEB | `min(matrículas, alunos)` quando alunos &lt; matrículas | FUNDEB, Tempo Real, fórmula `formula_base` |
+
+Transferências não encerradas geram **mais matrículas que alunos** — o hint aponta para Discrepâncias → `matricula_duplicada`. A previsão VAAF×volume usa **alunos** para não duplicar repasse indicativo.
 
 ## Ficheiros principais
 

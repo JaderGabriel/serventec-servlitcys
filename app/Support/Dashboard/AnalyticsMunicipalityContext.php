@@ -31,6 +31,8 @@ final class AnalyticsMunicipalityContext
         $escolas = (int) ($summary['escolas_afetadas'] ?? 0);
         $matriculas = $summary['total_matriculas'] ?? null;
         $matriculas = is_numeric($matriculas) ? (int) $matriculas : null;
+        $alunos = $healthData['total_alunos_distintos'] ?? $summary['total_alunos_distintos'] ?? null;
+        $alunos = is_numeric($alunos) ? (int) $alunos : null;
 
         $score = (int) ($healthData['compliance_score'] ?? 0);
         if ($score <= 0) {
@@ -56,6 +58,7 @@ final class AnalyticsMunicipalityContext
             'com_problema' => $comProblema,
             'escolas_afetadas' => $escolas,
             'total_matriculas' => $matriculas !== null && $matriculas > 0 ? $matriculas : null,
+            'total_alunos_distintos' => $alunos !== null && $alunos > 0 ? $alunos : null,
             'compliance_score' => $score,
             'compliance_status' => $status,
             'compliance_label' => $label,
@@ -85,6 +88,8 @@ final class AnalyticsMunicipalityContext
         $fortnight = (int) ($periods['fortnight'] ?? 0);
         $kpis = is_array($overviewData['kpis'] ?? null) ? $overviewData['kpis'] : [];
         $mat = (int) ($workDone['total_matriculas'] ?? $kpis['matriculas'] ?? 0);
+        $alunos = $workDone['alunos_distintos'] ?? $kpis['alunos_distintos'] ?? null;
+        $alunos = is_numeric($alunos) ? (int) $alunos : null;
 
         $score = 92;
         if ($pendentes > 0) {
@@ -106,6 +111,7 @@ final class AnalyticsMunicipalityContext
             'com_problema' => $pendentes,
             'escolas_afetadas' => 0,
             'total_matriculas' => $mat > 0 ? $mat : null,
+            'total_alunos_distintos' => $alunos !== null && $alunos > 0 ? $alunos : null,
             'compliance_score' => $score,
             'compliance_status' => $status,
             'compliance_label' => self::labelFromScore($score),
@@ -134,6 +140,11 @@ final class AnalyticsMunicipalityContext
         $kpis = is_array($overviewData['kpis'] ?? null) ? $overviewData['kpis'] : [];
         $metricExtras = IeducarAnalyticsMetricsScope::resolve()?->toMunicipalityContextExtras() ?? [];
         $matriculas = (int) ($metricExtras['total_matriculas'] ?? $kpis['matriculas'] ?? $overviewData['total_matriculas'] ?? 0);
+        $alunos = $metricExtras['total_alunos_distintos']
+            ?? $fundingSnapshot['total_alunos_distintos']
+            ?? $kpis['alunos_distintos']
+            ?? null;
+        $alunos = is_numeric($alunos) ? (int) $alunos : null;
         $distorcaoPct = isset($metricExtras['distorcao_pct']) ? (float) $metricExtras['distorcao_pct'] : null;
 
         $score = self::estimateComplianceScore($pendencias, $corrigiveis, $perda, $ganho, $distorcaoPct);
@@ -147,6 +158,7 @@ final class AnalyticsMunicipalityContext
             'corrigiveis' => $corrigiveis,
             'escolas_afetadas' => $escolas,
             'total_matriculas' => $matriculas > 0 ? $matriculas : null,
+            'total_alunos_distintos' => $alunos !== null && $alunos > 0 ? $alunos : null,
             'year_label' => filled($fundingSnapshot['year_label'] ?? null)
                 ? (string) $fundingSnapshot['year_label']
                 : null,

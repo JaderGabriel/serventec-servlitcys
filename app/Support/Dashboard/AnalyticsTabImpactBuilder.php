@@ -12,8 +12,8 @@ use App\Support\Ieducar\FundebReferenceDisplay;
  */
 final class AnalyticsTabImpactBuilder
 {
-    /** Abas sem status na faixa (ex.: Cadastro / Visão geral). */
-    public const TABS_WITHOUT_STATUS = ['overview'];
+    /** Abas sem status na faixa (Visão geral; Diagnóstico usa só o velocímetro na secção Qualidade). */
+    public const TABS_WITHOUT_STATUS = ['overview', 'municipality_health'];
 
     /** Abas sem bloco «Impacto no saldo» na faixa (conteúdo financeiro na própria aba). */
     public const TABS_WITHOUT_SALDO = [
@@ -1838,6 +1838,12 @@ final class AnalyticsTabImpactBuilder
         if ($tab === 'attendance' && (bool) ($payload['unavailable'] ?? false)) {
             return $computed;
         }
+        if ($tab === 'municipality_health') {
+            $idx = $payload['compliance_score'] ?? null;
+            if (is_numeric($idx) && (int) $idx > 0) {
+                return $computed;
+            }
+        }
         if (empty($payload['error'])) {
             return $computed;
         }
@@ -2093,11 +2099,26 @@ final class AnalyticsTabImpactBuilder
         }
 
         if (($ctx['total_matriculas'] ?? null) !== null && in_array($tab, ['overview', 'enrollment', 'inclusion'], true)) {
+            $alunos = $ctx['total_alunos_distintos'] ?? null;
             $out[] = [
-                'label' => __('Matrículas realizadas (filtro)'),
-                'value' => number_format((int) $ctx['total_matriculas'], 0, ',', '.'),
+                'label' => $alunos !== null && $alunos > 0
+                    ? __('Alunos distintos (filtro)')
+                    : __('Matrículas realizadas (filtro)'),
+                'value' => number_format(
+                    $alunos !== null && $alunos > 0 ? (int) $alunos : (int) $ctx['total_matriculas'],
+                    0,
+                    ',',
+                    '.',
+                ),
                 'tone' => 'neutral',
             ];
+            if ($alunos !== null && $alunos > 0 && (int) $ctx['total_matriculas'] > $alunos) {
+                $out[] = [
+                    'label' => __('Registos de matrícula'),
+                    'value' => number_format((int) $ctx['total_matriculas'], 0, ',', '.'),
+                    'tone' => 'neutral',
+                ];
+            }
         }
 
         return array_slice($out, 0, 4);

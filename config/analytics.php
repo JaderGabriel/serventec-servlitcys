@@ -161,7 +161,8 @@ return [
     | Finanças — contexto VAAF leve (sem rotinas Discrepâncias)
     |--------------------------------------------------------------------------
     |
-    | true (defeito): fundingImpactSnapshot só conta matrículas + VAAF (rápido).
+    | true (defeito): fundingImpactSnapshot delega a lightFundingContext (rápido).
+    | Tempo Real / Comparativo (preload) usam lightFundingContext() directamente.
     | false: executa todas as rotinas com fundingOnly (lento; use só para debug).
     |
     */
@@ -184,17 +185,6 @@ return [
     'fundeb_tab_light_bundle' => filter_var(env('ANALYTICS_FUNDEB_LIGHT_TAB', true), FILTER_VALIDATE_BOOL),
 
     'fundeb_skip_vaaf_profile_on_tab' => filter_var(env('ANALYTICS_FUNDEB_SKIP_VAAF_PROFILE', true), FILTER_VALIDATE_BOOL),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Comparativo — preload no grupo Finanças
-    |--------------------------------------------------------------------------
-    |
-    | true (defeito): só shell + anos letivos (loadYearOptions); relatório completo via AJAX.
-    |
-    */
-
-    'comparativo_preload_shell_only' => filter_var(env('ANALYTICS_COMPARATIVO_PRELOAD_SHELL', true), FILTER_VALIDATE_BOOL),
 
     /*
     |--------------------------------------------------------------------------

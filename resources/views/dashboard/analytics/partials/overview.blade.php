@@ -185,13 +185,17 @@
                 @endif
             </div>
             <div class="rounded-lg border border-indigo-300/90 dark:border-indigo-700/70 bg-white dark:bg-indigo-950/50 p-4 min-h-[6.75rem] flex flex-col justify-center shadow-sm ring-1 ring-indigo-200/70 dark:ring-indigo-800/50">
-                <p class="text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wide">{{ __('Matrículas (tabela)') }}</p>
-                <p class="mt-1 text-2xl font-semibold tabular-nums text-indigo-600 dark:text-indigo-400">
-                    {{ $overviewData['kpis']['matriculas'] !== null ? number_format($overviewData['kpis']['matriculas']) : '—' }}
-                </p>
+                <p class="text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wide">{{ __('Volume no filtro') }}</p>
+                <x-dashboard.enrollment-volume-display
+                    :matriculas="$overviewData['kpis']['matriculas'] ?? null"
+                    :alunos="$overviewData['kpis']['alunos_distintos'] ?? null"
+                    :hint="$overviewData['kpis']['volume_hint'] ?? null"
+                    size="xl"
+                    class="mt-1 text-indigo-600 dark:text-indigo-400"
+                />
             </div>
         </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Totais conforme os filtros aplicados; matrículas contam registros distintos de matrícula ativa no recorte (uma por aluno matriculado).') }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Totais conforme os filtros aplicados: matrículas = registos distintos na tabela matrícula; alunos = pessoas distintas (use alunos para comparar com Censo e previsão FUNDEB quando houver matrícula duplicada).') }}</p>
     @elseif ($yearFilterReady && empty($overviewData['error']))
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Sem totais para estes filtros.') }}</p>
     @endif

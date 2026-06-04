@@ -661,9 +661,11 @@ final class FinanceComparativoService
     public static function normalizeYearOptions(array $yearOptions, int $selected): array
     {
         $years = [];
-        foreach ($yearOptions as $y) {
-            if (is_numeric($y)) {
-                $years[(int) $y] = (int) $y;
+        foreach ($yearOptions as $key => $label) {
+            if (is_numeric($key)) {
+                $years[(int) $key] = (int) $key;
+            } elseif (is_numeric($label)) {
+                $years[(int) $label] = (int) $label;
             }
         }
         if ($years === []) {

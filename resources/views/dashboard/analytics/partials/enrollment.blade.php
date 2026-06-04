@@ -15,8 +15,13 @@
         @php $k = $enrollmentData['kpis']; @endphp
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-stretch">
             <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 px-3 py-2 sm:px-3 sm:py-2.5 min-h-0 flex flex-col justify-center">
-                <p class="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase leading-tight">{{ __('Matrículas ativas') }}</p>
-                <p class="mt-0.5 text-lg sm:text-xl font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums leading-tight">{{ number_format($k['matriculas'] ?? 0) }}</p>
+                <p class="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase leading-tight">{{ __('Volume no filtro') }}</p>
+                <x-dashboard.enrollment-volume-display
+                    :matriculas="$k['matriculas'] ?? 0"
+                    :alunos="$k['alunos_distintos'] ?? null"
+                    :hint="$k['volume_hint'] ?? null"
+                    class="mt-0.5 text-indigo-600 dark:text-indigo-400"
+                />
             </div>
             <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 px-3 py-2 sm:px-3 sm:py-2.5 min-h-0 flex flex-col justify-center">
                 <p class="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase leading-tight">{{ __('Turmas com matrícula') }}</p>

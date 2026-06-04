@@ -93,6 +93,7 @@ class InclusionRepository
         $gauges = [];
         $notes = [];
         $totalMatriculas = null;
+        $totalAlunosDistintos = null;
         $equidadeFonte = null;
         $neeGrupoResumo = null;
         $matriculasNee = null;
@@ -104,8 +105,12 @@ class InclusionRepository
         $fundebNee = null;
 
         try {
-            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDataset, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$equidadeFonte, &$neeGrupoResumo, &$matriculasNee, &$neeCatalogWarning, &$chartRacaPorEscolaStacked, &$chartNeePorRacaStacked, &$neeMatriculasPorEscola, &$recursoProva, &$fundebNee) {
-                $totalMatriculas = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
+            $this->cityData->run($city, function (Connection $db) use ($city, $filters, &$charts, &$neeCharts, &$neeDataset, &$neeDetalheCatalogo, &$aeeCross, &$gauges, &$notes, &$totalMatriculas, &$totalAlunosDistintos, &$equidadeFonte, &$neeGrupoResumo, &$matriculasNee, &$neeCatalogWarning, &$chartRacaPorEscolaStacked, &$chartNeePorRacaStacked, &$neeMatriculasPorEscola, &$recursoProva, &$fundebNee) {
+                $volume = MatriculaChartQueries::volumeCounts($db, $city, $filters);
+                $totalMatriculas = $volume['matriculas'] > 0 ? $volume['matriculas'] : null;
+                $totalAlunosDistintos = $volume['alunos_available'] && ($volume['alunos'] ?? 0) > 0
+                    ? (int) $volume['alunos']
+                    : null;
                 $matriculasNee = InclusionDashboardQueries::countMatriculasComNee($db, $city, $filters);
 
                 try {
@@ -285,15 +290,20 @@ class InclusionRepository
                 }
 
                 $matAeeSemCadastro = InclusionDashboardQueries::countMatriculasTurmaAeeSemCadastroNee($db, $city, $filters);
+                $alunosAeeSemCadastro = InclusionDashboardQueries::countAlunosTurmaAeeSemCadastroNee($db, $city, $filters);
                 if ($matAeeSemCadastro <= 0 && is_array($aeeCross)) {
                     $matAeeSemCadastro = (int) ($aeeCross['matriculas_aee_sem_cadastro'] ?? 0);
                 }
                 if ($matAeeSemCadastro <= 0 && is_array($recursoProva)) {
                     $matAeeSemCadastro = (int) ($recursoProva['aee_sem_cadastro_nee'] ?? 0);
                 }
+                if ($alunosAeeSemCadastro <= 0 && $matAeeSemCadastro > 0) {
+                    $alunosAeeSemCadastro = $matAeeSemCadastro;
+                }
                 $fundebNee['matriculas_aee_sem_cadastro'] = $matAeeSemCadastro;
+                $fundebNee['alunos_aee_sem_cadastro'] = $alunosAeeSemCadastro > 0 ? $alunosAeeSemCadastro : null;
                 $fundebNee['risco_aee_sem_cadastro'] = InclusionFundebImpact::riscoTurmaAeeSemCadastroDeficiencia(
-                    $matAeeSemCadastro,
+                    $alunosAeeSemCadastro > 0 ? $alunosAeeSemCadastro : $matAeeSemCadastro,
                     $city,
                     $filters,
                 );
@@ -346,6 +356,7 @@ class InclusionRepository
             'notes' => $notes,
             'error' => null,
             'total_matriculas' => $totalMatriculas,
+            'total_alunos_distintos' => $totalAlunosDistintos,
             'equidade_fonte' => $equidadeFonte,
             'intro' => $tabCopy['intro'],
             'tab_meta' => $tabCopy['tab_meta'],

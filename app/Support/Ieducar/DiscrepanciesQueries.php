@@ -180,6 +180,62 @@ final class DiscrepanciesQueries
     }
 
     /**
+     * Alunos distintos em turma AEE (heurística) sem cadastro NEE — evita somar várias matrículas do mesmo aluno.
+     */
+    public static function countAlunosTurmaAeeSemCadastroNee(Connection $db, City $city, IeducarFilterState $filters): int
+    {
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $aluno = IeducarSchema::resolveTable('aluno', $city);
+            $turma = IeducarSchema::resolveTable('turma', $city);
+            $curso = IeducarSchema::resolveTable('curso', $city);
+            $mAluno = (string) config('ieducar.columns.matricula.aluno');
+            $mId = (string) config('ieducar.columns.matricula.id');
+            $aId = (string) config('ieducar.columns.aluno.id');
+            $tName = IeducarColumnInspector::firstExistingColumn($db, $turma, ['nm_turma', (string) config('ieducar.columns.turma.name')], $city) ?? 'nm_turma';
+            $cName = IeducarColumnInspector::firstExistingColumn($db, $curso, ['nm_curso', (string) config('ieducar.columns.curso.name')], $city) ?? 'nm_curso';
+            $cId = (string) config('ieducar.columns.curso.id');
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+
+            $q = self::baseMatriculaComTurma($db, $city, $filters)
+                ->join($aluno.' as a', 'm.'.$mAluno, '=', 'a.'.$aId);
+            if ($tc['curso'] !== '') {
+                $q->leftJoin($curso.' as c_aee', 't_filter.'.$tc['curso'], '=', 'c_aee.'.$cId);
+            }
+
+            $neeAlunos = self::alunosComNeeSubquery($db, $city);
+            if ($neeAlunos === null) {
+                return 0;
+            }
+            $q->whereNotIn('a.'.$aId, $neeAlunos);
+
+            $rows = $q->select([
+                'm.'.$mId.' as mid',
+                'a.'.$aId.' as aid',
+                't_filter.'.$tName.' as nm_turma',
+                $tc['curso'] !== '' ? 'c_aee.'.$cName.' as nm_curso' : $db->raw("'' as nm_curso"),
+            ])->get();
+
+            $alunosAee = [];
+            foreach ($rows as $row) {
+                $t = strtolower((string) ($row->nm_turma ?? ''));
+                $c = strtolower((string) ($row->nm_curso ?? ''));
+                if (! self::matchAeeKeywords($t.' '.$c)) {
+                    continue;
+                }
+                $aid = (string) ($row->aid ?? '');
+                if ($aid !== '') {
+                    $alunosAee[$aid] = true;
+                }
+            }
+
+            return count($alunosAee);
+        } catch (QueryException|\Throwable) {
+            return 0;
+        }
+    }
+
+    /**
      * Escolas com matrículas ativas no filtro mas sem código INEP ligado.
      *
      * @return list<array{escola_id: string, escola: string, total: int}>

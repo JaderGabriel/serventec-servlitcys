@@ -78,7 +78,8 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 |------|---------|------------|
 | VAAF de referência | Cascata: BD `fundeb_municipio_references` → config IBGE → global (`FundebMunicipalReferenceResolver`) | Ano letivo do filtro define qual referência usar |
 | Discrepâncias | `perda/ganho ≈ ocorrências × VAAF × peso_por_check` | **Indicativo** — não substitui FNDE/Simec |
-| Previsão FUNDEB | `matrículas × VAAF` (+ cenários com resumo discrepâncias) | Não é repasse liquidado |
+| Previsão FUNDEB | `base_calculo × VAAF` onde `base_calculo = min(matrículas, alunos distintos)` quando aluno disponível (3.8.0) | Não é repasse liquidado; matrículas ainda aparecem nos KPIs |
+| Ponderação NEE / AEE | Incremento FUNDEB por **aluno** com NEE ou em turma AEE sem cadastro | Evita somar duas matrículas do mesmo estudante |
 | Prévia federal | `IEDUCAR_FUNDEB_NATIONAL_VAAF_*` para **comparação** | Municipal prevalece nos cálculos |
 | Programas (PNAE…) | Cobertura de **cadastro** (colunas detectadas) | Sem valor de repasse por aluno na maioria dos casos |
 | Consultas públicas | FNDE CKAN, Tesouro, Transparência — cache TTL | Amostras; dependem de API keys e resource IDs |

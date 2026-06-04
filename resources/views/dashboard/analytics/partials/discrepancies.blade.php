@@ -77,7 +77,10 @@
         $discMeta .= ' — '.e($d['year_label']);
     }
     if (($d['total_matriculas'] ?? null) !== null) {
-        $discMeta .= ' · '.e(__('Matrículas ativas:')).' <span class="tabular-nums font-medium">'.number_format((int) $d['total_matriculas']).'</span>';
+        $discMeta .= ' · '.e(__('Matrículas:')).' <span class="tabular-nums font-medium">'.number_format((int) $d['total_matriculas']).'</span>';
+        if (($d['total_alunos_distintos'] ?? null) !== null) {
+            $discMeta .= ' · '.e(__('Alunos distintos:')).' <span class="tabular-nums font-medium">'.number_format((int) $d['total_alunos_distintos']).'</span>';
+        }
     }
     if ($fundingRef !== null && isset($fundingRef['vaa_label'])) {
         $discMeta .= ' · '.e(__('VAAF:')).' <span class="font-medium">'.e($fundingRef['vaa_label']).'</span>';

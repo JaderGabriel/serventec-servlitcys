@@ -851,7 +851,6 @@ class AnalyticsDashboardController extends Controller
         $fundebDataForTab = $financePreload['fundebData'] ?? null;
         $otherFundingDataForTab = $financePreload['otherFundingData'] ?? null;
         $workDoneDataForTab = $financePreload['workDoneData'] ?? null;
-        $comparativoDataForTab = $financePreload['comparativoData'] ?? null;
         $comparativoBaseYear = FinanceComparativoService::resolveBaseYear($request, $filters);
         $municipalityContext = $financePreload['context'] ?? $this->resolveMunicipalityContextForTab(
             $tab,
@@ -1028,7 +1027,7 @@ class AnalyticsDashboardController extends Controller
                 ->withHeaders($headers),
             'comparativo' => response()
                 ->view('dashboard.analytics.partials.comparativo', array_merge($viewBase, $yearReady, [
-                    'comparativoData' => $comparativoDataForTab ?? $this->safeAnalyticsLoad(
+                    'comparativoData' => $this->safeAnalyticsLoad(
                         fn () => $this->buildComparativoForTab(
                             $financeComparativoService,
                             $filterOptionsService,
@@ -1142,57 +1141,14 @@ class AnalyticsDashboardController extends Controller
         Request $request,
         array &$warnings,
     ): array {
-        $preloadShell = filter_var(config('analytics.comparativo_preload_shell_only', true), FILTER_VALIDATE_BOOL);
-
-        $comparativoData = $this->safeAnalyticsLoad(
-            fn () => $preloadShell
-                ? $this->comparativoShellPayload(
-                    $filterOptionsService,
-                    $city,
-                    $filters,
-                    $this->comparativoYearOptions($filterOptionsService, $city, $filters),
-                )
-                : $this->buildComparativoForTab(
-                    $financeComparativoService,
-                    $filterOptionsService,
-                    $city,
-                    $filters,
-                    $request,
-                ),
-            AnalyticsEmptyPayloads::comparativo(),
-            __('Comparativo'),
-            $warnings,
-        );
-
-        $fundingSnapshot = $this->safeAnalyticsLoad(
-            fn () => $this->fundingImpactSnapshot($discrepanciesRepository, $city, $filters),
-            null,
-            __('Resumo financeiro'),
-            $warnings,
-        );
-        if (! is_array($fundingSnapshot)) {
-            $fundingSnapshot = [
-                'summary' => [],
-                'funding_reference' => DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters),
-            ];
-        } elseif (! is_array($fundingSnapshot['funding_reference'] ?? null)) {
-            $fundingSnapshot['funding_reference'] = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
-        }
-
-        $totalMat = is_array($comparativoData)
-            ? ($comparativoData['base_year_detail']['matriculas'] ?? null)
-            : null;
-        $overviewData = [
-            'kpis' => ['matriculas' => $totalMat],
-            'total_matriculas' => $totalMat,
-        ];
+        $preloaded = $this->preloadLightFundingContext($discrepanciesRepository, $city, $filters, $warnings);
 
         return [
-            'context' => AnalyticsFinanceTabPreload::contextFromFundingSnapshot($fundingSnapshot, $overviewData),
+            'context' => $preloaded['context'],
             'healthData' => null,
             'discrepanciesData' => null,
             'fundebData' => null,
-            'comparativoData' => is_array($comparativoData) ? $comparativoData : null,
+            'comparativoData' => null,
             'otherFundingData' => null,
             'workDoneData' => null,
         ];
@@ -1277,7 +1233,6 @@ class AnalyticsDashboardController extends Controller
             ),
             'finance_realtime' => $this->preloadFinanceRealtimeTab(
                 $discrepanciesRepository,
-                $overviewRepository,
                 $city,
                 $filters,
                 $warnings,
@@ -1422,32 +1377,14 @@ class AnalyticsDashboardController extends Controller
      */
     private function preloadFinanceRealtimeTab(
         DiscrepanciesRepository $discrepanciesRepository,
-        OverviewRepository $overviewRepository,
         City $city,
         IeducarFilterState $filters,
         array &$warnings,
     ): array {
-        $fundingSnapshot = $this->safeAnalyticsLoad(
-            fn () => $this->fundingImpactSnapshot($discrepanciesRepository, $city, $filters),
-            null,
-            __('Resumo financeiro'),
-            $warnings,
-        );
-        if (! is_array($fundingSnapshot)) {
-            $fundingSnapshot = [
-                'summary' => [],
-                'funding_reference' => DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters),
-            ];
-        }
-
-        $totalMat = (int) ($fundingSnapshot['total_matriculas'] ?? 0);
-        $overviewData = [
-            'kpis' => ['matriculas' => $totalMat > 0 ? $totalMat : null],
-            'total_matriculas' => $totalMat > 0 ? $totalMat : null,
-        ];
+        $preloaded = $this->preloadLightFundingContext($discrepanciesRepository, $city, $filters, $warnings);
 
         return [
-            'context' => AnalyticsFinanceTabPreload::contextFromFundingSnapshot($fundingSnapshot, $overviewData),
+            'context' => $preloaded['context'],
             'healthData' => null,
             'discrepanciesData' => null,
             'fundebData' => null,
@@ -1573,30 +1510,55 @@ class AnalyticsDashboardController extends Controller
         City $city,
         IeducarFilterState $filters,
     ): array {
-        $fundingSnapshot = null;
-        if (config('analytics.fundeb_load_discrepancies_summary', true)) {
-            $fundingSnapshot = $this->fundingImpactSnapshot($discrepanciesRepository, $city, $filters);
-        }
-
         $lightBundle = filter_var(config('analytics.fundeb_tab_light_bundle', true), FILTER_VALIDATE_BOOL);
+        $fundingSnapshot = $this->resolveFundebFundingSnapshot(
+            $discrepanciesRepository,
+            $city,
+            $filters,
+            $lightBundle,
+        );
+
         if ($lightBundle) {
-            $mat = max(0, (int) (is_array($fundingSnapshot) ? ($fundingSnapshot['total_matriculas'] ?? 0) : 0));
+            $matHint = (int) ($fundingSnapshot['total_matriculas'] ?? 0);
             $overviewData = [
-                'kpis' => ['matriculas' => $mat > 0 ? $mat : null],
-                'total_matriculas' => $mat > 0 ? $mat : null,
+                'kpis' => ['matriculas' => $matHint > 0 ? $matHint : null],
+                'total_matriculas' => $matHint > 0 ? $matHint : null,
             ];
-            $enrollmentData = ['kpis' => ['matriculas' => $mat > 0 ? $mat : null]];
+            $enrollmentData = ['kpis' => ['matriculas' => $matHint > 0 ? $matHint : null]];
         } else {
             $overviewData = $overviewRepository->summary($city, $filters);
             $enrollmentData = $enrollmentRepository->sample($city, $filters);
         }
-        if (! is_array($fundingSnapshot)) {
-            $fundingSnapshot = [
-                'summary' => [],
-                'funding_reference' => DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters),
+
+        $volume = FundebRepository::resolveVolumeCountsForFilter(
+            $city,
+            $filters,
+            $overviewData,
+            $enrollmentData,
+            $fundingSnapshot,
+        );
+        $matTotal = $volume['matriculas'];
+        if ($matTotal > 0) {
+            $alunos = $volume['alunos_available'] ? (int) ($volume['alunos'] ?? 0) : null;
+            $overviewData = [
+                'kpis' => [
+                    'matriculas' => $matTotal,
+                    'alunos_distintos' => $alunos > 0 ? $alunos : null,
+                ],
+                'total_matriculas' => $matTotal,
+                'total_alunos_distintos' => $alunos > 0 ? $alunos : null,
             ];
-        } elseif (! is_array($fundingSnapshot['funding_reference'] ?? null)) {
-            $fundingSnapshot['funding_reference'] = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
+            $enrollmentData = [
+                'kpis' => [
+                    'matriculas' => $matTotal,
+                    'alunos_distintos' => $alunos > 0 ? $alunos : null,
+                ],
+            ];
+            if (is_array($fundingSnapshot)) {
+                $fundingSnapshot['total_matriculas'] = $matTotal;
+                $fundingSnapshot['total_alunos_distintos'] = $alunos > 0 ? $alunos : null;
+                $fundingSnapshot['base_calculo_fundeb'] = $volume['base_calculo'] > 0 ? $volume['base_calculo'] : null;
+            }
         }
 
         $fundeb = $fundebRepository->buildReport(
@@ -1616,6 +1578,42 @@ class AnalyticsDashboardController extends Controller
             : null;
 
         return ['fundeb' => $fundeb, 'context' => $context];
+    }
+
+    /**
+     * Snapshot financeiro para FUNDEB: leve (matrículas + VAAF) ou impacto Discrepâncias conforme config.
+     *
+     * @return array<string, mixed>
+     */
+    private function resolveFundebFundingSnapshot(
+        DiscrepanciesRepository $discrepanciesRepository,
+        City $city,
+        IeducarFilterState $filters,
+        bool $lightBundle,
+    ): array {
+        $fallbackRef = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
+        $empty = [
+            'summary' => [],
+            'funding_reference' => $fallbackRef,
+            'total_matriculas' => null,
+            'year_label' => null,
+        ];
+
+        if ($lightBundle || ! config('analytics.fundeb_load_discrepancies_summary', true)) {
+            $light = $this->lightFundingContext($discrepanciesRepository, $city, $filters);
+
+            return array_merge($empty, AnalyticsFinanceTabPreload::normalizeLightFunding($light));
+        }
+
+        $fundingSnapshot = $this->fundingImpactSnapshot($discrepanciesRepository, $city, $filters);
+        if (! is_array($fundingSnapshot)) {
+            return $empty;
+        }
+        if (! is_array($fundingSnapshot['funding_reference'] ?? null)) {
+            $fundingSnapshot['funding_reference'] = $fallbackRef;
+        }
+
+        return $fundingSnapshot;
     }
 
     /**
@@ -1703,6 +1701,10 @@ class AnalyticsDashboardController extends Controller
             return null;
         }
 
+        if (in_array($tab, ['finance_realtime', 'comparativo'], true)) {
+            return $this->preloadLightFundingContext($discrepanciesRepository, $city, $filters, $warnings)['context'];
+        }
+
         $overviewData = $this->safeAnalyticsLoad(
             fn () => $overviewRepository->summary($city, $filters),
             ['kpis' => null, 'charts' => [], 'filter_note' => null, 'error' => null],
@@ -1729,6 +1731,48 @@ class AnalyticsDashboardController extends Controller
             $fundingSnapshot,
             is_array($overviewData) ? $overviewData : [],
         );
+    }
+
+    /**
+     * Pré-carga do contexto municipal (matrículas + VAAF) para abas que não precisam do resumo Discrepâncias.
+     *
+     * @param  list<string>  $warnings
+     * @return array{context: ?array<string, mixed>, light: array<string, mixed>}
+     */
+    private function preloadLightFundingContext(
+        DiscrepanciesRepository $discrepanciesRepository,
+        City $city,
+        IeducarFilterState $filters,
+        array &$warnings,
+    ): array {
+        $fallback = [
+            'summary' => [],
+            'funding_reference' => DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters),
+            'total_matriculas' => null,
+            'year_label' => '',
+        ];
+        $light = $this->safeAnalyticsLoad(
+            fn () => $this->lightFundingContext($discrepanciesRepository, $city, $filters),
+            $fallback,
+            __('Resumo financeiro'),
+            $warnings,
+        );
+        if (! is_array($light)) {
+            $light = $fallback;
+        } elseif (! is_array($light['funding_reference'] ?? null)) {
+            $light['funding_reference'] = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
+        }
+
+        $totalMat = (int) ($light['total_matriculas'] ?? 0);
+        $overviewData = [
+            'kpis' => ['matriculas' => $totalMat > 0 ? $totalMat : null],
+            'total_matriculas' => $totalMat > 0 ? $totalMat : null,
+        ];
+
+        return [
+            'context' => AnalyticsFinanceTabPreload::contextFromLightFunding($light, $overviewData),
+            'light' => $light,
+        ];
     }
 
     /**
@@ -1829,6 +1873,21 @@ class AnalyticsDashboardController extends Controller
                 'errors' => [$e->getMessage()],
             ], 500);
         }
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    /**
+     * @return array<string, mixed>
+     */
+    private function lightFundingContext(
+        DiscrepanciesRepository $discrepanciesRepository,
+        City $city,
+        IeducarFilterState $filters,
+    ): array {
+        return app(AnalyticsFundingContextResolver::class)
+            ->lightContext($city, $filters, $discrepanciesRepository);
     }
 
     /**

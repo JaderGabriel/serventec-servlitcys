@@ -105,7 +105,7 @@ final class InclusionFundebImpact
                     ]
                 ),
             'observacao' => __(
-                'Cada matrícula em turma AEE (heurística) sem registo em cadastro.deficiência / fisica_deficiencia entra nesta conta — não se somam outras matrículas do mesmo aluno em ensino regular ou atividades complementares. No Educacenso e na VAAR-inclusão o município arrisca não comprovar a ponderação :p (Lei 14.113/2020). O ganho potencial ao regularizar o cadastro é o valor indicado.',
+                'Cada aluno distinto em turma AEE (heurística) sem registo em cadastro.deficiência / fisica_deficiencia entra nesta conta (uma ponderação por pessoa, mesmo com mais de uma matrícula AEE). No Educacenso e na VAAR-inclusão o município arrisca não comprovar a ponderação :p (Lei 14.113/2020). O ganho potencial ao regularizar o cadastro é o valor indicado.',
                 ['p' => number_format($peso, 2, ',', '.')]
             ),
         ];
@@ -121,7 +121,9 @@ final class InclusionFundebImpact
         ?int $totalMatriculas = null,
     ): array {
         try {
-            $nee = InclusionDashboardQueries::countMatriculasComNee($db, $city, $filters);
+            $neeMatriculas = InclusionDashboardQueries::countMatriculasComNee($db, $city, $filters);
+            $neeAlunos = InclusionDashboardQueries::countAlunosComNee($db, $city, $filters);
+            $nee = $neeAlunos > 0 ? $neeAlunos : $neeMatriculas;
             if ($nee <= 0) {
                 return ['available' => false];
             }
@@ -129,7 +131,7 @@ final class InclusionFundebImpact
             $calc = FundebMunicipalReferenceResolver::vaafParaCalculo($city, $filters);
             $vaaf = (float) ($calc['vaaf'] ?? 0);
             if ($vaaf <= 0) {
-                return ['available' => false, 'matriculas_nee' => $nee];
+                return ['available' => false, 'matriculas_nee' => $neeMatriculas, 'alunos_nee' => $neeAlunos > 0 ? $neeAlunos : null];
             }
 
             $peso = self::pesoEducacaoEspecial();
@@ -148,7 +150,9 @@ final class InclusionFundebImpact
 
             return [
                 'available' => true,
-                'matriculas_nee' => $nee,
+                'matriculas_nee' => $neeMatriculas,
+                'alunos_nee' => $neeAlunos > 0 ? $neeAlunos : null,
+                'base_calculo_nee' => $nee,
                 'total_matriculas' => $totalMatriculas !== null && $totalMatriculas > 0 ? $totalMatriculas : null,
                 'peso_educacao_especial' => $peso,
                 'incremento_ponderacao' => $incremento,

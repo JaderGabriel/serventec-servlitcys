@@ -14,6 +14,17 @@ Com **`config/analytics.php` → `lazy_tab_loading`**, a página inicial só exe
 
 Para desativar o lazy e voltar ao carregamento completo num único HTML (útil para comparar antes/depois no Pulse): **`ANALYTICS_LAZY_TABS=false`**.
 
+## Volume matrículas vs alunos distintos (3.8.0)
+
+Implementação: `MatriculaVolumeCounts`, cache em `IeducarAnalyticsMetricsScope`.
+
+- **Matrículas:** registos activos distintos na tabela `matricula` (filtro + turma).
+- **Alunos:** pessoas distintas (`config/ieducar.columns.matricula.aluno`); se a coluna não existir na instalação, só matrículas são mostradas.
+- **FUNDEB:** `FundebRepository::resolveVolumeCountsForFilter()` → `base_calculo` para `FundebResourceProjection::build()`.
+- **Inclusão:** `countAlunosComNee`, `countAlunosTurmaAeeSemCadastroNee` para impacto indicativo.
+
+Release: [RELEASE_20260603_ARTEMIS.md](RELEASE_20260603_ARTEMIS.md).
+
 ## Navegação em quatro áreas (3.4.0+)
 
 Desde a release **`20260531-Nemesis`**, o menu do Analytics tem **quatro** áreas: Cadastro → Pedagógico → **Censo** → Finanças. A aba Educacenso (`work_done`) pertence só ao grupo `censo`; Finanças agrupa Diagnóstico, Discrepâncias, FUNDEB e Financiamentos.

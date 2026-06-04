@@ -49,13 +49,24 @@ final class MatriculaChartQueries
 
     public static function totalMatriculasAtivasFiltradasUncached(Connection $db, City $city, IeducarFilterState $filters): ?int
     {
-        try {
-            $q = self::baseMatriculasAtivasFiltradas($db, $city, $filters);
+        $volume = MatriculaVolumeCounts::count($db, $city, $filters);
 
-            return (int) ($q->selectRaw(self::distinctMatriculaCountExpression($db).' as c')->value('c') ?? 0);
-        } catch (QueryException|\InvalidArgumentException) {
-            return null;
-        }
+        return $volume['matriculas'];
+    }
+
+    /**
+     * @return array{matriculas: int, alunos: ?int, alunos_available: bool}
+     */
+    public static function volumeCounts(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        return MatriculaVolumeCounts::count($db, $city, $filters);
+    }
+
+    public static function totalAlunosDistintosAtivosFiltrados(Connection $db, City $city, IeducarFilterState $filters): ?int
+    {
+        $volume = MatriculaVolumeCounts::count($db, $city, $filters);
+
+        return $volume['alunos_available'] ? (int) ($volume['alunos'] ?? 0) : null;
     }
 
     /**
@@ -2381,7 +2392,7 @@ final class MatriculaChartQueries
      */
     public static function enrollmentResumoKpis(Connection $db, City $city, IeducarFilterState $filters): array
     {
-        $out = ['matriculas' => 0, 'turmas_distintas' => 0, 'ocupacao_pct' => null];
+        $out = ['matriculas' => 0, 'alunos_distintos' => null, 'volume_hint' => null, 'turmas_distintas' => 0, 'ocupacao_pct' => null];
         try {
             $mat = IeducarSchema::resolveTable('matricula', $city);
             $mAtivo = (string) config('ieducar.columns.matricula.ativo');
@@ -2397,7 +2408,10 @@ final class MatriculaChartQueries
                 return $q;
             };
 
-            $out['matriculas'] = self::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
+            $volume = self::volumeCounts($db, $city, $filters);
+            $out['matriculas'] = $volume['matriculas'];
+            $out['alunos_distintos'] = $volume['alunos_available'] ? (int) ($volume['alunos'] ?? 0) : null;
+            $out['volume_hint'] = MatriculaVolumeCounts::presentation($volume)['hint'];
             $rowT = $base()->selectRaw('COUNT(DISTINCT t_filter.'.$tId.') as c')->first();
             $out['turmas_distintas'] = (int) ($rowT->c ?? 0);
 

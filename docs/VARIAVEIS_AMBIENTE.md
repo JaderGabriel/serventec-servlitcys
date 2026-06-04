@@ -147,7 +147,6 @@ php artisan queue:work database --queue=default,admin-sync --sleep=3 --tries=3
 | `ANALYTICS_FUNDEB_DISC_SUMMARY` | | `true` | Resumo leve na aba FUNDEB |
 | `ANALYTICS_FUNDEB_LIGHT_TAB` | | `true` | FUNDEB lazy: matrículas do snapshot financeiro (sem Visão geral + amostra Matrículas) |
 | `ANALYTICS_FUNDEB_SKIP_VAAF_PROFILE` | | `true` | FUNDEB lazy: omitir perfil VAAF multi-ano FNDE na primeira carga |
-| `ANALYTICS_COMPARATIVO_PRELOAD_SHELL` | | `true` | Preload Finanças do Comparativo: só shell + anos (`loadYearOptions`) |
 | `ANALYTICS_FINANCE_LIGHT_FUNDING` | | `true` | `fundingImpactSnapshot` só matrículas + VAAF (sem rotinas Discrepâncias) |
 | `ANALYTICS_FUNDING_SUMMARY_CACHE` | | `600` | Cache do resumo financeiro / `fundingImpactSnapshot` (segundos; `0` = sem cache) |
 | `ANALYTICS_MUNICIPALITY_HEALTH_REUSE_CONTEXT` | | `true` | Diagnóstico: contexto da faixa de impacto a partir do snapshot já carregado |

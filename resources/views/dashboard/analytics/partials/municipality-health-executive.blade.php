@@ -75,12 +75,6 @@
         default => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
     };
 
-    $qualityLabel = match ($status) {
-        'success' => __('Adequado'),
-        'warning' => __('Atenção'),
-        'danger' => __('Crítico'),
-        default => __('Sem índice'),
-    };
 @endphp
 
 <section class="serv-panel overflow-hidden border border-teal-200/60 dark:border-teal-900/50" id="diag-decisao">
@@ -90,22 +84,6 @@
                 <h2 class="text-lg sm:text-xl font-semibold font-display text-serv-navy dark:text-slate-100 leading-snug">
                     {{ __('Painel de decisão') }}
                 </h2>
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="text-xs text-slate-600 dark:text-slate-400">{{ __('Qualidade geral:') }}</span>
-                    <span class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-slate-200/80 dark:border-slate-700 bg-white/70 dark:bg-slate-900/30">
-                        <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide {{ $statusChip($status) }}">
-                            {{ $qualityLabel }}
-                        </span>
-                        @if ($score !== null)
-                            <span class="text-xs font-semibold tabular-nums text-serv-navy dark:text-slate-100">{{ (int) $score }}</span>
-                        @else
-                            <span class="text-xs text-slate-500">{{ __('—') }}</span>
-                        @endif
-                    </span>
-                    <a href="#diag-qualidade-sistema" class="text-xs font-semibold text-teal-700 dark:text-teal-300 underline underline-offset-2">
-                        {{ __('ver detalhes') }}
-                    </a>
-                </div>
                 <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl">
                     {{ $decisionHeadline }}
                 </p>

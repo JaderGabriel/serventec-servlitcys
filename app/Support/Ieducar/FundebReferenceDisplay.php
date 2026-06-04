@@ -254,34 +254,47 @@ final class FundebReferenceDisplay
      *
      * @param  array<string, mixed>|null  $funding
      */
-    public static function formulaPrevisaoBase(int $matriculas, float $vaaf, ?array $funding): string
-    {
+    public static function formulaPrevisaoBase(
+        int $matriculas,
+        float $vaaf,
+        ?array $funding,
+        int $matriculasRegistos = 0,
+        ?int $alunosDistintos = null,
+    ): string {
         $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
         $total = $fmt(MoneyMath::multiplyVaaf($matriculas, $vaaf));
         $fonte = trim((string) ($funding['vaa_fonte_label'] ?? ''));
         $mat = number_format($matriculas, 0, ',', '.');
         $vaa = $fmt($vaaf);
+        $registos = $matriculasRegistos > 0 ? $matriculasRegistos : $matriculas;
+        $baseLabel = $mat;
+        if ($alunosDistintos !== null && $alunosDistintos > 0 && $alunosDistintos < $registos) {
+            $baseLabel = __(':alunos aluno(s) distinto(s) (:mat registo(s) de matrícula no filtro)', [
+                'alunos' => number_format($alunosDistintos, 0, ',', '.'),
+                'mat' => number_format($registos, 0, ',', '.'),
+            ]);
+        }
 
         return match (self::tipoVaafCalculo($funding)) {
             'municipal' => __(
-                ':mat matrícula(s) × :vaa/aluno/ano (VAAF municipal — :fonte) = :total.',
-                ['mat' => $mat, 'vaa' => $vaa, 'fonte' => $fonte, 'total' => $total]
+                ':mat × :vaa/aluno/ano (VAAF municipal — :fonte) = :total.',
+                ['mat' => $baseLabel, 'vaa' => $vaa, 'fonte' => $fonte, 'total' => $total]
             ),
             'previa' => __(
-                ':mat matrícula(s) × :vaa/aluno/ano (prévia federal configurável — :fonte) = :total.',
-                ['mat' => $mat, 'vaa' => $vaa, 'fonte' => $fonte, 'total' => $total]
+                ':mat × :vaa/aluno/ano (prévia federal configurável — :fonte) = :total.',
+                ['mat' => $baseLabel, 'vaa' => $vaa, 'fonte' => $fonte, 'total' => $total]
             ),
             'estimado' => __(
-                ':mat matrícula(s) × :vaa/aluno/ano (VAAF estimado — :fonte) = :total.',
-                ['mat' => $mat, 'vaa' => $vaa, 'fonte' => $fonte, 'total' => $total]
+                ':mat × :vaa/aluno/ano (VAAF estimado — :fonte) = :total.',
+                ['mat' => $baseLabel, 'vaa' => $vaa, 'fonte' => $fonte, 'total' => $total]
             ),
             'config' => __(
-                ':mat matrícula(s) × :vaa/aluno/ano (valor configurado IEDUCAR_DISC_VAA_REFERENCIA — :fonte) = :total.',
-                ['mat' => $mat, 'vaa' => $vaa, 'fonte' => $fonte, 'total' => $total]
+                ':mat × :vaa/aluno/ano (valor configurado IEDUCAR_DISC_VAA_REFERENCIA — :fonte) = :total.',
+                ['mat' => $baseLabel, 'vaa' => $vaa, 'fonte' => $fonte, 'total' => $total]
             ),
             default => __(
-                ':mat matrícula(s) × :vaa/aluno/ano (:fonte) = :total.',
-                ['mat' => $mat, 'vaa' => $vaa, 'fonte' => $fonte, 'total' => $total]
+                ':mat × :vaa/aluno/ano (:fonte) = :total.',
+                ['mat' => $baseLabel, 'vaa' => $vaa, 'fonte' => $fonte, 'total' => $total]
             ),
         };
     }

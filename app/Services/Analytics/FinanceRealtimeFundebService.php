@@ -5,7 +5,6 @@ namespace App\Services\Analytics;
 use App\Models\City;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Repositories\Ieducar\DiscrepanciesRepository;
-use App\Repositories\Ieducar\OverviewRepository;
 use App\Repositories\MunicipalTransferSnapshotRepository;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Finance\MoneyMath;
@@ -21,7 +20,6 @@ use App\Support\Ieducar\FundebResourceProjection;
 final class FinanceRealtimeFundebService
 {
     public function __construct(
-        private OverviewRepository $overview,
         private DiscrepanciesRepository $discrepancies,
         private MunicipalTransferSnapshotRepository $transfers,
     ) {}
@@ -43,41 +41,57 @@ final class FinanceRealtimeFundebService
         $fundingRef = is_array($ctx['funding_reference'] ?? null) ? $ctx['funding_reference'] : null;
 
         $matriculas = (int) ($ctx['total_matriculas'] ?? 0);
+        $alunosDistintos = isset($ctx['total_alunos_distintos']) && is_numeric($ctx['total_alunos_distintos'])
+            ? (int) $ctx['total_alunos_distintos']
+            : null;
+        $baseCalculo = isset($ctx['base_calculo_fundeb']) && is_numeric($ctx['base_calculo_fundeb'])
+            ? (int) $ctx['base_calculo_fundeb']
+            : 0;
         $yearLabel = (string) ($ctx['year_label'] ?? '');
 
-        if ($matriculas <= 0 || $fundingRef === null) {
-            $light = $this->discrepancies->fundingImpactSnapshot($city, $filters);
-            if (is_array($light)) {
-                $matriculas = (int) ($light['total_matriculas'] ?? $matriculas);
-                $yearLabel = (string) ($light['year_label'] ?? $yearLabel);
-                $fundingRef = is_array($light['funding_reference'] ?? null) ? $light['funding_reference'] : $fundingRef;
+        if ($baseCalculo <= 0 || $fundingRef === null) {
+            $light = $this->discrepancies->lightFundingContext($city, $filters);
+            $matriculas = (int) ($light['total_matriculas'] ?? $matriculas);
+            $alunosDistintos = isset($light['total_alunos_distintos']) && is_numeric($light['total_alunos_distintos'])
+                ? (int) $light['total_alunos_distintos']
+                : $alunosDistintos;
+            $baseCalculo = (int) ($light['base_calculo_fundeb'] ?? $baseCalculo);
+            if ($baseCalculo <= 0) {
+                $baseCalculo = $matriculas;
             }
+            $yearLabel = (string) ($light['year_label'] ?? $yearLabel);
+            $fundingRef = is_array($light['funding_reference'] ?? null) ? $light['funding_reference'] : $fundingRef;
+        }
+        if ($baseCalculo <= 0) {
+            $baseCalculo = $matriculas;
         }
 
-        if ($matriculas <= 0) {
-            $overview = $this->overview->snapshot($city, $filters);
-            $matriculas = (int) ($overview['kpis']['matriculas'] ?? $overview['total_matriculas'] ?? 0);
-        } else {
-            $overview = [
-                'kpis' => ['matriculas' => $matriculas],
-                'total_matriculas' => $matriculas,
-            ];
-        }
+        $overview = [
+            'kpis' => [
+                'matriculas' => $matriculas > 0 ? $matriculas : null,
+                'alunos_distintos' => $alunosDistintos > 0 ? $alunosDistintos : null,
+            ],
+            'total_matriculas' => $matriculas > 0 ? $matriculas : null,
+        ];
 
         $disc = [
             'year_label' => $yearLabel !== '' ? $yearLabel : (string) $ano,
             'funding_reference' => $fundingRef,
             'summary' => is_array($ctx['summary'] ?? null) ? $ctx['summary'] : [],
             'total_matriculas' => $matriculas > 0 ? $matriculas : null,
+            'total_alunos_distintos' => $alunosDistintos > 0 ? $alunosDistintos : null,
         ];
 
         $projection = FundebResourceProjection::build(
-            $matriculas,
+            $baseCalculo,
             (string) ($disc['year_label'] ?? (string) $ano),
             $overview,
             $disc,
             $city,
             $filters,
+            null,
+            $matriculas,
+            $alunosDistintos > 0 ? $alunosDistintos : null,
         );
 
         $expectedAnnual = (float) ($projection['previsao_referencia'] ?? 0);

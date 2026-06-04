@@ -159,6 +159,26 @@ final class InclusionDashboardQueries
     }
 
     /**
+     * Alunos distintos com matrícula activa em educação especial (evita dupla ponderação FUNDEB por matrícula duplicada).
+     */
+    public static function countAlunosComNee(Connection $db, City $city, IeducarFilterState $filters): int
+    {
+        try {
+            $alunos = [];
+            foreach (self::fetchNeeMatriculasComTurmaCurso($db, $city, $filters) as $row) {
+                $aid = (int) ($row['aluno_id'] ?? 0);
+                if ($aid > 0) {
+                    $alunos[$aid] = true;
+                }
+            }
+
+            return count($alunos);
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    /**
      * Matrículas activas com vínculo em fisica_deficiencia / aluno_deficiencia (sem turma AEE por heurística).
      */
     public static function countMatriculasComCadastroNee(Connection $db, City $city, IeducarFilterState $filters): int
@@ -1448,6 +1468,17 @@ final class InclusionDashboardQueries
         } catch (\Throwable) {
             return 0;
         }
+    }
+
+    /**
+     * Alunos distintos em turma AEE sem cadastro NEE — base indicativa de risco FUNDEB (uma ponderação por aluno).
+     */
+    public static function countAlunosTurmaAeeSemCadastroNee(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+    ): int {
+        return DiscrepanciesQueries::countAlunosTurmaAeeSemCadastroNee($db, $city, $filters);
     }
 
     /**

@@ -73,6 +73,31 @@ final class IeducarAnalyticsMetricsScope
         return $v !== null ? (int) $v : null;
     }
 
+    public function alunosDistintosAtivos(): ?int
+    {
+        $this->ensureLoaded();
+        if (! ($this->cache['alunos_available'] ?? false)) {
+            return null;
+        }
+        $v = $this->cache['alunos_distintos'] ?? null;
+
+        return $v !== null ? (int) $v : null;
+    }
+
+    /**
+     * @return array{matriculas: int, alunos: ?int, alunos_available: bool}
+     */
+    public function volumeCounts(): array
+    {
+        $this->ensureLoaded();
+
+        return [
+            'matriculas' => (int) ($this->cache['matriculas_ativas'] ?? 0),
+            'alunos' => $this->alunosDistintosAtivos(),
+            'alunos_available' => (bool) ($this->cache['alunos_available'] ?? false),
+        ];
+    }
+
     /**
      * @return array{
      *   com: int,
@@ -131,9 +156,13 @@ final class IeducarAnalyticsMetricsScope
      */
     public function toMunicipalityContextExtras(): array
     {
-        $mat = $this->matriculasAtivas();
+        $volume = $this->volumeCounts();
+        $mat = $volume['matriculas'];
         $out = [
-            'total_matriculas' => ($mat !== null && $mat > 0) ? $mat : null,
+            'total_matriculas' => $mat > 0 ? $mat : null,
+            'total_alunos_distintos' => ($volume['alunos_available'] && ($volume['alunos'] ?? 0) > 0)
+                ? (int) $volume['alunos']
+                : null,
         ];
 
         $kpi = $this->distorcaoKpi();
@@ -195,7 +224,8 @@ final class IeducarAnalyticsMetricsScope
         }
 
         $this->cache = $this->cityData->run($this->city, function (Connection $db): array {
-            $matriculas = MatriculaChartQueries::totalMatriculasAtivasFiltradasUncached($db, $this->city, $this->filters);
+            $volume = MatriculaVolumeCounts::count($db, $this->city, $this->filters);
+            $matriculas = $volume['matriculas'];
             $pack = DistorcaoIdadeSerieEngine::contagens($db, $this->city, $this->filters);
             $mecanismos = is_array($pack['mecanismos'] ?? null) && $pack['mecanismos'] !== []
                 ? $pack['mecanismos']
@@ -207,6 +237,8 @@ final class IeducarAnalyticsMetricsScope
 
             return [
                 'matriculas_ativas' => $matriculas,
+                'alunos_distintos' => $volume['alunos'],
+                'alunos_available' => $volume['alunos_available'],
                 'distorcao_pack' => $pack,
                 'distorcao_kpi' => self::normalizeDistorcaoKpi($pack),
                 'mecanismos' => $mecanismos,
