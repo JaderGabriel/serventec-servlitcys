@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '3.8.0',
         'release_tag' => '20260603-Artemis',
-        'commit_short' => 'a1ee6d0',
+        'commit_short' => 'b1e67af',
         'commit_number' => 274,
         'revision_date' => '2026-06-03',
         'in_production' => true,
