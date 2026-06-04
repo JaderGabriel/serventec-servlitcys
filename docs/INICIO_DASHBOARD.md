@@ -1,0 +1,47 @@
+# Início (`/dashboard`) — painel admin
+
+**Versão:** 4.0.0+ · **Release:** [RELEASE_20260604_HESTIA.md](RELEASE_20260604_HESTIA.md)
+
+Painel operacional após login (utilizadores com `canViewAdminDashboard()`). Utilizadores sem essa permissão são redireccionados para a consultoria municipal.
+
+## Ordem dos blocos (4.0)
+
+1. **Alertas** — falhas de sync em 24 h e itens em fila (sync/PDF).  
+2. **KPIs** — municípios prontos, cidades, usuários, filas.  
+3. **Mapa de municípios** — pins com semáforo RX e ligação a Cidades.  
+4. **Acesso rápido** — atalhos curados (`HomeQuickActionsCatalog`).  
+5. **Fluxo de dados · Mapa Mental** — arquitectura de integrações (`AdminSystemFlowStatus`).
+
+## Acesso rápido
+
+Três zonas (consultoria, dados, operação). Cada card aponta para uma tarefa concreta; vários links abrem o painel analítico com `?tab=`:
+
+| Atalho | Rota / tab |
+|--------|------------|
+| Discrepâncias | `dashboard.analytics?tab=discrepancies` |
+| Diagnóstico geral | `dashboard.analytics?tab=municipality_health` |
+| Finanças · Tempo Real | `dashboard.analytics?tab=finance_realtime` (se `IEDUCAR_FINANCE_REALTIME_ENABLED`) |
+| FUNDEB | `dashboard.analytics?tab=fundeb` |
+| RX | `dashboard.rx` |
+| Dados públicos | `admin.public-data.index` |
+| Filas | `admin.sync-queue` ou `sync-queue` (conforme perfil) |
+
+Badges dinâmicos: contagem de fila, `prontos/activos` i-Educar, municípios activos.
+
+## Mapa mental
+
+- **Sequência operacional** (faixa no topo do bloco): cadastro → agregação → referências → saída.  
+- **Diagrama em camadas:** i-Educar (topo) → plataforma → fontes federais (base).  
+- **Legenda:** operacional / a configurar / indisponível (contagem de nós e arestas).
+
+Botão **?** abre modal «Como ler o mapa mental».
+
+## Dados no controller
+
+`DashboardController@index` → `AdminHomeMetrics::gather()` + `HomeQuickActionsCatalog::sections()`.
+
+Variáveis na view: `stats`, `ops`, `mapMarkers`, `mapSummary`, `systemFlow`, `quickActions`.
+
+## CSS
+
+Classes principais: `serv-qa-*` (acesso rápido), `serv-data-flow-panel`, `serv-mindmap`, `serv-home-kpi`.

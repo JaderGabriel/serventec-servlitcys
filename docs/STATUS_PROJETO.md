@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **3.10.0** · release `20260604-Plutus` · **Ramo:** `main` · **Última revisão:** 04/06/2026
+**Versão em produção:** **4.0.0** · release `20260604-Hestia` · **Ramo:** `main` · **Última revisão:** 04/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -18,6 +18,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Analytics — CadÚnico previsão (lacuna rede, impacto VAAF, export consultoria) | Implementado (3.5.0) |
 | CadÚnico — mapa territorial, faixas com lacuna, cenários NEE/AEE, import IBGE (`cadunico:sync-territorio`) | Implementado (3.9.0) |
 | Repasses FUNDEB — 3 extratos, download BB, extrato Tempo Real (mês/ano + comparativo) | Implementado (3.10.0) |
+| Início 4.0 — Acesso rápido curado, mapa mental em camadas, rebuild `funding:rebuild-finance-realtime` | Implementado (4.0.0) |
 | CadÚnico — importação automática (URL nacional, fila `cadastro`, cron, admin) | Implementado (3.5.0) |
 | CadÚnico — SAGI/Misocial (MDS) nacional + `cadunico:import-misocial` histórico | Implementado (3.6.0) |
 | Analytics — Finanças «Tempo Real» (repasses vs FUNDEB) | Implementado (3.6.0) |
@@ -48,7 +49,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Inclusão NEE — cadastro + turma AEE (SQL alinhado gráficos/medidores) | Implementado (3.0.0; `IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE`) |
 | Desempenho — gráficos SAEB em grelha 4 colunas | Implementado (3.0.0) |
 | Rodapé área logada + política de privacidade (`/privacidade`) | Implementado (3.0.0) |
-| Welcome / home — UI ícones, RX barra Censo, mapa mental | Implementado (3.0.0) |
+| Welcome / home — UI ícones, RX barra Censo, mapa mental | Implementado (3.0.0; Início refinado 4.0.0 — [INICIO_DASHBOARD.md](INICIO_DASHBOARD.md)) |
 | Consentimento LGPD (PP + cookies, versão, `/consentimento`) | Implementado (3.0.0; `legal_consent_logs`; layout desktop) |
 | Admin — relatório consentimentos (`/admin/consentimentos-legais`) | Implementado (3.0.0) |
 | Admin — editor documentos legais + revogação/reconsentimento (`/admin/documentos-legais`) | Implementado (3.0.0; patch pós-release; `legal_document_versions`) |

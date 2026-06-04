@@ -38,6 +38,7 @@ Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que
 | Documento | Conteúdo |
 |-----------|----------|
 | [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) | Propósito, público, governação de acesso (resumo) |
+| [INICIO_DASHBOARD.md](INICIO_DASHBOARD.md) | Início admin (`/dashboard`) — KPIs, atalhos, mapa mental (4.0+) |
 | [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) | RBAC: admin, user, municipal — matriz e fluxos |
 | [SEGURANCA.md](SEGURANCA.md) | Senhas, sessões, checklist produção |
 

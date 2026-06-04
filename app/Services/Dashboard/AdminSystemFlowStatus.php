@@ -18,10 +18,11 @@ final class AdminSystemFlowStatus
     /**
      * @return array{
      *     summary: array{status: string, label: string, detail: string},
-     *     zones: list<array{id: string, title: string, description: string}>,
+     *     zones: list<array{id: string, step?: int, title: string, description: string}>,
+     *     flow_steps: list<array{step: int, label: string, detail: string}>,
      *     nodes: list<array<string, mixed>>,
      *     edges: list<array<string, mixed>>,
-     *     legend: list<array{status: string, label: string, description: string}>
+     *     legend: list<array{status: string, label: string, description: string, count: int}>
      * }
      */
     public function diagram(int $citiesReady, int $citiesActive): array
@@ -148,7 +149,7 @@ final class AdminSystemFlowStatus
             $this->edge('fnde', 'servlitcys', $fnde['status'], __('VAAF e repasses indicativos')),
             $this->edge('inep', 'servlitcys', $inep['status'], __('Desempenho e SAEB')),
             $this->edge('portal', 'servlitcys', $portal['status'], __('Programas e despesas')),
-            $this->edge('tesouro', 'servlitcys', $tesouro['status'], __('Financiamentos complementares')),
+            $this->edge('tesouro', 'servlitcys', $tesouro['status'], __('Repasses e CKAN Tesouro')),
             $this->edge('arcgis', 'servlitcys', 'ok', __('Mapa e catálogo de escolas')),
             $this->edge('cadunico', 'servlitcys', $cadunico['status'], __('Lacuna rede e previsão FUNDEB')),
         ];
@@ -164,20 +165,29 @@ final class AdminSystemFlowStatus
             'summary' => $summary,
             'zones' => [
                 [
-                    'id' => 'external',
-                    'title' => __('1 · Fontes públicas e federais'),
-                    'description' => __('APIs e bases abertas (FNDE, INEP, MDS/Cecad, Transparência) — não substituem o cadastro local.'),
+                    'id' => 'municipal',
+                    'step' => 1,
+                    'title' => __('1 · Entrada — base municipal'),
+                    'description' => __('i-Educar: matrículas, turmas, Censo e cadastro escolar — fonte de verdade do município.'),
                 ],
                 [
                     'id' => 'platform',
-                    'title' => __('2 · Plataforma de consultoria'),
-                    'description' => __('Agrega, valida e expõe indicadores no painel analítico e relatórios.'),
+                    'step' => 2,
+                    'title' => __('2 · Agregação — motor de consultoria'),
+                    'description' => __('Cruza o cadastro local com referências federais; gera discrepâncias, FUNDEB indicativo e relatórios.'),
                 ],
                 [
-                    'id' => 'municipal',
-                    'title' => __('3 · Base municipal (i-Educar)'),
-                    'description' => __('Fonte de verdade do cadastro: matrículas, turmas, Censo e rotinas de discrepância.'),
+                    'id' => 'external',
+                    'step' => 3,
+                    'title' => __('3 · Enriquecimento — fontes públicas'),
+                    'description' => __('Importações e APIs (FNDE, INEP, MDS/Cecad, Tesouro, Transparência) — complementam, não substituem o i-Educar.'),
                 ],
+            ],
+            'flow_steps' => [
+                ['step' => 1, 'label' => __('Cadastro municipal'), 'detail' => __('i-Educar')],
+                ['step' => 2, 'label' => __('Agregação'), 'detail' => config('app.name')],
+                ['step' => 3, 'label' => __('Referências federais'), 'detail' => __('FNDE · INEP · MDS')],
+                ['step' => 4, 'label' => __('Saída'), 'detail' => __('Consultoria · Filas · PDF')],
             ],
             'nodes' => $nodes,
             'edges' => $edges,

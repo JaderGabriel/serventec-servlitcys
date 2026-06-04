@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Dashboard\AdminHomeMetrics;
+use App\Support\Dashboard\HomeQuickActionsCatalog;
 use App\Services\Notifications\OperationalAlertsNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,6 +35,7 @@ class DashboardController extends Controller
             'systemFlow' => $data['system_flow'],
             'mapMarkers' => $data['map_markers'],
             'mapSummary' => $data['map_summary'],
+            'quickActions' => HomeQuickActionsCatalog::sections($data['stats'], $data['ops'], $user),
         ]);
     }
 }

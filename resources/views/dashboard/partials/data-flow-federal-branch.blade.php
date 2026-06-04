@@ -13,9 +13,13 @@
     ];
     $byCategory = $externals->groupBy(fn ($n) => $n['category'] ?? 'outros');
 @endphp
-<div class="serv-mm-branch serv-mm-branch--federal">
+<div class="serv-mm-branch serv-mm-branch--federal serv-mm-branch--enrichment">
+    <div class="serv-mm-branch__connector serv-mm-branch__connector--up" aria-hidden="true">
+        <span class="serv-mm-branch__connector-line"></span>
+        <span class="serv-mm-branch__connector-label">{{ __('Enriquecimento e importações') }}</span>
+    </div>
     <div class="serv-mm-branch__head">
-        <span class="serv-mm-branch__num" aria-hidden="true">1</span>
+        <span class="serv-mm-branch__num" aria-hidden="true">{{ $zone['step'] ?? 3 }}</span>
         <div class="serv-mm-branch__head-text">
             <p class="serv-mm-branch__title">{{ $zone['title'] ?? __('Fontes públicas e federais') }}</p>
             <p class="serv-mm-branch__desc">{{ $zone['description'] ?? '' }}</p>
@@ -53,10 +57,5 @@
                 </div>
             @endif
         @endforeach
-    </div>
-
-    <div class="serv-mm-branch__connector" aria-hidden="true">
-        <span class="serv-mm-branch__connector-line"></span>
-        <span class="serv-mm-branch__connector-label">{{ __('Ingestão federal') }}</span>
     </div>
 </div>

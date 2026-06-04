@@ -2195,9 +2195,231 @@
         @apply block text-[10px] font-medium text-teal-700/90 dark:text-teal-400/90 mt-1;
     }
 
+    /* Acesso rápido (Início) — atalhos curados */
+    .serv-qa-panel {
+        @apply serv-panel overflow-hidden;
+    }
+
+    .serv-qa-panel__head {
+        @apply flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between
+            px-5 py-4 sm:px-6 border-b border-slate-200/90 dark:border-slate-700/90;
+    }
+
+    .serv-qa-panel__body {
+        @apply px-5 py-5 sm:px-6 sm:py-6;
+    }
+
+    .serv-qa-zone__head {
+        @apply flex items-start gap-3 mb-4;
+    }
+
+    .serv-qa-zone__marker {
+        @apply mt-1.5 h-8 w-1 shrink-0 rounded-full;
+    }
+
+    .serv-qa-zone--teal .serv-qa-zone__marker {
+        @apply bg-teal-500;
+    }
+
+    .serv-qa-zone--indigo .serv-qa-zone__marker {
+        @apply bg-indigo-500;
+    }
+
+    .serv-qa-zone--amber .serv-qa-zone__marker {
+        @apply bg-amber-500;
+    }
+
+    .serv-qa-zone__title {
+        @apply font-display text-sm font-semibold text-slate-900 dark:text-slate-100;
+    }
+
+    .serv-qa-zone__subtitle {
+        @apply mt-0.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed;
+    }
+
+    .serv-qa-grid {
+        @apply grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3;
+    }
+
+    .serv-qa-grid--featured {
+        @apply grid-cols-1 md:grid-cols-2 gap-3 mb-3;
+    }
+
+    .serv-qa-grid--solo {
+        @apply xl:grid-cols-2;
+    }
+
+    .serv-qa-card {
+        @apply relative flex items-start gap-3 rounded-xl border border-slate-200/90
+            dark:border-slate-700/80 bg-white dark:bg-slate-900/60 p-4
+            transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-600
+            hover:shadow-md hover:shadow-slate-900/[0.04] dark:hover:shadow-black/20
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/30;
+    }
+
+    .serv-qa-card--featured {
+        @apply sm:p-5 ring-1 ring-slate-900/[0.04] dark:ring-white/[0.06];
+    }
+
+    .serv-qa-card--teal.serv-qa-card--featured {
+        @apply border-teal-200/90 dark:border-teal-800/50 bg-gradient-to-br from-teal-50/40 via-white to-white
+            dark:from-teal-950/20 dark:via-slate-900/50 dark:to-slate-950/60;
+    }
+
+    .serv-qa-card--alert {
+        @apply border-amber-200/90 dark:border-amber-800/50 ring-1 ring-amber-500/10;
+    }
+
+    .serv-qa-card__accent {
+        @apply absolute inset-y-3 start-0 w-1 rounded-e-full opacity-0 transition-opacity group-hover:opacity-100;
+    }
+
+    .serv-qa-card--teal .serv-qa-card__accent {
+        @apply bg-teal-500;
+    }
+
+    .serv-qa-card--indigo .serv-qa-card__accent {
+        @apply bg-indigo-500;
+    }
+
+    .serv-qa-card--amber .serv-qa-card__accent {
+        @apply bg-amber-500;
+    }
+
+    .serv-qa-card--slate .serv-qa-card__accent {
+        @apply bg-slate-400;
+    }
+
+    .serv-qa-card__badge {
+        @apply absolute top-3 end-3 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide;
+    }
+
+    .serv-qa-card__badge--ok {
+        @apply bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-200;
+    }
+
+    .serv-qa-card__badge--warn {
+        @apply bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200;
+    }
+
+    .serv-qa-card__badge--danger {
+        @apply bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-200;
+    }
+
+    .serv-qa-card__badge--info {
+        @apply bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200;
+    }
+
+    .serv-qa-card__badge--neutral {
+        @apply bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 tabular-nums;
+    }
+
+    .serv-qa-card__icon {
+        @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-lg
+            bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300;
+    }
+
+    .serv-qa-card--featured .serv-qa-card__icon {
+        @apply h-12 w-12 rounded-xl;
+    }
+
+    .serv-qa-card__icon--teal {
+        @apply bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300;
+    }
+
+    .serv-qa-card__icon--indigo {
+        @apply bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300;
+    }
+
+    .serv-qa-card__icon--amber {
+        @apply bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200;
+    }
+
+    .serv-qa-card__body {
+        @apply min-w-0 flex-1 pe-6 space-y-0.5;
+    }
+
+    .serv-qa-card__kicker {
+        @apply block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-qa-card__title {
+        @apply block font-display text-sm font-semibold text-slate-900 dark:text-slate-100 leading-snug
+            group-hover:text-teal-800 dark:group-hover:text-teal-300 transition-colors;
+    }
+
+    .serv-qa-card--featured .serv-qa-card__title {
+        @apply text-base;
+    }
+
+    .serv-qa-card__desc {
+        @apply block text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2;
+    }
+
+    .serv-qa-card--featured .serv-qa-card__desc {
+        @apply line-clamp-3;
+    }
+
+    .serv-qa-card__go {
+        @apply absolute end-3 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600
+            transition-colors group-hover:text-teal-600 dark:group-hover:text-teal-400;
+    }
+
     /* Fluxo de dados (Início) — diagrama de integrações */
+    .serv-data-flow-panel {
+        @apply serv-panel overflow-hidden;
+    }
+
+    .serv-data-flow-panel__head {
+        @apply px-5 py-4 sm:px-6 border-b border-slate-200/90 dark:border-slate-700/90
+            flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between;
+    }
+
+    .serv-data-flow-panel__intro {
+        @apply flex gap-3 items-start min-w-0 flex-1;
+    }
+
+    .serv-data-flow-panel__body {
+        @apply px-5 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7;
+    }
+
+    .serv-data-flow-steps {
+        @apply border-b border-slate-200/80 dark:border-slate-700/80
+            bg-slate-50/80 dark:bg-slate-900/40 px-5 py-3 sm:px-6;
+    }
+
+    .serv-data-flow-steps__list {
+        @apply flex flex-wrap items-center gap-2 sm:gap-3 list-none m-0 p-0;
+    }
+
+    .serv-data-flow-steps__item {
+        @apply flex items-center gap-2 rounded-lg border border-slate-200/90 dark:border-slate-700/80
+            bg-white dark:bg-slate-900/60 px-2.5 py-2 shadow-sm min-w-0;
+    }
+
+    .serv-data-flow-steps__num {
+        @apply flex h-6 w-6 shrink-0 items-center justify-center rounded-md
+            bg-serv-navy text-[11px] font-bold text-white;
+    }
+
+    .serv-data-flow-steps__text {
+        @apply flex flex-col min-w-0 leading-tight;
+    }
+
+    .serv-data-flow-steps__label {
+        @apply text-xs font-semibold text-slate-900 dark:text-slate-100;
+    }
+
+    .serv-data-flow-steps__detail {
+        @apply text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[8rem] sm:max-w-none;
+    }
+
+    .serv-data-flow-steps__arrow {
+        @apply hidden sm:flex items-center text-slate-400 dark:text-slate-500 list-none;
+    }
+
     .serv-data-flow-summary {
-        @apply rounded-xl border px-4 py-3 max-w-sm;
+        @apply rounded-xl border px-4 py-3 w-full lg:max-w-xs shrink-0;
     }
 
     .serv-data-flow-summary--ok {
@@ -2246,19 +2468,29 @@
 
     /* Fluxo de dados — mapa mental */
     .serv-mindmap {
-        @apply relative rounded-2xl border border-slate-200/90 dark:border-slate-700/90
-            bg-[radial-gradient(ellipse_at_50%_0%,rgba(99,102,241,0.08),transparent_55%),radial-gradient(ellipse_at_50%_100%,rgba(20,184,166,0.1),transparent_50%)]
-            dark:bg-[radial-gradient(ellipse_at_50%_0%,rgba(99,102,241,0.12),transparent_55%),radial-gradient(ellipse_at_50%_100%,rgba(20,184,166,0.08),transparent_50%)]
-            bg-slate-50/50 dark:bg-slate-900/40 px-4 py-5 sm:px-6 sm:py-6;
+        @apply relative rounded-xl border border-slate-200/90 dark:border-slate-700/90
+            bg-white dark:bg-slate-900/50 px-4 py-5 sm:px-6 sm:py-6 max-w-4xl mx-auto;
+    }
+
+    .serv-mm-branch--origin {
+        @apply max-w-xl mx-auto w-full;
     }
 
     .serv-mm-branch--federal {
-        @apply rounded-xl border border-indigo-200/70 dark:border-indigo-900/50
-            bg-white/70 dark:bg-slate-900/50 p-4 shadow-sm;
+        @apply rounded-xl border border-slate-200/90 dark:border-slate-700/80
+            bg-slate-50/90 dark:bg-slate-950/40 p-4;
+    }
+
+    .serv-mm-branch--enrichment .serv-mm-branch__connector--up {
+        @apply pb-2 pt-0;
     }
 
     .serv-mm-branch--municipal {
         @apply max-w-xl mx-auto w-full;
+    }
+
+    .serv-mm-branch__title--teal {
+        @apply text-teal-950 dark:text-teal-100;
     }
 
     .serv-mm-branch__head {
@@ -2270,12 +2502,12 @@
     }
 
     .serv-mm-branch__num {
-        @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full
-            bg-indigo-600 text-sm font-bold text-white shadow-md shadow-indigo-500/30;
+        @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-lg
+            bg-serv-navy text-xs font-bold text-white;
     }
 
     .serv-mm-branch__num--teal {
-        @apply bg-teal-600 shadow-teal-500/30;
+        @apply bg-teal-700 dark:bg-teal-600;
     }
 
     .serv-mm-branch__head-text {
@@ -2283,7 +2515,7 @@
     }
 
     .serv-mm-branch__title {
-        @apply font-display text-sm font-semibold text-indigo-950 dark:text-indigo-100 leading-snug;
+        @apply font-display text-sm font-semibold text-slate-900 dark:text-slate-100 leading-snug;
     }
 
     .serv-mm-branch__desc {
@@ -2313,8 +2545,8 @@
     }
 
     .serv-mm-twig__label {
-        @apply text-[10px] font-bold uppercase tracking-wider text-indigo-700/90 dark:text-indigo-300/90
-            mb-2 pb-1.5 border-b border-indigo-100 dark:border-indigo-900/50;
+        @apply text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400
+            mb-2 pb-1.5 border-b border-slate-200/90 dark:border-slate-700/80;
     }
 
     .serv-mm-leaves {
@@ -2360,7 +2592,7 @@
 
     .serv-mm-leaf__acronym {
         @apply inline-flex me-1 rounded px-1 py-px text-[9px] font-bold uppercase tracking-wide
-            bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-200;
+            bg-slate-200/90 text-slate-700 dark:bg-slate-800 dark:text-slate-300;
     }
 
     .serv-mm-leaf__sub {
@@ -2384,18 +2616,17 @@
     }
 
     .serv-mm-branch__connector-line {
-        @apply block w-px h-10 bg-gradient-to-b from-indigo-400/70 via-teal-500/80 to-teal-600
-            dark:from-indigo-500/50 dark:via-teal-500/60 dark:to-teal-400;
+        @apply block w-px h-8 bg-gradient-to-b from-teal-500/70 to-slate-300/80
+            dark:from-teal-500/50 dark:to-slate-600/60;
     }
 
     .serv-mm-branch__connector--up .serv-mm-branch__connector-line {
-        @apply bg-gradient-to-t from-teal-500/80 via-teal-400/70 to-indigo-300/50 h-8;
+        @apply bg-gradient-to-t from-teal-500/70 via-slate-300/60 to-transparent h-8;
     }
 
     .serv-mm-branch__connector-label {
-        @apply mt-1.5 rounded-full border border-teal-200/80 dark:border-teal-800/50
-            bg-white/90 dark:bg-slate-900/80 px-3 py-0.5 text-[10px] font-medium text-teal-900 dark:text-teal-200
-            shadow-sm;
+        @apply mt-1.5 rounded-md border border-slate-200/90 dark:border-slate-600/80
+            bg-white dark:bg-slate-900/90 px-2.5 py-0.5 text-[10px] font-medium text-slate-700 dark:text-slate-300;
     }
 
     .serv-mm-spine {
@@ -2403,7 +2634,7 @@
     }
 
     .serv-mm-spine__line--down {
-        @apply block w-0.5 h-6 bg-gradient-to-b from-indigo-300/60 to-teal-500/80;
+        @apply block w-px h-5 bg-gradient-to-b from-teal-500/60 to-slate-300/70 dark:to-slate-600/60;
     }
 
     .serv-mm-core-wrap {
@@ -2411,15 +2642,15 @@
     }
 
     .serv-mm-core {
-        @apply relative w-full max-w-lg text-center rounded-2xl border-2 border-teal-300/80
-            dark:border-teal-700/70 bg-gradient-to-br from-teal-50 via-white to-indigo-50/40
-            dark:from-teal-950/50 dark:via-slate-900/80 dark:to-indigo-950/30
-            px-5 py-5 shadow-lg shadow-teal-900/5 dark:shadow-black/20;
+        @apply relative w-full max-w-lg text-center rounded-xl border border-slate-200/90
+            dark:border-slate-600/80 bg-white dark:bg-slate-900/80
+            px-5 py-5 shadow-md shadow-slate-900/[0.06] dark:shadow-black/30
+            ring-1 ring-teal-600/15 dark:ring-teal-500/20;
     }
 
     .serv-mm-core__ring {
-        @apply pointer-events-none absolute inset-2 rounded-xl border border-dashed border-teal-300/40
-            dark:border-teal-600/30;
+        @apply pointer-events-none absolute inset-2 rounded-lg border border-dashed border-slate-200/80
+            dark:border-slate-600/50;
     }
 
     .serv-mm-core__badge {
@@ -2455,11 +2686,11 @@
     }
 
     .serv-mm-core__step {
-        @apply text-[10px] font-bold uppercase tracking-wider text-teal-800/90 dark:text-teal-300/90;
+        @apply text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400;
     }
 
     .serv-mm-core__label {
-        @apply font-display text-xl font-bold text-serv-navy dark:text-teal-50 mt-1;
+        @apply font-display text-xl font-bold text-serv-navy dark:text-slate-50 mt-1;
     }
 
     .serv-mm-core__sub {
@@ -2536,9 +2767,7 @@
     }
 
     .serv-data-flow-legend {
-        @apply border-t border-slate-200/90 dark:border-slate-700/90
-            bg-gradient-to-b from-slate-50/90 to-slate-100/60
-            dark:from-slate-900/70 dark:to-slate-950/50;
+        @apply border-t border-slate-200/90 dark:border-slate-700/90 bg-slate-50/60 dark:bg-slate-900/40;
     }
 
     .serv-data-flow-legend__inner {

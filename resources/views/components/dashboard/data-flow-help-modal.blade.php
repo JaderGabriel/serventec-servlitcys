@@ -27,22 +27,29 @@
             </button>
         </div>
         <div class="overflow-y-auto px-5 py-4 space-y-3 text-sm max-h-[min(70vh,28rem)]">
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                {{ __('A faixa horizontal resume a ordem em que a operação costuma correr. O diagrama em camadas mostra de onde vêm os dados e onde são cruzados.') }}
+            </p>
             <ul class="space-y-3 text-slate-700 dark:text-slate-300 leading-relaxed">
                 <li class="flex gap-2">
-                    <span class="serv-mm-tip-num" aria-hidden="true">1</span>
-                    <span>{{ __('Ramo superior: fontes públicas e federais, agrupadas por eixo (financiamento, indicadores, assistência social/CadÚnico, transparência, geografia).') }}</span>
+                    <span class="serv-mm-tip-num serv-mm-tip-num--teal" aria-hidden="true">1</span>
+                    <span>{{ __('Topo: i-Educar — cadastro municipal (matrículas, turmas, Censo). Sem base local, repasses e discrepâncias perdem sentido.') }}</span>
                 </li>
                 <li class="flex gap-2">
                     <span class="serv-mm-tip-num serv-mm-tip-num--hub" aria-hidden="true">2</span>
-                    <span>{{ __('Centro: a plataforma agrega, valida e expõe indicadores — lista resumida das entradas activas.') }}</span>
+                    <span>{{ __('Centro: a plataforma sincroniza, valida e cruza com FUNDEB, INEP, CadÚnico e Tesouro; as etiquetas no núcleo resumem cada entrada activa.') }}</span>
                 </li>
                 <li class="flex gap-2">
-                    <span class="serv-mm-tip-num serv-mm-tip-num--teal" aria-hidden="true">3</span>
-                    <span>{{ __('Base: i-Educar é a fonte de verdade do cadastro municipal; a seta bidirecional indica leitura e confronto com o painel.') }}</span>
+                    <span class="serv-mm-tip-num" aria-hidden="true">3</span>
+                    <span>{{ __('Base: fontes públicas e federais, por eixo (financiamento, indicadores, assistência social, transparência, geografia) — complementam o cadastro, não o substituem.') }}</span>
+                </li>
+                <li class="flex gap-2">
+                    <span class="serv-mm-tip-num serv-mm-tip-num--muted" aria-hidden="true">4</span>
+                    <span>{{ __('Saída: painel analítico, RX, filas de sync/PDF e relatórios (atalhos «Acesso rápido» acima deste bloco).') }}</span>
                 </li>
                 <li class="flex gap-2">
                     <span class="serv-mm-tip-num serv-mm-tip-num--muted" aria-hidden="true">·</span>
-                    <span>{{ __('Pontos no mapa: teal = operacional, âmbar = a configurar, cinza = indisponível — contagens na legenda refletem nós e conexões.') }}</span>
+                    <span>{{ __('Cores: teal = operacional, âmbar = a configurar (.env ou municípios), cinza = indisponível. A legenda conta nós e ligações.') }}</span>
                 </li>
             </ul>
         </div>

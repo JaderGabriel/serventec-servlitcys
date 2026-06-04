@@ -1,153 +1,81 @@
 @php
-    $queueTotal = (int) ($ops['sync_pending'] ?? 0) + (int) ($ops['pdf_pending'] ?? 0);
-    $syncFailed = (int) ($ops['sync_failed_24h'] ?? 0);
+    $sections = $quickActions ?? [];
 @endphp
 
-<section aria-labelledby="home-actions" class="space-y-6">
-    <div>
-        <h3 id="home-actions" class="font-display text-lg font-semibold text-serv-navy dark:text-slate-100">{{ __('Acesso rápido') }}</h3>
-        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-            {{ __('Atalhos alinhados ao fluxo de dados: consultoria a partir do i-Educar, operação em filas e monitorização da plataforma.') }}
-        </p>
-    </div>
-
-    <div class="space-y-5">
-        {{-- Consultoria --}}
-        <div class="serv-home-action-group">
-            <p class="serv-home-action-group__label">
-                <span class="serv-home-action-group__dot serv-home-action-group__dot--teal" aria-hidden="true"></span>
-                {{ __('Consultoria e relatórios') }}
+<section class="serv-qa-panel" aria-labelledby="home-actions">
+    <header class="serv-qa-panel__head">
+        <div>
+            <p class="serv-eyebrow text-slate-600 dark:text-slate-400">{{ __('Operação diária') }}</p>
+            <h3 id="home-actions" class="font-display text-lg font-semibold text-serv-navy dark:text-slate-100 mt-0.5">
+                {{ __('Acesso rápido') }}
+            </h3>
+            <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+                {{ __('Atalhos para onde a equipe decide, importa e processa — alinhados ao fluxo de dados no final da página.') }}
             </p>
-            <div class="serv-home-action-grid--half">
-                <a href="{{ route('dashboard.rx') }}" class="serv-home-action group">
-                    <span class="serv-home-action__icon serv-home-action__icon--teal" aria-hidden="true">
-                        <x-ui.icon name="clipboard-document-list" class="h-6 w-6" />
-                    </span>
-                    <span class="serv-home-action__body">
-                        <span class="serv-home-action__title">RX</span>
-                        <span class="serv-home-action__desc">{{ __('Cadastro e Censo em todos os municípios — força de trabalho e prazos.') }}</span>
-                        <span class="serv-home-action__ref">{{ __('Multi-município, ano vigente') }}</span>
-                    </span>
-                    <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 text-teal-600/70 group-hover:text-teal-700 dark:text-teal-400" />
-                </a>
-                <a href="{{ route('dashboard.analytics') }}" class="serv-home-action serv-home-action--primary group">
-                    <span class="serv-home-action__icon serv-home-action__icon--teal" aria-hidden="true">
-                        <x-ui.icon name="chart-bar" class="h-6 w-6" />
-                    </span>
-                    <span class="serv-home-action__body">
-                        <span class="serv-home-action__title">{{ __('Painel analítico') }}</span>
-                        <span class="serv-home-action__desc">{{ __('FUNDEB, matrículas, rede, Censo e discrepâncias por município e ano letivo.') }}</span>
-                        <span class="serv-home-action__ref">{{ __('Saída do fluxo: Consultoria') }}</span>
-                    </span>
-                    <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 text-teal-600/70 group-hover:text-teal-700 dark:text-teal-400" />
-                </a>
-            </div>
         </div>
+        <a href="{{ route('dashboard.analytics') }}" class="serv-btn-secondary text-sm shrink-0 hidden sm:inline-flex">
+            {{ __('Abrir consultoria') }}
+        </a>
+    </header>
 
-        {{-- Municípios --}}
-        <div class="serv-home-action-group">
-            <p class="serv-home-action-group__label">
-                <span class="serv-home-action-group__dot serv-home-action-group__dot--violet" aria-hidden="true"></span>
-                {{ __('Municípios e conexões') }}
-            </p>
-            <div class="serv-home-action-grid">
-                <a href="{{ route('cities.index') }}" class="serv-home-action group">
-                    <span class="serv-home-action__icon serv-home-action__icon--violet" aria-hidden="true">
-                        <x-ui.icon name="map-pin" class="h-6 w-6" />
-                    </span>
-                    <span class="serv-home-action__body">
-                        <span class="serv-home-action__title">{{ __('Cidades') }}</span>
-                        <span class="serv-home-action__desc">{{ __('Cadastro, IBGE, credenciais e activação no mapa.') }}</span>
-                        <span class="serv-home-action__ref">{{ __('Liga ao mapa abaixo') }}</span>
-                    </span>
-                    <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
-                </a>
-                <a href="{{ route('admin.connections.index') }}" class="serv-home-action group">
-                    <span class="serv-home-action__icon serv-home-action__icon--violet" aria-hidden="true">
-                        <x-ui.icon name="circle-stack" class="h-6 w-6" />
-                    </span>
-                    <span class="serv-home-action__body">
-                        <span class="serv-home-action__title">{{ __('Conexões i-Educar') }}</span>
-                        <span class="serv-home-action__desc">{{ __('Testar conexão, driver e versão da base por município.') }}</span>
-                        <span class="serv-home-action__ref">{{ __('Zona municipal no fluxo') }}</span>
-                    </span>
-                    <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
-                </a>
-                <a href="{{ route('admin.ieducar-compatibility.index') }}" class="serv-home-action group">
-                    <span class="serv-home-action__icon serv-home-action__icon--violet" aria-hidden="true">
-                        <x-ui.icon name="squares-2x2" class="h-6 w-6" />
-                    </span>
-                    <span class="serv-home-action__body">
-                        <span class="serv-home-action__title">{{ __('Compatibilidade i-Educar') }}</span>
-                        <span class="serv-home-action__desc">{{ __('Tabelas, métricas de cadastro e importação FUNDEB.') }}</span>
-                        <span class="serv-home-action__ref">{{ __('Pré-requisito da consultoria') }}</span>
-                    </span>
-                    <x-ui.icon name="chevron-right" class="h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
-                </a>
-            </div>
-        </div>
+    <div class="serv-qa-panel__body space-y-8">
+        @foreach ($sections as $section)
+            @php
+                $accent = (string) ($section['accent'] ?? 'slate');
+                $actions = $section['actions'] ?? [];
+                $featured = collect($actions)->where('featured', true)->values();
+                $standard = collect($actions)->where('featured', false)->values();
+            @endphp
+            <div class="serv-qa-zone serv-qa-zone--{{ $accent }}">
+                <div class="serv-qa-zone__head">
+                    <span class="serv-qa-zone__marker" aria-hidden="true"></span>
+                    <div class="min-w-0">
+                        <h4 class="serv-qa-zone__title">{{ $section['title'] ?? '' }}</h4>
+                        <p class="serv-qa-zone__subtitle">{{ $section['subtitle'] ?? '' }}</p>
+                    </div>
+                </div>
 
-        {{-- Operação --}}
-        <div class="serv-home-action-group">
-            <p class="serv-home-action-group__label">
-                <span class="serv-home-action-group__dot serv-home-action-group__dot--sky" aria-hidden="true"></span>
-                {{ __('Operação da plataforma') }}
-            </p>
-            <div class="serv-home-action-grid serv-home-action-grid--quarter">
-                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="serv-home-action group @if ($queueTotal > 0 || $syncFailed > 0) serv-home-action--alert @endif">
-                    <span class="serv-home-action__icon serv-home-action__icon--amber" aria-hidden="true">
-                        <x-ui.icon name="queue-list" class="h-6 w-6" />
-                    </span>
-                    <span class="serv-home-action__body">
-                        <span class="serv-home-action__title">{{ __('Filas de processamento') }}</span>
-                        <span class="serv-home-action__desc">
-                            @if ($queueTotal > 0)
-                                {{ __(':n em fila (sync :sync · PDF :pdf).', [
-                                    'n' => number_format($queueTotal),
-                                    'sync' => number_format($ops['sync_pending'] ?? 0),
-                                    'pdf' => number_format($ops['pdf_pending'] ?? 0),
-                                ]) }}
-                            @else
-                                {{ __('Sincronização admin, geo, pedagógico e exportação PDF.') }}
-                            @endif
-                        </span>
-                        <span class="serv-home-action__ref">{{ __('Saída do fluxo: Filas') }}</span>
-                    </span>
-                    <x-ui.icon name="chevron-right" class="serv-home-action__chevron h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
-                </a>
-                <a href="{{ route('pulse') }}" class="serv-home-action group">
-                    <span class="serv-home-action__icon serv-home-action__icon--sky" aria-hidden="true">
-                        <x-ui.icon name="computer-desktop" class="h-6 w-6" />
-                    </span>
-                    <span class="serv-home-action__body">
-                        <span class="serv-home-action__title">{{ __('Monitorização (Pulse)') }}</span>
-                        <span class="serv-home-action__desc">{{ __('Pedidos lentos, erros, filas e uso da aplicação em tempo real.') }}</span>
-                        <span class="serv-home-action__ref">{{ __('Hub :app no fluxo', ['app' => config('app.name')]) }}</span>
-                    </span>
-                    <x-ui.icon name="chevron-right" class="serv-home-action__chevron h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
-                </a>
-                <a href="{{ route('admin.geo-sync.index') }}" class="serv-home-action group">
-                    <span class="serv-home-action__icon serv-home-action__icon--sky" aria-hidden="true">
-                        <x-ui.icon name="map" class="h-6 w-6" />
-                    </span>
-                    <span class="serv-home-action__body">
-                        <span class="serv-home-action__title">{{ __('Sincronização geográfica') }}</span>
-                        <span class="serv-home-action__desc">{{ __('Coordenadas i-Educar, INEP e microdados para o mapa.') }}</span>
-                    </span>
-                    <x-ui.icon name="chevron-right" class="serv-home-action__chevron h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
-                </a>
-                <a href="{{ route('users.index') }}" class="serv-home-action group">
-                    <span class="serv-home-action__icon serv-home-action__icon--slate" aria-hidden="true">
-                        <x-ui.icon name="users" class="h-6 w-6" />
-                    </span>
-                    <span class="serv-home-action__body">
-                        <span class="serv-home-action__title">{{ __('Usuários') }}</span>
-                        <span class="serv-home-action__desc">{{ __('Contas, perfis, municípios associados e sessões.') }}</span>
-                        <span class="serv-home-action__ref">{{ __('Gestão de equipe') }}</span>
-                    </span>
-                    <x-ui.icon name="chevron-right" class="serv-home-action__chevron h-5 w-5 shrink-0 opacity-40 group-hover:opacity-70" />
-                </a>
+                @if ($featured->isNotEmpty())
+                    <div class="serv-qa-grid serv-qa-grid--featured">
+                        @foreach ($featured as $action)
+                            <x-dashboard.home-quick-action
+                                :href="$action['href']"
+                                :title="$action['title']"
+                                :description="$action['description']"
+                                :icon="$action['icon']"
+                                :accent="$accent"
+                                :kicker="$action['kicker'] ?? ''"
+                                :featured="true"
+                                :badge="$action['badge'] ?? null"
+                                :badge-tone="$action['badge_tone'] ?? 'neutral'"
+                                :alert="(bool) ($action['alert'] ?? false)"
+                            />
+                        @endforeach
+                    </div>
+                @endif
+
+                @if ($standard->isNotEmpty())
+                    <div @class([
+                        'serv-qa-grid',
+                        'serv-qa-grid--solo' => $featured->isEmpty(),
+                    ])>
+                        @foreach ($standard as $action)
+                            <x-dashboard.home-quick-action
+                                :href="$action['href']"
+                                :title="$action['title']"
+                                :description="$action['description']"
+                                :icon="$action['icon']"
+                                :accent="$accent"
+                                :kicker="$action['kicker'] ?? ''"
+                                :featured="false"
+                                :badge="$action['badge'] ?? null"
+                                :badge-tone="$action['badge_tone'] ?? 'neutral'"
+                                :alert="(bool) ($action['alert'] ?? false)"
+                            />
+                        @endforeach
+                    </div>
+                @endif
             </div>
-        </div>
+        @endforeach
     </div>
 </section>

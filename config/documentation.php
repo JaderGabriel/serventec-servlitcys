@@ -22,10 +22,10 @@ return [
     */
 
     'product' => [
-        'version' => '3.10.0',
-        'release_tag' => '20260604-Plutus',
-        'commit_short' => '765d97a',
-        'commit_number' => 282,
+        'version' => '4.0.0',
+        'release_tag' => '20260604-Hestia',
+        'commit_short' => 'pending',
+        'commit_number' => 283,
         'revision_date' => '2026-06-04',
         'in_production' => true,
         'production_label' => 'Em produção',

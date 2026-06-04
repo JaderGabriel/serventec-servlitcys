@@ -21,6 +21,10 @@ final class AdminSystemFlowStatusTest extends TestCase
         $this->assertArrayHasKey('summary', $diagram);
         $this->assertArrayHasKey('zones', $diagram);
         $this->assertCount(3, $diagram['zones']);
+        $this->assertArrayHasKey('flow_steps', $diagram);
+        $this->assertCount(4, $diagram['flow_steps']);
+        $municipalZone = collect($diagram['zones'])->firstWhere('id', 'municipal');
+        $this->assertSame(1, $municipalZone['step'] ?? null);
         $this->assertArrayHasKey('legend', $diagram);
         $this->assertCount(3, $diagram['legend']);
         $this->assertNotEmpty($diagram['legend'][0]['description'] ?? '');
