@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '3.8.0',
-        'release_tag' => '20260603-Artemis',
-        'commit_short' => 'b1e67af',
-        'commit_number' => 274,
-        'revision_date' => '2026-06-03',
+        'version' => '3.9.0',
+        'release_tag' => '20260604-Gaia',
+        'commit_short' => '',
+        'commit_number' => 275,
+        'revision_date' => '2026-06-04',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

@@ -1426,6 +1426,51 @@ return [
             ['key' => 'criancas_11_14', 'label' => 'Fundamental — anos finais', 'etapa_keywords' => ['finais', 'fundamental ii', 'fundamental 2']],
             ['key' => 'criancas_15_17', 'label' => 'Ensino médio', 'etapa_keywords' => ['médio', 'medio', 'eja']],
         ],
+        'territorio' => [
+            'delimiter' => env('IEDUCAR_CADUNICO_TERRITORIO_DELIMITER', ';'),
+            'storage_path' => (string) env('IEDUCAR_CADUNICO_TERRITORIO_PATH', 'cadunico/territorio'),
+            'load_school_markers' => filter_var(env('IEDUCAR_CADUNICO_TERRITORIO_SCHOOL_MARKERS', true), FILTER_VALIDATE_BOOL),
+            'ibge_censo' => [
+                'cache_days' => max(7, (int) env('IEDUCAR_CADUNICO_TERRITORIO_IBGE_CACHE_DAYS', 90)),
+                'http_timeout' => max(30, (int) env('IEDUCAR_CADUNICO_TERRITORIO_IBGE_TIMEOUT', 180)),
+                'zip_urls' => [
+                    'bairro_basico' => (string) env(
+                        'IEDUCAR_CADUNICO_TERRITORIO_IBGE_BAIRRO_ZIP',
+                        'https://ftp.ibge.gov.br/Censos/Censo_Demografico_2022/Agregados_por_Setores_Censitarios/Agregados_por_Bairro_csv/Agregados_por_bairros_basico_BR_20260520.zip',
+                    ),
+                    'setor_basico' => (string) env(
+                        'IEDUCAR_CADUNICO_TERRITORIO_IBGE_SETOR_ZIP',
+                        'https://ftp.ibge.gov.br/Censos/Censo_Demografico_2022/Agregados_por_Setores_Censitarios/Agregados_por_Setor_csv/Agregados_por_setores_basico_BR_20260520.zip',
+                    ),
+                ],
+            ],
+            'ibge_wfs' => [
+                'base_url' => (string) env(
+                    'IEDUCAR_CADUNICO_TERRITORIO_IBGE_WFS',
+                    'https://geoservicos.ibge.gov.br/geoserver/CGMAT/wfs',
+                ),
+                'layer_bairro' => 'CGMAT:qg_2022_650_bairro_agreg',
+                'layer_setor' => 'CGMAT:qg_2022_600_setcensitario__v02',
+                'timeout' => max(15, (int) env('IEDUCAR_CADUNICO_TERRITORIO_WFS_TIMEOUT', 60)),
+                'max_features' => 1500,
+            ],
+            'column_map' => [
+                'ibge' => ['codigo_ibge', 'ibge', 'ibge_municipio'],
+                'ano' => ['ano', 'ano_referencia'],
+                'codigo' => ['territorio_codigo', 'codigo', 'cod_bairro', 'cod_setor'],
+                'nome' => ['territorio_nome', 'bairro', 'nome', 'regiao', 'nm_bairro'],
+                'tipo' => ['territorio_tipo', 'tipo'],
+                'criancas_4_17' => ['criancas_4_17', 'pop_4_17', 'populacao_escolar'],
+                'criancas_4_5' => ['criancas_4_5'],
+                'criancas_6_10' => ['criancas_6_10'],
+                'criancas_11_14' => ['criancas_11_14'],
+                'criancas_15_17' => ['criancas_15_17'],
+                'familias_beneficio' => ['familias_pbf', 'familias_beneficio'],
+                'vulnerabilidade' => ['indice_vulnerabilidade', 'vulnerabilidade', 'ivs'],
+                'lat' => ['latitude', 'lat'],
+                'lng' => ['longitude', 'lng', 'lon'],
+            ],
+        ],
         'weekly_allow_partial' => filter_var(env('IEDUCAR_CADUNICO_WEEKLY_PARTIAL_OK', true), FILTER_VALIDATE_BOOL),
         'fontes_oficiais' => [
             'SAGI/Misocial — Matriz de Informação Social (MDS)',

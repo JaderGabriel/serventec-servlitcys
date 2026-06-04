@@ -72,8 +72,12 @@ Procedimento e requisitos (`unrar`/`p7zip`): [IMPORTACAO_SAEB_PLANILHAS_INEP.md]
 | `cadunico:import-misocial` | Nacional SAGI/Misocial multi-ano; `--from=2020`, `--to=`, `--years=` |
 | `cadunico:sync-city` | Um município ou `--all` |
 | `cadunico:import-cecad` | CSV manual (`;`, colunas em `config/ieducar.php`) |
+| `cadunico:import-territorio` | CSV agregado bairro/setor → `cadunico_territorio_snapshots` (`--city=`, `--ano=`) |
+| `cadunico:sync-territorio` | IBGE Censo 2022 (FTP) + malha WFS; rateia CadÚnico municipal (`--all`, `--ano=`) |
 
 **Interface web:** `/admin/cadunico-sync` · hub `/admin/dados-publicos`
+
+Documentação territorial: [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md)
 
 **Variáveis:** `IEDUCAR_CADUNICO_*` — ver [CADUNICO_AUTOMACAO.md](CADUNICO_AUTOMACAO.md)
 
@@ -81,6 +85,8 @@ Procedimento e requisitos (`unrar`/`p7zip`): [IMPORTACAO_SAEB_PLANILHAS_INEP.md]
 php artisan cadunico:auto-sync --queue
 php artisan cadunico:sync-city 1 --ano=2024
 php artisan cadunico:import-cecad storage/app/cadunico/cecad/nacional_2024.csv --ano=2024
+php artisan cadunico:import-territorio storage/app/cadunico/territorio/territorio_2910800_2024.csv --ano=2024 --city=1
+php artisan cadunico:sync-territorio --all --ano=2025
 ```
 
 ---

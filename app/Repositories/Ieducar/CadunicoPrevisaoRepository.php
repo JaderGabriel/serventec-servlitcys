@@ -5,16 +5,17 @@ namespace App\Repositories\Ieducar;
 use App\Models\City;
 use App\Repositories\CadunicoMunicipioSnapshotRepository;
 use App\Repositories\InepCensoMunicipioMatriculaRepository;
+use App\Services\Cadunico\CadunicoDemandaOfertaSlice;
 use App\Services\Cadunico\CadunicoRedeGapAnalyzer;
+use App\Services\Cadunico\CadunicoTerritorialPressureBuilder;
 use App\Services\CityDataConnection;
 use App\Support\Analytics\CadunicoPrevisaoInformeBuilder;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Dashboard\PublicDataSourcesCatalog;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\FundebMunicipalReferenceResolver;
-use App\Support\Ieducar\IeducarWorkActivityQueries;
+use App\Support\Ieducar\InclusionDashboardQueries;
 use App\Support\Ieducar\MatriculaChartQueries;
-
 final class CadunicoPrevisaoRepository
 {
     public function __construct(
@@ -23,6 +24,8 @@ final class CadunicoPrevisaoRepository
         private CadunicoMunicipioSnapshotRepository $cadunicoSnapshots,
         private InepCensoMunicipioMatriculaRepository $censoMunicipio,
         private CadunicoRedeGapAnalyzer $gapAnalyzer,
+        private CadunicoTerritorialPressureBuilder $territorialBuilder,
+        private SchoolUnitsRepository $schoolUnits,
     ) {}
 
     /**
@@ -35,9 +38,11 @@ final class CadunicoPrevisaoRepository
             'city_name' => (string) ($city->name ?? ''),
             'year_label' => '',
             'intro' => '',
-            'footnote' => __('Indicadores agregados CadÚnico (Cecad). Não utiliza CPF/NIS individuais. Valores FUNDEB são indicativos (matrículas × VAAF).'),
+            'footnote' => __('Indicadores agregados CadÚnico (Cecad). Não utiliza CPF/NIS individuais. Valores FUNDEB são indicativos (base × VAAF).'),
             'gap' => [],
             'kpis' => [],
+            'territorial' => [],
+            'demanda_oferta' => [],
             'metodologia' => [],
             'informe' => ['available' => false, 'blocos' => []],
             'alerts' => [],
@@ -68,15 +73,14 @@ final class CadunicoPrevisaoRepository
 
         try {
             $enrollmentData = $this->enrollmentRepository->sample($city, $filters);
-            $matriculas = (int) $this->cityData->run(
+            $volume = $this->cityData->run(
                 $city,
-                static fn ($db) => MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0,
+                static fn ($db) => MatriculaChartQueries::volumeCounts($db, $city, $filters),
             );
-            $alunos = (int) $this->cityData->run(
-                $city,
-                static fn ($db) => IeducarWorkActivityQueries::countAlunosAtivosForYear($db, $city, $filters),
-            );
+            $matriculas = $volume['matriculas'];
+            $alunos = ($volume['alunos_available'] ?? false) ? (int) ($volume['alunos'] ?? 0) : 0;
 
+            $inclusionHints = $this->inclusionHints($city, $filters);
             $ieducarPorEtapa = $this->etapasFromEnrollment($enrollmentData, $matriculas);
 
             $cadRow = $this->cadunicoSnapshots->findForCityYear($city, $year);
@@ -94,18 +98,25 @@ final class CadunicoPrevisaoRepository
                 $cadRow,
                 $censoMat,
                 $vaaf,
+                $inclusionHints,
             );
+
+            $schoolMarkers = $this->schoolMarkersForMap($city, $filters);
+            $territorial = $this->territorialBuilder->build($city, $filters, $gap, $schoolMarkers);
+            $demandaOferta = CadunicoDemandaOfertaSlice::build($gap, $territorial);
 
             $report = array_merge($empty, [
                 'available' => true,
                 'city_name' => (string) $city->name,
                 'intro' => __(
-                    'Estimativa de crianças/jovens (4-17 anos) no CadÚnico do município que não aparecem como matrículas na rede municipal filtrada, com impacto FUNDEB indicativo por nível de ensino.'
+                    'Estimativa de crianças/jovens em idade escolar no CadÚnico do município que não aparecem na rede municipal filtrada, com lacuna por faixa etária, cenários financeiros (NEE/AEE) e mapa territorial quando houver importação por bairro/setor.'
                 ),
                 'gap' => $gap,
-                'kpis' => $this->buildKpis($gap, $matriculas, $alunos),
+                'territorial' => $territorial,
+                'demanda_oferta' => $demandaOferta,
+                'kpis' => $this->buildKpis($gap, $matriculas, $alunos, $territorial),
                 'metodologia' => $this->metodologiaSteps(),
-                'alerts' => $this->buildAlerts($gap, $cadRow, $censoMat),
+                'alerts' => $this->buildAlerts($gap, $cadRow, $censoMat, $territorial),
                 'export_params' => [
                     'city_id' => $city->id,
                     'ano_letivo' => $filters->ano_letivo,
@@ -123,6 +134,45 @@ final class CadunicoPrevisaoRepository
                 'error' => $e->getMessage(),
                 'metodologia' => $this->metodologiaSteps(),
             ]);
+        }
+    }
+
+    /**
+     * @return array{nee_matriculas: int, alunos_nee: int, matriculas_aee_sem_cadastro: int, alunos_aee_sem_cadastro: int}
+     */
+    private function inclusionHints(City $city, IeducarFilterState $filters): array
+    {
+        return $this->cityData->run($city, function ($db) use ($city, $filters): array {
+            $neeMat = InclusionDashboardQueries::countMatriculasComNee($db, $city, $filters);
+            $neeAlunos = InclusionDashboardQueries::countAlunosComNee($db, $city, $filters);
+            $aeeMat = InclusionDashboardQueries::countMatriculasTurmaAeeSemCadastroNee($db, $city, $filters);
+            $aeeAlunos = InclusionDashboardQueries::countAlunosTurmaAeeSemCadastroNee($db, $city, $filters);
+
+            return [
+                'nee_matriculas' => $neeMat,
+                'alunos_nee' => $neeAlunos,
+                'matriculas_aee_sem_cadastro' => $aeeMat,
+                'alunos_aee_sem_cadastro' => $aeeAlunos,
+            ];
+        });
+    }
+
+    /**
+     * @return list<array{lat: float, lng: float, label?: string}>
+     */
+    private function schoolMarkersForMap(City $city, IeducarFilterState $filters): array
+    {
+        if (! filter_var(config('ieducar.cadunico.territorio.load_school_markers', true), FILTER_VALIDATE_BOOL)) {
+            return [];
+        }
+
+        try {
+            $snap = $this->schoolUnits->snapshot($city, $filters);
+            $markers = $snap['tab']['markers'] ?? [];
+
+            return is_array($markers) ? $markers : [];
+        } catch (\Throwable) {
+            return [];
         }
     }
 
@@ -164,14 +214,17 @@ final class CadunicoPrevisaoRepository
 
     /**
      * @param  array<string, mixed>  $gap
+     * @param  array<string, mixed>  $territorial
      * @return list<array<string, mixed>>
      */
-    private function buildKpis(array $gap, int $matriculas, int $alunos): array
+    private function buildKpis(array $gap, int $matriculas, int $alunos, array $territorial): array
     {
         $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
         $impacto = is_array($gap['impacto_financeiro'] ?? null) ? $gap['impacto_financeiro'] : [];
+        $vuln = is_array($gap['vulnerabilidade'] ?? null) ? $gap['vulnerabilidade'] : [];
+        $base = (int) ($gap['ieducar_base_calculo'] ?? $matriculas);
 
-        return [
+        $kpis = [
             [
                 'label' => __('CadÚnico (4-17 anos)'),
                 'value' => isset($gap['cadunico_total_escolar'])
@@ -180,8 +233,11 @@ final class CadunicoPrevisaoRepository
                 'tone' => 'indigo',
             ],
             [
-                'label' => __('Matrículas i-Educar'),
-                'value' => number_format($matriculas, 0, ',', '.'),
+                'label' => __('Base rede (cálculo)'),
+                'value' => number_format($base, 0, ',', '.')
+                    .($alunos > 0 && $alunos < $matriculas
+                        ? ' ('.__(':alu alunos', ['alu' => number_format($alunos, 0, ',', '.')]).')'
+                        : ''),
                 'tone' => 'teal',
             ],
             [
@@ -202,6 +258,25 @@ final class CadunicoPrevisaoRepository
                 'explicacao_resumo' => $impacto['formula'] ?? null,
             ],
         ];
+
+        if (($vuln['pct_criancas_pbf_label'] ?? null) !== null) {
+            $kpis[] = [
+                'label' => __('Crianças PBF (est.)'),
+                'value' => (string) $vuln['pct_criancas_pbf_label'],
+                'tone' => 'rose',
+                'explicacao_resumo' => __('Agregado Misocial/Cecad — vulnerabilidade familiar.'),
+            ];
+        }
+
+        if (($territorial['territorios_count'] ?? 0) > 0) {
+            $kpis[] = [
+                'label' => __('Territórios mapeados'),
+                'value' => (string) (int) $territorial['territorios_count'],
+                'tone' => 'sky',
+            ];
+        }
+
+        return $kpis;
     }
 
     /**
@@ -210,18 +285,20 @@ final class CadunicoPrevisaoRepository
     private function metodologiaSteps(): array
     {
         return [
-            ['step' => '1', 'text' => __('Importar agregados municipais do Cecad (CSV) — sem dados pessoais.')],
-            ['step' => '2', 'text' => __('Contar crianças/jovens 4-17 anos no CadÚnico no exercício de referência.')],
-            ['step' => '3', 'text' => __('Comparar com matrículas ativas da rede municipal no i-Educar (mesmos filtros).')],
-            ['step' => '4', 'text' => __('Distribuir lacuna por nível de ensino e aplicar VAAF municipal para impacto FUNDEB indicativo.')],
-            ['step' => '5', 'text' => __('Validar com Censo INEP e busca ativa (nem toda criança CadÚnico pertence à rede municipal).')],
+            ['step' => '1', 'text' => __('Importar agregados municipais Cecad/Misocial e, opcionalmente, território (bairro/setor) via CSV.')],
+            ['step' => '2', 'text' => __('Contar população escolar CadÚnico nas faixas etárias configuradas (4-17 por defeito).')],
+            ['step' => '3', 'text' => __('Comparar com alunos/matrículas ativos da rede municipal (i-Educar) nos mesmos filtros.')],
+            ['step' => '4', 'text' => __('Calcular lacuna por faixa e cenários financeiros NEE/AEE/VAAR (proporção observada na rede).')],
+            ['step' => '5', 'text' => __('Priorizar territórios no mapa (pressão = lacuna × vulnerabilidade × distância à escola).')],
+            ['step' => '6', 'text' => __('Validar com Censo INEP e busca ativa — nem toda criança CadÚnico pertence à rede municipal.')],
         ];
     }
 
     /**
+     * @param  array<string, mixed>  $territorial
      * @return list<array{tone: string, title: string, message: string}>
      */
-    private function buildAlerts(array $gap, $cadRow, ?int $censoMat): array
+    private function buildAlerts(array $gap, $cadRow, ?int $censoMat, array $territorial): array
     {
         $alerts = [];
 
@@ -229,7 +306,7 @@ final class CadunicoPrevisaoRepository
             $alerts[] = [
                 'tone' => 'warning',
                 'title' => __('CadÚnico não importado'),
-                'message' => (string) ($gap['nota'] ?? __('Execute cadunico:import-cecad com exportação Cecad do município.')),
+                'message' => (string) ($gap['nota'] ?? __('Execute cadunico:sync-city ou importe Cecad.')),
             ];
 
             return $alerts;
@@ -239,8 +316,27 @@ final class CadunicoPrevisaoRepository
             $alerts[] = [
                 'tone' => 'amber',
                 'title' => __('Potencial de busca ativa'),
-                'message' => __('Há :n crianças/jovens no CadÚnico acima das matrículas municipais registadas — investigar EJA, transferências e escolas não municipais.', [
+                'message' => __('Há :n crianças/jovens no CadÚnico acima da base municipal — investigar EJA, transferências e escolas não municipais.', [
                     'n' => $gap['gap_total_fmt'] ?? '0',
+                ]),
+            ];
+        }
+
+        if (($territorial['territorios_count'] ?? 0) === 0) {
+            $alerts[] = [
+                'tone' => 'sky',
+                'title' => __('Mapa territorial'),
+                'message' => (string) ($territorial['nota'] ?? ''),
+            ];
+        }
+
+        $cenarios = is_array($gap['cenarios_financeiros'] ?? null) ? $gap['cenarios_financeiros'] : [];
+        if (($cenarios['available'] ?? false) && ($cenarios['total_cenarios_label'] ?? null) !== null) {
+            $alerts[] = [
+                'tone' => 'violet',
+                'title' => __('Cenários financeiros (lacuna)'),
+                'message' => __('Soma indicativa dos cenários: :v — ver tabela na aba.', [
+                    'v' => (string) $cenarios['total_cenarios_label'],
                 ]),
             ];
         }

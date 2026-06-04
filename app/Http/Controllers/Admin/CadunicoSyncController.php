@@ -12,6 +12,7 @@ use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\Cadunico\CadunicoCkanDiscovery;
 use App\Services\Cadunico\CadunicoOpenDataImportService;
 use App\Services\Cadunico\CadunicoSagiMisocialClient;
+use App\Services\Cadunico\CadunicoTerritorioCsvImportService;
 use App\Support\Cadunico\CadunicoCecadUpload;
 use App\Support\Cadunico\CadunicoStoragePaths;
 use Illuminate\Http\RedirectResponse;
@@ -26,6 +27,7 @@ class CadunicoSyncController extends Controller
         private CadunicoMunicipioSnapshotRepository $snapshots,
         private CadunicoSagiMisocialClient $misocial,
         private CadunicoCkanDiscovery $ckanDiscovery,
+        private CadunicoTerritorioCsvImportService $territorioImport,
     ) {}
 
     public function index(Request $request): View
@@ -118,21 +120,25 @@ class CadunicoSyncController extends Controller
     public function run(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'action' => 'required|string|in:auto_sync,import_city_year,import_storage_year,import_csv,upload_cecad,import_all_cities_year',
+            'action' => 'required|string|in:auto_sync,import_city_year,import_storage_year,import_csv,upload_cecad,upload_territorio,import_all_cities_year',
             'city_id' => 'nullable|integer|exists:cities,id',
             'ano' => 'nullable|integer|min:2000|max:'.((int) date('Y') + 1),
-            'csv_file' => 'required_if:action,import_csv,upload_cecad|file|max:20480',
+            'csv_file' => 'required_if:action,import_csv,upload_cecad,upload_territorio|file|max:20480',
             'auto_import' => 'sometimes|boolean',
         ]);
 
         $action = $validated['action'];
         $ano = isset($validated['ano']) ? (int) $validated['ano'] : CadunicoOpenDataImportService::suggestedImportYear();
 
-        if ($action === 'import_city_year' && empty($validated['city_id'])) {
+        if (in_array($action, ['import_city_year', 'upload_territorio'], true) && empty($validated['city_id'])) {
             return redirect()
                 ->route('admin.cadunico-sync.index')
                 ->withInput()
                 ->with('cadunico_sync_error', __('Selecione um município.'));
+        }
+
+        if ($action === 'upload_territorio') {
+            return $this->handleUploadTerritorio($request, $ano, $validated);
         }
 
         if ($action === 'import_all_cities_year') {
@@ -266,6 +272,68 @@ class CadunicoSyncController extends Controller
                 'task_id' => $task->id,
                 'message' => $message.' '.AdminSyncQueueService::flashQueuedMessage($task),
             ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function handleUploadTerritorio(Request $request, int $ano, array $validated): RedirectResponse
+    {
+        $cityId = (int) $validated['city_id'];
+        $city = City::query()->find($cityId);
+        if ($city === null) {
+            return redirect()
+                ->route('admin.cadunico-sync.index')
+                ->with('cadunico_sync_error', __('Município inválido.'));
+        }
+
+        $stored = $this->storeTerritorioCsv($request, $ano, $city);
+        if ($stored === null) {
+            return redirect()
+                ->route('admin.cadunico-sync.index')
+                ->with('cadunico_sync_error', __('Ficheiro CSV territorial inválido.'));
+        }
+
+        $result = $this->territorioImport->importFile($stored['path'], $ano, $city);
+
+        return redirect()
+            ->route('admin.cadunico-sync.index', ['city_id' => $city->id])
+            ->with(
+                ($result['success'] ?? false) ? 'cadunico_upload_ok' : 'cadunico_sync_error',
+                $result['message'] ?? __('Importação territorial concluída.'),
+            );
+    }
+
+    /**
+     * @return array{path: string, filename: string}|null
+     */
+    private function storeTerritorioCsv(Request $request, int $ano, City $city): ?array
+    {
+        $upload = $request->file('csv_file');
+        if ($upload === null || ! $upload->isValid()) {
+            return null;
+        }
+
+        $ext = strtolower((string) $upload->getClientOriginalExtension());
+        if (! in_array($ext, ['csv', 'txt'], true)) {
+            return null;
+        }
+
+        $ibge = FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio);
+        if ($ibge === null) {
+            return null;
+        }
+
+        $root = CadunicoStoragePaths::territorioRoot();
+        if (! is_dir($root)) {
+            mkdir($root, 0755, true);
+        }
+
+        $filename = 'territorio_'.$ibge.'_'.$ano.'.'.$ext;
+        $absolute = $root.'/'.$filename;
+        $upload->move($root, $filename);
+
+        return ['path' => $absolute, 'filename' => $filename];
     }
 
     /**

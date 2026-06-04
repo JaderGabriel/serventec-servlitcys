@@ -43,7 +43,10 @@ final class CadunicoRedeGapAnalyzerTest extends TestCase
 
         $this->assertTrue($result['available']);
         $this->assertSame(2900, $result['cadunico_total_escolar']);
-        $this->assertSame(400, $result['gap_total']);
+        $this->assertSame(2400, $result['ieducar_base_calculo']);
+        $this->assertSame(500, $result['gap_total']);
+        $this->assertNotEmpty($result['por_faixa']);
+        $this->assertTrue($result['cenarios_financeiros']['available'] ?? false);
         $this->assertNotNull($result['impacto_financeiro']['gap_anual']);
     }
 }

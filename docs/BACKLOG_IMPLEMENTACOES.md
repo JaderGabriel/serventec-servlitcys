@@ -98,7 +98,7 @@ Estudo completo: [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO
 | INT-04 | P3 | PDF: bloco contexto socioeconómico (IBGE + repasses) | Pendente | Onda 1 |
 | INT-05 | P3 | Import agregado IBGE SIDRA → `municipal_demography_snapshots` | Pendente | Onda 1 |
 | INT-06 | P3 | SICONFI indicadores por ente (API Tesouro) | Pendente | Onda 1 |
-| INT-07 | P3 | CadÚnico / SNAS — painéis agregados municipais (sem CPF em massa) | Pendente | Onda 2 |
+| INT-07 | P3 | CadÚnico / SNAS — painéis agregados municipais (sem CPF em massa) | Parcial (lacuna por faixa, cenários, mapa territorial, demanda×oferta) | Onda 2 |
 | INT-08 | P4 | DATASUS agregado + CNES proximidade escola–UBS | Pendente | Onda 2 |
 | INT-09 | P4 | Articulação e-SUS escola / vacinação (credencial SMS) | Pendente | Onda 3 |
 

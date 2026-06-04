@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **3.8.0** · release `20260603-Artemis` · **Ramo:** `main` · **Última revisão:** 03/06/2026
+**Versão em produção:** **3.9.0** · release `20260604-Gaia` · **Ramo:** `main` · **Última revisão:** 04/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -16,6 +16,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Painel de análise i-Educar (abas lazy + faixa impacto por aba) | Implementado |
 | Analytics — Comparativo (Finanças: ano base vs anterior, FUNDEB, export PDF/CSV/Excel) | Implementado (3.5.0) |
 | Analytics — CadÚnico previsão (lacuna rede, impacto VAAF, export consultoria) | Implementado (3.5.0) |
+| CadÚnico — mapa territorial, faixas com lacuna, cenários NEE/AEE, import IBGE (`cadunico:sync-territorio`) | Implementado (3.9.0) |
 | CadÚnico — importação automática (URL nacional, fila `cadastro`, cron, admin) | Implementado (3.5.0) |
 | CadÚnico — SAGI/Misocial (MDS) nacional + `cadunico:import-misocial` histórico | Implementado (3.6.0) |
 | Analytics — Finanças «Tempo Real» (repasses vs FUNDEB) | Implementado (3.6.0) |

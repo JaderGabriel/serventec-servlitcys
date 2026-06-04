@@ -215,6 +215,47 @@
                     <x-admin.import-hub.action-card
                         method="post"
                         action="{{ route('admin.cadunico-sync.run') }}"
+                        enctype="multipart/form-data"
+                        variant="sky"
+                        :step="__('Território')"
+                        :title="__('CSV territorial (bairro/setor)')"
+                        :hint="__('Agregados por território com lat/lng opcional — alimenta mapa e ranking na aba CadÚnico. Requer município e ano.')"
+                        :submit-label="__('Importar território')"
+                    >
+                        @csrf
+                        <input type="hidden" name="action" value="upload_territorio">
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Município') }}</label>
+                                <select name="city_id" class="{{ $selectClass }}" required>
+                                    <option value="">{{ __('Selecione…') }}</option>
+                                    @foreach ($cities as $c)
+                                        <option value="{{ $c->id }}" @selected((int) old('city_id', $filterCity?->id) === $c->id)>{{ $c->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Ano') }}</label>
+                                <select name="ano" class="{{ $selectClass }}" required>
+                                    @foreach ($yearOptions as $y)
+                                        <option value="{{ $y }}" @selected((int) old('ano', $defaultYear) === $y)>{{ $y }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('CSV') }}</label>
+                            <input type="file" name="csv_file" accept=".csv,.txt" class="mt-1 block w-full text-sm" required>
+                        </div>
+                        <p class="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+                            {{ __('Colunas: territorio_codigo, territorio_nome, criancas_4_17 (ou faixas), latitude, longitude, indice_vulnerabilidade. Ver') }}
+                            <a href="{{ route('admin.documentation.show', ['doc' => 'docs/CADUNICO_PREVISAO_TERRITORIAL.md']) }}" class="underline">{{ __('documentação territorial') }}</a>.
+                        </p>
+                    </x-admin.import-hub.action-card>
+
+                    <x-admin.import-hub.action-card
+                        method="post"
+                        action="{{ route('admin.cadunico-sync.run') }}"
                         variant="warning"
                         :step="__('Passo 3')"
                         :title="__('Sincronizar todos os municípios (um ano)')"

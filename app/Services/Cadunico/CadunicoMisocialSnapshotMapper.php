@@ -36,6 +36,20 @@ final class CadunicoMisocialSnapshotMapper
         $anomes = (string) ($doc['anomes_s'] ?? '');
         $refYear = strlen($anomes) >= 4 ? (int) substr($anomes, 0, 4) : $ano;
 
+        $pbfCriancas = self::sumFields($doc, [
+            'qtd_pes_pbf_idade_0_e_4_sexo_feminino_i',
+            'qtd_pes_pbf_idade_0_e_4_sexo_masculino_i',
+            'qtd_pes_pbf_idade_5_a_6_sexo_feminino_i',
+            'qtd_pes_pbf_idade_5_a_6_sexo_masculino_i',
+            'qtd_pes_pbf_idade_7_a_15_sexo_feminino_i',
+            'qtd_pes_pbf_idade_7_a_15_sexo_masculino_i',
+            'qtd_pes_pbf_idade_16_a_17_sexo_feminino_i',
+            'qtd_pes_pbf_idade_16_a_17_sexo_masculino_i',
+        ]);
+        $pctPbf = ($popEscolar > 0 && $pbfCriancas > 0)
+            ? round(100.0 * $pbfCriancas / $popEscolar, 1)
+            : null;
+
         return [
             'pessoas_cadastradas' => self::int($doc['cadun_qtd_pessoas_cadastradas_i'] ?? null) ?? 0,
             'familias_cadastradas' => self::int($doc['cadun_qtd_familias_cadastradas_i'] ?? null) ?? 0,
@@ -52,6 +66,18 @@ final class CadunicoMisocialSnapshotMapper
                 'anomes_referencia' => $anomes,
                 'ano_referencia_mis' => $refYear,
                 'indicador_base' => 'cadun_qtd_pessoas_cadastradas_i',
+                'misocial_pbf_criancas' => $pbfCriancas > 0 ? $pbfCriancas : null,
+                'vulnerabilidade' => [
+                    'pessoas_cadastradas' => self::int($doc['cadun_qtd_pessoas_cadastradas_i'] ?? null) ?? 0,
+                    'familias_cadastradas' => self::int($doc['cadun_qtd_familias_cadastradas_i'] ?? null) ?? 0,
+                    'criancas_escolar_cadunico' => $popEscolar,
+                    'criancas_pbf_estimada' => $pbfCriancas > 0 ? $pbfCriancas : null,
+                    'pct_criancas_pbf' => $pctPbf,
+                    'pct_criancas_pbf_label' => $pctPbf !== null
+                        ? number_format($pctPbf, 1, ',', '.').'%'
+                        : null,
+                    'fonte' => 'sagi_misocial',
+                ],
             ],
         ];
     }

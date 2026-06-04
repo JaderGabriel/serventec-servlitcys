@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`3.8.0`** · tag de deploy **`20260603-Artemis`** · ver [RELEASE_20260603_ARTEMIS.md](RELEASE_20260603_ARTEMIS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`3.9.0`** · tag de deploy **`20260604-Gaia`** · ver [RELEASE_20260604_GAIA.md](RELEASE_20260604_GAIA.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **3.8.0** |
+| **Versão semântica em produção** | **3.9.0** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260603-Artemis` |
-| **Último marco documentado** | Alunos distintos nos medidores, base FUNDEB por pessoa, ponderação NEE/AEE sem duplicar matrícula — [RELEASE_20260603_ARTEMIS.md](RELEASE_20260603_ARTEMIS.md) |
+| **Tag de deploy (servidor)** | `20260604-Gaia` |
+| **Último marco documentado** | CadÚnico territorial (mapa IBGE + rateio), lacuna por faixa, cenários NEE/AEE/VAAR — [RELEASE_20260604_GAIA.md](RELEASE_20260604_GAIA.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -20,7 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 3.8.0** | `20260603-Artemis` → `main` | **274** | 03/06/2026 | **Produção:** Alunos distintos nos KPIs, base FUNDEB `min(mat, alunos)`, NEE/AEE por aluno, Diagnóstico/Tempo Real alinhados — [RELEASE_20260603_ARTEMIS.md](RELEASE_20260603_ARTEMIS.md). |
+| **▶ 3.9.0** | `20260604-Gaia` → `main` | **275** | 04/06/2026 | **Produção:** CadÚnico previsão territorial (mapa, IBGE Censo+WFS, faixas, cenários, demanda×oferta) — [RELEASE_20260604_GAIA.md](RELEASE_20260604_GAIA.md). |
+| 3.8.0 | `20260603-Artemis` → `main` | **274** | 03/06/2026 | Alunos distintos nos KPIs, base FUNDEB `min(mat, alunos)`, NEE/AEE por aluno — [RELEASE_20260603_ARTEMIS.md](RELEASE_20260603_ARTEMIS.md). |
 | 3.7.0 | `20260603-Selene` → `main` | **273** | 03/06/2026 | Finanças lazy otimizadas, VAAF×matrículas com ponderações e base legal, hub importação admin, `SafeOutboundUrl` — [RELEASE_20260603_SELENE.md](RELEASE_20260603_SELENE.md). |
 | 3.6.0 | `20260603-Iris` → `main` | — | 03/06/2026 | Misocial MDS (`cadunico:import-misocial`), IBGE 6/7, Finanças tempo real, metodologia FUNDEB admin — [RELEASE_20260603_IRIS.md](RELEASE_20260603_IRIS.md). |
 | 3.5.1 | `20260602-Hermes` → `main` | — | 02/06/2026 | Fix aba CadÚnico; FUNDEB/Financiamentos (`comparativoData`); matriz admin CadÚnico; fila cadastro — [RELEASE_20260602_HERMES.md](RELEASE_20260602_HERMES.md). |

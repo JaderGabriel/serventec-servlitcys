@@ -24,8 +24,8 @@ Cadastro (1) → Pedagógico (2) → Censo (3) → Finanças (4)
 - **Finanças:** `AnalyticsFinanceTabPreload` — Diagnóstico, Comparativo, Discrepâncias, FUNDEB, Financiamentos (sem `work_done`).
 - **Comparativo:** `FinanceComparativoService` + `FinanceComparativoInformeBuilder` — ano base (`ano_base` na query ou filtro global), variação matrículas/alunos/turmas/recursos, informes narrativos, detalhe por etapa FUNDEB e projeção do exercício seguinte.
 - **Exportação Comparativo:** `GET dashboard.analytics.comparativo.export?format=pdf|csv|xlsx` — download imediato; PDF dedicado em `pdf/comparativo-report/document.blade.php`. O bloco «Relatório PDF completo» (fila) permanece disponível para o dossiê Serventec integral.
-- **CadÚnico:** `CadunicoPrevisaoRepository` + `CadunicoRedeGapAnalyzer` — lacuna populacional 4–17 anos vs matrículas; impacto `gap × VAAF`.
-- **Exportação CadÚnico:** `GET dashboard.analytics.cadunico-previsao.export?format=pdf|csv|xlsx` — PDF em `pdf/cadunico-previsao-report/`. Dados em `cadunico_municipio_snapshots` (import admin ou automático).
+- **CadÚnico:** `CadunicoPrevisaoRepository` — lacuna municipal e por faixa (`min(mat, alunos)`), cenários NEE/AEE/VAAR, vulnerabilidade Misocial, mapa/ranking territorial (`cadunico_territorio_snapshots`), demanda×oferta. Ver [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md).
+- **Exportação CadÚnico:** `GET dashboard.analytics.cadunico-previsao.export?format=pdf|csv|xlsx` — PDF em `pdf/cadunico-previsao-report/`. Dados municipais em `cadunico_municipio_snapshots`; território via CSV admin/CLI.
 
 ## Componentes Blade
 

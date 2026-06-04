@@ -39,6 +39,7 @@ php artisan migrate
 php artisan cadunico:sync-city {city_id} --ano=2024
 php artisan cadunico:sync-city --all --ano=2024
 php artisan cadunico:import-cecad /caminho/arquivo.csv --ano=2024
+php artisan cadunico:import-territorio storage/app/cadunico/territorio/arquivo.csv --ano=2024 --city={city_id}
 ```
 
 CSV com delimitador `;`. Colunas: `codigo_ibge`, `ano`, faixas etárias e `populacao_escolar` (ver `config/ieducar.php` → `cadunico.cecad.column_map`).
@@ -47,14 +48,18 @@ CSV com delimitador `;`. Colunas: `codigo_ibge`, `ano`, faixas etárias e `popul
 
 Aba **CadÚnico: previsão fora da rede e FUNDEB** no grupo **Cadastro e rede** (`/dashboard/analytics` → `cadunico_previsao`).
 
+Funcionalidades avançadas (lacuna por faixa, cenários NEE/AEE/VAAR, mapa territorial, demanda×oferta): **[CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md)**.
+
 ## Leitura dos indicadores
 
 | Indicador | Significado |
 |-----------|-------------|
 | População escolar CadÚnico | Soma das faixas 4–17 ou coluna `populacao_escolar_estimada` |
-| Lacuna (`gap`) | `max(0, CadÚnico − matrículas i-Educar)` |
-| Cobertura | Matrículas / CadÚnico (%) |
+| Base rede (cálculo) | `min(matriculas, alunos distintos)` quando aplicável |
+| Lacuna (`gap`) | `max(0, CadÚnico − base rede)` |
+| Cobertura | Base rede / CadÚnico (%) |
 | Impacto FUNDEB | Lacuna × VAAF (estimativa anual se integradas à rede) |
+| Pressão territorial | Lacuna rateada × vulnerabilidade × distância à escola (com CSV territorial) |
 
 **Aviso:** CadÚnico inclui famílias em vulnerabilidade no município; nem toda criança deve estar na rede municipal (estadual, privada, EJA). Use para busca ativa e planeamento, não como meta automática de matrícula.
 

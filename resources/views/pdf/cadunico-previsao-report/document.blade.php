@@ -14,6 +14,10 @@
     $informe = is_array($d['informe'] ?? null) ? $d['informe'] : [];
     $blocos = is_array($informe['blocos'] ?? null) ? $informe['blocos'] : [];
     $impacto = is_array($gap['impacto_financeiro'] ?? null) ? $gap['impacto_financeiro'] : [];
+    $cenarios = is_array($gap['cenarios_financeiros'] ?? null) ? $gap['cenarios_financeiros'] : [];
+    $territorial = is_array($d['territorial'] ?? null) ? $d['territorial'] : [];
+    $rankingTerr = is_array($territorial['ranking'] ?? null) ? array_slice($territorial['ranking'], 0, 15) : [];
+    $demandaOferta = is_array($d['demanda_oferta'] ?? null) ? $d['demanda_oferta'] : [];
 @endphp
 
 <div class="pdf-footer">
@@ -86,12 +90,15 @@
 @endif
 
 @if (count($porFaixa) > 0)
-    <h2>{{ __('Faixas etárias CadÚnico') }}</h2>
+    <h2>{{ __('Faixas etárias — lacuna') }}</h2>
     <table class="data">
         <thead>
             <tr>
                 <th>{{ __('Faixa') }}</th>
-                <th>{{ __('População') }}</th>
+                <th>{{ __('CadÚnico') }}</th>
+                <th>{{ __('Rede (est.)') }}</th>
+                <th>{{ __('Lacuna') }}</th>
+                <th>{{ __('FUNDEB') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -99,6 +106,56 @@
                 <tr>
                     <td>{{ $faixa['faixa'] ?? '' }}</td>
                     <td>{{ number_format((int) ($faixa['cadunico'] ?? 0), 0, ',', '.') }}</td>
+                    <td>{{ number_format((int) ($faixa['ieducar_estimado'] ?? 0), 0, ',', '.') }}</td>
+                    <td>{{ $faixa['gap_fmt'] ?? '0' }}</td>
+                    <td>{{ $faixa['fundeb_gap_label'] ?? '—' }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+@endif
+
+@if ($cenarios['available'] ?? false)
+    <h2>{{ __('Cenários financeiros') }}</h2>
+    <table class="data">
+        <thead>
+            <tr>
+                <th>{{ __('Cenário') }}</th>
+                <th>{{ __('Valor/ano') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($cenarios['itens'] ?? [] as $item)
+                <tr>
+                    <td>{{ $item['titulo'] ?? '' }}</td>
+                    <td>{{ $item['valor_label'] ?? '—' }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+@endif
+
+@if ($demandaOferta['available'] ?? false)
+    <h2>{{ __('Demanda × oferta') }}</h2>
+    <p>{{ $demandaOferta['mensagem'] ?? '' }}</p>
+@endif
+
+@if (count($rankingTerr) > 0)
+    <h2>{{ __('Territórios prioritários') }}</h2>
+    <table class="data">
+        <thead>
+            <tr>
+                <th>{{ __('Território') }}</th>
+                <th>{{ __('Lacuna est.') }}</th>
+                <th>{{ __('Pressão') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($rankingTerr as $row)
+                <tr>
+                    <td>{{ $row['nome'] ?? '' }}</td>
+                    <td>{{ $row['gap_fmt'] ?? '0' }}</td>
+                    <td>{{ number_format((float) ($row['pressao'] ?? 0), 0, ',', '.') }}</td>
                 </tr>
             @endforeach
         </tbody>

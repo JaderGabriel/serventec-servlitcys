@@ -27,6 +27,7 @@ import {
     servDataLoadingStart,
 } from "./dataLoading.js";
 import createSchoolUnitsMap from "./schoolUnitsMap.js";
+import createCadunicoTerritoryMap from "./cadunicoTerritoryMap.js";
 import createBrazilMunicipalitiesMap from "./brazilMunicipalitiesMap.js";
 import "./notification-bell.js";
 import { registerScrollToTopData } from "./scroll-to-top.js";
@@ -106,6 +107,10 @@ function mergeCartesianScales(base, extra) {
 document.addEventListener("alpine:init", () => {
     Alpine.data("schoolUnitsMap", (markers, footnote = null, options = null) =>
         createSchoolUnitsMap(markers, footnote, options),
+    );
+
+    Alpine.data("cadunicoTerritoryMap", (territoryMarkers = [], schoolMarkers = [], footnote = null) =>
+        createCadunicoTerritoryMap(territoryMarkers, schoolMarkers, footnote),
     );
 
     Alpine.data("brazilMunicipalitiesMap", (markers, statusColors = null, options = null) =>

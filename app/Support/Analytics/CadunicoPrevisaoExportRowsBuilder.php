@@ -50,8 +50,68 @@ final class CadunicoPrevisaoExportRowsBuilder
                 'cidade' => $city,
                 'ano' => $year,
                 'indicador' => (string) ($faixa['faixa'] ?? ''),
-                'valor' => number_format((int) ($faixa['cadunico'] ?? 0), 0, ',', '.'),
-                'detalhe' => '',
+                'valor' => (string) ($faixa['gap_fmt'] ?? number_format((int) ($faixa['cadunico'] ?? 0), 0, ',', '.')),
+                'detalhe' => __('CadÚnico: :c · Rede: :r · Cobertura: :cov · FUNDEB: :f', [
+                    'c' => number_format((int) ($faixa['cadunico'] ?? 0), 0, ',', '.'),
+                    'r' => number_format((int) ($faixa['ieducar_estimado'] ?? 0), 0, ',', '.'),
+                    'cov' => (string) ($faixa['cobertura_label'] ?? '—'),
+                    'f' => (string) ($faixa['fundeb_gap_label'] ?? '—'),
+                ]),
+            ];
+        }
+
+        $cenarios = is_array($gap['cenarios_financeiros'] ?? null) ? $gap['cenarios_financeiros'] : [];
+        foreach (is_array($cenarios['itens'] ?? null) ? $cenarios['itens'] : [] as $item) {
+            $rows[] = [
+                'secao' => __('Cenário financeiro'),
+                'cidade' => $city,
+                'ano' => $year,
+                'indicador' => (string) ($item['titulo'] ?? ''),
+                'valor' => (string) ($item['valor_label'] ?? '—'),
+                'detalhe' => isset($item['quantidade'])
+                    ? number_format((int) $item['quantidade'], 0, ',', '.')
+                    : '',
+            ];
+        }
+
+        $vuln = is_array($gap['vulnerabilidade'] ?? null) ? $gap['vulnerabilidade'] : [];
+        if (($vuln['available'] ?? false) && ($vuln['pct_criancas_pbf_label'] ?? null) !== null) {
+            $rows[] = [
+                'secao' => __('Vulnerabilidade'),
+                'cidade' => $city,
+                'ano' => $year,
+                'indicador' => __('Crianças PBF (est.)'),
+                'valor' => (string) $vuln['pct_criancas_pbf_label'],
+                'detalhe' => (string) ($vuln['fonte'] ?? ''),
+            ];
+        }
+
+        $territorial = is_array($data['territorial'] ?? null) ? $data['territorial'] : [];
+        foreach (is_array($territorial['ranking'] ?? null) ? $territorial['ranking'] : [] as $row) {
+            $rows[] = [
+                'secao' => __('Território'),
+                'cidade' => $city,
+                'ano' => $year,
+                'indicador' => (string) ($row['nome'] ?? ''),
+                'valor' => (string) ($row['gap_fmt'] ?? '0'),
+                'detalhe' => __('Pressão: :p · Dist. escola: :d', [
+                    'p' => number_format((float) ($row['pressao'] ?? 0), 0, ',', '.'),
+                    'd' => isset($row['distancia_escola_km'])
+                        ? number_format((float) $row['distancia_escola_km'], 1, ',', '.').' km'
+                        : '—',
+                ]),
+            ];
+        }
+
+        $demanda = is_array($data['demanda_oferta'] ?? null) ? $data['demanda_oferta'] : [];
+        if ($demanda['available'] ?? false) {
+            $rows[] = [
+                'secao' => __('Demanda × oferta'),
+                'cidade' => $city,
+                'ano' => $year,
+                'indicador' => __('Resumo'),
+                'valor' => (string) ($demanda['demanda_fmt'] ?? '—'),
+                'detalhe' => (string) ($demanda['mensagem'] ?? ''),
             ];
         }
 

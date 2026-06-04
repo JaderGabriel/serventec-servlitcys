@@ -20,12 +20,21 @@
     $metodologia = is_array($d['metodologia'] ?? null) ? $d['metodologia'] : [];
     $publicSources = is_array($d['public_data_sources'] ?? null) ? $d['public_data_sources'] : [];
     $impacto = is_array($gap['impacto_financeiro'] ?? null) ? $gap['impacto_financeiro'] : [];
+    $cenarios = is_array($gap['cenarios_financeiros'] ?? null) ? $gap['cenarios_financeiros'] : [];
+    $vulnerabilidade = is_array($gap['vulnerabilidade'] ?? null) ? $gap['vulnerabilidade'] : [];
+    $territorial = is_array($d['territorial'] ?? null) ? $d['territorial'] : [];
+    $demandaOferta = is_array($d['demanda_oferta'] ?? null) ? $d['demanda_oferta'] : [];
+    $rankingTerr = is_array($territorial['ranking'] ?? null) ? $territorial['ranking'] : [];
 
     $flowSteps = ConsultoriaFlow::numberedSteps([
         ['label' => __('Resumo'), 'anchor' => 'cad-previsao-resumo', 'visible' => count($kpis) > 0],
+        ['label' => __('Demanda'), 'anchor' => 'cad-previsao-demanda', 'visible' => ($demandaOferta['available'] ?? false)],
+        ['label' => __('Cenários'), 'anchor' => 'cad-previsao-cenarios', 'visible' => ($cenarios['available'] ?? false)],
+        ['label' => __('Mapa'), 'anchor' => 'cad-previsao-mapa', 'visible' => count($territorial['markers'] ?? []) > 0],
         ['label' => __('Informes'), 'anchor' => 'cad-previsao-informes', 'visible' => count($informe['blocos'] ?? []) > 0],
         ['label' => __('Por etapa'), 'anchor' => 'cad-previsao-etapa', 'visible' => count($porEtapa) > 0],
-        ['label' => __('Faixas CadÚnico'), 'anchor' => 'cad-previsao-faixas', 'visible' => count($porFaixa) > 0],
+        ['label' => __('Faixas'), 'anchor' => 'cad-previsao-faixas', 'visible' => count($porFaixa) > 0],
+        ['label' => __('Territórios'), 'anchor' => 'cad-previsao-territorios', 'visible' => count($rankingTerr) > 0],
         ['label' => __('Metodologia'), 'anchor' => 'cad-previsao-metodo', 'visible' => count($metodologia) > 0],
     ]);
     $cadStep = ConsultoriaFlow::stepMap($flowSteps);
@@ -162,6 +171,120 @@
         </x-dashboard.consultoria-section>
     @endif
 
+    @if ($demandaOferta['available'] ?? false)
+        <x-dashboard.consultoria-section
+            :step="$cadStep['cad-previsao-demanda'] ?? null"
+            anchor="cad-previsao-demanda"
+            :title="__('Demanda × oferta (indicativo)')"
+            :subtitle="__('Ligação com backlog INT-01 — lacuna CadÚnico face à oferta municipal.')"
+        >
+            <p class="text-sm text-slate-700 dark:text-slate-300">{{ $demandaOferta['mensagem'] ?? '' }}</p>
+            <div class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+                <div class="serv-panel p-3">
+                    <p class="text-xs text-slate-500 uppercase">{{ __('Demanda') }}</p>
+                    <p class="font-semibold tabular-nums">{{ $demandaOferta['demanda_fmt'] ?? '—' }}</p>
+                </div>
+                <div class="serv-panel p-3">
+                    <p class="text-xs text-slate-500 uppercase">{{ __('Oferta (matr.)') }}</p>
+                    <p class="font-semibold tabular-nums">{{ number_format((int) ($demandaOferta['oferta_matriculas'] ?? 0), 0, ',', '.') }}</p>
+                </div>
+                <div class="serv-panel p-3">
+                    <p class="text-xs text-slate-500 uppercase">{{ __('Cobertura') }}</p>
+                    <p class="font-semibold tabular-nums">{{ $demandaOferta['cobertura_label'] ?? '—' }}</p>
+                </div>
+                <div class="serv-panel p-3">
+                    <p class="text-xs text-slate-500 uppercase">{{ __('Territórios') }}</p>
+                    <p class="font-semibold tabular-nums">{{ count($demandaOferta['territorios_prioritarios'] ?? []) }}</p>
+                </div>
+            </div>
+        </x-dashboard.consultoria-section>
+    @endif
+
+    @if ($cenarios['available'] ?? false)
+        <x-dashboard.consultoria-section
+            :step="$cadStep['cad-previsao-cenarios'] ?? null"
+            anchor="cad-previsao-cenarios"
+            :title="__('Cenários financeiros sobre a lacuna')"
+            :subtitle="__('NEE, AEE e VAAR — proporções observadas na rede; não identifica beneficiários no CadÚnico.')"
+        >
+            @if (filled($cenarios['aviso_geral'] ?? null))
+                <p class="serv-callout text-sm mb-3">{{ $cenarios['aviso_geral'] }}</p>
+            @endif
+            <div class="serv-panel overflow-x-auto">
+                <table class="min-w-full text-sm divide-y divide-slate-200 dark:divide-slate-700">
+                    <thead class="bg-slate-50 dark:bg-slate-900/60">
+                        <tr>
+                            <th class="px-3 py-2 text-left text-xs font-semibold">{{ __('Cenário') }}</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold">{{ __('Qtd. indicativa') }}</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold">{{ __('Valor/ano') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                        @foreach ($cenarios['itens'] ?? [] as $item)
+                            <tr>
+                                <td class="px-3 py-2">
+                                    <span class="font-medium">{{ $item['titulo'] ?? '' }}</span>
+                                    @if (filled($item['aviso'] ?? null))
+                                        <p class="text-[11px] text-slate-500 mt-0.5">{{ $item['aviso'] }}</p>
+                                    @endif
+                                </td>
+                                <td class="px-3 py-2 text-right tabular-nums">{{ isset($item['quantidade']) ? number_format((int) $item['quantidade'], 0, ',', '.') : '—' }}</td>
+                                <td class="px-3 py-2 text-right tabular-nums font-semibold">{{ $item['valor_label'] ?? '—' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-indigo-50/80 dark:bg-indigo-950/40 font-semibold">
+                            <td class="px-3 py-2" colspan="2">{{ __('Soma indicativa dos cenários') }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums">{{ $cenarios['total_cenarios_label'] ?? '—' }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </x-dashboard.consultoria-section>
+    @endif
+
+    @if (($vulnerabilidade['available'] ?? false) && (($vulnerabilidade['pct_criancas_pbf_label'] ?? null) !== null))
+        <x-dashboard.consultoria-section
+            anchor="cad-previsao-vulnerabilidade"
+            :title="__('Vulnerabilidade familiar (agregado)')"
+            :subtitle="__('Indicadores Misocial/Cecad no município — sem endereço individual.')"
+        >
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                <div class="serv-panel p-3">
+                    <p class="text-xs uppercase text-slate-500">{{ __('Famílias cadastradas') }}</p>
+                    <p class="text-lg font-semibold tabular-nums">{{ number_format((int) ($vulnerabilidade['familias_cadastradas'] ?? 0), 0, ',', '.') }}</p>
+                </div>
+                <div class="serv-panel p-3">
+                    <p class="text-xs uppercase text-slate-500">{{ __('Crianças 4-17 CadÚnico') }}</p>
+                    <p class="text-lg font-semibold tabular-nums">{{ number_format((int) ($vulnerabilidade['criancas_escolar_cadunico'] ?? 0), 0, ',', '.') }}</p>
+                </div>
+                <div class="serv-panel p-3">
+                    <p class="text-xs uppercase text-slate-500">{{ __('Crianças PBF (est.)') }}</p>
+                    <p class="text-lg font-semibold tabular-nums">{{ $vulnerabilidade['pct_criancas_pbf_label'] ?? '—' }}</p>
+                </div>
+                <div class="serv-panel p-3">
+                    <p class="text-xs uppercase text-slate-500">{{ __('Fonte') }}</p>
+                    <p class="text-sm font-medium">{{ $vulnerabilidade['fonte'] ?? '—' }}</p>
+                </div>
+            </div>
+        </x-dashboard.consultoria-section>
+    @endif
+
+    @if (count($territorial['markers'] ?? []) > 0)
+        <x-dashboard.consultoria-section
+            :step="$cadStep['cad-previsao-mapa'] ?? null"
+            anchor="cad-previsao-mapa"
+            :title="__('Mapa de pressão territorial')"
+            :subtitle="__('Priorize bairros/setores com maior lacuna estimada e distância à escola.')"
+        >
+            @include('dashboard.analytics.partials.cadunico-territorio-map', [
+                'territorial' => $territorial,
+                'schoolMarkers' => is_array($territorial['school_markers'] ?? null) ? $territorial['school_markers'] : [],
+            ])
+        </x-dashboard.consultoria-section>
+    @endif
+
     @if (count($informe['blocos'] ?? []) > 0)
         @include('dashboard.analytics.partials.comparativo-informe', [
             'informe' => $informe,
@@ -208,16 +331,70 @@
         <x-dashboard.consultoria-section
             :step="$cadStep['cad-previsao-faixas'] ?? null"
             anchor="cad-previsao-faixas"
-            :title="__('Faixas etárias no CadÚnico')"
-            :subtitle="__('Extração Cecad — população 4-17 anos por faixa.')"
+            :title="__('Faixas etárias — CadÚnico e lacuna')"
+            :subtitle="__('População Cecad, estimativa municipal e lacuna por faixa (VAAF indicativo).')"
         >
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                @foreach ($porFaixa as $faixa)
-                    <div class="serv-panel p-4">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">{{ $faixa['faixa'] ?? '' }}</p>
-                        <p class="text-2xl font-semibold tabular-nums text-serv-navy dark:text-slate-100 mt-1">{{ number_format((int) ($faixa['cadunico'] ?? 0), 0, ',', '.') }}</p>
-                    </div>
-                @endforeach
+            <div class="serv-panel overflow-x-auto">
+                <table class="min-w-full text-sm divide-y divide-slate-200 dark:divide-slate-700">
+                    <thead class="bg-slate-50 dark:bg-slate-900/60">
+                        <tr>
+                            <th class="px-3 py-2 text-left text-xs font-semibold">{{ __('Faixa') }}</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold">{{ __('CadÚnico') }}</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold">{{ __('Rede (est.)') }}</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold">{{ __('Lacuna') }}</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold">{{ __('Cobertura') }}</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold">{{ __('FUNDEB') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                        @foreach ($porFaixa as $faixa)
+                            <tr>
+                                <td class="px-3 py-2 font-medium">{{ $faixa['faixa'] ?? '' }}</td>
+                                <td class="px-3 py-2 text-right tabular-nums">{{ number_format((int) ($faixa['cadunico'] ?? 0), 0, ',', '.') }}</td>
+                                <td class="px-3 py-2 text-right tabular-nums">{{ number_format((int) ($faixa['ieducar_estimado'] ?? 0), 0, ',', '.') }}</td>
+                                <td class="px-3 py-2 text-right tabular-nums font-semibold text-amber-700 dark:text-amber-300">{{ $faixa['gap_fmt'] ?? '0' }}</td>
+                                <td class="px-3 py-2 text-right tabular-nums">{{ $faixa['cobertura_label'] ?? '—' }}</td>
+                                <td class="px-3 py-2 text-right tabular-nums">{{ $faixa['fundeb_gap_label'] ?? '—' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </x-dashboard.consultoria-section>
+    @endif
+
+    @if (count($rankingTerr) > 0)
+        <x-dashboard.consultoria-section
+            :step="$cadStep['cad-previsao-territorios'] ?? null"
+            anchor="cad-previsao-territorios"
+            :title="__('Prioridade por território')"
+            :subtitle="__('Pressão = lacuna × vulnerabilidade × distância à escola mais próxima.')"
+        >
+            <div class="serv-panel overflow-x-auto max-h-96 overflow-y-auto">
+                <table class="min-w-full text-sm divide-y divide-slate-200 dark:divide-slate-700">
+                    <thead class="bg-slate-50 dark:bg-slate-900/60 sticky top-0">
+                        <tr>
+                            <th class="px-3 py-2 text-left text-xs font-semibold">{{ __('Território') }}</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold">{{ __('Tipo') }}</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold">{{ __('CadÚnico') }}</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold">{{ __('Lacuna est.') }}</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold">{{ __('Dist. escola') }}</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold">{{ __('Pressão') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                        @foreach ($rankingTerr as $row)
+                            <tr>
+                                <td class="px-3 py-2 font-medium">{{ $row['nome'] ?? '' }}</td>
+                                <td class="px-3 py-2 text-xs">{{ $row['tipo'] ?? '' }}</td>
+                                <td class="px-3 py-2 text-right tabular-nums">{{ number_format((int) ($row['cadunico'] ?? 0), 0, ',', '.') }}</td>
+                                <td class="px-3 py-2 text-right tabular-nums text-amber-700 dark:text-amber-300">{{ $row['gap_fmt'] ?? '0' }}</td>
+                                <td class="px-3 py-2 text-right tabular-nums">{{ isset($row['distancia_escola_km']) ? number_format((float) $row['distancia_escola_km'], 1, ',', '.').' km' : '—' }}</td>
+                                <td class="px-3 py-2 text-right tabular-nums font-semibold">{{ number_format((float) ($row['pressao'] ?? 0), 0, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
         </x-dashboard.consultoria-section>
     @endif

@@ -29,6 +29,13 @@ final class CadunicoStoragePaths
         return storage_path('app/cadunico/uploads');
     }
 
+    public static function territorioRoot(): string
+    {
+        $rel = trim((string) config('ieducar.cadunico.territorio.storage_path', 'cadunico/territorio'), '/');
+
+        return storage_path('app/'.$rel);
+    }
+
     /**
      * CSVs candidatos para município/ano, do mais específico ao mais genérico.
      *
