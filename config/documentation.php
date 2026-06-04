@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '3.7.0',
         'release_tag' => '20260603-Selene',
-        'commit_short' => '1e60197',
+        'commit_short' => '9144c8b',
         'commit_number' => 273,
         'revision_date' => '2026-06-03',
         'in_production' => true,
