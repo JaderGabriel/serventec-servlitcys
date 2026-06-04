@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '3.10.0',
         'release_tag' => '20260604-Plutus',
-        'commit_short' => '',
+        'commit_short' => '765d97a',
         'commit_number' => 282,
         'revision_date' => '2026-06-04',
         'in_production' => true,
