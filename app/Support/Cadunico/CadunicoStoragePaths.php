@@ -37,6 +37,36 @@ final class CadunicoStoragePaths
     }
 
     /**
+     * CSVs territoriais importados manualmente (exclui ibge-cache).
+     *
+     * @return list<array{path: string, name: string, size: int, modified: string}>
+     */
+    public static function listTerritorioCsvFiles(): array
+    {
+        $root = self::territorioRoot();
+        if (! is_dir($root)) {
+            return [];
+        }
+
+        $out = [];
+        foreach (glob($root.'/territorio_*.csv') ?: [] as $path) {
+            if (! is_readable($path)) {
+                continue;
+            }
+            $out[] = [
+                'path' => $path,
+                'name' => basename($path),
+                'size' => (int) filesize($path),
+                'modified' => date('d/m/Y H:i', (int) filemtime($path)),
+            ];
+        }
+
+        usort($out, static fn (array $a, array $b): int => strcmp($b['name'], $a['name']));
+
+        return $out;
+    }
+
+    /**
      * CSVs candidatos para município/ano, do mais específico ao mais genérico.
      *
      * @return list<string>

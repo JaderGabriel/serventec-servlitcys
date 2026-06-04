@@ -106,9 +106,15 @@ O CadÚnico **municipal** (Misocial) é **rateado** por território:
 **Pré-requisito:** snapshot municipal importado (`cadunico:sync-city`).
 
 ```bash
+php artisan cadunico:sync-city --all --ano=2025
 php artisan cadunico:sync-territorio --all --ano=2025
+php artisan cadunico:sync-territorio --all --queue --ano=2025   # produção / cron
 php artisan cadunico:sync-territorio 1 --ano=2025
 ```
+
+**Admin:** `/admin/cadunico-sync` → «Fluxo completo — um município» ou «Mapa territorial IBGE — todos».
+
+**Cron (após `cadunico:auto-sync`):** `IEDUCAR_CADUNICO_TERRITORIO_SCHEDULE_ENABLED=true`, horário `04:30` por defeito.
 
 ZIPs em cache: `storage/app/cadunico/territorio/ibge-cache/` (renováveis a cada 90 dias).
 

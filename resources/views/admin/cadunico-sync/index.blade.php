@@ -9,7 +9,7 @@
                 {{ __('Sincronização CadÚnico / Cecad') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ __('Fonte principal: SAGI/Misocial (MDS). Complementos: CKAN/dados.gov.br, API municipal, CSV Cecad. Tarefas na fila admin-sync.') }}
+                {{ __('Agregados municipais (Misocial) e mapa territorial (IBGE Censo + WFS). Não precisa de CSV no Git — descarrega em storage no servidor. Tarefas na fila admin-sync.') }}
             </p>
         </div>
     </x-slot>
@@ -18,8 +18,8 @@
         active="cadastro"
         accent="violet"
         :eyebrow="__('Importação CadÚnico')"
-        :title="__('CadÚnico — agregados municipais')"
-        :description="__('Alimenta a aba «CadÚnico: previsão fora da rede» no painel. Sem CPF/NIS — apenas totais por faixa etária (4–17 anos).')"
+        :title="__('CadÚnico — municipal + mapa territorial')"
+        :description="__('Alimenta a aba «CadÚnico: previsão fora da rede» (lacunas, cenários) e o mapa por bairro/setor. Fluxo recomendado: municipal → IBGE.')"
         impact-domain="cadastro"
         queue-banner-compact
         :doc-href="route('admin.documentation.show', ['doc' => 'docs/CADUNICO_CECAD.md'])"
@@ -46,12 +46,13 @@
 
         <x-slot name="stats">
             <x-admin.import-hub.stats-grid>
-                <x-admin.import-hub.stat :label="__('Cobertura')" :value="$municipiosComDados.'/'.$municipiosIbge" :hint="__('municípios com snapshot')" />
-                <x-admin.import-hub.stat :label="__('Registos')" :value="(string) $snapshotsTotal" :hint="__('pares IBGE/ano')" />
+                <x-admin.import-hub.stat :label="__('Municipal')" :value="$municipiosComDados.'/'.$municipiosIbge" :hint="__('municípios com snapshot')" />
+                <x-admin.import-hub.stat :label="__('Mapa (:ano)', ['ano' => $territorioRefYear ?? $defaultYear])" :value="($territorioMunicipiosComDados ?? 0).'/'.$municipiosIbge" :hint="__(':n territórios', ['n' => (string) ($territorioRegistos ?? 0)])" />
                 <x-admin.import-hub.stat :label="__('SAGI/Misocial')" :value="($misocialProbe['ok'] ?? false) ? __('Acessível') : __('Indisponível')" :hint="$misocialProbe['message'] ?? ''" />
                 <x-admin.import-hub.stat
-                    :label="__('Última importação')"
+                    :label="__('Último municipal')"
                     :value="$latestImport ? \Illuminate\Support\Carbon::parse($latestImport)->format('d/m/Y H:i') : '—'"
+                    :hint="$territorioLatestImport ? __('Mapa: ').\Illuminate\Support\Carbon::parse($territorioLatestImport)->format('d/m/Y H:i') : __('Mapa ainda não importado')"
                 />
             </x-admin.import-hub.stats-grid>
         </x-slot>
@@ -132,14 +133,112 @@
                         </div>
                     </x-admin.import-hub.action-card>
 
-                    <x-admin.import-hub.flow-panel :title="__('Pipeline automático (referência)')" :summary="__('Ordem típica quando a sincronização automática está activa.')">
+                    <x-admin.import-hub.callout variant="sky" :title="__('Mapa territorial — fontes públicas IBGE (sem CSV no Git)')">
+                        <p class="text-xs leading-relaxed">
+                            {{ __('O servidor descarrega ZIPs do Censo 2022 e consulta o WFS do IBGE; rateia o CadÚnico municipal já importado. Cache:') }}
+                            <code class="text-[11px]">{{ $territorioRoot ?? 'storage/app/cadunico/territorio' }}/ibge-cache/</code>
+                        </p>
+                        @if ($territorioScheduleEnabled ?? false)
+                            <p class="text-[11px] mt-2 text-sky-900/80 dark:text-sky-200/80">
+                                {{ __('Cron: `cadunico:sync-territorio --all --queue` às :time (após auto-sync municipal).', ['time' => $territorioScheduleTime ?? '04:30']) }}
+                            </p>
+                        @endif
+                    </x-admin.import-hub.callout>
+
+                    <x-admin.import-hub.flow-panel :title="__('Fluxo completo (produção)')" :summary="__('Ordem recomendada para mapa e lacunas na aba CadÚnico.')">
                         <ol class="list-decimal pl-5 space-y-1 text-slate-700 dark:text-slate-300 text-xs">
-                            <li>{{ __('Download HTTP → nacional_{ano}.csv (IEDUCAR_CADUNICO_NACIONAL_CSV_URL)') }}</li>
-                            <li>{{ __('Importação em lote do CSV nacional') }}</li>
-                            <li>{{ __('API/CKAN por município em falta') }}</li>
-                            <li>{{ __('Cache JSON e CSV local como fallback') }}</li>
+                            <li><strong>{{ __('Municipal') }}</strong> — {{ __('Misocial / auto-sync → cadunico_municipio_snapshots') }}</li>
+                            <li><strong>{{ __('Territorial IBGE') }}</strong> — {{ __('FTP bairro/setor + WFS → cadunico_territorio_snapshots') }}</li>
+                            <li><strong>{{ __('Opcional') }}</strong> — {{ __('CSV municipal/CRAS se a prefeitura publicar agregados próprios') }}</li>
                         </ol>
+                        <p class="mt-2 text-[11px] text-slate-500">{{ __('CLI:') }} <code>cadunico:sync-city --all --ano={{ $defaultYear }}</code> → <code>cadunico:sync-territorio --all --queue --ano={{ $defaultYear }}</code></p>
                     </x-admin.import-hub.flow-panel>
+
+                    <x-admin.import-hub.action-card
+                        method="post"
+                        action="{{ route('admin.cadunico-sync.run') }}"
+                        variant="primary"
+                        :step="__('Mapa')"
+                        :title="__('Fluxo completo — um município (municipal + IBGE)')"
+                        :hint="__('Enfileira: snapshot Misocial/API e depois territórios IBGE com rateio 4–17. Recomendado na primeira carga.')"
+                        :submit-label="__('Enfileirar fluxo mapa')"
+                    >
+                        @csrf
+                        <input type="hidden" name="action" value="sync_territorio_flow_city">
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Município') }}</label>
+                                <select name="city_id" class="{{ $selectClass }}" required>
+                                    <option value="">{{ __('Selecione…') }}</option>
+                                    @foreach ($cities as $city)
+                                        <option value="{{ $city->id }}" @selected((int) old('city_id', $filterCity?->id) === $city->id)>{{ $city->name }}@if ($city->uf) ({{ $city->uf }})@endif</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Ano') }}</label>
+                                <select name="ano" class="{{ $selectClass }}" required>
+                                    @foreach ($yearOptions as $y)
+                                        <option value="{{ $y }}" @selected((int) old('ano', $defaultYear) === $y)>{{ $y }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </x-admin.import-hub.action-card>
+
+                    <x-admin.import-hub.action-card
+                        method="post"
+                        action="{{ route('admin.cadunico-sync.run') }}"
+                        variant="sky"
+                        :step="__('Mapa')"
+                        :title="__('Mapa territorial IBGE — todos os municípios')"
+                        :hint="__('Exige snapshots municipais do ano; descarrega IBGE na 1ª execução (pode demorar). Use a fila.')"
+                        :submit-label="__('Enfileirar mapa (todos)')"
+                    >
+                        @csrf
+                        <input type="hidden" name="action" value="sync_territorio_all">
+                        <div class="max-w-xs">
+                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Ano') }}</label>
+                            <select name="ano" class="{{ $selectClass }}" required>
+                                @foreach ($yearOptions as $y)
+                                    <option value="{{ $y }}" @selected((int) old('ano', $defaultYear) === $y)>{{ $y }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-2">{{ __('ou CLI:') }} <code>php artisan cadunico:sync-territorio --all --queue --ano={{ $defaultYear }}</code></p>
+                    </x-admin.import-hub.action-card>
+
+                    <x-admin.import-hub.action-card
+                        method="post"
+                        action="{{ route('admin.cadunico-sync.run') }}"
+                        variant="accent"
+                        :step="__('Mapa')"
+                        :title="__('Só território IBGE (município já sincronizado)')"
+                        :hint="__('Quando o snapshot municipal do ano já existe; apenas FTP/WFS + rateio.')"
+                        :submit-label="__('Enfileirar território IBGE')"
+                    >
+                        @csrf
+                        <input type="hidden" name="action" value="sync_territorio_city">
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Município') }}</label>
+                                <select name="city_id" class="{{ $selectClass }}" required>
+                                    <option value="">{{ __('Selecione…') }}</option>
+                                    @foreach ($cities as $c)
+                                        <option value="{{ $c->id }}" @selected((int) old('city_id', $filterCity?->id) === $c->id)>{{ $c->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Ano') }}</label>
+                                <select name="ano" class="{{ $selectClass }}" required>
+                                    @foreach ($yearOptions as $y)
+                                        <option value="{{ $y }}" @selected((int) old('ano', $defaultYear) === $y)>{{ $y }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </x-admin.import-hub.action-card>
 
                     <x-admin.import-hub.action-card
                         method="post"
@@ -164,7 +263,7 @@
                         method="post"
                         action="{{ route('admin.cadunico-sync.run') }}"
                         variant="accent"
-                        :step="__('Passo 1')"
+                        :step="__('Municipal')"
                         :title="__('Sincronizar município e ano')"
                         :hint="__('Recomendado para um município: percorre API → cache → CSV automaticamente.')"
                         :submit-label="__('Enfileirar sincronização')"
@@ -195,7 +294,7 @@
                     <x-admin.import-hub.action-card
                         method="post"
                         action="{{ route('admin.cadunico-sync.run') }}"
-                        :step="__('Passo 2')"
+                        :step="__('Municipal')"
                         :title="__('Importar ano a partir de CSV em storage')"
                         :hint="__('Coloque nacional_:ano.csv na pasta Cecad antes de executar.')"
                         :submit-label="__('Enfileirar importação storage')"
@@ -216,11 +315,11 @@
                         method="post"
                         action="{{ route('admin.cadunico-sync.run') }}"
                         enctype="multipart/form-data"
-                        variant="sky"
-                        :step="__('Território')"
-                        :title="__('CSV territorial (bairro/setor)')"
-                        :hint="__('Agregados por território com lat/lng opcional — alimenta mapa e ranking na aba CadÚnico. Requer município e ano.')"
-                        :submit-label="__('Importar território')"
+                        variant="default"
+                        :step="__('Opcional')"
+                        :title="__('CSV territorial municipal / CRAS (upload)')"
+                        :hint="__('Substitui ou complementa o rateio IBGE quando a prefeitura publica agregados próprios. Não é a fonte nacional oficial.')"
+                        :submit-label="__('Importar CSV territorial')"
                     >
                         @csrf
                         <input type="hidden" name="action" value="upload_territorio">
@@ -257,7 +356,7 @@
                         method="post"
                         action="{{ route('admin.cadunico-sync.run') }}"
                         variant="warning"
-                        :step="__('Passo 3')"
+                        :step="__('Municipal')"
                         :title="__('Sincronizar todos os municípios (um ano)')"
                         :hint="__('Cria uma tarefa por cidade na fila — use após configurar API ou CSV nacional.')"
                         :submit-label="__('Enfileirar todos')"
@@ -274,9 +373,20 @@
                         </div>
                     </x-admin.import-hub.action-card>
 
+                    @if (count($territorioStorageFiles ?? []) > 0)
+                        <details class="rounded-xl border border-sky-200 dark:border-sky-800 px-4 py-3">
+                            <summary class="cursor-pointer text-sm font-semibold">{{ __('CSV territorial em storage (:n)', ['n' => count($territorioStorageFiles)]) }}</summary>
+                            <ul class="mt-3 text-xs space-y-1 text-gray-700 dark:text-gray-300">
+                                @foreach ($territorioStorageFiles as $file)
+                                    <li class="font-mono">{{ $file['name'] }} — {{ number_format($file['size'] / 1024, 1) }} KB · {{ $file['modified'] }}</li>
+                                @endforeach
+                            </ul>
+                        </details>
+                    @endif
+
                     @if (count($storageFiles) > 0)
                         <details class="rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3">
-                            <summary class="cursor-pointer text-sm font-semibold">{{ __('CSV em storage (:n)', ['n' => count($storageFiles)]) }}</summary>
+                            <summary class="cursor-pointer text-sm font-semibold">{{ __('CSV Cecad em storage (:n)', ['n' => count($storageFiles)]) }}</summary>
                             <ul class="mt-3 text-xs space-y-1 text-gray-700 dark:text-gray-300">
                                 @foreach ($storageFiles as $file)
                                     <li class="font-mono">{{ $file['name'] }} — {{ number_format($file['size'] / 1024, 1) }} KB · {{ $file['modified'] }}</li>

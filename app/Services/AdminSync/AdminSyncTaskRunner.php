@@ -7,6 +7,7 @@ use App\Models\City;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\Cadunico\CadunicoAutoSyncService;
 use App\Services\Cadunico\CadunicoOpenDataImportService;
+use App\Services\Cadunico\CadunicoTerritorioOfficialImportService;
 use App\Services\CityDataConnection;
 use App\Services\Fundeb\FundebImportMode;
 use App\Services\Fundeb\FundebImportProgress;
@@ -41,6 +42,7 @@ final class AdminSyncTaskRunner
         private InclusionNeeExportService $inclusionNeeExport,
         private CadunicoOpenDataImportService $cadunicoImport,
         private CadunicoAutoSyncService $cadunicoAutoSync,
+        private CadunicoTerritorioOfficialImportService $cadunicoTerritorioImport,
     ) {}
 
     /**
@@ -72,6 +74,9 @@ final class AdminSyncTaskRunner
                 'cadastro::import_storage_year' => $this->runCadastroImportStorageYear($task, $progress),
                 'cadastro::import_csv' => $this->runCadastroImportCsv($task, $progress),
                 'cadastro::auto_sync' => $this->runCadastroAutoSync($task, $progress),
+                'cadastro::sync_territorio_city' => $this->runCadastroSyncTerritorioCity($task, $progress),
+                'cadastro::sync_territorio_all' => $this->runCadastroSyncTerritorioAll($task, $progress),
+                'cadastro::sync_territorio_flow_city' => $this->runCadastroSyncTerritorioFlowCity($task, $progress),
                 'ieducar::schema_probe' => $this->runIeducarSchemaProbe($task, $progress),
                 'ieducar::inclusion_nee_export' => $this->runInclusionNeeExport($task, $progress),
                 'system::weekly_mass_sync' => $this->weeklyMassSync->run($task, $progress),
@@ -887,6 +892,118 @@ final class AdminSyncTaskRunner
             'message' => (string) ($result['message'] ?? ''),
             'imported' => (int) ($result['imported'] ?? 0),
             'errors' => $result['errors'] ?? [],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function runCadastroSyncTerritorioFlowCity(AdminSyncTask $task, AdminSyncTaskProgress $progress): array
+    {
+        $payload = $task->payload ?? [];
+        $city = City::query()->findOrFail((int) ($payload['city_id'] ?? $task->city_id));
+        $ano = (int) ($payload['ano'] ?? CadunicoOpenDataImportService::suggestedImportYear());
+
+        $progress->step(1, 2, __('Passo 1/2 — CadÚnico municipal (:city, :ano)…', [
+            'city' => $city->name,
+            'ano' => (string) $ano,
+        ]));
+        $municipal = $this->cadunicoImport->importForCity($city, $ano);
+        foreach ($municipal['attempts'] ?? [] as $attempt) {
+            $progress->detail($attempt);
+        }
+        if (! ($municipal['success'] ?? false)) {
+            return [
+                'success' => false,
+                'message' => (string) ($municipal['message'] ?? __('Snapshot municipal em falta.')),
+                'municipal' => $municipal,
+            ];
+        }
+
+        $progress->step(2, 2, __('Passo 2/2 — Territórios IBGE (bairro/setor + WFS)…'));
+        $log = static function (string $message) use ($progress): void {
+            $progress->detail($message);
+        };
+        $territorial = $this->cadunicoTerritorioImport->importForCity($city, $ano, $log);
+
+        return [
+            'success' => (bool) ($territorial['success'] ?? false),
+            'message' => (string) ($territorial['message'] ?? ''),
+            'municipal' => $municipal,
+            'territorial' => $territorial,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function runCadastroSyncTerritorioCity(AdminSyncTask $task, AdminSyncTaskProgress $progress): array
+    {
+        $payload = $task->payload ?? [];
+        $city = City::query()->findOrFail((int) ($payload['city_id'] ?? $task->city_id));
+        $ano = (int) ($payload['ano'] ?? CadunicoOpenDataImportService::suggestedImportYear());
+
+        $progress->step(1, 1, __('Mapa territorial IBGE — :city (:ano)…', [
+            'city' => $city->name,
+            'ano' => (string) $ano,
+        ]));
+        $log = static function (string $message) use ($progress): void {
+            $progress->detail($message);
+        };
+        $result = $this->cadunicoTerritorioImport->importForCity($city, $ano, $log);
+
+        return [
+            'success' => (bool) ($result['success'] ?? false),
+            'message' => (string) ($result['message'] ?? ''),
+            'imported' => (int) ($result['imported'] ?? 0),
+            'territorial' => $result,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function runCadastroSyncTerritorioAll(AdminSyncTask $task, AdminSyncTaskProgress $progress): array
+    {
+        $payload = $task->payload ?? [];
+        $ano = (int) ($payload['ano'] ?? CadunicoOpenDataImportService::suggestedImportYear());
+        $cities = City::query()->forAnalytics()->orderBy('name')->get();
+        $total = max(1, $cities->count());
+        $failures = 0;
+        $importedTotal = 0;
+        $index = 0;
+
+        foreach ($cities as $city) {
+            $index++;
+            $progress->step($index, $total, __('[:i/:t] :name', [
+                'i' => $index,
+                't' => $total,
+                'name' => $city->name,
+            ]));
+            $log = static function (string $message) use ($progress): void {
+                $progress->detail($message);
+            };
+            $result = $this->cadunicoTerritorioImport->importForCity($city, $ano, $log);
+            $importedTotal += (int) ($result['imported'] ?? 0);
+            if (! ($result['success'] ?? false)) {
+                $failures++;
+                $progress->detail('✗ '.($result['message'] ?? ''));
+            } else {
+                $progress->detail('✓ '.($result['message'] ?? ''));
+            }
+        }
+
+        $ok = $total - $failures;
+
+        return [
+            'success' => $failures === 0,
+            'message' => __('Territorial: :ok OK, :fail falha(s), :reg registo(s).', [
+                'ok' => $ok,
+                'fail' => $failures,
+                'reg' => $importedTotal,
+            ]),
+            'imported' => $importedTotal,
+            'failures' => $failures,
         ];
     }
 }

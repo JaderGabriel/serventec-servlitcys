@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\AdminSyncDomain;
 use App\Models\City;
+use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\Cadunico\CadunicoOpenDataImportService;
 use App\Services\Cadunico\CadunicoTerritorioOfficialImportService;
 use Illuminate\Console\Command;
@@ -12,15 +14,58 @@ class CadunicoSyncTerritorioCommand extends Command
     protected $signature = 'cadunico:sync-territorio
                             {city? : ID da cidade ou omita com --all}
                             {--ano= : Ano de referência (CadÚnico + Censo)}
-                            {--all : Todos os municípios com analytics}';
+                            {--all : Todos os municípios com analytics}
+                            {--queue : Enfileirar na fila admin-sync (recomendado em produção/cron)}';
 
     protected $description = 'Importa territórios oficiais IBGE (Censo 2022 bairro/setor + WFS) e rateia CadÚnico municipal';
 
-    public function handle(CadunicoTerritorioOfficialImportService $import): int
-    {
+    public function handle(
+        CadunicoTerritorioOfficialImportService $import,
+        AdminSyncQueueService $syncQueue,
+    ): int {
         $ano = $this->option('ano') !== null
             ? (int) $this->option('ano')
             : CadunicoOpenDataImportService::suggestedImportYear();
+
+        if ($this->option('queue')) {
+            if (! $this->option('all') && $this->argument('city') === null) {
+                $this->error(__('Indique city_id, --all ou use sem --queue.'));
+
+                return self::FAILURE;
+            }
+
+            if ($this->option('all')) {
+                $task = $syncQueue->dispatch(
+                    AdminSyncDomain::Cadastro,
+                    'sync_territorio_all',
+                    __('CadÚnico — mapa territorial IBGE (:ano)', ['ano' => (string) $ano]),
+                    ['ano' => $ano],
+                    null,
+                );
+            } else {
+                $cityId = (int) $this->argument('city');
+                $city = City::query()->find($cityId);
+                if ($city === null) {
+                    $this->error(__('Município não encontrado.'));
+
+                    return self::FAILURE;
+                }
+                $task = $syncQueue->dispatch(
+                    AdminSyncDomain::Cadastro,
+                    'sync_territorio_city',
+                    __('CadÚnico — território IBGE (:city, :ano)', [
+                        'city' => $city->name,
+                        'ano' => (string) $ano,
+                    ]),
+                    ['city_id' => $city->id, 'ano' => $ano],
+                    $city->id,
+                );
+            }
+
+            $this->info(__('Tarefa #:id enfileirada.', ['id' => (string) $task->id]));
+
+            return self::SUCCESS;
+        }
 
         $cities = $this->option('all')
             ? City::query()->forAnalytics()->get()

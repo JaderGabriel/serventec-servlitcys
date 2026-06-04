@@ -1436,6 +1436,13 @@ return [
             'csv_url_template' => (string) env('IEDUCAR_CADUNICO_TERRITORIO_CSV_URL', ''),
             'csv_cache_days' => max(1, (int) env('IEDUCAR_CADUNICO_TERRITORIO_CSV_CACHE_DAYS', 7)),
             'csv_http_timeout' => max(10, (int) env('IEDUCAR_CADUNICO_TERRITORIO_CSV_TIMEOUT', 120)),
+            'schedule' => [
+                'enabled' => filter_var(env('IEDUCAR_CADUNICO_TERRITORIO_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
+                /** 0=domingo … 6=sábado — por defeito igual ao auto-sync (segunda). */
+                'day_of_week' => max(0, min(6, (int) env('IEDUCAR_CADUNICO_TERRITORIO_SCHEDULE_DAY', 1))),
+                /** Após cadunico:auto-sync (ex. 04:30 se municipal às 03:30). */
+                'time' => trim((string) env('IEDUCAR_CADUNICO_TERRITORIO_SCHEDULE_TIME', '04:30')) ?: '04:30',
+            ],
             'load_school_markers' => filter_var(env('IEDUCAR_CADUNICO_TERRITORIO_SCHOOL_MARKERS', true), FILTER_VALIDATE_BOOL),
             'ibge_censo' => [
                 'cache_days' => max(7, (int) env('IEDUCAR_CADUNICO_TERRITORIO_IBGE_CACHE_DAYS', 90)),

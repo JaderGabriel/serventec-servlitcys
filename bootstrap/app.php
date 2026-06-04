@@ -182,6 +182,11 @@ return Application::configure(basePath: dirname(__DIR__))
         }
 
         if (filter_var(config('ieducar.cadunico.auto_sync.enabled', true), FILTER_VALIDATE_BOOLEAN)
+            || filter_var(config('ieducar.cadunico.territorio.schedule.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            $timezone = (string) config('app.timezone', 'UTC');
+        }
+
+        if (filter_var(config('ieducar.cadunico.auto_sync.enabled', true), FILTER_VALIDATE_BOOLEAN)
             && filter_var(config('ieducar.cadunico.auto_sync.schedule.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             $cadDay = max(0, min(6, (int) config('ieducar.cadunico.auto_sync.schedule.day_of_week', 1)));
             $cadTime = trim((string) config('ieducar.cadunico.auto_sync.schedule.time', '03:30')) ?: '03:30';
@@ -190,6 +195,18 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->weeklyOn($cadDay, $cadTime)
                 ->name('cadunico-auto-sync-enqueue')
                 ->withoutOverlapping(120)
+                ->timezone($timezone)
+                ->runInBackground();
+        }
+
+        if (filter_var(config('ieducar.cadunico.territorio.schedule.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            $terDay = max(0, min(6, (int) config('ieducar.cadunico.territorio.schedule.day_of_week', 1)));
+            $terTime = trim((string) config('ieducar.cadunico.territorio.schedule.time', '04:30')) ?: '04:30';
+
+            $schedule->command('cadunico:sync-territorio --all --queue')
+                ->weeklyOn($terDay, $terTime)
+                ->name('cadunico-sync-territorio-enqueue')
+                ->withoutOverlapping(180)
                 ->timezone($timezone)
                 ->runInBackground();
         }

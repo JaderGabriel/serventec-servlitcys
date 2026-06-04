@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\AdminSyncDomain;
 use App\Http\Controllers\Controller;
 use App\Models\CadunicoMunicipioSnapshot;
+use App\Models\CadunicoTerritorioSnapshot;
 use App\Models\City;
 use App\Repositories\CadunicoMunicipioSnapshotRepository;
 use App\Repositories\FundebMunicipioReferenceRepository;
@@ -79,10 +80,20 @@ class CadunicoSyncController extends Controller
         $municipiosComDados = $snapshotRows->pluck('ibge_municipio')->unique()->count();
         $latestImport = $snapshotRows->max('imported_at');
 
+        $territorioRows = CadunicoTerritorioSnapshot::query()
+            ->when($ibgeList !== [], fn ($q) => $q->whereIn('ibge_municipio', $ibgeList))
+            ->where('ano_referencia', $refYear)
+            ->get(['ibge_municipio', 'territorio_codigo', 'imported_at']);
+        $territorioMunicipiosComDados = $territorioRows->pluck('ibge_municipio')->unique()->count();
+        $territorioRegistos = $territorioRows->count();
+        $territorioLatestImport = $territorioRows->max('imported_at');
+
         $apiTemplate = trim((string) config('ieducar.cadunico.open_data.api_url_template', ''));
         $ckanId = trim((string) config('ieducar.cadunico.open_data.resource_id', ''));
         $nacionalUrl = trim((string) config('ieducar.cadunico.auto_sync.nacional_csv_url_template', ''));
         $scheduleEnabled = filter_var(config('ieducar.cadunico.auto_sync.schedule.enabled', true), FILTER_VALIDATE_BOOL);
+        $territorioScheduleEnabled = filter_var(config('ieducar.cadunico.territorio.schedule.enabled', true), FILTER_VALIDATE_BOOL);
+        $territorioScheduleTime = trim((string) config('ieducar.cadunico.territorio.schedule.time', '04:30')) ?: '04:30';
         $autoYears = \App\Services\Cadunico\CadunicoAutoSyncService::yearsToSync();
         $misocialProbe = $this->misocial->probe();
         $ckanDiscovered = $this->ckanDiscovery->discover();
@@ -94,7 +105,13 @@ class CadunicoSyncController extends Controller
             'yearOptions' => range($maxYear, max(2000, $maxYear - 8)),
             'storageRoot' => CadunicoStoragePaths::storageRoot(),
             'storageFiles' => CadunicoStoragePaths::listStorageCsvFiles(),
+            'territorioStorageFiles' => CadunicoStoragePaths::listTerritorioCsvFiles(),
+            'territorioRoot' => CadunicoStoragePaths::territorioRoot(),
             'municipiosComDados' => $municipiosComDados,
+            'territorioMunicipiosComDados' => $territorioMunicipiosComDados,
+            'territorioRegistos' => $territorioRegistos,
+            'territorioLatestImport' => $territorioLatestImport,
+            'territorioRefYear' => $refYear,
             'municipiosIbge' => count($ibgeList),
             'snapshotsTotal' => $snapshotRows->count(),
             'latestImport' => $latestImport,
@@ -113,6 +130,8 @@ class CadunicoSyncController extends Controller
             'nacionalUrlConfigured' => $nacionalUrl !== '',
             'nacionalUrlTemplate' => $nacionalUrl,
             'scheduleEnabled' => $scheduleEnabled,
+            'territorioScheduleEnabled' => $territorioScheduleEnabled,
+            'territorioScheduleTime' => $territorioScheduleTime,
             'autoSyncYears' => $autoYears,
         ]);
     }
@@ -120,7 +139,7 @@ class CadunicoSyncController extends Controller
     public function run(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'action' => 'required|string|in:auto_sync,import_city_year,import_storage_year,import_csv,upload_cecad,upload_territorio,import_all_cities_year',
+            'action' => 'required|string|in:auto_sync,import_city_year,import_storage_year,import_csv,upload_cecad,upload_territorio,import_all_cities_year,sync_territorio_flow_city,sync_territorio_city,sync_territorio_all',
             'city_id' => 'nullable|integer|exists:cities,id',
             'ano' => 'nullable|integer|min:2000|max:'.((int) date('Y') + 1),
             'csv_file' => 'required_if:action,import_csv,upload_cecad,upload_territorio|file|max:20480',
@@ -130,7 +149,7 @@ class CadunicoSyncController extends Controller
         $action = $validated['action'];
         $ano = isset($validated['ano']) ? (int) $validated['ano'] : CadunicoOpenDataImportService::suggestedImportYear();
 
-        if (in_array($action, ['import_city_year', 'upload_territorio'], true) && empty($validated['city_id'])) {
+        if (in_array($action, ['import_city_year', 'upload_territorio', 'sync_territorio_flow_city', 'sync_territorio_city'], true) && empty($validated['city_id'])) {
             return redirect()
                 ->route('admin.cadunico-sync.index')
                 ->withInput()
@@ -143,6 +162,10 @@ class CadunicoSyncController extends Controller
 
         if ($action === 'import_all_cities_year') {
             return $this->dispatchAllCities($ano);
+        }
+
+        if (in_array($action, ['sync_territorio_flow_city', 'sync_territorio_city', 'sync_territorio_all'], true)) {
+            return $this->dispatchTerritorioSync($action, $ano, isset($validated['city_id']) ? (int) $validated['city_id'] : null);
         }
 
         if ($action === 'auto_sync') {
@@ -354,6 +377,49 @@ class CadunicoSyncController extends Controller
         $city = $cityId !== null ? City::query()->find($cityId) : null;
 
         return CadunicoCecadUpload::store($upload, $ano, $city);
+    }
+
+    private function dispatchTerritorioSync(string $action, int $ano, ?int $cityId): RedirectResponse
+    {
+        if ($action === 'sync_territorio_all') {
+            $task = $this->syncQueue->dispatch(
+                AdminSyncDomain::Cadastro,
+                'sync_territorio_all',
+                __('CadÚnico — mapa territorial IBGE (:ano)', ['ano' => (string) $ano]),
+                ['ano' => $ano],
+                null,
+            );
+
+            return redirect()
+                ->route('admin.cadunico-sync.index')
+                ->with('admin_sync_queued', [
+                    'task_id' => $task->id,
+                    'message' => AdminSyncQueueService::flashQueuedMessage($task),
+                ]);
+        }
+
+        $city = City::query()->findOrFail((int) $cityId);
+        $taskKey = $action === 'sync_territorio_flow_city'
+            ? 'sync_territorio_flow_city'
+            : 'sync_territorio_city';
+        $label = $action === 'sync_territorio_flow_city'
+            ? __('CadÚnico — fluxo mapa (:city, :ano)', ['city' => $city->name, 'ano' => (string) $ano])
+            : __('CadÚnico — território IBGE (:city, :ano)', ['city' => $city->name, 'ano' => (string) $ano]);
+
+        $task = $this->syncQueue->dispatch(
+            AdminSyncDomain::Cadastro,
+            $taskKey,
+            $label,
+            ['city_id' => $city->id, 'ano' => $ano],
+            $city->id,
+        );
+
+        return redirect()
+            ->route('admin.cadunico-sync.index', ['city_id' => $city->id])
+            ->with('admin_sync_queued', [
+                'task_id' => $task->id,
+                'message' => AdminSyncQueueService::flashQueuedMessage($task),
+            ]);
     }
 
     private function dispatchAllCities(int $ano): RedirectResponse

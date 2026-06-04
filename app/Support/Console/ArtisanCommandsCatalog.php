@@ -226,6 +226,20 @@ final class ArtisanCommandsCatalog
                         'doc_anchor' => 'cadunico',
                     ],
                     [
+                        'name' => 'cadunico:sync-territorio',
+                        'summary' => __('Mapa IBGE (FTP+WFS) + rateio municipal.'),
+                        'signature' => 'cadunico:sync-territorio {city?} {--ano=} {--all} {--queue}',
+                        'examples' => [
+                            'php artisan cadunico:sync-territorio --all --queue --ano=2025',
+                            'php artisan cadunico:sync-city --all --ano=2025',
+                        ],
+                        'env' => [
+                            'IEDUCAR_CADUNICO_TERRITORIO_IBGE_BAIRRO_ZIP',
+                            'IEDUCAR_CADUNICO_TERRITORIO_SCHEDULE_ENABLED',
+                        ],
+                        'doc_anchor' => 'cadunico',
+                    ],
+                    [
                         'name' => 'cadunico:pull-territorio',
                         'summary' => __('Download URL + import CSV territorial (produção).'),
                         'signature' => 'cadunico:pull-territorio {city?} {--ano=} {--all} {--url=} {--force} {--download-only}',
