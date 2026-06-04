@@ -1,0 +1,63 @@
+<?php
+
+namespace App\Support\Funding;
+
+use App\Models\City;
+use App\Models\MunicipalTransferSnapshot;
+use App\Repositories\MunicipalTransferSnapshotRepository;
+use Illuminate\Support\Str;
+
+/**
+ * Distingue repasses municipais de totais agregados por UF (ex.: publicação STN M_TOTAL).
+ */
+final class FundebTransferScope
+{
+    public static function isUfAggregated(MunicipalTransferSnapshot $row): bool
+    {
+        $meta = self::metaArray($row);
+
+        if (($meta['agregacao'] ?? '') === 'uf') {
+            return true;
+        }
+
+        // Publicação STN: folha M_TOTAL traz total por UF, não por município.
+        return (string) $row->fonte === 'tesouro_publicacao';
+    }
+
+    /**
+     * @param  list<MunicipalTransferSnapshot>  $rows
+     * @return list<MunicipalTransferSnapshot>
+     */
+    public static function municipalSnapshotsOnly(array $rows): array
+    {
+        return array_values(array_filter($rows, static fn (MunicipalTransferSnapshot $r): bool => ! self::isUfAggregated($r)));
+    }
+
+    public static function cityYearSlug(City $city, int $year): string
+    {
+        $ibge = MunicipalTransferSnapshotRepository::normalizeIbge((string) $city->ibge_municipio);
+        $base = Str::slug(trim((string) $city->name).'-'.strtoupper(trim((string) ($city->uf ?? ''))));
+        if ($ibge !== null) {
+            $base .= '-'.$ibge;
+        }
+
+        return $base.'-'.$year;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function metaArray(MunicipalTransferSnapshot $row): array
+    {
+        $meta = $row->meta;
+        if (is_array($meta)) {
+            return $meta;
+        }
+        if (! is_string($meta) || $meta === '') {
+            return [];
+        }
+        $decoded = json_decode($meta, true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+}

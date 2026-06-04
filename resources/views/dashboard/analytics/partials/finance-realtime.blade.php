@@ -146,7 +146,7 @@
             <x-dashboard.consultoria-section
                 anchor="realtime-extrato"
                 :title="__('Extrato simulado (dados públicos)')"
-                :subtitle="__('Visualização tipo conta-corrente com os repasses já importados — não é print do Internet Banking.')"
+                :subtitle="__('Extrato simulado: data do repasse, total mensal e saldo anual acumulado — com dados públicos importados (não substitui o Internet Banking).')"
             >
                 <div class="rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 overflow-hidden shadow-md font-mono text-[11px]">
                     <div class="bg-slate-800 text-white px-4 py-3 flex justify-between items-center">
@@ -167,19 +167,41 @@
                             <table class="w-full text-left">
                                 <thead class="bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300">
                                     <tr>
-                                        <th class="px-3 py-2">{{ __('Data') }}</th>
-                                        <th class="px-3 py-2">{{ __('Lançamento') }}</th>
-                                        <th class="px-3 py-2 text-right">{{ __('Crédito') }}</th>
-                                        <th class="px-3 py-2 text-right">{{ __('Saldo acum.') }}</th>
+                                        <th class="px-3 py-2 w-[5.5rem]">{{ __('Data') }}</th>
+                                        <th class="px-3 py-2">{{ __('Histórico') }}</th>
+                                        <th class="px-3 py-2 text-right w-[6.5rem]">{{ __('Crédito') }}</th>
+                                        <th class="px-3 py-2 text-right w-[6.5rem]">{{ __('Débito') }}</th>
+                                        <th class="px-3 py-2 text-right w-[7.5rem]">{{ __('Saldo anual acum.') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                     @foreach ($cycleLines as $line)
-                                        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-900/50">
-                                            <td class="px-3 py-2 whitespace-nowrap">{{ $line['date'] ?? '—' }}</td>
-                                            <td class="px-3 py-2">{{ $line['description'] ?? '' }}</td>
-                                            <td class="px-3 py-2 text-right text-emerald-700 dark:text-emerald-400">{{ $line['credit'] ?? '—' }}</td>
-                                            <td class="px-3 py-2 text-right font-semibold">{{ $line['balance'] ?? '—' }}</td>
+                                        @php
+                                            $lineType = (string) ($line['line_type'] ?? 'credit');
+                                            $isSubtotal = (bool) ($line['is_subtotal'] ?? false);
+                                        @endphp
+                                        <tr @class([
+                                            'hover:bg-slate-50/80 dark:hover:bg-slate-900/50' => ! $isSubtotal,
+                                            'bg-amber-50/90 dark:bg-amber-950/30 font-semibold' => $lineType === 'month_total',
+                                            'bg-teal-50/90 dark:bg-teal-950/35 font-bold' => $lineType === 'year_total',
+                                            'bg-slate-100/60 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400' => $lineType === 'opening',
+                                        ])>
+                                            <td class="px-3 py-2 whitespace-nowrap align-top">
+                                                {{ $line['date'] ?? '—' }}
+                                                @if (filled($line['date_note'] ?? null) && $lineType === 'credit')
+                                                    <span class="block text-[9px] font-normal text-slate-500 dark:text-slate-400" title="{{ __('Origem da data') }}">
+                                                        @if ($line['date_note'] === 'fim_mes')
+                                                            {{ __('ref. fim do mês') }}
+                                                        @elseif ($line['date_note'] === 'extrato')
+                                                            {{ __('extrato') }}
+                                                        @endif
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="px-3 py-2 align-top">{{ $line['description'] ?? '' }}</td>
+                                            <td class="px-3 py-2 text-right text-emerald-700 dark:text-emerald-400 align-top">{{ $line['credit'] ?? '—' }}</td>
+                                            <td class="px-3 py-2 text-right text-rose-700 dark:text-rose-400 align-top">{{ $line['debit'] ?? '—' }}</td>
+                                            <td class="px-3 py-2 text-right font-semibold align-top">{{ $line['balance_annual_fmt'] ?? $line['balance'] ?? '—' }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -236,10 +258,42 @@
                         $consYears = is_array($extratoConsolidado['by_year'] ?? null) ? $extratoConsolidado['by_year'] : [];
                         $consCmp = is_array($extratoConsolidado['comparativo'] ?? null) ? $extratoConsolidado['comparativo'] : [];
                     @endphp
-                    @if ($consPeriods !== [] || $consYears !== [])
+                    @php
+                        $consLines = is_array($extratoConsolidado['lines'] ?? null) ? $extratoConsolidado['lines'] : [];
+                    @endphp
+                    @if ($consLines !== [] || $consPeriods !== [] || $consYears !== [])
                         <div class="bg-sky-900/90 dark:bg-sky-950 px-4 py-2 font-sans text-xs font-semibold text-white border-t-2 border-sky-600">
                             {{ __('Consolidado (todas as fontes)') }} — {{ $extratoConsolidado['total_fmt'] ?? '—' }}
                         </div>
+                        @if ($consLines !== [])
+                            <table class="w-full text-left border-b border-slate-200 dark:border-slate-700">
+                                <thead class="bg-sky-50/80 dark:bg-sky-950/40 text-sky-900 dark:text-sky-100 text-[10px] uppercase">
+                                    <tr>
+                                        <th class="px-3 py-2">{{ __('Data') }}</th>
+                                        <th class="px-3 py-2">{{ __('Histórico') }}</th>
+                                        <th class="px-3 py-2 text-right">{{ __('Crédito') }}</th>
+                                        <th class="px-3 py-2 text-right">{{ __('Débito') }}</th>
+                                        <th class="px-3 py-2 text-right">{{ __('Saldo anual acum.') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    @foreach ($consLines as $line)
+                                        @php $lineType = (string) ($line['line_type'] ?? 'credit'); @endphp
+                                        <tr @class([
+                                            'bg-amber-50/90 dark:bg-amber-950/30 font-semibold' => $lineType === 'month_total',
+                                            'bg-teal-50/90 dark:bg-teal-950/35 font-bold' => $lineType === 'year_total',
+                                            'bg-slate-100/60 dark:bg-slate-800/40' => $lineType === 'opening',
+                                        ])>
+                                            <td class="px-3 py-2 whitespace-nowrap">{{ $line['date'] ?? '—' }}</td>
+                                            <td class="px-3 py-2">{{ $line['description'] ?? '' }}</td>
+                                            <td class="px-3 py-2 text-right text-emerald-700 dark:text-emerald-400">{{ $line['credit'] ?? '—' }}</td>
+                                            <td class="px-3 py-2 text-right">{{ $line['debit'] ?? '—' }}</td>
+                                            <td class="px-3 py-2 text-right font-semibold">{{ $line['balance_annual_fmt'] ?? $line['balance'] ?? '—' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @endif
                         @if ($consYears !== [])
                             <table class="w-full text-left border-b border-slate-200 dark:border-slate-700">
                                 <thead class="bg-sky-50 dark:bg-sky-950/50 text-sky-900 dark:text-sky-100 text-[10px] uppercase">

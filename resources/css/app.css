@@ -2765,6 +2765,126 @@
         @apply bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-200;
     }
 
+    .sync-queue-panel--amber {
+        @apply border-amber-200/70 dark:border-amber-900/40;
+    }
+
+    .sync-queue-panel--emerald {
+        @apply border-emerald-200/70 dark:border-emerald-900/40;
+    }
+
+    .sync-queue-panel--sky {
+        @apply border-sky-200/70 dark:border-sky-900/40;
+    }
+
+    .sync-queue-panel--violet {
+        @apply border-violet-200/70 dark:border-violet-900/40;
+    }
+
+    .sync-queue-panel--indigo {
+        @apply border-indigo-200/70 dark:border-indigo-900/40;
+    }
+
+    .sync-queue-panel--rose {
+        @apply border-rose-200/70 dark:border-rose-900/40;
+    }
+
+    .sync-queue-panel--slate {
+        @apply border-slate-200 dark:border-slate-700;
+    }
+
+    .sync-queue-theme-card--slate .sync-queue-theme-card__icon {
+        @apply bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200;
+    }
+
+    .sync-queue-theme-card--rose .sync-queue-theme-card__icon {
+        @apply bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-200;
+    }
+
+    .import-hub-nav-icon {
+        @apply inline-flex h-5 w-5 items-center justify-center rounded-md;
+    }
+
+    .import-hub-nav-icon--amber {
+        @apply bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200;
+    }
+
+    .import-hub-nav-icon--emerald {
+        @apply bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200;
+    }
+
+    .import-hub-nav-icon--violet {
+        @apply bg-violet-100 text-violet-800 dark:bg-violet-950/50 dark:text-violet-200;
+    }
+
+    .import-hub-nav-icon--sky {
+        @apply bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200;
+    }
+
+    .import-hub-nav-icon--slate {
+        @apply bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200;
+    }
+
+    .import-hub-nav-icon--indigo {
+        @apply bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-200;
+    }
+
+    .import-hub-source-card--amber {
+        @apply border-l-4 border-l-amber-400 dark:border-l-amber-600;
+    }
+
+    .import-hub-source-card--emerald {
+        @apply border-l-4 border-l-emerald-400 dark:border-l-emerald-600;
+    }
+
+    .import-hub-source-card--sky {
+        @apply border-l-4 border-l-sky-400 dark:border-l-sky-600;
+    }
+
+    .import-hub-source-card--violet {
+        @apply border-l-4 border-l-violet-400 dark:border-l-violet-600;
+    }
+
+    .import-hub-source-card--indigo {
+        @apply border-l-4 border-l-indigo-400 dark:border-l-indigo-600;
+    }
+
+    .import-hub-source-card--rose {
+        @apply border-l-4 border-l-rose-400 dark:border-l-rose-600;
+    }
+
+    .import-hub-source-card--slate {
+        @apply border-l-4 border-l-slate-400 dark:border-l-slate-600;
+    }
+
+    .import-hub-source-card--nested {
+        @apply rounded-lg border border-slate-100 bg-white/80 dark:border-slate-800 dark:bg-slate-900/40 overflow-hidden;
+    }
+
+    .import-hub-source-card__icon-wrap--amber .sync-queue-panel__icon {
+        @apply bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200;
+    }
+
+    .import-hub-source-card__icon-wrap--emerald .sync-queue-panel__icon {
+        @apply bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200;
+    }
+
+    .import-hub-source-card__icon-wrap--sky .sync-queue-panel__icon {
+        @apply bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200;
+    }
+
+    .import-hub-source-card__icon-wrap--violet .sync-queue-panel__icon {
+        @apply bg-violet-100 text-violet-800 dark:bg-violet-950/50 dark:text-violet-200;
+    }
+
+    .import-hub-source-card__icon-wrap--indigo .sync-queue-panel__icon {
+        @apply bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-200;
+    }
+
+    .import-hub-source-card__icon-wrap--slate .sync-queue-panel__icon {
+        @apply bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200;
+    }
+
     .sync-queue-panel__title {
         @apply text-base font-semibold text-gray-900 dark:text-gray-100;
     }
@@ -2774,7 +2894,35 @@
     }
 
     .sync-queue-task-card {
-        @apply rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 px-3 py-3 transition hover:border-slate-200 dark:hover:border-slate-700;
+        @apply rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 px-3 py-3 transition hover:border-slate-200 dark:hover:border-slate-700 border-s-2 border-s-transparent;
+    }
+
+    .sync-queue-task-card--amber {
+        @apply border-s-amber-400/80 dark:border-s-amber-600/70;
+    }
+
+    .sync-queue-task-card--emerald {
+        @apply border-s-emerald-400/80 dark:border-s-emerald-600/70;
+    }
+
+    .sync-queue-task-card--sky {
+        @apply border-s-sky-400/80 dark:border-s-sky-600/70;
+    }
+
+    .sync-queue-task-card--violet {
+        @apply border-s-violet-400/80 dark:border-s-violet-600/70;
+    }
+
+    .sync-queue-task-card--indigo {
+        @apply border-s-indigo-400/80 dark:border-s-indigo-600/70;
+    }
+
+    .sync-queue-task-card--rose {
+        @apply border-s-rose-400/80 dark:border-s-rose-600/70;
+    }
+
+    .sync-queue-task-card--slate {
+        @apply border-s-slate-300/90 dark:border-s-slate-600/80;
     }
 
     .sync-queue-download-btn {

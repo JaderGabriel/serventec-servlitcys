@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Notifications\AppMessageNotification;
 use App\Support\Notifications\NotificationKinds;
 use App\Support\Notifications\NotificationPayload;
+use App\Support\Notifications\NotificationQueuePresentation;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Collection;
 
@@ -50,7 +51,7 @@ final class NotificationDispatcher
         $cityName = (string) ($export->city?->name ?? __('Município'));
         $queue = (string) config('analytics.pdf_report.queue', 'default');
 
-        $this->notifyUser($user, [
+        $this->notifyUser($user, array_merge([
             'title' => __('PDF enfileirado'),
             'body' => __('Relatório #:id de :city na fila :queue. Acompanhe em Filas de processamento.', [
                 'id' => (string) $export->id,
@@ -60,9 +61,8 @@ final class NotificationDispatcher
             'icon' => 'info',
             'priority' => NotificationPriority::Normal->value,
             'kind' => NotificationKinds::PDF_EXPORT,
-            'action_url' => route('admin.sync-queue.index'),
             'dedupe_key' => 'pdf:queued:'.$export->id,
-        ]);
+        ], NotificationQueuePresentation::forPdf($export->id)));
 
         if ((string) config('queue.default') === 'sync') {
             $this->queueSyncModeWarning($user);
@@ -85,7 +85,8 @@ final class NotificationDispatcher
         $success = $export->statusEnum() === AnalyticsReportExportStatus::Completed;
 
         if ($success) {
-            $this->notifyUser($user, [
+            $pdfTheme = NotificationQueuePresentation::forPdf($export->id);
+            $this->notifyUser($user, array_merge([
                 'title' => __('Relatório PDF pronto'),
                 'body' => __('O PDF de análise de :city está disponível para descarregar.', ['city' => $cityName]),
                 'icon' => 'success',
@@ -95,7 +96,7 @@ final class NotificationDispatcher
                     ? route('dashboard.analytics.pdf.download', $export)
                     : $this->analyticsServentecUrl($export),
                 'dedupe_key' => 'pdf:done:'.$export->id,
-            ]);
+            ], array_diff_key($pdfTheme, ['action_url' => true])));
 
             return;
         }
@@ -106,7 +107,8 @@ final class NotificationDispatcher
 
         $err = filled($export->error_message) ? mb_substr((string) $export->error_message, 0, 200) : __('Erro desconhecido.');
 
-        $this->notifyUser($user, [
+        $pdfTheme = NotificationQueuePresentation::forPdf($export->id);
+        $this->notifyUser($user, array_merge([
             'title' => __('Falha na geração do PDF'),
             'body' => __(':city — :erro', ['city' => $cityName, 'erro' => $err]),
             'icon' => 'error',
@@ -114,7 +116,7 @@ final class NotificationDispatcher
             'kind' => NotificationKinds::PDF_EXPORT,
             'action_url' => $this->analyticsServentecUrl($export),
             'dedupe_key' => 'pdf:failed:'.$export->id,
-        ]);
+        ], array_diff_key($pdfTheme, ['action_url' => true])));
     }
 
     public function adminSyncQueued(AdminSyncTask $task): void
@@ -133,15 +135,14 @@ final class NotificationDispatcher
         $cityLabel = $task->cityLabel();
         $queue = (string) config('ieducar.admin_sync.queue', 'admin-sync');
 
-        $payload = [
+        $payload = array_merge([
             'title' => __('Sincronização enfileirada'),
             'body' => __(':label — :city (fila :queue).', ['label' => $label, 'city' => $cityLabel, 'queue' => $queue]),
             'icon' => 'info',
             'priority' => NotificationPriority::Normal->value,
             'kind' => NotificationKinds::ADMIN_SYNC,
-            'action_url' => route('admin.sync-queue.index'),
             'dedupe_key' => 'sync:queued:'.$task->id,
-        ];
+        ], NotificationQueuePresentation::forSyncTask($task));
 
         foreach ($recipients as $user) {
             $this->notifyUser($user, $payload);
@@ -171,29 +172,27 @@ final class NotificationDispatcher
         $success = $task->statusEnum() === AdminSyncTaskStatus::Completed;
 
         if ($success) {
-            $payload = [
+            $payload = array_merge([
                 'title' => __('Sincronização concluída'),
                 'body' => __(':label — :city', ['label' => $label, 'city' => $cityLabel]),
                 'icon' => 'success',
                 'priority' => NotificationPriority::Normal->value,
                 'kind' => NotificationKinds::ADMIN_SYNC,
-                'action_url' => route('admin.sync-queue.index'),
                 'dedupe_key' => 'sync:done:'.$task->id,
-            ];
+            ], NotificationQueuePresentation::forSyncTask($task));
         } else {
             if ($task->statusEnum() !== AdminSyncTaskStatus::Failed) {
                 return;
             }
             $err = filled($task->error_message) ? mb_substr((string) $task->error_message, 0, 200) : __('Erro desconhecido.');
-            $payload = [
+            $payload = array_merge([
                 'title' => __('Sincronização falhou'),
                 'body' => __(':label — :city. :erro', ['label' => $label, 'city' => $cityLabel, 'erro' => $err]),
                 'icon' => 'error',
                 'priority' => NotificationPriority::Critical->value,
                 'kind' => NotificationKinds::ADMIN_SYNC,
-                'action_url' => route('admin.sync-queue.index'),
                 'dedupe_key' => 'sync:failed:'.$task->id,
-            ];
+            ], NotificationQueuePresentation::forSyncTask($task));
         }
 
         foreach ($recipients as $user) {
@@ -351,7 +350,7 @@ final class NotificationDispatcher
 
     private function queueSyncModeWarning(User $user): void
     {
-        $this->notifyUser($user, [
+        $this->notifyUser($user, array_merge([
             'title' => __('Fila síncrona activa'),
             'body' => __('Os jobs correm na requisição HTTP (sync). Em produção use database/redis e um worker.'),
             'icon' => 'warning',
@@ -359,7 +358,7 @@ final class NotificationDispatcher
             'kind' => NotificationKinds::OPERATIONS,
             'action_url' => route('admin.sync-queue.index'),
             'dedupe_key' => 'ops:queue_sync_user',
-        ]);
+        ], NotificationQueuePresentation::forOperations('generic')));
     }
 
     /**

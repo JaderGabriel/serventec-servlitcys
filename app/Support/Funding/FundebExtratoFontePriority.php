@@ -34,6 +34,9 @@ final class FundebExtratoFontePriority
     {
         $fundeb = [];
         foreach ($rows as $row) {
+            if (FundebTransferScope::isUfAggregated($row)) {
+                continue;
+            }
             $blob = mb_strtolower((string) $row->programa_id.' '.(string) $row->programa_label);
             if (! str_contains($blob, 'fundeb') && ! str_contains($blob, 'fnde')) {
                 continue;

@@ -9,6 +9,7 @@ use App\Models\AdminSyncTask;
 use App\Models\AnalyticsReportExport;
 use App\Models\User;
 use App\Support\Notifications\NotificationKinds;
+use App\Support\Notifications\NotificationQueuePresentation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -44,7 +45,7 @@ final class OperationalAlertsNotifier
         if ($syncFailed >= max(1, (int) ($cfg['sync_failures_threshold'] ?? 1))) {
             $this->dispatcher->notifyOperational(
                 $recipients,
-                [
+                array_merge([
                     'title' => __('Falhas de sincronização nas últimas 24 h'),
                     'body' => __(':count tarefa(s) falharam. Revise a fila de processamento e os logs.', ['count' => $syncFailed]),
                     'icon' => 'error',
@@ -52,7 +53,7 @@ final class OperationalAlertsNotifier
                     'kind' => NotificationKinds::OPERATIONS,
                     'action_url' => route('admin.sync-queue.index'),
                     'dedupe_key' => 'ops:sync_failed_24h',
-                ],
+                ], NotificationQueuePresentation::forOperations('sync_failed')),
             );
         }
 
@@ -68,7 +69,7 @@ final class OperationalAlertsNotifier
         if ($pdfStale > 0) {
             $this->dispatcher->notifyOperational(
                 $recipients,
-                [
+                array_merge([
                     'title' => __('PDFs presos na fila'),
                     'body' => __(':count relatório(s) pendente(s) há mais de :h hora(s). Verifique o worker da fila.', [
                         'count' => $pdfStale,
@@ -77,9 +78,9 @@ final class OperationalAlertsNotifier
                     'icon' => 'warning',
                     'priority' => NotificationPriority::Critical->value,
                     'kind' => NotificationKinds::OPERATIONS,
-                    'action_url' => route('admin.sync-queue.index'),
+                    'action_url' => route('admin.sync-queue.index').'#fila-pdf',
                     'dedupe_key' => 'ops:pdf_stale',
-                ],
+                ], NotificationQueuePresentation::forOperations('pdf_stale')),
             );
         }
 
@@ -90,7 +91,7 @@ final class OperationalAlertsNotifier
             if ($pendingJobs >= $threshold) {
                 $this->dispatcher->notifyOperational(
                     $recipients,
-                    [
+                    array_merge([
                         'title' => __('Fila de jobs sobrecarregada'),
                         'body' => __(':count job(s) aguardam processamento (limiar :limit). Confirme que o worker está ativo.', [
                             'count' => $pendingJobs,
@@ -101,7 +102,7 @@ final class OperationalAlertsNotifier
                         'kind' => NotificationKinds::OPERATIONS,
                         'action_url' => route('admin.sync-queue.index'),
                         'dedupe_key' => 'ops:queue_backlog',
-                    ],
+                    ], NotificationQueuePresentation::forOperations('queue_backlog')),
                 );
             }
         }
@@ -109,7 +110,7 @@ final class OperationalAlertsNotifier
         if ((string) config('queue.default') === 'sync' && app()->environment('production')) {
             $this->dispatcher->notifyOperational(
                 $recipients,
-                [
+                array_merge([
                     'title' => __('Fila em modo síncrono (produção)'),
                     'body' => __('QUEUE_CONNECTION=sync — PDFs e sincronizações não persistem na tabela jobs. Configure database ou redis.'),
                     'icon' => 'error',
@@ -117,7 +118,7 @@ final class OperationalAlertsNotifier
                     'kind' => NotificationKinds::OPERATIONS,
                     'action_url' => route('admin.sync-queue.index'),
                     'dedupe_key' => 'ops:queue_sync_mode',
-                ],
+                ], NotificationQueuePresentation::forOperations('generic')),
             );
         }
     }

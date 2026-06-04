@@ -111,13 +111,30 @@
                         :class="rowClass(item)"
                     >
                         <div class="flex gap-2">
-                            <span
-                                class="mt-0.5 h-2 w-2 shrink-0 rounded-full"
-                                :class="dotClass(item)"
-                            ></span>
+                            <template x-if="item.queue_icon_html">
+                                <span
+                                    class="mt-0.5 shrink-0"
+                                    :class="item.queue_icon_box_class"
+                                    x-html="item.queue_icon_html"
+                                    aria-hidden="true"
+                                ></span>
+                            </template>
+                            <template x-if="!item.queue_icon_html">
+                                <span
+                                    class="mt-0.5 h-2 w-2 shrink-0 rounded-full"
+                                    :class="dotClass(item)"
+                                ></span>
+                            </template>
                             <div class="min-w-0 flex-1">
                                 <div class="flex flex-wrap items-center gap-1.5">
                                     <p class="font-medium text-gray-900 dark:text-gray-100" x-text="item.title"></p>
+                                    <span
+                                        x-show="item.queue_label"
+                                        x-cloak
+                                        class="inline-flex max-w-[11rem] truncate rounded-full px-1.5 py-0.5 text-[9px] font-semibold leading-tight"
+                                        :class="queueBadgeClass(item)"
+                                        x-text="item.queue_label"
+                                    ></span>
                                     <span
                                         x-show="item.is_critical"
                                         class="rounded bg-rose-100 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-rose-800 dark:bg-rose-900/50 dark:text-rose-200"

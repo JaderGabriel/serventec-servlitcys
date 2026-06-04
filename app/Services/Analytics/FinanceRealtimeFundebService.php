@@ -10,6 +10,7 @@ use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Finance\MoneyMath;
 use App\Support\Funding\FundebExtratoFontePriority;
 use App\Support\Funding\FundebExtratoVisualBuilder;
+use App\Support\Funding\FundebTransferScope;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\FundebImpactMethodology;
 use App\Support\Ieducar\FundebResourceProjection;
@@ -101,7 +102,8 @@ final class FinanceRealtimeFundebService
         $expectedFonte = (string) ($projection['vaa_fonte_label'] ?? '');
 
         $snapshots = $ibge !== null ? $this->transfers->forCityYear($city, $ano) : [];
-        $fundebRowsAll = $this->filterFundebTransfers($snapshots);
+        $snapshotsMunicipal = FundebTransferScope::municipalSnapshotsOnly($snapshots);
+        $fundebRowsAll = $this->filterFundebTransfers($snapshotsMunicipal);
         $fundebRows = FundebExtratoFontePriority::pickPrimaryFundebRows($fundebRowsAll);
         $observedAnnual = round(array_sum(array_map(static fn ($r) => (float) $r->valor, $fundebRows)), 2);
 
@@ -250,6 +252,16 @@ final class FinanceRealtimeFundebService
         float $thresholdPct,
     ): array {
         $alerts = [];
+
+        if ($fundebRows === [] && $snapshots !== [] && $snapshotsMunicipal === []) {
+            $alerts[] = [
+                'severity' => 'warning',
+                'title' => __('Apenas totais por UF (não por município)'),
+                'detail' => __('A publicação STN (tesouro_publicacao) grava o total da UF — não use para comparar municípios. Execute php artisan funding:rebuild-finance-realtime --ano=:ano --all-cities para repasses municipais (CKAN/SISWEB/BB).', [
+                    'ano' => (string) $ano,
+                ]),
+            ];
+        }
 
         if ($fundebRows === []) {
             $alerts[] = [

@@ -1,6 +1,6 @@
 @php $st = $export->statusEnum(); @endphp
 
-<article class="sync-queue-task-card group">
+<article id="export-{{ $export->id }}" class="sync-queue-task-card group scroll-mt-24">
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div class="min-w-0 flex-1 space-y-1">
             <div class="flex flex-wrap items-center gap-2">

@@ -55,21 +55,34 @@
                             ])
                         >
                             <div class="flex gap-3">
-                                <span
-                                    @class([
-                                        'mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full',
-                                        'bg-rose-500 animate-pulse' => $item['is_critical'] && ! $item['read'],
-                                        'bg-rose-400' => $item['is_critical'] && $item['read'],
-                                        'bg-indigo-500' => ! $item['is_critical'] && ! $item['read'],
-                                        'bg-slate-300 dark:bg-slate-600' => ! $item['is_critical'] && $item['read'],
-                                    ])
-                                    aria-hidden="true"
-                                ></span>
+                                @if (filled($item['queue_icon_html'] ?? null))
+                                    <x-notifications.queue-theme
+                                        :icon-box-class="$item['queue_icon_box_class'] ?? ''"
+                                        :icon-html="$item['queue_icon_html']"
+                                    />
+                                @else
+                                    <span
+                                        @class([
+                                            'mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full',
+                                            'bg-rose-500 animate-pulse' => $item['is_critical'] && ! $item['read'],
+                                            'bg-rose-400' => $item['is_critical'] && $item['read'],
+                                            'bg-indigo-500' => ! $item['is_critical'] && ! $item['read'],
+                                            'bg-slate-300 dark:bg-slate-600' => ! $item['is_critical'] && $item['read'],
+                                        ])
+                                        aria-hidden="true"
+                                    ></span>
+                                @endif
                                 <div class="min-w-0 flex-1">
                                     <div class="flex flex-wrap items-center gap-2">
                                         <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                             {{ $item['title'] }}
                                         </h3>
+                                        @if (filled($item['queue_label'] ?? null))
+                                            <x-notifications.queue-theme
+                                                :label="$item['queue_label']"
+                                                :accent="$item['queue_accent'] ?? null"
+                                            />
+                                        @endif
                                         @if ($item['is_critical'])
                                             <span class="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-rose-800 dark:bg-rose-900/50 dark:text-rose-200">
                                                 {{ __('Crítico') }}

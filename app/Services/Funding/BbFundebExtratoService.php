@@ -53,7 +53,9 @@ final class BbFundebExtratoService
         }
 
         $keywords = is_array($cfg['keywords'] ?? null) ? $cfg['keywords'] : ['fundeb', 'fnde', 'salario educacao', 'salário-educação'];
-        $total = $this->sumMatchingCredits($body, $year, $keywords);
+        $parsed = $this->parseMatchingCredits($body, $year, $keywords);
+        $total = $parsed['total'] ?? null;
+        $lancamentos = $parsed['lancamentos'] ?? [];
 
         if ($total === null || $total <= 0) {
             return [
@@ -77,6 +79,7 @@ final class BbFundebExtratoService
                     'downloaded' => (bool) ($csv['downloaded'] ?? false),
                     'source_url' => $csv['source_url'] ?? null,
                     'portal_url' => (string) ($cfg['portal_url'] ?? 'https://demonstrativos.apps.bb.com.br/extrato'),
+                    'lancamentos' => $lancamentos,
                 ],
             ]],
             'attempt' => $this->attempt(
@@ -91,16 +94,18 @@ final class BbFundebExtratoService
 
     /**
      * @param  list<string>  $keywords
+     * @return array{total: ?float, lancamentos: list<array{data: string, valor: float, historico: string}>}
      */
-    private function sumMatchingCredits(string $body, int $year, array $keywords): ?float
+    private function parseMatchingCredits(string $body, int $year, array $keywords): array
     {
         $lines = preg_split('/\r\n|\r|\n/', $body) ?: [];
         $total = 0.0;
         $matched = false;
         $yearStr = (string) $year;
+        $lancamentos = [];
 
         foreach ($lines as $line) {
-            if ($line === '' || ! str_contains($line, ';') && ! str_contains($line, ',')) {
+            if ($line === '' || (! str_contains($line, ';') && ! str_contains($line, ','))) {
                 continue;
             }
             $norm = Str::ascii(mb_strtolower($line));
@@ -121,6 +126,11 @@ final class BbFundebExtratoService
                 }
             }
 
+            $date = null;
+            if (preg_match('/\b(\d{2}\/\d{2}\/\d{4})\b/', $line, $dm)) {
+                $date = $dm[1];
+            }
+
             if (preg_match_all('/[\d]{1,3}(?:\.[\d]{3})*,[\d]{2}|[\d]+\.[\d]{2}/', $line, $m)) {
                 $last = end($m[0]);
                 if (is_string($last)) {
@@ -128,12 +138,26 @@ final class BbFundebExtratoService
                     if ($val !== null && $val > 0) {
                         $total += $val;
                         $matched = true;
+                        $historico = trim(preg_replace('/\b\d{2}\/\d{2}\/\d{4}\b/', '', $line) ?? $line);
+                        $historico = trim(preg_replace('/[\d]{1,3}(?:\.[\d]{3})*,[\d]{2}/', '', $historico) ?? $historico);
+                        $historico = trim(str_replace([';', ','], ' ', $historico));
+                        if ($historico === '') {
+                            $historico = __('Crédito FUNDEB/FNDE');
+                        }
+                        $lancamentos[] = [
+                            'data' => $date ?? sprintf('31/12/%d', $year),
+                            'valor' => round($val, 2),
+                            'historico' => mb_substr($historico, 0, 120),
+                        ];
                     }
                 }
             }
         }
 
-        return $matched ? $total : null;
+        return [
+            'total' => $matched ? round($total, 2) : null,
+            'lancamentos' => $lancamentos,
+        ];
     }
 
     private function parseBrNumber(string $raw): ?float

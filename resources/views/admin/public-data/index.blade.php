@@ -14,7 +14,6 @@
 
     @php
         $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm';
-        $statusLevelClass = AdminImportHubCatalog::statusBadgeClasses();
         $fundeb = $snapshot['fundeb'] ?? [];
         $censo = $snapshot['censo'] ?? [];
         $transfers = $snapshot['transfers'] ?? [];
@@ -62,18 +61,18 @@
 
         <x-slot name="stats">
             <x-admin.import-hub.stats-grid columns="sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                <x-admin.import-hub.stat label="FUNDEB" :value="($fundeb['cities_with_any'] ?? 0).'/'.($snapshot['cities_with_ibge'] ?? 0)" :hint="__('municípios com referência')">
+                <x-admin.import-hub.stat label="FUNDEB" :value="($fundeb['cities_with_any'] ?? 0).'/'.($snapshot['cities_with_ibge'] ?? 0)" :hint="__('municípios com referência')" tone="amber">
                     <x-slot name="footer"><p class="text-[11px] text-gray-500">{{ $fundeb['diagnostics']['hint'] ?? '' }}</p></x-slot>
                 </x-admin.import-hub.stat>
-                <x-admin.import-hub.stat label="Censo INEP" :value="(string) ($censo['municipios'] ?? 0)" :hint="__('municípios indexados')">
+                <x-admin.import-hub.stat label="Censo INEP" :value="(string) ($censo['municipios'] ?? 0)" :hint="__('municípios indexados')" tone="emerald">
                     <x-slot name="footer">
                         <p class="text-[11px] {{ ($md['readable'] ?? false) ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
                             {{ ($md['readable'] ?? false) ? __('Microdados disponíveis') : __('Microdados CSV em falta') }}
                         </p>
                     </x-slot>
                 </x-admin.import-hub.stat>
-                <x-admin.import-hub.stat :label="__('Repasses')" :value="(string) ($transfers['municipios'] ?? 0)" :hint="__('municípios com snapshots')" />
-                <x-admin.import-hub.stat label="SAEB" :value="(string) ($saeb['points'] ?? 0)" :hint="__('pontos indicadores')" />
+                <x-admin.import-hub.stat :label="__('Repasses')" :value="(string) ($transfers['municipios'] ?? 0)" :hint="__('municípios com snapshots')" tone="emerald" />
+                <x-admin.import-hub.stat label="SAEB" :value="(string) ($saeb['points'] ?? 0)" :hint="__('pontos indicadores')" tone="violet" />
                 <x-admin.import-hub.stat :label="__('CadÚnico / Cecad')" :value="(string) ($cadunico['municipios'] ?? 0)" :hint="__('municípios com snapshot')" tone="violet">
                     <x-slot name="footer">
                         <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', ['domain' => 'cadastro']) }}#fila-cadastro" class="text-[11px] font-medium text-violet-700 dark:text-violet-300 hover:underline">{{ __('Fila cadastro') }} →</a>
@@ -82,132 +81,59 @@
             </x-admin.import-hub.stats-grid>
         </x-slot>
 
-        <details class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 px-4 py-3">
-            <summary class="cursor-pointer text-sm font-semibold text-slate-900 dark:text-slate-100">{{ __('Lacunas do PDF ATM → importação') }}</summary>
-            <div class="mt-3 overflow-x-auto">
-                <table class="min-w-full text-xs text-left">
-                    <thead>
-                        <tr class="text-slate-500 dark:text-slate-400">
-                            <th class="py-2 pe-4">{{ __('Código') }}</th>
-                            <th class="py-2 pe-4">{{ __('Secção PDF') }}</th>
-                            <th class="py-2">{{ __('Fonte sugerida') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-slate-800 dark:text-slate-200">
-                        @foreach ($gapIndex as $row)
-                            <tr class="border-t border-slate-200/80 dark:border-slate-700/80">
-                                <td class="py-2 pe-4 font-mono">{{ $row['gap_code'] }}</td>
-                                <td class="py-2 pe-4">{{ $row['section'] }}</td>
-                                <td class="py-2">{{ $row['source_id'] }}</td>
+        <section class="space-y-3">
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Áreas temáticas') }}</h3>
+            @include('admin.partials.import-hub-theme-overview', [
+                'cards' => $themeOverviewCards,
+                'hrefMode' => 'anchor',
+            ])
+        </section>
+
+        <details class="sync-queue-panel sync-queue-panel--slate">
+            <summary class="sync-queue-panel__header cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <span class="sync-queue-panel__title text-sm">{{ __('Lacunas do PDF ATM → importação') }}</span>
+            </summary>
+            <div class="sync-queue-panel__body">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-xs text-left">
+                        <thead>
+                            <tr class="text-slate-500 dark:text-slate-400">
+                                <th class="py-2 pe-4">{{ __('Código') }}</th>
+                                <th class="py-2 pe-4">{{ __('Secção PDF') }}</th>
+                                <th class="py-2">{{ __('Fonte sugerida') }}</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody class="text-slate-800 dark:text-slate-200">
+                            @foreach ($gapIndex as $row)
+                                <tr class="border-t border-slate-200/80 dark:border-slate-700/80">
+                                    <td class="py-2 pe-4 font-mono">{{ $row['gap_code'] }}</td>
+                                    <td class="py-2 pe-4">{{ $row['section'] }}</td>
+                                    <td class="py-2">
+                                        <a href="#source-{{ $row['source_id'] }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ $row['source_id'] }}</a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </details>
 
-        @foreach ($sources as $source)
-            @php
-                $hasActions = count($source['actions'] ?? []) > 0;
-            @endphp
-            <x-admin.import-hub.source-card
-                :id="'source-'.($source['id'] ?? '')"
-                :title="$source['title']"
-                :summary="$source['summary']"
-                :status="$source['status'] ?? []"
-                :data-class="$source['data_class'] ?? ''"
-                :persistence="$source['persistence'] ?? ''"
-                :pdf-sections="$source['pdf_sections'] ?? []"
-                :admin-route="$source['admin_route'] ?? null"
-                :queue-domain="$source['domain'] ?? null"
-            >
-                @if ($hasActions)
-                    @foreach ($source['actions'] as $action)
-                        <x-admin.import-hub.action-card
-                            method="post"
-                            action="{{ route('admin.public-data.run') }}"
-                            :title="$action['label']"
-                            :hint="$action['hint'] ?? null"
-                            :variant="in_array($action['key'], ['auto_sync', 'weekly_mass_sync'], true) ? 'primary' : 'default'"
-                        >
-                            @csrf
-                            <input type="hidden" name="source_id" value="{{ $source['id'] }}">
-                            <input type="hidden" name="action_key" value="{{ $action['key'] }}">
-                            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                                @if ($action['needs_city'] ?? false)
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Município') }}</label>
-                                        <select name="city_id" class="{{ $selectClass }}" @if ($action['key'] !== 'import_transfers_all_cities') required @endif>
-                                            <option value="">{{ __('Selecione…') }}</option>
-                                            @foreach ($cities as $city)
-                                                <option value="{{ $city->id }}" @selected(old('city_id') == $city->id)>{{ $city->name }}@if ($city->uf) ({{ $city->uf }})@endif</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                @endif
-                                @if ($action['needs_year'] ?? false)
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Ano') }}</label>
-                                        <select name="ano" class="{{ $selectClass }}" required>
-                                            @foreach ($yearOptions as $y)
-                                                <option value="{{ $y }}" @selected((int) old('ano', $defaultYear) === $y)>{{ $y }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                @endif
-                                @if ($action['needs_years_range'] ?? false)
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('De') }}</label>
-                                        <select name="ano_from" class="{{ $selectClass }}">
-                                            @foreach ($yearOptions as $y)
-                                                <option value="{{ $y }}" @selected((int) old('ano_from', min($syncYears)) === $y)>{{ $y }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Até') }}</label>
-                                        <select name="ano_to" class="{{ $selectClass }}">
-                                            @foreach ($yearOptions as $y)
-                                                <option value="{{ $y }}" @selected((int) old('ano_to', $defaultYear) === $y)>{{ $y }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                @endif
-                            </div>
-                            @if (in_array($action['key'], ['import_city_year', 'import_bulk_year', 'sync_all_years'], true))
-                                <div class="flex flex-wrap gap-4 text-xs">
-                                    <label class="inline-flex items-center gap-2">
-                                        <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-indigo-600" @checked(old('use_nearest_year'))>
-                                        {{ __('Usar ano mais próximo se CKAN não tiver o exercício') }}
-                                    </label>
-                                    <label class="inline-flex items-center gap-2">
-                                        <input type="checkbox" name="include_cached_years" value="1" class="rounded border-gray-300 text-indigo-600" checked>
-                                        {{ __('Incluir anos em cache/BD') }}
-                                    </label>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Modo') }}</label>
-                                    <select name="import_mode" class="{{ $selectClass }} max-w-xs">
-                                        @foreach ($importModes as $mode)
-                                            <option value="{{ $mode }}">{{ $mode === 'replace' ? __('Apagar e buscar') : __('Atualizar existentes') }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            @endif
-                        </x-admin.import-hub.action-card>
-                    @endforeach
-                @else
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                        {{ __('Use a tela dedicada ou os comandos CLI:') }}
-                        <code class="text-xs">{{ implode(', ', $source['cli'] ?? []) }}</code>
-                    </p>
-                @endif
-
-                @if (($source['cli'] ?? []) !== [] && $hasActions)
-                    <p class="text-[11px] text-gray-500 dark:text-gray-500">CLI: {{ implode(' · ', $source['cli']) }}</p>
-                @endif
-            </x-admin.import-hub.source-card>
-        @endforeach
+        <section class="space-y-6" id="hub-fontes">
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Fontes por área') }}</h3>
+            @foreach ($themeSections as $section)
+                @include('admin.public-data.partials.theme-section', [
+                    'section' => $section,
+                    'selectClass' => $selectClass,
+                    'cities' => $cities,
+                    'yearOptions' => $yearOptions,
+                    'defaultYear' => $defaultYear,
+                    'syncYears' => $syncYears,
+                    'importModes' => $importModes,
+                    'syncQueueRoutePrefix' => $syncQueueRoutePrefix ?? 'admin.sync-queue',
+                ])
+            @endforeach
+        </section>
 
         <x-slot name="shortcuts">
             <x-admin.import-hub.link-chip href="{{ route('admin.ieducar-compatibility.index') }}">{{ __('Compatibilidade i-Educar / FUNDEB') }}</x-admin.import-hub.link-chip>

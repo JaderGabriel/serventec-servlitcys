@@ -11,7 +11,9 @@ use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\Fundeb\FundebImportMode;
 use App\Services\Cadunico\CadunicoOpenDataImportService;
 use App\Services\Fundeb\FundebOpenDataImportService;
+use App\Support\Admin\ImportHubThemeCatalog;
 use App\Support\Admin\PublicDataImportCatalog;
+use App\Support\SyncQueue\SyncQueueUserScope;
 use App\Support\AdminSync\WeeklyMassSyncCheckpoint;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,14 +33,20 @@ class PublicDataImportController extends Controller
         $refYear = (int) $snapshot['reference_year'];
         $maxYear = (int) date('Y');
 
+        $sources = $snapshot['sources'];
+        $themeSections = ImportHubThemeCatalog::sectionsForSources($sources);
+
         return view('admin.public-data.index', [
             'cities' => $cities,
             'snapshot' => $snapshot,
-            'sources' => PublicDataImportCatalog::sources(),
+            'sources' => $sources,
+            'themeSections' => $themeSections,
+            'themeOverviewCards' => ImportHubThemeCatalog::overviewCardsForSections($themeSections),
             'gapIndex' => PublicDataImportCatalog::gapIndex(),
             'defaultYear' => $refYear,
             'yearOptions' => range($maxYear, max(2000, $maxYear - 8)),
             'importModes' => [FundebImportMode::UPDATE, FundebImportMode::REPLACE],
+            'syncQueueRoutePrefix' => SyncQueueUserScope::routePrefix(request()->user()),
         ]);
     }
 

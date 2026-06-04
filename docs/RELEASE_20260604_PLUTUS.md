@@ -70,3 +70,16 @@ php artisan test --filter='FundebExtratoVisualBuilderTest|BbExtratoCsvFetcherTes
 
 - Publicação STN (XLS): totais por **UF** na folha `M_TOTAL`, não por município.
 - Open Finance BB: credenciais na UI; **consulta automática de transações ainda não implementada**.
+
+## Atualização pós-3.10.0 (sem bump de versão)
+
+Correção quando **dois municípios da mesma UF** exibiam o mesmo acumulado em Tempo Real: `tesouro_publicacao` deixou de entrar no total observado por cidade (`FundebTransferScope`). Reimportação organizada:
+
+```bash
+php artisan funding:rebuild-finance-realtime --ano=2025 --all-cities --dry-run
+php artisan funding:rebuild-finance-realtime --ano=2025 --all-cities
+# production:
+php artisan funding:rebuild-finance-realtime --ano=2025 --all-cities --confirm=rebuild-repasses-2025
+```
+
+Testes: `FundebTransferScopeTest`, `FundebExtratoVisualBuilderTest`.

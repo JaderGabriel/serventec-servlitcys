@@ -65,6 +65,22 @@ export function registerNotificationBellData(Alpine) {
             }
             return "bg-sky-500";
         },
+        queueBadgeClass(item) {
+            const accent = item.queue_accent || "slate";
+            const map = {
+                amber: "bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200",
+                emerald:
+                    "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200",
+                sky: "bg-sky-100 text-sky-900 dark:bg-sky-950/50 dark:text-sky-200",
+                violet:
+                    "bg-violet-100 text-violet-900 dark:bg-violet-950/50 dark:text-violet-200",
+                indigo:
+                    "bg-indigo-100 text-indigo-900 dark:bg-indigo-950/50 dark:text-indigo-200",
+                rose: "bg-rose-100 text-rose-900 dark:bg-rose-950/50 dark:text-rose-200",
+                slate: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200",
+            };
+            return map[accent] || map.slate;
+        },
         toggle() {
             this.open = !this.open;
             if (this.open) {

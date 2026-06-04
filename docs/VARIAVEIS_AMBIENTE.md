@@ -244,6 +244,11 @@ Tarefas geo com vários municípios guardam **checkpoint** por cidade; na fila, 
 | `IEDUCAR_BB_EXTRATO_REFRESH_DAYS` | `7` — validade do CSV em `storage/app/funding/bb_extrato/` |
 | `IEDUCAR_BB_OPEN_FINANCE_ENABLED` | Indicador UI Tempo Real; API de transações ainda não implementada |
 | `IEDUCAR_BB_OPEN_FINANCE_CLIENT_ID` | Client ID BB (Open Finance) |
+| `IEDUCAR_FINANCE_REALTIME_ENABLED` | Aba Finanças → Tempo Real no analytics |
+| `IEDUCAR_FINANCE_REALTIME_ALERT_PCT` | Limiar % para alerta repasse vs expectativa (default `15`) |
+| `IEDUCAR_FINANCE_REALTIME_REBUILD_SLUG` | Slug obrigatório em production para `funding:rebuild-finance-realtime --confirm=` (default `rebuild-repasses-{ano}`) |
+| `IEDUCAR_FINANCE_REALTIME_SOURCES_NOTE` | Nota opcional na UI sobre fontes |
+| `IEDUCAR_FINANCE_REALTIME_AVISO` | Aviso legal/indicativo na aba Tempo Real |
 
 Detalhe extrato BB e Open Finance: [BB_EXTRATO_OPEN_FINANCE.md](BB_EXTRATO_OPEN_FINANCE.md).
 | `IEDUCAR_DISC_CENSO_MAT_TOLERANCE_PCT` | Tolerância % check Censo×i-Educar |

@@ -7,7 +7,7 @@
     $canDownload = $task->isExportDownloadable();
 @endphp
 
-<article class="sync-queue-task-card group">
+<article class="sync-queue-task-card sync-queue-task-card--{{ $accent ?? 'slate' }} group">
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div class="min-w-0 flex-1 space-y-1">
             <div class="flex flex-wrap items-center gap-2">

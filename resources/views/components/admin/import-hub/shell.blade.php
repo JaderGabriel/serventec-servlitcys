@@ -44,16 +44,20 @@
                         @php
                             $isActive = ($active ?? '') === ($item['key'] ?? '');
                             $href = route($item['route']);
+                            $navAccent = $item['accent'] ?? 'slate';
                         @endphp
                         <a
                             href="{{ $href }}"
                             title="{{ $item['hint'] ?? '' }}"
                             @class([
-                                'inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-medium transition',
+                                'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition',
                                 'bg-white/90 text-gray-900 shadow-sm ring-1 ring-gray-200/90 dark:bg-gray-800 dark:text-gray-100 dark:ring-gray-600' => $isActive,
                                 'text-gray-600 hover:bg-white/60 dark:text-gray-400 dark:hover:bg-gray-800/60' => ! $isActive,
                             ])
                         >
+                            <span class="import-hub-nav-icon import-hub-nav-icon--{{ $navAccent }}" aria-hidden="true">
+                                <x-ui.icon :name="$item['icon'] ?? 'queue-list'" class="h-3.5 w-3.5" />
+                            </span>
                             {{ $item['label'] }}
                         </a>
                     @endforeach

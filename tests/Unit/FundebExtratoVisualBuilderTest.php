@@ -11,7 +11,7 @@ use Tests\TestCase;
 final class FundebExtratoVisualBuilderTest extends TestCase
 {
     #[Test]
-    public function agrupa_por_ciclo_com_resumo_mensal_e_comparativo(): void
+    public function extrato_tipo_bancario_com_data_repasse_e_subtotais(): void
     {
         $city = new City(['name' => 'Teste', 'uf' => 'BA', 'ibge_municipio' => '2911105']);
 
@@ -23,22 +23,39 @@ final class FundebExtratoVisualBuilderTest extends TestCase
             'meta' => json_encode(['mensal' => ['1' => 100.0, '2' => 200.0]]),
         ]);
 
-        $sisweb = new MunicipalTransferSnapshot([
+        $bb = new MunicipalTransferSnapshot([
             'programa_id' => 'fundeb',
-            'programa_label' => 'FUNDEB',
-            'fonte' => 'sisweb_ckan',
-            'valor' => 300.0,
-            'meta' => json_encode(['mensal' => ['1' => 100.0, '2' => 200.0]]),
+            'programa_label' => 'FUNDEB BB',
+            'fonte' => 'bb_extrato',
+            'valor' => 50.0,
+            'meta' => json_encode([
+                'lancamentos' => [
+                    ['data' => '15/03/2025', 'valor' => 50.0, 'historico' => 'CRED FUNDEB'],
+                ],
+            ]),
         ]);
 
-        $result = (new FundebExtratoVisualBuilder)->build([$csv, $sisweb], $city, 2025, 1200.0);
+        $result = (new FundebExtratoVisualBuilder)->build([$csv, $bb], $city, 2025, 1200.0);
 
         $this->assertCount(2, $result['cycles']);
-        $this->assertCount(2, $result['cycles'][0]['lines']);
-        $this->assertCount(2, $result['cycles'][0]['by_period']);
-        $this->assertSame(100.0, $result['cycles'][0]['by_period'][0]['credit']);
-        $this->assertSame('positive', $result['cycles'][0]['comparativo']['delta_sign']);
+
+        $tesouroLines = $result['cycles'][0]['lines'];
+        $this->assertSame('opening', $tesouroLines[0]['line_type']);
+        $this->assertTrue(
+            collect($tesouroLines)->contains(static fn (array $l): bool => ($l['line_type'] ?? '') === 'credit' && str_contains((string) ($l['date'] ?? ''), '/01/2025')),
+        );
+        $this->assertTrue(
+            collect($tesouroLines)->contains(static fn (array $l): bool => ($l['line_type'] ?? '') === 'month_total'),
+        );
+        $this->assertSame('year_total', $tesouroLines[array_key_last($tesouroLines)]['line_type']);
+
+        $bbLines = $result['cycles'][1]['lines'];
+        $this->assertTrue(
+            collect($bbLines)->contains(static fn (array $l): bool => ($l['line_type'] ?? '') === 'credit' && ($l['date'] ?? '') === '15/03/2025'),
+        );
+
         $this->assertArrayHasKey('consolidado', $result);
-        $this->assertCount(2, $result['consolidado']['by_period']);
+        $this->assertNotEmpty($result['consolidado']['lines']);
+        $this->assertGreaterThanOrEqual(2, count($result['consolidado']['by_period']));
     }
 }

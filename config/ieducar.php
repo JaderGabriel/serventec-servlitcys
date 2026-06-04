@@ -773,6 +773,8 @@ return [
 
     'finance_realtime' => [
         'enabled' => filter_var(env('IEDUCAR_FINANCE_REALTIME_ENABLED', true), FILTER_VALIDATE_BOOL),
+        /** Slug para `php artisan funding:rebuild-finance-realtime --confirm=` em production ({ano} = exercício). */
+        'rebuild_confirm_slug' => (string) env('IEDUCAR_FINANCE_REALTIME_REBUILD_SLUG', 'rebuild-repasses-{ano}'),
         'alert_threshold_pct' => max(1.0, (float) env('IEDUCAR_FINANCE_REALTIME_ALERT_PCT', 15)),
         'program_keywords' => ['fundeb', 'fnde', 'educacao basica', 'educação básica', 'manutencao', 'manutenção', 'salario educacao'],
         'sources_note' => (string) env('IEDUCAR_FINANCE_REALTIME_SOURCES_NOTE', ''),

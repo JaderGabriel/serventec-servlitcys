@@ -7,13 +7,23 @@
 
 @php
     $tones = [
+        'amber' => 'border-amber-200/90 dark:border-amber-800/50 bg-amber-50/40 dark:bg-amber-950/20',
         'violet' => 'border-violet-200 dark:border-violet-800/60 bg-violet-50/30 dark:bg-violet-950/20',
-        'emerald' => 'border-emerald-200/80 dark:border-emerald-800/50',
+        'emerald' => 'border-emerald-200/80 dark:border-emerald-800/50 bg-emerald-50/30 dark:bg-emerald-950/15',
+        'sky' => 'border-sky-200/80 dark:border-sky-800/50 bg-sky-50/30 dark:bg-sky-950/15',
+        'rose' => 'border-rose-200/80 dark:border-rose-800/50 bg-rose-50/30 dark:bg-rose-950/15',
+        'indigo' => 'border-indigo-200/80 dark:border-indigo-800/50',
+        'slate' => 'border-slate-200 dark:border-slate-700 bg-slate-50/40 dark:bg-slate-900/30',
         'neutral' => 'border-gray-200 dark:border-gray-700',
     ];
     $labelTone = [
+        'amber' => 'text-amber-800 dark:text-amber-300',
         'violet' => 'text-violet-800 dark:text-violet-300',
-        'emerald' => 'text-gray-500 dark:text-gray-400',
+        'emerald' => 'text-emerald-800 dark:text-emerald-300',
+        'sky' => 'text-sky-800 dark:text-sky-300',
+        'rose' => 'text-rose-800 dark:text-rose-300',
+        'indigo' => 'text-indigo-800 dark:text-indigo-300',
+        'slate' => 'text-slate-600 dark:text-slate-400',
         'neutral' => 'text-gray-500 dark:text-gray-400',
     ];
     $box = $tones[$tone] ?? $tones['neutral'];

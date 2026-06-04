@@ -8,7 +8,7 @@ namespace App\Support\Admin;
 final class AdminImportHubCatalog
 {
     /**
-     * @return list<array{key: string, route: string, label: string, hint: string}>
+     * @return list<array{key: string, route: string, label: string, hint: string, accent: string, icon: string}>
      */
     public static function navItems(): array
     {
@@ -18,36 +18,48 @@ final class AdminImportHubCatalog
                 'route' => 'admin.public-data.index',
                 'label' => __('Hub'),
                 'hint' => __('Visão geral e lacunas PDF'),
+                'accent' => ImportHubThemeCatalog::shellAccentForHubKey('hub'),
+                'icon' => 'squares-2x2',
             ],
             [
                 'key' => 'fundeb',
                 'route' => 'admin.ieducar-compatibility.index',
                 'label' => __('FUNDEB'),
                 'hint' => __('VAAF / VAAT / VAAR'),
+                'accent' => ImportHubThemeCatalog::shellAccentForHubKey('fundeb'),
+                'icon' => 'banknotes',
             ],
             [
                 'key' => 'cadastro',
                 'route' => 'admin.cadunico-sync.index',
                 'label' => __('CadÚnico'),
                 'hint' => __('Cecad / Misocial'),
+                'accent' => ImportHubThemeCatalog::shellAccentForHubKey('cadastro'),
+                'icon' => 'users',
             ],
             [
                 'key' => 'geo',
                 'route' => 'admin.geo-sync.index',
                 'label' => __('Geo'),
                 'hint' => __('Mapa e coordenadas'),
+                'accent' => ImportHubThemeCatalog::shellAccentForHubKey('geo'),
+                'icon' => 'map-pin',
             ],
             [
                 'key' => 'pedagogical',
                 'route' => 'admin.pedagogical-sync.index',
                 'label' => __('SAEB'),
                 'hint' => __('Desempenho INEP'),
+                'accent' => ImportHubThemeCatalog::shellAccentForHubKey('pedagogical'),
+                'icon' => 'academic-cap',
             ],
             [
                 'key' => 'queue',
                 'route' => 'admin.sync-queue.index',
                 'label' => __('Fila'),
                 'hint' => __('Tarefas e automação'),
+                'accent' => ImportHubThemeCatalog::shellAccentForHubKey('queue'),
+                'icon' => 'queue-list',
             ],
         ];
     }

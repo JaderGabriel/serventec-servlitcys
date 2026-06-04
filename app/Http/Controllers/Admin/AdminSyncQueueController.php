@@ -11,6 +11,7 @@ use App\Models\AnalyticsReportExport;
 use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\Notifications\OperationalAlertsNotifier;
 use App\Support\Admin\AdminSyncQueueIndexPresenter;
+use App\Support\Admin\ImportHubThemeCatalog;
 use App\Support\Admin\ExternalImportImpact;
 use App\Support\SyncQueue\SyncQueueUserScope;
 use Illuminate\Http\RedirectResponse;
@@ -141,6 +142,7 @@ class AdminSyncQueueController extends Controller
 
         return view('admin.sync-queue.show', [
             'task' => $task,
+            'taskTheme' => ImportHubThemeCatalog::themeForDomainValue($task->domain),
             'outcomeHint' => ExternalImportImpact::taskOutcomeHint($task),
             'canResume' => $user !== null && $user->can('resume', $task),
             'syncQueueRoutePrefix' => SyncQueueUserScope::routePrefix($user),

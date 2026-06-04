@@ -61,7 +61,7 @@
 
     <div class="sync-queue-panel__body space-y-2">
         @forelse ($tasks as $task)
-            @include('admin.sync-queue.partials.sync-task-card', ['task' => $task])
+            @include('admin.sync-queue.partials.sync-task-card', ['task' => $task, 'accent' => $accent])
         @empty
             <p class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                 {{ $isPaginated ? __('Nenhuma tarefa com estes filtros.') : __('Nenhuma tarefa nesta fila.') }}
