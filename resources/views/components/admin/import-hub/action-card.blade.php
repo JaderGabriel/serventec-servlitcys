@@ -9,6 +9,7 @@
     'titleTooltip' => null,
     'showQueueHint' => true,
     'submitDisabled' => false,
+    'tags' => [],
 ])
 
 @php
@@ -20,7 +21,6 @@
     ];
     $box = $variants[$variant] ?? $variants['default'];
     $submit = $submitLabel ?? __('Enfileirar na fila');
-    $tags = $tags ?? [];
     if (! is_array($tags)) {
         $tags = filled($tags) ? [(string) $tags] : [];
     }
