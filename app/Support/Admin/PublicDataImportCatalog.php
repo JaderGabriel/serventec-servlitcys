@@ -247,14 +247,17 @@ final class PublicDataImportCatalog
     {
         return [
             'id' => 'repasses_tesouro',
-            'title' => __('Repasses observados — Tesouro / Transparência'),
-            'summary' => __('Importa snapshots de programas (PNAE, PNATE, PDDE, etc.) via CKAN. Reduz lacunas de programas complementares no PDF.'),
+            'title' => __('Repasses observados — FUNDEB (3 extratos)'),
+            'summary' => __('Enfileira importação por município/ano: publicação FUNDEB (Tesouro Transparente), REPASSES/SISWEB, extrato BB e CKAN/Transparência para programas complementares.'),
             'data_class' => 'publicado',
             'domain' => 'funding',
             'persistence' => 'municipal_transfer_snapshots',
             'official_sources' => [
-                'CKAN Tesouro Transparente',
-                'FNDE (programas vinculados)',
+                'Tesouro Transparente — publicação FUNDEB (planilha)',
+                'SISWEB — Transferências Constitucionais (REPASSES)',
+                'Banco do Brasil — demonstrativos.apps.bb.com.br/extrato',
+                'CKAN Tesouro Transparente (municipal)',
+                'Portal da Transparência (opcional)',
             ],
             'pdf_sections' => ['programas_universais', 'salario_educacao'],
             'pdf_gaps' => ['programs_empty', 'mec_programs_api', 'salario_educacao_not_tracked'],

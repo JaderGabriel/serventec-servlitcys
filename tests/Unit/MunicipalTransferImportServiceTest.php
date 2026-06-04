@@ -4,7 +4,11 @@ namespace Tests\Unit;
 
 use App\Models\City;
 use App\Repositories\MunicipalTransferSnapshotRepository;
+use App\Services\Funding\BbExtratoCsvFetcher;
+use App\Services\Funding\BbFundebExtratoService;
 use App\Services\Funding\MunicipalTransferImportService;
+use App\Services\Funding\SiswebFundebRepassesService;
+use App\Services\Funding\TesouroFundebPublicacaoService;
 use App\Services\Funding\TesouroTransferenciasCsvService;
 use Illuminate\Support\Facades\Http;
 use Mockery;
@@ -23,6 +27,9 @@ final class MunicipalTransferImportServiceTest extends TestCase
     public function importa_repasses_fundeb_via_csv_tesouro(): void
     {
         config([
+            'ieducar.funding.transfers.extrato_sources.tesouro_publicacao.enabled' => false,
+            'ieducar.funding.transfers.extrato_sources.sisweb.enabled' => false,
+            'ieducar.funding.transfers.extrato_sources.bb_extrato.enabled' => false,
             'ieducar.other_funding.public_queries.portal_transparencia.api_key' => '',
             'ieducar.funding.transfers.historical_years' => 1,
             'ieducar.other_funding.public_queries.tesouro_ckan.csv_resources' => [
@@ -63,9 +70,13 @@ final class MunicipalTransferImportServiceTest extends TestCase
             })
             ->andReturn(1);
 
+        $tesouroCsv = new TesouroTransferenciasCsvService;
         $service = new MunicipalTransferImportService(
             $snapshots,
-            new TesouroTransferenciasCsvService(),
+            $tesouroCsv,
+            new TesouroFundebPublicacaoService,
+            new SiswebFundebRepassesService($tesouroCsv),
+            new BbFundebExtratoService(new BbExtratoCsvFetcher),
         );
 
         $result = $service->importForCityYear($city, 2025);

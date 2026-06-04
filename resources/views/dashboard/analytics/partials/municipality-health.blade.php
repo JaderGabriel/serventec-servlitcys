@@ -116,17 +116,10 @@
     $flowSteps = ConsultoriaFlow::numberedSteps([
         ['label' => __('Decisão'), 'anchor' => 'diag-decisao'],
         ['label' => __('Prioridades'), 'anchor' => 'diag-prioridades', 'visible' => count($topProblems) > 0],
-        ['label' => __('Qualidade'), 'anchor' => 'diag-qualidade-sistema'],
         ['label' => __('Explorar'), 'anchor' => 'diag-explorar'],
         ['label' => __('Consolidado'), 'anchor' => 'diag-consolidado', 'visible' => $hasConsolidado],
     ]);
     $consolidadoStep = ConsultoriaFlow::stepNum($flowSteps, 'diag-consolidado');
-    $scoreRing = match ($h['compliance_status'] ?? 'neutral') {
-        'success' => 'serv-panel border-emerald-300/80 dark:border-emerald-700',
-        'warning' => 'serv-panel border-amber-300/80 dark:border-amber-700',
-        'danger' => 'serv-panel border-rose-300/80 dark:border-rose-700',
-        default => 'serv-panel',
-    };
 @endphp
 
 <div class="space-y-6">
@@ -201,8 +194,6 @@
             'vaafComparacao' => $vaafComparacao,
             'fmtBrl' => $fmtBrl,
         ])
-
-        @include('dashboard.analytics.partials.municipality-health-system-quality', ['h' => $h])
 
         @include('dashboard.analytics.partials.municipality-health-explore', ['h' => $h])
 

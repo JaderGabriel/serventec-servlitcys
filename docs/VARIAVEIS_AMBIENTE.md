@@ -239,6 +239,13 @@ Tarefas geo com vários municípios guardam **checkpoint** por cidade; na fila, 
 | `IEDUCAR_FUNDEB_VAAR_PCT_BASE` | % indicativo só quando não há VAAR importado |
 | `IEDUCAR_FUNDING_TRANSFERS_ENABLED` | Import de repasses para `municipal_transfer_snapshots` |
 | `IEDUCAR_FUNDING_TRANSFERS_HISTORICAL_YEARS` | `5` — anos anteriores no import |
+| `IEDUCAR_BB_EXTRATO_URL_TEMPLATE` | URL HTTPS com `{ibge}`, `{ano}`, `{uf}` — download automático do CSV BB |
+| `IEDUCAR_BB_EXTRATO_EXPORT_URL` | URL fixa ou com placeholders (alternativa ao template) |
+| `IEDUCAR_BB_EXTRATO_REFRESH_DAYS` | `7` — validade do CSV em `storage/app/funding/bb_extrato/` |
+| `IEDUCAR_BB_OPEN_FINANCE_ENABLED` | Indicador UI Tempo Real; API de transações ainda não implementada |
+| `IEDUCAR_BB_OPEN_FINANCE_CLIENT_ID` | Client ID BB (Open Finance) |
+
+Detalhe extrato BB e Open Finance: [BB_EXTRATO_OPEN_FINANCE.md](BB_EXTRATO_OPEN_FINANCE.md).
 | `IEDUCAR_DISC_CENSO_MAT_TOLERANCE_PCT` | Tolerância % check Censo×i-Educar |
 | `IEDUCAR_INEP_CENSO_MATRICULAS_INDEX_ON_IMPORT` | Indexar matrículas municipais no import microdados |
 

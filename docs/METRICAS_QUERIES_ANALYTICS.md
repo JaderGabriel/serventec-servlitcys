@@ -35,7 +35,7 @@ Desde a release **`20260531-Nemesis`**, o menu do Analytics tem **quatro** área
 
 ### Explorar em detalhe (patch pós-3.4.0)
 
-Os cartões do Diagnóstico **não** repetem o índice global de conformidade. Cada área usa `DiagnosisExploreCards` com contador próprio (ocorrências, VAAR, programas, Censo, NEE, SAEB). O velocímetro 0–100 fica só em `#diag-qualidade-sistema`. Ver [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) § Explorar.
+Os cartões do Diagnóstico **não** repetem o índice global de conformidade. Cada área usa `DiagnosisExploreCards` com contador próprio (ocorrências, VAAR, programas, Censo, NEE, SAEB). O velocímetro 0–100 fica no Painel de decisão (`#diag-decisao`, cartão `#diag-qualidade-sistema`). Ver [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) § Explorar.
 
 ## Diagnóstico (`municipality_health`) — performance
 

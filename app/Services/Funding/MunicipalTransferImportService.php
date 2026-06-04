@@ -15,10 +15,19 @@ final class MunicipalTransferImportService
     public function __construct(
         private MunicipalTransferSnapshotRepository $snapshots,
         private TesouroTransferenciasCsvService $tesouroCsv,
+        private TesouroFundebPublicacaoService $tesouroPublicacao,
+        private SiswebFundebRepassesService $siswebFundeb,
+        private BbFundebExtratoService $bbExtrato,
     ) {}
 
     /**
-     * @return array{success: bool, message: string, rows: int, by_fonte: array<string, int>}
+     * @return array{
+     *   success: bool,
+     *   message: string,
+     *   rows: int,
+     *   by_fonte: array<string, int>,
+     *   attempts: list<array<string, mixed>>
+     * }
      */
     public function importForCityYear(City $city, int $year): array
     {
@@ -29,14 +38,35 @@ final class MunicipalTransferImportService
                 'message' => __('IBGE do município não configurado.'),
                 'rows' => 0,
                 'by_fonte' => [],
+                'attempts' => [],
             ];
         }
 
         $cfg = config('ieducar.funding.transfers', []);
+        if (! (bool) ($cfg['enabled'] ?? true)) {
+            return [
+                'success' => false,
+                'message' => __('Importação de repasses desactivada (IEDUCAR_FUNDING_TRANSFERS_ENABLED).'),
+                'rows' => 0,
+                'by_fonte' => [],
+                'attempts' => [],
+            ];
+        }
+
         $timeout = max(5, (int) ($cfg['timeout'] ?? 20));
         $importedAt = now();
         $allRows = [];
         $byFonte = [];
+        $attempts = [];
+
+        foreach ($this->fetchFundebExtratoSources($city, $year, $timeout) as $bundle) {
+            $attempts[] = $bundle['attempt'];
+            foreach ($bundle['rows'] as $row) {
+                $allRows[] = $row;
+                $fonte = (string) ($row['fonte'] ?? 'unknown');
+                $byFonte[$fonte] = ($byFonte[$fonte] ?? 0) + 1;
+            }
+        }
 
         $tesouro = $this->fetchTesouroRows($city, $ibge, $year, $timeout);
         if ($tesouro !== []) {
@@ -50,7 +80,7 @@ final class MunicipalTransferImportService
         $portal = $this->fetchPortalTransparenciaRows($ibge, $year, $timeout);
         if ($portal !== []) {
             $allRows = array_merge($allRows, $portal);
-            $byFonte['portal_transparencia'] = count($portal);
+            $byFonte['portal_transparencia'] = ($byFonte['portal_transparencia'] ?? 0) + count($portal);
         }
 
         $historical = $this->historicalYears($year, (int) ($cfg['historical_years'] ?? 5));
@@ -83,6 +113,21 @@ final class MunicipalTransferImportService
                 : __('Nenhum repasse identificado nas fontes configuradas para :ano.', ['ano' => $year]),
             'rows' => $written,
             'by_fonte' => $byFonte,
+            'attempts' => $attempts,
+        ];
+    }
+
+    /**
+     * Três extratos FUNDEB: publicação Tesouro Transparente, SISWEB (REPASSES) e BB.
+     *
+     * @return list<array{rows: list<array<string, mixed>>, attempt: array<string, mixed>}>
+     */
+    private function fetchFundebExtratoSources(City $city, int $year, int $timeout): array
+    {
+        return [
+            $this->tesouroPublicacao->fetchForCityYear($city, $year, $timeout),
+            $this->siswebFundeb->fetchForCityYear($city, $year, $timeout),
+            $this->bbExtrato->fetchForCityYear($city, $year, $timeout),
         ];
     }
 

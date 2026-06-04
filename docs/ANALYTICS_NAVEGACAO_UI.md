@@ -35,7 +35,7 @@ Cadastro (1) → Pedagógico (2) → Censo (3) → Finanças (4)
 | `x-dashboard.consultoria-tab-frame` | Moldura comum: impact strip, intro, links, flow nav, corpo |
 | `x-dashboard.serv-tab-intro` | Título + tom (`rose`, `teal`, `sky`, `amber`, `emerald`) |
 | `partials/municipality-health-executive` | Decisão + eixos (Diagnóstico) |
-| `partials/municipality-health-system-quality` | **Único** velocímetro / índice geral 0–100 (sem medidor duplicado na faixa de impacto) |
+| `partials/municipality-health-executive` | Painel de decisão: índice geral (velocímetro) + eixos na mesma linha |
 | `partials/municipality-health-explore` | Cartões «Explorar em detalhe» (métrica por área) |
 | `x-dashboard.diagnosis-explore-icon` | Ícones Heroicons nos cartões Explorar |
 
@@ -43,11 +43,10 @@ Cadastro (1) → Pedagógico (2) → Censo (3) → Finanças (4)
 
 Ordem na UI (alinhada ao roteiro sticky no topo):
 
-1. **Decisão** — `#diag-decisao`
+1. **Decisão** — `#diag-decisao` (KPIs, índice geral `#diag-qualidade-sistema` e eixos na mesma linha)
 2. **Prioridades** — `#diag-prioridades` (se houver rotinas)
-3. **Qualidade** — `#diag-qualidade-sistema`
-4. **Explorar** — `#diag-explorar`
-5. **Consolidado** — `#diag-consolidado` (fontes públicas + mapa de rotinas; subsecções sem número próprio)
+3. **Explorar** — `#diag-explorar`
+4. **Consolidado** — `#diag-consolidado` (fontes públicas + mapa de rotinas; subsecções sem número próprio)
 
 Secções AJAX legadas (VAAF/programas/temático embutidos) e skeletons «A carregar…» foram removidos da view — detalhe nas abas via Explorar.
 

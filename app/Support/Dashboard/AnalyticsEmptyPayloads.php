@@ -182,7 +182,7 @@ final class AnalyticsEmptyPayloads
             'delta_fmt' => '—',
             'delta_sign' => 'positive',
             'alerts' => [],
-            'extrato' => [],
+            'extrato' => ['cycles' => [], 'consolidado' => ['by_period' => [], 'by_year' => [], 'total_fmt' => '—', 'comparativo' => null]],
             'lay_guide' => [],
             'methodology_compact' => null,
             'bb_open_finance' => ['enabled' => false, 'configured' => false, 'message' => ''],

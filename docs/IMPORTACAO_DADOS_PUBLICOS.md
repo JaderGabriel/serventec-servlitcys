@@ -42,7 +42,7 @@ Classificação de dado (planilha Serventec / PDF): **publicado** (portaria/CKAN
 | FUNDEB todos (um ano) | `fundeb::import_bulk_year` | idem |
 | FUNDEB intervalo anos | `fundeb::sync_all_years` | idem |
 | Indexar Censo municipal | `funding::index_censo_matriculas` | `InepCensoMunicipioMatriculasIndexer` |
-| Repasses município + ano | `funding::import_transfers_city_year` | `MunicipalTransferImportService` |
+| Repasses município + ano | `funding::import_transfers_city_year` | `MunicipalTransferImportService` (3 extratos FUNDEB + CKAN/Transparência; campo `attempts` no resultado da fila). BB: download automático do CSV — [BB_EXTRATO_OPEN_FINANCE.md](BB_EXTRATO_OPEN_FINANCE.md) |
 | Repasses todos (um ano) | várias tarefas `funding::import_transfers_city_year` | idem |
 | Rotina semanal | `system::weekly_mass_sync` | `WeeklyMassSyncOrchestrator` |
 

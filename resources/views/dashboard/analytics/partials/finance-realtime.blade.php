@@ -4,6 +4,8 @@
     $d = is_array($realtimeData) ? $realtimeData : [];
     $alerts = is_array($d['alerts'] ?? null) ? $d['alerts'] : [];
     $extrato = is_array($d['extrato'] ?? null) ? $d['extrato'] : [];
+    $extratoCycles = is_array($extrato['cycles'] ?? null) ? $extrato['cycles'] : [];
+    $extratoConsolidado = is_array($extrato['consolidado'] ?? null) ? $extrato['consolidado'] : [];
     $guide = is_array($d['lay_guide'] ?? null) ? $d['lay_guide'] : [];
     $methodologyCompact = is_array($d['methodology_compact'] ?? null) ? $d['methodology_compact'] : null;
     $bb = is_array($d['bb_open_finance'] ?? null) ? $d['bb_open_finance'] : [];
@@ -16,7 +18,7 @@
     $hasKpis = $available && $realtimeDataReady;
     $hasBody = $hasKpis
         || count($alerts) > 0
-        || count($extrato) > 0
+        || count($extratoCycles) > 0
         || count($guide) > 0
         || $methodologyCompact !== null;
 @endphp
@@ -151,29 +153,136 @@
                         <span class="font-sans font-semibold tracking-wide">{{ __('EXTRATO — REPASSES FUNDEB') }}</span>
                         <span class="opacity-80">{{ $d['city_name'] ?? '' }} · {{ $d['year_label'] ?? $d['ano'] ?? '' }}</span>
                     </div>
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                            <tr>
-                                <th class="px-3 py-2">{{ __('Data imp.') }}</th>
-                                <th class="px-3 py-2">{{ __('Histórico') }}</th>
-                                <th class="px-3 py-2 text-right">{{ __('Crédito') }}</th>
-                                <th class="px-3 py-2 text-right">{{ __('Saldo acum.') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                            @foreach ($extrato as $line)
-                                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-900/50">
-                                    <td class="px-3 py-2 whitespace-nowrap">{{ $line['date'] ?? '—' }}</td>
-                                    <td class="px-3 py-2">
-                                        <span class="block">{{ $line['description'] ?? '' }}</span>
-                                        <span class="text-[10px] text-slate-500">{{ $line['fonte'] ?? '' }}</span>
-                                    </td>
-                                    <td class="px-3 py-2 text-right text-emerald-700 dark:text-emerald-400">{{ $line['credit'] ?? '—' }}</td>
-                                    <td class="px-3 py-2 text-right font-semibold">{{ $line['balance'] ?? '—' }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                    @foreach ($extratoCycles as $cycle)
+                        @php
+                            $cycleLines = is_array($cycle['lines'] ?? null) ? $cycle['lines'] : [];
+                            $byPeriod = is_array($cycle['by_period'] ?? null) ? $cycle['by_period'] : [];
+                            $cycleCmp = is_array($cycle['comparativo'] ?? null) ? $cycle['comparativo'] : [];
+                        @endphp
+                        <div class="border-b border-slate-200 dark:border-slate-700 last:border-b-0">
+                            <div class="bg-slate-700/90 dark:bg-slate-800 px-4 py-2 flex flex-wrap justify-between gap-2 font-sans text-xs">
+                                <span class="font-semibold text-white">{{ $cycle['fonte_label'] ?? $cycle['fonte'] ?? '' }}</span>
+                                <span class="text-slate-200">{{ __('Total ciclo:') }} <strong>{{ $cycle['cycle_total_fmt'] ?? '—' }}</strong></span>
+                            </div>
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300">
+                                    <tr>
+                                        <th class="px-3 py-2">{{ __('Data') }}</th>
+                                        <th class="px-3 py-2">{{ __('Lançamento') }}</th>
+                                        <th class="px-3 py-2 text-right">{{ __('Crédito') }}</th>
+                                        <th class="px-3 py-2 text-right">{{ __('Saldo acum.') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    @foreach ($cycleLines as $line)
+                                        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-900/50">
+                                            <td class="px-3 py-2 whitespace-nowrap">{{ $line['date'] ?? '—' }}</td>
+                                            <td class="px-3 py-2">{{ $line['description'] ?? '' }}</td>
+                                            <td class="px-3 py-2 text-right text-emerald-700 dark:text-emerald-400">{{ $line['credit'] ?? '—' }}</td>
+                                            <td class="px-3 py-2 text-right font-semibold">{{ $line['balance'] ?? '—' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                            @if ($byPeriod !== [])
+                                <div class="bg-slate-50 dark:bg-slate-900/60 px-3 py-2 font-sans text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700">
+                                    {{ __('Resumo por mês/ano — comparativo com expectativa') }}
+                                </div>
+                                <table class="w-full text-left">
+                                    <thead class="bg-teal-50/80 dark:bg-teal-950/40 text-teal-900 dark:text-teal-200">
+                                        <tr>
+                                            <th class="px-3 py-2">{{ __('Período') }}</th>
+                                            <th class="px-3 py-2 text-right">{{ __('Repassado') }}</th>
+                                            <th class="px-3 py-2 text-right">{{ __('Expectativa') }}</th>
+                                            <th class="px-3 py-2 text-right">{{ __('Diferença') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                        @foreach ($byPeriod as $period)
+                                            @php
+                                                $pCmp = is_array($period['comparativo'] ?? null) ? $period['comparativo'] : [];
+                                                $pSign = (string) ($pCmp['delta_sign'] ?? 'positive');
+                                            @endphp
+                                            <tr>
+                                                <td class="px-3 py-2">{{ $period['period_label'] ?? '' }}</td>
+                                                <td class="px-3 py-2 text-right">{{ $period['credit_fmt'] ?? '—' }}</td>
+                                                <td class="px-3 py-2 text-right text-slate-500">{{ $period['expected_fmt'] ?? '—' }}</td>
+                                                <td class="px-3 py-2 text-right {{ $pSign === 'negative' ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400' }}">
+                                                    {{ $pSign === 'negative' ? '−' : '+' }}{{ $pCmp['delta_fmt'] ?? '—' }}
+                                                    @if (($pCmp['delta_pct'] ?? null) !== null)
+                                                        <span class="text-slate-500">({{ number_format((float) $pCmp['delta_pct'], 1, ',', '.') }}%)</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                        <tr class="bg-slate-100/80 dark:bg-slate-800/50 font-semibold">
+                                            <td class="px-3 py-2">{{ __('Total do ciclo') }}</td>
+                                            <td class="px-3 py-2 text-right">{{ $cycleCmp['observed_fmt'] ?? ($cycle['cycle_total_fmt'] ?? '—') }}</td>
+                                            <td class="px-3 py-2 text-right text-slate-600">{{ $cycleCmp['expected_fmt'] ?? '—' }}</td>
+                                            <td class="px-3 py-2 text-right {{ ($cycleCmp['delta_sign'] ?? '') === 'negative' ? 'text-rose-700' : 'text-emerald-700' }}">
+                                                {{ ($cycleCmp['delta_sign'] ?? '') === 'negative' ? '−' : '+' }}{{ $cycleCmp['delta_fmt'] ?? '—' }}
+                                                @if (($cycleCmp['delta_pct'] ?? null) !== null)
+                                                    ({{ number_format((float) $cycleCmp['delta_pct'], 1, ',', '.') }}%)
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            @endif
+                        </div>
+                    @endforeach
+                    @php
+                        $consPeriods = is_array($extratoConsolidado['by_period'] ?? null) ? $extratoConsolidado['by_period'] : [];
+                        $consYears = is_array($extratoConsolidado['by_year'] ?? null) ? $extratoConsolidado['by_year'] : [];
+                        $consCmp = is_array($extratoConsolidado['comparativo'] ?? null) ? $extratoConsolidado['comparativo'] : [];
+                    @endphp
+                    @if ($consPeriods !== [] || $consYears !== [])
+                        <div class="bg-sky-900/90 dark:bg-sky-950 px-4 py-2 font-sans text-xs font-semibold text-white border-t-2 border-sky-600">
+                            {{ __('Consolidado (todas as fontes)') }} — {{ $extratoConsolidado['total_fmt'] ?? '—' }}
+                        </div>
+                        @if ($consYears !== [])
+                            <table class="w-full text-left border-b border-slate-200 dark:border-slate-700">
+                                <thead class="bg-sky-50 dark:bg-sky-950/50 text-sky-900 dark:text-sky-100 text-[10px] uppercase">
+                                    <tr>
+                                        <th class="px-3 py-2">{{ __('Ano') }}</th>
+                                        <th class="px-3 py-2 text-right">{{ __('Total repassado') }}</th>
+                                        <th class="px-3 py-2 text-right">{{ __('vs. expectativa anual') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($consYears as $yearRow)
+                                        @php $yCmp = is_array($yearRow['comparativo'] ?? null) ? $yearRow['comparativo'] : null; @endphp
+                                        <tr class="divide-y divide-slate-100">
+                                            <td class="px-3 py-2">{{ $yearRow['year_label'] ?? '' }}</td>
+                                            <td class="px-3 py-2 text-right font-semibold">{{ $yearRow['credit_fmt'] ?? '—' }}</td>
+                                            <td class="px-3 py-2 text-right text-xs">
+                                                @if ($yCmp !== null)
+                                                    {{ ($yCmp['delta_sign'] ?? '') === 'negative' ? '−' : '+' }}{{ $yCmp['delta_fmt'] ?? '—' }}
+                                                    @if (($yCmp['delta_pct'] ?? null) !== null)
+                                                        ({{ number_format((float) $yCmp['delta_pct'], 1, ',', '.') }}%)
+                                                    @endif
+                                                @else
+                                                    —
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @endif
+                        @if ($consCmp !== [])
+                            <p class="px-4 py-2 text-[10px] font-sans text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700">
+                                {{ __('Comparativo global:') }}
+                                {{ __('observado') }} {{ $consCmp['observed_fmt'] ?? '—' }}
+                                · {{ __('expectativa') }} {{ $consCmp['expected_fmt'] ?? '—' }}
+                                · {{ __('diferença') }}
+                                {{ ($consCmp['delta_sign'] ?? '') === 'negative' ? '−' : '+' }}{{ $consCmp['delta_fmt'] ?? '—' }}
+                                @if (($consCmp['delta_pct'] ?? null) !== null)
+                                    ({{ number_format((float) $consCmp['delta_pct'], 1, ',', '.') }}%)
+                                @endif
+                            </p>
+                        @endif
+                    @endif
                     <p class="px-4 py-2 text-[10px] text-slate-500 border-t border-slate-200 dark:border-slate-700 font-sans">
                         {{ $d['data_sources_note'] ?? '' }}
                     </p>

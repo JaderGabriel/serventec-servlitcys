@@ -1121,6 +1121,44 @@ return [
             'timeout' => max(5, (int) env('IEDUCAR_FUNDING_TRANSFERS_TIMEOUT', 20)),
             'historical_years' => max(1, (int) env('IEDUCAR_FUNDING_TRANSFERS_HISTORICAL_YEARS', 5)),
             'job_timeout' => max(60, (int) env('IEDUCAR_FUNDING_TRANSFERS_JOB_TIMEOUT', 600)),
+            /*
+             * Três extratos FUNDEB enfileirados em funding::import_transfers_city_year.
+             */
+            'extrato_sources' => [
+                'tesouro_publicacao' => [
+                    'enabled' => filter_var(env('IEDUCAR_FUNDEB_PUBLICACAO_ENABLED', true), FILTER_VALIDATE_BOOL),
+                    'portal_url' => 'https://www.tesourotransparente.gov.br/publicacoes/transferencias-ao-fundo-de-manutencao-e-desenvolvimento-da-educacao-basica-fundeb/',
+                    'page_url_template' => 'https://www.tesourotransparente.gov.br/publicacoes/transferencias-ao-fundo-de-manutencao-e-desenvolvimento-da-educacao-basica-fundeb/{ano}/{slug}?ano_selecionado={ano}',
+                    'page_slugs' => [
+                        '2026' => (string) env('IEDUCAR_FUNDEB_PUBLICACAO_SLUG_2026', '114'),
+                    ],
+                    'arquivo_ids' => [
+                        '2026' => (string) env('IEDUCAR_FUNDEB_PUBLICACAO_ARQUIVO_2026', '53824'),
+                    ],
+                    'cache_ttl_seconds' => max(3600, (int) env('IEDUCAR_FUNDEB_PUBLICACAO_CACHE_TTL', 86400)),
+                ],
+                'sisweb' => [
+                    'enabled' => filter_var(env('IEDUCAR_SISWEB_FUNDEB_ENABLED', true), FILTER_VALIDATE_BOOL),
+                    'portal_url' => 'https://sisweb.tesouro.gov.br/apex/f?p=2600:1',
+                    'export_url' => (string) env('IEDUCAR_SISWEB_FUNDEB_EXPORT_URL', ''),
+                    'use_ckan_mirror' => filter_var(env('IEDUCAR_SISWEB_USE_CKAN_MIRROR', true), FILTER_VALIDATE_BOOL),
+                ],
+                'bb_extrato' => [
+                    'enabled' => filter_var(env('IEDUCAR_BB_EXTRATO_FUNDEB_ENABLED', true), FILTER_VALIDATE_BOOL),
+                    'portal_url' => 'https://demonstrativos.apps.bb.com.br/extrato',
+                    /** URL fixa ou com {ibge}, {ano}, {uf} — o sistema descarrega para storage antes do import. */
+                    'export_url' => (string) env('IEDUCAR_BB_EXTRATO_EXPORT_URL', ''),
+                    /** Prioridade sobre export_url quando preenchido (um CSV por município/ano). */
+                    'url_template' => (string) env('IEDUCAR_BB_EXTRATO_URL_TEMPLATE', ''),
+                    'storage_path' => (string) env('IEDUCAR_BB_EXTRATO_STORAGE_PATH', 'funding/bb_extrato'),
+                    'refresh_days' => max(1, (int) env('IEDUCAR_BB_EXTRATO_REFRESH_DAYS', 7)),
+                    'http_timeout' => max(10, (int) env('IEDUCAR_BB_EXTRATO_HTTP_TIMEOUT', 30)),
+                    'keywords' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+                        'IEDUCAR_BB_EXTRATO_FUNDEB_KEYWORDS',
+                        'fundeb,fnde,salario educacao,salário-educação,tesouro nacional'
+                    ))))),
+                ],
+            ],
             'program_keywords' => [
                 'fundeb' => ['fundeb', 'fnde', 'salario-educacao', 'salário-educação'],
                 'pnae' => ['pnae', 'alimentacao', 'alimentação', 'merenda'],

@@ -8,6 +8,8 @@ use App\Repositories\Ieducar\DiscrepanciesRepository;
 use App\Repositories\MunicipalTransferSnapshotRepository;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Finance\MoneyMath;
+use App\Support\Funding\FundebExtratoFontePriority;
+use App\Support\Funding\FundebExtratoVisualBuilder;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\FundebImpactMethodology;
 use App\Support\Ieducar\FundebResourceProjection;
@@ -99,7 +101,8 @@ final class FinanceRealtimeFundebService
         $expectedFonte = (string) ($projection['vaa_fonte_label'] ?? '');
 
         $snapshots = $ibge !== null ? $this->transfers->forCityYear($city, $ano) : [];
-        $fundebRows = $this->filterFundebTransfers($snapshots);
+        $fundebRowsAll = $this->filterFundebTransfers($snapshots);
+        $fundebRows = FundebExtratoFontePriority::pickPrimaryFundebRows($fundebRowsAll);
         $observedAnnual = round(array_sum(array_map(static fn ($r) => (float) $r->valor, $fundebRows)), 2);
 
         $delta = MoneyMath::roundMoney($observedAnnual - $expectedAnnual);
@@ -140,7 +143,7 @@ final class FinanceRealtimeFundebService
             'has_transfer_data' => $fundebRows !== [],
             'transfer_count' => count($fundebRows),
             'alerts' => $alerts,
-            'extrato' => $this->buildExtratoVisual($fundebRows, $city, $ano),
+            'extrato' => (new FundebExtratoVisualBuilder)->build($fundebRowsAll, $city, $ano, $expectedAnnual),
             'lay_guide' => $this->layPersonGuide(),
             'methodology_compact' => FundebImpactMethodology::compactFromContext($ctx),
             'data_sources_note' => $this->dataSourcesNote(),
@@ -235,47 +238,6 @@ final class FinanceRealtimeFundebService
     }
 
     /**
-     * @param  list<\App\Models\MunicipalTransferSnapshot>  $rows
-     * @return list<array{date: string, description: string, credit: ?string, debit: ?string, balance: ?string, fonte: string, valor_fmt: string}>
-     */
-    private function buildExtratoVisual(array $rows, City $city, int $ano): array
-    {
-        $lines = [];
-        $running = 0.0;
-        foreach ($rows as $i => $row) {
-            $valor = (float) $row->valor;
-            $running += $valor;
-            $imported = $row->imported_at?->format('d/m/Y') ?? '—';
-            $lines[] = [
-                'date' => $imported,
-                'description' => trim((string) ($row->programa_label ?: $row->programa_id)),
-                'credit' => $valor > 0 ? DiscrepanciesFundingImpact::formatBrl($valor) : null,
-                'debit' => $valor < 0 ? DiscrepanciesFundingImpact::formatBrl(abs($valor)) : null,
-                'balance' => DiscrepanciesFundingImpact::formatBrl($running),
-                'fonte' => (string) $row->fonte,
-                'valor_fmt' => DiscrepanciesFundingImpact::formatBrl($valor),
-            ];
-        }
-
-        if ($lines === []) {
-            $lines[] = [
-                'date' => '—',
-                'description' => __('Sem repasses FUNDEB importados para :city / :ano. Use Admin → Dados públicos → Repasses.', [
-                    'city' => $city->name,
-                    'ano' => (string) $ano,
-                ]),
-                'credit' => null,
-                'debit' => null,
-                'balance' => null,
-                'fonte' => '—',
-                'valor_fmt' => '—',
-            ];
-        }
-
-        return $lines;
-    }
-
-    /**
      * @return list<array{severity: string, title: string, detail: string}>
      */
     private function buildAlerts(
@@ -360,10 +322,9 @@ final class FinanceRealtimeFundebService
 
     private function dataSourcesNote(): string
     {
-        return (string) config(
-            'ieducar.finance_realtime.sources_note',
-            __('Dados públicos: Tesouro Transparente e Portal da Transparência. Opcional: API Banco do Brasil (Open Finance) via credenciais no .env.'),
-        );
+        $default = __('Extratos analisados: publicação FUNDEB (Tesouro Transparente), REPASSES/SISWEB e extrato BB (export ou Open Finance). Importe via Admin → Dados públicos → Repasses.');
+
+        return (string) config('ieducar.finance_realtime.sources_note', $default);
     }
 
     /**
@@ -378,8 +339,8 @@ final class FinanceRealtimeFundebService
             'enabled' => $enabled,
             'configured' => $clientId !== '',
             'message' => $enabled && $clientId !== ''
-                ? __('Open Finance BB configurado — integração em evolução; use repasses públicos importados.')
-                : __('Para saldo em conta BB: IEDUCAR_BB_OPEN_FINANCE_ENABLED=true e credenciais OAuth.'),
+                ? __('Open Finance BB configurado — consulta automática de extrato em evolução. Use download CSV (IEDUCAR_BB_EXTRATO_URL_TEMPLATE) ou docs/BB_EXTRATO_OPEN_FINANCE.md.')
+                : __('Extrato BB: configure IEDUCAR_BB_EXTRATO_URL_TEMPLATE (download automático) ou copie CSV para storage/app/funding/bb_extrato/. Open Finance: ver docs/BB_EXTRATO_OPEN_FINANCE.md.'),
         ];
     }
 }

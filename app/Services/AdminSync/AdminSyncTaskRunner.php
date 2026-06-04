@@ -722,7 +722,7 @@ final class AdminSyncTaskRunner
         $city = City::query()->findOrFail((int) ($payload['city_id'] ?? $task->city_id));
         $ano = (int) ($payload['ano'] ?? 0);
 
-        $progress->step(1, 1, __('A importar repasses Tesouro/Transparência para :city (:ano)…', [
+        $progress->step(1, 1, __('A importar repasses FUNDEB (3 extratos + CKAN) para :city (:ano)…', [
             'city' => $city->name,
             'ano' => (string) $ano,
         ]));
@@ -734,6 +734,7 @@ final class AdminSyncTaskRunner
             'message' => (string) ($result['message'] ?? ''),
             'rows' => (int) ($result['rows'] ?? 0),
             'by_fonte' => $result['by_fonte'] ?? [],
+            'attempts' => $result['attempts'] ?? [],
         ];
     }
 

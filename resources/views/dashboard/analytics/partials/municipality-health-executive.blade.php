@@ -75,6 +75,13 @@
         default => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
     };
 
+    $statusLabel = match ($status) {
+        'success' => __('Adequado no filtro'),
+        'warning' => __('Atenção — corrigir antes do Censo'),
+        'danger' => __('Crítico — ação imediata'),
+        default => __('Sem índice'),
+    };
+
 @endphp
 
 <section class="serv-panel overflow-hidden border border-teal-200/60 dark:border-teal-900/50" id="diag-decisao">
@@ -98,10 +105,24 @@
     </div>
 
     <div class="p-4 sm:p-6">
-        <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3">
-            {{ __('Eixos para gestão (consolidado)') }}
-        </h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+            <article class="serv-panel border border-slate-200/80 dark:border-slate-700/80 p-4 flex flex-col items-center gap-2 h-full" id="diag-qualidade-sistema">
+                <h3 class="text-sm font-semibold text-serv-navy dark:text-slate-100 text-center leading-tight w-full">
+                    {{ __('Índice geral de qualidade (filtro actual)') }}
+                </h3>
+                @if ($score !== null)
+                    <x-dashboard.compliance-speedometer
+                        :score="(int) $score"
+                        :status="$status"
+                        :label="$statusLabel"
+                        class="w-full max-w-[200px]"
+                    />
+                @else
+                    <p class="text-xs text-slate-500 dark:text-slate-400 text-center flex-1 flex items-center justify-center">
+                        {{ __('Índice indisponível — verifique filtros e conexão ou abra Discrepâncias.') }}
+                    </p>
+                @endif
+            </article>
             @foreach ($eixos as $eixo)
                 <article class="serv-panel border border-slate-200/80 dark:border-slate-700/80 p-4 flex flex-col gap-3 h-full">
                     <div class="flex items-start justify-between gap-2">

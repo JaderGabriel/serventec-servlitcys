@@ -71,6 +71,7 @@ final class TesouroTransferenciasCsvService
                     'resource_id' => $resource['resource_id'],
                     'resource_name' => $resource['name'],
                     'meses_somados' => $match['months_counted'][$year] ?? 0,
+                    'mensal' => $match['mensal'][$year] ?? [],
                 ],
             ];
         }
@@ -278,6 +279,7 @@ final class TesouroTransferenciasCsvService
                     'uf' => $uf,
                     'annual' => [],
                     'months_counted' => [],
+                    'mensal' => [],
                 ];
             }
 
@@ -295,6 +297,10 @@ final class TesouroTransferenciasCsvService
                 }
                 $byNomeUf[$key]['annual'][$year] += $valor;
                 $byNomeUf[$key]['months_counted'][$year]++;
+                if (! isset($byNomeUf[$key]['mensal'][$year][$mes])) {
+                    $byNomeUf[$key]['mensal'][$year][$mes] = 0.0;
+                }
+                $byNomeUf[$key]['mensal'][$year][$mes] += $valor;
             }
         }
 

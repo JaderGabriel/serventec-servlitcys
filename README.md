@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão em produção (`main`):** **3.7.0** (Finanças rápidas, VAAF com regra legal nas abas, hub importação admin; tag **`20260603-Selene`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md) · release: [docs/RELEASE_20260603_SELENE.md](docs/RELEASE_20260603_SELENE.md).
+**Versão em produção (`main`):** **3.10.0** (repasses FUNDEB — 3 extratos, extrato Tempo Real, download BB; tag **`20260604-Plutus`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md) · release: [docs/RELEASE_20260604_PLUTUS.md](docs/RELEASE_20260604_PLUTUS.md).
 
 ## Requisitos
 

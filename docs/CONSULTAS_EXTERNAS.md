@@ -175,7 +175,9 @@ IEDUCAR_TESOURO_TRANSFERENCIAS_RESOURCE_ID=
 |------|---------|
 | **Tabela** | `municipal_transfer_snapshots` (IBGE, ano, fonte, programa_id, valor) |
 | **Import** | `MunicipalTransferImportService` — job `ImportMunicipalTransfersJob` / tarefa `funding::import_transfers_city_year` na fila `admin-sync` |
+| **Três extratos FUNDEB** | Por município/ano, em sequência na mesma tarefa: (1) [publicação FUNDEB](https://www.tesourotransparente.gov.br/publicacoes/transferencias-ao-fundo-de-manutencao-e-desenvolvimento-da-educacao-basica-fundeb/) → planilha `thot-arquivos` (`tesouro_publicacao`, agregado UF); (2) [SISWEB REPASSES](https://sisweb.tesouro.gov.br/apex/f?p=2600:1) → export opcional ou espelho CKAN (`sisweb_ckan` / `sisweb_export`); (3) [BB extrato](https://demonstrativos.apps.bb.com.br/extrato) → `BbExtratoCsvFetcher` descarrega CSV para `storage/app/funding/bb_extrato/{IBGE}_{ANO}.csv` (URL template/export ou upload manual). Open Finance: preparado na UI, consulta API futura. Ver **[BB_EXTRATO_OPEN_FINANCE.md](BB_EXTRATO_OPEN_FINANCE.md)**. Resultado inclui `attempts` por fonte. |
 | **Tesouro CSV** | `TesouroTransferenciasCsvService` — pacote CKAN `transferencias-obrigatorias-da-uniao-por-municipio` (ex.: `fundeb-por-municipio.csv`); mapeamento **COD_MUN → IBGE** por nome+UF; fonte `tesouro_csv` em `municipal_transfer_snapshots`. Env: `IEDUCAR_TESOURO_CSV_ENABLED` (default true). |
+| **Conciliação** | `FundebExtratoFontePriority` — totais em Tempo Real usam a fonte municipal mais fiável; o extrato visual lista todas as fontes gravadas. |
 | **UI** | Secção «Repasse observado (série histórica)» na aba Financiamentos |
 
 ### 3.5 Censo INEP × i-Educar (v2.3)
