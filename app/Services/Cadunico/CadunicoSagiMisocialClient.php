@@ -371,7 +371,10 @@ final class CadunicoSagiMisocialClient
     {
         $configured = config('ieducar.cadunico.misocial.field_list');
         if (is_array($configured) && $configured !== []) {
-            return $configured;
+            $max = max(10, (int) config('ieducar.cadunico.misocial.field_list_max', 24));
+            if (count($configured) <= $max) {
+                return $configured;
+            }
         }
 
         return self::defaultFieldList();

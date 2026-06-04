@@ -1,11 +1,24 @@
-@props(['realtimeData', 'yearFilterReady' => false, 'municipalityContext' => null])
+@props(['realtimeData', 'yearFilterReady' => false, 'municipalityContext' => null, 'filters' => null])
 
 @php
     $d = is_array($realtimeData) ? $realtimeData : [];
     $alerts = is_array($d['alerts'] ?? null) ? $d['alerts'] : [];
     $extrato = is_array($d['extrato'] ?? null) ? $d['extrato'] : [];
     $guide = is_array($d['lay_guide'] ?? null) ? $d['lay_guide'] : [];
-    $methodology = is_array($d['methodology'] ?? null) ? $d['methodology'] : null;
+    $methodologyCompact = is_array($d['methodology_compact'] ?? null) ? $d['methodology_compact'] : null;
+    $bb = is_array($d['bb_open_finance'] ?? null) ? $d['bb_open_finance'] : [];
+
+    $available = (bool) ($d['available'] ?? false);
+    $needsSpecificYear = $filters !== null
+        && $filters->hasYearSelected()
+        && $filters->isAllSchoolYears();
+    $realtimeDataReady = $yearFilterReady && ! $needsSpecificYear;
+    $hasKpis = $available && $realtimeDataReady;
+    $hasBody = $hasKpis
+        || count($alerts) > 0
+        || count($extrato) > 0
+        || count($guide) > 0
+        || $methodologyCompact !== null;
 @endphp
 
 <x-dashboard.consultoria-tab-frame
@@ -15,8 +28,8 @@
     :intro="__('Cruza o que o governo registou como transferido com a expectativa calculada pela rede (matrículas × VAAF). Para leigos e gestores financeiros.')"
     :year-filter-ready="$yearFilterReady"
     :municipality-context="$municipalityContext"
-    :tab-data="['realtimeData' => $realtimeData]"
-    :no-year-message="__('Selecione o ano letivo para comparar repasses e expectativa FUNDEB.')"
+    :tab-data="['realtimeData' => $d]"
+    :no-year-message="__('Selecione o ano letivo e aplique os filtros para comparar repasses observados com a expectativa FUNDEB.')"
 >
     <x-slot name="links">
         <x-consultoria-tab-link tab="fundeb" class="text-xs" />
@@ -24,15 +37,35 @@
         <x-consultoria-tab-link tab="discrepancies" class="text-xs" />
         <span class="text-slate-300">·</span>
         <a href="{{ route('admin.ieducar-compatibility.index') }}" class="text-xs text-sky-800 dark:text-sky-300 underline">{{ __('Admin FUNDEB') }}</a>
+        @if (Auth::user()?->canViewAdminDashboard())
+            <span class="text-slate-300">·</span>
+            <a href="{{ route('admin.public-data.index') }}" class="text-xs text-sky-800 dark:text-sky-300 underline">{{ __('Dados públicos') }}</a>
+        @endif
     </x-slot>
 
     @if (filled($d['aviso'] ?? null))
         <p class="serv-callout text-sm">{{ $d['aviso'] }}</p>
     @endif
 
-    @if (! ($d['available'] ?? false))
-        <p class="serv-callout serv-callout--warning">{{ __('Cadastre o código IBGE do município para usar esta aba.') }}</p>
-    @else
+    @if (! $yearFilterReady)
+        <p class="serv-callout text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            {{ __('Após aplicar município e ano letivo, o painel compara repasses importados (Tesouro/Transparência) com a expectativa FUNDEB (matrículas × VAAF). Enquanto isso, use o guia abaixo e importe dados em Admin → Dados públicos.') }}
+        </p>
+    @endif
+
+    @if ($needsSpecificYear)
+        <p class="serv-callout serv-callout--warning text-sm">
+            {{ __('Para alinhar matrículas e repasses ao mesmo exercício, aplique um ano letivo específico (não «Todos os anos») nos filtros superiores.') }}
+        </p>
+    @endif
+
+    @if (! $available)
+        <p class="serv-callout serv-callout--warning text-sm">
+            {{ __('Cadastre o código IBGE do município em Admin → Municípios para localizar repasses públicos importados.') }}
+        </p>
+    @endif
+
+    @if ($hasKpis)
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div class="rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50/50 dark:bg-sky-950/30 p-4">
                 <p class="text-[10px] font-semibold uppercase text-sky-800/80">{{ __('Expectativa FUNDEB / ano') }}</p>
@@ -40,6 +73,9 @@
                 <p class="mt-1 text-[11px] text-slate-600 dark:text-slate-400">{{ $d['formula'] ?? '' }}</p>
                 @if (filled($d['expected_fonte'] ?? null))
                     <p class="text-[10px] mt-1 text-slate-500">{{ __('Fonte VAAF:') }} {{ $d['expected_fonte'] }}</p>
+                @endif
+                @if ($methodologyCompact !== null && filled($methodologyCompact['referencias_legais'] ?? null))
+                    <x-dashboard.fundeb-valor-referencia :referencias="$methodologyCompact['referencias_legais']" class="mt-2" />
                 @endif
             </div>
             <div class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/30 p-4">
@@ -58,31 +94,53 @@
             </div>
             <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-xs">
                 <p class="font-semibold text-slate-800 dark:text-slate-200">{{ __('Banco do Brasil') }}</p>
-                <p class="mt-1 text-slate-600 dark:text-slate-400">{{ $d['bb_open_finance']['message'] ?? '' }}</p>
+                <p class="mt-1 text-slate-600 dark:text-slate-400">{{ $bb['message'] ?? '' }}</p>
             </div>
         </div>
+    @elseif ($realtimeDataReady && $available === false)
+        <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-xs max-w-xl">
+            <p class="font-semibold text-slate-800 dark:text-slate-200">{{ __('Banco do Brasil (Open Finance)') }}</p>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">{{ $bb['message'] ?? '' }}</p>
+        </div>
+    @endif
 
-        @if ($alerts !== [])
-            <div class="space-y-2">
-                @foreach ($alerts as $alert)
-                    @php
-                        $sev = (string) ($alert['severity'] ?? 'info');
-                        $box = match ($sev) {
-                            'danger' => 'serv-alert-panel--critical',
-                            'warning' => 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40',
-                            'success' => 'border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40',
-                            default => 'border-sky-200 bg-sky-50 dark:border-sky-800 dark:bg-sky-950/30',
-                        };
-                    @endphp
-                    <div class="rounded-lg border px-4 py-3 text-sm {{ $box }}">
-                        <p class="font-semibold">{{ $alert['title'] ?? '' }}</p>
-                        <p class="mt-0.5 text-xs opacity-90">{{ $alert['detail'] ?? '' }}</p>
-                    </div>
-                @endforeach
-            </div>
-        @endif
+    @if ($realtimeDataReady && $available && $alerts !== [])
+        <div class="space-y-2">
+            @foreach ($alerts as $alert)
+                @php
+                    $sev = (string) ($alert['severity'] ?? 'info');
+                    $box = match ($sev) {
+                        'danger' => 'serv-alert-panel--critical',
+                        'warning' => 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40',
+                        'success' => 'border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40',
+                        default => 'border-sky-200 bg-sky-50 dark:border-sky-800 dark:bg-sky-950/30',
+                    };
+                @endphp
+                <div class="rounded-lg border px-4 py-3 text-sm {{ $box }}">
+                    <p class="font-semibold">{{ $alert['title'] ?? '' }}</p>
+                    <p class="mt-0.5 text-xs opacity-90">{{ $alert['detail'] ?? '' }}</p>
+                </div>
+            @endforeach
+        </div>
+    @elseif ($alerts !== [])
+        <div class="space-y-2">
+            @foreach ($alerts as $alert)
+                <div class="rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40 px-4 py-3 text-sm">
+                    <p class="font-semibold">{{ $alert['title'] ?? '' }}</p>
+                    <p class="mt-0.5 text-xs opacity-90">{{ $alert['detail'] ?? '' }}</p>
+                </div>
+            @endforeach
+        </div>
+    @endif
 
-        <div class="grid gap-6 lg:grid-cols-2">
+    @if ($realtimeDataReady && ! $hasBody)
+        <p class="serv-callout text-sm text-slate-700 dark:text-slate-300">
+            {{ __('Não há dados para exibir neste recorte. Confirme ano letivo, IBGE do município, matrículas i-Educar, VAAF importado e repasses em Dados públicos.') }}
+        </p>
+    @endif
+
+    <div class="grid gap-6 lg:grid-cols-2">
+        @if ($realtimeDataReady && $available)
             <x-dashboard.consultoria-section
                 anchor="realtime-extrato"
                 :title="__('Extrato simulado (dados públicos)')"
@@ -121,11 +179,14 @@
                     </p>
                 </div>
             </x-dashboard.consultoria-section>
+        @endif
 
+        @if (count($guide) > 0)
             <x-dashboard.consultoria-section
                 anchor="realtime-guia"
                 :title="__('Entenda em linguagem simples')"
                 :subtitle="__('Para secretários, tesouraria e conselhos que não trabalham com siglas todos os dias.')"
+                @class($realtimeDataReady && $available ? '' : 'lg:col-span-2')
             >
                 <div class="space-y-3">
                     @foreach ($guide as $step)
@@ -139,10 +200,22 @@
                     @endforeach
                 </div>
             </x-dashboard.consultoria-section>
-        </div>
-
-        @if ($methodology !== null)
-            <x-dashboard.fundeb-methodology-panel :metodologia="$methodology" :default-open="false" />
         @endif
+    </div>
+
+    @if ($methodologyCompact !== null && $realtimeDataReady)
+        <details class="serv-panel text-xs border border-teal-200/80 dark:border-teal-800/60">
+            <summary class="cursor-pointer px-3 py-2 font-semibold text-teal-950 dark:text-teal-100">{{ __('Regras FUNDEB e ponderações') }}</summary>
+            <div class="px-3 pb-3 text-slate-700 dark:text-slate-300 space-y-1">
+                <p><span class="font-semibold">{{ $methodologyCompact['rotulo_vaaf'] ?? __('VAAF') }}:</span> {{ $methodologyCompact['vaa_label'] ?? '' }} @if (filled($methodologyCompact['vaa_fonte_label'] ?? null))— {{ $methodologyCompact['vaa_fonte_label'] }}@endif</p>
+                <p class="text-[11px]">{{ $methodologyCompact['formula_curta'] ?? '' }}</p>
+                @if (filled($methodologyCompact['aviso'] ?? null))
+                    <p class="text-[11px] text-amber-800/90">{{ $methodologyCompact['aviso'] }}</p>
+                @endif
+                @if (filled($methodologyCompact['referencias_legais'] ?? null))
+                    <x-dashboard.fundeb-valor-referencia :referencias="$methodologyCompact['referencias_legais']" />
+                @endif
+            </div>
+        </details>
     @endif
 </x-dashboard.consultoria-tab-frame>

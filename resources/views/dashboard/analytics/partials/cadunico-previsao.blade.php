@@ -38,6 +38,8 @@
     };
 
     $available = (bool) ($d['available'] ?? false);
+    $needsSpecificYear = $filters !== null && $filters->hasYearSelected() && $filters->isAllSchoolYears();
+    $cadunicoDataReady = $yearFilterReady && ! $needsSpecificYear;
     $exportParams = is_array($d['export_params'] ?? null) ? $d['export_params'] : request()->only(['city_id', 'ano_letivo', 'escola_id', 'curso_id', 'turno_id']);
     if (! isset($exportParams['city_id']) && $selectedCity !== null) {
         $exportParams['city_id'] = $selectedCity->id;
@@ -69,11 +71,27 @@
         <x-consultoria-tab-link tab="inclusion" :label="__('Inclusão')" class="text-xs" />
     </x-slot>
 
+    @if ($needsSpecificYear)
+        <p class="serv-callout serv-callout--warning text-sm">
+            {{ __('A previsão CadÚnico exige um ano letivo específico. Nos filtros superiores, escolha um ano (não «Todos os anos») e clique em Aplicar filtros.') }}
+        </p>
+    @endif
+
+    @if (! $yearFilterReady)
+        <p class="serv-callout text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            {{ __('Após aplicar cidade e ano letivo, o painel cruza agregados Cecad (MDS) com matrículas i-Educar. Enquanto isso, pode importar dados em Admin → CadÚnico/Cecad ou via `cadunico:sync-city`.') }}
+        </p>
+    @endif
+
+    @if (filled($d['error'] ?? null) && (! $yearFilterReady || $needsSpecificYear))
+        <div class="serv-callout serv-callout--danger text-sm">{{ $d['error'] }}</div>
+    @endif
+
     @if (count($publicSources['categories'] ?? []) > 0)
         <x-dashboard.consultoria-public-sources :catalog="$publicSources" anchor="cad-previsao-fontes" />
     @endif
 
-    @if (! ($gap['available'] ?? false))
+    @if (! ($gap['available'] ?? false) && $cadunicoDataReady)
         <p class="serv-callout serv-callout--warning text-sm">
             {{ __('Sincronize agregados Cecad (MDS) para o município e ano do filtro.') }}
             @if (Auth::user()?->canViewAdminDashboard())
@@ -93,13 +111,13 @@
             || count($metodologia) > 0
             || count($publicSources['categories'] ?? []) > 0;
     @endphp
-    @if ($yearFilterReady && ! $hasBody && ! filled($d['error'] ?? null))
+    @if ($cadunicoDataReady && ! $hasBody && ! filled($d['error'] ?? null))
         <p class="serv-callout text-sm text-slate-700 dark:text-slate-300">
             {{ __('Não há dados para exibir neste recorte. Confirme ano letivo, importação Cecad e conexão i-Educar.') }}
         </p>
     @endif
 
-    @if ($yearFilterReady && $available)
+    @if ($cadunicoDataReady && $available)
         <div class="rounded-lg border border-indigo-200/80 dark:border-indigo-800/50 bg-indigo-50/40 dark:bg-indigo-950/25 px-4 py-4 space-y-3">
             <div>
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Exportar previsão CadÚnico') }}</h3>
@@ -215,19 +233,31 @@
         </ul>
     @endif
 
-    @if (count($metodologia) > 0)
+    @php
+        $metodologiaRows = count($metodologia) > 0 ? $metodologia : [
+            ['step' => '1', 'text' => __('Importar agregados municipais do Cecad (CSV) — sem dados pessoais.')],
+            ['step' => '2', 'text' => __('Contar crianças/jovens 4-17 anos no CadÚnico no exercício de referência.')],
+            ['step' => '3', 'text' => __('Comparar com matrículas ativas i-Educar no mesmo ano letivo e filtros.')],
+            ['step' => '4', 'text' => __('Estimar lacuna e impacto FUNDEB indicativo (VAAF × população fora da rede).')],
+        ];
+        $showMetodologia = $cadunicoDataReady || ! $yearFilterReady || $needsSpecificYear;
+    @endphp
+    @if ($showMetodologia)
         <x-dashboard.consultoria-section
             :step="$cadStep['cad-previsao-metodo'] ?? null"
             anchor="cad-previsao-metodo"
             :title="__('Metodologia e limitações')"
         >
             <ol class="list-decimal list-inside text-sm text-slate-700 dark:text-slate-300 space-y-1">
-                @foreach ($metodologia as $step)
+                @foreach ($metodologiaRows as $step)
                     <li><span class="font-medium">{{ $step['step'] ?? '' }}.</span> {{ $step['text'] ?? '' }}</li>
                 @endforeach
             </ol>
             @if (filled($gap['nota'] ?? null))
                 <p class="serv-callout text-xs mt-3">{{ $gap['nota'] }}</p>
+            @endif
+            @if (filled($d['footnote'] ?? null))
+                <p class="serv-callout text-xs mt-3">{{ $d['footnote'] }}</p>
             @endif
         </x-dashboard.consultoria-section>
     @endif

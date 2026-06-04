@@ -20,29 +20,31 @@
 @endphp
 
 <div class="consultoria-tab-frame space-y-6" data-consultoria-tab="{{ $tab }}" data-analytics-panel-root>
+    @if ($tab !== '' && in_array($tab, \App\Support\Dashboard\AnalyticsTabCatalog::tabsWithImpactStrip(), true))
+        @include('dashboard.analytics.partials.tab-impact-strip', [
+            'tab' => $tab,
+            'yearFilterReady' => $yearFilterReady,
+            'municipalityContext' => $municipalityContext,
+            'tabData' => $tabData,
+        ])
+    @endif
+
+    @if (filled($title))
+        <x-dashboard.serv-tab-intro :title="$title" :tone="$tone">
+            @if (filled($intro))
+                {{ $intro }}
+            @endif
+            @if (filled($meta))
+                <x-slot name="meta">{!! $meta !!}</x-slot>
+            @endif
+        </x-dashboard.serv-tab-intro>
+    @endif
+
     @if (! $yearFilterReady)
         <p class="serv-callout serv-callout--warning text-sm">{{ $noYearMessage }}</p>
-    @else
-        @if ($tab !== '' && in_array($tab, \App\Support\Dashboard\AnalyticsTabCatalog::tabsWithImpactStrip(), true))
-            @include('dashboard.analytics.partials.tab-impact-strip', [
-                'tab' => $tab,
-                'yearFilterReady' => $yearFilterReady,
-                'municipalityContext' => $municipalityContext,
-                'tabData' => $tabData,
-            ])
-        @endif
+    @endif
 
-        @if (filled($title))
-            <x-dashboard.serv-tab-intro :title="$title" :tone="$tone">
-                @if (filled($intro))
-                    {{ $intro }}
-                @endif
-                @if (filled($meta))
-                    <x-slot name="meta">{!! $meta !!}</x-slot>
-                @endif
-            </x-dashboard.serv-tab-intro>
-        @endif
-
+    @if ($yearFilterReady)
         @if (filled($footnote))
             <p class="serv-callout text-xs leading-relaxed">{{ $footnote }}</p>
         @endif
@@ -60,9 +62,9 @@
         @if (count($flowSteps) > 0)
             <x-dashboard.consultoria-flow-nav :steps="$flowSteps" :tone="$flowTone" />
         @endif
-
-        <div class="consultoria-tab-frame__body space-y-6 min-w-0">
-            {{ $slot }}
-        </div>
     @endif
+
+    <div class="consultoria-tab-frame__body space-y-6 min-w-0">
+        {{ $slot }}
+    </div>
 </div>

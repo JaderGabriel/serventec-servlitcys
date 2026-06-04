@@ -80,6 +80,10 @@
             @else
                 @if (filled($proj['formula_base'] ?? null))
                     <p class="serv-callout text-sm">{{ $proj['formula_base'] }}</p>
+                    <x-dashboard.fundeb-valor-referencia
+                        :referencias="\App\Support\Ieducar\FundebReferenceDisplay::referenciasLegaisLinha()"
+                        class="mt-1"
+                    />
                 @endif
 
                 @if (filled($proj['vaa_fonte_label'] ?? null))

@@ -27,9 +27,11 @@ final class FinanceRealtimeFundebService
     ) {}
 
     /**
+     * @param  array<string, mixed>|null  $municipalityContext  Contexto da faixa de impacto (evita Discrepâncias + Visão geral).
+     *
      * @return array<string, mixed>
      */
-    public function buildReport(City $city, IeducarFilterState $filters): array
+    public function buildReport(City $city, IeducarFilterState $filters, ?array $municipalityContext = null): array
     {
         $ano = $filters->yearFilterValue() ?? 0;
         if ($ano <= 0) {
@@ -37,10 +39,38 @@ final class FinanceRealtimeFundebService
         }
 
         $ibge = FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio);
-        $overview = $this->overview->snapshot($city, $filters);
-        $matriculas = (int) ($overview['kpis']['matriculas'] ?? $overview['total_matriculas'] ?? 0);
+        $ctx = is_array($municipalityContext) ? $municipalityContext : [];
+        $fundingRef = is_array($ctx['funding_reference'] ?? null) ? $ctx['funding_reference'] : null;
 
-        $disc = $this->discrepancies->snapshot($city, $filters);
+        $matriculas = (int) ($ctx['total_matriculas'] ?? 0);
+        $yearLabel = (string) ($ctx['year_label'] ?? '');
+
+        if ($matriculas <= 0 || $fundingRef === null) {
+            $light = $this->discrepancies->fundingImpactSnapshot($city, $filters);
+            if (is_array($light)) {
+                $matriculas = (int) ($light['total_matriculas'] ?? $matriculas);
+                $yearLabel = (string) ($light['year_label'] ?? $yearLabel);
+                $fundingRef = is_array($light['funding_reference'] ?? null) ? $light['funding_reference'] : $fundingRef;
+            }
+        }
+
+        if ($matriculas <= 0) {
+            $overview = $this->overview->snapshot($city, $filters);
+            $matriculas = (int) ($overview['kpis']['matriculas'] ?? $overview['total_matriculas'] ?? 0);
+        } else {
+            $overview = [
+                'kpis' => ['matriculas' => $matriculas],
+                'total_matriculas' => $matriculas,
+            ];
+        }
+
+        $disc = [
+            'year_label' => $yearLabel !== '' ? $yearLabel : (string) $ano,
+            'funding_reference' => $fundingRef,
+            'summary' => is_array($ctx['summary'] ?? null) ? $ctx['summary'] : [],
+            'total_matriculas' => $matriculas > 0 ? $matriculas : null,
+        ];
+
         $projection = FundebResourceProjection::build(
             $matriculas,
             (string) ($disc['year_label'] ?? (string) $ano),
@@ -66,6 +96,14 @@ final class FinanceRealtimeFundebService
         $thresholdPct = max(1.0, (float) config('ieducar.finance_realtime.alert_threshold_pct', 15));
         $alerts = $this->buildAlerts($expectedAnnual, $observedAnnual, $delta, $deltaPct, $fundebRows, $matriculas, $thresholdPct);
 
+        if ($ibge === null) {
+            array_unshift($alerts, [
+                'severity' => 'warning',
+                'title' => __('Código IBGE do município ausente'),
+                'detail' => __('Cadastre o IBGE em Admin → Municípios para cruzar repasses públicos importados com a expectativa FUNDEB.'),
+            ]);
+        }
+
         return [
             'available' => $ibge !== null,
             'city_name' => $city->name,
@@ -90,7 +128,7 @@ final class FinanceRealtimeFundebService
             'alerts' => $alerts,
             'extrato' => $this->buildExtratoVisual($fundebRows, $city, $ano),
             'lay_guide' => $this->layPersonGuide(),
-            'methodology' => FundebImpactMethodology::panel($city, $filters),
+            'methodology_compact' => FundebImpactMethodology::compactFromContext($ctx),
             'data_sources_note' => $this->dataSourcesNote(),
             'bb_open_finance' => $this->bbOpenFinanceStatus(),
             'formula' => $matriculas > 0 && $expectedVaaf > 0
@@ -100,6 +138,57 @@ final class FinanceRealtimeFundebService
                     'total' => DiscrepanciesFundingImpact::formatBrl($expectedAnnual),
                 ])
                 : __('Importe VAAF municipal e matrículas activas para calcular a expectativa.'),
+            'aviso' => (string) config('ieducar.finance_realtime.aviso', config('ieducar.fundeb.aviso_previsao', '')),
+        ];
+    }
+
+    /**
+     * Payload mínimo para a aba (lazy load sem ano ou pré-visualização).
+     *
+     * @return array<string, mixed>
+     */
+    public function tabShell(City $city, IeducarFilterState $filters): array
+    {
+        $ibge = FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio);
+        $ano = $filters->yearFilterValue() ?? max(2000, (int) date('Y') - 1);
+        $alerts = [];
+
+        if ($ibge === null) {
+            $alerts[] = [
+                'severity' => 'warning',
+                'title' => __('Código IBGE do município ausente'),
+                'detail' => __('Cadastre o IBGE em Admin → Municípios para cruzar repasses públicos com a expectativa FUNDEB.'),
+            ];
+        }
+
+        if ($filters->hasYearSelected() && $filters->isAllSchoolYears()) {
+            $alerts[] = [
+                'severity' => 'warning',
+                'title' => __('Ano letivo específico recomendado'),
+                'detail' => __('Aplique um ano letivo concreto (não «Todos os anos») para alinhar matrículas e repasses ao mesmo exercício.'),
+            ];
+        }
+
+        return [
+            'available' => $ibge !== null,
+            'city_name' => (string) $city->name,
+            'uf' => (string) ($city->uf ?? ''),
+            'ibge' => $ibge,
+            'ano' => $ano,
+            'year_label' => $filters->yearLabelForDisplay() !== '' ? $filters->yearLabelForDisplay() : (string) $ano,
+            'expected_annual_fmt' => '—',
+            'observed_annual_fmt' => '—',
+            'delta_fmt' => '—',
+            'delta_sign' => 'positive',
+            'delta_pct' => null,
+            'transfer_count' => 0,
+            'alerts' => $alerts,
+            'extrato' => [],
+            'lay_guide' => $this->layPersonGuide(),
+            'methodology_compact' => null,
+            'data_sources_note' => $this->dataSourcesNote(),
+            'bb_open_finance' => $this->bbOpenFinanceStatus(),
+            'formula' => __('Após aplicar os filtros, a expectativa usa matrículas activas × VAAF municipal importado.'),
             'aviso' => (string) config('ieducar.finance_realtime.aviso', config('ieducar.fundeb.aviso_previsao', '')),
         ];
     }

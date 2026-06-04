@@ -147,6 +147,9 @@ final class AnalyticsMunicipalityContext
             'corrigiveis' => $corrigiveis,
             'escolas_afetadas' => $escolas,
             'total_matriculas' => $matriculas > 0 ? $matriculas : null,
+            'year_label' => filled($fundingSnapshot['year_label'] ?? null)
+                ? (string) $fundingSnapshot['year_label']
+                : null,
             'compliance_score' => $score,
             'compliance_status' => $status,
             'compliance_label' => self::labelFromScore($score),

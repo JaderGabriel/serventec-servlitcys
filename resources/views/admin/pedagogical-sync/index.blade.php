@@ -15,53 +15,54 @@
         </div>
     </x-slot>
 
-    <div class="py-10">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="rounded-2xl border border-gray-200/90 bg-white shadow-sm ring-1 ring-gray-950/5 dark:border-gray-700 dark:bg-gray-900 dark:ring-white/10 overflow-hidden">
-                <div class="border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-white px-6 py-5 dark:border-gray-800 dark:from-emerald-950/40 dark:to-gray-900/80 sm:px-8">
-                    <div class="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                            <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">{{ __('Administração') }}</p>
-                            <h1 class="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{{ __('Sincronização pedagógica') }}</h1>
-                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 max-w-2xl leading-relaxed">
-                                {{ __('Cada importação abaixo cria uma tarefa na fila (não bloqueia esta página).') }}
-                            </p>
-                        </div>
-                        @if ($cityCount > 0)
-                            <div class="flex flex-wrap items-center justify-end gap-2">
-                                <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                                    <svg class="h-4 w-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.125-9 12.375-9 12.375S1.5 17.625 1.5 10.5a9 9 0 1 1 18 0Z" />
-                                    </svg>
-                                    {{ trans_choice(':count cidade no filtro|:count cidades no filtro', $cityCount, ['count' => $cityCount]) }}
-                                </span>
-                            </div>
-                        @endif
-                    </div>
-                </div>
+    <x-admin.import-hub.shell
+        active="pedagogical"
+        accent="emerald"
+        :eyebrow="__('Sincronização pedagógica')"
+        :title="__('SAEB / indicadores INEP')"
+        :description="__('Cada importação abaixo cria uma tarefa na fila (não bloqueia esta página). Primeira carga: microdados ou CSV antes do passo HTTP por IBGE.')"
+        impact-domain="pedagogical"
+        queue-banner-compact
+    >
+        <x-slot name="badges">
+            @if ($cityCount > 0)
+                <x-admin.import-hub.badge>
+                    {{ trans_choice(':count cidade no filtro|:count cidades no filtro', $cityCount, ['count' => $cityCount]) }}
+                </x-admin.import-hub.badge>
+            @endif
+            @if ($fileExists ?? false)
+                <x-admin.import-hub.badge>{{ number_format($pontosCount ?? 0) }} {{ __('pontos SAEB') }}</x-admin.import-hub.badge>
+            @endif
+        </x-slot>
 
-                <div class="p-6 sm:p-8 space-y-8">
-
-                    @include('admin.partials.sync-queued-alert')
+        <x-slot name="flashes">
+            @if (session('pedagogical_sync_success'))
+                <x-admin.import-hub.callout variant="success" :title="__('Última execução')">
+                    <pre class="whitespace-pre-wrap font-mono text-[11px] max-h-[min(70vh,24rem)] overflow-y-auto">{{ session('pedagogical_sync_success') }}</pre>
+                </x-admin.import-hub.callout>
+            @endif
+            @if (session('pedagogical_sync_error'))
+                <x-admin.import-hub.callout variant="danger" :title="__('Erro')">
+                    <pre class="whitespace-pre-wrap">{{ session('pedagogical_sync_error') }}</pre>
+                </x-admin.import-hub.callout>
+            @endif
+        </x-slot>
 
                     @if (($officialUrlUsesAppDefault ?? false) && ($pontosCount ?? 0) === 0)
-                        <div class="rounded-xl border border-amber-300/90 bg-amber-50 px-4 py-4 text-sm text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100" role="alert">
-                            <p class="font-semibold">{{ __('Primeira carga SAEB: não use só o Passo 3') }}</p>
-                            <p class="mt-2 leading-relaxed text-amber-900/90 dark:text-amber-200/90">
-                                {{ __('Com IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE vazio, o Passo 3 chama a API desta aplicação (:url). Essa rota só devolve JSON depois de já existirem pontos na base — por isso falha na primeira vez.', ['url' => $effectiveOfficialTemplate ?? '']) }}
-                            </p>
-                            <ul class="mt-3 list-disc space-y-1 pl-5 text-xs leading-relaxed text-amber-900/85 dark:text-amber-200/80">
+                        <x-admin.import-hub.callout variant="warning" :title="__('Primeira carga SAEB: não use só o Passo 3')">
+                            <p>{{ __('Com IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE vazio, o Passo 3 chama a API desta aplicação (:url). Essa rota só devolve JSON depois de já existirem pontos na base — por isso falha na primeira vez.', ['url' => $effectiveOfficialTemplate ?? '']) }}</p>
+                            <ul class="mt-3 list-disc space-y-1 pl-5">
                                 <li><strong>{{ __('Recomendado:') }}</strong> {{ __('Passo 4 (microdados INEP) ou Passo 2 (CSV), depois os gráficos Desempenho passam a ter dados.') }}</li>
                                 <li>{{ __('Alternativa:') }} {{ __('Passo 1 com IEDUCAR_SAEB_IMPORT_URLS apontando para um JSON externo com chave «pontos».') }}</li>
                                 <li>{{ __('Ou defina IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE no .env com uma URL externa real (placeholder {ibge}).') }}</li>
                             </ul>
-                        </div>
+                        </x-admin.import-hub.callout>
                     @endif
 
-                    <x-admin.queue-banner compact />
-
-                    @include('admin.partials.external-import-impact', ['domain' => 'pedagogical'])
+                    <x-admin.import-hub.flow-panel
+                        :title="__('Ordem recomendada (primeira carga)')"
+                        :summary="__('1) Microdados INEP ou CSV local → 2) Passo HTTP por IBGE (só com dados já na base ou URL externa no .env) → 3) Acompanhe na Fila.')"
+                    />
 
                     <details id="saeb-historico-resumo" class="rounded-xl border border-emerald-200/90 bg-emerald-50/40 dark:border-emerald-800/50 dark:bg-emerald-950/20 [&_summary::-webkit-details-marker]:hidden">
                         <summary class="cursor-pointer list-none px-4 py-3 flex flex-wrap items-center justify-between gap-3 font-medium text-emerald-900 dark:text-emerald-100">
@@ -247,211 +248,24 @@
                         </dl>
                     </div>
 
-                    @if (session('pedagogical_sync_success'))
-                        <div class="rounded-xl border border-emerald-200/90 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-100 whitespace-pre-wrap font-mono text-xs max-h-[min(70vh,24rem)] overflow-y-auto">
-                            {{ session('pedagogical_sync_success') }}
-                        </div>
-                    @endif
-                    @if (session('pedagogical_sync_error'))
-                        <div class="rounded-xl border border-red-200/90 bg-red-50 dark:bg-red-900/20 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200 whitespace-pre-wrap">
-                            {{ session('pedagogical_sync_error') }}
-                        </div>
-                    @endif
 
-                    @if ($cityCount === 0)
-                        <div class="rounded-xl border border-amber-200/90 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/25 dark:text-amber-100">
-                            {{ __('Não há cidades com analytics e IBGE configurados. Crie ou edite cidades antes de importar SAEB por município.') }}
-                        </div>
-                    @endif
+                    @include('admin.pedagogical-sync.partials.step-forms', [
+                        'selectClass' => $selectClass,
+                        'cityCount' => $cityCount,
+                        'effectiveOfficialTemplate' => $effectiveOfficialTemplate ?? '',
+                        'defaultMicrodadosYear' => $defaultMicrodadosYear ?? null,
+                        'microdadosEnabled' => $microdadosEnabled ?? true,
+                    ])
 
-                    <div class="space-y-10">
-                        <div>
-                            <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">{{ __('Execução por passos') }}</p>
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                {{-- Passo 1 --}}
-                                <div class="rounded-xl border border-amber-200/80 dark:border-amber-900/60 bg-gradient-to-b from-amber-50/70 to-white dark:from-amber-950/35 dark:to-gray-900 shadow-sm ring-1 ring-black/5 dark:ring-white/5 p-5 space-y-4">
-                                    <div class="flex items-start gap-3">
-                                        <div class="mt-0.5 rounded-lg bg-amber-600 text-white p-2 shadow-sm">
-                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" /></svg>
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div class="flex flex-wrap items-center gap-2">
-                                                <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-950 dark:bg-amber-950/70 dark:text-amber-200">{{ __('Passo 1') }}</span>
-                                                <span class="inline-flex items-center rounded-full bg-slate-200/90 px-2 py-0.5 text-[10px] font-semibold text-slate-800 dark:bg-slate-600 dark:text-slate-100">{{ __('Opcional') }}</span>
-                                                <span class="inline-flex items-center rounded-full bg-emerald-100/90 px-2 py-0.5 text-[10px] font-semibold text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200">{{ __('Leve') }}</span>
-                                            </div>
-                                            <h3 class="mt-2 text-base font-semibold text-amber-950 dark:text-amber-100">{{ __('Importar JSON (IEDUCAR_SAEB_IMPORT_URLS)') }}</h3>
-                                            <p class="mt-2 text-xs text-amber-900/85 dark:text-amber-200/80 leading-relaxed">{{ __('Tenta cada URL até obter JSON com «pontos». Configure as URLs na seção de URLs acima.') }}</p>
-                                        </div>
-                                    </div>
-                                    <form method="post" action="{{ route('admin.pedagogical-sync.run') }}" class="space-y-3">
-                                        @csrf
-                                        <input type="hidden" name="action" value="import_urls" />
-                                        <x-primary-button type="submit">{{ __('Enfileirar importação por URL') }}</x-primary-button>
-                                        <x-admin.queue-submit-hint />
-                                    </form>
-                                </div>
 
-                                {{-- Passo 2 --}}
-                                <div class="rounded-xl border border-violet-200/80 dark:border-violet-900/60 bg-gradient-to-b from-violet-50/70 to-white dark:from-violet-950/35 dark:to-gray-900 shadow-sm ring-1 ring-black/5 dark:ring-white/5 p-5 space-y-4">
-                                    <div class="flex items-start gap-3">
-                                        <div class="mt-0.5 rounded-lg bg-violet-600 text-white p-2 shadow-sm">
-                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div class="flex flex-wrap items-center gap-2">
-                                                <span class="inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-950 dark:bg-violet-950/70 dark:text-violet-200">{{ __('Passo 2') }}</span>
-                                                <span class="inline-flex items-center rounded-full bg-slate-200/90 px-2 py-0.5 text-[10px] font-semibold text-slate-800 dark:bg-slate-600 dark:text-slate-100">{{ __('Opcional') }}</span>
-                                                <span class="inline-flex items-center rounded-full bg-emerald-100/90 px-2 py-0.5 text-[10px] font-semibold text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200">{{ __('Leve') }}</span>
-                                            </div>
-                                            <h3 class="mt-2 text-base font-semibold text-violet-950 dark:text-violet-100">{{ __('CSV tabular') }}</h3>
-                                            <p class="mt-2 text-xs text-violet-900/85 dark:text-violet-200/80">{{ __('IBGE, ano, disciplina, etapa, valor; opcional INEP ou escola_id.') }}</p>
-                                        </div>
-                                    </div>
-                                    <form method="post" action="{{ route('admin.pedagogical-sync.run') }}" enctype="multipart/form-data" class="space-y-3">
-                                        @csrf
-                                        <input type="hidden" name="action" value="import_csv" />
-                                        <div>
-                                            <label for="csv_file" class="block text-xs font-medium text-violet-900 dark:text-violet-200">{{ __('Ficheiro .csv ou .txt') }}</label>
-                                            <input id="csv_file" name="csv_file" type="file" accept=".csv,.txt,text/csv,text/plain" required class="mt-1 block w-full text-sm text-gray-700 dark:text-gray-200 file:mr-3 file:rounded-md file:border-0 file:bg-violet-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-violet-500" />
-                                        </div>
-                                        <div class="flex flex-wrap gap-4">
-                                            <label class="inline-flex items-center gap-2 text-sm text-violet-950 dark:text-violet-100 cursor-pointer">
-                                                <input type="hidden" name="csv_merge" value="0" />
-                                                <input type="checkbox" name="csv_merge" value="1" checked class="rounded border-gray-300 dark:border-gray-600" />
-                                                <span>{{ __('Fundir com dados já importados na base') }}</span>
-                                            </label>
-                                            <label class="inline-flex items-center gap-2 text-sm text-violet-950 dark:text-violet-100 cursor-pointer">
-                                                <input type="hidden" name="csv_resolve_inep" value="0" />
-                                                <input type="checkbox" name="csv_resolve_inep" value="1" checked class="rounded border-gray-300 dark:border-gray-600" />
-                                                <span>{{ __('INEP → cod_escola') }}</span>
-                                            </label>
-                                        </div>
-                                        <x-primary-button type="submit">{{ __('Enfileirar importação CSV') }}</x-primary-button>
-                                        <x-admin.queue-submit-hint />
-                                    </form>
-                                </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed border-t border-gray-200 dark:border-gray-700 pt-6">
+            {{ __('Depois de importar, os gráficos usam este arquivo. API interna: :url (só responde quando já há dados). Comandos: saeb:import-csv, saeb:sync-microdados, saeb:import-official.', ['url' => rtrim((string) config('app.url'), '/').'/api/saeb/municipio/{ibge}']) }}
+        </p>
 
-                                {{-- Passo 3 — IBGE --}}
-                                <div class="rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-gradient-to-b from-emerald-50/70 to-white dark:from-emerald-950/35 dark:to-gray-900 shadow-sm ring-1 ring-black/5 dark:ring-white/5 p-5 space-y-4 lg:col-span-2">
-                                    <div class="flex items-start gap-3">
-                                        <div class="mt-0.5 rounded-lg bg-emerald-600 text-white p-2 shadow-sm">
-                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3" /></svg>
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div class="flex flex-wrap items-center gap-2">
-                                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-950 dark:bg-emerald-950/70 dark:text-emerald-200">{{ __('Passo 3') }}</span>
-                                                <span class="inline-flex items-center rounded-full bg-sky-100/90 px-2 py-0.5 text-[10px] font-semibold text-sky-900 dark:bg-sky-900/45 dark:text-sky-200">{{ __('Requer cidades + IBGE') }}</span>
-                                                <span class="inline-flex items-center rounded-full bg-emerald-100/90 px-2 py-0.5 text-[10px] font-semibold text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200">{{ __('Leve') }}</span>
-                                            </div>
-                                            <h3 class="mt-2 text-base font-semibold text-emerald-950 dark:text-emerald-100">{{ __('Sincronizar dados oficiais por município (IBGE)') }}</h3>
-                                            <p class="mt-2 text-xs text-emerald-900/85 dark:text-emerald-200/80 leading-relaxed">
-                                                {{ __('Atualiza/agrega por IBGE. Se a base estiver vazia, descarrega microdados INEP (ZIP), filtra pelo município cadastrado e tabela por INEP da escola (cod_escola no i-Educar) antes de usar a API interna.') }}
-                                            </p>
-                                            <p class="mt-2 text-[11px] font-mono text-emerald-900/80 dark:text-emerald-300/90 break-all bg-white/60 dark:bg-emerald-950/20 rounded-md px-2 py-1.5 border border-emerald-200/60 dark:border-emerald-800/50">{{ __('Actual:') }} {{ $effectiveOfficialTemplate !== '' ? $effectiveOfficialTemplate : '—' }}</p>
-                                        </div>
-                                    </div>
-                                    <form method="post" action="{{ route('admin.pedagogical-sync.run') }}" class="space-y-4" x-data="{ customUrl: {{ old('use_custom_official_url') ? 'true' : 'false' }} }">
-                                        @csrf
-                                        <input type="hidden" name="action" value="import_official" />
-                                        <label class="flex items-start gap-2 cursor-pointer group">
-                                            <input type="hidden" name="use_custom_official_url" value="0" />
-                                            <input type="checkbox" name="use_custom_official_url" value="1" class="rounded border-gray-300 dark:border-gray-600 mt-0.5" x-model="customUrl" />
-                                            <span class="text-sm text-gray-800 dark:text-gray-200 group-hover:text-emerald-800 dark:group-hover:text-emerald-300">{{ __('Usar outra URL de modelo (sobrescrever a do projeto)') }}</span>
-                                        </label>
-                                        <div x-show="customUrl" x-cloak class="space-y-2">
-                                            <label for="official_url_override" class="block text-xs font-medium text-emerald-900 dark:text-emerald-200">{{ __('URL modelo (obrigatório {ibge}; opcional {uf}, {city_id})') }}</label>
-                                            <input id="official_url_override" name="official_url_override" type="url" value="{{ old('official_url_override') }}" placeholder="https://exemplo.gov.br/api/saeb/{ibge}.json" class="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-mono text-gray-900 dark:text-gray-100 px-3 py-2" />
-                                        </div>
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            <div>
-                                                <label for="official_year" class="block text-xs font-medium text-emerald-900 dark:text-emerald-200">{{ __('Ano SAEB (microdados INEP)') }}</label>
-                                                <input id="official_year" name="official_year" type="number" min="2000" max="2100" value="{{ old('official_year', max(2000, (int) date('Y') - 1)) }}" class="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm px-3 py-2" />
-                                            </div>
-                                            <div class="flex flex-col justify-end gap-2">
-                                                <label class="inline-flex items-center gap-2 text-sm text-emerald-950 dark:text-emerald-100 cursor-pointer">
-                                                    <input type="hidden" name="official_auto_microdados" value="0" />
-                                                    <input type="checkbox" name="official_auto_microdados" value="1" checked class="rounded border-gray-300 dark:border-gray-600" />
-                                                    <span>{{ __('Microdados INEP se base vazia') }}</span>
-                                                </label>
-                                                <label class="inline-flex items-center gap-2 text-sm text-emerald-950 dark:text-emerald-100 cursor-pointer">
-                                                    <input type="hidden" name="official_resolve_inep" value="0" />
-                                                    <input type="checkbox" name="official_resolve_inep" value="1" checked class="rounded border-gray-300 dark:border-gray-600" />
-                                                    <span>{{ __('INEP → cod_escola') }}</span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Enfileirar por IBGE') }}</x-primary-button>
-                                        <x-admin.queue-submit-hint />
-                                    </form>
-                                </div>
-
-                                @if ($microdadosEnabled ?? true)
-                                    {{-- Passo 4 --}}
-                                    <div class="rounded-xl border border-sky-200/80 dark:border-sky-900/60 bg-gradient-to-b from-sky-50/70 to-white dark:from-sky-950/35 dark:to-gray-900 shadow-sm ring-1 ring-black/5 dark:ring-white/5 p-5 space-y-4 lg:col-span-2">
-                                        <div class="flex items-start gap-3">
-                                            <div class="mt-0.5 rounded-lg bg-sky-600 text-white p-2 shadow-sm">
-                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                                            </div>
-                                            <div class="min-w-0 flex-1">
-                                                <div class="flex flex-wrap items-center gap-2">
-                                                    <span class="inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-950 dark:bg-sky-950/70 dark:text-sky-200">{{ __('Passo 4') }}</span>
-                                                    <span class="inline-flex items-center rounded-full bg-slate-200/90 px-2 py-0.5 text-[10px] font-semibold text-slate-800 dark:bg-slate-600 dark:text-slate-100">{{ __('Opcional') }}</span>
-                                                    <span class="inline-flex items-center rounded-full bg-orange-100/90 px-2 py-0.5 text-[10px] font-semibold text-orange-900 dark:bg-orange-900/40 dark:text-orange-200">{{ __('Pesado se ZIP INEP') }}</span>
-                                                    <span class="inline-flex items-center rounded-full bg-emerald-100/90 px-2 py-0.5 text-[10px] font-semibold text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200">{{ __('CSV mais leve') }}</span>
-                                                </div>
-                                                <h3 class="mt-2 text-base font-semibold text-sky-950 dark:text-sky-100">{{ __('Microdados INEP / CSV dados abertos') }}</h3>
-                                                <p class="mt-2 text-xs text-sky-900/85 dark:text-sky-200/80">{{ __('ZIP oficial ou URL de CSV; filtra pelos IBGE das cidades. ZIP INEP: use CLI (saeb:sync-microdados) em produção.') }}</p>
-                                                @if (! empty($opendataCsvUrlConfigured ?? false))
-                                                    <p class="mt-2 text-xs text-sky-800/90 dark:text-sky-300/80">{{ __('Com URL vazio no formulário, usa IEDUCAR_SAEB_OPENDATA_CSV_URL se estiver definida.') }}</p>
-                                                @endif
-                                            </div>
-                                        </div>
-                                        <form method="post" action="{{ route('admin.pedagogical-sync.run') }}" class="grid grid-cols-1 sm:grid-cols-2 gap-4 gap-y-3">
-                                            @csrf
-                                            <input type="hidden" name="action" value="import_microdados" />
-                                            <div>
-                                                <x-input-label for="md_year" :value="__('Ano (ZIP INEP)')" />
-                                                <input id="md_year" name="md_year" type="number" min="2000" max="2100" value="{{ old('md_year', $defaultMicrodadosYear ?? (int) date('Y') - 1) }}" class="{{ $selectClass }}" />
-                                            </div>
-                                            <div class="sm:col-span-2">
-                                                <x-input-label for="md_url" :value="__('URL opcional (CSV ou ZIP INEP)')" />
-                                                <p class="mt-1 text-[11px] text-sky-800/85 dark:text-sky-300/80 leading-relaxed">{{ __('Vazio: usa o ano ao lado com o modelo ZIP do .env. Ou cole CSV (dados abertos) ou o ZIP oficial (ex.: microdados_saeb_2023.zip).') }}</p>
-                                                <input id="md_url" name="md_url" type="url" placeholder="https://…" value="{{ old('md_url') }}" class="{{ $selectClass }} mt-1 font-mono text-xs" />
-                                            </div>
-                                            <div class="sm:col-span-2 flex flex-wrap gap-4">
-                                                <label class="inline-flex items-center gap-2 text-sm text-sky-950 dark:text-sky-100 cursor-pointer">
-                                                    <input type="hidden" name="md_merge" value="0" />
-                                                    <input type="checkbox" name="md_merge" value="1" checked class="rounded border-gray-300 dark:border-gray-600" />
-                                                    <span>{{ __('Fundir') }}</span>
-                                                </label>
-                                                <label class="inline-flex items-center gap-2 text-sm text-sky-950 dark:text-sky-100 cursor-pointer">
-                                                    <input type="hidden" name="md_resolve_inep" value="0" />
-                                                    <input type="checkbox" name="md_resolve_inep" value="1" checked class="rounded border-gray-300 dark:border-gray-600" />
-                                                    <span>{{ __('INEP → cod_escola') }}</span>
-                                                </label>
-                                                <label class="inline-flex items-center gap-2 text-sm text-sky-950 dark:text-sky-100 cursor-pointer" title="{{ __('Manter pasta extraída do ZIP') }}">
-                                                    <input type="hidden" name="md_keep_cache" value="0" />
-                                                    <input type="checkbox" name="md_keep_cache" value="1" class="rounded border-gray-300 dark:border-gray-600" />
-                                                    <span>{{ __('Manter cache ZIP') }}</span>
-                                                </label>
-                                            </div>
-                                            <div class="sm:col-span-2">
-                                                <x-primary-button type="submit" :disabled="$cityCount === 0">{{ __('Enfileirar microdados') }}</x-primary-button>
-                                                <x-admin.queue-submit-hint />
-                                            </div>
-                                        </form>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-
-                    <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed border-t border-gray-200 dark:border-gray-700 pt-6">
-                        {{ __('Depois de importar, os gráficos usam este arquivo. API interna: :url (só responde quando já há dados). Comandos: saeb:import-csv, saeb:sync-microdados, saeb:import-official.', ['url' => rtrim((string) config('app.url'), '/').'/api/saeb/municipio/{ibge}']) }}
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
+        <x-slot name="shortcuts">
+            <x-admin.import-hub.link-chip href="{{ route('admin.public-data.index') }}">{{ __('Hub dados públicos') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip href="{{ route('admin.sync-queue.index', ['domain' => 'pedagogical']) }}">{{ __('Fila SAEB') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip href="{{ route('admin.geo-sync.index') }}">{{ __('Geo') }}</x-admin.import-hub.link-chip>
+        </x-slot>
+    </x-admin.import-hub.shell>
 </x-app-layout>

@@ -102,12 +102,35 @@ Depois: gerar relatório PDF na consultoria — secções ATM consomem as tabela
 
 ---
 
-## 8. Ficheiros de código
+## 8. Padrão de interface (hub de importação)
+
+Todas as telas admin de importação partilham o componente `x-admin.import-hub.shell`:
+
+| Rota | `active` | Impacto (`impact-domain`) |
+|------|----------|---------------------------|
+| Hub dados públicos | `hub` | `funding` (inline) |
+| FUNDEB / compatibilidade | `fundeb` | `fundeb` |
+| CadÚnico / Cecad | `cadastro` | `cadastro` |
+| Geo | `geo` | `geo` |
+| SAEB | `pedagogical` | `pedagogical` |
+| Fila | `queue` | — (workers + tarefas) |
+
+**Blocos comuns:** navegação (`AdminImportHubCatalog`), alerta de tarefa enfileirada, banner da fila, painel «Para que serve» (`ExternalImportImpact`), atalhos para consultoria/fila, documentação (link no hero quando aplicável).
+
+**Peças reutilizáveis:** `stats-grid`, `stat`, `source-card`, `action-card` (passo, tags, comando CLI), `callout`, `section-heading`, `flow-panel`, `shortcuts`, `badge`, `link-chip`.
+
+Ao acrescentar uma nova fonte, registe o item em `AdminImportHubCatalog::navItems()` e reutilize o shell com o domínio de impacto correspondente em `ExternalImportImpact`.
+
+---
+
+## 9. Ficheiros de código
 
 | Ficheiro | Função |
 |----------|--------|
 | `app/Support/Admin/PublicDataImportCatalog.php` | Catálogo fontes + gaps PDF |
+| `app/Support/Admin/AdminImportHubCatalog.php` | Navegação do hub |
 | `app/Services/Admin/PublicDataImportStatusService.php` | Métricas do hub |
 | `app/Http/Controllers/Admin/PublicDataImportController.php` | UI + dispatch fila |
-| `resources/views/admin/public-data/index.blade.php` | Tela |
-| `app/Support/Admin/ExternalImportImpact.php` | Textos impacto domínio `funding` |
+| `resources/views/components/admin/import-hub/*` | Layout e cartões |
+| `resources/views/admin/public-data/index.blade.php` | Tela hub |
+| `app/Support/Admin/ExternalImportImpact.php` | Textos impacto por domínio |

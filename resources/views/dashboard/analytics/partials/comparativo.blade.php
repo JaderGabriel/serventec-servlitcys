@@ -53,6 +53,20 @@
         ['label' => __('Alertas'), 'anchor' => 'comparativo-alertas', 'visible' => count($alerts) > 0],
     ]);
     $cmpStep = ConsultoriaFlow::stepMap($flowSteps);
+
+    $baseYearResolved = max(0, (int) ($baseYear ?? $data['base_year'] ?? 0));
+    $needsSpecificYear = $filters !== null
+        && $filters->hasYearSelected()
+        && $filters->isAllSchoolYears()
+        && $baseYearResolved <= 0;
+    $comparativoDataReady = $baseYearResolved > 0 && ! $needsSpecificYear;
+    $hasBody = $available
+        || count($summaryKpis) > 0
+        || count($variacoes) > 0
+        || count($alerts) > 0
+        || count($fundebSeries) > 0
+        || $hasInforme
+        || (($projNext['available'] ?? false) || filled($projNext['previsao_label'] ?? null));
 @endphp
 
 @php
@@ -93,7 +107,26 @@
         <x-consultoria-tab-link tab="enrollment" :label="__('Matrículas')" class="text-xs" />
     </x-slot>
 
-    @if ($yearFilterReady && count($yearOptions) > 0)
+    @if (! $yearFilterReady)
+        <p class="serv-callout text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            {{ __('Defina o município e o ano letivo nos filtros superiores (ou escolha o ano base abaixo) e clique em Aplicar filtros. O comparativo cruza matrículas, VAAF e projeção FUNDEB entre exercícios.') }}
+        </p>
+        @if (filled($data['footnote'] ?? null))
+            <p class="serv-callout text-xs leading-relaxed">{{ $data['footnote'] }}</p>
+        @endif
+    @endif
+
+    @if ($needsSpecificYear)
+        <p class="serv-callout serv-callout--warning text-sm">
+            {{ __('Com «Todos os anos» no filtro superior, escolha o ano base do comparativo no seletor abaixo ou aplique um ano letivo específico.') }}
+        </p>
+    @endif
+
+    @if (filled($data['error'] ?? null) && (! $yearFilterReady || $needsSpecificYear || ! $comparativoDataReady))
+        <div class="serv-callout serv-callout--danger text-sm">{{ $data['error'] }}</div>
+    @endif
+
+    @if (count($yearOptions) > 0)
         <form
             method="get"
             action="{{ request()->url() }}"
@@ -131,9 +164,13 @@
                 </p>
             </div>
         </form>
+    @elseif ($yearFilterReady && $baseYearResolved <= 0)
+        <p class="serv-callout serv-callout--warning text-sm">
+            {{ __('Não foi possível listar anos letivos da base i-Educar. Confirme a conexão do município ou informe o ano base na URL (?ano_base=AAAA).') }}
+        </p>
     @endif
 
-    @if ($yearFilterReady && $available)
+    @if ($comparativoDataReady && $available)
         <div class="rounded-lg border border-indigo-200/80 dark:border-indigo-800/50 bg-indigo-50/40 dark:bg-indigo-950/25 px-4 py-4 space-y-3">
             <div>
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Exportar comparativo') }}</h3>
@@ -173,7 +210,13 @@
         @endif
     @endif
 
-    @if ($available && count($summaryKpis) > 0)
+    @if ($comparativoDataReady && ! $hasBody && ! filled($data['error'] ?? null))
+        <p class="serv-callout text-sm text-slate-700 dark:text-slate-300">
+            {{ __('Não há dados para exibir neste recorte. Confirme ano base, conexão i-Educar e importação de referências FUNDEB (VAAF).') }}
+        </p>
+    @endif
+
+    @if ($comparativoDataReady && $available && count($summaryKpis) > 0)
         <x-dashboard.consultoria-section
             :step="$cmpStep['comparativo-resumo'] ?? null"
             anchor="comparativo-resumo"
@@ -229,7 +272,7 @@
         </x-dashboard.consultoria-section>
     @endif
 
-    @if ($available)
+    @if ($comparativoDataReady && $available)
         <x-dashboard.consultoria-section
             :step="$cmpStep['comparativo-fundeb-base'] ?? null"
             anchor="comparativo-fundeb-base"

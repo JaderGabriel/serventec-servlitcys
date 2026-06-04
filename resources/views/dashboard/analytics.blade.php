@@ -226,7 +226,8 @@
                                 @if (! $lazyTabLoading)
                                     @include('dashboard.analytics.partials.comparativo', [
                                         'comparativoData' => $comparativoData,
-                                        'yearFilterReady' => $yearFilterReady,
+                                        'yearFilterReady' => $yearFilterReady
+                                            || \App\Services\Analytics\FinanceComparativoService::resolveBaseYear(request(), $filters) !== null,
                                         'chartExportContext' => $chartExportContext,
                                         'municipalityContext' => $municipalityContext ?? null,
                                         'selectedCity' => $selectedCity,
@@ -246,6 +247,7 @@
                                         'realtimeData' => $financeRealtimeData ?? \App\Support\Dashboard\AnalyticsEmptyPayloads::financeRealtime(),
                                         'yearFilterReady' => $yearFilterReady,
                                         'municipalityContext' => $municipalityContext ?? null,
+                                        'filters' => $filters,
                                     ])
                                 @else
                                     <div class="relative min-h-[12rem]" x-ref="panelFinanceRealtime"></div>

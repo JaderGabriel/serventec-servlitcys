@@ -158,6 +158,46 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Finanças — contexto VAAF leve (sem rotinas Discrepâncias)
+    |--------------------------------------------------------------------------
+    |
+    | true (defeito): fundingImpactSnapshot só conta matrículas + VAAF (rápido).
+    | false: executa todas as rotinas com fundingOnly (lento; use só para debug).
+    |
+    */
+
+    'finance_use_light_funding_context' => filter_var(
+        env('ANALYTICS_FINANCE_LIGHT_FUNDING', true),
+        FILTER_VALIDATE_BOOL,
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Aba FUNDEB (lazy) — bundle leve
+    |--------------------------------------------------------------------------
+    |
+    | true (defeito): matrículas do snapshot financeiro leve; não chama Visão geral
+    | nem amostra de Matrículas; omitir perfil VAAF multi-ano FNDE na primeira carga.
+    |
+    */
+
+    'fundeb_tab_light_bundle' => filter_var(env('ANALYTICS_FUNDEB_LIGHT_TAB', true), FILTER_VALIDATE_BOOL),
+
+    'fundeb_skip_vaaf_profile_on_tab' => filter_var(env('ANALYTICS_FUNDEB_SKIP_VAAF_PROFILE', true), FILTER_VALIDATE_BOOL),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Comparativo — preload no grupo Finanças
+    |--------------------------------------------------------------------------
+    |
+    | true (defeito): só shell + anos letivos (loadYearOptions); relatório completo via AJAX.
+    |
+    */
+
+    'comparativo_preload_shell_only' => filter_var(env('ANALYTICS_COMPARATIVO_PRELOAD_SHELL', true), FILTER_VALIDATE_BOOL),
+
+    /*
+    |--------------------------------------------------------------------------
     | Relatório PDF (aba Serventec)
     |--------------------------------------------------------------------------
     */

@@ -3,6 +3,7 @@
 namespace App\Services\Cadunico;
 
 use App\Support\Cadunico\CadunicoStoragePaths;
+use App\Support\Http\SafeOutboundUrl;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -194,12 +195,12 @@ final class CadunicoRemoteCsvFetcher
      */
     private function downloadTo(string $url, string $destPath): array
     {
-        if (! str_starts_with($url, 'http://') && ! str_starts_with($url, 'https://')) {
+        if (! SafeOutboundUrl::isAllowedHttpUrl($url)) {
             return [
                 'ok' => false,
                 'path' => null,
                 'downloaded' => false,
-                'message' => __('URL inválida.'),
+                'message' => __('URL inválida ou não permitida (SSRF).'),
             ];
         }
 

@@ -61,10 +61,31 @@ A coluna legada `is_admin` é sincronizada automaticamente com `role` ao gravar.
 - [ ] Logs: não expor stack traces a usuários finais
 - [ ] (Opcional) Proxy reverso: cabeçalhos `X-Forwarded-*` e `TrustProxies` configurados no Laravel se aplicável
 
+## Importações e URLs externas (CadÚnico, FUNDEB, SAEB)
+
+| Risco | Mitigação no código |
+|--------|---------------------|
+| **SSRF** em download de CSV por URL (`IEDUCAR_CADUNICO_*_CSV_URL`, CKAN) | `SafeOutboundUrl::isAllowedHttpUrl()` — bloqueia `localhost`, redes privadas e esquemas não HTTP(S) |
+| **Path traversal** em `cadunico:import-cecad {path}` | `ContainedPathResolver` — ficheiro só dentro de `storage/app` ou `storage/app/cadunico/cecad` |
+| **Lista Solr `fl` demasiado longa** (Misocial) | Máximo `IEDUCAR_CADUNICO_MISOGIAL_FIELDS_MAX` (default 24); acima disso usa lista compacta interna |
+| **IBGE Misocial 6 vs 7 dígitos** | `CadunicoMisocialIbgeNormalizer` — consulta com ambas variantes |
+| **HTML legal / documentação admin** | Conteúdo de editores confiáveis; `{!! !!}` só em vistas com origem controlada por admin |
+
+URLs Misocial (MDS) vêm de config fixa (`IEDUCAR_CADUNICO_MISOGIAL_BASE_URL`), não de input do utilizador.
+
+Comandos que executam `shell_exec` (ex.: `unrar`/`7z` em SAEB) usam binários resolvidos com `escapeshellarg` — restrinja PATH no servidor.
+
 ## Dependências e vulnerabilidades
 
 - Mantenha **Composer** e **npm** atualizados; execute `composer audit` e `npm audit` regularmente.
 - Subscreva alertas de segurança do Laravel e PHP.
+
+### Revisão estruturada (2026-06-03)
+
+- Rotas admin protegidas por `auth`, `verified`, `admin` e `legal.consent` onde aplicável.
+- Login e reset com **throttle** (5/min).
+- SQL dinâmico em i-Educar limitado a nomes de colunas/tabelas resolvidos por schema da cidade (não a input HTTP directo).
+- Testes unitários: `ContainedPathResolverTest`, `SafeOutboundUrlTest`, CadÚnico/Misocial, FUNDEB metodologia.
 
 ## Auditoria de usuários
 

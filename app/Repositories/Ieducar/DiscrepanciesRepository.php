@@ -47,6 +47,19 @@ class DiscrepanciesRepository
         $cacheKey = 'analytics:funding_impact:'.(int) $city->id.':'.md5(json_encode($params));
 
         $load = function () use ($city, $filters): array {
+            if (filter_var(config('analytics.finance_use_light_funding_context', true), FILTER_VALIDATE_BOOL)) {
+                $light = $this->lightFundingContext($city, $filters);
+
+                return [
+                    'summary' => is_array($light['summary'] ?? null) ? $light['summary'] : [],
+                    'funding_reference' => is_array($light['funding_reference'] ?? null)
+                        ? $light['funding_reference']
+                        : null,
+                    'total_matriculas' => $light['total_matriculas'] ?? null,
+                    'year_label' => $light['year_label'] ?? null,
+                ];
+            }
+
             $payload = $this->snapshot($city, $filters, fundingOnly: true);
 
             return [
@@ -54,6 +67,8 @@ class DiscrepanciesRepository
                 'funding_reference' => is_array($payload['funding_reference'] ?? null)
                     ? $payload['funding_reference']
                     : null,
+                'total_matriculas' => $payload['total_matriculas'] ?? null,
+                'year_label' => $payload['year_label'] ?? null,
             ];
         };
 
@@ -70,6 +85,52 @@ class DiscrepanciesRepository
             ]);
 
             return null;
+        }
+    }
+
+    /**
+     * Contexto financeiro mínimo (matrículas + VAAF) sem executar rotinas de discrepância — abas Finanças.
+     *
+     * @return array{
+     *   total_matriculas: ?int,
+     *   year_label: string,
+     *   funding_reference: ?array<string, mixed>,
+     *   summary: array<string, mixed>
+     * }
+     */
+    public function lightFundingContext(City $city, IeducarFilterState $filters): array
+    {
+        $emptySummary = [
+            'com_problema' => 0,
+            'corrigiveis' => 0,
+            'escolas_afetadas' => 0,
+            'perda_estimada_anual' => 0.0,
+            'ganho_potencial_anual' => 0.0,
+        ];
+
+        try {
+            return $this->cityData->run($city, function ($db) use ($city, $filters, $emptySummary): array {
+                $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
+
+                return [
+                    'total_matriculas' => $totalMat > 0 ? $totalMat : null,
+                    'year_label' => $this->yearLabel($filters),
+                    'funding_reference' => DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters),
+                    'summary' => $emptySummary,
+                ];
+            });
+        } catch (\Throwable $e) {
+            Log::warning('analytics.light_funding_context_failed', [
+                'city_id' => $city->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return [
+                'total_matriculas' => null,
+                'year_label' => $this->yearLabel($filters),
+                'funding_reference' => DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters),
+                'summary' => $emptySummary,
+            ];
         }
     }
 

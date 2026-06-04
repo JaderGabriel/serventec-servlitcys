@@ -117,6 +117,25 @@
                         @if (! empty($fc['aviso']))
                             <p class="text-[11px] text-amber-800/90 dark:text-amber-200/90">{{ $fc['aviso'] }}</p>
                         @endif
+                        @if (! empty($fc['ponderacoes_resumo']) && is_array($fc['ponderacoes_resumo']))
+                            <div class="mt-2 pt-2 border-t border-sky-200/60 dark:border-sky-800/50">
+                                <p class="text-[10px] font-semibold uppercase text-sky-800/80 dark:text-sky-300/80">{{ __('Ponderações FUNDEB (impacto por tipo)') }}</p>
+                                <ul class="mt-1 space-y-0.5 text-[11px] text-gray-700 dark:text-gray-300">
+                                    @foreach ($fc['ponderacoes_resumo'] as $pond)
+                                        <li>
+                                            <span class="font-medium">{{ $pond['label'] ?? '' }}</span>
+                                            · {{ __('peso') }} {{ $pond['peso_fmt'] ?? '—' }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                                @if (filled($fc['formula_impacto_curta'] ?? null))
+                                    <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">{{ $fc['formula_impacto_curta'] }}</p>
+                                @endif
+                                @if (filled($fc['referencias_legais'] ?? null))
+                                    <x-dashboard.fundeb-valor-referencia :referencias="$fc['referencias_legais']" class="mt-2" />
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 @elseif (! empty($saldo['fundeb_lines']))
                     <ul class="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 space-y-1 leading-relaxed border-t border-slate-200/80 dark:border-slate-700/80 pt-2">
@@ -144,6 +163,9 @@
                     @endif
                     · {{ $fundebMethodology['formula_curta'] ?? '' }}
                 </p>
+                @if (filled($fundebMethodology['referencias_legais'] ?? null))
+                    <x-dashboard.fundeb-valor-referencia :referencias="$fundebMethodology['referencias_legais']" class="border-t border-slate-200/80 dark:border-slate-700/80 pt-2" />
+                @endif
             @endif
         </div>
         @endif

@@ -142,7 +142,12 @@ final class FundebReferenceDisplay
      * @param  array<string, mixed>|null  $funding
      * @return ?array{matriculas: int, vaaf_fmt: string, total_fmt: string, rotulo: string, origem: string, aviso: ?string}
      */
-    public static function blocoCalculoMatriculasVaaf(int $matriculas, ?array $funding): ?array
+    public static function blocoCalculoMatriculasVaaf(
+        int $matriculas,
+        ?array $funding,
+        ?City $city = null,
+        ?IeducarFilterState $filters = null,
+    ): ?array
     {
         if ($matriculas <= 0 || $funding === null) {
             return null;
@@ -165,6 +170,21 @@ final class FundebReferenceDisplay
             default => __('Sem VAAF municipal importado para este IBGE/ano — não é repasse FNDE/Simec.'),
         };
 
+        $ponderacoes = [];
+        foreach (FundebImpactMethodology::ponderacoesVigentes() as $row) {
+            if ((float) ($row['peso'] ?? 0) <= 0) {
+                continue;
+            }
+            $ponderacoes[] = [
+                'label' => (string) ($row['label'] ?? ''),
+                'peso' => (float) ($row['peso'] ?? 0),
+                'peso_fmt' => number_format((float) ($row['peso'] ?? 0), 2, ',', '.'),
+            ];
+            if (count($ponderacoes) >= 5) {
+                break;
+            }
+        }
+
         return [
             'matriculas' => $matriculas,
             'vaaf_fmt' => $vaafFmt,
@@ -172,7 +192,37 @@ final class FundebReferenceDisplay
             'rotulo' => self::rotuloVaafCurto($funding),
             'origem' => self::origemVaafResumida($funding),
             'aviso' => $aviso,
+            'tipo_vaaf' => self::tipoVaafCalculo($funding),
+            'ponderacoes_resumo' => $ponderacoes,
+            'formula_impacto_curta' => __('Impacto por discrepância ≈ ocorrências × VAAF × peso (ver painel FUNDEB).'),
+            'referencias_legais' => self::referenciasLegaisLinha($city, $filters),
         ];
+    }
+
+    /**
+     * Linha única para rodapé de valores financeiros (lei, portarias FNDE, registro municipal).
+     */
+    public static function referenciasLegaisLinha(?City $city = null, ?IeducarFilterState $filters = null): string
+    {
+        $partes = [];
+        $dist = FundebImpactMethodology::distribuicaoLegalResumo();
+        $ref = trim((string) ($dist['referencia'] ?? ''));
+        if ($ref !== '') {
+            $partes[] = $ref;
+        }
+
+        foreach (FundebImpactMethodology::portariasOficiais($city, $filters) as $portaria) {
+            $label = trim((string) ($portaria['label'] ?? ''));
+            if ($label === '' || in_array($label, $partes, true)) {
+                continue;
+            }
+            $partes[] = $label;
+            if (count($partes) >= 4) {
+                break;
+            }
+        }
+
+        return implode(' · ', $partes);
     }
 
     /**

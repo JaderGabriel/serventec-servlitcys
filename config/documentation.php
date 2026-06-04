@@ -22,10 +22,10 @@ return [
     */
 
     'product' => [
-        'version' => '3.6.0',
-        'release_tag' => '20260603-Iris',
-        'commit_short' => '1892e73',
-        'commit_number' => 272,
+        'version' => '3.7.0',
+        'release_tag' => '20260603-Selene',
+        'commit_short' => '1e60197',
+        'commit_number' => 273,
         'revision_date' => '2026-06-03',
         'in_production' => true,
         'production_label' => 'Em produção',

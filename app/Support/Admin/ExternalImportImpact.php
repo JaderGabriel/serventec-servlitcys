@@ -57,6 +57,7 @@ final class ExternalImportImpact
                 ],
                 'consumers' => [
                     ['label' => __('Consultoria → Financiamentos'), 'hint' => __('tab=funding')],
+                    ['label' => __('Consultoria → Tempo Real'), 'hint' => __('tab=finance_realtime')],
                     ['label' => __('Consultoria → Matrículas'), 'hint' => __('tab=enrollment')],
                 ],
             ],

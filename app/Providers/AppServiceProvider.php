@@ -33,6 +33,7 @@ use App\Services\MailConfigService;
 use App\Support\Admin\WeeklyMassSyncCheckpoint;
 use App\Support\SyncQueue\SyncQueueUserScope;
 use App\Support\Performance\AuthRouteRegistry;
+use App\Support\Dashboard\AnalyticsFundingContextResolver;
 use App\Support\Pulse\RequestDbTimingAccumulator;
 use App\Support\Performance\RedisProbe;
 use Illuminate\Auth\Events\Login;
@@ -67,6 +68,8 @@ class AppServiceProvider extends ServiceProvider
                 IeducarCityDataService::class,
             );
         }
+
+        $this->app->scoped(AnalyticsFundingContextResolver::class);
     }
 
     /**

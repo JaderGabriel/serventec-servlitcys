@@ -70,6 +70,8 @@ final class FundebImpactMethodology
             'formula_curta' => __('Ocorrências × VAAF (:vaa) × peso por tipo de discrepância', [
                 'vaa' => (string) ($funding['vaa_label'] ?? ''),
             ]),
+            'distribuicao_referencia' => (string) (self::distribuicaoLegalResumo()['referencia'] ?? ''),
+            'referencias_legais' => FundebReferenceDisplay::referenciasLegaisLinha(),
         ];
     }
 

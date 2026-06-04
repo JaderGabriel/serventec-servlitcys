@@ -1369,6 +1369,8 @@ return [
             'base_url' => (string) env('IEDUCAR_CADUNICO_MISOGIAL_BASE_URL', 'https://aplicacoes.mds.gov.br/sagi/servicos/misocial'),
             'page_size' => max(500, min(15000, (int) env('IEDUCAR_CADUNICO_MISOGIAL_PAGE_SIZE', 6000))),
             'field_list' => array_values(array_filter(array_map('trim', explode(',', (string) env('IEDUCAR_CADUNICO_MISOGIAL_FIELDS', ''))))),
+            /** Máximo de campos em `fl` (Solr ignora listas longas). */
+            'field_list_max' => max(10, (int) env('IEDUCAR_CADUNICO_MISOGIAL_FIELDS_MAX', 24)),
             /** Ano inicial do `cadunico:import-misocial` sem --from/--years. */
             'historical_from_year' => max(2000, (int) env('IEDUCAR_CADUNICO_MISOGIAL_FROM_YEAR', 2020)),
         ],

@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`3.6.0`** · tag de deploy **`20260603-Iris`** · ver [RELEASE_20260603_IRIS.md](RELEASE_20260603_IRIS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`3.7.0`** · tag de deploy **`20260603-Selene`** · ver [RELEASE_20260603_SELENE.md](RELEASE_20260603_SELENE.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **3.6.0** |
+| **Versão semântica em produção** | **3.7.0** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260603-Iris` |
-| **Último marco documentado** | Misocial MDS multi-ano, Finanças tempo real, metodologia FUNDEB — [RELEASE_20260603_IRIS.md](RELEASE_20260603_IRIS.md) |
+| **Tag de deploy (servidor)** | `20260603-Selene` |
+| **Último marco documentado** | Finanças rápidas, VAAF com regra legal, hub importação admin, hardening URLs — [RELEASE_20260603_SELENE.md](RELEASE_20260603_SELENE.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -20,7 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 3.6.0** | `20260603-Iris` → `main` | — | 03/06/2026 | **Produção:** Misocial MDS (`cadunico:import-misocial`), IBGE 6/7, Finanças tempo real, metodologia FUNDEB admin — [RELEASE_20260603_IRIS.md](RELEASE_20260603_IRIS.md). |
+| **▶ 3.7.0** | `20260603-Selene` → `main` | — | 03/06/2026 | **Produção:** Finanças lazy otimizadas, VAAF×matrículas com ponderações e base legal, hub importação admin, `SafeOutboundUrl` — [RELEASE_20260603_SELENE.md](RELEASE_20260603_SELENE.md). |
+| 3.6.0 | `20260603-Iris` → `main` | — | 03/06/2026 | Misocial MDS (`cadunico:import-misocial`), IBGE 6/7, Finanças tempo real, metodologia FUNDEB admin — [RELEASE_20260603_IRIS.md](RELEASE_20260603_IRIS.md). |
 | 3.5.1 | `20260602-Hermes` → `main` | — | 02/06/2026 | Fix aba CadÚnico; FUNDEB/Financiamentos (`comparativoData`); matriz admin CadÚnico; fila cadastro — [RELEASE_20260602_HERMES.md](RELEASE_20260602_HERMES.md). |
 | 3.5.0 | `20260601-Atlas` → `main` | — | 01/06/2026 | Comparativo Finanças; CadÚnico previsão + pipeline automático + export — [RELEASE_20260601_ATLAS.md](RELEASE_20260601_ATLAS.md). |
 | 3.4.0 | `20260531-Nemesis` → `main` | — | 31/05/2026 | Área Censo; UI Finanças/Censo; Diagnóstico qualidade + explorar; cache v2 — [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md). |

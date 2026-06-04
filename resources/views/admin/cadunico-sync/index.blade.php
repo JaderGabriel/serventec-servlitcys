@@ -14,72 +14,50 @@
         </div>
     </x-slot>
 
-    <div class="py-10">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="rounded-2xl border border-gray-200/90 bg-white shadow-sm ring-1 ring-gray-950/5 dark:border-gray-700 dark:bg-gray-900 dark:ring-white/10 overflow-hidden">
-                <div class="border-b border-gray-100 bg-gradient-to-r from-violet-50 to-white px-6 py-5 dark:border-gray-800 dark:from-violet-950/40 dark:to-gray-900/80 sm:px-8">
-                    <p class="text-[11px] font-semibold uppercase tracking-wider text-violet-800 dark:text-violet-300">{{ __('Administração') }}</p>
-                    <h1 class="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{{ __('CadÚnico — agregados municipais') }}</h1>
-                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 max-w-2xl">
-                        {{ __('Alimenta a aba «CadÚnico: previsão fora da rede» no painel. Sem CPF/NIS — apenas totais por faixa etária (4–17 anos).') }}
-                    </p>
+    <x-admin.import-hub.shell
+        active="cadastro"
+        accent="violet"
+        :eyebrow="__('Importação CadÚnico')"
+        :title="__('CadÚnico — agregados municipais')"
+        :description="__('Alimenta a aba «CadÚnico: previsão fora da rede» no painel. Sem CPF/NIS — apenas totais por faixa etária (4–17 anos).')"
+        impact-domain="cadastro"
+        queue-banner-compact
+        :doc-href="route('admin.documentation.show', ['doc' => 'docs/CADUNICO_CECAD.md'])"
+        :doc-label="__('Documentação Cecad')"
+    >
+        <x-slot name="flashes">
+            @if (session('cadunico_sync_error'))
+                <div class="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-100" role="alert">
+                    {{ session('cadunico_sync_error') }}
                 </div>
+            @endif
+            @if (session('cadunico_upload_ok'))
+                <div class="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100" role="status">
+                    {{ session('cadunico_upload_ok') }}
+                </div>
+            @endif
+            @if (session('cadunico_bulk_queued'))
+                <div class="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
+                    {{ session('cadunico_bulk_queued.message') }}
+                    <a href="{{ route('admin.sync-queue.index') }}" class="ml-2 font-medium underline">{{ __('Ver fila') }}</a>
+                </div>
+            @endif
+        </x-slot>
 
-                <div class="p-6 sm:p-8 space-y-8">
-                    @include('admin.partials.sync-queued-alert')
+        <x-slot name="stats">
+            <x-admin.import-hub.stats-grid>
+                <x-admin.import-hub.stat :label="__('Cobertura')" :value="$municipiosComDados.'/'.$municipiosIbge" :hint="__('municípios com snapshot')" />
+                <x-admin.import-hub.stat :label="__('Registos')" :value="(string) $snapshotsTotal" :hint="__('pares IBGE/ano')" />
+                <x-admin.import-hub.stat :label="__('SAGI/Misocial')" :value="($misocialProbe['ok'] ?? false) ? __('Acessível') : __('Indisponível')" :hint="$misocialProbe['message'] ?? ''" />
+                <x-admin.import-hub.stat
+                    :label="__('Última importação')"
+                    :value="$latestImport ? \Illuminate\Support\Carbon::parse($latestImport)->format('d/m/Y H:i') : '—'"
+                />
+            </x-admin.import-hub.stats-grid>
+        </x-slot>
 
-                    @if (session('cadunico_sync_error'))
-                        <div class="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-100" role="alert">
-                            {{ session('cadunico_sync_error') }}
-                        </div>
-                    @endif
-
-                    @if (session('cadunico_upload_ok'))
-                        <div class="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100" role="status">
-                            {{ session('cadunico_upload_ok') }}
-                        </div>
-                    @endif
-
-                    @if (session('cadunico_bulk_queued'))
-                        <div class="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
-                            {{ session('cadunico_bulk_queued.message') }}
-                            <a href="{{ route('admin.sync-queue.index') }}" class="ml-2 font-medium underline">{{ __('Ver fila') }}</a>
-                        </div>
-                    @endif
-
-                    <x-admin.queue-banner compact />
-
-                    @include('admin.partials.external-import-impact', ['domain' => 'cadastro'])
-
-                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                            <p class="text-[11px] font-semibold uppercase text-gray-500">{{ __('Cobertura') }}</p>
-                            <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ $municipiosComDados }}/{{ $municipiosIbge }}</p>
-                            <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">{{ __('municípios com snapshot') }}</p>
-                        </div>
-                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                            <p class="text-[11px] font-semibold uppercase text-gray-500">{{ __('Registos') }}</p>
-                            <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ $snapshotsTotal }}</p>
-                            <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">{{ __('pares IBGE/ano') }}</p>
-                        </div>
-                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                            <p class="text-[11px] font-semibold uppercase text-gray-500">{{ __('SAGI/Misocial') }}</p>
-                            <p class="mt-1 text-sm font-semibold {{ ($misocialProbe['ok'] ?? false) ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300' }}">
-                                {{ ($misocialProbe['ok'] ?? false) ? __('Oficial — acessível') : __('Indisponível ou desactivado') }}
-                            </p>
-                            <p class="mt-1 text-[11px] text-gray-500">{{ $misocialProbe['message'] ?? '' }}</p>
-                        </div>
-                        <div class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                            <p class="text-[11px] font-semibold uppercase text-gray-500">{{ __('Última importação') }}</p>
-                            <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                {{ $latestImport ? \Illuminate\Support\Carbon::parse($latestImport)->format('d/m/Y H:i') : '—' }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="rounded-lg border border-violet-200 bg-violet-50/60 px-4 py-3 text-sm text-violet-950 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-100">
-                        <p class="font-semibold">{{ __('Fontes oficiais (sem servidor próprio)') }}</p>
-                        <ul class="mt-2 list-disc pl-5 text-xs space-y-1">
+        <x-admin.import-hub.callout variant="accent" :title="__('Fontes oficiais (sem servidor próprio)')">
+                        <ul class="list-disc pl-5 space-y-1">
                             <li>
                                 <strong>Misocial (MDS/SAGI)</strong> —
                                 <a href="https://aplicacoes.mds.gov.br/sagi/servicos/misocial/" class="underline" target="_blank" rel="noopener">aplicacoes.mds.gov.br</a>
@@ -111,13 +89,18 @@
                                 {{ __('Misocial inacessível neste ambiente — verifique firewall/HTTPS ou use CSV Cecad em storage como complemento.') }}
                             </p>
                         @endif
-                    </div>
+        </x-admin.import-hub.callout>
 
-                    <form method="post" action="{{ route('admin.cadunico-sync.run') }}" class="rounded-xl border-2 border-emerald-400/80 dark:border-emerald-700/60 bg-emerald-50/40 dark:bg-emerald-950/20 p-5 space-y-4">
+                    <x-admin.import-hub.action-card
+                        method="post"
+                        action="{{ route('admin.cadunico-sync.run') }}"
+                        variant="primary"
+                        :title="__('Sincronização automática (sem upload)')"
+                        hide-submit
+                    >
                         @csrf
                         <input type="hidden" name="action" value="auto_sync">
                         <div>
-                            <h3 class="text-base font-semibold text-emerald-950 dark:text-emerald-100">{{ __('Sincronização automática (sem upload)') }}</h3>
                             <p class="text-xs text-emerald-900/90 dark:text-emerald-200/90 mt-1 leading-relaxed">
                                 {{ __('Importa ~5 500 municípios via SAGI/Misocial (MDS); depois preenche lacunas com CKAN, API ou CSV. Anos: :anos.', ['anos' => implode(', ', $autoSyncYears ?? [])]) }}
                             </p>
@@ -147,39 +130,47 @@
                             </button>
                             <span class="text-xs text-gray-600 dark:text-gray-400 self-center">{{ __('ou CLI:') }} <code>php artisan cadunico:auto-sync --queue</code></span>
                         </div>
-                    </form>
+                    </x-admin.import-hub.action-card>
 
-                    <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 px-4 py-4 text-sm">
-                        <p class="font-semibold text-slate-900 dark:text-slate-100">{{ __('Pipeline automático') }}</p>
-                        <ol class="mt-2 list-decimal pl-5 space-y-1 text-slate-700 dark:text-slate-300">
+                    <x-admin.import-hub.flow-panel :title="__('Pipeline automático (referência)')" :summary="__('Ordem típica quando a sincronização automática está activa.')">
+                        <ol class="list-decimal pl-5 space-y-1 text-slate-700 dark:text-slate-300 text-xs">
                             <li>{{ __('Download HTTP → nacional_{ano}.csv (IEDUCAR_CADUNICO_NACIONAL_CSV_URL)') }}</li>
                             <li>{{ __('Importação em lote do CSV nacional') }}</li>
                             <li>{{ __('API/CKAN por município em falta') }}</li>
                             <li>{{ __('Cache JSON e CSV local como fallback') }}</li>
                         </ol>
-                    </div>
+                    </x-admin.import-hub.flow-panel>
 
-                    <details class="rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                        <summary class="cursor-pointer text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Upload manual (opcional)') }}</summary>
-                        <form method="post" action="{{ route('admin.cadunico-sync.run') }}" enctype="multipart/form-data" class="mt-4 space-y-3">
-                            @csrf
-                            <input type="hidden" name="action" value="upload_cecad">
-                            <input type="file" name="csv_file" accept=".csv,.txt" class="block w-full text-sm" required>
-                            <select name="ano" class="{{ $selectClass }}">
-                                @foreach ($yearOptions as $y)
-                                    <option value="{{ $y }}">{{ $y }}</option>
-                                @endforeach
-                            </select>
-                            <button type="submit" class="text-sm text-violet-700 underline">{{ __('Enviar ficheiro') }}</button>
-                        </form>
-                    </details>
+                    <x-admin.import-hub.action-card
+                        method="post"
+                        action="{{ route('admin.cadunico-sync.run') }}"
+                        enctype="multipart/form-data"
+                        variant="accent"
+                        :title="__('Upload manual Cecad (opcional)')"
+                        :hint="__('CSV nacional ou municipal; escolha o ano de referência.')"
+                        :submit-label="__('Enviar ficheiro')"
+                    >
+                        @csrf
+                        <input type="hidden" name="action" value="upload_cecad">
+                        <input type="file" name="csv_file" accept=".csv,.txt" class="block w-full text-sm" required>
+                        <select name="ano" class="{{ $selectClass }}">
+                            @foreach ($yearOptions as $y)
+                                <option value="{{ $y }}">{{ $y }}</option>
+                            @endforeach
+                        </select>
+                    </x-admin.import-hub.action-card>
 
-                    {{-- Passo 1: município + ano --}}
-                    <form method="post" action="{{ route('admin.cadunico-sync.run') }}" class="rounded-xl border border-violet-200/80 dark:border-violet-800/50 p-5 space-y-4">
+                    <x-admin.import-hub.action-card
+                        method="post"
+                        action="{{ route('admin.cadunico-sync.run') }}"
+                        variant="accent"
+                        :step="__('Passo 1')"
+                        :title="__('Sincronizar município e ano')"
+                        :hint="__('Recomendado para um município: percorre API → cache → CSV automaticamente.')"
+                        :submit-label="__('Enfileirar sincronização')"
+                    >
                         @csrf
                         <input type="hidden" name="action" value="import_city_year">
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('1. Sincronizar município e ano') }}</h3>
-                        <p class="text-xs text-gray-600 dark:text-gray-400">{{ __('Recomendado para um município: percorre API → cache → CSV automaticamente.') }}</p>
                         <div class="grid gap-3 sm:grid-cols-2">
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Município') }}</label>
@@ -199,17 +190,18 @@
                                 </select>
                             </div>
                         </div>
-                        <button type="submit" class="inline-flex items-center rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700">
-                            {{ __('Enfileirar sincronização') }}
-                        </button>
-                    </form>
+                    </x-admin.import-hub.action-card>
 
-                    {{-- Passo 2: ano nacional storage --}}
-                    <form method="post" action="{{ route('admin.cadunico-sync.run') }}" class="rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
+                    <x-admin.import-hub.action-card
+                        method="post"
+                        action="{{ route('admin.cadunico-sync.run') }}"
+                        :step="__('Passo 2')"
+                        :title="__('Importar ano a partir de CSV em storage')"
+                        :hint="__('Coloque nacional_:ano.csv na pasta Cecad antes de executar.')"
+                        :submit-label="__('Enfileirar importação storage')"
+                    >
                         @csrf
                         <input type="hidden" name="action" value="import_storage_year">
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('2. Importar ano a partir de CSV em storage') }}</h3>
-                        <p class="text-xs text-gray-600 dark:text-gray-400">{{ __('Coloque nacional_:ano.csv na pasta Cecad antes de executar.') }}</p>
                         <div class="max-w-xs">
                             <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Ano') }}</label>
                             <select name="ano" class="{{ $selectClass }}" required>
@@ -218,28 +210,28 @@
                                 @endforeach
                             </select>
                         </div>
-                        <button type="submit" class="inline-flex items-center rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-900 dark:bg-gray-700">
-                            {{ __('Enfileirar importação storage') }}
-                        </button>
-                    </form>
+                    </x-admin.import-hub.action-card>
 
-                    {{-- Lote todos municípios --}}
-                    <form method="post" action="{{ route('admin.cadunico-sync.run') }}" class="rounded-xl border border-amber-200/80 dark:border-amber-800/40 p-5 space-y-4">
+                    <x-admin.import-hub.action-card
+                        method="post"
+                        action="{{ route('admin.cadunico-sync.run') }}"
+                        variant="warning"
+                        :step="__('Passo 3')"
+                        :title="__('Sincronizar todos os municípios (um ano)')"
+                        :hint="__('Cria uma tarefa por cidade na fila — use após configurar API ou CSV nacional.')"
+                        :submit-label="__('Enfileirar todos')"
+                    >
                         @csrf
                         <input type="hidden" name="action" value="import_all_cities_year">
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('3. Sincronizar todos os municípios (um ano)') }}</h3>
-                        <p class="text-xs text-amber-800 dark:text-amber-200">{{ __('Cria uma tarefa por cidade na fila — use após configurar API ou CSV nacional.') }}</p>
                         <div class="max-w-xs">
+                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Ano') }}</label>
                             <select name="ano" class="{{ $selectClass }}" required>
                                 @foreach ($yearOptions as $y)
                                     <option value="{{ $y }}">{{ $y }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <button type="submit" class="inline-flex items-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700">
-                            {{ __('Enfileirar todos') }}
-                        </button>
-                    </form>
+                    </x-admin.import-hub.action-card>
 
                     @if (count($storageFiles) > 0)
                         <details class="rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3">
@@ -262,13 +254,9 @@
                         'selectClass' => $selectClass,
                     ])
 
-                    <p class="text-xs text-gray-500">
-                        <a href="{{ route('admin.public-data.index') }}#source-cadunico_cecad" class="text-violet-700 dark:text-violet-300 hover:underline">{{ __('Hub de dados públicos') }}</a>
-                        ·
-                        <a href="{{ route('admin.documentation.show', ['doc' => 'docs/CADUNICO_CECAD.md']) }}" class="text-violet-700 dark:text-violet-300 hover:underline">{{ __('Documentação') }}</a>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
+        <x-slot name="shortcuts">
+            <x-admin.import-hub.link-chip href="{{ route('admin.public-data.index') }}#source-cadunico_cecad">{{ __('Hub dados públicos') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip href="{{ route('admin.sync-queue.index', ['domain' => 'cadastro']) }}">{{ __('Fila cadastro') }}</x-admin.import-hub.link-chip>
+        </x-slot>
+    </x-admin.import-hub.shell>
 </x-app-layout>

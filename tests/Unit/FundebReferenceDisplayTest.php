@@ -56,4 +56,22 @@ final class FundebReferenceDisplayTest extends TestCase
         $this->assertStringContainsString('VAAF municipal', $formula);
         $this->assertStringContainsString('512.345', $formula);
     }
+
+    public function test_bloco_calculo_inclui_referencias_legais_e_ponderacoes(): void
+    {
+        $funding = [
+            'vaa_anual' => 5559.73,
+            'vaa_label' => 'R$ 5.559,73',
+            'vaa_municipal_importado' => true,
+            'vaa_fonte' => 'municipal',
+            'vaa_fonte_label' => 'VAAF municipal (FNDE, 2024)',
+        ];
+
+        $bloco = FundebReferenceDisplay::blocoCalculoMatriculasVaaf(10, $funding);
+
+        $this->assertNotNull($bloco);
+        $this->assertSame('R$ 55.597,30', $bloco['total_fmt']);
+        $this->assertNotEmpty($bloco['ponderacoes_resumo']);
+        $this->assertStringContainsString('14.113', (string) ($bloco['referencias_legais'] ?? ''));
+    }
 }

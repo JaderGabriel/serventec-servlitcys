@@ -230,6 +230,8 @@ final class AnalyticsTabImpactBuilder
             'municipality_health' => self::statusSystemConsolidated($tabData, $ctx),
             'discrepancies' => self::statusDiscrepancies($tabData, $ctx),
             'cadunico_previsao' => self::statusCadunicoPrevisao($tabData),
+            'comparativo' => self::statusComparativo($tabData),
+            'finance_realtime' => self::statusFinanceRealtime($tabData),
             default => ['status' => $municipalStatus, 'label' => (string) ($ctx['compliance_label'] ?? ''), 'score' => $municipalScore, 'share_label' => null, 'share_value' => null],
         };
 
@@ -340,6 +342,89 @@ final class AnalyticsTabImpactBuilder
             'score' => $scoreInt,
             'share_label' => __('Matrículas realizadas (filtro)'),
             'share_value' => number_format($mat, 0, ',', '.'),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @return array{status: string, label: string, score: ?int, share_label: ?string, share_value: ?string}
+     */
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @return array{status: string, label: string, score: ?int, share_label: ?string, share_value: ?string}
+     */
+    private static function statusFinanceRealtime(array $tabData): array
+    {
+        $data = self::tabPayload($tabData, 'finance_realtime');
+        if (! ($data['available'] ?? false)) {
+            return [
+                'status' => 'warning',
+                'label' => __('IBGE ou repasses não configurados'),
+                'score' => 42,
+                'share_label' => __('Repasses importados'),
+                'share_value' => '—',
+            ];
+        }
+
+        $observed = (float) ($data['observed_annual'] ?? 0);
+        $expected = (float) ($data['expected_annual'] ?? 0);
+        $deltaPct = $data['delta_pct'] ?? null;
+
+        if ($expected <= 0) {
+            return [
+                'status' => 'warning',
+                'label' => __('Expectativa FUNDEB indisponível'),
+                'score' => 48,
+                'share_label' => __('Observado/ano'),
+                'share_value' => $observed > 0 ? DiscrepanciesFundingImpact::formatBrl($observed) : '—',
+            ];
+        }
+
+        $status = 'success';
+        if ($deltaPct !== null && abs((float) $deltaPct) >= 15) {
+            $status = ($data['delta_sign'] ?? '') === 'negative' ? 'danger' : 'warning';
+        }
+
+        return [
+            'status' => $status,
+            'label' => ($data['has_transfer_data'] ?? false)
+                ? __('Repasses × expectativa no exercício')
+                : __('Sem repasses FUNDEB importados'),
+            'score' => $status === 'success' ? 82 : ($status === 'danger' ? 38 : 58),
+            'share_label' => __('Diferença'),
+            'share_value' => (string) ($data['delta_fmt'] ?? '—'),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @return array{status: string, label: string, score: ?int, share_label: ?string, share_value: ?string}
+     */
+    private static function statusComparativo(array $tabData): array
+    {
+        $data = self::tabPayload($tabData, 'comparativo');
+        $baseYear = (int) ($data['base_year'] ?? 0);
+
+        if ($baseYear <= 0 || ! ($data['available'] ?? false)) {
+            return [
+                'status' => 'warning',
+                'label' => __('Defina o ano base do comparativo'),
+                'score' => 45,
+                'share_label' => __('Ano base'),
+                'share_value' => '—',
+            ];
+        }
+
+        $detail = is_array($data['base_year_detail'] ?? null) ? $data['base_year_detail'] : [];
+        $mat = (int) ($detail['matriculas'] ?? 0);
+        $score = $mat > 0 ? min(92, 70 + (int) min(22, $mat / 50)) : 50;
+
+        return [
+            'status' => $mat > 0 ? 'success' : 'warning',
+            'label' => __('Exercício :ano', ['ano' => (string) $baseYear]),
+            'score' => $score,
+            'share_label' => __('Matrículas (ano base)'),
+            'share_value' => $mat > 0 ? number_format($mat, 0, ',', '.') : '—',
         ];
     }
 
@@ -471,6 +556,7 @@ final class AnalyticsTabImpactBuilder
         $raw = match ($tab) {
             'network' => self::saldoFromNetworkOffer($tabData, $ctx),
             'enrollment' => self::saldoFromEnrollment($tabData, $ctx),
+            'cadunico_previsao' => self::saldoFromCadunicoPrevisao($tabData),
             'inclusion' => self::saldoFromInclusion($tabData, $ctx),
             'school_units' => self::saldoFromSchoolUnitsGeo($tabData),
             'performance' => self::saldoFromPerformance($tabData, $ctx),
@@ -505,6 +591,23 @@ final class AnalyticsTabImpactBuilder
      * @param  array{share_label: ?string, share_value: ?string}  $tabStatus
      * @return array<string, mixed>
      */
+    /**
+     * @param  ?array<string, mixed>  $bloco
+     * @return ?array<string, mixed>
+     */
+    private static function enrichFundebCalculo(?array $bloco): ?array
+    {
+        if ($bloco === null) {
+            return null;
+        }
+
+        if (! filled($bloco['referencias_legais'] ?? null)) {
+            $bloco['referencias_legais'] = FundebReferenceDisplay::referenciasLegaisLinha();
+        }
+
+        return $bloco;
+    }
+
     private static function formatSaldoStrip(array $raw, array $tabStatus): array
     {
         $perda = (float) ($raw['perda'] ?? 0);
@@ -522,7 +625,7 @@ final class AnalyticsTabImpactBuilder
             'footnote' => (string) ($raw['footnote'] ?? ''),
             'info_only' => (bool) ($raw['info_only'] ?? false),
             'fundeb_lines' => is_array($raw['fundeb_lines'] ?? null) ? $raw['fundeb_lines'] : [],
-            'fundeb_calculo' => is_array($raw['fundeb_calculo'] ?? null) ? $raw['fundeb_calculo'] : null,
+            'fundeb_calculo' => self::enrichFundebCalculo(is_array($raw['fundeb_calculo'] ?? null) ? $raw['fundeb_calculo'] : null),
             'tab_share_label' => $tabStatus['share_label'] ?? null,
             'tab_share_value' => $tabStatus['share_value'] ?? null,
             'gain_only' => (bool) ($raw['gain_only'] ?? false),
@@ -551,7 +654,10 @@ final class AnalyticsTabImpactBuilder
         $taxa = ($k['taxa_ociosidade_pct'] ?? null) !== null
             ? number_format((float) $k['taxa_ociosidade_pct'], 1, ',', '.').'%'
             : '—';
-        $rotulo = FundebReferenceDisplay::rotuloVaafCurto(self::resolveFundingReference($ctx));
+        $fundingRef = self::resolveFundingReference($ctx);
+        $rotulo = FundebReferenceDisplay::rotuloVaafCurto($fundingRef);
+        $mat = max(0, (int) ($ctx['total_matriculas'] ?? 0));
+        $fundebCalculo = $mat > 0 ? FundebReferenceDisplay::blocoCalculoMatriculasVaaf($mat, $fundingRef) : null;
 
         return [
             'perda' => $perda,
@@ -566,6 +672,30 @@ final class AnalyticsTabImpactBuilder
                     'taxa' => $taxa,
                 ]
             ),
+            'fundeb_calculo' => $fundebCalculo,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $tabData
+     * @return array{perda: float, ganho: float, liquido: float, footnote: string, gain_only?: bool}|null
+     */
+    private static function saldoFromCadunicoPrevisao(array $tabData): ?array
+    {
+        $data = self::tabPayload($tabData, 'cadunico_previsao');
+        $gap = is_array($data['gap'] ?? null) ? $data['gap'] : [];
+        $impacto = is_array($gap['impacto_financeiro'] ?? null) ? $gap['impacto_financeiro'] : [];
+        $ganho = (float) ($impacto['gap_anual'] ?? 0);
+        if ($ganho <= 0) {
+            return null;
+        }
+
+        return [
+            'perda' => 0.0,
+            'ganho' => $ganho,
+            'liquido' => $ganho,
+            'gain_only' => true,
+            'footnote' => (string) ($impacto['formula'] ?? __('Lacuna CadÚnico × VAAF municipal — indicativo, não é repasse FNDE.')),
         ];
     }
 
@@ -1684,6 +1814,7 @@ final class AnalyticsTabImpactBuilder
             'municipality_health', 'health' => ['health', 'healthData', 'municipalityHealthData'],
             'discrepancies' => ['discrepancies', 'discrepanciesData'],
             'cadunico_previsao' => ['cadunico_previsao', 'cadunicoPrevisaoData'],
+            'finance_realtime' => ['finance_realtime', 'financeRealtimeData', 'realtimeData'],
             default => [$tab, $tab.'Data'],
         };
 

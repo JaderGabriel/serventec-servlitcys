@@ -658,7 +658,7 @@ final class FinanceComparativoService
      * @param  list<int|string>  $yearOptions
      * @return list<array{value: int, label: string}>
      */
-    private static function normalizeYearOptions(array $yearOptions, int $selected): array
+    public static function normalizeYearOptions(array $yearOptions, int $selected): array
     {
         $years = [];
         foreach ($yearOptions as $y) {

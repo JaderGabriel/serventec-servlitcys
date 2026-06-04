@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **3.6.0** · release `20260603-Iris` · **Ramo:** `main` · **Última revisão:** 03/06/2026
+**Versão em produção:** **3.7.0** · release `20260603-Selene` · **Ramo:** `main` · **Última revisão:** 03/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -20,6 +20,10 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | CadÚnico — SAGI/Misocial (MDS) nacional + `cadunico:import-misocial` histórico | Implementado (3.6.0) |
 | Analytics — Finanças «Tempo Real» (repasses vs FUNDEB) | Implementado (3.6.0) |
 | FUNDEB — metodologia de impacto + fontes/portarias no admin | Implementado (3.6.0) |
+| Analytics — Finanças lazy otimizado (FUNDEB leve, Comparativo shell, snapshot memoizado) | Implementado (3.7.0) |
+| Consultoria — VAAF×matrículas com ponderações e base legal (Lei/portarias) | Implementado (3.7.0) |
+| Admin — hub importação unificado (`import-hub`) | Implementado (3.7.0) |
+| Segurança — URLs outbound e paths contidos (CadÚnico/import) | Implementado (3.7.0) |
 | Analytics — navegação 4 áreas (Cadastro → Pedagógico → **Censo** → Finanças) | Implementado (3.4.0) |
 | Finanças / Censo — UI `consultoria-tab-frame` por tom temático | Implementado (3.4.0) |
 | Diagnóstico — qualidade do sistema + «Explorar em detalhe» | Implementado (3.4.0; refinado pós-release: métricas por área, PDF) |

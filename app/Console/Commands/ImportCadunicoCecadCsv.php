@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Services\Cadunico\CadunicoCecadCsvImportService;
+use App\Support\Cadunico\CadunicoStoragePaths;
+use App\Support\Filesystem\ContainedPathResolver;
 use Illuminate\Console\Command;
 
 class ImportCadunicoCecadCsv extends Command
@@ -15,9 +17,18 @@ class ImportCadunicoCecadCsv extends Command
 
     public function handle(CadunicoCecadCsvImportService $import): int
     {
-        $path = (string) $this->argument('path');
-        if (! str_starts_with($path, '/')) {
-            $path = storage_path('app/'.ltrim($path, '/'));
+        $path = ContainedPathResolver::resolveReadableFile(
+            (string) $this->argument('path'),
+            [
+                storage_path('app'),
+                CadunicoStoragePaths::storageRoot(),
+            ],
+        );
+
+        if ($path === null) {
+            $this->error(__('Ficheiro inválido ou fora de storage/app e cadunico/cecad.'));
+
+            return self::FAILURE;
         }
 
         $ano = $this->option('ano') !== null ? (int) $this->option('ano') : null;

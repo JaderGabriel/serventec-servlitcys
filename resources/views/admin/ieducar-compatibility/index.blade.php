@@ -24,20 +24,33 @@
         $pendenciaRoutines = array_values(array_filter($routines, static fn (array $r): bool => (bool) ($r['has_issue'] ?? false)));
     @endphp
 
-    <div class="py-10">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-
-            @include('admin.partials.sync-queued-alert')
-
-            <x-admin.queue-banner compact />
-
+    <x-admin.import-hub.shell
+        active="fundeb"
+        accent="indigo"
+        :eyebrow="__('Compatibilidade i-Educar')"
+        :title="__('FUNDEB, probe e rotinas')"
+        :description="__('Probe na hora; importações FUNDEB e export JSON vão para a fila. Use o hub de dados públicos para Censo e repasses.')"
+        impact-domain="fundeb"
+        queue-banner-compact
+        :doc-href="route('admin.documentation.show', ['doc' => 'docs/EXPORTACAO_DADOS_FUNDEB_PLANILHA.md'])"
+        :doc-label="__('Exportação FUNDEB / planilha')"
+    >
+        <x-slot name="flashes">
             @if (session('fundeb_import_error'))
-                <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200">
+                <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-200" role="alert">
                     {{ session('fundeb_import_error') }}
                 </div>
             @endif
+        </x-slot>
 
-            <form method="get" action="{{ route('admin.ieducar-compatibility.index') }}" class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 sm:p-6 shadow-sm">
+            <x-admin.import-hub.action-card
+                method="get"
+                action="{{ route('admin.ieducar-compatibility.index') }}"
+                :title="__('Probe i-Educar e contexto FUNDEB')"
+                :hint="__('O probe corre na hora; export JSON e importações FUNDEB vão para a fila.')"
+                :submit-label="__('Executar probe')"
+                :show-queue-hint="false"
+            >
                 @if (request()->filled('fundeb_matrix_from') || request()->filled('fundeb_matrix_to'))
                     <input type="hidden" name="fundeb_matrix_from" value="{{ request('fundeb_matrix_from') }}">
                     <input type="hidden" name="fundeb_matrix_to" value="{{ request('fundeb_matrix_to') }}">
@@ -64,21 +77,18 @@
                         <label for="fundeb_ano_filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Ano FUNDEB') }}</label>
                         <input type="number" id="fundeb_ano_filter" name="fundeb_ano" min="2000" max="{{ (int) date('Y') + 1 }}" value="{{ $fundebImportYear ?? $fundebSuggestedYear ?? (int) date('Y') - 1 }}" class="{{ $selectClass }} w-full">
                     </div>
-                    <div class="sm:col-span-2 lg:col-span-1 flex flex-wrap gap-2">
-                        <button type="submit" class="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">
-                            {{ __('Executar probe') }}
-                        </button>
-                        @if ($city)
-                            <a href="{{ route('admin.ieducar-compatibility.export', ['city_id' => $city->id]) }}" class="inline-flex items-center rounded-lg border border-indigo-300 dark:border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-800 dark:text-indigo-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40" title="{{ __('Cria tarefa na fila; baixe o JSON quando concluir.') }}">
-                                {{ __('Enfileirar export JSON') }}
-                            </a>
-                        @endif
-                        <a href="{{ route('dashboard.analytics', array_filter(['city_id' => $city?->id, 'tab' => 'discrepancies', 'ano_letivo' => $anoLetivo !== 'all' ? $anoLetivo : null])) }}" class="inline-flex items-center rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
-                            {{ __('Abrir Discrepâncias') }}
-                        </a>
-                    </div>
                 </div>
-            </form>
+                <x-slot name="actions">
+                    @if ($city)
+                        <a href="{{ route('admin.ieducar-compatibility.export', ['city_id' => $city->id]) }}" class="inline-flex items-center rounded-lg border border-indigo-300 dark:border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-800 dark:text-indigo-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40" title="{{ __('Cria tarefa na fila; baixe o JSON quando concluir.') }}">
+                            {{ __('Enfileirar export JSON') }}
+                        </a>
+                    @endif
+                    <a href="{{ route('dashboard.analytics', array_filter(['city_id' => $city?->id, 'tab' => 'discrepancies', 'ano_letivo' => $anoLetivo !== 'all' ? $anoLetivo : null])) }}" class="inline-flex items-center rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+                        {{ __('Abrir Discrepâncias') }}
+                    </a>
+                </x-slot>
+            </x-admin.import-hub.action-card>
 
             @include('admin.ieducar-compatibility.partials.fundeb-card', [
                 'city' => $city,
@@ -337,6 +347,11 @@
                     </div>
                 </div>
             @endif
-        </div>
-    </div>
+
+        <x-slot name="shortcuts">
+            <x-admin.import-hub.link-chip href="{{ route('admin.public-data.index') }}">{{ __('Hub dados públicos') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip href="{{ route('admin.sync-queue.index', ['domain' => 'fundeb']) }}">{{ __('Fila FUNDEB') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip href="{{ route('admin.cadunico-sync.index') }}">{{ __('CadÚnico') }}</x-admin.import-hub.link-chip>
+        </x-slot>
+    </x-admin.import-hub.shell>
 </x-app-layout>

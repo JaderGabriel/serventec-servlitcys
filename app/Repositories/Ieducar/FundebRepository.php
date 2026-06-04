@@ -101,13 +101,16 @@ class FundebRepository
             $fundebReference,
         );
 
-        $vaafProfile = app(FundebVaafProfileBuilder::class)->build(
-            $city,
-            $filters,
-            $matTotal,
-            $discrepanciesData,
-            $enrollmentData,
-        );
+        $skipVaafProfile = filter_var(config('analytics.fundeb_skip_vaaf_profile_on_tab', true), FILTER_VALIDATE_BOOL);
+        $vaafProfile = $skipVaafProfile
+            ? []
+            : app(FundebVaafProfileBuilder::class)->build(
+                $city,
+                $filters,
+                $matTotal,
+                $discrepanciesData,
+                $enrollmentData,
+            );
 
         return [
             'year_label' => $yearLabel,

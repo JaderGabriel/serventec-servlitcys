@@ -42,7 +42,6 @@
 <section class="rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50/40 dark:bg-teal-950/20 p-4 sm:p-6 shadow-sm space-y-5">
     @include('admin.ieducar-compatibility.partials.fundeb-sync-results', ['fmtBrl' => $fmtBrl])
     @include('admin.ieducar-compatibility.partials.fundeb-official-sources', ['fundebOfficialSources' => $fundebOfficialSources ?? []])
-    @include('admin.partials.external-import-impact', ['domain' => 'fundeb', 'cityId' => $city?->id])
     <div>
         <h3 class="text-sm font-semibold text-teal-950 dark:text-teal-100">{{ __('Referências FUNDEB (VAAF / VAAT)') }}</h3>
         <p class="text-xs text-teal-900/90 dark:text-teal-200/90 mt-1 leading-relaxed">

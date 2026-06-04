@@ -125,7 +125,10 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 | Contexto Finanças | `ANALYTICS_FINANCE_TABS_REUSE_CONTEXT` | Evita segunda passagem em Discrepâncias/visão geral na faixa de impacto (Diagnóstico, Discrepâncias, FUNDEB) |
 | Pulse | URI `tab=` e headers `X-Analytics-Tab`; métricas `db_slow_*`, `db_muni_run`, `db_request_total`, `app_operation*` | Medir custo **por aba**, **por município/base** e **por etapa** (RX, sync, PDF) |
 | Cache resumo financeiro | `ANALYTICS_FUNDING_SUMMARY_CACHE` (ex. 600 s) | Invalidação implícita por TTL; params incluem cidade+filtros |
-| FUNDEB tab | Reúne vários repositórios num pedido | Com reutilização de contexto, overview + fundingImpact não duplicam após `buildFundebTabBundle` |
+| FUNDEB tab | `ANALYTICS_FUNDEB_LIGHT_TAB` + `SKIP_VAAF_PROFILE` (3.7.0) | 1ª carga: matrículas do snapshot financeiro; sem overview/sample nem perfil FNDE multi-ano (opcional) |
+| Comparativo preload | `ANALYTICS_COMPARATIVO_PRELOAD_SHELL` | Preload Finanças: shell + `loadYearOptions`; relatório completo no AJAX da aba |
+| Snapshot por request | `AnalyticsFundingContextResolver` | Uma chamada `fundingImpactSnapshot` por pedido HTTP entre preload e abas |
+| FUNDEB tab (legado) | Reúne vários repositórios num pedido | Com `LIGHT_TAB=false`, comportamento anterior (overview + sample + perfil VAAF) |
 
 **Doc:** [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md).
 

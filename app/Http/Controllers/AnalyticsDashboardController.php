@@ -26,6 +26,7 @@ use App\Support\Auth\UserCityAccess;
 use App\Support\Dashboard\AnalyticsEmptyPayloads;
 use App\Support\Dashboard\AnalyticsLoadProfiler;
 use App\Support\Dashboard\AnalyticsFinanceTabPreload;
+use App\Support\Dashboard\AnalyticsFundingContextResolver;
 use App\Support\Dashboard\AnalyticsMunicipalityContext;
 use App\Support\Dashboard\AnalyticsTabPayloadCache;
 use App\Support\Dashboard\AnalyticsTabCatalog;
@@ -293,7 +294,7 @@ class AnalyticsDashboardController extends Controller
                         $municipalityContext = AnalyticsMunicipalityContext::fromHealthSnapshot($municipalityHealthData);
                     } else {
                         $fundingSnapshot = $this->safeAnalyticsLoad(
-                            fn () => $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
+                            fn () => $this->fundingImpactSnapshot($discrepanciesRepository, $city, $filters),
                             null,
                             __('Resumo financeiro'),
                             $analyticsLoadWarnings,
@@ -607,6 +608,39 @@ class AnalyticsDashboardController extends Controller
             : null;
 
         if (! $filters->hasYearSelected() && $comparativoBaseYear === null) {
+            if ($tab === 'comparativo') {
+                return response()
+                    ->view('dashboard.analytics.partials.comparativo', [
+                        'comparativoData' => $this->comparativoShellPayload($filterOptionsService, $city, $filters),
+                        'yearFilterReady' => false,
+                        'chartExportContext' => ChartExportMeta::forAnalytics($city, $filters, [
+                            'escolas' => [],
+                            'cursos' => [],
+                            'turnos' => [],
+                            'years' => [],
+                        ]),
+                        'municipalityContext' => null,
+                        'selectedCity' => $city,
+                        'filters' => $filters,
+                        'baseYear' => null,
+                        'pdfExportsRecent' => [],
+                    ])
+                    ->header('X-Analytics-Tab', $tab)
+                    ->header('X-Analytics-Tab-Status', 'no-year');
+            }
+
+            if ($tab === 'finance_realtime') {
+                return response()
+                    ->view('dashboard.analytics.partials.finance-realtime', [
+                        'realtimeData' => $financeRealtimeService->tabShell($city, $filters),
+                        'yearFilterReady' => false,
+                        'municipalityContext' => null,
+                        'filters' => $filters,
+                    ])
+                    ->header('X-Analytics-Tab', $tab)
+                    ->header('X-Analytics-Tab-Status', 'no-year');
+            }
+
             return response()
                 ->view('dashboard.analytics.partials.tab-fetch-notice', [
                     'message' => __('Aplique os filtros (ano letivo) no painel superior e confirme para carregar esta aba.'),
@@ -1015,11 +1049,12 @@ class AnalyticsDashboardController extends Controller
             'finance_realtime' => response()
                 ->view('dashboard.analytics.partials.finance-realtime', array_merge($viewBase, $yearReady, [
                     'realtimeData' => $this->safeAnalyticsLoad(
-                        fn () => $financeRealtimeService->buildReport($city, $filters),
-                        AnalyticsEmptyPayloads::financeRealtime(),
+                        fn () => $financeRealtimeService->buildReport($city, $filters, $municipalityContext),
+                        $financeRealtimeService->tabShell($city, $filters),
                         __('Tempo Real'),
                         $tabWarnings,
                     ),
+                    'filters' => $filters,
                 ]))
                 ->withHeaders($headers),
             default => abort(404),
@@ -1037,19 +1072,61 @@ class AnalyticsDashboardController extends Controller
         Request $request,
     ): array {
         $baseYear = FinanceComparativoService::resolveBaseYear($request, $filters);
-        if ($baseYear === null) {
-            return AnalyticsEmptyPayloads::comparativo();
-        }
+        $yearOptions = $this->comparativoYearOptions($filterOptionsService, $city, $filters);
 
-        $yearOptions = [];
-        try {
-            $loaded = $filterOptionsService->loadAll($city, $filters);
-            $yearOptions = is_array($loaded['years'] ?? null) ? $loaded['years'] : [];
-        } catch (Throwable) {
-            $yearOptions = [];
+        if ($baseYear === null) {
+            return $this->comparativoShellPayload($filterOptionsService, $city, $filters, $yearOptions);
         }
 
         return $financeComparativoService->build($city, $baseYear, $filters, $yearOptions);
+    }
+
+    /**
+     * @return list<int|string>
+     */
+    private function comparativoYearOptions(
+        FilterOptionsService $filterOptionsService,
+        City $city,
+        IeducarFilterState $filters,
+    ): array {
+        try {
+            $loaded = $filterOptionsService->loadYearOptions($city);
+
+            return is_array($loaded['years'] ?? null) ? $loaded['years'] : [];
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * Payload mínimo da aba Comparativo (seletor de ano base + orientações).
+     *
+     * @param  list<int|string>  $yearOptions
+     * @return array<string, mixed>
+     */
+    private function comparativoShellPayload(
+        FilterOptionsService $filterOptionsService,
+        City $city,
+        IeducarFilterState $filters,
+        ?array $yearOptions = null,
+    ): array {
+        $yearOptions ??= $this->comparativoYearOptions($filterOptionsService, $city, $filters);
+        $anchorYear = (int) date('Y');
+        $payload = AnalyticsEmptyPayloads::comparativo();
+        $payload['city_name'] = (string) ($city->name ?? '');
+        $payload['year_options'] = FinanceComparativoService::normalizeYearOptions($yearOptions, $anchorYear);
+        $payload['footnote'] = __('Valores indicativos para apoio à consultoria municipal. Não substituem portaria FNDE, extrato Simec/VAAR nem prestação de contas.');
+
+        if ($filters->hasYearSelected() && $filters->isAllSchoolYears()) {
+            $payload['error'] = __('O comparativo exige um ano base específico. Escolha um exercício abaixo ou um ano letivo concreto (não «Todos os anos») nos filtros superiores.');
+            $payload['alerts'] = [[
+                'tone' => 'warning',
+                'title' => __('Ano base necessário'),
+                'message' => __('Selecione o ano base do comparativo no formulário abaixo ou aplique um ano letivo específico.'),
+            ]];
+        }
+
+        return $payload;
     }
 
     /**
@@ -1065,21 +1142,30 @@ class AnalyticsDashboardController extends Controller
         Request $request,
         array &$warnings,
     ): array {
+        $preloadShell = filter_var(config('analytics.comparativo_preload_shell_only', true), FILTER_VALIDATE_BOOL);
+
         $comparativoData = $this->safeAnalyticsLoad(
-            fn () => $this->buildComparativoForTab(
-                $financeComparativoService,
-                $filterOptionsService,
-                $city,
-                $filters,
-                $request,
-            ),
+            fn () => $preloadShell
+                ? $this->comparativoShellPayload(
+                    $filterOptionsService,
+                    $city,
+                    $filters,
+                    $this->comparativoYearOptions($filterOptionsService, $city, $filters),
+                )
+                : $this->buildComparativoForTab(
+                    $financeComparativoService,
+                    $filterOptionsService,
+                    $city,
+                    $filters,
+                    $request,
+                ),
             AnalyticsEmptyPayloads::comparativo(),
             __('Comparativo'),
             $warnings,
         );
 
         $fundingSnapshot = $this->safeAnalyticsLoad(
-            fn () => $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
+            fn () => $this->fundingImpactSnapshot($discrepanciesRepository, $city, $filters),
             null,
             __('Resumo financeiro'),
             $warnings,
@@ -1341,17 +1427,27 @@ class AnalyticsDashboardController extends Controller
         IeducarFilterState $filters,
         array &$warnings,
     ): array {
-        $discrepanciesData = $this->safeAnalyticsLoad(
-            fn () => $discrepanciesRepository->snapshot($city, $filters),
-            AnalyticsEmptyPayloads::discrepancies(),
-            __('Discrepâncias'),
+        $fundingSnapshot = $this->safeAnalyticsLoad(
+            fn () => $this->fundingImpactSnapshot($discrepanciesRepository, $city, $filters),
+            null,
+            __('Resumo financeiro'),
             $warnings,
         );
+        if (! is_array($fundingSnapshot)) {
+            $fundingSnapshot = [
+                'summary' => [],
+                'funding_reference' => DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters),
+            ];
+        }
+
+        $totalMat = (int) ($fundingSnapshot['total_matriculas'] ?? 0);
+        $overviewData = [
+            'kpis' => ['matriculas' => $totalMat > 0 ? $totalMat : null],
+            'total_matriculas' => $totalMat > 0 ? $totalMat : null,
+        ];
 
         return [
-            'context' => is_array($discrepanciesData)
-                ? AnalyticsFinanceTabPreload::contextFromDiscrepancies($discrepanciesData)
-                : null,
+            'context' => AnalyticsFinanceTabPreload::contextFromFundingSnapshot($fundingSnapshot, $overviewData),
             'healthData' => null,
             'discrepanciesData' => null,
             'fundebData' => null,
@@ -1435,7 +1531,7 @@ class AnalyticsDashboardController extends Controller
             }
         }
         $fundingSnapshot = $this->safeAnalyticsLoad(
-            fn () => $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
+            fn () => $this->fundingImpactSnapshot($discrepanciesRepository, $city, $filters),
             null,
             __('Resumo financeiro'),
             $warnings,
@@ -1477,12 +1573,22 @@ class AnalyticsDashboardController extends Controller
         City $city,
         IeducarFilterState $filters,
     ): array {
-        $overviewData = $overviewRepository->summary($city, $filters);
-        $enrollmentData = $enrollmentRepository->sample($city, $filters);
-
         $fundingSnapshot = null;
         if (config('analytics.fundeb_load_discrepancies_summary', true)) {
-            $fundingSnapshot = $discrepanciesRepository->fundingImpactSnapshot($city, $filters);
+            $fundingSnapshot = $this->fundingImpactSnapshot($discrepanciesRepository, $city, $filters);
+        }
+
+        $lightBundle = filter_var(config('analytics.fundeb_tab_light_bundle', true), FILTER_VALIDATE_BOOL);
+        if ($lightBundle) {
+            $mat = max(0, (int) (is_array($fundingSnapshot) ? ($fundingSnapshot['total_matriculas'] ?? 0) : 0));
+            $overviewData = [
+                'kpis' => ['matriculas' => $mat > 0 ? $mat : null],
+                'total_matriculas' => $mat > 0 ? $mat : null,
+            ];
+            $enrollmentData = ['kpis' => ['matriculas' => $mat > 0 ? $mat : null]];
+        } else {
+            $overviewData = $overviewRepository->summary($city, $filters);
+            $enrollmentData = $enrollmentRepository->sample($city, $filters);
         }
         if (! is_array($fundingSnapshot)) {
             $fundingSnapshot = [
@@ -1604,7 +1710,7 @@ class AnalyticsDashboardController extends Controller
             $warnings,
         );
         $fundingSnapshot = $this->safeAnalyticsLoad(
-            fn () => $discrepanciesRepository->fundingImpactSnapshot($city, $filters),
+            fn () => $this->fundingImpactSnapshot($discrepanciesRepository, $city, $filters),
             null,
             __('Resumo financeiro'),
             $warnings,
@@ -1723,6 +1829,18 @@ class AnalyticsDashboardController extends Controller
                 'errors' => [$e->getMessage()],
             ], 500);
         }
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function fundingImpactSnapshot(
+        DiscrepanciesRepository $discrepanciesRepository,
+        City $city,
+        IeducarFilterState $filters,
+    ): ?array {
+        return app(AnalyticsFundingContextResolver::class)
+            ->snapshot($city, $filters, $discrepanciesRepository);
     }
 
     /**

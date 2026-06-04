@@ -41,7 +41,15 @@
         );
     }
 }">
-    <form method="post" action="{{ route('admin.ieducar-compatibility.fundeb-sync-all') }}" class="rounded-lg border-2 border-teal-600 dark:border-teal-500 p-4 bg-teal-100/50 dark:bg-teal-950/40 space-y-4" @submit.prevent="if (confirmSubmit()) { window.servDataLoading?.start(@js(__('A enfileirar importações FUNDEB')), @js(__('A registar tarefas na fila de sincronização; a página será atualizada em seguida.'))); $el.submit(); }">
+    <x-admin.import-hub.action-card
+        method="post"
+        action="{{ route('admin.ieducar-compatibility.fundeb-sync-all') }}"
+        variant="primary"
+        :title="__('Importação FUNDEB (lote)')"
+        :hint="__('Escolha anos, municípios e como tratar referências já gravadas. Cada envio vai para a fila.')"
+        hide-submit
+        @submit.prevent="if (confirmSubmit()) { window.servDataLoading?.start(@js(__('A enfileirar importações FUNDEB')), @js(__('A registar tarefas na fila de sincronização; a página será atualizada em seguida.'))); $el.submit(); }"
+    >
         @csrf
         @if ($city ?? null)
             <input type="hidden" name="city_id" value="{{ $city->id }}">
@@ -50,11 +58,6 @@
         <template x-for="id in selected" :key="id">
             <input type="hidden" name="city_ids[]" :value="id">
         </template>
-
-        <div>
-            <p class="text-sm font-semibold text-teal-950 dark:text-teal-50">{{ __('Importação FUNDEB') }}</p>
-            <p class="text-xs text-teal-900/90 dark:text-teal-200/80 mt-1">{{ __('Escolha anos, municípios e como tratar referências já gravadas. Cada envio vai para a fila.') }}</p>
-        </div>
 
         <fieldset class="rounded-lg border border-teal-200/70 dark:border-teal-800/70 p-3 bg-white/50 dark:bg-gray-900/30 space-y-2">
             <legend class="text-xs font-semibold text-teal-900 dark:text-teal-100 px-1">{{ __('Referências existentes') }}</legend>
@@ -130,16 +133,24 @@
             <span x-text="cityCount + ' município(s) × ' + yearCount + ' ano(s) = ' + ops + ' importação(ões)'"></span>
         </div>
 
-        <button type="submit" class="inline-flex items-center rounded-lg bg-teal-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 shadow-sm">
-            {{ __('Enfileirar importação') }}
-        </button>
-        <x-admin.queue-submit-hint class="mt-2" />
-    </form>
+        <x-slot name="actions">
+            <button type="submit" class="inline-flex items-center rounded-lg bg-teal-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 shadow-sm">
+                {{ __('Enfileirar importação') }}
+            </button>
+            <x-admin.queue-submit-hint />
+        </x-slot>
+    </x-admin.import-hub.action-card>
 
-    <details class="rounded-lg border border-teal-200/60 dark:border-teal-800/60 p-3 bg-white/60 dark:bg-gray-900/30">
-        <summary class="cursor-pointer text-xs font-medium text-teal-900 dark:text-teal-100">{{ __('Importação avançada (um município ou um ano)') }}</summary>
-        <div class="flex flex-col lg:flex-row flex-wrap gap-4 lg:items-end mt-3">
-            <form method="post" action="{{ route('admin.ieducar-compatibility.fundeb-import') }}" class="flex flex-wrap items-end gap-3">
+    <x-admin.import-hub.flow-panel :title="__('Importação avançada (um município ou um ano)')">
+        <div class="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-start">
+            <x-admin.import-hub.action-card
+                method="post"
+                action="{{ route('admin.ieducar-compatibility.fundeb-import') }}"
+                class="flex-1 min-w-[16rem]"
+                :title="__('Um município')"
+                hide-submit
+                :show-queue-hint="false"
+            >
                 @csrf
                 <input type="hidden" name="import_mode" :value="importMode">
                 @if ($city ?? null)
@@ -147,29 +158,42 @@
                 @endif
                 <div>
                     <label for="fundeb_ano" class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Ano') }}</label>
-                    <input type="number" id="fundeb_ano" name="ano" min="2000" max="{{ (int) date('Y') + 1 }}" value="{{ $fundebImportYear }}" class="{{ $selectClass }} w-24" required>
+                    <input type="number" id="fundeb_ano" name="ano" min="2000" max="{{ (int) date('Y') + 1 }}" value="{{ $fundebImportYear }}" class="{{ $selectClass }} w-full" required>
                 </div>
-                <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 max-w-[13rem] leading-tight">
+                <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
                     <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-teal-600 shrink-0">
                     {{ __('Ano mais recente na API') }}
                 </label>
-                <button type="submit" class="inline-flex items-center rounded-lg bg-teal-700 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-600 disabled:opacity-50" @disabled(! ($city ?? null) || ! $cityIbge)>
-                    {{ __('Enfileirar este município') }}
-                </button>
-            </form>
+                <x-slot name="actions">
+                    <button type="submit" class="inline-flex items-center rounded-lg bg-teal-700 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-600 disabled:opacity-50" @disabled(! ($city ?? null) || ! $cityIbge)>
+                        {{ __('Enfileirar este município') }}
+                    </button>
+                    <x-admin.queue-submit-hint />
+                </x-slot>
+            </x-admin.import-hub.action-card>
 
-            <form method="post" action="{{ route('admin.ieducar-compatibility.fundeb-import-bulk') }}" class="flex flex-wrap items-end gap-3">
+            <x-admin.import-hub.action-card
+                method="post"
+                action="{{ route('admin.ieducar-compatibility.fundeb-import-bulk') }}"
+                class="flex-1 min-w-[16rem]"
+                :title="__('Todos os municípios — um ano')"
+                hide-submit
+                :show-queue-hint="false"
+            >
                 @csrf
                 <input type="hidden" name="import_mode" :value="importMode">
                 <input type="hidden" name="ano" value="{{ $fundebImportYear }}">
-                <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 max-w-[11rem] leading-tight">
+                <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
                     <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-teal-600 shrink-0">
                     {{ __('Ano mais recente na API') }}
                 </label>
-                <button type="submit" class="inline-flex items-center rounded-lg border border-teal-700 px-3 py-2 text-sm font-semibold text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-teal-950/50">
-                    {{ __('Enfileirar todos — ano :ano', ['ano' => $fundebImportYear]) }}
-                </button>
-            </form>
+                <x-slot name="actions">
+                    <button type="submit" class="inline-flex items-center rounded-lg border border-teal-700 px-3 py-2 text-sm font-semibold text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-teal-950/50">
+                        {{ __('Enfileirar todos — ano :ano', ['ano' => $fundebImportYear]) }}
+                    </button>
+                    <x-admin.queue-submit-hint />
+                </x-slot>
+            </x-admin.import-hub.action-card>
         </div>
-    </details>
+    </x-admin.import-hub.flow-panel>
 </div>
