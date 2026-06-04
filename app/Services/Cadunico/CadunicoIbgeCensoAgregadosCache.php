@@ -16,9 +16,10 @@ final class CadunicoIbgeCensoAgregadosCache
     private static array $indexCache = [];
 
     /**
+     * @param  (callable(string): void)|null  $log
      * @return list<array{codigo: string, nome: string, tipo: string, populacao: int}>
      */
-    public function territoriosForMunicipio(string $ibge): array
+    public function territoriosForMunicipio(string $ibge, ?callable $log = null): array
     {
         $ibge = str_pad(preg_replace('/\D/', '', $ibge) ?? '', 7, '0', STR_PAD_LEFT);
 
@@ -26,24 +27,31 @@ final class CadunicoIbgeCensoAgregadosCache
             'bairro_basico',
             'Agregados_por_bairros_basico_BR.csv',
             'bairro',
+            $log,
         );
         if (isset($bairroIndex[$ibge]) && $bairroIndex[$ibge] !== []) {
+            $this->logStep($log, __('   Malha: bairros (nível preferencial).'));
+
             return $bairroIndex[$ibge];
         }
+
+        $this->logStep($log, __('   Sem bairros no município; a usar setores censitários.'));
 
         $setorIndex = $this->indexFromZip(
             'setor_basico',
             'Agregados_por_setores_basico_BR.csv',
             'setor',
+            $log,
         );
 
         return $setorIndex[$ibge] ?? [];
     }
 
     /**
+     * @param  (callable(string): void)|null  $log
      * @return array{ok: bool, path: ?string, message: string}
      */
-    private function ensureZip(string $kind): array
+    private function ensureZip(string $kind, ?callable $log = null): array
     {
         $cfg = config('ieducar.cadunico.territorio.ibge_censo', []);
         $urls = is_array($cfg['zip_urls'] ?? null) ? $cfg['zip_urls'] : [];
@@ -62,6 +70,8 @@ final class CadunicoIbgeCensoAgregadosCache
         $maxAge = max(1, (int) ($cfg['cache_days'] ?? 90)) * 86400;
 
         if (is_readable($path) && filemtime($path) !== false && (time() - (int) filemtime($path)) < $maxAge) {
+            $this->logStep($log, __('   ZIP :kind — cache local (:file).', ['kind' => $kind, 'file' => $filename]));
+
             return ['ok' => true, 'path' => $path, 'message' => __('Cache IBGE válido.')];
         }
 
@@ -69,14 +79,20 @@ final class CadunicoIbgeCensoAgregadosCache
             return ['ok' => false, 'path' => null, 'message' => __('URL IBGE não permitida.')];
         }
 
+        $this->logStep($log, __('   ZIP :kind — a descarregar do FTP IBGE (pode demorar)…', ['kind' => $kind]));
+
         $timeout = max(30, (int) ($cfg['http_timeout'] ?? 180));
         try {
             $response = Http::timeout($timeout)->withOptions(['verify' => true])->get($url);
         } catch (\Throwable $e) {
+            $this->logStep($log, __('   Download falhou: :msg', ['msg' => $e->getMessage()]));
+
             return ['ok' => false, 'path' => is_readable($path) ? $path : null, 'message' => $e->getMessage()];
         }
 
         if (! $response->successful()) {
+            $this->logStep($log, __('   HTTP :status; a usar cache antigo se existir.', ['status' => (string) $response->status()]));
+
             return [
                 'ok' => is_readable($path),
                 'path' => is_readable($path) ? $path : null,
@@ -85,6 +101,8 @@ final class CadunicoIbgeCensoAgregadosCache
         }
 
         file_put_contents($path, $response->body());
+        $sizeMb = is_readable($path) ? round(filesize($path) / 1048576, 1) : 0;
+        $this->logStep($log, __('   ZIP gravado (:file, ~:mb MB).', ['file' => $filename, 'mb' => (string) $sizeMb]));
 
         return ['ok' => true, 'path' => $path, 'message' => __('ZIP IBGE descarregado.')];
     }
@@ -92,21 +110,33 @@ final class CadunicoIbgeCensoAgregadosCache
     /**
      * @return array<string, list<array{codigo: string, nome: string, tipo: string, populacao: int}>>
      */
-    private function indexFromZip(string $zipKind, string $innerCsv, string $tipo): array
+    /**
+     * @param  (callable(string): void)|null  $log
+     * @return array<string, list<array{codigo: string, nome: string, tipo: string, populacao: int}>>
+     */
+    private function indexFromZip(string $zipKind, string $innerCsv, string $tipo, ?callable $log = null): array
     {
         $cacheKey = $zipKind.'|'.$innerCsv.'|'.$tipo;
         if (isset(self::$indexCache[$cacheKey])) {
+            $this->logStep($log, __('   Índice :tipo já em memória (sessão).', ['tipo' => $tipo]));
+
             return self::$indexCache[$cacheKey];
         }
 
-        $zipMeta = $this->ensureZip($zipKind);
+        $zipMeta = $this->ensureZip($zipKind, $log);
         $path = $zipMeta['path'] ?? null;
         if (! is_string($path) || ! is_readable($path)) {
+            $this->logStep($log, __('   ZIP :kind indisponível.', ['kind' => $zipKind]));
+
             return self::$indexCache[$cacheKey] = [];
         }
 
+        $this->logStep($log, __('   A indexar CSV :csv dentro do ZIP…', ['csv' => $innerCsv]));
+
         $zip = new ZipArchive;
         if ($zip->open($path) !== true) {
+            $this->logStep($log, __('   Não foi possível abrir o ZIP.'));
+
             return [];
         }
 
@@ -173,6 +203,9 @@ final class CadunicoIbgeCensoAgregadosCache
 
         fclose($stream);
         $zip->close();
+
+        $munCount = count($index);
+        $this->logStep($log, __('   Índice :tipo: :mun município(s) no Brasil.', ['tipo' => $tipo, 'mun' => $munCount]));
 
         return self::$indexCache[$cacheKey] = $index;
     }
@@ -269,5 +302,15 @@ final class CadunicoIbgeCensoAgregadosCache
         }
 
         return $line;
+    }
+
+    /**
+     * @param  (callable(string): void)|null  $log
+     */
+    private function logStep(?callable $log, string $message): void
+    {
+        if ($log !== null) {
+            $log($message);
+        }
     }
 }

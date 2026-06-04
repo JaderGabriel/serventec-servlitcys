@@ -23,12 +23,22 @@ final class CadunicoTerritorioOfficialImportService
     ) {}
 
     /**
+     * @param  (callable(string): void)|null  $log  Mensagens de progresso (CLI)
      * @return array{success: bool, imported: int, message: string, fonte: string}
      */
-    public function importForCity(City $city, int $ano): array
+    public function importForCity(City $city, int $ano, ?callable $log = null): array
     {
+        $step = static function (string $message) use ($log): void {
+            if ($log !== null) {
+                $log($message);
+            }
+        };
+
+        $step(__('1/5 — Código IBGE do município…'));
         $ibge = FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio);
         if ($ibge === null) {
+            $step(__('   Falha: município sem IBGE cadastrado.'));
+
             return [
                 'success' => false,
                 'imported' => 0,
@@ -36,9 +46,16 @@ final class CadunicoTerritorioOfficialImportService
                 'fonte' => '',
             ];
         }
+        $step(__('   IBGE :ibge', ['ibge' => $ibge]));
 
+        $step(__('2/5 — Snapshot CadÚnico municipal (ano :ano)…', ['ano' => $ano]));
         $cadRow = $this->cadunicoSnapshots->findForCityYear($city, $ano);
         if ($cadRow === null) {
+            $step(__('   Falha: execute antes `php artisan cadunico:sync-city :id --ano=:ano`.', [
+                'id' => $city->id,
+                'ano' => $ano,
+            ]));
+
             return [
                 'success' => false,
                 'imported' => 0,
@@ -49,6 +66,8 @@ final class CadunicoTerritorioOfficialImportService
 
         $cadTotal = $cadRow->totalCriancasEscolaridade();
         if ($cadTotal <= 0) {
+            $step(__('   Falha: snapshot sem crianças 4–17.'));
+
             return [
                 'success' => false,
                 'imported' => 0,
@@ -56,9 +75,13 @@ final class CadunicoTerritorioOfficialImportService
                 'fonte' => '',
             ];
         }
+        $step(__('   :n criança(s) 4–17 no agregado municipal (base do rateio).', ['n' => number_format($cadTotal, 0, ',', '.')]));
 
-        $territorios = $this->agregados->territoriosForMunicipio($ibge);
+        $step(__('3/5 — Agregados oficiais Censo 2022 (IBGE FTP / cache local)…'));
+        $territorios = $this->agregados->territoriosForMunicipio($ibge, $step);
         if ($territorios === []) {
+            $step(__('   Falha: nenhum bairro/setor no Censo para este município.'));
+
             return [
                 'success' => false,
                 'imported' => 0,
@@ -68,7 +91,21 @@ final class CadunicoTerritorioOfficialImportService
         }
 
         $tipo = $territorios[0]['tipo'] ?? 'setor';
-        $centroids = $this->wfs->centroidsByCodigo($ibge, $tipo);
+        $popCenso = array_sum(array_column($territorios, 'populacao'));
+        $step(__('   :n :tipo(s); população Censo (v0001) somada: :pop.', [
+            'n' => count($territorios),
+            'tipo' => $tipo,
+            'pop' => number_format($popCenso, 0, ',', '.'),
+        ]));
+
+        $step(__('4/5 — Malha geográfica IBGE (WFS — centroides por :tipo)…', ['tipo' => $tipo]));
+        $centroids = $this->wfs->centroidsByCodigo($ibge, $tipo, $step);
+        $step(__('   :n coordenada(s) obtida(s) de :total território(s).', [
+            'n' => count($centroids),
+            'total' => count($territorios),
+        ]));
+
+        $step(__('5/5 — Rateio proporcional CadÚnico → territórios e gravação…'));
         $popSum = max(1, array_sum(array_column($territorios, 'populacao')));
         $vulnPct = $this->municipalVulnerabilidadePct($cadRow);
 
@@ -110,6 +147,10 @@ final class CadunicoTerritorioOfficialImportService
                 ],
             ]);
             $imported++;
+        }
+
+        if ($imported > 0) {
+            $step(__('   :n registo(s) em cadunico_territorio_snapshots (fonte ibge_censo_2022_wfs).', ['n' => $imported]));
         }
 
         return [

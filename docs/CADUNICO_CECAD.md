@@ -40,7 +40,11 @@ php artisan cadunico:sync-city {city_id} --ano=2024
 php artisan cadunico:sync-city --all --ano=2024
 php artisan cadunico:import-cecad /caminho/arquivo.csv --ano=2024
 php artisan cadunico:import-territorio storage/app/cadunico/territorio/arquivo.csv --ano=2024 --city={city_id}
+php artisan cadunico:pull-territorio {city_id} --ano=2024   # download URL (.env) + import
+php artisan cadunico:pull-territorio --all --ano=2024
 ```
+
+CSV territorial em produção: variável `IEDUCAR_CADUNICO_TERRITORIO_CSV_URL` — ver [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md).
 
 CSV com delimitador `;`. Colunas: `codigo_ibge`, `ano`, faixas etárias e `populacao_escolar` (ver `config/ieducar.php` → `cadunico.cecad.column_map`).
 

@@ -295,8 +295,11 @@ Requer `unrar` ou `p7zip` no servidor para o RAR de 2023. URLs em `saeb.planilha
 | `IEDUCAR_CADUNICO_SCHEDULE_ENABLED` | `true` | Cron semanal (`cadunico:auto-sync --queue`) |
 | `IEDUCAR_CADUNICO_API_URL_TEMPLATE` | — | Lacuna por município: `{ibge}`, `{ano}` |
 | `IEDUCAR_CADUNICO_MUNICIPAL_CSV_URL` | — | CSV municipal alternativo |
+| `IEDUCAR_CADUNICO_TERRITORIO_CSV_URL` | — | CSV bairro/setor/CRAS: `{ibge}`, `{ano}`, `{city_id}` — `cadunico:pull-territorio` |
+| `IEDUCAR_CADUNICO_TERRITORIO_CSV_CACHE_DAYS` | `7` | Reutilizar ficheiro em `storage/app/cadunico/territorio/` sem novo HTTP |
+| `IEDUCAR_CADUNICO_TERRITORIO_CSV_TIMEOUT` | `120` | Timeout do download territorial (segundos) |
 
-Detalhe: [CADUNICO_AUTOMACAO.md](CADUNICO_AUTOMACAO.md), [CADUNICO_CECAD.md](CADUNICO_CECAD.md). Admin: `/admin/cadunico-sync`.
+Detalhe: [CADUNICO_AUTOMACAO.md](CADUNICO_AUTOMACAO.md), [CADUNICO_CECAD.md](CADUNICO_CECAD.md), [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md). Admin: `/admin/cadunico-sync`.
 
 ---
 

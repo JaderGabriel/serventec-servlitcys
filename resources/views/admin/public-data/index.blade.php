@@ -1,3 +1,5 @@
+@use('App\Support\Admin\AdminImportHubCatalog')
+
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col gap-1">
@@ -11,8 +13,6 @@
     </x-slot>
 
     @php
-        use App\Support\Admin\AdminImportHubCatalog;
-
         $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm';
         $statusLevelClass = AdminImportHubCatalog::statusBadgeClasses();
         $fundeb = $snapshot['fundeb'] ?? [];

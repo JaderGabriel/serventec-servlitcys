@@ -1429,6 +1429,13 @@ return [
         'territorio' => [
             'delimiter' => env('IEDUCAR_CADUNICO_TERRITORIO_DELIMITER', ';'),
             'storage_path' => (string) env('IEDUCAR_CADUNICO_TERRITORIO_PATH', 'cadunico/territorio'),
+            /**
+             * URL do CSV territorial municipal (produção). Placeholders: {ibge}, {ano}, {city_id}, {city}.
+             * Ex.: https://dados.prefeitura.gov.br/cadunico/territorio_{ibge}_{ano}.csv
+             */
+            'csv_url_template' => (string) env('IEDUCAR_CADUNICO_TERRITORIO_CSV_URL', ''),
+            'csv_cache_days' => max(1, (int) env('IEDUCAR_CADUNICO_TERRITORIO_CSV_CACHE_DAYS', 7)),
+            'csv_http_timeout' => max(10, (int) env('IEDUCAR_CADUNICO_TERRITORIO_CSV_TIMEOUT', 120)),
             'load_school_markers' => filter_var(env('IEDUCAR_CADUNICO_TERRITORIO_SCHOOL_MARKERS', true), FILTER_VALIDATE_BOOL),
             'ibge_censo' => [
                 'cache_days' => max(7, (int) env('IEDUCAR_CADUNICO_TERRITORIO_IBGE_CACHE_DAYS', 90)),

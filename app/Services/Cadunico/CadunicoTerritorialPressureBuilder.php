@@ -42,7 +42,7 @@ final class CadunicoTerritorialPressureBuilder
                 'school_markers' => $schoolMarkers,
                 'territorios_count' => 0,
                 'schools_on_map' => count($schoolMarkers),
-                'nota' => __('Importe agregados por bairro, setor censitário ou território CRAS (CSV) em Admin → CadÚnico ou `cadunico:import-territorio`.'),
+                'nota' => __('Importe agregados por bairro, setor censitário ou território CRAS: Admin → CadÚnico, `cadunico:pull-territorio` (URL) ou `cadunico:import-territorio` (ficheiro local).'),
             ];
         }
 

@@ -114,9 +114,38 @@ ZIPs em cache: `storage/app/cadunico/territorio/ibge-cache/` (renováveis a cada
 
 ### Import CSV territorial (municipal / CRAS)
 
-Quando o município dispuser de agregados próprios (secretaria social, CRAS), use CSV manual:
+Quando o município dispuser de agregados próprios (secretaria social, CRAS), use CSV manual ou **pull automático em produção**.
 
 **Admin:** `/admin/cadunico-sync` → formulário «CSV territorial (bairro/setor)».
+
+#### Produção — download + import (recomendado com URL fixa)
+
+Configure no `.env` a URL pública do CSV (placeholders `{ibge}`, `{ano}`, `{city_id}`, `{city}`):
+
+```env
+IEDUCAR_CADUNICO_TERRITORIO_CSV_URL=https://dados.exemplo.gov.br/cadunico/territorio_{ibge}_{ano}.csv
+IEDUCAR_CADUNICO_TERRITORIO_CSV_CACHE_DAYS=7
+IEDUCAR_CADUNICO_TERRITORIO_CSV_TIMEOUT=120
+```
+
+```bash
+# Um município
+php artisan cadunico:pull-territorio 1 --ano=2025
+
+# Todos os municípios com analytics (cron)
+php artisan cadunico:pull-territorio --all --ano=2025
+
+# Forçar novo download; só gravar ficheiro sem importar
+php artisan cadunico:pull-territorio 1 --ano=2025 --force
+php artisan cadunico:pull-territorio 1 --ano=2025 --download-only
+
+# URL pontual (ignora .env)
+php artisan cadunico:pull-territorio 1 --ano=2025 --url='https://.../territorio_{ibge}_{ano}.csv'
+```
+
+O ficheiro fica em `storage/app/cadunico/territorio/territorio_{ibge}_{ano}.csv` (mesmo padrão do upload admin). Depois importa para `cadunico_territorio_snapshots`.
+
+#### Ficheiro já no servidor
 
 ```bash
 php artisan cadunico:import-territorio storage/app/cadunico/territorio/territorio_2910800_2024.csv --ano=2024 --city=1

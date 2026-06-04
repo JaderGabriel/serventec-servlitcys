@@ -13,7 +13,11 @@ final class CadunicoIbgeMalhaWfsClient
     /**
      * @return array<string, array{lat: float, lng: float}>
      */
-    public function centroidsByCodigo(string $ibge, string $tipo): array
+    /**
+     * @param  (callable(string): void)|null  $log
+     * @return array<string, array{lat: float, lng: float}>
+     */
+    public function centroidsByCodigo(string $ibge, string $tipo, ?callable $log = null): array
     {
         $cfg = config('ieducar.cadunico.territorio.ibge_wfs', []);
         $base = rtrim((string) ($cfg['base_url'] ?? 'https://geoservicos.ibge.gov.br/geoserver/CGMAT/wfs'), '/');
@@ -23,11 +27,18 @@ final class CadunicoIbgeMalhaWfsClient
         $codigoField = $tipo === 'bairro' ? 'cd_bairro' : 'cd_setor';
 
         if (! SafeOutboundUrl::isAllowedHttpUrl($base)) {
+            self::logStep($log, __('   WFS: URL não permitida pela política de saída.'));
+
             return [];
         }
 
         $timeout = max(15, (int) ($cfg['timeout'] ?? 60));
         $out = [];
+
+        self::logStep($log, __('   WFS GetFeature — camada :layer (cd_mun=:ibge)…', [
+            'layer' => $typeName,
+            'ibge' => $ibge,
+        ]));
 
         try {
             $response = Http::timeout($timeout)->get($base, [
@@ -40,11 +51,15 @@ final class CadunicoIbgeMalhaWfsClient
                 'propertyName' => $codigoField.',geom',
                 'maxFeatures' => max(50, min(2000, (int) ($cfg['max_features'] ?? 1500))),
             ]);
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            self::logStep($log, __('   WFS indisponível: :msg', ['msg' => $e->getMessage()]));
+
             return [];
         }
 
         if (! $response->successful()) {
+            self::logStep($log, __('   WFS HTTP :status (mapa pode ficar sem coordenadas).', ['status' => (string) $response->status()]));
+
             return [];
         }
 
@@ -133,6 +148,16 @@ final class CadunicoIbgeMalhaWfsClient
                 }
                 self::collectPoints(['type' => 'Polygon', 'coordinates' => $poly], $points);
             }
+        }
+    }
+
+    /**
+     * @param  (callable(string): void)|null  $log
+     */
+    private static function logStep(?callable $log, string $message): void
+    {
+        if ($log !== null) {
+            $log($message);
         }
     }
 }

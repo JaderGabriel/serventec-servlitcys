@@ -225,6 +225,20 @@ final class ArtisanCommandsCatalog
                         'env' => ['IEDUCAR_CADUNICO_MISOGIAL_ENABLED'],
                         'doc_anchor' => 'cadunico',
                     ],
+                    [
+                        'name' => 'cadunico:pull-territorio',
+                        'summary' => __('Download URL + import CSV territorial (produção).'),
+                        'signature' => 'cadunico:pull-territorio {city?} {--ano=} {--all} {--url=} {--force} {--download-only}',
+                        'examples' => [
+                            'php artisan cadunico:pull-territorio 1 --ano=2025',
+                            'php artisan cadunico:pull-territorio --all --ano=2025',
+                        ],
+                        'env' => [
+                            'IEDUCAR_CADUNICO_TERRITORIO_CSV_URL',
+                            'IEDUCAR_CADUNICO_TERRITORIO_CSV_CACHE_DAYS',
+                        ],
+                        'doc_anchor' => 'cadunico',
+                    ],
                 ],
             ],
             [
