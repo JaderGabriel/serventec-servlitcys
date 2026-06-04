@@ -24,8 +24,8 @@ return [
     'product' => [
         'version' => '4.0.0',
         'release_tag' => '20260604-Hestia',
-        'commit_short' => 'pending',
-        'commit_number' => 283,
+        'commit_short' => 'a7bc5fd',
+        'commit_number' => 286,
         'revision_date' => '2026-06-04',
         'in_production' => true,
         'production_label' => 'Em produção',
