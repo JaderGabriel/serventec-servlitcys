@@ -5,6 +5,7 @@ namespace App\Services\Funding;
 use App\Models\City;
 use App\Models\MunicipalTransferSnapshot;
 use App\Repositories\MunicipalTransferSnapshotRepository;
+use App\Support\Funding\MunicipalTransferGranularityEnricher;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -18,6 +19,7 @@ final class MunicipalTransferImportService
         private TesouroFundebPublicacaoService $tesouroPublicacao,
         private SiswebFundebRepassesService $siswebFundeb,
         private BbFundebExtratoService $bbExtrato,
+        private MunicipalTransferGranularityEnricher $granularityEnricher,
     ) {}
 
     /**
@@ -103,6 +105,8 @@ final class MunicipalTransferImportService
                 $allRows = array_merge($allRows, $extra);
             }
         }
+
+        $allRows = $this->granularityEnricher->enrichRows($allRows, $year);
 
         $municipalRows = $this->countMunicipalRows($allRows);
         $written = $this->snapshots->upsertBatch($city, $allRows, $importedAt);
@@ -353,14 +357,73 @@ final class MunicipalTransferImportService
                     'programa_id' => $programaId,
                     'programa_label' => $this->programLabel($programaId),
                     'valor' => 0.0,
-                    'meta' => ['registros' => 0],
+                    'meta' => ['registros' => 0, 'repasses' => []],
                 ];
             }
+            $parsedDate = $this->parsePortalTransferDate($item, $year);
+            $repasse = [
+                'valor' => round((float) $valor, 2),
+                'granularity' => $parsedDate['granularity'],
+                'label' => mb_substr(trim((string) ($item['descricao'] ?? $item['nomePrograma'] ?? $item['acao'] ?? 'Transferência')), 0, 120),
+            ];
+            if ($parsedDate['data'] !== null) {
+                $repasse['data'] = $parsedDate['data'];
+            }
+            if ($parsedDate['mes'] !== null) {
+                $repasse['mes'] = $parsedDate['mes'];
+            }
+            if ($parsedDate['ano'] !== null) {
+                $repasse['ano'] = $parsedDate['ano'];
+            }
+            $aggregated[$programaId]['meta']['repasses'][] = $repasse;
             $aggregated[$programaId]['valor'] += (float) $valor;
             $aggregated[$programaId]['meta']['registros']++;
         }
 
         return array_values($aggregated);
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     * @return array{data: ?string, mes: ?int, ano: ?int, granularity: string}
+     */
+    private function parsePortalTransferDate(array $item, int $defaultYear): array
+    {
+        foreach (['data', 'dataTransferencia', 'dataRepasse', 'dataPagamento'] as $key) {
+            $raw = trim((string) ($item[$key] ?? ''));
+            if ($raw === '') {
+                continue;
+            }
+            if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $raw, $m) === 1) {
+                return [
+                    'data' => sprintf('%02d/%02d/%04d', (int) $m[1], (int) $m[2], (int) $m[3]),
+                    'mes' => (int) $m[2],
+                    'ano' => (int) $m[3],
+                    'granularity' => 'day',
+                ];
+            }
+            if (preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $raw, $m) === 1) {
+                return [
+                    'data' => sprintf('%02d/%02d/%04d', (int) $m[3], (int) $m[2], (int) $m[1]),
+                    'mes' => (int) $m[2],
+                    'ano' => (int) $m[1],
+                    'granularity' => 'day',
+                ];
+            }
+        }
+
+        $mes = isset($item['mes']) && is_numeric($item['mes']) ? (int) $item['mes'] : null;
+        $ano = isset($item['ano']) && is_numeric($item['ano']) ? (int) $item['ano'] : $defaultYear;
+        if ($mes !== null && $mes >= 1 && $mes <= 12) {
+            return [
+                'data' => null,
+                'mes' => $mes,
+                'ano' => $ano,
+                'granularity' => 'month',
+            ];
+        }
+
+        return ['data' => null, 'mes' => null, 'ano' => null, 'granularity' => 'month'];
     }
 
     /**

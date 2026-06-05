@@ -169,6 +169,7 @@ final class FundebExtratoVisualBuilder
                 $fonte,
                 [
                     'date_note' => $credit['date_source'] ?? null,
+                    'granularity' => $credit['granularity'] ?? null,
                     'import_reference' => $credit['import_reference'] ?? null,
                 ],
             );
@@ -397,6 +398,7 @@ final class FundebExtratoVisualBuilder
                     'valor' => $valor,
                     'description' => $descBase.($historico !== '' ? ' — '.$historico : ''),
                     'date_source' => 'extrato',
+                    'granularity' => 'day',
                     'import_reference' => $importReference,
                 ];
             }
@@ -421,20 +423,8 @@ final class FundebExtratoVisualBuilder
                 if ($month < 1 || $month > 12 || $valor <= 0) {
                     continue;
                 }
-                $date = $this->repasseDisplayDateForMonth($filterYear, $month);
-                $out[] = [
-                    'sort_key' => sprintf('%04d-%02d-99', $filterYear, $month),
-                    'date' => $date ?? '—',
-                    'year' => $filterYear,
-                    'month' => $month,
-                    'valor' => $valor,
-                    'description' => $descBase.' — '.__('Repasse ref. :mes/:ano', [
-                        'mes' => $this->monthName($month),
-                        'ano' => (string) $filterYear,
-                    ]),
-                    'date_source' => $date !== null ? 'fim_mes' : 'competencia',
-                    'import_reference' => $importReference,
-                ];
+                $credit = $this->creditFromMonthlyAmount($filterYear, $month, $valor, $descBase, $importReference);
+                $out[] = $credit;
             }
 
             return $out;
@@ -460,10 +450,43 @@ final class FundebExtratoVisualBuilder
                 'ano' => (string) $filterYear,
             ]),
             'date_source' => $eventDate !== null ? 'repasse' : 'sem_data_repasse',
+            'granularity' => $eventDate !== null ? 'day' : 'none',
             'import_reference' => $importReference,
         ];
 
         return $out;
+    }
+
+    /**
+     * @return array{sort_key: string, date: string, year: int, month: int, valor: float, description: string, date_source: string, granularity: string, import_reference: ?string}
+     */
+    private function creditFromMonthlyAmount(
+        int $year,
+        int $month,
+        float $valor,
+        string $description,
+        ?string $importReference,
+        bool $appendPeriodToDesc = true,
+    ): array {
+        $endDate = $this->repasseDisplayDateForMonth($year, $month);
+        $desc = $appendPeriodToDesc && ! str_contains($description, '/'.$year)
+            ? $description.' — '.__('Repasse ref. :mes/:ano', [
+                'mes' => $this->monthName($month),
+                'ano' => (string) $year,
+            ])
+            : $description;
+
+        return [
+            'sort_key' => sprintf('%04d-%02d-%02d', $year, $month, $endDate !== null ? 28 : 99),
+            'date' => $endDate ?? $this->monthPeriodLabel($year, $month),
+            'year' => $year,
+            'month' => $month,
+            'valor' => $valor,
+            'description' => $desc,
+            'date_source' => $endDate !== null ? 'fim_mes' : 'competencia_mensal',
+            'granularity' => $endDate !== null ? 'day' : 'month',
+            'import_reference' => $importReference,
+        ];
     }
 
     /**
@@ -494,30 +517,37 @@ final class FundebExtratoVisualBuilder
                 $date = trim((string) ($item['data'] ?? $item['date'] ?? $item['data_pagamento'] ?? $item['data_repasse'] ?? ''));
                 $month = isset($item['mes']) && is_numeric($item['mes']) ? (int) $item['mes'] : 0;
                 $year = isset($item['ano']) && is_numeric($item['ano']) ? (int) $item['ano'] : $filterYear;
-                if ($date === '' && $month >= 1 && $month <= 12) {
-                    $date = $this->repasseDisplayDateForMonth($year, $month) ?? '';
-                }
-                if ($date === '') {
-                    continue;
-                }
-                $parsed = $this->parseSortKeyFromBrDate($date);
-                if ($parsed === null) {
-                    continue;
-                }
-                if ($parsed['year'] !== $filterYear && $year !== $filterYear) {
-                    continue;
-                }
                 $label = trim((string) ($item['historico'] ?? $item['description'] ?? $item['label'] ?? ''));
-                $out[] = [
-                    'sort_key' => $parsed['sort_key'],
-                    'date' => $parsed['date'],
-                    'year' => $parsed['year'],
-                    'month' => $parsed['month'],
-                    'valor' => $valor,
-                    'description' => $descBase.($label !== '' ? ' — '.$label : ''),
-                    'date_source' => 'repasse',
-                    'import_reference' => $importReference,
-                ];
+                $lineDesc = $descBase.($label !== '' ? ' — '.$label : '');
+
+                if ($date !== '') {
+                    $parsed = $this->parseSortKeyFromBrDate($date);
+                    if ($parsed === null) {
+                        continue;
+                    }
+                    if ($parsed['year'] !== $filterYear && $year !== $filterYear) {
+                        continue;
+                    }
+                    $out[] = [
+                        'sort_key' => $parsed['sort_key'],
+                        'date' => $parsed['date'],
+                        'year' => $parsed['year'],
+                        'month' => $parsed['month'],
+                        'valor' => $valor,
+                        'description' => $lineDesc,
+                        'date_source' => 'repasse',
+                        'granularity' => 'day',
+                        'import_reference' => $importReference,
+                    ];
+
+                    continue;
+                }
+
+                if ($month >= 1 && $month <= 12 && $year === $filterYear) {
+                    $out[] = $this->creditFromMonthlyAmount($year, $month, $valor, $lineDesc, $importReference, false);
+
+                    continue;
+                }
             }
         }
 
@@ -788,6 +818,11 @@ final class FundebExtratoVisualBuilder
         }
 
         return false;
+    }
+
+    private function monthPeriodLabel(int $year, int $month): string
+    {
+        return sprintf('%02d/%04d', max(1, min(12, $month)), $year);
     }
 
     /**

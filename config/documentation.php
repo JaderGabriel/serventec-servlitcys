@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '4.1.2',
-        'release_tag' => '20260605-Eunomia',
-        'commit_short' => '7da5a67',
-        'commit_number' => 293,
-        'revision_date' => '2026-06-05',
+        'version' => '4.1.3',
+        'release_tag' => '20260603-Chronos',
+        'commit_short' => '397e16f',
+        'commit_number' => 294,
+        'revision_date' => '2026-06-03',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

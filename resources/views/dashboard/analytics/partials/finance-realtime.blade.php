@@ -219,16 +219,21 @@
                                                 {{ $line['date'] ?? '—' }}
                                                 @if (filled($line['date_note'] ?? null) && $lineType === 'credit')
                                                     <span class="block text-[9px] font-normal text-slate-500 dark:text-slate-400" title="{{ __('Origem da data do repasse') }}">
+                                                        @if (($line['granularity'] ?? '') === 'month')
+                                                            {{ __('granularidade: mês (STN/CKAN)') }}
+                                                        @elseif (($line['granularity'] ?? '') === 'day')
+                                                            {{ __('granularidade: dia (crédito)') }}
+                                                        @endif
                                                         @if ($line['date_note'] === 'fim_mes')
-                                                            {{ __('data ref. competência') }}
+                                                            <span class="block">{{ __('último dia do mês de competência') }}</span>
                                                         @elseif ($line['date_note'] === 'extrato')
-                                                            {{ __('data do extrato') }}
+                                                            <span class="block">{{ __('data do extrato bancário') }}</span>
                                                         @elseif ($line['date_note'] === 'repasse')
-                                                            {{ __('data do repasse') }}
-                                                        @elseif ($line['date_note'] === 'competencia')
-                                                            {{ __('competência — data do pagamento não informada') }}
+                                                            <span class="block">{{ __('data do repasse') }}</span>
+                                                        @elseif ($line['date_note'] === 'competencia_mensal')
+                                                            <span class="block">{{ __('competência mensal — sem dia na fonte') }}</span>
                                                         @elseif ($line['date_note'] === 'sem_data_repasse')
-                                                            {{ __('sem data na fonte — só total importado') }}
+                                                            <span class="block">{{ __('sem data na fonte — só total importado') }}</span>
                                                         @endif
                                                     </span>
                                                 @endif

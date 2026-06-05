@@ -77,6 +77,7 @@ final class MunicipalTransferImportServiceTest extends TestCase
             new TesouroFundebPublicacaoService,
             new SiswebFundebRepassesService($tesouroCsv),
             new BbFundebExtratoService(new BbExtratoCsvFetcher),
+            new \App\Support\Funding\MunicipalTransferGranularityEnricher($tesouroCsv),
         );
 
         $result = $service->importForCityYear($city, 2025);

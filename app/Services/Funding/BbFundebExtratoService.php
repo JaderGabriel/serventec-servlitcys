@@ -136,6 +136,9 @@ final class BbFundebExtratoService
                 if (is_string($last)) {
                     $val = $this->parseBrNumber($last);
                     if ($val !== null && $val > 0) {
+                        if ($date === null) {
+                            continue;
+                        }
                         $total += $val;
                         $matched = true;
                         $historico = trim(preg_replace('/\b\d{2}\/\d{2}\/\d{4}\b/', '', $line) ?? $line);
@@ -145,7 +148,7 @@ final class BbFundebExtratoService
                             $historico = __('Crédito FUNDEB/FNDE');
                         }
                         $lancamentos[] = [
-                            'data' => $date ?? sprintf('31/12/%d', $year),
+                            'data' => $date,
                             'valor' => round($val, 2),
                             'historico' => mb_substr($historico, 0, 120),
                         ];

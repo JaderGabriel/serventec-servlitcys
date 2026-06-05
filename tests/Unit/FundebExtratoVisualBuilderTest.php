@@ -159,4 +159,59 @@ final class FundebExtratoVisualBuilderTest extends TestCase
         $this->assertStringContainsString('não informou datas por repasse', (string) ($credit['description'] ?? ''));
         $this->assertSame('05/06/2026 09:41', $credit['import_reference'] ?? null);
     }
+
+    #[Test]
+    public function repasse_mensal_futuro_exibe_competencia_mm_aaaa(): void
+    {
+        $city = new City(['name' => 'Teste', 'uf' => 'BA', 'ibge_municipio' => '2911105']);
+
+        $csv = new MunicipalTransferSnapshot([
+            'programa_id' => 'fundeb',
+            'programa_label' => 'FUNDEB',
+            'fonte' => 'tesouro_csv',
+            'valor' => 500.0,
+            'meta' => json_encode([
+                'mensal' => ['6' => 500.0],
+                'repasses' => [
+                    ['mes' => 6, 'ano' => 2026, 'valor' => 500.0, 'granularity' => 'month'],
+                ],
+            ]),
+        ]);
+
+        $result = (new FundebExtratoVisualBuilder)->build([$csv], $city, 2026, 0.0);
+        $credit = collect($result['cycles'][0]['lines'] ?? [])
+            ->first(static fn (array $l): bool => ($l['line_type'] ?? '') === 'credit');
+
+        $this->assertNotNull($credit);
+        $this->assertSame('06/2026', $credit['date'] ?? null);
+        $this->assertSame('month', $credit['granularity'] ?? null);
+        $this->assertSame('competencia_mensal', $credit['date_note'] ?? null);
+    }
+
+    #[Test]
+    public function lancamento_bb_marca_granularidade_diaria(): void
+    {
+        $city = new City(['name' => 'Teste', 'uf' => 'BA', 'ibge_municipio' => '2911105']);
+
+        $bb = new MunicipalTransferSnapshot([
+            'programa_id' => 'fundeb',
+            'programa_label' => 'FUNDEB BB',
+            'fonte' => 'bb_extrato',
+            'valor' => 50.0,
+            'meta' => json_encode([
+                'lancamentos' => [
+                    ['data' => '15/03/2025', 'valor' => 50.0, 'historico' => 'CRED FUNDEB'],
+                ],
+            ]),
+        ]);
+
+        $result = (new FundebExtratoVisualBuilder)->build([$bb], $city, 2025, 0.0);
+        $credit = collect($result['cycles'][0]['lines'] ?? [])
+            ->first(static fn (array $l): bool => ($l['line_type'] ?? '') === 'credit');
+
+        $this->assertNotNull($credit);
+        $this->assertSame('15/03/2025', $credit['date'] ?? null);
+        $this->assertSame('day', $credit['granularity'] ?? null);
+        $this->assertSame('extrato', $credit['date_note'] ?? null);
+    }
 }
