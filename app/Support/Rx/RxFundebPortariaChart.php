@@ -208,6 +208,7 @@ final class RxFundebPortariaChart
         $chart['options'] = array_merge($chart['options'] ?? [], [
             'valueFormat' => 'brl_millions',
             'datalabelsMode' => 'tooltip_only',
+            'tooltipFriendly' => true,
             'panelHeight' => $panelHeight,
             'layout' => [
                 'padding' => [

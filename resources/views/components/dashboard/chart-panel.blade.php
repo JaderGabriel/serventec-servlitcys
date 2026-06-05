@@ -127,8 +127,10 @@
             class="border-b px-3 py-2.5 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 {{ $zoomBarClass }}"
         >
             <p class="text-[11px] leading-snug text-center sm:text-left sm:flex-1 sm:min-w-0 {{ $zoomHelpTextClass }}">
-                <span class="sm:hidden">{{ __('Pinça com dois dedos para ampliar ou reduzir. Arraste para mover. No computador: Ctrl + roda do rato para zoom.') }}</span>
-                <span class="hidden sm:inline">{{ __('Pinça para zoom · arrastar para mover · Ctrl + roda para zoom (computador).') }}</span>
+                <span class="sm:hidden" x-show="!tooltipHoverMode" x-cloak>{{ __('Pinça com dois dedos para ampliar ou reduzir. Arraste para mover. No computador: Ctrl + roda do rato para zoom.') }}</span>
+                <span class="sm:hidden" x-show="tooltipHoverMode" x-cloak>{{ __('Toque nas barras para ver valores. Pinça para zoom; no computador: Ctrl + roda.') }}</span>
+                <span class="hidden sm:inline" x-show="!tooltipHoverMode" x-cloak>{{ __('Pinça para zoom · arrastar para mover · Ctrl + roda para zoom (computador).') }}</span>
+                <span class="hidden sm:inline" x-show="tooltipHoverMode" x-cloak>{{ __('Passe o rato sobre as barras para ver valores · Shift+arrastar para mover · Ctrl+roda para zoom.') }}</span>
             </p>
             <div class="flex flex-wrap items-center justify-center gap-2 sm:justify-end shrink-0">
                 <button
@@ -166,7 +168,7 @@
 
         <div
             class="relative z-0 isolate p-2 sm:p-4 w-full overflow-x-auto transition-[min-height] duration-200 ease-out"
-            :class="[panelBodyClass, zoomUi ? 'touch-none' : '']"
+            :class="[panelBodyClass, zoomUi && !tooltipHoverMode ? 'touch-none' : '']"
             :style="panelBodyStyle || null"
         >
             <canvas

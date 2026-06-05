@@ -64,7 +64,7 @@ function shallowMergeZoom(base, user) {
 /**
  * Junta zoom e anotações opcionais do servidor (sem média automática).
  */
-export function mergeAnnotationAndZoomPlugins(mergedPlugins, payload, _extra) {
+export function mergeAnnotationAndZoomPlugins(mergedPlugins, payload, extra) {
     const type = payload?.type;
     const cartesian =
         type === "bar" || type === "line" || type === "scatter";
@@ -86,7 +86,16 @@ export function mergeAnnotationAndZoomPlugins(mergedPlugins, payload, _extra) {
         annotations: mergedAnnotations,
     };
 
-    const z0 = defaultZoomPluginOptions();
+    let z0 = defaultZoomPluginOptions();
+    if (extra?.tooltipFriendly === true) {
+        z0 = {
+            ...z0,
+            pan: {
+                ...z0.pan,
+                modifierKey: "shift",
+            },
+        };
+    }
     mergedPlugins.zoom = shallowMergeZoom(z0, mergedPlugins.zoom);
 
     return mergedPlugins;

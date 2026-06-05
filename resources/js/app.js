@@ -791,17 +791,38 @@ document.addEventListener("alpine:init", () => {
         };
         mergedPlugins.tooltip = {
             ...(mergedPlugins.tooltip || {}),
+            enabled: true,
+            ...(tooltipOnly
+                ? {
+                      mode: "index",
+                      intersect: false,
+                      position: "nearest",
+                  }
+                : {}),
             titleFont: chartLabelFont(13, "600"),
             bodyFont: chartLabelFont(12),
             footerFont: chartLabelFont(12, "600"),
             callbacks: {
                 ...(mergedPlugins.tooltip?.callbacks || {}),
+                ...(tooltipOnly
+                    ? {
+                          filter: (item) => {
+                              const raw =
+                                  item.raw ??
+                                  item.parsed?.y ??
+                                  item.parsed?.x;
+                              const n = Number(raw);
+
+                              return Number.isFinite(n) && n > 0;
+                          },
+                      }
+                    : {}),
                 label: (context) => {
                     const label = context.dataset?.label || "";
                     const raw =
+                        context.raw ??
                         context.parsed?.y ??
-                        context.parsed?.x ??
-                        context.raw;
+                        context.parsed?.x;
                     const n = Number(raw);
                     if (
                         tooltipOnly &&
@@ -884,6 +905,8 @@ document.addEventListener("alpine:init", () => {
             _visibleDatasetIndices: [],
             /** Estilo dinâmico (min-height) para barras horizontais. */
             panelBodyStyle: "",
+            /** Pan/zoom não bloqueia hover nem toque para tooltip (gráficos só-leitura no hover). */
+            tooltipHoverMode: false,
             init() {
                 if (!payload?.labels?.length || !payload?.datasets?.length) {
                     return;
@@ -892,6 +915,9 @@ document.addEventListener("alpine:init", () => {
                     payload.options && typeof payload.options === "object"
                         ? payload.options
                         : {};
+                this.tooltipHoverMode =
+                    extraEarly.datalabelsMode === "tooltip_only" ||
+                    extraEarly.tooltipFriendly === true;
                 const isGaugeEarly =
                     payload.type === "doughnut" &&
                     Number(extraEarly.circumference) === 180 &&
