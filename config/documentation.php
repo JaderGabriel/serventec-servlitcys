@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '4.2.0',
         'release_tag' => '20260610-Clio',
-        'commit_short' => '',
+        'commit_short' => 'b0cd61f',
         'commit_number' => 319,
         'revision_date' => '2026-06-10',
         'in_production' => true,
