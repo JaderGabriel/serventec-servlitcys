@@ -36,6 +36,6 @@ class ImportMunicipalTransfersJob implements ShouldQueue
     {
         $city = City::query()->findOrFail($this->cityId);
 
-        return $import->importForCityYear($city, $this->ano);
+        return $import->importForCityYear($city, $this->ano, financeRealtimeRebuild: true);
     }
 }

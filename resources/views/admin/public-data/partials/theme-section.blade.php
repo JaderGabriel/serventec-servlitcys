@@ -50,7 +50,7 @@
                             action="{{ route('admin.public-data.run') }}"
                             :title="$action['label']"
                             :hint="$action['hint'] ?? null"
-                            :variant="in_array($action['key'], ['auto_sync', 'weekly_mass_sync'], true) ? 'primary' : 'default'"
+                            :variant="in_array($action['key'], ['auto_sync', 'weekly_mass_sync', 'rebuild_finance_realtime_city_year', 'rebuild_finance_realtime_all_cities'], true) ? 'primary' : 'default'"
                         >
                             @csrf
                             <input type="hidden" name="source_id" value="{{ $source['id'] }}">
@@ -59,7 +59,7 @@
                                 @if ($action['needs_city'] ?? false)
                                     <div>
                                         <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Município') }}</label>
-                                        <select name="city_id" class="{{ $selectClass }}" @if ($action['key'] !== 'import_transfers_all_cities') required @endif>
+                                        <select name="city_id" class="{{ $selectClass }}" @if (! in_array($action['key'], ['import_transfers_all_cities', 'rebuild_finance_realtime_all_cities'], true)) required @endif>
                                             <option value="">{{ __('Selecione…') }}</option>
                                             @foreach ($cities as $city)
                                                 <option value="{{ $city->id }}" @selected(old('city_id') == $city->id)>{{ $city->name }}@if ($city->uf) ({{ $city->uf }})@endif</option>

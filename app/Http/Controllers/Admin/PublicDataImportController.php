@@ -96,6 +96,10 @@ class PublicDataImportController extends Controller
             return $this->dispatchTransfersAllCities((int) $validated['ano']);
         }
 
+        if ($action['key'] === 'rebuild_finance_realtime_all_cities') {
+            return $this->dispatchRebuildFinanceRealtimeAllCities((int) $validated['ano']);
+        }
+
         if ($action['key'] === 'sync_all_years') {
             return $this->dispatchFundebSyncAll($request, $validated);
         }
@@ -216,6 +220,24 @@ class PublicDataImportController extends Controller
                 'include_cached_years' => $request->boolean('include_cached_years', true),
                 'import_mode' => FundebImportMode::normalize($validated['import_mode'] ?? null),
             ],
+            null,
+        );
+
+        return redirect()
+            ->route('admin.public-data.index')
+            ->with('admin_sync_queued', [
+                'task_id' => $task->id,
+                'message' => AdminSyncQueueService::flashQueuedMessage($task),
+            ]);
+    }
+
+    private function dispatchRebuildFinanceRealtimeAllCities(int $ano): RedirectResponse
+    {
+        $task = $this->syncQueue->dispatch(
+            AdminSyncDomain::Funding,
+            'rebuild_finance_realtime',
+            __('Rebuild Tempo Real — todos os municípios, ano :ano', ['ano' => (string) $ano]),
+            ['ano' => $ano, 'all_cities' => true],
             null,
         );
 

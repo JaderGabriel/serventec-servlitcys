@@ -345,7 +345,7 @@ final class FinanceRealtimeFundebService
             [
                 'icon' => '2',
                 'title' => __('O que são «repasses observados»?'),
-                'text' => __('São valores que o governo federal registou como transferidos (Tesouro Transparente ou Portal da Transparência), depois de importados pelo administrador do sistema.'),
+                'text' => __('São valores que o governo federal registou como transferidos (CSV municipal do Tesouro e espelho SISWEB), importados em Admin → Dados públicos. No extrato, CKAN e SISWEB aparecem lado a lado; a linha «Conciliação entre fontes» resume se os totais batem.'),
             ],
             [
                 'icon' => '3',

@@ -45,6 +45,28 @@
         @endif
     </x-slot>
 
+    <div x-data="{ realtimeHelpOpen: false }" class="space-y-6">
+    @if (count($guide) > 0)
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-sky-200/90 dark:border-sky-800/60 bg-sky-50/50 dark:bg-sky-950/25 px-4 py-3">
+            <p class="text-sm text-sky-950/90 dark:text-sky-100/90 leading-relaxed min-w-0">
+                {{ __('Compare repasses públicos com a expectativa FUNDEB. Use o guia se precisar de ajuda com os termos.') }}
+            </p>
+            <button
+                type="button"
+                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-sky-300/90 bg-white px-3 py-2.5 text-xs font-semibold text-sky-900 shadow-sm hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-sky-700 dark:bg-sky-950/50 dark:text-sky-100 dark:hover:bg-sky-900/60"
+                @click="realtimeHelpOpen = true"
+                aria-haspopup="dialog"
+                :aria-expanded="realtimeHelpOpen"
+            >
+                <svg class="h-4 w-4 text-sky-700 dark:text-sky-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                </svg>
+                {{ __('Entenda em linguagem simples') }}
+            </button>
+        </div>
+        @include('dashboard.analytics.partials.finance-realtime-lay-guide-modal', ['guide' => $guide])
+    @endif
+
     @if (filled($d['aviso'] ?? null))
         <p class="serv-callout text-sm">{{ $d['aviso'] }}</p>
     @endif
@@ -170,134 +192,52 @@
         </p>
     @endif
 
-    <div class="grid gap-6 lg:grid-cols-2">
-        @if ($realtimeDataReady && $available)
-            <x-dashboard.consultoria-section
-                anchor="realtime-extrato"
-                :title="__('Extrato simulado (dados públicos)')"
-                :subtitle="__('Extrato simulado: data do repasse, total mensal e saldo anual acumulado — com dados públicos importados (não substitui o Internet Banking).')"
-            >
-                <div class="rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 overflow-hidden shadow-md font-mono text-[11px]">
-                    <div class="bg-slate-800 text-white px-4 py-3 flex justify-between items-center">
-                        <span class="font-sans font-semibold tracking-wide">{{ __('EXTRATO — REPASSES FUNDEB') }}</span>
-                        <span class="opacity-80">{{ $d['city_name'] ?? '' }} · {{ $d['year_label'] ?? $d['ano'] ?? '' }}</span>
+    @if ($realtimeDataReady && $available)
+        <x-dashboard.consultoria-section
+            anchor="realtime-extrato"
+            :title="__('Extrato simulado (dados públicos)')"
+            :subtitle="__('Tesouro CKAN e SISWEB lado a lado para comparação; depois a conciliação entre fontes (não substitui o Internet Banking).')"
+        >
+            @php
+                $ckanComparisonCycles = [];
+                $otherExtratoCycles = [];
+                foreach ($extratoCycles as $cycle) {
+                    $fonte = (string) ($cycle['fonte'] ?? '');
+                    if (in_array($fonte, ['tesouro_csv', 'sisweb_ckan'], true)) {
+                        $ckanComparisonCycles[$fonte] = $cycle;
+                    } else {
+                        $otherExtratoCycles[] = $cycle;
+                    }
+                }
+                $sideBySideCycles = [];
+                foreach (['tesouro_csv', 'sisweb_ckan'] as $fonteKey) {
+                    if (isset($ckanComparisonCycles[$fonteKey])) {
+                        $sideBySideCycles[] = $ckanComparisonCycles[$fonteKey];
+                    }
+                }
+            @endphp
+            <div class="rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 overflow-hidden shadow-md font-mono text-[11px]">
+                <div class="bg-slate-800 text-white px-4 py-3 flex justify-between items-center">
+                    <span class="font-sans font-semibold tracking-wide">{{ __('EXTRATO — REPASSES FUNDEB') }}</span>
+                    <span class="opacity-80">{{ $d['city_name'] ?? '' }} · {{ $d['year_label'] ?? $d['ano'] ?? '' }}</span>
+                </div>
+                @if ($sideBySideCycles !== [])
+                    <div class="bg-slate-600/90 dark:bg-slate-700 px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-wide text-white">
+                        {{ __('Comparação municipal — CKAN × SISWEB') }}
                     </div>
-                    @foreach ($extratoCycles as $cycle)
-                        @php
-                            $cycleLines = is_array($cycle['lines'] ?? null) ? $cycle['lines'] : [];
-                            $byPeriod = is_array($cycle['by_period'] ?? null) ? $cycle['by_period'] : [];
-                            $cycleCmp = is_array($cycle['comparativo'] ?? null) ? $cycle['comparativo'] : [];
-                        @endphp
-                        <div class="border-b border-slate-200 dark:border-slate-700 last:border-b-0">
-                            <div class="bg-slate-700/90 dark:bg-slate-800 px-4 py-2 flex flex-wrap justify-between gap-2 font-sans text-xs">
-                                <span class="font-semibold text-white">{{ $cycle['fonte_label'] ?? $cycle['fonte'] ?? '' }}</span>
-                                <span class="text-slate-200">{{ __('Total ciclo:') }} <strong>{{ $cycle['cycle_total_fmt'] ?? '—' }}</strong></span>
-                            </div>
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300">
-                                    <tr>
-                                        <th class="px-3 py-2 w-[5.5rem]">{{ __('Data') }}</th>
-                                        <th class="px-3 py-2">{{ __('Histórico') }}</th>
-                                        <th class="px-3 py-2 text-right w-[6.5rem]">{{ __('Crédito') }}</th>
-                                        <th class="px-3 py-2 text-right w-[6.5rem]">{{ __('Débito') }}</th>
-                                        <th class="px-3 py-2 text-right w-[7.5rem]">{{ __('Saldo anual acum.') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                    @foreach ($cycleLines as $line)
-                                        @php
-                                            $lineType = (string) ($line['line_type'] ?? 'credit');
-                                            $isSubtotal = (bool) ($line['is_subtotal'] ?? false);
-                                        @endphp
-                                        <tr @class([
-                                            'hover:bg-slate-50/80 dark:hover:bg-slate-900/50' => ! $isSubtotal,
-                                            'bg-amber-50/90 dark:bg-amber-950/30 font-semibold' => $lineType === 'month_total',
-                                            'bg-teal-50/90 dark:bg-teal-950/35 font-bold' => $lineType === 'year_total',
-                                            'bg-slate-100/60 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400' => $lineType === 'opening',
-                                        ])>
-                                            <td class="px-3 py-2 whitespace-nowrap align-top">
-                                                {{ $line['date'] ?? '—' }}
-                                                @if (filled($line['date_note'] ?? null) && $lineType === 'credit')
-                                                    <span class="block text-[9px] font-normal text-slate-500 dark:text-slate-400" title="{{ __('Origem da data do repasse') }}">
-                                                        @if (($line['granularity'] ?? '') === 'month')
-                                                            {{ __('granularidade: mês (STN/CKAN)') }}
-                                                        @elseif (($line['granularity'] ?? '') === 'day')
-                                                            {{ __('granularidade: dia (crédito)') }}
-                                                        @endif
-                                                        @if ($line['date_note'] === 'fim_mes')
-                                                            <span class="block">{{ __('último dia do mês de competência') }}</span>
-                                                        @elseif ($line['date_note'] === 'extrato')
-                                                            <span class="block">{{ __('data do extrato bancário') }}</span>
-                                                        @elseif ($line['date_note'] === 'repasse')
-                                                            <span class="block">{{ __('data do repasse') }}</span>
-                                                        @elseif ($line['date_note'] === 'competencia_mensal')
-                                                            <span class="block">{{ __('competência mensal — sem dia na fonte') }}</span>
-                                                        @elseif ($line['date_note'] === 'sem_data_repasse')
-                                                            <span class="block">{{ __('sem data na fonte — só total importado') }}</span>
-                                                        @endif
-                                                    </span>
-                                                @endif
-                                                @if (filled($line['import_reference'] ?? null) && $lineType === 'credit')
-                                                    <span class="block text-[9px] font-normal text-slate-400 dark:text-slate-500">
-                                                        {{ __('importado :d', ['d' => $line['import_reference']]) }}
-                                                    </span>
-                                                @endif
-                                            </td>
-                                            <td class="px-3 py-2 align-top">{{ $line['description'] ?? '' }}</td>
-                                            <td class="px-3 py-2 text-right text-emerald-700 dark:text-emerald-400 align-top">{{ $line['credit'] ?? '—' }}</td>
-                                            <td class="px-3 py-2 text-right text-rose-700 dark:text-rose-400 align-top">{{ $line['debit'] ?? '—' }}</td>
-                                            <td class="px-3 py-2 text-right font-semibold align-top">{{ $line['balance_annual_fmt'] ?? $line['balance'] ?? '—' }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                            @if ($byPeriod !== [])
-                                <div class="bg-slate-50 dark:bg-slate-900/60 px-3 py-2 font-sans text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700">
-                                    {{ __('Resumo por mês/ano — comparativo com expectativa') }}
-                                </div>
-                                <table class="w-full text-left">
-                                    <thead class="bg-teal-50/80 dark:bg-teal-950/40 text-teal-900 dark:text-teal-200">
-                                        <tr>
-                                            <th class="px-3 py-2">{{ __('Período') }}</th>
-                                            <th class="px-3 py-2 text-right">{{ __('Repassado') }}</th>
-                                            <th class="px-3 py-2 text-right">{{ __('Expectativa') }}</th>
-                                            <th class="px-3 py-2 text-right">{{ __('Diferença') }}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                        @foreach ($byPeriod as $period)
-                                            @php
-                                                $pCmp = is_array($period['comparativo'] ?? null) ? $period['comparativo'] : [];
-                                                $pSign = (string) ($pCmp['delta_sign'] ?? 'positive');
-                                            @endphp
-                                            <tr>
-                                                <td class="px-3 py-2">{{ $period['period_label'] ?? '' }}</td>
-                                                <td class="px-3 py-2 text-right">{{ $period['credit_fmt'] ?? '—' }}</td>
-                                                <td class="px-3 py-2 text-right text-slate-500">{{ $period['expected_fmt'] ?? '—' }}</td>
-                                                <td class="px-3 py-2 text-right {{ $pSign === 'negative' ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400' }}">
-                                                    {{ $pSign === 'negative' ? '−' : '+' }}{{ $pCmp['delta_fmt'] ?? '—' }}
-                                                    @if (($pCmp['delta_pct'] ?? null) !== null)
-                                                        <span class="text-slate-500">({{ number_format((float) $pCmp['delta_pct'], 1, ',', '.') }}%)</span>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                        <tr class="bg-slate-100/80 dark:bg-slate-800/50 font-semibold">
-                                            <td class="px-3 py-2">{{ __('Total do ciclo') }}</td>
-                                            <td class="px-3 py-2 text-right">{{ $cycleCmp['observed_fmt'] ?? ($cycle['cycle_total_fmt'] ?? '—') }}</td>
-                                            <td class="px-3 py-2 text-right text-slate-600">{{ $cycleCmp['expected_fmt'] ?? '—' }}</td>
-                                            <td class="px-3 py-2 text-right {{ ($cycleCmp['delta_sign'] ?? '') === 'negative' ? 'text-rose-700' : 'text-emerald-700' }}">
-                                                {{ ($cycleCmp['delta_sign'] ?? '') === 'negative' ? '−' : '+' }}{{ $cycleCmp['delta_fmt'] ?? '—' }}
-                                                @if (($cycleCmp['delta_pct'] ?? null) !== null)
-                                                    ({{ number_format((float) $cycleCmp['delta_pct'], 1, ',', '.') }}%)
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            @endif
-                        </div>
-                    @endforeach
+                    <div @class([
+                        'grid gap-0 lg:gap-4 lg:p-4 lg:bg-slate-100/50 dark:lg:bg-slate-900/40',
+                        'lg:grid-cols-2' => count($sideBySideCycles) >= 2,
+                        'lg:grid-cols-1' => count($sideBySideCycles) === 1,
+                    ])>
+                        @foreach ($sideBySideCycles as $cycle)
+                            @include('dashboard.analytics.partials.finance-realtime-extrato-cycle', ['cycle' => $cycle, 'compact' => true])
+                        @endforeach
+                    </div>
+                @endif
+                @foreach ($otherExtratoCycles as $cycle)
+                    @include('dashboard.analytics.partials.finance-realtime-extrato-cycle', ['cycle' => $cycle, 'compact' => false])
+                @endforeach
                     @php
                         $consPeriods = is_array($extratoConsolidado['by_period'] ?? null) ? $extratoConsolidado['by_period'] : [];
                         $consYears = is_array($extratoConsolidado['by_year'] ?? null) ? $extratoConsolidado['by_year'] : [];
@@ -415,33 +355,12 @@
                             </p>
                         @endif
                     @endif
-                    <p class="px-4 py-2 text-[10px] text-slate-500 border-t border-slate-200 dark:border-slate-700 font-sans">
-                        {{ $d['data_sources_note'] ?? '' }}
-                    </p>
-                </div>
-            </x-dashboard.consultoria-section>
-        @endif
-
-        @if (count($guide) > 0)
-            <x-dashboard.consultoria-section
-                anchor="realtime-guia"
-                :title="__('Entenda em linguagem simples')"
-                :subtitle="__('Para secretários, tesouraria e conselhos que não trabalham com siglas todos os dias.')"
-                @class($realtimeDataReady && $available ? '' : 'lg:col-span-2')
-            >
-                <div class="space-y-3">
-                    @foreach ($guide as $step)
-                        <div class="flex gap-3 rounded-lg border border-slate-200/80 dark:border-slate-700 p-3">
-                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-600 text-white text-sm font-bold">{{ $step['icon'] ?? '?' }}</span>
-                            <div>
-                                <p class="font-semibold text-sm text-slate-900 dark:text-slate-100">{{ $step['title'] ?? '' }}</p>
-                                <p class="mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{{ $step['text'] ?? '' }}</p>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </x-dashboard.consultoria-section>
-        @endif
+                <p class="px-4 py-2 text-[10px] text-slate-500 border-t border-slate-200 dark:border-slate-700 font-sans">
+                    {{ $d['data_sources_note'] ?? '' }}
+                </p>
+            </div>
+        </x-dashboard.consultoria-section>
+    @endif
     </div>
 
     @if ($methodologyCompact !== null && $realtimeDataReady)

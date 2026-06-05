@@ -247,8 +247,8 @@ final class PublicDataImportCatalog
     {
         return [
             'id' => 'repasses_tesouro',
-            'title' => __('Repasses observados — FUNDEB (3 extratos)'),
-            'summary' => __('Enfileira importação por município/ano: publicação FUNDEB (Tesouro Transparente), REPASSES/SISWEB, extrato BB e CKAN/Transparência para programas complementares.'),
+            'title' => __('Repasses observados — FUNDEB (Tempo Real)'),
+            'summary' => __('Importação municipal com granularidade dia/mês (CKAN, SISWEB, BB). Não grava total da UF na importação normal; use Rebuild para purgar e reimportar snapshots.'),
             'data_class' => 'publicado',
             'domain' => 'funding',
             'persistence' => 'municipal_transfer_snapshots',
@@ -265,13 +265,13 @@ final class PublicDataImportCatalog
             'actions' => [
                 [
                     'key' => 'import_transfers_city_year',
-                    'label' => __('Importar repasses (município + ano)'),
+                    'label' => __('Importar repasses municipais (município + ano)'),
                     'task_domain' => 'funding',
                     'task_key' => 'import_transfers_city_year',
                     'needs_city' => true,
                     'needs_year' => true,
                     'needs_years_range' => false,
-                    'hint' => null,
+                    'hint' => __('CKAN/SISWEB/BB com meta.mensal — sem publicação STN por UF.'),
                 ],
                 [
                     'key' => 'import_transfers_all_cities',
@@ -283,8 +283,30 @@ final class PublicDataImportCatalog
                     'needs_years_range' => false,
                     'hint' => __('Enfileira uma tarefa por município com IBGE.'),
                 ],
+                [
+                    'key' => 'rebuild_finance_realtime_city_year',
+                    'label' => __('Rebuild Tempo Real (município + ano)'),
+                    'task_domain' => 'funding',
+                    'task_key' => 'rebuild_finance_realtime',
+                    'needs_city' => true,
+                    'needs_year' => true,
+                    'needs_years_range' => false,
+                    'hint' => __('Apaga snapshots do ano/município e reimporta só fontes municipais com granularidade.'),
+                ],
+                [
+                    'key' => 'rebuild_finance_realtime_all_cities',
+                    'label' => __('Rebuild Tempo Real — todos os municípios (um ano)'),
+                    'task_domain' => 'funding',
+                    'task_key' => 'rebuild_finance_realtime',
+                    'needs_city' => false,
+                    'needs_year' => true,
+                    'needs_years_range' => false,
+                    'hint' => __('Uma tarefa: purga + reimporta todos os municípios analytics (equivalente ao Artisan rebuild).'),
+                ],
             ],
-            'cli' => [],
+            'cli' => [
+                'php artisan funding:rebuild-finance-realtime --all-cities --ano=2026 --confirm=rebuild-repasses-2026',
+            ],
         ];
     }
 

@@ -18,6 +18,13 @@ class PublicDataImportCatalogTest extends TestCase
         $this->assertContains('fundeb_fnde', $ids);
         $this->assertContains('censo_inep_matriculas', $ids);
         $this->assertContains('repasses_tesouro', $ids);
+
+        $repasses = PublicDataImportCatalog::findSource('repasses_tesouro');
+        $this->assertNotNull($repasses);
+        $actionKeys = array_column($repasses['actions'], 'key');
+        $this->assertContains('import_transfers_city_year', $actionKeys);
+        $this->assertContains('rebuild_finance_realtime_city_year', $actionKeys);
+        $this->assertContains('rebuild_finance_realtime_all_cities', $actionKeys);
         $this->assertContains('cadunico_cecad', $ids);
 
         $cadunico = PublicDataImportCatalog::findSource('cadunico_cecad');

@@ -299,7 +299,7 @@ final class WeeklyMassSyncOrchestrator
                     'ano' => (string) $ano,
                 ]));
 
-                $result = $this->transferImport->importForCityYear($city, $ano);
+                $result = $this->transferImport->importForCityYear($city, $ano, financeRealtimeRebuild: true);
                 if ((bool) ($result['success'] ?? false)) {
                     $ok++;
                 } else {

@@ -12,6 +12,7 @@ use App\Services\CityDataConnection;
 use App\Services\Fundeb\FundebImportMode;
 use App\Services\Fundeb\FundebImportProgress;
 use App\Services\Fundeb\FundebOpenDataImportService;
+use App\Services\Funding\FinanceRealtimeTransferRebuildService;
 use App\Services\Funding\MunicipalTransferImportService;
 use App\Services\Ieducar\InclusionNeeExportService;
 use App\Services\Inep\InepCensoMunicipioMatriculasIndexer;
@@ -37,6 +38,7 @@ final class AdminSyncTaskRunner
         private SaebMicrodadosOpenDataImportService $saebMicrodados,
         private CityDataConnection $cityData,
         private MunicipalTransferImportService $transferImport,
+        private FinanceRealtimeTransferRebuildService $financeRealtimeRebuild,
         private InepCensoMunicipioMatriculasIndexer $censoMatriculasIndexer,
         private WeeklyMassSyncOrchestrator $weeklyMassSync,
         private InclusionNeeExportService $inclusionNeeExport,
@@ -64,6 +66,7 @@ final class AdminSyncTaskRunner
                 'fundeb::sync_all_years' => $this->runFundebSyncAll($task, $progress),
                 'fundeb::new_city_auto' => $this->runFundebNewCity($task, $progress),
                 'funding::import_transfers_city_year' => $this->runFundingImportTransfers($task, $progress),
+                'funding::rebuild_finance_realtime' => $this->runFundingRebuildFinanceRealtime($task, $progress),
                 'funding::index_censo_matriculas' => $this->runFundingIndexCensoMatriculas($task, $progress),
                 'geo::ieducar', 'geo::microdados', 'geo::official', 'geo::pipeline', 'geo::probe' => $this->runGeoArtisan($task, $progress),
                 'pedagogical::import_official' => $this->runPedagogicalOfficial($task, $progress),
@@ -722,12 +725,12 @@ final class AdminSyncTaskRunner
         $city = City::query()->findOrFail((int) ($payload['city_id'] ?? $task->city_id));
         $ano = (int) ($payload['ano'] ?? 0);
 
-        $progress->step(1, 1, __('A importar repasses FUNDEB (3 extratos + CKAN) para :city (:ano)…', [
+        $progress->step(1, 1, __('A importar repasses FUNDEB municipais (CKAN/SISWEB/BB) para :city (:ano)…', [
             'city' => $city->name,
             'ano' => (string) $ano,
         ]));
 
-        $result = $this->transferImport->importForCityYear($city, $ano);
+        $result = $this->transferImport->importForCityYear($city, $ano, financeRealtimeRebuild: true);
 
         foreach ($result['attempts'] ?? [] as $attempt) {
             if (! is_array($attempt)) {
@@ -753,6 +756,74 @@ final class AdminSyncTaskRunner
             'municipal_rows' => (int) ($result['municipal_rows'] ?? 0),
             'by_fonte' => $result['by_fonte'] ?? [],
             'attempts' => $result['attempts'] ?? [],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function runFundingRebuildFinanceRealtime(AdminSyncTask $task, AdminSyncTaskProgress $progress): array
+    {
+        $payload = $task->payload ?? [];
+        $ano = (int) ($payload['ano'] ?? 0);
+        if ($ano < 2000) {
+            return [
+                'success' => false,
+                'message' => __('Ano inválido para rebuild do Tempo Real.'),
+            ];
+        }
+
+        $allCities = (bool) ($payload['all_cities'] ?? false);
+        $cityIds = null;
+        $scopeLabel = __('todos os municípios com IBGE');
+
+        if (! $allCities) {
+            $city = City::query()->findOrFail((int) ($payload['city_id'] ?? $task->city_id));
+            $cityIds = [(int) $city->id];
+            $scopeLabel = $city->name;
+        }
+
+        $progress->step(1, 1, __('Rebuild Finanças → Tempo Real — :scope, ano :ano (purga + repasses municipais com granularidade)…', [
+            'scope' => $scopeLabel,
+            'ano' => (string) $ano,
+        ]));
+
+        $result = $this->financeRealtimeRebuild->rebuild([$ano], $cityIds, purgeBeforeImport: true);
+
+        $progress->detail(__('Purga: :n registo(s) (:uf publicação UF).', [
+            'n' => (string) ($result['purged'] ?? 0),
+            'uf' => (string) ($result['purged_uf_publicacao'] ?? 0),
+        ]));
+
+        foreach ($result['results'] ?? [] as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $progress->detail(sprintf(
+                '%s — %s (%d linhas)',
+                (string) ($row['slug'] ?? '—'),
+                ($row['ok'] ?? false) ? 'OK' : 'FAIL',
+                (int) ($row['rows'] ?? 0),
+            ));
+        }
+
+        $failed = (int) ($result['failed'] ?? 0);
+        $imported = (int) ($result['imported'] ?? 0);
+
+        return [
+            'success' => $failed === 0 && $imported > 0,
+            'message' => __('Rebuild Tempo Real: :ok OK, :fail falhas, :rows linhas gravadas.', [
+                'ok' => (string) $imported,
+                'fail' => (string) $failed,
+                'rows' => (string) ($result['rows_written'] ?? 0),
+            ]),
+            'purged' => (int) ($result['purged'] ?? 0),
+            'purged_uf_publicacao' => (int) ($result['purged_uf_publicacao'] ?? 0),
+            'cities' => (int) ($result['cities'] ?? 0),
+            'imported' => $imported,
+            'failed' => $failed,
+            'rows_written' => (int) ($result['rows_written'] ?? 0),
+            'results' => $result['results'] ?? [],
         ];
     }
 

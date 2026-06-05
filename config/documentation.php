@@ -22,10 +22,10 @@ return [
     */
 
     'product' => [
-        'version' => '4.1.4',
-        'release_tag' => '20260605-Horae',
-        'commit_short' => '418dd5e',
-        'commit_number' => 296,
+        'version' => '4.1.5',
+        'release_tag' => '20260605-Themis',
+        'commit_short' => '',
+        'commit_number' => 298,
         'revision_date' => '2026-06-05',
         'in_production' => true,
         'production_label' => 'Em produção',

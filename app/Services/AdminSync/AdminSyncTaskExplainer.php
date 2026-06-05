@@ -35,6 +35,8 @@ final class AdminSyncTaskExplainer
             'ieducar::schema_probe' => __('Gera JSON de compatibilidade do schema i-Educar da cidade (tabelas/colunas usadas pelo painel).'),
             'ieducar::inclusion_nee_export' => __('Exporta CSV ou Excel com matrículas NEE, dados pessoais, designações e inconsistências (recorte dos filtros da aba Inclusão).'),
             'system::weekly_mass_sync' => __('Sincronização massiva semanal: geo (i-Educar+INEP), FUNDEB (VAAF/VAAT/VAAR), repasses, Censo e SAEB — com checkpoint retomável.'),
+            'funding::import_transfers_city_year' => __('Importa repasses municipais FUNDEB (CKAN/SISWEB/BB) com granularidade dia/mês; re-enriquece anos históricos em falta. Não grava total da UF.'),
+            'funding::rebuild_finance_realtime' => __('Rebuild Finanças → Tempo Real: apaga snapshots do(s) ano(s) e reimporta só fontes municipais com meta.mensal/repasses.'),
             default => __('Tarefa administrativa enfileirada (:key).', ['key' => $key]),
         };
     }
