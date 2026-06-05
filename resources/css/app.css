@@ -2213,24 +2213,50 @@
         @apply px-5 py-5 sm:px-6 sm:py-6;
     }
 
+    .serv-qa-zones {
+        @apply grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3;
+    }
+
+    .serv-qa-zone {
+        @apply rounded-xl border border-slate-200/90 dark:border-slate-700/80
+            bg-slate-50/50 dark:bg-slate-950/30 p-4 sm:p-5;
+    }
+
+    .serv-qa-zone--teal {
+        @apply border-teal-200/70 dark:border-teal-900/40 bg-teal-50/30 dark:bg-teal-950/15;
+    }
+
+    .serv-qa-zone--indigo {
+        @apply border-indigo-200/70 dark:border-indigo-900/40 bg-indigo-50/25 dark:bg-indigo-950/15;
+    }
+
+    .serv-qa-zone--amber {
+        @apply border-amber-200/70 dark:border-amber-900/40 bg-amber-50/30 dark:bg-amber-950/15;
+    }
+
     .serv-qa-zone__head {
         @apply flex items-start gap-3 mb-4;
     }
 
-    .serv-qa-zone__marker {
-        @apply mt-1.5 h-8 w-1 shrink-0 rounded-full;
+    .serv-qa-zone__icon {
+        @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-lg;
     }
 
-    .serv-qa-zone--teal .serv-qa-zone__marker {
-        @apply bg-teal-500;
+    .serv-qa-zone__icon--teal {
+        @apply bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300;
     }
 
-    .serv-qa-zone--indigo .serv-qa-zone__marker {
-        @apply bg-indigo-500;
+    .serv-qa-zone__icon--indigo {
+        @apply bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-300;
     }
 
-    .serv-qa-zone--amber .serv-qa-zone__marker {
-        @apply bg-amber-500;
+    .serv-qa-zone__icon--amber {
+        @apply bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200;
+    }
+
+    .serv-qa-zone__count {
+        @apply shrink-0 rounded-md border border-slate-200/90 dark:border-slate-600/80
+            bg-white/80 dark:bg-slate-900/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400;
     }
 
     .serv-qa-zone__title {
@@ -2241,16 +2267,22 @@
         @apply mt-0.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed;
     }
 
-    .serv-qa-grid {
-        @apply grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3;
+    .serv-qa-grid--auto {
+        @apply flex flex-wrap gap-2.5;
     }
 
-    .serv-qa-grid--featured {
-        @apply grid-cols-1 md:grid-cols-2 gap-3 mb-3;
+    .serv-qa-grid--auto .serv-qa-card {
+        @apply flex-[1_1_11.5rem] max-w-full;
     }
 
-    .serv-qa-grid--solo {
-        @apply xl:grid-cols-2;
+    @media (min-width: 640px) {
+        .serv-qa-grid--auto .serv-qa-card {
+            max-width: calc(50% - 0.3125rem);
+        }
+    }
+
+    .serv-qa-grid--auto:has(> .serv-qa-card:only-child) .serv-qa-card {
+        @apply max-w-[17rem];
     }
 
     .serv-qa-card {
@@ -2768,6 +2800,298 @@
 
     .serv-mm-tip-num--muted {
         @apply bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300;
+    }
+
+    /* Fluxo de dados — diagrama ERP (integrações) */
+    .serv-erp-board {
+        @apply rounded-xl border border-slate-200/90 dark:border-slate-700/90
+            bg-gradient-to-br from-slate-50/90 via-white to-white
+            dark:from-slate-950/50 dark:via-slate-900/60 dark:to-slate-950/40
+            p-4 sm:p-5 overflow-x-auto;
+    }
+
+    .serv-erp-board__lanes {
+        @apply grid gap-3 min-w-[52rem]
+            grid-cols-[minmax(9rem,1fr)_3rem_minmax(10rem,1.1fr)_minmax(13rem,1.3fr)_3rem_minmax(8.5rem,0.95fr)];
+    }
+
+    .serv-erp-lane {
+        @apply flex flex-col gap-3 min-w-0;
+    }
+
+    .serv-erp-lane__head {
+        @apply flex items-start gap-2 rounded-lg border border-slate-200/80 dark:border-slate-700/70
+            bg-white/70 dark:bg-slate-900/50 px-2.5 py-2;
+    }
+
+    .serv-erp-lane__head--hub {
+        @apply border-teal-200/80 dark:border-teal-800/50 bg-teal-50/50 dark:bg-teal-950/25;
+    }
+
+    .serv-erp-lane__step {
+        @apply flex h-6 w-6 shrink-0 items-center justify-center rounded-md
+            bg-serv-navy text-[10px] font-bold text-white;
+    }
+
+    .serv-erp-lane__step--hub {
+        @apply bg-teal-700 dark:bg-teal-600;
+    }
+
+    .serv-erp-lane__step--output {
+        @apply bg-indigo-700 dark:bg-indigo-600;
+    }
+
+    .serv-erp-lane__title {
+        @apply text-[11px] font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100 leading-tight;
+    }
+
+    .serv-erp-lane__desc {
+        @apply text-[10px] text-slate-500 dark:text-slate-400 leading-snug;
+    }
+
+    .serv-erp-lane__badge {
+        @apply shrink-0 rounded-md border border-teal-200/80 dark:border-teal-800/50
+            bg-teal-50 dark:bg-teal-950/40 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-teal-800 dark:text-teal-300;
+    }
+
+    .serv-erp-node {
+        @apply relative rounded-lg border border-slate-200/90 dark:border-slate-700/80
+            bg-white dark:bg-slate-900/70 px-3 py-2.5 shadow-sm min-w-0;
+    }
+
+    .serv-erp-node--hub {
+        @apply border-teal-300/80 dark:border-teal-700/60 ring-1 ring-teal-500/15 dark:ring-teal-400/20 py-3;
+    }
+
+    .serv-erp-node--feed {
+        @apply flex-1 min-w-0 py-2;
+    }
+
+    .serv-erp-node--output {
+        @apply py-2;
+    }
+
+    .serv-erp-node--ok {
+        @apply border-teal-200/70 dark:border-teal-900/40;
+    }
+
+    .serv-erp-node--partial {
+        @apply border-amber-200/80 dark:border-amber-900/45;
+    }
+
+    .serv-erp-node--off {
+        @apply border-slate-200/80 dark:border-slate-700/60 opacity-90;
+    }
+
+    .serv-erp-node__status {
+        @apply absolute top-2.5 end-2.5 h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-slate-900;
+    }
+
+    .serv-erp-node__status--ok {
+        @apply bg-teal-500 shadow-[0_0_0_3px_rgba(20,184,166,0.25)];
+    }
+
+    .serv-erp-node__status--partial {
+        @apply bg-amber-500;
+    }
+
+    .serv-erp-node__status--off {
+        @apply bg-slate-400;
+    }
+
+    .serv-erp-node__label {
+        @apply pe-4 text-xs font-semibold text-slate-900 dark:text-slate-100 leading-snug;
+    }
+
+    .serv-erp-node__label--hub {
+        @apply text-sm font-bold text-serv-navy dark:text-slate-50;
+    }
+
+    .serv-erp-node__acronym {
+        @apply inline-flex me-1 rounded px-1 py-px text-[8px] font-bold uppercase tracking-wide
+            bg-slate-200/90 text-slate-700 dark:bg-slate-800 dark:text-slate-300;
+    }
+
+    .serv-erp-node__sub {
+        @apply mt-0.5 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-erp-node__metric {
+        @apply mt-1.5 flex items-baseline gap-1.5 text-[10px] text-slate-600 dark:text-slate-400;
+    }
+
+    .serv-erp-node__metric strong {
+        @apply font-bold tabular-nums text-teal-800 dark:text-teal-300;
+    }
+
+    .serv-erp-node__hint {
+        @apply mt-1.5 text-[10px] text-slate-600 dark:text-slate-400 leading-snug line-clamp-2;
+    }
+
+    .serv-erp-node__edge {
+        @apply mt-1 text-[9px] font-medium leading-snug text-teal-800/90 dark:text-teal-300/90;
+    }
+
+    .serv-erp-node__edge--partial {
+        @apply text-amber-800/90 dark:text-amber-300/90;
+    }
+
+    .serv-erp-node__edge--off {
+        @apply text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-erp-feeds {
+        @apply space-y-2 m-0 p-0 list-none;
+    }
+
+    .serv-erp-feed {
+        @apply flex items-center gap-1.5 min-w-0;
+    }
+
+    .serv-erp-outputs {
+        @apply space-y-2 m-0 p-0 list-none;
+    }
+
+    .serv-erp-bridge {
+        @apply flex flex-col items-center justify-center gap-1.5 self-center px-0.5;
+    }
+
+    .serv-erp-bridge__label {
+        @apply text-[9px] font-medium text-center leading-snug max-w-[3.25rem];
+    }
+
+    .serv-erp-bridge__label--ok {
+        @apply text-teal-800 dark:text-teal-300;
+    }
+
+    .serv-erp-bridge__label--partial {
+        @apply text-amber-800 dark:text-amber-300;
+    }
+
+    .serv-erp-bridge__label--off {
+        @apply text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-erp-line {
+        @apply relative flex items-center w-full text-slate-500;
+    }
+
+    .serv-erp-line--compact {
+        @apply w-5 shrink-0;
+    }
+
+    .serv-erp-line__track {
+        @apply block h-[3px] flex-1 rounded-full bg-current;
+    }
+
+    .serv-erp-line--ok .serv-erp-line__track {
+        animation: serv-erp-pulse 2.2s ease-in-out infinite;
+    }
+
+    .serv-erp-line--partial .serv-erp-line__track {
+        @apply bg-transparent opacity-90;
+        height: 3px;
+        background-image: repeating-linear-gradient(
+            90deg,
+            currentColor 0,
+            currentColor 5px,
+            transparent 5px,
+            transparent 9px
+        );
+    }
+
+    .serv-erp-line--off .serv-erp-line__track {
+        @apply bg-transparent opacity-50;
+        height: 3px;
+        background-image: repeating-linear-gradient(
+            90deg,
+            currentColor 0,
+            currentColor 2px,
+            transparent 2px,
+            transparent 6px
+        );
+    }
+
+    .serv-erp-line__arrow {
+        @apply block h-0 w-0 shrink-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-current ms-0.5;
+    }
+
+    .serv-erp-line__arrow--left {
+        @apply order-first border-l-0 border-r-[6px] border-r-current me-0.5 ms-0;
+    }
+
+    .serv-erp-line--channel-municipal {
+        @apply text-teal-600 dark:text-teal-400;
+    }
+
+    .serv-erp-line--channel-financeiro {
+        @apply text-amber-600 dark:text-amber-400;
+    }
+
+    .serv-erp-line--channel-pedagogico {
+        @apply text-violet-600 dark:text-violet-400;
+    }
+
+    .serv-erp-line--channel-transparencia {
+        @apply text-sky-600 dark:text-sky-400;
+    }
+
+    .serv-erp-line--channel-geografia {
+        @apply text-emerald-600 dark:text-emerald-400;
+    }
+
+    .serv-erp-line--channel-social {
+        @apply text-fuchsia-600 dark:text-fuchsia-400;
+    }
+
+    .serv-erp-line--channel-platform {
+        @apply text-indigo-600 dark:text-indigo-400;
+    }
+
+    .serv-erp-line--bidirectional .serv-erp-line__arrow {
+        @apply hidden;
+    }
+
+    .serv-erp-line--bidirectional .serv-erp-line__track::after {
+        content: '';
+        @apply absolute end-0 top-1/2 -translate-y-1/2 h-0 w-0
+            border-y-[4px] border-y-transparent border-l-[6px] border-l-current;
+    }
+
+    @keyframes serv-erp-pulse {
+        0%, 100% { opacity: 0.45; }
+        50% { opacity: 1; }
+    }
+
+    @media (max-width: 1023px) {
+        .serv-erp-board__lanes {
+            @apply min-w-0 grid-cols-1;
+        }
+
+        .serv-erp-bridge {
+            @apply py-1;
+        }
+
+        .serv-erp-line--forward,
+        .serv-erp-line--inbound.serv-erp-line--compact {
+            @apply max-w-[12rem] mx-auto;
+        }
+    }
+
+    .serv-qa-grid--auto .serv-qa-card {
+        @apply p-3 gap-2.5;
+    }
+
+    .serv-qa-grid--auto .serv-qa-card__icon {
+        @apply h-9 w-9 rounded-lg;
+    }
+
+    .serv-qa-grid--auto .serv-qa-card--featured {
+        @apply sm:p-3.5;
+    }
+
+    .serv-qa-grid--auto .serv-qa-card__body {
+        @apply pe-5;
     }
 
     .serv-data-flow-legend {

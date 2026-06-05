@@ -122,7 +122,7 @@ Todas as telas admin de importação partilham o componente `x-admin.import-hub.
 | Grupo | `active` | Rotas |
 |-------|----------|-------|
 | `municipalities` | `cities` | `cities.*` |
-| `municipalities` | `connections` | `admin.connections.*` |
+| `municipalities` | `connections` | `admin.connections.index` (`screen-shell`, accent índigo) |
 | `administration` | `legal-documents` | `admin.legal-documents.*` |
 | `administration` | `legal-consents` | `admin.legal-consents.*` |
 

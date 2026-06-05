@@ -32,7 +32,12 @@ final class AdminSystemFlowStatusTest extends TestCase
         $this->assertSame(count($diagram['nodes']) + count($diagram['edges']), $legendTotal);
         $this->assertArrayHasKey('nodes', $diagram);
         $this->assertArrayHasKey('edges', $diagram);
+        $this->assertArrayHasKey('outputs', $diagram);
+        $this->assertCount(3, $diagram['outputs']);
         $this->assertGreaterThanOrEqual(6, count($diagram['nodes']));
+        $hubOutEdge = collect($diagram['edges'])->firstWhere('from', 'servlitcys');
+        $this->assertNotNull($hubOutEdge);
+        $this->assertSame('platform', $hubOutEdge['channel'] ?? null);
         $cadunico = collect($diagram['nodes'])->firstWhere('id', 'cadunico');
         $this->assertNotNull($cadunico);
         $this->assertSame('social', $cadunico['category'] ?? null);

@@ -5,6 +5,12 @@
     if ($sections === [] && isset($stats, $ops)) {
         $sections = HomeQuickActionsCatalog::sections($stats, $ops, $user ?? auth()->user());
     }
+
+    $zoneIcons = [
+        'consultoria' => 'chart-bar',
+        'dados' => 'circle-stack',
+        'operacao' => 'queue-list',
+    ];
 @endphp
 
 <section
@@ -28,68 +34,49 @@
         </div>
     </header>
 
-    <div class="serv-qa-panel__body px-5 py-5 sm:px-6 sm:py-6 space-y-8">
+    <div class="serv-qa-panel__body px-5 py-5 sm:px-6 sm:py-6">
+        <div class="serv-qa-zones">
         @forelse ($sections as $section)
             @php
                 $accent = (string) ($section['accent'] ?? 'slate');
                 $actions = $section['actions'] ?? [];
-                $featured = collect($actions)->where('featured', true)->values();
-                $standard = collect($actions)->where('featured', false)->values();
+                $sectionId = (string) ($section['id'] ?? '');
+                $zoneIcon = $zoneIcons[$sectionId] ?? 'squares-2x2';
             @endphp
             <div class="serv-qa-zone serv-qa-zone--{{ $accent }}">
-                <div class="serv-qa-zone__head flex items-start gap-3 mb-4">
-                    <span class="serv-qa-zone__marker mt-1.5 h-8 w-1 shrink-0 rounded-full @if ($accent === 'teal') bg-teal-500 @elseif ($accent === 'indigo') bg-indigo-500 @else bg-amber-500 @endif" aria-hidden="true"></span>
-                    <div class="min-w-0">
-                        <h4 class="serv-qa-zone__title font-display text-sm font-semibold text-slate-900 dark:text-slate-100">{{ $section['title'] ?? '' }}</h4>
-                        <p class="serv-qa-zone__subtitle mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ $section['subtitle'] ?? '' }}</p>
+                <div class="serv-qa-zone__head">
+                    <span class="serv-qa-zone__icon serv-qa-zone__icon--{{ $accent }}" aria-hidden="true">
+                        <x-ui.icon :name="$zoneIcon" class="h-4 w-4" />
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <h4 class="serv-qa-zone__title">{{ $section['title'] ?? '' }}</h4>
+                        <p class="serv-qa-zone__subtitle">{{ $section['subtitle'] ?? '' }}</p>
                     </div>
+                    <span class="serv-qa-zone__count tabular-nums">{{ count($actions) }}</span>
                 </div>
 
-                @if ($featured->isNotEmpty())
-                    <div class="serv-qa-grid serv-qa-grid--featured grid grid-cols-1 gap-3 md:grid-cols-2 mb-3">
-                        @foreach ($featured as $action)
-                            <x-dashboard.home-quick-action
-                                :href="$action['href']"
-                                :title="$action['title']"
-                                :description="$action['description']"
-                                :icon="$action['icon']"
-                                :accent="$accent"
-                                :kicker="$action['kicker'] ?? ''"
-                                :featured="true"
-                                :badge="$action['badge'] ?? null"
-                                :badge-tone="$action['badge_tone'] ?? 'neutral'"
-                                :alert="(bool) ($action['alert'] ?? false)"
-                            />
-                        @endforeach
-                    </div>
-                @endif
-
-                @if ($standard->isNotEmpty())
-                    <div @class([
-                        'serv-qa-grid grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3',
-                        'xl:grid-cols-2' => $featured->isEmpty(),
-                    ])>
-                        @foreach ($standard as $action)
-                            <x-dashboard.home-quick-action
-                                :href="$action['href']"
-                                :title="$action['title']"
-                                :description="$action['description']"
-                                :icon="$action['icon']"
-                                :accent="$accent"
-                                :kicker="$action['kicker'] ?? ''"
-                                :featured="false"
-                                :badge="$action['badge'] ?? null"
-                                :badge-tone="$action['badge_tone'] ?? 'neutral'"
-                                :alert="(bool) ($action['alert'] ?? false)"
-                            />
-                        @endforeach
-                    </div>
-                @endif
+                <div class="serv-qa-grid serv-qa-grid--auto">
+                    @foreach ($actions as $action)
+                        <x-dashboard.home-quick-action
+                            :href="$action['href']"
+                            :title="$action['title']"
+                            :description="$action['description']"
+                            :icon="$action['icon']"
+                            :accent="$accent"
+                            :kicker="$action['kicker'] ?? ''"
+                            :featured="(bool) ($action['featured'] ?? false)"
+                            :badge="$action['badge'] ?? null"
+                            :badge-tone="$action['badge_tone'] ?? 'neutral'"
+                            :alert="(bool) ($action['alert'] ?? false)"
+                        />
+                    @endforeach
+                </div>
             </div>
         @empty
-            <p class="serv-callout text-sm text-slate-600 dark:text-slate-400">
+            <p class="serv-callout text-sm text-slate-600 dark:text-slate-400 col-span-full">
                 {{ __('Atalhos indisponíveis no momento. Recarregue a página ou contacte o suporte.') }}
             </p>
         @endforelse
+        </div>
     </div>
 </section>

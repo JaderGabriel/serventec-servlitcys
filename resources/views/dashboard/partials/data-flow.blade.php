@@ -1,16 +1,5 @@
 @php
-    $nodesById = collect($systemFlow['nodes'] ?? [])->keyBy('id');
-    $externals = collect($systemFlow['nodes'] ?? [])->where('zone', 'external')->values();
-    $hub = $nodesById->get('servlitcys');
-    $ieducar = $nodesById->get('ieducar');
-    $edgesByFrom = collect($systemFlow['edges'] ?? [])->keyBy('from');
     $summary = $systemFlow['summary'] ?? ['status' => 'partial', 'label' => '', 'detail' => ''];
-    $zones = collect($systemFlow['zones'] ?? [])->keyBy('id');
-    $zoneMunicipal = $zones->get('municipal');
-    $zonePlatform = $zones->get('platform');
-    $zoneExternal = $zones->get('external');
-    $edgeIeducar = $edgesByFrom->get('ieducar');
-    $federalEdges = $externals->map(fn ($n) => $edgesByFrom->get($n['id']))->filter();
     $flowSteps = $systemFlow['flow_steps'] ?? [];
 @endphp
 <section
@@ -25,16 +14,16 @@
             <div class="min-w-0 flex-1">
                 <p class="serv-eyebrow text-slate-600 dark:text-slate-400">{{ __('Arquitetura de integrações') }}</p>
                 <h3 id="home-data-flow" class="font-display text-lg font-semibold text-serv-navy dark:text-slate-100 mt-0.5">
-                    {{ __('Fluxo de dados · Mapa Mental') }}
+                    {{ __('Fluxo de dados · Integrações') }}
                 </h3>
                 <p class="text-sm text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed max-w-3xl">
-                    {{ __('Ordem operacional: o cadastro municipal alimenta a plataforma; fontes públicas enriquecem indicadores e repasses; a consultoria consome o resultado nas filas e no painel analítico.') }}
+                    {{ __('Visão em camadas: entrada municipal, motor de agregação, referências federais e saídas operacionais. As linhas coloridas reflectem o estado de cada canal de dados.') }}
                 </p>
             </div>
             <button
                 type="button"
                 class="serv-tab-status-help__btn shrink-0"
-                title="{{ __('Como ler o mapa mental') }}"
+                title="{{ __('Como ler o Diagrama') }}"
                 aria-haspopup="dialog"
                 :aria-expanded="helpOpen"
                 @click="helpOpen = true"
@@ -73,91 +62,7 @@
     @endif
 
     <div class="serv-data-flow-panel__body">
-        <div class="serv-mindmap min-w-0" role="figure" aria-describedby="home-data-flow-desc">
-            <p id="home-data-flow-desc" class="sr-only">
-                {{ __('Mapa em camadas: i-Educar no topo, plataforma no centro, fontes federais na base convergindo para o motor de consultoria.') }}
-            </p>
-
-            {{-- 1 · Entrada municipal --}}
-            @if ($zoneMunicipal && $ieducar)
-                <div class="serv-mm-branch serv-mm-branch--municipal serv-mm-branch--origin">
-                    <div class="serv-mm-branch__head serv-mm-branch__head--compact">
-                        <span class="serv-mm-branch__num serv-mm-branch__num--teal" aria-hidden="true">{{ $zoneMunicipal['step'] ?? 1 }}</span>
-                        <div class="serv-mm-branch__head-text">
-                            <p class="serv-mm-branch__title serv-mm-branch__title--teal">{{ $zoneMunicipal['title'] ?? __('Base municipal') }}</p>
-                            <p class="serv-mm-branch__desc">{{ $zoneMunicipal['description'] ?? '' }}</p>
-                        </div>
-                    </div>
-                    <article class="serv-mm-municipal serv-mm-municipal--{{ $ieducar['status'] }}" title="{{ $ieducar['hint'] }}">
-                        <div class="serv-mm-municipal__card">
-                            <span class="serv-mm-leaf__dot serv-mm-leaf__dot--{{ $ieducar['status'] }}" aria-hidden="true"></span>
-                            <div>
-                                <p class="serv-mm-municipal__name">{{ $ieducar['label'] }}</p>
-                                <p class="serv-mm-municipal__sub">{{ $ieducar['sublabel'] }}</p>
-                                @if (filled($ieducar['metric'] ?? null))
-                                    <p class="serv-mm-municipal__metric">
-                                        <span>{{ $ieducar['metric_label'] ?? __('Municípios') }}</span>
-                                        <strong>{{ $ieducar['metric'] }}</strong>
-                                    </p>
-                                @endif
-                                <p class="serv-mm-municipal__hint">{{ $ieducar['hint'] }}</p>
-                            </div>
-                        </div>
-                    </article>
-                    @if ($edgeIeducar)
-                        <div class="serv-mm-branch__connector" aria-hidden="true">
-                            <span class="serv-mm-branch__connector-line"></span>
-                            <span class="serv-mm-branch__connector-label">
-                                @if ($edgeIeducar['bidirectional'] ?? false)
-                                    <span aria-hidden="true">↕</span>
-                                @endif
-                                {{ $edgeIeducar['label'] }}
-                            </span>
-                        </div>
-                    @endif
-                </div>
-            @endif
-
-            <div class="serv-mm-spine" aria-hidden="true">
-                <span class="serv-mm-spine__line serv-mm-spine__line--down"></span>
-            </div>
-
-            {{-- 2 · Núcleo plataforma --}}
-            @if ($zonePlatform && $hub)
-                <div class="serv-mm-core-wrap">
-                    <article class="serv-mm-core serv-mm-core--{{ $hub['status'] }}">
-                        <span class="serv-mm-core__ring" aria-hidden="true"></span>
-                        <span class="serv-mm-core__badge serv-mm-core__badge--{{ $hub['status'] }}" aria-hidden="true"></span>
-                        <p class="serv-mm-core__step">{{ $zonePlatform['title'] ?? __('Plataforma') }}</p>
-                        <p class="serv-mm-core__label">{{ $hub['label'] }}</p>
-                        <p class="serv-mm-core__sub">{{ $hub['sublabel'] }}</p>
-                        <p class="serv-mm-core__hint">{{ $hub['hint'] }}</p>
-                        @if ($federalEdges->isNotEmpty())
-                            <ul class="serv-mm-core__feeds" aria-label="{{ __('Entradas de referência') }}">
-                                @foreach ($federalEdges->take(6) as $edge)
-                                    @if (is_array($edge))
-                                        <li class="serv-mm-core__feed serv-mm-core__feed--{{ $edge['status'] ?? 'partial' }}">{{ $edge['label'] ?? '' }}</li>
-                                    @endif
-                                @endforeach
-                            </ul>
-                        @endif
-                    </article>
-                </div>
-            @endif
-
-            <div class="serv-mm-spine" aria-hidden="true">
-                <span class="serv-mm-spine__line serv-mm-spine__line--down"></span>
-            </div>
-
-            {{-- 3 · Fontes federais (enriquecimento) --}}
-            @if ($zoneExternal)
-                @include('dashboard.partials.data-flow-federal-branch', [
-                    'zone' => $zoneExternal,
-                    'externals' => $externals,
-                    'edgesByFrom' => $edgesByFrom,
-                ])
-            @endif
-        </div>
+        @include('dashboard.partials.data-flow-erp-board', ['systemFlow' => $systemFlow])
     </div>
 
     @if (count($systemFlow['legend'] ?? []) > 0)

@@ -22,6 +22,7 @@ final class AdminSystemFlowStatus
      *     flow_steps: list<array{step: int, label: string, detail: string}>,
      *     nodes: list<array<string, mixed>>,
      *     edges: list<array<string, mixed>>,
+     *     outputs: list<array<string, mixed>>,
      *     legend: list<array{status: string, label: string, description: string, count: int}>
      * }
      */
@@ -145,13 +146,13 @@ final class AdminSystemFlowStatus
         ];
 
         $edges = [
-            $this->edge('ieducar', 'servlitcys', $ieducar['status'], __('Matrículas, turmas, Censo'), true),
-            $this->edge('fnde', 'servlitcys', $fnde['status'], __('VAAF e repasses indicativos')),
-            $this->edge('inep', 'servlitcys', $inep['status'], __('Desempenho e SAEB')),
-            $this->edge('portal', 'servlitcys', $portal['status'], __('Programas e despesas')),
-            $this->edge('tesouro', 'servlitcys', $tesouro['status'], __('Repasses e CKAN Tesouro')),
-            $this->edge('arcgis', 'servlitcys', 'ok', __('Mapa e catálogo de escolas')),
-            $this->edge('cadunico', 'servlitcys', $cadunico['status'], __('Lacuna rede e previsão FUNDEB')),
+            $this->edge('ieducar', 'servlitcys', $ieducar['status'], __('Matrículas, turmas, Censo'), 'municipal', true),
+            $this->edge('fnde', 'servlitcys', $fnde['status'], __('VAAF e repasses indicativos'), 'financeiro'),
+            $this->edge('inep', 'servlitcys', $inep['status'], __('Desempenho e SAEB'), 'pedagogico'),
+            $this->edge('portal', 'servlitcys', $portal['status'], __('Programas e despesas'), 'transparencia'),
+            $this->edge('tesouro', 'servlitcys', $tesouro['status'], __('Repasses e CKAN Tesouro'), 'financeiro'),
+            $this->edge('arcgis', 'servlitcys', 'ok', __('Mapa e catálogo de escolas'), 'geografia'),
+            $this->edge('cadunico', 'servlitcys', $cadunico['status'], __('Lacuna rede e previsão FUNDEB'), 'social'),
         ];
 
         $statuses = array_merge(
@@ -159,6 +160,33 @@ final class AdminSystemFlowStatus
             array_column(array_filter($nodes, fn (array $n): bool => ($n['zone'] ?? '') === 'external'), 'status'),
         );
         $summary = $this->buildSummary($statuses, $citiesReady, $citiesActive);
+        $hubStatus = (string) ($summary['status'] ?? 'partial');
+
+        $outputs = [
+            [
+                'id' => 'consultoria',
+                'label' => __('Consultoria'),
+                'sublabel' => __('Painel analítico'),
+                'status' => $hubStatus === 'off' ? 'partial' : 'ok',
+                'hint' => __('Discrepâncias, FUNDEB, Finanças e diagnóstico por município/ano.'),
+            ],
+            [
+                'id' => 'filas',
+                'label' => __('Filas'),
+                'sublabel' => __('Sync e PDF'),
+                'status' => 'ok',
+                'hint' => __('Processamento admin-sync, pedagógico, geo e exportação Serventec.'),
+            ],
+            [
+                'id' => 'relatorios',
+                'label' => __('Relatórios'),
+                'sublabel' => __('PDF ATM'),
+                'status' => 'ok',
+                'hint' => __('Exportação executiva e planilhas de apoio à decisão.'),
+            ],
+        ];
+        $edges[] = $this->edge('servlitcys', 'consultoria', $hubStatus === 'off' ? 'partial' : 'ok', __('Indicadores e decisão'), 'platform');
+
         $statusCounts = $this->statusCounts($nodes, $edges);
 
         return [
@@ -191,6 +219,7 @@ final class AdminSystemFlowStatus
             ],
             'nodes' => $nodes,
             'edges' => $edges,
+            'outputs' => $outputs,
             'legend' => $this->legendItems($statusCounts),
         ];
     }
@@ -379,13 +408,14 @@ final class AdminSystemFlowStatus
     /**
      * @return array<string, mixed>
      */
-    private function edge(string $from, string $to, string $status, string $label, bool $bidirectional = false): array
+    private function edge(string $from, string $to, string $status, string $label, string $channel = 'platform', bool $bidirectional = false): array
     {
         return [
             'from' => $from,
             'to' => $to,
             'status' => $status,
             'label' => $label,
+            'channel' => $channel,
             'bidirectional' => $bidirectional,
         ];
     }

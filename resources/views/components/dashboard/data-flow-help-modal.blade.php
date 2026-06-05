@@ -13,9 +13,9 @@
         <div class="flex items-start justify-between gap-3 border-b border-slate-200/90 dark:border-slate-700 px-5 py-4 shrink-0">
             <div class="min-w-0">
                 <h2 id="data-flow-help-title" class="text-base font-semibold text-slate-900 dark:text-slate-100">
-                    {{ __('Como ler o mapa mental') }}
+                    {{ __('Como ler o diagrama ERP') }}
                 </h2>
-                <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ __('Fluxo de dados · Mapa Mental') }}</p>
+                <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ __('Fluxo de dados · Integrações ERP') }}</p>
             </div>
             <button
                 type="button"
@@ -28,28 +28,28 @@
         </div>
         <div class="overflow-y-auto px-5 py-4 space-y-3 text-sm max-h-[min(70vh,28rem)]">
             <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-                {{ __('A faixa horizontal resume a ordem em que a operação costuma correr. O diagrama em camadas mostra de onde vêm os dados e onde são cruzados.') }}
+                {{ __('O diagrama segue a leitura ERP: colunas de entrada → motor → referências → saída. As linhas entre módulos indicam o canal de dados e a cor do estado da integração.') }}
             </p>
             <ul class="space-y-3 text-slate-700 dark:text-slate-300 leading-relaxed">
                 <li class="flex gap-2">
                     <span class="serv-mm-tip-num serv-mm-tip-num--teal" aria-hidden="true">1</span>
-                    <span>{{ __('Topo: i-Educar — cadastro municipal (matrículas, turmas, Censo). Sem base local, repasses e discrepâncias perdem sentido.') }}</span>
+                    <span>{{ __('Entrada: i-Educar — cadastro municipal. Linha teal sólida = conexão operacional; tracejada = parcial.') }}</span>
                 </li>
                 <li class="flex gap-2">
                     <span class="serv-mm-tip-num serv-mm-tip-num--hub" aria-hidden="true">2</span>
-                    <span>{{ __('Centro: a plataforma sincroniza, valida e cruza com FUNDEB, INEP, CadÚnico e Tesouro; as etiquetas no núcleo resumem cada entrada activa.') }}</span>
+                    <span>{{ __('Motor: a plataforma agrega e cruza dados. O ponto no canto do cartão resume o estado do módulo.') }}</span>
                 </li>
                 <li class="flex gap-2">
                     <span class="serv-mm-tip-num" aria-hidden="true">3</span>
-                    <span>{{ __('Base: fontes públicas e federais, por eixo (financiamento, indicadores, assistência social, transparência, geografia) — complementam o cadastro, não o substituem.') }}</span>
+                    <span>{{ __('Referências: cada fonte federal tem linha colorida por eixo (âmbar finanças, violeta INEP, fúcsia CadÚnico, etc.) convergindo para o motor.') }}</span>
                 </li>
                 <li class="flex gap-2">
                     <span class="serv-mm-tip-num serv-mm-tip-num--muted" aria-hidden="true">4</span>
-                    <span>{{ __('Saída: painel analítico, RX, filas de sync/PDF e relatórios (atalhos «Acesso rápido» acima deste bloco).') }}</span>
+                    <span>{{ __('Saída: consultoria, filas e relatórios PDF — consumo operacional do que foi integrado.') }}</span>
                 </li>
                 <li class="flex gap-2">
                     <span class="serv-mm-tip-num serv-mm-tip-num--muted" aria-hidden="true">·</span>
-                    <span>{{ __('Cores: teal = operacional, âmbar = a configurar (.env ou municípios), cinza = indisponível. A legenda conta nós e ligações.') }}</span>
+                    <span>{{ __('Linhas: sólidas pulsantes = operacional; tracejadas = a configurar; pontilhadas = indisponível. Cada eixo tem cor própria (teal municipal, âmbar FNDE/Tesouro, violeta INEP, etc.).') }}</span>
                 </li>
             </ul>
         </div>

@@ -35,4 +35,13 @@ final class AdminScreenCatalogTest extends TestCase
             'legal-consents',
         ));
     }
+
+    #[Test]
+    public function accent_indigo_para_conexoes(): void
+    {
+        $this->assertSame('indigo', AdminScreenCatalog::shellAccentForScreen(
+            AdminScreenCatalog::GROUP_MUNICIPALITIES,
+            'connections',
+        ));
+    }
 }
