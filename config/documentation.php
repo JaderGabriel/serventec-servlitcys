@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '4.1.1',
         'release_tag' => '20260605-Kairos',
-        'commit_short' => 'pending',
+        'commit_short' => '7b11e6e',
         'commit_number' => 292,
         'revision_date' => '2026-06-05',
         'in_production' => true,
