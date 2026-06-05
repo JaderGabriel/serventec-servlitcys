@@ -87,36 +87,71 @@ function schoolMarkerStyle(mk, maxMat) {
     const mat = toFiniteNumber(mk?.school?.matriculas);
     const vagas = toFiniteNumber(mk?.school?.vagas_disponiveis);
     const cap = toFiniteNumber(mk?.school?.capacidade_declarada);
-    let color = "#1d4ed8";
-    let fill = "#3b82f6";
+    let color = "#1e40af";
+    let fill = "#2563eb";
+    let state = "rede";
     if (vagas !== null && vagas > 0) {
-        color = "#15803d";
+        color = "#166534";
         fill = "#22c55e";
+        state = "vagas";
     } else if (
         cap !== null &&
         mat !== null &&
         cap > 0 &&
         mat / cap >= 0.9
     ) {
-        color = "#b45309";
-        fill = "#f59e0b";
+        color = "#5b21b6";
+        fill = "#7c3aed";
+        state = "quase_lotada";
     }
     let radius = 7;
     if (mat !== null && mat > 0 && maxMat > 0) {
         radius = Math.round(6 + 10 * Math.sqrt(mat / maxMat));
     }
-    return { color, fill, radius };
+    return { color, fill, radius, state };
 }
 
-function midpointLabel(lat1, lng1, lat2, lng2, text) {
-    return L.marker([(lat1 + lat2) / 2, (lng1 + lng2) / 2], {
-        icon: L.divIcon({
-            className: "serv-cadunico-map-dist-label",
-            html: `<span class="serv-cadunico-map-dist-label__text">${escapeHtml(text)}</span>`,
-            iconSize: [0, 0],
-        }),
-        interactive: false,
-    });
+/** Escala de pressão: amarelo → laranja → vermelho (maior contraste entre faixas). */
+function pressureCircleStyle(pressao, maxPressao, gap, maxGap) {
+    const p = Math.min(1, Number(pressao ?? 0) / Math.max(1, maxPressao));
+    const g = Math.min(1, Number(gap ?? 0) / Math.max(1, maxGap));
+    const intensity = 0.65 * p + 0.35 * g;
+    if (intensity >= 0.66) {
+        return {
+            fillColor: "#dc2626",
+            color: "#7f1d1d",
+            fillOpacity: 0.42,
+            weight: 2.5,
+            tier: "alta",
+        };
+    }
+    if (intensity >= 0.33) {
+        return {
+            fillColor: "#f97316",
+            color: "#9a3412",
+            fillOpacity: 0.34,
+            weight: 2,
+            tier: "media",
+        };
+    }
+    return {
+        fillColor: "#fde047",
+        color: "#a16207",
+        fillOpacity: 0.28,
+        weight: 2,
+        tier: "baixa",
+    };
+}
+
+function bindDistanceTooltip(polyline, text) {
+    polyline
+        .bindTooltip(escapeHtml(text), {
+            permanent: true,
+            direction: "center",
+            className: "serv-cadunico-map-dist-tooltip",
+            opacity: 1,
+        })
+        .openTooltip();
 }
 
 /**
@@ -309,6 +344,10 @@ export default function createCadunicoTerritoryMap(
                 1,
                 ...visibleTerritories.map((t) => Number(t?.gap ?? 0)),
             );
+            const maxPressao = Math.max(
+                1,
+                ...visibleTerritories.map((t) => Number(t?.pressao ?? 0)),
+            );
 
             if (this.filters.showTerritories) {
                 for (const t of visibleTerritories) {
@@ -318,9 +357,14 @@ export default function createCadunicoTerritoryMap(
                         continue;
                     }
                     const gap = Number(t?.gap ?? 0);
-                    const intensity = Math.min(1, gap / maxGap);
+                    const pressao = Number(t?.pressao ?? 0);
                     const r = Math.max(8, Number(t.radius) || 14);
-                    const fillOpacity = 0.22 + intensity * 0.38;
+                    const pStyle = pressureCircleStyle(
+                        pressao,
+                        maxPressao,
+                        gap,
+                        maxGap,
+                    );
                     const nearest = t.nearest_school ?? null;
                     const distLabel =
                         t.distancia_escola_km ?? nearest?.km ?? null;
@@ -328,7 +372,7 @@ export default function createCadunicoTerritoryMap(
                         `<strong>${escapeHtml(t.label ?? "")}</strong>`,
                         `<span class="block text-xs mt-1">${escapeHtml(t.tipo ?? "")}</span>`,
                         `<span class="block text-xs">${escapeHtml(t.meta ?? "")}</span>`,
-                        `<span class="block text-xs mt-1">${escapeHtml("Pressão")}: <strong>${nf(t.pressao)}</strong></span>`,
+                        `<span class="block text-xs mt-1">${escapeHtml("Pressão")}: <strong>${nf(pressao)}</strong></span>`,
                     ];
                     if (nearest?.label) {
                         popup.push(
@@ -337,10 +381,10 @@ export default function createCadunicoTerritoryMap(
                     }
                     L.circle([lat, lng], {
                         radius: r * 80,
-                        color: "#c2410c",
-                        fillColor: intensity > 0.55 ? "#ea580c" : "#fb923c",
-                        fillOpacity,
-                        weight: 2,
+                        color: pStyle.color,
+                        fillColor: pStyle.fillColor,
+                        fillOpacity: pStyle.fillOpacity,
+                        weight: pStyle.weight,
                     })
                         .bindPopup(popup.join(""))
                         .addTo(this.territoryLayer);
@@ -421,7 +465,7 @@ export default function createCadunicoTerritoryMap(
                         continue;
                     }
                     const color = linkColorForKm(km);
-                    L.polyline(
+                    const line = L.polyline(
                         [
                             [lat, lng],
                             [slat, slng],
@@ -436,11 +480,9 @@ export default function createCadunicoTerritoryMap(
                         .bindTooltip(
                             `${escapeHtml(t.label ?? "")} → ${escapeHtml(nearest?.label ?? "")}: ${formatKm(km)}`,
                             { sticky: true },
-                        )
-                        .addTo(this.allocationLayer);
-                    midpointLabel(lat, lng, slat, slng, formatKm(km)).addTo(
-                        this.allocationLayer,
-                    );
+                        );
+                    bindDistanceTooltip(line, formatKm(km));
+                    line.addTo(this.allocationLayer);
                 }
             }
 
@@ -498,7 +540,7 @@ export default function createCadunicoTerritoryMap(
                             if (km === null) {
                                 continue;
                             }
-                            L.polyline(
+                            const meshLine = L.polyline(
                                 [
                                     [a.lat, a.lng],
                                     [b.lat, b.lng],
@@ -513,15 +555,9 @@ export default function createCadunicoTerritoryMap(
                                 .bindTooltip(
                                     `${escapeHtml(a.label)} ↔ ${escapeHtml(b.label)}: ${formatKm(km)}`,
                                     { sticky: true },
-                                )
-                                .addTo(this.zoneMeshLayer);
-                            midpointLabel(
-                                a.lat,
-                                a.lng,
-                                b.lat,
-                                b.lng,
-                                formatKm(km),
-                            ).addTo(this.zoneMeshLayer);
+                                );
+                            bindDistanceTooltip(meshLine, formatKm(km));
+                            meshLine.addTo(this.zoneMeshLayer);
                         }
                     }
                 }

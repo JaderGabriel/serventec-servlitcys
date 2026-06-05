@@ -123,17 +123,19 @@
                 <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     {{ __('Legenda') }}
                 </p>
-                <p class="leading-relaxed">
-                    <span class="inline-block w-3 h-3 rounded-full bg-orange-500 align-middle mr-1"></span>
-                    {{ __('Círculo ∝ lacuna; cor mais intensa = maior pressão.') }}
+                <p class="leading-relaxed space-y-1">
+                    <span class="block">{{ __('Lacuna / pressão (tamanho ∝ lacuna):') }}</span>
+                    <span class="inline-flex items-center gap-1 mr-2"><span class="inline-block w-3 h-3 rounded-full bg-yellow-300 border border-yellow-700"></span>{{ __('baixa') }}</span>
+                    <span class="inline-flex items-center gap-1 mr-2"><span class="inline-block w-3 h-3 rounded-full bg-orange-500 border border-orange-900"></span>{{ __('média') }}</span>
+                    <span class="inline-flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-full bg-red-600 border border-red-950"></span>{{ __('alta pressão') }}</span>
                 </p>
                 <p class="leading-relaxed">
                     <span class="inline-block w-3 h-3 rounded-full bg-green-500 align-middle mr-1"></span>
                     {{ __('Escola com vagas') }}
-                    <span class="inline-block w-3 h-3 rounded-full bg-blue-500 align-middle mx-1"></span>
+                    <span class="inline-block w-3 h-3 rounded-full bg-blue-600 align-middle mx-1"></span>
                     {{ __('rede') }}
-                    <span class="inline-block w-3 h-3 rounded-full bg-amber-500 align-middle mx-1"></span>
-                    {{ __('quase lotada') }}
+                    <span class="inline-block w-3 h-3 rounded-full bg-violet-600 align-middle mx-1"></span>
+                    {{ __('quase lotada (≥90% capacidade)') }}
                 </p>
                 <p class="leading-relaxed text-slate-600 dark:text-slate-400">
                     {{ __('Linhas tracejadas: verde ≤2 km, amarelo ≤5 km, laranja ≤10 km, vermelho >10 km até a escola de referência. Malha índigo: distâncias entre escolas candidatas a atender cada zona.') }}
@@ -144,26 +146,25 @@
 </div>
 
 <style>
-    .serv-cadunico-map-dist-label {
-        background: transparent;
-        border: none;
-    }
-    .serv-cadunico-map-dist-label__text {
-        display: inline-block;
-        padding: 1px 5px;
+    .serv-cadunico-map-dist-tooltip {
+        padding: 2px 6px;
         border-radius: 4px;
         font-size: 10px;
         font-weight: 600;
-        line-height: 1.2;
+        line-height: 1.25;
         color: #1e293b;
-        background: rgba(255, 255, 255, 0.92);
-        border: 1px solid rgba(148, 163, 184, 0.55);
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(148, 163, 184, 0.6);
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
         white-space: nowrap;
+        pointer-events: none;
     }
-    .dark .serv-cadunico-map-dist-label__text {
+    .serv-cadunico-map-dist-tooltip::before {
+        display: none;
+    }
+    .dark .serv-cadunico-map-dist-tooltip {
         color: #e2e8f0;
-        background: rgba(15, 23, 42, 0.88);
-        border-color: rgba(71, 85, 105, 0.7);
+        background: rgba(15, 23, 42, 0.92);
+        border-color: rgba(71, 85, 105, 0.75);
     }
 </style>
