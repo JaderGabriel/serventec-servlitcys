@@ -55,7 +55,7 @@ final class FinanceRealtimeTransferRebuildService
         foreach ($cities as $city) {
             foreach ($years as $year) {
                 $slug = FundebTransferScope::cityYearSlug($city, $year);
-                $result = $this->import->importForCityYear($city, $year);
+                $result = $this->import->importForCityYear($city, $year, financeRealtimeRebuild: true);
                 $ok = (bool) ($result['success'] ?? false);
                 $rows = (int) ($result['rows'] ?? 0);
 

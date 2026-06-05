@@ -58,6 +58,20 @@ final class TesouroTransferenciasCsvService
                 continue;
             }
             $programaId = (string) $resource['programa_id'];
+            $mensal = $this->normalizeMensalMap($match['mensal'][$year] ?? []);
+            $meta = [
+                'cod_mun' => $match['cod_mun'],
+                'uf' => $match['uf'],
+                'municipio' => $match['nome'],
+                'resource_id' => $resource['resource_id'],
+                'resource_name' => $resource['name'],
+                'meses_somados' => $match['months_counted'][$year] ?? count($mensal),
+                'mensal' => $mensal,
+            ];
+            if ($mensal !== []) {
+                $meta['granularity'] = 'month';
+                $meta['repasses'] = $this->repassesFromMensal($mensal, $year);
+            }
             $rows[] = [
                 'ibge_municipio' => $ibge,
                 'ano' => $year,
@@ -65,15 +79,7 @@ final class TesouroTransferenciasCsvService
                 'programa_id' => $programaId,
                 'programa_label' => $this->programLabel($programaId),
                 'valor' => round($valor, 2),
-                'meta' => [
-                    'cod_mun' => $match['cod_mun'],
-                    'uf' => $match['uf'],
-                    'municipio' => $match['nome'],
-                    'resource_id' => $resource['resource_id'],
-                    'resource_name' => $resource['name'],
-                    'meses_somados' => $match['months_counted'][$year] ?? 0,
-                    'mensal' => $match['mensal'][$year] ?? [],
-                ],
+                'meta' => $meta,
             ];
         }
 
@@ -156,6 +162,25 @@ final class TesouroTransferenciasCsvService
         }
 
         ksort($out);
+
+        return $out;
+    }
+
+    /**
+     * @param  array<int, float>  $mensal
+     * @return list<array{mes: int, ano: int, valor: float, granularity: string}>
+     */
+    private function repassesFromMensal(array $mensal, int $year): array
+    {
+        $out = [];
+        foreach ($mensal as $month => $valor) {
+            $out[] = [
+                'mes' => (int) $month,
+                'ano' => $year,
+                'valor' => round((float) $valor, 2),
+                'granularity' => 'month',
+            ];
+        }
 
         return $out;
     }

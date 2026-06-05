@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '4.1.3',
-        'release_tag' => '20260603-Chronos',
-        'commit_short' => 'acdae84',
-        'commit_number' => 294,
-        'revision_date' => '2026-06-03',
+        'version' => '4.1.4',
+        'release_tag' => '20260605-Horae',
+        'commit_short' => '',
+        'commit_number' => 296,
+        'revision_date' => '2026-06-05',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

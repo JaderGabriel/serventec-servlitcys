@@ -31,7 +31,7 @@ final class MunicipalTransferImportService
      *   attempts: list<array<string, mixed>>
      * }
      */
-    public function importForCityYear(City $city, int $year): array
+    public function importForCityYear(City $city, int $year, bool $financeRealtimeRebuild = false): array
     {
         $ibge = MunicipalTransferSnapshotRepository::normalizeIbge((string) $city->ibge_municipio);
         if ($ibge === null) {
@@ -61,7 +61,7 @@ final class MunicipalTransferImportService
         $byFonte = [];
         $attempts = [];
 
-        foreach ($this->fetchFundebExtratoSources($city, $year, $timeout) as $bundle) {
+        foreach ($this->fetchFundebExtratoSources($city, $year, $timeout, $financeRealtimeRebuild) as $bundle) {
             $attempts[] = $bundle['attempt'];
             foreach ($bundle['rows'] as $row) {
                 $allRows[] = $row;
@@ -90,12 +90,14 @@ final class MunicipalTransferImportService
             if ($histYear === $year) {
                 continue;
             }
-            $exists = MunicipalTransferSnapshot::query()
-                ->where('ibge_municipio', $ibge)
-                ->where('ano', $histYear)
-                ->exists();
-            if ($exists) {
-                continue;
+            if (! $financeRealtimeRebuild) {
+                $exists = MunicipalTransferSnapshot::query()
+                    ->where('ibge_municipio', $ibge)
+                    ->where('ano', $histYear)
+                    ->exists();
+                if ($exists) {
+                    continue;
+                }
             }
             $extra = array_merge(
                 $this->fetchTesouroRows($city, $ibge, $histYear, $timeout),
@@ -169,13 +171,18 @@ final class MunicipalTransferImportService
      *
      * @return list<array{rows: list<array<string, mixed>>, attempt: array<string, mixed>}>
      */
-    private function fetchFundebExtratoSources(City $city, int $year, int $timeout): array
+    private function fetchFundebExtratoSources(City $city, int $year, int $timeout, bool $financeRealtimeRebuild = false): array
     {
-        return [
-            $this->tesouroPublicacao->fetchForCityYear($city, $year, $timeout),
+        $sources = [
             $this->siswebFundeb->fetchForCityYear($city, $year, $timeout),
             $this->bbExtrato->fetchForCityYear($city, $year, $timeout),
         ];
+
+        if (! $financeRealtimeRebuild) {
+            array_unshift($sources, $this->tesouroPublicacao->fetchForCityYear($city, $year, $timeout));
+        }
+
+        return $sources;
     }
 
     /**

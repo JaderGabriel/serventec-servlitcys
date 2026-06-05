@@ -86,4 +86,69 @@ final class MunicipalTransferImportServiceTest extends TestCase
         $this->assertSame(1, $result['rows']);
         $this->assertArrayHasKey('tesouro_csv', $result['by_fonte']);
     }
+
+    #[Test]
+    public function rebuild_tempo_real_ignora_publicacao_uf_e_enriquece_mensal(): void
+    {
+        config([
+            'ieducar.funding.transfers.extrato_sources.tesouro_publicacao.enabled' => true,
+            'ieducar.funding.transfers.extrato_sources.sisweb.enabled' => false,
+            'ieducar.funding.transfers.extrato_sources.bb_extrato.enabled' => false,
+            'ieducar.other_funding.public_queries.portal_transparencia.api_key' => '',
+            'ieducar.funding.transfers.historical_years' => 1,
+            'ieducar.other_funding.public_queries.tesouro_ckan.csv_resources' => [
+                'fundeb' => [
+                    'resource_id' => 'test-fundeb',
+                    'programa_id' => 'fundeb',
+                    'name' => 'FUNDEB test',
+                    'url' => 'https://example.test/fundeb.csv',
+                ],
+            ],
+        ]);
+
+        Http::fake([
+            'example.test/fundeb.csv' => Http::response(
+                (string) file_get_contents(base_path('tests/Fixtures/tesouro-fundeb-snippet.csv')),
+                200,
+            ),
+            'tesourotransparente.gov.br/*' => Http::response(['success' => true, 'result' => []], 200),
+        ]);
+
+        $city = new City([
+            'id' => 99,
+            'name' => 'Formosa do Rio Preto',
+            'uf' => 'BA',
+            'ibge_municipio' => '2911105',
+        ]);
+
+        $snapshots = Mockery::mock(MunicipalTransferSnapshotRepository::class);
+        $snapshots->shouldReceive('upsertBatch')
+            ->once()
+            ->withArgs(function (?City $c, array $rows): bool {
+                $this->assertCount(1, $rows);
+                $this->assertSame('tesouro_csv', $rows[0]['fonte']);
+                $meta = $rows[0]['meta'] ?? [];
+                $this->assertSame('month', $meta['granularity'] ?? null);
+                $this->assertNotEmpty($meta['repasses'] ?? null);
+
+                return true;
+            })
+            ->andReturn(1);
+
+        $tesouroCsv = new TesouroTransferenciasCsvService;
+        $service = new MunicipalTransferImportService(
+            $snapshots,
+            $tesouroCsv,
+            new TesouroFundebPublicacaoService,
+            new SiswebFundebRepassesService($tesouroCsv),
+            new BbFundebExtratoService(new BbExtratoCsvFetcher),
+            new \App\Support\Funding\MunicipalTransferGranularityEnricher($tesouroCsv),
+        );
+
+        $result = $service->importForCityYear($city, 2025, financeRealtimeRebuild: true);
+
+        $this->assertTrue($result['success']);
+        $this->assertArrayNotHasKey('tesouro_publicacao', $result['by_fonte']);
+        $this->assertTrue($result['municipal_ready'] ?? false);
+    }
 }
