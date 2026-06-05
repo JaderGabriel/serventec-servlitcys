@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * Catálogo de abas do painel — ordem de consultoria e tab inicial por perfil.
+ * Catálogo de abas do painel — cenário C: Resumo (Diagnóstico) como entrada transversal.
  */
 final class AnalyticsTabCatalogTest extends TestCase
 {
@@ -42,27 +42,27 @@ final class AnalyticsTabCatalogTest extends TestCase
     }
 
     /**
-     * Cenário: tab inválida com filtros prontos — abrir em Visão geral (primeira aba de cadastro).
+     * Cenário: tab inválida com filtros prontos — abrir em Diagnóstico (Resumo).
      */
     #[Test]
-    public function resolve_initial_tab_com_ano_usa_overview(): void
+    public function resolve_initial_tab_com_ano_usa_diagnostico(): void
     {
         $user = new User(['role' => UserRole::Municipal]);
 
         $tab = AnalyticsTabCatalog::resolveInitialTab('tab_invalida', $user, true);
 
-        $this->assertSame('overview', $tab);
+        $this->assertSame('municipality_health', $tab);
     }
 
     /**
-     * Cenário: admin ou ano não aplicado — visão geral primeiro (cadastro).
+     * Cenário: ano não aplicado — visão geral (cadastro); com ano — Diagnóstico.
      */
     #[Test]
-    public function resolve_initial_tab_sem_ano_ou_admin_usa_overview(): void
+    public function resolve_initial_tab_sem_ano_usa_overview_com_ano_diagnostico(): void
     {
         $admin = new User(['role' => UserRole::Admin]);
 
-        $this->assertSame('overview', AnalyticsTabCatalog::resolveInitialTab('x', $admin, true));
+        $this->assertSame('municipality_health', AnalyticsTabCatalog::resolveInitialTab('x', $admin, true));
 
         $municipal = new User(['role' => UserRole::Municipal]);
         $this->assertSame('overview', AnalyticsTabCatalog::resolveInitialTab('x', $municipal, false));
@@ -80,26 +80,31 @@ final class AnalyticsTabCatalogTest extends TestCase
     }
 
     /**
-     * Cenário: grupos de navegação — cadastro antes de pedagógico e finanças.
+     * Cenário: grupos de navegação — Resumo primeiro; Diagnóstico fora de Finanças.
      */
     #[Test]
-    public function groups_cadastro_lista_primeiro(): void
+    public function groups_resumo_primeiro_e_financas_sem_diagnostico(): void
     {
         $groups = AnalyticsTabCatalog::groups();
 
-        $this->assertSame('cadastro', $groups[0]['id']);
-        $this->assertContains('overview', $groups[0]['tabs']);
-        $this->assertSame('pedagogico', $groups[1]['id']);
-        $this->assertSame('censo', $groups[2]['id']);
-        $this->assertContains('work_done', $groups[2]['tabs']);
-        $this->assertNotContains('work_done', $groups[3]['tabs']);
-        $this->assertSame('consultoria', $groups[3]['id']);
-        $this->assertContains('fundeb', $groups[3]['tabs']);
-        $this->assertContains('municipality_health', $groups[3]['tabs']);
-        $this->assertContains('comparativo', $groups[3]['tabs']);
+        $this->assertCount(5, $groups);
+        $this->assertSame('resumo', $groups[0]['id']);
+        $this->assertSame(['municipality_health'], $groups[0]['tabs']);
+        $this->assertSame('cadastro', $groups[1]['id']);
+        $this->assertContains('overview', $groups[1]['tabs']);
+        $this->assertSame('pedagogico', $groups[2]['id']);
+        $this->assertSame('censo', $groups[3]['id']);
+        $this->assertContains('work_done', $groups[3]['tabs']);
+        $this->assertSame('consultoria', $groups[4]['id']);
+        $this->assertContains('fundeb', $groups[4]['tabs']);
+        $this->assertNotContains('municipality_health', $groups[4]['tabs']);
         $this->assertSame(
-            'comparativo',
-            $groups[3]['tabs'][array_search('municipality_health', $groups[3]['tabs'], true) + 1] ?? null,
+            'discrepancies',
+            $groups[4]['tabs'][0] ?? null,
+        );
+        $this->assertSame(
+            'fundeb',
+            $groups[4]['tabs'][1] ?? null,
         );
     }
 
@@ -111,13 +116,21 @@ final class AnalyticsTabCatalogTest extends TestCase
     {
         $payload = AnalyticsTabCatalog::navigationPayload();
 
-        $this->assertCount(4, $payload['groups']);
-        $this->assertSame('cadastro', $payload['groups'][0]['id']);
+        $this->assertCount(5, $payload['groups']);
+        $this->assertSame('resumo', $payload['groups'][0]['id']);
+        $this->assertSame('resumo', $payload['tabToGroup']['municipality_health']);
         $this->assertSame('censo', $payload['tabToGroup']['work_done']);
         $this->assertSame('consultoria', $payload['tabToGroup']['fundeb']);
         $this->assertSame('cadastro', $payload['tabToGroup']['overview']);
         $this->assertArrayHasKey('municipality_health', $payload['tabHints']);
         $this->assertNotEmpty($payload['groups'][0]['short']);
         $this->assertNotEmpty($payload['groups'][0]['tone']);
+    }
+
+    #[Test]
+    public function is_resumo_group_tab_identifica_diagnostico(): void
+    {
+        $this->assertTrue(AnalyticsTabCatalog::isResumoGroupTab('municipality_health'));
+        $this->assertFalse(AnalyticsTabCatalog::isResumoGroupTab('fundeb'));
     }
 }

@@ -184,6 +184,22 @@ final class ArtisanCommandsCatalog
                         'env' => [],
                         'doc_anchor' => 'fundeb',
                     ],
+                    [
+                        'name' => 'funding:rebuild-finance-realtime',
+                        'summary' => __('Apaga e reimporta repasses FUNDEB (municipal_transfer_snapshots) para Finanças → Tempo Real.'),
+                        'signature' => 'funding:rebuild-finance-realtime {--ano=} {--from=} {--to=} {--city=} {--cities=} {--all-cities} {--purge-only} {--no-purge} {--dry-run} {--confirm=}',
+                        'examples' => [
+                            'php artisan funding:rebuild-finance-realtime --city=1 --ano=2025',
+                            'php artisan funding:rebuild-finance-realtime --all-cities --ano=2025 --dry-run',
+                            'php artisan funding:rebuild-finance-realtime --all-cities --ano=2025 --confirm=rebuild-repasses-2025',
+                        ],
+                        'env' => [
+                            'IEDUCAR_FUNDING_TRANSFERS_ENABLED',
+                            'IEDUCAR_FINANCE_REALTIME_REBUILD_SLUG',
+                            'IEDUCAR_TESOURO_CSV_ENABLED',
+                        ],
+                        'doc_anchor' => 'fundeb-repasses',
+                    ],
                 ],
             ],
             [

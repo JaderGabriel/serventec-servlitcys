@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **4.0.0** · release `20260604-Hestia` · **Ramo:** `main` · **Última revisão:** 04/06/2026
+**Versão em produção:** **4.1.0** · release `20260605-Athena` · **Ramo:** `main` · **Última revisão:** 05/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -18,6 +18,8 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Analytics — CadÚnico previsão (lacuna rede, impacto VAAF, export consultoria) | Implementado (3.5.0) |
 | CadÚnico — mapa territorial, faixas com lacuna, cenários NEE/AEE, import IBGE (`cadunico:sync-territorio`) | Implementado (3.9.0) |
 | Repasses FUNDEB — 3 extratos, download BB, extrato Tempo Real (mês/ano + comparativo) | Implementado (3.10.0) |
+| Consultoria 4.1 — navegação cenário C (Resumo → Diagnóstico; 5 áreas; aba inicial com ano) | Implementado (4.1.0) |
+| Finanças Tempo Real — fix alertas + filtro FUNDEB unificado KPI/extrato | Implementado (4.1.0) |
 | Início 4.0 — Acesso rápido curado, mapa mental em camadas, rebuild `funding:rebuild-finance-realtime` | Implementado (4.0.0) |
 | CadÚnico — importação automática (URL nacional, fila `cadastro`, cron, admin) | Implementado (3.5.0) |
 | CadÚnico — SAGI/Misocial (MDS) nacional + `cadunico:import-misocial` histórico | Implementado (3.6.0) |
@@ -30,7 +32,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Analytics — volume matrículas + alunos distintos nos medidores de quantidade | Implementado (3.8.0) |
 | FUNDEB / Inclusão — base e ponderação NEE por aluno (sem inflar matrícula duplicada) | Implementado (3.8.0) |
 | Diagnóstico — velocímetro único; faixa de impacto sem anel fictício em falha parcial | Implementado (3.8.0) |
-| Analytics — navegação 4 áreas (Cadastro → Pedagógico → **Censo** → Finanças) | Implementado (3.4.0) |
+| Analytics — navegação 5 áreas (**Resumo** → Cadastro → Pedagógico → Censo → Finanças) | Implementado (4.1.0) |
 | Finanças / Censo — UI `consultoria-tab-frame` por tom temático | Implementado (3.4.0) |
 | Diagnóstico — qualidade do sistema + «Explorar em detalhe» | Implementado (3.4.0; refinado pós-release: métricas por área, PDF) |
 | Diagnóstico — modo estratégico (um pedido leve + cache partilhado entre abas) | Implementado (3.3.2) |

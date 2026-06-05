@@ -37,7 +37,7 @@ O produto comunica **consultoria profissional** com foco em **finanças educacio
 | Componente | Quando usar |
 |------------|-------------|
 | `x-dashboard.consultoria-municipality-strip` | Painel analytics com cidade seleccionada |
-| `x-dashboard.analytics-tabs-nav` | Navegação em 2 níveis: área temática (3 segmentos) → sub-abas da área activa |
+| `x-dashboard.analytics-tabs-nav` | Navegação em 2 níveis: área temática (5 segmentos) → sub-abas da área activa |
 | `x-dashboard.analytics-tab-impact-header` | Topo das abas até Censo (saldo + status) |
 | `x-consultoria-tab-link` | Links internos «ir para aba X» (Alpine `set-analytics-tab`) |
 | `x-status-pill` | Estados success / warning / danger uniformes |
@@ -60,15 +60,17 @@ Rota documentação admin: `GET /admin/documentacao` → `admin.documentation.in
 
 ## 5. Ordem das abas (consultoria)
 
-1. **Cadastro e rede:** Visão geral → Matrículas → Rede → Unidades  
-2. **Indicadores pedagógicos:** Inclusão → Desempenho → Frequência  
-3. **Finanças e repasses:** Diagnóstico → Discrepâncias → FUNDEB → Financiamentos → Censo  
+1. **Resumo executivo:** Diagnóstico (entrada transversal)  
+2. **Cadastro e rede:** Visão geral → Matrículas → CadÚnico → Rede → Unidades  
+3. **Indicadores pedagógicos:** Inclusão → Desempenho → Frequência  
+4. **Censo e cadastro:** Censo (Educacenso)  
+5. **Finanças e repasses:** Discrepâncias → FUNDEB → Tempo Real → Comparativo → Financiamentos  
 
-No painel, o usuário escolhe primeiro a área (segmentos numerados 1–3) e depois a sub-aba; o indicador «Você está em» mostra área → análise activa.
+No painel, o usuário escolhe primeiro a área (segmentos numerados 1–5) e depois a sub-aba quando a área tem mais de uma análise; o indicador «Você está em» mostra área → análise activa.
 
-Aba inicial (sem `?tab=`): **Diagnóstico** para user/municipal com ano aplicado; **Visão geral** para admin.
+Aba inicial (sem `?tab=` válido): **Diagnóstico** com ano letivo aplicado; **Visão geral** sem ano.
 
-Código: `App\Support\Dashboard\AnalyticsTabCatalog`.
+Código: `App\Support\Dashboard\AnalyticsTabCatalog` (cenário C — ver [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md)).
 
 ---
 

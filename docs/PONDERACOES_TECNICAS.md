@@ -186,7 +186,7 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 | Tema | Decisão | Implicação |
 |------|---------|------------|
 | Identidade visual | Paleta slate + teal (`serv-*` em `app.css`) | Substitui indigo como acento principal no painel consultoria |
-| Ordem das abas | `AnalyticsTabCatalog` — finanças → cadastro → pedagógico | Municipal/user entram no **Diagnóstico** com filtros prontos |
+| Ordem das abas | `AnalyticsTabCatalog` — resumo → cadastro → pedagógico → censo → finanças | Com ano aplicado, entrada no **Diagnóstico** (área Resumo) |
 | Foco município | Faixa `consultoria-municipality-strip` + copy «no filtro» | Evita leitura «rede nacional» |
 | Links entre abas | `x-consultoria-tab-link` + evento Alpine | Mantém cidade/ano nos filtros |
 | Admin documentação | Menu pessoal → `/admin/documentacao` | Índice de arquivos `docs/` no servidor |

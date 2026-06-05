@@ -37,8 +37,7 @@ final class FundebExtratoFontePriority
             if (FundebTransferScope::isUfAggregated($row)) {
                 continue;
             }
-            $blob = mb_strtolower((string) $row->programa_id.' '.(string) $row->programa_label);
-            if (! str_contains($blob, 'fundeb') && ! str_contains($blob, 'fnde')) {
+            if (! FundebTransferScope::matchesFinanceRealtimeProgram($row)) {
                 continue;
             }
             $pid = (string) $row->programa_id;

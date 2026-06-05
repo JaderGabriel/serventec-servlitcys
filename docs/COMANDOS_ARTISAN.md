@@ -2,7 +2,7 @@
 
 > **Índice:** [README.md](README.md).
 
-**Data:** maio de 2026  
+**Data:** junho de 2026  
 **Interface admin:** menu **Sincronizações → Comandos Artisan** (`/admin/artisan-commands`)
 
 Execute sempre na **raiz do projeto** (onde está o `artisan`):
@@ -114,6 +114,57 @@ php artisan fundeb:import-references storage/app/fundeb.csv
 
 Ver também: [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md)
 
+### 4.1 Repasses observados (Finanças → Tempo Real)
+
+Grava em **`municipal_transfer_snapshots`** (IBGE, ano civil, fonte, `programa_id`, valor, `meta` com parcelas mensais ou lançamentos BB). Alimenta a aba **Finanças → Tempo Real** e a série histórica em Financiamentos.
+
+| Comando / tarefa | Descrição |
+|------------------|-----------|
+| `funding:rebuild-finance-realtime` | **Rebuild completo:** apaga snapshots do(s) ano(s) e reimporta por município (`MunicipalTransferImportService` — Tesouro CSV, SISWEB, BB, Portal). |
+| Fila `funding::import_transfers_city_year` | Mesma importação **por cidade/ano** via Admin → Dados públicos (sem apagar outros anos). |
+| `weekly-mass-sync:run` | Enfileira repasses entre outras tarefas semanais (checkpoint retomável). |
+
+**Interface web:** `/admin/dados-publicos` (tema Repasses) · impacto na consultoria: `?tab=finance_realtime`
+
+**Variáveis:** `IEDUCAR_FUNDING_TRANSFERS_*`, `IEDUCAR_FINANCE_REALTIME_*`, `IEDUCAR_TESOURO_CSV_ENABLED`, `IEDUCAR_BB_EXTRATO_URL_TEMPLATE` — ver [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) §3.4 e [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md).
+
+**Opções `funding:rebuild-finance-realtime`:**
+
+| Opção | Uso |
+|-------|-----|
+| `--ano=2025` | Um exercício de repasse (ano civil da publicação). |
+| `--from=2023 --to=2025` | Intervalo de anos. |
+| `--city=1` / `--cities=1,2` | Municípios específicos (IDs em Admin → Cidades). |
+| `--all-cities` | Todos com IBGE configurado. |
+| `--dry-run` | Plano de purga (conta `tesouro_publicacao` separado) sem gravar. |
+| `--purge-only` | Apaga snapshots; não reimporta. |
+| `--no-purge` | Reimporta sem apagar antes (upsert). |
+| `--confirm=rebuild-repasses-{ano}` | **Obrigatório em `production`** (`IEDUCAR_FINANCE_REALTIME_REBUILD_SLUG`). |
+
+**Slug anual por município** (tabela de resultado): `{nome}-{uf}-{ibge}-{ano}` — ex.: `salvador-ba-2927408-2025`.
+
+**Notas:**
+
+- Totais na aba Tempo Real **não** somam `tesouro_publicacao` (total por UF); use fontes municipais ou rebuild após import CKAN/SISWEB/BB.
+- O ano do comando é o **ano civil do repasse** na tabela; alinhe o **ano letivo** no filtro da consultoria ao mesmo exercício.
+- **Não confundir** com `fundeb:import-api` / `fundeb:import-references` (VAAF/VAAT em `fundeb_municipio_references`).
+
+```bash
+# Staging — um município
+php artisan funding:rebuild-finance-realtime --city=1 --ano=2025
+
+# Plano sem alterar dados
+php artisan funding:rebuild-finance-realtime --all-cities --ano=2025 --dry-run
+
+# Produção — todos os municípios, um ano (slug anual)
+php artisan funding:rebuild-finance-realtime --all-cities --ano=2025 --confirm=rebuild-repasses-2025
+
+# Só limpar snapshots UF incorretos antes de nova importação manual
+php artisan funding:rebuild-finance-realtime --all-cities --ano=2025 --purge-only
+```
+
+Ver também: [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md), [BB_EXTRATO_OPEN_FINANCE.md](BB_EXTRATO_OPEN_FINANCE.md).
+
 ---
 
 ## 5. Compatibilidade i-Educar
@@ -212,7 +263,8 @@ Sem `--password`, o comando pede a senha de forma oculta no terminal ou lê `CIT
 | Geo | `app:sync-school-unit-geos-pipeline` | Geo-sync |
 | SAEB | `saeb:sync-microdados` | Pedagogical-sync |
 | **CadÚnico / Cecad** | `cadunico:auto-sync` | `/admin/cadunico-sync` · fila `#fila-cadastro` |
-| FUNDEB | `fundeb:import-api` | ieducar-compatibility |
+| FUNDEB (VAAF) | `fundeb:import-api` | ieducar-compatibility |
+| **Repasses / Tempo Real** | `funding:rebuild-finance-realtime` · fila `funding::import_transfers_city_year` | `/admin/dados-publicos` |
 | **Dados públicos (hub)** | vários (`fundeb`, `funding`, `cadastro`, `system`) | `/admin/dados-publicos` |
 | Schema | `ieducar:schema-probe` | ieducar-compatibility |
 | Frequência | `ieducar:probe-falta` | — (CLI; aba Analytics Frequência) |

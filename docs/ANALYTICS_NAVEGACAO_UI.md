@@ -4,24 +4,28 @@
 
 ## Estrutura do painel
 
-O painel `/dashboard/analytics` organiza-se em **quatro áreas temáticas** (nível 1) e **sub-abas** (nível 2). O estado vive em Alpine (`analyticsTabs` em `resources/js/app.js`); o catálogo PHP é `App\Support\Dashboard\AnalyticsTabCatalog`.
+O painel `/dashboard/analytics` organiza-se em **cinco áreas temáticas** (nível 1) e **sub-abas** (nível 2). O estado vive em Alpine (`analyticsTabs` em `resources/js/app.js`); o catálogo PHP é `App\Support\Dashboard\AnalyticsTabCatalog`. Decisão de produto: [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md) (cenário C).
 
 ```
-Cadastro (1) → Pedagógico (2) → Censo (3) → Finanças (4)
+Resumo (1) → Cadastro (2) → Pedagógico (3) → Censo (4) → Finanças (5)
 ```
 
 | Grupo `id` | Label UI | Tom nav | Abas |
 |------------|----------|---------|------|
+| `resumo` | Resumo | teal | `municipality_health` |
 | `cadastro` | Cadastro | indigo | `overview`, `enrollment`, `cadunico_previsao`, `network`, `school_units` |
 | `pedagogico` | Pedagógico | violet | `inclusion`, `performance`, `attendance` |
 | `censo` | Censo | sky | `work_done` |
-| `consultoria` | Finanças | teal | `municipality_health`, `comparativo`, `discrepancies`, `fundeb`, `other_funding` |
+| `consultoria` | Finanças | teal | `discrepancies`, `fundeb`, `finance_realtime`, `comparativo`, `other_funding` |
+
+**Aba inicial** (sem `?tab=` válido): `municipality_health` com ano letivo aplicado; `overview` sem ano. Áreas com uma única sub-aba (Resumo, Censo) omitem o menu de nível 2.
 
 ## Lazy-load e preload
 
 - Pedido por aba: `GET /dashboard/analytics/tab?tab=…`
 - **Censo:** `AnalyticsDashboardController::preloadCensoTab()` — não passa pelo preload de Finanças.
-- **Finanças:** `AnalyticsFinanceTabPreload` — Diagnóstico, Comparativo, Discrepâncias, FUNDEB, Financiamentos (sem `work_done`).
+- **Resumo:** `municipality_health` — preload próprio; reutiliza cache de abas já visitadas.
+- **Finanças:** `AnalyticsFinanceTabPreload` — Discrepâncias, FUNDEB, Tempo Real, Comparativo, Financiamentos (sem `work_done` nem Diagnóstico).
 - **Comparativo:** `FinanceComparativoService` + `FinanceComparativoInformeBuilder` — ano base (`ano_base` na query ou filtro global), variação matrículas/alunos/turmas/recursos, informes narrativos, detalhe por etapa FUNDEB e projeção do exercício seguinte.
 - **Exportação Comparativo:** `GET dashboard.analytics.comparativo.export?format=pdf|csv|xlsx` — download imediato; PDF dedicado em `pdf/comparativo-report/document.blade.php`. O bloco «Relatório PDF completo» (fila) permanece disponível para o dossiê Serventec integral.
 - **CadÚnico:** `CadunicoPrevisaoRepository` — lacuna municipal e por faixa (`min(mat, alunos)`), cenários NEE/AEE/VAAR, vulnerabilidade Misocial, mapa/ranking territorial (`cadunico_territorio_snapshots`), demanda×oferta. Ver [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md).
@@ -39,7 +43,7 @@ Cadastro (1) → Pedagógico (2) → Censo (3) → Finanças (4)
 | `partials/municipality-health-explore` | Cartões «Explorar em detalhe» (métrica por área) |
 | `x-dashboard.diagnosis-explore-icon` | Ícones Heroicons nos cartões Explorar |
 
-## Diagnóstico — fluxo na página (Finanças → Diagnóstico)
+## Diagnóstico — fluxo na página (Resumo → Diagnóstico)
 
 Ordem na UI (alinhada ao roteiro sticky no topo):
 

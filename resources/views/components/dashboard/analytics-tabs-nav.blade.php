@@ -21,13 +21,13 @@
         </div>
     </div>
 
-    {{-- Nível 1: quatro áreas temáticas --}}
+    {{-- Nível 1: áreas temáticas (Resumo → Cadastro → Pedagógico → Censo → Finanças) --}}
     <div class="px-3 sm:px-5 py-3 bg-slate-50/80 dark:bg-slate-900/40">
         <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 px-0.5">
             {{ __('Área temática') }}
         </p>
         <div
-            class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-2"
             role="tablist"
             aria-label="{{ __('Áreas temáticas') }}"
         >
@@ -54,10 +54,10 @@
         </div>
     </div>
 
-    {{-- Nível 2: sub-abas da área activa --}}
+    {{-- Nível 2: sub-abas da área activa (omitido quando a área tem uma única análise) --}}
     <div
         class="px-3 sm:px-5 py-3 min-h-[3.25rem]"
-        x-show="activeGroup()?.tabs?.length"
+        x-show="(activeGroup()?.tabs?.length ?? 0) > 1"
         x-cloak
     >
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">

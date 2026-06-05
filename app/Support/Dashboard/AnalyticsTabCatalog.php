@@ -5,10 +5,12 @@ namespace App\Support\Dashboard;
 use App\Models\User;
 
 /**
- * Ordem e agrupamento das abas do painel — cadastro → pedagógico → censo → finanças.
+ * Ordem e agrupamento das abas do painel — resumo → cadastro → pedagógico → censo → finanças.
  */
 final class AnalyticsTabCatalog
 {
+    public const GROUP_RESUMO = 'resumo';
+
     public const GROUP_CENSO = 'censo';
 
     public const GROUP_FINANCE = 'consultoria';
@@ -19,6 +21,13 @@ final class AnalyticsTabCatalog
     public static function groups(): array
     {
         return [
+            [
+                'id' => self::GROUP_RESUMO,
+                'label' => __('Resumo executivo'),
+                'tabs' => [
+                    'municipality_health',
+                ],
+            ],
             [
                 'id' => 'cadastro',
                 'label' => __('Cadastro e rede'),
@@ -50,11 +59,10 @@ final class AnalyticsTabCatalog
                 'id' => self::GROUP_FINANCE,
                 'label' => __('Finanças e repasses'),
                 'tabs' => [
-                    'municipality_health',
-                    'comparativo',
                     'discrepancies',
                     'fundeb',
                     'finance_realtime',
+                    'comparativo',
                     'other_funding',
                 ],
             ],
@@ -69,28 +77,34 @@ final class AnalyticsTabCatalog
     public static function groupPresentation(): array
     {
         return [
-            'cadastro' => [
+            'resumo' => [
                 'step' => '1',
+                'short' => __('Resumo'),
+                'hint' => __('Diagnóstico executivo, prioridades e explorar em detalhe'),
+                'tone' => 'teal',
+            ],
+            'cadastro' => [
+                'step' => '2',
                 'short' => __('Cadastro'),
                 'hint' => __('Visão da rede, matrículas, CadÚnico (previsão) e unidades'),
                 'tone' => 'indigo',
             ],
             'pedagogico' => [
-                'step' => '2',
+                'step' => '3',
                 'short' => __('Pedagógico'),
                 'hint' => __('Inclusão, desempenho e frequência'),
                 'tone' => 'violet',
             ],
             'censo' => [
-                'step' => '3',
+                'step' => '4',
                 'short' => __('Censo'),
                 'hint' => __('Ritmo de cadastro e exportação Educacenso'),
                 'tone' => 'sky',
             ],
             'consultoria' => [
-                'step' => '4',
+                'step' => '5',
                 'short' => __('Finanças'),
-                'hint' => __('Diagnóstico, comparativo, discrepâncias, FUNDEB e financiamentos'),
+                'hint' => __('Discrepâncias, FUNDEB, repasses, comparativo e programas'),
                 'tone' => 'teal',
             ],
         ];
@@ -246,6 +260,10 @@ final class AnalyticsTabCatalog
             return $requestedTab;
         }
 
+        if ($yearFilterReady) {
+            return 'municipality_health';
+        }
+
         return 'overview';
     }
 
@@ -298,5 +316,10 @@ final class AnalyticsTabCatalog
     public static function isCensoGroupTab(string $tab): bool
     {
         return self::groupIdForTab($tab) === self::GROUP_CENSO;
+    }
+
+    public static function isResumoGroupTab(string $tab): bool
+    {
+        return self::groupIdForTab($tab) === self::GROUP_RESUMO;
     }
 }

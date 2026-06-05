@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto (`main`):** 3.5.1 · tag `20260602-Hermes` · **Última revisão deste índice:** 02/06/2026
+**Versão do produto (`main`):** 4.1.0 · tag `20260605-Athena` · **Última revisão deste índice:** 05/06/2026
 
 Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que o sistema faz hoje, **porque** certas decisões foram tomadas e **o que** está planejado implementar.
 
@@ -47,7 +47,8 @@ Este arquivo é o **ponto de entrada** da documentação. Use-o para saber o que
 | Documento | Conteúdo |
 |-----------|----------|
 | [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) | Performance, Pulse, lazy por aba |
-| [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) | Navegação 4 áreas, UI consultoria (3.4.0+) |
+| [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) | Navegação 5 áreas, UI consultoria (cenário C, 4.0+) |
+| [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md) | **Decisão** — ordem lógica, menus e dados das 16 abas (análise 4.0) |
 | [CADUNICO_CECAD.md](CADUNICO_CECAD.md) | CadÚnico/Cecad: importação, aba previsão, export |
 | [CADUNICO_AUTOMACAO.md](CADUNICO_AUTOMACAO.md) | Pipeline automático sem upload |
 | [SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md](SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md) | Guia MEC/INEP: gráficos cobertos vs. pendentes |

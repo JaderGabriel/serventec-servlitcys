@@ -45,6 +45,28 @@ final class FundebTransferScope
     }
 
     /**
+     * Linha de repasse pertence ao recorte FUNDEB da aba Tempo Real.
+     *
+     * @param  list<string>|null  $needles
+     */
+    public static function matchesFinanceRealtimeProgram(MunicipalTransferSnapshot $row, ?array $needles = null): bool
+    {
+        $needles = $needles ?? config('ieducar.finance_realtime.program_keywords', ['fundeb', 'fnde']);
+        if (! is_array($needles) || $needles === []) {
+            $needles = ['fundeb'];
+        }
+
+        $blob = mb_strtolower((string) $row->programa_id.' '.(string) $row->programa_label.' '.(string) $row->fonte);
+        foreach ($needles as $needle) {
+            if (str_contains($blob, mb_strtolower((string) $needle))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private static function metaArray(MunicipalTransferSnapshot $row): array

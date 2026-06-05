@@ -25,9 +25,9 @@ Implementação: `MatriculaVolumeCounts`, cache em `IeducarAnalyticsMetricsScope
 
 Release: [RELEASE_20260603_ARTEMIS.md](RELEASE_20260603_ARTEMIS.md).
 
-## Navegação em quatro áreas (3.4.0+)
+## Navegação em cinco áreas (4.0+ — cenário C)
 
-Desde a release **`20260531-Nemesis`**, o menu do Analytics tem **quatro** áreas: Cadastro → Pedagógico → **Censo** → Finanças. A aba Educacenso (`work_done`) pertence só ao grupo `censo`; Finanças agrupa Diagnóstico, Discrepâncias, FUNDEB e Financiamentos.
+O menu do Analytics tem **cinco** áreas: **Resumo** (Diagnóstico) → Cadastro → Pedagógico → Censo → Finanças. O Diagnóstico (`municipality_health`) é entrada transversal no grupo `resumo`; Finanças agrupa Discrepâncias, FUNDEB, Tempo Real, Comparativo e Financiamentos. Aba inicial com ano aplicado: Diagnóstico.
 
 - Catálogo: `AnalyticsTabCatalog::groups()` e `navigationPayload()`.
 - Preload Censo: `preloadCensoTab()` (separado de Finanças).

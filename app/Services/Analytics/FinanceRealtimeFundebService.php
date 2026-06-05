@@ -113,7 +113,18 @@ final class FinanceRealtimeFundebService
             : null;
 
         $thresholdPct = max(1.0, (float) config('ieducar.finance_realtime.alert_threshold_pct', 15));
-        $alerts = $this->buildAlerts($expectedAnnual, $observedAnnual, $delta, $deltaPct, $fundebRows, $matriculas, $thresholdPct);
+        $alerts = $this->buildAlerts(
+            $expectedAnnual,
+            $observedAnnual,
+            $delta,
+            $deltaPct,
+            $fundebRows,
+            $matriculas,
+            $thresholdPct,
+            $snapshots,
+            $snapshotsMunicipal,
+            $ano,
+        );
 
         if ($ibge === null) {
             array_unshift($alerts, [
@@ -218,21 +229,10 @@ final class FinanceRealtimeFundebService
      */
     private function filterFundebTransfers(array $snapshots): array
     {
-        $needles = config('ieducar.finance_realtime.program_keywords', [
-            'fundeb', 'fnde', 'educacao basica', 'educação básica', 'manutencao', 'manutenção',
-        ]);
-        if (! is_array($needles)) {
-            $needles = ['fundeb'];
-        }
-
         $out = [];
         foreach ($snapshots as $row) {
-            $blob = mb_strtolower((string) $row->programa_id.' '.(string) $row->programa_label.' '.(string) $row->fonte);
-            foreach ($needles as $n) {
-                if (str_contains($blob, mb_strtolower((string) $n))) {
-                    $out[] = $row;
-                    break;
-                }
+            if (FundebTransferScope::matchesFinanceRealtimeProgram($row)) {
+                $out[] = $row;
             }
         }
 
@@ -250,6 +250,9 @@ final class FinanceRealtimeFundebService
         array $fundebRows,
         int $matriculas,
         float $thresholdPct,
+        array $snapshots,
+        array $snapshotsMunicipal,
+        int $ano,
     ): array {
         $alerts = [];
 

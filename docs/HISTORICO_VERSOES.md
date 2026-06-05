@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`4.0.0`** · tag de deploy **`20260604-Hestia`** · ver [RELEASE_20260604_HESTIA.md](RELEASE_20260604_HESTIA.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`4.1.0`** · tag de deploy **`20260605-Athena`** · ver [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **4.0.0** |
+| **Versão semântica em produção** | **4.1.0** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260604-Hestia` |
-| **Último marco documentado** | Início 4.0 — Acesso rápido curado, mapa mental em camadas, rebuild Tempo Real — [RELEASE_20260604_HESTIA.md](RELEASE_20260604_HESTIA.md) |
+| **Tag de deploy (servidor)** | `20260605-Athena` |
+| **Último marco documentado** | Consultoria cenário C (Resumo/Diagnóstico), fix Tempo Real, docs repasses CLI — [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -20,7 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.0.0** | `20260604-Hestia` → `main` | **283+** | 04/06/2026 | **Produção:** Início reorganizado, Acesso rápido (`HomeQuickActionsCatalog`), mapa mental em camadas, rebuild Finanças Tempo Real — [RELEASE_20260604_HESTIA.md](RELEASE_20260604_HESTIA.md). |
+| **▶ 4.1.0** | `20260605-Athena` → `main` | **289** | 05/06/2026 | **Produção:** Navegação cenário C (5 áreas, Diagnóstico em Resumo), fix Tempo Real, `funding:rebuild-finance-realtime` documentado — [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md). |
+| 4.0.0 | `20260604-Hestia` → `main` | **283+** | 04/06/2026 | Início reorganizado, Acesso rápido (`HomeQuickActionsCatalog`), mapa mental em camadas, rebuild Finanças Tempo Real — [RELEASE_20260604_HESTIA.md](RELEASE_20260604_HESTIA.md). |
 | 3.10.0 | `20260604-Plutus` → `main` | **282** | 04/06/2026 | Repasses FUNDEB (Tesouro/SISWEB/BB), extrato Tempo Real por ciclo e mês, download BB — [RELEASE_20260604_PLUTUS.md](RELEASE_20260604_PLUTUS.md). |
 | 3.9.0 | `20260604-Gaia` → `main` | **275** | 04/06/2026 | CadÚnico previsão territorial (mapa, IBGE Censo+WFS, faixas, cenários, demanda×oferta) — [RELEASE_20260604_GAIA.md](RELEASE_20260604_GAIA.md). |
 | 3.8.0 | `20260603-Artemis` → `main` | **274** | 03/06/2026 | Alunos distintos nos KPIs, base FUNDEB `min(mat, alunos)`, NEE/AEE por aluno — [RELEASE_20260603_ARTEMIS.md](RELEASE_20260603_ARTEMIS.md). |

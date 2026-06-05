@@ -507,18 +507,7 @@ final class FundebExtratoVisualBuilder
 
     private function isFundebRow(MunicipalTransferSnapshot $row): bool
     {
-        $needles = config('ieducar.finance_realtime.program_keywords', ['fundeb', 'fnde']);
-        if (! is_array($needles)) {
-            $needles = ['fundeb'];
-        }
-        $blob = mb_strtolower((string) $row->programa_id.' '.(string) $row->programa_label.' '.(string) $row->fonte);
-        foreach ($needles as $n) {
-            if (str_contains($blob, mb_strtolower((string) $n))) {
-                return true;
-            }
-        }
-
-        return false;
+        return FundebTransferScope::matchesFinanceRealtimeProgram($row);
     }
 
     /**
