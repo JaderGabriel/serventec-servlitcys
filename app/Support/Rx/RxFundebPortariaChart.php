@@ -178,7 +178,10 @@ final class RxFundebPortariaChart
             return null;
         }
 
-        $labels = array_map(static fn (array $r): string => (string) $r['label'], $rows);
+        $labels = array_map(
+            static fn (array $r): string => self::chartAxisLabel((string) ($r['city_name'] ?? $r['label'] ?? '')),
+            $rows,
+        );
         $toMillions = static fn (?float $v): float => round(max(0.0, (float) ($v ?? 0)) / 1_000_000, 2);
 
         $count = count($labels);
@@ -199,7 +202,7 @@ final class RxFundebPortariaChart
             ],
         );
 
-        $chart['subtitle'] = __('Exercício FUNDEB :ano · barras verticais em milhões; passe o rato sobre cada município para ver VAAF, VAAT, VAAR e total em R$.', [
+        $chart['subtitle'] = __('Exercício FUNDEB :ano · passe o rato sobre cada município para ver o nome e os valores VAAF, VAAT, VAAR e total em R$.', [
             'ano' => (string) $exercicio,
         ]);
         $chart['footnote'] = __('Fonte: CSV receita FNDE — :portaria.', [
@@ -209,13 +212,14 @@ final class RxFundebPortariaChart
             'valueFormat' => 'brl_millions',
             'datalabelsMode' => 'tooltip_only',
             'tooltipFriendly' => true,
+            'showAllCategoryTicks' => true,
             'panelHeight' => $panelHeight,
             'layout' => [
                 'padding' => [
                     'left' => 4,
                     'right' => 8,
                     'top' => 12,
-                    'bottom' => 4,
+                    'bottom' => 28,
                 ],
             ],
         ]);
@@ -415,10 +419,14 @@ final class RxFundebPortariaChart
 
     private static function shortLabel(string $name): string
     {
-        $name = preg_replace('/^\d+\s*-\s*/', '', trim($name)) ?? trim($name);
-        $parts = preg_split('/\s+/', $name) ?: [$name];
-        $first = (string) ($parts[0] ?? $name);
+        return Str::limit(self::chartAxisLabel($name), 14, '…');
+    }
 
-        return Str::limit($first, 14, '…');
+    /** Nome completo no eixo do gráfico e no tooltip (sem prefixo numérico do cadastro). */
+    private static function chartAxisLabel(string $name): string
+    {
+        $name = preg_replace('/^\d+\s*-\s*/', '', trim($name)) ?? trim($name);
+
+        return $name !== '' ? $name : '—';
     }
 }

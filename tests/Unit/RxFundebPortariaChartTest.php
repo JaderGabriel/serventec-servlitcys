@@ -71,6 +71,8 @@ final class RxFundebPortariaChartTest extends TestCase
         $this->assertSame('brl_millions', $chart['options']['valueFormat'] ?? null);
         $this->assertSame('tooltip_only', $chart['options']['datalabelsMode'] ?? null);
         $this->assertTrue($chart['options']['tooltipFriendly'] ?? false);
+        $this->assertTrue($chart['options']['showAllCategoryTicks'] ?? false);
+        $this->assertSame('Salvador', $chart['labels'][0] ?? null);
         $this->assertIsArray($result['ibge_table'] ?? null);
         $this->assertCount(1, $result['ibge_table']);
         $this->assertIsArray($result['national'] ?? null);

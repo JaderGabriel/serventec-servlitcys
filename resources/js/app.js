@@ -6,6 +6,7 @@ import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import {
     cartesianInteractionDefaults,
+    tooltipFriendlyInteractionDefaults,
     chartResetZoomView,
     chartZoomInButton,
     chartZoomOutButton,
@@ -18,6 +19,7 @@ import {
     buildCompositeExport,
     triggerPngDownload,
 } from "./chartExportHelpers.js";
+import { chartExternalTooltipHandler } from "./chartExternalTooltip.js";
 import { initAnalyticsFilterBootstrap } from "./analyticsFilterBootstrap.js";
 import { initAnalyticsFilterTurno } from "./analyticsFilterTurno.js";
 import {
@@ -104,6 +106,43 @@ function truncateChartLabel(text, maxLen) {
         return s;
     }
     return `${s.slice(0, Math.max(1, m - 1))}…`;
+}
+
+/** Quebra nomes de município em linhas no eixo X (Chart.js aceita array = multilinha). */
+function wrapChartLabel(text, maxLineLen = 16, maxLines = 3) {
+    const s = String(text ?? "").trim();
+    if (!s) {
+        return "";
+    }
+    if (s.length <= maxLineLen) {
+        return s;
+    }
+    const words = s.split(/\s+/);
+    const lines = [];
+    let current = "";
+    for (const word of words) {
+        const next = current ? `${current} ${word}` : word;
+        if (next.length > maxLineLen && current) {
+            lines.push(current);
+            current = word;
+        } else {
+            current = next;
+        }
+    }
+    if (current) {
+        lines.push(current);
+    }
+    if (lines.length <= 1) {
+        return lines[0] ?? s;
+    }
+    if (lines.length > maxLines) {
+        const kept = lines.slice(0, maxLines - 1);
+        kept.push(lines.slice(maxLines - 1).join(" "));
+
+        return kept;
+    }
+
+    return lines;
 }
 
 /** Junta opções de eixos do payload com os padrões (evita perder eixo X ao só definir Y). */
@@ -791,32 +830,18 @@ document.addEventListener("alpine:init", () => {
         };
         mergedPlugins.tooltip = {
             ...(mergedPlugins.tooltip || {}),
-            enabled: true,
+            enabled: !tooltipOnly,
             ...(tooltipOnly
                 ? {
-                      mode: "index",
-                      intersect: false,
-                      position: "nearest",
+                      external: chartExternalTooltipHandler,
                   }
                 : {}),
             titleFont: chartLabelFont(13, "600"),
             bodyFont: chartLabelFont(12),
             footerFont: chartLabelFont(12, "600"),
+            padding: tooltipOnly ? 10 : undefined,
             callbacks: {
                 ...(mergedPlugins.tooltip?.callbacks || {}),
-                ...(tooltipOnly
-                    ? {
-                          filter: (item) => {
-                              const raw =
-                                  item.raw ??
-                                  item.parsed?.y ??
-                                  item.parsed?.x;
-                              const n = Number(raw);
-
-                              return Number.isFinite(n) && n > 0;
-                          },
-                      }
-                    : {}),
                 label: (context) => {
                     const label = context.dataset?.label || "";
                     const raw =
@@ -934,7 +959,8 @@ document.addEventListener("alpine:init", () => {
                 this.zoomUi =
                     !isRadialEarly &&
                     !isGaugeEarly &&
-                    ["bar", "line", "scatter"].includes(payload.type);
+                    ["bar", "line", "scatter"].includes(payload.type) &&
+                    !extraEarly.tooltipFriendly;
                 this.filterUi =
                     [
                         "bar",
@@ -1274,7 +1300,9 @@ document.addEventListener("alpine:init", () => {
                                 payload.type,
                             );
                         const interactionBlock = cartesianInteractive
-                            ? cartesianInteractionDefaults()
+                            ? extra.tooltipFriendly
+                                ? tooltipFriendlyInteractionDefaults()
+                                : cartesianInteractionDefaults()
                             : {};
 
                         this.chart = new Chart(ctx, {
@@ -1953,6 +1981,15 @@ document.addEventListener("alpine:init", () => {
                 if (!chart) {
                     return;
                 }
+                const extraOpts =
+                    this._sourcePayload?.options &&
+                    typeof this._sourcePayload.options === "object"
+                        ? this._sourcePayload.options
+                        : {};
+                const wrapAxisLabels =
+                    extraOpts.tooltipFriendly === true ||
+                    extraOpts.showAllCategoryTicks === true;
+                const n = chart.data?.labels?.length ?? 0;
                 const max = this._tickTruncate ?? 36;
                 const t = (raw) =>
                     truncateChartLabel(String(raw ?? ""), max);
@@ -1961,6 +1998,30 @@ document.addEventListener("alpine:init", () => {
                 const patchAxis = (key) => {
                     const sc = chart.options.scales?.[key];
                     if (!sc?.ticks) {
+                        return;
+                    }
+                    if (wrapAxisLabels) {
+                        sc.ticks.maxRotation = 0;
+                        sc.ticks.minRotation = 0;
+                        sc.ticks.autoSkip = false;
+                        const lineLen = n > 18 ? 12 : n > 12 ? 14 : 16;
+                        sc.ticks.callback = (tickValue) => {
+                            let raw = tickValue;
+                            try {
+                                const scale = chart.scales?.[key];
+                                if (
+                                    scale &&
+                                    typeof scale.getLabelForValue ===
+                                        "function"
+                                ) {
+                                    raw = scale.getLabelForValue(tickValue);
+                                }
+                            } catch (e) {
+                                raw = tickValue;
+                            }
+
+                            return wrapChartLabel(raw, lineLen, 3);
+                        };
                         return;
                     }
                     sc.ticks.callback = (tickValue) => {
