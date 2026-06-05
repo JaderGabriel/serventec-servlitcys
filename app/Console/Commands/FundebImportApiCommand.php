@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\City;
+use App\Services\Fundeb\FundebImportMode;
 use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Services\Fundeb\FundebImportProgress;
 use Illuminate\Console\Command;
@@ -17,6 +18,8 @@ class FundebImportApiCommand extends Command
                             {--to= : Ano final do intervalo}
                             {--new-city-years : Apenas ano vigente e anterior (igual ao cadastro automático)}
                             {--nearest : Se o ano pedido não existir na API, gravar o mais recente disponível}
+                            {--replace : Apaga referências do âmbito (municípios × anos) antes de importar}
+                            {--mode=update : Modo de persistência: update ou replace (equivalente a --replace)}
                             {--all : Todos os municípios com IBGE}
                             {--cities= : IDs de cidades separados por vírgula (ex.: 1,3,5)}';
 
@@ -31,6 +34,7 @@ class FundebImportApiCommand extends Command
     public function handle(): int
     {
         $useNearest = (bool) $this->option('nearest');
+        $importMode = $this->resolveImportMode();
         $years = $this->resolveYears();
         if ($years === []) {
             $this->error(__('Nenhum ano definido. Use --ano, --years, --from/--to ou --new-city-years.'));
@@ -46,7 +50,7 @@ class FundebImportApiCommand extends Command
         }
 
         $progress = $this->makeConsoleProgress();
-        $this->printRunHeader($years, $cityIds);
+        $this->printRunHeader($years, $cityIds, $importMode);
 
         $singleCityId = is_array($cityIds) && count($cityIds) === 1 ? $cityIds[0] : null;
         if ($singleCityId !== null && count($years) === 1 && ! $this->option('all') && ! $this->option('cities')) {
@@ -57,7 +61,7 @@ class FundebImportApiCommand extends Command
                 return self::FAILURE;
             }
 
-            $result = $this->import->importForCityYear($city, $years[0], $useNearest, $progress);
+            $result = $this->import->importForCityYear($city, $years[0], $useNearest, $progress, $importMode);
             $this->newLine();
             if ($result['success']) {
                 $this->info($result['message']);
@@ -70,7 +74,7 @@ class FundebImportApiCommand extends Command
             return self::FAILURE;
         }
 
-        $result = $this->import->importBulkForYears($years, $useNearest, $cityIds, $progress);
+        $result = $this->import->importBulkForYears($years, $useNearest, $cityIds, $progress, $importMode);
         $this->newLine();
         $this->displayBulkResult($result);
 
@@ -93,9 +97,21 @@ class FundebImportApiCommand extends Command
      * @param  list<int>  $years
      * @param  list<int>|null|false  $cityIds
      */
-    private function printRunHeader(array $years, array|null|false $cityIds): void
+    private function resolveImportMode(): string
+    {
+        if ((bool) $this->option('replace')) {
+            return FundebImportMode::REPLACE;
+        }
+
+        return FundebImportMode::normalize($this->option('mode'));
+    }
+
+    private function printRunHeader(array $years, array|null|false $cityIds, string $importMode): void
     {
         $flags = [];
+        if (FundebImportMode::isReplace($importMode)) {
+            $flags[] = '--replace';
+        }
         if ($this->option('new-city-years')) {
             $flags[] = '--new-city-years';
         }

@@ -97,8 +97,12 @@ final class IeducarCompatibilityProbe
      *   routines: list<array<string, mixed>>
      * }
      */
-    public static function report(Connection $db, City $city, ?IeducarFilterState $filters = null): array
-    {
+    public static function report(
+        Connection $db,
+        City $city,
+        ?IeducarFilterState $filters = null,
+        ?int $fundebAnchorAno = null,
+    ): array {
         $filters ??= new IeducarFilterState(ano_letivo: 'all', escola_id: null, curso_id: null, turno_id: null);
         $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
         $catalog = DiscrepanciesCheckCatalog::definitions();
@@ -146,7 +150,18 @@ final class IeducarCompatibilityProbe
         } catch (\Throwable) {
             $networkKpis = null;
         }
-        $routines = ConsultoriaOperationalSignals::append($routines, $networkKpis, $totalMat, $city, $filters);
+        $routines = ConsultoriaOperationalSignals::append($routines, $networkKpis, $totalMat, $city, $filters, $fundebAnchorAno);
+        $operationalMeta = ConsultoriaOperationalSignals::operationalMeta();
+        $routines = array_map(
+            static fn (array $routine): array => self::ensureRoutinePresentation(
+                $routine,
+                $catalog[$routine['id'] ?? ''] ?? $operationalMeta[$routine['id'] ?? ''] ?? [],
+                $totalMat,
+                $city,
+                $filters,
+            ),
+            $routines,
+        );
         $routines = self::sortRoutinesForConsultoria($routines);
         $fundingRef = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
         $modules = DiscrepanciesModuleCatalog::buildPanel($routines, []);
@@ -296,6 +311,54 @@ final class IeducarCompatibilityProbe
         }
 
         return implode(' · ', $parts);
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
+     * @return array<string, mixed>
+     */
+    private static function ensureRoutinePresentation(
+        array $routine,
+        array $meta,
+        int $totalMat,
+        City $city,
+        IeducarFilterState $filters,
+    ): array {
+        if (isset($routine['ui_status_class'])) {
+            return $routine;
+        }
+
+        $id = (string) ($routine['id'] ?? '');
+        if ($meta === [] && $id !== '') {
+            $meta = [
+                'id' => $id,
+                'title' => (string) ($routine['title'] ?? $id),
+                'severity' => (string) ($routine['severity'] ?? 'warning'),
+            ];
+        }
+
+        $presentation = DiscrepanciesRoutineStatus::presentation((string) ($routine['status'] ?? DiscrepanciesRoutineStatus::UNAVAILABLE));
+        $severity = (string) ($meta['severity'] ?? $routine['severity'] ?? 'warning');
+        $totals = DiscrepanciesRoutineMetrics::occurrenceTotals([
+            'has_issue' => (bool) ($routine['has_issue'] ?? false),
+            'rows' => ($routine['has_issue'] ?? false)
+                ? [['escola_id' => '0', 'escola' => '', 'total' => (int) ($routine['occurrences_total'] ?? $routine['total'] ?? 0)]]
+                : [],
+        ]);
+
+        return array_merge($routine, [
+            'explanation' => (string) ($routine['explanation'] ?? $meta['explanation'] ?? ''),
+            'impact' => (string) ($routine['impact'] ?? $meta['impact'] ?? ''),
+            'correction' => (string) ($routine['correction'] ?? $meta['correction'] ?? ''),
+            'is_erro' => $severity === 'danger' && ($routine['has_issue'] ?? false),
+            'consultoria_prioridade' => $severity === 'danger' ? __('Erro crítico') : __('Atenção'),
+            'escola_ids' => $routine['escola_ids'] ?? $totals['escola_ids'],
+            'hint' => $routine['status_hint'] ?? $routine['hint'] ?? null,
+            'ui_status_class' => self::uiStatusClass((string) ($routine['status'] ?? '')),
+            'correlacao_resumo' => self::correlacaoResumo($routine, $meta, $totalMat),
+            'presentation_chip' => $presentation['chip'] ?? '',
+            'presentation_icon' => $presentation['icon'] ?? '',
+        ]);
     }
 
     /**

@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **4.2.0** · release `20260610-Clio` · **Ramo:** `main` · **Última revisão:** 10/06/2026
+**Versão em produção:** **4.3.0** · release `20260611-Harmonia` · **Ramo:** `main` · **Última revisão:** 11/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -68,9 +68,12 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | Utilizador/Municipal — documentação (`/documentacao`) e filas (`/filas`) | Implementado (3.3.0) |
 | Inclusão — exportação NEE para utilizador/municipal (não só admin) | Implementado (3.3.0) |
 | Painel RX (`/dashboard/rx`) — legendas unificadas, KPIs `serv-home-kpi`, tons sky/teal | Implementado (patch pós-3.3.0) |
-| Painel RX — gráfico complementações FUNDEB (portaria consolidada vs cadastro em andamento) | Implementado (4.2.0) |
+| Painel RX — gráfico complementações FUNDEB (portaria consolidada vs cadastro em andamento) | Implementado (4.2.0; painel completo 4.3.0) |
+| Início — gráfico complementações FUNDEB após mapa municipal | Implementado (4.3.0) |
 | FUNDEB — complementação VAAT/VAAR da portaria, discrepâncias operacionais, projeção VAAT+IEI | Implementado (4.2.0) |
+| FUNDEB — `fundeb:import-api --replace` (reimportação limpa por âmbito) | Implementado (4.3.0) |
 | Consultoria — hub Discrepâncias modular por área | Implementado (4.2.0) |
+| Discrepâncias — geo escolas sem mapa alinhada a Unidades; sinais operacionais em todas as rotinas | Implementado (4.3.0) |
 | Admin — monitor de módulos — UI `serv-*`, cartões só saúde (sem atalhos) | Implementado (patch pós-3.3.0) |
 | Catálogo API i-Educar (consultas SQL → endpoints propostos, JSON, perf/seg) | Documentado — [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) |
 | Estudo integrações setor público + previsão demanda (doc) | Documentado — [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md); implementação Ondas 1–3 no backlog §H |

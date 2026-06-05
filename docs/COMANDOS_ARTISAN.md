@@ -111,6 +111,7 @@ Referências gravadas em **`fundeb_municipio_references`** (`city_id`, `ibge_mun
 
 ```bash
 php artisan fundeb:import-api 1 --ano=2024
+php artisan fundeb:import-api 0 --all --ano=2026 --replace --nearest
 php artisan fundeb:import-references storage/app/fundeb.csv
 php artisan fundeb:diagnose-matriculas
 php artisan fundeb:diagnose-matriculas 3 --anos=2024,2025,2026

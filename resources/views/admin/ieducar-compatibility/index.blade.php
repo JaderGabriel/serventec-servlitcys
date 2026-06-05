@@ -147,6 +147,7 @@
                 'city' => $city,
                 'filters' => $filters,
                 'fmtBrl' => $fmtBrl,
+                'fundebImportYear' => $fundebImportYear ?? null,
             ])
 
         <x-slot name="shortcuts">

@@ -716,34 +716,14 @@ final class DiscrepanciesQueries
     }
 
     /**
-     * Escolas sem posição utilizável no mapa (alinhado a Unidades escolares).
-     *
-     * Com matrículas no filtro: sem lat/lng válidos na escola i-Educar e sem coordenadas em school_unit_geos.
-     * Sem matrículas no âmbito: unidades no cache local sem coordenadas utilizáveis (modo geo_cache).
+     * Escolas sem marcador no mapa — delega ao mesmo pipeline de Cadastro → Unidades (i-Educar, cache e INEP).
      *
      * @return list<array{escola_id: string, escola: string, total: int}>
      */
     public static function escolasSemPosicaoUtilizavelParaMapa(Connection $db, City $city, IeducarFilterState $filters): array
     {
-        $fromMatricula = self::escolasComMatriculasSemPosicaoUtilizavel($db, $city, $filters);
-        if ($fromMatricula !== []) {
-            return $fromMatricula;
-        }
-
-        $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
-        if ($totalMat > 0) {
-            return [];
-        }
-
-        $fromRede = self::escolasRedeSemPosicaoUtilizavel($db, $city, $filters);
-        if ($fromRede !== []) {
-            return $fromRede;
-        }
-
-        return SchoolGeoPositionResolver::escolasCacheSemPosicaoUtilizavel(
-            $city,
-            $filters->escola_id !== null ? (int) $filters->escola_id : null,
-        );
+        return app(\App\Repositories\Ieducar\SchoolUnitsRepository::class)
+            ->escolasSemPosicaoMapaParaDiscrepancias($db, $city, $filters);
     }
 
     /**

@@ -103,6 +103,20 @@ final class FundebFndePortariaCatalog
     }
 
     /**
+     * @return array{receita_vinculada: ?float, complementacao_uniao: ?float}
+     */
+    public static function nationalTotals(int $exercicio): array
+    {
+        $pub = self::activePublication($exercicio);
+        $totais = is_array($pub['totais_nacionais'] ?? null) ? $pub['totais_nacionais'] : [];
+
+        return [
+            'receita_vinculada' => self::positiveFloat($totais['receita_vinculada'] ?? null),
+            'complementacao_uniao' => self::positiveFloat($totais['complementacao_uniao'] ?? null),
+        ];
+    }
+
+    /**
      * Metadados da portaria para gravar em fundeb_municipio_references.meta.
      *
      * @return array<string, mixed>

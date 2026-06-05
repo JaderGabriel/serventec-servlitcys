@@ -1610,7 +1610,8 @@ class SchoolUnitsRepository
      *   geo_note: ?string,
      *   geo_source: string,
      *   geo_attribution: list<string>,
-     *   geo_distribution: array<string, mixed>
+     *   geo_distribution: array<string, mixed>,
+     *   sem_posicao_rows: list<array{eid: int, escola_id: string, escola: string, total: int}>
      * }
      */
     private function buildMarkersFromEscolaRows(Connection $db, City $city, IeducarFilterState $filters, array $rows, string $mapScopeLabel): array
@@ -1841,6 +1842,33 @@ class SchoolUnitsRepository
             }
         }
 
+        $markedEids = [];
+        foreach ($markers as $m) {
+            $eid = (int) ($m['eid'] ?? 0);
+            if ($eid > 0) {
+                $markedEids[$eid] = true;
+            }
+        }
+
+        $semPosicaoRows = [];
+        foreach ($rows as $row) {
+            $arr = (array) $row;
+            $eid = (int) ($arr['eid'] ?? 0);
+            if ($eid <= 0 || isset($markedEids[$eid])) {
+                continue;
+            }
+            $nome = trim((string) ($arr['escola_nome'] ?? ($arr['ename'] ?? '')));
+            if ($nome === '') {
+                $nome = __('Unidade #:id', ['id' => $eid]);
+            }
+            $semPosicaoRows[] = [
+                'eid' => $eid,
+                'escola_id' => (string) $eid,
+                'escola' => $nome,
+                'total' => 0,
+            ];
+        }
+
         $totalComCoord = count($markers);
         $limite = 120;
         $markersSlice = array_slice($markers, 0, $limite);
@@ -1901,7 +1929,45 @@ class SchoolUnitsRepository
             'geo_source' => $geoSource,
             'geo_attribution' => $attribution,
             'geo_distribution' => $geoDistribution,
+            'sem_posicao_rows' => $semPosicaoRows,
         ];
+    }
+
+    /**
+     * Escolas no âmbito do mapa sem marcador — mesmo critério de Cadastro → Unidades (i-Educar, cache e INEP).
+     *
+     * @return list<array{escola_id: string, escola: string, total: int}>
+     */
+    public function escolasSemPosicaoMapaParaDiscrepancias(Connection $db, City $city, IeducarFilterState $filters): array
+    {
+        $bundle = $this->buildMapMarkers($db, $city, $filters);
+        $rows = is_array($bundle['sem_posicao_rows'] ?? null) ? $bundle['sem_posicao_rows'] : [];
+        if ($rows === []) {
+            return [];
+        }
+
+        if (($bundle['map_scope'] ?? '') === 'matricula') {
+            $eids = array_values(array_filter(array_map(
+                static fn (array $r): int => (int) ($r['eid'] ?? $r['escola_id'] ?? 0),
+                $rows,
+            ), static fn (int $id): bool => $id > 0));
+            $counts = $this->matriculasCountByEscolaIds($db, $city, $filters, $eids);
+            foreach ($rows as &$row) {
+                $eid = (int) ($row['eid'] ?? $row['escola_id'] ?? 0);
+                $row['total'] = (int) ($counts[$eid] ?? 0);
+                unset($row['eid']);
+            }
+            unset($row);
+        } else {
+            foreach ($rows as &$row) {
+                unset($row['eid']);
+            }
+            unset($row);
+        }
+
+        usort($rows, static fn (array $a, array $b): int => ($b['total'] ?? 0) <=> ($a['total'] ?? 0));
+
+        return array_slice($rows, 0, 50);
     }
 
     /**
@@ -2230,7 +2296,8 @@ class SchoolUnitsRepository
      *   geo_attribution: list<string>,
      *   geo_distribution: array<string, mixed>,
      *   map_scope: 'matricula'|'rede_escola'|'geo_cache',
-     *   show_waiting_capacity: bool
+     *   show_waiting_capacity: bool,
+     *   sem_posicao_rows: list<array{eid?: int, escola_id: string, escola: string, total: int}>
      * }
      */
     private function buildMapMarkers(Connection $db, City $city, IeducarFilterState $filters): array
@@ -2249,6 +2316,7 @@ class SchoolUnitsRepository
                 'geo_distribution' => $fromMatricula['geo_distribution'],
                 'map_scope' => 'matricula',
                 'show_waiting_capacity' => true,
+                'sem_posicao_rows' => $fromMatricula['sem_posicao_rows'] ?? [],
             ];
         }
 
@@ -2266,6 +2334,7 @@ class SchoolUnitsRepository
                 'geo_distribution' => $fromRede['geo_distribution'],
                 'map_scope' => 'rede_escola',
                 'show_waiting_capacity' => false,
+                'sem_posicao_rows' => $fromRede['sem_posicao_rows'] ?? [],
             ];
         }
 
@@ -2302,6 +2371,7 @@ class SchoolUnitsRepository
                     'geo_distribution' => $fromCache['geo_distribution'],
                     'map_scope' => 'geo_cache',
                     'show_waiting_capacity' => false,
+                    'sem_posicao_rows' => $fromCache['sem_posicao_rows'] ?? [],
                 ];
             }
         }
@@ -2337,6 +2407,7 @@ class SchoolUnitsRepository
             ],
             'map_scope' => 'matricula',
             'show_waiting_capacity' => true,
+            'sem_posicao_rows' => $fromMatricula['sem_posicao_rows'] ?? [],
         ];
     }
 

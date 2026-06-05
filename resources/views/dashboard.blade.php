@@ -48,6 +48,8 @@
 
             @include('dashboard.partials.municipalities-map', ['mapMarkers' => $mapMarkers, 'mapSummary' => $mapSummary])
 
+            @include('dashboard.partials.fundeb-complementacoes-chart', ['fundebPortaria' => $fundebPortaria ?? []])
+
             @include('dashboard.partials.quick-actions', [
                 'ops' => $ops,
                 'stats' => $stats,

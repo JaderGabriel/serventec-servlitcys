@@ -67,6 +67,10 @@ final class RxFundebPortariaChartTest extends TestCase
         $this->assertEqualsWithDelta(2.5, $chart['datasets'][0]['data'][0], 0.01);
         $this->assertEqualsWithDelta(1.0, $chart['datasets'][1]['data'][0], 0.01);
         $this->assertEqualsWithDelta(0.5, $chart['datasets'][2]['data'][0], 0.01);
+        $this->assertSame('brl_millions', $chart['options']['valueFormat'] ?? null);
+        $this->assertIsArray($result['ibge_table'] ?? null);
+        $this->assertCount(1, $result['ibge_table']);
+        $this->assertIsArray($result['national'] ?? null);
     }
 
     #[Test]

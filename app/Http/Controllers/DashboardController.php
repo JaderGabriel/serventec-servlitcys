@@ -35,6 +35,7 @@ class DashboardController extends Controller
             'systemFlow' => $data['system_flow'],
             'mapMarkers' => $data['map_markers'],
             'mapSummary' => $data['map_summary'],
+            'fundebPortaria' => $data['fundeb_portaria'],
             'quickActions' => HomeQuickActionsCatalog::sections($data['stats'], $data['ops'], $user),
         ]);
     }

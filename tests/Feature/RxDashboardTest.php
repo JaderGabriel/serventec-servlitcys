@@ -89,6 +89,7 @@ final class RxDashboardTest extends TestCase
             ->get(route('dashboard.rx'))
             ->assertOk()
             ->assertSee(__('FUNDEB — complementações da portaria (:ano)', ['ano' => '2026']), false)
+            ->assertSee(__('IBGE dos municípios cadastrados'), false)
             ->assertSee(__('Complementações previstas por município'), false)
             ->assertSee('data-chart-panel-root="1"', false);
     }

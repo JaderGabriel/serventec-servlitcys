@@ -71,7 +71,8 @@ Ponto de entrada da documentação técnica e funcional. Para **padrão editoria
 
 | Documento | Versão |
 |-----------|--------|
-| [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md) | **4.2.0** — Clio |
+| [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md) | **4.3.0** — Harmonia |
+| [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md) | 4.2.0 — Clio |
 | [RELEASE_20260609_THEIA.md](RELEASE_20260609_THEIA.md) | 4.1.9 — Theia |
 | [RELEASE_20260608_SOPHIA.md](RELEASE_20260608_SOPHIA.md) | 4.1.8 — Sophia |
 | [RELEASE_20260607_PHRONESIS.md](RELEASE_20260607_PHRONESIS.md) | 4.1.7 — Phronesis |

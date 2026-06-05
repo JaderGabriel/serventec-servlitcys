@@ -80,7 +80,14 @@ final class RxOverviewService
 
         $totals = $this->aggregateTotals($rows);
         $semaphoreSummary = $this->aggregateSemaphore($rows);
-        $fundebPortaria = RxFundebPortariaChart::buildForCities($cities, $vigenteYear);
+        $rxRowsByCity = [];
+        foreach ($rows as $row) {
+            $cid = (int) ($row['city_id'] ?? 0);
+            if ($cid > 0) {
+                $rxRowsByCity[$cid] = $row;
+            }
+        }
+        $fundebPortaria = RxFundebPortariaChart::buildForCities($cities, $vigenteYear, $rxRowsByCity);
 
         return [
             'vigente_ano' => $vigenteYear,

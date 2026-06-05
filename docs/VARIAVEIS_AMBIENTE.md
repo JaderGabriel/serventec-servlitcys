@@ -361,7 +361,7 @@ Só necessárias se o schema do município divergir do Portabilis 2.x. Lista com
 - **Frequência / falta:** `IEDUCAR_TABLE_FALTA_ALUNO`, `IEDUCAR_COL_FALTA_MATRICULA`, `IEDUCAR_COL_FALTA_DATA` — diagnóstico: `php artisan ieducar:probe-falta {city_id}`
 - **FUNDEB estado (PDF FNDE):** `IEDUCAR_FUNDEB_ESTADO_VAAF_ENABLED`, `IEDUCAR_FUNDEB_ESTADO_VAAF_ON_IMPORT`
 
-**Painel RX:** `RX_VIGENTE_YEAR`, `RX_FUNDEB_PORTARIA_EXERCICIO` (0 = mesmo que vigente; gráfico complementações portaria), `RX_CENSO_COLLECT_END_DEFAULT`, `RX_CITY_QUERY_TIMEOUT`, `RX_META_LOOKBACK_YEARS`, `RX_META_PCT_PER_SALTO` (default 5), `RX_SEMAPHORE_YELLOW_MIN` — ver `config/rx.php` e [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md). Legenda de cores e cálculo de progresso/em falta: v2.3.6 (`RxCadastroGap`, `RxColumnTone`). Gráfico FUNDEB: dados consolidados da portaria (distinto do cadastro em andamento no RX).
+**Painel RX / Início:** `RX_VIGENTE_YEAR`, `RX_FUNDEB_PORTARIA_EXERCICIO` (0 = mesmo que vigente; gráfico complementações portaria na home e no RX), `RX_CENSO_COLLECT_END_DEFAULT`, `RX_CITY_QUERY_TIMEOUT`, `RX_META_LOOKBACK_YEARS`, `RX_META_PCT_PER_SALTO` (default 5), `RX_SEMAPHORE_YELLOW_MIN` — ver `config/rx.php` e [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md). Legenda de cores e cálculo de progresso/em falta: v2.3.6 (`RxCadastroGap`, `RxColumnTone`). Gráfico FUNDEB: dados consolidados da portaria (distinto do cadastro em andamento no RX). Reimportação limpa: `php artisan fundeb:import-api 0 --all --ano=2026 --replace --nearest`.
 
 ---
 

@@ -153,7 +153,7 @@ final class ArtisanCommandsCatalog
                     [
                         'name' => 'fundeb:import-api',
                         'summary' => __('Importa via API CKAN FNDE ou JSON e grava na base.'),
-                        'signature' => 'fundeb:import-api {city} {--ano=}',
+                        'signature' => 'fundeb:import-api {city} {--ano=} {--all} {--replace} {--nearest}',
                         'examples' => [
                             'php artisan fundeb:import-api 1 --ano=2024',
                         ],

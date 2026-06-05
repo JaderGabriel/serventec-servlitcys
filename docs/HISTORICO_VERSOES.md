@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`4.2.0`** · tag de deploy **`20260610-Clio`** · ver [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`4.3.0`** · tag de deploy **`20260611-Harmonia`** · ver [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **4.2.0** |
+| **Versão semântica em produção** | **4.3.0** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260610-Clio` |
-| **Último marco documentado** | FUNDEB VAAT/VAAR portaria 6/2026, gráfico RX complementações, hub Discrepâncias — [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md) |
+| **Tag de deploy (servidor)** | `20260611-Harmonia` |
+| **Último marco documentado** | Discrepâncias alinhadas, painel RX portaria completo, gráfico FUNDEB na home, `fundeb:import-api --replace` — [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -20,7 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.2.0** | `b0cd61f` / `20260610-Clio` → `main` | **319** | 10/06/2026 | **Produção:** FUNDEB VAAT/VAAR portaria, gráfico RX complementações, hub Discrepâncias — [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md). |
+| **▶ 4.3.0** | `PLACEHOLDER` / `20260611-Harmonia` → `main` | **321** | 11/06/2026 | **Produção:** Discrepâncias×Unidades geo, painel RX portaria FUNDEB, gráfico na home, CLI `--replace` — [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md). |
+| 4.2.0 | `b0cd61f` / `20260610-Clio` → `main` | **319** | 10/06/2026 | FUNDEB VAAT/VAAR portaria, gráfico RX complementações, hub Discrepâncias — [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md). |
 | 4.1.9 | `e473c26` / `20260609-Theia` → `main` | **317** | 09/06/2026 | Outlook Finanças até dezembro, diagrama ERP, mapa CadÚnico (zoom + cores) — [RELEASE_20260609_THEIA.md](RELEASE_20260609_THEIA.md). |
 | 4.1.8 | `d1c01ed` / `20260608-Sophia` → `main` | **313** | 08/06/2026 | VAAT portaria + lookback Censo, diagnose matrículas, admin i-Educar leigos, diagrama ERP — [RELEASE_20260608_SOPHIA.md](RELEASE_20260608_SOPHIA.md). |
 | 4.1.7 | `033bfa7` / `20260607-Phronesis` → `main` | **307** | 07/06/2026 | FUNDEB portarias 6/2026, lexicon UI (consolidado/em formação/projeção), VAAT CSV, export matriz — [RELEASE_20260607_PHRONESIS.md](RELEASE_20260607_PHRONESIS.md). |

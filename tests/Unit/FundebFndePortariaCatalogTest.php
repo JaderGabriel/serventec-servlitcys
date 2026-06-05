@@ -24,4 +24,12 @@ final class FundebFndePortariaCatalogTest extends TestCase
         $this->assertEqualsWithDelta(5954.14, $pisos['vaaf_min'], 0.01);
         $this->assertEqualsWithDelta(10193.74, $pisos['vaat_min'], 0.01);
     }
+
+    #[Test]
+    public function expoe_totais_nacionais_da_portaria_6(): void
+    {
+        $totais = FundebFndePortariaCatalog::nationalTotals(2026);
+        $this->assertEqualsWithDelta(370_540_000_000, $totais['receita_vinculada'], 1.0);
+        $this->assertEqualsWithDelta(69_287_000_000, $totais['complementacao_uniao'], 1.0);
+    }
 }

@@ -77,6 +77,19 @@ function chartTextColor() {
         : "#374151";
 }
 
+/** Tipografia alinhada a .font-display (Outfit / DM Sans) nos gráficos Chart.js. */
+function chartFontFamily() {
+    return 'Outfit, "DM Sans", ui-sans-serif, system-ui, sans-serif';
+}
+
+function chartLabelFont(size = 12, weight = "500") {
+    return {
+        family: chartFontFamily(),
+        size,
+        weight,
+    };
+}
+
 function chartGridColor() {
     return document.documentElement.classList.contains("dark")
         ? "rgba(148,163,184,0.2)"
@@ -614,13 +627,37 @@ document.addEventListener("alpine:init", () => {
     }
 
     function applyChartBrlFormat(extra, mergedPlugins, scales) {
-        if (extra?.valueFormat !== "brl") {
+        const format = extra?.valueFormat;
+        if (format !== "brl" && format !== "brl_millions") {
             return;
         }
+        const millions = format === "brl_millions";
+        const toBrl = (raw) => {
+            const n = Number(raw);
+            if (!Number.isFinite(n)) {
+                return String(raw ?? "");
+            }
+
+            return formatChartBrl(millions ? n * 1_000_000 : n);
+        };
         const valueAxisKey = extra.indexAxis === "y" ? "x" : "y";
         const axis = scales?.[valueAxisKey];
         if (axis?.ticks) {
-            axis.ticks.callback = (tickValue) => formatChartBrl(tickValue);
+            axis.ticks.callback = (tickValue) => {
+                const n = Number(tickValue);
+                if (!Number.isFinite(n)) {
+                    return String(tickValue ?? "");
+                }
+                if (millions) {
+                    return `${n.toLocaleString("pt-BR", {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                    })} M`;
+                }
+
+                return formatChartBrl(n);
+            };
+            axis.ticks.font = chartLabelFont(11);
         }
         mergedPlugins.datalabels = {
             ...(mergedPlugins.datalabels || {}),
@@ -639,14 +676,17 @@ document.addEventListener("alpine:init", () => {
                         ? Math.round((Number(value) / sum) * 1000) / 10
                         : 0;
 
-                    return `${formatChartBrl(value)}\n(${pct}% do total)`;
+                    return `${toBrl(value)}\n(${pct}% do total)`;
                 }
 
-                return formatChartBrl(value);
+                return toBrl(value);
             },
         };
         mergedPlugins.tooltip = {
             ...(mergedPlugins.tooltip || {}),
+            titleFont: chartLabelFont(13, "600"),
+            bodyFont: chartLabelFont(12),
+            footerFont: chartLabelFont(12, "600"),
             callbacks: {
                 ...(mergedPlugins.tooltip?.callbacks || {}),
                 label: (context) => {
@@ -657,7 +697,25 @@ document.addEventListener("alpine:init", () => {
                         context.raw;
                     const prefix = label ? `${label}: ` : "";
 
-                    return prefix + formatChartBrl(raw);
+                    return prefix + toBrl(raw);
+                },
+                footer: (items) => {
+                    if (!millions || !items?.length) {
+                        return [];
+                    }
+                    const total = items.reduce((sum, item) => {
+                        const raw =
+                            item.parsed?.y ??
+                            item.parsed?.x ??
+                            item.raw;
+
+                        return sum + Number(raw);
+                    }, 0);
+                    if (!Number.isFinite(total) || total <= 0) {
+                        return [];
+                    }
+
+                    return [`Total: ${toBrl(total)}`];
                 },
             },
         };
@@ -933,6 +991,9 @@ document.addEventListener("alpine:init", () => {
                                     pointStyle: "rectRounded",
                                     padding: 14,
                                     color: chartTextColor(),
+                                    font: chartLabelFont(12, "500"),
+                                    boxWidth: 12,
+                                    boxHeight: 12,
                                     generateLabels: (chart) => {
                                         const ds0 = chart.data.datasets[0];
                                         const bg = ds0?.backgroundColor;

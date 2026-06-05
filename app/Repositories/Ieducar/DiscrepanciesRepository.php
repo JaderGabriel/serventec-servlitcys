@@ -4,6 +4,7 @@ namespace App\Repositories\Ieducar;
 
 use App\Models\City;
 use App\Services\CityDataConnection;
+use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Dashboard\PublicDataSourcesCatalog;
@@ -260,7 +261,14 @@ class DiscrepanciesRepository
                         $networkKpis = null;
                     }
 
-                    $dimensions = ConsultoriaOperationalSignals::append($dimensions, $networkKpis, $totalMat, $city, $filters);
+                    $dimensions = ConsultoriaOperationalSignals::append(
+                        $dimensions,
+                        $networkKpis,
+                        $totalMat,
+                        $city,
+                        $filters,
+                        $this->fundebAnchorAno($filters),
+                    );
 
                     $checks = $this->sortChecksForConsultoria($checks);
                     $checks = ConsultoriaOperationalSignals::enrichChecksFromDimensions($dimensions, $checks, $city, $filters);
@@ -314,7 +322,14 @@ class DiscrepanciesRepository
                     } catch (\Throwable) {
                         $networkKpis = null;
                     }
-                    $dimensions = ConsultoriaOperationalSignals::append($dimensions, $networkKpis, $totalMat, $city, $filters);
+                    $dimensions = ConsultoriaOperationalSignals::append(
+                        $dimensions,
+                        $networkKpis,
+                        $totalMat,
+                        $city,
+                        $filters,
+                        $this->fundebAnchorAno($filters),
+                    );
                     $summary = $this->buildSummaryFromDimensions($dimensions);
                     $tiposComProblema = count(array_filter($dimensions, static fn (array $d): bool => (bool) ($d['has_issue'] ?? false)));
                     $activeFromDimensions = array_values(array_filter(array_map(
@@ -829,5 +844,14 @@ class DiscrepanciesRepository
         }
 
         return __('Ano letivo :year', ['year' => (string) $filters->ano_letivo]);
+    }
+
+    private function fundebAnchorAno(IeducarFilterState $filters): int
+    {
+        if ($filters->hasYearSelected() && ! $filters->isAllSchoolYears()) {
+            return (int) $filters->yearFilterValue();
+        }
+
+        return FundebOpenDataImportService::suggestedImportYear();
     }
 }

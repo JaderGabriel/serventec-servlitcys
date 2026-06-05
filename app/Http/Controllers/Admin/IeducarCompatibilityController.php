@@ -76,7 +76,7 @@ class IeducarCompatibilityController extends Controller
             $fundebResolved = FundebMunicipalReferenceResolver::resolve($city, $resolveFilters);
 
             try {
-                $report = $this->runReport($city, $filters);
+                $report = $this->runReport($city, $filters, $fundebImportYear);
             } catch (\Throwable $e) {
                 $error = $e->getMessage();
             }
@@ -410,12 +410,12 @@ class IeducarCompatibilityController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function runReport(City $city, IeducarFilterState $filters): array
+    private function runReport(City $city, IeducarFilterState $filters, ?int $fundebAnchorAno = null): array
     {
         return PulseOperationRecorder::measure(
             'ieducar:compatibility|cid:'.(int) $city->id,
-            fn (): array => $this->cityData->run($city, function ($db) use ($city, $filters) {
-                return IeducarCompatibilityProbe::report($db, $city, $filters);
+            fn (): array => $this->cityData->run($city, function ($db) use ($city, $filters, $fundebAnchorAno) {
+                return IeducarCompatibilityProbe::report($db, $city, $filters, $fundebAnchorAno);
             }),
         );
     }

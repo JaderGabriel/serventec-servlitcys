@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '4.2.0',
-        'release_tag' => '20260610-Clio',
-        'commit_short' => 'b0cd61f',
-        'commit_number' => 319,
-        'revision_date' => '2026-06-10',
+        'version' => '4.3.0',
+        'release_tag' => '20260611-Harmonia',
+        'commit_short' => 'PLACEHOLDER',
+        'commit_number' => 321,
+        'revision_date' => '2026-06-11',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

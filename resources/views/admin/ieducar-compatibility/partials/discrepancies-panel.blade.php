@@ -11,6 +11,7 @@
     $fmtBrl = $fmtBrl ?? [\App\Support\Ieducar\DiscrepanciesFundingImpact::class, 'formatBrl'];
     $city = $city ?? null;
     $anoLetivo = $filters?->ano_letivo ?? 'all';
+    $fundebAnoProbe = isset($fundebImportYear) ? (int) $fundebImportYear : null;
     $consultoriaUrl = $city
         ? route('dashboard.analytics', array_filter([
             'city_id' => $city->id,
@@ -37,6 +38,9 @@
                     </p>
                     <p class="text-[11px] text-gray-500 dark:text-gray-500 leading-relaxed mt-1">
                         {{ __('admin_ieducar_compatibility.discrepancies.intro') }}
+                        @if ($anoLetivo === 'all' && $fundebAnoProbe !== null && $fundebAnoProbe >= 2000)
+                            {{ __(' O módulo Referência FUNDEB usa o exercício :ano (campo «Ano FUNDEB» do probe).', ['ano' => $fundebAnoProbe]) }}
+                        @endif
                     </p>
                 </div>
                 @if ($consultoriaUrl)

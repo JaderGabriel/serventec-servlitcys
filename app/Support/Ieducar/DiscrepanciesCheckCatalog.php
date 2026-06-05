@@ -379,7 +379,7 @@ final class DiscrepanciesCheckCatalog
                 'id' => 'escola_sem_geo',
                 'title' => __('Escola sem posição no mapa'),
                 'explanation' => __(
-                    'Unidades sem coordenadas utilizáveis no mapa: sem lat/lng válidos na tabela escola do i-Educar e sem posição em school_unit_geos (lat/lng ou oficial INEP em cache). Com matrículas no filtro, lista escolas com alunos; sem matrículas no âmbito, lista unidades do cache local sem posição (mesmo critério da aba Unidades escolares em modo cache).'
+                    'Unidades no âmbito do filtro que não obtêm marcador no mapa de Cadastro → Unidades (lat/lng i-Educar, cache school_unit_geos ou consulta INEP em tempo real). O total de escolas coincide com escolas_no_escopo − total_com_coordenadas do painel de Unidades.'
                 ),
                 'impact' => __(
                     'Afeta mapas, transporte e cruzamentos territoriais; dificulta comprovação de oferta por território e alinha com a distribuição geográfica do painel.'

@@ -20,6 +20,7 @@ final class FundebOperationalSignals
         array $dimensions,
         ?City $city = null,
         ?IeducarFilterState $filters = null,
+        ?int $fundebAnchorAno = null,
     ): array {
         if ($city === null) {
             return $dimensions;
@@ -31,7 +32,7 @@ final class FundebOperationalSignals
         }
 
         $out = $dimensions;
-        foreach (self::buildSignals($city, $filters) as $signal) {
+        foreach (self::buildSignals($city, $filters, $fundebAnchorAno) as $signal) {
             $id = (string) ($signal['id'] ?? '');
             if ($id === '' || isset($existing[$id])) {
                 continue;
@@ -46,10 +47,10 @@ final class FundebOperationalSignals
     /**
      * @return list<array<string, mixed>>
      */
-    private static function buildSignals(City $city, ?IeducarFilterState $filters): array
+    private static function buildSignals(City $city, ?IeducarFilterState $filters, ?int $fundebAnchorAno = null): array
     {
         $signals = [];
-        $ano = self::anchorAno($filters);
+        $ano = self::anchorAno($filters, $fundebAnchorAno);
         $ibge = FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio);
         if ($ibge === null) {
             return [];
@@ -72,7 +73,7 @@ final class FundebOperationalSignals
         $fonteMat = (string) ($ref->matriculas_fonte ?? '');
 
         if ($fonteMat === 'censo_inep' && $ieducarMeta === 0 && $censoMeta !== null && $censoMeta > 0) {
-            $signals[] = self::signalCensoSemIeducar($censoMeta, $city, $filters);
+            $signals[] = self::signalCensoSemIeducar($censoMeta, $ano, $city, $filters);
         }
 
         if (! empty($meta['ibge_nome_divergente'])) {
@@ -86,10 +87,14 @@ final class FundebOperationalSignals
         return array_values(array_filter($signals));
     }
 
-    private static function anchorAno(?IeducarFilterState $filters): int
+    private static function anchorAno(?IeducarFilterState $filters, ?int $fundebAnchorAno = null): int
     {
         if ($filters !== null && $filters->hasYearSelected() && ! $filters->isAllSchoolYears()) {
             return (int) $filters->yearFilterValue();
+        }
+
+        if ($fundebAnchorAno !== null && $fundebAnchorAno >= 2000) {
+            return $fundebAnchorAno;
         }
 
         return max(2000, (int) date('Y') - 1);
@@ -98,12 +103,9 @@ final class FundebOperationalSignals
     /**
      * @return array<string, mixed>
      */
-    private static function signalCensoSemIeducar(int $censo, ?City $city, ?IeducarFilterState $filters): array
+    private static function signalCensoSemIeducar(int $censo, int $ano, ?City $city, ?IeducarFilterState $filters): array
     {
         $id = 'fundeb_vaaf_fonte_censo';
-        $peso = DiscrepanciesFundingImpact::pesoParaCheck($id);
-        $vaa = DiscrepanciesFundingImpact::vaaReferencia($city, $filters);
-        $perda = round($censo * $vaa * $peso * 0.01, 2);
 
         return [
             'id' => $id,
@@ -113,13 +115,11 @@ final class FundebOperationalSignals
             'has_issue' => true,
             'detected' => true,
             'total' => $censo,
-            'perda_estimada_anual' => $perda,
-            'ganho_potencial_anual' => $perda,
             'status' => 'warning',
             'severity' => 'warning',
             'operational_note' => __(
                 'A referência FUNDEB :ano usa :censo matrículas do Censo INEP (i-Educar = 0 na importação). Projeções de Finanças podem divergir das matrículas activas no painel.',
-                ['ano' => (string) self::anchorAno($filters), 'censo' => number_format($censo, 0, ',', '.')],
+                ['ano' => (string) $ano, 'censo' => number_format($censo, 0, ',', '.')],
             ),
             'source_tab' => 'fundeb',
             'correction_tab' => 'enrollment',
@@ -142,8 +142,6 @@ final class FundebOperationalSignals
             'has_issue' => true,
             'detected' => true,
             'total' => 1,
-            'perda_estimada_anual' => 0.0,
-            'ganho_potencial_anual' => 0.0,
             'status' => 'warning',
             'severity' => 'warning',
             'operational_note' => __(

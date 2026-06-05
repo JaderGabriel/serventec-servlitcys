@@ -720,6 +720,10 @@ return [
                                 'vaaf_min' => (float) env('IEDUCAR_FUNDEB_NATIONAL_VAAF_2026', 5954.14),
                                 'vaat_min' => (float) env('IEDUCAR_FUNDEB_NATIONAL_VAAT_2026', 10193.74),
                             ],
+                            'totais_nacionais' => [
+                                'receita_vinculada' => (float) env('IEDUCAR_FUNDEB_NATIONAL_RECEITA_VINCULADA_2026', 370_540_000_000),
+                                'complementacao_uniao' => (float) env('IEDUCAR_FUNDEB_NATIONAL_COMPL_UNIAO_2026', 69_287_000_000),
+                            ],
                         ],
                         [
                             'ordem' => 1,

@@ -9,6 +9,7 @@ use App\Models\AnalyticsReportExport;
 use App\Models\City;
 use App\Models\User;
 use App\Support\Pulse\PulseOperationRecorder;
+use App\Support\Rx\RxFundebPortariaChart;
 
 final class AdminHomeMetrics
 {
@@ -21,7 +22,9 @@ final class AdminHomeMetrics
      * @return array{
      *     stats: array{cities: int, cities_active: int, cities_ready: int, cities_this_month: int, users: int, users_active: int},
      *     ops: array{sync_pending: int, sync_failed_24h: int, pdf_pending: int, pgsql: int, mysql: int},
-     *     recent_cities: \Illuminate\Support\Collection<int, City>
+     *     map_markers: list<array<string, mixed>>,
+     *     map_summary: array<string, mixed>,
+     *     fundeb_portaria: array<string, mixed>
      * }
      */
     public function gather(): array
@@ -33,7 +36,9 @@ final class AdminHomeMetrics
      * @return array{
      *     stats: array{cities: int, cities_active: int, cities_ready: int, cities_this_month: int, users: int, users_active: int},
      *     ops: array{sync_pending: int, sync_failed_24h: int, pdf_pending: int, pgsql: int, mysql: int},
-     *     recent_cities: \Illuminate\Support\Collection<int, City>
+     *     map_markers: list<array<string, mixed>>,
+     *     map_summary: array<string, mixed>,
+     *     fundeb_portaria: array<string, mixed>
      * }
      */
     private function gatherMetrics(): array
@@ -73,12 +78,15 @@ final class AdminHomeMetrics
             'mysql' => City::query()->active()->where('db_driver', City::DRIVER_MYSQL)->count(),
         ];
 
+        $vigenteYear = (int) config('rx.vigente_year', (int) date('Y'));
+
         return [
             'stats' => $stats,
             'ops' => $ops,
             'system_flow' => $this->systemFlow->diagram($ready, $activeCities->count()),
             'map_markers' => $this->municipalityMap->markers(),
             'map_summary' => $this->municipalityMap->summary(),
+            'fundeb_portaria' => RxFundebPortariaChart::buildForCities($activeCities, $vigenteYear),
         ];
     }
 }
