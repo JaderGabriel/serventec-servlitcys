@@ -1,6 +1,8 @@
 # Consultas externas — fontes, necessidade e uso no sistema
 
-**Data:** maio de 2026  
+**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+
+> **Índice:** [README.md](README.md) · **Comandos repasses:** [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §4.1  
 **Âmbito:** servlitcys (painel de análise i-Educar municipal)
 
 > **Índice:** [README.md](README.md) · **Estudo ampliado (saúde, SUAS, demanda):** [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) §C · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §6.

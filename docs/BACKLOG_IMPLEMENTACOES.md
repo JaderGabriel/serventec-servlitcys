@@ -1,6 +1,8 @@
 # Backlog de implementações — servlitcys
 
-**Última revisão:** maio/2026 · **Versão `main`:** 2.3.2 — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
+**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+
+> **Índice:** [README.md](README.md) · **Estado actual:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
 Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento** | **Concluído** (mover para [STATUS_PROJETO.md](STATUS_PROJETO.md) quando entrar em produção).
 

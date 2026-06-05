@@ -1,6 +1,8 @@
 # Início (`/dashboard`) — painel admin
 
-**Versão:** 4.0.0+ · **Release:** [RELEASE_20260604_HESTIA.md](RELEASE_20260604_HESTIA.md)
+**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+
+> **Release Início:** [RELEASE_20260604_HESTIA.md](RELEASE_20260604_HESTIA.md) (4.0.0) · **Índice:** [README.md](README.md)
 
 Painel operacional após login (utilizadores com `canViewAdminDashboard()`). Utilizadores sem essa permissão são redireccionados para a consultoria municipal.
 

@@ -339,9 +339,11 @@ gh release create 20260521-Mercury --title "20260521-Mercury (2.3.8)" --notes-fi
 
 ## Manutenção
 
-1. Cada entrega visível → uma linha na tabela **Linha do tempo** (versão, hash, #, resumo).
-2. Obter `#` local: `git rev-list --count <hash>`.
-3. Obter hash da tag: `git rev-parse --short v2.1.0`.
-4. Não duplicar listas longas noutros arquivos — linkar para este documento.
+Seguir checklist em [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) §6. Resumo:
 
-*Índice geral: [README.md](README.md) · Estado actual: [STATUS_PROJETO.md](STATUS_PROJETO.md)*
+1. Cada entrega visível → linha na tabela **Linha do tempo** (versão, hash, #, resumo).
+2. Actualizar `config/documentation.php` (`product.version`, `release_tag`, `commit_short`).
+3. Obter `#` local: `git rev-list --count HEAD`.
+4. Não duplicar listas longas noutros ficheiros — linkar para este documento ou [STATUS_PROJETO.md](STATUS_PROJETO.md).
+
+*Índice: [README.md](README.md) · Padrão editorial: [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md)*

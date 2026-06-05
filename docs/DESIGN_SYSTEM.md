@@ -1,9 +1,10 @@
 # Design system — consultoria municipal (servlitcys)
 
-**Última revisão:** maio/2026  
+**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+
 **Implementação:** `resources/css/app.css` (classes `serv-*`), componentes Blade `x-dashboard.*`, `x-status-pill`, `x-consultoria-tab-link`.
 
-> **Índice:** [README.md](README.md) · **Ponderações UX:** secção 14 em [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
+> **Índice:** [README.md](README.md) · **Padrão doc:** [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) · **Ponderações UX:** secção 14 em [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
 
 ---
 
@@ -14,7 +15,7 @@ O produto comunica **consultoria profissional** com foco em **finanças educacio
 | Princípio | Regra |
 |-----------|--------|
 | Município primeiro | Nome do município + UF em destaque (`serv-municipality-strip`) |
-| Finanças antes de pedagógico | Ordem das abas em `AnalyticsTabCatalog` |
+| Resumo antes de cadastro | Entrada em **Diagnóstico** (área Resumo); depois cadastro → pedagógico → censo → finanças |
 | Indicativo ≠ oficial | Avisos em saldo/perda; links para Discrepâncias e Diagnóstico |
 | Calma e credibilidade | Paleta slate + teal; evitar roxo/indigo como cor primária em consultoria |
 

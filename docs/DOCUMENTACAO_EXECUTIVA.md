@@ -1,6 +1,8 @@
 # Documentação executiva — servlitcys
 
-> **Índice central:** [README.md](README.md) · Estado actual: [STATUS_PROJETO.md](STATUS_PROJETO.md) · Versões: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · Backlog: [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md)
+**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+
+> **Índice:** [README.md](README.md) · **Estado:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md)
 
 ## Propósito
 
@@ -14,10 +16,12 @@ O **servlitcys** é uma aplicação web que consolida **informação educacional
 
 ## Funcionalidades principais
 
-1. **Painel e análise** — Visualização de métricas e filtros associados a cidades com configuração ativa e conexão a dados (ex.: ecossistema iEducar).
-2. **Gestão de cidades** — Cadastro de municípios e credenciais de acesso às respetivas bases (restrito a administradores).
-3. **Gestão de usuários** — Criação de contas após autenticação (sem registro público); administradores podem desativar, reativar ou excluir contas; inativos não autenticam.
-4. **Página institucional** — Apresentação da plataforma e acesso ao login.
+1. **Consultoria municipal** — Painel `/dashboard/analytics` com 16 análises em 5 áreas (entrada: Diagnóstico executivo); finanças indicativas (FUNDEB, repasses, discrepâncias); exportação PDF Serventec.
+2. **Painel e análise** — Métricas e filtros por município com base i-Educar activa (cadastro, pedagógico, Censo).
+3. **Gestão de cidades** — Cadastro de municípios e credenciais de acesso às respetivas bases (restrito a administradores).
+4. **Gestão de usuários** — Criação de contas após autenticação (sem registro público); administradores podem desativar, reativar ou excluir contas; inativos não autenticam.
+5. **Dados públicos** — Importação administrativa (FUNDEB, repasses, SAEB, CadÚnico, geo) com impacto documentado nas abas da consultoria.
+6. **Página institucional** — Apresentação da plataforma e acesso ao login.
 
 ## Modelo de governação de acesso
 

@@ -98,17 +98,17 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 
 ---
 
-## Painel de análise (`/dashboard/analytics`)
+## Painel de análise (`/dashboard/analytics`) — 4.1.0
 
-| Aba (ordem consultoria) | Notas |
-|-------------------------|-------|
-| Diagnóstico | Consultoria municipal, PDF, blocos temáticos |
-| Discrepâncias | Cadastro, impacto indicativo, export CSV |
-| FUNDEB | VAAF, previsão, condicionalidades |
-| Financiamentos | Programas + consultas públicas |
-| Censo | Meta vs. ano anterior, ritmo cadastro |
-| Visão geral / Matrículas / Rede / Unidades | Cadastro e rede |
-| Inclusão / Desempenho / Frequência | Indicadores pedagógicos |
+Navegação em **5 áreas** ([ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md)). Aba inicial com ano aplicado: **Diagnóstico** (área Resumo).
+
+| Área | Abas | Notas |
+|------|------|-------|
+| **1 Resumo** | Diagnóstico | PDF, Explorar, índice conformidade |
+| **2 Cadastro** | Visão geral, Matrículas, CadÚnico, Rede, Unidades | Volume matrículas/alunos (3.8.0+) |
+| **3 Pedagógico** | Inclusão, Desempenho, Frequência | SAEB, NEE, exportação |
+| **4 Censo** | Censo | Ritmo Educacenso, meta ano anterior |
+| **5 Finanças** | Discrepâncias, FUNDEB, Tempo Real, Comparativo, Financiamentos | Repasses em `municipal_transfer_snapshots` |
 
 | Funcionalidade | Notas |
 |----------------|-------|

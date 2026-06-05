@@ -1,14 +1,18 @@
 # Performance e Redis — servlitcys
 
+**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+
+> **Índice:** [README.md](README.md) · **Analytics:** [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md)
+
 Guia para reduzir lentidão no **login** e em consultas repetidas, usando Redis quando disponível no servidor.
 
-## Painel Analytics — Diagnóstico e Finanças (3.3.2+)
+## Painel Analytics — Diagnóstico e Finanças
 
-Release **`20260601-Atlas` (3.5.0):** abas **Comparativo** (Finanças) e **CadÚnico** (Cadastro) com export imediato; pipeline CadÚnico na fila `cadastro` e cron — [RELEASE_20260601_ATLAS.md](RELEASE_20260601_ATLAS.md).
-
-Release **`20260531-Nemesis` (3.4.0):** área **Censo** separada na navegação; UI unificada Finanças/Censo; Diagnóstico com qualidade do sistema; cache de abas v2. Patches pós-release (sem bump): consolidado Diagnóstico, métricas por área em Explorar, painel PDF — ver [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
-
-Release **`20260530-Metis` (3.3.2):** **Diagnóstico estratégico** (um pedido leve, cache partilhado entre abas). Legado progressivo/AJAX ainda disponível. Ver [RELEASE_20260530_METIS.md](RELEASE_20260530_METIS.md) e [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md).
+| Marco | Notas de performance |
+|-------|----------------------|
+| **4.1.0 Athena** | Navegação 5 áreas; lazy por aba inalterado — [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) |
+| **3.7.0+ Selene** | Finanças lazy otimizado; contexto municipal reutilizado |
+| **3.3.2 Metis** | Diagnóstico estratégico; cache partilhado — [RELEASE_20260530_METIS.md](RELEASE_20260530_METIS.md) |
 
 Variáveis: `ANALYTICS_MUNICIPALITY_HEALTH_MODE`, `ANALYTICS_MUNICIPALITY_HEALTH_CACHE`, `ANALYTICS_FINANCE_TABS_REUSE_CONTEXT` ([VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §7).
 

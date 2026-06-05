@@ -53,6 +53,8 @@ php artisan test --filter='AnalyticsTabCatalogTest|FinanceRealtimeFundebServiceT
 
 ## Documentação relacionada
 
+- [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) — padrão editorial (4.1.0)
 - [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md)
 - [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) §5
 - [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md)
+- [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §4.1 — repasses / Tempo Real

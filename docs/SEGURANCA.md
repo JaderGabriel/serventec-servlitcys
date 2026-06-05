@@ -1,6 +1,8 @@
 # Segurança e operações — servlitcys
 
-> **Índice:** [README.md](README.md) · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §10.
+**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+
+> **Índice:** [README.md](README.md) · **Deploy:** [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §10.
 
 ## Senhas e segredos
 

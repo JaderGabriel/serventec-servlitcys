@@ -1,6 +1,8 @@
 # Consultoria municipal — decisão sobre abas, menus e dados
 
-**Data:** 2026-06-04 · **Versão produto:** 4.0.0 · **Decisão:** **Cenário C implementado** (área Resumo + Diagnóstico como entrada).
+**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05 · **Decisão:** **Cenário C implementado** (área Resumo + Diagnóstico como entrada).
+
+> **Índice:** [README.md](README.md) · **Release:** [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md)
 
 **Objetivo:** apoiar a equipa (produto, secretaria, TI) na decisão de reorganizar o painel `/dashboard/analytics` — ordem das abas, agrupamento no menu de dois níveis e coerência dos dados exibidos.
 

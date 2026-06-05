@@ -1,7 +1,8 @@
 # FUNDEB, VAAF, VAAR/VAAT e Onda 1 — documentação técnica
 
-**Data:** maio de 2026  
-**Relacionado:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §6 · [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) §C · `config/ieducar.php`
+**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+
+> **Índice:** [README.md](README.md) · [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §6 · [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) · `config/ieducar.php`
 
 ---
 

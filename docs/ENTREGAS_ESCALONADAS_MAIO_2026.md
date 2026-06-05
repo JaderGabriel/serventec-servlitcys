@@ -1,4 +1,6 @@
-# Entregas escalonadas — maio/2026
+# Entregas escalonadas — maio/2026 *(arquivo)*
+
+> **Documento histórico** — cobre entregas até **3.4.0** (mai/jun 2026). **Versão actual em produção:** **4.1.0** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md).
 
 Documentação das alterações desenvolvidas no ramo `main`, organizadas para **commits e PRs pequenos**. Cada bloco pode ser revisto e implantado de forma independente (com `php artisan migrate` e `npm run build` quando indicado).
 
@@ -60,7 +62,9 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 52 | `4b976f2` | **Pós-3.4.0 (sem bump):** Diagnóstico — índice único, consolidado operacional, ordem visual |
 | 53 | `e423808` | **Pós-3.4.0 (sem bump):** Explorar — contador por área, ícones/legendas, PDF painel de áreas, modo estratégico sem AJAX extra |
 
-**Em produção:** versão **3.4.0** · tag **`20260531-Nemesis`** · [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md). Patches documentados em [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) § Diagnóstico.
+**Nota:** o parágrafo «Em produção 3.4.0» abaixo reflecte o estado **no fecho deste arquivo**. Para produção actual, usar [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
+
+**Referência histórica (snapshot deste doc):** versão **3.4.0** · tag **`20260531-Nemesis`** · [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md).
 
 ---
 

@@ -1,8 +1,9 @@
 # Comandos Artisan — servlitcys
 
-> **Índice:** [README.md](README.md).
+**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
 
-**Data:** junho de 2026  
+> **Índice:** [README.md](README.md) · **Padrão doc:** [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md)
+
 **Interface admin:** menu **Sincronizações → Comandos Artisan** (`/admin/artisan-commands`)
 
 Execute sempre na **raiz do projeto** (onde está o `artisan`):

@@ -1,6 +1,8 @@
-# Analytics — navegação e UI de consultoria (3.4.0+)
+# Analytics — navegação e UI de consultoria
 
-> **Release:** [RELEASE_20260601_ATLAS.md](RELEASE_20260601_ATLAS.md) (3.5.0) · [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md) · **Índice:** [README.md](README.md)
+**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+
+> **Release:** [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md) · **Índice:** [README.md](README.md) · **Padrão:** [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md)
 
 ## Estrutura do painel
 
@@ -86,16 +88,17 @@ Calculado em `MunicipalityHealthRepository::computeComplianceScore()`:
 - Penalização por `status` `danger` / `warning` e por perda estimada agregada.
 - Cache de abas só entra se o payload estiver **completo** (`AnalyticsTabPayloadCache::isComplete()`).
 
-## Patches pós-3.4.0 (sem bump de versão)
+## Histórico de patches (3.4.0 → 4.1.0)
 
-| Commit | Resumo |
-|--------|--------|
-| `4b976f2` | Diagnóstico consolidado: um velocímetro; mapa/fontes em bloco colapsável |
-| `e423808` | Explorar: contadores por área; ícones; PDF; modo estratégico sem duplicar secções |
+| Marco | Resumo |
+|-------|--------|
+| 3.4.0 Nemesis | Área Censo; Explorar em detalhe; cache conformidade v2 |
+| 4.0.0 Hestia | Início reorganizado; Acesso rápido; rebuild Tempo Real |
+| 4.1.0 Athena | Cenário C — área **Resumo**; Diagnóstico como entrada; fix alertas Tempo Real |
 
-Versão em produção mantém-se **3.4.0** / tag **`20260531-Nemesis`**.
+Versão em produção: **4.1.0** / tag **`20260605-Athena`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
-## Volume: matrículas vs alunos distintos (3.8.0)
+## Volume: matrículas vs alunos distintos (3.8.0+)
 
 Classe central: `App\Support\Ieducar\MatriculaVolumeCounts`.
 

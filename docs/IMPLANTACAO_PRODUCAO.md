@@ -1,10 +1,12 @@
 # Implantação em produção — servlitcys
 
-> **Índice:** [README.md](README.md) · Variáveis de produção: **[VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md)** (editar só `.env` no servidor).
+**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
 
-Guia passo a passo para publicar no servidor as alterações recentes (monitorização, notificações, financiamentos, correções de abas e modelo `.env`).
+> **Índice:** [README.md](README.md) · **Variáveis:** [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) · **Comandos:** [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md)
 
-**Versão em produção:** **2.3.8.7** (Pulse diagnóstico SQL/operações; Matrículas ganho VAAF; tag `20260521-Mercury` inalterada) · **Última atualização:** 21/05/2026 · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [PERFORMANCE.md](PERFORMANCE.md) · [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md)
+Guia passo a passo para publicar no servidor (código, assets, migrações, filas e `.env`).
+
+**Versão de referência:** **4.1.0** · tag **`20260605-Athena`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md)
 
 ---
 

@@ -1,6 +1,8 @@
 # Ponderações técnicas — servlitcys
 
-**Última revisão:** maio/2026
+**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+
+> **Índice:** [README.md](README.md) · **Padrão doc:** [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md)
 
 Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados no sistema. Serve para alinhar desenvolvimento, consultoria e secretarias sem reler o código. Para estado de implementação, ver [STATUS_PROJETO.md](STATUS_PROJETO.md). Para evoluções planeadas, ver [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md).
 
