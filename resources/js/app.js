@@ -710,10 +710,16 @@ document.addEventListener("alpine:init", () => {
             };
             axis.ticks.font = chartLabelFont(11);
         }
-        const stackedTotalCompact = extra?.datalabelsMode === "stack_total_compact" && millions;
+        const tooltipOnly = extra?.datalabelsMode === "tooltip_only";
+        const stackedTotalCompact =
+            !tooltipOnly &&
+            extra?.datalabelsMode === "stack_total_compact" &&
+            millions;
         mergedPlugins.datalabels = {
             ...(mergedPlugins.datalabels || {}),
-            ...(stackedTotalCompact
+            ...(tooltipOnly
+                ? { display: false }
+                : stackedTotalCompact
                 ? {
                       clip: false,
                       display: (ctx) => {
@@ -796,6 +802,13 @@ document.addEventListener("alpine:init", () => {
                         context.parsed?.y ??
                         context.parsed?.x ??
                         context.raw;
+                    const n = Number(raw);
+                    if (
+                        tooltipOnly &&
+                        (!Number.isFinite(n) || n <= 0)
+                    ) {
+                        return null;
+                    }
                     const prefix = label ? `${label}: ` : "";
 
                     return prefix + toBrl(raw);
