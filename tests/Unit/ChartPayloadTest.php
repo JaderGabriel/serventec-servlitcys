@@ -59,6 +59,21 @@ final class ChartPayloadTest extends TestCase
      * Cenário: gráfico doughnut para percentuais (conformidade, NEE).
      */
     #[Test]
+    public function bar_stacked_define_escalas_empilhadas_no_eixo_y(): void
+    {
+        $chart = ChartPayload::barStacked('Título', 'Milhões de R$', ['A', 'B'], [
+            ['label' => 'S1', 'data' => [1.0, 2.0]],
+            ['label' => 'S2', 'data' => [3.0, 4.0]],
+        ]);
+
+        $this->assertSame('bar', $chart['type']);
+        $this->assertTrue($chart['options']['scales']['x']['stacked'] ?? false);
+        $this->assertTrue($chart['options']['scales']['y']['stacked'] ?? false);
+        $this->assertSame('Milhões de R$', $chart['options']['scales']['y']['title']['text'] ?? null);
+        $this->assertArrayNotHasKey('indexAxis', $chart['options']);
+    }
+
+    #[Test]
     public function doughnut_aceita_labels_e_valores(): void
     {
         $chart = ChartPayload::doughnut('Distribuição', ['OK', 'Pend.'], [80, 20]);

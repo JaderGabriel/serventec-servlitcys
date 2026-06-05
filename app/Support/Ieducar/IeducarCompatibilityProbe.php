@@ -141,8 +141,15 @@ final class IeducarCompatibilityProbe
             $routines[] = self::routineRow('nee_subnotificacao', $catalog['nee_subnotificacao'], $neeEval, $totalMat, $city, $filters);
         }
 
+        try {
+            $networkKpis = MatriculaChartQueries::redeVagasResumoKpis($db, $city, $filters);
+        } catch (\Throwable) {
+            $networkKpis = null;
+        }
+        $routines = ConsultoriaOperationalSignals::append($routines, $networkKpis, $totalMat, $city, $filters);
         $routines = self::sortRoutinesForConsultoria($routines);
         $fundingRef = DiscrepanciesFundingImpact::fundingReferencePayload($city, $filters);
+        $modules = DiscrepanciesModuleCatalog::buildPanel($routines, []);
 
         return [
             'city_id' => (int) $city->id,
@@ -154,6 +161,7 @@ final class IeducarCompatibilityProbe
             'funding_reference' => $fundingRef,
             'funding_metodologia' => DiscrepanciesFundingImpact::metodologiaResumo($city, $filters),
             'recurso_prova_schema' => RecursoProvaSchemaResolver::resolve($db, $city),
+            'modules' => $modules,
             'routines' => $routines,
         ];
     }
@@ -252,20 +260,30 @@ final class IeducarCompatibilityProbe
             return null;
         }
 
+        $id = (string) ($dimension['id'] ?? '');
         $occ = (int) ($dimension['occurrences_total'] ?? 0);
         $schools = (int) ($dimension['schools_count'] ?? 0);
         $pct = $dimension['pct_rede'] ?? null;
         $perda = (float) ($dimension['perda_estimada_anual'] ?? 0);
 
-        $parts = [
-            __(':occ ocorrência(s) em :esc escola(s)', [
-                'occ' => number_format($occ, 0, ',', '.'),
-                'esc' => number_format($schools, 0, ',', '.'),
-            ]),
-        ];
-
-        if ($pct !== null && $totalMat > 0) {
-            $parts[] = __(':pct% das matrículas do filtro', ['pct' => number_format((float) $pct, 1, ',', '.')]);
+        if ($id === 'escola_sem_geo') {
+            $parts = [
+                __(':esc escola(s) sem posição no mapa', ['esc' => number_format($schools, 0, ',', '.')]),
+            ];
+            if ($occ > 0) {
+                $parts[] = __(':mat matrícula(s) nessas unidades', ['mat' => number_format($occ, 0, ',', '.')]);
+            }
+            $parts[] = __('perda calculada por escola (alinhado a Unidades)');
+        } else {
+            $parts = [
+                __(':occ ocorrência(s) em :esc escola(s)', [
+                    'occ' => number_format($occ, 0, ',', '.'),
+                    'esc' => number_format($schools, 0, ',', '.'),
+                ]),
+            ];
+            if ($pct !== null && $totalMat > 0) {
+                $parts[] = __(':pct% das matrículas do filtro', ['pct' => number_format((float) $pct, 1, ',', '.')]);
+            }
         }
 
         if ($perda > 0) {

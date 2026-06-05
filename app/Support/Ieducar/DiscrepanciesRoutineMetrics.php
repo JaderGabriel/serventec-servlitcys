@@ -72,10 +72,26 @@ final class DiscrepanciesRoutineMetrics
             || $status === 'warning'
             || $status === 'danger';
 
-        $pct = $totalMat > 0 && $hasIssue ? round(100.0 * $occurrences / $totalMat, 1) : null;
-        $funding = $hasIssue
-            ? DiscrepanciesFundingImpact::estimate($checkId, $occurrences, $city, $filters)
+        $impactUnits = $checkId === 'escola_sem_geo' && $hasIssue
+            ? max(1, $totals['schools_count'])
+            : $occurrences;
+        $pct = $totalMat > 0 && $hasIssue && $checkId !== 'escola_sem_geo'
+            ? round(100.0 * $occurrences / $totalMat, 1)
             : null;
+        $funding = $hasIssue
+            ? DiscrepanciesFundingImpact::estimate($checkId, $impactUnits, $city, $filters)
+            : null;
+
+        $operationalNote = null;
+        if ($checkId === 'escola_sem_geo' && $hasIssue) {
+            $operationalNote = __(
+                ':escolas escola(s) sem posição no mapa (critério alinhado a Cadastro → Unidades). :mat matrícula(s) nessas unidades.',
+                [
+                    'escolas' => number_format($totals['schools_count'], 0, ',', '.'),
+                    'mat' => number_format($occurrences, 0, ',', '.'),
+                ]
+            );
+        }
 
         return [
             'id' => $checkId,
@@ -87,9 +103,15 @@ final class DiscrepanciesRoutineMetrics
             'analyzed' => $analyzed,
             'schools_count' => $totals['schools_count'],
             'occurrences_total' => $occurrences,
+            'impact_units' => $impactUnits,
+            'impact_unit_label' => $checkId === 'escola_sem_geo' ? __('escolas') : __('ocorrências'),
             'total' => $occurrences,
             'row_count' => $totals['schools_count'],
+            'escola_ids' => $totals['escola_ids'],
             'pct_rede' => $pct,
+            'operational_note' => $operationalNote,
+            'correction_tab' => $checkId === 'escola_sem_geo' ? 'school_units' : null,
+            'correction_label' => $checkId === 'escola_sem_geo' ? __('Abrir Unidades') : null,
             'ganho_potencial_anual' => (float) ($funding['ganho_potencial_anual'] ?? 0),
             'perda_estimada_anual' => (float) ($funding['perda_anual'] ?? 0),
             'funding_formula' => $funding['formula'] ?? null,

@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '4.1.9',
-        'release_tag' => '20260609-Theia',
-        'commit_short' => 'e473c26',
-        'commit_number' => 317,
-        'revision_date' => '2026-06-09',
+        'version' => '4.2.0',
+        'release_tag' => '20260610-Clio',
+        'commit_short' => '',
+        'commit_number' => 319,
+        'revision_date' => '2026-06-10',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

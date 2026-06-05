@@ -873,6 +873,8 @@ return [
             'distorcao_idade_serie' => 0.4,
             'rede_vagas_ociosas' => 0.25,
             'matricula_censo_vs_ieducar' => 1.6,
+            'fundeb_vaaf_fonte_censo' => 0.15,
+            'fundeb_ibge_nome_divergente' => 0.0,
             /** Abandono + remanejamento (aba Desempenho) — eixo VAAR-indicadores. */
             'fluxo_abandono_remanejamento' => (float) env('IEDUCAR_DISC_PESO_FLUXO_ABANDONO', 0.45),
             /** Registos agregados em falta_aluno (aba Frequência), escala por lote de faltas. */

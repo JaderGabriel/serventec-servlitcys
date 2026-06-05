@@ -11,6 +11,7 @@ use App\Support\Ieducar\ConsultoriaOperationalSignals;
 use App\Support\Ieducar\DiscrepanciesCheckCatalog;
 use App\Support\Ieducar\DiscrepanciesCheckRunner;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
+use App\Support\Ieducar\DiscrepanciesModuleCatalog;
 use App\Support\Ieducar\DiscrepanciesQueries;
 use App\Support\Ieducar\DiscrepanciesRoutineMetrics;
 use App\Support\Ieducar\DiscrepanciesRoutineStatus;
@@ -165,6 +166,7 @@ class DiscrepanciesRepository
             'funding_pillars' => [],
             'active_check_ids' => [],
             'dimensions' => [],
+            'modules' => [],
             'checks' => [],
             'notes' => [],
             'public_data_sources' => PublicDataSourcesCatalog::build($city, 'financeiro'),
@@ -341,6 +343,7 @@ class DiscrepanciesRepository
                         ),
                         'active_check_ids' => $activeFromDimensions,
                         'dimensions' => $dimensions,
+                        'modules' => DiscrepanciesModuleCatalog::buildPanel($dimensions, []),
                         'checks' => [],
                         'notes' => $notes,
                         'public_data_sources' => PublicDataSourcesCatalog::build($city, 'financeiro'),
@@ -348,9 +351,11 @@ class DiscrepanciesRepository
                     ];
                 }
 
+                $modules = DiscrepanciesModuleCatalog::buildPanel($dimensions, $checks);
+
                 return [
                     'intro' => __(
-                        'Rotinas automáticas sobre a base i-Educar (ano, escola, curso e turno). Cada bloco explica o problema, o impacto em Censo/VAAR/FUNDEB, localiza por escola e compara situação atual com o cenário após correção. Valores financeiros são estimativas indicativas (VAAF de referência × peso por tipo).'
+                        'Painel unificado por módulo de cadastro (território, escola, matrícula, inclusão, Censo). Cada rotina indica pendências ou falta de dados, impacto financeiro indicativo e onde corrigir no i-Educar ou nas abas relacionadas (ex.: Unidades para coordenadas). Valores: VAAF de referência × peso por tipo.'
                     ),
                     'footnote' => __(
                         'Correções assumem ajuste no i-Educar antes da exportação ao Censo. VAAR/FUNDEB oficiais: Simec/MEC. Heurística AEE: IEDUCAR_INCLUSION_AEE_KEYWORDS. VAAF referência: IEDUCAR_DISC_VAA_REFERENCIA.'
@@ -378,6 +383,7 @@ class DiscrepanciesRepository
                     ),
                     'active_check_ids' => array_values(array_map(static fn (array $c): string => (string) ($c['id'] ?? ''), $checks)),
                     'dimensions' => $dimensions,
+                    'modules' => $modules,
                     'checks' => $checks,
                     'notes' => $notes,
                     'public_data_sources' => PublicDataSourcesCatalog::build($city, 'financeiro'),
@@ -512,9 +518,11 @@ class DiscrepanciesRepository
     ): array {
         $id = (string) ($meta['id'] ?? '');
         $total = array_sum(array_column($schoolRows, 'total'));
+        $schoolsCount = count($schoolRows);
+        $impactUnits = $id === 'escola_sem_geo' ? max(1, $schoolsCount) : $total;
         $corrigivel = $total;
-        $pct = $totalMat > 0 ? round(100.0 * $total / $totalMat, 1) : null;
-        $funding = DiscrepanciesFundingImpact::estimate($id, $total, $city, $filters);
+        $pct = $totalMat > 0 && $id !== 'escola_sem_geo' ? round(100.0 * $total / $totalMat, 1) : null;
+        $funding = DiscrepanciesFundingImpact::estimate($id, $impactUnits, $city, $filters);
 
         $top = array_slice($schoolRows, 0, 6);
         $labelsEsc = array_map(
@@ -568,12 +576,14 @@ class DiscrepanciesRepository
             default => 'neutral',
         };
 
-        $unitGain = $total > 0 ? ((float) $funding['ganho_potencial_anual']) / $total : 0.0;
+        $gainDivisor = $id === 'escola_sem_geo' ? max(1, $schoolsCount) : max(1, $total);
+        $unitGain = ((float) $funding['ganho_potencial_anual']) / $gainDivisor;
         $enrichedRows = [];
         foreach ($schoolRows as $row) {
             $cnt = (int) ($row['total'] ?? 0);
+            $rowGain = $id === 'escola_sem_geo' ? $unitGain : round($unitGain * $cnt, 2);
             $enrichedRows[] = array_merge($row, [
-                'ganho_potencial_anual' => round($unitGain * $cnt, 2),
+                'ganho_potencial_anual' => round($rowGain, 2),
             ]);
         }
 
@@ -589,6 +599,7 @@ class DiscrepanciesRepository
             'consultoria_prioridade' => $severity === 'danger' ? __('Erro crítico') : __('Atenção'),
             'vaar_refs' => is_array($meta['vaar_refs'] ?? null) ? $meta['vaar_refs'] : [],
             'total' => $total,
+            'schools_count' => $schoolsCount,
             'corrigivel' => $corrigivel,
             'pct_rede' => $pct,
             'perda_estimada_anual' => $funding['perda_anual'],

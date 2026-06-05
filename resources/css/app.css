@@ -344,6 +344,91 @@
         @apply border-amber-300/80 dark:border-amber-700;
     }
 
+    /* Discrepâncias — painel por módulo */
+    .disc-mod {
+        @apply serv-panel overflow-hidden flex flex-col;
+    }
+
+    .disc-mod--danger {
+        @apply border-l-4 border-l-rose-500 ring-1 ring-rose-200/60 dark:ring-rose-900/50;
+    }
+
+    .disc-mod--warning {
+        @apply border-l-4 border-l-amber-500 ring-1 ring-amber-200/50 dark:ring-amber-900/40;
+    }
+
+    .disc-mod--ok {
+        @apply border-l-4 border-l-emerald-500/80;
+    }
+
+    .disc-mod--nodata {
+        @apply border-l-4 border-l-sky-400/90;
+    }
+
+    .disc-mod--unavailable {
+        @apply border-l-4 border-l-slate-300 dark:border-l-slate-600 opacity-95;
+    }
+
+    .disc-mod__head {
+        @apply flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 px-4 py-3 border-b border-slate-200/80 dark:border-slate-700/70 bg-slate-50/50 dark:bg-slate-900/30;
+    }
+
+    .disc-mod__eyebrow {
+        @apply text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    }
+
+    .disc-mod__title {
+        @apply text-sm font-semibold font-display text-serv-navy dark:text-slate-100 mt-0.5;
+    }
+
+    .disc-mod__subtitle {
+        @apply text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed;
+    }
+
+    .disc-mod__metrics {
+        @apply text-xs space-y-0.5;
+    }
+
+    .disc-mod__perda {
+        @apply font-bold text-orange-700 dark:text-orange-300;
+    }
+
+    .disc-mod__ganho {
+        @apply text-emerald-700 dark:text-emerald-300;
+    }
+
+    .disc-mod__count {
+        @apply text-slate-500 dark:text-slate-400 text-[11px];
+    }
+
+    .disc-mod__routines {
+        @apply divide-y divide-slate-100 dark:divide-slate-800;
+    }
+
+    .disc-mod__routine-link {
+        @apply flex items-start gap-2 px-4 py-2.5 text-xs hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition;
+    }
+
+    .disc-mod__routine-icon {
+        @apply shrink-0 font-bold w-4 text-center;
+    }
+
+    .disc-mod__routine-title {
+        @apply block font-medium text-slate-800 dark:text-slate-200;
+    }
+
+    .disc-mod__routine-meta {
+        @apply block text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 tabular-nums;
+    }
+
+    .disc-mod__foot {
+        @apply px-4 py-2.5 border-t border-slate-200/70 dark:border-slate-700/60 bg-white/60 dark:bg-slate-900/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2;
+    }
+
+    .disc-mod__hint {
+        @apply text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed;
+    }
+
     .serv-btn-primary {
         @apply inline-flex items-center justify-center rounded-lg border border-teal-600/90 bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm
             hover:bg-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 dark:border-teal-500 dark:bg-teal-600 dark:hover:bg-teal-500 dark:focus:ring-offset-slate-900 transition;

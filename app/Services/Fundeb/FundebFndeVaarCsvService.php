@@ -8,21 +8,12 @@ use App\Support\Fundeb\FundebIbgeMatcher;
 use Illuminate\Support\Facades\Http;
 
 /**
- * CSV «VAAT, VAAT-MIN e complementação-VAAT por ente federado» (Portaria MEC/MF).
+ * CSV «Redes beneficiadas, coeficiente de distribuição e compl. VAAR prevista» (Portaria MEC/MF).
  */
-class FundebFndeVaatCsvService
+class FundebFndeVaarCsvService
 {
     /**
-     * @return ?array{
-     *   ibge: string,
-     *   vaat: float,
-     *   vaat_antes: ?float,
-     *   vaat_com_compl: ?float,
-     *   vaat_complementacao: ?float,
-     *   iei_pct: ?string,
-     *   csv_url: string,
-     *   ano_publicacao: int
-     * }
+     * @return ?array{ibge: string, coeficiente: ?float, complementacao_vaar: ?float, csv_url: string, ano_publicacao: int}
      */
     public function rowForIbge(string $ibge, int $ano): ?array
     {
@@ -49,12 +40,12 @@ class FundebFndeVaatCsvService
         $cachePath = $this->yearCachePath($publicationYear);
         if (is_readable($cachePath)) {
             $decoded = json_decode((string) file_get_contents($cachePath), true);
-            if (is_array($decoded) && $this->cachedIndexHasVaatAntes($decoded)) {
+            if (is_array($decoded)) {
                 return $decoded;
             }
         }
 
-        $url = $this->discoverCsvUrl($publicationYear);
+        $url = FundebFndePortariaCatalog::vaarCsvUrl($publicationYear);
         if ($url === null) {
             return [];
         }
@@ -69,11 +60,6 @@ class FundebFndeVaatCsvService
         }
 
         return $index;
-    }
-
-    public function discoverCsvUrl(int $publicationYear): ?string
-    {
-        return FundebFndePortariaCatalog::vaatCsvUrl($publicationYear);
     }
 
     /**
@@ -101,11 +87,8 @@ class FundebFndeVaatCsvService
         $rows = FundebFndeCsvTableReader::rowsFromBody($body);
         $matchers = [
             'ibge' => ['codigo ibge', 'ibge'],
-            'entidade' => ['ente federado', 'entidade'],
-            'vaat_antes' => ['vaat anterior', 'vaat antes'],
-            'vaat' => ['vaat com a', 'vaat com complementacao', 'vaat com a complementacao'],
-            'vaat_compl' => ['complementacao da uniao-vaat', 'complementacao vaat'],
-            'iei' => ['iei', 'educacao infantil'],
+            'coef' => ['coeficiente', 'coef de distribuicao', 'coeficiente de distribuicao'],
+            'vaar_compl' => ['complementacao vaar', 'compl vaar', 'complementacao da uniao-vaar'],
         ];
         $table = FundebFndeCsvTableReader::locateTable($rows, $matchers);
         if ($table['data_start'] < 0) {
@@ -114,7 +97,7 @@ class FundebFndeVaatCsvService
 
         $columns = $table['columns'];
         if (($columns['ibge'] ?? -1) < 0) {
-            $columns = FundebFndeCsvTableReader::inferVaatColumns($rows[$table['data_start']]);
+            $columns = FundebFndeCsvTableReader::inferVaarColumns($rows[$table['data_start']]);
         }
 
         $index = [];
@@ -130,20 +113,10 @@ class FundebFndeVaatCsvService
                 continue;
             }
 
-            $vaatAntes = $this->parseMoney($row[$columns['vaat_antes'] ?? 3] ?? null);
-            $vaatComCompl = $this->parseMoney($row[$columns['vaat'] ?? 4] ?? null);
-            $vaatMunicipal = $vaatAntes ?? $vaatComCompl;
-            if ($vaatMunicipal === null || $vaatMunicipal <= 0) {
-                continue;
-            }
-
             $index[$ibge] = [
                 'ibge' => $ibge,
-                'vaat' => $vaatMunicipal,
-                'vaat_antes' => $vaatAntes,
-                'vaat_com_compl' => $vaatComCompl,
-                'vaat_complementacao' => $this->parseMoney($row[$columns['vaat_compl'] ?? 5] ?? null),
-                'iei_pct' => $this->parseIei($row[$columns['iei'] ?? 6] ?? null),
+                'coeficiente' => $this->parseCoef($row[$columns['coef'] ?? -1] ?? null),
+                'complementacao_vaar' => $this->parseMoney($row[$columns['vaar_compl'] ?? -1] ?? null),
                 'csv_url' => $csvUrl,
                 'ano_publicacao' => $publicationYear,
             ];
@@ -158,7 +131,7 @@ class FundebFndeVaatCsvService
     private function candidatePublicationYears(int $requestedAno): array
     {
         $years = [$requestedAno];
-        if (FundebFndePortariaCatalog::vaatCsvUrl($requestedAno - 1) !== null) {
+        if (FundebFndePortariaCatalog::vaarCsvUrl($requestedAno - 1) !== null) {
             $years[] = $requestedAno - 1;
         }
 
@@ -167,24 +140,7 @@ class FundebFndeVaatCsvService
 
     private function yearCachePath(int $year): string
     {
-        return storage_path('app/fundeb/fnde-vaat/'.$year.'.json');
-    }
-
-    /**
-     * @param  array<string, array<string, mixed>>  $index
-     */
-    private function cachedIndexHasVaatAntes(array $index): bool
-    {
-        foreach ($index as $row) {
-            if (! is_array($row)) {
-                return false;
-            }
-            if (! array_key_exists('vaat_antes', $row)) {
-                return false;
-            }
-        }
-
-        return $index !== [];
+        return storage_path('app/fundeb/fnde-vaar/'.$year.'.json');
     }
 
     private function parseMoney(mixed $raw): ?float
@@ -210,7 +166,7 @@ class FundebFndeVaatCsvService
         return (float) $s;
     }
 
-    private function parseIei(mixed $raw): ?string
+    private function parseCoef(mixed $raw): ?float
     {
         if ($raw === null) {
             return null;
@@ -221,6 +177,12 @@ class FundebFndeVaatCsvService
             return null;
         }
 
-        return $s;
+        $s = str_replace(['%', ' '], '', $s);
+        $s = str_replace(',', '.', $s);
+        if ($s === '' || ! is_numeric($s)) {
+            return null;
+        }
+
+        return (float) $s;
     }
 }

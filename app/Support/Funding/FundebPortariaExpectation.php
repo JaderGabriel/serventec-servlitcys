@@ -117,7 +117,7 @@ final class FundebPortariaExpectation
         $lines = [];
         foreach ([
             'complementacao_vaaf' => __('Complementação VAAF (portaria)'),
-            'vaat' => __('Complementação VAAT (portaria)'),
+            'complementacao_vaat' => __('Complementação VAAT (portaria)'),
             'complementacao_vaar' => __('Complementação VAAR (portaria)'),
         ] as $key => $label) {
             $value = self::moneyField($reference, $key);
@@ -173,6 +173,7 @@ final class FundebPortariaExpectation
                 'vaat' => $reference->vaat !== null ? (float) $reference->vaat : null,
                 'complementacao_vaar' => $reference->complementacao_vaar !== null ? (float) $reference->complementacao_vaar : null,
                 'complementacao_vaaf' => $reference->complementacao_vaaf !== null ? (float) $reference->complementacao_vaaf : null,
+                'complementacao_vaat' => $reference->complementacao_vaat !== null ? (float) $reference->complementacao_vaat : null,
                 'receita_total' => $reference->receita_total !== null ? (float) $reference->receita_total : null,
                 'url_portaria' => $reference->url_portaria,
                 'portaria_publication_year' => isset($meta['ano_publicacao']) ? (int) $meta['ano_publicacao'] : null,
@@ -191,6 +192,7 @@ final class FundebPortariaExpectation
             'vaat' => isset($reference['vaat']) ? (float) $reference['vaat'] : null,
             'complementacao_vaar' => isset($reference['complementacao_vaar']) ? (float) $reference['complementacao_vaar'] : null,
             'complementacao_vaaf' => isset($reference['complementacao_vaaf']) ? (float) $reference['complementacao_vaaf'] : null,
+            'complementacao_vaat' => isset($reference['complementacao_vaat']) ? (float) $reference['complementacao_vaat'] : null,
             'receita_total' => isset($reference['receita_total']) ? (float) $reference['receita_total'] : null,
             'url_portaria' => $reference['url_portaria'] ?? null,
             'portaria_publication_year' => $reference['portaria_publication_year'] ?? ($meta['ano_publicacao'] ?? null),

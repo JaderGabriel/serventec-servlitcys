@@ -83,4 +83,30 @@ final class DiscrepanciesRoutineMetricsTest extends TestCase
         $this->assertSame(4.0, $dim['pct_rede']);
         $this->assertTrue($dim['has_issue']);
     }
+
+    public function test_dimension_geo_uses_school_count_for_funding_units(): void
+    {
+        $city = new City(['id' => 1, 'name' => 'Teste', 'ibge_municipio' => '2910800']);
+        $filters = new IeducarFilterState(ano_letivo: '2024', escola_id: null, curso_id: null, turno_id: null);
+        $meta = [
+            'id' => 'escola_sem_geo',
+            'title' => 'Sem geo',
+            'severity' => 'warning',
+        ];
+        $eval = [
+            'availability' => 'available',
+            'has_issue' => true,
+            'rows' => [
+                ['escola_id' => '1', 'escola' => 'A', 'total' => 40],
+                ['escola_id' => '2', 'escola' => 'B', 'total' => 25],
+            ],
+        ];
+
+        $dim = DiscrepanciesRoutineMetrics::dimensionFromEval('escola_sem_geo', $meta, $eval, 100, $city, $filters);
+
+        $this->assertSame(65, $dim['occurrences_total']);
+        $this->assertSame(2, $dim['impact_units']);
+        $this->assertSame('school_units', $dim['correction_tab']);
+        $this->assertNotNull($dim['operational_note']);
+    }
 }

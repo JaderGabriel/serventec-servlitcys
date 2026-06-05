@@ -46,7 +46,7 @@ class FundebMunicipioReferenceRepository
     }
 
     /**
-     * @param  array{vaaf: float, vaat?: ?float, complementacao_vaar?: ?float, fonte?: string, notas?: ?string}  $data
+     * @param  array{vaaf: float, vaat?: ?float, complementacao_vaar?: ?float, complementacao_vaat?: ?float, fonte?: string, notas?: ?string}  $data
      */
     public function upsert(City $city, int $ano, array $data): FundebMunicipioReference
     {
@@ -66,6 +66,7 @@ class FundebMunicipioReferenceRepository
             'tipo_valor' => isset($data['tipo_valor']) ? trim((string) $data['tipo_valor']) : null,
             'receita_total' => isset($data['receita_total']) ? (float) $data['receita_total'] : null,
             'complementacao_vaaf' => isset($data['complementacao_vaaf']) ? (float) $data['complementacao_vaaf'] : null,
+            'complementacao_vaat' => isset($data['complementacao_vaat']) ? (float) $data['complementacao_vaat'] : null,
             'matriculas_base' => isset($data['matriculas_base']) ? (int) $data['matriculas_base'] : null,
             'matriculas_fonte' => isset($data['matriculas_fonte']) ? trim((string) $data['matriculas_fonte']) : null,
             'url_portaria' => isset($data['url_portaria']) ? trim((string) $data['url_portaria']) : null,

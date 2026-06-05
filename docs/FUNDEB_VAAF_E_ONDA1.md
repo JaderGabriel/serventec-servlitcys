@@ -133,7 +133,7 @@ php artisan fundeb:import-api 0 --all --ano=2024 --nearest
 
 **Matrículas:** `FundebMatriculasByYearService` consulta i-Educar (`MatriculaChartQueries`) e, se zero, Censo INEP (`inep_censo_municipio_matriculas`) quando `IEDUCAR_FUNDEB_VAAF_CENSO_FALLBACK=true` (padrão). Lookback i-Educar na importação: ano pedido e três anteriores. Lookback Censo: até `IEDUCAR_FUNDEB_CENSO_MATRICULAS_LOOKBACK` anos anteriores ao exercício (microdados INEP costuma publicar `nu_ano_censo` defasado).
 
-**Metadados gravados na importação:** `receita_total`, `complementacao_vaaf`, `complementacao_vaat`, `matriculas_base`, `matriculas_fonte`, `url_portaria`, `tipo_valor` (`estimativa` \| `oficial` \| `placeholder`).
+**Metadados gravados na importação:** `receita_total`, `complementacao_vaaf`, `complementacao_vaat`, `complementacao_vaar`, `matriculas_base`, `matriculas_fonte`, `url_portaria`, `tipo_valor` (`estimativa` \| `oficial` \| `placeholder`). VAAT municipal na coluna `vaat` = valor **antes** da complementação (`vaat_antes`); IEI e `vaat_com_compl` em `meta`.
 
 ---
 
@@ -158,7 +158,9 @@ php artisan fundeb:import-api 0 --all --from=2025 --to=2026 --nearest
 - Duração: vários minutos (uma conexão i-Educar por município/ano).
 - Alternativa UI: `/admin/ieducar-compatibility` → FUNDEB → importar todos.
 
-**Não exige** `npm run build` nem migração de BD.
+**Migração 4.2.0:** `complementacao_vaat` em `fundeb_municipio_references` — executar `php artisan migrate --force` antes do reimport.
+
+**Não exige** `npm run build` (excepto se alterou assets CSS/JS no deploy).
 
 ### 6.2 Verificação pós-import
 

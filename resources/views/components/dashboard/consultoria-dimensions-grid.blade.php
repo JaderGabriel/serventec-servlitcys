@@ -51,6 +51,15 @@
                         @if (filled($dim['operational_note'] ?? null))
                             <p class="mt-0.5 text-[11px] leading-snug opacity-90">{{ $dim['operational_note'] }}</p>
                         @endif
+                        @if (filled($dim['correction_tab'] ?? null))
+                            <p class="mt-1">
+                                <x-consultoria-tab-link
+                                    :tab="$dim['correction_tab']"
+                                    :label="$dim['correction_label'] ?? __('Onde corrigir')"
+                                    class="text-[11px] font-semibold"
+                                />
+                            </p>
+                        @endif
                         @if (is_array($dim['funding_explicacao'] ?? null) && (($dim['perda_estimada_anual'] ?? 0) > 0 || ($dim['ganho_potencial_anual'] ?? 0) > 0))
                             <div class="mt-1.5">
                                 <x-dashboard.consultoria-funding-explanation :explicacao="$dim['funding_explicacao']" compact />

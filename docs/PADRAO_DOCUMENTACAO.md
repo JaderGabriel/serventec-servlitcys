@@ -1,6 +1,6 @@
 # Padrão editorial — documentação servlitcys
 
-**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+**Versão do produto:** 4.2.0 · **Última revisão:** 2026-06-10
 
 > **Índice:** [README.md](README.md) · **Estado:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 

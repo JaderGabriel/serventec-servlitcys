@@ -16,6 +16,12 @@ return [
     'vigente_year' => (int) env('RX_VIGENTE_YEAR', 0) ?: (int) date('Y'),
 
     /**
+     * Exercício FUNDEB para o gráfico de complementações no RX (0 = mesmo que vigente_year).
+     * Dados consolidados da portaria — distintos do cadastro em andamento no painel.
+     */
+    'fundeb_portaria_exercicio' => (int) env('RX_FUNDEB_PORTARIA_EXERCICIO', 0),
+
+    /**
      * Prazos operacionais do Censo Escolar por ano de referência.
      * collect_end: fim da janela de preenchimento/exportação no i-Educar.
      * validate_end: data limite indicativa de validação/revisão (opcional).

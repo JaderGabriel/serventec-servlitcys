@@ -154,6 +154,15 @@ final class DiscrepanciesFundingImpact
             'vaa_ano' => $calc['ano'] ?? $ref['ano'],
             'vaat' => $ref['vaat'],
             'vaat_label' => $ref['vaat'] !== null ? self::formatBrl($ref['vaat']) : null,
+            'vaat_com_compl' => $ref['vaat_com_compl'] ?? null,
+            'vaat_com_compl_label' => isset($ref['vaat_com_compl']) && is_numeric($ref['vaat_com_compl'])
+                ? self::formatBrl((float) $ref['vaat_com_compl'])
+                : null,
+            'iei_pct' => $ref['iei_pct'] ?? null,
+            'complementacao_vaat' => $ref['complementacao_vaat'] ?? null,
+            'complementacao_vaat_label' => isset($ref['complementacao_vaat']) && is_numeric($ref['complementacao_vaat'])
+                ? self::formatBrl((float) $ref['complementacao_vaat'])
+                : null,
             'complementacao_vaar' => $ref['complementacao_vaar'],
             'vaaf_comparacao' => FundebReferenceDisplay::vaafComparacao($ref),
             'divergencia' => is_array($ref['divergencia'] ?? null) ? $ref['divergencia'] : null,

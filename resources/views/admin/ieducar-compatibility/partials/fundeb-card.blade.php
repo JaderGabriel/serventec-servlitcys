@@ -205,7 +205,9 @@
                             <th class="px-3 py-2">{{ __('Natureza') }}</th>
                             <th class="px-3 py-2 text-right">{{ __('VAAF') }}</th>
                             <th class="px-3 py-2 text-right">{{ __('VAAT') }}</th>
+                            <th class="px-3 py-2 text-right">{{ __('Compl. VAAT') }}</th>
                             <th class="px-3 py-2 text-right">{{ __('Compl. VAAR') }}</th>
+                            <th class="px-3 py-2">{{ __('Portaria') }}</th>
                             <th class="px-3 py-2">{{ __('Fonte') }}</th>
                             <th class="px-3 py-2">{{ __('Importado') }}</th>
                         </tr>
@@ -228,8 +230,25 @@
                                     </span>
                                 </td>
                                 <td class="px-3 py-2 text-right tabular-nums">{{ $fmtBrl($ref['vaaf']) }}</td>
-                                <td class="px-3 py-2 text-right tabular-nums">{{ isset($ref['vaat']) ? $fmtBrl($ref['vaat']) : '—' }}</td>
+                                <td class="px-3 py-2 text-right tabular-nums">
+                                    {{ isset($ref['vaat']) ? $fmtBrl($ref['vaat']) : '—' }}
+                                    @if (! empty($ref['vaat_com_compl']))
+                                        <span class="block text-[10px] text-slate-500">{{ __('c/ compl.') }} {{ $fmtBrl($ref['vaat_com_compl']) }}</span>
+                                    @endif
+                                    @if (! empty($ref['iei_pct']))
+                                        <span class="block text-[10px] text-slate-500">IEI {{ $ref['iei_pct'] }}</span>
+                                    @endif
+                                </td>
+                                <td class="px-3 py-2 text-right tabular-nums">{{ isset($ref['complementacao_vaat']) ? $fmtBrl($ref['complementacao_vaat']) : '—' }}</td>
                                 <td class="px-3 py-2 text-right tabular-nums">{{ isset($ref['complementacao_vaar']) ? $fmtBrl($ref['complementacao_vaar']) : '—' }}</td>
+                                <td class="px-3 py-2 text-xs">
+                                    @php $elig = is_array($ref['eligibility'] ?? null) ? $ref['eligibility'] : []; @endphp
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium {{ ($elig['vaaf'] ?? false) ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }}">VAAF</span>
+                                        <span class="inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium {{ ($elig['vaat'] ?? false) ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }}">VAAT</span>
+                                        <span class="inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium {{ ($elig['vaar'] ?? false) ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }}">VAAR</span>
+                                    </div>
+                                </td>
                                 <td class="px-3 py-2 text-xs">{{ $ref['fonte'] ?? '—' }}</td>
                                 <td class="px-3 py-2 text-xs text-gray-500">{{ $ref['imported_at'] ?? '—' }}</td>
                             </tr>

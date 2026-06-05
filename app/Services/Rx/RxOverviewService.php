@@ -8,6 +8,7 @@ use App\Support\Pulse\PulseOperationRecorder;
 use App\Support\Rx\RxCensoDeadline;
 use App\Support\Rx\RxCityMetricsCollector;
 use App\Support\Rx\RxColumnHelp;
+use App\Support\Rx\RxFundebPortariaChart;
 
 /**
  * Painel RX: todas as cidades visíveis ao utilizador, ano vigente vs anterior.
@@ -79,6 +80,7 @@ final class RxOverviewService
 
         $totals = $this->aggregateTotals($rows);
         $semaphoreSummary = $this->aggregateSemaphore($rows);
+        $fundebPortaria = RxFundebPortariaChart::buildForCities($cities, $vigenteYear);
 
         return [
             'vigente_ano' => $vigenteYear,
@@ -96,6 +98,7 @@ final class RxOverviewService
             'column_help' => RxColumnHelp::columns($vigenteYear, $anteriorYear),
             'meta_pct_per_salto' => (float) config('rx.meta_pct_per_salto', 5),
             'scope_label' => $this->scopeLabel($user),
+            'fundeb_portaria' => $fundebPortaria,
         ];
     }
 

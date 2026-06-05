@@ -329,6 +329,7 @@ final class AnalyticsEmptyPayloads
             'chart_financeiro' => null,
             'funding_pillars' => [],
             'dimensions' => [],
+            'modules' => [],
             'active_check_ids' => [],
             'checks' => [],
             'notes' => [],

@@ -110,6 +110,18 @@ final class ChartPayload
     }
 
     /**
+     * Barras verticais empilhadas (categorias no eixo X).
+     *
+     * @param  list<string|int|float>  $labels
+     * @param  list<array{label: string, data: list<int|float>}>  $series
+     * @return array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options: array<string, mixed>}
+     */
+    public static function barStacked(string $title, string $valueAxisLabel, array $labels, array $series): array
+    {
+        return self::barVerticalMultiSeries($title, $valueAxisLabel, $labels, $series, true, 48);
+    }
+
+    /**
      * Barras horizontais agrupadas (multi-barras lado a lado por categoria no eixo Y).
      *
      * @param  list<string|int|float>  $labels
@@ -128,29 +140,7 @@ final class ChartPayload
      */
     private static function barHorizontalMultiSeries(string $title, string $valueAxisLabel, array $labels, array $series, bool $stacked, int $maxBarThickness): array
     {
-        $labels = array_map(static fn ($l) => (string) $l, $labels);
-        $n = count($labels);
-        $colors = self::palette();
-        $datasets = [];
-        foreach (array_values($series) as $i => $s) {
-            $c = $colors[$i % max(1, count($colors))];
-            $raw = array_values(array_map(static fn ($v) => is_numeric($v) ? (float) $v : 0.0, $s['data'] ?? []));
-            if (count($raw) < $n) {
-                $raw = array_pad($raw, $n, 0.0);
-            } elseif (count($raw) > $n) {
-                $raw = array_slice($raw, 0, $n);
-            }
-            $datasets[] = [
-                'label' => (string) ($s['label'] ?? ''),
-                'data' => $raw,
-                'backgroundColor' => $c,
-                'borderColor' => $c,
-                'borderWidth' => 1,
-                'borderRadius' => 4,
-                'borderSkipped' => false,
-                'maxBarThickness' => $maxBarThickness,
-            ];
-        }
+        [$labels, $datasets] = self::buildMultiSeriesDatasets($labels, $series, $maxBarThickness);
 
         $options = [
             'indexAxis' => 'y',
@@ -184,6 +174,82 @@ final class ChartPayload
             'datasets' => $datasets,
             'options' => $options,
         ];
+    }
+
+    /**
+     * @param  list<string|int|float>  $labels
+     * @param  list<array{label: string, data: list<int|float>}>  $series
+     * @return array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options: array<string, mixed>}
+     */
+    private static function barVerticalMultiSeries(string $title, string $valueAxisLabel, array $labels, array $series, bool $stacked, int $maxBarThickness): array
+    {
+        [$labels, $datasets] = self::buildMultiSeriesDatasets($labels, $series, $maxBarThickness);
+
+        $options = [
+            'scales' => [
+                'x' => [
+                    'stacked' => $stacked,
+                ],
+                'y' => [
+                    'stacked' => $stacked,
+                    'beginAtZero' => true,
+                    'title' => [
+                        'display' => true,
+                        'text' => $valueAxisLabel,
+                    ],
+                ],
+            ],
+        ];
+        if (! $stacked) {
+            $options['datasets'] = [
+                'bar' => [
+                    'categoryPercentage' => 0.72,
+                    'barPercentage' => 0.72,
+                ],
+            ];
+        }
+
+        return [
+            'type' => 'bar',
+            'title' => $title,
+            'labels' => $labels,
+            'datasets' => $datasets,
+            'options' => $options,
+        ];
+    }
+
+    /**
+     * @param  list<string|int|float>  $labels
+     * @param  list<array{label: string, data: list<int|float>}>  $series
+     * @return array{0: list<string>, 1: list<array<string, mixed>>}
+     */
+    private static function buildMultiSeriesDatasets(array $labels, array $series, int $maxBarThickness): array
+    {
+        $labels = array_map(static fn ($l) => (string) $l, $labels);
+        $n = count($labels);
+        $colors = self::palette();
+        $datasets = [];
+        foreach (array_values($series) as $i => $s) {
+            $c = $colors[$i % max(1, count($colors))];
+            $raw = array_values(array_map(static fn ($v) => is_numeric($v) ? (float) $v : 0.0, $s['data'] ?? []));
+            if (count($raw) < $n) {
+                $raw = array_pad($raw, $n, 0.0);
+            } elseif (count($raw) > $n) {
+                $raw = array_slice($raw, 0, $n);
+            }
+            $datasets[] = [
+                'label' => (string) ($s['label'] ?? ''),
+                'data' => $raw,
+                'backgroundColor' => $c,
+                'borderColor' => $c,
+                'borderWidth' => 1,
+                'borderRadius' => 4,
+                'borderSkipped' => false,
+                'maxBarThickness' => $maxBarThickness,
+            ];
+        }
+
+        return [$labels, $datasets];
     }
 
     /**

@@ -7,6 +7,7 @@
     $summary = is_array($d['summary'] ?? null) ? $d['summary'] : [];
     $checks = is_array($d['checks'] ?? null) ? $d['checks'] : [];
     $dimensions = is_array($d['dimensions'] ?? null) ? $d['dimensions'] : [];
+    $modules = is_array($d['modules'] ?? null) ? $d['modules'] : [];
     $errosCriticos = array_values(array_filter($checks, static fn (array $c): bool => ! empty($c['is_erro'])));
     $demaisChecks = array_values(array_filter($checks, static fn (array $c): bool => empty($c['is_erro'])));
     $chartResumo = is_array($d['chart_resumo'] ?? null) ? $d['chart_resumo'] : null;
@@ -60,13 +61,41 @@
     $publicSources = is_array($d['public_data_sources'] ?? null) ? $d['public_data_sources'] : [];
     $hasPublicSources = count($publicSources['categories'] ?? []) > 0;
     $exportParams = is_array($d['export_params'] ?? null) ? $d['export_params'] : request()->only(['city_id', 'ano_letivo', 'escola_id', 'curso_id', 'turno_id']);
-    $flowSteps = ConsultoriaFlow::numberedSteps([
-        ['label' => __('VAAF e previsão'), 'anchor' => 'disc-vaaf', 'visible' => $vaafComparacao !== null],
-        ['label' => __('Prioridades'), 'anchor' => 'disc-prioridades'],
-        ['label' => __('Referências'), 'anchor' => 'disc-referencias', 'visible' => count($pillars) > 0],
-        ['label' => __('Fontes públicas'), 'anchor' => 'disc-fontes-publicas', 'visible' => $hasPublicSources],
-        ['label' => __('Mapa de rotinas'), 'anchor' => 'disc-mapa', 'visible' => count($dimensions) > 0],
-        ['label' => __('Detalhe por escola'), 'anchor' => 'disc-detalhe', 'visible' => count($checks) > 0],
+    $checksByModule = [];
+    foreach ($modules as $mod) {
+        foreach ($mod['routines'] ?? [] as $routine) {
+            $rid = (string) ($routine['id'] ?? '');
+            if ($rid === '') {
+                continue;
+            }
+            foreach ($checks as $check) {
+                if ((string) ($check['id'] ?? '') === $rid) {
+                    $checksByModule[(string) ($mod['id'] ?? 'outros')][] = $check;
+                    break;
+                }
+            }
+        }
+    }
+    foreach ($checks as $check) {
+        $cid = (string) ($check['id'] ?? '');
+        $placed = false;
+        foreach ($checksByModule as $list) {
+            foreach ($list as $c) {
+                if ((string) ($c['id'] ?? '') === $cid) {
+                    $placed = true;
+                    break 2;
+                }
+            }
+        }
+        if (! $placed) {
+            $checksByModule['outros'][] = $check;
+        }
+    }
+
+     $flowSteps = ConsultoriaFlow::numberedSteps([
+        ['label' => __('Painel por módulo'), 'anchor' => 'disc-modulos', 'visible' => count($modules) > 0],
+        ['label' => __('Detalhe e correção'), 'anchor' => 'disc-detalhe', 'visible' => count($checks) > 0],
+        ['label' => __('VAAF de referência'), 'anchor' => 'disc-vaaf', 'visible' => $vaafComparacao !== null],
     ]);
     $discStep = ConsultoriaFlow::stepMap($flowSteps);
 @endphp
@@ -158,24 +187,24 @@
             </div>
         @endif
 
-        <x-dashboard.consultoria-section
-            :step="$discStep['disc-prioridades'] ?? null"
-            anchor="disc-prioridades"
-            :title="__('Prioridades e impacto')"
-            :subtitle="__('Resumo financeiro indicativo e rotinas com maior gravidade.')"
-        >
-            @if ($fundingMet !== null)
-                <x-dashboard.consultoria-funding-explanation
-                    :metodologia="$fundingMet"
-                    :resumo="$fundingResumo"
-                    class="mt-2"
-                />
-            @endif
+        @if (count($modules) > 0)
+            <x-dashboard.consultoria-section
+                :step="$discStep['disc-modulos'] ?? null"
+                anchor="disc-modulos"
+                :title="__('Painel por módulo de cadastro')"
+                :subtitle="__('Cada bloco reúne rotinas relacionadas, impacto financeiro indicativo e onde corrigir no i-Educar ou no painel municipal.')"
+            >
+                @if ($fundingMet !== null)
+                    <x-dashboard.consultoria-funding-explanation
+                        :metodologia="$fundingMet"
+                        :resumo="$fundingResumo"
+                        class="mb-3"
+                    />
+                @endif
 
-            @if (count($errosCriticos) > 0 || count($priorityDims) > 0)
-                <div class="serv-alert-panel serv-alert-panel--critical">
-                    <h4 class="text-sm font-bold font-display text-rose-950 dark:text-rose-100 uppercase tracking-wide">{{ __('Erros críticos') }}</h4>
-                    @if (count($errosCriticos) > 0)
+                @if (count($errosCriticos) > 0)
+                    <div class="serv-alert-panel serv-alert-panel--critical mb-3">
+                        <h4 class="text-sm font-bold font-display text-rose-950 dark:text-rose-100 uppercase tracking-wide">{{ __('Erros críticos') }}</h4>
                         <ul class="text-xs text-red-900/95 dark:text-red-100 space-y-1.5">
                             @foreach ($errosCriticos as $c)
                                 <li class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5">
@@ -187,97 +216,25 @@
                                 </li>
                             @endforeach
                         </ul>
-                    @endif
-                    @if (count($priorityDims) > 0 && count($errosCriticos) === 0)
-                        <ul class="text-xs text-red-900/95 dark:text-red-100 space-y-1.5">
-                            @foreach (array_slice($priorityDims, 0, 6) as $dim)
-                                <li class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5">
-                                    <span>{{ $dim['title'] ?? '' }}</span>
-                                    <span class="tabular-nums font-semibold shrink-0 text-right">
-                                        {{ number_format((int) ($dim['total'] ?? 0)) }} {{ __('ocorr.') }}
-                                        · {{ __('perda') }} {{ $fmtBrl((float) ($dim['perda_estimada_anual'] ?? 0)) }}
-                                    </span>
-                                </li>
-                            @endforeach
-                        </ul>
-                    @endif
-                    <p class="text-[11px] text-red-800/90 dark:text-red-200/90">{{ __('Impacto elevado em Censo, FUNDEB ou integridade da matrícula.') }}</p>
-                </div>
-            @endif
+                    </div>
+                @endif
 
-            @if (count($atencaoDims) > 0)
-                <div class="serv-alert-panel serv-alert-panel--warning">
-                    <h4 class="text-sm font-bold font-display text-amber-950 dark:text-amber-100 uppercase tracking-wide">{{ __('Pontos de atenção') }}</h4>
-                    <ul class="text-xs text-amber-950/95 dark:text-amber-100 space-y-1.5">
-                        @foreach (array_slice($atencaoDims, 0, 8) as $dim)
-                            <li class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5">
-                                <span>{{ $dim['title'] ?? '' }}</span>
-                                <span class="tabular-nums font-semibold shrink-0 text-right">
-                                    {{ number_format((int) ($dim['total'] ?? 0)) }} {{ __('ocorr.') }}
-                                    @if ((float) ($dim['perda_estimada_anual'] ?? 0) > 0)
-                                        · {{ __('perda est.') }} {{ $fmtBrl((float) $dim['perda_estimada_anual']) }}
-                                    @endif
-                                </span>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+                <x-dashboard.consultoria-discrepancies-hub :modules="$modules" :fmt-brl="$fmtBrl" />
 
-            <p class="serv-callout">
-                <x-consultoria-tab-link tab="municipality_health" :label="__('Ver consolidação no Diagnóstico')" class="text-xs" />
-            </p>
-        </x-dashboard.consultoria-section>
-
-        @if (count($pillars) > 0)
-            <x-dashboard.consultoria-section
-                :step="$discStep['disc-referencias'] ?? null"
-                anchor="disc-referencias"
-                :title="__('Referências FUNDEB / VAAR / Censo')"
-                :subtitle="__('Contexto normativo e resumo municipal por pilar.')"
-            >
-                <ul class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-700 dark:text-slate-300">
-                    @foreach ($pillars as $pillar)
-                        @php
-                            $resumo = is_array($pillar['municipio_resumo'] ?? null) ? $pillar['municipio_resumo'] : [];
-                            $resumoStatus = (string) ($resumo['status'] ?? 'ok');
-                            $resumoBox = match ($resumoStatus) {
-                                'danger' => 'border-rose-300/80 bg-rose-50/90 text-rose-950 dark:border-rose-700 dark:bg-rose-950/35 dark:text-rose-100',
-                                'warning' => 'border-amber-300/80 bg-amber-50/90 text-amber-950 dark:border-amber-700 dark:bg-amber-950/35 dark:text-amber-100',
-                                'neutral', 'no_data' => 'border-sky-300/80 bg-sky-50/90 text-sky-950 dark:border-sky-700 dark:bg-sky-950/35 dark:text-sky-100',
-                                default => 'border-emerald-300/80 bg-emerald-50/90 text-emerald-950 dark:border-emerald-700 dark:bg-emerald-950/35 dark:text-emerald-100',
-                            };
-                        @endphp
-                        <li class="serv-panel px-3 py-2 space-y-2">
-                            <p class="font-semibold font-display text-serv-navy dark:text-slate-100">{{ $pillar['titulo'] ?? '' }}</p>
-                            <p class="leading-relaxed">{{ $pillar['descricao'] ?? '' }}</p>
-                            <p class="text-[11px] leading-relaxed rounded-md border px-2 py-1.5 {{ $resumoBox }}">
-                                <span class="font-semibold uppercase tracking-wide">{{ __('Resumo do município') }}:</span>
-                                {{ $resumo['texto'] ?? '' }}
-                            </p>
-                        </li>
-                    @endforeach
-                </ul>
+                <p class="serv-callout text-xs">
+                    {{ __('Legenda:') }}
+                    <span class="inline-flex items-center gap-1 mx-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span>{{ __('crítico') }}</span>
+                    <span class="inline-flex items-center gap-1 mx-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span>{{ __('atenção') }}</span>
+                    <span class="inline-flex items-center gap-1 mx-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>{{ __('ok') }}</span>
+                    <span class="inline-flex items-center gap-1 mx-1"><span class="w-2 h-2 rounded-full bg-sky-400"></span>{{ __('sem dados') }}</span>
+                    <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-400"></span>{{ __('indisponível') }}</span>
+                </p>
             </x-dashboard.consultoria-section>
-        @endif
-
-        @if ($hasPublicSources)
+        @elseif (count($dimensions) > 0)
             <x-dashboard.consultoria-section
-                :step="$discStep['disc-fontes-publicas'] ?? null"
-                anchor="disc-fontes-publicas"
-                :title="__('Extração e relatórios oficiais')"
-                :subtitle="__('FNDE, Tesouro, Simec e INEP — para cruzar com as estimativas desta aba.')"
-            >
-                <x-dashboard.consultoria-public-sources :catalog="$publicSources" :anchor="null" />
-            </x-dashboard.consultoria-section>
-        @endif
-
-        @if (count($dimensions) > 0)
-            <x-dashboard.consultoria-section
-                :step="$discStep['disc-mapa'] ?? null"
-                anchor="disc-mapa"
+                anchor="disc-modulos"
                 :title="__('Mapa de rotinas')"
-                :subtitle="__('Verde = cadastro analisado sem pendência; azul = sem dados no filtro (não é «tudo certo»); cinza = rotina indisponível; amarelo/vermelho = pendência.')"
+                :subtitle="__('Estado das rotinas de cadastro no filtro actual.')"
             >
                 <x-dashboard.consultoria-dimensions-grid :dimensions="$dimensions" :fmt-brl="$fmtBrl" />
             </x-dashboard.consultoria-section>
@@ -287,8 +244,8 @@
             <x-dashboard.consultoria-section
                 :step="$discStep['disc-detalhe'] ?? null"
                 anchor="disc-detalhe"
-                :title="__('Detalhe por escola')"
-                :subtitle="__('Visão resumida por rotina; expanda cada bloco para orientação de correção e lista de unidades.')"
+                :title="__('Detalhe, correção e unidades afetadas')"
+                :subtitle="__('Agrupado por módulo — problema, impacto financeiro, onde corrigir e lista por escola na mesma secção.')"
             >
                 @if ($chartFinanceiro !== null || $chartResumo !== null)
                     <div class="disc-charts-overview grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
@@ -315,145 +272,68 @@
                     </div>
                 @endif
 
-                <div class="space-y-4">
-                    @foreach (array_merge($errosCriticos, $demaisChecks) as $idx => $check)
+                <div class="space-y-6">
+                    @foreach ($modules as $mod)
                         @php
-                            $isErro = ! empty($check['is_erro']);
-                            $ring = match (true) {
-                                $isErro => 'border-l-red-600 bg-red-50/70 dark:bg-red-950/40 ring-2 ring-red-400/40',
-                                ($check['status'] ?? '') === 'warning' => 'border-l-amber-500 bg-amber-50/35 dark:bg-amber-950/20',
-                                default => 'border-l-slate-400 bg-slate-50/40 dark:bg-slate-900/30',
-                            };
-                            $badge = match ($check['status'] ?? 'neutral') {
-                                'danger' => 'bg-red-100 text-red-900 dark:bg-red-900/50 dark:text-red-100',
-                                'warning' => 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100',
-                                default => 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100',
-                            };
-                            $vaarRefs = is_array($check['vaar_refs'] ?? null) ? $check['vaar_refs'] : [];
+                            $modChecks = $checksByModule[(string) ($mod['id'] ?? '')] ?? [];
                         @endphp
-                        <article class="serv-panel border-l-4 {{ $ring }} overflow-hidden">
-                            <header class="px-4 py-2.5 border-b border-slate-200/80 dark:border-slate-700/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                <div class="min-w-0">
-                                    <h3 class="text-sm font-semibold text-serv-navy dark:text-slate-100 leading-snug">{{ $check['title'] ?? '' }}</h3>
-                                    <dl class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs tabular-nums text-slate-600 dark:text-slate-400">
-                                        <div>
-                                            <dt class="sr-only">{{ __('Ocorrências') }}</dt>
-                                            <dd><span class="font-medium text-slate-800 dark:text-slate-200">{{ number_format((int) ($check['total'] ?? 0)) }}</span> {{ __('ocorr.') }}
-                                                @if (($check['pct_rede'] ?? null) !== null)
-                                                    <span class="text-slate-500">({{ number_format((float) $check['pct_rede'], 1, ',', '.') }}% {{ __('rede') }})</span>
-                                                @endif
-                                            </dd>
-                                        </div>
-                                        <div>
-                                            <dt class="sr-only">{{ __('Perda') }}</dt>
-                                            <dd class="text-orange-700 dark:text-orange-300"><span class="text-slate-500 dark:text-slate-500 font-normal">{{ __('Perda') }}</span> {{ $fmtBrl((float) ($check['perda_estimada_anual'] ?? 0)) }}</dd>
-                                        </div>
-                                        <div>
-                                            <dt class="sr-only">{{ __('Ganho') }}</dt>
-                                            <dd class="text-emerald-700 dark:text-emerald-300"><span class="text-slate-500 font-normal">{{ __('Ganho') }}</span> {{ $fmtBrl((float) ($check['ganho_potencial_anual'] ?? 0)) }}</dd>
-                                        </div>
-                                    </dl>
-                                </div>
-                                <span class="inline-flex items-center gap-1.5 shrink-0">
-                                    @if ($isErro)
-                                        <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-600 text-white">{{ __('Erro') }}</span>
-                                    @endif
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium {{ $badge }}">
-                                        {{ $check['consultoria_prioridade'] ?? match ($check['severity'] ?? '') {
-                                            'danger' => __('Alta prioridade'),
-                                            'warning' => __('Média prioridade'),
-                                            default => __('Verificar'),
-                                        } }}
-                                    </span>
-                                </span>
-                            </header>
-                            <div class="px-3 py-3 space-y-3 text-sm text-slate-700 dark:text-slate-300">
-                                <div class="disc-charts-mini grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                    @if (! empty($check['chart_financeiro']))
-                                        <x-dashboard.chart-panel :chart="$check['chart_financeiro']" :exportFilename="'discrepancia-fin-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-fin-'.$idx" panelTone="amber" />
-                                    @endif
-                                    @if (! empty($check['chart_rede']))
-                                        <x-dashboard.chart-panel :chart="$check['chart_rede']" :exportFilename="'discrepancia-rede-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-rede-'.$idx" panelTone="teal" />
-                                    @endif
-                                    @if (! empty($check['chart_escolas']))
-                                        <div class="sm:col-span-3 lg:col-span-1">
-                                            <x-dashboard.chart-panel :chart="$check['chart_escolas']" :exportFilename="'discrepancia-escolas-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-esc-'.$idx" panelTone="teal" />
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <details class="group serv-panel bg-slate-50/50 dark:bg-slate-900/30">
-                                    <summary class="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between gap-2 select-none">
-                                        <span>{{ __('Orientação e impacto') }}</span>
-                                        <span class="text-slate-400 group-open:rotate-180 transition-transform" aria-hidden="true">▾</span>
-                                    </summary>
-                                    <div class="px-3 pb-3 pt-0 space-y-3 text-xs leading-relaxed border-t border-slate-200/80 dark:border-slate-700/60">
-                                        @if (count($vaarRefs) > 0)
-                                            <p class="text-teal-800 dark:text-teal-200 pt-2">
-                                                <span class="font-semibold">{{ __('Eixos:') }}</span>
-                                                {{ implode(' · ', $vaarRefs) }}
-                                            </p>
-                                        @endif
-                                        <div>
-                                            <p class="font-semibold text-slate-500 dark:text-slate-400 mb-0.5">{{ __('O que é') }}</p>
-                                            <p>{{ $check['explanation'] ?? '' }}</p>
-                                        </div>
-                                        <div>
-                                            <p class="font-semibold text-rose-700 dark:text-rose-300 mb-0.5">{{ __('Impacto financeiro / Censo') }}</p>
-                                            <p>{{ $check['impact'] ?? '' }}</p>
-                                            @if (is_array($check['funding_explicacao'] ?? null))
-                                                <div class="mt-2">
-                                                    <x-dashboard.consultoria-funding-explanation :explicacao="$check['funding_explicacao']" />
-                                                </div>
-                                            @elseif (filled($check['funding_formula'] ?? null))
-                                                <p class="mt-1 text-slate-500 dark:text-slate-400 italic">{{ $check['funding_formula'] }}</p>
-                                            @endif
-                                        </div>
-                                        <div>
-                                            <p class="font-semibold text-emerald-700 dark:text-emerald-300 mb-0.5">{{ __('Correção possível') }}</p>
-                                            <p>{{ $check['correction'] ?? '' }}</p>
-                                        </div>
-                                    </div>
-                                </details>
-
-                                @if (! empty($check['school_rows']) && is_array($check['school_rows']))
-                                    <div>
-                                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">{{ __('Unidades com ocorrência') }}</p>
-                                        <div class="serv-panel overflow-x-auto max-h-52 overflow-y-auto">
-                                            <table class="min-w-full text-xs text-left">
-                                                <thead class="bg-slate-50/90 dark:bg-slate-900/60 sticky top-0">
-                                                    <tr>
-                                                        <th class="px-3 py-2 font-medium">{{ __('Unidade escolar') }}</th>
-                                                        <th class="px-3 py-2 font-medium text-right">{{ __('Ocorrências') }}</th>
-                                                        <th class="px-3 py-2 font-medium text-right">{{ __('Perda est.') }}</th>
-                                                        <th class="px-3 py-2 font-medium text-right">{{ __('Ganho pot.') }}</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                                    @foreach ($check['school_rows'] as $row)
-                                                        <tr>
-                                                            <td class="px-3 py-1.5 break-words max-w-[18rem]">{{ $row['escola'] ?? '—' }}</td>
-                                                            <td class="px-3 py-1.5 text-right tabular-nums font-medium">{{ number_format((int) ($row['total'] ?? 0)) }}</td>
-                                                            @php
-                                                                $unitPerda = (int) ($row['total'] ?? 0) > 0
-                                                                    ? ((float) ($check['perda_estimada_anual'] ?? 0)) / (int) ($check['total'] ?? 1)
-                                                                    : 0.0;
-                                                            @endphp
-                                                            <td class="px-3 py-1.5 text-right tabular-nums text-orange-700 dark:text-orange-300">{{ $fmtBrl($unitPerda * (int) ($row['total'] ?? 0)) }}</td>
-                                                            <td class="px-3 py-1.5 text-right tabular-nums text-emerald-700 dark:text-emerald-300">{{ $fmtBrl((float) ($row['ganho_potencial_anual'] ?? 0)) }}</td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
+                        @if (count($modChecks) === 0)
+                            @continue
+                        @endif
+                        <div id="disc-mod-detail-{{ $mod['id'] ?? '' }}" class="scroll-mt-24 space-y-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 dark:border-slate-700/70 pb-2">
+                                <h4 class="text-sm font-semibold font-display text-serv-navy dark:text-slate-100">{{ $mod['title'] ?? '' }}</h4>
+                                @if (filled($mod['correction_tab'] ?? null))
+                                    <x-consultoria-tab-link
+                                        :tab="$mod['correction_tab']"
+                                        :label="$mod['correction_label'] ?? __('Onde corrigir')"
+                                        class="text-xs font-semibold"
+                                    />
                                 @endif
                             </div>
-                        </article>
+                            @foreach ($modChecks as $idx => $check)
+                                @include('dashboard.analytics.partials.discrepancies-check-card', [
+                                    'check' => $check,
+                                    'idx' => $idx,
+                                    'fmtBrl' => $fmtBrl,
+                                    'chartExportContext' => $chartExportContext,
+                                ])
+                            @endforeach
+                        </div>
                     @endforeach
+
+                    @if (count($checksByModule['outros'] ?? []) > 0)
+                        <div class="space-y-3">
+                            <h4 class="text-sm font-semibold font-display text-serv-navy dark:text-slate-100">{{ __('Outras rotinas') }}</h4>
+                            @foreach ($checksByModule['outros'] as $idx => $check)
+                                @include('dashboard.analytics.partials.discrepancies-check-card', [
+                                    'check' => $check,
+                                    'idx' => 'outros-'.$idx,
+                                    'fmtBrl' => $fmtBrl,
+                                    'chartExportContext' => $chartExportContext,
+                                ])
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
             </x-dashboard.consultoria-section>
         @elseif ($showKpis && count($pendenciaDims) > 0)
-            <p class="text-xs text-slate-500 dark:text-slate-400 italic">{{ __('Sem detalhe por escola nesta base — consulte o mapa de rotinas ou Serventec.') }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 italic">{{ __('Sem detalhe por escola nesta base — consulte o painel de módulos ou Serventec.') }}</p>
+        @endif
+
+        @if ($hasPublicSources)
+            <details class="serv-panel scroll-mt-6 group">
+                <summary class="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-2 select-none text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <span>{{ __('Consultas públicas (FNDE, Tesouro, INEP)') }}</span>
+                    <span class="text-slate-400 group-open:rotate-180 transition-transform" aria-hidden="true">▾</span>
+                </summary>
+                <div class="px-4 pb-4 border-t border-slate-200/80 dark:border-slate-700/70">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 py-2">{{ __('Links de apoio — não substituem a correção no i-Educar indicada em cada módulo.') }}</p>
+                    <x-dashboard.consultoria-public-sources :catalog="$publicSources" :anchor="null" />
+                    <p class="mt-2 text-xs">
+                        <x-consultoria-tab-link tab="fundeb" :label="__('Repasse e FUNDEB')" class="text-xs" />
+                    </p>
+                </div>
+            </details>
         @endif
 </x-dashboard.consultoria-tab-frame>

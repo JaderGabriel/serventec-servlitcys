@@ -33,6 +33,8 @@ final class ConsultoriaOperationalSignals
             $out[] = $rede;
         }
 
+        $out = FundebOperationalSignals::append($out, $city, $filters);
+
         return $out;
     }
 
@@ -93,6 +95,8 @@ final class ConsultoriaOperationalSignals
                 ]
             ),
             'source_tab' => 'network',
+            'correction_tab' => 'network',
+            'correction_label' => __('Ver Rede'),
         ];
     }
 
@@ -123,7 +127,7 @@ final class ConsultoriaOperationalSignals
             if (($d['availability'] ?? '') !== 'available') {
                 continue;
             }
-            if (! str_starts_with($id, 'rede_')) {
+            if (! str_starts_with($id, 'rede_') && ! str_starts_with($id, 'fundeb_')) {
                 continue;
             }
 

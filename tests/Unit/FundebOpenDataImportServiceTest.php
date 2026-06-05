@@ -7,6 +7,7 @@ use App\Models\FundebMunicipioReference;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\CityDataConnection;
 use App\Services\Fundeb\FundebFndeReceitaCsvService;
+use App\Services\Fundeb\FundebFndeVaarCsvService;
 use App\Services\Fundeb\FundebFndeVaatCsvService;
 use App\Services\Fundeb\FundebImportMode;
 use App\Services\Fundeb\FundebImportProgress;
@@ -51,16 +52,26 @@ final class FundebOpenDataImportServiceTest extends TestCase
         return $vaat;
     }
 
+    private function fndeVaarWithoutNetwork(): FundebFndeVaarCsvService
+    {
+        $vaar = \Mockery::mock(FundebFndeVaarCsvService::class);
+        $vaar->shouldReceive('rowForIbge')->andReturn(null);
+
+        return $vaar;
+    }
+
     private function makeService(
         FundebMunicipioReferenceRepository $repo,
         ?FundebFndeReceitaCsvService $fndeReceita = null,
         ?FundebFndeVaatCsvService $fndeVaat = null,
+        ?FundebFndeVaarCsvService $fndeVaar = null,
         ?CityDataConnection $cityData = null,
     ): FundebOpenDataImportService {
         return new FundebOpenDataImportService(
             $repo,
             $fndeReceita ?? $this->fndeReceitaWithoutNetwork(),
             $fndeVaat ?? $this->fndeVaatWithoutNetwork(),
+            $fndeVaar ?? $this->fndeVaarWithoutNetwork(),
             $cityData ?? $this->cityDataReturningMatriculas(0),
         );
     }
@@ -475,7 +486,7 @@ final class FundebOpenDataImportServiceTest extends TestCase
                 && $d['fonte'] === FundebReferenceSource::FONTE_FNDE_RECEITA_IEDUCAR))
             ->andReturn($saved);
 
-        $result = $this->makeService($repo, $fnde, null, $cityData)->importForCityYear($city, 2024, false);
+        $result = $this->makeService($repo, $fnde, null, null, $cityData)->importForCityYear($city, 2024, false);
 
         $this->assertTrue($result['success']);
     }

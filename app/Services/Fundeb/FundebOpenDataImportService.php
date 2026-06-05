@@ -27,6 +27,7 @@ final class FundebOpenDataImportService
         private FundebMunicipioReferenceRepository $references,
         private FundebFndeReceitaCsvService $fndeReceita,
         private FundebFndeVaatCsvService $fndeVaat,
+        private FundebFndeVaarCsvService $fndeVaar,
         private CityDataConnection $cityData,
     ) {}
 
@@ -569,6 +570,7 @@ final class FundebOpenDataImportService
             'vaaf' => $vaaf,
             'vaat' => isset($match['vaat']) ? (float) $match['vaat'] : null,
             'complementacao_vaar' => isset($match['complementacao_vaar']) ? (float) $match['complementacao_vaar'] : null,
+            'complementacao_vaat' => isset($match['complementacao_vaat']) ? (float) $match['complementacao_vaat'] : null,
             'fonte' => (string) ($match['fonte'] ?? 'api_ckan_fnde'),
             'notas' => $notas !== '' ? $notas : null,
             'tipo_valor' => $match['tipo_valor'] ?? FundebReferenceSource::tipoFromFonte((string) ($match['fonte'] ?? '')),
@@ -677,6 +679,10 @@ final class FundebOpenDataImportService
         }
 
         if (! $this->nullableMoneyEquals($existing->complementacao_vaaf, $incoming['complementacao_vaaf'] ?? null)) {
+            return true;
+        }
+
+        if (! $this->nullableMoneyEquals($existing->complementacao_vaat, $incoming['complementacao_vaat'] ?? null)) {
             return true;
         }
 
@@ -1263,25 +1269,8 @@ final class FundebOpenDataImportService
     private function enrichMatchWithPortariaData(City $city, string $ibge, int $ano, array $match): array
     {
         $vaatRow = $this->fndeVaat->rowForIbge($ibge, $ano);
-        $vaatPerAluno = $vaatRow !== null ? (float) ($vaatRow['vaat'] ?? 0) : null;
-        if ($vaatPerAluno !== null && $vaatPerAluno <= 0) {
-            $vaatPerAluno = null;
-        }
-
-        if ($vaatPerAluno !== null) {
-            $currentVaat = isset($match['vaat']) ? (float) $match['vaat'] : null;
-            if ($currentVaat === null || $currentVaat <= 0) {
-                $match['vaat'] = $vaatPerAluno;
-                $notas = trim((string) ($match['notas'] ?? ''));
-                $match['notas'] = trim($notas.' '.__('VAAT/aluno da portaria: :v.', [
-                    'v' => number_format($vaatPerAluno, 2, ',', '.'),
-                ]));
-                $meta = is_array($match['meta'] ?? null) ? $match['meta'] : [];
-                if (filled($vaatRow['csv_url'] ?? null)) {
-                    $meta['vaat_csv_url'] = (string) $vaatRow['csv_url'];
-                }
-                $match['meta'] = $meta;
-            }
+        if ($vaatRow !== null) {
+            $match = $this->mergeVaatPortariaFields($match, $vaatRow);
         }
 
         if (! FundebReferenceSource::isPlaceholder((string) ($match['fonte'] ?? ''))) {
@@ -1307,9 +1296,13 @@ final class FundebOpenDataImportService
             return $this->enrichMatchWithPortariaReceitaMetadata($ibge, $ano, $match, $receita);
         }
 
+        $vaarRow = $this->fndeVaar->rowForIbge($ibge, $ano);
+
         $portariaRow = $this->buildPortariaReceitaMatch(
+            $city,
             $receita,
             $vaatRow,
+            $vaarRow,
             $matRow,
             $ano,
             $vaaf,
@@ -1317,6 +1310,42 @@ final class FundebOpenDataImportService
         );
 
         return array_merge($match, $portariaRow);
+    }
+
+    /**
+     * @param  array<string, mixed>  $match
+     * @param  array<string, mixed>  $vaatRow
+     * @return array<string, mixed>
+     */
+    private function mergeVaatPortariaFields(array $match, array $vaatRow): array
+    {
+        $vaatMunicipal = isset($vaatRow['vaat']) ? (float) $vaatRow['vaat'] : 0.0;
+        if ($vaatMunicipal <= 0) {
+            return $match;
+        }
+
+        $currentVaat = isset($match['vaat']) ? (float) $match['vaat'] : null;
+        if ($currentVaat === null || $currentVaat <= 0) {
+            $match['vaat'] = $vaatMunicipal;
+            $notas = trim((string) ($match['notas'] ?? ''));
+            $match['notas'] = trim($notas.' '.__('VAAT municipal/aluno (antes compl.): :v.', [
+                'v' => number_format($vaatMunicipal, 2, ',', '.'),
+            ]));
+        }
+
+        $meta = is_array($match['meta'] ?? null) ? $match['meta'] : [];
+        if (filled($vaatRow['csv_url'] ?? null)) {
+            $meta['vaat_csv_url'] = (string) $vaatRow['csv_url'];
+        }
+        if (isset($vaatRow['vaat_com_compl']) && is_numeric($vaatRow['vaat_com_compl'])) {
+            $meta['vaat_com_compl'] = (float) $vaatRow['vaat_com_compl'];
+        }
+        if (filled($vaatRow['iei_pct'] ?? null)) {
+            $meta['iei_pct'] = (string) $vaatRow['iei_pct'];
+        }
+        $match['meta'] = $meta;
+
+        return $match;
     }
 
     /**
@@ -1366,8 +1395,10 @@ final class FundebOpenDataImportService
      * @return array<string, mixed>
      */
     private function buildPortariaReceitaMatch(
+        City $city,
         array $receita,
         ?array $vaatRow,
+        ?array $vaarRow,
         array $matRow,
         int $ano,
         float $vaaf,
@@ -1394,6 +1425,26 @@ final class FundebOpenDataImportService
         if ($vaatRow !== null && filled($vaatRow['csv_url'] ?? null)) {
             $portariaMeta['vaat_csv_url'] = (string) $vaatRow['csv_url'];
         }
+        if ($vaatRow !== null && isset($vaatRow['vaat_com_compl']) && is_numeric($vaatRow['vaat_com_compl'])) {
+            $portariaMeta['vaat_com_compl'] = (float) $vaatRow['vaat_com_compl'];
+        }
+        if ($vaatRow !== null && filled($vaatRow['iei_pct'] ?? null)) {
+            $portariaMeta['iei_pct'] = (string) $vaatRow['iei_pct'];
+        }
+        if ($vaarRow !== null) {
+            if (filled($vaarRow['csv_url'] ?? null)) {
+                $portariaMeta['vaar_csv_url'] = (string) $vaarRow['csv_url'];
+            }
+            if (isset($vaarRow['coeficiente']) && is_numeric($vaarRow['coeficiente'])) {
+                $portariaMeta['vaar_coeficiente'] = (float) $vaarRow['coeficiente'];
+            }
+        }
+
+        $entidadeOficial = trim((string) ($receita['entidade'] ?? ''));
+        if ($entidadeOficial !== '' && ! $this->cityNameMatchesFndeEntity($city->name, $entidadeOficial)) {
+            $portariaMeta['ibge_nome_divergente'] = true;
+            $portariaMeta['nome_oficial_fnde'] = $entidadeOficial;
+        }
 
         $portariaLabel = (string) ($portariaMeta['portaria_label'] ?? '');
         $notas = __('VAAF estimado: receita total FNDE (:rec) ÷ :mat :tipo (ano :ano).', [
@@ -1408,15 +1459,28 @@ final class FundebOpenDataImportService
             $notas .= ' '.__('Publicação FNDE :pub.', ['pub' => (string) $pubAno]);
         }
         if ($vaatPerAluno !== null) {
-            $notas .= ' '.__('VAAT/aluno da portaria: :v.', [
+            $notas .= ' '.__('VAAT municipal/aluno (antes compl.): :v.', [
                 'v' => number_format($vaatPerAluno, 2, ',', '.'),
             ]);
+            if ($vaatRow !== null && isset($vaatRow['vaat_com_compl']) && is_numeric($vaatRow['vaat_com_compl'])) {
+                $notas .= ' '.__('VAAT c/ complementação: :v.', [
+                    'v' => number_format((float) $vaatRow['vaat_com_compl'], 2, ',', '.'),
+                ]);
+            }
+        }
+
+        $complVaar = isset($receita['complementacao_vaar']) ? (float) $receita['complementacao_vaar'] : null;
+        if (($complVaar === null || $complVaar <= 0)
+            && $vaarRow !== null
+            && isset($vaarRow['complementacao_vaar'])
+            && (float) $vaarRow['complementacao_vaar'] > 0) {
+            $complVaar = (float) $vaarRow['complementacao_vaar'];
         }
 
         return [
             'vaaf' => $vaaf,
             'vaat' => $vaatPerAluno,
-            'complementacao_vaar' => isset($receita['complementacao_vaar']) ? (float) $receita['complementacao_vaar'] : null,
+            'complementacao_vaar' => $complVaar,
             'fonte' => FundebReferenceSource::FONTE_FNDE_RECEITA_IEDUCAR,
             'tipo_valor' => 'estimativa',
             'receita_total' => (float) $receita['total_receita'],
@@ -1485,8 +1549,28 @@ final class FundebOpenDataImportService
         }
 
         $vaatRow = $this->fndeVaat->rowForIbge($ibge, $ano);
+        $vaarRow = $this->fndeVaar->rowForIbge($ibge, $ano);
 
-        return $this->buildPortariaReceitaMatch($receita, $vaatRow, $matRow, $ano, $vaaf, $matriculas);
+        return $this->buildPortariaReceitaMatch($city, $receita, $vaatRow, $vaarRow, $matRow, $ano, $vaaf, $matriculas);
+    }
+
+    private function cityNameMatchesFndeEntity(string $cityName, string $fndeEntity): bool
+    {
+        $normalize = static function (string $value): string {
+            $value = Str::lower(Str::ascii($value));
+            $value = preg_replace('/\b\d+\s*-\s*/', '', $value) ?? $value;
+            $value = preg_replace('/[^a-z0-9]+/', '', $value) ?? $value;
+
+            return $value;
+        };
+
+        $a = $normalize($cityName);
+        $b = $normalize($fndeEntity);
+        if ($a === '' || $b === '') {
+            return true;
+        }
+
+        return $a === $b || str_contains($a, $b) || str_contains($b, $a);
     }
 
     private function nationalFloorRow(string $ibge, int $ano): ?array

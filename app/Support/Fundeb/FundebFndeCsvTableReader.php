@@ -148,8 +148,27 @@ final class FundebFndeCsvTableReader
             'uf' => 0,
             'entidade' => 1,
             'ibge' => 2,
+            'vaat_antes' => 3,
             'vaat' => 4,
             'vaat_compl' => 5,
+            'iei' => 6,
+        ];
+    }
+
+    /**
+     * Layout típico Portaria 6/2026 — VAAR por ente.
+     *
+     * @param  list<string>  $row
+     * @return array<string, int>
+     */
+    public static function inferVaarColumns(array $row): array
+    {
+        return [
+            'uf' => 0,
+            'entidade' => 1,
+            'ibge' => 2,
+            'coef' => 3,
+            'vaar_compl' => count($row) > 5 ? 5 : 4,
         ];
     }
 

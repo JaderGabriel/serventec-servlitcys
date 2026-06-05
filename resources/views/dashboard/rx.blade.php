@@ -25,7 +25,7 @@
             <div class="serv-panel serv-panel--info px-4 py-3 text-sm">
                 <p class="font-medium text-serv-navy dark:text-teal-100">{{ __('RX — força de trabalho e prazos') }}</p>
                 <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">
-                    {{ __('Visão consolidada por município: volumes digitados, Censo Escolar, meta de cadastro (com busca em anos anteriores quando necessário) e indicador de cumprimento da meta. Sem indicadores financeiros.') }}
+                    {{ __('Visão consolidada por município: volumes digitados no i-Educar (em andamento), Censo Escolar, meta de cadastro e indicador de cumprimento. Abaixo, quando disponível, complementações FUNDEB da portaria (dados consolidados do FNDE).') }}
                 </p>
             </div>
 
@@ -140,6 +140,37 @@
                     </div>
                 </div>
             </section>
+
+            @php
+                $fundebPortaria = is_array($rx['fundeb_portaria'] ?? null) ? $rx['fundeb_portaria'] : [];
+                $fundebChart = is_array($fundebPortaria['chart'] ?? null) ? $fundebPortaria['chart'] : null;
+            @endphp
+
+            @if (! empty($fundebPortaria['available']) && $fundebChart !== null)
+                <section aria-labelledby="rx-fundeb-portaria" class="space-y-3">
+                    <div class="serv-panel px-4 py-3 border-sky-200/80 dark:border-sky-800/50 bg-sky-50/50 dark:bg-sky-950/20">
+                        <p id="rx-fundeb-portaria" class="font-medium text-sky-950 dark:text-sky-100">
+                            {{ __('FUNDEB — complementações da portaria (:ano)', ['ano' => (string) ($fundebPortaria['exercicio'] ?? '')]) }}
+                        </p>
+                        <p class="mt-1 text-xs text-sky-900/90 dark:text-sky-200/90 leading-relaxed">
+                            {{ __('Dados consolidados do FNDE (:portaria). O cadastro RX acima mede o volume em andamento no i-Educar e só impacta repasses após consolidação no exercício seguinte.', [
+                                'portaria' => $fundebPortaria['portaria_label'] ?? __('portaria vigente'),
+                            ]) }}
+                        </p>
+                        @if ((int) ($fundebPortaria['municipios_com_dados'] ?? 0) > 0)
+                            <p class="mt-1 text-[11px] text-sky-800/80 dark:text-sky-300/80">
+                                {{ __(':n município(s) com complementação prevista na portaria.', ['n' => (int) $fundebPortaria['municipios_com_dados']]) }}
+                            </p>
+                        @endif
+                    </div>
+                    <x-dashboard.chart-panel
+                        :chart="$fundebChart"
+                        export-filename="rx-fundeb-complementacoes-{{ $fundebPortaria['exercicio'] ?? 'ano' }}"
+                        :compact="false"
+                        chart-panel-id="rx-fundeb-complementacoes"
+                    />
+                </section>
+            @endif
 
             <x-rx.legend-panel
                 :semaphore="$sem"

@@ -79,6 +79,15 @@ final class FundebFndePortariaCatalog
         return is_string($url) && trim($url) !== '' ? trim($url) : null;
     }
 
+    public static function vaarCsvUrl(int $exercicio): ?string
+    {
+        $pub = self::activePublication($exercicio);
+        $csv = is_array($pub['csv'] ?? null) ? $pub['csv'] : [];
+        $url = $csv['vaar'] ?? null;
+
+        return is_string($url) && trim($url) !== '' ? trim($url) : null;
+    }
+
     /**
      * @return array{vaaf_min: ?float, vaat_min: ?float}
      */

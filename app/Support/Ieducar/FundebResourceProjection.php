@@ -86,6 +86,17 @@ final class FundebResourceProjection
         $previsaoRisco = MoneyMath::roundMoney(max(0, $base - $perda));
         $totalComComplemento = MoneyMath::roundMoney($previsaoReferencia + $complementVaar);
 
+        $vaatPerAluno = isset($ref['vaat']) && is_numeric($ref['vaat']) ? (float) $ref['vaat'] : 0.0;
+        $complVaatOficial = isset($ref['complementacao_vaat']) && is_numeric($ref['complementacao_vaat'])
+            ? (float) $ref['complementacao_vaat']
+            : 0.0;
+        $previsaoVaatBase = $vaatPerAluno > 0
+            ? MoneyMath::multiplyVaaf($matriculas, $vaatPerAluno)
+            : null;
+        $previsaoVaatTotal = $previsaoVaatBase !== null
+            ? MoneyMath::roundMoney($previsaoVaatBase + max(0.0, $complVaatOficial))
+            : ($complVaatOficial > 0 ? MoneyMath::roundMoney($complVaatOficial) : null);
+
         $distribuicao = self::buildLegalDistribution($previsaoReferencia, $cfg);
         $porEtapa = self::extractEtapaBreakdown($enrollmentData, $vaafCalculo, $matriculas);
         $vaafComparacao = FundebReferenceDisplay::vaafComparacao($ref);
@@ -101,29 +112,29 @@ final class FundebResourceProjection
             $alunosDistintos,
         );
 
-        return [
-            'available' => true,
-            'year_label' => $yearLabel,
-            'aviso' => $aviso,
-            'matriculas_base' => $matriculas,
-            'matriculas_registos' => $registos,
-            'alunos_base' => $alunosDistintos,
-            'base_calculo' => $matriculas,
-            'vaa_referencia' => $vaafCalculo,
-            'vaa_municipal' => $usaVaafMunicipal ? $vaafCalculo : null,
-            'vaa_previa' => $previaVaaf > 0 ? $previaVaaf : null,
-            'vaa_label' => $fmt($vaafCalculo),
-            'vaa_previa_label' => $previaVaaf > 0 ? $fmt($previaVaaf) : null,
-            'vaa_fonte' => $ref['fonte'],
-            'vaa_fonte_label' => $fonteCalculo,
-            'vaa_ano' => $anoCalculo,
-            'vaaf_comparacao' => $vaafComparacao,
-            'previsao_comparacao' => $previsaoComparacao,
-            'divergencia_vaaf' => is_array($ref['divergencia'] ?? null) ? $ref['divergencia'] : null,
-            'vaat_label' => $ref['vaat'] !== null ? $fmt($ref['vaat']) : null,
-            'complementacao_vaar_oficial' => $ref['complementacao_vaar'],
-            'formula_base' => $formulaBase,
-            'kpis' => [
+        $vaatKpi = null;
+        if ($previsaoVaatTotal !== null && $previsaoVaatTotal > 0) {
+            $ieiNote = filled($ref['iei_pct'] ?? null)
+                ? ' '.__('IEI (educação infantil): :pct.', ['pct' => (string) $ref['iei_pct']])
+                : '';
+            $vaatKpi = [
+                'label' => __('Previsão VAAT (indicativa)'),
+                'value' => $fmt($previsaoVaatTotal),
+                'tone' => 'sky',
+                'explicacao_resumo' => ($vaatPerAluno > 0
+                    ? __(':mat × VAAT municipal :vaat', [
+                        'mat' => number_format($matriculas, 0, ',', '.'),
+                        'vaat' => $fmt($vaatPerAluno),
+                    ])
+                    : __('Complementação VAAT da portaria'))
+                    .($complVaatOficial > 0
+                        ? ' + '.__('compl. portaria :v', ['v' => $fmt($complVaatOficial)])
+                        : '')
+                    .$ieiNote,
+            ];
+        }
+
+        $kpis = [
                 [
                     'label' => __('fundeb.semantics.previsao_indicativa_label'),
                     'value' => $fmt($previsaoReferencia),
@@ -158,6 +169,11 @@ final class FundebResourceProjection
                         ],
                     ],
                 ],
+        ];
+        if ($vaatKpi !== null) {
+            $kpis[] = $vaatKpi;
+        }
+        $kpis = array_merge($kpis, [
                 [
                     'label' => __('Risco cadastro (indicativo)'),
                     'value' => $perda > 0 ? '− '.$fmt($perda) : '—',
@@ -202,10 +218,42 @@ final class FundebResourceProjection
                         ),
                     ],
                 ],
-            ],
+        ]);
+
+        return [
+            'available' => true,
+            'year_label' => $yearLabel,
+            'aviso' => $aviso,
+            'matriculas_base' => $matriculas,
+            'matriculas_registos' => $registos,
+            'alunos_base' => $alunosDistintos,
+            'base_calculo' => $matriculas,
+            'vaa_referencia' => $vaafCalculo,
+            'vaa_municipal' => $usaVaafMunicipal ? $vaafCalculo : null,
+            'vaa_previa' => $previaVaaf > 0 ? $previaVaaf : null,
+            'vaa_label' => $fmt($vaafCalculo),
+            'vaa_previa_label' => $previaVaaf > 0 ? $fmt($previaVaaf) : null,
+            'vaa_fonte' => $ref['fonte'],
+            'vaa_fonte_label' => $fonteCalculo,
+            'vaa_ano' => $anoCalculo,
+            'vaaf_comparacao' => $vaafComparacao,
+            'previsao_comparacao' => $previsaoComparacao,
+            'divergencia_vaaf' => is_array($ref['divergencia'] ?? null) ? $ref['divergencia'] : null,
+            'vaat_label' => $ref['vaat'] !== null ? $fmt($ref['vaat']) : null,
+            'vaat_com_compl_label' => isset($ref['vaat_com_compl']) && is_numeric($ref['vaat_com_compl'])
+                ? $fmt((float) $ref['vaat_com_compl'])
+                : null,
+            'iei_pct' => $ref['iei_pct'] ?? null,
+            'complementacao_vaat_oficial' => $complVaatOficial > 0 ? $complVaatOficial : null,
+            'previsao_vaat_indicativa' => $previsaoVaatTotal,
+            'complementacao_vaar_oficial' => $ref['complementacao_vaar'],
+            'formula_base' => $formulaBase,
+            'kpis' => $kpis,
             'totais' => [
                 'fundeb_base_anual' => $previsaoReferencia,
                 'fundeb_base_previa_anual' => $basePrevia,
+                'previsao_vaat_indicativa' => $previsaoVaatTotal,
+                'complementacao_vaat_oficial' => $complVaatOficial > 0 ? $complVaatOficial : null,
                 'complementacao_vaar_indicativa' => $complementIndicativa,
                 'complementacao_vaar' => $complementVaar,
                 'complementacao_vaar_fonte' => $complementVaarFonte,

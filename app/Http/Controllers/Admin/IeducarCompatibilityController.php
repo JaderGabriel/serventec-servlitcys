@@ -46,14 +46,23 @@ class IeducarCompatibilityController extends Controller
         if ($city !== null) {
             $filters = $this->filtersFromRequest($request);
             $fundebStored = $this->fundebReferences->listForCity($city)
-                ->map(static fn ($r) => [
-                    'ano' => (int) $r->ano,
-                    'vaaf' => (float) $r->vaaf,
-                    'vaat' => $r->vaat !== null ? (float) $r->vaat : null,
-                    'complementacao_vaar' => $r->complementacao_vaar !== null ? (float) $r->complementacao_vaar : null,
-                    'fonte' => $r->fonte,
-                    'imported_at' => $r->imported_at?->format('d/m/Y H:i'),
-                ])
+                ->map(static function ($r) {
+                    $meta = is_array($r->meta) ? $r->meta : [];
+
+                    return [
+                        'ano' => (int) $r->ano,
+                        'vaaf' => (float) $r->vaaf,
+                        'vaat' => $r->vaat !== null ? (float) $r->vaat : null,
+                        'vaat_com_compl' => isset($meta['vaat_com_compl']) ? (float) $meta['vaat_com_compl'] : null,
+                        'iei_pct' => $meta['iei_pct'] ?? null,
+                        'complementacao_vaaf' => $r->complementacao_vaaf !== null ? (float) $r->complementacao_vaaf : null,
+                        'complementacao_vaat' => $r->complementacao_vaat !== null ? (float) $r->complementacao_vaat : null,
+                        'complementacao_vaar' => $r->complementacao_vaar !== null ? (float) $r->complementacao_vaar : null,
+                        'fonte' => $r->fonte,
+                        'imported_at' => $r->imported_at?->format('d/m/Y H:i'),
+                        'eligibility' => \App\Support\Fundeb\FundebPortariaEligibility::badges($r),
+                    ];
+                })
                 ->all();
 
             $resolveFilters = $filters->hasYearSelected() && ! $filters->isAllSchoolYears()

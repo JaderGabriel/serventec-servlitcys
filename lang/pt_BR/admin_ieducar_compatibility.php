@@ -51,10 +51,11 @@ return [
     ],
 
     'discrepancies' => [
-        'heading' => 'Como ler as rotinas de discrepância',
-        'ocorrencias' => 'Ocorrências — registos com problema (ex.: matrícula sem raça, escola inativa com alunos).',
-        'escolas' => 'Escolas — unidades com pelo menos uma ocorrência.',
-        'perda' => 'Perda estimada — ocorrências × índice do exercício × peso; valor indicativo, não multa nem repasse.',
+        'intro' => 'Mesmo painel da consultoria (Finanças → Discrepâncias): módulos de cadastro com estado, impacto indicativo e onde corrigir. Geo sem coordenadas conta escolas (não matrículas) para a perda — alinhado a Cadastro → Unidades.',
+        'legend' => 'Crítico = pendência grave · Atenção = revisar · Sem dados = filtro sem universo (não é «tudo certo») · Indisponível = coluna ou tabela em falta na base.',
+        'ocorrencias' => 'Ocorrências — soma de registos com problema (matrículas na maioria das rotinas; escolas na rotina de geo).',
+        'escolas' => 'Escolas — unidades distintas com pelo menos uma ocorrência.',
+        'perda' => 'Perda estimada — unidades × VAAF × peso por tipo; indicativo, não repasse oficial.',
         'ganho' => 'Ganho potencial — cenário se corrigir antes do Censo/FUNDEB.',
     ],
 

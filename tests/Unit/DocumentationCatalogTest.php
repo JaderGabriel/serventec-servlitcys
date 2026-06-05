@@ -38,7 +38,7 @@ class DocumentationCatalogTest extends TestCase
     public function test_outros_documentos_mostra_release_producao_e_submenu(): void
     {
         $production = DocumentationCatalog::productionReleasePath();
-        $this->assertSame('docs/RELEASE_20260605_ATHENA.md', $production);
+        $this->assertSame('docs/RELEASE_20260610_CLIO.md', $production);
 
         $layout = DocumentationCatalog::releaseOutrosLayout(4);
         $this->assertCount(4, $layout['featured']);

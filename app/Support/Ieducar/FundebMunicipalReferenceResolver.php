@@ -227,6 +227,9 @@ final class FundebMunicipalReferenceResolver
                 $ibge,
                 null,
             );
+            $primary['complementacao_vaat'] = $municipal['complementacao_vaat'] ?? null;
+            $primary['vaat_com_compl'] = $municipal['vaat_com_compl'] ?? null;
+            $primary['iei_pct'] = $municipal['iei_pct'] ?? null;
 
             return self::enrichWithComparison($primary, $previa, $ibge, $municipal, $referenciaEstadual);
         }
@@ -266,21 +269,14 @@ final class FundebMunicipalReferenceResolver
         foreach ($years as $ano) {
             $row = $byYear->get($ano);
             if ($row !== null && (float) $row->vaaf > 0 && ! FundebReferenceSource::isPlaceholder($row->fonte)) {
-                return [
-                    'vaaf' => (float) $row->vaaf,
-                    'vaat' => $row->vaat !== null ? (float) $row->vaat : null,
-                    'complementacao_vaar' => $row->complementacao_vaar !== null ? (float) $row->complementacao_vaar : null,
-                    'fonte' => self::FONTE_OFICIAL_DB,
-                    'fonte_label' => self::labelForResolvedYear(
-                        __('VAAF municipal (:fonte, :ano)', [
-                            'fonte' => $row->fonte ?: __('FNDE/dados importados'),
-                            'ano' => (string) $ano,
-                        ]),
-                        $ano,
-                        $anchorAno,
-                    ),
-                    'ano' => $ano,
-                ];
+                return self::municipalBlockFromRow($row, $anchorAno, self::labelForResolvedYear(
+                    __('VAAF municipal (:fonte, :ano)', [
+                        'fonte' => $row->fonte ?: __('FNDE/dados importados'),
+                        'ano' => (string) $ano,
+                    ]),
+                    $ano,
+                    $anchorAno,
+                ));
             }
 
             $fromConfig = self::fromConfigIbge($ibge, $ano);
@@ -295,6 +291,7 @@ final class FundebMunicipalReferenceResolver
                     'vaaf' => (float) $fromConfig['vaaf'],
                     'vaat' => $fromConfig['vaat'],
                     'complementacao_vaar' => $fromConfig['complementacao_vaar'],
+                    'complementacao_vaat' => $fromConfig['complementacao_vaat'] ?? null,
                     'fonte' => (string) $fromConfig['fonte'],
                     'fonte_label' => (string) $fromConfig['fonte_label'],
                     'ano' => (int) ($fromConfig['ano'] ?? $ano),
@@ -310,24 +307,53 @@ final class FundebMunicipalReferenceResolver
         if ($latest !== null && (float) $latest->vaaf > 0 && ! FundebReferenceSource::isPlaceholder($latest->fonte)) {
             $ano = (int) $latest->ano;
 
-            return [
-                'vaaf' => (float) $latest->vaaf,
-                'vaat' => $latest->vaat !== null ? (float) $latest->vaat : null,
-                'complementacao_vaar' => $latest->complementacao_vaar !== null ? (float) $latest->complementacao_vaar : null,
-                'fonte' => self::FONTE_OFICIAL_DB,
-                'fonte_label' => self::labelForResolvedYear(
-                    __('VAAF municipal (:fonte, :ano mais recente na base)', [
-                        'fonte' => $latest->fonte ?: __('FNDE/dados importados'),
-                        'ano' => (string) $ano,
-                    ]),
-                    $ano,
-                    $anchorAno,
-                ),
-                'ano' => $ano,
-            ];
+            return self::municipalBlockFromRow($latest, $anchorAno, self::labelForResolvedYear(
+                __('VAAF municipal (:fonte, :ano mais recente na base)', [
+                    'fonte' => $latest->fonte ?: __('FNDE/dados importados'),
+                    'ano' => (string) $ano,
+                ]),
+                $ano,
+                $anchorAno,
+            ));
         }
 
         return null;
+    }
+
+    /**
+     * @return array{
+     *   vaaf: float,
+     *   vaat: ?float,
+     *   vaat_com_compl: ?float,
+     *   iei_pct: ?string,
+     *   complementacao_vaar: ?float,
+     *   complementacao_vaat: ?float,
+     *   fonte: string,
+     *   fonte_label: string,
+     *   ano: ?int
+     * }
+     */
+    private static function municipalBlockFromRow(
+        FundebMunicipioReference $row,
+        int $anchorAno,
+        string $fonteLabel,
+    ): array {
+        $meta = is_array($row->meta) ? $row->meta : [];
+        $ano = (int) $row->ano;
+
+        return [
+            'vaaf' => (float) $row->vaaf,
+            'vaat' => $row->vaat !== null ? (float) $row->vaat : null,
+            'vaat_com_compl' => isset($meta['vaat_com_compl']) && is_numeric($meta['vaat_com_compl'])
+                ? (float) $meta['vaat_com_compl']
+                : null,
+            'iei_pct' => isset($meta['iei_pct']) ? (string) $meta['iei_pct'] : null,
+            'complementacao_vaar' => $row->complementacao_vaar !== null ? (float) $row->complementacao_vaar : null,
+            'complementacao_vaat' => $row->complementacao_vaat !== null ? (float) $row->complementacao_vaat : null,
+            'fonte' => self::FONTE_OFICIAL_DB,
+            'fonte_label' => $fonteLabel,
+            'ano' => $ano,
+        ];
     }
 
     /**
