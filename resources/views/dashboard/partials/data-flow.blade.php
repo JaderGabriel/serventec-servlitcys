@@ -17,7 +17,7 @@
                     {{ __('Fluxo de dados · Integrações') }}
                 </h3>
                 <p class="text-sm text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed max-w-3xl">
-                    {{ __('Visão em camadas: entrada municipal, motor de agregação, referências federais e saídas operacionais. As linhas coloridas reflectem o estado de cada canal de dados.') }}
+                    {{ __('Visão em camadas: entrada municipal, motor, referências ligadas e saídas. Cartões tracejados = fontes no roadmap, ainda desligadas do motor.') }}
                 </p>
             </div>
             <button
@@ -74,6 +74,7 @@
                         'ok' => 'check-circle',
                         'partial' => 'exclamation-triangle',
                         'off' => 'x-circle',
+                        'planned' => 'minus-circle',
                     ];
                 @endphp
                 <ul class="serv-data-flow-legend__list">

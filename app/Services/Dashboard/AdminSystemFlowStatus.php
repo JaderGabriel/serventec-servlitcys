@@ -23,6 +23,7 @@ final class AdminSystemFlowStatus
      *     nodes: list<array<string, mixed>>,
      *     edges: list<array<string, mixed>>,
      *     outputs: list<array<string, mixed>>,
+     *     planned_nodes: list<array<string, mixed>>,
      *     legend: list<array{status: string, label: string, description: string, count: int}>
      * }
      */
@@ -187,6 +188,7 @@ final class AdminSystemFlowStatus
         ];
         $edges[] = $this->edge('servlitcys', 'consultoria', $hubStatus === 'off' ? 'partial' : 'ok', __('Indicadores e decisão'), 'platform');
 
+        $plannedNodes = $this->plannedNodes();
         $statusCounts = $this->statusCounts($nodes, $edges);
 
         return [
@@ -220,7 +222,83 @@ final class AdminSystemFlowStatus
             'nodes' => $nodes,
             'edges' => $edges,
             'outputs' => $outputs,
-            'legend' => $this->legendItems($statusCounts),
+            'planned_nodes' => $plannedNodes,
+            'legend' => $this->legendItems($statusCounts, count($plannedNodes)),
+        ];
+    }
+
+    /**
+     * Fontes documentadas no estudo de integrações — sem canal activo no motor.
+     *
+     * @see docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md §3–4
+     *
+     * @return list<array{
+     *     id: string,
+     *     label: string,
+     *     acronym: string,
+     *     sublabel: string,
+     *     wave: string,
+     *     hint: string,
+     *     category: string
+     * }>
+     */
+    private function plannedNodes(): array
+    {
+        return [
+            [
+                'id' => 'ibge_sidra',
+                'label' => __('IBGE SIDRA'),
+                'acronym' => 'IBGE',
+                'sublabel' => __('População · malhas'),
+                'wave' => '1',
+                'category' => 'demografia',
+                'hint' => __('Séries demográficas por município — enriquece previsão de demanda (Onda 1).'),
+            ],
+            [
+                'id' => 'siconfi',
+                'label' => __('SICONFI'),
+                'acronym' => 'STN',
+                'sublabel' => __('Contas públicas'),
+                'wave' => '1',
+                'category' => 'financeiro',
+                'hint' => __('Indicadores fiscais do ente — contexto orçamentário (Onda 1).'),
+            ],
+            [
+                'id' => 'simec',
+                'label' => __('Simec / VAAR'),
+                'acronym' => 'MEC',
+                'sublabel' => __('Prestação FNDE'),
+                'wave' => '0',
+                'category' => 'financeiro',
+                'hint' => __('Referência manual e links; sem API única de repasse (documentação FUNDEB).'),
+            ],
+            [
+                'id' => 'snas',
+                'label' => __('SNAS / SUAS'),
+                'acronym' => 'MDS',
+                'sublabel' => __('Assistência social'),
+                'wave' => '2',
+                'category' => 'social',
+                'hint' => __('Metas e painéis SUAS — vulnerabilidade e proteção (Onda 2).'),
+            ],
+            [
+                'id' => 'datasus',
+                'label' => __('DATASUS / CNES'),
+                'acronym' => 'SUS',
+                'sublabel' => __('Saúde territorial'),
+                'wave' => '2',
+                'category' => 'saude',
+                'hint' => __('UBS e cobertura — proximidade escola–saúde (Onda 2).'),
+            ],
+            [
+                'id' => 'esus',
+                'label' => __('e-SUS / RNDS'),
+                'acronym' => 'SUS',
+                'sublabel' => __('Saúde na escola'),
+                'wave' => '3',
+                'category' => 'saude',
+                'hint' => __('Interoperabilidade clínica — credencial e pacto municipal (Onda 3).'),
+            ],
         ];
     }
 
@@ -247,9 +325,9 @@ final class AdminSystemFlowStatus
      * @param  array{ok: int, partial: int, off: int}  $counts
      * @return list<array{status: string, label: string, description: string, count: int}>
      */
-    private function legendItems(array $counts): array
+    private function legendItems(array $counts, int $plannedCount = 0): array
     {
-        return [
+        $items = [
             [
                 'status' => 'ok',
                 'label' => __('Operacional'),
@@ -269,6 +347,17 @@ final class AdminSystemFlowStatus
                 'count' => (int) ($counts['off'] ?? 0),
             ],
         ];
+
+        if ($plannedCount > 0) {
+            $items[] = [
+                'status' => 'planned',
+                'label' => __('Não integrado'),
+                'description' => __('Fontes no estudo/roadmap — sem linha de dados ligada ao motor.'),
+                'count' => $plannedCount,
+            ];
+        }
+
+        return $items;
     }
 
     /**

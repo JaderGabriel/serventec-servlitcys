@@ -102,6 +102,9 @@
     @case('x-circle')
         <svg {{ $attrs }} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
         @break
+    @case('minus-circle')
+        <svg {{ $attrs }} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+        @break
     @case('bell')
         <svg {{ $attrs }} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.031A7.967 7.967 0 0 1 18 9.75v-.75V8.25A4.5 4.5 0 0 0 14.25 4h-4.5A4.5 4.5 0 0 0 8.25 8.25v.75a7.967 7.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.454 1.031m-4.5 2.25h9" /></svg>
         @break

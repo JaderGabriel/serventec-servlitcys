@@ -2816,12 +2816,24 @@
     }
 
     .serv-erp-board__lanes {
-        @apply grid gap-3 min-w-[52rem]
+        @apply grid gap-3 min-w-[52rem] items-stretch
             grid-cols-[minmax(9rem,1fr)_3rem_minmax(10rem,1.1fr)_minmax(13rem,1.3fr)_3rem_minmax(8.5rem,0.95fr)];
     }
 
     .serv-erp-lane {
-        @apply flex flex-col gap-3 min-w-0;
+        @apply flex flex-col gap-3 min-w-0 h-full;
+    }
+
+    .serv-erp-lane__body {
+        @apply flex flex-1 flex-col min-h-0;
+    }
+
+    .serv-erp-lane__body--hub {
+        @apply justify-center;
+    }
+
+    .serv-erp-lane__body--outputs {
+        @apply justify-start;
     }
 
     .serv-erp-lane__head {
@@ -2886,6 +2898,49 @@
 
     .serv-erp-node--off {
         @apply border-slate-200/80 dark:border-slate-700/60 opacity-90;
+    }
+
+    .serv-erp-node--planned {
+        @apply border-dashed border-slate-300/90 dark:border-slate-600/80
+            bg-slate-50/50 dark:bg-slate-900/30 opacity-75 py-2;
+    }
+
+    .serv-erp-node__acronym--muted {
+        @apply bg-slate-100/90 text-slate-500 dark:bg-slate-800/60 dark:text-slate-500;
+    }
+
+    .serv-erp-node__planned-badge {
+        @apply absolute top-2 end-2 rounded px-1 py-px text-[8px] font-bold uppercase tracking-wide
+            border border-dashed border-slate-400/70 text-slate-500 dark:border-slate-500/60 dark:text-slate-400;
+    }
+
+    .serv-erp-node__wave {
+        @apply ms-1 inline-flex rounded px-1 py-px text-[8px] font-semibold tabular-nums
+            bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-400;
+    }
+
+    .serv-erp-planned__title {
+        @apply flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-erp-planned__unlink {
+        @apply text-slate-400 dark:text-slate-500 text-xs leading-none;
+    }
+
+    .serv-erp-planned__lead {
+        @apply mt-1 text-[10px] text-slate-500/90 dark:text-slate-500 leading-snug;
+    }
+
+    .serv-erp-planned__list {
+        @apply mt-2 space-y-1.5 m-0 p-0 list-none;
+    }
+
+    .serv-erp-bridge--mobile {
+        @apply flex items-center gap-2 py-1 text-[10px] text-slate-600 dark:text-slate-400;
+    }
+
+    .serv-erp-bridge__mobile-line {
+        @apply h-px flex-1 bg-teal-500/50;
     }
 
     .serv-erp-node__status {
@@ -2958,7 +3013,7 @@
     }
 
     .serv-erp-bridge {
-        @apply flex flex-col items-center justify-center gap-1.5 self-center px-0.5;
+        @apply flex flex-col items-center justify-center gap-1.5 self-stretch px-0.5 min-h-0;
     }
 
     .serv-erp-bridge__label {
@@ -3114,7 +3169,7 @@
 
     .serv-data-flow-legend__list {
         @apply list-none m-0 p-0 grid grid-cols-1 gap-3
-            sm:grid-cols-3 sm:gap-4;
+            sm:grid-cols-2 lg:grid-cols-4 sm:gap-4;
     }
 
     .serv-data-flow-legend__item {
@@ -3137,6 +3192,11 @@
             dark:border-slate-600/80 dark:from-slate-900/60 dark:via-slate-900/40 dark:to-slate-950/60;
     }
 
+    .serv-data-flow-legend__item--planned {
+        @apply border-dashed border-slate-300/90 bg-gradient-to-br from-slate-50/70 via-white to-white opacity-95
+            dark:border-slate-600/70 dark:from-slate-900/50 dark:via-slate-900/35 dark:to-slate-950/50;
+    }
+
     .serv-data-flow-legend__icon {
         @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1;
     }
@@ -3156,6 +3216,11 @@
             dark:bg-slate-800/80 dark:text-slate-300 dark:ring-slate-600/50;
     }
 
+    .serv-data-flow-legend__icon--planned {
+        @apply bg-slate-50 text-slate-500 ring-slate-300/50 border border-dashed border-slate-300/80
+            dark:bg-slate-900/60 dark:text-slate-400 dark:ring-slate-600/40 dark:border-slate-600/70;
+    }
+
     .serv-data-flow-legend__item--ok .serv-data-flow-legend__label {
         @apply text-teal-900 dark:text-teal-100;
     }
@@ -3166,6 +3231,10 @@
 
     .serv-data-flow-legend__item--off .serv-data-flow-legend__label {
         @apply text-slate-800 dark:text-slate-200;
+    }
+
+    .serv-data-flow-legend__item--planned .serv-data-flow-legend__label {
+        @apply text-slate-700 dark:text-slate-300;
     }
 
     .serv-data-flow-legend__label {
@@ -3186,6 +3255,10 @@
 
     .serv-data-flow-legend__item--off .serv-data-flow-legend__count {
         @apply text-slate-600 dark:text-slate-400;
+    }
+
+    .serv-data-flow-legend__item--planned .serv-data-flow-legend__count {
+        @apply text-slate-500 dark:text-slate-500;
     }
 
     .serv-data-flow-legend__desc {

@@ -51,6 +51,10 @@
                     <span class="serv-mm-tip-num serv-mm-tip-num--muted" aria-hidden="true">·</span>
                     <span>{{ __('Linhas: sólidas pulsantes = operacional; tracejadas = a configurar; pontilhadas = indisponível. Cada eixo tem cor própria (teal municipal, âmbar FNDE/Tesouro, violeta INEP, etc.).') }}</span>
                 </li>
+                <li class="flex gap-2">
+                    <span class="serv-mm-tip-num serv-mm-tip-num--muted" aria-hidden="true">⊘</span>
+                    <span>{{ __('Possíveis fontes (roadmap): cartões tracejados e etiqueta «Desligado» — aparecem na documentação/estudo de integrações, mas ainda sem canal de dados activo para o motor.') }}</span>
+                </li>
             </ul>
         </div>
         <div class="border-t border-slate-200/90 dark:border-slate-700 px-5 py-3 shrink-0 flex justify-end">

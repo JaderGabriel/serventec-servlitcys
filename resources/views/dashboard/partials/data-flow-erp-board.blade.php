@@ -1,6 +1,7 @@
 @php
     $nodesById = collect($systemFlow['nodes'] ?? [])->keyBy('id');
     $externals = collect($systemFlow['nodes'] ?? [])->where('zone', 'external')->values();
+    $plannedNodes = collect($systemFlow['planned_nodes'] ?? []);
     $hub = $nodesById->get('servlitcys');
     $ieducar = $nodesById->get('ieducar');
     $edgesByFrom = collect($systemFlow['edges'] ?? [])->keyBy('from');
@@ -14,63 +15,66 @@
     $configured = $externals->where('status', 'ok')->count();
     $totalExternal = $externals->count();
 
-    $statusBorder = [
-        'ok' => 'border-teal-300 dark:border-teal-700',
-        'partial' => 'border-amber-300 dark:border-amber-700',
-        'off' => 'border-slate-300 dark:border-slate-600',
-    ];
-    $statusDot = [
-        'ok' => 'bg-teal-500 shadow-[0_0_0_3px_rgba(20,184,166,0.25)]',
-        'partial' => 'bg-amber-500',
-        'off' => 'bg-slate-400',
-    ];
-    $channelLine = [
-        'municipal' => 'text-teal-600 dark:text-teal-400',
-        'financeiro' => 'text-amber-600 dark:text-amber-400',
-        'pedagogico' => 'text-violet-600 dark:text-violet-400',
-        'transparencia' => 'text-sky-600 dark:text-sky-400',
-        'geografia' => 'text-emerald-600 dark:text-emerald-400',
-        'social' => 'text-fuchsia-600 dark:text-fuchsia-400',
-        'platform' => 'text-indigo-600 dark:text-indigo-400',
-    ];
+    $nodeStatusClass = static fn (string $st): string => match ($st) {
+        'ok' => 'serv-erp-node--ok',
+        'partial' => 'serv-erp-node--partial',
+        default => 'serv-erp-node--off',
+    };
+    $statusDotClass = static fn (string $st): string => match ($st) {
+        'ok' => 'serv-erp-node__status--ok',
+        'partial' => 'serv-erp-node__status--partial',
+        default => 'serv-erp-node__status--off',
+    };
+    $bridgeLabelClass = static fn (string $st): string => match ($st) {
+        'ok' => 'serv-erp-bridge__label--ok',
+        'partial' => 'serv-erp-bridge__label--partial',
+        default => 'serv-erp-bridge__label--off',
+    };
+    $edgeLabelClass = static fn (string $st): string => match ($st) {
+        'ok' => 'serv-erp-node__edge',
+        'partial' => 'serv-erp-node__edge serv-erp-node__edge--partial',
+        default => 'serv-erp-node__edge serv-erp-node__edge--off',
+    };
 @endphp
 
 <div
-    class="serv-erp-board relative rounded-xl border border-slate-200/90 bg-slate-100/60 dark:border-slate-700/90 dark:bg-slate-950/50 p-4 sm:p-5 overflow-x-auto min-w-0"
+    class="serv-erp-board relative rounded-xl border border-slate-200/90 bg-slate-100/60 dark:border-slate-700/90 dark:bg-slate-950/50 min-w-0"
     role="figure"
     aria-describedby="home-data-flow-desc"
 >
     <div class="serv-erp-board__glow pointer-events-none absolute inset-0 rounded-xl bg-[radial-gradient(ellipse_55%_65%_at_42%_48%,rgba(20,184,166,0.14),transparent_68%)] dark:bg-[radial-gradient(ellipse_55%_65%_at_42%_48%,rgba(45,212,191,0.12),transparent_70%)]" aria-hidden="true"></div>
     <div class="serv-erp-board__grid pointer-events-none absolute inset-3 rounded-lg opacity-[0.35] dark:opacity-20 bg-[linear-gradient(rgba(148,163,184,0.22)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.22)_1px,transparent_1px)] bg-[size:1.25rem_1.25rem]" aria-hidden="true"></div>
     <p id="home-data-flow-desc" class="sr-only">
-        {{ __('Diagrama ERP: entrada municipal, motor de agregação, fontes federais e saídas operacionais, com estado de cada integração nas linhas de comunicação.') }}
+        {{ __('Diagrama ERP: entrada municipal, motor de agregação, fontes federais integradas, fontes planeadas desligadas e saídas operacionais.') }}
     </p>
 
-    <div class="serv-erp-board__lanes relative z-[1] grid grid-cols-1 gap-4 xl:grid-cols-[minmax(9rem,1fr)_2.75rem_minmax(11rem,1.15fr)_minmax(12rem,1.35fr)_2.75rem_minmax(8.5rem,1fr)] xl:gap-3 xl:min-w-[48rem]">
+    <div class="serv-erp-board__lanes relative z-[1]">
         {{-- Entrada municipal --}}
-        <div class="serv-erp-lane flex flex-col gap-3 min-w-0">
-            <header class="flex items-start gap-2 rounded-lg border border-slate-200/80 bg-white/80 dark:border-slate-700/70 dark:bg-slate-900/50 px-2.5 py-2">
-                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-serv-navy text-[10px] font-bold text-white" aria-hidden="true">{{ $zoneMunicipal['step'] ?? 1 }}</span>
+        <div class="serv-erp-lane">
+            <header class="serv-erp-lane__head">
+                <span class="serv-erp-lane__step" aria-hidden="true">{{ $zoneMunicipal['step'] ?? 1 }}</span>
                 <div class="min-w-0">
-                    <p class="text-[11px] font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100">{{ __('Entrada') }}</p>
-                    <p class="text-[10px] text-slate-500 dark:text-slate-400">{{ __('Base municipal') }}</p>
+                    <p class="serv-erp-lane__title">{{ __('Entrada') }}</p>
+                    <p class="serv-erp-lane__desc">{{ __('Base municipal') }}</p>
                 </div>
             </header>
-            @if ($ieducar)
-                @php $st = (string) ($ieducar['status'] ?? 'partial'); @endphp
-                <article class="relative rounded-lg border bg-white px-3 py-2.5 shadow-sm dark:bg-slate-900/70 {{ $statusBorder[$st] ?? $statusBorder['partial'] }}" title="{{ $ieducar['hint'] }}">
-                    <span class="absolute top-2.5 end-2.5 h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-slate-900 {{ $statusDot[$st] ?? $statusDot['partial'] }}" aria-hidden="true"></span>
-                    <p class="pe-4 text-xs font-semibold text-slate-900 dark:text-slate-100">{{ $ieducar['label'] }}</p>
-                    <p class="mt-0.5 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ $ieducar['sublabel'] }}</p>
-                    @if (filled($ieducar['metric'] ?? null))
-                        <p class="mt-1.5 text-[10px] text-slate-600 dark:text-slate-400">
-                            <span>{{ $ieducar['metric_label'] ?? __('Municípios') }}</span>
-                            <strong class="font-bold tabular-nums text-teal-800 dark:text-teal-300">{{ $ieducar['metric'] }}</strong>
-                        </p>
-                    @endif
-                    <p class="mt-1.5 text-[10px] text-slate-600 dark:text-slate-400 leading-snug line-clamp-2">{{ $ieducar['hint'] }}</p>
-                </article>
-            @endif
+            <div class="serv-erp-lane__body">
+                @if ($ieducar)
+                    @php $st = (string) ($ieducar['status'] ?? 'partial'); @endphp
+                    <article class="serv-erp-node {{ $nodeStatusClass($st) }}" title="{{ $ieducar['hint'] }}">
+                        <span class="serv-erp-node__status {{ $statusDotClass($st) }}" aria-hidden="true"></span>
+                        <p class="serv-erp-node__label">{{ $ieducar['label'] }}</p>
+                        <p class="serv-erp-node__sub">{{ $ieducar['sublabel'] }}</p>
+                        @if (filled($ieducar['metric'] ?? null))
+                            <p class="serv-erp-node__metric">
+                                <span>{{ $ieducar['metric_label'] ?? __('Municípios') }}</span>
+                                <strong>{{ $ieducar['metric'] }}</strong>
+                            </p>
+                        @endif
+                        <p class="serv-erp-node__hint">{{ $ieducar['hint'] }}</p>
+                    </article>
+                @endif
+            </div>
         </div>
 
         @if ($edgeIeducar)
@@ -78,89 +82,121 @@
                 $est = (string) ($edgeIeducar['status'] ?? 'partial');
                 $channel = (string) ($edgeIeducar['channel'] ?? 'municipal');
             @endphp
-            <div class="serv-erp-bridge hidden xl:flex flex-col items-center justify-center gap-1.5 self-center px-0.5" aria-hidden="true">
+            <div class="serv-erp-bridge serv-erp-bridge--forward hidden lg:flex" aria-hidden="true">
                 <div @class([
-                    'serv-erp-line relative flex items-center w-full',
-                    $channelLine[$channel] ?? $channelLine['municipal'],
+                    'serv-erp-line serv-erp-line--forward w-full',
+                    'serv-erp-line--channel-'.$channel,
                     'serv-erp-line--'.$est,
+                    $edgeIeducar['bidirectional'] ?? false ? 'serv-erp-line--bidirectional' : '',
                 ])>
-                    <span class="serv-erp-line__track block h-[3px] flex-1 rounded-full bg-current"></span>
-                    <span class="block h-0 w-0 shrink-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-current ms-0.5"></span>
+                    <span class="serv-erp-line__track"></span>
+                    <span class="serv-erp-line__arrow" aria-hidden="true"></span>
                 </div>
-                <p class="text-[9px] font-medium text-center leading-snug max-w-[3.25rem] @if ($est === 'ok') text-teal-800 dark:text-teal-300 @elseif ($est === 'partial') text-amber-800 dark:text-amber-300 @else text-slate-500 @endif">{{ $edgeIeducar['label'] }}</p>
+                <p class="serv-erp-bridge__label {{ $bridgeLabelClass($est) }}">{{ $edgeIeducar['label'] }}</p>
             </div>
-            <div class="xl:hidden flex items-center gap-2 py-1 text-[10px] text-slate-600 dark:text-slate-400" aria-hidden="true">
-                <span class="h-px flex-1 bg-teal-500/70"></span>
-                <span>{{ $edgeIeducar['label'] }}</span>
-                <span class="h-px flex-1 bg-teal-500/70"></span>
+            <div class="lg:hidden serv-erp-bridge serv-erp-bridge--mobile" aria-hidden="true">
+                <span class="serv-erp-bridge__mobile-line"></span>
+                <span class="text-[10px] text-slate-600 dark:text-slate-400">{{ $edgeIeducar['label'] }}</span>
+                <span class="serv-erp-bridge__mobile-line"></span>
             </div>
         @endif
 
-        {{-- Motor — destaque SERVLITCYS --}}
-        <div class="serv-erp-lane serv-erp-lane--hub flex flex-col gap-3 min-w-0 xl:rounded-xl xl:border xl:border-teal-300/70 xl:bg-gradient-to-b xl:from-teal-50/95 xl:via-white xl:to-teal-50/70 xl:px-2.5 xl:py-3 xl:shadow-inner xl:shadow-teal-900/5 dark:xl:border-teal-700/60 dark:xl:from-teal-950/40 dark:xl:via-slate-900/40 dark:xl:to-teal-950/30">
-            <header class="flex items-start gap-2 rounded-lg border border-teal-300/80 bg-teal-100/60 dark:border-teal-700/60 dark:bg-teal-950/40 px-2.5 py-2">
-                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-teal-700 text-[10px] font-bold text-white shadow-sm dark:bg-teal-500" aria-hidden="true">{{ $zonePlatform['step'] ?? 2 }}</span>
+        {{-- Motor --}}
+        <div class="serv-erp-lane serv-erp-lane--hub">
+            <header class="serv-erp-lane__head serv-erp-lane__head--hub">
+                <span class="serv-erp-lane__step serv-erp-lane__step--hub" aria-hidden="true">{{ $zonePlatform['step'] ?? 2 }}</span>
                 <div class="min-w-0">
-                    <p class="text-[11px] font-bold uppercase tracking-wide text-teal-900 dark:text-teal-100">{{ __('Motor') }}</p>
-                    <p class="text-[10px] text-teal-800/80 dark:text-teal-300/80">{{ __('Núcleo da plataforma') }}</p>
+                    <p class="serv-erp-lane__title text-teal-900 dark:text-teal-100">{{ __('Motor') }}</p>
+                    <p class="serv-erp-lane__desc text-teal-800/80 dark:text-teal-300/80">{{ __('Núcleo da plataforma') }}</p>
                 </div>
             </header>
-            @if ($hub)
-                @php $st = (string) ($hub['status'] ?? 'ok'); @endphp
-                <article class="serv-erp-hub relative overflow-hidden rounded-xl border-2 border-teal-500/70 bg-gradient-to-br from-teal-700 via-teal-800 to-serv-navy px-4 py-4 shadow-lg shadow-teal-900/25 ring-2 ring-teal-400/30 dark:border-teal-400/50 dark:from-teal-900 dark:via-teal-950 dark:to-slate-950 dark:shadow-teal-950/40 dark:ring-teal-500/25" title="{{ $hub['hint'] }}">
-                    <span class="pointer-events-none absolute -end-6 -top-6 h-24 w-24 rounded-full bg-teal-300/25 blur-2xl dark:bg-teal-400/15" aria-hidden="true"></span>
-                    <span class="absolute top-3 end-3 h-3 w-3 rounded-full ring-2 ring-white/80 {{ $statusDot[$st] ?? $statusDot['ok'] }}" aria-hidden="true"></span>
-                    <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-100/90">{{ __('Plataforma') }}</p>
-                    <p class="mt-1 font-display text-lg font-bold tracking-tight text-white pe-6">{{ $hub['label'] }}</p>
-                    <p class="mt-0.5 text-[11px] font-medium uppercase tracking-wide text-teal-100/85">{{ $hub['sublabel'] }}</p>
-                    <p class="mt-2 text-[10px] text-teal-50/90 leading-snug">{{ $hub['hint'] }}</p>
-                </article>
-            @endif
+            <div class="serv-erp-lane__body serv-erp-lane__body--hub">
+                @if ($hub)
+                    @php $st = (string) ($hub['status'] ?? 'ok'); @endphp
+                    <article class="serv-erp-hub relative overflow-hidden rounded-xl border-2 border-teal-500/70 bg-gradient-to-br from-teal-700 via-teal-800 to-serv-navy px-4 py-4 shadow-lg shadow-teal-900/25 ring-2 ring-teal-400/30 dark:border-teal-400/50 dark:from-teal-900 dark:via-teal-950 dark:to-slate-950 dark:shadow-teal-950/40 dark:ring-teal-500/25" title="{{ $hub['hint'] }}">
+                        <span class="pointer-events-none absolute -end-6 -top-6 h-24 w-24 rounded-full bg-teal-300/25 blur-2xl dark:bg-teal-400/15" aria-hidden="true"></span>
+                        <span class="serv-erp-node__status serv-erp-node__status--{{ $st === 'ok' ? 'ok' : ($st === 'partial' ? 'partial' : 'off') }} top-3 end-3 h-3 w-3" aria-hidden="true"></span>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-100/90">{{ __('Plataforma') }}</p>
+                        <p class="mt-1 font-display text-lg font-bold tracking-tight text-white pe-6">{{ $hub['label'] }}</p>
+                        <p class="mt-0.5 text-[11px] font-medium uppercase tracking-wide text-teal-100/85">{{ $hub['sublabel'] }}</p>
+                        <p class="mt-2 text-[10px] text-teal-50/90 leading-snug">{{ $hub['hint'] }}</p>
+                    </article>
+                @endif
+            </div>
         </div>
 
-        {{-- Fontes federais --}}
-        <div class="serv-erp-lane flex flex-col gap-3 min-w-0">
-            <header class="flex items-start gap-2 rounded-lg border border-slate-200/80 bg-white/80 dark:border-slate-700/70 dark:bg-slate-900/50 px-2.5 py-2">
-                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-serv-navy text-[10px] font-bold text-white" aria-hidden="true">{{ $zoneExternal['step'] ?? 3 }}</span>
+        {{-- Referências integradas --}}
+        <div class="serv-erp-lane serv-erp-lane--feeds">
+            <header class="serv-erp-lane__head">
+                <span class="serv-erp-lane__step" aria-hidden="true">{{ $zoneExternal['step'] ?? 3 }}</span>
                 <div class="min-w-0 flex-1">
-                    <p class="text-[11px] font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100">{{ __('Referências') }}</p>
-                    <p class="text-[10px] text-slate-500 dark:text-slate-400">{{ __('Fontes públicas') }}</p>
+                    <p class="serv-erp-lane__title">{{ __('Referências') }}</p>
+                    <p class="serv-erp-lane__desc">{{ __('Fontes públicas ligadas') }}</p>
                 </div>
-                <span class="shrink-0 rounded-md border border-teal-200/80 bg-teal-50 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-teal-800 dark:border-teal-800/50 dark:bg-teal-950/40 dark:text-teal-300">{{ $configured }}/{{ $totalExternal }}</span>
+                <span class="serv-erp-lane__badge">{{ $configured }}/{{ $totalExternal }}</span>
             </header>
-            <ul class="space-y-2 m-0 p-0 list-none">
-                @foreach ($externals as $node)
-                    @php
-                        $edge = $edgesByFrom->get($node['id']);
-                        $nst = (string) ($node['status'] ?? 'partial');
-                        $channel = (string) ($edge['channel'] ?? 'platform');
-                        $est = (string) ($edge['status'] ?? 'partial');
-                    @endphp
-                    <li class="flex items-center gap-1.5 min-w-0">
-                        @if ($edge)
-                            <div @class([
-                                'serv-erp-line serv-erp-line--compact relative hidden xl:flex items-center w-5 shrink-0',
-                                $channelLine[$channel] ?? $channelLine['platform'],
-                                'serv-erp-line--'.$est,
-                            ]) aria-hidden="true">
-                                <span class="serv-erp-line__track block h-[3px] flex-1 rounded-full bg-current"></span>
-                                <span class="order-first block h-0 w-0 shrink-0 border-y-[4px] border-y-transparent border-r-[6px] border-r-current me-0.5"></span>
-                            </div>
-                        @endif
-                        <article class="relative flex-1 min-w-0 rounded-lg border bg-white px-3 py-2 shadow-sm dark:bg-slate-900/70 {{ $statusBorder[$nst] ?? $statusBorder['partial'] }}" title="{{ $node['hint'] }}">
-                            <span class="absolute top-2 end-2 h-2 w-2 rounded-full ring-2 ring-white dark:ring-slate-900 {{ $statusDot[$nst] ?? $statusDot['partial'] }}" aria-hidden="true"></span>
-                            <p class="pe-3 text-xs font-semibold text-slate-900 dark:text-slate-100 leading-snug">
-                                <span class="inline-flex me-1 rounded px-1 py-px text-[8px] font-bold uppercase tracking-wide bg-slate-200/90 text-slate-700 dark:bg-slate-800 dark:text-slate-300">{{ $node['acronym'] ?? '' }}</span>
-                                {{ $node['label'] }}
-                            </p>
-                            <p class="mt-0.5 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ $node['sublabel'] }}</p>
+            <div class="serv-erp-lane__body">
+                <ul class="serv-erp-feeds">
+                    @foreach ($externals as $node)
+                        @php
+                            $edge = $edgesByFrom->get($node['id']);
+                            $nst = (string) ($node['status'] ?? 'partial');
+                            $channel = (string) ($edge['channel'] ?? 'platform');
+                            $est = (string) ($edge['status'] ?? 'partial');
+                        @endphp
+                        <li class="serv-erp-feed">
                             @if ($edge)
-                                <p class="mt-1 text-[9px] font-medium leading-snug @if ($est === 'ok') text-teal-800/90 dark:text-teal-300/90 @elseif ($est === 'partial') text-amber-800/90 dark:text-amber-300/90 @else text-slate-500 @endif">{{ $edge['label'] }}</p>
+                                <div @class([
+                                    'serv-erp-line serv-erp-line--compact serv-erp-line--inbound hidden lg:flex',
+                                    'serv-erp-line--channel-'.$channel,
+                                    'serv-erp-line--'.$est,
+                                ]) aria-hidden="true">
+                                    <span class="serv-erp-line__arrow serv-erp-line__arrow--left" aria-hidden="true"></span>
+                                    <span class="serv-erp-line__track"></span>
+                                </div>
                             @endif
-                        </article>
-                    </li>
-                @endforeach
-            </ul>
+                            <article class="serv-erp-node serv-erp-node--feed {{ $nodeStatusClass($nst) }}" title="{{ $node['hint'] }}">
+                                <span class="serv-erp-node__status {{ $statusDotClass($nst) }}" aria-hidden="true"></span>
+                                <p class="serv-erp-node__label">
+                                    <span class="serv-erp-node__acronym">{{ $node['acronym'] ?? '' }}</span>
+                                    {{ $node['label'] }}
+                                </p>
+                                <p class="serv-erp-node__sub">{{ $node['sublabel'] }}</p>
+                                @if ($edge)
+                                    <p class="{{ $edgeLabelClass($est) }}">{{ $edge['label'] }}</p>
+                                @endif
+                            </article>
+                        </li>
+                    @endforeach
+                </ul>
+
+                @if ($plannedNodes->isNotEmpty())
+                    <div class="serv-erp-planned mt-3 pt-3 border-t border-dashed border-slate-300/80 dark:border-slate-600/70">
+                        <p class="serv-erp-planned__title">
+                            <span class="serv-erp-planned__unlink" aria-hidden="true">⊘</span>
+                            {{ __('Possíveis fontes (roadmap)') }}
+                        </p>
+                        <p class="serv-erp-planned__lead">{{ __('Documentadas no estudo de integrações — sem ligação activa ao motor.') }}</p>
+                        <ul class="serv-erp-planned__list">
+                            @foreach ($plannedNodes as $node)
+                                <li>
+                                    <article class="serv-erp-node serv-erp-node--planned" title="{{ $node['hint'] ?? '' }}">
+                                        <span class="serv-erp-node__planned-badge">{{ __('Desligado') }}</span>
+                                        <p class="serv-erp-node__label">
+                                            <span class="serv-erp-node__acronym serv-erp-node__acronym--muted">{{ $node['acronym'] ?? '' }}</span>
+                                            {{ $node['label'] }}
+                                            @if (filled($node['wave'] ?? null))
+                                                <span class="serv-erp-node__wave">O{{ $node['wave'] }}</span>
+                                            @endif
+                                        </p>
+                                        <p class="serv-erp-node__sub">{{ $node['sublabel'] ?? '' }}</p>
+                                    </article>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+            </div>
         </div>
 
         @if ($edgeHubOut)
@@ -168,40 +204,42 @@
                 $est = (string) ($edgeHubOut['status'] ?? 'partial');
                 $channel = (string) ($edgeHubOut['channel'] ?? 'platform');
             @endphp
-            <div class="serv-erp-bridge hidden xl:flex flex-col items-center justify-center gap-1.5 self-center px-0.5" aria-hidden="true">
+            <div class="serv-erp-bridge serv-erp-bridge--forward hidden lg:flex" aria-hidden="true">
                 <div @class([
-                    'serv-erp-line relative flex items-center w-full',
-                    $channelLine[$channel] ?? $channelLine['platform'],
+                    'serv-erp-line serv-erp-line--forward w-full',
+                    'serv-erp-line--channel-'.$channel,
                     'serv-erp-line--'.$est,
                 ])>
-                    <span class="serv-erp-line__track block h-[3px] flex-1 rounded-full bg-current"></span>
-                    <span class="block h-0 w-0 shrink-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-current ms-0.5"></span>
+                    <span class="serv-erp-line__track"></span>
+                    <span class="serv-erp-line__arrow" aria-hidden="true"></span>
                 </div>
-                <p class="text-[9px] font-medium text-center leading-snug max-w-[3.25rem] @if ($est === 'ok') text-indigo-800 dark:text-indigo-300 @elseif ($est === 'partial') text-amber-800 dark:text-amber-300 @else text-slate-500 @endif">{{ $edgeHubOut['label'] }}</p>
+                <p class="serv-erp-bridge__label {{ $bridgeLabelClass($est) }}">{{ $edgeHubOut['label'] }}</p>
             </div>
         @endif
 
         {{-- Saída --}}
-        <div class="serv-erp-lane flex flex-col gap-3 min-w-0">
-            <header class="flex items-start gap-2 rounded-lg border border-slate-200/80 bg-white/80 dark:border-slate-700/70 dark:bg-slate-900/50 px-2.5 py-2">
-                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-indigo-700 text-[10px] font-bold text-white dark:bg-indigo-600" aria-hidden="true">4</span>
+        <div class="serv-erp-lane serv-erp-lane--outputs">
+            <header class="serv-erp-lane__head">
+                <span class="serv-erp-lane__step serv-erp-lane__step--output" aria-hidden="true">4</span>
                 <div class="min-w-0">
-                    <p class="text-[11px] font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100">{{ __('Saída') }}</p>
-                    <p class="text-[10px] text-slate-500 dark:text-slate-400">{{ __('Consumo operacional') }}</p>
+                    <p class="serv-erp-lane__title">{{ __('Saída') }}</p>
+                    <p class="serv-erp-lane__desc">{{ __('Consumo operacional') }}</p>
                 </div>
             </header>
-            <ul class="space-y-2 m-0 p-0 list-none">
-                @foreach ($outputs as $output)
-                    @php $st = (string) ($output['status'] ?? 'ok'); @endphp
-                    <li>
-                        <article class="relative rounded-lg border bg-white px-3 py-2 shadow-sm dark:bg-slate-900/70 {{ $statusBorder[$st] ?? $statusBorder['ok'] }}" title="{{ $output['hint'] }}">
-                            <span class="absolute top-2 end-2 h-2 w-2 rounded-full ring-2 ring-white dark:ring-slate-900 {{ $statusDot[$st] ?? $statusDot['ok'] }}" aria-hidden="true"></span>
-                            <p class="pe-3 text-xs font-semibold text-slate-900 dark:text-slate-100">{{ $output['label'] }}</p>
-                            <p class="mt-0.5 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ $output['sublabel'] }}</p>
-                        </article>
-                    </li>
-                @endforeach
-            </ul>
+            <div class="serv-erp-lane__body serv-erp-lane__body--outputs">
+                <ul class="serv-erp-outputs">
+                    @foreach ($outputs as $output)
+                        @php $st = (string) ($output['status'] ?? 'ok'); @endphp
+                        <li>
+                            <article class="serv-erp-node serv-erp-node--output {{ $nodeStatusClass($st) }}" title="{{ $output['hint'] }}">
+                                <span class="serv-erp-node__status {{ $statusDotClass($st) }}" aria-hidden="true"></span>
+                                <p class="serv-erp-node__label">{{ $output['label'] }}</p>
+                                <p class="serv-erp-node__sub">{{ $output['sublabel'] }}</p>
+                            </article>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
         </div>
     </div>
 </div>

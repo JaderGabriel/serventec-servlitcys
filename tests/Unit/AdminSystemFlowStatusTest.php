@@ -26,10 +26,18 @@ final class AdminSystemFlowStatusTest extends TestCase
         $municipalZone = collect($diagram['zones'])->firstWhere('id', 'municipal');
         $this->assertSame(1, $municipalZone['step'] ?? null);
         $this->assertArrayHasKey('legend', $diagram);
-        $this->assertCount(3, $diagram['legend']);
+        $this->assertGreaterThanOrEqual(4, count($diagram['legend']));
         $this->assertNotEmpty($diagram['legend'][0]['description'] ?? '');
         $legendTotal = array_sum(array_column($diagram['legend'], 'count'));
-        $this->assertSame(count($diagram['nodes']) + count($diagram['edges']), $legendTotal);
+        $this->assertSame(
+            count($diagram['nodes']) + count($diagram['edges']) + count($diagram['planned_nodes'] ?? []),
+            $legendTotal,
+        );
+        $this->assertArrayHasKey('planned_nodes', $diagram);
+        $this->assertGreaterThanOrEqual(4, count($diagram['planned_nodes']));
+        $plannedLegend = collect($diagram['legend'])->firstWhere('status', 'planned');
+        $this->assertNotNull($plannedLegend);
+        $this->assertSame(count($diagram['planned_nodes']), $plannedLegend['count'] ?? null);
         $this->assertArrayHasKey('nodes', $diagram);
         $this->assertArrayHasKey('edges', $diagram);
         $this->assertArrayHasKey('outputs', $diagram);
