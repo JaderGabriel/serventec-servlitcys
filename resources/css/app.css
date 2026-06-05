@@ -2269,43 +2269,20 @@
 
     .serv-qa-grid--auto {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(10.25rem, 10.25rem));
-        gap: 0.5rem;
-        justify-content: start;
+        grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
+        gap: 0.625rem;
+        width: 100%;
     }
 
     .serv-qa-grid--auto .serv-qa-card {
-        width: 10.25rem;
-        max-width: 10.25rem;
-        @apply flex-col items-stretch gap-2 p-2.5;
-    }
-
-    .serv-qa-grid--auto .serv-qa-card--featured {
-        @apply p-2.5 ring-1;
-    }
-
-    .serv-qa-grid--auto .serv-qa-card__icon {
-        @apply h-8 w-8 rounded-md;
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        @apply flex-row items-start gap-3 p-3;
     }
 
     .serv-qa-grid--auto .serv-qa-card__body {
-        @apply pe-0 space-y-0;
-    }
-
-    .serv-qa-grid--auto .serv-qa-card__title {
-        @apply text-xs leading-snug;
-    }
-
-    .serv-qa-grid--auto .serv-qa-card__desc {
-        @apply text-[10px] line-clamp-2 mt-0.5;
-    }
-
-    .serv-qa-grid--auto .serv-qa-card__go {
-        @apply hidden;
-    }
-
-    .serv-qa-grid--auto .serv-qa-card__badge {
-        @apply top-2 end-2;
+        @apply pe-6;
     }
 
     .serv-qa-card {
@@ -2827,10 +2804,15 @@
 
     /* Fluxo de dados — diagrama ERP (integrações) */
     .serv-erp-board {
-        @apply rounded-xl border border-slate-200/90 dark:border-slate-700/90
-            bg-gradient-to-br from-slate-50/90 via-white to-white
-            dark:from-slate-950/50 dark:via-slate-900/60 dark:to-slate-950/40
-            p-4 sm:p-5 overflow-x-auto;
+        @apply relative overflow-x-auto p-4 sm:p-5;
+    }
+
+    .serv-erp-lane--hub {
+        @apply xl:relative;
+    }
+
+    .serv-erp-hub {
+        @apply transition-shadow duration-300 hover:shadow-xl hover:shadow-teal-900/30;
     }
 
     .serv-erp-board__lanes {

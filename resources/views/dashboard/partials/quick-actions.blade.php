@@ -18,20 +18,13 @@
     aria-labelledby="home-actions"
 >
     <header class="serv-qa-panel__head border-b border-slate-200/90 dark:border-slate-700/90 px-5 py-4 sm:px-6">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-                <p class="serv-eyebrow text-slate-600 dark:text-slate-400">{{ __('Operação diária') }}</p>
-                <h3 id="home-actions" class="font-display text-lg font-semibold text-serv-navy dark:text-slate-100 mt-0.5">
-                    {{ __('Acesso rápido') }}
-                </h3>
-                <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-                    {{ __('Atalhos para onde a equipe decide, importa e processa — alinhados ao fluxo de dados no final da página.') }}
-                </p>
-            </div>
-            <a href="{{ route('dashboard.analytics') }}" class="serv-btn-secondary text-sm shrink-0 hidden sm:inline-flex">
-                {{ __('Abrir consultoria') }}
-            </a>
-        </div>
+        <p class="serv-eyebrow text-slate-600 dark:text-slate-400">{{ __('Operação diária') }}</p>
+        <h3 id="home-actions" class="font-display text-lg font-semibold text-serv-navy dark:text-slate-100 mt-0.5">
+            {{ __('Acesso rápido') }}
+        </h3>
+        <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+            {{ __('Atalhos para onde a equipe decide, importa e processa — alinhados ao fluxo de dados no final da página.') }}
+        </p>
     </header>
 
     <div class="serv-qa-panel__body px-5 py-5 sm:px-6 sm:py-6">

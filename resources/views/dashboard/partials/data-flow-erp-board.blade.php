@@ -36,15 +36,17 @@
 @endphp
 
 <div
-    class="serv-erp-board rounded-xl border border-slate-200/90 bg-gradient-to-br from-slate-50/90 via-white to-white dark:border-slate-700/90 dark:from-slate-950/50 dark:via-slate-900/60 dark:to-slate-950/40 p-4 sm:p-5 overflow-x-auto min-w-0"
+    class="serv-erp-board relative rounded-xl border border-slate-200/90 bg-slate-100/60 dark:border-slate-700/90 dark:bg-slate-950/50 p-4 sm:p-5 overflow-x-auto min-w-0"
     role="figure"
     aria-describedby="home-data-flow-desc"
 >
+    <div class="serv-erp-board__glow pointer-events-none absolute inset-0 rounded-xl bg-[radial-gradient(ellipse_55%_65%_at_42%_48%,rgba(20,184,166,0.14),transparent_68%)] dark:bg-[radial-gradient(ellipse_55%_65%_at_42%_48%,rgba(45,212,191,0.12),transparent_70%)]" aria-hidden="true"></div>
+    <div class="serv-erp-board__grid pointer-events-none absolute inset-3 rounded-lg opacity-[0.35] dark:opacity-20 bg-[linear-gradient(rgba(148,163,184,0.22)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.22)_1px,transparent_1px)] bg-[size:1.25rem_1.25rem]" aria-hidden="true"></div>
     <p id="home-data-flow-desc" class="sr-only">
         {{ __('Diagrama ERP: entrada municipal, motor de agregação, fontes federais e saídas operacionais, com estado de cada integração nas linhas de comunicação.') }}
     </p>
 
-    <div class="serv-erp-board__lanes grid grid-cols-1 gap-4 xl:grid-cols-[minmax(9rem,1fr)_2.75rem_minmax(10rem,1.1fr)_minmax(12rem,1.35fr)_2.75rem_minmax(8.5rem,1fr)] xl:gap-3 xl:min-w-[48rem]">
+    <div class="serv-erp-board__lanes relative z-[1] grid grid-cols-1 gap-4 xl:grid-cols-[minmax(9rem,1fr)_2.75rem_minmax(11rem,1.15fr)_minmax(12rem,1.35fr)_2.75rem_minmax(8.5rem,1fr)] xl:gap-3 xl:min-w-[48rem]">
         {{-- Entrada municipal --}}
         <div class="serv-erp-lane flex flex-col gap-3 min-w-0">
             <header class="flex items-start gap-2 rounded-lg border border-slate-200/80 bg-white/80 dark:border-slate-700/70 dark:bg-slate-900/50 px-2.5 py-2">
@@ -94,22 +96,24 @@
             </div>
         @endif
 
-        {{-- Motor --}}
-        <div class="serv-erp-lane flex flex-col gap-3 min-w-0">
-            <header class="flex items-start gap-2 rounded-lg border border-teal-200/80 bg-teal-50/50 dark:border-teal-800/50 dark:bg-teal-950/25 px-2.5 py-2">
-                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-teal-700 text-[10px] font-bold text-white dark:bg-teal-600" aria-hidden="true">{{ $zonePlatform['step'] ?? 2 }}</span>
+        {{-- Motor — destaque SERVLITCYS --}}
+        <div class="serv-erp-lane serv-erp-lane--hub flex flex-col gap-3 min-w-0 xl:rounded-xl xl:border xl:border-teal-300/70 xl:bg-gradient-to-b xl:from-teal-50/95 xl:via-white xl:to-teal-50/70 xl:px-2.5 xl:py-3 xl:shadow-inner xl:shadow-teal-900/5 dark:xl:border-teal-700/60 dark:xl:from-teal-950/40 dark:xl:via-slate-900/40 dark:xl:to-teal-950/30">
+            <header class="flex items-start gap-2 rounded-lg border border-teal-300/80 bg-teal-100/60 dark:border-teal-700/60 dark:bg-teal-950/40 px-2.5 py-2">
+                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-teal-700 text-[10px] font-bold text-white shadow-sm dark:bg-teal-500" aria-hidden="true">{{ $zonePlatform['step'] ?? 2 }}</span>
                 <div class="min-w-0">
-                    <p class="text-[11px] font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100">{{ __('Motor') }}</p>
-                    <p class="text-[10px] text-slate-500 dark:text-slate-400">{{ __('Agregação') }}</p>
+                    <p class="text-[11px] font-bold uppercase tracking-wide text-teal-900 dark:text-teal-100">{{ __('Motor') }}</p>
+                    <p class="text-[10px] text-teal-800/80 dark:text-teal-300/80">{{ __('Núcleo da plataforma') }}</p>
                 </div>
             </header>
             @if ($hub)
                 @php $st = (string) ($hub['status'] ?? 'ok'); @endphp
-                <article class="relative rounded-lg border border-teal-300/80 bg-white px-3 py-3 shadow-md ring-1 ring-teal-500/15 dark:border-teal-700/60 dark:bg-slate-900/70 dark:ring-teal-400/20 {{ $statusBorder[$st] ?? $statusBorder['ok'] }}" title="{{ $hub['hint'] }}">
-                    <span class="absolute top-2.5 end-2.5 h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-slate-900 {{ $statusDot[$st] ?? $statusDot['ok'] }}" aria-hidden="true"></span>
-                    <p class="text-sm font-bold text-serv-navy dark:text-slate-50 pe-4">{{ $hub['label'] }}</p>
-                    <p class="mt-0.5 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ $hub['sublabel'] }}</p>
-                    <p class="mt-1.5 text-[10px] text-slate-600 dark:text-slate-400 leading-snug">{{ $hub['hint'] }}</p>
+                <article class="serv-erp-hub relative overflow-hidden rounded-xl border-2 border-teal-500/70 bg-gradient-to-br from-teal-700 via-teal-800 to-serv-navy px-4 py-4 shadow-lg shadow-teal-900/25 ring-2 ring-teal-400/30 dark:border-teal-400/50 dark:from-teal-900 dark:via-teal-950 dark:to-slate-950 dark:shadow-teal-950/40 dark:ring-teal-500/25" title="{{ $hub['hint'] }}">
+                    <span class="pointer-events-none absolute -end-6 -top-6 h-24 w-24 rounded-full bg-teal-300/25 blur-2xl dark:bg-teal-400/15" aria-hidden="true"></span>
+                    <span class="absolute top-3 end-3 h-3 w-3 rounded-full ring-2 ring-white/80 {{ $statusDot[$st] ?? $statusDot['ok'] }}" aria-hidden="true"></span>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-100/90">{{ __('Plataforma') }}</p>
+                    <p class="mt-1 font-display text-lg font-bold tracking-tight text-white pe-6">{{ $hub['label'] }}</p>
+                    <p class="mt-0.5 text-[11px] font-medium uppercase tracking-wide text-teal-100/85">{{ $hub['sublabel'] }}</p>
+                    <p class="mt-2 text-[10px] text-teal-50/90 leading-snug">{{ $hub['hint'] }}</p>
                 </article>
             @endif
         </div>
