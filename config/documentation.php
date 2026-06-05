@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '4.1.6',
         'release_tag' => '20260606-Aletheia',
-        'commit_short' => 'pending',
+        'commit_short' => '29274d8',
         'commit_number' => 302,
         'revision_date' => '2026-06-06',
         'in_production' => true,

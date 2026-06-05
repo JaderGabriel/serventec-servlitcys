@@ -20,7 +20,7 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.1.6** | *(após commit)* / `20260606-Aletheia` → `main` | **302** | 06/06/2026 | **Produção:** Admin UI unificado (hub + screen-shell), dedup Financiamentos, telas legado cities/LGPD — [RELEASE_20260606_ALETHEIA.md](RELEASE_20260606_ALETHEIA.md). |
+| **▶ 4.1.6** | `29274d8` / `20260606-Aletheia` → `main` | **302** | 06/06/2026 | **Produção:** Admin UI unificado (hub + screen-shell), dedup Financiamentos, telas legado cities/LGPD — [RELEASE_20260606_ALETHEIA.md](RELEASE_20260606_ALETHEIA.md). |
 | 4.1.5 | `9be03ae` / `20260605-Themis` → `main` | **300** | 05/06/2026 | Admin rebuild Tempo Real e extrato CKAN×SISWEB. |
 | 4.1.4 | `418dd5e` / `20260605-Horae` → `main` | **298** | 05/06/2026 | Rebuild Tempo Real só municipal com granularidade. |
 | 4.1.3 | `acdae84` / `20260605-Chronos` → `main` | **296** | 05/06/2026 | Granularidade dia/mês no Tempo Real. |
