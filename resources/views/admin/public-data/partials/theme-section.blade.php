@@ -1,4 +1,6 @@
 @php
+    use App\Support\Admin\AdminVisualCatalog;
+
     $theme = $section['theme'];
     $sources = $section['sources'];
     $accent = $theme['accent'] ?? 'slate';
@@ -18,7 +20,7 @@
                 <p class="sync-queue-panel__desc">{{ $theme['description'] }}</p>
                 <a
                     href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', ['domain' => $theme['domain']]) }}#{{ $theme['anchor'] }}"
-                    class="mt-2 inline-flex text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                    class="mt-2 inline-flex text-xs font-medium {{ AdminVisualCatalog::linkClasses($accent) }}"
                 >
                     {{ __('Ver fila desta área') }} →
                 </a>
@@ -42,24 +44,41 @@
                 :icon="$source['theme_icon'] ?? $theme['icon']"
                 nested
             >
+                @if (filled($source['consultoria_tab'] ?? null))
+                    <p class="px-5 pt-3 text-xs text-gray-600 dark:text-gray-400">
+                        {{ __('Consultoria:') }}
+                        <a href="{{ route('dashboard.analytics', ['tab' => $source['consultoria_tab']]) }}" class="font-medium {{ AdminVisualCatalog::linkClasses($source['theme_accent'] ?? $accent) }}">
+                            {{ __('Finanças → Tempo Real') }} →
+                        </a>
+                    </p>
+                @endif
+
                 @php $hasActions = count($source['actions'] ?? []) > 0; @endphp
                 @if ($hasActions)
                     @foreach ($source['actions'] as $action)
+                        @php
+                            $enriched = AdminVisualCatalog::enrichAction($action);
+                            $actionAccent = $enriched['submit_accent'] ?? ($source['theme_accent'] ?? $accent);
+                        @endphp
                         <x-admin.import-hub.action-card
                             method="post"
                             action="{{ route('admin.public-data.run') }}"
-                            :title="$action['label']"
-                            :hint="$action['hint'] ?? null"
-                            :variant="in_array($action['key'], ['auto_sync', 'weekly_mass_sync', 'rebuild_finance_realtime_city_year', 'rebuild_finance_realtime_all_cities'], true) ? 'primary' : 'default'"
+                            :title="$enriched['label']"
+                            :hint="$enriched['hint'] ?? null"
+                            :variant="$enriched['variant'] ?? 'default'"
+                            :step="$enriched['step'] ?? null"
+                            :tags="$enriched['tags'] ?? []"
+                            :accent="$actionAccent"
+                            :icon="$enriched['icon'] ?? null"
                         >
                             @csrf
                             <input type="hidden" name="source_id" value="{{ $source['id'] }}">
-                            <input type="hidden" name="action_key" value="{{ $action['key'] }}">
+                            <input type="hidden" name="action_key" value="{{ $enriched['key'] }}">
                             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                                @if ($action['needs_city'] ?? false)
+                                @if ($enriched['needs_city'] ?? false)
                                     <div>
                                         <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Município') }}</label>
-                                        <select name="city_id" class="{{ $selectClass }}" @if (! in_array($action['key'], ['import_transfers_all_cities', 'rebuild_finance_realtime_all_cities'], true)) required @endif>
+                                        <select name="city_id" class="{{ $selectClass }}" @if (! in_array($enriched['key'], ['import_transfers_all_cities', 'rebuild_finance_realtime_all_cities'], true)) required @endif>
                                             <option value="">{{ __('Selecione…') }}</option>
                                             @foreach ($cities as $city)
                                                 <option value="{{ $city->id }}" @selected(old('city_id') == $city->id)>{{ $city->name }}@if ($city->uf) ({{ $city->uf }})@endif</option>
@@ -67,7 +86,7 @@
                                         </select>
                                     </div>
                                 @endif
-                                @if ($action['needs_year'] ?? false)
+                                @if ($enriched['needs_year'] ?? false)
                                     <div>
                                         <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Ano') }}</label>
                                         <select name="ano" class="{{ $selectClass }}" required>
@@ -77,7 +96,7 @@
                                         </select>
                                     </div>
                                 @endif
-                                @if ($action['needs_years_range'] ?? false)
+                                @if ($enriched['needs_years_range'] ?? false)
                                     <div>
                                         <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('De') }}</label>
                                         <select name="ano_from" class="{{ $selectClass }}">
@@ -96,7 +115,7 @@
                                     </div>
                                 @endif
                             </div>
-                            @if (in_array($action['key'], ['import_city_year', 'import_bulk_year', 'sync_all_years'], true))
+                            @if (in_array($enriched['key'], ['import_city_year', 'import_bulk_year', 'sync_all_years'], true))
                                 <div class="flex flex-wrap gap-4 text-xs">
                                     <label class="inline-flex items-center gap-2">
                                         <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-indigo-600" @checked(old('use_nearest_year'))>

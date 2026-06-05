@@ -5,6 +5,7 @@ namespace App\Services\Funding;
 use App\Models\City;
 use App\Repositories\MunicipalTransferSnapshotRepository;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Funding\FundebExtratoFontePriority;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\MatriculaChartQueries;
 use Illuminate\Database\Connection;
@@ -32,9 +33,8 @@ final class ProgramRepasseVsMatriculasService
         $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
         $snapshots = $this->snapshots->forCityYear($city, $year);
         $repasseByProgram = [];
-        foreach ($snapshots as $s) {
-            $pid = (string) $s->programa_id;
-            $repasseByProgram[$pid] = ($repasseByProgram[$pid] ?? 0.0) + (float) $s->valor;
+        foreach (FundebExtratoFontePriority::pickPrimaryPerProgram($snapshots) as $s) {
+            $repasseByProgram[(string) $s->programa_id] = (float) $s->valor;
         }
 
         $out = [];
@@ -58,7 +58,7 @@ final class ProgramRepasseVsMatriculasService
                     ? DiscrepanciesFundingImpact::formatBrl($repassePorAluno).__('/aluno indicativo')
                     : null,
                 'nota' => $repasse > 0
-                    ? __('Repasse agregado das fontes públicas importadas; elegíveis = matrículas com campo de programa preenchido no i-Educar.')
+                    ? __('Repasse deduplicado (uma fonte prioritária por programa). Não some com outras linhas nem com VAAF. Elegíveis = matrículas com campo preenchido no i-Educar.')
                     : __('Sem repasse importado para este programa — execute sincronização de transferências no admin.'),
             ] : null;
             $out[] = $prog;
@@ -113,7 +113,6 @@ final class ProgramRepasseVsMatriculasService
 
         $aliases = match ($programId) {
             'pdde-qualidade' => ['pdde'],
-            'salario-educacao' => ['fundeb', 'geral_educacao'],
             default => [],
         };
         foreach ($aliases as $alias) {

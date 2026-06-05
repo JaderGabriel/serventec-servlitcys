@@ -11,6 +11,7 @@ use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\Fundeb\FundebImportMode;
 use App\Services\Cadunico\CadunicoOpenDataImportService;
 use App\Services\Fundeb\FundebOpenDataImportService;
+use App\Support\Admin\AdminImportHubCatalog;
 use App\Support\Admin\ImportHubThemeCatalog;
 use App\Support\Admin\PublicDataImportCatalog;
 use App\Support\SyncQueue\SyncQueueUserScope;
@@ -26,8 +27,10 @@ class PublicDataImportController extends Controller
         private AdminSyncQueueService $syncQueue,
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
+        $hubActive = AdminImportHubCatalog::resolveHubActive($request->query('hub'));
+
         $cities = City::query()->forAnalytics()->orderBy('name')->get(['id', 'name', 'uf', 'ibge_municipio']);
         $snapshot = $this->status->build();
         $refYear = (int) $snapshot['reference_year'];
@@ -37,6 +40,7 @@ class PublicDataImportController extends Controller
         $themeSections = ImportHubThemeCatalog::sectionsForSources($sources);
 
         return view('admin.public-data.index', [
+            'hubActive' => $hubActive,
             'cities' => $cities,
             'snapshot' => $snapshot,
             'sources' => $sources,

@@ -17,7 +17,7 @@
 
     <x-admin.import-hub.shell
         active="pedagogical"
-        accent="emerald"
+        accent="violet"
         :eyebrow="__('Sincronização pedagógica')"
         :title="__('SAEB / indicadores INEP')"
         :description="__('Cada importação abaixo cria uma tarefa na fila (não bloqueia esta página). Primeira carga: microdados ou CSV antes do passo HTTP por IBGE.')"

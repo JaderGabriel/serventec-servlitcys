@@ -25,6 +25,8 @@ class PublicDataImportCatalogTest extends TestCase
         $this->assertContains('import_transfers_city_year', $actionKeys);
         $this->assertContains('rebuild_finance_realtime_city_year', $actionKeys);
         $this->assertContains('rebuild_finance_realtime_all_cities', $actionKeys);
+        $this->assertSame('admin.public-data.index', $repasses['admin_route']);
+        $this->assertSame('finance_realtime', $repasses['consultoria_tab']);
         $this->assertContains('cadunico_cecad', $ids);
 
         $cadunico = PublicDataImportCatalog::findSource('cadunico_cecad');

@@ -23,12 +23,19 @@
         $syncYears = $snapshot['sync_years'] ?? [];
     @endphp
 
+    @php
+        $hubActive = $hubActive ?? 'hub';
+        $isRepassesFocus = $hubActive === 'repasses';
+    @endphp
+
     <x-admin.import-hub.shell
-        active="hub"
-        accent="emerald"
-        :eyebrow="__('Hub de dados públicos')"
-        :title="__('Importação e cobertura')"
-        :description="__('Com base no modelo do relatório PDF ATM e na planilha Serventec: FUNDEB, Censo INEP, repasses e SAEB. Dados do i-Educar continuam em Compatibilidade e sincronizações específicas.')"
+        :active="$hubActive"
+        :accent="$isRepassesFocus ? 'emerald' : 'emerald'"
+        :eyebrow="$isRepassesFocus ? __('Repasses / Tempo Real') : __('Hub de dados públicos')"
+        :title="$isRepassesFocus ? __('Repasses FUNDEB observados') : __('Importação e cobertura')"
+        :description="$isRepassesFocus
+            ? __('Importação municipal com granularidade dia/mês (CKAN, SISWEB, BB). Use Rebuild para purgar snapshots e alimentar Finanças → Tempo Real na consultoria.')
+            : __('Com base no modelo do relatório PDF ATM e na planilha Serventec: VAAF FNDE, Censo INEP, repasses e SAEB. Dados do i-Educar continuam em VAAF e sincronizações específicas.')"
         :doc-href="route('admin.documentation.show', ['doc' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md'])"
         :doc-label="__('Documentação de importação')"
     >
@@ -136,11 +143,12 @@
         </section>
 
         <x-slot name="shortcuts">
-            <x-admin.import-hub.link-chip href="{{ route('admin.ieducar-compatibility.index') }}">{{ __('Compatibilidade i-Educar / FUNDEB') }}</x-admin.import-hub.link-chip>
-            <x-admin.import-hub.link-chip href="{{ route('admin.geo-sync.index') }}">{{ __('Sincronização geográfica') }}</x-admin.import-hub.link-chip>
-            <x-admin.import-hub.link-chip href="{{ route('admin.pedagogical-sync.index') }}">{{ __('SAEB pedagógico') }}</x-admin.import-hub.link-chip>
-            <x-admin.import-hub.link-chip href="{{ route('admin.cadunico-sync.index') }}">{{ __('CadÚnico / Cecad') }}</x-admin.import-hub.link-chip>
-            <x-admin.import-hub.link-chip href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}">{{ __('Fila de processamento') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="amber" href="{{ route('admin.ieducar-compatibility.index') }}">{{ __('VAAF / VAAT (FNDE)') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="emerald" href="{{ route('admin.public-data.index', ['hub' => 'repasses']) }}#source-repasses_tesouro">{{ __('Repasses / Tempo Real') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="sky" href="{{ route('admin.geo-sync.index') }}">{{ __('Sincronização geográfica') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="violet" href="{{ route('admin.pedagogical-sync.index') }}">{{ __('SAEB pedagógico') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="fuchsia" href="{{ route('admin.cadunico-sync.index') }}">{{ __('CadÚnico / Cecad') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="slate" href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}">{{ __('Fila de processamento') }}</x-admin.import-hub.link-chip>
         </x-slot>
     </x-admin.import-hub.shell>
 </x-app-layout>

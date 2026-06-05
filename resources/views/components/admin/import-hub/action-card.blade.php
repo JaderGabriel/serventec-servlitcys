@@ -10,9 +10,13 @@
     'showQueueHint' => true,
     'submitDisabled' => false,
     'tags' => [],
+    'accent' => 'indigo',
+    'icon' => null,
 ])
 
 @php
+    use App\Support\Admin\AdminVisualCatalog;
+
     $variants = [
         'primary' => 'border-2 border-emerald-400/80 dark:border-emerald-700/60 bg-emerald-50/40 dark:bg-emerald-950/20',
         'accent' => 'border-2 border-violet-300/80 dark:border-violet-700/60 bg-violet-50/30 dark:bg-violet-950/20',
@@ -24,13 +28,19 @@
     if (! is_array($tags)) {
         $tags = filled($tags) ? [(string) $tags] : [];
     }
+    $submitClasses = AdminVisualCatalog::submitButtonClasses($accent);
 @endphp
 
 <form {{ $attributes->merge(['class' => 'rounded-xl p-5 space-y-4 '.$box]) }}>
     @if (filled($step) || $tags !== [])
         <div class="flex flex-wrap items-center gap-2">
             @if (filled($step))
-                <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-800 dark:bg-gray-800 dark:text-gray-200">{{ $step }}</span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+                    @if (filled($icon))
+                        <x-ui.icon :name="$icon" class="h-3 w-3" />
+                    @endif
+                    {{ $step }}
+                </span>
             @endif
             @foreach ($tags as $tag)
                 <span class="inline-flex items-center rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-700 ring-1 ring-gray-200/80 dark:bg-gray-800/60 dark:text-gray-300 dark:ring-gray-600">{{ $tag }}</span>
@@ -40,9 +50,14 @@
     @if (filled($title))
         <div>
             <h3
-                @class(['text-base font-semibold text-gray-900 dark:text-gray-100', 'border-b border-dashed border-gray-300 dark:border-gray-600 pb-1 inline-block' => filled($titleTooltip)])
+                @class(['text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2', 'border-b border-dashed border-gray-300 dark:border-gray-600 pb-1 inline-block' => filled($titleTooltip)])
                 @if (filled($titleTooltip)) title="{{ $titleTooltip }}" @endif
-            >{{ $title }}</h3>
+            >
+                @if (filled($icon) && ! filled($step))
+                    <x-ui.icon :name="$icon" class="h-4 w-4 shrink-0 opacity-80" />
+                @endif
+                {{ $title }}
+            </h3>
             @if (filled($hint))
                 <p class="mt-1 text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ $hint }}</p>
             @endif
@@ -63,7 +78,7 @@
             <button
                 type="submit"
                 @disabled($submitDisabled)
-                class="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 dark:focus:ring-offset-gray-900"
+                class="{{ $submitClasses }}"
             >
                 {{ $submit }}
             </button>

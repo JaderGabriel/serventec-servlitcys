@@ -141,15 +141,7 @@ final class ImportHubThemeCatalog
 
     public static function shellAccentForHubKey(string $hubKey): string
     {
-        return match ($hubKey) {
-            'hub' => 'emerald',
-            'fundeb' => 'amber',
-            'cadastro' => 'violet',
-            'geo' => 'sky',
-            'pedagogical' => 'violet',
-            'queue' => 'slate',
-            default => 'indigo',
-        };
+        return AdminVisualCatalog::shellAccentForHubKey($hubKey);
     }
 
     /**
@@ -183,6 +175,7 @@ final class ImportHubThemeCatalog
     {
         return match ($domain) {
             'fundeb' => 'admin.ieducar-compatibility.index',
+            'funding' => 'admin.public-data.index',
             'cadastro' => 'admin.cadunico-sync.index',
             'geo' => 'admin.geo-sync.index',
             'pedagogical' => 'admin.pedagogical-sync.index',

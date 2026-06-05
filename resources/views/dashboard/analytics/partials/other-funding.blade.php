@@ -30,12 +30,16 @@
 >
     <x-slot name="links">
         <span class="text-slate-600 dark:text-slate-400">{{ __('Aprofundar:') }}</span>
-        <x-consultoria-tab-link tab="municipality_health" :label="__('Diagnóstico')" class="text-xs" />
+        <x-consultoria-tab-link tab="finance_realtime" :label="__('Tempo Real (FUNDEB)')" class="text-xs" />
         <span class="text-slate-300">·</span>
         <x-consultoria-tab-link tab="fundeb" class="text-xs" />
         <span class="text-slate-300">·</span>
         <x-consultoria-tab-link tab="discrepancies" class="text-xs" />
     </x-slot>
+
+        <p class="serv-callout serv-callout--warning text-xs leading-relaxed">
+            {{ __('Esta aba cruza programas complementares (PNAE, PNATE, PDDE) com cadastro i-Educar. Valores em R$ vêm de importações deduplicadas por programa — não some com VAAF (FUNDEB) nem duplique a leitura da aba Tempo Real.') }}
+        </p>
 
         <x-dashboard.municipal-public-queries
             :snapshot="$publicMunicipal"
@@ -49,10 +53,15 @@
                 :subtitle="$transferSeries['intro'] ?? ''"
             >
                 @if (filled($transferSeries['total_ano'] ?? null))
-                    <p class="text-sm font-semibold text-serv-navy dark:text-slate-100">
-                        {{ __('Total no exercício') }}:
-                        {{ \App\Support\Ieducar\DiscrepanciesFundingImpact::formatBrl((float) $transferSeries['total_ano']) }}
-                    </p>
+                    <div class="rounded-md border border-amber-200/80 dark:border-amber-800/60 bg-amber-50/50 dark:bg-amber-950/20 px-3 py-2 space-y-1">
+                        <p class="text-sm font-semibold text-serv-navy dark:text-slate-100">
+                            {{ __('Soma deduplicada por programa') }}:
+                            {{ \App\Support\Ieducar\DiscrepanciesFundingImpact::formatBrl((float) $transferSeries['total_ano']) }}
+                        </p>
+                        @if (filled($transferSeries['total_ano_note'] ?? null))
+                            <p class="text-xs text-amber-900/90 dark:text-amber-200/90">{{ $transferSeries['total_ano_note'] }}</p>
+                        @endif
+                    </div>
                 @endif
                 @if (count($transferSeries['rows'] ?? []) > 0)
                     <div class="overflow-x-auto">
@@ -69,7 +78,14 @@
                                     <tr>
                                         <td>{{ $row['label'] ?? '' }}</td>
                                         <td class="text-right tabular-nums">{{ $row['valor_fmt'] ?? '' }}</td>
-                                        <td class="text-xs text-slate-500">{{ $row['fonte'] ?? '' }}</td>
+                                        <td class="text-xs text-slate-500">
+                                            {{ $row['fonte'] ?? '' }}
+                                            @if (($row['fontes_ignoradas'] ?? 0) > 0)
+                                                <span class="block text-[10px] text-amber-700 dark:text-amber-300" title="{{ __('Outras fontes do mesmo programa não entram no total') }}">
+                                                    +{{ (int) $row['fontes_ignoradas'] }} {{ __('fonte(s) alternativa(s) omitida(s)') }}
+                                                </span>
+                                            @endif
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>

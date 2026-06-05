@@ -84,7 +84,7 @@ class OtherFundingRepository
                         'Programas federais e complementares de educação (transporte, alimentação, PDDE e correlatos) dependem de matrículas e escolas consistentes no Censo Escolar. Esta aba cruza o cadastro do i-Educar com referências FNDE e com o pilar «Programas complementares» das discrepâncias.'
                     ),
                     'footnote' => __(
-                        'Valores de repasse não são calculados aqui. A seção «Consultas públicas» obtém prévias e relatórios por IBGE/ano; links oficiais (FNDE, Simec, Tesouro) estão na aba FUNDEB. Os indicadores de i-Educar mostram cobertura de campos quando existirem na base.'
+                        'VAAF/VAAT (valor por aluno) ≠ repasse em R$. Não some consultas públicas, totais por programa e a aba Tempo Real — cada bloco usa fonte e deduplicação próprias. Cobertura i-Educar = campos de cadastro, não valores financeiros.'
                     ),
                     'programs' => $programs,
                     'transport' => $transport,

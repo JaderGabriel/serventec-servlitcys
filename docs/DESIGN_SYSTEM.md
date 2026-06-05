@@ -1,6 +1,6 @@
 # Design system — consultoria municipal (servlitcys)
 
-**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+**Versão do produto:** 4.1.6 · **Última revisão:** 2026-06-06
 
 **Implementação:** `resources/css/app.css` (classes `serv-*`), componentes Blade `x-dashboard.*`, `x-status-pill`, `x-consultoria-tab-link`.
 
@@ -92,6 +92,35 @@ Ver [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) — itens de gráfico
 - Aplicar `serv-panel` nas abas Discrepâncias e Diagnóstico (reduzir estilos locais).
 - Modo impressão/PDF alinhado à paleta teal/slate.
 - Gráficos Chart.js: paleta derivada de teal/slate (config central em JS).
+
+---
+
+## 8. Admin — shells e cores (4.1.6+)
+
+Duas famílias de layout partilham gradiente, tabs com ícone e corpo `rounded-2xl`:
+
+| Shell | Componente | Catálogo | Uso |
+|-------|------------|----------|-----|
+| Importação | `x-admin.import-hub.shell` | `AdminImportHubCatalog` | Hub dados públicos, Repasses, VAAF, Geo, SAEB, CadÚnico, Fila |
+| Operação municipal / LGPD | `x-admin.screen-shell` | `AdminScreenCatalog` | Cidades, Documentos legais, Consentimentos |
+
+**Tons por domínio** (`AdminVisualCatalog`):
+
+| Domínio | Cor | Ícone típico |
+|---------|-----|--------------|
+| VAAF FNDE | âmbar | `banknotes` |
+| Repasses / Tempo Real | esmeralda | `banknotes` |
+| Geo INEP | azul céu | `map-pin` |
+| SAEB | violeta | `academic-cap` |
+| CadÚnico | fúcsia | `users` |
+| Municípios (cadastro) | violeta | `map-pin` |
+| LGPD | rosa | `document-text` / `shield-check` |
+
+**Acções no hub:** `action-card` com variantes `primary` (importar), `warning` (rebuild), botão submit na cor do domínio; `link-chip` com prop `tone`.
+
+**Menu utilizador (admin):** grupo «Dados públicos» (Hub → Repasses → Geo → SAEB → CadÚnico → Fila); «Operação» (Monitor, Pulse); VAAF em «Municípios».
+
+Ver [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §8 e [RELEASE_20260606_ALETHEIA.md](RELEASE_20260606_ALETHEIA.md).
 
 ---
 

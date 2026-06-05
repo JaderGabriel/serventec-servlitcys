@@ -261,7 +261,10 @@ final class PublicDataImportCatalog
             ],
             'pdf_sections' => ['programas_universais', 'salario_educacao'],
             'pdf_gaps' => ['programs_empty', 'mec_programs_api', 'salario_educacao_not_tracked'],
-            'admin_route' => null,
+            'admin_route' => 'admin.public-data.index',
+            'consultoria_tab' => 'finance_realtime',
+            'theme_accent' => 'emerald',
+            'theme_icon' => 'banknotes',
             'actions' => [
                 [
                     'key' => 'import_transfers_city_year',

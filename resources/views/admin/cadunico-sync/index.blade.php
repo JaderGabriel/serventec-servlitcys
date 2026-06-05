@@ -16,7 +16,7 @@
 
     <x-admin.import-hub.shell
         active="cadastro"
-        accent="violet"
+        accent="fuchsia"
         :eyebrow="__('Importação CadÚnico')"
         :title="__('CadÚnico — municipal + mapa territorial')"
         :description="__('Alimenta a aba «CadÚnico: previsão fora da rede» (lacunas, cenários) e o mapa por bairro/setor. Fluxo recomendado: municipal → IBGE.')"

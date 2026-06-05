@@ -146,7 +146,7 @@ final class ArtisanCommandsCatalog
             ],
             [
                 'id' => 'fundeb',
-                'title' => __('FUNDEB / VAAF'),
+                'title' => __('FUNDEB VAAF (FNDE)'),
                 'description' => __('Referências VAAF, VAAT e complementação VAAR por município e ano (fundeb_municipio_references).'),
                 'admin_route' => 'admin.ieducar-compatibility.index',
                 'commands' => [
@@ -184,6 +184,16 @@ final class ArtisanCommandsCatalog
                         'env' => [],
                         'doc_anchor' => 'fundeb',
                     ],
+                ],
+            ],
+            [
+                'id' => 'funding_repasses',
+                'title' => __('Repasses / Tempo Real'),
+                'description' => __('Repasses municipais observados (CKAN, SISWEB, BB) — municipal_transfer_snapshots e aba Finanças → Tempo Real.'),
+                'admin_route' => 'admin.public-data.index',
+                'admin_route_query' => ['hub' => 'repasses'],
+                'admin_route_fragment' => 'source-repasses_tesouro',
+                'commands' => [
                     [
                         'name' => 'funding:rebuild-finance-realtime',
                         'summary' => __('Apaga e reimporta repasses FUNDEB (municipal_transfer_snapshots) para Finanças → Tempo Real.'),

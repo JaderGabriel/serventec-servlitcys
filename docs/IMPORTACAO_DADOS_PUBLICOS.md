@@ -110,11 +110,21 @@ Todas as telas admin de importação partilham o componente `x-admin.import-hub.
 | Rota | `active` | Impacto (`impact-domain`) |
 |------|----------|---------------------------|
 | Hub dados públicos | `hub` | `funding` (inline) |
+| Repasses / Tempo Real (hub) | `repasses` | `?hub=repasses` + `#source-repasses_tesouro` |
 | FUNDEB / compatibilidade | `fundeb` | `fundeb` |
 | CadÚnico / Cecad | `cadastro` | `cadastro` |
 | Geo | `geo` | `geo` |
 | SAEB | `pedagogical` | `pedagogical` |
 | Fila | `queue` | — (workers + tarefas) |
+
+**Telas legado no mesmo padrão visual** (`x-admin.screen-shell`, `AdminScreenCatalog`):
+
+| Grupo | `active` | Rotas |
+|-------|----------|-------|
+| `municipalities` | `cities` | `cities.*` |
+| `municipalities` | `connections` | `admin.connections.*` |
+| `administration` | `legal-documents` | `admin.legal-documents.*` |
+| `administration` | `legal-consents` | `admin.legal-consents.*` |
 
 **Blocos comuns:** navegação (`AdminImportHubCatalog`), alerta de tarefa enfileirada, banner da fila, painel «Para que serve» (`ExternalImportImpact`), atalhos para consultoria/fila, documentação (link no hero quando aplicável).
 
@@ -130,6 +140,8 @@ Ao acrescentar uma nova fonte, registe o item em `AdminImportHubCatalog::navItem
 |----------|--------|
 | `app/Support/Admin/PublicDataImportCatalog.php` | Catálogo fontes + gaps PDF |
 | `app/Support/Admin/AdminImportHubCatalog.php` | Navegação do hub |
+| `app/Support/Admin/AdminScreenCatalog.php` | Navegação municípios / LGPD |
+| `app/Support/Admin/AdminVisualCatalog.php` | Cores, chips e variantes de acção |
 | `app/Services/Admin/PublicDataImportStatusService.php` | Métricas do hub |
 | `app/Http/Controllers/Admin/PublicDataImportController.php` | UI + dispatch fila |
 | `resources/views/components/admin/import-hub/*` | Layout e cartões |

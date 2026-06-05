@@ -19,6 +19,8 @@
     </x-slot>
 
     @php
+        use App\Support\Admin\AdminVisualCatalog;
+
         $mono = 'font-mono text-xs text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-950/50 px-2 py-1 rounded border border-gray-200 dark:border-gray-700';
     @endphp
 
@@ -41,6 +43,13 @@
             </nav>
 
             @foreach ($categories as $category)
+                @php
+                    $catAccent = AdminVisualCatalog::categoryAccent($category['id']);
+                    $adminHref = filled($category['admin_route'] ?? null)
+                        ? route($category['admin_route'], $category['admin_route_query'] ?? [])
+                            .(filled($category['admin_route_fragment'] ?? null) ? '#'.$category['admin_route_fragment'] : '')
+                        : null;
+                @endphp
                 <section id="cmd-{{ $category['id'] }}" class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm overflow-hidden scroll-mt-6">
                     <header class="px-4 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-800/40">
                         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
@@ -48,8 +57,8 @@
                                 <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ $category['title'] }}</h3>
                                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ $category['description'] }}</p>
                             </div>
-                            @if (filled($category['admin_route'] ?? null))
-                                <a href="{{ route($category['admin_route']) }}" class="inline-flex shrink-0 items-center rounded-lg border border-indigo-200 dark:border-indigo-700 px-3 py-1.5 text-xs font-medium text-indigo-800 dark:text-indigo-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40">
+                            @if (filled($adminHref))
+                                <a href="{{ $adminHref }}" class="inline-flex shrink-0 items-center {{ AdminVisualCatalog::chipClasses($catAccent) }} text-xs">
                                     {{ __('Abrir interface web') }}
                                 </a>
                             @endif

@@ -33,4 +33,14 @@ final class ImportHubThemeCatalogTest extends TestCase
 
         $this->assertSame('admin.ieducar-compatibility.index', $theme['admin_route'] ?? null);
     }
+
+    #[Test]
+    public function tema_funding_tem_rota_hub_e_accent_emerald(): void
+    {
+        $theme = ImportHubThemeCatalog::themeForDomainValue('funding');
+
+        $this->assertSame('admin.public-data.index', $theme['admin_route'] ?? null);
+        $this->assertSame('emerald', $theme['accent']);
+        $this->assertSame('banknotes', $theme['icon']);
+    }
 }

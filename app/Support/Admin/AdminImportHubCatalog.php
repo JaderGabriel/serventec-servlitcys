@@ -8,7 +8,16 @@ namespace App\Support\Admin;
 final class AdminImportHubCatalog
 {
     /**
-     * @return list<array{key: string, route: string, label: string, hint: string, accent: string, icon: string}>
+     * @return list<array{
+     *     key: string,
+     *     route: string,
+     *     label: string,
+     *     hint: string,
+     *     accent: string,
+     *     icon: string,
+     *     fragment: ?string,
+     *     query: ?array<string, string>
+     * }>
      */
     public static function navItems(): array
     {
@@ -16,52 +25,96 @@ final class AdminImportHubCatalog
             [
                 'key' => 'hub',
                 'route' => 'admin.public-data.index',
+                'query' => ['hub' => 'hub'],
+                'fragment' => null,
                 'label' => __('Hub'),
                 'hint' => __('Visão geral e lacunas PDF'),
-                'accent' => ImportHubThemeCatalog::shellAccentForHubKey('hub'),
+                'accent' => AdminVisualCatalog::shellAccentForHubKey('hub'),
                 'icon' => 'squares-2x2',
+            ],
+            [
+                'key' => 'repasses',
+                'route' => 'admin.public-data.index',
+                'query' => ['hub' => 'repasses'],
+                'fragment' => 'source-repasses_tesouro',
+                'label' => __('Repasses'),
+                'hint' => __('Tempo Real — CKAN, SISWEB, BB'),
+                'accent' => AdminVisualCatalog::shellAccentForHubKey('repasses'),
+                'icon' => 'banknotes',
             ],
             [
                 'key' => 'fundeb',
                 'route' => 'admin.ieducar-compatibility.index',
-                'label' => __('FUNDEB'),
-                'hint' => __('VAAF / VAAT / VAAR'),
-                'accent' => ImportHubThemeCatalog::shellAccentForHubKey('fundeb'),
+                'query' => null,
+                'fragment' => null,
+                'label' => __('VAAF'),
+                'hint' => __('VAAF / VAAT / VAAR — FNDE'),
+                'accent' => AdminVisualCatalog::shellAccentForHubKey('fundeb'),
                 'icon' => 'banknotes',
-            ],
-            [
-                'key' => 'cadastro',
-                'route' => 'admin.cadunico-sync.index',
-                'label' => __('CadÚnico'),
-                'hint' => __('Cecad / Misocial'),
-                'accent' => ImportHubThemeCatalog::shellAccentForHubKey('cadastro'),
-                'icon' => 'users',
             ],
             [
                 'key' => 'geo',
                 'route' => 'admin.geo-sync.index',
+                'query' => null,
+                'fragment' => null,
                 'label' => __('Geo'),
                 'hint' => __('Mapa e coordenadas'),
-                'accent' => ImportHubThemeCatalog::shellAccentForHubKey('geo'),
+                'accent' => AdminVisualCatalog::shellAccentForHubKey('geo'),
                 'icon' => 'map-pin',
             ],
             [
                 'key' => 'pedagogical',
                 'route' => 'admin.pedagogical-sync.index',
+                'query' => null,
+                'fragment' => null,
                 'label' => __('SAEB'),
                 'hint' => __('Desempenho INEP'),
-                'accent' => ImportHubThemeCatalog::shellAccentForHubKey('pedagogical'),
+                'accent' => AdminVisualCatalog::shellAccentForHubKey('pedagogical'),
                 'icon' => 'academic-cap',
+            ],
+            [
+                'key' => 'cadastro',
+                'route' => 'admin.cadunico-sync.index',
+                'query' => null,
+                'fragment' => null,
+                'label' => __('CadÚnico'),
+                'hint' => __('Cecad / Misocial'),
+                'accent' => AdminVisualCatalog::shellAccentForHubKey('cadastro'),
+                'icon' => 'users',
             ],
             [
                 'key' => 'queue',
                 'route' => 'admin.sync-queue.index',
+                'query' => null,
+                'fragment' => null,
                 'label' => __('Fila'),
                 'hint' => __('Tarefas e automação'),
-                'accent' => ImportHubThemeCatalog::shellAccentForHubKey('queue'),
+                'accent' => AdminVisualCatalog::shellAccentForHubKey('queue'),
                 'icon' => 'queue-list',
             ],
         ];
+    }
+
+    public static function navHref(array $item): string
+    {
+        $params = $item['query'] ?? [];
+        $url = $params === []
+            ? route($item['route'])
+            : route($item['route'], $params);
+
+        if (filled($item['fragment'] ?? null)) {
+            $url .= '#'.($item['fragment']);
+        }
+
+        return $url;
+    }
+
+    public static function resolveHubActive(?string $hub): string
+    {
+        $hub = (string) ($hub ?? 'hub');
+        $keys = array_column(self::navItems(), 'key');
+
+        return in_array($hub, $keys, true) ? $hub : 'hub';
     }
 
     /**

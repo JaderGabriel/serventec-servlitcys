@@ -17,7 +17,7 @@
 
     <x-admin.import-hub.shell
         active="geo"
-        accent="indigo"
+        accent="sky"
         :eyebrow="__('Sincronização geográfica')"
         :title="__('Coordenadas e mapa das escolas')"
         :description="__('Passos 1–4 gravam em school_unit_geos; o passo 5 só diagnostica. Resultado e log na fila.')"

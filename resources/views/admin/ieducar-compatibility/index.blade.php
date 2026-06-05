@@ -26,10 +26,10 @@
 
     <x-admin.import-hub.shell
         active="fundeb"
-        accent="indigo"
-        :eyebrow="__('Compatibilidade i-Educar')"
-        :title="__('FUNDEB, probe e rotinas')"
-        :description="__('Probe na hora; importações FUNDEB e export JSON vão para a fila. Use o hub de dados públicos para Censo e repasses.')"
+        accent="amber"
+        :eyebrow="__('FUNDEB VAAF (FNDE)')"
+        :title="__('VAAF, probe i-Educar e rotinas')"
+        :description="__('Probe na hora; importações VAAF/VAAT FNDE e export JSON vão para a fila. Repasses observados (Tempo Real) ficam no hub de dados públicos.')"
         impact-domain="fundeb"
         queue-banner-compact
         :doc-href="route('admin.documentation.show', ['doc' => 'docs/EXPORTACAO_DADOS_FUNDEB_PLANILHA.md'])"

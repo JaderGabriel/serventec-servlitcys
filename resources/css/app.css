@@ -2986,6 +2986,10 @@
         @apply bg-violet-100 text-violet-800 dark:bg-violet-950/50 dark:text-violet-200;
     }
 
+    .sync-queue-panel--fuchsia .sync-queue-panel__icon {
+        @apply bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-950/50 dark:text-fuchsia-200;
+    }
+
     .sync-queue-panel--indigo .sync-queue-panel__icon {
         @apply bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-200;
     }
@@ -3012,6 +3016,10 @@
 
     .sync-queue-panel--violet {
         @apply border-violet-200/70 dark:border-violet-900/40;
+    }
+
+    .sync-queue-panel--fuchsia {
+        @apply border-fuchsia-200/70 dark:border-fuchsia-900/40;
     }
 
     .sync-queue-panel--indigo {
@@ -3050,6 +3058,10 @@
         @apply bg-violet-100 text-violet-800 dark:bg-violet-950/50 dark:text-violet-200;
     }
 
+    .import-hub-nav-icon--fuchsia {
+        @apply bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-950/50 dark:text-fuchsia-200;
+    }
+
     .import-hub-nav-icon--sky {
         @apply bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200;
     }
@@ -3060,6 +3072,10 @@
 
     .import-hub-nav-icon--indigo {
         @apply bg-indigo-100 text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-200;
+    }
+
+    .import-hub-nav-icon--rose {
+        @apply bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-200;
     }
 
     .import-hub-source-card--amber {
@@ -3076,6 +3092,10 @@
 
     .import-hub-source-card--violet {
         @apply border-l-4 border-l-violet-400 dark:border-l-violet-600;
+    }
+
+    .import-hub-source-card--fuchsia {
+        @apply border-l-4 border-l-fuchsia-400 dark:border-l-fuchsia-600;
     }
 
     .import-hub-source-card--indigo {
@@ -3108,6 +3128,10 @@
 
     .import-hub-source-card__icon-wrap--violet .sync-queue-panel__icon {
         @apply bg-violet-100 text-violet-800 dark:bg-violet-950/50 dark:text-violet-200;
+    }
+
+    .import-hub-source-card__icon-wrap--fuchsia .sync-queue-panel__icon {
+        @apply bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-950/50 dark:text-fuchsia-200;
     }
 
     .import-hub-source-card__icon-wrap--indigo .sync-queue-panel__icon {

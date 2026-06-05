@@ -330,12 +330,13 @@ final class MunicipalFundingPublicSnapshotService
         $stored = $this->transferSnapshots->forCityYear($city, $year, 'tesouro');
 
         try {
-            $records = $this->ckanDatastoreSearch($base, $resourceId, null, $timeout, 500, $ibge);
-            $rows = $this->summarizeTesouroRecords($records, $ibge, $year);
+            $rows = [];
+            $note = null;
+
             if ($stored !== []) {
                 foreach ($stored as $snap) {
                     $rows[] = [
-                        'label' => ($snap->programa_label ?? $snap->programa_id).' ('.__('base local').')',
+                        'label' => ($snap->programa_label ?? $snap->programa_id).' ('.__('importado').')',
                         'value' => DiscrepanciesFundingImpact::formatBrl((float) $snap->valor),
                     ];
                 }
@@ -343,6 +344,13 @@ final class MunicipalFundingPublicSnapshotService
                     'label' => __('Importado em'),
                     'value' => $stored[0]->imported_at?->format('d/m/Y H:i') ?? '—',
                 ];
+                $note = __('Valores da base local (sem somar consulta CKAN em paralelo). Repasses FUNDEB: aba Finanças → Tempo Real.');
+            } else {
+                $records = $this->ckanDatastoreSearch($base, $resourceId, null, $timeout, 500, $ibge);
+                $rows = $this->summarizeTesouroRecords($records, $ibge, $year);
+                $note = $rows === []
+                    ? __('Nenhuma linha encontrada para o IBGE no limite da consulta — confira o dataset no portal.')
+                    : __('Prévia CKAN filtrada por IBGE — não some com VAAF nem com repasses já importados.');
             }
 
             return $this->queryResult(
@@ -352,9 +360,7 @@ final class MunicipalFundingPublicSnapshotService
                 __('Tesouro CKAN'),
                 $base,
                 $rows,
-                $rows === []
-                    ? __('Nenhuma linha encontrada para o IBGE no limite da consulta — confira o dataset no portal.')
-                    : __('Amostra filtrada por IBGE; valores podem incluir FUNDEB e outras transferências constitucionais.')
+                $note
             );
         } catch (\Throwable $e) {
             return $this->queryResult(
