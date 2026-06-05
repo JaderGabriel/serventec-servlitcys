@@ -864,6 +864,7 @@ document.addEventListener("alpine:init", () => {
             exportMeta = {},
             panelId = "",
             compact = true,
+            tooltipHoverModeHint = false,
         ) => ({
             chart: null,
             _payload: null,
@@ -906,7 +907,7 @@ document.addEventListener("alpine:init", () => {
             /** Estilo dinâmico (min-height) para barras horizontais. */
             panelBodyStyle: "",
             /** Pan/zoom não bloqueia hover nem toque para tooltip (gráficos só-leitura no hover). */
-            tooltipHoverMode: false,
+            tooltipHoverMode: tooltipHoverModeHint === true,
             init() {
                 if (!payload?.labels?.length || !payload?.datasets?.length) {
                     return;
@@ -916,6 +917,7 @@ document.addEventListener("alpine:init", () => {
                         ? payload.options
                         : {};
                 this.tooltipHoverMode =
+                    tooltipHoverModeHint === true ||
                     extraEarly.datalabelsMode === "tooltip_only" ||
                     extraEarly.tooltipFriendly === true;
                 const isGaugeEarly =
@@ -1429,17 +1431,34 @@ document.addEventListener("alpine:init", () => {
                             this._onViewport,
                         );
 
+                        const refreshWhenVisible = () => {
+                            if (!this.chart) {
+                                return;
+                            }
+                            pulseChartSize();
+                            if (this.tooltipHoverMode) {
+                                setTimeout(() => pulseChartSize(), 80);
+                                setTimeout(() => pulseChartSize(), 240);
+                            }
+                        };
                         const io = new IntersectionObserver(
                             (entries) => {
                                 for (const en of entries) {
-                                    if (en.isIntersecting && this.chart) {
-                                        pulseChartSize();
+                                    if (
+                                        en.isIntersecting &&
+                                        en.intersectionRatio > 0.05 &&
+                                        this.chart
+                                    ) {
+                                        refreshWhenVisible();
                                     }
                                 }
                             },
-                            { root: null, threshold: [0, 0.02, 0.15] },
+                            { root: null, threshold: [0, 0.05, 0.2, 0.5] },
                         );
                         io.observe(canvas);
+                        if (this.tooltipHoverMode) {
+                            io.observe(this.$el);
+                        }
                         this._cleanupIo = () => io.disconnect();
 
                         const roRoot = this.$el;

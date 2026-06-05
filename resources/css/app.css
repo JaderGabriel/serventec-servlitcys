@@ -711,6 +711,22 @@
         @apply overflow-y-auto overflow-x-auto;
     }
 
+    .chart-panel-host--tooltip-hover {
+        contain: none;
+        overflow: visible;
+    }
+
+    .chart-panel-host--tooltip-hover > div.relative.isolate {
+        @apply overflow-visible;
+        touch-action: auto;
+    }
+
+    .home-fundeb-chart-shell {
+        @apply overflow-visible;
+        position: relative;
+        z-index: 1;
+    }
+
     .serv-rx-kpi-grid .serv-home-kpi {
         @apply h-full;
     }

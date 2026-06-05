@@ -92,7 +92,7 @@ export function mergeAnnotationAndZoomPlugins(mergedPlugins, payload, extra) {
             ...z0,
             pan: {
                 ...z0.pan,
-                modifierKey: "shift",
+                enabled: false,
             },
         };
     }
