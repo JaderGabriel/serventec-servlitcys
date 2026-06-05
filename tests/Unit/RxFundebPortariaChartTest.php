@@ -60,14 +60,16 @@ final class RxFundebPortariaChartTest extends TestCase
         $this->assertIsArray($chart);
         $this->assertSame('bar', $chart['type']);
         $this->assertSame(__('Complementações previstas por município'), $chart['title']);
+        $this->assertSame('y', $chart['options']['indexAxis'] ?? null);
         $this->assertTrue($chart['options']['scales']['x']['stacked'] ?? false);
         $this->assertTrue($chart['options']['scales']['y']['stacked'] ?? false);
-        $this->assertSame(__('Milhões de R$'), $chart['options']['scales']['y']['title']['text'] ?? null);
+        $this->assertSame(__('Milhões de R$'), $chart['options']['scales']['x']['title']['text'] ?? null);
         $this->assertCount(3, $chart['datasets']);
         $this->assertEqualsWithDelta(2.5, $chart['datasets'][0]['data'][0], 0.01);
         $this->assertEqualsWithDelta(1.0, $chart['datasets'][1]['data'][0], 0.01);
         $this->assertEqualsWithDelta(0.5, $chart['datasets'][2]['data'][0], 0.01);
         $this->assertSame('brl_millions', $chart['options']['valueFormat'] ?? null);
+        $this->assertSame('stack_total_compact', $chart['options']['datalabelsMode'] ?? null);
         $this->assertIsArray($result['ibge_table'] ?? null);
         $this->assertCount(1, $result['ibge_table']);
         $this->assertIsArray($result['national'] ?? null);

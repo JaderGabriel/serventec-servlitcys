@@ -7,7 +7,7 @@
 @endphp
 
 @if ($available && $fundebChart !== null)
-    <section aria-labelledby="home-fundeb-complementacoes" class="serv-panel overflow-hidden">
+    <section aria-labelledby="home-fundeb-complementacoes" class="serv-panel overflow-x-hidden">
         <div class="px-5 py-4 border-b border-slate-200/90 dark:border-slate-700/90 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div class="min-w-0">
                 <p class="serv-eyebrow">{{ __('FUNDEB') }}</p>

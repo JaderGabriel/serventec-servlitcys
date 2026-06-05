@@ -181,7 +181,15 @@ final class RxFundebPortariaChart
         $labels = array_map(static fn (array $r): string => (string) $r['label'], $rows);
         $toMillions = static fn (?float $v): float => round(max(0.0, (float) ($v ?? 0)) / 1_000_000, 2);
 
-        $chart = ChartPayload::barStacked(
+        $count = count($labels);
+        $panelHeight = match (true) {
+            $count > 20 => 'xxxl',
+            $count > 12 => 'xxl',
+            $count > 6 => 'lg',
+            default => 'md',
+        };
+
+        $chart = ChartPayload::barHorizontalStacked(
             __('Complementações previstas por município'),
             __('Milhões de R$'),
             $labels,
@@ -192,13 +200,26 @@ final class RxFundebPortariaChart
             ],
         );
 
-        $chart['subtitle'] = __('Exercício FUNDEB :ano · eixo em milhões; passe o rato sobre as barras para valores em R$.', [
+        $chart['subtitle'] = __('Exercício FUNDEB :ano · barras horizontais em milhões; total no fim da barra; detalhe VAAF/VAAT/VAAR no tooltip ou exportação.', [
             'ano' => (string) $exercicio,
         ]);
         $chart['footnote'] = __('Fonte: CSV receita FNDE — :portaria.', [
             'portaria' => $portariaLabel,
         ]);
-        $chart['options']['valueFormat'] = 'brl_millions';
+        $chart['options'] = array_merge($chart['options'] ?? [], [
+            'valueFormat' => 'brl_millions',
+            'datalabelsMode' => 'stack_total_compact',
+            'showAllCategoryTicks' => true,
+            'panelHeight' => $panelHeight,
+            'layout' => [
+                'padding' => [
+                    'left' => 4,
+                    'right' => 64,
+                    'top' => 8,
+                    'bottom' => 8,
+                ],
+            ],
+        ]);
 
         return $chart;
     }

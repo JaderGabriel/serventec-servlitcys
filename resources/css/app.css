@@ -707,6 +707,10 @@
         @apply font-sans text-xs text-slate-600 dark:text-slate-400;
     }
 
+    .rx-fundeb-portaria__chart .chart-panel-host > div.relative.isolate {
+        @apply overflow-y-auto overflow-x-auto;
+    }
+
     .serv-rx-kpi-grid .serv-home-kpi {
         @apply h-full;
     }

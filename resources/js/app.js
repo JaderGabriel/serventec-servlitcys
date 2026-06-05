@@ -626,6 +626,57 @@ document.addEventListener("alpine:init", () => {
         });
     }
 
+    function formatCompactMillions(raw) {
+        const n = Number(raw);
+        if (!Number.isFinite(n) || n <= 0) {
+            return "";
+        }
+        if (n >= 100) {
+            return `${Math.round(n)} M`;
+        }
+        if (n >= 10) {
+            return `${n.toLocaleString("pt-BR", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 1,
+            })} M`;
+        }
+
+        return `${n.toLocaleString("pt-BR", {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 2,
+        })} M`;
+    }
+
+    function stackedBarTopDatasetIndex(ctx) {
+        const chart = ctx.chart;
+        const dataIndex = ctx.dataIndex;
+        const datasets = chart?.data?.datasets ?? [];
+        for (let i = datasets.length - 1; i >= 0; i--) {
+            if (typeof chart.isDatasetVisible === "function" && !chart.isDatasetVisible(i)) {
+                continue;
+            }
+            const v = Number(datasets[i]?.data?.[dataIndex] ?? 0);
+            if (Number.isFinite(v) && v > 0) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    function stackedBarTotal(ctx) {
+        const chart = ctx.chart;
+        const dataIndex = ctx.dataIndex;
+
+        return (chart?.data?.datasets ?? []).reduce((sum, ds, di) => {
+            if (typeof chart.isDatasetVisible === "function" && !chart.isDatasetVisible(di)) {
+                return sum;
+            }
+
+            return sum + Number(ds?.data?.[dataIndex] ?? 0);
+        }, 0);
+    }
+
     function applyChartBrlFormat(extra, mergedPlugins, scales) {
         const format = extra?.valueFormat;
         if (format !== "brl" && format !== "brl_millions") {
@@ -659,28 +710,78 @@ document.addEventListener("alpine:init", () => {
             };
             axis.ticks.font = chartLabelFont(11);
         }
+        const stackedTotalCompact = extra?.datalabelsMode === "stack_total_compact" && millions;
         mergedPlugins.datalabels = {
             ...(mergedPlugins.datalabels || {}),
-            formatter: (value, ctx) => {
-                if (value === null || value === undefined) {
-                    return "";
-                }
-                const t = ctx.chart?.config?.type;
-                if (t === "doughnut" || t === "pie") {
-                    const data = ctx.dataset?.data ?? [];
-                    const sum = data.reduce(
-                        (a, b) => a + Number(b),
-                        0,
-                    );
-                    const pct = sum
-                        ? Math.round((Number(value) / sum) * 1000) / 10
-                        : 0;
+            ...(stackedTotalCompact
+                ? {
+                      clip: false,
+                      display: (ctx) => {
+                          const top = stackedBarTopDatasetIndex(ctx);
+                          if (top < 0 || ctx.datasetIndex !== top) {
+                              return false;
+                          }
+                          const total = stackedBarTotal(ctx);
 
-                    return `${toBrl(value)}\n(${pct}% do total)`;
-                }
+                          return Number.isFinite(total) && total > 0;
+                      },
+                      anchor: (ctx) => {
+                          const t = ctx.chart?.config?.type;
+                          const idx = ctx.chart?.options?.indexAxis;
+                          if (t === "bar" && idx === "y") {
+                              return "end";
+                          }
+                          if (t === "bar") {
+                              return "end";
+                          }
 
-                return toBrl(value);
-            },
+                          return "center";
+                      },
+                      align: (ctx) => {
+                          const t = ctx.chart?.config?.type;
+                          const idx = ctx.chart?.options?.indexAxis;
+                          if (t === "bar" && idx === "y") {
+                              return "end";
+                          }
+                          if (t === "bar") {
+                              return "end";
+                          }
+
+                          return "center";
+                      },
+                      offset: (ctx) => {
+                          const t = ctx.chart?.config?.type;
+                          if (t === "bar") {
+                              return ctx.chart?.options?.indexAxis === "y" ? 8 : 4;
+                          }
+
+                          return 0;
+                      },
+                      formatter: (_value, ctx) =>
+                          formatCompactMillions(stackedBarTotal(ctx)),
+                  }
+                : {
+                      formatter: (value, ctx) => {
+                          if (value === null || value === undefined) {
+                              return "";
+                          }
+                          const t = ctx.chart?.config?.type;
+                          if (t === "doughnut" || t === "pie") {
+                              const data = ctx.dataset?.data ?? [];
+                              const sum = data.reduce(
+                                  (a, b) => a + Number(b),
+                                  0,
+                              );
+                              const pct = sum
+                                  ? Math.round((Number(value) / sum) * 1000) / 10
+                                  : 0;
+
+                              return `${toBrl(value)}\n(${pct}% do total)`;
+                          }
+
+                          return toBrl(value);
+                      },
+                  }),
         };
         mergedPlugins.tooltip = {
             ...(mergedPlugins.tooltip || {}),
@@ -1750,6 +1851,13 @@ document.addEventListener("alpine:init", () => {
                     }
                 }
 
+                const extraOpts =
+                    this._sourcePayload?.options &&
+                    typeof this._sourcePayload.options === "object"
+                        ? this._sourcePayload.options
+                        : {};
+                const showAllCategoryTicks =
+                    extraOpts.showAllCategoryTicks === true;
                 const t = this.chart.config.type;
                 if (
                     (t === "bar" || t === "line") &&
@@ -1759,9 +1867,15 @@ document.addEventListener("alpine:init", () => {
                         this.chart.options.indexAxis === "y" ? "y" : "x";
                     const ticks = this.chart.options.scales[catAxis]?.ticks;
                     if (ticks) {
-                        ticks.autoSkip = true;
-                        ticks.autoSkipPadding = n > 16 ? 4 : 2;
-                        if (n > 24) {
+                        ticks.autoSkip = !showAllCategoryTicks;
+                        ticks.autoSkipPadding = showAllCategoryTicks
+                            ? 0
+                            : n > 16
+                              ? 4
+                              : 2;
+                        if (showAllCategoryTicks) {
+                            delete ticks.maxTicksLimit;
+                        } else if (n > 24) {
                             ticks.maxTicksLimit = 18;
                         } else {
                             delete ticks.maxTicksLimit;
