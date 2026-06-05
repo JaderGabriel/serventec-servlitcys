@@ -134,4 +134,29 @@ final class FundebExtratoVisualBuilderTest extends TestCase
         $this->assertSame('05/06/2026 09:41', $credits[0]['import_reference'] ?? null);
         $this->assertNotSame('05/06/2026', $credits[0]['date'] ?? null);
     }
+
+    #[Test]
+    public function fallback_anual_nao_usa_data_futura_nem_data_importacao(): void
+    {
+        $city = new City(['name' => 'Itaparica', 'uf' => 'BA', 'ibge_municipio' => '2916104']);
+
+        $csv = new MunicipalTransferSnapshot([
+            'programa_id' => 'fundeb',
+            'programa_label' => 'FUNDEB',
+            'fonte' => 'tesouro_csv',
+            'valor' => 13_168_732.33,
+            'imported_at' => '2026-06-05 09:41:10',
+            'meta' => json_encode(['resource_id' => 'missing-cache']),
+        ]);
+
+        $result = (new FundebExtratoVisualBuilder)->build([$csv], $city, 2026, 15_000_000.0);
+        $credit = collect($result['cycles'][0]['lines'] ?? [])
+            ->first(static fn (array $l): bool => ($l['line_type'] ?? '') === 'credit');
+
+        $this->assertNotNull($credit);
+        $this->assertSame('—', $credit['date'] ?? null);
+        $this->assertSame('sem_data_repasse', $credit['date_note'] ?? null);
+        $this->assertStringContainsString('não informou datas por repasse', (string) ($credit['description'] ?? ''));
+        $this->assertSame('05/06/2026 09:41', $credit['import_reference'] ?? null);
+    }
 }

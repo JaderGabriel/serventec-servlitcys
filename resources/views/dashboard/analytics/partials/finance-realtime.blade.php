@@ -225,8 +225,10 @@
                                                             {{ __('data do extrato') }}
                                                         @elseif ($line['date_note'] === 'repasse')
                                                             {{ __('data do repasse') }}
-                                                        @elseif ($line['date_note'] === 'fim_ano')
-                                                            {{ __('data ref. exercício') }}
+                                                        @elseif ($line['date_note'] === 'competencia')
+                                                            {{ __('competência — data do pagamento não informada') }}
+                                                        @elseif ($line['date_note'] === 'sem_data_repasse')
+                                                            {{ __('sem data na fonte — só total importado') }}
                                                         @endif
                                                     </span>
                                                 @endif

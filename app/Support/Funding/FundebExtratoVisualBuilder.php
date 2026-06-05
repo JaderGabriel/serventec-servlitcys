@@ -421,10 +421,10 @@ final class FundebExtratoVisualBuilder
                 if ($month < 1 || $month > 12 || $valor <= 0) {
                     continue;
                 }
-                $date = $this->repasseDateForMonth($filterYear, $month);
+                $date = $this->repasseDisplayDateForMonth($filterYear, $month);
                 $out[] = [
                     'sort_key' => sprintf('%04d-%02d-99', $filterYear, $month),
-                    'date' => $date,
+                    'date' => $date ?? '—',
                     'year' => $filterYear,
                     'month' => $month,
                     'valor' => $valor,
@@ -432,7 +432,7 @@ final class FundebExtratoVisualBuilder
                         'mes' => $this->monthName($month),
                         'ano' => (string) $filterYear,
                     ]),
-                    'date_source' => 'fim_mes',
+                    'date_source' => $date !== null ? 'fim_mes' : 'competencia',
                     'import_reference' => $importReference,
                 ];
             }
@@ -451,13 +451,15 @@ final class FundebExtratoVisualBuilder
         $month = $parsed['month'] ?? 0;
 
         $out[] = [
-            'sort_key' => $parsed['sort_key'] ?? sprintf('%04d-00-99', $filterYear),
-            'date' => $eventDate ?? $this->repasseDateForMonth($filterYear, 12),
+            'sort_key' => $parsed['sort_key'] ?? sprintf('%04d-99-99', $filterYear),
+            'date' => $eventDate ?? '—',
             'year' => $year,
             'month' => $month,
             'valor' => $valor,
-            'description' => $descBase.' — '.__('Repasse :ano', ['ano' => (string) $filterYear]),
-            'date_source' => $eventDate !== null ? 'repasse' : 'fim_ano',
+            'description' => $descBase.' — '.__('Total :ano na base importada (a fonte não informou datas por repasse)', [
+                'ano' => (string) $filterYear,
+            ]),
+            'date_source' => $eventDate !== null ? 'repasse' : 'sem_data_repasse',
             'import_reference' => $importReference,
         ];
 
@@ -493,7 +495,7 @@ final class FundebExtratoVisualBuilder
                 $month = isset($item['mes']) && is_numeric($item['mes']) ? (int) $item['mes'] : 0;
                 $year = isset($item['ano']) && is_numeric($item['ano']) ? (int) $item['ano'] : $filterYear;
                 if ($date === '' && $month >= 1 && $month <= 12) {
-                    $date = $this->repasseDateForMonth($year, $month);
+                    $date = $this->repasseDisplayDateForMonth($year, $month) ?? '';
                 }
                 if ($date === '') {
                     continue;
@@ -763,7 +765,7 @@ final class FundebExtratoVisualBuilder
 
         $month = isset($meta['mes']) && is_numeric($meta['mes']) ? (int) $meta['mes'] : 0;
         if ($month >= 1 && $month <= 12) {
-            return $this->repasseDateForMonth($filterYear, $month);
+            return $this->repasseDisplayDateForMonth($filterYear, $month);
         }
 
         return null;
@@ -788,13 +790,22 @@ final class FundebExtratoVisualBuilder
         return false;
     }
 
-    private function repasseDateForMonth(int $year, int $month): string
+    /**
+     * Data de exibição do repasse (fim do mês de competência), só se já passou — evita datas futuras em Tempo Real.
+     */
+    private function repasseDisplayDateForMonth(int $year, int $month): ?string
     {
-        if ($month < 1 || $month > 12) {
-            return '31/12/'.$year;
+        if ($month < 1 || $month > 12 || $year < 2000) {
+            return null;
         }
 
-        return sprintf('%02d/%02d/%04d', (int) date('t', mktime(0, 0, 0, $month, 1, $year)), $month, $year);
+        $lastDay = (int) date('t', mktime(0, 0, 0, $month, 1, $year));
+        $endTs = mktime(23, 59, 59, $month, $lastDay, $year);
+        if ($endTs > time()) {
+            return null;
+        }
+
+        return sprintf('%02d/%02d/%04d', $lastDay, $month, $year);
     }
 
     /**

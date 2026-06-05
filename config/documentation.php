@@ -22,10 +22,10 @@ return [
     */
 
     'product' => [
-        'version' => '4.1.1',
-        'release_tag' => '20260605-Kairos',
-        'commit_short' => '7b11e6e',
-        'commit_number' => 292,
+        'version' => '4.1.2',
+        'release_tag' => '20260605-Eunomia',
+        'commit_short' => 'pending',
+        'commit_number' => 293,
         'revision_date' => '2026-06-05',
         'in_production' => true,
         'production_label' => 'Em produção',
