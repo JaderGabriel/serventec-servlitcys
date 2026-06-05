@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '4.1.0',
         'release_tag' => '20260605-Athena',
-        'commit_short' => 'cb7e021',
+        'commit_short' => '85f15f3',
         'commit_number' => 289,
         'revision_date' => '2026-06-05',
         'in_production' => true,
