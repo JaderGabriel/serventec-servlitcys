@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '4.1.7',
-        'release_tag' => '20260607-Phronesis',
-        'commit_short' => '033bfa7',
-        'commit_number' => 307,
-        'revision_date' => '2026-06-07',
+        'version' => '4.1.8',
+        'release_tag' => '20260608-Sophia',
+        'commit_short' => '4607495',
+        'commit_number' => 313,
+        'revision_date' => '2026-06-08',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

@@ -1,6 +1,6 @@
 # Comandos Artisan — servlitcys
 
-**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+**Versão do produto:** 4.1.8 · **Última revisão:** 2026-06-08
 
 > **Índice:** [README.md](README.md) · **Padrão doc:** [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md)
 
@@ -103,6 +103,7 @@ Referências gravadas em **`fundeb_municipio_references`** (`city_id`, `ibge_mun
 |---------|-----------|
 | `fundeb:import-api` | API CKAN FNDE ou JSON (`{ibge}`, `{ano}`) |
 | `fundeb:import-references` | CSV `;` (ibge;ano;vaaf;…) |
+| `fundeb:diagnose-matriculas` | Diagnóstico i-Educar vs Censo INEP por município/ano (base do VAAF estimado) |
 
 **Interface web:** `/admin/ieducar-compatibility` (secção FUNDEB + probe)
 
@@ -111,9 +112,11 @@ Referências gravadas em **`fundeb_municipio_references`** (`city_id`, `ibge_mun
 ```bash
 php artisan fundeb:import-api 1 --ano=2024
 php artisan fundeb:import-references storage/app/fundeb.csv
+php artisan fundeb:diagnose-matriculas
+php artisan fundeb:diagnose-matriculas 3 --anos=2024,2025,2026
 ```
 
-Ver também: [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md)
+Ver também: [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md) §6.2–6.3
 
 ### 4.1 Repasses observados (Finanças → Tempo Real)
 

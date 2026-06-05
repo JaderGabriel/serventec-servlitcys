@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 4.1.6 · tag `20260606-Aletheia` · **Última revisão:** 2026-06-06
+**Versão do produto:** 4.1.8 · tag `20260608-Sophia` · **Última revisão:** 2026-06-08
 
 Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md).
 
@@ -71,7 +71,9 @@ Ponto de entrada da documentação técnica e funcional. Para **padrão editoria
 
 | Documento | Versão |
 |-----------|--------|
-| [RELEASE_20260606_ALETHEIA.md](RELEASE_20260606_ALETHEIA.md) | **4.1.6** — Aletheia |
+| [RELEASE_20260608_SOPHIA.md](RELEASE_20260608_SOPHIA.md) | **4.1.8** — Sophia |
+| [RELEASE_20260607_PHRONESIS.md](RELEASE_20260607_PHRONESIS.md) | 4.1.7 — Phronesis |
+| [RELEASE_20260606_ALETHEIA.md](RELEASE_20260606_ALETHEIA.md) | 4.1.6 — Aletheia |
 | [RELEASE_20260605_EUNOMIA.md](RELEASE_20260605_EUNOMIA.md) | 4.1.2 — Eunomia |
 | [RELEASE_20260605_KAIROS.md](RELEASE_20260605_KAIROS.md) | 4.1.1 — Kairos |
 | [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md) | 4.1.0 — Athena |

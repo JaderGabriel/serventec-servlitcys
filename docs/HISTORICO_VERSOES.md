@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`4.1.7`** · tag de deploy **`20260607-Phronesis`** · ver [RELEASE_20260607_PHRONESIS.md](RELEASE_20260607_PHRONESIS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`4.1.8`** · tag de deploy **`20260608-Sophia`** · ver [RELEASE_20260608_SOPHIA.md](RELEASE_20260608_SOPHIA.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **4.1.7** |
+| **Versão semântica em produção** | **4.1.8** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260607-Phronesis` |
-| **Último marco documentado** | FUNDEB portarias 6/2026, lexicon UI consolidado/projeção, export matriz — [RELEASE_20260607_PHRONESIS.md](RELEASE_20260607_PHRONESIS.md) |
+| **Tag de deploy (servidor)** | `20260608-Sophia` |
+| **Último marco documentado** | FUNDEB VAAT + lookback Censo, admin i-Educar para leigos, diagrama ERP — [RELEASE_20260608_SOPHIA.md](RELEASE_20260608_SOPHIA.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -20,7 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.1.7** | `033bfa7` / `20260607-Phronesis` → `main` | **307** | 07/06/2026 | **Produção:** FUNDEB portarias 6/2026, lexicon UI (consolidado/em formação/projeção), VAAT CSV, export matriz — [RELEASE_20260607_PHRONESIS.md](RELEASE_20260607_PHRONESIS.md). |
+| **▶ 4.1.8** | `4607495` / `20260608-Sophia` → `main` | **313** | 08/06/2026 | **Produção:** VAAT portaria + lookback Censo, diagnose matrículas, admin i-Educar leigos, diagrama ERP — [RELEASE_20260608_SOPHIA.md](RELEASE_20260608_SOPHIA.md). |
+| 4.1.7 | `033bfa7` / `20260607-Phronesis` → `main` | **307** | 07/06/2026 | FUNDEB portarias 6/2026, lexicon UI (consolidado/em formação/projeção), VAAT CSV, export matriz — [RELEASE_20260607_PHRONESIS.md](RELEASE_20260607_PHRONESIS.md). |
 | 4.1.6 | `29274d8` / `20260606-Aletheia` → `main` | **302** | 06/06/2026 | Admin UI unificado (hub + screen-shell), dedup Financiamentos, telas legado cities/LGPD — [RELEASE_20260606_ALETHEIA.md](RELEASE_20260606_ALETHEIA.md). |
 | 4.1.5 | `9be03ae` / `20260605-Themis` → `main` | **300** | 05/06/2026 | Admin rebuild Tempo Real e extrato CKAN×SISWEB. |
 | 4.1.4 | `418dd5e` / `20260605-Horae` → `main` | **298** | 05/06/2026 | Rebuild Tempo Real só municipal com granularidade. |
