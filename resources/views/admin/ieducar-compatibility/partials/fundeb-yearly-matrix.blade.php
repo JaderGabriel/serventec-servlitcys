@@ -29,10 +29,12 @@
     <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div class="min-w-0">
             <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {{ __('Tabela VAAF e VAAT — municípios cadastrados (:from–:to)', ['from' => $yearFrom, 'to' => $yearTo]) }}
+                {{ __('admin_ieducar_compatibility.matrix.title', ['from' => $yearFrom, 'to' => $yearTo]) }}
             </h3>
             <p class="mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                {{ __('Cada coluna é um exercício FUNDEB (ano da portaria). Cores indicam se o índice é oficial importado, estimado pela portaria ou piso nacional. Referência FUNDEB: :anchor.', ['anchor' => $anchorYear]) }}
+                {{ __('admin_ieducar_compatibility.matrix.intro') }}
+                {{ __('admin_ieducar_compatibility.matrix.icon_hint') }}
+                {{ __('Referência FUNDEB: :anchor.', ['anchor' => $anchorYear]) }}
             </p>
         </div>
         <div class="flex flex-wrap items-end gap-2 shrink-0">
@@ -71,6 +73,8 @@
 
     <x-dashboard.fundeb-exercise-guide class="mb-1" compact />
 
+    @include('admin.ieducar-compatibility.partials.fonte-legenda')
+
     @if ($legend !== [])
         <div class="flex flex-wrap gap-x-4 gap-y-2 text-xs" role="list" aria-label="{{ __('Legenda da tabela') }}">
             @foreach ($legend as $item)
@@ -86,7 +90,7 @@
         <p class="text-sm text-amber-800 dark:text-amber-200">{{ __('Nenhum município cadastrado.') }}</p>
     @elseif (! $withAnyRef)
         <p class="text-sm text-amber-800 dark:text-amber-200">
-            {{ __('Nenhuma referência importada neste intervalo. Use a sincronização FUNDEB acima.') }}
+            {{ __('admin_ieducar_compatibility.matrix.empty_refs') }}
         </p>
     @endif
 
@@ -116,8 +120,8 @@
                 <tr class="bg-slate-50 dark:bg-slate-900/80 text-[10px] normal-case text-slate-500 dark:text-slate-400">
                     <th colspan="4"></th>
                     @foreach ($years as $y)
-                        <th class="px-2 py-1 text-right border-l border-slate-200/80 dark:border-slate-600/80">{{ __('VAAF') }} <span class="font-normal">({{ __('índice') }})</span></th>
-                        <th class="px-2 py-1 text-right">{{ __('VAAT') }} <span class="font-normal">({{ __('índice') }})</span></th>
+                        <th class="px-2 py-1 text-right border-l border-slate-200/80 dark:border-slate-600/80" title="{{ __('admin_ieducar_compatibility.matrix.col_vaaf') }}">{{ __('VAAF') }}</th>
+                        <th class="px-2 py-1 text-right" title="{{ __('admin_ieducar_compatibility.matrix.col_vaat') }}">{{ __('VAAT') }}</th>
                     @endforeach
                 </tr>
             </thead>

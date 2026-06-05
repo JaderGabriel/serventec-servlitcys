@@ -43,12 +43,13 @@
     @include('admin.ieducar-compatibility.partials.fundeb-sync-results', ['fmtBrl' => $fmtBrl])
     @include('admin.ieducar-compatibility.partials.fundeb-official-sources', ['fundebOfficialSources' => $fundebOfficialSources ?? []])
     <div>
-        <h3 class="text-sm font-semibold text-teal-950 dark:text-teal-100">{{ __('Referências FUNDEB (VAAF / VAAT / portarias)') }}</h3>
+        <h3 class="text-sm font-semibold text-teal-950 dark:text-teal-100">{{ __('admin_ieducar_compatibility.fundeb_card.title') }}</h3>
         <p class="text-xs text-teal-900/90 dark:text-teal-200/90 mt-1 leading-relaxed">
-            {{ __('A importação FNDE grava índices e receitas por exercício (portaria publicada). Matrículas do ano vigente alimentam projeções do exercício seguinte. Envios vão para a fila. Nova cidade com IBGE enfileira :y1 e :y2.', [
-                'y1' => \App\Services\Fundeb\FundebOpenDataImportService::suggestedImportYear(),
-                'y2' => \App\Services\Fundeb\FundebOpenDataImportService::suggestedImportYear() - 1,
-            ]) }}
+            {{ __('admin_ieducar_compatibility.fundeb_card.intro') }}
+        </p>
+        <p class="text-[11px] text-teal-800/90 dark:text-teal-300/90 mt-2 leading-relaxed rounded-md border border-teal-100 dark:border-teal-900/50 bg-teal-50/50 dark:bg-teal-950/30 px-2.5 py-2">
+            {{ __('admin_ieducar_compatibility.matriculas.diagnose') }}
+            <a href="{{ route('admin.documentation.show', ['doc' => 'docs/FUNDEB_VAAF_E_ONDA1.md']) }}" class="underline font-medium ml-1">{{ __('Documentação FUNDEB') }}</a>
         </p>
     </div>
 
@@ -67,10 +68,10 @@
             @endif
         </p>
         @if ($fundebNationalFloor ?? false)
-            <p class="text-sky-800 dark:text-sky-200">{{ __('Sem dado FNDE/CKAN, usa piso nacional (IEDUCAR_DISC_VAA_REFERENCIA ou IEDUCAR_FUNDEB_NATIONAL_VAAF_*).') }}</p>
+            <p class="text-sky-800 dark:text-sky-200">{{ __('admin_ieducar_compatibility.fundeb_card.piso_hint') }}</p>
         @endif
         @if (trim((string) ($diag['effective_resource_id'] ?? '')) === '')
-            <p class="text-amber-700 dark:text-amber-300">{{ __('Opcional: IEDUCAR_FUNDEB_CKAN_RESOURCE_ID para buscar VAAF municipal oficial na API FNDE.') }}</p>
+            <p class="text-amber-700 dark:text-amber-300">{{ __('admin_ieducar_compatibility.fundeb_card.api_optional') }}</p>
         @endif
     </div>
 
@@ -193,8 +194,10 @@
 
     @if ($city && count($fundebStored ?? []) > 0)
         <div>
-            <h4 class="text-xs font-semibold text-teal-900 dark:text-teal-100 mb-2">{{ __('Histórico gravado — :name', ['name' => $city->name]) }}</h4>
-            <div class="overflow-x-auto rounded-lg border border-teal-100 dark:border-teal-900/50">
+            <h4 class="text-xs font-semibold text-teal-900 dark:text-teal-100 mb-1">{{ __('admin_ieducar_compatibility.fundeb_card.history_title') }} — {{ $city->name }}</h4>
+            <p class="text-[11px] text-teal-800/80 dark:text-teal-300/80 mb-2">{{ __('admin_ieducar_compatibility.sources.local_db') }}</p>
+            @include('admin.ieducar-compatibility.partials.fonte-legenda')
+            <div class="overflow-x-auto rounded-lg border border-teal-100 dark:border-teal-900/50 mt-2">
                 <table class="min-w-full text-sm">
                     <thead class="bg-teal-100/60 dark:bg-teal-950/40 text-left text-xs uppercase text-teal-800 dark:text-teal-200">
                         <tr>
@@ -236,6 +239,6 @@
             </div>
         </div>
     @elseif ($city)
-        <p class="text-sm text-amber-800 dark:text-amber-200">{{ __('Nenhuma referência gravada. Enfileire a importação abaixo ou consulte a fila.') }}</p>
+        <p class="text-sm text-amber-800 dark:text-amber-200">{{ __('admin_ieducar_compatibility.fundeb_card.no_refs') }}</p>
     @endif
 </section>

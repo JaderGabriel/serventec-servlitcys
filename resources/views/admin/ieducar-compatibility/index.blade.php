@@ -5,7 +5,7 @@
                 {{ __('Compatibilidade da base i-Educar') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ __('Probe na hora; importações FUNDEB e export JSON vão para a fila.') }}
+                {{ __('admin_ieducar_compatibility.page.subtitle') }}
             </p>
         </div>
     </x-slot>
@@ -29,7 +29,7 @@
         accent="amber"
         :eyebrow="__('FUNDEB VAAF (FNDE)')"
         :title="__('VAAF, probe i-Educar e rotinas')"
-        :description="__('Probe na hora; importações VAAF/VAAT FNDE e export JSON vão para a fila. Repasses observados (Tempo Real) ficam no hub de dados públicos.')"
+        :description="__('admin_ieducar_compatibility.page.hub_description')"
         impact-domain="fundeb"
         queue-banner-compact
         :doc-href="route('admin.documentation.show', ['doc' => 'docs/EXPORTACAO_DADOS_FUNDEB_PLANILHA.md'])"
@@ -43,11 +43,13 @@
             @endif
         </x-slot>
 
+            @include('admin.ieducar-compatibility.partials.lay-reader-guide')
+
             <x-admin.import-hub.action-card
                 method="get"
                 action="{{ route('admin.ieducar-compatibility.index') }}"
                 :title="__('Probe i-Educar e contexto FUNDEB')"
-                :hint="__('O probe corre na hora; export JSON e importações FUNDEB vão para a fila.')"
+                :hint="__('admin_ieducar_compatibility.probe.run_hint')"
                 :submit-label="__('Executar probe')"
                 :show-queue-hint="false"
             >
@@ -58,6 +60,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                     <div>
                         <label for="city_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Cidade') }}</label>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{{ __('admin_ieducar_compatibility.probe.city_hint') }}</p>
                         <select id="city_id" name="city_id" class="{{ $selectClass }}">
                             @foreach ($cities as $c)
                                 <option value="{{ $c->id }}" @selected($city && (int) $city->id === (int) $c->id)>{{ $c->name }}</option>
@@ -66,6 +69,7 @@
                     </div>
                     <div>
                         <label for="ano_letivo" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Ano letivo (probe)') }}</label>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{{ __('admin_ieducar_compatibility.probe.ano_letivo_hint') }}</p>
                         <select id="ano_letivo" name="ano_letivo" class="{{ $selectClass }}">
                             <option value="all" @selected($anoLetivo === 'all')>{{ __('Todos (consolidado)') }}</option>
                             @for ($y = (int) date('Y') + 1; $y >= 2018; $y--)
@@ -74,7 +78,8 @@
                         </select>
                     </div>
                     <div>
-                        <label for="fundeb_ano_filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Ano FUNDEB') }}</label>
+                        <label for="fundeb_ano_filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Ano FUNDEB (exercício)') }}</label>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{{ __('admin_ieducar_compatibility.probe.fundeb_ano_hint') }}</p>
                         <input type="number" id="fundeb_ano_filter" name="fundeb_ano" min="2000" max="{{ (int) date('Y') + 1 }}" value="{{ $fundebImportYear ?? $fundebSuggestedYear ?? (int) date('Y') - 1 }}" class="{{ $selectClass }} w-full">
                     </div>
                 </div>
@@ -156,8 +161,10 @@
                                 · {{ number_format((int) $report['total_matriculas'], 0, ',', '.') }} {{ __('matrículas ativas no filtro') }}
                             @endif
                         </p>
-                        <p class="text-[11px] text-gray-500 dark:text-gray-500">
-                            {{ __('Métricas alinhadas à aba Discrepâncias: ocorrências = soma por escola; escolas = linhas com pendência; impacto = índice do exercício (importado ou estimado) × peso × ocorrências — projeção indicativa, não repasse FNDE.') }}
+                        <p class="text-[11px] text-gray-500 dark:text-gray-500 leading-relaxed">
+                            {{ __('admin_ieducar_compatibility.discrepancies.heading') }}
+                            {{ __('admin_ieducar_compatibility.discrepancies.ocorrencias') }}
+                            {{ __('admin_ieducar_compatibility.discrepancies.perda') }}
                         </p>
                         @if ($fundingRef !== null && isset($fundingRef['vaa_label']))
                             <p class="text-xs text-gray-700 dark:text-gray-300 mt-1">
@@ -236,11 +243,11 @@
 
                     @if ($discSummary !== [])
                         <div class="px-4 py-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 border-b border-gray-100 dark:border-gray-800 bg-slate-50/60 dark:bg-slate-900/40">
-                            <div>
+                            <div title="{{ __('admin_ieducar_compatibility.discrepancies.ocorrencias') }}">
                                 <p class="text-[10px] uppercase tracking-wide text-gray-500">{{ __('Ocorrências') }}</p>
                                 <p class="text-lg font-semibold tabular-nums text-rose-800 dark:text-rose-200">{{ number_format((int) ($discSummary['com_problema'] ?? 0), 0, ',', '.') }}</p>
                             </div>
-                            <div>
+                            <div title="{{ __('admin_ieducar_compatibility.discrepancies.escolas') }}">
                                 <p class="text-[10px] uppercase tracking-wide text-gray-500">{{ __('Escolas afetadas') }}</p>
                                 <p class="text-lg font-semibold tabular-nums text-indigo-800 dark:text-indigo-200">{{ number_format((int) ($discSummary['escolas_afetadas'] ?? 0), 0, ',', '.') }}</p>
                             </div>
@@ -248,11 +255,11 @@
                                 <p class="text-[10px] uppercase tracking-wide text-gray-500">{{ __('Rotinas c/ pendência') }}</p>
                                 <p class="text-lg font-semibold tabular-nums">{{ number_format((int) ($discSummary['rotinas_com_pendencia'] ?? 0), 0, ',', '.') }}</p>
                             </div>
-                            <div>
+                            <div title="{{ __('admin_ieducar_compatibility.discrepancies.perda') }}">
                                 <p class="text-[10px] uppercase tracking-wide text-gray-500">{{ __('Perda est. / ano') }}</p>
                                 <p class="text-sm font-semibold tabular-nums text-orange-800 dark:text-orange-200">{{ $fmtBrl((float) ($discSummary['perda_estimada_anual'] ?? 0)) }}</p>
                             </div>
-                            <div>
+                            <div title="{{ __('admin_ieducar_compatibility.discrepancies.ganho') }}">
                                 <p class="text-[10px] uppercase tracking-wide text-gray-500">{{ __('Ganho pot. / ano') }}</p>
                                 <p class="text-sm font-semibold tabular-nums text-emerald-800 dark:text-emerald-200">{{ $fmtBrl((float) ($discSummary['ganho_potencial_anual'] ?? 0)) }}</p>
                             </div>

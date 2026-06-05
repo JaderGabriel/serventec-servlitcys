@@ -7,20 +7,21 @@
 
 <section class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/40 dark:bg-indigo-950/25 p-4 space-y-4">
     <div>
-        <h4 class="text-sm font-semibold text-indigo-950 dark:text-indigo-100">{{ __('Portarias e fontes oficiais (FUNDEB)') }}</h4>
-        <p class="text-xs text-indigo-900/90 dark:text-indigo-200/90 mt-1">
-            {{ __('Base legal e publicações usadas na importação de VAAF e na comparação «Tempo Real» da consultoria.') }}
+        <h4 class="text-sm font-semibold text-indigo-950 dark:text-indigo-100">{{ __('admin_ieducar_compatibility.official_sources.title') }}</h4>
+        <p class="text-xs text-indigo-900/90 dark:text-indigo-200/90 mt-1 leading-relaxed">
+            {{ __('admin_ieducar_compatibility.official_sources.intro') }}
         </p>
         @if (filled($panel['last_import_max'] ?? null))
             <p class="text-[11px] mt-2 text-slate-600 dark:text-slate-400">
-                {{ __('Última gravação local:') }} <span class="font-mono">{{ $panel['last_import_max'] }}</span>
+                {{ __('admin_ieducar_compatibility.official_sources.last_import') }}
+                <span class="font-mono">{{ $panel['last_import_max'] }}</span>
             </p>
         @endif
     </div>
 
     @if ($portarias !== [])
         <div>
-            <p class="text-xs font-medium text-slate-800 dark:text-slate-200 mb-1">{{ __('Portarias / CSV configurados') }}</p>
+            <p class="text-xs font-medium text-slate-800 dark:text-slate-200 mb-1">{{ __('admin_ieducar_compatibility.official_sources.portarias') }}</p>
             <ul class="text-xs space-y-1">
                 @foreach ($portarias as $p)
                     <li>
@@ -33,7 +34,7 @@
 
     @if ($fontes !== [])
         <div>
-            <p class="text-xs font-medium text-slate-800 dark:text-slate-200 mb-1">{{ __('Fontes de dados') }}</p>
+            <p class="text-xs font-medium text-slate-800 dark:text-slate-200 mb-1">{{ __('admin_ieducar_compatibility.official_sources.fontes') }}</p>
             <ul class="text-xs flex flex-wrap gap-x-3 gap-y-1">
                 @foreach ($fontes as $f)
                     <li>
@@ -46,7 +47,7 @@
 
     @if ($updates !== [])
         <div>
-            <p class="text-xs font-medium text-slate-800 dark:text-slate-200 mb-2">{{ __('Verificação de actualizações') }}</p>
+            <p class="text-xs font-medium text-slate-800 dark:text-slate-200 mb-2">{{ __('admin_ieducar_compatibility.official_sources.updates') }}</p>
             <ul class="space-y-2 text-xs">
                 @foreach ($updates as $u)
                     @php
