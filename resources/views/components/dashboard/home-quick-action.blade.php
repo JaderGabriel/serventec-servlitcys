@@ -35,7 +35,7 @@
             'border-slate-200/90 bg-white dark:border-slate-700/80 dark:bg-slate-900/60',
             'hover:border-slate-300 hover:shadow-md dark:hover:border-slate-600',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/30',
-            $featured ? 'serv-qa-card--featured sm:p-5 ring-1 ring-slate-900/5 dark:ring-white/10' : '',
+            $featured ? 'serv-qa-card--featured ring-1 ring-slate-900/5 dark:ring-white/10' : '',
             $featured && $accent === 'teal' ? 'border-teal-200/90 bg-gradient-to-br from-teal-50/50 via-white to-white dark:from-teal-950/25 dark:via-slate-900/50 dark:to-slate-950/60 dark:border-teal-800/50' : '',
             $alert ? 'border-amber-200/90 ring-1 ring-amber-500/10 dark:border-amber-800/50' : '',
             'serv-qa-card--'.$accent,

@@ -2214,7 +2214,7 @@
     }
 
     .serv-qa-zones {
-        @apply grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3;
+        @apply grid grid-cols-1 gap-5;
     }
 
     .serv-qa-zone {
@@ -2268,21 +2268,44 @@
     }
 
     .serv-qa-grid--auto {
-        @apply flex flex-wrap gap-2.5;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(10.25rem, 10.25rem));
+        gap: 0.5rem;
+        justify-content: start;
     }
 
     .serv-qa-grid--auto .serv-qa-card {
-        @apply flex-[1_1_11.5rem] max-w-full;
+        width: 10.25rem;
+        max-width: 10.25rem;
+        @apply flex-col items-stretch gap-2 p-2.5;
     }
 
-    @media (min-width: 640px) {
-        .serv-qa-grid--auto .serv-qa-card {
-            max-width: calc(50% - 0.3125rem);
-        }
+    .serv-qa-grid--auto .serv-qa-card--featured {
+        @apply p-2.5 ring-1;
     }
 
-    .serv-qa-grid--auto:has(> .serv-qa-card:only-child) .serv-qa-card {
-        @apply max-w-[17rem];
+    .serv-qa-grid--auto .serv-qa-card__icon {
+        @apply h-8 w-8 rounded-md;
+    }
+
+    .serv-qa-grid--auto .serv-qa-card__body {
+        @apply pe-0 space-y-0;
+    }
+
+    .serv-qa-grid--auto .serv-qa-card__title {
+        @apply text-xs leading-snug;
+    }
+
+    .serv-qa-grid--auto .serv-qa-card__desc {
+        @apply text-[10px] line-clamp-2 mt-0.5;
+    }
+
+    .serv-qa-grid--auto .serv-qa-card__go {
+        @apply hidden;
+    }
+
+    .serv-qa-grid--auto .serv-qa-card__badge {
+        @apply top-2 end-2;
     }
 
     .serv-qa-card {
