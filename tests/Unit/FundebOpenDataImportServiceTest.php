@@ -303,6 +303,59 @@ final class FundebOpenDataImportServiceTest extends TestCase
     }
 
     #[Test]
+    public function enriquece_vaat_da_portaria_quando_piso_nacional_sem_vaat(): void
+    {
+        config([
+            'ieducar.fundeb.open_data.json_url' => '',
+            'ieducar.fundeb.open_data.cache_path' => '',
+            'ieducar.fundeb.open_data.resource_id' => '',
+            'ieducar.fundeb.open_data.national_floor.enabled' => true,
+            'ieducar.fundeb.open_data.national_floor.write_on_import' => true,
+            'ieducar.fundeb.open_data.national_floor.vaaf_by_year' => [2025 => 5559.73],
+            'ieducar.fundeb.open_data.national_floor.vaat_by_year' => [],
+            'ieducar.discrepancies.vaa_referencia_anual' => 5559.73,
+        ]);
+
+        $ibge = '2910800';
+        $city = new City(['id' => 7, 'name' => 'Feira', 'ibge_municipio' => $ibge]);
+
+        $fnde = Mockery::mock(FundebFndeReceitaCsvService::class);
+        $fnde->shouldReceive('rowForIbge')->andReturn(null);
+        $fnde->shouldReceive('estimateVaafFromReceitaAndMatriculas')->andReturn(null);
+
+        $vaat = Mockery::mock(FundebFndeVaatCsvService::class);
+        $vaat->shouldReceive('rowForIbge')
+            ->with($ibge, 2025)
+            ->andReturn([
+                'ibge' => $ibge,
+                'vaat' => 9876.54,
+                'csv_url' => 'https://www.gov.br/fnde/vaat-2025.csv',
+            ]);
+
+        $saved = new FundebMunicipioReference([
+            'ibge_municipio' => $ibge,
+            'ano' => 2025,
+            'vaaf' => 5559.73,
+            'vaat' => 9876.54,
+            'fonte' => 'referencia_nacional_config',
+        ]);
+        $saved->id = 210;
+
+        $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $repo->shouldReceive('findForCityYear')->with($city, 2025)->andReturn(null);
+        $repo->shouldReceive('upsert')
+            ->once()
+            ->with($city, 2025, Mockery::on(static fn (array $d) => $d['vaaf'] === 5559.73
+                && $d['vaat'] === 9876.54
+                && $d['fonte'] === 'referencia_nacional_config'))
+            ->andReturn($saved);
+
+        $result = $this->makeService($repo, $fnde, $vaat)->importForCityYear($city, 2025, false);
+
+        $this->assertTrue($result['success']);
+    }
+
+    #[Test]
     public function import_for_city_regista_logs_de_andamento(): void
     {
         config([
@@ -377,6 +430,7 @@ final class FundebOpenDataImportServiceTest extends TestCase
             'ieducar.fundeb.open_data.cache_path' => '',
             'ieducar.fundeb.open_data.resource_id' => '',
             'ieducar.fundeb.open_data.national_floor.write_on_import' => false,
+            'ieducar.fundeb.open_data.vaaf_use_censo_matriculas_fallback' => false,
         ]);
 
         $ibge = '2910800';
@@ -397,10 +451,13 @@ final class FundebOpenDataImportServiceTest extends TestCase
             ->with(15_000_000.0, 2500)
             ->andReturn(6000.0);
 
-        $cityData = Mockery::mock(CityDataConnection::class);
-        $cityData->shouldReceive('run')
-            ->once()
-            ->andReturnUsing(static fn () => 2500);
+        $cityData = new class extends CityDataConnection
+        {
+            public function run(City $city, callable $callback): mixed
+            {
+                return 2500;
+            }
+        };
 
         $saved = new FundebMunicipioReference([
             'ibge_municipio' => $ibge,

@@ -103,6 +103,7 @@ final class DocumentationCatalog
             'docs/IMPORTACAO_DADOS_PUBLICOS.md',
             'docs/IMPORTACAO_SAEB_PLANILHAS_INEP.md',
             'docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md',
+            'docs/ESTUDO_AGENTES_IA_SERVLITCYS.md',
             'docs/CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md',
             'docs/ROADMAP_BASES_CALCULOS_FINANCEIROS.md',
         ];
@@ -414,6 +415,7 @@ final class DocumentationCatalog
                 'description' => __('Ingestão administrativa, APIs e estudos de integração.'),
                 'audience' => self::AUDIENCE_ADMIN,
                 'items' => [
+                    ['label' => __('Estudo: agentes e IA'), 'path' => 'docs/ESTUDO_AGENTES_IA_SERVLITCYS.md', 'hint' => __('Copilot, RAG, automação')],
                     ['label' => __('Estudo: setor público e demanda'), 'path' => 'docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md'],
                     ['label' => __('Catálogo API i-Educar (proposta)'), 'path' => 'docs/CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md'],
                     ['label' => __('Importação dados públicos'), 'path' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md'],

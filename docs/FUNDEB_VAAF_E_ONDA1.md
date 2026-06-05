@@ -1,6 +1,6 @@
 # FUNDEB, VAAF, VAAR/VAAT e Onda 1 — documentação técnica
 
-**Versão do produto:** 4.1.7 · **Última revisão:** 2026-06-07
+**Versão do produto:** 4.1.7 · **Última revisão:** 2026-06-05
 
 > **Índice:** [README.md](README.md) · [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §6 · [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) · `config/ieducar.php`
 
@@ -88,12 +88,17 @@ php artisan fundeb:import-references storage/app/fundeb_references.csv
 
 **Fluxo de importação (`fundeb:import-api` / botão na admin):**
 
-1. Lê `storage/app/fundeb/api/{ibge}/{ano}.json` se existir.
-2. Se não existir, consulta CKAN (ou URL HTTP em `IEDUCAR_FUNDEB_JSON_URL`).
-3. **Grava o JSON no cache** e persiste VAAF/VAAT em `fundeb_municipio_references`.
-4. Próximas leituras usam o cache (útil quando o CKAN está instável).
+1. **Portaria FNDE** — CSV receita total + matrículas (i-Educar ou Censo INEP) → VAAF estimado; CSV VAAT → VAAT/aluno municipal (`fnde_portaria_receita_ieducar`).
+2. Cache local `storage/app/fundeb/api/{ibge}/{ano}.json` se existir.
+3. CKAN / JSON remoto (`IEDUCAR_FUNDEB_JSON_URL`).
+4. PDF Consultas FNDE — VAAF **estadual** (`fnde_estado_vaaf_consultas`).
+5. Piso nacional — só se `IEDUCAR_FUNDEB_NATIONAL_FLOOR_ON_IMPORT=true` (`referencia_nacional_config`).
 
-Sem `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` e sem arquivos em `storage/app/fundeb/…`, a importação falha para todos os municípios — o cache não se preenche sozinho.
+Após resolver a linha, **`enrichMatchWithPortariaData`** completa VAAT e metadados de receita da portaria mesmo quando o VAAF veio de outra fonte, e tenta substituir placeholder por VAAF estimado quando há receita + matrículas.
+
+**VAAF só com portaria de receita?** Não. O CSV de receita traz o **total previsto**, não o VAAF municipal. O sistema calcula `receita ÷ matrículas`. Sem matrículas (i-Educar ou Censo), não há VAAF municipal estimado — apenas VAAT direto do CSV VAAT, receita em metadados ou fallback CKAN/piso.
+
+Sem `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` e sem portarias em cache, a importação depende dos CSV gov.br/FNDE e das matrículas locais.
 
 **UI admin:** em Compatibilidade i-Educar, card FUNDEB — importar um município ou **todos**; ano sugerido = ano anterior (FNDE raramente tem o ano corrente, ex. 2026). Opção «usar ano mais recente na API» quando o ano pedido não existir.
 
@@ -126,11 +131,78 @@ php artisan fundeb:import-api 0 --all --ano=2024 --nearest
 
 **CLI:** `php artisan fundeb:diagnose-matriculas` · **Env:** `IEDUCAR_FUNDEB_PLANNING_YEARS_AHEAD`, `IEDUCAR_FUNDEB_VAAF_CENSO_FALLBACK`
 
-**Metadados gravados na importação:** `receita_total`, `complementacao_vaaf`, `matriculas_base`, `url_portaria`, `tipo_valor` (`estimativa` \| `oficial` \| `placeholder`).
+**Matrículas:** `FundebMatriculasByYearService` consulta i-Educar (`MatriculaChartQueries`) e, se zero, Censo INEP (`inep_censo_municipio_matriculas`) quando `IEDUCAR_FUNDEB_VAAF_CENSO_FALLBACK=true` (padrão). Lookback na importação: ano pedido e três anteriores.
+
+**Metadados gravados na importação:** `receita_total`, `complementacao_vaaf`, `complementacao_vaat`, `matriculas_base`, `matriculas_fonte`, `url_portaria`, `tipo_valor` (`estimativa` \| `oficial` \| `placeholder`).
 
 ---
 
-## 6. Estado da implementação (maio/2026)
+## 6. Operação em produção e resolução de problemas
+
+### 6.1 Deploy + reimportação (obrigatório após evolução do import)
+
+1. Publicar código com `FundebOpenDataImportService` (VAAT da portaria + upgrade de placeholder) e correção de `IeducarFilterState` em `FundebMatriculasByYearService`.
+2. No servidor (acesso HTTPS a `www.gov.br/fnde`):
+
+```bash
+php artisan fundeb:import-api 0 --all --from=2025 --to=2025 --nearest
+```
+
+Incluir 2026 se a portaria vigente já estiver catalogada:
+
+```bash
+php artisan fundeb:import-api 0 --all --from=2025 --to=2026 --nearest
+```
+
+- Modo padrão: **atualiza só** quando VAAF, VAAT, VAAR ou receita diferem do gravado.
+- Duração: vários minutos (uma conexão i-Educar por município/ano).
+- Alternativa UI: `/admin/ieducar-compatibility` → FUNDEB → importar todos.
+
+**Não exige** `npm run build` nem migração de BD.
+
+### 6.2 Verificação pós-import
+
+```bash
+php artisan fundeb:diagnose-matriculas
+```
+
+| Sintoma | Causa provável | Acção |
+|---------|----------------|-------|
+| VAAF = piso nacional (`referencia_nacional_config`) | Sem matrículas ou receita fora dos limites de sanidade | Ver diagnóstico; corrigir i-Educar ou importar Censo |
+| VAAT vazio / só «Piso» em 2025 | Import antigo ou CSV VAAT indisponível | Reexecutar `fundeb:import-api` após deploy |
+| `fnde_estado_vaaf_consultas` | Fallback estadual — não é VAAF municipal | Reimportar quando houver matrículas + portaria receita |
+| HTTP 403 nos CSV FNDE | Bloqueio do IP do servidor | Testar URL no browser; usar fila admin-sync; ver `FundebOfficialSourcesService` |
+
+Na consultoria: aba **FUNDEB** → matriz por exercício → confirmar **VAAT 2025** com valor numérico (ex. R$ 8.024,31) e fonte `fnde_portaria_receita_ieducar` onde aplicável.
+
+### 6.3 Matrículas sem i-Educar
+
+Ordem de fontes para o VAAF estimado:
+
+1. Matrículas activas **i-Educar** (ano pedido ou lookback −1/−2/−3).
+2. **Censo INEP** agregado municipal (`IEDUCAR_FUNDEB_VAAF_CENSO_FALLBACK=true`).
+3. CKAN / cache com VAAF já calculado pelo FNDE.
+4. Placeholder (piso) — evitar em produção (`IEDUCAR_FUNDEB_NATIONAL_FLOOR_ON_IMPORT=false` recomendado).
+
+**Importar Censo** quando o diagnóstico mostrar `ieducar=0` e `censo` ausente para o exercício:
+
+- Hub `/admin/dados-publicos` ou CLI documentado em [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) / matrículas INEP.
+- Após o Censo, repetir `fundeb:import-api` para o mesmo ano.
+
+**VAAT** não depende de matrículas — vem do CSV «VAAT, VAAT-MIN e complementação-VAAT por ente federado» (`FundebFndeVaatCsvService`).
+
+### 6.4 Variáveis relevantes em produção
+
+| Variável | Recomendação |
+|----------|----------------|
+| `IEDUCAR_FUNDEB_NATIONAL_FLOOR_ON_IMPORT` | `false` |
+| `IEDUCAR_FUNDEB_VAAF_CENSO_FALLBACK` | `true` |
+| `IEDUCAR_FUNDEB_RECEITA_CSV_URL_2025` / `IEDUCAR_FUNDEB_VAAT_CSV_URL_2025` | Opcional — override se o gov.br mudar o path |
+| `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` | Preencher se usar CKAN como fonte principal |
+
+---
+
+## 7. Estado da implementação (maio/2026)
 
 | Item | Estado |
 |------|--------|
@@ -192,4 +264,6 @@ php artisan fundeb:import-api 0 --all --from=2025 --to=2026 --nearest
 - `tests/Unit/FundebComplementacaoInformeBuilderTest.php` — blocos e status VAAT/VAAR.
 - `tests/Unit/FundebValueLexiconTest.php` — fases consolidado / em formação / projeção.
 - `tests/Unit/FundebFndePortariaCatalogTest.php` · `FundebFndeVaatCsvServiceTest.php` — portarias 6/2026.
+- `tests/Unit/FundebOpenDataImportServiceTest.php` — portaria + VAAT em placeholder, VAAF estimado.
+- `tests/Unit/FundebOfficialSourcesServiceTest.php` — probe CSV portaria (GET + User-Agent).
 - `tests/Unit/IeducarFilterStateInclusionTest.php` — filtros Inclusão (já existente).

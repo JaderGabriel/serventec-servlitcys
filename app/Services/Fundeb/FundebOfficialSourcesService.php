@@ -4,6 +4,7 @@ namespace App\Services\Fundeb;
 
 use App\Models\FundebMunicipioReference;
 use App\Support\Fundeb\FundebFndePortariaCatalog;
+use App\Support\Http\SafeOutboundUrl;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -113,14 +114,14 @@ final class FundebOfficialSourcesService
             'action' => $reachable ? null : __('Testar importação FUNDEB na fila'),
         ];
 
-        foreach ($this->portariasFromConfig() as $portaria) {
+        foreach ($this->activePortariasForProbe() as $portaria) {
             $url = (string) ($portaria['url'] ?? '');
-            $head = $this->probeUrl($url);
+            $probe = $this->probeCsvUrl($url);
             $items[] = [
-                'source' => __('Portaria :ano', ['ano' => (string) $portaria['ano']]),
-                'status' => $head['ok'] ? 'ok' : 'warning',
-                'message' => $head['message'],
-                'action' => $head['ok'] ? __('CSV publicado — importar na rotina FUNDEB') : null,
+                'source' => (string) ($portaria['label'] ?? __('Portaria :ano', ['ano' => (string) $portaria['ano']])),
+                'status' => $probe['ok'] ? 'ok' : 'warning',
+                'message' => $probe['message'],
+                'action' => $probe['ok'] ? __('CSV publicado — importar na rotina FUNDEB') : null,
             ];
         }
 
@@ -138,21 +139,93 @@ final class FundebOfficialSourcesService
     }
 
     /**
+     * Uma portaria por exercício (publicação vigente = maior «ordem» no catálogo).
+     *
+     * @return list<array{ano: int, label: string, url: string}>
+     */
+    private function activePortariasForProbe(): array
+    {
+        $portarias = config('ieducar.fundeb.open_data.portarias', []);
+        if (! is_array($portarias)) {
+            return [];
+        }
+
+        $out = [];
+        foreach (array_keys($portarias) as $exercicio) {
+            $year = (int) $exercicio;
+            $pub = FundebFndePortariaCatalog::activePublication($year);
+            if ($pub === null) {
+                continue;
+            }
+            $csv = is_array($pub['csv'] ?? null) ? $pub['csv'] : [];
+            $receita = $csv['receita'] ?? null;
+            if (! is_string($receita) || trim($receita) === '') {
+                continue;
+            }
+            $label = trim((string) ($pub['label'] ?? ''));
+            $out[] = [
+                'ano' => $year,
+                'label' => $label !== '' ? $label : __('Portaria FUNDEB :ano', ['ano' => (string) $year]),
+                'url' => trim($receita),
+            ];
+        }
+
+        usort($out, static fn (array $a, array $b): int => $b['ano'] <=> $a['ano']);
+
+        return $out;
+    }
+
+    /**
+     * gov.br/FNDE bloqueia HEAD (403); a importação usa GET com User-Agent.
+     *
      * @return array{ok: bool, message: string}
      */
-    private function probeUrl(string $url): array
+    private function probeCsvUrl(string $url): array
     {
+        $url = trim($url);
         if ($url === '' || ! str_starts_with($url, 'http')) {
             return ['ok' => false, 'message' => __('URL não configurada.')];
         }
 
+        if (! SafeOutboundUrl::isAllowedHttpUrl($url)) {
+            return ['ok' => false, 'message' => __('URL não permitida para verificação de saída.')];
+        }
+
         try {
-            $response = Http::timeout(8)->head($url);
-            if ($response->successful() || $response->status() === 405) {
-                return ['ok' => true, 'message' => __('URL responde (HTTP :status).', ['status' => (string) $response->status()])];
+            $timeout = max(8, (int) config('ieducar.fundeb.open_data.timeout', 30));
+            $response = Http::timeout($timeout)
+                ->withHeaders([
+                    'User-Agent' => 'Servlitcys-FUNDEB/1.0',
+                    'Range' => 'bytes=0-1023',
+                    'Accept' => 'text/csv,text/plain,*/*',
+                ])
+                ->withOptions(['allow_redirects' => true])
+                ->get($url);
+
+            $status = $response->status();
+            if (in_array($status, [200, 206], true)) {
+                $sample = strlen($response->body());
+                $looksCsv = $sample > 0 && str_contains(mb_strtolower(substr($response->body(), 0, 200)), 'ibge');
+
+                return [
+                    'ok' => true,
+                    'message' => $looksCsv
+                        ? __('CSV acessível (HTTP :status) — amostra com colunas esperadas.', ['status' => (string) $status])
+                        : __('CSV acessível (HTTP :status, :bytes bytes).', [
+                            'status' => (string) $status,
+                            'bytes' => number_format($sample),
+                        ]),
+                ];
             }
 
-            return ['ok' => false, 'message' => __('HTTP :status ao verificar CSV.', ['status' => (string) $response->status()])];
+            if ($status === 403) {
+                return [
+                    'ok' => false,
+                    'message' => __('HTTP 403 — o servidor pode bloquear o IP da aplicação; teste «fundeb:import-api» na fila ou abra o link no browser.'),
+                ];
+            }
+
+            return ['ok' => false, 'message' => __('HTTP :status ao verificar CSV.', ['status' => (string) $status])];
         } catch (\Throwable $e) {
             return ['ok' => false, 'message' => $e->getMessage()];
         }

@@ -6,7 +6,7 @@ use App\Models\City;
 use App\Models\InepCensoMunicipioMatricula;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\CityDataConnection;
-use App\Support\Ieducar\IeducarFilterState;
+use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\MatriculaChartQueries;
 
 /**
@@ -52,8 +52,11 @@ final class FundebMatriculasByYearService
                 $erro = $e->getMessage();
             }
 
-            $censo = $this->censoMatriculas($ibge, $ano);
-            $usado = $ieducar > 0 ? $ieducar : ($useCensoFallback && $censo !== null && $censo > 0 ? $censo : 0);
+            $censo = null;
+            if ($ieducar <= 0 && $useCensoFallback) {
+                $censo = $this->censoMatriculas($ibge, $ano);
+            }
+            $usado = $ieducar > 0 ? $ieducar : ($censo !== null && $censo > 0 ? $censo : 0);
             $fonte = match (true) {
                 $ieducar > 0 => 'ieducar',
                 $usado > 0 && $censo !== null => 'censo_inep',

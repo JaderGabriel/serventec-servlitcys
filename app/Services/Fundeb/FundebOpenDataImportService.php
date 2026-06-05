@@ -544,6 +544,8 @@ final class FundebOpenDataImportService
             ];
         }
 
+        $match = $this->enrichMatchWithPortariaData($city, $ibge, $ano, $match);
+
         $vaaf = (float) ($match['vaaf'] ?? 0);
         if ($vaaf <= 0) {
             $msg = __('Registo encontrado, mas VAAF inválido ou ausente.');
@@ -1251,38 +1253,118 @@ final class FundebOpenDataImportService
         ];
     }
 
-    private function fetchFromFndeReceitaPortaria(City $city, string $ibge, int $ano): ?array
+    /**
+     * Completa VAAT municipal (CSV portaria) e, quando possível, substitui VAAF placeholder
+     * por estimativa receita FNDE ÷ matrículas (i-Educar ou Censo INEP).
+     *
+     * @param  array<string, mixed>  $match
+     * @return array<string, mixed>
+     */
+    private function enrichMatchWithPortariaData(City $city, string $ibge, int $ano, array $match): array
     {
-        $receita = $this->fndeReceita->rowForIbge($ibge, $ano);
-        if ($receita === null) {
-            return null;
+        $vaatRow = $this->fndeVaat->rowForIbge($ibge, $ano);
+        $vaatPerAluno = $vaatRow !== null ? (float) ($vaatRow['vaat'] ?? 0) : null;
+        if ($vaatPerAluno !== null && $vaatPerAluno <= 0) {
+            $vaatPerAluno = null;
         }
 
-        $matSvc = app(FundebMatriculasByYearService::class);
-        $matYears = self::normalizeYearList([$ano, $ano - 1, $ano - 2]);
-        $matRows = $matSvc->forCityYears($city, $matYears);
-        $matRow = null;
-        $matriculasAno = $ano;
-        foreach ($matYears as $matYear) {
-            $candidate = $matRows[$matYear] ?? null;
-            if (is_array($candidate) && (int) ($candidate['usado'] ?? 0) > 0) {
-                $matRow = $candidate;
-                $matriculasAno = (int) $matYear;
-                break;
+        if ($vaatPerAluno !== null) {
+            $currentVaat = isset($match['vaat']) ? (float) $match['vaat'] : null;
+            if ($currentVaat === null || $currentVaat <= 0) {
+                $match['vaat'] = $vaatPerAluno;
+                $notas = trim((string) ($match['notas'] ?? ''));
+                $match['notas'] = trim($notas.' '.__('VAAT/aluno da portaria: :v.', [
+                    'v' => number_format($vaatPerAluno, 2, ',', '.'),
+                ]));
+                $meta = is_array($match['meta'] ?? null) ? $match['meta'] : [];
+                if (filled($vaatRow['csv_url'] ?? null)) {
+                    $meta['vaat_csv_url'] = (string) $vaatRow['csv_url'];
+                }
+                $match['meta'] = $meta;
             }
         }
+
+        if (! FundebReferenceSource::isPlaceholder((string) ($match['fonte'] ?? ''))) {
+            return $this->enrichMatchWithPortariaReceitaMetadata($ibge, $ano, $match);
+        }
+
+        $receita = $this->fndeReceita->rowForIbge($ibge, $ano);
+        if ($receita === null) {
+            return $match;
+        }
+
+        $matRow = $this->resolveMatriculasForVaafEstimate($city, $ano);
         $matriculas = (int) ($matRow['usado'] ?? 0);
-        $fonteMat = (string) ($matRow['fonte_usada'] ?? 'indisponivel');
+        if ($matriculas <= 0) {
+            return $this->enrichMatchWithPortariaReceitaMetadata($ibge, $ano, $match, $receita);
+        }
 
         $vaaf = $this->fndeReceita->estimateVaafFromReceitaAndMatriculas(
             (float) $receita['total_receita'],
             $matriculas,
         );
-
         if ($vaaf === null || $vaaf <= 0) {
-            return null;
+            return $this->enrichMatchWithPortariaReceitaMetadata($ibge, $ano, $match, $receita);
         }
 
+        $portariaRow = $this->buildPortariaReceitaMatch(
+            $receita,
+            $vaatRow,
+            $matRow,
+            $ano,
+            $vaaf,
+            $matriculas,
+        );
+
+        return array_merge($match, $portariaRow);
+    }
+
+    /**
+     * @return array{usado: int, fonte_usada: string, ieducar: int, censo: ?int, ano: int}
+     */
+    private function resolveMatriculasForVaafEstimate(City $city, int $ano): array
+    {
+        $matSvc = new FundebMatriculasByYearService($this->cityData);
+        $matYears = self::normalizeYearList([$ano, $ano - 1, $ano - 2, $ano - 3]);
+        $matRows = $matSvc->forCityYears($city, $matYears);
+        foreach ($matYears as $matYear) {
+            $candidate = $matRows[$matYear] ?? null;
+            if (is_array($candidate) && (int) ($candidate['usado'] ?? 0) > 0) {
+                return [
+                    'usado' => (int) $candidate['usado'],
+                    'fonte_usada' => (string) ($candidate['fonte_usada'] ?? 'indisponivel'),
+                    'ieducar' => (int) ($candidate['ieducar'] ?? 0),
+                    'censo' => $candidate['censo'] ?? null,
+                    'ano' => (int) $matYear,
+                ];
+            }
+        }
+
+        return [
+            'usado' => 0,
+            'fonte_usada' => 'indisponivel',
+            'ieducar' => 0,
+            'censo' => null,
+            'ano' => $ano,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $receita
+     * @param  ?array<string, mixed>  $vaatRow
+     * @param  array{usado: int, fonte_usada: string, ieducar: int, censo: ?int, ano: int}  $matRow
+     * @return array<string, mixed>
+     */
+    private function buildPortariaReceitaMatch(
+        array $receita,
+        ?array $vaatRow,
+        array $matRow,
+        int $ano,
+        float $vaaf,
+        int $matriculas,
+    ): array {
+        $matriculasAno = (int) $matRow['ano'];
+        $fonteMat = (string) $matRow['fonte_usada'];
         $pubAno = (int) ($receita['ano_publicacao'] ?? $ano);
         $matLabel = $fonteMat === 'censo_inep'
             ? __('matrículas Censo INEP')
@@ -1291,7 +1373,6 @@ final class FundebOpenDataImportService
             $matLabel .= ' ('.__('ano :y', ['y' => (string) $matriculasAno]).')';
         }
 
-        $vaatRow = $this->fndeVaat->rowForIbge($ibge, $ano);
         $vaatPerAluno = $vaatRow !== null ? (float) ($vaatRow['vaat'] ?? 0) : null;
         if ($vaatPerAluno !== null && $vaatPerAluno <= 0) {
             $vaatPerAluno = null;
@@ -1335,12 +1416,67 @@ final class FundebOpenDataImportService
             'matriculas_fonte' => $fonteMat,
             'url_portaria' => (string) ($receita['csv_url'] ?? ''),
             'meta' => array_merge($portariaMeta, [
-                'ieducar_matriculas' => (int) ($matRow['ieducar'] ?? 0),
-                'censo_matriculas' => $matRow['censo'] ?? null,
+                'ieducar_matriculas' => (int) $matRow['ieducar'],
+                'censo_matriculas' => $matRow['censo'],
                 'matriculas_ano_usado' => $matriculasAno !== $ano ? $matriculasAno : null,
             ]),
             'notas' => $notas,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $match
+     * @param  ?array<string, mixed>  $receita
+     * @return array<string, mixed>
+     */
+    private function enrichMatchWithPortariaReceitaMetadata(string $ibge, int $ano, array $match, ?array $receita = null): array
+    {
+        $receita ??= $this->fndeReceita->rowForIbge($ibge, $ano);
+        if ($receita === null) {
+            return $match;
+        }
+
+        if (! isset($match['receita_total']) || (float) ($match['receita_total'] ?? 0) <= 0) {
+            $match['receita_total'] = (float) $receita['total_receita'];
+        }
+        if (! isset($match['complementacao_vaaf']) && isset($receita['complementacao_vaaf'])) {
+            $match['complementacao_vaaf'] = (float) $receita['complementacao_vaaf'];
+        }
+        if (! isset($match['complementacao_vaat']) && isset($receita['complementacao_vaat'])) {
+            $match['complementacao_vaat'] = (float) $receita['complementacao_vaat'];
+        }
+        if (! isset($match['complementacao_vaar']) && isset($receita['complementacao_vaar'])) {
+            $match['complementacao_vaar'] = (float) $receita['complementacao_vaar'];
+        }
+        if (trim((string) ($match['url_portaria'] ?? '')) === '' && filled($receita['csv_url'] ?? null)) {
+            $match['url_portaria'] = (string) $receita['csv_url'];
+        }
+
+        return $match;
+    }
+
+    private function fetchFromFndeReceitaPortaria(City $city, string $ibge, int $ano): ?array
+    {
+        $receita = $this->fndeReceita->rowForIbge($ibge, $ano);
+        if ($receita === null) {
+            return null;
+        }
+
+        $matRow = $this->resolveMatriculasForVaafEstimate($city, $ano);
+        $matriculas = (int) ($matRow['usado'] ?? 0);
+
+        $vaaf = $this->fndeReceita->estimateVaafFromReceitaAndMatriculas(
+            (float) $receita['total_receita'],
+            $matriculas,
+        );
+
+        if ($vaaf === null || $vaaf <= 0) {
+            return null;
+        }
+
+        $vaatRow = $this->fndeVaat->rowForIbge($ibge, $ano);
+
+        return $this->buildPortariaReceitaMatch($receita, $vaatRow, $matRow, $ano, $vaaf, $matriculas);
     }
 
     private function nationalFloorRow(string $ibge, int $ano): ?array
