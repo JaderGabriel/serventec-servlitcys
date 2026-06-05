@@ -20,7 +20,7 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.3.0** | `PLACEHOLDER` / `20260611-Harmonia` → `main` | **321** | 11/06/2026 | **Produção:** Discrepâncias×Unidades geo, painel RX portaria FUNDEB, gráfico na home, CLI `--replace` — [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md). |
+| **▶ 4.3.0** | `a308c0d` / `20260611-Harmonia` → `main` | **321** | 11/06/2026 | **Produção:** Discrepâncias×Unidades geo, painel RX portaria FUNDEB, gráfico na home, CLI `--replace` — [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md). |
 | 4.2.0 | `b0cd61f` / `20260610-Clio` → `main` | **319** | 10/06/2026 | FUNDEB VAAT/VAAR portaria, gráfico RX complementações, hub Discrepâncias — [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md). |
 | 4.1.9 | `e473c26` / `20260609-Theia` → `main` | **317** | 09/06/2026 | Outlook Finanças até dezembro, diagrama ERP, mapa CadÚnico (zoom + cores) — [RELEASE_20260609_THEIA.md](RELEASE_20260609_THEIA.md). |
 | 4.1.8 | `d1c01ed` / `20260608-Sophia` → `main` | **313** | 08/06/2026 | VAAT portaria + lookback Censo, diagnose matrículas, admin i-Educar leigos, diagrama ERP — [RELEASE_20260608_SOPHIA.md](RELEASE_20260608_SOPHIA.md). |

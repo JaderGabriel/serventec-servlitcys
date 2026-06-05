@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '4.3.0',
         'release_tag' => '20260611-Harmonia',
-        'commit_short' => 'PLACEHOLDER',
+        'commit_short' => 'a308c0d',
         'commit_number' => 321,
         'revision_date' => '2026-06-11',
         'in_production' => true,
