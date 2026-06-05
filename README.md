@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão em produção (`main`):** **4.1.8** (FUNDEB VAAT + lookback Censo, admin i-Educar para leigos; tag **`20260608-Sophia`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md) · release: [docs/RELEASE_20260608_SOPHIA.md](docs/RELEASE_20260608_SOPHIA.md).
+**Versão em produção (`main`):** **4.1.9** (projeção Finanças até dezembro, diagrama ERP e mapa CadÚnico; tag **`20260609-Theia`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md) · release: [docs/RELEASE_20260609_THEIA.md](docs/RELEASE_20260609_THEIA.md).
 
 ## Requisitos
 

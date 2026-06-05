@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`4.1.8`** · tag de deploy **`20260608-Sophia`** · ver [RELEASE_20260608_SOPHIA.md](RELEASE_20260608_SOPHIA.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`4.1.9`** · tag de deploy **`20260609-Theia`** · ver [RELEASE_20260609_THEIA.md](RELEASE_20260609_THEIA.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **4.1.8** |
+| **Versão semântica em produção** | **4.1.9** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260608-Sophia` |
-| **Último marco documentado** | FUNDEB VAAT + lookback Censo, admin i-Educar para leigos, diagrama ERP — [RELEASE_20260608_SOPHIA.md](RELEASE_20260608_SOPHIA.md) |
+| **Tag de deploy (servidor)** | `20260609-Theia` |
+| **Último marco documentado** | Projeção Finanças até dezembro, diagrama ERP, mapa CadÚnico com distâncias e cores legíveis — [RELEASE_20260609_THEIA.md](RELEASE_20260609_THEIA.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -20,7 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.1.8** | `d1c01ed` / `20260608-Sophia` → `main` | **313** | 08/06/2026 | **Produção:** VAAT portaria + lookback Censo, diagnose matrículas, admin i-Educar leigos, diagrama ERP — [RELEASE_20260608_SOPHIA.md](RELEASE_20260608_SOPHIA.md). |
+| **▶ 4.1.9** | `21129f5` / `20260609-Theia` → `main` | **317** | 09/06/2026 | **Produção:** outlook Finanças até dezembro, diagrama ERP, mapa CadÚnico (zoom + cores) — [RELEASE_20260609_THEIA.md](RELEASE_20260609_THEIA.md). |
+| 4.1.8 | `d1c01ed` / `20260608-Sophia` → `main` | **313** | 08/06/2026 | VAAT portaria + lookback Censo, diagnose matrículas, admin i-Educar leigos, diagrama ERP — [RELEASE_20260608_SOPHIA.md](RELEASE_20260608_SOPHIA.md). |
 | 4.1.7 | `033bfa7` / `20260607-Phronesis` → `main` | **307** | 07/06/2026 | FUNDEB portarias 6/2026, lexicon UI (consolidado/em formação/projeção), VAAT CSV, export matriz — [RELEASE_20260607_PHRONESIS.md](RELEASE_20260607_PHRONESIS.md). |
 | 4.1.6 | `29274d8` / `20260606-Aletheia` → `main` | **302** | 06/06/2026 | Admin UI unificado (hub + screen-shell), dedup Financiamentos, telas legado cities/LGPD — [RELEASE_20260606_ALETHEIA.md](RELEASE_20260606_ALETHEIA.md). |
 | 4.1.5 | `9be03ae` / `20260605-Themis` → `main` | **300** | 05/06/2026 | Admin rebuild Tempo Real e extrato CKAN×SISWEB. |

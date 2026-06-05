@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '4.1.8',
-        'release_tag' => '20260608-Sophia',
-        'commit_short' => 'd1c01ed',
-        'commit_number' => 313,
-        'revision_date' => '2026-06-08',
+        'version' => '4.1.9',
+        'release_tag' => '20260609-Theia',
+        'commit_short' => '21129f5',
+        'commit_number' => 317,
+        'revision_date' => '2026-06-09',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

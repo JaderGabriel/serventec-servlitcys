@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **4.1.8** · release `20260608-Sophia` · **Ramo:** `main` · **Última revisão:** 08/06/2026
+**Versão em produção:** **4.1.9** · release `20260609-Theia` · **Ramo:** `main` · **Última revisão:** 09/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
