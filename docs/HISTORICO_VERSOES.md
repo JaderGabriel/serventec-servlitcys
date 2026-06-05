@@ -20,7 +20,7 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.1.2** | `20260605-Eunomia` → `main` | **293** | 05/06/2026 | **Produção:** Fix datas extrato Tempo Real — sem 31/12 futuro; total anual sem data na fonte — [RELEASE_20260605_EUNOMIA.md](RELEASE_20260605_EUNOMIA.md). |
+| **▶ 4.1.2** | `7da5a67` / `20260605-Eunomia` → `main` | **293** | 05/06/2026 | **Produção:** Fix datas extrato Tempo Real — sem 31/12 futuro; total anual sem data na fonte — [RELEASE_20260605_EUNOMIA.md](RELEASE_20260605_EUNOMIA.md). |
 | 4.1.1 | `7b11e6e` / `20260605-Kairos` → `main` | **292** | 05/06/2026 | Extrato Tempo Real por repasse, expectativa portaria FNDE, cache CSV mensal, mapa CadÚnico, sidebar releases — [RELEASE_20260605_KAIROS.md](RELEASE_20260605_KAIROS.md). |
 | 4.1.0 | `20260605-Athena` → `main` | **289** | 05/06/2026 | Navegação cenário C (5 áreas, Diagnóstico em Resumo), fix Tempo Real, `funding:rebuild-finance-realtime` documentado — [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md). |
 | 4.0.0 | `20260604-Hestia` → `main` | **283+** | 04/06/2026 | Início reorganizado, Acesso rápido (`HomeQuickActionsCatalog`), mapa mental em camadas, rebuild Finanças Tempo Real — [RELEASE_20260604_HESTIA.md](RELEASE_20260604_HESTIA.md). |

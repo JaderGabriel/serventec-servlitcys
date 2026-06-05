@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '4.1.2',
         'release_tag' => '20260605-Eunomia',
-        'commit_short' => 'pending',
+        'commit_short' => '7da5a67',
         'commit_number' => 293,
         'revision_date' => '2026-06-05',
         'in_production' => true,
