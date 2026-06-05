@@ -9,6 +9,7 @@ use App\Repositories\Ieducar\DiscrepanciesRepository;
 use App\Repositories\MunicipalTransferSnapshotRepository;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Finance\MoneyMath;
+use App\Support\Funding\FinanceRealtimeYearEndOutlook;
 use App\Support\Funding\FundebExtratoFontePriority;
 use App\Support\Funding\FundebExtratoVisualBuilder;
 use App\Support\Funding\FundebPortariaExpectation;
@@ -123,15 +124,17 @@ final class FinanceRealtimeFundebService
             ? round(($delta / $expectedAnnual) * 100, 1)
             : null;
 
-        $thresholdPct = max(1.0, (float) config('ieducar.finance_realtime.alert_threshold_pct', 15));
-        $alerts = $this->buildAlerts(
+        $yearEndOutlook = FinanceRealtimeYearEndOutlook::build(
             $expectedAnnual,
             $observedAnnual,
-            $delta,
-            $deltaPct,
+            $ano,
+            $periodicSchedule,
+        );
+
+        $alerts = $this->buildAlerts(
+            $expectedAnnual,
             $fundebRows,
             $matriculas,
-            $thresholdPct,
             $snapshots,
             $snapshotsMunicipal,
             $ano,
@@ -178,6 +181,7 @@ final class FinanceRealtimeFundebService
             'delta_fmt' => DiscrepanciesFundingImpact::formatBrl(abs($delta)),
             'delta_sign' => $delta >= 0 ? 'positive' : 'negative',
             'delta_pct' => $deltaPct,
+            'year_end_outlook' => $yearEndOutlook,
             'has_transfer_data' => $fundebRows !== [],
             'transfer_count' => count($fundebRows),
             'alerts' => $alerts,
@@ -269,12 +273,8 @@ final class FinanceRealtimeFundebService
      */
     private function buildAlerts(
         float $expected,
-        float $observed,
-        float $delta,
-        ?float $deltaPct,
         array $fundebRows,
         int $matriculas,
-        float $thresholdPct,
         array $snapshots,
         array $snapshotsMunicipal,
         int $ano,
@@ -304,27 +304,6 @@ final class FinanceRealtimeFundebService
                 'severity' => 'warning',
                 'title' => __('Expectativa FUNDEB indisponível'),
                 'detail' => __('Importe VAAF municipal (FNDE) em Compatibilidade i-Educar / FUNDEB.'),
-            ];
-        }
-
-        if ($expected > 0 && $observed > 0 && $deltaPct !== null && abs($deltaPct) >= $thresholdPct) {
-            $alerts[] = [
-                'severity' => $delta < 0 ? 'danger' : 'info',
-                'title' => $delta < 0
-                    ? __('Repasse observado abaixo da expectativa')
-                    : __('Repasse observado acima da expectativa'),
-                'detail' => __('Diferença de :pct% (:delta) — verifique cronograma FNDE, retenções e base de matrículas.', [
-                    'pct' => number_format(abs($deltaPct), 1, ',', '.'),
-                    'delta' => DiscrepanciesFundingImpact::formatBrl(abs($delta)),
-                ]),
-            ];
-        }
-
-        if ($expected > 0 && $observed > 0 && abs($delta) < ($expected * 0.02)) {
-            $alerts[] = [
-                'severity' => 'success',
-                'title' => __('Valores próximos da expectativa'),
-                'detail' => __('Diferença inferior a 2% no recorte anual importado.'),
             ];
         }
 

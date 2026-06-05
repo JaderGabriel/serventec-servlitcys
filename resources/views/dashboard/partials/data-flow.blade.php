@@ -17,7 +17,7 @@
                     {{ __('Fluxo de dados · Integrações') }}
                 </h3>
                 <p class="text-sm text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed max-w-3xl">
-                    {{ __('Visão em camadas: entrada municipal, motor, referências ligadas e saídas. Cartões tracejados = fontes no roadmap, ainda desligadas do motor.') }}
+                    {{ __('Referências ligadas numa faixa acima do motor; entrada municipal e saídas no centro; fontes do roadmap, desligadas, numa linha horizontal abaixo da plataforma.') }}
                 </p>
             </div>
             <button

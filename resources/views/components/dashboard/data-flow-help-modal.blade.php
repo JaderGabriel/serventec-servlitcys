@@ -28,32 +28,28 @@
         </div>
         <div class="overflow-y-auto px-5 py-4 space-y-3 text-sm max-h-[min(70vh,28rem)]">
             <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-                {{ __('O diagrama segue a leitura ERP: colunas de entrada → motor → referências → saída. As linhas entre módulos indicam o canal de dados e a cor do estado da integração.') }}
+                {{ __('Leitura em três faixas: referências ligadas acima do motor; no centro a entrada municipal, a plataforma e as saídas; abaixo, numa linha horizontal, as fontes do roadmap ainda desligadas.') }}
             </p>
             <ul class="space-y-3 text-slate-700 dark:text-slate-300 leading-relaxed">
                 <li class="flex gap-2">
+                    <span class="serv-mm-tip-num serv-mm-tip-num--teal" aria-hidden="true">↑</span>
+                    <span>{{ __('Faixa superior — referências ligadas: chips horizontais (FNDE, INEP, MDS, etc.) com ponto de estado e descrição do canal. Alimentam o motor por importação ou API.') }}</span>
+                </li>
+                <li class="flex gap-2">
                     <span class="serv-mm-tip-num serv-mm-tip-num--teal" aria-hidden="true">1</span>
-                    <span>{{ __('Entrada: i-Educar — cadastro municipal. Linha teal sólida = conexão operacional; tracejada = parcial.') }}</span>
+                    <span>{{ __('Centro — entrada: i-Educar (cadastro municipal). Seta teal = conexão operacional; tracejada = parcial.') }}</span>
                 </li>
                 <li class="flex gap-2">
                     <span class="serv-mm-tip-num serv-mm-tip-num--hub" aria-hidden="true">2</span>
-                    <span>{{ __('Motor: a plataforma agrega e cruza dados. O ponto no canto do cartão resume o estado do módulo.') }}</span>
+                    <span>{{ __('Centro — motor: a plataforma agrega e cruza dados municipais com as referências federais.') }}</span>
                 </li>
                 <li class="flex gap-2">
-                    <span class="serv-mm-tip-num" aria-hidden="true">3</span>
-                    <span>{{ __('Referências: cada fonte federal tem linha colorida por eixo (âmbar finanças, violeta INEP, fúcsia CadÚnico, etc.) convergindo para o motor.') }}</span>
+                    <span class="serv-mm-tip-num serv-mm-tip-num--muted" aria-hidden="true">3</span>
+                    <span>{{ __('Centro — saída: consultoria, filas e relatórios PDF.') }}</span>
                 </li>
                 <li class="flex gap-2">
-                    <span class="serv-mm-tip-num serv-mm-tip-num--muted" aria-hidden="true">4</span>
-                    <span>{{ __('Saída: consultoria, filas e relatórios PDF — consumo operacional do que foi integrado.') }}</span>
-                </li>
-                <li class="flex gap-2">
-                    <span class="serv-mm-tip-num serv-mm-tip-num--muted" aria-hidden="true">·</span>
-                    <span>{{ __('Linhas: sólidas pulsantes = operacional; tracejadas = a configurar; pontilhadas = indisponível. Cada eixo tem cor própria (teal municipal, âmbar FNDE/Tesouro, violeta INEP, etc.).') }}</span>
-                </li>
-                <li class="flex gap-2">
-                    <span class="serv-mm-tip-num serv-mm-tip-num--muted" aria-hidden="true">⊘</span>
-                    <span>{{ __('Possíveis fontes (roadmap): cartões tracejados e etiqueta «Desligado» — aparecem na documentação/estudo de integrações, mas ainda sem canal de dados activo para o motor.') }}</span>
+                    <span class="serv-mm-tip-num serv-mm-tip-num--muted" aria-hidden="true">↓</span>
+                    <span>{{ __('Faixa inferior — roadmap: chips tracejados numa única linha, sem ligação ao motor (estudo de integrações, ondas futuras).') }}</span>
                 </li>
             </ul>
         </div>

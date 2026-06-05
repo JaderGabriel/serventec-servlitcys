@@ -9,6 +9,20 @@
     $guide = is_array($d['lay_guide'] ?? null) ? $d['lay_guide'] : [];
     $methodologyCompact = is_array($d['methodology_compact'] ?? null) ? $d['methodology_compact'] : null;
     $bb = is_array($d['bb_open_finance'] ?? null) ? $d['bb_open_finance'] : [];
+    $yearEnd = is_array($d['year_end_outlook'] ?? null) ? $d['year_end_outlook'] : [];
+    $outlook = (string) ($yearEnd['outlook'] ?? 'unknown');
+    $outlookBox = match ($outlook) {
+        'risk' => 'border-rose-300 bg-rose-50/70 dark:border-rose-800 dark:bg-rose-950/35',
+        'surplus' => 'border-emerald-300 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-950/30',
+        'close' => 'border-sky-300 bg-sky-50/60 dark:border-sky-800 dark:bg-sky-950/30',
+        default => 'border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/30',
+    };
+    $outlookText = match ($outlook) {
+        'risk' => 'text-rose-900 dark:text-rose-100',
+        'surplus' => 'text-emerald-900 dark:text-emerald-100',
+        'close' => 'text-sky-900 dark:text-sky-100',
+        default => 'text-amber-900 dark:text-amber-100',
+    };
 
     $available = (bool) ($d['available'] ?? false);
     $needsSpecificYear = $filters !== null
@@ -140,13 +154,46 @@
                 <p class="mt-1 text-xl font-bold tabular-nums text-emerald-950 dark:text-emerald-50">{{ $d['observed_annual_fmt'] ?? '—' }}</p>
                 <p class="text-[11px] mt-1 text-slate-600">{{ __(':n linha(s) FUNDEB em bases públicas importadas', ['n' => (string) ($d['transfer_count'] ?? 0)]) }}</p>
             </div>
-            <div class="rounded-xl border px-4 py-4 {{ ($d['delta_sign'] ?? '') === 'negative' ? 'border-rose-300 bg-rose-50/60 dark:border-rose-800 dark:bg-rose-950/30' : 'border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/30' }}">
-                <p class="text-[10px] font-semibold uppercase">{{ __('Diferença') }}</p>
-                <p class="mt-1 text-xl font-bold tabular-nums">
-                    {{ ($d['delta_sign'] ?? '') === 'negative' ? '−' : '+' }}{{ $d['delta_fmt'] ?? '—' }}
-                </p>
-                @if (($d['delta_pct'] ?? null) !== null)
-                    <p class="text-[11px] mt-1">{{ number_format((float) $d['delta_pct'], 1, ',', '.') }}% {{ __('vs. projeção indicativa') }}</p>
+            <div class="rounded-xl border px-4 py-4 {{ $outlookBox }}">
+                <p class="text-[10px] font-semibold uppercase {{ $outlookText }}">{{ __('Diferença · projeção até dezembro') }}</p>
+                @if ($yearEnd !== [] && filled($yearEnd['outlook_label'] ?? null))
+                    <p class="mt-1 text-sm font-bold {{ $outlookText }}">{{ $yearEnd['outlook_label'] }}</p>
+                @endif
+                @if ($yearEnd !== [] && filled($yearEnd['gap_until_december_fmt'] ?? null) && ($yearEnd['need_until_december'] ?? 0) > 0)
+                    <p class="mt-1 text-xl font-bold tabular-nums {{ $outlookText }}">
+                        {{ ($yearEnd['gap_sign'] ?? '') === 'negative' ? '−' : '+' }}{{ $yearEnd['gap_until_december_fmt'] }}
+                    </p>
+                    @if (($yearEnd['gap_pct'] ?? null) !== null)
+                        <p class="text-[11px] mt-0.5 opacity-90">
+                            {{ number_format((float) $yearEnd['gap_pct'], 1, ',', '.') }}% {{ __('vs. necessidade até dez.') }}
+                        </p>
+                    @endif
+                @else
+                    <p class="mt-1 text-xl font-bold tabular-nums">
+                        {{ ($d['delta_sign'] ?? '') === 'negative' ? '−' : '+' }}{{ $d['delta_fmt'] ?? '—' }}
+                    </p>
+                    @if (($d['delta_pct'] ?? null) !== null)
+                        <p class="text-[11px] mt-1">{{ number_format((float) $d['delta_pct'], 1, ',', '.') }}% {{ __('vs. projeção indicativa (YTD)') }}</p>
+                    @endif
+                @endif
+                @if ($yearEnd !== [])
+                    <dl class="mt-2.5 space-y-1 text-[10px] leading-snug opacity-95">
+                        <div class="flex justify-between gap-2">
+                            <dt class="text-slate-600 dark:text-slate-400">{{ __('Necessidade até dez.') }}</dt>
+                            <dd class="font-semibold tabular-nums text-slate-800 dark:text-slate-200">{{ $yearEnd['need_until_december_fmt'] ?? '—' }}</dd>
+                        </div>
+                        <div class="flex justify-between gap-2">
+                            <dt class="text-slate-600 dark:text-slate-400">{{ __('Saldo a repassar') }}</dt>
+                            <dd class="font-semibold tabular-nums text-slate-800 dark:text-slate-200">{{ $yearEnd['balance_to_repass_fmt'] ?? '—' }}</dd>
+                        </div>
+                        <div class="flex justify-between gap-2">
+                            <dt class="text-slate-600 dark:text-slate-400">{{ __('Projeção repasses até dez.') }}</dt>
+                            <dd class="font-semibold tabular-nums text-slate-800 dark:text-slate-200">{{ $yearEnd['projected_repass_until_december_fmt'] ?? '—' }}</dd>
+                        </div>
+                    </dl>
+                    @if (filled($yearEnd['outlook_detail'] ?? null))
+                        <p class="mt-2 text-[10px] leading-relaxed opacity-90">{{ $yearEnd['outlook_detail'] }}</p>
+                    @endif
                 @endif
             </div>
             <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-xs">

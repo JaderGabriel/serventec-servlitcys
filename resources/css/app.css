@@ -2804,36 +2804,182 @@
 
     /* Fluxo de dados — diagrama ERP (integrações) */
     .serv-erp-board {
-        @apply relative overflow-x-auto p-4 sm:p-5;
-    }
-
-    .serv-erp-lane--hub {
-        @apply xl:relative;
+        @apply relative overflow-hidden rounded-xl border border-slate-200/90
+            bg-slate-100/60 dark:border-slate-700/90 dark:bg-slate-950/50 min-w-0 p-4 sm:p-5;
     }
 
     .serv-erp-hub {
         @apply transition-shadow duration-300 hover:shadow-xl hover:shadow-teal-900/30;
     }
 
-    .serv-erp-board__lanes {
-        @apply grid gap-3 min-w-[52rem] items-stretch
-            grid-cols-[minmax(9rem,1fr)_3rem_minmax(10rem,1.1fr)_minmax(13rem,1.3fr)_3rem_minmax(8.5rem,0.95fr)];
+    .serv-erp-board__layout {
+        @apply flex flex-col gap-4 sm:gap-5;
     }
 
-    .serv-erp-lane {
-        @apply flex flex-col gap-3 min-w-0 h-full;
+    /* Faixas horizontais — ligadas (topo) e roadmap (base) */
+    .serv-erp-shelf {
+        @apply relative rounded-xl border border-slate-200/80 dark:border-slate-700/70
+            bg-white/75 dark:bg-slate-900/45 px-3 py-3 sm:px-4 sm:py-3.5;
     }
 
-    .serv-erp-lane__body {
-        @apply flex flex-1 flex-col min-h-0;
+    .serv-erp-shelf--connected {
+        @apply border-teal-200/70 dark:border-teal-900/45
+            bg-gradient-to-b from-teal-50/50 to-white/80 dark:from-teal-950/25 dark:to-slate-900/50;
     }
 
-    .serv-erp-lane__body--hub {
-        @apply justify-center;
+    .serv-erp-shelf--planned {
+        @apply border-dashed border-slate-300/90 dark:border-slate-600/70
+            bg-slate-50/60 dark:bg-slate-900/30;
     }
 
-    .serv-erp-lane__body--outputs {
-        @apply justify-start;
+    .serv-erp-shelf__head {
+        @apply flex items-start gap-2 mb-2.5;
+    }
+
+    .serv-erp-shelf__head--planned {
+        @apply mb-2;
+    }
+
+    .serv-erp-shelf__step {
+        @apply flex h-6 w-6 shrink-0 items-center justify-center rounded-md
+            bg-teal-700 text-[10px] font-bold text-white dark:bg-teal-600;
+    }
+
+    .serv-erp-shelf__unlink {
+        @apply flex h-6 w-6 shrink-0 items-center justify-center rounded-md
+            border border-dashed border-slate-400/70 text-slate-400 text-xs dark:border-slate-500/60;
+    }
+
+    .serv-erp-shelf__title {
+        @apply text-[11px] font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100 leading-tight;
+    }
+
+    .serv-erp-shelf__desc {
+        @apply text-[10px] text-slate-500 dark:text-slate-400 leading-snug mt-0.5;
+    }
+
+    .serv-erp-shelf__count {
+        @apply shrink-0 rounded-md border border-dashed border-slate-300/80 dark:border-slate-600/70
+            bg-white/60 dark:bg-slate-900/50 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-erp-shelf__rail {
+        @apply flex justify-center h-3 -mb-1 pointer-events-none;
+    }
+
+    .serv-erp-shelf__rail--up {
+        @apply -mt-0.5 mb-1 h-2;
+    }
+
+    .serv-erp-shelf__rail-line {
+        @apply block w-px h-full bg-gradient-to-b from-transparent via-teal-400/60 to-teal-500/80 dark:via-teal-500/50;
+    }
+
+    .serv-erp-shelf__rail-line--up {
+        @apply bg-gradient-to-t from-transparent via-slate-400/40 to-slate-400/20 dark:via-slate-500/35;
+    }
+
+    .serv-erp-shelf__strip {
+        @apply flex flex-wrap items-stretch justify-center gap-2 m-0 p-0 list-none;
+    }
+
+    .serv-erp-shelf__strip--planned {
+        @apply gap-1.5;
+    }
+
+    .serv-erp-shelf__item {
+        @apply min-w-0;
+    }
+
+    .serv-erp-chip {
+        @apply relative inline-flex flex-col items-start gap-0.5 rounded-lg border px-2.5 py-2
+            min-w-[7.5rem] max-w-[10.5rem] shadow-sm transition-shadow hover:shadow-md;
+    }
+
+    .serv-erp-chip--ok {
+        @apply border-teal-200/80 bg-white dark:border-teal-900/50 dark:bg-slate-900/70;
+    }
+
+    .serv-erp-chip--partial {
+        @apply border-amber-200/80 bg-white dark:border-amber-900/45 dark:bg-slate-900/70;
+    }
+
+    .serv-erp-chip--off {
+        @apply border-slate-200/80 bg-white/90 dark:border-slate-700/60 dark:bg-slate-900/60;
+    }
+
+    .serv-erp-chip--planned {
+        @apply border-dashed border-slate-300/90 bg-slate-50/80 opacity-80
+            dark:border-slate-600/75 dark:bg-slate-900/40 min-w-[6.5rem] max-w-[9rem] py-1.5;
+    }
+
+    .serv-erp-chip__dot {
+        @apply absolute top-2 end-2 h-2 w-2 rounded-full ring-2 ring-white dark:ring-slate-900;
+    }
+
+    .serv-erp-chip__dot--ok {
+        @apply bg-teal-500;
+    }
+
+    .serv-erp-chip__dot--partial {
+        @apply bg-amber-500;
+    }
+
+    .serv-erp-chip__dot--off {
+        @apply bg-slate-400;
+    }
+
+    .serv-erp-chip__acronym {
+        @apply inline-flex rounded px-1 py-px text-[8px] font-bold uppercase tracking-wide
+            bg-slate-200/90 text-slate-700 dark:bg-slate-800 dark:text-slate-300;
+    }
+
+    .serv-erp-chip__acronym--muted {
+        @apply bg-slate-100/90 text-slate-500 dark:bg-slate-800/60 dark:text-slate-500;
+    }
+
+    .serv-erp-chip__label {
+        @apply pe-3 text-[11px] font-semibold text-slate-900 dark:text-slate-100 leading-snug line-clamp-2;
+    }
+
+    .serv-erp-chip__edge {
+        @apply text-[9px] font-medium leading-snug line-clamp-2 text-teal-800/90 dark:text-teal-300/90;
+    }
+
+    .serv-erp-chip__edge--partial {
+        @apply text-amber-800/90 dark:text-amber-300/90;
+    }
+
+    .serv-erp-chip__edge--off {
+        @apply text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-erp-chip__wave {
+        @apply rounded px-1 py-px text-[8px] font-semibold tabular-nums
+            bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-400;
+    }
+
+    /* Pipeline central */
+    .serv-erp-pipeline {
+        @apply grid gap-3 items-end
+            grid-cols-1
+            lg:grid-cols-[minmax(9rem,1fr)_2.5rem_minmax(11rem,1.15fr)_2.5rem_minmax(9rem,1fr)];
+    }
+
+    .serv-erp-pipeline__lane {
+        @apply flex flex-col gap-2.5 min-w-0;
+    }
+
+    .serv-erp-pipeline__lane--hub {
+        @apply lg:row-span-1;
+    }
+
+    .serv-erp-pipeline__bridge {
+        @apply hidden lg:flex flex-col items-center justify-end gap-1.5 pb-8 min-h-0;
+    }
+
+    .serv-erp-node--input {
+        @apply min-h-[5.5rem];
     }
 
     .serv-erp-lane__head {
@@ -2880,12 +3026,12 @@
         @apply border-teal-300/80 dark:border-teal-700/60 ring-1 ring-teal-500/15 dark:ring-teal-400/20 py-3;
     }
 
-    .serv-erp-node--feed {
-        @apply flex-1 min-w-0 py-2;
-    }
-
     .serv-erp-node--output {
         @apply py-2;
+    }
+
+    .serv-erp-outputs--pipeline {
+        @apply space-y-2;
     }
 
     .serv-erp-node--ok {
@@ -2900,48 +3046,6 @@
         @apply border-slate-200/80 dark:border-slate-700/60 opacity-90;
     }
 
-    .serv-erp-node--planned {
-        @apply border-dashed border-slate-300/90 dark:border-slate-600/80
-            bg-slate-50/50 dark:bg-slate-900/30 opacity-75 py-2;
-    }
-
-    .serv-erp-node__acronym--muted {
-        @apply bg-slate-100/90 text-slate-500 dark:bg-slate-800/60 dark:text-slate-500;
-    }
-
-    .serv-erp-node__planned-badge {
-        @apply absolute top-2 end-2 rounded px-1 py-px text-[8px] font-bold uppercase tracking-wide
-            border border-dashed border-slate-400/70 text-slate-500 dark:border-slate-500/60 dark:text-slate-400;
-    }
-
-    .serv-erp-node__wave {
-        @apply ms-1 inline-flex rounded px-1 py-px text-[8px] font-semibold tabular-nums
-            bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-400;
-    }
-
-    .serv-erp-planned__title {
-        @apply flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
-    }
-
-    .serv-erp-planned__unlink {
-        @apply text-slate-400 dark:text-slate-500 text-xs leading-none;
-    }
-
-    .serv-erp-planned__lead {
-        @apply mt-1 text-[10px] text-slate-500/90 dark:text-slate-500 leading-snug;
-    }
-
-    .serv-erp-planned__list {
-        @apply mt-2 space-y-1.5 m-0 p-0 list-none;
-    }
-
-    .serv-erp-bridge--mobile {
-        @apply flex items-center gap-2 py-1 text-[10px] text-slate-600 dark:text-slate-400;
-    }
-
-    .serv-erp-bridge__mobile-line {
-        @apply h-px flex-1 bg-teal-500/50;
-    }
 
     .serv-erp-node__status {
         @apply absolute top-2.5 end-2.5 h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-slate-900;
@@ -3000,20 +3104,8 @@
         @apply text-slate-500 dark:text-slate-400;
     }
 
-    .serv-erp-feeds {
-        @apply space-y-2 m-0 p-0 list-none;
-    }
-
-    .serv-erp-feed {
-        @apply flex items-center gap-1.5 min-w-0;
-    }
-
     .serv-erp-outputs {
         @apply space-y-2 m-0 p-0 list-none;
-    }
-
-    .serv-erp-bridge {
-        @apply flex flex-col items-center justify-center gap-1.5 self-stretch px-0.5 min-h-0;
     }
 
     .serv-erp-bridge__label {
@@ -3124,17 +3216,21 @@
     }
 
     @media (max-width: 1023px) {
-        .serv-erp-board__lanes {
-            @apply min-w-0 grid-cols-1;
+        .serv-erp-shelf__strip {
+            @apply flex-nowrap overflow-x-auto justify-start pb-1 snap-x snap-mandatory
+                [scrollbar-width:thin];
         }
 
-        .serv-erp-bridge {
-            @apply py-1;
+        .serv-erp-shelf__item {
+            @apply snap-start shrink-0;
         }
 
-        .serv-erp-line--forward,
-        .serv-erp-line--inbound.serv-erp-line--compact {
-            @apply max-w-[12rem] mx-auto;
+        .serv-erp-pipeline__bridge {
+            @apply flex py-2;
+        }
+
+        .serv-erp-line--forward {
+            @apply max-w-[10rem] mx-auto;
         }
     }
 
