@@ -70,10 +70,12 @@
             <x-dashboard.fundeb-methodology-panel :metodologia="$fundebData['impact_methodology']" class="mb-4" />
         @endif
 
+        <x-dashboard.fundeb-exercise-guide class="mb-4" />
+
         <x-dashboard.consultoria-section
             anchor="fundeb-previsao-recursos"
-            :title="__('Previsão de recursos e distribuição legal')"
-            :subtitle="__('Estimativa anual com base nos alunos distintos do filtro (ou matrículas, se o cadastro de aluno não estiver disponível) e nos pisos mínimos de aplicação do FUNDEB (Lei nº 14.113/2020). Valores indicativos para planejamento — não substituem repasse do FNDE nem prestação de contas.')"
+            :title="__('Projeção de recursos e distribuição legal')"
+            :subtitle="__('Cenário indicativo: matrículas do filtro × índice do exercício (publicado, estimado ou piso). As portarias FNDE consolidam receita e complementações por exercício; matrículas do ano vigente alimentam o planejamento do exercício seguinte. Não substitui repasse FNDE/Simec.')"
         >
             @if (! $projAvailable)
                 <p class="serv-callout serv-callout--warning text-sm">{{ $proj['formula_base'] ?? __('Sem matrículas no filtro para calcular a previsão.') }}</p>
@@ -147,7 +149,7 @@
                 @if (count($distItens) > 0)
                     <div class="space-y-2">
                         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            {{ __('Pisos legais de aplicação (sobre previsão base :total)', ['total' => $distLegal['total_base_label'] ?? '']) }}
+                            {{ __('Pisos legais de aplicação (sobre projeção indicativa :total)', ['total' => $distLegal['total_base_label'] ?? '']) }}
                         </p>
                         @if (filled($distLegal['referencia_legal'] ?? null))
                             <p class="text-[11px] text-slate-600 dark:text-slate-400">{{ $distLegal['referencia_legal'] }}</p>
@@ -188,7 +190,7 @@
 
                 @if (count($porEtapa) > 0)
                     <div class="space-y-3">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('Participação por nível de ensino (previsão base)') }}</p>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('Participação por nível de ensino (projeção indicativa)') }}</p>
                         @if (! empty($proj['chart_etapa']))
                             <x-dashboard.chart-panel
                                 :chart="$proj['chart_etapa']"

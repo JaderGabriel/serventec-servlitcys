@@ -157,14 +157,14 @@
                             @endif
                         </p>
                         <p class="text-[11px] text-gray-500 dark:text-gray-500">
-                            {{ __('Métricas alinhadas à aba Discrepâncias: ocorrências = soma por escola; escolas = linhas com pendência; impacto = VAAF municipal (importado ou estimado) × peso × ocorrências.') }}
+                            {{ __('Métricas alinhadas à aba Discrepâncias: ocorrências = soma por escola; escolas = linhas com pendência; impacto = índice do exercício (importado ou estimado) × peso × ocorrências — projeção indicativa, não repasse FNDE.') }}
                         </p>
                         @if ($fundingRef !== null && isset($fundingRef['vaa_label']))
                             <p class="text-xs text-gray-700 dark:text-gray-300 mt-1">
-                                {{ __('VAAF utilizado nos cálculos:') }}
+                                {{ __('Índice do exercício nos cálculos:') }}
                                 <span class="font-semibold tabular-nums">{{ $fundingRef['vaa_label'] }}</span>
                                 @if (filled($fundingRef['vaa_previa_label'] ?? null))
-                                    · {{ __('prévia federal:') }} <span class="font-medium">{{ $fundingRef['vaa_previa_label'] }}</span>
+                                    · {{ __('fundeb.semantics.piso_federal_label') }}: <span class="font-medium">{{ $fundingRef['vaa_previa_label'] }}</span>
                                 @endif
                                 @if (filled($fundingRef['vaa_fonte_label'] ?? null))
                                     <span class="opacity-80">({{ $fundingRef['vaa_fonte_label'] }})</span>

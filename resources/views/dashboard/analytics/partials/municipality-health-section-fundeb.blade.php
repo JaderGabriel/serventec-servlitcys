@@ -12,8 +12,8 @@
     <x-dashboard.consultoria-section
         :step="$diagStep['diag-vaaf'] ?? null"
         anchor="diag-vaaf"
-        :title="__('Medidores financeiros (VAAF e previsão)')"
-        :subtitle="__('Valor municipal usado nos cálculos × prévia federal para comparação com painéis do governo.')"
+        :title="__('Medidores financeiros (índice e projeção)')"
+        :subtitle="__('Índice do exercício (portaria) × piso federal (comparação). Projeção = matrículas do filtro × índice — indicativa.')"
     >
         <x-dashboard.consultoria-vaaf-comparacao
             :comparacao="$vaafComparacao"

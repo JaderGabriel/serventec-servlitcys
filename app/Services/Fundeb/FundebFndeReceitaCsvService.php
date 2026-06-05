@@ -2,6 +2,8 @@
 
 namespace App\Services\Fundeb;
 
+use App\Support\Fundeb\FundebFndeCsvTableReader;
+use App\Support\Fundeb\FundebFndePortariaCatalog;
 use App\Support\Fundeb\FundebIbgeMatcher;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -30,12 +32,14 @@ class FundebFndeReceitaCsvService
 
         foreach ($this->candidatePublicationYears($ano) as $pubYear) {
             $index = $this->loadYearIndex($pubYear);
-            if (isset($index[$ibge])) {
-                $row = $index[$ibge];
-                $row['ano_publicacao'] = $pubYear;
-
-                return $row;
+            if (! isset($index[$ibge])) {
+                continue;
             }
+            $row = $index[$ibge];
+            $row['ano_publicacao'] = $pubYear;
+            $row['exercicio'] = $pubYear;
+
+            return $row;
         }
 
         return null;
@@ -93,12 +97,9 @@ class FundebFndeReceitaCsvService
 
     public function discoverCsvUrl(int $publicationYear): ?string
     {
-        $configured = config('ieducar.fundeb.open_data.fnde_receita_csv_urls', []);
-        if (is_array($configured)) {
-            $direct = $configured[$publicationYear] ?? $configured[(string) $publicationYear] ?? null;
-            if (is_string($direct) && $direct !== '') {
-                return $direct;
-            }
+        $fromCatalog = FundebFndePortariaCatalog::receitaCsvUrl($publicationYear);
+        if ($fromCatalog !== null) {
+            return $fromCatalog;
         }
 
         $base = 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/';
@@ -140,16 +141,42 @@ class FundebFndeReceitaCsvService
             '/href="(https:\/\/www\.gov\.br\/fnde[^"]*1-receita-total-do-fundeb-por-ente-federado\.csv[^"]*)"/i',
         ];
 
+        $candidates = [];
         foreach ($patterns as $pattern) {
-            if (preg_match($pattern, $html, $m)) {
-                $url = html_entity_decode($m[1], ENT_QUOTES, 'UTF-8');
-                $url = preg_replace('#/view$#i', '', $url) ?? $url;
-
-                return $url;
+            if (preg_match_all($pattern, $html, $matches, PREG_SET_ORDER)) {
+                foreach ($matches as $m) {
+                    $url = html_entity_decode($m[1], ENT_QUOTES, 'UTF-8');
+                    $url = preg_replace('#/view$#i', '', $url) ?? $url;
+                    $candidates[] = $url;
+                }
             }
         }
 
-        return null;
+        if ($candidates === []) {
+            return null;
+        }
+
+        usort($candidates, static function (string $a, string $b): int {
+            $score = static function (string $url): int {
+                $s = 0;
+                if (str_contains($url, '2-publicacao')) {
+                    $s += 100;
+                } elseif (str_contains($url, '6-publicacao')) {
+                    $s += 80;
+                } elseif (str_contains($url, '1-publicacao')) {
+                    $s += 40;
+                }
+                if (str_contains($url, 'receita-total') || str_contains($url, 'Receitatotal')) {
+                    $s += 20;
+                }
+
+                return $s;
+            };
+
+            return $score($b) <=> $score($a);
+        });
+
+        return $candidates[0];
     }
 
     /**
@@ -157,7 +184,10 @@ class FundebFndeReceitaCsvService
      */
     private function candidatePublicationYears(int $requestedAno): array
     {
-        $years = [$requestedAno, $requestedAno + 1, $requestedAno - 1, $requestedAno + 2];
+        $years = [$requestedAno];
+        if (FundebFndePortariaCatalog::receitaCsvUrl($requestedAno - 1) !== null) {
+            $years[] = $requestedAno - 1;
+        }
 
         return FundebOpenDataImportService::normalizeYearList($years);
     }
@@ -233,6 +263,71 @@ class FundebFndeReceitaCsvService
      */
     private function parseCsvBody(string $body, string $csvUrl, int $publicationYear): array
     {
+        $rows = FundebFndeCsvTableReader::rowsFromBody($body);
+        $matchers = [
+            'uf' => ['uf'],
+            'ibge' => ['codigo ibge', 'ibge'],
+            'entidade' => ['entidade', 'ente federado'],
+            'vaaf' => ['complementacao vaaf'],
+            'vaat_compl' => ['complementacao vaat'],
+            'vaar' => ['complementacao vaar'],
+            'total' => ['total das receitas', 'total receita', 'receitas previstas'],
+        ];
+        $table = FundebFndeCsvTableReader::locateTable($rows, $matchers);
+
+        if ($table['data_start'] < 0) {
+            return $this->parseCsvBodyLegacy($body, $csvUrl, $publicationYear);
+        }
+
+        $columns = $table['columns'];
+        if (($columns['ibge'] ?? -1) < 0 || ($columns['total'] ?? -1) < 0) {
+            $columns = array_merge(
+                FundebFndeCsvTableReader::inferReceitaColumns($rows[$table['data_start']]),
+                array_filter($columns, static fn (int $v): bool => $v >= 0),
+            );
+        }
+
+        $index = [];
+        for ($i = $table['data_start'], $n = count($rows); $i < $n; $i++) {
+            $row = $rows[$i];
+            if (! FundebFndeCsvTableReader::isDataRow($row)) {
+                continue;
+            }
+
+            $ibge = FundebIbgeMatcher::normalize($row[$columns['ibge'] ?? 1] ?? null);
+            if ($ibge === null) {
+                continue;
+            }
+
+            $totalReceita = $this->parseMoney($row[$columns['total'] ?? -1] ?? null);
+            if ($totalReceita === null || $totalReceita <= 0) {
+                continue;
+            }
+
+            $index[$ibge] = [
+                'ibge' => $ibge,
+                'uf' => trim((string) ($row[$columns['uf'] ?? 0] ?? '')),
+                'entidade' => trim((string) ($row[$columns['entidade'] ?? 2] ?? '')),
+                'total_receita' => $totalReceita,
+                'complementacao_vaaf' => $this->parseMoney($row[$columns['vaaf'] ?? -1] ?? null),
+                'complementacao_vaat' => $this->parseMoney($row[$columns['vaat_compl'] ?? -1] ?? null),
+                'complementacao_vaar' => $this->parseMoney($row[$columns['vaar'] ?? -1] ?? null),
+                'ano_publicacao' => $publicationYear,
+                'csv_url' => $csvUrl,
+                'portaria' => FundebFndePortariaCatalog::metaForExercicio($publicationYear),
+            ];
+        }
+
+        return $index;
+    }
+
+    /**
+     * Formato antigo (cabeçalho numa linha).
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function parseCsvBodyLegacy(string $body, string $csvUrl, int $publicationYear): array
+    {
         $index = [];
         $handle = fopen('php://memory', 'r+');
         if ($handle === false) {
@@ -279,6 +374,7 @@ class FundebFndeReceitaCsvService
                 'complementacao_vaar' => $this->parseMoney($row[$headerMap['vaar']] ?? null),
                 'ano_publicacao' => $publicationYear,
                 'csv_url' => $csvUrl,
+                'portaria' => FundebFndePortariaCatalog::metaForExercicio($publicationYear),
             ];
         }
 

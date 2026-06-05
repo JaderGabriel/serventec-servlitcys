@@ -81,7 +81,7 @@ final class AnalyticsReportFundebReferenceTables
                 __('Matrículas'),
                 __('Fonte mat.'),
                 __('VAAF est.'),
-                __('Previsão base'),
+                __('Projeção indicativa'),
                 __('Publ. FNDE'),
             ],
             'rows' => $rows,
@@ -173,7 +173,7 @@ final class AnalyticsReportFundebReferenceTables
         return [
             'available' => $rows !== [],
             'title' => __('Quadro de referência — Distribuição legal mínima (Lei 14.113/2020)'),
-            'subtitle' => (string) ($dist['referencia_legal'] ?? __('Pisos de aplicação sobre a previsão base do exercício do filtro.')),
+            'subtitle' => (string) ($dist['referencia_legal'] ?? __('Pisos de aplicação sobre a projeção indicativa do exercício do filtro.')),
             'headers' => [__('Destino'), __('% mín./máx.'), __('Valor planejado (R$)'), __('Descrição')],
             'rows' => $rows,
             'note' => (string) ($dist['nota'] ?? ''),
@@ -195,7 +195,7 @@ final class AnalyticsReportFundebReferenceTables
         }
 
         $rows = [
-            [__('Previsão base (matrículas × VAAF)'), isset($totais['fundeb_base_anual']) ? $fmt((float) $totais['fundeb_base_anual']) : '—'],
+            [__('Projeção indicativa (matrículas × índice)'), isset($totais['fundeb_base_anual']) ? $fmt((float) $totais['fundeb_base_anual']) : '—'],
             [__('Complementação VAAR (indicativa/importada)'), isset($totais['complementacao_vaar']) ? $fmt((float) $totais['complementacao_vaar']) : '—'],
             [__('Total com complementação'), isset($totais['total_com_complemento']) ? $fmt((float) $totais['total_com_complemento']) : '—'],
             [__('Cenário com risco (cadastro)'), isset($totais['previsao_cenario_risco']) ? $fmt((float) $totais['previsao_cenario_risco']) : '—'],
@@ -204,12 +204,12 @@ final class AnalyticsReportFundebReferenceTables
         ];
 
         if (isset($totais['fundeb_base_previa_anual']) && $totais['fundeb_base_previa_anual'] !== null) {
-            $rows[] = [__('Prévia federal (referência)'), $fmt((float) $totais['fundeb_base_previa_anual'])];
+            $rows[] = [__('fundeb.semantics.piso_federal_label'), $fmt((float) $totais['fundeb_base_previa_anual'])];
         }
 
         return [
             'available' => true,
-            'title' => __('Quadro de referência — Cenários de previsão (exercício do filtro)'),
+            'title' => __('Quadro de referência — Cenários de projeção indicativa (exercício do filtro)'),
             'subtitle' => (string) ($proj['formula_base'] ?? ''),
             'headers' => [__('Indicador'), __('Valor (R$)')],
             'rows' => $rows,

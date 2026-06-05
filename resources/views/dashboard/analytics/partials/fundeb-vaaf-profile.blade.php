@@ -17,8 +17,9 @@
     <x-dashboard.consultoria-section
         anchor="fundeb-perfil-vaaf"
         :title="__('Perfil FUNDEB — receitas, VAAF e planejamento')"
-        :subtitle="__('Portaria FNDE (receita por ente), matrículas i-Educar/Censo, VAAF estimado e distribuição legal indicativa para o exercício corrente e o próximo. Valores para planejamento — conferir no FNDE/Simec.')"
+        :subtitle="__('Por exercício: receita consolidada na portaria, matrículas usadas no cálculo, índice estimado e projeção. Exercícios publicados vs em formação vs projeção — conferir FNDE/Simec.')"
     >
+        <x-dashboard.fundeb-exercise-guide class="mb-4" compact :show-matriculas-nota="false" />
         @if (count($alerts) > 0)
             <div class="space-y-2 mb-4">
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
@@ -46,13 +47,14 @@
                 <thead class="bg-slate-50 dark:bg-slate-800/80 text-left text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-400">
                     <tr>
                         <th class="px-3 py-2">{{ __('Exercício') }}</th>
-                        <th class="px-3 py-2 text-right">{{ __('Receita total FNDE') }}</th>
-                        <th class="px-3 py-2 text-right">{{ __('Compl. VAAF') }}</th>
+                        <th class="px-3 py-2">{{ __('Situação') }}</th>
+                        <th class="px-3 py-2 text-right">{{ __('Receita (portaria)') }}</th>
+                        <th class="px-3 py-2 text-right">{{ __('Compl. VAAF (R$)') }}</th>
                         <th class="px-3 py-2 text-right">{{ __('Matrículas') }}</th>
-                        <th class="px-3 py-2 text-right">{{ __('VAAF est.') }}</th>
-                        <th class="px-3 py-2 text-right">{{ __('VAAF UF') }}</th>
-                        <th class="px-3 py-2 text-right">{{ __('Previsão base') }}</th>
-                        <th class="px-3 py-2">{{ __('Publicação') }}</th>
+                        <th class="px-3 py-2 text-right">{{ __('Índice VAAF est.') }}</th>
+                        <th class="px-3 py-2 text-right">{{ __('Índice VAAF UF') }}</th>
+                        <th class="px-3 py-2 text-right">{{ __('Projeção base') }}</th>
+                        <th class="px-3 py-2">{{ __('Portaria') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -62,10 +64,15 @@
                             $mat = is_array($block['matriculas'] ?? null) ? $block['matriculas'] : [];
                             $est = is_array($block['vaaf_estimado'] ?? null) ? $block['vaaf_estimado'] : [];
                             $prev = is_array($block['previsao_recursos'] ?? null) ? $block['previsao_recursos'] : [];
+                            $ufRef = is_array($block['referencia_estadual'] ?? null) ? $block['referencia_estadual'] : [];
+                            $phaseLabel = \App\Support\Fundeb\FundebValueLexicon::exercisePhaseLabel((int) $ano);
                         @endphp
                         <tr>
                             <td class="px-3 py-2 font-medium text-slate-900 dark:text-slate-100">
                                 {{ $block['label'] ?? $ano }}
+                            </td>
+                            <td class="px-3 py-2 text-xs text-slate-600 dark:text-slate-400" title="{{ \App\Support\Fundeb\FundebValueLexicon::exercisePhaseHint((int) $ano) }}">
+                                {{ $phaseLabel }}
                             </td>
                             <td class="px-3 py-2 text-right tabular-nums">{{ $fmtBrl(isset($rec['total']) ? (float) $rec['total'] : null) }}</td>
                             <td class="px-3 py-2 text-right tabular-nums">{{ $fmtBrl(isset($rec['complementacao_vaaf']) ? (float) $rec['complementacao_vaaf'] : null) }}</td>

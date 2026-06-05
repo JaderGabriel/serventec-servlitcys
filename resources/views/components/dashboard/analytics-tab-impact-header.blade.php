@@ -144,7 +144,7 @@
                         @endforeach
                     </ul>
                 @endif
-                <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed {{ ($fc !== null || ! empty($saldo['fundeb_lines'])) ? 'mt-2' : '' }}">{{ $saldo['footnote'] ?? __('VAAF municipal × pesos Discrepâncias — não é repasse oficial.') }}</p>
+                <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed {{ ($fc !== null || ! empty($saldo['fundeb_lines'])) ? 'mt-2' : '' }}">{{ $saldo['footnote'] ?? __('Índice do exercício × pesos Discrepâncias — projeção indicativa, não repasse FNDE.') }}</p>
                 @if (filled($saldo['tab_share_label'] ?? null) && filled($saldo['tab_share_value'] ?? null))
                     <p class="text-xs text-gray-600 dark:text-gray-400 pt-1 border-t border-slate-200/80 dark:border-slate-700/80">
                         <span class="font-medium text-slate-700 dark:text-slate-300">{{ $saldo['tab_share_label'] }}:</span>

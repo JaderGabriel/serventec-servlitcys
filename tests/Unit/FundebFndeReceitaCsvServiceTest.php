@@ -54,4 +54,22 @@ CSV;
         $this->assertEqualsWithDelta(100.0, $index['2910800']['complementacao_vaaf'], 0.01);
         $this->assertArrayHasKey('2911403', $index);
     }
+
+    #[Test]
+    public function parseia_csv_portaria_6_com_linhas_de_titulo(): void
+    {
+        $csv = <<<'CSV'
+;;;;;;;;
+Receita total prevista do Fundeb 2026 - Portaria Interministerial n 6;;;;;;;;
+UF;Código IBGE;Entidade;Receita estados;Complementação VAAF;Complementação VAAT;Complementação VAAR;Compl União;Total das receitas previstas
+BA;2915700;ITAMARI; 5.000.000,00 ; - ; 100.000,00 ; - ; 100.000,00 ; 5.100.000,00
+CSV;
+
+        $service = new FundebFndeReceitaCsvService();
+        $index = (new \ReflectionMethod($service, 'parseCsvBody'))
+            ->invoke($service, $csv, 'https://example.test/receita.csv', 2026);
+
+        $this->assertArrayHasKey('2915700', $index);
+        $this->assertEqualsWithDelta(5_100_000.0, $index['2915700']['total_receita'], 0.01);
+    }
 }

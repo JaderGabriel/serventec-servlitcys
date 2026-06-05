@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Models\FundebMunicipioReference;
 use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Support\Fundeb\FundebMatrixCellPresentation;
+use App\Support\Fundeb\FundebValueLexicon;
 use Illuminate\Support\Collection;
 
 class FundebMunicipioReferenceRepository
@@ -253,11 +254,22 @@ class FundebMunicipioReferenceRepository
 
         $defaults = self::defaultMatrixYearRange();
 
+        $yearSemantics = [];
+        foreach ($years as $y) {
+            $yearSemantics[$y] = [
+                'phase' => FundebValueLexicon::exercisePhase((int) $y),
+                'phase_label' => FundebValueLexicon::exercisePhaseLabel((int) $y),
+                'phase_hint' => FundebValueLexicon::exercisePhaseHint((int) $y),
+                'column_caption' => FundebValueLexicon::matrixColumnCaption((int) $y),
+            ];
+        }
+
         return [
             'year_from' => $yearFrom,
             'year_to' => $yearTo,
             'anchor_year' => $defaults['anchor'],
             'years' => $years,
+            'year_semantics' => $yearSemantics,
             'legend' => FundebMatrixCellPresentation::legendItems(),
             'rows' => $rows,
         ];
@@ -281,6 +293,7 @@ class FundebMunicipioReferenceRepository
     private static function enrichCell(bool $hasReference, ?float $vaaf, ?float $vaat, ?string $fonte): array
     {
         $display = FundebMatrixCellPresentation::forFonte($fonte, $hasReference);
+        $nature = FundebValueLexicon::valueNature($fonte, $hasReference);
 
         return [
             'has_reference' => $hasReference,
@@ -290,7 +303,8 @@ class FundebMunicipioReferenceRepository
             'display_kind' => $display['kind'],
             'display_label' => $display['label'],
             'display_short' => $display['short'],
-            'display_title' => $display['title'],
+            'display_title' => $display['title'].($hasReference ? ' '.$nature['hint'] : ''),
+            'value_nature_label' => $nature['label'],
             'cell_class' => $display['cell_class'],
             'swatch_class' => $display['swatch_class'],
             'display_icon' => $display['icon'],

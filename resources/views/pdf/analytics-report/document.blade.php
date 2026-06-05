@@ -86,7 +86,7 @@
 
         @include('pdf.analytics-report.partials.diagnosis-explore-board', ['health' => $health])
         @if (is_array($health['vaaf_comparacao'] ?? null))
-            <h3>{{ __('VAAF municipal × prévia federal') }}</h3>
+            <h3>{{ __('Índice do exercício × piso federal (comparação)') }}</h3>
             <table class="data">
                 <tr><th>{{ __('Indicador') }}</th><th>{{ __('Valor') }}</th><th>{{ __('Leitura') }}</th></tr>
                 @foreach (['real', 'previa'] as $key)
@@ -185,7 +185,7 @@
     </div>
 
     <div class="appendix-section">
-        <h2>{{ __('6. FUNDEB — previsão e complementação') }}</h2>
+        <h2>{{ __('6. FUNDEB — projeção indicativa e complementação') }}</h2>
         @include('pdf.analytics-report.partials.section-lead', ['section' => 'fundeb'])
         <span class="official-tag">{{ __('Lei 14.113/2020 · FNDE') }}</span>
         <p>{{ $fundeb['intro'] ?? '' }}</p>
@@ -206,7 +206,7 @@
 
         @if ($fundebRefPdf !== [])
             <h3>{{ __('Quadros de referência — receita, complementação e planejamento') }}</h3>
-            <p class="muted">{{ __('Valores objetivos para o exercício corrente e exercícios de planejamento (Portaria FNDE, eixos VAAF/VAAT/VAAR e cenários indicativos). Detalhe ampliado na secção 2 — Comparativos.') }}</p>
+            <p class="muted">{{ __('Consolidado = portaria FNDE publicada por exercício. Em formação = cadastro em curso. Projeção = matrículas vigentes × índice (planejamento). Detalhe na secção 2 — Comparativos.') }}</p>
             @include('pdf.analytics-report.partials.fundeb-reference-tables', ['tables' => $fundebRefPdf])
         @endif
 

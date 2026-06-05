@@ -45,7 +45,7 @@
     <div>
         <h3 class="text-sm font-semibold text-teal-950 dark:text-teal-100">{{ __('Referências FUNDEB (VAAF / VAAT / portarias)') }}</h3>
         <p class="text-xs text-teal-900/90 dark:text-teal-200/90 mt-1 leading-relaxed">
-            {{ __('A importação FNDE grava também receita total e complementações de portarias recentes (VAAF, VAAT, VAAR), usadas na expectativa do Tempo Real. Envios vão para a fila. Nova cidade com IBGE enfileira automaticamente :y1 e :y2.', [
+            {{ __('A importação FNDE grava índices e receitas por exercício (portaria publicada). Matrículas do ano vigente alimentam projeções do exercício seguinte. Envios vão para a fila. Nova cidade com IBGE enfileira :y1 e :y2.', [
                 'y1' => \App\Services\Fundeb\FundebOpenDataImportService::suggestedImportYear(),
                 'y2' => \App\Services\Fundeb\FundebOpenDataImportService::suggestedImportYear() - 1,
             ]) }}
@@ -198,7 +198,8 @@
                 <table class="min-w-full text-sm">
                     <thead class="bg-teal-100/60 dark:bg-teal-950/40 text-left text-xs uppercase text-teal-800 dark:text-teal-200">
                         <tr>
-                            <th class="px-3 py-2">{{ __('Ano') }}</th>
+                            <th class="px-3 py-2">{{ __('Exercício') }}</th>
+                            <th class="px-3 py-2">{{ __('Natureza') }}</th>
                             <th class="px-3 py-2 text-right">{{ __('VAAF') }}</th>
                             <th class="px-3 py-2 text-right">{{ __('VAAT') }}</th>
                             <th class="px-3 py-2 text-right">{{ __('Compl. VAAR') }}</th>
@@ -208,8 +209,21 @@
                     </thead>
                     <tbody class="divide-y divide-teal-50 dark:divide-teal-900/30 bg-white/80 dark:bg-gray-900/30">
                         @foreach ($fundebStored as $ref)
+                            @php
+                                $nature = \App\Support\Fundeb\FundebMatrixCellPresentation::forFonte($ref['fonte'] ?? null, true);
+                                $phase = \App\Support\Fundeb\FundebValueLexicon::exercisePhaseLabel((int) ($ref['ano'] ?? 0));
+                            @endphp
                             <tr>
-                                <td class="px-3 py-2 font-medium tabular-nums">{{ $ref['ano'] }}</td>
+                                <td class="px-3 py-2 font-medium tabular-nums">
+                                    {{ $ref['ano'] }}
+                                    <span class="block text-[10px] font-normal text-slate-500">{{ $phase }}</span>
+                                </td>
+                                <td class="px-3 py-2 text-xs" title="{{ $nature['title'] ?? '' }}">
+                                    <span class="inline-flex items-center gap-1">
+                                        <span aria-hidden="true">{{ $nature['icon'] ?? '' }}</span>
+                                        {{ $nature['label'] ?? '—' }}
+                                    </span>
+                                </td>
                                 <td class="px-3 py-2 text-right tabular-nums">{{ $fmtBrl($ref['vaaf']) }}</td>
                                 <td class="px-3 py-2 text-right tabular-nums">{{ isset($ref['vaat']) ? $fmtBrl($ref['vaat']) : '—' }}</td>
                                 <td class="px-3 py-2 text-right tabular-nums">{{ isset($ref['complementacao_vaar']) ? $fmtBrl($ref['complementacao_vaar']) : '—' }}</td>

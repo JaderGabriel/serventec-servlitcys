@@ -5,7 +5,9 @@ namespace App\Support\Ieducar;
 use App\Models\City;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Finance\MoneyMath;
+use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Support\Fundeb\FundebMatrixCellPresentation;
+use App\Support\Fundeb\FundebValueLexicon;
 
 /**
  * Formata comparação VAAF municipal (real/importado) × prévia federal para cartões do painel.
@@ -69,11 +71,11 @@ final class FundebReferenceDisplay
     public static function rotuloVaafCurto(?array $funding): string
     {
         return match (self::tipoVaafCalculo($funding)) {
-            'municipal' => __('VAAF municipal'),
-            'previa' => __('Prévia federal (configurável)'),
-            'estimado' => __('VAAF estimado (receita ÷ matrículas)'),
+            'municipal' => __('Índice municipal publicado'),
+            'previa' => __('Piso federal (comparação)'),
+            'estimado' => __('Índice estimado (portaria ÷ matrículas)'),
             'config' => __('Valor configurado (IEDUCAR_DISC_VAA_REFERENCIA)'),
-            default => __('Valor-aluno/ano de referência'),
+            default => __('Índice de referência'),
         };
     }
 
@@ -322,21 +324,24 @@ final class FundebReferenceDisplay
             'ano' => $ref['ano'] ?? null,
         ];
 
+        $exerciseAno = (int) ($municipal['ano'] ?? $ref['ano'] ?? FundebOpenDataImportService::suggestedImportYear());
+
         return [
             'real' => [
-                'label' => __('Valor municipal (base do cálculo)'),
+                'label' => __('fundeb.semantics.vaaf_municipal_label'),
                 'value' => $municipal !== null ? $fmt((float) $municipal['vaaf']) : __('—'),
                 'hint' => $municipal !== null
-                    ? (string) ($municipal['fonte_label'] ?? '')
-                    : __('Sem dado municipal importado para este IBGE/ano'),
+                    ? trim((string) ($municipal['fonte_label'] ?? '').' · '.__('Exercício :y', ['y' => (string) $exerciseAno]))
+                    : __('fundeb.semantics.vaaf_municipal_hint_empty'),
             ],
             'previa' => [
-                'label' => __('Prévia federal (referência)'),
+                'label' => __('fundeb.semantics.piso_federal_label'),
                 'value' => $previa !== null ? $fmt((float) $previa['vaaf']) : __('—'),
                 'hint' => $previa !== null
                     ? (string) ($previa['fonte_label'] ?? '')
-                    : __('Configure IEDUCAR_FUNDEB_NATIONAL_VAAF_* ou IEDUCAR_DISC_VAA_REFERENCIA'),
+                    : __('fundeb.semantics.piso_federal_hint_empty'),
             ],
+            'exercise_phase' => FundebValueLexicon::exercisePhaseLabel($exerciseAno),
         ];
     }
 
@@ -362,17 +367,25 @@ final class FundebReferenceDisplay
         $realTotal = MoneyMath::multiplyVaaf($matriculas, $municipalVaaf);
         $previaTotal = $previaVaaf > 0 ? MoneyMath::multiplyVaaf($matriculas, $previaVaaf) : null;
 
+        $filterYear = $filters !== null && $filters->hasYearSelected() && ! $filters->isAllSchoolYears()
+            ? (int) $filters->ano_letivo
+            : FundebOpenDataImportService::suggestedImportYear();
+        $exerciseAno = is_array($ref['municipal'] ?? null)
+            ? (int) ($ref['municipal']['ano'] ?? $filterYear)
+            : $filterYear;
+        $matNote = FundebValueLexicon::matriculasExercicioNota($filterYear, $exerciseAno);
+
         return [
             'real' => [
-                'label' => __('Previsão (municipal × matrículas)'),
+                'label' => __('fundeb.semantics.previsao_indicativa_label'),
                 'value' => $fmt($realTotal),
                 'hint' => __(':n × :vaa', [
                     'n' => number_format($matriculas, 0, ',', '.'),
                     'vaa' => $fmt($municipalVaaf),
-                ]),
+                ]).($matNote !== null ? ' '.$matNote : ''),
             ],
             'previa' => [
-                'label' => __('Previsão (prévia federal × matrículas)'),
+                'label' => __('fundeb.semantics.previsao_piso_label'),
                 'value' => $previaTotal !== null ? $fmt($previaTotal) : __('—'),
                 'hint' => $previaTotal !== null
                     ? __(':n × :vaa', [

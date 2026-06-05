@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão em produção (`main`):** **3.10.0** (repasses FUNDEB — 3 extratos, extrato Tempo Real, download BB; tag **`20260604-Plutus`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md) · release: [docs/RELEASE_20260604_PLUTUS.md](docs/RELEASE_20260604_PLUTUS.md).
+**Versão em produção (`main`):** **4.1.7** (FUNDEB portarias 6/2026, lexicon consolidado/projeção na consultoria; tag **`20260607-Phronesis`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md) · release: [docs/RELEASE_20260607_PHRONESIS.md](docs/RELEASE_20260607_PHRONESIS.md).
 
 ## Requisitos
 

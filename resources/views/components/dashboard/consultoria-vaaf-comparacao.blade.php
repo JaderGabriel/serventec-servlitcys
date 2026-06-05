@@ -61,7 +61,7 @@
         @endif
 
         <p class="serv-callout text-[11px]">
-            {{ __('Os impactos financeiros desta aba usam o VAAF municipal quando importado; a prévia federal serve só para comparação com painéis do governo.') }}
+            {{ __('Índice do exercício = valor publicado ou estimado pela portaria FNDE para aquele ano. Piso federal = só comparação. Projeções usam matrículas do filtro × índice — indicativas, não repasse oficial.') }}
         </p>
     </div>
 @endif

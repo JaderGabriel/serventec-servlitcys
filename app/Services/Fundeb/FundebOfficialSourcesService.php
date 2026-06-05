@@ -3,6 +3,7 @@
 namespace App\Services\Fundeb;
 
 use App\Models\FundebMunicipioReference;
+use App\Support\Fundeb\FundebFndePortariaCatalog;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -41,19 +42,34 @@ final class FundebOfficialSourcesService
     }
 
     /**
-     * @return list<array{ano: int, label: string, url: string, configured: bool}>
+     * @return list<array{ano: int, label: string, url: string, configured: bool, numero?: ?string, data?: ?string, tipo?: string}>
      */
     private function portariasFromConfig(): array
     {
-        $byYear = config('ieducar.fundeb.open_data.fnde_receita_csv_by_year', []);
         $out = [];
-        if (! is_array($byYear)) {
-            return $out;
-        }
-        foreach ($byYear as $ano => $url) {
-            if (! is_string($url) || trim($url) === '') {
+        foreach (FundebFndePortariaCatalog::adminPortariaRows() as $row) {
+            $receita = $row['csv']['receita'] ?? null;
+            if (! is_string($receita) || $receita === '') {
                 continue;
             }
+            $out[] = [
+                'ano' => (int) $row['exercicio'],
+                'label' => $row['label'] !== ''
+                    ? $row['label']
+                    : __('Receita total FUNDEB por ente (:ano)', ['ano' => (string) $row['exercicio']]),
+                'url' => $receita,
+                'configured' => true,
+                'numero' => $row['numero'] ?? null,
+                'data' => $row['data'] ?? null,
+                'tipo' => 'portaria_receita',
+            ];
+        }
+
+        if ($out !== []) {
+            return $out;
+        }
+
+        foreach (FundebFndePortariaCatalog::receitaCsvUrlsByYear() as $ano => $url) {
             $out[] = [
                 'ano' => (int) $ano,
                 'label' => __('Receita total FUNDEB por ente (:ano)', ['ano' => (string) $ano]),
@@ -61,8 +77,6 @@ final class FundebOfficialSourcesService
                 'configured' => true,
             ];
         }
-
-        usort($out, static fn (array $a, array $b): int => $b['ano'] <=> $a['ano']);
 
         return $out;
     }

@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **4.1.2** · release `20260605-Eunomia` · **Ramo:** `main` · **Última revisão:** 05/06/2026
+**Versão em produção:** **4.1.7** · release `20260607-Phronesis` · **Ramo:** `main` · **Última revisão:** 07/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 

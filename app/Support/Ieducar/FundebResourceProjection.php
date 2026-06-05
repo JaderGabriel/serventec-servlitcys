@@ -125,7 +125,7 @@ final class FundebResourceProjection
             'formula_base' => $formulaBase,
             'kpis' => [
                 [
-                    'label' => __('Previsão base (ano)'),
+                    'label' => __('fundeb.semantics.previsao_indicativa_label'),
                     'value' => $fmt($previsaoReferencia),
                     'tone' => 'indigo',
                     'comparacao' => $previsaoComparacao,
@@ -137,7 +137,7 @@ final class FundebResourceProjection
                         $alunosDistintos,
                     )
                         .($basePrevia !== null && ! $usaVaafMunicipal
-                        ? ' '.__('Comparação — prévia federal × matrículas: :total.', ['total' => $fmt($basePrevia)])
+                        ? ' '.__('Comparação — piso federal × matrículas: :total.', ['total' => $fmt($basePrevia)])
                         : ''),
                     'funding_explicacao' => [
                         'formula_curta' => __(':mat × :vaa = :total', [
@@ -146,7 +146,7 @@ final class FundebResourceProjection
                             'total' => $fmt($previsaoReferencia),
                         ]),
                         'formula_expandida' => __(
-                            'Previsão base = matrículas ativas no filtro × VAAF (:fonte), sem peso por tipo de discrepância.',
+                            'Projeção indicativa = matrículas ativas no filtro × índice do exercício (:fonte), sem peso por tipo de discrepância.',
                             ['fonte' => $usaVaafMunicipal
                                 ? (string) ($municipalBlock['fonte_label'] ?? $ref['fonte_label'])
                                 : (string) $ref['fonte_label']],

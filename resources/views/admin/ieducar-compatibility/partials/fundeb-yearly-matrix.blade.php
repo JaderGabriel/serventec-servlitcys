@@ -6,6 +6,7 @@
     $yearFrom = (int) ($fundebMatrixFrom ?? $matrix['year_from'] ?? 2022);
     $yearTo = (int) ($fundebMatrixTo ?? $matrix['year_to'] ?? 2026);
     $anchorYear = (int) ($matrix['anchor_year'] ?? $yearTo);
+    $yearSemantics = is_array($matrix['year_semantics'] ?? null) ? $matrix['year_semantics'] : [];
     $fmtBrl = $fmtBrl ?? [\App\Support\Ieducar\DiscrepanciesFundingImpact::class, 'formatBrl'];
     $selectClass = $selectClass ?? 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 text-sm';
     $indexQuery = array_filter([
@@ -31,7 +32,7 @@
                 {{ __('Tabela VAAF e VAAT — municípios cadastrados (:from–:to)', ['from' => $yearFrom, 'to' => $yearTo]) }}
             </h3>
             <p class="mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                {{ __('Valores em fundeb_municipio_references. Por defeito: ano de referência FUNDEB (:anchor) e dois anteriores. Cores distinguem dado municipal consolidado, prévia estimada e piso nacional.', ['anchor' => $anchorYear]) }}
+                {{ __('Cada coluna é um exercício FUNDEB (ano da portaria). Cores indicam se o índice é oficial importado, estimado pela portaria ou piso nacional. Referência FUNDEB: :anchor.', ['anchor' => $anchorYear]) }}
             </p>
         </div>
         <div class="flex flex-wrap items-end gap-2 shrink-0">
@@ -68,6 +69,8 @@
         </a>
     </form>
 
+    <x-dashboard.fundeb-exercise-guide class="mb-1" compact />
+
     @if ($legend !== [])
         <div class="flex flex-wrap gap-x-4 gap-y-2 text-xs" role="list" aria-label="{{ __('Legenda da tabela') }}">
             @foreach ($legend as $item)
@@ -96,19 +99,25 @@
                     <th class="px-2 py-2 font-semibold">{{ __('IBGE') }}</th>
                     <th class="px-2 py-2 font-semibold text-center">{{ __('Ativo') }}</th>
                     @foreach ($years as $y)
-                        <th colspan="2" class="px-2 py-2 font-semibold text-center border-l border-slate-200/80 dark:border-slate-600/80">
-                            {{ $y }}
-                            @if ($y === $anchorYear)
-                                <span class="normal-case font-normal text-teal-700 dark:text-teal-300">({{ __('ref.') }})</span>
-                            @endif
+                        @php
+                            $sem = is_array($yearSemantics[$y] ?? null) ? $yearSemantics[$y] : [];
+                        @endphp
+                        <th colspan="2" class="px-2 py-2 font-semibold text-center border-l border-slate-200/80 dark:border-slate-600/80" title="{{ $sem['phase_hint'] ?? '' }}">
+                            <span class="block">{{ $y }}</span>
+                            <span class="block normal-case font-normal text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                {{ $sem['phase_label'] ?? '' }}
+                                @if ($y === $anchorYear)
+                                    · {{ __('ref. FUNDEB') }}
+                                @endif
+                            </span>
                         </th>
                     @endforeach
                 </tr>
                 <tr class="bg-slate-50 dark:bg-slate-900/80 text-[10px] normal-case text-slate-500 dark:text-slate-400">
                     <th colspan="4"></th>
                     @foreach ($years as $y)
-                        <th class="px-2 py-1 text-right border-l border-slate-200/80 dark:border-slate-600/80">{{ __('VAAF') }}</th>
-                        <th class="px-2 py-1 text-right">{{ __('VAAT') }}</th>
+                        <th class="px-2 py-1 text-right border-l border-slate-200/80 dark:border-slate-600/80">{{ __('VAAF') }} <span class="font-normal">({{ __('índice') }})</span></th>
+                        <th class="px-2 py-1 text-right">{{ __('VAAT') }} <span class="font-normal">({{ __('índice') }})</span></th>
                     @endforeach
                 </tr>
             </thead>

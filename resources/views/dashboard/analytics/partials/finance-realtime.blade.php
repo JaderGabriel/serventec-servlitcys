@@ -27,11 +27,11 @@
     tab="finance_realtime"
     tone="sky"
     :title="__('Tempo Real — FUNDEB e repasses')"
-    :intro="__('Cruza o que o governo registou como transferido com a expectativa calculada pela rede (matrículas × VAAF). Para leigos e gestores financeiros.')"
+    :intro="__('Compara repasses já observados (consolidados nas bases públicas) com a projeção indicativa da rede (matrículas × índice do exercício). Valores de portaria FNDE aparecem à parte como referência publicada.')"
     :year-filter-ready="$yearFilterReady"
     :municipality-context="$municipalityContext"
     :tab-data="['realtimeData' => $d]"
-    :no-year-message="__('Selecione o ano letivo e aplique os filtros para comparar repasses observados com a expectativa FUNDEB.')"
+    :no-year-message="__('Selecione o ano letivo e aplique os filtros para comparar repasses observados com a projeção indicativa FUNDEB.')"
 >
     <x-slot name="links">
         <x-consultoria-tab-link tab="fundeb" class="text-xs" />
@@ -46,10 +46,12 @@
     </x-slot>
 
     <div x-data="{ realtimeHelpOpen: false }" class="space-y-6">
+    <x-dashboard.fundeb-exercise-guide compact class="mb-2" />
+
     @if (count($guide) > 0)
         <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-sky-200/90 dark:border-sky-800/60 bg-sky-50/50 dark:bg-sky-950/25 px-4 py-3">
             <p class="text-sm text-sky-950/90 dark:text-sky-100/90 leading-relaxed min-w-0">
-                {{ __('Compare repasses públicos com a expectativa FUNDEB. Use o guia se precisar de ajuda com os termos.') }}
+                {{ __('Compare repasses públicos (consolidados) com a projeção indicativa FUNDEB. Use o guia se precisar de ajuda com os termos.') }}
             </p>
             <button
                 type="button"
@@ -73,7 +75,7 @@
 
     @if (! $yearFilterReady)
         <p class="serv-callout text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-            {{ __('Após aplicar município e ano letivo, o painel compara repasses importados (Tesouro/Transparência) com a expectativa FUNDEB (matrículas × VAAF). Enquanto isso, use o guia abaixo e importe dados em Admin → Dados públicos.') }}
+            {{ __('Após aplicar município e ano letivo, o painel compara repasses importados (Tesouro/Transparência) com a projeção indicativa (matrículas × índice do exercício). A receita de portaria FNDE aparece como referência consolidada. Enquanto isso, importe dados em Admin → Dados públicos.') }}
         </p>
     @endif
 
@@ -92,7 +94,8 @@
     @if ($hasKpis)
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div class="rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50/50 dark:bg-sky-950/30 p-4">
-                <p class="text-[10px] font-semibold uppercase text-sky-800/80">{{ __('Expectativa FUNDEB / ano') }}</p>
+                <p class="text-[10px] font-semibold uppercase text-sky-800/80">{{ __('Projeção indicativa / ano') }}</p>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400">{{ __('Matrículas × índice — não é repasse nem portaria consolidada') }}</p>
                 <p class="mt-1 text-xl font-bold tabular-nums text-sky-950 dark:text-sky-50">{{ $d['expected_annual_fmt'] ?? '—' }}</p>
                 <p class="mt-1 text-[11px] text-slate-600 dark:text-slate-400">{{ $d['formula'] ?? '' }}</p>
                 @if (filled($d['expected_periodic_fmt'] ?? null) && (float) ($d['expected_monthly'] ?? 0) > 0)
@@ -105,7 +108,7 @@
                 @endif
                 @if (filled($d['receita_portaria_fmt'] ?? null))
                     <p class="text-[10px] mt-1 text-emerald-800/90 dark:text-emerald-200/90">
-                        {{ __('Receita portaria FNDE:') }} {{ $d['receita_portaria_fmt'] }}
+                        {{ __('Receita consolidada (portaria FNDE):') }} {{ $d['receita_portaria_fmt'] }}
                         @if (filled($d['portaria_publication_year'] ?? null))
                             ({{ $d['portaria_publication_year'] }})
                         @endif
@@ -133,6 +136,7 @@
             </div>
             <div class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/30 p-4">
                 <p class="text-[10px] font-semibold uppercase text-emerald-800/80">{{ __('Repasses observados / ano') }}</p>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400">{{ __('Valores já registados em bases públicas importadas') }}</p>
                 <p class="mt-1 text-xl font-bold tabular-nums text-emerald-950 dark:text-emerald-50">{{ $d['observed_annual_fmt'] ?? '—' }}</p>
                 <p class="text-[11px] mt-1 text-slate-600">{{ __(':n linha(s) FUNDEB em bases públicas importadas', ['n' => (string) ($d['transfer_count'] ?? 0)]) }}</p>
             </div>
@@ -142,7 +146,7 @@
                     {{ ($d['delta_sign'] ?? '') === 'negative' ? '−' : '+' }}{{ $d['delta_fmt'] ?? '—' }}
                 </p>
                 @if (($d['delta_pct'] ?? null) !== null)
-                    <p class="text-[11px] mt-1">{{ number_format((float) $d['delta_pct'], 1, ',', '.') }}% {{ __('vs. expectativa') }}</p>
+                    <p class="text-[11px] mt-1">{{ number_format((float) $d['delta_pct'], 1, ',', '.') }}% {{ __('vs. projeção indicativa') }}</p>
                 @endif
             </div>
             <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-xs">
@@ -296,7 +300,7 @@
                                     <tr>
                                         <th class="px-3 py-2">{{ __('Ano') }}</th>
                                         <th class="px-3 py-2 text-right">{{ __('Total repassado') }}</th>
-                                        <th class="px-3 py-2 text-right">{{ __('vs. expectativa anual') }}</th>
+                                        <th class="px-3 py-2 text-right">{{ __('vs. projeção anual') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -344,9 +348,9 @@
                         @endif
                         @if ($consCmp !== [])
                             <p class="px-4 py-2 text-[10px] font-sans text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700">
-                                {{ __('Referência vs. expectativa:') }}
-                                {{ __('observado') }} {{ $consCmp['observed_fmt'] ?? '—' }}
-                                · {{ __('expectativa') }} {{ $consCmp['expected_fmt'] ?? '—' }}
+                                {{ __('Observado vs. projeção:') }}
+                                {{ __('repasses observados') }} {{ $consCmp['observed_fmt'] ?? '—' }}
+                                · {{ __('projeção indicativa') }} {{ $consCmp['expected_fmt'] ?? '—' }}
                                 · {{ __('diferença') }}
                                 {{ ($consCmp['delta_sign'] ?? '') === 'negative' ? '−' : '+' }}{{ $consCmp['delta_fmt'] ?? '—' }}
                                 @if (($consCmp['delta_pct'] ?? null) !== null)

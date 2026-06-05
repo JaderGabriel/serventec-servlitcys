@@ -114,7 +114,6 @@ class IeducarCompatibilityController extends Controller
             $matrixRange['from'],
             $matrixRange['to'],
         );
-
         return view('admin.ieducar-compatibility.index', [
             'cities' => $cities,
             'city' => $city,
@@ -160,11 +159,14 @@ class IeducarCompatibilityController extends Controller
             }
             fwrite($out, "\xEF\xBB\xBF");
 
+            $yearSemantics = is_array($matrix['year_semantics'] ?? null) ? $matrix['year_semantics'] : [];
             $header = [__('Município'), __('UF'), __('IBGE'), __('Ativo')];
             foreach ($matrix['years'] as $y) {
+                $phaseLabel = (string) (($yearSemantics[$y] ?? [])['phase_label'] ?? '');
                 $header[] = __('VAAF :ano', ['ano' => $y]);
                 $header[] = __('VAAT :ano', ['ano' => $y]);
-                $header[] = __('Tipo :ano', ['ano' => $y]);
+                $header[] = __('Natureza :ano', ['ano' => $y]);
+                $header[] = __('Fase exercício :ano', ['ano' => $y]).($phaseLabel !== '' ? ' ('.$phaseLabel.')' : '');
             }
             fputcsv($out, $header, ';');
 
@@ -184,8 +186,9 @@ class IeducarCompatibilityController extends Controller
                         ? number_format((float) $cell['vaat'], 2, '.', '')
                         : '';
                     $line[] = ($cell['has_reference'] ?? false)
-                        ? (string) ($cell['display_label'] ?? '')
+                        ? (string) ($cell['value_nature_label'] ?? $cell['display_label'] ?? '')
                         : '';
+                    $line[] = (string) (($yearSemantics[$y] ?? [])['phase_label'] ?? '');
                 }
                 fputcsv($out, $line, ';');
             }

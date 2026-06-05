@@ -1,6 +1,6 @@
 # FUNDEB, VAAF, VAAR/VAAT e Onda 1 — documentação técnica
 
-**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+**Versão do produto:** 4.1.7 · **Última revisão:** 2026-06-07
 
 > **Índice:** [README.md](README.md) · [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §6 · [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) · `config/ieducar.php`
 
@@ -13,7 +13,7 @@ O painel usa o **VAAF** como valor de referência (R$/aluno/ano) em dois modelos
 | Modelo | Fórmula | Onde |
 |--------|---------|------|
 | **Discrepâncias** | `ocorrências × VAAF × peso_por_check` | `DiscrepanciesFundingImpact` |
-| **FUNDEB (previsão)** | `matrículas × VAAF` (+ cenários com perda/ganho das discrepâncias) | `FundebResourceProjection` |
+| **FUNDEB (projeção indicativa)** | `matrículas × índice do exercício` (+ cenários com perda/ganho das discrepâncias) | `FundebResourceProjection` |
 
 Até maio/2026 o VAAF vinha só de `IEDUCAR_DISC_VAA_REFERENCIA` (default 4500). A partir desta evolução:
 
@@ -151,15 +151,45 @@ php artisan fundeb:import-api 0 --all --ano=2024 --nearest
 
 ---
 
-## 6. O que ainda não está no âmbito desta entrega
+## 8. Semântica na UI (4.1.7 — Phronesis)
 
-- Fetch HTTP automático ao FNDE/dados.gov.br.
+O sistema distingue três leituras para gestores e leigos (`FundebValueLexicon`, `lang/pt_BR/fundeb.php`):
+
+| Fase | Significado | Exemplo |
+|------|-------------|---------|
+| **Consolidado** | Portaria FNDE publicada (receita, complementações, índices) | Exercícios anteriores com CSV oficial importado |
+| **Em formação** | Exercício corrente — matrículas e cadastro ainda evoluem | Ano civil vigente na matriz admin |
+| **Projeção** | Planejamento: matrículas vigentes × índice recente | Próximo exercício FUNDEB |
+
+**Regra prática:** as matrículas do ano letivo vigente alimentam a projeção indicativa do exercício FUNDEB **seguinte**; as portarias trazem valores **consolidados** por exercício.
+
+| Rótulo na UI | O que é |
+|--------------|---------|
+| Índice do exercício (municipal) | VAAF/VAAT importado ou estimado (receita ÷ matrículas) |
+| Piso federal (comparação) | `IEDUCAR_FUNDEB_NATIONAL_VAAF_*` — não é repasse |
+| Projeção indicativa | `matrículas × índice` — não substitui portaria |
+| Receita consolidada (portaria) | Total publicado no CSV FNDE do exercício |
+
+**Portarias catalogadas:** `FundebFndePortariaCatalog` (2025, 2026 incl. nº 6/2026). Import em lote:
+
+```bash
+php artisan fundeb:import-api 0 --all --from=2025 --to=2026 --nearest
+```
+
+**Componente:** `resources/views/components/dashboard/fundeb-exercise-guide.blade.php` — guia nas abas Comparativo, Tempo Real, FUNDEB e matriz admin.
+
+---
+
+## 9. O que ainda não está no âmbito desta entrega
+
 - Itens C1–C4 do roadmap (ficha médica, PNAE, etc.).
 
 ---
 
-## 7. Testes
+## 10. Testes
 
 - `tests/Unit/FundebMunicipalReferenceResolverTest.php` — fallback e prioridade DB/config.
 - `tests/Unit/FundebComplementacaoInformeBuilderTest.php` — blocos e status VAAT/VAAR.
+- `tests/Unit/FundebValueLexiconTest.php` — fases consolidado / em formação / projeção.
+- `tests/Unit/FundebFndePortariaCatalogTest.php` · `FundebFndeVaatCsvServiceTest.php` — portarias 6/2026.
 - `tests/Unit/IeducarFilterStateInclusionTest.php` — filtros Inclusão (já existente).

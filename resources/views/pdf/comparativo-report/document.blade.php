@@ -86,7 +86,7 @@
                 <th>{{ __('Nível') }}</th>
                 <th>{{ __('Matrículas') }}</th>
                 <th>{{ __('% rede') }}</th>
-                <th>{{ __('FUNDEB indicativo') }}</th>
+                <th>{{ __('Projeção indicativa') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -104,7 +104,7 @@
 
 @if (($proj['available'] ?? false))
     <h2>{{ __('Projeção :ano', ['ano' => (string) ($proj['year'] ?? '')]) }}</h2>
-    <p>{{ __('Previsão: :v · Δ ano base: :d', ['v' => $proj['previsao_label'] ?? '—', 'd' => $proj['delta_label'] ?? '—']) }}</p>
+    <p>{{ __('Projeção indicativa: :v · Δ ano base: :d', ['v' => $proj['previsao_label'] ?? '—', 'd' => $proj['delta_label'] ?? '—']) }}</p>
     <p class="muted">{{ $proj['note'] ?? '' }}</p>
 @endif
 

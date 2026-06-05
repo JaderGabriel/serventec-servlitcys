@@ -698,13 +698,67 @@ return [
              * (referência para planejamento — substitua quando houver dado oficial por IBGE).
              */
             /*
-             * CSV «Receita total do Fundeb por ente federado» (Portaria FNDE em gov.br).
-             * Descoberta automática em fundeb/{ano}; override por ano, ex.:
-             * 'fnde_receita_csv_urls' => [2025 => 'https://www.gov.br/fnde/.../1.Receitatotal....csv']
+             * Portarias FNDE por exercício (publicações múltiplas — usa a de maior «ordem»).
+             * 2ª publicação 2026 = Portaria Interministerial MEC/MF nº 6, de 29/04/2026.
              */
+            'portarias' => [
+                2026 => [
+                    'exercicio' => 2026,
+                    'publicacoes' => [
+                        [
+                            'ordem' => 2,
+                            'numero' => '6',
+                            'data' => '2026-04-29',
+                            'label' => 'Portaria Interministerial MEC/MF nº 6, de 29 de abril de 2026',
+                            'listing_url' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2026',
+                            'csv' => [
+                                'receita' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2026-1/publicacoes-2026/2-publicacao/1-receita-total-do-fundeb-por-ente-federado.csv',
+                                'vaat' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2026-1/publicacoes-2026/2-publicacao/3-vaat-vaat-min-e-complementacao-vaat-por-ente-federado.csv',
+                                'vaar' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2026-1/publicacoes-2026/2-publicacao/6-redes-beneficiadas-coef-de-distribuicao-e-compl-vaar-prevista.csv',
+                            ],
+                            'pisos_nacionais' => [
+                                'vaaf_min' => (float) env('IEDUCAR_FUNDEB_NATIONAL_VAAF_2026', 5954.14),
+                                'vaat_min' => (float) env('IEDUCAR_FUNDEB_NATIONAL_VAAT_2026', 10193.74),
+                            ],
+                        ],
+                        [
+                            'ordem' => 1,
+                            'numero' => '14',
+                            'data' => '2025-12-29',
+                            'label' => 'Portaria Interministerial MEC/MF nº 14, de 29 de dezembro de 2025',
+                            'listing_url' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2026',
+                            'csv' => [
+                                'receita' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2026-1/publicacoes-2026/1-receita-total-do-fundeb-por-ente-federado-iii-1.csv',
+                                'vaat' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2026-1/publicacoes-2026/3-vaat-vaat-min-e-complementacao-vaat-por-ente-federado-iii.csv',
+                            ],
+                        ],
+                    ],
+                ],
+                2025 => [
+                    'exercicio' => 2025,
+                    'publicacoes' => [
+                        [
+                            'ordem' => 1,
+                            'numero' => '5',
+                            'data' => '2026-04-29',
+                            'label' => 'Portaria Interministerial MEC/MF nº 5, de 29 de abril de 2026 (exercício 2025)',
+                            'listing_url' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2025',
+                            'csv' => [
+                                'receita' => (string) env('IEDUCAR_FUNDEB_RECEITA_CSV_URL_2025', 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2025-1/6-publicacao-2013-portaria-mec-mf-n-5-de-29-de-abril-de-2026/1.ReceitatotaldoFundebporentefederado.csv'),
+                                'vaat' => (string) env('IEDUCAR_FUNDEB_VAAT_CSV_URL_2025', 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2025-1/6-publicacao-2013-portaria-mec-mf-n-5-de-29-de-abril-de-2026/3.VAATVAATMINecomplementaoVAATporentefederado.csv'),
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+
+            /** @deprecated Use portarias[].publicacoes[].csv.receita — mantido para override pontual */
             'fnde_receita_csv_urls' => [
                 2026 => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2026-1/publicacoes-2026/2-publicacao/1-receita-total-do-fundeb-por-ente-federado.csv',
             ],
+
+            /** Override directo do CSV VAAT por exercício (opcional). */
+            'fnde_vaat_csv_urls' => [],
 
             /** PDF «Valor aluno/ano e receita anual prevista» por UF/DF (Consultas FNDE). */
             'fnde_estado_vaaf_enabled' => filter_var(env('IEDUCAR_FUNDEB_ESTADO_VAAF_ENABLED', true), FILTER_VALIDATE_BOOL),
@@ -726,7 +780,11 @@ return [
                 'write_on_import' => filter_var(env('IEDUCAR_FUNDEB_NATIONAL_FLOOR_ON_IMPORT', false), FILTER_VALIDATE_BOOL),
                 'vaaf_by_year' => [
                     2024 => (float) env('IEDUCAR_FUNDEB_NATIONAL_VAAF_2024', 0) ?: null,
-                    2025 => (float) env('IEDUCAR_FUNDEB_NATIONAL_VAAF_2025', 0) ?: null,
+                    2025 => (float) env('IEDUCAR_FUNDEB_NATIONAL_VAAF_2025', 5559.73) ?: null,
+                    2026 => (float) env('IEDUCAR_FUNDEB_NATIONAL_VAAF_2026', 5954.14) ?: null,
+                ],
+                'vaat_by_year' => [
+                    2026 => (float) env('IEDUCAR_FUNDEB_NATIONAL_VAAT_2026', 10193.74) ?: null,
                 ],
             ],
         ],

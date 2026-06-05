@@ -85,7 +85,7 @@
     tab="comparativo"
     tone="teal"
     :title="__('Comparativo anual')"
-    :intro="$data['intro'] ?? __('Evolução de matrículas, alunos, turmas e recursos FUNDEB para apresentação à gestão municipal.')"
+    :intro="$data['intro'] ?? __('Evolução de matrículas e recursos FUNDEB entre exercícios — distinguindo portaria publicada, exercício em formação e projeção indicativa.')"
     :meta="$meta"
     :footnote="$data['footnote'] ?? null"
     :error="$data['error'] ?? null"
@@ -107,9 +107,11 @@
         <x-consultoria-tab-link tab="enrollment" :label="__('Matrículas')" class="text-xs" />
     </x-slot>
 
+    <x-dashboard.fundeb-exercise-guide compact class="mb-4" />
+
     @if (! $yearFilterReady)
         <p class="serv-callout text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-            {{ __('Defina o município e o ano letivo nos filtros superiores (ou escolha o ano base abaixo) e clique em Aplicar filtros. O comparativo cruza matrículas, VAAF e projeção FUNDEB entre exercícios.') }}
+            {{ __('Defina o município e o ano letivo nos filtros superiores (ou escolha o ano base abaixo) e clique em Aplicar filtros. O comparativo cruza matrículas, índice VAAF e projeção FUNDEB entre exercícios.') }}
         </p>
         @if (filled($data['footnote'] ?? null))
             <p class="serv-callout text-xs leading-relaxed">{{ $data['footnote'] }}</p>
@@ -277,7 +279,7 @@
             :step="$cmpStep['comparativo-fundeb-base'] ?? null"
             anchor="comparativo-fundeb-base"
             :title="__('Matrículas e FUNDEB — exercício :ano', ['ano' => (string) $baseYear])"
-            :subtitle="__('Detalhe por nível de ensino (participação na rede e valor indicativo matrícula × VAAF).')"
+            :subtitle="__('Exercício em formação ou consolidado: participação na rede e projeção indicativa (matrículas × índice do exercício).')"
         >
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                 <div class="serv-panel p-4 border border-teal-200/80 dark:border-teal-800/50">
@@ -285,14 +287,14 @@
                     <p class="text-2xl font-semibold tabular-nums text-serv-navy dark:text-slate-100 mt-1">{{ $detail['matriculas_fmt'] ?? '—' }}</p>
                 </div>
                 <div class="serv-panel p-4">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">{{ __('VAAF de referência') }}</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">{{ __('fundeb.semantics.vaaf_municipal_label') }}</p>
                     <p class="text-2xl font-semibold tabular-nums text-serv-navy dark:text-slate-100 mt-1">{{ $detail['vaaf_label'] ?? '—' }}</p>
                     @if (filled($detail['vaaf_fonte'] ?? null))
                         <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-1">{{ $detail['vaaf_fonte'] }}</p>
                     @endif
                 </div>
                 <div class="serv-panel p-4">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">{{ __('Previsão base (ano)') }}</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">{{ __('fundeb.semantics.previsao_indicativa_label') }}</p>
                     <p class="text-2xl font-semibold tabular-nums text-serv-navy dark:text-slate-100 mt-1">{{ $detail['previsao_base_label'] ?? '—' }}</p>
                 </div>
             </div>
@@ -305,7 +307,7 @@
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">{{ __('Nível de ensino') }}</th>
                                 <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 dark:text-slate-400">{{ __('Matrículas') }}</th>
                                 <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 dark:text-slate-400">{{ __('% rede (ponderação)') }}</th>
-                                <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 dark:text-slate-400">{{ __('FUNDEB indicativo') }}</th>
+                                <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 dark:text-slate-400">{{ __('Projeção indicativa') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -331,11 +333,11 @@
             :step="$cmpStep['comparativo-proximo-ano'] ?? null"
             anchor="comparativo-proximo-ano"
             :title="__('Projeção para :ano', ['ano' => (string) $nextYear])"
-            :subtitle="__('Estimativa se as matrículas do ano base se mantiverem e o VAAF do exercício seguinte for aplicável.')"
+            :subtitle="__('Cenário de planejamento: matrículas do ano base × índice do exercício seguinte — não é portaria publicada nem repasse FNDE.')"
         >
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="serv-panel p-4 border-l-4 {{ $alertRing((string) ($projNext['tone'] ?? 'teal')) }}">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">{{ __('Previsão indicativa') }}</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">{{ __('fundeb.semantics.previsao_indicativa_label') }}</p>
                     <p class="text-2xl font-semibold tabular-nums text-serv-navy dark:text-slate-100 mt-1">{{ $projNext['previsao_label'] ?? '—' }}</p>
                     <p class="text-sm text-slate-700 dark:text-slate-300 mt-2">
                         {{ __('Face ao ano base (:base): :delta', [
@@ -362,15 +364,15 @@
         <x-dashboard.consultoria-section
             :step="$cmpStep['comparativo-serie-vaaf'] ?? null"
             anchor="comparativo-serie-vaaf"
-            :title="__('Série histórica VAAF')"
-            :subtitle="__('Referências importadas por exercício (FNDE / dados abertos).')"
+            :title="__('Série histórica — índice VAAF por exercício')"
+            :subtitle="__('Valores gravados por exercício FUNDEB (portaria publicada ou estimativa). Coluna «base» = exercício de referência do comparativo.')"
         >
             <div class="serv-panel overflow-x-auto">
                 <table class="min-w-full text-sm">
                     <thead class="bg-slate-50 dark:bg-slate-900/60">
                         <tr>
                             <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">{{ __('Ano') }}</th>
-                            <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 dark:text-slate-400">{{ __('VAAF') }}</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 dark:text-slate-400">{{ __('Índice VAAF') }}</th>
                             <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 dark:text-slate-400">{{ __('Var. VAAF') }}</th>
                             <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400">{{ __('Fonte') }}</th>
                         </tr>

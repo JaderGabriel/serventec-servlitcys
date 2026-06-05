@@ -140,19 +140,19 @@ final class FundebImpactMethodology
             $ano = FundebOpenDataImportService::suggestedImportYear();
         }
 
-        $csvByYear = config('ieducar.fundeb.open_data.fnde_receita_csv_by_year', []);
-        if (is_array($csvByYear)) {
-            foreach ($csvByYear as $y => $url) {
-                if (! is_string($url) || $url === '') {
-                    continue;
-                }
-                $links[] = [
-                    'label' => __('Portaria FNDE — receita total por ente (:ano)', ['ano' => (string) $y]),
-                    'url' => $url,
-                    'ano' => (int) $y,
-                    'tipo' => 'portaria_receita',
-                ];
+        foreach (\App\Support\Fundeb\FundebFndePortariaCatalog::adminPortariaRows() as $pub) {
+            $url = $pub['csv']['receita'] ?? null;
+            if (! is_string($url) || $url === '') {
+                continue;
             }
+            $links[] = [
+                'label' => $pub['label'] !== ''
+                    ? $pub['label']
+                    : __('Portaria FNDE — receita total por ente (:ano)', ['ano' => (string) $pub['exercicio']]),
+                'url' => $url,
+                'ano' => (int) $pub['exercicio'],
+                'tipo' => 'portaria_receita',
+            ];
         }
 
         $ref = $city !== null ? FundebMunicipalReferenceResolver::resolve($city, $filters) : [];

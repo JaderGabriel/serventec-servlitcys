@@ -19,7 +19,7 @@ final class FundebReferenceDisplayTest extends TestCase
         ];
 
         $this->assertSame('previa', FundebReferenceDisplay::tipoVaafCalculo($funding));
-        $this->assertStringContainsString('Prévia federal', FundebReferenceDisplay::rotuloVaafCurto($funding));
+        $this->assertStringContainsString('Piso federal', FundebReferenceDisplay::rotuloVaafCurto($funding));
     }
 
     public function test_linha_matriculas_vaaf_base_para_previa_4500(): void
@@ -39,7 +39,7 @@ final class FundebReferenceDisplayTest extends TestCase
         $this->assertStringContainsString('4.500', $line);
         $this->assertStringContainsString('13.918.500', $line);
         $this->assertStringNotContainsString('VAAF ref.', $line);
-        $this->assertStringContainsString('prévia federal', mb_strtolower($line));
+        $this->assertStringContainsString('piso federal', mb_strtolower($line));
         $this->assertStringContainsString('Sem VAAF municipal', $line);
     }
 

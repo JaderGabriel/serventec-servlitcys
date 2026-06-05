@@ -18,13 +18,13 @@
 
 @if (count($yearCmp) > 0)
     <h3>{{ __('2.1 Evolução entre anos letivos (cadastro e Fundeb)') }}</h3>
-    <p class="action-lead">{{ __('Use para avaliar crescimento ou queda de matrículas e estabilidade do VAAF municipal. Variações abruptas sem explicação cadastral merecem auditoria antes de metas de expansão da rede.') }}</p>
+    <p class="action-lead">{{ __('Use para avaliar crescimento ou queda de matrículas e estabilidade do índice VAAF por exercício. Variações abruptas sem explicação cadastral merecem auditoria antes de metas de expansão da rede.') }}</p>
     <table class="data">
         <tr>
             <th>{{ __('Ano letivo') }}</th>
             <th>{{ __('Matrículas activas') }}</th>
             <th>{{ __('Variação matr.') }}</th>
-            <th>{{ __('VAAF municipal') }}</th>
+            <th>{{ __('Índice VAAF') }}</th>
             <th>{{ __('Referência') }}</th>
         </tr>
         @foreach ($yearCmp as $row)
@@ -51,7 +51,7 @@
 @endif
 
 @if (is_array($fundebRef['cenarios_previsao'] ?? null) && ($fundebRef['cenarios_previsao']['available'] ?? false))
-    <h3>{{ __('2.3 Cenários de previsão e distribuição legal') }}</h3>
+    <h3>{{ __('2.3 Cenários de projeção indicativa e distribuição legal') }}</h3>
     @include('pdf.analytics-report.partials.fundeb-reference-tables', [
         'tables' => [
             'cenarios_previsao' => $fundebRef['cenarios_previsao'],
@@ -62,12 +62,12 @@
 
 @if ($fundebYears['available'] ?? false)
     <h3>{{ __('2.4 Série VAAF/VAAT gravada (referência municipal)') }}</h3>
-    <p class="action-lead"><strong>{{ $fundebYears['title'] ?? '' }}</strong> — {{ $fundebYears['subtitle'] ?? __('Série histórica para validar premissas da previsão base e da complementação VAAR no exercício corrente.') }}</p>
+    <p class="action-lead"><strong>{{ $fundebYears['title'] ?? '' }}</strong> — {{ $fundebYears['subtitle'] ?? __('Série histórica por exercício FUNDEB: consolidado (portaria), em formação ou projeção — valida premissas da projeção indicativa e da complementação VAAR.') }}</p>
     @if (filled($fundebYears['previsao_label'] ?? null))
-        <p>{{ __('Previsão no painel') }}: {{ $fundebYears['previsao_label'] }}</p>
+        <p>{{ __('Projeção indicativa no painel') }}: {{ $fundebYears['previsao_label'] }}</p>
     @endif
     @if (filled($fundebYears['previa_federal'] ?? null))
-        <p>{{ __('Prévia federal de referência') }}: {{ $fundebYears['previa_federal'] }}</p>
+        <p>{{ __('Piso federal (só comparação)') }}: {{ $fundebYears['previa_federal'] }}</p>
     @endif
     <table class="data">
         <tr>

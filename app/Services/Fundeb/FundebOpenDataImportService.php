@@ -7,6 +7,7 @@ use App\Models\FundebMunicipioReference;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\CityDataConnection;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Fundeb\FundebFndePortariaCatalog;
 use App\Support\Fundeb\FundebIbgeMatcher;
 use App\Support\Fundeb\FundebReferenceSource;
 use App\Support\Funding\FundebPortariaExpectation;
@@ -25,6 +26,7 @@ final class FundebOpenDataImportService
     public function __construct(
         private FundebMunicipioReferenceRepository $references,
         private FundebFndeReceitaCsvService $fndeReceita,
+        private FundebFndeVaatCsvService $fndeVaat,
         private CityDataConnection $cityData,
     ) {}
 
@@ -1257,7 +1259,18 @@ final class FundebOpenDataImportService
         }
 
         $matSvc = app(FundebMatriculasByYearService::class);
-        $matRow = $matSvc->forCityYears($city, [$ano])[$ano] ?? null;
+        $matYears = self::normalizeYearList([$ano, $ano - 1, $ano - 2]);
+        $matRows = $matSvc->forCityYears($city, $matYears);
+        $matRow = null;
+        $matriculasAno = $ano;
+        foreach ($matYears as $matYear) {
+            $candidate = $matRows[$matYear] ?? null;
+            if (is_array($candidate) && (int) ($candidate['usado'] ?? 0) > 0) {
+                $matRow = $candidate;
+                $matriculasAno = (int) $matYear;
+                break;
+            }
+        }
         $matriculas = (int) ($matRow['usado'] ?? 0);
         $fonteMat = (string) ($matRow['fonte_usada'] ?? 'indisponivel');
 
@@ -1274,30 +1287,59 @@ final class FundebOpenDataImportService
         $matLabel = $fonteMat === 'censo_inep'
             ? __('matrículas Censo INEP')
             : __('matrículas activas i-Educar');
+        if ($matriculasAno !== $ano) {
+            $matLabel .= ' ('.__('ano :y', ['y' => (string) $matriculasAno]).')';
+        }
+
+        $vaatRow = $this->fndeVaat->rowForIbge($ibge, $ano);
+        $vaatPerAluno = $vaatRow !== null ? (float) ($vaatRow['vaat'] ?? 0) : null;
+        if ($vaatPerAluno !== null && $vaatPerAluno <= 0) {
+            $vaatPerAluno = null;
+        }
+
+        $portariaMeta = is_array($receita['portaria'] ?? null)
+            ? $receita['portaria']
+            : FundebFndePortariaCatalog::metaForExercicio($pubAno);
+        if ($vaatRow !== null && filled($vaatRow['csv_url'] ?? null)) {
+            $portariaMeta['vaat_csv_url'] = (string) $vaatRow['csv_url'];
+        }
+
+        $portariaLabel = (string) ($portariaMeta['portaria_label'] ?? '');
+        $notas = __('VAAF estimado: receita total FNDE (:rec) ÷ :mat :tipo (ano :ano).', [
+            'rec' => number_format((float) $receita['total_receita'], 2, ',', '.'),
+            'mat' => number_format($matriculas, 0, ',', '.'),
+            'tipo' => $matLabel,
+            'ano' => (string) $ano,
+        ]);
+        if ($portariaLabel !== '') {
+            $notas .= ' '.$portariaLabel.'.';
+        } elseif ($pubAno > 0) {
+            $notas .= ' '.__('Publicação FNDE :pub.', ['pub' => (string) $pubAno]);
+        }
+        if ($vaatPerAluno !== null) {
+            $notas .= ' '.__('VAAT/aluno da portaria: :v.', [
+                'v' => number_format($vaatPerAluno, 2, ',', '.'),
+            ]);
+        }
 
         return [
             'vaaf' => $vaaf,
-            'vaat' => isset($receita['complementacao_vaat']) ? (float) $receita['complementacao_vaat'] : null,
+            'vaat' => $vaatPerAluno,
             'complementacao_vaar' => isset($receita['complementacao_vaar']) ? (float) $receita['complementacao_vaar'] : null,
             'fonte' => FundebReferenceSource::FONTE_FNDE_RECEITA_IEDUCAR,
             'tipo_valor' => 'estimativa',
             'receita_total' => (float) $receita['total_receita'],
             'complementacao_vaaf' => isset($receita['complementacao_vaaf']) ? (float) $receita['complementacao_vaaf'] : null,
+            'complementacao_vaat' => isset($receita['complementacao_vaat']) ? (float) $receita['complementacao_vaat'] : null,
             'matriculas_base' => $matriculas,
             'matriculas_fonte' => $fonteMat,
             'url_portaria' => (string) ($receita['csv_url'] ?? ''),
-            'meta' => [
-                'ano_publicacao' => $pubAno,
+            'meta' => array_merge($portariaMeta, [
                 'ieducar_matriculas' => (int) ($matRow['ieducar'] ?? 0),
                 'censo_matriculas' => $matRow['censo'] ?? null,
-            ],
-            'notas' => __('VAAF estimado: receita total FNDE (:rec) ÷ :mat :tipo (ano :ano). Publicação Portaria FNDE :pub.', [
-                'rec' => number_format((float) $receita['total_receita'], 2, ',', '.'),
-                'mat' => number_format($matriculas, 0, ',', '.'),
-                'tipo' => $matLabel,
-                'ano' => (string) $ano,
-                'pub' => (string) $pubAno,
+                'matriculas_ano_usado' => $matriculasAno !== $ano ? $matriculasAno : null,
             ]),
+            'notas' => $notas,
         ];
     }
 
@@ -1318,6 +1360,11 @@ final class FundebOpenDataImportService
             $vaaf = (float) $byYear[$ano];
         }
 
+        $pisosPortaria = FundebFndePortariaCatalog::nationalFloors($ano);
+        if (($vaaf === null || $vaaf <= 0) && ($pisosPortaria['vaaf_min'] ?? null) !== null) {
+            $vaaf = (float) $pisosPortaria['vaaf_min'];
+        }
+
         if ($vaaf === null || $vaaf <= 0) {
             $vaaf = (float) config('ieducar.discrepancies.vaa_referencia_anual', 0);
         }
@@ -1326,9 +1373,21 @@ final class FundebOpenDataImportService
             return null;
         }
 
+        $vaatByYear = config('ieducar.fundeb.open_data.national_floor.vaat_by_year', []);
+        $vaat = null;
+        if (is_array($vaatByYear) && isset($vaatByYear[$ano]) && $vaatByYear[$ano] !== null && (float) $vaatByYear[$ano] > 0) {
+            $vaat = (float) $vaatByYear[$ano];
+        } elseif (($pisosPortaria['vaat_min'] ?? null) !== null) {
+            $vaat = (float) $pisosPortaria['vaat_min'];
+        }
+
+        $portariaMeta = FundebFndePortariaCatalog::metaForExercicio($ano);
+
         return [
             'vaaf' => $vaaf,
+            'vaat' => $vaat,
             'fonte' => FundebReferenceSource::FONTE_NACIONAL,
+            'meta' => $portariaMeta,
             'notas' => __('VAAF nacional de referência (:valor) — sem dado municipal para IBGE :ibge/ano :ano. Atualize quando importar dados oficiais FNDE.', [
                 'valor' => number_format($vaaf, 2, ',', '.'),
                 'ibge' => $ibge,
