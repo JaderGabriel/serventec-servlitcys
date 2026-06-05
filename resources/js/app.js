@@ -6,7 +6,6 @@ import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import {
     cartesianInteractionDefaults,
-    tooltipFriendlyInteractionDefaults,
     chartResetZoomView,
     chartZoomInButton,
     chartZoomOutButton,
@@ -19,7 +18,6 @@ import {
     buildCompositeExport,
     triggerPngDownload,
 } from "./chartExportHelpers.js";
-import { chartExternalTooltipHandler } from "./chartExternalTooltip.js";
 import { initAnalyticsFilterBootstrap } from "./analyticsFilterBootstrap.js";
 import { initAnalyticsFilterTurno } from "./analyticsFilterTurno.js";
 import {
@@ -749,14 +747,14 @@ document.addEventListener("alpine:init", () => {
             };
             axis.ticks.font = chartLabelFont(11);
         }
-        const tooltipOnly = extra?.datalabelsMode === "tooltip_only";
+        const hideDataLabels = extra?.plugins?.datalabels?.display === false;
         const stackedTotalCompact =
-            !tooltipOnly &&
+            !hideDataLabels &&
             extra?.datalabelsMode === "stack_total_compact" &&
             millions;
         mergedPlugins.datalabels = {
             ...(mergedPlugins.datalabels || {}),
-            ...(tooltipOnly
+            ...(hideDataLabels
                 ? { display: false }
                 : stackedTotalCompact
                 ? {
@@ -830,16 +828,10 @@ document.addEventListener("alpine:init", () => {
         };
         mergedPlugins.tooltip = {
             ...(mergedPlugins.tooltip || {}),
-            enabled: !tooltipOnly,
-            ...(tooltipOnly
-                ? {
-                      external: chartExternalTooltipHandler,
-                  }
-                : {}),
+            enabled: true,
             titleFont: chartLabelFont(13, "600"),
             bodyFont: chartLabelFont(12),
             footerFont: chartLabelFont(12, "600"),
-            padding: tooltipOnly ? 10 : undefined,
             callbacks: {
                 ...(mergedPlugins.tooltip?.callbacks || {}),
                 label: (context) => {
@@ -850,7 +842,7 @@ document.addEventListener("alpine:init", () => {
                         context.parsed?.x;
                     const n = Number(raw);
                     if (
-                        tooltipOnly &&
+                        hideDataLabels &&
                         (!Number.isFinite(n) || n <= 0)
                     ) {
                         return null;
@@ -889,7 +881,6 @@ document.addEventListener("alpine:init", () => {
             exportMeta = {},
             panelId = "",
             compact = true,
-            tooltipHoverModeHint = false,
         ) => ({
             chart: null,
             _payload: null,
@@ -931,8 +922,6 @@ document.addEventListener("alpine:init", () => {
             _visibleDatasetIndices: [],
             /** Estilo dinâmico (min-height) para barras horizontais. */
             panelBodyStyle: "",
-            /** Pan/zoom não bloqueia hover nem toque para tooltip (gráficos só-leitura no hover). */
-            tooltipHoverMode: tooltipHoverModeHint === true,
             init() {
                 if (!payload?.labels?.length || !payload?.datasets?.length) {
                     return;
@@ -941,10 +930,6 @@ document.addEventListener("alpine:init", () => {
                     payload.options && typeof payload.options === "object"
                         ? payload.options
                         : {};
-                this.tooltipHoverMode =
-                    tooltipHoverModeHint === true ||
-                    extraEarly.datalabelsMode === "tooltip_only" ||
-                    extraEarly.tooltipFriendly === true;
                 const isGaugeEarly =
                     payload.type === "doughnut" &&
                     Number(extraEarly.circumference) === 180 &&
@@ -959,8 +944,7 @@ document.addEventListener("alpine:init", () => {
                 this.zoomUi =
                     !isRadialEarly &&
                     !isGaugeEarly &&
-                    ["bar", "line", "scatter"].includes(payload.type) &&
-                    !extraEarly.tooltipFriendly;
+                    ["bar", "line", "scatter"].includes(payload.type);
                 this.filterUi =
                     [
                         "bar",
@@ -1299,10 +1283,26 @@ document.addEventListener("alpine:init", () => {
                             ["bar", "line", "scatter"].includes(
                                 payload.type,
                             );
+                        const baseInteraction = cartesianInteractive
+                            ? cartesianInteractionDefaults()
+                            : {};
                         const interactionBlock = cartesianInteractive
-                            ? extra.tooltipFriendly
-                                ? tooltipFriendlyInteractionDefaults()
-                                : cartesianInteractionDefaults()
+                            ? {
+                                  interaction: {
+                                      ...baseInteraction.interaction,
+                                      ...(extra.interaction &&
+                                      typeof extra.interaction === "object"
+                                          ? extra.interaction
+                                          : {}),
+                                  },
+                                  hover: {
+                                      ...baseInteraction.hover,
+                                      ...(extra.hover &&
+                                      typeof extra.hover === "object"
+                                          ? extra.hover
+                                          : {}),
+                                  },
+                              }
                             : {};
 
                         this.chart = new Chart(ctx, {
@@ -1464,10 +1464,6 @@ document.addEventListener("alpine:init", () => {
                                 return;
                             }
                             pulseChartSize();
-                            if (this.tooltipHoverMode) {
-                                setTimeout(() => pulseChartSize(), 80);
-                                setTimeout(() => pulseChartSize(), 240);
-                            }
                         };
                         const io = new IntersectionObserver(
                             (entries) => {
@@ -1484,9 +1480,6 @@ document.addEventListener("alpine:init", () => {
                             { root: null, threshold: [0, 0.05, 0.2, 0.5] },
                         );
                         io.observe(canvas);
-                        if (this.tooltipHoverMode) {
-                            io.observe(this.$el);
-                        }
                         this._cleanupIo = () => io.disconnect();
 
                         const roRoot = this.$el;
@@ -1987,7 +1980,6 @@ document.addEventListener("alpine:init", () => {
                         ? this._sourcePayload.options
                         : {};
                 const wrapAxisLabels =
-                    extraOpts.tooltipFriendly === true ||
                     extraOpts.showAllCategoryTicks === true;
                 const n = chart.data?.labels?.length ?? 0;
                 const max = this._tickTruncate ?? 36;

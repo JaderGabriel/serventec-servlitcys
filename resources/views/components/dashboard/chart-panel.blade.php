@@ -51,12 +51,6 @@
     $footnoteBarClass = $toneIndigo
         ? 'border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/60 dark:bg-indigo-950/25 text-indigo-900/90 dark:text-indigo-200/90'
         : 'border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400';
-    $chartOptions = is_array($chart['options'] ?? null) ? $chart['options'] : [];
-    $tooltipHoverMode = ($chartOptions['datalabelsMode'] ?? '') === 'tooltip_only'
-        || ! empty($chartOptions['tooltipFriendly']);
-    $chartZoomUi = $hasChart && in_array($chart['type'] ?? '', ['bar', 'line', 'scatter'], true);
-    $chartCanvasTouchClass = ($chartZoomUi && ! $tooltipHoverMode) ? 'touch-none' : '';
-    $chartHostExtraClass = $tooltipHoverMode ? 'chart-panel-host--tooltip-hover' : '';
 @endphp
 
 @if ($hasChart)
@@ -64,8 +58,8 @@
         id="{{ $chartPanelDomId }}"
         data-chart-panel-root="1"
         data-chart-panel-id="{{ $chartPanelDomId }}"
-        class="chart-panel-host min-w-0 rounded-lg border shadow-sm overflow-hidden {{ $chartHostExtraClass }} {{ $panelRootClass }}"
-        x-data="chartPanel(@js($chart), @js($exportFilename), @js($exportMeta), @js($chartPanelDomId), @js($compact), @js($tooltipHoverMode))"
+        class="chart-panel-host min-w-0 rounded-lg border shadow-sm overflow-hidden {{ $panelRootClass }}"
+        x-data="chartPanel(@js($chart), @js($exportFilename), @js($exportMeta), @js($chartPanelDomId), @js($compact))"
     >
         <div class="flex flex-col gap-3 px-3 py-3 sm:py-2.5 border-b {{ $panelHeaderClass }}">
             <div class="min-w-0 w-full text-center">
@@ -133,10 +127,8 @@
             class="border-b px-3 py-2.5 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 {{ $zoomBarClass }}"
         >
             <p class="text-[11px] leading-snug text-center sm:text-left sm:flex-1 sm:min-w-0 {{ $zoomHelpTextClass }}">
-                <span class="sm:hidden" x-show="!tooltipHoverMode" x-cloak>{{ __('Pinça com dois dedos para ampliar ou reduzir. Arraste para mover. No computador: Ctrl + roda do rato para zoom.') }}</span>
-                <span class="sm:hidden" x-show="tooltipHoverMode" x-cloak>{{ __('Toque nas barras para ver valores. Pinça para zoom; no computador: Ctrl + roda.') }}</span>
-                <span class="hidden sm:inline" x-show="!tooltipHoverMode" x-cloak>{{ __('Pinça para zoom · arrastar para mover · Ctrl + roda para zoom (computador).') }}</span>
-                <span class="hidden sm:inline" x-show="tooltipHoverMode" x-cloak>{{ __('Passe o rato sobre as barras para ver valores · Ctrl+roda ou botões +/− para zoom.') }}</span>
+                <span class="sm:hidden">{{ __('Pinça com dois dedos para ampliar ou reduzir. Arraste para mover. No computador: Ctrl + roda do rato para zoom.') }}</span>
+                <span class="hidden sm:inline">{{ __('Pinça para zoom · arrastar para mover · Ctrl + roda para zoom (computador).') }}</span>
             </p>
             <div class="flex flex-wrap items-center justify-center gap-2 sm:justify-end shrink-0">
                 <button
@@ -174,7 +166,7 @@
 
         <div
             class="relative z-0 isolate p-2 sm:p-4 w-full overflow-x-auto transition-[min-height] duration-200 ease-out"
-            :class="[panelBodyClass, @js($chartCanvasTouchClass)]"
+            :class="[panelBodyClass, zoomUi ? 'touch-none' : '']"
             :style="panelBodyStyle || null"
         >
             <canvas

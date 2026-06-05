@@ -7,7 +7,7 @@
 @endphp
 
 @if ($available && $fundebChart !== null)
-    <section aria-labelledby="home-fundeb-complementacoes-heading" class="serv-panel !overflow-visible">
+    <section aria-labelledby="home-fundeb-complementacoes-heading" class="serv-panel overflow-hidden">
         <div class="px-5 py-4 border-b border-slate-200/90 dark:border-slate-700/90 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div class="min-w-0">
                 <p class="serv-eyebrow">{{ __('FUNDEB') }}</p>
@@ -26,7 +26,7 @@
                 {{ __('Painel RX completo') }}
             </a>
         </div>
-        <div class="p-4 sm:p-5 home-fundeb-chart-shell rx-fundeb-portaria__chart">
+        <div class="p-4 sm:p-5 rx-fundeb-portaria__chart">
             <x-dashboard.chart-panel
                 :chart="$fundebChart"
                 export-filename="home-fundeb-complementacoes-{{ $fundebPortaria['exercicio'] ?? 'ano' }}"

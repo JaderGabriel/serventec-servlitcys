@@ -86,31 +86,10 @@ export function mergeAnnotationAndZoomPlugins(mergedPlugins, payload, extra) {
         annotations: mergedAnnotations,
     };
 
-    let z0 = defaultZoomPluginOptions();
-    if (extra?.tooltipFriendly === true) {
-        return mergedPlugins;
-    }
+    const z0 = defaultZoomPluginOptions();
     mergedPlugins.zoom = shallowMergeZoom(z0, mergedPlugins.zoom);
 
     return mergedPlugins;
-}
-
-/**
- * Interação optimizada para barras empilhadas com tooltip por município (eixo X).
- */
-export function tooltipFriendlyInteractionDefaults() {
-    return {
-        interaction: {
-            mode: "index",
-            intersect: false,
-            axis: "x",
-        },
-        hover: {
-            mode: "index",
-            intersect: false,
-            axis: "x",
-        },
-    };
 }
 
 /**
