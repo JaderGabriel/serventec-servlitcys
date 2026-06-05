@@ -22,10 +22,10 @@ return [
     */
 
     'product' => [
-        'version' => '4.1.0',
-        'release_tag' => '20260605-Athena',
-        'commit_short' => '85f15f3',
-        'commit_number' => 289,
+        'version' => '4.1.1',
+        'release_tag' => '20260605-Kairos',
+        'commit_short' => 'pending',
+        'commit_number' => 292,
         'revision_date' => '2026-06-05',
         'in_production' => true,
         'production_label' => 'Em produção',

@@ -116,6 +116,8 @@
                                 <th class="px-3 py-1.5">{{ __('IBGE') }}</th>
                                 <th class="px-3 py-1.5 text-right">{{ __('Ano') }}</th>
                                 <th class="px-3 py-1.5 text-right">{{ __('VAAF') }}</th>
+                                <th class="px-3 py-1.5 text-right">{{ __('Receita portaria') }}</th>
+                                <th class="px-3 py-1.5">{{ __('Ajustes / portaria') }}</th>
                                 <th class="px-3 py-1.5">{{ __('Fonte') }}</th>
                             </tr>
                         </thead>
@@ -131,6 +133,30 @@
                                         @endif
                                     </td>
                                     <td class="px-3 py-1.5 text-right tabular-nums">{{ $fmtBrl($row['vaaf'] ?? 0) }}</td>
+                                    <td class="px-3 py-1.5 text-right tabular-nums text-[11px]">
+                                        @if (! empty($row['receita_total']))
+                                            {{ $fmtBrl($row['receita_total']) }}
+                                        @else
+                                            <span class="text-gray-400">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-3 py-1.5 text-[10px] text-gray-700 dark:text-gray-300 max-w-[14rem]">
+                                        @if (! empty($row['portaria_summary']))
+                                            <span class="block leading-snug">{{ Str::limit($row['portaria_summary'], 120) }}</span>
+                                        @elseif (is_array($row['adjustments'] ?? null) && count($row['adjustments']) > 0)
+                                            @foreach ($row['adjustments'] as $adj)
+                                                <span class="block">{{ $adj['label'] ?? '' }}: {{ $adj['value_fmt'] ?? '' }}</span>
+                                            @endforeach
+                                        @else
+                                            <span class="text-gray-400">—</span>
+                                        @endif
+                                        @if (! empty($row['portaria_publication_year']))
+                                            <span class="block text-gray-500 mt-0.5">{{ __('Pub. :ano', ['ano' => $row['portaria_publication_year']]) }}</span>
+                                        @endif
+                                        @if (! empty($row['url_portaria']))
+                                            <a href="{{ $row['url_portaria'] }}" target="_blank" rel="noopener" class="text-teal-700 dark:text-teal-300 underline">{{ __('Portaria') }}</a>
+                                        @endif
+                                    </td>
                                     <td class="px-3 py-1.5 font-mono text-[10px] text-gray-600 dark:text-gray-400">{{ Str::limit($row['fonte'] ?? '—', 32) }}</td>
                                 </tr>
                             @endforeach

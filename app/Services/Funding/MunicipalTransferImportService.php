@@ -104,17 +104,60 @@ final class MunicipalTransferImportService
             }
         }
 
+        $municipalRows = $this->countMunicipalRows($allRows);
         $written = $this->snapshots->upsertBatch($city, $allRows, $importedAt);
 
         return [
             'success' => $written > 0,
-            'message' => $written > 0
-                ? __(':n registro(s) de repasse gravados para IBGE :ibge.', ['n' => $written, 'ibge' => $ibge])
-                : __('Nenhum repasse identificado nas fontes configuradas para :ano.', ['ano' => $year]),
+            'municipal_ready' => $municipalRows > 0,
+            'municipal_rows' => $municipalRows,
+            'message' => $this->buildImportMessage($written, $municipalRows, $city, $ibge, $year),
             'rows' => $written,
             'by_fonte' => $byFonte,
             'attempts' => $attempts,
         ];
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     */
+    private function countMunicipalRows(array $rows): int
+    {
+        $count = 0;
+        foreach ($rows as $row) {
+            if ((string) ($row['fonte'] ?? '') === 'tesouro_publicacao') {
+                continue;
+            }
+            $meta = is_array($row['meta'] ?? null) ? $row['meta'] : [];
+            if (($meta['agregacao'] ?? '') === 'uf') {
+                continue;
+            }
+            $count++;
+        }
+
+        return $count;
+    }
+
+    private function buildImportMessage(int $written, int $municipalRows, City $city, string $ibge, int $year): string
+    {
+        if ($written === 0) {
+            return __('Nenhum repasse identificado nas fontes configuradas para :ano.', ['ano' => $year]);
+        }
+
+        if ($municipalRows > 0) {
+            return __(':n registro(s) gravados (:m municipais) para :city (IBGE :ibge) — utilizáveis em Finanças → Tempo Real.', [
+                'n' => $written,
+                'm' => $municipalRows,
+                'city' => $city->name,
+                'ibge' => $ibge,
+            ]);
+        }
+
+        return __(':n registro(s) gravados apenas como total da UF (publicação STN) para :city / :ano — não aparecem em Finanças → Tempo Real. Reexecute a importação; o espelho CKAN/SISWEB deve trazer o FUNDEB municipal.', [
+            'n' => $written,
+            'city' => $city->name,
+            'ano' => (string) $year,
+        ]);
     }
 
     /**

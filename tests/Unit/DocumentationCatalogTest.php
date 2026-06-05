@@ -34,4 +34,34 @@ class DocumentationCatalogTest extends TestCase
 
         $this->assertStringContainsString('doc=docs%2FENTREGAS_ESCALONADAS_MAIO_2026.md', $url);
     }
+
+    public function test_outros_documentos_mostra_release_producao_e_submenu(): void
+    {
+        $production = DocumentationCatalog::productionReleasePath();
+        $this->assertSame('docs/RELEASE_20260605_ATHENA.md', $production);
+
+        $layout = DocumentationCatalog::releaseOutrosLayout(4);
+        $this->assertCount(4, $layout['featured']);
+        $this->assertSame($production, $layout['featured'][0]['path']);
+        $this->assertStringContainsString('Em produção', (string) ($layout['featured'][0]['hint'] ?? ''));
+        $this->assertNotEmpty($layout['submenu']);
+
+        $featuredPaths = array_column($layout['featured'], 'path');
+        $submenuPaths = array_column($layout['submenu'], 'path');
+        $this->assertEmpty(array_intersect($featuredPaths, $submenuPaths));
+
+        $submenuDates = array_map(
+            static fn (string $path): string => (string) preg_replace('/^.*RELEASE_(\d{8})_.*$/', '$1', $path),
+            $submenuPaths,
+        );
+        $sorted = $submenuDates;
+        rsort($sorted, SORT_STRING);
+        $this->assertSame($sorted, $submenuDates);
+
+        $sections = DocumentationCatalog::sections();
+        $outros = collect($sections)->firstWhere('title', __('Outros documentos'));
+        $this->assertNotNull($outros);
+        $this->assertArrayHasKey('submenus', $outros);
+        $this->assertSame(__('Demais releases'), $outros['submenus'][0]['title'] ?? null);
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Support\Funding;
 
 use App\Models\City;
 use App\Models\MunicipalTransferSnapshot;
+use App\Services\Funding\TesouroTransferenciasCsvService;
 use App\Support\Finance\MoneyMath;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 
@@ -26,7 +27,11 @@ final class FundebExtratoVisualBuilder
      *   consolidado: array<string, mixed>
      * }
      */
-    public function build(array $rows, City $city, int $filterYear, float $expectedAnnual): array
+    /**
+     * @param  list<MunicipalTransferSnapshot>  $rows
+     * @param  list<MunicipalTransferSnapshot>  $hintRows  Snapshots brutos (incl. UF) para mensagem quando vazio.
+     */
+    public function build(array $rows, City $city, int $filterYear, float $expectedAnnual, array $hintRows = []): array
     {
         $byFonte = [];
         foreach (FundebTransferScope::municipalSnapshotsOnly($rows) as $row) {
@@ -39,8 +44,10 @@ final class FundebExtratoVisualBuilder
         }
 
         if ($byFonte === []) {
+            $diagnosticRows = $hintRows !== [] ? $hintRows : $rows;
+
             return [
-                'cycles' => [$this->emptyCycle($city, $filterYear)],
+                'cycles' => [$this->emptyCycle($city, $filterYear, $diagnosticRows)],
                 'consolidado' => $this->emptyConsolidado($expectedAnnual),
             ];
         }
@@ -48,33 +55,14 @@ final class FundebExtratoVisualBuilder
         uksort($byFonte, static fn (string $a, string $b): int => FundebExtratoFontePriority::rank($a) <=> FundebExtratoFontePriority::rank($b));
 
         $cycles = [];
-        $consolidatedPeriods = [];
 
         foreach ($byFonte as $fonte => $fonteRows) {
-            $cycle = $this->buildCycle($fonte, $fonteRows, $filterYear, $expectedAnnual);
-            $cycles[] = $cycle;
-            foreach ($cycle['by_period'] as $period) {
-                $key = $period['year'].'-'.str_pad((string) $period['month'], 2, '0', STR_PAD_LEFT);
-                if (! isset($consolidatedPeriods[$key])) {
-                    $consolidatedPeriods[$key] = [
-                        'year' => $period['year'],
-                        'month' => $period['month'],
-                        'period_label' => $period['period_label'],
-                        'credit' => 0.0,
-                    ];
-                }
-                $consolidatedPeriods[$key]['credit'] += (float) $period['credit'];
-            }
-        }
-
-        $observedTotal = 0.0;
-        foreach ($cycles as $cycle) {
-            $observedTotal += (float) ($cycle['cycle_total'] ?? 0);
+            $cycles[] = $this->buildCycle($fonte, $fonteRows, $filterYear, $expectedAnnual);
         }
 
         return [
             'cycles' => $cycles,
-            'consolidado' => $this->buildConsolidado($consolidatedPeriods, $observedTotal, $expectedAnnual, $filterYear),
+            'consolidado' => $this->buildConsolidado($cycles, $expectedAnnual, $filterYear),
         ];
     }
 
@@ -98,13 +86,13 @@ final class FundebExtratoVisualBuilder
             }
         }
 
-        $expectedMonthly = $expectedAnnual > 0 ? $expectedAnnual / 12 : 0.0;
+        $schedule = FundebPortariaExpectation::periodicSchedule($expectedAnnual, $filterYear, $fonteRows);
+        $expectedMonthly = (float) ($schedule['monthly'] ?? 0);
         $byPeriod = $this->periodRowsFromBuckets($periodBuckets, $filterYear, $expectedMonthly);
         $cycleTotal = round(array_sum(array_map(static fn (array $p): float => (float) $p['credit'], $byPeriod)), 2);
-        $monthsWithData = count(array_filter($byPeriod, static fn (array $p): bool => (int) ($p['month'] ?? 0) > 0));
         $expectedCycle = $this->hasAnnualBucket($periodBuckets)
             ? $expectedAnnual
-            : $expectedMonthly * max(1, $monthsWithData);
+            : (float) ($schedule['periodic_expected'] ?? ($expectedMonthly * max(1, (int) ($schedule['months_with_transfers'] ?? 1))));
 
         return [
             'fonte' => $fonte,
@@ -181,6 +169,7 @@ final class FundebExtratoVisualBuilder
                 $fonte,
                 [
                     'date_note' => $credit['date_source'] ?? null,
+                    'import_reference' => $credit['import_reference'] ?? null,
                 ],
             );
         }
@@ -203,82 +192,173 @@ final class FundebExtratoVisualBuilder
     }
 
     /**
-     * @param  array<string, array{year: int, month: int, period_label: string, credit: float}>  $consolidatedPeriods
+     * Conciliação: usa a fonte de referência (prioridade CKAN > BB > SISWEB) e só destaca divergências entre fontes.
+     *
+     * @param  list<array<string, mixed>>  $cycles
      * @return array<string, mixed>
      */
-    private function buildConsolidado(array $consolidatedPeriods, float $observedTotal, float $expectedAnnual, int $filterYear): array
+    private function buildConsolidado(array $cycles, float $expectedAnnual, int $filterYear): array
     {
-        $expectedMonthly = $expectedAnnual > 0 ? $expectedAnnual / 12 : 0.0;
-        $byPeriod = [];
-        ksort($consolidatedPeriods);
-
-        $consolidatedCredits = [];
-        foreach ($consolidatedPeriods as $period) {
-            $year = (int) $period['year'];
-            $month = (int) $period['month'];
-            $credit = round((float) $period['credit'], 2);
-            if ($credit <= 0) {
-                continue;
-            }
-
-            $byPeriod[] = $this->periodRow(
-                $year,
-                $month,
-                $credit,
-                $month === 0 ? $expectedAnnual : $expectedMonthly,
-            );
-
-            if ($month >= 1 && $month <= 12) {
-                $consolidatedCredits[] = [
-                    'sort_key' => sprintf('%04d-%02d-99', $year, $month),
-                    'date' => $this->repasseDateForMonth($year, $month),
-                    'year' => $year,
-                    'month' => $month,
-                    'valor' => $credit,
-                    'description' => __('Repasse FUNDEB consolidado (todas as fontes) — :periodo', [
-                        'periodo' => $this->monthName($month).'/'.$year,
-                    ]),
-                    'date_source' => 'fim_mes',
-                ];
-            } elseif ($month === 0) {
-                $consolidatedCredits[] = [
-                    'sort_key' => sprintf('%04d-00-99', $year),
-                    'date' => '31/12/'.$year,
-                    'year' => $year,
-                    'month' => 0,
-                    'valor' => $credit,
-                    'description' => __('Repasse FUNDEB consolidado — :ano', ['ano' => $year]),
-                    'date_source' => 'anual',
-                ];
-            }
+        if ($cycles === []) {
+            return $this->emptyConsolidado($expectedAnnual);
         }
 
-        $byYear = [];
-        foreach ($byPeriod as $period) {
-            $y = (int) $period['year'];
-            $byYear[$y] = ($byYear[$y] ?? 0.0) + (float) $period['credit'];
-        }
+        $reference = $this->pickReferenceCycle($cycles);
+        $observedTotal = round((float) ($reference['cycle_total'] ?? 0), 2);
+        $divergences = $this->sourceDivergences($cycles, $reference);
+        $sourcesAligned = count($cycles) > 1 && $divergences === [];
 
+        $byPeriod = is_array($reference['by_period'] ?? null) ? $reference['by_period'] : [];
         $yearRows = [];
-        foreach ($byYear as $year => $total) {
-            $expectedYear = $year === $filterYear ? $expectedAnnual : 0.0;
+        if ($observedTotal > 0) {
             $yearRows[] = [
-                'year' => $year,
-                'year_label' => (string) $year,
-                'credit_fmt' => DiscrepanciesFundingImpact::formatBrl($total),
-                'comparativo' => $expectedYear > 0
-                    ? $this->comparativoBlock($total, $expectedYear)
-                    : null,
+                'year' => $filterYear,
+                'year_label' => (string) $filterYear,
+                'credit_fmt' => DiscrepanciesFundingImpact::formatBrl($observedTotal),
+                'comparativo' => $this->comparativoBlock($observedTotal, $expectedAnnual),
             ];
         }
 
         return [
-            'lines' => $this->buildStatementLines($consolidatedCredits, 'consolidado'),
+            'lines' => $this->buildReconciliationLines($reference, $divergences, $expectedAnnual, $sourcesAligned),
             'by_period' => $byPeriod,
             'by_year' => $yearRows,
             'total_fmt' => DiscrepanciesFundingImpact::formatBrl($observedTotal),
+            'reference_fonte' => (string) ($reference['fonte'] ?? ''),
+            'reference_fonte_label' => (string) ($reference['fonte_label'] ?? ''),
+            'divergences' => $divergences,
+            'sources_aligned' => $sourcesAligned,
             'comparativo' => $this->comparativoBlock($observedTotal, $expectedAnnual),
         ];
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $cycles
+     * @return array<string, mixed>
+     */
+    private function pickReferenceCycle(array $cycles): array
+    {
+        $best = $cycles[0];
+        $bestRank = FundebExtratoFontePriority::rank((string) ($best['fonte'] ?? ''));
+
+        foreach ($cycles as $cycle) {
+            $rank = FundebExtratoFontePriority::rank((string) ($cycle['fonte'] ?? ''));
+            if ($rank < $bestRank) {
+                $best = $cycle;
+                $bestRank = $rank;
+            }
+        }
+
+        return $best;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $cycles
+     * @return list<array{fonte: string, fonte_label: string, total_fmt: string, delta_fmt: string, delta_sign: string}>
+     */
+    private function sourceDivergences(array $cycles, array $reference): array
+    {
+        $refTotal = (float) ($reference['cycle_total'] ?? 0);
+        $refFonte = (string) ($reference['fonte'] ?? '');
+        $out = [];
+
+        foreach ($cycles as $cycle) {
+            $fonte = (string) ($cycle['fonte'] ?? '');
+            if ($fonte === '' || $fonte === $refFonte) {
+                continue;
+            }
+            $total = (float) ($cycle['cycle_total'] ?? 0);
+            $delta = MoneyMath::roundMoney($total - $refTotal);
+            if (abs($delta) < 0.01) {
+                continue;
+            }
+            $out[] = [
+                'fonte' => $fonte,
+                'fonte_label' => (string) ($cycle['fonte_label'] ?? $fonte),
+                'total_fmt' => (string) ($cycle['cycle_total_fmt'] ?? DiscrepanciesFundingImpact::formatBrl($total)),
+                'delta_fmt' => DiscrepanciesFundingImpact::formatBrl(abs($delta)),
+                'delta_sign' => $delta >= 0 ? 'positive' : 'negative',
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  list<array{fonte: string, fonte_label: string, total_fmt: string, delta_fmt: string, delta_sign: string}>  $divergences
+     * @return list<array<string, mixed>>
+     */
+    private function buildReconciliationLines(
+        array $reference,
+        array $divergences,
+        float $expectedAnnual,
+        bool $sourcesAligned,
+    ): array {
+        $lines = [];
+        $refLabel = (string) ($reference['fonte_label'] ?? __('Fonte de referência'));
+        $refTotal = (float) ($reference['cycle_total'] ?? 0);
+
+        $lines[] = $this->lineEntry(
+            'info',
+            '—',
+            __('Referência (:fonte): :valor', [
+                'fonte' => $refLabel,
+                'valor' => DiscrepanciesFundingImpact::formatBrl($refTotal),
+            ]),
+            null,
+            null,
+            $refTotal,
+            'conciliacao',
+        );
+
+        if ($sourcesAligned) {
+            $lines[] = $this->lineEntry(
+                'info',
+                '—',
+                __('Demais fontes importadas coincidem com a referência (não são somadas).'),
+                null,
+                null,
+                $refTotal,
+                'conciliacao',
+            );
+        }
+
+        foreach ($divergences as $divergence) {
+            $sign = ($divergence['delta_sign'] ?? '') === 'negative' ? '−' : '+';
+            $lines[] = $this->lineEntry(
+                'info',
+                '—',
+                __(':fonte: :total — diferença vs. referência :delta', [
+                    'fonte' => $divergence['fonte_label'],
+                    'total' => $divergence['total_fmt'],
+                    'delta' => $sign.$divergence['delta_fmt'],
+                ]),
+                null,
+                null,
+                $refTotal,
+                'conciliacao',
+            );
+        }
+
+        $expectedCmp = $this->comparativoBlock($refTotal, $expectedAnnual);
+        $expSign = ($expectedCmp['delta_sign'] ?? '') === 'negative' ? '−' : '+';
+        $lines[] = $this->lineEntry(
+            'info',
+            '—',
+            __('Expectativa FUNDEB: :expected — diferença :delta', [
+                'expected' => $expectedCmp['expected_fmt'],
+                'delta' => $expSign.$expectedCmp['delta_fmt'],
+            ]),
+            null,
+            null,
+            $refTotal,
+            'conciliacao',
+            [
+                'delta_pct' => $expectedCmp['delta_pct'],
+            ],
+        );
+
+        return $lines;
     }
 
     /**
@@ -287,6 +367,7 @@ final class FundebExtratoVisualBuilder
     private function extractCreditsFromRow(MunicipalTransferSnapshot $row, int $filterYear, string $descBase): array
     {
         $meta = $this->decodeMeta($row);
+        $importReference = $this->importReferenceLabel($row);
         $out = [];
 
         $lancamentos = $meta['lancamentos'] ?? null;
@@ -316,15 +397,25 @@ final class FundebExtratoVisualBuilder
                     'valor' => $valor,
                     'description' => $descBase.($historico !== '' ? ' — '.$historico : ''),
                     'date_source' => 'extrato',
+                    'import_reference' => $importReference,
                 ];
             }
 
             return $out;
         }
 
-        $mensal = $this->extractMensalFromMeta($meta);
+        foreach ($this->extractRepasseItemsFromMeta($meta, $filterYear, $descBase, $importReference) as $credit) {
+            $out[] = $credit;
+        }
+        if ($out !== []) {
+            return $out;
+        }
+
+        $mensal = $this->extractMensalFromMeta($meta, $filterYear);
+        if ($mensal === [] && in_array((string) $row->fonte, ['tesouro_csv', 'sisweb_ckan'], true)) {
+            $mensal = app(TesouroTransferenciasCsvService::class)->resolveMensalForSnapshotMeta($meta, $filterYear);
+        }
         if ($mensal !== []) {
-            ksort($mensal);
             foreach ($mensal as $month => $valor) {
                 $month = (int) $month;
                 if ($month < 1 || $month > 12 || $valor <= 0) {
@@ -342,6 +433,7 @@ final class FundebExtratoVisualBuilder
                         'ano' => (string) $filterYear,
                     ]),
                     'date_source' => 'fim_mes',
+                    'import_reference' => $importReference,
                 ];
             }
 
@@ -353,20 +445,79 @@ final class FundebExtratoVisualBuilder
             return [];
         }
 
-        $date = $row->imported_at?->format('d/m/Y') ?? '—';
-        $parsed = $date !== '—' ? $this->parseSortKeyFromBrDate($date) : null;
+        $eventDate = $this->resolveEventDateFromMeta($meta, $filterYear);
+        $parsed = $eventDate !== null ? $this->parseSortKeyFromBrDate($eventDate) : null;
         $year = $parsed['year'] ?? $filterYear;
         $month = $parsed['month'] ?? 0;
 
         $out[] = [
             'sort_key' => $parsed['sort_key'] ?? sprintf('%04d-00-99', $filterYear),
-            'date' => $date,
+            'date' => $eventDate ?? $this->repasseDateForMonth($filterYear, 12),
             'year' => $year,
             'month' => $month,
             'valor' => $valor,
-            'description' => $descBase.' — '.__('Crédito único :ano', ['ano' => (string) $filterYear]),
-            'date_source' => 'importacao',
+            'description' => $descBase.' — '.__('Repasse :ano', ['ano' => (string) $filterYear]),
+            'date_source' => $eventDate !== null ? 'repasse' : 'fim_ano',
+            'import_reference' => $importReference,
         ];
+
+        return $out;
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
+     * @return list<array{sort_key: string, date: string, year: int, month: int, valor: float, description: string, date_source?: string, import_reference?: ?string}>
+     */
+    private function extractRepasseItemsFromMeta(array $meta, int $filterYear, string $descBase, ?string $importReference): array
+    {
+        $lists = [];
+        foreach (['repasses', 'parcelas', 'transferencias', 'pagamentos'] as $key) {
+            if (is_array($meta[$key] ?? null) && $meta[$key] !== []) {
+                $lists[] = $meta[$key];
+            }
+        }
+
+        $out = [];
+        foreach ($lists as $items) {
+            foreach ($items as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                $valor = isset($item['valor']) && is_numeric($item['valor'])
+                    ? (float) $item['valor']
+                    : (isset($item['value']) && is_numeric($item['value']) ? (float) $item['value'] : 0.0);
+                if ($valor <= 0) {
+                    continue;
+                }
+                $date = trim((string) ($item['data'] ?? $item['date'] ?? $item['data_pagamento'] ?? $item['data_repasse'] ?? ''));
+                $month = isset($item['mes']) && is_numeric($item['mes']) ? (int) $item['mes'] : 0;
+                $year = isset($item['ano']) && is_numeric($item['ano']) ? (int) $item['ano'] : $filterYear;
+                if ($date === '' && $month >= 1 && $month <= 12) {
+                    $date = $this->repasseDateForMonth($year, $month);
+                }
+                if ($date === '') {
+                    continue;
+                }
+                $parsed = $this->parseSortKeyFromBrDate($date);
+                if ($parsed === null) {
+                    continue;
+                }
+                if ($parsed['year'] !== $filterYear && $year !== $filterYear) {
+                    continue;
+                }
+                $label = trim((string) ($item['historico'] ?? $item['description'] ?? $item['label'] ?? ''));
+                $out[] = [
+                    'sort_key' => $parsed['sort_key'],
+                    'date' => $parsed['date'],
+                    'year' => $parsed['year'],
+                    'month' => $parsed['month'],
+                    'valor' => $valor,
+                    'description' => $descBase.($label !== '' ? ' — '.$label : ''),
+                    'date_source' => 'repasse',
+                    'import_reference' => $importReference,
+                ];
+            }
+        }
 
         return $out;
     }
@@ -464,18 +615,20 @@ final class FundebExtratoVisualBuilder
     /**
      * @return array<string, mixed>
      */
-    private function emptyCycle(City $city, int $ano): array
+    /**
+     * @param  list<MunicipalTransferSnapshot>  $diagnosticRows
+     */
+    private function emptyCycle(City $city, int $ano, array $diagnosticRows = []): array
     {
+        $description = $this->emptyCycleDescription($city, $ano, $diagnosticRows);
+
         return [
             'fonte' => '—',
             'fonte_label' => __('Sem dados'),
             'lines' => [[
                 'line_type' => 'info',
                 'date' => '—',
-                'description' => __('Sem repasses FUNDEB importados para :city / :ano. Use Admin → Dados públicos → Repasses.', [
-                    'city' => $city->name,
-                    'ano' => (string) $ano,
-                ]),
+                'description' => $description,
                 'credit' => null,
                 'debit' => null,
                 'balance' => null,
@@ -511,6 +664,27 @@ final class FundebExtratoVisualBuilder
     }
 
     /**
+     * @param  list<MunicipalTransferSnapshot>  $rows
+     */
+    private function emptyCycleDescription(City $city, int $ano, array $rows): string
+    {
+        if (
+            FundebTransferScope::hasUfAggregatedFundebSnapshots($rows)
+            && ! FundebTransferScope::hasMunicipalFundebSnapshots($rows)
+        ) {
+            return __('Há importação da publicação STN (total da UF), mas não repasses municipais para :city / :ano. A fila pode mostrar «carga concluída» só com esse total — reexecute Admin → Dados públicos → Repasses até aparecer CKAN/SISWEB (tesouro_csv ou sisweb_ckan) no log da tarefa.', [
+                'city' => $city->name,
+                'ano' => (string) $ano,
+            ]);
+        }
+
+        return __('Sem repasses FUNDEB importados para :city / :ano. Use Admin → Dados públicos → Repasses.', [
+            'city' => $city->name,
+            'ano' => (string) $ano,
+        ]);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function decodeMeta(MunicipalTransferSnapshot $row): array
@@ -530,22 +704,74 @@ final class FundebExtratoVisualBuilder
     /**
      * @return array<int, float>
      */
-    private function extractMensalFromMeta(array $meta): array
+    private function extractMensalFromMeta(array $meta, int $filterYear = 0): array
     {
         $mensal = $meta['mensal'] ?? null;
-        if (! is_array($mensal)) {
+        if (! is_array($mensal) || $mensal === []) {
             return [];
         }
 
+        if ($filterYear > 0 && (isset($mensal[$filterYear]) || isset($mensal[(string) $filterYear]))) {
+            $slice = $mensal[$filterYear] ?? $mensal[(string) $filterYear];
+
+            return $this->normalizeMensalMap(is_array($slice) ? $slice : []);
+        }
+
+        $firstKey = array_key_first($mensal);
+        if (is_array($mensal[$firstKey] ?? null)) {
+            return [];
+        }
+
+        return $this->normalizeMensalMap($mensal);
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $map
+     * @return array<int, float>
+     */
+    private function normalizeMensalMap(array $map): array
+    {
         $out = [];
-        foreach ($mensal as $month => $valor) {
+        foreach ($map as $month => $valor) {
             if (! is_numeric($valor) || (float) $valor <= 0) {
                 continue;
             }
-            $out[(int) $month] = (float) $valor;
+            $m = (int) $month;
+            if ($m >= 1 && $m <= 12) {
+                $out[$m] = (float) $valor;
+            }
         }
+        ksort($out);
 
         return $out;
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
+     */
+    private function resolveEventDateFromMeta(array $meta, int $filterYear): ?string
+    {
+        foreach (['data_repasse', 'data_pagamento', 'data_transferencia', 'data', 'date'] as $key) {
+            $raw = trim((string) ($meta[$key] ?? ''));
+            if ($raw === '') {
+                continue;
+            }
+            $parsed = $this->parseSortKeyFromBrDate($raw);
+
+            return $parsed !== null ? $parsed['date'] : null;
+        }
+
+        $month = isset($meta['mes']) && is_numeric($meta['mes']) ? (int) $meta['mes'] : 0;
+        if ($month >= 1 && $month <= 12) {
+            return $this->repasseDateForMonth($filterYear, $month);
+        }
+
+        return null;
+    }
+
+    private function importReferenceLabel(MunicipalTransferSnapshot $row): ?string
+    {
+        return $row->imported_at?->format('d/m/Y H:i');
     }
 
     /**
@@ -618,6 +844,7 @@ final class FundebExtratoVisualBuilder
             'tesouro' => __('Tesouro CKAN (datastore)'),
             'portal_transparencia' => __('Portal da Transparência'),
             'consolidado' => __('Consolidado (todas as fontes)'),
+            'conciliacao' => __('Conciliação entre fontes'),
             default => $fonte,
         };
     }

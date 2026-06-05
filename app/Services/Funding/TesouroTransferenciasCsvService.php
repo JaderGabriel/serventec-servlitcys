@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
  */
 final class TesouroTransferenciasCsvService
 {
+    private const INDEX_SCHEMA_VERSION = 2;
     /**
      * @return list<array{
      *   ibge_municipio: string,
@@ -80,6 +81,145 @@ final class TesouroTransferenciasCsvService
     }
 
     /**
+     * Repasses mensais a partir do meta gravado ou do índice CSV em cache (para extrato Tempo Real).
+     *
+     * @param  array<string, mixed>  $meta
+     * @return array<int, float>
+     */
+    public function resolveMensalForSnapshotMeta(array $meta, int $year, int $timeout = 15): array
+    {
+        $fromMeta = $this->normalizeMensalMap($this->mensalSliceFromMeta($meta, $year));
+        if ($fromMeta !== []) {
+            return $fromMeta;
+        }
+
+        $resourceId = trim((string) ($meta['resource_id'] ?? ''));
+        if ($resourceId === '') {
+            return [];
+        }
+
+        $resource = $this->findConfiguredResource($resourceId);
+        if ($resource === null) {
+            return [];
+        }
+
+        $index = $this->loadResourceIndex($resource, $timeout);
+        $entry = $this->findMunicipalityEntryInIndex($index, $meta);
+        if ($entry === null) {
+            return [];
+        }
+
+        $mensal = $entry['mensal'][$year] ?? $entry['mensal'][(string) $year] ?? [];
+
+        return $this->normalizeMensalMap(is_array($mensal) ? $mensal : []);
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
+     * @return array<int, mixed>
+     */
+    private function mensalSliceFromMeta(array $meta, int $year): array
+    {
+        $mensal = $meta['mensal'] ?? null;
+        if (! is_array($mensal) || $mensal === []) {
+            return [];
+        }
+
+        if (isset($mensal[$year]) || isset($mensal[(string) $year])) {
+            $slice = $mensal[$year] ?? $mensal[(string) $year];
+
+            return is_array($slice) ? $slice : [];
+        }
+
+        $first = reset($mensal);
+
+        return is_array($first) && ! is_numeric(array_key_first($mensal))
+            ? []
+            : $mensal;
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $map
+     * @return array<int, float>
+     */
+    private function normalizeMensalMap(array $map): array
+    {
+        $out = [];
+        foreach ($map as $month => $valor) {
+            if (! is_numeric($valor) || (float) $valor <= 0) {
+                continue;
+            }
+            $m = (int) $month;
+            if ($m >= 1 && $m <= 12) {
+                $out[$m] = (float) $valor;
+            }
+        }
+
+        ksort($out);
+
+        return $out;
+    }
+
+    /**
+     * @return ?array{resource_id: string, name: string, url: string, programa_id: string}
+     */
+    private function findConfiguredResource(string $resourceId): ?array
+    {
+        $cfg = config('ieducar.other_funding.public_queries.tesouro_ckan', []);
+        $resources = $this->resolveCsvResources(is_array($cfg) ? $cfg : [], 8);
+        foreach ($resources as $resource) {
+            if ((string) ($resource['resource_id'] ?? '') === $resourceId) {
+                return $resource;
+            }
+        }
+
+        $url = trim((string) cache()->get('tesouro_csv_resource_url_'.$resourceId));
+        if ($url !== '') {
+            return [
+                'resource_id' => $resourceId,
+                'name' => 'cached',
+                'url' => $url,
+                'programa_id' => 'fundeb',
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $index
+     * @param  array<string, mixed>  $meta
+     * @return ?array<string, mixed>
+     */
+    private function findMunicipalityEntryInIndex(array $index, array $meta): ?array
+    {
+        $byNomeUf = $index['by_nome_uf'] ?? null;
+        if (! is_array($byNomeUf)) {
+            return null;
+        }
+
+        $uf = strtoupper(trim((string) ($meta['uf'] ?? '')));
+        $nome = trim((string) ($meta['municipio'] ?? ''));
+        if ($nome !== '' && $uf !== '') {
+            $key = $this->nomeUfKey($nome, $uf);
+            if ($key !== '' && isset($byNomeUf[$key])) {
+                return $byNomeUf[$key];
+            }
+        }
+
+        $codMun = trim((string) ($meta['cod_mun'] ?? ''));
+        if ($codMun !== '') {
+            foreach ($byNomeUf as $entry) {
+                if (is_array($entry) && (string) ($entry['cod_mun'] ?? '') === $codMun) {
+                    return $entry;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @param  array<string, mixed>  $cfg
      * @return list<array{resource_id: string, name: string, url: string, programa_id: string}>
      */
@@ -97,12 +237,16 @@ final class TesouroTransferenciasCsvService
                 if ($resourceId === '' && $url === '') {
                     continue;
                 }
+                $rid = $resourceId !== '' ? $resourceId : md5($url);
                 $out[] = [
-                    'resource_id' => $resourceId !== '' ? $resourceId : md5($url),
+                    'resource_id' => $rid,
                     'name' => (string) ($item['name'] ?? $programaId),
                     'url' => $url,
                     'programa_id' => (string) ($item['programa_id'] ?? $programaId),
                 ];
+                if ($url !== '') {
+                    cache()->put('tesouro_csv_resource_url_'.$rid, $url, 604800);
+                }
             }
 
             return $out;
@@ -172,6 +316,7 @@ final class TesouroTransferenciasCsvService
                 'url' => $url,
                 'programa_id' => $programaId,
             ];
+            cache()->put('tesouro_csv_resource_url_'.$resourceId, $url, 604800);
         }
 
         $ttl = max(300, (int) ($cfg['csv_cache_ttl_seconds'] ?? 86400));
@@ -192,7 +337,7 @@ final class TesouroTransferenciasCsvService
         $cachePath = $this->resourceCachePath($resource['resource_id']);
         if (is_readable($cachePath)) {
             $decoded = json_decode((string) file_get_contents($cachePath), true);
-            if (is_array($decoded) && isset($decoded['by_nome_uf'])) {
+            if ($this->isIndexCacheValid($decoded)) {
                 return $decoded;
             }
         }
@@ -223,14 +368,38 @@ final class TesouroTransferenciasCsvService
 
         $index = $this->parseCsvBody($body);
         if ($index !== []) {
+            $index['_schema'] = self::INDEX_SCHEMA_VERSION;
             $dir = dirname($cachePath);
             if (! is_dir($dir)) {
                 @mkdir($dir, 0755, true);
             }
             file_put_contents($cachePath, json_encode($index, JSON_UNESCAPED_UNICODE));
+            cache()->put('tesouro_csv_resource_url_'.$resource['resource_id'], $resource['url'], 604800);
         }
 
         return $index;
+    }
+
+    /**
+     * @param  mixed  $decoded
+     */
+    private function isIndexCacheValid(mixed $decoded): bool
+    {
+        if (! is_array($decoded) || ! isset($decoded['by_nome_uf']) || ! is_array($decoded['by_nome_uf'])) {
+            return false;
+        }
+
+        if ((int) ($decoded['_schema'] ?? 0) < self::INDEX_SCHEMA_VERSION) {
+            return false;
+        }
+
+        foreach ($decoded['by_nome_uf'] as $entry) {
+            if (! is_array($entry) || ! array_key_exists('mensal', $entry)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

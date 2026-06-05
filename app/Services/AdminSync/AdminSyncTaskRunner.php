@@ -11,19 +11,19 @@ use App\Services\Cadunico\CadunicoTerritorioOfficialImportService;
 use App\Services\CityDataConnection;
 use App\Services\Fundeb\FundebImportMode;
 use App\Services\Fundeb\FundebImportProgress;
-use App\Services\Funding\MunicipalTransferImportService;
 use App\Services\Fundeb\FundebOpenDataImportService;
+use App\Services\Funding\MunicipalTransferImportService;
+use App\Services\Ieducar\InclusionNeeExportService;
 use App\Services\Inep\InepCensoMunicipioMatriculasIndexer;
-use App\Support\InepMicrodadosCadastroEscolasPath;
 use App\Services\Inep\SaebCsvPedagogicalImportService;
 use App\Services\Inep\SaebMicrodadosOpenDataImportService;
 use App\Services\Inep\SaebOfficialMunicipalImportService;
-use App\Services\Ieducar\InclusionNeeExportService;
 use App\Services\Inep\SaebPedagogicalImportService;
 use App\Support\Admin\ExternalImportImpact;
 use App\Support\AdminSync\WeeklyMassSyncCheckpoint;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\IeducarCompatibilityProbe;
+use App\Support\InepMicrodadosCadastroEscolasPath;
 use Illuminate\Support\Facades\Artisan;
 use InvalidArgumentException;
 
@@ -729,10 +729,28 @@ final class AdminSyncTaskRunner
 
         $result = $this->transferImport->importForCityYear($city, $ano);
 
+        foreach ($result['attempts'] ?? [] as $attempt) {
+            if (! is_array($attempt)) {
+                continue;
+            }
+            $progress->detail(sprintf(
+                '%s [%s]: %s',
+                (string) ($attempt['source'] ?? __('fonte')),
+                (string) ($attempt['status'] ?? '—'),
+                (string) ($attempt['message'] ?? ''),
+            ));
+        }
+
+        if (($result['rows'] ?? 0) > 0 && ! ($result['municipal_ready'] ?? false)) {
+            $progress->detail(__('Atenção: só há totais por UF na base — Finanças → Tempo Real exige repasses municipais (CKAN, SISWEB ou extrato BB).'));
+        }
+
         return [
             'success' => (bool) ($result['success'] ?? false),
             'message' => (string) ($result['message'] ?? ''),
             'rows' => (int) ($result['rows'] ?? 0),
+            'municipal_ready' => (bool) ($result['municipal_ready'] ?? false),
+            'municipal_rows' => (int) ($result['municipal_rows'] ?? 0),
             'by_fonte' => $result['by_fonte'] ?? [],
             'attempts' => $result['attempts'] ?? [],
         ];

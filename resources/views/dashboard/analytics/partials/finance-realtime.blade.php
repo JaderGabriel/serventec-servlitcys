@@ -73,6 +73,35 @@
                 <p class="text-[10px] font-semibold uppercase text-sky-800/80">{{ __('Expectativa FUNDEB / ano') }}</p>
                 <p class="mt-1 text-xl font-bold tabular-nums text-sky-950 dark:text-sky-50">{{ $d['expected_annual_fmt'] ?? '—' }}</p>
                 <p class="mt-1 text-[11px] text-slate-600 dark:text-slate-400">{{ $d['formula'] ?? '' }}</p>
+                @if (filled($d['expected_periodic_fmt'] ?? null) && (float) ($d['expected_monthly'] ?? 0) > 0)
+                    <p class="text-[10px] mt-1 text-sky-800/90 dark:text-sky-200/90">
+                        {{ __('Mensal:') }} {{ $d['expected_monthly_fmt'] ?? '—' }}
+                        @if (filled($d['expected_periodic_label'] ?? null))
+                            <span class="text-slate-500">· {{ $d['expected_periodic_label'] }}</span>
+                        @endif
+                    </p>
+                @endif
+                @if (filled($d['receita_portaria_fmt'] ?? null))
+                    <p class="text-[10px] mt-1 text-emerald-800/90 dark:text-emerald-200/90">
+                        {{ __('Receita portaria FNDE:') }} {{ $d['receita_portaria_fmt'] }}
+                        @if (filled($d['portaria_publication_year'] ?? null))
+                            ({{ $d['portaria_publication_year'] }})
+                        @endif
+                    </p>
+                @endif
+                @if (is_array($d['portaria_adjustments'] ?? null) && count($d['portaria_adjustments']) > 0)
+                    <ul class="text-[10px] mt-1 text-slate-600 dark:text-slate-400 space-y-0.5">
+                        @foreach ($d['portaria_adjustments'] as $adj)
+                            <li>{{ $adj['label'] ?? '' }}: {{ $adj['value_fmt'] ?? '' }}</li>
+                        @endforeach
+                    </ul>
+                    @if (filled($d['portaria_adjustments_note'] ?? null))
+                        <p class="text-[10px] mt-0.5 text-slate-500 italic">{{ $d['portaria_adjustments_note'] }}</p>
+                    @endif
+                @endif
+                @if (filled($d['portaria_url'] ?? null))
+                    <a href="{{ $d['portaria_url'] }}" target="_blank" rel="noopener" class="text-[10px] mt-1 inline-block text-sky-700 dark:text-sky-300 underline">{{ __('Ver portaria FNDE') }}</a>
+                @endif
                 @if (filled($d['expected_fonte'] ?? null))
                     <p class="text-[10px] mt-1 text-slate-500">{{ __('Fonte VAAF:') }} {{ $d['expected_fonte'] }}</p>
                 @endif
@@ -189,12 +218,21 @@
                                             <td class="px-3 py-2 whitespace-nowrap align-top">
                                                 {{ $line['date'] ?? '—' }}
                                                 @if (filled($line['date_note'] ?? null) && $lineType === 'credit')
-                                                    <span class="block text-[9px] font-normal text-slate-500 dark:text-slate-400" title="{{ __('Origem da data') }}">
+                                                    <span class="block text-[9px] font-normal text-slate-500 dark:text-slate-400" title="{{ __('Origem da data do repasse') }}">
                                                         @if ($line['date_note'] === 'fim_mes')
-                                                            {{ __('ref. fim do mês') }}
+                                                            {{ __('data ref. competência') }}
                                                         @elseif ($line['date_note'] === 'extrato')
-                                                            {{ __('extrato') }}
+                                                            {{ __('data do extrato') }}
+                                                        @elseif ($line['date_note'] === 'repasse')
+                                                            {{ __('data do repasse') }}
+                                                        @elseif ($line['date_note'] === 'fim_ano')
+                                                            {{ __('data ref. exercício') }}
                                                         @endif
+                                                    </span>
+                                                @endif
+                                                @if (filled($line['import_reference'] ?? null) && $lineType === 'credit')
+                                                    <span class="block text-[9px] font-normal text-slate-400 dark:text-slate-500">
+                                                        {{ __('importado :d', ['d' => $line['import_reference']]) }}
                                                     </span>
                                                 @endif
                                             </td>
@@ -261,9 +299,20 @@
                     @php
                         $consLines = is_array($extratoConsolidado['lines'] ?? null) ? $extratoConsolidado['lines'] : [];
                     @endphp
+                    @php
+                        $consDivergences = is_array($extratoConsolidado['divergences'] ?? null) ? $extratoConsolidado['divergences'] : [];
+                        $sourcesAligned = (bool) ($extratoConsolidado['sources_aligned'] ?? false);
+                    @endphp
                     @if ($consLines !== [] || $consPeriods !== [] || $consYears !== [])
                         <div class="bg-sky-900/90 dark:bg-sky-950 px-4 py-2 font-sans text-xs font-semibold text-white border-t-2 border-sky-600">
-                            {{ __('Consolidado (todas as fontes)') }} — {{ $extratoConsolidado['total_fmt'] ?? '—' }}
+                            {{ __('Conciliação entre fontes') }}
+                            @if (filled($extratoConsolidado['reference_fonte_label'] ?? null))
+                                <span class="font-normal opacity-90">— {{ __('referência:') }} {{ $extratoConsolidado['reference_fonte_label'] }}</span>
+                            @endif
+                            · {{ $extratoConsolidado['total_fmt'] ?? '—' }}
+                            @if ($sourcesAligned)
+                                <span class="block text-[10px] font-normal opacity-90 mt-0.5">{{ __('Fontes alinhadas — valores espelhados não são somados.') }}</span>
+                            @endif
                         </div>
                         @if ($consLines !== [])
                             <table class="w-full text-left border-b border-slate-200 dark:border-slate-700">
@@ -324,9 +373,31 @@
                                 </tbody>
                             </table>
                         @endif
+                        @if ($consDivergences !== [])
+                            <table class="w-full text-left border-b border-slate-200 dark:border-slate-700">
+                                <thead class="bg-amber-50/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-100 text-[10px] uppercase">
+                                    <tr>
+                                        <th class="px-3 py-2">{{ __('Outra fonte') }}</th>
+                                        <th class="px-3 py-2 text-right">{{ __('Total na fonte') }}</th>
+                                        <th class="px-3 py-2 text-right">{{ __('Diferença vs. referência') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    @foreach ($consDivergences as $divergence)
+                                        <tr>
+                                            <td class="px-3 py-2">{{ $divergence['fonte_label'] ?? '' }}</td>
+                                            <td class="px-3 py-2 text-right">{{ $divergence['total_fmt'] ?? '—' }}</td>
+                                            <td class="px-3 py-2 text-right {{ ($divergence['delta_sign'] ?? '') === 'negative' ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400' }}">
+                                                {{ ($divergence['delta_sign'] ?? '') === 'negative' ? '−' : '+' }}{{ $divergence['delta_fmt'] ?? '—' }}
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @endif
                         @if ($consCmp !== [])
                             <p class="px-4 py-2 text-[10px] font-sans text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700">
-                                {{ __('Comparativo global:') }}
+                                {{ __('Referência vs. expectativa:') }}
                                 {{ __('observado') }} {{ $consCmp['observed_fmt'] ?? '—' }}
                                 · {{ __('expectativa') }} {{ $consCmp['expected_fmt'] ?? '—' }}
                                 · {{ __('diferença') }}

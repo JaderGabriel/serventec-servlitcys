@@ -109,8 +109,15 @@ document.addEventListener("alpine:init", () => {
         createSchoolUnitsMap(markers, footnote, options),
     );
 
-    Alpine.data("cadunicoTerritoryMap", (territoryMarkers = [], schoolMarkers = [], footnote = null) =>
-        createCadunicoTerritoryMap(territoryMarkers, schoolMarkers, footnote),
+    Alpine.data(
+        "cadunicoTerritoryMap",
+        (territoryMarkers = [], schoolMarkers = [], footnote = null, ranking = []) =>
+            createCadunicoTerritoryMap(
+                territoryMarkers,
+                schoolMarkers,
+                footnote,
+                ranking,
+            ),
     );
 
     Alpine.data("brazilMunicipalitiesMap", (markers, statusColors = null, options = null) =>

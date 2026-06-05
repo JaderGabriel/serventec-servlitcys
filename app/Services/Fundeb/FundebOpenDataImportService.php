@@ -9,6 +9,7 @@ use App\Services\CityDataConnection;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Fundeb\FundebIbgeMatcher;
 use App\Support\Fundeb\FundebReferenceSource;
+use App\Support\Funding\FundebPortariaExpectation;
 use App\Support\Ieducar\FundebReferenceYearOrder;
 use App\Support\Ieducar\MatriculaChartQueries;
 use Illuminate\Support\Collection;
@@ -583,10 +584,14 @@ final class FundebOpenDataImportService
         } else {
             $existing = $this->references->findForCityYear($city, $importAno);
             if ($existing !== null && ! $this->incomingDiffersFromStored($existing, $payload)) {
+                $portariaNote = FundebPortariaExpectation::summaryForImport($existing);
                 $msg = __('Sem alteração — VAAF :vaaf e demais campos já coincidem com a fonte (:fonte).', [
                     'vaaf' => number_format((float) $existing->vaaf, 2, ',', '.'),
                     'fonte' => (string) $existing->fonte,
                 ]);
+                if ($portariaNote !== null) {
+                    $msg .= ' '.__('Portaria: :p', ['p' => $portariaNote]);
+                }
                 $progress?->info(__('○ :city / :ano: inalterado', [
                     'city' => $city->name,
                     'ano' => (string) $importAno,
@@ -619,12 +624,20 @@ final class FundebOpenDataImportService
                 'fonte' => $model->fonte,
             ]);
 
+        $portariaNote = FundebPortariaExpectation::summaryForImport($model);
+        if ($portariaNote !== null) {
+            $msg .= ' · '.$portariaNote;
+        }
+
         $progress?->success(__('✓ :city / :gravado: VAAF :vaaf (:fonte)', [
             'city' => $city->name,
             'gravado' => (string) $importAno,
             'vaaf' => number_format($vaaf, 2, ',', '.'),
             'fonte' => $model->fonte,
         ]));
+        if ($portariaNote !== null) {
+            $progress?->info(__('  ↳ :city: :portaria', ['city' => $city->name, 'portaria' => $portariaNote]));
+        }
 
         return [
             'success' => true,
@@ -635,22 +648,15 @@ final class FundebOpenDataImportService
     }
 
     /**
-     * @return array{ano: int, vaaf: float, vaat: ?float, complementacao_vaar: ?float, fonte: string, imported_at: ?string}
+     * @return array<string, mixed>
      */
     private function referenceArrayFromModel(FundebMunicipioReference $model): array
     {
-        return [
-            'ano' => (int) $model->ano,
-            'vaaf' => (float) $model->vaaf,
-            'vaat' => $model->vaat !== null ? (float) $model->vaat : null,
-            'complementacao_vaar' => $model->complementacao_vaar !== null ? (float) $model->complementacao_vaar : null,
-            'fonte' => (string) $model->fonte,
-            'imported_at' => $model->imported_at?->toIso8601String(),
-        ];
+        return FundebPortariaExpectation::referencePayload($model);
     }
 
     /**
-     * @param  array{vaaf: float, vaat?: ?float, complementacao_vaar?: ?float, fonte?: string}  $incoming
+     * @param  array<string, mixed>  $incoming
      */
     private function incomingDiffersFromStored(FundebMunicipioReference $existing, array $incoming): bool
     {
@@ -663,6 +669,20 @@ final class FundebOpenDataImportService
         }
 
         if (! $this->nullableMoneyEquals($existing->complementacao_vaar, $incoming['complementacao_vaar'] ?? null)) {
+            return true;
+        }
+
+        if (! $this->nullableMoneyEquals($existing->complementacao_vaaf, $incoming['complementacao_vaaf'] ?? null)) {
+            return true;
+        }
+
+        if (! $this->nullableMoneyEquals($existing->receita_total, $incoming['receita_total'] ?? null)) {
+            return true;
+        }
+
+        $incomingUrl = trim((string) ($incoming['url_portaria'] ?? ''));
+        $storedUrl = trim((string) ($existing->url_portaria ?? ''));
+        if ($incomingUrl !== '' && $storedUrl !== $incomingUrl) {
             return true;
         }
 
@@ -1005,6 +1025,14 @@ final class FundebOpenDataImportService
             }
 
             $result = $this->importForCityYear($city, $ano, $useNearestYear, $progress, $importMode);
+            $ref = is_array($result['reference'] ?? null) ? $result['reference'] : [];
+            $portariaRow = [
+                'receita_total' => isset($ref['receita_total']) ? (float) $ref['receita_total'] : null,
+                'portaria_summary' => $ref['portaria_summary'] ?? null,
+                'adjustments' => is_array($ref['adjustments'] ?? null) ? $ref['adjustments'] : [],
+                'portaria_publication_year' => $ref['portaria_publication_year'] ?? null,
+                'url_portaria' => $ref['url_portaria'] ?? null,
+            ];
             if ($result['success'] && ($result['unchanged'] ?? false)) {
                 $unchanged[] = [
                     'city_id' => (int) $city->id,
@@ -1012,8 +1040,9 @@ final class FundebOpenDataImportService
                     'ibge' => $ibge,
                     'requested_ano' => $ano,
                     'ano' => (int) ($result['imported_ano'] ?? $ano),
-                    'vaaf' => (float) ($result['reference']['vaaf'] ?? 0),
-                    'fonte' => (string) ($result['reference']['fonte'] ?? ''),
+                    'vaaf' => (float) ($ref['vaaf'] ?? 0),
+                    'fonte' => (string) ($ref['fonte'] ?? ''),
+                    ...$portariaRow,
                 ];
             } elseif ($result['success']) {
                 $ok[] = [
@@ -1022,8 +1051,9 @@ final class FundebOpenDataImportService
                     'ibge' => $ibge,
                     'requested_ano' => $ano,
                     'ano' => (int) ($result['imported_ano'] ?? $ano),
-                    'vaaf' => (float) ($result['reference']['vaaf'] ?? 0),
-                    'fonte' => (string) ($result['reference']['fonte'] ?? ''),
+                    'vaaf' => (float) ($ref['vaaf'] ?? 0),
+                    'fonte' => (string) ($ref['fonte'] ?? ''),
+                    ...$portariaRow,
                 ];
             } else {
                 $failed[] = [

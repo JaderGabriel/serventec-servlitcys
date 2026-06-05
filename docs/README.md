@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 4.1.0 · tag `20260605-Athena` · **Última revisão:** 2026-06-05
+**Versão do produto:** 4.1.1 · tag `20260605-Kairos` · **Última revisão:** 2026-06-05
 
 Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md).
 
@@ -71,7 +71,8 @@ Ponto de entrada da documentação técnica e funcional. Para **padrão editoria
 
 | Documento | Versão |
 |-----------|--------|
-| [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md) | **4.1.0** — Athena |
+| [RELEASE_20260605_KAIROS.md](RELEASE_20260605_KAIROS.md) | **4.1.1** — Kairos |
+| [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md) | 4.1.0 — Athena |
 | [RELEASE_20260604_HESTIA.md](RELEASE_20260604_HESTIA.md) | 4.0.0 — Hestia |
 | [RELEASE_20260604_PLUTUS.md](RELEASE_20260604_PLUTUS.md) | 3.10.0 — Plutus |
 | [RELEASE_20260604_GAIA.md](RELEASE_20260604_GAIA.md) | 3.9.0 — Gaia |

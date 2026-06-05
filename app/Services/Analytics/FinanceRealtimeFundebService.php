@@ -3,6 +3,7 @@
 namespace App\Services\Analytics;
 
 use App\Models\City;
+use App\Models\MunicipalTransferSnapshot;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Repositories\Ieducar\DiscrepanciesRepository;
 use App\Repositories\MunicipalTransferSnapshotRepository;
@@ -10,6 +11,7 @@ use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Finance\MoneyMath;
 use App\Support\Funding\FundebExtratoFontePriority;
 use App\Support\Funding\FundebExtratoVisualBuilder;
+use App\Support\Funding\FundebPortariaExpectation;
 use App\Support\Funding\FundebTransferScope;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\FundebImpactMethodology;
@@ -25,11 +27,11 @@ final class FinanceRealtimeFundebService
     public function __construct(
         private DiscrepanciesRepository $discrepancies,
         private MunicipalTransferSnapshotRepository $transfers,
+        private FundebMunicipioReferenceRepository $fundebReferences,
     ) {}
 
     /**
      * @param  array<string, mixed>|null  $municipalityContext  Contexto da faixa de impacto (evita Discrepâncias + Visão geral).
-     *
      * @return array<string, mixed>
      */
     public function buildReport(City $city, IeducarFilterState $filters, ?array $municipalityContext = null): array
@@ -97,15 +99,24 @@ final class FinanceRealtimeFundebService
             $alunosDistintos > 0 ? $alunosDistintos : null,
         );
 
-        $expectedAnnual = (float) ($projection['previsao_referencia'] ?? 0);
         $expectedVaaf = (float) ($projection['vaaf_calculo'] ?? 0);
         $expectedFonte = (string) ($projection['vaa_fonte_label'] ?? '');
+        $baseCalculoExpectativa = $baseCalculo > 0 ? $baseCalculo : $matriculas;
+
+        $fundebRef = $this->fundebReferences->findForCityYear($city, $ano);
+        $expectation = FundebPortariaExpectation::buildAnnual(
+            $baseCalculoExpectativa,
+            $expectedVaaf,
+            $fundebRef,
+        );
+        $expectedAnnual = (float) ($expectation['annual'] ?? ($projection['previsao_referencia'] ?? 0));
 
         $snapshots = $ibge !== null ? $this->transfers->forCityYear($city, $ano) : [];
         $snapshotsMunicipal = FundebTransferScope::municipalSnapshotsOnly($snapshots);
         $fundebRowsAll = $this->filterFundebTransfers($snapshotsMunicipal);
         $fundebRows = FundebExtratoFontePriority::pickPrimaryFundebRows($fundebRowsAll);
         $observedAnnual = round(array_sum(array_map(static fn ($r) => (float) $r->valor, $fundebRows)), 2);
+        $periodicSchedule = FundebPortariaExpectation::periodicSchedule($expectedAnnual, $ano, $fundebRows);
 
         $delta = MoneyMath::roundMoney($observedAnnual - $expectedAnnual);
         $deltaPct = $expectedAnnual > 0
@@ -147,6 +158,20 @@ final class FinanceRealtimeFundebService
             'expected_vaaf' => $expectedVaaf,
             'expected_vaaf_fmt' => DiscrepanciesFundingImpact::formatBrl($expectedVaaf),
             'expected_fonte' => $expectedFonte,
+            'expected_source' => (string) ($expectation['source'] ?? 'matricula_vaaf'),
+            'expected_monthly' => (float) ($periodicSchedule['monthly'] ?? 0),
+            'expected_monthly_fmt' => DiscrepanciesFundingImpact::formatBrl((float) ($periodicSchedule['monthly'] ?? 0)),
+            'expected_periodic' => (float) ($periodicSchedule['periodic_expected'] ?? 0),
+            'expected_periodic_fmt' => DiscrepanciesFundingImpact::formatBrl((float) ($periodicSchedule['periodic_expected'] ?? 0)),
+            'expected_periodic_label' => (string) ($periodicSchedule['label'] ?? ''),
+            'portaria_adjustments' => $expectation['adjustments'] ?? [],
+            'portaria_adjustments_note' => $expectation['adjustments_note'] ?? null,
+            'portaria_publication_year' => $expectation['portaria_publication_year'] ?? null,
+            'portaria_url' => $expectation['url_portaria'] ?? null,
+            'receita_portaria' => $expectation['receita_portaria'] ?? null,
+            'receita_portaria_fmt' => isset($expectation['receita_portaria']) && is_numeric($expectation['receita_portaria'])
+                ? DiscrepanciesFundingImpact::formatBrl((float) $expectation['receita_portaria'])
+                : null,
             'observed_annual' => $observedAnnual,
             'observed_annual_fmt' => DiscrepanciesFundingImpact::formatBrl($observedAnnual),
             'delta' => $delta,
@@ -156,18 +181,18 @@ final class FinanceRealtimeFundebService
             'has_transfer_data' => $fundebRows !== [],
             'transfer_count' => count($fundebRows),
             'alerts' => $alerts,
-            'extrato' => (new FundebExtratoVisualBuilder)->build($fundebRowsAll, $city, $ano, $expectedAnnual),
+            'extrato' => (new FundebExtratoVisualBuilder)->build($fundebRowsAll, $city, $ano, $expectedAnnual, $snapshots),
             'lay_guide' => $this->layPersonGuide(),
             'methodology_compact' => FundebImpactMethodology::compactFromContext($ctx),
             'data_sources_note' => $this->dataSourcesNote(),
             'bb_open_finance' => $this->bbOpenFinanceStatus(),
-            'formula' => $matriculas > 0 && $expectedVaaf > 0
-                ? __('Expectativa ≈ :mat matrículas × :vaaf/aluno = :total/ano', [
-                    'mat' => number_format($matriculas, 0, ',', '.'),
-                    'vaaf' => DiscrepanciesFundingImpact::formatBrl($expectedVaaf),
-                    'total' => DiscrepanciesFundingImpact::formatBrl($expectedAnnual),
-                ])
-                : __('Importe VAAF municipal e matrículas activas para calcular a expectativa.'),
+            'formula' => $this->expectationFormula(
+                $baseCalculoExpectativa,
+                $expectedVaaf,
+                $expectedAnnual,
+                $expectation,
+                $periodicSchedule,
+            ),
             'aviso' => (string) config('ieducar.finance_realtime.aviso', config('ieducar.fundeb.aviso_previsao', '')),
         ];
     }
@@ -224,8 +249,8 @@ final class FinanceRealtimeFundebService
     }
 
     /**
-     * @param  list<\App\Models\MunicipalTransferSnapshot>  $snapshots
-     * @return list<\App\Models\MunicipalTransferSnapshot>
+     * @param  list<MunicipalTransferSnapshot>  $snapshots
+     * @return list<MunicipalTransferSnapshot>
      */
     private function filterFundebTransfers(array $snapshots): array
     {
@@ -340,6 +365,48 @@ final class FinanceRealtimeFundebService
         $default = __('Extratos analisados: publicação FUNDEB (Tesouro Transparente), REPASSES/SISWEB e extrato BB (export ou Open Finance). Importe via Admin → Dados públicos → Repasses.');
 
         return (string) config('ieducar.finance_realtime.sources_note', $default);
+    }
+
+    /**
+     * @param  array<string, mixed>  $expectation
+     * @param  array<string, mixed>  $periodicSchedule
+     */
+    private function expectationFormula(
+        int $baseCalculo,
+        float $expectedVaaf,
+        float $expectedAnnual,
+        array $expectation,
+        array $periodicSchedule,
+    ): string {
+        if ($baseCalculo <= 0 || $expectedVaaf <= 0) {
+            return __('Importe VAAF municipal e matrículas activas para calcular a expectativa.');
+        }
+
+        $baseLine = __('Base matrículas × VAAF: :mat × :vaaf = :base/ano', [
+            'mat' => number_format($baseCalculo, 0, ',', '.'),
+            'vaaf' => DiscrepanciesFundingImpact::formatBrl($expectedVaaf),
+            'base' => DiscrepanciesFundingImpact::formatBrl((float) ($expectation['base_mat_vaaf'] ?? 0)),
+        ]);
+
+        if (($expectation['source'] ?? '') === 'portaria_receita' && isset($expectation['receita_portaria'])) {
+            $pub = $expectation['portaria_publication_year'] ?? null;
+            $annualLine = $pub !== null
+                ? __('Expectativa anual (receita portaria FNDE :ano): :total', [
+                    'ano' => (string) $pub,
+                    'total' => DiscrepanciesFundingImpact::formatBrl($expectedAnnual),
+                ])
+                : __('Expectativa anual (receita portaria FNDE): :total', [
+                    'total' => DiscrepanciesFundingImpact::formatBrl($expectedAnnual),
+                ]);
+        } else {
+            $annualLine = __('Expectativa anual: :total', [
+                'total' => DiscrepanciesFundingImpact::formatBrl($expectedAnnual),
+            ]);
+        }
+
+        $periodicLine = (string) ($periodicSchedule['label'] ?? '');
+
+        return implode(' · ', array_filter([$baseLine, $annualLine, $periodicLine]));
     }
 
     /**

@@ -64,7 +64,8 @@ final class CadunicoTerritorialPressureBuilder
 
             $lat = $row->latitude;
             $lng = $row->longitude;
-            $distKm = self::nearestSchoolKm($lat, $lng, $schoolMarkers);
+            $nearest = self::nearestSchool($lat, $lng, $schoolMarkers);
+            $distKm = $nearest['km'] ?? null;
             $vuln = (float) ($row->indice_vulnerabilidade ?? 0);
             $pressure = round($gapEst * (1.0 + min(100.0, $vuln) / 100.0) * (1.0 + min(15.0, $distKm ?? 0) / 15.0 * 0.35), 2);
 
@@ -78,7 +79,8 @@ final class CadunicoTerritorialPressureBuilder
                 'gap_estimado' => $gapEst,
                 'gap_fmt' => number_format($gapEst, 0, ',', '.'),
                 'fundeb_label' => $fundeb > 0 ? $fmt($fundeb) : '—',
-                'distancia_escola_km' => $distKm !== null ? round($distKm, 1) : null,
+                'distancia_escola_km' => $distKm,
+                'escola_mais_proxima' => $nearest['label'] ?? null,
                 'indice_vulnerabilidade' => $vuln > 0 ? $vuln : null,
                 'pressao' => $pressure,
             ];
@@ -86,6 +88,7 @@ final class CadunicoTerritorialPressureBuilder
             if ($lat !== null && $lng !== null && abs((float) $lat) <= 90 && abs((float) $lng) <= 180) {
                 $radius = max(8, min(28, (int) round(8 + sqrt(max(0, $gapEst)) * 0.6)));
                 $markers[] = [
+                    'codigo' => $row->territorio_codigo,
                     'lat' => (float) $lat,
                     'lng' => (float) $lng,
                     'label' => $row->territorio_nome,
@@ -94,6 +97,8 @@ final class CadunicoTerritorialPressureBuilder
                     'cadunico' => $cadLocal,
                     'pressao' => $pressure,
                     'radius' => $radius,
+                    'distancia_escola_km' => $distKm,
+                    'nearest_school' => $nearest,
                     'meta' => __('Lacuna est.: :g · CadÚnico: :c', [
                         'g' => number_format($gapEst, 0, ',', '.'),
                         'c' => number_format($cadLocal, 0, ',', '.'),
@@ -124,14 +129,16 @@ final class CadunicoTerritorialPressureBuilder
     }
 
     /**
-     * @param  list<array{lat: float|int, lng: float|int}>  $schoolMarkers
+     * @param  list<array{lat: float|int, lng: float|int, label?: string, eid?: int}>  $schoolMarkers
+     * @return array{eid: ?int, label: ?string, lat: ?float, lng: ?float, km: ?float}|null
      */
-    private static function nearestSchoolKm(?float $lat, ?float $lng, array $schoolMarkers): ?float
+    private static function nearestSchool(?float $lat, ?float $lng, array $schoolMarkers): ?array
     {
         if ($lat === null || $lng === null || $schoolMarkers === []) {
             return null;
         }
 
+        $bestKm = null;
         $best = null;
         foreach ($schoolMarkers as $s) {
             $slat = (float) ($s['lat'] ?? 0);
@@ -140,8 +147,18 @@ final class CadunicoTerritorialPressureBuilder
                 continue;
             }
             $m = self::haversineKm($lat, $lng, $slat, $slng);
-            if ($m !== null && ($best === null || $m < $best)) {
-                $best = $m;
+            if ($m === null) {
+                continue;
+            }
+            if ($bestKm === null || $m < $bestKm) {
+                $bestKm = $m;
+                $best = [
+                    'eid' => isset($s['eid']) ? (int) $s['eid'] : null,
+                    'label' => isset($s['label']) ? (string) $s['label'] : null,
+                    'lat' => $slat,
+                    'lng' => $slng,
+                    'km' => round($m, 1),
+                ];
             }
         }
 

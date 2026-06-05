@@ -115,12 +115,168 @@ final class DocumentationCatalog
     {
         $paths = [];
         foreach (self::sections() as $section) {
-            foreach ($section['items'] as $item) {
+            foreach (self::sectionItemsFlat($section) as $item) {
                 $paths[] = $item['path'];
             }
         }
 
         return array_values(array_unique($paths));
+    }
+
+    /**
+     * Caminho do release em produção (config documentation.product.release_tag).
+     */
+    public static function productionReleasePath(): ?string
+    {
+        $tag = trim((string) config('documentation.product.release_tag', ''));
+        if ($tag === '' || ! preg_match('/^(\d{8})-(.+)$/i', $tag, $matches)) {
+            return null;
+        }
+
+        $path = 'docs/RELEASE_'.$matches[1].'_'.strtoupper($matches[2]).'.md';
+
+        return self::resolveReadablePath($path);
+    }
+
+    /**
+     * @return list<array{label: string, path: string, hint?: string, sort_key: string}>
+     */
+    public static function discoverReleaseEntries(): array
+    {
+        $entries = [];
+        foreach (self::discoverDocPaths() as $path) {
+            if (! self::isReleasePath($path)) {
+                continue;
+            }
+            $entries[] = self::releaseEntryFromPath($path);
+        }
+
+        usort($entries, static fn (array $a, array $b): int => strcmp($b['sort_key'], $a['sort_key']));
+
+        return $entries;
+    }
+
+    /**
+     * @return array{featured: list<array{label: string, path: string, hint?: string}>, submenu: list<array{label: string, path: string, hint?: string}>}
+     */
+    public static function releaseOutrosLayout(int $featuredCount = 4): array
+    {
+        $featuredCount = max(1, $featuredCount);
+        $all = self::discoverReleaseEntries();
+        $production = self::productionReleasePath();
+        $featured = [];
+        $seen = [];
+
+        if ($production !== null) {
+            foreach ($all as $entry) {
+                if ($entry['path'] === $production) {
+                    $featured[] = self::withoutSortKey($entry);
+                    $seen[$production] = true;
+                    break;
+                }
+            }
+        }
+
+        foreach ($all as $entry) {
+            if (count($featured) >= $featuredCount) {
+                break;
+            }
+            if (isset($seen[$entry['path']])) {
+                continue;
+            }
+            $featured[] = self::withoutSortKey($entry);
+            $seen[$entry['path']] = true;
+        }
+
+        $submenu = [];
+        foreach ($all as $entry) {
+            if (isset($seen[$entry['path']])) {
+                continue;
+            }
+            $submenu[] = self::withoutSortKey($entry);
+        }
+
+        return ['featured' => $featured, 'submenu' => $submenu];
+    }
+
+    /**
+     * @param  array<string, mixed>  $section
+     * @return list<array{label: string, path: string, hint?: string}>
+     */
+    private static function sectionItemsFlat(array $section): array
+    {
+        $items = is_array($section['items'] ?? null) ? $section['items'] : [];
+        foreach ($section['submenus'] ?? [] as $submenu) {
+            if (! is_array($submenu)) {
+                continue;
+            }
+            foreach ($submenu['items'] ?? [] as $item) {
+                if (is_array($item)) {
+                    $items[] = $item;
+                }
+            }
+        }
+        foreach ($section['trailing_items'] ?? [] as $item) {
+            if (is_array($item)) {
+                $items[] = $item;
+            }
+        }
+
+        return $items;
+    }
+
+    private static function isReleasePath(string $path): bool
+    {
+        return (bool) preg_match('/\/RELEASE_\d{8}_[^\/]+\.md$/i', str_replace('\\', '/', $path));
+    }
+
+    /**
+     * @return array{label: string, path: string, hint?: string, sort_key: string}
+     */
+    private static function releaseEntryFromPath(string $path): array
+    {
+        $basename = basename($path, '.md');
+        if (! preg_match('/^RELEASE_(\d{8})_(.+)$/i', $basename, $matches)) {
+            return [
+                'label' => self::labelFromPath($path),
+                'path' => $path,
+                'sort_key' => '00000000',
+            ];
+        }
+
+        $dateKey = $matches[1];
+        $codename = Str::title(str_replace('_', ' ', $matches[2]));
+        $production = self::productionReleasePath();
+        $version = ($path === $production)
+            ? trim((string) config('documentation.product.version', ''))
+            : '';
+
+        $label = $version !== ''
+            ? __('Release :version — :name', ['version' => $version, 'name' => $codename])
+            : __('Release — :name', ['name' => $codename]);
+
+        $hint = substr($dateKey, 6, 2).'/'.substr($dateKey, 4, 2).'/'.substr($dateKey, 0, 4);
+        if ($path === $production && filter_var(config('documentation.product.in_production', false), FILTER_VALIDATE_BOOL)) {
+            $hint = trim((string) config('documentation.product.production_label', __('Em produção'))).' · '.$hint;
+        }
+
+        return [
+            'label' => $label,
+            'path' => $path,
+            'hint' => $hint,
+            'sort_key' => $dateKey,
+        ];
+    }
+
+    /**
+     * @param  array{label: string, path: string, hint?: string, sort_key?: string}  $entry
+     * @return array{label: string, path: string, hint?: string}
+     */
+    private static function withoutSortKey(array $entry): array
+    {
+        unset($entry['sort_key']);
+
+        return $entry;
     }
 
     /**
@@ -131,7 +287,7 @@ final class DocumentationCatalog
         $normalized = self::resolveReadablePath($path) ?? str_replace('\\', '/', trim($path));
 
         foreach (self::sections() as $section) {
-            foreach ($section['items'] as $item) {
+            foreach (self::sectionItemsFlat($section) as $item) {
                 if ($item['path'] === $normalized) {
                     return array_merge($item, ['section_title' => $section['title']]);
                 }
@@ -228,7 +384,7 @@ final class DocumentationCatalog
                 'description' => __('Abas, métricas, inclusão, relatórios e cadastro.'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
-                    ['label' => __('Navegação consultoria (5 áreas)'), 'path' => 'docs/ANALYTICS_NAVEGACAO_UI.md', 'hint' => __('4.1.0 — cenário C')],
+                    ['label' => __('Navegação consultoria (5 áreas)'), 'path' => 'docs/ANALYTICS_NAVEGACAO_UI.md', 'hint' => __('4.1.1 — cenário C')],
                     ['label' => __('Decisão abas consultoria'), 'path' => 'docs/CONSULTORIA_ABAS_DECISAO.md'],
                     ['label' => __('Início dashboard'), 'path' => 'docs/INICIO_DASHBOARD.md'],
                     ['label' => __('Métricas & Pulse (analytics)'), 'path' => 'docs/METRICAS_QUERIES_ANALYTICS.md'],
@@ -251,25 +407,6 @@ final class DocumentationCatalog
                     ['label' => __('Extrato BB / Open Finance'), 'path' => 'docs/BB_EXTRATO_OPEN_FINANCE.md'],
                     ['label' => __('Exportação planilha FUNDEB'), 'path' => 'docs/EXPORTACAO_DADOS_FUNDEB_PLANILHA.md'],
                     ['label' => __('Comparativo VAAF vs FNDE/MEC'), 'path' => 'docs/COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md'],
-                ],
-            ],
-            [
-                'title' => __('Releases'),
-                'description' => __('Notas por tag de deploy (mais recentes primeiro).'),
-                'audience' => self::AUDIENCE_ALL,
-                'items' => [
-                    ['label' => __('Release 4.1.0 — Athena'), 'path' => 'docs/RELEASE_20260605_ATHENA.md', 'hint' => __('Em produção')],
-                    ['label' => __('Release 4.0.0 — Hestia'), 'path' => 'docs/RELEASE_20260604_HESTIA.md'],
-                    ['label' => __('Release 3.10.0 — Plutus'), 'path' => 'docs/RELEASE_20260604_PLUTUS.md'],
-                    ['label' => __('Release 3.9.0 — Gaia'), 'path' => 'docs/RELEASE_20260604_GAIA.md'],
-                    ['label' => __('Release 3.8.0 — Artemis'), 'path' => 'docs/RELEASE_20260603_ARTEMIS.md'],
-                    ['label' => __('Release 3.7.0 — Selene'), 'path' => 'docs/RELEASE_20260603_SELENE.md'],
-                    ['label' => __('Release 3.6.0 — Iris'), 'path' => 'docs/RELEASE_20260603_IRIS.md'],
-                    ['label' => __('Release 3.5.1 — Hermes'), 'path' => 'docs/RELEASE_20260602_HERMES.md'],
-                    ['label' => __('Release 3.5.0 — Atlas'), 'path' => 'docs/RELEASE_20260601_ATLAS.md'],
-                    ['label' => __('Release 3.4.0 — Nemesis'), 'path' => 'docs/RELEASE_20260531_NEMESIS.md'],
-                    ['label' => __('Release 3.3.2 — Metis'), 'path' => 'docs/RELEASE_20260530_METIS.md'],
-                    ['label' => __('Release 3.0.0 — Apollo'), 'path' => 'docs/RELEASE_20260525_APOLLO.md'],
                 ],
             ],
             [
@@ -326,26 +463,62 @@ final class DocumentationCatalog
                 continue;
             }
 
-            $items = [];
-            foreach ($section['items'] as $item) {
-                if (($item['audience'] ?? self::AUDIENCE_ALL) === self::AUDIENCE_ADMIN && ! $isAdmin) {
+            $items = self::filterItemsForAudience($section['items'] ?? [], $isAdmin);
+            $submenus = [];
+            foreach ($section['submenus'] ?? [] as $submenu) {
+                if (! is_array($submenu)) {
                     continue;
                 }
-                if (! $isAdmin && in_array($item['path'], self::adminOnlyPaths(), true)) {
+                $subItems = self::filterItemsForAudience($submenu['items'] ?? [], $isAdmin);
+                if ($subItems === []) {
                     continue;
                 }
-                $items[] = $item;
+                $submenus[] = array_merge($submenu, ['items' => $subItems]);
             }
+            $trailing = self::filterItemsForAudience($section['trailing_items'] ?? [], $isAdmin);
 
-            if ($items === []) {
+            if ($items === [] && $submenus === [] && $trailing === []) {
                 continue;
             }
 
             $section['items'] = $items;
+            if ($submenus !== []) {
+                $section['submenus'] = $submenus;
+            } else {
+                unset($section['submenus']);
+            }
+            if ($trailing !== []) {
+                $section['trailing_items'] = $trailing;
+            } else {
+                unset($section['trailing_items']);
+            }
             $filtered[] = $section;
         }
 
         return $filtered;
+    }
+
+    /**
+     * @param  list<array{label: string, path: string, hint?: string, audience?: string}>  $items
+     * @return list<array{label: string, path: string, hint?: string, audience?: string}>
+     */
+    private static function filterItemsForAudience(array $items, bool $isAdmin): array
+    {
+        $out = [];
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            if (($item['audience'] ?? self::AUDIENCE_ALL) === self::AUDIENCE_ADMIN && ! $isAdmin) {
+                continue;
+            }
+            if (! $isAdmin && in_array($item['path'] ?? '', self::adminOnlyPaths(), true)) {
+                continue;
+            }
+            $out[] = $item;
+        }
+
+        return $out;
     }
 
     /**
@@ -363,7 +536,7 @@ final class DocumentationCatalog
 
         $extras = [];
         foreach (self::discoverDocPaths() as $path) {
-            if (isset($listed[$path])) {
+            if (isset($listed[$path]) || self::isReleasePath($path)) {
                 continue;
             }
             $extras[] = [
@@ -375,18 +548,34 @@ final class DocumentationCatalog
             ];
         }
 
-        if ($extras === []) {
+        $releases = self::releaseOutrosLayout(4);
+        $hasReleases = $releases['featured'] !== [] || $releases['submenu'] !== [];
+
+        if ($extras === [] && ! $hasReleases) {
             return $sections;
         }
 
         usort($extras, static fn (array $a, array $b): int => strcmp($a['label'], $b['label']));
 
-        $sections[] = [
+        $outros = [
             'title' => __('Outros documentos'),
-            'description' => __('Ficheiros adicionais em docs/.'),
+            'description' => __('Releases e ficheiros adicionais em docs/.'),
             'audience' => self::AUDIENCE_ALL,
-            'items' => $extras,
+            'items' => $releases['featured'],
         ];
+
+        if ($releases['submenu'] !== []) {
+            $outros['submenus'] = [[
+                'title' => __('Demais releases'),
+                'items' => $releases['submenu'],
+            ]];
+        }
+
+        if ($extras !== []) {
+            $outros['trailing_items'] = $extras;
+        }
+
+        $sections[] = $outros;
 
         return $sections;
     }

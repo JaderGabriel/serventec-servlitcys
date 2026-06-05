@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **4.1.0** · release `20260605-Athena` · **Ramo:** `main` · **Última revisão:** 05/06/2026
+**Versão em produção:** **4.1.1** · release `20260605-Kairos` · **Ramo:** `main` · **Última revisão:** 05/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 

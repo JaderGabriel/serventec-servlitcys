@@ -40,6 +40,21 @@ final class FundebTransferScopeTest extends TestCase
     }
 
     #[Test]
+    public function detecta_quando_so_existem_snapshots_agregados_por_uf(): void
+    {
+        $ufRow = new MunicipalTransferSnapshot([
+            'programa_id' => 'fundeb',
+            'programa_label' => 'FUNDEB STN',
+            'fonte' => 'tesouro_publicacao',
+            'valor' => 1_000_000.0,
+            'meta' => ['agregacao' => 'uf', 'uf' => 'BA'],
+        ]);
+
+        $this->assertTrue(FundebTransferScope::hasUfAggregatedFundebSnapshots([$ufRow]));
+        $this->assertFalse(FundebTransferScope::hasMunicipalFundebSnapshots([$ufRow]));
+    }
+
+    #[Test]
     public function slug_anual_inclui_municipio_ibge_e_ano(): void
     {
         $city = new City([

@@ -43,9 +43,9 @@
     @include('admin.ieducar-compatibility.partials.fundeb-sync-results', ['fmtBrl' => $fmtBrl])
     @include('admin.ieducar-compatibility.partials.fundeb-official-sources', ['fundebOfficialSources' => $fundebOfficialSources ?? []])
     <div>
-        <h3 class="text-sm font-semibold text-teal-950 dark:text-teal-100">{{ __('Referências FUNDEB (VAAF / VAAT)') }}</h3>
+        <h3 class="text-sm font-semibold text-teal-950 dark:text-teal-100">{{ __('Referências FUNDEB (VAAF / VAAT / portarias)') }}</h3>
         <p class="text-xs text-teal-900/90 dark:text-teal-200/90 mt-1 leading-relaxed">
-            {{ __('Envios vão para a fila. Nova cidade com IBGE enfileira automaticamente :y1 e :y2.', [
+            {{ __('A importação FNDE grava também receita total e complementações de portarias recentes (VAAF, VAAT, VAAR), usadas na expectativa do Tempo Real. Envios vão para a fila. Nova cidade com IBGE enfileira automaticamente :y1 e :y2.', [
                 'y1' => \App\Services\Fundeb\FundebOpenDataImportService::suggestedImportYear(),
                 'y2' => \App\Services\Fundeb\FundebOpenDataImportService::suggestedImportYear() - 1,
             ]) }}

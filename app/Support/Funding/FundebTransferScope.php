@@ -33,6 +33,34 @@ final class FundebTransferScope
         return array_values(array_filter($rows, static fn (MunicipalTransferSnapshot $r): bool => ! self::isUfAggregated($r)));
     }
 
+    /**
+     * @param  list<MunicipalTransferSnapshot>  $rows
+     */
+    public static function hasMunicipalFundebSnapshots(array $rows): bool
+    {
+        foreach (self::municipalSnapshotsOnly($rows) as $row) {
+            if (self::matchesFinanceRealtimeProgram($row)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  list<MunicipalTransferSnapshot>  $rows
+     */
+    public static function hasUfAggregatedFundebSnapshots(array $rows): bool
+    {
+        foreach ($rows as $row) {
+            if (self::isUfAggregated($row) && self::matchesFinanceRealtimeProgram($row)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static function cityYearSlug(City $city, int $year): string
     {
         $ibge = MunicipalTransferSnapshotRepository::normalizeIbge((string) $city->ibge_municipio);
