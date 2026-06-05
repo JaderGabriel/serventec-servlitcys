@@ -20,7 +20,7 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.1.7** | `a6f1c2c` / `20260607-Phronesis` → `main` | **307** | 07/06/2026 | **Produção:** FUNDEB portarias 6/2026, lexicon UI (consolidado/em formação/projeção), VAAT CSV, export matriz — [RELEASE_20260607_PHRONESIS.md](RELEASE_20260607_PHRONESIS.md). |
+| **▶ 4.1.7** | `033bfa7` / `20260607-Phronesis` → `main` | **307** | 07/06/2026 | **Produção:** FUNDEB portarias 6/2026, lexicon UI (consolidado/em formação/projeção), VAAT CSV, export matriz — [RELEASE_20260607_PHRONESIS.md](RELEASE_20260607_PHRONESIS.md). |
 | 4.1.6 | `29274d8` / `20260606-Aletheia` → `main` | **302** | 06/06/2026 | Admin UI unificado (hub + screen-shell), dedup Financiamentos, telas legado cities/LGPD — [RELEASE_20260606_ALETHEIA.md](RELEASE_20260606_ALETHEIA.md). |
 | 4.1.5 | `9be03ae` / `20260605-Themis` → `main` | **300** | 05/06/2026 | Admin rebuild Tempo Real e extrato CKAN×SISWEB. |
 | 4.1.4 | `418dd5e` / `20260605-Horae` → `main` | **298** | 05/06/2026 | Rebuild Tempo Real só municipal com granularidade. |

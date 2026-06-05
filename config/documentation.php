@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '4.1.7',
         'release_tag' => '20260607-Phronesis',
-        'commit_short' => 'a6f1c2c',
+        'commit_short' => '033bfa7',
         'commit_number' => 307,
         'revision_date' => '2026-06-07',
         'in_production' => true,
