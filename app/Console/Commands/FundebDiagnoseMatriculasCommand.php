@@ -43,17 +43,30 @@ class FundebDiagnoseMatriculasCommand extends Command
                 if ($r === null) {
                     continue;
                 }
+                $censoLabel = $r['censo'] !== null
+                    ? number_format($r['censo'], 0, ',', '.')
+                    : '—';
+                if ($r['censo'] !== null && ($r['censo_ano_usado'] ?? null) !== null) {
+                    $censoLabel .= ' (Censo '.$r['censo_ano_usado'].')';
+                }
                 $this->line(sprintf(
                     '  %d: i-Educar=%s | Censo=%s | usado=%s [%s]',
                     $ano,
                     number_format($r['ieducar'], 0, ',', '.'),
-                    $r['censo'] !== null ? number_format($r['censo'], 0, ',', '.') : '—',
+                    $censoLabel,
                     number_format($r['usado'], 0, ',', '.'),
                     $r['fonte_usada'],
                 ));
+                if (($r['ieducar_erro'] ?? null) !== null && (int) ($r['ieducar'] ?? 0) <= 0) {
+                    $this->line('      <fg=yellow>↳ i-Educar: '.str($r['ieducar_erro'])->limit(120).'</>');
+                }
             }
             $this->newLine();
         }
+
+        $this->comment(__('Dica: exercício FUNDEB :y costuma usar Censo do ano anterior — indexe microdados INEP e execute fundeb:import-api após Censo>0.', [
+            'y' => (string) (max($years) - 1),
+        ]));
 
         return self::SUCCESS;
     }

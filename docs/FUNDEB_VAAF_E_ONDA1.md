@@ -131,7 +131,7 @@ php artisan fundeb:import-api 0 --all --ano=2024 --nearest
 
 **CLI:** `php artisan fundeb:diagnose-matriculas` · **Env:** `IEDUCAR_FUNDEB_PLANNING_YEARS_AHEAD`, `IEDUCAR_FUNDEB_VAAF_CENSO_FALLBACK`
 
-**Matrículas:** `FundebMatriculasByYearService` consulta i-Educar (`MatriculaChartQueries`) e, se zero, Censo INEP (`inep_censo_municipio_matriculas`) quando `IEDUCAR_FUNDEB_VAAF_CENSO_FALLBACK=true` (padrão). Lookback na importação: ano pedido e três anteriores.
+**Matrículas:** `FundebMatriculasByYearService` consulta i-Educar (`MatriculaChartQueries`) e, se zero, Censo INEP (`inep_censo_municipio_matriculas`) quando `IEDUCAR_FUNDEB_VAAF_CENSO_FALLBACK=true` (padrão). Lookback i-Educar na importação: ano pedido e três anteriores. Lookback Censo: até `IEDUCAR_FUNDEB_CENSO_MATRICULAS_LOOKBACK` anos anteriores ao exercício (microdados INEP costuma publicar `nu_ano_censo` defasado).
 
 **Metadados gravados na importação:** `receita_total`, `complementacao_vaaf`, `complementacao_vaat`, `matriculas_base`, `matriculas_fonte`, `url_portaria`, `tipo_valor` (`estimativa` \| `oficial` \| `placeholder`).
 
@@ -180,14 +180,61 @@ Na consultoria: aba **FUNDEB** → matriz por exercício → confirmar **VAAT 20
 Ordem de fontes para o VAAF estimado:
 
 1. Matrículas activas **i-Educar** (ano pedido ou lookback −1/−2/−3).
-2. **Censo INEP** agregado municipal (`IEDUCAR_FUNDEB_VAAF_CENSO_FALLBACK=true`).
+2. **Censo INEP** agregado municipal (`IEDUCAR_FUNDEB_VAAF_CENSO_FALLBACK=true`), com lookback configurável (`IEDUCAR_FUNDEB_CENSO_MATRICULAS_LOOKBACK`, padrão 3).
 3. CKAN / cache com VAAF já calculado pelo FNDE.
 4. Placeholder (piso) — evitar em produção (`IEDUCAR_FUNDEB_NATIONAL_FLOOR_ON_IMPORT=false` recomendado).
 
-**Importar Censo** quando o diagnóstico mostrar `ieducar=0` e `censo` ausente para o exercício:
+#### Diagnóstico (antes e depois de indexar Censo)
 
-- Hub `/admin/dados-publicos` ou CLI documentado em [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) / matrículas INEP.
-- Após o Censo, repetir `fundeb:import-api` para o mesmo ano.
+```bash
+# Todos os municípios com IBGE — anos do perfil de planejamento
+php artisan fundeb:diagnose-matriculas
+
+# Um município (ID da tabela cities)
+php artisan fundeb:diagnose-matriculas 3
+
+# Anos explícitos (exercícios FUNDEB / planejamento)
+php artisan fundeb:diagnose-matriculas --anos=2024,2025,2026
+```
+
+Interpretação da saída por ano:
+
+| Campo | Significado |
+|-------|-------------|
+| `i-Educar` | Matrículas activas na base municipal |
+| `Censo` | Total INEP agregado; `(Censo 2024)` indica que o exercício pedido usou microdados de outro ano (lookback) |
+| `usado` | Valor efectivo no cálculo VAAF estimado |
+| `[fonte_usada]` | `ieducar`, `censo_inep` ou `indisponivel` |
+| `↳ i-Educar: …` | Erro de conexão/consulta quando i-Educar = 0 |
+
+Sintoma típico em produção: `Censo=—` para 2025–2027 com i-Educar zerado — a tabela local só tem anos já publicados pelo INEP (ex. 2022–2024). O lookback preenche o exercício com o Censo mais recente disponível.
+
+#### Indexar Censo e reimportar VAAF
+
+Quando `ieducar=0` e `Censo=—` (ou `usado=0`):
+
+**Opção A — hub admin** (`/admin/dados-publicos`):
+
+1. Importar microdados INEP (geo/cadastro) se ainda não existirem no `storage`.
+2. Enfileirar tarefa **`funding::index_censo_matriculas`** (grava `inep_censo_municipio_matriculas`).
+
+**Opção B — CLI** (servidor com acesso a `download.inep.gov.br`):
+
+```bash
+# Baixa ZIP INEP (se necessário), importa cadastro e indexa matrículas municipais
+php artisan app:import-inep-microdados-cadastro-escolas-geo --fetch=1
+```
+
+O comando acima indexa matrículas Censo quando `IEDUCAR_INEP_CENSO_MATRICULAS_INDEX_ON_IMPORT=true` (padrão). Ver [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §6.
+
+**Depois do Censo indexado:**
+
+```bash
+php artisan fundeb:diagnose-matriculas --anos=2025,2026
+php artisan fundeb:import-api 0 --all --from=2025 --to=2025 --nearest
+```
+
+Confirme na saída do diagnóstico `Censo>0` e `[censo_inep]` (ou matrículas i-Educar) antes do import. Na consultoria, a fonte `fnde_portaria_receita_ieducar` com VAAF numérico indica receita ÷ matrículas correctas.
 
 **VAAT** não depende de matrículas — vem do CSV «VAAT, VAAT-MIN e complementação-VAAT por ente federado» (`FundebFndeVaatCsvService`).
 
@@ -197,6 +244,7 @@ Ordem de fontes para o VAAF estimado:
 |----------|----------------|
 | `IEDUCAR_FUNDEB_NATIONAL_FLOOR_ON_IMPORT` | `false` |
 | `IEDUCAR_FUNDEB_VAAF_CENSO_FALLBACK` | `true` |
+| `IEDUCAR_FUNDEB_CENSO_MATRICULAS_LOOKBACK` | `3` (anos anteriores ao exercício para buscar Censo INEP) |
 | `IEDUCAR_FUNDEB_RECEITA_CSV_URL_2025` / `IEDUCAR_FUNDEB_VAAT_CSV_URL_2025` | Opcional — override se o gov.br mudar o path |
 | `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` | Preencher se usar CKAN como fonte principal |
 

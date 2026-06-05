@@ -1325,17 +1325,27 @@ final class FundebOpenDataImportService
     private function resolveMatriculasForVaafEstimate(City $city, int $ano): array
     {
         $matSvc = new FundebMatriculasByYearService($this->cityData);
-        $matYears = self::normalizeYearList([$ano, $ano - 1, $ano - 2, $ano - 3]);
+        $lookback = max(0, min(5, (int) config('ieducar.fundeb.open_data.censo_matriculas_lookback_years', 3)));
+        $matYears = self::normalizeYearList(array_merge(
+            [$ano, $ano - 1, $ano - 2, $ano - 3],
+            range($ano - $lookback, $ano),
+        ));
         $matRows = $matSvc->forCityYears($city, $matYears);
         foreach ($matYears as $matYear) {
             $candidate = $matRows[$matYear] ?? null;
             if (is_array($candidate) && (int) ($candidate['usado'] ?? 0) > 0) {
+                $matriculasAno = (int) $matYear;
+                if (($candidate['fonte_usada'] ?? '') === 'censo_inep' && ($candidate['censo_ano_usado'] ?? null) !== null) {
+                    $matriculasAno = (int) $candidate['censo_ano_usado'];
+                }
+
                 return [
                     'usado' => (int) $candidate['usado'],
                     'fonte_usada' => (string) ($candidate['fonte_usada'] ?? 'indisponivel'),
                     'ieducar' => (int) ($candidate['ieducar'] ?? 0),
                     'censo' => $candidate['censo'] ?? null,
-                    'ano' => (int) $matYear,
+                    'ano' => $matriculasAno,
+                    'censo_ano_usado' => $candidate['censo_ano_usado'] ?? null,
                 ];
             }
         }

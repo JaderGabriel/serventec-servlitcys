@@ -770,6 +770,8 @@ return [
             'vaaf_estimate_max' => (float) env('IEDUCAR_FUNDEB_VAAF_ESTIMATE_MAX', 18000),
             /** Usar matrículas do Censo INEP quando i-Educar = 0 (estimativa VAAF portaria). */
             'vaaf_use_censo_matriculas_fallback' => filter_var(env('IEDUCAR_FUNDEB_VAAF_CENSO_FALLBACK', true), FILTER_VALIDATE_BOOL),
+            /** Anos anteriores ao pedido para buscar matrículas no Censo INEP (exercícios encerrados). */
+            'censo_matriculas_lookback_years' => max(0, min(5, (int) env('IEDUCAR_FUNDEB_CENSO_MATRICULAS_LOOKBACK', 3))),
             /** Anos à frente no perfil de planejamento (ex.: 1 = ano civil + próximo). */
             'planning_years_ahead' => max(0, (int) env('IEDUCAR_FUNDEB_PLANNING_YEARS_AHEAD', 1)),
             'planning_include_suggested_import_year' => filter_var(env('IEDUCAR_FUNDEB_PLANNING_INCLUDE_IMPORT_YEAR', true), FILTER_VALIDATE_BOOL),
