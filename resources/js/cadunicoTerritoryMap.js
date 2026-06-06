@@ -247,10 +247,9 @@ export default function createCadunicoTerritoryMap(
         },
 
         topTerritoriesForFilter() {
-            const rows = [...this.territories].sort(
+            return [...this.territories].sort(
                 (a, b) => (b.pressao ?? 0) - (a.pressao ?? 0),
             );
-            return rows.slice(0, 20);
         },
 
         toggleAllTerritories(visible) {
@@ -370,6 +369,9 @@ export default function createCadunicoTerritoryMap(
                         t.distancia_escola_km ?? nearest?.km ?? null;
                     const popup = [
                         `<strong>${escapeHtml(t.label ?? "")}</strong>`,
+                        t.codigo
+                            ? `<span class="block text-[10px] font-mono text-slate-500">${escapeHtml(t.codigo)}</span>`
+                            : "",
                         `<span class="block text-xs mt-1">${escapeHtml(t.tipo ?? "")}</span>`,
                         `<span class="block text-xs">${escapeHtml(t.meta ?? "")}</span>`,
                         `<span class="block text-xs mt-1">${escapeHtml("Pressão")}: <strong>${nf(pressao)}</strong></span>`,

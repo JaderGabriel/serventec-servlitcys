@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Repositories\CadunicoMunicipioSnapshotRepository;
 use App\Repositories\CadunicoTerritorioSnapshotRepository;
 use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Support\Cadunico\CadunicoTerritorioDisplay;
 
 /**
  * Importa territórios a partir de fontes oficiais IBGE (Censo 2022 + WFS).
@@ -125,10 +126,12 @@ final class CadunicoTerritorioOfficialImportService
                 $remaining -= $criancas;
             }
 
-            $centroid = $centroids[$codigo] ?? null;
+            $centroid = $centroids[$codigo]
+                ?? $centroids[CadunicoTerritorioDisplay::normalizeCodigo($codigo)]
+                ?? null;
 
             $this->repository->upsert($ibge, $ano, $codigo, [
-                'territorio_nome' => (string) ($row['nome'] ?? $codigo),
+                'territorio_nome' => (string) ($row['nome'] ?? ''),
                 'territorio_tipo' => $tipo,
                 'criancas_4_17' => $criancas,
                 'criancas_4_5' => 0,

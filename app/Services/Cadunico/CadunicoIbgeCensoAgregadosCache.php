@@ -189,9 +189,7 @@ final class CadunicoIbgeCensoAgregadosCache
                 continue;
             }
             $nome = $this->cell($cols, $map['nome'])
-                ?? ($tipo === 'setor'
-                    ? __('Setor :c', ['c' => substr($codigo, -4)])
-                    : $codigo);
+                ?? ($tipo === 'setor' ? '' : $codigo);
             $index[$mun] ??= [];
             $index[$mun][] = [
                 'codigo' => $codigo,

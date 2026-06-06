@@ -2,6 +2,7 @@
 
 namespace App\Services\Cadunico;
 
+use App\Support\Cadunico\CadunicoTerritorioDisplay;
 use App\Support\Http\SafeOutboundUrl;
 use Illuminate\Support\Facades\Http;
 
@@ -81,6 +82,10 @@ final class CadunicoIbgeMalhaWfsClient
             $centroid = $geom !== null ? self::centroidFromGeometry($geom) : null;
             if ($centroid !== null) {
                 $out[$codigo] = $centroid;
+                $norm = CadunicoTerritorioDisplay::normalizeCodigo($codigo);
+                if ($norm !== '' && $norm !== $codigo) {
+                    $out[$norm] = $centroid;
+                }
             }
         }
 

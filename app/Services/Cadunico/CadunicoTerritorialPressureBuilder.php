@@ -4,6 +4,7 @@ namespace App\Services\Cadunico;
 
 use App\Models\City;
 use App\Repositories\CadunicoTerritorioSnapshotRepository;
+use App\Support\Cadunico\CadunicoTerritorioDisplay;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Finance\MoneyMath;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
@@ -46,16 +47,23 @@ final class CadunicoTerritorialPressureBuilder
             ];
         }
 
-        $cadTerrSum = max(1, (int) $rows->sum(static fn ($r) => $r->totalEscolar()));
+        $activeRows = $rows->filter(static fn ($r) => $r->totalEscolar() > 0)->values();
+        $displayLabels = CadunicoTerritorioDisplay::labelsForRows($activeRows);
+        $cadTerrSum = max(1, (int) $activeRows->sum(static fn ($r) => $r->totalEscolar()));
         $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
         $ranking = [];
         $markers = [];
+        $semCoordenadas = 0;
 
-        foreach ($rows as $row) {
+        foreach ($activeRows as $row) {
             $cadLocal = $row->totalEscolar();
-            if ($cadLocal <= 0) {
-                continue;
-            }
+            $codigo = (string) $row->territorio_codigo;
+            $displayNome = $displayLabels[$codigo]
+                ?? CadunicoTerritorioDisplay::label(
+                    $codigo,
+                    (string) $row->territorio_nome,
+                    (string) ($row->territorio_tipo ?? 'bairro'),
+                );
 
             $share = $cadLocal / $cadTerrSum;
             $gapEst = $gapTotal > 0
@@ -64,7 +72,11 @@ final class CadunicoTerritorialPressureBuilder
 
             $lat = $row->latitude;
             $lng = $row->longitude;
-            $nearest = self::nearestSchool($lat, $lng, $schoolMarkers);
+            $hasCoords = $lat !== null
+                && $lng !== null
+                && abs((float) $lat) <= 90
+                && abs((float) $lng) <= 180;
+            $nearest = self::nearestSchool($hasCoords ? (float) $lat : null, $hasCoords ? (float) $lng : null, $schoolMarkers);
             $distKm = $nearest['km'] ?? null;
             $vuln = (float) ($row->indice_vulnerabilidade ?? 0);
             $pressure = round($gapEst * (1.0 + min(100.0, $vuln) / 100.0) * (1.0 + min(15.0, $distKm ?? 0) / 15.0 * 0.35), 2);
@@ -72,8 +84,9 @@ final class CadunicoTerritorialPressureBuilder
             $fundeb = ($gapEst > 0 && $vaaf > 0) ? MoneyMath::multiplyVaaf($gapEst, $vaaf) : 0.0;
 
             $ranking[] = [
-                'codigo' => $row->territorio_codigo,
-                'nome' => $row->territorio_nome,
+                'codigo' => $codigo,
+                'nome' => $displayNome,
+                'nome_base' => $row->territorio_nome,
                 'tipo' => $row->territorio_tipo,
                 'cadunico' => $cadLocal,
                 'gap_estimado' => $gapEst,
@@ -83,15 +96,16 @@ final class CadunicoTerritorialPressureBuilder
                 'escola_mais_proxima' => $nearest['label'] ?? null,
                 'indice_vulnerabilidade' => $vuln > 0 ? $vuln : null,
                 'pressao' => $pressure,
+                'no_mapa' => $hasCoords,
             ];
 
-            if ($lat !== null && $lng !== null && abs((float) $lat) <= 90 && abs((float) $lng) <= 180) {
+            if ($hasCoords) {
                 $radius = max(8, min(28, (int) round(8 + sqrt(max(0, $gapEst)) * 0.6)));
                 $markers[] = [
-                    'codigo' => $row->territorio_codigo,
+                    'codigo' => $codigo,
                     'lat' => (float) $lat,
                     'lng' => (float) $lng,
-                    'label' => $row->territorio_nome,
+                    'label' => $displayNome,
                     'tipo' => $row->territorio_tipo,
                     'gap' => $gapEst,
                     'cadunico' => $cadLocal,
@@ -104,18 +118,23 @@ final class CadunicoTerritorialPressureBuilder
                         'c' => number_format($cadLocal, 0, ',', '.'),
                     ]),
                 ];
+            } else {
+                $semCoordenadas++;
             }
         }
 
         usort($ranking, static fn ($a, $b) => ($b['pressao'] ?? 0) <=> ($a['pressao'] ?? 0));
-        $ranking = array_slice($ranking, 0, 30);
+
+        $territoriosAtivos = $activeRows->count();
 
         return [
             'available' => true,
             'markers' => $markers,
             'ranking' => $ranking,
             'school_markers' => $schoolMarkers,
-            'territorios_count' => $rows->count(),
+            'territorios_count' => $territoriosAtivos,
+            'territorios_no_mapa' => count($markers),
+            'territorios_sem_coordenadas' => $semCoordenadas,
             'schools_on_map' => count($schoolMarkers),
             'cad_territorio_sum' => $cadTerrSum,
             'cad_municipal' => $cadTotal,

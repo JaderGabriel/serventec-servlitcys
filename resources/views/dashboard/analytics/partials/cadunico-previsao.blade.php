@@ -271,12 +271,18 @@
         </x-dashboard.consultoria-section>
     @endif
 
+    @if (count($rankingTerr) > 0 || count($territorial['markers'] ?? []) > 0)
+        @include('dashboard.analytics.partials.cadunico-pressao-callout')
+    @endif
+
     @if (count($territorial['markers'] ?? []) > 0)
         <x-dashboard.consultoria-section
             :step="$cadStep['cad-previsao-mapa'] ?? null"
             anchor="cad-previsao-mapa"
             :title="__('Mapa de pressão territorial')"
-            :subtitle="__('Priorize bairros/setores com maior lacuna estimada e distância à escola.')"
+            :subtitle="__(':total território(s) · priorize bairros/setores com maior lacuna e distância à escola.', [
+                'total' => number_format((int) ($territorial['territorios_count'] ?? count($territorial['markers'] ?? [])), 0, ',', '.'),
+            ])"
         >
             @include('dashboard.analytics.partials.cadunico-territorio-map', [
                 'territorial' => $territorial,
@@ -368,24 +374,36 @@
             :step="$cadStep['cad-previsao-territorios'] ?? null"
             anchor="cad-previsao-territorios"
             :title="__('Prioridade por território')"
-            :subtitle="__('Pressão = lacuna × vulnerabilidade × distância à escola mais próxima.')"
+            :subtitle="__(':total território(s) · pressão = lacuna × vulnerabilidade × distância à escola. Código IBGE distingue setores com o mesmo nome.', [
+                'total' => number_format((int) ($territorial['territorios_count'] ?? count($rankingTerr)), 0, ',', '.'),
+            ])"
         >
             <div class="serv-panel overflow-x-auto max-h-96 overflow-y-auto">
                 <table class="min-w-full text-sm divide-y divide-slate-200 dark:divide-slate-700">
                     <thead class="bg-slate-50 dark:bg-slate-900/60 sticky top-0">
                         <tr>
                             <th class="px-3 py-2 text-left text-xs font-semibold">{{ __('Território') }}</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold">{{ __('Código') }}</th>
                             <th class="px-3 py-2 text-left text-xs font-semibold">{{ __('Tipo') }}</th>
                             <th class="px-3 py-2 text-right text-xs font-semibold">{{ __('CadÚnico') }}</th>
                             <th class="px-3 py-2 text-right text-xs font-semibold">{{ __('Lacuna est.') }}</th>
                             <th class="px-3 py-2 text-right text-xs font-semibold">{{ __('Dist. escola') }}</th>
-                            <th class="px-3 py-2 text-right text-xs font-semibold">{{ __('Pressão') }}</th>
+                            <th class="px-3 py-2 text-right text-xs font-semibold" title="{{ __('Índice de prioridade: lacuna × vulnerabilidade × distância à escola (ver destaque acima).') }}">
+                                {{ __('Pressão') }}
+                                <span class="block font-normal text-[10px] text-amber-700 dark:text-amber-300 normal-case">{{ __('prioridade') }}</span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                         @foreach ($rankingTerr as $row)
-                            <tr>
-                                <td class="px-3 py-2 font-medium">{{ $row['nome'] ?? '' }}</td>
+                            <tr @class(['opacity-80' => empty($row['no_mapa'])])>
+                                <td class="px-3 py-2 font-medium">
+                                    {{ $row['nome'] ?? '' }}
+                                    @if (empty($row['no_mapa']))
+                                        <span class="block text-[10px] font-normal text-amber-700 dark:text-amber-300">{{ __('Sem coordenadas no mapa') }}</span>
+                                    @endif
+                                </td>
+                                <td class="px-3 py-2 text-xs font-mono text-slate-600 dark:text-slate-400">{{ $row['codigo'] ?? '—' }}</td>
                                 <td class="px-3 py-2 text-xs">{{ $row['tipo'] ?? '' }}</td>
                                 <td class="px-3 py-2 text-right tabular-nums">{{ number_format((int) ($row['cadunico'] ?? 0), 0, ',', '.') }}</td>
                                 <td class="px-3 py-2 text-right tabular-nums text-amber-700 dark:text-amber-300">{{ $row['gap_fmt'] ?? '0' }}</td>

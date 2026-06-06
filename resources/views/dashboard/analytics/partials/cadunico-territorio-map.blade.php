@@ -9,6 +9,9 @@
     $schools = is_array($schoolMarkers) ? $schoolMarkers : [];
     $ranking = is_array($t['ranking'] ?? null) ? $t['ranking'] : [];
     $footnote = filled($t['nota'] ?? null) ? (string) $t['nota'] : null;
+    $territoriosTotal = (int) ($t['territorios_count'] ?? count($ranking));
+    $territoriosMapa = (int) ($t['territorios_no_mapa'] ?? count($markers));
+    $semCoords = (int) ($t['territorios_sem_coordenadas'] ?? max(0, $territoriosTotal - $territoriosMapa));
 @endphp
 
 <div
@@ -29,6 +32,15 @@
         </div>
 
         <aside class="serv-panel p-3 space-y-3 text-xs text-slate-700 dark:text-slate-300 max-h-[min(32rem,58vh)] overflow-y-auto">
+            <div class="rounded-lg border border-amber-300/80 dark:border-amber-600/50 bg-amber-50/80 dark:bg-amber-950/30 px-2.5 py-2">
+                <p class="text-[11px] font-bold text-amber-950 dark:text-amber-100 leading-snug">
+                    {{ __('Pressão = prioridade territorial') }}
+                </p>
+                <p class="text-[10px] text-amber-900/90 dark:text-amber-200/90 mt-1 leading-snug">
+                    {{ __('Lacuna estimada × vulnerabilidade × distância à escola. Círculos maiores/vermelhos = maior urgência para busca ativa ou oferta.') }}
+                </p>
+            </div>
+
             <div>
                 <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
                     {{ __('Camadas') }}
@@ -93,6 +105,28 @@
             </template>
 
             <div>
+                <p class="text-[11px] text-slate-600 dark:text-slate-400 mb-2 leading-snug">
+                    {{ trans_choice(
+                        ':total território com CadÚnico|:total territórios com CadÚnico',
+                        $territoriosTotal,
+                        ['total' => number_format($territoriosTotal, 0, ',', '.')]
+                    ) }}
+                    ·
+                    {{ trans_choice(
+                        ':n no mapa|:n no mapa',
+                        $territoriosMapa,
+                        ['n' => number_format($territoriosMapa, 0, ',', '.')]
+                    ) }}
+                    @if ($semCoords > 0)
+                        <span class="text-amber-700 dark:text-amber-300">
+                            ({{ trans_choice(
+                                ':n sem coordenadas|:n sem coordenadas',
+                                $semCoords,
+                                ['n' => number_format($semCoords, 0, ',', '.')]
+                            ) }})
+                        </span>
+                    @endif
+                </p>
                 <div class="flex items-center justify-between gap-2 mb-2">
                     <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                         {{ __('Territórios no mapa') }}
@@ -112,6 +146,11 @@
                             >
                             <span>
                                 <span class="font-medium" x-text="t.label"></span>
+                                <span
+                                    class="block text-[10px] text-slate-500 dark:text-slate-400 font-mono"
+                                    x-show="t.codigo"
+                                    x-text="t.codigo"
+                                ></span>
                                 <span class="block text-[10px] text-slate-500 dark:text-slate-400" x-text="(t.gap ?? 0).toLocaleString('pt-BR') + ' {{ __('lacuna est.') }}'"></span>
                             </span>
                         </label>
@@ -124,7 +163,7 @@
                     {{ __('Legenda') }}
                 </p>
                 <p class="leading-relaxed space-y-1">
-                    <span class="block">{{ __('Lacuna / pressão (tamanho ∝ lacuna):') }}</span>
+                    <span class="block">{{ __('Intensidade visual (tamanho e cor ∝ pressão):') }}</span>
                     <span class="inline-flex items-center gap-1 mr-2"><span class="inline-block w-3 h-3 rounded-full bg-yellow-300 border border-yellow-700"></span>{{ __('baixa') }}</span>
                     <span class="inline-flex items-center gap-1 mr-2"><span class="inline-block w-3 h-3 rounded-full bg-orange-500 border border-orange-900"></span>{{ __('média') }}</span>
                     <span class="inline-flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-full bg-red-600 border border-red-950"></span>{{ __('alta pressão') }}</span>
