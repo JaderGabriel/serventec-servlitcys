@@ -286,9 +286,9 @@ final class CadunicoPrevisaoRepository
     {
         return [
             ['step' => '1', 'text' => __('Importar agregados municipais Cecad/Misocial e, opcionalmente, território (bairro/setor) via CSV.')],
-            ['step' => '2', 'text' => __('Contar população escolar CadÚnico nas faixas etárias configuradas (4-17 por defeito).')],
+            ['step' => '2', 'text' => __('Contar população CadÚnico nas faixas 4–17 (pré 4–5 a médio 15–17); creche 0–3 excluída da lacuna principal.')],
             ['step' => '3', 'text' => __('Comparar com alunos/matrículas ativos da rede municipal (i-Educar) nos mesmos filtros.')],
-            ['step' => '4', 'text' => __('Calcular lacuna por faixa e cenários financeiros NEE/AEE/VAAR (proporção observada na rede).')],
+            ['step' => '4', 'text' => __('Calcular lacuna por faixa e impacto indicativo VAAF; cenários NEE/AEE/VAAR (VAAT/IEI não entram nesta aba).')],
             ['step' => '5', 'text' => __('Priorizar territórios no mapa (pressão = lacuna × vulnerabilidade × distância à escola).')],
             ['step' => '6', 'text' => __('Validar com Censo INEP e busca ativa — nem toda criança CadÚnico pertence à rede municipal.')],
         ];

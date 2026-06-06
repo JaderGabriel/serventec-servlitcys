@@ -389,6 +389,8 @@ final class DocumentationCatalog
                     ['label' => __('Decisão abas consultoria'), 'path' => 'docs/CONSULTORIA_ABAS_DECISAO.md'],
                     ['label' => __('Início dashboard'), 'path' => 'docs/INICIO_DASHBOARD.md'],
                     ['label' => __('Métricas & Pulse (analytics)'), 'path' => 'docs/METRICAS_QUERIES_ANALYTICS.md'],
+                    ['label' => __('CadÚnico — faixas etárias e FUNDEB'), 'path' => 'docs/CADUNICO_FAIXAS_ETARIAS_FUNDEB.md', 'hint' => __('4–17, 0–3, VAAF/VAAT/IEI')],
+                    ['label' => __('CadÚnico / Cecad (importação)'), 'path' => 'docs/CADUNICO_CECAD.md'],
                     ['label' => __('CadÚnico previsão territorial'), 'path' => 'docs/CADUNICO_PREVISAO_TERRITORIAL.md'],
                     ['label' => __('Gráficos MEC/INEP'), 'path' => 'docs/SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md'],
                     ['label' => __('SAEB — referências pedagógicas'), 'path' => 'docs/saeb_pedagogico_referencias.md'],

@@ -100,6 +100,10 @@
         <x-dashboard.consultoria-public-sources :catalog="$publicSources" anchor="cad-previsao-fontes" />
     @endif
 
+    @if ($yearFilterReady)
+        @include('dashboard.analytics.partials.cadunico-faixas-fundeb-callout')
+    @endif
+
     @if (! ($gap['available'] ?? false) && $cadunicoDataReady)
         <p class="serv-callout serv-callout--warning text-sm">
             {{ __('Sincronize agregados Cecad (MDS) para o município e ano do filtro.') }}
@@ -338,7 +342,7 @@
             :step="$cadStep['cad-previsao-faixas'] ?? null"
             anchor="cad-previsao-faixas"
             :title="__('Faixas etárias — CadÚnico e lacuna')"
-            :subtitle="__('População Cecad, estimativa municipal e lacuna por faixa (VAAF indicativo).')"
+            :subtitle="__('Faixas 4–17 anos (pré-escola a ensino médio). Lacuna e FUNDEB indicativo por faixa = gap × VAAF; não inclui creche 0–3.')"
         >
             <div class="serv-panel overflow-x-auto">
                 <table class="min-w-full text-sm divide-y divide-slate-200 dark:divide-slate-700">
@@ -431,9 +435,9 @@
     @php
         $metodologiaRows = count($metodologia) > 0 ? $metodologia : [
             ['step' => '1', 'text' => __('Importar agregados municipais do Cecad (CSV) — sem dados pessoais.')],
-            ['step' => '2', 'text' => __('Contar crianças/jovens 4-17 anos no CadÚnico no exercício de referência.')],
+            ['step' => '2', 'text' => __('Contar população CadÚnico nas faixas 4–17 (escolaridade obrigatória); 0–3 só com CSV Cecad dedicado.')],
             ['step' => '3', 'text' => __('Comparar com matrículas ativas i-Educar no mesmo ano letivo e filtros.')],
-            ['step' => '4', 'text' => __('Estimar lacuna e impacto FUNDEB indicativo (VAAF × população fora da rede).')],
+            ['step' => '4', 'text' => __('Estimar lacuna e impacto FUNDEB indicativo (VAAF × fora da rede; cenários NEE/AEE/VAAR). VAAT e IEI de creche ficam fora desta aba.')],
         ];
         $showMetodologia = $cadunicoDataReady || ! $yearFilterReady || $needsSpecificYear;
     @endphp

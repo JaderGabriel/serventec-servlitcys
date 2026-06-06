@@ -54,6 +54,8 @@ Aba **CadÚnico: previsão fora da rede e FUNDEB** no grupo **Cadastro e rede** 
 
 Funcionalidades avançadas (lacuna por faixa, cenários NEE/AEE/VAAR, mapa territorial, demanda×oferta): **[CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md)**.
 
+**Faixas etárias (4–17 vs 0–3) e indicadores FUNDEB afectados:** **[CADUNICO_FAIXAS_ETARIAS_FUNDEB.md](CADUNICO_FAIXAS_ETARIAS_FUNDEB.md)**.
+
 ## Leitura dos indicadores
 
 | Indicador | Significado |

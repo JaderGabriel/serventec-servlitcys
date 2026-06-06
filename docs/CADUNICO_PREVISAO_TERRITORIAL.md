@@ -2,7 +2,7 @@
 
 Extensão da aba **CadÚnico: previsão fora da rede** (`cadunico_previsao`) em três fases, sempre com **dados agregados** (sem CPF/NIS/endereço individual).
 
-Documentação base Cecad/Misocial: [CADUNICO_CECAD.md](CADUNICO_CECAD.md).
+Documentação base Cecad/Misocial: [CADUNICO_CECAD.md](CADUNICO_CECAD.md). Faixas etárias e FUNDEB: [CADUNICO_FAIXAS_ETARIAS_FUNDEB.md](CADUNICO_FAIXAS_ETARIAS_FUNDEB.md).
 
 ---
 
