@@ -46,6 +46,10 @@ final class MunicipalityMapCadastroPresenter
             'falta_matriculas' => (int) ($row['falta_matriculas'] ?? 0),
             'falta_turmas' => (int) ($row['falta_turmas'] ?? 0),
             'meta_matriculas_alvo' => (int) ($row['meta_matriculas_alvo'] ?? 0),
+            'meta_referencia_ano' => (int) ($row['meta_referencia_ano'] ?? 0),
+            'meta_saltos' => (int) ($row['meta_saltos'] ?? 0),
+            'meta_ano_imediato_zerado' => (bool) ($row['meta_ano_imediato_zerado'] ?? false),
+            'anterior_ano' => (int) ($row['anterior_ano'] ?? 0),
             'matriculas_vigente' => (int) ($row['matriculas_vigente'] ?? 0),
             'attention_level' => $attention['level'],
             'attention_message' => $attention['message'],
@@ -95,14 +99,31 @@ final class MunicipalityMapCadastroPresenter
             ];
         }
 
+        $anoImediatoZerado = (bool) ($row['meta_ano_imediato_zerado'] ?? false);
+        $saltos = (int) ($row['meta_saltos'] ?? 0);
+        $refAno = (int) ($row['meta_referencia_ano'] ?? 0);
+
         return match ($semaforo) {
             'green' => [
                 'level' => 'praise',
-                'message' => __('Meta de cadastro atingida — reconheça o trabalho da equipe municipal.'),
+                'message' => $anoImediatoZerado && $saltos > 0 && $refAno > 0
+                    ? __('Meta RX atingida com referência em :ref (+:n salto(s)). O ano anterior imediato estava sem cadastro — confira o painel RX.', [
+                        'ref' => (string) $refAno,
+                        'n' => $saltos,
+                    ])
+                    : __('Meta de cadastro atingida — reconheça o trabalho da equipe municipal.'),
             ],
             'yellow' => [
                 'level' => 'watch',
-                'message' => __('Cadastro em curso — acompanhe até concluir a meta do ano vigente.'),
+                'message' => $anoImediatoZerado && $saltos > 0 && $refAno > 0
+                    ? __('Cadastro em curso — meta com referência em :ref (+:n salto(s)); :ant sem cadastro.', [
+                        'ref' => (string) $refAno,
+                        'n' => $saltos,
+                        'ant' => (int) ($row['anterior_ano'] ?? 0) > 0
+                            ? (string) (int) $row['anterior_ano']
+                            : __('ano anterior'),
+                    ])
+                    : __('Cadastro em curso — acompanhe até concluir a meta do ano vigente.'),
             ],
             'red' => [
                 'level' => 'urgent',

@@ -42,4 +42,20 @@ final class RxCadastroGapTest extends TestCase
         $this->assertNull($d['delta_pct']);
         $this->assertTrue($d['delta_sem_base']);
     }
+
+    public function test_nao_marca_meta_ok_so_por_turmas_com_matriculas_vigentes_sem_meta(): void
+    {
+        $gap = RxCadastroGap::compute(
+            metaTurmas: 10,
+            metaMatriculas: 0,
+            metaEnturmacoes: 0,
+            turmasVigente: 10,
+            matriculasVigente: 96,
+            enturmacoesVigente: 96,
+        );
+
+        $this->assertEqualsWithDelta(100.0, $gap['progresso_turmas_pct'], 0.01);
+        $this->assertEqualsWithDelta(0.0, $gap['progresso_matriculas_pct'], 0.01);
+        $this->assertEqualsWithDelta(0.0, $gap['progresso_cadastro_pct'], 0.01);
+    }
 }

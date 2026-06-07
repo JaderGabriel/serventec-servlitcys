@@ -150,6 +150,17 @@
                                     <span x-text="active.cadastro.registros_restantes.toLocaleString('pt-BR')"></span>
                                     {{ __('registo(s) em falta (turmas + matrículas + enturmações)') }}
                                 </p>
+                                <p
+                                    class="text-[10px] font-medium text-amber-800 dark:text-amber-200"
+                                    x-show="active.cadastro.meta_ano_imediato_zerado && active.cadastro.meta_saltos > 0"
+                                >
+                                    {{ __('Ano') }}
+                                    <span class="tabular-nums" x-text="active.cadastro.anterior_ano"></span>
+                                    {{ __('sem cadastro — meta com') }}
+                                    <span class="tabular-nums" x-text="active.cadastro.meta_saltos"></span>
+                                    {{ __('salto(s) a partir de') }}
+                                    <span class="tabular-nums" x-text="active.cadastro.meta_referencia_ano"></span>.
+                                </p>
                             </div>
                             <a
                                 :href="active.cadastro.rx_url"

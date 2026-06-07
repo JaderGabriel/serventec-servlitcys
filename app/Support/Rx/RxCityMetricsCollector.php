@@ -227,6 +227,7 @@ final class RxCityMetricsCollector
             $entV,
         );
         $deltaInfo = RxCadastroGap::matriculasDelta($matV, $matA);
+        $anoImediatoZerado = $matA === 0 && $turmasA === 0;
 
         $row = array_merge($base, [
             'ok' => true,
@@ -258,6 +259,7 @@ final class RxCityMetricsCollector
             'meta_fator' => (float) ($baselineResolved['fator_meta'] ?? 1.0),
             'meta_acrescimo_pct' => (float) ($baselineResolved['acrescimo_pct'] ?? 0.0),
             'meta_encontrou_referencia' => (bool) ($baselineResolved['encontrou_referencia'] ?? false),
+            'meta_ano_imediato_zerado' => $anoImediatoZerado,
             'meta_turmas_alvo' => $metaTurmas,
             'meta_matriculas_alvo' => $metaMat,
             'meta_enturmacoes_alvo' => $metaEnt,
@@ -331,6 +333,7 @@ final class RxCityMetricsCollector
             'meta_fator' => 1.0,
             'meta_acrescimo_pct' => 0.0,
             'meta_encontrou_referencia' => false,
+            'meta_ano_imediato_zerado' => false,
             'meta_turmas_alvo' => 0,
             'meta_matriculas_alvo' => 0,
             'meta_enturmacoes_alvo' => 0,

@@ -36,11 +36,27 @@ final class RxSemaphore
         $metaTur = (int) ($row['meta_turmas_alvo'] ?? 0);
         $hasMeta = $metaMat > 0 || $metaTur > 0;
 
+        $anoImediatoZerado = (bool) ($row['meta_ano_imediato_zerado'] ?? false);
+        $saltos = (int) ($row['meta_saltos'] ?? 0);
+        $refAno = (int) ($row['meta_referencia_ano'] ?? 0);
+        $anteriorAno = (int) ($row['anterior_ano'] ?? 0);
+
         if ($hasMeta && ($prog !== null && (float) $prog >= 100.0 || $rest === 0)) {
+            $title = $anoImediatoZerado && $saltos > 0 && $refAno > 0
+                ? __('Meta atingida com base em :ref (+:n salto(s), +:pct% sobre o volume histórico). O ano :ant não tinha turmas nem matrículas — o alvo não é só repetir o vigente face a :ant.', [
+                    'ref' => (string) $refAno,
+                    'n' => $saltos,
+                    'pct' => number_format((float) ($row['meta_acrescimo_pct'] ?? 0), 1, ',', '.'),
+                    'ant' => $anteriorAno > 0 ? (string) $anteriorAno : __('anterior'),
+                ])
+                : __('Volume vigente atinge ou supera a meta de cadastro (turmas e matrículas com alvo definido).');
+
             return [
                 'status' => 'green',
-                'label' => __('Meta OK'),
-                'title' => __('Volume vigente atinge ou supera a meta de cadastro (turmas, matrículas e enturmações).'),
+                'label' => $anoImediatoZerado && $saltos > 0
+                    ? __('Meta OK (ref. :ano)', ['ano' => (string) $refAno])
+                    : __('Meta OK'),
+                'title' => $title,
             ];
         }
 
@@ -48,10 +64,19 @@ final class RxSemaphore
         $progF = $prog !== null ? (float) $prog : 0.0;
 
         if ($progF >= $yellowMin) {
+            $title = __('Progresso :pct% em relação à meta; ainda há registos em falta.', ['pct' => number_format($progF, 1, ',', '.')]);
+            if ($anoImediatoZerado && $saltos > 0 && $refAno > 0) {
+                $title .= ' '.__('Referência em :ref (+:n salto(s)); :ant sem cadastro.', [
+                    'ref' => (string) $refAno,
+                    'n' => $saltos,
+                    'ant' => $anteriorAno > 0 ? (string) $anteriorAno : __('ano anterior'),
+                ]);
+            }
+
             return [
                 'status' => 'yellow',
                 'label' => __('Em curso'),
-                'title' => __('Progresso :pct% em relação à meta; ainda há registos em falta.', ['pct' => number_format($progF, 1, ',', '.')]),
+                'title' => $title,
             ];
         }
 

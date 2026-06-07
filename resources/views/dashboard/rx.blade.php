@@ -281,6 +281,14 @@
                                                     't' => number_format((int) ($row['meta_referencia_turmas'] ?? 0), 0, ',', '.'),
                                                 ]) }}
                                             </span>
+                                            @if ($row['meta_ano_imediato_zerado'] ?? false)
+                                                <span class="block text-[10px] font-medium text-amber-800 dark:text-amber-200">
+                                                    {{ __(':ano sem cadastro — meta com salto(s) a partir de :ref.', [
+                                                        'ano' => (string) ($rx['anterior_ano'] ?? ''),
+                                                        'ref' => (int) ($row['meta_referencia_ano'] ?? 0),
+                                                    ]) }}
+                                                </span>
+                                            @endif
                                             @if ((int) ($row['meta_saltos'] ?? 0) > 0)
                                                 <span class="serv-rx-val--meta-alvo">
                                                     {{ __('+:pct% (:n salto(s)) → alvo :mat mat.', [

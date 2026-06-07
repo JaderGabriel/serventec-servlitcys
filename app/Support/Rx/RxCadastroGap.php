@@ -34,12 +34,29 @@ final class RxCadastroGap
         $progMat = self::progressPct($matriculasVigente, $metaMatriculas);
         $progEnt = self::progressPct($enturmacoesVigente, $metaEnturmacoes);
 
+        // Evita «meta OK» só por turmas quando há matrículas vigentes sem meta definida (ex.: ref. histórica só com turmas).
+        if ($matriculasVigente > 0 && $metaMatriculas <= 0) {
+            $progMat = 0.0;
+        }
+        if ($turmasVigente > 0 && $metaTurmas <= 0) {
+            $progTurmas = 0.0;
+        }
+
         return [
             'falta_turmas' => $faltaTurmas,
             'falta_matriculas' => $faltaMat,
             'falta_enturmacoes' => $faltaEnt,
             'registros_restantes' => $faltaTurmas + $faltaMat,
-            'progresso_cadastro_pct' => self::compositeProgressPct($progTurmas, $progMat, $progEnt, $metaTurmas, $metaMatriculas, $metaEnturmacoes),
+            'progresso_cadastro_pct' => self::compositeProgressPct(
+                $progTurmas,
+                $progMat,
+                $progEnt,
+                $metaTurmas,
+                $metaMatriculas,
+                $metaEnturmacoes,
+                $turmasVigente,
+                $matriculasVigente,
+            ),
             'progresso_turmas_pct' => $progTurmas,
             'progresso_matriculas_pct' => $progMat,
         ];
@@ -64,13 +81,19 @@ final class RxCadastroGap
         int $metaTurmas,
         int $metaMatriculas,
         int $metaEnturmacoes,
+        int $turmasVigente = 0,
+        int $matriculasVigente = 0,
     ): ?float {
         $parts = [];
         if ($metaTurmas > 0 && $progTurmas !== null) {
             $parts[] = $progTurmas;
+        } elseif ($turmasVigente > 0) {
+            $parts[] = 0.0;
         }
         if ($metaMatriculas > 0 && $progMat !== null) {
             $parts[] = $progMat;
+        } elseif ($matriculasVigente > 0) {
+            $parts[] = 0.0;
         }
         if ($metaEnturmacoes > 0 && $progEnt !== null) {
             $parts[] = $progEnt;
