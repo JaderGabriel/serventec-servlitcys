@@ -234,6 +234,7 @@
                                         </p>
                                         <x-rx.censo-municipio-bar :censo="$censo" :vigenteAno="$rx['vigente_ano'] ?? null" />
                                         <x-rx.censo-municipio-detail :censo="$censo" :compact="true" />
+                                        <x-rx.fundeb-municipio-snippet :fundeb="$row['fundeb_resumo'] ?? null" />
                                         @if (is_array($row['reference_contact'] ?? null) && ($row['reference_contact']['available'] ?? false))
                                             <x-city.reference-contact
                                                 :contact="$row['reference_contact']"

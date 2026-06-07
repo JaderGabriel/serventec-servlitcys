@@ -23,7 +23,7 @@ final class RxColumnHelp
             [
                 'key' => 'municipio',
                 'title' => __('Município'),
-                'description' => __('Unidade da rede com base i-Educar configurada no ServLitcys.'),
+                'description' => __('Unidade da rede com barra Censo e, abaixo, projeção FUNDEB indicativa em R$ para o próximo exercício (matrículas vigentes × VAAF — mesma base da aba Finanças → FUNDEB na Consultoria).'),
             ],
             [
                 'key' => 'alunos',

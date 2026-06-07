@@ -49,4 +49,7 @@ return [
         'yellow_min_progress' => (float) env('RX_SEMAPHORE_YELLOW_MIN', 75),
     ],
 
+    /** Projeção FUNDEB (R$) na coluna Município — alinhada à aba Finanças → FUNDEB. */
+    'fundeb_municipio_summary' => filter_var(env('RX_FUNDEB_MUNICIPIO_SUMMARY', true), FILTER_VALIDATE_BOOL),
+
 ];

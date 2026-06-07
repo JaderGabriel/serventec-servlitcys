@@ -3,6 +3,7 @@
 namespace App\Support\Rx;
 
 use App\Models\City;
+use App\Repositories\Ieducar\DiscrepanciesRepository;
 use App\Services\CityDataConnection;
 use App\Support\City\CityReferenceContact;
 use App\Support\Dashboard\IeducarFilterState;
@@ -12,12 +13,13 @@ use App\Support\Ieducar\MatriculaChartQueries;
 use Illuminate\Database\QueryException;
 
 /**
- * Métricas RX por município (ano vigente vs anterior) — sem indicadores financeiros.
+ * Métricas RX por município (ano vigente vs anterior).
  */
 final class RxCityMetricsCollector
 {
     public function __construct(
         private CityDataConnection $cityData,
+        private DiscrepanciesRepository $discrepancies,
     ) {}
 
     /**
@@ -235,6 +237,19 @@ final class RxCityMetricsCollector
             RxCadastroPulse::empty(),
         ) ?? RxCadastroPulse::empty();
 
+        $fundebResumo = $this->safe(
+            fn () => RxFundebMunicipioSummary::build(
+                $city,
+                $filtersVigente,
+                (int) ($matV ?? 0),
+                $alunosV !== null && $alunosV > 0 ? (int) $alunosV : null,
+                $this->discrepancies,
+            ),
+            $warnings,
+            __('projeção FUNDEB'),
+            RxFundebMunicipioSummary::empty(),
+        ) ?? RxFundebMunicipioSummary::empty();
+
         $row = array_merge($base, [
             'ok' => true,
             'alunos_vigente' => $alunosV,
@@ -285,6 +300,7 @@ final class RxCityMetricsCollector
             ],
             'cadastro_ritmo_quinzena' => (int) ($estimativa['cadastros_ultima_quinzena'] ?? 0),
             'cadastro_pulse' => is_array($cadastroPulse) ? $cadastroPulse : RxCadastroPulse::empty(),
+            'fundeb_resumo' => is_array($fundebResumo) ? $fundebResumo : RxFundebMunicipioSummary::empty(),
             'consulta_warnings' => $warnings,
             'situacao_codigo' => $warnings === [] ? 'ok' : 'parcial',
             'conexao_ok' => true,

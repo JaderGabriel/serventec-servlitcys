@@ -11,20 +11,22 @@
         {{ $attributes->merge(['class' => 'serv-rx-cadastro-pulse mt-1.5']) }}
         x-data="rxCadastroPulse(@js($pulse))"
     >
-        <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[9px] leading-tight text-violet-800/90 dark:text-violet-200/90">
-            <span class="font-semibold uppercase tracking-wide text-[8px] text-violet-600/80 dark:text-violet-300/80">
+        <div class="serv-rx-cadastro-pulse__header text-[9px] leading-tight">
+            <p class="serv-rx-cadastro-pulse__label font-semibold uppercase tracking-wide text-[8px]">
                 {{ __('Ritmo') }}
-            </span>
-            <template x-for="window in windows" :key="window.hours">
-                <span
-                    class="inline-flex items-center gap-0.5 rounded px-1 py-px bg-violet-100/80 dark:bg-violet-950/50 tabular-nums cursor-help"
-                    :title="windowTitle(window)"
-                >
-                    <span class="font-semibold" x-text="`${window.hours}h`"></span>
-                    <span class="text-violet-600/70 dark:text-violet-300/70" x-text="`${window.turmas}t`"></span>
-                    <span class="text-violet-950/80 dark:text-violet-100/80" x-text="`${window.matriculas}m`"></span>
-                </span>
-            </template>
+            </p>
+            <div class="serv-rx-cadastro-pulse__windows mt-0.5 flex w-full gap-1">
+                <template x-for="window in windows" :key="window.hours">
+                    <span
+                        class="serv-rx-cadastro-pulse__chip flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded px-1 py-0.5 tabular-nums cursor-help"
+                        :title="windowTitle(window)"
+                    >
+                        <span class="serv-rx-cadastro-pulse__chip-hours font-semibold" x-text="`${window.hours}h`"></span>
+                        <span class="serv-rx-cadastro-pulse__chip-muted" x-text="`${window.turmas}t`"></span>
+                        <span class="serv-rx-cadastro-pulse__chip-strong" x-text="`${window.matriculas}m`"></span>
+                    </span>
+                </template>
+            </div>
         </div>
 
         <div

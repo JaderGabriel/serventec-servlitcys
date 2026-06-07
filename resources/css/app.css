@@ -586,32 +586,66 @@
         @apply block text-[10px] text-violet-800 dark:text-violet-200;
     }
 
+    /* Ritmo de cadastro — paleta fuchsia (distinta da meta violeta e dos volumes teal/sky) */
+    .serv-rx-cadastro-pulse {
+        @apply border-t border-fuchsia-200/70 dark:border-fuchsia-900/50 pt-1.5;
+    }
+
+    .serv-rx-cadastro-pulse__header {
+        @apply text-fuchsia-900/95 dark:text-fuchsia-100/95;
+    }
+
+    .serv-rx-cadastro-pulse__label {
+        @apply block text-fuchsia-700/90 dark:text-fuchsia-300/90;
+    }
+
+    .serv-rx-cadastro-pulse__windows {
+        @apply w-full min-w-0;
+    }
+
+    .serv-rx-cadastro-pulse__chip {
+        @apply bg-fuchsia-50/90 ring-1 ring-fuchsia-200/80
+            dark:bg-fuchsia-950/45 dark:ring-fuchsia-800/55;
+    }
+
+    .serv-rx-cadastro-pulse__chip-hours {
+        @apply text-fuchsia-800 dark:text-fuchsia-200;
+    }
+
+    .serv-rx-cadastro-pulse__chip-muted {
+        @apply text-fuchsia-600/75 dark:text-fuchsia-400/80;
+    }
+
+    .serv-rx-cadastro-pulse__chip-strong {
+        @apply text-fuchsia-950/90 dark:text-fuchsia-50/95;
+    }
+
     .serv-rx-cadastro-pulse__svg {
         display: block;
     }
 
     .serv-rx-cadastro-pulse__line {
-        stroke: rgb(124 58 237 / 0.85);
+        stroke: rgb(192 38 211 / 0.88);
     }
 
     .dark .serv-rx-cadastro-pulse__line {
-        stroke: rgb(196 181 253 / 0.9);
+        stroke: rgb(232 121 249 / 0.92);
     }
 
     .serv-rx-cadastro-pulse__cursor {
-        stroke: rgb(124 58 237 / 0.35);
+        stroke: rgb(192 38 211 / 0.38);
     }
 
     .dark .serv-rx-cadastro-pulse__cursor {
-        stroke: rgb(196 181 253 / 0.45);
+        stroke: rgb(232 121 249 / 0.48);
     }
 
     .serv-rx-cadastro-pulse__tooltip {
-        @apply border border-violet-200/90 bg-white text-violet-950;
+        @apply border border-fuchsia-200/90 bg-white text-fuchsia-950;
     }
 
     .dark .serv-rx-cadastro-pulse__tooltip {
-        @apply border-violet-800/80 bg-slate-900 text-violet-100;
+        @apply border-fuchsia-800/80 bg-slate-900 text-fuchsia-100;
     }
 
     .serv-rx-chip {
@@ -648,6 +682,10 @@
 
     .serv-rx-chip-swatch--meta {
         @apply bg-violet-500 dark:bg-violet-400;
+    }
+
+    .serv-rx-fundeb-snippet {
+        @apply border-t border-slate-200/70 dark:border-slate-600/50 pt-1;
     }
 
     .serv-rx-censo-bar {
