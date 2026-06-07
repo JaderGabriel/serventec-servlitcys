@@ -1399,6 +1399,12 @@ return [
             'id_usuario_cad',
             'usuario_cad',
         ],
+        'turma_date_columns' => [
+            'data_cadastro',
+            'data_cad',
+            'data_registro',
+            'created_at',
+        ],
         'ano_letivo_table_candidates' => array_values(array_filter(array_map('trim', explode(',', (string) env(
             'IEDUCAR_WORK_ANO_LETIVO_TABLES',
             'escola_ano_letivo,ano_letivo,educacenso_ano_letivo'

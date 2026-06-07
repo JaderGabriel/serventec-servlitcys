@@ -29,6 +29,7 @@ import {
 import createSchoolUnitsMap from "./schoolUnitsMap.js";
 import createCadunicoTerritoryMap from "./cadunicoTerritoryMap.js";
 import createBrazilMunicipalitiesMap from "./brazilMunicipalitiesMap.js";
+import rxCadastroPulse from "./rxCadastroPulse.js";
 import "./notification-bell.js";
 import { registerScrollToTopData } from "./scroll-to-top.js";
 
@@ -2119,6 +2120,7 @@ window.Alpine = Alpine;
 
 registerDataLoadingStore(Alpine);
 registerScrollToTopData(Alpine);
+Alpine.data("rxCadastroPulse", rxCadastroPulse);
 
 Alpine.start();
 

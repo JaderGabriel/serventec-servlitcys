@@ -586,6 +586,34 @@
         @apply block text-[10px] text-violet-800 dark:text-violet-200;
     }
 
+    .serv-rx-cadastro-pulse__svg {
+        display: block;
+    }
+
+    .serv-rx-cadastro-pulse__line {
+        stroke: rgb(124 58 237 / 0.85);
+    }
+
+    .dark .serv-rx-cadastro-pulse__line {
+        stroke: rgb(196 181 253 / 0.9);
+    }
+
+    .serv-rx-cadastro-pulse__cursor {
+        stroke: rgb(124 58 237 / 0.35);
+    }
+
+    .dark .serv-rx-cadastro-pulse__cursor {
+        stroke: rgb(196 181 253 / 0.45);
+    }
+
+    .serv-rx-cadastro-pulse__tooltip {
+        @apply border border-violet-200/90 bg-white text-violet-950;
+    }
+
+    .dark .serv-rx-cadastro-pulse__tooltip {
+        @apply border-violet-800/80 bg-slate-900 text-violet-100;
+    }
+
     .serv-rx-chip {
         @apply inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium;
     }

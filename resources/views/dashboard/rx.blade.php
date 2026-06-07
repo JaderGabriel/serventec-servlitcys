@@ -302,9 +302,11 @@
                                                     {{ __('Alvo: :mat mat.', ['mat' => number_format((int) ($row['meta_matriculas_alvo'] ?? 0), 0, ',', '.')]) }}
                                                 </span>
                                             @endif
+                                            <x-rx.cadastro-pulse :pulse="$row['cadastro_pulse'] ?? null" />
                                         @else
                                             <span class="text-slate-400">—</span>
                                             <span class="serv-rx-val--meta-ref block">{{ __('Sem histórico') }}</span>
+                                            <x-rx.cadastro-pulse :pulse="$row['cadastro_pulse'] ?? null" />
                                         @endif
                                     </td>
                                     <td class="{{ $rxTd('censo', true) }} tabular-nums text-xs">

@@ -54,6 +54,227 @@ final class IeducarWorkActivityQueries
     }
 
     /**
+     * @return array{
+     *   available: bool,
+     *   date_col: ?string,
+     *   note: ?string
+     * }
+     */
+    public static function turmaActivityContext(Connection $db, City $city): array
+    {
+        $turma = IeducarSchema::resolveTable('turma', $city);
+        $dateCol = IeducarColumnInspector::firstExistingColumn(
+            $db,
+            $turma,
+            config('ieducar.work_tracking.turma_date_columns', []),
+            $city
+        );
+
+        if ($dateCol === null) {
+            return [
+                'available' => false,
+                'date_col' => null,
+                'note' => __('Não foi encontrada coluna de data de cadastro em turma nesta base.'),
+            ];
+        }
+
+        return [
+            'available' => true,
+            'date_col' => $dateCol,
+            'note' => null,
+        ];
+    }
+
+    /**
+     * @param  list<int>  $windowHours
+     * @return array<string, int>
+     */
+    public static function matriculaWindowCounts(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        string $dateCol,
+        ?string $userCol,
+        array $windowHours,
+    ): array {
+        $out = [];
+        foreach ($windowHours as $hours) {
+            $out[(string) $hours] = 0;
+        }
+
+        if ($windowHours === []) {
+            return $out;
+        }
+
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $usuario = IeducarUsuarioScope::resolve($db, $city);
+            $maxHours = max($windowHours);
+            $since = Carbon::now()->subHours($maxHours);
+
+            $q = $db->table($mat.' as m');
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.(string) config('ieducar.columns.matricula.ativo'), $city);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+            $q->where('m.'.$dateCol, '>=', $since);
+
+            if ($userCol !== null && $usuario !== null) {
+                $q->join($usuario['table'].' as u', 'm.'.$userCol, '=', 'u.'.$usuario['id_col']);
+                IeducarUsuarioScope::applyExclusions($q, $usuario, 'u');
+            }
+
+            $bindings = [];
+            $parts = [];
+            foreach ($windowHours as $hours) {
+                $bindings[] = Carbon::now()->subHours((int) $hours);
+                $parts[] = 'SUM(CASE WHEN m.'.$dateCol.' >= ? THEN 1 ELSE 0 END) as w_'.(int) $hours;
+            }
+
+            $row = (array) ($q->selectRaw(implode(', ', $parts), $bindings)->first() ?? []);
+            foreach ($windowHours as $hours) {
+                $out[(string) $hours] = (int) ($row['w_'.$hours] ?? 0);
+            }
+        } catch (\Throwable) {
+            // mantém zeros
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  list<int>  $windowHours
+     * @return array<string, int>
+     */
+    public static function turmaWindowCounts(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        string $dateCol,
+        array $windowHours,
+    ): array {
+        $out = [];
+        foreach ($windowHours as $hours) {
+            $out[(string) $hours] = 0;
+        }
+
+        if ($windowHours === []) {
+            return $out;
+        }
+
+        try {
+            foreach ($windowHours as $hours) {
+                $out[(string) $hours] = self::countTurmasSinceHours($db, $city, $filters, $dateCol, (int) $hours);
+            }
+        } catch (\Throwable) {
+            // mantém zeros
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public static function matriculaHourlyBuckets(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        string $dateCol,
+        ?string $userCol,
+        int $seriesHours,
+        int $bucketHours = 1,
+    ): array {
+        unset($bucketHours);
+
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+            $usuario = IeducarUsuarioScope::resolve($db, $city);
+            $since = Carbon::now()->subHours($seriesHours);
+            $bucketExpr = self::hourBucketExpression($db, 'm.'.$dateCol);
+
+            $q = $db->table($mat.' as m');
+            MatriculaAtivoFilter::apply($q, $db, 'm.'.(string) config('ieducar.columns.matricula.ativo'), $city);
+            MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
+            MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
+            MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
+            $q->where('m.'.$dateCol, '>=', $since);
+
+            if ($userCol !== null && $usuario !== null) {
+                $q->join($usuario['table'].' as u', 'm.'.$userCol, '=', 'u.'.$usuario['id_col']);
+                IeducarUsuarioScope::applyExclusions($q, $usuario, 'u');
+            }
+
+            $rows = $q
+                ->selectRaw($bucketExpr.' as bucket, COUNT(*) as c')
+                ->groupBy('bucket')
+                ->orderBy('bucket')
+                ->get();
+
+            $out = [];
+            foreach ($rows as $row) {
+                $key = self::normalizeHourBucketKey((string) ($row->bucket ?? ''));
+                if ($key !== '') {
+                    $out[$key] = (int) ($row->c ?? 0);
+                }
+            }
+
+            return $out;
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public static function turmaHourlyBuckets(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        string $dateCol,
+        int $seriesHours,
+        int $bucketHours = 1,
+    ): array {
+        unset($bucketHours);
+
+        try {
+            $turma = IeducarSchema::resolveTable('turma', $city);
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            $tId = (string) config('ieducar.columns.turma.id');
+            $since = Carbon::now()->subHours($seriesHours);
+            $bucketExpr = self::hourBucketExpression($db, 't.'.$dateCol);
+
+            $q = $db->table($turma.' as t');
+            if ($filters->yearFilterValue() !== null && $tc['year'] !== '') {
+                $q->where('t.'.$tc['year'], $filters->yearFilterValue());
+            }
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['turno'], $filters->turno_id);
+            $q->where('t.'.$dateCol, '>=', $since);
+
+            $rows = $q
+                ->selectRaw($bucketExpr.' as bucket, COUNT(DISTINCT t.'.$tId.') as c')
+                ->groupBy('bucket')
+                ->orderBy('bucket')
+                ->get();
+
+            $out = [];
+            foreach ($rows as $row) {
+                $key = self::normalizeHourBucketKey((string) ($row->bucket ?? ''));
+                if ($key !== '') {
+                    $out[$key] = (int) ($row->c ?? 0);
+                }
+            }
+
+            return $out;
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /**
      * @return array{day: int, week: int, fortnight: int}
      */
     public static function matriculaCountsByPeriod(
@@ -962,6 +1183,59 @@ final class IeducarWorkActivityQueries
         }
 
         return null;
+    }
+
+    private static function countTurmasSinceHours(
+        Connection $db,
+        City $city,
+        IeducarFilterState $filters,
+        string $dateCol,
+        int $hours,
+    ): int {
+        try {
+            $turma = IeducarSchema::resolveTable('turma', $city);
+            $tc = MatriculaTurmaJoin::turmaFilterColumns($db, $city);
+            $tId = (string) config('ieducar.columns.turma.id');
+            $since = Carbon::now()->subHours($hours);
+
+            $q = $db->table($turma.' as t');
+            if ($filters->yearFilterValue() !== null && $tc['year'] !== '') {
+                $q->where('t.'.$tc['year'], $filters->yearFilterValue());
+            }
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['escola'], $filters->escola_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['curso'], $filters->curso_id);
+            MatriculaTurmaJoin::whereTurmaColumnEqualsFilterId($q, $db, 't', $tc['turno'], $filters->turno_id);
+            $q->where('t.'.$dateCol, '>=', $since);
+
+            $row = $q->selectRaw('COUNT(DISTINCT t.'.$tId.') as c')->first();
+
+            return (int) ($row->c ?? 0);
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    private static function hourBucketExpression(Connection $db, string $qualifiedCol): string
+    {
+        if ($db->getDriverName() === 'pgsql') {
+            return "to_char(date_trunc('hour', {$qualifiedCol}), 'YYYY-MM-DD HH24:MI:SS')";
+        }
+
+        return "DATE_FORMAT({$qualifiedCol}, '%Y-%m-%d %H:00:00')";
+    }
+
+    private static function normalizeHourBucketKey(string $raw): string
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return '';
+        }
+
+        try {
+            return Carbon::parse($raw)->startOfHour()->format('Y-m-d H:00:00');
+        } catch (\Throwable) {
+            return '';
+        }
     }
 
     private static function countMatriculasSince(

@@ -49,7 +49,7 @@ final class RxColumnHelp
                 'key' => 'meta',
                 'title' => __('Meta de cadastro'),
                 'description' => __(
-                    'Ano de referência com turmas ou matrículas > 0 (busca até :n anos para trás se :a estiver zerado). Meta alvo = volume desse ano × (1 + :pct%)^saltos, em que cada salto é um ano a mais para trás em relação a :a.',
+                    'Ano de referência com turmas ou matrículas > 0 (busca até :n anos para trás se :a estiver zerado). Meta alvo = volume desse ano × (1 + :pct%)^saltos, em que cada salto é um ano a mais para trás em relação a :a. Abaixo do alvo: ritmo recente (turmas e matrículas em 24h, 48h e 72h) e mini-gráfico das últimas 72h — passe o rato para ver o detalhe por intervalo.',
                     [
                         'n' => (int) config('rx.meta_lookback_years', 10),
                         'a' => $anteriorYear,

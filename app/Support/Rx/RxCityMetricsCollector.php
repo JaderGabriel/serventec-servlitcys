@@ -228,6 +228,12 @@ final class RxCityMetricsCollector
         );
         $deltaInfo = RxCadastroGap::matriculasDelta($matV, $matA);
         $anoImediatoZerado = $matA === 0 && $turmasA === 0;
+        $cadastroPulse = $this->safe(
+            fn () => RxCadastroPulse::build($db, $city, $filtersVigente),
+            $warnings,
+            __('pulso de cadastro'),
+            RxCadastroPulse::empty(),
+        ) ?? RxCadastroPulse::empty();
 
         $row = array_merge($base, [
             'ok' => true,
@@ -278,6 +284,7 @@ final class RxCityMetricsCollector
                 'pending' => is_array($censo['pending'] ?? null) ? $censo['pending'] : [],
             ],
             'cadastro_ritmo_quinzena' => (int) ($estimativa['cadastros_ultima_quinzena'] ?? 0),
+            'cadastro_pulse' => is_array($cadastroPulse) ? $cadastroPulse : RxCadastroPulse::empty(),
             'consulta_warnings' => $warnings,
             'situacao_codigo' => $warnings === [] ? 'ok' : 'parcial',
             'conexao_ok' => true,
@@ -355,6 +362,7 @@ final class RxCityMetricsCollector
                 'pending' => [],
             ],
             'cadastro_ritmo_quinzena' => 0,
+            'cadastro_pulse' => RxCadastroPulse::empty(),
         ];
     }
 
