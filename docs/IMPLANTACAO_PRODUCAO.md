@@ -1,12 +1,27 @@
 # Implantação em produção — servlitcys
 
-**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
 
 > **Índice:** [README.md](README.md) · **Variáveis:** [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) · **Comandos:** [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md)
 
 Guia passo a passo para publicar no servidor (código, assets, migrações, filas e `.env`).
 
-**Versão de referência:** **4.1.0** · tag **`20260605-Athena`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md)
+**Versão de referência:** **4.4.0** · tag **`20260607a-Ananke`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md)
+
+```mermaid
+sequenceDiagram
+    participant Op as Operador
+    participant Git as Repositório
+    participant Srv as Servidor
+
+    Op->>Git: git fetch --tags && git checkout TAG
+    Op->>Srv: composer install --no-dev
+    Srv->>Srv: migrate --force
+    Srv->>Srv: config/route/view cache
+    Srv->>Srv: queue:restart
+```
+
+Fluxo completo: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) §6.
 
 ---
 

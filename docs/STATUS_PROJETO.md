@@ -4,7 +4,40 @@
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
-Referência do que está **implementado** hoje. Para **decisões técnicas**, ver [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md). Para **próximas entregas**, ver [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md). **Índice completo:** [README.md](README.md).
+Referência do que está **implementado** hoje. Para **decisões técnicas**, ver [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md). Para **próximas entregas**, ver [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md). **Índice completo:** [README.md](README.md) · **diagramas:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
+
+---
+
+## Mapa de capacidades (4.4.0)
+
+```mermaid
+flowchart TB
+    subgraph Consultoria
+        D[Diagnóstico]
+        CAD[Cadastro · CadÚnico]
+        PED[Pedagógico · NEE/SAEB]
+        CEN[Censo · ritmo]
+        FIN[Finanças · FUNDEB · Tempo Real]
+    end
+
+    subgraph Admin
+        IMP[Importações hub]
+        COMP[i-Educar compatibilidade<br/>VAAR · CadÚnico · Discrepâncias]
+        RX[Painel RX]
+    end
+
+    subgraph Dados
+        IED[(i-Educar)]
+        PUB[APIs FNDE · IBGE · MDS]
+        LOC[(MySQL app)]
+    end
+
+    Consultoria --> IED
+    Consultoria --> LOC
+    Admin --> PUB
+    Admin --> LOC
+    COMP -.->|paridade| FIN
+```
 
 ---
 

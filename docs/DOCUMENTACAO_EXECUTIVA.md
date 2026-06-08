@@ -1,12 +1,35 @@
 # Documentação executiva — servlitcys
 
-**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
 
 > **Índice:** [README.md](README.md) · **Estado:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md)
 
 ## Propósito
 
 O **servlitcys** é uma aplicação web que consolida **informação educacional ao nível municipal**, permitindo explorar indicadores, painéis analíticos e comparações entre territórios. O objetivo é apoiar **análise, planeamento e decisão** com dados organizados e acessíveis a equipas autorizadas.
+
+```mermaid
+flowchart LR
+    subgraph Entrada
+        Login[Autenticação RBAC]
+    end
+    subgraph Painéis
+        Analytics[Consultoria 16 abas]
+        RX[RX municipal]
+        Home[Início admin]
+    end
+    subgraph Fontes
+        Ied[i-Educar]
+        Pub[FNDE · IBGE · MDS]
+    end
+    Login --> Analytics
+    Login --> RX
+    Login --> Home
+    Analytics --> Ied
+    Analytics --> Pub
+```
+
+Arquitectura detalhada: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
 ## Público-alvo
 

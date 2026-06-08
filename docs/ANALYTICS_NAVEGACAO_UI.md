@@ -1,6 +1,6 @@
 # Analytics — navegação e UI de consultoria
 
-**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
 
 > **Release:** [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md) · **Índice:** [README.md](README.md) · **Padrão:** [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md)
 
@@ -8,8 +8,24 @@
 
 O painel `/dashboard/analytics` organiza-se em **cinco áreas temáticas** (nível 1) e **sub-abas** (nível 2). O estado vive em Alpine (`analyticsTabs` em `resources/js/app.js`); o catálogo PHP é `App\Support\Dashboard\AnalyticsTabCatalog`. Decisão de produto: [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md) (cenário C).
 
-```
-Resumo (1) → Cadastro (2) → Pedagógico (3) → Censo (4) → Finanças (5)
+```mermaid
+flowchart TB
+    subgraph Resumo["1 · Resumo (teal)"]
+        MH[municipality_health]
+    end
+    subgraph Cadastro["2 · Cadastro (indigo)"]
+        OV[overview · enrollment · cadunico · network · units]
+    end
+    subgraph Ped["3 · Pedagógico (violet)"]
+        IP[inclusion · performance · attendance]
+    end
+    subgraph Censo["4 · Censo (sky)"]
+        WD[work_done]
+    end
+    subgraph Fin["5 · Finanças (teal)"]
+        FN[discrepancies · fundeb · realtime · comparativo · funding]
+    end
+    MH --> Cadastro --> Ped --> Censo --> Fin
 ```
 
 | Grupo `id` | Label UI | Tom nav | Abas |
@@ -96,7 +112,7 @@ Calculado em `MunicipalityHealthRepository::computeComplianceScore()`:
 | 4.0.0 Hestia | Início reorganizado; Acesso rápido; rebuild Tempo Real |
 | 4.1.0 Athena | Cenário C — área **Resumo**; Diagnóstico como entrada; fix alertas Tempo Real |
 
-Versão em produção: **4.1.0** / tag **`20260605-Athena`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
+Versão em produção: **4.4.0** / tag **`20260607a-Ananke`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · diagramas: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
 ## Volume: matrículas vs alunos distintos (3.8.0+)
 

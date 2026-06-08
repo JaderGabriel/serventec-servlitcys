@@ -1,6 +1,6 @@
 # Backlog de implementações — servlitcys
 
-**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
 
 > **Índice:** [README.md](README.md) · **Estado actual:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 

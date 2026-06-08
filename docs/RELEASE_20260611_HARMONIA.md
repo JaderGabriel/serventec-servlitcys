@@ -4,6 +4,8 @@
 
 ## Resumo
 
+> **Nota:** esta release foi documentada com data `20260611` (incorrecta). O conteúdo está consolidado em **4.4.0** · `20260607a-Ananke` — [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md).
+
 Minor **4.3.0** sobre **4.2.0** (Clio — portaria VAAT/VAAR e gráfico RX inicial):
 
 ### Discrepâncias × cadastro (geo e consultoria)

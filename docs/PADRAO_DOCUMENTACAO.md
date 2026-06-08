@@ -15,7 +15,7 @@ Todo documento **mantido activamente** (âncora, guia operacional, release recen
 ```markdown
 # Título — contexto curto (servlitcys)
 
-**Versão do produto:** 4.1.0 · **Última revisão:** AAAA-MM-DD
+**Versão do produto:** 4.4.0 · **Última revisão:** AAAA-MM-DD
 
 > **Índice:** [README.md](README.md) · **Relacionado:** [outro-doc.md](outro-doc.md)
 ```
@@ -30,6 +30,7 @@ Todo documento **mantido activamente** (âncora, guia operacional, release recen
 |----------|------------------------|
 | O que está em produção? | [STATUS_PROJETO.md](STATUS_PROJETO.md) + `config/documentation.php` |
 | Qual a versão e tag? | [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) |
+| Diagramas de arquitectura e fluxos? | [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) |
 | Porquê esta decisão técnica? | [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) |
 | Ordem das abas / UI | [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) §5 + [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) |
 | Comandos CLI | [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) + `ArtisanCommandsCatalog` |

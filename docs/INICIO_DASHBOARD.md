@@ -1,6 +1,6 @@
 # Início (`/dashboard`) — painel admin
 
-**Versão do produto:** 4.1.0 · **Última revisão:** 2026-06-05
+**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
 
 > **Release Início:** [RELEASE_20260604_HESTIA.md](RELEASE_20260604_HESTIA.md) (4.0.0) · **Índice:** [README.md](README.md)
 

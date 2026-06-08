@@ -372,6 +372,7 @@ final class DocumentationCatalog
                 'items' => [
                     ['label' => __('Índice da documentação'), 'path' => 'docs/README.md', 'hint' => __('Ponto de entrada')],
                     ['label' => __('Padrão editorial'), 'path' => 'docs/PADRAO_DOCUMENTACAO.md', 'hint' => __('Qualidade e manutenção')],
+                    ['label' => __('Arquitectura e fluxos'), 'path' => 'docs/ARQUITETURA_E_FLUXOS.md', 'hint' => __('Diagramas Mermaid')],
                     ['label' => __('Documentação executiva'), 'path' => 'docs/DOCUMENTACAO_EXECUTIVA.md'],
                     ['label' => __('Perfis de utilizador'), 'path' => 'docs/PERFIS_UTILIZADOR.md'],
                     ['label' => __('Design system (UI)'), 'path' => 'docs/DESIGN_SYSTEM.md'],

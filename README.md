@@ -2,7 +2,60 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão em produção (`main`):** **4.4.0** (tags com sufixo no mesmo dia, paridade Discrepâncias, VAAR/CadÚnico no admin; tag **`20260607a-Ananke`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md) · release: [docs/RELEASE_20260607a_ANANKE.md](docs/RELEASE_20260607a_ANANKE.md).
+**Versão em produção (`main`):** **4.4.0** · tag **`20260607a-Ananke`** · [release](docs/RELEASE_20260607a_ANANKE.md) · [histórico](docs/HISTORICO_VERSOES.md)
+
+---
+
+## Visão geral
+
+```mermaid
+flowchart LR
+    subgraph Utilizadores
+        Admin[Administrador]
+        Analista[User / Municipal]
+    end
+
+    subgraph servlitcys
+        Inicio[Início / RX]
+        Analytics[Consultoria<br/>16 abas · 5 áreas]
+        AdminPanel[Admin<br/>importações · compatibilidade]
+    end
+
+    subgraph Bases
+        AppDB[(MySQL app)]
+        Ieducar[(i-Educar<br/>por município)]
+        APIs[Fontes públicas<br/>FNDE · IBGE · MDS]
+    end
+
+    Admin --> Inicio
+    Admin --> Analytics
+    Admin --> AdminPanel
+    Analista --> Analytics
+    servlitcys --> AppDB
+    servlitcys --> Ieducar
+    servlitcys --> APIs
+```
+
+| Pergunta | Onde ler |
+|----------|----------|
+| O que está implementado? | [docs/STATUS_PROJETO.md](docs/STATUS_PROJETO.md) |
+| Diagramas e fluxos (deploy, FUNDEB, releases) | [docs/ARQUITETURA_E_FLUXOS.md](docs/ARQUITETURA_E_FLUXOS.md) |
+| Índice completo da documentação | [docs/README.md](docs/README.md) |
+| Hub visual (timeline 4.x, mapa de docs) | [Canvas documentação](/home/jadergabriel/.cursor/projects/home-jadergabriel-servlitcys/canvases/documentacao-hub.canvas.tsx) — abrir ao lado do chat no Cursor |
+
+### Consultoria — 5 áreas
+
+```mermaid
+flowchart TB
+    R[1 Resumo → Diagnóstico] --> C[2 Cadastro · 5 abas]
+    C --> P[3 Pedagógico · 3 abas]
+    P --> Ce[4 Censo]
+    Ce --> F[5 Finanças · Discrepâncias · FUNDEB · Tempo Real · Comparativo · Financiamentos]
+```
+
+Detalhe: [docs/ANALYTICS_NAVEGACAO_UI.md](docs/ANALYTICS_NAVEGACAO_UI.md).
+
+---
 
 ## Requisitos
 
@@ -171,24 +224,38 @@ composer run phpstan
 
 ## Documentação
 
-**Entrada central:** [**docs/README.md**](docs/README.md) — índice, estado, ponderações técnicas e backlog único.
+**Entrada central:** [docs/README.md](docs/README.md) · **fluxos visuais:** [docs/ARQUITETURA_E_FLUXOS.md](docs/ARQUITETURA_E_FLUXOS.md)
+
+```mermaid
+mindmap
+  root((Documentação))
+    Estado
+      STATUS_PROJETO
+      HISTORICO_VERSOES
+    Produto
+      DOCUMENTACAO_EXECUTIVA
+      ANALYTICS_NAVEGACAO_UI
+      DESIGN_SYSTEM
+    Operação
+      IMPLANTACAO_PRODUCAO
+      VARIAVEIS_AMBIENTE
+      COMANDOS_ARTISAN
+      SEGURANCA
+    Finanças
+      FUNDEB_VAAF_E_ONDA1
+      CONSULTAS_EXTERNAS
+```
 
 | Âncora | Ficheiro |
 |--------|----------|
 | Estado actual | [docs/STATUS_PROJETO.md](docs/STATUS_PROJETO.md) |
+| Arquitectura e fluxos | [docs/ARQUITETURA_E_FLUXOS.md](docs/ARQUITETURA_E_FLUXOS.md) |
 | Design system (UI) | [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) |
-| Decisões técnicas («porquê») | [docs/PONDERACOES_TECNICAS.md](docs/PONDERACOES_TECNICAS.md) |
-| Novas implementações (backlog) | [docs/BACKLOG_IMPLEMENTACOES.md](docs/BACKLOG_IMPLEMENTACOES.md) |
+| Decisões técnicas | [docs/PONDERACOES_TECNICAS.md](docs/PONDERACOES_TECNICAS.md) |
+| Backlog | [docs/BACKLOG_IMPLEMENTACOES.md](docs/BACKLOG_IMPLEMENTACOES.md) |
+| Padrão editorial | [docs/PADRAO_DOCUMENTACAO.md](docs/PADRAO_DOCUMENTACAO.md) |
 
-- [**Implantação em produção**](docs/IMPLANTACAO_PRODUCAO.md) — deploy (Pulse, notificações, `.env`, filas, cron)
-- [Documentação executiva](docs/DOCUMENTACAO_EXECUTIVA.md) — visão de negócio e stakeholders
-- [Comandos Artisan](docs/COMANDOS_ARTISAN.md) — CLI (geo, SAEB, FUNDEB, schema probe, deploy); tela admin em `/admin/artisan-commands`
-- [FUNDEB / VAAF e Onda 1](docs/FUNDEB_VAAF_E_ONDA1.md) — referências por município/ano na base
-- [**Estudo: integrações setor público**](docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) — saúde, SUAS, tesouro, janelas de implementação, APIs e previsão de demanda educacional
-- [**Consultas externas**](docs/CONSULTAS_EXTERNAS.md) — FNDE, Tesouro, Portal da Transparência; necessidade, impacto e uso por aba
-- [**Roadmap financeiro**](docs/ROADMAP_BASES_CALCULOS_FINANCEIROS.md) — bases e cálculos futuros (repasses, programas, VAAR)
-- [Segurança e operações](docs/SEGURANCA.md) — senhas, permissões e checklist de deploy
-- [Métricas: queries lentas no analytics](docs/METRICAS_QUERIES_ANALYTICS.md) — Pulse, staging e anonimização
+Leitura na interface: `/admin/documentacao` (admin) · `/documentacao` (utilizador/municipal).
 
 ## Estrutura de permissões (resumo)
 
@@ -203,25 +270,18 @@ composer run phpstan
 
 Detalhe: [docs/PERFIS_UTILIZADOR.md](docs/PERFIS_UTILIZADOR.md).
 
-## Histórico de versões (resumo)
+## Histórico de versões (linha 4.x)
 
-| Versão | Commit | # | Notas |
-|--------|--------|---|--------|
-| **3.0.0** | `20260525-Apollo` | — | LGPD, notificações, NEE catálogo INEP, consultoria/SAEB — [RELEASE_20260525_APOLLO.md](docs/RELEASE_20260525_APOLLO.md). |
-| **2.4.0** | `20260524-Ceres` | — | Planilhas SAEB INEP (`saeb:import-planilhas-inep`), FUNDEB import — [RELEASE_20260524_CERES.md](docs/RELEASE_20260524_CERES.md). |
-| **2.3.8** | `20260521-Mercury` → `3c935ca` | 182 | VAAF municipal, contatos, perfil, RX — ver [RELEASE_20260521_MERCURY.md](docs/RELEASE_20260521_MERCURY.md). |
-| **2.3.7** | `20260521-Minerva` → `a9a8c73` | 180 | Consultoria VAAF/saldo, overlay, diagnóstico — ver [RELEASE_20260521_MINERVA.md](docs/RELEASE_20260521_MINERVA.md). |
-| **2.3.6** | `20260522-Janus` → `9350e9d` | 174 | RX, mapa, Inclusão, Matrículas — ver [RELEASE_20260522_JANUS.md](docs/RELEASE_20260522_JANUS.md). |
-| **2.3.2** | `4d3f5e8` | 157 | Saldo pedagógico, frequência/falta_aluno, FUNDEB lazy matrículas, UI impact strip. |
-| **2.3.1** | `4893801` | 155 | Modal mapa unidades (QEdu, endereço, métricas), FUNDEB e sync semanal. |
-| **2.3.0** | `05a7410` | 151 | VAAF ampliado, repasses Tesouro CSV, sync semanal, PDF quadros FUNDEB, Financiamentos. |
-| **2.2.0** | `2c8cf44` | 135 | Matriz VAAF/VAAT, importações externas com guia de impacto, PDF comparativos, dashboard admin. |
-| **v2.1.0** | `c3ec8b9` | 66 | Sync geográfica INEP, pipeline microdados, mapa unidades. |
-| **v2.0.1** | `683510b` | 28 | Inclusão cor/raça; estabilização analytics 2.0.x. |
-| **v2.0.0** | — | ~15–27 | Matrículas INEP, `pdo_pgsql`, evolução painel. |
-| **v1.0.0** | `8507c9a` | 1 | Plataforma inicial Laravel + i-Educar. |
+| Versão | Tag | Data | Destaque |
+|--------|-----|------|----------|
+| **▶ 4.4.0** | `20260607a-Ananke` | 07/06 | Sufixo no mesmo dia, paridade Discrepâncias, VAAR/CadÚnico admin — [RELEASE](docs/RELEASE_20260607a_ANANKE.md) |
+| 4.3.0 | `20260611-Harmonia` | 11/06 | RX portaria, gráfico home, CLI `--replace` — [RELEASE](docs/RELEASE_20260611_HARMONIA.md) |
+| 4.2.0 | `20260610-Clio` | 10/06 | VAAT/VAAR portaria, hub Discrepâncias — [RELEASE](docs/RELEASE_20260610_CLIO.md) |
+| 4.1.9 | `20260609-Theia` | 09/06 | Outlook Finanças, diagrama ERP — [RELEASE](docs/RELEASE_20260609_THEIA.md) |
+| 4.1.0 | `20260605-Athena` | 05/06 | Navegação 5 áreas (cenário C) — [RELEASE](docs/RELEASE_20260605_ATHENA.md) |
+| 4.0.0 | `20260604-Hestia` | 04/06 | Início reorganizado, rebuild Tempo Real — [RELEASE](docs/RELEASE_20260604_HESTIA.md) |
 
-Detalhe, marcos intermédios e instruções de tag: **[docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md)** · estado funcional: **[docs/STATUS_PROJETO.md](docs/STATUS_PROJETO.md)**.
+Linha completa (2.x–4.x), tags Git e convenção de sufixo: **[docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md)**.
 
 ## Licença
 

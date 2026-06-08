@@ -6,6 +6,24 @@
 
 Marco **4.4.0** sobre **4.3.0** (Harmonia — conteúdo integrado; data da tag corrigida) e **4.2.0** (Clio):
 
+```mermaid
+flowchart LR
+    P[20260607-Phronesis<br/>4.1.7] --> A[20260607a-Ananke<br/>4.4.0]
+    H[20260611-Harmonia<br/>4.3.0 conteúdo] -.->|integrado| A
+    C[20260610-Clio<br/>4.2.0] --> H
+```
+
+Convenção de tag no mesmo dia:
+
+```mermaid
+flowchart TD
+    D{Dia já tem release?}
+    D -->|Não| T1["YYYYMMDD-Codename"]
+    D -->|Sim| T2["YYYYMMDD + a|b|c… -Codename"]
+    T1 --> SK[sort_key ordena submenu docs]
+    T2 --> SK
+```
+
 ### Convenção de tags (mesmo dia)
 
 - Formato habitual: `YYYYMMDD-Codename` (ex.: `20260607-Phronesis`).
@@ -48,4 +66,6 @@ php artisan test --filter='ProductReleaseTagTest|DocumentationCatalogTest|Discre
 ## Documentação
 
 - [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
+- [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) — diagramas de sistema e deploy
 - [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) §6
+- [README.md](../README.md) e [docs/README.md](README.md) — índice revisado com Mermaid

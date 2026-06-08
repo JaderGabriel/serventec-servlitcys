@@ -14,6 +14,21 @@
 >
 > **Entregas em série (mai/2026):** ver [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md).
 
+### Linha 4.x (visual)
+
+```mermaid
+timeline
+    title Marcos semânticos 4.x
+    2026-06-04 : 4.0.0 Hestia — Início reorganizado
+    2026-06-05 : 4.1.0 Athena — 5 áreas consultoria
+    2026-06-07 : 4.1.7 Phronesis — portarias FUNDEB
+    2026-06-07 : 4.4.0a Ananke — sufixo mesmo dia
+    2026-06-10 : 4.2.0 Clio — VAAT/VAAR portaria
+    2026-06-11 : 4.3.0 Harmonia — RX + gráfico home
+```
+
+Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) §5–6.
+
 ---
 
 ## Linha do tempo

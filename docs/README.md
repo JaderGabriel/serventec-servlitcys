@@ -1,18 +1,32 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 4.1.9 · tag `20260609-Theia` · **Última revisão:** 2026-06-09
+**Versão do produto:** 4.4.0 · tag `20260607a-Ananke` · **Última revisão:** 2026-06-07
 
-Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md).
+Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitectura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
+
+**Canvas interactivo** (timeline 4.x, mapa de docs): [documentacao-hub.canvas.tsx](/home/jadergabriel/.cursor/projects/home-jadergabriel-servlitcys/canvases/documentacao-hub.canvas.tsx) — abrir ao lado do chat no Cursor.
 
 ---
 
 ## Começar aqui
 
+```mermaid
+flowchart TD
+    Start{Perfil?}
+    Start -->|Gestão| G[DOCUMENTACAO_EXECUTIVA]
+    Start -->|Analista| A[PERFIS_UTILIZADOR → ANALYTICS_NAVEGACAO_UI]
+    Start -->|Dev| D[STATUS → PONDERACOES → README repo]
+    Start -->|Ops| O[VARIAVEIS → IMPLANTACAO → SEGURANCA]
+    Start -->|Produto| P[BACKLOG_IMPLEMENTACOES]
+    G --> S[STATUS_PROJETO]
+    S --> H[HISTORICO_VERSOES]
+```
+
 | Perfil | Leia primeiro |
 |--------|----------------|
 | Gestão / secretaria | [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) → [STATUS_PROJETO.md](STATUS_PROJETO.md) → [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) |
 | Analista (utilizador) | [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) → [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) |
-| Desenvolvimento | [STATUS_PROJETO.md](STATUS_PROJETO.md) → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) → [README do repositório](../README.md) |
+| Desenvolvimento | [STATUS_PROJETO.md](STATUS_PROJETO.md) → [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) → [README do repositório](../README.md) |
 | Operações / deploy | [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) → [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) → [SEGURANCA.md](SEGURANCA.md) → [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) |
 | Priorização de produto | [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) |
 
@@ -22,6 +36,7 @@ Ponto de entrada da documentação técnica e funcional. Para **padrão editoria
 
 | Documento | Função |
 |-----------|--------|
+| [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) | Diagramas: camadas, RBAC, consultoria, FUNDEB, deploy, releases |
 | [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) | Padrão editorial e checklist de manutenção |
 | [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) | Tags, commits e trajetória de releases |
 | [STATUS_PROJETO.md](STATUS_PROJETO.md) | Funcionalidades **implementadas** em produção |
@@ -32,6 +47,28 @@ Ponto de entrada da documentação técnica e funcional. Para **padrão editoria
 ---
 
 ## Mapa por tema
+
+```mermaid
+mindmap
+  root((docs/))
+    Produto
+      DOCUMENTACAO_EXECUTIVA
+      ANALYTICS_NAVEGACAO_UI
+      INICIO_DASHBOARD
+    Finanças
+      FUNDEB_VAAF_E_ONDA1
+      CONSULTAS_EXTERNAS
+      ROADMAP_BASES_CALCULOS
+    CadÚnico
+      CADUNICO_PREVISAO_TERRITORIAL
+      CADUNICO_AUTOMACAO
+    Operação
+      IMPLANTACAO_PRODUCAO
+      VARIAVEIS_AMBIENTE
+      COMANDOS_ARTISAN
+    Releases
+      RELEASE_*
+```
 
 ### 1. Produto e acesso
 
@@ -62,7 +99,7 @@ Ponto de entrada da documentação técnica e funcional. Para **padrão editoria
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md) | VAAF, VAAR, previsão |
+| [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md) | VAAF, VAAT, VAAR, previsão |
 | [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) | FNDE, Tesouro, INEP, repasses |
 | [BB_EXTRATO_OPEN_FINANCE.md](BB_EXTRATO_OPEN_FINANCE.md) | Extrato BB / Open Finance |
 | [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md) | Export matriz FUNDEB |
@@ -83,14 +120,6 @@ Ponto de entrada da documentação técnica e funcional. Para **padrão editoria
 | [RELEASE_20260605_KAIROS.md](RELEASE_20260605_KAIROS.md) | 4.1.1 — Kairos |
 | [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md) | 4.1.0 — Athena |
 | [RELEASE_20260604_HESTIA.md](RELEASE_20260604_HESTIA.md) | 4.0.0 — Hestia |
-| [RELEASE_20260604_PLUTUS.md](RELEASE_20260604_PLUTUS.md) | 3.10.0 — Plutus |
-| [RELEASE_20260604_GAIA.md](RELEASE_20260604_GAIA.md) | 3.9.0 — Gaia |
-| [RELEASE_20260603_ARTEMIS.md](RELEASE_20260603_ARTEMIS.md) | 3.8.0 — Artemis |
-| [RELEASE_20260603_SELENE.md](RELEASE_20260603_SELENE.md) | 3.7.0 — Selene |
-| [RELEASE_20260603_IRIS.md](RELEASE_20260603_IRIS.md) | 3.6.0 — Iris |
-| [RELEASE_20260602_HERMES.md](RELEASE_20260602_HERMES.md) | 3.5.1 — Hermes |
-| [RELEASE_20260601_ATLAS.md](RELEASE_20260601_ATLAS.md) | 3.5.0 — Atlas |
-| [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md) | 3.4.0 — Nemesis |
 
 Histórico completo: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -126,15 +155,27 @@ Histórico completo: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
 ---
 
-## Consultoria — abas (4.1.0)
+## Consultoria — abas (4.1.0+)
 
-| Área | Abas |
-|------|------|
-| **1 Resumo** | Diagnóstico |
-| **2 Cadastro** | Visão geral, Matrículas, CadÚnico, Rede, Unidades |
-| **3 Pedagógico** | Inclusão, Desempenho, Frequência |
-| **4 Censo** | Censo |
-| **5 Finanças** | Discrepâncias, FUNDEB, Tempo Real, Comparativo, Financiamentos |
+```mermaid
+flowchart LR
+    subgraph R["1 Resumo"]
+        MH[Diagnóstico]
+    end
+    subgraph C["2 Cadastro"]
+        C1[5 abas]
+    end
+    subgraph P["3 Pedagógico"]
+        P1[3 abas]
+    end
+    subgraph Ce["4 Censo"]
+        Ce1[Censo]
+    end
+    subgraph F["5 Finanças"]
+        F1[Discrepâncias · FUNDEB · Tempo Real · Comparativo · Financiamentos]
+    end
+    MH --> C1 --> P1 --> Ce1 --> F1
+```
 
 Faixa de impacto (saldo indicativo): `AnalyticsTabImpactBuilder` — ver [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md).
 
@@ -156,10 +197,11 @@ Links internos abrem no leitor da mesma rota; «Ver no GitHub» usa `config/docu
 
 Seguir [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) §6. Resumo:
 
-1. Funcionalidade nova → `STATUS_PROJETO.md` + release se visível ao utilizador  
-2. Decisão técnica → `PONDERACOES_TECNICAS.md`  
-3. Planeamento → `BACKLOG_IMPLEMENTACOES.md`  
+1. Funcionalidade nova → `STATUS_PROJETO.md` + release se visível ao utilizador
+2. Decisão técnica → `PONDERACOES_TECNICAS.md`
+3. Planeamento → `BACKLOG_IMPLEMENTACOES.md`
 4. Versão → `HISTORICO_VERSOES.md` + `config/documentation.php`
+5. Diagrama novo de arquitectura → preferir [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md)
 
 ---
 

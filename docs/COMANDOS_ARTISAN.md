@@ -1,6 +1,6 @@
 # Comandos Artisan — servlitcys
 
-**Versão do produto:** 4.1.8 · **Última revisão:** 2026-06-08
+**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
 
 > **Índice:** [README.md](README.md) · **Padrão doc:** [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md)
 

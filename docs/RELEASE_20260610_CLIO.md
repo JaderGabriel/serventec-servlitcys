@@ -2,6 +2,19 @@
 
 **Data:** 2026-06-10 · **Ramo:** `main` · **Figura:** *Clio* (registo fiel — portaria consolidada vs cadastro em curso).
 
+## Contexto na linha 4.x
+
+```mermaid
+flowchart LR
+    H[4.0 Hestia] --> A[4.1 Athena]
+    A --> P[4.1.7 Phronesis]
+    P --> C[4.2 Clio]
+    C --> Ha[4.3 Harmonia]
+    Ha --> An[4.4 Ananke]
+```
+
+Ver [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) e [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
+
 ## Resumo
 
 Minor **4.2.0** sobre **4.1.9** (Theia — projeção Finanças e mapa CadÚnico):
