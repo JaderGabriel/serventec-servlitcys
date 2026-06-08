@@ -173,7 +173,6 @@
                 <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
                     <p class="serv-eyebrow">{{ __('Tabela') }}</p>
                     <h3 class="font-display font-semibold text-serv-navy dark:text-white">{{ __('Detalhe por município') }}</h3>
-                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Leia da esquerda para a direita: meta → cadastrado → falta. Violeta · verde · âmbar.') }}</p>
                 </div>
                 <x-rx.cadastro-concepts
                     :vigenteAno="$rx['vigente_ano'] ?? ''"
@@ -202,40 +201,40 @@
                             />
                             <tr>
                                 <th class="{{ $rxTh('semaforo') }}" title="{{ $thTitle('semaforo') }}">
-                                    <x-rx.table-column-header :title="$th('semaforo', __('Indicador'))" />
+                                    <x-rx.table-column-header tone="neutral" :title="$th('semaforo', __('Indicador'))" />
                                 </th>
                                 <th class="{{ $rxTh('municipio') }}" title="{{ $thTitle('municipio') }}">
-                                    <x-rx.table-column-header icon="map-pin" :title="$th('municipio', __('Município'))" />
+                                    <x-rx.table-column-header icon="map-pin" tone="neutral" :title="$th('municipio', __('Município'))" />
                                 </th>
                                 <th class="{{ $rxTh('meta', true) }} min-w-[8.5rem]" title="{{ $thTitle('meta') }}">
-                                    <x-rx.table-column-header icon="chart-bar" align="right" :title="$th('meta', __('Meta alvo'))" :subtitle="__('tur. · mat.')" />
+                                    <x-rx.table-column-header icon="chart-bar" tone="meta" align="right" :title="$th('meta', __('Meta alvo'))" :subtitle="__('tur. · mat.')" />
                                 </th>
                                 <th class="{{ $rxTh('alunos', true) }}" title="{{ $thTitle('alunos') }}">
-                                    <x-rx.table-column-header icon="users" align="right" :title="$th('alunos', __('Alunos'))" :subtitle="__('distintos')" />
+                                    <x-rx.table-column-header icon="users" tone="vigente" align="right" :title="$th('alunos', __('Alunos'))" :subtitle="__('distintos')" />
                                 </th>
                                 <th class="{{ $rxTh('matriculas', true) }}" title="{{ $thTitle('matriculas') }}">
-                                    <x-rx.table-column-header icon="clipboard-document-list" align="right" :title="$th('matriculas', __('Matrículas'))" :subtitle="__('activas')" />
+                                    <x-rx.table-column-header icon="clipboard-document-list" tone="vigente" align="right" :title="$th('matriculas', __('Matrículas'))" :subtitle="__('activas')" />
                                 </th>
                                 <th class="{{ $rxTh('turmas', true) }}" title="{{ $thTitle('turmas') }}">
-                                    <x-rx.table-column-header icon="academic-cap" align="right" :title="$th('turmas', __('Turmas'))" :subtitle="__('abertas')" />
+                                    <x-rx.table-column-header icon="academic-cap" tone="vigente" align="right" :title="$th('turmas', __('Turmas'))" :subtitle="__('abertas')" />
                                 </th>
                                 <th class="{{ $rxTh('progresso', true) }} min-w-[9rem]" title="{{ $thTitle('progresso') }}">
-                                    <x-rx.table-column-header icon="check-circle" align="right" :title="$th('progresso', __('Progresso'))" :subtitle="__('ritmo 72h')" />
+                                    <x-rx.table-column-header icon="check-circle" tone="vigente" align="right" :title="$th('progresso', __('Progresso'))" :subtitle="__('ritmo 72h')" />
                                 </th>
                                 <th class="{{ $rxTh('falta', true) }}" title="{{ $thTitle('falta') }}">
-                                    <x-rx.table-column-header icon="exclamation-triangle" align="right" :title="$th('falta', __('Falta'))" :subtitle="__('registos')" />
+                                    <x-rx.table-column-header icon="exclamation-triangle" tone="falta" align="right" :title="$th('falta', __('Falta'))" :subtitle="__('registos')" />
                                 </th>
                                 <th class="{{ $rxTh('dias', true) }}" title="{{ $thTitle('dias') }}">
-                                    <x-rx.table-column-header icon="command-line" align="right" :title="$th('dias', __('Dias'))" :subtitle="__('p/ meta')" />
+                                    <x-rx.table-column-header icon="command-line" tone="falta" align="right" :title="$th('dias', __('Dias'))" :subtitle="__('p/ meta')" />
                                 </th>
                                 <th class="{{ $rxTh('delta', true) }}" title="{{ $thTitle('delta') }}">
-                                    <x-rx.table-column-header icon="arrow-path" align="right" :title="$th('delta', __('Δ matr.'))" :subtitle="__('vs :ano', ['ano' => $rx['anterior_ano'] ?? ''])" />
+                                    <x-rx.table-column-header icon="arrow-path" tone="comparativo" align="right" :title="$th('delta', __('Δ matr.'))" :subtitle="__('vs :ano', ['ano' => $rx['anterior_ano'] ?? ''])" />
                                 </th>
                                 <th class="{{ $rxTh('censo', true) }}" title="{{ $thTitle('censo') }}">
-                                    <x-rx.table-column-header icon="document-text" align="right" :title="$th('censo', __('Censo'))" />
+                                    <x-rx.table-column-header icon="document-text" tone="comparativo" align="right" :title="$th('censo', __('Censo'))" />
                                 </th>
                                 <th class="{{ $rxTh('situacao') }}" title="{{ $thTitle('situacao') }}">
-                                    <x-rx.table-column-header icon="signal" :title="$th('situacao', __('Leitura'))" />
+                                    <x-rx.table-column-header icon="signal" tone="neutral" :title="$th('situacao', __('Leitura'))" />
                                 </th>
                             </tr>
                         </thead>

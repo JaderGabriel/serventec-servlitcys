@@ -20,8 +20,6 @@
         </p>
         <p class="serv-rx-val--meta-ref">
             {{ __('Ref. :ano', ['ano' => (int) ($row['meta_referencia_ano'] ?? 0)]) }}
-            · {{ $fmt((int) ($row['meta_referencia_turmas'] ?? 0)) }} {{ __('tur.') }}
-            · {{ $fmt((int) ($row['meta_referencia_matriculas'] ?? 0)) }} {{ __('mat.') }}
         </p>
         @if ($row['meta_ano_imediato_zerado'] ?? false)
             <p class="text-[10px] font-medium text-amber-800 dark:text-amber-200">

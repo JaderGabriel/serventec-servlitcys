@@ -652,12 +652,37 @@
             dark:border-slate-700/80 dark:from-slate-900/70 dark:via-slate-900/50 dark:to-slate-950/80;
     }
 
-    .serv-rx-cadastro-concepts__title {
-        @apply text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400;
-    }
-
     .serv-rx-cadastro-concepts__footnote {
         @apply mt-2.5 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed;
+    }
+
+    .serv-rx-col-icon {
+        @apply inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border;
+    }
+
+    .serv-rx-col-icon--meta {
+        @apply border-violet-300/80 bg-violet-100 text-violet-800
+            dark:border-violet-700/60 dark:bg-violet-950/60 dark:text-violet-200;
+    }
+
+    .serv-rx-col-icon--vigente {
+        @apply border-teal-300/80 bg-teal-100 text-teal-800
+            dark:border-teal-700/60 dark:bg-teal-950/60 dark:text-teal-200;
+    }
+
+    .serv-rx-col-icon--falta {
+        @apply border-amber-300/80 bg-amber-100 text-amber-900
+            dark:border-amber-700/60 dark:bg-amber-950/60 dark:text-amber-200;
+    }
+
+    .serv-rx-col-icon--comparativo {
+        @apply border-sky-300/80 bg-sky-100 text-sky-800
+            dark:border-sky-700/60 dark:bg-sky-950/60 dark:text-sky-200;
+    }
+
+    .serv-rx-col-icon--neutral {
+        @apply border-slate-300/80 bg-slate-100 text-slate-600
+            dark:border-slate-600/60 dark:bg-slate-800/80 dark:text-slate-300;
     }
 
     /* Ritmo de cadastro — paleta fuchsia (distinta da meta violeta e dos volumes teal/sky) */

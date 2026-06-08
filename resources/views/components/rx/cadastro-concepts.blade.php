@@ -8,10 +8,7 @@
 @endphp
 
 <div {{ $attributes->merge(['class' => 'serv-rx-cadastro-concepts px-4 py-3.5']) }}>
-    <p class="serv-rx-cadastro-concepts__title">
-        {{ __('Como ler a tabela') }}
-    </p>
-    <div class="serv-rx-table-flow mt-3">
+    <div class="serv-rx-table-flow">
         <div class="serv-rx-table-flow__step serv-rx-table-flow__step--meta">
             <x-ui.icon name="chart-bar" class="h-5 w-5 shrink-0 opacity-90" />
             <div class="min-w-0">

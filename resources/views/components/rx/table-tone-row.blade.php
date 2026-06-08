@@ -26,6 +26,7 @@
                         'tone' => $col['tone'],
                         'label' => $col['tone_label'] ?? '',
                         'description' => $col['tone_description'] ?? '',
+                        'icon' => $col['group_icon'] ?? null,
                     ];
                 @endphp
                 @if ($col['tone_compact'] ?? false)

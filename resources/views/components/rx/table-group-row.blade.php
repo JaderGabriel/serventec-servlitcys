@@ -23,7 +23,9 @@
         >
             <span class="inline-flex items-center justify-center gap-1.5">
                 @if ($icon)
-                    <x-ui.icon :name="$icon" class="h-3.5 w-3.5 shrink-0 opacity-90" />
+                    <span class="serv-rx-col-icon serv-rx-col-icon--{{ $tone }}" aria-hidden="true">
+                        <x-ui.icon :name="$icon" class="h-3 w-3" />
+                    </span>
                 @endif
                 <span>{{ $label }}</span>
             </span>
