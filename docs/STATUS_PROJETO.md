@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **4.3.0** · release `20260611-Harmonia` · **Ramo:** `main` · **Última revisão:** 11/06/2026
+**Versão em produção:** **4.4.0** · release `20260607a-Ananke` · **Ramo:** `main` · **Última revisão:** 07/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -74,6 +74,9 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 | FUNDEB — `fundeb:import-api --replace` (reimportação limpa por âmbito) | Implementado (4.3.0) |
 | Consultoria — hub Discrepâncias modular por área | Implementado (4.2.0) |
 | Discrepâncias — geo escolas sem mapa alinhada a Unidades; sinais operacionais em todas as rotinas | Implementado (4.3.0) |
+| Discrepâncias — painel modular unificado admin/consultoria (`DiscrepanciesPanelAssembler`) | Implementado (4.4.0) |
+| Admin i-Educar — VAAR na matriz FUNDEB, CadÚnico nas discrepâncias, ano letivo vigente | Implementado (4.4.0) |
+| Tags de release — sufixo alfabético no mesmo dia (`ProductReleaseTag`) | Implementado (4.4.0) |
 | Admin — monitor de módulos — UI `serv-*`, cartões só saúde (sem atalhos) | Implementado (patch pós-3.3.0) |
 | Catálogo API i-Educar (consultas SQL → endpoints propostos, JSON, perf/seg) | Documentado — [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) |
 | Estudo integrações setor público + previsão demanda (doc) | Documentado — [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md); implementação Ondas 1–3 no backlog §H |

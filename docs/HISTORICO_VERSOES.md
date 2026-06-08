@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`4.3.0`** · tag de deploy **`20260611-Harmonia`** · ver [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`4.4.0`** · tag de deploy **`20260607a-Ananke`** · ver [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **4.3.0** |
+| **Versão semântica em produção** | **4.4.0** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260611-Harmonia` |
-| **Último marco documentado** | Discrepâncias alinhadas, painel RX portaria completo, gráfico FUNDEB na home, `fundeb:import-api --replace` — [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md) |
+| **Tag de deploy (servidor)** | `20260607a-Ananke` |
+| **Último marco documentado** | Tags com sufixo no mesmo dia, paridade Discrepâncias admin/consultoria, VAAR/CadÚnico no admin — [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -20,7 +20,8 @@
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.3.0** | `a308c0d` / `20260611-Harmonia` → `main` | **321** | 11/06/2026 | **Produção:** Discrepâncias×Unidades geo, painel RX portaria FUNDEB, gráfico na home, CLI `--replace` — [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md). |
+| **▶ 4.4.0** | `78409c6` / `20260607a-Ananke` → `main` | **335** | 07/06/2026 | **Produção:** sufixo alfabético em tags do mesmo dia, paridade Discrepâncias, VAAR/CadÚnico admin, ano vigente — [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md). |
+| 4.3.0 | `a308c0d` / `20260611-Harmonia` → `main` | **321** | 11/06/2026 | *(doc. data incorrecta)* Discrepâncias×Unidades geo, RX portaria, gráfico home, CLI `--replace` — conteúdo em 4.4.0 — [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md). |
 | 4.2.0 | `b0cd61f` / `20260610-Clio` → `main` | **319** | 10/06/2026 | FUNDEB VAAT/VAAR portaria, gráfico RX complementações, hub Discrepâncias — [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md). |
 | 4.1.9 | `e473c26` / `20260609-Theia` → `main` | **317** | 09/06/2026 | Outlook Finanças até dezembro, diagrama ERP, mapa CadÚnico (zoom + cores) — [RELEASE_20260609_THEIA.md](RELEASE_20260609_THEIA.md). |
 | 4.1.8 | `d1c01ed` / `20260608-Sophia` → `main` | **313** | 08/06/2026 | VAAT portaria + lookback Censo, diagnose matrículas, admin i-Educar leigos, diagrama ERP — [RELEASE_20260608_SOPHIA.md](RELEASE_20260608_SOPHIA.md). |
@@ -337,7 +338,8 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 ## Convenção de releases (a partir de 2.3.6)
 
 - **Nome da tag:** `YYYYMMDD-NomeMitologico` (ex.: `20260522-Janus`).
-- **Versão semântica** em docs/UI: `2.3.x` em [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) e `config/documentation.php`.
+- **Mais de uma release no mesmo dia (desde 4.4.0):** `YYYYMMDD` + letra minúscula em sequência (`a`, `b`, `c`…) + `-NomeMitologico` (ex.: `20260607a-Ananke` após `20260607-Phronesis`). Implementação: `ProductReleaseTag`.
+- **Versão semântica** em docs/UI: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) e `config/documentation.php`.
 - Ao publicar: actualizar tabela **Linha do tempo**, **Tags Git**, `README.md`, `STATUS_PROJETO.md` e `product.version`.
 
 ```bash

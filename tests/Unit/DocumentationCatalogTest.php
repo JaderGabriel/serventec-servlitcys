@@ -37,8 +37,18 @@ class DocumentationCatalogTest extends TestCase
 
     public function test_outros_documentos_mostra_release_producao_e_submenu(): void
     {
+        config([
+            'documentation.product' => [
+                'version' => '4.4.0',
+                'release_tag' => '20260607a-Ananke',
+                'revision_date' => '2026-06-07',
+                'in_production' => true,
+                'production_label' => 'Em produção',
+            ],
+        ]);
+
         $production = DocumentationCatalog::productionReleasePath();
-        $this->assertSame('docs/RELEASE_20260610_CLIO.md', $production);
+        $this->assertSame('docs/RELEASE_20260607a_ANANKE.md', $production);
 
         $layout = DocumentationCatalog::releaseOutrosLayout(4);
         $this->assertCount(4, $layout['featured']);
@@ -50,18 +60,34 @@ class DocumentationCatalogTest extends TestCase
         $submenuPaths = array_column($layout['submenu'], 'path');
         $this->assertEmpty(array_intersect($featuredPaths, $submenuPaths));
 
-        $submenuDates = array_map(
-            static fn (string $path): string => (string) preg_replace('/^.*RELEASE_(\d{8})_.*$/', '$1', $path),
+        $submenuSortKeys = array_map(
+            static fn (string $path): string => (string) preg_replace('/^.*RELEASE_(\d{8}[a-z]?)_.*$/i', '$1', $path),
             $submenuPaths,
         );
-        $sorted = $submenuDates;
+        $sorted = $submenuSortKeys;
         rsort($sorted, SORT_STRING);
-        $this->assertSame($sorted, $submenuDates);
+        $this->assertSame($sorted, $submenuSortKeys);
 
         $sections = DocumentationCatalog::sections();
         $outros = collect($sections)->firstWhere('title', __('Outros documentos'));
         $this->assertNotNull($outros);
         $this->assertArrayHasKey('submenus', $outros);
         $this->assertSame(__('Demais releases'), $outros['submenus'][0]['title'] ?? null);
+    }
+
+    public function test_releases_mesmo_dia_ordenam_por_sufixo(): void
+    {
+        $entries = DocumentationCatalog::discoverReleaseEntries();
+        $sortKeys = array_column($entries, 'sort_key');
+
+        $june7 = array_values(array_filter($sortKeys, static fn (string $key): bool => str_starts_with($key, '20260607')));
+        if (count($june7) >= 2) {
+            $sorted = $june7;
+            rsort($sorted, SORT_STRING);
+            $this->assertSame($sorted, $june7);
+        }
+
+        $this->assertContains('20260607', $sortKeys);
+        $this->assertContains('20260607a', $sortKeys);
     }
 }

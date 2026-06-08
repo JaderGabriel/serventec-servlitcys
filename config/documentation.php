@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '4.3.0',
-        'release_tag' => '20260611-Harmonia',
-        'commit_short' => 'a308c0d',
-        'commit_number' => 321,
-        'revision_date' => '2026-06-11',
+        'version' => '4.4.0',
+        'release_tag' => '20260607a-Ananke',
+        'commit_short' => '78409c6',
+        'commit_number' => 335,
+        'revision_date' => '2026-06-07',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

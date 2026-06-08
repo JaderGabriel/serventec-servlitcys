@@ -3,6 +3,7 @@
 namespace App\Support\Admin;
 
 use App\Models\User;
+use App\Support\Product\ProductReleaseTag;
 use Illuminate\Support\Str;
 
 /**
@@ -130,11 +131,10 @@ final class DocumentationCatalog
     public static function productionReleasePath(): ?string
     {
         $tag = trim((string) config('documentation.product.release_tag', ''));
-        if ($tag === '' || ! preg_match('/^(\d{8})-(.+)$/i', $tag, $matches)) {
+        $path = ProductReleaseTag::releaseDocPath($tag);
+        if ($path === null) {
             return null;
         }
-
-        $path = 'docs/RELEASE_'.$matches[1].'_'.strtoupper($matches[2]).'.md';
 
         return self::resolveReadablePath($path);
     }
@@ -228,7 +228,7 @@ final class DocumentationCatalog
 
     private static function isReleasePath(string $path): bool
     {
-        return (bool) preg_match('/\/RELEASE_\d{8}_[^\/]+\.md$/i', str_replace('\\', '/', $path));
+        return (bool) preg_match('/\/RELEASE_\d{8}[a-z]?_[^\/]+\.md$/i', str_replace('\\', '/', $path));
     }
 
     /**
@@ -237,7 +237,8 @@ final class DocumentationCatalog
     private static function releaseEntryFromPath(string $path): array
     {
         $basename = basename($path, '.md');
-        if (! preg_match('/^RELEASE_(\d{8})_(.+)$/i', $basename, $matches)) {
+        $parsed = ProductReleaseTag::parseDocBasename($basename);
+        if ($parsed === null) {
             return [
                 'label' => self::labelFromPath($path),
                 'path' => $path,
@@ -245,8 +246,8 @@ final class DocumentationCatalog
             ];
         }
 
-        $dateKey = $matches[1];
-        $codename = Str::title(str_replace('_', ' ', $matches[2]));
+        $dateKey = $parsed['date'];
+        $codename = Str::title($parsed['codename']);
         $production = self::productionReleasePath();
         $version = ($path === $production)
             ? trim((string) config('documentation.product.version', ''))
@@ -265,7 +266,7 @@ final class DocumentationCatalog
             'label' => $label,
             'path' => $path,
             'hint' => $hint,
-            'sort_key' => $dateKey,
+            'sort_key' => $parsed['sort_key'],
         ];
     }
 

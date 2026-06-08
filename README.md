@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão em produção (`main`):** **4.1.9** (projeção Finanças até dezembro, diagrama ERP e mapa CadÚnico; tag **`20260609-Theia`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md) · release: [docs/RELEASE_20260609_THEIA.md](docs/RELEASE_20260609_THEIA.md).
+**Versão em produção (`main`):** **4.4.0** (tags com sufixo no mesmo dia, paridade Discrepâncias, VAAR/CadÚnico no admin; tag **`20260607a-Ananke`**). Histórico: [docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md) · release: [docs/RELEASE_20260607a_ANANKE.md](docs/RELEASE_20260607a_ANANKE.md).
 
 ## Requisitos
 

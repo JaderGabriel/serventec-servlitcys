@@ -1,6 +1,6 @@
 # Padrão editorial — documentação servlitcys
 
-**Versão do produto:** 4.3.0 · **Última revisão:** 2026-06-11
+**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
 
 > **Índice:** [README.md](README.md) · **Estado:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
@@ -100,11 +100,12 @@ Decisão de produto: [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md).
 1. [ ] [STATUS_PROJETO.md](STATUS_PROJETO.md) reflecte funcionalidades novas
 2. [ ] Release + linha em [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 3. [ ] `config/documentation.php` (`product.version`, `release_tag`, `commit_short`)
-4. [ ] [README.md](README.md) — secção releases e abas rápidas
-5. [ ] `DocumentationCatalog` — entradas curadas se o doc for de leitura frequente
-6. [ ] Comando novo → [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) + `ArtisanCommandsCatalog`
-7. [ ] Decisão técnica → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md)
-8. [ ] Item concluído no backlog → mover para STATUS; remover ou marcar Concluído
+4. [ ] Tag: `YYYYMMDD-Codename`; se já existir release na mesma data, usar sufixo `a`, `b`, … (`ProductReleaseTag`)
+5. [ ] [README.md](README.md) — secção releases e abas rápidas
+6. [ ] `DocumentationCatalog` — entradas curadas se o doc for de leitura frequente
+7. [ ] Comando novo → [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) + `ArtisanCommandsCatalog`
+8. [ ] Decisão técnica → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md)
+9. [ ] Item concluído no backlog → mover para STATUS; remover ou marcar Concluído
 
 ---
 
