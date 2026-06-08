@@ -11,12 +11,12 @@ final class MunicipalityMapCadastroPresenter
 {
     /** @var array<string, string> */
     public const FILL_COLORS = [
-        'cadastro_green' => '#10b981',
-        'cadastro_yellow' => '#fbbf24',
-        'cadastro_red' => '#f43f5e',
-        'cadastro_neutral' => '#cbd5e1',
-        'cadastro_error' => '#64748b',
-        'cadastro_pending' => '#94a3b8',
+        'cadastro_pending' => '#38bdf8',
+        'cadastro_green' => '#059669',
+        'cadastro_yellow' => '#ca8a04',
+        'cadastro_red' => '#dc2626',
+        'cadastro_neutral' => '#78716c',
+        'cadastro_error' => '#9333ea',
     ];
 
     /**
@@ -142,6 +142,33 @@ final class MunicipalityMapCadastroPresenter
     }
 
     /**
+     * @param  list<array<string, mixed>>  $markers
+     * @return list<array{status: string, label: string, description: string, color: string, count: int}>
+     */
+    public static function legendItemsFromMarkers(array $markers): array
+    {
+        $counts = array_fill_keys(array_keys(self::FILL_COLORS), 0);
+
+        foreach ($markers as $marker) {
+            $connection = (string) ($marker['status'] ?? '');
+            if (! in_array($connection, ['ready', 'inactive_setup'], true)) {
+                continue;
+            }
+
+            $key = (string) ($marker['map_fill_key'] ?? 'cadastro_pending');
+            if (! str_starts_with($key, 'cadastro_')) {
+                continue;
+            }
+
+            if (array_key_exists($key, $counts)) {
+                $counts[$key]++;
+            }
+        }
+
+        return self::buildLegendItems($counts);
+    }
+
+    /**
      * @param  array<string, array<string, mixed>>  $byCityId
      * @return list<array{status: string, label: string, description: string, color: string, count: int}>
      */
@@ -155,7 +182,20 @@ final class MunicipalityMapCadastroPresenter
             }
         }
 
+        return self::buildLegendItems($counts);
+    }
+
+    /**
+     * @param  array<string, int>  $counts
+     * @return list<array{status: string, label: string, description: string, color: string, count: int}>
+     */
+    private static function buildLegendItems(array $counts): array
+    {
         $definitions = [
+            'cadastro_pending' => [
+                'label' => __('A carregar'),
+                'description' => __('Aguardando leitura RX do i-Educar — cor temporária até actualizar o mapa.'),
+            ],
             'cadastro_green' => [
                 'label' => __('Meta OK'),
                 'description' => __('Progresso de cadastro atinge ou supera a meta RX (ano vigente).'),
@@ -187,7 +227,7 @@ final class MunicipalityMapCadastroPresenter
                 'label' => $meta['label'],
                 'description' => $meta['description'],
                 'color' => self::FILL_COLORS[$status],
-                'count' => $counts[$status],
+                'count' => (int) ($counts[$status] ?? 0),
             ];
         }
 

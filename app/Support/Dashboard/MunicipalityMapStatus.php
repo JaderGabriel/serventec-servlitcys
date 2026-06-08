@@ -10,10 +10,10 @@ final class MunicipalityMapStatus
 {
     /** @var array<string, string> */
     public const COLORS = [
-        'ready' => '#10b981',
-        'incomplete' => '#f59e0b',
-        'inactive_setup' => '#64748b',
-        'inactive' => '#94a3b8',
+        'ready' => '#0284c7',
+        'incomplete' => '#ea580c',
+        'inactive_setup' => '#7c3aed',
+        'inactive' => '#475569',
     ];
 
     /**
@@ -29,8 +29,8 @@ final class MunicipalityMapStatus
     {
         $definitions = [
             'ready' => [
-                'label' => __('Ativo · base configurada'),
-                'description' => __('Município ativo com conexão i-Educar (host, base e usuário).'),
+                'label' => __('Conexão OK'),
+                'description' => __('Base i-Educar configurada — a cor do pin segue o cadastro RX (linha abaixo).'),
             ],
             'incomplete' => [
                 'label' => __('Ativo · credenciais incompletas'),

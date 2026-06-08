@@ -21,6 +21,7 @@ final class MunicipalityMapStatusTest extends TestCase
         $ready = collect($items)->firstWhere('status', 'ready');
         $this->assertSame(2, $ready['count']);
         $this->assertSame(MunicipalityMapStatus::COLORS['ready'], $ready['color']);
-        $this->assertSame('#64748b', MunicipalityMapStatus::colorFor('inactive_setup'));
+        $this->assertSame('#0284c7', MunicipalityMapStatus::colorFor('ready'));
+        $this->assertSame('#7c3aed', MunicipalityMapStatus::colorFor('inactive_setup'));
     }
 }

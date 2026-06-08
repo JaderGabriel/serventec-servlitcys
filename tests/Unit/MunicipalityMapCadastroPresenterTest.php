@@ -46,15 +46,32 @@ final class MunicipalityMapCadastroPresenterTest extends TestCase
     }
 
     #[Test]
-    public function legend_items_contam_cinco_estados_cadastro(): void
+    public function legend_items_contam_seis_estados_cadastro(): void
     {
         $items = MunicipalityMapCadastroPresenter::legendItems([
             1 => ['map_fill_key' => 'cadastro_green'],
             2 => ['map_fill_key' => 'cadastro_red'],
         ]);
 
-        $this->assertCount(5, $items);
+        $this->assertCount(6, $items);
         $green = collect($items)->firstWhere('status', 'cadastro_green');
+        $this->assertSame(1, $green['count']);
+        $pending = collect($items)->firstWhere('status', 'cadastro_pending');
+        $this->assertSame('#38bdf8', $pending['color']);
+    }
+
+    #[Test]
+    public function legend_items_from_markers_conta_pending_sem_cadastro(): void
+    {
+        $items = MunicipalityMapCadastroPresenter::legendItemsFromMarkers([
+            ['status' => 'ready', 'map_fill_key' => 'cadastro_pending'],
+            ['status' => 'ready', 'map_fill_key' => 'cadastro_green'],
+            ['status' => 'incomplete', 'map_fill_key' => 'incomplete'],
+        ]);
+
+        $pending = collect($items)->firstWhere('status', 'cadastro_pending');
+        $green = collect($items)->firstWhere('status', 'cadastro_green');
+        $this->assertSame(1, $pending['count']);
         $this->assertSame(1, $green['count']);
     }
 }

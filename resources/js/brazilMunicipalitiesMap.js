@@ -2,16 +2,16 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 const DEFAULT_STATUS_COLORS = {
-    ready: "#10b981",
-    incomplete: "#f59e0b",
-    inactive_setup: "#64748b",
-    inactive: "#94a3b8",
-    cadastro_green: "#10b981",
-    cadastro_yellow: "#fbbf24",
-    cadastro_red: "#f43f5e",
-    cadastro_neutral: "#cbd5e1",
-    cadastro_error: "#64748b",
-    cadastro_pending: "#94a3b8",
+    ready: "#0284c7",
+    incomplete: "#ea580c",
+    inactive_setup: "#7c3aed",
+    inactive: "#475569",
+    cadastro_pending: "#38bdf8",
+    cadastro_green: "#059669",
+    cadastro_yellow: "#ca8a04",
+    cadastro_red: "#dc2626",
+    cadastro_neutral: "#78716c",
+    cadastro_error: "#9333ea",
 };
 
 export default function createBrazilMunicipalitiesMap(markers = [], statusColors = null, options = null) {
@@ -24,6 +24,7 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
         options && typeof options.cadastroSnapshotUrl === "string" ? options.cadastroSnapshotUrl : null;
     const deferCadastroSnapshot = Boolean(options?.deferCadastroSnapshot);
     const vigenteAno = typeof options?.vigenteAno === "number" ? options.vigenteAno : null;
+    const initialCadastroLegend = Array.isArray(options?.cadastroLegend) ? options.cadastroLegend : [];
 
     return {
         map: null,
@@ -43,6 +44,7 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
         cadastroLoadDurationMs: null,
         cadastroGeneratedAt: null,
         cadastroSnapshotCount: 0,
+        cadastroLegend: initialCadastroLegend.map((item) => ({ ...item })),
         _elapsedTimer: null,
         active: null,
         tooltipPinned: false,
@@ -132,6 +134,7 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
                 this.map.setView([-14.5, -52], 4);
             }
 
+            this.rebuildCadastroLegend();
             this.loadCadastroSnapshot();
         },
 
@@ -218,6 +221,30 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
                     fillColor: this.statusColors[key] || this.statusColors.inactive,
                 });
             }
+            this.rebuildCadastroLegend();
+        },
+
+        rebuildCadastroLegend() {
+            if (!Array.isArray(this.cadastroLegend) || this.cadastroLegend.length === 0) {
+                return;
+            }
+
+            const counts = {};
+            for (const marker of this.markers) {
+                if (marker?.status !== "ready" && marker?.status !== "inactive_setup") {
+                    continue;
+                }
+                const key = this.markerFillKey(marker);
+                if (!key.startsWith("cadastro_")) {
+                    continue;
+                }
+                counts[key] = (counts[key] ?? 0) + 1;
+            }
+
+            this.cadastroLegend = this.cadastroLegend.map((item) => ({
+                ...item,
+                count: counts[item.status] ?? 0,
+            }));
         },
 
         mergeCadastroSnapshot(data) {

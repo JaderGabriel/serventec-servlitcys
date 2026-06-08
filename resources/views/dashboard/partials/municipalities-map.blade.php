@@ -15,22 +15,25 @@
         'cadastroSnapshotUrl' => $cadastroSnapshotUrl,
         'deferCadastroSnapshot' => $deferCadastroSnapshot,
         'vigenteAno' => $vigenteAno,
+        'cadastroLegend' => $cadastroLegend !== []
+            ? $cadastroLegend
+            : \App\Support\Dashboard\MunicipalityMapCadastroPresenter::legendItemsFromMarkers($mapMarkers ?? []),
     ];
 @endphp
 <section class="serv-panel overflow-hidden" aria-labelledby="home-map">
-    <div class="px-5 py-4 border-b border-slate-200/90 dark:border-slate-700/90 flex flex-col gap-3">
+    <div class="px-5 py-4 border-b border-slate-200/90 dark:border-slate-700/90">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div>
                 <h3 id="home-map" class="font-display text-lg font-semibold text-serv-navy dark:text-slate-100">{{ __('Municípios implementados') }}</h3>
                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                     @if ($deferCadastroSnapshot)
-                        {{ __(':total município(s) cadastrados · :plotted marcador(es). Cinza = aguardando leitura RX; depois verde/âmbar/vermelho conforme a meta :ano.', [
+                        {{ __(':total município(s) · :plotted no mapa. Com conexão OK, a cor do pin vem do cadastro RX (:ano) — azul claro enquanto carrega.', [
                             'total' => number_format($totalCities),
                             'plotted' => number_format($plottedOnMap),
                             'ano' => $vigenteAno,
                         ]) }}
                     @else
-                        {{ __(':total município(s) cadastrados · :plotted marcador(es). Cor do pin = cadastro :ano (meta RX, igual ao painel RX). Cinza/âmbar = conexão i-Educar incompleta ou inativa.', [
+                        {{ __(':total município(s) · :plotted no mapa. Cor do pin = cadastro RX :ano; laranja/roxo/cinza = problemas de conexão.', [
                             'total' => number_format($totalCities),
                             'plotted' => number_format($plottedOnMap),
                             'ano' => $vigenteAno,
@@ -40,15 +43,20 @@
             </div>
             <a href="{{ route('cities.create') }}" class="serv-link text-sm shrink-0 self-start">{{ __('Nova cidade') }}</a>
         </div>
+    </div>
 
-        <div class="flex flex-col gap-2 text-xs text-slate-500 dark:text-slate-400" aria-label="{{ __('Legendas do mapa') }}">
+    <div
+        x-data="brazilMunicipalitiesMap(@js($mapMarkers), @js($mapStatusColors), @js($mapOptions))"
+        x-init="init()"
+    >
+        <div class="serv-map-legend px-5 py-3 border-b border-slate-200/90 dark:border-slate-700/90 flex flex-col gap-2.5 text-xs" aria-label="{{ __('Legendas do mapa') }}">
             <div class="flex flex-wrap items-center gap-x-4 gap-y-2" role="list" aria-label="{{ __('Conexão i-Educar') }}">
-                <span class="font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide text-[10px]">{{ __('Conexão') }}</span>
+                <span class="serv-map-legend__group-label">{{ __('Conexão') }}</span>
                 @foreach ($mapLegend as $item)
-                    <span class="inline-flex items-center gap-1.5" role="listitem" title="{{ $item['description'] ?? '' }}">
+                    <span class="serv-map-legend__item" role="listitem" title="{{ $item['description'] ?? '' }}">
                         <span
-                            class="h-2.5 w-2.5 rounded-full ring-1 ring-white/80 dark:ring-slate-900 shrink-0"
-                            style="background-color: {{ $item['color'] ?? '#94a3b8' }}"
+                            class="serv-map-legend-swatch serv-map-legend-swatch--connection"
+                            style="background-color: {{ $item['color'] ?? '#475569' }}"
                             aria-hidden="true"
                         ></span>
                         <span class="text-slate-600 dark:text-slate-300">
@@ -58,35 +66,37 @@
                     </span>
                 @endforeach
             </div>
-            @if (count($cadastroLegend) > 0)
-                <div class="flex flex-wrap items-center gap-x-4 gap-y-2" role="list" aria-label="{{ __('Cadastro ano vigente (RX)') }}">
-                    <span class="font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide text-[10px]">
-                        {{ __('Cadastro :ano (RX)', ['ano' => $vigenteAno]) }}
-                    </span>
-                    @foreach ($cadastroLegend as $item)
-                        <span class="inline-flex items-center gap-1.5" role="listitem" title="{{ $item['description'] ?? '' }}">
-                            <span
-                                class="h-2.5 w-2.5 rounded-full ring-1 ring-white/80 dark:ring-slate-900 shrink-0"
-                                style="background-color: {{ $item['color'] ?? '#94a3b8' }}"
-                                aria-hidden="true"
-                            ></span>
-                            <span class="text-slate-600 dark:text-slate-300">
-                                {{ $item['label'] ?? '' }}
-                                <span class="tabular-nums font-semibold text-slate-800 dark:text-slate-200">({{ number_format((int) ($item['count'] ?? 0)) }})</span>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2" role="list" aria-label="{{ __('Cadastro ano vigente (RX)') }}">
+                <span class="serv-map-legend__group-label">
+                    {{ __('Cadastro :ano (RX)', ['ano' => $vigenteAno]) }}
+                </span>
+                <template x-for="item in cadastroLegend" :key="item.status">
+                    <span
+                        class="serv-map-legend__item"
+                        role="listitem"
+                        :title="item.description || ''"
+                        :class="{ 'serv-map-legend__item--pending': item.status === 'cadastro_pending' && cadastroLoadState === 'loading' }"
+                        x-show="item.count > 0 || item.status === 'cadastro_pending'"
+                    >
+                        <span
+                            class="serv-map-legend-swatch serv-map-legend-swatch--rx"
+                            :class="{ 'serv-map-legend-swatch--pulse': item.status === 'cadastro_pending' && cadastroLoadState === 'loading' }"
+                            :style="'background-color:' + (item.color || '#38bdf8')"
+                            aria-hidden="true"
+                        ></span>
+                        <span class="text-slate-600 dark:text-slate-300">
+                            <span x-text="item.label"></span>
+                            <span class="tabular-nums font-semibold text-slate-800 dark:text-slate-200">
+                                (<span x-text="(item.count ?? 0).toLocaleString('pt-BR')"></span>)
                             </span>
                         </span>
-                    @endforeach
-                    <a href="{{ route('dashboard.rx') }}" class="serv-link">{{ __('Painel RX') }}</a>
-                </div>
-            @endif
+                    </span>
+                </template>
+                <a href="{{ route('dashboard.rx') }}" class="serv-link">{{ __('Painel RX') }}</a>
+            </div>
         </div>
-    </div>
 
-    <div
-        class="relative"
-        x-data="brazilMunicipalitiesMap(@js($mapMarkers), @js($mapStatusColors), @js($mapOptions))"
-        x-init="init()"
-    >
+        <div class="relative">
         <div x-ref="map" class="serv-brazil-map" role="application" aria-label="{{ __('Mapa do Brasil com municípios cadastrados') }}"></div>
 
         <div
@@ -308,6 +318,7 @@
                 <a href="{{ route('cities.create') }}" class="serv-link ms-1">{{ __('Cadastrar') }}</a>
             </p>
         @endif
+        </div>
 
         <div
             x-show="showCadastroStatusBar()"
@@ -323,7 +334,7 @@
                         {{ __('A carregar cores de cadastro RX (:ano)…', ['ano' => $vigenteAno]) }}
                     </p>
                     <p class="serv-map-rx-status__detail">
-                        {{ __('Marcadores cinza serão actualizados conforme a meta. Tempo:') }}
+                        {{ __('Marcadores azul-claro serão actualizados conforme a meta. Tempo:') }}
                         <span class="tabular-nums font-semibold" x-text="cadastroElapsedSeconds + ' s'"></span>
                     </p>
                 </div>

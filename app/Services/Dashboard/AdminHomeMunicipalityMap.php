@@ -148,14 +148,6 @@ final class AdminHomeMunicipalityMap
             }
         }
 
-        $cadastroById = [];
-        foreach ($markers as $m) {
-            $id = (int) ($m['id'] ?? 0);
-            if ($id > 0 && is_array($m['cadastro'] ?? null)) {
-                $cadastroById[$id] = $m['cadastro'];
-            }
-        }
-
         $vigenteYear = (int) config('rx.vigente_year', (int) date('Y'));
 
         return [
@@ -163,7 +155,7 @@ final class AdminHomeMunicipalityMap
             'on_map' => $plotted,
             'by_status' => $byStatus,
             'legend' => MunicipalityMapStatus::legendItems($byStatus),
-            'cadastro_legend' => MunicipalityMapCadastroPresenter::legendItems($cadastroById),
+            'cadastro_legend' => MunicipalityMapCadastroPresenter::legendItemsFromMarkers($markers),
             'vigente_ano' => $vigenteYear,
             'cadastro_snapshot_url' => route('dashboard.municipality-map.cadastro-snapshot'),
             'colors' => array_merge(
