@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão em produção (`main`):** **4.4.0** · tag **`20260607a-Ananke`** · [release](docs/RELEASE_20260607a_ANANKE.md) · [histórico](docs/HISTORICO_VERSOES.md)
+**Versão em produção (`main`):** **4.4.1** · tag **`20260607b-Peitho`** · [release](docs/RELEASE_20260607b_PEITHO.md) · [histórico](docs/HISTORICO_VERSOES.md)
 
 ---
 
@@ -274,7 +274,8 @@ Detalhe: [docs/PERFIS_UTILIZADOR.md](docs/PERFIS_UTILIZADOR.md).
 
 | Versão | Tag | Data | Destaque |
 |--------|-----|------|----------|
-| **▶ 4.4.0** | `20260607a-Ananke` | 07/06 | Sufixo no mesmo dia, paridade Discrepâncias, VAAR/CadÚnico admin — [RELEASE](docs/RELEASE_20260607a_ANANKE.md) |
+| **▶ 4.4.1** | `20260607b-Peitho` | 07/06 b | Hub docs, Mermaid no leitor, rodapé dev/GitHub — [RELEASE](docs/RELEASE_20260607b_PEITHO.md) |
+| 4.4.0 | `20260607a-Ananke` | 07/06 a | Sufixo no mesmo dia, paridade Discrepâncias — [RELEASE](docs/RELEASE_20260607a_ANANKE.md) |
 | 4.3.0 | `20260611-Harmonia` | 11/06 | RX portaria, gráfico home, CLI `--replace` — [RELEASE](docs/RELEASE_20260611_HARMONIA.md) |
 | 4.2.0 | `20260610-Clio` | 10/06 | VAAT/VAAR portaria, hub Discrepâncias — [RELEASE](docs/RELEASE_20260610_CLIO.md) |
 | 4.1.9 | `20260609-Theia` | 09/06 | Outlook Finanças, diagrama ERP — [RELEASE](docs/RELEASE_20260609_THEIA.md) |

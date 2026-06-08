@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`4.4.0`** · tag de deploy **`20260607a-Ananke`** · ver [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`4.4.1`** · tag de deploy **`20260607b-Peitho`** · ver [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **4.4.0** |
+| **Versão semântica em produção** | **4.4.1** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260607a-Ananke` |
-| **Último marco documentado** | Tags com sufixo no mesmo dia, paridade Discrepâncias admin/consultoria, VAAR/CadÚnico no admin — [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md) |
+| **Tag de deploy (servidor)** | `20260607b-Peitho` |
+| **Último marco documentado** | Hub documentação no leitor + Mermaid, rodapé com desenvolvedor/GitHub — [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -23,6 +23,7 @@ timeline
     2026-06-05 : 4.1.0 Athena — 5 áreas consultoria
     2026-06-07 : 4.1.7 Phronesis — portarias FUNDEB
     2026-06-07 : 4.4.0a Ananke — sufixo mesmo dia
+    2026-06-07 : 4.4.1b Peitho — hub docs e rodapé
     2026-06-10 : 4.2.0 Clio — VAAT/VAAR portaria
     2026-06-11 : 4.3.0 Harmonia — RX + gráfico home
 ```
@@ -35,7 +36,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.4.0** | `eee339e` / `20260607a-Ananke` → `main` | **336** | 07/06/2026 | **Produção:** sufixo alfabético em tags do mesmo dia, paridade Discrepâncias, VAAR/CadÚnico admin, ano vigente — [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md). |
+| **▶ 4.4.1** | `52113e4` / `20260607b-Peitho` → `main` | **339** | 07/06/2026 | **Produção:** hub docs no GitHub/leitor, Mermaid, rodapé desenvolvedor+GitHub — [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md). |
+| 4.4.0 | `eee339e` / `20260607a-Ananke` → `main` | **336** | 07/06/2026 | Sufixo alfabético em tags do mesmo dia, paridade Discrepâncias, VAAR/CadÚnico admin — [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md). |
 | 4.3.0 | `a308c0d` / `20260611-Harmonia` → `main` | **321** | 11/06/2026 | *(doc. data incorrecta)* Discrepâncias×Unidades geo, RX portaria, gráfico home, CLI `--replace` — conteúdo em 4.4.0 — [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md). |
 | 4.2.0 | `b0cd61f` / `20260610-Clio` → `main` | **319** | 10/06/2026 | FUNDEB VAAT/VAAR portaria, gráfico RX complementações, hub Discrepâncias — [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md). |
 | 4.1.9 | `e473c26` / `20260609-Theia` → `main` | **317** | 09/06/2026 | Outlook Finanças até dezembro, diagrama ERP, mapa CadÚnico (zoom + cores) — [RELEASE_20260609_THEIA.md](RELEASE_20260609_THEIA.md). |

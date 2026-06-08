@@ -19,11 +19,11 @@ import {
 } from "cursor/canvas";
 
 const PRODUCAO = {
-  version: "4.4.0",
-  tag: "20260607a-Ananke",
+  version: "4.4.1",
+  tag: "20260607b-Peitho",
   date: "2026-06-07",
-  commit: "eee339e",
-  number: 336,
+  commit: "52113e4",
+  number: 339,
 };
 
 const RELEASES_4X = [
@@ -33,6 +33,7 @@ const RELEASES_4X = [
   { version: "4.2.0", commits: 319 },
   { version: "4.3.0", commits: 321 },
   { version: "4.4.0", commits: 336 },
+  { version: "4.4.1", commits: 339 },
 ];
 
 const DOC_SECOES: { title: string; docs: string[] }[] = [

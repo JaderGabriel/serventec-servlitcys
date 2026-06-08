@@ -1,6 +1,6 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
+**Versão do produto:** 4.4.1 · **Última revisão:** 2026-06-07
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
@@ -14,11 +14,11 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **4.4.0** |
-| **Tag de deploy** | `20260607a-Ananke` |
-| **Commit** | `eee339e` · **#336** |
+| **Versão semântica** | **4.4.1** |
+| **Tag de deploy** | `20260607b-Peitho` |
+| **Commit** | `52113e4` · **#339** |
 | **Data de referência** | 2026-06-07 |
-| **Release** | [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md) |
+| **Release** | [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md) |
 
 ---
 
@@ -30,7 +30,7 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 |--------------|----------------|------------------|
 | 1ª | `20260607-Phronesis` | [RELEASE_20260607_PHRONESIS.md](RELEASE_20260607_PHRONESIS.md) |
 | 2ª | `20260607a-Ananke` | [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md) |
-| 3ª | `20260607b-…` | *(futuro)* |
+| 3ª | `20260607b-Peitho` | [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md) |
 
 ```mermaid
 flowchart TD
@@ -52,7 +52,8 @@ flowchart TD
 | 4.1.7 | Phronesis | 07/06/2026 | 307 |
 | 4.2.0 | Clio | 10/06/2026 | 319 |
 | 4.3.0 | Harmonia | 11/06/2026 | 321 |
-| **4.4.0** | **Ananke** | **07/06 a** | **336** |
+| **4.4.1** | **Peitho** | **07/06 b** | **339** |
+| 4.4.0 | Ananke | 07/06 a | 336 |
 
 ```mermaid
 timeline
@@ -134,7 +135,8 @@ Guia: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 
 | Versão | Codename | Data | Nota |
 |--------|----------|------|------|
-| **4.4.0** | Ananke | 07/06 a | [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md) |
+| **4.4.1** | Peitho | 07/06 b | [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md) |
+| 4.4.0 | Ananke | 07/06 a | [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md) |
 | 4.3.0 | Harmonia | 11/06 | [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md) |
 | 4.2.0 | Clio | 10/06 | [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md) |
 

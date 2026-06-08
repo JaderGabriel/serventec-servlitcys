@@ -11,6 +11,9 @@
     $appEnv = (string) config('app.env', 'production');
     $isProduction = $appEnv === 'production';
     $whatsAppDigits = preg_replace('/\D+/', '', (string) config('services.serventec.whatsapp', ''));
+    $developerName = trim((string) ($brand['developer_name'] ?? ''));
+    $developerGithub = rtrim((string) ($brand['developer_github'] ?? ''), '/');
+    $githubRepository = rtrim((string) config('documentation.github.repository', ''), '/');
     $user = Auth::user();
     $municipalityLabel = $user->footerMunicipalityLabel();
 
@@ -89,6 +92,30 @@
                 <p class="text-[11px] text-slate-400 dark:text-slate-500 max-w-2xl mx-auto leading-relaxed">
                     {{ __('Monitorização em tempo real (Laravel Pulse). Métricas agregadas conforme a configuração do servidor.') }}
                 </p>
+                @if ($developerName !== '' || $githubRepository !== '')
+                    <p class="text-[11px] text-slate-400 dark:text-slate-500">
+                        @if ($developerName !== '')
+                            {{ __('Desenvolvimento:') }}
+                            <a
+                                href="{{ $developerGithub !== '' ? $developerGithub : 'https://github.com/jadergabriel' }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="serv-link font-medium"
+                            >{{ $developerName }}</a>
+                        @endif
+                        @if ($developerName !== '' && $githubRepository !== '')
+                            <span class="serv-app-footer__sep" aria-hidden="true">·</span>
+                        @endif
+                        @if ($githubRepository !== '')
+                            <a
+                                href="{{ $githubRepository }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="serv-link font-medium"
+                            >GitHub</a>
+                        @endif
+                    </p>
+                @endif
             </div>
         @else
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
@@ -106,8 +133,26 @@
                             rel="noopener noreferrer"
                             class="serv-link font-medium"
                         >{{ $serventecName }}</a>
-                        <span class="serv-app-footer__sep" aria-hidden="true">·</span>
-                        {{ __('Uso restrito a utilizadores autenticados.') }}
+                        @if ($developerName !== '')
+                            <span class="serv-app-footer__sep" aria-hidden="true">·</span>
+                            {{ __('Desenvolvimento:') }}
+                            <a
+                                href="{{ $developerGithub !== '' ? $developerGithub : 'https://github.com/jadergabriel' }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="serv-link font-medium"
+                            >{{ $developerName }}</a>
+                        @endif
+                        @if ($githubRepository !== '')
+                            <span class="serv-app-footer__sep" aria-hidden="true">·</span>
+                            <a
+                                href="{{ $githubRepository }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="serv-link font-medium"
+                                title="{{ __('Código-fonte no GitHub') }}"
+                            >GitHub</a>
+                        @endif
                     </p>
                     @if (filled($municipalityLabel))
                         <p class="text-[11px] text-teal-800/90 dark:text-teal-300/90 leading-relaxed">

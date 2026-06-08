@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 4.4.0 · tag `20260607a-Ananke` · **Última revisão:** 2026-06-07
+**Versão do produto:** 4.4.1 · tag `20260607b-Peitho` · **Última revisão:** 2026-06-07
 
 Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitectura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
@@ -110,7 +110,8 @@ mindmap
 
 | Documento | Versão |
 |-----------|--------|
-| [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md) | **4.4.0** — Ananke |
+| [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md) | **4.4.1** — Peitho |
+| [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md) | 4.4.0 — Ananke |
 | [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md) | 4.3.0 — Harmonia |
 | [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md) | 4.2.0 — Clio |
 | [RELEASE_20260609_THEIA.md](RELEASE_20260609_THEIA.md) | 4.1.9 — Theia |
