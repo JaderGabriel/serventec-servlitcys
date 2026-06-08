@@ -16,6 +16,7 @@ final class MunicipalityMapCadastroPresenter
         'cadastro_red' => '#f43f5e',
         'cadastro_neutral' => '#cbd5e1',
         'cadastro_error' => '#64748b',
+        'cadastro_pending' => '#94a3b8',
     ];
 
     /**
@@ -67,7 +68,7 @@ final class MunicipalityMapCadastroPresenter
         }
 
         if ($cadastro === null) {
-            return 'ready';
+            return 'cadastro_pending';
         }
 
         return (string) ($cadastro['map_fill_key'] ?? 'cadastro_neutral');

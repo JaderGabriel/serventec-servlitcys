@@ -10,6 +10,12 @@
         \App\Support\Dashboard\MunicipalityMapCadastroPresenter::fillColorsForJs(),
     );
     $cadastroSnapshotUrl = $mapSummary['cadastro_snapshot_url'] ?? route('dashboard.municipality-map.cadastro-snapshot');
+    $deferCadastroSnapshot = (bool) config('performance.home_defer_map_rx_snapshot', true);
+    $mapOptions = [
+        'cadastroSnapshotUrl' => $cadastroSnapshotUrl,
+        'deferCadastroSnapshot' => $deferCadastroSnapshot,
+        'vigenteAno' => $vigenteAno,
+    ];
 @endphp
 <section class="serv-panel overflow-hidden" aria-labelledby="home-map">
     <div class="px-5 py-4 border-b border-slate-200/90 dark:border-slate-700/90 flex flex-col gap-3">
@@ -17,11 +23,19 @@
             <div>
                 <h3 id="home-map" class="font-display text-lg font-semibold text-serv-navy dark:text-slate-100">{{ __('Municípios implementados') }}</h3>
                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                    {{ __(':total município(s) cadastrados · :plotted marcador(es). Cor do pin = cadastro :ano (meta RX, igual ao painel RX). Cinza/âmbar = conexão i-Educar incompleta ou inativa.', [
-                        'total' => number_format($totalCities),
-                        'plotted' => number_format($plottedOnMap),
-                        'ano' => $vigenteAno,
-                    ]) }}
+                    @if ($deferCadastroSnapshot)
+                        {{ __(':total município(s) cadastrados · :plotted marcador(es). Cinza = aguardando leitura RX; depois verde/âmbar/vermelho conforme a meta :ano.', [
+                            'total' => number_format($totalCities),
+                            'plotted' => number_format($plottedOnMap),
+                            'ano' => $vigenteAno,
+                        ]) }}
+                    @else
+                        {{ __(':total município(s) cadastrados · :plotted marcador(es). Cor do pin = cadastro :ano (meta RX, igual ao painel RX). Cinza/âmbar = conexão i-Educar incompleta ou inativa.', [
+                            'total' => number_format($totalCities),
+                            'plotted' => number_format($plottedOnMap),
+                            'ano' => $vigenteAno,
+                        ]) }}
+                    @endif
                 </p>
             </div>
             <a href="{{ route('cities.create') }}" class="serv-link text-sm shrink-0 self-start">{{ __('Nova cidade') }}</a>
@@ -70,7 +84,7 @@
 
     <div
         class="relative"
-        x-data="brazilMunicipalitiesMap(@js($mapMarkers), @js($mapStatusColors), @js(['cadastroSnapshotUrl' => $cadastroSnapshotUrl]))"
+        x-data="brazilMunicipalitiesMap(@js($mapMarkers), @js($mapStatusColors), @js($mapOptions))"
         x-init="init()"
     >
         <div x-ref="map" class="serv-brazil-map" role="application" aria-label="{{ __('Mapa do Brasil com municípios cadastrados') }}"></div>
@@ -294,5 +308,65 @@
                 <a href="{{ route('cities.create') }}" class="serv-link ms-1">{{ __('Cadastrar') }}</a>
             </p>
         @endif
+
+        <div
+            x-show="showCadastroStatusBar()"
+            x-cloak
+            class="serv-map-rx-status border-t border-slate-200/90 dark:border-slate-700/90 px-4 py-3"
+            role="status"
+            aria-live="polite"
+        >
+            <div x-show="cadastroLoadState === 'loading'" class="serv-map-rx-status__row serv-map-rx-status__row--loading">
+                <span class="serv-map-rx-status__spinner" aria-hidden="true"></span>
+                <div class="min-w-0">
+                    <p class="serv-map-rx-status__title">
+                        {{ __('A carregar cores de cadastro RX (:ano)…', ['ano' => $vigenteAno]) }}
+                    </p>
+                    <p class="serv-map-rx-status__detail">
+                        {{ __('Marcadores cinza serão actualizados conforme a meta. Tempo:') }}
+                        <span class="tabular-nums font-semibold" x-text="cadastroElapsedSeconds + ' s'"></span>
+                    </p>
+                </div>
+            </div>
+
+            <div x-show="cadastroLoadState === 'loaded'" class="serv-map-rx-status__row serv-map-rx-status__row--ok">
+                <span class="serv-map-rx-status__icon serv-map-rx-status__icon--ok" aria-hidden="true">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg>
+                </span>
+                <div class="min-w-0">
+                    <p class="serv-map-rx-status__title">
+                        {{ __('Mapa actualizado — cores RX (:ano) aplicadas.', ['ano' => $vigenteAno]) }}
+                    </p>
+                    <p class="serv-map-rx-status__detail">
+                        <span x-show="cadastroSnapshotCount > 0">
+                            <span x-text="cadastroSnapshotCount.toLocaleString('pt-BR')"></span>
+                            {{ __('município(s) com leitura i-Educar ·') }}
+                        </span>
+                        {{ __('Carregado em') }}
+                        <span class="tabular-nums font-semibold" x-text="formatLoadDuration(cadastroLoadDurationMs)"></span>
+                        <span x-show="formatGeneratedAt(cadastroGeneratedAt)">
+                            · {{ __('dados de') }}
+                            <span class="tabular-nums" x-text="formatGeneratedAt(cadastroGeneratedAt)"></span>
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div x-show="cadastroLoadState === 'error'" class="serv-map-rx-status__row serv-map-rx-status__row--error">
+                <span class="serv-map-rx-status__icon serv-map-rx-status__icon--error" aria-hidden="true">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+                </span>
+                <div class="min-w-0 flex-1">
+                    <p class="serv-map-rx-status__title">{{ __('Não foi possível actualizar as cores RX') }}</p>
+                    <p class="serv-map-rx-status__detail" x-text="cadastroError"></p>
+                </div>
+                <button
+                    type="button"
+                    class="serv-btn-secondary text-xs shrink-0"
+                    x-on:click="retryCadastroSnapshot()"
+                    :disabled="cadastroLoading"
+                >{{ __('Tentar novamente') }}</button>
+            </div>
+        </div>
     </div>
 </section>

@@ -3669,6 +3669,51 @@
         @apply w-80 sm:w-[22rem];
     }
 
+    .serv-map-rx-status {
+        @apply bg-slate-50/90 dark:bg-slate-900/50;
+    }
+
+    .serv-map-rx-status__row {
+        @apply flex items-start gap-3 text-sm;
+    }
+
+    .serv-map-rx-status__row--loading {
+        @apply text-sky-900 dark:text-sky-100;
+    }
+
+    .serv-map-rx-status__row--ok {
+        @apply text-emerald-900 dark:text-emerald-100;
+    }
+
+    .serv-map-rx-status__row--error {
+        @apply text-amber-900 dark:text-amber-100;
+    }
+
+    .serv-map-rx-status__title {
+        @apply font-medium leading-snug;
+    }
+
+    .serv-map-rx-status__detail {
+        @apply mt-0.5 text-xs opacity-90 leading-relaxed;
+    }
+
+    .serv-map-rx-status__spinner {
+        @apply mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 border-sky-300 border-t-sky-600 animate-spin
+            dark:border-sky-700 dark:border-t-sky-300;
+    }
+
+    .serv-map-rx-status__icon {
+        @apply mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full;
+    }
+
+    .serv-map-rx-status__icon--ok {
+        @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300;
+    }
+
+    .serv-map-rx-status__icon--error {
+        @apply bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300;
+    }
+
     /* Fila admin/sync-queue — cards temáticos */
     .sync-queue-theme-card {
         @apply block rounded-xl border border-slate-200/90 bg-white dark:bg-gray-900 p-4 shadow-sm transition hover:border-indigo-300/80 hover:shadow-md dark:border-slate-700 dark:hover:border-indigo-700/60;

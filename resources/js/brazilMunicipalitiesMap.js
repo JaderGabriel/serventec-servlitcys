@@ -11,6 +11,7 @@ const DEFAULT_STATUS_COLORS = {
     cadastro_red: "#f43f5e",
     cadastro_neutral: "#cbd5e1",
     cadastro_error: "#64748b",
+    cadastro_pending: "#94a3b8",
 };
 
 export default function createBrazilMunicipalitiesMap(markers = [], statusColors = null, options = null) {
@@ -21,6 +22,8 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
 
     const cadastroSnapshotUrl =
         options && typeof options.cadastroSnapshotUrl === "string" ? options.cadastroSnapshotUrl : null;
+    const deferCadastroSnapshot = Boolean(options?.deferCadastroSnapshot);
+    const vigenteAno = typeof options?.vigenteAno === "number" ? options.vigenteAno : null;
 
     return {
         map: null,
@@ -30,8 +33,17 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
         statusColors: colors,
         cadastroById: {},
         cadastroSnapshotUrl,
+        deferCadastroSnapshot,
+        vigenteAno,
+        cadastroLoadState: "idle",
         cadastroLoading: false,
         cadastroError: null,
+        cadastroLoadStartedAt: null,
+        cadastroElapsedSeconds: 0,
+        cadastroLoadDurationMs: null,
+        cadastroGeneratedAt: null,
+        cadastroSnapshotCount: 0,
+        _elapsedTimer: null,
         active: null,
         tooltipPinned: false,
         tooltipStyle: "",
@@ -123,11 +135,76 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
             this.loadCadastroSnapshot();
         },
 
+        showCadastroStatusBar() {
+            return Boolean(this.cadastroSnapshotUrl) && this.cadastroLoadState !== "skipped";
+        },
+
+        formatLoadDuration(ms) {
+            if (ms == null || !Number.isFinite(ms)) {
+                return "";
+            }
+            if (ms < 1000) {
+                return `${Math.round(ms)} ms`;
+            }
+            return `${(ms / 1000).toFixed(1).replace(".", ",")} s`;
+        },
+
+        formatGeneratedAt(iso) {
+            if (!iso || typeof iso !== "string") {
+                return "";
+            }
+            try {
+                const d = new Date(iso);
+                if (Number.isNaN(d.getTime())) {
+                    return "";
+                }
+                return d.toLocaleString("pt-BR", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                });
+            } catch {
+                return "";
+            }
+        },
+
+        startElapsedTimer() {
+            this.stopElapsedTimer();
+            this.cadastroLoadStartedAt = Date.now();
+            this.cadastroElapsedSeconds = 0;
+            this._elapsedTimer = setInterval(() => {
+                if (this.cadastroLoadStartedAt) {
+                    this.cadastroElapsedSeconds = Math.floor(
+                        (Date.now() - this.cadastroLoadStartedAt) / 1000,
+                    );
+                }
+            }, 1000);
+        },
+
+        stopElapsedTimer() {
+            if (this._elapsedTimer) {
+                clearInterval(this._elapsedTimer);
+                this._elapsedTimer = null;
+            }
+        },
+
         markerFillKey(marker) {
             const id = marker?.id;
             const cadastro = id != null ? this.cadastroById[id] : null;
+            const connectionOk =
+                marker?.status === "ready" || marker?.status === "inactive_setup";
+
+            if (
+                this.cadastroLoadState === "loading" &&
+                connectionOk &&
+                !cadastro?.map_fill_key
+            ) {
+                return "cadastro_pending";
+            }
+
             if (cadastro?.map_fill_key) {
-                if (marker.status === "ready" || marker.status === "inactive_setup") {
+                if (connectionOk) {
                     return cadastro.map_fill_key;
                 }
             }
@@ -171,10 +248,28 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
 
         async loadCadastroSnapshot() {
             if (!this.cadastroSnapshotUrl) {
+                this.cadastroLoadState = "skipped";
                 return;
             }
+
+            const hasInitialCadastro = this.markers.some(
+                (m) => m?.cadastro?.map_fill_key && m.cadastro.map_fill_key !== "cadastro_pending",
+            );
+
+            if (!this.deferCadastroSnapshot && hasInitialCadastro) {
+                this.cadastroLoadState = "skipped";
+                return;
+            }
+
             this.cadastroLoading = true;
+            this.cadastroLoadState = "loading";
             this.cadastroError = null;
+            this.cadastroLoadDurationMs = null;
+            this.cadastroGeneratedAt = null;
+            this.cadastroSnapshotCount = 0;
+            this.startElapsedTimer();
+            this.applyMarkerColors();
+
             try {
                 const r = await fetch(this.cadastroSnapshotUrl, {
                     headers: {
@@ -185,15 +280,33 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
                 });
                 if (!r.ok) {
                     this.cadastroError = "Não foi possível carregar o status de cadastro (RX).";
+                    this.cadastroLoadState = "error";
                     return;
                 }
                 const data = await r.json();
+                this.cadastroGeneratedAt =
+                    typeof data?.generated_at === "string" ? data.generated_at : null;
+                this.cadastroSnapshotCount =
+                    data?.by_city_id && typeof data.by_city_id === "object"
+                        ? Object.keys(data.by_city_id).length
+                        : 0;
                 this.mergeCadastroSnapshot(data);
+                this.cadastroLoadDurationMs = this.cadastroLoadStartedAt
+                    ? Date.now() - this.cadastroLoadStartedAt
+                    : null;
+                this.cadastroLoadState = "loaded";
             } catch {
                 this.cadastroError = "Erro de rede ao carregar cadastro RX.";
+                this.cadastroLoadState = "error";
             } finally {
                 this.cadastroLoading = false;
+                this.stopElapsedTimer();
+                this.applyMarkerColors();
             }
+        },
+
+        retryCadastroSnapshot() {
+            this.loadCadastroSnapshot();
         },
 
         cadastroAttentionClass(level) {
@@ -337,6 +450,7 @@ export default function createBrazilMunicipalitiesMap(markers = [], statusColors
         },
 
         destroy() {
+            this.stopElapsedTimer();
             this.map?.remove();
             this.map = null;
         },

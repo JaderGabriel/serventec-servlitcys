@@ -39,6 +39,10 @@ final class MunicipalityMapCadastroPresenterTest extends TestCase
             'cadastro_red',
             MunicipalityMapCadastroPresenter::resolveMapFillKey('ready', ['map_fill_key' => 'cadastro_red'])
         );
+        $this->assertSame(
+            'cadastro_pending',
+            MunicipalityMapCadastroPresenter::resolveMapFillKey('ready', null)
+        );
     }
 
     #[Test]
