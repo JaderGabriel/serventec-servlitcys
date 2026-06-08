@@ -31,6 +31,7 @@ final class FundebMunicipioReferenceRepositoryTest extends TestCase
             'ano' => 2024,
             'vaaf' => 5100.50,
             'vaat' => 4800.00,
+            'complementacao_vaar' => 320.25,
             'fonte' => 'api_ckan_fnde',
             'imported_at' => now(),
         ]);
@@ -53,6 +54,8 @@ final class FundebMunicipioReferenceRepositoryTest extends TestCase
         $row = $matrix['rows'][0];
         $this->assertSame(FundebMatrixCellPresentation::KIND_CONSOLIDATED, $row['years'][2024]['display_kind']);
         $this->assertSame(FundebMatrixCellPresentation::KIND_NATIONAL, $row['years'][2023]['display_kind']);
+        $this->assertSame(320.25, $row['years'][2024]['vaar']);
+        $this->assertNull($row['years'][2023]['vaar'] ?? null);
         $this->assertFalse($row['years'][2022]['has_reference'] ?? true);
     }
 

@@ -48,6 +48,15 @@ final class ConsultoriaOperationalSignals
             $existingIds[$id] = true;
         }
 
+        foreach (CadunicoOperationalSignals::append([], $totalMat, $city, $filters, $fundebAnchorAno) as $signal) {
+            $id = (string) ($signal['id'] ?? '');
+            if ($id === '' || isset($existingIds[$id])) {
+                continue;
+            }
+            $out[] = self::normalizeDimension($signal, $totalMat, $city, $filters);
+            $existingIds[$id] = true;
+        }
+
         return $out;
     }
 
@@ -85,6 +94,24 @@ final class ConsultoriaOperationalSignals
                 'correction' => __('Revise IBGE e nome no cadastro da cidade; confira geo-sync e importações territoriais.'),
                 'severity' => 'warning',
                 'vaar_refs' => [__('Território'), __('Portaria FNDE')],
+            ],
+            'cadunico_snapshot_ausente' => [
+                'id' => 'cadunico_snapshot_ausente',
+                'title' => __('CadÚnico — snapshot municipal ausente'),
+                'explanation' => __('Agregados Cecad/SAGI do CadÚnico (4–17 anos) não gravados para o exercício analisado.'),
+                'impact' => __('Sem CadÚnico não há estimativa de crianças fora da rede nem cenários de busca ativa na consultoria.'),
+                'correction' => __('Sincronize em Admin → CadÚnico/Cecad ou execute `cadunico:sync-city` / `cadunico:auto-sync`.'),
+                'severity' => 'warning',
+                'vaar_refs' => [__('CadÚnico'), __('Busca ativa')],
+            ],
+            'cadunico_rede_lacuna' => [
+                'id' => 'cadunico_rede_lacuna',
+                'title' => __('CadÚnico — crianças fora da rede municipal'),
+                'explanation' => __('Compara população escolar no CadÚnico com matrículas i-Educar no filtro; lacuna elevada sugere busca ativa.'),
+                'impact' => __('Potencial subdimensionamento de matrículas e cenário indicativo de ganho FUNDEB se integradas à rede (não inclui estadual/privada).'),
+                'correction' => __('Cruze faixas etárias na aba CadÚnico, valide NEE/AEE e política de matrícula antes do Censo.'),
+                'severity' => 'warning',
+                'vaar_refs' => [__('CadÚnico'), __('FUNDEB — matrícula')],
             ],
         ];
     }
@@ -140,6 +167,16 @@ final class ConsultoriaOperationalSignals
                     'escola_id' => 'ibge',
                     'escola' => (string) ($city?->name ?? __('Município')),
                     'total' => 1,
+                ]],
+                'cadunico_snapshot_ausente' => [[
+                    'escola_id' => 'cadunico',
+                    'escola' => __('CadÚnico municipal'),
+                    'total' => max(1, $total),
+                ]],
+                'cadunico_rede_lacuna' => [[
+                    'escola_id' => 'cadunico',
+                    'escola' => __('CadÚnico municipal'),
+                    'total' => max(1, $total),
                 ]],
                 default => [[
                     'escola_id' => '0',

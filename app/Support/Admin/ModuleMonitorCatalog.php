@@ -100,8 +100,8 @@ final class ModuleMonitorCatalog
             ],
             [
                 'id' => 'fundeb',
-                'label' => __('FUNDEB VAAF (FNDE)'),
-                'description' => __('VAAF/VAAT/VAAR FNDE e matriz de compatibilidade i-Educar.'),
+                'label' => __('admin_ieducar_compatibility.page.nav_label'),
+                'description' => __('admin_ieducar_compatibility.page.nav_tooltip'),
                 'icon' => 'banknotes',
                 'accent' => 'amber',
                 'group' => 'sincronizacao',

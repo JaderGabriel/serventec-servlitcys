@@ -202,8 +202,8 @@ final class HomeQuickActionsCatalog
                     [
                         'id' => 'compatibility',
                         'href' => route('admin.ieducar-compatibility.index'),
-                        'title' => __('Compatibilidade e FUNDEB'),
-                        'description' => __('Schema i-Educar, importação VAAF/VAAT e matriz de cobertura por município.'),
+                        'title' => __('admin_ieducar_compatibility.page.title'),
+                        'description' => __('admin_ieducar_compatibility.page.subtitle'),
                         'icon' => 'squares-2x2',
                         'kicker' => __('Admin'),
                         'featured' => false,

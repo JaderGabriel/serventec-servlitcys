@@ -191,7 +191,7 @@ class FundebMunicipioReferenceRepository
     }
 
     /**
-     * Matriz município × ano com VAAF, VAAT e classificação de fonte.
+     * Matriz município × ano com VAAF, VAAT, complementação VAAR e classificação de fonte.
      *
      * @return array{
      *     year_from: int,
@@ -216,12 +216,13 @@ class FundebMunicipioReferenceRepository
 
         foreach (FundebMunicipioReference::query()
             ->whereBetween('ano', [$yearFrom, $yearTo])
-            ->get(['city_id', 'ibge_municipio', 'ano', 'vaaf', 'vaat', 'fonte']) as $ref) {
+            ->get(['city_id', 'ibge_municipio', 'ano', 'vaaf', 'vaat', 'complementacao_vaar', 'fonte']) as $ref) {
             $ano = (int) $ref->ano;
             $payload = self::enrichCell(
                 true,
                 (float) $ref->vaaf,
                 $ref->vaat !== null ? (float) $ref->vaat : null,
+                $ref->complementacao_vaar !== null ? (float) $ref->complementacao_vaar : null,
                 $ref->fonte !== null && trim((string) $ref->fonte) !== '' ? trim((string) $ref->fonte) : null,
             );
             if ($ref->city_id) {
@@ -232,7 +233,7 @@ class FundebMunicipioReferenceRepository
             }
         }
 
-        $emptyCell = self::enrichCell(false, null, null, null);
+        $emptyCell = self::enrichCell(false, null, null, null, null);
 
         $rows = [];
         foreach ($cities as $city) {
@@ -281,6 +282,7 @@ class FundebMunicipioReferenceRepository
      *     has_reference: bool,
      *     vaaf: ?float,
      *     vaat: ?float,
+     *     vaar: ?float,
      *     fonte: ?string,
      *     display_kind: string,
      *     display_label: string,
@@ -291,7 +293,7 @@ class FundebMunicipioReferenceRepository
      *     display_icon: string
      * }
      */
-    private static function enrichCell(bool $hasReference, ?float $vaaf, ?float $vaat, ?string $fonte): array
+    private static function enrichCell(bool $hasReference, ?float $vaaf, ?float $vaat, ?float $vaar, ?string $fonte): array
     {
         $display = FundebMatrixCellPresentation::forFonte($fonte, $hasReference);
         $nature = FundebValueLexicon::valueNature($fonte, $hasReference);
@@ -300,6 +302,7 @@ class FundebMunicipioReferenceRepository
             'has_reference' => $hasReference,
             'vaaf' => $vaaf,
             'vaat' => $vaat,
+            'vaar' => $vaar,
             'fonte' => $fonte,
             'display_kind' => $display['kind'],
             'display_label' => $display['label'],

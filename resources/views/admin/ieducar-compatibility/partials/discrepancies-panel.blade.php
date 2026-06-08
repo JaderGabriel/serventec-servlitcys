@@ -12,11 +12,13 @@
     $city = $city ?? null;
     $anoLetivo = $filters?->ano_letivo ?? 'all';
     $fundebAnoProbe = isset($fundebImportYear) ? (int) $fundebImportYear : null;
+    $discrepanciesEvalYear = (int) ($discrepanciesEvalYear ?? \App\Support\Ieducar\IeducarCompatibilityProbe::vigenteSchoolYear());
+    $discrepanciesUsedVigenteDefault = (bool) ($discrepanciesUsedVigenteDefault ?? false);
     $consultoriaUrl = $city
         ? route('dashboard.analytics', array_filter([
             'city_id' => $city->id,
             'tab' => 'discrepancies',
-            'ano_letivo' => $anoLetivo !== 'all' ? $anoLetivo : null,
+            'ano_letivo' => (string) $discrepanciesEvalYear,
         ]))
         : null;
     $errosCriticos = array_values(array_filter($routines, static fn (array $r): bool => ! empty($r['is_erro']) && ! empty($r['has_issue'])));
@@ -37,9 +39,12 @@
                         @endif
                     </p>
                     <p class="text-[11px] text-gray-500 dark:text-gray-500 leading-relaxed mt-1">
-                        {{ __('admin_ieducar_compatibility.discrepancies.intro') }}
-                        @if ($anoLetivo === 'all' && $fundebAnoProbe !== null && $fundebAnoProbe >= 2000)
-                            {{ __(' O módulo Referência FUNDEB usa o exercício :ano (campo «Ano FUNDEB» do probe).', ['ano' => $fundebAnoProbe]) }}
+                        {{ __('admin_ieducar_compatibility.discrepancies.intro', ['ano' => $discrepanciesEvalYear]) }}
+                        @if ($discrepanciesUsedVigenteDefault)
+                            {{ __('admin_ieducar_compatibility.discrepancies.vigente_fallback', ['ano' => $discrepanciesEvalYear]) }}
+                        @endif
+                        @if ($fundebAnoProbe !== null && $fundebAnoProbe >= 2000 && $fundebAnoProbe !== $discrepanciesEvalYear)
+                            {{ __(' Referência FUNDEB importada: exercício :ano (campo «Ano FUNDEB» do probe).', ['ano' => $fundebAnoProbe]) }}
                         @endif
                     </p>
                 </div>

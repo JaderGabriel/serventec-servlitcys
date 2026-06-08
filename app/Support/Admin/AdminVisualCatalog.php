@@ -13,7 +13,7 @@ final class AdminVisualCatalog
     public static function domainTone(string $domain): array
     {
         return match ($domain) {
-            'fundeb' => ['accent' => 'amber', 'icon' => 'banknotes', 'label' => __('FUNDEB VAAF (FNDE)')],
+            'fundeb' => ['accent' => 'amber', 'icon' => 'banknotes', 'label' => __('admin_ieducar_compatibility.hub.tab_label')],
             'funding' => ['accent' => 'emerald', 'icon' => 'banknotes', 'label' => __('Repasses / Tempo Real')],
             'geo' => ['accent' => 'sky', 'icon' => 'map-pin', 'label' => __('Geográfica')],
             'pedagogical' => ['accent' => 'violet', 'icon' => 'academic-cap', 'label' => __('SAEB / INEP')],

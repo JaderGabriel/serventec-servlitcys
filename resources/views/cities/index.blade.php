@@ -198,7 +198,7 @@
 
         <x-slot name="shortcuts">
             <x-admin.import-hub.link-chip tone="indigo" href="{{ route('admin.connections.index') }}">{{ __('Conexões i-Educar') }}</x-admin.import-hub.link-chip>
-            <x-admin.import-hub.link-chip tone="amber" href="{{ route('admin.ieducar-compatibility.index') }}">{{ __('VAAF / FNDE') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="amber" href="{{ route('admin.ieducar-compatibility.index') }}">{{ __('admin_ieducar_compatibility.hub.tab_hint') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip tone="emerald" href="{{ route('admin.public-data.index') }}">{{ __('Hub dados públicos') }}</x-admin.import-hub.link-chip>
         </x-slot>
     </x-admin.screen-shell>

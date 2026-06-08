@@ -14,6 +14,35 @@ final class IeducarCompatibilityProbe
     public const SCHEMA_PROBE_VERSION = '1.1';
 
     /**
+     * Ano letivo vigente para o painel de discrepâncias na admin Compatibilidade.
+     */
+    public static function vigenteSchoolYear(): int
+    {
+        $configured = (int) config('ieducar.compatibility.vigente_year', 0);
+
+        return $configured >= 2000 ? $configured : (int) date('Y');
+    }
+
+    /**
+     * O painel de discrepâncias não usa consolidado «Todos» — fixa o ano vigente salvo escolha explícita.
+     */
+    public static function filtersForDiscrepancies(IeducarFilterState $filters): IeducarFilterState
+    {
+        if ($filters->hasYearSelected() && ! $filters->isAllSchoolYears()) {
+            return $filters;
+        }
+
+        return new IeducarFilterState(
+            ano_letivo: (string) self::vigenteSchoolYear(),
+            escola_id: $filters->escola_id,
+            curso_id: $filters->curso_id,
+            turno_id: $filters->turno_id,
+            inclusion_somente_nee: $filters->inclusion_somente_nee,
+            inclusion_somente_inconsistencias: $filters->inclusion_somente_inconsistencias,
+        );
+    }
+
+    /**
      * Documento JSON para onboarding (`schema_probe.json`).
      *
      * @return array<string, mixed>

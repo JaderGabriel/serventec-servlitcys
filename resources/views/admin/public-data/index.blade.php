@@ -143,7 +143,7 @@
         </section>
 
         <x-slot name="shortcuts">
-            <x-admin.import-hub.link-chip tone="amber" href="{{ route('admin.ieducar-compatibility.index') }}">{{ __('VAAF / VAAT (FNDE)') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="amber" href="{{ route('admin.ieducar-compatibility.index') }}">{{ __('admin_ieducar_compatibility.hub.tab_hint') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip tone="emerald" href="{{ route('admin.public-data.index', ['hub' => 'repasses']) }}#source-repasses_tesouro">{{ __('Repasses / Tempo Real') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip tone="sky" href="{{ route('admin.geo-sync.index') }}">{{ __('Sincronização geográfica') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip tone="violet" href="{{ route('admin.pedagogical-sync.index') }}">{{ __('SAEB pedagógico') }}</x-admin.import-hub.link-chip>

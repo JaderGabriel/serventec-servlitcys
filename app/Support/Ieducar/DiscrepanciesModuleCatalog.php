@@ -103,6 +103,17 @@ final class DiscrepanciesModuleCatalog
                 'admin_route' => 'admin.public-data.index',
                 'admin_route_label' => __('Hub dados públicos'),
             ],
+            [
+                'id' => 'cadunico',
+                'title' => __('CadÚnico × rede'),
+                'subtitle' => __('Agregados Cecad/SAGI (4–17 anos), snapshot municipal e lacuna face às matrículas i-Educar.'),
+                'routine_ids' => ['cadunico_snapshot_ausente', 'cadunico_rede_lacuna'],
+                'correction_tab' => 'cadunico_previsao',
+                'correction_label' => __('Ver CadÚnico'),
+                'correction_hint' => __('Sincronize Cecad em Admin → CadÚnico e cruze faixas etárias com a rede antes do Censo.'),
+                'admin_route' => 'admin.cadunico-sync.index',
+                'admin_route_label' => __('Sincronizar CadÚnico (admin)'),
+            ],
         ];
     }
 

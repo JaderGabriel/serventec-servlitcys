@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-col gap-1">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Compatibilidade da base i-Educar') }}
+                {{ __('admin_ieducar_compatibility.page.title') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                 {{ __('admin_ieducar_compatibility.page.subtitle') }}
@@ -14,14 +14,16 @@
         $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm';
         $schema = is_array($report['recurso_prova_schema'] ?? null) ? $report['recurso_prova_schema'] : null;
         $fmtBrl = [\App\Support\Ieducar\DiscrepanciesFundingImpact::class, 'formatBrl'];
-        $anoLetivo = $filters?->ano_letivo ?? 'all';
+        $anoLetivo = $filters?->ano_letivo ?? (string) \App\Support\Ieducar\IeducarCompatibilityProbe::vigenteSchoolYear();
+        $vigenteSchoolYear = \App\Support\Ieducar\IeducarCompatibilityProbe::vigenteSchoolYear();
+        $discrepanciesEvalYear = (int) ($discrepanciesEvalYear ?? $vigenteSchoolYear);
     @endphp
 
     <x-admin.import-hub.shell
         active="fundeb"
         accent="amber"
-        :eyebrow="__('FUNDEB VAAF (FNDE)')"
-        :title="__('VAAF, probe i-Educar e rotinas')"
+        :eyebrow="__('admin_ieducar_compatibility.hub.eyebrow')"
+        :title="__('admin_ieducar_compatibility.hub.title')"
         :description="__('admin_ieducar_compatibility.page.hub_description')"
         impact-domain="fundeb"
         queue-banner-compact
@@ -62,7 +64,7 @@
                     </div>
                     <div>
                         <label for="ano_letivo" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Ano letivo (probe)') }}</label>
-                        <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{{ __('admin_ieducar_compatibility.probe.ano_letivo_hint') }}</p>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{{ __('admin_ieducar_compatibility.probe.ano_letivo_hint', ['vigente' => $vigenteSchoolYear]) }}</p>
                         <select id="ano_letivo" name="ano_letivo" class="{{ $selectClass }}">
                             <option value="all" @selected($anoLetivo === 'all')>{{ __('Todos (consolidado)') }}</option>
                             @for ($y = (int) date('Y') + 1; $y >= 2018; $y--)
@@ -82,7 +84,7 @@
                             {{ __('Enfileirar export JSON') }}
                         </a>
                     @endif
-                    <a href="{{ route('dashboard.analytics', array_filter(['city_id' => $city?->id, 'tab' => 'discrepancies', 'ano_letivo' => $anoLetivo !== 'all' ? $anoLetivo : null])) }}" class="inline-flex items-center rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <a href="{{ route('dashboard.analytics', array_filter(['city_id' => $city?->id, 'tab' => 'discrepancies', 'ano_letivo' => (string) $discrepanciesEvalYear])) }}" class="inline-flex items-center rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
                         {{ __('Abrir Discrepâncias') }}
                     </a>
                 </x-slot>
@@ -148,6 +150,8 @@
                 'filters' => $filters,
                 'fmtBrl' => $fmtBrl,
                 'fundebImportYear' => $fundebImportYear ?? null,
+                'discrepanciesEvalYear' => $discrepanciesEvalYear,
+                'discrepanciesUsedVigenteDefault' => (bool) ($discrepanciesUsedVigenteDefault ?? false),
             ])
 
         <x-slot name="shortcuts">

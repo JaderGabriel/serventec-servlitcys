@@ -146,7 +146,7 @@ final class ArtisanCommandsCatalog
             ],
             [
                 'id' => 'fundeb',
-                'title' => __('FUNDEB VAAF (FNDE)'),
+                'title' => __('admin_ieducar_compatibility.hub.tab_label'),
                 'description' => __('Referências VAAF, VAAT e complementação VAAR por município e ano (fundeb_municipio_references).'),
                 'admin_route' => 'admin.ieducar-compatibility.index',
                 'commands' => [
@@ -283,8 +283,8 @@ final class ArtisanCommandsCatalog
             ],
             [
                 'id' => 'ieducar',
-                'title' => __('Compatibilidade i-Educar'),
-                'description' => __('Probe de schema e rotinas de discrepância. Interface: Compatibilidade da base.'),
+                'title' => __('admin_ieducar_compatibility.page.title'),
+                'description' => __('admin_ieducar_compatibility.page.subtitle'),
                 'admin_route' => 'admin.ieducar-compatibility.index',
                 'commands' => [
                     [

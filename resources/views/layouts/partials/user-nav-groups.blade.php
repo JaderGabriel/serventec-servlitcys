@@ -103,10 +103,10 @@
                 [
                     'show' => true,
                     'href' => route('admin.ieducar-compatibility.index'),
-                    'label' => __('FUNDEB VAAF (FNDE)'),
+                    'label' => __('admin_ieducar_compatibility.page.nav_label'),
                     'icon' => 'banknotes',
                     'active' => $req->routeIs('admin.ieducar-compatibility.*'),
-                    'title' => __('VAAF/VAAT/VAAR FNDE, probe i-Educar e matriz de compatibilidade.'),
+                    'title' => __('admin_ieducar_compatibility.page.nav_tooltip'),
                 ],
             ],
         ],

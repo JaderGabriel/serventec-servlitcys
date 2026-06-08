@@ -21,7 +21,7 @@
             </h4>
             <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-xs">
                 @foreach ([
-                    'vaaf', 'vaat', 'exercicio', 'matriculas', 'probe', 'fila', 'piso',
+                    'vaaf', 'vaat', 'vaar', 'exercicio', 'matriculas', 'probe', 'fila', 'piso',
                 ] as $key)
                     <div class="rounded-md bg-white/70 dark:bg-gray-900/40 px-2.5 py-2 border border-sky-100 dark:border-sky-900/50">
                         <dt class="sr-only">{{ $key }}</dt>

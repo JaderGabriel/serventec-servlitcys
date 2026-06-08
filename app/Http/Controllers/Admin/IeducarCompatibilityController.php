@@ -39,6 +39,7 @@ class IeducarCompatibilityController extends Controller
         $report = null;
         $error = null;
         $filters = null;
+        $probeFilters = null;
         $fundebStored = [];
         $fundebResolved = null;
         $fundebImportYear = (int) $request->input('fundeb_ano', FundebOpenDataImportService::suggestedImportYear());
@@ -75,8 +76,10 @@ class IeducarCompatibilityController extends Controller
                 );
             $fundebResolved = FundebMunicipalReferenceResolver::resolve($city, $resolveFilters);
 
+            $probeFilters = IeducarCompatibilityProbe::filtersForDiscrepancies($filters);
+
             try {
-                $report = $this->runReport($city, $filters, $fundebImportYear);
+                $report = $this->runReport($city, $probeFilters, $fundebImportYear);
             } catch (\Throwable $e) {
                 $error = $e->getMessage();
             }
@@ -148,6 +151,11 @@ class IeducarCompatibilityController extends Controller
             'fundebOfficialSources' => $this->fundebOfficialSources->adminPanel(),
             'fundebMatrixFrom' => $matrixRange['from'],
             'fundebMatrixTo' => $matrixRange['to'],
+            'discrepanciesEvalYear' => isset($probeFilters)
+                ? (int) $probeFilters->yearFilterValue()
+                : IeducarCompatibilityProbe::vigenteSchoolYear(),
+            'discrepanciesUsedVigenteDefault' => isset($filters, $probeFilters)
+                && ($filters->isAllSchoolYears() || ! $filters->hasYearSelected()),
         ]);
     }
 
@@ -159,7 +167,7 @@ class IeducarCompatibilityController extends Controller
         );
 
         $matrix = $this->fundebReferences->yearlyMatrix($range['from'], $range['to']);
-        $filename = sprintf('fundeb-vaaf-vaat-%d-%d.csv', $range['from'], $range['to']);
+        $filename = sprintf('fundeb-vaaf-vaat-vaar-%d-%d.csv', $range['from'], $range['to']);
 
         return response()->streamDownload(function () use ($matrix): void {
             $out = fopen('php://output', 'w');
@@ -174,6 +182,7 @@ class IeducarCompatibilityController extends Controller
                 $phaseLabel = (string) (($yearSemantics[$y] ?? [])['phase_label'] ?? '');
                 $header[] = __('VAAF :ano', ['ano' => $y]);
                 $header[] = __('VAAT :ano', ['ano' => $y]);
+                $header[] = __('Compl. VAAR :ano', ['ano' => $y]);
                 $header[] = __('Natureza :ano', ['ano' => $y]);
                 $header[] = __('Fase exercício :ano', ['ano' => $y]).($phaseLabel !== '' ? ' ('.$phaseLabel.')' : '');
             }
@@ -193,6 +202,9 @@ class IeducarCompatibilityController extends Controller
                         : '';
                     $line[] = ($cell['vaat'] ?? null) !== null
                         ? number_format((float) $cell['vaat'], 2, '.', '')
+                        : '';
+                    $line[] = ($cell['vaar'] ?? null) !== null
+                        ? number_format((float) $cell['vaar'], 2, '.', '')
                         : '';
                     $line[] = ($cell['has_reference'] ?? false)
                         ? (string) ($cell['value_nature_label'] ?? $cell['display_label'] ?? '')
@@ -423,6 +435,15 @@ class IeducarCompatibilityController extends Controller
     private function filtersFromRequest(Request $request): IeducarFilterState
     {
         $filters = IeducarFilterState::fromRequest($request);
+        if (! $request->has('ano_letivo')) {
+            return new IeducarFilterState(
+                ano_letivo: (string) IeducarCompatibilityProbe::vigenteSchoolYear(),
+                escola_id: $filters->escola_id,
+                curso_id: $filters->curso_id,
+                turno_id: $filters->turno_id,
+            );
+        }
+
         if (! $filters->hasYearSelected()) {
             return new IeducarFilterState(
                 ano_letivo: 'all',

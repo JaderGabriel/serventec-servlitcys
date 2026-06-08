@@ -106,7 +106,7 @@
                         @php
                             $sem = is_array($yearSemantics[$y] ?? null) ? $yearSemantics[$y] : [];
                         @endphp
-                        <th colspan="2" class="px-2 py-2 font-semibold text-center border-l border-slate-200/80 dark:border-slate-600/80" title="{{ $sem['phase_hint'] ?? '' }}">
+                        <th colspan="3" class="px-2 py-2 font-semibold text-center border-l border-slate-200/80 dark:border-slate-600/80" title="{{ $sem['phase_hint'] ?? '' }}">
                             <span class="block">{{ $y }}</span>
                             <span class="block normal-case font-normal text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                                 {{ $sem['phase_label'] ?? '' }}
@@ -122,6 +122,7 @@
                     @foreach ($years as $y)
                         <th class="px-2 py-1 text-right border-l border-slate-200/80 dark:border-slate-600/80" title="{{ __('admin_ieducar_compatibility.matrix.col_vaaf') }}">{{ __('VAAF') }}</th>
                         <th class="px-2 py-1 text-right" title="{{ __('admin_ieducar_compatibility.matrix.col_vaat') }}">{{ __('VAAT') }}</th>
+                        <th class="px-2 py-1 text-right" title="{{ __('admin_ieducar_compatibility.matrix.col_vaar') }}">{{ __('VAAR') }}</th>
                     @endforeach
                 </tr>
             </thead>
@@ -163,6 +164,15 @@
                                     {{ $fmtBrl($cell['vaat']) }}
                                 @elseif ($has)
                                     <span class="text-[10px] opacity-70">{{ $cell['display_short'] ?? '' }}</span>
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td class="px-2 py-1.5 text-right tabular-nums {{ $has && ($cell['vaar'] ?? null) !== null ? $cellClass : 'text-slate-400 dark:text-slate-500' }}" title="{{ $has ? __('admin_ieducar_compatibility.matrix.col_vaar') : '' }}">
+                                @if ($missingIbge)
+                                    —
+                                @elseif ($has && ($cell['vaar'] ?? null) !== null)
+                                    {{ $fmtBrl($cell['vaar']) }}
                                 @else
                                     —
                                 @endif

@@ -627,6 +627,19 @@ return [
     |--------------------------------------------------------------------------
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Compatibilidade i-Educar — ano letivo vigente (discrepâncias)
+    |--------------------------------------------------------------------------
+    |
+    | Quando o probe está em «Todos», o painel de discrepâncias usa este ano (padrão: ano civil corrente).
+    |
+    */
+
+    'compatibility' => [
+        'vigente_year' => (int) env('IEDUCAR_COMPATIBILITY_VIGENTE_YEAR', 0),
+    ],
+
     'consultoria' => [
         'rede_ociosidade_alerta_pct' => (float) env('IEDUCAR_CONSULTORIA_REDE_OCIOSIDADE_PCT', 15),
         'raca_nao_declarado_keywords' => array_values(array_filter(array_map('trim', explode(',', (string) env(
@@ -879,6 +892,8 @@ return [
             'matricula_censo_vs_ieducar' => 1.6,
             'fundeb_vaaf_fonte_censo' => 0.15,
             'fundeb_ibge_nome_divergente' => 0.0,
+            'cadunico_snapshot_ausente' => 0.0,
+            'cadunico_rede_lacuna' => 0.35,
             /** Abandono + remanejamento (aba Desempenho) — eixo VAAR-indicadores. */
             'fluxo_abandono_remanejamento' => (float) env('IEDUCAR_DISC_PESO_FLUXO_ABANDONO', 0.45),
             /** Registos agregados em falta_aluno (aba Frequência), escala por lote de faltas. */
