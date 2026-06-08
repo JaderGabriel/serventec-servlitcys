@@ -16,7 +16,7 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 |-----------|-------|
 | **Versão semântica** | **4.4.1** |
 | **Tag de deploy** | `20260607b-Peitho` |
-| **Commit** | `52113e4` · **#339** |
+| **Commit** | `e50ecca` · **#340** |
 | **Data de referência** | 2026-06-07 |
 | **Release** | [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md) |
 
@@ -52,7 +52,7 @@ flowchart TD
 | 4.1.7 | Phronesis | 07/06/2026 | 307 |
 | 4.2.0 | Clio | 10/06/2026 | 319 |
 | 4.3.0 | Harmonia | 11/06/2026 | 321 |
-| **4.4.1** | **Peitho** | **07/06 b** | **339** |
+| **4.4.1** | **Peitho** | **07/06 b** | **340** |
 | 4.4.0 | Ananke | 07/06 a | 336 |
 
 ```mermaid

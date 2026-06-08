@@ -36,7 +36,7 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.4.1** | `52113e4` / `20260607b-Peitho` → `main` | **339** | 07/06/2026 | **Produção:** hub docs no GitHub/leitor, Mermaid, rodapé desenvolvedor+GitHub — [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md). |
+| **▶ 4.4.1** | `e50ecca` / `20260607b-Peitho` → `main` | **340** | 07/06/2026 | **Produção:** hub docs no GitHub/leitor, Mermaid, rodapé desenvolvedor+GitHub — [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md). |
 | 4.4.0 | `eee339e` / `20260607a-Ananke` → `main` | **336** | 07/06/2026 | Sufixo alfabético em tags do mesmo dia, paridade Discrepâncias, VAAR/CadÚnico admin — [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md). |
 | 4.3.0 | `a308c0d` / `20260611-Harmonia` → `main` | **321** | 11/06/2026 | *(doc. data incorrecta)* Discrepâncias×Unidades geo, RX portaria, gráfico home, CLI `--replace` — conteúdo em 4.4.0 — [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md). |
 | 4.2.0 | `b0cd61f` / `20260610-Clio` → `main` | **319** | 10/06/2026 | FUNDEB VAAT/VAAR portaria, gráfico RX complementações, hub Discrepâncias — [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md). |

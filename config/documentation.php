@@ -24,8 +24,8 @@ return [
     'product' => [
         'version' => '4.4.1',
         'release_tag' => '20260607b-Peitho',
-        'commit_short' => '52113e4',
-        'commit_number' => 339,
+        'commit_short' => 'e50ecca',
+        'commit_number' => 340,
         'revision_date' => '2026-06-07',
         'in_production' => true,
         'production_label' => 'Em produção',
