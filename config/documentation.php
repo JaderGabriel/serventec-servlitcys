@@ -24,8 +24,8 @@ return [
     'product' => [
         'version' => '4.4.0',
         'release_tag' => '20260607a-Ananke',
-        'commit_short' => '78409c6',
-        'commit_number' => 335,
+        'commit_short' => 'eee339e',
+        'commit_number' => 336,
         'revision_date' => '2026-06-07',
         'in_production' => true,
         'production_label' => 'Em produção',
