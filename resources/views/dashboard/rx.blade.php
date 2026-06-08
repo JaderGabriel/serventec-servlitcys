@@ -148,11 +148,6 @@
                 :metaPctPerSalto="(float) ($rx['meta_pct_per_salto'] ?? 5)"
             />
 
-            <x-rx.cadastro-concepts
-                :vigenteAno="$rx['vigente_ano'] ?? ''"
-                :anteriorAno="$rx['anterior_ano'] ?? ''"
-            />
-
             @if ((int) ($rx['cities_partial'] ?? 0) > 0)
                 <div class="serv-panel border-amber-200/90 bg-amber-50/60 px-4 py-3 text-sm text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/25 dark:text-amber-100">
                     {{ __(':n município(s) com dados parciais (alguma consulta i-Educar falhou, mas a conexão está OK).', ['n' => (int) $rx['cities_partial']]) }}
@@ -178,8 +173,13 @@
                 <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
                     <p class="serv-eyebrow">{{ __('Tabela') }}</p>
                     <h3 class="font-display font-semibold text-serv-navy dark:text-white">{{ __('Detalhe por município') }}</h3>
-                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Três colunas verdes = cadastro vigente (aluno → matrícula → turma). Meta mostra «agora» vs «alvo». Passe o rato no cabeçalho para detalhe.') }}</p>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Leia da esquerda para a direita: meta → cadastrado → falta. Violeta · verde · âmbar.') }}</p>
                 </div>
+                <x-rx.cadastro-concepts
+                    class="border-b border-slate-200/80 dark:border-slate-700/80 rounded-none shadow-none"
+                    :vigenteAno="$rx['vigente_ano'] ?? ''"
+                    :anteriorAno="$rx['anterior_ano'] ?? ''"
+                />
                 <div class="overflow-x-auto">
                     @php
                         $rxTh = static fn (string $key, bool $right = false): string => \App\Support\Rx\RxColumnTone::thClass(
@@ -202,33 +202,42 @@
                                 :anteriorAno="$rx['anterior_ano'] ?? ''"
                             />
                             <tr>
-                                <th class="{{ $rxTh('semaforo') }}" title="{{ $thTitle('semaforo') }}">{{ $th('semaforo', __('Indicador meta')) }}</th>
-                                <th class="{{ $rxTh('municipio') }}" title="{{ $thTitle('municipio') }}">{{ $th('municipio', __('Município')) }}</th>
+                                <th class="{{ $rxTh('semaforo') }}" title="{{ $thTitle('semaforo') }}">
+                                    <x-rx.table-column-header :title="$th('semaforo', __('Indicador'))" />
+                                </th>
+                                <th class="{{ $rxTh('municipio') }}" title="{{ $thTitle('municipio') }}">
+                                    <x-rx.table-column-header icon="map-pin" :title="$th('municipio', __('Município'))" />
+                                </th>
+                                <th class="{{ $rxTh('meta', true) }} min-w-[8.5rem]" title="{{ $thTitle('meta') }}">
+                                    <x-rx.table-column-header icon="chart-bar" align="right" :title="$th('meta', __('Meta alvo'))" :subtitle="__('tur. · mat.')" />
+                                </th>
                                 <th class="{{ $rxTh('alunos', true) }}" title="{{ $thTitle('alunos') }}">
-                                    <span class="block">{{ $th('alunos', __('Alunos')) }}</span>
-                                    <span class="block text-[10px] font-normal normal-case tracking-normal text-slate-500 dark:text-slate-400">{{ __('distintos') }}</span>
+                                    <x-rx.table-column-header icon="users" align="right" :title="$th('alunos', __('Alunos'))" :subtitle="__('distintos')" />
                                 </th>
                                 <th class="{{ $rxTh('matriculas', true) }}" title="{{ $thTitle('matriculas') }}">
-                                    <span class="block">{{ $th('matriculas', __('Matrículas')) }}</span>
-                                    <span class="block text-[10px] font-normal normal-case tracking-normal text-slate-500 dark:text-slate-400">{{ __('ativas') }}</span>
+                                    <x-rx.table-column-header icon="clipboard-document-list" align="right" :title="$th('matriculas', __('Matrículas'))" :subtitle="__('activas')" />
                                 </th>
                                 <th class="{{ $rxTh('turmas', true) }}" title="{{ $thTitle('turmas') }}">
-                                    <span class="block">{{ $th('turmas', __('Turmas')) }}</span>
-                                    <span class="block text-[10px] font-normal normal-case tracking-normal text-slate-500 dark:text-slate-400">{{ __('no :ano', ['ano' => $rx['vigente_ano'] ?? '']) }}</span>
+                                    <x-rx.table-column-header icon="academic-cap" align="right" :title="$th('turmas', __('Turmas'))" :subtitle="__('abertas')" />
+                                </th>
+                                <th class="{{ $rxTh('progresso', true) }} min-w-[9rem]" title="{{ $thTitle('progresso') }}">
+                                    <x-rx.table-column-header icon="check-circle" align="right" :title="$th('progresso', __('Progresso'))" :subtitle="__('ritmo 72h')" />
+                                </th>
+                                <th class="{{ $rxTh('falta', true) }}" title="{{ $thTitle('falta') }}">
+                                    <x-rx.table-column-header icon="exclamation-triangle" align="right" :title="$th('falta', __('Falta'))" :subtitle="__('registos')" />
+                                </th>
+                                <th class="{{ $rxTh('dias', true) }}" title="{{ $thTitle('dias') }}">
+                                    <x-rx.table-column-header icon="command-line" align="right" :title="$th('dias', __('Dias'))" :subtitle="__('p/ meta')" />
                                 </th>
                                 <th class="{{ $rxTh('delta', true) }}" title="{{ $thTitle('delta') }}">
-                                    <span class="block">{{ $th('delta', __('Δ matr.')) }}</span>
-                                    <span class="block text-[10px] font-normal normal-case tracking-normal text-slate-500 dark:text-slate-400">{{ __('vs :ano', ['ano' => $rx['anterior_ano'] ?? '']) }}</span>
+                                    <x-rx.table-column-header icon="arrow-path" align="right" :title="$th('delta', __('Δ matr.'))" :subtitle="__('vs :ano', ['ano' => $rx['anterior_ano'] ?? ''])" />
                                 </th>
-                                <th class="{{ $rxTh('meta', true) }} min-w-[11rem]" title="{{ $thTitle('meta') }}">
-                                    <span class="block">{{ $th('meta', __('Meta')) }}</span>
-                                    <span class="block text-[10px] font-normal normal-case tracking-normal text-slate-500 dark:text-slate-400">{{ __('agora · alvo · ritmo') }}</span>
+                                <th class="{{ $rxTh('censo', true) }}" title="{{ $thTitle('censo') }}">
+                                    <x-rx.table-column-header icon="document-text" align="right" :title="$th('censo', __('Censo'))" />
                                 </th>
-                                <th class="{{ $rxTh('censo', true) }}" title="{{ $thTitle('censo') }}">{{ $th('censo', __('Censo')) }}</th>
-                                <th class="{{ $rxTh('progresso', true) }}" title="{{ $thTitle('progresso') }}">{{ $th('progresso', __('Progresso cad.')) }}</th>
-                                <th class="{{ $rxTh('falta', true) }}" title="{{ $thTitle('falta') }}">{{ $th('falta', __('Pendente')) }}</th>
-                                <th class="{{ $rxTh('dias', true) }}" title="{{ $thTitle('dias') }}">{{ $th('dias', __('Dias p/ meta')) }}</th>
-                                <th class="{{ $rxTh('situacao') }}" title="{{ $thTitle('situacao') }}">{{ $th('situacao', __('Leitura dos dados')) }}</th>
+                                <th class="{{ $rxTh('situacao') }}" title="{{ $thTitle('situacao') }}">
+                                    <x-rx.table-column-header icon="signal" :title="$th('situacao', __('Leitura'))" />
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -236,7 +245,6 @@
                                 @php
                                     $censo = is_array($row['censo'] ?? null) ? $row['censo'] : [];
                                     $pctC = $censo['pct_concluido'] ?? null;
-                                    $prog = $row['progresso_cadastro_pct'] ?? null;
                                 @endphp
                                 <tr>
                                     <td class="{{ $rxTd('semaforo') }} whitespace-nowrap">
@@ -263,7 +271,13 @@
                                             />
                                         @endif
                                     </td>
-                                    <td class="{{ $rxTd('alunos', true) }}">
+                                    <td class="{{ $rxTd('meta', true) }} text-xs leading-snug align-top">
+                                        <x-rx.meta-alvo-cell
+                                            :row="$row"
+                                            :anteriorAno="$rx['anterior_ano'] ?? ''"
+                                        />
+                                    </td>
+                                    <td class="{{ $rxTd('alunos', true) }} align-top">
                                         <span class="serv-rx-val--vigente">{{ number_format((int) ($row['alunos_vigente'] ?? 0), 0, ',', '.') }}</span>
                                         @if ((int) ($row['matriculas_vigente'] ?? 0) > (int) ($row['alunos_vigente'] ?? 0) && (int) ($row['alunos_vigente'] ?? 0) > 0)
                                             <span class="block text-[10px] text-amber-700/90 dark:text-amber-200/90" title="{{ __('Mais matrículas que alunos — verifique transferências.') }}">
@@ -271,7 +285,7 @@
                                             </span>
                                         @endif
                                     </td>
-                                    <td class="{{ $rxTd('matriculas', true) }}">
+                                    <td class="{{ $rxTd('matriculas', true) }} align-top">
                                         <span class="serv-rx-val--vigente">{{ number_format((int) ($row['matriculas_vigente'] ?? 0), 0, ',', '.') }}</span>
                                         <span class="serv-rx-val--anterior">
                                             {{ __(':n em :ano', [
@@ -280,15 +294,30 @@
                                             ]) }}
                                         </span>
                                     </td>
-                                    <td class="{{ $rxTd('turmas', true) }}">
+                                    <td class="{{ $rxTd('turmas', true) }} align-top">
                                         <span class="serv-rx-val--vigente">{{ number_format((int) ($row['turmas_vigente'] ?? 0), 0, ',', '.') }}</span>
-                                        @if ((int) ($row['meta_turmas_alvo'] ?? 0) > 0)
-                                            <span class="block text-[10px] text-slate-500 dark:text-slate-400">
-                                                {{ __('meta :n', ['n' => number_format((int) ($row['meta_turmas_alvo'] ?? 0), 0, ',', '.')]) }}
-                                            </span>
+                                    </td>
+                                    <td class="{{ $rxTd('progresso', true) }} text-xs leading-snug align-top min-w-[9rem]">
+                                        <x-rx.progresso-cadastro-cell :row="$row" />
+                                    </td>
+                                    <td class="{{ $rxTd('falta', true) }} align-top">
+                                        <x-rx.falta-cadastro-cell :row="$row" />
+                                    </td>
+                                    <td class="{{ $rxTd('dias', true) }} tabular-nums align-top">
+                                        @php
+                                            $diasMeta = $row['dias_para_meta'] ?? null;
+                                            $faltaTotal = (int) ($row['falta_turmas'] ?? 0) + (int) ($row['falta_matriculas'] ?? 0);
+                                        @endphp
+                                        @if ($faltaTotal === 0 && ($row['meta_encontrou_referencia'] ?? false))
+                                            <span class="text-emerald-700 dark:text-emerald-300 text-xs font-medium">—</span>
+                                        @elseif ($diasMeta !== null && $diasMeta !== '')
+                                            <span class="serv-rx-val--falta font-semibold">{{ $diasMeta }}</span>
+                                            <span class="block text-[10px] text-amber-800/80 dark:text-amber-200/80">{{ __('dias est.') }}</span>
+                                        @else
+                                            <span class="text-slate-400">—</span>
                                         @endif
                                     </td>
-                                    <td class="{{ $rxTd('delta', true) }} tabular-nums text-xs">
+                                    <td class="{{ $rxTd('delta', true) }} tabular-nums text-xs align-top">
                                         @php
                                             $d = (int) ($row['matriculas_delta'] ?? 0);
                                             $semBase = (bool) ($row['matriculas_delta_sem_base'] ?? false);
@@ -302,14 +331,7 @@
                                             @endif
                                         </span>
                                     </td>
-                                    <td class="{{ $rxTd('meta', true) }} text-xs leading-snug">
-                                        <x-rx.meta-cadastro-cell
-                                            :row="$row"
-                                            :vigenteAno="$rx['vigente_ano'] ?? ''"
-                                            :anteriorAno="$rx['anterior_ano'] ?? ''"
-                                        />
-                                    </td>
-                                    <td class="{{ $rxTd('censo', true) }} tabular-nums text-xs">
+                                    <td class="{{ $rxTd('censo', true) }} tabular-nums text-xs align-top">
                                         @if ($pctC !== null)
                                             {{ number_format((float) $pctC, 1, ',', '.') }}%
                                             <span class="block text-[10px] text-slate-500">
@@ -319,51 +341,7 @@
                                             —
                                         @endif
                                     </td>
-                                    <td class="{{ $rxTd('progresso', true) }} tabular-nums text-xs leading-snug">
-                                        @if ($prog !== null)
-                                            <span class="font-medium text-sky-950 dark:text-sky-50">{{ number_format((float) $prog, 1, ',', '.') }}%</span>
-                                            @if (($row['progresso_matriculas_pct'] ?? null) !== null)
-                                                <span class="block text-[10px] text-slate-500">
-                                                    {{ __('Matrículas :pct %', ['pct' => number_format((float) $row['progresso_matriculas_pct'], 1, ',', '.')]) }}
-                                                </span>
-                                            @endif
-                                            @if (($row['progresso_turmas_pct'] ?? null) !== null && (int) ($row['meta_turmas_alvo'] ?? 0) > 0)
-                                                <span class="block text-[10px] text-slate-500">
-                                                    {{ __('Turmas :pct %', ['pct' => number_format((float) $row['progresso_turmas_pct'], 1, ',', '.')]) }}
-                                                </span>
-                                            @endif
-                                        @elseif ($row['meta_encontrou_referencia'] ?? false)
-                                            <span class="text-slate-400">0%</span>
-                                        @else
-                                            —
-                                        @endif
-                                    </td>
-                                    <td class="{{ $rxTd('falta', true) }} tabular-nums text-xs leading-snug font-medium text-sky-900 dark:text-sky-100">
-                                        @php
-                                            $faltaTur = (int) ($row['falta_turmas'] ?? 0);
-                                            $faltaMat = (int) ($row['falta_matriculas'] ?? 0);
-                                            $metaTur = (int) ($row['meta_turmas_alvo'] ?? 0);
-                                            $metaMat = (int) ($row['meta_matriculas_alvo'] ?? 0);
-                                        @endphp
-                                        @if ($metaTur > 0 || $metaMat > 0)
-                                            @if ($metaTur > 0)
-                                                <span class="block">
-                                                    {{ __('Faltam :n turma(s)', ['n' => number_format($faltaTur, 0, ',', '.')]) }}
-                                                </span>
-                                            @endif
-                                            @if ($metaMat > 0)
-                                                <span class="block {{ $metaTur > 0 ? 'text-[10px] font-normal text-amber-700/90 dark:text-amber-200/90' : '' }}">
-                                                    {{ __('Faltam :n matrícula(s)', ['n' => number_format($faltaMat, 0, ',', '.')]) }}
-                                                </span>
-                                            @endif
-                                        @else
-                                            —
-                                        @endif
-                                    </td>
-                                    <td class="{{ $rxTd('dias', true) }} tabular-nums text-sky-950 dark:text-sky-50">
-                                        {{ $row['dias_para_meta'] ?? '—' }}
-                                    </td>
-                                    <td class="{{ $rxTd('situacao') }} text-xs max-w-[14rem]">
+                                    <td class="{{ $rxTd('situacao') }} text-xs max-w-[14rem] align-top">
                                         @php
                                             $sitLabel = $row['situacao_label'] ?? __('Erro');
                                             $sitCode = $row['situacao_codigo'] ?? '';

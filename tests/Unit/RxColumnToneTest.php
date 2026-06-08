@@ -28,21 +28,34 @@ final class RxColumnToneTest extends TestCase
         $this->assertSame(12, $toneSpan);
     }
 
-    public function test_matriculas_header_uses_vigente_tone(): void
+    public function test_column_order_meta_before_cadastrado(): void
     {
-        $this->assertSame(RxColumnTone::VIGENTE, RxColumnTone::headerToneForColumn('matriculas'));
-        $this->assertSame(RxColumnTone::VIGENTE, RxColumnTone::forColumn('matriculas'));
+        $cols = RxColumnTone::tableColumns(2026, 2025);
+        $keys = array_column($cols, 'key');
+
+        $this->assertSame([
+            'semaforo', 'municipio', 'meta', 'alunos', 'matriculas', 'turmas', 'progresso',
+            'falta', 'dias', 'delta', 'censo', 'situacao',
+        ], $keys);
     }
 
-    public function test_tone_chips_align_with_column_keys(): void
+    public function test_falta_columns_use_falta_tone(): void
+    {
+        $this->assertSame(RxColumnTone::FALTA, RxColumnTone::forColumn('falta'));
+        $this->assertSame(RxColumnTone::FALTA, RxColumnTone::forColumn('dias'));
+        $this->assertSame(RxColumnTone::VIGENTE, RxColumnTone::forColumn('progresso'));
+    }
+
+    public function test_tone_chips_align_with_column_groups(): void
     {
         $cols = RxColumnTone::tableColumns(2026, 2025);
 
-        $this->assertSame('vigente', $cols[2]['tone']);
-        $this->assertSame('comparativo', $cols[5]['tone']);
-        $this->assertSame('meta', $cols[6]['tone']);
-        $this->assertSame('comparativo', $cols[8]['tone']);
-        $this->assertSame(3, $cols[8]['tone_colspan']);
-        $this->assertSame(3, $cols[2]['group_colspan']);
+        $this->assertSame('meta', $cols[2]['tone']);
+        $this->assertSame('vigente', $cols[3]['tone']);
+        $this->assertSame(4, $cols[3]['tone_colspan']);
+        $this->assertSame('falta', $cols[7]['tone']);
+        $this->assertSame(2, $cols[7]['tone_colspan']);
+        $this->assertSame('comparativo', $cols[9]['tone']);
+        $this->assertSame(3, $cols[9]['tone_colspan']);
     }
 }

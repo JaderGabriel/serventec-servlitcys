@@ -3,7 +3,7 @@
 namespace App\Support\Rx;
 
 /**
- * Tons visuais das colunas RX: vigente (atual), anterior (histórico) e comparativo (Δ / meta).
+ * Tons visuais das colunas RX: meta (alvo), vigente (feito), falta (pendente) e contexto.
  */
 final class RxColumnTone
 {
@@ -15,33 +15,39 @@ final class RxColumnTone
 
     public const META = 'meta';
 
+    public const FALTA = 'falta';
+
     public const NEUTRAL = 'neutral';
 
     /**
-     * @return list<array{tone: string, label: string, description: string}>
+     * @return list<array{tone: string, label: string, description: string, icon: string}>
      */
     public static function legend(int $vigenteYear, int $anteriorYear): array
     {
         return [
             [
-                'tone' => self::VIGENTE,
-                'label' => __('Cadastro vigente :ano', ['ano' => $vigenteYear]),
-                'description' => __('Alunos distintos, matrículas ativas e turmas abertas no ano em curso — o que a rede já digitou no i-Educar.'),
+                'tone' => self::META,
+                'icon' => 'chart-bar',
+                'label' => __('Meta alvo'),
+                'description' => __('Volume esperado de turmas e matrículas (referência histórica + saltos percentuais).'),
             ],
             [
-                'tone' => self::ANTERIOR,
-                'label' => __('Comparação :ano', ['ano' => $anteriorYear]),
-                'description' => __('Linha inferior em Matrículas e referência histórica usada para projetar a meta (não é o alvo final).'),
+                'tone' => self::VIGENTE,
+                'icon' => 'check-circle',
+                'label' => __('Já cadastrado :ano', ['ano' => $vigenteYear]),
+                'description' => __('Alunos, matrículas e turmas activos no i-Educar — o que a rede já digitou.'),
+            ],
+            [
+                'tone' => self::FALTA,
+                'icon' => 'exclamation-triangle',
+                'label' => __('Falta cadastrar'),
+                'description' => __('Registos e prazo estimado para fechar o gap face à meta.'),
             ],
             [
                 'tone' => self::COMPARATIVO,
-                'label' => __('Face à meta'),
-                'description' => __('Δ de matrículas vs ano anterior, progresso cadastral, pendências e prazo estimado.'),
-            ],
-            [
-                'tone' => self::META,
-                'label' => __('Meta de cadastro'),
-                'description' => __('Par «agora» vs «alvo» em turmas e matrículas, com ritmo recente de cadastro nas últimas 72h.'),
+                'icon' => 'arrow-path',
+                'label' => __('Contexto'),
+                'description' => __('Comparação com :ano anterior, Censo Escolar e estado da leitura i-Educar.', ['ano' => $anteriorYear]),
             ],
         ];
     }
@@ -49,39 +55,24 @@ final class RxColumnTone
     public static function forColumn(string $key): string
     {
         return match ($key) {
-            'alunos', 'matriculas', 'turmas', 'censo' => self::VIGENTE,
-            'delta', 'progresso', 'falta', 'dias' => self::COMPARATIVO,
+            'alunos', 'matriculas', 'turmas', 'progresso' => self::VIGENTE,
+            'falta', 'dias' => self::FALTA,
             'meta' => self::META,
+            'delta', 'censo' => self::COMPARATIVO,
             'semaforo', 'municipio', 'situacao' => self::NEUTRAL,
             default => self::NEUTRAL,
         };
     }
 
-    /** Tom do cabeçalho da coluna (pode diferir da célula, ex. Matrículas = referência). */
     public static function headerToneForColumn(string $key): string
     {
         return self::forColumn($key);
     }
 
     /**
-     * Estrutura do thead: grupos e chips alinhados às 12 colunas.
+     * Ordem: identificação · meta · cadastrado (4) · falta (2) · contexto (3).
      *
-     * Ordem: semáforo · município · alunos · matrículas · turmas · Δ · meta · censo · progresso · pendente · dias · leitura
-     *
-     * @return list<array{
-     *     key: string,
-     *     group_label: ?string,
-     *     group_tone: string,
-     *     group_colspan: int,
-     *     skip_group: bool,
-     *     tone: ?string,
-     *     tone_label: ?string,
-     *     tone_description: ?string,
-     *     tone_colspan: int,
-     *     tone_compact: bool,
-     *     skip_tone: bool,
-     *     header_tone: string
-     * }>
+     * @return list<array<string, mixed>>
      */
     public static function tableColumns(int $vigenteYear, int $anteriorYear): array
     {
@@ -94,17 +85,20 @@ final class RxColumnTone
                 'tone' => $tone,
                 'tone_label' => $item['label'] ?? '',
                 'tone_description' => $item['description'] ?? '',
+                'group_icon' => $item['icon'] ?? null,
             ];
         };
 
-        $v = $chip(self::VIGENTE);
         $m = $chip(self::META);
-        $f = $chip(self::COMPARATIVO);
+        $v = $chip(self::VIGENTE);
+        $f = $chip(self::FALTA);
+        $c = $chip(self::COMPARATIVO);
 
         return [
             [
                 'key' => 'semaforo',
-                'group_label' => __('Identificação'),
+                'group_label' => __('Município'),
+                'group_icon' => 'map-pin',
                 'group_tone' => self::NEUTRAL,
                 'group_colspan' => 2,
                 'skip_group' => false,
@@ -119,6 +113,7 @@ final class RxColumnTone
             [
                 'key' => 'municipio',
                 'group_label' => null,
+                'group_icon' => null,
                 'group_tone' => self::NEUTRAL,
                 'group_colspan' => 1,
                 'skip_group' => true,
@@ -131,13 +126,25 @@ final class RxColumnTone
                 'header_tone' => self::NEUTRAL,
             ],
             [
-                'key' => 'alunos',
-                'group_label' => __('Cadastro vigente :ano', ['ano' => $vigenteYear]),
-                'group_tone' => self::VIGENTE,
-                'group_colspan' => 3,
+                'key' => 'meta',
+                'group_label' => __('Meta alvo'),
+                ...$m,
+                'group_tone' => self::META,
+                'group_colspan' => 1,
                 'skip_group' => false,
+                'tone_colspan' => 1,
+                'tone_compact' => false,
+                'skip_tone' => false,
+                'header_tone' => self::META,
+            ],
+            [
+                'key' => 'alunos',
+                'group_label' => __('Já cadastrado :ano', ['ano' => $vigenteYear]),
                 ...$v,
-                'tone_colspan' => 3,
+                'group_tone' => self::VIGENTE,
+                'group_colspan' => 4,
+                'skip_group' => false,
+                'tone_colspan' => 4,
                 'tone_compact' => false,
                 'skip_tone' => false,
                 'header_tone' => self::VIGENTE,
@@ -145,6 +152,7 @@ final class RxColumnTone
             [
                 'key' => 'matriculas',
                 'group_label' => null,
+                'group_icon' => null,
                 'group_tone' => self::VIGENTE,
                 'group_colspan' => 1,
                 'skip_group' => true,
@@ -159,6 +167,7 @@ final class RxColumnTone
             [
                 'key' => 'turmas',
                 'group_label' => null,
+                'group_icon' => null,
                 'group_tone' => self::VIGENTE,
                 'group_colspan' => 1,
                 'skip_group' => true,
@@ -171,72 +180,63 @@ final class RxColumnTone
                 'header_tone' => self::VIGENTE,
             ],
             [
-                'key' => 'delta',
-                'group_label' => __('Δ vs :ano', ['ano' => $anteriorYear]),
-                'group_tone' => self::COMPARATIVO,
-                'group_colspan' => 1,
-                'skip_group' => false,
-                'tone' => self::COMPARATIVO,
-                'tone_label' => __('Δ matrículas'),
-                'tone_description' => $f['tone_description'],
-                'tone_colspan' => 1,
-                'tone_compact' => false,
-                'skip_tone' => false,
-                'header_tone' => self::COMPARATIVO,
-            ],
-            [
-                'key' => 'meta',
-                'group_label' => __('Meta'),
-                'group_tone' => self::META,
-                'group_colspan' => 1,
-                'skip_group' => false,
-                ...$m,
-                'tone_colspan' => 1,
-                'tone_compact' => false,
-                'skip_tone' => false,
-                'header_tone' => self::META,
-            ],
-            [
-                'key' => 'censo',
-                'group_label' => __('Censo'),
+                'key' => 'progresso',
+                'group_label' => null,
+                'group_icon' => null,
                 'group_tone' => self::VIGENTE,
                 'group_colspan' => 1,
-                'skip_group' => false,
-                ...$v,
+                'skip_group' => true,
+                'tone' => null,
+                'tone_label' => null,
+                'tone_description' => null,
                 'tone_colspan' => 1,
-                'tone_compact' => true,
-                'skip_tone' => false,
+                'tone_compact' => false,
+                'skip_tone' => true,
                 'header_tone' => self::VIGENTE,
             ],
             [
-                'key' => 'progresso',
-                'group_label' => __('Face à meta'),
+                'key' => 'falta',
+                'group_label' => __('Falta cadastrar'),
+                ...$f,
+                'group_tone' => self::FALTA,
+                'group_colspan' => 2,
+                'skip_group' => false,
+                'tone_colspan' => 2,
+                'tone_compact' => false,
+                'skip_tone' => false,
+                'header_tone' => self::FALTA,
+            ],
+            [
+                'key' => 'dias',
+                'group_label' => null,
+                'group_icon' => null,
+                'group_tone' => self::FALTA,
+                'group_colspan' => 1,
+                'skip_group' => true,
+                'tone' => null,
+                'tone_label' => null,
+                'tone_description' => null,
+                'tone_colspan' => 1,
+                'tone_compact' => false,
+                'skip_tone' => true,
+                'header_tone' => self::FALTA,
+            ],
+            [
+                'key' => 'delta',
+                'group_label' => __('Contexto'),
+                ...$c,
                 'group_tone' => self::COMPARATIVO,
                 'group_colspan' => 3,
                 'skip_group' => false,
-                ...$f,
                 'tone_colspan' => 3,
                 'tone_compact' => false,
                 'skip_tone' => false,
                 'header_tone' => self::COMPARATIVO,
             ],
             [
-                'key' => 'falta',
+                'key' => 'censo',
                 'group_label' => null,
-                'group_tone' => self::COMPARATIVO,
-                'group_colspan' => 1,
-                'skip_group' => true,
-                'tone' => null,
-                'tone_label' => null,
-                'tone_description' => null,
-                'tone_colspan' => 1,
-                'tone_compact' => false,
-                'skip_tone' => true,
-                'header_tone' => self::COMPARATIVO,
-            ],
-            [
-                'key' => 'dias',
-                'group_label' => null,
+                'group_icon' => null,
                 'group_tone' => self::COMPARATIVO,
                 'group_colspan' => 1,
                 'skip_group' => true,
@@ -250,16 +250,17 @@ final class RxColumnTone
             ],
             [
                 'key' => 'situacao',
-                'group_label' => __('Leitura'),
+                'group_label' => null,
+                'group_icon' => null,
                 'group_tone' => self::NEUTRAL,
                 'group_colspan' => 1,
-                'skip_group' => false,
+                'skip_group' => true,
                 'tone' => null,
                 'tone_label' => null,
                 'tone_description' => null,
                 'tone_colspan' => 1,
                 'tone_compact' => false,
-                'skip_tone' => false,
+                'skip_tone' => true,
                 'header_tone' => self::NEUTRAL,
             ],
         ];

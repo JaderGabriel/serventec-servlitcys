@@ -532,6 +532,11 @@
             dark:bg-violet-950/40 dark:text-violet-100 dark:border-violet-600;
     }
 
+    .serv-rx-th--falta {
+        @apply bg-amber-50/95 text-amber-950 border-amber-400
+            dark:bg-amber-950/40 dark:text-amber-100 dark:border-amber-600;
+    }
+
     .serv-rx-th-group {
         @apply text-[10px] font-bold uppercase tracking-wider px-2 py-1 text-center border-b border-slate-200/80
             dark:border-slate-700;
@@ -553,6 +558,10 @@
         @apply bg-violet-50/70 text-violet-800/90 dark:bg-violet-950/30 dark:text-violet-200/90;
     }
 
+    .serv-rx-th-group--falta {
+        @apply bg-amber-50/80 text-amber-900/95 dark:bg-amber-950/35 dark:text-amber-100/95;
+    }
+
     .serv-rx-td--neutral {
         @apply bg-white dark:bg-slate-900/40;
     }
@@ -567,6 +576,10 @@
 
     .serv-rx-td--meta {
         @apply bg-violet-50/25 dark:bg-violet-950/20;
+    }
+
+    .serv-rx-td--falta {
+        @apply bg-amber-50/35 dark:bg-amber-950/25;
     }
 
     .serv-rx-val--vigente {
@@ -584,6 +597,54 @@
 
     .serv-rx-val--meta-alvo {
         @apply block text-[10px] text-violet-800 dark:text-violet-200;
+    }
+
+    .serv-rx-val--falta {
+        @apply tabular-nums text-amber-900 dark:text-amber-100;
+    }
+
+    .serv-rx-progress-bar {
+        @apply h-1.5 w-full min-w-[4rem] max-w-[6rem] overflow-hidden rounded-full bg-slate-200/90
+            dark:bg-slate-700/80;
+    }
+
+    .serv-rx-progress-bar__fill {
+        @apply block h-full rounded-full transition-[width] duration-300;
+    }
+
+    .serv-rx-progress-bar__fill--teal {
+        @apply bg-teal-500 dark:bg-teal-400;
+    }
+
+    .serv-rx-progress-bar__fill--violet {
+        @apply bg-violet-500 dark:bg-violet-400;
+    }
+
+    .serv-rx-table-flow {
+        @apply flex flex-wrap items-stretch gap-2 text-xs;
+    }
+
+    .serv-rx-table-flow__step {
+        @apply flex min-w-0 flex-1 items-center gap-2 rounded-lg border px-3 py-2;
+    }
+
+    .serv-rx-table-flow__step--meta {
+        @apply border-violet-200/90 bg-violet-50/60 text-violet-950
+            dark:border-violet-800/50 dark:bg-violet-950/30 dark:text-violet-100;
+    }
+
+    .serv-rx-table-flow__step--feito {
+        @apply border-teal-200/90 bg-teal-50/60 text-teal-950
+            dark:border-teal-800/50 dark:bg-teal-950/30 dark:text-teal-100;
+    }
+
+    .serv-rx-table-flow__step--falta {
+        @apply border-amber-200/90 bg-amber-50/60 text-amber-950
+            dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-100;
+    }
+
+    .serv-rx-table-flow__arrow {
+        @apply hidden sm:flex items-center text-slate-400 dark:text-slate-500 shrink-0;
     }
 
     /* Ritmo de cadastro — paleta fuchsia (distinta da meta violeta e dos volumes teal/sky) */
@@ -668,6 +729,10 @@
         @apply border-violet-300/80 bg-violet-50 text-violet-900 dark:border-violet-700 dark:bg-violet-950/50 dark:text-violet-100;
     }
 
+    .serv-rx-chip--falta {
+        @apply border-amber-300/80 bg-amber-50 text-amber-950 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-100;
+    }
+
     .serv-rx-chip-swatch--vigente {
         @apply bg-teal-500 dark:bg-teal-400;
     }
@@ -682,6 +747,10 @@
 
     .serv-rx-chip-swatch--meta {
         @apply bg-violet-500 dark:bg-violet-400;
+    }
+
+    .serv-rx-chip-swatch--falta {
+        @apply bg-amber-500 dark:bg-amber-400;
     }
 
     .serv-rx-fundeb-snippet {
@@ -891,6 +960,10 @@
 
     .serv-rx-table tbody tr:hover .serv-rx-td--meta {
         @apply bg-violet-50/40 dark:bg-violet-950/30;
+    }
+
+    .serv-rx-table tbody tr:hover .serv-rx-td--falta {
+        @apply bg-amber-50/55 dark:bg-amber-950/35;
     }
 
     .serv-municipality-strip {

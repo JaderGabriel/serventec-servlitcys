@@ -5,37 +5,38 @@
 
 @php
     $ano = (string) $vigenteAno;
-    $anoAnterior = (string) $anteriorAno;
-    if ($anoAnterior === '' && $ano !== '' && ctype_digit($ano)) {
-        $anoAnterior = (string) ((int) $ano - 1);
-    }
 @endphp
 
 <div {{ $attributes->merge(['class' => 'serv-panel px-4 py-3']) }}>
     <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
-        {{ __('O que cada número significa') }}
+        {{ __('Como ler a tabela') }}
     </p>
-    <div class="mt-3 grid gap-3 sm:grid-cols-3 text-xs leading-relaxed">
-        <div class="rounded-lg border border-teal-200/80 bg-teal-50/50 px-3 py-2.5 dark:border-teal-900/50 dark:bg-teal-950/25">
-            <p class="font-semibold text-teal-950 dark:text-teal-50">{{ __('Aluno') }}</p>
-            <p class="mt-1 text-slate-700 dark:text-slate-300">
-                {{ __('Pessoa contada uma vez no :ano — mesmo que tenha mais de uma matrícula ativa (ex.: transferência não encerrada).', ['ano' => $ano]) }}
-            </p>
+    <div class="serv-rx-table-flow mt-3">
+        <div class="serv-rx-table-flow__step serv-rx-table-flow__step--meta">
+            <x-ui.icon name="chart-bar" class="h-5 w-5 shrink-0 opacity-90" />
+            <div class="min-w-0">
+                <p class="font-semibold">{{ __('1 · Meta alvo') }}</p>
+                <p class="mt-0.5 text-[11px] leading-snug opacity-90">{{ __('Turmas e matrículas esperadas (referência + saltos).') }}</p>
+            </div>
         </div>
-        <div class="rounded-lg border border-teal-200/80 bg-teal-50/50 px-3 py-2.5 dark:border-teal-900/50 dark:bg-teal-950/25">
-            <p class="font-semibold text-teal-950 dark:text-teal-50">{{ __('Matrícula') }}</p>
-            <p class="mt-1 text-slate-700 dark:text-slate-300">
-                {{ __('Vínculo do aluno à rede no ano letivo. Cada registo ativo no i-Educar soma +1 — é a base da meta e do Δ face ao ano anterior.') }}
-            </p>
+        <span class="serv-rx-table-flow__arrow" aria-hidden="true">→</span>
+        <div class="serv-rx-table-flow__step serv-rx-table-flow__step--feito">
+            <x-ui.icon name="check-circle" class="h-5 w-5 shrink-0 opacity-90" />
+            <div class="min-w-0">
+                <p class="font-semibold">{{ __('2 · Já cadastrado :ano', ['ano' => $ano]) }}</p>
+                <p class="mt-0.5 text-[11px] leading-snug opacity-90">{{ __('Alunos, matrículas, turmas e % de progresso + ritmo recente.') }}</p>
+            </div>
         </div>
-        <div class="rounded-lg border border-teal-200/80 bg-teal-50/50 px-3 py-2.5 dark:border-teal-900/50 dark:bg-teal-950/25">
-            <p class="font-semibold text-teal-950 dark:text-teal-50">{{ __('Turma') }}</p>
-            <p class="mt-1 text-slate-700 dark:text-slate-300">
-                {{ __('Classe/sala aberta no :ano. A meta compara turmas e matrículas em paralelo; enturmar o aluno numa turma não substitui abrir a turma ou gravar a matrícula.', ['ano' => $ano]) }}
-            </p>
+        <span class="serv-rx-table-flow__arrow" aria-hidden="true">→</span>
+        <div class="serv-rx-table-flow__step serv-rx-table-flow__step--falta">
+            <x-ui.icon name="exclamation-triangle" class="h-5 w-5 shrink-0 opacity-90" />
+            <div class="min-w-0">
+                <p class="font-semibold">{{ __('3 · Falta cadastrar') }}</p>
+                <p class="mt-0.5 text-[11px] leading-snug opacity-90">{{ __('Registos em falta e dias estimados para fechar a meta.') }}</p>
+            </div>
         </div>
     </div>
-    <p class="mt-2.5 text-[11px] text-slate-500 dark:text-slate-400">
-        {{ __('Colunas em verde-água = cadastro vigente. Violeta = meta (alvo). Azul = comparação com a meta ou com :ano anterior.', ['ano' => $anoAnterior !== '' ? $anoAnterior : '…']) }}
+    <p class="mt-2.5 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+        {{ __('Aluno = pessoa distinta · Matrícula = vínculo no ano · Turma = classe aberta. As três métricas aparecem nas colunas verdes; a meta compara turmas e matrículas em paralelo.') }}
     </p>
 </div>
