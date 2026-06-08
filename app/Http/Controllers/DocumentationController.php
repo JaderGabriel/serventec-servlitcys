@@ -44,12 +44,15 @@ class DocumentationController extends Controller
         $routePrefix = $this->documentationRoutePrefix();
         $product = config('documentation.product', []);
 
+        $markdown = $file['markdown'];
+
         return view('documentation.show', [
             'sections' => DocumentationCatalog::sectionsForUser($user),
             'currentPath' => $resolved,
             'currentLabel' => $item['label'] ?? $file['label'],
             'currentSection' => $item['section_title'] ?? null,
-            'htmlContent' => $renderer->toHtml($file['markdown'], $resolved, $routePrefix),
+            'htmlContent' => $renderer->toHtml($markdown, $resolved, $routePrefix),
+            'loadMermaid' => $renderer->markdownUsesMermaid($markdown),
             'modifiedAt' => $file['modified_at'],
             'githubBlobUrl' => DocumentationCatalog::githubBlobUrl($resolved),
             'defaultDoc' => DocumentationCatalog::defaultPath(),

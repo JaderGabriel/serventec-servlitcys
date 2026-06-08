@@ -68,8 +68,14 @@
                                     </p>
                                 @endif
                                 <a
-                                    href="{{ route($docRoute.'.show', ['doc' => 'docs/HISTORICO_VERSOES.md']) }}"
+                                    href="{{ route($docRoute.'.show', ['doc' => 'docs/HUB_DOCUMENTACAO.md']) }}"
                                     class="mt-2 inline-block text-teal-800 dark:text-teal-300 hover:underline font-medium"
+                                >
+                                    {{ __('Hub de documentação') }} →
+                                </a>
+                                <a
+                                    href="{{ route($docRoute.'.show', ['doc' => 'docs/HISTORICO_VERSOES.md']) }}"
+                                    class="inline-block text-teal-800 dark:text-teal-300 hover:underline font-medium"
                                 >
                                     {{ __('Histórico de versões') }} →
                                 </a>
@@ -119,6 +125,13 @@
                         </p>
                     @endif
 
+                    @if (($loadMermaid ?? false) && ($currentPath ?? '') === 'docs/HUB_DOCUMENTACAO.md')
+                        <p class="serv-panel px-4 py-2 text-xs text-slate-600 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                            {{ __('Hub visual da documentação — diagramas renderizados no leitor; versão interactiva para Cursor em') }}
+                            <code class="font-mono text-[11px]">canvases/documentacao-hub.canvas.tsx</code>
+                        </p>
+                    @endif
+
                     <article class="serv-panel serv-docs-article">
                         @if ($modifiedAt)
                             <p class="px-5 sm:px-8 pt-4 text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
@@ -134,4 +147,20 @@
             </div>
         </div>
     </div>
+
+    @if ($loadMermaid ?? false)
+        <script type="module">
+            import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+
+            const isDark = document.documentElement.classList.contains('dark');
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: isDark ? 'dark' : 'default',
+                securityLevel: 'strict',
+                fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+            });
+
+            await mermaid.run({ querySelector: '.serv-docs-prose .mermaid' });
+        </script>
+    @endif
 </x-app-layout>

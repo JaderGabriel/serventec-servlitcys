@@ -102,11 +102,12 @@ Decisão de produto: [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md).
 2. [ ] Release + linha em [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 3. [ ] `config/documentation.php` (`product.version`, `release_tag`, `commit_short`)
 4. [ ] Tag: `YYYYMMDD-Codename`; se já existir release na mesma data, usar sufixo `a`, `b`, … (`ProductReleaseTag`)
-5. [ ] [README.md](README.md) — secção releases e abas rápidas
-6. [ ] `DocumentationCatalog` — entradas curadas se o doc for de leitura frequente
-7. [ ] Comando novo → [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) + `ArtisanCommandsCatalog`
-8. [ ] Decisão técnica → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md)
-9. [ ] Item concluído no backlog → mover para STATUS; remover ou marcar Concluído
+5. [ ] [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) — versão, linha 4.x e mapa de docs
+6. [ ] [README.md](README.md) — secção releases e abas rápidas
+7. [ ] `DocumentationCatalog` — entradas curadas se o doc for de leitura frequente
+8. [ ] Comando novo → [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) + `ArtisanCommandsCatalog`
+9. [ ] Decisão técnica → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md)
+10. [ ] Item concluído no backlog → mover para STATUS; remover ou marcar Concluído
 
 ---
 

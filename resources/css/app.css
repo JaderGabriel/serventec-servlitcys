@@ -1829,6 +1829,14 @@
         @apply me-2 rounded border-slate-300 text-teal-600;
     }
 
+    .serv-docs-prose .mermaid {
+        @apply my-6 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/80 p-4 text-center;
+    }
+
+    .serv-docs-prose .mermaid svg {
+        @apply max-w-full h-auto mx-auto;
+    }
+
 }
 
 /* Painel analítico: espaçamento consistente entre blocos dentro de cada aba */

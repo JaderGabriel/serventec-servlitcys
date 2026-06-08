@@ -21,11 +21,30 @@ class DocumentationMarkdownRenderer
 
         $converter = new MarkdownConverter($environment);
         $html = $converter->convert($markdown)->getContent();
+        $html = $this->transformMermaidFences($html);
 
         return $this->rewriteInternalDocLinks(
             $html,
             $currentPath,
             $documentationRoutePrefix ?? DocumentationCatalog::readerRoutePrefix(),
+        );
+    }
+
+    public function markdownUsesMermaid(string $markdown): bool
+    {
+        return (bool) preg_match('/```mermaid\b/i', $markdown);
+    }
+
+    private function transformMermaidFences(string $html): string
+    {
+        return (string) preg_replace_callback(
+            '/<pre><code class="language-mermaid">(.*?)<\/code><\/pre>/si',
+            static function (array $matches): string {
+                $diagram = html_entity_decode($matches[1], ENT_QUOTES | ENT_HTML5);
+
+                return '<div class="mermaid">'.trim($diagram).'</div>';
+            },
+            $html,
         );
     }
 

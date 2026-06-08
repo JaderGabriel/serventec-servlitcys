@@ -2,7 +2,7 @@
 
 **Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
 
-> **Índice:** [README.md](README.md) · **Estado:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Canvas interactivo:** ver nota no [README do repositório](../README.md#documentação)
+> **Índice:** [README.md](README.md) · **Hub visual:** [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) · **Estado:** [STATUS_PROJETO.md](STATUS_PROJETO.md)
 
 Documento de referência visual para **como o sistema se organiza**, **de onde vêm os dados** e **como publicar releases**. Os diagramas abaixo usam [Mermaid](https://mermaid.js.org/); o leitor admin (`/admin/documentacao`) renderiza blocos ` ```mermaid ` quando suportado.
 

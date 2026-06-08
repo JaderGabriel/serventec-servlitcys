@@ -34,4 +34,25 @@ class DocumentationMarkdownRendererTest extends TestCase
             $html
         );
     }
+
+    public function test_transforma_blocos_mermaid_em_div(): void
+    {
+        $renderer = new DocumentationMarkdownRenderer;
+        $html = $renderer->toHtml(
+            "```mermaid\nflowchart LR\nA-->B\n```",
+            'docs/HUB_DOCUMENTACAO.md'
+        );
+
+        $this->assertStringContainsString('<div class="mermaid">', $html);
+        $this->assertStringContainsString('flowchart LR', $html);
+        $this->assertStringNotContainsString('language-mermaid', $html);
+    }
+
+    public function test_markdown_uses_mermaid_detecta_bloco(): void
+    {
+        $renderer = new DocumentationMarkdownRenderer;
+
+        $this->assertTrue($renderer->markdownUsesMermaid("```mermaid\ngraph TD\n```"));
+        $this->assertFalse($renderer->markdownUsesMermaid('# Título'));
+    }
 }

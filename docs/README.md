@@ -4,7 +4,7 @@
 
 Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitectura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
-**Canvas interactivo** (timeline 4.x, mapa de docs): [documentacao-hub.canvas.tsx](/home/jadergabriel/.cursor/projects/home-jadergabriel-servlitcys/canvases/documentacao-hub.canvas.tsx) — abrir ao lado do chat no Cursor.
+**Hub visual** (timeline 4.x, mapa de docs): [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) — leitor Documentação na app · [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) no Cursor IDE.
 
 ---
 
@@ -36,6 +36,7 @@ flowchart TD
 
 | Documento | Função |
 |-----------|--------|
+| [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) | Mapa visual — versão, 4.x, consultoria, releases |
 | [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) | Diagramas: camadas, RBAC, consultoria, FUNDEB, deploy, releases |
 | [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) | Padrão editorial e checklist de manutenção |
 | [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) | Tags, commits e trajetória de releases |

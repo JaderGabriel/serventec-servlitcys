@@ -370,6 +370,7 @@ final class DocumentationCatalog
                 'description' => __('Visão do produto, perfis e identidade visual.'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
+                    ['label' => __('Hub de documentação'), 'path' => 'docs/HUB_DOCUMENTACAO.md', 'hint' => __('Mapa visual · 4.x · releases')],
                     ['label' => __('Índice da documentação'), 'path' => 'docs/README.md', 'hint' => __('Ponto de entrada')],
                     ['label' => __('Padrão editorial'), 'path' => 'docs/PADRAO_DOCUMENTACAO.md', 'hint' => __('Qualidade e manutenção')],
                     ['label' => __('Arquitectura e fluxos'), 'path' => 'docs/ARQUITETURA_E_FLUXOS.md', 'hint' => __('Diagramas Mermaid')],

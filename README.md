@@ -41,7 +41,7 @@ flowchart LR
 | O que está implementado? | [docs/STATUS_PROJETO.md](docs/STATUS_PROJETO.md) |
 | Diagramas e fluxos (deploy, FUNDEB, releases) | [docs/ARQUITETURA_E_FLUXOS.md](docs/ARQUITETURA_E_FLUXOS.md) |
 | Índice completo da documentação | [docs/README.md](docs/README.md) |
-| Hub visual (timeline 4.x, mapa de docs) | [Canvas documentação](/home/jadergabriel/.cursor/projects/home-jadergabriel-servlitcys/canvases/documentacao-hub.canvas.tsx) — abrir ao lado do chat no Cursor |
+| Hub visual (timeline 4.x, mapa de docs) | [docs/HUB_DOCUMENTACAO.md](docs/HUB_DOCUMENTACAO.md) · leitor `/admin/documentacao` · canvas Cursor em [canvases/documentacao-hub.canvas.tsx](canvases/documentacao-hub.canvas.tsx) |
 
 ### Consultoria — 5 áreas
 

@@ -31,6 +31,18 @@ class AdminDocumentationTest extends TestCase
             ->assertSee('v'.config('documentation.product.version'), false);
     }
 
+    public function test_admin_can_render_hub_documentacao_com_mermaid(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->get(route('admin.documentation.show', ['doc' => 'docs/HUB_DOCUMENTACAO.md']))
+            ->assertOk()
+            ->assertSee(__('Hub de documentação'), false)
+            ->assertSee('class="mermaid"', false)
+            ->assertSee('mermaid@11/dist/mermaid.esm.min.mjs', false);
+    }
+
     public function test_admin_can_render_version_history_document(): void
     {
         $admin = User::factory()->admin()->create();
