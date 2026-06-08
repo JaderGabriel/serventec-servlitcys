@@ -109,7 +109,9 @@ final class AdminHomeMunicipalityMapTest extends TestCase
         City::factory()->create(['name' => 'Incompleta', 'uf' => 'BA', 'is_active' => true]);
         City::factory()->create(['name' => 'Off', 'uf' => 'BA', 'is_active' => false]);
 
-        $summary = app(AdminHomeMunicipalityMap::class)->summary();
+        $map = app(AdminHomeMunicipalityMap::class);
+        $markers = $map->markers();
+        $summary = $map->summary($markers);
 
         $this->assertCount(4, $summary['legend']);
         $this->assertSame(1, $summary['by_status']['ready'] ?? 0);

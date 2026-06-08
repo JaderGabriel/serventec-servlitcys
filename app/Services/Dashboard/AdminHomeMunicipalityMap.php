@@ -46,10 +46,13 @@ final class AdminHomeMunicipalityMap
      *     cadastro: ?array<string, mixed>
      * }>
      */
-    public function markers(): array
+    public function markers(?bool $includeCadastroSnapshot = null): array
     {
+        $includeCadastro = $includeCadastroSnapshot ?? ! (bool) config('performance.home_defer_map_rx_snapshot', true);
         $vigenteYear = (int) config('rx.vigente_year', (int) date('Y'));
-        $cadastroById = $this->cadastroSnapshot->forMap()['by_city_id'] ?? [];
+        $cadastroById = $includeCadastro
+            ? ($this->cadastroSnapshot->forMap()['by_city_id'] ?? [])
+            : [];
 
         $cities = City::query()
             ->orderBy('uf')
@@ -123,11 +126,12 @@ final class AdminHomeMunicipalityMap
     }
 
     /**
+     * @param  list<array<string, mixed>>|null  $markers  Evita reconstruir marcadores quando já calculados.
      * @return array{total: int, on_map: int, by_status: array<string, int>}
      */
-    public function summary(): array
+    public function summary(?array $markers = null): array
     {
-        $markers = $this->markers();
+        $markers = $markers ?? $this->markers();
         $byStatus = [];
 
         foreach ($markers as $m) {
@@ -144,8 +148,15 @@ final class AdminHomeMunicipalityMap
             }
         }
 
-        $snapshot = $this->cadastroSnapshot->forMap();
-        $cadastroById = is_array($snapshot['by_city_id'] ?? null) ? $snapshot['by_city_id'] : [];
+        $cadastroById = [];
+        foreach ($markers as $m) {
+            $id = (int) ($m['id'] ?? 0);
+            if ($id > 0 && is_array($m['cadastro'] ?? null)) {
+                $cadastroById[$id] = $m['cadastro'];
+            }
+        }
+
+        $vigenteYear = (int) config('rx.vigente_year', (int) date('Y'));
 
         return [
             'total' => count($markers),
@@ -153,7 +164,7 @@ final class AdminHomeMunicipalityMap
             'by_status' => $byStatus,
             'legend' => MunicipalityMapStatus::legendItems($byStatus),
             'cadastro_legend' => MunicipalityMapCadastroPresenter::legendItems($cadastroById),
-            'vigente_ano' => (int) ($snapshot['vigente_ano'] ?? config('rx.vigente_year', (int) date('Y'))),
+            'vigente_ano' => $vigenteYear,
             'cadastro_snapshot_url' => route('dashboard.municipality-map.cadastro-snapshot'),
             'colors' => array_merge(
                 MunicipalityMapStatus::colorsForJs(),

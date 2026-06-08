@@ -26,6 +26,30 @@ final class AdminHomeMapCadastroSnapshot
      */
     public function forMap(): array
     {
+        if ((bool) config('performance.home_defer_map_rx_snapshot', true)) {
+            return $this->emptyPayload();
+        }
+
+        return $this->loadOrBuild();
+    }
+
+    /**
+     * Endpoint AJAX do mapa — sempre tenta cache/build (ignora defer da página Início).
+     */
+    public function forMapAjax(): array
+    {
+        return $this->loadOrBuild();
+    }
+
+    /**
+     * @return array{
+     *     vigente_ano: int,
+     *     by_city_id: array<int, array<string, mixed>>,
+     *     generated_at: string
+     * }
+     */
+    private function loadOrBuild(): array
+    {
         $vigenteYear = (int) config('rx.vigente_year', (int) date('Y'));
         $cacheKey = 'admin_home_map_rx:'.$vigenteYear;
         $ttlMinutes = 20;
@@ -61,5 +85,21 @@ final class AdminHomeMapCadastroSnapshot
         Cache::put($cacheKey, $payload, now()->addMinutes($ttlMinutes));
 
         return $payload;
+    }
+
+    /**
+     * @return array{
+     *     vigente_ano: int,
+     *     by_city_id: array<int, array<string, mixed>>,
+     *     generated_at: string
+     * }
+     */
+    private function emptyPayload(): array
+    {
+        return [
+            'vigente_ano' => (int) config('rx.vigente_year', (int) date('Y')),
+            'by_city_id' => [],
+            'generated_at' => now()->toIso8601String(),
+        ];
     }
 }

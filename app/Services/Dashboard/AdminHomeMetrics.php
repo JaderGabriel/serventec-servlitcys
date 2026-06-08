@@ -80,12 +80,14 @@ final class AdminHomeMetrics
 
         $vigenteYear = (int) config('rx.vigente_year', (int) date('Y'));
 
+        $mapMarkers = $this->municipalityMap->markers();
+
         return [
             'stats' => $stats,
             'ops' => $ops,
             'system_flow' => $this->systemFlow->diagram($ready, $activeCities->count()),
-            'map_markers' => $this->municipalityMap->markers(),
-            'map_summary' => $this->municipalityMap->summary(),
+            'map_markers' => $mapMarkers,
+            'map_summary' => $this->municipalityMap->summary($mapMarkers),
             'fundeb_portaria' => RxFundebPortariaChart::buildForCities($activeCities, $vigenteYear),
         ];
     }

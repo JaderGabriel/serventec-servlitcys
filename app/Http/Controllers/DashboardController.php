@@ -23,7 +23,13 @@ class DashboardController extends Controller
         }
 
         if ($user !== null && $user->canImportOrConfigure()) {
-            $operationalAlerts->notifyAdminsIfNeeded($user);
+            if ((bool) config('performance.defer_operational_alerts_on_home', true)) {
+                dispatch(static function () use ($operationalAlerts, $user): void {
+                    $operationalAlerts->notifyAdminsIfNeeded($user);
+                })->afterResponse();
+            } else {
+                $operationalAlerts->notifyAdminsIfNeeded($user);
+            }
         }
 
         $data = $metrics->gather();

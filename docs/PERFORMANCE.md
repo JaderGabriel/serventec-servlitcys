@@ -84,8 +84,22 @@ php artisan queue:work redis --queue=default,admin-sync --sleep=3 --tries=3
 | `PERFORMANCE_PULSE_SKIP_AUTH=true` | Sem gravação Pulse em login/logout/recuperação de senha |
 | `PERFORMANCE_USER_CITY_IDS_CACHE` | Cache dos municípios do utilizador municipal |
 | `PERFORMANCE_MAIL_SETTINGS_CACHE` | Uma leitura de `mail_settings` por hora (pedidos autenticados) |
+| `PERFORMANCE_HOME_DEFER_MAP_RX=true` | Início **não** consulta i-Educar por município no servidor; mapa RX via AJAX |
+| `PERFORMANCE_DEFER_OPS_ALERTS_HOME=true` | Alertas operacionais no Início após enviar a resposta |
 | Índice `admin_user_logs` | Histórico de logins mais rápido para admins |
 | Índice único `users.username` | Lookup de credenciais indexado |
+
+## Início (`/dashboard`) vs login
+
+O **POST `/login`** em si é leve (uma query + `Hash::check` + redirect). A sensação de «login lento» em **administradores** costuma ser o carregamento do **Início**:
+
+1. Snapshot RX do mapa (`RxCityMetricsCollector` × N municípios) — cache 20 min, mas **miss** bloqueava a página inteira.
+2. Marcadores do mapa calculados **duas vezes** (`markers()` + `summary()`).
+3. Alertas operacionais (filas/sync/PDF) no mesmo pedido.
+
+Com `PERFORMANCE_HOME_DEFER_MAP_RX=true` (default), a página abre só com conexão/cores básicas; o browser chama `GET /dashboard/municipality-map/cadastro-snapshot` em paralelo (endpoint já existia).
+
+**Utilizadores municipais** vão para `/dashboard/analytics` — aí o atraso típico é **uma** ligação i-Educar para anos letivo (`ANALYTICS_INDEX_LIGHT_FILTERS=true` evita escolas/cursos no index).
 
 ## Painel analítico
 

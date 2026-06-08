@@ -16,7 +16,7 @@ class DashboardMunicipalityMapController extends Controller
             abort(403);
         }
 
-        return response()->json($snapshot->forMap());
+        return response()->json($snapshot->forMapAjax());
     }
 
     public function schoolYears(Request $request, City $city, CitySchoolYearsForMap $catalog): JsonResponse

@@ -51,4 +51,26 @@ return [
     */
     'pulse_skip_auth_routes' => env('PERFORMANCE_PULSE_SKIP_AUTH', true),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Início (/dashboard) — snapshot RX do mapa
+    |--------------------------------------------------------------------------
+    |
+    | Quando true, a página Início não consulta o i-Educar por município no
+    | servidor; o mapa carrega cores RX via AJAX (cadastro-snapshot). Evita
+    | bloquear o login→Início enquanto o cache RX (20 min) está frio.
+    |
+    */
+    'home_defer_map_rx_snapshot' => filter_var(env('PERFORMANCE_HOME_DEFER_MAP_RX', true), FILTER_VALIDATE_BOOL),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Alertas operacionais no Início
+    |--------------------------------------------------------------------------
+    |
+    | Quando true, a avaliação de filas/sync/PDF corre após enviar a resposta.
+    |
+    */
+    'defer_operational_alerts_on_home' => filter_var(env('PERFORMANCE_DEFER_OPS_ALERTS_HOME', true), FILTER_VALIDATE_BOOL),
+
 ];
