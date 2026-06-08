@@ -18,7 +18,7 @@
             <p class="serv-eyebrow">{{ __('Como ler') }}</p>
             <span class="text-sm font-semibold text-serv-navy dark:text-white">{{ __('Legendas e cores') }}</span>
             <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400 truncate">
-                {{ __('Semáforo meta · tons da tabela · barra Censo — clique para expandir') }}
+                {{ __('Aluno · matrícula · turma · semáforo · tons — clique para expandir') }}
             </p>
         </div>
         <x-ui.icon name="chevron-right" class="h-5 w-5 text-slate-400 shrink-0 transition-transform group-open:rotate-90" />

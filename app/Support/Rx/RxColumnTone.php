@@ -25,23 +25,23 @@ final class RxColumnTone
         return [
             [
                 'tone' => self::VIGENTE,
-                'label' => __('Ano vigente :ano', ['ano' => $vigenteYear]),
-                'description' => __('Volumes digitados no ano letivo em curso (alunos, matrículas, turmas, Censo).'),
+                'label' => __('Cadastro vigente :ano', ['ano' => $vigenteYear]),
+                'description' => __('Alunos distintos, matrículas ativas e turmas abertas no ano em curso — o que a rede já digitou no i-Educar.'),
             ],
             [
                 'tone' => self::ANTERIOR,
-                'label' => __('Ano anterior :ano / referência', ['ano' => $anteriorYear]),
-                'description' => __('Histórico imediato ou ano de referência usado para calcular a meta (linha inferior em Matrículas e bloco «Base» na meta).'),
+                'label' => __('Comparação :ano', ['ano' => $anteriorYear]),
+                'description' => __('Linha inferior em Matrículas e referência histórica usada para projetar a meta (não é o alvo final).'),
             ],
             [
                 'tone' => self::COMPARATIVO,
                 'label' => __('Face à meta'),
-                'description' => __('Δ face ao ano anterior, progresso cadastral, pendente face à meta e dias estimados.'),
+                'description' => __('Δ de matrículas vs ano anterior, progresso cadastral, pendências e prazo estimado.'),
             ],
             [
                 'tone' => self::META,
                 'label' => __('Meta de cadastro'),
-                'description' => __('Ano de referência encontrado, volumes base e alvo após saltos percentuais.'),
+                'description' => __('Par «agora» vs «alvo» em turmas e matrículas, com ritmo recente de cadastro nas últimas 72h.'),
             ],
         ];
     }
@@ -49,8 +49,7 @@ final class RxColumnTone
     public static function forColumn(string $key): string
     {
         return match ($key) {
-            'alunos', 'turmas', 'censo' => self::VIGENTE,
-            'matriculas' => self::VIGENTE,
+            'alunos', 'matriculas', 'turmas', 'censo' => self::VIGENTE,
             'delta', 'progresso', 'falta', 'dias' => self::COMPARATIVO,
             'meta' => self::META,
             'semaforo', 'municipio', 'situacao' => self::NEUTRAL,
@@ -61,14 +60,13 @@ final class RxColumnTone
     /** Tom do cabeçalho da coluna (pode diferir da célula, ex. Matrículas = referência). */
     public static function headerToneForColumn(string $key): string
     {
-        return match ($key) {
-            'matriculas' => self::ANTERIOR,
-            default => self::forColumn($key),
-        };
+        return self::forColumn($key);
     }
 
     /**
      * Estrutura do thead: grupos e chips alinhados às 12 colunas.
+     *
+     * Ordem: semáforo · município · alunos · matrículas · turmas · Δ · meta · censo · progresso · pendente · dias · leitura
      *
      * @return list<array{
      *     key: string,
@@ -100,14 +98,13 @@ final class RxColumnTone
         };
 
         $v = $chip(self::VIGENTE);
-        $a = $chip(self::ANTERIOR);
         $m = $chip(self::META);
         $f = $chip(self::COMPARATIVO);
 
         return [
             [
                 'key' => 'semaforo',
-                'group_label' => null,
+                'group_label' => __('Identificação'),
                 'group_tone' => self::NEUTRAL,
                 'group_colspan' => 2,
                 'skip_group' => false,
@@ -135,53 +132,57 @@ final class RxColumnTone
             ],
             [
                 'key' => 'alunos',
-                'group_label' => __('Vigente :ano', ['ano' => $vigenteYear]),
+                'group_label' => __('Cadastro vigente :ano', ['ano' => $vigenteYear]),
                 'group_tone' => self::VIGENTE,
-                'group_colspan' => 1,
+                'group_colspan' => 3,
                 'skip_group' => false,
                 ...$v,
-                'tone_colspan' => 1,
+                'tone_colspan' => 3,
                 'tone_compact' => false,
                 'skip_tone' => false,
                 'header_tone' => self::VIGENTE,
             ],
             [
                 'key' => 'matriculas',
-                'group_label' => __('Ref. :ano', ['ano' => $anteriorYear]),
-                'group_tone' => self::ANTERIOR,
+                'group_label' => null,
+                'group_tone' => self::VIGENTE,
                 'group_colspan' => 1,
-                'skip_group' => false,
-                ...$a,
+                'skip_group' => true,
+                'tone' => null,
+                'tone_label' => null,
+                'tone_description' => null,
                 'tone_colspan' => 1,
                 'tone_compact' => false,
-                'skip_tone' => false,
-                'header_tone' => self::ANTERIOR,
+                'skip_tone' => true,
+                'header_tone' => self::VIGENTE,
+            ],
+            [
+                'key' => 'turmas',
+                'group_label' => null,
+                'group_tone' => self::VIGENTE,
+                'group_colspan' => 1,
+                'skip_group' => true,
+                'tone' => null,
+                'tone_label' => null,
+                'tone_description' => null,
+                'tone_colspan' => 1,
+                'tone_compact' => false,
+                'skip_tone' => true,
+                'header_tone' => self::VIGENTE,
             ],
             [
                 'key' => 'delta',
-                'group_label' => __('Δ :ano', ['ano' => $anteriorYear]),
+                'group_label' => __('Δ vs :ano', ['ano' => $anteriorYear]),
                 'group_tone' => self::COMPARATIVO,
                 'group_colspan' => 1,
                 'skip_group' => false,
                 'tone' => self::COMPARATIVO,
-                'tone_label' => __('Δ vs :ano', ['ano' => $anteriorYear]),
+                'tone_label' => __('Δ matrículas'),
                 'tone_description' => $f['tone_description'],
                 'tone_colspan' => 1,
                 'tone_compact' => false,
                 'skip_tone' => false,
                 'header_tone' => self::COMPARATIVO,
-            ],
-            [
-                'key' => 'turmas',
-                'group_label' => __('Turmas'),
-                'group_tone' => self::VIGENTE,
-                'group_colspan' => 1,
-                'skip_group' => false,
-                ...$v,
-                'tone_colspan' => 1,
-                'tone_compact' => true,
-                'skip_tone' => false,
-                'header_tone' => self::VIGENTE,
             ],
             [
                 'key' => 'meta',
@@ -249,7 +250,7 @@ final class RxColumnTone
             ],
             [
                 'key' => 'situacao',
-                'group_label' => null,
+                'group_label' => __('Leitura'),
                 'group_tone' => self::NEUTRAL,
                 'group_colspan' => 1,
                 'skip_group' => false,

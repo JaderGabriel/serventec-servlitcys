@@ -13,17 +13,19 @@
     >
         <div class="serv-rx-cadastro-pulse__header text-[9px] leading-tight">
             <p class="serv-rx-cadastro-pulse__label font-semibold uppercase tracking-wide text-[8px]">
-                {{ __('Ritmo') }}
+                {{ __('Ritmo de cadastro') }}
+            </p>
+            <p class="text-[8px] text-fuchsia-700/80 dark:text-fuchsia-300/80 leading-tight">
+                {{ __('Novas turmas e matrículas por data no i-Educar') }}
             </p>
             <div class="serv-rx-cadastro-pulse__windows mt-0.5 flex w-full gap-1">
                 <template x-for="window in windows" :key="window.hours">
                     <span
-                        class="serv-rx-cadastro-pulse__chip flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded px-1 py-0.5 tabular-nums cursor-help"
+                        class="serv-rx-cadastro-pulse__chip flex min-w-0 flex-1 flex-col items-center justify-center gap-0 rounded px-0.5 py-0.5 tabular-nums cursor-help leading-none"
                         :title="windowTitle(window)"
                     >
-                        <span class="serv-rx-cadastro-pulse__chip-hours font-semibold" x-text="`${window.hours}h`"></span>
-                        <span class="serv-rx-cadastro-pulse__chip-muted" x-text="`${window.turmas}t`"></span>
-                        <span class="serv-rx-cadastro-pulse__chip-strong" x-text="`${window.matriculas}m`"></span>
+                        <span class="serv-rx-cadastro-pulse__chip-hours font-semibold text-[9px]" x-text="`${window.hours}h`"></span>
+                        <span class="text-[8px] text-fuchsia-600/80 dark:text-fuchsia-400/80" x-text="windowChipLine(window)"></span>
                     </span>
                 </template>
             </div>

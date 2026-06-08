@@ -28,9 +28,9 @@ final class RxColumnToneTest extends TestCase
         $this->assertSame(12, $toneSpan);
     }
 
-    public function test_matriculas_header_uses_anterior_tone(): void
+    public function test_matriculas_header_uses_vigente_tone(): void
     {
-        $this->assertSame(RxColumnTone::ANTERIOR, RxColumnTone::headerToneForColumn('matriculas'));
+        $this->assertSame(RxColumnTone::VIGENTE, RxColumnTone::headerToneForColumn('matriculas'));
         $this->assertSame(RxColumnTone::VIGENTE, RxColumnTone::forColumn('matriculas'));
     }
 
@@ -39,10 +39,10 @@ final class RxColumnToneTest extends TestCase
         $cols = RxColumnTone::tableColumns(2026, 2025);
 
         $this->assertSame('vigente', $cols[2]['tone']);
-        $this->assertSame('anterior', $cols[3]['tone']);
-        $this->assertSame('comparativo', $cols[4]['tone']);
+        $this->assertSame('comparativo', $cols[5]['tone']);
         $this->assertSame('meta', $cols[6]['tone']);
         $this->assertSame('comparativo', $cols[8]['tone']);
         $this->assertSame(3, $cols[8]['tone_colspan']);
+        $this->assertSame(3, $cols[2]['group_colspan']);
     }
 }

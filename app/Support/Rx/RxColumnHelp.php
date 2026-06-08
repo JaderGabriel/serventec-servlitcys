@@ -28,31 +28,29 @@ final class RxColumnHelp
             [
                 'key' => 'alunos',
                 'title' => __('Alunos'),
-                'description' => __('Alunos distintos com matrícula ativa no ano letivo :ano (filtro de turma/ano).', ['ano' => $vigenteYear]),
+                'description' => __('Pessoas distintas com pelo menos uma matrícula ativa no :ano. Se matrículas > alunos, pode haver transferências duplicadas — ver Discrepâncias.', ['ano' => $vigenteYear]),
             ],
             [
                 'key' => 'matriculas',
                 'title' => __('Matrículas'),
-                'description' => __('Matrículas ativas no ano :v. A linha inferior mostra o volume em :a para comparação.', ['v' => $vigenteYear, 'a' => $anteriorYear]),
-            ],
-            [
-                'key' => 'delta',
-                'title' => __('Δ vs :ano', ['ano' => $anteriorYear]),
-                'description' => __('Diferença das matrículas vigentes em relação ao ano :ano imediato (não é a meta). Se :ano estiver zerado e houver matrículas no vigente, mostra "novo cadastro" em vez de percentual.', ['ano' => $anteriorYear]),
+                'description' => __('Registos de matrícula ativos no :ano (cada vínculo aluno↔rede no ano letivo). Número grande = vigente; linha inferior = total no :a para comparar evolução — não confundir com a meta alvo.', ['ano' => $vigenteYear, 'a' => $anteriorYear]),
             ],
             [
                 'key' => 'turmas',
                 'title' => __('Turmas'),
-                'description' => __('Turmas distintas no ano letivo :ano.', ['ano' => $vigenteYear]),
+                'description' => __('Classes/salas distintas abertas no :ano. Abrir turma é um passo à parte de matricular o aluno.', ['ano' => $vigenteYear]),
+            ],
+            [
+                'key' => 'delta',
+                'title' => __('Δ vs :ano', ['ano' => $anteriorYear]),
+                'description' => __('Variação só de matrículas: vigente menos :ano imediato. Não inclui turmas nem alunos. Se :ano estiver zerado, mostra «novo cadastro».', ['ano' => $anteriorYear]),
             ],
             [
                 'key' => 'meta',
                 'title' => __('Meta de cadastro'),
                 'description' => __(
-                    'Ano de referência com turmas ou matrículas > 0 (busca até :n anos para trás se :a estiver zerado). Meta alvo = volume desse ano × (1 + :pct%)^saltos, em que cada salto é um ano a mais para trás em relação a :a. Abaixo do alvo: ritmo recente (turmas e matrículas em 24h, 48h e 72h) e mini-gráfico das últimas 72h — passe o rato para ver o detalhe por intervalo.',
+                    'Bloco «Agora» repete turmas e matrículas vigentes; «Meta alvo» é o volume esperado (referência histórica + :pct% por salto de ano sem dados). Ritmo = cadastros recentes nas últimas 24h, 48h e 72h (data gravada no i-Educar).',
                     [
-                        'n' => (int) config('rx.meta_lookback_years', 10),
-                        'a' => $anteriorYear,
                         'pct' => number_format($pctSalto, 0, ',', '.'),
                     ]
                 ),
@@ -65,17 +63,17 @@ final class RxColumnHelp
             [
                 'key' => 'progresso',
                 'title' => __('Progresso cad.'),
-                'description' => __('Percentual em relação à meta (turmas e matrículas com alvo > 0): usa o menor progresso entre as dimensões — o gargalo define o indicador.'),
+                'description' => __('Percentual face à meta em turmas e matrículas. O valor principal usa o menor dos dois — o que mais falta define o semáforo.'),
             ],
             [
                 'key' => 'falta',
                 'title' => __('Pendente'),
-                'description' => __('Turmas e matrículas ainda abaixo da meta alvo (não soma enturmações, para evitar duplicar o mesmo cadastro).'),
+                'description' => __('Quanto falta para a meta: turmas e matrículas em separado (enturmações não entram, para não contar o mesmo trabalho duas vezes).'),
             ],
             [
                 'key' => 'dias',
                 'title' => __('Dias p/ meta'),
-                'description' => __('Dias estimados para fechar o cadastro ao ritmo observado na quinzena (quando há movimento recente).'),
+                'description' => __('Prazo estimado para fechar o gap de matrículas/turmas, com base no ritmo de cadastro da quinzena recente.'),
             ],
             [
                 'key' => 'situacao',

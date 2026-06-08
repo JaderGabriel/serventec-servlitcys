@@ -1402,10 +1402,10 @@ return [
             'fortnight' => 15,
         ],
         'matricula_date_columns' => [
-            'data_cad',
-            'data_cadastro',
             'data_matricula',
             'data_matricula_inicial',
+            'data_cad',
+            'data_cadastro',
             'data_registro',
         ],
         'matricula_user_columns' => [

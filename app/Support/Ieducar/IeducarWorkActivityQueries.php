@@ -16,30 +16,26 @@ final class IeducarWorkActivityQueries
      * @return array{
      *   available: bool,
      *   date_col: ?string,
+     *   date_expr: ?string,
      *   user_col: ?string,
      *   note: ?string
      * }
      */
     public static function matriculaActivityContext(Connection $db, City $city): array
     {
-        $mat = IeducarSchema::resolveTable('matricula', $city);
-        $dateCol = IeducarColumnInspector::firstExistingColumn(
-            $db,
-            $mat,
-            config('ieducar.work_tracking.matricula_date_columns', []),
-            $city
-        );
+        $dateExpr = self::matriculaActivityDateExpression($db, $city);
         $userCol = IeducarColumnInspector::firstExistingColumn(
             $db,
-            $mat,
+            IeducarSchema::resolveTable('matricula', $city),
             config('ieducar.work_tracking.matricula_user_columns', []),
             $city
         );
 
-        if ($dateCol === null) {
+        if ($dateExpr === null) {
             return [
                 'available' => false,
                 'date_col' => null,
+                'date_expr' => null,
                 'user_col' => $userCol,
                 'note' => __('Não foi encontrada coluna de data de cadastro em matrícula nesta base.'),
             ];
@@ -47,10 +43,54 @@ final class IeducarWorkActivityQueries
 
         return [
             'available' => true,
-            'date_col' => $dateCol,
+            'date_col' => self::matriculaActivityPrimaryDateColumn($db, $city),
+            'date_expr' => $dateExpr,
             'user_col' => $userCol,
             'note' => null,
         ];
+    }
+
+    /**
+     * Expressão SQL da data de cadastro/matricula (COALESCE das colunas existentes, priorizando data_matricula).
+     */
+    public static function matriculaActivityDateExpression(Connection $db, City $city, string $alias = 'm'): ?string
+    {
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+        } catch (\InvalidArgumentException) {
+            return null;
+        }
+
+        $parts = [];
+        foreach (config('ieducar.work_tracking.matricula_date_columns', []) as $col) {
+            $col = trim((string) $col);
+            if ($col === '' || ! IeducarColumnInspector::columnExists($db, $mat, $col, $city)) {
+                continue;
+            }
+            $parts[] = $alias.'.'.$col;
+        }
+
+        if ($parts === []) {
+            return null;
+        }
+
+        return count($parts) === 1 ? $parts[0] : 'COALESCE('.implode(', ', $parts).')';
+    }
+
+    public static function matriculaActivityPrimaryDateColumn(Connection $db, City $city): ?string
+    {
+        try {
+            $mat = IeducarSchema::resolveTable('matricula', $city);
+        } catch (\InvalidArgumentException) {
+            return null;
+        }
+
+        return IeducarColumnInspector::firstExistingColumn(
+            $db,
+            $mat,
+            config('ieducar.work_tracking.matricula_date_columns', []),
+            $city
+        );
     }
 
     /**
@@ -93,10 +133,12 @@ final class IeducarWorkActivityQueries
         Connection $db,
         City $city,
         IeducarFilterState $filters,
-        string $dateCol,
+        string $dateExpr,
         ?string $userCol,
         array $windowHours,
     ): array {
+        unset($userCol);
+
         $out = [];
         foreach ($windowHours as $hours) {
             $out[(string) $hours] = 0;
@@ -108,7 +150,6 @@ final class IeducarWorkActivityQueries
 
         try {
             $mat = IeducarSchema::resolveTable('matricula', $city);
-            $usuario = IeducarUsuarioScope::resolve($db, $city);
             $maxHours = max($windowHours);
             $since = Carbon::now()->subHours($maxHours);
 
@@ -117,18 +158,13 @@ final class IeducarWorkActivityQueries
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
-            $q->where('m.'.$dateCol, '>=', $since);
-
-            if ($userCol !== null && $usuario !== null) {
-                $q->join($usuario['table'].' as u', 'm.'.$userCol, '=', 'u.'.$usuario['id_col']);
-                IeducarUsuarioScope::applyExclusions($q, $usuario, 'u');
-            }
+            $q->whereRaw($dateExpr.' >= ?', [$since]);
 
             $bindings = [];
             $parts = [];
             foreach ($windowHours as $hours) {
                 $bindings[] = Carbon::now()->subHours((int) $hours);
-                $parts[] = 'SUM(CASE WHEN m.'.$dateCol.' >= ? THEN 1 ELSE 0 END) as w_'.(int) $hours;
+                $parts[] = 'SUM(CASE WHEN '.$dateExpr.' >= ? THEN 1 ELSE 0 END) as w_'.(int) $hours;
             }
 
             $row = (array) ($q->selectRaw(implode(', ', $parts), $bindings)->first() ?? []);
@@ -180,30 +216,24 @@ final class IeducarWorkActivityQueries
         Connection $db,
         City $city,
         IeducarFilterState $filters,
-        string $dateCol,
+        string $dateExpr,
         ?string $userCol,
         int $seriesHours,
         int $bucketHours = 1,
     ): array {
-        unset($bucketHours);
+        unset($bucketHours, $userCol);
 
         try {
             $mat = IeducarSchema::resolveTable('matricula', $city);
-            $usuario = IeducarUsuarioScope::resolve($db, $city);
             $since = Carbon::now()->subHours($seriesHours);
-            $bucketExpr = self::hourBucketExpression($db, 'm.'.$dateCol);
+            $bucketExpr = self::hourBucketExpression($db, $dateExpr);
 
             $q = $db->table($mat.' as m');
             MatriculaAtivoFilter::apply($q, $db, 'm.'.(string) config('ieducar.columns.matricula.ativo'), $city);
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
-            $q->where('m.'.$dateCol, '>=', $since);
-
-            if ($userCol !== null && $usuario !== null) {
-                $q->join($usuario['table'].' as u', 'm.'.$userCol, '=', 'u.'.$usuario['id_col']);
-                IeducarUsuarioScope::applyExclusions($q, $usuario, 'u');
-            }
+            $q->whereRaw($dateExpr.' >= ?', [$since]);
 
             $rows = $q
                 ->selectRaw($bucketExpr.' as bucket, COUNT(*) as c')
@@ -281,12 +311,13 @@ final class IeducarWorkActivityQueries
         Connection $db,
         City $city,
         IeducarFilterState $filters,
-        string $dateCol,
+        string $dateExpr,
         ?string $userCol = null,
     ): array {
+        unset($userCol);
+
         $periods = config('ieducar.work_tracking.periods_days', ['day' => 1, 'week' => 7, 'fortnight' => 15]);
         $out = ['day' => 0, 'week' => 0, 'fortnight' => 0];
-        $usuario = IeducarUsuarioScope::resolve($db, $city);
 
         foreach ($periods as $key => $days) {
             if (! array_key_exists($key, $out)) {
@@ -296,10 +327,8 @@ final class IeducarWorkActivityQueries
                 $db,
                 $city,
                 $filters,
-                $dateCol,
+                $dateExpr,
                 (int) $days,
-                $userCol,
-                $usuario
             );
         }
 
@@ -313,7 +342,7 @@ final class IeducarWorkActivityQueries
         Connection $db,
         City $city,
         IeducarFilterState $filters,
-        string $dateCol,
+        string $dateExpr,
         string $userCol,
         int $days,
         int $limit = 25,
@@ -335,7 +364,7 @@ final class IeducarWorkActivityQueries
         $q->join($usuario['table'].' as u', 'm.'.$userCol, '=', 'u.'.$usuario['id_col']);
         IeducarUsuarioScope::applyExclusions($q, $usuario, 'u');
 
-        $q->where('m.'.$dateCol, '>=', $since->toDateString());
+        $q->whereRaw($dateExpr.' >= ?', [$since->toDateString()]);
 
         $q->selectRaw('u.'.$usuario['id_col'].' as usuario_id');
         $groupBy = ['u.'.$usuario['id_col']];
@@ -1215,13 +1244,13 @@ final class IeducarWorkActivityQueries
         }
     }
 
-    private static function hourBucketExpression(Connection $db, string $qualifiedCol): string
+    private static function hourBucketExpression(Connection $db, string $dateSql): string
     {
         if ($db->getDriverName() === 'pgsql') {
-            return "to_char(date_trunc('hour', {$qualifiedCol}), 'YYYY-MM-DD HH24:MI:SS')";
+            return "to_char(date_trunc('hour', {$dateSql}), 'YYYY-MM-DD HH24:MI:SS')";
         }
 
-        return "DATE_FORMAT({$qualifiedCol}, '%Y-%m-%d %H:00:00')";
+        return "DATE_FORMAT({$dateSql}, '%Y-%m-%d %H:00:00')";
     }
 
     private static function normalizeHourBucketKey(string $raw): string
@@ -1242,10 +1271,8 @@ final class IeducarWorkActivityQueries
         Connection $db,
         City $city,
         IeducarFilterState $filters,
-        string $dateCol,
+        string $dateExpr,
         int $days,
-        ?string $userCol,
-        ?array $usuario,
     ): int {
         try {
             $mat = IeducarSchema::resolveTable('matricula', $city);
@@ -1256,12 +1283,7 @@ final class IeducarWorkActivityQueries
             MatriculaTurmaJoin::joinMatriculaToTurma($q, $db, $city, 'm');
             MatriculaTurmaJoin::applyPivotAtivoIfNeeded($q, $db, $city);
             MatriculaTurmaJoin::applyTurmaFiltersWhere($q, $db, $city, $filters, 't_filter');
-            $q->where('m.'.$dateCol, '>=', $since->toDateString());
-
-            if ($userCol !== null && $usuario !== null) {
-                $q->join($usuario['table'].' as u', 'm.'.$userCol, '=', 'u.'.$usuario['id_col']);
-                IeducarUsuarioScope::applyExclusions($q, $usuario, 'u');
-            }
+            $q->whereRaw($dateExpr.' >= ?', [$since->toDateString()]);
 
             $row = $q->selectRaw('COUNT(*) as c')->first();
 

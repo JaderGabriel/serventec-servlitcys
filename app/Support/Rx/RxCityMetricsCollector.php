@@ -165,13 +165,13 @@ final class RxCityMetricsCollector
             __('ritmo de cadastro'),
             ['available' => false, 'date_col' => null, 'user_col' => null]
         );
-        if (is_array($ctx) && ($ctx['available'] ?? false) && filled($ctx['date_col'] ?? null)) {
+        if (is_array($ctx) && ($ctx['available'] ?? false) && filled($ctx['date_expr'] ?? null)) {
             $periods = $this->safe(
                 fn () => IeducarWorkActivityQueries::matriculaCountsByPeriod(
                     $db,
                     $city,
                     $filtersVigente,
-                    (string) $ctx['date_col'],
+                    (string) $ctx['date_expr'],
                     $ctx['user_col'] ?? null,
                 ),
                 $warnings,

@@ -33,7 +33,16 @@ export default function rxCadastroPulse(payload) {
             const tur = Number(window.turmas ?? 0).toLocaleString("pt-BR");
             const mat = Number(window.matriculas ?? 0).toLocaleString("pt-BR");
             const tot = Number(window.total ?? 0).toLocaleString("pt-BR");
-            return `${window.hours}h · ${tot} total (${tur} tur., ${mat} mat.)`;
+            return `Últimas ${window.hours}h: ${tot} cadastros (${tur} turma(s), ${mat} matrícula(s))`;
+        },
+
+        windowChipLine(window) {
+            if (!window) {
+                return "";
+            }
+            const tur = Number(window.turmas ?? 0).toLocaleString("pt-BR");
+            const mat = Number(window.matriculas ?? 0).toLocaleString("pt-BR");
+            return `${tur} tur. · ${mat} mat.`;
         },
 
         ecgPath() {
@@ -80,7 +89,7 @@ export default function rxCadastroPulse(payload) {
             const tur = Number(point.turmas ?? 0).toLocaleString("pt-BR");
             const mat = Number(point.matriculas ?? 0).toLocaleString("pt-BR");
             const tot = Number(point.total ?? 0).toLocaleString("pt-BR");
-            return `${point.label} · ${tot} (${tur} tur., ${mat} mat.)`;
+            return `${point.label}: ${tot} cadastros (${tur} tur., ${mat} mat.)`;
         },
 
         markerX() {

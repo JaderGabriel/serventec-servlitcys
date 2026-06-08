@@ -43,19 +43,20 @@ final class RxCadastroPulse
         $matCtx = IeducarWorkActivityQueries::matriculaActivityContext($db, $city);
         $turCtx = IeducarWorkActivityQueries::turmaActivityContext($db, $city);
 
+        $matDateExpr = ($matCtx['available'] ?? false) ? ($matCtx['date_expr'] ?? null) : null;
         $matDateCol = ($matCtx['available'] ?? false) ? ($matCtx['date_col'] ?? null) : null;
         $turDateCol = ($turCtx['available'] ?? false) ? ($turCtx['date_col'] ?? null) : null;
 
-        if ($matDateCol === null && $turDateCol === null) {
+        if ($matDateExpr === null && $turDateCol === null) {
             return self::empty();
         }
 
-        $matWindows = $matDateCol !== null
+        $matWindows = $matDateExpr !== null
             ? IeducarWorkActivityQueries::matriculaWindowCounts(
                 $db,
                 $city,
                 $filters,
-                (string) $matDateCol,
+                (string) $matDateExpr,
                 $matCtx['user_col'] ?? null,
                 self::WINDOW_HOURS,
             )
@@ -71,12 +72,12 @@ final class RxCadastroPulse
             )
             : array_fill_keys(array_map('strval', self::WINDOW_HOURS), 0);
 
-        $matBuckets = $matDateCol !== null
+        $matBuckets = $matDateExpr !== null
             ? IeducarWorkActivityQueries::matriculaHourlyBuckets(
                 $db,
                 $city,
                 $filters,
-                (string) $matDateCol,
+                (string) $matDateExpr,
                 $matCtx['user_col'] ?? null,
                 self::SERIES_HOURS,
                 self::BUCKET_HOURS,
@@ -114,7 +115,7 @@ final class RxCadastroPulse
         $hasSignal = $seriesMax > 0 || array_sum(array_column($windows, 'total')) > 0;
 
         return [
-            'available' => $hasSignal || $matDateCol !== null || $turDateCol !== null,
+            'available' => $hasSignal || $matDateExpr !== null || $turDateCol !== null,
             'matricula_date_col' => $matDateCol,
             'turma_date_col' => $turDateCol,
             'windows' => $windows,

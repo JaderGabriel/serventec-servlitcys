@@ -91,13 +91,13 @@ class WorkDoneRepository
                 $byUser = [];
                 $activityNote = $ctx['note'] ?? null;
 
-                if ($ctx['available'] && filled($ctx['date_col'] ?? null)) {
-                    $dateCol = (string) $ctx['date_col'];
+                if ($ctx['available'] && filled($ctx['date_expr'] ?? null)) {
+                    $dateExpr = (string) $ctx['date_expr'];
                     $periods = IeducarWorkActivityQueries::matriculaCountsByPeriod(
                         $db,
                         $city,
                         $filters,
-                        $dateCol,
+                        $dateExpr,
                         $ctx['user_col'] ?? null
                     );
                     if (filled($ctx['user_col'] ?? null) && IeducarUsuarioScope::resolve($db, $city) !== null) {
@@ -106,7 +106,7 @@ class WorkDoneRepository
                                 $db,
                                 $city,
                                 $filters,
-                                $dateCol,
+                                $dateExpr,
                                 (string) $ctx['user_col'],
                                 (int) config('ieducar.work_tracking.periods_days.fortnight', 15)
                             );

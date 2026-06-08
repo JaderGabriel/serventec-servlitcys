@@ -23,9 +23,9 @@
             <x-rx.censo-deadline-banner :deadline="$rx['deadline'] ?? []" class="shadow-lg" />
 
             <div class="serv-panel serv-panel--info px-4 py-3 text-sm">
-                <p class="font-medium text-serv-navy dark:text-teal-100">{{ __('RX — força de trabalho e prazos') }}</p>
+                <p class="font-medium text-serv-navy dark:text-teal-100">{{ __('RX — cadastro em andamento e meta') }}</p>
                 <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">
-                    {{ __('Visão consolidada por município: volumes digitados no i-Educar (em andamento), Censo Escolar, meta de cadastro e indicador de cumprimento. Abaixo, quando disponível, complementações FUNDEB da portaria (dados consolidados do FNDE).') }}
+                    {{ __('Por município: quantos alunos, matrículas e turmas já estão no i-Educar no ano vigente; comparação com o ano anterior; meta de volume (turmas + matrículas); Censo e prazos. Aluno ≠ matrícula ≠ turma — veja o quadro abaixo antes da tabela.') }}
                 </p>
             </div>
 
@@ -74,9 +74,7 @@
                             <p class="serv-home-kpi__label">{{ __('Alunos :ano', ['ano' => $rx['vigente_ano'] ?? '']) }}</p>
                         </div>
                         <p class="serv-home-kpi__value">{{ $fmtN((int) ($t['alunos_vigente'] ?? 0)) }}</p>
-                        <p class="serv-home-kpi__hint">
-                            {{ __(':a em :ano', ['a' => $fmtN((int) ($t['alunos_anterior'] ?? 0)), 'ano' => $rx['anterior_ano'] ?? '']) }}
-                        </p>
+                        <p class="serv-home-kpi__hint">{{ __('Pessoas distintas matriculadas') }}</p>
                     </div>
 
                     <div class="serv-home-kpi">
@@ -88,8 +86,9 @@
                         </div>
                         <p class="serv-home-kpi__value">{{ $fmtN((int) ($t['matriculas_vigente'] ?? 0)) }}</p>
                         <p class="serv-home-kpi__hint {{ $delta >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300' }}">
-                            {{ $delta >= 0 ? '+' : '' }}{{ $fmtN($delta) }} {{ __('vs :ano', ['ano' => $rx['anterior_ano'] ?? '']) }}
+                            {{ $delta >= 0 ? '+' : '' }}{{ $fmtN($delta) }} {{ __('matr. vs :ano', ['ano' => $rx['anterior_ano'] ?? '']) }}
                         </p>
+                        <p class="serv-home-kpi__hint text-slate-500 dark:text-slate-400">{{ __('Vínculos ativos no ano') }}</p>
                     </div>
 
                     <div class="serv-home-kpi">
@@ -125,7 +124,7 @@
                             <p class="serv-home-kpi__label">{{ __('Registos em falta') }}</p>
                         </div>
                         <p class="serv-home-kpi__value text-amber-800 dark:text-amber-200">{{ $fmtN((int) ($t['registros_restantes'] ?? 0)) }}</p>
-                        <p class="serv-home-kpi__hint">{{ __('Turmas e matrículas abaixo da meta') }}</p>
+                        <p class="serv-home-kpi__hint">{{ __('Turmas + matrículas ainda abaixo do alvo') }}</p>
                     </div>
 
                     <div class="serv-home-kpi">
@@ -147,6 +146,11 @@
                 :vigenteAno="$rx['vigente_ano'] ?? ''"
                 :anteriorAno="$rx['anterior_ano'] ?? ''"
                 :metaPctPerSalto="(float) ($rx['meta_pct_per_salto'] ?? 5)"
+            />
+
+            <x-rx.cadastro-concepts
+                :vigenteAno="$rx['vigente_ano'] ?? ''"
+                :anteriorAno="$rx['anterior_ano'] ?? ''"
             />
 
             @if ((int) ($rx['cities_partial'] ?? 0) > 0)
@@ -174,7 +178,7 @@
                 <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
                     <p class="serv-eyebrow">{{ __('Tabela') }}</p>
                     <h3 class="font-display font-semibold text-serv-navy dark:text-white">{{ __('Detalhe por município') }}</h3>
-                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Tons alinhados às colunas. Passe o rato no cabeçalho para mais detalhe. Barra sob o nome = Censo por escola.') }}</p>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Três colunas verdes = cadastro vigente (aluno → matrícula → turma). Meta mostra «agora» vs «alvo». Passe o rato no cabeçalho para detalhe.') }}</p>
                 </div>
                 <div class="overflow-x-auto">
                     @php
@@ -200,11 +204,26 @@
                             <tr>
                                 <th class="{{ $rxTh('semaforo') }}" title="{{ $thTitle('semaforo') }}">{{ $th('semaforo', __('Indicador meta')) }}</th>
                                 <th class="{{ $rxTh('municipio') }}" title="{{ $thTitle('municipio') }}">{{ $th('municipio', __('Município')) }}</th>
-                                <th class="{{ $rxTh('alunos', true) }}" title="{{ $thTitle('alunos') }}">{{ $th('alunos', __('Alunos')) }}</th>
-                                <th class="{{ $rxTh('matriculas', true) }}" title="{{ $thTitle('matriculas') }}">{{ $th('matriculas', __('Matrículas')) }}</th>
-                                <th class="{{ $rxTh('delta', true) }}" title="{{ $thTitle('delta') }}">{{ $th('delta', __('Δ vs :ano', ['ano' => $rx['anterior_ano'] ?? ''])) }}</th>
-                                <th class="{{ $rxTh('turmas', true) }}" title="{{ $thTitle('turmas') }}">{{ $th('turmas', __('Turmas')) }}</th>
-                                <th class="{{ $rxTh('meta', true) }} min-w-[10rem]" title="{{ $thTitle('meta') }}">{{ $th('meta', __('Meta cadastro')) }}</th>
+                                <th class="{{ $rxTh('alunos', true) }}" title="{{ $thTitle('alunos') }}">
+                                    <span class="block">{{ $th('alunos', __('Alunos')) }}</span>
+                                    <span class="block text-[10px] font-normal normal-case tracking-normal text-slate-500 dark:text-slate-400">{{ __('distintos') }}</span>
+                                </th>
+                                <th class="{{ $rxTh('matriculas', true) }}" title="{{ $thTitle('matriculas') }}">
+                                    <span class="block">{{ $th('matriculas', __('Matrículas')) }}</span>
+                                    <span class="block text-[10px] font-normal normal-case tracking-normal text-slate-500 dark:text-slate-400">{{ __('ativas') }}</span>
+                                </th>
+                                <th class="{{ $rxTh('turmas', true) }}" title="{{ $thTitle('turmas') }}">
+                                    <span class="block">{{ $th('turmas', __('Turmas')) }}</span>
+                                    <span class="block text-[10px] font-normal normal-case tracking-normal text-slate-500 dark:text-slate-400">{{ __('no :ano', ['ano' => $rx['vigente_ano'] ?? '']) }}</span>
+                                </th>
+                                <th class="{{ $rxTh('delta', true) }}" title="{{ $thTitle('delta') }}">
+                                    <span class="block">{{ $th('delta', __('Δ matr.')) }}</span>
+                                    <span class="block text-[10px] font-normal normal-case tracking-normal text-slate-500 dark:text-slate-400">{{ __('vs :ano', ['ano' => $rx['anterior_ano'] ?? '']) }}</span>
+                                </th>
+                                <th class="{{ $rxTh('meta', true) }} min-w-[11rem]" title="{{ $thTitle('meta') }}">
+                                    <span class="block">{{ $th('meta', __('Meta')) }}</span>
+                                    <span class="block text-[10px] font-normal normal-case tracking-normal text-slate-500 dark:text-slate-400">{{ __('agora · alvo · ritmo') }}</span>
+                                </th>
                                 <th class="{{ $rxTh('censo', true) }}" title="{{ $thTitle('censo') }}">{{ $th('censo', __('Censo')) }}</th>
                                 <th class="{{ $rxTh('progresso', true) }}" title="{{ $thTitle('progresso') }}">{{ $th('progresso', __('Progresso cad.')) }}</th>
                                 <th class="{{ $rxTh('falta', true) }}" title="{{ $thTitle('falta') }}">{{ $th('falta', __('Pendente')) }}</th>
@@ -246,13 +265,28 @@
                                     </td>
                                     <td class="{{ $rxTd('alunos', true) }}">
                                         <span class="serv-rx-val--vigente">{{ number_format((int) ($row['alunos_vigente'] ?? 0), 0, ',', '.') }}</span>
+                                        @if ((int) ($row['matriculas_vigente'] ?? 0) > (int) ($row['alunos_vigente'] ?? 0) && (int) ($row['alunos_vigente'] ?? 0) > 0)
+                                            <span class="block text-[10px] text-amber-700/90 dark:text-amber-200/90" title="{{ __('Mais matrículas que alunos — verifique transferências.') }}">
+                                                {{ __('+ matrículas duplicadas') }}
+                                            </span>
+                                        @endif
                                     </td>
                                     <td class="{{ $rxTd('matriculas', true) }}">
                                         <span class="serv-rx-val--vigente">{{ number_format((int) ($row['matriculas_vigente'] ?? 0), 0, ',', '.') }}</span>
                                         <span class="serv-rx-val--anterior">
-                                            {{ number_format((int) ($row['matriculas_anterior'] ?? 0), 0, ',', '.') }}
-                                            <span class="text-slate-400">({{ $rx['anterior_ano'] ?? '' }})</span>
+                                            {{ __(':n em :ano', [
+                                                'n' => number_format((int) ($row['matriculas_anterior'] ?? 0), 0, ',', '.'),
+                                                'ano' => $rx['anterior_ano'] ?? '',
+                                            ]) }}
                                         </span>
+                                    </td>
+                                    <td class="{{ $rxTd('turmas', true) }}">
+                                        <span class="serv-rx-val--vigente">{{ number_format((int) ($row['turmas_vigente'] ?? 0), 0, ',', '.') }}</span>
+                                        @if ((int) ($row['meta_turmas_alvo'] ?? 0) > 0)
+                                            <span class="block text-[10px] text-slate-500 dark:text-slate-400">
+                                                {{ __('meta :n', ['n' => number_format((int) ($row['meta_turmas_alvo'] ?? 0), 0, ',', '.')]) }}
+                                            </span>
+                                        @endif
                                     </td>
                                     <td class="{{ $rxTd('delta', true) }} tabular-nums text-xs">
                                         @php
@@ -264,51 +298,16 @@
                                             @if ($semBase)
                                                 <span class="block text-[10px] text-slate-500 font-normal">{{ __('novo cadastro') }}</span>
                                             @elseif ($row['matriculas_delta_pct'] !== null)
-                                                ({{ number_format((float) $row['matriculas_delta_pct'], 1, ',', '.') }}%)
+                                                <span class="block text-[10px] font-normal text-slate-500">({{ number_format((float) $row['matriculas_delta_pct'], 1, ',', '.') }}%)</span>
                                             @endif
                                         </span>
                                     </td>
-                                    <td class="{{ $rxTd('turmas', true) }}">
-                                        <span class="serv-rx-val--vigente">{{ number_format((int) ($row['turmas_vigente'] ?? 0), 0, ',', '.') }}</span>
-                                    </td>
                                     <td class="{{ $rxTd('meta', true) }} text-xs leading-snug">
-                                        @if ($row['meta_encontrou_referencia'] ?? false)
-                                            <span class="font-medium text-violet-950 dark:text-violet-50">
-                                                {{ __('Ref. :ano', ['ano' => (int) ($row['meta_referencia_ano'] ?? 0)]) }}
-                                            </span>
-                                            <span class="serv-rx-val--meta-ref block">
-                                                {{ __('Base: :m mat. · :t tur.', [
-                                                    'm' => number_format((int) ($row['meta_referencia_matriculas'] ?? 0), 0, ',', '.'),
-                                                    't' => number_format((int) ($row['meta_referencia_turmas'] ?? 0), 0, ',', '.'),
-                                                ]) }}
-                                            </span>
-                                            @if ($row['meta_ano_imediato_zerado'] ?? false)
-                                                <span class="block text-[10px] font-medium text-amber-800 dark:text-amber-200">
-                                                    {{ __(':ano sem cadastro — meta com salto(s) a partir de :ref.', [
-                                                        'ano' => (string) ($rx['anterior_ano'] ?? ''),
-                                                        'ref' => (int) ($row['meta_referencia_ano'] ?? 0),
-                                                    ]) }}
-                                                </span>
-                                            @endif
-                                            @if ((int) ($row['meta_saltos'] ?? 0) > 0)
-                                                <span class="serv-rx-val--meta-alvo">
-                                                    {{ __('+:pct% (:n salto(s)) → alvo :mat mat.', [
-                                                        'pct' => number_format((float) ($row['meta_acrescimo_pct'] ?? 0), 1, ',', '.'),
-                                                        'n' => (int) ($row['meta_saltos'] ?? 0),
-                                                        'mat' => number_format((int) ($row['meta_matriculas_alvo'] ?? 0), 0, ',', '.'),
-                                                    ]) }}
-                                                </span>
-                                            @else
-                                                <span class="serv-rx-val--meta-alvo">
-                                                    {{ __('Alvo: :mat mat.', ['mat' => number_format((int) ($row['meta_matriculas_alvo'] ?? 0), 0, ',', '.')]) }}
-                                                </span>
-                                            @endif
-                                            <x-rx.cadastro-pulse :pulse="$row['cadastro_pulse'] ?? null" />
-                                        @else
-                                            <span class="text-slate-400">—</span>
-                                            <span class="serv-rx-val--meta-ref block">{{ __('Sem histórico') }}</span>
-                                            <x-rx.cadastro-pulse :pulse="$row['cadastro_pulse'] ?? null" />
-                                        @endif
+                                        <x-rx.meta-cadastro-cell
+                                            :row="$row"
+                                            :vigenteAno="$rx['vigente_ano'] ?? ''"
+                                            :anteriorAno="$rx['anterior_ano'] ?? ''"
+                                        />
                                     </td>
                                     <td class="{{ $rxTd('censo', true) }} tabular-nums text-xs">
                                         @if ($pctC !== null)
@@ -325,12 +324,12 @@
                                             <span class="font-medium text-sky-950 dark:text-sky-50">{{ number_format((float) $prog, 1, ',', '.') }}%</span>
                                             @if (($row['progresso_matriculas_pct'] ?? null) !== null)
                                                 <span class="block text-[10px] text-slate-500">
-                                                    {{ __('Mat. :pct %', ['pct' => number_format((float) $row['progresso_matriculas_pct'], 1, ',', '.')]) }}
+                                                    {{ __('Matrículas :pct %', ['pct' => number_format((float) $row['progresso_matriculas_pct'], 1, ',', '.')]) }}
                                                 </span>
                                             @endif
                                             @if (($row['progresso_turmas_pct'] ?? null) !== null && (int) ($row['meta_turmas_alvo'] ?? 0) > 0)
                                                 <span class="block text-[10px] text-slate-500">
-                                                    {{ __('Tur. :pct %', ['pct' => number_format((float) $row['progresso_turmas_pct'], 1, ',', '.')]) }}
+                                                    {{ __('Turmas :pct %', ['pct' => number_format((float) $row['progresso_turmas_pct'], 1, ',', '.')]) }}
                                                 </span>
                                             @endif
                                         @elseif ($row['meta_encontrou_referencia'] ?? false)
@@ -349,12 +348,12 @@
                                         @if ($metaTur > 0 || $metaMat > 0)
                                             @if ($metaTur > 0)
                                                 <span class="block">
-                                                    {{ __(':n turma(s)', ['n' => number_format($faltaTur, 0, ',', '.')]) }}
+                                                    {{ __('Faltam :n turma(s)', ['n' => number_format($faltaTur, 0, ',', '.')]) }}
                                                 </span>
                                             @endif
                                             @if ($metaMat > 0)
                                                 <span class="block {{ $metaTur > 0 ? 'text-[10px] font-normal text-amber-700/90 dark:text-amber-200/90' : '' }}">
-                                                    {{ __(':n matrícula(s)', ['n' => number_format($faltaMat, 0, ',', '.')]) }}
+                                                    {{ __('Faltam :n matrícula(s)', ['n' => number_format($faltaMat, 0, ',', '.')]) }}
                                                 </span>
                                             @endif
                                         @else
