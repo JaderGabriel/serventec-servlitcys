@@ -7,8 +7,8 @@
     $ano = (string) $vigenteAno;
 @endphp
 
-<div {{ $attributes->merge(['class' => 'serv-panel px-4 py-3']) }}>
-    <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+<div {{ $attributes->merge(['class' => 'serv-rx-cadastro-concepts px-4 py-3.5']) }}>
+    <p class="serv-rx-cadastro-concepts__title">
         {{ __('Como ler a tabela') }}
     </p>
     <div class="serv-rx-table-flow mt-3">
@@ -36,7 +36,7 @@
             </div>
         </div>
     </div>
-    <p class="mt-2.5 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+    <p class="serv-rx-cadastro-concepts__footnote">
         {{ __('Aluno = pessoa distinta · Matrícula = vínculo no ano · Turma = classe aberta. As três métricas aparecem nas colunas verdes; a meta compara turmas e matrículas em paralelo.') }}
     </p>
 </div>
