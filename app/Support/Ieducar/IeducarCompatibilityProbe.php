@@ -133,53 +133,10 @@ final class IeducarCompatibilityProbe
         ?int $fundebAnchorAno = null,
     ): array {
         $filters ??= new IeducarFilterState(ano_letivo: 'all', escola_id: null, curso_id: null, turno_id: null);
-        $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
+        $assembled = DiscrepanciesPanelAssembler::assemble($db, $city, $filters, $fundebAnchorAno);
+        $totalMat = (int) ($assembled['total_matriculas'] ?? 0);
         $catalog = DiscrepanciesCheckCatalog::definitions();
-        $queryMap = DiscrepanciesCheckRunner::queryMap();
-        $routines = [];
-
-        foreach ($catalog as $id => $meta) {
-            if ($id === 'nee_subnotificacao') {
-                continue;
-            }
-            $spec = $queryMap[$id] ?? null;
-            if ($spec === null) {
-                $routines[] = self::routineRowUnavailable($id, $meta);
-
-                continue;
-            }
-
-            $eval = DiscrepanciesCheckRunner::evaluate(
-                $db,
-                $city,
-                $filters,
-                $spec['fn'],
-                $spec['probe'],
-                isset($spec['hint']) ? (string) $spec['hint'] : null,
-            );
-
-            $routines[] = self::routineRow($id, $meta, $eval, $totalMat, $city, $filters);
-        }
-
-        if (isset($catalog['nee_subnotificacao'])) {
-            $neeRow = DiscrepanciesQueries::neeSubnotificacaoEstimativaPorRede($db, $city, $filters, $totalMat);
-            $neeEval = [
-                'availability' => $neeRow !== null ? 'available' : 'unavailable',
-                'has_issue' => $neeRow !== null,
-                'rows' => $neeRow !== null ? [$neeRow] : [],
-                'unavailable_reason' => $neeRow === null
-                    ? __('Benchmark NEE não aplicável neste filtro (denominador ou patamar).')
-                    : null,
-            ];
-            $routines[] = self::routineRow('nee_subnotificacao', $catalog['nee_subnotificacao'], $neeEval, $totalMat, $city, $filters);
-        }
-
-        try {
-            $networkKpis = MatriculaChartQueries::redeVagasResumoKpis($db, $city, $filters);
-        } catch (\Throwable) {
-            $networkKpis = null;
-        }
-        $routines = ConsultoriaOperationalSignals::append($routines, $networkKpis, $totalMat, $city, $filters, $fundebAnchorAno);
+        $routines = $assembled['dimensions'];
         $operationalMeta = ConsultoriaOperationalSignals::operationalMeta();
         $routines = array_map(
             static fn (array $routine): array => self::ensureRoutinePresentation(

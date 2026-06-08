@@ -4,20 +4,17 @@ namespace App\Repositories\Ieducar;
 
 use App\Models\City;
 use App\Services\CityDataConnection;
-use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Dashboard\PublicDataSourcesCatalog;
 use App\Support\Ieducar\ConsultoriaOperationalSignals;
 use App\Support\Ieducar\DiscrepanciesCheckCatalog;
-use App\Support\Ieducar\DiscrepanciesCheckRunner;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\DiscrepanciesModuleCatalog;
-use App\Support\Ieducar\DiscrepanciesQueries;
+use App\Support\Ieducar\DiscrepanciesPanelAssembler;
 use App\Support\Ieducar\DiscrepanciesRoutineMetrics;
 use App\Support\Ieducar\DiscrepanciesRoutineStatus;
-use App\Support\Ieducar\InclusionDashboardQueries;
-use App\Support\Ieducar\InclusionRecursoProvaQueries;
+use App\Support\Ieducar\IeducarCompatibilityProbe;
 use App\Support\Ieducar\MatriculaChartQueries;
 use App\Support\Ieducar\MatriculaVolumeCounts;
 use Illuminate\Database\Connection;
@@ -179,110 +176,34 @@ class DiscrepanciesRepository
             return $empty;
         }
 
+        $filters = IeducarCompatibilityProbe::filtersForDiscrepancies($filters);
+
         try {
             return $this->cityData->run($city, function (Connection $db) use ($city, $filters, $fundingOnly, $forDiagnosis) {
-                $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters) ?? 0;
+                $assembled = DiscrepanciesPanelAssembler::assemble(
+                    $db,
+                    $city,
+                    $filters,
+                    $this->fundebAnchorAno($filters),
+                );
+                $totalMat = (int) ($assembled['total_matriculas'] ?? 0);
+                $dimensions = $assembled['dimensions'];
+                $notes = $assembled['notes'];
                 $checks = [];
-                $dimensions = [];
-                $notes = [];
                 $catalog = DiscrepanciesCheckCatalog::definitions();
-                $queryMap = DiscrepanciesCheckRunner::queryMap();
 
-                foreach ($catalog as $id => $meta) {
-                    if ($id === 'nee_subnotificacao') {
-                        continue;
-                    }
-                    $spec = $queryMap[$id] ?? null;
-                    if ($spec === null) {
-                        $dimensions[] = $this->buildDimension($meta, [
-                            'availability' => 'unavailable',
-                            'has_issue' => false,
-                            'rows' => [],
-                            'unavailable_reason' => __('Rotina não implementada.'),
-                        ], $totalMat, $city, $filters);
-
-                        continue;
-                    }
-
-                    $eval = DiscrepanciesCheckRunner::evaluate(
-                        $db,
-                        $city,
-                        $filters,
-                        $spec['fn'],
-                        $spec['probe'],
-                        isset($spec['hint']) ? (string) $spec['hint'] : null,
-                    );
-                    $dimensions[] = $this->buildDimension($meta, $eval, $totalMat, $city, $filters);
-
-                    if (! $fundingOnly && ! $forDiagnosis && $eval['has_issue']) {
-                        $rows = $eval['rows'];
-                        if ($id === 'recurso_prova_sem_nee' && $rows !== []) {
-                            $rows = InclusionRecursoProvaQueries::enriquecerLinhasEscolaComTiposRecurso(
-                                $db,
-                                $city,
-                                $filters,
-                                $rows,
-                            );
+                if (! $fundingOnly && ! $forDiagnosis) {
+                    foreach ($assembled['issue_rows_by_id'] as $id => $rows) {
+                        $meta = $catalog[$id] ?? null;
+                        if (! is_array($meta) || $rows === []) {
+                            continue;
                         }
                         $checks[] = $this->buildCheck($meta, $rows, $totalMat, $city, $filters);
                     }
-                }
-
-                $neeRow = DiscrepanciesQueries::neeSubnotificacaoEstimativaPorRede($db, $city, $filters, $totalMat);
-                if ($neeRow !== null && isset($catalog['nee_subnotificacao'])) {
-                    $meta = $catalog['nee_subnotificacao'];
-                    $m = is_array($neeRow['meta'] ?? null) ? $neeRow['meta'] : [];
-                    $meta['explanation'] = __(
-                        'A rede tem :nee matrícula(s) NEE (:pct% do total), abaixo do patamar de referência de :bench% (configurável). Estimativa de :gap registro(s) possivelmente omitidos — indicador de subnotificação no Censo e no VAAR de inclusão.',
-                        [
-                            'nee' => number_format((int) ($m['nee_matriculas'] ?? 0)),
-                            'pct' => number_format((float) ($m['pct_atual'] ?? 0), 1, ',', '.'),
-                            'bench' => number_format((float) ($m['benchmark_pct'] ?? 0), 1, ',', '.'),
-                            'gap' => number_format((int) ($neeRow['total'] ?? 0)),
-                        ]
-                    );
-                    $neeEval = [
-                        'availability' => 'available',
-                        'has_issue' => true,
-                        'rows' => [$neeRow],
-                        'unavailable_reason' => null,
-                    ];
-                    $dimensions[] = $this->buildDimension($meta, $neeEval, $totalMat, $city, $filters);
-                    if (! $fundingOnly && ! $forDiagnosis) {
-                        $checks[] = $this->buildCheck($meta, [$neeRow], $totalMat, $city, $filters);
-                    }
-                }
-
-                if (! $fundingOnly && ! $forDiagnosis) {
-                    $networkKpis = null;
-                    try {
-                        $networkKpis = MatriculaChartQueries::redeVagasResumoKpis($db, $city, $filters);
-                    } catch (\Throwable) {
-                        $networkKpis = null;
-                    }
-
-                    $dimensions = ConsultoriaOperationalSignals::append(
-                        $dimensions,
-                        $networkKpis,
-                        $totalMat,
-                        $city,
-                        $filters,
-                        $this->fundebAnchorAno($filters),
-                    );
 
                     $checks = $this->sortChecksForConsultoria($checks);
                     $checks = ConsultoriaOperationalSignals::enrichChecksFromDimensions($dimensions, $checks, $city, $filters);
                     $checks = $this->sortChecksForConsultoria($checks);
-
-                    $aee = InclusionDashboardQueries::buildAeeCrossEnrollment($db, $city, $filters);
-                    if (is_array($aee) && (int) ($aee['nee_matriculas_total'] ?? 0) > 0) {
-                        $neeTotal = (int) $aee['nee_matriculas_total'];
-                        $emAee = (int) ($aee['matriculas_em_turmas_aee'] ?? 0);
-                        $semAee = max(0, $neeTotal - $emAee);
-                        if ($semAee > 0 && ! $this->hasCheckId($checks, 'nee_sem_aee')) {
-                            $notes[] = __('Cruzamento AEE (rede): :n matrícula(s) NEE sem turma AEE identificada.', ['n' => number_format($semAee)]);
-                        }
-                    }
                 }
 
                 $summary = $dimensions !== []
@@ -316,20 +237,6 @@ class DiscrepanciesRepository
                 )));
 
                 if ($forDiagnosis) {
-                    $networkKpis = null;
-                    try {
-                        $networkKpis = MatriculaChartQueries::redeVagasResumoKpis($db, $city, $filters);
-                    } catch (\Throwable) {
-                        $networkKpis = null;
-                    }
-                    $dimensions = ConsultoriaOperationalSignals::append(
-                        $dimensions,
-                        $networkKpis,
-                        $totalMat,
-                        $city,
-                        $filters,
-                        $this->fundebAnchorAno($filters),
-                    );
                     $summary = $this->buildSummaryFromDimensions($dimensions);
                     $tiposComProblema = count(array_filter($dimensions, static fn (array $d): bool => (bool) ($d['has_issue'] ?? false)));
                     $activeFromDimensions = array_values(array_filter(array_map(
@@ -370,7 +277,7 @@ class DiscrepanciesRepository
 
                 return [
                     'intro' => __(
-                        'Painel unificado por módulo de cadastro (território, escola, matrícula, inclusão, Censo). Cada rotina indica pendências ou falta de dados, impacto financeiro indicativo e onde corrigir no i-Educar ou nas abas relacionadas (ex.: Unidades para coordenadas). Valores: VAAF de referência × peso por tipo.'
+                        'Painel unificado por módulo de cadastro (território, escola, matrícula, inclusão, FUNDEB, Censo e CadÚnico). Cada rotina indica pendências ou falta de dados, impacto financeiro indicativo e onde corrigir no i-Educar ou nas abas relacionadas (ex.: Unidades para coordenadas). Valores: VAAF de referência × peso por tipo.'
                     ),
                     'footnote' => __(
                         'Correções assumem ajuste no i-Educar antes da exportação ao Censo. VAAR/FUNDEB oficiais: Simec/MEC. Heurística AEE: IEDUCAR_INCLUSION_AEE_KEYWORDS. VAAF referência: IEDUCAR_DISC_VAA_REFERENCIA.'
@@ -848,10 +755,6 @@ class DiscrepanciesRepository
 
     private function fundebAnchorAno(IeducarFilterState $filters): int
     {
-        if ($filters->hasYearSelected() && ! $filters->isAllSchoolYears()) {
-            return (int) $filters->yearFilterValue();
-        }
-
-        return FundebOpenDataImportService::suggestedImportYear();
+        return DiscrepanciesPanelAssembler::resolveFundebAnchorAno($filters);
     }
 }
