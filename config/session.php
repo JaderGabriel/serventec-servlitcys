@@ -230,4 +230,26 @@ return [
 
     'serialization' => 'json',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Espelho de sessões (lista admin /users/sessoes)
+    |--------------------------------------------------------------------------
+    |
+    | Com redis/file, os dados da sessão ficam no cache; este espelho grava
+    | uma linha por session id na tabela sessions (um dispositivo = uma linha).
+    |
+    */
+
+    'registry_mirror' => filter_var(env('SESSION_REGISTRY_MIRROR', true), FILTER_VALIDATE_BOOL),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Geolocalização aproximada (lista de sessões)
+    |--------------------------------------------------------------------------
+    */
+
+    'ip_geo_lookup' => filter_var(env('SESSION_IP_GEO_LOOKUP', true), FILTER_VALIDATE_BOOL),
+
+    'ip_geo_cache_hours' => max(1, (int) env('SESSION_IP_GEO_CACHE_HOURS', 24)),
+
 ];

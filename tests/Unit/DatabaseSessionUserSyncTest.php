@@ -19,7 +19,7 @@ final class DatabaseSessionUserSyncTest extends TestCase
     #[Test]
     public function sync_preenche_user_id_na_linha_da_sessao_actual(): void
     {
-        config(['session.driver' => 'database']);
+        config(['session.registry_mirror' => true]);
 
         $user = User::factory()->admin()->create();
         $sessionId = Str::random(40);
@@ -47,5 +47,28 @@ final class DatabaseSessionUserSyncTest extends TestCase
             'id' => $sessionId,
             'user_id' => $user->id,
         ]);
+    }
+
+    #[Test]
+    public function sync_cria_linhas_distintas_por_session_id(): void
+    {
+        config(['session.registry_mirror' => true]);
+
+        $user = User::factory()->admin()->create();
+        $sync = app(DatabaseSessionUserSync::class);
+
+        foreach (['device-a', 'device-b'] as $label) {
+            $sessionId = hash('sha256', $label);
+            $session = app('session.store');
+            $session->setId($sessionId);
+
+            $request = Request::create('/', 'GET');
+            $request->setLaravelSession($session);
+            Auth::login($user);
+
+            $sync->syncAuthenticated($request);
+        }
+
+        $this->assertSame(2, DB::table('sessions')->where('user_id', $user->id)->count());
     }
 }

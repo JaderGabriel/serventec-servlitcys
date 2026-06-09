@@ -28,9 +28,9 @@
                 </div>
             @endif
 
-            @if ($sessionDriver !== 'database')
+            @if ($sessionDriver !== 'database' && $registryEnabled ?? true)
                 <div class="mb-6 rounded-md border border-sky-200/90 bg-sky-50/80 px-4 py-3 text-sm text-sky-900 dark:border-sky-800/60 dark:bg-sky-950/30 dark:text-sky-100">
-                    {{ __('O driver de sessão é :driver — a lista completa só existe na tabela quando SESSION_DRIVER=database. Abaixo mostramos pelo menos a sessão actual deste navegador.', ['driver' => $sessionDriver]) }}
+                    {{ __('Driver :driver — cada dispositivo gera um session id próprio; a lista abaixo reflecte todos os dispositivos com sessão activa.', ['driver' => $sessionDriver]) }}
                 </div>
             @endif
 

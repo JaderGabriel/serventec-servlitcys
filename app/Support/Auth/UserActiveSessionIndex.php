@@ -6,7 +6,6 @@ use App\Models\DatabaseSession;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator as Paginator;
 
 final class UserActiveSessionIndex
 {
@@ -17,6 +16,11 @@ final class UserActiveSessionIndex
     public function driver(): string
     {
         return (string) config('session.driver', 'database');
+    }
+
+    public function registryEnabled(): bool
+    {
+        return DatabaseSessionUserSync::registryEnabled();
     }
 
     public function currentSessionId(Request $request): string
@@ -36,7 +40,7 @@ final class UserActiveSessionIndex
             return null;
         }
 
-        if (DatabaseSessionUserSync::usesDatabaseTable()) {
+        if ($this->registryEnabled()) {
             $this->sessionSync->syncAuthenticated($request);
 
             $existing = DatabaseSession::query()
@@ -55,8 +59,9 @@ final class UserActiveSessionIndex
     {
         $currentId = $this->currentSessionId($request);
 
-        if (DatabaseSessionUserSync::usesDatabaseTable()) {
+        if ($this->registryEnabled()) {
             $this->sessionSync->syncAuthenticated($request);
+            $this->sessionSync->pruneExpired();
 
             return DatabaseSession::query()
                 ->with(['user:id,name,email,username'])
@@ -74,7 +79,7 @@ final class UserActiveSessionIndex
         $current = $this->currentSession($request);
         $items = $current !== null ? collect([$current]) : collect();
 
-        return new Paginator(
+        return new \Illuminate\Pagination\LengthAwarePaginator(
             $items,
             $items->count(),
             max(1, $perPage),

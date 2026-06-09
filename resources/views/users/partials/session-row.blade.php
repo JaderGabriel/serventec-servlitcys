@@ -15,7 +15,21 @@
             </span>
         @endif
     </td>
-    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 font-mono">{{ $s->ip_address ?? '—' }}</td>
+    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 align-top">
+        @php
+            $conn = $connectionPresenter->forSession($s);
+        @endphp
+        <span class="font-mono text-sm text-gray-700 dark:text-gray-200">{{ $conn['ip'] ?? '—' }}</span>
+        @if ($conn['location'])
+            <span class="serv-session-meta block">{{ $conn['location'] }}</span>
+        @endif
+        @if ($conn['user_agent_short'])
+            <span
+                class="serv-session-meta block truncate max-w-[16rem]"
+                @if ($conn['user_agent_full']) title="{{ $conn['user_agent_full'] }}" @endif
+            >{{ $conn['user_agent_short'] }}</span>
+        @endif
+    </td>
     <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">
         @if ($s->last_activity)
             {{ now()->setTimestamp($s->last_activity)->timezone(config('app.timezone'))->format('d/m/Y H:i:s') }}

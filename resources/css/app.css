@@ -3746,6 +3746,10 @@
         @apply animate-pulse ring-2 ring-sky-300/90 dark:ring-sky-600/80;
     }
 
+    .serv-session-meta {
+        @apply mt-0.5 text-[11px] font-normal leading-snug text-slate-400 dark:text-slate-500;
+    }
+
     /* Fila admin/sync-queue — cards temáticos */
     .sync-queue-theme-card {
         @apply block rounded-xl border border-slate-200/90 bg-white dark:bg-gray-900 p-4 shadow-sm transition hover:border-indigo-300/80 hover:shadow-md dark:border-slate-700 dark:hover:border-indigo-700/60;

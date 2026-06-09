@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AdminUserLog;
 use App\Models\DatabaseSession;
+use App\Support\Auth\SessionConnectionPresenter;
+use App\Support\Auth\SessionRevoker;
 use App\Support\Auth\UserActiveSessionIndex;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,10 +30,12 @@ class UserSessionController extends Controller
             'currentSessionId' => $currentSessionId,
             'currentListed' => $currentListed,
             'sessionDriver' => $sessionIndex->driver(),
+            'registryEnabled' => $sessionIndex->registryEnabled(),
+            'connectionPresenter' => app(SessionConnectionPresenter::class),
         ]);
     }
 
-    public function destroy(Request $request, DatabaseSession $session): RedirectResponse
+    public function destroy(Request $request, DatabaseSession $session, SessionRevoker $revoker): RedirectResponse
     {
         Gate::authorize('manageUserAudit');
 
@@ -44,7 +48,7 @@ class UserSessionController extends Controller
         $subjectUserId = $session->user_id;
         $sessionId = $session->getKey();
 
-        $session->delete();
+        $revoker->revoke((string) $sessionId);
 
         if ($subjectUserId !== null) {
             AdminUserLog::query()->create([

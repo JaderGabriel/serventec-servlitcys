@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Models\User;
+use App\Support\Auth\DatabaseSessionUserSync;
 use App\Support\Performance\LoginAuditWriter;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Str;
@@ -26,12 +27,12 @@ class LogSuccessfulUserLogin
 
         if (! config('performance.defer_login_audit', true)) {
             LoginAuditWriter::insert($payload);
-
-            return;
+        } else {
+            dispatch(static function () use ($payload): void {
+                LoginAuditWriter::insert($payload);
+            })->afterResponse();
         }
 
-        dispatch(static function () use ($payload): void {
-            LoginAuditWriter::insert($payload);
-        })->afterResponse();
+        app(DatabaseSessionUserSync::class)->syncAuthenticated(request());
     }
 }
