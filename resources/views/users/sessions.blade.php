@@ -5,7 +5,9 @@
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                     {{ __('Sessões ativas') }}
                 </h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Sessões guardadas na base de dados (usuário com sessão iniciada). Encerre uma sessão para desligar esse dispositivo.') }}</p>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {{ __('Dispositivos com sessão iniciada. A linha «Esta sessão» é o navegador que está a usar agora.') }}
+                </p>
             </div>
             <a href="{{ route('users.index') }}" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
                 {{ __('← Lista de usuários') }}
@@ -18,6 +20,17 @@
             @if (session('success'))
                 <div class="mb-6 rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-4 py-3 text-sm text-green-800 dark:text-green-200">
                     {{ session('success') }}
+                </div>
+            @endif
+            @if (session('error'))
+                <div class="mb-6 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            @if ($sessionDriver !== 'database')
+                <div class="mb-6 rounded-md border border-sky-200/90 bg-sky-50/80 px-4 py-3 text-sm text-sky-900 dark:border-sky-800/60 dark:bg-sky-950/30 dark:text-sky-100">
+                    {{ __('O driver de sessão é :driver — a lista completa só existe na tabela quando SESSION_DRIVER=database. Abaixo mostramos pelo menos a sessão actual deste navegador.', ['driver' => $sessionDriver]) }}
                 </div>
             @endif
 
@@ -33,38 +46,23 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            @if ($currentSession && ! $currentListed)
+                                @include('users.partials.session-row', ['s' => $currentSession, 'isCurrent' => true])
+                            @endif
+
                             @forelse ($sessions as $s)
-                                <tr>
-                                    <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                                        @if ($s->user)
-                                            <span class="font-medium">{{ $s->user->name }}</span>
-                                            <span class="block text-xs text-gray-500 dark:text-gray-400 font-mono">{{ $s->user->username }}</span>
-                                        @else
-                                            —
-                                        @endif
-                                    </td>
-                                    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 font-mono">{{ $s->ip_address ?? '—' }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">
-                                        @if ($s->last_activity)
-                                            {{ now()->setTimestamp($s->last_activity)->timezone(config('app.timezone'))->format('d/m/Y H:i:s') }}
-                                        @else
-                                            —
-                                        @endif
-                                    </td>
-                                    <td class="px-4 py-3 text-sm text-right">
-                                        <form method="POST" action="{{ route('users.sessions.destroy', $s) }}" class="inline" onsubmit="return confirm('{{ __('Encerrar esta sessão?') }}');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-rose-600 dark:text-rose-400 hover:underline font-medium">
-                                                {{ __('Encerrar') }}
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
+                                @include('users.partials.session-row', [
+                                    's' => $s,
+                                    'isCurrent' => $currentSessionId !== '' && $s->getKey() === $currentSessionId,
+                                ])
                             @empty
-                                <tr>
-                                    <td colspan="4" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">{{ __('Nenhuma sessão com usuário associado.') }}</td>
-                                </tr>
+                                @if (! $currentSession)
+                                    <tr>
+                                        <td colspan="4" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                                            {{ __('Nenhuma sessão com usuário associado.') }}
+                                        </td>
+                                    </tr>
+                                @endif
                             @endforelse
                         </tbody>
                     </table>
