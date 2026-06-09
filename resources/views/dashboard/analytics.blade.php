@@ -5,21 +5,20 @@
             $filters,
             is_array($ieducarOptions ?? null) ? $ieducarOptions : [],
         );
-        $analyticsHeaderFallback = Auth::user()?->isMunicipal()
-            ? __('Painel do município')
-            : (Auth::user()?->canViewAdminDashboard()
-                ? __('Consultoria municipal')
-                : __('Análise por município'));
     @endphp
 
     <x-slot name="header">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <x-dashboard.analytics-page-heading
-                :pageHeader="$analyticsPageHeader"
-                :fallbackTitle="$analyticsHeaderFallback"
-            />
-            @if (Auth::user()?->canViewAdminDashboard())
-                <a href="{{ route('dashboard') }}" class="serv-link text-sm shrink-0">{{ __('← Início') }}</a>
+        <div class="flex flex-row items-center justify-between gap-4">
+            <x-dashboard.analytics-page-heading />
+            @if (Auth::user())
+                <a
+                    href="{{ Auth::user()->homeUrl() }}"
+                    class="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-teal-700 transition hover:bg-teal-50 hover:text-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-500/40 dark:border-slate-600 dark:bg-slate-800 dark:text-teal-400 dark:hover:bg-teal-950/40 dark:hover:text-teal-300"
+                    title="{{ __('Início') }}"
+                    aria-label="{{ __('Início') }}"
+                >
+                    <x-ui.icon name="home" class="h-5 w-5" />
+                </a>
             @endif
         </div>
     </x-slot>

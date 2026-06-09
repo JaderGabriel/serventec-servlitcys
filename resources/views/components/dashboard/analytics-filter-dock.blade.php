@@ -82,7 +82,7 @@
                         id="analytics_dock_city"
                         name="city_id"
                         class="serv-analytics-filter-dock__city-select"
-                        onchange="this.form.submit()"
+                        onchange="window.servDataLoading?.requestSubmit?.(this.form)"
                     >
                         <option value="">{{ __('— Município —') }}</option>
                         @foreach ($cities as $c)

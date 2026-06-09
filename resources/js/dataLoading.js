@@ -296,9 +296,35 @@ export function initDataLoadingForms(root = document) {
     });
 }
 
+/**
+ * Submete o formulário disparando o evento `submit` (para o overlay global).
+ * `HTMLFormElement.submit()` não dispara `submit` — evitar em selects com onchange.
+ *
+ * @param {HTMLFormElement|null|undefined} form
+ */
+export function servFormRequestSubmit(form) {
+    if (!(form instanceof HTMLFormElement)) {
+        return;
+    }
+
+    if (typeof form.requestSubmit === "function") {
+        form.requestSubmit();
+
+        return;
+    }
+
+    const copy = resolveLoadingCopy(form);
+    if (copy) {
+        servDataLoadingStart(copy.title, copy.message);
+    }
+
+    HTMLFormElement.prototype.submit.call(form);
+}
+
 window.servDataLoading = {
     start: servDataLoadingStart,
     finish: servDataLoadingFinish,
     reset: servDataLoadingReset,
+    requestSubmit: servFormRequestSubmit,
     presets: LOADING_PRESETS,
 };
