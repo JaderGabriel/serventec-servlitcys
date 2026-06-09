@@ -1,20 +1,27 @@
 <x-app-layout>
+    @php
+        use App\Support\Dashboard\ChartExportMeta;
+
+        $analyticsPageHeader = ChartExportMeta::pageHeaderContext(
+            $selectedCity ?? null,
+            $filters,
+            is_array($ieducarOptions ?? null) ? $ieducarOptions : [],
+        );
+        $analyticsHeaderFallback = Auth::user()?->isMunicipal()
+            ? __('Painel do município')
+            : (Auth::user()?->canViewAdminDashboard()
+                ? __('Consultoria municipal')
+                : __('Análise por município'));
+    @endphp
+
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-                <p class="serv-eyebrow">{{ __('Consultoria educacional') }}</p>
-                <h2 class="font-display font-semibold text-xl text-serv-navy dark:text-white leading-tight">
-                    @if (Auth::user()?->isMunicipal())
-                        {{ __('Painel do município') }}
-                    @elseif (Auth::user()?->canViewAdminDashboard())
-                        {{ __('Consultoria municipal') }}
-                    @else
-                        {{ __('Análise por município') }}
-                    @endif
-                </h2>
-            </div>
+            <x-dashboard.analytics-page-heading
+                :pageHeader="$analyticsPageHeader"
+                :fallbackTitle="$analyticsHeaderFallback"
+            />
             @if (Auth::user()?->canViewAdminDashboard())
-                <a href="{{ route('dashboard') }}" class="serv-link text-sm">{{ __('← Início') }}</a>
+                <a href="{{ route('dashboard') }}" class="serv-link text-sm shrink-0">{{ __('← Início') }}</a>
             @endif
         </div>
     </x-slot>

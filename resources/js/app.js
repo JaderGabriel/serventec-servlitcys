@@ -20,6 +20,7 @@ import {
 } from "./chartExportHelpers.js";
 import { initAnalyticsFilterBootstrap } from "./analyticsFilterBootstrap.js";
 import { initAnalyticsFilterTurno } from "./analyticsFilterTurno.js";
+import { registerAnalyticsPageHeader } from "./analyticsPageHeader.js";
 import {
     initDataLoadingForms,
     registerDataLoadingStore,
@@ -2121,6 +2122,7 @@ document.addEventListener("alpine:init", () => {
 window.Alpine = Alpine;
 
 registerDataLoadingStore(Alpine);
+registerAnalyticsPageHeader(Alpine);
 registerScrollToTopData(Alpine);
 Alpine.data("rxCadastroPulse", rxCadastroPulse);
 

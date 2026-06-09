@@ -44,30 +44,10 @@ final class ChartExportMeta
             ];
         }
 
-        $lines = [];
-
-        if ($filters->hasYearSelected()) {
-            $lines[] = $filters->isAllSchoolYears()
-                ? __('Ano letivo: todos')
-                : __('Ano letivo: :ano', ['ano' => $filters->ano_letivo]);
-        } else {
-            $lines[] = __('Ano letivo: —');
-        }
-
-        $escolaName = self::findPairName($ieducarOptions['escolas'] ?? [], $filters->escola_id);
-        if ($escolaName !== null) {
-            $lines[] = __('Escola: :n', ['n' => $escolaName]);
-        }
-
-        $cursoName = self::findPairName($ieducarOptions['cursos'] ?? [], $filters->curso_id);
-        if ($cursoName !== null) {
-            $lines[] = __('Tipo/Segmento: :n', ['n' => $cursoName]);
-        }
-
-        $turnoName = self::findPairName($ieducarOptions['turnos'] ?? [], $filters->turno_id);
-        if ($turnoName !== null) {
-            $lines[] = __('Turno: :n', ['n' => $turnoName]);
-        }
+        $lines = array_map(
+            static fn (array $part): string => $part['label'].': '.$part['value'],
+            self::appliedFilterParts($filters, $ieducarOptions, includeUnsetDimensions: false),
+        );
 
         $author = trim((string) config('chart_export.author'));
         $footer = $author !== ''
@@ -81,6 +61,121 @@ final class ChartExportMeta
             'footerLine' => $footer,
             'generatedAt' => $generatedAt,
         ];
+    }
+
+    /**
+     * Contexto para o cabeçalho fixo do painel (`/dashboard/analytics`).
+     *
+     * @param  array{
+     *   years?: array<string|int, mixed>,
+     *   escolas?: list<array{id: string, name: string}>,
+     *   cursos?: list<array{id: string, name: string}>,
+     *   turnos?: list<array{id: string, name: string}>
+     * }  $ieducarOptions
+     * @return array{
+     *   hasCity: bool,
+     *   cityTitle: string,
+     *   parts: list<array{label: string, value: string, muted?: bool}>
+     * }
+     */
+    public static function pageHeaderContext(?City $city, IeducarFilterState $filters, array $ieducarOptions): array
+    {
+        if ($city === null) {
+            return [
+                'hasCity' => false,
+                'cityTitle' => '',
+                'parts' => [],
+            ];
+        }
+
+        return [
+            'hasCity' => true,
+            'cityTitle' => trim($city->name.($city->uf ? ' — '.$city->uf : '')),
+            'parts' => self::appliedFilterParts($filters, $ieducarOptions, includeUnsetDimensions: true),
+            'labels' => [
+                'ano' => __('Ano letivo'),
+                'escola' => __('Escola'),
+                'curso' => __('Tipo/Segmento'),
+                'turno' => __('Turno'),
+                'todas' => __('Todas'),
+                'todos' => __('Todos'),
+                'naoSelecionado' => __('Não seleccionado'),
+            ],
+        ];
+    }
+
+    /**
+     * @param  array{
+     *   escolas?: list<array{id: string, name: string}>,
+     *   cursos?: list<array{id: string, name: string}>,
+     *   turnos?: list<array{id: string, name: string}>
+     * }  $ieducarOptions
+     * @return list<array{label: string, value: string, muted?: bool}>
+     */
+    private static function appliedFilterParts(
+        IeducarFilterState $filters,
+        array $ieducarOptions,
+        bool $includeUnsetDimensions,
+    ): array {
+        $parts = [];
+
+        if ($filters->hasYearSelected()) {
+            $parts[] = [
+                'label' => __('Ano letivo'),
+                'value' => $filters->isAllSchoolYears()
+                    ? __('Todos')
+                    : (string) $filters->ano_letivo,
+            ];
+        } else {
+            $parts[] = [
+                'label' => __('Ano letivo'),
+                'value' => __('Não seleccionado'),
+                'muted' => true,
+            ];
+        }
+
+        $dimensionParts = [
+            [
+                'label' => __('Escola'),
+                'value' => self::findPairName($ieducarOptions['escolas'] ?? [], $filters->escola_id),
+                'fallback' => __('Todas'),
+            ],
+            [
+                'label' => __('Tipo/Segmento'),
+                'value' => self::findPairName($ieducarOptions['cursos'] ?? [], $filters->curso_id),
+                'fallback' => __('Todos'),
+            ],
+            [
+                'label' => __('Turno'),
+                'value' => self::findPairName($ieducarOptions['turnos'] ?? [], $filters->turno_id),
+                'fallback' => __('Todos'),
+            ],
+        ];
+
+        foreach ($dimensionParts as $dimension) {
+            $value = $dimension['value'];
+            if ($value !== null && $value !== '') {
+                $parts[] = ['label' => $dimension['label'], 'value' => $value];
+
+                continue;
+            }
+
+            if ($includeUnsetDimensions) {
+                $parts[] = [
+                    'label' => $dimension['label'],
+                    'value' => $dimension['fallback'],
+                    'muted' => true,
+                ];
+            }
+        }
+
+        if ($filters->inclusion_somente_nee) {
+            $parts[] = ['label' => __('Inclusão'), 'value' => __('Só NEE')];
+        } elseif ($filters->inclusion_somente_inconsistencias) {
+            $parts[] = ['label' => __('Inclusão'), 'value' => __('Só inconsistências')];
+        }
+
+        return $parts;
     }
 
     /**

@@ -40,6 +40,7 @@
         method="get"
         action="{{ $formAction }}"
         class="p-4"
+        x-on:change="window.dispatchEvent(new CustomEvent('analytics-filters-preview'))"
         data-serv-loading-on-submit
         data-serv-loading-title="{{ __('A aplicar filtros') }}"
         data-serv-loading-message="{{ __('A carregar indicadores, gráficos e totais do município na base i-Educar. Aguarde…') }}"
