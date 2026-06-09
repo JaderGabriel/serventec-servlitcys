@@ -25,7 +25,7 @@ return [
         'version' => '4.4.4',
         'release_tag' => '20260609c-Atropos',
         'commit_short' => '6ea5002',
-        'commit_number' => 359,
+        'commit_number' => 360,
         'revision_date' => '2026-06-09',
         'in_production' => true,
         'production_label' => 'Em produção',
