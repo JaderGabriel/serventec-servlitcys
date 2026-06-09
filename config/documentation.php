@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '4.4.5',
         'release_tag' => '20260603a-Themis',
-        'commit_short' => '7a931f6',
+        'commit_short' => '1927352',
         'commit_number' => 364,
         'revision_date' => '2026-06-03',
         'in_production' => true,

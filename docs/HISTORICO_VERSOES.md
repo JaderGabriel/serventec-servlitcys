@@ -39,7 +39,7 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.4.5** | `7a931f6` / `20260603a-Themis` → `main` | **364** | 03/06/2026 | **Produção:** índice qualidade no dock, FUNDEB gerencial, fix troca município/ano, hub exports, pt-BR — [RELEASE_20260603a_THEMIS.md](RELEASE_20260603a_THEMIS.md). |
+| **▶ 4.4.5** | `1927352` / `20260603a-Themis` → `main` | **364** | 03/06/2026 | **Produção:** índice qualidade no dock, FUNDEB gerencial, fix troca município/ano, hub exports, pt-BR — [RELEASE_20260603a_THEMIS.md](RELEASE_20260603a_THEMIS.md). |
 | 4.4.4 | `6ea5002` / `20260609c-Atropos` → `main` | **360** | 09/06/2026 | Dock analytics, Diagnóstico explorar, cache mapa Início 1 h, PNG com legenda 1/2 colunas, PDF CadÚnico — [RELEASE_20260609c_ATROPOS.md](RELEASE_20260609c_ATROPOS.md). |
 | 4.4.3 | `39333e0` / `20260609b-Lachesis` → `main` | **355** | 09/06/2026 | CadÚnico CUN-01/02 — lacuna por idade, desconto Censo não municipal, mapa territorial — [RELEASE_20260609b_LACHESIS.md](RELEASE_20260609b_LACHESIS.md). |
 | 4.4.2 | `9e728a5` / `20260608a-Pythia` → `main` | **352** | 08/06/2026 | Estudo Power BI, pesquisa no leitor, backlog PBI-01…10 — [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md). |
