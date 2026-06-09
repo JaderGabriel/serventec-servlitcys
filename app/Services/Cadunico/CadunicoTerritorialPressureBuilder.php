@@ -50,6 +50,7 @@ final class CadunicoTerritorialPressureBuilder
         $activeRows = $rows->filter(static fn ($r) => $r->totalEscolar() > 0)->values();
         $displayLabels = CadunicoTerritorioDisplay::labelsForRows($activeRows);
         $cadTerrSum = max(1, (int) $activeRows->sum(static fn ($r) => $r->totalEscolar()));
+        $ibgeRateio = CadunicoTerritorialGapEstimator::isIbgeRateioCollection($activeRows);
         $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
         $ranking = [];
         $markers = [];
@@ -66,9 +67,14 @@ final class CadunicoTerritorialPressureBuilder
                 );
 
             $share = $cadLocal / $cadTerrSum;
-            $gapEst = $gapTotal > 0
-                ? (int) round($gapTotal * $share)
-                : max(0, $cadLocal - (int) round(($gap['ieducar_matriculas'] ?? 0) * $share));
+            $gapEst = CadunicoTerritorialGapEstimator::estimateForTerritory(
+                $row,
+                $gap,
+                (int) ($gap['ieducar_base_calculo'] ?? $gap['ieducar_matriculas'] ?? 0),
+                $cadTerrSum,
+                $gapTotal,
+                $ibgeRateio,
+            );
 
             $lat = $row->latitude;
             $lng = $row->longitude;
@@ -138,12 +144,15 @@ final class CadunicoTerritorialPressureBuilder
             'schools_on_map' => count($schoolMarkers),
             'cad_territorio_sum' => $cadTerrSum,
             'cad_municipal' => $cadTotal,
-            'nota' => $cadTerrSum < $cadTotal
-                ? __('A soma territorial (:t) é menor que o CadÚnico municipal (:m) — complete importações ou territórios sem cobertura.', [
-                    't' => number_format($cadTerrSum, 0, ',', '.'),
-                    'm' => number_format($cadTotal, 0, ',', '.'),
-                ])
-                : __('Lacuna municipal rateada pelo peso da população escolar CadÚnico em cada território.'),
+            'territorio_fonte' => $ibgeRateio ? 'ibge_rateio' : 'cadunico_territorial',
+            'nota' => $ibgeRateio
+                ? ($cadTerrSum < $cadTotal
+                    ? __('A soma territorial (:t) é menor que o CadÚnico municipal (:m) — complete importações ou territórios sem cobertura.', [
+                        't' => number_format($cadTerrSum, 0, ',', '.'),
+                        'm' => number_format($cadTotal, 0, ',', '.'),
+                    ])
+                    : __('Lacuna municipal rateada pelo peso da população escolar CadÚnico em cada território (fonte IBGE).'))
+                : __('Lacuna estimada por território com CadÚnico local (CSV/CRAS) e, quando disponível, alunos distintos por faixa etária no i-Educar.'),
         ];
     }
 

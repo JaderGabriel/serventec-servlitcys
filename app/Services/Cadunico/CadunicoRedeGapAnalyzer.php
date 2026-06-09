@@ -4,6 +4,7 @@ namespace App\Services\Cadunico;
 
 use App\Models\City;
 use App\Models\CadunicoMunicipioSnapshot;
+use App\Models\InepCensoMunicipioMatricula;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Finance\MoneyMath;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
@@ -16,6 +17,7 @@ final class CadunicoRedeGapAnalyzer
     /**
      * @param  list<array{etapa: string, matriculas: int}>  $ieducarPorEtapa
      * @param  array{nee_matriculas?: int, alunos_nee?: int, matriculas_aee_sem_cadastro?: int, alunos_aee_sem_cadastro?: int}  $inclusionHints
+     * @param  array{available?: bool, metodo?: string, por_faixa?: array<string, int>}|null  $faixaCounts
      * @return array<string, mixed>
      */
     public function analyze(
@@ -28,6 +30,8 @@ final class CadunicoRedeGapAnalyzer
         ?int $censoMatriculas,
         float $vaaf,
         array $inclusionHints = [],
+        ?array $faixaCounts = null,
+        ?InepCensoMunicipioMatricula $censoRow = null,
     ): array {
         $cfg = config('ieducar.cadunico', []);
         if (! is_array($cfg)) {
@@ -57,9 +61,30 @@ final class CadunicoRedeGapAnalyzer
         }
 
         $cadTotal = $cadunico->totalCriancasEscolaridade();
+        $faixaMetodo = ($faixaCounts['available'] ?? false)
+            ? (string) ($faixaCounts['metodo'] ?? CadunicoFaixaEtariaMetodo::RATEIO)
+            : CadunicoFaixaEtariaMetodo::RATEIO;
+
+        $porFaixa = $this->faixasComLacuna($cadunico, $matriculasIeducar, $baseRede, $vaaf, $faixaCounts);
+
         $gapTotal = $cadTotal > 0 && $baseRede >= 0
             ? max(0, $cadTotal - $baseRede)
             : null;
+
+        if ($faixaMetodo === CadunicoFaixaEtariaMetodo::IDADE && $porFaixa !== []) {
+            $gapFaixas = array_sum(array_map(static fn (array $f): int => (int) ($f['gap'] ?? 0), $porFaixa));
+            $gapTotal = max(0, $gapFaixas);
+        }
+
+        $gapBruto = $gapTotal;
+        $censoAjuste = CadunicoCensoAjuste::apply($cadTotal, $baseRede, $gapTotal, $censoRow);
+        if ($censoAjuste['aplicado']) {
+            $gapTotal = $censoAjuste['gap_ajustado'];
+        }
+
+        $cadExibicao = $censoAjuste['aplicado']
+            ? (int) $censoAjuste['cadunico_ajustado']
+            : $cadTotal;
 
         $cobertura = ($cadTotal > 0 && $baseRede >= 0)
             ? round(min(100.0, 100.0 * $baseRede / $cadTotal), 1)
@@ -68,11 +93,10 @@ final class CadunicoRedeGapAnalyzer
         $status = match (true) {
             $gapTotal === null || $cadTotal <= 0 => 'neutral',
             $cobertura !== null && $cobertura >= $coberturaAlerta => 'success',
-            $gapTotal > 0 => 'warning',
+            ($gapTotal ?? 0) > 0 => 'warning',
             default => 'neutral',
         };
 
-        $porFaixa = $this->faixasComLacuna($cadunico, $matriculasIeducar, $baseRede, $vaaf);
         $porEtapa = $this->distribuirGapPorEtapa($porFaixa, $ieducarPorEtapa, $baseRede, $cadTotal, $gapTotal ?? 0, $vaaf);
 
         $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
@@ -80,19 +104,32 @@ final class CadunicoRedeGapAnalyzer
             ? MoneyMath::multiplyVaaf($gapTotal, $vaaf)
             : null;
 
+        $formulaBase = ($gapTotal !== null && $gapTotal > 0 && $vaaf > 0)
+            ? self::formulaImpacto($gapTotal, $vaaf, $baseRede, $matriculasIeducar, $alunosIeducar, $fmt)
+            : null;
+
         $censoGap = null;
         if ($censoMatriculas !== null && $censoMatriculas > 0 && $baseRede > 0) {
             $censoGap = max(0, $censoMatriculas - $baseRede);
         }
 
-        $formulaBase = ($gapTotal !== null && $gapTotal > 0 && $vaaf > 0)
-            ? self::formulaImpacto($gapTotal, $vaaf, $baseRede, $matriculasIeducar, $alunosIeducar, $fmt)
-            : null;
+        $nota = __(
+            'CadÚnico mede famílias em vulnerabilidade no município; nem toda criança cadastrada deveria estar na rede municipal (escolas estaduais, privadas, EJA). Use como busca ativa e planeamento, não como meta automática de matrícula.'
+        );
+        if ($faixaMetodo === CadunicoFaixaEtariaMetodo::IDADE) {
+            $nota .= ' '.__(
+                'Lacuna por faixa calculada com idade na data de corte (31/03) e alunos distintos no i-Educar.'
+            );
+        }
+        if ($censoAjuste['aplicado'] && filled($censoAjuste['nota'] ?? null)) {
+            $nota .= ' '.(string) $censoAjuste['nota'];
+        }
 
         return [
             'available' => true,
             'cadunico_ano' => (int) $cadunico->ano_referencia,
             'cadunico_total_escolar' => $cadTotal,
+            'cadunico_total_ajustado' => $censoAjuste['aplicado'] ? $cadExibicao : null,
             'cadunico_fonte' => (string) ($cadunico->fonte ?? ''),
             'cadunico_imported_at' => $cadunico->imported_at?->format('d/m/Y H:i'),
             'ieducar_matriculas' => $matriculasIeducar,
@@ -100,8 +137,17 @@ final class CadunicoRedeGapAnalyzer
             'ieducar_base_calculo' => $baseRede,
             'censo_matriculas' => $censoMatriculas,
             'censo_gap' => $censoGap,
+            'censo_nao_municipal' => $censoAjuste['nao_municipal_estimado'] > 0
+                ? $censoAjuste['nao_municipal_estimado']
+                : null,
+            'censo_ajuste_aplicado' => $censoAjuste['aplicado'],
+            'censo_ajuste_metodo' => $censoAjuste['metodo'],
+            'gap_bruto' => $gapBruto,
+            'gap_bruto_fmt' => $gapBruto !== null ? number_format($gapBruto, 0, ',', '.') : null,
             'gap_total' => $gapTotal,
             'gap_total_fmt' => $gapTotal !== null ? number_format($gapTotal, 0, ',', '.') : '—',
+            'faixa_metodo' => $faixaMetodo,
+            'faixa_cobertura_nascimento_pct' => ($faixaCounts['cobertura_nascimento_pct'] ?? null),
             'cobertura_pct' => $cobertura,
             'cobertura_label' => $cobertura !== null ? number_format($cobertura, 1, ',', '.').'%' : '—',
             'status' => $status,
@@ -127,9 +173,7 @@ final class CadunicoRedeGapAnalyzer
                 'gap_anual_label' => $impactoGap !== null ? $fmt($impactoGap) : '—',
                 'formula' => $formulaBase,
             ],
-            'nota' => __(
-                'CadÚnico mede famílias em vulnerabilidade no município; nem toda criança cadastrada deveria estar na rede municipal (escolas estaduais, privadas, EJA). Use como busca ativa e planeamento, não como meta automática de matrícula.'
-            ),
+            'nota' => $nota,
         ];
     }
 
@@ -171,6 +215,7 @@ final class CadunicoRedeGapAnalyzer
     }
 
     /**
+     * @param  array{available?: bool, metodo?: string, por_faixa?: array<string, int>}|null  $faixaCounts
      * @return list<array<string, mixed>>
      */
     private function faixasComLacuna(
@@ -178,11 +223,17 @@ final class CadunicoRedeGapAnalyzer
         int $matriculasTotal,
         int $baseRede,
         float $vaaf,
+        ?array $faixaCounts = null,
     ): array {
         $faixas = config('ieducar.cadunico.faixas_etarias', []);
         if (! is_array($faixas)) {
             return [];
         }
+
+        $ieducarPorFaixa = is_array($faixaCounts['por_faixa'] ?? null) ? $faixaCounts['por_faixa'] : [];
+        $usaIdade = ($faixaCounts['available'] ?? false)
+            && ($faixaCounts['metodo'] ?? '') === CadunicoFaixaEtariaMetodo::IDADE
+            && $ieducarPorFaixa !== [];
 
         $cadSum = max(1, $snap->totalCriancasEscolaridade());
         $fmt = [DiscrepanciesFundingImpact::class, 'formatBrl'];
@@ -198,12 +249,15 @@ final class CadunicoRedeGapAnalyzer
             }
             $cad = (int) ($snap->{$key} ?? 0);
             $share = $cad / $cadSum;
-            $ieducarEst = $matriculasTotal > 0 ? (int) round($baseRede * $share) : 0;
+            $ieducarReal = $usaIdade ? max(0, (int) ($ieducarPorFaixa[$key] ?? 0)) : 0;
+            $ieducarEst = $ieducarReal > 0
+                ? $ieducarReal
+                : ($matriculasTotal > 0 ? (int) round($baseRede * $share) : 0);
             $gap = max(0, $cad - $ieducarEst);
             $cob = $cad > 0 ? round(min(100.0, 100.0 * $ieducarEst / $cad), 1) : null;
             $fundeb = ($gap > 0 && $vaaf > 0) ? MoneyMath::multiplyVaaf($gap, $vaaf) : 0.0;
 
-            $out[] = [
+            $row = [
                 'faixa' => (string) ($faixa['label'] ?? $key),
                 'key' => $key,
                 'cadunico' => $cad,
@@ -215,6 +269,12 @@ final class CadunicoRedeGapAnalyzer
                 'fundeb_gap_label' => $fundeb > 0 ? $fmt($fundeb) : '—',
                 'tone' => $gap > 0 ? 'amber' : 'emerald',
             ];
+            if ($ieducarReal > 0) {
+                $row['ieducar'] = $ieducarReal;
+                $row['ieducar_fonte'] = CadunicoFaixaEtariaMetodo::IDADE;
+            }
+
+            $out[] = $row;
         }
 
         return $out;

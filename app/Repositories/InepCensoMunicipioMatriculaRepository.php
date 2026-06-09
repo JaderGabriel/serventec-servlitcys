@@ -15,7 +15,9 @@ final class InepCensoMunicipioMatriculaRepository
         int $matriculasTotal,
         int $escolasContagem = 0,
         string $fonte = 'inep_microdados',
-        ?Carbon $importedAt = null,
+        ?\Illuminate\Support\Carbon $importedAt = null,
+        ?int $matriculasMunicipal = null,
+        ?int $matriculasNaoMunicipal = null,
     ): void {
         $ibgeNorm = FundebMunicipioReferenceRepository::normalizeIbge($ibge);
         if ($ibgeNorm === null || $ano < 2000) {
@@ -28,6 +30,8 @@ final class InepCensoMunicipioMatriculaRepository
             ['ibge_municipio' => $ibgeNorm, 'ano' => $ano],
             [
                 'matriculas_total' => max(0, $matriculasTotal),
+                'matriculas_municipal' => $matriculasMunicipal !== null ? max(0, $matriculasMunicipal) : null,
+                'matriculas_nao_municipal' => $matriculasNaoMunicipal !== null ? max(0, $matriculasNaoMunicipal) : null,
                 'escolas_contagem' => max(0, $escolasContagem),
                 'fonte' => $fonte,
                 'imported_at' => $now,

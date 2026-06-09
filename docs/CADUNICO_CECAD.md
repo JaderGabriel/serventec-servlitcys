@@ -62,12 +62,17 @@ Funcionalidades avançadas (lacuna por faixa, cenários NEE/AEE/VAAR, mapa terri
 |-----------|-------------|
 | População escolar CadÚnico | Soma das faixas 4–17 ou coluna `populacao_escolar_estimada` |
 | Base rede (cálculo) | `min(matriculas, alunos distintos)` quando aplicável |
-| Lacuna (`gap`) | `max(0, CadÚnico − base rede)` |
+| Lacuna (`gap`) | `max(0, CadÚnico ajustado − base rede)`; ver `gap_bruto` vs `gap_total` se Censo aplicado |
+| Lacuna por faixa | Idade 31/03 (i-Educar) ou rateio proporcional |
 | Cobertura | Base rede / CadÚnico (%) |
 | Impacto FUNDEB | Lacuna × VAAF (estimativa anual se integradas à rede) |
 | Pressão territorial | Lacuna rateada × vulnerabilidade × distância à escola (com CSV territorial) |
 
 **Aviso:** CadÚnico inclui famílias em vulnerabilidade no município; nem toda criança deve estar na rede municipal (estadual, privada, EJA). Use para busca ativa e planeamento, não como meta automática de matrícula.
+
+## Melhorias futuras
+
+Roadmap para **maior acurácia** da lacuna e do mapa de pressão (faixa etária real, territorial CRAS, desconto Censo, busca ativa CPF/NIS): **[CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md) § Melhorias futuras** · backlog **CUN-01…CUN-03**.
 
 ## Variáveis de ambiente
 

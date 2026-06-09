@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **4.4.2** · release `20260608a-Pythia` · **Ramo:** `main` · **Última revisão:** 08/06/2026
+**Versão em produção:** **4.4.3** · release `20260609b-Lachesis` · **Ramo:** `main` · **Última revisão:** 09/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 

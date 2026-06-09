@@ -12,6 +12,7 @@ use App\Services\CityDataConnection;
 use App\Support\Analytics\CadunicoPrevisaoInformeBuilder;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Dashboard\PublicDataSourcesCatalog;
+use App\Support\Ieducar\CadunicoFaixaEtariaCounts;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\FundebMunicipalReferenceResolver;
 use App\Support\Ieducar\InclusionDashboardQueries;
@@ -82,6 +83,10 @@ final class CadunicoPrevisaoRepository
 
             $inclusionHints = $this->inclusionHints($city, $filters);
             $ieducarPorEtapa = $this->etapasFromEnrollment($enrollmentData, $matriculas);
+            $faixaCounts = $this->cityData->run(
+                $city,
+                static fn ($db) => CadunicoFaixaEtariaCounts::count($db, $city, $filters),
+            );
 
             $cadRow = $this->cadunicoSnapshots->findForCityYear($city, $year);
             $censoRow = $this->censoMunicipio->findForCityYear($city, $year);
@@ -99,6 +104,8 @@ final class CadunicoPrevisaoRepository
                 $censoMat,
                 $vaaf,
                 $inclusionHints,
+                $faixaCounts,
+                $censoRow,
             );
 
             $schoolMarkers = $this->schoolMarkersForMap($city, $filters);
@@ -287,8 +294,8 @@ final class CadunicoPrevisaoRepository
         return [
             ['step' => '1', 'text' => __('Importar agregados municipais Cecad/Misocial e, opcionalmente, território (bairro/setor) via CSV.')],
             ['step' => '2', 'text' => __('Contar população CadÚnico nas faixas 4–17 (pré 4–5 a médio 15–17); creche 0–3 excluída da lacuna principal.')],
-            ['step' => '3', 'text' => __('Comparar com alunos/matrículas ativos da rede municipal (i-Educar) nos mesmos filtros.')],
-            ['step' => '4', 'text' => __('Calcular lacuna por faixa e impacto indicativo VAAF; cenários NEE/AEE/VAAR (VAAT/IEI não entram nesta aba).')],
+            ['step' => '3', 'text' => __('Comparar com alunos/matrículas ativos da rede municipal (i-Educar) nos mesmos filtros; por faixa, idade na data de corte 31/03 quando houver nascimento cadastrado.')],
+            ['step' => '4', 'text' => __('Descontar matrículas fora da rede municipal (Censo INEP) e calcular lacuna por faixa; cenários NEE/AEE/VAAR (VAAT/IEI não entram nesta aba).')],
             ['step' => '5', 'text' => __('Priorizar territórios no mapa (pressão = lacuna × vulnerabilidade × distância à escola).')],
             ['step' => '6', 'text' => __('Validar com Censo INEP e busca ativa — nem toda criança CadÚnico pertence à rede municipal.')],
         ];

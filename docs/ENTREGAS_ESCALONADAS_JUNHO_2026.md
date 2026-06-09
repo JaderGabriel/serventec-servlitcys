@@ -1,9 +1,9 @@
 # Entregas escalonadas — junho/2026
 
-> **Versão actual em produção:** **4.4.2** · tag **`20260608a-Pythia`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md)  
+> **Versão actual em produção:** **4.4.3** · tag **`20260609b-Lachesis`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260609b_LACHESIS.md](RELEASE_20260609b_LACHESIS.md)  
 > **Índice geral:** [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) · **Mês anterior:** [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) (3.4.0)
 
-Cronologia de **junho/2026**: de **3.5.0** (CadÚnico e comparativo) a **4.4.2** (Power BI, pesquisa no leitor). Cada linha da tabela abaixo aponta para a nota de release; patches sem bump estão no [histórico](HISTORICO_VERSOES.md).
+Cronologia de **junho/2026**: de **3.5.0** (CadÚnico e comparativo) a **4.4.3** (faixas etárias, Censo e mapa territorial). Cada linha da tabela abaixo aponta para a nota de release; patches sem bump estão no [histórico](HISTORICO_VERSOES.md).
 
 ---
 
@@ -27,7 +27,8 @@ Cronologia de **junho/2026**: de **3.5.0** (CadÚnico e comparativo) a **4.4.2**
 | 14 | **4.4.0** | `20260607a-Ananke` | [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md) | Sufixo alfabético em tags; paridade Discrepâncias |
 | 15 | **4.4.1** | `20260607b-Peitho` | [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md) | Hub docs no leitor; Mermaid; rodapé GitHub |
 | 16 | **4.1.8** | `20260608-Sophia` | [RELEASE_20260608_SOPHIA.md](RELEASE_20260608_SOPHIA.md) | VAAT portaria; diagnose matrículas; diagrama ERP |
-| 17 | **4.4.2** | `20260608a-Pythia` | [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md) | **Produção:** Power BI, pesquisa docs, backlog PBI |
+| 17 | **4.4.2** | `20260608a-Pythia` | [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md) | Power BI, pesquisa docs, backlog PBI |
+| 18 | **4.4.3** | `20260609b-Lachesis` | [RELEASE_20260609b_LACHESIS.md](RELEASE_20260609b_LACHESIS.md) | **Produção:** CadÚnico CUN-01/02 — faixas por idade, ajuste Censo, mapa |
 | 18 | **4.1.9** | `20260609-Theia` | [RELEASE_20260609_THEIA.md](RELEASE_20260609_THEIA.md) | Outlook Finanças; mapa CadÚnico (zoom + cores) |
 | 19 | **4.2.0** | `20260610-Clio` | [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md) | FUNDEB VAAT/VAAR portaria; gráfico RX complementações |
 | 20 | **4.3.0** | `20260611-Harmonia` | [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md) | Discrepâncias×Unidades geo; RX portaria; gráfico home |

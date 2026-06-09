@@ -65,6 +65,8 @@ final class InepCensoMunicipioMatriculasIndexer
         $anoIdx = $this->columnIndex($map, ['nu_ano_censo', 'ano']);
         $matIndices = $this->matriculaColumnIndices($map);
 
+        $depIdx = $this->columnIndex($map, ['tp_dependencia', 'dependencia_administrativa', 'tp_dependencia_adm']);
+
         if ($ibgeIdx === null || $anoIdx === null || $matIndices === []) {
             fclose($fh);
             Log::warning('INEP censo matrículas: colunas IBGE/ano/matricula não encontradas no CSV.');
@@ -88,7 +90,7 @@ final class InepCensoMunicipioMatriculasIndexer
             }
         }
 
-        /** @var array<string, array{ano: int, mat: int, escolas: int}> $agg */
+        /** @var array<string, array{ano: int, mat: int, escolas: int, municipal: int, nao_municipal: int}> $agg */
         $agg = [];
 
         while (($row = fgetcsv($fh, 0, $delimiter)) !== false) {
@@ -112,10 +114,16 @@ final class InepCensoMunicipioMatriculasIndexer
             }
             $key = $ibge.'|'.$ano;
             if (! isset($agg[$key])) {
-                $agg[$key] = ['ano' => $ano, 'mat' => 0, 'escolas' => 0];
+                $agg[$key] = ['ano' => $ano, 'mat' => 0, 'escolas' => 0, 'municipal' => 0, 'nao_municipal' => 0];
             }
             $agg[$key]['mat'] += $mat;
             $agg[$key]['escolas']++;
+            $dep = self::classifyMunicipalDependency($row, $depIdx);
+            if ($dep === true) {
+                $agg[$key]['municipal'] += $mat;
+            } elseif ($dep === false) {
+                $agg[$key]['nao_municipal'] += $mat;
+            }
         }
         fclose($fh);
 
@@ -130,6 +138,8 @@ final class InepCensoMunicipioMatriculasIndexer
                 $data['escolas'],
                 'inep_microdados',
                 $importedAt,
+                $data['municipal'] > 0 ? $data['municipal'] : null,
+                $data['nao_municipal'] > 0 ? $data['nao_municipal'] : null,
             );
             $count++;
         }
@@ -184,5 +194,36 @@ final class InepCensoMunicipioMatriculasIndexer
         }
 
         return array_values(array_unique($indices));
+    }
+
+    /**
+     * @param  list<string|null>  $row
+     */
+    private static function classifyMunicipalDependency(array $row, ?int $depIdx): ?bool
+    {
+        if ($depIdx === null) {
+            return null;
+        }
+
+        $raw = trim((string) ($row[$depIdx] ?? ''));
+        if ($raw === '') {
+            return null;
+        }
+
+        if (ctype_digit($raw)) {
+            return (int) $raw === 3;
+        }
+
+        $lower = mb_strtolower($raw);
+        if (str_contains($lower, 'municipal') && ! str_contains($lower, 'estadual')) {
+            return true;
+        }
+        if (str_contains($lower, 'estadual')
+            || str_contains($lower, 'federal')
+            || str_contains($lower, 'privad')) {
+            return false;
+        }
+
+        return null;
     }
 }

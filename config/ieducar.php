@@ -1548,10 +1548,10 @@ return [
             ],
         ],
         'faixas_etarias' => [
-            ['key' => 'criancas_4_5', 'label' => 'Pré-escola (4-5 anos)', 'etapa_keywords' => ['infantil', 'pré', 'pre', 'creche']],
-            ['key' => 'criancas_6_10', 'label' => 'Fundamental — anos iniciais', 'etapa_keywords' => ['iniciais', 'fundamental i']],
-            ['key' => 'criancas_11_14', 'label' => 'Fundamental — anos finais', 'etapa_keywords' => ['finais', 'fundamental ii', 'fundamental 2']],
-            ['key' => 'criancas_15_17', 'label' => 'Ensino médio', 'etapa_keywords' => ['médio', 'medio', 'eja']],
+            ['key' => 'criancas_4_5', 'label' => 'Pré-escola (4-5 anos)', 'idade_min' => 4, 'idade_max' => 5, 'etapa_keywords' => ['infantil', 'pré', 'pre', 'creche']],
+            ['key' => 'criancas_6_10', 'label' => 'Fundamental — anos iniciais', 'idade_min' => 6, 'idade_max' => 10, 'etapa_keywords' => ['iniciais', 'fundamental i']],
+            ['key' => 'criancas_11_14', 'label' => 'Fundamental — anos finais', 'idade_min' => 11, 'idade_max' => 14, 'etapa_keywords' => ['finais', 'fundamental ii', 'fundamental 2']],
+            ['key' => 'criancas_15_17', 'label' => 'Ensino médio', 'idade_min' => 15, 'idade_max' => 17, 'etapa_keywords' => ['médio', 'medio', 'eja']],
         ],
         'territorio' => [
             'delimiter' => env('IEDUCAR_CADUNICO_TERRITORIO_DELIMITER', ';'),

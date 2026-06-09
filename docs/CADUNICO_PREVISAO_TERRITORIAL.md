@@ -12,6 +12,8 @@ Documentação base Cecad/Misocial: [CADUNICO_CECAD.md](CADUNICO_CECAD.md). Faix
 
 - **Matrículas** e **alunos distintos** vêm de `MatriculaChartQueries::volumeCounts`.
 - A base para lacuna e FUNDEB usa `min(matriculas, alunos)` quando há duplicidade de matrícula do mesmo aluno (alinhado ao resto do painel Analytics).
+- **CUN-01 (implementado):** quando há data de nascimento no i-Educar, a lacuna por faixa usa **alunos distintos** com idade completa na data de corte **31/03** do ano letivo (`CadunicoFaixaEtariaCounts`). Caso contrário, mantém-se o rateio proporcional anterior.
+- **CUN-02 (implementado):** com Censo INEP indexado, desconta-se matrículas **fora da rede municipal** (`CadunicoCensoAjuste` — coluna `matriculas_nao_municipal` ou proxy `total − municipal i-Educar`).
 
 ### Lacuna por faixa etária
 
@@ -20,8 +22,9 @@ Para cada faixa Cecad (4–5, 6–10, 11–14, 15–17):
 | Campo | Significado |
 |-------|-------------|
 | `cadunico` | População na faixa (snapshot municipal) |
-| `ieducar_estimado` | Rateio da base municipal pelas keywords de etapa |
-| `gap` | `max(0, cadunico − estimativa rede na faixa)` |
+| `ieducar_estimado` | Alunos distintos na faixa (idade 31/03) ou rateio proporcional |
+| `ieducar` | Presente quando a contagem veio de `CadunicoFaixaEtariaCounts` |
+| `gap` | `max(0, cadunico − i-Educar na faixa)` |
 | `cobertura_label` | Percentagem de cobertura na faixa |
 | `fundeb_gap_label` | Lacuna da faixa × VAAF |
 
@@ -53,8 +56,23 @@ Serviço: `App\Services\Cadunico\CadunicoFinanceScenarioBuilder`.
 
 Para cada território importado:
 
+**Fonte IBGE** (`ibge_censo_2022_wfs` — rateio):
+
 ```
 lacuna_est = lacuna_municipal × (cadunico_territorio / soma_cadunico_territorios)
+```
+
+**Fonte municipal/CRAS** (`csv_territorio` — CUN-02):
+
+```
+lacuna_est = max(0, cadunico_territorio − base_rede × (cadunico_territorio / cadunico_municipal))
+```
+
+Com faixas etárias reais no i-Educar, a lacuna territorial soma `max(0, cad_faixa_território − ieducar_faixa × peso)` por faixa Cecad.
+
+**Pressão** (ambas as fontes):
+
+```
 pressao = lacuna_est × (1 + IVS/100) × (1 + min(15, dist_km_escola)/15 × 0,35)
 ```
 
@@ -185,6 +203,111 @@ Rotas: `dashboard.analytics.cadunico-previsao.export`.
 - Território depende da qualidade do CSV municipal (CRAS, IBGE, secretaria social).
 - Cenários NEE/AEE são **indicativos**; não substituem cadastro individual no i-Educar.
 - Sem dados territoriais, o mapa e o ranking ficam vazios; a lacuna **municipal** continua disponível.
+- O painel **não identifica aluno a aluno** quem está ou não matriculado — apenas estimativas agregadas (ver § Melhorias futuras).
+
+---
+
+## Melhorias futuras — acurácia da lacuna e mapa
+
+> **Estado:** planeamento · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) §I (CUN-01…CUN-03) · **Integrações:** [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) §8.1
+
+### O que o modelo actual não faz
+
+| Limite | Detalhe |
+|--------|---------|
+| **Sem match individual** | Não há cruzamento CPF/NIS entre CadÚnico e i-Educar |
+| **Lacuna municipal** | `CadÚnico 4–17 − min(matriculas, alunos)` no filtro |
+| **Faixas etárias** | A rede é **rateada** proporcionalmente pelas faixas Cecad; não usa idade/série real de cada matrícula |
+| **Mapa territorial** | A lacuna municipal é **repartida** pelo peso de cada território; com IBGE, o CadÚnico municipal é rateado pela população do Censo |
+
+Isto responde «onde a pressão **provavelmente** é maior», não «quais crianças **concretas** faltam matricular».
+
+### Níveis de evolução
+
+```mermaid
+flowchart TB
+    subgraph hoje [Hoje — agregados]
+        A[CadÚnico municipal 4–17]
+        B[i-Educar matrículas / alunos distintos]
+        C["Lacuna = A − B"]
+        D[Rateio territorial + IVS + distância]
+        A --> C
+        B --> C
+        C --> D
+    end
+
+    subgraph medio [Próximo — mais acurácia sem CPF]
+        E[Faixa etária real no i-Educar]
+        F[CadÚnico por bairro / CRAS]
+        G[Desconto Censo estadual / privada / EJA]
+        H[Qualidade cadastro i-Educar]
+    end
+
+    subgraph avancado [Busca ativa — CPF/NIS]
+        I[Cecad / Conecta unitário]
+        J[Match com cadastro i-Educar]
+        K[Lista nominativa + mapa por endereço]
+    end
+
+    hoje --> medio
+    medio --> avancado
+```
+
+| Nível | Certeza | Esforço | IDs backlog |
+|-------|---------|---------|-------------|
+| **Actual** | Indicativa (municipal + rateio) | Entregue | INT-07 parcial |
+| **Agregados refinados** | Média-alta no território | **Concluído (4.4.x)** | **CUN-01**, **CUN-02** |
+| **Busca ativa nominativa** | Alta por aluno | Meses + enquadramento legal | CUN-03 |
+
+### CUN-01 — Lacuna por faixa etária real (sem CPF) — **Concluído**
+
+**Objectivo:** substituir o rateio proporcional por contagem real de matrículas/alunos distintos por idade ou série, alinhada às faixas Cecad (4–5, 6–10, 11–14, 15–17).
+
+| Aspecto | Proposta |
+|---------|----------|
+| **Fonte rede** | i-Educar: data nascimento + série/etapa + matrícula activa no filtro |
+| **Cálculo** | `gap_faixa = max(0, cadunico_faixa − matriculas_rede_faixa)` |
+| **Impacto** | Lacuna por etapa e mapa menos distorcidos entre pré-escola, EF e EM |
+| **Serviço** | `CadunicoFaixaEtariaCounts` + `CadunicoRedeGapAnalyzer` |
+
+**Pré-requisito:** cadastro com data de nascimento preenchida — [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) §3.1 P0.
+
+### CUN-02 — Território real e lacuna ajustada à rede não municipal — **Concluído**
+
+**Objectivo:** aumentar a fidelidade do mapa de pressão sem identificar pessoas.
+
+| Melhoria | Descrição | Ganho |
+|----------|-----------|-------|
+| **CadÚnico por bairro/CRAS** | CSV da secretaria social com crianças 4–17 por território (não rateio IBGE) | Mapa reflecte onde estão os cadastrados |
+| **Desconto Censo INEP** | Matrículas totais no município por dependência administrativa (`inep_censo_municipio_matriculas`) | Lacuna municipal não infla quem já estuda na rede estadual/privada |
+| **IBGE SIDRA** | População por idade (Onda 1, INT-05) | Denominador alternativo para validação |
+| **Indicadores SNAS/PBF** | Agregados por território (Onda 2) | Priorização no factor de pressão, não prova de matrícula |
+
+**Serviços afectados:** `CadunicoTerritorialGapEstimator`, `CadunicoTerritorialPressureBuilder`, `CadunicoCensoAjuste`, import Censo (`InepCensoMunicipioMatriculasIndexer` — `tp_dependencia`).
+
+**Operação recomendada:** configurar `IEDUCAR_CADUNICO_TERRITORIO_CSV_URL` com agregados CRAS antes de confiar no mapa IBGE-only.
+
+### CUN-03 — Busca ativa com cruzamento CPF/NIS (módulo restrito)
+
+**Objectivo:** responder, com alta confiança, se **este aluno** está ou não matriculado na rede municipal — fora do painel analítico público.
+
+| Aspecto | Detalhe |
+|---------|---------|
+| **Fontes** | Cecad/Conecta gov.br (consulta unitária CPF/NIS) ↔ i-Educar (`cadastro.pessoa` / CPF quando existir) |
+| **Fluxo** | Lista de candidatos → validação humana → matrícula; registo de operações (LGPD) |
+| **Produto** | Módulo admin «Busca ativa»; **proibido** varrer base escolar em massa no dashboard |
+| **Mapa** | Endereços geocodificados: confirmados sem matrícula vs. matriculados vs. incertos (CPF ausente/inconsistente) |
+| **Privacidade** | Mantém política actual: sem armazenar CPF/NIS de beneficiários CadÚnico em claro no núcleo analítico; credencial Conecta + DPO municipal |
+
+Estudo legal e técnico: [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) §8.1 · Janela **Onda 2–3**.
+
+### Resumo para gestão
+
+| Pergunta | Resposta hoje | Com CUN-01/02 | Com CUN-03 |
+|----------|---------------|---------------|------------|
+| Quantos provavelmente faltam na rede? | Lacuna municipal indicativa | Lacuna por faixa/território mais fiel | — |
+| Onde actuar primeiro? | Ranking de pressão (rateio) | Ranking com CadÚnico CRAS + Censo | — |
+| Este aluno está matriculado? | Não disponível | Não disponível | Sim, com fluxo de busca ativa |
 
 ---
 
@@ -194,6 +317,9 @@ Rotas: `dashboard.analytics.cadunico-previsao.export`.
 |------------|--------|
 | Relatório da aba | `CadunicoPrevisaoRepository` |
 | Lacuna / faixas | `CadunicoRedeGapAnalyzer` |
+| Alunos por faixa (idade) | `CadunicoFaixaEtariaCounts` |
+| Ajuste Censo | `CadunicoCensoAjuste` |
+| Lacuna territorial | `CadunicoTerritorialGapEstimator` |
 | Mapa / ranking | `CadunicoTerritorialPressureBuilder` |
 | Import CSV | `CadunicoTerritorioCsvImportService` |
 | Informes | `CadunicoPrevisaoInformeBuilder` |

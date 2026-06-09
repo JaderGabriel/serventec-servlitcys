@@ -1,6 +1,6 @@
 # Backlog de implementações — servlitcys
 
-**Versão do produto:** 4.4.2 · **Última revisão:** 2026-06-08
+**Versão do produto:** 4.4.3 · **Última revisão:** 2026-06-09
 
 > **Índice:** [README.md](README.md) · **Estado actual:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
@@ -122,6 +122,20 @@ Estudo completo: [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO
 | INT-07 | P3 | CadÚnico / SNAS — painéis agregados municipais (sem CPF em massa) | Parcial (lacuna por faixa, cenários, mapa territorial, demanda×oferta) | Onda 2 |
 | INT-08 | P4 | DATASUS agregado + CNES proximidade escola–UBS | Pendente | Onda 2 |
 | INT-09 | P4 | Articulação e-SUS escola / vacinação (credencial SMS) | Pendente | Onda 3 |
+
+---
+
+## I. CadÚnico — acurácia da lacuna, mapa e busca ativa
+
+Detalhe: [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md) § Melhorias futuras.
+
+| ID | Prioridade | Item | Estado | Janela |
+|----|------------|------|--------|--------|
+| CUN-01 | P2 | Lacuna por faixa Cecad com matrículas reais por idade/série (i-Educar) | Concluído | Onda 2 |
+| CUN-02 | P2 | Mapa: CadÚnico territorial CRAS/bairro + desconto matrículas Censo estadual/privada | Concluído | Onda 2 |
+| CUN-03 | P3 | Busca ativa: match CPF/NIS Conecta ↔ i-Educar (módulo admin, LGPD) | Pendente | Onda 2–3 |
+
+*Complementa INT-07 (entregue parcialmente). Qualidade de cadastro i-Educar (P0):* [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md).
 
 ---
 

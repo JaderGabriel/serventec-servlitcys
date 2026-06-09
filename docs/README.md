@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 4.4.2 · tag `20260608a-Pythia` · **Última revisão:** 2026-06-08
+**Versão do produto:** 4.4.3 · tag `20260609b-Lachesis` · **Última revisão:** 2026-06-09
 
 Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitectura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
@@ -98,7 +98,7 @@ mindmap
 | [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) | Performance, Pulse, Diagnóstico estratégico |
 | [CADUNICO_CECAD.md](CADUNICO_CECAD.md) · [CADUNICO_AUTOMACAO.md](CADUNICO_AUTOMACAO.md) | CadÚnico / Cecad |
 | [CADUNICO_FAIXAS_ETARIAS_FUNDEB.md](CADUNICO_FAIXAS_ETARIAS_FUNDEB.md) | Faixas 4–17, 0–3 e indicadores FUNDEB |
-| [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md) | Mapa territorial e pressão |
+| [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md) | Mapa territorial, pressão; **CUN-01/02 entregues**, CUN-03 pendente |
 | [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md) | PDF Serventec |
 | [POWERBI.md](POWERBI.md) | Estudo Power BI — integração, ETL, DAX, previsão |
 | [SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md](SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md) | Cobertura MEC/INEP |
@@ -121,6 +121,7 @@ mindmap
 
 | Documento | Versão |
 |-----------|--------|
+| [RELEASE_20260609b_LACHESIS.md](RELEASE_20260609b_LACHESIS.md) | **4.4.3** — Lachesis (CadÚnico faixas + Censo + mapa) |
 | [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md) | **4.4.2** — Pythia |
 | [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md) | **4.4.1** — Peitho |
 | [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md) | 4.4.0 — Ananke |
@@ -163,7 +164,7 @@ Histórico completo: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 | Documento | Conteúdo |
 |-----------|----------|
 | [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) | Índice mensal + ligação às releases |
-| [ENTREGAS_ESCALONADAS_JUNHO_2026.md](ENTREGAS_ESCALONADAS_JUNHO_2026.md) | Jun/2026 — 3.5.0 → 4.4.2 (20 releases) |
+| [ENTREGAS_ESCALONADAS_JUNHO_2026.md](ENTREGAS_ESCALONADAS_JUNHO_2026.md) | Jun/2026 — 3.5.0 → 4.4.3 (21 releases) |
 | [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) | Mai/2026 *(arquivo)* — 2.3.6 → 3.4.0 |
 
 ### 8. Arquivo

@@ -12,6 +12,8 @@ class InepCensoMunicipioMatricula extends Model
         'ibge_municipio',
         'ano',
         'matriculas_total',
+        'matriculas_municipal',
+        'matriculas_nao_municipal',
         'escolas_contagem',
         'fonte',
         'imported_at',
@@ -25,6 +27,8 @@ class InepCensoMunicipioMatricula extends Model
         return [
             'ano' => 'integer',
             'matriculas_total' => 'integer',
+            'matriculas_municipal' => 'integer',
+            'matriculas_nao_municipal' => 'integer',
             'escolas_contagem' => 'integer',
             'imported_at' => 'datetime',
         ];
