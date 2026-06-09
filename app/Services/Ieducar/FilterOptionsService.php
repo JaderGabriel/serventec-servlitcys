@@ -197,14 +197,39 @@ class FilterOptionsService
      */
     public static function hasNumericSchoolYears(array $yearOptions): bool
     {
+        return self::maxNumericSchoolYearFromOptions($yearOptions) !== null;
+    }
+
+    /**
+     * Maior ano letivo numérico nas opções do select (ignora placeholder e «all»).
+     *
+     * @param  array<string|int, string>  $yearOptions
+     */
+    public static function maxNumericSchoolYearFromOptions(array $yearOptions): ?int
+    {
+        $max = null;
+
         foreach (array_keys($yearOptions) as $key) {
             $k = (string) $key;
-            if ($k !== '' && $k !== 'all' && ctype_digit($k)) {
-                return true;
+            if ($k === '' || $k === 'all' || ! ctype_digit($k)) {
+                continue;
+            }
+
+            $year = (int) $k;
+            if ($max === null || $year > $max) {
+                $max = $year;
             }
         }
 
-        return false;
+        return $max;
+    }
+
+    /** Último ano letivo disponível na base i-Educar da cidade, ou null se vazio. */
+    public function latestSchoolYear(City $city): ?int
+    {
+        $payload = $this->loadYearOptions($city);
+
+        return self::maxNumericSchoolYearFromOptions($payload['years'] ?? []);
     }
 
     public function loadByKind(City $city, string $kind, ?int $anoLetivo = null): array

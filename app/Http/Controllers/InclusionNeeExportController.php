@@ -8,6 +8,7 @@ use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\Ieducar\InclusionNeeExportService;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Pulse\PulseOperationRecorder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -20,7 +21,7 @@ final class InclusionNeeExportController extends Controller
         private AdminSyncQueueService $syncQueue,
     ) {}
 
-    public function queue(Request $request): RedirectResponse
+    public function queue(Request $request): JsonResponse|RedirectResponse
     {
         $user = $request->user();
         abort_if($user === null || ! $user->canExportInclusionNee(), 403);
@@ -66,11 +67,20 @@ final class InclusionNeeExportController extends Controller
             (int) $user->id,
         );
 
+        $message = AdminSyncQueueService::flashQueuedMessage($task);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                'task_id' => $task->id,
+            ]);
+        }
+
         return redirect()
             ->back()
             ->with('admin_sync_queued', [
                 'task_id' => $task->id,
-                'message' => AdminSyncQueueService::flashQueuedMessage($task),
+                'message' => $message,
             ]);
     }
 

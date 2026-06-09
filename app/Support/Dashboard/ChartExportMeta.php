@@ -37,6 +37,8 @@ final class ChartExportMeta
         $appName = (string) config('app.name');
         $author = trim((string) config('chart_export.author'));
 
+        $logoUrl = self::exportLogoUrl();
+
         if ($city === null) {
             return [
                 'documentTitle' => __('Análise educacional'),
@@ -47,6 +49,7 @@ final class ChartExportMeta
                 'appName' => $appName,
                 'copyrightLine' => $appName,
                 'poweredByLine' => $author !== '' ? $author : '',
+                'logoUrl' => $logoUrl,
             ];
         }
 
@@ -68,7 +71,18 @@ final class ChartExportMeta
             'appName' => $appName,
             'copyrightLine' => $appName,
             'poweredByLine' => $author !== '' ? $author : '',
+            'logoUrl' => $logoUrl,
         ];
+    }
+
+    public static function exportLogoUrl(): string
+    {
+        $custom = trim((string) config('chart_export.logo_url', ''));
+        if ($custom !== '') {
+            return $custom;
+        }
+
+        return asset('images/servlitcys-logo-export.svg');
     }
 
     /**

@@ -188,6 +188,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Medidor FUNDEB no rodapé fixo (consultoria)
+    |--------------------------------------------------------------------------
+    |
+    | Compara projeção base (matrículas × VAAF) entre ano anterior, actual e
+    | seguinte no recorte activo. Consulta leve (3 exercícios), independente da
+    | aba FUNDEB lazy.
+    |
+    */
+
+    'fundeb_dock_meter' => filter_var(env('ANALYTICS_FUNDEB_DOCK_METER', true), FILTER_VALIDATE_BOOL),
+
+    /*
+    |--------------------------------------------------------------------------
     | Relatório PDF (aba Serventec)
     |--------------------------------------------------------------------------
     */

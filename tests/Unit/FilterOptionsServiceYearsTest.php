@@ -27,4 +27,25 @@ class FilterOptionsServiceYearsTest extends TestCase
             '2023' => '2023',
         ]));
     }
+
+    #[Test]
+    public function max_numeric_school_year_returns_latest(): void
+    {
+        $this->assertSame(2025, FilterOptionsService::maxNumericSchoolYearFromOptions([
+            '' => '— Selecione o ano letivo —',
+            'all' => 'Todos os anos',
+            '2023' => '2023',
+            '2025' => '2025',
+            '2024' => '2024',
+        ]));
+    }
+
+    #[Test]
+    public function max_numeric_school_year_returns_null_without_years(): void
+    {
+        $this->assertNull(FilterOptionsService::maxNumericSchoolYearFromOptions([
+            '' => '— Selecione o ano letivo —',
+            'all' => 'Todos os anos',
+        ]));
+    }
 }

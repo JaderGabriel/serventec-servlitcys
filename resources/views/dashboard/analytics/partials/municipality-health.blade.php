@@ -116,7 +116,7 @@
     $flowSteps = ConsultoriaFlow::numberedSteps([
         ['label' => __('Decisão'), 'anchor' => 'diag-decisao'],
         ['label' => __('Prioridades'), 'anchor' => 'diag-prioridades', 'visible' => count($topProblems) > 0],
-        ['label' => __('Explorar'), 'anchor' => 'diag-explorar'],
+        ['label' => __('Roteiro'), 'anchor' => 'diag-explorar'],
         ['label' => __('Consolidado'), 'anchor' => 'diag-consolidado', 'visible' => $hasConsolidado],
     ]);
     $consolidadoStep = ConsultoriaFlow::stepNum($flowSteps, 'diag-consolidado');
@@ -133,13 +133,6 @@
             'yearFilterReady' => $yearFilterReady,
             'municipalityContext' => $municipalityContext,
             'tabData' => ['healthData' => $healthData],
-        ])
-
-        @include('dashboard.analytics.partials.serventec-pdf-export', [
-            'selectedCity' => $selectedCity,
-            'filters' => $filters,
-            'yearFilterReady' => $yearFilterReady,
-            'pdfExportsRecent' => $pdfExportsRecent,
         ])
 
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">

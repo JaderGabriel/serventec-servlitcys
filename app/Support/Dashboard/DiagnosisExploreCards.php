@@ -3,18 +3,37 @@
 namespace App\Support\Dashboard;
 
 /**
- * Cartões «Explorar em detalhe» do Diagnóstico — métrica e status por módulo do painel (não o índice global).
+ * Cartões «Navegação rápida» do Diagnóstico — métrica e status por módulo (roteiro gerencial).
  */
 final class DiagnosisExploreCards
 {
     /** @var list<string> */
-    private const EXCLUDED_TABS = ['municipality_health', 'discrepancies'];
+    private const EXCLUDED_TABS = ['municipality_health', 'discrepancies', 'overview'];
+
+    /**
+     * Fases do roteiro gerencial (ordem de leitura na UI).
+     *
+     * @return list<array{id: string, step: string, label: string}>
+     */
+    public static function managerialPhases(): array
+    {
+        return [
+            ['id' => 'finance', 'step' => '1', 'label' => __('Decisão de repasse')],
+            ['id' => 'cadastro', 'step' => '2', 'label' => __('Base cadastral')],
+            ['id' => 'pedagogico', 'step' => '3', 'label' => __('Condicionalidades VAAR')],
+            ['id' => 'censo', 'step' => '4', 'label' => __('Fecho Censo')],
+        ];
+    }
 
     /**
      * @return list<array{
      *   tab: string,
      *   label: string,
      *   group: string,
+     *   phase: string,
+     *   phase_step: string,
+     *   phase_label: string,
+     *   focus: string,
      *   tone: string,
      *   icon: string,
      *   metric_value: string,
@@ -33,7 +52,6 @@ final class DiagnosisExploreCards
         $dimensions = is_array($health['cadastro_dimensions'] ?? null) ? $health['cadastro_dimensions'] : [];
         $labels = AnalyticsTabCatalog::labels();
         $hints = AnalyticsTabCatalog::tabHints();
-        $groupPresentation = AnalyticsTabCatalog::groupPresentation();
         $tabToGroup = AnalyticsTabCatalog::tabToGroupMap();
 
         $cards = [];
@@ -41,8 +59,7 @@ final class DiagnosisExploreCards
 
         foreach (self::exploreTabOrder() as $tab) {
             $order++;
-            $groupId = $tabToGroup[$tab] ?? '';
-            $groupLabel = (string) ($groupPresentation[$groupId]['short'] ?? $groupId);
+            $phase = self::managerialPhase($tab);
             $meta = self::tabMeta($tab);
             $statusRow = AnalyticsTabImpactBuilder::exploreStatusForHealth($tab, $health);
 
@@ -65,7 +82,11 @@ final class DiagnosisExploreCards
             $cards[] = self::baseCard(
                 tab: $tab,
                 order: $order,
-                group: $groupLabel,
+                group: (string) ($tabToGroup[$tab] ?? ''),
+                phase: $phase['phase'],
+                phaseStep: $phase['phase_step'],
+                phaseLabel: $phase['phase_label'],
+                focus: $phase['focus'],
                 tone: $meta['tone'],
                 icon: $meta['icon'],
                 label: $labels[$tab] ?? $tab,
@@ -82,22 +103,112 @@ final class DiagnosisExploreCards
     }
 
     /**
+     * Agrupa cartões por fase gerencial (para secções na UI).
+     *
+     * @return list<array{id: string, step: string, label: string, cards: list<array<string, mixed>>}>
+     */
+    public static function buildGroupedByPhase(array $health): array
+    {
+        $cards = self::build($health);
+        $byPhase = [];
+        foreach ($cards as $card) {
+            $byPhase[$card['phase']][] = $card;
+        }
+
+        $grouped = [];
+        foreach (self::managerialPhases() as $phase) {
+            $id = $phase['id'];
+            if (empty($byPhase[$id])) {
+                continue;
+            }
+            $grouped[] = [
+                'id' => $id,
+                'step' => $phase['step'],
+                'label' => $phase['label'],
+                'cards' => $byPhase[$id],
+            ];
+        }
+
+        return $grouped;
+    }
+
+    /**
      * @return list<string>
      */
     private static function exploreTabOrder(): array
     {
-        $tabs = [];
-        foreach (AnalyticsTabCatalog::groups() as $group) {
-            foreach ($group['tabs'] ?? [] as $tabId) {
-                $tab = (string) $tabId;
-                if (in_array($tab, self::EXCLUDED_TABS, true)) {
-                    continue;
-                }
-                $tabs[] = $tab;
-            }
-        }
+        return [
+            'fundeb',
+            'finance_realtime',
+            'comparativo',
+            'other_funding',
+            'enrollment',
+            'cadunico_previsao',
+            'network',
+            'school_units',
+            'inclusion',
+            'performance',
+            'attendance',
+            'work_done',
+        ];
+    }
 
-        return $tabs;
+    /**
+     * @return array{phase: string, phase_step: string, phase_label: string, focus: string}
+     */
+    private static function managerialPhase(string $tab): array
+    {
+        return match ($tab) {
+            'fundeb', 'finance_realtime', 'comparativo', 'other_funding' => [
+                'phase' => 'finance',
+                'phase_step' => '1',
+                'phase_label' => __('Decisão de repasse'),
+                'focus' => self::managerialFocus($tab),
+            ],
+            'enrollment', 'cadunico_previsao', 'network', 'school_units' => [
+                'phase' => 'cadastro',
+                'phase_step' => '2',
+                'phase_label' => __('Base cadastral'),
+                'focus' => self::managerialFocus($tab),
+            ],
+            'inclusion', 'performance', 'attendance' => [
+                'phase' => 'pedagogico',
+                'phase_step' => '3',
+                'phase_label' => __('Condicionalidades VAAR'),
+                'focus' => self::managerialFocus($tab),
+            ],
+            'work_done' => [
+                'phase' => 'censo',
+                'phase_step' => '4',
+                'phase_label' => __('Fecho Censo'),
+                'focus' => self::managerialFocus($tab),
+            ],
+            default => [
+                'phase' => 'cadastro',
+                'phase_step' => '2',
+                'phase_label' => __('Base cadastral'),
+                'focus' => '',
+            ],
+        };
+    }
+
+    private static function managerialFocus(string $tab): string
+    {
+        return match ($tab) {
+            'fundeb' => __('Previsão VAAF/VAAR e condicionalidades'),
+            'finance_realtime' => __('Repasses observados × expectativa'),
+            'comparativo' => __('Evolução anual e projeção'),
+            'other_funding' => __('Programas complementares (PNAE, PDDE…)'),
+            'enrollment' => __('Volume, ocupação e distorção idade-série'),
+            'cadunico_previsao' => __('Lacuna territorial 4–17 anos'),
+            'network' => __('Capacidade e vagas ociosas'),
+            'school_units' => __('Georreferência e lista de espera'),
+            'inclusion' => __('NEE, AEE e recurso de prova'),
+            'performance' => __('Aprovação, evasão e SAEB'),
+            'attendance' => __('Frequência por período'),
+            'work_done' => __('Ritmo Educacenso e meta de fecho'),
+            default => '',
+        };
     }
 
     /**
@@ -106,7 +217,6 @@ final class DiagnosisExploreCards
     private static function tabMeta(string $tab): array
     {
         return match ($tab) {
-            'overview' => ['tone' => 'indigo', 'icon' => 'layout-grid'],
             'enrollment' => ['tone' => 'indigo', 'icon' => 'users'],
             'cadunico_previsao' => ['tone' => 'sky', 'icon' => 'user-group'],
             'network' => ['tone' => 'teal', 'icon' => 'share'],
@@ -160,13 +270,13 @@ final class DiagnosisExploreCards
     {
         $status = (string) ($statusRow['status'] ?? 'neutral');
         if ($status === 'success') {
-            return __('OK');
+            return __('Em linha');
         }
 
         $summary = is_array($health['summary'] ?? null) ? $health['summary'] : [];
 
         return match ($tab) {
-            'overview' => ($summary['total_matriculas'] ?? null) !== null
+            'enrollment' => ($summary['total_matriculas'] ?? null) !== null
                 ? number_format((int) $summary['total_matriculas'])
                 : '—',
             'fundeb' => number_format((int) ($summary['modulos_fundeb_alerta'] ?? 0)),
@@ -180,14 +290,18 @@ final class DiagnosisExploreCards
     private static function metricLabelFallback(string $tab): string
     {
         return match ($tab) {
-            'overview' => __('matrículas'),
+            'enrollment' => __('matrículas activas'),
             'fundeb' => __('módulos VAAR em alerta'),
             'other_funding' => __('programas em alerta'),
-            'work_done' => __('indicador Censo'),
+            'work_done' => __('pendências Censo'),
             'inclusion' => __('recurso prova s/ NEE'),
             'cadunico_previsao' => __('lacuna CadÚnico'),
-            'finance_realtime' => __('repasses'),
+            'finance_realtime' => __('diferença repasse'),
             'comparativo' => __('ano base'),
+            'network' => __('ociosidade'),
+            'school_units' => __('cobertura geo'),
+            'performance' => __('indicador pedagógico'),
+            'attendance' => __('registo faltas'),
             default => __('indicador'),
         };
     }
@@ -199,6 +313,10 @@ final class DiagnosisExploreCards
         string $tab,
         int $order,
         string $group,
+        string $phase,
+        string $phaseStep,
+        string $phaseLabel,
+        string $focus,
         string $tone,
         string $icon,
         string $label,
@@ -213,6 +331,10 @@ final class DiagnosisExploreCards
             'tab' => $tab,
             'order' => $order,
             'group' => $group,
+            'phase' => $phase,
+            'phase_step' => $phaseStep,
+            'phase_label' => $phaseLabel,
+            'focus' => $focus,
             'tone' => $tone,
             'icon' => $icon,
             'label' => $label,
@@ -229,9 +351,9 @@ final class DiagnosisExploreCards
     private static function statusLabel(string $status): string
     {
         return match ($status) {
-            'success' => __('Adequado'),
-            'warning' => __('Atenção'),
-            'danger' => __('Crítico'),
+            'success' => __('Em linha'),
+            'warning' => __('Revisar'),
+            'danger' => __('Priorizar'),
             default => __('Consultar'),
         };
     }

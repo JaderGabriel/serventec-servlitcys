@@ -12,6 +12,7 @@ use App\Services\Fundeb\FundebMatriculasByYearService;
 use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Fundeb\FundebReferenceSource;
+use App\Support\Fundeb\FundebValueLexicon;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 
 /**
@@ -85,6 +86,201 @@ final class FundebVaafProfileBuilder
             ],
             'fontes' => $this->fontesResumo(),
         ];
+    }
+
+    /**
+     * Medidor compacto para o rodapé da consultoria (ano anterior, atual e próximo).
+     *
+     * @return array{
+     *   available: bool,
+     *   anchor_ano: ?int,
+     *   title: string,
+     *   hint: string,
+     *   max_value: float,
+     *   points: list<array{
+     *     ano: int,
+     *     label: string,
+     *     short_label: string,
+     *     role: string,
+     *     value: ?float,
+     *     value_label: string,
+     *     bar_pct: float,
+     *     matriculas: int,
+     *     phase: string,
+     *     delta_pct: ?float,
+     *     delta_tone: string
+     *   }>,
+     *   delta_previous_pct: ?float,
+     *   delta_next_pct: ?float
+     * }
+     */
+    public function buildDockMeter(City $city, IeducarFilterState $filters, ?int $matriculasFiltro = null): array
+    {
+        if (! $filters->hasYearSelected() || $filters->isAllSchoolYears()) {
+            return self::emptyDockMeter();
+        }
+
+        $anchor = (int) $filters->ano_letivo;
+        $yearKeys = [$anchor - 1, $anchor, $anchor + 1];
+        $ibge = FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio);
+        $matByYear = $this->matriculas->forCityYears($city, $yearKeys);
+
+        if ($matriculasFiltro !== null && $matriculasFiltro > 0) {
+            $matByYear[$anchor] = array_merge($matByYear[$anchor] ?? [
+                'ano' => $anchor,
+                'ieducar' => $matriculasFiltro,
+                'censo' => null,
+                'usado' => $matriculasFiltro,
+                'fonte_usada' => 'ieducar_filtro',
+            ], [
+                'usado' => $matriculasFiltro,
+                'ieducar' => $matriculasFiltro,
+                'fonte_usada' => 'ieducar_filtro',
+            ]);
+        }
+
+        $roles = [
+            ['role' => 'previous', 'ano' => $anchor - 1, 'short' => __('Anterior')],
+            ['role' => 'current', 'ano' => $anchor, 'short' => __('Atual')],
+            ['role' => 'next', 'ano' => $anchor + 1, 'short' => __('Próximo')],
+        ];
+
+        $rawPoints = [];
+        foreach ($roles as $roleMeta) {
+            $ano = (int) $roleMeta['ano'];
+            $block = $this->buildYearBlock($city, $ibge, $ano, $matByYear[$ano] ?? null);
+            $base = isset($block['previsao_recursos']['base_anual'])
+                ? (float) $block['previsao_recursos']['base_anual']
+                : null;
+
+            $rawPoints[] = [
+                'ano' => $ano,
+                'label' => (string) $ano,
+                'short_label' => $roleMeta['short'],
+                'role' => $roleMeta['role'],
+                'value' => $base !== null && $base > 0 ? $base : null,
+                'value_label' => self::formatDockBrl($base),
+                'value_compact' => self::formatDockBrl($base, true),
+                'matriculas' => (int) ($block['matriculas']['usado'] ?? 0),
+                'phase' => FundebValueLexicon::exercisePhaseLabel($ano),
+            ];
+        }
+
+        $values = array_values(array_filter(
+            array_map(static fn (array $p): ?float => $p['value'], $rawPoints),
+            static fn (?float $v): bool => $v !== null && $v > 0,
+        ));
+
+        $hasValues = $values !== [];
+        $max = $hasValues ? max($values) : 1.0;
+        $pctDelta = static function (?float $from, ?float $to): ?float {
+            if ($from === null || $to === null || $from <= 0 || $to <= 0) {
+                return null;
+            }
+
+            return round((($to - $from) / $from) * 100, 1);
+        };
+
+        $currentVal = null;
+        $previousVal = null;
+        $nextVal = null;
+        foreach ($rawPoints as $point) {
+            match ($point['role']) {
+                'current' => $currentVal = $point['value'],
+                'previous' => $previousVal = $point['value'],
+                'next' => $nextVal = $point['value'],
+                default => null,
+            };
+        }
+
+        $deltaPrevious = $pctDelta($previousVal, $currentVal);
+        $deltaNext = $pctDelta($currentVal, $nextVal);
+
+        $points = array_map(function (array $point) use ($max, $currentVal, $deltaPrevious, $deltaNext): array {
+            $value = $point['value'];
+            $barPct = $value !== null && $max > 0 ? round(($value / $max) * 100, 1) : 0.0;
+            $deltaPct = null;
+            if ($point['role'] === 'current') {
+                $deltaPct = $deltaPrevious;
+            } elseif ($point['role'] === 'next') {
+                $deltaPct = $deltaNext;
+            }
+
+            return [
+                ...$point,
+                'bar_pct' => $barPct,
+                'delta_pct' => $deltaPct,
+                'delta_tone' => self::dockDeltaTone($deltaPct, $point['role']),
+            ];
+        }, $rawPoints);
+
+        return [
+            'available' => $hasValues,
+            'partial' => ! $hasValues,
+            'anchor_ano' => $anchor,
+            'title' => __('FUNDEB — verbas'),
+            'hint' => __('Matrículas × VAAF estimado por exercício (indicativo)'),
+            'max_value' => $hasValues ? $max : 0.0,
+            'points' => $points,
+            'delta_previous_pct' => $deltaPrevious,
+            'delta_next_pct' => $deltaNext,
+        ];
+    }
+
+    /**
+     * @return array{available: false, partial: bool, anchor_ano: ?int, title: string, hint: string, max_value: float, points: list<empty>, delta_previous_pct: null, delta_next_pct: null}
+     */
+    private static function emptyDockMeter(?int $anchor = null): array
+    {
+        return [
+            'available' => false,
+            'partial' => false,
+            'anchor_ano' => $anchor,
+            'title' => __('FUNDEB — verbas'),
+            'hint' => __('Matrículas × VAAF estimado por exercício (indicativo)'),
+            'max_value' => 0.0,
+            'points' => [],
+            'delta_previous_pct' => null,
+            'delta_next_pct' => null,
+        ];
+    }
+
+    private static function formatDockBrl(?float $value, bool $compact = false): string
+    {
+        if ($value === null || $value <= 0) {
+            return '—';
+        }
+
+        if (! $compact) {
+            return DiscrepanciesFundingImpact::formatBrl($value);
+        }
+
+        if ($value >= 1_000_000_000) {
+            return 'R$ '.number_format($value / 1_000_000_000, 1, ',', '.').' bi';
+        }
+
+        if ($value >= 1_000_000) {
+            return 'R$ '.number_format($value / 1_000_000, 1, ',', '.').' mi';
+        }
+
+        if ($value >= 10_000) {
+            return 'R$ '.number_format($value / 1_000, 0, ',', '.').' mil';
+        }
+
+        return DiscrepanciesFundingImpact::formatBrl($value);
+    }
+
+    private static function dockDeltaTone(?float $deltaPct, string $role): string
+    {
+        if ($deltaPct === null || $role === 'previous') {
+            return 'muted';
+        }
+
+        if (abs($deltaPct) < 0.05) {
+            return 'neutral';
+        }
+
+        return $deltaPct > 0 ? 'up' : 'down';
     }
 
     /**

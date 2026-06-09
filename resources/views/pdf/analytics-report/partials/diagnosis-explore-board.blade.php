@@ -38,7 +38,7 @@
             <tr>
                 @foreach ($row as $card)
                     <td class="diag-board__cell" style="border-color: {{ $toneBorder($card['tone']) }};">
-                        <p class="diag-board__group">{{ $card['group'] }}</p>
+                        <p class="diag-board__group">{{ $card['phase_label'] ?? $card['group'] }}</p>
                         <p class="diag-board__title">{{ $card['label'] }}</p>
                         <p class="diag-board__metric">
                             <strong style="font-size: 14pt; color: #0f766e;">{{ $card['metric_value'] }}</strong>

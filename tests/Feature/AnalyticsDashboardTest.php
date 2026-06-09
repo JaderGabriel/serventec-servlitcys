@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\City;
 use App\Models\User;
+use App\Services\Ieducar\FilterOptionsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -111,5 +112,23 @@ class AnalyticsDashboardTest extends TestCase
         $this->actingAs($municipal)
             ->get(route('dashboard.analytics'))
             ->assertRedirect(route('dashboard.analytics', ['city_id' => $city->id]));
+    }
+
+    public function test_analytics_index_redirects_to_latest_school_year_when_city_has_no_ano(): void
+    {
+        $city = City::factory()->create();
+        $user = User::factory()->create();
+        $user->cities()->attach($city->id);
+
+        $this->mock(FilterOptionsService::class, function ($mock): void {
+            $mock->shouldReceive('latestSchoolYear')->andReturn(2025);
+        });
+
+        $this->actingAs($user)
+            ->get(route('dashboard.analytics', ['city_id' => $city->id]))
+            ->assertRedirect(route('dashboard.analytics', [
+                'city_id' => $city->id,
+                'ano_letivo' => '2025',
+            ]));
     }
 }

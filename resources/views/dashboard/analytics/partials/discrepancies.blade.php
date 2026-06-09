@@ -141,14 +141,6 @@
 
     <div class="flex flex-wrap gap-2 items-center justify-end -mt-2">
         <x-dashboard.funding-loss-conditions-button :activeCheckIds="$activeCheckIds" />
-        @if ($yearFilterReady)
-            <a
-                href="{{ route('dashboard.analytics.discrepancies.export', $exportParams) }}"
-                class="serv-btn-secondary serv-btn-secondary--rose"
-            >
-                {{ __('Exportar CSV') }}
-            </a>
-        @endif
     </div>
 
     @if (filled($d['funding_aviso'] ?? null))

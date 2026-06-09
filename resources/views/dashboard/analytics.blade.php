@@ -8,8 +8,16 @@
     @endphp
 
     <x-slot name="header">
-        <div class="flex flex-row items-center justify-between gap-4">
+        <div class="flex flex-row items-center justify-between gap-3 sm:gap-4">
             <x-dashboard.analytics-page-heading />
+            <div class="flex items-center gap-2 shrink-0">
+                @if ($selectedCity ?? null)
+                    <x-dashboard.analytics-export-hub
+                        :selectedCity="$selectedCity"
+                        :filters="$filters ?? null"
+                        :yearFilterReady="$yearFilterReady ?? false"
+                    />
+                @endif
             @if (Auth::user())
                 <a
                     href="{{ Auth::user()->homeUrl() }}"
@@ -20,11 +28,23 @@
                     <x-ui.icon name="home" class="h-5 w-5" />
                 </a>
             @endif
+            </div>
         </div>
     </x-slot>
 
     <div class="serv-analytics-page py-8">
         <div class="max-w-[1600px] mx-auto sm:px-6 lg:px-8 space-y-6">
+            @if (session('admin_sync_queued'))
+                @include('admin.partials.sync-queued-alert')
+            @endif
+            @if (session('status') && session('pdf_export_id'))
+                <div class="rounded-lg border border-emerald-200 bg-emerald-50/95 dark:border-emerald-800 dark:bg-emerald-950/35 px-4 py-3 text-sm text-emerald-900 dark:text-emerald-100" role="status">
+                    <p class="font-semibold">{{ __('Enviado para a fila') }}</p>
+                    <p class="mt-1">{{ session('status') }}</p>
+                    <p class="mt-1 text-xs font-mono">#{{ session('pdf_export_id') }}</p>
+                    <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', ['pdf_status' => 'pending']) }}#fila-pdf" class="mt-2 inline-block text-xs font-medium underline">{{ __('Abrir fila') }}</a>
+                </div>
+            @endif
             <div class="serv-panel serv-panel--info px-4 py-3 text-sm">
                 <p class="font-medium text-serv-navy dark:text-teal-100">{{ __('Foco no município selecionado') }}</p>
                 <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -280,6 +300,7 @@
                         :yearOptions="$yearOptions"
                         :ieducarOptions="$ieducarOptions"
                         :yearFilterReady="$yearFilterReady"
+                        :fundebDockMeter="$fundebDockMeter ?? []"
                         :pageHeader="$analyticsPageHeader"
                         :formAction="route('dashboard.analytics')"
                         :filterOptionsTurnoUrl="route('dashboard.analytics.filter-options')"

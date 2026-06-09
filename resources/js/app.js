@@ -16,11 +16,13 @@ import { radialCalloutsPlugin } from "./chartRadialCallouts.js";
 import {
     buildCanvasOnlyExport,
     buildCompositeExport,
+    ensureExportLogo,
     triggerPngDownload,
 } from "./chartExportHelpers.js";
 import { initAnalyticsFilterBootstrap } from "./analyticsFilterBootstrap.js";
 import { initAnalyticsFilterTurno } from "./analyticsFilterTurno.js";
 import { registerAnalyticsPageHeader } from "./analyticsPageHeader.js";
+import { registerAnalyticsExportHub } from "./analyticsExportHub.js";
 import {
     initDataLoadingForms,
     registerDataLoadingStore,
@@ -177,6 +179,8 @@ document.addEventListener("alpine:init", () => {
     Alpine.data("brazilMunicipalitiesMap", (markers, statusColors = null, options = null) =>
         createBrazilMunicipalitiesMap(markers, statusColors, options),
     );
+
+    registerAnalyticsExportHub(Alpine);
 
     Alpine.data(
         "analyticsTabs",
@@ -2059,7 +2063,7 @@ document.addEventListener("alpine:init", () => {
                 }
                 this.chart?.destroy();
             },
-            exportPng() {
+            async exportPng() {
                 if (!this.chart) {
                     return;
                 }
@@ -2084,6 +2088,14 @@ document.addEventListener("alpine:init", () => {
                     wrap.style.minHeight = "280px";
                 }
 
+                const logoUrl =
+                    this._exportMeta?.logoUrl ||
+                    this._exportMeta?.logo_url ||
+                    "";
+                const logoImage = logoUrl
+                    ? await ensureExportLogo(logoUrl)
+                    : null;
+
                 const runExport = () => {
                     try {
                         let dataUrl;
@@ -2097,6 +2109,7 @@ document.addEventListener("alpine:init", () => {
                                     footnote: this._sourcePayload?.footnote || "",
                                     legendRows: this.legendRows(),
                                     payload: this._sourcePayload,
+                                    logoImage,
                                 },
                             ).dataUrl;
                         } catch (e1) {

@@ -11,6 +11,7 @@
     'filterYearsUrl' => null,
     'deferSecondaryFilters' => false,
     'pageHeader' => null,
+    'fundebDockMeter' => null,
 ])
 
 @php
@@ -72,7 +73,7 @@
                 >
                     @if ($filters && $selectedCity)
                         @foreach ($filters->toQueryParams() as $key => $value)
-                            @if ($value !== null && $value !== '' && $key !== 'city_id')
+                            @if ($value !== null && $value !== '' && ! in_array($key, ['city_id', 'ano_letivo'], true))
                                 <input type="hidden" name="{{ $key }}" value="{{ $value }}" />
                             @endif
                         @endforeach
@@ -115,6 +116,13 @@
                         </template>
                     </span>
                 </button>
+
+                <x-dashboard.analytics-filter-dock-fundeb-meter
+                    :meter="$fundebDockMeter ?? []"
+                    :filters="$filters"
+                    :selectedCity="$selectedCity"
+                    :yearFilterReady="$yearFilterReady"
+                />
 
                 <div class="serv-analytics-filter-dock__summary-actions">
                     <button

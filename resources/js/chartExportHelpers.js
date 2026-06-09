@@ -160,10 +160,15 @@ const EXPORT_COLORS = {
 
 const FONT_STACK = 'system-ui, -apple-system, "Segoe UI", sans-serif';
 
+const LOGO_ASPECT = 52 / 36;
+const LOGO_BRAND = "#0d9488";
+
 /** Tokens de layout — manter alturas de cálculo e desenho alinhadas. */
 const EXPORT_LAYOUT = {
     accentBarH: 6,
     pad: 36,
+    logoMaxH: 40,
+    logoGap: 14,
     /** Acima disto: legenda em duas colunas (melhor densidade sem PNG alto). */
     legendTwoColThreshold: 11,
     legendMaxRowsSingle: 20,
@@ -177,6 +182,115 @@ const EXPORT_LAYOUT = {
     legendLabelMaxChars: 80,
     legendLabelMaxCharsTwoCol: 42,
 };
+
+const exportLogoCache = new Map();
+
+/**
+ * Pré-carrega a logomarca para o cabeçalho do PNG (mesma origem da página).
+ *
+ * @param {string} url
+ * @returns {Promise<HTMLImageElement|null>}
+ */
+export function ensureExportLogo(url) {
+    const src = String(url ?? "").trim();
+    if (!src || typeof Image === "undefined") {
+        return Promise.resolve(null);
+    }
+
+    const cached = exportLogoCache.get(src);
+    if (cached?.image?.complete && cached.image.naturalWidth > 0) {
+        return Promise.resolve(cached.image);
+    }
+    if (cached?.promise) {
+        return cached.promise;
+    }
+
+    const promise = new Promise((resolve) => {
+        const img = new Image();
+        let settled = false;
+        const finish = (result) => {
+            if (settled) {
+                return;
+            }
+            settled = true;
+            exportLogoCache.set(src, {
+                image: result,
+                promise: Promise.resolve(result),
+            });
+            resolve(result);
+        };
+
+        img.onload = () => {
+            finish(img.naturalWidth > 0 ? img : null);
+        };
+        img.onerror = () => finish(null);
+        img.src = src;
+        window.setTimeout(() => {
+            finish(img.complete && img.naturalWidth > 0 ? img : null);
+        }, 200);
+    });
+
+    exportLogoCache.set(src, { promise });
+    return promise;
+}
+
+function exportLogoDimensions(maxH = EXPORT_LAYOUT.logoMaxH) {
+    const height = maxH;
+    const width = Math.round(height * LOGO_ASPECT);
+
+    return { width, height };
+}
+
+function headerLogoColumn(pad, textMax) {
+    const { width: logoW, height: logoH } = exportLogoDimensions();
+    const gap = EXPORT_LAYOUT.logoGap;
+
+    return {
+        logoW,
+        logoH,
+        textX: pad + logoW + gap,
+        textColumnW: Math.max(160, textMax - logoW - gap),
+    };
+}
+
+/**
+ * @param {CanvasRenderingContext2D} ctx
+ */
+function drawBrandLogoFallback(ctx, x, y, w, h) {
+    const sx = w / 52;
+    const sy = h / 36;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(sx, sy);
+    ctx.fillStyle = LOGO_BRAND;
+    ctx.globalAlpha = 0.75;
+    ctx.fillRect(2, 18, 7, 14);
+    ctx.globalAlpha = 0.9;
+    ctx.fillRect(12, 10, 7, 22);
+    ctx.globalAlpha = 1;
+    ctx.fillRect(22, 4, 7, 28);
+    ctx.globalAlpha = 0.92;
+    ctx.fillRect(36, 4, 7, 28);
+    ctx.globalAlpha = 0.55;
+    ctx.fillRect(41, 4, 6, 28);
+    ctx.restore();
+}
+
+/**
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {HTMLImageElement|null} image
+ */
+function drawBrandLogo(ctx, image, x, y, maxH = EXPORT_LAYOUT.logoMaxH) {
+    const { width: w, height: h } = exportLogoDimensions(maxH);
+
+    if (image && image.naturalWidth > 0) {
+        ctx.drawImage(image, x, y, w, h);
+    } else {
+        drawBrandLogoFallback(ctx, x, y, w, h);
+    }
+
+    return { width: w, height: h };
+}
 
 function countWrappedLines(text, maxWidth, font) {
     const ctx = document.createElement("canvas").getContext("2d");
@@ -727,18 +841,22 @@ export function buildCompositeExport(chart, meta, chartTitle, options = {}) {
         const fontFilter = `13px ${FONT_STACK}`;
         const fontFoot = `11px ${FONT_STACK}`;
 
+        const logoColumn = headerLogoColumn(pad, textMax);
+        const textX = logoColumn.textX;
+        const textColumnW = logoColumn.textColumnW;
+
         const filterText = (meta.filterLines || [])
             .filter(Boolean)
             .map(String)
             .join(" · ");
         const linesFilter = filterText
-            ? countWrappedLines(filterText, textMax, fontFilter)
+            ? countWrappedLines(filterText, textColumnW, fontFilter)
             : 0;
         const linesSub = subtitle
-            ? countWrappedLines(subtitle, textMax, fontSub)
+            ? countWrappedLines(subtitle, textColumnW, fontSub)
             : 0;
         const linesFootnote = footnote
-            ? countWrappedLines(footnote, textMax, fontSub)
+            ? countWrappedLines(footnote, textColumnW, fontSub)
             : 0;
 
         const legendLayout = planLegendLayout(legendRows);
@@ -755,16 +873,21 @@ export function buildCompositeExport(chart, meta, chartTitle, options = {}) {
             .join(" · ");
         const linesFooter = countWrappedLines(footerMeta, textMax, fontFoot);
 
-        const headerH =
+        const headerH = Math.max(
             EXPORT_LAYOUT.accentBarH +
-            22 +
-            24 +
-            24 +
-            (chartTitle ? 24 : 0) +
-            linesSub * 16 +
-            (meta.cityLine ? 22 : 0) +
-            linesFilter * 16 +
-            20;
+                22 +
+                logoColumn.logoH +
+                8,
+            EXPORT_LAYOUT.accentBarH +
+                22 +
+                24 +
+                24 +
+                (chartTitle ? 24 : 0) +
+                linesSub * 16 +
+                (meta.cityLine ? 22 : 0) +
+                linesFilter * 16 +
+                20,
+        );
 
         const footnoteH = linesFootnote > 0 ? 14 + linesFootnote * 15 + 10 : 0;
         const footerH = 18 + linesFooter * 14 + 18;
@@ -792,15 +915,20 @@ export function buildCompositeExport(chart, meta, chartTitle, options = {}) {
         ctx.fillRect(0, headerTop, w, headerBottom - headerTop);
         drawHorizontalRule(ctx, headerBottom, w, EXPORT_COLORS.headerBorder);
 
-        let y = headerTop + 20;
+        const logoImage = options.logoImage ?? null;
+        const titleStartY = headerTop + 20;
         const x = pad;
+
+        drawBrandLogo(ctx, logoImage, x, titleStartY - 2, logoColumn.logoH);
+
+        let y = titleStartY;
 
         ctx.font = fontEyebrow;
         ctx.fillStyle = EXPORT_COLORS.accentDark;
         ctx.textAlign = "left";
         ctx.fillText(
             String(meta.documentTitle || "Análise educacional").toUpperCase(),
-            x,
+            textX,
             y,
         );
         y += 22;
@@ -809,9 +937,9 @@ export function buildCompositeExport(chart, meta, chartTitle, options = {}) {
             y = drawWrappedLines(
                 ctx,
                 String(chartTitle).toUpperCase(),
-                x,
+                textX,
                 y,
-                textMax,
+                textColumnW,
                 19,
                 fontChart,
                 EXPORT_COLORS.chartTitle,
@@ -823,9 +951,9 @@ export function buildCompositeExport(chart, meta, chartTitle, options = {}) {
             y = drawWrappedLines(
                 ctx,
                 subtitle,
-                x,
+                textX,
                 y,
-                textMax,
+                textColumnW,
                 16,
                 fontSub,
                 EXPORT_COLORS.filter,
@@ -837,7 +965,7 @@ export function buildCompositeExport(chart, meta, chartTitle, options = {}) {
             ctx.font = fontCity;
             ctx.fillStyle = EXPORT_COLORS.city;
             ctx.textAlign = "left";
-            ctx.fillText(meta.cityLine, x, y);
+            ctx.fillText(meta.cityLine, textX, y);
             y += 22;
         }
 
@@ -845,9 +973,9 @@ export function buildCompositeExport(chart, meta, chartTitle, options = {}) {
             y = drawWrappedLines(
                 ctx,
                 `Recorte: ${filterText}`,
-                x,
+                textX,
                 y,
-                textMax,
+                textColumnW,
                 16,
                 fontFilter,
                 EXPORT_COLORS.filter,

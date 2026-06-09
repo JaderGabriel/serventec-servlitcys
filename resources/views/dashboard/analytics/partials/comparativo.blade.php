@@ -172,46 +172,6 @@
         </p>
     @endif
 
-    @if ($comparativoDataReady && $available)
-        <div class="rounded-lg border border-indigo-200/80 dark:border-indigo-800/50 bg-indigo-50/40 dark:bg-indigo-950/25 px-4 py-4 space-y-3">
-            <div>
-                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Exportar comparativo') }}</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                    {{ __('Resumo executivo, variações, etapas FUNDEB, projeção e informes — no formato escolhido para reunião com a gestão.') }}
-                </p>
-            </div>
-            <div class="flex flex-wrap gap-2 items-center">
-                <a
-                    href="{{ route('dashboard.analytics.comparativo.export', array_merge($exportParams, ['format' => 'pdf'])) }}"
-                    class="inline-flex items-center gap-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 shadow-sm"
-                >
-                    {{ __('PDF') }}
-                </a>
-                <a
-                    href="{{ route('dashboard.analytics.comparativo.export', array_merge($exportParams, ['format' => 'csv'])) }}"
-                    class="serv-btn-secondary serv-btn-secondary--teal"
-                >
-                    {{ __('CSV') }}
-                </a>
-                <a
-                    href="{{ route('dashboard.analytics.comparativo.export', array_merge($exportParams, ['format' => 'xlsx'])) }}"
-                    class="serv-btn-secondary serv-btn-secondary--indigo"
-                >
-                    {{ __('Excel') }}
-                </a>
-            </div>
-        </div>
-
-        @if (auth()->user()?->canExportAnalyticsPdf())
-            @include('dashboard.analytics.partials.serventec-pdf-export', [
-                'selectedCity' => $selectedCity,
-                'filters' => $filters,
-                'yearFilterReady' => $yearFilterReady,
-                'pdfExportsRecent' => $pdfExportsRecent,
-            ])
-        @endif
-    @endif
-
     @if ($comparativoDataReady && ! $hasBody && ! filled($data['error'] ?? null))
         <p class="serv-callout text-sm text-slate-700 dark:text-slate-300">
             {{ __('Não há dados para exibir neste recorte. Confirme ano base, conexão i-Educar e importação de referências FUNDEB (VAAF).') }}
