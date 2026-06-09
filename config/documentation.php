@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '4.4.3',
         'release_tag' => '20260609b-Lachesis',
-        'commit_short' => 'pending',
+        'commit_short' => '39333e0',
         'commit_number' => 355,
         'revision_date' => '2026-06-09',
         'in_production' => true,

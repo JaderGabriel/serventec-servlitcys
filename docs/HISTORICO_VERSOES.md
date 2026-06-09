@@ -38,7 +38,7 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.4.3** | `pending` / `20260609b-Lachesis` → `main` | **355** | 09/06/2026 | **Produção:** CadÚnico CUN-01/02 — lacuna por idade, desconto Censo não municipal, mapa territorial — [RELEASE_20260609b_LACHESIS.md](RELEASE_20260609b_LACHESIS.md). |
+| **▶ 4.4.3** | `39333e0` / `20260609b-Lachesis` → `main` | **355** | 09/06/2026 | **Produção:** CadÚnico CUN-01/02 — lacuna por idade, desconto Censo não municipal, mapa territorial — [RELEASE_20260609b_LACHESIS.md](RELEASE_20260609b_LACHESIS.md). |
 | 4.4.2 | `9e728a5` / `20260608a-Pythia` → `main` | **352** | 08/06/2026 | Estudo Power BI, pesquisa no leitor, backlog PBI-01…10 — [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md). |
 | 4.4.1 | `e50ecca` / `20260607b-Peitho` → `main` | **340** | 07/06/2026 | Hub docs no GitHub/leitor, Mermaid, rodapé desenvolvedor+GitHub — [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md). |
 | 4.4.0 | `eee339e` / `20260607a-Ananke` → `main` | **336** | 07/06/2026 | Sufixo alfabético em tags do mesmo dia, paridade Discrepâncias, VAAR/CadÚnico admin — [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md). |
