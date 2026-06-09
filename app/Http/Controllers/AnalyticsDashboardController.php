@@ -114,13 +114,14 @@ class AnalyticsDashboardController extends Controller
         if ($city) {
             $this->authorize('viewAnalytics', $city);
 
-            if ($redirect = $this->redirectAnalyticsWithDefaultSchoolYearIfNeeded(
-                $request,
-                $city,
-                $filters,
-                $filterOptionsService,
-            )) {
-                return $redirect;
+            $yearPayload = null;
+            try {
+                $filters = $filterOptionsService->applyLatestSchoolYearIfMissing($filters, $city, $yearPayload);
+            } catch (Throwable $e) {
+                Log::warning('analytics.default_year_failed', [
+                    'city_id' => $city->id,
+                    'message' => $e->getMessage(),
+                ]);
             }
 
             try {
@@ -130,12 +131,14 @@ class AnalyticsDashboardController extends Controller
                     $filters,
                     $indexLightFilters,
                     $profiler,
+                    $yearPayload,
                 ) {
                     return $filterOptionsService->loadForAnalyticsIndex(
                         $city,
                         $filters,
                         $indexLightFilters,
                         $profiler,
+                        $yearPayload,
                     );
                 }, ['light' => $indexLightFilters]);
             } catch (Throwable $e) {
@@ -199,13 +202,20 @@ class AnalyticsDashboardController extends Controller
             'available' => false,
             'partial' => false,
             'anchor_ano' => null,
-            'title' => __('FUNDEB — verbas'),
-            'hint' => __('Matrículas × VAAF estimado por exercício (indicativo)'),
-            'max_value' => 0.0,
-            'points' => [],
-            'delta_previous_pct' => null,
-            'delta_next_pct' => null,
+            'title' => __('FUNDEB'),
+            'hint' => __('Valor publicado pelo FNDE ou consolidado do ano letivo. O ano seguinte não é projetado se houver pendências.'),
+            'status' => 'neutral',
+            'status_label' => __('Indisponível'),
+            'primary_value' => '—',
+            'primary_label' => __('Exercício'),
+            'phase_label' => '',
+            'secondary' => [],
+            'variation_pct' => null,
+            'alert' => null,
+            'projection_blocked' => false,
+            'next_year_note' => null,
         ];
+        $qualityDockIndicator = \App\Support\Dashboard\AnalyticsDockQualityIndicator::empty();
 
         if ($yearFilterReady && $city !== null && $loadOverviewOnIndex) {
             try {
@@ -352,40 +362,65 @@ class AnalyticsDashboardController extends Controller
             }
         }
 
-        if (
-            $city !== null
-            && $yearFilterReady
-            && filter_var(config('analytics.fundeb_dock_meter', true), FILTER_VALIDATE_BOOL)
-        ) {
-            try {
-                $this->bindAnalyticsMetricsScope($city, $filters);
-                $matFiltro = FundebRepository::resolveMatriculasAtivasForFilter(
-                    $city,
-                    $filters,
-                    is_array($overviewData) ? $overviewData : [],
-                    is_array($enrollmentData) ? $enrollmentData : [],
-                );
-                $fundebDockMeter = $profiler->measure(
-                    'fundeb_dock_meter',
-                    fn () => $this->safeAnalyticsLoad(
-                        fn () => app(FundebVaafProfileBuilder::class)->buildDockMeter(
+        if ($city !== null && $yearFilterReady) {
+            $dockMetersEnabled = filter_var(config('analytics.fundeb_dock_meter', true), FILTER_VALIDATE_BOOL)
+                || filter_var(config('analytics.quality_dock_indicator', true), FILTER_VALIDATE_BOOL);
+
+            if ($dockMetersEnabled) {
+                try {
+                    $this->bindAnalyticsMetricsScope($city, $filters);
+                    $fundingSnapshotForDock = null;
+                    $discSummary = is_array($discrepanciesData['summary'] ?? null)
+                        ? $discrepanciesData['summary']
+                        : null;
+                    if ($discSummary === null && filter_var(config('analytics.fundeb_load_discrepancies_summary', true), FILTER_VALIDATE_BOOL)) {
+                        $fundingSnapshotForDock = $this->fundingImpactSnapshot($discrepanciesRepository, $city, $filters);
+                        if (is_array($fundingSnapshotForDock['summary'] ?? null)) {
+                            $discSummary = $fundingSnapshotForDock['summary'];
+                        }
+                    }
+
+                    if (filter_var(config('analytics.quality_dock_indicator', true), FILTER_VALIDATE_BOOL)) {
+                        $qualityDockIndicator = \App\Support\Dashboard\AnalyticsDockQualityIndicator::build(
+                            is_array($municipalityHealthData) ? $municipalityHealthData : null,
+                            $municipalityContext,
+                            $fundingSnapshotForDock,
+                            true,
+                        );
+                    }
+
+                    if (filter_var(config('analytics.fundeb_dock_meter', true), FILTER_VALIDATE_BOOL)) {
+                        $matFiltro = FundebRepository::resolveMatriculasAtivasForFilter(
                             $city,
                             $filters,
-                            $matFiltro > 0 ? $matFiltro : null,
-                        ),
-                        $fundebDockMeter,
-                        __('FUNDEB (rodapé)'),
-                        $analyticsLoadWarnings,
-                    ),
-                );
-            } catch (Throwable $e) {
-                Log::warning('analytics.fundeb_dock_meter_failed', [
-                    'city_id' => $city->id,
-                    'ano_letivo' => $filters->ano_letivo,
-                    'message' => $e->getMessage(),
-                ]);
-            } finally {
-                IeducarAnalyticsMetricsScope::forget();
+                            is_array($overviewData) ? $overviewData : [],
+                            is_array($enrollmentData) ? $enrollmentData : [],
+                        );
+
+                        $fundebDockMeter = $profiler->measure(
+                            'fundeb_dock_meter',
+                            fn () => $this->safeAnalyticsLoad(
+                                fn () => app(FundebVaafProfileBuilder::class)->buildDockMeter(
+                                    $city,
+                                    $filters,
+                                    $matFiltro > 0 ? $matFiltro : null,
+                                    is_array($discSummary) ? $discSummary : null,
+                                ),
+                                $fundebDockMeter,
+                                __('FUNDEB (rodapé)'),
+                                $analyticsLoadWarnings,
+                            ),
+                        );
+                    }
+                } catch (Throwable $e) {
+                    Log::warning('analytics.dock_meters_failed', [
+                        'city_id' => $city->id,
+                        'ano_letivo' => $filters->ano_letivo,
+                        'message' => $e->getMessage(),
+                    ]);
+                } finally {
+                    IeducarAnalyticsMetricsScope::forget();
+                }
             }
         }
 
@@ -448,6 +483,7 @@ class AnalyticsDashboardController extends Controller
                 $analyticsDebugTotalMs,
                 $indexFatalMessage,
                 $fundebDockMeter,
+                $qualityDockIndicator,
             ));
         } catch (Throwable $e) {
             Log::error('analytics.index_fatal', [
@@ -500,6 +536,7 @@ class AnalyticsDashboardController extends Controller
                 $profiler->totalMs(),
                 $indexFatalMessage,
                 $fundebDockMeter,
+                $qualityDockIndicator,
             ));
         }
     }
@@ -508,6 +545,7 @@ class AnalyticsDashboardController extends Controller
      * @param  list<string>  $analyticsLoadWarnings
      * @param  list<array{step: string, ms: float, meta?: array<string, mixed>}>  $analyticsDebugSteps
      * @param  array<string, mixed>  $fundebDockMeter
+     * @param  array<string, mixed>  $qualityDockIndicator
      * @return array<string, mixed>
      */
     private function analyticsIndexViewData(
@@ -545,6 +583,7 @@ class AnalyticsDashboardController extends Controller
         float $analyticsDebugTotalMs,
         ?string $indexFatalMessage,
         array $fundebDockMeter,
+        array $qualityDockIndicator,
     ): array {
         return [
             'cities' => $cities,
@@ -583,6 +622,7 @@ class AnalyticsDashboardController extends Controller
             'analyticsDebugTotalMs' => $analyticsDebugTotalMs,
             'indexFatalMessage' => $indexFatalMessage,
             'fundebDockMeter' => $fundebDockMeter,
+            'qualityDockIndicator' => $qualityDockIndicator,
         ];
     }
 
@@ -1968,43 +2008,6 @@ class AnalyticsDashboardController extends Controller
     /**
      * @return array<string, string>
      */
-    /**
-     * Ao abrir a consultoria com município mas sem ano letivo, redireciona para o último ano da base.
-     */
-    private function redirectAnalyticsWithDefaultSchoolYearIfNeeded(
-        Request $request,
-        City $city,
-        IeducarFilterState $filters,
-        FilterOptionsService $filterOptionsService,
-    ): ?RedirectResponse {
-        if ($filters->hasYearSelected()) {
-            return null;
-        }
-
-        try {
-            $latestYear = $filterOptionsService->latestSchoolYear($city);
-        } catch (Throwable $e) {
-            Log::warning('analytics.default_year_failed', [
-                'city_id' => $city->id,
-                'message' => $e->getMessage(),
-            ]);
-
-            return null;
-        }
-
-        if ($latestYear === null) {
-            return null;
-        }
-
-        return redirect()->route('dashboard.analytics', array_merge(
-            $request->query(),
-            [
-                'city_id' => $city->id,
-                'ano_letivo' => (string) $latestYear,
-            ],
-        ));
-    }
-
     private function schoolYearOptionsFallback(): array
     {
         return [

@@ -13,13 +13,13 @@
     role="alertdialog"
     aria-modal="true"
     :aria-busy="$store.dataLoading.active ? 'true' : 'false'"
-    :aria-label="$store.dataLoading.title || @js(__('A carregar dados'))"
+    :aria-label="$store.dataLoading.title || @js(__('Carregando dados'))"
 >
     <div class="serv-data-loading-overlay__panel">
         <div class="serv-data-loading-overlay__spinner" aria-hidden="true"></div>
         <p
             class="serv-data-loading-overlay__title"
-            x-text="$store.dataLoading.title || @js(__('A carregar…'))"
+            x-text="$store.dataLoading.title || @js(__('Carregando…'))"
         ></p>
         <p
             class="serv-data-loading-overlay__message"

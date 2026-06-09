@@ -290,7 +290,7 @@ final class DiagnosisExploreCards
     private static function metricLabelFallback(string $tab): string
     {
         return match ($tab) {
-            'enrollment' => __('matrículas activas'),
+            'enrollment' => __('matrículas ativas'),
             'fundeb' => __('módulos VAAR em alerta'),
             'other_funding' => __('programas em alerta'),
             'work_done' => __('pendências Censo'),

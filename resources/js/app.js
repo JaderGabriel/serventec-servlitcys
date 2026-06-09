@@ -378,9 +378,9 @@ document.addEventListener("alpine:init", () => {
                     (typeof t === "string" ? t : "");
                 servDataLoadingStart(
                     tabLabel
-                        ? `A carregar: ${tabLabel}`
-                        : "A carregar indicadores…",
-                    "Consulta à base i-Educar do município; pode demorar alguns minutos.",
+                        ? `Carregando: ${tabLabel}`
+                        : "Carregando indicadores…",
+                    "Consultando a base i-Educar do município; pode demorar alguns minutos.",
                 );
                 this.loadingTab = t;
                 try {

@@ -163,7 +163,7 @@ final class AnalyticsReportSectionScopeAssembler
         if ($ok !== []) {
             $kpis[] = ['label' => __('Escolas (recorte)'), 'value' => $this->fmtInt($ok['escolas'] ?? null)];
             $kpis[] = ['label' => __('Turmas'), 'value' => $this->fmtInt($ok['turmas'] ?? null)];
-            $kpis[] = ['label' => __('Matrículas activas'), 'value' => $this->fmtInt($ok['matriculas'] ?? null)];
+            $kpis[] = ['label' => __('Matrículas ativas'), 'value' => $this->fmtInt($ok['matriculas'] ?? null)];
         }
 
         $ano = $this->resolveCensoYear($filters);
@@ -328,7 +328,7 @@ final class AnalyticsReportSectionScopeAssembler
                 'headers' => [__('Rede'), __('Matrículas'), __('%')],
                 'rows' => $rows,
             ];
-            $notes[] = __('Fonte: i-Educar (recorte de matrículas activas).');
+            $notes[] = __('Fonte: i-Educar (recorte de matrículas ativas).');
         } else {
             $this->gap($gaps, 'redes_publicas', 'network_breakdown_missing', __('Gráfico de participação por rede (municipal/estadual/privada) indisponível — verifique coluna de dependência administrativa ou importe Censo por rede.'));
         }

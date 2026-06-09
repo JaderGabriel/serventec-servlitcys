@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\City;
 use App\Models\User;
 use App\Services\Ieducar\FilterOptionsService;
+use App\Support\Dashboard\IeducarFilterState;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -114,21 +115,40 @@ class AnalyticsDashboardTest extends TestCase
             ->assertRedirect(route('dashboard.analytics', ['city_id' => $city->id]));
     }
 
-    public function test_analytics_index_redirects_to_latest_school_year_when_city_has_no_ano(): void
+    public function test_analytics_index_applies_latest_school_year_inline_when_city_has_no_ano(): void
     {
         $city = City::factory()->create();
         $user = User::factory()->create();
         $user->cities()->attach($city->id);
 
         $this->mock(FilterOptionsService::class, function ($mock): void {
-            $mock->shouldReceive('latestSchoolYear')->andReturn(2025);
+            $mock->shouldReceive('applyLatestSchoolYearIfMissing')
+                ->once()
+                ->andReturnUsing(function (IeducarFilterState $filters, $city, &$yearPayload) {
+                    $yearPayload = [
+                        'years' => ['' => '—', '2025' => '2025'],
+                        'errors' => [],
+                    ];
+
+                    return new IeducarFilterState('2025', null, null, null);
+                });
+            $mock->shouldReceive('loadForAnalyticsIndex')
+                ->once()
+                ->andReturn([
+                    'years' => ['' => '—', '2025' => '2025'],
+                    'escolas' => [],
+                    'cursos' => [],
+                    'series' => [],
+                    'segmentos' => [],
+                    'etapas' => [],
+                    'turnos' => [],
+                    'errors' => [],
+                ]);
         });
 
         $this->actingAs($user)
             ->get(route('dashboard.analytics', ['city_id' => $city->id]))
-            ->assertRedirect(route('dashboard.analytics', [
-                'city_id' => $city->id,
-                'ano_letivo' => '2025',
-            ]));
+            ->assertOk()
+            ->assertSee('value="2025"', false);
     }
 }

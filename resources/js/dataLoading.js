@@ -6,39 +6,39 @@ let progressTimer = null;
 
 const LOADING_PRESETS = {
     filter: {
-        title: "A aplicar filtros",
+        title: "Aplicando filtros",
         message:
-            "A carregar listagens e indicadores conforme o recorte selecionado. Aguarde…",
+            "Carregando listagens e indicadores do recorte selecionado. Aguarde…",
     },
     navigate: {
-        title: "A carregar página",
-        message: "A preparar o conteúdo solicitado. Aguarde…",
+        title: "Carregando página",
+        message: "Preparando o conteúdo solicitado. Aguarde…",
     },
     sync: {
-        title: "A enfileirar tarefa",
+        title: "Enfileirando tarefa",
         message:
-            "O pedido está a ser registado; em seguida a página será atualizada. O processamento pesado corre na fila de sincronização.",
+            "Registrando o pedido; a página será atualizada em seguida. O processamento pesado roda na fila de sincronização.",
     },
     diagnostic: {
-        title: "A executar diagnóstico",
+        title: "Executando diagnóstico",
         message:
-            "A consultar a base i-Educar e a montar o relatório de diagnóstico. Pode demorar alguns minutos.",
+            "Consultando a base i-Educar e montando o relatório de diagnóstico. Pode demorar alguns minutos.",
     },
     save: {
-        title: "A guardar alterações",
-        message: "A validar e gravar os dados. Aguarde…",
+        title: "Salvando alterações",
+        message: "Validando e gravando os dados. Aguarde…",
     },
     auth: {
-        title: "A autenticar",
-        message: "A verificar as suas credenciais. Aguarde…",
+        title: "Autenticando",
+        message: "Verificando suas credenciais. Aguarde…",
     },
     prepare: {
-        title: "A preparar filtros",
+        title: "Preparando filtros",
         message:
-            "A carregar anos letivos, escolas, cursos e turnos na base do município…",
+            "Carregando anos letivos, escolas, cursos e turnos na base do município…",
     },
     default: {
-        title: "A processar pedido",
+        title: "Processando pedido",
         message: "Aguarde enquanto a operação é concluída.",
     },
 };

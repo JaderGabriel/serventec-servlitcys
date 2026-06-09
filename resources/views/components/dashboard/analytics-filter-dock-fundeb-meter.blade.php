@@ -9,11 +9,19 @@
     $m = is_array($meter) ? $meter : [];
     $available = (bool) ($m['available'] ?? false);
     $partial = (bool) ($m['partial'] ?? false);
-    $points = is_array($m['points'] ?? null) ? $m['points'] : [];
-    $title = (string) ($m['title'] ?? __('FUNDEB — verbas'));
+    $title = (string) ($m['title'] ?? __('FUNDEB'));
     $hint = (string) ($m['hint'] ?? '');
-    $deltaPrevious = $m['delta_previous_pct'] ?? null;
-    $deltaNext = $m['delta_next_pct'] ?? null;
+    $status = (string) ($m['status'] ?? 'neutral');
+    $statusLabel = (string) ($m['status_label'] ?? __('Indisponível'));
+    $primaryValue = (string) ($m['primary_value'] ?? '—');
+    $primaryLabel = (string) ($m['primary_label'] ?? __('Exercício'));
+    $phaseLabel = (string) ($m['phase_label'] ?? '');
+    $secondary = is_array($m['secondary'] ?? null) ? $m['secondary'] : [];
+    $alert = is_array($m['alert'] ?? null) ? $m['alert'] : null;
+    $projectionBlocked = (bool) ($m['projection_blocked'] ?? false);
+    $nextYearNote = (string) ($m['next_year_note'] ?? '');
+    $anchorAno = $m['anchor_ano'] ?? null;
+
     $fundebUrl = ($selectedCity && $filters)
         ? route('dashboard.analytics', array_merge(
             $filters->toQueryParams(),
@@ -21,112 +29,97 @@
         ))
         : null;
 
-    $fmtDelta = static function (?float $pct): string {
-        if ($pct === null) {
-            return '—';
-        }
-
-        return ($pct > 0 ? '+' : '').number_format($pct, 1, ',', '.').'%';
+    $statusBadge = match ($status) {
+        'success' => 'diag-explore-badge--success',
+        'warning' => 'diag-explore-badge--warning',
+        'danger' => 'diag-explore-badge--danger',
+        default => 'diag-explore-badge--neutral',
     };
 
-    $deltaTone = static function (?float $pct): string {
-        if ($pct === null || abs($pct) < 0.05) {
-            return 'neutral';
-        }
+    $alertBadge = match ((string) ($alert['severity'] ?? 'warning')) {
+        'danger' => 'diag-explore-badge--danger',
+        default => 'diag-explore-badge--warning',
+    };
 
-        return $pct > 0 ? 'up' : 'down';
+    $toneClass = static function (string $tone): string {
+        return match ($tone) {
+            'up' => 'serv-fundeb-dock-kpi__tone--up',
+            'down' => 'serv-fundeb-dock-kpi__tone--down',
+            'neutral' => 'serv-fundeb-dock-kpi__tone--neutral',
+            default => 'serv-fundeb-dock-kpi__tone--muted',
+        };
     };
 @endphp
 
 <div
-    class="serv-analytics-filter-dock__fundeb-meter serv-fundeb-dock-meter"
+    class="serv-analytics-filter-dock__fundeb-meter serv-fundeb-dock-kpi"
     aria-label="{{ $title }}"
 >
-    <div class="serv-fundeb-dock-meter__head">
-        @if ($fundebUrl)
-            <a href="{{ $fundebUrl }}" class="serv-fundeb-dock-meter__title">
-                {{ $title }}
-            </a>
-        @else
-            <span class="serv-fundeb-dock-meter__title serv-fundeb-dock-meter__title--static">{{ $title }}</span>
-        @endif
-        @if ($hint !== '')
-            <span class="serv-fundeb-dock-meter__hint" title="{{ $hint }}" aria-label="{{ $hint }}">i</span>
-        @endif
+    <div class="serv-fundeb-dock-kpi__head">
+        <div class="serv-fundeb-dock-kpi__title-wrap min-w-0">
+            @if ($fundebUrl)
+                <a href="{{ $fundebUrl }}" class="serv-fundeb-dock-kpi__title">
+                    {{ $title }}
+                </a>
+            @else
+                <span class="serv-fundeb-dock-kpi__title serv-fundeb-dock-kpi__title--static">{{ $title }}</span>
+            @endif
+            @if ($anchorAno !== null)
+                <span class="serv-fundeb-dock-kpi__year tabular-nums">{{ $anchorAno }}</span>
+            @endif
+            @if ($hint !== '')
+                <span class="serv-fundeb-dock-kpi__hint" title="{{ $hint }}" aria-label="{{ $hint }}">i</span>
+            @endif
+        </div>
+        <span class="diag-explore-badge {{ $statusBadge }}">{{ $statusLabel }}</span>
     </div>
 
-    @if ($points !== [])
-        @if ($available && ($deltaPrevious !== null || $deltaNext !== null))
-            <p class="serv-fundeb-dock-meter__summary tabular-nums">
-                <span class="serv-fundeb-dock-meter__delta serv-fundeb-dock-meter__delta--{{ $deltaTone(is_numeric($deltaPrevious) ? (float) $deltaPrevious : null) }}">
-                    {{ $fmtDelta(is_numeric($deltaPrevious) ? (float) $deltaPrevious : null) }}
-                </span>
-                <span class="serv-fundeb-dock-meter__summary-sep">{{ __('vs anterior') }}</span>
-                <span class="serv-fundeb-dock-meter__summary-sep">·</span>
-                <span class="serv-fundeb-dock-meter__delta serv-fundeb-dock-meter__delta--{{ $deltaTone(is_numeric($deltaNext) ? (float) $deltaNext : null) }}">
-                    {{ $fmtDelta(is_numeric($deltaNext) ? (float) $deltaNext : null) }}
-                </span>
-                <span class="serv-fundeb-dock-meter__summary-sep">{{ __('próximo') }}</span>
+    @if ($yearFilterReady)
+        <div class="serv-fundeb-dock-kpi__metric">
+            <span class="serv-fundeb-dock-kpi__value tabular-nums">{{ $primaryValue }}</span>
+            <span class="serv-fundeb-dock-kpi__label">
+                {{ $primaryLabel }}
+                @if ($phaseLabel !== '')
+                    <span class="serv-fundeb-dock-kpi__phase">· {{ $phaseLabel }}</span>
+                @endif
+            </span>
+        </div>
+
+        @if ($secondary !== [])
+            <p class="serv-fundeb-dock-kpi__secondary">
+                @foreach ($secondary as $index => $line)
+                    @if ($index > 0)
+                        <span class="serv-fundeb-dock-kpi__sep" aria-hidden="true">·</span>
+                    @endif
+                    <span class="serv-fundeb-dock-kpi__secondary-item">
+                        <span class="serv-fundeb-dock-kpi__secondary-label">{{ $line['label'] ?? '' }}</span>
+                        <span class="serv-fundeb-dock-kpi__secondary-value tabular-nums {{ $toneClass((string) ($line['tone'] ?? 'muted')) }}">
+                            {{ $line['value'] ?? '' }}
+                        </span>
+                    </span>
+                @endforeach
             </p>
         @endif
 
-        <div class="serv-fundeb-dock-meter__bars" role="list">
-            @foreach ($points as $point)
-                @php
-                    $role = (string) ($point['role'] ?? '');
-                    $barPct = max(0.0, min(100.0, (float) ($point['bar_pct'] ?? 0)));
-                    $deltaPct = $point['delta_pct'] ?? null;
-                    $deltaToneRow = (string) ($point['delta_tone'] ?? 'muted');
-                    $hasValue = ($point['value'] ?? null) !== null;
-                    $displayValue = (string) ($point['value_compact'] ?? $point['value_label'] ?? '—');
-                @endphp
-                <div
-                    class="serv-fundeb-dock-meter__row serv-fundeb-dock-meter__row--{{ $role }}"
-                    role="listitem"
-                    title="{{ $hasValue ? ($point['value_label'] ?? '') : '' }}"
-                >
-                    <div class="serv-fundeb-dock-meter__meta">
-                        <span class="serv-fundeb-dock-meter__year">{{ $point['label'] ?? '' }}</span>
-                        <span class="serv-fundeb-dock-meter__role">{{ $point['short_label'] ?? '' }}</span>
-                    </div>
-                    <div class="serv-fundeb-dock-meter__track" aria-hidden="true">
-                        <div
-                            class="serv-fundeb-dock-meter__fill serv-fundeb-dock-meter__fill--{{ $role }}{{ $hasValue ? '' : ' serv-fundeb-dock-meter__fill--empty' }}"
-                            style="width: {{ $hasValue ? $barPct : 4 }}%"
-                        ></div>
-                    </div>
-                    <div class="serv-fundeb-dock-meter__value">
-                        <span class="serv-fundeb-dock-meter__amount tabular-nums">{{ $displayValue }}</span>
-                        @if ($deltaPct !== null)
-                            <span class="serv-fundeb-dock-meter__delta serv-fundeb-dock-meter__delta--{{ $deltaToneRow }} tabular-nums">
-                                {{ $deltaPct > 0 ? '+' : '' }}{{ number_format((float) $deltaPct, 1, ',', '.') }}%
-                            </span>
-                        @endif
-                    </div>
-                </div>
-            @endforeach
-        </div>
-
-        @if ($partial)
-            <p class="serv-fundeb-dock-meter__empty">
-                {{ __('Sem VAAF ou matrículas para estimar verbas neste recorte.') }}
+        @if ($projectionBlocked && $alert !== null)
+            <p class="serv-fundeb-dock-kpi__alert">
+                <span class="diag-explore-badge {{ $alertBadge }} serv-fundeb-dock-kpi__alert-badge">
+                    {{ $nextYearNote !== '' ? $nextYearNote : __('Sem projeção') }}
+                </span>
+                <span class="serv-fundeb-dock-kpi__alert-text">{{ $alert['message'] ?? '' }}</span>
+            </p>
+        @elseif ($partial || ! $available)
+            <p class="serv-fundeb-dock-kpi__empty">
+                {{ __('Sem receita FNDE nem valor consolidado para este ano letivo.') }}
             </p>
         @endif
-    @elseif (! $yearFilterReady)
-        <div class="serv-fundeb-dock-meter__placeholder" aria-hidden="true">
-            @foreach ([__('Anterior'), __('Atual'), __('Próximo')] as $slot)
-                <div class="serv-fundeb-dock-meter__row serv-fundeb-dock-meter__row--placeholder">
-                    <span class="serv-fundeb-dock-meter__role">{{ $slot }}</span>
-                    <span class="serv-fundeb-dock-meter__track"><span class="serv-fundeb-dock-meter__fill serv-fundeb-dock-meter__fill--empty"></span></span>
-                </div>
-            @endforeach
-        </div>
-        <p class="serv-fundeb-dock-meter__empty">
-            {{ __('Aplique o ano letivo para ver a evolução das verbas FUNDEB.') }}
-        </p>
     @else
-        <p class="serv-fundeb-dock-meter__empty">
-            {{ __('Sem projeção FUNDEB disponível para este recorte.') }}
+        <div class="serv-fundeb-dock-kpi__placeholder" aria-hidden="true">
+            <span class="serv-fundeb-dock-kpi__value serv-fundeb-dock-kpi__value--ghost">—</span>
+            <span class="serv-fundeb-dock-kpi__label serv-fundeb-dock-kpi__label--ghost">{{ __('Exercício') }}</span>
+        </div>
+        <p class="serv-fundeb-dock-kpi__empty">
+            {{ __('Aplique o ano letivo para ver o indicador FUNDEB.') }}
         </p>
     @endif
 </div>

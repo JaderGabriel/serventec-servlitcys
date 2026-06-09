@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '4.4.4',
-        'release_tag' => '20260609c-Atropos',
-        'commit_short' => '6ea5002',
-        'commit_number' => 360,
-        'revision_date' => '2026-06-09',
+        'version' => '4.4.5',
+        'release_tag' => '20260603a-Themis',
+        'commit_short' => '7a931f6',
+        'commit_number' => 364,
+        'revision_date' => '2026-06-03',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

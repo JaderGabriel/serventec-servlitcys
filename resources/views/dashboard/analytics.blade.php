@@ -301,6 +301,7 @@
                         :ieducarOptions="$ieducarOptions"
                         :yearFilterReady="$yearFilterReady"
                         :fundebDockMeter="$fundebDockMeter ?? []"
+                        :qualityDockIndicator="$qualityDockIndicator ?? []"
                         :pageHeader="$analyticsPageHeader"
                         :formAction="route('dashboard.analytics')"
                         :filterOptionsTurnoUrl="route('dashboard.analytics.filter-options')"

@@ -38,7 +38,7 @@ return [
         'guide_published_body' => 'Portaria FNDE já publicou receita total e complementações para aquele ano. O VAAF pode ser oficial (importado) ou estimado (receita ÷ matrículas daquele exercício).',
         'guide_reference_title' => 'Referência FUNDEB (:ref)',
         'guide_reference_body' => 'Exercício que o sistema usa como âncora para comparações e importação — valores alinhados à última portaria disponível para esse ano.',
-        'guide_in_progress_title' => 'Em formação (exercício corrente)',
+        'guide_in_progress_title' => 'Em formação (exercício atual)',
         'guide_in_progress_body' => 'Cadastro e matrículas ainda em andamento. Serve para acompanhar tendência; a consolidação oficial virá em portarias futuras.',
         'guide_projection_title' => 'Projeção (próximo exercício)',
         'guide_projection_body' => 'Estimativa para planejamento: combina matrículas do ano letivo vigente com o índice mais recente. Não substitui portaria nem repasse do FNDE.',

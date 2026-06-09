@@ -79,7 +79,7 @@
                     · {{ __('mecanismo:') }} <span class="font-mono text-[10px]">{{ $d['metodo'] }}</span>
                 @endif
                 @if (($d['cobertura_pct'] ?? null) !== null)
-                    · {{ __('cobertura:') }} {{ number_format((float) $d['cobertura_pct'], 1, ',', '.') }}% {{ __('das matrículas activas no filtro') }}
+                    · {{ __('cobertura:') }} {{ number_format((float) $d['cobertura_pct'], 1, ',', '.') }}% {{ __('das matrículas ativas no filtro') }}
                 @endif
             </p>
         </div>

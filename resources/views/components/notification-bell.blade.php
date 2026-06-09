@@ -100,7 +100,7 @@
 
             <div class="max-h-80 overflow-y-auto">
                 <template x-if="loading && items.length === 0">
-                    <p class="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ __('A carregar…') }}</p>
+                    <p class="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ __('Carregando…') }}</p>
                 </template>
                 <template x-if="!loading && items.length === 0">
                     <p class="px-3 py-4 text-sm text-gray-500 dark:text-gray-400" x-text="filterCritical ? @js(__('Sem notificações críticas.')) : @js(__('Sem notificações.'))"></p>

@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Services\Ieducar\FilterOptionsService;
+use App\Support\Dashboard\IeducarFilterState;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -47,5 +48,27 @@ class FilterOptionsServiceYearsTest extends TestCase
             '' => '— Selecione o ano letivo —',
             'all' => 'Todos os anos',
         ]));
+    }
+
+    #[Test]
+    public function apply_latest_school_year_reuses_payload_without_second_query(): void
+    {
+        $service = $this->createPartialMock(FilterOptionsService::class, ['loadYearOptions']);
+        $service->method('loadYearOptions')->willReturn([
+            'years' => [
+                '' => '— Selecione o ano letivo —',
+                '2024' => '2024',
+                '2025' => '2025',
+            ],
+            'errors' => [],
+        ]);
+
+        $filters = new IeducarFilterState(null, null, null, null);
+        $payload = null;
+        $resolved = $service->applyLatestSchoolYearIfMissing($filters, new \App\Models\City, $payload);
+
+        $this->assertSame('2025', $resolved->ano_letivo);
+        $this->assertIsArray($payload);
+        $this->assertArrayHasKey('years', $payload);
     }
 }

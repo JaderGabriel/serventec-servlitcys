@@ -89,41 +89,26 @@ final class FundebVaafProfileBuilder
     }
 
     /**
-     * Medidor compacto para o rodapé da consultoria (ano anterior, atual e próximo).
+     * Indicador gerencial compacto no rodapé da consultoria (exercício actual e referência anterior).
      *
-     * @return array{
-     *   available: bool,
-     *   anchor_ano: ?int,
-     *   title: string,
-     *   hint: string,
-     *   max_value: float,
-     *   points: list<array{
-     *     ano: int,
-     *     label: string,
-     *     short_label: string,
-     *     role: string,
-     *     value: ?float,
-     *     value_label: string,
-     *     bar_pct: float,
-     *     matriculas: int,
-     *     phase: string,
-     *     delta_pct: ?float,
-     *     delta_tone: string
-     *   }>,
-     *   delta_previous_pct: ?float,
-     *   delta_next_pct: ?float
-     * }
+     * Com discrepâncias ou pendências de publicação, não projeta o exercício seguinte.
+     *
+     * @param  array{com_problema?: int, corrigiveis?: int}|null  $discrepanciesSummary
+     * @return array<string, mixed>
      */
-    public function buildDockMeter(City $city, IeducarFilterState $filters, ?int $matriculasFiltro = null): array
-    {
+    public function buildDockMeter(
+        City $city,
+        IeducarFilterState $filters,
+        ?int $matriculasFiltro = null,
+        ?array $discrepanciesSummary = null,
+    ): array {
         if (! $filters->hasYearSelected() || $filters->isAllSchoolYears()) {
             return self::emptyDockMeter();
         }
 
         $anchor = (int) $filters->ano_letivo;
-        $yearKeys = [$anchor - 1, $anchor, $anchor + 1];
         $ibge = FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio);
-        $matByYear = $this->matriculas->forCityYears($city, $yearKeys);
+        $matByYear = $this->matriculas->forCityYears($city, [$anchor - 1, $anchor]);
 
         if ($matriculasFiltro !== null && $matriculasFiltro > 0) {
             $matByYear[$anchor] = array_merge($matByYear[$anchor] ?? [
@@ -139,96 +124,76 @@ final class FundebVaafProfileBuilder
             ]);
         }
 
-        $roles = [
-            ['role' => 'previous', 'ano' => $anchor - 1, 'short' => __('Anterior')],
-            ['role' => 'current', 'ano' => $anchor, 'short' => __('Atual')],
-            ['role' => 'next', 'ano' => $anchor + 1, 'short' => __('Próximo')],
-        ];
+        $previousBlock = $this->buildYearBlock($city, $ibge, $anchor - 1, $matByYear[$anchor - 1] ?? null);
+        $currentBlock = $this->buildYearBlock($city, $ibge, $anchor, $matByYear[$anchor] ?? null);
+        $yearBlocks = [$anchor - 1 => $previousBlock, $anchor => $currentBlock];
+        $alerts = $this->alerts->evaluate($yearBlocks);
+        $blocking = self::evaluateDockBlocking($anchor, $currentBlock, $alerts, $discrepanciesSummary);
 
-        $rawPoints = [];
-        foreach ($roles as $roleMeta) {
-            $ano = (int) $roleMeta['ano'];
-            $block = $this->buildYearBlock($city, $ibge, $ano, $matByYear[$ano] ?? null);
-            $base = isset($block['previsao_recursos']['base_anual'])
-                ? (float) $block['previsao_recursos']['base_anual']
-                : null;
+        $currentFigure = self::dockConsolidatedFigure($currentBlock);
+        $previousFigure = self::dockConsolidatedFigure($previousBlock);
+        $variationPct = self::dockVariationPct($previousFigure['amount'], $currentFigure['amount']);
 
-            $rawPoints[] = [
-                'ano' => $ano,
-                'label' => (string) $ano,
-                'short_label' => $roleMeta['short'],
-                'role' => $roleMeta['role'],
-                'value' => $base !== null && $base > 0 ? $base : null,
-                'value_label' => self::formatDockBrl($base),
-                'value_compact' => self::formatDockBrl($base, true),
-                'matriculas' => (int) ($block['matriculas']['usado'] ?? 0),
-                'phase' => FundebValueLexicon::exercisePhaseLabel($ano),
+        $matriculas = (int) ($currentBlock['matriculas']['usado'] ?? 0);
+        $secondary = [];
+
+        if ($matriculas > 0) {
+            $secondary[] = [
+                'label' => __('Matrículas'),
+                'value' => number_format($matriculas, 0, ',', '.'),
+                'tone' => 'muted',
             ];
         }
 
-        $values = array_values(array_filter(
-            array_map(static fn (array $p): ?float => $p['value'], $rawPoints),
-            static fn (?float $v): bool => $v !== null && $v > 0,
-        ));
-
-        $hasValues = $values !== [];
-        $max = $hasValues ? max($values) : 1.0;
-        $pctDelta = static function (?float $from, ?float $to): ?float {
-            if ($from === null || $to === null || $from <= 0 || $to <= 0) {
-                return null;
-            }
-
-            return round((($to - $from) / $from) * 100, 1);
-        };
-
-        $currentVal = null;
-        $previousVal = null;
-        $nextVal = null;
-        foreach ($rawPoints as $point) {
-            match ($point['role']) {
-                'current' => $currentVal = $point['value'],
-                'previous' => $previousVal = $point['value'],
-                'next' => $nextVal = $point['value'],
-                default => null,
-            };
+        if ($variationPct !== null) {
+            $secondary[] = [
+                'label' => __('vs :ano', ['ano' => (string) ($anchor - 1)]),
+                'value' => ($variationPct > 0 ? '+' : '').number_format($variationPct, 1, ',', '.').'%',
+                'tone' => self::dockDeltaTone($variationPct),
+            ];
         }
 
-        $deltaPrevious = $pctDelta($previousVal, $currentVal);
-        $deltaNext = $pctDelta($currentVal, $nextVal);
+        $status = $blocking['status'];
+        $statusLabel = self::dockStatusLabel($status);
+        $hasFigure = $currentFigure['amount'] !== null && $currentFigure['amount'] > 0;
 
-        $points = array_map(function (array $point) use ($max, $currentVal, $deltaPrevious, $deltaNext): array {
-            $value = $point['value'];
-            $barPct = $value !== null && $max > 0 ? round(($value / $max) * 100, 1) : 0.0;
-            $deltaPct = null;
-            if ($point['role'] === 'current') {
-                $deltaPct = $deltaPrevious;
-            } elseif ($point['role'] === 'next') {
-                $deltaPct = $deltaNext;
-            }
-
-            return [
-                ...$point,
-                'bar_pct' => $barPct,
-                'delta_pct' => $deltaPct,
-                'delta_tone' => self::dockDeltaTone($deltaPct, $point['role']),
+        $alert = null;
+        if ($blocking['blocked']) {
+            $primary = $blocking['reasons'][0] ?? null;
+            $alert = [
+                'severity' => is_array($primary) ? (string) ($primary['severity'] ?? 'warning') : 'warning',
+                'message' => is_array($primary)
+                    ? (string) ($primary['message'] ?? __('Há pendências — o ano seguinte não é projetado.'))
+                    : __('Há pendências — o ano seguinte não é projetado.'),
             ];
-        }, $rawPoints);
+        } elseif (! $hasFigure) {
+            $status = 'neutral';
+            $statusLabel = self::dockStatusLabel($status);
+        }
 
         return [
-            'available' => $hasValues,
-            'partial' => ! $hasValues,
+            'available' => $hasFigure,
+            'partial' => ! $hasFigure && ! $blocking['blocked'],
             'anchor_ano' => $anchor,
-            'title' => __('FUNDEB — verbas'),
-            'hint' => __('Matrículas × VAAF estimado por exercício (indicativo)'),
-            'max_value' => $hasValues ? $max : 0.0,
-            'points' => $points,
-            'delta_previous_pct' => $deltaPrevious,
-            'delta_next_pct' => $deltaNext,
+            'title' => __('FUNDEB'),
+            'hint' => __('Valor publicado pelo FNDE ou consolidado do ano letivo. O ano seguinte não é projetado se houver pendências.'),
+            'status' => $status,
+            'status_label' => $statusLabel,
+            'primary_value' => $hasFigure ? $currentFigure['display'] : '—',
+            'primary_label' => $currentFigure['label'],
+            'phase_label' => FundebValueLexicon::exercisePhaseLabel($anchor),
+            'secondary' => $secondary,
+            'variation_pct' => $variationPct,
+            'alert' => $alert,
+            'projection_blocked' => $blocking['blocked'],
+            'next_year_note' => $blocking['blocked']
+                ? __('Ano seguinte: sem projeção')
+                : null,
         ];
     }
 
     /**
-     * @return array{available: false, partial: bool, anchor_ano: ?int, title: string, hint: string, max_value: float, points: list<empty>, delta_previous_pct: null, delta_next_pct: null}
+     * @return array{available: false, partial: bool, anchor_ano: ?int, title: string, hint: string, status: string, status_label: string, primary_value: string, primary_label: string, phase_label: string, secondary: list<empty>, variation_pct: null, alert: null, projection_blocked: false, next_year_note: null}
      */
     private static function emptyDockMeter(?int $anchor = null): array
     {
@@ -236,13 +201,186 @@ final class FundebVaafProfileBuilder
             'available' => false,
             'partial' => false,
             'anchor_ano' => $anchor,
-            'title' => __('FUNDEB — verbas'),
-            'hint' => __('Matrículas × VAAF estimado por exercício (indicativo)'),
-            'max_value' => 0.0,
-            'points' => [],
-            'delta_previous_pct' => null,
-            'delta_next_pct' => null,
+            'title' => __('FUNDEB'),
+            'hint' => __('Valor publicado pelo FNDE ou consolidado do ano letivo. O ano seguinte não é projetado se houver pendências.'),
+            'status' => 'neutral',
+            'status_label' => self::dockStatusLabel('neutral'),
+            'primary_value' => '—',
+            'primary_label' => __('Exercício'),
+            'phase_label' => '',
+            'secondary' => [],
+            'variation_pct' => null,
+            'alert' => null,
+            'projection_blocked' => false,
+            'next_year_note' => null,
         ];
+    }
+
+    /**
+     * @param  list<array{id: string, severity: string, ano: ?int, titulo: string, mensagem: string, acao: ?string}>  $alerts
+     * @param  array{com_problema?: int, corrigiveis?: int}|null  $discrepanciesSummary
+     * @return array{blocked: bool, status: string, reasons: list<array{severity: string, message: string}>}
+     */
+    private static function evaluateDockBlocking(
+        int $anchor,
+        array $currentBlock,
+        array $alerts,
+        ?array $discrepanciesSummary,
+    ): array {
+        $reasons = [];
+        $hasDanger = false;
+
+        $comProblema = (int) ($discrepanciesSummary['com_problema'] ?? 0);
+        $corrigiveis = (int) ($discrepanciesSummary['corrigiveis'] ?? 0);
+
+        if ($comProblema > 0) {
+            $reasons[] = [
+                'severity' => $comProblema >= 50 ? 'danger' : 'warning',
+                'message' => __('Inconsistências no cadastro (:n casos)', ['n' => number_format($comProblema, 0, ',', '.')]),
+            ];
+        } elseif ($corrigiveis > 0) {
+            $reasons[] = [
+                'severity' => 'warning',
+                'message' => __(':n item(ns) a corrigir no cadastro', ['n' => number_format($corrigiveis, 0, ',', '.')]),
+            ];
+        }
+
+        foreach ($alerts as $alert) {
+            if (! is_array($alert)) {
+                continue;
+            }
+            $severity = (string) ($alert['severity'] ?? '');
+            if (! in_array($severity, ['danger', 'warning'], true)) {
+                continue;
+            }
+            $ano = $alert['ano'] ?? null;
+            if ($ano !== null && (int) $ano !== $anchor) {
+                continue;
+            }
+            $reasons[] = [
+                'severity' => $severity,
+                'message' => (string) ($alert['titulo'] ?? $alert['mensagem'] ?? __('Pendência FUNDEB')),
+            ];
+        }
+
+        $matUsado = (int) ($currentBlock['matriculas']['usado'] ?? 0);
+        if ($matUsado <= 0 && $reasons === []) {
+            $reasons[] = [
+                'severity' => 'danger',
+                'message' => __('Sem matrículas para calcular este ano letivo'),
+            ];
+        }
+
+        $db = is_array($currentBlock['db_reference'] ?? null) ? $currentBlock['db_reference'] : null;
+        if (
+            $db !== null
+            && FundebReferenceSource::isPlaceholder($db['fonte'] ?? null)
+            && ! self::hasPublishedReceita($currentBlock)
+        ) {
+            $reasons[] = [
+                'severity' => 'warning',
+                'message' => __('VAAF municipal ainda não importado'),
+            ];
+        }
+
+        foreach ($reasons as $reason) {
+            if (($reason['severity'] ?? '') === 'danger') {
+                $hasDanger = true;
+                break;
+            }
+        }
+
+        $blocked = $reasons !== [];
+        $status = $blocked
+            ? ($hasDanger ? 'danger' : 'warning')
+            : 'success';
+
+        return [
+            'blocked' => $blocked,
+            'status' => $status,
+            'reasons' => $reasons,
+        ];
+    }
+
+    /**
+     * Valor gerencial: prioriza receita FNDE publicada; evita projeção matrículas×VAAF.
+     *
+     * @return array{amount: ?float, display: string, label: string}
+     */
+    private static function dockConsolidatedFigure(array $block): array
+    {
+        $ano = (int) ($block['ano'] ?? 0);
+        $receita = is_array($block['receita'] ?? null) ? $block['receita'] : [];
+        $totalReceita = isset($receita['total']) && is_numeric($receita['total'])
+            ? (float) $receita['total']
+            : null;
+
+        if ($totalReceita !== null && $totalReceita > 0 && ($receita['disponivel'] ?? false)) {
+            return [
+                'amount' => $totalReceita,
+                'display' => self::formatDockBrl($totalReceita, true),
+                'label' => __('Receita FNDE :ano', ['ano' => (string) $ano]),
+            ];
+        }
+
+        $phase = FundebValueLexicon::exercisePhase($ano);
+        if ($phase === FundebValueLexicon::PHASE_PROJECTION) {
+            return [
+                'amount' => null,
+                'display' => '—',
+                'label' => __('Exercício :ano', ['ano' => (string) $ano]),
+            ];
+        }
+
+        $base = isset($block['previsao_recursos']['base_anual'])
+            ? (float) $block['previsao_recursos']['base_anual']
+            : null;
+
+        if ($base !== null && $base > 0) {
+            return [
+                'amount' => $base,
+                'display' => self::formatDockBrl($base, true),
+                'label' => __('Valor consolidado :ano', ['ano' => (string) $ano]),
+            ];
+        }
+
+        return [
+            'amount' => null,
+            'display' => '—',
+            'label' => __('Exercício :ano', ['ano' => (string) $ano]),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $block
+     */
+    private static function hasPublishedReceita(array $block): bool
+    {
+        $receita = is_array($block['receita'] ?? null) ? $block['receita'] : [];
+
+        return ($receita['disponivel'] ?? false)
+            && isset($receita['total'])
+            && is_numeric($receita['total'])
+            && (float) $receita['total'] > 0;
+    }
+
+    private static function dockVariationPct(?float $from, ?float $to): ?float
+    {
+        if ($from === null || $to === null || $from <= 0 || $to <= 0) {
+            return null;
+        }
+
+        return round((($to - $from) / $from) * 100, 1);
+    }
+
+    private static function dockStatusLabel(string $status): string
+    {
+        return match ($status) {
+            'success' => __('Em linha'),
+            'warning' => __('Revisar'),
+            'danger' => __('Priorizar'),
+            default => __('Indisponível'),
+        };
     }
 
     private static function formatDockBrl(?float $value, bool $compact = false): string
@@ -270,9 +408,9 @@ final class FundebVaafProfileBuilder
         return DiscrepanciesFundingImpact::formatBrl($value);
     }
 
-    private static function dockDeltaTone(?float $deltaPct, string $role): string
+    private static function dockDeltaTone(?float $deltaPct): string
     {
-        if ($deltaPct === null || $role === 'previous') {
+        if ($deltaPct === null) {
             return 'muted';
         }
 
@@ -385,7 +523,7 @@ final class FundebVaafProfileBuilder
     {
         $cy = (int) date('Y');
         if ($ano === $cy) {
-            return __('Exercício corrente (:ano)', ['ano' => (string) $ano]);
+            return __('Exercício atual (:ano)', ['ano' => (string) $ano]);
         }
         if ($ano === $cy + 1) {
             return __('Próximo exercício (:ano) — planejamento', ['ano' => (string) $ano]);
@@ -454,7 +592,7 @@ final class FundebVaafProfileBuilder
             ['key' => 'fnde_portaria', 'label' => __('Portaria FNDE — CSV receita total por ente'), 'url' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/consultas'],
             ['key' => 'fnde_estado_vaaf', 'label' => __('Consultas FNDE — VAAF estimado por UF/DF (PDF)'), 'url' => 'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/consultas'],
             ['key' => 'ckan', 'label' => __('FNDE dados abertos (CKAN)'), 'url' => (string) config('ieducar.fundeb.open_data.ckan_base_url', 'https://www.fnde.gov.br/dadosabertos')],
-            ['key' => 'ieducar', 'label' => __('Matrículas activas (i-Educar)'), 'url' => ''],
+            ['key' => 'ieducar', 'label' => __('Matrículas ativas (i-Educar)'), 'url' => ''],
             ['key' => 'censo', 'label' => __('Censo INEP (agregado municipal)'), 'url' => 'https://www.gov.br/inep/pt-br/areas-de-atuacao/pesquisas-estatisticas-e-indicadores/censo-escolar/resultado'],
         ];
     }

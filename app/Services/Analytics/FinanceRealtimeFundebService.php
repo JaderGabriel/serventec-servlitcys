@@ -247,7 +247,7 @@ final class FinanceRealtimeFundebService
             'methodology_compact' => null,
             'data_sources_note' => $this->dataSourcesNote(),
             'bb_open_finance' => $this->bbOpenFinanceStatus(),
-            'formula' => __('Após aplicar os filtros, a expectativa usa matrículas activas × VAAF municipal importado.'),
+            'formula' => __('Após aplicar os filtros, a expectativa usa matrículas ativas × VAAF municipal importado.'),
             'aviso' => (string) config('ieducar.finance_realtime.aviso', config('ieducar.fundeb.aviso_previsao', '')),
         ];
     }
@@ -358,7 +358,7 @@ final class FinanceRealtimeFundebService
         array $periodicSchedule,
     ): string {
         if ($baseCalculo <= 0 || $expectedVaaf <= 0) {
-            return __('Importe VAAF municipal e matrículas activas para calcular a expectativa.');
+            return __('Importe VAAF municipal e matrículas ativas para calcular a expectativa.');
         }
 
         $baseLine = __('Base matrículas × VAAF: :mat × :vaaf = :base/ano', [

@@ -10,7 +10,7 @@
         $score === null => __('Aplique os filtros para gerar o painel de decisão.'),
         $status === 'danger' => __('Situação crítica: priorize correções de cadastro com maior impacto financeiro antes do Censo.'),
         $status === 'warning' => __('Atenção: há pendências relevantes — alinhe cadastro, VAAF e condicionalidades VAAR.'),
-        default => __('Boa conformidade no filtro actual; mantenha rotinas e documentação para o VAAR.'),
+        default => __('Boa conformidade no filtro ativo; mantenha rotinas e documentação para o VAAR.'),
     };
 
     $eixos = [
@@ -75,12 +75,7 @@
         default => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
     };
 
-    $statusLabel = match ($status) {
-        'success' => __('Adequado no filtro'),
-        'warning' => __('Atenção — corrigir antes do Censo'),
-        'danger' => __('Crítico — ação imediata'),
-        default => __('Sem índice'),
-    };
+    $statusLabel = \App\Support\Dashboard\AnalyticsDockQualityIndicator::executiveStatusLabel($status);
 
 @endphp
 
@@ -108,7 +103,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
             <article class="serv-panel border border-slate-200/80 dark:border-slate-700/80 p-4 flex flex-col items-center gap-2 h-full" id="diag-qualidade-sistema">
                 <h3 class="text-sm font-semibold text-serv-navy dark:text-slate-100 text-center leading-tight w-full">
-                    {{ __('Índice geral de qualidade (filtro actual)') }}
+                    {{ __('Índice geral de qualidade (filtro ativo)') }}
                 </h3>
                 @if ($score !== null)
                     <x-dashboard.compliance-speedometer

@@ -58,7 +58,7 @@ final class AnalyticsDiagnosticsRunner
             if ($cityId <= 0) {
                 return [
                     'ok' => false,
-                    'hint' => __('Passe ?city_id=ID na URL (cidade activa com BD i-Educar).'),
+                    'hint' => __('Passe ?city_id=ID na URL (cidade ativa com BD i-Educar).'),
                 ];
             }
 

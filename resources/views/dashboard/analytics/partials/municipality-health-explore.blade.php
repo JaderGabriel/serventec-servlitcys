@@ -31,7 +31,7 @@
                 {{ __('Roteiro gerencial') }}
             </h3>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-3xl leading-relaxed">
-                {{ __('Do repasse à base cadastral, condicionalidades pedagógicas e fecho do Censo — cada cartão resume o que exige decisão ou acompanhamento no recorte activo. Discrepâncias e impacto financeiro agregado estão no Painel de decisão acima.') }}
+                {{ __('Do repasse à base cadastral, condicionalidades pedagógicas e fechamento do Censo — cada cartão resume o que exige decisão ou acompanhamento no recorte ativo. Inconsistências e impacto financeiro agregado estão no Painel de decisão acima.') }}
             </p>
         </div>
 

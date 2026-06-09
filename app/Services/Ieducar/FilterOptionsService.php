@@ -67,10 +67,16 @@ class FilterOptionsService
         ?IeducarFilterState $filterState = null,
         bool $light = false,
         ?AnalyticsLoadProfiler $profiler = null,
+        ?array $preloadedYearPayload = null,
     ): array {
         $errors = [];
 
-        $years = $this->runFilterStep($profiler, 'filter_years', fn () => $this->mergeYearOptions($city, $errors));
+        if (is_array($preloadedYearPayload)) {
+            $years = $preloadedYearPayload['years'] ?? [];
+            $errors = is_array($preloadedYearPayload['errors'] ?? null) ? $preloadedYearPayload['errors'] : [];
+        } else {
+            $years = $this->runFilterStep($profiler, 'filter_years', fn () => $this->mergeYearOptions($city, $errors));
+        }
 
         if ($light) {
             if (AnalyticsLoadProfiler::enabled()) {
@@ -227,9 +233,38 @@ class FilterOptionsService
     /** Último ano letivo disponível na base i-Educar da cidade, ou null se vazio. */
     public function latestSchoolYear(City $city): ?int
     {
-        $payload = $this->loadYearOptions($city);
+        return self::maxNumericSchoolYearFromOptions($this->loadYearOptions($city)['years'] ?? []);
+    }
 
-        return self::maxNumericSchoolYearFromOptions($payload['years'] ?? []);
+    /**
+     * Aplica o último ano letivo quando o recorte ainda não tem ano (evita redirect HTTP).
+     *
+     * @param  array{years?: array<string, string>, errors?: list<string>}|null  $yearPayload
+     */
+    public function applyLatestSchoolYearIfMissing(
+        IeducarFilterState $filters,
+        City $city,
+        ?array &$yearPayload = null,
+    ): IeducarFilterState {
+        if ($filters->hasYearSelected()) {
+            return $filters;
+        }
+
+        $yearPayload = $this->loadYearOptions($city);
+        $latestYear = self::maxNumericSchoolYearFromOptions($yearPayload['years'] ?? []);
+
+        if ($latestYear === null) {
+            return $filters;
+        }
+
+        return new IeducarFilterState(
+            (string) $latestYear,
+            $filters->escola_id,
+            $filters->curso_id,
+            $filters->turno_id,
+            $filters->inclusion_somente_nee,
+            $filters->inclusion_somente_inconsistencias,
+        );
     }
 
     public function loadByKind(City $city, string $kind, ?int $anoLetivo = null): array

@@ -1,8 +1,3 @@
-import {
-    servDataLoadingFinish,
-    servDataLoadingStart,
-} from "./dataLoading.js";
-
 /**
  * Filtros da Consultoria: anos letivos (se o SSR não trouxe) e escolas/cursos/turnos (modo light).
  */
@@ -25,22 +20,7 @@ export async function initAnalyticsFilterBootstrap(root = document) {
         }
     });
 
-    if (yearJobs.length === 0 && bootstrapJobs.length === 0) {
-        return;
-    }
-
-    const preset = window.servDataLoading?.presets?.prepare;
-    servDataLoadingStart(
-        preset?.title ?? "A preparar filtros",
-        preset?.message ??
-            "A carregar anos letivos, escolas, cursos e turnos na base do município…",
-    );
-
-    try {
-        await Promise.all([...yearJobs, ...bootstrapJobs]);
-    } finally {
-        servDataLoadingFinish();
-    }
+    await Promise.all([...yearJobs, ...bootstrapJobs]);
 }
 
 /**
@@ -56,7 +36,7 @@ async function loadYears(form, baseUrl) {
 
     const loadingLabel =
         form.dataset.analyticsFilterYearsLoadingLabel ??
-        "A carregar anos letivos…";
+        "Carregando anos letivos…";
     const selectedYear = ano.value;
 
     setYearSelectLoading(ano, loadingLabel);
@@ -103,7 +83,7 @@ async function loadBootstrap(form, baseUrl) {
     const todosLabel =
         form.dataset.analyticsFilterTodosLabel ?? "Todos os dados";
     const loadingLabel =
-        form.dataset.analyticsFilterLoadingLabel ?? "A carregar opções…";
+        form.dataset.analyticsFilterLoadingLabel ?? "Carregando opções…";
 
     setSelectLoading(escola, loadingLabel);
     setSelectLoading(curso, loadingLabel);

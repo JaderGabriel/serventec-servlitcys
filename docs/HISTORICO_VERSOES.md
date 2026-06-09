@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`4.4.4`** · tag de deploy **`20260609c-Atropos`** · ver [RELEASE_20260609c_ATROPOS.md](RELEASE_20260609c_ATROPOS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`4.4.5`** · tag de deploy **`20260603a-Themis`** · ver [RELEASE_20260603a_THEMIS.md](RELEASE_20260603a_THEMIS.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **4.4.4** |
+| **Versão semântica em produção** | **4.4.5** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260609c-Atropos` |
-| **Último marco documentado** | Dock analytics, mapa Início cache 1 h, PNG com legenda, Diagnóstico explorar — [RELEASE_20260609c_ATROPOS.md](RELEASE_20260609c_ATROPOS.md) |
+| **Tag de deploy (servidor)** | `20260603a-Themis` |
+| **Último marco documentado** | Índice qualidade no dock, FUNDEB gerencial, fix troca município, pt-BR consultoria — [RELEASE_20260603a_THEMIS.md](RELEASE_20260603a_THEMIS.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -39,7 +39,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.4.4** | `6ea5002` / `20260609c-Atropos` → `main` | **360** | 09/06/2026 | **Produção:** dock analytics, Diagnóstico explorar, cache mapa Início 1 h, PNG com legenda 1/2 colunas, PDF CadÚnico — [RELEASE_20260609c_ATROPOS.md](RELEASE_20260609c_ATROPOS.md). |
+| **▶ 4.4.5** | `7a931f6` / `20260603a-Themis` → `main` | **364** | 03/06/2026 | **Produção:** índice qualidade no dock, FUNDEB gerencial, fix troca município/ano, hub exports, pt-BR — [RELEASE_20260603a_THEMIS.md](RELEASE_20260603a_THEMIS.md). |
+| 4.4.4 | `6ea5002` / `20260609c-Atropos` → `main` | **360** | 09/06/2026 | Dock analytics, Diagnóstico explorar, cache mapa Início 1 h, PNG com legenda 1/2 colunas, PDF CadÚnico — [RELEASE_20260609c_ATROPOS.md](RELEASE_20260609c_ATROPOS.md). |
 | 4.4.3 | `39333e0` / `20260609b-Lachesis` → `main` | **355** | 09/06/2026 | CadÚnico CUN-01/02 — lacuna por idade, desconto Censo não municipal, mapa territorial — [RELEASE_20260609b_LACHESIS.md](RELEASE_20260609b_LACHESIS.md). |
 | 4.4.2 | `9e728a5` / `20260608a-Pythia` → `main` | **352** | 08/06/2026 | Estudo Power BI, pesquisa no leitor, backlog PBI-01…10 — [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md). |
 | 4.4.1 | `e50ecca` / `20260607b-Peitho` → `main` | **340** | 07/06/2026 | Hub docs no GitHub/leitor, Mermaid, rodapé desenvolvedor+GitHub — [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md). |

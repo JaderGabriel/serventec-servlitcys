@@ -201,6 +201,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Índice de qualidade no rodapé fixo (consultoria)
+    |--------------------------------------------------------------------------
+    |
+    | Mesmo índice 0–100 do Painel de decisão (Diagnóstico). Reutiliza snapshot
+    | do Diagnóstico quando já carregado; senão estima pelo resumo financeiro.
+    |
+    */
+
+    'quality_dock_indicator' => filter_var(env('ANALYTICS_QUALITY_DOCK_INDICATOR', true), FILTER_VALIDATE_BOOL),
+
+    /*
+    |--------------------------------------------------------------------------
     | Relatório PDF (aba Serventec)
     |--------------------------------------------------------------------------
     */

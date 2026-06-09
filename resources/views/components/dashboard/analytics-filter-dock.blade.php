@@ -12,6 +12,7 @@
     'deferSecondaryFilters' => false,
     'pageHeader' => null,
     'fundebDockMeter' => null,
+    'qualityDockIndicator' => null,
 ])
 
 @php
@@ -50,7 +51,7 @@
                         {{ __('Selecione o município para analisar') }}
                     </p>
                     <p class="serv-analytics-filter-dock__city-meta">
-                        {{ __('Base i-Educar activa com conexão configurada.') }}
+                        {{ __('Base i-Educar ativa com conexão configurada.') }}
                     </p>
                 @endif
             </div>
@@ -68,8 +69,8 @@
                     class="serv-analytics-filter-dock__city-form shrink-0"
                     id="analytics-city-switch"
                     data-serv-loading-on-submit
-                    data-serv-loading-title="{{ __('A carregar município') }}"
-                    data-serv-loading-message="{{ __('A preparar o painel de consultoria para a cidade selecionada…') }}"
+                    data-serv-loading-title="{{ __('Carregando município') }}"
+                    data-serv-loading-message="{{ __('Preparando o painel de consultoria para a cidade selecionada…') }}"
                 >
                     @if ($filters && $selectedCity)
                         @foreach ($filters->toQueryParams() as $key => $value)
@@ -105,7 +106,7 @@
                     :aria-expanded="filtersOpen"
                     aria-controls="analytics-filter-dock-panel"
                 >
-                    <span class="serv-analytics-filter-dock__summary-label">{{ __('Recorte activo') }}</span>
+                    <span class="serv-analytics-filter-dock__summary-label">{{ __('Recorte ativo') }}</span>
                     <span class="serv-analytics-filter-dock__summary-parts">
                         <template x-for="(part, index) in parts" :key="part.label + '-' + index">
                             <span class="serv-analytics-filter-dock__chip" :class="part.muted ? 'serv-analytics-filter-dock__chip--muted' : ''">
@@ -117,12 +118,23 @@
                     </span>
                 </button>
 
+                @if (filter_var(config('analytics.quality_dock_indicator', true), FILTER_VALIDATE_BOOL))
+                    <x-dashboard.analytics-filter-dock-quality-meter
+                        :indicator="$qualityDockIndicator ?? []"
+                        :filters="$filters"
+                        :selectedCity="$selectedCity"
+                        :yearFilterReady="$yearFilterReady"
+                    />
+                @endif
+
+                @if (filter_var(config('analytics.fundeb_dock_meter', true), FILTER_VALIDATE_BOOL))
                 <x-dashboard.analytics-filter-dock-fundeb-meter
                     :meter="$fundebDockMeter ?? []"
                     :filters="$filters"
                     :selectedCity="$selectedCity"
                     :yearFilterReady="$yearFilterReady"
                 />
+                @endif
 
                 <div class="serv-analytics-filter-dock__summary-actions">
                     <button
@@ -188,7 +200,7 @@
             </div>
         @elseif ($cities->isEmpty())
             <p class="serv-analytics-filter-dock__empty text-sm text-amber-800 dark:text-amber-200">
-                {{ __('Não há cidades activas com banco configurado. Configure e active uma cidade em Cidades.') }}
+                {{ __('Não há cidades ativas com banco configurado. Configure e ative uma cidade em Cidades.') }}
             </p>
         @endif
     </div>

@@ -58,18 +58,18 @@
         ])
         x-on:change="window.dispatchEvent(new CustomEvent('analytics-filters-preview'))"
         data-serv-loading-on-submit
-        data-serv-loading-title="{{ __('A aplicar filtros') }}"
-        data-serv-loading-message="{{ __('A carregar indicadores, gráficos e totais do município na base i-Educar. Aguarde…') }}"
+        data-serv-loading-title="{{ __('Aplicando filtros') }}"
+        data-serv-loading-message="{{ __('Carregando indicadores, gráficos e totais do município na base i-Educar. Aguarde…') }}"
         @if (is_string($filterYearsUrl) && $filterYearsUrl !== '')
             data-analytics-filter-years-url="{{ $filterYearsUrl }}"
-            data-analytics-filter-years-loading-label="{{ __('A carregar anos letivos…') }}"
+            data-analytics-filter-years-loading-label="{{ __('Carregando anos letivos…') }}"
             @if ($needsYearFetch) data-analytics-filter-years-fetch="1" @endif
         @endif
         @if ($deferSecondaryFilters && is_string($filterBootstrapUrl) && $filterBootstrapUrl !== '')
             data-analytics-filter-bootstrap
             data-analytics-filter-bootstrap-url="{{ $filterBootstrapUrl }}"
             data-analytics-filter-todos-label="{{ __('Todos os dados') }}"
-            data-analytics-filter-loading-label="{{ __('A carregar opções…') }}"
+            data-analytics-filter-loading-label="{{ __('Carregando opções…') }}"
         @endif
         @if (is_string($filterOptionsTurnoUrl) && $filterOptionsTurnoUrl !== '')
             data-analytics-turno-cascade
@@ -95,7 +95,7 @@
                     @endforeach
                 </div>
                 @if ($needsYearFetch && empty($loadErrors))
-                    <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ __('A carregar anos letivos da base do município…') }}</p>
+                    <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ __('Carregando anos letivos da base do município…') }}</p>
                 @endif
                 <select id="ano_letivo" name="ano_letivo" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     @foreach ($yearOptions as $value => $label)

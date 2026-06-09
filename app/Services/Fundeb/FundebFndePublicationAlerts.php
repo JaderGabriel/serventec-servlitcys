@@ -73,7 +73,7 @@ final class FundebFndePublicationAlerts
                 'danger',
                 $ano,
                 __('Sem matrículas para estimar VAAF'),
-                __('Não há matrículas activas no i-Educar nem agregado Censo INEP para este ano. A Portaria FNDE (receita) não pode ser convertida em VAAF municipal.'),
+                __('Não há matrículas ativas no i-Educar nem total do Censo INEP para este ano. A portaria FNDE (receita) não pode ser convertida em VAAF municipal.'),
                 __('Verificar conexão i-Educar, ano letivo e importar Censo (sync semanal).'),
             );
         } elseif (is_array($mat) && ($mat['fonte_usada'] ?? '') === 'censo_inep') {
@@ -155,7 +155,7 @@ final class FundebFndePublicationAlerts
                 'info',
                 $ano,
                 __('Exercício futuro — dados preliminares'),
-                __('Valores para anos posteriores ao civil corrente dependem de portarias preliminares ou projeção; não use em prestação de contas sem validar no FNDE.'),
+                __('Valores para anos posteriores ao ano civil atual dependem de portarias preliminares ou projeção; não use em prestação de contas sem validar no FNDE.'),
                 null,
             );
         }
