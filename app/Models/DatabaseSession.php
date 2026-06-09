@@ -18,6 +18,18 @@ class DatabaseSession extends Model
     public $timestamps = false;
 
     /**
+     * @var list<string>
+     */
+    protected $fillable = [
+        'id',
+        'user_id',
+        'ip_address',
+        'user_agent',
+        'payload',
+        'last_activity',
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
