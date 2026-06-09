@@ -129,15 +129,16 @@ class AdminDocumentationTest extends TestCase
             ->assertJsonFragment(['path' => 'docs/POWERBI.md']);
     }
 
-    public function test_documentation_reader_includes_search_field(): void
+    public function test_documentation_reader_includes_search_and_toc(): void
     {
         $admin = User::factory()->admin()->create();
 
         $this->actingAs($admin)
-            ->get(route('admin.documentation.show', ['doc' => 'docs/README.md']))
+            ->get(route('admin.documentation.show', ['doc' => 'docs/POWERBI.md']))
             ->assertOk()
             ->assertSee('serv-docs-search-input', false)
-            ->assertSee(__('Pesquisar documentos…'), false);
+            ->assertSee(__('Neste documento'), false)
+            ->assertSee('id="1-resumo-executivo"', false);
     }
 
     public function test_admin_can_open_powerbi_document_from_catalog(): void

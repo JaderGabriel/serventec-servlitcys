@@ -3,6 +3,8 @@
 namespace App\Services\Admin;
 
 use App\Support\Admin\DocumentationCatalog;
+use App\Support\Admin\DocumentationHeadingIndex;
+use Illuminate\Support\Str;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
@@ -10,6 +12,25 @@ use League\CommonMark\MarkdownConverter;
 
 class DocumentationMarkdownRenderer
 {
+    public function __construct(
+        private DocumentationHeadingIndex $headingIndex = new DocumentationHeadingIndex,
+    ) {}
+
+    /**
+     * @return array{html: string, headings: list<array{id: string, level: int, text: string}>}
+     */
+    public function render(string $markdown, string $currentPath, ?string $documentationRoutePrefix = null): array
+    {
+        $headings = $this->headingIndex->headingsFromMarkdown($markdown);
+        $html = $this->toHtml($markdown, $currentPath, $documentationRoutePrefix);
+        $html = $this->headingIndex->injectHeadingIds($html, $headings);
+
+        return [
+            'html' => $html,
+            'headings' => $headings,
+        ];
+    }
+
     public function toHtml(string $markdown, string $currentPath, ?string $documentationRoutePrefix = null): string
     {
         $environment = new Environment([
@@ -64,13 +85,23 @@ class DocumentationMarkdownRenderer
                     return $matches[0];
                 }
 
+                $fragment = '';
+                if (str_contains($href, '#')) {
+                    [$hrefPath, $fragmentPart] = explode('#', $href, 2);
+                    $href = $hrefPath;
+                    $fragment = '#'.Str::slug(Str::ascii(urldecode($fragmentPart)));
+                    if ($fragment === '#') {
+                        $fragment = '';
+                    }
+                }
+
                 $target = $this->resolveRelativeDocPath($href, $baseDir);
                 $resolved = $target !== null ? DocumentationCatalog::resolveReadablePath($target) : null;
                 if ($resolved === null) {
                     return $matches[0];
                 }
 
-                $url = route($documentationRoutePrefix.'.show', ['doc' => $resolved]);
+                $url = route($documentationRoutePrefix.'.show', ['doc' => $resolved]).$fragment;
 
                 return '<a href="'.e($url).'"';
             },

@@ -1,5 +1,6 @@
 @php
     $docRoute = $documentationRoutePrefix ?? 'documentation';
+    $headings = is_array($documentHeadings ?? null) ? $documentHeadings : [];
 @endphp
 <x-app-layout>
     <x-slot name="header">
@@ -40,9 +41,13 @@
     </x-slot>
 
     <div class="py-6 sm:py-8">
-        <div class="max-w-[90rem] mx-auto sm:px-6 lg:px-8">
-            <div class="lg:grid lg:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)] lg:gap-8 xl:gap-10">
-                <aside class="hidden lg:block">
+        <div class="max-w-[96rem] mx-auto sm:px-6 lg:px-8">
+            <div @class([
+                'gap-8 xl:gap-10',
+                'lg:grid lg:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)]' => count($headings) === 0,
+                'lg:grid lg:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)] xl:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)_minmax(12rem,14rem)]' => count($headings) > 0,
+            ])>
+                <aside class="hidden lg:block serv-docs-sidebar">
                     <div class="serv-panel p-4 sticky top-[5.5rem] max-h-[calc(100vh-7rem)] overflow-y-auto space-y-4">
                         @if (($productVersion ?? '') !== '')
                             <div class="rounded-lg border border-teal-200/80 bg-teal-50/60 dark:border-teal-800/50 dark:bg-teal-950/25 px-3 py-2.5 text-xs space-y-2">
@@ -95,7 +100,7 @@
                 <div class="min-w-0 space-y-4">
                     <details class="lg:hidden serv-panel">
                         <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-serv-navy dark:text-slate-100">
-                            {{ __('Índice de documentos') }}
+                            {{ __('Menu da documentação') }}
                         </summary>
                         <div class="border-t border-slate-200/80 dark:border-slate-700/80 p-4 space-y-4 max-h-[28rem] overflow-y-auto">
                             @include('documentation.partials.search', [
@@ -108,6 +113,20 @@
                             ])
                         </div>
                     </details>
+
+                    @if (count($headings) > 1)
+                        <details class="xl:hidden serv-panel">
+                            <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-serv-navy dark:text-slate-100">
+                                {{ __('Neste documento') }}
+                            </summary>
+                            <div class="border-t border-slate-200/80 dark:border-slate-700/80 p-4 max-h-56 overflow-y-auto">
+                                @include('documentation.partials.toc', [
+                                    'headings' => $headings,
+                                    'variant' => 'mobile',
+                                ])
+                            </div>
+                        </details>
+                    @endif
 
                     @if (($productVersion ?? '') !== '' && ($currentPath ?? '') === 'docs/HISTORICO_VERSOES.md')
                         <p class="serv-panel px-4 py-2 text-xs text-slate-600 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
@@ -150,6 +169,17 @@
                         </div>
                     </article>
                 </div>
+
+                @if (count($headings) > 1)
+                    <aside class="hidden xl:block">
+                        <div class="serv-panel p-4 sticky top-[5.5rem] max-h-[calc(100vh-7rem)] overflow-y-auto">
+                            @include('documentation.partials.toc', [
+                                'headings' => $headings,
+                                'variant' => 'sidebar',
+                            ])
+                        </div>
+                    </aside>
+                @endif
             </div>
         </div>
     </div>

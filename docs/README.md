@@ -6,6 +6,15 @@ Ponto de entrada da documentação técnica e funcional. Para **padrão editoria
 
 **Hub visual** (timeline 4.x, mapa de docs): [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) — leitor Documentação na app · [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) no Cursor IDE.
 
+### Leitor na aplicação (`/documentacao`)
+
+| Recurso | Descrição |
+|---------|-----------|
+| **Menu lateral** | Seis secções numeradas (Entrada → Operação) + releases descobertos |
+| **Pesquisa** | Campo no menu — mínimo 2 caracteres; indexa título, secção e cabeçalhos |
+| **Neste documento** | Sumário à direita (desktop) com âncoras nos títulos `h1`–`h4` |
+| **Idioma** | Português europeu — cadastro, utilizador, secção, arquitectura |
+
 ---
 
 ## Começar aqui
@@ -149,11 +158,18 @@ Histórico completo: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 | [PERFORMANCE.md](PERFORMANCE.md) | Redis e performance |
 | [PLANO_TESTES_UNITARIOS.md](PLANO_TESTES_UNITARIOS.md) | Estratégia de testes |
 
-### 7. Arquivo
+### 7. Entregas escalonadas
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) | Cronologia mai/2026 *(arquivo)* |
+| [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) | Índice mensal + ligação às releases |
+| [ENTREGAS_ESCALONADAS_JUNHO_2026.md](ENTREGAS_ESCALONADAS_JUNHO_2026.md) | Jun/2026 — 3.5.0 → 4.4.2 (20 releases) |
+| [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) | Mai/2026 *(arquivo)* — 2.3.6 → 3.4.0 |
+
+### 8. Arquivo
+
+| Documento | Conteúdo |
+|-----------|----------|
 | [DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md](DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md) | Revisão Laravel |
 | [DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md](DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md) | Rede & oferta — BI |
 | [DOCUMENTO_EXECUTIVO_TESTE_MAPA_UNIDADES_ESCOLARES.md](DOCUMENTO_EXECUTIVO_TESTE_MAPA_UNIDADES_ESCOLARES.md) | Testes mapa |

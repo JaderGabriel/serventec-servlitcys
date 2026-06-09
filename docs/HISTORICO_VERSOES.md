@@ -12,7 +12,7 @@
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
-> **Entregas em série (mai/2026):** ver [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md).
+> **Entregas em série:** índice [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) — [junho/2026](ENTREGAS_ESCALONADAS_JUNHO_2026.md) · [maio/2026 (arquivo)](ENTREGAS_ESCALONADAS_MAIO_2026.md).
 
 ### Linha 4.x (visual)
 

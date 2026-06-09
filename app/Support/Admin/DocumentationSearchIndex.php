@@ -76,7 +76,7 @@ final class DocumentationSearchIndex
                 }
                 $seen[$path] = true;
 
-                $contentMeta = $this->contentMetaForPath($path);
+                $contentMeta = $this->contentMetaForPath($path, $item['label'] ?? '');
                 $blob = Str::lower(implode(' ', array_filter([
                     $item['label'],
                     $item['hint'] ?? '',
@@ -106,7 +106,7 @@ final class DocumentationSearchIndex
     /**
      * @return array{headings: string, keywords: string, excerpt: string}
      */
-    private function contentMetaForPath(string $path): array
+    private function contentMetaForPath(string $path, string $label = ''): array
     {
         $resolved = DocumentationCatalog::resolveReadablePath($path);
         if ($resolved === null) {
@@ -119,16 +119,15 @@ final class DocumentationSearchIndex
         }
 
         $markdown = File::get($absolute);
-        $headings = [];
+        $headingRows = app(DocumentationHeadingIndex::class)->headingsFromMarkdown($markdown);
+        $headingTexts = array_column($headingRows, 'text');
+        $headings = implode(' ', $headingTexts);
         $keywords = [];
 
         foreach (preg_split('/\R/', $markdown) ?: [] as $line) {
             $trimmed = trim($line);
             if ($trimmed === '') {
                 continue;
-            }
-            if (preg_match('/^#{1,4}\s+(.+)$/u', $trimmed, $m)) {
-                $headings[] = trim($m[1], " \t#");
             }
             if (preg_match('/\*\*Versão do produto:\*\*/i', $trimmed)) {
                 continue;
@@ -146,13 +145,15 @@ final class DocumentationSearchIndex
             }
         }
 
-        $excerpt = '';
-        if ($keywords !== []) {
+        $excerpt = $label !== '' ? $label : '';
+        if ($headingTexts !== []) {
+            $excerpt = Str::limit($headingTexts[0], 140);
+        } elseif ($keywords !== []) {
             $excerpt = Str::limit($keywords[0], 140);
         }
 
         return [
-            'headings' => implode(' ', $headings),
+            'headings' => $headings,
             'keywords' => implode(' ', $keywords),
             'excerpt' => $excerpt,
         ];

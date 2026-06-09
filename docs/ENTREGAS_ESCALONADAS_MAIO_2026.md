@@ -1,10 +1,33 @@
 # Entregas escalonadas — maio/2026 *(arquivo)*
 
-> **Documento histórico** — cobre entregas até **3.4.0** (mai/jun 2026). **Versão actual em produção:** **4.1.0** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md).
+> **Documento histórico** — cobre entregas até **3.4.0** (mai/2026). **Versão actual em produção:** **4.4.2** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md).  
+> **Índice geral:** [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) · **Mês seguinte:** [ENTREGAS_ESCALONADAS_JUNHO_2026.md](ENTREGAS_ESCALONADAS_JUNHO_2026.md).
 
 Documentação das alterações desenvolvidas no ramo `main`, organizadas para **commits e PRs pequenos**. Cada bloco pode ser revisto e implantado de forma independente (com `php artisan migrate` e `npm run build` quando indicado).
 
-**Ordem sugerida de merge:** 1 → 2 → 3 → 4 → 5 → 6 → 7.
+---
+
+## Releases de maio/2026
+
+| # | Versão | Tag | Release | Tema (resumo) |
+|---|--------|-----|---------|---------------|
+| 1 | **2.3.6** | `20260522-Janus` | [RELEASE_20260522_JANUS.md](RELEASE_20260522_JANUS.md) | RX: progresso, em falta, legenda por coluna |
+| 2 | **2.3.7** | `20260521-Minerva` | [RELEASE_20260521_MINERVA.md](RELEASE_20260521_MINERVA.md) | Consultoria: saldo, VAAF, overlay, PDF |
+| 3 | **2.3.8** | `20260521-Mercury` | [RELEASE_20260521_MERCURY.md](RELEASE_20260521_MERCURY.md) | VAAF municipal; perfil; RX; admin i-Educar |
+| 4 | **2.4.0** | `20260524-Ceres` | [RELEASE_20260524_CERES.md](RELEASE_20260524_CERES.md) | SAEB planilhas INEP; FUNDEB receita |
+| 5 | **3.0.0** | `20260525-Apollo` | [RELEASE_20260525_APOLLO.md](RELEASE_20260525_APOLLO.md) | LGPD; notificações; catálogo NEE INEP |
+| 6 | **3.1.0** | `20260526-Boreas` | [RELEASE_20260526_BOREAS.md](RELEASE_20260526_BOREAS.md) | Inclusão NEE/AEE; leitor doc admin |
+| 7 | **3.2.0** | `20260527-Notus` | [RELEASE_20260527_NOTUS.md](RELEASE_20260527_NOTUS.md) | Export NEE; medidores AEE; fila admin |
+| 8 | **3.3.0** | `20260528-Eos` | [RELEASE_20260528_EOS.md](RELEASE_20260528_EOS.md) | Monitor módulos admin |
+| 9 | **3.3.1** | `20260529-Helios` | [RELEASE_20260529_HELIOS.md](RELEASE_20260529_HELIOS.md) | Otimização Analytics; cache Finanças |
+| 10 | **3.3.2** | `20260530-Metis` | [RELEASE_20260530_METIS.md](RELEASE_20260530_METIS.md) | Diagnóstico estratégico leve |
+| 11 | **3.4.0** | `20260531-Nemesis` | [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md) | Área Censo; UI Finanças; cache v2 |
+
+> **Patches 2.3.8.1–2.3.8.7** e entregas **pré-2.3.6** (mapa, RX, FUNDEB) estão numeradas na tabela de commits abaixo; versões intermédias sem tag dedicada: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
+
+---
+
+**Ordem sugerida de merge (entregas incrementais):** 1 → 2 → 3 → 4 → 5 → 6 → 7.
 
 | # | Commit | Tema |
 |---|--------|------|

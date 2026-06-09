@@ -35,6 +35,24 @@ class DocumentationCatalogTest extends TestCase
         $this->assertStringContainsString('doc=docs%2FENTREGAS_ESCALONADAS_MAIO_2026.md', $url);
     }
 
+    public function test_catalog_sections_follow_logical_order(): void
+    {
+        $sections = DocumentationCatalog::sections();
+        $titles = array_column($sections, 'title');
+
+        $this->assertSame(__('1 · Entrada'), $titles[0]);
+        $this->assertContains(__('Entregas escalonadas'), $titles);
+        $this->assertContains(__('Arquivo'), $titles);
+    }
+
+    public function test_flat_entries_includes_powerbi_once(): void
+    {
+        $paths = array_column(DocumentationCatalog::flatEntriesForUser(null), 'path');
+        $powerBi = array_filter($paths, static fn (string $p): bool => $p === 'docs/POWERBI.md');
+
+        $this->assertCount(1, $powerBi);
+    }
+
     public function test_outros_documentos_mostra_release_producao_e_submenu(): void
     {
         config([

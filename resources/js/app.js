@@ -32,6 +32,7 @@ import createBrazilMunicipalitiesMap from "./brazilMunicipalitiesMap.js";
 import rxCadastroPulse from "./rxCadastroPulse.js";
 import "./notification-bell.js";
 import "./documentationSearch.js";
+import "./documentationToc.js";
 import { registerScrollToTopData } from "./scroll-to-top.js";
 
 registerChartVisualPlugins(Chart);

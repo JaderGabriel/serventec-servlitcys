@@ -396,92 +396,99 @@ final class DocumentationCatalog
     {
         $sections = [
             [
-                'title' => __('Começar'),
-                'description' => __('Visão do produto, perfis e identidade visual.'),
+                'title' => __('1 · Entrada'),
+                'description' => __('Por onde começar — índice, estado do produto e perfis.'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
-                    ['label' => __('Hub de documentação'), 'path' => 'docs/HUB_DOCUMENTACAO.md', 'hint' => __('Mapa visual · 4.x · releases')],
-                    ['label' => __('Índice da documentação'), 'path' => 'docs/README.md', 'hint' => __('Ponto de entrada')],
-                    ['label' => __('Padrão editorial'), 'path' => 'docs/PADRAO_DOCUMENTACAO.md', 'hint' => __('Qualidade e manutenção')],
-                    ['label' => __('Arquitectura e fluxos'), 'path' => 'docs/ARQUITETURA_E_FLUXOS.md', 'hint' => __('Diagramas Mermaid')],
-                    ['label' => __('Documentação executiva'), 'path' => 'docs/DOCUMENTACAO_EXECUTIVA.md'],
+                    ['label' => __('Índice da documentação'), 'path' => 'docs/README.md', 'hint' => __('Mapa por tema e perfil')],
+                    ['label' => __('Hub de documentação'), 'path' => 'docs/HUB_DOCUMENTACAO.md', 'hint' => __('Versão · timeline 4.x')],
+                    ['label' => __('Estado do projeto'), 'path' => 'docs/STATUS_PROJETO.md', 'hint' => __('O que está em produção')],
+                    ['label' => __('Histórico de versões'), 'path' => 'docs/HISTORICO_VERSOES.md', 'hint' => __('Tags e commits')],
+                    ['label' => __('Backlog de implementações'), 'path' => 'docs/BACKLOG_IMPLEMENTACOES.md'],
+                    ['label' => __('Documentação executiva'), 'path' => 'docs/DOCUMENTACAO_EXECUTIVA.md', 'hint' => __('Gestão e secretaria')],
                     ['label' => __('Perfis de utilizador'), 'path' => 'docs/PERFIS_UTILIZADOR.md'],
                     ['label' => __('Design system (UI)'), 'path' => 'docs/DESIGN_SYSTEM.md'],
-                    ['label' => __('Estado do projeto'), 'path' => 'docs/STATUS_PROJETO.md'],
-                    ['label' => __('Histórico de versões'), 'path' => 'docs/HISTORICO_VERSOES.md', 'hint' => __('Tags, commits e trajetória')],
-                    ['label' => __('Backlog de implementações'), 'path' => 'docs/BACKLOG_IMPLEMENTACOES.md'],
-                    ['label' => __('Entregas escalonadas (arquivo mai/2026)'), 'path' => 'docs/ENTREGAS_ESCALONADAS_MAIO_2026.md'],
                 ],
             ],
             [
-                'title' => __('Painel de análise'),
-                'description' => __('Abas, métricas, inclusão, relatórios e cadastro.'),
+                'title' => __('2 · Arquitectura'),
+                'description' => __('Diagramas, decisões técnicas e normas editoriais.'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
-                    ['label' => __('Navegação consultoria (5 áreas)'), 'path' => 'docs/ANALYTICS_NAVEGACAO_UI.md', 'hint' => __('4.1.1 — cenário C')],
-                    ['label' => __('Decisão abas consultoria'), 'path' => 'docs/CONSULTORIA_ABAS_DECISAO.md'],
+                    ['label' => __('Arquitectura e fluxos'), 'path' => 'docs/ARQUITETURA_E_FLUXOS.md', 'hint' => __('Camadas · FUNDEB · deploy')],
+                    ['label' => __('Ponderações técnicas'), 'path' => 'docs/PONDERACOES_TECNICAS.md', 'hint' => __('Decisões e limites')],
+                    ['label' => __('Padrão editorial'), 'path' => 'docs/PADRAO_DOCUMENTACAO.md'],
+                    ['label' => __('Segurança'), 'path' => 'docs/SEGURANCA.md', 'hint' => __('RBAC · LGPD · checklist')],
+                ],
+            ],
+            [
+                'title' => __('3 · Consultoria municipal'),
+                'description' => __('Painel `/dashboard/analytics` — navegação, métricas e relatórios.'),
+                'audience' => self::AUDIENCE_ALL,
+                'items' => [
+                    ['label' => __('Navegação (5 áreas)'), 'path' => 'docs/ANALYTICS_NAVEGACAO_UI.md', 'hint' => __('Resumo → Finanças')],
+                    ['label' => __('Decisão de abas'), 'path' => 'docs/CONSULTORIA_ABAS_DECISAO.md'],
                     ['label' => __('Início dashboard'), 'path' => 'docs/INICIO_DASHBOARD.md'],
-                    ['label' => __('Métricas & Pulse (analytics)'), 'path' => 'docs/METRICAS_QUERIES_ANALYTICS.md'],
-                    ['label' => __('CadÚnico — faixas etárias e FUNDEB'), 'path' => 'docs/CADUNICO_FAIXAS_ETARIAS_FUNDEB.md', 'hint' => __('4–17, 0–3, VAAF/VAAT/IEI')],
-                    ['label' => __('CadÚnico / Cecad (importação)'), 'path' => 'docs/CADUNICO_CECAD.md'],
+                    ['label' => __('Métricas e Pulse'), 'path' => 'docs/METRICAS_QUERIES_ANALYTICS.md'],
+                    ['label' => __('Relatório PDF Serventec'), 'path' => 'docs/RELATORIO_PDF_ATM.md'],
+                    ['label' => __('Power BI — estudo de integração'), 'path' => 'docs/POWERBI.md', 'hint' => __('ETL · DAX · roadmap')],
+                    ['label' => __('CadÚnico / Cecad'), 'path' => 'docs/CADUNICO_CECAD.md'],
+                    ['label' => __('CadÚnico — faixas etárias'), 'path' => 'docs/CADUNICO_FAIXAS_ETARIAS_FUNDEB.md'],
                     ['label' => __('CadÚnico previsão territorial'), 'path' => 'docs/CADUNICO_PREVISAO_TERRITORIAL.md'],
+                    ['label' => __('CadÚnico — automação'), 'path' => 'docs/CADUNICO_AUTOMACAO.md'],
+                    ['label' => __('Inclusão e NEE — roadmap'), 'path' => 'docs/DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md'],
+                    ['label' => __('SAEB / IDEB'), 'path' => 'docs/saeb_pedagogico_referencias.md'],
                     ['label' => __('Gráficos MEC/INEP'), 'path' => 'docs/SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md'],
-                    ['label' => __('SAEB — referências pedagógicas'), 'path' => 'docs/saeb_pedagogico_referencias.md'],
-                    ['label' => __('Plugins e cadastro i-Educar'), 'path' => 'docs/PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md'],
-                    ['label' => __('Roadmap inclusão e cadastro NEE'), 'path' => 'docs/DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md'],
-                    ['label' => __('Relatório PDF ATM'), 'path' => 'docs/RELATORIO_PDF_ATM.md'],
-                    ['label' => __('Power BI — integração'), 'path' => 'docs/POWERBI.md', 'hint' => __('ETL, DAX, Embedded, previsão')],
-                    ['label' => __('Ponderações técnicas'), 'path' => 'docs/PONDERACOES_TECNICAS.md'],
+                    ['label' => __('Plugins i-Educar'), 'path' => 'docs/PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md'],
                 ],
             ],
             [
-                'title' => __('Financiamento e Censo'),
-                'description' => __('FUNDEB, VAAF, exportações e consultas públicas.'),
+                'title' => __('4 · Financiamento (FUNDEB)'),
+                'description' => __('VAAF, repasses, exportações e fontes públicas.'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
-                    ['label' => __('FUNDEB / VAAF'), 'path' => 'docs/FUNDEB_VAAF_E_ONDA1.md'],
-                    ['label' => __('Consultas externas (produção)'), 'path' => 'docs/CONSULTAS_EXTERNAS.md', 'hint' => __('FNDE, Tesouro, repasses')],
-                    ['label' => __('Extrato BB / Open Finance'), 'path' => 'docs/BB_EXTRATO_OPEN_FINANCE.md'],
+                    ['label' => __('FUNDEB / VAAF / VAAR'), 'path' => 'docs/FUNDEB_VAAF_E_ONDA1.md'],
+                    ['label' => __('Consultas externas'), 'path' => 'docs/CONSULTAS_EXTERNAS.md', 'hint' => __('FNDE · Tesouro · INEP')],
+                    ['label' => __('Comparativo vs FNDE/MEC'), 'path' => 'docs/COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md'],
                     ['label' => __('Exportação planilha FUNDEB'), 'path' => 'docs/EXPORTACAO_DADOS_FUNDEB_PLANILHA.md'],
-                    ['label' => __('Power BI — matriz e ETL'), 'path' => 'docs/POWERBI.md', 'hint' => __('Data mart, Gateway, roadmap')],
-                    ['label' => __('Comparativo VAAF vs FNDE/MEC'), 'path' => 'docs/COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md'],
+                    ['label' => __('Extrato BB / Open Finance'), 'path' => 'docs/BB_EXTRATO_OPEN_FINANCE.md'],
+                    ['label' => __('Roadmap bases financeiras'), 'path' => 'docs/ROADMAP_BASES_CALCULOS_FINANCEIROS.md', 'audience' => self::AUDIENCE_ADMIN],
                 ],
             ],
             [
-                'title' => __('Integrações e dados públicos'),
-                'description' => __('Ingestão administrativa, APIs e estudos de integração.'),
+                'title' => __('5 · Integrações (admin)'),
+                'description' => __('Importações, APIs propostas e estudos.'),
                 'audience' => self::AUDIENCE_ADMIN,
                 'items' => [
-                    ['label' => __('Estudo: agentes e IA'), 'path' => 'docs/ESTUDO_AGENTES_IA_SERVLITCYS.md', 'hint' => __('Copilot, RAG, automação')],
-                    ['label' => __('Estudo: setor público e demanda'), 'path' => 'docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md'],
-                    ['label' => __('Catálogo API i-Educar (proposta)'), 'path' => 'docs/CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md'],
                     ['label' => __('Importação dados públicos'), 'path' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md'],
-                    ['label' => __('Importação SAEB (planilhas INEP)'), 'path' => 'docs/IMPORTACAO_SAEB_PLANILHAS_INEP.md'],
-                    ['label' => __('Roadmap bases financeiras'), 'path' => 'docs/ROADMAP_BASES_CALCULOS_FINANCEIROS.md'],
+                    ['label' => __('Importação SAEB (INEP)'), 'path' => 'docs/IMPORTACAO_SAEB_PLANILHAS_INEP.md'],
+                    ['label' => __('Catálogo API i-Educar'), 'path' => 'docs/CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md'],
+                    ['label' => __('Estudo: agentes e IA'), 'path' => 'docs/ESTUDO_AGENTES_IA_SERVLITCYS.md'],
+                    ['label' => __('Estudo: setor público'), 'path' => 'docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md'],
                 ],
             ],
             [
-                'title' => __('Operação e deploy'),
-                'description' => __('Ambiente, segurança, filas e CLI (administradores).'),
+                'title' => __('6 · Operação (admin)'),
+                'description' => __('Deploy, ambiente, performance e CLI.'),
                 'audience' => self::AUDIENCE_ADMIN,
                 'items' => [
-                    ['label' => __('Variáveis de ambiente (.env)'), 'path' => 'docs/VARIAVEIS_AMBIENTE.md'],
                     ['label' => __('Implantação em produção'), 'path' => 'docs/IMPLANTACAO_PRODUCAO.md'],
+                    ['label' => __('Variáveis de ambiente'), 'path' => 'docs/VARIAVEIS_AMBIENTE.md'],
                     ['label' => __('Performance e Redis'), 'path' => 'docs/PERFORMANCE.md'],
-                    ['label' => __('Segurança'), 'path' => 'docs/SEGURANCA.md'],
                     ['label' => __('Comandos Artisan'), 'path' => 'docs/COMANDOS_ARTISAN.md'],
-                    ['label' => __('Plano de testes unitários'), 'path' => 'docs/PLANO_TESTES_UNITARIOS.md'],
+                    ['label' => __('Plano de testes'), 'path' => 'docs/PLANO_TESTES_UNITARIOS.md'],
                     ['label' => __('README (instalação)'), 'path' => 'README.md'],
                 ],
             ],
+            DocumentationEscalonadasCatalog::menuSection(),
             [
-                'title' => __('Notas executivas (arquivo)'),
-                'description' => __('Documentos de desenho e revisão pontuais.'),
+                'title' => __('Arquivo'),
+                'description' => __('Notas pontuais e documentos executivos antigos.'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Revisão técnica do projeto'), 'path' => 'docs/DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md'],
-                    ['label' => __('Rede & oferta — BI'), 'path' => 'docs/DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md'],
-                    ['label' => __('Testes mapa unidades escolares'), 'path' => 'docs/DOCUMENTO_EXECUTIVO_TESTE_MAPA_UNIDADES_ESCOLARES.md'],
+                    ['label' => __('Rede e oferta — BI'), 'path' => 'docs/DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md'],
+                    ['label' => __('Mapa unidades escolares'), 'path' => 'docs/DOCUMENTO_EXECUTIVO_TESTE_MAPA_UNIDADES_ESCOLARES.md'],
                 ],
             ],
         ];
@@ -568,14 +575,14 @@ final class DocumentationCatalog
     {
         $listed = [];
         foreach ($sections as $section) {
-            foreach ($section['items'] as $item) {
+            foreach (self::sectionItemsFlat($section) as $item) {
                 $listed[$item['path']] = true;
             }
         }
 
         $extras = [];
         foreach (self::discoverDocPaths() as $path) {
-            if (isset($listed[$path]) || self::isReleasePath($path)) {
+            if (isset($listed[$path]) || self::isReleasePath($path) || DocumentationEscalonadasCatalog::isEscalonadasPath($path)) {
                 continue;
             }
             $extras[] = [
@@ -596,11 +603,21 @@ final class DocumentationCatalog
 
         usort($extras, static fn (array $a, array $b): int => strcmp($a['label'], $b['label']));
 
+        $escalonadasIndex = DocumentationEscalonadasCatalog::indexPath();
+        $featured = $releases['featured'];
+        if ($featured === [] && DocumentationCatalog::resolveReadablePath($escalonadasIndex) !== null) {
+            $featured = [[
+                'label' => __('Entregas escalonadas — índice'),
+                'path' => $escalonadasIndex,
+                'hint' => __('Releases por mês'),
+            ]];
+        }
+
         $outros = [
             'title' => __('Outros documentos'),
-            'description' => __('Releases e ficheiros adicionais em docs/.'),
+            'description' => __('Releases recentes e ficheiros adicionais — histórico mensal em «Entregas escalonadas».'),
             'audience' => self::AUDIENCE_ALL,
-            'items' => $releases['featured'],
+            'items' => $featured,
         ];
 
         if ($releases['submenu'] !== []) {

@@ -1859,19 +1859,59 @@
     }
 
     .serv-docs-prose h1 {
-        @apply font-display text-2xl font-bold text-slate-900 dark:text-white mt-8 mb-4 pb-2 border-b border-slate-200 dark:border-slate-700;
+        @apply font-display text-2xl font-bold text-slate-900 dark:text-white mt-8 mb-4 pb-2 border-b border-slate-200 dark:border-slate-700 scroll-mt-28;
     }
 
     .serv-docs-prose h2 {
-        @apply font-display text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-3;
+        @apply font-display text-xl font-semibold text-slate-900 dark:text-white mt-8 mb-3 scroll-mt-28;
     }
 
     .serv-docs-prose h3 {
-        @apply text-base font-semibold text-teal-900 dark:text-teal-200 mt-6 mb-2;
+        @apply text-base font-semibold text-teal-900 dark:text-teal-200 mt-6 mb-2 scroll-mt-28;
     }
 
     .serv-docs-prose h4 {
-        @apply text-sm font-semibold text-slate-800 dark:text-slate-200 mt-4 mb-2;
+        @apply text-sm font-semibold text-slate-800 dark:text-slate-200 mt-4 mb-2 scroll-mt-28;
+    }
+
+    .serv-docs-toc-title {
+        @apply text-[11px] font-semibold uppercase tracking-wider text-teal-800 dark:text-teal-300 mb-2;
+    }
+
+    .serv-docs-toc-list {
+        @apply space-y-0.5 text-[11px] leading-snug;
+    }
+
+    .serv-docs-toc-link {
+        @apply block rounded-md py-1.5 pe-2 text-slate-600 hover:text-teal-800 hover:bg-teal-50/80 dark:text-slate-400 dark:hover:text-teal-200 dark:hover:bg-teal-950/40 transition;
+    }
+
+    .serv-docs-toc-link.is-active {
+        @apply text-teal-900 font-medium bg-teal-50 ring-1 ring-teal-200/70 dark:text-teal-100 dark:bg-teal-950/50 dark:ring-teal-800/60;
+    }
+
+    .serv-docs-toc-depth-0 {
+        @apply ps-0;
+    }
+
+    .serv-docs-toc-depth-1 {
+        @apply ps-2.5 border-s border-slate-200 dark:border-slate-700;
+    }
+
+    .serv-docs-toc-depth-2 {
+        @apply ps-5 border-s border-slate-200 dark:border-slate-700;
+    }
+
+    .serv-docs-toc-depth-3 {
+        @apply ps-7 border-s border-slate-200 dark:border-slate-700;
+    }
+
+    .serv-docs-toc--mobile {
+        @apply mb-0;
+    }
+
+    .serv-docs-sidebar .serv-docs-search {
+        @apply pb-1 border-b border-slate-200/80 dark:border-slate-700/80;
     }
 
     .serv-docs-prose p {

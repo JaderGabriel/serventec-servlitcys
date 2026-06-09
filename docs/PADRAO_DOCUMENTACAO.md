@@ -118,7 +118,16 @@ Decisão de produto: [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md).
 | Admin | `/admin/documentacao` |
 | Utilizador / Municipal | `/documentacao` |
 
+| Recurso | Comportamento |
+|---------|----------------|
+| **Menu lateral** | Secções numeradas 1–6 + Arquivo + releases descobertos |
+| **Pesquisa** | `GET …/documentacao/buscar?q=` — título, secção, cabeçalhos |
+| **Neste documento** | Sumário à direita (desktop) com âncoras em `h1`–`h4` |
+| **Idioma** | Português europeu na UI e nos docs vivos |
+
 Ficheiros só-admin (deploy, `.env`, importações): lista em `DocumentationCatalog::adminOnlyPaths()`.
+
+Use cabeçalhos `##` e `###` descritivos — alimentam o sumário e a pesquisa.
 
 ---
 
