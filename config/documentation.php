@@ -23,10 +23,10 @@ return [
 
     'product' => [
         'version' => '4.4.5',
-        'release_tag' => '20260603a-Themis',
+        'release_tag' => '20260609a-Themis',
         'commit_short' => '1927352',
         'commit_number' => 364,
-        'revision_date' => '2026-06-03',
+        'revision_date' => '2026-06-09',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

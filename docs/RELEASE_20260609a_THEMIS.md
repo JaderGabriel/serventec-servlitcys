@@ -1,6 +1,6 @@
-# Release `20260603a-Themis` — ServLitcys 4.4.5
+# Release `20260609a-Themis` — ServLitcys 4.4.5
 
-**Data:** 2026-06-03 · **Ramo:** `main` · **Figura:** *Themis* (ordem e equilíbrio — índice de qualidade e leitura gerencial no rodapé).
+**Data:** 2026-06-09 · **Ramo:** `main` · **Figura:** *Themis* (ordem e equilíbrio — índice de qualidade e leitura gerencial no rodapé).
 
 ## Resumo
 
@@ -26,7 +26,7 @@ Patch **4.4.5** sobre **4.4.4** ([RELEASE_20260609c_ATROPOS.md](RELEASE_20260609
 
 ```bash
 git fetch --tags
-git checkout 20260603a-Themis
+git checkout 20260609a-Themis
 # ou: git pull origin main
 
 composer install --no-dev --optimize-autoloader
