@@ -16,7 +16,7 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 |-----------|-------|
 | **Versão semântica** | **4.4.2** |
 | **Tag de deploy** | `20260608a-Pythia` |
-| **Commit** | `15937ad` · **#352** |
+| **Commit** | `9e728a5` · **#352** |
 | **Data de referência** | 2026-06-08 |
 | **Release** | [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md) |
 

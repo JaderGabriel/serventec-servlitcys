@@ -24,7 +24,7 @@ return [
     'product' => [
         'version' => '4.4.2',
         'release_tag' => '20260608a-Pythia',
-        'commit_short' => '15937ad',
+        'commit_short' => '9e728a5',
         'commit_number' => 352,
         'revision_date' => '2026-06-08',
         'in_production' => true,
