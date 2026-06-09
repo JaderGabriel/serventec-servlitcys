@@ -75,6 +75,13 @@ class DocumentationCatalogTest extends TestCase
         $this->assertSame(__('Demais releases'), $outros['submenus'][0]['title'] ?? null);
     }
 
+    public function test_flat_entries_includes_powerbi_document(): void
+    {
+        $paths = array_column(DocumentationCatalog::flatEntriesForUser(null), 'path');
+
+        $this->assertContains('docs/POWERBI.md', $paths);
+    }
+
     public function test_releases_mesmo_dia_ordenam_por_sufixo(): void
     {
         $entries = DocumentationCatalog::discoverReleaseEntries();

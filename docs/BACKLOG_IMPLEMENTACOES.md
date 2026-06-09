@@ -1,6 +1,6 @@
 # Backlog de implementações — servlitcys
 
-**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
+**Versão do produto:** 4.4.2 · **Última revisão:** 2026-06-08
 
 > **Índice:** [README.md](README.md) · **Estado actual:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
@@ -88,6 +88,25 @@ Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento
 
 ---
 
+## I. Power BI e camada analítica
+
+Estudo completo: [POWERBI.md](POWERBI.md).
+
+| ID | Prioridade | Item | Estado | Fase |
+|----|------------|------|--------|------|
+| PBI-01 | P2 | Protótipo Desktop — discrepâncias CSV | Pendente | 0 |
+| PBI-02 | P1 | Tabela `bi_escola_discrepancies` + `bi:refresh-discrepancies` | Pendente | 1 |
+| PBI-03 | P1 | Tabela `bi_fundeb_municipio` + paridade VAAF | Pendente | 1 |
+| PBI-04 | P2 | `bi_network_vagas` (vagas por turma) | Pendente | 1 |
+| PBI-05 | P2 | On-premises Data Gateway em staging | Pendente | 2 |
+| PBI-06 | P2 | Relatório FUNDEB publicado no workspace | Pendente | 2 |
+| PBI-07 | P3 | API JSON `/api/bi/v1/fundeb` | Pendente | 3 |
+| PBI-08 | P2 | RLS `bi_user_cities` (espelhar `CityPolicy`) | Pendente | 4 |
+| PBI-09 | P3 | Power BI Embedded — rota `/dashboard/bi` | Pendente | 5 |
+| PBI-10 | P2 | Export matriz Serventec (Fase 1 [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md)) | Pendente | 6 |
+
+---
+
 ## H. Integrações setor público e previsão de demanda
 
 Estudo completo: [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md).
@@ -143,7 +162,7 @@ Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IE
 | NOVO-XX | P? | Descrição curta | Pendente | Origem (issue, reunião, doc) |
 ```
 
-1. Inserir na secção correcta (A–E).
+1. Inserir na secção correcta (A–I).
 2. Se for decisão de desenho, documentar em [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
 3. Ao concluir, mover linha para **G** e atualizar [STATUS_PROJETO.md](STATUS_PROJETO.md).
 4. Sugestão de cadastro/integração → [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) §F.

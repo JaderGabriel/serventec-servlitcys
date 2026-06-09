@@ -1,6 +1,6 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 4.4.1 · **Última revisão:** 2026-06-07
+**Versão do produto:** 4.4.2 · **Última revisão:** 2026-06-08
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
@@ -14,11 +14,11 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **4.4.1** |
-| **Tag de deploy** | `20260607b-Peitho` |
-| **Commit** | `e50ecca` · **#340** |
-| **Data de referência** | 2026-06-07 |
-| **Release** | [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md) |
+| **Versão semântica** | **4.4.2** |
+| **Tag de deploy** | `20260608a-Pythia` |
+| **Commit** | `15937ad` · **#352** |
+| **Data de referência** | 2026-06-08 |
+| **Release** | [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md) |
 
 ---
 

@@ -81,6 +81,9 @@
                                 </a>
                             </div>
                         @endif
+                        @include('documentation.partials.search', [
+                            'documentationRoutePrefix' => $docRoute,
+                        ])
                         @include('documentation.partials.sidebar', [
                             'sections' => $sections,
                             'currentPath' => $currentPath,
@@ -94,7 +97,10 @@
                         <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-serv-navy dark:text-slate-100">
                             {{ __('Índice de documentos') }}
                         </summary>
-                        <div class="border-t border-slate-200/80 dark:border-slate-700/80 p-4 max-h-64 overflow-y-auto">
+                        <div class="border-t border-slate-200/80 dark:border-slate-700/80 p-4 space-y-4 max-h-[28rem] overflow-y-auto">
+                            @include('documentation.partials.search', [
+                                'documentationRoutePrefix' => $docRoute,
+                            ])
                             @include('documentation.partials.sidebar', [
                                 'sections' => $sections,
                                 'currentPath' => $currentPath,

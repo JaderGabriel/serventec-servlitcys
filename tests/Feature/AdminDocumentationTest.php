@@ -117,4 +117,37 @@ class AdminDocumentationTest extends TestCase
             ->get(route('documentation.index'))
             ->assertRedirect(route('documentation.show', ['doc' => 'docs/README.md']));
     }
+
+    public function test_admin_documentation_search_returns_json(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->getJson(route('admin.documentation.search', ['q' => 'power bi']))
+            ->assertOk()
+            ->assertJsonStructure(['query', 'results'])
+            ->assertJsonFragment(['path' => 'docs/POWERBI.md']);
+    }
+
+    public function test_documentation_reader_includes_search_field(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->get(route('admin.documentation.show', ['doc' => 'docs/README.md']))
+            ->assertOk()
+            ->assertSee('serv-docs-search-input', false)
+            ->assertSee(__('Pesquisar documentos…'), false);
+    }
+
+    public function test_admin_can_open_powerbi_document_from_catalog(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->get(route('admin.documentation.show', ['doc' => 'docs/POWERBI.md']))
+            ->assertOk()
+            ->assertSee(__('Power BI'), false)
+            ->assertSee('bi_escola_discrepancies', false);
+    }
 }

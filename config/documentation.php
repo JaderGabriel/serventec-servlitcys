@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '4.4.1',
-        'release_tag' => '20260607b-Peitho',
-        'commit_short' => 'e50ecca',
-        'commit_number' => 340,
-        'revision_date' => '2026-06-07',
+        'version' => '4.4.2',
+        'release_tag' => '20260608a-Pythia',
+        'commit_short' => '15937ad',
+        'commit_number' => 352,
+        'revision_date' => '2026-06-08',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

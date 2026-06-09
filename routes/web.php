@@ -84,6 +84,7 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
             ->name('dashboard.analytics.inclusion.export.queue');
 
         Route::get('/documentacao', [DocumentationController::class, 'index'])->name('documentation.index');
+        Route::get('/documentacao/buscar', [DocumentationController::class, 'search'])->name('documentation.search');
         Route::get('/documentacao/ver', [DocumentationController::class, 'show'])->name('documentation.show');
 
         Route::get('/filas', [AdminSyncQueueController::class, 'index'])->name('sync-queue.index');
@@ -158,6 +159,8 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'legal.consent', 'adm
 
     Route::get('/admin/documentacao', [AdminDocumentationController::class, 'index'])
         ->name('admin.documentation.index');
+    Route::get('/admin/documentacao/buscar', [AdminDocumentationController::class, 'search'])
+        ->name('admin.documentation.search');
     Route::get('/admin/documentacao/ver', [AdminDocumentationController::class, 'show'])
         ->name('admin.documentation.show');
 

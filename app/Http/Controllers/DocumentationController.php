@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Services\Admin\DocumentationFileReader;
 use App\Services\Admin\DocumentationMarkdownRenderer;
 use App\Support\Admin\DocumentationCatalog;
+use App\Support\Admin\DocumentationSearchIndex;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,6 +19,27 @@ class DocumentationController extends Controller
     {
         return redirect()->route($this->documentationRoutePrefix().'.show', [
             'doc' => DocumentationCatalog::defaultPath(),
+        ]);
+    }
+
+    public function search(Request $request, DocumentationSearchIndex $searchIndex): JsonResponse
+    {
+        $user = $request->user();
+        abort_if($user === null || ! $user->canViewDocumentation(), 403);
+
+        $query = trim((string) $request->query('q', ''));
+        $limit = min(30, max(1, (int) $request->query('limit', 20)));
+
+        $results = $searchIndex->search(
+            $user,
+            $query,
+            $limit,
+            $this->documentationRoutePrefix(),
+        );
+
+        return response()->json([
+            'query' => $query,
+            'results' => $results,
         ]);
     }
 

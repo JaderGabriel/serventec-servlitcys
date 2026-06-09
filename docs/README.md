@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 4.4.1 · tag `20260607b-Peitho` · **Última revisão:** 2026-06-07
+**Versão do produto:** 4.4.2 · tag `20260608a-Pythia` · **Última revisão:** 2026-06-08
 
 Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitectura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
@@ -91,6 +91,7 @@ mindmap
 | [CADUNICO_FAIXAS_ETARIAS_FUNDEB.md](CADUNICO_FAIXAS_ETARIAS_FUNDEB.md) | Faixas 4–17, 0–3 e indicadores FUNDEB |
 | [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md) | Mapa territorial e pressão |
 | [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md) | PDF Serventec |
+| [POWERBI.md](POWERBI.md) | Estudo Power BI — integração, ETL, DAX, previsão |
 | [SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md](SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md) | Cobertura MEC/INEP |
 | [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | SAEB / IDEB |
 | [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) | Cadastro e integrações |
@@ -104,12 +105,14 @@ mindmap
 | [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) | FNDE, Tesouro, INEP, repasses |
 | [BB_EXTRATO_OPEN_FINANCE.md](BB_EXTRATO_OPEN_FINANCE.md) | Extrato BB / Open Finance |
 | [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md) | Export matriz FUNDEB |
+| [POWERBI.md](POWERBI.md) | Power BI — cenários, licenciamento, roadmap |
 | [COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md](COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md) | Base local vs FNDE |
 
 ### 4. Releases (recentes primeiro)
 
 | Documento | Versão |
 |-----------|--------|
+| [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md) | **4.4.2** — Pythia |
 | [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md) | **4.4.1** — Peitho |
 | [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md) | 4.4.0 — Ananke |
 | [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md) | 4.3.0 — Harmonia |

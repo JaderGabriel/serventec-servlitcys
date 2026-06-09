@@ -335,6 +335,36 @@ final class DocumentationCatalog
         return self::filterSectionsForAudience(self::sections(), $isAdmin);
     }
 
+    /**
+     * Lista plana de entradas do menu (deduplicada por path) para pesquisa e índices.
+     *
+     * @return list<array{path: string, label: string, hint: string, section_title: string}>
+     */
+    public static function flatEntriesForUser(?User $user = null): array
+    {
+        $seen = [];
+        $entries = [];
+
+        foreach (self::sectionsForUser($user) as $section) {
+            $sectionTitle = (string) ($section['title'] ?? __('Documentação'));
+            foreach (self::sectionItemsFlat($section) as $item) {
+                $path = (string) ($item['path'] ?? '');
+                if ($path === '' || isset($seen[$path])) {
+                    continue;
+                }
+                $seen[$path] = true;
+                $entries[] = [
+                    'path' => $path,
+                    'label' => (string) ($item['label'] ?? self::labelFromPath($path)),
+                    'hint' => (string) ($item['hint'] ?? ''),
+                    'section_title' => $sectionTitle,
+                ];
+            }
+        }
+
+        return $entries;
+    }
+
     public static function githubRepositoryUrl(): string
     {
         return (string) config('documentation.github.repository', '');
@@ -400,6 +430,7 @@ final class DocumentationCatalog
                     ['label' => __('Plugins e cadastro i-Educar'), 'path' => 'docs/PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md'],
                     ['label' => __('Roadmap inclusão e cadastro NEE'), 'path' => 'docs/DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md'],
                     ['label' => __('Relatório PDF ATM'), 'path' => 'docs/RELATORIO_PDF_ATM.md'],
+                    ['label' => __('Power BI — integração'), 'path' => 'docs/POWERBI.md', 'hint' => __('ETL, DAX, Embedded, previsão')],
                     ['label' => __('Ponderações técnicas'), 'path' => 'docs/PONDERACOES_TECNICAS.md'],
                 ],
             ],
@@ -412,6 +443,7 @@ final class DocumentationCatalog
                     ['label' => __('Consultas externas (produção)'), 'path' => 'docs/CONSULTAS_EXTERNAS.md', 'hint' => __('FNDE, Tesouro, repasses')],
                     ['label' => __('Extrato BB / Open Finance'), 'path' => 'docs/BB_EXTRATO_OPEN_FINANCE.md'],
                     ['label' => __('Exportação planilha FUNDEB'), 'path' => 'docs/EXPORTACAO_DADOS_FUNDEB_PLANILHA.md'],
+                    ['label' => __('Power BI — matriz e ETL'), 'path' => 'docs/POWERBI.md', 'hint' => __('Data mart, Gateway, roadmap')],
                     ['label' => __('Comparativo VAAF vs FNDE/MEC'), 'path' => 'docs/COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md'],
                 ],
             ],

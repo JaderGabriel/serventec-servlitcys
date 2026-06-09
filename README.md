@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão em produção (`main`):** **4.4.1** · tag **`20260607b-Peitho`** · [release](docs/RELEASE_20260607b_PEITHO.md) · [histórico](docs/HISTORICO_VERSOES.md)
+**Versão em produção (`main`):** **4.4.2** · tag **`20260608a-Pythia`** · [release](docs/RELEASE_20260608a_PYTHIA.md) · [histórico](docs/HISTORICO_VERSOES.md)
 
 ---
 

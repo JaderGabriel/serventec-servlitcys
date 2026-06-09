@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **4.4.1** · release `20260607b-Peitho` · **Ramo:** `main` · **Última revisão:** 07/06/2026
+**Versão em produção:** **4.4.2** · release `20260608a-Pythia` · **Ramo:** `main` · **Última revisão:** 08/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -111,6 +111,8 @@ flowchart TB
 | Admin i-Educar — VAAR na matriz FUNDEB, CadÚnico nas discrepâncias, ano letivo vigente | Implementado (4.4.0) |
 | Tags de release — sufixo alfabético no mesmo dia (`ProductReleaseTag`) | Implementado (4.4.0) |
 | Hub documentação — `HUB_DOCUMENTACAO.md`, Mermaid no leitor, canvas no repo | Implementado (4.4.1) |
+| Pesquisa na documentação (`/documentacao/buscar`, índice MD + menu) | Implementado (4.4.2) |
+| Estudo Power BI — `docs/POWERBI.md`, backlog PBI-01…10 | Implementado (4.4.2) |
 | Rodapé autenticado — créditos desenvolvedor e link GitHub | Implementado (4.4.1) |
 | Admin — monitor de módulos — UI `serv-*`, cartões só saúde (sem atalhos) | Implementado (patch pós-3.3.0) |
 | Catálogo API i-Educar (consultas SQL → endpoints propostos, JSON, perf/seg) | Documentado — [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) |
