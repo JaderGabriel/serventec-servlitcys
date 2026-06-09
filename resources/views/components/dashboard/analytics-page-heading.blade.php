@@ -4,8 +4,6 @@
 ])
 
 @php
-    use App\Support\Dashboard\ChartExportMeta;
-
     $ctx = is_array($pageHeader) ? $pageHeader : ['hasCity' => false, 'cityTitle' => '', 'parts' => []];
     $hasCity = (bool) ($ctx['hasCity'] ?? false);
     $cityTitle = (string) ($ctx['cityTitle'] ?? '');

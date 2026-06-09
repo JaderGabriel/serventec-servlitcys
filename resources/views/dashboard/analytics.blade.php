@@ -1,8 +1,6 @@
 <x-app-layout>
     @php
-        use App\Support\Dashboard\ChartExportMeta;
-
-        $analyticsPageHeader = ChartExportMeta::pageHeaderContext(
+        $analyticsPageHeader = \App\Support\Dashboard\ChartExportMeta::pageHeaderContext(
             $selectedCity ?? null,
             $filters,
             is_array($ieducarOptions ?? null) ? $ieducarOptions : [],
