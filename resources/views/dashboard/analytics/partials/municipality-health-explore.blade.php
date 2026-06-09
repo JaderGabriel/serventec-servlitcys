@@ -31,12 +31,12 @@
                 {{ __('Explorar em detalhe') }}
             </h3>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
-                {{ __('Cada cartão mostra o que precisa de ajuste na área correspondente. O índice geral de qualidade está apenas na secção acima.') }}
+                {{ __('Atalhos para cada módulo do painel (cadastro, pedagógico, Censo e Finanças). Discrepâncias e impacto financeiro agregado estão no Painel de decisão acima — não se repetem aqui.') }}
             </p>
         </div>
     </header>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
         @foreach ($cards as $card)
             <article class="diag-explore-card {{ $toneSurface($card['tone']) }}">
                 <div class="diag-explore-card__top">

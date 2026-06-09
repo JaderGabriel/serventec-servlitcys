@@ -4,7 +4,9 @@ namespace Tests\Unit;
 
 use App\Models\City;
 use App\Services\Dashboard\AdminHomeMunicipalityMap;
+use App\Support\Dashboard\AdminHomeMapCache;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -93,6 +95,51 @@ final class AdminHomeMunicipalityMapTest extends TestCase
                 $this->assertTrue($dLat >= 0.1 || $dLng >= 0.1, 'Marcadores BA devem estar separados');
             }
         }
+    }
+
+    #[Test]
+    public function markers_usam_cache_apos_primeira_construcao(): void
+    {
+        config([
+            'cache.default' => 'array',
+            'performance.home_map_cache_store' => 'redis',
+            'performance.home_map_cache_ttl' => 3600,
+            'performance.home_defer_map_rx_snapshot' => true,
+        ]);
+        Cache::flush();
+
+        City::factory()->create([
+            'name' => 'Cacheville',
+            'uf' => 'SP',
+            'is_active' => true,
+            'db_host' => 'h',
+            'db_database' => 'd',
+            'db_username' => 'u',
+        ]);
+
+        $map = app(AdminHomeMunicipalityMap::class);
+        $first = $map->markers();
+        $second = $map->markers();
+
+        $this->assertCount(1, $first);
+        $this->assertSame($first, $second);
+        $this->assertNotNull(AdminHomeMapCache::get(
+            'admin_home_map_markers:v2:defer:'.(int) config('rx.vigente_year', (int) date('Y')).':'.$this->invokeFingerprint(),
+        ));
+    }
+
+    private function invokeFingerprint(): string
+    {
+        $row = City::query()
+            ->selectRaw('count(*) as aggregate_count, max(updated_at) as aggregate_updated')
+            ->first();
+        $count = (int) ($row->aggregate_count ?? 0);
+        $updated = $row->aggregate_updated ?? null;
+        $updatedTs = $updated instanceof \DateTimeInterface
+            ? $updated->format('U')
+            : (is_string($updated) ? strtotime($updated) : 0);
+
+        return $count.':'.$updatedTs;
     }
 
     #[Test]

@@ -135,6 +135,49 @@ export function safeChartResize(chart) {
     }
 }
 
+const EXPORT_COLORS = {
+    accent: "#0d9488",
+    accentDark: "#115e59",
+    headerBg: "#ffffff",
+    headerBorder: "#cbd5e1",
+    chartTitle: "#0f766e",
+    city: "#0f172a",
+    filter: "#475569",
+    legendBg: "#f8fffe",
+    legendStripe: "#ecfdf5",
+    legendBorder: "#5eead4",
+    legendHead: "#134e4a",
+    legendColHead: "#64748b",
+    legendLabel: "#1e293b",
+    legendValue: "#0d9488",
+    legendTotal: "#0f766e",
+    legendDivider: "#99f6e4",
+    footnote: "#64748b",
+    footerBg: "#f8fafc",
+    footerBorder: "#94a3b8",
+    footerText: "#475569",
+};
+
+const FONT_STACK = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+
+/** Tokens de layout — manter alturas de cálculo e desenho alinhadas. */
+const EXPORT_LAYOUT = {
+    accentBarH: 6,
+    pad: 36,
+    /** Acima disto: legenda em duas colunas (melhor densidade sem PNG alto). */
+    legendTwoColThreshold: 11,
+    legendMaxRowsSingle: 20,
+    legendMaxRegularTwoCol: 24,
+    legendColGap: 28,
+    legendRowH: 18,
+    legendTitleH: 22,
+    legendColHeadH: 16,
+    legendTotalsGap: 10,
+    legendBlockPad: 28,
+    legendLabelMaxChars: 80,
+    legendLabelMaxCharsTwoCol: 42,
+};
+
 function countWrappedLines(text, maxWidth, font) {
     const ctx = document.createElement("canvas").getContext("2d");
     if (!ctx || !text) {
@@ -168,11 +211,14 @@ function drawWrappedLines(
     lineHeight,
     font,
     color,
+    align = "left",
 ) {
     const oldAlign = ctx.textAlign;
+    ctx.textAlign = align;
     ctx.font = font;
     ctx.fillStyle = color;
     if (!text) {
+        ctx.textAlign = oldAlign;
         return startY;
     }
     const words = String(text).split(/\s+/);
@@ -196,14 +242,428 @@ function drawWrappedLines(
     return y;
 }
 
+function formatLegendValue(v) {
+    if (v === undefined || v === null || v === "") {
+        return "";
+    }
+    if (typeof v === "number") {
+        if (Number.isInteger(v)) {
+            return v.toLocaleString("pt-BR");
+        }
+        return (Math.round(v * 10) / 10).toLocaleString("pt-BR");
+    }
+    return String(v);
+}
+
 /**
- * Monta imagem final (cabeçalho + gráfico) de forma síncrona, para o download PNG/PDF
- * funcionar no mesmo «gesto» do utilizador (evita promessas / decode assíncrono).
+ * @param {object|null} payload
+ * @returns {Array<{label: string, valueText: string, isTotal?: boolean}>}
+ */
+export function legendRowsFromPayload(payload) {
+    if (!payload || typeof payload !== "object") {
+        return [];
+    }
+
+    const labels = Array.isArray(payload.labels) ? payload.labels : [];
+    const datasets = Array.isArray(payload.datasets) ? payload.datasets : [];
+    const rows = [];
+
+    if (labels.length && datasets.length === 1) {
+        const data = datasets[0]?.data ?? [];
+        labels.forEach((label, i) => {
+            rows.push({
+                label: String(label ?? ""),
+                valueText: formatLegendValue(data[i]),
+                isTotal: false,
+            });
+        });
+    } else if (labels.length && datasets.length > 1) {
+        datasets.forEach((ds, di) => {
+            const series = String(ds?.label ?? `Série ${di + 1}`);
+            const data = ds?.data ?? [];
+            labels.forEach((label, i) => {
+                rows.push({
+                    label: `${String(label ?? "")} (${series})`,
+                    valueText: formatLegendValue(data[i]),
+                    isTotal: false,
+                });
+            });
+        });
+    }
+
+    const fmt = (n) =>
+        Number(n).toLocaleString("pt-BR", { maximumFractionDigits: 0 });
+    if (payload.kpi_total !== undefined && payload.kpi_total !== null) {
+        rows.push({
+            label: String(payload.kpi_total_label || "Total no KPI"),
+            valueText: fmt(payload.kpi_total),
+            isTotal: true,
+        });
+    }
+    if (
+        payload.kpi_total_secondary !== undefined &&
+        payload.kpi_total_secondary !== null
+    ) {
+        rows.push({
+            label: String(
+                payload.kpi_total_secondary_label || "Soma das barras",
+            ),
+            valueText: fmt(payload.kpi_total_secondary),
+            isTotal: true,
+        });
+    }
+
+    return rows.filter((r) => r.label.trim() !== "");
+}
+
+function normalizeLegendRows(rows) {
+    if (!Array.isArray(rows)) {
+        return [];
+    }
+    return rows
+        .map((row) => ({
+            label: String(row?.label ?? "").trim(),
+            valueText: String(
+                row?.valueText ?? formatLegendValue(row?.value),
+            ).trim(),
+            isTotal: Boolean(row?.isTotal),
+        }))
+        .filter((r) => r.label !== "");
+}
+
+function drawAccentBar(ctx, w) {
+    ctx.fillStyle = EXPORT_COLORS.accent;
+    ctx.fillRect(0, 0, w, EXPORT_LAYOUT.accentBarH);
+}
+
+/**
+ * @param {Array<{label: string, valueText: string, isTotal?: boolean}>} rows
+ */
+function planLegendLayout(rows) {
+    if (!rows.length) {
+        return {
+            useTwoCol: false,
+            leftRows: [],
+            rightRows: [],
+            totals: [],
+            hiddenCount: 0,
+            innerH: 0,
+            blockH: 0,
+        };
+    }
+
+    const regular = rows.filter((r) => !r.isTotal);
+    const totals = rows.filter((r) => r.isTotal);
+    const useTwoCol = regular.length >= EXPORT_LAYOUT.legendTwoColThreshold;
+    const rowH = EXPORT_LAYOUT.legendRowH;
+
+    let leftRows = [];
+    let rightRows = [];
+    let hiddenCount = 0;
+    let dataRowSlots = 0;
+
+    if (useTwoCol) {
+        const cap = EXPORT_LAYOUT.legendMaxRegularTwoCol;
+        const visibleRegular = regular.slice(0, cap);
+        hiddenCount = regular.length - visibleRegular.length;
+        const half = Math.ceil(visibleRegular.length / 2);
+        leftRows = visibleRegular.slice(0, half);
+        rightRows = visibleRegular.slice(half);
+        dataRowSlots = Math.max(leftRows.length, rightRows.length);
+        if (hiddenCount > 0) {
+            dataRowSlots += 1;
+        }
+    } else {
+        const cap = Math.max(0, EXPORT_LAYOUT.legendMaxRowsSingle - totals.length);
+        const visibleRegular = regular.slice(0, cap);
+        hiddenCount = regular.length - visibleRegular.length;
+        leftRows = visibleRegular;
+        dataRowSlots = visibleRegular.length + totals.length;
+        if (hiddenCount > 0) {
+            dataRowSlots += 1;
+        }
+    }
+
+    let innerH =
+        EXPORT_LAYOUT.legendTitleH +
+        EXPORT_LAYOUT.legendColHeadH +
+        dataRowSlots * rowH +
+        10;
+
+    if (useTwoCol && totals.length > 0) {
+        innerH += EXPORT_LAYOUT.legendTotalsGap + totals.length * rowH;
+    }
+
+    const blockH = innerH + EXPORT_LAYOUT.legendBlockPad;
+
+    return {
+        useTwoCol,
+        leftRows,
+        rightRows,
+        totals: useTwoCol ? totals : [],
+        singleRows: useTwoCol ? [] : [...leftRows, ...totals],
+        hiddenCount,
+        innerH,
+        blockH,
+    };
+}
+
+function drawHorizontalRule(ctx, y, w, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+}
+
+function drawLegendDivider(ctx, x, y, width) {
+    ctx.strokeStyle = EXPORT_COLORS.legendDivider;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + width, y);
+    ctx.stroke();
+}
+
+/**
+ * @param {CanvasRenderingContext2D} ctx
+ */
+function drawLegendDataRow(
+    ctx,
+    row,
+    x,
+    y,
+    colWidth,
+    rowH,
+    rowFont,
+    totalFont,
+    maxLabel,
+    stripeY,
+    stripeLeft,
+    stripeWidth,
+    stripe,
+) {
+    const valueColX = x + colWidth - 4;
+    const font = row.isTotal ? totalFont : rowFont;
+
+    if (stripe && stripeWidth > 0 && !row.isTotal) {
+        ctx.fillStyle = EXPORT_COLORS.legendStripe;
+        ctx.fillRect(stripeLeft, stripeY, stripeWidth, rowH);
+    }
+
+    ctx.font = font;
+    ctx.fillStyle = row.isTotal
+        ? EXPORT_COLORS.legendTotal
+        : EXPORT_COLORS.legendLabel;
+    ctx.textAlign = "left";
+    const label =
+        row.label.length > maxLabel
+            ? `${row.label.slice(0, maxLabel - 1)}…`
+            : row.label;
+    ctx.fillText(label, x, y);
+
+    if (row.valueText) {
+        ctx.fillStyle = row.isTotal
+            ? EXPORT_COLORS.legendTotal
+            : EXPORT_COLORS.legendValue;
+        ctx.textAlign = "right";
+        ctx.fillText(row.valueText, valueColX, y);
+    }
+    ctx.textAlign = "left";
+}
+
+/**
+ * @param {CanvasRenderingContext2D} ctx
+ */
+function drawLegendColumnHeaders(ctx, x, y, colWidth, colHeadFont) {
+    const valueColX = x + colWidth - 4;
+    ctx.font = colHeadFont;
+    ctx.fillStyle = EXPORT_COLORS.legendColHead;
+    ctx.textAlign = "left";
+    ctx.fillText("Indicador", x, y);
+    ctx.textAlign = "right";
+    ctx.fillText("Valor", valueColX, y);
+    ctx.textAlign = "left";
+}
+
+/**
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {Array<{label: string, valueText: string, isTotal?: boolean}>} rows
+ */
+function drawLegendTable(ctx, rows, x, y, width, blockLeft = 0, blockWidth = 0) {
+    if (!rows.length) {
+        return y;
+    }
+
+    const layout = planLegendLayout(rows);
+    const rowH = EXPORT_LAYOUT.legendRowH;
+    const headFont = `700 12px ${FONT_STACK}`;
+    const colHeadFont = `600 10px ${FONT_STACK}`;
+    const rowFont = `12px ${FONT_STACK}`;
+    const totalFont = `700 12px ${FONT_STACK}`;
+    const startY = y;
+
+    ctx.fillStyle = EXPORT_COLORS.legendHead;
+    ctx.font = headFont;
+    ctx.textAlign = "left";
+    ctx.fillText("Legenda de leituras", x, y);
+    y += EXPORT_LAYOUT.legendTitleH;
+
+    const dataTop = y + EXPORT_LAYOUT.legendColHeadH;
+
+    if (layout.useTwoCol) {
+        const colWidth = Math.floor(
+            (width - EXPORT_LAYOUT.legendColGap) / 2,
+        );
+        const rightX = x + colWidth + EXPORT_LAYOUT.legendColGap;
+        const maxLabel = EXPORT_LAYOUT.legendLabelMaxCharsTwoCol;
+        const pairCount = Math.max(
+            layout.leftRows.length,
+            layout.rightRows.length,
+        );
+
+        drawLegendColumnHeaders(ctx, x, y, colWidth, colHeadFont);
+        drawLegendColumnHeaders(ctx, rightX, y, colWidth, colHeadFont);
+        y = dataTop;
+
+        for (let i = 0; i < pairCount; i += 1) {
+            const stripeY = y - rowH + 4;
+            if (layout.leftRows[i]) {
+                drawLegendDataRow(
+                    ctx,
+                    layout.leftRows[i],
+                    x,
+                    y,
+                    colWidth,
+                    rowH,
+                    rowFont,
+                    totalFont,
+                    maxLabel,
+                    stripeY,
+                    blockLeft,
+                    colWidth,
+                    i % 2 === 0,
+                );
+            }
+            if (layout.rightRows[i]) {
+                drawLegendDataRow(
+                    ctx,
+                    layout.rightRows[i],
+                    rightX,
+                    y,
+                    colWidth,
+                    rowH,
+                    rowFont,
+                    totalFont,
+                    maxLabel,
+                    stripeY,
+                    rightX,
+                    colWidth,
+                    i % 2 === 0,
+                );
+            }
+            y += rowH;
+        }
+
+        if (layout.hiddenCount > 0) {
+            ctx.font = rowFont;
+            ctx.fillStyle = EXPORT_COLORS.footnote;
+            ctx.fillText(
+                `… e mais ${layout.hiddenCount} item(ns) — consulte o painel interativo`,
+                x,
+                y,
+            );
+            y += rowH;
+        }
+
+        if (layout.totals.length > 0) {
+            y += EXPORT_LAYOUT.legendTotalsGap;
+            drawLegendDivider(ctx, x, y - 6, width);
+            layout.totals.forEach((row) => {
+                drawLegendDataRow(
+                    ctx,
+                    row,
+                    x,
+                    y,
+                    width,
+                    rowH,
+                    rowFont,
+                    totalFont,
+                    EXPORT_LAYOUT.legendLabelMaxChars,
+                    y - rowH + 4,
+                    blockLeft,
+                    blockWidth,
+                    false,
+                );
+                y += rowH;
+            });
+        }
+    } else {
+        const maxLabel = EXPORT_LAYOUT.legendLabelMaxChars;
+        const valueColX = x + width - 4;
+
+        ctx.font = colHeadFont;
+        ctx.fillStyle = EXPORT_COLORS.legendColHead;
+        ctx.fillText("Indicador", x, y);
+        ctx.textAlign = "right";
+        ctx.fillText("Valor", valueColX, y);
+        ctx.textAlign = "left";
+        y = dataTop;
+
+        let drewTotalDivider = false;
+        layout.singleRows.forEach((row, rowIndex) => {
+            if (row.isTotal && !drewTotalDivider) {
+                const hasRegularBefore = layout.singleRows
+                    .slice(0, rowIndex)
+                    .some((r) => !r.isTotal);
+                if (hasRegularBefore) {
+                    drawLegendDivider(ctx, x, y - 6, width);
+                }
+                drewTotalDivider = true;
+            }
+
+            drawLegendDataRow(
+                ctx,
+                row,
+                x,
+                y,
+                width,
+                rowH,
+                rowFont,
+                totalFont,
+                maxLabel,
+                y - rowH + 4,
+                blockLeft,
+                blockWidth,
+                !row.isTotal && rowIndex % 2 === 0,
+            );
+            y += rowH;
+        });
+
+        if (layout.hiddenCount > 0) {
+            ctx.font = rowFont;
+            ctx.fillStyle = EXPORT_COLORS.footnote;
+            ctx.fillText(
+                `… e mais ${layout.hiddenCount} item(ns) — consulte o painel interativo`,
+                x,
+                y,
+            );
+            y += rowH;
+        }
+    }
+
+    return startY + layout.innerH;
+}
+
+/**
+ * Monta imagem final (cabeçalho + gráfico + legenda + rodapé) de forma síncrona.
  *
  * @param {object} meta - documentTitle, cityLine, filterLines[], footerLine, generatedAt
+ * @param {object} [options] - subtitle, footnote, legendRows[]
  * @returns {{ dataUrl: string, width: number, height: number }}
  */
-export function buildCompositeExport(chart, meta, chartTitle) {
+export function buildCompositeExport(chart, meta, chartTitle, options = {}) {
     const restore = applyLightThemeForExport(chart);
     try {
         safeChartResize(chart);
@@ -237,9 +697,9 @@ export function buildCompositeExport(chart, meta, chartTitle) {
             imgH = Math.max(240, Number(chart.height) || 360);
         }
 
-        const pad = 28;
-        const maxContentW = 1320;
-        const innerW = Math.min(maxContentW, Math.max(720, imgW + pad * 2));
+        const pad = EXPORT_LAYOUT.pad;
+        const maxContentW = 1400;
+        const innerW = Math.min(maxContentW, Math.max(800, imgW + pad * 2));
         const textMax = innerW - 2 * pad;
 
         if (imgW > textMax) {
@@ -248,43 +708,71 @@ export function buildCompositeExport(chart, meta, chartTitle) {
             imgH = Math.round(imgH * s);
         }
 
+        const subtitle = String(options.subtitle ?? "").trim();
+        const footnote = String(options.footnote ?? "").trim();
+        const legendRows = normalizeLegendRows(
+            options.legendRows?.length
+                ? options.legendRows
+                : legendRowsFromPayload(options.payload),
+        );
+
         const generatedLine =
             (meta.generatedAt && String(meta.generatedAt).trim()) ||
             formatFooterTimestampGmt3();
-        const foot = [meta.footerLine, generatedLine]
+
+        const fontEyebrow = `700 11px ${FONT_STACK}`;
+        const fontChart = `700 15px ${FONT_STACK}`;
+        const fontSub = `13px ${FONT_STACK}`;
+        const fontCity = `600 14px ${FONT_STACK}`;
+        const fontFilter = `13px ${FONT_STACK}`;
+        const fontFoot = `11px ${FONT_STACK}`;
+
+        const filterText = (meta.filterLines || [])
             .filter(Boolean)
+            .map(String)
             .join(" · ");
+        const linesFilter = filterText
+            ? countWrappedLines(filterText, textMax, fontFilter)
+            : 0;
+        const linesSub = subtitle
+            ? countWrappedLines(subtitle, textMax, fontSub)
+            : 0;
+        const linesFootnote = footnote
+            ? countWrappedLines(footnote, textMax, fontSub)
+            : 0;
 
-        const fontTitle =
-            'bold 18px system-ui, -apple-system, "Segoe UI", sans-serif';
-        const fontSub =
-            '800 14px system-ui, -apple-system, "Segoe UI", sans-serif';
-        const fontCity =
-            '13px system-ui, -apple-system, "Segoe UI", sans-serif';
-        const fontFoot =
-            '11px system-ui, -apple-system, "Segoe UI", sans-serif';
+        const legendLayout = planLegendLayout(legendRows);
+        const legendH = legendLayout.blockH;
 
-        const linesSub = countWrappedLines(chartTitle || "", textMax, fontSub);
-        const linesFoot = countWrappedLines(foot, textMax, fontFoot);
+        const copyright =
+            (meta.copyrightLine && String(meta.copyrightLine).trim()) ||
+            (meta.appName && String(meta.appName).trim()) ||
+            "";
+        const powered =
+            (meta.poweredByLine && String(meta.poweredByLine).trim()) || "";
+        const footerMeta = [copyright, powered, generatedLine]
+            .filter((s) => String(s || "").trim() !== "")
+            .join(" · ");
+        const linesFooter = countWrappedLines(footerMeta, textMax, fontFoot);
 
-        const headerBandPad = 14;
-        const footerBandPad = 16;
-        const footerH = footerBandPad + linesFoot * 14 + footerBandPad;
+        const headerH =
+            EXPORT_LAYOUT.accentBarH +
+            22 +
+            24 +
+            24 +
+            (chartTitle ? 24 : 0) +
+            linesSub * 16 +
+            (meta.cityLine ? 22 : 0) +
+            linesFilter * 16 +
+            20;
+
+        const footnoteH = linesFootnote > 0 ? 14 + linesFootnote * 15 + 10 : 0;
+        const footerH = 18 + linesFooter * 14 + 18;
 
         const w = innerW;
-        /** Altura aproximada do cabeçalho (texto + faixa), alinhada ao desenho abaixo. */
-        const headerHApprox =
-            headerBandPad +
-            pad +
-            20 +
-            linesSub * 18 +
-            10 +
-            (meta.cityLine ? 20 : 0) +
-            (meta.filterLines || []).length * 18 +
-            headerBandPad +
-            8;
-
-        const h = Math.ceil(headerHApprox + imgH + 20 + footerH + 32);
+        const h = Math.ceil(
+            headerH + imgH + 24 + legendH + footnoteH + footerH + 8,
+        );
 
         const canvas = document.createElement("canvas");
         canvas.width = w;
@@ -296,77 +784,77 @@ export function buildCompositeExport(chart, meta, chartTitle) {
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, w, h);
 
-        const cx = Math.round(w / 2);
+        drawAccentBar(ctx, w);
 
-        // Helpers: logo simples (sem dependência de imagens externas).
-        const drawToolLogo = (y0) => {
-            const size = 22;
-            const x0 = cx - size / 2;
-            ctx.save();
-            ctx.fillStyle = "#4f46e5";
-            ctx.beginPath();
-            ctx.roundRect(x0, y0, size, size, 6);
-            ctx.fill();
-            ctx.strokeStyle = "rgba(255,255,255,0.65)";
-            ctx.lineWidth = 1.25;
-            ctx.beginPath();
-            ctx.moveTo(x0 + 6, y0 + 14);
-            ctx.lineTo(x0 + 10, y0 + 10);
-            ctx.lineTo(x0 + 13, y0 + 13);
-            ctx.lineTo(x0 + 17, y0 + 8);
-            ctx.stroke();
-            ctx.restore();
-            return y0 + size;
-        };
+        const headerTop = EXPORT_LAYOUT.accentBarH;
+        const headerBottom = headerH;
+        ctx.fillStyle = EXPORT_COLORS.headerBg;
+        ctx.fillRect(0, headerTop, w, headerBottom - headerTop);
+        drawHorizontalRule(ctx, headerBottom, w, EXPORT_COLORS.headerBorder);
 
-        let y = headerBandPad + pad;
-        // Logo + nome do documento (centralizado)
-        y = drawToolLogo(y) + 10;
-        ctx.font = fontTitle;
-        ctx.fillStyle = "#111827";
-        ctx.textAlign = "center";
-        ctx.fillText(meta.documentTitle || "Relatório", cx, y);
-        y += 26;
+        let y = headerTop + 20;
+        const x = pad;
 
-        const titleUpper = String(chartTitle || "").toUpperCase();
-        y = drawWrappedLines(
-            ctx,
-            titleUpper,
-            cx,
+        ctx.font = fontEyebrow;
+        ctx.fillStyle = EXPORT_COLORS.accentDark;
+        ctx.textAlign = "left";
+        ctx.fillText(
+            String(meta.documentTitle || "Análise educacional").toUpperCase(),
+            x,
             y,
-            textMax,
-            18,
-            fontSub,
-            "#374151",
         );
-        y += 10;
+        y += 22;
 
-        ctx.font = fontCity;
-        ctx.fillStyle = "#1f2937";
-        if (meta.cityLine) {
-            ctx.fillText(meta.cityLine, cx, y);
-            y += 20;
+        if (chartTitle) {
+            y = drawWrappedLines(
+                ctx,
+                String(chartTitle).toUpperCase(),
+                x,
+                y,
+                textMax,
+                19,
+                fontChart,
+                EXPORT_COLORS.chartTitle,
+            );
+            y += 6;
         }
-        (meta.filterLines || []).forEach((line) => {
-            ctx.fillText(String(line), cx, y);
-            y += 18;
-        });
-        y += headerBandPad;
 
-        const headerBg = "#f3f4f6";
-        const headerBorder = "#e5e7eb";
-        const headerFillH = y;
-        ctx.save();
-        ctx.globalCompositeOperation = "destination-over";
-        ctx.fillStyle = headerBg;
-        ctx.fillRect(0, 0, w, headerFillH);
-        ctx.restore();
-        ctx.strokeStyle = headerBorder;
-        ctx.beginPath();
-        ctx.moveTo(0, headerFillH);
-        ctx.lineTo(w, headerFillH);
-        ctx.stroke();
+        if (subtitle) {
+            y = drawWrappedLines(
+                ctx,
+                subtitle,
+                x,
+                y,
+                textMax,
+                16,
+                fontSub,
+                EXPORT_COLORS.filter,
+            );
+            y += 8;
+        }
 
+        if (meta.cityLine) {
+            ctx.font = fontCity;
+            ctx.fillStyle = EXPORT_COLORS.city;
+            ctx.textAlign = "left";
+            ctx.fillText(meta.cityLine, x, y);
+            y += 22;
+        }
+
+        if (filterText) {
+            y = drawWrappedLines(
+                ctx,
+                `Recorte: ${filterText}`,
+                x,
+                y,
+                textMax,
+                16,
+                fontFilter,
+                EXPORT_COLORS.filter,
+            );
+        }
+
+        y = headerBottom + 18;
         const imgX = pad + (w - 2 * pad - imgW) / 2;
         if (!src.width || !src.height) {
             throw new Error(
@@ -374,42 +862,61 @@ export function buildCompositeExport(chart, meta, chartTitle) {
             );
         }
         ctx.drawImage(src, imgX, y, imgW, imgH);
-        y += imgH + 16;
+        y += imgH + 20;
+
+        if (legendRows.length > 0) {
+            const legendTop = y;
+            const legendBlockH = legendLayout.blockH;
+            ctx.fillStyle = EXPORT_COLORS.legendBg;
+            ctx.fillRect(0, legendTop, w, legendBlockH);
+            drawHorizontalRule(ctx, legendTop, w, EXPORT_COLORS.legendBorder);
+            drawHorizontalRule(
+                ctx,
+                legendTop + legendBlockH,
+                w,
+                EXPORT_COLORS.legendBorder,
+            );
+            drawLegendTable(
+                ctx,
+                legendRows,
+                x,
+                legendTop + 14,
+                textMax,
+                0,
+                w,
+            );
+            y = legendTop + legendBlockH + 10;
+        }
+
+        if (footnote) {
+            y = drawWrappedLines(
+                ctx,
+                footnote,
+                x,
+                y + 4,
+                textMax,
+                14,
+                fontSub,
+                EXPORT_COLORS.footnote,
+            );
+            y += 10;
+        }
 
         const footerTop = y;
-        const footerBg = "#f9fafb";
-        const footerBorder = "#e5e7eb";
-        ctx.fillStyle = footerBg;
+        ctx.fillStyle = EXPORT_COLORS.footerBg;
         ctx.fillRect(0, footerTop, w, h - footerTop);
-        ctx.strokeStyle = footerBorder;
-        ctx.beginPath();
-        ctx.moveTo(0, footerTop);
-        ctx.lineTo(w, footerTop);
-        ctx.stroke();
+        drawHorizontalRule(ctx, footerTop, w, EXPORT_COLORS.footerBorder);
 
-        ctx.textAlign = "center";
-        const footerY0 = footerTop + footerBandPad;
-        // Rodapé: logo + texto direitos autorais (centralizado)
-        let fy = footerY0;
-        fy = drawToolLogo(fy) + 8;
-        const appName = (meta.appName && String(meta.appName).trim()) || "";
-        const copyright =
-            (meta.copyrightLine && String(meta.copyrightLine).trim()) || "";
-        const powered =
-            (meta.poweredByLine && String(meta.poweredByLine).trim()) || "";
-        const footerText = [copyright, powered, foot]
-            .filter((s) => String(s || "").trim() !== "")
-            .join(" · ");
-
+        ctx.textAlign = "left";
         drawWrappedLines(
             ctx,
-            footerText,
-            cx,
-            fy,
+            footerMeta,
+            x,
+            footerTop + 18,
             textMax,
             14,
             fontFoot,
-            "#64748b",
+            EXPORT_COLORS.footerText,
         );
 
         return {

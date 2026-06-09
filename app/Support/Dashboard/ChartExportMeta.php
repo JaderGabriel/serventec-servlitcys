@@ -34,13 +34,19 @@ final class ChartExportMeta
             ->format('d/m/Y H:i')
             .' GMT-3';
 
+        $appName = (string) config('app.name');
+        $author = trim((string) config('chart_export.author'));
+
         if ($city === null) {
             return [
                 'documentTitle' => __('Análise educacional'),
                 'cityLine' => '',
                 'filterLines' => [],
-                'footerLine' => (string) config('app.name'),
+                'footerLine' => $appName,
                 'generatedAt' => $generatedAt,
+                'appName' => $appName,
+                'copyrightLine' => $appName,
+                'poweredByLine' => $author !== '' ? $author : '',
             ];
         }
 
@@ -49,10 +55,9 @@ final class ChartExportMeta
             self::appliedFilterParts($filters, $ieducarOptions, includeUnsetDimensions: false),
         );
 
-        $author = trim((string) config('chart_export.author'));
         $footer = $author !== ''
-            ? __(':app · :author', ['app' => config('app.name'), 'author' => $author])
-            : (string) config('app.name');
+            ? __(':app · :author', ['app' => $appName, 'author' => $author])
+            : $appName;
 
         return [
             'documentTitle' => __('Análise educacional'),
@@ -60,6 +65,9 @@ final class ChartExportMeta
             'filterLines' => $lines,
             'footerLine' => $footer,
             'generatedAt' => $generatedAt,
+            'appName' => $appName,
+            'copyrightLine' => $appName,
+            'poweredByLine' => $author !== '' ? $author : '',
         ];
     }
 

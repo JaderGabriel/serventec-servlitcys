@@ -46,6 +46,12 @@ final class AnalyticsReportPdfCopy
             'cadastro' => __(
                 'Dimensão sistémica do cadastro e da rede: volume de matrículas, turmas, oferta e ocupação. Decisões típicas: abertura de turmas, remanejamento, transporte escolar e validação de dados antes do Censo.'
             ),
+            'cadunico' => __(
+                'Previsão CadÚnico: crianças em idade escolar no Cecad que não aparecem na rede municipal filtrada. Use as tabelas de faixas e territórios (distância à escola, pressão e lacuna) para busca ativa e expansão de vagas — sem mapa neste PDF.'
+            ),
+            'finance_realtime' => __(
+                'Conciliação entre expectativa FUNDEB (matrículas × VAAF) e repasses já registados nas fontes públicas importadas. Apoia o acompanhamento de parcelas e divergências face ao planeamento.'
+            ),
             'pedagogical' => __(
                 'Indicadores pedagógicos e de equidade no mesmo filtro. Apoia decisões sobre inclusão (NEE/VAAR), permanência (frequência, abandono) e metas de aprendizagem quando há dados SAEB ou fluxo escolar.'
             ),

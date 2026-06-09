@@ -22,10 +22,10 @@ return [
     */
 
     'product' => [
-        'version' => '4.4.3',
-        'release_tag' => '20260609b-Lachesis',
-        'commit_short' => '39333e0',
-        'commit_number' => 355,
+        'version' => '4.4.4',
+        'release_tag' => '20260609c-Atropos',
+        'commit_short' => 'd77efeb',
+        'commit_number' => 359,
         'revision_date' => '2026-06-09',
         'in_production' => true,
         'production_label' => 'Em produção',

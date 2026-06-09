@@ -8,6 +8,8 @@
     'filterBootstrapUrl' => null,
     'filterYearsUrl' => null,
     'deferSecondaryFilters' => false,
+    /** panel: cartão completo no corpo · dock: painel compacto no rodapé fixo */
+    'variant' => 'panel',
 ])
 
 @php
@@ -19,27 +21,41 @@
     $turnos = $opts['turnos'] ?? [];
     $loadErrors = $opts['errors'] ?? [];
     $needsYearFetch = ! FilterOptionsService::hasNumericSchoolYears($yearOptions);
+    $isDock = $variant === 'dock';
 @endphp
 
-<div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
-    <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-        <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Filtros (estilo iEducar)') }}</h3>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
-            {{ __('Os valores dos selects vêm da base do município (config/ieducar.php). Turnos: prioridade à tabela turma_turno (id, nome); com ano letivo escolhido filtra-se por coluna ano (se existir) ou por turmas daquele ano. Escolas PostgreSQL podem usar relatorio.get_nome_escola. Personalize IEDUCAR_SQL_* quando necessário.') }}
-        </p>
-    </div>
+@if ($isDock)
     @if (! empty($loadErrors))
-        <div class="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200">
+        <div class="mb-3 rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
             @foreach ($loadErrors as $err)
                 <p>{{ $err }}</p>
             @endforeach
         </div>
     @endif
+@else
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Filtros (estilo iEducar)') }}</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">
+                {{ __('Os valores dos selects vêm da base do município (config/ieducar.php). Turnos: prioridade à tabela turma_turno (id, nome); com ano letivo escolhido filtra-se por coluna ano (se existir) ou por turmas daquele ano. Escolas PostgreSQL podem usar relatorio.get_nome_escola. Personalize IEDUCAR_SQL_* quando necessário.') }}
+            </p>
+        </div>
+        @if (! empty($loadErrors))
+            <div class="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200">
+                @foreach ($loadErrors as $err)
+                    <p>{{ $err }}</p>
+                @endforeach
+            </div>
+        @endif
+@endif
     <form
         id="analytics-ieducar-filters"
         method="get"
         action="{{ $formAction }}"
-        class="p-4"
+        @class([
+            'p-4' => ! $isDock,
+            'serv-analytics-filter-dock__form' => $isDock,
+        ])
         x-on:change="window.dispatchEvent(new CustomEvent('analytics-filters-preview'))"
         data-serv-loading-on-submit
         data-serv-loading-title="{{ __('A aplicar filtros') }}"
@@ -117,16 +133,18 @@
                         <option value="{{ $opt['id'] }}" @selected((string) old('escola_id', $filters->escola_id) === (string) $opt['id'])>{{ $label }}</option>
                     @endforeach
                 </select>
-                <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span class="font-medium not-italic text-gray-600 dark:text-gray-300">{{ __('Legenda:') }}</span>
-                    <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0" aria-hidden="true"></span>{{ __('ativa') }}</span>
-                    <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-red-500 shrink-0" aria-hidden="true"></span>{{ __('inativa') }}</span>
-                    <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-amber-500 shrink-0" aria-hidden="true"></span>{{ __('paralisada (substatus)') }}</span>
-                    <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-neutral-800 dark:bg-neutral-200 shrink-0" aria-hidden="true"></span>{{ __('extinta/baixada') }}</span>
-                    <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-sky-500 shrink-0" aria-hidden="true"></span>{{ __('anexo/integrada') }}</span>
-                    <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-500 shrink-0" aria-hidden="true"></span>{{ __('indisponível') }}</span>
-                    <span class="text-gray-400 dark:text-gray-500">{{ __('INEP antes do nome quando existir.') }}</span>
-                </p>
+                @unless ($isDock)
+                    <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span class="font-medium not-italic text-gray-600 dark:text-gray-300">{{ __('Legenda:') }}</span>
+                        <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0" aria-hidden="true"></span>{{ __('ativa') }}</span>
+                        <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-red-500 shrink-0" aria-hidden="true"></span>{{ __('inativa') }}</span>
+                        <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-amber-500 shrink-0" aria-hidden="true"></span>{{ __('paralisada (substatus)') }}</span>
+                        <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-neutral-800 dark:bg-neutral-200 shrink-0" aria-hidden="true"></span>{{ __('extinta/baixada') }}</span>
+                        <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-sky-500 shrink-0" aria-hidden="true"></span>{{ __('anexo/integrada') }}</span>
+                        <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-500 shrink-0" aria-hidden="true"></span>{{ __('indisponível') }}</span>
+                        <span class="text-gray-400 dark:text-gray-500">{{ __('INEP antes do nome quando existir.') }}</span>
+                    </p>
+                @endunless
             </div>
             <div>
                 <x-input-label for="curso_id" :value="__('Tipo/Segmento')" />
@@ -148,9 +166,13 @@
             </div>
         </div>
 
-        <div class="mt-4 flex flex-wrap items-center gap-2">
-            <x-primary-button type="submit">{{ __('Aplicar filtros') }}</x-primary-button>
-            <a href="{{ route('dashboard.analytics', ['city_id' => $city->id]) }}" class="text-sm text-gray-600 dark:text-gray-400 hover:underline">{{ __('Limpar filtros') }}</a>
-        </div>
+        @unless ($isDock)
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+                <x-primary-button type="submit">{{ __('Aplicar filtros') }}</x-primary-button>
+                <a href="{{ route('dashboard.analytics', ['city_id' => $city->id]) }}" class="text-sm text-gray-600 dark:text-gray-400 hover:underline">{{ __('Limpar filtros') }}</a>
+            </div>
+        @endunless
     </form>
-</div>
+@if (! $isDock)
+    </div>
+@endif

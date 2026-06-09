@@ -3,10 +3,10 @@
 namespace App\Services\Dashboard;
 
 use App\Models\City;
+use App\Support\Dashboard\AdminHomeMapCache;
 use App\Support\Dashboard\MunicipalityMapCadastroPresenter;
 use App\Support\Pulse\PulseOperationRecorder;
 use App\Support\Rx\RxCityMetricsCollector;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Snapshot RX (cadastro ano vigente) para cores e cartões do mapa no Início.
@@ -51,11 +51,10 @@ final class AdminHomeMapCadastroSnapshot
     private function loadOrBuild(): array
     {
         $vigenteYear = (int) config('rx.vigente_year', (int) date('Y'));
-        $cacheKey = 'admin_home_map_rx:'.$vigenteYear;
-        $ttlMinutes = 20;
+        $cacheKey = 'admin_home_map_rx:v2:'.$vigenteYear;
 
-        $cached = Cache::get($cacheKey);
-        if ($cached !== null) {
+        $cached = AdminHomeMapCache::get($cacheKey);
+        if (is_array($cached)) {
             PulseOperationRecorder::record('map:rx_snapshot|cache:hit', 1);
 
             return $cached;
@@ -82,7 +81,7 @@ final class AdminHomeMapCadastroSnapshot
             ];
         });
 
-        Cache::put($cacheKey, $payload, now()->addMinutes($ttlMinutes));
+        AdminHomeMapCache::put($cacheKey, $payload);
 
         return $payload;
     }

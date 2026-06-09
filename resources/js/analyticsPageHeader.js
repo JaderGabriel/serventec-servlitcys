@@ -69,6 +69,14 @@ function stripEscolaMarker(text) {
     return text.replace(/^[\p{Extended_Pictographic}\uFE0F?\s]+/u, "").trim();
 }
 
+export function analyticsFilterDock(initial) {
+    return {
+        filtersOpen: Boolean(initial?.filtersOpen),
+        ...analyticsPageHeader(initial?.header ?? initial),
+    };
+}
+
 export function registerAnalyticsPageHeader(Alpine) {
     Alpine.data("analyticsPageHeader", analyticsPageHeader);
+    Alpine.data("analyticsFilterDock", analyticsFilterDock);
 }

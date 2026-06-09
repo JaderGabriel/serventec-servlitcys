@@ -89,7 +89,7 @@
                     type="button"
                     @click="exportPng()"
                     class="inline-flex w-full sm:w-auto min-h-[44px] sm:min-h-0 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md bg-indigo-600 px-3 py-2.5 sm:py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
-                    title="{{ __('Exportar imagem PNG com cabeçalho e filtros') }}"
+                    title="{{ __('Exportar PNG com cabeçalho, recorte e legenda (1 ou 2 colunas)') }}"
                 >
                     {{ __('PNG') }}
                 </button>

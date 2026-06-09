@@ -614,7 +614,37 @@ class MunicipalityHealthRepository
 
             $totalMat = (int) ($disc['total_matriculas'] ?? $overview['kpis']['matriculas'] ?? 0);
 
-            return $this->assemble($city, $filters, $disc, $fundeb, $otherFunding, $workDone, $inclusion, $performance, $network, $totalMat);
+            return $this->assemble(
+                $city,
+                $filters,
+                $disc,
+                $fundeb,
+                $otherFunding,
+                $workDone,
+                $inclusion,
+                $performance,
+                $network,
+                $totalMat,
+                exploreTabPayload: [
+                    'overview' => $overview,
+                    'enrollment' => $enrollment,
+                    'network' => $network,
+                    'attendance' => $attendance,
+                    'performance' => $performance,
+                    'inclusion' => $inclusion,
+                    'fundeb' => $fundeb,
+                    'fundeb_projection' => is_array($fundeb['resource_projection'] ?? null) ? $fundeb['resource_projection'] : [],
+                    'work_done' => $workDone,
+                    'other_funding' => $otherFunding,
+                    'comparativo' => [
+                        'available' => $filters->hasYearSelected() && ! $filters->isAllSchoolYears(),
+                        'base_year' => $filters->hasYearSelected() && ! $filters->isAllSchoolYears()
+                            ? (int) $filters->ano_letivo
+                            : 0,
+                        'base_year_detail' => ['matriculas' => $totalMat],
+                    ],
+                ],
+            );
         } catch (\Throwable $e) {
             return array_merge($empty, [
                 'city_name' => $city->name,
@@ -645,6 +675,7 @@ class MunicipalityHealthRepository
         int $totalMat,
         bool $shellOnly = false,
         bool $strategicIntro = false,
+        array $exploreTabPayload = [],
     ): array {
         $checks = is_array($disc['checks'] ?? null) ? $disc['checks'] : [];
         $dimensions = is_array($disc['dimensions'] ?? null) ? $disc['dimensions'] : [];
@@ -806,6 +837,7 @@ class MunicipalityHealthRepository
                     count(array_filter($cadastroDimensions, static fn (array $d): bool => (bool) ($d['has_issue'] ?? false))),
                 ),
             'error' => $discLoadFailed ? (string) $disc['error'] : null,
+            'explore_tab_payload' => $shellOnly ? [] : $exploreTabPayload,
         ];
     }
 

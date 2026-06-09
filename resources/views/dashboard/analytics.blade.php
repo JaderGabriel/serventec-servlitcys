@@ -24,39 +24,13 @@
         </div>
     </x-slot>
 
-    <div class="py-8">
+    <div class="serv-analytics-page py-8">
         <div class="max-w-[1600px] mx-auto sm:px-6 lg:px-8 space-y-6">
             <div class="serv-panel serv-panel--info px-4 py-3 text-sm">
                 <p class="font-medium text-serv-navy dark:text-teal-100">{{ __('Foco no município selecionado') }}</p>
                 <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">
-                    {{ __('Comece pelo Resumo (Diagnóstico executivo); depois Cadastro, Pedagógico, Censo ou Finanças conforme a prioridade. Finanças detalha discrepâncias, FUNDEB e repasses.') }}
+                    {{ __('Comece pelo Resumo (Diagnóstico executivo); depois Cadastro, Pedagógico, Censo ou Finanças conforme a prioridade. Finanças detalha discrepâncias, FUNDEB e repasses. Use o rodapé fixo para mudar município, contato e filtros.') }}
                 </p>
-            </div>
-
-            <div class="serv-panel p-6">
-                <x-input-label for="analytics_city" :value="__('Município')" />
-                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Selecione o município cuja base i-Educar será analisada (cadastro ativo com conexão à base).') }}</p>
-                <form
-                    method="get"
-                    action="{{ route('dashboard.analytics') }}"
-                    class="mt-2 flex flex-col sm:flex-row gap-4 sm:items-end"
-                    data-serv-loading-on-submit
-                    data-serv-loading-title="{{ __('A carregar município') }}"
-                    data-serv-loading-message="{{ __('A preparar o painel de consultoria para a cidade selecionada…') }}"
-                >
-                    <div class="flex-1 max-w-xl">
-                        <select id="analytics_city" name="city_id" class="block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 shadow-sm focus:border-teal-600 focus:ring-teal-600" onchange="this.form.submit()">
-                            <option value="">{{ __('— Selecione uma cidade —') }}</option>
-                            @foreach ($cities as $c)
-                                <option value="{{ $c->id }}" @selected((string) ($selectedCity?->id) === (string) $c->id)>{{ $c->name }} ({{ $c->uf }})@if (filled($c->ibge_municipio)) — {{ __('IBGE') }} {{ $c->ibge_municipio }}@endif</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <x-primary-button type="submit">{{ __('Confirmar') }}</x-primary-button>
-                </form>
-                @if ($cities->isEmpty())
-                    <p class="mt-4 text-sm text-amber-700 dark:text-amber-300">{{ __('Não há cidades ativas com banco de dados configurado. Configure e ative uma cidade em Cidades.') }}</p>
-                @endif
             </div>
 
             @if ($selectedCity)
@@ -73,22 +47,6 @@
                         :filters="$filters"
                         :yearFilterReady="$yearFilterReady"
                     />
-
-                    <x-dashboard.ieducar-filter-bar
-                        :city="$selectedCity"
-                        :filters="$filters"
-                        :yearOptions="$yearOptions"
-                        :ieducarOptions="$ieducarOptions"
-                        :formAction="route('dashboard.analytics')"
-                        :filterOptionsTurnoUrl="route('dashboard.analytics.filter-options')"
-                        :filterBootstrapUrl="route('dashboard.analytics.filter-options-bootstrap')"
-                        :filterYearsUrl="route('dashboard.analytics.filter-options-years')"
-                        :deferSecondaryFilters="$deferSecondaryFilters ?? false"
-                    >
-                        <x-slot name="filtersExtras">
-                            <input type="hidden" name="tab" :value="tab" />
-                        </x-slot>
-                    </x-dashboard.ieducar-filter-bar>
 
                     @if (! empty($indexFatalMessage ?? null))
                         <div class="rounded-lg border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-900 dark:text-red-100">
@@ -315,11 +273,39 @@
                             </div>
                         </div>
                     </div>
+
+                    <x-dashboard.analytics-filter-dock
+                        :cities="$cities"
+                        :selectedCity="$selectedCity"
+                        :filters="$filters"
+                        :yearOptions="$yearOptions"
+                        :ieducarOptions="$ieducarOptions"
+                        :yearFilterReady="$yearFilterReady"
+                        :pageHeader="$analyticsPageHeader"
+                        :formAction="route('dashboard.analytics')"
+                        :filterOptionsTurnoUrl="route('dashboard.analytics.filter-options')"
+                        :filterBootstrapUrl="route('dashboard.analytics.filter-options-bootstrap')"
+                        :filterYearsUrl="route('dashboard.analytics.filter-options-years')"
+                        :deferSecondaryFilters="$deferSecondaryFilters ?? false"
+                    >
+                        <x-slot name="filtersExtras">
+                            <input type="hidden" name="tab" :value="tab" />
+                        </x-slot>
+                    </x-dashboard.analytics-filter-dock>
                 </div>
             @else
                 <div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/30 p-12 text-center">
-                    <p class="text-gray-600 dark:text-gray-400">{{ __('Selecione uma cidade para carregar os filtros do iEducar e as áreas de análise.') }}</p>
+                    <p class="text-gray-600 dark:text-gray-400">{{ __('Selecione um município no rodapé fixo para carregar os filtros do iEducar e as áreas de análise.') }}</p>
                 </div>
+
+                <x-dashboard.analytics-filter-dock
+                    :cities="$cities"
+                    :selectedCity="null"
+                    :filters="$filters"
+                    :yearOptions="$yearOptions ?? []"
+                    :ieducarOptions="$ieducarOptions ?? []"
+                    :formAction="route('dashboard.analytics')"
+                />
             @endif
         </div>
     </div>

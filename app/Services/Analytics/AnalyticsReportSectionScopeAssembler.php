@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Repositories\InepCensoMunicipioMatriculaRepository;
 use App\Support\Analytics\AnalyticsReportAtmCatalog;
 use App\Support\Analytics\AnalyticsReportBibliography;
+use App\Support\Analytics\AnalyticsReportCadunicoSection;
 use App\Support\Analytics\AnalyticsReportQrCodeBuilder;
 use App\Support\Dashboard\IeducarFilterState;
 
@@ -98,18 +99,23 @@ final class AnalyticsReportSectionScopeAssembler
         $network = is_array($bundle['network'] ?? null) ? $bundle['network'] : [];
         $schoolMap = is_array($bundle['school_units_map'] ?? null) ? $bundle['school_units_map'] : [];
         $comparatives = is_array($bundle['comparatives'] ?? null) ? $bundle['comparatives'] : [];
+        $cadunico = is_array($bundle['cadunico_previsao'] ?? null) ? $bundle['cadunico_previsao'] : [];
+        $financeRealtime = is_array($bundle['finance_realtime'] ?? null) ? $bundle['finance_realtime'] : [];
+        $attendance = is_array($bundle['attendance'] ?? null) ? $bundle['attendance'] : [];
 
         match ($id) {
             'indicadores_educacionais' => $this->scopeIndicadores($city, $filters, $overview, $comparatives, $kpis, $tables, $gaps, $notes),
-            'rede_municipal' => $this->scopeRedeMunicipal($enrollment, $network, $overview, $kpis, $tables, $gaps, $notes),
+            'rede_municipal' => $this->scopeRedeMunicipal($enrollment, $network, $overview, $attendance, $kpis, $tables, $gaps, $notes),
             'redes_publicas' => $this->scopeRedesPublicas($city, $filters, $overview, $kpis, $tables, $gaps, $notes),
             'fundeb' => $this->scopeFundeb($fundeb, $health, $kpis, $tables, $gaps, $notes),
+            'finance_realtime' => $this->scopeFinanceRealtime($financeRealtime, $kpis, $tables, $gaps, $notes),
             'salario_educacao' => $this->scopeSalarioEducacao($other, $kpis, $tables, $gaps, $notes),
             'programas_universais' => $this->scopeProgramasUniversais($other, $kpis, $tables, $gaps, $notes),
             'educacao_infantil' => $this->scopeEducacaoInfantil($enrollment, $overview, $kpis, $tables, $gaps, $notes),
             'inclusao_equidade' => $this->scopeInclusao($inclusion, $health, $kpis, $tables, $gaps, $notes),
             'desempenho_aprendizagem' => $this->scopeDesempenho($performance, $kpis, $tables, $gaps, $notes),
             'cadastro_censo' => $this->scopeCadastroCenso($disc, $work, $health, $kpis, $tables, $gaps, $notes),
+            'cadunico_previsao' => $this->scopeCadunico($cadunico, $kpis, $tables, $gaps, $notes),
             'territorio_rede' => $this->scopeTerritorio($schoolMap, $kpis, $tables, $gaps, $notes),
             'publicacao_digital' => $this->scopePublicacao($bundle, $kpis, $notes),
             default => $available = false,
@@ -206,6 +212,7 @@ final class AnalyticsReportSectionScopeAssembler
         array $enrollment,
         array $network,
         array $overview,
+        array $attendance,
         array &$kpis,
         array &$tables,
         array &$gaps,
@@ -252,6 +259,30 @@ final class AnalyticsReportSectionScopeAssembler
                     'rows' => $rows,
                 ];
             }
+        }
+
+        $attRows = is_array($attendance['rows'] ?? null) ? $attendance['rows'] : [];
+        if ($attRows !== []) {
+            $freqRows = [];
+            foreach (array_slice($attRows, 0, 8) as $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+                $freqRows[] = [
+                    (string) ($row['periodo'] ?? $row['label'] ?? '—'),
+                    (string) ($row['faltas'] ?? $row['total'] ?? '—'),
+                    (string) ($row['matriculas'] ?? '—'),
+                ];
+            }
+            if ($freqRows !== []) {
+                $tables[] = [
+                    'title' => __('Frequência — faltas por período'),
+                    'headers' => [__('Período'), __('Faltas'), __('Matrículas')],
+                    'rows' => $freqRows,
+                ];
+            }
+        } elseif (filled($attendance['message'] ?? null)) {
+            $notes[] = (string) $attendance['message'];
         }
 
         $this->gap($gaps, 'rede_municipal', 'ideb_series_missing', __('Série histórica IDEB por etapa (gráficos ATM) não importada — configure SAEB/IDEB municipal ou use o Portal IDEB no painel web.'));
@@ -484,6 +515,86 @@ final class AnalyticsReportSectionScopeAssembler
      * @param  list<array{section: string, code: string, detail: string}>  $gaps
      * @param  list<string>  $notes
      */
+    /**
+     * @param  array<string, mixed>  $cadunico
+     * @param  list<array<string, mixed>>  $kpis
+     * @param  list<array<string, mixed>>  $tables
+     * @param  list<array{section: string, code: string, detail: string}>  $gaps
+     * @param  list<string>  $notes
+     */
+    private function scopeCadunico(array $cadunico, array &$kpis, array &$tables, array &$gaps, array &$notes): void
+    {
+        $built = AnalyticsReportCadunicoSection::scopeFromReport($cadunico);
+        $kpis = $built['kpis'];
+        $tables = $built['tables'];
+        $notes = $built['notes'];
+
+        if (! ($built['available'] ?? false)) {
+            $detail = (string) ($cadunico['error'] ?? __('Dados CadÚnico indisponíveis — sincronize Cecad e aplique ano letivo específico.'));
+            $this->gap($gaps, 'cadunico_previsao', 'cadunico_previsao_missing', $detail);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $financeRealtime
+     * @param  list<array<string, mixed>>  $kpis
+     * @param  list<array<string, mixed>>  $tables
+     * @param  list<array{section: string, code: string, detail: string}>  $gaps
+     * @param  list<string>  $notes
+     */
+    private function scopeFinanceRealtime(array $financeRealtime, array &$kpis, array &$tables, array &$gaps, array &$notes): void
+    {
+        if (! ($financeRealtime['available'] ?? false)) {
+            $this->gap($gaps, 'finance_realtime', 'finance_realtime_unavailable', __('Finanças em tempo real indisponível para o município/ano.'));
+
+            return;
+        }
+
+        $kpis[] = ['label' => __('Expectativa anual'), 'value' => (string) ($financeRealtime['expected_annual_fmt'] ?? '—')];
+        $kpis[] = ['label' => __('Repasses observados'), 'value' => (string) ($financeRealtime['observed_annual_fmt'] ?? '—')];
+        $kpis[] = ['label' => __('Diferença'), 'value' => (string) ($financeRealtime['delta_fmt'] ?? '—')];
+        if (isset($financeRealtime['delta_pct']) && is_numeric($financeRealtime['delta_pct'])) {
+            $kpis[] = ['label' => __('% diferença'), 'value' => round((float) $financeRealtime['delta_pct'], 1).'%'];
+        }
+
+        $extrato = is_array($financeRealtime['extrato'] ?? null) ? $financeRealtime['extrato'] : [];
+        $tableBody = [];
+        foreach (is_array($extrato['cycles'] ?? null) ? $extrato['cycles'] : [] as $cycle) {
+            if (! is_array($cycle)) {
+                continue;
+            }
+            $fonteLabel = (string) ($cycle['fonte_label'] ?? $cycle['fonte'] ?? '—');
+            foreach (is_array($cycle['lines'] ?? null) ? $cycle['lines'] : [] as $line) {
+                if (! is_array($line) || ($line['line_type'] ?? '') !== 'credit') {
+                    continue;
+                }
+                $tableBody[] = [
+                    (string) ($line['date'] ?? '—'),
+                    $fonteLabel,
+                    (string) ($line['valor_fmt'] ?? $line['credit'] ?? '—'),
+                ];
+                if (count($tableBody) >= 12) {
+                    break 2;
+                }
+            }
+        }
+        if ($tableBody !== []) {
+            $tables[] = [
+                'title' => __('Extrato FUNDEB — repasses no exercício'),
+                'headers' => [__('Data'), __('Fonte'), __('Valor')],
+                'rows' => $tableBody,
+            ];
+        }
+
+        if (! ($financeRealtime['has_transfer_data'] ?? false)) {
+            $this->gap($gaps, 'finance_realtime', 'transfers_missing', __('Sem repasses importados — execute funding::import_transfers_city_year em Admin → Dados públicos.'));
+        }
+
+        if (filled($financeRealtime['data_sources_note'] ?? null)) {
+            $notes[] = (string) $financeRealtime['data_sources_note'];
+        }
+    }
+
     private function scopeCadastroCenso(array $disc, array $work, array $health, array &$kpis, array &$tables, array &$gaps, array &$notes): void
     {
         $ds = is_array($disc['summary'] ?? null) ? $disc['summary'] : [];

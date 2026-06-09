@@ -16,7 +16,11 @@ class DashboardMunicipalityMapController extends Controller
             abort(403);
         }
 
-        return response()->json($snapshot->forMapAjax());
+        $ttl = max(3600, (int) config('performance.home_map_cache_ttl', 3600));
+
+        return response()
+            ->json($snapshot->forMapAjax())
+            ->header('Cache-Control', 'private, max-age='.$ttl);
     }
 
     public function schoolYears(Request $request, City $city, CitySchoolYearsForMap $catalog): JsonResponse

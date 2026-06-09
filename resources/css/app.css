@@ -1837,6 +1837,125 @@
         @apply -translate-y-0.5;
     }
 
+    body:has(.serv-analytics-filter-dock) .serv-scroll-top {
+        @apply bottom-28 sm:bottom-32;
+    }
+
+    .serv-analytics-page {
+        @apply pb-36 sm:pb-40;
+    }
+
+    body:has(.serv-analytics-filter-dock) .serv-app-footer {
+        @apply mb-32 sm:mb-36;
+    }
+
+    .serv-analytics-filter-dock {
+        @apply fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/90 bg-white/95 backdrop-blur-md
+            shadow-[0_-6px_28px_rgba(15,23,42,0.1)] dark:border-slate-700/90 dark:bg-slate-900/95;
+    }
+
+    .serv-analytics-filter-dock__inner {
+        @apply py-2.5 sm:py-3 space-y-2;
+    }
+
+    .serv-analytics-filter-dock__municipality {
+        @apply flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2;
+    }
+
+    .serv-analytics-filter-dock__city-name {
+        @apply text-sm sm:text-base leading-tight;
+    }
+
+    .serv-analytics-filter-dock__city-meta {
+        @apply text-[11px] text-slate-500 dark:text-slate-400 font-mono;
+    }
+
+    .serv-analytics-filter-dock__contact {
+        @apply w-full sm:w-auto sm:max-w-[20rem];
+    }
+
+    .serv-analytics-filter-dock__city-form {
+        @apply w-full sm:w-auto sm:min-w-[12rem] sm:max-w-xs;
+    }
+
+    .serv-analytics-filter-dock__city-select {
+        @apply block w-full rounded-md border-slate-300 bg-white text-sm shadow-sm
+            focus:border-teal-600 focus:ring-teal-600
+            dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200;
+    }
+
+    .serv-analytics-filter-dock__summary {
+        @apply flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3
+            rounded-lg border border-slate-200/90 bg-slate-50/90 px-2.5 py-2
+            dark:border-slate-600/80 dark:bg-slate-800/50;
+    }
+
+    .serv-analytics-filter-dock__summary-toggle {
+        @apply min-w-0 flex-1 text-left rounded-md px-1 py-0.5
+            hover:bg-white/70 dark:hover:bg-slate-900/40 transition;
+    }
+
+    .serv-analytics-filter-dock__summary-label {
+        @apply block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-analytics-filter-dock__summary-parts {
+        @apply mt-0.5 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-xs sm:text-sm text-serv-navy dark:text-slate-200;
+    }
+
+    .serv-analytics-filter-dock__chip-label {
+        @apply text-slate-500 dark:text-slate-400 after:content-[':'] after:mr-0.5;
+    }
+
+    .serv-analytics-filter-dock__chip-value {
+        @apply font-medium;
+    }
+
+    .serv-analytics-filter-dock__chip--muted .serv-analytics-filter-dock__chip-value {
+        @apply font-normal text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-analytics-filter-dock__chip-sep {
+        @apply mx-1 text-slate-300 dark:text-slate-600;
+    }
+
+    .serv-analytics-filter-dock__summary-actions {
+        @apply flex shrink-0 items-center gap-1.5 self-end sm:self-center;
+    }
+
+    .serv-analytics-filter-dock__apply {
+        @apply inline-flex items-center justify-center rounded-md bg-teal-700 px-3 py-1.5 text-xs font-semibold text-white
+            shadow-sm hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1
+            dark:bg-teal-600 dark:hover:bg-teal-500 dark:focus:ring-offset-slate-900;
+    }
+
+    .serv-analytics-filter-dock__clear {
+        @apply text-xs text-slate-600 hover:underline dark:text-slate-400 px-1;
+    }
+
+    .serv-analytics-filter-dock__expand {
+        @apply inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200/90 bg-white text-slate-600
+            hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-500/40
+            dark:border-slate-600/80 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800;
+    }
+
+    .serv-analytics-filter-dock__panel {
+        @apply rounded-lg border border-slate-200/90 bg-white px-3 py-3 shadow-sm
+            dark:border-slate-600/80 dark:bg-slate-900/60;
+    }
+
+    .serv-analytics-filter-dock__form .grid {
+        @apply gap-3;
+    }
+
+    .serv-analytics-filter-dock__form label {
+        @apply text-xs;
+    }
+
+    .serv-analytics-filter-dock__empty {
+        @apply rounded-lg border border-amber-200/90 bg-amber-50/90 px-3 py-2 dark:border-amber-800/80 dark:bg-amber-950/30;
+    }
+
     .serv-nav-link-active {
         @apply border-teal-600 text-teal-900 dark:border-teal-500 dark:text-teal-100;
     }

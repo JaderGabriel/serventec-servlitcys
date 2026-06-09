@@ -4,8 +4,8 @@ namespace App\Support\Brazil;
 
 use App\Models\City;
 use App\Models\SchoolUnitGeo;
+use App\Support\Dashboard\AdminHomeMapCache;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -40,7 +40,7 @@ final class MunicipalityMapCoordinates
                     continue;
                 }
                 $coords = $byIbge[$ibge];
-                Cache::put(
+                AdminHomeMapCache::repository()->put(
                     $this->ibgeCacheKey((int) $city->id, $ibge),
                     $coords,
                     self::CACHE_TTL_SECONDS,
@@ -128,19 +128,20 @@ final class MunicipalityMapCoordinates
     {
         $key = $this->ibgeCacheKey($cityId, $ibge7);
 
-        $cached = Cache::get($key);
+        $cache = AdminHomeMapCache::repository();
+        $cached = $cache->get($key);
         if (is_array($cached) && isset($cached['lat'], $cached['lng'])) {
             return $cached;
         }
 
         $ufIndex = $this->municipiosByIbgeForUf(strtoupper(trim($uf)));
         if (isset($ufIndex[$ibge7])) {
-            Cache::put($key, $ufIndex[$ibge7], self::CACHE_TTL_SECONDS);
+            $cache->put($key, $ufIndex[$ibge7], self::CACHE_TTL_SECONDS);
 
             return $ufIndex[$ibge7];
         }
 
-        return Cache::remember(
+        return $cache->remember(
             $key,
             self::CACHE_TTL_SECONDS,
             fn (): ?array => $this->fetchIbgeCentroid($ibge7),
@@ -162,7 +163,7 @@ final class MunicipalityMapCoordinates
             return [];
         }
 
-        return Cache::remember(
+        return AdminHomeMapCache::repository()->remember(
             'municipality_map_ibge_uf:'.$uf,
             self::CACHE_TTL_SECONDS,
             function () use ($uf): array {

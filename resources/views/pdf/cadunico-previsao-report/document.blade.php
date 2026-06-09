@@ -16,7 +16,8 @@
     $impacto = is_array($gap['impacto_financeiro'] ?? null) ? $gap['impacto_financeiro'] : [];
     $cenarios = is_array($gap['cenarios_financeiros'] ?? null) ? $gap['cenarios_financeiros'] : [];
     $territorial = is_array($d['territorial'] ?? null) ? $d['territorial'] : [];
-    $rankingTerr = is_array($territorial['ranking'] ?? null) ? array_slice($territorial['ranking'], 0, 15) : [];
+    $rankingLimit = max(5, min(40, (int) config('analytics.pdf_report.cadunico_territory_rows', 25)));
+    $rankingTerr = is_array($territorial['ranking'] ?? null) ? array_slice($territorial['ranking'], 0, $rankingLimit) : [];
     $demandaOferta = is_array($d['demanda_oferta'] ?? null) ? $d['demanda_oferta'] : [];
 @endphp
 
@@ -141,12 +142,17 @@
 @endif
 
 @if (count($rankingTerr) > 0)
-    <h2>{{ __('Territórios prioritários') }}</h2>
-    <table class="data">
+    <h2>{{ __('Territórios — distância, pressão e lacuna') }}</h2>
+    <p class="muted">{{ __('Tabelas apenas — sem mapa. Pressão = lacuna × vulnerabilidade × distância à escola.') }}</p>
+    <table class="data data--compact">
         <thead>
             <tr>
                 <th>{{ __('Território') }}</th>
+                <th>{{ __('Código') }}</th>
+                <th>{{ __('Tipo') }}</th>
+                <th>{{ __('CadÚnico') }}</th>
                 <th>{{ __('Lacuna est.') }}</th>
+                <th>{{ __('Dist. escola') }}</th>
                 <th>{{ __('Pressão') }}</th>
             </tr>
         </thead>
@@ -154,7 +160,17 @@
             @foreach ($rankingTerr as $row)
                 <tr>
                     <td>{{ $row['nome'] ?? '' }}</td>
+                    <td>{{ $row['codigo'] ?? '—' }}</td>
+                    <td>{{ $row['tipo'] ?? '—' }}</td>
+                    <td>{{ isset($row['cadunico']) ? number_format((int) $row['cadunico'], 0, ',', '.') : '—' }}</td>
                     <td>{{ $row['gap_fmt'] ?? '0' }}</td>
+                    <td>
+                        @if (isset($row['distancia_escola_km']) && is_numeric($row['distancia_escola_km']))
+                            {{ number_format((float) $row['distancia_escola_km'], 1, ',', '.') }} km
+                        @else
+                            —
+                        @endif
+                    </td>
                     <td>{{ number_format((float) ($row['pressao'] ?? 0), 0, ',', '.') }}</td>
                 </tr>
             @endforeach

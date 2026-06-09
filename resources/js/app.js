@@ -2092,6 +2092,12 @@ document.addEventListener("alpine:init", () => {
                                 this.chart,
                                 this._exportMeta,
                                 this._payload?.title || "",
+                                {
+                                    subtitle: this._sourcePayload?.subtitle || "",
+                                    footnote: this._sourcePayload?.footnote || "",
+                                    legendRows: this.legendRows(),
+                                    payload: this._sourcePayload,
+                                },
                             ).dataUrl;
                         } catch (e1) {
                             console.warn("exportPng composite", e1);

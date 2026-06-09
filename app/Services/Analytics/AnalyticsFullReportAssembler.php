@@ -5,6 +5,7 @@ namespace App\Services\Analytics;
 use App\Models\AnalyticsReportExport;
 use App\Models\City;
 use App\Repositories\Ieducar\AttendanceRepository;
+use App\Repositories\Ieducar\CadunicoPrevisaoRepository;
 use App\Repositories\Ieducar\DiscrepanciesRepository;
 use App\Repositories\Ieducar\EnrollmentRepository;
 use App\Repositories\Ieducar\FundebRepository;
@@ -39,6 +40,8 @@ final class AnalyticsFullReportAssembler
         private AnalyticsReportComparatives $comparatives,
         private AnalyticsReportSchoolMapBuilder $schoolMapBuilder,
         private AnalyticsReportSectionScopeAssembler $sectionScopes,
+        private CadunicoPrevisaoRepository $cadunicoPrevisao,
+        private FinanceRealtimeFundebService $financeRealtime,
     ) {}
 
     /**
@@ -72,6 +75,9 @@ final class AnalyticsFullReportAssembler
         $charts = $this->collectCharts($health, $disc, $fundeb, $other, $work, $overview, $performance, $enrollment);
         $comparativeData = $this->comparatives->build($city, $filters, $fundeb, $health);
         $schoolMap = $this->schoolMapBuilder->build($city, $filters);
+        $cadunicoPrevisao = $this->cadunicoPrevisao->buildReport($city, $filters);
+        $municipalityCtx = \App\Support\Dashboard\AnalyticsMunicipalityContext::fromHealthSnapshot($health);
+        $financeRealtime = $this->financeRealtime->buildReport($city, $filters, $municipalityCtx);
 
         $filtersQuery = $filters->toQueryParamsWithCity((int) $city->id);
 
@@ -102,6 +108,8 @@ final class AnalyticsFullReportAssembler
             'municipal_vs_state' => $comparativeData['municipal_vs_state_enriched'],
             'charts' => $charts,
             'school_units_map' => $schoolMap,
+            'cadunico_previsao' => $cadunicoPrevisao,
+            'finance_realtime' => $financeRealtime,
             'brand' => PdfBrandAssets::enrich(config('analytics.pdf_report.brand', [])),
             'colors' => config('analytics.pdf_report.colors', []),
         ];

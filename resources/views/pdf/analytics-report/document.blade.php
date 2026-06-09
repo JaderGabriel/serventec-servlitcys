@@ -18,6 +18,8 @@
     $inclusion = is_array($inclusion ?? null) ? $inclusion : [];
     $performance = is_array($performance ?? null) ? $performance : [];
     $attendance = is_array($attendance ?? null) ? $attendance : [];
+    $cadunicoPrevisao = is_array($cadunico_previsao ?? null) ? $cadunico_previsao : [];
+    $financeRealtime = is_array($finance_realtime ?? null) ? $finance_realtime : [];
     $overviewKpis = is_array($overview['kpis'] ?? null) ? $overview['kpis'] : [];
     $enrollmentKpis = is_array($enrollment['kpis'] ?? null) ? $enrollment['kpis'] : [];
     $networkKpis = is_array($network['kpis'] ?? null) ? $network['kpis'] : [];
@@ -150,6 +152,12 @@
     </div>
 
     <div class="appendix-section">
+        <h2>{{ __('3b. CadÚnico — previsão fora da rede') }}</h2>
+        @include('pdf.analytics-report.partials.section-lead', ['section' => 'cadunico'])
+        @include('pdf.analytics-report.partials.cadunico-appendix', ['cadunico_previsao' => $cadunicoPrevisao])
+    </div>
+
+    <div class="appendix-section">
         <h2>{{ __('4. Pedagógico, inclusão e permanência') }}</h2>
         @include('pdf.analytics-report.partials.section-lead', ['section' => 'pedagogical'])
         @if (filled($performance['message'] ?? null))
@@ -165,6 +173,36 @@
                             <td>{{ $kpi['value'] ?? '—' }}</td>
                             <td>{{ isset($kpi['pct']) ? $kpi['pct'].'%' : '—' }}</td>
                         </tr>
+                    @endif
+                @endforeach
+            </table>
+        @endif
+        @php $attRows = is_array($attendance['rows'] ?? null) ? $attendance['rows'] : []; @endphp
+        @if (count($attRows) > 0)
+            <h3>{{ __('Frequência escolar') }}</h3>
+            <table class="data">
+                <tr><th>{{ __('Período') }}</th><th>{{ __('Faltas') }}</th><th>{{ __('Matrículas') }}</th></tr>
+                @foreach (array_slice($attRows, 0, 10) as $row)
+                    @if (is_array($row))
+                        <tr>
+                            <td>{{ $row['periodo'] ?? $row['label'] ?? '—' }}</td>
+                            <td>{{ $row['faltas'] ?? $row['total'] ?? '—' }}</td>
+                            <td>{{ $row['matriculas'] ?? '—' }}</td>
+                        </tr>
+                    @endif
+                @endforeach
+            </table>
+        @elseif (filled($attendance['message'] ?? null))
+            <p class="muted">{{ $attendance['message'] }}</p>
+        @endif
+        @php $inclKpis = is_array($inclusion['kpis'] ?? null) ? $inclusion['kpis'] : []; @endphp
+        @if ($inclKpis !== [])
+            <h3>{{ __('Inclusão (NEE)') }}</h3>
+            <table class="data">
+                <tr><th>{{ __('Indicador') }}</th><th>{{ __('Valor') }}</th></tr>
+                @foreach (array_slice($inclKpis, 0, 6) as $kpi)
+                    @if (is_array($kpi))
+                        <tr><td>{{ $kpi['label'] ?? '' }}</td><td>{{ $kpi['value'] ?? '—' }}</td></tr>
                     @endif
                 @endforeach
             </table>
@@ -228,6 +266,25 @@
                     @endif
                 @endif
             @endforeach
+        @endif
+    </div>
+
+    <div class="appendix-section">
+        <h2>{{ __('6b. Finanças — repasses em tempo real') }}</h2>
+        @include('pdf.analytics-report.partials.section-lead', ['section' => 'finance_realtime'])
+        @if ($financeRealtime['available'] ?? false)
+            <table class="kpi-row">
+                <tr>
+                    <td><div class="kpi-label">{{ __('Expectativa anual') }}</div><div class="kpi-value">{{ $financeRealtime['expected_annual_fmt'] ?? '—' }}</div></td>
+                    <td><div class="kpi-label">{{ __('Repasses observados') }}</div><div class="kpi-value">{{ $financeRealtime['observed_annual_fmt'] ?? '—' }}</div></td>
+                    <td><div class="kpi-label">{{ __('Diferença') }}</div><div class="kpi-value">{{ $financeRealtime['delta_fmt'] ?? '—' }}</div></td>
+                </tr>
+            </table>
+            @if (filled($financeRealtime['formula'] ?? null))
+                <p class="muted">{{ $financeRealtime['formula'] }}</p>
+            @endif
+        @else
+            <p class="muted">{{ __('Dados de repasses em tempo real indisponíveis para este recorte.') }}</p>
         @endif
     </div>
 

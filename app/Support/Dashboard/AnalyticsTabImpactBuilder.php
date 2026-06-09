@@ -118,6 +118,104 @@ final class AnalyticsTabImpactBuilder
     }
 
     /**
+     * Status e métrica resumida de uma aba para os cartões «Explorar» do Diagnóstico.
+     *
+     * @return array{status: string, label: string, score: ?int, share_label: ?string, share_value: ?string}
+     */
+    public static function exploreStatusForHealth(string $tab, array $health): array
+    {
+        return self::tabStatus($tab, self::tabDataFromHealth($health), self::contextFromHealth($health));
+    }
+
+    public static function exploreTabPurpose(string $tab): string
+    {
+        return (string) (self::definition($tab)['purpose'] ?? '');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function contextFromHealth(array $health): array
+    {
+        $summary = is_array($health['summary'] ?? null) ? $health['summary'] : [];
+
+        return [
+            'total_matriculas' => (int) ($summary['total_matriculas'] ?? 0),
+            'pendencias_cadastro' => (int) ($summary['pendencias_cadastro'] ?? 0),
+            'com_problema' => (int) ($summary['com_problema'] ?? 0),
+            'perda_estimada_anual' => (float) ($summary['perda_estimada_anual'] ?? 0),
+            'ganho_potencial_anual' => (float) ($summary['ganho_potencial_anual'] ?? 0),
+            'escolas_afetadas' => (int) ($summary['escolas_afetadas'] ?? 0),
+            'compliance_score' => (int) ($health['compliance_score'] ?? 0),
+            'compliance_status' => (string) ($health['compliance_status'] ?? 'neutral'),
+            'compliance_label' => (string) ($health['compliance_label'] ?? ''),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function tabDataFromHealth(array $health): array
+    {
+        $payload = is_array($health['explore_tab_payload'] ?? null) ? $health['explore_tab_payload'] : [];
+        $summary = is_array($health['summary'] ?? null) ? $health['summary'] : [];
+        $tabData = [];
+
+        foreach ([
+            'overview',
+            'enrollment',
+            'network',
+            'attendance',
+            'performance',
+            'inclusion',
+            'fundeb',
+            'work_done',
+            'other_funding',
+            'school_units',
+            'cadunico_previsao',
+            'finance_realtime',
+            'comparativo',
+        ] as $key) {
+            if (is_array($payload[$key] ?? null)) {
+                $tabData[$key] = $payload[$key];
+            }
+        }
+
+        if (! isset($tabData['other_funding'])) {
+            $tabData['other_funding'] = [
+                'programs' => is_array($health['complementary_programs'] ?? null) ? $health['complementary_programs'] : [],
+            ];
+        }
+
+        if (! isset($tabData['fundeb'])) {
+            $modules = is_array($health['fundeb_modules'] ?? null) ? $health['fundeb_modules'] : [];
+            $tabData['fundeb'] = ['modules' => $modules];
+            if (is_array($payload['fundeb_projection'] ?? null)) {
+                $tabData['fundeb']['resource_projection'] = $payload['fundeb_projection'];
+            }
+        }
+
+        if (! isset($tabData['comparativo']) && is_array($payload['comparativo'] ?? null)) {
+            $tabData['comparativo'] = $payload['comparativo'];
+        }
+
+        if (! isset($tabData['finance_realtime'])) {
+            $tabData['finance_realtime'] = [
+                'available' => (int) ($health['public_queries_success'] ?? 0) > 0,
+                'has_transfer_data' => false,
+            ];
+        }
+
+        if (! isset($tabData['overview']) && ($summary['total_matriculas'] ?? null) !== null) {
+            $tabData['overview'] = [
+                'kpis' => ['matriculas' => (int) $summary['total_matriculas']],
+            ];
+        }
+
+        return $tabData;
+    }
+
+    /**
      * @return array{title: string, purpose: string, impact_note: string}
      */
     private static function definition(string $tab): array

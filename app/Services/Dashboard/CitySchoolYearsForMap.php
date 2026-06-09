@@ -5,8 +5,8 @@ namespace App\Services\Dashboard;
 use App\Models\City;
 use App\Services\CityDataConnection;
 use App\Services\Ieducar\FilterOptionsService;
+use App\Support\Dashboard\AdminHomeMapCache;
 use App\Support\Ieducar\IeducarWorkActivityQueries;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Anos letivos por município para o mapa do Início (cache + leitura i-Educar).
@@ -27,9 +27,8 @@ final class CitySchoolYearsForMap
             return [];
         }
 
-        return Cache::remember(
-            'dashboard.map.school_years.v2.'.$city->id,
-            now()->addHour(),
+        return AdminHomeMapCache::remember(
+            'dashboard.map.school_years.v3.'.$city->id,
             function () use ($city): array {
                 try {
                     $fallback = $this->filterOptions->distinctSchoolYears($city);

@@ -6,9 +6,11 @@ use App\Models\City;
 use App\Support\Brazil\MunicipalityMapCoordinates;
 use App\Support\Brazil\MunicipalityMapOverlapResolver;
 use App\Support\City\CityReferenceContact;
+use App\Support\Dashboard\AdminHomeMapCache;
 use App\Support\Dashboard\MunicipalityMapCadastroPresenter;
 use App\Support\Dashboard\MunicipalityMapStatus;
 use App\Support\Ieducar\CityIeducarAppUrlResolver;
+use App\Support\Pulse\PulseOperationRecorder;
 
 /**
  * Marcadores para o mapa de municípios implementados no Início.
@@ -50,6 +52,32 @@ final class AdminHomeMunicipalityMap
     {
         $includeCadastro = $includeCadastroSnapshot ?? ! (bool) config('performance.home_defer_map_rx_snapshot', true);
         $vigenteYear = (int) config('rx.vigente_year', (int) date('Y'));
+        $cacheKey = 'admin_home_map_markers:v2:'
+            .($includeCadastro ? 'inline' : 'defer')
+            .':'.$vigenteYear
+            .':'.$this->citiesCacheFingerprint();
+
+        $cached = AdminHomeMapCache::get($cacheKey);
+        if (is_array($cached)) {
+            PulseOperationRecorder::record('map:markers|cache:hit', 1);
+
+            return $cached;
+        }
+
+        $markers = PulseOperationRecorder::measure(
+            'map:markers|cache:miss',
+            fn (): array => $this->buildMarkers($includeCadastro, $vigenteYear),
+        );
+        AdminHomeMapCache::put($cacheKey, $markers);
+
+        return $markers;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function buildMarkers(bool $includeCadastro, int $vigenteYear): array
+    {
         $cadastroById = $includeCadastro
             ? ($this->cadastroSnapshot->forMap()['by_city_id'] ?? [])
             : [];
@@ -61,7 +89,7 @@ final class AdminHomeMunicipalityMap
 
         $byUf = $cities->groupBy(fn (City $c): string => strtoupper(trim((string) $c->uf)));
 
-        return $cities
+        $markers = $cities
             ->map(function (City $city) use ($byUf, $cadastroById, $vigenteYear): array {
                 $uf = strtoupper(trim((string) $city->uf));
                 $inUf = $byUf->get($uf, collect());
@@ -123,6 +151,21 @@ final class AdminHomeMunicipalityMap
             ->all();
 
         return $this->overlapResolver->separate($markers);
+    }
+
+    private function citiesCacheFingerprint(): string
+    {
+        $row = City::query()
+            ->selectRaw('count(*) as aggregate_count, max(updated_at) as aggregate_updated')
+            ->first();
+
+        $count = (int) ($row->aggregate_count ?? 0);
+        $updated = $row->aggregate_updated ?? null;
+        $updatedTs = $updated instanceof \DateTimeInterface
+            ? $updated->format('U')
+            : (is_string($updated) ? strtotime($updated) : 0);
+
+        return $count.':'.$updatedTs;
     }
 
     /**

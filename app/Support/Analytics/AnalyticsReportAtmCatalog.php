@@ -55,6 +55,14 @@ final class AnalyticsReportAtmCatalog
                 'order' => 40,
             ],
             [
+                'id' => 'finance_realtime',
+                'title' => __('Finanças — repasses em tempo real'),
+                'group' => 'financiamento',
+                'scope' => 'finance_realtime_transfers',
+                'intro' => __('Repasses observados (Tesouro/Transparência) confrontados com expectativa FUNDEB no exercício.'),
+                'order' => 45,
+            ],
+            [
                 'id' => 'salario_educacao',
                 'title' => __('Salário-Educação'),
                 'group' => 'financiamento',
@@ -103,6 +111,14 @@ final class AnalyticsReportAtmCatalog
                 'order' => 100,
             ],
             [
+                'id' => 'cadunico_previsao',
+                'title' => __('CadÚnico — previsão fora da rede'),
+                'group' => 'gestao',
+                'scope' => 'cadunico_gap_territory',
+                'intro' => __('Cruza agregados Cecad com matrículas i-Educar: lacuna por faixa, territórios prioritários (distância, pressão e lacuna) — tabelas, sem mapa.'),
+                'order' => 105,
+            ],
+            [
                 'id' => 'territorio_rede',
                 'title' => __('Território e unidades escolares'),
                 'group' => 'gestao',
@@ -136,7 +152,7 @@ final class AnalyticsReportAtmCatalog
             ];
             $page += match ($section['id']) {
                 'indicadores_educacionais', 'rede_municipal' => 3,
-                'fundeb', 'cadastro_censo' => 4,
+                'fundeb', 'cadastro_censo', 'cadunico_previsao' => 4,
                 'publicacao_digital' => 2,
                 default => 2,
             };

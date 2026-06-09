@@ -65,6 +65,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cache do mapa «Municípios implementados» (marcadores + snapshot RX)
+    |--------------------------------------------------------------------------
+    |
+    | TTL mínimo efectivo: 3600 s (1 h). Preferência: store redis quando
+    | REDIS_* está acessível; caso contrário usa CACHE_STORE.
+    |
+    */
+    'home_map_cache_ttl' => max(3600, (int) env('PERFORMANCE_HOME_MAP_CACHE_TTL', 3600)),
+    'home_map_cache_store' => env('PERFORMANCE_HOME_MAP_CACHE_STORE', 'redis'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Alertas operacionais no Início
     |--------------------------------------------------------------------------
     |

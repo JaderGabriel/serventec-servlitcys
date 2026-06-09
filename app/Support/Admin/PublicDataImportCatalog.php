@@ -85,7 +85,8 @@ final class PublicDataImportCatalog
             'salario_educacao_not_tracked', 'programs_empty', 'mec_programs_api' => 'programas_universais',
             'saeb_missing', 'ideb_series_missing' => 'desempenho_aprendizagem',
             'map_unavailable' => 'territorio_rede',
-            'ibge_socio_missing', 'cadunico_previsao_missing' => 'indicadores_educacionais',
+            'ibge_socio_missing' => 'indicadores_educacionais',
+            'cadunico_previsao_missing' => 'cadunico_previsao',
             default => 'geral',
         };
     }
