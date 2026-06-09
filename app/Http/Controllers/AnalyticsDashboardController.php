@@ -115,14 +115,7 @@ class AnalyticsDashboardController extends Controller
             $this->authorize('viewAnalytics', $city);
 
             $yearPayload = null;
-            try {
-                $filters = $filterOptionsService->applyLatestSchoolYearIfMissing($filters, $city, $yearPayload);
-            } catch (Throwable $e) {
-                Log::warning('analytics.default_year_failed', [
-                    'city_id' => $city->id,
-                    'message' => $e->getMessage(),
-                ]);
-            }
+            $filters = $this->resolveAnalyticsFilters($request, $filterOptionsService, $city, $yearPayload);
 
             try {
                 $ieducarOptions = $profiler->measure('filter_options', function () use (
@@ -381,8 +374,24 @@ class AnalyticsDashboardController extends Controller
                     }
 
                     if (filter_var(config('analytics.quality_dock_indicator', true), FILTER_VALIDATE_BOOL)) {
+                        $healthForDock = is_array($municipalityHealthData)
+                            && is_numeric($municipalityHealthData['compliance_score'] ?? null)
+                            ? $municipalityHealthData
+                            : null;
+                        if ($healthForDock === null) {
+                            $healthForDock = $profiler->measure(
+                                'quality_dock_health',
+                                fn () => $this->safeAnalyticsLoad(
+                                    fn () => $municipalityHealthRepository->snapshot($city, $filters),
+                                    AnalyticsEmptyPayloads::municipalityHealth(),
+                                    __('Diagnóstico (rodapé)'),
+                                    $analyticsLoadWarnings,
+                                ),
+                            );
+                        }
+
                         $qualityDockIndicator = \App\Support\Dashboard\AnalyticsDockQualityIndicator::build(
-                            is_array($municipalityHealthData) ? $municipalityHealthData : null,
+                            $healthForDock,
                             $municipalityContext,
                             $fundingSnapshotForDock,
                             true,
@@ -700,7 +709,7 @@ class AnalyticsDashboardController extends Controller
 
         $this->authorize('viewAnalytics', $city);
 
-        $filters = IeducarFilterState::fromRequest($request);
+        $filters = $this->resolveAnalyticsFilters($request, $filterOptionsService, $city);
 
         if ($tab === 'municipality_health' && $request->hasSession()) {
             $request->session()->save();
@@ -1944,7 +1953,7 @@ class AnalyticsDashboardController extends Controller
         $city = UserCityAccess::citiesQuery($request->user())->whereKey($request->integer('city_id'))->firstOrFail();
         $this->authorize('viewAnalytics', $city);
 
-        $filters = IeducarFilterState::fromRequest($request);
+        $filters = $this->resolveAnalyticsFilters($request, $filterOptionsService, $city);
         $profiler = new AnalyticsLoadProfiler;
 
         try {
@@ -2024,5 +2033,30 @@ class AnalyticsDashboardController extends Controller
             $filters,
             warm: true,
         );
+    }
+
+    /**
+     * Restaura filtros do pedido e aplica o último ano letivo quando o recorte ainda não tem ano.
+     *
+     * @param  array{years?: array<string, string>, errors?: list<string>}|null  $yearPayload
+     */
+    private function resolveAnalyticsFilters(
+        Request $request,
+        FilterOptionsService $filterOptionsService,
+        City $city,
+        ?array &$yearPayload = null,
+    ): IeducarFilterState {
+        $filters = IeducarFilterState::fromRequest($request);
+
+        try {
+            return $filterOptionsService->applyLatestSchoolYearIfMissing($filters, $city, $yearPayload);
+        } catch (Throwable $e) {
+            Log::warning('analytics.default_year_failed', [
+                'city_id' => $city->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return $filters;
+        }
     }
 }

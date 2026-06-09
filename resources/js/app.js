@@ -190,10 +190,17 @@ document.addEventListener("alpine:init", () => {
             lazy = false,
             tabFetchUrl = "",
             navPayload = null,
+            effectiveQueryParams = null,
         ) => ({
             tab: "overview",
             lazy: lazy === true,
             tabFetchUrl: typeof tabFetchUrl === "string" ? tabFetchUrl : "",
+            effectiveQueryParams:
+                effectiveQueryParams &&
+                typeof effectiveQueryParams === "object" &&
+                !Array.isArray(effectiveQueryParams)
+                    ? effectiveQueryParams
+                    : {},
             tabLoaded: {},
             loadingTab: null,
             navGroups: Array.isArray(navPayload?.groups) ? navPayload.groups : [],
@@ -201,6 +208,7 @@ document.addEventListener("alpine:init", () => {
             tabHints: navPayload?.tabHints ?? {},
             tabToGroup: navPayload?.tabToGroup ?? {},
             init() {
+                this.syncEffectiveQueryToUrl();
                 const allowed = Array.isArray(allowedKeys) ? allowedKeys : [];
                 let next = "overview";
                 try {
@@ -342,6 +350,48 @@ document.addEventListener("alpine:init", () => {
                     `[data-consultoria-tab="${t}"], [data-analytics-panel-root]`,
                 );
             },
+            syncEffectiveQueryToUrl() {
+                const eq = this.effectiveQueryParams;
+                if (!eq || typeof eq !== "object" || Object.keys(eq).length === 0) {
+                    return;
+                }
+                try {
+                    const url = new URL(window.location.href);
+                    let changed = false;
+                    for (const [key, value] of Object.entries(eq)) {
+                        if (
+                            value != null &&
+                            value !== "" &&
+                            !url.searchParams.has(key)
+                        ) {
+                            url.searchParams.set(key, String(value));
+                            changed = true;
+                        }
+                    }
+                    if (changed) {
+                        history.replaceState(null, "", url);
+                    }
+                } catch {
+                    // ignore
+                }
+            },
+            buildTabFetchSearchParams() {
+                const params = new URLSearchParams(window.location.search);
+                const eq = this.effectiveQueryParams;
+                if (eq && typeof eq === "object") {
+                    for (const [key, value] of Object.entries(eq)) {
+                        if (
+                            value != null &&
+                            value !== "" &&
+                            !params.has(key)
+                        ) {
+                            params.set(key, String(value));
+                        }
+                    }
+                }
+
+                return params;
+            },
             maybeLoadTab(t) {
                 if (!this.lazy) {
                     return;
@@ -385,8 +435,9 @@ document.addEventListener("alpine:init", () => {
                 this.loadingTab = t;
                 try {
                     const u = new URL(this.tabFetchUrl, window.location.origin);
-                    u.search = window.location.search;
-                    u.searchParams.set("tab", t);
+                    const params = this.buildTabFetchSearchParams();
+                    params.set("tab", t);
+                    u.search = params.toString();
                     const r = await fetch(u.toString(), {
                         headers: {
                             Accept: "text/html",
@@ -456,9 +507,10 @@ document.addEventListener("alpine:init", () => {
                             this.tabFetchUrl,
                             window.location.origin,
                         );
-                        u.search = window.location.search;
-                        u.searchParams.set("tab", "municipality_health");
-                        u.searchParams.set("health_section", section);
+                        const params = this.buildTabFetchSearchParams();
+                        params.set("tab", "municipality_health");
+                        params.set("health_section", section);
+                        u.search = params.toString();
                         const r = await fetch(u.toString(), {
                             headers: {
                                 Accept: "text/html",

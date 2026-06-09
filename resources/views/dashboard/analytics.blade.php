@@ -57,7 +57,7 @@
                     $lazyTabLoading = $lazyTabLoading ?? false;
                 @endphp
                 <div
-                    x-data="analyticsTabs(@js(array_keys($tabs)), @js($analyticsInitialTab ?? 'overview'), @js($lazyTabLoading), @js(route('dashboard.analytics.tab')), @js(\App\Support\Dashboard\AnalyticsTabCatalog::navigationPayload()))"
+                    x-data="analyticsTabs(@js(array_keys($tabs)), @js($analyticsInitialTab ?? 'overview'), @js($lazyTabLoading), @js(route('dashboard.analytics.tab')), @js(\App\Support\Dashboard\AnalyticsTabCatalog::navigationPayload()), @js($filters->toQueryParamsWithCity($selectedCity->id)))"
                     x-on:set-analytics-tab.window="if ($event.detail && @js(array_keys($tabs)).includes($event.detail)) { tab = $event.detail; afterTabChange(); }"
                     class="space-y-6"
                 >

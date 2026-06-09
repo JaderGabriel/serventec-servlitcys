@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`4.4.5`** · tag de deploy **`20260609a-Themis`** · ver [RELEASE_20260609a_THEMIS.md](RELEASE_20260609a_THEMIS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`4.4.6`** · tag de deploy **`20260609d-Themis`** · ver [RELEASE_20260609d_THEMIS.md](RELEASE_20260609d_THEMIS.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **4.4.5** |
+| **Versão semântica em produção** | **4.4.6** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260609a-Themis` |
-| **Último marco documentado** | Índice qualidade no dock, FUNDEB gerencial, fix troca município, pt-BR consultoria — [RELEASE_20260609a_THEMIS.md](RELEASE_20260609a_THEMIS.md) |
+| **Tag de deploy (servidor)** | `20260609d-Themis` |
+| **Último marco documentado** | Fix ano letivo ao trocar município, abas lazy e qualidade no dock — [RELEASE_20260609d_THEMIS.md](RELEASE_20260609d_THEMIS.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -27,6 +27,8 @@ timeline
     2026-06-08 : 4.4.2a Pythia — Power BI + busca docs
     2026-06-09 : 4.4.3b Lachesis — CadÚnico faixas + Censo + mapa
     2026-06-09 : 4.4.4c Atropos — dock analytics, PNG legenda, mapa cache
+    2026-06-09 : 4.4.5a Themis — qualidade no dock, FUNDEB gerencial
+    2026-06-09 : 4.4.6d Themis — ano letivo ao trocar município
     2026-06-10 : 4.2.0 Clio — VAAT/VAAR portaria
     2026-06-11 : 4.3.0 Harmonia — RX + gráfico home
 ```
@@ -39,7 +41,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.4.5** | `1927352` / `20260609a-Themis` → `main` | **364** | 09/06/2026 | **Produção:** índice qualidade no dock, FUNDEB gerencial, fix troca município/ano, hub exports, pt-BR — [RELEASE_20260609a_THEMIS.md](RELEASE_20260609a_THEMIS.md). |
+| **▶ 4.4.6** | `—` / `20260609d-Themis` → `main` | **367** | 09/06/2026 | **Produção:** ano letivo automático ao trocar município, abas lazy com `ano_letivo`, índice qualidade no dock — [RELEASE_20260609d_THEMIS.md](RELEASE_20260609d_THEMIS.md). |
+| 4.4.5 | `1927352` / `20260609a-Themis` → `main` | **364** | 09/06/2026 | Índice qualidade no dock, FUNDEB gerencial, fix troca município/ano, hub exports, pt-BR — [RELEASE_20260609a_THEMIS.md](RELEASE_20260609a_THEMIS.md). |
 | 4.4.4 | `6ea5002` / `20260609c-Atropos` → `main` | **360** | 09/06/2026 | Dock analytics, Diagnóstico explorar, cache mapa Início 1 h, PNG com legenda 1/2 colunas, PDF CadÚnico — [RELEASE_20260609c_ATROPOS.md](RELEASE_20260609c_ATROPOS.md). |
 | 4.4.3 | `39333e0` / `20260609b-Lachesis` → `main` | **355** | 09/06/2026 | CadÚnico CUN-01/02 — lacuna por idade, desconto Censo não municipal, mapa territorial — [RELEASE_20260609b_LACHESIS.md](RELEASE_20260609b_LACHESIS.md). |
 | 4.4.2 | `9e728a5` / `20260608a-Pythia` → `main` | **352** | 08/06/2026 | Estudo Power BI, pesquisa no leitor, backlog PBI-01…10 — [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md). |

@@ -115,6 +115,38 @@ class AnalyticsDashboardTest extends TestCase
             ->assertRedirect(route('dashboard.analytics', ['city_id' => $city->id]));
     }
 
+    public function test_analytics_tab_applies_latest_school_year_when_city_has_no_ano(): void
+    {
+        $city = City::factory()->create();
+        $user = User::factory()->create();
+        $user->cities()->attach($city->id);
+
+        $this->mock(FilterOptionsService::class, function ($mock): void {
+            $mock->shouldReceive('applyLatestSchoolYearIfMissing')
+                ->once()
+                ->andReturnUsing(function (IeducarFilterState $filters, $city, &$yearPayload = null) {
+                    $yearPayload = [
+                        'years' => ['' => '—', '2025' => '2025'],
+                        'errors' => [],
+                    ];
+
+                    return new IeducarFilterState('2025', null, null, null);
+                });
+        });
+
+        $this->actingAs($user)
+            ->get(route('dashboard.analytics.tab', [
+                'tab' => 'enrollment',
+                'city_id' => $city->id,
+            ]), [
+                'Accept' => 'text/html',
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])
+            ->assertOk()
+            ->assertHeader('X-Analytics-Tab', 'enrollment')
+            ->assertHeaderMissing('X-Analytics-Tab-Status');
+    }
+
     public function test_analytics_index_applies_latest_school_year_inline_when_city_has_no_ano(): void
     {
         $city = City::factory()->create();
