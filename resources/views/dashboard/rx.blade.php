@@ -22,7 +22,10 @@
         <div class="max-w-[1680px] mx-auto sm:px-6 lg:px-8 space-y-6">
             <x-rx.censo-deadline-banner :deadline="$rx['deadline'] ?? []" class="shadow-lg" />
 
-            <x-rx.educacenso-toolkit :toolkit="$rx['educacenso_toolkit'] ?? []" />
+            <x-rx.educacenso-toolkit
+                :toolkit="$rx['educacenso_toolkit'] ?? []"
+                :activePhase="$rx['deadline']['phase'] ?? null"
+            />
 
             <div class="serv-panel serv-panel--info px-4 py-3 text-sm">
                 <p class="font-medium text-serv-navy dark:text-teal-100">{{ __('RX — cadastro em andamento e meta') }}</p>

@@ -18,6 +18,7 @@ final class RxEducacensoToolkit
         return [
             'ano' => $ano,
             'calendar' => self::calendarMilestones($calendar),
+            'calendar_legend' => self::calendarLegend(),
             'stage1_required' => self::stage1RequiredData(),
             'rectification' => self::rectificationRules($calendar),
             'stage2_preview' => self::stage2Preview($calendar),
@@ -26,8 +27,32 @@ final class RxEducacensoToolkit
     }
 
     /**
+     * @return list<array{kind: string, label: string}>
+     */
+    public static function calendarLegend(): array
+    {
+        return [
+            ['kind' => 'reference', 'label' => __('Data de referência')],
+            ['kind' => 'collect', 'label' => __('Coleta')],
+            ['kind' => 'publication', 'label' => __('Publicação DOU')],
+            ['kind' => 'rectification', 'label' => __('Retificação')],
+            ['kind' => 'fundeb', 'label' => __('Homologação Fundeb')],
+            ['kind' => 'stage2', 'label' => __('2ª etapa')],
+        ];
+    }
+
+    /**
      * @param  array<string, mixed>|null  $calendar
-     * @return list<array{key: string, label: string, date: string, date_label: string, note: string}>
+     * @return list<array{
+     *   key: string,
+     *   kind: string,
+     *   label: string,
+     *   date: string,
+     *   date_end: ?string,
+     *   date_label: string,
+     *   date_short: string,
+     *   note: string
+     * }>
      */
     private static function calendarMilestones(?array $calendar): array
     {
@@ -42,69 +67,140 @@ final class RxEducacensoToolkit
         $milestones = [];
 
         if ($ref !== '') {
-            $milestones[] = [
-                'key' => 'reference',
-                'label' => __('Data de referência (Dia Nacional do Censo)'),
-                'date' => $ref,
-                'date_label' => RxCensoCalendar::formatDate($ref),
-                'note' => __('Situação das escolas, turmas, matrículas e profissionais deve refletir esta data.'),
-            ];
+            $milestones[] = self::milestone(
+                'reference',
+                __('Data de referência (Dia Nacional do Censo)'),
+                $ref,
+                RxCensoCalendar::formatDate($ref),
+                __('Situação das escolas, turmas, matrículas e profissionais deve refletir esta data.'),
+            );
         }
 
         if (filled($s1['collect_start'] ?? null) && filled($s1['collect_end'] ?? null)) {
-            $milestones[] = [
-                'key' => 'stage1_collect',
-                'label' => (string) ($s1['label'] ?? __('1ª etapa — Matrícula inicial')),
-                'date' => (string) $s1['collect_start'],
-                'date_label' => RxCensoCalendar::formatDate((string) $s1['collect_start'])
-                    .' — '.RxCensoCalendar::formatDate((string) $s1['collect_end']),
-                'note' => __('Coleta no Educacenso ou migração via exportação do i-Educar.'),
-            ];
+            $start = (string) $s1['collect_start'];
+            $end = (string) $s1['collect_end'];
+            $milestones[] = self::milestone(
+                'stage1_collect',
+                (string) ($s1['label'] ?? __('1ª etapa — Matrícula inicial')),
+                $start,
+                RxCensoCalendar::formatDate($start).' — '.RxCensoCalendar::formatDate($end),
+                __('Coleta no Educacenso ou migração via exportação do i-Educar.'),
+                $end,
+            );
         }
 
         if (filled($s1['prelim_dou'] ?? null)) {
-            $milestones[] = [
-                'key' => 'prelim_dou',
-                'label' => __('Publicação preliminar (DOU)'),
-                'date' => (string) $s1['prelim_dou'],
-                'date_label' => RxCensoCalendar::formatDate((string) $s1['prelim_dou']),
-                'note' => __('Após esta data abre a janela de conferência e retificação.'),
-            ];
+            $dou = (string) $s1['prelim_dou'];
+            $milestones[] = self::milestone(
+                'prelim_dou',
+                __('Publicação preliminar (DOU)'),
+                $dou,
+                RxCensoCalendar::formatDate($dou),
+                __('Após esta data abre a janela de conferência e retificação.'),
+            );
         }
 
         if (filled($s1['rectification_end'] ?? null)) {
-            $milestones[] = [
-                'key' => 'rectification',
-                'label' => __('Retificação da 1ª etapa'),
-                'date' => (string) $s1['rectification_end'],
-                'date_label' => __('30 dias após o DOU')
-                    .' ('.RxCensoCalendar::formatDate((string) $s1['rectification_end']).')',
-                'note' => __('Correções com base nos registros administrativos e acadêmicos.'),
-            ];
+            $rectEnd = (string) $s1['rectification_end'];
+            $milestones[] = self::milestone(
+                'rectification',
+                __('Retificação da 1ª etapa'),
+                $rectEnd,
+                __('30 dias após o DOU').' ('.RxCensoCalendar::formatDate($rectEnd).')',
+                __('Correções com base nos registros administrativos e acadêmicos.'),
+            );
         }
 
         if (filled($s1['fundeb_send'] ?? null)) {
-            $milestones[] = [
-                'key' => 'fundeb_send',
-                'label' => __('Envio homologado ao FNDE (Fundeb)'),
-                'date' => (string) $s1['fundeb_send'],
-                'date_label' => RxCensoCalendar::formatDate((string) $s1['fundeb_send']),
-                'note' => __('Dados finais para coeficientes de distribuição do Fundeb.'),
-            ];
+            $fundeb = (string) $s1['fundeb_send'];
+            $milestones[] = self::milestone(
+                'fundeb_send',
+                __('Envio homologado ao FNDE (Fundeb)'),
+                $fundeb,
+                RxCensoCalendar::formatDate($fundeb),
+                __('Dados finais para coeficientes de distribuição do Fundeb.'),
+            );
         }
 
         if (filled($s2['collect_start'] ?? null) && filled($s2['collect_end'] ?? null)) {
-            $milestones[] = [
-                'key' => 'stage2_collect',
-                'label' => (string) ($s2['label'] ?? __('2ª etapa — Situação do aluno')),
-                'date' => (string) $s2['collect_start'],
-                'date_label' => RxCensoCalendar::formatDate((string) $s2['collect_start'])
-                    .' — '.RxCensoCalendar::formatDate((string) $s2['collect_end']),
-                'note' => __('Rendimento e movimento escolar dos alunos declarados na 1ª etapa.'),
-            ];
+            $start = (string) $s2['collect_start'];
+            $end = (string) $s2['collect_end'];
+            $milestones[] = self::milestone(
+                'stage2_collect',
+                (string) ($s2['label'] ?? __('2ª etapa — Situação do aluno')),
+                $start,
+                RxCensoCalendar::formatDate($start).' — '.RxCensoCalendar::formatDate($end),
+                __('Rendimento e movimento escolar dos alunos declarados na 1ª etapa.'),
+                $end,
+            );
         }
 
         return $milestones;
+    }
+
+    /**
+     * @return array{
+     *   key: string,
+     *   kind: string,
+     *   label: string,
+     *   date: string,
+     *   date_end: ?string,
+     *   date_label: string,
+     *   date_short: string,
+     *   note: string
+     * }
+     */
+    private static function milestone(
+        string $key,
+        string $label,
+        string $date,
+        string $dateLabel,
+        string $note,
+        ?string $dateEnd = null,
+    ): array {
+        $dateShort = $dateEnd !== null
+            ? RxCensoCalendar::formatDate($date).' — '.RxCensoCalendar::formatDate($dateEnd)
+            : RxCensoCalendar::formatDate($date);
+
+        return [
+            'key' => $key,
+            'kind' => self::milestoneKind($key),
+            'label' => $label,
+            'date' => $date,
+            'date_end' => $dateEnd,
+            'date_label' => $dateLabel,
+            'date_short' => $dateShort,
+            'note' => $note,
+        ];
+    }
+
+    private static function milestoneKind(string $key): string
+    {
+        return match ($key) {
+            'reference' => 'reference',
+            'stage1_collect' => 'collect',
+            'prelim_dou' => 'publication',
+            'rectification' => 'rectification',
+            'fundeb_send' => 'fundeb',
+            'stage2_collect' => 'stage2',
+            default => 'neutral',
+        };
+    }
+
+    /**
+     * Marco activo no calendário conforme a fase do banner RX.
+     */
+    public static function activeMilestoneKey(?string $deadlinePhase): ?string
+    {
+        return match ($deadlinePhase) {
+            'before_reference' => 'reference',
+            'stage1_collect' => 'stage1_collect',
+            'awaiting_rectification' => 'prelim_dou',
+            'stage1_rectification' => 'rectification',
+            'between_stages' => 'fundeb_send',
+            'stage2_collect' => 'stage2_collect',
+            default => null,
+        };
     }
 
     /**

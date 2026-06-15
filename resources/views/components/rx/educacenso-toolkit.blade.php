@@ -1,13 +1,23 @@
-@props(['toolkit' => []])
+@props([
+    'toolkit' => [],
+    'activePhase' => null,
+])
 
 @php
+    use App\Support\Rx\RxEducacensoToolkit;
+
     $t = is_array($toolkit) ? $toolkit : [];
     $calendar = is_array($t['calendar'] ?? null) ? $t['calendar'] : [];
+    $legend = is_array($t['calendar_legend'] ?? null) ? $t['calendar_legend'] : RxEducacensoToolkit::calendarLegend();
+    $activeKey = RxEducacensoToolkit::activeMilestoneKey(
+        is_string($activePhase) && $activePhase !== '' ? $activePhase : null,
+    );
     $stage1 = is_array($t['stage1_required'] ?? null) ? $t['stage1_required'] : [];
     $rect = is_array($t['rectification'] ?? null) ? $t['rectification'] : [];
     $stage2 = is_array($t['stage2_preview'] ?? null) ? $t['stage2_preview'] : null;
     $sources = is_array($t['sources'] ?? null) ? $t['sources'] : [];
     $ano = (string) ($t['ano'] ?? '');
+    $calendarCols = max(1, count($calendar));
 @endphp
 
 <details class="serv-panel serv-rx-toolkit group" open>
@@ -26,23 +36,76 @@
 
     <div class="px-4 pb-5 pt-4 space-y-6">
         @if ($calendar !== [])
-            <section aria-labelledby="rx-toolkit-calendar">
-                <h4 id="rx-toolkit-calendar" class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-3">
-                    {{ __('Calendário oficial') }}
-                </h4>
-                <ol class="space-y-3">
-                    @foreach ($calendar as $milestone)
-                        <li class="serv-rx-toolkit-milestone">
-                            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                                <span class="text-xs font-semibold text-serv-navy dark:text-teal-100">{{ $milestone['label'] ?? '' }}</span>
-                                <span class="text-xs tabular-nums text-teal-800 dark:text-teal-300 font-medium">{{ $milestone['date_label'] ?? '' }}</span>
-                            </div>
-                            @if (filled($milestone['note'] ?? null))
-                                <p class="mt-0.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{{ $milestone['note'] }}</p>
-                            @endif
-                        </li>
-                    @endforeach
-                </ol>
+            <section class="serv-rx-toolkit-calendar w-full" aria-labelledby="rx-toolkit-calendar">
+                <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-3">
+                    <h4 id="rx-toolkit-calendar" class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                        {{ __('Calendário oficial') }}
+                    </h4>
+                    @if ($activeKey)
+                        <p class="text-[10px] font-medium text-teal-800 dark:text-teal-300">
+                            {{ __('Fase actual destacada no calendário') }}
+                        </p>
+                    @endif
+                </div>
+
+                <div class="serv-rx-toolkit-calendar__panel rounded-xl border border-slate-200/90 bg-slate-50/70 dark:border-slate-700/80 dark:bg-slate-900/40 p-4 sm:p-5">
+                    <div class="serv-rx-toolkit-calendar__legend" role="list" aria-label="{{ __('Legenda do calendário') }}">
+                        @foreach ($legend as $item)
+                            <span class="serv-rx-toolkit-calendar__legend-item" role="listitem">
+                                <span
+                                    class="serv-rx-toolkit-calendar__dot serv-rx-toolkit-calendar__dot--{{ $item['kind'] ?? 'neutral' }}"
+                                    aria-hidden="true"
+                                ></span>
+                                <span>{{ $item['label'] ?? '' }}</span>
+                            </span>
+                        @endforeach
+                        @if ($activeKey)
+                            <span class="serv-rx-toolkit-calendar__legend-item serv-rx-toolkit-calendar__legend-item--active">
+                                <span class="serv-rx-toolkit-calendar__ring" aria-hidden="true"></span>
+                                <span>{{ __('Fase actual') }}</span>
+                            </span>
+                        @endif
+                    </div>
+
+                    <div class="serv-rx-toolkit-calendar__scroll mt-4 -mx-1 px-1 overflow-x-auto">
+                        <div
+                            class="serv-rx-toolkit-calendar__track"
+                            role="list"
+                            style="--calendar-cols: {{ $calendarCols }}"
+                        >
+                            @foreach ($calendar as $index => $milestone)
+                                @php
+                                    $kind = (string) ($milestone['kind'] ?? 'neutral');
+                                    $isActive = $activeKey !== null && ($milestone['key'] ?? '') === $activeKey;
+                                    $isLast = $index === count($calendar) - 1;
+                                @endphp
+                                <div
+                                    class="serv-rx-toolkit-calendar__event serv-rx-toolkit-calendar__event--{{ $kind }}{{ $isActive ? ' serv-rx-toolkit-calendar__event--active' : '' }}{{ $isLast ? ' serv-rx-toolkit-calendar__event--last' : '' }}"
+                                    role="listitem"
+                                    @if ($isActive) aria-current="step" @endif
+                                >
+                                    <p class="serv-rx-toolkit-calendar__date tabular-nums" title="{{ $milestone['date_label'] ?? '' }}">
+                                        {{ $milestone['date_short'] ?? ($milestone['date_label'] ?? '') }}
+                                    </p>
+                                    <div class="serv-rx-toolkit-calendar__marker-row">
+                                        @if (! $isLast)
+                                            <span class="serv-rx-toolkit-calendar__connector" aria-hidden="true"></span>
+                                        @endif
+                                        <span class="serv-rx-toolkit-calendar__dot serv-rx-toolkit-calendar__dot--{{ $kind }}" aria-hidden="true">
+                                            @if ($isActive)
+                                                <span class="serv-rx-toolkit-calendar__ring"></span>
+                                            @endif
+                                        </span>
+                                    </div>
+                                    <p class="serv-rx-toolkit-calendar__label">{{ $milestone['label'] ?? '' }}</p>
+                                    @if (filled($milestone['note'] ?? null))
+                                        <p class="serv-rx-toolkit-calendar__note">{{ $milestone['note'] }}</p>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
             </section>
         @endif
 
