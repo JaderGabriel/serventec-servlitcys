@@ -147,6 +147,8 @@ final class RxEducacensoToolkit
      *   date_end: ?string,
      *   date_label: string,
      *   date_short: string,
+     *   label_short: string,
+     *   icon: string,
      *   note: string
      * }
      */
@@ -166,12 +168,40 @@ final class RxEducacensoToolkit
             'key' => $key,
             'kind' => self::milestoneKind($key),
             'label' => $label,
+            'label_short' => self::milestoneShortLabel($key),
+            'icon' => self::milestoneIcon($key),
             'date' => $date,
             'date_end' => $dateEnd,
             'date_label' => $dateLabel,
             'date_short' => $dateShort,
             'note' => $note,
         ];
+    }
+
+    private static function milestoneShortLabel(string $key): string
+    {
+        return match ($key) {
+            'reference' => __('Referência'),
+            'stage1_collect' => __('1ª etapa'),
+            'prelim_dou' => __('DOU preliminar'),
+            'rectification' => __('Retificação'),
+            'fundeb_send' => __('Homologação Fundeb'),
+            'stage2_collect' => __('2ª etapa'),
+            default => '',
+        };
+    }
+
+    private static function milestoneIcon(string $key): string
+    {
+        return match ($key) {
+            'reference' => 'map-pin',
+            'stage1_collect' => 'clipboard-document-list',
+            'prelim_dou' => 'document-text',
+            'rectification' => 'arrow-path',
+            'fundeb_send' => 'banknotes',
+            'stage2_collect' => 'academic-cap',
+            default => 'signal',
+        };
     }
 
     private static function milestoneKind(string $key): string

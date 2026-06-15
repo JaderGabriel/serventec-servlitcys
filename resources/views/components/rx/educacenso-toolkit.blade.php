@@ -36,73 +36,62 @@
 
     <div class="px-4 pb-5 pt-4 space-y-6">
         @if ($calendar !== [])
-            <section class="serv-rx-toolkit-calendar w-full" aria-labelledby="rx-toolkit-calendar">
+            <section class="w-full" aria-labelledby="rx-toolkit-calendar">
                 <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-3">
                     <h4 id="rx-toolkit-calendar" class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                         {{ __('Calendário oficial') }}
                     </h4>
                     @if ($activeKey)
-                        <p class="text-[10px] font-medium text-teal-800 dark:text-teal-300">
-                            {{ __('Fase actual destacada no calendário') }}
+                        <p class="inline-flex items-center gap-1.5 text-[10px] font-medium text-teal-800 dark:text-teal-300">
+                            <span class="serv-rx-cal-dot serv-rx-cal-dot--active" aria-hidden="true"></span>
+                            {{ __('Fase actual destacada') }}
                         </p>
                     @endif
                 </div>
 
-                <div class="serv-rx-toolkit-calendar__panel rounded-xl border border-slate-200/90 bg-slate-50/70 dark:border-slate-700/80 dark:bg-slate-900/40 p-4 sm:p-5">
-                    <div class="serv-rx-toolkit-calendar__legend" role="list" aria-label="{{ __('Legenda do calendário') }}">
+                <div class="serv-rx-cal-panel">
+                    <div class="serv-rx-cal-legend" role="list" aria-label="{{ __('Legenda do calendário') }}">
                         @foreach ($legend as $item)
-                            <span class="serv-rx-toolkit-calendar__legend-item" role="listitem">
-                                <span
-                                    class="serv-rx-toolkit-calendar__dot serv-rx-toolkit-calendar__dot--{{ $item['kind'] ?? 'neutral' }}"
-                                    aria-hidden="true"
-                                ></span>
+                            @php $kind = (string) ($item['kind'] ?? 'neutral'); @endphp
+                            <span class="serv-rx-cal-legend__item" role="listitem">
+                                <span class="serv-rx-cal-dot serv-rx-cal-dot--{{ $kind }}" aria-hidden="true"></span>
                                 <span>{{ $item['label'] ?? '' }}</span>
                             </span>
                         @endforeach
-                        @if ($activeKey)
-                            <span class="serv-rx-toolkit-calendar__legend-item serv-rx-toolkit-calendar__legend-item--active">
-                                <span class="serv-rx-toolkit-calendar__ring" aria-hidden="true"></span>
-                                <span>{{ __('Fase actual') }}</span>
-                            </span>
-                        @endif
                     </div>
 
-                    <div class="serv-rx-toolkit-calendar__scroll mt-4 -mx-1 px-1 overflow-x-auto">
-                        <div
-                            class="serv-rx-toolkit-calendar__track"
-                            role="list"
-                            style="--calendar-cols: {{ $calendarCols }}"
-                        >
-                            @foreach ($calendar as $index => $milestone)
-                                @php
-                                    $kind = (string) ($milestone['kind'] ?? 'neutral');
-                                    $isActive = $activeKey !== null && ($milestone['key'] ?? '') === $activeKey;
-                                    $isLast = $index === count($calendar) - 1;
-                                @endphp
-                                <div
-                                    class="serv-rx-toolkit-calendar__event serv-rx-toolkit-calendar__event--{{ $kind }}{{ $isActive ? ' serv-rx-toolkit-calendar__event--active' : '' }}{{ $isLast ? ' serv-rx-toolkit-calendar__event--last' : '' }}"
-                                    role="listitem"
-                                    @if ($isActive) aria-current="step" @endif
-                                >
-                                    <p class="serv-rx-toolkit-calendar__date tabular-nums" title="{{ $milestone['date_label'] ?? '' }}">
-                                        {{ $milestone['date_short'] ?? ($milestone['date_label'] ?? '') }}
-                                    </p>
-                                    <div class="serv-rx-toolkit-calendar__marker-row">
-                                        @if (! $isLast)
-                                            <span class="serv-rx-toolkit-calendar__connector" aria-hidden="true"></span>
-                                        @endif
-                                        <span class="serv-rx-toolkit-calendar__dot serv-rx-toolkit-calendar__dot--{{ $kind }}" aria-hidden="true">
-                                            @if ($isActive)
-                                                <span class="serv-rx-toolkit-calendar__ring"></span>
+                    <div class="serv-rx-cal-scroll">
+                        <div class="serv-rx-cal-rail" style="--calendar-cols: {{ $calendarCols }}">
+                            <div class="serv-rx-cal-rail__line" aria-hidden="true"></div>
+                            <div class="serv-rx-cal-grid" role="list">
+                                @foreach ($calendar as $milestone)
+                                    @php
+                                        $kind = (string) ($milestone['kind'] ?? 'neutral');
+                                        $isActive = $activeKey !== null && ($milestone['key'] ?? '') === $activeKey;
+                                        $icon = (string) ($milestone['icon'] ?? 'signal');
+                                    @endphp
+                                    <article
+                                        class="serv-rx-cal-card serv-rx-cal-card--{{ $kind }}{{ $isActive ? ' serv-rx-cal-card--active' : '' }}"
+                                        role="listitem"
+                                        @if ($isActive) aria-current="step" @endif
+                                    >
+                                        <div class="serv-rx-cal-card__marker serv-rx-cal-card__marker--{{ $kind }}">
+                                            <x-ui.icon :name="$icon" class="h-4 w-4" />
+                                        </div>
+                                        <div class="serv-rx-cal-card__body">
+                                            <p class="serv-rx-cal-card__date tabular-nums" title="{{ $milestone['date_label'] ?? '' }}">
+                                                {{ $milestone['date_short'] ?? '' }}
+                                            </p>
+                                            <h5 class="serv-rx-cal-card__title" title="{{ $milestone['label'] ?? '' }}">
+                                                {{ $milestone['label_short'] ?? ($milestone['label'] ?? '') }}
+                                            </h5>
+                                            @if (filled($milestone['note'] ?? null))
+                                                <p class="serv-rx-cal-card__note">{{ $milestone['note'] }}</p>
                                             @endif
-                                        </span>
-                                    </div>
-                                    <p class="serv-rx-toolkit-calendar__label">{{ $milestone['label'] ?? '' }}</p>
-                                    @if (filled($milestone['note'] ?? null))
-                                        <p class="serv-rx-toolkit-calendar__note">{{ $milestone['note'] }}</p>
-                                    @endif
-                                </div>
-                            @endforeach
+                                        </div>
+                                    </article>
+                                @endforeach
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -118,7 +107,7 @@
                     <p class="text-xs text-slate-600 dark:text-slate-400 mb-3 leading-relaxed">
                         {{ __('Declaração na data de referência — exportação do i-Educar ou preenchimento direto no Educacenso.') }}
                     </p>
-                    <div class="space-y-4">
+                    <div class="space-y-3">
                         @foreach ($stage1 as $group)
                             <div class="serv-rx-toolkit-group">
                                 <p class="text-xs font-semibold text-serv-navy dark:text-white">{{ $group['title'] ?? '' }}</p>
@@ -135,23 +124,24 @@
 
             <div class="space-y-6">
                 @if ($rect !== [])
-                    <section aria-labelledby="rx-toolkit-rect">
-                        <h4 id="rx-toolkit-rect" class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-3">
-                            {{ $rect['title'] ?? __('Retificação') }}
+                    <section class="serv-rx-toolkit-callout serv-rx-toolkit-callout--amber" aria-labelledby="rx-toolkit-rect">
+                        <h4 id="rx-toolkit-rect" class="serv-rx-toolkit-callout__title">
+                            <x-ui.icon name="arrow-path" class="h-4 w-4 shrink-0" />
+                            <span>{{ $rect['title'] ?? __('Retificação') }}</span>
                         </h4>
                         @if (filled($rect['intro'] ?? null))
-                            <p class="text-xs text-slate-600 dark:text-slate-400 mb-2 leading-relaxed">{{ $rect['intro'] }}</p>
+                            <p class="serv-rx-toolkit-callout__intro">{{ $rect['intro'] }}</p>
                         @endif
-                        <ul class="space-y-1 text-xs text-slate-600 dark:text-slate-400 list-disc pl-4 leading-relaxed">
+                        <ul class="serv-rx-toolkit-callout__list">
                             @foreach ($rect['items'] ?? [] as $item)
                                 <li>{{ $item }}</li>
                             @endforeach
                         </ul>
                         @if (! empty($rect['warnings'] ?? []))
-                            <ul class="mt-3 space-y-1 text-xs text-amber-800 dark:text-amber-200 list-none pl-0">
+                            <ul class="serv-rx-toolkit-callout__warnings">
                                 @foreach ($rect['warnings'] as $warn)
                                     <li class="flex gap-2">
-                                        <span aria-hidden="true">⚠</span>
+                                        <x-ui.icon name="exclamation-triangle" class="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
                                         <span>{{ $warn }}</span>
                                     </li>
                                 @endforeach
@@ -161,14 +151,15 @@
                 @endif
 
                 @if (is_array($stage2))
-                    <section aria-labelledby="rx-toolkit-stage2">
-                        <h4 id="rx-toolkit-stage2" class="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-3">
-                            {{ $stage2['title'] ?? __('2ª etapa') }}
+                    <section class="serv-rx-toolkit-callout serv-rx-toolkit-callout--indigo" aria-labelledby="rx-toolkit-stage2">
+                        <h4 id="rx-toolkit-stage2" class="serv-rx-toolkit-callout__title">
+                            <x-ui.icon name="academic-cap" class="h-4 w-4 shrink-0" />
+                            <span>{{ $stage2['title'] ?? __('2ª etapa') }}</span>
                         </h4>
                         @if (filled($stage2['intro'] ?? null))
-                            <p class="text-xs text-slate-600 dark:text-slate-400 mb-2 leading-relaxed">{{ $stage2['intro'] }}</p>
+                            <p class="serv-rx-toolkit-callout__intro">{{ $stage2['intro'] }}</p>
                         @endif
-                        <ul class="space-y-1 text-xs text-slate-600 dark:text-slate-400 list-disc pl-4 leading-relaxed">
+                        <ul class="serv-rx-toolkit-callout__list">
                             @foreach ($stage2['items'] ?? [] as $item)
                                 <li>{{ $item }}</li>
                             @endforeach
@@ -190,8 +181,11 @@
                                 href="{{ $link['url'] ?? '#' }}"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                class="serv-link font-medium"
-                            >{{ $link['label'] ?? '' }}</a>
+                                class="serv-link inline-flex items-center gap-1 font-medium"
+                            >
+                                <x-ui.icon name="document-text" class="h-3.5 w-3.5 shrink-0 opacity-80" />
+                                <span>{{ $link['label'] ?? '' }}</span>
+                            </a>
                         </li>
                     @endforeach
                 </ul>
