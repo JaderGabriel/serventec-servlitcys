@@ -36,5 +36,6 @@ export default {
         { pattern: /^serv-qa-/ },
         { pattern: /^serv-data-flow/ },
         { pattern: /^serv-mm-/ },
+        { pattern: /^serv-rx-cal-/ },
     ],
 };

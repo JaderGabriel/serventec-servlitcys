@@ -29,6 +29,12 @@
     }
 @endphp
 
+{{-- Classes estáticas para o purge do Tailwind (marcadores dinâmicos no calendário). --}}
+<div class="hidden" aria-hidden="true">
+    <span class="serv-rx-cal-dot serv-rx-cal-dot--reference serv-rx-cal-dot--collect serv-rx-cal-dot--publication serv-rx-cal-dot--rectification serv-rx-cal-dot--fundeb serv-rx-cal-dot--stage2 serv-rx-cal-dot--neutral"></span>
+    <span class="serv-rx-cal-card serv-rx-cal-card--reference serv-rx-cal-card--collect serv-rx-cal-card--publication serv-rx-cal-card--rectification serv-rx-cal-card--fundeb serv-rx-cal-card--stage2 serv-rx-cal-card--neutral"></span>
+</div>
+
 <details class="serv-panel serv-rx-toolkit group" open>
     <summary class="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-3 border-b border-transparent group-open:border-slate-200/80 dark:group-open:border-slate-700/80">
         <div class="min-w-0">
