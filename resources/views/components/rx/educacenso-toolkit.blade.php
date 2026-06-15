@@ -18,17 +18,26 @@
     $sources = is_array($t['sources'] ?? null) ? $t['sources'] : [];
     $ano = (string) ($t['ano'] ?? '');
     $calendarCols = max(1, count($calendar));
+    $activeKind = null;
+    if ($activeKey !== null) {
+        foreach ($calendar as $milestoneRow) {
+            if (($milestoneRow['key'] ?? '') === $activeKey) {
+                $activeKind = (string) ($milestoneRow['kind'] ?? '');
+                break;
+            }
+        }
+    }
 @endphp
 
 <details class="serv-panel serv-rx-toolkit group" open>
     <summary class="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-3 border-b border-transparent group-open:border-slate-200/80 dark:group-open:border-slate-700/80">
         <div class="min-w-0">
-            <p class="serv-eyebrow">{{ __('Toolkit Educacenso') }}</p>
+            <p class="serv-eyebrow">{{ __('Guia do Educacenso') }}</p>
             <span class="text-sm font-semibold text-serv-navy dark:text-white">
                 {{ __('Regras e calendário do Censo :ano', ['ano' => $ano]) }}
             </span>
             <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                {{ __('1ª etapa · retificação · referências oficiais Inep') }}
+                {{ __('1ª etapa · correção · referências oficiais Inep') }}
             </p>
         </div>
         <x-ui.icon name="chevron-right" class="h-5 w-5 text-slate-400 shrink-0 transition-transform group-open:rotate-90" />
@@ -44,20 +53,36 @@
                     @if ($activeKey)
                         <p class="inline-flex items-center gap-1.5 text-[10px] font-medium text-teal-800 dark:text-teal-300">
                             <span class="serv-rx-cal-dot serv-rx-cal-dot--active" aria-hidden="true"></span>
-                            {{ __('Fase actual destacada') }}
+                            {{ __('Fase atual destacada') }}
                         </p>
                     @endif
                 </div>
 
                 <div class="serv-rx-cal-panel">
-                    <div class="serv-rx-cal-legend" role="list" aria-label="{{ __('Legenda do calendário') }}">
-                        @foreach ($legend as $item)
-                            @php $kind = (string) ($item['kind'] ?? 'neutral'); @endphp
-                            <span class="serv-rx-cal-legend__item" role="listitem">
-                                <span class="serv-rx-cal-dot serv-rx-cal-dot--{{ $kind }}" aria-hidden="true"></span>
-                                <span>{{ $item['label'] ?? '' }}</span>
-                            </span>
-                        @endforeach
+                    <div class="serv-rx-cal-legend" aria-labelledby="rx-toolkit-legend-title">
+                        <p id="rx-toolkit-legend-title" class="serv-rx-cal-legend__title">
+                            {{ __('Legenda das fases do Censo') }}
+                        </p>
+                        <div class="serv-rx-cal-legend__grid" role="list">
+                            @foreach ($legend as $item)
+                                @php
+                                    $kind = (string) ($item['kind'] ?? 'neutral');
+                                    $isLegendActive = $activeKind !== null && $kind === $activeKind;
+                                @endphp
+                                <div
+                                    class="serv-rx-cal-legend__entry{{ $isLegendActive ? ' serv-rx-cal-legend__entry--active' : '' }}"
+                                    role="listitem"
+                                >
+                                    <div class="serv-rx-cal-legend__entry-head">
+                                        <span class="serv-rx-cal-dot serv-rx-cal-dot--{{ $kind }} serv-rx-cal-dot--lg" aria-hidden="true"></span>
+                                        <span class="serv-rx-cal-legend__label">{{ $item['label'] ?? '' }}</span>
+                                    </div>
+                                    @if (filled($item['hint'] ?? null))
+                                        <p class="serv-rx-cal-legend__hint">{{ $item['hint'] }}</p>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
 
                     <div class="serv-rx-cal-scroll">
@@ -79,6 +104,9 @@
                                             <x-ui.icon :name="$icon" class="h-4 w-4" />
                                         </div>
                                         <div class="serv-rx-cal-card__body">
+                                            @if (filled($milestone['kind_label'] ?? null))
+                                                <span class="serv-rx-cal-card__kind serv-rx-cal-card__kind--{{ $kind }}">{{ $milestone['kind_label'] }}</span>
+                                            @endif
                                             <p class="serv-rx-cal-card__date tabular-nums" title="{{ $milestone['date_label'] ?? '' }}">
                                                 {{ $milestone['date_short'] ?? '' }}
                                             </p>
@@ -105,7 +133,7 @@
                         {{ __('Dados necessários na 1ª etapa') }}
                     </h4>
                     <p class="text-xs text-slate-600 dark:text-slate-400 mb-3 leading-relaxed">
-                        {{ __('Declaração na data de referência — exportação do i-Educar ou preenchimento direto no Educacenso.') }}
+                        {{ __('Declaração na data-base — exportação do i-Educar ou preenchimento direto no Educacenso.') }}
                     </p>
                     <div class="space-y-3">
                         @foreach ($stage1 as $group)
@@ -127,7 +155,7 @@
                     <section class="serv-rx-toolkit-callout serv-rx-toolkit-callout--amber" aria-labelledby="rx-toolkit-rect">
                         <h4 id="rx-toolkit-rect" class="serv-rx-toolkit-callout__title">
                             <x-ui.icon name="arrow-path" class="h-4 w-4 shrink-0" />
-                            <span>{{ $rect['title'] ?? __('Retificação') }}</span>
+                            <span>{{ $rect['title'] ?? __('Correção') }}</span>
                         </h4>
                         @if (filled($rect['intro'] ?? null))
                             <p class="serv-rx-toolkit-callout__intro">{{ $rect['intro'] }}</p>

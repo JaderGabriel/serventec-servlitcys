@@ -57,13 +57,13 @@
             <dl class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] opacity-80">
                 @if ($refDate !== '')
                     <div>
-                        <dt class="inline font-semibold">{{ __('Data de referência') }}:</dt>
+                        <dt class="inline font-semibold">{{ __('Data-base') }}:</dt>
                         <dd class="inline ml-1">{{ $refDate }}</dd>
                     </div>
                 @endif
                 @if ($windowStart !== '' && $windowEnd !== '')
                     <div>
-                        <dt class="inline font-semibold">{{ __('Janela actual') }}:</dt>
+                        <dt class="inline font-semibold">{{ __('Período atual') }}:</dt>
                         <dd class="inline ml-1">{{ $windowStart }} — {{ $windowEnd }}</dd>
                     </div>
                 @endif
@@ -82,7 +82,7 @@
                 <p class="mt-1 text-sm font-semibold uppercase tracking-wide opacity-90 text-center leading-snug">{{ $countdownLabel }}</p>
             @else
                 <p class="text-center text-sm font-semibold leading-snug opacity-90">
-                    {{ __('Prazo encerrado — consulte o toolkit abaixo') }}
+                    {{ __('Prazo encerrado — consulte o guia abaixo') }}
                 </p>
             @endif
             <div class="mt-3 w-full min-w-[10rem]">

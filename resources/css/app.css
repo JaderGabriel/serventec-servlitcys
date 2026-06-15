@@ -963,7 +963,35 @@
     }
 
     .serv-rx-cal-legend {
-        @apply flex flex-wrap items-center gap-x-4 gap-y-2 pb-3 mb-4 border-b border-slate-200 dark:border-slate-700;
+        @apply pb-4 mb-4 border-b border-slate-200 dark:border-slate-700;
+    }
+
+    .serv-rx-cal-legend__title {
+        @apply mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400;
+    }
+
+    .serv-rx-cal-legend__grid {
+        @apply grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3;
+    }
+
+    .serv-rx-cal-legend__entry {
+        @apply rounded-lg border border-slate-200/90 bg-white/60 px-3 py-2.5 dark:border-slate-600/80 dark:bg-slate-800/40;
+    }
+
+    .serv-rx-cal-legend__entry--active {
+        @apply border-teal-400/70 bg-teal-50/70 ring-1 ring-teal-500/40 dark:border-teal-600/50 dark:bg-teal-950/25;
+    }
+
+    .serv-rx-cal-legend__entry-head {
+        @apply flex items-center gap-2;
+    }
+
+    .serv-rx-cal-legend__label {
+        @apply text-[11px] font-semibold text-slate-700 dark:text-slate-200;
+    }
+
+    .serv-rx-cal-legend__hint {
+        @apply mt-1.5 pl-5 text-[10px] leading-relaxed text-slate-500 dark:text-slate-400;
     }
 
     .serv-rx-cal-legend__item {
@@ -1080,6 +1108,26 @@
     .serv-rx-cal-card__date {
         @apply text-[11px] font-bold leading-snug text-slate-800 dark:text-slate-100;
     }
+
+    .serv-rx-cal-card__kind {
+        @apply mb-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide;
+    }
+
+    .serv-rx-cal-card__kind--reference { background-color: #ede9fe; color: #6d28d9; }
+    .serv-rx-cal-card__kind--collect { background-color: #ccfbf1; color: #0f766e; }
+    .serv-rx-cal-card__kind--publication { background-color: #e0f2fe; color: #0369a1; }
+    .serv-rx-cal-card__kind--rectification { background-color: #fef3c7; color: #b45309; }
+    .serv-rx-cal-card__kind--fundeb { background-color: #d1fae5; color: #047857; }
+    .serv-rx-cal-card__kind--stage2 { background-color: #e0e7ff; color: #4338ca; }
+    .serv-rx-cal-card__kind--neutral { background-color: #f1f5f9; color: #64748b; }
+
+    .dark .serv-rx-cal-card__kind--reference { background-color: rgb(91 33 182 / 0.35); color: #ddd6fe; }
+    .dark .serv-rx-cal-card__kind--collect { background-color: rgb(15 118 110 / 0.35); color: #99f6e4; }
+    .dark .serv-rx-cal-card__kind--publication { background-color: rgb(3 105 161 / 0.35); color: #bae6fd; }
+    .dark .serv-rx-cal-card__kind--rectification { background-color: rgb(180 83 9 / 0.35); color: #fde68a; }
+    .dark .serv-rx-cal-card__kind--fundeb { background-color: rgb(4 120 87 / 0.35); color: #a7f3d0; }
+    .dark .serv-rx-cal-card__kind--stage2 { background-color: rgb(67 56 202 / 0.35); color: #c7d2fe; }
+    .dark .serv-rx-cal-card__kind--neutral { background-color: rgb(100 116 139 / 0.35); color: #cbd5e1; }
 
     .serv-rx-cal-card__title {
         @apply mt-1 text-[11px] font-semibold leading-snug text-serv-navy dark:text-white;

@@ -86,15 +86,15 @@ final class RxCensoDeadline
         if ($ref && $now->lt($ref)) {
             return self::buildPhase(
                 key: 'before_reference',
-                label: __('Antes da data de referência'),
+                label: __('Antes da data-base'),
                 note: __('Organize o cadastro no i-Educar para refletir a situação na data-base do Censo.'),
                 windowStart: $now->copy()->startOfYear(),
                 windowEnd: $ref,
                 targetEnd: $ref,
                 now: $now,
-                countdownLabel: __('dias até a data de referência'),
+                countdownLabel: __('dias até a data-base'),
                 statusWhenOk: __('Preparação'),
-                messageOk: __('Faltam :d dia(s) para a data de referência do Censo (:data). Revise turmas e matrículas no i-Educar.', [
+                messageOk: __('Faltam :d dia(s) para a data-base do Censo (:data). Revise turmas e matrículas no i-Educar.', [
                     'data' => RxCensoCalendar::formatDate($ref->format('Y-m-d')),
                 ]),
                 nextLabel: __('Início da 1ª etapa'),
@@ -124,18 +124,18 @@ final class RxCensoDeadline
         if ($prelim && $rectEnd && $now->lt($prelim)) {
             return self::buildPhase(
                 key: 'awaiting_rectification',
-                label: __('Aguardando retificação'),
+                label: __('Aguardando correção'),
                 note: __('Coleta da 1ª etapa encerrada. Aguarde a publicação preliminar no DOU para a janela de correção.'),
                 windowStart: $s1End ?? $now,
                 windowEnd: $prelim,
                 targetEnd: $prelim,
                 now: $now,
-                countdownLabel: __('dias até abertura da retificação'),
+                countdownLabel: __('dias até abertura da correção'),
                 statusWhenOk: __('Conferência pendente'),
-                messageOk: __('A retificação abre após o DOU (:data). Use este período para auditoria interna e duplicidades de matrícula.', [
+                messageOk: __('A correção abre após o DOU (:data). Use este período para auditoria interna e duplicidades de matrícula.', [
                     'data' => RxCensoCalendar::formatDate($prelim->format('Y-m-d')),
                 ]),
-                nextLabel: __('Início da retificação'),
+                nextLabel: __('Início da correção'),
                 nextDate: $prelim->format('Y-m-d'),
             );
         }
@@ -143,15 +143,15 @@ final class RxCensoDeadline
         if ($rectEnd && $now->lte($rectEnd)) {
             return self::buildPhase(
                 key: 'stage1_rectification',
-                label: __('Retificação da 1ª etapa'),
-                note: __('Janela de 30 dias para conferir, ratificar e corrigir dados declarados na coleta inicial.'),
+                label: __('Correção da 1ª etapa'),
+                note: __('Janela de 30 dias para conferir, confirmar e corrigir dados declarados na coleta inicial.'),
                 windowStart: $prelim ?? $s1End ?? $now,
                 windowEnd: $rectEnd,
                 targetEnd: $rectEnd,
                 now: $now,
-                countdownLabel: __('dias restantes de retificação'),
-                statusWhenOk: __('Retificação aberta'),
-                messageOk: __('Faltam :d dia(s) para encerrar a retificação (:data). Confirme duplicidades e ajustes no Educacenso.', [
+                countdownLabel: __('dias restantes de correção'),
+                statusWhenOk: __('Correção aberta'),
+                messageOk: __('Faltam :d dia(s) para encerrar a correção (:data). Confirme duplicidades e ajustes no Educacenso.', [
                     'data' => RxCensoCalendar::formatDate($rectEnd->format('Y-m-d')),
                 ]),
                 nextLabel: __('2ª etapa — Situação do aluno'),
@@ -182,7 +182,7 @@ final class RxCensoDeadline
             return self::buildPhase(
                 key: 'stage2_collect',
                 label: (string) ($s2['label'] ?? __('2ª etapa — Situação do aluno')),
-                note: __('Informe aprovação, reprovação, abandono e transferência dos estudantes da 1ª etapa.'),
+                note: __('Informe aprovação, reprovação, abandono e transferência dos alunos da 1ª etapa.'),
                 windowStart: $s2Start,
                 windowEnd: $s2End,
                 targetEnd: $s2End,
@@ -209,7 +209,7 @@ final class RxCensoDeadline
             now: $now,
             countdownLabel: __('prazo encerrado'),
             statusWhenOk: __('Encerrado'),
-            messageOk: __('A janela operacional do Censo :ano terminou. Consulte o toolkit para o próximo exercício.', [
+            messageOk: __('A janela operacional do Censo :ano terminou. Consulte o guia do Educacenso para o próximo exercício.', [
                 'ano' => (string) ($calendar['ano'] ?? ''),
             ]),
             forcePast: true,

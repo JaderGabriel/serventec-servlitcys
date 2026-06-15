@@ -27,18 +27,56 @@ final class RxEducacensoToolkit
     }
 
     /**
-     * @return list<array{kind: string, label: string}>
+     * @return list<array{kind: string, label: string, hint: string}>
      */
     public static function calendarLegend(): array
     {
         return [
-            ['kind' => 'reference', 'label' => __('Data de referência')],
-            ['kind' => 'collect', 'label' => __('Coleta')],
-            ['kind' => 'publication', 'label' => __('Publicação DOU')],
-            ['kind' => 'rectification', 'label' => __('Retificação')],
-            ['kind' => 'fundeb', 'label' => __('Homologação Fundeb')],
-            ['kind' => 'stage2', 'label' => __('2ª etapa')],
+            [
+                'kind' => 'reference',
+                'label' => __('Data-base'),
+                'hint' => __('Situação da rede na data oficial do Censo (Dia Nacional do Censo Escolar).'),
+            ],
+            [
+                'kind' => 'collect',
+                'label' => __('Coleta'),
+                'hint' => __('Envio das informações no Educacenso ou exportação a partir do i-Educar.'),
+            ],
+            [
+                'kind' => 'publication',
+                'label' => __('Publicação no DOU'),
+                'hint' => __('Dados preliminares publicados; em seguida abre a conferência na rede.'),
+            ],
+            [
+                'kind' => 'rectification',
+                'label' => __('Correção'),
+                'hint' => __('30 dias para conferir, confirmar e ajustar o que foi declarado na 1ª etapa.'),
+            ],
+            [
+                'kind' => 'fundeb',
+                'label' => __('Homologação FUNDEB'),
+                'hint' => __('Envio dos dados finais ao FNDE para coeficientes de distribuição.'),
+            ],
+            [
+                'kind' => 'stage2',
+                'label' => __('Situação do aluno'),
+                'hint' => __('Aprovação, reprovação, abandono e transferência ao fim do ano letivo.'),
+            ],
         ];
+    }
+
+    /**
+     * @return array{kind: string, label: string, hint: string}
+     */
+    private static function legendEntryForKind(string $kind): array
+    {
+        foreach (self::calendarLegend() as $entry) {
+            if (($entry['kind'] ?? '') === $kind) {
+                return $entry;
+            }
+        }
+
+        return ['kind' => $kind, 'label' => '', 'hint' => ''];
     }
 
     /**
@@ -46,11 +84,14 @@ final class RxEducacensoToolkit
      * @return list<array{
      *   key: string,
      *   kind: string,
+     *   kind_label: string,
      *   label: string,
      *   date: string,
      *   date_end: ?string,
      *   date_label: string,
      *   date_short: string,
+     *   label_short: string,
+     *   icon: string,
      *   note: string
      * }>
      */
@@ -69,10 +110,10 @@ final class RxEducacensoToolkit
         if ($ref !== '') {
             $milestones[] = self::milestone(
                 'reference',
-                __('Data de referência (Dia Nacional do Censo)'),
+                __('Data-base do Censo (Dia Nacional do Censo Escolar)'),
                 $ref,
                 RxCensoCalendar::formatDate($ref),
-                __('Situação das escolas, turmas, matrículas e profissionais deve refletir esta data.'),
+                __('Escolas, turmas, matrículas e profissionais devem refletir a situação nesta data.'),
             );
         }
 
@@ -84,7 +125,7 @@ final class RxEducacensoToolkit
                 (string) ($s1['label'] ?? __('1ª etapa — Matrícula inicial')),
                 $start,
                 RxCensoCalendar::formatDate($start).' — '.RxCensoCalendar::formatDate($end),
-                __('Coleta no Educacenso ou migração via exportação do i-Educar.'),
+                __('Período de envio no Educacenso ou migração via exportação do i-Educar.'),
                 $end,
             );
         }
@@ -96,7 +137,7 @@ final class RxEducacensoToolkit
                 __('Publicação preliminar (DOU)'),
                 $dou,
                 RxCensoCalendar::formatDate($dou),
-                __('Após esta data abre a janela de conferência e retificação.'),
+                __('Publicação dos dados preliminares no Diário Oficial da União.'),
             );
         }
 
@@ -104,10 +145,10 @@ final class RxEducacensoToolkit
             $rectEnd = (string) $s1['rectification_end'];
             $milestones[] = self::milestone(
                 'rectification',
-                __('Retificação da 1ª etapa'),
+                __('Correção da 1ª etapa'),
                 $rectEnd,
-                __('30 dias após o DOU').' ('.RxCensoCalendar::formatDate($rectEnd).')',
-                __('Correções com base nos registros administrativos e acadêmicos.'),
+                __('Janela de 30 dias (até :data)', ['data' => RxCensoCalendar::formatDate($rectEnd)]),
+                __('Ajustes com base nos registros administrativos e acadêmicos da escola.'),
             );
         }
 
@@ -118,7 +159,7 @@ final class RxEducacensoToolkit
                 __('Envio homologado ao FNDE (Fundeb)'),
                 $fundeb,
                 RxCensoCalendar::formatDate($fundeb),
-                __('Dados finais para coeficientes de distribuição do Fundeb.'),
+                __('Dados homologados enviados ao FNDE para o cálculo do FUNDEB.'),
             );
         }
 
@@ -164,9 +205,13 @@ final class RxEducacensoToolkit
             ? RxCensoCalendar::formatDate($date).' — '.RxCensoCalendar::formatDate($dateEnd)
             : RxCensoCalendar::formatDate($date);
 
+        $kind = self::milestoneKind($key);
+        $legend = self::legendEntryForKind($kind);
+
         return [
             'key' => $key,
-            'kind' => self::milestoneKind($key),
+            'kind' => $kind,
+            'kind_label' => (string) ($legend['label'] ?? ''),
             'label' => $label,
             'label_short' => self::milestoneShortLabel($key),
             'icon' => self::milestoneIcon($key),
@@ -181,12 +226,12 @@ final class RxEducacensoToolkit
     private static function milestoneShortLabel(string $key): string
     {
         return match ($key) {
-            'reference' => __('Referência'),
-            'stage1_collect' => __('1ª etapa'),
-            'prelim_dou' => __('DOU preliminar'),
-            'rectification' => __('Retificação'),
-            'fundeb_send' => __('Homologação Fundeb'),
-            'stage2_collect' => __('2ª etapa'),
+            'reference' => __('Data-base'),
+            'stage1_collect' => __('Matrícula inicial'),
+            'prelim_dou' => __('Publicação DOU'),
+            'rectification' => __('Correção'),
+            'fundeb_send' => __('Homologação FUNDEB'),
+            'stage2_collect' => __('Situação do aluno'),
             default => '',
         };
     }
@@ -218,7 +263,7 @@ final class RxEducacensoToolkit
     }
 
     /**
-     * Marco activo no calendário conforme a fase do banner RX.
+     * Marco ativo no calendário conforme a fase do banner RX.
      */
     public static function activeMilestoneKey(?string $deadlinePhase): ?string
     {
@@ -250,14 +295,14 @@ final class RxEducacensoToolkit
             [
                 'title' => __('Turmas e organização escolar'),
                 'items' => [
-                    __('Turmas abertas na data de referência, com etapa/modalidade, turno e tipo de atendimento.'),
+                    __('Turmas abertas na data-base, com etapa/modalidade, turno e tipo de atendimento.'),
                     __('Vínculo correto entre turma, escola e ano letivo no i-Educar antes da exportação.'),
                 ],
             ],
             [
                 'title' => __('Alunos e matrículas'),
                 'items' => [
-                    __('Matrícula inicial de cada estudante na data de referência (vínculo ativo, série/etapa).'),
+                    __('Matrícula inicial de cada aluno na data-base (vínculo ativo, série/etapa).'),
                     __('Dados cadastrais do aluno: nome, data de nascimento, filiação, documentos e deficiência/NNE.'),
                     __('Endereço residencial e vínculo com a unidade — base para programas e indicadores territoriais.'),
                 ],
@@ -265,7 +310,7 @@ final class RxEducacensoToolkit
             [
                 'title' => __('Profissionais escolares'),
                 'items' => [
-                    __('Gestores, docentes e demais profissionais em exercício na data de referência.'),
+                    __('Gestores, docentes e demais profissionais em exercício na data-base.'),
                     __('Função, carga horária, formação e vínculo empregatício conforme layout do Educacenso.'),
                 ],
             ],
@@ -290,8 +335,8 @@ final class RxEducacensoToolkit
             : __('após publicação no DOU');
 
         return [
-            'title' => __('Retificação da 1ª etapa'),
-            'intro' => __('Após a publicação preliminar no DOU (:data), o Educacenso reabre por 30 dias para conferência, ratificação e correção dos dados declarados na coleta inicial.', [
+            'title' => __('Correção da 1ª etapa'),
+            'intro' => __('Depois da publicação preliminar no DOU (:data), o Educacenso fica aberto por 30 dias para conferência, confirmação e correção dos dados da coleta inicial.', [
                 'data' => $prelim,
             ]),
             'items' => [
@@ -301,8 +346,8 @@ final class RxEducacensoToolkit
                 __('Matrículas não confirmadas podem ser desconsideradas nos resultados finais.'),
             ],
             'warnings' => [
-                __('A retificação não substitui a 2ª etapa (Situação do aluno) — rendimento e movimento têm calendário próprio.'),
-                __('Use registros administrativos e acadêmicos da escola; a data de referência da 1ª etapa permanece a do Censo.'),
+                __('A correção da 1ª etapa não substitui a 2ª etapa (Situação do aluno) — rendimento e movimento têm calendário próprio.'),
+                __('Use os registros administrativos e acadêmicos da escola; a data-base da 1ª etapa permanece a do Censo.'),
             ],
         ];
     }
@@ -324,14 +369,14 @@ final class RxEducacensoToolkit
 
         return [
             'title' => (string) ($s2['label'] ?? __('2ª etapa — Situação do aluno')),
-            'intro' => __('Coleta prevista de :inicio a :fim. Só para estudantes já declarados na 1ª etapa.', [
+            'intro' => __('Coleta prevista de :inicio a :fim. Somente para alunos já declarados na 1ª etapa.', [
                 'inicio' => RxCensoCalendar::formatDate((string) $s2['collect_start']),
                 'fim' => RxCensoCalendar::formatDate((string) ($s2['collect_end'] ?? '')),
             ]),
             'items' => [
                 __('Situação final do ano letivo: aprovado, reprovado, em exame ou progressão continuada.'),
                 __('Movimento escolar: transferência, abandono, falecimento ou conclusão.'),
-                __('Após a coleta, há período de conferência e retificação específico da 2ª etapa.'),
+                __('Após a coleta, há período de conferência e correção específico da 2ª etapa.'),
             ],
         ];
     }
