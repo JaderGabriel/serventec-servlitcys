@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`4.4.6`** · tag de deploy **`20260609d-Themis`** · ver [RELEASE_20260609d_THEMIS.md](RELEASE_20260609d_THEMIS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`4.4.7`** · tag de deploy **`20260615a-Mnemosyne`** · ver [RELEASE_20260615a_MNEMOSYNE.md](RELEASE_20260615a_MNEMOSYNE.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **4.4.6** |
+| **Versão semântica em produção** | **4.4.7** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260609d-Themis` |
-| **Último marco documentado** | Fix ano letivo ao trocar município, abas lazy e qualidade no dock — [RELEASE_20260609d_THEMIS.md](RELEASE_20260609d_THEMIS.md) |
+| **Tag de deploy (servidor)** | `20260615a-Mnemosyne` |
+| **Último marco documentado** | Toolkit Educacenso 2026 e prazo por fase no RX — [RELEASE_20260615a_MNEMOSYNE.md](RELEASE_20260615a_MNEMOSYNE.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -29,6 +29,7 @@ timeline
     2026-06-09 : 4.4.4c Atropos — dock analytics, PNG legenda, mapa cache
     2026-06-09 : 4.4.5a Themis — qualidade no dock, FUNDEB gerencial
     2026-06-09 : 4.4.6d Themis — ano letivo ao trocar município
+    2026-06-15 : 4.4.7a Mnemosyne — toolkit Educacenso no RX
     2026-06-10 : 4.2.0 Clio — VAAT/VAAR portaria
     2026-06-11 : 4.3.0 Harmonia — RX + gráfico home
 ```
@@ -41,7 +42,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.4.6** | `5225496` / `20260609d-Themis` → `main` | **367** | 09/06/2026 | **Produção:** ano letivo automático ao trocar município, abas lazy com `ano_letivo`, índice qualidade no dock — [RELEASE_20260609d_THEMIS.md](RELEASE_20260609d_THEMIS.md). |
+| **▶ 4.4.7** | `66bc396` / `20260615a-Mnemosyne` → `main` | **369** | 15/06/2026 | **Produção:** toolkit Educacenso 2026, calendário INEP e banner de prazo por fase no RX — [RELEASE_20260615a_MNEMOSYNE.md](RELEASE_20260615a_MNEMOSYNE.md). |
+| 4.4.6 | `5225496` / `20260609d-Themis` → `main` | **367** | 09/06/2026 | Ano letivo automático ao trocar município, abas lazy com `ano_letivo`, índice qualidade no dock — [RELEASE_20260609d_THEMIS.md](RELEASE_20260609d_THEMIS.md). |
 | 4.4.5 | `1927352` / `20260609a-Themis` → `main` | **364** | 09/06/2026 | Índice qualidade no dock, FUNDEB gerencial, fix troca município/ano, hub exports, pt-BR — [RELEASE_20260609a_THEMIS.md](RELEASE_20260609a_THEMIS.md). |
 | 4.4.4 | `6ea5002` / `20260609c-Atropos` → `main` | **360** | 09/06/2026 | Dock analytics, Diagnóstico explorar, cache mapa Início 1 h, PNG com legenda 1/2 colunas, PDF CadÚnico — [RELEASE_20260609c_ATROPOS.md](RELEASE_20260609c_ATROPOS.md). |
 | 4.4.3 | `39333e0` / `20260609b-Lachesis` → `main` | **355** | 09/06/2026 | CadÚnico CUN-01/02 — lacuna por idade, desconto Censo não municipal, mapa territorial — [RELEASE_20260609b_LACHESIS.md](RELEASE_20260609b_LACHESIS.md). |

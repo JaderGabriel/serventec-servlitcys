@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '4.4.6',
-        'release_tag' => '20260609d-Themis',
-        'commit_short' => '5225496',
-        'commit_number' => 367,
-        'revision_date' => '2026-06-09',
+        'version' => '4.4.7',
+        'release_tag' => '20260615a-Mnemosyne',
+        'commit_short' => '66bc396',
+        'commit_number' => 369,
+        'revision_date' => '2026-06-15',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],
