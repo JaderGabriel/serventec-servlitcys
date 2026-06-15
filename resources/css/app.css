@@ -947,6 +947,20 @@
             dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-200;
     }
 
+    .serv-rx-toolkit summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .serv-rx-toolkit-milestone {
+        @apply rounded-lg border border-slate-200/80 bg-slate-50/60 px-3 py-2
+            dark:border-slate-700/80 dark:bg-slate-900/40;
+    }
+
+    .serv-rx-toolkit-group {
+        @apply rounded-lg border border-teal-200/60 bg-teal-50/30 px-3 py-2.5
+            dark:border-teal-900/50 dark:bg-teal-950/20;
+    }
+
     .serv-rx-th-group--anterior {
         @apply bg-slate-100/70 text-slate-800/90 dark:bg-slate-800/50 dark:text-slate-200/90;
     }

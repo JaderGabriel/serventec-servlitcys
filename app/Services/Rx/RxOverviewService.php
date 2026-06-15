@@ -8,6 +8,7 @@ use App\Support\Pulse\PulseOperationRecorder;
 use App\Support\Rx\RxCensoDeadline;
 use App\Support\Rx\RxCityMetricsCollector;
 use App\Support\Rx\RxColumnHelp;
+use App\Support\Rx\RxEducacensoToolkit;
 use App\Support\Rx\RxFundebPortariaChart;
 
 /**
@@ -93,6 +94,7 @@ final class RxOverviewService
             'vigente_ano' => $vigenteYear,
             'anterior_ano' => $anteriorYear,
             'deadline' => $deadline,
+            'educacenso_toolkit' => RxEducacensoToolkit::forYear($vigenteYear),
             'cities_total' => count($rows),
             'cities_ok' => $okCount,
             'cities_error' => $errors,
