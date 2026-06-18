@@ -93,6 +93,12 @@ final class EducacensoIeducarCrossCheck
      */
     private function countMatriculasForSchool(array $parsed, string $schoolInep): int
     {
+        $stats = is_array($parsed['statistics'] ?? null) ? $parsed['statistics'] : [];
+        $byInep = is_array($stats['matriculas_by_inep'] ?? null) ? $stats['matriculas_by_inep'] : [];
+        if (isset($byInep[$schoolInep])) {
+            return (int) $byInep[$schoolInep];
+        }
+
         $records = is_array($parsed['records'] ?? null) ? $parsed['records'] : [];
         $count = 0;
         foreach ($records as $rec) {

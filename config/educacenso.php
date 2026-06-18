@@ -34,4 +34,7 @@ return [
 
     'tolerance_matricula_min_diff' => (int) env('IEDUCAR_DISC_CENSO_MAT_MIN_DIFF', 10),
 
+    /** Máximo de linhas detalhadas em memória; estatísticas agregadas mantêm-se completas. */
+    'store_records_max' => max(0, (int) env('EDUCACENSO_STORE_RECORDS_MAX', 50_000)),
+
 ];

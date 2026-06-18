@@ -4,6 +4,7 @@ namespace App\Services\Educacenso;
 
 use App\Models\City;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Ieducar\EscolaTurmaJoin;
 use App\Support\Ieducar\IeducarColumnInspector;
 use App\Support\Ieducar\IeducarSchema;
 use App\Support\Ieducar\MatriculaChartQueries;
@@ -50,14 +51,14 @@ final class EducacensoIeducarSnapshot
     private function schoolsWithInep(Connection $db, City $city, IeducarFilterState $filters): array
     {
         $inepTable = IeducarSchema::resolveTable('educacenso_cod_escola', $city);
-        $escolaT = IeducarSchema::resolveTable('escola', $city);
 
-        $eId = (string) config('ieducar.columns.escola.id', 'cod_escola');
-        $eName = IeducarColumnInspector::firstExistingColumn($db, $escolaT, [
-            (string) config('ieducar.columns.escola.name', 'nome'),
-            'nm_escola',
-            'nome',
-        ], $city) ?? 'nome';
+        $pk = EscolaTurmaJoin::pkSpec($db, $city);
+        if ($pk === null) {
+            return ['by_inep' => [], 'ineps_with_matricula' => []];
+        }
+
+        $escolaT = $pk['qualified'];
+        $eId = $pk['idCol'];
 
         $inepColEscola = (string) config('ieducar.columns.educacenso_cod_escola.cod_escola', 'cod_escola');
         $inepColInep = (string) config('ieducar.columns.educacenso_cod_escola.cod_escola_inep', 'cod_escola_inep');
@@ -66,14 +67,40 @@ final class EducacensoIeducarSnapshot
             return ['by_inep' => [], 'ineps_with_matricula' => []];
         }
 
-        $inepRows = $db->table($inepTable.' as ie')
-            ->join($escolaT.' as e', 'ie.'.$inepColEscola, '=', 'e.'.$eId)
-            ->select([
+        $eName = IeducarColumnInspector::firstExistingColumn($db, $escolaT, array_filter([
+            (string) config('ieducar.columns.escola.name', 'nome'),
+            'nome',
+            'nm_escola',
+            'fantasia',
+            'razao_social',
+            'sigla',
+        ]), $city);
+
+        $useRelatorioNome = $eName === null
+            && $db->getDriverName() === 'pgsql'
+            && filter_var(config('ieducar.pgsql_use_relatorio_escola_nome', true), FILTER_VALIDATE_BOOLEAN);
+
+        $query = $db->table($inepTable.' as ie')
+            ->join($escolaT.' as e', 'ie.'.$inepColEscola, '=', 'e.'.$eId);
+
+        if ($eName !== null) {
+            $query->select([
                 'e.'.$eId.' as escola_id',
                 'e.'.$eName.' as nome',
                 'ie.'.$inepColInep.' as inep',
-            ])
-            ->get();
+            ]);
+        } elseif ($useRelatorioNome) {
+            $query->selectRaw('e.'.$eId.' as escola_id')
+                ->selectRaw('relatorio.get_nome_escola(e.'.$eId.') as nome')
+                ->addSelect('ie.'.$inepColInep.' as inep');
+        } else {
+            $query->select([
+                'e.'.$eId.' as escola_id',
+                'ie.'.$inepColInep.' as inep',
+            ]);
+        }
+
+        $inepRows = $query->get();
 
         $byInep = [];
         foreach ($inepRows as $row) {
@@ -83,7 +110,7 @@ final class EducacensoIeducarSnapshot
             }
             $byInep[$inep] = [
                 'escola_id' => $row->escola_id,
-                'nome' => (string) ($row->nome ?? '—'),
+                'nome' => trim((string) ($row->nome ?? '')) !== '' ? (string) $row->nome : ('Escola #'.($row->escola_id ?? '')),
                 'matriculas' => 0,
             ];
         }

@@ -90,6 +90,17 @@
                         <x-dashboard.funding-loss-conditions-modal :data="$fundingLossModalData ?? []" />
                     @endif
 
+                    @if (session('educacenso_success') || session('educacenso_error'))
+                        <div class="space-y-2">
+                            @if (session('educacenso_success'))
+                                <div class="serv-callout serv-callout--success text-sm">{{ session('educacenso_success') }}</div>
+                            @endif
+                            @if (session('educacenso_error'))
+                                <div class="serv-callout serv-callout--danger text-sm">{{ session('educacenso_error') }}</div>
+                            @endif
+                        </div>
+                    @endif
+
                     <div class="serv-panel overflow-x-hidden overflow-y-visible">
                         <x-dashboard.analytics-tabs-nav :groups="$tabGroups ?? []" :tabs="$tabs" />
 

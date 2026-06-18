@@ -25,7 +25,9 @@ final class EducacensoFileReader
         $records = [];
         $countsByType = [];
         $schoolIneps = [];
+        $matriculasByInep = [];
         $lineNo = 0;
+        $storeRecordsMax = max(0, (int) config('educacenso.store_records_max', 50_000));
 
         if (! is_readable($absolutePath)) {
             return $this->fail(__('Ficheiro não legível.'), $displayName, 0);
@@ -80,17 +82,23 @@ final class EducacensoFileReader
             }
 
             $countsByType[$type] = ($countsByType[$type] ?? 0) + 1;
-            $records[] = [
-                'line' => $lineNo,
-                'type' => $type,
-                'fields' => $fields,
-                'school_inep' => $schoolInep,
-            ];
+
+            if ($type === '60' && $schoolInep !== null) {
+                $matriculasByInep[$schoolInep] = ($matriculasByInep[$schoolInep] ?? 0) + 1;
+            }
+
+            if ($storeRecordsMax === 0 || count($records) < $storeRecordsMax) {
+                $records[] = [
+                    'line' => $lineNo,
+                    'type' => $type,
+                    'school_inep' => $schoolInep,
+                ];
+            }
         }
 
         fclose($handle);
 
-        if ($records === []) {
+        if ($countsByType === []) {
             $findings[] = $this->finding('EDU-CEN-001', 0, null, null);
 
             return $this->fail(__('Nenhum registro válido encontrado.'), $displayName, $size, $findings);
@@ -114,10 +122,12 @@ final class EducacensoFileReader
             'records' => $records,
             'statistics' => [
                 'total_lines' => $lineNo,
-                'total_records' => count($records),
+                'total_records' => array_sum($countsByType),
+                'records_sampled' => count($records),
                 'by_type' => $countsByType,
                 'schools' => count($schoolIneps),
                 'matriculas' => (int) ($countsByType['60'] ?? 0),
+                'matriculas_by_inep' => $matriculasByInep,
                 'turmas' => (int) ($countsByType['20'] ?? 0),
                 'pessoas' => (int) ($countsByType['30'] ?? 0),
                 'profissionais' => (int) (($countsByType['40'] ?? 0) + ($countsByType['50'] ?? 0) + ($countsByType['51'] ?? 0)),

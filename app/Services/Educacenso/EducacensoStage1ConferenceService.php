@@ -287,6 +287,12 @@ final class EducacensoStage1ConferenceService
      */
     private function countSchoolReg60(array $parsed, string $inep): int
     {
+        $stats = is_array($parsed['statistics'] ?? null) ? $parsed['statistics'] : [];
+        $byInep = is_array($stats['matriculas_by_inep'] ?? null) ? $stats['matriculas_by_inep'] : [];
+        if (isset($byInep[$inep])) {
+            return (int) $byInep[$inep];
+        }
+
         $n = 0;
         foreach (is_array($parsed['records'] ?? null) ? $parsed['records'] : [] as $rec) {
             if (($rec['type'] ?? '') === '60' && ($rec['school_inep'] ?? '') === $inep) {

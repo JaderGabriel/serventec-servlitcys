@@ -10,6 +10,7 @@ use App\Support\Dashboard\IeducarFilterState;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EducacensoAnalysisController extends Controller
@@ -57,11 +58,26 @@ class EducacensoAnalysisController extends Controller
         $absolute = $dir.'/'.$safeName;
         $upload->move($dir, $safeName);
 
-        $report = $service->analyze($city, $filters, $absolute, (string) $upload->getClientOriginalName());
+        try {
+            $report = $service->analyze($city, $filters, $absolute, (string) $upload->getClientOriginalName());
+            EducacensoAnalysisCache::put($request->user(), $city, $report);
+        } catch (\Throwable $e) {
+            Log::error('educacenso.analyze_failed', [
+                'city_id' => $city->getKey(),
+                'file' => $upload->getClientOriginalName(),
+                'message' => $e->getMessage(),
+            ]);
 
-        EducacensoAnalysisCache::put($request->user(), $city, $report);
-
-        @unlink($absolute);
+            return redirect()
+                ->route('dashboard.analytics', [
+                    'city_id' => $city->getKey(),
+                    'ano_letivo' => $filters->ano_letivo,
+                    'tab' => 'work_done',
+                ])
+                ->with('educacenso_error', __('Falha ao analisar o arquivo Educacenso: :msg', ['msg' => $e->getMessage()]));
+        } finally {
+            @unlink($absolute);
+        }
 
         return redirect()
             ->route('dashboard.analytics', [
