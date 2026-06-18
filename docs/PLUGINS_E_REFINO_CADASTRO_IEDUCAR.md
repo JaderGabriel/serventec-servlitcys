@@ -74,7 +74,7 @@ Prioridade para secretaria e equipes de escola. Campos mapeados em `config/ieduc
 
 | Rotina | Quem | Porquê |
 |--------|------|--------|
-| **Exportação Educacenso** no prazo | Secretaria + escolas | Base oficial de matrícula; check `matricula_censo_vs_ieducar` |
+| **Conferência Educacenso** (arquivo portal INEP × i-Educar) | Secretaria + escolas | Divergências cadastro vs declaração oficial — [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) |
 | **Fecho de ano letivo** (situações finais) | Rede | Evita «em curso» fantasma |
 | **Sincronização geo** (admin) | TI | `app:sync-school-unit-geos-pipeline` ou sync massiva semanal |
 | **Revisão discrepâncias** antes do PDF | Consultoria | Prioriza correcções com maior `peso_por_check` |

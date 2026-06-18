@@ -24,6 +24,7 @@ use App\Http\Controllers\CityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DashboardMunicipalityMapController;
 use App\Http\Controllers\DiscrepanciesExportController;
+use App\Http\Controllers\EducacensoAnalysisController;
 use App\Http\Controllers\InclusionNeeExportController;
 use App\Http\Controllers\FirstAccessProfileController;
 use App\Http\Controllers\LegalConsentController;
@@ -74,6 +75,9 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
         Route::get('/dashboard/analytics/filter-options-bootstrap', [AnalyticsDashboardController::class, 'filterOptionsBootstrap'])->name('dashboard.analytics.filter-options-bootstrap');
         Route::get('/dashboard/analytics/filter-options-years', [AnalyticsDashboardController::class, 'filterOptionsYears'])->name('dashboard.analytics.filter-options-years');
         Route::get('/dashboard/analytics/discrepancies/export', [DiscrepanciesExportController::class, 'csv'])->name('dashboard.analytics.discrepancies.export');
+        Route::post('/dashboard/analytics/educacenso-analyze', [EducacensoAnalysisController::class, 'store'])->name('dashboard.analytics.educacenso.analyze');
+        Route::delete('/dashboard/analytics/educacenso-analyze', [EducacensoAnalysisController::class, 'destroy'])->name('dashboard.analytics.educacenso.clear');
+        Route::get('/dashboard/analytics/educacenso-analyze/export', [EducacensoAnalysisController::class, 'exportFindings'])->name('dashboard.analytics.educacenso.export');
         Route::get('/dashboard/analytics/comparativo/export', [ComparativoExportController::class, 'download'])
             ->name('dashboard.analytics.comparativo.export');
         Route::get('/dashboard/analytics/cadunico-previsao/export', [CadunicoPrevisaoExportController::class, 'download'])

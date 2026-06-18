@@ -104,6 +104,7 @@ mindmap
 | [SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md](SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md) | Cobertura MEC/INEP |
 | [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | SAEB / IDEB |
 | [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) | Cadastro e integrações |
+| [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) | Conferência arquivo Educacenso (portal INEP) × i-Educar + painel |
 | [DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md](DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md) | Roadmap NEE / AEE |
 
 ### 3. Financiamento e repasses

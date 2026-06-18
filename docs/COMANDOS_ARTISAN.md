@@ -95,6 +95,27 @@ php artisan cadunico:sync-territorio --all --queue --ano=2025
 
 ---
 
+## 3.1 Educacenso — conferência 1ª etapa
+
+| Comando | Descrição |
+|---------|-----------|
+| `censo:analyze-educacenso-file` | Analisa arquivo `.txt` do portal INEP cruzando com i-Educar read-only (`--city=`, `--ano=`, `--output=json\|table`) |
+
+**Interface web:** Analytics → aba **Censo** → secção **Conferência Educacenso**
+
+**Fixtures:** `tests/fixtures/educacenso/stage1_2026_minimal.txt` · `stage1_2026_load_test.txt` (~15 MB)
+
+```bash
+php artisan censo:analyze-educacenso-file tests/fixtures/educacenso/stage1_2026_minimal.txt --city=1 --ano=2026
+php tests/fixtures/educacenso/generate_load_test.php --schools=200 --matriculas=1200 --turmas=30
+```
+
+Documentação: [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md)
+
+**Variáveis:** `EDUCACENSO_*` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md)
+
+---
+
 ## 4. FUNDEB / VAAF
 
 Referências gravadas em **`fundeb_municipio_references`** (`city_id`, `ibge_municipio`, `ano`, `vaaf`, `vaat`, `complementacao_vaar`). O painel Analytics usa o **ano do filtro**; se não existir linha, o ano mais recente; depois fallback global.

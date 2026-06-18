@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '4.4.7',
-        'release_tag' => '20260615a-Mnemosyne',
-        'commit_short' => '66bc396',
-        'commit_number' => 369,
-        'revision_date' => '2026-06-15',
+        'version' => '4.4.8',
+        'release_tag' => '20260603a-Cleodora',
+        'commit_short' => '',
+        'commit_number' => null,
+        'revision_date' => '2026-06-03',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

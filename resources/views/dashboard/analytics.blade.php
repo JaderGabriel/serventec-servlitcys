@@ -258,6 +258,9 @@
                                         'yearFilterReady' => $yearFilterReady,
                                         'chartExportContext' => $chartExportContext,
                                         'municipalityContext' => $municipalityContext ?? null,
+                                        'selectedCity' => $selectedCity,
+                                        'filters' => $filters,
+                                        'educacensoAnalysis' => $educacensoAnalysis ?? null,
                                     ])
                                 @else
                                     <div class="relative min-h-[12rem]" x-ref="panelWorkDone" data-analytics-tab-panel="work_done"></div>

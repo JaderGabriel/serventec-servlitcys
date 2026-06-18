@@ -20,6 +20,7 @@ use App\Services\Analytics\AnalyticsReportExportService;
 use App\Services\Analytics\FinanceComparativoService;
 use App\Services\Analytics\FinanceRealtimeFundebService;
 use App\Services\CityDataConnection;
+use App\Services\Educacenso\EducacensoAnalysisCache;
 use App\Services\Ieducar\FilterOptionsService;
 use App\Services\Notifications\NotificationDispatcher;
 use App\Support\Auth\UserCityAccess;
@@ -457,42 +458,47 @@ class AnalyticsDashboardController extends Controller
                 ? $pdfExportService->recentForUserCity($user, $city, 6)
                 : [];
 
-            return view('dashboard.analytics', $this->analyticsIndexViewData(
-                $cities,
-                $city,
-                $filters,
-                $yearOptions,
-                $yearFilterReady,
-                $ieducarOptions,
-                $overviewData,
-                $schoolUnitsData,
-                $enrollmentData,
-                $cadunicoPrevisaoData,
-                $performanceData,
-                $attendanceData,
-                $inclusionData,
-                $networkData,
-                $fundebData,
-                $otherFundingData,
-                $workDoneData,
-                $discrepanciesData,
-                $comparativoData,
-                $municipalityHealthData,
-                $chartExportContext,
-                $tabs,
-                $analyticsInitialTab,
-                $lazyTabLoading,
-                $pdfExportsRecent,
-                $municipalityContext,
-                $analyticsLoadWarnings,
-                $indexLightFilters,
-                $deferOverviewOnIndex,
-                $analyticsDebugEnabled,
-                $analyticsDebugSteps,
-                $analyticsDebugTotalMs,
-                $indexFatalMessage,
-                $fundebDockMeter,
-                $qualityDockIndicator,
+            return view('dashboard.analytics', array_merge(
+                $this->analyticsIndexViewData(
+                    $cities,
+                    $city,
+                    $filters,
+                    $yearOptions,
+                    $yearFilterReady,
+                    $ieducarOptions,
+                    $overviewData,
+                    $schoolUnitsData,
+                    $enrollmentData,
+                    $cadunicoPrevisaoData,
+                    $performanceData,
+                    $attendanceData,
+                    $inclusionData,
+                    $networkData,
+                    $fundebData,
+                    $otherFundingData,
+                    $workDoneData,
+                    $discrepanciesData,
+                    $comparativoData,
+                    $municipalityHealthData,
+                    $chartExportContext,
+                    $tabs,
+                    $analyticsInitialTab,
+                    $lazyTabLoading,
+                    $pdfExportsRecent,
+                    $municipalityContext,
+                    $analyticsLoadWarnings,
+                    $indexLightFilters,
+                    $deferOverviewOnIndex,
+                    $analyticsDebugEnabled,
+                    $analyticsDebugSteps,
+                    $analyticsDebugTotalMs,
+                    $indexFatalMessage,
+                    $fundebDockMeter,
+                    $qualityDockIndicator,
+                ),
+                [
+                    'educacensoAnalysis' => $this->resolveEducacensoAnalysis($user, $city),
+                ],
             ));
         } catch (Throwable $e) {
             Log::error('analytics.index_fatal', [
@@ -506,48 +512,65 @@ class AnalyticsDashboardController extends Controller
             $analyticsLoadWarnings[] = __('Erro ao renderizar o painel: :msg', ['msg' => $e->getMessage()]);
             $analyticsDebugSteps = $profiler->steps();
 
-            return view('dashboard.analytics', $this->analyticsIndexViewData(
-                $cities,
-                $city,
-                $filters,
-                $yearOptions,
-                $yearFilterReady,
-                $ieducarOptions,
-                $overviewData,
-                $schoolUnitsData,
-                $enrollmentData,
-                $cadunicoPrevisaoData,
-                $performanceData,
-                $attendanceData,
-                $inclusionData,
-                $networkData,
-                $fundebData,
-                $otherFundingData,
-                $workDoneData,
-                $discrepanciesData,
-                $comparativoData,
-                $municipalityHealthData,
-                ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions),
-                AnalyticsTabCatalog::tabsOrdered(),
-                AnalyticsTabCatalog::resolveInitialTab(
-                    (string) $request->query('tab', ''),
-                    $user,
+            return view('dashboard.analytics', array_merge(
+                $this->analyticsIndexViewData(
+                    $cities,
+                    $city,
+                    $filters,
+                    $yearOptions,
                     $yearFilterReady,
+                    $ieducarOptions,
+                    $overviewData,
+                    $schoolUnitsData,
+                    $enrollmentData,
+                    $cadunicoPrevisaoData,
+                    $performanceData,
+                    $attendanceData,
+                    $inclusionData,
+                    $networkData,
+                    $fundebData,
+                    $otherFundingData,
+                    $workDoneData,
+                    $discrepanciesData,
+                    $comparativoData,
+                    $municipalityHealthData,
+                    ChartExportMeta::forAnalytics($city, $filters, $ieducarOptions),
+                    AnalyticsTabCatalog::tabsOrdered(),
+                    AnalyticsTabCatalog::resolveInitialTab(
+                        (string) $request->query('tab', ''),
+                        $user,
+                        $yearFilterReady,
+                    ),
+                    $lazyTabLoading,
+                    [],
+                    $municipalityContext,
+                    $analyticsLoadWarnings,
+                    $indexLightFilters,
+                    $deferOverviewOnIndex,
+                    $analyticsDebugEnabled,
+                    $analyticsDebugSteps,
+                    $profiler->totalMs(),
+                    $indexFatalMessage,
+                    $fundebDockMeter,
+                    $qualityDockIndicator,
                 ),
-                $lazyTabLoading,
-                [],
-                $municipalityContext,
-                $analyticsLoadWarnings,
-                $indexLightFilters,
-                $deferOverviewOnIndex,
-                $analyticsDebugEnabled,
-                $analyticsDebugSteps,
-                $profiler->totalMs(),
-                $indexFatalMessage,
-                $fundebDockMeter,
-                $qualityDockIndicator,
+                [
+                    'educacensoAnalysis' => $this->resolveEducacensoAnalysis($user, $city),
+                ],
             ));
         }
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function resolveEducacensoAnalysis(?\Illuminate\Contracts\Auth\Authenticatable $user, ?City $city): ?array
+    {
+        if ($user === null || ! $city instanceof City || ! $user instanceof \App\Models\User) {
+            return null;
+        }
+
+        return EducacensoAnalysisCache::get($user, $city);
     }
 
     /**
@@ -1110,6 +1133,7 @@ class AnalyticsDashboardController extends Controller
                         __('Censo'),
                         $tabWarnings,
                     ),
+                    'educacensoAnalysis' => $this->resolveEducacensoAnalysis($request->user(), $city),
                 ]))
                 ->withHeaders($headers),
             'municipality_health' => response()

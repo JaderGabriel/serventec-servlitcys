@@ -327,6 +327,18 @@ Detalhe: [CADUNICO_AUTOMACAO.md](CADUNICO_AUTOMACAO.md), [CADUNICO_CECAD.md](CAD
 | `IEDUCAR_WORK_EXCLUDE_LOGINS` | `admin,administrador,suporte,portabilis` |
 | `IEDUCAR_WORK_MINUTES_PER_RECORD` | `3.5` |
 
+**Conferência Educacenso (upload na aba Censo):**
+
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `EDUCACENSO_DRY_RUN_ENABLED` | `true` | Activa o módulo de análise |
+| `EDUCACENSO_DRY_RUN_MAX_MB` | `64` | Tamanho máximo do upload |
+| `EDUCACENSO_DRY_RUN_RETENTION_DAYS` | `7` | Retenção de ficheiros temporários |
+| `EDUCACENSO_ANALYSIS_CACHE_HOURS` | `24` | TTL do resultado em cache |
+| `EDUCACENSO_LAYOUT_YEAR_DEFAULT` | `2026` | Exercício de referência do layout |
+| `IEDUCAR_DISC_CENSO_MAT_TOLERANCE_PCT` | `5` | Tolerância % matrículas arquivo vs i-Educar |
+| `IEDUCAR_DISC_CENSO_MAT_MIN_DIFF` | `10` | Diferença mínima absoluta de matrículas |
+
 ---
 
 ## 14. Documentação admin (GitHub)

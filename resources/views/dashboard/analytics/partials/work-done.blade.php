@@ -1,4 +1,4 @@
-@props(['workDoneData', 'yearFilterReady' => false, 'chartExportContext' => [], 'municipalityContext' => null])
+@props(['workDoneData', 'yearFilterReady' => false, 'chartExportContext' => [], 'municipalityContext' => null, 'selectedCity' => null, 'filters' => null, 'educacensoAnalysis' => null])
 
 @php
     $d = is_array($workDoneData) ? $workDoneData : [];
@@ -32,6 +32,7 @@
     $flowSteps = ConsultoriaFlow::numberedSteps([
         ['label' => __('Meta de cadastro'), 'anchor' => 'censo-meta'],
         ['label' => __('Educacenso'), 'anchor' => 'censo-export', 'visible' => (bool) ($censo['available'] ?? false)],
+        ['label' => __('Conferência arquivo'), 'anchor' => 'censo-educacenso-analise'],
         ['label' => __('Ritmo por usuário'), 'anchor' => 'censo-usuarios', 'visible' => count($byUser) > 0],
     ]);
 @endphp
@@ -259,7 +260,7 @@
             @endif
         </section>
 
-        <section class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/30 dark:bg-indigo-950/20 px-4 py-4 space-y-4">
+        <section id="censo-export" class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/30 dark:bg-indigo-950/20 px-4 py-4 space-y-4 scroll-mt-24">
             <h3 class="text-sm font-semibold uppercase tracking-wide text-indigo-950 dark:text-indigo-100">{{ __('Escolas — Censo / Educacenso') }}</h3>
             @if (filled($censo['source_label'] ?? null))
                 <p class="text-xs text-indigo-800/90 dark:text-indigo-300/90">{{ __('Fonte na base:') }} <span class="font-mono">{{ $censo['source_label'] }}</span></p>
@@ -299,6 +300,14 @@
                 @include('dashboard.analytics.partials.censo-escolas-table', ['titulo' => __('Sem exportação/fecho detectado'), 'escolas' => $censo['pending'] ?? [], 'tone' => 'amber'])
             @endif
         </section>
+
+        @include('dashboard.analytics.partials.educacenso-analysis', [
+            'educacensoAnalysis' => $educacensoAnalysis,
+            'selectedCity' => $selectedCity,
+            'filters' => $filters,
+            'yearFilterReady' => $yearFilterReady,
+            'chartExportContext' => $chartExportContext,
+        ])
 
         <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">
             {{ __('Cadastro recente (ritmo)') }}

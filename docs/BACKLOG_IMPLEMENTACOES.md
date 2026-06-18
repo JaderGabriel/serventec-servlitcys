@@ -149,6 +149,7 @@ Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IE
 | PLG-02 | P2 | Série IDEB municipal no painel | Pendente | PLUGINS §5.3 |
 | PLG-03 | P2 | PNAE/transporte × NEE (se schema i-Educar existir) | Pendente | PLUGINS §5.3, backlog CAD-03 |
 | PLG-04 | P2 | Validação pós-export Educacenso (recurso×NEE) | Pendente | PLUGINS §5.3, CAD-04 |
+| CEN-01 | **P0** | Conferência Educacenso 1ª etapa: arquivo portal INEP × i-Educar + painel analítico | Pendente | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) §12 |
 | PLG-05 | P2 | Ranking aprovação/reprovação por escola (i-Educar) | Pendente | PLUGINS §5.3, GRA-06 |
 | PLG-06 | P2 | Metas PNE/semáforo no quadro SAEB | Em andamento | PLUGINS §5.3, GRA-07 |
 | PLG-07 | P2 | Gráfico repasses históricos × matrícula | Pendente | PLUGINS §5.3 |
