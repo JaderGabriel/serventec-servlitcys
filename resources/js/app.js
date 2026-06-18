@@ -22,6 +22,7 @@ import {
 import { initAnalyticsFilterBootstrap } from "./analyticsFilterBootstrap.js";
 import { initAnalyticsFilterTurno } from "./analyticsFilterTurno.js";
 import { registerAnalyticsPageHeader } from "./analyticsPageHeader.js";
+import { initAnalyticsFilterDockLayout } from "./analyticsFilterDockLayout.js";
 import { registerAnalyticsExportHub } from "./analyticsExportHub.js";
 import {
     initDataLoadingForms,
@@ -2203,6 +2204,8 @@ function initAnalyticsFilters() {
     initDataLoadingForms();
     initAnalyticsFilterBootstrap();
     initAnalyticsFilterTurno();
+    initAnalyticsFilterDockLayout();
+    requestAnimationFrame(() => initAnalyticsFilterDockLayout());
 }
 
 if (document.readyState === "loading") {

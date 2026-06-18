@@ -515,6 +515,10 @@
         padding-bottom: max(5.5rem, calc(4.5rem + env(safe-area-inset-bottom, 0px)));
     }
 
+    :root {
+        --serv-analytics-dock-height: 9rem;
+    }
+
     .serv-btn-secondary--rose {
         @apply border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-100 hover:bg-rose-50 dark:hover:bg-rose-950/40;
     }
@@ -2091,7 +2095,7 @@
     }
 
     body:has(.serv-analytics-filter-dock) .serv-scroll-top {
-        @apply bottom-28 sm:bottom-32;
+        bottom: calc(var(--serv-analytics-dock-height, 9rem) + 0.75rem + env(safe-area-inset-bottom, 0px));
     }
 
     .serv-export-hub__trigger {
@@ -2153,16 +2157,17 @@
     }
 
     .serv-analytics-page {
-        @apply pb-36 sm:pb-40;
+        padding-bottom: calc(var(--serv-analytics-dock-height, 9rem) + 1rem + env(safe-area-inset-bottom, 0px));
     }
 
     body:has(.serv-analytics-filter-dock) .serv-app-footer {
-        @apply mb-32 sm:mb-36;
+        margin-bottom: calc(var(--serv-analytics-dock-height, 9rem) + env(safe-area-inset-bottom, 0px));
     }
 
     .serv-analytics-filter-dock {
         @apply fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/90 bg-white/95 backdrop-blur-md
             shadow-[0_-6px_28px_rgba(15,23,42,0.1)] dark:border-slate-700/90 dark:bg-slate-900/95;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     .serv-analytics-filter-dock__inner {

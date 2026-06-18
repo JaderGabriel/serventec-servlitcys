@@ -82,6 +82,12 @@ final class EducacensoErrorCatalog
                 'message' => __('Contagem de matrículas por escola difere entre Educacenso e i-Educar.'),
                 'suggestion' => __('Compare escola a escola na tabela abaixo.'),
             ],
+            'EDU-CEN-DB' => [
+                'code' => 'EDU-CEN-DB',
+                'severity' => 'critical',
+                'message' => __('Não foi possível consultar o i-Educar para cruzamento.'),
+                'suggestion' => __('Verifique conexão, credenciais e schema da cidade.'),
+            ],
         ];
     }
 }
