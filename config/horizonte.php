@@ -1,5 +1,7 @@
 <?php
 
+use App\Support\Horizonte\HorizonteReferenceYear;
+
 return [
 
     /*
@@ -16,7 +18,7 @@ return [
 
     'cache_seconds' => max(60, (int) env('HORIZONTE_CACHE_SECONDS', 900)),
 
-    'reference_year' => max(2000, (int) env('HORIZONTE_REFERENCE_YEAR', (int) date('Y') - 1)),
+    'reference_year' => HorizonteReferenceYear::resolve(),
 
     'high_opportunity_threshold' => max(1, min(99, (int) env('HORIZONTE_HIGH_THRESHOLD', 70))),
 

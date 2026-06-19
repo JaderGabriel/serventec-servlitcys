@@ -26,8 +26,9 @@ class HorizonteFortnightlyFeedCommand extends Command
         }
 
         $this->info(__('Horizonte — abastecimento quinzenal de dados públicos'));
-        $this->line(__('Exercício de referência: :ano', [
-            'ano' => (string) config('horizonte.reference_year', (int) date('Y') - 1),
+        $this->line(__('Exercício de referência: :ano (:origem)', [
+            'ano' => (string) config('horizonte.reference_year'),
+            'origem' => $this->referenceYearOriginLabel(),
         ]));
 
         $result = $feed->run([
@@ -58,5 +59,18 @@ class HorizonteFortnightlyFeedCommand extends Command
         $this->line(__('Mapa: :url', ['url' => route('dashboard.horizonte')]));
 
         return ($result['success'] ?? false) ? self::SUCCESS : self::FAILURE;
+    }
+
+    private function referenceYearOriginLabel(): string
+    {
+        $raw = env('HORIZONTE_REFERENCE_YEAR');
+        if ($raw !== null && $raw !== '' && is_numeric(trim((string) $raw))) {
+            $year = (int) trim((string) $raw);
+            if (\App\Support\Horizonte\HorizonteReferenceYear::isPlausible($year)) {
+                return __('HORIZONTE_REFERENCE_YEAR');
+            }
+        }
+
+        return __('ano civil anterior — defina HORIZONTE_REFERENCE_YEAR para fixar');
     }
 }
