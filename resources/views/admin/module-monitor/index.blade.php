@@ -29,7 +29,7 @@
         'healthy' => __('Saudável'),
         'warning' => __('Atenção'),
         'critical' => __('Crítico'),
-        default => __('Sem dados'),
+        default => __('Por avaliar'),
     };
 
     $statusBannerClass = match ($systemStatus) {
@@ -44,7 +44,7 @@
         ['key' => 'critical', 'label' => __('Críticos'), 'count' => (int) ($moduleSummary['critical'] ?? 0), 'tone' => 'rose'],
         ['key' => 'warning', 'label' => __('Atenção'), 'count' => (int) ($moduleSummary['warning'] ?? 0), 'tone' => 'amber'],
         ['key' => 'healthy', 'label' => __('Saudáveis'), 'count' => (int) ($moduleSummary['healthy'] ?? 0), 'tone' => 'emerald'],
-        ['key' => 'unknown', 'label' => __('Sem dados'), 'count' => (int) ($moduleSummary['unknown'] ?? 0), 'tone' => 'slate'],
+        ['key' => 'unknown', 'label' => __('Por avaliar'), 'count' => (int) ($moduleSummary['unknown'] ?? 0), 'tone' => 'slate'],
     ];
 
     $filterUrl = static function (string $status) use ($period): string {
@@ -66,7 +66,7 @@
                     {{ __('Monitor de módulos') }}
                 </h2>
                 <p class="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-                    {{ __('Saúde operacional por área — filas admin, Pulse e incidentes. Filtre por estado ou abra o módulo directamente no cartão.') }}
+                    {{ __('Saúde operacional por área — filas admin, Pulse, sondas diárias e incidentes. Módulos em repouso permanecem saudáveis quando a recolha estrutural está actualizada.') }}
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-2 shrink-0">
@@ -102,6 +102,17 @@
                             <time datetime="{{ $report['generated_at'] ?? '' }}">
                                 {{ \Illuminate\Support\Carbon::parse($report['generated_at'] ?? now())->format('d/m/Y H:i') }}
                             </time>
+                            @if (filled($report['snapshot_collected_at'] ?? null))
+                                · {{ __('Recolha') }}
+                                <time datetime="{{ $report['snapshot_collected_at'] }}">
+                                    {{ \Illuminate\Support\Carbon::parse($report['snapshot_collected_at'])->format('d/m/Y H:i') }}
+                                </time>
+                                @if (! ($report['snapshot_fresh'] ?? false))
+                                    <span class="text-amber-700 dark:text-amber-300">({{ __('desactualizada') }})</span>
+                                @endif
+                            @else
+                                · <span class="text-amber-700 dark:text-amber-300">{{ __('Recolha diária pendente') }}</span>
+                            @endif
                         </p>
                     </div>
 

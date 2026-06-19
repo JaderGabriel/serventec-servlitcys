@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 5.1.0 · **Última revisão:** 2026-06-19
+**Versão do produto:** 5.2.0 · **Última revisão:** 2026-06-03
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
-Mapa visual da documentação em produção: versão actual **5.1.0**, linha **5.x** (Horizonte comercial + operação admin), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
+Mapa visual da documentação em produção: versão actual **5.2.0**, linha **5.x** (Horizonte comercial + operação admin), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
 
 Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e secções expansíveis).
 
@@ -14,11 +14,11 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **5.1.0** |
-| **Tag de deploy** | `20260619b-Prospeccao` |
-| **Data de referência** | 2026-06-19 |
-| **Release** | [RELEASE_20260619b_PROSPECCAO.md](RELEASE_20260619b_PROSPECCAO.md) |
-| **Marco** | **Prospeccao** — Horizonte comercial + abastecimento quinzenal |
+| **Versão semântica** | **5.2.0** |
+| **Tag de deploy** | `20260603c-Argus` |
+| **Data de referência** | 2026-06-03 |
+| **Release** | [RELEASE_20260603c_ARGUS.md](RELEASE_20260603c_ARGUS.md) |
+| **Marco** | **Argus** — hub Horizonte + monitor sondas + acesso |
 
 ---
 

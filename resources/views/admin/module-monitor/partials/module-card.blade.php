@@ -13,7 +13,7 @@
         'healthy' => __('Saudável'),
         'warning' => __('Atenção'),
         'critical' => __('Crítico'),
-        default => __('Sem dados'),
+        default => __('Por avaliar'),
     };
     $stripeClass = match ($statusKey) {
         'healthy' => 'module-monitor-card__stripe--healthy',
@@ -31,6 +31,8 @@
     $incidentCount = (int) ($module['incident_count'] ?? 0);
     $hasSyncActivity = ($syncFailed + $syncActive + $syncCompleted) > 0;
     $hasPulseActivity = ($pulseOps + $pulseErrors + $pulseSlow) > 0;
+    $probeTags = is_array($module['probe_tags'] ?? null) ? $module['probe_tags'] : [];
+    $probeSignal = (string) ($module['probe_signal'] ?? '');
 @endphp
 
 <article
@@ -84,8 +86,20 @@
             @endif
 
             @if (! $hasSyncActivity && ! $hasPulseActivity)
-                <span class="sync-queue-theme-card__pill bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ __('Sem actividade no período') }}</span>
+                @if ($probeSignal === 'idle')
+                    <span class="sync-queue-theme-card__pill bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ __('Em repouso') }}</span>
+                @elseif (filled($module['probe_detail'] ?? null))
+                    <span class="sync-queue-theme-card__pill bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ \Illuminate\Support\Str::limit((string) $module['probe_detail'], 48) }}</span>
+                @else
+                    <span class="sync-queue-theme-card__pill bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ __('Sem telemetria no período') }}</span>
+                @endif
             @endif
+
+            @foreach ($probeTags as $tag)
+                @if (filled($tag))
+                    <span class="sync-queue-theme-card__pill sync-queue-theme-card__pill--emerald">{{ $tag }}</span>
+                @endif
+            @endforeach
 
             @if ($incidentCount > 0)
                 <span class="sync-queue-theme-card__pill sync-queue-theme-card__pill--red">{{ $incidentCount }} {{ __('incidente(s)') }}</span>

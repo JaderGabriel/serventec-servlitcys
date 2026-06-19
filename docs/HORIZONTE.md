@@ -1,7 +1,7 @@
 # Horizonte — mapa de oportunidade municipal
 
 **Rota:** `/dashboard/horizonte` (`dashboard.horizonte`)  
-**Menu:** Consultoria → **Horizonte** (perfil com `canViewAdminDashboard()`)  
+**Menu:** Consultoria → **Horizonte** (perfil com `canViewHorizonte()`)  
 **Relacionado:** [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) · [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) · [INICIO_DASHBOARD.md](INICIO_DASHBOARD.md)
 
 ---
@@ -24,9 +24,10 @@ O **Horizonte** é o módulo de **inteligência territorial** do SERVLITCYS. Res
 
 | Perfil | Acesso |
 |--------|--------|
-| Admin / utilizador com painel Início | Sim |
-| Municipal (só «Meu município») | Não |
-| Convidado / sem `canViewAdminDashboard()` | Redireccionado (403) |
+| Admin | Sim |
+| Utilizador da plataforma | Sim |
+| Municipal (só «Meu município») | Não (403) |
+| Inactivo / convidado | Não (403) |
 
 ---
 
@@ -182,6 +183,8 @@ php artisan schedule:list | grep horizonte
 ```
 
 Variáveis: `HORIZONTE_FORTNIGHTLY_FEED_*` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11b.
+
+**Hub admin:** `/admin/dados-publicos?hub=horizonte` · painel `#horizonte-hub` — cobertura nacional, botão «Abastecer Horizonte» e ligações a cada fonte. Ver [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11.
 
 O cache do mapa invalida-se automaticamente quando `imported_at` / contagens nas tabelas fonte mudam (fingerprint em `HorizonteMapService`).
 

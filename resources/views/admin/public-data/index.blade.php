@@ -7,7 +7,7 @@
                 {{ __('Dados públicos') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ __('Fontes oficiais (FNDE, INEP, MDS/Cecad, Tesouro) fora do i-Educar — alimentam consultoria e relatório PDF.') }}
+                {{ __('Fontes oficiais (FNDE, INEP, MDS/Cecad, Tesouro) fora do i-Educar — alimentam consultoria, relatório PDF e mapa Horizonte.') }}
             </p>
         </div>
     </x-slot>
@@ -26,16 +26,19 @@
     @php
         $hubActive = $hubActive ?? 'hub';
         $isRepassesFocus = $hubActive === 'repasses';
+        $isHorizonteFocus = $hubActive === 'horizonte';
     @endphp
 
     <x-admin.import-hub.shell
         :active="$hubActive"
-        :accent="$isRepassesFocus ? 'emerald' : 'emerald'"
-        :eyebrow="$isRepassesFocus ? __('Repasses / Tempo Real') : __('Hub de dados públicos')"
-        :title="$isRepassesFocus ? __('Repasses FUNDEB observados') : __('Importação e cobertura')"
-        :description="$isRepassesFocus
+        :accent="$isHorizonteFocus ? 'indigo' : ($isRepassesFocus ? 'emerald' : 'emerald')"
+        :eyebrow="$isHorizonteFocus ? __('Horizonte') : ($isRepassesFocus ? __('Repasses / Tempo Real') : __('Hub de dados públicos'))"
+        :title="$isHorizonteFocus ? __('Abastecimento nacional — mapa de oportunidade') : ($isRepassesFocus ? __('Repasses FUNDEB observados') : __('Importação e cobertura'))"
+        :description="$isHorizonteFocus
+            ? __('FUNDEB receita, Censo matrículas, SAEB planilhas INEP e catálogo IBGE para prospectos no mapa Horizonte. Use a rotina quinzenal ou importe fontes individuais abaixo.')
+            : ($isRepassesFocus
             ? __('Importação municipal com granularidade dia/mês (CKAN, SISWEB, BB). Use Rebuild para purgar snapshots e alimentar Finanças → Tempo Real na consultoria.')
-            : __('Com base no modelo do relatório PDF ATM e na planilha Serventec: VAAF FNDE, Censo INEP, repasses e SAEB. Dados do i-Educar continuam em VAAF e sincronizações específicas.')"
+            : __('Com base no modelo do relatório PDF ATM e na planilha Serventec: VAAF FNDE, Censo INEP, repasses e SAEB. Alimenta consultoria, PDF e mapa Horizonte. Dados do i-Educar continuam em VAAF e sincronizações específicas.'))"
         :doc-href="route('admin.documentation.show', ['doc' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md'])"
         :doc-label="__('Documentação de importação')"
     >
@@ -79,6 +82,10 @@
             'officialCheck' => $officialCheck ?? null,
             'officialCheckEnabled' => $officialCheckEnabled ?? true,
             'officialCheckScheduleTime' => $officialCheckScheduleTime ?? '07:00',
+        ])
+
+        @include('admin.public-data.partials.horizonte-hub-panel', [
+            'horizonteHub' => $horizonteHub ?? [],
         ])
 
         <x-slot name="stats">
@@ -158,6 +165,8 @@
         </section>
 
         <x-slot name="shortcuts">
+            <x-admin.import-hub.link-chip tone="indigo" href="{{ route('admin.public-data.index', ['hub' => 'horizonte']) }}#horizonte-hub">{{ __('Horizonte — abastecimento') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="indigo" href="{{ route('dashboard.horizonte') }}">{{ __('Mapa Horizonte') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip tone="amber" href="{{ route('admin.ieducar-compatibility.index') }}">{{ __('admin_ieducar_compatibility.hub.tab_hint') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip tone="emerald" href="{{ route('admin.public-data.index', ['hub' => 'repasses']) }}#source-repasses_tesouro">{{ __('Repasses / Tempo Real') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip tone="sky" href="{{ route('admin.geo-sync.index') }}">{{ __('Sincronização geográfica') }}</x-admin.import-hub.link-chip>

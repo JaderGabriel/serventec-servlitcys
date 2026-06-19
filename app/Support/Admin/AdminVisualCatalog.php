@@ -29,6 +29,7 @@ final class AdminVisualCatalog
         return match ($hubKey) {
             'hub' => 'emerald',
             'repasses' => 'emerald',
+            'horizonte' => 'indigo',
             'fundeb' => 'amber',
             'cadastro' => 'fuchsia',
             'geo' => 'sky',

@@ -8,6 +8,7 @@ use App\Models\AdminSyncTask;
 use App\Models\AnalyticsReportExport;
 use App\Models\City;
 use App\Support\Admin\ModuleMonitorCatalog;
+use App\Support\Admin\ModuleMonitorSnapshotCache;
 use App\Support\Pulse\PulseAggregateBridge;
 use App\Support\Pulse\PulseOperationMetricsAggregator;
 use Illuminate\Support\Carbon;
@@ -45,15 +46,21 @@ final class ModuleMonitorService
         $incidents = $this->collectIncidents($since, $pulseOps);
 
         $system = $this->systemOverview($since);
+        $snapshot = ModuleMonitorSnapshotCache::get();
+        $probes = is_array($snapshot['modules'] ?? null) ? $snapshot['modules'] : [];
+        $snapshotFresh = ModuleMonitorSnapshotCache::isFresh($snapshot);
 
         $modules = [];
         foreach (ModuleMonitorCatalog::modules() as $def) {
+            $probe = is_array($probes[$def['id']] ?? null) ? $probes[$def['id']] : null;
             $modules[] = $this->buildModuleRow(
                 $def,
                 $syncByDomain,
                 $modulePulse[$def['id']] ?? self::emptyPulseModuleMetrics(),
                 $incidents,
                 $system,
+                $probe,
+                $snapshotFresh,
             );
         }
 
@@ -75,6 +82,8 @@ final class ModuleMonitorService
             'kpis' => $this->buildSystemKpis($system, $pulseAvailable, $moduleSummary),
             'modules' => $modules,
             'incidents' => array_slice($incidents, 0, (int) config('module_monitor.incidents_limit', 50)),
+            'snapshot_collected_at' => is_array($snapshot) ? ($snapshot['collected_at'] ?? null) : null,
+            'snapshot_fresh' => $snapshotFresh,
         ];
     }
 
@@ -247,8 +256,15 @@ final class ModuleMonitorService
     /**
      * @param  array<string, mixed>  $system
      */
-    private function buildModuleRow(array $def, array $syncByDomain, array $pulse, array $incidents, array $system): array
-    {
+    private function buildModuleRow(
+        array $def,
+        array $syncByDomain,
+        array $pulse,
+        array $incidents,
+        array $system,
+        ?array $probe,
+        bool $snapshotFresh,
+    ): array {
         $syncFailed = 0;
         $syncActive = 0;
         $syncCompleted = 0;
@@ -281,14 +297,27 @@ final class ModuleMonitorService
 
         $slowCount = $pulse['slow_count'];
 
-        $hasActivity = $syncFailed + $syncActive + $syncCompleted + $pulse['op_count'] > 0;
+        $hasPeriodActivity = $syncFailed + $syncActive + $syncCompleted + $pulse['op_count'] > 0;
+        $probeSignal = is_string($probe['signal'] ?? null) ? (string) $probe['signal'] : null;
 
         $status = 'healthy';
         if ($failureCount > 0) {
             $status = 'critical';
         } elseif ($slowCount > 0 || $syncActive > 5) {
             $status = 'warning';
-        } elseif (! $hasActivity && $def['id'] !== 'queue') {
+        } elseif ($def['id'] === 'queue') {
+            // tratado abaixo
+        } elseif ($probeSignal === 'failed') {
+            $status = 'critical';
+        } elseif ($probeSignal === 'degraded') {
+            $status = 'warning';
+        } elseif (in_array($probeSignal, ['operational', 'idle'], true)) {
+            $status = 'healthy';
+        } elseif ($hasPeriodActivity) {
+            $status = 'healthy';
+        } elseif ($probe !== null && $snapshotFresh) {
+            $status = 'healthy';
+        } else {
             $status = 'unknown';
         }
 
@@ -318,9 +347,11 @@ final class ModuleMonitorService
                 $slowCount,
                 $syncActive,
                 $pulse['op_count'],
-                $hasActivity,
+                $hasPeriodActivity,
                 $def['id'] === 'queue',
                 $system,
+                $probe,
+                $snapshotFresh,
             ),
             'sync_failed' => $syncFailed,
             'sync_active' => $syncActive,
@@ -331,6 +362,9 @@ final class ModuleMonitorService
             'pulse_max_ms' => $pulse['max_ms'],
             'pulse_ops' => $pulse['op_count'],
             'incident_count' => count($moduleIncidents),
+            'probe_signal' => $probeSignal,
+            'probe_detail' => is_string($probe['detail'] ?? null) ? (string) $probe['detail'] : null,
+            'probe_tags' => is_array($probe['tags'] ?? null) ? array_values($probe['tags']) : [],
             'admin_url' => ModuleMonitorCatalog::adminUrl($def),
             'queue_url' => ModuleMonitorCatalog::queueUrl($def),
         ];
@@ -342,7 +376,7 @@ final class ModuleMonitorService
             'healthy' => __('Em funcionamento'),
             'warning' => __('Degradado'),
             'critical' => __('Com falhas'),
-            default => __('Indeterminado'),
+            default => __('Por avaliar'),
         };
     }
 
@@ -356,9 +390,11 @@ final class ModuleMonitorService
         int $slowCount,
         int $syncActive,
         int $pulseOps,
-        bool $hasActivity,
+        bool $hasPeriodActivity,
         bool $isQueueModule,
         array $system,
+        ?array $probe,
+        bool $snapshotFresh,
     ): string {
         if ($isQueueModule) {
             if ($status === 'critical') {
@@ -385,6 +421,10 @@ final class ModuleMonitorService
                 return __(':n erro(s) de operação no Pulse.', ['n' => $pulseErrors]);
             }
 
+            if (filled($probe['detail'] ?? null)) {
+                return (string) $probe['detail'];
+            }
+
             return __('Falha operacional detectada no período.');
         }
 
@@ -402,18 +442,34 @@ final class ModuleMonitorService
                 return __(':n tarefas ainda em processamento na fila.', ['n' => $syncActive]);
             }
 
+            if (filled($probe['detail'] ?? null)) {
+                return (string) $probe['detail'];
+            }
+
             return __('Funcionamento degradado — rever métricas abaixo.');
         }
 
         if ($status === 'healthy') {
-            if ($hasActivity) {
+            if ($hasPeriodActivity) {
                 return __('Operações normais no período (:ops registos Pulse).', ['ops' => $pulseOps]);
             }
 
-            return __('Sem alertas; sem actividade medida no período.');
+            if (filled($probe['detail'] ?? null)) {
+                return (string) $probe['detail'];
+            }
+
+            return __('Sem alertas no período — módulo em repouso.');
         }
 
-        return __('Sem telemetria suficiente para avaliar o período.');
+        if ($status === 'unknown') {
+            if (! $snapshotFresh) {
+                return __('Recolha diária pendente — execute module-monitor:collect ou aguarde o agendamento.');
+            }
+
+            return __('Sem telemetria Pulse/sync no período seleccionado.');
+        }
+
+        return __('Estado indeterminado — execute module-monitor:collect.');
     }
 
     /**
@@ -576,7 +632,7 @@ final class ModuleMonitorService
                 'label' => __('Módulos saudáveis'),
                 'value' => (string) $moduleSummary['healthy'].' / '.$moduleSummary['total'],
                 'tone' => $moduleSummary['critical'] > 0 ? 'rose' : ($moduleSummary['warning'] > 0 ? 'amber' : 'emerald'),
-                'explicacao_resumo' => __(':crit crítico(s) · :warn atenção · :unk sem telemetria', [
+                'explicacao_resumo' => __(':crit crítico(s) · :warn atenção · :unk por avaliar', [
                     'crit' => $moduleSummary['critical'],
                     'warn' => $moduleSummary['warning'],
                     'unk' => $moduleSummary['unknown'],

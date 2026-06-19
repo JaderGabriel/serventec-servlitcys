@@ -135,6 +135,12 @@ class User extends Authenticatable
         return $this->is_active && $this->isAdmin();
     }
 
+    /** Mapa Horizonte (oportunidade territorial): administrador e utilizador da plataforma. */
+    public function canViewHorizonte(): bool
+    {
+        return $this->is_active && ($this->isAdmin() || $this->isUsuário());
+    }
+
     /** Relatório PDF completo (aba Serventec): administrador e usuário da plataforma. */
     public function canExportAnalyticsPdf(): bool
     {

@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **5.1.0** · release `20260619b-Prospeccao` · **Ramo:** `main` · **Última revisão:** 19/06/2026
+**Versão em produção:** **5.2.0** · release `20260603c-Argus` · **Ramo:** `main` · **Última revisão:** 03/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -120,6 +120,9 @@ flowchart TB
 | Horizonte — mapa oportunidade municipal (Consultoria vs prospectos, scores FUNDEB/SAEB/Censo, busca IBGE) | Implementado (5.0.0) — [HORIZONTE.md](HORIZONTE.md) |
 | Horizonte — mapa calor, filtros gestores, prospecção comercial, IBGE nacional | Implementado (5.1.0) |
 | Horizonte — abastecimento quinzenal (`horizonte:fortnightly-feed`, dias 1 e 15) | Implementado (5.1.0) |
+| Monitor de módulos — recolha diária (`module-monitor:collect`) + sondas estruturais | Implementado (5.2.0) |
+| Horizonte — hub abastecimento em Dados públicos (`#horizonte-hub`) | Implementado (5.2.0) — [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11 |
+| Horizonte — acesso admin e utilizador (`canViewHorizonte`; municipal 403) | Implementado (5.2.0) |
 | Verificação diária dados públicos (`public-data:check-official`, notificação admins) | Implementado (5.0.0) |
 | Início — KPIs realinhados (bases, RX/FUNDEB, consultoria, filas) | Implementado (5.0.0) |
 | Notificações — feed completo só no sino (sem duplicar menu utilizador) | Implementado (5.0.0) |

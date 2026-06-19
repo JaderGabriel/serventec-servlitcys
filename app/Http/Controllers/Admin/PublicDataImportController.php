@@ -6,6 +6,7 @@ use App\Enums\AdminSyncDomain;
 use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Services\Admin\HorizonteImportHubStatusService;
 use App\Services\Admin\PublicDataImportStatusService;
 use App\Services\Admin\PublicDataOfficialCheckCache;
 use App\Services\AdminSync\AdminSyncQueueService;
@@ -17,6 +18,7 @@ use App\Support\Admin\AdminImportHubCatalog;
 use App\Support\Admin\ImportHubThemeCatalog;
 use App\Support\Admin\PublicDataImportCatalog;
 use App\Support\SyncQueue\SyncQueueUserScope;
+use App\Services\Horizonte\HorizonteFortnightlyFeedService;
 use App\Support\AdminSync\WeeklyMassSyncCheckpoint;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,6 +28,7 @@ class PublicDataImportController extends Controller
 {
     public function __construct(
         private PublicDataImportStatusService $status,
+        private HorizonteImportHubStatusService $horizonteHub,
         private AdminSyncQueueService $syncQueue,
     ) {}
 
@@ -56,7 +59,41 @@ class PublicDataImportController extends Controller
             'officialCheck' => PublicDataOfficialCheckCache::get(),
             'officialCheckEnabled' => (bool) config('public_data_availability.enabled', true),
             'officialCheckScheduleTime' => trim((string) config('public_data_availability.schedule.time', '07:00')) ?: '07:00',
+            'horizonteHub' => $this->horizonteHub->build(),
         ]);
+    }
+
+    public function horizonteFeed(Request $request, HorizonteFortnightlyFeedService $feed): RedirectResponse
+    {
+        if (! (bool) config('horizonte.enabled', true)) {
+            return redirect()
+                ->route('admin.public-data.index', ['hub' => 'horizonte'])
+                ->with('public_data_error', __('Horizonte desactivado (HORIZONTE_ENABLED).'));
+        }
+
+        if (! (bool) config('horizonte.fortnightly_feed.enabled', true)) {
+            return redirect()
+                ->route('admin.public-data.index', ['hub' => 'horizonte'])
+                ->with('public_data_error', __('Abastecimento quinzenal Horizonte desactivado (HORIZONTE_FORTNIGHTLY_FEED_ENABLED).'));
+        }
+
+        @set_time_limit(600);
+
+        $result = $feed->run([
+            'skip_fundeb' => $request->boolean('skip_fundeb'),
+            'skip_censo' => $request->boolean('skip_censo'),
+            'skip_saeb' => $request->boolean('skip_saeb'),
+            'skip_ibge' => $request->boolean('skip_ibge'),
+            'skip_verify' => $request->boolean('skip_verify'),
+        ]);
+
+        return redirect()
+            ->to(route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-hub')
+            ->with('horizonte_feed', [
+                'success' => (bool) ($result['success'] ?? false),
+                'message' => (string) ($result['message'] ?? ''),
+                'phases' => is_array($result['phases'] ?? null) ? $result['phases'] : [],
+            ]);
     }
 
     public function checkOfficial(Request $request, PublicDataDailyCheckNotifier $notifier): RedirectResponse

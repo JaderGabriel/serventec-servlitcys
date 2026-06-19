@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '5.1.0',
-        'release_tag' => '20260619b-Prospeccao',
+        'version' => '5.2.0',
+        'release_tag' => '20260603c-Argus',
         'commit_short' => '',
         'commit_number' => null,
-        'revision_date' => '2026-06-19',
+        'revision_date' => '2026-06-03',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

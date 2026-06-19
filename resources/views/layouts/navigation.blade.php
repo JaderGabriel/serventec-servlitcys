@@ -35,7 +35,7 @@
                     <x-nav-link :href="route('dashboard.rx')" :active="request()->routeIs('dashboard.rx*')" icon="clipboard-document-list">
                         RX
                     </x-nav-link>
-                    @if (Auth::user()->canViewAdminDashboard())
+                    @if (Auth::user()->canViewHorizonte())
                         <x-nav-link :href="route('dashboard.horizonte')" :active="request()->routeIs('dashboard.horizonte')" icon="globe-alt">
                             {{ __('Horizonte') }}
                         </x-nav-link>
@@ -88,7 +88,7 @@
             <x-responsive-nav-link :href="route('dashboard.rx')" :active="request()->routeIs('dashboard.rx*')" icon="clipboard-document-list">
                 RX
             </x-responsive-nav-link>
-            @if (Auth::user()->canViewAdminDashboard())
+            @if (Auth::user()->canViewHorizonte())
                 <x-responsive-nav-link :href="route('dashboard.horizonte')" :active="request()->routeIs('dashboard.horizonte')" icon="globe-alt">
                     {{ __('Horizonte') }}
                 </x-responsive-nav-link>

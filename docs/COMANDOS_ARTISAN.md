@@ -150,7 +150,9 @@ php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo
 php artisan schedule:list | grep horizonte
 ```
 
-Documentação: [HORIZONTE.md](HORIZONTE.md) §9.1 · variáveis §11b em [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md)
+Documentação: [HORIZONTE.md](HORIZONTE.md) §9.1 · [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11 · variáveis §11b em [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md)
+
+**Hub admin:** `/admin/dados-publicos?hub=horizonte` · botão «Abastecer Horizonte» (POST `admin.public-data.horizonte-feed`)
 
 ---
 
@@ -158,7 +160,23 @@ Documentação: [HORIZONTE.md](HORIZONTE.md) §9.1 · variáveis §11b em [VARIA
 
 **Rota:** `/admin/monitor-modulos` (`admin.module-monitor.index`) · menu **Operação**
 
-Painel read-only de saúde por módulo (consultoria, sincronizações, infra), cruzando fila admin, Pulse e incidentes. Períodos **24 h** / **7 dias**. Sem comando CLI dedicado — use Pulse e filas para detalhe técnico.
+Painel de saúde por módulo (consultoria, sincronizações, infra). Combina **incidentes no período** (fila admin, Pulse) com **sondas estruturais** (último sync, conexões, PDF, fontes públicas) recolhidas diariamente.
+
+| Comando | Descrição |
+|---------|-----------|
+| `module-monitor:collect` | Recolhe sinais de saúde por módulo e grava cache usado na UI |
+
+**Agendamento:** diário (`MODULE_MONITOR_COLLECT_TIME`, default `07:30`) — após `public-data:check-official`.
+
+**Estados na UI:** módulos **em repouso** (sem uso Pulse/sync no período) permanecem **saudáveis** quando a sonda diária está actualizada; **Por avaliar** só quando a recolha está pendente ou desactualizada.
+
+```bash
+php artisan module-monitor:collect
+php artisan module-monitor:collect --dry-run
+php artisan schedule:list | grep module-monitor
+```
+
+Variáveis: `MODULE_MONITOR_*` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11c · Períodos UI: **24 h** / **7 dias**
 
 ---
 
@@ -340,7 +358,7 @@ Sem `--password`, o comando pede a senha de forma oculta no terminal ou lê `CIT
 | **Dados públicos (hub)** | vários (`fundeb`, `funding`, `cadastro`, `system`) | `/admin/dados-publicos` |
 | **Verificação diária** | `public-data:check-official` | notificação sino + hub |
 | **Educacenso 1ª etapa** | `censo:analyze-educacenso-file` | Analytics → Censo |
-| **Monitor de módulos** | — (UI) | `/admin/monitor-modulos` |
+| **Monitor de módulos** | `module-monitor:collect` | `/admin/monitor-modulos` |
 | Schema | `ieducar:schema-probe` | ieducar-compatibility |
 | Frequência | `ieducar:probe-falta` | — (CLI; aba Analytics Frequência) |
 | **Massiva semanal** | `weekly-mass-sync:run` | sync-queue (retomar) |

@@ -386,8 +386,64 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.active = m;
             this.tooltipPinned = true;
             if (ev?.containerPoint) {
-                this.tooltipStyle = `left:${ev.containerPoint.x}px;top:${ev.containerPoint.y}px;`;
+                this.positionTooltip(ev);
             }
+        },
+
+        positionTooltip(event) {
+            const mapEl = this.$refs.map;
+            if (!mapEl || !event?.containerPoint) {
+                return;
+            }
+
+            const margin = 16;
+            const gap = 12;
+            const rect = mapEl.getBoundingClientRect();
+            const pinX = rect.left + event.containerPoint.x;
+            const pinY = rect.top + event.containerPoint.y;
+
+            this.tooltipStyle =
+                `left:${pinX + gap}px;top:${pinY + gap}px;visibility:hidden;max-height:calc(100dvh - ${margin * 2}px);overflow-y:auto;`;
+
+            this.$nextTick(() => {
+                const tooltip = this.$el?.querySelector?.(".serv-brazil-map-tooltip");
+                if (!tooltip || !this.active) {
+                    return;
+                }
+
+                const vw = window.innerWidth;
+                const vh = window.innerHeight;
+                const maxH = vh - margin * 2;
+                tooltip.style.maxHeight = `${maxH}px`;
+
+                const tw = tooltip.offsetWidth;
+                const th = Math.min(tooltip.scrollHeight, maxH);
+
+                let left = pinX + gap;
+                let top = pinY + gap;
+
+                if (left + tw + margin > vw) {
+                    left = pinX - tw - gap;
+                }
+                if (top + th + margin > vh) {
+                    top = pinY - th - gap;
+                }
+                if (top < margin) {
+                    top = margin;
+                }
+                if (left < margin) {
+                    left = margin;
+                }
+                if (left + tw + margin > vw) {
+                    left = Math.max(margin, vw - tw - margin);
+                }
+                if (top + th + margin > vh) {
+                    top = Math.max(margin, vh - th - margin);
+                }
+
+                this.tooltipStyle =
+                    `left:${Math.round(left)}px;top:${Math.round(top)}px;max-height:${Math.round(maxH)}px;overflow-y:auto;visibility:visible;`;
+            });
         },
 
         closeTooltip() {
@@ -476,14 +532,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return m?.tier_label || m?.tier || "";
         },
 
-        tooltipHtml(m) {
+        tooltipBodyHtml(m) {
             if (!m) {
                 return "";
             }
             const lines = [
-                `<p class="font-semibold text-gray-900 dark:text-gray-100">${escapeHtml(m.name)} — ${escapeHtml(m.uf)}</p>`,
-                `<p class="text-xs text-gray-500">IBGE ${escapeHtml(m.ibge)} · ${escapeHtml(this.tierLabel(m))}</p>`,
-                `<dl class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">`,
+                `<dl class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">`,
                 `<dt class="text-gray-500">${escapeHtml("Propensão")}</dt><dd class="font-semibold tabular-nums">${nf(m.success_score)}/100</dd>`,
                 `<dt class="text-gray-500">${escapeHtml("Benefício")}</dt><dd class="font-semibold tabular-nums">${nf(m.benefit_score)}/100</dd>`,
             ];

@@ -43,6 +43,16 @@ final class AdminImportHubCatalog
                 'icon' => 'banknotes',
             ],
             [
+                'key' => 'horizonte',
+                'route' => 'admin.public-data.index',
+                'query' => ['hub' => 'horizonte'],
+                'fragment' => 'horizonte-hub',
+                'label' => __('Horizonte'),
+                'hint' => __('Mapa de oportunidade — abastecimento nacional'),
+                'accent' => AdminVisualCatalog::shellAccentForHubKey('horizonte'),
+                'icon' => 'map',
+            ],
+            [
                 'key' => 'fundeb',
                 'route' => 'admin.ieducar-compatibility.index',
                 'query' => null,

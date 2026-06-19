@@ -97,13 +97,27 @@ final class HorizonteFortnightlyFeedService
             'phases' => array_map(static fn (array $p): string => (string) ($p['key'] ?? '?'), $phases),
         ]);
 
-        return [
+        $result = [
             'success' => $allOk,
             'phases' => $phases,
             'message' => $allOk
                 ? __('Abastecimento Horizonte concluído — cache do mapa invalida-se automaticamente pelo fingerprint dos dados.')
                 : __('Abastecimento Horizonte concluído com falhas — reveja os logs e o hub Dados públicos.'),
         ];
+
+        if (! $dryRun) {
+            $this->storeFeedResult($result);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param  array{success: bool, phases: list<array<string, mixed>>, message: string}  $result
+     */
+    private function storeFeedResult(array $result): void
+    {
+        \App\Support\Horizonte\HorizonteFortnightlyFeedCache::put($result);
     }
 
     /**

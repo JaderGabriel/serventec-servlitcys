@@ -345,6 +345,21 @@ final class ArtisanCommandsCatalog
                         'doc_anchor' => 'operacao',
                     ],
                     [
+                        'name' => 'module-monitor:collect',
+                        'summary' => __('Recolhe sondas de saúde por módulo para o monitor admin.'),
+                        'signature' => 'module-monitor:collect {--dry-run}',
+                        'examples' => [
+                            'php artisan module-monitor:collect',
+                            'php artisan module-monitor:collect --dry-run',
+                        ],
+                        'env' => [
+                            'MODULE_MONITOR_ENABLED',
+                            'MODULE_MONITOR_COLLECT_SCHEDULE_ENABLED',
+                            'MODULE_MONITOR_COLLECT_TIME',
+                        ],
+                        'doc_anchor' => 'operacao',
+                    ],
+                    [
                         'name' => 'horizonte:fortnightly-feed',
                         'summary' => __('Abastecimento quinzenal Horizonte — FUNDEB nacional, Censo, SAEB, IBGE.'),
                         'signature' => 'horizonte:fortnightly-feed {--dry-run} {--skip-fundeb} {--skip-censo} {--skip-saeb} {--skip-ibge} {--skip-verify}',

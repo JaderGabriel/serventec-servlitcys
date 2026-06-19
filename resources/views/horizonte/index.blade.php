@@ -270,12 +270,28 @@
                                 <div
                                     x-show="active"
                                     x-cloak
-                                    class="absolute z-20 max-w-xs rounded-lg border border-gray-200 dark:border-gray-600 bg-white/95 dark:bg-gray-900/95 p-3 shadow-lg text-sm pointer-events-auto"
+                                    x-transition.opacity.duration.150ms
+                                    class="serv-brazil-map-tooltip serv-brazil-map-tooltip--wide"
                                     :style="tooltipStyle"
                                     @click.outside="closeTooltip()"
                                 >
-                                    <div x-html="tooltipHtml(active)"></div>
-                                    <button type="button" class="mt-2 text-xs text-gray-500 hover:underline" @click="closeTooltip()">{{ __('Fechar') }}</button>
+                                    <template x-if="active">
+                                        <div class="space-y-3">
+                                            <div class="flex items-start justify-between gap-2">
+                                                <div class="min-w-0">
+                                                    <p class="font-semibold text-slate-900 dark:text-slate-100" x-text="active.name + ' — ' + active.uf"></p>
+                                                    <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400" x-text="'IBGE ' + active.ibge + ' · ' + tierLabel(active)"></p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    class="shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                                    x-on:click="closeTooltip()"
+                                                    aria-label="{{ __('Fechar') }}"
+                                                >&times;</button>
+                                            </div>
+                                            <div x-html="tooltipBodyHtml(active)"></div>
+                                        </div>
+                                    </template>
                                 </div>
                             </div>
                             <p class="text-xs text-slate-500 dark:text-slate-400">

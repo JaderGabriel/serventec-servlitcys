@@ -130,7 +130,7 @@ final class PublicDataImportCatalog
         return [
             'id' => 'fundeb_fnde',
             'title' => __('FUNDEB — VAAF, VAAT e complementação VAAR'),
-            'summary' => __('CKAN FNDE, cache JSON e CSV «Receita total do Fundeb» (portarias). Alimenta comparativos e projeção na consultoria e no PDF.'),
+            'summary' => __('CKAN FNDE, cache JSON e CSV «Receita total do Fundeb» (portarias). Alimenta comparativos, projeção na consultoria, PDF e mapa Horizonte (pressão FUNDEB).'),
             'data_class' => 'publicado',
             'domain' => 'fundeb',
             'persistence' => 'fundeb_municipio_references',
@@ -245,7 +245,7 @@ final class PublicDataImportCatalog
         return [
             'id' => 'censo_inep_matriculas',
             'title' => __('Censo INEP — matrículas por município'),
-            'summary' => __('Agrega microdados Educacenso (qt_mat_*) em inep_censo_municipio_matriculas. Não substitui matrículas do i-Educar; serve para cruzamento e secção indicadores do PDF.'),
+            'summary' => __('Agrega microdados Educacenso (qt_mat_*) em inep_censo_municipio_matriculas. Escala municipal no Horizonte e cruzamento PDF — não substitui matrículas i-Educar.'),
             'data_class' => 'publicado',
             'domain' => 'funding',
             'persistence' => 'inep_censo_municipio_matriculas',
@@ -353,7 +353,7 @@ final class PublicDataImportCatalog
         return [
             'id' => 'saeb_inep',
             'title' => __('SAEB / desempenho (INEP)'),
-            'summary' => __('Microdados, CSV ou JSON por IBGE. Alimenta aba Desempenho e secção aprendizagem do relatório PDF.'),
+            'summary' => __('Microdados, CSV, planilhas INEP ou JSON por IBGE. Alimenta Desempenho, PDF e mapa Horizonte (déficit pedagógico SAEB).'),
             'data_class' => 'publicado',
             'domain' => 'pedagogical',
             'persistence' => 'saeb_indicator_points',
@@ -377,7 +377,7 @@ final class PublicDataImportCatalog
         return [
             'id' => 'geo_inep',
             'title' => __('Georreferenciação INEP'),
-            'summary' => __('Coordenadas oficiais e microdados para mapa de unidades e alertas de divergência (não é dado financeiro, mas é consulta pública INEP).'),
+            'summary' => __('Coordenadas INEP, microdados e catálogo IBGE municipal (centroides) — mapa de unidades, divergências geo e posicionamento no Horizonte.'),
             'data_class' => 'publicado',
             'domain' => 'geo',
             'persistence' => 'school_unit_geos / inep_school_geos',

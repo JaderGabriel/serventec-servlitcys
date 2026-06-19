@@ -17,7 +17,7 @@ class HorizonteController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        abort_unless($user !== null && $user->canViewAdminDashboard(), 403);
+        abort_unless($user !== null && $user->canViewHorizonte(), 403);
         abort_unless((bool) config('horizonte.enabled', true), 404);
 
         return view('horizonte.index', [
@@ -31,7 +31,7 @@ class HorizonteController extends Controller
     public function mapData(Request $request): JsonResponse
     {
         $user = $request->user();
-        abort_unless($user !== null && $user->canViewAdminDashboard(), 403);
+        abort_unless($user !== null && $user->canViewHorizonte(), 403);
         abort_unless((bool) config('horizonte.enabled', true), 404);
 
         return response()->json($this->map->build());

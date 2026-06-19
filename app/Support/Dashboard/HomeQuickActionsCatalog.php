@@ -98,7 +98,7 @@ final class HomeQuickActionsCatalog
             'alert' => false,
         ];
 
-        if ($user?->canViewAdminDashboard()) {
+        if ($user?->canViewHorizonte()) {
             $consultoria[] = [
                 'id' => 'horizonte',
                 'href' => route('dashboard.horizonte'),

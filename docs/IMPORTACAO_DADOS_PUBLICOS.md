@@ -143,7 +143,9 @@ Ao acrescentar uma nova fonte, registe o item em `AdminImportHubCatalog::navItem
 | `app/Support/Admin/AdminScreenCatalog.php` | Navegação municípios / LGPD |
 | `app/Support/Admin/AdminVisualCatalog.php` | Cores, chips e variantes de acção |
 | `app/Services/Admin/PublicDataImportStatusService.php` | Métricas do hub |
-| `app/Http/Controllers/Admin/PublicDataImportController.php` | UI + dispatch fila |
+| `app/Services/Admin/HorizonteImportHubStatusService.php` | Cobertura nacional Horizonte |
+| `app/Http/Controllers/Admin/PublicDataImportController.php` | UI + dispatch fila + abastecimento Horizonte |
+| `resources/views/admin/public-data/partials/horizonte-hub-panel.blade.php` | Painel Horizonte no hub |
 | `resources/views/components/admin/import-hub/*` | Layout e cartões |
 | `resources/views/admin/public-data/index.blade.php` | Tela hub |
 | `app/Support/Admin/ExternalImportImpact.php` | Textos impacto por domínio |
@@ -167,3 +169,35 @@ Comando **`public-data:check-official`** (agendado por defeito às 07:00):
 | Variáveis | `PUBLIC_DATA_DAILY_CHECK_*` — [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11 |
 
 Documentação de comandos: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §3.2.
+
+---
+
+## 11. Horizonte — abastecimento nacional
+
+O **mapa Horizonte** (`/dashboard/horizonte`) usa dados públicos **nacionais** (não só municípios do catálogo). O hub expõe cobertura, fases da rotina e atalhos para cada fonte.
+
+| Onde ver | Rota / artefacto |
+|----------|------------------|
+| Hub | `/admin/dados-publicos?hub=horizonte` · painel **Horizonte — abastecimento nacional** (`#horizonte-hub`) |
+| Abastecimento manual | Botão «Abastecer Horizonte» (POST `admin.public-data.horizonte-feed`) |
+| Mapa | `/dashboard/horizonte` |
+| Rotina quinzenal | `php artisan horizonte:fortnightly-feed` (dias 1 e 15) |
+| Documentação | [HORIZONTE.md](HORIZONTE.md) §9 |
+
+**Fases da rotina:** FUNDEB receita CSV FNDE → Censo matrículas → SAEB planilhas INEP (todos IBGE) → catálogo IBGE (27 UFs) → verificação oficial (`--no-notify`).
+
+| Fase | Fonte no hub |
+|------|----------------|
+| FUNDEB receita | `#source-fundeb_fnde` / Compatibilidade i-Educar |
+| Censo | `#source-censo_inep_matriculas` |
+| SAEB | `#source-saeb_inep` / SAEB pedagógico |
+| IBGE centroides | `#source-geo_inep` / Geo |
+| Verificação | `#verificacao-oficial` |
+
+| Ficheiro | Função |
+|----------|--------|
+| `app/Services/Admin/HorizonteImportHubStatusService.php` | Métricas nacionais + fases |
+| `resources/views/admin/public-data/partials/horizonte-hub-panel.blade.php` | Painel no hub |
+| `app/Support/Horizonte/HorizonteFortnightlyFeedCache.php` | Cache da última execução |
+
+Comandos: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §3.2b · variáveis `HORIZONTE_FORTNIGHTLY_*` — [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11b.

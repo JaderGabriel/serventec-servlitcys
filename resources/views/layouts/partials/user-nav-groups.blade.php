@@ -43,7 +43,7 @@
                     'title' => __('Todos os municípios: volume digitado, status Censo e trabalho restante.'),
                 ],
                 [
-                    'show' => $user->canViewAdminDashboard(),
+                    'show' => $user->canViewHorizonte(),
                     'href' => route('dashboard.horizonte'),
                     'label' => __('Horizonte'),
                     'icon' => 'globe-alt',
