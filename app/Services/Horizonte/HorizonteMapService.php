@@ -13,6 +13,7 @@ use App\Support\Brazil\IbgeUfFromCode;
 use App\Support\Dashboard\AdminHomeMapCache;
 use App\Support\Horizonte\HorizonteManagerInsights;
 use App\Support\Horizonte\HorizonteMapPresenter;
+use App\Support\Horizonte\HorizonteMunicipalSgeResolver;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -23,6 +24,8 @@ final class HorizonteMapService
     public function __construct(
         private readonly IbgeMunicipalityCatalog $ibgeCatalog,
         private readonly HorizonteOpportunityScorer $scorer,
+        private readonly HorizonteMunicipalSgeResolver $sgeResolver,
+        private readonly HorizonteMunicipalSgeRegistryService $sgeRegistry,
     ) {}
 
     /**
@@ -111,6 +114,8 @@ final class HorizonteMapService
         }
         $benchmarks = $this->scorer->benchmarks($saebForBench, $complRatios);
 
+        $sgeRegistry = $this->sgeRegistry->indexedFromCache();
+
         $high = (int) config('horizonte.high_opportunity_threshold', 70);
         $medium = (int) config('horizonte.medium_opportunity_threshold', 40);
 
@@ -161,6 +166,12 @@ final class HorizonteMapService
             $minHeat = $consultoriaActive ? 0.0 : ($scores['tier'] === 'data_sparse' ? 0.08 : 0.0);
             $heatIntensity = max($minHeat, min(1.0, $rawHeat));
 
+            $sge = $this->sgeResolver->resolve(
+                $ibge,
+                $city !== null ? array_merge($city, ['in_catalog' => true]) : null,
+                $sgeRegistry[$ibge] ?? null,
+            );
+
             $markers[] = [
                 'ibge' => $ibge,
                 'city_id' => $city['id'] ?? null,
@@ -190,6 +201,10 @@ final class HorizonteMapService
                     ? route('dashboard.analytics', ['city_id' => $city['id']])
                     : null,
                 'cities_url' => $city !== null ? route('cities.edit', $city['id']) : route('cities.create'),
+                'sge' => $sge,
+                'sge_found' => (bool) ($sge['found'] ?? false),
+                'sge_system' => $sge['system'] ?? null,
+                'sge_status' => $sge['status'] ?? 'not_found',
             ];
         }
 
@@ -213,6 +228,7 @@ final class HorizonteMapService
             'uf_rankings' => $ufRankings,
             'top_prospects' => $topProspects,
             'focus_segments' => $focusSegments,
+            'sge_summary' => HorizonteManagerInsights::sgeSummary($markers),
             'meta' => HorizonteMapPresenter::refreshMeta(count($markers), $coverage),
             'colors' => HorizonteMapPresenter::tierColors(),
             'legend' => HorizonteMapPresenter::legendItems(),
@@ -246,6 +262,10 @@ final class HorizonteMapService
                 'name' => (string) $city->name,
                 'uf' => $uf,
                 'consultoria_active' => (bool) $city->is_active && $city->hasDataSetup(),
+                'has_data_setup' => $city->hasDataSetup(),
+                'is_active' => (bool) $city->is_active,
+                'ieducar_app_url' => $city->ieducar_app_url,
+                'db_driver' => $city->effectiveIeducarDriver(),
                 'lat' => $lat,
                 'lng' => $lng,
             ];
@@ -511,6 +531,7 @@ final class HorizonteMapService
             'uf_rankings' => [],
             'top_prospects' => [],
             'focus_segments' => [],
+            'sge_summary' => HorizonteManagerInsights::sgeSummary([]),
             'meta' => HorizonteMapPresenter::refreshMeta(0, HorizonteManagerInsights::dataCoverage([])),
             'colors' => HorizonteMapPresenter::tierColors(),
             'legend' => HorizonteMapPresenter::legendItems(),

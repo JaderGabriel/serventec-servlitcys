@@ -3,7 +3,6 @@
 namespace App\Services\Horizonte;
 
 use App\Models\City;
-use App\Models\FundebMunicipioReference;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\Fundeb\FundebFndeReceitaCsvService;
 use App\Services\Inep\InepCensoMunicipioMatriculasIndexer;
@@ -20,9 +19,11 @@ final class HorizonteFortnightlyFeedService
 {
     public function __construct(
         private readonly FundebFndeReceitaCsvService $fundebReceita,
+        private readonly FundebMunicipioReferenceRepository $fundebReferences,
         private readonly InepCensoMunicipioMatriculasIndexer $censoIndexer,
         private readonly SaebPlanilhaInepImportService $saebPlanilhas,
         private readonly IbgeMunicipalityCatalog $ibgeCatalog,
+        private readonly HorizonteMunicipalSgeRegistryService $sgeRegistry,
     ) {}
 
     /**
@@ -49,6 +50,7 @@ final class HorizonteFortnightlyFeedService
             'censo' => ! ($options['skip_censo'] ?? false),
             'saeb' => ! ($options['skip_saeb'] ?? false),
             'ibge' => ! ($options['skip_ibge'] ?? false),
+            'sge' => ! ($options['skip_sge'] ?? false),
             'verify' => ! ($options['skip_verify'] ?? false),
         ];
 
@@ -84,6 +86,14 @@ final class HorizonteFortnightlyFeedService
             $allOk = $allOk && ($result['success'] ?? false);
         }
 
+        if ($steps['sge']) {
+            $result = $dryRun
+                ? ['success' => true, 'message' => __('[dry-run] Sincronizar registo SGE (sistemas de gestão educacional).'), 'skipped' => true]
+                : $this->syncSgeRegistry();
+            $phases[] = array_merge(['key' => 'sge_registry'], $result);
+            $allOk = $allOk && ($result['success'] ?? false);
+        }
+
         if ($steps['verify']) {
             $result = $dryRun
                 ? ['success' => true, 'message' => __('[dry-run] Verificação de fontes oficiais (--no-notify).'), 'skipped' => true]
@@ -97,12 +107,19 @@ final class HorizonteFortnightlyFeedService
             'phases' => array_map(static fn (array $p): string => (string) ($p['key'] ?? '?'), $phases),
         ]);
 
+        $hasWarnings = collect($phases)->contains(
+            static fn (array $p): bool => (bool) ($p['skipped'] ?? false) || ! ($p['success'] ?? false),
+        );
+        $usable = $this->feedHasUsableOutput($phases);
+
         $result = [
-            'success' => $allOk,
+            'success' => $usable,
             'phases' => $phases,
-            'message' => $allOk
-                ? __('Abastecimento Horizonte concluído — cache do mapa invalida-se automaticamente pelo fingerprint dos dados.')
-                : __('Abastecimento Horizonte concluído com falhas — reveja os logs e o hub Dados públicos.'),
+            'message' => $usable
+                ? ($hasWarnings
+                    ? __('Abastecimento Horizonte concluído com avisos — mapa usa os dados disponíveis (fases em falha não bloqueiam).')
+                    : __('Abastecimento Horizonte concluído — cache do mapa invalida-se automaticamente pelo fingerprint dos dados.'))
+                : __('Abastecimento Horizonte concluído sem dados novos — reveja os logs e o hub Dados públicos.'),
         ];
 
         if (! $dryRun) {
@@ -159,17 +176,17 @@ final class HorizonteFortnightlyFeedService
                     continue;
                 }
 
-                FundebMunicipioReference::query()->updateOrCreate(
-                    ['ibge_municipio' => $ibgeNorm, 'ano' => $ano],
+                $this->fundebReferences->upsertHorizontePortariaReceita(
+                    $ibgeNorm,
+                    $ano,
+                    $cityIbgeMap[$ibgeNorm] ?? null,
                     [
-                        'city_id' => $cityIbgeMap[$ibgeNorm] ?? null,
                         'receita_total' => $totalReceita,
                         'complementacao_vaaf' => $row['complementacao_vaaf'] ?? null,
                         'complementacao_vaat' => $row['complementacao_vaat'] ?? null,
                         'complementacao_vaar' => $row['complementacao_vaar'] ?? null,
                         'fonte' => 'fnde_portaria_receita_horizonte',
                         'url_portaria' => $row['csv_url'] ?? null,
-                        'imported_at' => now(),
                     ],
                 );
                 $imported++;
@@ -177,11 +194,27 @@ final class HorizonteFortnightlyFeedService
         }
 
         if ($imported === 0 && $emptyYears !== []) {
+            $allowEmpty = filter_var(
+                config('horizonte.fortnightly_feed.fundeb_allow_empty', true),
+                FILTER_VALIDATE_BOOLEAN,
+            );
+            $msg = __('CSV receita FNDE indisponível para os anos: :anos.', [
+                'anos' => implode(', ', array_map('strval', $emptyYears)),
+            ]);
+
+            if ($allowEmpty) {
+                return [
+                    'success' => true,
+                    'skipped' => true,
+                    'message' => $msg,
+                    'imported' => 0,
+                    'years' => $years,
+                ];
+            }
+
             return [
                 'success' => false,
-                'message' => __('CSV receita FNDE indisponível para os anos: :anos.', [
-                    'anos' => implode(', ', array_map('strval', $emptyYears)),
-                ]),
+                'message' => $msg,
                 'imported' => 0,
                 'years' => $years,
             ];
@@ -249,8 +282,9 @@ final class HorizonteFortnightlyFeedService
 
         if ($years === []) {
             return [
-                'success' => false,
-                'message' => __('Configure horizonte.fortnightly_feed.saeb_years ou saeb.planilha_resultados_urls.'),
+                'success' => true,
+                'skipped' => true,
+                'message' => __('SAEB: anos não configurados — configure horizonte.fortnightly_feed.saeb_years ou saeb.planilha_resultados_urls.'),
             ];
         }
 
@@ -263,10 +297,56 @@ final class HorizonteFortnightlyFeedService
         );
 
         return [
-            'success' => (bool) ($result['ok'] ?? false),
+            'success' => (bool) ($result['ok'] ?? false) || filter_var(
+                config('horizonte.fortnightly_feed.censo_skip_if_missing', true),
+                FILTER_VALIDATE_BOOLEAN,
+            ),
             'message' => (string) ($result['message'] ?? ''),
             'details' => $result['detalhes'] ?? null,
+            'skipped' => ! (bool) ($result['ok'] ?? false),
         ];
+    }
+
+    /**
+     * @return array{success: bool, message: string, matched?: int, skipped?: bool}
+     */
+    private function syncSgeRegistry(): array
+    {
+        try {
+            return $this->sgeRegistry->sync();
+        } catch (\Throwable $e) {
+            Log::warning('horizonte.sge_registry_failed', ['message' => $e->getMessage()]);
+
+            return [
+                'success' => true,
+                'skipped' => true,
+                'message' => __('SGE: registo externo indisponível — mapa continua com catálogo ServLITCYS e dados públicos.'),
+                'matched' => 0,
+            ];
+        }
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $phases
+     */
+    private function feedHasUsableOutput(array $phases): bool
+    {
+        foreach ($phases as $phase) {
+            if (! ($phase['success'] ?? false)) {
+                continue;
+            }
+            if (($phase['imported'] ?? 0) > 0
+                || ($phase['indexed'] ?? 0) > 0
+                || ($phase['matched'] ?? 0) > 0
+                || ($phase['ufs'] ?? 0) > 0) {
+                return true;
+            }
+            if (($phase['skipped'] ?? false) && ($phase['key'] ?? '') !== 'sge_registry') {
+                return true;
+            }
+        }
+
+        return collect($phases)->contains(fn (array $p): bool => (bool) ($p['success'] ?? false));
     }
 
     /**

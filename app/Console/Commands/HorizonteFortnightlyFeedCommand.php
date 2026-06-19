@@ -13,6 +13,7 @@ class HorizonteFortnightlyFeedCommand extends Command
                             {--skip-censo : Ignorar indexação Censo matrículas}
                             {--skip-saeb : Ignorar planilhas SAEB INEP}
                             {--skip-ibge : Ignorar aquecimento catálogo IBGE}
+                            {--skip-sge : Ignorar registo de sistemas de gestão educacional (SGE)}
                             {--skip-verify : Ignorar verificação public-data:check-official}';
 
     protected $description = 'Abastecimento quinzenal de dados públicos para o mapa Horizonte (FUNDEB nacional, Censo, SAEB, IBGE)';
@@ -37,6 +38,7 @@ class HorizonteFortnightlyFeedCommand extends Command
             'skip_censo' => (bool) $this->option('skip-censo'),
             'skip_saeb' => (bool) $this->option('skip-saeb'),
             'skip_ibge' => (bool) $this->option('skip-ibge'),
+            'skip_sge' => (bool) $this->option('skip-sge'),
             'skip_verify' => (bool) $this->option('skip-verify'),
         ]);
 
@@ -46,6 +48,7 @@ class HorizonteFortnightlyFeedCommand extends Command
                 'censo_matriculas' => 'Censo',
                 'saeb_planilhas' => 'SAEB',
                 'ibge_catalog' => 'IBGE',
+                'sge_registry' => 'SGE',
                 'official_check' => __('Verificação'),
                 default => (string) ($phase['key'] ?? '?'),
             };

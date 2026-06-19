@@ -43,6 +43,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         ufRankings: Array.isArray(options.ufRankings) ? options.ufRankings : [],
         topProspects: Array.isArray(options.topProspects) ? options.topProspects : [],
         focusSegments: Array.isArray(options.focusSegments) ? options.focusSegments : [],
+        sgeSummary: options.sgeSummary && typeof options.sgeSummary === "object" ? options.sgeSummary : {},
         refYear: Number(options.refYear) || new Date().getFullYear() - 1,
         loadUrl: typeof options.loadUrl === "string" ? options.loadUrl : "",
         pageLoading: Boolean(options.loadUrl),
@@ -242,6 +243,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.focusSegments = Array.isArray(data.focus_segments)
                 ? data.focus_segments
                 : this.focusSegments;
+            this.sgeSummary =
+                data.sge_summary && typeof data.sge_summary === "object"
+                    ? data.sge_summary
+                    : this.sgeSummary;
             this.refYear = Number(data.reference_year) || this.refYear;
             this.ufList = uniqueSortedUfs(this.markers);
             this.meta = data.meta && typeof data.meta === "object" ? data.meta : {};
@@ -574,6 +579,18 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     `<dt class="text-gray-500">${escapeHtml("Compl. FUNDEB")}</dt><dd class="tabular-nums">${nf(m.complementacao_fundeb)}</dd>`,
                 );
             }
+            const sge = m.sge && typeof m.sge === "object" ? m.sge : null;
+            if (sge) {
+                lines.push(
+                    `<dt class="text-gray-500">${escapeHtml("SGE")}</dt><dd>${escapeHtml(sge.system_label || sge.system || "—")}</dd>`,
+                    `<dt class="text-gray-500">${escapeHtml("Estado SGE")}</dt><dd>${escapeHtml(sge.status_label || "—")}</dd>`,
+                );
+                if (sge.detail) {
+                    lines.push(
+                        `<dt class="text-gray-500 col-span-2">${escapeHtml("Detalhe")}</dt><dd class="col-span-2 text-slate-600 dark:text-slate-300">${escapeHtml(sge.detail)}</dd>`,
+                    );
+                }
+            }
             const sources = [
                 m.has_fundeb ? "FUNDEB" : null,
                 m.has_censo ? "Censo" : null,
@@ -588,6 +605,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (m.analytics_url) {
                 lines.push(
                     `<a href="${escapeHtml(m.analytics_url)}" class="mt-2 inline-block text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">${escapeHtml("Abrir consultoria")}</a>`,
+                );
+            } else if (sge?.app_url) {
+                lines.push(
+                    `<a href="${escapeHtml(sge.app_url)}" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">${escapeHtml("Portal do sistema")}</a>`,
                 );
             } else if (m.cities_url) {
                 lines.push(

@@ -2,6 +2,8 @@
 
 namespace App\Support\Horizonte;
 
+use Illuminate\Support\Facades\Storage;
+
 /**
  * Segmentos e playbooks de prospecção para gestores comerciais.
  */
@@ -57,6 +59,75 @@ final class HorizonteManagerInsights
             'prospect_matriculas_censo' => $prospectMatriculas,
             'public_data_pct' => $total > 0 ? (int) round(100 * $withPublic / $total) : 0,
         ];
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $markers
+     * @return array<string, mixed>
+     */
+    public static function sgeSummary(array $markers): array
+    {
+        $withSge = 0;
+        $consultoria = 0;
+        $catalog = 0;
+        $registry = 0;
+        $notFound = 0;
+        $bySystem = [];
+
+        foreach ($markers as $m) {
+            $sge = is_array($m['sge'] ?? null) ? $m['sge'] : [];
+            $found = (bool) ($sge['found'] ?? $m['sge_found'] ?? false);
+            if ($found) {
+                $withSge++;
+            } else {
+                $notFound++;
+            }
+
+            $status = (string) ($sge['status'] ?? $m['sge_status'] ?? 'not_found');
+            match ($status) {
+                'consultoria_active' => $consultoria++,
+                'catalog_pending', 'catalog_configured' => $catalog++,
+                'registry' => $registry++,
+                default => null,
+            };
+
+            $system = trim((string) ($sge['system'] ?? $m['sge_system'] ?? ''));
+            if ($system !== '') {
+                $bySystem[$system] = ($bySystem[$system] ?? 0) + 1;
+            }
+        }
+
+        arsort($bySystem);
+
+        return [
+            'total' => count($markers),
+            'with_sge' => $withSge,
+            'not_found' => $notFound,
+            'consultoria_active' => $consultoria,
+            'catalog' => $catalog,
+            'registry' => $registry,
+            'by_system' => $bySystem,
+            'registry_configured' => self::sgeRegistryConfigured(),
+        ];
+    }
+
+    private static function sgeRegistryConfigured(): bool
+    {
+        $url = trim((string) config('horizonte.sge.registry_url', ''));
+        if ($url !== '') {
+            return true;
+        }
+
+        $rel = trim((string) config('horizonte.sge.registry_path', ''));
+        if ($rel === '') {
+            return false;
+        }
+
+        try {
+            return Storage::disk('local')->exists($rel);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /**

@@ -16,10 +16,10 @@ final class HorizonteFortnightlyFeedServiceTest extends TestCase
         $result = app(HorizonteFortnightlyFeedService::class)->run(['dry_run' => true]);
 
         $this->assertTrue($result['success']);
-        $this->assertCount(5, $result['phases']);
+        $this->assertCount(6, $result['phases']);
         $keys = array_column($result['phases'], 'key');
         $this->assertSame(
-            ['fundeb_receita', 'censo_matriculas', 'saeb_planilhas', 'ibge_catalog', 'official_check'],
+            ['fundeb_receita', 'censo_matriculas', 'saeb_planilhas', 'ibge_catalog', 'sge_registry', 'official_check'],
             $keys,
         );
     }

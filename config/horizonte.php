@@ -59,11 +59,27 @@ return [
             explode(',', (string) env('HORIZONTE_FORTNIGHTLY_FUNDEB_YEARS', '')),
         ))),
 
+        'fundeb_allow_empty' => filter_var(env('HORIZONTE_FORTNIGHTLY_FUNDEB_ALLOW_EMPTY', true), FILTER_VALIDATE_BOOL),
+
         'saeb_years' => null,
 
         'censo_skip_if_missing' => filter_var(env('HORIZONTE_FORTNIGHTLY_CENSO_SKIP_IF_MISSING', true), FILTER_VALIDATE_BOOL),
         'censo_allow_empty' => filter_var(env('HORIZONTE_FORTNIGHTLY_CENSO_ALLOW_EMPTY', false), FILTER_VALIDATE_BOOL),
         'snapshot_cache_ttl' => max(3600, (int) env('HORIZONTE_FORTNIGHTLY_SNAPSHOT_CACHE_TTL', 604800)),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sistemas de gestão educacional (SGE) — registo opcional + catálogo local
+    |--------------------------------------------------------------------------
+    */
+
+    'sge' => [
+        'enabled' => filter_var(env('HORIZONTE_SGE_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'registry_path' => env('HORIZONTE_SGE_REGISTRY_PATH', 'horizonte/sge_registry.json'),
+        'registry_url' => env('HORIZONTE_SGE_REGISTRY_URL'),
+        'registry_http_timeout' => max(5, min(60, (int) env('HORIZONTE_SGE_REGISTRY_HTTP_TIMEOUT', 15))),
+        'registry_cache_ttl' => max(3600, (int) env('HORIZONTE_SGE_REGISTRY_CACHE_TTL', 604800)),
     ],
 
 ];

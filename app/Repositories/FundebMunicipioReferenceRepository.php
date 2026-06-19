@@ -76,6 +76,54 @@ class FundebMunicipioReferenceRepository
         ]);
     }
 
+    /**
+     * Receita/complementação FNDE do feed Horizonte (IBGE nacional, city_id opcional).
+     * Não sobrescreve VAAF municipal já importado; em registo novo usa vaaf=0 (NOT NULL).
+     *
+     * @param  array{
+     *     receita_total: float,
+     *     complementacao_vaaf?: ?float,
+     *     complementacao_vaat?: ?float,
+     *     complementacao_vaar?: ?float,
+     *     fonte: string,
+     *     url_portaria?: ?string
+     * }  $data
+     */
+    public function upsertHorizontePortariaReceita(string $ibge, int $ano, ?int $cityId, array $data): FundebMunicipioReference
+    {
+        $ibge = self::normalizeIbge($ibge);
+        if ($ibge === null) {
+            throw new \InvalidArgumentException(__('IBGE inválido.'));
+        }
+
+        $ref = FundebMunicipioReference::query()->firstOrNew([
+            'ibge_municipio' => $ibge,
+            'ano' => $ano,
+        ]);
+
+        if ($cityId !== null) {
+            $ref->city_id = $cityId;
+        }
+
+        $ref->receita_total = (float) $data['receita_total'];
+        $ref->complementacao_vaaf = isset($data['complementacao_vaaf']) ? (float) $data['complementacao_vaaf'] : null;
+        $ref->complementacao_vaat = isset($data['complementacao_vaat']) ? (float) $data['complementacao_vaat'] : null;
+        $ref->complementacao_vaar = isset($data['complementacao_vaar']) ? (float) $data['complementacao_vaar'] : null;
+        $ref->fonte = trim((string) ($data['fonte'] ?? 'fnde_portaria_receita_horizonte')) ?: 'fnde_portaria_receita_horizonte';
+        $ref->url_portaria = isset($data['url_portaria']) ? trim((string) $data['url_portaria']) : null;
+        $ref->imported_at = now();
+
+        if (! $ref->exists) {
+            $ref->vaaf = 0.0;
+            $ref->tipo_valor = 'estimativa';
+            $ref->notas = __('Registo Horizonte — receita portaria FNDE; VAAF municipal pode ser enriquecido depois (fundeb:import-api ou sync por município).');
+        }
+
+        $ref->save();
+
+        return $ref;
+    }
+
     public static function normalizeIbge(mixed $raw): ?string
     {
         $ibge = preg_replace('/\D/', '', (string) $raw);

@@ -101,12 +101,13 @@ Calculados **na mesma geração do mapa** (amostra actual):
 - **Buscador** por nome, UF ou código IBGE (sugestões + `flyTo`).
 - Filtros comerciais: propensão/benefício mínimos, matrículas, FUNDEB/Censo/SAEB, UF, segmentos «Onde buscar clientes».
 - Overlay de carregamento durante fetch JSON e desenho do mapa.
-- Tooltip: scores, matrículas Censo, SAEB, complementação FUNDEB, fontes, atalho Consultoria ou catálogo.
+- Tooltip: scores, matrículas Censo, SAEB, complementação FUNDEB, **SGE** (sistema, estado, detalhe), fontes, atalho Consultoria ou portal do sistema.
 
 ### 6.2 Painéis laterais
 
 | Painel | Conteúdo |
 |--------|----------|
+| **Sistemas de gestão (SGE)** | Identificados, consultoria i-Educar, registo externo, não identificados |
 | **Cobertura de dados** | Contagem FUNDEB / Censo / SAEB / triad completa |
 | **UFs prioritárias** | Top 12 UFs por benefício médio + clique filtra UF |
 | **Top prospectos** | Melhores scores nacionais (clicáveis no mapa) |
@@ -117,9 +118,48 @@ Calculados **na mesma geração do mapa** (amostra actual):
 |--------|----------|
 | **KPIs** | Dados públicos · prospectos · alta propensão · consultoria · matrículas prospecto |
 | **Segmentos** | Prontos para abordagem · pressão FUNDEB · déficit SAEB · grande escala |
-| **Tabela** | Até 50 municípios do recorte, ordenados para abordagem comercial |
+| **Tabela** | Até 50 municípios do recorte, ordenados para abordagem comercial (inclui coluna SGE) |
 
 ---
+
+## 6.4 Sistemas de gestão educacional (SGE)
+
+O Horizonte tenta identificar o **SGE** de cada município por duas fontes (em ordem de prioridade):
+
+1. **Catálogo ServLITCYS** (`cities`) — i-Educar com estados: consultoria activa, base configurada ou pendente.
+2. **Registo externo opcional** — JSON local ou URL remota (não bloqueia o mapa se ausente ou inválido).
+
+Quando nenhuma fonte identifica o sistema, o município aparece como **SGE não identificado** (`N/I` na tabela); o restante do payload (FUNDEB, Censo, SAEB, scores) continua disponível.
+
+### Formato do registo externo
+
+Ficheiro default: `storage/app/horizonte/sge_registry.json` (configurável via `HORIZONTE_SGE_REGISTRY_PATH`).
+
+```json
+{
+  "3550308": {
+    "system": "GDAE",
+    "vendor": "SME-SP",
+    "notes": "Portal municipal de gestão escolar",
+    "app_url": "https://portal.exemplo.sp.gov.br"
+  },
+  "municipios": [
+    {
+      "ibge": "2910800",
+      "system": "SIGE",
+      "fornecedor": "Secretaria municipal"
+    }
+  ]
+}
+```
+
+Chaves aceites por entrada: `system`/`sistema`, `vendor`/`fornecedor`, `notes`/`notas`, `app_url`/`url`, `ibge`/`ibge_municipio`.
+
+A fase **SGE** do feed quinzenal (`horizonte:fortnightly-feed`) sincroniza o registo para cache; falhas são registadas em log e **não impedem** as restantes fases nem o uso do mapa.
+
+```bash
+php artisan horizonte:fortnightly-feed --skip-sge   # ignorar registo SGE
+```
 
 ## 7. Arquitectura técnica
 
@@ -129,6 +169,7 @@ HorizonteController
         ├── citiesByIbge()
         ├── fundebByIbge / censoByIbge / saebByIbge
         ├── IbgeMunicipalityCatalog (nome + coordenadas)
+        ├── HorizonteMunicipalSgeResolver + HorizonteMunicipalSgeRegistryService (cache)
         └── HorizonteOpportunityScorer
 ```
 
@@ -139,6 +180,8 @@ HorizonteController
 | `app/Services/Horizonte/HorizonteOpportunityScorer.php` | Scores |
 | `app/Support/Horizonte/HorizonteMapPresenter.php` | Cores e legenda |
 | `app/Support/Brazil/IbgeMunicipalityCatalog.php` | Metadados IBGE |
+| `app/Support/Horizonte/HorizonteMunicipalSgeResolver.php` | SGE por IBGE (catálogo + registo) |
+| `app/Services/Horizonte/HorizonteMunicipalSgeRegistryService.php` | Import JSON/URL do registo SGE |
 | `resources/js/horizonteMap.js` | Mapa Alpine + busca |
 | `resources/views/horizonte/index.blade.php` | UI |
 | `app/Services/Horizonte/HorizonteFortnightlyFeedService.php` | Rotina quinzenal de dados públicos |
@@ -155,6 +198,12 @@ HorizonteController
 | `HORIZONTE_REFERENCE_YEAR` | ano−1 | Exercício FUNDEB/Censo/SAEB |
 | `HORIZONTE_HIGH_THRESHOLD` | `70` | Limiar alta propensão |
 | `HORIZONTE_MEDIUM_THRESHOLD` | `40` | Limiar média propensão |
+| `HORIZONTE_FORTNIGHTLY_FUNDEB_ALLOW_EMPTY` | `true` | Feed continua se FUNDEB vier vazio |
+| `HORIZONTE_SGE_ENABLED` | `true` | Activa fase SGE no feed |
+| `HORIZONTE_SGE_REGISTRY_PATH` | `horizonte/sge_registry.json` | JSON local IBGE→SGE |
+| `HORIZONTE_SGE_REGISTRY_URL` | — | URL remota alternativa (opcional) |
+| `HORIZONTE_SGE_REGISTRY_HTTP_TIMEOUT` | `15` | Timeout HTTP do registo remoto |
+| `HORIZONTE_SGE_REGISTRY_CACHE_TTL` | `604800` | TTL cache do índice SGE (s) |
 
 ---
 
@@ -170,13 +219,14 @@ Comando: **`horizonte:fortnightly-feed`** · agendamento: **dias 1 e 15** de cad
 | **Censo** | Indexa matrículas municipais a partir do microdados INEP (`inep_censo_municipio_matriculas`) |
 | **SAEB** | Planilhas oficiais INEP (aba Municípios, `CO_MUNICIPIO`) para **todos** os municípios — `saeb_indicator_points` |
 | **IBGE** | Aquece catálogo de centroides (27 UFs) para posicionar prospectos no mapa |
+| **SGE** | Sincroniza registo opcional de sistemas de gestão educacional (JSON local ou URL) — **não bloqueia** se ausente |
 | **Verificação** | `public-data:check-official --no-notify` (cache no hub, sem notificação) |
 
 ```bash
 # Manual / diagnóstico
 php artisan horizonte:fortnightly-feed
 php artisan horizonte:fortnightly-feed --dry-run
-php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo
+php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo --skip-sge
 
 # Confirmar agendamento
 php artisan schedule:list | grep horizonte

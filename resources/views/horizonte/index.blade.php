@@ -373,7 +373,8 @@
                                         <th class="py-2 px-2 font-medium">{{ __('Prop.') }}</th>
                                         <th class="py-2 px-2 font-medium">{{ __('Benef.') }}</th>
                                         <th class="py-2 px-2 font-medium">{{ __('Matr.') }}</th>
-                                        <th class="py-2 ps-2 font-medium">{{ __('Fontes') }}</th>
+                                        <th class="py-2 px-2 font-medium">{{ __('Fontes') }}</th>
+                                        <th class="py-2 ps-2 font-medium">{{ __('SGE') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -386,7 +387,8 @@
                                             <td class="py-2 px-2 tabular-nums font-semibold" x-text="p.success_score"></td>
                                             <td class="py-2 px-2 tabular-nums" x-text="p.benefit_score"></td>
                                             <td class="py-2 px-2 tabular-nums" x-text="p.matriculas_censo != null ? Number(p.matriculas_censo).toLocaleString('pt-BR') : '—'"></td>
-                                            <td class="py-2 ps-2 text-slate-500" x-text="[p.has_fundeb ? 'F' : null, p.has_censo ? 'C' : null, p.has_saeb ? 'S' : null].filter(Boolean).join('·') || '—'"></td>
+                                            <td class="py-2 px-2 text-slate-500" x-text="[p.has_fundeb ? 'F' : null, p.has_censo ? 'C' : null, p.has_saeb ? 'S' : null].filter(Boolean).join('·') || '—'"></td>
+                                            <td class="py-2 ps-2 text-slate-600 dark:text-slate-300" x-text="p.sge?.system_label || (p.sge_found ? '—' : '{{ __('N/I') }}')"></td>
                                         </tr>
                                     </template>
                                 </tbody>
@@ -396,6 +398,20 @@
                 </section>
 
                 <aside class="space-y-4 xl:sticky xl:top-4 xl:self-start">
+                    <section class="serv-panel p-4" aria-labelledby="horizonte-sge">
+                        <h3 id="horizonte-sge" class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Sistemas de gestão (SGE)') }}</h3>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('i-Educar no catálogo ServLITCYS + registo externo opcional.') }}</p>
+                        <dl class="mt-3 space-y-2 text-sm">
+                            <div class="flex justify-between gap-2"><dt class="text-slate-500">{{ __('Identificados') }}</dt><dd class="font-medium tabular-nums" x-text="pageLoading ? '…' : Number(sgeSummary.with_sge ?? 0).toLocaleString('pt-BR')"></dd></div>
+                            <div class="flex justify-between gap-2"><dt class="text-slate-500">{{ __('Consultoria i-Educar') }}</dt><dd class="font-medium tabular-nums" x-text="pageLoading ? '…' : Number(sgeSummary.consultoria_active ?? 0).toLocaleString('pt-BR')"></dd></div>
+                            <div class="flex justify-between gap-2"><dt class="text-slate-500">{{ __('Registo externo') }}</dt><dd class="font-medium tabular-nums" x-text="pageLoading ? '…' : Number(sgeSummary.registry ?? 0).toLocaleString('pt-BR')"></dd></div>
+                            <div class="flex justify-between gap-2"><dt class="text-slate-500">{{ __('Não identificados') }}</dt><dd class="font-medium tabular-nums text-amber-800 dark:text-amber-300" x-text="pageLoading ? '…' : Number(sgeSummary.not_found ?? 0).toLocaleString('pt-BR')"></dd></div>
+                        </dl>
+                        <p x-show="!pageLoading && !(sgeSummary.registry_configured ?? false)" x-cloak class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                            {{ __('Registo SGE externo não configurado — coloque JSON em storage/app/horizonte/sge_registry.json ou defina HORIZONTE_SGE_REGISTRY_URL.') }}
+                        </p>
+                    </section>
+
                     <section class="serv-panel p-4" aria-labelledby="horizonte-coverage">
                         <h3 id="horizonte-coverage" class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Cobertura de dados') }}</h3>
                         <dl class="mt-3 space-y-2 text-sm">
