@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\City;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\Horizonte\HorizonteMunicipalSgeRegistryService;
 use App\Support\Horizonte\HorizonteMunicipalSgeResolver;
@@ -37,6 +38,17 @@ final class HorizonteSgeRegistryController extends Controller
     public function upsert(Request $request, string $ibge): JsonResponse
     {
         $this->authorizeAdmin();
+
+        $normalized = FundebMunicipioReferenceRepository::normalizeIbge($ibge);
+        if ($normalized === null) {
+            return response()->json(['message' => __('Código IBGE inválido.')], 422);
+        }
+
+        if ($this->ibgeInConsultoriaCatalog($normalized)) {
+            return response()->json([
+                'message' => __('Município já está no catálogo Consultoria — o SGE é gerido pela ficha da cidade, não pelo registo Horizonte.'),
+            ], 422);
+        }
 
         $validated = $request->validate([
             'system' => ['required', 'string', 'max:120'],
@@ -94,5 +106,16 @@ final class HorizonteSgeRegistryController extends Controller
         abort_unless($user !== null && $user->canImportOrConfigure(), 403);
         abort_unless((bool) config('horizonte.enabled', true), 404);
         abort_unless(filter_var(config('horizonte.sge.enabled', true), FILTER_VALIDATE_BOOLEAN), 403);
+    }
+
+    private function ibgeInConsultoriaCatalog(string $ibge): bool
+    {
+        foreach (City::query()->whereNotNull('ibge_municipio')->pluck('ibge_municipio') as $raw) {
+            if (FundebMunicipioReferenceRepository::normalizeIbge((string) $raw) === $ibge) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

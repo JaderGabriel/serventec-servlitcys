@@ -25,12 +25,19 @@ class HorizonteOpportunityScorerTest extends TestCase
             'receita_total' => 5_000_000,
             'saeb_lp' => 220,
             'saeb_mat' => 230,
+            'cadunico_escolar' => null,
+            'sidra_pop_4_17' => null,
+            'pct_criancas_pbf' => null,
+            'transfer_total' => null,
             'has_fundeb' => true,
             'has_censo' => true,
             'has_saeb' => true,
+            'has_cadunico' => false,
+            'has_demography' => false,
+            'has_transfers' => false,
             'consultoria_active' => true,
             'in_catalog' => true,
-        ], ['saeb_p25' => 200, 'compl_ratio_median' => 0.1], 70, 40);
+        ], ['saeb_p25' => 200, 'compl_ratio_median' => 0.1, 'transfer_ratio_median' => null], 70, 40);
 
         $this->assertSame('consultoria_active', $result['tier']);
     }
@@ -44,12 +51,19 @@ class HorizonteOpportunityScorerTest extends TestCase
             'receita_total' => 4_000_000,
             'saeb_lp' => 180,
             'saeb_mat' => 175,
+            'cadunico_escolar' => 55000,
+            'sidra_pop_4_17' => 60000,
+            'pct_criancas_pbf' => 40.0,
+            'transfer_total' => 1_500_000,
             'has_fundeb' => true,
             'has_censo' => true,
             'has_saeb' => true,
+            'has_cadunico' => true,
+            'has_demography' => true,
+            'has_transfers' => true,
             'consultoria_active' => false,
             'in_catalog' => false,
-        ], ['saeb_p25' => 210, 'compl_ratio_median' => 0.15], 70, 40);
+        ], ['saeb_p25' => 210, 'compl_ratio_median' => 0.15, 'transfer_ratio_median' => 0.2], 70, 40);
 
         $this->assertContains($result['tier'], ['prospect_high', 'prospect_medium']);
         $this->assertGreaterThanOrEqual(40, $result['success_score']);
@@ -64,12 +78,19 @@ class HorizonteOpportunityScorerTest extends TestCase
             'receita_total' => null,
             'saeb_lp' => null,
             'saeb_mat' => null,
+            'cadunico_escolar' => null,
+            'sidra_pop_4_17' => null,
+            'pct_criancas_pbf' => null,
+            'transfer_total' => null,
             'has_fundeb' => false,
             'has_censo' => false,
             'has_saeb' => false,
+            'has_cadunico' => false,
+            'has_demography' => false,
+            'has_transfers' => false,
             'consultoria_active' => false,
             'in_catalog' => false,
-        ], ['saeb_p25' => null, 'compl_ratio_median' => null], 70, 40);
+        ], ['saeb_p25' => null, 'compl_ratio_median' => null, 'transfer_ratio_median' => null], 70, 40);
 
         $this->assertSame('data_sparse', $result['tier']);
         $this->assertSame(0, $result['success_score']);

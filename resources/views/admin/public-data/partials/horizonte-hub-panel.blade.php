@@ -23,9 +23,7 @@
                 {{ __('Horizonte — abastecimento nacional') }}
             </h3>
             <p class="mt-1 text-xs text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed">
-                {{ __('O mapa de oportunidade usa FUNDEB, Censo, SAEB e catálogo IBGE para prospectos fora do catálogo SERVLITCYS. Em produção a rotina corre em etapas (1 fase por vez; IBGE aquece :n UF(s) por passo).', [
-                    'n' => (string) ($hub['ibge_ufs_per_step'] ?? 1),
-                ]) }}
+                {{ __('O mapa de oportunidade usa FUNDEB, Censo, SAEB, CadÚnico, SIDRA, repasses Tesouro e catálogo IBGE. Em produção a rotina corre em etapas (1 fase por vez; IBGE/SIDRA aquecem UFs incrementalmente).') }}
             </p>
             @if ($feedEnabled && ($hub['schedule_enabled'] ?? true))
                 <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-500">
@@ -67,6 +65,9 @@
                 <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-gray-700 dark:text-gray-300">
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_fundeb" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar FUNDEB') }}</label>
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_censo" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar Censo') }}</label>
+                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_cadunico" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar CadÚnico') }}</label>
+                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_sidra" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar SIDRA') }}</label>
+                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_repasses" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar repasses') }}</label>
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_saeb" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar SAEB') }}</label>
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_ibge" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar IBGE') }}</label>
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_sge" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar SGE') }}</label>
@@ -109,7 +110,8 @@
         <x-admin.import-hub.stat label="Censo" :value="number_format((int) ($coverage['censo_municipios'] ?? 0))" :hint="__('municípios indexados')" tone="emerald" />
         <x-admin.import-hub.stat label="SAEB" :value="number_format((int) ($coverage['saeb_municipios'] ?? 0))" :hint="__('municípios com indicadores')" tone="violet" />
         <x-admin.import-hub.stat :label="__('Triad completa')" :value="number_format((int) ($coverage['with_full_triad'] ?? 0))" :hint="__('FUNDEB + Censo + SAEB')" tone="sky" />
-        <x-admin.import-hub.stat :label="__('Universo mapa')" :value="number_format((int) ($coverage['universe_municipios'] ?? 0))" :hint="__('IBGE em qualquer fonte')" tone="slate" />
+        <x-admin.import-hub.stat label="CadÚnico" :value="number_format((int) ($coverage['cadunico_municipios'] ?? 0))" :hint="__('agregados municipais')" tone="rose" />
+        <x-admin.import-hub.stat label="SIDRA" :value="number_format((int) ($coverage['demography_municipios'] ?? 0))" :hint="__('pop. 4–17')" tone="slate" />
         <x-admin.import-hub.stat label="IBGE" :value="((int) ($coverage['ibge_ufs_warmed'] ?? 0)).'/'.$ibgeUfsTotal" :hint="__('UFs com catálogo')" tone="sky" />
     </x-admin.import-hub.stats-grid>
 
@@ -120,16 +122,32 @@
                 {{ __('Processe o feed numa máquina com RAM suficiente, exporte um ZIP e importe em produção sem passar pelo git.') }}
             </p>
         </div>
-        <div class="grid gap-3 lg:grid-cols-2">
-            <div class="rounded-lg border border-slate-200/80 dark:border-slate-700 bg-white/80 dark:bg-slate-900/50 p-3">
-                <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Exportar (local)') }}</p>
-                <code class="mt-2 block rounded bg-slate-100 px-2 py-1.5 text-[10px] text-slate-800 dark:bg-slate-800 dark:text-slate-200">php artisan horizonte:export-data-bundle</code>
-            </div>
-            <div class="rounded-lg border border-slate-200/80 dark:border-slate-700 bg-white/80 dark:bg-slate-900/50 p-3">
-                <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Importar (produção)') }}</p>
-                <code class="mt-2 block rounded bg-slate-100 px-2 py-1.5 text-[10px] text-slate-800 dark:bg-slate-800 dark:text-slate-200">php artisan horizonte:import-data-bundle storage/app/horizonte/bundles/latest.zip</code>
-            </div>
+        <div class="grid gap-4 lg:grid-cols-2">
+            <form method="POST" action="{{ route('admin.public-data.horizonte-bundle-export') }}" class="rounded-lg border border-slate-200/80 dark:border-slate-700 bg-white/80 dark:bg-slate-900/50 p-3 space-y-2">
+                @csrf
+                <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Exportar pacote (servidor actual)') }}</p>
+                <div class="grid grid-cols-2 gap-1 text-[10px] text-slate-600 dark:text-slate-300">
+                    @foreach (['fundeb' => 'FUNDEB', 'censo' => 'Censo', 'saeb' => 'SAEB', 'cadunico' => 'CadÚnico', 'demography' => 'SIDRA', 'transfers' => 'Repasses', 'ibge_cache' => 'IBGE cache', 'sge_registry' => 'SGE'] as $key => $label)
+                        <label class="inline-flex items-center gap-1"><input type="checkbox" name="section_{{ $key }}" value="1" checked class="rounded border-gray-300 text-indigo-600" /> {{ $label }}</label>
+                    @endforeach
+                </div>
+                <button type="submit" class="mt-2 inline-flex items-center rounded-md bg-slate-800 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-700">{{ __('Gerar ZIP') }}</button>
+                <code class="block rounded bg-slate-100 px-2 py-1 text-[10px] text-slate-700 dark:bg-slate-800 dark:text-slate-300">php artisan horizonte:export-data-bundle</code>
+            </form>
+            <form method="POST" action="{{ route('admin.public-data.horizonte-bundle-import') }}" enctype="multipart/form-data" class="rounded-lg border border-slate-200/80 dark:border-slate-700 bg-white/80 dark:bg-slate-900/50 p-3 space-y-2">
+                @csrf
+                <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Importar pacote (upload)') }}</p>
+                <input type="file" name="bundle" accept=".zip,application/zip" required class="block w-full text-[11px] text-slate-700 file:mr-2 file:rounded file:border-0 file:bg-indigo-50 file:px-2 file:py-1 file:text-indigo-700 dark:text-slate-200" />
+                <label class="inline-flex items-center gap-1 text-[10px] text-slate-600"><input type="checkbox" name="dry_run" value="1" class="rounded border-gray-300" /> {{ __('Dry-run (contar apenas)') }}</label>
+                <button type="submit" class="mt-2 inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-indigo-500">{{ __('Importar ZIP') }}</button>
+                <code class="block rounded bg-slate-100 px-2 py-1 text-[10px] text-slate-700 dark:bg-slate-800 dark:text-slate-300">php artisan horizonte:import-data-bundle …</code>
+            </form>
         </div>
+        @if (session('horizonte_bundle'))
+            <x-admin.import-hub.callout :variant="(session('horizonte_bundle.success') ?? false) ? 'success' : 'warning'" :title="__('Pacote Horizonte')">
+                {{ session('horizonte_bundle.message') ?? '' }}
+            </x-admin.import-hub.callout>
+        @endif
         @if ($bundle['latest_exists'] ?? false)
             <p class="text-[11px] text-emerald-800 dark:text-emerald-200">
                 {{ __('Pacote latest.zip disponível') }}

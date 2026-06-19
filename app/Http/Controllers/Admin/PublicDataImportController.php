@@ -19,6 +19,7 @@ use App\Support\Admin\ImportHubThemeCatalog;
 use App\Support\Admin\PublicDataImportCatalog;
 use App\Support\SyncQueue\SyncQueueUserScope;
 use App\Services\Horizonte\HorizonteFortnightlyFeedService;
+use App\Services\Horizonte\HorizonteDataBundleService;
 use App\Support\Horizonte\HorizonteUfScope;
 use App\Support\AdminSync\WeeklyMassSyncCheckpoint;
 use Illuminate\Http\RedirectResponse;
@@ -87,6 +88,9 @@ class PublicDataImportController extends Controller
         $skipOptions = [
             'skip_fundeb' => $request->boolean('skip_fundeb'),
             'skip_censo' => $request->boolean('skip_censo'),
+            'skip_cadunico' => $request->boolean('skip_cadunico'),
+            'skip_sidra' => $request->boolean('skip_sidra'),
+            'skip_repasses' => $request->boolean('skip_repasses'),
             'skip_saeb' => $request->boolean('skip_saeb'),
             'skip_ibge' => $request->boolean('skip_ibge'),
             'skip_sge' => $request->boolean('skip_sge'),
@@ -120,6 +124,87 @@ class PublicDataImportController extends Controller
                 'phases' => is_array($result['phases'] ?? null) ? $result['phases'] : [],
                 'pipeline' => is_array($result['pipeline'] ?? null) ? $result['pipeline'] : null,
                 'staged' => $staged,
+            ]);
+    }
+
+    public function horizonteBundleExport(Request $request, HorizonteDataBundleService $bundle): RedirectResponse
+    {
+        $sections = [
+            'fundeb' => $request->boolean('section_fundeb', true),
+            'censo' => $request->boolean('section_censo', true),
+            'saeb' => $request->boolean('section_saeb', true),
+            'cadunico' => $request->boolean('section_cadunico', true),
+            'demography' => $request->boolean('section_demography', true),
+            'transfers' => $request->boolean('section_transfers', true),
+            'ibge_cache' => $request->boolean('section_ibge_cache', true),
+            'sge_registry' => $request->boolean('section_sge_registry', true),
+        ];
+
+        try {
+            $result = $bundle->export($sections);
+        } catch (\Throwable $e) {
+            return redirect()
+                ->to(route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-offline-bundle')
+                ->with('public_data_error', __('Exportação Horizonte falhou: :msg', ['msg' => $e->getMessage()]));
+        }
+
+        return redirect()
+            ->to(route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-offline-bundle')
+            ->with('horizonte_bundle', [
+                'success' => (bool) ($result['success'] ?? false),
+                'message' => (string) ($result['message'] ?? ''),
+                'path' => (string) ($result['path'] ?? ''),
+            ]);
+    }
+
+    public function horizonteBundleImport(Request $request, HorizonteDataBundleService $bundle): RedirectResponse
+    {
+        $request->validate([
+            'bundle' => ['required', 'file', 'mimes:zip', 'max:512000'],
+        ]);
+
+        $file = $request->file('bundle');
+        if ($file === null) {
+            return redirect()
+                ->to(route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-offline-bundle')
+                ->with('public_data_error', __('Ficheiro ZIP em falta.'));
+        }
+
+        $dir = storage_path('app/horizonte/bundles/uploads');
+        if (! is_dir($dir) && ! mkdir($dir, 0755, true) && ! is_dir($dir)) {
+            return redirect()
+                ->to(route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-offline-bundle')
+                ->with('public_data_error', __('Não foi possível criar directório de upload.'));
+        }
+
+        $storedPath = $dir.'/upload-'.now()->format('Ymd-His').'.zip';
+        $file->move($dir, basename($storedPath));
+
+        $sections = [
+            'fundeb' => $request->boolean('section_fundeb', true),
+            'censo' => $request->boolean('section_censo', true),
+            'saeb' => $request->boolean('section_saeb', true),
+            'cadunico' => $request->boolean('section_cadunico', true),
+            'demography' => $request->boolean('section_demography', true),
+            'transfers' => $request->boolean('section_transfers', true),
+            'ibge_cache' => $request->boolean('section_ibge_cache', true),
+            'sge_registry' => $request->boolean('section_sge_registry', true),
+        ];
+
+        try {
+            $result = $bundle->import($storedPath, $sections, $request->boolean('dry_run'));
+        } catch (\Throwable $e) {
+            return redirect()
+                ->to(route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-offline-bundle')
+                ->with('public_data_error', __('Importação Horizonte falhou: :msg', ['msg' => $e->getMessage()]));
+        }
+
+        return redirect()
+            ->to(route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-offline-bundle')
+            ->with('horizonte_bundle', [
+                'success' => (bool) ($result['success'] ?? false),
+                'message' => (string) ($result['message'] ?? ''),
+                'imported' => is_array($result['imported'] ?? null) ? $result['imported'] : [],
             ]);
     }
 

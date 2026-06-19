@@ -103,6 +103,59 @@ final class HorizonteMapPresenter
         ];
     }
 
+    /**
+     * Política de vista inicial e limite de renderização para bases nacionais grandes.
+     *
+     * @param  list<array<string, mixed>>  $ufRankings
+     * @return array{
+     *     heavy_dataset: bool,
+     *     marker_count_total: int,
+     *     max_render_markers: int,
+     *     heavy_threshold: int,
+     *     initial_tier: string,
+     *     initial_uf: string,
+     *     reason: string|null
+     * }
+     */
+    public static function displayPolicy(int $markerCount, array $ufRankings): array
+    {
+        $threshold = max(100, (int) config('horizonte.map_display.heavy_threshold', 800));
+        $maxRender = max(80, min(800, (int) config('horizonte.map_display.max_render_markers', 400)));
+        $heavy = $markerCount > $threshold;
+
+        $initialUf = '';
+        if ($heavy && $ufRankings !== []) {
+            $ranked = $ufRankings;
+            usort($ranked, static fn (array $a, array $b): int => ($b['high_prospect'] ?? 0) <=> ($a['high_prospect'] ?? 0)
+                ?: ($b['without_consultoria'] ?? 0) <=> ($a['without_consultoria'] ?? 0)
+                ?: ($b['avg_benefit'] ?? 0) <=> ($a['avg_benefit'] ?? 0));
+            $initialUf = strtoupper(trim((string) ($ranked[0]['uf'] ?? '')));
+        }
+
+        $reason = null;
+        if ($heavy) {
+            $formatted = number_format($markerCount, 0, ',', '.');
+            $reason = $initialUf !== ''
+                ? __('Base nacional com :total municípios — vista inicial na UF :uf (prospectos) para manter o mapa fluido.', [
+                    'total' => $formatted,
+                    'uf' => $initialUf,
+                ])
+                : __('Base nacional com :total municípios — vista inicial restrita a prospectos prioritários.', [
+                    'total' => $formatted,
+                ]);
+        }
+
+        return [
+            'heavy_dataset' => $heavy,
+            'marker_count_total' => $markerCount,
+            'max_render_markers' => $maxRender,
+            'heavy_threshold' => $threshold,
+            'initial_tier' => $heavy ? 'prospects' : 'all',
+            'initial_uf' => $initialUf,
+            'reason' => $reason,
+        ];
+    }
+
     public static function heatLegendItems(): array
     {
         return [

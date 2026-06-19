@@ -14,7 +14,7 @@ final class HorizonteImportHubStatusServiceTest extends TestCase
         $this->assertArrayHasKey('coverage', $status);
         $this->assertArrayHasKey('phases', $status);
         $this->assertArrayHasKey('map_url', $status);
-        $this->assertGreaterThanOrEqual(5, count($status['phases']));
+        $this->assertCount(9, $status['phases']);
         $this->assertSame(route('dashboard.horizonte'), $status['map_url']);
     }
 }

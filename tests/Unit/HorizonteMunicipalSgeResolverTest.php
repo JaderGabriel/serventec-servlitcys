@@ -62,6 +62,17 @@ final class HorizonteMunicipalSgeResolverTest extends TestCase
     }
 
     #[Test]
+    public function manual_admin_registry_notes_competition_intelligence(): void
+    {
+        $result = $this->resolver->resolve('3550308', null, [
+            'system' => 'Proesc',
+            'source' => 'manual_admin',
+        ]);
+
+        $this->assertStringContainsString('concorrência', strtolower($result['detail']));
+    }
+
+    #[Test]
     public function returns_not_found_without_blocking_payload(): void
     {
         $result = $this->resolver->resolve('9999999', null, null);

@@ -25,11 +25,34 @@ return [
     'medium_opportunity_threshold' => max(1, min(98, (int) env('HORIZONTE_MEDIUM_THRESHOLD', 40))),
 
     'weights' => [
-        'financial_pressure' => 0.30,
-        'pedagogical_gap' => 0.25,
-        'scale' => 0.20,
-        'data_readiness' => 0.15,
+        'financial_pressure' => 0.22,
+        'pedagogical_gap' => 0.18,
+        'scale' => 0.12,
+        'social_demand' => 0.18,
+        'transfer_dependency' => 0.10,
+        'data_readiness' => 0.10,
         'benefit_scale' => 0.10,
+    ],
+
+    'sidra' => [
+        'enabled' => filter_var(env('HORIZONTE_SIDRA_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'agregado' => env('HORIZONTE_SIDRA_AGREGADO', '9514'),
+        'variavel' => env('HORIZONTE_SIDRA_VARIAVEL', '93'),
+        'periodo' => max(2010, (int) env('HORIZONTE_SIDRA_PERIODO', 2022)),
+        'ufs_per_step' => max(1, min(3, (int) env('HORIZONTE_SIDRA_UFS_PER_STEP', 1))),
+        'base_url' => env('HORIZONTE_SIDRA_BASE_URL', 'https://servicodados.ibge.gov.br/api/v3/agregados'),
+        'http_timeout' => max(15, (int) env('HORIZONTE_SIDRA_HTTP_TIMEOUT', 90)),
+        'uf_n3_codes' => [
+            'AC' => '12', 'AL' => '27', 'AM' => '13', 'AP' => '16', 'BA' => '29', 'CE' => '23',
+            'DF' => '53', 'ES' => '32', 'GO' => '52', 'MA' => '21', 'MG' => '31', 'MS' => '50',
+            'MT' => '51', 'PA' => '15', 'PB' => '25', 'PE' => '26', 'PI' => '22', 'PR' => '41',
+            'RJ' => '33', 'RN' => '24', 'RO' => '11', 'RR' => '14', 'RS' => '43', 'SC' => '42',
+            'SE' => '28', 'SP' => '35', 'TO' => '17',
+        ],
+    ],
+
+    'cadunico_feed' => [
+        'fill_api_gaps' => filter_var(env('HORIZONTE_CADUNICO_FILL_GAPS', false), FILTER_VALIDATE_BOOL),
     ],
 
     'saeb_disciplines' => ['LP', 'MAT', 'lp', 'mat', 'Língua Portuguesa', 'Matemática'],
@@ -100,6 +123,21 @@ return [
         'registry_url' => env('HORIZONTE_SGE_REGISTRY_URL'),
         'registry_http_timeout' => max(5, min(60, (int) env('HORIZONTE_SGE_REGISTRY_HTTP_TIMEOUT', 15))),
         'registry_cache_ttl' => max(3600, (int) env('HORIZONTE_SGE_REGISTRY_CACHE_TTL', 604800)),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mapa — volume de pontos e vista inicial
+    |--------------------------------------------------------------------------
+    |
+    | Bases nacionais (>800 municípios) aplicam recorte inicial (UF prioritária +
+    | prospectos) e limitam pontos desenhados para evitar travamento no zoom.
+    |
+    */
+
+    'map_display' => [
+        'heavy_threshold' => max(100, (int) env('HORIZONTE_MAP_HEAVY_THRESHOLD', 800)),
+        'max_render_markers' => max(80, min(800, (int) env('HORIZONTE_MAP_MAX_RENDER', 400))),
     ],
 
 ];

@@ -22,8 +22,8 @@ return [
     */
 
     'product' => [
-        'version' => '5.3.0',
-        'release_tag' => '20260603c-Argus',
+        'version' => '5.4.0',
+        'release_tag' => '20260603e-Hyperion',
         'commit_short' => '',
         'commit_number' => null,
         'revision_date' => '2026-06-03',

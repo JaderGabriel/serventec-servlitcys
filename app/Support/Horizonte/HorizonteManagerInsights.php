@@ -19,6 +19,9 @@ final class HorizonteManagerInsights
         $withFundeb = 0;
         $withCenso = 0;
         $withSaeb = 0;
+        $withCadunico = 0;
+        $withDemography = 0;
+        $withTransfers = 0;
         $withFullTriad = 0;
         $prospectMatriculas = 0;
 
@@ -40,6 +43,15 @@ final class HorizonteManagerInsights
             if ($hasSaeb) {
                 $withSaeb++;
             }
+            if ($m['has_cadunico'] ?? false) {
+                $withCadunico++;
+            }
+            if ($m['has_demography'] ?? false) {
+                $withDemography++;
+            }
+            if ($m['has_transfers'] ?? false) {
+                $withTransfers++;
+            }
             if ($hasFundeb && $hasCenso && $hasSaeb) {
                 $withFullTriad++;
             }
@@ -55,6 +67,9 @@ final class HorizonteManagerInsights
             'with_fundeb' => $withFundeb,
             'with_censo' => $withCenso,
             'with_saeb' => $withSaeb,
+            'with_cadunico' => $withCadunico,
+            'with_demography' => $withDemography,
+            'with_transfers' => $withTransfers,
             'with_full_triad' => $withFullTriad,
             'prospect_matriculas_censo' => $prospectMatriculas,
             'public_data_pct' => $total > 0 ? (int) round(100 * $withPublic / $total) : 0,
@@ -140,10 +155,18 @@ final class HorizonteManagerInsights
         $pedagogicalGap = 0;
         $largeScale = 0;
         $readyToPitch = 0;
+        $socialDemand = 0;
+        $missingSge = 0;
 
         foreach ($markers as $m) {
             if ($m['consultoria_active'] ?? false) {
                 continue;
+            }
+            if ($m['in_catalog'] ?? false) {
+                continue;
+            }
+            if (! ($m['sge_found'] ?? false)) {
+                $missingSge++;
             }
             if (! str_starts_with((string) ($m['tier'] ?? ''), 'prospect_')) {
                 continue;
@@ -160,6 +183,9 @@ final class HorizonteManagerInsights
             }
             if ((int) ($m['data_readiness'] ?? 0) >= 66 && (int) ($m['success_score'] ?? 0) >= 55) {
                 $readyToPitch++;
+            }
+            if ((int) ($m['social_demand'] ?? 0) >= 55 && ($m['has_cadunico'] ?? false)) {
+                $socialDemand++;
             }
         }
 
@@ -191,6 +217,20 @@ final class HorizonteManagerInsights
                 'description' => __('≥ 15 mil matrículas Censo — impacto de rede e receita.'),
                 'count' => $largeScale,
                 'filter' => ['tier' => 'prospects', 'min_matriculas' => 15000],
+            ],
+            [
+                'key' => 'social_demand',
+                'label' => __('Demanda social'),
+                'description' => __('CadÚnico indica lacuna de cobertura escolar ou vulnerabilidade elevada.'),
+                'count' => $socialDemand,
+                'filter' => ['tier' => 'prospects', 'min_social' => 55, 'require_cadunico' => true],
+            ],
+            [
+                'key' => 'missing_sge',
+                'label' => __('Sem SGE (concorrência)'),
+                'description' => __('Prospectos fora do catálogo Consultoria — registe o sistema rival no mapa (inteligência, não abre cidade).'),
+                'count' => $missingSge,
+                'filter' => ['tier' => 'prospects', 'only_missing_sge' => true],
             ],
         ];
     }

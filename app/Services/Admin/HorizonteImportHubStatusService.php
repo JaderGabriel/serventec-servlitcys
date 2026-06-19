@@ -2,8 +2,10 @@
 
 namespace App\Services\Admin;
 
+use App\Models\CadunicoMunicipioSnapshot;
 use App\Models\FundebMunicipioReference;
 use App\Models\InepCensoMunicipioMatricula;
+use App\Models\MunicipalDemographySnapshot;
 use App\Models\SaebIndicatorPoint;
 use App\Support\Admin\PublicDataImportCatalog;
 use App\Services\Admin\PublicDataOfficialCheckCache;
@@ -12,6 +14,7 @@ use App\Support\Horizonte\HorizonteFortnightlyFeedCache;
 use App\Support\Horizonte\HorizonteFortnightlyFeedScheduleCadence;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPipeline;
 use App\Support\Horizonte\HorizonteIbgeWarmProgress;
+use App\Support\Horizonte\HorizonteSidraImportProgress;
 use App\Support\Horizonte\HorizonteSaebImportProgress;
 use App\Support\InepMicrodadosCadastroEscolasPath;
 use Illuminate\Support\Facades\Storage;
@@ -73,6 +76,12 @@ final class HorizonteImportHubStatusService
 
         $ibgeUfsWarmed = $this->countIbgeUfsWarmed();
         $ibgeUfsTotal = count(self::BRAZIL_UFS);
+        $cadunicoCount = \Illuminate\Support\Facades\Schema::hasTable('cadunico_municipio_snapshots')
+            ? CadunicoMunicipioSnapshot::query()->distinct()->count('ibge_municipio')
+            : 0;
+        $demographyCount = \Illuminate\Support\Facades\Schema::hasTable('municipal_demography_snapshots')
+            ? MunicipalDemographySnapshot::query()->distinct()->count('ibge_municipio')
+            : 0;
 
         return [
             'enabled' => (bool) config('horizonte.enabled', true),
@@ -88,6 +97,8 @@ final class HorizonteImportHubStatusService
                 'fundeb_municipios' => count($fundebIbges),
                 'censo_municipios' => count($censoIbges),
                 'saeb_municipios' => count($saebIbges),
+                'cadunico_municipios' => $cadunicoCount,
+                'demography_municipios' => $demographyCount,
                 'universe_municipios' => count($universe),
                 'with_full_triad' => $withFullTriad,
                 'ibge_ufs_warmed' => $ibgeUfsWarmed,
@@ -97,7 +108,7 @@ final class HorizonteImportHubStatusService
                 'censo_latest' => InepCensoMunicipioMatricula::query()->max('imported_at'),
                 'saeb_latest' => SaebIndicatorPoint::query()->max('updated_at'),
             ],
-            'phases' => $this->feedPhases($fundebSet, $censoSet, $saebSet, $microdadosPath, $ibgeUfsWarmed, $ibgeUfsTotal),
+            'phases' => $this->feedPhases($fundebSet, $censoSet, $saebSet, $microdadosPath, $ibgeUfsWarmed, $ibgeUfsTotal, $cadunicoCount, $demographyCount),
             'last_feed' => HorizonteFortnightlyFeedCache::get(),
             'pipeline' => HorizonteFortnightlyFeedPipeline::get(),
             'feed_staged' => filter_var(config('horizonte.fortnightly_feed.staged', true), FILTER_VALIDATE_BOOLEAN),
@@ -105,6 +116,7 @@ final class HorizonteImportHubStatusService
             'ibge_ufs_per_step' => max(1, (int) config('horizonte.fortnightly_feed.ibge_ufs_per_step', 1)),
             'saeb_years_per_step' => max(1, (int) config('horizonte.fortnightly_feed.saeb_years_per_step', 1)),
             'ibge_warm_done' => HorizonteIbgeWarmProgress::doneUfs(),
+            'sidra_import_done' => HorizonteSidraImportProgress::doneUfs(),
             'saeb_import_done' => HorizonteSaebImportProgress::doneYears(),
             'bundle' => $this->bundleStatus(),
             'map_url' => route('dashboard.horizonte'),
@@ -118,7 +130,7 @@ final class HorizonteImportHubStatusService
      * @param  array<string, int>  $saebSet
      * @return list<array<string, mixed>>
      */
-    private function feedPhases(array $fundebSet, array $censoSet, array $saebSet, ?string $microdadosPath, int $ibgeUfsWarmed, int $ibgeUfsTotal): array
+    private function feedPhases(array $fundebSet, array $censoSet, array $saebSet, ?string $microdadosPath, int $ibgeUfsWarmed, int $ibgeUfsTotal, int $cadunicoCount, int $demographyCount): array
     {
         $phases = [
             [
@@ -145,6 +157,45 @@ final class HorizonteImportHubStatusService
                 'metric' => count($censoSet),
                 'metric_label' => __('municípios'),
                 'needs_microdados' => true,
+            ],
+            [
+                'key' => 'cadunico_sync',
+                'label' => __('CadÚnico — agregados municipais'),
+                'description' => __('Sincronização Misocial/CECAD — faixas etárias e demanda social no score.'),
+                'source_id' => 'cadunico_cecad',
+                'hub_anchor' => '#source-cadunico_cecad',
+                'admin_url' => route('admin.cadunico-sync.index'),
+                'cli' => 'php artisan cadunico:auto-sync',
+                'ok' => $cadunicoCount >= 100,
+                'metric' => $cadunicoCount,
+                'metric_label' => __('municípios'),
+            ],
+            [
+                'key' => 'sidra_demography',
+                'label' => __('IBGE SIDRA — população 4–17'),
+                'description' => __('Denominador demográfico independente do Censo escolar (Censo 2022).'),
+                'source_id' => null,
+                'hub_anchor' => '#horizonte-hub',
+                'admin_url' => route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-hub',
+                'cli' => 'php artisan horizonte:fortnightly-feed --phase=sidra_demography',
+                'ok' => $demographyCount >= 100,
+                'metric' => $demographyCount,
+                'metric_label' => __('municípios'),
+            ],
+            [
+                'key' => 'repasses_tesouro',
+                'label' => __('Repasses Tesouro — FUNDEB CKAN'),
+                'description' => __('Dependência de transferências federais — complementa pressão FUNDEB.'),
+                'source_id' => 'repasses_tesouro',
+                'hub_anchor' => '#source-repasses_tesouro',
+                'admin_url' => route('admin.public-data.index').'#source-repasses_tesouro',
+                'cli' => 'php artisan horizonte:fortnightly-feed --phase=repasses_tesouro',
+                'ok' => \Illuminate\Support\Facades\Schema::hasTable('municipal_transfer_snapshots')
+                    && \App\Models\MunicipalTransferSnapshot::query()->distinct()->count('ibge_municipio') >= 100,
+                'metric' => \Illuminate\Support\Facades\Schema::hasTable('municipal_transfer_snapshots')
+                    ? \App\Models\MunicipalTransferSnapshot::query()->distinct()->count('ibge_municipio')
+                    : 0,
+                'metric_label' => __('municípios'),
             ],
             [
                 'key' => 'saeb_planilhas',

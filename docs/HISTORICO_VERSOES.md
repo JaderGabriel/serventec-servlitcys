@@ -1,14 +1,14 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`5.3.0`** · tag de deploy **`20260603d-Prometheus`** · ver [RELEASE_20260603d_PROMETHEUS.md](RELEASE_20260603d_PROMETHEUS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`5.4.0`** · tag de deploy **`20260603e-Hyperion`** · ver [RELEASE_20260603e_HYPERION.md](RELEASE_20260603e_HYPERION.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **5.3.0** |
+| **Versão semântica em produção** | **5.4.0** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260603d-Prometheus` |
+| **Tag de deploy (servidor)** | `20260603e-Hyperion` |
 | **Data de referência** | **03/06/2026** |
-| **Último marco documentado** | **Prometheus** — feed Horizonte bimestral, UF, SGE no mapa, fix IBGE — [RELEASE_20260603d_PROMETHEUS.md](RELEASE_20260603d_PROMETHEUS.md) |
+| **Último marco documentado** | **Hyperion** — Horizonte v2 (CadÚnico, SIDRA, repasses, mapa performante, SGE concorrência) — [RELEASE_20260603e_HYPERION.md](RELEASE_20260603e_HYPERION.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -29,6 +29,7 @@ timeline
     2026-06-19 : 5.1.0b Prospeccao — Horizonte calor + feed quinzenal
     2026-06-03 : 5.2.0c Argus — hub Horizonte + monitor sondas + acesso
     2026-06-03 : 5.3.0d Prometheus — feed bimestral, UF, SGE mapa, fix IBGE
+    2026-06-03 : 5.4.0e Hyperion — scoring v2, SIDRA, repasses, mapa performante
 ```
 
 Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) §5–6.
@@ -39,7 +40,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 5.3.0** | — / `20260603d-Prometheus` → `main` | — | 03/06/2026 | **Produção:** feed Horizonte bimestral, escopo UF, cadastro SGE no mapa, fix catálogo IBGE — [RELEASE_20260603d_PROMETHEUS.md](RELEASE_20260603d_PROMETHEUS.md). |
+| **▶ 5.4.0** | — / `20260603e-Hyperion` → `main` | — | 03/06/2026 | **Produção:** Horizonte v2 — CadÚnico/SIDRA/repasses no score e feed, mapa performante, SGE concorrência, fix Closure no cache — [RELEASE_20260603e_HYPERION.md](RELEASE_20260603e_HYPERION.md). |
+| 5.3.0 | — / `20260603d-Prometheus` → `main` | — | 03/06/2026 | Feed Horizonte bimestral, escopo UF, cadastro SGE no mapa, fix catálogo IBGE — [RELEASE_20260603d_PROMETHEUS.md](RELEASE_20260603d_PROMETHEUS.md). |
 | 5.2.0 | — / `20260603c-Argus` → `main` | — | 03/06/2026 | Hub Horizonte em Dados públicos, `module-monitor:collect`, acesso admin/utilizador — [RELEASE_20260603c_ARGUS.md](RELEASE_20260603c_ARGUS.md). |
 | 5.1.0 | — / `20260619b-Prospeccao` → `main` | — | 19/06/2026 | Horizonte comercial (calor, gestores, prospecção) + rotina quinzenal `horizonte:fortnightly-feed` — [RELEASE_20260619b_PROSPECCAO.md](RELEASE_20260619b_PROSPECCAO.md). |
 | 5.0.1 | — / `20260619a-Heimdall` → `main` | — | 19/06/2026 | Data de release corrigida; monitor de módulos; painel verificação dados públicos no hub — [RELEASE_20260619a_HEIMDALL.md](RELEASE_20260619a_HEIMDALL.md). |

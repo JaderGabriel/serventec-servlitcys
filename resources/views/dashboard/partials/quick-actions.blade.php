@@ -19,12 +19,12 @@
     aria-labelledby="home-actions"
 >
     <header class="serv-qa-panel__head border-b border-slate-200/90 dark:border-slate-700/90 px-5 py-4 sm:px-6">
-        <p class="serv-eyebrow text-slate-600 dark:text-slate-400">{{ __('Operação diária') }}</p>
-        <h3 id="home-actions" class="font-display text-lg font-semibold text-serv-navy dark:text-slate-100 mt-0.5">
-            {{ __('Acesso rápido') }}
+        <p class="serv-eyebrow">{{ __('Acesso rápido') }}</p>
+        <h3 id="home-actions" class="font-display text-lg font-semibold text-serv-navy dark:text-slate-100">
+            {{ __('Operação diária') }}
         </h3>
-        <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-            {{ __('Filas, importações, conexões e painéis multi-município — destinos directos, sem passo intermédio de escolher cidade.') }}
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed max-w-3xl">
+            {{ __('Filas, hub de dados públicos, conexões i-Educar, RX, Horizonte e gestão — destinos directos sem escolher município.') }}
         </p>
     </header>
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\Horizonte\HorizonteMapService;
 use App\Support\Horizonte\HorizonteMapPresenter;
+use App\Support\Horizonte\HorizonteUfScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -28,6 +29,7 @@ class HorizonteController extends Controller
             'canRefreshData' => $user->canImportOrConfigure(),
             'canManageSge' => $user->canImportOrConfigure() && filter_var(config('horizonte.sge.enabled', true), FILTER_VALIDATE_BOOLEAN),
             'sgeRegistryUrl' => route('admin.horizonte.sge.upsert', ['ibge' => '__IBGE__']),
+            'initialUf' => HorizonteUfScope::normalize($request->query('uf')) ?? '',
         ]);
     }
 

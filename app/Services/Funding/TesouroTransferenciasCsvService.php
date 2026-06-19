@@ -4,6 +4,8 @@ namespace App\Services\Funding;
 
 use App\Models\City;
 use App\Repositories\MunicipalTransferSnapshotRepository;
+use App\Support\Brazil\IbgeMunicipalityCatalog;
+use App\Support\Horizonte\HorizonteUfScope;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -680,5 +682,125 @@ final class TesouroTransferenciasCsvService
     private function resourceCachePath(string $resourceId): string
     {
         return storage_path('app/funding/tesouro-csv/'.preg_replace('/[^a-zA-Z0-9_-]/', '_', $resourceId).'.json');
+    }
+
+    /**
+     * Linhas FUNDEB nacionais a partir do índice CKAN (para mapa Horizonte).
+     *
+     * @return list<array{
+     *   ibge_municipio: string,
+     *   ano: int,
+     *   fonte: string,
+     *   programa_id: string,
+     *   programa_label: string,
+     *   valor: float,
+     *   meta: array<string, mixed>
+     * }>
+     */
+    public function nationalFundebRowsForYear(
+        int $year,
+        int $timeout,
+        ?string $ufFilter,
+        IbgeMunicipalityCatalog $catalog,
+    ): array {
+        $cfg = config('ieducar.other_funding.public_queries.tesouro_ckan', []);
+        $resources = array_values(array_filter(
+            $this->resolveCsvResources(is_array($cfg) ? $cfg : [], $timeout),
+            static fn (array $r): bool => (string) ($r['programa_id'] ?? '') === 'fundeb',
+        ));
+
+        if ($resources === []) {
+            return [];
+        }
+
+        $ufs = $ufFilter !== null && HorizonteUfScope::normalize($ufFilter) !== null
+            ? [HorizonteUfScope::normalize($ufFilter)]
+            : IbgeMunicipalityCatalog::brazilianUfs();
+
+        $ibgeByNomeUf = [];
+        foreach ($ufs as $uf) {
+            if (! is_string($uf) || $uf === '') {
+                continue;
+            }
+            foreach ($catalog->municipalitiesForUf($uf) as $ibge => $meta) {
+                $name = trim((string) ($meta['name'] ?? ''));
+                if ($name === '') {
+                    continue;
+                }
+                $ibgeByNomeUf[$this->nomeUfKey($name, $uf)] = (string) $ibge;
+            }
+        }
+
+        $rows = [];
+        foreach ($resources as $resource) {
+            $index = $this->loadResourceIndex($resource, $timeout);
+            $byNomeUf = $index['by_nome_uf'] ?? null;
+            if (! is_array($byNomeUf)) {
+                continue;
+            }
+
+            foreach ($byNomeUf as $key => $entry) {
+                if (! is_array($entry)) {
+                    continue;
+                }
+                $uf = strtoupper(trim((string) ($entry['uf'] ?? '')));
+                if ($ufFilter !== null && HorizonteUfScope::normalize($ufFilter) !== $uf) {
+                    continue;
+                }
+                $valor = $entry['annual'][$year] ?? null;
+                if ($valor === null || (float) $valor <= 0) {
+                    continue;
+                }
+
+                $ibge = $ibgeByNomeUf[$key] ?? null;
+                if ($ibge === null) {
+                    $ibge = $this->resolveIbgeFromCodMun((string) ($entry['cod_mun'] ?? ''));
+                }
+                if ($ibge === null) {
+                    continue;
+                }
+
+                $mensal = $this->normalizeMensalMap($entry['mensal'][$year] ?? []);
+                $meta = [
+                    'cod_mun' => (string) ($entry['cod_mun'] ?? ''),
+                    'uf' => $uf,
+                    'municipio' => (string) ($entry['nome'] ?? ''),
+                    'resource_id' => $resource['resource_id'],
+                    'resource_name' => $resource['name'],
+                    'meses_somados' => $entry['months_counted'][$year] ?? count($mensal),
+                    'mensal' => $mensal,
+                    'horizonte_national' => true,
+                ];
+                if ($mensal !== []) {
+                    $meta['granularity'] = 'month';
+                    $meta['repasses'] = $this->repassesFromMensal($mensal, $year);
+                }
+
+                $rows[] = [
+                    'ibge_municipio' => $ibge,
+                    'ano' => $year,
+                    'fonte' => 'tesouro_csv',
+                    'programa_id' => (string) $resource['programa_id'],
+                    'programa_label' => $this->programLabel((string) $resource['programa_id']),
+                    'valor' => round((float) $valor, 2),
+                    'meta' => $meta,
+                ];
+                $this->rememberCodMunMapping((string) ($entry['cod_mun'] ?? ''), $ibge);
+            }
+        }
+
+        return $rows;
+    }
+
+    private function resolveIbgeFromCodMun(string $codMun): ?string
+    {
+        $codMun = trim($codMun);
+        if ($codMun === '') {
+            return null;
+        }
+
+        $map = cache()->get('tesouro_cod_mun_to_ibge');
+
+        return is_array($map) ? ($map[$codMun] ?? null) : null;
     }
 }

@@ -39,7 +39,9 @@ O **Horizonte** é o módulo de **inteligência territorial** do SERVLITCYS. Res
 | **FUNDEB** | `fundeb_municipio_references` | Complementação VAAR/VAAT/VAAF, receita, pressão financeira |
 | **Censo INEP** | `inep_censo_municipio_matriculas` | Escala (matrículas municipais) |
 | **SAEB / IDEB** | `saeb_indicator_points` | Déficit pedagógico (LP, MAT) |
-| **CadÚnico** | `cadunico_municipio_snapshots` | Presença no universo IBGE (expansão futura de score) |
+| **CadÚnico** | `cadunico_municipio_snapshots` | Demanda social (crianças 0–17, PBF), filtro no mapa, dimensão `social_demand` no score |
+| **Demografia IBGE SIDRA** | `municipal_demography_snapshots` | População 4–17 (Censo 2022, agregado 9514) — denominador independente do Censo escolar; fallback de escala |
+| **Repasses Tesouro** | `fundeb_municipio_references` (colunas de transferência) | Dependência de transferências federais — dimensão `transfer_dependency`, complementa FUNDEB |
 | **IBGE** | API localidades (cache) | Nome, UF, centroide para municípios só com dados públicos |
 
 O universo do mapa = **união de IBGE** presentes em qualquer fonte acima ou no catálogo.
@@ -59,7 +61,7 @@ O universo do mapa = **união de IBGE** presentes em qualquer fonte acima ou no 
 
 ---
 
-## 5. Metodologia de scoring (v1)
+## 5. Metodologia de scoring (v2)
 
 Configuração: `config/horizonte.php` · serviço: `HorizonteOpportunityScorer`
 
@@ -67,10 +69,12 @@ Configuração: `config/horizonte.php` · serviço: `HorizonteOpportunityScorer`
 
 | Dimensão | Peso default | Descrição |
 |----------|--------------|-----------|
-| **Pressão financeira** | 30% | Complementação FUNDEB / receita ou por matrícula vs mediana nacional |
-| **Déficit pedagógico** | 25% | SAEB LP/MAT abaixo do percentil 25 da amostra |
-| **Escala** | 20% | log₁₀(matriculas Censo) — municípios maiores |
-| **Prontidão de dados** | 15% | FUNDEB + Censo + SAEB disponíveis |
+| **Pressão financeira** | 22% | Complementação FUNDEB / receita ou por matrícula vs mediana nacional |
+| **Déficit pedagógico** | 18% | SAEB LP/MAT abaixo do percentil 25 da amostra |
+| **Demanda social** | 18% | CadÚnico escolar vs Censo, % crianças PBF — pressão social indicativa |
+| **Escala** | 12% | log₁₀(matriculas Censo ou pop. 4–17 SIDRA como fallback) |
+| **Dependência de transferências** | 10% | Razão repasses Tesouro / receita FUNDEB vs mediana nacional |
+| **Prontidão de dados** | 10% | FUNDEB + Censo + SAEB + CadÚnico (+ bónus SIDRA/repasses) |
 | **Benefício × escala** | 10% | Interacção escala × pressão financeira |
 
 **Propensão a sucesso** (`success_score`, 0–100): combinação ponderada acima.
@@ -83,6 +87,7 @@ Calculados **na mesma geração do mapa** (amostra actual):
 
 - `saeb_p25` — percentil 25 dos valores SAEB LP/MAT
 - `compl_ratio_median` — mediana complementação/receita FUNDEB
+- `transfer_ratio_median` — mediana repasses Tesouro / receita FUNDEB
 
 ### 5.3 Limites de tier
 
@@ -99,16 +104,17 @@ Calculados **na mesma geração do mapa** (amostra actual):
 
 - Base **Leaflet** + OSM; modos **Calor** (propensão) e **Marcadores** (tiers).
 - **Buscador** por nome, UF ou código IBGE (sugestões + `flyTo`).
-- Filtros comerciais: propensão/benefício mínimos, matrículas, FUNDEB/Censo/SAEB, UF, segmentos «Onde buscar clientes».
+- Filtros comerciais: propensão/benefício mínimos, matrículas, FUNDEB/Censo/SAEB/CadÚnico, **demanda social mínima**, UF, segmentos «Onde buscar clientes» (incl. **Demanda social**).
+- **Bases nacionais grandes** (>800 municípios): vista inicial na UF com mais alta propensão + segmento prospectos; mapa limita a **400 pontos** por defeito (configurável) — KPIs e tabelas usam a base completa.
 - Overlay de carregamento durante fetch JSON e desenho do mapa.
-- Tooltip: scores, matrículas Censo, SAEB, complementação FUNDEB, **SGE** (sistema, estado, detalhe), fontes, atalho Consultoria ou portal do sistema.
+- Tooltip: scores, matrículas Censo, pop. 4–17 SIDRA, CadÚnico/PBF, SAEB, complementação FUNDEB, repasses, **SGE** (sistema, estado, detalhe), fontes, atalho Consultoria ou portal do sistema.
 
 ### 6.2 Painéis laterais
 
 | Painel | Conteúdo |
 |--------|----------|
 | **Sistemas de gestão (SGE)** | Identificados, consultoria i-Educar, registo externo, não identificados |
-| **Cobertura de dados** | Contagem FUNDEB / Censo / SAEB / triad completa |
+| **Cobertura de dados** | Contagem FUNDEB / Censo / SAEB / CadÚnico / SIDRA / repasses / triad completa |
 | **UFs prioritárias** | Top 12 UFs por benefício médio + clique filtra UF |
 | **Top prospectos** | Melhores scores nacionais (clicáveis no mapa) |
 
@@ -117,7 +123,7 @@ Calculados **na mesma geração do mapa** (amostra actual):
 | Área | Conteúdo |
 |--------|----------|
 | **KPIs** | Dados públicos · prospectos · alta propensão · consultoria · matrículas prospecto |
-| **Segmentos** | Prontos para abordagem · pressão FUNDEB · déficit SAEB · grande escala |
+| **Segmentos** | Prontos para abordagem · pressão FUNDEB · déficit SAEB · grande escala · **demanda social** |
 | **Tabela** | Até 50 municípios do recorte, ordenados para abordagem comercial (inclui coluna SGE) |
 
 ---
@@ -204,6 +210,13 @@ HorizonteController
 | `HORIZONTE_SGE_REGISTRY_URL` | — | URL remota alternativa (opcional) |
 | `HORIZONTE_SGE_REGISTRY_HTTP_TIMEOUT` | `15` | Timeout HTTP do registo remoto |
 | `HORIZONTE_SGE_REGISTRY_CACHE_TTL` | `604800` | TTL cache do índice SGE (s) |
+| `HORIZONTE_SIDRA_ENABLED` | `true` | Activa ingestão SIDRA pop. 4–17 no feed |
+| `HORIZONTE_SIDRA_AGREGADO` | `9514` | Agregado IBGE SIDRA (Censo 2022) |
+| `HORIZONTE_SIDRA_PERIODO` | `2022` | Período SIDRA |
+| `HORIZONTE_SIDRA_UFS_PER_STEP` | `1` | UFs por passo na fase SIDRA |
+| `HORIZONTE_CADUNICO_FILL_GAPS` | `false` | CadÚnico: preencher lacunas via API SAGI no feed |
+| `HORIZONTE_MAP_HEAVY_THRESHOLD` | `800` | Acima disto, vista inicial restringe UF + prospectos |
+| `HORIZONTE_MAP_MAX_RENDER` | `400` | Máximo de pontos desenhados no mapa por defeito |
 
 ---
 
@@ -219,6 +232,9 @@ Por defeito corre **em etapas** (`HORIZONTE_FORTNIGHTLY_FEED_STAGED=true`): cada
 |------|-----------|
 | **FUNDEB** | CSV nacional «Receita total do Fundeb por ente federado» (FNDE) → `fundeb_municipio_references` por IBGE |
 | **Censo** | Indexa matrículas municipais a partir do microdados INEP (`inep_censo_municipio_matriculas`) |
+| **CadÚnico** | Sincroniza snapshots municipais (`cadunico_municipio_snapshots`) — criancas escolares e PBF |
+| **SIDRA** | População 4–17 por município (API agregado 9514) → `municipal_demography_snapshots` — **1 UF por passo** |
+| **Repasses Tesouro** | Transferências federais (CKAN Tesouro / FUNDEB) → enriquece `fundeb_municipio_references` |
 | **SAEB** | Planilhas oficiais INEP — **1 ano por passo** por defeito (`HORIZONTE_FORTNIGHTLY_SAEB_YEARS_PER_STEP=1`) |
 | **IBGE** | Aquece catálogo de centroides (**1 UF por invocação** por defeito — `HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP=1`) |
 | **SGE** | Sincroniza registo opcional de sistemas de gestão educacional (JSON local ou URL) — **não bloqueia** se ausente |
@@ -229,6 +245,9 @@ Por defeito corre **em etapas** (`HORIZONTE_FORTNIGHTLY_FEED_STAGED=true`): cada
 php artisan horizonte:fortnightly-feed --staged --reset
 php artisan horizonte:fortnightly-feed --staged --continue
 php artisan horizonte:fortnightly-feed --phase=fundeb_receita
+php artisan horizonte:fortnightly-feed --phase=cadunico_sync
+php artisan horizonte:fortnightly-feed --phase=sidra_demography
+php artisan horizonte:fortnightly-feed --phase=repasses_tesouro
 
 # Manual — tudo numa invocação (verbose activo; retomar se interrompido)
 php artisan horizonte:fortnightly-feed --all
@@ -236,7 +255,7 @@ php artisan horizonte:fortnightly-feed --all --continue
 php artisan horizonte:fortnightly-feed --all --reset
 
 php artisan horizonte:fortnightly-feed --dry-run
-php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo --skip-sge
+php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo --skip-cadunico --skip-sidra --skip-repasses --skip-sge
 
 # VPS com pouca RAM — só IBGE + SGE (1 UF por passo; repetir --continue)
 php artisan horizonte:fortnightly-feed --staged --reset --skip-fundeb --skip-censo --skip-saeb --skip-verify
@@ -251,7 +270,7 @@ php artisan schedule:list | grep horizonte
 
 Variáveis: `HORIZONTE_FORTNIGHTLY_FEED_*` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11b.
 
-**Hub admin:** `/admin/dados-publicos?hub=horizonte` · painel `#horizonte-hub` — cobertura nacional, botão «Abastecer Horizonte» e ligações a cada fonte. Ver [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11.
+**Hub admin:** `/admin/dados-publicos?hub=horizonte` · painel `#horizonte-hub` — cobertura nacional (FUNDEB, Censo, SAEB, CadÚnico, SIDRA, repasses), botão «Abastecer Horizonte» com skips por fase, **export/import de pacote offline v2** e ligações a cada fonte. Ver [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11.
 
 O cache do mapa invalida-se automaticamente quando `imported_at` / contagens nas tabelas fonte mudam (fingerprint em `HorizonteMapService`).
 
@@ -264,14 +283,14 @@ O cache do mapa invalida-se automaticamente quando `imported_at` / contagens nas
 
 ### 9.3 Abastecimento offline (local → produção, sem git)
 
-Quando o feed em produção morre com `Killed` (OOM), processe os dados **localmente** (máquina com RAM e acesso às APIs) e transfira um pacote ZIP:
+Quando o feed em produção morre com `Killed` (OOM), processe os dados **localmente** (máquina com RAM e acesso às APIs) e transfira um pacote ZIP **v2**:
 
 ```bash
 # Local — gerar dados completos (feed ou importações no hub)
 php artisan horizonte:fortnightly-feed --all
 # ou fases individuais com RAM suficiente
 
-# Exportar pacote
+# Exportar pacote (CLI ou hub admin — secções seleccionáveis)
 php artisan horizonte:export-data-bundle
 # Ficheiro: storage/app/horizonte/bundles/horizonte-YYYYMMDD-HHMMSS.zip
 # Cópia: storage/app/horizonte/bundles/latest.zip
@@ -282,10 +301,10 @@ scp storage/app/horizonte/bundles/latest.zip user@servidor:/var/www/servlitcys/s
 # Produção — importar (sem git)
 php artisan horizonte:import-data-bundle storage/app/horizonte/bundles/latest.zip
 php artisan horizonte:import-data-bundle storage/app/horizonte/bundles/latest.zip --dry-run
-php artisan horizonte:import-data-bundle storage/app/horizonte/bundles/latest.zip --only=fundeb,censo
+php artisan horizonte:import-data-bundle storage/app/horizonte/bundles/latest.zip --only=fundeb,censo,cadunico,demography,transfers
 ```
 
-O pacote inclui: `fundeb_municipio_references`, `inep_censo_municipio_matriculas`, `saeb_indicator_points` (municipal), cache IBGE (centroides) e registo SGE. Variável `HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP` controla quantas UFs aquecem por passo no feed (defeito `1`).
+O pacote v2 inclui: `fundeb_municipio_references`, `inep_censo_municipio_matriculas`, `saeb_indicator_points` (municipal), **`cadunico_municipio_snapshots`**, **`municipal_demography_snapshots`**, repasses Tesouro, cache IBGE (centroides) e registo SGE. No hub admin, use os checkboxes de secção para export/import parcial.
 
 ---
 
@@ -308,7 +327,7 @@ Após activar Consultoria, use **Painel analítico → Diagnóstico** para indic
 | **v1 (actual)** | Mapa IBGE conhecidos + scores + busca + rankings UF/prospectos |
 | **v1.1** | Importação nacional por UF (job batch) sem cadastrar cidade |
 | **v1.2** | Choropleth UF + export CSV prospectos |
-| **v2** | IBGE SIDRA população 4–17 (Onda 1 backlog `INT-05`) no score |
+| **v2 (parcial)** | CadÚnico no feed + dimensão demanda social + filtro mapa · SIDRA pop. 4–17 · repasses Tesouro · bundle offline v2 |
 | **v2** | Comparativo antes/depois para clientes (delta compliance_score) |
 
 Ver backlog §H em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md).
@@ -321,8 +340,8 @@ Ver backlog §H em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md).
 php artisan test --filter=Horizonte
 ```
 
-Cobertura: `HorizonteOpportunityScorerTest` (tiers, benchmarks, pesos).
+Cobertura: `HorizonteOpportunityScorerTest`, `HorizonteSocialDemandScorerTest`, `HorizonteFortnightlyFeedPipelineTest`, `HorizonteDataBundleServiceTest`.
 
 ---
 
-*Última revisão: 2026-06-03 · Módulo Horizonte v1*
+*Última revisão: 2026-06-03 · Módulo Horizonte v2 (CadÚnico, SIDRA, repasses)*

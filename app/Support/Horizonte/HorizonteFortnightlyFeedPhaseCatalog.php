@@ -13,6 +13,9 @@ final class HorizonteFortnightlyFeedPhaseCatalog
         return [
             ['key' => 'fundeb_receita', 'label' => 'FUNDEB', 'skip_option' => 'skip_fundeb'],
             ['key' => 'censo_matriculas', 'label' => 'Censo', 'skip_option' => 'skip_censo'],
+            ['key' => 'cadunico_sync', 'label' => 'CadÚnico', 'skip_option' => 'skip_cadunico'],
+            ['key' => 'sidra_demography', 'label' => 'SIDRA', 'skip_option' => 'skip_sidra'],
+            ['key' => 'repasses_tesouro', 'label' => 'Repasses', 'skip_option' => 'skip_repasses'],
             ['key' => 'saeb_planilhas', 'label' => 'SAEB', 'skip_option' => 'skip_saeb'],
             ['key' => 'ibge_catalog', 'label' => 'IBGE', 'skip_option' => 'skip_ibge'],
             ['key' => 'sge_registry', 'label' => 'SGE', 'skip_option' => 'skip_sge'],

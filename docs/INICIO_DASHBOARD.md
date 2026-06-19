@@ -1,8 +1,8 @@
 # Início (`/dashboard`) — painel admin
 
-**Versão do produto:** 5.0.1 · **Última revisão:** 2026-06-19
+**Versão do produto:** 5.4.0 · **Última revisão:** 2026-06-03
 
-> **Release:** [RELEASE_20260619a_HEIMDALL.md](RELEASE_20260619a_HEIMDALL.md) (5.0.1) · **Horizonte (5.0):** [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md) · **Índice:** [README.md](README.md)
+> **Release:** [RELEASE_20260603e_HYPERION.md](RELEASE_20260603e_HYPERION.md) (5.4.0) · **Horizonte:** [HORIZONTE.md](HORIZONTE.md) · **Índice:** [README.md](README.md)
 
 Painel operacional após login (utilizadores com `canViewAdminDashboard()`). Utilizadores sem essa permissão são redireccionados para a consultoria municipal.
 
@@ -15,6 +15,8 @@ Painel operacional após login (utilizadores com `canViewAdminDashboard()`). Uti
 5. **Fluxo de dados · Mapa Mental** — arquitectura de integrações (`AdminSystemFlowStatus`).
 
 ## Acesso rápido
+
+Cabeçalho do painel (desde **5.4.0**): eyebrow **«Acesso rápido»** + título **«Operação diária»** — alinhado ao padrão visual das restantes secções do Início.
 
 Quatro zonas operacionais — **sem** atalhos para abas da consultoria analítica (exigem escolher município/ano). Destinos directos:
 

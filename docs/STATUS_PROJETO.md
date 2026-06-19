@@ -123,6 +123,11 @@ flowchart TB
 | Monitor de módulos — recolha diária (`module-monitor:collect`) + sondas estruturais | Implementado (5.2.0) |
 | Horizonte — hub abastecimento em Dados públicos (`#horizonte-hub`) | Implementado (5.2.0) — [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11 |
 | Horizonte — acesso admin e utilizador (`canViewHorizonte`; municipal 403) | Implementado (5.2.0) |
+| Horizonte — scoring v2 (demanda social CadÚnico, SIDRA 4–17, repasses Tesouro) | Implementado (5.4.0) — [HORIZONTE.md](HORIZONTE.md) §5 |
+| Horizonte — feed 9 fases (CadÚnico, SIDRA, Repasses) + fix cache Closure | Implementado (5.4.0) |
+| Horizonte — mapa performante (UF prioritária, cap 400 pontos, avisos UI) | Implementado (5.4.0) |
+| Horizonte — registo SGE concorrência (admin, sem duplicar catálogo Consultoria) | Implementado (5.4.0) |
+| Início — cabeçalho Acesso rápido (eyebrow + «Operação diária») | Implementado (5.4.0) |
 | Verificação diária dados públicos (`public-data:check-official`, notificação admins) | Implementado (5.0.0) |
 | Início — KPIs realinhados (bases, RX/FUNDEB, consultoria, filas) | Implementado (5.0.0) |
 | Notificações — feed completo só no sino (sem duplicar menu utilizador) | Implementado (5.0.0) |

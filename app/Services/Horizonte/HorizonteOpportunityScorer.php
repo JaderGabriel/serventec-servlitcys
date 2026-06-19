@@ -2,6 +2,8 @@
 
 namespace App\Services\Horizonte;
 
+use App\Support\Horizonte\HorizonteSocialDemandScorer;
+
 /**
  * Score indicativo de oportunidade / benefício com base em dados públicos agregados.
  */
@@ -14,19 +16,28 @@ final class HorizonteOpportunityScorer
      *     receita_total: ?float,
      *     saeb_lp: ?float,
      *     saeb_mat: ?float,
+     *     cadunico_escolar: ?int,
+     *     sidra_pop_4_17: ?int,
+     *     pct_criancas_pbf: ?float,
+     *     transfer_total: ?float,
      *     has_fundeb: bool,
      *     has_censo: bool,
      *     has_saeb: bool,
+     *     has_cadunico: bool,
+     *     has_demography: bool,
+     *     has_transfers: bool,
      *     consultoria_active: bool,
      *     in_catalog: bool
      * }  $row
-     * @param  array{saeb_p25: ?float, compl_ratio_median: ?float}  $benchmarks
+     * @param  array{saeb_p25: ?float, compl_ratio_median: ?float, transfer_ratio_median: ?float}  $benchmarks
      * @return array{
      *     success_score: int,
      *     benefit_score: int,
      *     financial_pressure: int,
      *     pedagogical_gap: int,
      *     scale_score: int,
+     *     social_demand: int,
+     *     transfer_dependency: int,
      *     data_readiness: int,
      *     tier: string,
      *     tier_label: string
@@ -40,7 +51,9 @@ final class HorizonteOpportunityScorer
                 benefit: 0,
                 financial: 0,
                 pedagogical: 0,
-                scale: $this->scaleScore($row['matriculas_censo']),
+                scale: $this->scaleScore($row['matriculas_censo'], $row['sidra_pop_4_17'] ?? null),
+                social: 0,
+                transfer: 0,
                 readiness: $this->dataReadiness($row),
                 tier: 'consultoria_active',
                 tierLabel: __('Consultoria activa'),
@@ -55,7 +68,9 @@ final class HorizonteOpportunityScorer
                 benefit: min(90, 25 + (int) round($readiness * 0.4)),
                 financial: 0,
                 pedagogical: 0,
-                scale: $this->scaleScore($row['matriculas_censo']),
+                scale: $this->scaleScore($row['matriculas_censo'], $row['sidra_pop_4_17'] ?? null),
+                social: 0,
+                transfer: 0,
                 readiness: $readiness,
                 tier: 'catalog_pending',
                 tierLabel: __('No catálogo · sem base'),
@@ -73,28 +88,44 @@ final class HorizonteOpportunityScorer
             $row['saeb_mat'],
             $benchmarks['saeb_p25'] ?? null,
         );
-        $scale = $this->scaleScore($row['matriculas_censo']);
+        $scale = $this->scaleScore($row['matriculas_censo'], $row['sidra_pop_4_17'] ?? null);
+        $social = HorizonteSocialDemandScorer::socialDemandScore(
+            $row['matriculas_censo'],
+            $row['cadunico_escolar'] ?? null,
+            $row['sidra_pop_4_17'] ?? null,
+            $row['pct_criancas_pbf'] ?? null,
+        );
+        $transfer = HorizonteSocialDemandScorer::transferDependencyScore(
+            $row['transfer_total'] ?? null,
+            $row['receita_total'],
+            $row['complementacao_total'],
+            $benchmarks['transfer_ratio_median'] ?? null,
+        );
         $readiness = $this->dataReadiness($row);
 
-        if (! $row['has_fundeb'] && ! $row['has_censo'] && ! $row['has_saeb']) {
-            return $this->packTier(0, 0, 0, 0, 0, 0, 'data_sparse', __('Sem dados públicos'));
+        if (! $row['has_fundeb'] && ! $row['has_censo'] && ! $row['has_saeb'] && ! ($row['has_cadunico'] ?? false)) {
+            return $this->packTier(0, 0, 0, 0, 0, 0, 0, 0, 'data_sparse', __('Sem dados públicos'));
         }
 
         $weights = config('horizonte.weights', []);
         $success = (int) round(
-            ($weights['financial_pressure'] ?? 0.3) * $financial
-            + ($weights['pedagogical_gap'] ?? 0.25) * $pedagogical
-            + ($weights['scale'] ?? 0.2) * $scale
-            + ($weights['data_readiness'] ?? 0.15) * $readiness
-            + ($weights['benefit_scale'] ?? 0.1) * min($scale, $financial)
+            ($weights['financial_pressure'] ?? 0.22) * $financial
+            + ($weights['pedagogical_gap'] ?? 0.18) * $pedagogical
+            + ($weights['scale'] ?? 0.12) * $scale
+            + ($weights['social_demand'] ?? 0.18) * $social
+            + ($weights['transfer_dependency'] ?? 0.10) * $transfer
+            + ($weights['data_readiness'] ?? 0.10) * $readiness
+            + ($weights['benefit_scale'] ?? 0.10) * min($scale, $financial)
         );
         $success = max(0, min(100, $success));
 
         $benefit = (int) round(
-            0.35 * $pedagogical
-            + 0.35 * $financial
-            + 0.20 * $scale
-            + 0.10 * $readiness
+            0.28 * $pedagogical
+            + 0.28 * $financial
+            + 0.18 * $social
+            + 0.14 * $scale
+            + 0.07 * $transfer
+            + 0.05 * $readiness
         );
         $benefit = max(0, min(100, $benefit));
 
@@ -110,15 +141,16 @@ final class HorizonteOpportunityScorer
             default => __('Baixa propensão'),
         };
 
-        return $this->packTier($success, $benefit, $financial, $pedagogical, $scale, $readiness, $tier, $tierLabel);
+        return $this->packTier($success, $benefit, $financial, $pedagogical, $scale, $social, $transfer, $readiness, $tier, $tierLabel);
     }
 
     /**
      * @param  list<float|null>  $saebValues
      * @param  list<float|null>  $complRatios
-     * @return array{saeb_p25: ?float, compl_ratio_median: ?float}
+     * @param  list<float|null>  $transferRatios
+     * @return array{saeb_p25: ?float, compl_ratio_median: ?float, transfer_ratio_median: ?float}
      */
-    public function benchmarks(array $saebValues, array $complRatios): array
+    public function benchmarks(array $saebValues, array $complRatios, array $transferRatios = []): array
     {
         $saeb = array_values(array_filter($saebValues, static fn ($v) => $v !== null && is_finite((float) $v)));
         sort($saeb);
@@ -134,7 +166,11 @@ final class HorizonteOpportunityScorer
                 : ((float) $ratios[$mid - 1] + (float) $ratios[$mid]) / 2;
         }
 
-        return ['saeb_p25' => $saebP25, 'compl_ratio_median' => $median];
+        return [
+            'saeb_p25' => $saebP25,
+            'compl_ratio_median' => $median,
+            'transfer_ratio_median' => HorizonteSocialDemandScorer::transferRatioMedian($transferRatios),
+        ];
     }
 
     private function financialPressure(?float $compl, ?float $receita, ?int $matriculas, ?float $medianRatio): int
@@ -180,22 +216,32 @@ final class HorizonteOpportunityScorer
         return max(0, min(40, (int) round(240 - $avg)));
     }
 
-    private function scaleScore(?int $matriculas): int
+    private function scaleScore(?int $matriculas, ?int $sidraPop417): int
     {
-        if ($matriculas === null || $matriculas <= 0) {
+        $base = $matriculas;
+        if (($base === null || $base <= 0) && $sidraPop417 !== null && $sidraPop417 > 0) {
+            $base = (int) round($sidraPop417 * 0.85);
+        }
+
+        if ($base === null || $base <= 0) {
             return 15;
         }
 
-        $log = log10(max(1, $matriculas));
+        $log = log10(max(1, $base));
 
         return max(0, min(100, (int) round(($log / 5) * 100)));
     }
 
     private function dataReadiness(array $row): int
     {
-        $n = (int) $row['has_fundeb'] + (int) $row['has_censo'] + (int) $row['has_saeb'];
+        $n = (float) (int) ($row['has_fundeb'] ?? false)
+            + (float) (int) ($row['has_censo'] ?? false)
+            + (float) (int) ($row['has_saeb'] ?? false)
+            + (float) (int) ($row['has_cadunico'] ?? false)
+            + (($row['has_demography'] ?? false) ? 0.5 : 0.0)
+            + (($row['has_transfers'] ?? false) ? 0.5 : 0.0);
 
-        return (int) round(100 * $n / 3);
+        return (int) round(min(100.0, 100 * $n / 4));
     }
 
     /**
@@ -205,6 +251,8 @@ final class HorizonteOpportunityScorer
      *     financial_pressure: int,
      *     pedagogical_gap: int,
      *     scale_score: int,
+     *     social_demand: int,
+     *     transfer_dependency: int,
      *     data_readiness: int,
      *     tier: string,
      *     tier_label: string
@@ -216,6 +264,8 @@ final class HorizonteOpportunityScorer
         int $financial,
         int $pedagogical,
         int $scale,
+        int $social,
+        int $transfer,
         int $readiness,
         string $tier,
         string $tierLabel,
@@ -226,6 +276,8 @@ final class HorizonteOpportunityScorer
             'financial_pressure' => max(0, min(100, $financial)),
             'pedagogical_gap' => max(0, min(100, $pedagogical)),
             'scale_score' => max(0, min(100, $scale)),
+            'social_demand' => max(0, min(100, $social)),
+            'transfer_dependency' => max(0, min(100, $transfer)),
             'data_readiness' => max(0, min(100, $readiness)),
             'tier' => $tier,
             'tier_label' => $tierLabel,

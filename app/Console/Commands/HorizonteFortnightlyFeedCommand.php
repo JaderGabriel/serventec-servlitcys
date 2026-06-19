@@ -22,6 +22,9 @@ class HorizonteFortnightlyFeedCommand extends Command
                             {--phase= : Executar apenas a fase indicada (fundeb_receita, censo_matriculas, …)}
                             {--skip-fundeb : Ignorar sincronização FUNDEB (CSV receita FNDE)}
                             {--skip-censo : Ignorar indexação Censo matrículas}
+                            {--skip-cadunico : Ignorar sincronização CadÚnico}
+                            {--skip-sidra : Ignorar população IBGE SIDRA 4–17}
+                            {--skip-repasses : Ignorar repasses Tesouro CKAN}
                             {--skip-saeb : Ignorar planilhas SAEB INEP}
                             {--skip-ibge : Ignorar aquecimento catálogo IBGE}
                             {--skip-sge : Ignorar registo de sistemas de gestão educacional (SGE)}
@@ -132,6 +135,9 @@ class HorizonteFortnightlyFeedCommand extends Command
             'dry_run' => (bool) $this->option('dry-run'),
             'skip_fundeb' => (bool) $this->option('skip-fundeb'),
             'skip_censo' => (bool) $this->option('skip-censo'),
+            'skip_cadunico' => (bool) $this->option('skip-cadunico'),
+            'skip_sidra' => (bool) $this->option('skip-sidra'),
+            'skip_repasses' => (bool) $this->option('skip-repasses'),
             'skip_saeb' => (bool) $this->option('skip-saeb'),
             'skip_ibge' => (bool) $this->option('skip-ibge'),
             'skip_sge' => (bool) $this->option('skip-sge'),

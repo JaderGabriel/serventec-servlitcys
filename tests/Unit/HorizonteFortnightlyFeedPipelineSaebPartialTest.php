@@ -17,6 +17,9 @@ final class HorizonteFortnightlyFeedPipelineSaebPartialTest extends TestCase
         $state = HorizonteFortnightlyFeedPipeline::start([
             'skip_fundeb' => true,
             'skip_censo' => true,
+            'skip_cadunico' => true,
+            'skip_sidra' => true,
+            'skip_repasses' => true,
             'skip_saeb' => false,
             'skip_ibge' => true,
             'skip_sge' => true,

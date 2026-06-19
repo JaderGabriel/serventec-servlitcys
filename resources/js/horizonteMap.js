@@ -59,15 +59,23 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         searchQuery: "",
         filterTier: options.initialFilter ?? "all",
         filterUf: options.initialUf ?? "",
+        displayPolicy: null,
+        initialViewNotice: null,
+        showAllOnMap: false,
+        renderCapDismissed: false,
+        mapRenderLimit: 400,
         minSuccessScore: 0,
         minBenefitScore: 0,
         minMatriculas: 0,
         minFinancial: 0,
         minPedagogical: 0,
         minReadiness: 0,
+        minSocialDemand: 0,
         requireFundeb: false,
         requireCenso: false,
         requireSaeb: false,
+        requireCadunico: false,
+        onlyMissingSge: false,
         hideConsultoria: false,
         ufList: Array.isArray(options.ufList) ? options.ufList : [],
         prospectSort: "success_score",
@@ -91,6 +99,38 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         get totalMarkers() {
             return this.markers.length;
+        },
+
+        get filteredCount() {
+            return this.filteredMarkers.length;
+        },
+
+        get mapMarkersForRender() {
+            const list = this.filteredMarkers;
+            const limit = Number(this.mapRenderLimit) || 400;
+            if (this.showAllOnMap || list.length <= limit) {
+                return list;
+            }
+            return [...list]
+                .sort(
+                    (a, b) =>
+                        Number(b.success_score ?? 0) - Number(a.success_score ?? 0) ||
+                        String(a.name).localeCompare(String(b.name), "pt-BR"),
+                )
+                .slice(0, limit);
+        },
+
+        get mapRenderTruncated() {
+            const limit = Number(this.mapRenderLimit) || 400;
+            return !this.showAllOnMap && this.filteredCount > limit;
+        },
+
+        get mapRenderShownCount() {
+            return this.mapMarkersForRender.length;
+        },
+
+        get mapHeavyDataset() {
+            return Boolean(this.displayPolicy?.heavy_dataset);
         },
 
         get mapHiddenByFilters() {
@@ -131,6 +171,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 if (Number(m.data_readiness ?? 0) < this.minReadiness) {
                     return false;
                 }
+                if (Number(m.social_demand ?? 0) < this.minSocialDemand) {
+                    return false;
+                }
                 if (this.requireFundeb && !m.has_fundeb) {
                     return false;
                 }
@@ -138,6 +181,15 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     return false;
                 }
                 if (this.requireSaeb && !m.has_saeb) {
+                    return false;
+                }
+                if (this.requireCadunico && !m.has_cadunico) {
+                    return false;
+                }
+                if (this.onlyMissingSge && (m.sge_found ?? false)) {
+                    return false;
+                }
+                if (this.onlyMissingSge && (m.in_catalog ?? false)) {
                     return false;
                 }
                 if (q === "") {
@@ -266,6 +318,45 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.refYear = Number(data.reference_year) || this.refYear;
             this.ufList = uniqueSortedUfs(this.markers);
             this.meta = data.meta && typeof data.meta === "object" ? data.meta : {};
+            this.displayPolicy =
+                this.meta.display_policy && typeof this.meta.display_policy === "object"
+                    ? this.meta.display_policy
+                    : null;
+            this.mapRenderLimit = Number(this.displayPolicy?.max_render_markers) || 400;
+            this.applyInitialViewPolicy();
+        },
+
+        applyInitialViewPolicy() {
+            const policy = this.displayPolicy;
+            const urlUf = String(this.filterUf ?? "").trim();
+
+            if (urlUf !== "") {
+                this.filterUf = urlUf;
+                if (policy?.heavy_dataset) {
+                    this.filterTier = policy.initial_tier || "prospects";
+                    this.initialViewNotice = {
+                        kind: "uf_param",
+                        message: `Vista filtrada à UF ${urlUf} (${this.totalMarkers.toLocaleString("pt-BR")} municípios na base).`,
+                    };
+                }
+                this.showAllOnMap = false;
+                return;
+            }
+
+            if (!policy?.heavy_dataset) {
+                this.initialViewNotice = null;
+                return;
+            }
+
+            this.filterTier = policy.initial_tier || "prospects";
+            this.filterUf = policy.initial_uf || "";
+            this.showAllOnMap = false;
+            this.initialViewNotice = {
+                kind: "heavy_initial",
+                message: policy.reason || "",
+                total: Number(policy.marker_count_total ?? this.totalMarkers),
+                uf: policy.initial_uf || "",
+            };
         },
 
         initMap() {
@@ -276,6 +367,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.map = L.map(this.$refs.map, {
                 zoomControl: true,
                 scrollWheelZoom: true,
+                preferCanvas: true,
             });
 
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -288,7 +380,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.heatLayer = L.layerGroup().addTo(this.map);
             void this.refreshMapLayers();
 
-            this.$watch("filteredMarkers", () => void this.refreshMapLayers());
+            this.$watch("filteredMarkers", () => {
+                this.showAllOnMap = false;
+                this.renderCapDismissed = false;
+                void this.refreshMapLayers();
+            });
             this.$watch("mapView", () => void this.refreshMapLayers());
         },
 
@@ -319,10 +415,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.heatLayer.clearLayers();
             this.markerLayers = [];
             const bounds = [];
-            const list = this.filteredMarkers;
+            const list = this.mapMarkersForRender;
             const total = list.length;
             const radius = total > 300 ? 4 : total > 80 ? 5 : total > 30 ? 6 : 8;
             const batch = total > 200 ? 80 : total;
+            const interactive = total <= 600;
 
             for (let i = 0; i < list.length; i++) {
                 const m = list[i];
@@ -340,11 +437,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     weight: total > 300 ? 1 : 2,
                     opacity: 1,
                     fillOpacity: 0.9,
+                    interactive,
                 });
-                circle.on("click", (e) => {
-                    L.DomEvent.stopPropagation(e);
-                    this.selectMarker(m, e);
-                });
+                if (interactive) {
+                    circle.on("click", (e) => {
+                        L.DomEvent.stopPropagation(e);
+                        this.selectMarker(m, e);
+                    });
+                }
                 circle.addTo(this.layer);
                 this.markerLayers.push({ circle, marker: m });
 
@@ -363,7 +463,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.heatLayer.clearLayers();
             this.markerLayers = [];
             const bounds = [];
-            const list = this.filteredMarkers.filter((m) => {
+            const list = this.mapMarkersForRender.filter((m) => {
                 if (m.consultoria_active) {
                     return false;
                 }
@@ -372,6 +472,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             });
             const total = list.length;
             const batch = total > 150 ? 60 : total;
+            const interactive = total <= 600;
 
             for (let i = 0; i < list.length; i++) {
                 const m = list[i];
@@ -392,11 +493,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     weight: 0,
                     opacity: 1,
                     fillOpacity: 0.12 + intensity * 0.55,
+                    interactive,
                 });
-                circle.on("click", (e) => {
-                    L.DomEvent.stopPropagation(e);
-                    this.selectMarker(m, e);
-                });
+                if (interactive) {
+                    circle.on("click", (e) => {
+                        L.DomEvent.stopPropagation(e);
+                        this.selectMarker(m, e);
+                    });
+                }
                 circle.addTo(this.heatLayer);
                 this.markerLayers.push({ circle, marker: m });
 
@@ -415,7 +519,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return;
             }
             if (bounds.length > 0) {
-                this.map.fitBounds(bounds, { padding: [32, 32], maxZoom: 8 });
+                const maxZoom = this.filterUf !== "" ? 10 : bounds.length > 200 ? 7 : 8;
+                this.map.fitBounds(bounds, { padding: [32, 32], maxZoom });
             } else {
                 this.map.setView([-14.2, -51.9], 4);
             }
@@ -514,6 +619,25 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         resetFilters() {
+            if (this.displayPolicy?.heavy_dataset) {
+                this.applyInitialViewPolicy();
+                this.minSuccessScore = 0;
+                this.minBenefitScore = 0;
+                this.minMatriculas = 0;
+                this.minFinancial = 0;
+                this.minPedagogical = 0;
+                this.minReadiness = 0;
+                this.minSocialDemand = 0;
+                this.requireFundeb = false;
+                this.requireCenso = false;
+                this.requireSaeb = false;
+                this.requireCadunico = false;
+                this.onlyMissingSge = false;
+                this.hideConsultoria = false;
+                this.showAllOnMap = false;
+                this.renderCapDismissed = false;
+                return;
+            }
             this.filterTier = "all";
             this.filterUf = "";
             this.minSuccessScore = 0;
@@ -522,10 +646,26 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.minFinancial = 0;
             this.minPedagogical = 0;
             this.minReadiness = 0;
+            this.minSocialDemand = 0;
             this.requireFundeb = false;
             this.requireCenso = false;
             this.requireSaeb = false;
+            this.requireCadunico = false;
+            this.onlyMissingSge = false;
             this.hideConsultoria = false;
+            this.showAllOnMap = false;
+            this.renderCapDismissed = false;
+            this.initialViewNotice = null;
+        },
+
+        enableFullMapRender() {
+            this.showAllOnMap = true;
+            this.renderCapDismissed = true;
+            void this.refreshMapLayers();
+        },
+
+        dismissInitialNotice() {
+            this.initialViewNotice = null;
         },
 
         applyFocusSegment(segment) {
@@ -563,6 +703,16 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             if (f.require_saeb) {
                 this.requireSaeb = true;
+            }
+            if (f.require_cadunico) {
+                this.requireCadunico = true;
+            }
+            if (f.only_missing_sge) {
+                this.onlyMissingSge = true;
+                this.filterTier = f.tier || "prospects";
+            }
+            if (f.min_social != null) {
+                this.minSocialDemand = Number(f.min_social);
             }
             this.mapView = "heat";
         },
@@ -626,9 +776,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 lines.push(
                     `<a href="${escapeHtml(sge.app_url)}" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">${escapeHtml("Portal do sistema")}</a>`,
                 );
-            } else if (m.cities_url) {
+            } else if (m.cities_url && m.in_catalog) {
                 lines.push(
-                    `<a href="${escapeHtml(m.cities_url)}" class="mt-2 inline-block text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">${escapeHtml("Cadastrar / ver catálogo")}</a>`,
+                    `<a href="${escapeHtml(m.cities_url)}" class="mt-2 inline-block text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">${escapeHtml("Ver ficha Consultoria")}</a>`,
                 );
             }
             return lines.join("");
@@ -637,6 +787,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         canEditSgeFor(m) {
             if (!this.canManageSge || !m) {
                 return false;
+            }
+            if (m.sge_editable === false) {
+                return false;
+            }
+            if (m.sge_editable === true) {
+                return true;
             }
             const status = String(m.sge_status ?? m.sge?.status ?? "");
             return status === "not_found" || status === "registry";
@@ -651,7 +807,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         openSgeForm(m) {
-            if (!this.canManageSge || !m?.ibge) {
+            if (!this.canManageSge || !m?.ibge || !this.canEditSgeFor(m)) {
                 return;
             }
             this.sgeFormError = null;
@@ -704,6 +860,39 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
         },
 
+        applyMarkerSgeUpdate(ibge, sge) {
+            const target = String(ibge);
+            const idx = this.markers.findIndex((m) => String(m.ibge) === target);
+            if (idx < 0) {
+                return;
+            }
+            const prev = this.markers[idx];
+            const wasFound = Boolean(prev.sge_found);
+            const nowFound = Boolean(sge?.found);
+            this.markers[idx] = {
+                ...prev,
+                sge,
+                sge_found: nowFound,
+                sge_status: sge?.status ?? "not_found",
+                sge_system: sge?.system ?? null,
+            };
+            if (!wasFound && nowFound) {
+                this.sgeSummary = {
+                    ...this.sgeSummary,
+                    with_sge: Number(this.sgeSummary.with_sge ?? 0) + 1,
+                    not_found: Math.max(0, Number(this.sgeSummary.not_found ?? 0) - 1),
+                    registry: Number(this.sgeSummary.registry ?? 0) + 1,
+                };
+            } else if (wasFound && !nowFound) {
+                this.sgeSummary = {
+                    ...this.sgeSummary,
+                    with_sge: Math.max(0, Number(this.sgeSummary.with_sge ?? 0) - 1),
+                    not_found: Number(this.sgeSummary.not_found ?? 0) + 1,
+                    registry: Math.max(0, Number(this.sgeSummary.registry ?? 0) - 1),
+                };
+            }
+        },
+
         async saveSgeEntry() {
             if (!this.canManageSge || !this.sgeForm.ibge) {
                 return;
@@ -731,7 +920,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 if (!response.ok) {
                     throw new Error(data.message || `HTTP ${response.status}`);
                 }
-                await this.reloadMapKeepingIbge(this.sgeForm.ibge);
+                const ibge = this.sgeForm.ibge;
+                if (data.sge) {
+                    this.applyMarkerSgeUpdate(ibge, data.sge);
+                    await this.refreshMapLayers();
+                    const marker = this.markers.find((m) => String(m.ibge) === String(ibge));
+                    if (marker) {
+                        this.selectMarker(marker);
+                    }
+                } else {
+                    await this.reloadMapKeepingIbge(ibge);
+                }
                 this.closeSgeForm();
             } catch (error) {
                 this.sgeFormError =
@@ -764,7 +963,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 if (!response.ok) {
                     throw new Error(data.message || `HTTP ${response.status}`);
                 }
-                await this.reloadMapKeepingIbge(this.sgeForm.ibge);
+                const ibge = this.sgeForm.ibge;
+                if (data.sge) {
+                    this.applyMarkerSgeUpdate(ibge, data.sge);
+                    await this.refreshMapLayers();
+                } else {
+                    await this.reloadMapKeepingIbge(ibge);
+                }
                 this.closeSgeForm();
             } catch (error) {
                 this.sgeFormError =

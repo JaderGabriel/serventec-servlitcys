@@ -4,7 +4,9 @@ namespace App\Services\Horizonte;
 
 use App\Models\City;
 use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Services\Cadunico\CadunicoAutoSyncService;
 use App\Services\Fundeb\FundebFndeReceitaCsvService;
+use App\Services\Ibge\IbgeSidraMunicipalDemographyService;
 use App\Services\Inep\InepCensoMunicipioMatriculasIndexer;
 use App\Services\Inep\SaebPlanilhaInepImportService;
 use App\Support\Brazil\IbgeMunicipalityCatalog;
@@ -13,6 +15,7 @@ use App\Support\Horizonte\HorizonteFortnightlyFeedPhaseCatalog;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPipeline;
 use App\Support\Horizonte\HorizonteIbgeWarmProgress;
 use App\Support\Horizonte\HorizonteSaebImportProgress;
+use App\Support\Horizonte\HorizonteSidraImportProgress;
 use App\Support\Horizonte\HorizonteUfScope;
 use App\Support\InepMicrodadosCadastroEscolasPath;
 use Illuminate\Support\Facades\Artisan;
@@ -31,6 +34,9 @@ final class HorizonteFortnightlyFeedService
         private readonly IbgeMunicipalityCatalog $ibgeCatalog,
         private readonly HorizonteMunicipalSgeRegistryService $sgeRegistry,
         private readonly HorizonteFortnightlyFeedNotifier $notifier,
+        private readonly CadunicoAutoSyncService $cadunicoAutoSync,
+        private readonly IbgeSidraMunicipalDemographyService $sidraDemography,
+        private readonly HorizonteTesouroTransferSyncService $tesouroTransferSync,
     ) {}
 
     /**
@@ -45,12 +51,13 @@ final class HorizonteFortnightlyFeedService
         }
 
         $feedOptions = $this->feedOptionsForPipeline($options);
+        $runtimeOptions = $this->attachRuntimeOptions($feedOptions, $options);
         $reset = (bool) ($options['reset'] ?? false);
         $continue = (bool) ($options['continue'] ?? false);
         $dryRun = (bool) ($options['dry_run'] ?? false);
 
         if ($reset) {
-            HorizonteFortnightlyFeedPipeline::forget();
+            HorizonteFortnightlyFeedPipeline::forgetIncludingIbgeProgress();
             $state = HorizonteFortnightlyFeedPipeline::start($feedOptions);
         } elseif ($continue) {
             $state = HorizonteFortnightlyFeedPipeline::get();
@@ -64,16 +71,18 @@ final class HorizonteFortnightlyFeedService
                 ];
             }
             $feedOptions = $this->mergeStoredFeedOptions($feedOptions, is_array($state['options'] ?? null) ? $state['options'] : []);
+            $runtimeOptions = $this->attachRuntimeOptions($feedOptions, $options);
         } else {
             $state = HorizonteFortnightlyFeedPipeline::get();
             if ($state === null || ! in_array($state['status'] ?? '', ['running', 'partial'], true)) {
                 $state = HorizonteFortnightlyFeedPipeline::start($feedOptions);
             } else {
                 $feedOptions = $this->mergeStoredFeedOptions($feedOptions, is_array($state['options'] ?? null) ? $state['options'] : []);
+                $runtimeOptions = $this->attachRuntimeOptions($feedOptions, $options);
             }
         }
 
-        $this->debugLog($feedOptions, $this->scopeIntroMessage($feedOptions));
+        $this->debugLog($runtimeOptions, $this->scopeIntroMessage($runtimeOptions));
 
         if (($state['status'] ?? '') === 'completed' || ($state['status'] ?? '') === 'partial') {
             return $this->pipelineResponse($state);
@@ -90,13 +99,13 @@ final class HorizonteFortnightlyFeedService
 
         $phaseResult = $dryRun
             ? $this->dryRunPhase($phaseKey)
-            : $this->runPhase($phaseKey, $feedOptions);
+            : $this->runPhase($phaseKey, $runtimeOptions);
 
-        if ($verbose = (bool) ($feedOptions['verbose'] ?? false)) {
-            $this->debugLog($feedOptions, __('▶ :label', [
+        if ($verbose = (bool) ($runtimeOptions['verbose'] ?? false)) {
+            $this->debugLog($runtimeOptions, __('▶ :label', [
                 'label' => HorizonteFortnightlyFeedPhaseCatalog::label($phaseKey),
             ]));
-            $this->emitPhaseDebugLines($feedOptions, $phaseResult);
+            $this->emitPhaseDebugLines($runtimeOptions, $phaseResult);
         }
 
         $state = HorizonteFortnightlyFeedPipeline::recordPhaseResult($state, $phaseResult);
@@ -161,6 +170,9 @@ final class HorizonteFortnightlyFeedService
         $result = match ($phaseKey) {
             'fundeb_receita' => $this->syncFundebReceitaNacional($refYear, $options),
             'censo_matriculas' => $this->indexCensoMatriculas($options),
+            'cadunico_sync' => $this->syncCadunicoNacional($options),
+            'sidra_demography' => $this->importSidraDemography($options),
+            'repasses_tesouro' => $this->syncRepassesTesouro($refYear, $options),
             'saeb_planilhas' => $this->importSaebPlanilhasNacional($options),
             'ibge_catalog' => $this->warmIbgeCatalog($options),
             'sge_registry' => $this->syncSgeRegistry($options),
@@ -190,6 +202,7 @@ final class HorizonteFortnightlyFeedService
         $reset = (bool) ($options['reset'] ?? false);
         $skipOptions = $this->normalizedSkipOptions($options);
         $feedOptions = $this->feedOptionsForPipeline($options);
+        $runtimeOptions = $this->attachRuntimeOptions($feedOptions, $options);
         $queue = HorizonteFortnightlyFeedPhaseCatalog::queueFromOptions($skipOptions);
         $phases = [];
 
@@ -197,9 +210,10 @@ final class HorizonteFortnightlyFeedService
             HorizonteFortnightlyFeedMonolithicProgress::forget();
             HorizonteIbgeWarmProgress::reset();
             HorizonteSaebImportProgress::reset();
+            HorizonteSidraImportProgress::reset();
             HorizonteFortnightlyFeedMonolithicProgress::start($queue, $feedOptions);
-            $this->debugLog($feedOptions, __('Reinício --all — :n fase(s) na fila.', ['n' => (string) count($queue)]));
-            $this->debugLog($feedOptions, $this->scopeIntroMessage($feedOptions));
+            $this->debugLog($runtimeOptions, __('Reinício --all — :n fase(s) na fila.', ['n' => (string) count($queue)]));
+            $this->debugLog($runtimeOptions, $this->scopeIntroMessage($runtimeOptions));
         } elseif ($continue) {
             $remainingPhases = HorizonteFortnightlyFeedMonolithicProgress::remainingPhases();
             $ibgePending = HorizonteIbgeWarmProgress::remainingUfs();
@@ -218,8 +232,9 @@ final class HorizonteFortnightlyFeedService
             } else {
                 $stored = HorizonteFortnightlyFeedMonolithicProgress::get();
                 $feedOptions = $this->mergeStoredFeedOptions($feedOptions, is_array($stored['options'] ?? null) ? $stored['options'] : []);
+                $runtimeOptions = $this->attachRuntimeOptions($feedOptions, $options);
             }
-            $this->debugLog($feedOptions, __('Continuar — :pending fase(s) pendente(s), IBGE :ibge UF(s), SAEB :saeb ano(s).', [
+            $this->debugLog($runtimeOptions, __('Continuar — :pending fase(s) pendente(s), IBGE :ibge UF(s), SAEB :saeb ano(s).', [
                 'pending' => (string) count(HorizonteFortnightlyFeedMonolithicProgress::remainingPhases()),
                 'ibge' => (string) count($ibgePending),
                 'saeb' => (string) count($saebPending),
@@ -227,13 +242,14 @@ final class HorizonteFortnightlyFeedService
         } elseif (HorizonteFortnightlyFeedMonolithicProgress::isRunning()) {
             $stored = HorizonteFortnightlyFeedMonolithicProgress::get();
             $feedOptions = $this->mergeStoredFeedOptions($feedOptions, is_array($stored['options'] ?? null) ? $stored['options'] : []);
-            $this->debugLog($feedOptions, __('Retomando execução --all em curso — :n fase(s) pendente(s).', [
+            $runtimeOptions = $this->attachRuntimeOptions($feedOptions, $options);
+            $this->debugLog($runtimeOptions, __('Retomando execução --all em curso — :n fase(s) pendente(s).', [
                 'n' => (string) count(HorizonteFortnightlyFeedMonolithicProgress::remainingPhases()),
             ]));
         } else {
             HorizonteFortnightlyFeedMonolithicProgress::start($queue, $feedOptions);
-            $this->debugLog($feedOptions, __('Início --all — :n fase(s) na fila.', ['n' => (string) count($queue)]));
-            $this->debugLog($feedOptions, $this->scopeIntroMessage($feedOptions));
+            $this->debugLog($runtimeOptions, __('Início --all — :n fase(s) na fila.', ['n' => (string) count($queue)]));
+            $this->debugLog($runtimeOptions, $this->scopeIntroMessage($runtimeOptions));
         }
 
         $completed = HorizonteFortnightlyFeedMonolithicProgress::completedPhases();
@@ -242,23 +258,23 @@ final class HorizonteFortnightlyFeedService
 
         foreach ($queue as $phaseKey) {
             if (in_array($phaseKey, $completed, true)) {
-                $this->debugLog($feedOptions, __('⊘ :label — já concluída, a saltar.', [
+                $this->debugLog($runtimeOptions, __('⊘ :label — já concluída, a saltar.', [
                     'label' => HorizonteFortnightlyFeedPhaseCatalog::label($phaseKey),
                 ]));
                 continue;
             }
 
             $step++;
-            $this->debugLog($feedOptions, __('▶ Fase :step/:total — :label', [
+            $this->debugLog($runtimeOptions, __('▶ Fase :step/:total — :label', [
                 'step' => (string) $step,
                 'total' => (string) max(1, $pendingCount),
                 'label' => HorizonteFortnightlyFeedPhaseCatalog::label($phaseKey),
             ]));
 
-            if (in_array($phaseKey, ['ibge_catalog', 'saeb_planilhas'], true)) {
+            if (in_array($phaseKey, ['ibge_catalog', 'saeb_planilhas', 'sidra_demography'], true)) {
                 do {
-                    $result = $dryRun ? $this->dryRunPhase($phaseKey) : $this->runPhase($phaseKey, $feedOptions);
-                    $this->emitPhaseDebugLines($feedOptions, $result);
+                    $result = $dryRun ? $this->dryRunPhase($phaseKey) : $this->runPhase($phaseKey, $runtimeOptions);
+                    $this->emitPhaseDebugLines($runtimeOptions, $result);
                     if (! $dryRun) {
                         gc_collect_cycles();
                     }
@@ -271,8 +287,8 @@ final class HorizonteFortnightlyFeedService
                 continue;
             }
 
-            $result = $dryRun ? $this->dryRunPhase($phaseKey) : $this->runPhase($phaseKey, $feedOptions);
-            $this->emitPhaseDebugLines($feedOptions, $result);
+            $result = $dryRun ? $this->dryRunPhase($phaseKey) : $this->runPhase($phaseKey, $runtimeOptions);
+            $this->emitPhaseDebugLines($runtimeOptions, $result);
             $phases[] = $result;
 
             if (($result['success'] ?? false) && ! $dryRun) {
@@ -413,6 +429,9 @@ final class HorizonteFortnightlyFeedService
         return [
             'skip_fundeb' => (bool) ($options['skip_fundeb'] ?? false),
             'skip_censo' => (bool) ($options['skip_censo'] ?? false),
+            'skip_cadunico' => (bool) ($options['skip_cadunico'] ?? false),
+            'skip_sidra' => (bool) ($options['skip_sidra'] ?? false),
+            'skip_repasses' => (bool) ($options['skip_repasses'] ?? false),
             'skip_saeb' => (bool) ($options['skip_saeb'] ?? false),
             'skip_ibge' => (bool) ($options['skip_ibge'] ?? false),
             'skip_sge' => (bool) ($options['skip_sge'] ?? false),
@@ -429,8 +448,23 @@ final class HorizonteFortnightlyFeedService
         return array_merge($this->normalizedSkipOptions($options), [
             'uf' => HorizonteUfScope::normalize($options['uf'] ?? null) ?? '',
             'verbose' => (bool) ($options['verbose'] ?? false),
-            'debug' => $options['debug'] ?? null,
         ]);
+    }
+
+    /**
+     * Opções de execução (ex.: callback debug da CLI) — não serializáveis em cache.
+     *
+     * @param  array<string, mixed>  $cacheable
+     * @param  array<string, mixed>  $source
+     * @return array<string, mixed>
+     */
+    private function attachRuntimeOptions(array $cacheable, array $source): array
+    {
+        if (isset($source['debug']) && is_callable($source['debug'])) {
+            $cacheable['debug'] = $source['debug'];
+        }
+
+        return $cacheable;
     }
 
     /**
@@ -773,6 +807,62 @@ final class HorizonteFortnightlyFeedService
             'skipped' => ! $batchOk && $allowSoftFail,
             'details' => ['years' => $allYears, 'remaining' => HorizonteSaebImportProgress::remainingYears($allYears)],
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
+     * @return array{success: bool, message: string, imported?: int, skipped?: bool}
+     */
+    private function syncCadunicoNacional(array $options = []): array
+    {
+        $this->debugLog($options, __('CadÚnico — a sincronizar agregados municipais…'));
+        try {
+            $result = $this->cadunicoAutoSync->syncAllConfiguredYears();
+            $imported = 0;
+            foreach ($result['by_year'] ?? [] as $yearResult) {
+                if (is_array($yearResult)) {
+                    $imported += (int) ($yearResult['imported_nacional'] ?? 0);
+                    $imported += (int) ($yearResult['gap_filled'] ?? 0);
+                }
+            }
+
+            return [
+                'success' => (bool) ($result['success'] ?? false),
+                'message' => (string) ($result['message'] ?? __('CadÚnico sincronizado.')),
+                'imported' => $imported,
+                'skipped' => ! ($result['success'] ?? false),
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('horizonte.cadunico_sync_failed', ['message' => $e->getMessage()]);
+
+            return [
+                'success' => false,
+                'message' => __('CadÚnico: falha na sincronização — :msg', ['msg' => $e->getMessage()]),
+                'imported' => 0,
+            ];
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
+     * @return array<string, mixed>
+     */
+    private function importSidraDemography(array $options = []): array
+    {
+        $this->debugLog($options, __('SIDRA — população 4–17 por UF…'));
+
+        return $this->sidraDemography->importNextUfBatch($options);
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
+     * @return array{success: bool, message: string, imported?: int}
+     */
+    private function syncRepassesTesouro(int $refYear, array $options = []): array
+    {
+        $this->debugLog($options, __('Repasses Tesouro — FUNDEB CKAN nacional…'));
+
+        return $this->tesouroTransferSync->syncNationalFundeb($refYear, $options);
     }
 
     /**

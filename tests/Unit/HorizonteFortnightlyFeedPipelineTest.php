@@ -9,19 +9,28 @@ use Tests\TestCase;
 
 final class HorizonteFortnightlyFeedPipelineTest extends TestCase
 {
+    /** @return array<string, bool> */
+    private function baseSkips(): array
+    {
+        return [
+            'skip_fundeb' => false,
+            'skip_censo' => true,
+            'skip_cadunico' => true,
+            'skip_sidra' => true,
+            'skip_repasses' => true,
+            'skip_saeb' => true,
+            'skip_ibge' => false,
+            'skip_sge' => true,
+            'skip_verify' => true,
+        ];
+    }
+
     #[Test]
     public function start_creates_running_pipeline_with_pending_phases(): void
     {
         Cache::flush();
 
-        $state = HorizonteFortnightlyFeedPipeline::start([
-            'skip_fundeb' => false,
-            'skip_censo' => true,
-            'skip_saeb' => true,
-            'skip_ibge' => false,
-            'skip_sge' => true,
-            'skip_verify' => true,
-        ]);
+        $state = HorizonteFortnightlyFeedPipeline::start($this->baseSkips());
 
         $this->assertSame('running', $state['status']);
         $this->assertSame(['fundeb_receita', 'ibge_catalog'], $state['phase_queue']);
@@ -34,14 +43,10 @@ final class HorizonteFortnightlyFeedPipelineTest extends TestCase
     {
         Cache::flush();
 
-        $state = HorizonteFortnightlyFeedPipeline::start([
-            'skip_fundeb' => false,
-            'skip_censo' => true,
-            'skip_saeb' => true,
-            'skip_ibge' => true,
-            'skip_sge' => true,
-            'skip_verify' => true,
-        ]);
+        $options = $this->baseSkips();
+        $options['skip_ibge'] = true;
+
+        $state = HorizonteFortnightlyFeedPipeline::start($options);
 
         $state = HorizonteFortnightlyFeedPipeline::recordPhaseResult($state, [
             'key' => 'fundeb_receita',
@@ -59,14 +64,10 @@ final class HorizonteFortnightlyFeedPipelineTest extends TestCase
     {
         Cache::flush();
 
-        $state = HorizonteFortnightlyFeedPipeline::start([
-            'skip_fundeb' => true,
-            'skip_censo' => true,
-            'skip_saeb' => true,
-            'skip_ibge' => false,
-            'skip_sge' => true,
-            'skip_verify' => true,
-        ]);
+        $options = $this->baseSkips();
+        $options['skip_fundeb'] = true;
+
+        $state = HorizonteFortnightlyFeedPipeline::start($options);
 
         $state = HorizonteFortnightlyFeedPipeline::recordPhaseResult($state, [
             'key' => 'ibge_catalog',

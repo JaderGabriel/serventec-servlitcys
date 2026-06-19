@@ -274,8 +274,21 @@ Rota: `/dashboard/horizonte` · Documentação: [HORIZONTE.md](HORIZONTE.md).
 | `HORIZONTE_FORTNIGHTLY_FEED_TIME` | `03:00` | Hora (timezone da app) |
 | `HORIZONTE_FORTNIGHTLY_FUNDEB_YEARS` | *(vazio)* | Anos CSV receita FNDE (vazio = ref. + anterior) |
 | `HORIZONTE_FORTNIGHTLY_CENSO_SKIP_IF_MISSING` | `true` | Não falha se microdados INEP ausentes |
+| `HORIZONTE_SIDRA_ENABLED` | `true` | Fase SIDRA no feed (pop. 4–17, agregado 9514) |
+| `HORIZONTE_SIDRA_AGREGADO` | `9514` | Agregado IBGE SIDRA (Censo 2022) |
+| `HORIZONTE_SIDRA_VARIAVEL` | `93` | Variável SIDRA (população residente) |
+| `HORIZONTE_SIDRA_PERIODO` | `2022` | Período SIDRA |
+| `HORIZONTE_SIDRA_UFS_PER_STEP` | `1` | UFs processadas por passo na fase SIDRA |
+| `HORIZONTE_SIDRA_BASE_URL` | URL IBGE v3 | Endpoint agregados SIDRA |
+| `HORIZONTE_SIDRA_HTTP_TIMEOUT` | `90` | Timeout HTTP SIDRA (segundos) |
+| `HORIZONTE_CADUNICO_FILL_GAPS` | `false` | CadÚnico: preencher lacunas via API SAGI no feed |
+| `HORIZONTE_MAP_HEAVY_THRESHOLD` | `800` | Acima disto, vista inicial restringe UF + prospectos |
+| `HORIZONTE_MAP_MAX_RENDER` | `400` | Máximo de pontos desenhados no mapa por defeito |
+| `HORIZONTE_SGE_ENABLED` | `true` | Activa fase SGE no feed |
+| `HORIZONTE_SGE_REGISTRY_PATH` | `horizonte/sge_registry.json` | JSON local IBGE→SGE |
+| `HORIZONTE_SGE_REGISTRY_URL` | — | URL remota alternativa (opcional) |
 
-Ver [HORIZONTE.md](HORIZONTE.md) §9.1 e `php artisan horizonte:fortnightly-feed --help`.
+Ver [HORIZONTE.md](HORIZONTE.md) §8–§9.1 e `php artisan horizonte:fortnightly-feed --help`.
 
 ---
 

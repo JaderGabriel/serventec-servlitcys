@@ -8,6 +8,7 @@
     $canRefreshData = (bool) ($canRefreshData ?? auth()->user()?->canImportOrConfigure());
     $canManageSge = (bool) ($canManageSge ?? false);
     $sgeRegistryUrl = (string) ($sgeRegistryUrl ?? '');
+    $initialUf = (string) ($initialUf ?? '');
 @endphp
 
 <x-app-layout>
@@ -36,6 +37,7 @@
             'canRefreshData' => $canRefreshData,
             'canManageSge' => $canManageSge,
             'sgeRegistryUrl' => $sgeRegistryUrl,
+            'initialUf' => $initialUf,
         ]))"
         x-init="init()"
     >
@@ -87,7 +89,7 @@
                         {{ __('Limpar filtros') }}
                     </button>
                 </div>
-                <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     <template x-for="seg in focusSegments" :key="seg.key">
                         <button
                             type="button"
@@ -213,7 +215,13 @@
                                     <label class="inline-flex items-center gap-1.5"><input type="checkbox" x-model="requireFundeb" class="rounded border-gray-300 text-teal-600" :disabled="pageLoading" /><span>FUNDEB</span></label>
                                     <label class="inline-flex items-center gap-1.5"><input type="checkbox" x-model="requireCenso" class="rounded border-gray-300 text-teal-600" :disabled="pageLoading" /><span>Censo</span></label>
                                     <label class="inline-flex items-center gap-1.5"><input type="checkbox" x-model="requireSaeb" class="rounded border-gray-300 text-teal-600" :disabled="pageLoading" /><span>SAEB</span></label>
+                                    <label class="inline-flex items-center gap-1.5"><input type="checkbox" x-model="requireCadunico" class="rounded border-gray-300 text-teal-600" :disabled="pageLoading" /><span>CadÚnico</span></label>
                                 </div>
+                                <label class="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
+                                    <span class="text-slate-500">{{ __('Demanda social mín.') }}</span>
+                                    <input type="range" min="0" max="100" step="5" x-model.number="minSocialDemand" class="w-full accent-rose-600" :disabled="pageLoading" />
+                                    <span class="tabular-nums font-medium" x-text="minSocialDemand + '/100'"></span>
+                                </label>
                             </div>
 
                             <div class="flex flex-wrap gap-1.5 text-xs">
@@ -236,6 +244,61 @@
                                     <input type="checkbox" x-model="hideConsultoria" class="rounded border-gray-300 text-teal-600" :disabled="pageLoading" />
                                     <span>{{ __('Ocultar consultoria') }}</span>
                                 </label>
+                                @if ($canManageSge)
+                                    <label class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 ring-1 ring-amber-200/80 bg-amber-50/80 dark:ring-amber-900/50 dark:bg-amber-950/30">
+                                        <input type="checkbox" x-model="onlyMissingSge" class="rounded border-gray-300 text-amber-600" :disabled="pageLoading" />
+                                        <span>{{ __('Só sem SGE') }}</span>
+                                    </label>
+                                @endif
+                            </div>
+
+                            <div
+                                x-show="!pageLoading && initialViewNotice && initialViewNotice.message"
+                                x-cloak
+                                class="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-100 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"
+                                role="status"
+                            >
+                                <div class="min-w-0 space-y-1">
+                                    <p class="font-medium">{{ __('Vista inicial optimizada') }}</p>
+                                    <p x-text="initialViewNotice.message"></p>
+                                    <p class="text-xs text-sky-800/80 dark:text-sky-200/80 tabular-nums">
+                                        <span x-text="filteredCount.toLocaleString('pt-BR')"></span> {{ __('no recorte') }} ·
+                                        <span x-text="totalMarkers.toLocaleString('pt-BR')"></span> {{ __('na base nacional') }} ·
+                                        <span x-text="mapRenderShownCount.toLocaleString('pt-BR')"></span> {{ __('desenhados no mapa') }}
+                                    </p>
+                                </div>
+                                <div class="flex flex-wrap gap-2 shrink-0">
+                                    <button type="button" class="serv-btn-secondary text-xs" @click="filterUf = ''; filterTier = 'prospects'">{{ __('Prospectos (Brasil)') }}</button>
+                                    <button type="button" class="text-xs text-sky-800 dark:text-sky-200 hover:underline" @click="dismissInitialNotice()">{{ __('Ocultar') }}</button>
+                                </div>
+                            </div>
+
+                            <div
+                                x-show="!pageLoading && mapRenderTruncated && !renderCapDismissed"
+                                x-cloak
+                                class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                                role="status"
+                            >
+                                <p>
+                                    <span class="font-medium">{{ __('Mapa limitado para fluidez.') }}</span>
+                                    <span class="tabular-nums" x-text="' ' + mapRenderShownCount.toLocaleString('pt-BR') + ' {{ __('de') }} ' + filteredCount.toLocaleString('pt-BR') + ' {{ __('no recorte') }} (' + totalMarkers.toLocaleString('pt-BR') + ' {{ __('na base') }}).'"></span>
+                                    <span class="block text-xs mt-1 text-amber-900/80 dark:text-amber-100/80">{{ __('Prioridade por propensão. Use UF, segmentos ou busca para reduzir; ou carregue todos os pontos (pode travar).') }}</span>
+                                </p>
+                                <div class="flex flex-wrap gap-2 shrink-0">
+                                    <button type="button" class="serv-btn-secondary text-xs" @click="enableFullMapRender()">{{ __('Mostrar todos no mapa') }}</button>
+                                    <button type="button" class="text-xs text-amber-900 dark:text-amber-100 hover:underline" @click="renderCapDismissed = true">{{ __('Manter limite') }}</button>
+                                </div>
+                            </div>
+
+                            <div
+                                x-show="!pageLoading && showAllOnMap && filteredCount > mapRenderLimit"
+                                x-cloak
+                                class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-950 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-100"
+                                role="status"
+                            >
+                                <span class="font-medium">{{ __('Modo completo') }}:</span>
+                                <span class="tabular-nums" x-text="' ' + filteredCount.toLocaleString('pt-BR') + ' {{ __('pontos no mapa') }}.'"></span>
+                                {{ __('O zoom pode ficar lento — prefira filtrar por UF ou segmento.') }}
                             </div>
 
                             <div class="serv-map-legend flex flex-wrap gap-x-4 gap-y-2 text-xs">
@@ -255,7 +318,15 @@
                                         </span>
                                     </template>
                                 </template>
-                                <span class="text-slate-500 dark:text-slate-400 tabular-nums" x-show="!pageLoading" x-text="filteredMarkers.length.toLocaleString('pt-BR') + ' {{ __('no recorte') }}'"></span>
+                                <span class="text-slate-500 dark:text-slate-400 tabular-nums" x-show="!pageLoading">
+                                    <span x-text="filteredCount.toLocaleString('pt-BR')"></span> {{ __('no recorte') }}
+                                    <template x-if="mapRenderTruncated">
+                                        <span x-text="' · ' + mapRenderShownCount.toLocaleString('pt-BR') + ' {{ __('no mapa') }}'"></span>
+                                    </template>
+                                    <template x-if="mapHeavyDataset">
+                                        <span x-text="' · ' + totalMarkers.toLocaleString('pt-BR') + ' {{ __('na base') }}'"></span>
+                                    </template>
+                                </span>
                             </div>
 
                             <div class="relative">
@@ -331,21 +402,30 @@
                                                 >&times;</button>
                                             </div>
                                             <div x-html="tooltipBodyHtml(active)"></div>
-                                            <div x-show="canManageSge && active && canEditSgeFor(active)" x-cloak class="pt-2 border-t border-slate-200/80 dark:border-slate-700/80">
+                                            <div x-show="canManageSge && active && canEditSgeFor(active)" x-cloak class="pt-2 border-t border-slate-200/80 dark:border-slate-700/80 space-y-2">
+                                                <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                                    {{ __('Inteligência de concorrência — não cadastra o município no catálogo Consultoria.') }}
+                                                </p>
                                                 <button
                                                     type="button"
-                                                    class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+                                                    class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-500"
                                                     @click="openSgeForm(active)"
                                                 >
-                                                    <span x-text="active.sge_status === 'registry' ? '{{ __('Editar registo SGE') }}' : '{{ __('Cadastrar SGE') }}'"></span>
+                                                    <span x-text="active.sge_status === 'registry' ? '{{ __('Editar SGE concorrente') }}' : '{{ __('Registar SGE concorrente') }}'"></span>
                                                 </button>
+                                            </div>
+                                            <div x-show="canManageSge && active && active.in_catalog" x-cloak class="pt-2 border-t border-slate-200/80 dark:border-slate-700/80">
+                                                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                                    {{ __('Município no catálogo Consultoria — o SGE é gerido na ficha da cidade.') }}
+                                                    <a x-show="active.cities_url" :href="active.cities_url" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ __('Abrir ficha') }}</a>
+                                                </p>
                                             </div>
                                         </div>
                                     </template>
                                 </div>
                             </div>
                             <p class="text-xs text-slate-500 dark:text-slate-400">
-                                {{ __('Scores indicativos — não substituem o Diagnóstico i-Educar. Vista inicial: todos os municípios com coordenadas.') }}
+                                {{ __('Scores indicativos — não substituem o Diagnóstico i-Educar. Bases nacionais grandes iniciam com UF prioritária e limite de pontos no mapa; KPIs e listas usam a base completa.') }}
                             </p>
                         </div>
                     </div>
@@ -405,9 +485,9 @@
                                                 <button
                                                     type="button"
                                                     class="text-left hover:underline"
-                                                    :class="!(p.sge_found ?? false) && canManageSge ? 'text-amber-700 dark:text-amber-300 font-medium' : ''"
-                                                    @click.stop="canManageSge && !(p.sge_found ?? false) ? openSgeForm(p) : flyToMarker(p)"
-                                                    x-text="p.sge?.system_label || (p.sge_found ? '—' : '{{ __('N/I') }}')"
+                                                    :class="canEditSgeFor(p) ? 'text-amber-700 dark:text-amber-300 font-medium' : (!(p.sge_found ?? false) ? 'text-slate-400' : '')"
+                                                    @click.stop="canEditSgeFor(p) ? openSgeForm(p) : flyToMarker(p)"
+                                                    x-text="canEditSgeFor(p) ? '{{ __('Registar SGE') }}' : (p.sge?.system_label || (p.sge_found ? '—' : '{{ __('N/I') }}'))"
                                                 ></button>
                                             </td>
                                         </tr>
@@ -429,11 +509,19 @@
                             <div class="flex justify-between gap-2"><dt class="text-slate-500">{{ __('Não identificados') }}</dt><dd class="font-medium tabular-nums text-amber-800 dark:text-amber-300" x-text="pageLoading ? '…' : Number(sgeSummary.not_found ?? 0).toLocaleString('pt-BR')"></dd></div>
                         </dl>
                         <p x-show="!pageLoading && !(sgeSummary.registry_configured ?? false)" x-cloak class="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                            {{ __('Registo SGE externo vazio — clique num município sem SGE no mapa para cadastrar ou coloque JSON em storage/app/horizonte/sge_registry.json.') }}
+                            {{ __('Registo SGE externo vazio — use o segmento «Sem SGE (concorrência)» ou clique num município N/I no mapa / lista.') }}
                         </p>
                         @if ($canManageSge)
-                            <p class="mt-2 text-[11px] text-indigo-700 dark:text-indigo-300">
-                                {{ __('Administrador: selecione um município com «N/I» na lista ou no mapa para registar o sistema de gestão.') }}
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                <button
+                                    type="button"
+                                    class="serv-btn-secondary text-xs"
+                                    :disabled="pageLoading"
+                                    @click="resetFilters(); onlyMissingSge = true; filterTier = 'prospects';"
+                                >{{ __('Ver sem SGE') }}</button>
+                            </div>
+                            <p class="mt-2 text-[11px] text-indigo-700 dark:text-indigo-300 leading-relaxed">
+                                {{ __('Administrador: registe GDAE, Proesc, SIGE próprio, etc. em prospectos fora do catálogo — só inteligência territorial, sem abrir Consultoria.') }}
                             </p>
                         @endif
                     </section>
@@ -498,7 +586,10 @@
             <div class="w-full max-w-lg rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-700 p-5 space-y-4" @click.outside="closeSgeForm()">
                 <div class="flex items-start justify-between gap-3">
                     <div>
-                        <h3 id="horizonte-sge-form-title" class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Registo SGE municipal') }}</h3>
+                        <h3 id="horizonte-sge-form-title" class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('SGE concorrente / próprio') }}</h3>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-md">
+                            {{ __('Registo de inteligência Horizonte — acompanha sistemas rivais ou municipais. Não cria cidade nem activa Consultoria i-Educar.') }}
+                        </p>
                         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400" x-show="sgeForm.ibge">
                             <span x-text="sgeForm.name + ' — ' + sgeForm.uf"></span>
                             · IBGE <span x-text="sgeForm.ibge"></span>
@@ -510,7 +601,7 @@
                 <form class="space-y-3" @submit.prevent="saveSgeEntry()">
                     <div>
                         <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">{{ __('Sistema (SGE)') }} <span class="text-red-600">*</span></label>
-                        <input type="text" x-model="sgeForm.system" required maxlength="120" class="mt-1 block w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:border-slate-600" placeholder="Ex.: Proesc, GDAE, SIGE…" />
+                        <input type="text" x-model="sgeForm.system" required maxlength="120" class="mt-1 block w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:border-slate-600" placeholder="Ex.: GDAE, Proesc, SIGE municipal…" />
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">{{ __('Fornecedor / secretaria') }}</label>
@@ -522,7 +613,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">{{ __('Observações') }}</label>
-                        <textarea x-model="sgeForm.notes" rows="3" maxlength="2000" class="mt-1 block w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:border-slate-600"></textarea>
+                        <textarea x-model="sgeForm.notes" rows="3" maxlength="2000" class="mt-1 block w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:border-slate-600" placeholder="{{ __('Ex.: sistema próprio da secretaria; concorrente regional; observações de campo…') }}"></textarea>
                     </div>
                     <p x-show="sgeFormError" x-text="sgeFormError" class="text-xs text-red-600 dark:text-red-400"></p>
                     <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
@@ -541,7 +632,7 @@
                         </div>
                     </div>
                 </form>
-                <p class="text-[10px] text-slate-500">{{ __('Gravado em storage/app/horizonte/sge_registry.json — visível no mapa após recarregar os dados.') }}</p>
+                <p class="text-[10px] text-slate-500">{{ __('Gravado em storage/app/horizonte/sge_registry.json — actualiza o mapa de imediato.') }}</p>
             </div>
         </div>
     </div>

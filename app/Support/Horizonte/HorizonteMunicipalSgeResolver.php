@@ -71,6 +71,10 @@ final class HorizonteMunicipalSgeResolver
             $system = trim((string) $registry['system']);
             $vendor = trim((string) ($registry['vendor'] ?? ''));
             $notes = trim((string) ($registry['notes'] ?? ''));
+            $source = trim((string) ($registry['source'] ?? 'external_registry')) ?: 'external_registry';
+            $defaultDetail = $source === 'manual_admin'
+                ? __('Registo manual Horizonte — inteligência de concorrência (não abre Consultoria).')
+                : __('Sistema identificado na base SGE configurada (IBGE :ibge).', ['ibge' => $ibge]);
 
             return [
                 'found' => true,
@@ -78,11 +82,9 @@ final class HorizonteMunicipalSgeResolver
                 'status_label' => __('Registo externo'),
                 'system' => $system,
                 'system_label' => $vendor !== '' ? $system.' ('.$vendor.')' : $system,
-                'detail' => $notes !== ''
-                    ? $notes
-                    : __('Sistema identificado na base SGE configurada (IBGE :ibge).', ['ibge' => $ibge]),
+                'detail' => $notes !== '' ? $notes : $defaultDetail,
                 'app_url' => filled($registry['app_url'] ?? null) ? (string) $registry['app_url'] : null,
-                'source' => trim((string) ($registry['source'] ?? 'external_registry')) ?: 'external_registry',
+                'source' => $source,
             ];
         }
 

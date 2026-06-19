@@ -6,8 +6,11 @@ use App\Models\CadunicoMunicipioSnapshot;
 use App\Models\City;
 use App\Models\FundebMunicipioReference;
 use App\Models\InepCensoMunicipioMatricula;
+use App\Models\MunicipalDemographySnapshot;
 use App\Models\SaebIndicatorPoint;
 use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Services\Cadunico\CadunicoVulnerabilidadeIndicators;
+use App\Services\Horizonte\HorizonteTesouroTransferSyncService;
 use App\Support\Brazil\IbgeMunicipalityCatalog;
 use App\Support\Brazil\IbgeUfFromCode;
 use App\Support\Dashboard\AdminHomeMapCache;
@@ -78,6 +81,9 @@ final class HorizonteMapService
         $fundebByIbge = $this->fundebByIbge($refYear);
         $censoByIbge = $this->censoByIbge($refYear);
         $saebByIbge = $this->saebByIbge($refYear);
+        $cadunicoByIbge = $this->cadunicoByIbge($refYear);
+        $demographyByIbge = $this->demographyByIbge($refYear);
+        $transfersByIbge = HorizonteTesouroTransferSyncService::aggregateByIbge($refYear);
 
         foreach (array_keys($fundebByIbge) as $ibge) {
             $ibgeSet[$ibge] = true;
@@ -86,6 +92,15 @@ final class HorizonteMapService
             $ibgeSet[$ibge] = true;
         }
         foreach (array_keys($saebByIbge) as $ibge) {
+            $ibgeSet[$ibge] = true;
+        }
+        foreach (array_keys($cadunicoByIbge) as $ibge) {
+            $ibgeSet[$ibge] = true;
+        }
+        foreach (array_keys($demographyByIbge) as $ibge) {
+            $ibgeSet[$ibge] = true;
+        }
+        foreach (array_keys($transfersByIbge) as $ibge) {
             $ibgeSet[$ibge] = true;
         }
 
@@ -101,9 +116,11 @@ final class HorizonteMapService
 
         $saebForBench = [];
         $complRatios = [];
+        $transferRatios = [];
         foreach (array_keys($ibgeSet) as $ibge) {
             $fundeb = $fundebByIbge[$ibge] ?? null;
             $saeb = $saebByIbge[$ibge] ?? null;
+            $transfer = $transfersByIbge[$ibge] ?? null;
             if ($saeb !== null) {
                 foreach (['lp', 'mat'] as $k) {
                     if ($saeb[$k] !== null) {
@@ -114,8 +131,12 @@ final class HorizonteMapService
             if ($fundeb !== null && ($fundeb['complementacao_total'] ?? 0) > 0 && ($fundeb['receita_total'] ?? 0) > 0) {
                 $complRatios[] = (float) $fundeb['complementacao_total'] / (float) $fundeb['receita_total'];
             }
+            if ($transfer !== null && ($transfer['total'] ?? 0) > 0) {
+                $base = max(1.0, (float) ($fundeb['receita_total'] ?? 0), (float) ($fundeb['complementacao_total'] ?? 0));
+                $transferRatios[] = (float) $transfer['total'] / $base;
+            }
         }
-        $benchmarks = $this->scorer->benchmarks($saebForBench, $complRatios);
+        $benchmarks = $this->scorer->benchmarks($saebForBench, $complRatios, $transferRatios);
 
         $sgeRegistry = $this->sgeRegistry->indexedFromCache();
 
@@ -128,6 +149,9 @@ final class HorizonteMapService
             $fundeb = $fundebByIbge[$ibge] ?? null;
             $censo = $censoByIbge[$ibge] ?? null;
             $saeb = $saebByIbge[$ibge] ?? null;
+            $cadunico = $cadunicoByIbge[$ibge] ?? null;
+            $demography = $demographyByIbge[$ibge] ?? null;
+            $transfer = $transfersByIbge[$ibge] ?? null;
 
             $meta = null;
             if ($city !== null) {
@@ -149,8 +173,9 @@ final class HorizonteMapService
                 continue;
             }
 
-            $consultoriaActive = (bool) ($city['consultoria_active'] ?? false);
             $inCatalog = $city !== null;
+
+            $consultoriaActive = (bool) ($city['consultoria_active'] ?? false);
 
             $scoreInput = [
                 'matriculas_censo' => $censo['matriculas_total'] ?? null,
@@ -158,9 +183,16 @@ final class HorizonteMapService
                 'receita_total' => $fundeb['receita_total'] ?? null,
                 'saeb_lp' => $saeb['lp'] ?? null,
                 'saeb_mat' => $saeb['mat'] ?? null,
+                'cadunico_escolar' => $cadunico['escolar'] ?? null,
+                'sidra_pop_4_17' => $demography['populacao_4_17'] ?? null,
+                'pct_criancas_pbf' => $cadunico['pct_pbf'] ?? null,
+                'transfer_total' => $transfer['total'] ?? null,
                 'has_fundeb' => $fundeb !== null,
                 'has_censo' => $censo !== null,
                 'has_saeb' => $saeb !== null,
+                'has_cadunico' => $cadunico !== null,
+                'has_demography' => $demography !== null,
+                'has_transfers' => $transfer !== null,
                 'consultoria_active' => $consultoriaActive,
                 'in_catalog' => $inCatalog,
             ];
@@ -189,6 +221,8 @@ final class HorizonteMapService
                 'financial_pressure' => $scores['financial_pressure'],
                 'pedagogical_gap' => $scores['pedagogical_gap'],
                 'scale_score' => $scores['scale_score'],
+                'social_demand' => $scores['social_demand'],
+                'transfer_dependency' => $scores['transfer_dependency'],
                 'data_readiness' => $scores['data_readiness'],
                 'heat_intensity' => round($heatIntensity, 3),
                 'consultoria_active' => $consultoriaActive,
@@ -196,14 +230,22 @@ final class HorizonteMapService
                 'has_fundeb' => $fundeb !== null,
                 'has_censo' => $censo !== null,
                 'has_saeb' => $saeb !== null,
+                'has_cadunico' => $cadunico !== null,
+                'has_demography' => $demography !== null,
+                'has_transfers' => $transfer !== null,
                 'matriculas_censo' => $censo['matriculas_total'] ?? null,
+                'cadunico_escolar' => $cadunico['escolar'] ?? null,
+                'sidra_pop_4_17' => $demography['populacao_4_17'] ?? null,
+                'pct_criancas_pbf' => $cadunico['pct_pbf'] ?? null,
+                'transfer_total' => $transfer['total'] ?? null,
                 'complementacao_fundeb' => $fundeb['complementacao_total'] ?? null,
                 'saeb_lp' => $saeb['lp'] ?? null,
                 'saeb_mat' => $saeb['mat'] ?? null,
                 'analytics_url' => $city !== null && $consultoriaActive
                     ? route('dashboard.analytics', ['city_id' => $city['id']])
                     : null,
-                'cities_url' => $city !== null ? route('cities.edit', $city['id']) : route('cities.create'),
+                'cities_url' => $city !== null ? route('cities.edit', $city['id']) : null,
+                'sge_editable' => ! $inCatalog && ! $consultoriaActive,
                 'sge' => $sge,
                 'sge_found' => (bool) ($sge['found'] ?? false),
                 'sge_system' => $sge['system'] ?? null,
@@ -232,7 +274,10 @@ final class HorizonteMapService
             'top_prospects' => $topProspects,
             'focus_segments' => $focusSegments,
             'sge_summary' => HorizonteManagerInsights::sgeSummary($markers),
-            'meta' => HorizonteMapPresenter::refreshMeta(count($markers), $coverage),
+            'meta' => array_merge(
+                HorizonteMapPresenter::refreshMeta(count($markers), $coverage),
+                ['display_policy' => HorizonteMapPresenter::displayPolicy(count($markers), $ufRankings)],
+            ),
             'colors' => HorizonteMapPresenter::tierColors(),
             'legend' => HorizonteMapPresenter::legendItems(),
             'heat_legend' => HorizonteMapPresenter::heatLegendItems(),
@@ -412,6 +457,65 @@ final class HorizonteMapService
     }
 
     /**
+     * @return array<string, array{escolar: int, pct_pbf: ?float}>
+     */
+    private function cadunicoByIbge(int $refYear): array
+    {
+        if (! Schema::hasTable('cadunico_municipio_snapshots')) {
+            return [];
+        }
+
+        $years = [$refYear, $refYear - 1, $refYear - 2];
+        $rows = CadunicoMunicipioSnapshot::query()
+            ->whereIn('ano_referencia', $years)
+            ->orderByDesc('ano_referencia')
+            ->get();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
+            if ($ibge === null || isset($out[$ibge])) {
+                continue;
+            }
+            $indicators = CadunicoVulnerabilidadeIndicators::fromSnapshot($row);
+            $out[$ibge] = [
+                'escolar' => (int) ($indicators['criancas_escolar_cadunico'] ?? $row->totalCriancasEscolaridade()),
+                'pct_pbf' => isset($indicators['pct_criancas_pbf']) ? (float) $indicators['pct_criancas_pbf'] : null,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, array{populacao_4_17: int}>
+     */
+    private function demographyByIbge(int $refYear): array
+    {
+        if (! Schema::hasTable('municipal_demography_snapshots')) {
+            return [];
+        }
+
+        $sidraYear = (int) config('horizonte.sidra.periodo', 2022);
+        $years = array_values(array_unique([$sidraYear, $refYear, $refYear - 1]));
+        $rows = MunicipalDemographySnapshot::query()
+            ->whereIn('ano_referencia', $years)
+            ->orderByDesc('ano_referencia')
+            ->get();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
+            if ($ibge === null || isset($out[$ibge]) || $row->populacao_4_17 === null) {
+                continue;
+            }
+            $out[$ibge] = ['populacao_4_17' => (int) $row->populacao_4_17];
+        }
+
+        return $out;
+    }
+
+    /**
      * @param  list<array<string, mixed>>  $markers
      * @return array<string, mixed>
      */
@@ -500,6 +604,8 @@ final class HorizonteMapService
             [FundebMunicipioReference::class, 'imported_at'],
             [InepCensoMunicipioMatricula::class, 'imported_at'],
             [SaebIndicatorPoint::class, 'updated_at'],
+            [CadunicoMunicipioSnapshot::class, 'imported_at'],
+            [MunicipalDemographySnapshot::class, 'imported_at'],
         ] as [$model, $col]) {
             if (! \Illuminate\Support\Facades\Schema::hasTable((new $model)->getTable())) {
                 continue;
@@ -508,6 +614,13 @@ final class HorizonteMapService
                 ->selectRaw('count(*) as c, max('.$col.') as m')
                 ->first();
             $parts[] = (new $model)->getTable().':'.((int) ($row->c ?? 0)).':'.(string) ($row->m ?? '');
+        }
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('municipal_transfer_snapshots')) {
+            $row = DB::table('municipal_transfer_snapshots')
+                ->selectRaw('count(*) as c, max(imported_at) as m')
+                ->first();
+            $parts[] = 'municipal_transfer_snapshots:'.((int) ($row->c ?? 0)).':'.(string) ($row->m ?? '');
         }
 
         $parts[] = 'sge_bust:'.HorizonteMapCacheBuster::token();
@@ -541,7 +654,10 @@ final class HorizonteMapService
             'top_prospects' => [],
             'focus_segments' => [],
             'sge_summary' => HorizonteManagerInsights::sgeSummary([]),
-            'meta' => HorizonteMapPresenter::refreshMeta(0, HorizonteManagerInsights::dataCoverage([])),
+            'meta' => array_merge(
+                HorizonteMapPresenter::refreshMeta(0, HorizonteManagerInsights::dataCoverage([])),
+                ['display_policy' => HorizonteMapPresenter::displayPolicy(0, [])],
+            ),
             'colors' => HorizonteMapPresenter::tierColors(),
             'legend' => HorizonteMapPresenter::legendItems(),
             'heat_legend' => HorizonteMapPresenter::heatLegendItems(),

@@ -2,8 +2,11 @@
 
 namespace App\Services\Horizonte;
 
+use App\Models\CadunicoMunicipioSnapshot;
 use App\Models\FundebMunicipioReference;
 use App\Models\InepCensoMunicipioMatricula;
+use App\Models\MunicipalDemographySnapshot;
+use App\Models\MunicipalTransferSnapshot;
 use App\Models\SaebIndicatorPoint;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Support\Brazil\IbgeMunicipalityCatalog;
@@ -18,7 +21,7 @@ use ZipArchive;
  */
 final class HorizonteDataBundleService
 {
-    public const BUNDLE_VERSION = 1;
+    public const BUNDLE_VERSION = 2;
 
     private const IBGE_CACHE_TTL = 604800;
 
@@ -62,6 +65,15 @@ final class HorizonteDataBundleService
         }
         if ($enabled['sge_registry'] ?? false) {
             $files['sge_registry.json'] = $this->exportSgeRegistry($dir.'/sge_registry.json', $counts);
+        }
+        if ($enabled['cadunico'] ?? false) {
+            $files['cadunico.jsonl'] = $this->exportCadunico($dir.'/cadunico.jsonl', $counts);
+        }
+        if ($enabled['demography'] ?? false) {
+            $files['demography.jsonl'] = $this->exportDemography($dir.'/demography.jsonl', $counts);
+        }
+        if ($enabled['transfers'] ?? false) {
+            $files['transfers.jsonl'] = $this->exportTransfers($dir.'/transfers.jsonl', $counts);
         }
 
         $manifest = [
@@ -147,7 +159,7 @@ final class HorizonteDataBundleService
 
         $manifestRaw = @file_get_contents($tmpdir.'/manifest.json');
         $manifest = is_string($manifestRaw) ? json_decode($manifestRaw, true) : null;
-        if (! is_array($manifest) || (int) ($manifest['version'] ?? 0) !== self::BUNDLE_VERSION) {
+        if (! is_array($manifest) || (int) ($manifest['version'] ?? 0) < 1 || (int) ($manifest['version'] ?? 0) > self::BUNDLE_VERSION) {
             $this->removeDirectory($tmpdir);
 
             return [
@@ -192,6 +204,21 @@ final class HorizonteDataBundleService
                 ? 1
                 : $this->importSgeRegistry($tmpdir.'/sge_registry.json');
         }
+        if (($enabled['cadunico'] ?? false) && is_readable($tmpdir.'/cadunico.jsonl')) {
+            $imported['cadunico'] = $dryRun
+                ? $this->countJsonlLines($tmpdir.'/cadunico.jsonl')
+                : $this->importCadunico($tmpdir.'/cadunico.jsonl');
+        }
+        if (($enabled['demography'] ?? false) && is_readable($tmpdir.'/demography.jsonl')) {
+            $imported['demography'] = $dryRun
+                ? $this->countJsonlLines($tmpdir.'/demography.jsonl')
+                : $this->importDemography($tmpdir.'/demography.jsonl');
+        }
+        if (($enabled['transfers'] ?? false) && is_readable($tmpdir.'/transfers.jsonl')) {
+            $imported['transfers'] = $dryRun
+                ? $this->countJsonlLines($tmpdir.'/transfers.jsonl')
+                : $this->importTransfers($tmpdir.'/transfers.jsonl');
+        }
 
         $this->removeDirectory($tmpdir);
 
@@ -216,6 +243,9 @@ final class HorizonteDataBundleService
             'fundeb' => true,
             'censo' => true,
             'saeb' => true,
+            'cadunico' => true,
+            'demography' => true,
+            'transfers' => true,
             'ibge_cache' => true,
             'sge_registry' => true,
         ];
@@ -521,6 +551,183 @@ final class HorizonteDataBundleService
         }
 
         return count($index);
+    }
+
+    /**
+     * @param  array<string, int>  $counts
+     */
+    private function exportCadunico(string $path, array &$counts): string
+    {
+        if (! Schema::hasTable('cadunico_municipio_snapshots')) {
+            $counts['cadunico'] = 0;
+            touch($path);
+
+            return $path;
+        }
+
+        $handle = fopen($path, 'wb');
+        $count = 0;
+        CadunicoMunicipioSnapshot::query()->orderBy('id')->chunk(self::CHUNK_SIZE, function ($rows) use ($handle, &$count): void {
+            foreach ($rows as $row) {
+                fwrite($handle, json_encode($this->modelToArray($row), JSON_UNESCAPED_UNICODE)."\n");
+                $count++;
+            }
+        });
+        fclose($handle);
+        $counts['cadunico'] = $count;
+
+        return $path;
+    }
+
+    /**
+     * @param  array<string, int>  $counts
+     */
+    private function exportDemography(string $path, array &$counts): string
+    {
+        if (! Schema::hasTable('municipal_demography_snapshots')) {
+            $counts['demography'] = 0;
+            touch($path);
+
+            return $path;
+        }
+
+        $handle = fopen($path, 'wb');
+        $count = 0;
+        MunicipalDemographySnapshot::query()->orderBy('id')->chunk(self::CHUNK_SIZE, function ($rows) use ($handle, &$count): void {
+            foreach ($rows as $row) {
+                fwrite($handle, json_encode($this->modelToArray($row), JSON_UNESCAPED_UNICODE)."\n");
+                $count++;
+            }
+        });
+        fclose($handle);
+        $counts['demography'] = $count;
+
+        return $path;
+    }
+
+    /**
+     * @param  array<string, int>  $counts
+     */
+    private function exportTransfers(string $path, array &$counts): string
+    {
+        if (! Schema::hasTable('municipal_transfer_snapshots')) {
+            $counts['transfers'] = 0;
+            touch($path);
+
+            return $path;
+        }
+
+        $handle = fopen($path, 'wb');
+        $count = 0;
+        MunicipalTransferSnapshot::query()->orderBy('id')->chunk(self::CHUNK_SIZE, function ($rows) use ($handle, &$count): void {
+            foreach ($rows as $row) {
+                fwrite($handle, json_encode($this->modelToArray($row), JSON_UNESCAPED_UNICODE)."\n");
+                $count++;
+            }
+        });
+        fclose($handle);
+        $counts['transfers'] = $count;
+
+        return $path;
+    }
+
+    private function importCadunico(string $path): int
+    {
+        if (! Schema::hasTable('cadunico_municipio_snapshots')) {
+            return 0;
+        }
+
+        $imported = 0;
+        $handle = fopen($path, 'rb');
+        if ($handle === false) {
+            return 0;
+        }
+
+        while (($line = fgets($handle)) !== false) {
+            $row = json_decode(trim($line), true);
+            if (! is_array($row) || empty($row['ibge_municipio'])) {
+                continue;
+            }
+            unset($row['id'], $row['created_at'], $row['updated_at']);
+            CadunicoMunicipioSnapshot::query()->updateOrCreate(
+                [
+                    'ibge_municipio' => (string) $row['ibge_municipio'],
+                    'ano_referencia' => (int) ($row['ano_referencia'] ?? 0),
+                ],
+                $row,
+            );
+            $imported++;
+        }
+        fclose($handle);
+
+        return $imported;
+    }
+
+    private function importDemography(string $path): int
+    {
+        if (! Schema::hasTable('municipal_demography_snapshots')) {
+            return 0;
+        }
+
+        $imported = 0;
+        $handle = fopen($path, 'rb');
+        if ($handle === false) {
+            return 0;
+        }
+
+        while (($line = fgets($handle)) !== false) {
+            $row = json_decode(trim($line), true);
+            if (! is_array($row) || empty($row['ibge_municipio'])) {
+                continue;
+            }
+            unset($row['id'], $row['created_at'], $row['updated_at']);
+            MunicipalDemographySnapshot::query()->updateOrCreate(
+                [
+                    'ibge_municipio' => (string) $row['ibge_municipio'],
+                    'ano_referencia' => (int) ($row['ano_referencia'] ?? 0),
+                    'fonte' => (string) ($row['fonte'] ?? 'ibge_sidra'),
+                ],
+                $row,
+            );
+            $imported++;
+        }
+        fclose($handle);
+
+        return $imported;
+    }
+
+    private function importTransfers(string $path): int
+    {
+        if (! Schema::hasTable('municipal_transfer_snapshots')) {
+            return 0;
+        }
+
+        $imported = 0;
+        $handle = fopen($path, 'rb');
+        if ($handle === false) {
+            return 0;
+        }
+
+        while (($line = fgets($handle)) !== false) {
+            $row = json_decode(trim($line), true);
+            if (! is_array($row) || empty($row['ibge_municipio'])) {
+                continue;
+            }
+            unset($row['id'], $row['created_at'], $row['updated_at']);
+            MunicipalTransferSnapshot::query()->updateOrCreate(
+                [
+                    'ibge_municipio' => (string) $row['ibge_municipio'],
+                    'ano' => (int) ($row['ano'] ?? 0),
+                    'fonte' => (string) ($row['fonte'] ?? 'unknown'),
+                    'programa_id' => (string) ($row['programa_id'] ?? 'geral'),
+                ],
+                $row,
+            );
+            $imported++;
+        }
+        fclose($handle);
+
+        return $imported;
     }
 
     /**
