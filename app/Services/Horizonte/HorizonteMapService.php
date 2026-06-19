@@ -11,6 +11,7 @@ use App\Models\SaebIndicatorPoint;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\Cadunico\CadunicoVulnerabilidadeIndicators;
 use App\Services\Horizonte\HorizonteTesouroTransferSyncService;
+use App\Support\Brazil\BrazilUfCentroids;
 use App\Support\Brazil\IbgeMunicipalityCatalog;
 use App\Support\Brazil\IbgeUfFromCode;
 use App\Support\Dashboard\AdminHomeMapCache;
@@ -68,6 +69,129 @@ final class HorizonteMapService
         );
 
         return $payload;
+    }
+
+    /**
+     * Resposta para a UI GIS: overview nacional (sem marcadores municipais) ou recorte regional por UF.
+     *
+     * @return array<string, mixed>
+     */
+    public function buildForRequest(string $scope, ?string $uf): array
+    {
+        $full = $this->build();
+        $uf = \App\Support\Horizonte\HorizonteUfScope::normalize($uf);
+
+        if ($scope === 'regional' && $uf !== null) {
+            return $this->asRegionalPayload($full, $uf);
+        }
+
+        return $this->asOverviewPayload($full);
+    }
+
+    /**
+     * @param  array<string, mixed>  $full
+     * @return array<string, mixed>
+     */
+    private function asOverviewPayload(array $full): array
+    {
+        $markers = is_array($full['markers'] ?? null) ? $full['markers'] : [];
+        $full['mode'] = 'overview';
+        $full['uf_map_points'] = $this->buildUfMapPoints($markers);
+        $full['markers'] = [];
+
+        return $full;
+    }
+
+    /**
+     * @param  array<string, mixed>  $full
+     * @return array<string, mixed>
+     */
+    private function asRegionalPayload(array $full, string $uf): array
+    {
+        $all = is_array($full['markers'] ?? null) ? $full['markers'] : [];
+        $regional = array_values(array_filter(
+            $all,
+            static fn (array $m): bool => strtoupper((string) ($m['uf'] ?? '')) === $uf,
+        ));
+
+        $coverage = HorizonteManagerInsights::dataCoverage($regional);
+        $topProspects = array_values(array_filter(
+            $regional,
+            static fn (array $m): bool => in_array($m['tier'] ?? '', ['prospect_high', 'prospect_medium'], true),
+        ));
+
+        $full['mode'] = 'regional';
+        $full['scope_uf'] = $uf;
+        $full['markers'] = $regional;
+        $full['summary'] = array_merge($this->buildSummary($regional), ['coverage' => $coverage]);
+        $full['focus_segments'] = HorizonteManagerInsights::focusSegments($regional);
+        $full['sge_summary'] = HorizonteManagerInsights::sgeSummary($regional);
+        $full['top_prospects'] = array_slice($topProspects, 0, 25);
+        $full['uf_map_points'] = [];
+
+        return $full;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $markers
+     * @return list<array<string, mixed>>
+     */
+    private function buildUfMapPoints(array $markers): array
+    {
+        $byUf = [];
+        foreach ($markers as $m) {
+            $uf = strtoupper(trim((string) ($m['uf'] ?? '')));
+            if ($uf === '') {
+                continue;
+            }
+            if (! isset($byUf[$uf])) {
+                $byUf[$uf] = [
+                    'uf' => $uf,
+                    'total' => 0,
+                    'prospect_count' => 0,
+                    'high_prospect' => 0,
+                    'without_consultoria' => 0,
+                    'success_sum' => 0,
+                    'benefit_sum' => 0,
+                ];
+            }
+            $byUf[$uf]['total']++;
+            $byUf[$uf]['success_sum'] += (int) ($m['success_score'] ?? 0);
+            $byUf[$uf]['benefit_sum'] += (int) ($m['benefit_score'] ?? 0);
+            if (($m['tier'] ?? '') === 'prospect_high') {
+                $byUf[$uf]['high_prospect']++;
+            }
+            if (str_starts_with((string) ($m['tier'] ?? ''), 'prospect_')) {
+                $byUf[$uf]['prospect_count']++;
+            }
+            if (! ($m['consultoria_active'] ?? false)) {
+                $byUf[$uf]['without_consultoria']++;
+            }
+        }
+
+        $points = [];
+        foreach ($byUf as $row) {
+            [$lat, $lng] = BrazilUfCentroids::latLng($row['uf'], 0);
+            $total = max(1, (int) $row['total']);
+            $points[] = [
+                'uf' => $row['uf'],
+                'lat' => $lat,
+                'lng' => $lng,
+                'total' => (int) $row['total'],
+                'prospect_count' => (int) $row['prospect_count'],
+                'high_prospect' => (int) $row['high_prospect'],
+                'without_consultoria' => (int) $row['without_consultoria'],
+                'avg_success' => (int) round($row['success_sum'] / $total),
+                'avg_benefit' => (int) round($row['benefit_sum'] / $total),
+                'heat_intensity' => min(1.0, ((int) $row['high_prospect']) / max(1, (int) $row['prospect_count'])),
+            ];
+        }
+
+        usort($points, static fn (array $a, array $b): int => ($b['high_prospect'] <=> $a['high_prospect'])
+            ?: ($b['avg_benefit'] <=> $a['avg_benefit'])
+            ?: strcmp((string) $a['uf'], (string) $b['uf']));
+
+        return $points;
     }
 
     /**
@@ -154,7 +278,12 @@ final class HorizonteMapService
             $transfer = $transfersByIbge[$ibge] ?? null;
 
             $meta = null;
-            if ($city !== null) {
+            $fromIbge = $ibgeMetaIndex[$ibge] ?? null;
+            if ($fromIbge !== null
+                && BrazilUfCentroids::isValidBrazilCoord((float) ($fromIbge['lat'] ?? 0), (float) ($fromIbge['lng'] ?? 0))
+                && (($fromIbge['coord_source'] ?? '') !== 'uf_spread' || $city === null)) {
+                $meta = $fromIbge;
+            } elseif ($city !== null) {
                 $meta = [
                     'ibge' => $ibge,
                     'name' => (string) $city['name'],
@@ -163,13 +292,11 @@ final class HorizonteMapService
                     'lng' => (float) ($city['lng'] ?? 0),
                 ];
             }
-            if ($meta === null || ! is_finite($meta['lat']) || ! is_finite($meta['lng']) || ($meta['lat'] === 0.0 && $meta['lng'] === 0.0)) {
-                $fromIbge = $ibgeMetaIndex[$ibge] ?? null;
-                if ($fromIbge !== null) {
-                    $meta = $fromIbge;
-                }
+            if ($meta === null && $fromIbge !== null) {
+                $meta = $fromIbge;
             }
-            if ($meta === null || ! is_finite((float) ($meta['lat'] ?? 0))) {
+            if ($meta === null
+                || ! BrazilUfCentroids::isValidBrazilCoord((float) ($meta['lat'] ?? 0), (float) ($meta['lng'] ?? 0))) {
                 continue;
             }
 
@@ -250,6 +377,7 @@ final class HorizonteMapService
                 'sge_found' => (bool) ($sge['found'] ?? false),
                 'sge_system' => $sge['system'] ?? null,
                 'sge_status' => $sge['status'] ?? 'not_found',
+                'coord_source' => $meta['coord_source'] ?? null,
             ];
         }
 

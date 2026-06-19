@@ -59,6 +59,8 @@ final class HorizonteMapPresenterTest extends TestCase
         $this->assertSame(400, $heavy['max_render_markers']);
         $this->assertSame('prospects', $heavy['initial_tier']);
         $this->assertSame('SP', $heavy['initial_uf']);
+        $this->assertTrue($heavy['require_uf_selection']);
+        $this->assertSame('overview', $heavy['initial_mode']);
         $this->assertNotNull($heavy['reason']);
     }
 }

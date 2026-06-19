@@ -34,10 +34,18 @@ final class IbgeMunicipalityCatalogTest extends TestCase
                     ],
                 ],
             ], 200),
+            'servicodados.ibge.gov.br/api/v1/localidades/municipios/*' => Http::response([
+                'id' => 2927408,
+                'nome' => 'Salvador',
+                'centroide' => [
+                    'type' => 'Point',
+                    'coordinates' => [-38.501157, -12.971177],
+                ],
+            ], 200),
         ]);
 
         $repo = AdminHomeMapCache::repository();
-        $repo->forget('ibge_municipality_catalog_uf:BA');
+        $repo->forget('ibge_municipality_catalog_uf:v2:BA');
 
         $catalog = app(IbgeMunicipalityCatalog::class)->municipalitiesForUf('BA');
 
@@ -62,6 +70,6 @@ final class IbgeMunicipalityCatalogTest extends TestCase
         $catalog = app(IbgeMunicipalityCatalog::class)->municipalitiesForUf('XX');
 
         $this->assertSame([], $catalog);
-        $this->assertNull($repo->get('ibge_municipality_catalog_uf:XX'));
+        $this->assertNull($repo->get('ibge_municipality_catalog_uf:v2:XX'));
     }
 }

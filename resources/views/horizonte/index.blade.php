@@ -20,7 +20,7 @@
                     {{ __('Inteligência comercial municipal') }}
                 </h2>
                 <p class="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-3xl">
-                    {{ __('Mapa de calor e prospecção para gestores: municípios com dados públicos (FUNDEB, Censo, SAEB), scores de oportunidade e segmentos prioritários para Consultoria i-Educar + SERVLITCYS.') }}
+                    {{ __('Painel GIS gerencial: visão nacional por UF e detalhe municipal com filtros interactivos, clusters e scores de oportunidade.') }}
                 </p>
             </div>
             <a href="{{ $docUrl }}" class="serv-link text-sm shrink-0">{{ __('Documentação Horizonte') }}</a>
@@ -106,35 +106,67 @@
             </section>
 
             <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
-                <section class="serv-panel overflow-hidden min-w-0" aria-labelledby="horizonte-map-heading">
+                <section class="serv-panel overflow-hidden min-w-0 serv-horizonte-gis" aria-labelledby="horizonte-map-heading">
+                    <div class="serv-horizonte-gis__toolbar px-5 py-3 border-b border-slate-200/90 dark:border-slate-700/90 bg-slate-50/80 dark:bg-slate-900/50">
+                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="serv-horizonte-gis__mode-pill" :class="isOverviewMode ? 'is-national' : 'is-regional'">
+                                    <span x-show="isOverviewMode">{{ __('Visão nacional') }}</span>
+                                    <span x-show="isRegionalMode" x-cloak x-text="'UF ' + scopeUf"></span>
+                                </span>
+                                <button
+                                    type="button"
+                                    x-show="isRegionalMode"
+                                    x-cloak
+                                    class="serv-btn-secondary text-xs"
+                                    @click="backToOverview()"
+                                    :disabled="pageLoading || regionalLoading"
+                                >{{ __('← Brasil') }}</button>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2 text-xs">
+                                <label class="inline-flex items-center gap-2">
+                                    <span class="text-slate-500 shrink-0">{{ __('UF') }}</span>
+                                    <select
+                                        x-model="scopeUf"
+                                        @change="scopeUf ? selectUf(scopeUf) : backToOverview()"
+                                        :disabled="pageLoading || regionalLoading"
+                                        class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 text-sm min-w-[5rem]"
+                                    >
+                                        <option value="">{{ __('Nacional') }}</option>
+                                        <template x-for="uf in ufList.length ? ufList : ufRankings.map(r => r.uf)" :key="uf">
+                                            <option :value="uf" x-text="uf"></option>
+                                        </template>
+                                    </select>
+                                </label>
+                                <div class="flex gap-1 rounded-lg ring-1 ring-slate-200/80 dark:ring-slate-600 p-0.5" x-show="isRegionalMode" x-cloak>
+                                    <button type="button" class="rounded-md px-2.5 py-1 font-medium transition" :class="mapView === 'markers' ? 'bg-indigo-100 text-indigo-900 dark:bg-indigo-950/50' : 'text-slate-600'" @click="setMapView('markers')">{{ __('Pontos') }}</button>
+                                    <button type="button" class="rounded-md px-2.5 py-1 font-medium transition" :class="mapView === 'heat' ? 'bg-rose-100 text-rose-900 dark:bg-rose-950/50' : 'text-slate-600'" @click="setMapView('heat')">{{ __('Calor') }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="px-5 py-4 border-b border-slate-200/90 dark:border-slate-700/90 space-y-4">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <h3 id="horizonte-map-heading" class="font-display text-lg font-semibold text-serv-navy dark:text-slate-100">
-                                {{ __('Mapa') }}
+                                <span x-show="isOverviewMode">{{ __('Mapa — agregado por UF') }}</span>
+                                <span x-show="isRegionalMode" x-cloak>{{ __('Mapa municipal') }}</span>
                             </h3>
-                            <div class="flex flex-wrap gap-1.5 text-xs">
-                                <button
-                                    type="button"
-                                    class="rounded-full px-3 py-1 font-medium ring-1 ring-slate-200/80 dark:ring-slate-600 transition"
-                                    :class="mapView === 'heat' ? 'bg-rose-100 text-rose-900 dark:bg-rose-950/50 dark:text-rose-200' : 'bg-white/80 text-slate-600 dark:bg-slate-900/60 dark:text-slate-300'"
-                                    @click="setMapView('heat')"
-                                    :disabled="pageLoading"
-                                >{{ __('Calor') }}</button>
-                                <button
-                                    type="button"
-                                    class="rounded-full px-3 py-1 font-medium ring-1 ring-slate-200/80 dark:ring-slate-600 transition"
-                                    :class="mapView === 'markers' ? 'bg-indigo-100 text-indigo-900 dark:bg-indigo-950/50 dark:text-indigo-200' : 'bg-white/80 text-slate-600 dark:bg-slate-900/60 dark:text-slate-300'"
-                                    @click="setMapView('markers')"
-                                    :disabled="pageLoading"
-                                >{{ __('Marcadores') }}</button>
-                            </div>
+                            <p class="text-xs text-slate-500 tabular-nums" x-show="!pageLoading">
+                                <span x-show="isOverviewMode">{{ __('Clique num estado para detalhar municípios') }}</span>
+                                <span x-show="isRegionalMode" x-cloak>
+                                    <span x-text="filteredCount.toLocaleString('pt-BR')"></span> {{ __('no recorte') }} ·
+                                    <span x-text="totalMarkers.toLocaleString('pt-BR')"></span> {{ __('nacional') }}
+                                </span>
+                            </p>
                         </div>
 
                         <div
                             @keydown.escape.window="closeTooltip()"
                             class="space-y-3"
-                            :class="{ 'pointer-events-none opacity-60': pageLoading }"
-                            :aria-busy="(pageLoading || mapRendering) ? 'true' : 'false'"
+                            :class="{ 'pointer-events-none opacity-60': pageLoading || regionalLoading }"
+                            :aria-busy="(pageLoading || regionalLoading || mapRendering) ? 'true' : 'false'"
+                            x-show="isRegionalMode"
+                            x-cloak
                         >
                             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                                 <div class="relative sm:col-span-2">
@@ -251,134 +283,95 @@
                                     </label>
                                 @endif
                             </div>
+                        </div>
 
-                            <div
-                                x-show="!pageLoading && initialViewNotice && initialViewNotice.message"
-                                x-cloak
-                                class="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-100 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"
-                                role="status"
-                            >
-                                <div class="min-w-0 space-y-1">
-                                    <p class="font-medium">{{ __('Vista inicial optimizada') }}</p>
-                                    <p x-text="initialViewNotice.message"></p>
-                                    <p class="text-xs text-sky-800/80 dark:text-sky-200/80 tabular-nums">
-                                        <span x-text="filteredCount.toLocaleString('pt-BR')"></span> {{ __('no recorte') }} ·
-                                        <span x-text="totalMarkers.toLocaleString('pt-BR')"></span> {{ __('na base nacional') }} ·
-                                        <span x-text="mapRenderShownCount.toLocaleString('pt-BR')"></span> {{ __('desenhados no mapa') }}
-                                    </p>
-                                </div>
-                                <div class="flex flex-wrap gap-2 shrink-0">
-                                    <button type="button" class="serv-btn-secondary text-xs" @click="filterUf = ''; filterTier = 'prospects'">{{ __('Prospectos (Brasil)') }}</button>
-                                    <button type="button" class="text-xs text-sky-800 dark:text-sky-200 hover:underline" @click="dismissInitialNotice()">{{ __('Ocultar') }}</button>
-                                </div>
-                            </div>
+                        <div
+                            x-show="isOverviewMode && !pageLoading && initialViewNotice?.message"
+                            x-cloak
+                            class="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-100"
+                            role="status"
+                        >
+                            <p class="font-medium">{{ __('Visão executiva nacional') }}</p>
+                            <p x-text="initialViewNotice?.message"></p>
+                            <p class="mt-1 text-xs tabular-nums text-sky-800/80 dark:text-sky-200/80">
+                                <span x-text="totalMarkers.toLocaleString('pt-BR')"></span> {{ __('municípios na base') }} ·
+                                <span x-text="ufMapPoints.length"></span> {{ __('UFs no mapa') }}
+                            </p>
+                        </div>
 
-                            <div
-                                x-show="!pageLoading && mapRenderTruncated && !renderCapDismissed"
-                                x-cloak
-                                class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
-                                role="status"
-                            >
-                                <p>
-                                    <span class="font-medium">{{ __('Mapa limitado para fluidez.') }}</span>
-                                    <span class="tabular-nums" x-text="' ' + mapRenderShownCount.toLocaleString('pt-BR') + ' {{ __('de') }} ' + filteredCount.toLocaleString('pt-BR') + ' {{ __('no recorte') }} (' + totalMarkers.toLocaleString('pt-BR') + ' {{ __('na base') }}).'"></span>
-                                    <span class="block text-xs mt-1 text-amber-900/80 dark:text-amber-100/80">{{ __('Prioridade por propensão. Use UF, segmentos ou busca para reduzir; ou carregue todos os pontos (pode travar).') }}</span>
-                                </p>
-                                <div class="flex flex-wrap gap-2 shrink-0">
-                                    <button type="button" class="serv-btn-secondary text-xs" @click="enableFullMapRender()">{{ __('Mostrar todos no mapa') }}</button>
-                                    <button type="button" class="text-xs text-amber-900 dark:text-amber-100 hover:underline" @click="renderCapDismissed = true">{{ __('Manter limite') }}</button>
-                                </div>
-                            </div>
-
-                            <div
-                                x-show="!pageLoading && showAllOnMap && filteredCount > mapRenderLimit"
-                                x-cloak
-                                class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-950 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-100"
-                                role="status"
-                            >
-                                <span class="font-medium">{{ __('Modo completo') }}:</span>
-                                <span class="tabular-nums" x-text="' ' + filteredCount.toLocaleString('pt-BR') + ' {{ __('pontos no mapa') }}.'"></span>
-                                {{ __('O zoom pode ficar lento — prefira filtrar por UF ou segmento.') }}
-                            </div>
-
-                            <div class="serv-map-legend flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                                <template x-if="mapView === 'heat'">
-                                    <template x-for="item in heatLegend" :key="item.key">
-                                        <span class="serv-map-legend__item" :title="item.description || ''">
-                                            <span class="serv-map-legend-swatch serv-map-legend-swatch--connection" :style="'background-color:' + (item.color || '#64748b')" aria-hidden="true"></span>
-                                            <span class="text-slate-600 dark:text-slate-300" x-text="item.label"></span>
-                                        </span>
-                                    </template>
+                        <div class="serv-map-legend flex flex-wrap gap-x-4 gap-y-2 text-xs" x-show="isRegionalMode" x-cloak>
+                            <template x-if="mapView === 'heat'">
+                                <template x-for="item in heatLegend" :key="item.key">
+                                    <span class="serv-map-legend__item" :title="item.description || ''">
+                                        <span class="serv-map-legend-swatch serv-map-legend-swatch--connection" :style="'background-color:' + (item.color || '#64748b')" aria-hidden="true"></span>
+                                        <span class="text-slate-600 dark:text-slate-300" x-text="item.label"></span>
+                                    </span>
                                 </template>
-                                <template x-if="mapView === 'markers'">
-                                    <template x-for="item in legend" :key="item.key">
-                                        <span class="serv-map-legend__item" :title="item.description || ''">
-                                            <span class="serv-map-legend-swatch serv-map-legend-swatch--connection" :style="'background-color:' + (item.color || '#64748b')" aria-hidden="true"></span>
-                                            <span class="text-slate-600 dark:text-slate-300" x-text="item.label"></span>
-                                        </span>
-                                    </template>
+                            </template>
+                            <template x-if="mapView === 'markers'">
+                                <template x-for="item in legend" :key="item.key">
+                                    <span class="serv-map-legend__item" :title="item.description || ''">
+                                        <span class="serv-map-legend-swatch serv-map-legend-swatch--connection" :style="'background-color:' + (item.color || '#64748b')" aria-hidden="true"></span>
+                                        <span class="text-slate-600 dark:text-slate-300" x-text="item.label"></span>
+                                    </span>
                                 </template>
-                                <span class="text-slate-500 dark:text-slate-400 tabular-nums" x-show="!pageLoading">
-                                    <span x-text="filteredCount.toLocaleString('pt-BR')"></span> {{ __('no recorte') }}
-                                    <template x-if="mapRenderTruncated">
-                                        <span x-text="' · ' + mapRenderShownCount.toLocaleString('pt-BR') + ' {{ __('no mapa') }}'"></span>
-                                    </template>
-                                    <template x-if="mapHeavyDataset">
-                                        <span x-text="' · ' + totalMarkers.toLocaleString('pt-BR') + ' {{ __('na base') }}'"></span>
-                                    </template>
-                                </span>
+                            </template>
+                        </div>
+                        <div class="serv-map-legend flex flex-wrap gap-x-4 gap-y-2 text-xs" x-show="isOverviewMode" x-cloak>
+                            <span class="serv-map-legend__item">
+                                <span class="serv-map-legend-swatch serv-map-legend-swatch--connection bg-amber-300" aria-hidden="true"></span>
+                                <span class="text-slate-600 dark:text-slate-300">{{ __('Tamanho = volume municipal') }}</span>
+                            </span>
+                            <span class="serv-map-legend__item">
+                                <span class="serv-map-legend-swatch serv-map-legend-swatch--connection bg-rose-500" aria-hidden="true"></span>
+                                <span class="text-slate-600 dark:text-slate-300">{{ __('Cor = alta propensão') }}</span>
+                            </span>
+                        </div>
+
+                        <div
+                            x-show="isRegionalMode && !pageLoading && mapRenderTruncated && !renderCapDismissed"
+                            x-cloak
+                            class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100"
+                            role="status"
+                        >
+                            <span class="font-medium">{{ __('Mapa limitado') }}:</span>
+                            <span class="tabular-nums" x-text="' ' + mapRenderShownCount.toLocaleString('pt-BR') + ' / ' + filteredCount.toLocaleString('pt-BR') + ' {{ __('pontos') }}.'"></span>
+                            <button type="button" class="ms-2 text-xs underline" @click="enableFullMapRender()">{{ __('Mostrar todos') }}</button>
+                        </div>
+
+                        <div class="relative">
+                            <div
+                                x-show="pageLoading || regionalLoading || mapRendering"
+                                x-cloak
+                                class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-lg bg-white/85 dark:bg-slate-900/85 backdrop-blur-sm"
+                                role="status"
+                                aria-live="polite"
+                            >
+                                <div class="h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" aria-hidden="true"></div>
+                                <p class="text-sm font-medium text-slate-700 dark:text-slate-200" x-text="loadingMessage || (regionalLoading ? '{{ __('A carregar UF…') }}' : '{{ __('A carregar…') }}')"></p>
                             </div>
 
-                            <div class="relative">
-                                <div
-                                    x-show="pageLoading || mapRendering"
-                                    x-cloak
-                                    class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-lg bg-white/85 dark:bg-slate-900/85 backdrop-blur-sm"
-                                    role="status"
-                                    aria-live="polite"
-                                >
-                                    <div class="h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" aria-hidden="true"></div>
-                                    <p class="text-sm font-medium text-slate-700 dark:text-slate-200" x-text="pageLoading ? loadingMessage || '{{ __('A carregar dados públicos…') }}' : (loadingMessage || '{{ __('A desenhar mapa…') }}')"></p>
-                                    <div x-show="mapRendering && renderProgress > 0" class="w-48 max-w-[70%] h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                                        <div class="h-full bg-teal-600 transition-all duration-150" :style="'width:' + renderProgress + '%'"></div>
-                                    </div>
-                                </div>
+                            <div
+                                x-show="!pageLoading && !regionalLoading && totalMarkers === 0 && !isOverviewMode"
+                                x-cloak
+                                class="absolute inset-0 z-[5] flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50/95 dark:bg-slate-900/90 px-6 py-8 text-center"
+                                role="status"
+                            >
+                                <p class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Mapa vazio') }}</p>
+                                <p class="text-sm text-slate-600 dark:text-slate-400 max-w-md" x-text="meta.message || '{{ __('Importe dados públicos nacionais.') }}'"></p>
+                            </div>
 
-                                <div
-                                    x-show="!pageLoading && !mapRendering && totalMarkers === 0"
-                                    x-cloak
-                                    class="absolute inset-0 z-[5] flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50/95 dark:bg-slate-900/90 px-6 py-8 text-center"
-                                    role="status"
-                                >
-                                    <p class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Mapa vazio') }}</p>
-                                    <p class="text-sm text-slate-600 dark:text-slate-400 max-w-md" x-text="meta.message || '{{ __('Importe dados públicos nacionais ou cadastre municípios com IBGE no catálogo.') }}'"></p>
-                                    <div class="w-full max-w-lg rounded-lg bg-slate-900 dark:bg-slate-950 px-4 py-3 text-left">
-                                        <p class="text-[10px] font-medium uppercase tracking-wide text-slate-400">{{ __('Abastecimento (servidor)') }}</p>
-                                        <code class="mt-1 block text-xs text-emerald-300 break-all font-mono" x-text="meta.refresh_command || 'php artisan horizonte:fortnightly-feed'"></code>
-                                        <p class="mt-2 text-[10px] text-slate-500">{{ __('Simular antes:') }} <code class="text-slate-400" x-text="meta.refresh_dry_run_command || 'php artisan horizonte:fortnightly-feed --dry-run'"></code></p>
-                                    </div>
-                                    @if ($canRefreshData)
-                                        <a
-                                            :href="meta.hub_url || @js(route('admin.public-data.index', ['hub' => 'horizonte']))"
-                                            class="serv-btn-secondary text-sm"
-                                        >{{ __('Abrir hub Dados públicos') }}</a>
-                                    @endif
-                                </div>
+                            <div
+                                x-show="mapHiddenByFilters"
+                                x-cloak
+                                class="absolute inset-x-0 top-0 z-[5] mx-3 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 flex justify-between gap-2"
+                                role="status"
+                            >
+                                <p class="font-medium">{{ __('Filtros ocultam todos os municípios.') }}</p>
+                                <button type="button" class="serv-btn-secondary text-xs shrink-0" @click="resetFilters()">{{ __('Limpar') }}</button>
+                            </div>
 
-                                <div
-                                    x-show="mapHiddenByFilters"
-                                    x-cloak
-                                    class="absolute inset-x-0 top-0 z-[5] mx-3 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
-                                    role="status"
-                                >
-                                    <p>
-                                        <span class="font-medium">{{ __('Filtros ocultam todos os municípios.') }}</span>
-                                        <span class="tabular-nums" x-text="' ' + totalMarkers.toLocaleString('pt-BR') + ' {{ __('carregados') }}.'"></span>
-                                    </p>
-                                    <button type="button" class="serv-btn-secondary text-xs shrink-0" @click="resetFilters()">{{ __('Mostrar todos') }}</button>
-                                </div>
-
-                                <div x-ref="map" class="serv-brazil-map w-full" role="application" aria-label="{{ __('Mapa Horizonte — oportunidade municipal') }}" style="height: min(70vh, 520px);"></div>
+                            <div x-ref="map" class="serv-brazil-map serv-horizonte-gis__map w-full" role="application" aria-label="{{ __('Mapa Horizonte GIS') }}" style="height: min(72vh, 560px);"></div>
                                 <div
                                     x-show="active"
                                     x-cloak
@@ -425,7 +418,7 @@
                                 </div>
                             </div>
                             <p class="text-xs text-slate-500 dark:text-slate-400">
-                                {{ __('Scores indicativos — não substituem o Diagnóstico i-Educar. Bases nacionais grandes iniciam com UF prioritária e limite de pontos no mapa; KPIs e listas usam a base completa.') }}
+                                {{ __('Visão nacional por UF; detalhe municipal com clusters. Coordenadas IBGE reais quando disponíveis.') }}
                             </p>
                         </div>
                     </div>
@@ -543,7 +536,7 @@
                         <ol x-show="ufRankings.length > 0" class="mt-3 space-y-2 text-sm">
                             <template x-for="row in ufRankings" :key="row.uf">
                                 <li>
-                                    <button type="button" class="w-full flex items-center justify-between gap-2 rounded-lg bg-slate-50/80 dark:bg-slate-900/50 px-3 py-2 text-left hover:bg-teal-50/80 dark:hover:bg-teal-950/30" @click="filterUf = row.uf">
+                                    <button type="button" class="w-full flex items-center justify-between gap-2 rounded-lg bg-slate-50/80 dark:bg-slate-900/50 px-3 py-2 text-left hover:bg-teal-50/80 dark:hover:bg-teal-950/30" @click="selectUf(row.uf)">
                                         <span class="font-medium" x-text="row.uf"></span>
                                         <span class="text-xs text-slate-500 tabular-nums" x-text="Number(row.without_consultoria ?? 0).toLocaleString('pt-BR') + ' {{ __('sem consult.') }}'"></span>
                                         <span class="text-xs text-rose-700 dark:text-rose-300 tabular-nums" x-text="Number(row.high_prospect ?? 0).toLocaleString('pt-BR') + ' {{ __('alta') }}'"></span>

@@ -57,18 +57,42 @@ final class BrazilUfCentroids
         $base = self::CENTROIDS[$uf] ?? [-14.5, -52.0];
 
         if ($total <= 1 && $extraSeed === 0) {
-            return $base;
+            return self::clampBrazil($base[0], $base[1]);
         }
 
-        $slot = $index + ($extraSeed % max(1, $total));
-        $angle = (2 * M_PI * $slot) / max(1, $total);
-        $rings = (int) ceil($total / 8);
-        $ring = (int) floor($slot / 8);
-        $radius = 0.42 + ($ring * 0.28) + min(1.1, 0.12 * sqrt($total));
+        $total = max(1, $total);
+        $index = max(0, $index % $total);
+        $slot = ($index + abs($extraSeed) % $total) % $total;
+        $angle = (2 * M_PI * $slot) / $total;
 
-        return [
+        // Raio máximo ~1,8° (~200 km) — evita pontos fora do território nacional.
+        $maxRadius = min(1.8, 0.35 + 0.08 * sqrt($total));
+        $layers = min(8, max(1, (int) ceil($total / 20)));
+        $layer = $slot % $layers;
+        $radius = ($maxRadius / $layers) * (0.55 + $layer);
+
+        return self::clampBrazil(
             round($base[0] + $radius * cos($angle), 5),
             round($base[1] + $radius * sin($angle) * 1.12, 5),
+        );
+    }
+
+    /**
+     * @return array{0: float, 1: float}
+     */
+    public static function clampBrazil(float $lat, float $lng): array
+    {
+        return [
+            max(-33.75, min(5.27, $lat)),
+            max(-73.99, min(-32.39, $lng)),
         ];
+    }
+
+    /**
+     * @return bool
+     */
+    public static function isValidBrazilCoord(float $lat, float $lng): bool
+    {
+        return $lat >= -34.0 && $lat <= 5.5 && $lng >= -74.5 && $lng <= -32.0;
     }
 }

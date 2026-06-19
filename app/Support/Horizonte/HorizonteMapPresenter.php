@@ -152,6 +152,8 @@ final class HorizonteMapPresenter
             'heavy_threshold' => $threshold,
             'initial_tier' => $heavy ? 'prospects' : 'all',
             'initial_uf' => $initialUf,
+            'require_uf_selection' => $heavy,
+            'initial_mode' => $heavy ? 'overview' : 'regional',
             'reason' => $reason,
         ];
     }

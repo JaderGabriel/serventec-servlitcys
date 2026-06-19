@@ -108,7 +108,7 @@ final class IbgeMunicipalityCatalog
             return [];
         }
 
-        $cacheKey = 'ibge_municipality_catalog_uf:'.$uf;
+        $cacheKey = 'ibge_municipality_catalog_uf:v2:'.$uf;
         $cache = AdminHomeMapCache::repository();
         $cached = $cache->get($cacheKey);
         if (is_array($cached) && $cached !== []) {
@@ -179,7 +179,7 @@ final class IbgeMunicipalityCatalog
             return null;
         }
 
-        [$lat, $lng] = $this->coordinatesFromApiItem($item, $uf, $index, $total, (int) $ibge);
+        [$lat, $lng, $source] = $this->coordinatesFromApiItem($item, $uf, $index, $total, $ibge);
 
         return [
             'ibge' => $ibge,
@@ -187,16 +187,17 @@ final class IbgeMunicipalityCatalog
             'uf' => $uf,
             'lat' => $lat,
             'lng' => $lng,
+            'coord_source' => $source,
         ];
     }
 
     /**
-     * A API de localidades deixou de incluir centroide na listagem por UF; usa dispersão na UF como fallback.
+     * A API de localidades deixou de incluir centroide na listagem por UF; tenta endpoint individual (cacheado).
      *
      * @param  array<string, mixed>  $item
-     * @return array{0: float, 1: float}
+     * @return array{0: float, 1: float, 2: string}
      */
-    private function coordinatesFromApiItem(array $item, string $uf, int $index, int $total, int $ibgeSeed): array
+    private function coordinatesFromApiItem(array $item, string $uf, int $index, int $total, string $ibge): array
     {
         $centroide = $item['centroide'] ?? null;
         if (is_array($centroide) && ($centroide['type'] ?? '') === 'Point') {
@@ -204,13 +205,82 @@ final class IbgeMunicipalityCatalog
             if (is_array($coordinates) && count($coordinates) >= 2) {
                 $lat = (float) $coordinates[1];
                 $lng = (float) $coordinates[0];
-                if ($lat >= -34.0 && $lat <= 5.5 && $lng >= -74.5 && $lng <= -32.0) {
-                    return [$lat, $lng];
+                if (BrazilUfCentroids::isValidBrazilCoord($lat, $lng)) {
+                    return [$lat, $lng, 'ibge_list'];
                 }
             }
         }
 
-        return BrazilUfCentroids::latLngForIndex($uf, $index, max(1, $total), $ibgeSeed);
+        $fromSingle = $this->fetchRawCentroidFromApi($ibge);
+        if ($fromSingle !== null) {
+            return [$fromSingle[0], $fromSingle[1], 'ibge_api'];
+        }
+
+        [$lat, $lng] = BrazilUfCentroids::latLngForIndex($uf, $index, max(1, $total), (int) $ibge);
+
+        return [$lat, $lng, 'uf_spread'];
+    }
+
+    /**
+     * Centroide real via endpoint individual (sem recursão com metaByIbge).
+     *
+     * @return array{0: float, 1: float}|null
+     */
+    private function fetchRawCentroidFromApi(string $ibge): ?array
+    {
+        $ibge = $this->normalizeIbge($ibge);
+        if ($ibge === null) {
+            return null;
+        }
+
+        $cacheKey = 'ibge_municipality_centroid:'.$ibge;
+        $cached = AdminHomeMapCache::get($cacheKey);
+        if (is_array($cached) && isset($cached['lat'], $cached['lng'])) {
+            return [(float) $cached['lat'], (float) $cached['lng']];
+        }
+
+        try {
+            $response = Http::timeout(8)
+                ->acceptJson()
+                ->get('https://servicodados.ibge.gov.br/api/v1/localidades/municipios/'.$ibge);
+
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $centroide = $response->json('centroide');
+            if (! is_array($centroide) || ($centroide['type'] ?? '') !== 'Point') {
+                return null;
+            }
+
+            $coordinates = $centroide['coordinates'] ?? null;
+            if (! is_array($coordinates) || count($coordinates) < 2) {
+                return null;
+            }
+
+            $lat = (float) $coordinates[1];
+            $lng = (float) $coordinates[0];
+            if (! BrazilUfCentroids::isValidBrazilCoord($lat, $lng)) {
+                return null;
+            }
+
+            AdminHomeMapCache::repository()->put($cacheKey, ['lat' => $lat, 'lng' => $lng], self::CACHE_TTL_SECONDS);
+
+            return [$lat, $lng];
+        } catch (\Throwable $e) {
+            Log::debug('horizonte.ibge_centroid_failed', ['ibge' => $ibge, 'message' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /**
+     * @deprecated Use fetchRawCentroidFromApi
+     * @return array{0: float, 1: float}|null
+     */
+    private function centroidFromSingleMunicipalityApi(string $ibge): ?array
+    {
+        return $this->fetchRawCentroidFromApi($ibge);
     }
 
     private function normalizeIbge(string $raw): ?string

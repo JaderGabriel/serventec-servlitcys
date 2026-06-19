@@ -4373,6 +4373,30 @@
         @apply w-80 sm:w-[22rem];
     }
 
+    .serv-horizonte-gis__toolbar {
+        @apply backdrop-blur-sm;
+    }
+
+    .serv-horizonte-gis__mode-pill {
+        @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ring-1;
+    }
+
+    .serv-horizonte-gis__mode-pill.is-national {
+        @apply bg-sky-100 text-sky-900 ring-sky-200 dark:bg-sky-950/50 dark:text-sky-100 dark:ring-sky-800;
+    }
+
+    .serv-horizonte-gis__mode-pill.is-regional {
+        @apply bg-teal-100 text-teal-900 ring-teal-200 dark:bg-teal-950/50 dark:text-teal-100 dark:ring-teal-800;
+    }
+
+    .serv-horizonte-gis__map {
+        @apply rounded-lg ring-1 ring-slate-200/80 dark:ring-slate-700/80 overflow-hidden;
+    }
+
+    .serv-horizonte-gis__map .leaflet-container {
+        @apply rounded-lg;
+    }
+
     .serv-map-rx-status {
         @apply bg-slate-50/90 dark:bg-slate-900/50;
     }

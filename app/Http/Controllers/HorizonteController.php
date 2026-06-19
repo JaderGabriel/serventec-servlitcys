@@ -39,6 +39,15 @@ class HorizonteController extends Controller
         abort_unless($user !== null && $user->canViewHorizonte(), 403);
         abort_unless((bool) config('horizonte.enabled', true), 404);
 
-        return response()->json($this->map->build());
+        $uf = HorizonteUfScope::normalize($request->query('uf'));
+        $scope = (string) $request->query('scope', $uf !== null ? 'regional' : 'overview');
+        if (! in_array($scope, ['overview', 'regional'], true)) {
+            $scope = 'overview';
+        }
+        if ($scope === 'regional' && $uf === null) {
+            $scope = 'overview';
+        }
+
+        return response()->json($this->map->buildForRequest($scope, $uf));
     }
 }
