@@ -41,6 +41,12 @@ final class HorizonteFortnightlyFeedPipeline
     public static function forget(): void
     {
         Cache::forget(self::CACHE_KEY);
+        HorizonteSaebImportProgress::reset();
+    }
+
+    public static function forgetIncludingIbgeProgress(): void
+    {
+        self::forget();
         HorizonteIbgeWarmProgress::reset();
     }
 

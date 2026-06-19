@@ -268,7 +268,9 @@ Rota: `/dashboard/horizonte` · Documentação: [HORIZONTE.md](HORIZONTE.md).
 | `HORIZONTE_HIGH_THRESHOLD` | `70` | Limiar tier «alta propensão» |
 | `HORIZONTE_MEDIUM_THRESHOLD` | `40` | Limiar tier «média propensão» |
 | `HORIZONTE_FORTNIGHTLY_FEED_ENABLED` | `true` | Activa o comando e fases da rotina |
-| `HORIZONTE_FORTNIGHTLY_FEED_SCHEDULE_ENABLED` | `true` | Agenda dias 1 e 15 (`horizonte:fortnightly-feed`) |
+| `HORIZONTE_FORTNIGHTLY_FEED_SCHEDULE_ENABLED` | `true` | Agenda bimestral (`horizonte:fortnightly-feed`) |
+| `HORIZONTE_FORTNIGHTLY_FEED_SCHEDULE_DAY` | `1` | Dia do mês (1–28) |
+| `HORIZONTE_FORTNIGHTLY_FEED_SCHEDULE_MONTHS` | `1,3,5,7,9,11` | Meses do ano (bimestral) |
 | `HORIZONTE_FORTNIGHTLY_FEED_TIME` | `03:00` | Hora (timezone da app) |
 | `HORIZONTE_FORTNIGHTLY_FUNDEB_YEARS` | *(vazio)* | Anos CSV receita FNDE (vazio = ref. + anterior) |
 | `HORIZONTE_FORTNIGHTLY_CENSO_SKIP_IF_MISSING` | `true` | Não falha se microdados INEP ausentes |

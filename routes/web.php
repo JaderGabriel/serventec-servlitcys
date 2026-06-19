@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\LegalConsentRevocationController;
 use App\Http\Controllers\Admin\LegalDocumentAdminController;
 use App\Http\Controllers\Admin\CadunicoSyncController;
 use App\Http\Controllers\Admin\PedagogicalSyncController;
+use App\Http\Controllers\Admin\HorizonteSgeRegistryController;
 use App\Http\Controllers\Admin\PublicDataImportController;
 use App\Http\Controllers\HorizonteController;
 use App\Http\Controllers\AnalyticsDashboardController;
@@ -148,6 +149,10 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'legal.consent', 'adm
     Route::post('/admin/dados-publicos/verificar-oficial', [PublicDataImportController::class, 'checkOfficial'])->name('admin.public-data.check-official');
     Route::match(['get', 'post'], '/admin/dados-publicos/horizonte-feed', [PublicDataImportController::class, 'horizonteFeed'])->name('admin.public-data.horizonte-feed');
     Route::post('/admin/dados-publicos', [PublicDataImportController::class, 'run'])->name('admin.public-data.run');
+
+    Route::get('/admin/horizonte/sge/{ibge}', [HorizonteSgeRegistryController::class, 'show'])->name('admin.horizonte.sge.show');
+    Route::put('/admin/horizonte/sge/{ibge}', [HorizonteSgeRegistryController::class, 'upsert'])->name('admin.horizonte.sge.upsert');
+    Route::delete('/admin/horizonte/sge/{ibge}', [HorizonteSgeRegistryController::class, 'destroy'])->name('admin.horizonte.sge.destroy');
 
     Route::get('/admin/ieducar-compatibility', [IeducarCompatibilityController::class, 'index'])->name('admin.ieducar-compatibility.index');
     Route::get('/admin/ieducar-compatibility/export', [IeducarCompatibilityController::class, 'export'])->name('admin.ieducar-compatibility.export');

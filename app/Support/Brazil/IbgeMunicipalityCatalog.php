@@ -42,7 +42,10 @@ final class IbgeMunicipalityCatalog
                 return null;
             }
 
-            $meta = $this->metaFromApiItem($item);
+            $ufHint = strtoupper(trim((string) (
+                IbgeUfFromCode::ufFromIbge($ibge) ?? ''
+            )));
+            $meta = $this->metaFromApiItem($item, $ufHint !== '' ? $ufHint : null, 0, 1);
             if ($meta !== null) {
                 AdminHomeMapCache::repository()->put('ibge_municipality_meta:'.$ibge, $meta, self::CACHE_TTL_SECONDS);
             }
@@ -105,51 +108,59 @@ final class IbgeMunicipalityCatalog
             return [];
         }
 
-        return AdminHomeMapCache::repository()->remember(
-            'ibge_municipality_catalog_uf:'.$uf,
-            self::CACHE_TTL_SECONDS,
-            function () use ($uf): array {
-                try {
-                    $response = Http::timeout(15)
-                        ->acceptJson()
-                        ->get('https://servicodados.ibge.gov.br/api/v1/localidades/estados/'.$uf.'/municipios');
+        $cacheKey = 'ibge_municipality_catalog_uf:'.$uf;
+        $cache = AdminHomeMapCache::repository();
+        $cached = $cache->get($cacheKey);
+        if (is_array($cached) && $cached !== []) {
+            return $cached;
+        }
 
-                    if (! $response->successful()) {
-                        return [];
-                    }
+        try {
+            $response = Http::timeout(15)
+                ->acceptJson()
+                ->get('https://servicodados.ibge.gov.br/api/v1/localidades/estados/'.$uf.'/municipios');
 
-                    $items = $response->json();
-                    if (! is_array($items)) {
-                        return [];
-                    }
+            if (! $response->successful()) {
+                return [];
+            }
 
-                    $index = [];
-                    foreach ($items as $item) {
-                        if (! is_array($item)) {
-                            continue;
-                        }
-                        $meta = $this->metaFromApiItem($item);
-                        if ($meta !== null) {
-                            $index[$meta['ibge']] = $meta;
-                            AdminHomeMapCache::repository()->put('ibge_municipality_meta:'.$meta['ibge'], $meta, self::CACHE_TTL_SECONDS);
-                        }
-                    }
+            $items = $response->json();
+            if (! is_array($items)) {
+                return [];
+            }
 
-                    return $index;
-                } catch (\Throwable $e) {
-                    Log::debug('horizonte.ibge_uf_failed', ['uf' => $uf, 'message' => $e->getMessage()]);
-
-                    return [];
+            $total = count($items);
+            $index = [];
+            foreach ($items as $position => $item) {
+                if (! is_array($item)) {
+                    continue;
                 }
-            },
-        );
+                $meta = $this->metaFromApiItem($item, $uf, (int) $position, $total);
+                if ($meta !== null) {
+                    $index[$meta['ibge']] = $meta;
+                    $cache->put('ibge_municipality_meta:'.$meta['ibge'], $meta, self::CACHE_TTL_SECONDS);
+                }
+            }
+
+            if ($index !== []) {
+                $cache->put($cacheKey, $index, self::CACHE_TTL_SECONDS);
+            } else {
+                $cache->forget($cacheKey);
+            }
+
+            return $index;
+        } catch (\Throwable $e) {
+            Log::debug('horizonte.ibge_uf_failed', ['uf' => $uf, 'message' => $e->getMessage()]);
+
+            return [];
+        }
     }
 
     /**
      * @param  array<string, mixed>  $item
      * @return array{ibge: string, name: string, uf: string, lat: float, lng: float}|null
      */
-    private function metaFromApiItem(array $item): ?array
+    private function metaFromApiItem(array $item, ?string $ufHint = null, int $index = 0, int $total = 1): ?array
     {
         $ibge = $this->normalizeIbge((string) ($item['id'] ?? ''));
         $name = trim((string) ($item['nome'] ?? ''));
@@ -160,24 +171,15 @@ final class IbgeMunicipalityCatalog
         $uf = strtoupper(trim((string) (
             $item['microrregiao']['mesorregiao']['UF']['sigla']
             ?? $item['regiao-imediata']['regiao-intermediaria']['UF']['sigla']
+            ?? $ufHint
+            ?? IbgeUfFromCode::ufFromIbge($ibge)
             ?? ''
         )));
-
-        $centroide = $item['centroide'] ?? null;
-        if (! is_array($centroide) || ($centroide['type'] ?? '') !== 'Point') {
+        if ($uf === '') {
             return null;
         }
 
-        $coordinates = $centroide['coordinates'] ?? null;
-        if (! is_array($coordinates) || count($coordinates) < 2) {
-            return null;
-        }
-
-        $lat = (float) $coordinates[1];
-        $lng = (float) $coordinates[0];
-        if ($lat < -34.0 || $lat > 5.5 || $lng < -74.5 || $lng > -32.0) {
-            return null;
-        }
+        [$lat, $lng] = $this->coordinatesFromApiItem($item, $uf, $index, $total, (int) $ibge);
 
         return [
             'ibge' => $ibge,
@@ -186,6 +188,29 @@ final class IbgeMunicipalityCatalog
             'lat' => $lat,
             'lng' => $lng,
         ];
+    }
+
+    /**
+     * A API de localidades deixou de incluir centroide na listagem por UF; usa dispersão na UF como fallback.
+     *
+     * @param  array<string, mixed>  $item
+     * @return array{0: float, 1: float}
+     */
+    private function coordinatesFromApiItem(array $item, string $uf, int $index, int $total, int $ibgeSeed): array
+    {
+        $centroide = $item['centroide'] ?? null;
+        if (is_array($centroide) && ($centroide['type'] ?? '') === 'Point') {
+            $coordinates = $centroide['coordinates'] ?? null;
+            if (is_array($coordinates) && count($coordinates) >= 2) {
+                $lat = (float) $coordinates[1];
+                $lng = (float) $coordinates[0];
+                if ($lat >= -34.0 && $lat <= 5.5 && $lng >= -74.5 && $lng <= -32.0) {
+                    return [$lat, $lng];
+                }
+            }
+        }
+
+        return BrazilUfCentroids::latLngForIndex($uf, $index, max(1, $total), $ibgeSeed);
     }
 
     private function normalizeIbge(string $raw): ?string

@@ -8,7 +8,7 @@
     $lastFeed = is_array($hub['last_feed'] ?? null) ? $hub['last_feed'] : null;
     $pipeline = is_array($hub['pipeline'] ?? null) ? $hub['pipeline'] : null;
     $lastPhases = is_array($lastFeed['phases'] ?? null) ? $lastFeed['phases'] : [];
-    $scheduleDays = $hub['schedule_days'] ?? [1, 15];
+    $scheduleSummary = (string) ($hub['schedule_summary'] ?? __('Bimestral — dia 1 às 03:00 (meses 01, 03, 05, 07, 09, 11)'));
     $canRunFeed = auth()->user()?->canImportOrConfigure() ?? false;
     $canViewMap = auth()->user()?->canViewHorizonte() ?? false;
 @endphp
@@ -28,11 +28,7 @@
                     </p>
                     @if (($hub['feed_enabled'] ?? true) && ($hub['schedule_enabled'] ?? true))
                         <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                            {{ __('Dias :d1 e :d2 às :time', [
-                                'd1' => (int) ($scheduleDays[0] ?? 1),
-                                'd2' => (int) ($scheduleDays[1] ?? 15),
-                                'time' => $hub['schedule_time'] ?? '03:00',
-                            ]) }}
+                            {{ $scheduleSummary }}
                         </p>
                     @endif
                 </div>
@@ -55,7 +51,7 @@
             @if (! ($hub['enabled'] ?? true))
                 <span class="rounded-full px-2.5 py-1 bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200">{{ __('Módulo desactivado') }}</span>
             @elseif (! ($hub['feed_enabled'] ?? true))
-                <span class="rounded-full px-2.5 py-1 bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">{{ __('Feed quinzenal desactivado') }}</span>
+                <span class="rounded-full px-2.5 py-1 bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">{{ __('Feed bimestral desactivado') }}</span>
             @elseif ($lastFeed === null)
                 <span class="rounded-full px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">{{ __('Nenhuma execução registada') }}</span>
             @elseif ($lastFeed['success'] ?? false)
@@ -195,10 +191,11 @@
 
         <div class="rounded-xl border border-slate-200/80 dark:border-slate-700 bg-slate-900 dark:bg-slate-950 px-4 py-3 space-y-2">
             <p class="text-[10px] font-medium uppercase tracking-wide text-slate-400">{{ __('Comandos manual (servidor)') }}</p>
-            <code class="block text-xs text-emerald-300 font-mono break-all">php artisan horizonte:fortnightly-feed --staged --reset</code>
+            <code class="block text-xs text-emerald-300 font-mono break-all">php artisan horizonte:fortnightly-feed --all</code>
             <p class="text-[10px] text-slate-500">
-                {{ __('Continuar:') }} <code class="text-slate-400">--staged --continue</code>
-                · {{ __('IBGE leve:') }} <code class="text-slate-400">--skip-fundeb --skip-censo --skip-saeb --skip-verify</code>
+                {{ __('Retomar:') }} <code class="text-slate-400">--all --continue</code>
+                · {{ __('Reiniciar:') }} <code class="text-slate-400">--all --reset</code>
+                · {{ __('Etapas:') }} <code class="text-slate-400">--staged --continue</code>
             </p>
             <p class="text-[10px] text-slate-500 pt-1 border-t border-slate-800">
                 {{ __('Offline:') }}

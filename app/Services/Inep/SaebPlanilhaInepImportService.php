@@ -35,6 +35,90 @@ final class SaebPlanilhaInepImportService
     }
 
     /**
+     * Importa **um** ano de planilha INEP (nacional) — uso Horizonte particionado por ano.
+     *
+     * @return array{ok: bool, message: string, skipped?: bool, detalhes?: array<string, mixed>}
+     */
+    public function importSingleYearNational(
+        int $year,
+        bool $download,
+        bool $merge,
+        bool $resolveInep,
+        bool $keepCache,
+        ?array $allowedIbge = null,
+    ): array {
+        if (! filter_var(config('ieducar.saeb.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            return [
+                'ok' => false,
+                'message' => __('Séries SAEB desativadas (IEDUCAR_SAEB_SERIES_ENABLED).'),
+            ];
+        }
+
+        $urls = config('ieducar.saeb.planilha_resultados_urls', []);
+        if (! is_array($urls)) {
+            $urls = [];
+        }
+
+        $url = $urls[$year] ?? null;
+        if (! is_string($url) || $url === '') {
+            return [
+                'ok' => true,
+                'skipped' => true,
+                'message' => __('Ano :y: sem URL em planilha_resultados_urls.', ['y' => (string) $year]),
+                'detalhes' => ['year' => $year, 'rows' => 0, 'municipios' => 0],
+            ];
+        }
+
+        try {
+            $stats = $this->processYear($year, $url, $allowedIbge, $download, $keepCache);
+
+            if (($stats['rows'] ?? 0) === 0) {
+                @unlink($stats['path']);
+
+                return [
+                    'ok' => true,
+                    'skipped' => true,
+                    'message' => __('Ano :y: conversão sem linhas municipais.', ['y' => (string) $year]),
+                    'detalhes' => ['year' => $year, 'per_year' => [$year => $stats], 'rows' => 0],
+                ];
+            }
+
+            $import = $this->csvImport->importFromCsvFile($stats['path'], $merge, $resolveInep);
+            @unlink($stats['path']);
+
+            if (! ($import['ok'] ?? false)) {
+                return array_merge($import, [
+                    'detalhes' => ['year' => $year, 'per_year' => [$year => $stats]],
+                ]);
+            }
+
+            $import['message'] = ($import['message'] ?? '')."\n".__(
+                'Planilha INEP :year — :n linha(s); municípios: :m.',
+                [
+                    'year' => (string) $year,
+                    'n' => (string) ($stats['rows'] ?? 0),
+                    'm' => (string) ($stats['municipios'] ?? 0),
+                ]
+            );
+            $import['fonte_efetiva'] = $import['fonte_efetiva'] ?? 'saeb:planilhas-inep';
+            $import['detalhes'] = [
+                'year' => $year,
+                'rows' => (int) ($stats['rows'] ?? 0),
+                'municipios' => (int) ($stats['municipios'] ?? 0),
+                'per_year' => [$year => $stats],
+            ];
+
+            return $import;
+        } catch (\Throwable $e) {
+            return [
+                'ok' => false,
+                'message' => __('Ano :y: :msg', ['y' => (string) $year, 'msg' => $e->getMessage()]),
+                'detalhes' => ['year' => $year],
+            ];
+        }
+    }
+
+    /**
      * @param  list<int>  $years
      * @return array{ok: bool, message: string, detalhes?: array<string, mixed>}
      */

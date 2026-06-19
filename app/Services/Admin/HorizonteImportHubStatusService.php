@@ -9,8 +9,10 @@ use App\Support\Admin\PublicDataImportCatalog;
 use App\Services\Admin\PublicDataOfficialCheckCache;
 use App\Support\Dashboard\AdminHomeMapCache;
 use App\Support\Horizonte\HorizonteFortnightlyFeedCache;
+use App\Support\Horizonte\HorizonteFortnightlyFeedScheduleCadence;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPipeline;
 use App\Support\Horizonte\HorizonteIbgeWarmProgress;
+use App\Support\Horizonte\HorizonteSaebImportProgress;
 use App\Support\InepMicrodadosCadastroEscolasPath;
 use Illuminate\Support\Facades\Storage;
 
@@ -69,10 +71,6 @@ final class HorizonteImportHubStatusService
         $rel = (string) config('ieducar.inep_geocoding.microdados_cadastro_escolas_path', 'inep/microdados_ed_basica_*.csv');
         $microdadosPath = InepMicrodadosCadastroEscolasPath::resolve($rel);
 
-        $scheduleDays = config('horizonte.fortnightly_feed.schedule.days', [1, 15]);
-        $day1 = (int) ($scheduleDays[0] ?? 1);
-        $day2 = (int) ($scheduleDays[1] ?? 15);
-
         $ibgeUfsWarmed = $this->countIbgeUfsWarmed();
         $ibgeUfsTotal = count(self::BRAZIL_UFS);
 
@@ -80,8 +78,11 @@ final class HorizonteImportHubStatusService
             'enabled' => (bool) config('horizonte.enabled', true),
             'feed_enabled' => (bool) config('horizonte.fortnightly_feed.enabled', true),
             'schedule_enabled' => (bool) config('horizonte.fortnightly_feed.schedule.enabled', true),
-            'schedule_time' => trim((string) config('horizonte.fortnightly_feed.schedule.time', '03:00')) ?: '03:00',
-            'schedule_days' => [$day1, $day2],
+            'schedule_time' => HorizonteFortnightlyFeedScheduleCadence::time(),
+            'schedule_day' => HorizonteFortnightlyFeedScheduleCadence::day(),
+            'schedule_months' => HorizonteFortnightlyFeedScheduleCadence::months(),
+            'schedule_summary' => HorizonteFortnightlyFeedScheduleCadence::summary(),
+            'schedule_cron' => HorizonteFortnightlyFeedScheduleCadence::cronExpression(),
             'reference_year' => (int) config('horizonte.reference_year', (int) date('Y') - 1),
             'coverage' => [
                 'fundeb_municipios' => count($fundebIbges),
@@ -102,7 +103,9 @@ final class HorizonteImportHubStatusService
             'feed_staged' => filter_var(config('horizonte.fortnightly_feed.staged', true), FILTER_VALIDATE_BOOLEAN),
             'feed_step_interval' => max(5, (int) config('horizonte.fortnightly_feed.schedule.step_interval_minutes', 20)),
             'ibge_ufs_per_step' => max(1, (int) config('horizonte.fortnightly_feed.ibge_ufs_per_step', 1)),
+            'saeb_years_per_step' => max(1, (int) config('horizonte.fortnightly_feed.saeb_years_per_step', 1)),
             'ibge_warm_done' => HorizonteIbgeWarmProgress::doneUfs(),
+            'saeb_import_done' => HorizonteSaebImportProgress::doneYears(),
             'bundle' => $this->bundleStatus(),
             'map_url' => route('dashboard.horizonte'),
             'doc_url' => route('admin.documentation.show', ['doc' => 'docs/HORIZONTE.md']),
@@ -146,7 +149,9 @@ final class HorizonteImportHubStatusService
             [
                 'key' => 'saeb_planilhas',
                 'label' => __('SAEB — planilhas INEP (nacional)'),
-                'description' => __('Indicadores LP/MAT por município (saeb_indicator_points) — cobertura nacional para prospectos.'),
+                'description' => __('Indicadores LP/MAT por município — :n ano(s) por passo (HORIZONTE_FORTNIGHTLY_SAEB_YEARS_PER_STEP).', [
+                    'n' => (string) max(1, (int) config('horizonte.fortnightly_feed.saeb_years_per_step', 1)),
+                ]),
                 'source_id' => 'saeb_inep',
                 'hub_anchor' => '#source-saeb_inep',
                 'admin_url' => route('admin.pedagogical-sync.index'),
@@ -164,7 +169,7 @@ final class HorizonteImportHubStatusService
                 'source_id' => 'geo_inep',
                 'hub_anchor' => '#source-geo_inep',
                 'admin_url' => route('admin.geo-sync.index'),
-                'cli' => 'php artisan horizonte:fortnightly-feed --staged --reset --skip-fundeb --skip-censo --skip-saeb --skip-sge --skip-verify',
+                'cli' => 'php artisan horizonte:fortnightly-feed --staged --reset --skip-fundeb --skip-censo --skip-saeb --skip-sge --skip-verify && php artisan horizonte:fortnightly-feed --staged --continue --skip-fundeb --skip-censo --skip-saeb --skip-sge --skip-verify',
                 'ok' => $ibgeUfsWarmed >= $ibgeUfsTotal,
                 'metric' => $ibgeUfsWarmed,
                 'metric_label' => __('UFs aquecidas'),

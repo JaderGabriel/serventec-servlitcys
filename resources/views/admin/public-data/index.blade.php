@@ -35,7 +35,7 @@
         :eyebrow="$isHorizonteFocus ? __('Horizonte') : ($isRepassesFocus ? __('Repasses / Tempo Real') : __('Hub de dados públicos'))"
         :title="$isHorizonteFocus ? __('Abastecimento nacional — mapa de oportunidade') : ($isRepassesFocus ? __('Repasses FUNDEB observados') : __('Importação e cobertura'))"
         :description="$isHorizonteFocus
-            ? __('FUNDEB receita, Censo matrículas, SAEB planilhas INEP e catálogo IBGE para prospectos no mapa Horizonte. Use a rotina quinzenal ou importe fontes individuais abaixo.')
+            ? __('FUNDEB receita, Censo matrículas, SAEB planilhas INEP e catálogo IBGE para prospectos no mapa Horizonte. Use a rotina bimestral ou importe fontes individuais abaixo.')
             : ($isRepassesFocus
             ? __('Importação municipal com granularidade dia/mês (CKAN, SISWEB, BB). Use Rebuild para purgar snapshots e alimentar Finanças → Tempo Real na consultoria.')
             : __('Com base no modelo do relatório PDF ATM e na planilha Serventec: VAAF FNDE, Censo INEP, repasses e SAEB. Alimenta consultoria, PDF e mapa Horizonte. Dados do i-Educar continuam em VAAF e sincronizações específicas.'))"

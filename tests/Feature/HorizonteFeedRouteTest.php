@@ -30,8 +30,12 @@ final class HorizonteFeedRouteTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         $this->mock(HorizonteFortnightlyFeedService::class, function ($mock): void {
-            $mock->shouldReceive('run')
+            $mock->shouldReceive('runStaged')
                 ->once()
+                ->withArgs(function (array $options): bool {
+                    return ($options['reset'] ?? false) === true
+                        && ($options['uf'] ?? '') === 'SP';
+                })
                 ->andReturn([
                     'success' => true,
                     'message' => 'OK',
@@ -39,9 +43,33 @@ final class HorizonteFeedRouteTest extends TestCase
                 ]);
         });
 
-        $response = $this->actingAs($admin)->post(route('admin.public-data.horizonte-feed'));
+        $response = $this->actingAs($admin)->post(route('admin.public-data.horizonte-feed'), [
+            'uf' => 'SP',
+        ]);
 
         $response->assertRedirect(route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-hub');
         $response->assertSessionHas('horizonte_feed.success', true);
+    }
+
+    public function test_post_horizonte_feed_rejects_invalid_uf(): void
+    {
+        config([
+            'horizonte.enabled' => true,
+            'horizonte.fortnightly_feed.enabled' => true,
+        ]);
+
+        $admin = User::factory()->admin()->create();
+
+        $this->mock(HorizonteFortnightlyFeedService::class, function ($mock): void {
+            $mock->shouldNotReceive('runStaged');
+            $mock->shouldNotReceive('run');
+        });
+
+        $response = $this->actingAs($admin)->post(route('admin.public-data.horizonte-feed'), [
+            'uf' => 'XX',
+        ]);
+
+        $response->assertRedirect(route('admin.public-data.index', ['hub' => 'horizonte']));
+        $response->assertSessionHas('public_data_error');
     }
 }

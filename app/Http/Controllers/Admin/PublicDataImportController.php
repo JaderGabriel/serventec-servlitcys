@@ -19,6 +19,7 @@ use App\Support\Admin\ImportHubThemeCatalog;
 use App\Support\Admin\PublicDataImportCatalog;
 use App\Support\SyncQueue\SyncQueueUserScope;
 use App\Services\Horizonte\HorizonteFortnightlyFeedService;
+use App\Support\Horizonte\HorizonteUfScope;
 use App\Support\AdminSync\WeeklyMassSyncCheckpoint;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -78,7 +79,7 @@ class PublicDataImportController extends Controller
         if (! (bool) config('horizonte.fortnightly_feed.enabled', true)) {
             return redirect()
                 ->route('admin.public-data.index', ['hub' => 'horizonte'])
-                ->with('public_data_error', __('Abastecimento quinzenal Horizonte desactivado (HORIZONTE_FORTNIGHTLY_FEED_ENABLED).'));
+                ->with('public_data_error', __('Abastecimento bimestral Horizonte desactivado (HORIZONTE_FORTNIGHTLY_FEED_ENABLED).'));
         }
 
         @set_time_limit(600);
@@ -92,10 +93,24 @@ class PublicDataImportController extends Controller
             'skip_verify' => $request->boolean('skip_verify'),
         ];
 
+        $ufRaw = trim((string) $request->input('uf', ''));
+        if ($ufRaw !== '' && HorizonteUfScope::normalize($ufRaw) === null) {
+            return redirect()
+                ->route('admin.public-data.index', ['hub' => 'horizonte'])
+                ->with('public_data_error', __('UF inválida: :uf — escolha uma sigla válida ou deixe em branco para abastecimento nacional.', [
+                    'uf' => $ufRaw,
+                ]));
+        }
+
+        $feedOptions = array_merge($skipOptions, [
+            'uf' => $ufRaw,
+            'reset' => true,
+        ]);
+
         $staged = filter_var(config('horizonte.fortnightly_feed.staged', true), FILTER_VALIDATE_BOOLEAN);
         $result = $staged
-            ? $feed->runStaged(array_merge($skipOptions, ['reset' => true]))
-            : $feed->run($skipOptions);
+            ? $feed->runStaged($feedOptions)
+            : $feed->run($feedOptions);
 
         return redirect()
             ->to(route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-hub')

@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Support\Horizonte\HorizonteFortnightlyFeedScheduleCadence;
 use Illuminate\Console\Scheduling\Schedule;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -33,5 +34,17 @@ final class HorizonteFortnightlyFeedScheduleTest extends TestCase
             collect($commands)->contains(static fn (string $c): bool => str_contains($c, '--staged --continue')),
             'Expected horizonte staged continue in schedule.',
         );
+    }
+
+    #[Test]
+    public function bimonthly_start_uses_cron_on_odd_months(): void
+    {
+        config([
+            'horizonte.fortnightly_feed.schedule.day' => 1,
+            'horizonte.fortnightly_feed.schedule.months' => [1, 3, 5, 7, 9, 11],
+            'horizonte.fortnightly_feed.schedule.time' => '03:00',
+        ]);
+
+        $this->assertSame('0 3 1 1,3,5,7,9,11 *', HorizonteFortnightlyFeedScheduleCadence::cronExpression());
     }
 }

@@ -6,6 +6,8 @@
     $mapDataUrl = $mapDataUrl ?? route('dashboard.horizonte.map-data');
     $docUrl = route(auth()->user()?->isAdmin() ? 'admin.documentation.show' : 'documentation.show', ['doc' => 'docs/HORIZONTE.md']);
     $canRefreshData = (bool) ($canRefreshData ?? auth()->user()?->canImportOrConfigure());
+    $canManageSge = (bool) ($canManageSge ?? false);
+    $sgeRegistryUrl = (string) ($sgeRegistryUrl ?? '');
 @endphp
 
 <x-app-layout>
@@ -32,6 +34,8 @@
             'legend' => $legend,
             'heatLegend' => $heatLegend,
             'canRefreshData' => $canRefreshData,
+            'canManageSge' => $canManageSge,
+            'sgeRegistryUrl' => $sgeRegistryUrl,
         ]))"
         x-init="init()"
     >
@@ -327,6 +331,15 @@
                                                 >&times;</button>
                                             </div>
                                             <div x-html="tooltipBodyHtml(active)"></div>
+                                            <div x-show="canManageSge && active && canEditSgeFor(active)" x-cloak class="pt-2 border-t border-slate-200/80 dark:border-slate-700/80">
+                                                <button
+                                                    type="button"
+                                                    class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+                                                    @click="openSgeForm(active)"
+                                                >
+                                                    <span x-text="active.sge_status === 'registry' ? '{{ __('Editar registo SGE') }}' : '{{ __('Cadastrar SGE') }}'"></span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </template>
                                 </div>
@@ -345,7 +358,7 @@
                         <h4 class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Actualizar dados do mapa') }}</h4>
                         <p class="mt-1 text-xs text-slate-600 dark:text-slate-400 max-w-3xl" x-show="meta.message" x-text="meta.message"></p>
                         <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                            {{ __('Rotina quinzenal (dias 1 e 15) ou execução manual no servidor:') }}
+                            {{ __('Rotina bimestral ou execução manual no servidor:') }}
                         </p>
                         <div class="mt-2 rounded-lg bg-slate-900 dark:bg-slate-950 px-4 py-3">
                             <code class="block text-xs sm:text-sm text-emerald-300 font-mono break-all" x-text="meta.refresh_command || 'php artisan horizonte:fortnightly-feed'"></code>
@@ -388,7 +401,15 @@
                                             <td class="py-2 px-2 tabular-nums" x-text="p.benefit_score"></td>
                                             <td class="py-2 px-2 tabular-nums" x-text="p.matriculas_censo != null ? Number(p.matriculas_censo).toLocaleString('pt-BR') : '—'"></td>
                                             <td class="py-2 px-2 text-slate-500" x-text="[p.has_fundeb ? 'F' : null, p.has_censo ? 'C' : null, p.has_saeb ? 'S' : null].filter(Boolean).join('·') || '—'"></td>
-                                            <td class="py-2 ps-2 text-slate-600 dark:text-slate-300" x-text="p.sge?.system_label || (p.sge_found ? '—' : '{{ __('N/I') }}')"></td>
+                                            <td class="py-2 ps-2 text-slate-600 dark:text-slate-300">
+                                                <button
+                                                    type="button"
+                                                    class="text-left hover:underline"
+                                                    :class="!(p.sge_found ?? false) && canManageSge ? 'text-amber-700 dark:text-amber-300 font-medium' : ''"
+                                                    @click.stop="canManageSge && !(p.sge_found ?? false) ? openSgeForm(p) : flyToMarker(p)"
+                                                    x-text="p.sge?.system_label || (p.sge_found ? '—' : '{{ __('N/I') }}')"
+                                                ></button>
+                                            </td>
                                         </tr>
                                     </template>
                                 </tbody>
@@ -408,8 +429,13 @@
                             <div class="flex justify-between gap-2"><dt class="text-slate-500">{{ __('Não identificados') }}</dt><dd class="font-medium tabular-nums text-amber-800 dark:text-amber-300" x-text="pageLoading ? '…' : Number(sgeSummary.not_found ?? 0).toLocaleString('pt-BR')"></dd></div>
                         </dl>
                         <p x-show="!pageLoading && !(sgeSummary.registry_configured ?? false)" x-cloak class="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                            {{ __('Registo SGE externo não configurado — coloque JSON em storage/app/horizonte/sge_registry.json ou defina HORIZONTE_SGE_REGISTRY_URL.') }}
+                            {{ __('Registo SGE externo vazio — clique num município sem SGE no mapa para cadastrar ou coloque JSON em storage/app/horizonte/sge_registry.json.') }}
                         </p>
+                        @if ($canManageSge)
+                            <p class="mt-2 text-[11px] text-indigo-700 dark:text-indigo-300">
+                                {{ __('Administrador: selecione um município com «N/I» na lista ou no mapa para registar o sistema de gestão.') }}
+                            </p>
+                        @endif
                     </section>
 
                     <section class="serv-panel p-4" aria-labelledby="horizonte-coverage">
@@ -457,6 +483,65 @@
                         </ul>
                     </section>
                 </aside>
+            </div>
+        </div>
+
+        <div
+            x-show="sgeFormOpen"
+            x-cloak
+            class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/50"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="horizonte-sge-form-title"
+            @keydown.escape.window="closeSgeForm()"
+        >
+            <div class="w-full max-w-lg rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-700 p-5 space-y-4" @click.outside="closeSgeForm()">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <h3 id="horizonte-sge-form-title" class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Registo SGE municipal') }}</h3>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400" x-show="sgeForm.ibge">
+                            <span x-text="sgeForm.name + ' — ' + sgeForm.uf"></span>
+                            · IBGE <span x-text="sgeForm.ibge"></span>
+                        </p>
+                    </div>
+                    <button type="button" class="text-slate-400 hover:text-slate-600" @click="closeSgeForm()" aria-label="{{ __('Fechar') }}">&times;</button>
+                </div>
+
+                <form class="space-y-3" @submit.prevent="saveSgeEntry()">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">{{ __('Sistema (SGE)') }} <span class="text-red-600">*</span></label>
+                        <input type="text" x-model="sgeForm.system" required maxlength="120" class="mt-1 block w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:border-slate-600" placeholder="Ex.: Proesc, GDAE, SIGE…" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">{{ __('Fornecedor / secretaria') }}</label>
+                        <input type="text" x-model="sgeForm.vendor" maxlength="120" class="mt-1 block w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:border-slate-600" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">{{ __('URL do portal') }}</label>
+                        <input type="url" x-model="sgeForm.app_url" maxlength="500" class="mt-1 block w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:border-slate-600" placeholder="https://…" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">{{ __('Observações') }}</label>
+                        <textarea x-model="sgeForm.notes" rows="3" maxlength="2000" class="mt-1 block w-full rounded-md border-slate-300 text-sm dark:bg-slate-800 dark:border-slate-600"></textarea>
+                    </div>
+                    <p x-show="sgeFormError" x-text="sgeFormError" class="text-xs text-red-600 dark:text-red-400"></p>
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                        <button
+                            type="button"
+                            x-show="sgeForm.has_entry"
+                            class="text-xs text-red-700 dark:text-red-400 hover:underline"
+                            @click="deleteSgeEntry()"
+                        >{{ __('Remover registo') }}</button>
+                        <div class="flex gap-2 ms-auto">
+                            <button type="button" class="serv-btn-secondary text-xs" @click="closeSgeForm()">{{ __('Cancelar') }}</button>
+                            <button type="submit" class="serv-btn-primary text-xs" :disabled="sgeFormSaving">
+                                <span x-show="!sgeFormSaving">{{ __('Gravar') }}</span>
+                                <span x-show="sgeFormSaving">{{ __('A gravar…') }}</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <p class="text-[10px] text-slate-500">{{ __('Gravado em storage/app/horizonte/sge_registry.json — visível no mapa após recarregar os dados.') }}</p>
             </div>
         </div>
     </div>

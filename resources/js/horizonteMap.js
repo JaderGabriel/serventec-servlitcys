@@ -72,6 +72,22 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         ufList: Array.isArray(options.ufList) ? options.ufList : [],
         prospectSort: "success_score",
         canRefreshData: Boolean(options.canRefreshData),
+        canManageSge: Boolean(options.canManageSge),
+        sgeRegistryUrl:
+            typeof options.sgeRegistryUrl === "string" ? options.sgeRegistryUrl : "",
+        sgeFormOpen: false,
+        sgeFormSaving: false,
+        sgeFormError: null,
+        sgeForm: {
+            ibge: "",
+            name: "",
+            uf: "",
+            system: "",
+            vendor: "",
+            notes: "",
+            app_url: "",
+            has_entry: false,
+        },
 
         get totalMarkers() {
             return this.markers.length;
@@ -616,6 +632,159 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 );
             }
             return lines.join("");
+        },
+
+        canEditSgeFor(m) {
+            if (!this.canManageSge || !m) {
+                return false;
+            }
+            const status = String(m.sge_status ?? m.sge?.status ?? "");
+            return status === "not_found" || status === "registry";
+        },
+
+        sgeUrlFor(ibge) {
+            return this.sgeRegistryUrl.replace("__IBGE__", encodeURIComponent(String(ibge)));
+        },
+
+        csrfToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? "";
+        },
+
+        openSgeForm(m) {
+            if (!this.canManageSge || !m?.ibge) {
+                return;
+            }
+            this.sgeFormError = null;
+            this.sgeForm = {
+                ibge: String(m.ibge),
+                name: String(m.name ?? ""),
+                uf: String(m.uf ?? ""),
+                system: String(m.sge?.system ?? ""),
+                vendor: "",
+                notes: "",
+                app_url: String(m.sge?.app_url ?? ""),
+                has_entry: m.sge_status === "registry",
+            };
+            this.sgeFormOpen = true;
+            this.loadSgeFormEntry(String(m.ibge));
+        },
+
+        closeSgeForm() {
+            this.sgeFormOpen = false;
+            this.sgeFormError = null;
+            this.sgeFormSaving = false;
+        },
+
+        async loadSgeFormEntry(ibge) {
+            if (!this.canManageSge) {
+                return;
+            }
+            try {
+                const response = await fetch(this.sgeUrlFor(ibge), {
+                    headers: {
+                        Accept: "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    credentials: "same-origin",
+                });
+                if (!response.ok) {
+                    return;
+                }
+                const data = await response.json();
+                const entry = data.entry;
+                if (entry && typeof entry === "object") {
+                    this.sgeForm.system = String(entry.system ?? this.sgeForm.system);
+                    this.sgeForm.vendor = String(entry.vendor ?? "");
+                    this.sgeForm.notes = String(entry.notes ?? "");
+                    this.sgeForm.app_url = String(entry.app_url ?? "");
+                    this.sgeForm.has_entry = true;
+                }
+            } catch (error) {
+                console.debug("horizonte sge load", error);
+            }
+        },
+
+        async saveSgeEntry() {
+            if (!this.canManageSge || !this.sgeForm.ibge) {
+                return;
+            }
+            this.sgeFormSaving = true;
+            this.sgeFormError = null;
+            try {
+                const response = await fetch(this.sgeUrlFor(this.sgeForm.ibge), {
+                    method: "PUT",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": this.csrfToken(),
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    credentials: "same-origin",
+                    body: JSON.stringify({
+                        system: this.sgeForm.system,
+                        vendor: this.sgeForm.vendor,
+                        notes: this.sgeForm.notes,
+                        app_url: this.sgeForm.app_url || null,
+                    }),
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data.message || `HTTP ${response.status}`);
+                }
+                await this.reloadMapKeepingIbge(this.sgeForm.ibge);
+                this.closeSgeForm();
+            } catch (error) {
+                this.sgeFormError =
+                    error instanceof Error ? error.message : "Erro ao gravar registo SGE.";
+            } finally {
+                this.sgeFormSaving = false;
+            }
+        },
+
+        async deleteSgeEntry() {
+            if (!this.canManageSge || !this.sgeForm.ibge || !this.sgeForm.has_entry) {
+                return;
+            }
+            if (!window.confirm("Remover registo SGE deste município?")) {
+                return;
+            }
+            this.sgeFormSaving = true;
+            this.sgeFormError = null;
+            try {
+                const response = await fetch(this.sgeUrlFor(this.sgeForm.ibge), {
+                    method: "DELETE",
+                    headers: {
+                        Accept: "application/json",
+                        "X-CSRF-TOKEN": this.csrfToken(),
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    credentials: "same-origin",
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data.message || `HTTP ${response.status}`);
+                }
+                await this.reloadMapKeepingIbge(this.sgeForm.ibge);
+                this.closeSgeForm();
+            } catch (error) {
+                this.sgeFormError =
+                    error instanceof Error ? error.message : "Erro ao remover registo SGE.";
+            } finally {
+                this.sgeFormSaving = false;
+            }
+        },
+
+        async reloadMapKeepingIbge(ibge) {
+            const target = String(ibge);
+            await this.fetchPayload();
+            if (this.pageError) {
+                return;
+            }
+            await this.refreshMapLayers();
+            const marker = this.markers.find((m) => String(m.ibge) === target);
+            if (marker) {
+                this.selectMarker(marker);
+            }
         },
     };
 }

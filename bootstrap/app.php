@@ -243,18 +243,14 @@ return Application::configure(basePath: dirname(__DIR__))
         if (filter_var(config('horizonte.fortnightly_feed.enabled', true), FILTER_VALIDATE_BOOLEAN)
             && filter_var(config('horizonte.fortnightly_feed.schedule.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             $timezone = (string) config('app.timezone', 'UTC');
-            $feedTime = trim((string) config('horizonte.fortnightly_feed.schedule.time', '03:00')) ?: '03:00';
-            $days = config('horizonte.fortnightly_feed.schedule.days', [1, 15]);
-            $day1 = max(1, min(28, (int) ($days[0] ?? 1)));
-            $day2 = max(1, min(28, (int) ($days[1] ?? 15)));
-            $overlap = max(60, (int) config('horizonte.fortnightly_feed.schedule.overlap_minutes', 2880));
+            $feedCron = \App\Support\Horizonte\HorizonteFortnightlyFeedScheduleCadence::cronExpression();
+            $overlap = max(60, (int) config('horizonte.fortnightly_feed.schedule.overlap_minutes', 10080));
             $stepInterval = max(5, (int) config('horizonte.fortnightly_feed.schedule.step_interval_minutes', 20));
             $staged = filter_var(config('horizonte.fortnightly_feed.staged', true), FILTER_VALIDATE_BOOLEAN);
 
             if ($staged) {
                 $schedule->command('horizonte:fortnightly-feed --staged --reset')
-                    ->twiceMonthly($day1, $day2)
-                    ->at($feedTime)
+                    ->cron($feedCron)
                     ->name('horizonte-fortnightly-feed-start')
                     ->withoutOverlapping($overlap)
                     ->timezone($timezone)
@@ -269,8 +265,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     ->runInBackground();
             } else {
                 $schedule->command('horizonte:fortnightly-feed --all')
-                    ->twiceMonthly($day1, $day2)
-                    ->at($feedTime)
+                    ->cron($feedCron)
                     ->name('horizonte-fortnightly-feed')
                     ->withoutOverlapping($overlap)
                     ->timezone($timezone)

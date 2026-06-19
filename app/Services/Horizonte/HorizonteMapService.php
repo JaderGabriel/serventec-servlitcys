@@ -13,8 +13,11 @@ use App\Support\Brazil\IbgeUfFromCode;
 use App\Support\Dashboard\AdminHomeMapCache;
 use App\Support\Horizonte\HorizonteManagerInsights;
 use App\Support\Horizonte\HorizonteMapPresenter;
+use App\Support\Horizonte\HorizonteMapCacheBuster;
 use App\Support\Horizonte\HorizonteMunicipalSgeResolver;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Mapa Horizonte — municípios com e sem Consultoria, scores de oportunidade e regiões prioritárias.
@@ -505,6 +508,12 @@ final class HorizonteMapService
                 ->selectRaw('count(*) as c, max('.$col.') as m')
                 ->first();
             $parts[] = (new $model)->getTable().':'.((int) ($row->c ?? 0)).':'.(string) ($row->m ?? '');
+        }
+
+        $parts[] = 'sge_bust:'.HorizonteMapCacheBuster::token();
+        $sgePath = trim((string) config('horizonte.sge.registry_path', 'horizonte/sge_registry.json'));
+        if ($sgePath !== '' && Storage::disk('local')->exists($sgePath)) {
+            $parts[] = 'sge_mtime:'.(string) Storage::disk('local')->lastModified($sgePath);
         }
 
         return md5(implode('|', $parts));

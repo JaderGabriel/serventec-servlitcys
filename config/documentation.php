@@ -22,7 +22,7 @@ return [
     */
 
     'product' => [
-        'version' => '5.2.0',
+        'version' => '5.3.0',
         'release_tag' => '20260603c-Argus',
         'commit_short' => '',
         'commit_number' => null,

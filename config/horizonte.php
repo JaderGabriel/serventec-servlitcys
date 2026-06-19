@@ -36,7 +36,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Abastecimento quinzenal (rotina agendada + comando horizonte:fortnightly-feed)
+    | Abastecimento bimestral (rotina agendada + comando horizonte:fortnightly-feed)
     |--------------------------------------------------------------------------
     |
     | Sincroniza dados públicos nacionais para alimentar o mapa Horizonte:
@@ -49,9 +49,15 @@ return [
 
         'schedule' => [
             'enabled' => filter_var(env('HORIZONTE_FORTNIGHTLY_FEED_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
-            'days' => [1, 15],
+            /** Dia do mês (1–28) em que inicia cada ciclo bimestral. */
+            'day' => max(1, min(28, (int) env('HORIZONTE_FORTNIGHTLY_FEED_SCHEDULE_DAY', 1))),
+            /** Meses do ano (1–12) — por defeito ímpares = a cada 2 meses. */
+            'months' => array_values(array_filter(array_map(
+                'intval',
+                explode(',', (string) env('HORIZONTE_FORTNIGHTLY_FEED_SCHEDULE_MONTHS', '1,3,5,7,9,11')),
+            ))),
             'time' => env('HORIZONTE_FORTNIGHTLY_FEED_TIME', '03:00'),
-            'overlap_minutes' => max(60, (int) env('HORIZONTE_FORTNIGHTLY_FEED_OVERLAP_MINUTES', 2880)),
+            'overlap_minutes' => max(60, (int) env('HORIZONTE_FORTNIGHTLY_FEED_OVERLAP_MINUTES', 10080)),
             'step_interval_minutes' => max(5, (int) env('HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL', 20)),
         ],
 
@@ -77,6 +83,9 @@ return [
 
         /** UFs aquecidas por invocação na fase IBGE (1 = mínimo de RAM). */
         'ibge_ufs_per_step' => max(1, min(27, (int) env('HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP', 1))),
+
+        /** Anos SAEB importados por invocação na fase planilhas (1 = mínimo de RAM). */
+        'saeb_years_per_step' => max(1, min(10, (int) env('HORIZONTE_FORTNIGHTLY_SAEB_YEARS_PER_STEP', 1))),
     ],
 
     /*

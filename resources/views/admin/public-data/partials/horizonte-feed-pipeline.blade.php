@@ -13,6 +13,9 @@
     $status = (string) ($pipeline['status'] ?? 'idle');
     $stepInterval = (int) ($stepInterval ?? config('horizonte.fortnightly_feed.schedule.step_interval_minutes', 20));
     $ibgeUfsPerStep = max(1, (int) config('horizonte.fortnightly_feed.ibge_ufs_per_step', 1));
+    $saebYearsPerStep = max(1, (int) config('horizonte.fortnightly_feed.saeb_years_per_step', 1));
+    $pipelineOptions = is_array($pipeline['options'] ?? null) ? $pipeline['options'] : [];
+    $scopedUf = strtoupper(trim((string) ($pipelineOptions['uf'] ?? '')));
 @endphp
 
 <div class="rounded-xl border border-indigo-200/80 bg-indigo-50/40 dark:border-indigo-900/50 dark:bg-indigo-950/20 p-4 space-y-3">
@@ -26,12 +29,16 @@
                     'total' => (string) $total,
                     'status' => $status,
                 ]) }}
+                @if ($scopedUf !== '')
+                    · {{ __('UF :uf', ['uf' => $scopedUf]) }}
+                @endif
             </p>
             @if ($status === 'running')
                 <p class="mt-1 text-[11px] text-indigo-800/70 dark:text-indigo-300/70">
-                    {{ __('Próximo passo pelo agendador a cada :n min (--staged --continue). IBGE: :u UF(s) por passo.', [
+                    {{ __('Próximo passo a cada :n min (--staged --continue). IBGE: :u UF(s)/passo · SAEB: :y ano(s)/passo.', [
                         'n' => (string) $stepInterval,
                         'u' => (string) $ibgeUfsPerStep,
+                        'y' => (string) $saebYearsPerStep,
                     ]) }}
                 </p>
             @endif
@@ -52,7 +59,10 @@
                     $phaseResult = is_array($row['result'] ?? null) ? $row['result'] : [];
                     $ibgeDone = (int) ($phaseResult['ibge_done'] ?? 0);
                     $ibgeTotal = (int) ($phaseResult['ibge_total'] ?? 27);
-                    $isIbgeRunning = $phaseKey === 'ibge_catalog' && $phaseStatus === 'running';
+                    $saebDone = (int) ($phaseResult['saeb_done'] ?? 0);
+                    $saebTotal = (int) ($phaseResult['saeb_total'] ?? 0);
+                    $isIbgeRunning = $phaseKey === 'ibge_catalog' && in_array($phaseStatus, ['running', 'pending'], true);
+                    $isSaebRunning = $phaseKey === 'saeb_planilhas' && in_array($phaseStatus, ['running', 'pending'], true);
                     $badge = match ($phaseStatus) {
                         'completed' => 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200',
                         'skipped' => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
@@ -60,7 +70,7 @@
                         'running' => 'bg-sky-100 text-sky-900 dark:bg-sky-950/50 dark:text-sky-200',
                         default => 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
                     };
-                    $statusLabel = $isIbgeRunning && ($phaseResult['partial'] ?? false)
+                    $statusLabel = ($isIbgeRunning || $isSaebRunning) && ($phaseResult['partial'] ?? false)
                         ? __('em progresso')
                         : $phaseStatus;
                 @endphp
@@ -71,7 +81,7 @@
                             @if (filled($row['message'] ?? null))
                                 <p class="mt-0.5 text-slate-600 dark:text-slate-400">{{ $row['message'] }}</p>
                             @endif
-                            @if ($isIbgeRunning && $ibgeTotal > 0)
+                            @if ($phaseKey === 'ibge_catalog' && $ibgeTotal > 0 && ($ibgeDone > 0 || $isIbgeRunning))
                                 <div class="mt-2">
                                     <div class="flex justify-between text-[10px] text-slate-500 mb-1">
                                         <span>{{ __('UFs aquecidas') }}</span>
@@ -81,6 +91,20 @@
                                         <div
                                             class="h-full rounded-full bg-sky-500 transition-all"
                                             style="width: {{ min(100, max(0, (int) round(($ibgeDone / max(1, $ibgeTotal)) * 100))) }}%"
+                                        ></div>
+                                    </div>
+                                </div>
+                            @endif
+                            @if ($phaseKey === 'saeb_planilhas' && $saebTotal > 0 && ($saebDone > 0 || $isSaebRunning))
+                                <div class="mt-2">
+                                    <div class="flex justify-between text-[10px] text-slate-500 mb-1">
+                                        <span>{{ __('Anos SAEB importados') }}</span>
+                                        <span class="tabular-nums">{{ $saebDone }}/{{ $saebTotal }}</span>
+                                    </div>
+                                    <div class="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                                        <div
+                                            class="h-full rounded-full bg-violet-500 transition-all"
+                                            style="width: {{ min(100, max(0, (int) round(($saebDone / max(1, $saebTotal)) * 100))) }}%"
                                         ></div>
                                     </div>
                                 </div>

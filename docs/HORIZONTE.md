@@ -209,9 +209,9 @@ HorizonteController
 
 ## 9. Operacionalização
 
-### 9.1 Rotina quinzenal (abastecimento automático)
+### 9.1 Rotina bimestral (abastecimento automático)
 
-Comando: **`horizonte:fortnightly-feed`** · agendamento: **dias 1 e 15** (início do ciclo) + **passos a cada N minutos** enquanto o pipeline estiver activo.
+Comando: **`horizonte:fortnightly-feed`** · agendamento: **bimestral** — dia **1** às **03:00** nos meses **1, 3, 5, 7, 9, 11** (início do ciclo) + **passos a cada N minutos** enquanto o pipeline estiver activo.
 
 Por defeito corre **em etapas** (`HORIZONTE_FORTNIGHTLY_FEED_STAGED=true`): cada invocação executa **uma fase**, libertando memória entre processos. Admins recebem **notificação por fase** e ao concluir o ciclo. Estado visível em **Filas** (`#fila-horizonte`) e no hub Horizonte.
 
@@ -219,7 +219,7 @@ Por defeito corre **em etapas** (`HORIZONTE_FORTNIGHTLY_FEED_STAGED=true`): cada
 |------|-----------|
 | **FUNDEB** | CSV nacional «Receita total do Fundeb por ente federado» (FNDE) → `fundeb_municipio_references` por IBGE |
 | **Censo** | Indexa matrículas municipais a partir do microdados INEP (`inep_censo_municipio_matriculas`) |
-| **SAEB** | Planilhas oficiais INEP (aba Municípios, `CO_MUNICIPIO`) para **todos** os municípios — `saeb_indicator_points` |
+| **SAEB** | Planilhas oficiais INEP — **1 ano por passo** por defeito (`HORIZONTE_FORTNIGHTLY_SAEB_YEARS_PER_STEP=1`) |
 | **IBGE** | Aquece catálogo de centroides (**1 UF por invocação** por defeito — `HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP=1`) |
 | **SGE** | Sincroniza registo opcional de sistemas de gestão educacional (JSON local ou URL) — **não bloqueia** se ausente |
 | **Verificação** | `public-data:check-official --no-notify` (cache no hub, sem notificação) |
@@ -230,8 +230,10 @@ php artisan horizonte:fortnightly-feed --staged --reset
 php artisan horizonte:fortnightly-feed --staged --continue
 php artisan horizonte:fortnightly-feed --phase=fundeb_receita
 
-# Manual — tudo numa invocação (mais RAM)
+# Manual — tudo numa invocação (verbose activo; retomar se interrompido)
 php artisan horizonte:fortnightly-feed --all
+php artisan horizonte:fortnightly-feed --all --continue
+php artisan horizonte:fortnightly-feed --all --reset
 
 php artisan horizonte:fortnightly-feed --dry-run
 php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo --skip-sge

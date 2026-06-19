@@ -1,15 +1,15 @@
 @php
     use App\Support\Admin\AdminImportHubCatalog;
+    use App\Support\Brazil\IbgeMunicipalityCatalog;
 
     $hub = is_array($horizonteHub ?? null) ? $horizonteHub : [];
+    $brazilianUfs = IbgeMunicipalityCatalog::brazilianUfs();
     $coverage = is_array($hub['coverage'] ?? null) ? $hub['coverage'] : [];
     $phases = is_array($hub['phases'] ?? null) ? $hub['phases'] : [];
     $lastFeed = is_array($hub['last_feed'] ?? null) ? $hub['last_feed'] : null;
     $feedFlash = session('horizonte_feed');
     $pipeline = is_array($hub['pipeline'] ?? null) ? $hub['pipeline'] : (is_array($feedFlash['pipeline'] ?? null) ? $feedFlash['pipeline'] : null);
-    $scheduleDays = $hub['schedule_days'] ?? [1, 15];
-    $day1 = (int) ($scheduleDays[0] ?? 1);
-    $day2 = (int) ($scheduleDays[1] ?? 15);
+    $scheduleSummary = (string) ($hub['schedule_summary'] ?? __('Bimestral — dia 1 às 03:00 (meses 01, 03, 05, 07, 09, 11)'));
     $enabled = (bool) ($hub['enabled'] ?? true);
     $feedEnabled = (bool) ($hub['feed_enabled'] ?? true);
     $bundle = is_array($hub['bundle'] ?? null) ? $hub['bundle'] : [];
@@ -29,10 +29,8 @@
             </p>
             @if ($feedEnabled && ($hub['schedule_enabled'] ?? true))
                 <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-500">
-                    {{ __('Agendamento: dias :d1 e :d2 às :time (horizonte:fortnightly-feed).', [
-                        'd1' => $day1,
-                        'd2' => $day2,
-                        'time' => $hub['schedule_time'] ?? '03:00',
+                    {{ __('Agendamento: :summary (horizonte:fortnightly-feed).', [
+                        'summary' => $scheduleSummary,
                     ]) }}
                     @if ($lastFeed && filled($lastFeed['finished_at'] ?? null))
                         · {{ __('Última execução: :when', [
@@ -56,6 +54,16 @@
                 @csrf
                 <p class="text-[11px] font-semibold uppercase tracking-wide text-indigo-800 dark:text-indigo-200">{{ __('Executar agora') }}</p>
                 <p class="text-[11px] text-indigo-900/80 dark:text-indigo-200/80">{{ __('Inicia o pipeline em etapas. IBGE e fases pesadas continuam com --continue ou pelo agendador.') }}</p>
+                <label class="block text-[11px] text-gray-700 dark:text-gray-300">
+                    <span class="font-medium">{{ __('UF (opcional)') }}</span>
+                    <select name="uf" class="mt-1 block w-full rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                        <option value="">{{ __('Nacional (27 UFs)') }}</option>
+                        @foreach ($brazilianUfs as $ufOption)
+                            <option value="{{ $ufOption }}">{{ $ufOption }}</option>
+                        @endforeach
+                    </select>
+                    <span class="mt-0.5 block text-[10px] text-gray-500 dark:text-gray-400">{{ __('Restringe FUNDEB, Censo, SAEB, IBGE e SGE à UF escolhida.') }}</span>
+                </label>
                 <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-gray-700 dark:text-gray-300">
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_fundeb" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar FUNDEB') }}</label>
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_censo" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar Censo') }}</label>

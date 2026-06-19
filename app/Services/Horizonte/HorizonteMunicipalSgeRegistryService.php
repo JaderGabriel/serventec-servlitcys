@@ -2,7 +2,9 @@
 
 namespace App\Services\Horizonte;
 
+use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Support\Horizonte\HorizonteMunicipalSgeCache;
+use App\Support\Horizonte\HorizonteUfScope;
 use App\Support\Http\SafeOutboundUrl;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -17,8 +19,9 @@ final class HorizonteMunicipalSgeRegistryService
     /**
      * @return array{success: bool, message: string, matched: int, skipped: bool, sources: list<string>}
      */
-    public function sync(): array
+    public function sync(?string $ufScope = null): array
     {
+        $scopedUf = HorizonteUfScope::normalize($ufScope);
         if (! filter_var(config('horizonte.sge.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             return [
                 'success' => true,
@@ -50,7 +53,15 @@ final class HorizonteMunicipalSgeRegistryService
             }
         }
 
-        $catalogCount = $this->countCatalogSge();
+        if ($scopedUf !== null) {
+            $index = array_filter(
+                $index,
+                static fn (mixed $_row, string $ibge): bool => HorizonteUfScope::ibgeBelongsToScope($ibge, $scopedUf),
+                ARRAY_FILTER_USE_BOTH,
+            );
+        }
+
+        $catalogCount = $this->countCatalogSge($scopedUf);
 
         if ($index === [] && $sources === []) {
             HorizonteMunicipalSgeCache::put([]);
@@ -66,14 +77,39 @@ final class HorizonteMunicipalSgeRegistryService
             ];
         }
 
+        if ($scopedUf !== null) {
+            $cached = HorizonteMunicipalSgeCache::get();
+            foreach (array_keys($cached) as $ibge) {
+                if (HorizonteUfScope::ibgeBelongsToScope($ibge, $scopedUf)) {
+                    unset($cached[$ibge]);
+                }
+            }
+            $index = array_merge($cached, $index);
+        }
+
         HorizonteMunicipalSgeCache::put($index);
 
         return [
             'success' => true,
-            'message' => __('SGE: :n município(s) no registo externo (+ catálogo local).', [
-                'n' => (string) count($index),
-            ]),
-            'matched' => count($index),
+            'message' => $scopedUf !== null
+                ? __('SGE (UF :uf): :n município(s) no registo externo (+ catálogo local).', [
+                    'uf' => $scopedUf,
+                    'n' => (string) count(array_filter(
+                        $index,
+                        static fn (mixed $_row, string $ibge): bool => HorizonteUfScope::ibgeBelongsToScope($ibge, $scopedUf),
+                        ARRAY_FILTER_USE_BOTH,
+                    )),
+                ])
+                : __('SGE: :n município(s) no registo externo (+ catálogo local).', [
+                    'n' => (string) count($index),
+                ]),
+            'matched' => $scopedUf !== null
+                ? count(array_filter(
+                    $index,
+                    static fn (mixed $_row, string $ibge): bool => HorizonteUfScope::ibgeBelongsToScope($ibge, $scopedUf),
+                    ARRAY_FILTER_USE_BOTH,
+                ))
+                : count($index),
             'skipped' => false,
             'sources' => array_values(array_unique(array_merge(['servlitcys_catalog'], $sources))),
         ];
@@ -87,11 +123,127 @@ final class HorizonteMunicipalSgeRegistryService
         return HorizonteMunicipalSgeCache::get();
     }
 
-    private function countCatalogSge(): int
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function localEntry(string $ibge): ?array
     {
-        return (int) \App\Models\City::query()
-            ->whereNotNull('ibge_municipio')
-            ->count();
+        $ibge = FundebMunicipioReferenceRepository::normalizeIbge($ibge);
+        if ($ibge === null) {
+            return null;
+        }
+
+        $entries = $this->loadLocalRegistry()['entries'];
+
+        return $entries[$ibge] ?? null;
+    }
+
+    /**
+     * @param  array{system: string, vendor?: string, notes?: string, app_url?: string}  $fields
+     * @return array{ibge: string, entry: array<string, mixed>}
+     */
+    public function upsertLocalEntry(string $ibge, array $fields, ?int $userId = null): array
+    {
+        $ibge = FundebMunicipioReferenceRepository::normalizeIbge($ibge);
+        if ($ibge === null) {
+            throw new \InvalidArgumentException(__('Código IBGE inválido.'));
+        }
+
+        $system = trim((string) ($fields['system'] ?? ''));
+        if ($system === '') {
+            throw new \InvalidArgumentException(__('Informe o nome do sistema de gestão (SGE).'));
+        }
+
+        $entry = [
+            'system' => $system,
+            'vendor' => trim((string) ($fields['vendor'] ?? '')),
+            'notes' => trim((string) ($fields['notes'] ?? '')),
+            'app_url' => trim((string) ($fields['app_url'] ?? '')),
+            'source' => 'manual_admin',
+            'updated_at' => now()->toIso8601String(),
+        ];
+        if ($userId !== null) {
+            $entry['updated_by'] = $userId;
+        }
+
+        $local = $this->loadLocalRegistry()['entries'];
+        $local[$ibge] = $entry;
+        $this->persistLocalRegistry($local);
+        $this->mergeEntryIntoRuntimeCache($ibge, $entry);
+
+        return ['ibge' => $ibge, 'entry' => $entry];
+    }
+
+    public function removeLocalEntry(string $ibge): bool
+    {
+        $ibge = FundebMunicipioReferenceRepository::normalizeIbge($ibge);
+        if ($ibge === null) {
+            return false;
+        }
+
+        $local = $this->loadLocalRegistry()['entries'];
+        if (! isset($local[$ibge])) {
+            return false;
+        }
+
+        unset($local[$ibge]);
+        $this->persistLocalRegistry($local);
+
+        $cached = HorizonteMunicipalSgeCache::get();
+        unset($cached[$ibge]);
+        HorizonteMunicipalSgeCache::put($cached);
+
+        return true;
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $index
+     */
+    private function persistLocalRegistry(array $index): void
+    {
+        $rel = trim((string) config('horizonte.sge.registry_path', 'horizonte/sge_registry.json'));
+        if ($rel === '') {
+            throw new \RuntimeException(__('Caminho do registo SGE não configurado.'));
+        }
+
+        ksort($index, SORT_STRING);
+        $municipios = [];
+        foreach ($index as $ibgeCode => $row) {
+            $municipios[] = array_merge(
+                ['ibge_municipio' => $ibgeCode],
+                $row,
+            );
+        }
+
+        $payload = [
+            'updated_at' => now()->toIso8601String(),
+            'municipios' => $municipios,
+        ];
+
+        Storage::disk('local')->put(
+            $rel,
+            json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $entry
+     */
+    private function mergeEntryIntoRuntimeCache(string $ibge, array $entry): void
+    {
+        $cached = HorizonteMunicipalSgeCache::get();
+        $cached[$ibge] = $entry;
+        HorizonteMunicipalSgeCache::put($cached);
+    }
+
+    private function countCatalogSge(?string $ufScope = null): int
+    {
+        $query = \App\Models\City::query()->whereNotNull('ibge_municipio');
+        if ($ufScope !== null) {
+            $query->where('uf', $ufScope);
+        }
+
+        return (int) $query->count();
     }
 
     /**

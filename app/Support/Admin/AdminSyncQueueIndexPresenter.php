@@ -135,7 +135,7 @@ final class AdminSyncQueueIndexPresenter
         return [
             'id' => 'horizonte',
             'label' => __('Horizonte'),
-            'description' => __('Abastecimento nacional (FUNDEB, Censo, SAEB, IBGE, SGE) — rotina quinzenal via Artisan, não enfileira em admin-sync.'),
+            'description' => __('Abastecimento nacional (FUNDEB, Censo, SAEB, IBGE, SGE) — rotina bimestral via Artisan, não enfileira em admin-sync.'),
             'icon' => 'map',
             'accent' => 'indigo',
             'anchor' => 'fila-horizonte',
