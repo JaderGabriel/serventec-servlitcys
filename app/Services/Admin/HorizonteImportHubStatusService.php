@@ -10,7 +10,9 @@ use App\Services\Admin\PublicDataOfficialCheckCache;
 use App\Support\Dashboard\AdminHomeMapCache;
 use App\Support\Horizonte\HorizonteFortnightlyFeedCache;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPipeline;
+use App\Support\Horizonte\HorizonteIbgeWarmProgress;
 use App\Support\InepMicrodadosCadastroEscolasPath;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Cobertura nacional e metadados da rotina Horizonte para o hub Dados públicos.
@@ -71,6 +73,9 @@ final class HorizonteImportHubStatusService
         $day1 = (int) ($scheduleDays[0] ?? 1);
         $day2 = (int) ($scheduleDays[1] ?? 15);
 
+        $ibgeUfsWarmed = $this->countIbgeUfsWarmed();
+        $ibgeUfsTotal = count(self::BRAZIL_UFS);
+
         return [
             'enabled' => (bool) config('horizonte.enabled', true),
             'feed_enabled' => (bool) config('horizonte.fortnightly_feed.enabled', true),
@@ -84,17 +89,21 @@ final class HorizonteImportHubStatusService
                 'saeb_municipios' => count($saebIbges),
                 'universe_municipios' => count($universe),
                 'with_full_triad' => $withFullTriad,
-                'ibge_ufs_warmed' => $this->countIbgeUfsWarmed(),
+                'ibge_ufs_warmed' => $ibgeUfsWarmed,
+                'ibge_ufs_total' => $ibgeUfsTotal,
                 'microdados_ok' => $microdadosPath !== null && is_readable($microdadosPath),
                 'fundeb_latest' => FundebMunicipioReference::query()->max('imported_at'),
                 'censo_latest' => InepCensoMunicipioMatricula::query()->max('imported_at'),
                 'saeb_latest' => SaebIndicatorPoint::query()->max('updated_at'),
             ],
-            'phases' => $this->feedPhases($fundebSet, $censoSet, $saebSet, $microdadosPath),
+            'phases' => $this->feedPhases($fundebSet, $censoSet, $saebSet, $microdadosPath, $ibgeUfsWarmed, $ibgeUfsTotal),
             'last_feed' => HorizonteFortnightlyFeedCache::get(),
             'pipeline' => HorizonteFortnightlyFeedPipeline::get(),
             'feed_staged' => filter_var(config('horizonte.fortnightly_feed.staged', true), FILTER_VALIDATE_BOOLEAN),
             'feed_step_interval' => max(5, (int) config('horizonte.fortnightly_feed.schedule.step_interval_minutes', 20)),
+            'ibge_ufs_per_step' => max(1, (int) config('horizonte.fortnightly_feed.ibge_ufs_per_step', 1)),
+            'ibge_warm_done' => HorizonteIbgeWarmProgress::doneUfs(),
+            'bundle' => $this->bundleStatus(),
             'map_url' => route('dashboard.horizonte'),
             'doc_url' => route('admin.documentation.show', ['doc' => 'docs/HORIZONTE.md']),
         ];
@@ -106,7 +115,7 @@ final class HorizonteImportHubStatusService
      * @param  array<string, int>  $saebSet
      * @return list<array<string, mixed>>
      */
-    private function feedPhases(array $fundebSet, array $censoSet, array $saebSet, ?string $microdadosPath): array
+    private function feedPhases(array $fundebSet, array $censoSet, array $saebSet, ?string $microdadosPath, int $ibgeUfsWarmed, int $ibgeUfsTotal): array
     {
         $phases = [
             [
@@ -116,7 +125,7 @@ final class HorizonteImportHubStatusService
                 'source_id' => 'fundeb_fnde',
                 'hub_anchor' => '#source-fundeb_fnde',
                 'admin_url' => route('admin.ieducar-compatibility.index'),
-                'cli' => 'php artisan horizonte:fortnightly-feed --skip-censo --skip-saeb --skip-ibge --skip-verify',
+                'cli' => 'php artisan horizonte:fortnightly-feed --staged --reset --skip-censo --skip-saeb --skip-ibge --skip-sge --skip-verify',
                 'ok' => count($fundebSet) >= 100,
                 'metric' => count($fundebSet),
                 'metric_label' => __('municípios'),
@@ -141,7 +150,7 @@ final class HorizonteImportHubStatusService
                 'source_id' => 'saeb_inep',
                 'hub_anchor' => '#source-saeb_inep',
                 'admin_url' => route('admin.pedagogical-sync.index'),
-                'cli' => 'php artisan horizonte:fortnightly-feed --skip-fundeb --skip-censo --skip-ibge --skip-verify',
+                'cli' => 'php artisan horizonte:fortnightly-feed --staged --reset --skip-fundeb --skip-censo --skip-ibge --skip-sge --skip-verify',
                 'ok' => count($saebSet) >= 100,
                 'metric' => count($saebSet),
                 'metric_label' => __('municípios'),
@@ -149,13 +158,15 @@ final class HorizonteImportHubStatusService
             [
                 'key' => 'ibge_catalog',
                 'label' => __('Catálogo IBGE — centroides'),
-                'description' => __('Nome, UF e coordenadas para municípios só com dados públicos (27 UFs).'),
+                'description' => __('Nome, UF e coordenadas — :n UF(s) por passo (HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP).', [
+                    'n' => (string) max(1, (int) config('horizonte.fortnightly_feed.ibge_ufs_per_step', 1)),
+                ]),
                 'source_id' => 'geo_inep',
                 'hub_anchor' => '#source-geo_inep',
                 'admin_url' => route('admin.geo-sync.index'),
-                'cli' => 'php artisan horizonte:fortnightly-feed --skip-fundeb --skip-censo --skip-saeb --skip-verify',
-                'ok' => $this->countIbgeUfsWarmed() >= 10,
-                'metric' => $this->countIbgeUfsWarmed(),
+                'cli' => 'php artisan horizonte:fortnightly-feed --staged --reset --skip-fundeb --skip-censo --skip-saeb --skip-sge --skip-verify',
+                'ok' => $ibgeUfsWarmed >= $ibgeUfsTotal,
+                'metric' => $ibgeUfsWarmed,
                 'metric_label' => __('UFs aquecidas'),
             ],
             [
@@ -165,7 +176,7 @@ final class HorizonteImportHubStatusService
                 'source_id' => null,
                 'hub_anchor' => '#horizonte-hub',
                 'admin_url' => route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-hub',
-                'cli' => 'php artisan horizonte:fortnightly-feed --skip-fundeb --skip-censo --skip-saeb --skip-ibge --skip-verify',
+                'cli' => 'php artisan horizonte:fortnightly-feed --phase=sge_registry --skip-fundeb --skip-censo --skip-saeb --skip-ibge --skip-verify',
                 'ok' => true,
                 'metric' => null,
                 'metric_label' => null,
@@ -179,6 +190,18 @@ final class HorizonteImportHubStatusService
                 'admin_url' => route('admin.public-data.index').'#verificacao-oficial',
                 'cli' => 'php artisan public-data:check-official --no-notify',
                 'ok' => PublicDataOfficialCheckCache::get() !== null,
+                'metric' => null,
+                'metric_label' => null,
+            ],
+            [
+                'key' => 'data_bundle',
+                'label' => __('Pacote offline — local → produção'),
+                'description' => __('Exporta/importa FUNDEB, Censo, SAEB, cache IBGE e SGE via ZIP (sem git).'),
+                'source_id' => null,
+                'hub_anchor' => '#horizonte-offline-bundle',
+                'admin_url' => route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-offline-bundle',
+                'cli' => 'php artisan horizonte:export-data-bundle',
+                'ok' => Storage::disk('local')->exists('horizonte/bundles/latest.zip'),
                 'metric' => null,
                 'metric_label' => null,
             ],
@@ -210,5 +233,21 @@ final class HorizonteImportHubStatusService
         }
 
         return $count;
+    }
+
+    /**
+     * @return array{latest_exists: bool, latest_path: string, latest_updated_at: ?int, latest_size: ?int}
+     */
+    private function bundleStatus(): array
+    {
+        $rel = 'horizonte/bundles/latest.zip';
+        $exists = Storage::disk('local')->exists($rel);
+
+        return [
+            'latest_exists' => $exists,
+            'latest_path' => storage_path('app/'.$rel),
+            'latest_updated_at' => $exists ? Storage::disk('local')->lastModified($rel) : null,
+            'latest_size' => $exists ? Storage::disk('local')->size($rel) : null,
+        ];
     }
 }

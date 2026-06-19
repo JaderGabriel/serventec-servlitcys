@@ -74,6 +74,9 @@ return [
         'notify_phases' => filter_var(env('HORIZONTE_FORTNIGHTLY_FEED_NOTIFY_PHASES', true), FILTER_VALIDATE_BOOL),
         'memory_limit' => env('HORIZONTE_FORTNIGHTLY_FEED_MEMORY_LIMIT', '512M'),
         'time_limit' => max(60, (int) env('HORIZONTE_FORTNIGHTLY_FEED_TIME_LIMIT', 900)),
+
+        /** UFs aquecidas por invocação na fase IBGE (1 = mínimo de RAM). */
+        'ibge_ufs_per_step' => max(1, min(27, (int) env('HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP', 1))),
     ],
 
     /*

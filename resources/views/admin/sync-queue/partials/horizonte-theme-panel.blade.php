@@ -84,7 +84,7 @@
             <x-admin.import-hub.stat label="SAEB" :value="number_format((int) ($coverage['saeb_municipios'] ?? 0))" :hint="__('com indicadores')" tone="violet" />
             <x-admin.import-hub.stat :label="__('Triad completa')" :value="number_format((int) ($coverage['with_full_triad'] ?? 0))" :hint="__('FUNDEB+Censo+SAEB')" tone="sky" />
             <x-admin.import-hub.stat :label="__('Universo mapa')" :value="number_format((int) ($coverage['universe_municipios'] ?? 0))" :hint="__('IBGE em qualquer fonte')" tone="slate" />
-            <x-admin.import-hub.stat label="IBGE" :value="((int) ($coverage['ibge_ufs_warmed'] ?? 0)).'/27'" :hint="__('UFs aquecidas')" tone="sky" />
+            <x-admin.import-hub.stat label="IBGE" :value="((int) ($coverage['ibge_ufs_warmed'] ?? 0)).'/'.((int) ($coverage['ibge_ufs_total'] ?? 27))" :hint="__('UFs aquecidas')" tone="sky" />
         </x-admin.import-hub.stats-grid>
 
         @if ($pipeline !== null)
@@ -193,12 +193,18 @@
             </div>
         </div>
 
-        <div class="rounded-xl border border-slate-200/80 dark:border-slate-700 bg-slate-900 dark:bg-slate-950 px-4 py-3">
-            <p class="text-[10px] font-medium uppercase tracking-wide text-slate-400">{{ __('Comando manual (servidor)') }}</p>
-            <code class="mt-1 block text-xs text-emerald-300 font-mono break-all">php artisan horizonte:fortnightly-feed --staged --reset</code>
-            <p class="mt-2 text-[10px] text-slate-500">
-                {{ __('Continuar pipeline:') }} <code class="text-slate-400">php artisan horizonte:fortnightly-feed --staged --continue</code>
-                · {{ __('Tudo numa vez:') }} <code class="text-slate-400">--all</code>
+        <div class="rounded-xl border border-slate-200/80 dark:border-slate-700 bg-slate-900 dark:bg-slate-950 px-4 py-3 space-y-2">
+            <p class="text-[10px] font-medium uppercase tracking-wide text-slate-400">{{ __('Comandos manual (servidor)') }}</p>
+            <code class="block text-xs text-emerald-300 font-mono break-all">php artisan horizonte:fortnightly-feed --staged --reset</code>
+            <p class="text-[10px] text-slate-500">
+                {{ __('Continuar:') }} <code class="text-slate-400">--staged --continue</code>
+                · {{ __('IBGE leve:') }} <code class="text-slate-400">--skip-fundeb --skip-censo --skip-saeb --skip-verify</code>
+            </p>
+            <p class="text-[10px] text-slate-500 pt-1 border-t border-slate-800">
+                {{ __('Offline:') }}
+                <code class="text-slate-400">horizonte:export-data-bundle</code>
+                → scp →
+                <code class="text-slate-400">horizonte:import-data-bundle</code>
             </p>
         </div>
     </div>

@@ -41,6 +41,7 @@ final class HorizonteFortnightlyFeedPipeline
     public static function forget(): void
     {
         Cache::forget(self::CACHE_KEY);
+        HorizonteIbgeWarmProgress::reset();
     }
 
     /**
@@ -97,15 +98,19 @@ final class HorizonteFortnightlyFeedPipeline
         $index = (int) ($state['current_index'] ?? 0);
         $queue = is_array($state['phase_queue'] ?? null) ? $state['phase_queue'] : [];
         $success = (bool) ($phaseResult['success'] ?? false);
+        $partial = (bool) ($phaseResult['partial'] ?? false);
         $now = now()->toIso8601String();
 
         $phases = is_array($state['phases'] ?? null) ? $state['phases'] : [];
         if (isset($phases[$index]) && ($phases[$index]['key'] ?? '') === $key) {
+            $status = ($phaseResult['skipped'] ?? false)
+                ? 'skipped'
+                : ($partial ? 'running' : ($success ? 'completed' : 'failed'));
             $phases[$index] = array_merge($phases[$index], [
-                'status' => ($phaseResult['skipped'] ?? false) ? 'skipped' : ($success ? 'completed' : 'failed'),
-                'success' => $success,
+                'status' => $status,
+                'success' => $partial ? null : $success,
                 'message' => (string) ($phaseResult['message'] ?? ''),
-                'finished_at' => $now,
+                'finished_at' => $partial ? null : $now,
                 'result' => $phaseResult,
             ]);
             if (filled($phases[$index]['started_at'] ?? null) === false) {
@@ -113,8 +118,8 @@ final class HorizonteFortnightlyFeedPipeline
             }
         }
 
-        $nextIndex = $index + 1;
-        $done = $nextIndex >= count($queue);
+        $nextIndex = $partial ? $index : $index + 1;
+        $done = ! $partial && $nextIndex >= count($queue);
         $phaseResults = array_values(array_filter(
             array_map(static fn (array $p): ?array => is_array($p['result'] ?? null) ? $p['result'] : null, $phases),
             static fn (?array $r): bool => $r !== null,

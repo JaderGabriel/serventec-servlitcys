@@ -10,6 +10,7 @@ use App\Services\Inep\SaebPlanilhaInepImportService;
 use App\Support\Brazil\IbgeMunicipalityCatalog;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPhaseCatalog;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPipeline;
+use App\Support\Horizonte\HorizonteIbgeWarmProgress;
 use App\Support\InepMicrodadosCadastroEscolasPath;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -81,11 +82,11 @@ final class HorizonteFortnightlyFeedService
 
         $phaseResult = $dryRun
             ? $this->dryRunPhase($phaseKey)
-            : $this->runPhase($phaseKey);
+            : $this->runPhase($phaseKey, $options);
 
         $state = HorizonteFortnightlyFeedPipeline::recordPhaseResult($state, $phaseResult);
 
-        if (! $dryRun) {
+        if (! $dryRun && ! ($phaseResult['partial'] ?? false)) {
             $this->notifier->phaseFinished(
                 (string) ($state['run_id'] ?? ''),
                 $phaseResult,
@@ -119,7 +120,7 @@ final class HorizonteFortnightlyFeedService
         }
 
         $dryRun = (bool) ($options['dry_run'] ?? false);
-        $phaseResult = $dryRun ? $this->dryRunPhase($phaseKey) : $this->runPhase($phaseKey);
+        $phaseResult = $dryRun ? $this->dryRunPhase($phaseKey) : $this->runPhase($phaseKey, $options);
 
         if (! $dryRun) {
             $this->notifier->phaseFinished('manual-'.$phaseKey, $phaseResult, 1, 1);
@@ -134,9 +135,10 @@ final class HorizonteFortnightlyFeedService
     }
 
     /**
+     * @param  array<string, mixed>  $options
      * @return array<string, mixed>
      */
-    public function runPhase(string $phaseKey): array
+    public function runPhase(string $phaseKey, array $options = []): array
     {
         $this->applyResourceLimits();
         $refYear = (int) config('horizonte.reference_year', (int) date('Y') - 1);
@@ -145,7 +147,7 @@ final class HorizonteFortnightlyFeedService
             'fundeb_receita' => $this->syncFundebReceitaNacional($refYear),
             'censo_matriculas' => $this->indexCensoMatriculas(),
             'saeb_planilhas' => $this->importSaebPlanilhasNacional(),
-            'ibge_catalog' => $this->warmIbgeCatalog(),
+            'ibge_catalog' => $this->warmIbgeCatalog($options),
             'sge_registry' => $this->syncSgeRegistry(),
             'official_check' => $this->runOfficialCheck(),
             default => [
@@ -172,7 +174,19 @@ final class HorizonteFortnightlyFeedService
         $phases = [];
 
         foreach (HorizonteFortnightlyFeedPhaseCatalog::queueFromOptions($this->normalizedSkipOptions($options)) as $phaseKey) {
-            $result = $dryRun ? $this->dryRunPhase($phaseKey) : $this->runPhase($phaseKey);
+            if ($phaseKey === 'ibge_catalog') {
+                do {
+                    $result = $dryRun ? $this->dryRunPhase($phaseKey) : $this->runPhase($phaseKey, $options);
+                    if (! $dryRun) {
+                        gc_collect_cycles();
+                    }
+                } while (! $dryRun && ($result['partial'] ?? false));
+
+                $phases[] = $result;
+                continue;
+            }
+
+            $result = $dryRun ? $this->dryRunPhase($phaseKey) : $this->runPhase($phaseKey, $options);
             $phases[] = $result;
             if (! $dryRun) {
                 gc_collect_cycles();
@@ -249,13 +263,16 @@ final class HorizonteFortnightlyFeedService
         }
 
         $running = ($state['status'] ?? '') === 'running';
-        $message = $running
-            ? __('Fase :label concluída — :done/:total. Próxima etapa pelo agendador.', [
-                'label' => HorizonteFortnightlyFeedPhaseCatalog::label((string) ($lastPhase['key'] ?? '')),
-                'done' => (string) count($phaseResults),
-                'total' => (string) count(is_array($state['phase_queue'] ?? null) ? $state['phase_queue'] : []),
-            ])
-            : (string) ($state['message'] ?? __('Pipeline Horizonte actualizado.'));
+        $partial = (bool) ($lastPhase['partial'] ?? false);
+        $message = $partial
+            ? (string) ($lastPhase['message'] ?? __('IBGE em progresso — execute --continue ou aguarde o agendador.'))
+            : ($running
+                ? __('Fase :label concluída — :done/:total. Próxima etapa pelo agendador.', [
+                    'label' => HorizonteFortnightlyFeedPhaseCatalog::label((string) ($lastPhase['key'] ?? '')),
+                    'done' => (string) count($phaseResults),
+                    'total' => (string) count(is_array($state['phase_queue'] ?? null) ? $state['phase_queue'] : []),
+                ])
+                : (string) ($state['message'] ?? __('Pipeline Horizonte actualizado.')));
 
         return [
             'success' => $running ? (bool) ($lastPhase['success'] ?? true) : (bool) ($state['success'] ?? false),
@@ -527,19 +544,74 @@ final class HorizonteFortnightlyFeedService
     }
 
     /**
-     * @return array{success: bool, message: string, ufs?: int}
+     * @param  array<string, mixed>  $options
+     * @return array{success: bool, message: string, ufs?: int, partial?: bool, ibge_done?: int, ibge_total?: int}
      */
-    private function warmIbgeCatalog(): array
+    private function warmIbgeCatalog(array $options = []): array
     {
-        $ufs = IbgeMunicipalityCatalog::brazilianUfs();
-        $this->ibgeCatalog->warmForUfs($ufs);
+        $singleUf = strtoupper(trim((string) ($options['uf'] ?? '')));
+        if ($singleUf !== '') {
+            $this->ibgeCatalog->municipalitiesForUf($singleUf);
+            gc_collect_cycles();
+
+            return [
+                'success' => true,
+                'message' => __('Catálogo IBGE aquecido para UF :uf.', ['uf' => $singleUf]),
+                'ufs' => 1,
+                'partial' => false,
+                'ibge_done' => 1,
+                'ibge_total' => 1,
+            ];
+        }
+
+        $allUfs = IbgeMunicipalityCatalog::brazilianUfs();
+        $total = count($allUfs);
+        $remaining = HorizonteIbgeWarmProgress::remainingUfs();
+
+        if ($remaining === []) {
+            HorizonteIbgeWarmProgress::reset();
+
+            return [
+                'success' => true,
+                'message' => __('Catálogo IBGE já completo (:n UFs).', ['n' => (string) $total]),
+                'ufs' => $total,
+                'partial' => false,
+                'ibge_done' => $total,
+                'ibge_total' => $total,
+            ];
+        }
+
+        $ufsPerStep = max(1, (int) config('horizonte.fortnightly_feed.ibge_ufs_per_step', 1));
+        $batch = array_slice($remaining, 0, $ufsPerStep);
+
+        foreach ($batch as $uf) {
+            $this->ibgeCatalog->municipalitiesForUf($uf);
+            gc_collect_cycles();
+        }
+
+        HorizonteIbgeWarmProgress::markDone($batch);
+        $doneCount = count(HorizonteIbgeWarmProgress::doneUfs());
+        $stillRemaining = $total - $doneCount;
+        $partial = $stillRemaining > 0;
+
+        if (! $partial) {
+            HorizonteIbgeWarmProgress::reset();
+        }
 
         return [
             'success' => true,
-            'message' => __('Catálogo IBGE aquecido para :n UFs (coordenadas para prospectos).', [
-                'n' => (string) count($ufs),
-            ]),
-            'ufs' => count($ufs),
+            'partial' => $partial,
+            'message' => $partial
+                ? __('IBGE: :done/:total UFs aquecidas — continue com --continue ou aguarde o agendador.', [
+                    'done' => (string) $doneCount,
+                    'total' => (string) $total,
+                ])
+                : __('Catálogo IBGE aquecido para :n UFs (coordenadas para prospectos).', [
+                    'n' => (string) $total,
+                ]),
+            'ufs' => $doneCount,
+            'ibge_done' => $doneCount,
+            'ibge_total' => $total,
         ];
     }
 

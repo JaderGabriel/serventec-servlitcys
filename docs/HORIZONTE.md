@@ -220,7 +220,7 @@ Por defeito corre **em etapas** (`HORIZONTE_FORTNIGHTLY_FEED_STAGED=true`): cada
 | **FUNDEB** | CSV nacional «Receita total do Fundeb por ente federado» (FNDE) → `fundeb_municipio_references` por IBGE |
 | **Censo** | Indexa matrículas municipais a partir do microdados INEP (`inep_censo_municipio_matriculas`) |
 | **SAEB** | Planilhas oficiais INEP (aba Municípios, `CO_MUNICIPIO`) para **todos** os municípios — `saeb_indicator_points` |
-| **IBGE** | Aquece catálogo de centroides (27 UFs) para posicionar prospectos no mapa |
+| **IBGE** | Aquece catálogo de centroides (**1 UF por invocação** por defeito — `HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP=1`) |
 | **SGE** | Sincroniza registo opcional de sistemas de gestão educacional (JSON local ou URL) — **não bloqueia** se ausente |
 | **Verificação** | `public-data:check-official --no-notify` (cache no hub, sem notificação) |
 
@@ -235,6 +235,13 @@ php artisan horizonte:fortnightly-feed --all
 
 php artisan horizonte:fortnightly-feed --dry-run
 php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo --skip-sge
+
+# VPS com pouca RAM — só IBGE + SGE (1 UF por passo; repetir --continue)
+php artisan horizonte:fortnightly-feed --staged --reset --skip-fundeb --skip-censo --skip-saeb --skip-verify
+php artisan horizonte:fortnightly-feed --staged --continue   # até concluir IBGE, depois SGE
+
+# Uma UF manualmente
+php artisan horizonte:fortnightly-feed --phase=ibge_catalog --uf=SP
 
 # Confirmar agendamento
 php artisan schedule:list | grep horizonte
@@ -252,6 +259,31 @@ O cache do mapa invalida-se automaticamente quando `imported_at` / contagens nas
 2. **Actualizar mapa:** abrir `/dashboard/horizonte` — shell rápido + JSON assíncrono; overlay de carregamento.
 3. **Priorizar expansão:** modo **Calor**, segmentos «Onde buscar clientes», filtros de propensão/FUNDEB/Censo/SAEB.
 4. **Onboarding:** criar cidade no catálogo → configurar conexão → tier passa a `catalog_pending` → `consultoria_active`.
+
+### 9.3 Abastecimento offline (local → produção, sem git)
+
+Quando o feed em produção morre com `Killed` (OOM), processe os dados **localmente** (máquina com RAM e acesso às APIs) e transfira um pacote ZIP:
+
+```bash
+# Local — gerar dados completos (feed ou importações no hub)
+php artisan horizonte:fortnightly-feed --all
+# ou fases individuais com RAM suficiente
+
+# Exportar pacote
+php artisan horizonte:export-data-bundle
+# Ficheiro: storage/app/horizonte/bundles/horizonte-YYYYMMDD-HHMMSS.zip
+# Cópia: storage/app/horizonte/bundles/latest.zip
+
+# Enviar para produção (exemplo)
+scp storage/app/horizonte/bundles/latest.zip user@servidor:/var/www/servlitcys/storage/app/horizonte/bundles/
+
+# Produção — importar (sem git)
+php artisan horizonte:import-data-bundle storage/app/horizonte/bundles/latest.zip
+php artisan horizonte:import-data-bundle storage/app/horizonte/bundles/latest.zip --dry-run
+php artisan horizonte:import-data-bundle storage/app/horizonte/bundles/latest.zip --only=fundeb,censo
+```
+
+O pacote inclui: `fundeb_municipio_references`, `inep_censo_municipio_matriculas`, `saeb_indicator_points` (municipal), cache IBGE (centroides) e registo SGE. Variável `HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP` controla quantas UFs aquecem por passo no feed (defeito `1`).
 
 ---
 

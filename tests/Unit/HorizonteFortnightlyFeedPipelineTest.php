@@ -53,4 +53,33 @@ final class HorizonteFortnightlyFeedPipelineTest extends TestCase
         $this->assertSame('completed', $state['status']);
         $this->assertFalse(HorizonteFortnightlyFeedPipeline::isActive());
     }
+
+    #[Test]
+    public function partial_phase_does_not_advance_pipeline_index(): void
+    {
+        Cache::flush();
+
+        $state = HorizonteFortnightlyFeedPipeline::start([
+            'skip_fundeb' => true,
+            'skip_censo' => true,
+            'skip_saeb' => true,
+            'skip_ibge' => false,
+            'skip_sge' => true,
+            'skip_verify' => true,
+        ]);
+
+        $state = HorizonteFortnightlyFeedPipeline::recordPhaseResult($state, [
+            'key' => 'ibge_catalog',
+            'success' => true,
+            'partial' => true,
+            'message' => '1/27',
+            'ibge_done' => 1,
+            'ibge_total' => 27,
+        ]);
+
+        $this->assertSame('running', $state['status']);
+        $this->assertSame(0, $state['current_index']);
+        $this->assertSame('ibge_catalog', $state['current_phase']);
+        $this->assertSame('running', $state['phases'][0]['status']);
+    }
 }

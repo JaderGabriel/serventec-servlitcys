@@ -21,12 +21,18 @@ class HorizonteFortnightlyFeedCommand extends Command
                             {--skip-saeb : Ignorar planilhas SAEB INEP}
                             {--skip-ibge : Ignorar aquecimento catálogo IBGE}
                             {--skip-sge : Ignorar registo de sistemas de gestão educacional (SGE)}
-                            {--skip-verify : Ignorar verificação public-data:check-official}';
+                            {--skip-verify : Ignorar verificação public-data:check-official}
+                            {--uf= : Aquecer apenas uma UF no catálogo IBGE (ex.: SP)}';
 
     protected $description = 'Abastecimento quinzenal de dados públicos para o mapa Horizonte (FUNDEB nacional, Censo, SAEB, IBGE)';
 
     public function handle(HorizonteFortnightlyFeedService $feed): int
     {
+        $memory = trim((string) config('horizonte.fortnightly_feed.memory_limit', '512M'));
+        if ($memory !== '') {
+            @ini_set('memory_limit', $memory);
+        }
+
         if (! filter_var(config('horizonte.fortnightly_feed.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             $this->warn(__('Rotina quinzenal Horizonte desactivada (HORIZONTE_FORTNIGHTLY_FEED_ENABLED=false).'));
 
@@ -94,6 +100,7 @@ class HorizonteFortnightlyFeedCommand extends Command
             'skip_ibge' => (bool) $this->option('skip-ibge'),
             'skip_sge' => (bool) $this->option('skip-sge'),
             'skip_verify' => (bool) $this->option('skip-verify'),
+            'uf' => trim((string) $this->option('uf')),
         ];
     }
 

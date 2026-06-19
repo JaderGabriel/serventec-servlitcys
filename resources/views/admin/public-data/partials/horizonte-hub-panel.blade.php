@@ -12,6 +12,8 @@
     $day2 = (int) ($scheduleDays[1] ?? 15);
     $enabled = (bool) ($hub['enabled'] ?? true);
     $feedEnabled = (bool) ($hub['feed_enabled'] ?? true);
+    $bundle = is_array($hub['bundle'] ?? null) ? $hub['bundle'] : [];
+    $ibgeUfsTotal = (int) ($coverage['ibge_ufs_total'] ?? 27);
 @endphp
 
 <section id="horizonte-hub" class="scroll-mt-24 space-y-4">
@@ -21,7 +23,9 @@
                 {{ __('Horizonte — abastecimento nacional') }}
             </h3>
             <p class="mt-1 text-xs text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed">
-                {{ __('O mapa de oportunidade usa FUNDEB, Censo, SAEB e catálogo IBGE para prospectos fora do catálogo SERVLITCYS. A rotina quinzenal sincroniza todas as fontes nacionais de uma vez.') }}
+                {{ __('O mapa de oportunidade usa FUNDEB, Censo, SAEB e catálogo IBGE para prospectos fora do catálogo SERVLITCYS. Em produção a rotina corre em etapas (1 fase por vez; IBGE aquece :n UF(s) por passo).', [
+                    'n' => (string) ($hub['ibge_ufs_per_step'] ?? 1),
+                ]) }}
             </p>
             @if ($feedEnabled && ($hub['schedule_enabled'] ?? true))
                 <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-500">
@@ -51,7 +55,7 @@
             >
                 @csrf
                 <p class="text-[11px] font-semibold uppercase tracking-wide text-indigo-800 dark:text-indigo-200">{{ __('Executar agora') }}</p>
-                <p class="text-[11px] text-indigo-900/80 dark:text-indigo-200/80">{{ __('Pode demorar — em produção corre em etapas (1 fase por vez).') }}</p>
+                <p class="text-[11px] text-indigo-900/80 dark:text-indigo-200/80">{{ __('Inicia o pipeline em etapas. IBGE e fases pesadas continuam com --continue ou pelo agendador.') }}</p>
                 <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-gray-700 dark:text-gray-300">
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_fundeb" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar FUNDEB') }}</label>
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_censo" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar Censo') }}</label>
@@ -79,7 +83,8 @@
         <x-admin.import-hub.callout :variant="($feedFlash['success'] ?? false) ? 'success' : 'warning'" :title="($feedFlash['success'] ?? false) ? __('Abastecimento concluído') : __('Abastecimento com falhas')">
             {{ $feedFlash['message'] ?? '' }}
             @if ($feedFlash['staged'] ?? false)
-                <p class="mt-2 text-xs opacity-90">{{ __('Modo em etapas — fases restantes continuam pelo agendador ou php artisan horizonte:fortnightly-feed --staged --continue') }}</p>
+                <p class="mt-2 text-xs opacity-90">{{ __('Modo em etapas — fases restantes continuam pelo agendador ou:') }}</p>
+                <code class="mt-1 block text-[10px] font-mono opacity-90">php artisan horizonte:fortnightly-feed --staged --continue</code>
             @endif
         </x-admin.import-hub.callout>
     @endif
@@ -97,8 +102,40 @@
         <x-admin.import-hub.stat label="SAEB" :value="number_format((int) ($coverage['saeb_municipios'] ?? 0))" :hint="__('municípios com indicadores')" tone="violet" />
         <x-admin.import-hub.stat :label="__('Triad completa')" :value="number_format((int) ($coverage['with_full_triad'] ?? 0))" :hint="__('FUNDEB + Censo + SAEB')" tone="sky" />
         <x-admin.import-hub.stat :label="__('Universo mapa')" :value="number_format((int) ($coverage['universe_municipios'] ?? 0))" :hint="__('IBGE em qualquer fonte')" tone="slate" />
-        <x-admin.import-hub.stat label="IBGE" :value="((int) ($coverage['ibge_ufs_warmed'] ?? 0)).'/27'" :hint="__('UFs com catálogo')" tone="sky" />
+        <x-admin.import-hub.stat label="IBGE" :value="((int) ($coverage['ibge_ufs_warmed'] ?? 0)).'/'.$ibgeUfsTotal" :hint="__('UFs com catálogo')" tone="sky" />
     </x-admin.import-hub.stats-grid>
+
+    <section id="horizonte-offline-bundle" class="scroll-mt-24 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/40 p-4 space-y-3">
+        <div>
+            <h4 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ __('Transferência offline (local → produção)') }}</h4>
+            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400 max-w-3xl">
+                {{ __('Processe o feed numa máquina com RAM suficiente, exporte um ZIP e importe em produção sem passar pelo git.') }}
+            </p>
+        </div>
+        <div class="grid gap-3 lg:grid-cols-2">
+            <div class="rounded-lg border border-slate-200/80 dark:border-slate-700 bg-white/80 dark:bg-slate-900/50 p-3">
+                <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Exportar (local)') }}</p>
+                <code class="mt-2 block rounded bg-slate-100 px-2 py-1.5 text-[10px] text-slate-800 dark:bg-slate-800 dark:text-slate-200">php artisan horizonte:export-data-bundle</code>
+            </div>
+            <div class="rounded-lg border border-slate-200/80 dark:border-slate-700 bg-white/80 dark:bg-slate-900/50 p-3">
+                <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Importar (produção)') }}</p>
+                <code class="mt-2 block rounded bg-slate-100 px-2 py-1.5 text-[10px] text-slate-800 dark:bg-slate-800 dark:text-slate-200">php artisan horizonte:import-data-bundle storage/app/horizonte/bundles/latest.zip</code>
+            </div>
+        </div>
+        @if ($bundle['latest_exists'] ?? false)
+            <p class="text-[11px] text-emerald-800 dark:text-emerald-200">
+                {{ __('Pacote latest.zip disponível') }}
+                @if (filled($bundle['latest_updated_at'] ?? null))
+                    · {{ \Illuminate\Support\Carbon::createFromTimestamp((int) $bundle['latest_updated_at'])->timezone(config('app.timezone'))->format('d/m/Y H:i') }}
+                @endif
+                @if (filled($bundle['latest_size'] ?? null))
+                    · {{ number_format(((int) $bundle['latest_size']) / 1024 / 1024, 1) }} MB
+                @endif
+            </p>
+        @else
+            <p class="text-[11px] text-slate-500">{{ __('Nenhum pacote latest.zip em storage/app/horizonte/bundles/') }}</p>
+        @endif
+    </section>
 
     @if (! ($coverage['microdados_ok'] ?? false))
         <x-admin.import-hub.callout variant="warning" :title="__('Microdados Censo em falta')">
