@@ -4,6 +4,7 @@ namespace App\Services\Notifications;
 
 use App\Enums\NotificationPriority;
 use App\Services\Admin\PublicDataOfficialAvailabilityService;
+use App\Services\Admin\PublicDataOfficialCheckCache;
 use App\Support\Notifications\NotificationKinds;
 
 final class PublicDataDailyCheckNotifier
@@ -13,22 +14,55 @@ final class PublicDataDailyCheckNotifier
         private readonly NotificationDispatcher $dispatcher,
     ) {}
 
-    public function notifyAdminsDaily(): array
+    /**
+     * Executa verificação read-only, regista cache para o hub admin e opcionalmente notifica.
+     *
+     * @return array<string, mixed>
+     */
+    public function run(bool $notify = true): array
     {
         if (! (bool) config('public_data_availability.enabled', true)) {
             return ['skipped' => true, 'reason' => 'disabled'];
         }
 
+        $report = $this->availability->scan();
+        PublicDataOfficialCheckCache::put($report);
+
+        $notified = false;
+        if ($notify) {
+            $notified = $this->dispatchNotification($report);
+        }
+
+        return [
+            'skipped' => false,
+            'has_news' => (bool) $report['has_news'],
+            'news_count' => (int) $report['news_count'],
+            'findings' => count($report['findings']),
+            'notified' => $notified,
+            'report' => $report,
+        ];
+    }
+
+    /** @deprecated Use run() — mantido para compatibilidade com agendador. */
+    public function notifyAdminsDaily(): array
+    {
+        return $this->run(true);
+    }
+
+    /**
+     * @param  array{has_news: bool, news_count: int, findings: list<array<string, mixed>>}  $report
+     */
+    private function dispatchNotification(array $report): bool
+    {
         if (! $this->dispatcher->isEnabled()) {
-            return ['skipped' => true, 'reason' => 'notifications_disabled'];
+            return false;
         }
 
         $recipients = $this->dispatcher->operationalRecipients();
         if ($recipients->isEmpty()) {
-            return ['skipped' => true, 'reason' => 'no_recipients'];
+            return false;
         }
 
-        $report = $this->availability->scan();
         $body = $this->buildBody($report);
 
         $this->dispatcher->notifyOperational($recipients, [
@@ -41,16 +75,11 @@ final class PublicDataDailyCheckNotifier
                 ? NotificationPriority::High->value
                 : NotificationPriority::Normal->value,
             'kind' => NotificationKinds::PUBLIC_DATA,
-            'action_url' => route('admin.public-data.index'),
+            'action_url' => route('admin.public-data.index').'#verificacao-oficial',
             'dedupe_key' => 'public-data:daily:'.now()->format('Y-m-d'),
         ]);
 
-        return [
-            'skipped' => false,
-            'has_news' => (bool) $report['has_news'],
-            'news_count' => (int) $report['news_count'],
-            'findings' => count($report['findings']),
-        ];
+        return true;
     }
 
     /**
@@ -89,7 +118,7 @@ final class PublicDataDailyCheckNotifier
         }
 
         $lines[] = '';
-        $lines[] = __('Hub: :url', ['url' => route('admin.public-data.index')]);
+        $lines[] = __('Ver detalhes no hub: :url', ['url' => route('admin.public-data.index').'#verificacao-oficial']);
 
         return mb_substr(implode("\n", $lines), 0, 3500);
     }

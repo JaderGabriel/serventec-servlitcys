@@ -4495,6 +4495,43 @@
         @apply bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-200;
     }
 
+    .sync-queue-theme-card--teal .sync-queue-theme-card__icon {
+        @apply bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-200;
+    }
+
+    .sync-queue-theme-card--fuchsia .sync-queue-theme-card__icon {
+        @apply bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-950/50 dark:text-fuchsia-200;
+    }
+
+    /* Monitor de módulos — cartões com faixa de estado */
+    .module-monitor-card.sync-queue-theme-card {
+        @apply relative overflow-hidden p-0;
+    }
+
+    .module-monitor-card__stripe {
+        @apply absolute inset-y-0 left-0 w-1;
+    }
+
+    .module-monitor-card__stripe--healthy {
+        @apply bg-emerald-500;
+    }
+
+    .module-monitor-card__stripe--warning {
+        @apply bg-amber-500;
+    }
+
+    .module-monitor-card__stripe--critical {
+        @apply bg-rose-500;
+    }
+
+    .module-monitor-card__stripe--unknown {
+        @apply bg-slate-400 dark:bg-slate-600;
+    }
+
+    .module-monitor-incident summary:hover {
+        @apply bg-slate-50/80 dark:bg-slate-800/40;
+    }
+
     .sync-queue-theme-card__title {
         @apply text-sm font-semibold text-gray-900 dark:text-gray-100;
     }

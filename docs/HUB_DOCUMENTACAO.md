@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 5.0.0 · **Última revisão:** 2026-06-03
+**Versão do produto:** 5.0.1 · **Última revisão:** 2026-06-19
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
-Mapa visual da documentação em produção: versão actual, linha **5.0** (Horizonte), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
+Mapa visual da documentação em produção: versão actual **5.0.1**, linha **5.x** (Horizonte + operação admin), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
 
 Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e secções expansíveis).
 
@@ -14,11 +14,11 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **5.0.0** |
-| **Tag de deploy** | `20260603b-Horizonte` |
-| **Data de referência** | 2026-06-03 |
-| **Release** | [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md) |
-| **Marco** | **Horizonte** — mapa de oportunidade municipal |
+| **Versão semântica** | **5.0.1** |
+| **Tag de deploy** | `20260619a-Heimdall` |
+| **Data de referência** | 2026-06-19 |
+| **Release** | [RELEASE_20260619a_HEIMDALL.md](RELEASE_20260619a_HEIMDALL.md) |
+| **Marco** | **Heimdall** — operação admin (monitor, dados públicos) + data release |
 
 ---
 
@@ -52,8 +52,8 @@ flowchart TD
 | 4.1.7 | Phronesis | 07/06/2026 | 307 |
 | 4.2.0 | Clio | 10/06/2026 | 319 |
 | 4.3.0 | Harmonia | 11/06/2026 | 321 |
-| **5.0.0** | **Horizonte** | **03/06 b** | — |
-| 4.4.8 | Cleodora | 03/06 a | — |
+| **5.0.1** | **Heimdall** | **19/06 a** | — |
+| 5.0.0 | Horizonte | 19/06* | `f3d19b8` |
 
 ```mermaid
 timeline

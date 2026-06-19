@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '5.0.0',
-        'release_tag' => '20260603b-Horizonte',
+        'version' => '5.0.1',
+        'release_tag' => '20260619a-Heimdall',
         'commit_short' => '',
         'commit_number' => null,
-        'revision_date' => '2026-06-03',
+        'revision_date' => '2026-06-19',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

@@ -62,9 +62,24 @@
                     <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="ml-2 font-medium underline">{{ __('Ver fila') }}</a>
                 </div>
             @endif
+            @if (session('public_data_check.message'))
+                <div @class([
+                    'rounded-lg border px-4 py-3 text-sm',
+                    'border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100' => session('public_data_check.has_news'),
+                    'border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100' => ! session('public_data_check.has_news'),
+                ]) role="status">
+                    {{ session('public_data_check.message') }}
+                </div>
+            @endif
         </x-slot>
 
         <x-admin.import-hub.impact domain="funding" />
+
+        @include('admin.public-data.partials.official-check-panel', [
+            'officialCheck' => $officialCheck ?? null,
+            'officialCheckEnabled' => $officialCheckEnabled ?? true,
+            'officialCheckScheduleTime' => $officialCheckScheduleTime ?? '07:00',
+        ])
 
         <x-slot name="stats">
             <x-admin.import-hub.stats-grid columns="sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">

@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **5.0.0** · release `20260603b-Horizonte` · **Ramo:** `main` · **Última revisão:** 03/06/2026
+**Versão em produção:** **5.0.1** · release `20260619a-Heimdall` · **Ramo:** `main` · **Última revisão:** 19/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -115,10 +115,11 @@ flowchart TB
 | Sumário «Neste documento» (âncoras h1–h4, scroll-spy) | Implementado (4.4.2) |
 | Estudo Power BI — `docs/POWERBI.md`, backlog PBI-01…10 | Implementado (4.4.2) |
 | Rodapé autenticado — créditos desenvolvedor e link GitHub | Implementado (4.4.1) |
+| Monitor de módulos — UI legível (KPIs, filtro URL, cartões, incidentes expansíveis) | Implementado (5.0.1) |
+| Verificação dados públicos — painel admin no hub (`#verificacao-oficial`) | Implementado (5.0.1) |
 | Horizonte — mapa oportunidade municipal (Consultoria vs prospectos, scores FUNDEB/SAEB/Censo, busca IBGE) | Implementado (5.0.0) — [HORIZONTE.md](HORIZONTE.md) |
 | Verificação diária dados públicos (`public-data:check-official`, notificação admins) | Implementado (5.0.0) |
 | Início — KPIs realinhados (bases, RX/FUNDEB, consultoria, filas) | Implementado (5.0.0) |
-| Admin — monitor de módulos — UI modernizada (KPIs, URLs, educacenso) | Implementado (5.0.0) |
 | Notificações — feed completo só no sino (sem duplicar menu utilizador) | Implementado (5.0.0) |
 | Educacenso — conferência 1ª etapa (upload, cruzamento i-Educar, painel Censo) | Implementado (4.4.8) |
 | Catálogo API i-Educar (consultas SQL → endpoints propostos, JSON, perf/seg) | Documentado — [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) |

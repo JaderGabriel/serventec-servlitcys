@@ -250,8 +250,9 @@ Comando: `php artisan public-data:check-official` (agendado por defeito às **07
 | `PUBLIC_DATA_DAILY_CHECK_SCHEDULE` | `true` | Agenda via `schedule:run` |
 | `PUBLIC_DATA_DAILY_CHECK_TIME` | `07:00` | Hora diária |
 | `PUBLIC_DATA_DAILY_CHECK_HTTP_TIMEOUT` | `12` | Timeout HTTP por fonte (segundos) |
+| `PUBLIC_DATA_DAILY_CHECK_CACHE_TTL` | `86400` | TTL do último relatório no hub admin (segundos) |
 
-Notifica administradores (`kind=public_data`) com resumo das fontes FNDE, CadÚnico, Censo INEP, repasses e SAEB — **sem importar** dados. Ver [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §8.
+Notifica administradores (`kind=public_data`) com resumo das fontes FNDE, CadÚnico, Censo INEP, repasses e SAEB — **sem importar** dados. Painel em **Dados públicos → Verificação de fontes oficiais** (`#verificacao-oficial`). Ver [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §10.
 
 ---
 

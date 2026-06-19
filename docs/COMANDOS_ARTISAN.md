@@ -124,10 +124,11 @@ Documentação: [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARG
 
 **Agendamento:** diário (`PUBLIC_DATA_DAILY_CHECK_TIME`, default `07:00`) via `schedule:run` + cron.
 
-**Interface:** notificação no sino (`kind=public_data`) · hub [Dados públicos](/admin/dados-publicos) · [Monitor de módulos](/admin/monitor-modulos)
+**Interface:** painel **Verificação de fontes oficiais** no hub (`/admin/dados-publicos#verificacao-oficial`) · notificação no sino (`kind=public_data`) · [Monitor de módulos](/admin/monitor-modulos)
 
 ```bash
 php artisan public-data:check-official
+php artisan public-data:check-official --no-notify   # só verifica e regista cache (hub)
 ```
 
 **Variáveis:** `PUBLIC_DATA_DAILY_CHECK_*` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11

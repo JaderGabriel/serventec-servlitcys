@@ -7,7 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\Admin\PublicDataImportStatusService;
+use App\Services\Admin\PublicDataOfficialCheckCache;
 use App\Services\AdminSync\AdminSyncQueueService;
+use App\Services\Notifications\PublicDataDailyCheckNotifier;
 use App\Services\Fundeb\FundebImportMode;
 use App\Services\Cadunico\CadunicoOpenDataImportService;
 use App\Services\Fundeb\FundebOpenDataImportService;
@@ -51,7 +53,51 @@ class PublicDataImportController extends Controller
             'yearOptions' => range($maxYear, max(2000, $maxYear - 8)),
             'importModes' => [FundebImportMode::UPDATE, FundebImportMode::REPLACE],
             'syncQueueRoutePrefix' => SyncQueueUserScope::routePrefix(request()->user()),
+            'officialCheck' => PublicDataOfficialCheckCache::get(),
+            'officialCheckEnabled' => (bool) config('public_data_availability.enabled', true),
+            'officialCheckScheduleTime' => trim((string) config('public_data_availability.schedule.time', '07:00')) ?: '07:00',
         ]);
+    }
+
+    public function checkOfficial(Request $request, PublicDataDailyCheckNotifier $notifier): RedirectResponse
+    {
+        if (! (bool) config('public_data_availability.enabled', true)) {
+            return redirect()
+                ->route('admin.public-data.index')
+                ->with('public_data_error', __('Verificação de fontes oficiais desactivada (PUBLIC_DATA_DAILY_CHECK_ENABLED).'));
+        }
+
+        $notify = $request->boolean('notify');
+        $result = $notifier->run($notify);
+
+        if ($result['skipped'] ?? false) {
+            return redirect()
+                ->route('admin.public-data.index')
+                ->with('public_data_error', __('Verificação não executada: :reason', [
+                    'reason' => (string) ($result['reason'] ?? '?'),
+                ]));
+        }
+
+        $message = ($result['has_news'] ?? false)
+            ? trans_choice(
+                'Verificação concluída — :n novidade detectada nas fontes oficiais.|Verificação concluída — :n novidades detectadas nas fontes oficiais.',
+                max(1, (int) ($result['news_count'] ?? 0)),
+                ['n' => (int) ($result['news_count'] ?? 0)],
+            )
+            : __('Verificação concluída — sem novidades nas fontes oficiais.');
+
+        if ($notify) {
+            $message .= ' '.(($result['notified'] ?? false)
+                ? __('Notificação enviada.')
+                : __('Notificação não enviada (sem destinatários ou centro desactivado).'));
+        }
+
+        return redirect()
+            ->to(route('admin.public-data.index').'#verificacao-oficial')
+            ->with('public_data_check', [
+                'message' => $message,
+                'has_news' => (bool) ($result['has_news'] ?? false),
+            ]);
     }
 
     public function run(Request $request): RedirectResponse

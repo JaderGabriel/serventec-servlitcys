@@ -1,6 +1,6 @@
 # Design system — consultoria municipal (servlitcys)
 
-**Versão do produto:** 5.0.0 · **Última revisão:** 2026-06-03
+**Versão do produto:** 5.0.1 · **Última revisão:** 2026-06-19
 
 **Implementação:** `resources/css/app.css` (classes `serv-*`), componentes Blade `x-dashboard.*`, `x-status-pill`, `x-consultoria-tab-link`.
 

@@ -160,9 +160,10 @@ Comando **`public-data:check-official`** (agendado por defeito às 07:00):
 
 | Onde ver | Rota / artefacto |
 |----------|------------------|
-| Hub | `/admin/dados-publicos` |
+| Hub | `/admin/dados-publicos` · painel **Verificação de fontes oficiais** (`#verificacao-oficial`) |
+| Acção manual | Botão «Verificar agora» no hub (POST `admin.public-data.check-official`) |
 | Monitor operacional | `/admin/monitor-modulos` (módulo `public_data`) |
-| CLI | `php artisan public-data:check-official` |
+| CLI | `php artisan public-data:check-official` · `--no-notify` para só registar cache |
 | Variáveis | `PUBLIC_DATA_DAILY_CHECK_*` — [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11 |
 
 Documentação de comandos: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §3.2.

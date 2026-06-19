@@ -12,4 +12,7 @@ return [
     /** Timeout HTTP por fonte (segundos). */
     'http_timeout' => max(5, (int) env('PUBLIC_DATA_DAILY_CHECK_HTTP_TIMEOUT', 12)),
 
+    /** TTL do último relatório exibido no hub admin (segundos). */
+    'cache_ttl' => max(60, (int) env('PUBLIC_DATA_DAILY_CHECK_CACHE_TTL', 86400)),
+
 ];

@@ -1,8 +1,8 @@
 # Início (`/dashboard`) — painel admin
 
-**Versão do produto:** 5.0.0 · **Última revisão:** 2026-06-03
+**Versão do produto:** 5.0.1 · **Última revisão:** 2026-06-19
 
-> **Release Horizonte:** [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md) (5.0.0) · **Índice:** [README.md](README.md)
+> **Release:** [RELEASE_20260619a_HEIMDALL.md](RELEASE_20260619a_HEIMDALL.md) (5.0.1) · **Horizonte (5.0):** [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md) · **Índice:** [README.md](README.md)
 
 Painel operacional após login (utilizadores com `canViewAdminDashboard()`). Utilizadores sem essa permissão são redireccionados para a consultoria municipal.
 

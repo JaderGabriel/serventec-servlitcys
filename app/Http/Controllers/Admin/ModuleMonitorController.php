@@ -22,11 +22,24 @@ final class ModuleMonitorController extends Controller
             $period = '24h';
         }
 
+        $statusFilter = (string) $request->query('status', 'all');
+        if (! in_array($statusFilter, ['all', 'healthy', 'warning', 'critical', 'unknown'], true)) {
+            $statusFilter = 'all';
+        }
+
         $report = $this->monitor->build($period);
+
+        if ($statusFilter !== 'all') {
+            $report['modules'] = array_values(array_filter(
+                $report['modules'],
+                static fn (array $module): bool => ($module['status'] ?? '') === $statusFilter,
+            ));
+        }
 
         return view('admin.module-monitor.index', [
             'report' => $report,
             'period' => $period,
+            'statusFilter' => $statusFilter,
             'periods' => array_keys(config('module_monitor.periods', ['24h' => [], '7d' => []])),
         ]);
     }

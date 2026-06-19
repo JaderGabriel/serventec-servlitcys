@@ -1,6 +1,6 @@
 # Backlog de implementações — servlitcys
 
-**Versão do produto:** 5.0.0 · **Última revisão:** 2026-06-03
+**Versão do produto:** 5.0.1 · **Última revisão:** 2026-06-19
 
 > **Índice:** [README.md](README.md) · **Estado actual:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
@@ -161,6 +161,8 @@ Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IE
 
 | ID | Item | Notas |
 |----|------|-------|
+| DONE-21 | Monitor de módulos — UI legível, filtro URL, incidentes expansíveis | 5.0.1 |
+| DONE-22 | Verificação dados públicos — painel admin + cache + CLI `--no-notify` | 5.0.1 |
 | DONE-20 | Horizonte v1 — mapa oportunidade municipal (scores, busca IBGE, rankings UF) | 5.0.0 — [HORIZONTE.md](HORIZONTE.md) |
 | DONE-19 | Conferência Educacenso 1ª etapa (upload, cruzamento i-Educar, painel Censo) | 4.4.8 |
 | DONE-01 | Lazy load por aba + Pulse por `tab=` | `ANALYTICS_LAZY_TABS` |

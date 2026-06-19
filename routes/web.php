@@ -144,6 +144,7 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'legal.consent', 'adm
     Route::post('/admin/cadunico-sync', [CadunicoSyncController::class, 'run'])->name('admin.cadunico-sync.run');
 
     Route::get('/admin/dados-publicos', [PublicDataImportController::class, 'index'])->name('admin.public-data.index');
+    Route::post('/admin/dados-publicos/verificar-oficial', [PublicDataImportController::class, 'checkOfficial'])->name('admin.public-data.check-official');
     Route::post('/admin/dados-publicos', [PublicDataImportController::class, 'run'])->name('admin.public-data.run');
 
     Route::get('/admin/ieducar-compatibility', [IeducarCompatibilityController::class, 'index'])->name('admin.ieducar-compatibility.index');

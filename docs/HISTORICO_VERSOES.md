@@ -1,13 +1,14 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`5.0.0`** · tag de deploy **`20260603b-Horizonte`** · ver [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`5.0.1`** · tag de deploy **`20260619a-Heimdall`** · ver [RELEASE_20260619a_HEIMDALL.md](RELEASE_20260619a_HEIMDALL.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **5.0.0** |
+| **Versão semântica em produção** | **5.0.1** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260603b-Horizonte` |
-| **Último marco documentado** | **Horizonte** — mapa de oportunidade municipal (déficits públicos, propensão, regiões prioritárias) — [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md) |
+| **Tag de deploy (servidor)** | `20260619a-Heimdall` |
+| **Data de referência** | **19/06/2026** |
+| **Último marco documentado** | **Heimdall** — data de release corrigida; monitor de módulos e verificação dados públicos no hub — [RELEASE_20260619a_HEIMDALL.md](RELEASE_20260619a_HEIMDALL.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -22,8 +23,9 @@ timeline
     2026-06-04 : 4.0.0 Hestia — Início reorganizado
     2026-06-05 : 4.1.0 Athena — 5 áreas consultoria
     2026-06-09 : 4.4.5a Themis — qualidade no dock, FUNDEB gerencial
-    2026-06-03 : 4.4.8a Cleodora — conferência Educacenso × i-Educar
-    2026-06-03 : 5.0.0b Horizonte — mapa oportunidade municipal
+    2026-06-15 : 4.4.7a Mnemosyne — toolkit Educacenso RX
+    2026-06-19 : 5.0.0 Horizonte — mapa oportunidade municipal
+    2026-06-19 : 5.0.1a Heimdall — data release + monitor + dados públicos
 ```
 
 Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) §5–6.
@@ -34,7 +36,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 5.0.0** | — / `20260603b-Horizonte` → `main` | — | 03/06/2026 | **Produção:** **Horizonte** — mapa oportunidade (Consultoria vs prospectos, déficits FUNDEB/SAEB/Censo, busca IBGE, rankings UF); KPIs Início; verificação diária dados públicos; monitor módulos — [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md). |
+| **▶ 5.0.1** | — / `20260619a-Heimdall` → `main` | — | 19/06/2026 | **Produção:** data de release corrigida; monitor de módulos (UI legível, filtro URL, incidentes expansíveis); painel verificação dados públicos no hub — [RELEASE_20260619a_HEIMDALL.md](RELEASE_20260619a_HEIMDALL.md). |
+| 5.0.0 | `f3d19b8` / `20260603b-Horizonte`* → `main` | — | 19/06/2026 | **Horizonte** — mapa oportunidade; KPIs Início; check dados públicos — [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md). *Tag com prefixo de data incorrecto; usar `20260619a-Heimdall`. |
 | 4.4.8 | — / `20260603a-Cleodora` → `main` | — | 03/06/2026 | Conferência Educacenso 1ª etapa — upload, parser, cruzamento i-Educar read-only, painel na aba Censo — [RELEASE_20260603a_CLEODORA.md](RELEASE_20260603a_CLEODORA.md). |
 | 4.4.7 | `66bc396` / `20260615a-Mnemosyne` → `main` | **369** | 15/06/2026 | Toolkit Educacenso 2026, calendário INEP e banner de prazo por fase no RX — [RELEASE_20260615a_MNEMOSYNE.md](RELEASE_20260615a_MNEMOSYNE.md). |
 | 4.4.6 | `5225496` / `20260609d-Themis` → `main` | **367** | 09/06/2026 | Ano letivo automático ao trocar município, abas lazy com `ano_letivo`, índice qualidade no dock — [RELEASE_20260609d_THEMIS.md](RELEASE_20260609d_THEMIS.md). |

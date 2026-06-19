@@ -8,6 +8,7 @@
     $incidents = $report['incidents'] ?? [];
     $moduleSummary = $report['module_summary'] ?? [];
     $kpis = $report['kpis'] ?? [];
+    $statusFilter = $statusFilter ?? 'all';
 
     $groupLabels = [
         'consultoria' => __('Consultoria'),
@@ -17,24 +18,42 @@
 
     $modulesByGroup = collect($modules)->groupBy('group');
 
-    $systemPillStatus = match ($system['status'] ?? 'unknown') {
+    $systemStatus = (string) ($system['status'] ?? 'unknown');
+    $systemPillStatus = match ($systemStatus) {
         'healthy' => 'success',
         'warning' => 'warning',
         'critical' => 'danger',
         default => 'neutral',
     };
-    $systemPillLabel = match ($system['status'] ?? 'unknown') {
+    $systemPillLabel = match ($systemStatus) {
         'healthy' => __('Saudável'),
         'warning' => __('Atenção'),
         'critical' => __('Crítico'),
         default => __('Sem dados'),
     };
 
-    $heroTone = match ($system['status'] ?? 'unknown') {
-        'healthy' => 'from-emerald-600/90 via-teal-700/85 to-serv-navy dark:from-emerald-900/80 dark:via-teal-950/70 dark:to-slate-950',
-        'warning' => 'from-amber-500/90 via-orange-600/85 to-serv-navy dark:from-amber-900/80 dark:via-orange-950/70 dark:to-slate-950',
-        'critical' => 'from-rose-600/90 via-red-700/85 to-serv-navy dark:from-rose-950/80 dark:via-red-950/70 dark:to-slate-950',
-        default => 'from-slate-600/90 via-slate-700/85 to-serv-navy dark:from-slate-900/80 dark:to-slate-950',
+    $statusBannerClass = match ($systemStatus) {
+        'healthy' => 'serv-panel--emerald border-l-emerald-500',
+        'warning' => 'serv-panel--amber border-l-amber-500',
+        'critical' => 'serv-panel--rose border-l-rose-500',
+        default => 'border-l-slate-400',
+    };
+
+    $filterChips = [
+        ['key' => 'all', 'label' => __('Todos'), 'count' => (int) ($moduleSummary['total'] ?? count($modules))],
+        ['key' => 'critical', 'label' => __('Críticos'), 'count' => (int) ($moduleSummary['critical'] ?? 0), 'tone' => 'rose'],
+        ['key' => 'warning', 'label' => __('Atenção'), 'count' => (int) ($moduleSummary['warning'] ?? 0), 'tone' => 'amber'],
+        ['key' => 'healthy', 'label' => __('Saudáveis'), 'count' => (int) ($moduleSummary['healthy'] ?? 0), 'tone' => 'emerald'],
+        ['key' => 'unknown', 'label' => __('Sem dados'), 'count' => (int) ($moduleSummary['unknown'] ?? 0), 'tone' => 'slate'],
+    ];
+
+    $filterUrl = static function (string $status) use ($period): string {
+        $params = ['period' => $period];
+        if ($status !== 'all') {
+            $params['status'] = $status;
+        }
+
+        return route('admin.module-monitor.index', $params);
     };
 @endphp
 
@@ -47,132 +66,136 @@
                     {{ __('Monitor de módulos') }}
                 </h2>
                 <p class="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-                    {{ __('Saúde operacional por área — filas admin, Pulse e incidentes recentes. Use os atalhos em cada cartão para abrir o módulo ou a fila correspondente.') }}
+                    {{ __('Saúde operacional por área — filas admin, Pulse e incidentes. Filtre por estado ou abra o módulo directamente no cartão.') }}
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-2 shrink-0">
-                <form method="get" action="{{ route('admin.module-monitor.index') }}" class="flex flex-wrap items-center gap-2">
-                    <label for="period" class="sr-only">{{ __('Período') }}</label>
-                    <select
-                        id="period"
-                        name="period"
-                        class="rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 text-sm shadow-sm focus:border-teal-500 focus:ring-teal-500"
-                        onchange="this.form.submit()"
-                    >
-                        @foreach ($periods as $p)
-                            <option value="{{ $p }}" @selected($period === $p)>
-                                {{ PulseAggregateBridge::periodLabel($p) }}
-                            </option>
-                        @endforeach
-                    </select>
-                </form>
-                <a href="{{ route('pulse') }}" class="serv-btn-secondary text-sm">{{ __('Monitorização (Pulse)') }}</a>
-                <a href="{{ route('admin.sync-queue.index') }}" class="serv-link text-sm">{{ __('Filas de processamento') }}</a>
+                <a href="{{ route('pulse') }}" class="serv-btn-secondary text-sm">{{ __('Pulse') }}</a>
+                <a href="{{ route('admin.sync-queue.index') }}" class="serv-link text-sm">{{ __('Filas') }}</a>
             </div>
         </div>
     </x-slot>
 
-    <div
-        class="py-8 sm:py-10"
-        x-data="{ filter: 'all' }"
-    >
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
+    <div class="py-8 sm:py-10">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             @if (! ($report['pulse_available'] ?? true))
-                <div class="serv-panel serv-panel--info px-4 py-3 text-sm">
-                    <p class="font-medium text-slate-900 dark:text-slate-100">{{ __('Pulse desactivado') }}</p>
-                    <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">
-                        {{ __('Métricas de lentidão por operação não estão disponíveis. Falhas de fila e tarefas admin continuam visíveis.') }}
-                    </p>
-                </div>
+                <x-admin.import-hub.callout variant="warning" :title="__('Pulse desactivado')">
+                    {{ __('Métricas de lentidão por operação não estão disponíveis. Falhas de fila e tarefas admin continuam visíveis abaixo.') }}
+                </x-admin.import-hub.callout>
             @endif
 
-            {{-- Hero de saúde global --}}
-            <section class="rounded-2xl bg-gradient-to-br {{ $heroTone }} text-white shadow-lg overflow-hidden">
-                <div class="px-5 sm:px-8 py-6 sm:py-8 space-y-5">
-                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                        <div class="space-y-2 min-w-0">
-                            <p class="text-[11px] font-semibold uppercase tracking-widest text-white/70">{{ __('Saúde global do sistema') }}</p>
-                            <div class="flex flex-wrap items-center gap-3">
-                                <h3 class="font-display text-2xl sm:text-3xl font-bold tracking-tight">{{ $systemPillLabel }}</h3>
-                                <x-status-pill :status="$systemPillStatus" :label="$systemPillLabel" class="!bg-white/15 !text-white !border-white/20" />
-                            </div>
-                            @if (filled($system['status_hint'] ?? null))
-                                <p class="text-sm text-white/85 max-w-3xl leading-relaxed">{{ $system['status_hint'] }}</p>
-                            @endif
-                            <p class="text-xs text-white/60">
-                                {{ $report['period_label'] ?? '' }}
-                                · {{ __('Actualizado') }}
-                                <time datetime="{{ $report['generated_at'] ?? '' }}">
-                                    {{ \Illuminate\Support\Carbon::parse($report['generated_at'] ?? now())->format('d/m/Y H:i') }}
-                                </time>
-                            </p>
+            {{-- Estado global --}}
+            <section class="serv-panel border-l-4 {{ $statusBannerClass }} px-5 py-5 sm:px-6">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div class="min-w-0 space-y-2">
+                        <p class="serv-eyebrow">{{ __('Saúde global') }}</p>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <h3 class="font-display text-xl font-semibold text-serv-navy dark:text-white">{{ $systemPillLabel }}</h3>
+                            <x-status-pill :status="$systemPillStatus" :label="$systemPillLabel" />
                         </div>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 shrink-0 w-full lg:w-auto">
-                            @foreach ([
-                                ['key' => 'healthy', 'label' => __('Saudáveis'), 'tone' => 'bg-emerald-400/20 border-emerald-300/30'],
-                                ['key' => 'warning', 'label' => __('Atenção'), 'tone' => 'bg-amber-400/20 border-amber-300/30'],
-                                ['key' => 'critical', 'label' => __('Críticos'), 'tone' => 'bg-rose-400/25 border-rose-300/30'],
-                                ['key' => 'unknown', 'label' => __('Sem dados'), 'tone' => 'bg-white/10 border-white/15'],
-                            ] as $chip)
-                                <button
-                                    type="button"
-                                    @click="filter = filter === '{{ $chip['key'] }}' ? 'all' : '{{ $chip['key'] }}'"
-                                    :class="filter === '{{ $chip['key'] }}' ? 'ring-2 ring-white/60 scale-[1.02]' : ''"
-                                    class="rounded-xl border px-3 py-2.5 text-center transition {{ $chip['tone'] }}"
-                                >
-                                    <p class="text-[10px] uppercase tracking-wide text-white/70">{{ $chip['label'] }}</p>
-                                    <p class="text-xl font-bold tabular-nums">{{ (int) ($moduleSummary[$chip['key']] ?? 0) }}</p>
-                                </button>
-                            @endforeach
-                        </div>
+                        @if (filled($system['status_hint'] ?? null))
+                            <p class="text-sm text-slate-700 dark:text-slate-300 max-w-3xl leading-relaxed">{{ $system['status_hint'] }}</p>
+                        @endif
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            {{ $report['period_label'] ?? '' }}
+                            · {{ __('Actualizado') }}
+                            <time datetime="{{ $report['generated_at'] ?? '' }}">
+                                {{ \Illuminate\Support\Carbon::parse($report['generated_at'] ?? now())->format('d/m/Y H:i') }}
+                            </time>
+                        </p>
                     </div>
 
-                    @if (count($kpis) > 0)
-                        <x-dashboard.consultoria-kpi-grid
-                            :items="$kpis"
-                            class="grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2 [&_.serv-panel]:bg-white/10 [&_.serv-panel]:border-white/15 [&_.serv-panel_p]:text-white/70 [&_.serv-panel_.font-semibold]:text-white [&_.serv-panel_.tabular-nums]:text-white"
-                        />
-                    @endif
+                    <form method="get" action="{{ route('admin.module-monitor.index') }}" class="shrink-0">
+                        @if ($statusFilter !== 'all')
+                            <input type="hidden" name="status" value="{{ $statusFilter }}" />
+                        @endif
+                        <label for="period" class="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                            {{ __('Período') }}
+                        </label>
+                        <select
+                            id="period"
+                            name="period"
+                            class="rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 text-sm shadow-sm focus:border-teal-500 focus:ring-teal-500 min-w-[10rem]"
+                            onchange="this.form.submit()"
+                        >
+                            @foreach ($periods as $p)
+                                <option value="{{ $p }}" @selected($period === $p)>
+                                    {{ PulseAggregateBridge::periodLabel($p) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
                 </div>
             </section>
 
-            {{-- Navegação rápida por grupo --}}
-            <nav class="flex flex-wrap gap-2 text-xs">
-                <button
-                    type="button"
-                    @click="filter = 'all'"
-                    :class="filter === 'all' ? 'bg-serv-navy text-white dark:bg-teal-700' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
-                    class="rounded-full px-3 py-1.5 font-medium transition"
-                >
-                    {{ __('Todos os módulos') }}
-                </button>
-                @foreach ($groupLabels as $groupKey => $groupTitle)
-                    @if ($modulesByGroup->get($groupKey, collect())->isNotEmpty())
+            @if (count($kpis) > 0)
+                <x-dashboard.consultoria-kpi-grid :items="$kpis" />
+            @endif
+
+            {{-- Filtros e navegação --}}
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex flex-wrap gap-2">
+                    @foreach ($filterChips as $chip)
+                        @php
+                            $active = $statusFilter === $chip['key'];
+                            $tone = $chip['tone'] ?? null;
+                        @endphp
                         <a
-                            href="#grupo-{{ $groupKey }}"
-                            class="rounded-full border border-slate-200 dark:border-slate-600 px-3 py-1.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                            href="{{ $filterUrl($chip['key']) }}"
+                            @class([
+                                'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition ring-1',
+                                'bg-serv-navy text-white ring-serv-navy dark:bg-teal-700 dark:ring-teal-600' => $active,
+                                'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 ring-slate-200 dark:ring-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800' => ! $active,
+                            ])
                         >
-                            {{ $groupTitle }}
+                            {{ $chip['label'] }}
+                            <span @class([
+                                'rounded-full px-1.5 py-0.5 text-[10px] tabular-nums',
+                                'bg-white/20 text-white' => $active,
+                                'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' => ! $active,
+                            ])>{{ $chip['count'] }}</span>
+                        </a>
+                    @endforeach
+                </div>
+
+                <nav class="flex flex-wrap gap-2 text-xs" aria-label="{{ __('Saltos por grupo') }}">
+                    @foreach ($groupLabels as $groupKey => $groupTitle)
+                        @if ($modulesByGroup->get($groupKey, collect())->isNotEmpty())
+                            <a href="#grupo-{{ $groupKey }}" class="serv-link">{{ $groupTitle }}</a>
+                        @endif
+                    @endforeach
+                    @if (count($incidents) > 0)
+                        <a href="#historico-incidentes" class="font-medium text-rose-700 dark:text-rose-300 hover:underline">
+                            {{ __('Incidentes (:n)', ['n' => count($incidents)]) }}
                         </a>
                     @endif
-                @endforeach
-                @if (count($incidents) > 0)
-                    <a
-                        href="#historico-incidentes"
-                        class="rounded-full border border-rose-200 dark:border-rose-800 px-3 py-1.5 text-rose-800 dark:text-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
-                    >
-                        {{ __('Incidentes (:n)', ['n' => count($incidents)]) }}
-                    </a>
-                @endif
-            </nav>
+                </nav>
+            </div>
+
+            @if ($statusFilter !== 'all')
+                <p class="text-xs text-slate-600 dark:text-slate-400">
+                    {{ trans_choice('A mostrar :n módulo filtrado.|A mostrar :n módulos filtrados.', count($modules), ['n' => count($modules)]) }}
+                    <a href="{{ $filterUrl('all') }}" class="ml-1 serv-link">{{ __('Limpar filtro') }}</a>
+                </p>
+            @endif
+
+            @if (count($modules) === 0)
+                <x-admin.import-hub.callout variant="info" :title="__('Nenhum módulo neste filtro')">
+                    {{ __('Altere o filtro de estado ou o período para ver outros módulos.') }}
+                </x-admin.import-hub.callout>
+            @endif
 
             @foreach ($groupLabels as $groupKey => $groupTitle)
                 @php $groupModules = $modulesByGroup->get($groupKey, collect()); @endphp
                 @if ($groupModules->isNotEmpty())
                     <section id="grupo-{{ $groupKey }}" class="space-y-3 scroll-mt-6">
-                        <div>
-                            <p class="serv-eyebrow">{{ $groupTitle }}</p>
-                            <h3 class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Saúde por módulo') }}</h3>
+                        <div class="flex flex-wrap items-end justify-between gap-2">
+                            <div>
+                                <p class="serv-eyebrow">{{ $groupTitle }}</p>
+                                <h3 class="text-sm font-semibold text-serv-navy dark:text-slate-100">
+                                    {{ trans_choice(':n módulo|:n módulos', $groupModules->count(), ['n' => $groupModules->count()]) }}
+                                </h3>
+                            </div>
                         </div>
                         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                             @foreach ($groupModules as $module)
@@ -183,85 +206,10 @@
                 @endif
             @endforeach
 
-            <section id="historico-incidentes" class="sync-queue-panel scroll-mt-6">
-                <header class="sync-queue-panel__header">
-                    <p class="serv-eyebrow">{{ __('Histórico') }}</p>
-                    <h3 class="sync-queue-panel__title font-display text-lg font-semibold text-serv-navy dark:text-white">
-                        {{ __('Falhas e lentidões') }}
-                    </h3>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {{ __('Tarefas admin, PDFs, Pulse e jobs — :count registo(s) no período.', ['count' => count($incidents)]) }}
-                    </p>
-                </header>
-                <div class="sync-queue-panel__body">
-                    @if (count($incidents) === 0)
-                        <p class="py-8 text-sm text-center text-slate-500 dark:text-slate-400">
-                            {{ __('Nenhum incidente no período seleccionado.') }}
-                        </p>
-                    @else
-                        <div class="overflow-x-auto -mx-1">
-                            <table class="w-full text-sm text-left">
-                                <thead class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
-                                    <tr>
-                                        <th scope="col" class="pb-2 pe-4">{{ __('Quando') }}</th>
-                                        <th scope="col" class="pb-2 pe-4">{{ __('Tipo') }}</th>
-                                        <th scope="col" class="pb-2 pe-4">{{ __('Módulo') }}</th>
-                                        <th scope="col" class="pb-2 pe-4">{{ __('Descrição') }}</th>
-                                        <th scope="col" class="pb-2 text-right">{{ __('Acção') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                    @foreach ($incidents as $incident)
-                                        @php
-                                            $mod = ModuleMonitorCatalog::find($incident['module_id'] ?? '');
-                                            $incidentPill = ($incident['type'] ?? '') === 'failure' ? 'danger' : 'warning';
-                                            $incidentLabel = ($incident['type'] ?? '') === 'failure' ? __('Falha') : __('Lentidão');
-                                            $moduleAnchor = filled($incident['module_id'] ?? null) ? '#modulo-'.$incident['module_id'] : null;
-                                        @endphp
-                                        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
-                                            <td class="py-2.5 pe-4 whitespace-nowrap font-mono text-[11px] text-slate-600 dark:text-slate-400">
-                                                @if (! empty($incident['occurred_at']))
-                                                    {{ \Illuminate\Support\Carbon::parse($incident['occurred_at'])->format('d/m H:i') }}
-                                                @else
-                                                    —
-                                                @endif
-                                            </td>
-                                            <td class="py-2.5 pe-4">
-                                                <x-status-pill :status="$incidentPill" :label="$incidentLabel" />
-                                            </td>
-                                            <td class="py-2.5 pe-4 font-medium text-slate-800 dark:text-slate-200">
-                                                @if ($moduleAnchor)
-                                                    <a href="{{ $moduleAnchor }}" class="hover:text-teal-700 dark:hover:text-teal-300 hover:underline">
-                                                        {{ $mod['label'] ?? $incident['module_id'] }}
-                                                    </a>
-                                                @else
-                                                    {{ $mod['label'] ?? $incident['module_id'] }}
-                                                @endif
-                                            </td>
-                                            <td class="py-2.5 pe-4 max-w-md">
-                                                <p class="font-medium text-slate-900 dark:text-slate-100">{{ $incident['title'] }}</p>
-                                                @if (! empty($incident['detail']))
-                                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">{{ $incident['detail'] }}</p>
-                                                @endif
-                                                @if (! empty($incident['duration_ms']))
-                                                    <p class="text-[10px] font-mono text-amber-800 dark:text-amber-200 mt-0.5">
-                                                        {{ number_format((int) $incident['duration_ms'], 0, ',', '.') }} ms
-                                                    </p>
-                                                @endif
-                                            </td>
-                                            <td class="py-2.5 text-right whitespace-nowrap space-x-2">
-                                                @if (! empty($incident['url']))
-                                                    <a href="{{ $incident['url'] }}" class="serv-link text-xs font-medium">{{ __('Detalhe') }}</a>
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
-                </div>
-            </section>
+            @include('admin.module-monitor.partials.incidents-panel', [
+                'incidents' => $incidents,
+                'periodLabel' => $report['period_label'] ?? '',
+            ])
         </div>
     </div>
 </x-app-layout>
