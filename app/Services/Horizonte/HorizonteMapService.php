@@ -85,7 +85,9 @@ final class HorizonteMapService
         foreach ($citiesByIbge as $city) {
             $ufs[] = strtoupper((string) $city['uf']);
         }
-        $this->ibgeCatalog->warmForUfs($ufs);
+        $ibgeMetaIndex = $this->ibgeCatalog->metaIndexForUfs(
+            $ufs !== [] ? $ufs : IbgeMunicipalityCatalog::brazilianUfs(),
+        );
 
         $saebForBench = [];
         $complRatios = [];
@@ -126,7 +128,7 @@ final class HorizonteMapService
                 ];
             }
             if ($meta === null || ! is_finite($meta['lat']) || ! is_finite($meta['lng']) || ($meta['lat'] === 0.0 && $meta['lng'] === 0.0)) {
-                $fromIbge = $this->ibgeCatalog->metaByIbge($ibge);
+                $fromIbge = $ibgeMetaIndex[$ibge] ?? null;
                 if ($fromIbge !== null) {
                     $meta = $fromIbge;
                 }

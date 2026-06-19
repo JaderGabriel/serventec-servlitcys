@@ -1,22 +1,33 @@
+@php
+    $homeRoute = Auth::user()->homeRouteName();
+    $homeActive = $homeRoute === 'dashboard'
+        ? request()->routeIs('dashboard')
+        : request()->routeIs('dashboard.analytics*');
+@endphp
+
 <nav x-data="{ open: false }" class="serv-nav-brand">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ Auth::user()->homeUrl() }}" class="flex items-center gap-2 group" title="{{ config('app.name') }}">
+                <div class="shrink-0 flex items-center sm:-my-px">
+                    <a
+                        href="{{ Auth::user()->homeUrl() }}"
+                        @class([
+                            'flex items-center gap-2 group px-1 pt-1 border-b-2 transition duration-150 ease-in-out',
+                            'border-teal-600' => $homeActive,
+                            'border-transparent hover:border-slate-300 dark:hover:border-slate-600' => ! $homeActive,
+                        ])
+                        title="{{ Auth::user()->canViewAdminDashboard() ? __('Início — :app', ['app' => config('app.name')]) : config('app.name') }}"
+                        aria-label="{{ Auth::user()->canViewAdminDashboard() ? __('Início') : config('app.name') }}"
+                    >
                         <x-application-logo class="block h-9 w-[3.25rem] shrink-0 text-teal-700 dark:text-teal-400 group-hover:text-teal-900 dark:group-hover:text-teal-300 transition" />
                     </a>
                 </div>
 
                 <div class="hidden space-x-6 sm:-my-px sm:ms-10 sm:flex">
-                    @if (Auth::user()->canViewAdminDashboard())
-                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">
-                            {{ __('Início') }}
-                        </x-nav-link>
-                    @endif
                     <x-nav-link :href="route('dashboard.analytics')" :active="request()->routeIs('dashboard.analytics*')" icon="chart-bar">
                         @if (Auth::user()->canViewAdminDashboard())
-                            {{ __('Consultoria municipal') }}
+                            {{ __('Consultoria') }}
                         @else
                             {{ __('Meu município') }}
                         @endif
@@ -27,14 +38,6 @@
                     @if (Auth::user()->canViewAdminDashboard())
                         <x-nav-link :href="route('dashboard.horizonte')" :active="request()->routeIs('dashboard.horizonte')" icon="globe-alt">
                             {{ __('Horizonte') }}
-                        </x-nav-link>
-                    @endif
-                    @if (Auth::user()->isAdmin())
-                        <x-nav-link :href="route('pulse')" :active="request()->routeIs('pulse')" icon="signal">
-                            {{ __('Monitorização') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('cities.index')" :active="request()->routeIs('cities.*')" icon="map-pin">
-                            {{ __('Cidades') }}
                         </x-nav-link>
                     @endif
                 </div>
@@ -75,14 +78,9 @@
 
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-slate-900/95">
         <div class="pt-1.5 pb-2 space-y-0">
-            @if (Auth::user()->canViewAdminDashboard())
-                <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">
-                    {{ __('Início') }}
-                </x-responsive-nav-link>
-            @endif
             <x-responsive-nav-link :href="route('dashboard.analytics')" :active="request()->routeIs('dashboard.analytics*')" icon="chart-bar">
                 @if (Auth::user()->canViewAdminDashboard())
-                    {{ __('Consultoria municipal') }}
+                    {{ __('Consultoria') }}
                 @else
                     {{ __('Meu município') }}
                 @endif
@@ -90,6 +88,11 @@
             <x-responsive-nav-link :href="route('dashboard.rx')" :active="request()->routeIs('dashboard.rx*')" icon="clipboard-document-list">
                 RX
             </x-responsive-nav-link>
+            @if (Auth::user()->canViewAdminDashboard())
+                <x-responsive-nav-link :href="route('dashboard.horizonte')" :active="request()->routeIs('dashboard.horizonte')" icon="globe-alt">
+                    {{ __('Horizonte') }}
+                </x-responsive-nav-link>
+            @endif
             <p class="px-4 pt-3 pb-1 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {{ __('Mais opções no menu do usuário (submenus expansíveis).') }}
             </p>

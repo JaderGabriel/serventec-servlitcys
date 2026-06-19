@@ -37,12 +37,6 @@
             'active' => request()->routeIs(['admin.sync-queue.*', 'sync-queue.*']),
         ],
         [
-            'show' => $user->isAdmin(),
-            'href' => route('pulse'),
-            'label' => __('Monitorização'),
-            'active' => request()->routeIs('pulse'),
-        ],
-        [
             'show' => strlen($whatsAppDigits) >= 10,
             'href' => 'https://wa.me/' . $whatsAppDigits,
             'label' => __('Suporte'),

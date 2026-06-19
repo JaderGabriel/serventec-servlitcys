@@ -26,6 +26,8 @@ import { initAnalyticsFilterDockLayout } from "./analyticsFilterDockLayout.js";
 import { registerAnalyticsExportHub } from "./analyticsExportHub.js";
 import {
     initDataLoadingForms,
+    initDataLoadingLinks,
+    initDataLoadingPageshow,
     registerDataLoadingStore,
     servDataLoadingFinish,
     servDataLoadingStart,
@@ -2207,6 +2209,8 @@ Alpine.start();
 
 function initAnalyticsFilters() {
     initDataLoadingForms();
+    initDataLoadingLinks();
+    initDataLoadingPageshow();
     initAnalyticsFilterBootstrap();
     initAnalyticsFilterTurno();
     initAnalyticsFilterDockLayout();

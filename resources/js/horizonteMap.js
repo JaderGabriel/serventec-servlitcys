@@ -14,6 +14,10 @@ function nf(n) {
     return Number(n).toLocaleString("pt-BR");
 }
 
+function uniqueSortedUfs(markers) {
+    return [...new Set(markers.map((m) => String(m.uf ?? "").trim()).filter(Boolean))].sort();
+}
+
 export default function createHorizonteMap(markers = [], colors = {}, options = {}) {
     return {
         map: null,
@@ -21,6 +25,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         markerLayers: [],
         markers: Array.isArray(markers) ? markers : [],
         colors: colors && typeof colors === "object" ? colors : {},
+        legend: Array.isArray(options.legend) ? options.legend : [],
+        summary: options.summary && typeof options.summary === "object" ? options.summary : {},
+        ufRankings: Array.isArray(options.ufRankings) ? options.ufRankings : [],
+        topProspects: Array.isArray(options.topProspects) ? options.topProspects : [],
+        refYear: Number(options.refYear) || new Date().getFullYear() - 1,
+        loadUrl: typeof options.loadUrl === "string" ? options.loadUrl : "",
+        pageLoading: Boolean(options.loadUrl),
+        pageError: null,
         active: null,
         tooltipPinned: false,
         tooltipStyle: "",
@@ -63,7 +75,85 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 .slice(0, 12);
         },
 
-        init() {
+        async init() {
+            if (this.loadUrl) {
+                await this.fetchPayload();
+            }
+
+            if (this.pageError) {
+                return;
+            }
+
+            this.initMap();
+        },
+
+        async fetchPayload() {
+            this.pageLoading = true;
+            this.pageError = null;
+
+            const preset = window.servDataLoading?.presets?.horizonteData;
+            window.servDataLoading?.start?.(
+                preset?.title ?? "Montando mapa Horizonte",
+                preset?.message ??
+                    "Consultando dados públicos e posicionando municípios no mapa. Aguarde…",
+            );
+
+            try {
+                const response = await fetch(this.loadUrl, {
+                    headers: {
+                        Accept: "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                    credentials: "same-origin",
+                });
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(text || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                this.applyPayload(data);
+            } catch (error) {
+                console.error("horizonte map-data", error);
+                let message =
+                    error instanceof Error ? error.message : "Erro ao carregar o mapa Horizonte.";
+                if (message.length > 400) {
+                    message = message.replace(/<[^>]+>/g, " ").slice(0, 400);
+                }
+                this.pageError = message;
+            } finally {
+                this.pageLoading = false;
+                window.servDataLoading?.finish?.();
+            }
+        },
+
+        applyPayload(data) {
+            if (!data || typeof data !== "object") {
+                return;
+            }
+
+            this.markers = Array.isArray(data.markers) ? data.markers : [];
+            this.colors =
+                data.colors && typeof data.colors === "object"
+                    ? data.colors
+                    : this.colors;
+            this.legend = Array.isArray(data.legend) ? data.legend : this.legend;
+            this.summary =
+                data.summary && typeof data.summary === "object"
+                    ? data.summary
+                    : this.summary;
+            this.ufRankings = Array.isArray(data.uf_rankings)
+                ? data.uf_rankings
+                : this.ufRankings;
+            this.topProspects = Array.isArray(data.top_prospects)
+                ? data.top_prospects
+                : this.topProspects;
+            this.refYear = Number(data.reference_year) || this.refYear;
+            this.ufList = uniqueSortedUfs(this.markers);
+        },
+
+        initMap() {
             if (!this.$refs.map) {
                 return;
             }
@@ -75,7 +165,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 maxZoom: 12,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+                attribution:
+                    '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
             }).addTo(this.map);
 
             this.layer = L.layerGroup().addTo(this.map);
@@ -178,19 +269,29 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 `<dt class="text-gray-500">${escapeHtml("Benefício")}</dt><dd class="font-semibold tabular-nums">${nf(m.benefit_score)}/100</dd>`,
             ];
             if (m.matriculas_censo != null) {
-                lines.push(`<dt class="text-gray-500">${escapeHtml("Matrículas Censo")}</dt><dd class="tabular-nums">${nf(m.matriculas_censo)}</dd>`);
+                lines.push(
+                    `<dt class="text-gray-500">${escapeHtml("Matrículas Censo")}</dt><dd class="tabular-nums">${nf(m.matriculas_censo)}</dd>`,
+                );
             }
             if (m.saeb_lp != null || m.saeb_mat != null) {
-                lines.push(`<dt class="text-gray-500">SAEB</dt><dd class="tabular-nums">LP ${nf(m.saeb_lp)} · MAT ${nf(m.saeb_mat)}</dd>`);
+                lines.push(
+                    `<dt class="text-gray-500">SAEB</dt><dd class="tabular-nums">LP ${nf(m.saeb_lp)} · MAT ${nf(m.saeb_mat)}</dd>`,
+                );
             }
             if (m.complementacao_fundeb != null) {
-                lines.push(`<dt class="text-gray-500">${escapeHtml("Compl. FUNDEB")}</dt><dd class="tabular-nums">${nf(m.complementacao_fundeb)}</dd>`);
+                lines.push(
+                    `<dt class="text-gray-500">${escapeHtml("Compl. FUNDEB")}</dt><dd class="tabular-nums">${nf(m.complementacao_fundeb)}</dd>`,
+                );
             }
             lines.push(`</dl>`);
             if (m.analytics_url) {
-                lines.push(`<a href="${escapeHtml(m.analytics_url)}" class="mt-2 inline-block text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">${escapeHtml("Abrir consultoria")}</a>`);
+                lines.push(
+                    `<a href="${escapeHtml(m.analytics_url)}" class="mt-2 inline-block text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">${escapeHtml("Abrir consultoria")}</a>`,
+                );
             } else if (m.cities_url) {
-                lines.push(`<a href="${escapeHtml(m.cities_url)}" class="mt-2 inline-block text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">${escapeHtml("Ver no catálogo")}</a>`);
+                lines.push(
+                    `<a href="${escapeHtml(m.cities_url)}" class="mt-2 inline-block text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">${escapeHtml("Ver no catálogo")}</a>`,
+                );
             }
             return lines.join("");
         },

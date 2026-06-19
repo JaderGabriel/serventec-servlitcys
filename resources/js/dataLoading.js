@@ -14,6 +14,15 @@ const LOADING_PRESETS = {
         title: "Carregando página",
         message: "Preparando o conteúdo solicitado. Aguarde…",
     },
+    horizonte: {
+        title: "Carregando Horizonte",
+        message: "Abrindo o mapa de oportunidade municipal. Aguarde…",
+    },
+    horizonteData: {
+        title: "Montando mapa Horizonte",
+        message:
+            "Consultando dados públicos e posicionando municípios no mapa. Pode demorar alguns segundos.",
+    },
     sync: {
         title: "Enfileirando tarefa",
         message:
@@ -293,6 +302,74 @@ export function initDataLoadingForms(root = document) {
             return;
         }
         bindLoadingOnSubmit(form);
+    });
+}
+
+const NAV_LINK_LOADING = [
+    { pattern: /^\/dashboard\/horizonte\/?$/, preset: "horizonte" },
+    { pattern: /^\/dashboard\/rx\/?$/, preset: "navigate" },
+    { pattern: /^\/dashboard\/analytics\/?$/, preset: "navigate" },
+];
+
+function linkPathname(link) {
+    try {
+        return new URL(link.href, window.location.origin).pathname;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * @param {HTMLAnchorElement} link
+ */
+function bindLoadingOnLink(link) {
+    if (link.dataset.servLoadingBound === "1") {
+        return;
+    }
+
+    if (link.target === "_blank" || link.hasAttribute("download")) {
+        return;
+    }
+
+    const href = linkPathname(link);
+    if (!href) {
+        return;
+    }
+
+    const match = NAV_LINK_LOADING.find(({ pattern }) => pattern.test(href));
+    if (!match) {
+        return;
+    }
+
+    if (href === window.location.pathname) {
+        return;
+    }
+
+    link.dataset.servLoadingBound = "1";
+    link.addEventListener("click", () => {
+        const preset = presetCopy(match.preset);
+        servDataLoadingStart(preset.title, preset.message);
+    });
+}
+
+export function initDataLoadingLinks(root = document) {
+    root.querySelectorAll("a[href]").forEach((link) => {
+        if (!(link instanceof HTMLAnchorElement)) {
+            return;
+        }
+        bindLoadingOnLink(link);
+    });
+}
+
+let pageshowBound = false;
+
+export function initDataLoadingPageshow() {
+    if (pageshowBound) {
+        return;
+    }
+    pageshowBound = true;
+    window.addEventListener("pageshow", () => {
+        servDataLoadingFinish();
     });
 }
 

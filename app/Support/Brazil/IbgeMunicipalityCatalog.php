@@ -56,6 +56,36 @@ final class IbgeMunicipalityCatalog
     }
 
     /**
+     * @return list<string>
+     */
+    public static function brazilianUfs(): array
+    {
+        return [
+            'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG',
+            'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
+        ];
+    }
+
+    /**
+     * Índice IBGE → metadados (nome, UF, centroide) a partir do cache por UF.
+     *
+     * @return array<string, array{ibge: string, name: string, uf: string, lat: float, lng: float}>
+     */
+    public function metaIndexForUfs(array $ufs): array
+    {
+        $this->warmForUfs($ufs);
+
+        $index = [];
+        foreach (array_unique(array_filter(array_map('strtoupper', $ufs))) as $uf) {
+            foreach ($this->municipalitiesForUf($uf) as $ibge => $meta) {
+                $index[$ibge] = $meta;
+            }
+        }
+
+        return $index;
+    }
+
+    /**
      * @param  list<string>  $ufs
      */
     public function warmForUfs(array $ufs): void

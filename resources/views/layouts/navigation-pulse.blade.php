@@ -1,28 +1,30 @@
-{{-- Barra superior do Pulse: logo/links à esquerda; período, tema e usuário à direita. --}}
+{{-- Barra superior do Pulse: logo/início à esquerda; período, tema e usuário à direita. --}}
+@php
+    $homeRoute = Auth::user()->homeRouteName();
+    $homeActive = $homeRoute === 'dashboard'
+        ? request()->routeIs('dashboard')
+        : request()->routeIs('dashboard.analytics*');
+@endphp
+
 <nav class="serv-nav-brand border-b border-slate-200/90 dark:border-slate-700/90">
     <div class="mx-auto max-w-[min(100%,100rem)] px-4 sm:px-6 lg:px-10 xl:px-12">
         <div class="pulse-nav-shell min-h-14 py-3 sm:min-h-16 sm:py-4">
             <div class="pulse-nav-primary">
-                <a href="{{ Auth::user()->homeUrl() }}" class="flex shrink-0 items-center gap-2 group" title="{{ config('app.name') }}">
+                <a
+                    href="{{ Auth::user()->homeUrl() }}"
+                    @class([
+                        'flex shrink-0 items-center gap-2 group rounded-md px-1 py-0.5 -ms-1 ring-2 ring-transparent transition',
+                        'ring-teal-500/40' => $homeActive,
+                    ])
+                    title="{{ Auth::user()->canViewAdminDashboard() ? __('Início — :app', ['app' => config('app.name')]) : config('app.name') }}"
+                    aria-label="{{ Auth::user()->canViewAdminDashboard() ? __('Início') : config('app.name') }}"
+                >
                     <x-application-logo class="block h-9 w-[3.25rem] shrink-0 text-teal-700 dark:text-teal-400 group-hover:text-teal-900 dark:group-hover:text-teal-300 transition" />
                 </a>
                 <div class="pulse-nav-links">
-                    @if (Auth::user()->canViewAdminDashboard())
-                        <x-pulse-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">
-                            {{ __('Início') }}
-                        </x-pulse-nav-link>
-                    @endif
                     <x-pulse-nav-link :href="route('dashboard.analytics')" :active="request()->routeIs('dashboard.analytics*')" icon="chart-bar">
-                        {{ __('Análise') }}
+                        {{ __('Consultoria') }}
                     </x-pulse-nav-link>
-                    <x-pulse-nav-link :href="route('pulse')" :active="request()->routeIs('pulse')" icon="signal">
-                        {{ __('Monitorização') }}
-                    </x-pulse-nav-link>
-                    @if (Auth::user()->isAdmin())
-                        <x-pulse-nav-link :href="route('cities.index')" :active="request()->routeIs('cities.*')" icon="map-pin">
-                            {{ __('Cidades') }}
-                        </x-pulse-nav-link>
-                    @endif
                 </div>
             </div>
 
