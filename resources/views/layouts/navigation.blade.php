@@ -24,6 +24,11 @@
                     <x-nav-link :href="route('dashboard.rx')" :active="request()->routeIs('dashboard.rx*')" icon="clipboard-document-list">
                         RX
                     </x-nav-link>
+                    @if (Auth::user()->canViewAdminDashboard())
+                        <x-nav-link :href="route('dashboard.horizonte')" :active="request()->routeIs('dashboard.horizonte')" icon="globe-alt">
+                            {{ __('Horizonte') }}
+                        </x-nav-link>
+                    @endif
                     @if (Auth::user()->isAdmin())
                         <x-nav-link :href="route('pulse')" :active="request()->routeIs('pulse')" icon="signal">
                             {{ __('Monitorização') }}

@@ -1,9 +1,9 @@
 # Entregas escalonadas — junho/2026
 
-> **Versão actual em produção:** **4.4.5** · tag **`20260609a-Themis`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260609a_THEMIS.md](RELEASE_20260609a_THEMIS.md)  
+> **Versão actual em produção:** **5.0.0** · tag **`20260603b-Horizonte`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md)  
 > **Índice geral:** [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) · **Mês anterior:** [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) (3.4.0)
 
-Cronologia de **junho/2026**: de **3.5.0** (CadÚnico e comparativo) a **4.4.3** (faixas etárias, Censo e mapa territorial). Cada linha da tabela abaixo aponta para a nota de release; patches sem bump estão no [histórico](HISTORICO_VERSOES.md).
+Cronologia de **junho/2026**: de **3.5.0** (CadÚnico e comparativo) a **5.0.0** (Horizonte — mapa de oportunidade). Cada linha da tabela abaixo aponta para a nota de release; patches sem bump estão no [histórico](HISTORICO_VERSOES.md).
 
 ---
 
@@ -34,6 +34,7 @@ Cronologia de **junho/2026**: de **3.5.0** (CadÚnico e comparativo) a **4.4.3**
 | 19 | **4.2.0** | `20260610-Clio` | [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md) | FUNDEB VAAT/VAAR portaria; gráfico RX complementações |
 | 20 | **4.3.0** | `20260611-Harmonia` | [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md) | Discrepâncias×Unidades geo; RX portaria; gráfico home |
 | 21 | **4.4.5** | `20260609a-Themis` | [RELEASE_20260609a_THEMIS.md](RELEASE_20260609a_THEMIS.md) | **Produção:** índice qualidade no dock, FUNDEB gerencial, fix município/ano, pt-BR |
+| 22 | **5.0.0** | `20260603b-Horizonte` | [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md) | **Produção:** Horizonte — mapa oportunidade; KPIs Início; check dados públicos |
 
 > **Nota:** versões **4.1.3–4.1.5** (Chronos, Horae, Themis) e patches do mesmo dia estão no [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) sem `RELEASE_*.md` dedicado. A numeração **4.4.x** reflecte marcos de documentação e convenção de tag com sufixo no mesmo dia civil.
 

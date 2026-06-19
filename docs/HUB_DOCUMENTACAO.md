@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 4.4.2 · **Última revisão:** 2026-06-08
+**Versão do produto:** 5.0.0 · **Última revisão:** 2026-06-03
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
-Mapa visual da documentação em produção: versão actual, linha **4.x**, navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
+Mapa visual da documentação em produção: versão actual, linha **5.0** (Horizonte), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
 
 Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e secções expansíveis).
 
@@ -14,11 +14,11 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **4.4.2** |
-| **Tag de deploy** | `20260608a-Pythia` |
-| **Commit** | `9e728a5` · **#352** |
-| **Data de referência** | 2026-06-08 |
-| **Release** | [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md) |
+| **Versão semântica** | **5.0.0** |
+| **Tag de deploy** | `20260603b-Horizonte` |
+| **Data de referência** | 2026-06-03 |
+| **Release** | [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md) |
+| **Marco** | **Horizonte** — mapa de oportunidade municipal |
 
 ---
 
@@ -52,8 +52,8 @@ flowchart TD
 | 4.1.7 | Phronesis | 07/06/2026 | 307 |
 | 4.2.0 | Clio | 10/06/2026 | 319 |
 | 4.3.0 | Harmonia | 11/06/2026 | 321 |
-| **4.4.1** | **Peitho** | **07/06 b** | **340** |
-| 4.4.0 | Ananke | 07/06 a | 336 |
+| **5.0.0** | **Horizonte** | **03/06 b** | — |
+| 4.4.8 | Cleodora | 03/06 a | — |
 
 ```mermaid
 timeline

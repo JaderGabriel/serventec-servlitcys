@@ -255,6 +255,20 @@ Notifica administradores (`kind=public_data`) com resumo das fontes FNDE, CadÚn
 
 ---
 
+## 11b. Horizonte (mapa de oportunidade)
+
+Rota: `/dashboard/horizonte` · Documentação: [HORIZONTE.md](HORIZONTE.md).
+
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `HORIZONTE_ENABLED` | `true` | Liga o módulo |
+| `HORIZONTE_MAP_CACHE_TTL` | `3600` | TTL cache do payload do mapa (segundos) |
+| `HORIZONTE_MIN_MATRICULAS` | `500` | Escala mínima Censo para considerar município |
+| `HORIZONTE_HIGH_PROPENSITY_THRESHOLD` | `0.65` | Limiar tier «alta propensão» |
+| `HORIZONTE_MEDIUM_PROPENSITY_THRESHOLD` | `0.40` | Limiar tier «média propensão» |
+
+---
+
 ## 12. FUNDEB, discrepâncias e financiamentos
 
 | Variável | Descrição |

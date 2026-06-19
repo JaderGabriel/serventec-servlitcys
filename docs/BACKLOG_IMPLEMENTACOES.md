@@ -1,6 +1,6 @@
 # Backlog de implementações — servlitcys
 
-**Versão do produto:** 4.4.5 · **Última revisão:** 2026-06-09
+**Versão do produto:** 5.0.0 · **Última revisão:** 2026-06-03
 
 > **Índice:** [README.md](README.md) · **Estado actual:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
@@ -149,7 +149,7 @@ Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IE
 | PLG-02 | P2 | Série IDEB municipal no painel | Pendente | PLUGINS §5.3 |
 | PLG-03 | P2 | PNAE/transporte × NEE (se schema i-Educar existir) | Pendente | PLUGINS §5.3, backlog CAD-03 |
 | PLG-04 | P2 | Validação pós-export Educacenso (recurso×NEE) | Pendente | PLUGINS §5.3, CAD-04 |
-| CEN-01 | **P0** | Conferência Educacenso 1ª etapa: arquivo portal INEP × i-Educar + painel analítico | Pendente | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) §12 |
+| CEN-01 | **P0** | Conferência Educacenso 1ª etapa: arquivo portal INEP × i-Educar + painel analítico | Concluído (4.4.8) | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) |
 | PLG-05 | P2 | Ranking aprovação/reprovação por escola (i-Educar) | Pendente | PLUGINS §5.3, GRA-06 |
 | PLG-06 | P2 | Metas PNE/semáforo no quadro SAEB | Em andamento | PLUGINS §5.3, GRA-07 |
 | PLG-07 | P2 | Gráfico repasses históricos × matrícula | Pendente | PLUGINS §5.3 |
@@ -161,6 +161,8 @@ Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IE
 
 | ID | Item | Notas |
 |----|------|-------|
+| DONE-20 | Horizonte v1 — mapa oportunidade municipal (scores, busca IBGE, rankings UF) | 5.0.0 — [HORIZONTE.md](HORIZONTE.md) |
+| DONE-19 | Conferência Educacenso 1ª etapa (upload, cruzamento i-Educar, painel Censo) | 4.4.8 |
 | DONE-01 | Lazy load por aba + Pulse por `tab=` | `ANALYTICS_LAZY_TABS` |
 | DONE-02 | Resumo financeiro em cache para FUNDEB/faixa abas | `fundingImpactSnapshot` |
 | DONE-03 | Faixa impacto saldo + status municipal (abas até Censo) | `AnalyticsTabImpactBuilder` |

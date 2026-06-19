@@ -98,6 +98,21 @@ final class HomeQuickActionsCatalog
             'alert' => false,
         ];
 
+        if ($user?->canViewAdminDashboard()) {
+            $consultoria[] = [
+                'id' => 'horizonte',
+                'href' => route('dashboard.horizonte'),
+                'title' => __('Horizonte'),
+                'description' => __('Mapa de oportunidade — déficits oficiais, regiões prioritárias e propensão de Consultoria.'),
+                'icon' => 'globe-alt',
+                'kicker' => __('Expansão'),
+                'featured' => false,
+                'badge' => null,
+                'badge_tone' => 'info',
+                'alert' => false,
+            ];
+        }
+
         $consultoria[] = [
             'id' => 'fundeb',
             'href' => $analytics('fundeb'),

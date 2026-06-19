@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 4.4.3 · tag `20260609b-Lachesis` · **Última revisão:** 2026-06-09
+**Versão do produto:** 5.0.0 · tag `20260603b-Horizonte` · **Última revisão:** 2026-06-03
 
 Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitectura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
@@ -86,6 +86,7 @@ mindmap
 |-----------|----------|
 | [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) | Propósito, público, governação |
 | [INICIO_DASHBOARD.md](INICIO_DASHBOARD.md) | Início admin — KPIs, atalhos, mapa mental |
+| [HORIZONTE.md](HORIZONTE.md) | Mapa de oportunidade municipal (5.0) — propensão, déficits públicos, prospectos |
 | [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) | RBAC: admin, user, municipal |
 | [SEGURANCA.md](SEGURANCA.md) | Senhas, sessões, checklist produção |
 

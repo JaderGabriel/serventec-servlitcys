@@ -429,6 +429,7 @@ final class DocumentationCatalog
                     ['label' => __('Navegação (5 áreas)'), 'path' => 'docs/ANALYTICS_NAVEGACAO_UI.md', 'hint' => __('Resumo → Finanças')],
                     ['label' => __('Decisão de abas'), 'path' => 'docs/CONSULTORIA_ABAS_DECISAO.md'],
                     ['label' => __('Início dashboard'), 'path' => 'docs/INICIO_DASHBOARD.md'],
+                    ['label' => __('Horizonte — mapa oportunidade'), 'path' => 'docs/HORIZONTE.md', 'hint' => __('Expansão · déficits públicos')],
                     ['label' => __('Métricas e Pulse'), 'path' => 'docs/METRICAS_QUERIES_ANALYTICS.md'],
                     ['label' => __('Relatório PDF Serventec'), 'path' => 'docs/RELATORIO_PDF_ATM.md'],
                     ['label' => __('Power BI — estudo de integração'), 'path' => 'docs/POWERBI.md', 'hint' => __('ETL · DAX · roadmap')],

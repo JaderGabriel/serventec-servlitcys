@@ -33,6 +33,7 @@ import {
 import createSchoolUnitsMap from "./schoolUnitsMap.js";
 import createCadunicoTerritoryMap from "./cadunicoTerritoryMap.js";
 import createBrazilMunicipalitiesMap from "./brazilMunicipalitiesMap.js";
+import createHorizonteMap from "./horizonteMap.js";
 import rxCadastroPulse from "./rxCadastroPulse.js";
 import "./notification-bell.js";
 import "./documentationSearch.js";
@@ -179,6 +180,10 @@ document.addEventListener("alpine:init", () => {
 
     Alpine.data("brazilMunicipalitiesMap", (markers, statusColors = null, options = null) =>
         createBrazilMunicipalitiesMap(markers, statusColors, options),
+    );
+
+    Alpine.data("horizonteMap", (markers, colors = {}, options = {}) =>
+        createHorizonteMap(markers, colors, options),
     );
 
     registerAnalyticsExportHub(Alpine);

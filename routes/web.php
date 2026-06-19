@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\LegalDocumentAdminController;
 use App\Http\Controllers\Admin\CadunicoSyncController;
 use App\Http\Controllers\Admin\PedagogicalSyncController;
 use App\Http\Controllers\Admin\PublicDataImportController;
+use App\Http\Controllers\HorizonteController;
 use App\Http\Controllers\AnalyticsDashboardController;
 use App\Http\Controllers\CadunicoPrevisaoExportController;
 use App\Http\Controllers\ComparativoExportController;
@@ -70,6 +71,7 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
             ->name('dashboard.municipality-map.school-years');
         Route::get('/dashboard/analytics', [AnalyticsDashboardController::class, 'index'])->name('dashboard.analytics');
         Route::get('/dashboard/rx', [RxDashboardController::class, 'index'])->name('dashboard.rx');
+        Route::get('/dashboard/horizonte', [HorizonteController::class, 'index'])->name('dashboard.horizonte');
         Route::get('/dashboard/analytics/tab', [AnalyticsDashboardController::class, 'tabPartial'])->name('dashboard.analytics.tab');
         Route::get('/dashboard/analytics/filter-options', [AnalyticsDashboardController::class, 'filterOptions'])->name('dashboard.analytics.filter-options');
         Route::get('/dashboard/analytics/filter-options-bootstrap', [AnalyticsDashboardController::class, 'filterOptionsBootstrap'])->name('dashboard.analytics.filter-options-bootstrap');

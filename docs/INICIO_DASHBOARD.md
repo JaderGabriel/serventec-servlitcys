@@ -1,8 +1,8 @@
 # Início (`/dashboard`) — painel admin
 
-**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
+**Versão do produto:** 5.0.0 · **Última revisão:** 2026-06-03
 
-> **Release Início:** [RELEASE_20260604_HESTIA.md](RELEASE_20260604_HESTIA.md) (4.0.0) · **Índice:** [README.md](README.md)
+> **Release Horizonte:** [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md) (5.0.0) · **Índice:** [README.md](README.md)
 
 Painel operacional após login (utilizadores com `canViewAdminDashboard()`). Utilizadores sem essa permissão são redireccionados para a consultoria municipal.
 
@@ -28,6 +28,7 @@ Três zonas (consultoria, dados, operação). Cada card aponta para uma tarefa c
 | Dados públicos | `admin.public-data.index` |
 | Filas de processamento | `admin.sync-queue` ou `sync-queue` (conforme perfil) |
 | Monitor de módulos | `admin.module-monitor.index` (perfil `canImportOrConfigure`) |
+| Horizonte (oportunidade) | `dashboard.horizonte` |
 | Monitorização (Pulse) | `pulse` (mesmo perfil) |
 
 Badges dinâmicos: contagem de fila, `prontos/activos` i-Educar, municípios activos.

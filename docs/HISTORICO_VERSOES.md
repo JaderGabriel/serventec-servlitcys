@@ -1,13 +1,13 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`4.4.8`** · tag de deploy **`20260603a-Cleodora`** · ver [RELEASE_20260603a_CLEODORA.md](RELEASE_20260603a_CLEODORA.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`5.0.0`** · tag de deploy **`20260603b-Horizonte`** · ver [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **4.4.8** |
+| **Versão semântica em produção** | **5.0.0** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260603a-Cleodora` |
-| **Último marco documentado** | Conferência Educacenso 1ª etapa (upload, cruzamento i-Educar, painel Censo) — [RELEASE_20260603a_CLEODORA.md](RELEASE_20260603a_CLEODORA.md) |
+| **Tag de deploy (servidor)** | `20260603b-Horizonte` |
+| **Último marco documentado** | **Horizonte** — mapa de oportunidade municipal (déficits públicos, propensão, regiões prioritárias) — [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -18,21 +18,12 @@
 
 ```mermaid
 timeline
-    title Marcos semânticos 4.x
+    title Marcos semânticos 4.x → 5.0
     2026-06-04 : 4.0.0 Hestia — Início reorganizado
     2026-06-05 : 4.1.0 Athena — 5 áreas consultoria
-    2026-06-07 : 4.1.7 Phronesis — portarias FUNDEB
-    2026-06-07 : 4.4.0a Ananke — sufixo mesmo dia
-    2026-06-07 : 4.4.1b Peitho — hub docs e rodapé
-    2026-06-08 : 4.4.2a Pythia — Power BI + busca docs
-    2026-06-09 : 4.4.3b Lachesis — CadÚnico faixas + Censo + mapa
-    2026-06-09 : 4.4.4c Atropos — dock analytics, PNG legenda, mapa cache
     2026-06-09 : 4.4.5a Themis — qualidade no dock, FUNDEB gerencial
-    2026-06-09 : 4.4.6d Themis — ano letivo ao trocar município
-    2026-06-15 : 4.4.7a Mnemosyne — toolkit Educacenso no RX
     2026-06-03 : 4.4.8a Cleodora — conferência Educacenso × i-Educar
-    2026-06-10 : 4.2.0 Clio — VAAT/VAAR portaria
-    2026-06-11 : 4.3.0 Harmonia — RX + gráfico home
+    2026-06-03 : 5.0.0b Horizonte — mapa oportunidade municipal
 ```
 
 Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) §5–6.
@@ -43,7 +34,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 4.4.8** | — / `20260603a-Cleodora` → `main` | — | 03/06/2026 | **Produção:** conferência Educacenso 1ª etapa — upload, parser, cruzamento i-Educar read-only, painel na aba Censo, CLI e fixture de carga — [RELEASE_20260603a_CLEODORA.md](RELEASE_20260603a_CLEODORA.md). |
+| **▶ 5.0.0** | — / `20260603b-Horizonte` → `main` | — | 03/06/2026 | **Produção:** **Horizonte** — mapa oportunidade (Consultoria vs prospectos, déficits FUNDEB/SAEB/Censo, busca IBGE, rankings UF); KPIs Início; verificação diária dados públicos; monitor módulos — [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md). |
+| 4.4.8 | — / `20260603a-Cleodora` → `main` | — | 03/06/2026 | Conferência Educacenso 1ª etapa — upload, parser, cruzamento i-Educar read-only, painel na aba Censo — [RELEASE_20260603a_CLEODORA.md](RELEASE_20260603a_CLEODORA.md). |
 | 4.4.7 | `66bc396` / `20260615a-Mnemosyne` → `main` | **369** | 15/06/2026 | Toolkit Educacenso 2026, calendário INEP e banner de prazo por fase no RX — [RELEASE_20260615a_MNEMOSYNE.md](RELEASE_20260615a_MNEMOSYNE.md). |
 | 4.4.6 | `5225496` / `20260609d-Themis` → `main` | **367** | 09/06/2026 | Ano letivo automático ao trocar município, abas lazy com `ano_letivo`, índice qualidade no dock — [RELEASE_20260609d_THEMIS.md](RELEASE_20260609d_THEMIS.md). |
 | 4.4.5 | `1927352` / `20260609a-Themis` → `main` | **364** | 09/06/2026 | Índice qualidade no dock, FUNDEB gerencial, fix troca município/ano, hub exports, pt-BR — [RELEASE_20260609a_THEMIS.md](RELEASE_20260609a_THEMIS.md). |

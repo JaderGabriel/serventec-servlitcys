@@ -22,8 +22,8 @@ return [
     */
 
     'product' => [
-        'version' => '4.4.8',
-        'release_tag' => '20260603a-Cleodora',
+        'version' => '5.0.0',
+        'release_tag' => '20260603b-Horizonte',
         'commit_short' => '',
         'commit_number' => null,
         'revision_date' => '2026-06-03',

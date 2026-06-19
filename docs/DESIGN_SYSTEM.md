@@ -1,6 +1,6 @@
 # Design system — consultoria municipal (servlitcys)
 
-**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
+**Versão do produto:** 5.0.0 · **Última revisão:** 2026-06-03
 
 **Implementação:** `resources/css/app.css` (classes `serv-*`), componentes Blade `x-dashboard.*`, `x-status-pill`, `x-consultoria-tab-link`.
 
@@ -53,7 +53,7 @@ O produto comunica **consultoria profissional** com foco em **finanças educacio
 |--------|----------------|-----------------|
 | **Municipal** | Meu município | Perfil, Sair |
 | **User** (consultor) | Meu município / Consultoria municipal | Idem |
-| **Admin** | [Início](INICIO_DASHBOARD.md) (`/dashboard`) + Consultoria municipal | **Conexões** (conexões i-Educar), Sincronizações, Usuários, Documentação, SMTP |
+| **Admin** | [Início](INICIO_DASHBOARD.md) (`/dashboard`) + [Horizonte](HORIZONTE.md) (`/dashboard/horizonte`) + Consultoria municipal | **Conexões** (conexões i-Educar), Sincronizações, Usuários, Documentação, SMTP |
 
 Rota documentação admin: `GET /admin/documentacao` → `admin.documentation.index`.
 

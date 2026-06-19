@@ -24,7 +24,7 @@
             'title' => __('Consultoria'),
             'icon' => 'chart-bar',
             'tone' => 'teal',
-            'routes' => ['dashboard.analytics*', 'dashboard.rx*', 'admin.analytics-diagnostics'],
+            'routes' => ['dashboard.analytics*', 'dashboard.rx*', 'dashboard.horizonte', 'admin.analytics-diagnostics'],
             'items' => array_values(array_filter([
                 [
                     'show' => true,
@@ -41,6 +41,14 @@
                     'icon' => 'clipboard-document-list',
                     'active' => $req->routeIs('dashboard.rx*'),
                     'title' => __('Todos os municípios: volume digitado, status Censo e trabalho restante.'),
+                ],
+                [
+                    'show' => $user->canViewAdminDashboard(),
+                    'href' => route('dashboard.horizonte'),
+                    'label' => __('Horizonte'),
+                    'icon' => 'globe-alt',
+                    'active' => $req->routeIs('dashboard.horizonte'),
+                    'title' => __('Mapa de oportunidade — déficits públicos e propensão de Consultoria.'),
                 ],
                 [
                     'show' => $user->isAdmin(),
