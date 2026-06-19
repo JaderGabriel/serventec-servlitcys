@@ -25,6 +25,7 @@ class HorizonteController extends Controller
             'refYear' => (int) config('horizonte.reference_year', (int) date('Y') - 1),
             'legend' => HorizonteMapPresenter::legendItems(),
             'colors' => HorizonteMapPresenter::tierColors(),
+            'canRefreshData' => $user->canImportOrConfigure(),
         ]);
     }
 

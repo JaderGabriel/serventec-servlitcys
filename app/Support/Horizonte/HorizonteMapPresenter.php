@@ -69,6 +69,40 @@ final class HorizonteMapPresenter
     /**
      * @return list<array{key: string, label: string, description: string, color: string}>
      */
+    /**
+     * Metadados de abastecimento / CLI para a UI quando o mapa está vazio ou incompleto.
+     *
+     * @param  array<string, mixed>  $coverage
+     * @return array{
+     *     marker_count: int,
+     *     needs_refresh: bool,
+     *     refresh_command: string,
+     *     refresh_dry_run_command: string,
+     *     hub_url: string,
+     *     message: string|null
+     * }
+     */
+    public static function refreshMeta(int $markerCount, array $coverage): array
+    {
+        $withPublic = (int) ($coverage['with_public_data'] ?? 0);
+        $needsRefresh = $markerCount === 0 || $withPublic === 0;
+
+        $message = match (true) {
+            $markerCount === 0 => __('Nenhum município posicionado — importe dados públicos nacionais ou cadastre cidades com código IBGE.'),
+            $withPublic === 0 => __('Só municípios do catálogo local — importe FUNDEB, Censo ou SAEB para prospectos nacionais e scores completos.'),
+            default => null,
+        };
+
+        return [
+            'marker_count' => $markerCount,
+            'needs_refresh' => $needsRefresh,
+            'refresh_command' => 'php artisan horizonte:fortnightly-feed',
+            'refresh_dry_run_command' => 'php artisan horizonte:fortnightly-feed --dry-run',
+            'hub_url' => route('admin.public-data.index', ['hub' => 'horizonte']),
+            'message' => $message,
+        ];
+    }
+
     public static function heatLegendItems(): array
     {
         return [

@@ -50,12 +50,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         renderProgress: 0,
         loadingMessage: "",
         pageError: null,
-        mapView: "heat",
+        mapView: "markers",
+        meta: {},
         active: null,
         tooltipPinned: false,
         tooltipStyle: "",
         searchQuery: "",
-        filterTier: options.initialFilter ?? "prospects",
+        filterTier: options.initialFilter ?? "all",
         filterUf: options.initialUf ?? "",
         minSuccessScore: 0,
         minBenefitScore: 0,
@@ -66,9 +67,18 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         requireFundeb: false,
         requireCenso: false,
         requireSaeb: false,
-        hideConsultoria: true,
+        hideConsultoria: false,
         ufList: Array.isArray(options.ufList) ? options.ufList : [],
         prospectSort: "success_score",
+        canRefreshData: Boolean(options.canRefreshData),
+
+        get totalMarkers() {
+            return this.markers.length;
+        },
+
+        get mapHiddenByFilters() {
+            return !this.pageLoading && this.totalMarkers > 0 && this.filteredMarkers.length === 0;
+        },
 
         get filteredMarkers() {
             const q = this.searchQuery.trim().toLowerCase();
@@ -234,6 +244,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 : this.focusSegments;
             this.refYear = Number(data.reference_year) || this.refYear;
             this.ufList = uniqueSortedUfs(this.markers);
+            this.meta = data.meta && typeof data.meta === "object" ? data.meta : {};
         },
 
         initMap() {
@@ -331,9 +342,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.heatLayer.clearLayers();
             this.markerLayers = [];
             const bounds = [];
-            const list = this.filteredMarkers.filter(
-                (m) => !m.consultoria_active && Number(m.heat_intensity ?? 0) > 0,
-            );
+            const list = this.filteredMarkers.filter((m) => {
+                if (m.consultoria_active) {
+                    return false;
+                }
+                const heat = Number(m.heat_intensity ?? 0);
+                return heat > 0 || m.tier === "catalog_pending" || m.tier === "data_sparse";
+            });
             const total = list.length;
             const batch = total > 150 ? 60 : total;
 
@@ -345,7 +360,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     continue;
                 }
                 bounds.push([lat, lng]);
-                const intensity = Number(m.heat_intensity ?? m.success_score / 100) || 0;
+                const intensity = Math.max(
+                    0.08,
+                    Number(m.heat_intensity ?? m.success_score / 100) || 0,
+                );
                 const circle = L.circleMarker([lat, lng], {
                     radius: 6 + intensity * 18,
                     fillColor: heatColor(intensity),
@@ -475,7 +493,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         resetFilters() {
-            this.filterTier = "prospects";
+            this.filterTier = "all";
             this.filterUf = "";
             this.minSuccessScore = 0;
             this.minBenefitScore = 0;
@@ -486,7 +504,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.requireFundeb = false;
             this.requireCenso = false;
             this.requireSaeb = false;
-            this.hideConsultoria = true;
+            this.hideConsultoria = false;
         },
 
         applyFocusSegment(segment) {

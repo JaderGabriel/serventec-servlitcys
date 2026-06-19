@@ -5,6 +5,7 @@
     $heatLegend = \App\Support\Horizonte\HorizonteMapPresenter::heatLegendItems();
     $mapDataUrl = $mapDataUrl ?? route('dashboard.horizonte.map-data');
     $docUrl = route(auth()->user()?->isAdmin() ? 'admin.documentation.show' : 'documentation.show', ['doc' => 'docs/HORIZONTE.md']);
+    $canRefreshData = (bool) ($canRefreshData ?? auth()->user()?->canImportOrConfigure());
 @endphp
 
 <x-app-layout>
@@ -30,6 +31,7 @@
             'refYear' => $refYear,
             'legend' => $legend,
             'heatLegend' => $heatLegend,
+            'canRefreshData' => $canRefreshData,
         ]))"
         x-init="init()"
     >
@@ -266,6 +268,41 @@
                                         <div class="h-full bg-teal-600 transition-all duration-150" :style="'width:' + renderProgress + '%'"></div>
                                     </div>
                                 </div>
+
+                                <div
+                                    x-show="!pageLoading && !mapRendering && totalMarkers === 0"
+                                    x-cloak
+                                    class="absolute inset-0 z-[5] flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50/95 dark:bg-slate-900/90 px-6 py-8 text-center"
+                                    role="status"
+                                >
+                                    <p class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Mapa vazio') }}</p>
+                                    <p class="text-sm text-slate-600 dark:text-slate-400 max-w-md" x-text="meta.message || '{{ __('Importe dados públicos nacionais ou cadastre municípios com IBGE no catálogo.') }}'"></p>
+                                    <div class="w-full max-w-lg rounded-lg bg-slate-900 dark:bg-slate-950 px-4 py-3 text-left">
+                                        <p class="text-[10px] font-medium uppercase tracking-wide text-slate-400">{{ __('Abastecimento (servidor)') }}</p>
+                                        <code class="mt-1 block text-xs text-emerald-300 break-all font-mono" x-text="meta.refresh_command || 'php artisan horizonte:fortnightly-feed'"></code>
+                                        <p class="mt-2 text-[10px] text-slate-500">{{ __('Simular antes:') }} <code class="text-slate-400" x-text="meta.refresh_dry_run_command || 'php artisan horizonte:fortnightly-feed --dry-run'"></code></p>
+                                    </div>
+                                    @if ($canRefreshData)
+                                        <a
+                                            :href="meta.hub_url || @js(route('admin.public-data.index', ['hub' => 'horizonte']))"
+                                            class="serv-btn-secondary text-sm"
+                                        >{{ __('Abrir hub Dados públicos') }}</a>
+                                    @endif
+                                </div>
+
+                                <div
+                                    x-show="mapHiddenByFilters"
+                                    x-cloak
+                                    class="absolute inset-x-0 top-0 z-[5] mx-3 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                                    role="status"
+                                >
+                                    <p>
+                                        <span class="font-medium">{{ __('Filtros ocultam todos os municípios.') }}</span>
+                                        <span class="tabular-nums" x-text="' ' + totalMarkers.toLocaleString('pt-BR') + ' {{ __('carregados') }}.'"></span>
+                                    </p>
+                                    <button type="button" class="serv-btn-secondary text-xs shrink-0" @click="resetFilters()">{{ __('Mostrar todos') }}</button>
+                                </div>
+
                                 <div x-ref="map" class="serv-brazil-map w-full" role="application" aria-label="{{ __('Mapa Horizonte — oportunidade municipal') }}" style="height: min(70vh, 520px);"></div>
                                 <div
                                     x-show="active"
@@ -295,8 +332,32 @@
                                 </div>
                             </div>
                             <p class="text-xs text-slate-500 dark:text-slate-400">
-                                {{ __('Scores indicativos — não substituem o Diagnóstico i-Educar. Importe fontes em Dados públicos para ampliar a cobertura nacional.') }}
+                                {{ __('Scores indicativos — não substituem o Diagnóstico i-Educar. Vista inicial: todos os municípios com coordenadas.') }}
                             </p>
+                        </div>
+                    </div>
+
+                    <div
+                        x-show="!pageLoading && (meta.needs_refresh || totalMarkers === 0)"
+                        x-cloak
+                        class="px-5 py-4 border-t border-slate-200/90 dark:border-slate-700/90 bg-slate-50/60 dark:bg-slate-900/40"
+                    >
+                        <h4 class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Actualizar dados do mapa') }}</h4>
+                        <p class="mt-1 text-xs text-slate-600 dark:text-slate-400 max-w-3xl" x-show="meta.message" x-text="meta.message"></p>
+                        <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                            {{ __('Rotina quinzenal (dias 1 e 15) ou execução manual no servidor:') }}
+                        </p>
+                        <div class="mt-2 rounded-lg bg-slate-900 dark:bg-slate-950 px-4 py-3">
+                            <code class="block text-xs sm:text-sm text-emerald-300 font-mono break-all" x-text="meta.refresh_command || 'php artisan horizonte:fortnightly-feed'"></code>
+                        </div>
+                        <div class="mt-3 flex flex-wrap gap-3 text-xs">
+                            @if ($canRefreshData)
+                                <a
+                                    :href="meta.hub_url || @js(route('admin.public-data.index', ['hub' => 'horizonte']))"
+                                    class="font-medium text-indigo-700 dark:text-indigo-300 hover:underline"
+                                >{{ __('Hub Horizonte — abastecer pela UI') }} →</a>
+                            @endif
+                            <span class="text-slate-500">{{ __('Após importar, o cache invalida-se pelo fingerprint dos dados.') }}</span>
                         </div>
                     </div>
 

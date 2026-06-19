@@ -16,22 +16,16 @@ Painel operacional após login (utilizadores com `canViewAdminDashboard()`). Uti
 
 ## Acesso rápido
 
-Três zonas (consultoria, dados, operação). Cada card aponta para uma tarefa concreta; vários links abrem o painel analítico com `?tab=`:
+Quatro zonas operacionais — **sem** atalhos para abas da consultoria analítica (exigem escolher município/ano). Destinos directos:
 
-| Atalho | Rota / tab |
-|--------|------------|
-| Discrepâncias | `dashboard.analytics?tab=discrepancies` |
-| Diagnóstico geral | `dashboard.analytics?tab=municipality_health` |
-| Finanças · Tempo Real | `dashboard.analytics?tab=finance_realtime` (se `IEDUCAR_FINANCE_REALTIME_ENABLED`) |
-| FUNDEB | `dashboard.analytics?tab=fundeb` |
-| RX | `dashboard.rx` |
-| Dados públicos | `admin.public-data.index` |
-| Filas de processamento | `admin.sync-queue` ou `sync-queue` (conforme perfil) |
-| Monitor de módulos | `admin.module-monitor.index` (perfil `canImportOrConfigure`) |
-| Horizonte (oportunidade) | `dashboard.horizonte` |
-| Monitorização (Pulse) | `pulse` (mesmo perfil) |
+| Zona | Atalhos principais |
+|------|-------------------|
+| Filas e monitorização | Filas de processamento, Dados públicos, Monitor de módulos |
+| Rede municipal | Conexões i-Educar, Municípios, Matriz FUNDEB (compatibilidade) |
+| Visão multi-município | RX, Horizonte (`canViewHorizonte`) |
+| Gestão | Utilizadores (`canManageUsers`) |
 
-Badges dinâmicos: contagem de fila, `prontos/activos` i-Educar, municípios activos.
+Badges dinâmicos: contagem de fila, `prontos/activos` i-Educar, municípios activos na RX.
 
 ## Mapa mental
 

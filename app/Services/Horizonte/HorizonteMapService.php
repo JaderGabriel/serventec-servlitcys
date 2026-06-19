@@ -157,9 +157,9 @@ final class HorizonteMapService
                 'in_catalog' => $inCatalog,
             ];
             $scores = $this->scorer->score($scoreInput, $benchmarks, $high, $medium);
-            $heatIntensity = $consultoriaActive
-                ? 0.0
-                : max(0.0, min(1.0, ((int) $scores['success_score']) / 100));
+            $rawHeat = $consultoriaActive ? 0.0 : ((int) $scores['success_score']) / 100;
+            $minHeat = $consultoriaActive ? 0.0 : ($scores['tier'] === 'data_sparse' ? 0.08 : 0.0);
+            $heatIntensity = max($minHeat, min(1.0, $rawHeat));
 
             $markers[] = [
                 'ibge' => $ibge,
@@ -213,6 +213,7 @@ final class HorizonteMapService
             'uf_rankings' => $ufRankings,
             'top_prospects' => $topProspects,
             'focus_segments' => $focusSegments,
+            'meta' => HorizonteMapPresenter::refreshMeta(count($markers), $coverage),
             'colors' => HorizonteMapPresenter::tierColors(),
             'legend' => HorizonteMapPresenter::legendItems(),
             'heat_legend' => HorizonteMapPresenter::heatLegendItems(),
@@ -510,6 +511,7 @@ final class HorizonteMapService
             'uf_rankings' => [],
             'top_prospects' => [],
             'focus_segments' => [],
+            'meta' => HorizonteMapPresenter::refreshMeta(0, HorizonteManagerInsights::dataCoverage([])),
             'colors' => HorizonteMapPresenter::tierColors(),
             'legend' => HorizonteMapPresenter::legendItems(),
             'heat_legend' => HorizonteMapPresenter::heatLegendItems(),

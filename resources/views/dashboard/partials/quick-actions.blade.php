@@ -7,9 +7,10 @@
     }
 
     $zoneIcons = [
-        'consultoria' => 'chart-bar',
-        'dados' => 'circle-stack',
         'operacao' => 'queue-list',
+        'dados' => 'circle-stack',
+        'visao' => 'globe-alt',
+        'gestao' => 'users',
     ];
 @endphp
 
@@ -23,7 +24,7 @@
             {{ __('Acesso rápido') }}
         </h3>
         <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-            {{ __('Atalhos para onde a equipe decide, importa e processa — alinhados ao fluxo de dados no final da página.') }}
+            {{ __('Filas, importações, conexões e painéis multi-município — destinos directos, sem passo intermédio de escolher cidade.') }}
         </p>
     </header>
 
