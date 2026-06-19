@@ -1,3 +1,5 @@
+@use('App\Support\Admin\AdminVisualCatalog')
+
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -19,8 +21,6 @@
     </x-slot>
 
     @php
-        use App\Support\Admin\AdminVisualCatalog;
-
         $mono = 'font-mono text-xs text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-950/50 px-2 py-1 rounded border border-gray-200 dark:border-gray-700';
     @endphp
 
