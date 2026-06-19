@@ -25,12 +25,6 @@
             'active' => request()->routeIs('profile.*'),
         ],
         [
-            'show' => true,
-            'href' => route('notifications.index'),
-            'label' => __('Notificações'),
-            'active' => request()->routeIs('notifications.*'),
-        ],
-        [
             'show' => $user->canViewDocumentation(),
             'href' => route($user->isAdmin() ? 'admin.documentation.index' : 'documentation.index'),
             'label' => __('Documentação'),

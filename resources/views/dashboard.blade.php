@@ -11,7 +11,7 @@
                     {{ __('Olá, :name', ['name' => $user->name]) }}
                 </h2>
                 <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    {{ __('Resumo operacional de :app — municípios, fluxo de dados e filas.', ['app' => config('app.name')]) }}
+                    {{ __('Resumo operacional — conexões i-Educar, RX, consultoria e filas.', ['app' => config('app.name')]) }}
                 </p>
             </div>
             <p class="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -44,7 +44,13 @@
                 </div>
             @endif
 
-            @include('dashboard.partials.kpi-strip', ['stats' => $stats, 'ops' => $ops])
+            @include('dashboard.partials.kpi-strip', [
+                'stats' => $stats,
+                'ops' => $ops,
+                'fundebPortaria' => $fundebPortaria ?? [],
+                'mapSummary' => $mapSummary ?? [],
+                'user' => $user,
+            ])
 
             @include('dashboard.partials.municipalities-map', ['mapMarkers' => $mapMarkers, 'mapSummary' => $mapSummary])
 

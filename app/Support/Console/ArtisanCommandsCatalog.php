@@ -345,6 +345,14 @@ final class ArtisanCommandsCatalog
                         'doc_anchor' => 'operacao',
                     ],
                     [
+                        'name' => 'public-data:check-official',
+                        'summary' => __('Verifica fontes oficiais de dados públicos e notifica admins (rotina diária).'),
+                        'signature' => 'public-data:check-official',
+                        'examples' => ['php artisan public-data:check-official'],
+                        'env' => ['PUBLIC_DATA_DAILY_CHECK_ENABLED', 'PUBLIC_DATA_DAILY_CHECK_TIME'],
+                        'doc_anchor' => 'operacao',
+                    ],
+                    [
                         'name' => 'app:flush-processing-queue',
                         'summary' => __('Esvazia filas admin (sync + PDF) e jobs pendentes; em production exige --confirm=slug.'),
                         'signature' => 'app:flush-processing-queue {--confirm=} {--only-sync} {--only-pdf} ...',

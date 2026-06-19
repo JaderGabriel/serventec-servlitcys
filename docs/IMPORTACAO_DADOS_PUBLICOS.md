@@ -1,7 +1,7 @@
 # Importação de dados públicos (hub admin)
 
 **Rota:** `/admin/dados-publicos` (`admin.public-data.index`)  
-**Menu:** Sincronização → **Dados públicos** (perfil com `canImportOrConfigure`)  
+**Menu:** Operação / **Dados públicos** (perfil com `canImportOrConfigure`)  
 **Relacionado:** [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) · [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) · [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md) · [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md)
 
 ---
@@ -147,3 +147,22 @@ Ao acrescentar uma nova fonte, registe o item em `AdminImportHubCatalog::navItem
 | `resources/views/components/admin/import-hub/*` | Layout e cartões |
 | `resources/views/admin/public-data/index.blade.php` | Tela hub |
 | `app/Support/Admin/ExternalImportImpact.php` | Textos impacto por domínio |
+
+---
+
+## 10. Verificação diária de fontes oficiais
+
+Comando **`public-data:check-official`** (agendado por defeito às 07:00):
+
+1. Consulta **read-only** FNDE (CKAN/portarias), Misocial/Cecad, microdados Censo, repasses Tesouro e SAEB.
+2. Compara com o que já existe localmente (anos importados, indexação, snapshots).
+3. Envia **notificação diária** a administradores (`kind=public_data`) — com ou sem novidades — indicando a **rotina CLI ou acção no hub** para importar (não executa importação).
+
+| Onde ver | Rota / artefacto |
+|----------|------------------|
+| Hub | `/admin/dados-publicos` |
+| Monitor operacional | `/admin/monitor-modulos` (módulo `public_data`) |
+| CLI | `php artisan public-data:check-official` |
+| Variáveis | `PUBLIC_DATA_DAILY_CHECK_*` — [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11 |
+
+Documentação de comandos: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §3.2.

@@ -21,7 +21,7 @@
         active="queue"
         accent="slate"
         :eyebrow="__('Operação e automação')"
-        :title="__('Fila de sincronização e relatórios PDF')"
+        :title="__('Filas de processamento')"
         :description="__('Acompanhe tarefas enfileiradas pelas telas de importação. Em produção, mantenha workers ativos e o agendador schedule:run conforme abaixo.')"
         queue-banner-compact
         :doc-href="route('admin.documentation.show', ['doc' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md'])"

@@ -13,6 +13,7 @@ class ModuleMonitorCatalogTest extends TestCase
         $ids = array_column(ModuleMonitorCatalog::modules(), 'id');
 
         $this->assertContains('analytics', $ids);
+        $this->assertContains('educacenso', $ids);
         $this->assertContains('geo', $ids);
         $this->assertContains('queue', $ids);
     }
@@ -32,8 +33,20 @@ class ModuleMonitorCatalogTest extends TestCase
         );
 
         $this->assertSame(
-            'geo',
-            ModuleMonitorCatalog::moduleIdForPulseKey('sync:geo:pipeline|cid:2')
+            'educacenso',
+            ModuleMonitorCatalog::moduleIdForPulseKey('educacenso:analysis|cid:1')
         );
+    }
+
+    public function test_admin_and_queue_urls(): void
+    {
+        $geo = ModuleMonitorCatalog::find('geo');
+        $this->assertNotNull($geo);
+        $this->assertStringContainsString('geo-sync', ModuleMonitorCatalog::adminUrl($geo) ?? '');
+        $this->assertStringContainsString('fila-geo', ModuleMonitorCatalog::queueUrl($geo) ?? '');
+
+        $educacenso = ModuleMonitorCatalog::find('educacenso');
+        $this->assertNotNull($educacenso);
+        $this->assertStringContainsString('tab=work_done', ModuleMonitorCatalog::adminUrl($educacenso) ?? '');
     }
 }

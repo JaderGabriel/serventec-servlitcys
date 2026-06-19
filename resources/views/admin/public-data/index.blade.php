@@ -4,7 +4,7 @@
     <x-slot name="header">
         <div class="flex flex-col gap-1">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Importação de dados públicos') }}
+                {{ __('Dados públicos') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                 {{ __('Fontes oficiais (FNDE, INEP, MDS/Cecad, Tesouro) fora do i-Educar — alimentam consultoria e relatório PDF.') }}

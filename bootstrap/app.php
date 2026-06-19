@@ -212,5 +212,18 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->timezone($timezone)
                 ->runInBackground();
         }
+
+        if ((bool) config('public_data_availability.enabled', true)
+            && (bool) config('public_data_availability.schedule.enabled', true)) {
+            $timezone = (string) config('app.timezone', 'UTC');
+            $dailyTime = trim((string) config('public_data_availability.schedule.time', '07:00')) ?: '07:00';
+
+            $schedule->command('public-data:check-official')
+                ->dailyAt($dailyTime)
+                ->name('public-data-daily-check')
+                ->withoutOverlapping(120)
+                ->timezone($timezone)
+                ->runInBackground();
+        }
     })
     ->create();

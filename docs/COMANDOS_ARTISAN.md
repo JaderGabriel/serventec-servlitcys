@@ -116,6 +116,32 @@ Documentação: [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARG
 
 ---
 
+## 3.2 Verificação diária de fontes oficiais
+
+| Comando | Descrição |
+|---------|-----------|
+| `public-data:check-official` | Verifica **existência** de dados novos em fontes oficiais (FNDE, CadÚnico/Misocial, Censo INEP, repasses Tesouro, SAEB) e **notifica admins** com a rotina CLI/hub recomendada — **não importa** dados |
+
+**Agendamento:** diário (`PUBLIC_DATA_DAILY_CHECK_TIME`, default `07:00`) via `schedule:run` + cron.
+
+**Interface:** notificação no sino (`kind=public_data`) · hub [Dados públicos](/admin/dados-publicos) · [Monitor de módulos](/admin/monitor-modulos)
+
+```bash
+php artisan public-data:check-official
+```
+
+**Variáveis:** `PUBLIC_DATA_DAILY_CHECK_*` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11
+
+---
+
+## 3.3 Monitor de módulos
+
+**Rota:** `/admin/monitor-modulos` (`admin.module-monitor.index`) · menu **Operação**
+
+Painel read-only de saúde por módulo (consultoria, sincronizações, infra), cruzando fila admin, Pulse e incidentes. Períodos **24 h** / **7 dias**. Sem comando CLI dedicado — use Pulse e filas para detalhe técnico.
+
+---
+
 ## 4. FUNDEB / VAAF
 
 Referências gravadas em **`fundeb_municipio_references`** (`city_id`, `ibge_municipio`, `ano`, `vaaf`, `vaat`, `complementacao_vaar`). O painel Analytics usa o **ano do filtro**; se não existir linha, o ano mais recente; depois fallback global.
@@ -292,6 +318,9 @@ Sem `--password`, o comando pede a senha de forma oculta no terminal ou lê `CIT
 | FUNDEB (VAAF) | `fundeb:import-api` | ieducar-compatibility |
 | **Repasses / Tempo Real** | `funding:rebuild-finance-realtime` · fila `funding::import_transfers_city_year` | `/admin/dados-publicos` |
 | **Dados públicos (hub)** | vários (`fundeb`, `funding`, `cadastro`, `system`) | `/admin/dados-publicos` |
+| **Verificação diária** | `public-data:check-official` | notificação sino + hub |
+| **Educacenso 1ª etapa** | `censo:analyze-educacenso-file` | Analytics → Censo |
+| **Monitor de módulos** | — (UI) | `/admin/monitor-modulos` |
 | Schema | `ieducar:schema-probe` | ieducar-compatibility |
 | Frequência | `ieducar:probe-falta` | — (CLI; aba Analytics Frequência) |
 | **Massiva semanal** | `weekly-mass-sync:run` | sync-queue (retomar) |

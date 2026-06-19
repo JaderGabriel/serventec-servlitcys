@@ -18,6 +18,8 @@ final class ModuleMonitorCatalog
      *     accent: string,
      *     group: string,
      *     admin_route: ?string,
+     *     admin_route_query: ?array<string, scalar>,
+     *     admin_route_fragment: ?string,
      *     sync_queue_anchor: ?string,
      *     pulse_prefixes: list<string>,
      *     sync_domains: list<string>
@@ -34,6 +36,8 @@ final class ModuleMonitorCatalog
                 'accent' => 'teal',
                 'group' => 'consultoria',
                 'admin_route' => 'dashboard.analytics',
+                'admin_route_query' => null,
+                'admin_route_fragment' => null,
                 'sync_queue_anchor' => null,
                 'pulse_prefixes' => ['analytics:tab:', 'http:route:dashboard.analytics'],
                 'sync_domains' => [],
@@ -60,6 +64,20 @@ final class ModuleMonitorCatalog
                 'admin_route' => null,
                 'sync_queue_anchor' => 'fila-pdf',
                 'pulse_prefixes' => ['pdf:'],
+                'sync_domains' => [],
+            ],
+            [
+                'id' => 'educacenso',
+                'label' => __('Educacenso — 1ª etapa'),
+                'description' => __('Conferência CEN-01 × i-Educar na aba Censo (Trabalho realizado).'),
+                'icon' => 'clipboard-document-list',
+                'accent' => 'teal',
+                'group' => 'consultoria',
+                'admin_route' => 'dashboard.analytics',
+                'admin_route_query' => ['tab' => 'work_done'],
+                'admin_route_fragment' => 'panelWorkDone',
+                'sync_queue_anchor' => null,
+                'pulse_prefixes' => ['educacenso:', 'analytics:tab:work_done'],
                 'sync_domains' => [],
             ],
             [
@@ -238,5 +256,28 @@ final class ModuleMonitorCatalog
         }
 
         return null;
+    }
+
+    public static function adminUrl(array $module): ?string
+    {
+        $route = $module['admin_route'] ?? null;
+        if (! is_string($route) || $route === '') {
+            return null;
+        }
+
+        $url = route($route, is_array($module['admin_route_query'] ?? null) ? $module['admin_route_query'] : []);
+        $fragment = $module['admin_route_fragment'] ?? null;
+
+        return is_string($fragment) && $fragment !== '' ? $url.'#'.$fragment : $url;
+    }
+
+    public static function queueUrl(array $module): ?string
+    {
+        $anchor = $module['sync_queue_anchor'] ?? null;
+        if (! is_string($anchor) || $anchor === '') {
+            return null;
+        }
+
+        return route('admin.sync-queue.index').'#'.$anchor;
     }
 }

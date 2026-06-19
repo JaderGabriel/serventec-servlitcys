@@ -9,7 +9,7 @@ Painel operacional após login (utilizadores com `canViewAdminDashboard()`). Uti
 ## Ordem dos blocos (4.0)
 
 1. **Alertas** — falhas de sync em 24 h e itens em fila (sync/PDF).  
-2. **KPIs** — municípios prontos, cidades, usuários, filas.  
+2. **KPIs** — bases i-Educar prontas, RX/FUNDEB, consultoria (municípios activos), filas de processamento.  
 3. **Mapa de municípios** — pins com semáforo RX e ligação a Cidades.  
 4. **Acesso rápido** — atalhos curados (`HomeQuickActionsCatalog`).  
 5. **Fluxo de dados · Mapa Mental** — arquitectura de integrações (`AdminSystemFlowStatus`).
@@ -26,7 +26,9 @@ Três zonas (consultoria, dados, operação). Cada card aponta para uma tarefa c
 | FUNDEB | `dashboard.analytics?tab=fundeb` |
 | RX | `dashboard.rx` |
 | Dados públicos | `admin.public-data.index` |
-| Filas | `admin.sync-queue` ou `sync-queue` (conforme perfil) |
+| Filas de processamento | `admin.sync-queue` ou `sync-queue` (conforme perfil) |
+| Monitor de módulos | `admin.module-monitor.index` (perfil `canImportOrConfigure`) |
+| Monitorização (Pulse) | `pulse` (mesmo perfil) |
 
 Badges dinâmicos: contagem de fila, `prontos/activos` i-Educar, municípios activos.
 

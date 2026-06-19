@@ -14,6 +14,8 @@ final class NotificationKinds
 
     public const OPERATIONS = 'operations';
 
+    public const PUBLIC_DATA = 'public_data';
+
     public const CONNECTION = 'connection';
 
     public const SECURITY = 'security';
@@ -26,6 +28,7 @@ final class NotificationKinds
             self::ADMIN_SYNC => __('Sincronização'),
             self::ANALYTICS => __('Painel analítico'),
             self::OPERATIONS => __('Operações'),
+            self::PUBLIC_DATA => __('Dados públicos'),
             self::CONNECTION => __('Conexão i-Educar'),
             self::SECURITY => __('Segurança'),
             default => $kind !== null && $kind !== '' ? $kind : null,

@@ -92,12 +92,6 @@
                 </div>
             </div>
 
-            <div class="border-b border-gray-100 dark:border-gray-700 px-3 py-2">
-                <a href="{{ route('notifications.index') }}" class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
-                    {{ __('Ver todas as notificações') }}
-                </a>
-            </div>
-
             <div class="max-h-80 overflow-y-auto">
                 <template x-if="loading && items.length === 0">
                     <p class="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ __('Carregando…') }}</p>
@@ -167,6 +161,11 @@
                         </div>
                     </div>
                 </template>
+            </div>
+            <div class="border-t border-gray-200 dark:border-gray-700 px-3 py-2">
+                <a href="{{ route('notifications.index') }}" class="block text-center text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                    {{ __('Ver todas as notificações') }}
+                </a>
             </div>
         </div>
     </div>

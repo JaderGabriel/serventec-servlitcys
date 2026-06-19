@@ -20,7 +20,7 @@ final class AdminHomeMetrics
 
     /**
      * @return array{
-     *     stats: array{cities: int, cities_active: int, cities_ready: int, cities_this_month: int, users: int, users_active: int},
+     *     stats: array{cities: int, cities_active: int, cities_ready: int, cities_incomplete: int, cities_this_month: int, users: int, users_active: int},
      *     ops: array{sync_pending: int, sync_failed_24h: int, pdf_pending: int, pgsql: int, mysql: int},
      *     map_markers: list<array<string, mixed>>,
      *     map_summary: array<string, mixed>,
@@ -34,7 +34,7 @@ final class AdminHomeMetrics
 
     /**
      * @return array{
-     *     stats: array{cities: int, cities_active: int, cities_ready: int, cities_this_month: int, users: int, users_active: int},
+     *     stats: array{cities: int, cities_active: int, cities_ready: int, cities_incomplete: int, cities_this_month: int, users: int, users_active: int},
      *     ops: array{sync_pending: int, sync_failed_24h: int, pdf_pending: int, pgsql: int, mysql: int},
      *     map_markers: list<array<string, mixed>>,
      *     map_summary: array<string, mixed>,
@@ -52,6 +52,7 @@ final class AdminHomeMetrics
             'cities' => City::count(),
             'cities_active' => $activeCities->count(),
             'cities_ready' => $ready,
+            'cities_incomplete' => max(0, $activeCities->count() - $ready),
             'cities_this_month' => City::query()
                 ->whereMonth('created_at', $now->month)
                 ->whereYear('created_at', $now->year)

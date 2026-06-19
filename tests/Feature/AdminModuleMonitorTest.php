@@ -18,7 +18,8 @@ class AdminModuleMonitorTest extends TestCase
             ->get(route('admin.module-monitor.index'))
             ->assertOk()
             ->assertSee(__('Monitor de módulos'), false)
-            ->assertSee(__('Saúde global'), false);
+            ->assertSee(__('Saúde global do sistema'), false)
+            ->assertSee(__('Abrir módulo'), false);
     }
 
     public function test_utilizador_cannot_open_module_monitor(): void

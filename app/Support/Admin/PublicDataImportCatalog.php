@@ -77,6 +77,37 @@ final class PublicDataImportCatalog
         return $rows;
     }
 
+    /**
+     * Atalho para rotina de importação (hub + CLI) usado em alertas automáticos.
+     *
+     * @return array{hub_url: string, cli: ?string, label: ?string}
+     */
+    public static function routineHint(string $sourceId): array
+    {
+        $source = self::findSource($sourceId);
+        if ($source === null) {
+            return [
+                'hub_url' => route('admin.public-data.index'),
+                'cli' => null,
+                'label' => null,
+            ];
+        }
+
+        $adminRoute = $source['admin_route'] ?? null;
+        $hubUrl = is_string($adminRoute) && $adminRoute !== ''
+            ? route($adminRoute)
+            : route('admin.public-data.index').'#source-'.$sourceId;
+
+        $cli = $source['cli'][0] ?? null;
+        $action = $source['actions'][0] ?? null;
+
+        return [
+            'hub_url' => $hubUrl,
+            'cli' => is_string($cli) ? $cli : null,
+            'label' => is_array($action) ? ($action['label'] ?? null) : null,
+        ];
+    }
+
     private static function gapSection(string $gapCode): string
     {
         return match ($gapCode) {

@@ -118,7 +118,7 @@ Duas famílias de layout partilham gradiente, tabs com ícone e corpo `rounded-2
 
 **Acções no hub:** `action-card` com variantes `primary` (importar), `warning` (rebuild), botão submit na cor do domínio; `link-chip` com prop `tone`.
 
-**Menu utilizador (admin):** grupo «Dados públicos» (Hub → Repasses → Geo → SAEB → CadÚnico → Fila); «Operação» (Monitor, Pulse); VAAF em «Municípios».
+**Menu utilizador (admin):** grupo «Dados públicos» (Visão geral → Repasses → Geo → SAEB → CadÚnico → Filas); «Operação» (Monitor de módulos, Monitorização Pulse); «Utilizadores»; VAAF em «Municípios».
 
 Ver [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §8 e [RELEASE_20260606_ALETHEIA.md](RELEASE_20260606_ALETHEIA.md).
 

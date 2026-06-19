@@ -6,6 +6,7 @@ use App\Enums\AdminSyncTaskStatus;
 use App\Enums\AnalyticsReportExportStatus;
 use App\Models\AdminSyncTask;
 use App\Models\AnalyticsReportExport;
+use App\Models\City;
 use App\Support\Admin\ModuleMonitorCatalog;
 use App\Support\Pulse\PulseAggregateBridge;
 use App\Support\Pulse\PulseOperationMetricsAggregator;
@@ -24,6 +25,8 @@ final class ModuleMonitorService
      *     generated_at: string,
      *     pulse_available: bool,
      *     system: array<string, mixed>,
+     *     module_summary: array<string, int>,
+     *     kpis: list<array<string, mixed>>,
      *     modules: list<array<string, mixed>>,
      *     incidents: list<array<string, mixed>>
      * }
@@ -60,12 +63,16 @@ final class ModuleMonitorService
             return ($order[$a['status']] ?? 9) <=> ($order[$b['status']] ?? 9);
         });
 
+        $moduleSummary = $this->buildModuleSummary($modules);
+
         return [
             'period' => $period,
             'period_label' => PulseAggregateBridge::periodLabel($period),
             'generated_at' => now()->toIso8601String(),
             'pulse_available' => $pulseAvailable,
             'system' => $system,
+            'module_summary' => $moduleSummary,
+            'kpis' => $this->buildSystemKpis($system, $pulseAvailable, $moduleSummary),
             'modules' => $modules,
             'incidents' => array_slice($incidents, 0, (int) config('module_monitor.incidents_limit', 50)),
         ];
@@ -106,21 +113,49 @@ final class ModuleMonitorService
             ->where('created_at', '>=', $since)
             ->count();
 
+        $syncPending = (int) AdminSyncTask::query()
+            ->whereIn('status', [AdminSyncTaskStatus::Pending->value, AdminSyncTaskStatus::Processing->value])
+            ->count();
+
+        $pdfPending = (int) AnalyticsReportExport::query()
+            ->whereIn('status', [
+                AnalyticsReportExportStatus::Pending->value,
+                AnalyticsReportExportStatus::Processing->value,
+            ])
+            ->count();
+
+        $activeCities = City::query()->active()->get();
+        $citiesReady = $activeCities->filter(fn (City $city): bool => $city->hasDataSetup())->count();
+
         $status = 'healthy';
         if ($syncFailed > 0 || ($failedJobs ?? 0) > 0 || $pdfFailed > 0) {
             $status = 'critical';
-        } elseif (($pendingJobs ?? 0) >= max(10, (int) config('notifications.operational_alerts.queue_pending_threshold', 25))) {
+        } elseif (($pendingJobs ?? 0) >= max(10, (int) config('notifications.operational_alerts.queue_pending_threshold', 25))
+            || $syncPending >= 10) {
             $status = 'warning';
         }
 
         return [
             'status' => $status,
+            'status_hint' => $this->systemStatusHint(
+                $status,
+                $syncFailed,
+                $failedJobs ?? 0,
+                $pdfFailed,
+                $pendingJobs,
+                $syncPending,
+                $queueConnection,
+            ),
             'queue_connection' => $queueConnection,
             'queue_is_sync' => $queueConnection === 'sync',
             'pending_jobs' => $pendingJobs,
             'failed_jobs_period' => $failedJobs,
             'sync_failures' => $syncFailed,
+            'sync_pending' => $syncPending,
             'pdf_failures' => $pdfFailed,
+            'pdf_pending' => $pdfPending,
+            'cities_active' => $activeCities->count(),
+            'cities_ready' => $citiesReady,
             'pulse_enabled' => (bool) config('pulse.enabled', true),
         ];
     }
@@ -239,11 +274,12 @@ final class ModuleMonitorService
             static fn (array $i): bool => ($i['module_id'] ?? '') === $def['id'],
         ));
 
-        $failureCount = $syncFailed + $pulse['error_count']
-            + count(array_filter($moduleIncidents, static fn (array $i): bool => $i['type'] === 'failure'));
+        $failureCount = $syncFailed + $pulse['error_count'];
+        if ($def['id'] === 'pdf') {
+            $failureCount += (int) ($system['pdf_failures'] ?? 0);
+        }
 
-        $slowCount = $pulse['slow_count']
-            + count(array_filter($moduleIncidents, static fn (array $i): bool => $i['type'] === 'slowness'));
+        $slowCount = $pulse['slow_count'];
 
         $hasActivity = $syncFailed + $syncActive + $syncCompleted + $pulse['op_count'] > 0;
 
@@ -295,6 +331,8 @@ final class ModuleMonitorService
             'pulse_max_ms' => $pulse['max_ms'],
             'pulse_ops' => $pulse['op_count'],
             'incident_count' => count($moduleIncidents),
+            'admin_url' => ModuleMonitorCatalog::adminUrl($def),
+            'queue_url' => ModuleMonitorCatalog::queueUrl($def),
         ];
     }
 
@@ -500,6 +538,131 @@ final class ModuleMonitorService
         });
 
         return $incidents;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $modules
+     * @return array{total: int, healthy: int, warning: int, critical: int, unknown: int}
+     */
+    private function buildModuleSummary(array $modules): array
+    {
+        $summary = [
+            'total' => count($modules),
+            'healthy' => 0,
+            'warning' => 0,
+            'critical' => 0,
+            'unknown' => 0,
+        ];
+
+        foreach ($modules as $module) {
+            $status = (string) ($module['status'] ?? 'unknown');
+            if (isset($summary[$status])) {
+                $summary[$status]++;
+            }
+        }
+
+        return $summary;
+    }
+
+    /**
+     * @param  array<string, mixed>  $system
+     * @param  array{total: int, healthy: int, warning: int, critical: int, unknown: int}  $moduleSummary
+     * @return list<array<string, mixed>>
+     */
+    private function buildSystemKpis(array $system, bool $pulseAvailable, array $moduleSummary): array
+    {
+        $kpis = [
+            [
+                'label' => __('Módulos saudáveis'),
+                'value' => (string) $moduleSummary['healthy'].' / '.$moduleSummary['total'],
+                'tone' => $moduleSummary['critical'] > 0 ? 'rose' : ($moduleSummary['warning'] > 0 ? 'amber' : 'emerald'),
+                'explicacao_resumo' => __(':crit crítico(s) · :warn atenção · :unk sem telemetria', [
+                    'crit' => $moduleSummary['critical'],
+                    'warn' => $moduleSummary['warning'],
+                    'unk' => $moduleSummary['unknown'],
+                ]),
+            ],
+            [
+                'label' => __('Municípios prontos'),
+                'value' => (string) ($system['cities_ready'] ?? 0).' / '.(string) ($system['cities_active'] ?? 0),
+                'tone' => ($system['cities_ready'] ?? 0) >= max(1, (int) ($system['cities_active'] ?? 0)) ? 'emerald' : 'amber',
+                'explicacao_resumo' => __('Com base i-Educar configurada'),
+            ],
+            [
+                'label' => __('Sync / PDF em fila'),
+                'value' => (string) ((int) ($system['sync_pending'] ?? 0) + (int) ($system['pdf_pending'] ?? 0)),
+                'tone' => ((int) ($system['sync_pending'] ?? 0) + (int) ($system['pdf_pending'] ?? 0)) > 0 ? 'violet' : 'slate',
+                'explicacao_resumo' => __(':sync sync · :pdf PDF', [
+                    'sync' => (string) ($system['sync_pending'] ?? 0),
+                    'pdf' => (string) ($system['pdf_pending'] ?? 0),
+                ]),
+            ],
+            [
+                'label' => __('Falhas no período'),
+                'value' => (string) ((int) ($system['sync_failures'] ?? 0) + (int) ($system['pdf_failures'] ?? 0) + (int) ($system['failed_jobs_period'] ?? 0)),
+                'tone' => ((int) ($system['sync_failures'] ?? 0) + (int) ($system['pdf_failures'] ?? 0) + (int) ($system['failed_jobs_period'] ?? 0)) > 0 ? 'rose' : 'emerald',
+                'explicacao_resumo' => __('Sync admin, PDF e failed_jobs'),
+            ],
+            [
+                'label' => __('Jobs pendentes'),
+                'value' => $system['pending_jobs'] !== null ? (string) $system['pending_jobs'] : '—',
+                'tone' => ($system['pending_jobs'] ?? 0) >= 10 ? 'amber' : 'slate',
+                'explicacao_resumo' => (string) ($system['queue_connection'] ?? '—'),
+            ],
+        ];
+
+        if (! $pulseAvailable) {
+            $kpis[] = [
+                'label' => __('Pulse'),
+                'value' => __('Off'),
+                'tone' => 'amber',
+                'explicacao_resumo' => __('Métricas de lentidão indisponíveis'),
+            ];
+        }
+
+        return $kpis;
+    }
+
+    private function systemStatusHint(
+        string $status,
+        int $syncFailed,
+        int $failedJobs,
+        int $pdfFailed,
+        ?int $pendingJobs,
+        int $syncPending,
+        string $queueConnection,
+    ): string {
+        if ($status === 'critical') {
+            $parts = [];
+            if ($syncFailed > 0) {
+                $parts[] = __(':n sync', ['n' => $syncFailed]);
+            }
+            if ($pdfFailed > 0) {
+                $parts[] = __(':n PDF', ['n' => $pdfFailed]);
+            }
+            if ($failedJobs > 0) {
+                $parts[] = __(':n jobs', ['n' => $failedJobs]);
+            }
+
+            return __('Falhas detectadas no período (:parts).', ['parts' => implode(' · ', $parts)]);
+        }
+
+        if ($status === 'warning') {
+            if (($pendingJobs ?? 0) >= 10) {
+                return __('Fila :conn com :n job(s) pendente(s).', [
+                    'conn' => $queueConnection,
+                    'n' => $pendingJobs,
+                ]);
+            }
+
+            return __(':n tarefa(s) de sincronização ainda em processamento.', ['n' => $syncPending]);
+        }
+
+        if ($queueConnection === 'sync') {
+            return __('Sem falhas no período. Atenção: fila em modo sync (jobs na requisição HTTP).');
+        }
+
+        return __('Operação estável no período seleccionado.');
     }
 
  

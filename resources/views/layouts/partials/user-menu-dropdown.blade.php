@@ -2,10 +2,6 @@
     {{ __('Perfil') }}
 </x-dropdown-link>
 
-<x-dropdown-link :href="route('notifications.index')" icon="bell" :title="__('Centro de notificações.')">
-    {{ __('Notificações') }}
-</x-dropdown-link>
-
 @include('layouts.partials.user-nav-groups', ['variant' => 'dropdown'])
 
 <div class="my-1 border-t border-slate-200/90 dark:border-gray-600/90" role="separator"></div>

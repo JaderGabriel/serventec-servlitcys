@@ -128,10 +128,10 @@
                 [
                     'show' => true,
                     'href' => route('pulse'),
-                    'label' => __('Pulse'),
+                    'label' => __('Monitorização (Pulse)'),
                     'icon' => 'signal',
                     'active' => $req->routeIs('pulse'),
-                    'title' => __('Monitorização em tempo real (Pulse).'),
+                    'title' => __('Monitorização em tempo real — pedidos, SQL e infraestrutura (Laravel Pulse).'),
                 ],
             ],
         ],
@@ -145,7 +145,7 @@
                 [
                     'show' => true,
                     'href' => route('admin.public-data.index'),
-                    'label' => __('Hub de importação'),
+                    'label' => __('Dados públicos'),
                     'icon' => 'squares-2x2',
                     'active' => $req->routeIs('admin.public-data.*') && $req->query('hub', 'hub') === 'hub',
                     'title' => __('Visão geral, lacunas PDF e fontes por área.'),
@@ -185,7 +185,7 @@
                 [
                     'show' => true,
                     'href' => route($syncQueueRoutePrefix.'.index'),
-                    'label' => __('Fila de processamento'),
+                    'label' => __('Filas de processamento'),
                     'icon' => 'queue-list',
                     'active' => $req->routeIs(['admin.sync-queue.*', 'sync-queue.*']),
                     'title' => __('Sincronização admin e exportação PDF em fila.'),
@@ -243,7 +243,7 @@
         ],
         [
             'show' => $user->canManageUsers(),
-            'title' => __('Usuários'),
+            'title' => __('Utilizadores'),
             'icon' => 'users',
             'tone' => 'slate',
             'routes' => ['users.*'],
@@ -251,7 +251,7 @@
                 [
                     'show' => true,
                     'href' => route('users.index'),
-                    'label' => __('Usuários'),
+                    'label' => __('Utilizadores'),
                     'icon' => 'users',
                     'active' => $req->routeIs('users.index') || $req->routeIs('users.edit'),
                     'title' => __('Lista e gestão de contas.'),
@@ -259,10 +259,10 @@
                 [
                     'show' => true,
                     'href' => route('users.create'),
-                    'label' => __('Novo usuário'),
+                    'label' => __('Novo utilizador'),
                     'icon' => 'user-plus',
                     'active' => $req->routeIs('users.create'),
-                    'title' => __('Criar novo usuário.'),
+                    'title' => __('Criar novo utilizador.'),
                 ],
                 [
                     'show' => $user->isAdmin(),

@@ -42,7 +42,7 @@ final class AdminScreenCatalog
                     'route' => 'admin.connections.index',
                     'query' => null,
                     'fragment' => null,
-                    'label' => __('Conexões'),
+                    'label' => __('Conexões i-Educar'),
                     'hint' => __('Testar banco i-Educar'),
                     'accent' => 'indigo',
                     'icon' => 'circle-stack',

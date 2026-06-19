@@ -218,15 +218,44 @@ Tarefas geo com vários municípios guardam **checkpoint** por cidade; na fila, 
 
 ## 10. Notificações (sino)
 
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `APP_NOTIFICATIONS_ENABLED` | `true` | Centro de notificações |
+| `APP_NOTIFICATIONS_POLL_SECONDS` | `30` | Intervalo de polling do sino (segundos) |
+| `APP_NOTIFICATIONS_INDEX_LIMIT` | `40` | Máximo de itens no dropdown |
+| `APP_NOTIFICATIONS_QUEUE` | `default` | Fila dos jobs de notificação |
+| `APP_NOTIFICATIONS_DEDUPE_MINUTES` | `360` | Minutos sem repetir a mesma `dedupe_key` |
+| `APP_NOTIFICATIONS_ANALYTICS_ERRORS` | `true` | Aviso ao abrir Analytics com erros parciais |
+
+### Alertas operacionais (`notifications:operational-alerts`)
+
 | Variável | Default |
 |----------|---------|
-| `APP_NOTIFICATIONS_ENABLED` | `true` |
-| `APP_NOTIFICATIONS_POLL_SECONDS` | `45` |
-| `APP_NOTIFICATIONS_QUEUE` | `default` |
+| `APP_NOTIFICATIONS_OPERATIONAL` | `true` |
+| `APP_NOTIFICATIONS_OPERATIONAL_SCHEDULE` | `true` |
+| `APP_NOTIFICATIONS_OPERATIONAL_INTERVAL_MINUTES` | `15` |
+| `APP_NOTIFICATIONS_SYNC_FAIL_THRESHOLD` | `1` |
+| `APP_NOTIFICATIONS_PDF_STALE_HOURS` | `2` |
+| `APP_NOTIFICATIONS_QUEUE_PENDING_THRESHOLD` | `25` |
 
 ---
 
-## 11. FUNDEB, discrepâncias e financiamentos
+## 11. Verificação diária de dados públicos
+
+Comando: `php artisan public-data:check-official` (agendado por defeito às **07:00**, timezone da app).
+
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `PUBLIC_DATA_DAILY_CHECK_ENABLED` | `true` | Liga comando e notificação |
+| `PUBLIC_DATA_DAILY_CHECK_SCHEDULE` | `true` | Agenda via `schedule:run` |
+| `PUBLIC_DATA_DAILY_CHECK_TIME` | `07:00` | Hora diária |
+| `PUBLIC_DATA_DAILY_CHECK_HTTP_TIMEOUT` | `12` | Timeout HTTP por fonte (segundos) |
+
+Notifica administradores (`kind=public_data`) com resumo das fontes FNDE, CadÚnico, Censo INEP, repasses e SAEB — **sem importar** dados. Ver [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §8.
+
+---
+
+## 12. FUNDEB, discrepâncias e financiamentos
 
 | Variável | Descrição |
 |----------|-----------|
