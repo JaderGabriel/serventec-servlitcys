@@ -26,8 +26,10 @@ class HorizonteController extends Controller
             'refYear' => (int) config('horizonte.reference_year', (int) date('Y') - 1),
             'legend' => HorizonteMapPresenter::legendItems(),
             'colors' => HorizonteMapPresenter::tierColors(),
+            'methodology' => HorizonteMapPresenter::methodologyUi(),
             'canRefreshData' => $user->canImportOrConfigure(),
             'canManageSge' => $user->canImportOrConfigure() && filter_var(config('horizonte.sge.enabled', true), FILTER_VALIDATE_BOOLEAN),
+            'sgeShowUrl' => route('admin.horizonte.sge.show', ['ibge' => '__IBGE__']),
             'sgeRegistryUrl' => route('admin.horizonte.sge.upsert', ['ibge' => '__IBGE__']),
             'initialUf' => HorizonteUfScope::normalize($request->query('uf')) ?? '',
         ]);

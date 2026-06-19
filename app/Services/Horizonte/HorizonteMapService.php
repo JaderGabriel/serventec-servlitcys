@@ -278,7 +278,8 @@ final class HorizonteMapService
             if ($ufs === []) {
                 $ufs = IbgeMunicipalityCatalog::brazilianUfs();
             }
-            $ibgeMetaIndex = $this->ibgeCatalog->metaIndexForUfs($ufs, fetchRemoteCentroids: false);
+            $fetchRemoteCentroids = $scopedUf !== null;
+            $ibgeMetaIndex = $this->ibgeCatalog->metaIndexForUfs($ufs, $fetchRemoteCentroids);
         }
 
         $saebForBench = [];
@@ -335,6 +336,7 @@ final class HorizonteMapService
                         'uf' => strtoupper((string) $city['uf']),
                         'lat' => (float) ($city['lat'] ?? 0),
                         'lng' => (float) ($city['lng'] ?? 0),
+                        'coord_source' => (string) ($city['coord_source'] ?? 'catalog'),
                     ];
                 }
                 if ($meta === null && $fromIbge !== null) {
@@ -439,6 +441,7 @@ final class HorizonteMapService
                 'sge_system' => $sge['system'] ?? null,
                 'sge_status' => $sge['status'] ?? 'not_found',
                 'coord_source' => $meta['coord_source'] ?? null,
+                'coord_approximate' => in_array((string) ($meta['coord_source'] ?? ''), ['uf_spread', 'overview'], true),
             ];
         }
 
@@ -492,7 +495,7 @@ final class HorizonteMapService
             $inUf = $byUf->get($uf, collect());
             $index = $inUf->search(fn (City $c): bool => (int) $c->id === (int) $city->id);
             $index = $index === false ? 0 : (int) $index;
-            [$lat, $lng] = array_slice($coords->forCity($city, $index, max(1, $inUf->count())), 0, 2);
+            [$lat, $lng, $source] = array_pad($coords->forCity($city, $index, max(1, $inUf->count())), 3, 'uf_spread');
 
             $out[$ibge] = [
                 'id' => (int) $city->id,
@@ -505,6 +508,7 @@ final class HorizonteMapService
                 'db_driver' => $city->effectiveIeducarDriver(),
                 'lat' => $lat,
                 'lng' => $lng,
+                'coord_source' => (string) $source,
             ];
         }
 

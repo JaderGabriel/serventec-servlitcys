@@ -51,28 +51,28 @@
         @apply font-medium text-teal-700 hover:text-teal-900 hover:underline dark:text-teal-400 dark:hover:text-teal-300;
     }
 
-    /* Autenticação (login) — contraste reforçado no modo claro */
+    /* Autenticação (login) — alinhado à landing (welcome) */
     .serv-auth-bg {
-        @apply bg-slate-100 dark:bg-slate-950;
+        @apply bg-slate-50 dark:bg-slate-950;
     }
 
     .serv-auth-bg__gradient {
-        @apply absolute inset-0 bg-gradient-to-br from-teal-100/80 via-white to-indigo-100/70
-            dark:from-indigo-950 dark:via-slate-950 dark:to-cyan-950;
+        @apply absolute inset-0 bg-gradient-to-br from-slate-100 via-white to-teal-50/50
+            dark:from-slate-950 dark:via-slate-950 dark:to-teal-950/40;
     }
 
     .serv-auth-bg__grid {
-        @apply absolute inset-0 bg-grid-edu opacity-25 dark:opacity-60;
+        @apply absolute inset-0 bg-grid-edu opacity-40 dark:opacity-50;
     }
 
-    .serv-auth-header {
-        @apply border-b border-slate-300/90 bg-white/95 shadow-sm backdrop-blur-xl
-            dark:border-white/10 dark:bg-slate-950/50;
+    .serv-auth-bg__fade {
+        @apply absolute inset-0 bg-gradient-to-t from-slate-50 via-transparent to-transparent
+            dark:from-slate-950;
     }
 
     .serv-auth-card {
-        @apply rounded-2xl border-2 border-slate-300/90 bg-white p-8 shadow-2xl shadow-slate-400/15 ring-1 ring-teal-600/10
-            dark:border-white/10 dark:bg-slate-900/80 dark:shadow-2xl dark:ring-teal-500/10;
+        @apply rounded-2xl border border-slate-200/90 bg-white/95 p-7 shadow-lg ring-1 ring-slate-900/5 backdrop-blur-md
+            sm:p-8 dark:border-slate-700/80 dark:bg-slate-900/70 dark:ring-teal-500/10;
     }
 
     .serv-auth-card--wide {
@@ -80,30 +80,38 @@
     }
 
     .serv-auth-brand-mark {
-        @apply flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-600 to-indigo-700
-            shadow-xl shadow-teal-900/25 ring-2 ring-white ring-offset-2 ring-offset-slate-100
-            dark:from-cyan-500 dark:to-indigo-600 dark:shadow-indigo-900/40 dark:ring-offset-slate-950;
+        @apply flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl bg-gradient-to-br from-teal-600 to-indigo-700
+            shadow-lg shadow-teal-900/20 ring-1 ring-slate-900/10
+            dark:from-teal-500 dark:to-indigo-600 dark:shadow-indigo-900/30 dark:ring-white/15;
+    }
+
+    .serv-auth-hero-name {
+        @apply mt-4 font-display text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white;
+    }
+
+    .serv-auth-hero-tagline {
+        @apply mt-2 max-w-xs text-sm leading-relaxed text-slate-600 dark:text-slate-400;
     }
 
     .serv-auth-title {
-        @apply font-display text-2xl font-bold text-slate-900 dark:text-white;
+        @apply font-display text-2xl font-bold tracking-tight text-slate-900 sm:text-[1.65rem] dark:text-white;
     }
 
     .serv-auth-subtitle {
-        @apply mt-2 text-sm font-medium text-slate-600 dark:text-slate-400;
+        @apply mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400;
     }
 
     .serv-auth-label {
-        @apply text-sm font-semibold text-slate-800 dark:text-slate-200;
+        @apply text-sm font-semibold tracking-tight text-slate-800 dark:text-slate-200;
     }
 
     .serv-auth-muted {
-        @apply text-sm text-slate-600 dark:text-slate-400;
+        @apply text-sm leading-relaxed text-slate-600 dark:text-slate-400;
     }
 
     .serv-auth-link {
-        @apply text-sm font-semibold text-teal-800 underline decoration-teal-600/50 underline-offset-2
-            hover:text-teal-950 dark:text-cyan-300 dark:hover:text-cyan-200;
+        @apply text-sm font-medium text-teal-800 underline decoration-teal-600/40 underline-offset-2
+            hover:text-teal-950 dark:text-teal-300 dark:hover:text-teal-200;
     }
 
     .serv-inline-tab-link {
@@ -4391,6 +4399,90 @@
 
     .serv-horizonte-gis__map {
         @apply rounded-lg ring-1 ring-slate-200/80 dark:ring-slate-700/80 overflow-hidden;
+    }
+
+    .serv-horizonte-gis__map--tall {
+        height: min(72vh, 560px);
+    }
+
+    @screen lg {
+        .serv-horizonte-gis__map--tall {
+            height: min(78vh, 680px);
+        }
+    }
+
+    @screen 2xl {
+        .serv-horizonte-gis__map--tall {
+            height: min(82vh, 720px);
+        }
+    }
+
+    .serv-horizonte-kpi {
+        @apply relative rounded-xl border border-slate-200/90 bg-white/90 px-4 py-3
+            dark:border-slate-700/90 dark:bg-slate-900/60;
+    }
+
+    .serv-horizonte-kpi__info {
+        @apply absolute top-2.5 end-2.5 text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 cursor-help;
+    }
+
+    .serv-horizonte-filters {
+        @apply rounded-xl border border-slate-200/90 bg-slate-50/60 dark:border-slate-700/90 dark:bg-slate-900/40;
+    }
+
+    .serv-horizonte-filters__toggle {
+        @apply flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold
+            text-serv-navy dark:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-800/50 rounded-xl transition;
+    }
+
+    .serv-horizonte-filters__body {
+        @apply px-4 pb-4 pt-1 space-y-4 border-t border-slate-200/80 dark:border-slate-700/80;
+    }
+
+    .serv-horizonte-filter-chip {
+        @apply inline-flex items-center gap-1 rounded-full bg-teal-100 px-2 py-0.5 text-[11px] font-medium
+            text-teal-900 ring-1 ring-teal-200/80 dark:bg-teal-950/50 dark:text-teal-100 dark:ring-teal-800/60;
+    }
+
+    .serv-horizonte-filter-chip--count {
+        @apply bg-indigo-100 text-indigo-900 ring-indigo-200/80 dark:bg-indigo-950/50 dark:text-indigo-100 dark:ring-indigo-800/60;
+    }
+
+    .serv-horizonte-tier-pill {
+        @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium ring-1 transition disabled:opacity-60;
+    }
+
+    .serv-horizonte-tier-pill.is-active {
+        @apply ring-2 ring-offset-1 ring-teal-500/60 dark:ring-offset-slate-900;
+    }
+
+    .serv-horizonte-methodology {
+        @apply text-xs text-slate-600 dark:text-slate-400 leading-relaxed space-y-3;
+    }
+
+    .serv-horizonte-methodology__dim {
+        @apply rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-900/50 px-3 py-2;
+    }
+
+    .serv-horizonte-score-hint {
+        @apply text-[10px] text-slate-400 dark:text-slate-500 tabular-nums;
+    }
+
+    .serv-horizonte-guide__step {
+        @apply shadow-sm;
+    }
+
+    .serv-horizonte-legend-approx {
+        @apply bg-transparent ring-2 ring-amber-500 ring-offset-1;
+        border: 2px dashed #d97706;
+    }
+
+    .serv-horizonte-gis__map .leaflet-interactive {
+        cursor: pointer;
+    }
+
+    .serv-horizonte-gis__map .serv-horizonte-marker--approx {
+        cursor: help;
     }
 
     .serv-horizonte-gis__map .leaflet-container {

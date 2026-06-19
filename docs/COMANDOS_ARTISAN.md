@@ -166,7 +166,7 @@ Painel de saúde por módulo (consultoria, sincronizações, infra). Combina **i
 |---------|-----------|
 | `module-monitor:collect` | Recolhe sinais de saúde por módulo e grava cache usado na UI |
 
-**Agendamento:** diário (`MODULE_MONITOR_COLLECT_TIME`, default `07:30`) — após `public-data:check-official`.
+**Agendamento:** a cada `MODULE_MONITOR_COLLECT_INTERVAL_MINUTES` (default **10 min**) via `schedule:run` + cron.
 
 **Estados na UI:** módulos **em repouso** (sem uso Pulse/sync no período) permanecem **saudáveis** quando a sonda diária está actualizada; **Por avaliar** só quando a recolha está pendente ou desactualizada.
 

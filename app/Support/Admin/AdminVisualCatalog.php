@@ -30,6 +30,8 @@ final class AdminVisualCatalog
             'hub' => 'emerald',
             'repasses' => 'emerald',
             'horizonte' => 'indigo',
+            'monitor' => 'sky',
+            'educacenso' => 'violet',
             'fundeb' => 'amber',
             'cadastro' => 'fuchsia',
             'geo' => 'sky',
@@ -161,7 +163,9 @@ final class AdminVisualCatalog
             'fundeb' => 'amber',
             'funding_repasses' => 'emerald',
             'cadunico' => 'fuchsia',
-            'pedagogical', 'saeb' => 'violet',
+            'pedagogical', 'saeb', 'educacenso' => 'violet',
+            'horizonte' => 'indigo',
+            'monitor' => 'sky',
             default => 'indigo',
         };
     }

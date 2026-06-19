@@ -18,7 +18,7 @@ return [
 
   /*
   |--------------------------------------------------------------------------
-  | Recolha diária (module-monitor:collect)
+  | Recolha periódica (module-monitor:collect)
   |--------------------------------------------------------------------------
   |
   | Sondas estruturais por módulo — último sync, conexões, PDF, fontes públicas.
@@ -33,8 +33,8 @@ return [
 
   'schedule' => [
       'enabled' => filter_var(env('MODULE_MONITOR_COLLECT_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
-      'time' => env('MODULE_MONITOR_COLLECT_TIME', '07:30'),
-      'overlap_minutes' => max(30, (int) env('MODULE_MONITOR_COLLECT_OVERLAP_MINUTES', 90)),
+      'interval_minutes' => max(1, min(59, (int) env('MODULE_MONITOR_COLLECT_INTERVAL_MINUTES', 10))),
+      'overlap_minutes' => max(1, (int) env('MODULE_MONITOR_COLLECT_OVERLAP_MINUTES', 8)),
   ],
 
   'probe' => [

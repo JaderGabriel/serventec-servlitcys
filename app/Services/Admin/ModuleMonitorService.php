@@ -463,7 +463,7 @@ final class ModuleMonitorService
 
         if ($status === 'unknown') {
             if (! $snapshotFresh) {
-                return __('Recolha diária pendente — execute module-monitor:collect ou aguarde o agendamento.');
+                return __('Recolha agendada pendente — execute module-monitor:collect ou aguarde o agendamento.');
             }
 
             return __('Sem telemetria Pulse/sync no período seleccionado.');

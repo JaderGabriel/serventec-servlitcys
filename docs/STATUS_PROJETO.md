@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **5.2.0** · release `20260603c-Argus` · **Ramo:** `main` · **Última revisão:** 03/06/2026
+**Versão em produção:** **5.5.0** · release `20260603f-Helios` · **Ramo:** `main` · **Última revisão:** 03/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -120,7 +120,10 @@ flowchart TB
 | Horizonte — mapa oportunidade municipal (Consultoria vs prospectos, scores FUNDEB/SAEB/Censo, busca IBGE) | Implementado (5.0.0) — [HORIZONTE.md](HORIZONTE.md) |
 | Horizonte — mapa calor, filtros gestores, prospecção comercial, IBGE nacional | Implementado (5.1.0) |
 | Horizonte — abastecimento quinzenal (`horizonte:fortnightly-feed`, dias 1 e 15) | Implementado (5.1.0) |
-| Monitor de módulos — recolha diária (`module-monitor:collect`) + sondas estruturais | Implementado (5.2.0) |
+| Monitor de módulos — recolha periódica (`module-monitor:collect` a cada 10 min) + sondas estruturais | Implementado (5.5.0) |
+| Comandos Artisan admin — catálogo expandido, slugs production, agendamentos | Implementado (5.5.0) |
+| Horizonte — UI GIS gerencial (filtros, metodologia, tooltip dimensões, layout ampliado) | Implementado (5.5.0) — [HORIZONTE.md](HORIZONTE.md) |
+| Monitor de módulos — recolha diária (`module-monitor:collect`) + sondas estruturais | Implementado (5.2.0) — substituído por intervalo 10 min (5.5.0) |
 | Horizonte — hub abastecimento em Dados públicos (`#horizonte-hub`) | Implementado (5.2.0) — [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11 |
 | Horizonte — acesso admin e utilizador (`canViewHorizonte`; municipal 403) | Implementado (5.2.0) |
 | Horizonte — scoring v2 (demanda social CadÚnico, SIDRA 4–17, repasses Tesouro) | Implementado (5.4.0) — [HORIZONTE.md](HORIZONTE.md) §5 |

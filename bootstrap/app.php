@@ -229,15 +229,16 @@ return Application::configure(basePath: dirname(__DIR__))
         if (filter_var(config('module_monitor.enabled', true), FILTER_VALIDATE_BOOLEAN)
             && filter_var(config('module_monitor.schedule.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             $timezone = (string) config('app.timezone', 'UTC');
-            $collectTime = trim((string) config('module_monitor.schedule.time', '07:30')) ?: '07:30';
-            $overlap = max(30, (int) config('module_monitor.schedule.overlap_minutes', 90));
+            $collectMinutes = max(1, min(59, (int) config('module_monitor.schedule.interval_minutes', 10)));
+            $overlap = max(1, (int) config('module_monitor.schedule.overlap_minutes', 8));
 
-            $schedule->command('module-monitor:collect')
-                ->dailyAt($collectTime)
-                ->name('module-monitor-daily-collect')
+            $moduleMonitorCollect = $schedule->command('module-monitor:collect')
+                ->name('module-monitor-collect')
                 ->withoutOverlapping($overlap)
                 ->timezone($timezone)
                 ->runInBackground();
+
+            ScheduleIntervals::everyMinutes($moduleMonitorCollect, $collectMinutes);
         }
 
         if (filter_var(config('horizonte.fortnightly_feed.enabled', true), FILTER_VALIDATE_BOOLEAN)

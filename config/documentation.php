@@ -22,8 +22,8 @@ return [
     */
 
     'product' => [
-        'version' => '5.4.0',
-        'release_tag' => '20260603e-Hyperion',
+        'version' => '5.5.0',
+        'release_tag' => '20260603f-Helios',
         'commit_short' => '',
         'commit_number' => null,
         'revision_date' => '2026-06-03',

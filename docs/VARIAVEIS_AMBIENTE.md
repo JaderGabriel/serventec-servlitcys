@@ -301,7 +301,8 @@ Rota: `/admin/monitor-modulos` · Documentação: [COMANDOS_ARTISAN.md](COMANDOS
 | `MODULE_MONITOR_ENABLED` | `true` | Liga o painel e o comando de recolha |
 | `MODULE_MONITOR_PERIOD` | `24h` | Período predefinido na UI (`24h` ou `7d`) |
 | `MODULE_MONITOR_COLLECT_SCHEDULE_ENABLED` | `true` | Agenda `module-monitor:collect` |
-| `MODULE_MONITOR_COLLECT_TIME` | `07:30` | Hora da recolha diária (timezone da app) |
+| `MODULE_MONITOR_COLLECT_INTERVAL_MINUTES` | `10` | Intervalo da recolha (`module-monitor:collect`) via schedule:run |
+| `MODULE_MONITOR_COLLECT_OVERLAP_MINUTES` | `8` | Mutex withoutOverlapping (minutos) |
 | `MODULE_MONITOR_SNAPSHOT_CACHE_TTL` | `172800` | TTL do cache de sondas (segundos) |
 | `MODULE_MONITOR_SNAPSHOT_STALE_HOURS` | `36` | Idade máxima considerada «actualizada» |
 | `MODULE_MONITOR_SYNC_STALE_DAYS` | `14` | Limiar «sync antigo» para módulos de fila |

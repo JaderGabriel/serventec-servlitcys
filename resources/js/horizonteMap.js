@@ -29,12 +29,12 @@ function uniqueSortedUfs(markers) {
 function heatColor(intensity) {
     const t = Math.max(0, Math.min(1, Number(intensity) || 0));
     if (t >= 0.66) {
-        return "#dc2626";
+        return "#be123c";
     }
     if (t >= 0.33) {
-        return "#f97316";
+        return "#b45309";
     }
-    return "#fde047";
+    return "#fde68a";
 }
 
 function isValidCoord(lat, lng) {
@@ -46,6 +46,34 @@ function isValidCoord(lat, lng) {
         lng >= -74.5 &&
         lng <= -32.0
     );
+}
+
+const APPROX_COORD_SOURCES = new Set(["uf_spread", "overview"]);
+
+function isApproxCoord(marker) {
+    if (!marker) {
+        return false;
+    }
+    if (marker.coord_approximate) {
+        return true;
+    }
+    return APPROX_COORD_SOURCES.has(String(marker.coord_source ?? ""));
+}
+
+function markerVisualStyle(marker, colors) {
+    const tier = String(marker?.tier ?? "");
+    const fill = colors[tier] || "#64748b";
+    const approx = isApproxCoord(marker);
+    const sparse = tier === "data_sparse";
+
+    return {
+        radius: sparse ? 10 : approx ? 9 : 8,
+        fillColor: fill,
+        color: approx ? "#d97706" : sparse ? "#475569" : "#ffffff",
+        weight: approx ? 2.5 : 2,
+        dashArray: approx ? "4 3" : null,
+        fillOpacity: sparse ? 0.98 : 0.92,
+    };
 }
 
 export default function createHorizonteMap(markers = [], colors = {}, options = {}) {
@@ -83,7 +111,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         tooltipStyle: "",
         searchQuery: "",
         filterTier: options.initialFilter ?? "prospects",
-        filterUf: options.initialUf ?? "",
         displayPolicy: null,
         initialViewNotice: null,
         showAllOnMap: false,
@@ -106,12 +133,20 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         prospectSort: "success_score",
         canRefreshData: Boolean(options.canRefreshData),
         canManageSge: Boolean(options.canManageSge),
+        sgeShowUrl:
+            typeof options.sgeShowUrl === "string" ? options.sgeShowUrl : "",
         sgeRegistryUrl:
             typeof options.sgeRegistryUrl === "string" ? options.sgeRegistryUrl : "",
         sgeFormOpen: false,
         sgeFormSaving: false,
         sgeFormError: null,
         filterPanelOpen: true,
+        methodologyPanelOpen: false,
+        highlightIbge: "",
+        methodology:
+            options.methodology && typeof options.methodology === "object"
+                ? options.methodology
+                : {},
         sgeForm: {
             ibge: "",
             name: "",
@@ -147,16 +182,28 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 isValidCoord(Number(m.lat), Number(m.lng)),
             );
             const limit = Number(this.mapRenderLimit) || 400;
+            let rendered = [];
             if (this.showAllOnMap || list.length <= limit) {
-                return list;
+                rendered = list;
+            } else {
+                rendered = [...list]
+                    .sort(
+                        (a, b) =>
+                            Number(b.success_score ?? 0) - Number(a.success_score ?? 0) ||
+                            String(a.name).localeCompare(String(b.name), "pt-BR"),
+                    )
+                    .slice(0, limit);
             }
-            return [...list]
-                .sort(
-                    (a, b) =>
-                        Number(b.success_score ?? 0) - Number(a.success_score ?? 0) ||
-                        String(a.name).localeCompare(String(b.name), "pt-BR"),
-                )
-                .slice(0, limit);
+
+            const pinnedIbge = String(this.highlightIbge ?? "").trim();
+            if (pinnedIbge !== "") {
+                const pinned = list.find((m) => String(m.ibge) === pinnedIbge);
+                if (pinned && !rendered.some((m) => String(m.ibge) === pinnedIbge)) {
+                    rendered = [pinned, ...rendered.slice(0, Math.max(0, limit - 1))];
+                }
+            }
+
+            return rendered;
         },
 
         get mapRenderTruncated() {
@@ -279,6 +326,134 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return this.summary?.coverage ?? {};
         },
 
+        get scoreThresholds() {
+            const t = this.methodology?.thresholds;
+            return {
+                high: Number(t?.high ?? 70),
+                medium: Number(t?.medium ?? 40),
+            };
+        },
+
+        get activeFilterCount() {
+            let count = 0;
+            if (this.filterTier !== "prospects") {
+                count += 1;
+            }
+            if (this.minSuccessScore > 0) {
+                count += 1;
+            }
+            if (this.minBenefitScore > 0) {
+                count += 1;
+            }
+            if (this.minMatriculas > 0) {
+                count += 1;
+            }
+            if (this.minSocialDemand > 0) {
+                count += 1;
+            }
+            if (this.requireFundeb) {
+                count += 1;
+            }
+            if (this.requireCenso) {
+                count += 1;
+            }
+            if (this.requireSaeb) {
+                count += 1;
+            }
+            if (this.requireCadunico) {
+                count += 1;
+            }
+            if (this.onlyMissingSge) {
+                count += 1;
+            }
+            if (this.hideConsultoria) {
+                count += 1;
+            }
+            if (this.searchQuery.trim() !== "") {
+                count += 1;
+            }
+            return count;
+        },
+
+        get mapInteractionStats() {
+            if (!this.isRegionalMode) {
+                return { onMap: 0, approximate: 0, sparse: 0 };
+            }
+            const valid = this.filteredMarkers.filter((m) =>
+                isValidCoord(Number(m.lat), Number(m.lng)),
+            );
+            return {
+                onMap: this.mapMarkersForRender.length,
+                total: valid.length,
+                approximate: valid.filter((m) => isApproxCoord(m)).length,
+                sparse: valid.filter((m) => m.tier === "data_sparse").length,
+            };
+        },
+
+        get activeFilterChips() {
+            const chips = [];
+            const tierLabels = {
+                prospects: "Prospectos",
+                prospect_high: "Alta propensão",
+                all: "Todos",
+                consultoria_active: "Consultoria",
+                catalog_pending: "Catálogo pendente",
+            };
+            if (this.filterTier !== "prospects") {
+                chips.push({
+                    key: "tier",
+                    label: tierLabels[this.filterTier] || this.filterTier,
+                });
+            }
+            if (this.minSuccessScore > 0) {
+                chips.push({
+                    key: "success",
+                    label: `Propensão ≥ ${this.minSuccessScore}`,
+                });
+            }
+            if (this.minBenefitScore > 0) {
+                chips.push({
+                    key: "benefit",
+                    label: `Benefício ≥ ${this.minBenefitScore}`,
+                });
+            }
+            if (this.minMatriculas > 0) {
+                chips.push({
+                    key: "matriculas",
+                    label: `Matrículas ≥ ${nf(this.minMatriculas)}`,
+                });
+            }
+            if (this.minSocialDemand > 0) {
+                chips.push({
+                    key: "social",
+                    label: `Demanda social ≥ ${this.minSocialDemand}`,
+                });
+            }
+            if (this.requireFundeb) {
+                chips.push({ key: "fundeb", label: "FUNDEB" });
+            }
+            if (this.requireCenso) {
+                chips.push({ key: "censo", label: "Censo" });
+            }
+            if (this.requireSaeb) {
+                chips.push({ key: "saeb", label: "SAEB" });
+            }
+            if (this.requireCadunico) {
+                chips.push({ key: "cadunico", label: "CadÚnico" });
+            }
+            if (this.onlyMissingSge) {
+                chips.push({ key: "sge", label: "Sem SGE" });
+            }
+            if (this.hideConsultoria) {
+                chips.push({ key: "hide_consultoria", label: "Ocultar consultoria" });
+            }
+            const q = this.searchQuery.trim();
+            if (q !== "") {
+                chips.push({ key: "search", label: `«${q}»` });
+            }
+            return chips;
+        },
+
         async init() {
             this.initMap();
             if (this.loadUrl) {
@@ -386,7 +561,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             this.mapMode = "regional";
             this.scopeUf = uf;
-            this.filterUf = uf;
             this.markers = Array.isArray(data.markers) ? data.markers : [];
             this.ufMapPoints = [];
             this.ufList = uniqueSortedUfs(this.markers);
@@ -475,10 +649,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.clusterGroup = L.markerClusterGroup({
                 chunkedLoading: true,
                 chunkInterval: 120,
-                maxClusterRadius: 42,
+                maxClusterRadius: 36,
                 spiderfyOnMaxZoom: true,
                 showCoverageOnHover: false,
-                disableClusteringAtZoom: 11,
+                disableClusteringAtZoom: 9,
+                zoomToBoundsOnClick: true,
             });
             this.map.addLayer(this.clusterGroup);
 
@@ -575,15 +750,16 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 if (!isValidCoord(lat, lng)) {
                     continue;
                 }
-                const fill = this.colors[m.tier] || "#64748b";
+                const style = markerVisualStyle(m, this.colors);
                 const marker = L.circleMarker([lat, lng], {
-                    radius: 7,
-                    fillColor: fill,
-                    color: "#ffffff",
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.92,
+                    ...style,
+                    className: isApproxCoord(m) ? "serv-horizonte-marker--approx" : "",
                 });
+                marker.bindTooltip(
+                    `<span class="font-medium">${escapeHtml(m.name)}</span> — ${escapeHtml(m.uf)}` +
+                        (isApproxCoord(m) ? `<br><span class="text-amber-700">${escapeHtml("Coordenada aproximada")}</span>` : ""),
+                    { direction: "top", opacity: 0.95 },
+                );
                 marker.on("click", (e) => {
                     L.DomEvent.stopPropagation(e);
                     this.selectMarker(m, e);
@@ -610,12 +786,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.clusterGroup.clearLayers();
             this.markerLayers = [];
 
-            const list = this.mapMarkersForRender.filter((m) => {
-                if (m.consultoria_active) {
-                    return false;
-                }
-                return Number(m.heat_intensity ?? 0) > 0 || String(m.tier).startsWith("prospect_");
-            });
+            const list = this.mapMarkersForRender.filter((m) => !m.consultoria_active);
 
             const bounds = [];
             for (const m of list) {
@@ -664,6 +835,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (!scoped) {
                 return;
             }
+            this.highlightIbge = "";
             this.filterTier = this.filterTier || "prospects";
             if (userInitiated) {
                 this.filterTier = "prospects";
@@ -673,7 +845,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         async backToOverview() {
             this.scopeUf = "";
-            this.filterUf = "";
             this.markers = [];
             this.mapMode = "overview";
             this.showAllOnMap = false;
@@ -731,17 +902,39 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         pickSearch(m) {
             this.searchQuery = `${m.name} — ${m.uf}`;
-            this.flyToMarker(m);
+            void this.flyToMarker(m);
         },
 
-        flyToMarker(m) {
+        async flyToMarker(m) {
+            if (!m) {
+                return;
+            }
             const lat = Number(m.lat);
             const lng = Number(m.lng);
             if (!this.map || !isValidCoord(lat, lng)) {
                 return;
             }
-            this.map.flyTo([lat, lng], 10, { duration: 0.8 });
-            this.selectMarker(m);
+            const targetUf = String(m.uf ?? "").trim().toUpperCase();
+            if (this.isOverviewMode && targetUf) {
+                await this.selectUf(targetUf, false);
+            } else if (
+                this.isRegionalMode &&
+                targetUf &&
+                this.scopeUf !== targetUf
+            ) {
+                await this.selectUf(targetUf, false);
+            }
+            this.highlightIbge = String(m.ibge ?? "");
+            await this.refreshMapLayers();
+            const zoom = isApproxCoord(m) ? 9 : 10;
+            this.map.flyTo([lat, lng], zoom, { duration: 0.75 });
+            window.setTimeout(() => {
+                if (!this.map) {
+                    return;
+                }
+                const point = this.map.latLngToContainerPoint([lat, lng]);
+                this.selectMarker(m, { containerPoint: point });
+            }, 400);
         },
 
         setFilterTier(tier) {
@@ -847,14 +1040,37 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (!m) {
                 return "";
             }
-            const lines = [
+            const th = this.scoreThresholds;
+            const lines = [];
+            if (isApproxCoord(m)) {
+                lines.push(
+                    `<p class="rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">${escapeHtml("Posição indicativa (centroide IBGE ou dispersão na UF) — use a lista para localizar o município.")}</p>`,
+                );
+            }
+            if (m.tier === "data_sparse") {
+                lines.push(
+                    `<p class="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-700 dark:border-slate-600 dark:bg-slate-800/60 dark:text-slate-200">${escapeHtml("Sem dados públicos importados — score e tier indicativos. Importe FUNDEB, Censo ou SAEB para enriquecer.")}</p>`,
+                );
+            }
+            lines.push(
                 `<dl class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">`,
-                `<dt class="text-gray-500">${escapeHtml("Propensão")}</dt><dd class="font-semibold tabular-nums">${nf(m.success_score)}/100</dd>`,
+                `<dt class="text-gray-500">${escapeHtml("Propensão")}</dt><dd class="font-semibold tabular-nums">${nf(m.success_score)}/100 <span class="text-[10px] font-normal text-slate-400">(≥${th.high} alta)</span></dd>`,
                 `<dt class="text-gray-500">${escapeHtml("Benefício")}</dt><dd class="font-semibold tabular-nums">${nf(m.benefit_score)}/100</dd>`,
-            ];
+            );
             if (m.matriculas_censo != null) {
                 lines.push(
                     `<dt class="text-gray-500">${escapeHtml("Matrículas Censo")}</dt><dd class="tabular-nums">${nf(m.matriculas_censo)}</dd>`,
+                );
+            }
+            const sources = [
+                m.has_fundeb ? "FUNDEB" : null,
+                m.has_censo ? "Censo" : null,
+                m.has_saeb ? "SAEB" : null,
+                m.has_cadunico ? "CadÚnico" : null,
+            ].filter(Boolean);
+            if (sources.length > 0) {
+                lines.push(
+                    `<dt class="text-gray-500">${escapeHtml("Fontes")}</dt><dd>${escapeHtml(sources.join(" · "))}</dd>`,
                 );
             }
             const sge = m.sge && typeof m.sge === "object" ? m.sge : null;
@@ -864,9 +1080,36 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 );
             }
             lines.push(`</dl>`);
+
+            const dims = [
+                { key: "financial_pressure", label: "Financeira" },
+                { key: "pedagogical_gap", label: "Pedagógica" },
+                { key: "scale_score", label: "Escala" },
+                { key: "social_demand", label: "Social" },
+                { key: "transfer_dependency", label: "Transfer." },
+                { key: "data_readiness", label: "Prontidão" },
+            ];
+            lines.push(
+                `<p class="mt-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">${escapeHtml("Dimensões (0–100)")}</p>`,
+            );
+            lines.push(`<div class="mt-1 space-y-1.5">`);
+            for (const d of dims) {
+                const val = Math.max(0, Math.min(100, Number(m[d.key] ?? 0)));
+                lines.push(
+                    `<div class="flex items-center gap-2 text-[11px]">` +
+                        `<span class="w-[4.5rem] shrink-0 text-slate-500">${escapeHtml(d.label)}</span>` +
+                        `<span class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">` +
+                        `<span class="block h-full rounded-full bg-teal-600" style="width:${val}%"></span>` +
+                        `</span>` +
+                        `<span class="w-6 text-right tabular-nums font-medium">${val}</span>` +
+                        `</div>`,
+                );
+            }
+            lines.push(`</div>`);
+
             if (m.analytics_url) {
                 lines.push(
-                    `<a href="${escapeHtml(m.analytics_url)}" class="mt-2 inline-block text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">${escapeHtml("Abrir consultoria")}</a>`,
+                    `<a href="${escapeHtml(m.analytics_url)}" class="mt-3 inline-block text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">${escapeHtml("Abrir consultoria")}</a>`,
                 );
             }
             return lines.join("");
@@ -886,8 +1129,20 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return status === "not_found" || status === "registry";
         },
 
+        sgeShowUrlFor(ibge) {
+            return this.sgeShowUrl.replace("__IBGE__", encodeURIComponent(String(ibge)));
+        },
+
         sgeUrlFor(ibge) {
             return this.sgeRegistryUrl.replace("__IBGE__", encodeURIComponent(String(ibge)));
+        },
+
+        handleSgeCellClick(m) {
+            if (this.canEditSgeFor(m)) {
+                this.openSgeForm(m);
+                return;
+            }
+            void this.flyToMarker(m);
         },
 
         csrfToken() {
@@ -924,7 +1179,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return;
             }
             try {
-                const response = await fetch(this.sgeUrlFor(ibge), {
+                const response = await fetch(this.sgeShowUrlFor(ibge), {
                     headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
                     credentials: "same-origin",
                 });

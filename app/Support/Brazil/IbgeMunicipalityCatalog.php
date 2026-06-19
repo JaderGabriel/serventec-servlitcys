@@ -108,7 +108,7 @@ final class IbgeMunicipalityCatalog
             return [];
         }
 
-        $cacheKey = 'ibge_municipality_catalog_uf:v2:'.$uf;
+        $cacheKey = 'ibge_municipality_catalog_uf:v3:'.($fetchRemoteCentroids ? 'geo' : 'spread').':'.$uf;
         $cache = AdminHomeMapCache::repository();
         $cached = $cache->get($cacheKey);
         if (is_array($cached) && $cached !== []) {

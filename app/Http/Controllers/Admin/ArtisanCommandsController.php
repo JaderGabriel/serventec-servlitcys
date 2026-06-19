@@ -12,6 +12,8 @@ class ArtisanCommandsController extends Controller
     {
         return view('admin.artisan-commands.index', [
             'categories' => ArtisanCommandsCatalog::categories(),
+            'confirmSlugs' => ArtisanCommandsCatalog::confirmSlugs(),
+            'documentationUrl' => ArtisanCommandsCatalog::documentationUrl(),
             'phpBinary' => PHP_BINARY,
             'projectRoot' => base_path(),
         ]);

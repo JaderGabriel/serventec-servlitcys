@@ -111,7 +111,7 @@
                                     <span class="text-amber-700 dark:text-amber-300">({{ __('desactualizada') }})</span>
                                 @endif
                             @else
-                                · <span class="text-amber-700 dark:text-amber-300">{{ __('Recolha diária pendente') }}</span>
+                                · <span class="text-amber-700 dark:text-amber-300">{{ __('Recolha agendada pendente') }}</span>
                             @endif
                         </p>
                     </div>

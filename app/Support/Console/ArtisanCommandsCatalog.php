@@ -4,22 +4,92 @@ namespace App\Support\Console;
 
 /**
  * Catálogo curado dos comandos Artisan do projeto (documentação admin + docs).
+ *
+ * Campos opcionais por comando: details, schedule, confirm_slugs (referência; slugs activos em confirmSlugs()).
  */
 final class ArtisanCommandsCatalog
 {
+    public static function documentationUrl(): string
+    {
+        return \App\Support\Admin\DocumentationCatalog::readerUrl('docs/COMANDOS_ARTISAN.md');
+    }
+
+    /**
+     * Slugs de confirmação efectivos (production) — valores resolvidos a partir de config/.env.
+     *
+     * @return list<array{
+     *   command: string,
+     *   slug: string,
+     *   slug_template: ?string,
+     *   slug_examples: list<string>,
+     *   env: ?string,
+     *   when: string,
+     *   example: string,
+     *   notes: ?string
+     * }>
+     */
+    public static function confirmSlugs(): array
+    {
+        $flushSlug = (string) config('ieducar.admin_sync.flush_confirm_slug', 'zerar-fila-processamento');
+        $rebuildTemplate = (string) config('ieducar.finance_realtime.rebuild_confirm_slug', 'rebuild-repasses-{ano}');
+        $currentYear = (int) date('Y');
+        $rebuildExamples = array_map(
+            static fn (int $year): string => str_replace('{ano}', (string) $year, $rebuildTemplate),
+            [$currentYear - 1, $currentYear, $currentYear + 1],
+        );
+
+        return [
+            [
+                'command' => 'app:flush-processing-queue',
+                'slug' => $flushSlug,
+                'slug_template' => null,
+                'slug_examples' => [],
+                'env' => 'ADMIN_PROCESSING_QUEUE_FLUSH_SLUG',
+                'when' => __('Obrigatório em APP_ENV=production (excepto com --dry-run).'),
+                'example' => 'php artisan app:flush-processing-queue --confirm='.$flushSlug,
+                'notes' => __('Esvazia filas admin-sync e exportações PDF pendentes.'),
+            ],
+            [
+                'command' => 'funding:rebuild-finance-realtime',
+                'slug' => str_replace('{ano}', (string) $currentYear, $rebuildTemplate),
+                'slug_template' => str_contains($rebuildTemplate, '{ano}') ? $rebuildTemplate : null,
+                'slug_examples' => $rebuildExamples,
+                'env' => 'IEDUCAR_FINANCE_REALTIME_REBUILD_SLUG',
+                'when' => __('Obrigatório em production por ano de repasse (--ano= ou --from/--to).'),
+                'example' => 'php artisan funding:rebuild-finance-realtime --all-cities --ano='.$currentYear.' --confirm='.$rebuildExamples[1],
+                'notes' => __('Slug por município na tabela de resultado: {nome}-{uf}-{ibge}-{ano} (informativo, não é --confirm).'),
+            ],
+            [
+                'command' => 'cities:reencrypt-db-passwords',
+                'slug' => 'reencrypt-db-passwords',
+                'slug_template' => null,
+                'slug_examples' => [],
+                'env' => null,
+                'when' => __('Obrigatório em production (slug fixo no código).'),
+                'example' => 'php artisan cities:reencrypt-db-passwords --password=... --confirm=reencrypt-db-passwords',
+                'notes' => __('Após rotação de APP_KEY — regrava db_password de todas as cidades.'),
+            ],
+        ];
+    }
+
     /**
      * @return list<array{
      *   id: string,
      *   title: string,
      *   description: string,
      *   admin_route: ?string,
+     *   admin_route_query?: array<string, mixed>,
+     *   admin_route_fragment?: ?string,
      *   commands: list<array{
      *     name: string,
      *     summary: string,
      *     signature: string,
      *     examples: list<string>,
      *     env: list<string>,
-     *     doc_anchor: ?string
+     *     doc_anchor: ?string,
+     *     details?: ?string,
+     *     schedule?: ?string,
+     *     confirm_slugs?: list<string>
      *   }>
      * }>
      */
@@ -116,6 +186,18 @@ final class ArtisanCommandsCatalog
                 'admin_route' => 'admin.pedagogical-sync.index',
                 'commands' => [
                     [
+                        'name' => 'saeb:import-planilhas-inep',
+                        'summary' => __('Planilhas oficiais INEP (aba Municípios) — download RAR/XLSX, conversão e import SAEB.'),
+                        'signature' => 'saeb:import-planilhas-inep {--years=} {--url=} {--year=} {--no-download} {--no-merge} ...',
+                        'examples' => [
+                            'php artisan saeb:import-planilhas-inep --years=2021,2023',
+                            'php artisan saeb:import-planilhas-inep --years=2023 --no-download',
+                        ],
+                        'env' => ['IEDUCAR_SAEB_*'],
+                        'doc_anchor' => 'pedagogicas',
+                        'details' => __('Requer unrar/p7zip para RAR INEP. Usado pelo Horizonte e Analytics pedagógico.'),
+                    ],
+                    [
                         'name' => 'saeb:sync-microdados',
                         'summary' => __('Descarrega microdados SAEB (ZIP INEP ou URL CSV) e grava historico.json.'),
                         'signature' => 'saeb:sync-microdados {--year=} {--url=} {--no-merge} ...',
@@ -124,6 +206,14 @@ final class ArtisanCommandsCatalog
                             'php artisan saeb:sync-microdados --url=https://exemplo/dados.csv',
                         ],
                         'env' => ['IEDUCAR_SAEB_*'],
+                        'doc_anchor' => 'pedagogicas',
+                    ],
+                    [
+                        'name' => 'saeb:refresh-ca-bundle',
+                        'summary' => __('Actualiza bundle PEM para SSL do download.inep.gov.br (erro cURL 60).'),
+                        'signature' => 'saeb:refresh-ca-bundle',
+                        'examples' => ['php artisan saeb:refresh-ca-bundle'],
+                        'env' => [],
                         'doc_anchor' => 'pedagogicas',
                     ],
                     [
@@ -184,6 +274,14 @@ final class ArtisanCommandsCatalog
                         'env' => [],
                         'doc_anchor' => 'fundeb',
                     ],
+                    [
+                        'name' => 'fundeb:benchmark',
+                        'summary' => __('Benchmark: fluxo completo FUNDEB vs gravação directa na base (diagnóstico de performance).'),
+                        'signature' => 'fundeb:benchmark {--cities=} {--years=} {--iterations=3} {--warm-cache}',
+                        'examples' => ['php artisan fundeb:benchmark --cities=1,2 --years=2024,2025'],
+                        'env' => [],
+                        'doc_anchor' => 'fundeb',
+                    ],
                 ],
             ],
             [
@@ -209,6 +307,20 @@ final class ArtisanCommandsCatalog
                             'IEDUCAR_TESOURO_CSV_ENABLED',
                         ],
                         'doc_anchor' => 'fundeb-repasses',
+                        'details' => __('Não confundir com fundeb:import-api (VAAF em fundeb_municipio_references). Totais Tempo Real não somam tesouro_publicacao (total UF).'),
+                        'confirm_slugs' => ['rebuild-repasses-{ano}'],
+                    ],
+                    [
+                        'name' => 'weekly-mass-sync:run',
+                        'summary' => __('Sincronização massiva semanal (geo, FUNDEB, repasses, SAEB) — enfileira ou retoma com checkpoint.'),
+                        'signature' => 'weekly-mass-sync:run {--resume=} {--sync} {--force}',
+                        'examples' => [
+                            'php artisan weekly-mass-sync:run',
+                            'php artisan weekly-mass-sync:run --resume=42',
+                        ],
+                        'env' => ['ADMIN_SYNC_SCHEDULE_ENABLED'],
+                        'doc_anchor' => 'fundeb-repasses',
+                        'schedule' => __('Semanal (config admin_sync) — complementa fila admin-sync.'),
                     ],
                 ],
             ],
@@ -249,6 +361,26 @@ final class ArtisanCommandsCatalog
                         'signature' => 'cadunico:sync-city {city?} {--ano=} {--all}',
                         'examples' => ['php artisan cadunico:sync-city 1 --ano=2026'],
                         'env' => ['IEDUCAR_CADUNICO_MISOGIAL_ENABLED'],
+                        'doc_anchor' => 'cadunico',
+                    ],
+                    [
+                        'name' => 'cadunico:import-cecad',
+                        'summary' => __('CSV Cecad manual (;) — agregados municipais CadÚnico.'),
+                        'signature' => 'cadunico:import-cecad {path} {--ano=}',
+                        'examples' => [
+                            'php artisan cadunico:import-cecad storage/app/cadunico/cecad/nacional_2024.csv --ano=2024',
+                        ],
+                        'env' => ['IEDUCAR_CADUNICO_NACIONAL_CSV_URL'],
+                        'doc_anchor' => 'cadunico',
+                    ],
+                    [
+                        'name' => 'cadunico:import-territorio',
+                        'summary' => __('CSV agregado bairro/setor → cadunico_territorio_snapshots.'),
+                        'signature' => 'cadunico:import-territorio {path} {--city=} {--ano=}',
+                        'examples' => [
+                            'php artisan cadunico:import-territorio storage/app/cadunico/territorio/territorio_2910800_2024.csv --city=1 --ano=2024',
+                        ],
+                        'env' => [],
                         'doc_anchor' => 'cadunico',
                     ],
                     [
@@ -298,6 +430,117 @@ final class ArtisanCommandsCatalog
                         'env' => [],
                         'doc_anchor' => 'ieducar',
                     ],
+                    [
+                        'name' => 'ieducar:probe-falta',
+                        'summary' => __('Diagnóstico de faltas / presença no i-Educar (município específico).'),
+                        'signature' => 'ieducar:probe-falta {city}',
+                        'examples' => ['php artisan ieducar:probe-falta 1'],
+                        'env' => [],
+                        'doc_anchor' => 'ieducar',
+                    ],
+                ],
+            ],
+            [
+                'id' => 'educacenso',
+                'title' => __('Educacenso — conferência 1ª etapa'),
+                'description' => __('Cruzamento arquivo INEP .txt com i-Educar read-only. Interface: Analytics → aba Censo.'),
+                'admin_route' => null,
+                'commands' => [
+                    [
+                        'name' => 'censo:analyze-educacenso-file',
+                        'summary' => __('Analisa arquivo Educacenso do portal INEP vs matrículas i-Educar.'),
+                        'signature' => 'censo:analyze-educacenso-file {file} {--city=} {--ano=} {--output=json|table}',
+                        'examples' => [
+                            'php artisan censo:analyze-educacenso-file tests/fixtures/educacenso/stage1_2026_minimal.txt --city=1 --ano=2026',
+                        ],
+                        'env' => ['EDUCACENSO_*'],
+                        'doc_anchor' => 'educacenso',
+                    ],
+                ],
+            ],
+            [
+                'id' => 'horizonte',
+                'title' => __('Horizonte — inteligência comercial'),
+                'description' => __('Abastecimento nacional do mapa de oportunidade municipal (FUNDEB, Censo, SAEB, CadÚnico, IBGE, repasses).'),
+                'admin_route' => 'admin.public-data.index',
+                'admin_route_query' => ['hub' => 'horizonte'],
+                'commands' => [
+                    [
+                        'name' => 'horizonte:fortnightly-feed',
+                        'summary' => __('Pipeline bimestral Horizonte — 9 fases nacionais (FUNDEB, Censo, SAEB, CadÚnico, SIDRA, repasses, IBGE, SGE, verify).'),
+                        'signature' => 'horizonte:fortnightly-feed {--dry-run} {--all} {--staged} {--continue} {--reset} {--phase=} {--skip-*} {--uf=}',
+                        'examples' => [
+                            'php artisan horizonte:fortnightly-feed --staged --reset',
+                            'php artisan horizonte:fortnightly-feed --staged --continue',
+                            'php artisan horizonte:fortnightly-feed --dry-run',
+                            'php artisan horizonte:fortnightly-feed --uf=SP --staged --reset',
+                        ],
+                        'env' => [
+                            'HORIZONTE_FORTNIGHTLY_FEED_ENABLED',
+                            'HORIZONTE_FORTNIGHTLY_FEED_SCHEDULE_ENABLED',
+                            'HORIZONTE_FORTNIGHTLY_FEED_STAGED',
+                            'HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL',
+                            'HORIZONTE_REFERENCE_YEAR',
+                        ],
+                        'doc_anchor' => 'horizonte',
+                        'details' => __('Modo --staged recomendado em produção (1 fase por invocação). Fases: fundeb_receita, censo_matriculas, cadunico, sidra_pop417, repasses_tesouro, saeb_planilhas, ibge_catalog, sge_registry, public_data_verify.'),
+                        'schedule' => __('Bimestral (dias 1 e 15, meses ímpares) + passos --continue a cada HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL min.'),
+                    ],
+                    [
+                        'name' => 'horizonte:export-data-bundle',
+                        'summary' => __('Exporta bundle JSON de dados Horizonte (backup/migração).'),
+                        'signature' => 'horizonte:export-data-bundle {--path=}',
+                        'examples' => ['php artisan horizonte:export-data-bundle'],
+                        'env' => ['HORIZONTE_ENABLED'],
+                        'doc_anchor' => 'horizonte',
+                    ],
+                    [
+                        'name' => 'horizonte:import-data-bundle',
+                        'summary' => __('Importa bundle JSON previamente exportado.'),
+                        'signature' => 'horizonte:import-data-bundle {path}',
+                        'examples' => ['php artisan horizonte:import-data-bundle storage/app/horizonte/bundle.json'],
+                        'env' => ['HORIZONTE_ENABLED'],
+                        'doc_anchor' => 'horizonte',
+                    ],
+                ],
+            ],
+            [
+                'id' => 'monitor',
+                'title' => __('Monitor de módulos'),
+                'description' => __('Sondas estruturais de saúde por módulo (sync, conexões, PDF, fontes públicas). Interface: Operação → Monitor de módulos.'),
+                'admin_route' => 'admin.module-monitor.index',
+                'commands' => [
+                    [
+                        'name' => 'module-monitor:collect',
+                        'summary' => __('Recolhe sinais de saúde por módulo e grava cache usado na UI.'),
+                        'signature' => 'module-monitor:collect {--dry-run}',
+                        'examples' => [
+                            'php artisan module-monitor:collect',
+                            'php artisan module-monitor:collect --dry-run',
+                        ],
+                        'env' => [
+                            'MODULE_MONITOR_ENABLED',
+                            'MODULE_MONITOR_COLLECT_SCHEDULE_ENABLED',
+                            'MODULE_MONITOR_COLLECT_INTERVAL_MINUTES',
+                        ],
+                        'doc_anchor' => 'operacao',
+                        'schedule' => __('A cada MODULE_MONITOR_COLLECT_INTERVAL_MINUTES (default 10 min) via schedule:run.'),
+                    ],
+                    [
+                        'name' => 'public-data:check-official',
+                        'summary' => __('Verifica fontes oficiais de dados públicos e notifica admins (não importa dados).'),
+                        'signature' => 'public-data:check-official {--no-notify}',
+                        'examples' => [
+                            'php artisan public-data:check-official',
+                            'php artisan public-data:check-official --no-notify',
+                        ],
+                        'env' => [
+                            'PUBLIC_DATA_DAILY_CHECK_ENABLED',
+                            'PUBLIC_DATA_DAILY_CHECK_TIME',
+                        ],
+                        'doc_anchor' => 'operacao',
+                        'schedule' => __('Diário (PUBLIC_DATA_DAILY_CHECK_TIME, default 07:00).'),
+                    ],
                 ],
             ],
             [
@@ -345,53 +588,29 @@ final class ArtisanCommandsCatalog
                         'doc_anchor' => 'operacao',
                     ],
                     [
-                        'name' => 'module-monitor:collect',
-                        'summary' => __('Recolhe sondas de saúde por módulo para o monitor admin.'),
-                        'signature' => 'module-monitor:collect {--dry-run}',
+                        'name' => 'cities:reencrypt-db-passwords',
+                        'summary' => __('Regrava db_password de todas as cidades com APP_KEY actual (pós key:generate).'),
+                        'signature' => 'cities:reencrypt-db-passwords {--password=} {--probe} {--dry-run} {--confirm=}',
                         'examples' => [
-                            'php artisan module-monitor:collect',
-                            'php artisan module-monitor:collect --dry-run',
+                            'php artisan cities:reencrypt-db-passwords --password=... --dry-run',
+                            'php artisan cities:reencrypt-db-passwords --password=... --confirm=reencrypt-db-passwords',
                         ],
-                        'env' => [
-                            'MODULE_MONITOR_ENABLED',
-                            'MODULE_MONITOR_COLLECT_SCHEDULE_ENABLED',
-                            'MODULE_MONITOR_COLLECT_TIME',
-                        ],
+                        'env' => ['APP_KEY'],
                         'doc_anchor' => 'operacao',
-                    ],
-                    [
-                        'name' => 'horizonte:fortnightly-feed',
-                        'summary' => __('Abastecimento quinzenal Horizonte — FUNDEB nacional, Censo, SAEB, IBGE.'),
-                        'signature' => 'horizonte:fortnightly-feed {--dry-run} {--skip-fundeb} {--skip-censo} {--skip-saeb} {--skip-ibge} {--skip-verify}',
-                        'examples' => [
-                            'php artisan horizonte:fortnightly-feed',
-                            'php artisan horizonte:fortnightly-feed --dry-run',
-                        ],
-                        'env' => [
-                            'HORIZONTE_FORTNIGHTLY_FEED_ENABLED',
-                            'HORIZONTE_FORTNIGHTLY_FEED_SCHEDULE_ENABLED',
-                            'HORIZONTE_FORTNIGHTLY_FEED_TIME',
-                        ],
-                        'doc_anchor' => 'operacao',
-                    ],
-                    [
-                        'name' => 'public-data:check-official',
-                        'summary' => __('Verifica fontes oficiais de dados públicos e notifica admins (rotina diária).'),
-                        'signature' => 'public-data:check-official',
-                        'examples' => ['php artisan public-data:check-official'],
-                        'env' => ['PUBLIC_DATA_DAILY_CHECK_ENABLED', 'PUBLIC_DATA_DAILY_CHECK_TIME'],
-                        'doc_anchor' => 'operacao',
+                        'confirm_slugs' => ['reencrypt-db-passwords'],
+                        'details' => __('Use após «The MAC is invalid» na conexão i-Educar. Mesma senha aplicada a todas as cidades.'),
                     ],
                     [
                         'name' => 'app:flush-processing-queue',
                         'summary' => __('Esvazia filas admin (sync + PDF) e jobs pendentes; em production exige --confirm=slug.'),
-                        'signature' => 'app:flush-processing-queue {--confirm=} {--only-sync} {--only-pdf} ...',
+                        'signature' => 'app:flush-processing-queue {--confirm=} {--only-sync} {--only-pdf} {--include-failed} {--include-completed} {--dry-run}',
                         'examples' => [
                             'php artisan app:flush-processing-queue --dry-run',
                             'php artisan app:flush-processing-queue --confirm=zerar-fila-processamento',
                         ],
                         'env' => ['ADMIN_PROCESSING_QUEUE_FLUSH_SLUG'],
                         'doc_anchor' => 'operacao',
+                        'confirm_slugs' => ['zerar-fila-processamento'],
                     ],
                 ],
             ],

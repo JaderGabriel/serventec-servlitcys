@@ -7,7 +7,7 @@
             $brand = config('analytics.pdf_report.brand', []);
             $systemTagline = $brand['system_tagline'] ?? __('Plataforma educacional municipal');
         @endphp
-        <meta name="description" content="{{ config('app.name') }} — {{ $systemTagline }}. Consultoria municipal, cadastro i-Educar e Censo Escolar.">
+        <meta name="description" content="{{ config('app.name') }} — {{ $systemTagline }}. Consultoria municipal, Horizonte GIS, cadastro i-Educar, Censo e dados públicos (FUNDEB, SAEB).">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ config('app.name', 'servlitcys') }}</title>
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
@@ -100,7 +100,7 @@
                         </span>
                     </h1>
                     <p class="mt-5 max-w-2xl text-lg leading-relaxed text-slate-600 sm:text-xl dark:text-slate-300">
-                        {!! __('O <strong class="font-semibold text-slate-900 dark:text-white">:app</strong> integra i-Educar, Censo Escolar e indicadores públicos num único painel. Acompanhe matrículas, FUNDEB, rede escolar e o progresso de cadastro — município a município.', ['app' => e(config('app.name', 'servlitcys'))]) !!}
+                        {!! __('O <strong class="font-semibold text-slate-900 dark:text-white">:app</strong> integra i-Educar, importações públicas (FUNDEB, Censo INEP, SAEB) e o mapa <strong class="font-semibold text-slate-900 dark:text-white">Horizonte</strong> num único ecossistema. Acompanhe matrículas, finanças, rede escolar e oportunidades territoriais — município a município.', ['app' => e(config('app.name', 'servlitcys'))]) !!}
                     </p>
 
                     @if (Route::has('login'))
@@ -151,16 +151,16 @@
                 <section class="border-t border-slate-200/80 bg-white/70 py-14 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/50">
                     <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
                         <div class="text-center">
-                            <h2 class="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">{{ __('Dois eixos de trabalho') }}</h2>
-                            <p class="mx-auto mt-3 max-w-2xl text-slate-600 dark:text-slate-400">{{ __('Consultoria analítica para decisão e RX para cadastro operacional e Censo.') }}</p>
+                            <h2 class="font-display text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">{{ __('Três frentes de trabalho') }}</h2>
+                            <p class="mx-auto mt-3 max-w-2xl text-slate-600 dark:text-slate-400">{{ __('Consultoria analítica, cadastro operacional (RX) e inteligência territorial (Horizonte) para decisão e expansão.') }}</p>
                         </div>
-                        <div class="mt-10 grid gap-5 sm:grid-cols-2">
+                        <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                             <article class="serv-landing-module border-teal-200/80 bg-gradient-to-br from-teal-50/90 via-white to-slate-50/80 dark:border-teal-900/50 dark:from-teal-950/30 dark:via-slate-900/40 dark:to-slate-950/80">
                                 <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-100 text-teal-800 ring-1 ring-teal-200/80 dark:bg-teal-500/15 dark:text-teal-200 dark:ring-teal-700/50">
                                     <x-ui.icon name="chart-bar" class="h-6 w-6" />
                                 </div>
                                 <h3 class="font-display mt-4 text-lg font-semibold text-slate-900 dark:text-white">{{ __('Consultoria municipal') }}</h3>
-                                <p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{{ __('Painel analítico com FUNDEB, matrículas, rede escolar, inclusão, desempenho (SAEB/IDEB) e mapa de unidades — filtros por ano letivo e território.') }}</p>
+                                <p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{{ __('Painel analítico com FUNDEB, matrículas, rede escolar, inclusão, desempenho (SAEB/IDEB), finanças em tempo real e mapa de unidades — filtros por ano letivo e território.') }}</p>
                             </article>
                             <article class="serv-landing-module border-indigo-200/80 bg-gradient-to-br from-indigo-50/80 via-white to-slate-50/80 dark:border-indigo-900/50 dark:from-indigo-950/25 dark:via-slate-900/40 dark:to-slate-950/80">
                                 <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-indigo-800 ring-1 ring-indigo-200/80 dark:bg-indigo-500/15 dark:text-indigo-200 dark:ring-indigo-700/50">
@@ -168,6 +168,13 @@
                                 </div>
                                 <h3 class="font-display mt-4 text-lg font-semibold text-slate-900 dark:text-white">{{ __('RX — cadastro e Censo') }}</h3>
                                 <p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{{ __('Visão operacional por município: volume digitado, meta de cadastro, prazo do Censo e barra de escolas exportadas ou pendentes no ano vigente.') }}</p>
+                            </article>
+                            <article class="serv-landing-module border-amber-200/80 bg-gradient-to-br from-amber-50/80 via-white to-slate-50/80 dark:border-amber-900/40 dark:from-amber-950/25 dark:via-slate-900/40 dark:to-slate-950/80">
+                                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-900 ring-1 ring-amber-200/80 dark:bg-amber-500/15 dark:text-amber-100 dark:ring-amber-700/50">
+                                    <x-ui.icon name="map-pin" class="h-6 w-6" />
+                                </div>
+                                <h3 class="font-display mt-4 text-lg font-semibold text-slate-900 dark:text-white">{{ __('Horizonte — inteligência territorial') }}</h3>
+                                <p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{{ __('Mapa GIS gerencial com visão nacional por UF, scores de oportunidade, filtros interactivos e metodologia transparente — dados públicos FUNDEB, Censo e SAEB para priorizar abordagem comercial.') }}</p>
                             </article>
                         </div>
                     </div>
@@ -187,8 +194,8 @@
                                 ['icon' => 'academic-cap', 't' => __('Desempenho'), 'd' => __('Referências SAEB/IDEB e leituras cruzadas com a realidade local.'), 'accent' => 'border-amber-200/80 bg-amber-50/70', 'iconBg' => 'bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-100'],
                                 ['icon' => 'globe-alt', 't' => __('Inclusão'), 'd' => __('Educação especial, equidade e indicadores de inclusão.'), 'accent' => 'border-emerald-200/80 bg-emerald-50/70', 'iconBg' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200'],
                                 ['icon' => 'signal', 't' => __('Frequência'), 'd' => __('Acompanhamento de frequência quando a base municipal permitir.'), 'accent' => 'border-sky-200/80 bg-sky-50/70', 'iconBg' => 'bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-200'],
-                                ['icon' => 'banknotes', 't' => __('FUNDEB'), 'd' => __('Quadro de apoio à análise financeira — não substitui relatórios oficiais.'), 'accent' => 'border-rose-200/80 bg-rose-50/70', 'iconBg' => 'bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-200'],
-                                ['icon' => 'map', 't' => __('Rede & oferta'), 'd' => __('Estrutura da rede e oferta educativa no território.'), 'accent' => 'border-slate-200/80 bg-slate-50/70', 'iconBg' => 'bg-slate-200 text-slate-700 dark:bg-slate-600/30 dark:text-slate-200'],
+                                ['icon' => 'banknotes', 't' => __('FUNDEB'), 'd' => __('Quadro de apoio à análise financeira e finanças em tempo real — não substitui relatórios oficiais.'), 'accent' => 'border-rose-200/80 bg-rose-50/70', 'iconBg' => 'bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-200'],
+                                ['icon' => 'map-pin', 't' => __('Horizonte'), 'd' => __('Mapa GIS com propensão comercial, benefício estimado e cobertura de dados públicos por município.'), 'accent' => 'border-amber-200/80 bg-amber-50/70', 'iconBg' => 'bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-100'],
                             ] as $tile)
                                 <article class="serv-landing-module {{ $tile['accent'] }} dark:border-slate-700/80 dark:bg-slate-900/30">
                                     <div class="flex h-9 w-9 items-center justify-center rounded-lg ring-1 ring-slate-900/5 {{ $tile['iconBg'] }}">
@@ -209,8 +216,8 @@
                         </div>
                         <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                             @foreach ([
-                                ['icon' => 'map-pin', 'title' => __('Território e comparação'), 'text' => __('Indicadores agregados por município para priorizar ações e comparar realidades da rede.')],
-                                ['icon' => 'chart-bar', 'title' => __('Uma fonte integrada'), 'text' => __('i-Educar, importações públicas (FUNDEB, Censo INEP) e regras da plataforma num só fluxo de leitura.')],
+                                ['icon' => 'map-pin', 'title' => __('Território e comparação'), 'text' => __('Indicadores agregados por município e mapa Horizonte para priorizar ações, comparar realidades e orientar expansão.')],
+                                ['icon' => 'chart-bar', 'title' => __('Uma fonte integrada'), 'text' => __('i-Educar, importações públicas (FUNDEB, Censo INEP, SAEB) e regras da plataforma num só fluxo de leitura.')],
                                 ['icon' => 'shield-check', 'title' => __('Acesso controlado'), 'text' => __('Perfis municipal e administrativo, com trilha de uso restrito à gestão autorizada (LGPD).')],
                             ] as $card)
                                 <article class="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/40">

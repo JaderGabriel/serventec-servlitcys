@@ -10,12 +10,146 @@ final class HorizonteMapPresenter
     public static function tierColors(): array
     {
         return [
-            'consultoria_active' => '#059669',
+            'consultoria_active' => '#0d9488',
             'catalog_pending' => '#ea580c',
-            'prospect_high' => '#dc2626',
-            'prospect_medium' => '#ca8a04',
-            'prospect_low' => '#64748b',
-            'data_sparse' => '#cbd5e1',
+            'prospect_high' => '#be123c',
+            'prospect_medium' => '#b45309',
+            'prospect_low' => '#475569',
+            'data_sparse' => '#94a3b8',
+        ];
+    }
+
+    /**
+     * Textos de metodologia, fórmulas e KPIs para a UI gerencial.
+     *
+     * @return array<string, mixed>
+     */
+    public static function methodologyUi(): array
+    {
+        $weights = config('horizonte.weights', []);
+        $high = (int) config('horizonte.high_opportunity_threshold', 70);
+        $medium = (int) config('horizonte.medium_opportunity_threshold', 40);
+        $refYear = (int) config('horizonte.reference_year', (int) date('Y') - 1);
+
+        $pct = static fn (string $key): int => (int) round(((float) ($weights[$key] ?? 0)) * 100);
+
+        return [
+            'reference_year' => $refYear,
+            'thresholds' => [
+                'high' => $high,
+                'medium' => $medium,
+            ],
+            'disclaimer' => __('Indicadores indicativos para priorização comercial. Não substituem o Diagnóstico i-Educar, discrepâncias ou publicações oficiais FNDE/MEC.'),
+            'success_title' => __('Propensão a sucesso (0–100)'),
+            'success_formula' => __('Σ (peso × dimensão): financeira :wf% + pedagógica :wp% + escala :ws% + demanda social :wd% + transferências :wt% + prontidão :wr% + benefício×escala :wb%.', [
+                'wf' => $pct('financial_pressure'),
+                'wp' => $pct('pedagogical_gap'),
+                'ws' => $pct('scale'),
+                'wd' => $pct('social_demand'),
+                'wt' => $pct('transfer_dependency'),
+                'wr' => $pct('data_readiness'),
+                'wb' => $pct('benefit_scale'),
+            ]),
+            'benefit_title' => __('Benefício territorial (0–100)'),
+            'benefit_formula' => __('28% pedagógico + 28% financeiro + 18% demanda social + 14% escala + 7% transferências + 5% prontidão — enfatiza impacto regional.'),
+            'tier_rules' => __('Alta propensão ≥ :high · Média ≥ :medium · Baixa abaixo de :medium.', [
+                'high' => $high,
+                'medium' => $medium,
+            ]),
+            'dimensions' => [
+                [
+                    'key' => 'financial_pressure',
+                    'label' => __('Pressão financeira'),
+                    'weight' => $pct('financial_pressure'),
+                    'formula' => __('Complementação FUNDEB ÷ receita vs mediana nacional; fallback por complementação / matrícula.'),
+                ],
+                [
+                    'key' => 'pedagogical_gap',
+                    'label' => __('Déficit pedagógico'),
+                    'weight' => $pct('pedagogical_gap'),
+                    'formula' => __('SAEB LP/MAT abaixo do percentil 25 da amostra (P25 calculado na geração).'),
+                ],
+                [
+                    'key' => 'scale_score',
+                    'label' => __('Escala'),
+                    'weight' => $pct('scale'),
+                    'formula' => __('log₁₀(matriculas Censo); fallback população 4–17 SIDRA × 0,85.'),
+                ],
+                [
+                    'key' => 'social_demand',
+                    'label' => __('Demanda social'),
+                    'weight' => $pct('social_demand'),
+                    'formula' => __('CadÚnico escolar vs Censo/SIDRA e % crianças PBF (pressão social indicativa).'),
+                ],
+                [
+                    'key' => 'transfer_dependency',
+                    'label' => __('Dependência de transferências'),
+                    'weight' => $pct('transfer_dependency'),
+                    'formula' => __('Repasses Tesouro ÷ max(receita, complementação FUNDEB) vs mediana nacional.'),
+                ],
+                [
+                    'key' => 'data_readiness',
+                    'label' => __('Prontidão de dados'),
+                    'weight' => $pct('data_readiness'),
+                    'formula' => __('Presença FUNDEB + Censo + SAEB + CadÚnico (+ bónus SIDRA/repasses).'),
+                ],
+            ],
+            'map_guide' => [
+                [
+                    'step' => 1,
+                    'title' => __('Visão nacional'),
+                    'text' => __('Clique num estado (bolha) para carregar municípios da UF.'),
+                ],
+                [
+                    'step' => 2,
+                    'title' => __('Detalhe municipal'),
+                    'text' => __('Filtros e segmentos; todos os pontos no mapa são clicáveis, incluindo cinza (sem dados públicos).'),
+                ],
+                [
+                    'step' => 3,
+                    'title' => __('Ficha do município'),
+                    'text' => __('Clique no ponto ou na lista para ver scores, dimensões e registo SGE.'),
+                ],
+            ],
+            'map_legend_notes' => [
+                [
+                    'key' => 'approx',
+                    'label' => __('Borda tracejada laranja'),
+                    'description' => __('Coordenada aproximada — posição indicativa na UF.'),
+                ],
+                [
+                    'key' => 'sparse',
+                    'label' => __('Cinza'),
+                    'description' => __('Sem FUNDEB/Censo/SAEB — clicável para ver o que falta importar.'),
+                ],
+            ],
+            'kpis' => [
+                [
+                    'key' => 'with_public_data',
+                    'label' => __('Com dados públicos'),
+                    'hint' => __('Municípios com FUNDEB, Censo ou SAEB importados.'),
+                ],
+                [
+                    'key' => 'prospect_count',
+                    'label' => __('Prospectos'),
+                    'hint' => __('Sem Consultoria activa — candidatos à expansão comercial.'),
+                ],
+                [
+                    'key' => 'high_prospect',
+                    'label' => __('Alta propensão'),
+                    'hint' => __('Propensão ≥ :high — prioridade de abordagem.', ['high' => $high]),
+                ],
+                [
+                    'key' => 'consultoria_active',
+                    'label' => __('Consultoria activa'),
+                    'hint' => __('Base i-Educar configurada no catálogo SERVLITCYS.'),
+                ],
+                [
+                    'key' => 'prospect_matriculas',
+                    'label' => __('Matrículas prospecto'),
+                    'hint' => __('Soma Censo ref. :ano em municípios prospecto.', ['ano' => $refYear]),
+                ],
+            ],
         ];
     }
 
@@ -165,19 +299,19 @@ final class HorizonteMapPresenter
                 'key' => 'heat_low',
                 'label' => __('Baixa oportunidade'),
                 'description' => __('Propensão indicativa baixa — monitorar ou enriquecer dados.'),
-                'color' => '#fde047',
+                'color' => '#fde68a',
             ],
             [
                 'key' => 'heat_mid',
                 'label' => __('Média oportunidade'),
                 'description' => __('Sinais moderados de benefício com Consultoria.'),
-                'color' => '#f97316',
+                'color' => '#b45309',
             ],
             [
                 'key' => 'heat_high',
                 'label' => __('Alta oportunidade'),
                 'description' => __('Prioridade comercial — déficits e escala favoráveis.'),
-                'color' => '#dc2626',
+                'color' => '#be123c',
             ],
         ];
     }
