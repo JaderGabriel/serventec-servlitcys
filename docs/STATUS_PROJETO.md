@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **5.0.1** · release `20260619a-Heimdall` · **Ramo:** `main` · **Última revisão:** 19/06/2026
+**Versão em produção:** **5.1.0** · release `20260619b-Prospeccao` · **Ramo:** `main` · **Última revisão:** 19/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -118,6 +118,8 @@ flowchart TB
 | Monitor de módulos — UI legível (KPIs, filtro URL, cartões, incidentes expansíveis) | Implementado (5.0.1) |
 | Verificação dados públicos — painel admin no hub (`#verificacao-oficial`) | Implementado (5.0.1) |
 | Horizonte — mapa oportunidade municipal (Consultoria vs prospectos, scores FUNDEB/SAEB/Censo, busca IBGE) | Implementado (5.0.0) — [HORIZONTE.md](HORIZONTE.md) |
+| Horizonte — mapa calor, filtros gestores, prospecção comercial, IBGE nacional | Implementado (5.1.0) |
+| Horizonte — abastecimento quinzenal (`horizonte:fortnightly-feed`, dias 1 e 15) | Implementado (5.1.0) |
 | Verificação diária dados públicos (`public-data:check-official`, notificação admins) | Implementado (5.0.0) |
 | Início — KPIs realinhados (bases, RX/FUNDEB, consultoria, filas) | Implementado (5.0.0) |
 | Notificações — feed completo só no sino (sem duplicar menu utilizador) | Implementado (5.0.0) |

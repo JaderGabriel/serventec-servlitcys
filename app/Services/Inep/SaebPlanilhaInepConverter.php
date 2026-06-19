@@ -31,10 +31,10 @@ final class SaebPlanilhaInepConverter
     ];
 
     /**
-     * @param  array<string, true>  $allowedIbge
+     * @param  array<string, true>|null  $allowedIbge
      * @return array{rows: int, municipios: int, path: string, warnings: list<string>}
      */
-    public function spreadsheetToCanonicalCsv(string $spreadsheetPath, string $outputCsvPath, array $allowedIbge, ?int $yearHint = null): array
+    public function spreadsheetToCanonicalCsv(string $spreadsheetPath, string $outputCsvPath, ?array $allowedIbge, ?int $yearHint = null): array
     {
         $warnings = [];
         $ext = strtolower(pathinfo($spreadsheetPath, PATHINFO_EXTENSION));
@@ -83,7 +83,7 @@ final class SaebPlanilhaInepConverter
                 continue;
             }
             $ibge = $this->normalizeIbge($this->cell($row, $colMap['CO_MUNICIPIO'] ?? null));
-            if ($ibge === null || ! isset($allowedIbge[$ibge])) {
+            if ($ibge === null || ($allowedIbge !== null && ! isset($allowedIbge[$ibge]))) {
                 continue;
             }
 

@@ -32,4 +32,35 @@ return [
 
     'saeb_disciplines' => ['LP', 'MAT', 'lp', 'mat', 'Língua Portuguesa', 'Matemática'],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Abastecimento quinzenal (rotina agendada + comando horizonte:fortnightly-feed)
+    |--------------------------------------------------------------------------
+    |
+    | Sincroniza dados públicos nacionais para alimentar o mapa Horizonte:
+    | FUNDEB (CSV receita FNDE), Censo matrículas, SAEB planilhas INEP, catálogo IBGE.
+    |
+    */
+
+    'fortnightly_feed' => [
+        'enabled' => filter_var(env('HORIZONTE_FORTNIGHTLY_FEED_ENABLED', true), FILTER_VALIDATE_BOOL),
+
+        'schedule' => [
+            'enabled' => filter_var(env('HORIZONTE_FORTNIGHTLY_FEED_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
+            'days' => [1, 15],
+            'time' => env('HORIZONTE_FORTNIGHTLY_FEED_TIME', '03:00'),
+            'overlap_minutes' => max(60, (int) env('HORIZONTE_FORTNIGHTLY_FEED_OVERLAP_MINUTES', 2880)),
+        ],
+
+        'fundeb_years' => array_values(array_filter(array_map(
+            'intval',
+            explode(',', (string) env('HORIZONTE_FORTNIGHTLY_FUNDEB_YEARS', '')),
+        ))),
+
+        'saeb_years' => null,
+
+        'censo_skip_if_missing' => filter_var(env('HORIZONTE_FORTNIGHTLY_CENSO_SKIP_IF_MISSING', true), FILTER_VALIDATE_BOOL),
+        'censo_allow_empty' => filter_var(env('HORIZONTE_FORTNIGHTLY_CENSO_ALLOW_EMPTY', false), FILTER_VALIDATE_BOOL),
+    ],
+
 ];

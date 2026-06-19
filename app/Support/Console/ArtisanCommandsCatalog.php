@@ -345,6 +345,21 @@ final class ArtisanCommandsCatalog
                         'doc_anchor' => 'operacao',
                     ],
                     [
+                        'name' => 'horizonte:fortnightly-feed',
+                        'summary' => __('Abastecimento quinzenal Horizonte — FUNDEB nacional, Censo, SAEB, IBGE.'),
+                        'signature' => 'horizonte:fortnightly-feed {--dry-run} {--skip-fundeb} {--skip-censo} {--skip-saeb} {--skip-ibge} {--skip-verify}',
+                        'examples' => [
+                            'php artisan horizonte:fortnightly-feed',
+                            'php artisan horizonte:fortnightly-feed --dry-run',
+                        ],
+                        'env' => [
+                            'HORIZONTE_FORTNIGHTLY_FEED_ENABLED',
+                            'HORIZONTE_FORTNIGHTLY_FEED_SCHEDULE_ENABLED',
+                            'HORIZONTE_FORTNIGHTLY_FEED_TIME',
+                        ],
+                        'doc_anchor' => 'operacao',
+                    ],
+                    [
                         'name' => 'public-data:check-official',
                         'summary' => __('Verifica fontes oficiais de dados públicos e notifica admins (rotina diária).'),
                         'signature' => 'public-data:check-official',

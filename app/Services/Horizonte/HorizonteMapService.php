@@ -9,7 +9,9 @@ use App\Models\InepCensoMunicipioMatricula;
 use App\Models\SaebIndicatorPoint;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Support\Brazil\IbgeMunicipalityCatalog;
+use App\Support\Brazil\IbgeUfFromCode;
 use App\Support\Dashboard\AdminHomeMapCache;
+use App\Support\Horizonte\HorizonteManagerInsights;
 use App\Support\Horizonte\HorizonteMapPresenter;
 use Illuminate\Support\Facades\DB;
 
@@ -42,7 +44,7 @@ final class HorizonteMapService
         }
 
         $refYear = (int) config('horizonte.reference_year', (int) date('Y') - 1);
-        $cacheKey = 'horizonte:map:v1:'.$refYear.':'.$this->dataFingerprint();
+        $cacheKey = 'horizonte:map:v2:'.$refYear.':'.$this->dataFingerprint();
 
         $cached = AdminHomeMapCache::get($cacheKey);
         if (is_array($cached)) {
@@ -81,13 +83,15 @@ final class HorizonteMapService
             $ibgeSet[$ibge] = true;
         }
 
-        $ufs = [];
+        $ufs = IbgeUfFromCode::ufsFromIbgeCodes(array_keys($ibgeSet));
         foreach ($citiesByIbge as $city) {
             $ufs[] = strtoupper((string) $city['uf']);
         }
-        $ibgeMetaIndex = $this->ibgeCatalog->metaIndexForUfs(
-            $ufs !== [] ? $ufs : IbgeMunicipalityCatalog::brazilianUfs(),
-        );
+        $ufs = array_values(array_unique(array_filter($ufs)));
+        if ($ufs === []) {
+            $ufs = IbgeMunicipalityCatalog::brazilianUfs();
+        }
+        $ibgeMetaIndex = $this->ibgeCatalog->metaIndexForUfs($ufs);
 
         $saebForBench = [];
         $complRatios = [];
@@ -153,6 +157,9 @@ final class HorizonteMapService
                 'in_catalog' => $inCatalog,
             ];
             $scores = $this->scorer->score($scoreInput, $benchmarks, $high, $medium);
+            $heatIntensity = $consultoriaActive
+                ? 0.0
+                : max(0.0, min(1.0, ((int) $scores['success_score']) / 100));
 
             $markers[] = [
                 'ibge' => $ibge,
@@ -169,7 +176,12 @@ final class HorizonteMapService
                 'pedagogical_gap' => $scores['pedagogical_gap'],
                 'scale_score' => $scores['scale_score'],
                 'data_readiness' => $scores['data_readiness'],
+                'heat_intensity' => round($heatIntensity, 3),
                 'consultoria_active' => $consultoriaActive,
+                'in_catalog' => $inCatalog,
+                'has_fundeb' => $fundeb !== null,
+                'has_censo' => $censo !== null,
+                'has_saeb' => $saeb !== null,
                 'matriculas_censo' => $censo['matriculas_total'] ?? null,
                 'complementacao_fundeb' => $fundeb['complementacao_total'] ?? null,
                 'saeb_lp' => $saeb['lp'] ?? null,
@@ -189,17 +201,21 @@ final class HorizonteMapService
             $markers,
             static fn (array $m): bool => in_array($m['tier'], ['prospect_high', 'prospect_medium'], true),
         ));
-        $topProspects = array_slice($topProspects, 0, 15);
+        $topProspects = array_slice($topProspects, 0, 25);
+        $coverage = HorizonteManagerInsights::dataCoverage($markers);
+        $focusSegments = HorizonteManagerInsights::focusSegments($markers);
 
         return [
             'reference_year' => $refYear,
             'generated_at' => now()->toIso8601String(),
             'markers' => $markers,
-            'summary' => $summary,
+            'summary' => array_merge($summary, ['coverage' => $coverage]),
             'uf_rankings' => $ufRankings,
             'top_prospects' => $topProspects,
+            'focus_segments' => $focusSegments,
             'colors' => HorizonteMapPresenter::tierColors(),
             'legend' => HorizonteMapPresenter::legendItems(),
+            'heat_legend' => HorizonteMapPresenter::heatLegendItems(),
         ];
     }
 
@@ -381,6 +397,7 @@ final class HorizonteMapService
         $byTier = [];
         $withoutConsultoria = 0;
         $highProspect = 0;
+        $prospectCount = 0;
 
         foreach ($markers as $m) {
             $tier = (string) ($m['tier'] ?? 'data_sparse');
@@ -391,6 +408,9 @@ final class HorizonteMapService
             if ($tier === 'prospect_high') {
                 $highProspect++;
             }
+            if (str_starts_with($tier, 'prospect_')) {
+                $prospectCount++;
+            }
         }
 
         return [
@@ -398,6 +418,7 @@ final class HorizonteMapService
             'without_consultoria' => $withoutConsultoria,
             'consultoria_active' => $byTier['consultoria_active'] ?? 0,
             'high_prospect' => $highProspect,
+            'prospect_count' => $prospectCount,
             'by_tier' => $byTier,
         ];
     }
@@ -477,11 +498,21 @@ final class HorizonteMapService
             'reference_year' => (int) config('horizonte.reference_year', (int) date('Y') - 1),
             'generated_at' => now()->toIso8601String(),
             'markers' => [],
-            'summary' => ['total' => 0, 'without_consultoria' => 0, 'consultoria_active' => 0, 'high_prospect' => 0, 'by_tier' => []],
+            'summary' => [
+                'total' => 0,
+                'without_consultoria' => 0,
+                'consultoria_active' => 0,
+                'high_prospect' => 0,
+                'prospect_count' => 0,
+                'by_tier' => [],
+                'coverage' => HorizonteManagerInsights::dataCoverage([]),
+            ],
             'uf_rankings' => [],
             'top_prospects' => [],
+            'focus_segments' => [],
             'colors' => HorizonteMapPresenter::tierColors(),
             'legend' => HorizonteMapPresenter::legendItems(),
+            'heat_legend' => HorizonteMapPresenter::heatLegendItems(),
         ];
     }
 }

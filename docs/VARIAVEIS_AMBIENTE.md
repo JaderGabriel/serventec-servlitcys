@@ -263,10 +263,17 @@ Rota: `/dashboard/horizonte` · Documentação: [HORIZONTE.md](HORIZONTE.md).
 | Variável | Default | Descrição |
 |----------|---------|-----------|
 | `HORIZONTE_ENABLED` | `true` | Liga o módulo |
-| `HORIZONTE_MAP_CACHE_TTL` | `3600` | TTL cache do payload do mapa (segundos) |
-| `HORIZONTE_MIN_MATRICULAS` | `500` | Escala mínima Censo para considerar município |
-| `HORIZONTE_HIGH_PROPENSITY_THRESHOLD` | `0.65` | Limiar tier «alta propensão» |
-| `HORIZONTE_MEDIUM_PROPENSITY_THRESHOLD` | `0.40` | Limiar tier «média propensão» |
+| `HORIZONTE_CACHE_SECONDS` | `900` | TTL cache do payload do mapa (segundos) |
+| `HORIZONTE_REFERENCE_YEAR` | ano−1 | Exercício FUNDEB/Censo/SAEB |
+| `HORIZONTE_HIGH_THRESHOLD` | `70` | Limiar tier «alta propensão» |
+| `HORIZONTE_MEDIUM_THRESHOLD` | `40` | Limiar tier «média propensão» |
+| `HORIZONTE_FORTNIGHTLY_FEED_ENABLED` | `true` | Activa o comando e fases da rotina |
+| `HORIZONTE_FORTNIGHTLY_FEED_SCHEDULE_ENABLED` | `true` | Agenda dias 1 e 15 (`horizonte:fortnightly-feed`) |
+| `HORIZONTE_FORTNIGHTLY_FEED_TIME` | `03:00` | Hora (timezone da app) |
+| `HORIZONTE_FORTNIGHTLY_FUNDEB_YEARS` | *(vazio)* | Anos CSV receita FNDE (vazio = ref. + anterior) |
+| `HORIZONTE_FORTNIGHTLY_CENSO_SKIP_IF_MISSING` | `true` | Não falha se microdados INEP ausentes |
+
+Ver [HORIZONTE.md](HORIZONTE.md) §9.1 e `php artisan horizonte:fortnightly-feed --help`.
 
 ---
 

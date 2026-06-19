@@ -22,8 +22,8 @@ return [
     */
 
     'product' => [
-        'version' => '5.0.1',
-        'release_tag' => '20260619a-Heimdall',
+        'version' => '5.1.0',
+        'release_tag' => '20260619b-Prospeccao',
         'commit_short' => '',
         'commit_number' => null,
         'revision_date' => '2026-06-19',

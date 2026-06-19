@@ -65,4 +65,31 @@ final class HorizonteMapPresenter
             ],
         ];
     }
+
+    /**
+     * @return list<array{key: string, label: string, description: string, color: string}>
+     */
+    public static function heatLegendItems(): array
+    {
+        return [
+            [
+                'key' => 'heat_low',
+                'label' => __('Baixa oportunidade'),
+                'description' => __('Propensão indicativa baixa — monitorar ou enriquecer dados.'),
+                'color' => '#fde047',
+            ],
+            [
+                'key' => 'heat_mid',
+                'label' => __('Média oportunidade'),
+                'description' => __('Sinais moderados de benefício com Consultoria.'),
+                'color' => '#f97316',
+            ],
+            [
+                'key' => 'heat_high',
+                'label' => __('Alta oportunidade'),
+                'description' => __('Prioridade comercial — déficits e escala favoráveis.'),
+                'color' => '#dc2626',
+            ],
+        ];
+    }
 }

@@ -96,21 +96,27 @@ Calculados **na mesma geração do mapa** (amostra actual):
 
 ### 6.1 Mapa
 
-- Base **Leaflet** + OSM (mesmo stack do mapa do Início).
+- Base **Leaflet** + OSM; modos **Calor** (propensão) e **Marcadores** (tiers).
 - **Buscador** por nome, UF ou código IBGE (sugestões + `flyTo`).
-- Filtros: todos · prospectos · alta propensão · consultoria · catálogo pendente · UF.
-- Tooltip: scores, matrículas Censo, SAEB, complementação FUNDEB, atalho Consultoria ou catálogo.
+- Filtros comerciais: propensão/benefício mínimos, matrículas, FUNDEB/Censo/SAEB, UF, segmentos «Onde buscar clientes».
+- Overlay de carregamento durante fetch JSON e desenho do mapa.
+- Tooltip: scores, matrículas Censo, SAEB, complementação FUNDEB, fontes, atalho Consultoria ou catálogo.
 
 ### 6.2 Painéis laterais
 
 | Painel | Conteúdo |
 |--------|----------|
-| **Regiões mais afectadas** | Top 12 UFs por benefício médio + contagem alta propensão |
-| **Mais propensos a sucesso** | Top 15 prospectos por `success_score` |
+| **Cobertura de dados** | Contagem FUNDEB / Censo / SAEB / triad completa |
+| **UFs prioritárias** | Top 12 UFs por benefício médio + clique filtra UF |
+| **Top prospectos** | Melhores scores nacionais (clicáveis no mapa) |
 
-### 6.3 KPIs no topo
+### 6.3 KPIs e prospecção
 
-Municípios no mapa · sem Consultoria · Consultoria activa · alta propensão.
+| Área | Conteúdo |
+|--------|----------|
+| **KPIs** | Dados públicos · prospectos · alta propensão · consultoria · matrículas prospecto |
+| **Segmentos** | Prontos para abordagem · pressão FUNDEB · déficit SAEB · grande escala |
+| **Tabela** | Até 50 municípios do recorte, ordenados para abordagem comercial |
 
 ---
 
@@ -134,7 +140,8 @@ HorizonteController
 | `app/Support/Brazil/IbgeMunicipalityCatalog.php` | Metadados IBGE |
 | `resources/js/horizonteMap.js` | Mapa Alpine + busca |
 | `resources/views/horizonte/index.blade.php` | UI |
-| `config/horizonte.php` | Pesos, cache, limiares |
+| `app/Services/Horizonte/HorizonteFortnightlyFeedService.php` | Rotina quinzenal de dados públicos |
+| `app/Console/Commands/HorizonteFortnightlyFeedCommand.php` | CLI `horizonte:fortnightly-feed` |
 
 ---
 
@@ -152,9 +159,37 @@ HorizonteController
 
 ## 9. Operacionalização
 
-1. **Enriquecer dados:** Admin → Dados públicos — importar FUNDEB, Censo, SAEB para IBGE alvo.
-2. **Actualizar mapa:** cache expira (`HORIZONTE_CACHE_SECONDS`) ou alteração nas tabelas fonte (invalidação por fingerprint).
-3. **Priorizar expansão:** filtro «Alta propensão» + painel «Mais propensos» + ranking UF.
+### 9.1 Rotina quinzenal (abastecimento automático)
+
+Comando: **`horizonte:fortnightly-feed`** · agendamento: **dias 1 e 15** de cada mês (configurável).
+
+| Fase | O que faz |
+|------|-----------|
+| **FUNDEB** | CSV nacional «Receita total do Fundeb por ente federado» (FNDE) → `fundeb_municipio_references` por IBGE |
+| **Censo** | Indexa matrículas municipais a partir do microdados INEP (`inep_censo_municipio_matriculas`) |
+| **SAEB** | Planilhas oficiais INEP (aba Municípios, `CO_MUNICIPIO`) para **todos** os municípios — `saeb_indicator_points` |
+| **IBGE** | Aquece catálogo de centroides (27 UFs) para posicionar prospectos no mapa |
+| **Verificação** | `public-data:check-official --no-notify` (cache no hub, sem notificação) |
+
+```bash
+# Manual / diagnóstico
+php artisan horizonte:fortnightly-feed
+php artisan horizonte:fortnightly-feed --dry-run
+php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo
+
+# Confirmar agendamento
+php artisan schedule:list | grep horizonte
+```
+
+Variáveis: `HORIZONTE_FORTNIGHTLY_FEED_*` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11b.
+
+O cache do mapa invalida-se automaticamente quando `imported_at` / contagens nas tabelas fonte mudam (fingerprint em `HorizonteMapService`).
+
+### 9.2 Uso comercial (gestores)
+
+1. **Enriquecer dados:** garantir rotina quinzenal activa + importações pontuais em Dados públicos.
+2. **Actualizar mapa:** abrir `/dashboard/horizonte` — shell rápido + JSON assíncrono; overlay de carregamento.
+3. **Priorizar expansão:** modo **Calor**, segmentos «Onde buscar clientes», filtros de propensão/FUNDEB/Censo/SAEB.
 4. **Onboarding:** criar cidade no catálogo → configurar conexão → tier passa a `catalog_pending` → `consultoria_active`.
 
 ---

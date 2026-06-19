@@ -19,6 +19,22 @@ final class SaebPlanilhaInepImportService
     ) {}
 
     /**
+     * Importa planilhas INEP para **todos** os municípios (CO_MUNICIPIO) — uso Horizonte / cobertura nacional.
+     *
+     * @param  list<int>  $years
+     * @return array{ok: bool, message: string, detalhes?: array<string, mixed>}
+     */
+    public function importYearsNational(
+        array $years,
+        bool $download,
+        bool $merge,
+        bool $resolveInep,
+        bool $keepCache,
+    ): array {
+        return $this->importYearsInternal($years, $download, $merge, $resolveInep, $keepCache, null);
+    }
+
+    /**
      * @param  list<int>  $years
      * @return array{ok: bool, message: string, detalhes?: array<string, mixed>}
      */
@@ -29,18 +45,34 @@ final class SaebPlanilhaInepImportService
         bool $resolveInep,
         bool $keepCache,
     ): array {
-        if (! filter_var(config('ieducar.saeb.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
-            return [
-                'ok' => false,
-                'message' => __('Séries SAEB desativadas (IEDUCAR_SAEB_SERIES_ENABLED).'),
-            ];
-        }
-
         $allowedIbge = $this->allowedIbgeSet();
         if ($allowedIbge === []) {
             return [
                 'ok' => false,
                 'message' => __('Nenhuma cidade com IBGE (7 dígitos) para importar.'),
+            ];
+        }
+
+        return $this->importYearsInternal($years, $download, $merge, $resolveInep, $keepCache, $allowedIbge);
+    }
+
+    /**
+     * @param  list<int>  $years
+     * @param  array<string, true>|null  $allowedIbge  null = todos os municípios da planilha
+     * @return array{ok: bool, message: string, detalhes?: array<string, mixed>}
+     */
+    private function importYearsInternal(
+        array $years,
+        bool $download,
+        bool $merge,
+        bool $resolveInep,
+        bool $keepCache,
+        ?array $allowedIbge,
+    ): array {
+        if (! filter_var(config('ieducar.saeb.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            return [
+                'ok' => false,
+                'message' => __('Séries SAEB desativadas (IEDUCAR_SAEB_SERIES_ENABLED).'),
             ];
         }
 
@@ -164,7 +196,7 @@ final class SaebPlanilhaInepImportService
      * @param  array<string, true>  $allowedIbge
      * @return array{rows: int, municipios: int, path: string, warnings: list<string>}
      */
-    private function processYear(int $year, string $url, array $allowedIbge, bool $download, bool $keepCache): array
+    private function processYear(int $year, string $url, ?array $allowedIbge, bool $download, bool $keepCache): array
     {
         $cacheRoot = storage_path('app/'.trim((string) config('ieducar.saeb.planilha_cache_path', 'saeb/planilhas'), '/'));
         if (! is_dir($cacheRoot)) {
@@ -207,7 +239,7 @@ final class SaebPlanilhaInepImportService
      * @param  array<string, true>  $allowedIbge
      * @return array{rows: int, municipios: int, path: string, warnings: list<string>}
      */
-    private function convertSpreadsheet(string $spreadsheetPath, array $allowedIbge, int $year, string $tempCsv): array
+    private function convertSpreadsheet(string $spreadsheetPath, ?array $allowedIbge, int $year, string $tempCsv): array
     {
         $readable = $this->spreadsheetResolver->resolveReadablePath($spreadsheetPath);
 

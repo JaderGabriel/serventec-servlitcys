@@ -225,5 +225,23 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->timezone($timezone)
                 ->runInBackground();
         }
+
+        if (filter_var(config('horizonte.fortnightly_feed.enabled', true), FILTER_VALIDATE_BOOLEAN)
+            && filter_var(config('horizonte.fortnightly_feed.schedule.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            $timezone = (string) config('app.timezone', 'UTC');
+            $feedTime = trim((string) config('horizonte.fortnightly_feed.schedule.time', '03:00')) ?: '03:00';
+            $days = config('horizonte.fortnightly_feed.schedule.days', [1, 15]);
+            $day1 = max(1, min(28, (int) ($days[0] ?? 1)));
+            $day2 = max(1, min(28, (int) ($days[1] ?? 15)));
+            $overlap = max(60, (int) config('horizonte.fortnightly_feed.schedule.overlap_minutes', 2880));
+
+            $schedule->command('horizonte:fortnightly-feed')
+                ->twiceMonthly($day1, $day2)
+                ->at($feedTime)
+                ->name('horizonte-fortnightly-feed')
+                ->withoutOverlapping($overlap)
+                ->timezone($timezone)
+                ->runInBackground();
+        }
     })
     ->create();
