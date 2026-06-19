@@ -68,22 +68,6 @@ final class AdminSyncQueueIndexPresenter
         return $cards;
     }
 
-    /**
-     * @return array{
-     *     id: string,
-     *     label: string,
-     *     description: string,
-     *     icon: string,
-     *     accent: string,
-     *     anchor: string,
-     *     queue_label: string,
-     *     counts: array<string, int>,
-     *     total: int,
-     *     active: int,
-     *     failed: int,
-     *     ready: int
-     * }
-     */
     public static function pdfThemeCard(Collection $pdfCounts, string $pdfQueueName): array
     {
         $counts = [];
@@ -108,6 +92,64 @@ final class AdminSyncQueueIndexPresenter
                 + ($counts[AnalyticsReportExportStatus::Processing->value] ?? 0),
             'failed' => $counts[AnalyticsReportExportStatus::Failed->value] ?? 0,
             'ready' => $counts[AnalyticsReportExportStatus::Completed->value] ?? 0,
+        ];
+    }
+
+    /**
+     * Card do abastecimento Horizonte (comando agendado — fora da fila admin-sync).
+     *
+     * @param  array<string, mixed>  $hub  Saída de {@see \App\Services\Admin\HorizonteImportHubStatusService::build()}
+     * @return array<string, mixed>
+     */
+    public static function horizonteThemeCard(array $hub): array
+    {
+        $coverage = is_array($hub['coverage'] ?? null) ? $hub['coverage'] : [];
+        $phases = is_array($hub['phases'] ?? null) ? $hub['phases'] : [];
+        $lastFeed = is_array($hub['last_feed'] ?? null) ? $hub['last_feed'] : null;
+
+        $phasesOk = 0;
+        $phasesAlert = 0;
+        foreach ($phases as $phase) {
+            if (! is_array($phase)) {
+                continue;
+            }
+            if ($phase['ok'] ?? false) {
+                $phasesOk++;
+            } else {
+                $phasesAlert++;
+            }
+        }
+
+        $lastSuccess = is_array($lastFeed) ? (bool) ($lastFeed['success'] ?? false) : null;
+        $pipeline = is_array($hub['pipeline'] ?? null) ? $hub['pipeline'] : null;
+        $pipelineRunning = is_array($pipeline) && ($pipeline['status'] ?? '') === 'running';
+        $pipelineDone = 0;
+        $pipelineTotal = 0;
+        if (is_array($pipeline)) {
+            $pipelineTotal = count(is_array($pipeline['phase_queue'] ?? null) ? $pipeline['phase_queue'] : []);
+            $pipelineDone = collect(is_array($pipeline['phases'] ?? null) ? $pipeline['phases'] : [])
+                ->whereIn('status', ['completed', 'skipped', 'failed'])
+                ->count();
+        }
+
+        return [
+            'id' => 'horizonte',
+            'label' => __('Horizonte'),
+            'description' => __('Abastecimento nacional (FUNDEB, Censo, SAEB, IBGE, SGE) — rotina quinzenal via Artisan, não enfileira em admin-sync.'),
+            'icon' => 'map',
+            'accent' => 'indigo',
+            'anchor' => 'fila-horizonte',
+            'queue_label' => 'horizonte:fortnightly-feed',
+            'universe' => (int) ($coverage['universe_municipios'] ?? 0),
+            'triad' => (int) ($coverage['with_full_triad'] ?? 0),
+            'status_ok' => $phasesOk,
+            'status_alert' => $phasesAlert,
+            'last_feed_success' => $lastSuccess,
+            'last_feed_at' => is_array($lastFeed) ? ($lastFeed['finished_at'] ?? null) : null,
+            'pipeline_running' => $pipelineRunning,
+            'pipeline_progress' => $pipelineTotal > 0 ? $pipelineDone.'/'.$pipelineTotal : null,
+            'enabled' => (bool) ($hub['enabled'] ?? true),
+            'feed_enabled' => (bool) ($hub['feed_enabled'] ?? true),
         ];
     }
 

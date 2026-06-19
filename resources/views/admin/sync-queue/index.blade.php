@@ -6,7 +6,7 @@
                     {{ __('Filas de processamento') }}
                 </h2>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {{ __('Sincronizações admin (FUNDEB, geo, SAEB, CadÚnico/Cecad), exportações NEE e relatórios PDF — por área temática.') }}
+                    {{ __('Sincronizações admin (FUNDEB, geo, SAEB, CadÚnico/Cecad), abastecimento Horizonte, exportações NEE e relatórios PDF — por área temática.') }}
                 </p>
             </div>
             @if ($filterDomain !== '' || $filterStatus !== '' || $filterPdfStatus !== '')
@@ -51,12 +51,12 @@
                         <code class="font-mono text-[11px]">php artisan queue:work {{ $queueDefault }} --queue={{ $syncQueueName }},{{ $pdfQueueName }}</code>
                     </p>
                 </div>
-                @if (config('ieducar.admin_sync.schedule.enabled', true) || config('analytics.pdf_report.schedule.enabled', true))
+                @if (config('ieducar.admin_sync.schedule.enabled', true) || config('analytics.pdf_report.schedule.enabled', true) || config('horizonte.fortnightly_feed.schedule.enabled', true))
                     <div class="border-t border-slate-200/80 dark:border-slate-700 pt-3">
                         <p class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ __('Agendador (schedule:run)') }}</p>
                         <code class="block text-xs text-gray-600 dark:text-gray-400 mt-1">*/{{ config('schedule.runner_interval_minutes', 3) }} * * * * php artisan schedule:run</code>
                         <p class="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                            {{ __('Sincronizações automáticas (CadÚnico, geo, FUNDEB, etc.) dependem do cron acima e das opções em cada tela de importação.') }}
+                            {{ __('Sincronizações automáticas (CadÚnico, geo, FUNDEB, etc.) e o feed Horizonte (dias 1 e 15) dependem do cron acima.') }}
                         </p>
                     </div>
                 @endif
@@ -95,10 +95,16 @@
             </section>
         @endif
 
+        @include('admin.sync-queue.partials.horizonte-theme-panel')
+
         @include('admin.sync-queue.partials.pdf-theme-panel')
 
         <x-slot name="shortcuts">
             <x-admin.import-hub.link-chip href="{{ route('admin.public-data.index') }}">{{ __('Hub dados públicos') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="indigo" href="{{ route('admin.public-data.index', ['hub' => 'horizonte']) }}#horizonte-hub">{{ __('Horizonte') }}</x-admin.import-hub.link-chip>
+            @if (auth()->user()?->canViewHorizonte())
+                <x-admin.import-hub.link-chip tone="indigo" href="{{ route('dashboard.horizonte') }}">{{ __('Mapa Horizonte') }}</x-admin.import-hub.link-chip>
+            @endif
             <x-admin.import-hub.link-chip href="{{ route('admin.cadunico-sync.index') }}">{{ __('CadÚnico') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip href="{{ route('admin.geo-sync.index') }}">{{ __('Geo') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip href="{{ route('admin.pedagogical-sync.index') }}">{{ __('SAEB') }}</x-admin.import-hub.link-chip>

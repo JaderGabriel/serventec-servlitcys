@@ -8,6 +8,8 @@ use App\Services\Fundeb\FundebFndeReceitaCsvService;
 use App\Services\Inep\InepCensoMunicipioMatriculasIndexer;
 use App\Services\Inep\SaebPlanilhaInepImportService;
 use App\Support\Brazil\IbgeMunicipalityCatalog;
+use App\Support\Horizonte\HorizonteFortnightlyFeedPhaseCatalog;
+use App\Support\Horizonte\HorizonteFortnightlyFeedPipeline;
 use App\Support\InepMicrodadosCadastroEscolasPath;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +26,136 @@ final class HorizonteFortnightlyFeedService
         private readonly SaebPlanilhaInepImportService $saebPlanilhas,
         private readonly IbgeMunicipalityCatalog $ibgeCatalog,
         private readonly HorizonteMunicipalSgeRegistryService $sgeRegistry,
+        private readonly HorizonteFortnightlyFeedNotifier $notifier,
     ) {}
+
+    /**
+     * @param  array<string, bool>  $options
+     * @return array{success: bool, phases: list<array<string, mixed>>, message: string, pipeline?: array<string, mixed>|null, idle?: bool, phase?: array<string, mixed>|null}
+     */
+    public function runStaged(array $options = []): array
+    {
+        $disabled = $this->disabledPayload();
+        if ($disabled !== null) {
+            return $disabled;
+        }
+
+        $skipOptions = $this->normalizedSkipOptions($options);
+        $reset = (bool) ($options['reset'] ?? false);
+        $continue = (bool) ($options['continue'] ?? false);
+        $dryRun = (bool) ($options['dry_run'] ?? false);
+
+        if ($reset) {
+            HorizonteFortnightlyFeedPipeline::forget();
+            $state = HorizonteFortnightlyFeedPipeline::start($skipOptions);
+        } elseif ($continue) {
+            $state = HorizonteFortnightlyFeedPipeline::get();
+            if ($state === null || ($state['status'] ?? '') !== 'running') {
+                return [
+                    'success' => true,
+                    'phases' => [],
+                    'message' => __('Nenhum abastecimento Horizonte em curso.'),
+                    'idle' => true,
+                    'pipeline' => $state,
+                ];
+            }
+        } else {
+            $state = HorizonteFortnightlyFeedPipeline::get();
+            if ($state === null || ! in_array($state['status'] ?? '', ['running', 'partial'], true)) {
+                $state = HorizonteFortnightlyFeedPipeline::start($skipOptions);
+            }
+        }
+
+        if (($state['status'] ?? '') === 'completed' || ($state['status'] ?? '') === 'partial') {
+            return $this->pipelineResponse($state);
+        }
+
+        $queue = is_array($state['phase_queue'] ?? null) ? $state['phase_queue'] : [];
+        $index = (int) ($state['current_index'] ?? 0);
+        if ($index >= count($queue)) {
+            return $this->pipelineResponse($state);
+        }
+
+        $phaseKey = (string) $queue[$index];
+        $state = HorizonteFortnightlyFeedPipeline::markPhaseRunning($state, $phaseKey);
+
+        $phaseResult = $dryRun
+            ? $this->dryRunPhase($phaseKey)
+            : $this->runPhase($phaseKey);
+
+        $state = HorizonteFortnightlyFeedPipeline::recordPhaseResult($state, $phaseResult);
+
+        if (! $dryRun) {
+            $this->notifier->phaseFinished(
+                (string) ($state['run_id'] ?? ''),
+                $phaseResult,
+                $index + 1,
+                count($queue),
+            );
+            if (! in_array($state['status'] ?? '', ['running'], true)) {
+                $this->notifier->cycleFinished($state);
+            }
+        }
+
+        Log::info('horizonte.fortnightly_feed.staged', [
+            'run_id' => $state['run_id'] ?? null,
+            'phase' => $phaseKey,
+            'status' => $state['status'] ?? null,
+            'success' => $phaseResult['success'] ?? false,
+        ]);
+
+        return $this->pipelineResponse($state, $phaseResult);
+    }
+
+    /**
+     * @param  array<string, bool>  $options
+     * @return array{success: bool, phases: list<array<string, mixed>>, message: string}
+     */
+    public function runSinglePhase(string $phaseKey, array $options = []): array
+    {
+        $disabled = $this->disabledPayload();
+        if ($disabled !== null) {
+            return $disabled;
+        }
+
+        $dryRun = (bool) ($options['dry_run'] ?? false);
+        $phaseResult = $dryRun ? $this->dryRunPhase($phaseKey) : $this->runPhase($phaseKey);
+
+        if (! $dryRun) {
+            $this->notifier->phaseFinished('manual-'.$phaseKey, $phaseResult, 1, 1);
+        }
+
+        return [
+            'success' => (bool) ($phaseResult['success'] ?? false),
+            'phases' => [$phaseResult],
+            'message' => (string) ($phaseResult['message'] ?? ''),
+            'phase' => $phaseResult,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function runPhase(string $phaseKey): array
+    {
+        $this->applyResourceLimits();
+        $refYear = (int) config('horizonte.reference_year', (int) date('Y') - 1);
+
+        $result = match ($phaseKey) {
+            'fundeb_receita' => $this->syncFundebReceitaNacional($refYear),
+            'censo_matriculas' => $this->indexCensoMatriculas(),
+            'saeb_planilhas' => $this->importSaebPlanilhasNacional(),
+            'ibge_catalog' => $this->warmIbgeCatalog(),
+            'sge_registry' => $this->syncSgeRegistry(),
+            'official_check' => $this->runOfficialCheck(),
+            default => [
+                'success' => false,
+                'message' => __('Fase Horizonte desconhecida: :key', ['key' => $phaseKey]),
+            ],
+        };
+
+        return array_merge(['key' => $phaseKey], $result);
+    }
 
     /**
      * @param  array<string, bool>  $options
@@ -32,78 +163,24 @@ final class HorizonteFortnightlyFeedService
      */
     public function run(array $options = []): array
     {
-        if (! (bool) config('horizonte.enabled', true)) {
-            return [
-                'success' => false,
-                'phases' => [],
-                'message' => __('Horizonte desactivado (HORIZONTE_ENABLED=false).'),
-            ];
+        $disabled = $this->disabledPayload();
+        if ($disabled !== null) {
+            return $disabled;
         }
 
         $dryRun = (bool) ($options['dry_run'] ?? false);
-        $refYear = (int) config('horizonte.reference_year', (int) date('Y') - 1);
         $phases = [];
-        $allOk = true;
 
-        $steps = [
-            'fundeb' => ! ($options['skip_fundeb'] ?? false),
-            'censo' => ! ($options['skip_censo'] ?? false),
-            'saeb' => ! ($options['skip_saeb'] ?? false),
-            'ibge' => ! ($options['skip_ibge'] ?? false),
-            'sge' => ! ($options['skip_sge'] ?? false),
-            'verify' => ! ($options['skip_verify'] ?? false),
-        ];
-
-        if ($steps['fundeb']) {
-            $result = $dryRun
-                ? ['success' => true, 'message' => __('[dry-run] Sincronizar FUNDEB receita nacional (CSV FNDE).'), 'skipped' => true]
-                : $this->syncFundebReceitaNacional($refYear);
-            $phases[] = array_merge(['key' => 'fundeb_receita'], $result);
-            $allOk = $allOk && ($result['success'] ?? false);
-        }
-
-        if ($steps['censo']) {
-            $result = $dryRun
-                ? ['success' => true, 'message' => __('[dry-run] Indexar matrículas Censo (microdados INEP).'), 'skipped' => true]
-                : $this->indexCensoMatriculas();
-            $phases[] = array_merge(['key' => 'censo_matriculas'], $result);
-            $allOk = $allOk && ($result['success'] ?? false);
-        }
-
-        if ($steps['saeb']) {
-            $result = $dryRun
-                ? ['success' => true, 'message' => __('[dry-run] Importar planilhas SAEB INEP (todos os municípios).'), 'skipped' => true]
-                : $this->importSaebPlanilhasNacional();
-            $phases[] = array_merge(['key' => 'saeb_planilhas'], $result);
-            $allOk = $allOk && ($result['success'] ?? false);
-        }
-
-        if ($steps['ibge']) {
-            $result = $dryRun
-                ? ['success' => true, 'message' => __('[dry-run] Aquecer catálogo IBGE (27 UFs).'), 'skipped' => true]
-                : $this->warmIbgeCatalog();
-            $phases[] = array_merge(['key' => 'ibge_catalog'], $result);
-            $allOk = $allOk && ($result['success'] ?? false);
-        }
-
-        if ($steps['sge']) {
-            $result = $dryRun
-                ? ['success' => true, 'message' => __('[dry-run] Sincronizar registo SGE (sistemas de gestão educacional).'), 'skipped' => true]
-                : $this->syncSgeRegistry();
-            $phases[] = array_merge(['key' => 'sge_registry'], $result);
-            $allOk = $allOk && ($result['success'] ?? false);
-        }
-
-        if ($steps['verify']) {
-            $result = $dryRun
-                ? ['success' => true, 'message' => __('[dry-run] Verificação de fontes oficiais (--no-notify).'), 'skipped' => true]
-                : $this->runOfficialCheck();
-            $phases[] = array_merge(['key' => 'official_check'], $result);
-            $allOk = $allOk && ($result['success'] ?? false);
+        foreach (HorizonteFortnightlyFeedPhaseCatalog::queueFromOptions($this->normalizedSkipOptions($options)) as $phaseKey) {
+            $result = $dryRun ? $this->dryRunPhase($phaseKey) : $this->runPhase($phaseKey);
+            $phases[] = $result;
+            if (! $dryRun) {
+                gc_collect_cycles();
+            }
         }
 
         Log::info('horizonte.fortnightly_feed', [
-            'success' => $allOk,
+            'success' => collect($phases)->every(static fn (array $p): bool => (bool) ($p['success'] ?? false)),
             'phases' => array_map(static fn (array $p): string => (string) ($p['key'] ?? '?'), $phases),
         ]);
 
@@ -120,13 +197,113 @@ final class HorizonteFortnightlyFeedService
                     ? __('Abastecimento Horizonte concluído com avisos — mapa usa os dados disponíveis (fases em falha não bloqueiam).')
                     : __('Abastecimento Horizonte concluído — cache do mapa invalida-se automaticamente pelo fingerprint dos dados.'))
                 : __('Abastecimento Horizonte concluído sem dados novos — reveja os logs e o hub Dados públicos.'),
+            'staged' => false,
         ];
 
         if (! $dryRun) {
+            $runId = 'monolithic-'.now()->format('Ymd-His');
+            $result['run_id'] = $runId;
             $this->storeFeedResult($result);
+            foreach ($phases as $i => $phase) {
+                $this->notifier->phaseFinished($runId, $phase, $i + 1, count($phases));
+            }
+            $this->notifier->cycleFinished([
+                'run_id' => $runId,
+                'success' => $usable,
+                'message' => $result['message'],
+                'phase_queue' => array_column($phases, 'key'),
+            ]);
         }
 
         return $result;
+    }
+
+    /**
+     * @return array{success: bool, message: string, phases: list<array<string, mixed>>}|null
+     */
+    private function disabledPayload(): ?array
+    {
+        if (! (bool) config('horizonte.enabled', true)) {
+            return [
+                'success' => false,
+                'phases' => [],
+                'message' => __('Horizonte desactivado (HORIZONTE_ENABLED=false).'),
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $state
+     * @param  array<string, mixed>|null  $lastPhase
+     * @return array{success: bool, phases: list<array<string, mixed>>, message: string, pipeline?: array<string, mixed>, phase?: array<string, mixed>|null}
+     */
+    private function pipelineResponse(array $state, ?array $lastPhase = null): array
+    {
+        $phaseResults = [];
+        foreach (is_array($state['phases'] ?? null) ? $state['phases'] : [] as $row) {
+            if (is_array($row['result'] ?? null)) {
+                $phaseResults[] = $row['result'];
+            }
+        }
+
+        $running = ($state['status'] ?? '') === 'running';
+        $message = $running
+            ? __('Fase :label concluída — :done/:total. Próxima etapa pelo agendador.', [
+                'label' => HorizonteFortnightlyFeedPhaseCatalog::label((string) ($lastPhase['key'] ?? '')),
+                'done' => (string) count($phaseResults),
+                'total' => (string) count(is_array($state['phase_queue'] ?? null) ? $state['phase_queue'] : []),
+            ])
+            : (string) ($state['message'] ?? __('Pipeline Horizonte actualizado.'));
+
+        return [
+            'success' => $running ? (bool) ($lastPhase['success'] ?? true) : (bool) ($state['success'] ?? false),
+            'phases' => $phaseResults,
+            'message' => $message,
+            'pipeline' => $state,
+            'phase' => $lastPhase,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function dryRunPhase(string $phaseKey): array
+    {
+        $label = HorizonteFortnightlyFeedPhaseCatalog::label($phaseKey);
+
+        return [
+            'key' => $phaseKey,
+            'success' => true,
+            'skipped' => true,
+            'message' => __('[dry-run] :label', ['label' => $label]),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
+     * @return array<string, bool>
+     */
+    private function normalizedSkipOptions(array $options): array
+    {
+        return [
+            'skip_fundeb' => (bool) ($options['skip_fundeb'] ?? false),
+            'skip_censo' => (bool) ($options['skip_censo'] ?? false),
+            'skip_saeb' => (bool) ($options['skip_saeb'] ?? false),
+            'skip_ibge' => (bool) ($options['skip_ibge'] ?? false),
+            'skip_sge' => (bool) ($options['skip_sge'] ?? false),
+            'skip_verify' => (bool) ($options['skip_verify'] ?? false),
+        ];
+    }
+
+    private function applyResourceLimits(): void
+    {
+        $memory = trim((string) config('horizonte.fortnightly_feed.memory_limit', '512M'));
+        if ($memory !== '') {
+            @ini_set('memory_limit', $memory);
+        }
+        @set_time_limit(max(60, (int) config('horizonte.fortnightly_feed.time_limit', 900)));
     }
 
     /**

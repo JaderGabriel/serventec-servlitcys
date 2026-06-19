@@ -248,14 +248,34 @@ return Application::configure(basePath: dirname(__DIR__))
             $day1 = max(1, min(28, (int) ($days[0] ?? 1)));
             $day2 = max(1, min(28, (int) ($days[1] ?? 15)));
             $overlap = max(60, (int) config('horizonte.fortnightly_feed.schedule.overlap_minutes', 2880));
+            $stepInterval = max(5, (int) config('horizonte.fortnightly_feed.schedule.step_interval_minutes', 20));
+            $staged = filter_var(config('horizonte.fortnightly_feed.staged', true), FILTER_VALIDATE_BOOLEAN);
 
-            $schedule->command('horizonte:fortnightly-feed')
-                ->twiceMonthly($day1, $day2)
-                ->at($feedTime)
-                ->name('horizonte-fortnightly-feed')
-                ->withoutOverlapping($overlap)
-                ->timezone($timezone)
-                ->runInBackground();
+            if ($staged) {
+                $schedule->command('horizonte:fortnightly-feed --staged --reset')
+                    ->twiceMonthly($day1, $day2)
+                    ->at($feedTime)
+                    ->name('horizonte-fortnightly-feed-start')
+                    ->withoutOverlapping($overlap)
+                    ->timezone($timezone)
+                    ->runInBackground();
+
+                $schedule->command('horizonte:fortnightly-feed --staged --continue')
+                    ->cron('*/'.$stepInterval.' * * * *')
+                    ->name('horizonte-fortnightly-feed-step')
+                    ->withoutOverlapping(max(5, $stepInterval - 1))
+                    ->when(static fn (): bool => \App\Support\Horizonte\HorizonteFortnightlyFeedPipeline::isActive())
+                    ->timezone($timezone)
+                    ->runInBackground();
+            } else {
+                $schedule->command('horizonte:fortnightly-feed --all')
+                    ->twiceMonthly($day1, $day2)
+                    ->at($feedTime)
+                    ->name('horizonte-fortnightly-feed')
+                    ->withoutOverlapping($overlap)
+                    ->timezone($timezone)
+                    ->runInBackground();
+            }
         }
     })
     ->create();

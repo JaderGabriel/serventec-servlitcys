@@ -8,6 +8,7 @@ use App\Enums\AnalyticsReportExportStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AdminSyncTask;
 use App\Models\AnalyticsReportExport;
+use App\Services\Admin\HorizonteImportHubStatusService;
 use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\Notifications\OperationalAlertsNotifier;
 use App\Support\Admin\AdminSyncQueueIndexPresenter;
@@ -22,7 +23,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AdminSyncQueueController extends Controller
 {
-    public function index(Request $request, OperationalAlertsNotifier $operationalAlerts): View
+    public function index(Request $request, OperationalAlertsNotifier $operationalAlerts, HorizonteImportHubStatusService $horizonteHub): View
     {
         $user = $request->user();
         abort_if($user === null || ! $user->canViewSyncQueue(), 403);
@@ -82,6 +83,9 @@ class AdminSyncQueueController extends Controller
         $syncQueueName = (string) config('ieducar.admin_sync.queue', 'admin-sync');
         $pdfQueueName = (string) config('analytics.pdf_report.queue', 'default');
 
+        $horizonteHubData = $horizonteHub->build();
+        $horizonteThemeCard = AdminSyncQueueIndexPresenter::horizonteThemeCard($horizonteHubData);
+
         $domainEnum = $domain !== '' ? AdminSyncDomain::tryFrom($domain) : null;
         $activeTheme = $domainEnum !== null
             ? AdminSyncQueueIndexPresenter::themeForDomain($domainEnum, $syncQueueName)
@@ -121,6 +125,8 @@ class AdminSyncQueueController extends Controller
                 ? AdminSyncQueueIndexPresenter::syncThemeSections($countsByDomainStatus, $syncQueueName)
                 : [],
             'pdfThemeCard' => AdminSyncQueueIndexPresenter::pdfThemeCard($pdfCounts, $pdfQueueName),
+            'horizonteHub' => $horizonteHubData,
+            'horizonteThemeCard' => $horizonteThemeCard,
             'syncQueueName' => $syncQueueName,
             'syncQueueConnection' => config('ieducar.admin_sync.connection') ?? $queueDefault,
             'pdfExports' => $pdfExports,

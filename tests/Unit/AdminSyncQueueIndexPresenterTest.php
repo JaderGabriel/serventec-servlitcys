@@ -60,4 +60,31 @@ class AdminSyncQueueIndexPresenterTest extends TestCase
 
         @unlink($path);
     }
+
+    public function test_horizonte_theme_card_summarizes_hub_coverage(): void
+    {
+        $card = AdminSyncQueueIndexPresenter::horizonteThemeCard([
+            'enabled' => true,
+            'feed_enabled' => true,
+            'coverage' => [
+                'universe_municipios' => 1200,
+                'with_full_triad' => 450,
+            ],
+            'phases' => [
+                ['ok' => true],
+                ['ok' => false],
+            ],
+            'last_feed' => [
+                'success' => true,
+                'finished_at' => now()->toIso8601String(),
+            ],
+        ]);
+
+        $this->assertSame('horizonte', $card['id']);
+        $this->assertSame(1200, $card['universe']);
+        $this->assertSame(450, $card['triad']);
+        $this->assertSame(1, $card['status_ok']);
+        $this->assertSame(1, $card['status_alert']);
+        $this->assertTrue($card['last_feed_success']);
+    }
 }

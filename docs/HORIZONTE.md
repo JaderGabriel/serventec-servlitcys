@@ -211,7 +211,9 @@ HorizonteController
 
 ### 9.1 Rotina quinzenal (abastecimento automático)
 
-Comando: **`horizonte:fortnightly-feed`** · agendamento: **dias 1 e 15** de cada mês (configurável).
+Comando: **`horizonte:fortnightly-feed`** · agendamento: **dias 1 e 15** (início do ciclo) + **passos a cada N minutos** enquanto o pipeline estiver activo.
+
+Por defeito corre **em etapas** (`HORIZONTE_FORTNIGHTLY_FEED_STAGED=true`): cada invocação executa **uma fase**, libertando memória entre processos. Admins recebem **notificação por fase** e ao concluir o ciclo. Estado visível em **Filas** (`#fila-horizonte`) e no hub Horizonte.
 
 | Fase | O que faz |
 |------|-----------|
@@ -223,8 +225,14 @@ Comando: **`horizonte:fortnightly-feed`** · agendamento: **dias 1 e 15** de cad
 | **Verificação** | `public-data:check-official --no-notify` (cache no hub, sem notificação) |
 
 ```bash
-# Manual / diagnóstico
-php artisan horizonte:fortnightly-feed
+# Manual — etapas (recomendado em produção)
+php artisan horizonte:fortnightly-feed --staged --reset
+php artisan horizonte:fortnightly-feed --staged --continue
+php artisan horizonte:fortnightly-feed --phase=fundeb_receita
+
+# Manual — tudo numa invocação (mais RAM)
+php artisan horizonte:fortnightly-feed --all
+
 php artisan horizonte:fortnightly-feed --dry-run
 php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo --skip-sge
 

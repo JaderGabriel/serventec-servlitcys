@@ -83,14 +83,19 @@ class PublicDataImportController extends Controller
 
         @set_time_limit(600);
 
-        $result = $feed->run([
+        $skipOptions = [
             'skip_fundeb' => $request->boolean('skip_fundeb'),
             'skip_censo' => $request->boolean('skip_censo'),
             'skip_saeb' => $request->boolean('skip_saeb'),
             'skip_ibge' => $request->boolean('skip_ibge'),
             'skip_sge' => $request->boolean('skip_sge'),
             'skip_verify' => $request->boolean('skip_verify'),
-        ]);
+        ];
+
+        $staged = filter_var(config('horizonte.fortnightly_feed.staged', true), FILTER_VALIDATE_BOOLEAN);
+        $result = $staged
+            ? $feed->runStaged(array_merge($skipOptions, ['reset' => true]))
+            : $feed->run($skipOptions);
 
         return redirect()
             ->to(route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-hub')
@@ -98,6 +103,8 @@ class PublicDataImportController extends Controller
                 'success' => (bool) ($result['success'] ?? false),
                 'message' => (string) ($result['message'] ?? ''),
                 'phases' => is_array($result['phases'] ?? null) ? $result['phases'] : [],
+                'pipeline' => is_array($result['pipeline'] ?? null) ? $result['pipeline'] : null,
+                'staged' => $staged,
             ]);
     }
 

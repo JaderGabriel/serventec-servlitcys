@@ -52,6 +52,7 @@ return [
             'days' => [1, 15],
             'time' => env('HORIZONTE_FORTNIGHTLY_FEED_TIME', '03:00'),
             'overlap_minutes' => max(60, (int) env('HORIZONTE_FORTNIGHTLY_FEED_OVERLAP_MINUTES', 2880)),
+            'step_interval_minutes' => max(5, (int) env('HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL', 20)),
         ],
 
         'fundeb_years' => array_values(array_filter(array_map(
@@ -66,6 +67,13 @@ return [
         'censo_skip_if_missing' => filter_var(env('HORIZONTE_FORTNIGHTLY_CENSO_SKIP_IF_MISSING', true), FILTER_VALIDATE_BOOL),
         'censo_allow_empty' => filter_var(env('HORIZONTE_FORTNIGHTLY_CENSO_ALLOW_EMPTY', false), FILTER_VALIDATE_BOOL),
         'snapshot_cache_ttl' => max(3600, (int) env('HORIZONTE_FORTNIGHTLY_SNAPSHOT_CACHE_TTL', 604800)),
+        'pipeline_cache_ttl' => max(3600, (int) env('HORIZONTE_FORTNIGHTLY_PIPELINE_CACHE_TTL', 604800)),
+
+        /** Executar uma fase por invocação Artisan (recomendado em produção). */
+        'staged' => filter_var(env('HORIZONTE_FORTNIGHTLY_FEED_STAGED', true), FILTER_VALIDATE_BOOL),
+        'notify_phases' => filter_var(env('HORIZONTE_FORTNIGHTLY_FEED_NOTIFY_PHASES', true), FILTER_VALIDATE_BOOL),
+        'memory_limit' => env('HORIZONTE_FORTNIGHTLY_FEED_MEMORY_LIMIT', '512M'),
+        'time_limit' => max(60, (int) env('HORIZONTE_FORTNIGHTLY_FEED_TIME_LIMIT', 900)),
     ],
 
     /*

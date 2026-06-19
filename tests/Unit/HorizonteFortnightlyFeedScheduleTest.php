@@ -9,15 +9,29 @@ use Tests\TestCase;
 final class HorizonteFortnightlyFeedScheduleTest extends TestCase
 {
     #[Test]
-    public function schedule_includes_horizonte_fortnightly_feed(): void
+    public function schedule_includes_horizonte_staged_feed_commands(): void
     {
+        config([
+            'horizonte.fortnightly_feed.enabled' => true,
+            'horizonte.fortnightly_feed.schedule.enabled' => true,
+            'horizonte.fortnightly_feed.staged' => true,
+        ]);
+
         $this->artisan('schedule:list')->assertSuccessful();
 
         $events = app(Schedule::class)->events();
-        $found = collect($events)->contains(
-            static fn ($e) => str_contains((string) ($e->command ?? ''), 'horizonte:fortnightly-feed'),
-        );
+        $commands = collect($events)
+            ->map(static fn ($e) => (string) ($e->command ?? ''))
+            ->filter(static fn (string $c): bool => str_contains($c, 'horizonte:fortnightly-feed'))
+            ->all();
 
-        $this->assertTrue($found, 'Expected horizonte:fortnightly-feed in the schedule.');
+        $this->assertTrue(
+            collect($commands)->contains(static fn (string $c): bool => str_contains($c, '--staged --reset')),
+            'Expected horizonte staged reset in schedule.',
+        );
+        $this->assertTrue(
+            collect($commands)->contains(static fn (string $c): bool => str_contains($c, '--staged --continue')),
+            'Expected horizonte staged continue in schedule.',
+        );
     }
 }

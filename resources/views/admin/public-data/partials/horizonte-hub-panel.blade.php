@@ -6,6 +6,7 @@
     $phases = is_array($hub['phases'] ?? null) ? $hub['phases'] : [];
     $lastFeed = is_array($hub['last_feed'] ?? null) ? $hub['last_feed'] : null;
     $feedFlash = session('horizonte_feed');
+    $pipeline = is_array($hub['pipeline'] ?? null) ? $hub['pipeline'] : (is_array($feedFlash['pipeline'] ?? null) ? $feedFlash['pipeline'] : null);
     $scheduleDays = $hub['schedule_days'] ?? [1, 15];
     $day1 = (int) ($scheduleDays[0] ?? 1);
     $day2 = (int) ($scheduleDays[1] ?? 15);
@@ -50,7 +51,7 @@
             >
                 @csrf
                 <p class="text-[11px] font-semibold uppercase tracking-wide text-indigo-800 dark:text-indigo-200">{{ __('Executar agora') }}</p>
-                <p class="text-[11px] text-indigo-900/80 dark:text-indigo-200/80">{{ __('Pode demorar vários minutos — mantenha a sessão aberta.') }}</p>
+                <p class="text-[11px] text-indigo-900/80 dark:text-indigo-200/80">{{ __('Pode demorar — em produção corre em etapas (1 fase por vez).') }}</p>
                 <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-gray-700 dark:text-gray-300">
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_fundeb" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar FUNDEB') }}</label>
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_censo" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar Censo') }}</label>
@@ -77,7 +78,17 @@
     @elseif (is_array($feedFlash))
         <x-admin.import-hub.callout :variant="($feedFlash['success'] ?? false) ? 'success' : 'warning'" :title="($feedFlash['success'] ?? false) ? __('Abastecimento concluído') : __('Abastecimento com falhas')">
             {{ $feedFlash['message'] ?? '' }}
+            @if ($feedFlash['staged'] ?? false)
+                <p class="mt-2 text-xs opacity-90">{{ __('Modo em etapas — fases restantes continuam pelo agendador ou php artisan horizonte:fortnightly-feed --staged --continue') }}</p>
+            @endif
         </x-admin.import-hub.callout>
+    @endif
+
+    @if ($pipeline !== null)
+        @include('admin.public-data.partials.horizonte-feed-pipeline', [
+            'pipeline' => $pipeline,
+            'stepInterval' => $hub['feed_step_interval'] ?? 20,
+        ])
     @endif
 
     <x-admin.import-hub.stats-grid columns="sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">

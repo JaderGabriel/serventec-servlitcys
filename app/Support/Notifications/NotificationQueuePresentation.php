@@ -36,17 +36,6 @@ final class NotificationQueuePresentation
         ]);
     }
 
-    /**
-     * @return array{
-     *   pdf_export_id?: int,
-     *   queue_domain: string,
-     *   queue_icon: string,
-     *   queue_accent: string,
-     *   queue_label: string,
-     *   queue_icon_box_class: string,
-     *   action_url: string
-     * }
-     */
     public static function forPdf(?int $exportId = null, ?string $actionUrl = null): array
     {
         $url = $actionUrl ?? route('admin.sync-queue.index');
@@ -66,6 +55,29 @@ final class NotificationQueuePresentation
         }
 
         return self::build($fields);
+    }
+
+    /**
+     * @return array{
+     *   queue_domain: string,
+     *   queue_icon: string,
+     *   queue_accent: string,
+     *   queue_label: string,
+     *   queue_icon_box_class: string,
+     *   action_url: string
+     * }
+     */
+    public static function forHorizonte(?string $actionUrl = null): array
+    {
+        $url = $actionUrl ?? route('admin.sync-queue.index').'#fila-horizonte';
+
+        return self::build([
+            'queue_domain' => 'horizonte',
+            'queue_icon' => 'map',
+            'queue_accent' => 'indigo',
+            'queue_label' => __('Horizonte — abastecimento'),
+            'action_url' => $url,
+        ]);
     }
 
     /**
@@ -125,6 +137,13 @@ final class NotificationQueuePresentation
             $variant = self::operationsVariantFromDedupeKey($data['dedupe_key'] ?? null);
 
             return self::ensurePresentationFields(array_merge($data, self::forOperations($variant)));
+        }
+
+        $dedupe = (string) ($data['dedupe_key'] ?? '');
+        if (str_starts_with($dedupe, 'horizonte:')) {
+            return self::ensurePresentationFields(array_merge($data, self::forHorizonte(
+                filled($data['action_url'] ?? null) ? (string) $data['action_url'] : null,
+            )));
         }
 
         return self::ensurePresentationFields($data);

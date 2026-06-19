@@ -9,6 +9,7 @@ use App\Support\Admin\PublicDataImportCatalog;
 use App\Services\Admin\PublicDataOfficialCheckCache;
 use App\Support\Dashboard\AdminHomeMapCache;
 use App\Support\Horizonte\HorizonteFortnightlyFeedCache;
+use App\Support\Horizonte\HorizonteFortnightlyFeedPipeline;
 use App\Support\InepMicrodadosCadastroEscolasPath;
 
 /**
@@ -91,6 +92,9 @@ final class HorizonteImportHubStatusService
             ],
             'phases' => $this->feedPhases($fundebSet, $censoSet, $saebSet, $microdadosPath),
             'last_feed' => HorizonteFortnightlyFeedCache::get(),
+            'pipeline' => HorizonteFortnightlyFeedPipeline::get(),
+            'feed_staged' => filter_var(config('horizonte.fortnightly_feed.staged', true), FILTER_VALIDATE_BOOLEAN),
+            'feed_step_interval' => max(5, (int) config('horizonte.fortnightly_feed.schedule.step_interval_minutes', 20)),
             'map_url' => route('dashboard.horizonte'),
             'doc_url' => route('admin.documentation.show', ['doc' => 'docs/HORIZONTE.md']),
         ];
@@ -153,6 +157,18 @@ final class HorizonteImportHubStatusService
                 'ok' => $this->countIbgeUfsWarmed() >= 10,
                 'metric' => $this->countIbgeUfsWarmed(),
                 'metric_label' => __('UFs aquecidas'),
+            ],
+            [
+                'key' => 'sge_registry',
+                'label' => __('SGE — sistemas de gestão educacional'),
+                'description' => __('Registo opcional IBGE→SGE + catálogo i-Educar ServLITCYS (não bloqueia o mapa).'),
+                'source_id' => null,
+                'hub_anchor' => '#horizonte-hub',
+                'admin_url' => route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-hub',
+                'cli' => 'php artisan horizonte:fortnightly-feed --skip-fundeb --skip-censo --skip-saeb --skip-ibge --skip-verify',
+                'ok' => true,
+                'metric' => null,
+                'metric_label' => null,
             ],
             [
                 'key' => 'official_check',
