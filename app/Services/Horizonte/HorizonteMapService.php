@@ -61,7 +61,7 @@ final class HorizonteMapService
             return $cached;
         }
 
-        $payload = $this->assemble($refYear);
+        $payload = $this->assemble($refYear, requireCoordinates: true);
         AdminHomeMapCache::repository()->put(
             $cacheKey,
             $payload,
@@ -78,14 +78,43 @@ final class HorizonteMapService
      */
     public function buildForRequest(string $scope, ?string $uf): array
     {
-        $full = $this->build();
+        if (! (bool) config('horizonte.enabled', true)) {
+            return $this->asOverviewPayload($this->emptyPayload());
+        }
+
+        $refYear = (int) config('horizonte.reference_year', (int) date('Y') - 1);
+        $fingerprint = $this->dataFingerprint();
+        $ttl = max(60, (int) config('horizonte.cache_seconds', 900));
         $uf = \App\Support\Horizonte\HorizonteUfScope::normalize($uf);
 
         if ($scope === 'regional' && $uf !== null) {
-            return $this->asRegionalPayload($full, $uf);
+            $fullKey = 'horizonte:map:v2:'.$refYear.':'.$fingerprint;
+            $full = AdminHomeMapCache::get($fullKey);
+            if (is_array($full)) {
+                return $this->asRegionalPayload($full, $uf);
+            }
+
+            $regKey = 'horizonte:map:regional:v1:'.$refYear.':'.$uf.':'.$fingerprint;
+            $regional = AdminHomeMapCache::get($regKey);
+            if (! is_array($regional)) {
+                $regional = $this->assemble($refYear, requireCoordinates: true, scopeUf: $uf);
+                AdminHomeMapCache::repository()->put($regKey, $regional, $ttl);
+            }
+
+            return $this->asRegionalPayload($regional, $uf);
         }
 
-        return $this->asOverviewPayload($full);
+        $overviewKey = 'horizonte:map:overview:v1:'.$refYear.':'.$fingerprint;
+        $cachedOverview = AdminHomeMapCache::get($overviewKey);
+        if (is_array($cachedOverview)) {
+            return $cachedOverview;
+        }
+
+        $assembled = $this->assemble($refYear, requireCoordinates: false);
+        $payload = $this->asOverviewPayload($assembled);
+        AdminHomeMapCache::repository()->put($overviewKey, $payload, $ttl);
+
+        return $payload;
     }
 
     /**
@@ -197,7 +226,7 @@ final class HorizonteMapService
     /**
      * @return array<string, mixed>
      */
-    private function assemble(int $refYear): array
+    private function assemble(int $refYear, bool $requireCoordinates = true, ?string $scopeUf = null): array
     {
         $citiesByIbge = $this->citiesByIbge();
         $ibgeSet = $this->collectIbgeCodes(array_keys($citiesByIbge));
@@ -228,15 +257,29 @@ final class HorizonteMapService
             $ibgeSet[$ibge] = true;
         }
 
-        $ufs = IbgeUfFromCode::ufsFromIbgeCodes(array_keys($ibgeSet));
-        foreach ($citiesByIbge as $city) {
-            $ufs[] = strtoupper((string) $city['uf']);
+        $scopedUf = $scopeUf !== null ? strtoupper(trim($scopeUf)) : null;
+        if ($scopedUf !== null) {
+            $ibgeSet = array_filter(
+                $ibgeSet,
+                static fn (bool $_present, string $ibge): bool => IbgeUfFromCode::ufFromIbge($ibge) === $scopedUf,
+                ARRAY_FILTER_USE_BOTH,
+            );
         }
-        $ufs = array_values(array_unique(array_filter($ufs)));
-        if ($ufs === []) {
-            $ufs = IbgeMunicipalityCatalog::brazilianUfs();
+
+        $ibgeMetaIndex = [];
+        if ($requireCoordinates) {
+            $ufs = $scopedUf !== null
+                ? [$scopedUf]
+                : IbgeUfFromCode::ufsFromIbgeCodes(array_keys($ibgeSet));
+            foreach ($citiesByIbge as $city) {
+                $ufs[] = strtoupper((string) $city['uf']);
+            }
+            $ufs = array_values(array_unique(array_filter($ufs)));
+            if ($ufs === []) {
+                $ufs = IbgeMunicipalityCatalog::brazilianUfs();
+            }
+            $ibgeMetaIndex = $this->ibgeCatalog->metaIndexForUfs($ufs, fetchRemoteCentroids: false);
         }
-        $ibgeMetaIndex = $this->ibgeCatalog->metaIndexForUfs($ufs);
 
         $saebForBench = [];
         $complRatios = [];
@@ -279,25 +322,43 @@ final class HorizonteMapService
 
             $meta = null;
             $fromIbge = $ibgeMetaIndex[$ibge] ?? null;
-            if ($fromIbge !== null
-                && BrazilUfCentroids::isValidBrazilCoord((float) ($fromIbge['lat'] ?? 0), (float) ($fromIbge['lng'] ?? 0))
-                && (($fromIbge['coord_source'] ?? '') !== 'uf_spread' || $city === null)) {
-                $meta = $fromIbge;
-            } elseif ($city !== null) {
+
+            if ($requireCoordinates) {
+                if ($fromIbge !== null
+                    && BrazilUfCentroids::isValidBrazilCoord((float) ($fromIbge['lat'] ?? 0), (float) ($fromIbge['lng'] ?? 0))
+                    && (($fromIbge['coord_source'] ?? '') !== 'uf_spread' || $city === null)) {
+                    $meta = $fromIbge;
+                } elseif ($city !== null) {
+                    $meta = [
+                        'ibge' => $ibge,
+                        'name' => (string) $city['name'],
+                        'uf' => strtoupper((string) $city['uf']),
+                        'lat' => (float) ($city['lat'] ?? 0),
+                        'lng' => (float) ($city['lng'] ?? 0),
+                    ];
+                }
+                if ($meta === null && $fromIbge !== null) {
+                    $meta = $fromIbge;
+                }
+                if ($meta === null
+                    || ! BrazilUfCentroids::isValidBrazilCoord((float) ($meta['lat'] ?? 0), (float) ($meta['lng'] ?? 0))) {
+                    continue;
+                }
+            } else {
+                $ufCode = strtoupper((string) ($city['uf'] ?? IbgeUfFromCode::ufFromIbge($ibge) ?? ''));
+                if ($ufCode === '') {
+                    continue;
+                }
                 $meta = [
                     'ibge' => $ibge,
-                    'name' => (string) $city['name'],
-                    'uf' => strtoupper((string) $city['uf']),
-                    'lat' => (float) ($city['lat'] ?? 0),
-                    'lng' => (float) ($city['lng'] ?? 0),
+                    'name' => $city !== null
+                        ? (string) $city['name']
+                        : (string) ($fromIbge['name'] ?? __('Município :ibge', ['ibge' => $ibge])),
+                    'uf' => $ufCode,
+                    'lat' => (float) ($fromIbge['lat'] ?? 0),
+                    'lng' => (float) ($fromIbge['lng'] ?? 0),
+                    'coord_source' => 'overview',
                 ];
-            }
-            if ($meta === null && $fromIbge !== null) {
-                $meta = $fromIbge;
-            }
-            if ($meta === null
-                || ! BrazilUfCentroids::isValidBrazilCoord((float) ($meta['lat'] ?? 0), (float) ($meta['lng'] ?? 0))) {
-                continue;
             }
 
             $inCatalog = $city !== null;

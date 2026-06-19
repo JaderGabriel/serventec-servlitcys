@@ -74,13 +74,13 @@ final class IbgeMunicipalityCatalog
      *
      * @return array<string, array{ibge: string, name: string, uf: string, lat: float, lng: float}>
      */
-    public function metaIndexForUfs(array $ufs): array
+    public function metaIndexForUfs(array $ufs, bool $fetchRemoteCentroids = false): array
     {
-        $this->warmForUfs($ufs);
+        $this->warmForUfs($ufs, $fetchRemoteCentroids);
 
         $index = [];
         foreach (array_unique(array_filter(array_map('strtoupper', $ufs))) as $uf) {
-            foreach ($this->municipalitiesForUf($uf) as $ibge => $meta) {
+            foreach ($this->municipalitiesForUf($uf, $fetchRemoteCentroids) as $ibge => $meta) {
                 $index[$ibge] = $meta;
             }
         }
@@ -91,17 +91,17 @@ final class IbgeMunicipalityCatalog
     /**
      * @param  list<string>  $ufs
      */
-    public function warmForUfs(array $ufs): void
+    public function warmForUfs(array $ufs, bool $fetchRemoteCentroids = false): void
     {
         foreach (array_unique(array_filter(array_map('strtoupper', $ufs))) as $uf) {
-            $this->municipalitiesForUf($uf);
+            $this->municipalitiesForUf($uf, $fetchRemoteCentroids);
         }
     }
 
     /**
      * @return array<string, array{ibge: string, name: string, uf: string, lat: float, lng: float}>
      */
-    public function municipalitiesForUf(string $uf): array
+    public function municipalitiesForUf(string $uf, bool $fetchRemoteCentroids = false): array
     {
         $uf = strtoupper(trim($uf));
         if ($uf === '') {
@@ -135,7 +135,7 @@ final class IbgeMunicipalityCatalog
                 if (! is_array($item)) {
                     continue;
                 }
-                $meta = $this->metaFromApiItem($item, $uf, (int) $position, $total);
+                $meta = $this->metaFromApiItem($item, $uf, (int) $position, $total, $fetchRemoteCentroids);
                 if ($meta !== null) {
                     $index[$meta['ibge']] = $meta;
                     $cache->put('ibge_municipality_meta:'.$meta['ibge'], $meta, self::CACHE_TTL_SECONDS);
@@ -160,7 +160,7 @@ final class IbgeMunicipalityCatalog
      * @param  array<string, mixed>  $item
      * @return array{ibge: string, name: string, uf: string, lat: float, lng: float}|null
      */
-    private function metaFromApiItem(array $item, ?string $ufHint = null, int $index = 0, int $total = 1): ?array
+    private function metaFromApiItem(array $item, ?string $ufHint = null, int $index = 0, int $total = 1, bool $fetchRemoteCentroids = false): ?array
     {
         $ibge = $this->normalizeIbge((string) ($item['id'] ?? ''));
         $name = trim((string) ($item['nome'] ?? ''));
@@ -179,7 +179,7 @@ final class IbgeMunicipalityCatalog
             return null;
         }
 
-        [$lat, $lng, $source] = $this->coordinatesFromApiItem($item, $uf, $index, $total, $ibge);
+        [$lat, $lng, $source] = $this->coordinatesFromApiItem($item, $uf, $index, $total, $ibge, $fetchRemoteCentroids);
 
         return [
             'ibge' => $ibge,
@@ -197,7 +197,7 @@ final class IbgeMunicipalityCatalog
      * @param  array<string, mixed>  $item
      * @return array{0: float, 1: float, 2: string}
      */
-    private function coordinatesFromApiItem(array $item, string $uf, int $index, int $total, string $ibge): array
+    private function coordinatesFromApiItem(array $item, string $uf, int $index, int $total, string $ibge, bool $fetchRemoteCentroids = false): array
     {
         $centroide = $item['centroide'] ?? null;
         if (is_array($centroide) && ($centroide['type'] ?? '') === 'Point') {
@@ -211,9 +211,11 @@ final class IbgeMunicipalityCatalog
             }
         }
 
-        $fromSingle = $this->fetchRawCentroidFromApi($ibge);
-        if ($fromSingle !== null) {
-            return [$fromSingle[0], $fromSingle[1], 'ibge_api'];
+        if ($fetchRemoteCentroids) {
+            $fromSingle = $this->fetchRawCentroidFromApi($ibge);
+            if ($fromSingle !== null) {
+                return [$fromSingle[0], $fromSingle[1], 'ibge_api'];
+            }
         }
 
         [$lat, $lng] = BrazilUfCentroids::latLngForIndex($uf, $index, max(1, $total), (int) $ibge);

@@ -284,14 +284,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (this.loadUrl) {
                 await this.fetchOverview();
             }
-            if (this.pageError) {
-                return;
-            }
             const initialUf = String(options.initialUf ?? "").trim();
-            if (initialUf !== "") {
+            if (initialUf !== "" && !this.pageError) {
                 await this.selectUf(initialUf, false);
-            } else if (this.displayPolicy?.initial_uf) {
-                await this.selectUf(this.displayPolicy.initial_uf, false);
             }
         },
 
