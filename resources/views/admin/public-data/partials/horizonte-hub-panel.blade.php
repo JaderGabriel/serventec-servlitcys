@@ -56,6 +56,7 @@
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_censo" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar Censo') }}</label>
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_saeb" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar SAEB') }}</label>
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_ibge" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar IBGE') }}</label>
+                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_sge" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar SGE') }}</label>
                     <label class="col-span-2 flex items-center gap-1.5"><input type="checkbox" name="skip_verify" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar verificação oficial') }}</label>
                 </div>
                 <button

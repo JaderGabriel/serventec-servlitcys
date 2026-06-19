@@ -65,6 +65,10 @@ class PublicDataImportController extends Controller
 
     public function horizonteFeed(Request $request, HorizonteFortnightlyFeedService $feed): RedirectResponse
     {
+        if ($request->isMethod('GET')) {
+            return redirect()->to(route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-hub');
+        }
+
         if (! (bool) config('horizonte.enabled', true)) {
             return redirect()
                 ->route('admin.public-data.index', ['hub' => 'horizonte'])
@@ -84,6 +88,7 @@ class PublicDataImportController extends Controller
             'skip_censo' => $request->boolean('skip_censo'),
             'skip_saeb' => $request->boolean('skip_saeb'),
             'skip_ibge' => $request->boolean('skip_ibge'),
+            'skip_sge' => $request->boolean('skip_sge'),
             'skip_verify' => $request->boolean('skip_verify'),
         ]);
 

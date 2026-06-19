@@ -146,7 +146,7 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'legal.consent', 'adm
 
     Route::get('/admin/dados-publicos', [PublicDataImportController::class, 'index'])->name('admin.public-data.index');
     Route::post('/admin/dados-publicos/verificar-oficial', [PublicDataImportController::class, 'checkOfficial'])->name('admin.public-data.check-official');
-    Route::post('/admin/dados-publicos/horizonte-feed', [PublicDataImportController::class, 'horizonteFeed'])->name('admin.public-data.horizonte-feed');
+    Route::match(['get', 'post'], '/admin/dados-publicos/horizonte-feed', [PublicDataImportController::class, 'horizonteFeed'])->name('admin.public-data.horizonte-feed');
     Route::post('/admin/dados-publicos', [PublicDataImportController::class, 'run'])->name('admin.public-data.run');
 
     Route::get('/admin/ieducar-compatibility', [IeducarCompatibilityController::class, 'index'])->name('admin.ieducar-compatibility.index');
