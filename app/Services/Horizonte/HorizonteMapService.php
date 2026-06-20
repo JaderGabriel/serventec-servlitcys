@@ -15,6 +15,7 @@ use App\Support\Brazil\BrazilUfCentroids;
 use App\Support\Brazil\BrazilUfNames;
 use App\Support\Brazil\IbgeMunicipalityCatalog;
 use App\Support\Brazil\IbgeUfFromCode;
+use App\Support\Brazil\MunicipalityMapOverlapResolver;
 use App\Support\Dashboard\AdminHomeMapCache;
 use App\Support\Horizonte\HorizonteManagerInsights;
 use App\Support\Horizonte\HorizonteMapPresenter;
@@ -157,6 +158,8 @@ final class HorizonteMapService
 
         $full['mode'] = 'regional';
         $full['scope_uf'] = $uf;
+        $regional = $this->enrichRegionalCoordinates($regional, $uf);
+        $regional = $this->resolveApproximateOverlaps($regional);
         $full['markers'] = $regional;
         $full['summary'] = array_merge($this->buildSummary($regional), ['coverage' => $coverage]);
         $full['focus_segments'] = HorizonteManagerInsights::focusSegments($regional);
@@ -165,6 +168,100 @@ final class HorizonteMapService
         $full['uf_map_points'] = [];
 
         return $full;
+    }
+
+    private function financialPressureMin(): int
+    {
+        return max(0, min(100, (int) config('horizonte.map_display.financial_pressure_min', 60)));
+    }
+
+    /**
+     * @param  array<string, mixed>  $m
+     */
+    private function isHighPressureMarker(array $m): bool
+    {
+        if ($m['consultoria_active'] ?? false) {
+            return false;
+        }
+        $tier = (string) ($m['tier'] ?? '');
+        if (! str_starts_with($tier, 'prospect_')) {
+            return false;
+        }
+
+        return $tier === 'prospect_high'
+            || (int) ($m['financial_pressure'] ?? 0) >= $this->financialPressureMin();
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $markers
+     * @return list<array<string, mixed>>
+     */
+    private function enrichRegionalCoordinates(array $markers, string $uf): array
+    {
+        if ($markers === []) {
+            return $markers;
+        }
+
+        $ibgeIndex = $this->ibgeCatalog->metaIndexForUfs([$uf], true);
+
+        foreach ($markers as &$m) {
+            $ibge = (string) ($m['ibge'] ?? '');
+            if ($ibge === '') {
+                continue;
+            }
+            $fromIbge = $ibgeIndex[$ibge] ?? null;
+            if ($fromIbge === null) {
+                continue;
+            }
+            $source = (string) ($fromIbge['coord_source'] ?? '');
+            if (in_array($source, ['uf_spread', 'overview'], true)) {
+                continue;
+            }
+            if (! BrazilUfCentroids::isValidBrazilCoord((float) ($fromIbge['lat'] ?? 0), (float) ($fromIbge['lng'] ?? 0))) {
+                continue;
+            }
+            $m['lat'] = (float) $fromIbge['lat'];
+            $m['lng'] = (float) $fromIbge['lng'];
+            $m['coord_source'] = $source;
+            $m['coord_approximate'] = false;
+        }
+        unset($m);
+
+        return $markers;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $markers
+     * @return list<array<string, mixed>>
+     */
+    private function resolveApproximateOverlaps(array $markers): array
+    {
+        $approxIndices = [];
+        $approxSlice = [];
+        foreach ($markers as $i => $m) {
+            if (! ($m['coord_approximate'] ?? false)) {
+                continue;
+            }
+            $approxIndices[] = $i;
+            $approxSlice[] = [
+                'lat' => (float) ($m['lat'] ?? 0),
+                'lng' => (float) ($m['lng'] ?? 0),
+                'coord_source' => (string) ($m['coord_source'] ?? 'uf_spread'),
+            ];
+        }
+
+        if (count($approxSlice) < 2) {
+            return $markers;
+        }
+
+        $separated = (new MunicipalityMapOverlapResolver())->separate($approxSlice);
+        foreach ($approxIndices as $j => $idx) {
+            $markers[$idx]['lat'] = (float) ($separated[$j]['lat'] ?? $markers[$idx]['lat']);
+            $markers[$idx]['lng'] = (float) ($separated[$j]['lng'] ?? $markers[$idx]['lng']);
+            $markers[$idx]['coord_source'] = (string) ($separated[$j]['coord_source'] ?? $markers[$idx]['coord_source']);
+        }
+
+        return $markers;
     }
 
     /**
@@ -185,6 +282,7 @@ final class HorizonteMapService
                     'total' => 0,
                     'prospect_count' => 0,
                     'high_prospect' => 0,
+                    'high_pressure' => 0,
                     'without_consultoria' => 0,
                     'success_sum' => 0,
                     'benefit_sum' => 0,
@@ -195,6 +293,9 @@ final class HorizonteMapService
             $byUf[$uf]['benefit_sum'] += (int) ($m['benefit_score'] ?? 0);
             if (($m['tier'] ?? '') === 'prospect_high') {
                 $byUf[$uf]['high_prospect']++;
+            }
+            if ($this->isHighPressureMarker($m)) {
+                $byUf[$uf]['high_pressure']++;
             }
             if (str_starts_with((string) ($m['tier'] ?? ''), 'prospect_')) {
                 $byUf[$uf]['prospect_count']++;
@@ -216,14 +317,16 @@ final class HorizonteMapService
                 'total' => (int) $row['total'],
                 'prospect_count' => (int) $row['prospect_count'],
                 'high_prospect' => (int) $row['high_prospect'],
+                'high_pressure' => (int) $row['high_pressure'],
                 'without_consultoria' => (int) $row['without_consultoria'],
                 'avg_success' => (int) round($row['success_sum'] / $total),
                 'avg_benefit' => (int) round($row['benefit_sum'] / $total),
-                'heat_intensity' => min(1.0, ((int) $row['high_prospect']) / max(1, (int) $row['prospect_count'])),
+                'heat_intensity' => min(1.0, ((int) $row['high_pressure']) / max(1, (int) $row['prospect_count'])),
             ];
         }
 
-        usort($points, static fn (array $a, array $b): int => ($b['high_prospect'] <=> $a['high_prospect'])
+        usort($points, static fn (array $a, array $b): int => ($b['high_pressure'] <=> $a['high_pressure'])
+            ?: ($b['high_prospect'] <=> $a['high_prospect'])
             ?: ($b['avg_benefit'] <=> $a['avg_benefit'])
             ?: strcmp((string) $a['uf'], (string) $b['uf']));
 
@@ -287,7 +390,7 @@ final class HorizonteMapService
             }
             // Usar listagem IBGE + spread por UF (1 pedido/UF). Centroides individuais por município
             // bloqueavam o clique regional (centenas de HTTP) sem ganho proporcional na UI.
-            $ibgeMetaIndex = $this->ibgeCatalog->metaIndexForUfs($ufs, false);
+            $ibgeMetaIndex = $this->ibgeCatalog->metaIndexForUfs($ufs, $scopedUf !== null);
         }
 
         $saebForBench = [];
@@ -438,6 +541,10 @@ final class HorizonteMapService
 
         usort($markers, static fn (array $a, array $b): int => ($b['success_score'] <=> $a['success_score']) ?: strcasecmp((string) $a['name'], (string) $b['name']));
 
+        if ($scopedUf !== null) {
+            $markers = $this->resolveApproximateOverlaps($markers);
+        }
+
         $summary = $this->buildSummary($markers);
         $ufRankings = $this->buildUfRankings($markers);
         $topProspects = array_values(array_filter(
@@ -459,7 +566,10 @@ final class HorizonteMapService
             'sge_summary' => HorizonteManagerInsights::sgeSummary($markers),
             'meta' => array_merge(
                 HorizonteMapPresenter::refreshMeta(count($markers), $coverage),
-                ['display_policy' => HorizonteMapPresenter::displayPolicy(count($markers), $ufRankings)],
+                [
+                    'display_policy' => HorizonteMapPresenter::displayPolicy(count($markers), $ufRankings),
+                    'default_filter' => HorizonteMapPresenter::defaultViewFilter(),
+                ],
             ),
             'colors' => HorizonteMapPresenter::tierColors(),
             'legend' => HorizonteMapPresenter::legendItems(),
@@ -744,6 +854,7 @@ final class HorizonteMapService
         $withoutConsultoria = 0;
         $highProspect = 0;
         $prospectCount = 0;
+        $highPressure = 0;
 
         foreach ($markers as $m) {
             $tier = (string) ($m['tier'] ?? 'data_sparse');
@@ -757,6 +868,9 @@ final class HorizonteMapService
             if (str_starts_with($tier, 'prospect_')) {
                 $prospectCount++;
             }
+            if ($this->isHighPressureMarker($m)) {
+                $highPressure++;
+            }
         }
 
         return [
@@ -764,6 +878,7 @@ final class HorizonteMapService
             'without_consultoria' => $withoutConsultoria,
             'consultoria_active' => $byTier['consultoria_active'] ?? 0,
             'high_prospect' => $highProspect,
+            'high_pressure' => $highPressure,
             'prospect_count' => $prospectCount,
             'by_tier' => $byTier,
         ];
@@ -788,6 +903,7 @@ final class HorizonteMapService
                     'total' => 0,
                     'benefit_sum' => 0,
                     'high_prospect' => 0,
+                    'high_pressure' => 0,
                     'without_consultoria' => 0,
                 ];
             }
@@ -795,6 +911,9 @@ final class HorizonteMapService
             $byUf[$uf]['benefit_sum'] += (int) ($m['benefit_score'] ?? 0);
             if (($m['tier'] ?? '') === 'prospect_high') {
                 $byUf[$uf]['high_prospect']++;
+            }
+            if ($this->isHighPressureMarker($m)) {
+                $byUf[$uf]['high_pressure']++;
             }
             if (! ($m['consultoria_active'] ?? false)) {
                 $byUf[$uf]['without_consultoria']++;
@@ -810,7 +929,9 @@ final class HorizonteMapService
         }
         unset($row);
 
-        usort($ranked, static fn (array $a, array $b): int => ($b['avg_benefit'] <=> $a['avg_benefit']) ?: ($b['high_prospect'] <=> $a['high_prospect']));
+        usort($ranked, static fn (array $a, array $b): int => ($b['high_pressure'] ?? 0) <=> ($a['high_pressure'] ?? 0)
+            ?: ($b['avg_benefit'] <=> $a['avg_benefit'])
+            ?: ($b['high_prospect'] <=> $a['high_prospect']));
 
         return array_slice($ranked, 0, 12);
     }
@@ -875,7 +996,10 @@ final class HorizonteMapService
             'sge_summary' => HorizonteManagerInsights::sgeSummary([]),
             'meta' => array_merge(
                 HorizonteMapPresenter::refreshMeta(0, HorizonteManagerInsights::dataCoverage([])),
-                ['display_policy' => HorizonteMapPresenter::displayPolicy(0, [])],
+                [
+                    'display_policy' => HorizonteMapPresenter::displayPolicy(0, []),
+                    'default_filter' => HorizonteMapPresenter::defaultViewFilter(),
+                ],
             ),
             'colors' => HorizonteMapPresenter::tierColors(),
             'legend' => HorizonteMapPresenter::legendItems(),

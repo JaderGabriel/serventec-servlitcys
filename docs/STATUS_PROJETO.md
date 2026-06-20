@@ -119,7 +119,7 @@ flowchart TB
 | Verificação dados públicos — painel admin no hub (`#verificacao-oficial`) | Implementado (5.0.1) |
 | Horizonte — mapa oportunidade municipal (Consultoria vs prospectos, scores FUNDEB/SAEB/Censo, busca IBGE) | Implementado (5.0.0) — [HORIZONTE.md](HORIZONTE.md) |
 | Horizonte — mapa calor, filtros gestores, prospecção comercial, IBGE nacional | Implementado (5.1.0) |
-| Horizonte — abastecimento quinzenal (`horizonte:fortnightly-feed`, dias 1 e 15) | Implementado (5.1.0) |
+| Horizonte — abastecimento bimestral (`horizonte:fortnightly-feed`, meses 1/3/5/7/9/11) | Implementado (5.1.0) |
 | Monitor de módulos — recolha periódica (`module-monitor:collect` a cada 10 min) + sondas estruturais | Implementado (5.5.0) |
 | Comandos Artisan admin — catálogo expandido, slugs production, agendamentos | Implementado (5.5.0) |
 | Horizonte — UI GIS gerencial (filtros, metodologia, tooltip dimensões, layout ampliado) | Implementado (5.5.0) — [HORIZONTE.md](HORIZONTE.md) |

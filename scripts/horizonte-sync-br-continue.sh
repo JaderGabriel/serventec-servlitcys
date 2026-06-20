@@ -10,6 +10,7 @@ ROUND=0
 log() { echo "[$(date -Iseconds)] $*" | tee -a "$LOG"; }
 
 log "Horizonte sync BR — início (máx. ${MAX_ROUNDS} rondas)"
+export HORIZONTE_SAEB_MEMORY_LIMIT="${HORIZONTE_SAEB_MEMORY_LIMIT:-2048M}"
 
 while (( ROUND < MAX_ROUNDS )); do
   ROUND=$((ROUND + 1))

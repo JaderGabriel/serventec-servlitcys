@@ -13,9 +13,12 @@ class HorizonteExportDataBundleCommand extends Command
                             {--skip-censo : Omitir Censo}
                             {--skip-saeb : Omitir SAEB municipal}
                             {--skip-ibge : Omitir cache IBGE}
-                            {--skip-sge : Omitir registo SGE}';
+                            {--skip-sge : Omitir registo SGE}
+                            {--skip-cadunico : Omitir CadÚnico}
+                            {--skip-demography : Omitir SIDRA demografia}
+                            {--skip-transfers : Omitir repasses Tesouro}';
 
-    protected $description = 'Exporta dados Horizonte (FUNDEB, Censo, SAEB, cache IBGE, SGE) para ZIP — transferência local → produção';
+    protected $description = 'Exporta dados Horizonte (FUNDEB, Censo, SAEB, CadÚnico, SIDRA, repasses, cache IBGE, SGE) para ZIP — transferência local → produção';
 
     public function handle(HorizonteDataBundleService $bundle): int
     {
@@ -25,6 +28,9 @@ class HorizonteExportDataBundleCommand extends Command
             'fundeb' => ! $this->option('skip-fundeb'),
             'censo' => ! $this->option('skip-censo'),
             'saeb' => ! $this->option('skip-saeb'),
+            'cadunico' => ! $this->option('skip-cadunico'),
+            'demography' => ! $this->option('skip-demography'),
+            'transfers' => ! $this->option('skip-transfers'),
             'ibge_cache' => ! $this->option('skip-ibge'),
             'sge_registry' => ! $this->option('skip-sge'),
         ];

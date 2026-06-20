@@ -211,6 +211,15 @@ final class IbgeMunicipalityCatalog
             }
         }
 
+        $cachedCentroid = AdminHomeMapCache::get('ibge_municipality_centroid:'.$ibge);
+        if (is_array($cachedCentroid) && isset($cachedCentroid['lat'], $cachedCentroid['lng'])) {
+            $lat = (float) $cachedCentroid['lat'];
+            $lng = (float) $cachedCentroid['lng'];
+            if (BrazilUfCentroids::isValidBrazilCoord($lat, $lng)) {
+                return [$lat, $lng, 'ibge_cache'];
+            }
+        }
+
         if ($fetchRemoteCentroids) {
             $fromSingle = $this->fetchRawCentroidFromApi($ibge);
             if ($fromSingle !== null) {

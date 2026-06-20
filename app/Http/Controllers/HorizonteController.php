@@ -28,6 +28,7 @@ class HorizonteController extends Controller
             'legend' => HorizonteMapPresenter::legendItems(),
             'colors' => HorizonteMapPresenter::tierColors(),
             'methodology' => HorizonteMapPresenter::methodologyUi(),
+            'defaultViewFilter' => HorizonteMapPresenter::defaultViewFilter(),
             'canRefreshData' => $user->canImportOrConfigure(),
             'canManageSge' => $user->canImportOrConfigure() && filter_var(config('horizonte.sge.enabled', true), FILTER_VALIDATE_BOOLEAN),
             'sgeShowUrl' => route('admin.horizonte.sge.show', ['ibge' => '__IBGE__']),

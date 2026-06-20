@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Abastecimento quinzenal de dados públicos para o mapa Horizonte (cobertura nacional).
+ * Abastecimento bimestral de dados públicos para o mapa Horizonte (cobertura nacional).
  */
 final class HorizonteFortnightlyFeedService
 {
@@ -683,6 +683,11 @@ final class HorizonteFortnightlyFeedService
      */
     private function importSaebPlanilhasNacional(array $options = []): array
     {
+        $saebMemory = trim((string) config('horizonte.fortnightly_feed.saeb_memory_limit', '2048M'));
+        if ($saebMemory !== '') {
+            @ini_set('memory_limit', $saebMemory);
+        }
+
         if (! filter_var(config('ieducar.saeb.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             return [
                 'success' => true,
@@ -804,7 +809,7 @@ final class HorizonteFortnightlyFeedService
             'saeb_years_batch' => $batch,
             'imported' => $totalRows,
             'debug_lines' => $debugLines,
-            'skipped' => ! $batchOk && $allowSoftFail,
+            'skipped' => ! $batchOk && $allowSoftFail && ! $partial,
             'details' => ['years' => $allYears, 'remaining' => HorizonteSaebImportProgress::remainingYears($allYears)],
         ];
     }
@@ -817,7 +822,11 @@ final class HorizonteFortnightlyFeedService
     {
         $this->debugLog($options, __('CadÚnico — a sincronizar agregados municipais…'));
         try {
-            $result = $this->cadunicoAutoSync->syncAllConfiguredYears();
+            $fillGaps = filter_var(
+                config('horizonte.cadunico_feed.fill_api_gaps', config('ieducar.cadunico.auto_sync.fill_api_gaps', true)),
+                FILTER_VALIDATE_BOOLEAN,
+            );
+            $result = $this->cadunicoAutoSync->syncAllConfiguredYears($fillGaps);
             $imported = 0;
             foreach ($result['by_year'] ?? [] as $yearResult) {
                 if (is_array($yearResult)) {

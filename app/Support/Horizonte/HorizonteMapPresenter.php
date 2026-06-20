@@ -93,6 +93,12 @@ final class HorizonteMapPresenter
                     'weight' => $pct('data_readiness'),
                     'formula' => __('Presença FUNDEB + Censo + SAEB + CadÚnico (+ bónus SIDRA/repasses).'),
                 ],
+                [
+                    'key' => 'benefit_scale',
+                    'label' => __('Benefício × escala'),
+                    'weight' => $pct('benefit_scale'),
+                    'formula' => __('Interacção entre escala (matrículas/pop.) e pressão financeira FUNDEB.'),
+                ],
             ],
             'map_guide' => [
                 [
@@ -260,7 +266,8 @@ final class HorizonteMapPresenter
         $initialUf = '';
         if ($heavy && $ufRankings !== []) {
             $ranked = $ufRankings;
-            usort($ranked, static fn (array $a, array $b): int => ($b['high_prospect'] ?? 0) <=> ($a['high_prospect'] ?? 0)
+            usort($ranked, static fn (array $a, array $b): int => ($b['high_pressure'] ?? 0) <=> ($a['high_pressure'] ?? 0)
+                ?: ($b['high_prospect'] ?? 0) <=> ($a['high_prospect'] ?? 0)
                 ?: ($b['without_consultoria'] ?? 0) <=> ($a['without_consultoria'] ?? 0)
                 ?: ($b['avg_benefit'] ?? 0) <=> ($a['avg_benefit'] ?? 0));
             $initialUf = strtoupper(trim((string) ($ranked[0]['uf'] ?? '')));
@@ -270,11 +277,11 @@ final class HorizonteMapPresenter
         if ($heavy) {
             $formatted = number_format($markerCount, 0, ',', '.');
             $reason = $initialUf !== ''
-                ? __('Base nacional com :total municípios — vista inicial na UF :uf (prospectos) para manter o mapa fluido.', [
+                ? __('Base nacional com :total municípios — clique num estado ou abra :uf para ver só municípios de alta pressão FUNDEB.', [
                     'total' => $formatted,
                     'uf' => $initialUf,
                 ])
-                : __('Base nacional com :total municípios — vista inicial restrita a prospectos prioritários.', [
+                : __('Base nacional com :total municípios — selecione uma UF para a camada de alta pressão.', [
                     'total' => $formatted,
                 ]);
         }
@@ -284,11 +291,40 @@ final class HorizonteMapPresenter
             'marker_count_total' => $markerCount,
             'max_render_markers' => $maxRender,
             'heavy_threshold' => $threshold,
-            'initial_tier' => $heavy ? 'prospects' : 'all',
+            'initial_tier' => 'high_pressure',
             'initial_uf' => $initialUf,
             'require_uf_selection' => $heavy,
             'initial_mode' => $heavy ? 'overview' : 'regional',
             'reason' => $reason,
+            'default_filter' => self::defaultViewFilter(),
+        ];
+    }
+
+    /**
+     * Filtros iniciais da vista GIS/BI (alta pressão por defeito).
+     *
+     * @return array<string, mixed>
+     */
+    public static function defaultViewFilter(): array
+    {
+        $pressureMin = max(0, min(100, (int) config('horizonte.map_display.financial_pressure_min', 60)));
+
+        return [
+            'preset' => (string) config('horizonte.map_display.default_view', 'high_pressure'),
+            'tier' => 'prospects',
+            'min_financial' => $pressureMin,
+            'hide_consultoria' => true,
+            'require_fundeb' => true,
+            'map_view' => 'heat',
+            'hide_approximate_on_map' => filter_var(
+                config('horizonte.map_display.hide_approximate_on_map', true),
+                FILTER_VALIDATE_BOOL,
+            ),
+            'pressure_min' => $pressureMin,
+            'label' => __('Alta pressão FUNDEB'),
+            'description' => __('Prospectos fora da consultoria com pressão financeira ≥ :min ou propensão alta — camada inicial para decisão comercial.', [
+                'min' => $pressureMin,
+            ]),
         ];
     }
 

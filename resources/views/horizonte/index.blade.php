@@ -12,6 +12,10 @@
     $sgeShowUrl = (string) ($sgeShowUrl ?? '');
     $sgeRegistryUrl = (string) ($sgeRegistryUrl ?? '');
     $initialUf = (string) ($initialUf ?? '');
+    $defaultViewFilter = is_array($defaultViewFilter ?? null)
+        ? $defaultViewFilter
+        : \App\Support\Horizonte\HorizonteMapPresenter::defaultViewFilter();
+    $pressureMin = (int) ($defaultViewFilter['pressure_min'] ?? 60);
 @endphp
 
 <x-app-layout>
@@ -38,6 +42,7 @@
             'legend' => $legend,
             'heatLegend' => $heatLegend,
             'methodology' => $methodology,
+            'defaultViewFilter' => $defaultViewFilter,
             'canRefreshData' => $canRefreshData,
             'canManageSge' => $canManageSge,
             'sgeShowUrl' => $sgeShowUrl,
@@ -71,7 +76,7 @@
                     </div>
                     <div class="flex flex-wrap gap-2 text-[10px]">
                         @foreach ($legend as $item)
-                            @if (in_array($item['key'], ['prospect_high', 'prospect_medium', 'prospect_low', 'consultoria_active', 'data_sparse'], true))
+                            @if (in_array($item['key'], ['prospect_high', 'prospect_medium', 'prospect_low', 'consultoria_active', 'catalog_pending', 'data_sparse'], true))
                                 <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 ring-1 ring-slate-200/80 dark:bg-slate-900/60 dark:ring-slate-600" title="{{ $item['description'] ?? '' }}">
                                     <span class="h-2 w-2 rounded-full" style="background-color: {{ $item['color'] }}"></span>
                                     <span class="text-slate-600 dark:text-slate-300">{{ $item['label'] }}</span>
@@ -80,7 +85,13 @@
                         @endforeach
                     </div>
                 </div>
-                <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+                <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+                <div class="serv-horizonte-kpi serv-home-kpi--rose" title="{{ __('Municípios com pressão FUNDEB ≥ :min ou alta propensão — camada inicial do mapa.', ['min' => $pressureMin]) }}">
+                    <span class="serv-horizonte-kpi__info" aria-hidden="true">ⓘ</span>
+                    <p class="serv-home-kpi__label">{{ __('Alta pressão') }}</p>
+                    <p class="serv-home-kpi__value tabular-nums" x-text="pageLoading ? '…' : Number(summary.high_pressure ?? 0).toLocaleString('pt-BR')">…</p>
+                    <p class="serv-home-kpi__hint">{{ __('FUNDEB ≥ :min ou prop. alta', ['min' => $pressureMin]) }}</p>
+                </div>
                 <div class="serv-horizonte-kpi serv-home-kpi--teal" title="{{ $kpiHints['with_public_data']['hint'] ?? '' }}">
                     <span class="serv-horizonte-kpi__info" aria-hidden="true" title="{{ $kpiHints['with_public_data']['hint'] ?? '' }}">ⓘ</span>
                     <p class="serv-home-kpi__label">{{ $kpiHints['with_public_data']['label'] ?? __('Com dados públicos') }}</p>
@@ -125,7 +136,7 @@
                         </p>
                     </div>
                     <button type="button" class="serv-btn-secondary text-xs shrink-0" @click="resetFilters()" :disabled="pageLoading">
-                        {{ __('Limpar filtros') }}
+                        {{ __('Vista padrão (alta pressão)') }}
                     </button>
                 </div>
                 <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -204,12 +215,30 @@
                         </div>
 
                         <div
+                            x-show="decisionViewBanner"
+                            x-cloak
+                            class="rounded-lg border px-4 py-3 text-sm"
+                            :class="decisionViewBanner?.kind === 'overview'
+                                ? 'border-sky-200 bg-sky-50 text-sky-950 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-100'
+                                : 'border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-100'"
+                            role="status"
+                        >
+                            <p class="font-semibold" x-text="decisionViewBanner?.title"></p>
+                            <p class="mt-1 text-xs leading-relaxed opacity-90" x-text="decisionViewBanner?.message"></p>
+                            <p class="mt-2 text-xs tabular-nums font-medium">
+                                <span x-text="Number(decisionViewBanner?.count ?? 0).toLocaleString('pt-BR')"></span>
+                                <span x-text="decisionViewBanner?.unit"></span>
+                                <span x-show="decisionViewBanner?.total != null" x-cloak>
+                                    · <span x-text="Number(decisionViewBanner.total).toLocaleString('pt-BR')"></span> {{ __('na UF') }}
+                                </span>
+                            </p>
+                        </div>
+
+                        <div
                             @keydown.escape.window="closeTooltip()"
                             class="serv-horizonte-filters"
                             :class="{ 'pointer-events-none opacity-60': pageLoading || regionalLoading }"
                             :aria-busy="(pageLoading || regionalLoading || mapRendering) ? 'true' : 'false'"
-                            x-show="isRegionalMode"
-                            x-cloak
                         >
                             <button
                                 type="button"
@@ -218,7 +247,7 @@
                                 :aria-expanded="filterPanelOpen"
                             >
                                 <span class="flex items-center gap-2">
-                                    {{ __('Filtros interactivos') }}
+                                    {{ __('Camada analítica') }}
                                     <span
                                         x-show="activeFilterCount > 0"
                                         x-cloak
@@ -233,7 +262,7 @@
                                 <template x-for="chip in activeFilterChips" :key="chip.key">
                                     <span class="serv-horizonte-filter-chip" x-text="chip.label"></span>
                                 </template>
-                                <button type="button" class="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline ms-1" @click="resetFilters()">{{ __('Limpar') }}</button>
+                                <button type="button" class="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline ms-1" @click="resetFilters()">{{ __('Vista padrão') }}</button>
                             </div>
 
                             <div x-show="filterPanelOpen" x-transition.opacity.duration.200ms class="serv-horizonte-filters__body">
@@ -284,46 +313,68 @@
                                 </div>
 
                                 <div>
-                                    <p class="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">{{ __('Segmento / camada') }}</p>
+                                    <p class="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">{{ __('Vista de decisão') }}</p>
                                     <div class="flex flex-wrap gap-1.5 text-xs">
                                         @php
-                                            $tierPresets = [
-                                                'prospects' => ['label' => __('Prospectos'), 'color' => $colors['prospect_medium'] ?? '#b45309'],
+                                            $viewPresets = [
+                                                'high_pressure' => ['label' => __('Alta pressão FUNDEB'), 'color' => '#be123c'],
+                                                'prospects' => ['label' => __('Todos prospectos'), 'color' => $colors['prospect_medium'] ?? '#b45309'],
                                                 'prospect_high' => ['label' => __('Alta propensão'), 'color' => $colors['prospect_high'] ?? '#be123c'],
-                                                'all' => ['label' => __('Todos'), 'color' => '#64748b'],
+                                                'all' => ['label' => __('Todos os municípios'), 'color' => '#64748b'],
+                                            ];
+                                            $tierPresets = [
                                                 'consultoria_active' => ['label' => __('Consultoria'), 'color' => $colors['consultoria_active'] ?? '#0d9488'],
                                                 'catalog_pending' => ['label' => __('Catálogo pendente'), 'color' => $colors['catalog_pending'] ?? '#ea580c'],
                                             ];
                                         @endphp
-                                        @foreach ($tierPresets as $key => $preset)
+                                        @foreach ($viewPresets as $key => $preset)
                                             <button
                                                 type="button"
-                                                :disabled="pageLoading"
+                                                :disabled="pageLoading || (isOverviewMode && @js($key) !== 'high_pressure' && @js($key) !== 'all')"
                                                 class="serv-horizonte-tier-pill bg-white/80 text-slate-700 ring-slate-200/80 dark:bg-slate-900/60 dark:text-slate-200 dark:ring-slate-600"
-                                                :class="filterTier === @js($key) ? 'is-active bg-teal-50 dark:bg-teal-950/40' : ''"
-                                                @click="setFilterTier(@js($key))"
+                                                :class="(viewPreset === @js($key) || (viewPreset === 'custom' && filterTier === @js($key))) ? 'is-active bg-teal-50 dark:bg-teal-950/40' : ''"
+                                                @click="setViewPreset(@js($key))"
                                             >
                                                 <span class="inline-block h-2 w-2 rounded-full" style="background-color: {{ $preset['color'] }}"></span>
                                                 {{ $preset['label'] }}
                                             </button>
                                         @endforeach
-                                        <label class="inline-flex items-center gap-1.5 serv-horizonte-tier-pill bg-white/80 ring-slate-200/80 dark:bg-slate-900/60 dark:ring-slate-600">
-                                            <input type="checkbox" x-model="hideConsultoria" class="rounded border-gray-300 text-teal-600" :disabled="pageLoading" />
+                                        @foreach ($tierPresets as $key => $preset)
+                                            <button
+                                                type="button"
+                                                :disabled="pageLoading || isOverviewMode"
+                                                class="serv-horizonte-tier-pill bg-white/80 text-slate-700 ring-slate-200/80 dark:bg-slate-900/60 dark:text-slate-200 dark:ring-slate-600"
+                                                :class="filterTier === @js($key) ? 'is-active bg-teal-50 dark:bg-teal-950/40' : ''"
+                                                @click="setViewPreset('custom'); setFilterTier(@js($key))"
+                                            >
+                                                <span class="inline-block h-2 w-2 rounded-full" style="background-color: {{ $preset['color'] }}"></span>
+                                                {{ $preset['label'] }}
+                                            </button>
+                                        @endforeach
+                                        <label class="inline-flex items-center gap-1.5 serv-horizonte-tier-pill bg-white/80 ring-slate-200/80 dark:bg-slate-900/60 dark:ring-slate-600" x-show="isRegionalMode" x-cloak>
+                                            <input type="checkbox" x-model="hideConsultoria" @change="markFiltersCustom()" class="rounded border-gray-300 text-teal-600" :disabled="pageLoading" />
                                             <span>{{ __('Ocultar consultoria') }}</span>
                                         </label>
+                                        <label class="inline-flex items-center gap-1.5 serv-horizonte-tier-pill bg-white/80 ring-slate-200/80 dark:bg-slate-900/60 dark:ring-slate-600" x-show="isRegionalMode" x-cloak>
+                                            <input type="checkbox" x-model="hideApproxOnMap" class="rounded border-gray-300 text-amber-600" :disabled="pageLoading" />
+                                            <span>{{ __('Só coord. IBGE no mapa') }}</span>
+                                        </label>
                                         @if ($canManageSge)
-                                            <label class="inline-flex items-center gap-1.5 serv-horizonte-tier-pill bg-amber-50/80 ring-amber-200/80 dark:bg-amber-950/30 dark:ring-amber-900/50">
-                                                <input type="checkbox" x-model="onlyMissingSge" class="rounded border-gray-300 text-amber-600" :disabled="pageLoading" />
+                                            <label class="inline-flex items-center gap-1.5 serv-horizonte-tier-pill bg-amber-50/80 ring-amber-200/80 dark:bg-amber-950/30 dark:ring-amber-900/50" x-show="isRegionalMode" x-cloak>
+                                                <input type="checkbox" x-model="onlyMissingSge" @change="markFiltersCustom()" class="rounded border-gray-300 text-amber-600" :disabled="pageLoading" />
                                                 <span>{{ __('Só sem SGE') }}</span>
                                             </label>
                                         @endif
                                     </div>
+                                    <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400" x-show="isOverviewMode" x-cloak>
+                                        {{ __('No Brasil, seleccione uma UF para aplicar a camada municipal. Bolhas = volume de alta pressão por estado.') }}
+                                    </p>
                                 </div>
 
-                                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-xs">
+                                <div x-show="isRegionalMode" x-cloak class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-xs">
                                     <label class="flex flex-col gap-1">
                                         <span class="text-slate-600 dark:text-slate-400 font-medium">{{ __('Propensão mínima') }}</span>
-                                        <input type="range" min="0" max="100" step="5" x-model.number="minSuccessScore" class="w-full accent-rose-600" :disabled="pageLoading" />
+                                        <input type="range" min="0" max="100" step="5" x-model.number="minSuccessScore" @input="markFiltersCustom()" class="w-full accent-rose-600" :disabled="pageLoading" />
                                         <span class="flex items-baseline justify-between gap-2">
                                             <span class="tabular-nums font-semibold text-serv-navy dark:text-slate-100" x-text="minSuccessScore + '/100'"></span>
                                             <span class="serv-horizonte-score-hint" x-text="'Alta ≥ ' + scoreThresholds.high"></span>
@@ -331,12 +382,12 @@
                                     </label>
                                     <label class="flex flex-col gap-1">
                                         <span class="text-slate-600 dark:text-slate-400 font-medium">{{ __('Benefício mínimo') }}</span>
-                                        <input type="range" min="0" max="100" step="5" x-model.number="minBenefitScore" class="w-full accent-teal-600" :disabled="pageLoading" />
+                                        <input type="range" min="0" max="100" step="5" x-model.number="minBenefitScore" @input="markFiltersCustom()" class="w-full accent-teal-600" :disabled="pageLoading" />
                                         <span class="tabular-nums font-semibold text-serv-navy dark:text-slate-100" x-text="minBenefitScore + '/100'"></span>
                                     </label>
                                     <label class="flex flex-col gap-1">
                                         <span class="text-slate-600 dark:text-slate-400 font-medium">{{ __('Matrículas mín.') }}</span>
-                                        <select x-model.number="minMatriculas" class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 text-sm" :disabled="pageLoading">
+                                        <select x-model.number="minMatriculas" @change="markFiltersCustom()" class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 text-sm" :disabled="pageLoading">
                                             <option value="0">{{ __('Qualquer') }}</option>
                                             <option value="5000">5 000+</option>
                                             <option value="15000">15 000+</option>
@@ -344,13 +395,18 @@
                                         </select>
                                     </label>
                                     <label class="flex flex-col gap-1">
+                                        <span class="text-slate-600 dark:text-slate-400 font-medium">{{ __('Pressão FUNDEB mín.') }}</span>
+                                        <input type="range" min="0" max="100" step="5" x-model.number="minFinancial" @input="markFiltersCustom()" class="w-full accent-rose-700" :disabled="pageLoading || viewPreset === 'high_pressure'" />
+                                        <span class="tabular-nums font-semibold text-serv-navy dark:text-slate-100" x-text="minFinancial + '/100'"></span>
+                                    </label>
+                                    <label class="flex flex-col gap-1">
                                         <span class="text-slate-600 dark:text-slate-400 font-medium">{{ __('Demanda social mín.') }}</span>
-                                        <input type="range" min="0" max="100" step="5" x-model.number="minSocialDemand" class="w-full accent-amber-600" :disabled="pageLoading" />
+                                        <input type="range" min="0" max="100" step="5" x-model.number="minSocialDemand" @input="markFiltersCustom()" class="w-full accent-amber-600" :disabled="pageLoading" />
                                         <span class="tabular-nums font-semibold text-serv-navy dark:text-slate-100" x-text="minSocialDemand + '/100'"></span>
                                     </label>
                                 </div>
 
-                                <div>
+                                <div x-show="isRegionalMode" x-cloak>
                                     <p class="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">{{ __('Exigir fontes de dados') }}</p>
                                     <div class="flex flex-wrap gap-2">
                                         <label class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 ring-1 ring-slate-200/80 bg-white/80 dark:bg-slate-900/60 dark:ring-slate-600 has-[:checked]:ring-teal-400 has-[:checked]:bg-teal-50/80 dark:has-[:checked]:bg-teal-950/30">
@@ -422,8 +478,8 @@
                             <span x-show="filteredCount !== markers.length" x-cloak>
                                 · <span x-text="filteredCount.toLocaleString('pt-BR')"></span> {{ __('após filtros') }}
                             </span>
-                            <span x-show="mapInteractionStats.approximate > 0" x-cloak>
-                                · <span x-text="mapInteractionStats.approximate.toLocaleString('pt-BR')"></span> {{ __('coord. aproximada') }}
+                            <span x-show="approxHiddenOnMapCount > 0" x-cloak>
+                                · <span x-text="approxHiddenOnMapCount.toLocaleString('pt-BR')"></span> {{ __('só na lista (coord. aprox.)') }}
                             </span>
                         </p>
                         <div class="serv-map-legend flex flex-wrap gap-x-4 gap-y-2 text-xs" x-show="isOverviewMode" x-cloak>
@@ -487,7 +543,7 @@
                                 role="status"
                             >
                                 <p class="font-medium">{{ __('Filtros ocultam todos os municípios.') }}</p>
-                                <button type="button" class="serv-btn-secondary text-xs shrink-0" @click="resetFilters()">{{ __('Limpar') }}</button>
+                                <button type="button" class="serv-btn-secondary text-xs shrink-0" @click="resetFilters()">{{ __('Vista padrão') }}</button>
                             </div>
 
                             <div x-ref="map" class="serv-brazil-map serv-horizonte-gis__map serv-horizonte-gis__map--tall w-full" role="application" aria-label="{{ __('Mapa Horizonte GIS') }}"></div>
@@ -635,7 +691,7 @@
                                 </div>
                             </div>
                             <p class="text-xs text-slate-500 dark:text-slate-400">
-                                {{ __('Visão nacional por UF; detalhe municipal com clusters. Clique num ponto para ver dimensões e fórmulas no tooltip.') }}
+                                {{ __('Visão nacional por UF (alta pressão); detalhe municipal em calor GIS com filtros de decisão.') }}
                             </p>
                         </div>
                     </div>
@@ -666,9 +722,10 @@
 
                     <div class="px-5 py-4 border-t border-slate-200/90 dark:border-slate-700/90">
                         <h4 class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Lista de prospecção') }}</h4>
-                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Até 50 municípios do recorte actual, ordenados para abordagem comercial.') }}</p>
-                        <p x-show="!pageLoading && sortedProspects.length === 0" x-cloak class="mt-3 text-sm text-slate-500">{{ __('Nenhum município no recorte — ajuste filtros ou importe dados públicos.') }}</p>
-                        <div x-show="sortedProspects.length > 0" class="mt-3 overflow-x-auto">
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Até 50 municípios do recorte actual (camada analítica), ordenados para abordagem.') }}</p>
+                        <p x-show="!pageLoading && isOverviewMode" x-cloak class="mt-3 text-sm text-slate-500">{{ __('Seleccione uma UF para ver a lista filtrada de alta pressão.') }}</p>
+                        <p x-show="!pageLoading && isRegionalMode && sortedProspects.length === 0" x-cloak class="mt-3 text-sm text-slate-500">{{ __('Nenhum município no recorte — alargue a vista ou importe dados públicos.') }}</p>
+                        <div x-show="sortedProspects.length > 0 && isRegionalMode" class="mt-3 overflow-x-auto">
                             <table class="min-w-full text-xs">
                                 <thead>
                                     <tr class="text-left text-slate-500 border-b border-slate-200 dark:border-slate-700">
@@ -719,7 +776,7 @@
                                     <button type="button" class="w-full flex items-center justify-between gap-2 rounded-lg bg-slate-50/80 dark:bg-slate-900/50 px-3 py-2 text-left hover:bg-teal-50/80 dark:hover:bg-teal-950/30" @click="selectUf(row.uf)">
                                         <span class="font-medium min-w-0" x-text="ufLabel(row.uf)"></span>
                                         <span class="text-xs text-slate-500 tabular-nums" x-text="Number(row.without_consultoria ?? 0).toLocaleString('pt-BR') + ' {{ __('sem consult.') }}'"></span>
-                                        <span class="text-xs text-rose-700 dark:text-rose-300 tabular-nums" x-text="Number(row.high_prospect ?? 0).toLocaleString('pt-BR') + ' {{ __('alta') }}'"></span>
+                                        <span class="text-xs text-rose-700 dark:text-rose-300 tabular-nums" x-text="Number(row.high_pressure ?? row.high_prospect ?? 0).toLocaleString('pt-BR') + ' {{ __('pressão') }}'"></span>
                                     </button>
                                 </li>
                             </template>
@@ -729,6 +786,7 @@
                     <section class="serv-panel p-4" aria-labelledby="horizonte-top">
                         <h3 id="horizonte-top" class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Top prospectos') }}</h3>
                         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ __('Clique para centrar no mapa e abrir a ficha.') }}</p>
+                        <p x-show="!pageLoading && topProspects.length === 0" x-cloak class="mt-3 text-sm text-slate-500">{{ __('Sem prospectos destacados neste recorte.') }}</p>
                         <ul x-show="topProspects.length > 0" class="mt-3 space-y-2 text-sm">
                             <template x-for="p in topProspects.slice(0, 10)" :key="p.ibge">
                                 <li>
@@ -762,7 +820,7 @@
                                     type="button"
                                     class="serv-btn-secondary text-xs"
                                     :disabled="pageLoading"
-                                    @click="resetFilters(); onlyMissingSge = true; filterTier = 'prospects';"
+                                    @click="applyFocusSegment(focusSegments.find(s => s.key === 'missing_sge') || { filter: { tier: 'prospects', only_missing_sge: true } })"
                                 >{{ __('Ver sem SGE') }}</button>
                             </div>
                             <p class="mt-2 text-[11px] text-indigo-700 dark:text-indigo-300 leading-relaxed">

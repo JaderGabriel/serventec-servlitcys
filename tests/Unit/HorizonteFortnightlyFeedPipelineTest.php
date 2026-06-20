@@ -81,6 +81,6 @@ final class HorizonteFortnightlyFeedPipelineTest extends TestCase
         $this->assertSame('running', $state['status']);
         $this->assertSame(0, $state['current_index']);
         $this->assertSame('ibge_catalog', $state['current_phase']);
-        $this->assertSame('running', $state['phases'][0]['status']);
+        $this->assertSame('partial', $state['phases'][0]['status']);
     }
 }

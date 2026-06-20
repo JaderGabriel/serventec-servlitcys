@@ -34,12 +34,24 @@ final class HorizonteTesouroTransferSyncService
         }
 
         $timeout = max(10, (int) ($cfg['timeout'] ?? 25));
-        $rows = $this->tesouroCsv->nationalFundebRowsForYear($refYear, $timeout, $options['uf'] ?? null, $this->ibgeCatalog);
+        $yearsToTry = array_values(array_unique([$refYear, $refYear - 1]));
+        $rows = [];
+        $usedYear = $refYear;
+
+        foreach ($yearsToTry as $year) {
+            $rows = $this->tesouroCsv->nationalFundebRowsForYear($year, $timeout, $options['uf'] ?? null, $this->ibgeCatalog);
+            if ($rows !== []) {
+                $usedYear = $year;
+                break;
+            }
+        }
 
         if ($rows === []) {
             return [
                 'success' => false,
-                'message' => __('Repasses Tesouro: nenhuma linha FUNDEB encontrada no índice CKAN.'),
+                'message' => __('Repasses Tesouro: nenhuma linha FUNDEB encontrada no índice CKAN (anos :anos).', [
+                    'anos' => implode(', ', array_map('strval', $yearsToTry)),
+                ]),
                 'imported' => 0,
             ];
         }
@@ -57,7 +69,10 @@ final class HorizonteTesouroTransferSyncService
         return [
             'success' => $imported > 0,
             'message' => $imported > 0
-                ? __('Repasses Tesouro: :n município(s) actualizados (FUNDEB CKAN).', ['n' => (string) $imported])
+                ? __('Repasses Tesouro: :n município(s) actualizados (FUNDEB CKAN, ano :ano).', [
+                    'n' => (string) $imported,
+                    'ano' => (string) $usedYear,
+                ])
                 : __('Repasses Tesouro: nenhum registo gravado.'),
             'imported' => $imported,
         ];

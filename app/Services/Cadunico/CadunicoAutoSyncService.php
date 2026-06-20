@@ -111,14 +111,18 @@ final class CadunicoAutoSyncService
     /**
      * @return array<string, mixed>
      */
-    public function syncAllConfiguredYears(): array
+    public function syncAllConfiguredYears(?bool $fillGapsPerCity = null): array
     {
         $years = self::yearsToSync();
         $results = [];
         $anySuccess = false;
+        $fillGaps = $fillGapsPerCity ?? filter_var(
+            config('ieducar.cadunico.auto_sync.fill_api_gaps', true),
+            FILTER_VALIDATE_BOOLEAN,
+        );
 
         foreach ($years as $ano) {
-            $r = $this->syncYear($ano);
+            $r = $this->syncYear($ano, $fillGaps);
             $results[$ano] = $r;
             if ($r['success'] ?? false) {
                 $anySuccess = true;

@@ -61,18 +61,22 @@
                     $ibgeTotal = (int) ($phaseResult['ibge_total'] ?? 27);
                     $saebDone = (int) ($phaseResult['saeb_done'] ?? 0);
                     $saebTotal = (int) ($phaseResult['saeb_total'] ?? 0);
-                    $isIbgeRunning = $phaseKey === 'ibge_catalog' && in_array($phaseStatus, ['running', 'pending'], true);
-                    $isSaebRunning = $phaseKey === 'saeb_planilhas' && in_array($phaseStatus, ['running', 'pending'], true);
+                    $isIbgeRunning = $phaseKey === 'ibge_catalog' && in_array($phaseStatus, ['running', 'pending', 'partial'], true);
+                    $isSaebRunning = $phaseKey === 'saeb_planilhas' && in_array($phaseStatus, ['running', 'pending', 'partial'], true);
                     $badge = match ($phaseStatus) {
                         'completed' => 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200',
+                        'partial' => 'bg-violet-100 text-violet-900 dark:bg-violet-950/50 dark:text-violet-200',
                         'skipped' => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
                         'failed' => 'bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200',
                         'running' => 'bg-sky-100 text-sky-900 dark:bg-sky-950/50 dark:text-sky-200',
                         default => 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
                     };
-                    $statusLabel = ($isIbgeRunning || $isSaebRunning) && ($phaseResult['partial'] ?? false)
-                        ? __('em progresso')
-                        : $phaseStatus;
+                    $statusLabel = match ($phaseStatus) {
+                        'partial' => __('parcial'),
+                        default => ($isIbgeRunning || $isSaebRunning) && ($phaseResult['partial'] ?? false)
+                            ? __('em progresso')
+                            : $phaseStatus,
+                    };
                 @endphp
                 <li class="rounded-lg border border-indigo-100/80 dark:border-indigo-900/40 bg-white/70 dark:bg-slate-900/40 px-3 py-2 text-xs">
                     <div class="flex flex-wrap items-start gap-2 justify-between">

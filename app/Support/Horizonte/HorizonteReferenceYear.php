@@ -6,7 +6,7 @@ use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Support\Ieducar\FundebReferenceYearOrder;
 
 /**
- * Exercício FUNDEB / Censo / SAEB usado pelo mapa Horizonte e pela rotina quinzenal.
+ * Exercício FUNDEB / Censo / SAEB usado pelo mapa Horizonte e pela rotina bimestral.
  */
 final class HorizonteReferenceYear
 {

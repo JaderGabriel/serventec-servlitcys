@@ -47,20 +47,34 @@ final class HorizonteMapPresenterTest extends TestCase
 
         $small = HorizonteMapPresenter::displayPolicy(120, []);
         $this->assertFalse($small['heavy_dataset']);
-        $this->assertSame('all', $small['initial_tier']);
+        $this->assertSame('high_pressure', $small['initial_tier']);
+        $this->assertArrayHasKey('default_filter', $small);
 
         $heavy = HorizonteMapPresenter::displayPolicy(5200, [
-            ['uf' => 'BA', 'high_prospect' => 12, 'without_consultoria' => 300, 'avg_benefit' => 55],
-            ['uf' => 'SP', 'high_prospect' => 40, 'without_consultoria' => 500, 'avg_benefit' => 48],
+            ['uf' => 'BA', 'high_prospect' => 12, 'high_pressure' => 18, 'without_consultoria' => 300, 'avg_benefit' => 55],
+            ['uf' => 'SP', 'high_prospect' => 40, 'high_pressure' => 55, 'without_consultoria' => 500, 'avg_benefit' => 48],
         ]);
 
         $this->assertTrue($heavy['heavy_dataset']);
         $this->assertSame(5200, $heavy['marker_count_total']);
         $this->assertSame(400, $heavy['max_render_markers']);
-        $this->assertSame('prospects', $heavy['initial_tier']);
+        $this->assertSame('high_pressure', $heavy['initial_tier']);
         $this->assertSame('SP', $heavy['initial_uf']);
         $this->assertTrue($heavy['require_uf_selection']);
         $this->assertSame('overview', $heavy['initial_mode']);
         $this->assertNotNull($heavy['reason']);
+    }
+
+    #[Test]
+    public function default_view_filter_exposes_high_pressure_preset(): void
+    {
+        config(['horizonte.map_display.financial_pressure_min' => 60]);
+
+        $filter = HorizonteMapPresenter::defaultViewFilter();
+
+        $this->assertSame('high_pressure', $filter['preset']);
+        $this->assertSame(60, $filter['pressure_min']);
+        $this->assertTrue($filter['hide_consultoria']);
+        $this->assertSame('heat', $filter['map_view']);
     }
 }

@@ -104,8 +104,8 @@ Calculados **na mesma geração do mapa** (amostra actual):
 
 - Base **Leaflet** + OSM; modos **Calor** (propensão) e **Marcadores** (tiers).
 - **Buscador** por nome, UF ou código IBGE (sugestões + `flyTo`).
-- Filtros comerciais: propensão/benefício mínimos, matrículas, FUNDEB/Censo/SAEB/CadÚnico, **demanda social mínima**, UF, segmentos «Onde buscar clientes» (incl. **Demanda social**).
-- **Bases nacionais grandes** (>800 municípios): vista inicial na UF com mais alta propensão + segmento prospectos; mapa limita a **400 pontos** por defeito (configurável) — KPIs e tabelas usam a base completa.
+- Filtros comerciais: **camada «Alta pressão FUNDEB»** (default), propensão/benefício mínimos, matrículas, pressão FUNDEB, FUNDEB/Censo/SAEB/CadÚnico, **demanda social mínima**, UF, segmentos «Onde buscar clientes».
+- **Bases nacionais grandes** (>800 municípios): overview por UF (bolhas = volume de alta pressão); ao abrir UF, camada **Alta pressão** + mapa de **Calor**; limite de **400 pontos** IBGE no mapa (configurável) — coord. aproximadas ficam na lista.
 - Overlay de carregamento durante fetch JSON e desenho do mapa.
 - Tooltip: scores, matrículas Censo, pop. 4–17 SIDRA, CadÚnico/PBF, SAEB, complementação FUNDEB, repasses, **SGE** (sistema, estado, detalhe), fontes, atalho Consultoria ou portal do sistema.
 
@@ -115,14 +115,14 @@ Calculados **na mesma geração do mapa** (amostra actual):
 |--------|----------|
 | **Sistemas de gestão (SGE)** | Identificados, consultoria i-Educar, registo externo, não identificados |
 | **Cobertura de dados** | Contagem FUNDEB / Censo / SAEB / CadÚnico / SIDRA / repasses / triad completa |
-| **UFs prioritárias** | Top 12 UFs por benefício médio + clique filtra UF |
+| **UFs prioritárias** | Top 12 UFs por volume de **alta pressão** + clique abre UF filtrada |
 | **Top prospectos** | Melhores scores nacionais (clicáveis no mapa) |
 
 ### 6.3 KPIs e prospecção
 
 | Área | Conteúdo |
 |--------|----------|
-| **KPIs** | Dados públicos · prospectos · alta propensão · consultoria · matrículas prospecto |
+| **KPIs** | **Alta pressão** · dados públicos · prospectos · alta propensão · consultoria · matrículas prospecto |
 | **Segmentos** | Prontos para abordagem · pressão FUNDEB · déficit SAEB · grande escala · **demanda social** |
 | **Tabela** | Até 50 municípios do recorte, ordenados para abordagem comercial (inclui coluna SGE) |
 
@@ -161,7 +161,7 @@ Ficheiro default: `storage/app/horizonte/sge_registry.json` (configurável via `
 
 Chaves aceites por entrada: `system`/`sistema`, `vendor`/`fornecedor`, `notes`/`notas`, `app_url`/`url`, `ibge`/`ibge_municipio`.
 
-A fase **SGE** do feed quinzenal (`horizonte:fortnightly-feed`) sincroniza o registo para cache; falhas são registadas em log e **não impedem** as restantes fases nem o uso do mapa.
+A fase **SGE** do feed bimestral (`horizonte:fortnightly-feed`) sincroniza o registo para cache; falhas são registadas em log e **não impedem** as restantes fases nem o uso do mapa.
 
 ```bash
 php artisan horizonte:fortnightly-feed --skip-sge   # ignorar registo SGE
@@ -190,7 +190,7 @@ HorizonteController
 | `app/Services/Horizonte/HorizonteMunicipalSgeRegistryService.php` | Import JSON/URL do registo SGE |
 | `resources/js/horizonteMap.js` | Mapa Alpine + busca |
 | `resources/views/horizonte/index.blade.php` | UI |
-| `app/Services/Horizonte/HorizonteFortnightlyFeedService.php` | Rotina quinzenal de dados públicos |
+| `app/Services/Horizonte/HorizonteFortnightlyFeedService.php` | Rotina bimestral de dados públicos |
 | `app/Console/Commands/HorizonteFortnightlyFeedCommand.php` | CLI `horizonte:fortnightly-feed` |
 
 ---
@@ -276,7 +276,7 @@ O cache do mapa invalida-se automaticamente quando `imported_at` / contagens nas
 
 ### 9.2 Uso comercial (gestores)
 
-1. **Enriquecer dados:** garantir rotina quinzenal activa + importações pontuais em Dados públicos.
+1. **Enriquecer dados:** garantir rotina **bimestral** activa + importações pontuais em Dados públicos.
 2. **Actualizar mapa:** abrir `/dashboard/horizonte` — shell rápido + JSON assíncrono; overlay de carregamento.
 3. **Priorizar expansão:** modo **Calor**, segmentos «Onde buscar clientes», filtros de propensão/FUNDEB/Censo/SAEB.
 4. **Onboarding:** criar cidade no catálogo → configurar conexão → tier passa a `catalog_pending` → `consultoria_active`.
@@ -344,4 +344,4 @@ Cobertura: `HorizonteOpportunityScorerTest`, `HorizonteSocialDemandScorerTest`, 
 
 ---
 
-*Última revisão: 2026-06-03 · Módulo Horizonte v2 (CadÚnico, SIDRA, repasses)*
+*Última revisão: 2026-06-03 · Módulo Horizonte v2 — camada alta pressão GIS, CadÚnico, SIDRA, repasses*

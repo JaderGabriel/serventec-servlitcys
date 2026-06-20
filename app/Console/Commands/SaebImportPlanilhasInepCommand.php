@@ -20,6 +20,11 @@ class SaebImportPlanilhasInepCommand extends Command
 {
     public function handle(SaebPlanilhaInepImportService $service): int
     {
+        $saebMemory = trim((string) config('horizonte.fortnightly_feed.saeb_memory_limit', '2048M'));
+        if ($saebMemory !== '') {
+            @ini_set('memory_limit', $saebMemory);
+        }
+
         $merge = ! $this->option('no-merge');
         $resolveInep = ! $this->option('no-resolve-inep');
         $download = ! $this->option('no-download');

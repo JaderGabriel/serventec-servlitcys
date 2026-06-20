@@ -102,6 +102,8 @@ return [
         'staged' => filter_var(env('HORIZONTE_FORTNIGHTLY_FEED_STAGED', true), FILTER_VALIDATE_BOOL),
         'notify_phases' => filter_var(env('HORIZONTE_FORTNIGHTLY_FEED_NOTIFY_PHASES', true), FILTER_VALIDATE_BOOL),
         'memory_limit' => env('HORIZONTE_FORTNIGHTLY_FEED_MEMORY_LIMIT', '512M'),
+        /** Planilhas SAEB INEP (RAR/XLSX) exigem mais RAM que o resto do feed. */
+        'saeb_memory_limit' => env('HORIZONTE_SAEB_MEMORY_LIMIT', '2048M'),
         'time_limit' => max(60, (int) env('HORIZONTE_FORTNIGHTLY_FEED_TIME_LIMIT', 900)),
 
         /** UFs aquecidas por invocação na fase IBGE (1 = mínimo de RAM). */
@@ -138,6 +140,10 @@ return [
     'map_display' => [
         'heavy_threshold' => max(100, (int) env('HORIZONTE_MAP_HEAVY_THRESHOLD', 800)),
         'max_render_markers' => max(80, min(800, (int) env('HORIZONTE_MAP_MAX_RENDER', 400))),
+        /** Vista inicial GIS/BI — municípios com pressão FUNDEB elevada ou alta propensão. */
+        'default_view' => env('HORIZONTE_MAP_DEFAULT_VIEW', 'high_pressure'),
+        'financial_pressure_min' => max(0, min(100, (int) env('HORIZONTE_MAP_FINANCIAL_PRESSURE_MIN', 60))),
+        'hide_approximate_on_map' => filter_var(env('HORIZONTE_MAP_HIDE_APPROXIMATE', true), FILTER_VALIDATE_BOOL),
     ],
 
 ];

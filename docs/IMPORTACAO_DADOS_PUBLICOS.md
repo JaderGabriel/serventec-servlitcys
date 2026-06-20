@@ -181,7 +181,7 @@ O **mapa Horizonte** (`/dashboard/horizonte`) usa dados públicos **nacionais** 
 | Hub | `/admin/dados-publicos?hub=horizonte` · painel **Horizonte — abastecimento nacional** (`#horizonte-hub`) |
 | Abastecimento manual | Botão «Abastecer Horizonte» (POST `admin.public-data.horizonte-feed`) |
 | Mapa | `/dashboard/horizonte` |
-| Rotina quinzenal | `php artisan horizonte:fortnightly-feed` (dias 1 e 15) |
+| Rotina bimestral | `php artisan horizonte:fortnightly-feed` (dia 1 nos meses 1, 3, 5, 7, 9, 11) |
 | Documentação | [HORIZONTE.md](HORIZONTE.md) §9 |
 
 **Fases da rotina:** FUNDEB receita CSV FNDE → Censo matrículas → SAEB planilhas INEP (todos IBGE) → catálogo IBGE (27 UFs) → verificação oficial (`--no-notify`).

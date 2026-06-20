@@ -2,7 +2,7 @@
 
 namespace App\Support\Horizonte;
 
-/** Fases do abastecimento quinzenal Horizonte (ordem fixa). */
+/** Fases do abastecimento bimestral Horizonte (ordem fixa). */
 final class HorizonteFortnightlyFeedPhaseCatalog
 {
     /**

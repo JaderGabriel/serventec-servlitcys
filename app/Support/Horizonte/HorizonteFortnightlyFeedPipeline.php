@@ -110,9 +110,11 @@ final class HorizonteFortnightlyFeedPipeline
 
         $phases = is_array($state['phases'] ?? null) ? $state['phases'] : [];
         if (isset($phases[$index]) && ($phases[$index]['key'] ?? '') === $key) {
-            $status = ($phaseResult['skipped'] ?? false)
-                ? 'skipped'
-                : ($partial ? 'running' : ($success ? 'completed' : 'failed'));
+            $status = $partial
+                ? 'partial'
+                : (($phaseResult['skipped'] ?? false)
+                    ? 'skipped'
+                    : ($success ? 'completed' : 'failed'));
             $phases[$index] = array_merge($phases[$index], [
                 'status' => $status,
                 'success' => $partial ? null : $success,

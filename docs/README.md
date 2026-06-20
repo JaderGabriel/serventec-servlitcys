@@ -86,7 +86,7 @@ mindmap
 |-----------|----------|
 | [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) | Propósito, público, governação |
 | [INICIO_DASHBOARD.md](INICIO_DASHBOARD.md) | Início admin — KPIs, atalhos, mapa mental |
-| [HORIZONTE.md](HORIZONTE.md) | Mapa de oportunidade municipal (5.x) — propensão, calor, feed quinzenal, prospectos |
+| [HORIZONTE.md](HORIZONTE.md) | Mapa de oportunidade municipal (5.x) — propensão, calor, feed bimestral, alta pressão |
 | [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) | RBAC: admin, user, municipal |
 | [SEGURANCA.md](SEGURANCA.md) | Senhas, sessões, checklist produção |
 

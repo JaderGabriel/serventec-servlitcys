@@ -56,7 +56,7 @@
                         <p class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ __('Agendador (schedule:run)') }}</p>
                         <code class="block text-xs text-gray-600 dark:text-gray-400 mt-1">*/{{ config('schedule.runner_interval_minutes', 3) }} * * * * php artisan schedule:run</code>
                         <p class="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                            {{ __('Sincronizações automáticas (CadÚnico, geo, FUNDEB, etc.) e o feed Horizonte (dias 1 e 15) dependem do cron acima.') }}
+                            {{ __('Sincronizações automáticas (CadÚnico, geo, FUNDEB, etc.) e o feed Horizonte (bimestral — dia 1 nos meses 1, 3, 5, 7, 9, 11) dependem do cron acima.') }}
                         </p>
                     </div>
                 @endif

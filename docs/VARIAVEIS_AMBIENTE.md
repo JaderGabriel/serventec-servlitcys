@@ -274,6 +274,8 @@ Rota: `/dashboard/horizonte` · Documentação: [HORIZONTE.md](HORIZONTE.md).
 | `HORIZONTE_FORTNIGHTLY_FEED_TIME` | `03:00` | Hora (timezone da app) |
 | `HORIZONTE_FORTNIGHTLY_FUNDEB_YEARS` | *(vazio)* | Anos CSV receita FNDE (vazio = ref. + anterior) |
 | `HORIZONTE_FORTNIGHTLY_CENSO_SKIP_IF_MISSING` | `true` | Não falha se microdados INEP ausentes |
+| `HORIZONTE_FORTNIGHTLY_FEED_MEMORY_LIMIT` | `512M` | RAM geral do comando `horizonte:fortnightly-feed` |
+| `HORIZONTE_SAEB_MEMORY_LIMIT` | `2048M` | RAM da fase SAEB / `saeb:import-planilhas-inep` (planilhas RAR/XLSX INEP) |
 | `HORIZONTE_SIDRA_ENABLED` | `true` | Fase SIDRA no feed (pop. 4–17, agregado 9514) |
 | `HORIZONTE_SIDRA_AGREGADO` | `9514` | Agregado IBGE SIDRA (Censo 2022) |
 | `HORIZONTE_SIDRA_VARIAVEL` | `93` | Variável SIDRA (população residente) |
@@ -282,8 +284,11 @@ Rota: `/dashboard/horizonte` · Documentação: [HORIZONTE.md](HORIZONTE.md).
 | `HORIZONTE_SIDRA_BASE_URL` | URL IBGE v3 | Endpoint agregados SIDRA |
 | `HORIZONTE_SIDRA_HTTP_TIMEOUT` | `90` | Timeout HTTP SIDRA (segundos) |
 | `HORIZONTE_CADUNICO_FILL_GAPS` | `false` | CadÚnico: preencher lacunas via API SAGI no feed |
-| `HORIZONTE_MAP_HEAVY_THRESHOLD` | `800` | Acima disto, vista inicial restringe UF + prospectos |
+| `HORIZONTE_MAP_HEAVY_THRESHOLD` | `800` | Acima disto, vista inicial restringe UF + camada alta pressão |
 | `HORIZONTE_MAP_MAX_RENDER` | `400` | Máximo de pontos desenhados no mapa por defeito |
+| `HORIZONTE_MAP_DEFAULT_VIEW` | `high_pressure` | Vista GIS inicial (`high_pressure`, `prospects`, `all`) |
+| `HORIZONTE_MAP_FINANCIAL_PRESSURE_MIN` | `60` | Limiar pressão FUNDEB na camada «Alta pressão» |
+| `HORIZONTE_MAP_HIDE_APPROXIMATE` | `true` | Ocultar coord. aproximadas no mapa (mantém na lista) |
 | `HORIZONTE_SGE_ENABLED` | `true` | Activa fase SGE no feed |
 | `HORIZONTE_SGE_REGISTRY_PATH` | `horizonte/sge_registry.json` | JSON local IBGE→SGE |
 | `HORIZONTE_SGE_REGISTRY_URL` | — | URL remota alternativa (opcional) |

@@ -38,5 +38,6 @@ final class HorizonteFortnightlyFeedPipelineSaebPartialTest extends TestCase
         $this->assertSame('running', $state['status']);
         $this->assertSame(0, $state['current_index']);
         $this->assertSame('saeb_planilhas', $state['current_phase']);
+        $this->assertSame('partial', $state['phases'][0]['status']);
     }
 }

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * Carrega registo opcional IBGE → SGE (JSON local ou URL) para o Horizonte.
- * Falhas nunca interrompem o abastecimento quinzenal.
+ * Falhas nunca interrompem o abastecimento bimestral.
  */
 final class HorizonteMunicipalSgeRegistryService
 {

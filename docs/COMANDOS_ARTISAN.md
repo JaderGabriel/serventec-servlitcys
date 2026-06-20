@@ -135,13 +135,13 @@ php artisan public-data:check-official --no-notify   # só verifica e regista ca
 
 ---
 
-## 3.2b Horizonte — abastecimento quinzenal
+## 3.2b Horizonte — abastecimento bimestral
 
 | Comando | Descrição |
 |---------|-----------|
-| `horizonte:fortnightly-feed` | Sincroniza dados públicos **nacionais** para o mapa Horizonte: FUNDEB (CSV receita FNDE), Censo matrículas, SAEB planilhas INEP (todos os municípios), catálogo IBGE, verificação oficial (`--no-notify`) |
+| `horizonte:fortnightly-feed` | Sincroniza dados públicos **nacionais** para o mapa Horizonte: FUNDEB, Censo, CadÚnico, SIDRA, repasses, SAEB, catálogo IBGE, SGE, verificação oficial |
 
-**Agendamento:** dias **1 e 15** de cada mês (`HORIZONTE_FORTNIGHTLY_FEED_TIME`, default `03:00`).
+**Agendamento:** dia **1** às **03:00** nos meses **1, 3, 5, 7, 9, 11** + passos `--continue` a cada `HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL` min.
 
 ```bash
 php artisan horizonte:fortnightly-feed
