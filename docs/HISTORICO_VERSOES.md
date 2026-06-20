@@ -1,14 +1,14 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`5.5.0`** · tag de deploy **`20260619c-Helios`** · ver [RELEASE_20260619c_HELIOS.md](RELEASE_20260619c_HELIOS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`5.6.0`** · tag de deploy **`20260620-Urania`** · ver [RELEASE_20260620_URANIA.md](RELEASE_20260620_URANIA.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **5.5.0** |
+| **Versão semântica em produção** | **5.6.0** |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260619c-Helios` |
-| **Data de referência** | **19/06/2026** |
-| **Último marco documentado** | **Helios** — Horizonte GIS gerencial, monitor 10 min, catálogo Artisan admin — [RELEASE_20260619c_HELIOS.md](RELEASE_20260619c_HELIOS.md) |
+| **Tag de deploy (servidor)** | `20260620-Urania` |
+| **Data de referência** | **20/06/2026** |
+| **Último marco documentado** | **Urania** — Horizonte alta pressão GIS, feed robusto, sync BR — [RELEASE_20260620_URANIA.md](RELEASE_20260620_URANIA.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -31,6 +31,7 @@ timeline
     2026-06-03 : 5.3.0d Prometheus — feed bimestral, UF, SGE mapa, fix IBGE
     2026-06-03 : 5.4.0e Hyperion — scoring v2, SIDRA, repasses, mapa performante
     2026-06-19 : 5.5.0c Helios — GIS gerencial Horizonte, monitor 10 min, Artisan admin
+    2026-06-20 : 5.6.0 Urania — alta pressão GIS, feed robusto, sync BR
 ```
 
 Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) §5–6.
@@ -41,7 +42,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 5.5.0** | — / `20260619c-Helios` → `main` | — | 19/06/2026 | **Produção:** Horizonte GIS gerencial (filtros, metodologia, tooltip dimensões), monitor 10 min, catálogo Artisan admin, login/home — [RELEASE_20260619c_HELIOS.md](RELEASE_20260619c_HELIOS.md). *Tag `20260603f-Helios` obsoleta.* |
+| **▶ 5.6.0** | — / `20260620-Urania` → `main` | — | 20/06/2026 | **Produção:** Horizonte alta pressão GIS (preset decisão comercial), centroides IBGE, feed SAEB/repasses/CadÚnico robusto, script sync BR — [RELEASE_20260620_URANIA.md](RELEASE_20260620_URANIA.md). |
+| 5.5.0 | — / `20260619c-Helios` → `main` | — | 19/06/2026 | Horizonte GIS gerencial (filtros, metodologia, tooltip dimensões), monitor 10 min, catálogo Artisan admin, login/home — [RELEASE_20260619c_HELIOS.md](RELEASE_20260619c_HELIOS.md). *Tag `20260603f-Helios` obsoleta.* |
 | 5.4.0 | — / `20260603e-Hyperion` → `main` | — | 03/06/2026 | Horizonte v2 — CadÚnico/SIDRA/repasses no score e feed, mapa performante, SGE concorrência, fix Closure no cache — [RELEASE_20260603e_HYPERION.md](RELEASE_20260603e_HYPERION.md). |
 | 5.3.0 | — / `20260603d-Prometheus` → `main` | — | 03/06/2026 | Feed Horizonte bimestral, escopo UF, cadastro SGE no mapa, fix catálogo IBGE — [RELEASE_20260603d_PROMETHEUS.md](RELEASE_20260603d_PROMETHEUS.md). |
 | 5.2.0 | — / `20260603c-Argus` → `main` | — | 03/06/2026 | Hub Horizonte em Dados públicos, `module-monitor:collect`, acesso admin/utilizador — [RELEASE_20260603c_ARGUS.md](RELEASE_20260603c_ARGUS.md). |

@@ -22,11 +22,11 @@ return [
     */
 
     'product' => [
-        'version' => '5.5.0',
-        'release_tag' => '20260619c-Helios',
+        'version' => '5.6.0',
+        'release_tag' => '20260620-Urania',
         'commit_short' => '',
         'commit_number' => null,
-        'revision_date' => '2026-06-19',
+        'revision_date' => '2026-06-20',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],
