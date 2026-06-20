@@ -63,7 +63,7 @@
                                 <strong>Misocial (MDS/SAGI)</strong> —
                                 <a href="https://aplicacoes.mds.gov.br/sagi/servicos/misocial/" class="underline" target="_blank" rel="noopener">aplicacoes.mds.gov.br</a>
                                 @if ($misocialEnabled ?? true)
-                                    <span class="text-emerald-700 dark:text-emerald-300">({{ __('activo') }})</span>
+                                    <span class="text-emerald-700 dark:text-emerald-300">({{ __('ativo') }})</span>
                                 @else
                                     <span class="text-amber-700">({{ __('IEDUCAR_CADUNICO_MISOGIAL_ENABLED=false') }})</span>
                                 @endif
@@ -106,7 +106,7 @@
                                 {{ __('Importa ~5 500 municípios via SAGI/Misocial (MDS); depois preenche lacunas com CKAN, API ou CSV. Anos: :anos.', ['anos' => implode(', ', $autoSyncYears ?? [])]) }}
                             </p>
                             @if ($scheduleEnabled ?? false)
-                                <p class="text-[11px] mt-2 text-emerald-800/80">{{ __('Agendamento activo (cron): `cadunico:auto-sync --queue` semanalmente.') }}</p>
+                                <p class="text-[11px] mt-2 text-emerald-800/80">{{ __('Agendamento ativo (cron): `cadunico:auto-sync --queue` semanalmente.') }}</p>
                             @endif
                         </div>
                         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

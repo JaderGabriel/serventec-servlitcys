@@ -34,7 +34,7 @@
                 <span class="serv-home-kpi__bar-fill serv-home-kpi__bar-fill--teal" style="width: {{ $readyPct }}%"></span>
             </div>
             <p class="serv-home-kpi__hint">
-                {{ __(':pct% dos municípios activos com conexão testada', ['pct' => $readyPct]) }}
+                {{ __(':pct% dos municípios ativos com conexão testada', ['pct' => $readyPct]) }}
                 @if ($incomplete > 0)
                     <span class="block mt-0.5 text-amber-800 dark:text-amber-300 font-medium">{{ __(':n aguardam configuração', ['n' => number_format($incomplete)]) }}</span>
                 @endif
@@ -70,7 +70,7 @@
                 <p class="serv-home-kpi__label">{{ __('Consultoria') }}</p>
             </div>
             <p class="serv-home-kpi__value">{{ number_format($active) }}</p>
-            <p class="serv-home-kpi__hint">{{ __('Municípios activos no painel — FUNDEB, matrículas e discrepâncias') }}</p>
+            <p class="serv-home-kpi__hint">{{ __('Municípios ativos no painel — FUNDEB, matrículas e discrepâncias') }}</p>
         </a>
 
         <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="serv-home-kpi serv-home-kpi--link group @if ($queueTotal > 0 || $syncFailed > 0) serv-home-kpi--amber @endif">
@@ -95,7 +95,7 @@
             <span class="text-emerald-700 dark:text-emerald-400 font-medium">+{{ number_format($stats['cities_this_month']) }} {{ __('este mês') }}</span>
         @endif
         <span aria-hidden="true">·</span>
-        <span>{{ __('Bases activas:') }}</span>
+        <span>{{ __('Bases ativas:') }}</span>
         <span class="inline-flex items-center gap-1.5 font-mono">
             <span class="h-2 w-2 rounded-full bg-sky-500" aria-hidden="true"></span>
             PG {{ number_format($ops['pgsql']) }}
@@ -106,7 +106,7 @@
         </span>
         <a href="{{ route('cities.index') }}" class="serv-link">{{ __('Gerir municípios') }}</a>
         @if ($user?->canManageUsers())
-            <a href="{{ route('users.index') }}" class="serv-link">{{ __('Utilizadores') }}</a>
+            <a href="{{ route('users.index') }}" class="serv-link">{{ __('Usuários') }}</a>
         @endif
     </p>
 </section>

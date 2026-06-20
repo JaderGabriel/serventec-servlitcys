@@ -25,7 +25,7 @@ class LegalConsentRevocationController extends Controller
 
         return back()->with(
             'status',
-            __('Aceite de :name revogado. O utilizador deverá confirmar novamente em /consentimento.', ['name' => $user->name])
+            __('Aceite de :name revogado. O usuário deverá confirmar novamente em /consentimento.', ['name' => $user->name])
         );
     }
 
@@ -42,7 +42,7 @@ class LegalConsentRevocationController extends Controller
 
         return back()->with(
             'status',
-            __('Aceites revogados para :n utilizador(es) activos.', ['n' => $count])
+            __('Aceites revogados para :n usuário(s) ativos.', ['n' => $count])
         );
     }
 }

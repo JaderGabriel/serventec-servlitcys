@@ -147,7 +147,7 @@ final class HomeQuickActionsCatalog
                         'id' => 'cities',
                         'href' => route('cities.index'),
                         'title' => __('Municípios'),
-                        'description' => __('IBGE, credenciais, activação no mapa e vínculo de utilizadores.'),
+                        'description' => __('IBGE, credenciais, ativação no mapa e vínculo de usuários.'),
                         'icon' => 'map-pin',
                         'kicker' => __('Cadastro'),
                         'featured' => false,
@@ -188,7 +188,7 @@ final class HomeQuickActionsCatalog
                     [
                         'id' => 'users',
                         'href' => route('users.index'),
-                        'title' => __('Utilizadores e acessos'),
+                        'title' => __('Usuários e acessos'),
                         'description' => __('Contas, perfis, municípios associados e encerramento de sessões.'),
                         'icon' => 'users',
                         'kicker' => __('Contas'),

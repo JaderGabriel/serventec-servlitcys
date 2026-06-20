@@ -277,10 +277,13 @@ Para completar **todas** as fases/UFs/anos pendentes em loop (até 200 rondas), 
 ```bash
 cd /caminho/do/servlitcys
 
-# Iniciar (detached — pode fechar o terminal)
+# Uma vez por utilizador (evita systemd matar processos ao logout SSH):
+loginctl enable-linger $(whoami)
+
+# Iniciar (detached — pode fechar o terminal de imediato)
 ./scripts/horizonte-sync-br-screen.sh start
 
-# Rever progresso (desanexar: Ctrl+A, depois D)
+# Rever progresso (desanexar: Ctrl+A, depois D — NÃO feche o SSH estando attached)
 ./scripts/horizonte-sync-br-screen.sh attach
 
 # Estado
@@ -292,6 +295,13 @@ cd /caminho/do/servlitcys
 # Log agregado
 tail -f storage/logs/horizonte-sync-br-nohup.log
 ```
+
+**Importante:**
+
+- Corra **sempre como o mesmo utilizador** (não use `sudo` no `start` — senão o `status` noutro user mostra «não activo»).
+- Use `start` e saia do SSH **sem** `attach`, ou desanexe com **Ctrl+A, D** antes de fechar o terminal.
+- Se ao logout o sync morrer: `loginctl enable-linger $(whoami)` (requer sudo, uma vez).
+- Sockets screen ficam em `storage/screen/` (por defeito).
 
 O script interno `horizonte-sync-br-continue.sh` usa **flock** (uma instância), detecta OOM/parcial e exporta `HORIZONTE_SAEB_MEMORY_LIMIT=2048M` por defeito. **Não** corra em paralelo com `php artisan horizonte:fortnightly-feed` manual.
 

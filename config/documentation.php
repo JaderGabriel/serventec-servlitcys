@@ -24,8 +24,8 @@ return [
     */
 
     'product' => [
-        'version' => '5.7.2',
-        'release_tag' => '20260620c-Forseti',
+        'version' => '5.7.3',
+        'release_tag' => '20260620d-Bragi',
         'commit_short' => '',
         'commit_number' => null,
         'revision_date' => '2026-06-20',

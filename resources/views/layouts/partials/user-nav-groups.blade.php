@@ -98,7 +98,7 @@
                     'label' => __('Cidades'),
                     'icon' => 'map-pin',
                     'active' => $req->routeIs('cities.*'),
-                    'title' => __('Cadastro de cidades, IBGE e activação no mapa.'),
+                    'title' => __('Cadastro de cidades, IBGE e ativação no mapa.'),
                 ],
                 [
                     'show' => true,
@@ -221,7 +221,7 @@
                     'label' => __('Consentimentos LGPD'),
                     'icon' => 'shield-check',
                     'active' => $req->routeIs('admin.legal-consents.*'),
-                    'title' => __('Aceites, revogações e auditoria por utilizador.'),
+                    'title' => __('Aceites, revogações e auditoria por usuário.'),
                 ],
                 [
                     'show' => true,
@@ -251,7 +251,7 @@
         ],
         [
             'show' => $user->canManageUsers(),
-            'title' => __('Utilizadores'),
+            'title' => __('Usuários'),
             'icon' => 'users',
             'tone' => 'slate',
             'routes' => ['users.*'],
@@ -259,7 +259,7 @@
                 [
                     'show' => true,
                     'href' => route('users.index'),
-                    'label' => __('Utilizadores'),
+                    'label' => __('Usuários'),
                     'icon' => 'users',
                     'active' => $req->routeIs('users.index') || $req->routeIs('users.edit'),
                     'title' => __('Lista e gestão de contas.'),
@@ -267,10 +267,10 @@
                 [
                     'show' => true,
                     'href' => route('users.create'),
-                    'label' => __('Novo utilizador'),
+                    'label' => __('Novo usuário'),
                     'icon' => 'user-plus',
                     'active' => $req->routeIs('users.create'),
-                    'title' => __('Criar novo utilizador.'),
+                    'title' => __('Criar novo usuário.'),
                 ],
                 [
                     'show' => $user->isAdmin(),

@@ -14,7 +14,7 @@
         narrow
         :eyebrow="__('Municípios')"
         :title="$city->name"
-        :description="__('Atualize IBGE, conexão i-Educar e estado de activação.')"
+        :description="__('Atualize IBGE, conexão i-Educar e estado de ativação.')"
     >
         <div class="rounded-xl border border-gray-200/90 dark:border-gray-700 bg-white/80 dark:bg-gray-900/40 p-6">
             <form method="post" action="{{ route('cities.update', $city) }}">

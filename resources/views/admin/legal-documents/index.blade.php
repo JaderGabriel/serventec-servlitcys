@@ -16,7 +16,7 @@
         accent="rose"
         :eyebrow="__('Administração · LGPD')"
         :title="__('Documentos legais')"
-        :description="__('Edite e publique novas versões. Utilizadores activos podem ser redireccionados para /consentimento após publicação.')"
+        :description="__('Edite e publique novas versões. Usuários ativos podem ser redirecionados para /consentimento após publicação.')"
         :doc-href="route('legal.privacy')"
         :doc-label="__('Ver política pública')"
     >
@@ -26,7 +26,7 @@
 
         <x-slot name="headerActions">
             <a href="{{ route('admin.legal-consents.index') }}" class="inline-flex items-center {{ \App\Support\Admin\AdminVisualCatalog::chipClasses('rose') }} text-xs">
-                {{ __('Consentimentos dos utilizadores') }} →
+                {{ __('Consentimentos dos usuários') }} →
             </a>
         </x-slot>
 

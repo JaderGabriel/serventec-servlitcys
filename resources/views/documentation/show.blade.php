@@ -152,7 +152,7 @@
 
                     @if (($loadMermaid ?? false) && ($currentPath ?? '') === 'docs/HUB_DOCUMENTACAO.md')
                         <p class="serv-panel px-4 py-2 text-xs text-slate-600 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
-                            {{ __('Hub visual da documentação — diagramas renderizados no leitor; versão interactiva para Cursor em') }}
+                            {{ __('Hub visual da documentação — diagramas renderizados no leitor; versão interativa para Cursor em') }}
                             <code class="font-mono text-[11px]">canvases/documentacao-hub.canvas.tsx</code>
                         </p>
                     @endif

@@ -81,7 +81,7 @@ class LegalDocumentAdminController extends Controller
         $message = __('Versão :v publicada.', ['v' => $result['document']->version]);
         if ($result['reconsent_count'] > 0) {
             $message .= ' '.__(
-                ':n utilizador(es) terão de aceitar novamente na próxima visita.',
+                ':n usuário(s) terão de aceitar novamente na próxima visita.',
                 ['n' => $result['reconsent_count']]
             );
         }

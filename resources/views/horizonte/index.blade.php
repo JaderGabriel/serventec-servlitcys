@@ -42,8 +42,11 @@
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-3 shrink-0">
-                <button type="button" class="serv-link text-sm" x-data @click="$dispatch('horizonte-toggle-guide')">
+                <button type="button" class="serv-link text-sm" @click="startTour()">
                     {{ __('Como usar') }}
+                </button>
+                <button type="button" class="serv-link text-sm" @click="guideOpen = !guideOpen">
+                    {{ __('Demonstração') }}
                 </button>
                 <a href="{{ $docUrl }}" class="serv-link text-sm">{{ __('Documentação') }}</a>
             </div>
@@ -67,7 +70,6 @@
             'ufNames' => $ufNames,
         ]))"
         x-init="init()"
-        @horizonte-toggle-guide.window="guideOpen = !guideOpen"
     >
         <div class="max-w-[100rem] mx-auto sm:px-6 lg:px-8 space-y-5">
 
@@ -77,36 +79,36 @@
             </div>
 
             {{-- Barra de comando — decisão imediata --}}
-            <section class="serv-horizonte-cmd" aria-label="{{ __('Painel de decisão') }}">
+            <section class="serv-horizonte-cmd" aria-label="{{ __('Painel de decisão') }}" data-horizonte-tour="kpi">
                 <div class="serv-horizonte-cmd__hero">
                     <div class="serv-horizonte-cmd__primary">
                         <p class="text-[10px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">{{ __('Prioridade comercial') }}</p>
-                        <p class="serv-horizonte-cmd__primary-value" x-text="pageLoading ? '…' : Number(summary.high_pressure ?? 0).toLocaleString('pt-BR')">…</p>
-                        <p class="mt-1 text-sm text-rose-900/80 dark:text-rose-100/80">
+                        <p class="serv-horizonte-cmd__primary-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(summary.high_pressure)">…</p>
+                        <p class="mt-1 text-sm text-rose-900/80 dark:text-rose-100/80 line-clamp-3">
                             {{ __('Municípios em alta pressão FUNDEB (≥ :min) ou alta propensão — camada inicial do mapa.', ['min' => $pressureMin]) }}
                         </p>
                     </div>
                     <div class="serv-horizonte-cmd__metrics">
                         <div class="serv-horizonte-cmd__metric" title="{{ $kpiHints['prospect_count']['hint'] ?? '' }}">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Prospectos') }}</p>
-                            <p class="serv-horizonte-cmd__metric-value" x-text="pageLoading ? '…' : Number(summary.prospect_count ?? 0).toLocaleString('pt-BR')">…</p>
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 truncate">{{ __('Prospectos') }}</p>
+                            <p class="serv-horizonte-cmd__metric-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(summary.prospect_count)">…</p>
                         </div>
                         <div class="serv-horizonte-cmd__metric" title="{{ $kpiHints['high_prospect']['hint'] ?? '' }}">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Alta propensão') }}</p>
-                            <p class="serv-horizonte-cmd__metric-value" x-text="pageLoading ? '…' : Number(summary.high_prospect ?? 0).toLocaleString('pt-BR')">…</p>
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 truncate">{{ __('Alta propensão') }}</p>
+                            <p class="serv-horizonte-cmd__metric-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(summary.high_prospect)">…</p>
                         </div>
                         <div class="serv-horizonte-cmd__metric" title="{{ $kpiHints['consultoria_active']['hint'] ?? '' }}">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Consultoria') }}</p>
-                            <p class="serv-horizonte-cmd__metric-value" x-text="pageLoading ? '…' : Number(summary.consultoria_active ?? 0).toLocaleString('pt-BR')">…</p>
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 truncate">{{ __('Consultoria') }}</p>
+                            <p class="serv-horizonte-cmd__metric-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(summary.consultoria_active)">…</p>
                         </div>
                         <div class="serv-horizonte-cmd__metric" title="{{ $kpiHints['prospect_matriculas']['hint'] ?? '' }}">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Matr. prospecto') }}</p>
-                            <p class="serv-horizonte-cmd__metric-value" x-text="pageLoading ? '…' : Number(coverage.prospect_matriculas_censo ?? 0).toLocaleString('pt-BR')">…</p>
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 truncate">{{ __('Matr. prospecto') }}</p>
+                            <p class="serv-horizonte-cmd__metric-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(coverage.prospect_matriculas_censo)">…</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="serv-horizonte-cmd__segments">
+                <div class="serv-horizonte-cmd__segments" data-horizonte-tour="segments" x-show="!kpiLoading && focusSegments.length > 0" x-cloak>
                     <template x-for="seg in focusSegments" :key="seg.key">
                         <button
                             type="button"
@@ -121,7 +123,7 @@
                     </template>
                 </div>
 
-                <div class="serv-horizonte-cmd__controls">
+                <div class="serv-horizonte-cmd__controls" data-horizonte-tour="recorte">
                     <div class="flex flex-wrap items-center gap-2">
                         <label class="inline-flex items-center gap-2 text-xs">
                             <span class="text-slate-500 shrink-0">{{ __('Recorte') }}</span>
@@ -132,9 +134,9 @@
                                 class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 text-sm min-w-[11rem]"
                             >
                                 <option value="">{{ __('Brasil (por UF)') }}</option>
-                                <template x-for="opt in ufSelectOptions" :key="opt.uf">
-                                    <option :value="opt.uf" x-text="opt.label"></option>
-                                </template>
+                                @foreach ($ufNames as $code => $name)
+                                    <option value="{{ $code }}">{{ $code }} — {{ $name }}</option>
+                                @endforeach
                             </select>
                         </label>
                         <span class="serv-horizonte-gis__mode-pill" :class="isOverviewMode ? 'is-national' : 'is-regional'">
@@ -154,7 +156,8 @@
                         <button
                             type="button"
                             class="serv-btn-secondary text-xs xl:hidden"
-                            @click="filterDockOpen = !filterDockOpen"
+                            data-horizonte-tour="filters-hint"
+                            @click="openFiltersDock()"
                             :disabled="pageLoading || isOverviewMode"
                         >
                             {{ __('Filtros') }}
@@ -205,7 +208,7 @@
                             <span class="text-slate-400">·</span>
                             <span class="text-slate-500" x-text="decisionLensLabel"></span>
                         </div>
-                        <button type="button" class="serv-link text-[11px] shrink-0" @click="filterDockOpen = !filterDockOpen" x-show="!filterDockOpen">{{ __('Abrir filtros') }}</button>
+                        <button type="button" class="serv-link text-[11px] shrink-0" @click="openFiltersDock()" x-show="!filterDockOpen">{{ __('Abrir filtros') }}</button>
                     </div>
 
                     <div class="px-4 py-2 border-b border-slate-200/90 dark:border-slate-700/90 space-y-2">
@@ -277,6 +280,7 @@
                     <div class="serv-horizonte-map-stage">
                         <aside
                             class="serv-horizonte-filter-dock"
+                            data-horizonte-tour="filters"
                             :class="filterDockOpen ? 'is-open' : ''"
                             x-show="isRegionalMode"
                             x-cloak
@@ -344,14 +348,14 @@
                             <span x-show="!canShowAllOnMap" class="ms-2 text-amber-800/80">{{ __('Use a lista ou zoom nos clusters.') }}</span>
                         </div>
 
-                        <div x-ref="map" class="serv-brazil-map serv-horizonte-gis__map serv-horizonte-gis__map--tall w-full mt-3" role="application" aria-label="{{ __('Mapa Horizonte GIS') }}"></div>
+                        <div x-ref="map" data-horizonte-tour="map" class="serv-brazil-map serv-horizonte-gis__map serv-horizonte-gis__map--tall w-full mt-3" role="application" aria-label="{{ __('Mapa Horizonte GIS') }}"></div>
 
                         @include('horizonte.partials.map-tooltip-sge')
                         </div>
                     </div>
                 </section>
 
-                <aside class="serv-horizonte-rail" aria-label="{{ __('Próximas acções') }}">
+                <aside class="serv-horizonte-rail" aria-label="{{ __('Próximas acções') }}" data-horizonte-tour="rail">
                     <div class="serv-horizonte-rail__card">
                         <h3 class="text-xs font-bold uppercase tracking-wide text-slate-500">{{ __('Abordar primeiro') }}</h3>
                         <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{{ __('Clique para centrar no mapa.') }}</p>
@@ -363,7 +367,7 @@
                                         <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-100 text-[10px] font-bold text-rose-800 dark:bg-rose-950/50 dark:text-rose-200 tabular-nums" x-text="idx + 1"></span>
                                         <span class="min-w-0">
                                             <span class="block text-sm font-medium text-slate-900 dark:text-slate-100 truncate" x-text="p.name + ' (' + p.uf + ')'"></span>
-                                            <span class="text-[11px] text-slate-500 tabular-nums" x-text="Number(p.success_score ?? 0) + '/100 · ' + (p.tier_label || '')"></span>
+                                            <span class="text-[11px] text-slate-500 tabular-nums" x-text="formatScoreDisplay(p.success_score) + '/100 · ' + (p.tier_label || '')"></span>
                                         </span>
                                     </button>
                                 </li>
@@ -376,7 +380,7 @@
                         <ol x-show="ufRankings.length > 0" class="mt-2 space-y-1">
                             <template x-for="row in ufRankings.slice(0, 6)" :key="row.uf">
                                 <li>
-                                    <button type="button" class="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800/50" @click="selectUf(row.uf)">
+                                    <button type="button" class="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800/50" @click="selectPriorityUf(row.uf)">
                                         <span class="font-medium truncate" x-text="ufLabel(row.uf)"></span>
                                         <span class="shrink-0 text-[11px] tabular-nums text-rose-700 dark:text-rose-300" x-text="Number(row.high_pressure ?? row.high_prospect ?? 0).toLocaleString('pt-BR')"></span>
                                     </button>
@@ -388,20 +392,19 @@
                     <div class="serv-horizonte-rail__card">
                         <h3 class="text-xs font-bold uppercase tracking-wide text-slate-500">{{ __('Cobertura') }}</h3>
                         <dl class="mt-2 space-y-1 text-xs">
-                            <div class="flex justify-between gap-2"><dt class="text-slate-500">FUNDEB</dt><dd class="font-medium tabular-nums" x-text="pageLoading ? '…' : Number(coverage.with_fundeb ?? 0).toLocaleString('pt-BR')"></dd></div>
-                            <div class="flex justify-between gap-2"><dt class="text-slate-500">SAEB</dt><dd class="font-medium tabular-nums" x-text="pageLoading ? '…' : Number(coverage.with_saeb ?? 0).toLocaleString('pt-BR')"></dd></div>
-                            <div class="flex justify-between gap-2"><dt class="text-slate-500">{{ __('Triad completa') }}</dt><dd class="font-medium tabular-nums" x-text="pageLoading ? '…' : Number(coverage.with_full_triad ?? 0).toLocaleString('pt-BR')"></dd></div>
+                            <div class="flex justify-between gap-2"><dt class="text-slate-500">FUNDEB</dt><dd class="font-medium tabular-nums" x-text="formatKpiCount(coverage.with_fundeb)">…</dd></div>
+                            <div class="flex justify-between gap-2"><dt class="text-slate-500">SAEB</dt><dd class="font-medium tabular-nums" x-text="formatKpiCount(coverage.with_saeb)">…</dd></div>
+                            <div class="flex justify-between gap-2"><dt class="text-slate-500">{{ __('Triad completa') }}</dt><dd class="font-medium tabular-nums" x-text="formatKpiCount(coverage.with_full_triad)">…</dd></div>
                         </dl>
                     </div>
                 </aside>
             </div>
 
             {{-- Área de trabalho — abas --}}
-            <section class="serv-panel p-4 sm:p-5" aria-label="{{ __('Área de trabalho') }}">
+            <section class="serv-panel p-4 sm:p-5" aria-label="{{ __('Área de trabalho') }}" data-horizonte-tour="workspace">
                 <nav class="serv-horizonte-workspace__tabs" role="tablist">
                     <button type="button" role="tab" class="serv-horizonte-workspace__tab" :class="workspaceTab === 'actions' ? 'is-active' : ''" @click="workspaceTab = 'actions'">{{ __('Resumo') }}</button>
                     <button type="button" role="tab" class="serv-horizonte-workspace__tab" :class="workspaceTab === 'list' ? 'is-active' : ''" @click="workspaceTab = 'list'">{{ __('Lista de prospecção') }}</button>
-                    <button type="button" role="tab" class="serv-horizonte-workspace__tab" :class="workspaceTab === 'filters' ? 'is-active' : ''" @click="workspaceTab = 'filters'">{{ __('Filtros') }}</button>
                     <button type="button" role="tab" class="serv-horizonte-workspace__tab" :class="workspaceTab === 'data' ? 'is-active' : ''" @click="workspaceTab = 'data'">{{ __('Dados & SGE') }}</button>
                     <button type="button" role="tab" class="serv-horizonte-workspace__tab" :class="workspaceTab === 'methodology' ? 'is-active' : ''" @click="workspaceTab = 'methodology'; methodologyPanelOpen = true">{{ __('Metodologia') }}</button>
                 </nav>
@@ -409,6 +412,7 @@
                 <div class="serv-horizonte-workspace__body">
                     {{-- Resumo --}}
                     <div x-show="workspaceTab === 'actions'" role="tabpanel">
+                        <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">{{ __('Os filtros do mapa ficam no painel lateral — abra uma UF para refiná-los.') }}</p>
                         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             @foreach ($methodology['map_guide'] ?? [] as $step)
                                 <div class="rounded-xl border border-slate-200/90 bg-slate-50/60 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/40">
@@ -454,6 +458,7 @@
                                         <th class="py-2 px-2 font-medium">{{ __('Prop.') }}</th>
                                         <th class="py-2 px-2 font-medium">{{ __('Benef.') }}</th>
                                         <th class="py-2 px-2 font-medium">{{ __('Matr.') }}</th>
+                                        <th class="py-2 px-2 font-medium">{{ __('Press. FUNDEB') }}</th>
                                         <th class="py-2 px-2 font-medium">{{ __('Fontes') }}</th>
                                         <th class="py-2 ps-2 font-medium">{{ __('SGE') }}</th>
                                     </tr>
@@ -465,9 +470,10 @@
                                                 <span class="font-medium text-slate-900 dark:text-slate-100" x-text="p.name"></span>
                                                 <span class="text-slate-500" x-text="' (' + p.uf + ')'"></span>
                                             </td>
-                                            <td class="py-2 px-2 tabular-nums font-semibold" x-text="p.success_score"></td>
-                                            <td class="py-2 px-2 tabular-nums" x-text="p.benefit_score"></td>
-                                            <td class="py-2 px-2 tabular-nums" x-text="p.matriculas_censo != null ? Number(p.matriculas_censo).toLocaleString('pt-BR') : '—'"></td>
+                                            <td class="py-2 px-2 tabular-nums font-semibold" x-text="formatScoreDisplay(p.success_score)"></td>
+                                            <td class="py-2 px-2 tabular-nums" x-text="formatScoreDisplay(p.benefit_score)"></td>
+                                            <td class="py-2 px-2 tabular-nums" x-text="p.matriculas_censo != null ? formatCount(p.matriculas_censo) : '—'"></td>
+                                            <td class="py-2 px-2 tabular-nums" x-text="formatScoreDisplay(p.financial_pressure)"></td>
                                             <td class="py-2 px-2 text-slate-500" x-text="[p.has_fundeb ? 'F' : null, p.has_censo ? 'C' : null, p.has_saeb ? 'S' : null].filter(Boolean).join('·') || '—'"></td>
                                             <td class="py-2 ps-2">
                                                 <button
@@ -483,16 +489,6 @@
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-
-                    {{-- Filtros --}}
-                    <div x-show="workspaceTab === 'filters'" role="tabpanel" @keydown.escape.window="closeTooltip()">
-                        @include('horizonte.partials.filters-panel', [
-                            'viewPresets' => $viewPresets,
-                            'tierPresets' => $tierPresets,
-                            'canManageSge' => $canManageSge,
-                            'compact' => false,
-                        ])
                     </div>
 
                     {{-- Dados & SGE --}}
@@ -556,22 +552,83 @@
                 </div>
             </section>
 
-            {{-- Guia colapsável --}}
-            <section x-show="guideOpen" x-cloak x-transition class="serv-panel p-4" aria-label="{{ __('Como usar o Horizonte') }}">
-                <div class="flex items-center justify-between gap-3 mb-3">
-                    <h3 class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Fluxo de decisão') }}</h3>
-                    <button type="button" class="text-slate-400 hover:text-slate-600 text-xs" @click="guideOpen = false">{{ __('Fechar') }}</button>
+            {{-- Demonstração animada --}}
+            <section x-show="guideOpen" x-cloak x-transition class="serv-panel p-4 sm:p-5" aria-label="{{ __('Demonstração Horizonte') }}">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Como funciona o Horizonte') }}</h3>
+                        <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ __('Fluxo típico de decisão comercial — do Brasil ao município.') }}</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" class="serv-btn-secondary text-xs" @click="startTour()">{{ __('Tour guiado') }}</button>
+                        <button type="button" class="text-slate-400 hover:text-slate-600 text-xs" @click="guideOpen = false">{{ __('Fechar') }}</button>
+                    </div>
                 </div>
-                <div class="grid gap-3 sm:grid-cols-3">
-                    @foreach ($methodology['map_guide'] ?? [] as $step)
-                        <div class="serv-horizonte-guide__step rounded-xl border border-slate-200/90 bg-white/90 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/60">
-                            <p class="text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300">{{ __('Passo :n', ['n' => $step['step']]) }}</p>
-                            <p class="mt-1 text-sm font-semibold text-serv-navy dark:text-slate-100">{{ $step['title'] }}</p>
-                            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{{ $step['text'] }}</p>
+
+                <div class="serv-horizonte-demo" aria-hidden="true">
+                    <div class="serv-horizonte-demo__stage">
+                        <div class="serv-horizonte-demo__map serv-horizonte-demo__map--br">
+                            <span class="serv-horizonte-demo__bubble serv-horizonte-demo__bubble--a"></span>
+                            <span class="serv-horizonte-demo__bubble serv-horizonte-demo__bubble--b"></span>
+                            <span class="serv-horizonte-demo__bubble serv-horizonte-demo__bubble--c"></span>
+                            <span class="serv-horizonte-demo__cursor"></span>
                         </div>
-                    @endforeach
+                        <div class="serv-horizonte-demo__map serv-horizonte-demo__map--uf">
+                            <span class="serv-horizonte-demo__dot"></span>
+                            <span class="serv-horizonte-demo__dot"></span>
+                            <span class="serv-horizonte-demo__dot"></span>
+                            <span class="serv-horizonte-demo__dot"></span>
+                            <span class="serv-horizonte-demo__dot"></span>
+                        </div>
+                        <div class="serv-horizonte-demo__panel">
+                            <span class="serv-horizonte-demo__line serv-horizonte-demo__line--w75"></span>
+                            <span class="serv-horizonte-demo__line serv-horizonte-demo__line--w50"></span>
+                            <span class="serv-horizonte-demo__line serv-horizonte-demo__line--w66"></span>
+                        </div>
+                    </div>
+                    <ol class="serv-horizonte-demo__steps">
+                        @foreach ($methodology['map_guide'] ?? [] as $step)
+                            <li class="serv-horizonte-demo__step">
+                                <span class="serv-horizonte-demo__step-num">{{ $step['step'] }}</span>
+                                <span class="font-semibold text-sm text-serv-navy dark:text-slate-100">{{ $step['title'] }}</span>
+                                <span class="text-xs text-slate-600 dark:text-slate-400">{{ $step['text'] }}</span>
+                            </li>
+                        @endforeach
+                    </ol>
                 </div>
             </section>
+
+            {{-- Tour guiado in-app --}}
+            <div
+                x-show="tourActive"
+                x-cloak
+                class="serv-horizonte-tour"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="horizonte-tour-title"
+                @keydown.escape.window="skipTour()"
+            >
+                <div class="serv-horizonte-tour__backdrop" @click="skipTour()"></div>
+                <div class="serv-horizonte-tour__spotlight" :style="tourSpotlightStyle"></div>
+                <div class="serv-horizonte-tour__card" :style="tourCardStyle">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300">
+                        {{ __('Guia') }}
+                        <span class="tabular-nums" x-text="(tourStepIndex + 1) + ' / ' + tourStepsList.length"></span>
+                    </p>
+                    <h4 id="horizonte-tour-title" class="mt-1 text-sm font-semibold text-serv-navy dark:text-slate-100" x-text="currentTourStep?.title"></h4>
+                    <p class="mt-1.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed" x-text="currentTourStep?.text"></p>
+                    <div class="mt-4 flex flex-wrap items-center justify-between gap-2">
+                        <button type="button" class="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300" @click="skipTour()">{{ __('Saltar') }}</button>
+                        <div class="flex gap-2">
+                            <button type="button" class="serv-btn-secondary text-xs" x-show="tourStepIndex > 0" @click="prevTourStep()">{{ __('Anterior') }}</button>
+                            <button type="button" class="serv-btn-primary text-xs" @click="nextTourStep()">
+                                <span x-show="tourStepIndex < tourStepsList.length - 1">{{ __('Seguinte') }}</span>
+                                <span x-show="tourStepIndex >= tourStepsList.length - 1">{{ __('Concluir') }}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </x-app-layout>

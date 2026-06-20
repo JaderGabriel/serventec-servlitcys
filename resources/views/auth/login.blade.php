@@ -2,7 +2,7 @@
     <div class="mb-6 text-center">
         <p class="serv-eyebrow">{{ __('Acesso seguro') }}</p>
         <h1 class="serv-auth-title mt-2">{{ __('Entrar') }}</h1>
-        <p class="serv-auth-subtitle">{{ __('Utilize o seu nome de utilizador e palavra-passe autorizados.') }}</p>
+        <p class="serv-auth-subtitle">{{ __('Utilize seu nome de usuário e senha autorizados.') }}</p>
     </div>
 
     <x-auth-session-status class="mb-4 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-medium text-teal-900 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-200" :status="session('status')" />

@@ -52,7 +52,7 @@
                             <thead>
                                 <tr class="text-left text-xs uppercase tracking-wide text-amber-900/70 dark:text-amber-200/70 border-b border-amber-200/60 dark:border-amber-900/40">
                                     <th class="px-4 sm:px-6 py-2 font-semibold">{{ __('Comando') }}</th>
-                                    <th class="px-3 py-2 font-semibold">{{ __('Slug activo') }}</th>
+                                    <th class="px-3 py-2 font-semibold">{{ __('Slug ativo') }}</th>
                                     <th class="px-3 py-2 font-semibold hidden md:table-cell">{{ __('Variável .env') }}</th>
                                     <th class="px-4 sm:px-6 py-2 font-semibold">{{ __('Exemplo') }}</th>
                                 </tr>

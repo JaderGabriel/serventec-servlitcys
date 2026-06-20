@@ -406,7 +406,7 @@ final class DocumentationCatalog
                     ['label' => __('Histórico de versões'), 'path' => 'docs/HISTORICO_VERSOES.md', 'hint' => __('Tags e commits')],
                     ['label' => __('Backlog de implementações'), 'path' => 'docs/BACKLOG_IMPLEMENTACOES.md'],
                     ['label' => __('Documentação executiva'), 'path' => 'docs/DOCUMENTACAO_EXECUTIVA.md', 'hint' => __('Gestão e secretaria')],
-                    ['label' => __('Perfis de utilizador'), 'path' => 'docs/PERFIS_UTILIZADOR.md'],
+                    ['label' => __('Perfis de usuário'), 'path' => 'docs/PERFIS_UTILIZADOR.md'],
                     ['label' => __('Design system (UI)'), 'path' => 'docs/DESIGN_SYSTEM.md'],
                 ],
             ],

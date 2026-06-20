@@ -35,6 +35,7 @@ docker-compose.override.yml
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/screen
 /vendor
 
 # SAEB / exemplos JSON (evitar dados de teste em produção)

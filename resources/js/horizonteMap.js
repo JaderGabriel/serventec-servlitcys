@@ -22,6 +22,26 @@ function nf(n) {
     return Number(n).toLocaleString("pt-BR");
 }
 
+function formatScoreValue(n) {
+    if (n === null || n === undefined || Number.isNaN(Number(n))) {
+        return "—";
+    }
+    return Number(n).toLocaleString("pt-BR", { maximumFractionDigits: 0 });
+}
+
+function formatCurrencyBrl(n) {
+    if (n === null || n === undefined || Number.isNaN(Number(n))) {
+        return "—";
+    }
+    return Number(n).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+        maximumFractionDigits: 0,
+    });
+}
+
+const HORIZONTE_TOUR_STORAGE_KEY = "horizonte_onboarding_v1";
+
 function uniqueSortedUfs(markers) {
     return [...new Set(markers.map((m) => String(m.uf ?? "").trim()).filter(Boolean))].sort();
 }
@@ -226,6 +246,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         onlyMissingSge: false,
         hideConsultoria: options.defaultViewFilter?.hide_consultoria !== false,
         ufList: Array.isArray(options.ufList) ? options.ufList : [],
+        nationalUfRankings: Array.isArray(options.ufRankings) ? options.ufRankings : [],
+        nationalUfMapPoints: [],
         ufNames:
             options.ufNames && typeof options.ufNames === "object" ? options.ufNames : {},
         prospectSort: "success_score",
@@ -244,6 +266,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         methodologyPanelOpen: false,
         workspaceTab: "actions",
         guideOpen: false,
+        tourActive: false,
+        tourStepIndex: 0,
+        tourSpotlightStyle: "display:none",
+        tourCardStyle: "",
+        tourResizeHandler: null,
         highlightIbge: "",
         methodology:
             options.methodology && typeof options.methodology === "object"
@@ -262,6 +289,55 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         get totalMarkers() {
             return Number(this.summary?.total ?? this.meta?.marker_count ?? 0);
+        },
+
+        get kpiLoading() {
+            return this.pageLoading || this.regionalLoading;
+        },
+
+        get tourStepsList() {
+            return [
+                {
+                    target: '[data-horizonte-tour="kpi"]',
+                    title: "Prioridade comercial",
+                    text: "Indicadores do recorte actual — alta pressão FUNDEB, prospectos, consultoria activa e matrículas em prospecto.",
+                },
+                {
+                    target: '[data-horizonte-tour="recorte"]',
+                    title: "Recorte geográfico",
+                    text: "Brasil mostra bolhas por UF. Escolha um estado para carregar municípios no mapa e na lista.",
+                },
+                {
+                    target: '[data-horizonte-tour="segments"]',
+                    title: "Segmentos rápidos",
+                    text: "Atalhos de prospecção — cada cartão aplica um recorte típico e abre a lista filtrada.",
+                },
+                {
+                    target: '[data-horizonte-tour="map"]',
+                    title: "Mapa GIS",
+                    text: "Clique numa bolha (Brasil) ou num ponto municipal (UF). Pontos cinza também são clicáveis.",
+                },
+                {
+                    target: '[data-horizonte-tour="filters"]',
+                    title: "Filtros laterais",
+                    text: "Lentes de decisão e refinamento — activos com UF aberta. No telemóvel use o botão «Filtros».",
+                    openFilters: true,
+                },
+                {
+                    target: '[data-horizonte-tour="rail"]',
+                    title: "Próximas acções",
+                    text: "Municípios para abordar primeiro e UFs prioritárias — clique para centrar ou abrir a UF.",
+                },
+                {
+                    target: '[data-horizonte-tour="workspace"]',
+                    title: "Área de trabalho",
+                    text: "Lista de prospecção, cobertura de dados públicos e metodologia dos scores.",
+                },
+            ];
+        },
+
+        get currentTourStep() {
+            return this.tourStepsList[this.tourStepIndex] ?? null;
         },
 
         get filteredCount() {
@@ -345,12 +421,15 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         get ufSelectOptions() {
+            const fromNames = Object.keys(this.ufNames || {});
             const codes =
-                this.ufList.length > 0
-                    ? this.ufList
-                    : this.ufRankings.length > 0
-                      ? this.ufRankings.map((r) => r.uf)
-                      : this.ufMapPoints.map((p) => p.uf);
+                fromNames.length > 0
+                    ? fromNames
+                    : this.nationalUfMapPoints.length > 0
+                      ? this.nationalUfMapPoints.map((p) => p.uf)
+                      : this.ufMapPoints.length > 0
+                        ? this.ufMapPoints.map((p) => p.uf)
+                        : this.ufRankings.map((r) => r.uf);
             return [...new Set(codes.map((uf) => String(uf ?? "").trim()).filter(Boolean))]
                 .sort((a, b) => this.ufLabel(a).localeCompare(this.ufLabel(b), "pt-BR"))
                 .map((uf) => ({
@@ -719,10 +798,137 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         async init() {
             this.initMap();
+            this.tourResizeHandler = () => {
+                if (this.tourActive) {
+                    this.positionTourStep();
+                }
+            };
+            window.addEventListener("resize", this.tourResizeHandler, { passive: true });
             if (this.loadUrl) {
                 await this.fetchOverview();
                 await this.applyInitialNavigation();
+                this.maybeStartOnboarding();
             }
+        },
+
+        formatKpiCount(value) {
+            if (this.kpiLoading) {
+                return "…";
+            }
+            return nf(value ?? 0);
+        },
+
+        formatCount(value) {
+            return nf(value ?? 0);
+        },
+
+        formatScoreDisplay(value) {
+            return formatScoreValue(value);
+        },
+
+        formatCurrencyDisplay(value) {
+            return formatCurrencyBrl(value);
+        },
+
+        openFiltersDock() {
+            this.filterDockOpen = true;
+        },
+
+        startTour() {
+            this.tourActive = true;
+            this.tourStepIndex = 0;
+            this.guideOpen = false;
+            this.$nextTick(() => this.positionTourStep());
+        },
+
+        endTour(remember = true) {
+            this.tourActive = false;
+            this.tourSpotlightStyle = "display:none";
+            if (remember) {
+                try {
+                    localStorage.setItem(HORIZONTE_TOUR_STORAGE_KEY, "1");
+                } catch (_) {
+                    /* ignore */
+                }
+            }
+        },
+
+        skipTour() {
+            this.endTour(true);
+        },
+
+        prevTourStep() {
+            if (this.tourStepIndex <= 0) {
+                return;
+            }
+            this.tourStepIndex -= 1;
+            this.$nextTick(() => this.positionTourStep());
+        },
+
+        nextTourStep() {
+            if (this.tourStepIndex >= this.tourStepsList.length - 1) {
+                this.endTour(true);
+                return;
+            }
+            this.tourStepIndex += 1;
+            this.$nextTick(() => this.positionTourStep());
+        },
+
+        maybeStartOnboarding() {
+            if (this.pageError) {
+                return;
+            }
+            try {
+                if (localStorage.getItem(HORIZONTE_TOUR_STORAGE_KEY)) {
+                    return;
+                }
+            } catch (_) {
+                /* ignore */
+            }
+            window.setTimeout(() => {
+                if (!this.pageError && !this.tourActive) {
+                    this.startTour();
+                }
+            }, 700);
+        },
+
+        positionTourStep() {
+            const step = this.currentTourStep;
+            if (!step) {
+                return;
+            }
+            if (step.openFilters && this.isRegionalMode && window.innerWidth < 1280) {
+                this.filterDockOpen = true;
+            }
+            const el = document.querySelector(step.target);
+            if (!el || (el.offsetParent === null && step.target.includes("filters"))) {
+                this.tourSpotlightStyle = "display:none";
+                this.tourCardStyle =
+                    "top:50%;left:50%;transform:translate(-50%,-50%);max-width:min(22rem,calc(100vw - 2rem));";
+                return;
+            }
+            el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            window.requestAnimationFrame(() => {
+                const rect = el.getBoundingClientRect();
+                const pad = 10;
+                this.tourSpotlightStyle = [
+                    `top:${Math.max(8, rect.top - pad)}px`,
+                    `left:${Math.max(8, rect.left - pad)}px`,
+                    `width:${rect.width + pad * 2}px`,
+                    `height:${rect.height + pad * 2}px`,
+                ].join(";");
+                const cardWidth = Math.min(320, window.innerWidth - 32);
+                let left = rect.left;
+                if (left + cardWidth > window.innerWidth - 16) {
+                    left = window.innerWidth - cardWidth - 16;
+                }
+                left = Math.max(16, left);
+                let top = rect.bottom + 14;
+                if (top + 180 > window.innerHeight - 16) {
+                    top = Math.max(16, rect.top - 180);
+                }
+                this.tourCardStyle = `top:${top}px;left:${left}px;width:${cardWidth}px;`;
+            });
         },
 
         applyDefaultDecisionView() {
@@ -1057,6 +1263,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 if (this.pendingRegionalUf === scoped) {
                     this.pendingRegionalUf = "";
                 }
+                if (this.ensurePointsVisibleOnMap()) {
+                    this._filterSignature = this.filterSignature();
+                }
                 await this.scheduleMapRefresh();
             }
         },
@@ -1070,6 +1279,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.markers = [];
             this.filteredMarkersList = [];
             this.ufMapPoints = Array.isArray(data.uf_map_points) ? data.uf_map_points : [];
+            this.nationalUfMapPoints = this.ufMapPoints;
+            if (Array.isArray(data.uf_rankings) && data.uf_rankings.length > 0) {
+                this.nationalUfRankings = data.uf_rankings;
+            }
             this.applyCommonPayload(data);
             this.setOverviewNotice();
         },
@@ -1082,14 +1295,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.scopeUf = uf;
             this.markers = Array.isArray(data.markers) ? data.markers : [];
             this.ufMapPoints = [];
-            this.ufList = uniqueSortedUfs(this.markers).sort((a, b) =>
-                this.ufLabel(a).localeCompare(this.ufLabel(b), "pt-BR"),
-            );
             this.applyCommonPayload(data);
             this.recomputeFilteredMarkers();
             this._filterSignature = this.filterSignature();
             this.applyRegionalRenderPolicy();
             this._tooltipHtmlCache = {};
+            this.ensurePointsVisibleOnMap();
             this.initialViewNotice = {
                 kind: "regional",
                 message:
@@ -1113,6 +1324,22 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.ufRankings = Array.isArray(data.uf_rankings)
                 ? data.uf_rankings
                 : this.ufRankings;
+            if (
+                Array.isArray(data.uf_rankings) &&
+                data.uf_rankings.length > 1 &&
+                this.isOverviewMode
+            ) {
+                this.nationalUfRankings = data.uf_rankings;
+            } else if (
+                Array.isArray(data.uf_rankings) &&
+                data.uf_rankings.length > 1 &&
+                this.nationalUfRankings.length === 0
+            ) {
+                this.nationalUfRankings = data.uf_rankings;
+            }
+            if (this.nationalUfRankings.length > 0) {
+                this.ufRankings = this.nationalUfRankings;
+            }
             this.topProspects = Array.isArray(data.top_prospects)
                 ? data.top_prospects
                 : this.topProspects;
@@ -1133,12 +1360,23 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     ? this.meta.display_policy
                     : null;
             this.mapRenderLimit = Number(this.displayPolicy?.max_render_markers) || 400;
-            if (this.ufList.length === 0 && Array.isArray(this.ufMapPoints)) {
-                this.ufList = this.ufMapPoints
-                    .map((p) => p.uf)
-                    .filter(Boolean)
-                    .sort((a, b) => this.ufLabel(a).localeCompare(this.ufLabel(b), "pt-BR"));
+        },
+
+        /** Se há municípios no recorte mas nenhum desenhável (coords. aproximadas ocultas), mostra no mapa. */
+        ensurePointsVisibleOnMap() {
+            if (!this.isRegionalMode || this.markers.length === 0) {
+                return false;
             }
+            const withCoords = this.filteredMarkersList.filter((m) =>
+                isValidCoord(Number(m.lat), Number(m.lng)),
+            );
+            const onMap = withCoords.filter((m) => !this.hideApproxOnMap || !isApproxCoord(m));
+            if (withCoords.length > 0 && onMap.length === 0 && this.hideApproxOnMap) {
+                this.hideApproxOnMap = false;
+                this.recomputeFilteredMarkers();
+                return true;
+            }
+            return false;
         },
 
         setOverviewNotice() {
@@ -1191,7 +1429,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 zoomToBoundsOnClick: true,
                 removeOutsideVisibleBounds: true,
             });
-            this.map.addLayer(this.clusterGroup);
 
             this.map.setView([-14.2, -51.9], 4);
 
@@ -1284,11 +1521,22 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             try {
                 if (this.isOverviewMode) {
+                    if (this.map.hasLayer(this.clusterGroup)) {
+                        this.map.removeLayer(this.clusterGroup);
+                    }
                     await this.renderUfOverview();
-                } else if (this.mapView === "heat") {
-                    await this.renderHeatLayer();
                 } else {
-                    await this.renderMarkers();
+                    if (this.mapView === "heat") {
+                        if (this.map.hasLayer(this.clusterGroup)) {
+                            this.map.removeLayer(this.clusterGroup);
+                        }
+                        await this.renderHeatLayer();
+                    } else {
+                        if (!this.map.hasLayer(this.clusterGroup)) {
+                            this.map.addLayer(this.clusterGroup);
+                        }
+                        await this.renderMarkers();
+                    }
                 }
             } finally {
                 this.mapRendering = false;
@@ -1348,9 +1596,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                         `<span class="text-slate-500">Clique para abrir camada municipal filtrada</span>`,
                     { direction: "top", sticky: true },
                 );
-                circle.on("click", () => this.selectUf(p.uf));
+                circle.on("click", (e) => {
+                    L.DomEvent.stopPropagation(e);
+                    void this.selectUfFromOverview(p.uf);
+                });
                 circle.addTo(this.ufLayer);
             }
+
+            if (this.map.hasLayer(this.ufLayer)) {
+                this.map.removeLayer(this.ufLayer);
+            }
+            this.ufLayer.addTo(this.map);
 
             this.fitMapBounds(bounds, 4);
         },
@@ -1477,6 +1733,26 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             void this.selectUf(uf, true);
         },
 
+        async enterRegionalWithPressureLens(uf) {
+            this.applyDecisionLens("high_pressure");
+            this.mapView = "markers";
+            await this.selectUf(uf, false, true);
+            if (this.filteredCount === 0 && this.markers.length > 0) {
+                this.applyDecisionLens("prospects");
+                this.recomputeFilteredMarkers();
+                this.ensurePointsVisibleOnMap();
+                await this.scheduleMapRefresh();
+            }
+        },
+
+        async selectUfFromOverview(uf) {
+            await this.enterRegionalWithPressureLens(uf);
+        },
+
+        async selectPriorityUf(uf) {
+            await this.enterRegionalWithPressureLens(uf);
+        },
+
         async selectUf(uf, userInitiated = true, force = false) {
             const scoped = String(uf ?? "").trim().toUpperCase();
             if (!scoped) {
@@ -1495,7 +1771,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return;
             }
             this.highlightIbge = "";
-            if (userInitiated) {
+            if (userInitiated && !this.isOverviewMode) {
                 this.applyDefaultDecisionView();
             }
             await this.fetchRegional(scoped);
@@ -1716,12 +1992,23 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             lines.push(
                 `<dl class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">`,
-                `<dt class="text-gray-500">${escapeHtml("Propensão")}</dt><dd class="font-semibold tabular-nums">${nf(m.success_score)}/100 <span class="text-[10px] font-normal text-slate-400">(≥${th.high} alta)</span></dd>`,
-                `<dt class="text-gray-500">${escapeHtml("Benefício")}</dt><dd class="font-semibold tabular-nums">${nf(m.benefit_score)}/100</dd>`,
+                `<dt class="text-gray-500">${escapeHtml("Propensão")}</dt><dd class="font-semibold tabular-nums">${formatScoreValue(m.success_score)}/100 <span class="text-[10px] font-normal text-slate-400">(≥${th.high} alta)</span></dd>`,
+                `<dt class="text-gray-500">${escapeHtml("Benefício")}</dt><dd class="font-semibold tabular-nums">${formatScoreValue(m.benefit_score)}/100</dd>`,
+                `<dt class="text-gray-500">${escapeHtml("Pressão FUNDEB")}</dt><dd class="font-semibold tabular-nums">${formatScoreValue(m.financial_pressure)}/100</dd>`,
             );
             if (m.matriculas_censo != null) {
                 lines.push(
                     `<dt class="text-gray-500">${escapeHtml("Matrículas Censo")}</dt><dd class="tabular-nums">${nf(m.matriculas_censo)}</dd>`,
+                );
+            }
+            if (m.complementacao_fundeb != null) {
+                lines.push(
+                    `<dt class="text-gray-500">${escapeHtml("Compl. FUNDEB")}</dt><dd class="tabular-nums font-medium">${formatCurrencyBrl(m.complementacao_fundeb)}</dd>`,
+                );
+            }
+            if (m.transfer_total != null) {
+                lines.push(
+                    `<dt class="text-gray-500">${escapeHtml("Repasses")}</dt><dd class="tabular-nums font-medium">${formatCurrencyBrl(m.transfer_total)}</dd>`,
                 );
             }
             const sources = [
@@ -1744,7 +2031,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             lines.push(`</dl>`);
 
             const dims = [
-                { key: "financial_pressure", label: "Financeira" },
+                { key: "financial_pressure", label: "Pressão FUNDEB" },
                 { key: "pedagogical_gap", label: "Pedagógica" },
                 { key: "scale_score", label: "Escala" },
                 { key: "social_demand", label: "Social" },
@@ -1763,7 +2050,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                         `<span class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">` +
                         `<span class="block h-full rounded-full bg-teal-600" style="width:${val}%"></span>` +
                         `</span>` +
-                        `<span class="w-6 text-right tabular-nums font-medium">${val}</span>` +
+                        `<span class="w-6 text-right tabular-nums font-medium">${formatScoreValue(val)}</span>` +
                         `</div>`,
                 );
             }

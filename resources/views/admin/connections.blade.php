@@ -89,7 +89,7 @@
                 ['label' => __('Cidades cadastradas'), 'value' => $stats['cities'], 'hint' => __('Total na aplicação')],
                 ['label' => __('Cidades ativas'), 'value' => $stats['cities_active'], 'hint' => __('Elegíveis para painéis'), 'tone' => 'emerald'],
                 ['label' => __('Novas este mês'), 'value' => $stats['cities_this_month'], 'hint' => __('Cadastro no mês corrente')],
-                ['label' => __('Utilizadores'), 'value' => $stats['users'], 'hint' => __('Contas com acesso')],
+                ['label' => __('Usuários'), 'value' => $stats['users'], 'hint' => __('Contas com acesso')],
             ] as $card)
                 <div class="rounded-xl border border-gray-200/90 dark:border-gray-700 bg-white dark:bg-gray-900/50 p-5 shadow-sm">
                     <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ $card['label'] }}</p>

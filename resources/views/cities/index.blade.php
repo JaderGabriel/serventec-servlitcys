@@ -5,7 +5,7 @@
                 {{ __('Cidades') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ __('Cadastro municipal, IBGE, conexão i-Educar e activação na consultoria.') }}
+                {{ __('Cadastro municipal, IBGE, conexão i-Educar e ativação na consultoria.') }}
             </p>
         </div>
     </x-slot>

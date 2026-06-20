@@ -89,17 +89,18 @@ final class HorizonteMapService
         $ttl = max(60, (int) config('horizonte.cache_seconds', 900));
         $uf = \App\Support\Horizonte\HorizonteUfScope::normalize($uf);
 
-        if ($scope === 'regional' && $uf !== null) {
+            if ($scope === 'regional' && $uf !== null) {
             $responseKey = 'horizonte:map:regional-response:v2:'.$refYear.':'.$uf.':'.$fingerprint;
             $cachedResponse = AdminHomeMapCache::get($responseKey);
             if (is_array($cachedResponse)) {
-                return $cachedResponse;
+                return $this->attachNationalUfRankings($cachedResponse, $refYear, $fingerprint);
             }
 
             $fullKey = 'horizonte:map:v2:'.$refYear.':'.$fingerprint;
             $full = AdminHomeMapCache::get($fullKey);
             if (is_array($full)) {
                 $payload = $this->asRegionalPayload($full, $uf);
+                $payload = $this->attachNationalUfRankings($payload, $refYear, $fingerprint);
                 AdminHomeMapCache::repository()->put($responseKey, $payload, $ttl);
 
                 return $payload;
@@ -113,6 +114,7 @@ final class HorizonteMapService
             }
 
             $payload = $this->asRegionalPayload($regional, $uf);
+            $payload = $this->attachNationalUfRankings($payload, $refYear, $fingerprint);
             AdminHomeMapCache::repository()->put($responseKey, $payload, $ttl);
 
             return $payload;
@@ -185,6 +187,37 @@ final class HorizonteMapService
         );
 
         return $full;
+    }
+
+    /**
+     * Mantém o ranking nacional de UFs na resposta regional (rail «UFs prioritárias»).
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function attachNationalUfRankings(array $payload, int $refYear, string $fingerprint): array
+    {
+        $current = is_array($payload['uf_rankings'] ?? null) ? $payload['uf_rankings'] : [];
+        if (count($current) > 1) {
+            return $payload;
+        }
+
+        foreach ([
+            'horizonte:map:overview:v2:'.$refYear.':'.$fingerprint,
+            'horizonte:map:v2:'.$refYear.':'.$fingerprint,
+        ] as $cacheKey) {
+            $cached = AdminHomeMapCache::get($cacheKey);
+            if (! is_array($cached)) {
+                continue;
+            }
+            $rankings = is_array($cached['uf_rankings'] ?? null) ? $cached['uf_rankings'] : [];
+            if (count($rankings) > 1) {
+                $payload['uf_rankings'] = $rankings;
+                break;
+            }
+        }
+
+        return $payload;
     }
 
     private function financialPressureMin(): int

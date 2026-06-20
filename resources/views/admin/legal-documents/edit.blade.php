@@ -63,7 +63,7 @@
                     <label class="flex gap-2 items-start cursor-pointer">
                         <input type="checkbox" name="force_reconsent" value="1" class="mt-1 rounded border-gray-300 text-rose-600" @checked(old('force_reconsent', true)) />
                         <span class="text-sm text-gray-700 dark:text-gray-300">
-                            {{ __('Forçar novo consentimento de todos os utilizadores activos após publicar') }}
+                            {{ __('Forçar novo consentimento de todos os usuários ativos após publicar') }}
                         </span>
                     </label>
                     <button type="submit" class="inline-flex items-center rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500 disabled:opacity-50" @disabled(! $contentChanged)>

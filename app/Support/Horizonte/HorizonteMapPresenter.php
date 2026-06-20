@@ -104,17 +104,17 @@ final class HorizonteMapPresenter
                 [
                     'step' => 1,
                     'title' => __('Visão nacional'),
-                    'text' => __('Clique num estado (bolha) para carregar municípios da UF.'),
+                    'text' => __('Bolhas = estados · clique numa UF ou use o selector «Recorte» para abrir municípios.'),
                 ],
                 [
                     'step' => 2,
-                    'title' => __('Detalhe municipal'),
-                    'text' => __('Filtros e segmentos; todos os pontos no mapa são clicáveis, incluindo cinza (sem dados públicos).'),
+                    'title' => __('Filtros laterais'),
+                    'text' => __('Escolha a lente (alta pressão, prospectos…) e refine scores — painel à esquerda do mapa.'),
                 ],
                 [
                     'step' => 3,
                     'title' => __('Ficha do município'),
-                    'text' => __('Clique no ponto ou na lista para ver scores, dimensões e registo SGE.'),
+                    'text' => __('Clique no ponto ou na lista — scores, complementação FUNDEB em R$ e registo SGE.'),
                 ],
             ],
             'map_legend_notes' => [

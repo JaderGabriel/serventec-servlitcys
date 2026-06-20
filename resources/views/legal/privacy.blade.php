@@ -23,7 +23,7 @@
             <section>
                 <h2 class="font-display text-base font-semibold text-slate-900 dark:text-white">{{ __('1. Quem somos') }}</h2>
                 <p class="mt-2">
-                    {!! __('A plataforma <strong>:app</strong> é operada no âmbito da consultoria educacional municipal, com tratamento de dados restrito a utilizadores autorizados e bases vinculadas por município. A operação comercial é da :serventec.', [
+                    {!! __('A plataforma <strong>:app</strong> é operada no âmbito da consultoria educacional municipal, com tratamento de dados restrito a usuários autorizados e bases vinculadas por município. A operação comercial é da :serventec.', [
                         'app' => e($systemName),
                         'serventec' => e($serventecName),
                     ]) !!}
@@ -52,7 +52,7 @@
             <section>
                 <h2 class="font-display text-base font-semibold text-slate-900 dark:text-white">{{ __('4. Partilha e armazenamento') }}</h2>
                 <p class="mt-2">
-                    {{ __('Os dados não são vendidos. O acesso interno obedece ao perfil do utilizador (administrador, plataforma ou municipal). Prestadores de infraestrutura (hospedagem, e-mail) podem processar dados sob contrato e apenas na medida necessária.') }}
+                    {{ __('Os dados não são vendidos. O acesso interno obedece ao perfil do usuário (administrador, plataforma ou municipal). Prestadores de infraestrutura (hospedagem, e-mail) podem processar dados sob contrato e apenas na medida necessária.') }}
                 </p>
             </section>
 

@@ -16,7 +16,7 @@
         accent="rose"
         :eyebrow="__('Administração · LGPD')"
         :title="__('Consentimentos e auditoria')"
-        :description="__('Acompanhe aceites por utilizador, pendentes e revogue em massa quando publicar nova versão.')"
+        :description="__('Acompanhe aceites por usuário, pendentes e revogue em massa quando publicar nova versão.')"
     >
         <x-slot name="flashes">
             @include('admin.partials.flash-messages')
@@ -33,7 +33,7 @@
                         \App\Support\Admin\AdminVisualCatalog::chipClasses('slate'),
                         'text-xs ring-2 ring-rose-500/40' => $filter === '',
                     ])
-                >{{ __('Todos os activos') }}</a>
+                >{{ __('Todos os ativos') }}</a>
                 <a
                     href="{{ route('admin.legal-consents.index', ['filter' => 'pending']) }}"
                     @class([
@@ -53,10 +53,10 @@
                         </span>
                         <div>
                             <h3 class="sync-queue-panel__title">{{ __('Revogar aceites (forçar novo consentimento)') }}</h3>
-                            <p class="sync-queue-panel__desc">{{ __('Limpa versões aceites nos utilizadores activos — redireccionamento para /consentimento na próxima visita.') }}</p>
+                            <p class="sync-queue-panel__desc">{{ __('Limpa versões aceitas nos usuários ativos — redirecionamento para /consentimento na próxima visita.') }}</p>
                         </div>
                     </div>
-                    <form method="POST" action="{{ route('admin.legal-consents.revoke-all') }}" class="flex flex-wrap items-center gap-3 shrink-0" onsubmit="return confirm(@js(__('Revogar aceites de todos os utilizadores activos?')));">
+                    <form method="POST" action="{{ route('admin.legal-consents.revoke-all') }}" class="flex flex-wrap items-center gap-3 shrink-0" onsubmit="return confirm(@js(__('Revogar aceites de todos os usuários ativos?')));">
                         @csrf
                         <label class="flex items-center gap-2 text-sm">
                             <input type="checkbox" name="revoke_privacy" value="1" checked class="rounded border-gray-300 text-rose-600" />
@@ -76,7 +76,7 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="rounded-xl border border-gray-200/90 dark:border-gray-700 bg-white/80 dark:bg-gray-900/40 p-4">
-                <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{{ __('Utilizadores activos') }}</p>
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{{ __('Usuários ativos') }}</p>
                 <p class="mt-1 text-2xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">{{ number_format($summary['total_users']) }}</p>
             </div>
             <div class="rounded-xl border border-amber-200/80 dark:border-amber-800/50 bg-amber-50/30 dark:bg-amber-950/20 p-4">
@@ -95,7 +95,7 @@
 
         <div class="rounded-xl border border-gray-200/90 dark:border-gray-700 overflow-hidden">
             <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-900/50">
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Utilizadores') }}</h3>
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ __('Usuários') }}</h3>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm divide-y divide-gray-100 dark:divide-gray-800">
@@ -149,7 +149,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-4 py-8 text-center text-gray-500">{{ __('Nenhum utilizador neste filtro.') }}</td>
+                                <td colspan="5" class="px-4 py-8 text-center text-gray-500">{{ __('Nenhum usuário neste filtro.') }}</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -172,7 +172,7 @@
                     <thead class="bg-gray-50 dark:bg-gray-900/60">
                         <tr>
                             <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">{{ __('Data') }}</th>
-                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">{{ __('Utilizador') }}</th>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">{{ __('Usuário') }}</th>
                             <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">{{ __('Tipo') }}</th>
                             <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">{{ __('Versões') }}</th>
                             <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-400">{{ __('Origem') }}</th>

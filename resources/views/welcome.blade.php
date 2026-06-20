@@ -174,7 +174,7 @@
                                     <x-ui.icon name="map-pin" class="h-6 w-6" />
                                 </div>
                                 <h3 class="font-display mt-4 text-lg font-semibold text-slate-900 dark:text-white">{{ __('Horizonte — inteligência territorial') }}</h3>
-                                <p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{{ __('Mapa GIS gerencial com visão nacional por UF, scores de oportunidade, filtros interactivos e metodologia transparente — dados públicos FUNDEB, Censo e SAEB para priorizar abordagem comercial.') }}</p>
+                                <p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{{ __('Mapa GIS gerencial com visão nacional por UF, scores de oportunidade, filtros interativos e metodologia transparente — dados públicos FUNDEB, Censo e SAEB para priorizar abordagem comercial.') }}</p>
                             </article>
                         </div>
                     </div>
@@ -244,7 +244,7 @@
                                 __('Os indicadores refletem o cadastro na base municipal (i-Educar) e importações configuradas, sujeitos à qualidade do registro.'),
                                 __('Para fins legais ou oficiais (Censo INEP, tribunais), utilize sempre as fontes previstas em legislação.'),
                                 __('Os valores correspondem ao momento da consulta e aos filtros aplicados (ano letivo, escola, segmento).'),
-                                __('Dados pessoais: tratamento conforme LGPD; acesso apenas a utilizadores autorizados.'),
+                                __('Dados pessoais: tratamento conforme LGPD; acesso apenas a usuários autorizados.'),
                             ] as $i => $text)
                                 <li class="flex gap-3">
                                     <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-800 ring-1 ring-teal-300/60 dark:bg-teal-950/50 dark:text-teal-200 dark:ring-teal-700/50" aria-hidden="true">{{ $i + 1 }}</span>
