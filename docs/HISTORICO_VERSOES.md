@@ -1,14 +1,14 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`5.7.3`** · tag de deploy **`20260620d-Bragi`** · ver [RELEASE_20260620d_BRAGI.md](RELEASE_20260620d_BRAGI.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`5.7.4`** · tag de deploy **`20260620e-Vidar`** · ver [RELEASE_20260620e_VIDAR.md](RELEASE_20260620e_VIDAR.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **5.7.3** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **5.7.4** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260620d-Bragi` |
+| **Tag de deploy (servidor)** | `20260620e-Vidar` |
 | **Data de referência** | **20/06/2026** |
-| **Último marco documentado** | **Bragi** — Horizonte mapa/recorte/tour, sync screen, UI pt-BR — [RELEASE_20260620d_BRAGI.md](RELEASE_20260620d_BRAGI.md) |
+| **Último marco documentado** | **Vidar** — sync BR wanted/ensure, linger — [RELEASE_20260620e_VIDAR.md](RELEASE_20260620e_VIDAR.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -36,6 +36,7 @@ timeline
     2026-06-20 : 5.7.1b Sleipnir — sync BR screen, convenção MAJOR.VERSÃO.MINOR
     2026-06-20 : 5.7.2c Forseti — mapa UF extensas, cache Redis, filtros GIS
     2026-06-20 : 5.7.3d Bragi — mapa recorte/tour, sync screen, UI pt-BR
+    2026-06-20 : 5.7.4e Vidar — sync wanted/ensure, reinício pós-TERM
 ```
 
 Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) §5–6.
@@ -46,8 +47,9 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 5.7.3** | — / `20260620d-Bragi` → `main` | — | 20/06/2026 | **Produção:** Horizonte mapa UF/recorte/tour; sync BR screen robusto; UI pt-BR (Usuários) — [RELEASE_20260620d_BRAGI.md](RELEASE_20260620d_BRAGI.md). |
-| 5.7.2 | — / `20260620c-Forseti` → `main` | — | 20/06/2026 | Horizonte performance UF 150+ (cache, clusters, cap render); filtros em lentes GIS + dock lateral — [RELEASE_20260620c_FORSETI.md](RELEASE_20260620c_FORSETI.md). |
+| **▶ 5.7.4** | — / `20260620e-Vidar` → `main` | — | 20/06/2026 | **Produção:** sync BR wanted/ensure, runner resistente a TERM, `loginctl enable-linger` — [RELEASE_20260620e_VIDAR.md](RELEASE_20260620e_VIDAR.md). |
+| 5.7.3 | — / `20260620d-Bragi` → `main` | — | 20/06/2026 | Horizonte mapa UF/recorte/tour; sync BR screen; UI pt-BR — [RELEASE_20260620d_BRAGI.md](RELEASE_20260620d_BRAGI.md). |
+| 5.7.2 | — / `20260620c-Forseti` → `main` | — | 20/06/2026 | Horizonte performance UF 150+; filtros GIS + dock lateral — [RELEASE_20260620c_FORSETI.md](RELEASE_20260620c_FORSETI.md). |
 | 5.7.1 | — / `20260620b-Sleipnir` → `main` | — | 20/06/2026 | Convenção `MAJOR.VERSÃO.MINOR` + codenames nórdicos/astecas; sync BR em GNU screen — [RELEASE_20260620b_SLEIPNIR.md](RELEASE_20260620b_SLEIPNIR.md). |
 | 5.7.0 | — / `20260620a-Metis` → `main` | — | 20/06/2026 | Horizonte centro de decisão (UI funil comercial), consultas scoped por UF, render adaptativo e mapa canvas — [RELEASE_20260620a_METIS.md](RELEASE_20260620a_METIS.md). |
 | 5.6.0 | — / `20260620-Urania` → `main` | — | 20/06/2026 | Horizonte alta pressão GIS (preset decisão comercial), centroides IBGE, feed SAEB/repasses/CadÚnico robusto, script sync BR — [RELEASE_20260620_URANIA.md](RELEASE_20260620_URANIA.md). |

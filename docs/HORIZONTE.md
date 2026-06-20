@@ -278,10 +278,16 @@ Para completar **todas** as fases/UFs/anos pendentes em loop (até 200 rondas), 
 cd /caminho/do/servlitcys
 
 # Uma vez por utilizador (evita systemd matar processos ao logout SSH):
-loginctl enable-linger $(whoami)
+sudo loginctl enable-linger serventec   # ou $(whoami)
 
 # Iniciar (detached — pode fechar o terminal de imediato)
 ./scripts/horizonte-sync-br-screen.sh start
+
+# Se cair após logout SSH ou TERM acidental:
+./scripts/horizonte-sync-br-screen.sh ensure
+
+# Cron (reinício automático a cada 5 min se wanted activo):
+# */5 * * * * cd /caminho/servlitcys && ./scripts/horizonte-sync-br-screen.sh ensure >> storage/logs/horizonte-sync-br-ensure.log 2>&1
 
 # Rever progresso (desanexar: Ctrl+A, depois D — NÃO feche o SSH estando attached)
 ./scripts/horizonte-sync-br-screen.sh attach
@@ -291,6 +297,9 @@ loginctl enable-linger $(whoami)
 
 # Parar
 ./scripts/horizonte-sync-br-screen.sh stop
+
+# Reiniciar se caiu (wanted activo, screen morto)
+./scripts/horizonte-sync-br-screen.sh ensure
 
 # Log agregado
 tail -f storage/logs/horizonte-sync-br-nohup.log

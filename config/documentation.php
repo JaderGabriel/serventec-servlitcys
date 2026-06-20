@@ -24,8 +24,8 @@ return [
     */
 
     'product' => [
-        'version' => '5.7.3',
-        'release_tag' => '20260620d-Bragi',
+        'version' => '5.7.4',
+        'release_tag' => '20260620e-Vidar',
         'commit_short' => '',
         'commit_number' => null,
         'revision_date' => '2026-06-20',

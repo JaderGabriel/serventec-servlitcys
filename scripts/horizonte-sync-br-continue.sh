@@ -37,7 +37,11 @@ has_pending() {
 
 cleanup() {
   rm -f "$PID_FILE"
-  log "Sync BR interrompido (sinal recebido)."
+  if [[ -f storage/logs/horizonte-sync-br.wanted ]]; then
+    log "Sync BR interrompido (sinal) — runner reinicia se wanted activo."
+  else
+    log "Sync BR parado (stop pedido)."
+  fi
   exit 130
 }
 
