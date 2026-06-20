@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Horizonte\HorizonteMapService;
+use App\Support\Brazil\BrazilUfNames;
 use App\Support\Horizonte\HorizonteMapPresenter;
 use App\Support\Horizonte\HorizonteUfScope;
 use Illuminate\Http\JsonResponse;
@@ -32,6 +33,7 @@ class HorizonteController extends Controller
             'sgeShowUrl' => route('admin.horizonte.sge.show', ['ibge' => '__IBGE__']),
             'sgeRegistryUrl' => route('admin.horizonte.sge.upsert', ['ibge' => '__IBGE__']),
             'initialUf' => HorizonteUfScope::normalize($request->query('uf')) ?? '',
+            'ufNames' => BrazilUfNames::all(),
         ]);
     }
 

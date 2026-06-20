@@ -4381,6 +4381,17 @@
         @apply w-80 sm:w-[22rem];
     }
 
+    .serv-horizonte-sge-overlay {
+        @apply absolute inset-0 z-[220] flex items-end sm:items-center justify-center p-4
+            bg-slate-900/55 backdrop-blur-[2px];
+    }
+
+    .serv-horizonte-sge-panel {
+        @apply w-full max-w-lg max-h-[calc(100%-2rem)] overflow-y-auto rounded-xl border border-slate-200
+            bg-white p-5 shadow-xl ring-1 ring-slate-900/5 space-y-4
+            dark:border-slate-700 dark:bg-slate-900 dark:ring-teal-500/10;
+    }
+
     .serv-horizonte-gis__toolbar {
         @apply backdrop-blur-sm;
     }
