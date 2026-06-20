@@ -1,14 +1,14 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`5.7.0`** · tag de deploy **`20260620a-Metis`** · ver [RELEASE_20260620a_METIS.md](RELEASE_20260620a_METIS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`5.7.1`** · tag de deploy **`20260620b-Sleipnir`** · ver [RELEASE_20260620b_SLEIPNIR.md](RELEASE_20260620b_SLEIPNIR.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **5.7.0** |
+| **Versão semântica em produção** | **5.7.1** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260620a-Metis` |
+| **Tag de deploy (servidor)** | `20260620b-Sleipnir` |
 | **Data de referência** | **20/06/2026** |
-| **Último marco documentado** | **Metis** — Horizonte centro de decisão + performance UF extensas — [RELEASE_20260620a_METIS.md](RELEASE_20260620a_METIS.md) |
+| **Último marco documentado** | **Sleipnir** — convenção de versões, sync BR em screen — [RELEASE_20260620b_SLEIPNIR.md](RELEASE_20260620b_SLEIPNIR.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -33,6 +33,7 @@ timeline
     2026-06-19 : 5.5.0c Helios — GIS gerencial Horizonte, monitor 10 min, Artisan admin
     2026-06-20 : 5.6.0 Urania — alta pressão GIS, feed robusto, sync BR
     2026-06-20 : 5.7.0a Metis — centro de decisão Horizonte, performance UF extensas
+    2026-06-20 : 5.7.1b Sleipnir — sync BR screen, convenção MAJOR.VERSÃO.MINOR
 ```
 
 Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) §5–6.
@@ -43,7 +44,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 5.7.0** | — / `20260620a-Metis` → `main` | — | 20/06/2026 | **Produção:** Horizonte centro de decisão (UI funil comercial), consultas scoped por UF, render adaptativo e mapa canvas — [RELEASE_20260620a_METIS.md](RELEASE_20260620a_METIS.md). |
+| **▶ 5.7.1** | — / `20260620b-Sleipnir` → `main` | — | 20/06/2026 | **Produção:** convenção `MAJOR.VERSÃO.MINOR` + codenames nórdicos/astecas; sync BR em GNU screen (`horizonte-sync-br-screen.sh`) — [RELEASE_20260620b_SLEIPNIR.md](RELEASE_20260620b_SLEIPNIR.md). |
+| 5.7.0 | — / `20260620a-Metis` → `main` | — | 20/06/2026 | Horizonte centro de decisão (UI funil comercial), consultas scoped por UF, render adaptativo e mapa canvas — [RELEASE_20260620a_METIS.md](RELEASE_20260620a_METIS.md). |
 | 5.6.0 | — / `20260620-Urania` → `main` | — | 20/06/2026 | Horizonte alta pressão GIS (preset decisão comercial), centroides IBGE, feed SAEB/repasses/CadÚnico robusto, script sync BR — [RELEASE_20260620_URANIA.md](RELEASE_20260620_URANIA.md). |
 | 5.5.0 | — / `20260619c-Helios` → `main` | — | 19/06/2026 | Horizonte GIS gerencial (filtros, metodologia, tooltip dimensões), monitor 10 min, catálogo Artisan admin, login/home — [RELEASE_20260619c_HELIOS.md](RELEASE_20260619c_HELIOS.md). *Tag `20260603f-Helios` obsoleta.* |
 | 5.4.0 | — / `20260603e-Hyperion` → `main` | — | 03/06/2026 | Horizonte v2 — CadÚnico/SIDRA/repasses no score e feed, mapa performante, SGE concorrência, fix Closure no cache — [RELEASE_20260603e_HYPERION.md](RELEASE_20260603e_HYPERION.md). |
@@ -377,9 +379,28 @@ Consultoria pedagógica e Finanças alinhadas ao cadastro filtrado:
 
 ## Convenção de releases (a partir de 2.3.6)
 
+### Numeração `MAJOR.VERSÃO.MINOR`
+
+Formato **`X.Y.Z`** (três segmentos). A nomenclatura do produto **não** segue o sentido coloquial de «minor» do npm/SemVer:
+
+| Tipo | Segmento que muda | Exemplo | Quando usar |
+|------|-------------------|---------|-------------|
+| **Major** | **1.º** (`X`) | `5.7.3` → **`6.0.0`** | Mudança estrutural, quebra de compatibilidade ou nova linha de produto |
+| **Versão** | **2.º** (`Y`) | `5.6.0` → **`5.7.0`** | Marco funcional visível (módulo, área consultoria, fluxo admin) |
+| **Minor** | **3.º** (`Z`) | `5.7.0` → **`5.7.1`** | Ajustes, correcções e melhorias incrementais sobre o mesmo marco |
+
+- **Patch pós-release sem bump:** documentar em [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) / entregas escalonadas **sem** alterar `X.Y.Z` (ex.: pós-3.0.0).
+- **UI e config:** `config/documentation.php` → `product.version`; selo `<x-product-version-badge />`.
+
+> **Nota histórica:** notas `RELEASE_*.md` antigas podem dizer «Minor» ao descrever um bump do **2.º** segmento — leia como **Versão** na tabela acima.
+
+### Tag Git e codename
+
 - **Nome da tag:** `YYYYMMDD-NomeMitologico` (ex.: `20260522-Janus`).
 - **Mais de uma release no mesmo dia (desde 4.4.0):** `YYYYMMDD` + letra minúscula em sequência (`a`, `b`, `c`…) + `-NomeMitologico` (ex.: `20260607a-Ananke` após `20260607-Phronesis`). Implementação: `ProductReleaseTag`.
-- **Versão semântica** em docs/UI: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) e `config/documentation.php`.
+- **Codename:** entidade mitológica — **greco-romana** (padrão histórico do projecto), **nórdica** ou **asteca**; o nome deve **aludir** às melhorias da release (ex.: *Heimdall* — vigilância; *Sleipnir* — percurso até concluir). **Único por tag**; não repetir no mesmo dia sem nova letra.
+- **Tradições já usadas:** greco-romana (Athena, Metis, Urania…), nórdica (`20260619a-Heimdall`, `20260620b-Sleipnir`). Asteca — disponível para releases futuras (ex.: *Quetzalcoatl*, *Tlaloc*).
+- **Data na tag:** sempre o dia civil da release (`YYYYMMDD`), alinhado a `revision_date` em `config/documentation.php`.
 - Ao publicar: actualizar tabela **Linha do tempo**, **Tags Git**, `README.md`, `STATUS_PROJETO.md` e `product.version`.
 
 ```bash

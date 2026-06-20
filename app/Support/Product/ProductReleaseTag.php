@@ -3,7 +3,12 @@
 namespace App\Support\Product;
 
 /**
- * Convenção de tags de release: YYYYMMDD[-letra]-Codename.
+ * Convenção de tags de release: YYYYMMDD[-letra]-Codename (entidade mitológica).
+ *
+ * Codenames: greco-romano (padrão), nórdico ou asteca — ver docs/HISTORICO_VERSOES.md § convenção.
+ *
+ * Numeração do produto MAJOR.VERSÃO.MINOR — ver docs/HISTORICO_VERSOES.md:
+ *   major (1.º) · versão/marco (2.º) · minor (3.º)
  *
  * Quando há mais de uma release no mesmo dia civil, acrescenta-se uma letra
  * minúscula em sequência (a, b, c…) imediatamente após a data, antes do codename.

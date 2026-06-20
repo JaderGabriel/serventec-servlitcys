@@ -270,6 +270,31 @@ php artisan schedule:list | grep horizonte
 
 Variáveis: `HORIZONTE_FORTNIGHTLY_FEED_*` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11b.
 
+### 9.1b Loop nacional até concluir (screen)
+
+Para completar **todas** as fases/UFs/anos pendentes em loop (até 200 rondas), use **GNU screen** — a sessão continua após fechar SSH:
+
+```bash
+cd /caminho/do/servlitcys
+
+# Iniciar (detached — pode fechar o terminal)
+./scripts/horizonte-sync-br-screen.sh start
+
+# Rever progresso (desanexar: Ctrl+A, depois D)
+./scripts/horizonte-sync-br-screen.sh attach
+
+# Estado
+./scripts/horizonte-sync-br-screen.sh status
+
+# Parar
+./scripts/horizonte-sync-br-screen.sh stop
+
+# Log agregado
+tail -f storage/logs/horizonte-sync-br-nohup.log
+```
+
+O script interno `horizonte-sync-br-continue.sh` usa **flock** (uma instância), detecta OOM/parcial e exporta `HORIZONTE_SAEB_MEMORY_LIMIT=2048M` por defeito. **Não** corra em paralelo com `php artisan horizonte:fortnightly-feed` manual.
+
 **Hub admin:** `/admin/dados-publicos?hub=horizonte` · painel `#horizonte-hub` — cobertura nacional (FUNDEB, Censo, SAEB, CadÚnico, SIDRA, repasses), botão «Abastecer Horizonte» com skips por fase, **export/import de pacote offline v2** e ligações a cada fonte. Ver [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11.
 
 O cache do mapa invalida-se automaticamente quando `imported_at` / contagens nas tabelas fonte mudam (fingerprint em `HorizonteMapService`).

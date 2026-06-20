@@ -8,7 +8,7 @@
 
 ## Resumo
 
-Minor **5.7.0** sobre **5.6.0** (Urania):
+Versão **5.7.0** sobre **5.6.0** (Urania) — bump do **2.º segmento** (*versão* / marco):
 
 1. **UI centro de decisão** — barra de comando sticky (KPI hero alta pressão, segmentos, recorte UF); mapa como foco; rail «Abordar primeiro»; área de trabalho em abas (lista, filtros, dados, metodologia).
 2. **Performance UF extensas** — consultas scoped por prefixo IBGE; cache da resposta regional; política adaptativa de renderização (180–250 pontos); filtros memoizados no cliente.

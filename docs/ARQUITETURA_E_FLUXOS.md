@@ -183,7 +183,13 @@ Assembler único (4.4.0): `DiscrepanciesPanelAssembler` alimenta consultoria e a
 
 ```mermaid
 flowchart TD
-    A[Código em main estável] --> B{Já existe release<br/>nesta data?}
+    A[Código em main estável] --> V{Tipo de bump?}
+    V -->|Major| V1["X.0.0 — 1.º segmento"]
+    V -->|Versão| V2["x.Y.0 — 2.º segmento"]
+    V -->|Minor| V3["x.y.Z — 3.º segmento"]
+    V1 --> B{Já existe release<br/>nesta data?}
+    V2 --> B
+    V3 --> B
     B -->|Não| C["Tag: YYYYMMDD-Codename<br/>ex.: 20260608-Sophia"]
     B -->|Sim| D["Tag: YYYYMMDD + letra<br/>ex.: 20260607a-Ananke"]
     C --> E[docs/RELEASE_*.md]
@@ -196,7 +202,7 @@ flowchart TD
     D -.-> P[ProductReleaseTag::nextSuffixForDate]
 ```
 
-Regra completa: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · checklist [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) §6.
+Numeração `MAJOR.VERSÃO.MINOR`: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) § convenção · checklist [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) §6.
 
 ---
 

@@ -6,7 +6,7 @@
 
 ## Resumo
 
-Minor **5.6.0** sobre **5.5.0** (Helios):
+Versão **5.6.0** sobre **5.5.0** (Helios) — bump do **2.º segmento** (*versão* / marco):
 
 1. **Horizonte — vista de decisão comercial** — preset **alta pressão** por defeito (`high_pressure`); KPI e filtros alinhados; ocultar coordenadas aproximadas no mapa; presets de vista (calor, prospectos, UF automática).
 2. **Mapa GIS** — centroides IBGE reais por UF; resolução de sobreposições (`MunicipalityMapOverlapResolver`); métrica `high_pressure` em resumo/UF; painel metodologia com `benefit_scale`.

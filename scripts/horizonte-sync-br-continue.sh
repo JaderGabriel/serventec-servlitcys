@@ -3,9 +3,16 @@
 #
 # Uso:
 #   ./scripts/horizonte-sync-br-continue.sh
+#
+# Produção (sobrevive a fecho SSH — recomendado):
+#   ./scripts/horizonte-sync-br-screen.sh start
+#   ./scripts/horizonte-sync-br-screen.sh attach   # Ctrl+A, D para desanexar
+#
+# Alternativa sem screen (nohup):
 #   nohup ./scripts/horizonte-sync-br-continue.sh >> storage/logs/horizonte-sync-br-nohup.log 2>&1 &
 #
-# Interromper: kill $(cat storage/logs/horizonte-sync-br.lock 2>/dev/null)  # ou Ctrl+C se em foreground
+# Interromper: ./scripts/horizonte-sync-br-screen.sh stop
+#   ou kill $(cat storage/logs/horizonte-sync-br.pid 2>/dev/null)  # se em foreground
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

@@ -17,13 +17,15 @@ return [
     |--------------------------------------------------------------------------
     | Versão do produto (exibida na UI de documentação admin)
     |--------------------------------------------------------------------------
+    | Formato MAJOR.VERSÃO.MINOR — ver docs/HISTORICO_VERSOES.md § convenção:
+    |   major → 1.º segmento · versão (marco) → 2.º · minor → 3.º
     | Actualizar junto com docs/HISTORICO_VERSOES.md ao fechar uma release.
     | `in_production` + selo na UI = referência oficial do que está em main/produção.
     */
 
     'product' => [
-        'version' => '5.7.0',
-        'release_tag' => '20260620a-Metis',
+        'version' => '5.7.1',
+        'release_tag' => '20260620b-Sleipnir',
         'commit_short' => '',
         'commit_number' => null,
         'revision_date' => '2026-06-20',
