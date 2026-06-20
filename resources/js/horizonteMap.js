@@ -1478,6 +1478,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.$watch("mapView", () => void this.scheduleMapRefresh());
         },
 
+        cancelPendingMapRefresh() {
+            this.mapRefreshGeneration += 1;
+            if (this.mapRefreshTimer !== null) {
+                clearTimeout(this.mapRefreshTimer);
+                this.mapRefreshTimer = null;
+            }
+        },
+
         scheduleMapRefresh() {
             this.mapRefreshGeneration += 1;
             const generation = this.mapRefreshGeneration;
@@ -1497,6 +1505,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     resolve();
                 }, this.mapRefreshDebounceMs);
             });
+        },
+
+        /** Canvas regional fica por cima dos círculos SVG do overview e bloqueia cliques. */
+        detachCanvasRendererForOverview() {
+            if (!this.map || !this.canvasRenderer) {
+                return;
+            }
+            if (this.map.hasLayer(this.canvasRenderer)) {
+                this.map.removeLayer(this.canvasRenderer);
+            }
+            this.canvasRenderer = L.canvas({ padding: 0.5 });
         },
 
         async refreshMapLayers() {
@@ -1524,6 +1543,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     if (this.map.hasLayer(this.clusterGroup)) {
                         this.map.removeLayer(this.clusterGroup);
                     }
+                    this.detachCanvasRendererForOverview();
                     await this.renderUfOverview();
                 } else {
                     if (this.mapView === "heat") {
@@ -1568,7 +1588,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.ufLayer.clearLayers();
             this.markerLayers = [];
 
-            const points = this.ufMapPoints;
+            const points =
+                this.ufMapPoints.length > 0 ? this.ufMapPoints : this.nationalUfMapPoints;
             const bounds = [];
 
             for (const p of points) {
@@ -1603,10 +1624,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 circle.addTo(this.ufLayer);
             }
 
-            if (this.map.hasLayer(this.ufLayer)) {
-                this.map.removeLayer(this.ufLayer);
+            if (!this.map.hasLayer(this.ufLayer)) {
+                this.ufLayer.addTo(this.map);
             }
-            this.ufLayer.addTo(this.map);
+            this.ufLayer.bringToFront();
 
             this.fitMapBounds(bounds, 4);
         },
@@ -1778,10 +1799,15 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         async backToOverview() {
+            this.cancelPendingMapRefresh();
+            this.closeTooltip();
             this.scopeUf = "";
             this.markers = [];
             this.mapMode = "overview";
             this.showAllOnMap = false;
+            if (this.ufMapPoints.length === 0 && this.nationalUfMapPoints.length > 0) {
+                this.ufMapPoints = this.nationalUfMapPoints;
+            }
             await this.fetchOverview();
         },
 
