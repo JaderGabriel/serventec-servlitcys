@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 5.7.1 · **Última revisão:** 2026-06-20
+**Versão do produto:** 5.7.2 · **Última revisão:** 2026-06-20
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
-Mapa visual da documentação em produção: versão actual **5.7.1**, linha **5.x** (Horizonte GIS + operação admin), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
+Mapa visual da documentação em produção: versão actual **5.7.2**, linha **5.x** (Horizonte GIS + operação admin), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
 
 Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e secções expansíveis).
 
@@ -14,11 +14,11 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **5.7.1** |
-| **Tag de deploy** | `20260620b-Sleipnir` |
+| **Versão semântica** | **5.7.2** |
+| **Tag de deploy** | `20260620c-Forseti` |
 | **Data de referência** | 2026-06-20 |
-| **Release** | [RELEASE_20260620b_SLEIPNIR.md](RELEASE_20260620b_SLEIPNIR.md) |
-| **Marco** | **Sleipnir** — sync BR em screen + convenção de versões |
+| **Release** | [RELEASE_20260620c_FORSETI.md](RELEASE_20260620c_FORSETI.md) |
+| **Marco** | **Forseti** — Horizonte performance UF + filtros GIS |
 
 ---
 
@@ -28,7 +28,7 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 |------|----------|---------|
 | **Major** | 1.º | `5.7.0` → `6.0.0` |
 | **Versão** (marco) | 2.º | `5.6.0` → `5.7.0` |
-| **Minor** (ajuste) | 3.º | `5.7.0` → `5.7.1` |
+| **Minor** (ajuste) | 3.º | `5.7.1` → `5.7.2` |
 
 Detalhe e exemplos históricos: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) § convenção.
 
@@ -39,7 +39,7 @@ Detalhe e exemplos históricos: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) § 
 | Tradição | Exemplos no projecto | Quando usar |
 |----------|---------------------|-------------|
 | **Greco-romana** | Athena, Metis, Urania, Phronesis | Padrão histórico; marcos funcionais e áreas consultoria |
-| **Nórdica** | Heimdall (vigilância), **Sleipnir** (percurso até concluir) | Operação resiliente, sync longo, monitorização |
+| **Nórdica** | Heimdall (vigilância), Sleipnir (percurso), **Forseti** (decisão/filtros) | Operação resiliente, sync longo, centro de decisão |
 | **Asteca** | *(reservado)* Quetzalcoatl, Tlaloc | Pontes entre sistemas, integrações, documentação operacional |
 
 O codename deve **aludir** ao conteúdo da release. Tag: `YYYYMMDD[-letra]-Codename` — `ProductReleaseTag`.

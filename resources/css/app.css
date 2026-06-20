@@ -4580,6 +4580,135 @@
         @apply flex flex-wrap items-center gap-2 border-b border-slate-200/90 px-4 py-2.5 dark:border-slate-700/90;
     }
 
+    .serv-horizonte-result-bar {
+        @apply flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 bg-slate-50/80 px-4 py-2
+            dark:border-slate-700/80 dark:bg-slate-900/40;
+    }
+
+    .serv-horizonte-map-stage {
+        @apply flex flex-col xl:flex-row xl:items-stretch min-h-0;
+    }
+
+    .serv-horizonte-filter-dock {
+        @apply hidden xl:flex xl:flex-col xl:w-[17rem] xl:shrink-0 border-b xl:border-b-0 xl:border-r border-slate-200/90
+            bg-slate-50/50 dark:border-slate-700/90 dark:bg-slate-900/30 max-h-[min(72vh,560px)] xl:max-h-none overflow-y-auto;
+    }
+
+    .serv-horizonte-filter-dock.is-open {
+        @apply flex flex-col fixed inset-x-0 bottom-0 z-40 max-h-[85dvh] rounded-t-2xl border border-slate-200 shadow-2xl
+            bg-white dark:bg-slate-900 dark:border-slate-700 xl:static xl:rounded-none xl:shadow-none xl:max-h-none;
+    }
+
+    .serv-horizonte-filter-dock__head {
+        @apply flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-200/80 dark:border-slate-700/80 xl:hidden;
+    }
+
+    .serv-horizonte-lens-bar {
+        @apply flex flex-wrap gap-0.5 rounded-lg ring-1 ring-slate-200/80 dark:ring-slate-600 p-0.5 bg-white/80 dark:bg-slate-900/60;
+    }
+
+    .serv-horizonte-lens-bar__btn {
+        @apply rounded-md px-2 py-1 text-[11px] font-semibold text-slate-600 transition
+            hover:bg-slate-100 disabled:opacity-50
+            dark:text-slate-300 dark:hover:bg-slate-800;
+    }
+
+    .serv-horizonte-lens-bar__btn.is-active {
+        @apply bg-teal-100 text-teal-900 dark:bg-teal-950/50 dark:text-teal-100;
+    }
+
+    .serv-horizonte-filters--dock {
+        @apply px-3 py-3 space-y-0;
+    }
+
+    .serv-horizonte-filters__section {
+        @apply py-3 border-b border-slate-200/70 dark:border-slate-700/70 last:border-b-0;
+    }
+
+    .serv-horizonte-filters__section-head {
+        @apply flex gap-2.5 mb-2.5;
+    }
+
+    .serv-horizonte-filters__step {
+        @apply flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-100 text-[11px] font-bold text-teal-800
+            dark:bg-teal-950/50 dark:text-teal-200;
+    }
+
+    .serv-horizonte-filters__title {
+        @apply text-xs font-bold text-serv-navy dark:text-slate-100;
+    }
+
+    .serv-horizonte-filters__hint {
+        @apply text-[10px] text-slate-500 dark:text-slate-400 leading-snug mt-0.5;
+    }
+
+    .serv-horizonte-filters__field-label {
+        @apply block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1;
+    }
+
+    .serv-horizonte-filters__note {
+        @apply mt-2 text-[11px] text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-horizonte-filters__footer {
+        @apply pt-3 pb-1;
+    }
+
+    .serv-horizonte-lens-grid {
+        @apply grid grid-cols-1 sm:grid-cols-2 gap-1.5;
+    }
+
+    .serv-horizonte-lens-card {
+        @apply flex items-center gap-2 rounded-lg border border-slate-200/90 bg-white px-2.5 py-2 text-left text-xs font-medium
+            transition hover:border-teal-300 hover:bg-teal-50/50 disabled:opacity-50
+            dark:border-slate-700 dark:bg-slate-900/60 dark:hover:border-teal-700 dark:hover:bg-teal-950/20;
+    }
+
+    .serv-horizonte-lens-card.is-active {
+        @apply border-teal-500 bg-teal-50 ring-1 ring-teal-500/30 dark:border-teal-600 dark:bg-teal-950/40 dark:ring-teal-500/20;
+    }
+
+    .serv-horizonte-lens-card__dot {
+        @apply h-2 w-2 shrink-0 rounded-full;
+    }
+
+    .serv-horizonte-lens-card__label {
+        @apply leading-snug text-slate-800 dark:text-slate-200;
+    }
+
+    .serv-horizonte-refine-grid {
+        @apply grid gap-3 sm:grid-cols-2;
+    }
+
+    .serv-horizonte-refine-field {
+        @apply flex flex-col gap-1;
+    }
+
+    .serv-horizonte-toggle-pill {
+        @apply inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 ring-1 ring-slate-200/80 bg-white/80
+            dark:bg-slate-900/60 dark:ring-slate-600 has-[:checked]:ring-teal-400 has-[:checked]:bg-teal-50/80
+            dark:has-[:checked]:bg-teal-950/30;
+    }
+
+    .serv-horizonte-toggle-pill--amber {
+        @apply has-[:checked]:ring-amber-400 has-[:checked]:bg-amber-50/80 dark:has-[:checked]:bg-amber-950/30;
+    }
+
+    .serv-horizonte-source-pill {
+        @apply inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] ring-1 ring-slate-200/80 bg-white/80
+            dark:bg-slate-900/60 dark:ring-slate-600 has-[:checked]:ring-teal-400 has-[:checked]:bg-teal-50/80
+            dark:has-[:checked]:bg-teal-950/30;
+    }
+
+    .serv-horizonte-filter-chip--lens {
+        @apply bg-rose-100 text-rose-900 ring-rose-200/80 dark:bg-rose-950/50 dark:text-rose-100 dark:ring-rose-800/60;
+    }
+
+    .serv-horizonte-filter-chip__remove {
+        @apply ms-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-sm leading-none
+            text-teal-700 hover:bg-teal-200/80 dark:text-teal-200 dark:hover:bg-teal-800/50;
+    }
+
     .serv-map-rx-status {
         @apply bg-slate-50/90 dark:bg-slate-900/50;
     }

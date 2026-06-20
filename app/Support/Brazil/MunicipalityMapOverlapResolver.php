@@ -20,7 +20,8 @@ final class MunicipalityMapOverlapResolver
         }
 
         $out = $markers;
-        $maxPasses = count($out) * 3;
+        $count = count($out);
+        $maxPasses = min($count * 3, 120);
 
         for ($pass = 0; $pass < $maxPasses; $pass++) {
             $moved = false;

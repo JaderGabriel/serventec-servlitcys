@@ -151,17 +151,17 @@
                         >{{ __('← Brasil') }}</button>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <button type="button" class="serv-btn-secondary text-xs" @click="resetFilters()" :disabled="pageLoading">
-                            {{ __('Vista padrão') }}
-                        </button>
                         <button
                             type="button"
-                            class="serv-btn-secondary text-xs"
-                            @click="workspaceTab = 'filters'; filterPanelOpen = true"
-                            :disabled="pageLoading"
+                            class="serv-btn-secondary text-xs xl:hidden"
+                            @click="filterDockOpen = !filterDockOpen"
+                            :disabled="pageLoading || isOverviewMode"
                         >
-                            {{ __('Camada analítica') }}
+                            {{ __('Filtros') }}
                             <span x-show="activeFilterCount > 0" x-cloak class="ms-1 rounded-full bg-teal-600 px-1.5 py-0.5 text-[10px] font-bold text-white tabular-nums" x-text="activeFilterCount"></span>
+                        </button>
+                        <button type="button" class="serv-btn-secondary text-xs" @click="resetFilters()" :disabled="pageLoading">
+                            {{ __('Vista padrão') }}
                         </button>
                     </div>
                 </div>
@@ -171,25 +171,48 @@
             <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem] 2xl:grid-cols-[minmax(0,1fr)_20rem]">
                 <section class="serv-panel overflow-hidden min-w-0 serv-horizonte-gis" aria-labelledby="horizonte-map-heading">
                     <div class="serv-horizonte-map-toolbar">
-                        <h3 id="horizonte-map-heading" class="text-sm font-semibold text-serv-navy dark:text-slate-100 me-auto">
+                        <h3 id="horizonte-map-heading" class="text-sm font-semibold text-serv-navy dark:text-slate-100 me-auto min-w-0">
                             <span x-show="isOverviewMode">{{ __('Mapa — alta pressão por UF') }}</span>
                             <span x-show="isRegionalMode" x-cloak>{{ __('Detalhe municipal') }}</span>
                         </h3>
+                        <div class="serv-horizonte-lens-bar" x-show="isRegionalMode" x-cloak role="group" aria-label="{{ __('Lente rápida') }}">
+                            <template x-for="opt in decisionLensOptions.filter(o => ['high_pressure','prospects','prospect_high','all'].includes(o.key))" :key="opt.key">
+                                <button
+                                    type="button"
+                                    class="serv-horizonte-lens-bar__btn"
+                                    :class="decisionLensKey === opt.key ? 'is-active' : ''"
+                                    :disabled="pageLoading || opt.disabled"
+                                    @click="applyDecisionLens(opt.key)"
+                                    x-text="opt.short"
+                                ></button>
+                            </template>
+                        </div>
                         <div class="flex gap-1 rounded-lg ring-1 ring-slate-200/80 dark:ring-slate-600 p-0.5" x-show="isRegionalMode" x-cloak>
                             <button type="button" class="rounded-md px-2 py-1 text-xs font-medium transition" :class="mapView === 'markers' ? 'bg-indigo-100 text-indigo-900 dark:bg-indigo-950/50' : 'text-slate-600'" @click="setMapView('markers')">{{ __('Pontos') }}</button>
-                            <button type="button" class="rounded-md px-2 py-1 text-xs font-medium transition" :class="mapView === 'heat' ? 'bg-rose-100 text-rose-900 dark:bg-rose-950/50' : 'text-slate-600'" @click="setMapView('heat')">{{ __('Calor') }}</button>
+                            <button type="button" class="rounded-md px-2 py-1 text-xs font-medium transition" :class="mapView === 'heat' ? 'bg-rose-100 text-rose-900 dark:bg-rose-950/50' : 'text-slate-600'" @click="setMapView('heat')" :disabled="regionalDisplayPolicy?.heavy_regional">{{ __('Calor') }}</button>
                         </div>
-                        <p class="text-[11px] text-slate-500 tabular-nums w-full sm:w-auto" x-show="!pageLoading && isRegionalMode" x-cloak>
-                            <span x-text="filteredCount.toLocaleString('pt-BR')"></span> {{ __('no recorte') }}
-                            · <span x-text="mapInteractionStats.onMap.toLocaleString('pt-BR')"></span> {{ __('no mapa') }}
-                        </p>
                     </div>
 
-                    <div class="px-4 py-3 space-y-3 border-b border-slate-200/90 dark:border-slate-700/90">
+                    <div class="serv-horizonte-result-bar" x-show="isRegionalMode && !pageLoading" x-cloak>
+                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                            <span class="font-semibold text-serv-navy dark:text-slate-100 tabular-nums">
+                                <span x-text="filteredCount.toLocaleString('pt-BR')"></span> {{ __('no recorte') }}
+                            </span>
+                            <span class="text-slate-400">·</span>
+                            <span class="text-slate-600 dark:text-slate-300 tabular-nums">
+                                <span x-text="mapInteractionStats.onMap.toLocaleString('pt-BR')"></span> {{ __('desenhados no mapa') }}
+                            </span>
+                            <span class="text-slate-400">·</span>
+                            <span class="text-slate-500" x-text="decisionLensLabel"></span>
+                        </div>
+                        <button type="button" class="serv-link text-[11px] shrink-0" @click="filterDockOpen = !filterDockOpen" x-show="!filterDockOpen">{{ __('Abrir filtros') }}</button>
+                    </div>
+
+                    <div class="px-4 py-2 border-b border-slate-200/90 dark:border-slate-700/90 space-y-2">
                         <div
                             x-show="decisionViewBanner"
                             x-cloak
-                            class="rounded-lg border px-3 py-2.5 text-sm"
+                            class="rounded-lg border px-3 py-2 text-sm"
                             :class="decisionViewBanner?.kind === 'overview'
                                 ? 'border-sky-200 bg-sky-50 text-sky-950 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-100'
                                 : 'border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-100'"
@@ -205,9 +228,19 @@
                             x-text="regionalDisplayPolicy.reason"
                         ></p>
 
-                        <div x-show="activeFilterChips.length > 0" x-cloak class="flex flex-wrap gap-1.5">
+                        <div x-show="activeFilterChips.length > 1" x-cloak class="flex flex-wrap gap-1.5 items-center">
                             <template x-for="chip in activeFilterChips" :key="chip.key">
-                                <span class="serv-horizonte-filter-chip" x-text="chip.label"></span>
+                                <span class="serv-horizonte-filter-chip" :class="chip.key === 'lens' ? 'serv-horizonte-filter-chip--lens' : ''">
+                                    <span x-text="chip.label"></span>
+                                    <button
+                                        type="button"
+                                        x-show="chip.removable"
+                                        x-cloak
+                                        class="serv-horizonte-filter-chip__remove"
+                                        @click="removeFilterChip(chip.key)"
+                                        aria-label="{{ __('Remover filtro') }}"
+                                    >×</button>
+                                </span>
                             </template>
                         </div>
 
@@ -241,7 +274,27 @@
                         </div>
                     </div>
 
-                    <div class="relative px-4 pb-4">
+                    <div class="serv-horizonte-map-stage">
+                        <aside
+                            class="serv-horizonte-filter-dock"
+                            :class="filterDockOpen ? 'is-open' : ''"
+                            x-show="isRegionalMode"
+                            x-cloak
+                            aria-label="{{ __('Filtros do mapa') }}"
+                        >
+                            <div class="serv-horizonte-filter-dock__head">
+                                <p class="text-xs font-bold uppercase tracking-wide text-slate-500">{{ __('Filtros') }}</p>
+                                <button type="button" class="text-slate-400 hover:text-slate-600 text-lg leading-none xl:hidden" @click="filterDockOpen = false" aria-label="{{ __('Fechar') }}">×</button>
+                            </div>
+                            @include('horizonte.partials.filters-panel', [
+                                'viewPresets' => $viewPresets,
+                                'tierPresets' => $tierPresets,
+                                'canManageSge' => $canManageSge,
+                                'compact' => true,
+                            ])
+                        </aside>
+
+                        <div class="relative px-4 pb-4 min-w-0 flex-1">
                         <div
                             x-show="pageLoading || regionalLoading"
                             x-cloak
@@ -287,12 +340,14 @@
                         >
                             <span class="font-medium">{{ __('Mapa limitado') }}:</span>
                             <span class="tabular-nums" x-text="' ' + mapRenderShownCount.toLocaleString('pt-BR') + ' / ' + filteredCount.toLocaleString('pt-BR')"></span>
-                            <button type="button" class="ms-2 underline" @click="enableFullMapRender()">{{ __('Mostrar todos') }}</button>
+                            <button type="button" class="ms-2 underline" x-show="canShowAllOnMap" @click="enableFullMapRender()">{{ __('Mostrar todos') }}</button>
+                            <span x-show="!canShowAllOnMap" class="ms-2 text-amber-800/80">{{ __('Use a lista ou zoom nos clusters.') }}</span>
                         </div>
 
                         <div x-ref="map" class="serv-brazil-map serv-horizonte-gis__map serv-horizonte-gis__map--tall w-full mt-3" role="application" aria-label="{{ __('Mapa Horizonte GIS') }}"></div>
 
                         @include('horizonte.partials.map-tooltip-sge')
+                        </div>
                     </div>
                 </section>
 
@@ -346,7 +401,7 @@
                 <nav class="serv-horizonte-workspace__tabs" role="tablist">
                     <button type="button" role="tab" class="serv-horizonte-workspace__tab" :class="workspaceTab === 'actions' ? 'is-active' : ''" @click="workspaceTab = 'actions'">{{ __('Resumo') }}</button>
                     <button type="button" role="tab" class="serv-horizonte-workspace__tab" :class="workspaceTab === 'list' ? 'is-active' : ''" @click="workspaceTab = 'list'">{{ __('Lista de prospecção') }}</button>
-                    <button type="button" role="tab" class="serv-horizonte-workspace__tab" :class="workspaceTab === 'filters' ? 'is-active' : ''" @click="workspaceTab = 'filters'; filterPanelOpen = true">{{ __('Camada analítica') }}</button>
+                    <button type="button" role="tab" class="serv-horizonte-workspace__tab" :class="workspaceTab === 'filters' ? 'is-active' : ''" @click="workspaceTab = 'filters'">{{ __('Filtros') }}</button>
                     <button type="button" role="tab" class="serv-horizonte-workspace__tab" :class="workspaceTab === 'data' ? 'is-active' : ''" @click="workspaceTab = 'data'">{{ __('Dados & SGE') }}</button>
                     <button type="button" role="tab" class="serv-horizonte-workspace__tab" :class="workspaceTab === 'methodology' ? 'is-active' : ''" @click="workspaceTab = 'methodology'; methodologyPanelOpen = true">{{ __('Metodologia') }}</button>
                 </nav>
@@ -436,6 +491,7 @@
                             'viewPresets' => $viewPresets,
                             'tierPresets' => $tierPresets,
                             'canManageSge' => $canManageSge,
+                            'compact' => false,
                         ])
                     </div>
 

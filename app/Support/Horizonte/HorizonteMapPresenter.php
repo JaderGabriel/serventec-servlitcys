@@ -308,35 +308,37 @@ final class HorizonteMapPresenter
      *     max_render_markers: int,
      *     prefer_map_view: string,
      *     heavy_regional: bool,
+     *     allow_show_all: bool,
      *     reason: string|null
      * }
      */
     public static function regionalDisplayPolicy(int $markerCount): array
     {
         $cfg = config('horizonte.map_display', []);
-        $mediumAt = max(80, (int) ($cfg['regional_medium_threshold'] ?? 200));
-        $heavyAt = max($mediumAt + 1, (int) ($cfg['regional_heavy_threshold'] ?? 350));
-        $heatMax = max(100, (int) ($cfg['regional_heat_max'] ?? 220));
+        $mediumAt = max(80, (int) ($cfg['regional_medium_threshold'] ?? 150));
+        $heavyAt = max($mediumAt + 1, (int) ($cfg['regional_heavy_threshold'] ?? 300));
+        $heatMax = max(100, (int) ($cfg['regional_heat_max'] ?? 150));
         $defaultMax = max(80, min(800, (int) ($cfg['max_render_markers'] ?? 400)));
 
         $maxRender = $defaultMax;
         $preferView = 'heat';
         $heavyRegional = $markerCount >= $heavyAt;
+        $allowShowAll = ! $heavyRegional;
         $reason = null;
 
         if ($markerCount >= $heavyAt) {
-            $maxRender = max(60, min(400, (int) ($cfg['regional_max_render_heavy'] ?? 180)));
+            $maxRender = max(60, min(400, (int) ($cfg['regional_max_render_heavy'] ?? 120)));
             $preferView = 'markers';
-            $reason = __('UF com :total municípios — mapa limitado aos :limit de maior propensão; vista em clusters recomendada.', [
+            $reason = __('UF com :total municípios — mapa limitado aos :limit de maior propensão; clusters activos (sem «mostrar todos»).', [
                 'total' => number_format($markerCount, 0, ',', '.'),
                 'limit' => number_format($maxRender, 0, ',', '.'),
             ]);
         } elseif ($markerCount >= $mediumAt) {
-            $maxRender = max(80, min(500, (int) ($cfg['regional_max_render_medium'] ?? 250)));
+            $maxRender = max(80, min(500, (int) ($cfg['regional_max_render_medium'] ?? 180)));
             if ($markerCount > $heatMax) {
                 $preferView = 'markers';
             }
-            $reason = __('UF extensa (:total municípios) — renderização optimizada.', [
+            $reason = __('UF extensa (:total municípios) — renderização optimizada com clusters.', [
                 'total' => number_format($markerCount, 0, ',', '.'),
             ]);
         }
@@ -346,6 +348,7 @@ final class HorizonteMapPresenter
             'max_render_markers' => $maxRender,
             'prefer_map_view' => $preferView,
             'heavy_regional' => $heavyRegional,
+            'allow_show_all' => $allowShowAll,
             'heat_max' => $heatMax,
             'reason' => $reason,
         ];

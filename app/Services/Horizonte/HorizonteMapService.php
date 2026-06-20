@@ -124,14 +124,9 @@ final class HorizonteMapService
             return $cachedOverview;
         }
 
-        $assembled = $this->assemble($refYear, requireCoordinates: true);
+        $assembled = $this->assemble($refYear, requireCoordinates: false);
         $payload = $this->asOverviewPayload($assembled);
         AdminHomeMapCache::repository()->put($overviewKey, $payload, $ttl);
-        AdminHomeMapCache::repository()->put(
-            'horizonte:map:v2:'.$refYear.':'.$fingerprint,
-            $assembled,
-            $ttl,
-        );
 
         return $payload;
     }
@@ -170,8 +165,12 @@ final class HorizonteMapService
 
         $full['mode'] = 'regional';
         $full['scope_uf'] = $uf;
-        $regional = $this->enrichRegionalCoordinates($regional, $uf);
-        $regional = $this->resolveApproximateOverlaps($regional);
+        if ($this->shouldEnrichRegionalCoordinates($regional)) {
+            $regional = $this->enrichRegionalCoordinates($regional, $uf);
+        }
+        if ($this->shouldResolveOverlaps($regional)) {
+            $regional = $this->resolveApproximateOverlaps($regional);
+        }
         $full['markers'] = $regional;
         $full['summary'] = array_merge($this->buildSummary($regional), ['coverage' => $coverage]);
         $full['focus_segments'] = HorizonteManagerInsights::focusSegments($regional);
@@ -208,6 +207,41 @@ final class HorizonteMapService
 
         return $tier === 'prospect_high'
             || (int) ($m['financial_pressure'] ?? 0) >= $this->financialPressureMin();
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $markers
+     */
+    private function shouldEnrichRegionalCoordinates(array $markers): bool
+    {
+        if ($markers === [] || ! (bool) config('horizonte.map_display.fetch_remote_centroids', false)) {
+            return false;
+        }
+
+        $approx = 0;
+        foreach ($markers as $m) {
+            if ($m['coord_approximate'] ?? false) {
+                $approx++;
+            }
+        }
+
+        return $approx > 0 && ($approx / count($markers)) >= 0.05;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $markers
+     */
+    private function shouldResolveOverlaps(array $markers): bool
+    {
+        $max = max(10, (int) config('horizonte.map_display.overlap_max_markers', 80));
+        $approx = 0;
+        foreach ($markers as $m) {
+            if ($m['coord_approximate'] ?? false) {
+                $approx++;
+            }
+        }
+
+        return $approx >= 2 && $approx <= $max;
     }
 
     /**
@@ -269,6 +303,11 @@ final class HorizonteMapService
         }
 
         if (count($approxSlice) < 2) {
+            return $markers;
+        }
+
+        $maxForOverlap = max(10, (int) config('horizonte.map_display.overlap_max_markers', 80));
+        if (count($approxSlice) > $maxForOverlap) {
             return $markers;
         }
 
@@ -409,7 +448,8 @@ final class HorizonteMapService
             if ($ufs === []) {
                 $ufs = IbgeMunicipalityCatalog::brazilianUfs();
             }
-            $ibgeMetaIndex = $this->ibgeCatalog->metaIndexForUfs($ufs, $scopedUf !== null);
+            $fetchGeo = (bool) config('horizonte.map_display.fetch_remote_centroids', false);
+            $ibgeMetaIndex = $this->ibgeCatalog->metaIndexForUfs($ufs, $fetchGeo);
         }
 
         $saebForBench = [];
@@ -560,7 +600,7 @@ final class HorizonteMapService
 
         usort($markers, static fn (array $a, array $b): int => ($b['success_score'] <=> $a['success_score']) ?: strcasecmp((string) $a['name'], (string) $b['name']));
 
-        if ($scopedUf !== null) {
+        if ($scopedUf !== null && $this->shouldResolveOverlaps($markers)) {
             $markers = $this->resolveApproximateOverlaps($markers);
         }
 

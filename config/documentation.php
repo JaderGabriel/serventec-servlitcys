@@ -24,8 +24,8 @@ return [
     */
 
     'product' => [
-        'version' => '5.7.1',
-        'release_tag' => '20260620b-Sleipnir',
+        'version' => '5.7.2',
+        'release_tag' => '20260620c-Forseti',
         'commit_short' => '',
         'commit_number' => null,
         'revision_date' => '2026-06-20',

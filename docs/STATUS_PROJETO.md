@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **5.7.1** · release `20260620b-Sleipnir` · **Ramo:** `main` · **Última revisão:** 20/06/2026
+**Versão em produção:** **5.7.2** · release `20260620c-Forseti` · **Ramo:** `main` · **Última revisão:** 20/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -129,6 +129,8 @@ flowchart TB
 | Horizonte — sync BR em GNU screen (`horizonte-sync-br-screen.sh`, sobrevive a SSH) | Implementado (5.7.1) — [HORIZONTE.md](HORIZONTE.md) §9.1b |
 | Horizonte — UI centro de decisão (barra comando, rail abordagem, abas trabalho) | Implementado (5.7.0) — [HORIZONTE.md](HORIZONTE.md) |
 | Horizonte — performance UF extensas (queries scoped IBGE, cache regional, render adaptativo) | Implementado (5.7.0) — [HORIZONTE.md](HORIZONTE.md) |
+| Horizonte — mapa UF 150+ (cap clusters, cache Redis 1h, overlap limitado, overview sem coords) | Implementado (5.7.2) — [HORIZONTE.md](HORIZONTE.md) |
+| Horizonte — filtros GIS (lentes de decisão, dock lateral, chips removíveis) | Implementado (5.7.2) — [HORIZONTE.md](HORIZONTE.md) |
 | Monitor de módulos — recolha diária (`module-monitor:collect`) + sondas estruturais | Implementado (5.2.0) — substituído por intervalo 10 min (5.5.0) |
 | Horizonte — hub abastecimento em Dados públicos (`#horizonte-hub`) | Implementado (5.2.0) — [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11 |
 | Horizonte — acesso admin e utilizador (`canViewHorizonte`; municipal 403) | Implementado (5.2.0) |

@@ -72,6 +72,70 @@ function matchesHighPressure(marker, threshold) {
     return tier === "prospect_high" || Number(marker.financial_pressure ?? 0) >= threshold;
 }
 
+/** Lentes de decisão — uma audiência por vez; refinamentos são camada separada. */
+const DECISION_LENSES = {
+    high_pressure: {
+        label: "Alta pressão FUNDEB",
+        short: "Alta pressão",
+        color: "#be123c",
+        overviewOk: true,
+    },
+    prospects: {
+        label: "Todos prospectos",
+        short: "Prospectos",
+        color: "#b45309",
+        overviewOk: false,
+    },
+    prospect_high: {
+        label: "Alta propensão",
+        short: "Alta propensão",
+        color: "#be123c",
+        overviewOk: false,
+    },
+    all: {
+        label: "Todos os municípios",
+        short: "Todos",
+        color: "#64748b",
+        overviewOk: false,
+    },
+    consultoria_active: {
+        label: "Consultoria activa",
+        short: "Consultoria",
+        color: "#0d9488",
+        overviewOk: false,
+    },
+    catalog_pending: {
+        label: "Catálogo pendente",
+        short: "Catálogo",
+        color: "#ea580c",
+        overviewOk: false,
+    },
+};
+
+function lensAudiencePass(marker, viewPreset, filterTier, pressureThreshold) {
+    const tier = String(marker?.tier ?? "");
+    switch (viewPreset) {
+        case "high_pressure":
+            return matchesHighPressure(marker, pressureThreshold);
+        case "prospects":
+            return tier.startsWith("prospect_");
+        case "prospect_high":
+            return tier === "prospect_high";
+        case "all":
+            return true;
+        case "custom":
+            if (filterTier === "prospects") {
+                return tier.startsWith("prospect_");
+            }
+            if (filterTier === "all") {
+                return true;
+            }
+            return tier === filterTier;
+        default:
+            return tier.startsWith("prospect_");
+    }
+}
+
 function markerVisualStyle(marker, colors) {
     const tier = String(marker?.tier ?? "");
     const fill = colors[tier] || "#64748b";
@@ -145,8 +209,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         regionalDisplayPolicy: null,
         filteredMarkersList: [],
         _filterSignature: "",
+        _tooltipHtmlCache: {},
         canvasRenderer: null,
-        mapRefreshDebounceMs: 120,
+        mapRefreshDebounceMs: 150,
         minSuccessScore: 0,
         minBenefitScore: 0,
         minMatriculas: 0,
@@ -175,6 +240,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         sgeFormSaving: false,
         sgeFormError: null,
         filterPanelOpen: false,
+        filterDockOpen: true,
         methodologyPanelOpen: false,
         workspaceTab: "actions",
         guideOpen: false,
@@ -221,10 +287,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 list = list.filter((m) => !isApproxCoord(m));
             }
             const limit = Number(this.mapRenderLimit) || 400;
+            const heavyCap = Boolean(this.regionalDisplayPolicy?.heavy_regional);
+            const hardMax = heavyCap ? limit : list.length;
             let rendered = [];
-            if (this.showAllOnMap || list.length <= limit) {
-                rendered = list;
-            } else {
+            if ((!this.showAllOnMap || heavyCap) && list.length > limit) {
                 rendered = [...list]
                     .sort(
                         (a, b) =>
@@ -232,6 +298,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                             String(a.name).localeCompare(String(b.name), "pt-BR"),
                     )
                     .slice(0, limit);
+            } else {
+                rendered = list.slice(0, hardMax);
             }
 
             const allValid = this.filteredMarkersList.filter((m) =>
@@ -257,6 +325,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 isValidCoord(Number(m.lat), Number(m.lng)),
             );
             return !this.showAllOnMap && valid.length > limit;
+        },
+
+        get canShowAllOnMap() {
+            return (
+                this.regionalDisplayPolicy?.allow_show_all !== false &&
+                !this.regionalDisplayPolicy?.heavy_regional
+            );
         },
 
         get mapRenderShownCount() {
@@ -362,6 +437,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.hideConsultoria,
                 this.searchQuery.trim().toLowerCase(),
                 this.pressureThreshold,
+                this.hideApproxOnMap,
             ].join("|");
         },
 
@@ -371,15 +447,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 if (this.hideConsultoria && m.consultoria_active) {
                     return false;
                 }
-                if (this.viewPreset === "high_pressure") {
-                    if (!matchesHighPressure(m, this.pressureThreshold)) {
-                        return false;
-                    }
-                } else if (this.filterTier === "prospects") {
-                    if (!String(m.tier || "").startsWith("prospect_")) {
-                        return false;
-                    }
-                } else if (this.filterTier !== "all" && m.tier !== this.filterTier) {
+                if (
+                    !lensAudiencePass(
+                        m,
+                        this.viewPreset,
+                        this.filterTier,
+                        this.pressureThreshold,
+                    )
+                ) {
                     return false;
                 }
                 if (Number(m.success_score ?? 0) < this.minSuccessScore) {
@@ -487,55 +562,75 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             };
         },
 
+        get decisionLensKey() {
+            if (this.viewPreset === "custom") {
+                if (this.filterTier === "consultoria_active") {
+                    return "consultoria_active";
+                }
+                if (this.filterTier === "catalog_pending") {
+                    return "catalog_pending";
+                }
+                if (this.filterTier === "prospect_high") {
+                    return "prospect_high";
+                }
+                return "custom";
+            }
+            return this.viewPreset || "high_pressure";
+        },
+
+        get decisionLensLabel() {
+            const key = this.decisionLensKey;
+            if (key === "custom") {
+                return "Recorte personalizado";
+            }
+            return DECISION_LENSES[key]?.label ?? key;
+        },
+
+        get decisionLensOptions() {
+            return Object.entries(DECISION_LENSES).map(([key, meta]) => ({
+                key,
+                ...meta,
+                disabled: this.isOverviewMode && !meta.overviewOk,
+            }));
+        },
+
+        get hasAdvancedFilters() {
+            return (
+                this.minSuccessScore > 0 ||
+                this.minBenefitScore > 0 ||
+                this.minMatriculas > 0 ||
+                this.minFinancial > 0 ||
+                this.minPedagogical > 0 ||
+                this.minReadiness > 0 ||
+                this.minSocialDemand > 0 ||
+                this.requireFundeb ||
+                this.requireCenso ||
+                this.requireSaeb ||
+                this.requireCadunico ||
+                this.onlyMissingSge ||
+                this.searchQuery.trim() !== "" ||
+                (this.viewPreset === "all" && this.hideConsultoria) ||
+                !this.hideApproxOnMap
+            );
+        },
+
         get activeFilterCount() {
-            let count = 0;
-            if (this.viewPreset === "high_pressure") {
-                count += 1;
-            } else if (this.filterTier !== "prospects" && this.filterTier !== "all") {
-                count += 1;
-            }
-            if (this.minSuccessScore > 0) {
-                count += 1;
-            }
-            if (this.minBenefitScore > 0) {
-                count += 1;
-            }
-            if (this.minMatriculas > 0) {
-                count += 1;
-            }
-            if (this.minFinancial > 0) {
-                count += 1;
-            }
-            if (this.minPedagogical > 0) {
-                count += 1;
-            }
-            if (this.minReadiness > 0) {
-                count += 1;
-            }
-            if (this.minSocialDemand > 0) {
-                count += 1;
-            }
-            if (this.requireFundeb) {
-                count += 1;
-            }
-            if (this.requireCenso) {
-                count += 1;
-            }
-            if (this.requireSaeb) {
-                count += 1;
-            }
-            if (this.requireCadunico) {
-                count += 1;
-            }
-            if (this.onlyMissingSge) {
-                count += 1;
-            }
-            if (this.hideConsultoria) {
-                count += 1;
-            }
-            if (this.searchQuery.trim() !== "") {
-                count += 1;
-            }
+            let count = this.viewPreset === "custom" || this.hasAdvancedFilters ? 1 : 0;
+            if (this.minSuccessScore > 0) count += 1;
+            if (this.minBenefitScore > 0) count += 1;
+            if (this.minMatriculas > 0) count += 1;
+            if (this.minFinancial > 0) count += 1;
+            if (this.minPedagogical > 0) count += 1;
+            if (this.minReadiness > 0) count += 1;
+            if (this.minSocialDemand > 0) count += 1;
+            if (this.requireFundeb) count += 1;
+            if (this.requireCenso) count += 1;
+            if (this.requireSaeb) count += 1;
+            if (this.requireCadunico) count += 1;
+            if (this.onlyMissingSge) count += 1;
+            if (this.viewPreset === "all" && this.hideConsultoria) count += 1;
+            if (!this.hideApproxOnMap) count += 1;
+            if (this.searchQuery.trim() !== "") count += 1;
             return count;
         },
 
@@ -558,86 +653,66 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             const chips = [];
             const tierLabels = {
                 high_pressure: `Alta pressão FUNDEB ≥ ${this.pressureThreshold}`,
-                prospects: "Prospectos",
+                prospects: "Todos prospectos",
                 prospect_high: "Alta propensão",
-                all: "Todos",
-                consultoria_active: "Consultoria",
+                all: "Todos os municípios",
+                consultoria_active: "Consultoria activa",
                 catalog_pending: "Catálogo pendente",
+                custom: "Recorte personalizado",
             };
-            if (this.viewPreset === "high_pressure") {
-                chips.push({
-                    key: "preset",
-                    label: tierLabels.high_pressure,
-                });
-            } else if (this.filterTier !== "prospects" && this.filterTier !== "all") {
-                chips.push({
-                    key: "tier",
-                    label: tierLabels[this.filterTier] || this.filterTier,
-                });
-            }
+
+            const lensKey = this.decisionLensKey;
+            chips.push({
+                key: "lens",
+                label: tierLabels[lensKey] || this.decisionLensLabel,
+                removable: false,
+            });
+
             if (this.minSuccessScore > 0) {
-                chips.push({
-                    key: "success",
-                    label: `Propensão ≥ ${this.minSuccessScore}`,
-                });
+                chips.push({ key: "success", label: `Propensão ≥ ${this.minSuccessScore}`, removable: true });
             }
             if (this.minBenefitScore > 0) {
-                chips.push({
-                    key: "benefit",
-                    label: `Benefício ≥ ${this.minBenefitScore}`,
-                });
+                chips.push({ key: "benefit", label: `Benefício ≥ ${this.minBenefitScore}`, removable: true });
             }
             if (this.minMatriculas > 0) {
-                chips.push({
-                    key: "matriculas",
-                    label: `Matrículas ≥ ${nf(this.minMatriculas)}`,
-                });
+                chips.push({ key: "matriculas", label: `Matrículas ≥ ${nf(this.minMatriculas)}`, removable: true });
             }
             if (this.minFinancial > 0) {
-                chips.push({
-                    key: "financial",
-                    label: `Pressão FUNDEB ≥ ${this.minFinancial}`,
-                });
+                chips.push({ key: "financial", label: `Pressão FUNDEB ≥ ${this.minFinancial}`, removable: true });
             }
             if (this.minPedagogical > 0) {
-                chips.push({
-                    key: "pedagogical",
-                    label: `Déficit SAEB ≥ ${this.minPedagogical}`,
-                });
+                chips.push({ key: "pedagogical", label: `Déficit SAEB ≥ ${this.minPedagogical}`, removable: true });
             }
             if (this.minReadiness > 0) {
-                chips.push({
-                    key: "readiness",
-                    label: `Prontidão ≥ ${this.minReadiness}`,
-                });
+                chips.push({ key: "readiness", label: `Prontidão ≥ ${this.minReadiness}`, removable: true });
             }
             if (this.minSocialDemand > 0) {
-                chips.push({
-                    key: "social",
-                    label: `Demanda social ≥ ${this.minSocialDemand}`,
-                });
+                chips.push({ key: "social", label: `Demanda social ≥ ${this.minSocialDemand}`, removable: true });
             }
             if (this.requireFundeb) {
-                chips.push({ key: "fundeb", label: "FUNDEB" });
+                chips.push({ key: "fundeb", label: "Com FUNDEB", removable: true });
             }
             if (this.requireCenso) {
-                chips.push({ key: "censo", label: "Censo" });
+                chips.push({ key: "censo", label: "Com Censo", removable: true });
             }
             if (this.requireSaeb) {
-                chips.push({ key: "saeb", label: "SAEB" });
+                chips.push({ key: "saeb", label: "Com SAEB", removable: true });
             }
             if (this.requireCadunico) {
-                chips.push({ key: "cadunico", label: "CadÚnico" });
+                chips.push({ key: "cadunico", label: "Com CadÚnico", removable: true });
             }
             if (this.onlyMissingSge) {
-                chips.push({ key: "sge", label: "Sem SGE" });
+                chips.push({ key: "sge", label: "Sem SGE", removable: true });
             }
-            if (this.hideConsultoria) {
-                chips.push({ key: "hide_consultoria", label: "Ocultar consultoria" });
+            if (this.viewPreset === "all" && this.hideConsultoria) {
+                chips.push({ key: "hide_consultoria", label: "Sem consultoria", removable: true });
+            }
+            if (!this.hideApproxOnMap) {
+                chips.push({ key: "approx_map", label: "Coords. aproximadas no mapa", removable: true });
             }
             const q = this.searchQuery.trim();
             if (q !== "") {
-                chips.push({ key: "search", label: `«${q}»` });
+                chips.push({ key: "search", label: `Busca «${q}»`, removable: true });
             }
             return chips;
         },
@@ -660,70 +735,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     ? this.defaultViewFilter
                     : {});
 
-            this.viewPreset = df.preset || "high_pressure";
-            this.filterTier = df.tier || "prospects";
-            this.hideConsultoria = df.hide_consultoria !== false;
-            this.requireFundeb = df.require_fundeb === true;
             this.pressureThreshold = Number(
                 df.pressure_min ?? df.min_financial ?? 60,
             );
-            this.hideApproxOnMap = df.hide_approximate_on_map !== false;
-            this.mapView = df.map_view || "heat";
-            this.minSuccessScore = 0;
-            this.minBenefitScore = 0;
-            this.minMatriculas = 0;
-            this.minFinancial = 0;
-            this.minPedagogical = 0;
-            this.minReadiness = 0;
-            this.minSocialDemand = 0;
-            this.requireCenso = false;
-            this.requireSaeb = false;
-            this.requireCadunico = false;
-            this.onlyMissingSge = false;
-            this.searchQuery = "";
-            this.showAllOnMap = false;
-            this.renderCapDismissed = false;
-            this._filterSignature = "";
-            if (this.markers.length > 0) {
-                this.recomputeFilteredMarkers();
-            }
-        },
-
-        async applyInitialNavigation() {
-            this.applyDefaultDecisionView();
-            const queryUf = String(options.initialUf ?? "").trim().toUpperCase();
-            const policyUf = String(this.displayPolicy?.initial_uf ?? "")
-                .trim()
-                .toUpperCase();
-            const uf = queryUf || policyUf;
-            if (uf !== "" && !this.pageError) {
-                await this.selectUf(uf, false);
-            }
-        },
-
-        setViewPreset(preset) {
-            this.viewPreset = preset;
-            if (preset === "high_pressure") {
-                this.applyDefaultDecisionView();
-                return;
-            }
-            if (preset === "prospects") {
-                this.applyDefaultDecisionView();
-                this.viewPreset = "prospects";
-                this.minFinancial = 0;
-                this.requireFundeb = false;
-                return;
-            }
-            if (preset === "prospect_high") {
-                this.clearSecondaryFilters();
-                this.viewPreset = "custom";
-                this.filterTier = "prospect_high";
-                this.hideConsultoria = true;
-                return;
-            }
-            if (preset === "all") {
-                this.resetFiltersToAll();
-            }
+            this.applyDecisionLens("high_pressure", { keepMapView: false });
         },
 
         clearSecondaryFilters() {
@@ -742,9 +757,197 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.searchQuery = "";
         },
 
+        preferredMapViewForRegional() {
+            return this.regionalDisplayPolicy?.heavy_regional ||
+                Number(this.regionalDisplayPolicy?.marker_count ?? 0) >
+                    Number(this.regionalDisplayPolicy?.heat_max ?? 150)
+                ? "markers"
+                : "heat";
+        },
+
+        applyDecisionLens(lensKey, opts = {}) {
+            const keepMapView = opts.keepMapView === true;
+            this.clearSecondaryFilters();
+            this.showAllOnMap = false;
+            this.renderCapDismissed = false;
+            this.searchQuery = "";
+            this.hideApproxOnMap = true;
+
+            switch (lensKey) {
+                case "high_pressure":
+                    this.viewPreset = "high_pressure";
+                    this.filterTier = "prospects";
+                    this.hideConsultoria = true;
+                    if (!keepMapView) {
+                        this.mapView = this.preferredMapViewForRegional();
+                    }
+                    break;
+                case "prospects":
+                    this.viewPreset = "prospects";
+                    this.filterTier = "prospects";
+                    this.hideConsultoria = true;
+                    if (!keepMapView) {
+                        this.mapView = this.preferredMapViewForRegional();
+                    }
+                    break;
+                case "prospect_high":
+                    this.viewPreset = "prospect_high";
+                    this.filterTier = "prospect_high";
+                    this.hideConsultoria = true;
+                    if (!keepMapView) {
+                        this.mapView = this.preferredMapViewForRegional();
+                    }
+                    break;
+                case "all":
+                    this.viewPreset = "all";
+                    this.filterTier = "all";
+                    this.hideConsultoria = false;
+                    if (!keepMapView) {
+                        this.mapView = this.preferredMapViewForRegional();
+                    }
+                    break;
+                case "consultoria_active":
+                    this.viewPreset = "custom";
+                    this.filterTier = "consultoria_active";
+                    this.hideConsultoria = false;
+                    if (!keepMapView) {
+                        this.mapView = "markers";
+                    }
+                    break;
+                case "catalog_pending":
+                    this.viewPreset = "custom";
+                    this.filterTier = "catalog_pending";
+                    this.hideConsultoria = false;
+                    if (!keepMapView) {
+                        this.mapView = "markers";
+                    }
+                    break;
+                default:
+                    return;
+            }
+
+            this._filterSignature = "";
+            if (this.markers.length > 0) {
+                this.recomputeFilteredMarkers();
+            }
+        },
+
+        setViewPreset(preset) {
+            if (Object.prototype.hasOwnProperty.call(DECISION_LENSES, preset)) {
+                this.applyDecisionLens(preset);
+            }
+        },
+
+        removeFilterChip(key) {
+            switch (key) {
+                case "success":
+                    this.minSuccessScore = 0;
+                    break;
+                case "benefit":
+                    this.minBenefitScore = 0;
+                    break;
+                case "matriculas":
+                    this.minMatriculas = 0;
+                    break;
+                case "financial":
+                    this.minFinancial = 0;
+                    break;
+                case "pedagogical":
+                    this.minPedagogical = 0;
+                    break;
+                case "readiness":
+                    this.minReadiness = 0;
+                    break;
+                case "social":
+                    this.minSocialDemand = 0;
+                    break;
+                case "fundeb":
+                    this.requireFundeb = false;
+                    break;
+                case "censo":
+                    this.requireCenso = false;
+                    break;
+                case "saeb":
+                    this.requireSaeb = false;
+                    break;
+                case "cadunico":
+                    this.requireCadunico = false;
+                    break;
+                case "sge":
+                    this.onlyMissingSge = false;
+                    break;
+                case "hide_consultoria":
+                    this.hideConsultoria = false;
+                    break;
+                case "approx_map":
+                    this.hideApproxOnMap = true;
+                    break;
+                case "search":
+                    this.searchQuery = "";
+                    break;
+                default:
+                    return;
+            }
+            this.markFiltersCustom();
+        },
+
         markFiltersCustom() {
-            if (this.viewPreset === "high_pressure") {
+            if (
+                this.viewPreset !== "custom" &&
+                (this.minSuccessScore > 0 ||
+                    this.minBenefitScore > 0 ||
+                    this.minMatriculas > 0 ||
+                    this.minFinancial > 0 ||
+                    this.minPedagogical > 0 ||
+                    this.minReadiness > 0 ||
+                    this.minSocialDemand > 0 ||
+                    this.requireFundeb ||
+                    this.requireCenso ||
+                    this.requireSaeb ||
+                    this.requireCadunico ||
+                    this.onlyMissingSge ||
+                    this.searchQuery.trim() !== "" ||
+                    (this.viewPreset === "all" && this.hideConsultoria) ||
+                    !this.hideApproxOnMap)
+            ) {
                 this.viewPreset = "custom";
+                if (this.filterTier === "prospects" && this.hideConsultoria) {
+                    // mantém tier prospects como base do custom
+                }
+            }
+        },
+
+        setFilterTier(tier) {
+            if (tier === "consultoria_active") {
+                this.applyDecisionLens("consultoria_active");
+                return;
+            }
+            if (tier === "catalog_pending") {
+                this.applyDecisionLens("catalog_pending");
+                return;
+            }
+            if (tier === "prospect_high") {
+                this.applyDecisionLens("prospect_high");
+                return;
+            }
+            if (tier === "all") {
+                this.applyDecisionLens("all");
+                return;
+            }
+            if (tier === "prospects") {
+                this.applyDecisionLens("prospects");
+            }
+        },
+
+        async applyInitialNavigation() {
+            this.applyDefaultDecisionView();
+            const queryUf = String(options.initialUf ?? "").trim().toUpperCase();
+            const policyUf = String(this.displayPolicy?.initial_uf ?? "")
+                .trim()
+                .toUpperCase();
+            const uf = queryUf || policyUf;
+            if (uf !== "" && !this.pageError) {
+                await this.selectUf(uf, false);
             }
         },
 
@@ -886,6 +1089,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.recomputeFilteredMarkers();
             this._filterSignature = this.filterSignature();
             this.applyRegionalRenderPolicy();
+            this._tooltipHtmlCache = {};
             this.initialViewNotice = {
                 kind: "regional",
                 message:
@@ -978,13 +1182,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.heatLayer = L.layerGroup().addTo(this.map);
             this.clusterGroup = L.markerClusterGroup({
                 chunkedLoading: true,
-                chunkInterval: 80,
-                chunkDelay: 30,
-                maxClusterRadius: 42,
+                chunkInterval: 100,
+                chunkDelay: 40,
+                maxClusterRadius: 48,
                 spiderfyOnMaxZoom: true,
                 showCoverageOnHover: false,
-                disableClusteringAtZoom: 12,
+                disableClusteringAtZoom: 11,
                 zoomToBoundsOnClick: true,
+                removeOutsideVisibleBounds: true,
             });
             this.map.addLayer(this.clusterGroup);
 
@@ -1030,6 +1235,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 "hideConsultoria",
                 "searchQuery",
                 "pressureThreshold",
+                "hideApproxOnMap",
             ].forEach((key) => this.$watch(key, onFilterChange));
 
             this.$watch("mapView", () => void this.scheduleMapRefresh());
@@ -1172,11 +1378,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     renderer: this.canvasRenderer,
                     className: isApproxCoord(m) ? "serv-horizonte-marker--approx" : "",
                 });
-                marker.bindTooltip(
-                    `<span class="font-medium">${escapeHtml(m.name)}</span> — ${escapeHtml(m.uf)}` +
-                        (isApproxCoord(m) ? `<br><span class="text-amber-700">${escapeHtml("Coordenada aproximada")}</span>` : ""),
-                    { direction: "top", opacity: 0.95 },
-                );
                 marker.on("click", (e) => {
                     L.DomEvent.stopPropagation(e);
                     this.selectMarker(m, e);
@@ -1249,8 +1450,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             const valid = bounds.filter(([la, ln]) => isValidCoord(la, ln));
             if (valid.length > 0) {
-                const maxZoom = this.scopeUf ? 10 : valid.length > 80 ? 6 : 7;
-                this.map.fitBounds(valid, { padding: [40, 40], maxZoom });
+                const heavy = Boolean(this.regionalDisplayPolicy?.heavy_regional);
+                const maxZoom = this.scopeUf
+                    ? heavy
+                        ? 8
+                        : valid.length > 80
+                          ? 9
+                          : 10
+                    : valid.length > 80
+                      ? 6
+                      : 7;
+                this.map.fitBounds(valid, { padding: [40, 40], maxZoom, animate: !heavy });
             } else {
                 this.map.setView([-14.2, -51.9], fallbackZoom);
             }
@@ -1302,17 +1512,19 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         selectMarker(m, ev = null) {
             this.active = m;
             this.tooltipPinned = true;
-            let containerPoint = ev?.containerPoint ?? null;
-            if (!containerPoint && this.map && m) {
-                const lat = Number(m.lat);
-                const lng = Number(m.lng);
-                if (isValidCoord(lat, lng)) {
-                    containerPoint = this.map.latLngToContainerPoint([lat, lng]);
+            window.requestAnimationFrame(() => {
+                let containerPoint = ev?.containerPoint ?? null;
+                if (!containerPoint && this.map && m) {
+                    const lat = Number(m.lat);
+                    const lng = Number(m.lng);
+                    if (isValidCoord(lat, lng)) {
+                        containerPoint = this.map.latLngToContainerPoint([lat, lng]);
+                    }
                 }
-            }
-            if (containerPoint) {
-                this.positionTooltip({ containerPoint });
-            }
+                if (containerPoint) {
+                    this.positionTooltip({ containerPoint });
+                }
+            });
         },
 
         positionTooltip(event) {
@@ -1393,11 +1605,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }, 400);
         },
 
-        setFilterTier(tier) {
-            this.viewPreset = "custom";
-            this.filterTier = tier;
-        },
-
         setMapView(view) {
             this.mapView = view;
         },
@@ -1407,27 +1614,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         resetFiltersToAll() {
-            this.viewPreset = "all";
-            this.filterTier = "all";
-            this.minSuccessScore = 0;
-            this.minBenefitScore = 0;
-            this.minMatriculas = 0;
-            this.minFinancial = 0;
-            this.minPedagogical = 0;
-            this.minReadiness = 0;
-            this.minSocialDemand = 0;
-            this.requireFundeb = false;
-            this.requireCenso = false;
-            this.requireSaeb = false;
-            this.requireCadunico = false;
-            this.onlyMissingSge = false;
-            this.hideConsultoria = false;
-            this.showAllOnMap = false;
-            this.renderCapDismissed = false;
-            this.mapView = "markers";
+            this.applyDecisionLens("all");
         },
 
         enableFullMapRender() {
+            if (!this.canShowAllOnMap) {
+                return;
+            }
             this.showAllOnMap = true;
             this.renderCapDismissed = true;
             void this.scheduleMapRefresh();
@@ -1442,7 +1635,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return;
             }
             const f = segment.filter;
-            this.resetFiltersToAll();
+            this.applyDecisionLens("prospects", { keepMapView: true });
             this.viewPreset = "custom";
             if (f.tier) {
                 this.filterTier = f.tier;
@@ -1504,6 +1697,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         tooltipBodyHtml(m) {
             if (!m) {
                 return "";
+            }
+            const cacheKey = String(m.ibge ?? "");
+            if (cacheKey !== "" && this._tooltipHtmlCache[cacheKey]) {
+                return this._tooltipHtmlCache[cacheKey];
             }
             const th = this.scoreThresholds;
             const lines = [];
@@ -1577,7 +1774,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     `<a href="${escapeHtml(m.analytics_url)}" class="mt-3 inline-block text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">${escapeHtml("Abrir consultoria")}</a>`,
                 );
             }
-            return lines.join("");
+            const html = lines.join("");
+            if (cacheKey !== "") {
+                this._tooltipHtmlCache[cacheKey] = html;
+            }
+            return html;
         },
 
         canEditSgeFor(m) {
