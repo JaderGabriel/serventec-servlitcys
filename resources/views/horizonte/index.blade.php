@@ -166,7 +166,7 @@
                                     <span class="text-slate-500 shrink-0">{{ __('UF') }}</span>
                                     <select
                                         x-model="scopeUf"
-                                        @change="scopeUf ? selectUf(scopeUf) : backToOverview()"
+                                        @change="onScopeUfPick($event)"
                                         :disabled="pageLoading || regionalLoading"
                                         class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 text-sm min-w-[5rem]"
                                     >
@@ -442,7 +442,7 @@
 
                         <div class="relative">
                             <div
-                                x-show="pageLoading || regionalLoading || mapRendering"
+                                x-show="pageLoading || regionalLoading"
                                 x-cloak
                                 class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-lg bg-white/85 dark:bg-slate-900/85 backdrop-blur-sm"
                                 role="status"
@@ -450,6 +450,16 @@
                             >
                                 <div class="h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" aria-hidden="true"></div>
                                 <p class="text-sm font-medium text-slate-700 dark:text-slate-200" x-text="loadingMessage || (regionalLoading ? '{{ __('A carregar UF…') }}' : '{{ __('A carregar…') }}')"></p>
+                            </div>
+                            <div
+                                x-show="!pageLoading && !regionalLoading && mapRendering"
+                                x-cloak
+                                class="absolute top-3 right-3 z-10 flex items-center gap-2 rounded-lg bg-white/90 dark:bg-slate-900/90 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-700"
+                                role="status"
+                                aria-live="polite"
+                            >
+                                <span class="h-3 w-3 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" aria-hidden="true"></span>
+                                <span>{{ __('A actualizar mapa…') }}</span>
                             </div>
 
                             <div

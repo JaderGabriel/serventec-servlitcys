@@ -98,6 +98,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         loadUrl: typeof options.loadUrl === "string" ? options.loadUrl : "",
         pageLoading: Boolean(options.loadUrl),
         regionalLoading: false,
+        pendingRegionalUf: "",
+        mapRefreshTimer: null,
+        mapRefreshGeneration: 0,
         mapRendering: false,
         renderProgress: 0,
         loadingMessage: "",
@@ -514,6 +517,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (!scoped) {
                 return;
             }
+            if (this.regionalLoading && this.pendingRegionalUf === scoped) {
+                return;
+            }
+            this.pendingRegionalUf = scoped;
             this.regionalLoading = true;
             this.pageError = null;
             this.loadingMessage = `A carregar municípios de ${scoped}…`;
@@ -539,7 +546,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                         : `Erro ao carregar UF ${scoped}.`;
             } finally {
                 this.regionalLoading = false;
-                await this.refreshMapLayers();
+                if (this.pendingRegionalUf === scoped) {
+                    this.pendingRegionalUf = "";
+                }
+                await this.scheduleMapRefresh();
             }
         },
 
@@ -660,13 +670,35 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.map.setView([-14.2, -51.9], 4);
 
             this.$watch("filteredMarkers", () => {
-                if (this.isRegionalMode) {
-                    this.showAllOnMap = false;
-                    this.renderCapDismissed = false;
-                    void this.refreshMapLayers();
+                if (!this.isRegionalMode || this.regionalLoading || this.pageLoading) {
+                    return;
                 }
+                this.showAllOnMap = false;
+                this.renderCapDismissed = false;
+                void this.scheduleMapRefresh();
             });
-            this.$watch("mapView", () => void this.refreshMapLayers());
+            this.$watch("mapView", () => void this.scheduleMapRefresh());
+        },
+
+        scheduleMapRefresh() {
+            this.mapRefreshGeneration += 1;
+            const generation = this.mapRefreshGeneration;
+
+            if (this.mapRefreshTimer !== null) {
+                clearTimeout(this.mapRefreshTimer);
+            }
+
+            return new Promise((resolve) => {
+                this.mapRefreshTimer = window.setTimeout(async () => {
+                    this.mapRefreshTimer = null;
+                    if (generation !== this.mapRefreshGeneration) {
+                        resolve();
+                        return;
+                    }
+                    await this.refreshMapLayers();
+                    resolve();
+                }, 32);
+            });
         },
 
         async refreshMapLayers() {
@@ -830,9 +862,32 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
         },
 
-        async selectUf(uf, userInitiated = true) {
+        onScopeUfPick(event) {
+            const uf = String(event?.target?.value ?? "")
+                .trim()
+                .toUpperCase();
+            if (uf === "") {
+                void this.backToOverview();
+                return;
+            }
+            void this.selectUf(uf, true);
+        },
+
+        async selectUf(uf, userInitiated = true, force = false) {
             const scoped = String(uf ?? "").trim().toUpperCase();
             if (!scoped) {
+                return;
+            }
+            if (
+                !force &&
+                this.isRegionalMode &&
+                this.scopeUf === scoped &&
+                this.markers.length > 0 &&
+                !this.regionalLoading
+            ) {
+                return;
+            }
+            if (this.regionalLoading && this.pendingRegionalUf === scoped) {
                 return;
             }
             this.highlightIbge = "";
@@ -925,7 +980,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 await this.selectUf(targetUf, false);
             }
             this.highlightIbge = String(m.ibge ?? "");
-            await this.refreshMapLayers();
+            await this.scheduleMapRefresh();
             const zoom = isApproxCoord(m) ? 9 : 10;
             this.map.flyTo([lat, lng], zoom, { duration: 0.75 });
             window.setTimeout(() => {
@@ -967,7 +1022,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         enableFullMapRender() {
             this.showAllOnMap = true;
             this.renderCapDismissed = true;
-            void this.refreshMapLayers();
+            void this.scheduleMapRefresh();
         },
 
         dismissInitialNotice() {
@@ -1245,7 +1300,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 }
                 if (data.sge) {
                     this.applyMarkerSgeUpdate(this.sgeForm.ibge, data.sge);
-                    await this.refreshMapLayers();
+                    await this.scheduleMapRefresh();
                 }
                 this.closeSgeForm();
             } catch (error) {

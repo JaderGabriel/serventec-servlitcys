@@ -278,8 +278,9 @@ final class HorizonteMapService
             if ($ufs === []) {
                 $ufs = IbgeMunicipalityCatalog::brazilianUfs();
             }
-            $fetchRemoteCentroids = $scopedUf !== null;
-            $ibgeMetaIndex = $this->ibgeCatalog->metaIndexForUfs($ufs, $fetchRemoteCentroids);
+            // Usar listagem IBGE + spread por UF (1 pedido/UF). Centroides individuais por município
+            // bloqueavam o clique regional (centenas de HTTP) sem ganho proporcional na UI.
+            $ibgeMetaIndex = $this->ibgeCatalog->metaIndexForUfs($ufs, false);
         }
 
         $saebForBench = [];
