@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **5.5.0** · release `20260603f-Helios` · **Ramo:** `main` · **Última revisão:** 03/06/2026
+**Versão em produção:** **5.5.0** · release `20260619c-Helios` · **Ramo:** `main` · **Última revisão:** 19/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 

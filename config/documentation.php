@@ -23,10 +23,10 @@ return [
 
     'product' => [
         'version' => '5.5.0',
-        'release_tag' => '20260603f-Helios',
+        'release_tag' => '20260619c-Helios',
         'commit_short' => '',
         'commit_number' => null,
-        'revision_date' => '2026-06-03',
+        'revision_date' => '2026-06-19',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

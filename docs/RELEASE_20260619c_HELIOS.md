@@ -1,8 +1,8 @@
-# Release `20260603f-Helios` — ServLITCYS 5.5.0
+# Release `20260619c-Helios` — ServLITCYS 5.5.0
 
-> **Nota (19/06/2026):** a tag `20260603f-Helios` usava prefixo de data incorrecto. **Produção actual:** [RELEASE_20260619c_HELIOS.md](RELEASE_20260619c_HELIOS.md) · tag **`20260619c-Helios`** · versão **5.5.0** · `revision_date` **2026-06-19**.
+**Data:** 2026-06-19 · **Ramo:** `main` · **Marco:** **5.5** — Horizonte GIS gerencial, monitor periódico e catálogo Artisan admin.
 
-**Data (obsoleta):** 2026-06-03 · **Ramo:** `main` · **Marco:** **5.5** — Horizonte GIS gerencial, monitor periódico e catálogo Artisan admin.
+> A tag `20260603f-Helios` usava prefixo de data incorrecto. **Produção actual:** este ficheiro · tag **`20260619c-Helios`** · `revision_date` **2026-06-19**.
 
 ---
 
@@ -10,16 +10,17 @@
 
 Minor **5.5.0** sobre **5.4.0** (Hyperion):
 
-1. **Horizonte — UI gerencial** — painel de filtros colapsável com chips activos; layout alargado e mapa mais alto; paleta GIS refinada; KPIs com tooltips; painel lateral **Metodologia e fórmulas** (pesos, dimensões, limiares); tooltip municipal com breakdown das 6 dimensões.
+1. **Horizonte — UI gerencial** — painel de filtros colapsável com chips activos; layout alargado e mapa mais alto; paleta GIS refinada; KPIs com tooltips; painel lateral **Metodologia e fórmulas** (pesos, dimensões, limiares); tooltip municipal com breakdown das 6 dimensões; cadastro SGE no mapa.
 2. **Monitor de módulos** — `module-monitor:collect` agendado a cada **10 minutos** (`MODULE_MONITOR_COLLECT_INTERVAL_MINUTES`) em vez de recolha diária única.
 3. **Comandos Artisan (admin)** — catálogo expandido (Horizonte, Educacenso, SAEB planilhas, CadÚnico Cecad, slugs de confirmação); tabela de **slugs production** resolvidos da config; detalhes, agendamento e badges por comando.
+4. **Login e home** — fundo e tipografia do login alinhados à landing; página inicial actualizada com Horizonte e conceitos da linha 5.5.
 
 ---
 
 ## Deploy
 
 ```bash
-git fetch --tags && git checkout 20260603f-Helios
+git fetch --tags && git checkout 20260619c-Helios
 composer install --no-dev --optimize-autoloader
 npm ci && npm run build
 php artisan config:cache && php artisan route:cache && php artisan view:cache
@@ -55,3 +56,4 @@ php artisan test --filter='ArtisanCommandsCatalog|ModuleMonitorCollectSchedule|H
 | Comandos CLI + slugs | [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) · `/admin/artisan-commands` |
 | Monitor (`module-monitor:collect`) | [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11c |
 | Anterior | [RELEASE_20260603e_HYPERION.md](RELEASE_20260603e_HYPERION.md) |
+| Tag obsoleta | [RELEASE_20260603f_HELIOS.md](RELEASE_20260603f_HELIOS.md) |
