@@ -29,6 +29,23 @@ final class IbgeUfFromCode
         return self::PREFIX_TO_UF[$prefix] ?? null;
     }
 
+    /** Prefixo IBGE (2 dígitos) para filtrar consultas SQL por UF. */
+    public static function ibgePrefixForUf(string $uf): ?string
+    {
+        $uf = strtoupper(trim($uf));
+        if ($uf === '') {
+            return null;
+        }
+
+        foreach (self::PREFIX_TO_UF as $prefix => $code) {
+            if ($code === $uf) {
+                return $prefix;
+            }
+        }
+
+        return null;
+    }
+
     /**
      * @param  list<string>  $ibgeCodes
      * @return list<string>

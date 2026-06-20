@@ -301,6 +301,57 @@ final class HorizonteMapPresenter
     }
 
     /**
+     * Política de renderização para recorte regional (UF com muitos municípios).
+     *
+     * @return array{
+     *     marker_count: int,
+     *     max_render_markers: int,
+     *     prefer_map_view: string,
+     *     heavy_regional: bool,
+     *     reason: string|null
+     * }
+     */
+    public static function regionalDisplayPolicy(int $markerCount): array
+    {
+        $cfg = config('horizonte.map_display', []);
+        $mediumAt = max(80, (int) ($cfg['regional_medium_threshold'] ?? 200));
+        $heavyAt = max($mediumAt + 1, (int) ($cfg['regional_heavy_threshold'] ?? 350));
+        $heatMax = max(100, (int) ($cfg['regional_heat_max'] ?? 220));
+        $defaultMax = max(80, min(800, (int) ($cfg['max_render_markers'] ?? 400)));
+
+        $maxRender = $defaultMax;
+        $preferView = 'heat';
+        $heavyRegional = $markerCount >= $heavyAt;
+        $reason = null;
+
+        if ($markerCount >= $heavyAt) {
+            $maxRender = max(60, min(400, (int) ($cfg['regional_max_render_heavy'] ?? 180)));
+            $preferView = 'markers';
+            $reason = __('UF com :total municípios — mapa limitado aos :limit de maior propensão; vista em clusters recomendada.', [
+                'total' => number_format($markerCount, 0, ',', '.'),
+                'limit' => number_format($maxRender, 0, ',', '.'),
+            ]);
+        } elseif ($markerCount >= $mediumAt) {
+            $maxRender = max(80, min(500, (int) ($cfg['regional_max_render_medium'] ?? 250)));
+            if ($markerCount > $heatMax) {
+                $preferView = 'markers';
+            }
+            $reason = __('UF extensa (:total municípios) — renderização optimizada.', [
+                'total' => number_format($markerCount, 0, ',', '.'),
+            ]);
+        }
+
+        return [
+            'marker_count' => $markerCount,
+            'max_render_markers' => $maxRender,
+            'prefer_map_view' => $preferView,
+            'heavy_regional' => $heavyRegional,
+            'heat_max' => $heatMax,
+            'reason' => $reason,
+        ];
+    }
+
+    /**
      * Filtros iniciais da vista GIS/BI (alta pressão por defeito).
      *
      * @return array<string, mixed>

@@ -140,6 +140,12 @@ return [
     'map_display' => [
         'heavy_threshold' => max(100, (int) env('HORIZONTE_MAP_HEAVY_THRESHOLD', 800)),
         'max_render_markers' => max(80, min(800, (int) env('HORIZONTE_MAP_MAX_RENDER', 400))),
+        /** UF com muitos municípios — limites adaptativos de renderização no mapa. */
+        'regional_medium_threshold' => max(80, (int) env('HORIZONTE_MAP_REGIONAL_MEDIUM', 200)),
+        'regional_heavy_threshold' => max(150, (int) env('HORIZONTE_MAP_REGIONAL_HEAVY', 350)),
+        'regional_max_render_medium' => max(80, min(500, (int) env('HORIZONTE_MAP_REGIONAL_MAX_MEDIUM', 250))),
+        'regional_max_render_heavy' => max(60, min(400, (int) env('HORIZONTE_MAP_REGIONAL_MAX_HEAVY', 180))),
+        'regional_heat_max' => max(100, (int) env('HORIZONTE_MAP_REGIONAL_HEAT_MAX', 220)),
         /** Vista inicial GIS/BI — municípios com pressão FUNDEB elevada ou alta propensão. */
         'default_view' => env('HORIZONTE_MAP_DEFAULT_VIEW', 'high_pressure'),
         'financial_pressure_min' => max(0, min(100, (int) env('HORIZONTE_MAP_FINANCIAL_PRESSURE_MIN', 60))),

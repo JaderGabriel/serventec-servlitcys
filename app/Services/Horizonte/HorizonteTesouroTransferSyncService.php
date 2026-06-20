@@ -81,15 +81,18 @@ final class HorizonteTesouroTransferSyncService
     /**
      * @return array<string, array{total: float, programas: int}>
      */
-    public static function aggregateByIbge(int $year): array
+    public static function aggregateByIbge(int $year, ?string $ibgePrefix = null): array
     {
         if (! \Illuminate\Support\Facades\Schema::hasTable('municipal_transfer_snapshots')) {
             return [];
         }
 
-        $rows = \App\Models\MunicipalTransferSnapshot::query()
-            ->where('ano', $year)
-            ->get(['ibge_municipio', 'valor']);
+        $query = \App\Models\MunicipalTransferSnapshot::query()
+            ->where('ano', $year);
+        if ($ibgePrefix !== null && $ibgePrefix !== '') {
+            $query->where('ibge_municipio', 'like', $ibgePrefix.'%');
+        }
+        $rows = $query->get(['ibge_municipio', 'valor']);
 
         $out = [];
         foreach ($rows as $row) {

@@ -22,8 +22,8 @@ return [
     */
 
     'product' => [
-        'version' => '5.6.0',
-        'release_tag' => '20260620-Urania',
+        'version' => '5.7.0',
+        'release_tag' => '20260620a-Metis',
         'commit_short' => '',
         'commit_number' => null,
         'revision_date' => '2026-06-20',

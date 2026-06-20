@@ -66,6 +66,29 @@ final class HorizonteMapPresenterTest extends TestCase
     }
 
     #[Test]
+    public function regional_display_policy_scales_render_limit_for_large_uf(): void
+    {
+        config([
+            'horizonte.map_display.regional_medium_threshold' => 200,
+            'horizonte.map_display.regional_heavy_threshold' => 350,
+            'horizonte.map_display.regional_max_render_medium' => 250,
+            'horizonte.map_display.regional_max_render_heavy' => 180,
+            'horizonte.map_display.regional_heat_max' => 220,
+        ]);
+
+        $small = HorizonteMapPresenter::regionalDisplayPolicy(120);
+        $this->assertSame(400, $small['max_render_markers']);
+        $this->assertSame('heat', $small['prefer_map_view']);
+        $this->assertFalse($small['heavy_regional']);
+
+        $heavy = HorizonteMapPresenter::regionalDisplayPolicy(645);
+        $this->assertSame(180, $heavy['max_render_markers']);
+        $this->assertSame('markers', $heavy['prefer_map_view']);
+        $this->assertTrue($heavy['heavy_regional']);
+        $this->assertNotNull($heavy['reason']);
+    }
+
+    #[Test]
     public function default_view_filter_exposes_high_pressure_preset(): void
     {
         config(['horizonte.map_display.financial_pressure_min' => 60]);

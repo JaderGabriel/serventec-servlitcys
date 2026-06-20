@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão em produção (`main`):** **5.6.0** · tag **`20260620-Urania`** · [release](docs/RELEASE_20260620_URANIA.md) · [histórico](docs/HISTORICO_VERSOES.md)
+**Versão em produção (`main`):** **5.7.0** · tag **`20260620a-Metis`** · [release](docs/RELEASE_20260620a_METIS.md) · [histórico](docs/HISTORICO_VERSOES.md)
 
 ---
 
