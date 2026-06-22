@@ -26,12 +26,17 @@ final class HorizonteIbgeCentroidSyncServiceTest extends TestCase
                     'microrregiao' => ['mesorregiao' => ['UF' => ['sigla' => 'RR']]],
                 ],
             ], 200),
-            'servicodados.ibge.gov.br/api/v1/localidades/municipios/1400100' => Http::response([
-                'id' => 1400100,
-                'nome' => 'Boa Vista',
-                'centroide' => [
-                    'type' => 'Point',
-                    'coordinates' => [-60.6719, 2.8235],
+            'servicodados.ibge.gov.br/api/v2/malhas/14*' => Http::response([
+                'type' => 'FeatureCollection',
+                'features' => [
+                    [
+                        'type' => 'Feature',
+                        'properties' => [
+                            'codarea' => '1400100',
+                            'centroide' => [-60.6719, 2.8235],
+                        ],
+                        'geometry' => ['type' => 'Polygon', 'coordinates' => []],
+                    ],
                 ],
             ], 200),
         ]);

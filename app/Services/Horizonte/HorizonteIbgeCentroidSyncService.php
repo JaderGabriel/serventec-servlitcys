@@ -120,6 +120,22 @@ final class HorizonteIbgeCentroidSyncService
 
         $stats = ['cached' => 0, 'fetched' => 0, 'failed' => 0, 'pending' => 0];
         $lines = [];
+        $preCached = [];
+
+        if (! $dryRun && ! $force) {
+            foreach ($list as $municipality) {
+                $ibge = (string) ($municipality['ibge'] ?? '');
+                if ($this->catalog->hasCentroidCached($ibge)) {
+                    $preCached[$ibge] = true;
+                }
+            }
+        }
+
+        $bulkCentroids = [];
+        if (! $dryRun) {
+            $malha = $this->catalog->syncCentroidsForUfFromMalha($uf, $force);
+            $bulkCentroids = is_array($malha['centroids'] ?? null) ? $malha['centroids'] : [];
+        }
 
         foreach ($list as $index => $municipality) {
             $ibge = (string) ($municipality['ibge'] ?? '');
@@ -138,7 +154,22 @@ final class HorizonteIbgeCentroidSyncService
                 continue;
             }
 
-            $result = $this->catalog->syncCentroidForIbge($ibge, $force);
+            if (! $this->catalog->hasCentroidCached($ibge)) {
+                $result = $this->catalog->syncCentroidForIbge($ibge, true);
+                if ($delayMs > 0 && ($result['status'] ?? '') === 'fetched' && $index < count($list) - 1) {
+                    usleep($delayMs * 1000);
+                }
+            } else {
+                $cached = \App\Support\Dashboard\AdminHomeMapCache::get('ibge_municipality_centroid:'.$ibge);
+                $wasCached = isset($preCached[$ibge]) && ! $force;
+                $result = [
+                    'status' => $wasCached ? 'cached' : 'fetched',
+                    'lat' => (float) ($cached['lat'] ?? 0),
+                    'lng' => (float) ($cached['lng'] ?? 0),
+                    'source' => isset($bulkCentroids[$ibge]) ? 'malha' : 'cache',
+                ];
+            }
+
             $status = (string) ($result['status'] ?? 'failed');
             if (! isset($stats[$status])) {
                 $stats[$status] = 0;
@@ -150,10 +181,6 @@ final class HorizonteIbgeCentroidSyncService
                 'name' => $name,
                 'uf' => $uf,
             ], $result);
-
-            if ($delayMs > 0 && $status === 'fetched' && $index < count($list) - 1) {
-                usleep($delayMs * 1000);
-            }
         }
 
         $catalogSize = 0;
@@ -180,6 +207,7 @@ final class HorizonteIbgeCentroidSyncService
             'stats' => array_merge($stats, [
                 'catalog_size' => $catalogSize,
                 'still_approximate' => $stillApproximate,
+                'malha_bulk' => count($bulkCentroids),
             ]),
             'lines' => $lines,
         ];

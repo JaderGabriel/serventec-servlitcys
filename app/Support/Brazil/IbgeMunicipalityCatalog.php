@@ -167,6 +167,7 @@ final class IbgeMunicipalityCatalog
             'status' => 'fetched',
             'lat' => $fromApi[0],
             'lng' => $fromApi[1],
+            'source' => 'metadados',
         ];
     }
 
@@ -180,6 +181,77 @@ final class IbgeMunicipalityCatalog
         $cache = AdminHomeMapCache::repository();
         $cache->forget('ibge_municipality_catalog_uf:v3:spread:'.$uf);
         $cache->forget('ibge_municipality_catalog_uf:v3:geo:'.$uf);
+    }
+
+    /**
+     * Obtém centroides de todos os municípios da UF num único pedido (API malhas v2).
+     *
+     * @return array{success: bool, fetched: int, centroids: array<string, array{lat: float, lng: float}>}
+     */
+    public function syncCentroidsForUfFromMalha(string $uf, bool $force = false): array
+    {
+        $uf = strtoupper(trim($uf));
+        $prefix = IbgeUfFromCode::ibgePrefixForUf($uf);
+        if ($prefix === null) {
+            return ['success' => false, 'fetched' => 0, 'centroids' => []];
+        }
+
+        try {
+            $response = Http::timeout(45)
+                ->acceptJson()
+                ->get('https://servicodados.ibge.gov.br/api/v2/malhas/'.$prefix, [
+                    'resolucao' => 5,
+                    'formato' => 'application/vnd.geo+json',
+                    'qualidade' => 'minima',
+                ]);
+
+            if (! $response->successful()) {
+                return ['success' => false, 'fetched' => 0, 'centroids' => []];
+            }
+
+            $geo = $response->json();
+            $features = is_array($geo['features'] ?? null) ? $geo['features'] : [];
+            $centroids = [];
+            $fetched = 0;
+
+            foreach ($features as $feature) {
+                if (! is_array($feature)) {
+                    continue;
+                }
+                $props = is_array($feature['properties'] ?? null) ? $feature['properties'] : [];
+                $ibge = $this->normalizeIbge((string) ($props['codarea'] ?? ''));
+                $centroide = $props['centroide'] ?? null;
+                if ($ibge === null || ! is_array($centroide) || count($centroide) < 2) {
+                    continue;
+                }
+                $lng = (float) $centroide[0];
+                $lat = (float) $centroide[1];
+                if (! BrazilUfCentroids::isValidBrazilCoord($lat, $lng)) {
+                    continue;
+                }
+
+                $hadCache = ! $force && $this->hasCentroidCached($ibge);
+                if ($force) {
+                    AdminHomeMapCache::repository()->forget('ibge_municipality_centroid:'.$ibge);
+                }
+                if ($force || ! $hadCache) {
+                    $this->cacheCentroid($ibge, $lat, $lng);
+                    $fetched++;
+                }
+
+                $centroids[$ibge] = ['lat' => $lat, 'lng' => $lng];
+            }
+
+            return [
+                'success' => $centroids !== [],
+                'fetched' => $fetched,
+                'centroids' => $centroids,
+            ];
+        } catch (\Throwable $e) {
+            Log::debug('horizonte.ibge_malha_uf_failed', ['uf' => $uf, 'message' => $e->getMessage()]);
+
+            return ['success' => false, 'fetched' => 0, 'centroids' => []];
+        }
     }
 
     /**
@@ -379,6 +451,13 @@ final class IbgeMunicipalityCatalog
         }
 
         try {
+            $fromMalha = $this->fetchCentroidFromMalhaMetadados($ibge);
+            if ($fromMalha !== null) {
+                $this->cacheCentroid($ibge, $fromMalha[0], $fromMalha[1]);
+
+                return $fromMalha;
+            }
+
             $response = Http::timeout(8)
                 ->acceptJson()
                 ->get('https://servicodados.ibge.gov.br/api/v1/localidades/municipios/'.$ibge);
@@ -403,7 +482,7 @@ final class IbgeMunicipalityCatalog
                 return null;
             }
 
-            AdminHomeMapCache::repository()->put($cacheKey, ['lat' => $lat, 'lng' => $lng], self::CACHE_TTL_SECONDS);
+            $this->cacheCentroid($ibge, $lat, $lng);
 
             return [$lat, $lng];
         } catch (\Throwable $e) {
@@ -411,6 +490,58 @@ final class IbgeMunicipalityCatalog
 
             return null;
         }
+    }
+
+    /**
+     * @return array{0: float, 1: float}|null
+     */
+    private function fetchCentroidFromMalhaMetadados(string $ibge): ?array
+    {
+        try {
+            $response = Http::timeout(12)
+                ->acceptJson()
+                ->get('https://servicodados.ibge.gov.br/api/v4/malhas/municipios/'.$ibge.'/metadados');
+
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $items = $response->json();
+            if (! is_array($items) || $items === []) {
+                return null;
+            }
+
+            $meta = $items[0];
+            if (! is_array($meta)) {
+                return null;
+            }
+
+            $centroide = $meta['centroide'] ?? null;
+            if (! is_array($centroide)) {
+                return null;
+            }
+
+            $lat = (float) ($centroide['latitude'] ?? 0);
+            $lng = (float) ($centroide['longitude'] ?? 0);
+            if (! BrazilUfCentroids::isValidBrazilCoord($lat, $lng)) {
+                return null;
+            }
+
+            return [$lat, $lng];
+        } catch (\Throwable $e) {
+            Log::debug('horizonte.ibge_malha_meta_failed', ['ibge' => $ibge, 'message' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    private function cacheCentroid(string $ibge, float $lat, float $lng): void
+    {
+        AdminHomeMapCache::repository()->put(
+            'ibge_municipality_centroid:'.$ibge,
+            ['lat' => $lat, 'lng' => $lng],
+            self::CACHE_TTL_SECONDS,
+        );
     }
 
     /**

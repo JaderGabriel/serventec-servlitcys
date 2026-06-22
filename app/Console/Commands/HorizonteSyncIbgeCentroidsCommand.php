@@ -146,6 +146,12 @@ class HorizonteSyncIbgeCentroidsCommand extends Command
 
         $this->line($summary);
 
+        if (! $dryRun && isset($stats['malha_bulk'])) {
+            $this->line(__('  Malha IBGE: :n centroides na resposta bulk', [
+                'n' => (string) ($stats['malha_bulk'] ?? 0),
+            ]));
+        }
+
         if (! $dryRun && isset($stats['catalog_size'])) {
             $approx = (int) ($stats['still_approximate'] ?? 0);
             $this->line(__('  Catálogo geo: :n municípios (:approx ainda aproximados)', [
@@ -179,7 +185,12 @@ class HorizonteSyncIbgeCentroidsCommand extends Command
 
         $lat = isset($line['lat']) ? number_format((float) $line['lat'], 5, '.', '') : '—';
         $lng = isset($line['lng']) ? number_format((float) $line['lng'], 5, '.', '') : '—';
-        $label = $status === 'cached' ? 'cache' : 'ibge';
+        $source = (string) ($line['source'] ?? '');
+        $label = match ($source) {
+            'malha' => 'malha',
+            'metadados' => 'metadados',
+            default => $status === 'cached' ? 'cache' : 'ibge',
+        };
         $this->line("  ✓ {$ibge} {$name}/{$uf} ({$lat}, {$lng}) [{$label}]");
     }
 }
