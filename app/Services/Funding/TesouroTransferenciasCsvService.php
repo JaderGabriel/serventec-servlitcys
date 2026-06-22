@@ -714,12 +714,19 @@ final class TesouroTransferenciasCsvService
     /**
      * @param  array<string, array<string, mixed>>  $byNomeUf
      */
-    private function countIbgeCrossMatches(array $byNomeUf, array $ibgeByNomeUf, int $year): int
+    private function countIbgeCrossMatches(array $byNomeUf, array $ibgeByNomeUf, int $year, ?string $scopedUf = null): int
     {
         $ibgeByUfNome = $this->buildIbgeByUfNome($ibgeByNomeUf);
         $matches = 0;
         foreach ($byNomeUf as $key => $entry) {
-            if (! is_array($entry) || ((float) ($entry['annual'][$year] ?? 0)) <= 0) {
+            if (! is_array($entry)) {
+                continue;
+            }
+            $uf = strtoupper(trim((string) ($entry['uf'] ?? '')));
+            if ($scopedUf !== null && $scopedUf !== $uf) {
+                continue;
+            }
+            if (((float) ($entry['annual'][$year] ?? 0)) <= 0) {
                 continue;
             }
             if ($this->resolveIbgeForEntry($entry, (string) $key, $ibgeByNomeUf, $ibgeByUfNome) !== null) {
@@ -1131,6 +1138,43 @@ final class TesouroTransferenciasCsvService
         self::$codMunMapMemo = $map;
     }
 
+    /**
+     * @param  array<string, string>  $mappings
+     */
+    public function rememberCodMunMappings(array $mappings): void
+    {
+        if ($mappings === []) {
+            return;
+        }
+
+        $map = $this->codMunToIbgeMap();
+        $changed = false;
+        foreach ($mappings as $codMun => $ibge) {
+            $codMun = trim((string) $codMun);
+            $ibge = trim((string) $ibge);
+            if ($codMun === '' || $ibge === '') {
+                continue;
+            }
+            if (($map[$codMun] ?? '') === $ibge) {
+                continue;
+            }
+            $map[$codMun] = $ibge;
+            $changed = true;
+        }
+
+        if (! $changed) {
+            return;
+        }
+
+        $path = $this->codMunMapPath();
+        $dir = dirname($path);
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        file_put_contents($path, json_encode($map, JSON_UNESCAPED_UNICODE));
+        self::$codMunMapMemo = $map;
+    }
+
     /** @var array<string, string>|null */
     private static ?array $codMunMapMemo = null;
 
@@ -1268,9 +1312,9 @@ final class TesouroTransferenciasCsvService
             return [];
         }
 
-        $ufs = $ufFilter !== null && HorizonteUfScope::normalize($ufFilter) !== null
-            ? [HorizonteUfScope::normalize($ufFilter)]
-            : null;
+        $scopedUf = HorizonteUfScope::normalize($ufFilter);
+
+        $ufs = $scopedUf !== null ? [$scopedUf] : null;
 
         $ibgeByNomeUf = $ufs === null
             ? $catalog->nationalNomeUfToIbgeIndex()
@@ -1278,6 +1322,7 @@ final class TesouroTransferenciasCsvService
         $ibgeByUfNome = $this->buildIbgeByUfNome($ibgeByNomeUf);
 
         $rows = [];
+        $codMunBatch = [];
         foreach ($resources as $resource) {
             $index = $this->normalizeStoredIndex($this->loadResourceIndex($resource, $timeout));
             $byNomeUf = $index['by_nome_uf'] ?? null;
@@ -1290,7 +1335,7 @@ final class TesouroTransferenciasCsvService
                     continue;
                 }
                 $uf = strtoupper(trim((string) ($entry['uf'] ?? '')));
-                if ($ufFilter !== null && HorizonteUfScope::normalize($ufFilter) !== $uf) {
+                if ($scopedUf !== null && $scopedUf !== $uf) {
                     continue;
                 }
                 $valor = $entry['annual'][$year] ?? null;
@@ -1328,8 +1373,15 @@ final class TesouroTransferenciasCsvService
                     'valor' => round((float) $valor, 2),
                     'meta' => $meta,
                 ];
-                $this->rememberCodMunMapping((string) ($entry['cod_mun'] ?? ''), $ibge);
+                $codMun = trim((string) ($entry['cod_mun'] ?? ''));
+                if ($codMun !== '') {
+                    $codMunBatch[$codMun] = $ibge;
+                }
             }
+        }
+
+        if ($codMunBatch !== []) {
+            $this->rememberCodMunMappings($codMunBatch);
         }
 
         return $rows;
@@ -1381,14 +1433,13 @@ final class TesouroTransferenciasCsvService
             }
         }
 
-        $ufs = $ufFilter !== null && HorizonteUfScope::normalize($ufFilter) !== null
-            ? [HorizonteUfScope::normalize($ufFilter)]
-            : null;
+        $scopedUf = HorizonteUfScope::normalize($ufFilter);
+        $ufs = $scopedUf !== null ? [$scopedUf] : null;
         $ibgeIndex = $ufs === null
             ? $catalog->nationalNomeUfToIbgeIndex()
             : $this->nomeUfIbgeIndexForUfs($catalog, $ufs);
         $codMap = $this->codMunToIbgeMap();
-        $crossMatches = $this->countIbgeCrossMatches($byNomeUf, $ibgeIndex, $year);
+        $crossMatches = $this->countIbgeCrossMatches($byNomeUf, $ibgeIndex, $year, $scopedUf);
 
         if ($byNomeUf === []) {
             $url = trim((string) ($resources[0]['url'] ?? ''));

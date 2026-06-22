@@ -9,8 +9,11 @@
         <div class="space-y-3">
             <div class="flex items-start justify-between gap-2">
                 <div class="min-w-0">
-                    <p class="font-semibold text-slate-900 dark:text-slate-100" x-text="active.name + ' — ' + active.uf"></p>
-                    <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400" x-text="'IBGE ' + active.ibge + ' · ' + tierLabel(active)"></p>
+                    <p class="serv-horizonte-muni-tooltip__title">
+                        <span x-text="active.name"></span>
+                        <span class="serv-horizonte-muni-tooltip__uf" x-text="active.uf"></span>
+                    </p>
+                    <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400" x-text="'IBGE ' + active.ibge + ' · ' + tierLabel(active)"></p>
                 </div>
                 <button
                     type="button"

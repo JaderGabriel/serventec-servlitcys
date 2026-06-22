@@ -53,6 +53,11 @@ class HorizonteController extends Controller
             $scope = 'overview';
         }
 
+        if ($scope === 'regional' && $uf !== null) {
+            $regionalLimit = max(60, (int) config('horizonte.map_display.regional_time_limit', 120));
+            set_time_limit($regionalLimit);
+        }
+
         return response()->json($this->map->buildForRequest($scope, $uf));
     }
 }

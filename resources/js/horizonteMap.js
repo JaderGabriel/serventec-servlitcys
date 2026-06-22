@@ -47,6 +47,112 @@ function formatPercentValue(n) {
     return `${Number(n).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
 }
 
+function formatVaafPerStudent(n) {
+    if (n === null || n === undefined || Number.isNaN(Number(n))) {
+        return "—";
+    }
+    return (
+        Number(n).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }) + "/aluno"
+    );
+}
+
+function nfCompact(n) {
+    if (n === null || n === undefined || Number.isNaN(Number(n))) {
+        return "—";
+    }
+    const v = Number(n);
+    if (v >= 1_000_000) {
+        const m = v / 1_000_000;
+        return `${m.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}M`;
+    }
+    if (v >= 10_000) {
+        return `${Math.round(v / 1000).toLocaleString("pt-BR")}k`;
+    }
+    return nf(v);
+}
+
+function muniScoreChipsHtml(m, th) {
+    const matriculas =
+        m.matriculas_censo != null
+            ? nfCompact(m.matriculas_censo)
+            : m.fundeb_matriculas_base != null
+              ? nfCompact(m.fundeb_matriculas_base)
+              : "—";
+    return (
+        `<div class="serv-horizonte-muni-tooltip__scores">` +
+        `<span><strong>${formatScoreValue(m.success_score)}</strong>${escapeHtml("Prop.")}</span>` +
+        `<span><strong>${formatScoreValue(m.financial_pressure)}</strong>${escapeHtml("Press.")}</span>` +
+        `<span><strong>${matriculas}</strong>${escapeHtml("Matr.")}</span>` +
+        `</div>` +
+        `<p class="serv-horizonte-muni-tooltip__score-hint">${escapeHtml("Propensão")} ≥${th.high} ${escapeHtml("alta")} · ${escapeHtml("Pressão FUNDEB")} 0–100</p>`
+    );
+}
+
+function fundebReferenceHtml(m) {
+    const ano = m.fundeb_ano;
+    const vaaf = m.fundeb_vaaf;
+    const receita = m.fundeb_receita_total;
+    const compl = m.complementacao_fundeb;
+    const hasVaaf = vaaf != null && Number(vaaf) > 0;
+    const hasReceita = receita != null && Number(receita) > 0;
+    const hasCompl = compl != null && Number(compl) > 0;
+    if (ano == null && !hasVaaf && !hasReceita && !hasCompl) {
+        return "";
+    }
+
+    const rows = [];
+    if (hasVaaf) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="min-w-0">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("VAAF")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Valor aluno/ano (referência FNDE)")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value tabular-nums">${formatVaafPerStudent(vaaf)}</span>` +
+                `</div>`,
+        );
+    }
+    if (hasReceita) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="min-w-0">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Receita total")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("FUNDEB municipal (FNDE)")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value tabular-nums">${formatCurrencyBrl(receita)}</span>` +
+                `</div>`,
+        );
+    }
+    if (hasCompl) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="min-w-0">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Complementação")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("VAAF + VAAT + VAAR (FNDE)")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value tabular-nums">${formatCurrencyBrl(compl)}</span>` +
+                `</div>`,
+        );
+    }
+
+    const yearLabel = ano != null ? String(ano) : "—";
+
+    return (
+        `<div class="serv-horizonte-muni-tooltip__fundeb">` +
+        `<div class="serv-horizonte-muni-tooltip__fundeb-head">` +
+        `<span class="serv-horizonte-muni-tooltip__fundeb-title">${escapeHtml("Referência FUNDEB")}</span>` +
+        `<span class="serv-horizonte-muni-tooltip__fundeb-year">${escapeHtml("Ano")} ${escapeHtml(yearLabel)}</span>` +
+        `</div>` +
+        `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` +
+        `</div>`
+    );
+}
+
 function transferTooltipHtml(m, refYear) {
     const total = m.transfer_total;
     const hasValue = total != null && Number(total) > 0;
@@ -65,48 +171,62 @@ function transferTooltipHtml(m, refYear) {
     const rows = [];
 
     rows.push(
-        `<div class="flex items-baseline justify-between gap-2">` +
-            `<span class="text-slate-600 dark:text-slate-300">${escapeHtml("Total")}</span>` +
-            `<span class="tabular-nums font-semibold text-slate-900 dark:text-slate-100">${formatCurrencyBrl(total)}</span>` +
+        `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+            `<div class="min-w-0">` +
+            `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Total repasses")}</span>` +
+            `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Soma programas CKAN")}</span>` +
+            `</div>` +
+            `<span class="serv-horizonte-muni-tooltip__fundeb-value tabular-nums font-semibold">${formatCurrencyBrl(total)}</span>` +
             `</div>`,
     );
 
     if (fundeb != null && Number(fundeb) > 0) {
         rows.push(
-            `<div class="flex items-baseline justify-between gap-2 rounded-md bg-rose-50 px-2 py-1 dark:bg-rose-950/30">` +
-                `<span class="font-semibold text-rose-800 dark:text-rose-200">${escapeHtml("FUNDEB")}</span>` +
-                `<span class="text-right tabular-nums text-rose-900 dark:text-rose-100">` +
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row serv-horizonte-muni-tooltip__fundeb-row--highlight">` +
+                `<div class="min-w-0">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Repasse FUNDEB")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Valor total pago (Tesouro CKAN)")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value tabular-nums text-right">` +
                 `<span class="font-semibold">${formatCurrencyBrl(fundeb)}</span>` +
                 (pctFundeb
-                    ? `<span class="ms-1 text-[10px] font-medium text-rose-700/90 dark:text-rose-300/90">(${escapeHtml(pctFundeb)})</span>`
+                    ? `<span class="block text-[10px] font-medium text-rose-700/90 dark:text-rose-300/90">${escapeHtml(pctFundeb)} ${escapeHtml("do total")}</span>`
                     : "") +
                 `</span></div>`,
         );
     }
 
     if (educacao != null && Number(educacao) > 0) {
-        const educLabel =
+        const educSameFundeb =
             fundeb != null &&
             Number(fundeb) > 0 &&
-            Math.abs(Number(educacao) - Number(fundeb)) < 0.01
-                ? "Verbas educação (FUNDEB)"
-                : "Verbas educação";
+            Math.abs(Number(educacao) - Number(fundeb)) < 0.01;
+        const educLabel = educSameFundeb ? "Verbas educação" : "Verbas educação";
+        const educDesc = educSameFundeb
+            ? "Inclui FUNDEB e demais programas"
+            : "PNAE, PNATE, PDDE e afins";
         rows.push(
-            `<div class="flex items-baseline justify-between gap-2 rounded-md bg-teal-50 px-2 py-1 dark:bg-teal-950/30">` +
-                `<span class="font-semibold text-teal-800 dark:text-teal-200">${escapeHtml(educLabel)}</span>` +
-                `<span class="text-right tabular-nums text-teal-900 dark:text-teal-100">` +
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="min-w-0">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml(educLabel)}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(educDesc)}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value tabular-nums text-right">` +
                 `<span class="font-semibold">${formatCurrencyBrl(educacao)}</span>` +
                 (pctEduc
-                    ? `<span class="ms-1 text-[10px] font-medium text-teal-700/90 dark:text-teal-300/90">(${escapeHtml(pctEduc)})</span>`
+                    ? `<span class="block text-[10px] font-medium text-teal-700/90 dark:text-teal-300/90">${escapeHtml(pctEduc)} ${escapeHtml("do total")}</span>`
                     : "") +
                 `</span></div>`,
         );
     }
 
     return (
-        `<div class="mt-2 rounded-lg border border-slate-200/90 bg-slate-50/80 px-2.5 py-2 dark:border-slate-600 dark:bg-slate-900/40">` +
-        `<p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">${escapeHtml("Repasses federais")} · ${escapeHtml("Ref.")} ${escapeHtml(String(ano))}</p>` +
-        `<div class="mt-1.5 space-y-1 text-[11px]">${rows.join("")}</div>` +
+        `<div class="serv-horizonte-muni-tooltip__fundeb serv-horizonte-muni-tooltip__fundeb--repasses">` +
+        `<div class="serv-horizonte-muni-tooltip__fundeb-head">` +
+        `<span class="serv-horizonte-muni-tooltip__fundeb-title">${escapeHtml("Repasses federais")}</span>` +
+        `<span class="serv-horizonte-muni-tooltip__fundeb-year">${escapeHtml("Ano")} ${escapeHtml(String(ano))}</span>` +
+        `</div>` +
+        `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` +
         `</div>`
     );
 }
@@ -1214,11 +1334,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         applyDecisionLens(lensKey, opts = {}) {
             const keepMapView = opts.keepMapView === true;
+            const enteringRegional = opts.enteringRegional === true;
             this.clearSecondaryFilters();
             this.showAllOnMap = false;
             this.renderCapDismissed = false;
             this.searchQuery = "";
-            this.hideApproxOnMap = true;
+            if (!enteringRegional) {
+                this.hideApproxOnMap = true;
+            }
 
             switch (lensKey) {
                 case "high_pressure":
@@ -1478,7 +1601,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.pendingRegionalUf = scoped;
             this.regionalLoading = true;
             this.pageError = null;
-            this.loadingMessage = `A carregar municípios de ${scoped}…`;
+            this.loadingMessage = `A carregar municípios de ${scoped}… (UF extensa — pode demorar na 1.ª vez)`;
+            this.scopeUf = scoped;
 
             try {
                 const response = await fetch(this.dataUrl("regional", scoped), {
@@ -1492,9 +1616,15 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     throw new Error(`HTTP ${response.status}`);
                 }
                 const data = await response.json();
+                if (!Array.isArray(data.markers) || data.markers.length === 0) {
+                    throw new Error(
+                        `Nenhum município com coordenadas em ${scoped}. Corra o feed ibge_catalog para esta UF.`,
+                    );
+                }
                 this.applyRegionalPayload(data, scoped);
             } catch (error) {
                 console.error("horizonte regional", error);
+                this.scopeUf = "";
                 this.pageError =
                     error instanceof Error
                         ? error.message
@@ -1504,7 +1634,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 if (this.pendingRegionalUf === scoped) {
                     this.pendingRegionalUf = "";
                 }
-                if (this.ensurePointsVisibleOnMap()) {
+                if (this.isRegionalMode && this.ensurePointsVisibleOnMap()) {
                     this._filterSignature = this.filterSignature();
                 }
                 await this.scheduleMapRefresh();
@@ -2030,11 +2160,21 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         async enterRegionalWithPressureLens(uf) {
-            this.applyDecisionLens("high_pressure");
+            this.hideApproxOnMap = false;
+            this.applyDecisionLens("high_pressure", { enteringRegional: true });
             this.mapView = "markers";
             await this.selectUf(uf, false, true);
+            if (!this.isRegionalMode) {
+                return;
+            }
             if (this.filteredCount === 0 && this.markers.length > 0) {
-                this.applyDecisionLens("prospects");
+                this.applyDecisionLens("prospects", { enteringRegional: true });
+                this.recomputeFilteredMarkers();
+                this.ensurePointsVisibleOnMap();
+                await this.scheduleMapRefresh();
+            }
+            if (this.filteredCount === 0 && this.markers.length > 0) {
+                this.applyDecisionLens("all", { enteringRegional: true });
                 this.recomputeFilteredMarkers();
                 this.ensurePointsVisibleOnMap();
                 await this.scheduleMapRefresh();
@@ -2291,27 +2431,22 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     `<p class="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-700 dark:border-slate-600 dark:bg-slate-800/60 dark:text-slate-200">${escapeHtml("Sem dados públicos importados — score e tier indicativos. Importe FUNDEB, Censo ou SAEB para enriquecer.")}</p>`,
                 );
             }
-            lines.push(
-                `<dl class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">`,
-                `<dt class="text-gray-500">${escapeHtml("Propensão")}</dt><dd class="font-semibold tabular-nums">${formatScoreValue(m.success_score)}/100 <span class="text-[10px] font-normal text-slate-400">(≥${th.high} alta)</span></dd>`,
-                `<dt class="text-gray-500">${escapeHtml("Benefício")}</dt><dd class="font-semibold tabular-nums">${formatScoreValue(m.benefit_score)}/100</dd>`,
-                `<dt class="text-gray-500">${escapeHtml("Pressão FUNDEB")}</dt><dd class="font-semibold tabular-nums">${formatScoreValue(m.financial_pressure)}/100</dd>`,
-            );
-            if (m.matriculas_censo != null) {
-                lines.push(
-                    `<dt class="text-gray-500">${escapeHtml("Matrículas Censo")}</dt><dd class="tabular-nums">${nf(m.matriculas_censo)}</dd>`,
-                );
+            lines.push(muniScoreChipsHtml(m, th));
+
+            const fundebBlock = fundebReferenceHtml(m);
+            if (fundebBlock) {
+                lines.push(fundebBlock);
             }
-            if (m.complementacao_fundeb != null) {
-                lines.push(
-                    `<dt class="text-gray-500">${escapeHtml("Compl. FUNDEB")}</dt><dd class="tabular-nums font-medium">${formatCurrencyBrl(m.complementacao_fundeb)}</dd>`,
-                );
-            }
-            lines.push(`</dl>`);
 
             const transferBlock = transferTooltipHtml(m, this.refYear);
             if (transferBlock) {
                 lines.push(transferBlock);
+            }
+
+            if (m.benefit_score != null) {
+                lines.push(
+                    `<p class="text-[11px] text-slate-500 dark:text-slate-400">${escapeHtml("Benefício estimado")}: <span class="font-semibold tabular-nums text-slate-700 dark:text-slate-200">${formatScoreValue(m.benefit_score)}/100</span></p>`,
+                );
             }
 
             const sources = [
@@ -2351,7 +2486,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 { key: "data_readiness", label: "Prontidão" },
             ];
             lines.push(
-                `<p class="mt-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">${escapeHtml("Dimensões (0–100)")}</p>`,
+                `<p class="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">${escapeHtml("Dimensões (0–100)")}</p>`,
             );
             lines.push(`<div class="mt-1 space-y-1.5">`);
             for (const d of dims) {

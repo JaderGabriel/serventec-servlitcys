@@ -34,13 +34,14 @@ final class HorizonteTesouroTransferSyncService
         }
 
         $timeout = max(10, (int) ($cfg['timeout'] ?? 25));
-        $yearsToTry = $this->tesouroCsv->fundebYearsToTry($refYear, $timeout, $options['uf'] ?? null);
+        $scopedUf = HorizonteUfScope::normalize(isset($options['uf']) ? (string) $options['uf'] : null);
+        $yearsToTry = $this->tesouroCsv->fundebYearsToTry($refYear, $timeout, $scopedUf);
         $rows = [];
         $usedYear = $refYear;
         $partialYear = false;
 
         foreach ($yearsToTry as $year) {
-            $rows = $this->tesouroCsv->nationalFundebRowsForYear($year, $timeout, $options['uf'] ?? null, $this->ibgeCatalog);
+            $rows = $this->tesouroCsv->nationalFundebRowsForYear($year, $timeout, $scopedUf, $this->ibgeCatalog);
             if ($rows !== []) {
                 $usedYear = $year;
                 $partialYear = $year === (int) date('Y');
@@ -53,7 +54,7 @@ final class HorizonteTesouroTransferSyncService
             $diagnosis = $this->tesouroCsv->diagnoseNationalFundeb(
                 $diagYear,
                 $timeout,
-                $options['uf'] ?? null,
+                $scopedUf,
                 $this->ibgeCatalog,
             );
 
@@ -64,7 +65,7 @@ final class HorizonteTesouroTransferSyncService
             ];
         }
 
-        $scoped = HorizonteUfScope::normalize($options['uf'] ?? null);
+        $scoped = $scopedUf;
         if ($scoped !== null) {
             $rows = array_values(array_filter(
                 $rows,

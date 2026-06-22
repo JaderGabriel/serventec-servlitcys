@@ -142,8 +142,20 @@
                         <span><strong>72</strong> {{ __('Press.') }}</span>
                         <span><strong>94k</strong> {{ __('Matr.') }}</span>
                     </div>
-                    <span class="serv-horizonte-demo__filter-line serv-horizonte-demo__filter-line--w100"></span>
-                    <span class="serv-horizonte-demo__filter-line serv-horizonte-demo__filter-line--w75"></span>
+                    <div class="serv-horizonte-demo__muni-fundeb">
+                        <p class="serv-horizonte-demo__muni-fundeb-head">
+                            <span>{{ __('Referência FUNDEB') }}</span>
+                            <span>{{ __('Ano') }} 2025</span>
+                        </p>
+                        <p class="serv-horizonte-demo__muni-fundeb-line">
+                            <span>{{ __('VAAF') }}</span>
+                            <strong>R$ 5.559,73/aluno</strong>
+                        </p>
+                        <p class="serv-horizonte-demo__muni-fundeb-line">
+                            <span>{{ __('Repasse FUNDEB') }}</span>
+                            <strong>R$ 412 mi</strong>
+                        </p>
+                    </div>
                 </div>
             </div>
             <p class="serv-horizonte-demo__caption">{{ __('Ficha municipal — scores e complementação FUNDEB') }}</p>

@@ -21,6 +21,8 @@ use App\Support\Horizonte\HorizonteManagerInsights;
 use App\Support\Horizonte\HorizonteMapPresenter;
 use App\Support\Horizonte\HorizonteMapCacheBuster;
 use App\Support\Horizonte\HorizonteMunicipalSgeResolver;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -96,16 +98,6 @@ final class HorizonteMapService
                 return $this->attachNationalUfRankings($cachedResponse, $refYear, $fingerprint);
             }
 
-            $fullKey = 'horizonte:map:v2:'.$refYear.':'.$fingerprint;
-            $full = AdminHomeMapCache::get($fullKey);
-            if (is_array($full)) {
-                $payload = $this->asRegionalPayload($full, $uf);
-                $payload = $this->attachNationalUfRankings($payload, $refYear, $fingerprint);
-                AdminHomeMapCache::repository()->put($responseKey, $payload, $ttl);
-
-                return $payload;
-            }
-
             $regKey = 'horizonte:map:regional:v2:'.$refYear.':'.$uf.':'.$fingerprint;
             $regional = AdminHomeMapCache::get($regKey);
             if (! is_array($regional)) {
@@ -167,6 +159,7 @@ final class HorizonteMapService
 
         $full['mode'] = 'regional';
         $full['scope_uf'] = $uf;
+        $regional = $this->ensureRegionalMarkerCoordinates($regional, $uf);
         if ($this->shouldEnrichRegionalCoordinates($regional)) {
             $regional = $this->enrichRegionalCoordinates($regional, $uf);
         }
@@ -240,6 +233,100 @@ final class HorizonteMapService
 
         return $tier === 'prospect_high'
             || (int) ($m['financial_pressure'] ?? 0) >= $this->financialPressureMin();
+    }
+
+    /**
+     * Garante coordenadas válidas no recorte regional (ex.: payload filtrado de cache nacional).
+     *
+     * @param  list<array<string, mixed>>  $markers
+     * @return list<array<string, mixed>>
+     */
+    private function ensureRegionalMarkerCoordinates(array $markers, string $uf): array
+    {
+        if ($markers === []) {
+            return $markers;
+        }
+
+        $needsIndex = false;
+        foreach ($markers as $m) {
+            $lat = (float) ($m['lat'] ?? 0);
+            $lng = (float) ($m['lng'] ?? 0);
+            if (! BrazilUfCentroids::isValidBrazilCoord($lat, $lng)) {
+                $needsIndex = true;
+                break;
+            }
+        }
+
+        if (! $needsIndex) {
+            return $markers;
+        }
+
+        $ibgeIndex = $this->ibgeCatalog->metaIndexForUfs([$uf], false);
+
+        foreach ($markers as &$m) {
+            $lat = (float) ($m['lat'] ?? 0);
+            $lng = (float) ($m['lng'] ?? 0);
+            if (BrazilUfCentroids::isValidBrazilCoord($lat, $lng)) {
+                continue;
+            }
+            $ibge = (string) ($m['ibge'] ?? '');
+            if ($ibge === '') {
+                continue;
+            }
+            $fromIbge = $ibgeIndex[$ibge] ?? null;
+            if ($fromIbge === null
+                || ! BrazilUfCentroids::isValidBrazilCoord((float) ($fromIbge['lat'] ?? 0), (float) ($fromIbge['lng'] ?? 0))) {
+                continue;
+            }
+            $source = (string) ($fromIbge['coord_source'] ?? 'ibge');
+            $m['lat'] = (float) $fromIbge['lat'];
+            $m['lng'] = (float) $fromIbge['lng'];
+            $m['coord_source'] = $source;
+            $m['coord_approximate'] = in_array($source, ['uf_spread', 'overview'], true);
+            if ($m['name'] === '' || str_starts_with((string) $m['name'], 'Município ')) {
+                $m['name'] = (string) ($fromIbge['name'] ?? $m['name']);
+            }
+        }
+        unset($m);
+
+        return $markers;
+    }
+
+    /**
+     * @param  class-string<Model>  $modelClass
+     * @param  list<int>  $years
+     * @return Collection<int, Model>
+     */
+    private function latestModelRowsPerIbge(
+        string $modelClass,
+        string $yearColumn,
+        array $years,
+        ?string $ibgePrefix,
+        string $ibgeColumn = 'ibge_municipio',
+    ): Collection {
+        /** @var Model $model */
+        $model = new $modelClass;
+        $table = $model->getTable();
+
+        $latest = DB::table($table)
+            ->select($ibgeColumn, DB::raw(sprintf('MAX(%s) as latest_year', $yearColumn)))
+            ->whereIn($yearColumn, $years);
+        if ($ibgePrefix !== null && $ibgePrefix !== '') {
+            $latest->where($ibgeColumn, 'like', $ibgePrefix.'%');
+        }
+        $latest->groupBy($ibgeColumn);
+
+        return $modelClass::query()
+            ->joinSub($latest, 'latest_row', function ($join) use ($table, $ibgeColumn, $yearColumn): void {
+                $join->on("{$table}.{$ibgeColumn}", '=', "latest_row.{$ibgeColumn}")
+                    ->on("{$table}.{$yearColumn}", '=', 'latest_row.latest_year');
+            })
+            ->whereIn("{$table}.{$yearColumn}", $years)
+            ->when(
+                $ibgePrefix !== null && $ibgePrefix !== '',
+                static fn ($q) => $q->where("{$table}.{$ibgeColumn}", 'like', $ibgePrefix.'%'),
+            )
+            ->get();
     }
 
     /**
@@ -432,7 +519,6 @@ final class HorizonteMapService
         $ibgePrefix = $scopedUf !== null ? IbgeUfFromCode::ibgePrefixForUf($scopedUf) : null;
 
         $citiesByIbge = $this->citiesByIbge($scopedUf);
-        $ibgeSet = $this->collectIbgeCodes(array_keys($citiesByIbge), $ibgePrefix);
 
         $fundebByIbge = $this->fundebByIbge($refYear, $ibgePrefix);
         $censoByIbge = $this->censoByIbge($refYear, $ibgePrefix);
@@ -440,6 +526,15 @@ final class HorizonteMapService
         $cadunicoByIbge = $this->cadunicoByIbge($refYear, $ibgePrefix);
         $demographyByIbge = $this->demographyByIbge($refYear, $ibgePrefix);
         $transfersByIbge = HorizonteTesouroTransferSyncService::aggregateByIbge($refYear, $ibgePrefix);
+
+        $ibgeMetaIndex = [];
+        if ($scopedUf !== null && $requireCoordinates) {
+            $fetchGeo = (bool) config('horizonte.map_display.fetch_remote_centroids', false);
+            $ibgeMetaIndex = $this->ibgeCatalog->metaIndexForUfs([$scopedUf], $fetchGeo);
+            $ibgeSet = array_fill_keys(array_keys($ibgeMetaIndex), true);
+        } else {
+            $ibgeSet = $this->collectIbgeCodes(array_keys($citiesByIbge), $ibgePrefix);
+        }
 
         foreach (array_keys($fundebByIbge) as $ibge) {
             $ibgeSet[$ibge] = true;
@@ -460,8 +555,7 @@ final class HorizonteMapService
             $ibgeSet[$ibge] = true;
         }
 
-        $scopedUf = $scopeUf !== null ? strtoupper(trim($scopeUf)) : null;
-        if ($scopedUf !== null) {
+        if ($scopedUf !== null && $ibgeMetaIndex === []) {
             $ibgeSet = array_filter(
                 $ibgeSet,
                 static fn (bool $_present, string $ibge): bool => IbgeUfFromCode::ufFromIbge($ibge) === $scopedUf,
@@ -469,8 +563,7 @@ final class HorizonteMapService
             );
         }
 
-        $ibgeMetaIndex = [];
-        if ($requireCoordinates) {
+        if ($requireCoordinates && $ibgeMetaIndex === []) {
             $ufs = $scopedUf !== null
                 ? [$scopedUf]
                 : IbgeUfFromCode::ufsFromIbgeCodes(array_keys($ibgeSet));
@@ -620,6 +713,10 @@ final class HorizonteMapService
                 'transfer_pct_fundeb' => $transfer['pct_fundeb'] ?? null,
                 'transfer_pct_educacao' => $transfer['pct_educacao'] ?? null,
                 'complementacao_fundeb' => $fundeb['complementacao_total'] ?? null,
+                'fundeb_vaaf' => $fundeb['vaaf'] ?? null,
+                'fundeb_receita_total' => $fundeb['receita_total'] ?? null,
+                'fundeb_ano' => $fundeb['ano'] ?? null,
+                'fundeb_matriculas_base' => $fundeb['matriculas_base'] ?? null,
                 'saeb_lp' => $saeb['lp'] ?? null,
                 'saeb_mat' => $saeb['mat'] ?? null,
                 'analytics_url' => $city !== null && $consultoriaActive
@@ -772,23 +869,23 @@ final class HorizonteMapService
     }
 
     /**
-     * @return array<string, array{complementacao_total: float, receita_total: ?float, matriculas_base: ?int}>
+     * @return array<string, array{
+     *     complementacao_total: float,
+     *     receita_total: ?float,
+     *     matriculas_base: ?int,
+     *     vaaf: ?float,
+     *     ano: int
+     * }>
      */
     private function fundebByIbge(int $refYear, ?string $ibgePrefix = null): array
     {
         $years = [$refYear, $refYear - 1, $refYear - 2];
-        $query = FundebMunicipioReference::query()
-            ->whereIn('ano', $years)
-            ->orderByDesc('ano');
-        if ($ibgePrefix !== null && $ibgePrefix !== '') {
-            $query->where('ibge_municipio', 'like', $ibgePrefix.'%');
-        }
-        $rows = $query->get();
+        $rows = $this->latestModelRowsPerIbge(FundebMunicipioReference::class, 'ano', $years, $ibgePrefix);
 
         $out = [];
         foreach ($rows as $row) {
             $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
-            if ($ibge === null || isset($out[$ibge])) {
+            if ($ibge === null) {
                 continue;
             }
             $compl = (float) ($row->complementacao_vaaf ?? 0)
@@ -798,6 +895,8 @@ final class HorizonteMapService
                 'complementacao_total' => $compl,
                 'receita_total' => $row->receita_total !== null ? (float) $row->receita_total : null,
                 'matriculas_base' => $row->matriculas_base !== null ? (int) $row->matriculas_base : null,
+                'vaaf' => $row->vaaf !== null ? (float) $row->vaaf : null,
+                'ano' => (int) $row->ano,
             ];
         }
 
@@ -810,18 +909,12 @@ final class HorizonteMapService
     private function censoByIbge(int $refYear, ?string $ibgePrefix = null): array
     {
         $years = [$refYear, $refYear - 1, $refYear - 2];
-        $query = InepCensoMunicipioMatricula::query()
-            ->whereIn('ano', $years)
-            ->orderByDesc('ano');
-        if ($ibgePrefix !== null && $ibgePrefix !== '') {
-            $query->where('ibge_municipio', 'like', $ibgePrefix.'%');
-        }
-        $rows = $query->get();
+        $rows = $this->latestModelRowsPerIbge(InepCensoMunicipioMatricula::class, 'ano', $years, $ibgePrefix);
 
         $out = [];
         foreach ($rows as $row) {
             $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
-            if ($ibge === null || isset($out[$ibge])) {
+            if ($ibge === null) {
                 continue;
             }
             $out[$ibge] = ['matriculas_total' => (int) $row->matriculas_total];
@@ -882,18 +975,20 @@ final class HorizonteMapService
         }
 
         $years = [$refYear, $refYear - 1, $refYear - 2];
-        $query = CadunicoMunicipioSnapshot::query()
-            ->whereIn('ano_referencia', $years)
-            ->orderByDesc('ano_referencia');
-        if ($ibgePrefix !== null && $ibgePrefix !== '') {
-            $query->where('ibge_municipio', 'like', $ibgePrefix.'%');
-        }
-        $rows = $query->get();
+        $rows = $this->latestModelRowsPerIbge(
+            CadunicoMunicipioSnapshot::class,
+            'ano_referencia',
+            $years,
+            $ibgePrefix,
+        );
 
         $out = [];
         foreach ($rows as $row) {
+            if (! $row instanceof CadunicoMunicipioSnapshot) {
+                continue;
+            }
             $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
-            if ($ibge === null || isset($out[$ibge])) {
+            if ($ibge === null) {
                 continue;
             }
             $indicators = CadunicoVulnerabilidadeIndicators::fromSnapshot($row);
@@ -917,18 +1012,17 @@ final class HorizonteMapService
 
         $sidraYear = (int) config('horizonte.sidra.periodo', 2022);
         $years = array_values(array_unique([$sidraYear, $refYear, $refYear - 1]));
-        $query = MunicipalDemographySnapshot::query()
-            ->whereIn('ano_referencia', $years)
-            ->orderByDesc('ano_referencia');
-        if ($ibgePrefix !== null && $ibgePrefix !== '') {
-            $query->where('ibge_municipio', 'like', $ibgePrefix.'%');
-        }
-        $rows = $query->get();
+        $rows = $this->latestModelRowsPerIbge(
+            MunicipalDemographySnapshot::class,
+            'ano_referencia',
+            $years,
+            $ibgePrefix,
+        );
 
         $out = [];
         foreach ($rows as $row) {
             $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
-            if ($ibge === null || isset($out[$ibge]) || $row->populacao_4_17 === null) {
+            if ($ibge === null || $row->populacao_4_17 === null) {
                 continue;
             }
             $out[$ibge] = ['populacao_4_17' => (int) $row->populacao_4_17];

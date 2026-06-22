@@ -59,6 +59,45 @@ final class HorizonteTesouroTransferSyncServiceTest extends TestCase
     }
 
     #[Test]
+    public function repasses_importa_com_uf_vazia_como_no_feed_nacional(): void
+    {
+        Cache::flush();
+
+        $this->mock(MunicipalTransferSnapshotRepository::class, function ($mock): void {
+            $mock->shouldReceive('upsertBatch')
+                ->once()
+                ->with(null, Mockery::type('array'))
+                ->andReturn(1);
+        });
+
+        config([
+            'ieducar.other_funding.public_queries.tesouro_ckan.csv_enabled' => true,
+            'ieducar.other_funding.public_queries.tesouro_ckan.csv_resources' => [
+                'fundeb' => [
+                    'resource_id' => 'test-fundeb-empty-uf',
+                    'programa_id' => 'fundeb',
+                    'name' => 'FUNDEB test',
+                    'url' => 'https://example.test/fundeb-empty-uf.csv',
+                ],
+            ],
+        ]);
+
+        $csv = (string) file_get_contents(base_path('tests/Fixtures/tesouro-fundeb-snippet.csv'));
+
+        Http::fake([
+            'example.test/fundeb-empty-uf.csv' => Http::response($csv, 200, ['Content-Type' => 'text/csv']),
+            'servicodados.ibge.gov.br/api/v1/localidades/estados/*/municipios' => Http::response([
+                ['id' => 2911105, 'nome' => 'Formosa do Rio Preto'],
+            ], 200),
+        ]);
+
+        $result = app(HorizonteTesouroTransferSyncService::class)->syncNationalFundeb(2025, ['uf' => '']);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame(1, $result['imported']);
+    }
+
+    #[Test]
     public function repasses_falha_quando_nenhum_ano_tem_linhas(): void
     {
         Cache::flush();

@@ -4378,7 +4378,90 @@
     }
 
     .serv-brazil-map-tooltip--wide {
-        @apply w-80 sm:w-[22rem];
+        @apply w-[19rem] sm:w-[23rem];
+    }
+
+    .serv-horizonte-muni-tooltip__title {
+        @apply text-sm font-bold text-serv-navy dark:text-slate-100 leading-tight;
+    }
+
+    .serv-horizonte-muni-tooltip__uf {
+        @apply ms-1.5 text-xs font-medium text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-horizonte-muni-tooltip__scores {
+        @apply grid grid-cols-3 gap-1 rounded-xl border border-slate-200/90 bg-slate-50/80 px-2.5 py-2 text-center
+            dark:border-slate-600 dark:bg-slate-800/50;
+    }
+
+    .serv-horizonte-muni-tooltip__scores span {
+        @apply text-[10px] text-slate-600 dark:text-slate-400;
+    }
+
+    .serv-horizonte-muni-tooltip__scores strong {
+        @apply block text-sm font-bold text-serv-navy dark:text-slate-100 tabular-nums;
+    }
+
+    .serv-horizonte-muni-tooltip__score-hint {
+        @apply text-[10px] text-slate-400 dark:text-slate-500 leading-snug;
+    }
+
+    .serv-horizonte-muni-tooltip__fundeb {
+        @apply rounded-xl border border-rose-200/80 bg-rose-50/50 px-2.5 py-2 dark:border-rose-900/40 dark:bg-rose-950/20;
+    }
+
+    .serv-horizonte-muni-tooltip__fundeb--repasses {
+        @apply border-sky-200/80 bg-sky-50/50 dark:border-sky-900/40 dark:bg-sky-950/20;
+    }
+
+    .serv-horizonte-muni-tooltip__fundeb-head {
+        @apply flex items-center justify-between gap-2 border-b border-rose-200/60 pb-1.5 mb-1.5
+            dark:border-rose-900/30;
+    }
+
+    .serv-horizonte-muni-tooltip__fundeb--repasses .serv-horizonte-muni-tooltip__fundeb-head {
+        @apply border-sky-200/60 dark:border-sky-900/30;
+    }
+
+    .serv-horizonte-muni-tooltip__fundeb-title {
+        @apply text-[10px] font-bold uppercase tracking-wide text-rose-800 dark:text-rose-200;
+    }
+
+    .serv-horizonte-muni-tooltip__fundeb--repasses .serv-horizonte-muni-tooltip__fundeb-title {
+        @apply text-sky-800 dark:text-sky-200;
+    }
+
+    .serv-horizonte-muni-tooltip__fundeb-year {
+        @apply shrink-0 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-rose-900
+            ring-1 ring-rose-200/80 dark:bg-slate-900/60 dark:text-rose-100 dark:ring-rose-900/50;
+    }
+
+    .serv-horizonte-muni-tooltip__fundeb--repasses .serv-horizonte-muni-tooltip__fundeb-year {
+        @apply text-sky-900 dark:text-sky-100 ring-sky-200/80 dark:ring-sky-900/50;
+    }
+
+    .serv-horizonte-muni-tooltip__fundeb-rows {
+        @apply space-y-1.5;
+    }
+
+    .serv-horizonte-muni-tooltip__fundeb-row {
+        @apply flex items-start justify-between gap-2 text-[11px];
+    }
+
+    .serv-horizonte-muni-tooltip__fundeb-row--highlight {
+        @apply rounded-md bg-white/70 px-1.5 py-1 dark:bg-slate-900/40;
+    }
+
+    .serv-horizonte-muni-tooltip__fundeb-label {
+        @apply block font-semibold text-slate-800 dark:text-slate-100;
+    }
+
+    .serv-horizonte-muni-tooltip__fundeb-desc {
+        @apply block text-[10px] text-slate-500 dark:text-slate-400 leading-snug;
+    }
+
+    .serv-horizonte-muni-tooltip__fundeb-value {
+        @apply shrink-0 text-right font-medium text-slate-900 dark:text-slate-100;
     }
 
     .serv-horizonte-sge-overlay {
@@ -4908,7 +4991,7 @@
     }
 
     .serv-horizonte-demo__muni-card {
-        @apply absolute right-3 bottom-3 z-10 w-40 rounded-xl border border-slate-200/90 bg-white/95 p-3 shadow-lg space-y-2
+        @apply absolute right-3 bottom-3 z-10 w-44 rounded-xl border border-slate-200/90 bg-white/95 p-3 shadow-lg space-y-2
             dark:border-slate-600 dark:bg-slate-900/95;
         animation: serv-horizonte-demo-muni-card 16s ease-in-out infinite;
     }
@@ -4927,6 +5010,22 @@
 
     .serv-horizonte-demo__muni-scores strong {
         @apply block text-[11px] text-serv-navy dark:text-slate-100 tabular-nums;
+    }
+
+    .serv-horizonte-demo__muni-fundeb {
+        @apply rounded-lg border border-rose-200/70 bg-rose-50/60 px-2 py-1.5 space-y-1 dark:border-rose-900/40 dark:bg-rose-950/25;
+    }
+
+    .serv-horizonte-demo__muni-fundeb-head {
+        @apply flex items-center justify-between gap-1 text-[8px] font-bold uppercase tracking-wide text-rose-800 dark:text-rose-200;
+    }
+
+    .serv-horizonte-demo__muni-fundeb-line {
+        @apply flex items-baseline justify-between gap-1 text-[8px] text-slate-600 dark:text-slate-400;
+    }
+
+    .serv-horizonte-demo__muni-fundeb-line strong {
+        @apply text-[9px] font-bold text-serv-navy dark:text-slate-100 tabular-nums;
     }
 
     .serv-horizonte-demo__caption {

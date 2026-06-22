@@ -150,6 +150,8 @@ return [
         'overlap_max_markers' => max(10, (int) env('HORIZONTE_MAP_OVERLAP_MAX', 80)),
         /** Busca centroide IBGE individual (lento em UF extensa); preferir cache do feed. */
         'fetch_remote_centroids' => filter_var(env('HORIZONTE_MAP_FETCH_REMOTE_CENTROIDS', false), FILTER_VALIDATE_BOOL),
+        /** Tempo máximo PHP ao montar recorte regional (UF extensa, ex. MG). */
+        'regional_time_limit' => max(60, (int) env('HORIZONTE_MAP_REGIONAL_TIME_LIMIT', 120)),
         /** Vista inicial GIS/BI — municípios com pressão FUNDEB elevada ou alta propensão. */
         'default_view' => env('HORIZONTE_MAP_DEFAULT_VIEW', 'high_pressure'),
         'financial_pressure_min' => max(0, min(100, (int) env('HORIZONTE_MAP_FINANCIAL_PRESSURE_MIN', 60))),
