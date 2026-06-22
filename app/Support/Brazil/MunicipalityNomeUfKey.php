@@ -2,6 +2,8 @@
 
 namespace App\Support\Brazil;
 
+use Illuminate\Support\Str;
+
 /**
  * Chave normalizada município+UF para cruzar CSV Tesouro com catálogo IBGE.
  */
@@ -21,12 +23,14 @@ final class MunicipalityNomeUfKey
         if ($nome === '') {
             return '';
         }
-        $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $nome);
-        if (is_string($ascii) && $ascii !== '') {
-            $nome = $ascii;
-        }
-        $nome = preg_replace('/[^a-z0-9\s]/', '', $nome) ?? $nome;
 
-        return trim(preg_replace('/\s+/', ' ', $nome) ?? $nome);
+        $ascii = Str::ascii($nome);
+        if ($ascii !== '') {
+            $nome = mb_strtolower($ascii);
+        }
+
+        $nome = preg_replace('/[^a-z0-9\s]/u', '', $nome) ?? $nome;
+
+        return trim(preg_replace('/\s+/u', ' ', $nome) ?? $nome);
     }
 }

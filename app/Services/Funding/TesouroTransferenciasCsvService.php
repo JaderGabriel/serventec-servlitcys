@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
  */
 final class TesouroTransferenciasCsvService
 {
-    private const INDEX_SCHEMA_VERSION = 2;
+    private const INDEX_SCHEMA_VERSION = 3;
 
     /** @var array<string, mixed> */
     private array $lastIndexLoadMeta = [];
@@ -567,7 +567,7 @@ final class TesouroTransferenciasCsvService
             return [];
         }
 
-        return is_array($decoded) ? $decoded : [];
+        return is_array($decoded) ? $this->normalizeStoredIndex($decoded) : [];
     }
 
     /**
@@ -588,7 +588,229 @@ final class TesouroTransferenciasCsvService
             return [];
         }
 
-        return $decoded;
+        return $this->normalizeStoredIndex($decoded);
+    }
+
+    /**
+     * Reindexa chaves nome+UF e anos após JSON (evita cache legado incompatível).
+     *
+     * @param  array<string, mixed>  $index
+     * @return array<string, mixed>
+     */
+    private function normalizeStoredIndex(array $index): array
+    {
+        $byNomeUf = $index['by_nome_uf'] ?? null;
+        if (! is_array($byNomeUf)) {
+            return $index;
+        }
+
+        $normalized = [];
+        foreach ($byNomeUf as $entry) {
+            if (! is_array($entry)) {
+                continue;
+            }
+            $nome = trim((string) ($entry['nome'] ?? ''));
+            $uf = strtoupper(trim((string) ($entry['uf'] ?? '')));
+            $key = $this->nomeUfKey($nome, $uf);
+            if ($key === '') {
+                continue;
+            }
+            $entry['annual'] = $this->normalizeYearValueMap($entry['annual'] ?? []);
+            $entry['months_counted'] = $this->normalizeYearValueMap($entry['months_counted'] ?? [], true);
+            $mensal = is_array($entry['mensal'] ?? null) ? $entry['mensal'] : [];
+            $mensalNorm = [];
+            foreach ($mensal as $year => $months) {
+                $y = (int) $year;
+                if ($y >= 2000 && is_array($months)) {
+                    $mensalNorm[$y] = $months;
+                }
+            }
+            $entry['mensal'] = $mensalNorm;
+            $normalized[$key] = $entry;
+        }
+
+        $index['by_nome_uf'] = $normalized;
+        if (isset($index['year_columns']) && is_array($index['year_columns'])) {
+            $years = [];
+            foreach ($index['year_columns'] as $year => $col) {
+                $y = (int) $year;
+                if ($y >= 2000) {
+                    $years[$y] = (int) $col;
+                }
+            }
+            $index['year_columns'] = $years;
+        }
+
+        return $index;
+    }
+
+    /**
+     * @param  array<mixed, mixed>  $map
+     * @return array<int, float|int>
+     */
+    private function normalizeYearValueMap(array $map, bool $intValues = false): array
+    {
+        $out = [];
+        foreach ($map as $year => $value) {
+            $y = (int) $year;
+            if ($y < 2000) {
+                continue;
+            }
+            $out[$y] = $intValues ? (int) $value : (float) $value;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, array<string, string>>
+     */
+    private function buildIbgeByUfNome(array $ibgeByNomeUf): array
+    {
+        $byUf = [];
+        foreach ($ibgeByNomeUf as $key => $ibge) {
+            if (! is_string($key) || ! str_contains($key, '|')) {
+                continue;
+            }
+            [$nome, $uf] = array_pad(explode('|', $key, 2), 2, '');
+            $uf = strtoupper(trim($uf));
+            $nome = trim($nome);
+            if ($uf === '' || $nome === '') {
+                continue;
+            }
+            $byUf[$uf][$nome] = (string) $ibge;
+        }
+
+        return $byUf;
+    }
+
+    /**
+     * @param  array<string, mixed>  $entry
+     * @param  array<string, string>  $ibgeByNomeUf
+     * @param  array<string, array<string, string>>  $ibgeByUfNome
+     */
+    private function resolveIbgeForEntry(array $entry, string $csvKey, array $ibgeByNomeUf, array $ibgeByUfNome): ?string
+    {
+        if ($csvKey !== '' && isset($ibgeByNomeUf[$csvKey])) {
+            return (string) $ibgeByNomeUf[$csvKey];
+        }
+
+        $nome = trim((string) ($entry['nome'] ?? ''));
+        $uf = strtoupper(trim((string) ($entry['uf'] ?? '')));
+        if ($uf !== '' && $nome !== '') {
+            $rebuilt = $this->nomeUfKey($nome, $uf);
+            if ($rebuilt !== '' && isset($ibgeByNomeUf[$rebuilt])) {
+                return (string) $ibgeByNomeUf[$rebuilt];
+            }
+            $nomeKey = MunicipalityNomeUfKey::normalizeNome($nome);
+            if ($nomeKey !== '' && isset($ibgeByUfNome[$uf][$nomeKey])) {
+                return (string) $ibgeByUfNome[$uf][$nomeKey];
+            }
+        }
+
+        return $this->resolveIbgeFromCodMun((string) ($entry['cod_mun'] ?? ''));
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $byNomeUf
+     */
+    private function countIbgeCrossMatches(array $byNomeUf, array $ibgeByNomeUf, int $year): int
+    {
+        $ibgeByUfNome = $this->buildIbgeByUfNome($ibgeByNomeUf);
+        $matches = 0;
+        foreach ($byNomeUf as $key => $entry) {
+            if (! is_array($entry) || ((float) ($entry['annual'][$year] ?? 0)) <= 0) {
+                continue;
+            }
+            if ($this->resolveIbgeForEntry($entry, (string) $key, $ibgeByNomeUf, $ibgeByUfNome) !== null) {
+                $matches++;
+            }
+        }
+
+        return $matches;
+    }
+
+    /**
+     * Anos com valores FUNDEB no CSV CKAN (para priorizar exercício em curso vs consolidado).
+     *
+     * @return list<int>
+     */
+    public function availableFundebYears(int $timeout, ?string $ufFilter = null): array
+    {
+        $cfg = config('ieducar.other_funding.public_queries.tesouro_ckan', []);
+        $resources = array_values(array_filter(
+            $this->resolveCsvResources(is_array($cfg) ? $cfg : [], $timeout),
+            static fn (array $r): bool => (string) ($r['programa_id'] ?? '') === 'fundeb',
+        ));
+        if ($resources === []) {
+            return [];
+        }
+
+        $index = $this->normalizeStoredIndex($this->loadResourceIndex($resources[0], $timeout));
+        $byNomeUf = is_array($index['by_nome_uf'] ?? null) ? $index['by_nome_uf'] : [];
+        $scopedUf = HorizonteUfScope::normalize($ufFilter);
+        $counts = [];
+
+        foreach ($byNomeUf as $entry) {
+            if (! is_array($entry)) {
+                continue;
+            }
+            if ($scopedUf !== null && strtoupper(trim((string) ($entry['uf'] ?? ''))) !== $scopedUf) {
+                continue;
+            }
+            foreach ($entry['annual'] ?? [] as $year => $valor) {
+                $y = (int) $year;
+                if ($y >= 2000 && (float) $valor > 0) {
+                    $counts[$y] = ($counts[$y] ?? 0) + 1;
+                }
+            }
+        }
+
+        if ($counts === []) {
+            return [];
+        }
+
+        arsort($counts);
+
+        return array_map('intval', array_keys($counts));
+    }
+
+    /**
+     * Ordem de anos: referência Horizonte → exercício civil corrente (parcial) → consolidado anterior → melhor cobertura CSV.
+     *
+     * @return list<int>
+     */
+    public function fundebYearsToTry(int $refYear, int $timeout, ?string $ufFilter = null): array
+    {
+        $currentYear = (int) date('Y');
+        $available = $this->availableFundebYears($timeout, $ufFilter);
+        $availableSet = array_fill_keys($available, true);
+
+        $candidates = [
+            $refYear,
+            $currentYear,
+            $refYear - 1,
+            $currentYear - 1,
+        ];
+
+        $ordered = [];
+        foreach ($candidates as $year) {
+            if ($year >= 2000 && isset($availableSet[$year]) && ! in_array($year, $ordered, true)) {
+                $ordered[] = $year;
+            }
+        }
+
+        foreach ($available as $year) {
+            if (! in_array($year, $ordered, true)) {
+                $ordered[] = $year;
+            }
+        }
+
+        if ($ordered !== []) {
+            return $ordered;
+        }
+
+        return array_values(array_unique([$refYear, $currentYear, $refYear - 1]));
     }
 
     /**
@@ -601,6 +823,7 @@ final class TesouroTransferenciasCsvService
             return;
         }
 
+        $index = $this->normalizeStoredIndex($index);
         $index['_schema'] = self::INDEX_SCHEMA_VERSION;
         $cachePath = $this->resourceCachePath((string) $resource['resource_id']);
         $dir = dirname($cachePath);
@@ -697,10 +920,10 @@ final class TesouroTransferenciasCsvService
 
         fclose($handle);
 
-        return [
+        return $this->normalizeStoredIndex([
             'by_nome_uf' => $byNomeUf,
             'year_columns' => $yearColumns,
-        ];
+        ]);
     }
 
     private function normalizeCsvLineEncoding(string $line): string
@@ -807,10 +1030,10 @@ final class TesouroTransferenciasCsvService
             }
         }
 
-        return [
+        return $this->normalizeStoredIndex([
             'by_nome_uf' => $byNomeUf,
             'year_columns' => $yearColumns,
-        ];
+        ]);
     }
 
     /**
@@ -1052,10 +1275,11 @@ final class TesouroTransferenciasCsvService
         $ibgeByNomeUf = $ufs === null
             ? $catalog->nationalNomeUfToIbgeIndex()
             : $this->nomeUfIbgeIndexForUfs($catalog, $ufs);
+        $ibgeByUfNome = $this->buildIbgeByUfNome($ibgeByNomeUf);
 
         $rows = [];
         foreach ($resources as $resource) {
-            $index = $this->loadResourceIndex($resource, $timeout);
+            $index = $this->normalizeStoredIndex($this->loadResourceIndex($resource, $timeout));
             $byNomeUf = $index['by_nome_uf'] ?? null;
             if (! is_array($byNomeUf)) {
                 continue;
@@ -1074,10 +1298,7 @@ final class TesouroTransferenciasCsvService
                     continue;
                 }
 
-                $ibge = $ibgeByNomeUf[$key] ?? null;
-                if ($ibge === null) {
-                    $ibge = $this->resolveIbgeFromCodMun((string) ($entry['cod_mun'] ?? ''));
-                }
+                $ibge = $this->resolveIbgeForEntry($entry, (string) $key, $ibgeByNomeUf, $ibgeByUfNome);
                 if ($ibge === null) {
                     continue;
                 }
@@ -1167,6 +1388,7 @@ final class TesouroTransferenciasCsvService
             ? $catalog->nationalNomeUfToIbgeIndex()
             : $this->nomeUfIbgeIndexForUfs($catalog, $ufs);
         $codMap = $this->codMunToIbgeMap();
+        $crossMatches = $this->countIbgeCrossMatches($byNomeUf, $ibgeIndex, $year);
 
         if ($byNomeUf === []) {
             $url = trim((string) ($resources[0]['url'] ?? ''));
@@ -1206,8 +1428,12 @@ final class TesouroTransferenciasCsvService
                 'ano' => (string) $year,
             ]);
         } else {
-            $message = __('Repasses Tesouro: nenhuma linha FUNDEB cruzada com IBGE (anos :anos). Índice nome+UF: :idx · cache COD_MUN: :cod.', [
-                'anos' => implode(', ', array_map('strval', array_unique([$year, $year - 1]))),
+            $message = __('Repasses Tesouro: nenhuma linha FUNDEB cruzada com IBGE (anos :anos). CSV: :csv municípios · :y com valor em :ano · cruzamentos nome+UF: :cross · índice IBGE: :idx · cache COD_MUN: :cod. Apague storage/app/funding/tesouro-csv/*.json se actualizou o ServLITCYS.', [
+                'anos' => implode(', ', array_map('strval', array_unique([$year, $year - 1, (int) date('Y')]))),
+                'csv' => (string) count($byNomeUf),
+                'y' => (string) $yearValues,
+                'ano' => (string) $year,
+                'cross' => (string) $crossMatches,
                 'idx' => (string) count($ibgeIndex),
                 'cod' => (string) count($codMap),
             ]);
@@ -1219,6 +1445,7 @@ final class TesouroTransferenciasCsvService
             'year_values' => $yearValues,
             'ibge_index_size' => count($ibgeIndex),
             'cod_mun_mappings' => count($codMap),
+            'cross_matches' => $crossMatches,
         ];
     }
 

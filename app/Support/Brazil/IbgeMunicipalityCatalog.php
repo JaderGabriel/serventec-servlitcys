@@ -291,7 +291,7 @@ final class IbgeMunicipalityCatalog
      */
     public function nationalNomeUfToIbgeIndex(): array
     {
-        $cacheKey = 'ibge_nome_uf_to_ibge_national:v1';
+        $cacheKey = 'ibge_nome_uf_to_ibge_national:v2';
         $cached = AdminHomeMapCache::get($cacheKey);
         if (is_array($cached) && $cached !== []) {
             return $cached;
