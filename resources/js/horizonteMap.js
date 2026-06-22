@@ -83,11 +83,15 @@ function muniScoreChipsHtml(m, th) {
             : m.fundeb_matriculas_base != null
               ? nfCompact(m.fundeb_matriculas_base)
               : "—";
+    const chip = (val, label) =>
+        `<div class="serv-horizonte-muni-tooltip__score-cell">` +
+        `<span class="serv-horizonte-muni-tooltip__score-val">${val}</span>` +
+        `${escapeHtml(label)}</div>`;
     return (
         `<div class="serv-horizonte-muni-tooltip__scores">` +
-        `<span><strong>${formatScoreValue(m.success_score)}</strong>${escapeHtml("Prop.")}</span>` +
-        `<span><strong>${formatScoreValue(m.financial_pressure)}</strong>${escapeHtml("Press.")}</span>` +
-        `<span><strong>${matriculas}</strong>${escapeHtml("Matr.")}</span>` +
+        chip(formatScoreValue(m.success_score), "Prop.") +
+        chip(formatScoreValue(m.financial_pressure), "Press.") +
+        chip(matriculas, "Matr.") +
         `</div>` +
         `<p class="serv-horizonte-muni-tooltip__score-hint">${escapeHtml("Propensão")} ≥${th.high} ${escapeHtml("alta")} · ${escapeHtml("Pressão FUNDEB")} 0–100</p>`
     );
@@ -109,33 +113,33 @@ function fundebReferenceHtml(m) {
     if (hasVaaf) {
         rows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
-                `<div class="min-w-0">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("VAAF")}</span>` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Valor aluno/ano (referência FNDE)")}</span>` +
                 `</div>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value tabular-nums">${formatVaafPerStudent(vaaf)}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatVaafPerStudent(vaaf)}</span>` +
                 `</div>`,
         );
     }
     if (hasReceita) {
         rows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
-                `<div class="min-w-0">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Receita total")}</span>` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("FUNDEB municipal (FNDE)")}</span>` +
                 `</div>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value tabular-nums">${formatCurrencyBrl(receita)}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(receita)}</span>` +
                 `</div>`,
         );
     }
     if (hasCompl) {
         rows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
-                `<div class="min-w-0">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Complementação")}</span>` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("VAAF + VAAT + VAAR (FNDE)")}</span>` +
                 `</div>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value tabular-nums">${formatCurrencyBrl(compl)}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(compl)}</span>` +
                 `</div>`,
         );
     }
@@ -158,7 +162,7 @@ function transferTooltipHtml(m, refYear) {
     const hasValue = total != null && Number(total) > 0;
     if (!hasValue) {
         if (m.has_transfers) {
-            return `<p class="mt-2 text-[11px] text-slate-500">${escapeHtml("Repasses importados sem valor agregado para este município.")}</p>`;
+            return `<p class="serv-horizonte-muni-tooltip__empty-msg">${escapeHtml("Repasses importados sem valor agregado para este município.")}</p>`;
         }
         return "";
     }
@@ -172,25 +176,25 @@ function transferTooltipHtml(m, refYear) {
 
     rows.push(
         `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
-            `<div class="min-w-0">` +
+            `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
             `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Total repasses")}</span>` +
             `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Soma programas CKAN")}</span>` +
             `</div>` +
-            `<span class="serv-horizonte-muni-tooltip__fundeb-value tabular-nums font-semibold">${formatCurrencyBrl(total)}</span>` +
+            `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(total)}</span>` +
             `</div>`,
     );
 
     if (fundeb != null && Number(fundeb) > 0) {
         rows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row serv-horizonte-muni-tooltip__fundeb-row--highlight">` +
-                `<div class="min-w-0">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Repasse FUNDEB")}</span>` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Valor total pago (Tesouro CKAN)")}</span>` +
                 `</div>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value tabular-nums text-right">` +
-                `<span class="font-semibold">${formatCurrencyBrl(fundeb)}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(fundeb)}</span>` +
                 (pctFundeb
-                    ? `<span class="block text-[10px] font-medium text-rose-700/90 dark:text-rose-300/90">${escapeHtml(pctFundeb)} ${escapeHtml("do total")}</span>`
+                    ? `<span class="serv-horizonte-muni-tooltip__fundeb-pct serv-horizonte-muni-tooltip__fundeb-pct--rose">${escapeHtml(pctFundeb)} ${escapeHtml("do total")}</span>`
                     : "") +
                 `</span></div>`,
         );
@@ -207,14 +211,14 @@ function transferTooltipHtml(m, refYear) {
             : "PNAE, PNATE, PDDE e afins";
         rows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
-                `<div class="min-w-0">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml(educLabel)}</span>` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(educDesc)}</span>` +
                 `</div>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value tabular-nums text-right">` +
-                `<span class="font-semibold">${formatCurrencyBrl(educacao)}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(educacao)}</span>` +
                 (pctEduc
-                    ? `<span class="block text-[10px] font-medium text-teal-700/90 dark:text-teal-300/90">${escapeHtml(pctEduc)} ${escapeHtml("do total")}</span>`
+                    ? `<span class="serv-horizonte-muni-tooltip__fundeb-pct serv-horizonte-muni-tooltip__fundeb-pct--teal">${escapeHtml(pctEduc)} ${escapeHtml("do total")}</span>`
                     : "") +
                 `</span></div>`,
         );
@@ -222,9 +226,9 @@ function transferTooltipHtml(m, refYear) {
 
     return (
         `<div class="serv-horizonte-muni-tooltip__fundeb serv-horizonte-muni-tooltip__fundeb--repasses">` +
-        `<div class="serv-horizonte-muni-tooltip__fundeb-head">` +
-        `<span class="serv-horizonte-muni-tooltip__fundeb-title">${escapeHtml("Repasses federais")}</span>` +
-        `<span class="serv-horizonte-muni-tooltip__fundeb-year">${escapeHtml("Ano")} ${escapeHtml(String(ano))}</span>` +
+        `<div class="serv-horizonte-muni-tooltip__fundeb-head serv-horizonte-muni-tooltip__fundeb-head--repasses">` +
+        `<span class="serv-horizonte-muni-tooltip__fundeb-title serv-horizonte-muni-tooltip__fundeb-title--repasses">${escapeHtml("Repasses federais")}</span>` +
+        `<span class="serv-horizonte-muni-tooltip__fundeb-year serv-horizonte-muni-tooltip__fundeb-year--repasses">${escapeHtml("Ano")} ${escapeHtml(String(ano))}</span>` +
         `</div>` +
         `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` +
         `</div>`
@@ -2420,15 +2424,15 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return this._tooltipHtmlCache[cacheKey];
             }
             const th = this.scoreThresholds;
-            const lines = [];
+            const lines = ['<div class="serv-horizonte-muni-tooltip__body">'];
             if (isApproxCoord(m)) {
                 lines.push(
-                    `<p class="rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">${escapeHtml("Posição indicativa (centroide IBGE ou dispersão na UF) — use a lista para localizar o município.")}</p>`,
+                    `<p class="serv-horizonte-muni-tooltip__notice serv-horizonte-muni-tooltip__notice--warn">${escapeHtml("Posição indicativa (centroide IBGE ou dispersão na UF) — use a lista para localizar o município.")}</p>`,
                 );
             }
             if (m.tier === "data_sparse") {
                 lines.push(
-                    `<p class="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-700 dark:border-slate-600 dark:bg-slate-800/60 dark:text-slate-200">${escapeHtml("Sem dados públicos importados — score e tier indicativos. Importe FUNDEB, Censo ou SAEB para enriquecer.")}</p>`,
+                    `<p class="serv-horizonte-muni-tooltip__notice serv-horizonte-muni-tooltip__notice--info">${escapeHtml("Sem dados públicos importados — score e tier indicativos. Importe FUNDEB, Censo ou SAEB para enriquecer.")}</p>`,
                 );
             }
             lines.push(muniScoreChipsHtml(m, th));
@@ -2445,7 +2449,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             if (m.benefit_score != null) {
                 lines.push(
-                    `<p class="text-[11px] text-slate-500 dark:text-slate-400">${escapeHtml("Benefício estimado")}: <span class="font-semibold tabular-nums text-slate-700 dark:text-slate-200">${formatScoreValue(m.benefit_score)}/100</span></p>`,
+                    `<p class="serv-horizonte-muni-tooltip__benefit">${escapeHtml("Benefício estimado")}: <span class="serv-horizonte-muni-tooltip__benefit-val">${formatScoreValue(m.benefit_score)}/100</span></p>`,
                 );
             }
 
@@ -2457,16 +2461,16 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             ].filter(Boolean);
             const sge = m.sge && typeof m.sge === "object" ? m.sge : null;
             if (sources.length > 0 || sge) {
-                lines.push(`<dl class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">`);
+                lines.push(`<dl class="serv-horizonte-muni-tooltip__sources">`);
             }
             if (sources.length > 0) {
                 lines.push(
-                    `<dt class="text-gray-500">${escapeHtml("Fontes")}</dt><dd>${escapeHtml(sources.join(" · "))}</dd>`,
+                    `<dt class="serv-horizonte-muni-tooltip__sources-dt">${escapeHtml("Fontes")}</dt><dd>${escapeHtml(sources.join(" · "))}</dd>`,
                 );
             }
             if (sge) {
                 lines.push(
-                    `<dt class="text-gray-500">${escapeHtml("SGE")}</dt><dd>${escapeHtml(sge.system_label || sge.system || "—")}</dd>`,
+                    `<dt class="serv-horizonte-muni-tooltip__sources-dt">${escapeHtml("SGE")}</dt><dd>${escapeHtml(sge.system_label || sge.system || "—")}</dd>`,
                 );
             }
             if (sources.length > 0 || sge) {
@@ -2486,9 +2490,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 { key: "data_readiness", label: "Prontidão" },
             ];
             lines.push(
-                `<p class="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">${escapeHtml("Dimensões (0–100)")}</p>`,
+                `<p class="serv-horizonte-muni-tooltip__dims-title">${escapeHtml("Dimensões (0–100)")}</p>`,
             );
-            lines.push(`<div class="mt-1 space-y-1.5">`);
+            lines.push(`<div class="serv-horizonte-muni-tooltip__dims">`);
             for (const d of dims) {
                 const val = Math.max(0, Math.min(100, Number(m[d.key] ?? 0)));
                 const isTransfer = d.key === "transfer_dependency";
@@ -2496,17 +2500,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     isTransfer && transferAno
                         ? `${d.label} (${transferAno})`
                         : d.label;
-                const barClass =
+                const fillClass =
                     isTransfer && m.transfer_fundeb != null && Number(m.transfer_fundeb) > 0
-                        ? "bg-rose-600"
-                        : "bg-teal-600";
+                        ? "serv-horizonte-muni-tooltip__dim-fill--rose"
+                        : "serv-horizonte-muni-tooltip__dim-fill--teal";
                 lines.push(
-                    `<div class="flex items-center gap-2 text-[11px]">` +
-                        `<span class="w-[4.5rem] shrink-0 text-slate-500">${escapeHtml(dimLabel)}</span>` +
-                        `<span class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">` +
-                        `<span class="block h-full rounded-full ${barClass}" style="width:${val}%"></span>` +
+                    `<div class="serv-horizonte-muni-tooltip__dim-row">` +
+                        `<span class="serv-horizonte-muni-tooltip__dim-label">${escapeHtml(dimLabel)}</span>` +
+                        `<span class="serv-horizonte-muni-tooltip__dim-bar">` +
+                        `<span class="serv-horizonte-muni-tooltip__dim-fill ${fillClass}" style="width:${val}%"></span>` +
                         `</span>` +
-                        `<span class="w-6 text-right tabular-nums font-medium">${formatScoreValue(val)}</span>` +
+                        `<span class="serv-horizonte-muni-tooltip__dim-val">${formatScoreValue(val)}</span>` +
                         `</div>`,
                 );
             }
@@ -2514,9 +2518,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             if (m.analytics_url) {
                 lines.push(
-                    `<a href="${escapeHtml(m.analytics_url)}" class="mt-3 inline-block text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">${escapeHtml("Abrir consultoria")}</a>`,
+                    `<a href="${escapeHtml(m.analytics_url)}" class="serv-horizonte-muni-tooltip__link">${escapeHtml("Abrir consultoria")}</a>`,
                 );
             }
+            lines.push(`</div>`);
             const html = lines.join("");
             if (cacheKey !== "") {
                 this._tooltipHtmlCache[cacheKey] = html;

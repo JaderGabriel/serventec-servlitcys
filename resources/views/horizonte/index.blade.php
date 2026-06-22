@@ -42,21 +42,7 @@
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-3 shrink-0">
-                <button
-                    type="button"
-                    class="serv-link text-sm"
-                    onclick="window.dispatchEvent(new CustomEvent('horizonte-guide', { detail: { mode: 'tour' } }))"
-                >
-                    {{ __('Como usar') }}
-                </button>
-                <button
-                    type="button"
-                    class="serv-link text-sm"
-                    onclick="window.dispatchEvent(new CustomEvent('horizonte-guide', { detail: { mode: 'demo' } }))"
-                >
-                    {{ __('Demonstração') }}
-                </button>
-                <a href="{{ $docUrl }}" class="serv-link text-sm">{{ __('Documentação') }}</a>
+                @include('horizonte.partials.help-nav', ['docUrl' => $docUrl])
             </div>
         </div>
     </x-slot>
@@ -161,9 +147,7 @@
                             :disabled="pageLoading || regionalLoading"
                         >{{ __('← Brasil') }}</button>
                     </div>
-                    <div class="flex flex-wrap gap-2">
-                        <button type="button" class="serv-link text-xs" @click="startTour()">{{ __('Como usar') }}</button>
-                        <button type="button" class="serv-link text-xs" @click="openGuideDemo()">{{ __('Demonstração') }}</button>
+                    <div class="flex flex-wrap gap-2 sm:justify-end">
                         <button
                             type="button"
                             class="serv-btn-secondary text-xs xl:hidden"
