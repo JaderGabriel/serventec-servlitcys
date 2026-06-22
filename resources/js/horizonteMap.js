@@ -76,24 +76,74 @@ function nfCompact(n) {
     return nf(v);
 }
 
-function muniScoreChipsHtml(m, th) {
-    const matriculas =
-        m.matriculas_censo != null
-            ? nfCompact(m.matriculas_censo)
-            : m.fundeb_matriculas_base != null
-              ? nfCompact(m.fundeb_matriculas_base)
-              : "—";
-    const chip = (val, label) =>
-        `<div class="serv-horizonte-muni-tooltip__score-cell">` +
-        `<span class="serv-horizonte-muni-tooltip__score-val">${val}</span>` +
-        `${escapeHtml(label)}</div>`;
+function muniPopulationPipelineHtml(m) {
+    const fmt = (val) => (val != null && Number(val) > 0 ? nfCompact(val) : "—");
+    const yearLine = (year) =>
+        year != null
+            ? `<span class="serv-horizonte-muni-tooltip__pipe-year">${escapeHtml(String(year))}</span>`
+            : `<span class="serv-horizonte-muni-tooltip__pipe-year serv-horizonte-muni-tooltip__pipe-year--empty">—</span>`;
+    const cell = (val, label) =>
+        `<div class="serv-horizonte-muni-tooltip__pipe-cell">` +
+        `<span class="serv-horizonte-muni-tooltip__pipe-val">${fmt(val)}</span>` +
+        `<span class="serv-horizonte-muni-tooltip__pipe-label">${escapeHtml(label)}</span>` +
+        `</div>`;
+    const matriculas = m.matriculas_censo ?? m.fundeb_matriculas_base ?? null;
+    const matAno = m.censo_ano ?? m.fundeb_ano ?? null;
+
     return (
-        `<div class="serv-horizonte-muni-tooltip__scores">` +
-        chip(formatScoreValue(m.success_score), "Prop.") +
-        chip(formatScoreValue(m.financial_pressure), "Press.") +
-        chip(matriculas, "Matr.") +
+        `<div class="serv-horizonte-muni-tooltip__pipeline">` +
+        `<div class="serv-horizonte-muni-tooltip__pipe-step">` +
+        cell(m.populacao_total, "Pop. municipal") +
+        yearLine(m.demography_ano) +
         `</div>` +
-        `<p class="serv-horizonte-muni-tooltip__score-hint">${escapeHtml("Propensão")} ≥${th.high} ${escapeHtml("alta")} · ${escapeHtml("Pressão FUNDEB")} 0–100</p>`
+        `<div class="serv-horizonte-muni-tooltip__pipe-arrow" aria-hidden="true">›</div>` +
+        `<div class="serv-horizonte-muni-tooltip__pipe-step">` +
+        cell(m.sidra_pop_4_17, "Pop. 4–17") +
+        yearLine(m.demography_ano) +
+        `</div>` +
+        `<div class="serv-horizonte-muni-tooltip__pipe-arrow" aria-hidden="true">›</div>` +
+        `<div class="serv-horizonte-muni-tooltip__pipe-step">` +
+        cell(m.cadunico_escolar, "CadÚnico") +
+        yearLine(m.cadunico_ano) +
+        `</div>` +
+        `<div class="serv-horizonte-muni-tooltip__pipe-arrow" aria-hidden="true">›</div>` +
+        `<div class="serv-horizonte-muni-tooltip__pipe-step serv-horizonte-muni-tooltip__pipe-step--final">` +
+        cell(matriculas, "Matrículas") +
+        yearLine(matAno) +
+        `</div>` +
+        `</div>` +
+        `<p class="serv-horizonte-muni-tooltip__pipe-hint">${escapeHtml("População municipal → faixa escolar → CadÚnico → matrículas Censo/FUNDEB")}</p>`
+    );
+}
+
+function muniPropensityThermometerHtml(m, th) {
+    const score = Math.max(0, Math.min(100, Number(m.success_score ?? 0)));
+    const level =
+        score >= th.high ? "high" : score >= th.medium ? "medium" : score > 0 ? "low" : "none";
+    const tier = String(m.tier_label ?? m.tier ?? "");
+    const thresholdHint =
+        score >= th.high
+            ? `${escapeHtml("Alta")} ≥${th.high}`
+            : score >= th.medium
+              ? `${escapeHtml("Média")} ≥${th.medium}`
+              : `${escapeHtml("Baixa")} <${th.medium}`;
+
+    return (
+        `<div class="serv-horizonte-muni-tooltip__propensity">` +
+        `<div class="serv-horizonte-muni-tooltip__propensity-head">` +
+        `<span class="serv-horizonte-muni-tooltip__propensity-title">${escapeHtml("Propensão ao sistema")}</span>` +
+        `<span class="serv-horizonte-muni-tooltip__propensity-score">${formatScoreValue(score)}<span class="serv-horizonte-muni-tooltip__propensity-max">/100</span></span>` +
+        `</div>` +
+        `<div class="serv-horizonte-muni-tooltip__thermo" role="img" aria-label="${escapeHtml("Propensão")} ${formatScoreValue(score)}">` +
+        `<div class="serv-horizonte-muni-tooltip__thermo-track">` +
+        `<div class="serv-horizonte-muni-tooltip__thermo-fill serv-horizonte-muni-tooltip__thermo-fill--${level}" style="width:${score}%"></div>` +
+        `<div class="serv-horizonte-muni-tooltip__thermo-mark serv-horizonte-muni-tooltip__thermo-mark--medium" style="left:${th.medium}%"></div>` +
+        `<div class="serv-horizonte-muni-tooltip__thermo-mark serv-horizonte-muni-tooltip__thermo-mark--high" style="left:${th.high}%"></div>` +
+        `</div>` +
+        `<div class="serv-horizonte-muni-tooltip__thermo-scale"><span>0</span><span>${th.medium}</span><span>${th.high}</span><span>100</span></div>` +
+        `</div>` +
+        `<p class="serv-horizonte-muni-tooltip__propensity-tier">${escapeHtml(tier)} · ${thresholdHint}</p>` +
+        `</div>`
     );
 }
 
@@ -2435,7 +2485,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     `<p class="serv-horizonte-muni-tooltip__notice serv-horizonte-muni-tooltip__notice--info">${escapeHtml("Sem dados públicos importados — score e tier indicativos. Importe FUNDEB, Censo ou SAEB para enriquecer.")}</p>`,
                 );
             }
-            lines.push(muniScoreChipsHtml(m, th));
+            lines.push(muniPopulationPipelineHtml(m));
 
             const fundebBlock = fundebReferenceHtml(m);
             if (fundebBlock) {
@@ -2480,13 +2530,15 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             const transferAno =
                 m.transfer_ano != null && m.transfer_total != null
                     ? String(m.transfer_ano)
-                    : null;
+                    : !m.has_transfers && m.has_fundeb
+                      ? "FNDE"
+                      : null;
             const dims = [
                 { key: "financial_pressure", label: "Pressão FUNDEB" },
                 { key: "pedagogical_gap", label: "Pedagógica" },
                 { key: "scale_score", label: "Escala" },
                 { key: "social_demand", label: "Social" },
-                { key: "transfer_dependency", label: "Transfer." },
+                { key: "transfer_dependency", label: "Transf. fed." },
                 { key: "data_readiness", label: "Prontidão" },
             ];
             lines.push(
@@ -2501,7 +2553,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                         ? `${d.label} (${transferAno})`
                         : d.label;
                 const fillClass =
-                    isTransfer && m.transfer_fundeb != null && Number(m.transfer_fundeb) > 0
+                    isTransfer && val > 0
                         ? "serv-horizonte-muni-tooltip__dim-fill--rose"
                         : "serv-horizonte-muni-tooltip__dim-fill--teal";
                 lines.push(
@@ -2515,6 +2567,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 );
             }
             lines.push(`</div>`);
+
+            lines.push(muniPropensityThermometerHtml(m, th));
 
             if (m.analytics_url) {
                 lines.push(

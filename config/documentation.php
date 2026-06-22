@@ -24,11 +24,11 @@ return [
     */
 
     'product' => [
-        'version' => '5.7.5',
-        'release_tag' => '20260620e-Vidar',
+        'version' => '5.7.6',
+        'release_tag' => '20260622b-Saga',
         'commit_short' => '',
         'commit_number' => null,
-        'revision_date' => '2026-06-20',
+        'revision_date' => '2026-06-22',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

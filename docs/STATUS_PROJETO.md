@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **5.7.5** · release `20260622a-Mimir` · **Ramo:** `main` · **Última revisão:** 22/06/2026
+**Versão em produção:** **5.7.6** · release `20260622b-Saga` · **Ramo:** `main` · **Última revisão:** 22/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 

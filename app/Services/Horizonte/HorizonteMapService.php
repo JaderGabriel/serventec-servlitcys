@@ -19,6 +19,7 @@ use App\Support\Brazil\MunicipalityMapOverlapResolver;
 use App\Support\Dashboard\AdminHomeMapCache;
 use App\Support\Horizonte\HorizonteManagerInsights;
 use App\Support\Horizonte\HorizonteMapPresenter;
+use App\Support\Horizonte\HorizonteTransferScoring;
 use App\Support\Horizonte\HorizonteMapCacheBuster;
 use App\Support\Horizonte\HorizonteMunicipalSgeResolver;
 use Illuminate\Database\Eloquent\Model;
@@ -595,9 +596,9 @@ final class HorizonteMapService
             if ($fundeb !== null && ($fundeb['complementacao_total'] ?? 0) > 0 && ($fundeb['receita_total'] ?? 0) > 0) {
                 $complRatios[] = (float) $fundeb['complementacao_total'] / (float) $fundeb['receita_total'];
             }
-            if ($transfer !== null && ($transfer['total'] ?? 0) > 0) {
-                $base = max(1.0, (float) ($fundeb['receita_total'] ?? 0), (float) ($fundeb['complementacao_total'] ?? 0));
-                $transferRatios[] = (float) $transfer['total'] / $base;
+            $transferRatio = HorizonteTransferScoring::ratioForBenchmark($transfer, $fundeb);
+            if ($transferRatio !== null) {
+                $transferRatios[] = $transferRatio;
             }
         }
         $benchmarks = $this->scorer->benchmarks($saebForBench, $complRatios, $transferRatios);
@@ -655,7 +656,7 @@ final class HorizonteMapService
                 'cadunico_escolar' => $cadunico['escolar'] ?? null,
                 'sidra_pop_4_17' => $demography['populacao_4_17'] ?? null,
                 'pct_criancas_pbf' => $cadunico['pct_pbf'] ?? null,
-                'transfer_total' => $transfer['total'] ?? null,
+                'transfer_total' => HorizonteTransferScoring::resolveTotalForScoring($transfer, $fundeb),
                 'has_fundeb' => $fundeb !== null,
                 'has_censo' => $censo !== null,
                 'has_saeb' => $saeb !== null,
@@ -703,7 +704,11 @@ final class HorizonteMapService
                 'has_demography' => $demography !== null,
                 'has_transfers' => $transfer !== null,
                 'matriculas_censo' => $censo['matriculas_total'] ?? null,
+                'censo_ano' => $censo['ano'] ?? null,
                 'cadunico_escolar' => $cadunico['escolar'] ?? null,
+                'cadunico_ano' => $cadunico['ano'] ?? null,
+                'populacao_total' => $demography['populacao_total'] ?? null,
+                'demography_ano' => $demography['ano'] ?? null,
                 'sidra_pop_4_17' => $demography['populacao_4_17'] ?? null,
                 'pct_criancas_pbf' => $cadunico['pct_pbf'] ?? null,
                 'transfer_total' => $transfer['total'] ?? null,
@@ -917,7 +922,10 @@ final class HorizonteMapService
             if ($ibge === null) {
                 continue;
             }
-            $out[$ibge] = ['matriculas_total' => (int) $row->matriculas_total];
+            $out[$ibge] = [
+                'matriculas_total' => (int) $row->matriculas_total,
+                'ano' => (int) $row->ano,
+            ];
         }
 
         return $out;
@@ -995,6 +1003,7 @@ final class HorizonteMapService
             $out[$ibge] = [
                 'escolar' => (int) ($indicators['criancas_escolar_cadunico'] ?? $row->totalCriancasEscolaridade()),
                 'pct_pbf' => isset($indicators['pct_criancas_pbf']) ? (float) $indicators['pct_criancas_pbf'] : null,
+                'ano' => (int) $row->ano_referencia,
             ];
         }
 
@@ -1022,10 +1031,17 @@ final class HorizonteMapService
         $out = [];
         foreach ($rows as $row) {
             $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
-            if ($ibge === null || $row->populacao_4_17 === null) {
+            if ($ibge === null) {
                 continue;
             }
-            $out[$ibge] = ['populacao_4_17' => (int) $row->populacao_4_17];
+            if ($row->populacao_4_17 === null && $row->populacao_total === null) {
+                continue;
+            }
+            $out[$ibge] = [
+                'populacao_4_17' => $row->populacao_4_17 !== null ? (int) $row->populacao_4_17 : null,
+                'populacao_total' => $row->populacao_total !== null ? (int) $row->populacao_total : null,
+                'ano' => (int) $row->ano_referencia,
+            ];
         }
 
         return $out;

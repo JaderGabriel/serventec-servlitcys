@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Support\Horizonte\HorizonteSocialDemandScorer;
+use App\Support\Horizonte\HorizonteTransferScoring;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -32,5 +33,25 @@ class HorizonteSocialDemandScorerTest extends TestCase
         );
 
         $this->assertGreaterThan(50, $score);
+    }
+
+    #[Test]
+    public function transfer_scoring_falls_back_to_fundeb_complementacao(): void
+    {
+        $total = HorizonteTransferScoring::resolveTotalForScoring(
+            transfer: null,
+            fundeb: ['complementacao_total' => 800_000.0, 'receita_total' => 4_000_000.0],
+        );
+
+        $this->assertSame(800_000.0, $total);
+
+        $score = HorizonteSocialDemandScorer::transferDependencyScore(
+            transferTotal: $total,
+            receitaFundeb: 4_000_000.0,
+            complementacaoFundeb: 800_000.0,
+            medianRatio: 0.2,
+        );
+
+        $this->assertGreaterThan(0, $score);
     }
 }

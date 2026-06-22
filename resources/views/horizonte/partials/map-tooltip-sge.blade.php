@@ -2,22 +2,22 @@
     x-show="active"
     x-cloak
     x-transition.opacity.duration.150ms
-    class="serv-brazil-map-tooltip serv-brazil-map-tooltip--wide"
+    class="serv-brazil-map-tooltip serv-brazil-map-tooltip--wide serv-brazil-map-tooltip--muni"
     :style="tooltipStyle"
 >
     <template x-if="active">
         <div class="space-y-3">
-            <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0">
-                    <p class="serv-horizonte-muni-tooltip__title">
-                        <span x-text="active.name"></span>
-                        <span class="serv-horizonte-muni-tooltip__uf" x-text="active.uf"></span>
-                    </p>
+            <div class="serv-horizonte-muni-tooltip__header">
+                <div class="min-w-0 flex-1">
+                    <div class="serv-horizonte-muni-tooltip__heading">
+                        <h3 class="serv-horizonte-muni-tooltip__name" x-text="active.name"></h3>
+                        <span class="serv-horizonte-muni-tooltip__uf-badge" x-text="active.uf"></span>
+                    </div>
                     <p class="serv-horizonte-muni-tooltip__meta" x-text="'IBGE ' + active.ibge + ' · ' + tierLabel(active)"></p>
                 </div>
                 <button
                     type="button"
-                    class="shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    class="serv-horizonte-muni-tooltip__close shrink-0"
                     x-on:click.stop="closeTooltip()"
                     aria-label="{{ __('Fechar') }}"
                 >&times;</button>

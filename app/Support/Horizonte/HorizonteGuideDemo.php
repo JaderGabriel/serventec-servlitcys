@@ -70,6 +70,7 @@ final class HorizonteGuideDemo
                 'y' => $pt['y'],
                 'r' => round(8 + $heat * 10, 1),
                 'heat' => $heat,
+                'score' => (int) round(52 + $heat * 48),
             ];
         }
 
@@ -91,7 +92,7 @@ final class HorizonteGuideDemo
     /**
      * Pontos municipais fictícios no recorte da Bahia.
      *
-     * @return list<array{x: float, y: float, r: float, heat: float, label: string}>
+     * @return list<array{x: float, y: float, r: float, heat: float, label: string, score: int}>
      */
     public static function bahiaMunicipalDots(): array
     {
@@ -103,6 +104,7 @@ final class HorizonteGuideDemo
                 'r' => round(4 + $heat * 5, 1),
                 'heat' => $heat,
                 'label' => $label,
+                'score' => (int) round(48 + $heat * 52),
             ];
         };
 

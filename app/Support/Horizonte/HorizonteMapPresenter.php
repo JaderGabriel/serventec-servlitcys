@@ -181,11 +181,12 @@ final class HorizonteMapPresenter
                     'key' => 'transfer_dependency',
                     'label' => __('Dependência de transferências'),
                     'weight' => $pct('transfer_dependency'),
-                    'formula' => __('Repasses Tesouro ÷ max(receita, complementação FUNDEB) vs mediana nacional.'),
-                    'detects' => __('Soma repasses CKAN (FUNDEB + educação) e razão vs receita/complementação.'),
+                    'formula' => __('Repasses Tesouro ÷ max(receita, complementação FUNDEB) vs mediana nacional; sem CKAN, usa complementação FNDE como proxy.'),
+                    'detects' => __('Soma repasses CKAN (FUNDEB + educação) ou complementação FUNDEB quando repasses não importados.'),
                     'scenarios' => [
                         __('Alto: repasses federais pesam mais que a mediana — dependência de transferências constitucionais.'),
-                        __('Zero: repasses não importados (correr fase repasses_tesouro no feed).'),
+                        __('Parcial: só FUNDEB FNDE — complementação estima dependência até importar repasses_tesouro.'),
+                        __('Zero: sem FUNDEB nem repasses CKAN.'),
                     ],
                 ],
                 [

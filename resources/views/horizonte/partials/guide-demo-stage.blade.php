@@ -17,16 +17,30 @@
                 <img src="{{ $demoMapUrl }}" alt="" class="serv-horizonte-demo__land" loading="lazy" decoding="async" />
                 <svg class="serv-horizonte-demo__overlay" viewBox="0 0 613 639" aria-hidden="true">
                     @foreach ($demoBubbles as $bubble)
-                        <circle
-                            cx="{{ $bubble['x'] }}"
-                            cy="{{ $bubble['y'] }}"
-                            r="{{ $bubble['r'] }}"
-                            fill="{{ HorizonteGuideDemo::heatColor($bubble['heat']) }}"
-                            fill-opacity="0.72"
-                            stroke="#ffffff"
-                            stroke-width="2"
-                            class="serv-horizonte-demo__uf-bubble"
-                        />
+                        <g class="serv-horizonte-demo__uf-bubble-group">
+                            <circle
+                                cx="{{ $bubble['x'] }}"
+                                cy="{{ $bubble['y'] }}"
+                                r="{{ $bubble['r'] }}"
+                                fill="{{ HorizonteGuideDemo::heatColor($bubble['heat']) }}"
+                                fill-opacity="0.88"
+                                stroke="#ffffff"
+                                stroke-width="2"
+                                class="serv-horizonte-demo__uf-bubble"
+                            />
+                            <text
+                                x="{{ $bubble['x'] }}"
+                                y="{{ $bubble['y'] + 1 }}"
+                                text-anchor="middle"
+                                class="serv-horizonte-demo__bubble-uf"
+                            >{{ $bubble['uf'] }}</text>
+                            <text
+                                x="{{ $bubble['x'] }}"
+                                y="{{ $bubble['y'] + $bubble['r'] + 9 }}"
+                                text-anchor="middle"
+                                class="serv-horizonte-demo__bubble-score-out"
+                            >{{ $bubble['score'] }}</text>
+                        </g>
                     @endforeach
                     <circle
                         cx="{{ $demoHighlight['x'] }}"
@@ -62,16 +76,28 @@
                     />
                     <path d="{{ $demoBaPath }}" class="serv-horizonte-demo__regional-land" />
                     @foreach ($demoMuniDots as $dot)
-                        <circle
-                            cx="{{ $dot['x'] + $demoBaView['x'] }}"
-                            cy="{{ $dot['y'] + $demoBaView['y'] }}"
-                            r="{{ $dot['r'] }}"
-                            fill="{{ HorizonteGuideDemo::heatColor($dot['heat']) }}"
-                            fill-opacity="0.85"
-                            stroke="#ffffff"
-                            stroke-width="1.5"
-                            class="serv-horizonte-demo__muni-dot"
-                        />
+                        @php
+                            $cx = $dot['x'] + $demoBaView['x'];
+                            $cy = $dot['y'] + $demoBaView['y'];
+                        @endphp
+                        <g class="serv-horizonte-demo__muni-dot-group">
+                            <circle
+                                cx="{{ $cx }}"
+                                cy="{{ $cy }}"
+                                r="{{ $dot['r'] }}"
+                                fill="{{ HorizonteGuideDemo::heatColor($dot['heat']) }}"
+                                fill-opacity="0.9"
+                                stroke="#ffffff"
+                                stroke-width="1.5"
+                                class="serv-horizonte-demo__muni-dot"
+                            />
+                            <text
+                                x="{{ $cx }}"
+                                y="{{ $cy + $dot['r'] + 5 }}"
+                                text-anchor="middle"
+                                class="serv-horizonte-demo__muni-dot-score-out"
+                            >{{ $dot['score'] }}</text>
+                        </g>
                     @endforeach
                     <circle
                         cx="{{ $demoMuniDots[0]['x'] + $demoBaView['x'] }}"
@@ -138,9 +164,18 @@
                 <div class="serv-horizonte-demo__muni-card">
                     <p class="serv-horizonte-demo__muni-card-title">{{ __('Salvador') }} <span>BA</span></p>
                     <div class="serv-horizonte-demo__muni-scores">
-                        <span><strong>87</strong> {{ __('Prop.') }}</span>
-                        <span><strong>72</strong> {{ __('Press.') }}</span>
-                        <span><strong>94k</strong> {{ __('Matr.') }}</span>
+                        <div class="serv-horizonte-demo__muni-score-cell">
+                            <span class="serv-horizonte-demo__muni-score-val">87</span>
+                            <span class="serv-horizonte-demo__muni-score-label">{{ __('Prop.') }}</span>
+                        </div>
+                        <div class="serv-horizonte-demo__muni-score-cell">
+                            <span class="serv-horizonte-demo__muni-score-val">72</span>
+                            <span class="serv-horizonte-demo__muni-score-label">{{ __('Press.') }}</span>
+                        </div>
+                        <div class="serv-horizonte-demo__muni-score-cell">
+                            <span class="serv-horizonte-demo__muni-score-val">94k</span>
+                            <span class="serv-horizonte-demo__muni-score-label">{{ __('Matr.') }}</span>
+                        </div>
                     </div>
                     <div class="serv-horizonte-demo__muni-fundeb">
                         <p class="serv-horizonte-demo__muni-fundeb-head">
@@ -149,11 +184,11 @@
                         </p>
                         <p class="serv-horizonte-demo__muni-fundeb-line">
                             <span>{{ __('VAAF') }}</span>
-                            <strong>R$ 5.559,73/aluno</strong>
+                            <span class="serv-horizonte-demo__muni-fundeb-val">R$ 5.559,73</span>
                         </p>
                         <p class="serv-horizonte-demo__muni-fundeb-line">
                             <span>{{ __('Repasse FUNDEB') }}</span>
-                            <strong>R$ 412 mi</strong>
+                            <span class="serv-horizonte-demo__muni-fundeb-val">R$ 412 mi</span>
                         </p>
                     </div>
                 </div>
@@ -164,10 +199,13 @@
 
     <ol class="serv-horizonte-demo__steps">
         @foreach ($methodology['map_guide'] ?? [] as $step)
-            <li class="serv-horizonte-demo__step" style="--demo-step-index: {{ (int) $step['step'] - 1 }};">
-                <span class="serv-horizonte-demo__step-num">{{ $step['step'] }}</span>
-                <span class="font-semibold text-sm text-serv-navy dark:text-slate-100">{{ $step['title'] }}</span>
-                <span class="text-xs text-slate-600 dark:text-slate-400">{{ $step['text'] }}</span>
+            @php($stepNum = (int) $step['step'])
+            <li class="serv-horizonte-demo__step serv-horizonte-demo__step--{{ $stepNum }}">
+                <span class="serv-horizonte-demo__step-num serv-horizonte-demo__step-num--{{ $stepNum }}">{{ $stepNum }}</span>
+                <div class="serv-horizonte-demo__step-body">
+                    <span class="serv-horizonte-demo__step-title">{{ $step['title'] }}</span>
+                    <span class="serv-horizonte-demo__step-text">{{ $step['text'] }}</span>
+                </div>
             </li>
         @endforeach
     </ol>
