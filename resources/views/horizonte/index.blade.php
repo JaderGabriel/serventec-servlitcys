@@ -267,6 +267,9 @@
                                     </span>
                                 </template>
                             </template>
+                            <p x-show="mapView === 'heat'" class="w-full text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                                {{ __('Cores relativas à pressão FUNDEB no recorte visível (escala automática).') }}
+                            </p>
                             <template x-if="mapView === 'markers'">
                                 <template x-for="item in legend" :key="item.key">
                                     <span class="serv-map-legend__item" :title="item.description || ''">
@@ -583,37 +586,7 @@
                     </div>
                 </div>
 
-                <div class="serv-horizonte-demo" aria-hidden="true">
-                    <div class="serv-horizonte-demo__stage">
-                        <div class="serv-horizonte-demo__map serv-horizonte-demo__map--br">
-                            <span class="serv-horizonte-demo__bubble serv-horizonte-demo__bubble--a"></span>
-                            <span class="serv-horizonte-demo__bubble serv-horizonte-demo__bubble--b"></span>
-                            <span class="serv-horizonte-demo__bubble serv-horizonte-demo__bubble--c"></span>
-                            <span class="serv-horizonte-demo__cursor"></span>
-                        </div>
-                        <div class="serv-horizonte-demo__map serv-horizonte-demo__map--uf">
-                            <span class="serv-horizonte-demo__dot"></span>
-                            <span class="serv-horizonte-demo__dot"></span>
-                            <span class="serv-horizonte-demo__dot"></span>
-                            <span class="serv-horizonte-demo__dot"></span>
-                            <span class="serv-horizonte-demo__dot"></span>
-                        </div>
-                        <div class="serv-horizonte-demo__panel">
-                            <span class="serv-horizonte-demo__line serv-horizonte-demo__line--w75"></span>
-                            <span class="serv-horizonte-demo__line serv-horizonte-demo__line--w50"></span>
-                            <span class="serv-horizonte-demo__line serv-horizonte-demo__line--w66"></span>
-                        </div>
-                    </div>
-                    <ol class="serv-horizonte-demo__steps">
-                        @foreach ($methodology['map_guide'] ?? [] as $step)
-                            <li class="serv-horizonte-demo__step">
-                                <span class="serv-horizonte-demo__step-num">{{ $step['step'] }}</span>
-                                <span class="font-semibold text-sm text-serv-navy dark:text-slate-100">{{ $step['title'] }}</span>
-                                <span class="text-xs text-slate-600 dark:text-slate-400">{{ $step['text'] }}</span>
-                            </li>
-                        @endforeach
-                    </ol>
-                </div>
+                @include('horizonte.partials.guide-demo-stage', ['methodology' => $methodology])
             </section>
 
             {{-- Tour guiado in-app --}}
@@ -628,7 +601,7 @@
             >
                 <div class="serv-horizonte-tour__backdrop" @click="skipTour()"></div>
                 <div class="serv-horizonte-tour__spotlight" :style="tourSpotlightStyle"></div>
-                <div class="serv-horizonte-tour__card" :style="tourCardStyle">
+                <div class="serv-horizonte-tour__card" x-ref="tourCard" :style="tourCardStyle">
                     <p class="text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300">
                         {{ __('Guia') }}
                         <span class="tabular-nums" x-text="(tourStepIndex + 1) + ' / ' + tourStepsList.length"></span>

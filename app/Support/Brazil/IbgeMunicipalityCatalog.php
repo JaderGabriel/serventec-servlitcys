@@ -3,6 +3,7 @@
 namespace App\Support\Brazil;
 
 use App\Support\Dashboard\AdminHomeMapCache;
+use App\Support\Brazil\MunicipalityNomeUfKey;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -284,6 +285,41 @@ final class IbgeMunicipalityCatalog
     }
 
     /**
+     * Mapa nome+UF normalizado → IBGE (7 dígitos) para cruzamento com CSV Tesouro.
+     *
+     * @return array<string, string>
+     */
+    public function nationalNomeUfToIbgeIndex(): array
+    {
+        $cacheKey = 'ibge_nome_uf_to_ibge_national:v1';
+        $cached = AdminHomeMapCache::get($cacheKey);
+        if (is_array($cached) && $cached !== []) {
+            return $cached;
+        }
+
+        $index = $this->fetchNationalNomeUfIndexFromIbgeApi();
+        if ($index !== []) {
+            AdminHomeMapCache::repository()->put($cacheKey, $index, self::CACHE_TTL_SECONDS);
+
+            return $index;
+        }
+
+        $index = $this->nomeUfIndexFromUfCatalog();
+        if ($index !== []) {
+            AdminHomeMapCache::repository()->put($cacheKey, $index, self::CACHE_TTL_SECONDS);
+
+            return $index;
+        }
+
+        $fromCities = $this->nomeUfIndexFromCitiesTable();
+        if ($fromCities !== []) {
+            AdminHomeMapCache::repository()->put($cacheKey, $fromCities, self::CACHE_TTL_SECONDS);
+        }
+
+        return $fromCities;
+    }
+
+    /**
      * @return array<string, array{ibge: string, name: string, uf: string, lat: float, lng: float}>
      */
     public function municipalitiesForUf(string $uf, bool $fetchRemoteCentroids = false): array
@@ -561,5 +597,105 @@ final class IbgeMunicipalityCatalog
         }
 
         return str_pad($digits, 7, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function fetchNationalNomeUfIndexFromIbgeApi(): array
+    {
+        try {
+            $response = Http::timeout(25)
+                ->acceptJson()
+                ->get('https://servicodados.ibge.gov.br/api/v1/localidades/municipios');
+        } catch (\Throwable $e) {
+            Log::debug('tesouro.ibge_national_index_failed', ['message' => $e->getMessage()]);
+
+            return [];
+        }
+
+        if (! $response->successful()) {
+            return [];
+        }
+
+        $items = $response->json();
+        if (! is_array($items)) {
+            return [];
+        }
+
+        $index = [];
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            $meta = $this->metaFromApiItem($item, null, 0, 1, false);
+            if ($meta === null) {
+                continue;
+            }
+            $key = MunicipalityNomeUfKey::key((string) $meta['name'], (string) $meta['uf']);
+            if ($key !== '') {
+                $index[$key] = (string) $meta['ibge'];
+            }
+        }
+
+        return $index;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function nomeUfIndexFromUfCatalog(): array
+    {
+        $index = [];
+        foreach (self::brazilianUfs() as $uf) {
+            foreach ($this->municipalitiesForUf($uf) as $ibge => $meta) {
+                $name = trim((string) ($meta['name'] ?? ''));
+                if ($name === '') {
+                    continue;
+                }
+                $key = MunicipalityNomeUfKey::key($name, $uf);
+                if ($key !== '') {
+                    $index[$key] = (string) $ibge;
+                }
+            }
+        }
+
+        return $index;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function nomeUfIndexFromCitiesTable(): array
+    {
+        try {
+            if (! \Illuminate\Support\Facades\Schema::hasTable('cities')) {
+                return [];
+            }
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $index = [];
+        \App\Models\City::query()
+            ->whereNotNull('ibge_municipio')
+            ->select(['name', 'uf', 'ibge_municipio'])
+            ->orderBy('id')
+            ->chunk(500, function ($rows) use (&$index): void {
+                foreach ($rows as $row) {
+                    $ibge = $this->normalizeIbge((string) $row->ibge_municipio);
+                    $uf = strtoupper(trim((string) $row->uf));
+                    $name = trim((string) $row->name);
+                    if ($ibge === null || $uf === '' || $name === '') {
+                        continue;
+                    }
+                    $key = MunicipalityNomeUfKey::key($name, $uf);
+                    if ($key !== '') {
+                        $index[$key] = $ibge;
+                    }
+                }
+            });
+
+        return $index;
     }
 }

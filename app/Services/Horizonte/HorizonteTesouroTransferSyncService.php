@@ -2,10 +2,10 @@
 
 namespace App\Services\Horizonte;
 
-use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Repositories\MunicipalTransferSnapshotRepository;
 use App\Services\Funding\TesouroTransferenciasCsvService;
 use App\Support\Brazil\IbgeMunicipalityCatalog;
+use App\Support\Horizonte\HorizonteTransferBreakdown;
 use App\Support\Horizonte\HorizonteUfScope;
 /**
  * Sincroniza repasses Tesouro (CKAN CSV) para cobertura nacional no Horizonte.
@@ -47,11 +47,17 @@ final class HorizonteTesouroTransferSyncService
         }
 
         if ($rows === []) {
+            $diagYear = $usedYear;
+            $diagnosis = $this->tesouroCsv->diagnoseNationalFundeb(
+                $diagYear,
+                $timeout,
+                $options['uf'] ?? null,
+                $this->ibgeCatalog,
+            );
+
             return [
                 'success' => false,
-                'message' => __('Repasses Tesouro: nenhuma linha FUNDEB encontrada no índice CKAN (anos :anos).', [
-                    'anos' => implode(', ', array_map('strval', $yearsToTry)),
-                ]),
+                'message' => $diagnosis['message'],
                 'imported' => 0,
             ];
         }
@@ -79,34 +85,18 @@ final class HorizonteTesouroTransferSyncService
     }
 
     /**
-     * @return array<string, array{total: float, programas: int}>
+     * @return array<string, array{
+     *     total: float,
+     *     programas: int,
+     *     ano: int,
+     *     fundeb: float,
+     *     educacao: float,
+     *     pct_fundeb: ?float,
+     *     pct_educacao: ?float
+     * }>
      */
     public static function aggregateByIbge(int $year, ?string $ibgePrefix = null): array
     {
-        if (! \Illuminate\Support\Facades\Schema::hasTable('municipal_transfer_snapshots')) {
-            return [];
-        }
-
-        $query = \App\Models\MunicipalTransferSnapshot::query()
-            ->where('ano', $year);
-        if ($ibgePrefix !== null && $ibgePrefix !== '') {
-            $query->where('ibge_municipio', 'like', $ibgePrefix.'%');
-        }
-        $rows = $query->get(['ibge_municipio', 'valor']);
-
-        $out = [];
-        foreach ($rows as $row) {
-            $ibge = FundebMunicipioReferenceRepository::normalizeIbge((string) $row->ibge_municipio);
-            if ($ibge === null) {
-                continue;
-            }
-            if (! isset($out[$ibge])) {
-                $out[$ibge] = ['total' => 0.0, 'programas' => 0];
-            }
-            $out[$ibge]['total'] += (float) $row->valor;
-            $out[$ibge]['programas']++;
-        }
-
-        return $out;
+        return HorizonteTransferBreakdown::aggregateByIbge($year, $ibgePrefix);
     }
 }

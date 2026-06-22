@@ -104,17 +104,22 @@ final class HorizonteMapPresenter
                 [
                     'step' => 1,
                     'title' => __('Visão nacional'),
-                    'text' => __('Bolhas = estados · clique numa UF ou use o selector «Recorte» para abrir municípios.'),
+                    'text' => __('Bolhas por UF no mapa do Brasil — clique num estado ou use «Recorte» para abrir municípios.'),
                 ],
                 [
                     'step' => 2,
-                    'title' => __('Filtros laterais'),
-                    'text' => __('Escolha a lente (alta pressão, prospectos…) e refine scores — painel à esquerda do mapa.'),
+                    'title' => __('Camada municipal'),
+                    'text' => __('Pontos coloridos por pressão FUNDEB no estado escolhido — vista Marcadores ou Calor.'),
                 ],
                 [
                     'step' => 3,
+                    'title' => __('Filtros laterais'),
+                    'text' => __('Lentes de decisão (alta pressão, prospectos…) e refinamento de scores no painel à esquerda.'),
+                ],
+                [
+                    'step' => 4,
                     'title' => __('Ficha do município'),
-                    'text' => __('Clique no ponto ou na lista — scores, complementação FUNDEB em R$ e registo SGE.'),
+                    'text' => __('Clique no ponto ou na lista — propensão, pressão, matrículas, repasses e registo SGE.'),
                 ],
             ],
             'map_legend_notes' => [
@@ -387,20 +392,20 @@ final class HorizonteMapPresenter
         return [
             [
                 'key' => 'heat_low',
-                'label' => __('Baixa oportunidade'),
-                'description' => __('Propensão indicativa baixa — monitorar ou enriquecer dados.'),
-                'color' => '#fde68a',
+                'label' => __('Pressão baixa'),
+                'description' => __('Menor pressão FUNDEB entre os municípios do recorte visível.'),
+                'color' => '#fef3c7',
             ],
             [
                 'key' => 'heat_mid',
-                'label' => __('Média oportunidade'),
-                'description' => __('Sinais moderados de benefício com Consultoria.'),
-                'color' => '#b45309',
+                'label' => __('Pressão média'),
+                'description' => __('Pressão intermédia no recorte — oportunidade moderada.'),
+                'color' => '#d97706',
             ],
             [
                 'key' => 'heat_high',
-                'label' => __('Alta oportunidade'),
-                'description' => __('Prioridade comercial — déficits e escala favoráveis.'),
+                'label' => __('Pressão alta'),
+                'description' => __('Maior pressão FUNDEB no recorte — prioridade comercial.'),
                 'color' => '#be123c',
             ],
         ];

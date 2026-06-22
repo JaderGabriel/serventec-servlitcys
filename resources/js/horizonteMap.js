@@ -40,6 +40,77 @@ function formatCurrencyBrl(n) {
     });
 }
 
+function formatPercentValue(n) {
+    if (n === null || n === undefined || Number.isNaN(Number(n))) {
+        return null;
+    }
+    return `${Number(n).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+}
+
+function transferTooltipHtml(m, refYear) {
+    const total = m.transfer_total;
+    const hasValue = total != null && Number(total) > 0;
+    if (!hasValue) {
+        if (m.has_transfers) {
+            return `<p class="mt-2 text-[11px] text-slate-500">${escapeHtml("Repasses importados sem valor agregado para este município.")}</p>`;
+        }
+        return "";
+    }
+
+    const ano = m.transfer_ano ?? refYear;
+    const fundeb = m.transfer_fundeb;
+    const educacao = m.transfer_educacao;
+    const pctFundeb = formatPercentValue(m.transfer_pct_fundeb);
+    const pctEduc = formatPercentValue(m.transfer_pct_educacao);
+    const rows = [];
+
+    rows.push(
+        `<div class="flex items-baseline justify-between gap-2">` +
+            `<span class="text-slate-600 dark:text-slate-300">${escapeHtml("Total")}</span>` +
+            `<span class="tabular-nums font-semibold text-slate-900 dark:text-slate-100">${formatCurrencyBrl(total)}</span>` +
+            `</div>`,
+    );
+
+    if (fundeb != null && Number(fundeb) > 0) {
+        rows.push(
+            `<div class="flex items-baseline justify-between gap-2 rounded-md bg-rose-50 px-2 py-1 dark:bg-rose-950/30">` +
+                `<span class="font-semibold text-rose-800 dark:text-rose-200">${escapeHtml("FUNDEB")}</span>` +
+                `<span class="text-right tabular-nums text-rose-900 dark:text-rose-100">` +
+                `<span class="font-semibold">${formatCurrencyBrl(fundeb)}</span>` +
+                (pctFundeb
+                    ? `<span class="ms-1 text-[10px] font-medium text-rose-700/90 dark:text-rose-300/90">(${escapeHtml(pctFundeb)})</span>`
+                    : "") +
+                `</span></div>`,
+        );
+    }
+
+    if (educacao != null && Number(educacao) > 0) {
+        const educLabel =
+            fundeb != null &&
+            Number(fundeb) > 0 &&
+            Math.abs(Number(educacao) - Number(fundeb)) < 0.01
+                ? "Verbas educação (FUNDEB)"
+                : "Verbas educação";
+        rows.push(
+            `<div class="flex items-baseline justify-between gap-2 rounded-md bg-teal-50 px-2 py-1 dark:bg-teal-950/30">` +
+                `<span class="font-semibold text-teal-800 dark:text-teal-200">${escapeHtml(educLabel)}</span>` +
+                `<span class="text-right tabular-nums text-teal-900 dark:text-teal-100">` +
+                `<span class="font-semibold">${formatCurrencyBrl(educacao)}</span>` +
+                (pctEduc
+                    ? `<span class="ms-1 text-[10px] font-medium text-teal-700/90 dark:text-teal-300/90">(${escapeHtml(pctEduc)})</span>`
+                    : "") +
+                `</span></div>`,
+        );
+    }
+
+    return (
+        `<div class="mt-2 rounded-lg border border-slate-200/90 bg-slate-50/80 px-2.5 py-2 dark:border-slate-600 dark:bg-slate-900/40">` +
+        `<p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">${escapeHtml("Repasses federais")} · ${escapeHtml("Ref.")} ${escapeHtml(String(ano))}</p>` +
+        `<div class="mt-1.5 space-y-1 text-[11px]">${rows.join("")}</div>` +
+        `</div>`
+    );
+}
+
 const HORIZONTE_TOUR_STORAGE_KEY = "horizonte_onboarding_v1";
 
 function uniqueSortedUfs(markers) {
@@ -48,13 +119,111 @@ function uniqueSortedUfs(markers) {
 
 function heatColor(intensity) {
     const t = Math.max(0, Math.min(1, Number(intensity) || 0));
-    if (t >= 0.66) {
-        return "#be123c";
+    if (t <= 0.5) {
+        return lerpColor("#fef3c7", "#d97706", t / 0.5);
     }
-    if (t >= 0.33) {
-        return "#b45309";
+
+    return lerpColor("#d97706", "#be123c", (t - 0.5) / 0.5);
+}
+
+function lerpColor(hexA, hexB, t) {
+    const parse = (hex) => {
+        const h = String(hex).replace("#", "");
+        return {
+            r: parseInt(h.slice(0, 2), 16),
+            g: parseInt(h.slice(2, 4), 16),
+            b: parseInt(h.slice(4, 6), 16),
+        };
+    };
+    const a = parse(hexA);
+    const b = parse(hexB);
+    const u = Math.max(0, Math.min(1, Number(t) || 0));
+    const r = Math.round(a.r + (b.r - a.r) * u);
+    const g = Math.round(a.g + (b.g - a.g) * u);
+    const bl = Math.round(a.b + (b.b - a.b) * u);
+
+    return `rgb(${r},${g},${bl})`;
+}
+
+/** Pressão FUNDEB (0–100) como base do mapa de calor municipal. */
+function pressureHeatRaw(marker) {
+    const pressure = Number(marker?.financial_pressure);
+    if (Number.isFinite(pressure) && pressure > 0) {
+        return Math.max(0, Math.min(100, pressure));
     }
-    return "#fde68a";
+    const fromHeat = Number(marker?.heat_intensity);
+    if (Number.isFinite(fromHeat) && fromHeat > 0) {
+        return Math.max(0, Math.min(100, fromHeat * 100));
+    }
+    const success = Number(marker?.success_score);
+    if (Number.isFinite(success) && success > 0) {
+        return Math.max(0, Math.min(100, success));
+    }
+
+    return 0;
+}
+
+/**
+ * Normaliza intensidades no recorte visível para haver contraste regional
+ * (percentil linear; ranking quando as pressões são muito parecidas).
+ *
+ * @param {Array<{ ibge?: string|number }>} markers
+ * @returns {Map<string, number>}
+ */
+function buildHeatIntensityMap(markers) {
+    const entries = markers.map((marker) => ({
+        marker,
+        raw: pressureHeatRaw(marker),
+    }));
+    const ranked = entries
+        .filter((entry) => entry.raw > 0)
+        .sort((a, b) => a.raw - b.raw || String(a.marker.ibge).localeCompare(String(b.marker.ibge)));
+    const map = new Map();
+
+    if (ranked.length === 0) {
+        for (const entry of entries) {
+            map.set(String(entry.marker.ibge ?? ""), 0.08);
+        }
+
+        return map;
+    }
+
+    if (ranked.length === 1) {
+        map.set(String(ranked[0].marker.ibge ?? ""), 0.82);
+        for (const entry of entries) {
+            const ibge = String(entry.marker.ibge ?? "");
+            if (!map.has(ibge)) {
+                map.set(ibge, 0.08);
+            }
+        }
+
+        return map;
+    }
+
+    const min = ranked[0].raw;
+    const max = ranked[ranked.length - 1].raw;
+    const span = max - min;
+    const useRank = span < 8;
+
+    for (const entry of entries) {
+        const ibge = String(entry.marker.ibge ?? "");
+        if (entry.raw <= 0) {
+            map.set(ibge, 0.06);
+            continue;
+        }
+
+        if (useRank) {
+            const rank = ranked.findIndex((row) => String(row.marker.ibge) === ibge);
+            const t = rank / Math.max(1, ranked.length - 1);
+            map.set(ibge, 0.14 + t * 0.86);
+            continue;
+        }
+
+        const t = (entry.raw - min) / span;
+        map.set(ibge, 0.12 + t * 0.88);
+    }
+
+    return map;
 }
 
 function isValidCoord(lat, lng) {
@@ -854,9 +1023,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.guideOpen = true;
             this.workspaceTab = "actions";
             this.$nextTick(() => {
-                this.$el
-                    ?.querySelector?.('[data-horizonte-guide="demo"]')
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                const demo = this.$el?.querySelector?.('[data-horizonte-guide="demo"]');
+                demo?.scrollIntoView({ behavior: "smooth", block: "center" });
             });
         },
 
@@ -927,33 +1095,80 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.filterDockOpen = true;
             }
             const el = document.querySelector(step.target);
+            const margin = 16;
+            const bottomSafe = 28;
+            const viewportH =
+                window.visualViewport?.height ?? window.innerHeight;
+            const viewportW =
+                window.visualViewport?.width ?? window.innerWidth;
+            const preferCenter =
+                step.target.includes("workspace") ||
+                step.target.includes("rail");
+
             if (!el || (el.offsetParent === null && step.target.includes("filters"))) {
                 this.tourSpotlightStyle = "display:none";
                 this.tourCardStyle =
-                    "top:50%;left:50%;transform:translate(-50%,-50%);max-width:min(22rem,calc(100vw - 2rem));";
+                    "top:50%;left:50%;transform:translate(-50%,-50%);max-width:min(22rem,calc(100vw - 2rem));max-height:calc(100dvh - 2rem);overflow-y:auto;";
                 return;
             }
-            el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+
+            el.scrollIntoView({
+                block: preferCenter ? "center" : "nearest",
+                behavior: "smooth",
+            });
+
             window.requestAnimationFrame(() => {
-                const rect = el.getBoundingClientRect();
-                const pad = 10;
-                this.tourSpotlightStyle = [
-                    `top:${Math.max(8, rect.top - pad)}px`,
-                    `left:${Math.max(8, rect.left - pad)}px`,
-                    `width:${rect.width + pad * 2}px`,
-                    `height:${rect.height + pad * 2}px`,
-                ].join(";");
-                const cardWidth = Math.min(320, window.innerWidth - 32);
-                let left = rect.left;
-                if (left + cardWidth > window.innerWidth - 16) {
-                    left = window.innerWidth - cardWidth - 16;
-                }
-                left = Math.max(16, left);
-                let top = rect.bottom + 14;
-                if (top + 180 > window.innerHeight - 16) {
-                    top = Math.max(16, rect.top - 180);
-                }
-                this.tourCardStyle = `top:${top}px;left:${left}px;width:${cardWidth}px;`;
+                window.requestAnimationFrame(() => {
+                    const rect = el.getBoundingClientRect();
+                    const pad = 10;
+                    this.tourSpotlightStyle = [
+                        `top:${Math.max(8, rect.top - pad)}px`,
+                        `left:${Math.max(8, rect.left - pad)}px`,
+                        `width:${rect.width + pad * 2}px`,
+                        `height:${rect.height + pad * 2}px`,
+                    ].join(";");
+
+                    const cardEl = this.$refs?.tourCard;
+                    const cardWidth = Math.min(320, viewportW - margin * 2);
+                    const cardHeight = cardEl?.offsetHeight ?? 210;
+
+                    let left = rect.left;
+                    if (left + cardWidth > viewportW - margin) {
+                        left = viewportW - cardWidth - margin;
+                    }
+                    left = Math.max(margin, left);
+
+                    let top = rect.bottom + 12;
+                    const fitsBelow =
+                        top + cardHeight <= viewportH - bottomSafe;
+                    const fitsAbove =
+                        rect.top - cardHeight - 12 >= margin;
+
+                    if (!fitsBelow && fitsAbove) {
+                        top = rect.top - cardHeight - 12;
+                    } else if (!fitsBelow && !fitsAbove) {
+                        top = Math.max(
+                            margin,
+                            Math.min(
+                                rect.top,
+                                viewportH - cardHeight - bottomSafe,
+                            ),
+                        );
+                    }
+
+                    top = Math.max(
+                        margin,
+                        Math.min(top, viewportH - cardHeight - bottomSafe),
+                    );
+
+                    this.tourCardStyle = [
+                        `top:${top}px`,
+                        `left:${left}px`,
+                        `width:${cardWidth}px`,
+                        `max-height:${Math.max(160, viewportH - margin * 2)}px`,
+                        "overflow-y:auto",
+                    ].join(";");
+                });
             });
         },
 
@@ -1715,6 +1930,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.markerLayers = [];
 
             const list = this.mapMarkersForRender.filter((m) => !m.consultoria_active);
+            const intensityMap = buildHeatIntensityMap(list);
             const total = list.length;
             const batchSize = this.regionalDisplayPolicy?.heavy_regional ? 50 : 80;
             const bounds = [];
@@ -1727,22 +1943,28 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     continue;
                 }
                 bounds.push([lat, lng]);
-                const intensity = Math.max(
-                    0.08,
-                    Number(m.heat_intensity ?? m.success_score / 100) || 0,
-                );
+                const ibge = String(m.ibge ?? "");
+                const intensity = intensityMap.get(ibge) ?? 0.08;
+                const pressure = pressureHeatRaw(m);
                 const circle = L.circleMarker([lat, lng], {
-                    radius: 5 + intensity * 12,
+                    radius: 7 + intensity * 14,
                     fillColor: heatColor(intensity),
-                    color: "transparent",
-                    weight: 0,
-                    fillOpacity: 0.12 + intensity * 0.5,
+                    color: intensity >= 0.72 ? "#9f1239" : intensity >= 0.4 ? "#b45309" : "#fbbf24",
+                    weight: 1,
+                    opacity: 0.55,
+                    fillOpacity: 0.28 + intensity * 0.62,
                     renderer: this.canvasRenderer,
                 });
                 circle.on("click", (e) => {
                     L.DomEvent.stopPropagation(e);
                     this.selectMarker(m, e);
                 });
+                circle.bindTooltip(
+                    `<strong>${escapeHtml(m.name)}</strong><br>` +
+                        `${escapeHtml("Pressão FUNDEB")}: ${formatScoreValue(pressure)}/100<br>` +
+                        `<span class="text-slate-500">${escapeHtml("Intensidade no recorte")}: ${Math.round(intensity * 100)}%</span>`,
+                    { direction: "top", sticky: true },
+                );
                 circle.addTo(this.heatLayer);
 
                 if (i > 0 && i % batchSize === 0) {
@@ -1780,12 +2002,18 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (!this.map || !this.isRegionalMode || !this.canvasRenderer) {
                 return;
             }
-            if (!this.map.hasLayer(this.clusterGroup)) {
+            const layer =
+                this.mapView === "heat" && this.map.hasLayer(this.heatLayer)
+                    ? this.heatLayer
+                    : this.map.hasLayer(this.clusterGroup)
+                      ? this.clusterGroup
+                      : null;
+            if (!layer) {
                 return;
             }
-            this.clusterGroup.eachLayer((layer) => {
-                if (typeof layer.redraw === "function") {
-                    layer.redraw();
+            layer.eachLayer((marker) => {
+                if (typeof marker.redraw === "function") {
+                    marker.redraw();
                 }
             });
         },
@@ -2079,30 +2307,41 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     `<dt class="text-gray-500">${escapeHtml("Compl. FUNDEB")}</dt><dd class="tabular-nums font-medium">${formatCurrencyBrl(m.complementacao_fundeb)}</dd>`,
                 );
             }
-            if (m.transfer_total != null) {
-                lines.push(
-                    `<dt class="text-gray-500">${escapeHtml("Repasses")}</dt><dd class="tabular-nums font-medium">${formatCurrencyBrl(m.transfer_total)}</dd>`,
-                );
+            lines.push(`</dl>`);
+
+            const transferBlock = transferTooltipHtml(m, this.refYear);
+            if (transferBlock) {
+                lines.push(transferBlock);
             }
+
             const sources = [
                 m.has_fundeb ? "FUNDEB" : null,
                 m.has_censo ? "Censo" : null,
                 m.has_saeb ? "SAEB" : null,
                 m.has_cadunico ? "CadÚnico" : null,
             ].filter(Boolean);
+            const sge = m.sge && typeof m.sge === "object" ? m.sge : null;
+            if (sources.length > 0 || sge) {
+                lines.push(`<dl class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">`);
+            }
             if (sources.length > 0) {
                 lines.push(
                     `<dt class="text-gray-500">${escapeHtml("Fontes")}</dt><dd>${escapeHtml(sources.join(" · "))}</dd>`,
                 );
             }
-            const sge = m.sge && typeof m.sge === "object" ? m.sge : null;
             if (sge) {
                 lines.push(
                     `<dt class="text-gray-500">${escapeHtml("SGE")}</dt><dd>${escapeHtml(sge.system_label || sge.system || "—")}</dd>`,
                 );
             }
-            lines.push(`</dl>`);
+            if (sources.length > 0 || sge) {
+                lines.push(`</dl>`);
+            }
 
+            const transferAno =
+                m.transfer_ano != null && m.transfer_total != null
+                    ? String(m.transfer_ano)
+                    : null;
             const dims = [
                 { key: "financial_pressure", label: "Pressão FUNDEB" },
                 { key: "pedagogical_gap", label: "Pedagógica" },
@@ -2117,11 +2356,20 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             lines.push(`<div class="mt-1 space-y-1.5">`);
             for (const d of dims) {
                 const val = Math.max(0, Math.min(100, Number(m[d.key] ?? 0)));
+                const isTransfer = d.key === "transfer_dependency";
+                const dimLabel =
+                    isTransfer && transferAno
+                        ? `${d.label} (${transferAno})`
+                        : d.label;
+                const barClass =
+                    isTransfer && m.transfer_fundeb != null && Number(m.transfer_fundeb) > 0
+                        ? "bg-rose-600"
+                        : "bg-teal-600";
                 lines.push(
                     `<div class="flex items-center gap-2 text-[11px]">` +
-                        `<span class="w-[4.5rem] shrink-0 text-slate-500">${escapeHtml(d.label)}</span>` +
+                        `<span class="w-[4.5rem] shrink-0 text-slate-500">${escapeHtml(dimLabel)}</span>` +
                         `<span class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">` +
-                        `<span class="block h-full rounded-full bg-teal-600" style="width:${val}%"></span>` +
+                        `<span class="block h-full rounded-full ${barClass}" style="width:${val}%"></span>` +
                         `</span>` +
                         `<span class="w-6 text-right tabular-nums font-medium">${formatScoreValue(val)}</span>` +
                         `</div>`,

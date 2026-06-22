@@ -5,6 +5,7 @@ namespace App\Services\Funding;
 use App\Models\City;
 use App\Repositories\MunicipalTransferSnapshotRepository;
 use App\Support\Brazil\IbgeMunicipalityCatalog;
+use App\Support\Brazil\MunicipalityNomeUfKey;
 use App\Support\Horizonte\HorizonteUfScope;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -569,12 +570,7 @@ final class TesouroTransferenciasCsvService
 
     private function codMunForIbge(string $ibge): ?string
     {
-        $map = cache()->get('tesouro_cod_mun_to_ibge');
-        if (! is_array($map)) {
-            return null;
-        }
-
-        foreach ($map as $cod => $mappedIbge) {
+        foreach ($this->codMunToIbgeMap() as $cod => $mappedIbge) {
             if ((string) $mappedIbge === $ibge) {
                 return (string) $cod;
             }
@@ -585,13 +581,29 @@ final class TesouroTransferenciasCsvService
 
     public function rememberCodMunMapping(string $codMun, string $ibge): void
     {
-        $map = cache()->get('tesouro_cod_mun_to_ibge');
-        if (! is_array($map)) {
-            $map = [];
+        $codMun = trim($codMun);
+        $ibge = trim($ibge);
+        if ($codMun === '' || $ibge === '') {
+            return;
         }
+
+        $map = $this->codMunToIbgeMap();
+        if (($map[$codMun] ?? '') === $ibge) {
+            return;
+        }
+
         $map[$codMun] = $ibge;
-        cache()->put('tesouro_cod_mun_to_ibge', $map, 604800);
+        $path = $this->codMunMapPath();
+        $dir = dirname($path);
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        file_put_contents($path, json_encode($map, JSON_UNESCAPED_UNICODE));
+        self::$codMunMapMemo = $map;
     }
+
+    /** @var array<string, string>|null */
+    private static ?array $codMunMapMemo = null;
 
     /**
      * @param  list<string>  $header
@@ -628,25 +640,39 @@ final class TesouroTransferenciasCsvService
 
     private function nomeUfKey(string $nome, string $uf): string
     {
-        $nome = $this->normalizeNome($nome);
-        $uf = strtoupper(trim($uf));
-
-        return $nome !== '' && $uf !== '' ? $nome.'|'.$uf : '';
+        return MunicipalityNomeUfKey::key($nome, $uf);
     }
 
     private function normalizeNome(string $nome): string
     {
-        $nome = mb_strtolower(trim($nome));
-        if ($nome === '') {
-            return '';
-        }
-        $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $nome);
-        if (is_string($ascii) && $ascii !== '') {
-            $nome = $ascii;
-        }
-        $nome = preg_replace('/[^a-z0-9\s]/', '', $nome) ?? $nome;
+        return MunicipalityNomeUfKey::normalizeNome($nome);
+    }
 
-        return trim(preg_replace('/\s+/', ' ', $nome) ?? $nome);
+    /**
+     * @return array<string, string>
+     */
+    private function codMunToIbgeMap(): array
+    {
+        if (self::$codMunMapMemo !== null) {
+            return self::$codMunMapMemo;
+        }
+
+        $path = $this->codMunMapPath();
+        if (! is_readable($path)) {
+            self::$codMunMapMemo = [];
+
+            return self::$codMunMapMemo;
+        }
+
+        $decoded = json_decode((string) file_get_contents($path), true);
+        self::$codMunMapMemo = is_array($decoded) ? $decoded : [];
+
+        return self::$codMunMapMemo;
+    }
+
+    private function codMunMapPath(): string
+    {
+        return storage_path('app/funding/tesouro-csv/cod_mun_to_ibge.json');
     }
 
     /**
@@ -715,21 +741,11 @@ final class TesouroTransferenciasCsvService
 
         $ufs = $ufFilter !== null && HorizonteUfScope::normalize($ufFilter) !== null
             ? [HorizonteUfScope::normalize($ufFilter)]
-            : IbgeMunicipalityCatalog::brazilianUfs();
+            : null;
 
-        $ibgeByNomeUf = [];
-        foreach ($ufs as $uf) {
-            if (! is_string($uf) || $uf === '') {
-                continue;
-            }
-            foreach ($catalog->municipalitiesForUf($uf) as $ibge => $meta) {
-                $name = trim((string) ($meta['name'] ?? ''));
-                if ($name === '') {
-                    continue;
-                }
-                $ibgeByNomeUf[$this->nomeUfKey($name, $uf)] = (string) $ibge;
-            }
-        }
+        $ibgeByNomeUf = $ufs === null
+            ? $catalog->nationalNomeUfToIbgeIndex()
+            : $this->nomeUfIbgeIndexForUfs($catalog, $ufs);
 
         $rows = [];
         foreach ($resources as $resource) {
@@ -792,6 +808,115 @@ final class TesouroTransferenciasCsvService
         return $rows;
     }
 
+    /**
+     * Diagnóstico quando a importação nacional FUNDEB não produz linhas.
+     *
+     * @return array{
+     *   message: string,
+     *   csv_municipalities: int,
+     *   year_values: int,
+     *   ibge_index_size: int,
+     *   cod_mun_mappings: int
+     * }
+     */
+    public function diagnoseNationalFundeb(
+        int $year,
+        int $timeout,
+        ?string $ufFilter,
+        IbgeMunicipalityCatalog $catalog,
+    ): array {
+        $cfg = config('ieducar.other_funding.public_queries.tesouro_ckan', []);
+        $resources = array_values(array_filter(
+            $this->resolveCsvResources(is_array($cfg) ? $cfg : [], $timeout),
+            static fn (array $r): bool => (string) ($r['programa_id'] ?? '') === 'fundeb',
+        ));
+
+        if ($resources === []) {
+            return [
+                'message' => __('Repasses Tesouro: recurso CSV FUNDEB não configurado (ieducar.other_funding.public_queries.tesouro_ckan.csv_resources).'),
+                'csv_municipalities' => 0,
+                'year_values' => 0,
+                'ibge_index_size' => 0,
+                'cod_mun_mappings' => 0,
+            ];
+        }
+
+        $index = $this->loadResourceIndex($resources[0], $timeout);
+        $byNomeUf = is_array($index['by_nome_uf'] ?? null) ? $index['by_nome_uf'] : [];
+        $yearValues = 0;
+        foreach ($byNomeUf as $entry) {
+            if (! is_array($entry)) {
+                continue;
+            }
+            if (((float) ($entry['annual'][$year] ?? 0)) > 0) {
+                $yearValues++;
+            }
+        }
+
+        $ufs = $ufFilter !== null && HorizonteUfScope::normalize($ufFilter) !== null
+            ? [HorizonteUfScope::normalize($ufFilter)]
+            : null;
+        $ibgeIndex = $ufs === null
+            ? $catalog->nationalNomeUfToIbgeIndex()
+            : $this->nomeUfIbgeIndexForUfs($catalog, $ufs);
+        $codMap = $this->codMunToIbgeMap();
+
+        if ($byNomeUf === []) {
+            $message = __('Repasses Tesouro: não foi possível ler o CSV FUNDEB do CKAN (rede bloqueada ou cache vazio). Verifique acesso a tesourotransparente.gov.br.');
+        } elseif ($yearValues === 0) {
+            $message = __('Repasses Tesouro: CSV lido (:n municípios), mas sem valores para o ano :ano.', [
+                'n' => (string) count($byNomeUf),
+                'ano' => (string) $year,
+            ]);
+        } elseif ($ibgeIndex === [] && $codMap === []) {
+            $message = __('Repasses Tesouro: CSV com :n municípios e :y com valor em :ano, mas sem índice IBGE (API servicodados.ibge.gov.br inacessível). Execute antes: php artisan horizonte:fortnightly-feed --phase=ibge_catalog', [
+                'n' => (string) count($byNomeUf),
+                'y' => (string) $yearValues,
+                'ano' => (string) $year,
+            ]);
+        } else {
+            $message = __('Repasses Tesouro: nenhuma linha FUNDEB cruzada com IBGE (anos :anos). Índice nome+UF: :idx · cache COD_MUN: :cod.', [
+                'anos' => implode(', ', array_map('strval', array_unique([$year, $year - 1]))),
+                'idx' => (string) count($ibgeIndex),
+                'cod' => (string) count($codMap),
+            ]);
+        }
+
+        return [
+            'message' => $message,
+            'csv_municipalities' => count($byNomeUf),
+            'year_values' => $yearValues,
+            'ibge_index_size' => count($ibgeIndex),
+            'cod_mun_mappings' => count($codMap),
+        ];
+    }
+
+    /**
+     * @param  list<string>  $ufs
+     * @return array<string, string>
+     */
+    private function nomeUfIbgeIndexForUfs(IbgeMunicipalityCatalog $catalog, array $ufs): array
+    {
+        $index = [];
+        foreach ($ufs as $uf) {
+            if (! is_string($uf) || $uf === '') {
+                continue;
+            }
+            foreach ($catalog->municipalitiesForUf($uf) as $ibge => $meta) {
+                $name = trim((string) ($meta['name'] ?? ''));
+                if ($name === '') {
+                    continue;
+                }
+                $key = MunicipalityNomeUfKey::key($name, $uf);
+                if ($key !== '') {
+                    $index[$key] = (string) $ibge;
+                }
+            }
+        }
+
+        return $index;
+    }
+
     private function resolveIbgeFromCodMun(string $codMun): ?string
     {
         $codMun = trim($codMun);
@@ -799,8 +924,8 @@ final class TesouroTransferenciasCsvService
             return null;
         }
 
-        $map = cache()->get('tesouro_cod_mun_to_ibge');
+        $map = $this->codMunToIbgeMap();
 
-        return is_array($map) ? ($map[$codMun] ?? null) : null;
+        return $map[$codMun] ?? null;
     }
 }

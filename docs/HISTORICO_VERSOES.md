@@ -1,14 +1,14 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`5.7.4`** · tag de deploy **`20260620e-Vidar`** · ver [RELEASE_20260620e_VIDAR.md](RELEASE_20260620e_VIDAR.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`5.7.5`** · tag de deploy **`20260622a-Mimir`** · ver [RELEASE_20260622a_MIMIR.md](RELEASE_20260622a_MIMIR.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **5.7.4** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **5.7.5** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260620e-Vidar` |
-| **Data de referência** | **20/06/2026** |
-| **Último marco documentado** | **Vidar** — sync BR wanted/ensure, linger — [RELEASE_20260620e_VIDAR.md](RELEASE_20260620e_VIDAR.md) |
+| **Tag de deploy (servidor)** | `20260622a-Mimir` |
+| **Data de referência** | **22/06/2026** |
+| **Último marco documentado** | **Mímir** — tour/demo Horizonte, repasses modal, import Tesouro — [RELEASE_20260622a_MIMIR.md](RELEASE_20260622a_MIMIR.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -37,6 +37,7 @@ timeline
     2026-06-20 : 5.7.2c Forseti — mapa UF extensas, cache Redis, filtros GIS
     2026-06-20 : 5.7.3d Bragi — mapa recorte/tour, sync screen, UI pt-BR
     2026-06-20 : 5.7.4e Vidar — sync wanted/ensure, reinício pós-TERM
+    2026-06-22 : 5.7.5a Mimir — tour/demo Horizonte, repasses modal, import Tesouro
 ```
 
 Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) §5–6.
@@ -47,7 +48,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 5.7.4** | — / `20260620e-Vidar` → `main` | — | 20/06/2026 | **Produção:** sync BR wanted/ensure, runner resistente a TERM, `loginctl enable-linger` — [RELEASE_20260620e_VIDAR.md](RELEASE_20260620e_VIDAR.md). |
+| **▶ 5.7.5** | — / `20260622a-Mimir` → `main` | — | 22/06/2026 | **Produção:** tour/demo Horizonte, repasses no modal (FUNDEB/educação), import Tesouro com índice IBGE — [RELEASE_20260622a_MIMIR.md](RELEASE_20260622a_MIMIR.md). |
+| 5.7.4 | — / `20260620e-Vidar` → `main` | — | 20/06/2026 | **Produção:** sync BR wanted/ensure, runner resistente a TERM, `loginctl enable-linger` — [RELEASE_20260620e_VIDAR.md](RELEASE_20260620e_VIDAR.md). |
 | 5.7.3 | — / `20260620d-Bragi` → `main` | — | 20/06/2026 | Horizonte mapa UF/recorte/tour; sync BR screen; UI pt-BR — [RELEASE_20260620d_BRAGI.md](RELEASE_20260620d_BRAGI.md). |
 | 5.7.2 | — / `20260620c-Forseti` → `main` | — | 20/06/2026 | Horizonte performance UF 150+; filtros GIS + dock lateral — [RELEASE_20260620c_FORSETI.md](RELEASE_20260620c_FORSETI.md). |
 | 5.7.1 | — / `20260620b-Sleipnir` → `main` | — | 20/06/2026 | Convenção `MAJOR.VERSÃO.MINOR` + codenames nórdicos/astecas; sync BR em GNU screen — [RELEASE_20260620b_SLEIPNIR.md](RELEASE_20260620b_SLEIPNIR.md). |

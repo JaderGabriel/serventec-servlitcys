@@ -4731,6 +4731,9 @@
     .serv-horizonte-tour__card {
         @apply absolute z-10 rounded-xl border border-slate-200/90 bg-white p-4 shadow-xl pointer-events-auto
             dark:border-slate-600 dark:bg-slate-900;
+        padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+        max-height: calc(100dvh - 2rem);
+        overflow-y: auto;
     }
 
     @keyframes serv-horizonte-tour-pulse {
@@ -4745,105 +4748,205 @@
 
     /* Horizonte — demonstração animada */
     .serv-horizonte-demo {
-        @apply grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] items-center;
+        @apply grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] items-start;
     }
 
     .serv-horizonte-demo__stage {
-        @apply relative aspect-[16/10] max-h-64 rounded-2xl border border-slate-200/90 bg-gradient-to-br from-slate-100 to-slate-50 overflow-hidden
+        @apply relative rounded-2xl border border-slate-200/90 bg-gradient-to-br from-slate-100 to-slate-50 overflow-hidden
             dark:border-slate-700 dark:from-slate-900 dark:to-slate-950;
+        aspect-ratio: 16 / 10;
+        max-height: min(22rem, 52dvh);
+        min-height: 12rem;
     }
 
-    .serv-horizonte-demo__map {
-        @apply absolute inset-0 transition-opacity duration-700;
+    .serv-horizonte-demo__scene {
+        @apply absolute inset-0 flex flex-col p-3 sm:p-4;
+        opacity: 0;
+        pointer-events: none;
     }
 
-    .serv-horizonte-demo__map--br {
-        animation: serv-horizonte-demo-br 9s ease-in-out infinite;
+    .serv-horizonte-demo__scene--national {
+        animation: serv-horizonte-demo-scene-national 16s ease-in-out infinite;
     }
 
-    .serv-horizonte-demo__map--uf {
-        @apply opacity-0;
-        animation: serv-horizonte-demo-uf 9s ease-in-out infinite;
+    .serv-horizonte-demo__scene--regional {
+        animation: serv-horizonte-demo-scene-regional 16s ease-in-out infinite;
     }
 
-    .serv-horizonte-demo__panel {
-        @apply absolute right-3 top-3 w-28 rounded-lg border border-slate-200/80 bg-white/90 p-2 space-y-1.5 shadow-sm opacity-0
-            dark:border-slate-600 dark:bg-slate-900/90;
-        animation: serv-horizonte-demo-panel 9s ease-in-out infinite;
+    .serv-horizonte-demo__scene--filters {
+        animation: serv-horizonte-demo-scene-filters 16s ease-in-out infinite;
     }
 
-    .serv-horizonte-demo__bubble {
-        @apply absolute rounded-full bg-amber-200/90 border-2 border-white dark:border-slate-800;
+    .serv-horizonte-demo__scene--modal {
+        animation: serv-horizonte-demo-scene-modal 16s ease-in-out infinite;
     }
 
-    .serv-horizonte-demo__bubble--a {
-        @apply h-10 w-10 left-[18%] top-[42%];
+    .serv-horizonte-demo__map-frame {
+        @apply relative flex-1 min-h-0 rounded-xl border border-slate-200/80 bg-white/70 overflow-hidden
+            dark:border-slate-600 dark:bg-slate-900/50;
     }
 
-    .serv-horizonte-demo__bubble--b {
-        @apply h-14 w-14 left-[44%] top-[28%] bg-rose-300/90;
+    .serv-horizonte-demo__map-frame--regional,
+    .serv-horizonte-demo__map-frame--filters,
+    .serv-horizonte-demo__map-frame--modal {
+        @apply bg-sky-50/80 dark:bg-slate-950/60;
     }
 
-    .serv-horizonte-demo__bubble--c {
-        @apply h-8 w-8 left-[68%] top-[55%];
+    .serv-horizonte-demo__land {
+        @apply absolute inset-0 h-full w-full object-contain p-2 opacity-90;
     }
 
-    .serv-horizonte-demo__cursor {
-        @apply absolute h-3 w-3 rounded-full bg-teal-500 border-2 border-white shadow left-[44%] top-[28%];
-        animation: serv-horizonte-demo-cursor 9s ease-in-out infinite;
+    .serv-horizonte-demo__overlay {
+        @apply absolute inset-0 h-full w-full;
     }
 
-    .serv-horizonte-demo__dot {
-        @apply absolute h-2 w-2 rounded-full bg-rose-600/80;
+    .serv-horizonte-demo__uf-bubble {
+        animation: serv-horizonte-demo-bubble-pulse 2.4s ease-in-out infinite;
     }
 
-    .serv-horizonte-demo__dot:nth-child(1) {
-        @apply left-[22%] top-[35%];
-    }
-    .serv-horizonte-demo__dot:nth-child(2) {
-        @apply left-[38%] top-[52%];
-    }
-    .serv-horizonte-demo__dot:nth-child(3) {
-        @apply left-[55%] top-[40%];
-    }
-    .serv-horizonte-demo__dot:nth-child(4) {
-        @apply left-[62%] top-[58%];
-    }
-    .serv-horizonte-demo__dot:nth-child(5) {
-        @apply left-[48%] top-[68%];
+    .serv-horizonte-demo__uf-focus {
+        fill: none;
+        stroke: #14b8a6;
+        stroke-width: 2.5;
+        animation: serv-horizonte-demo-uf-focus 16s ease-in-out infinite;
     }
 
-    .serv-horizonte-demo__line {
+    .serv-horizonte-demo__cursor-dot {
+        fill: #14b8a6;
+        stroke: #ffffff;
+        stroke-width: 2;
+        animation: serv-horizonte-demo-cursor 16s ease-in-out infinite;
+    }
+
+    .serv-horizonte-demo__regional-svg {
+        @apply absolute inset-0 h-full w-full;
+    }
+
+    .serv-horizonte-demo__regional-svg--dim {
+        @apply opacity-70;
+    }
+
+    .serv-horizonte-demo__regional-bg {
+        fill: #e2e8f0;
+    }
+
+  .dark .serv-horizonte-demo__regional-bg {
+        fill: #1e293b;
+    }
+
+    .serv-horizonte-demo__regional-land {
+        fill: #cbd5e1;
+        stroke: #94a3b8;
+        stroke-width: 1;
+    }
+
+    .dark .serv-horizonte-demo__regional-land {
+        fill: #334155;
+        stroke: #64748b;
+    }
+
+    .serv-horizonte-demo__muni-dot {
+        animation: serv-horizonte-demo-muni-pop 16s ease-in-out infinite;
+    }
+
+    .serv-horizonte-demo__muni-focus {
+        fill: none;
+        stroke: #0d9488;
+        stroke-width: 2;
+        animation: serv-horizonte-demo-muni-focus 16s ease-in-out infinite;
+    }
+
+    .serv-horizonte-demo__filter-dock {
+        @apply absolute left-3 top-3 z-10 w-32 rounded-lg border border-slate-200/90 bg-white/95 p-2.5 space-y-2 shadow-md
+            dark:border-slate-600 dark:bg-slate-900/95;
+        animation: serv-horizonte-demo-filter-dock 16s ease-in-out infinite;
+    }
+
+    .serv-horizonte-demo__filter-title {
+        @apply text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-horizonte-demo__filter-pill {
+        @apply block rounded-md px-2 py-1 text-[10px] font-semibold text-slate-600 ring-1 ring-slate-200/90
+            dark:text-slate-300 dark:ring-slate-600;
+    }
+
+    .serv-horizonte-demo__filter-pill.is-active {
+        @apply bg-teal-50 text-teal-900 ring-teal-300 dark:bg-teal-950/40 dark:text-teal-100 dark:ring-teal-700;
+    }
+
+    .serv-horizonte-demo__filter-line {
         @apply block h-1.5 rounded-full bg-slate-200 dark:bg-slate-700;
     }
 
-    .serv-horizonte-demo__line--w75 {
-        @apply w-3/4;
+    .serv-horizonte-demo__filter-line--w100 {
+        @apply w-full;
     }
-    .serv-horizonte-demo__line--w50 {
-        @apply w-1/2;
+
+    .serv-horizonte-demo__filter-line--w90 {
+        width: 90%;
     }
-    .serv-horizonte-demo__line--w66 {
-        @apply w-2/3;
+
+    .serv-horizonte-demo__filter-line--w80 {
+        width: 80%;
+    }
+
+    .serv-horizonte-demo__filter-line--w75 {
+        width: 75%;
+    }
+
+    .serv-horizonte-demo__filter-line--w70 {
+        width: 70%;
+    }
+
+    .serv-horizonte-demo__muni-card {
+        @apply absolute right-3 bottom-3 z-10 w-40 rounded-xl border border-slate-200/90 bg-white/95 p-3 shadow-lg space-y-2
+            dark:border-slate-600 dark:bg-slate-900/95;
+        animation: serv-horizonte-demo-muni-card 16s ease-in-out infinite;
+    }
+
+    .serv-horizonte-demo__muni-card-title {
+        @apply text-xs font-bold text-serv-navy dark:text-slate-100;
+    }
+
+    .serv-horizonte-demo__muni-card-title span {
+        @apply text-slate-500 font-medium;
+    }
+
+    .serv-horizonte-demo__muni-scores {
+        @apply grid grid-cols-3 gap-1 text-[9px] text-slate-600 dark:text-slate-400;
+    }
+
+    .serv-horizonte-demo__muni-scores strong {
+        @apply block text-[11px] text-serv-navy dark:text-slate-100 tabular-nums;
+    }
+
+    .serv-horizonte-demo__caption {
+        @apply mt-2 text-[10px] text-center text-slate-500 dark:text-slate-400;
     }
 
     .serv-horizonte-demo__steps {
-        @apply space-y-3;
+        @apply space-y-2.5;
     }
 
     .serv-horizonte-demo__step {
         @apply flex flex-col gap-0.5 rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 dark:border-slate-700 dark:bg-slate-900/50;
-        animation: serv-horizonte-demo-step 9s ease-in-out infinite;
     }
 
     .serv-horizonte-demo__step:nth-child(1) {
-        animation-delay: 0s;
+        animation: serv-horizonte-demo-step-1 16s ease-in-out infinite;
     }
+
     .serv-horizonte-demo__step:nth-child(2) {
-        animation-delay: 0.15s;
+        animation: serv-horizonte-demo-step-2 16s ease-in-out infinite;
     }
+
     .serv-horizonte-demo__step:nth-child(3) {
-        animation-delay: 0.3s;
+        animation: serv-horizonte-demo-step-3 16s ease-in-out infinite;
+    }
+
+    .serv-horizonte-demo__step:nth-child(4) {
+        animation: serv-horizonte-demo-step-4 16s ease-in-out infinite;
     }
 
     .serv-horizonte-demo__step-num {
@@ -4851,68 +4954,238 @@
             dark:bg-teal-950/50 dark:text-teal-200;
     }
 
-    @keyframes serv-horizonte-demo-br {
+    .serv-horizonte-demo__attribution {
+        @apply lg:col-span-2 text-[10px] text-slate-400 dark:text-slate-500;
+    }
+
+    @keyframes serv-horizonte-demo-scene-national {
         0%,
-        28%,
-        100% {
+        23% {
             opacity: 1;
         }
-        38%,
-        88% {
+        27%,
+        100% {
             opacity: 0;
         }
     }
 
-    @keyframes serv-horizonte-demo-uf {
+    @keyframes serv-horizonte-demo-scene-regional {
         0%,
-        32%,
-        100% {
+        25% {
             opacity: 0;
         }
-        42%,
-        82% {
+        29%,
+        48% {
             opacity: 1;
+        }
+        52%,
+        100% {
+            opacity: 0;
         }
     }
 
-    @keyframes serv-horizonte-demo-panel {
+    @keyframes serv-horizonte-demo-scene-filters {
         0%,
-        58%,
+        49% {
+            opacity: 0;
+        }
+        53%,
+        72% {
+            opacity: 1;
+        }
+        76%,
         100% {
             opacity: 0;
-            transform: translateY(4px);
         }
-        68%,
-        88% {
+    }
+
+    @keyframes serv-horizonte-demo-scene-modal {
+        0%,
+        73% {
+            opacity: 0;
+        }
+        77%,
+        96% {
             opacity: 1;
-            transform: translateY(0);
+        }
+        100% {
+            opacity: 0;
+        }
+    }
+
+    @keyframes serv-horizonte-demo-uf-focus {
+        0%,
+        18% {
+            opacity: 0;
+            r: 12;
+        }
+        22%,
+        26% {
+            opacity: 1;
+            r: 22;
+        }
+        30%,
+        100% {
+            opacity: 0;
         }
     }
 
     @keyframes serv-horizonte-demo-cursor {
         0%,
-        18% {
+        14% {
             transform: translate(0, 0);
+            opacity: 0;
         }
-        24%,
-        32% {
-            transform: translate(0, 0) scale(1.2);
+        18%,
+        22% {
+            transform: translate(0, 0);
+            opacity: 1;
         }
-        38%,
+        26%,
         100% {
-            transform: translate(12px, 18px);
+            transform: translate(14px, 10px);
+            opacity: 0;
         }
     }
 
-    @keyframes serv-horizonte-demo-step {
+    @keyframes serv-horizonte-demo-bubble-pulse {
         0%,
         100% {
-            border-color: rgb(226 232 240 / 0.8);
+            transform: scale(1);
         }
-        8%,
-        28% {
+        50% {
+            transform: scale(1.04);
+        }
+    }
+
+    @keyframes serv-horizonte-demo-muni-pop {
+        0%,
+        30% {
+            transform: scale(0.6);
+            opacity: 0;
+        }
+        36%,
+        48% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        52%,
+        100% {
+            opacity: 0.85;
+        }
+    }
+
+    @keyframes serv-horizonte-demo-muni-focus {
+        0%,
+        38% {
+            opacity: 0;
+        }
+        42%,
+        48% {
+            opacity: 1;
+        }
+        52%,
+        100% {
+            opacity: 0;
+        }
+    }
+
+    @keyframes serv-horizonte-demo-filter-dock {
+        0%,
+        52% {
+            opacity: 0;
+            transform: translateX(-12px);
+        }
+        56%,
+        72% {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        76%,
+        100% {
+            opacity: 0;
+        }
+    }
+
+    @keyframes serv-horizonte-demo-muni-card {
+        0%,
+        76% {
+            opacity: 0;
+            transform: translateY(8px) scale(0.96);
+        }
+        80%,
+        96% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        100% {
+            opacity: 0;
+        }
+    }
+
+    @keyframes serv-horizonte-demo-step-1 {
+        0%,
+        23% {
             border-color: rgb(20 184 166 / 0.55);
-            background-color: rgb(240 253 250 / 0.7);
+            background-color: rgb(240 253 250 / 0.85);
+        }
+        27%,
+        100% {
+            border-color: rgb(226 232 240 / 0.8);
+            background-color: rgb(255 255 255 / 0.8);
+        }
+    }
+
+    @keyframes serv-horizonte-demo-step-2 {
+        0%,
+        28% {
+            border-color: rgb(226 232 240 / 0.8);
+            background-color: rgb(255 255 255 / 0.8);
+        }
+        29%,
+        48% {
+            border-color: rgb(20 184 166 / 0.55);
+            background-color: rgb(240 253 250 / 0.85);
+        }
+        52%,
+        100% {
+            border-color: rgb(226 232 240 / 0.8);
+            background-color: rgb(255 255 255 / 0.8);
+        }
+    }
+
+    @keyframes serv-horizonte-demo-step-3 {
+        0%,
+        52% {
+            border-color: rgb(226 232 240 / 0.8);
+            background-color: rgb(255 255 255 / 0.8);
+        }
+        53%,
+        72% {
+            border-color: rgb(20 184 166 / 0.55);
+            background-color: rgb(240 253 250 / 0.85);
+        }
+        76%,
+        100% {
+            border-color: rgb(226 232 240 / 0.8);
+            background-color: rgb(255 255 255 / 0.8);
+        }
+    }
+
+    @keyframes serv-horizonte-demo-step-4 {
+        0%,
+        76% {
+            border-color: rgb(226 232 240 / 0.8);
+            background-color: rgb(255 255 255 / 0.8);
+        }
+        77%,
+        96% {
+            border-color: rgb(20 184 166 / 0.55);
+            background-color: rgb(240 253 250 / 0.85);
+        }
+        100% {
+            border-color: rgb(226 232 240 / 0.8);
+            background-color: rgb(255 255 255 / 0.8);
         }
     }
 

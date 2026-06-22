@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 5.7.4 · **Última revisão:** 2026-06-20
+**Versão do produto:** 5.7.5 · **Última revisão:** 2026-06-22
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
-Mapa visual da documentação em produção: versão actual **5.7.4**, linha **5.x** (Horizonte GIS + operação admin), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
+Mapa visual da documentação em produção: versão actual **5.7.5**, linha **5.x** (Horizonte GIS + operação admin), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
 
 Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e secções expansíveis).
 
@@ -14,7 +14,7 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **5.7.4** |
+| **Versão semântica** | **5.7.5** |
 | **Tag de deploy** | `20260620e-Vidar` |
 | **Data de referência** | 2026-06-20 |
 | **Release** | [RELEASE_20260620e_VIDAR.md](RELEASE_20260620e_VIDAR.md) |

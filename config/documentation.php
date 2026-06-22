@@ -24,7 +24,7 @@ return [
     */
 
     'product' => [
-        'version' => '5.7.4',
+        'version' => '5.7.5',
         'release_tag' => '20260620e-Vidar',
         'commit_short' => '',
         'commit_number' => null,
