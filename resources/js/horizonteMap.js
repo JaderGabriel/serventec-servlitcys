@@ -798,6 +798,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         async init() {
             this.initMap();
+            this._guideListener = (event) => {
+                this.onHorizonteGuide(event?.detail ?? {});
+            };
+            window.addEventListener("horizonte-guide", this._guideListener);
             this.tourResizeHandler = () => {
                 if (this.tourActive) {
                     this.positionTourStep();
@@ -1424,7 +1428,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.map = L.map(this.$refs.map, {
                 zoomControl: true,
                 scrollWheelZoom: true,
-                preferCanvas: true,
+                preferCanvas: false,
+                maxZoom: 12,
+                zoomSnap: 0.5,
+                zoomDelta: 0.5,
                 maxBounds: BRAZIL_BOUNDS,
                 maxBoundsViscosity: 0.85,
                 minZoom: 3,
@@ -1432,7 +1439,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.canvasRenderer = L.canvas({ padding: 0.5 });
 
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                maxZoom: 14,
+                maxZoom: 12,
                 attribution:
                     '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
             }).addTo(this.map);
@@ -1447,7 +1454,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 maxClusterRadius: 48,
                 spiderfyOnMaxZoom: true,
                 showCoverageOnHover: false,
-                disableClusteringAtZoom: 11,
+                disableClusteringAtZoom: 9,
                 zoomToBoundsOnClick: true,
                 removeOutsideVisibleBounds: true,
             });
@@ -1458,6 +1465,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 if (!this.sgeFormOpen) {
                     this.closeTooltip();
                 }
+            });
+
+            this.map.on("zoomend", () => {
+                this.refreshCanvasMarkersAfterZoom();
             });
 
             const onFilterChange = () => {
@@ -1693,7 +1704,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             const bounds = list
                 .map((m) => [Number(m.lat), Number(m.lng)])
                 .filter(([la, ln]) => isValidCoord(la, ln));
-            this.fitMapBounds(bounds, this.scopeUf ? 8 : 6);
+            this.fitMapBounds(bounds, this.scopeUf ? 5 : 4);
         },
 
         async renderHeatLayer() {
@@ -1740,7 +1751,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 }
             }
 
-            this.fitMapBounds(bounds, this.scopeUf ? 8 : 6);
+            this.fitMapBounds(bounds, this.scopeUf ? 5 : 4);
         },
 
         fitMapBounds(bounds, fallbackZoom = 4) {
@@ -1752,17 +1763,31 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 const heavy = Boolean(this.regionalDisplayPolicy?.heavy_regional);
                 const maxZoom = this.scopeUf
                     ? heavy
-                        ? 8
+                        ? 7
                         : valid.length > 80
-                          ? 9
-                          : 10
+                          ? 7
+                          : 8
                     : valid.length > 80
-                      ? 6
-                      : 7;
-                this.map.fitBounds(valid, { padding: [40, 40], maxZoom, animate: !heavy });
+                      ? 5
+                      : 6;
+                this.map.fitBounds(valid, { padding: [48, 48], maxZoom, animate: !heavy });
             } else {
                 this.map.setView([-14.2, -51.9], fallbackZoom);
             }
+        },
+
+        refreshCanvasMarkersAfterZoom() {
+            if (!this.map || !this.isRegionalMode || !this.canvasRenderer) {
+                return;
+            }
+            if (!this.map.hasLayer(this.clusterGroup)) {
+                return;
+            }
+            this.clusterGroup.eachLayer((layer) => {
+                if (typeof layer.redraw === "function") {
+                    layer.redraw();
+                }
+            });
         },
 
         onScopeUfPick(event) {
@@ -1918,7 +1943,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             this.highlightIbge = String(m.ibge ?? "");
             await this.scheduleMapRefresh();
-            const zoom = isApproxCoord(m) ? 9 : 10;
+            const zoom = isApproxCoord(m) ? 7 : 8;
             this.map.flyTo([lat, lng], zoom, { duration: 0.75 });
             window.setTimeout(() => {
                 if (!this.map) {

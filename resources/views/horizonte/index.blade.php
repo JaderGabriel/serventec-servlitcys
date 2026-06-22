@@ -42,10 +42,18 @@
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-3 shrink-0">
-                <button type="button" class="serv-link text-sm" @click="$dispatch('horizonte-guide', { mode: 'tour' })">
+                <button
+                    type="button"
+                    class="serv-link text-sm"
+                    onclick="window.dispatchEvent(new CustomEvent('horizonte-guide', { detail: { mode: 'tour' } }))"
+                >
                     {{ __('Como usar') }}
                 </button>
-                <button type="button" class="serv-link text-sm" @click="$dispatch('horizonte-guide', { mode: 'demo' })">
+                <button
+                    type="button"
+                    class="serv-link text-sm"
+                    onclick="window.dispatchEvent(new CustomEvent('horizonte-guide', { detail: { mode: 'demo' } }))"
+                >
                     {{ __('Demonstração') }}
                 </button>
                 <a href="{{ $docUrl }}" class="serv-link text-sm">{{ __('Documentação') }}</a>
@@ -154,6 +162,8 @@
                         >{{ __('← Brasil') }}</button>
                     </div>
                     <div class="flex flex-wrap gap-2">
+                        <button type="button" class="serv-link text-xs" @click="startTour()">{{ __('Como usar') }}</button>
+                        <button type="button" class="serv-link text-xs" @click="openGuideDemo()">{{ __('Demonstração') }}</button>
                         <button
                             type="button"
                             class="serv-btn-secondary text-xs xl:hidden"
