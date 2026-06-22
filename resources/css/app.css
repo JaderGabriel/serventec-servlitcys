@@ -4468,7 +4468,15 @@
     }
 
     .serv-horizonte-methodology {
-        @apply text-xs text-slate-600 dark:text-slate-400 leading-relaxed space-y-3;
+        @apply text-xs text-slate-600 dark:text-slate-400 leading-relaxed;
+    }
+
+    .serv-horizonte-methodology__grid {
+        @apply mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-start lg:gap-5;
+    }
+
+    .serv-horizonte-methodology__col {
+        @apply min-w-0 space-y-4;
     }
 
     .serv-horizonte-methodology__dim {

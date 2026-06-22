@@ -539,86 +539,99 @@
                     </div>
 
                     {{-- Metodologia --}}
-                    <div x-show="workspaceTab === 'methodology'" role="tabpanel" class="serv-horizonte-methodology max-w-3xl">
+                    <div x-show="workspaceTab === 'methodology'" role="tabpanel" class="serv-horizonte-methodology">
                         <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ $methodology['disclaimer'] ?? '' }}</p>
 
-                        <div class="mt-4">
-                            <p class="font-semibold text-serv-navy dark:text-slate-200">{{ $methodology['detection_title'] ?? __('O que é detectado') }}</p>
-                            <p class="mt-1 text-sm">{{ $methodology['detection_intro'] ?? '' }}</p>
-                            <ul class="mt-2 space-y-1.5">
-                                @foreach ($methodology['detection_sources'] ?? [] as $src)
-                                    <li class="serv-horizonte-methodology__dim">
-                                        <span class="font-medium text-serv-navy dark:text-slate-200">{{ $src['label'] }}</span>
-                                        <span class="text-slate-500 dark:text-slate-400"> — </span>
-                                        <span>{{ $src['feeds'] }}</span>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-
-                        <div class="mt-4">
-                            <p class="font-semibold text-serv-navy dark:text-slate-200">{{ $methodology['scenarios_title'] ?? __('Cenários') }}</p>
-                            <p class="mt-1 text-sm">{{ $methodology['scenarios_intro'] ?? '' }}</p>
-                            <div class="mt-2 space-y-2">
-                                @foreach ($methodology['tier_scenarios'] ?? [] as $scenario)
-                                    <div class="serv-horizonte-methodology__dim">
-                                        <p class="font-medium text-serv-navy dark:text-slate-200">{{ $scenario['label'] }}</p>
-                                        <p class="mt-0.5"><span class="font-medium text-slate-500 dark:text-slate-400">{{ __('Quando:') }}</span> {{ $scenario['when'] }}</p>
-                                        <p class="mt-0.5"><span class="font-medium text-slate-500 dark:text-slate-400">{{ __('Efeito:') }}</span> {{ $scenario['effect'] }}</p>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        <div class="rounded-lg border border-teal-200/80 bg-teal-50/50 dark:border-teal-900/50 dark:bg-teal-950/20 px-3 py-2 space-y-2 mt-4">
-                            <div>
-                                <p class="font-semibold text-teal-900 dark:text-teal-100">{{ $methodology['success_title'] ?? __('Propensão') }}</p>
-                                <p class="mt-0.5 text-sm">{{ $methodology['success_formula'] ?? '' }}</p>
-                            </div>
-                            <div>
-                                <p class="font-semibold text-teal-900 dark:text-teal-100">{{ $methodology['benefit_title'] ?? __('Benefício') }}</p>
-                                <p class="mt-0.5 text-sm">{{ $methodology['benefit_formula'] ?? '' }}</p>
-                            </div>
-                            <p class="text-[11px] text-teal-800/80 dark:text-teal-200/80">{{ $methodology['tier_rules'] ?? '' }}</p>
-                        </div>
-
-                        <p class="font-semibold text-serv-navy dark:text-slate-200 mt-4">{{ __('Dimensões (peso)') }}</p>
-                        @foreach ($methodology['dimensions'] ?? [] as $dim)
-                            <div class="serv-horizonte-methodology__dim mt-2">
-                                <p class="font-medium text-serv-navy dark:text-slate-200">
-                                    {{ $dim['label'] }}
-                                    <span class="text-teal-700 dark:text-teal-300 tabular-nums">{{ $dim['weight'] }}%</span>
-                                </p>
-                                <p class="mt-0.5 text-sm">{{ $dim['formula'] }}</p>
-                                @if (! empty($dim['detects']))
-                                    <p class="mt-1.5 text-[11px]"><span class="font-semibold text-slate-500 dark:text-slate-400">{{ __('Detecta:') }}</span> {{ $dim['detects'] }}</p>
-                                @endif
-                                @if (! empty($dim['scenarios']) && is_array($dim['scenarios']))
-                                    <ul class="mt-1 list-disc list-inside space-y-0.5 text-[11px] text-slate-600 dark:text-slate-400">
-                                        @foreach ($dim['scenarios'] as $scenarioLine)
-                                            <li>{{ $scenarioLine }}</li>
-                                        @endforeach
-                                    </ul>
-                                @endif
-                            </div>
-                        @endforeach
-
-                        <div class="mt-4 rounded-lg border border-amber-200/80 bg-amber-50/40 dark:border-amber-900/40 dark:bg-amber-950/20 px-3 py-2">
-                            <p class="font-semibold text-amber-900 dark:text-amber-100">{{ $methodology['outside_formula_title'] ?? '' }}</p>
-                            <p class="mt-1 text-sm">{{ $methodology['outside_formula_intro'] ?? '' }}</p>
-                            @foreach ($methodology['discrepancy_groups'] ?? [] as $group)
-                                <div class="mt-2">
-                                    <p class="font-medium text-amber-900/90 dark:text-amber-200/90 text-[11px] uppercase tracking-wide">{{ $group['label'] }}</p>
-                                    <ul class="mt-1 list-disc list-inside space-y-0.5 text-[11px]">
-                                        @foreach ($group['items'] ?? [] as $item)
-                                            <li>{{ $item['title'] }}</li>
+                        <div class="serv-horizonte-methodology__grid">
+                            {{-- Coluna 1: fontes e fórmulas --}}
+                            <div class="serv-horizonte-methodology__col">
+                                <div>
+                                    <p class="font-semibold text-serv-navy dark:text-slate-200">{{ $methodology['detection_title'] ?? __('O que é detectado') }}</p>
+                                    <p class="mt-1 text-sm">{{ $methodology['detection_intro'] ?? '' }}</p>
+                                    <ul class="mt-2 space-y-1.5">
+                                        @foreach ($methodology['detection_sources'] ?? [] as $src)
+                                            <li class="serv-horizonte-methodology__dim">
+                                                <span class="font-medium text-serv-navy dark:text-slate-200">{{ $src['label'] }}</span>
+                                                <span class="text-slate-500 dark:text-slate-400"> — </span>
+                                                <span>{{ $src['feeds'] }}</span>
+                                            </li>
                                         @endforeach
                                     </ul>
                                 </div>
-                            @endforeach
-                            @if (! empty($methodology['outside_formula_footer']))
-                                <p class="mt-2 text-[11px] text-amber-800/90 dark:text-amber-200/80">{{ $methodology['outside_formula_footer'] }}</p>
-                            @endif
+
+                                <div class="rounded-lg border border-teal-200/80 bg-teal-50/50 dark:border-teal-900/50 dark:bg-teal-950/20 px-3 py-2 space-y-2">
+                                    <div>
+                                        <p class="font-semibold text-teal-900 dark:text-teal-100">{{ $methodology['success_title'] ?? __('Propensão') }}</p>
+                                        <p class="mt-0.5 text-sm">{{ $methodology['success_formula'] ?? '' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-teal-900 dark:text-teal-100">{{ $methodology['benefit_title'] ?? __('Benefício') }}</p>
+                                        <p class="mt-0.5 text-sm">{{ $methodology['benefit_formula'] ?? '' }}</p>
+                                    </div>
+                                    <p class="text-[11px] text-teal-800/80 dark:text-teal-200/80">{{ $methodology['tier_rules'] ?? '' }}</p>
+                                </div>
+                            </div>
+
+                            {{-- Coluna 2: cenários e dimensões --}}
+                            <div class="serv-horizonte-methodology__col">
+                                <div>
+                                    <p class="font-semibold text-serv-navy dark:text-slate-200">{{ $methodology['scenarios_title'] ?? __('Cenários') }}</p>
+                                    <p class="mt-1 text-sm">{{ $methodology['scenarios_intro'] ?? '' }}</p>
+                                    <div class="mt-2 space-y-2">
+                                        @foreach ($methodology['tier_scenarios'] ?? [] as $scenario)
+                                            <div class="serv-horizonte-methodology__dim">
+                                                <p class="font-medium text-serv-navy dark:text-slate-200">{{ $scenario['label'] }}</p>
+                                                <p class="mt-0.5"><span class="font-medium text-slate-500 dark:text-slate-400">{{ __('Quando:') }}</span> {{ $scenario['when'] }}</p>
+                                                <p class="mt-0.5"><span class="font-medium text-slate-500 dark:text-slate-400">{{ __('Efeito:') }}</span> {{ $scenario['effect'] }}</p>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <p class="font-semibold text-serv-navy dark:text-slate-200">{{ __('Dimensões (peso)') }}</p>
+                                    @foreach ($methodology['dimensions'] ?? [] as $dim)
+                                        <div class="serv-horizonte-methodology__dim mt-2">
+                                            <p class="font-medium text-serv-navy dark:text-slate-200">
+                                                {{ $dim['label'] }}
+                                                <span class="text-teal-700 dark:text-teal-300 tabular-nums">{{ $dim['weight'] }}%</span>
+                                            </p>
+                                            <p class="mt-0.5 text-sm">{{ $dim['formula'] }}</p>
+                                            @if (! empty($dim['detects']))
+                                                <p class="mt-1.5 text-[11px]"><span class="font-semibold text-slate-500 dark:text-slate-400">{{ __('Detecta:') }}</span> {{ $dim['detects'] }}</p>
+                                            @endif
+                                            @if (! empty($dim['scenarios']) && is_array($dim['scenarios']))
+                                                <ul class="mt-1 list-disc list-inside space-y-0.5 text-[11px] text-slate-600 dark:text-slate-400">
+                                                    @foreach ($dim['scenarios'] as $scenarioLine)
+                                                        <li>{{ $scenarioLine }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            {{-- Coluna 3: discrepâncias fora da fórmula --}}
+                            <div class="serv-horizonte-methodology__col">
+                                <div class="rounded-lg border border-amber-200/80 bg-amber-50/40 dark:border-amber-900/40 dark:bg-amber-950/20 px-3 py-2 h-full">
+                                    <p class="font-semibold text-amber-900 dark:text-amber-100">{{ $methodology['outside_formula_title'] ?? '' }}</p>
+                                    <p class="mt-1 text-sm">{{ $methodology['outside_formula_intro'] ?? '' }}</p>
+                                    @foreach ($methodology['discrepancy_groups'] ?? [] as $group)
+                                        <div class="mt-2">
+                                            <p class="font-medium text-amber-900/90 dark:text-amber-200/90 text-[11px] uppercase tracking-wide">{{ $group['label'] }}</p>
+                                            <ul class="mt-1 list-disc list-inside space-y-0.5 text-[11px]">
+                                                @foreach ($group['items'] ?? [] as $item)
+                                                    <li>{{ $item['title'] }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endforeach
+                                    @if (! empty($methodology['outside_formula_footer']))
+                                        <p class="mt-2 text-[11px] text-amber-800/90 dark:text-amber-200/80">{{ $methodology['outside_formula_footer'] }}</p>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
