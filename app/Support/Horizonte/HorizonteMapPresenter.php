@@ -2,6 +2,8 @@
 
 namespace App\Support\Horizonte;
 
+use App\Support\Ieducar\DiscrepanciesCheckCatalog;
+
 final class HorizonteMapPresenter
 {
     /**
@@ -40,6 +42,78 @@ final class HorizonteMapPresenter
                 'medium' => $medium,
             ],
             'disclaimer' => __('Indicadores indicativos para priorização comercial. Não substituem o Diagnóstico i-Educar, discrepâncias ou publicações oficiais FNDE/MEC.'),
+            'detection_title' => __('O que é detectado'),
+            'detection_intro' => __('O Horizonte cruza apenas dados públicos agregados por município (IBGE) e o catálogo SERVLITCYS. Não lê a base i-Educar de prospectos — só de municípios com Consultoria activa.'),
+            'detection_sources' => [
+                [
+                    'label' => __('Catálogo SERVLITCYS'),
+                    'feeds' => __('Consultoria activa, catálogo pendente, registo SGE (informativo).'),
+                ],
+                [
+                    'label' => __('FUNDEB (FNDE)'),
+                    'feeds' => __('Complementação VAAR/VAAT/VAAF, receita municipal — dimensão pressão financeira.'),
+                ],
+                [
+                    'label' => __('Censo INEP'),
+                    'feeds' => __('Matrículas municipais — escala e denominador da demanda social.'),
+                ],
+                [
+                    'label' => __('SAEB / IDEB'),
+                    'feeds' => __('Proficiência LP e MAT — déficit pedagógico (percentil 25 da amostra).'),
+                ],
+                [
+                    'label' => __('CadÚnico (Misocial/CECAD)'),
+                    'feeds' => __('Crianças 0–17 e % PBF — demanda social indicativa.'),
+                ],
+                [
+                    'label' => __('IBGE SIDRA'),
+                    'feeds' => __('População 4–17 (Censo demográfico) — fallback de escala quando falta Censo escolar.'),
+                ],
+                [
+                    'label' => __('Tesouro Transparente (CKAN)'),
+                    'feeds' => __('Repasses federais agregados — dependência de transferências (FUNDEB + educação).'),
+                ],
+            ],
+            'scenarios_title' => __('Cenários no mapa'),
+            'scenarios_intro' => __('Cada município recebe um tier (cor) e scores 0–100. Prospectos usam limiares configuráveis; clientes e catálogo têm regras próprias.'),
+            'tier_scenarios' => [
+                [
+                    'tier' => 'consultoria_active',
+                    'label' => __('Consultoria activa'),
+                    'when' => __('Município no catálogo com base i-Educar configurada.'),
+                    'effect' => __('Propensão fixa pela prontidão de dados (20–100); benefício = 0 — já é cliente.'),
+                ],
+                [
+                    'tier' => 'catalog_pending',
+                    'label' => __('Catálogo · pendente'),
+                    'when' => __('Cadastrado no SERVLITCYS, sem conexão i-Educar pronta.'),
+                    'effect' => __('Scores limitados (propensão ≤ 85) — priorizar activação da base, não prospecção fria.'),
+                ],
+                [
+                    'tier' => 'prospect_high',
+                    'label' => __('Alta propensão'),
+                    'when' => __('Prospecto com propensão ≥ :high e pelo menos uma fonte pública (FUNDEB, Censo, SAEB ou CadÚnico).', ['high' => $high]),
+                    'effect' => __('Combinação elevada de pressão FUNDEB, déficit SAEB, escala e/ou demanda social — candidato prioritário.'),
+                ],
+                [
+                    'tier' => 'prospect_medium',
+                    'label' => __('Média propensão'),
+                    'when' => __('Propensão entre :medium e :high−1.', ['medium' => $medium, 'high' => $high]),
+                    'effect' => __('Sinais moderados — útil com filtros de UF, matrículas ou repasses.'),
+                ],
+                [
+                    'tier' => 'prospect_low',
+                    'label' => __('Baixa propensão'),
+                    'when' => __('Propensão abaixo de :medium com dados públicos parciais.', ['medium' => $medium]),
+                    'effect' => __('Pressão ou escala fraca; pode ainda ter valor se filtros comerciais forem apertados.'),
+                ],
+                [
+                    'tier' => 'data_sparse',
+                    'label' => __('Sem dados públicos'),
+                    'when' => __('Sem FUNDEB, Censo, SAEB nem CadÚnico importados para o IBGE.'),
+                    'effect' => __('Scores zerados — importar no hub Dados públicos antes de priorizar.'),
+                ],
+            ],
             'success_title' => __('Propensão a sucesso (0–100)'),
             'success_formula' => __('Σ (peso × dimensão): financeira :wf% + pedagógica :wp% + escala :ws% + demanda social :wd% + transferências :wt% + prontidão :wr% + benefício×escala :wb%.', [
                 'wf' => $pct('financial_pressure'),
@@ -62,44 +136,85 @@ final class HorizonteMapPresenter
                     'label' => __('Pressão financeira'),
                     'weight' => $pct('financial_pressure'),
                     'formula' => __('Complementação FUNDEB ÷ receita vs mediana nacional; fallback por complementação / matrícula.'),
+                    'detects' => __('Complementação total FUNDEB, receita municipal e razão compl./receita da amostra actual.'),
+                    'scenarios' => [
+                        __('Alto (≥70): complementação representa parcela elevada da receita vs mediana — município depende do VAAR/VAAT.'),
+                        __('Médio: compl./matrícula elevada sem receita declarada.'),
+                        __('Baixo/zero: sem FUNDEB importado ou complementação nula.'),
+                    ],
                 ],
                 [
                     'key' => 'pedagogical_gap',
                     'label' => __('Déficit pedagógico'),
                     'weight' => $pct('pedagogical_gap'),
                     'formula' => __('SAEB LP/MAT abaixo do percentil 25 da amostra (P25 calculado na geração).'),
+                    'detects' => __('Média LP+MAT do município comparada ao P25 de todos os municípios com SAEB na geração.'),
+                    'scenarios' => [
+                        __('Alto: proficiência abaixo do P25 — déficit relativo à amostra nacional/regional carregada.'),
+                        __('Médio (35): sem SAEB, assume lacuna moderada.'),
+                        __('Baixo: desempenho acima ou próximo do P25.'),
+                    ],
                 ],
                 [
                     'key' => 'scale_score',
                     'label' => __('Escala'),
                     'weight' => $pct('scale'),
                     'formula' => __('log₁₀(matriculas Censo); fallback população 4–17 SIDRA × 0,85.'),
+                    'detects' => __('Matrículas Censo INEP; se ausentes, população escolar estimada via SIDRA.'),
+                    'scenarios' => [
+                        __('Alto: redes grandes (log matrículas próximo de 5 → ~100).'),
+                        __('Baixo: municípios pequenos ou só população SIDRA disponível.'),
+                    ],
                 ],
                 [
                     'key' => 'social_demand',
                     'label' => __('Demanda social'),
                     'weight' => $pct('social_demand'),
                     'formula' => __('CadÚnico escolar vs Censo/SIDRA e % crianças PBF (pressão social indicativa).'),
+                    'detects' => __('Razão CadÚnico/Censo (ou SIDRA), percentual de crianças no Bolsa Família.'),
+                    'scenarios' => [
+                        __('Alto: muitas crianças no CadÚnico vs matrículas declaradas ou alta % PBF.'),
+                        __('Baixo: CadÚnico alinhado ao Censo e baixa pressão PBF.'),
+                    ],
                 ],
                 [
                     'key' => 'transfer_dependency',
                     'label' => __('Dependência de transferências'),
                     'weight' => $pct('transfer_dependency'),
                     'formula' => __('Repasses Tesouro ÷ max(receita, complementação FUNDEB) vs mediana nacional.'),
+                    'detects' => __('Soma repasses CKAN (FUNDEB + educação) e razão vs receita/complementação.'),
+                    'scenarios' => [
+                        __('Alto: repasses federais pesam mais que a mediana — dependência de transferências constitucionais.'),
+                        __('Zero: repasses não importados (correr fase repasses_tesouro no feed).'),
+                    ],
                 ],
                 [
                     'key' => 'data_readiness',
                     'label' => __('Prontidão de dados'),
                     'weight' => $pct('data_readiness'),
                     'formula' => __('Presença FUNDEB + Censo + SAEB + CadÚnico (+ bónus SIDRA/repasses).'),
+                    'detects' => __('Contagem de fontes disponíveis por IBGE — não mede qualidade do cadastro escolar.'),
+                    'scenarios' => [
+                        __('Alto (≥75): triad FUNDEB+Censo+SAEB + CadÚnico e bónus demografia/repasses.'),
+                        __('Baixo: só uma ou duas fontes — score de propensão menos fiável.'),
+                    ],
                 ],
                 [
                     'key' => 'benefit_scale',
                     'label' => __('Benefício × escala'),
                     'weight' => $pct('benefit_scale'),
                     'formula' => __('Interacção entre escala (matrículas/pop.) e pressão financeira FUNDEB.'),
+                    'detects' => __('min(escala, pressão financeira) — prioriza municípios grandes com pressão FUNDEB.'),
+                    'scenarios' => [
+                        __('Alto: rede média/grande com complementação elevada — impacto regional potencial.'),
+                        __('Baixo: município pequeno ou pressão financeira fraca.'),
+                    ],
                 ],
             ],
+            'outside_formula_title' => __('Discrepâncias i-Educar fora desta fórmula'),
+            'outside_formula_intro' => __('Após activar Consultoria, o Diagnóstico e a aba Discrepâncias analisam o cadastro escolar real. Nenhuma destas rotinas entra no score Horizonte de prospectos:'),
+            'discrepancy_groups' => self::discrepancyGroupsOutsideFormula(),
+            'outside_formula_footer' => __('Também ficam de fora: compliance_score do Diagnóstico, perda/ganho estimado por rotina (VAAF × peso), condicionalidades VAAR no Simec, programas PNAE/PNATE/PDDE e cruzamento Censo exportado vs matrículas activas.'),
             'map_guide' => [
                 [
                     'step' => 1,
@@ -409,5 +524,57 @@ final class HorizonteMapPresenter
                 'color' => '#be123c',
             ],
         ];
+    }
+
+    /**
+     * Rotinas de discrepância i-Educar agrupadas para a metodologia (não entram no score Horizonte).
+     *
+     * @return list<array{label: string, items: list<array{id: string, title: string}>}>
+     */
+    private static function discrepancyGroupsOutsideFormula(): array
+    {
+        $groups = [
+            [
+                'label' => __('Cadastro do aluno'),
+                'ids' => ['sem_raca', 'sem_sexo', 'sem_data_nascimento', 'matricula_duplicada', 'matricula_situacao_invalida', 'distorcao_idade_serie'],
+            ],
+            [
+                'label' => __('Inclusão e educação especial (NEE)'),
+                'ids' => ['nee_sem_aee', 'aee_sem_nee', 'nee_subnotificacao', 'recurso_prova_sem_nee', 'nee_sem_recurso_prova', 'recurso_prova_incompativel'],
+            ],
+            [
+                'label' => __('Escola e território'),
+                'ids' => ['escola_sem_inep', 'escola_inativa_matricula', 'escola_sem_geo'],
+            ],
+            [
+                'label' => __('Censo vs i-Educar'),
+                'ids' => ['matricula_censo_vs_ieducar'],
+            ],
+        ];
+
+        $defs = DiscrepanciesCheckCatalog::definitions();
+        $out = [];
+
+        foreach ($groups as $group) {
+            $items = [];
+            foreach ($group['ids'] as $id) {
+                $def = $defs[$id] ?? null;
+                if (! is_array($def)) {
+                    continue;
+                }
+                $items[] = [
+                    'id' => $id,
+                    'title' => (string) ($def['title'] ?? $id),
+                ];
+            }
+            if ($items !== []) {
+                $out[] = [
+                    'label' => $group['label'],
+                    'items' => $items,
+                ];
+            }
+        }
+
+        return $out;
     }
 }
