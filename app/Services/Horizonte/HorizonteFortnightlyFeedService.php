@@ -928,9 +928,10 @@ final class HorizonteFortnightlyFeedService
      */
     private function warmIbgeCatalog(array $options = []): array
     {
+        $fetchCentroids = (bool) config('horizonte.map_display.fetch_remote_centroids', false);
         $singleUf = HorizonteUfScope::normalize($options['uf'] ?? null);
         if ($singleUf !== null) {
-            $this->ibgeCatalog->municipalitiesForUf($singleUf);
+            $this->ibgeCatalog->municipalitiesForUf($singleUf, $fetchCentroids);
             gc_collect_cycles();
 
             return [
@@ -966,7 +967,7 @@ final class HorizonteFortnightlyFeedService
 
         foreach ($batch as $uf) {
             $this->debugLog($options, __('IBGE — aquecendo UF :uf…', ['uf' => $uf]));
-            $catalog = $this->ibgeCatalog->municipalitiesForUf($uf);
+            $catalog = $this->ibgeCatalog->municipalitiesForUf($uf, $fetchCentroids);
             $count = is_array($catalog) ? count($catalog) : 0;
             if ($count === 0) {
                 $line = __('IBGE — UF :uf: nenhum município indexado (API indisponível ou cache vazio).', ['uf' => $uf]);

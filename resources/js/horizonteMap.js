@@ -834,6 +834,28 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.filterDockOpen = true;
         },
 
+        onHorizonteGuide(detail = {}) {
+            const mode = String(detail?.mode ?? "").toLowerCase();
+            if (mode === "tour") {
+                this.startTour();
+                return;
+            }
+            if (mode === "demo") {
+                this.openGuideDemo();
+            }
+        },
+
+        openGuideDemo() {
+            this.tourActive = false;
+            this.guideOpen = true;
+            this.workspaceTab = "actions";
+            this.$nextTick(() => {
+                this.$el
+                    ?.querySelector?.('[data-horizonte-guide="demo"]')
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            });
+        },
+
         startTour() {
             this.tourActive = true;
             this.tourStepIndex = 0;

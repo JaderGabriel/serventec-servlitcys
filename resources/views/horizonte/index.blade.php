@@ -42,10 +42,10 @@
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-3 shrink-0">
-                <button type="button" class="serv-link text-sm" @click="startTour()">
+                <button type="button" class="serv-link text-sm" @click="$dispatch('horizonte-guide', { mode: 'tour' })">
                     {{ __('Como usar') }}
                 </button>
-                <button type="button" class="serv-link text-sm" @click="guideOpen = !guideOpen">
+                <button type="button" class="serv-link text-sm" @click="$dispatch('horizonte-guide', { mode: 'demo' })">
                     {{ __('Demonstração') }}
                 </button>
                 <a href="{{ $docUrl }}" class="serv-link text-sm">{{ __('Documentação') }}</a>
@@ -70,6 +70,7 @@
             'ufNames' => $ufNames,
         ]))"
         x-init="init()"
+        @horizonte-guide.window="onHorizonteGuide($event.detail)"
     >
         <div class="max-w-[100rem] mx-auto sm:px-6 lg:px-8 space-y-5">
 
@@ -553,7 +554,14 @@
             </section>
 
             {{-- Demonstração animada --}}
-            <section x-show="guideOpen" x-cloak x-transition class="serv-panel p-4 sm:p-5" aria-label="{{ __('Demonstração Horizonte') }}">
+            <section
+                x-show="guideOpen"
+                x-cloak
+                x-transition
+                data-horizonte-guide="demo"
+                class="serv-panel p-4 sm:p-5"
+                aria-label="{{ __('Demonstração Horizonte') }}"
+            >
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <div>
                         <h3 class="text-sm font-semibold text-serv-navy dark:text-slate-100">{{ __('Como funciona o Horizonte') }}</h3>
