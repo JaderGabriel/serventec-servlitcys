@@ -6,7 +6,9 @@ use App\Models\City;
 use App\Repositories\MunicipalTransferSnapshotRepository;
 use App\Support\Brazil\IbgeMunicipalityCatalog;
 use App\Support\Brazil\MunicipalityNomeUfKey;
+use App\Support\Filesystem\ContainedPathResolver;
 use App\Support\Horizonte\HorizonteUfScope;
+use App\Support\Http\SafeOutboundUrl;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -17,6 +19,9 @@ use Illuminate\Support\Str;
 final class TesouroTransferenciasCsvService
 {
     private const INDEX_SCHEMA_VERSION = 2;
+
+    /** @var array<string, mixed> */
+    private array $lastIndexLoadMeta = [];
     /**
      * @return list<array{
      *   ibge_municipio: string,
@@ -354,6 +359,16 @@ final class TesouroTransferenciasCsvService
     }
 
     /**
+     * Metadados da última tentativa de carregar índice CSV (diagnóstico CLI/UI).
+     *
+     * @return array<string, mixed>
+     */
+    public function lastIndexLoadMeta(): array
+    {
+        return $this->lastIndexLoadMeta;
+    }
+
+    /**
      * @param  array{resource_id: string, name: string, url: string, programa_id: string}  $resource
      * @return array{
      *   by_nome_uf: array<string, array{cod_mun: string, nome: string, uf: string, annual: array<int, float>, months_counted: array<int, int>}>,
@@ -362,50 +377,341 @@ final class TesouroTransferenciasCsvService
      */
     private function loadResourceIndex(array $resource, int $timeout): array
     {
-        $cachePath = $this->resourceCachePath($resource['resource_id']);
-        if (is_readable($cachePath)) {
-            $decoded = json_decode((string) file_get_contents($cachePath), true);
-            if ($this->isIndexCacheValid($decoded)) {
-                return $decoded;
+        $this->lastIndexLoadMeta = [
+            'resource_id' => (string) ($resource['resource_id'] ?? ''),
+            'url' => (string) ($resource['url'] ?? ''),
+        ];
+
+        $cached = $this->readValidIndexCache((string) $resource['resource_id']);
+        if ($cached !== []) {
+            $this->lastIndexLoadMeta['source'] = 'cache';
+
+            return $cached;
+        }
+
+        $localPath = $this->resolveLocalCsvPath($resource);
+        if ($localPath !== null) {
+            $index = $this->parseCsvFile($localPath);
+            if ($index !== []) {
+                $this->persistIndexCache($resource, $index);
+                $this->lastIndexLoadMeta['source'] = 'local';
+                $this->lastIndexLoadMeta['local_path'] = $localPath;
+
+                return $index;
+            }
+            $this->lastIndexLoadMeta['local_error'] = __('Ficheiro local legível mas sem linhas válidas.');
+        }
+
+        $download = $this->downloadCsvToTemp($resource, $timeout);
+        $this->lastIndexLoadMeta['http_code'] = $download['http_code'];
+        if ($download['error'] !== null) {
+            $this->lastIndexLoadMeta['fetch_error'] = $download['error'];
+        }
+
+        if ($download['path'] !== null) {
+            $index = $this->parseCsvFile($download['path']);
+            @unlink($download['path']);
+            if ($index !== []) {
+                $this->persistIndexCache($resource, $index);
+                $this->lastIndexLoadMeta['source'] = 'http';
+
+                return $index;
+            }
+            $this->lastIndexLoadMeta['fetch_error'] = __('CSV descarregado mas sem colunas/linhas reconhecidas.');
+        }
+
+        $stale = $this->readStaleIndexCache((string) $resource['resource_id']);
+        if ($stale !== []) {
+            $this->lastIndexLoadMeta['source'] = 'stale_cache';
+
+            return $stale;
+        }
+
+        return [];
+    }
+
+    /**
+     * @param  array{resource_id: string, name: string, url: string, programa_id: string}  $resource
+     */
+    private function resolveLocalCsvPath(array $resource): ?string
+    {
+        $cfg = config('ieducar.other_funding.public_queries.tesouro_ckan', []);
+        $roots = [
+            storage_path('app'),
+            storage_path('app/funding'),
+            storage_path('app/funding/tesouro-csv'),
+        ];
+
+        $candidates = [];
+        $programaId = (string) ($resource['programa_id'] ?? '');
+        $csvResources = is_array($cfg['csv_resources'] ?? null) ? $cfg['csv_resources'] : [];
+        foreach ($csvResources as $key => $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            $itemPrograma = (string) ($item['programa_id'] ?? $key);
+            if ($programaId !== '' && $itemPrograma !== $programaId) {
+                continue;
+            }
+            $local = trim((string) ($item['local_path'] ?? ''));
+            if ($local !== '') {
+                $candidates[] = $local;
             }
         }
 
-        $url = $resource['url'];
-        if ($url === '') {
-            return [];
+        $globalLocal = trim((string) ($cfg['csv_local_path'] ?? ''));
+        if ($globalLocal !== '') {
+            $candidates[] = $globalLocal;
         }
 
+        $defaultName = $programaId !== '' ? $programaId.'-por-municipio.csv' : 'fundeb-por-municipio.csv';
+        $candidates[] = 'funding/tesouro-csv/'.$defaultName;
+
+        foreach (array_unique($candidates) as $candidate) {
+            $resolved = ContainedPathResolver::resolveReadableFile($candidate, $roots);
+            if ($resolved !== null) {
+                return $resolved;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array{resource_id: string, name: string, url: string, programa_id: string}  $resource
+     * @return array{path: ?string, http_code: ?int, error: ?string}
+     */
+    private function downloadCsvToTemp(array $resource, int $timeout): array
+    {
+        $url = trim((string) ($resource['url'] ?? ''));
+        if ($url === '') {
+            return ['path' => null, 'http_code' => null, 'error' => __('URL do CSV não configurada.')];
+        }
+
+        if (! SafeOutboundUrl::isAllowedHttpUrl($url)) {
+            return ['path' => null, 'http_code' => null, 'error' => __('URL do CSV bloqueada pela política de saída (SSRF).')];
+        }
+
+        $cfg = config('ieducar.other_funding.public_queries.tesouro_ckan', []);
+        $downloadTimeout = max(
+            $timeout,
+            max(30, (int) ($cfg['csv_download_timeout'] ?? 120)),
+        );
+
+        $dir = storage_path('app/funding/tesouro-csv');
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+
+        $tmpPath = $dir.'/'.preg_replace('/[^a-zA-Z0-9_-]/', '_', (string) $resource['resource_id']).'.csv.tmp';
+
         try {
-            $response = Http::timeout(max($timeout, 30))
+            $response = Http::timeout($downloadTimeout)
                 ->withHeaders(['User-Agent' => 'Servlitcys-TesouroCSV/1.0'])
                 ->withOptions(['allow_redirects' => true])
+                ->sink($tmpPath)
                 ->get($url);
-        } catch (\Throwable) {
-            return [];
+        } catch (\Throwable $e) {
+            @unlink($tmpPath);
+
+            return ['path' => null, 'http_code' => null, 'error' => $e->getMessage()];
         }
 
         if (! $response->successful()) {
+            @unlink($tmpPath);
+
+            return [
+                'path' => null,
+                'http_code' => $response->status(),
+                'error' => __('HTTP :code ao descarregar CSV.', ['code' => (string) $response->status()]),
+            ];
+        }
+
+        $size = is_readable($tmpPath) ? (int) @filesize($tmpPath) : 0;
+        if ($size < 64) {
+            $body = $response->body();
+            if ($body !== '' && strlen($body) >= 64) {
+                file_put_contents($tmpPath, $body);
+                $size = strlen($body);
+            }
+        }
+
+        if ($size < 64) {
+            @unlink($tmpPath);
+
+            return [
+                'path' => null,
+                'http_code' => $response->status(),
+                'error' => __('CSV descarregado vazio ou ilegível.'),
+            ];
+        }
+
+        return ['path' => $tmpPath, 'http_code' => $response->status(), 'error' => null];
+    }
+
+    /**
+     * @return array{
+     *   by_nome_uf: array<string, array{cod_mun: string, nome: string, uf: string, annual: array<int, float>, months_counted: array<int, int>, mensal: array<int|string, array<int, float>>}>,
+     *   year_columns: array<int, int>
+     * }
+     */
+    private function readValidIndexCache(string $resourceId): array
+    {
+        $cachePath = $this->resourceCachePath($resourceId);
+        if (! is_readable($cachePath)) {
             return [];
         }
 
-        $body = $response->body();
-        $encoding = mb_detect_encoding($body, ['UTF-8', 'ISO-8859-1', 'Windows-1252'], true) ?: 'ISO-8859-1';
-        if ($encoding !== 'UTF-8') {
-            $body = mb_convert_encoding($body, 'UTF-8', $encoding);
+        $decoded = json_decode((string) file_get_contents($cachePath), true);
+        if (! $this->isIndexCacheValid($decoded)) {
+            return [];
         }
 
-        $index = $this->parseCsvBody($body);
-        if ($index !== []) {
-            $index['_schema'] = self::INDEX_SCHEMA_VERSION;
-            $dir = dirname($cachePath);
-            if (! is_dir($dir)) {
-                @mkdir($dir, 0755, true);
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    /**
+     * @return array{
+     *   by_nome_uf: array<string, array<string, mixed>>,
+     *   year_columns?: array<int, int>
+     * }
+     */
+    private function readStaleIndexCache(string $resourceId): array
+    {
+        $cachePath = $this->resourceCachePath($resourceId);
+        if (! is_readable($cachePath)) {
+            return [];
+        }
+
+        $decoded = json_decode((string) file_get_contents($cachePath), true);
+        if (! is_array($decoded) || ! isset($decoded['by_nome_uf']) || ! is_array($decoded['by_nome_uf']) || $decoded['by_nome_uf'] === []) {
+            return [];
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * @param  array{resource_id: string, name: string, url: string, programa_id: string}  $resource
+     * @param  array{by_nome_uf: array<string, mixed>, year_columns: array<int, int>}  $index
+     */
+    private function persistIndexCache(array $resource, array $index): void
+    {
+        if ($index === []) {
+            return;
+        }
+
+        $index['_schema'] = self::INDEX_SCHEMA_VERSION;
+        $cachePath = $this->resourceCachePath((string) $resource['resource_id']);
+        $dir = dirname($cachePath);
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        file_put_contents($cachePath, json_encode($index, JSON_UNESCAPED_UNICODE));
+        cache()->put('tesouro_csv_resource_url_'.$resource['resource_id'], $resource['url'], 604800);
+    }
+
+    /**
+     * Lê CSV municipal linha a linha (ficheiros CKAN ~20 MB).
+     *
+     * @return array{
+     *   by_nome_uf: array<string, array{cod_mun: string, nome: string, uf: string, annual: array<int, float>, months_counted: array<int, int>, mensal: array<int|string, array<int, float>>}>,
+     *   year_columns: array<int, int>
+     * }
+     */
+    public function parseCsvFile(string $path): array
+    {
+        $handle = @fopen($path, 'rb');
+        if ($handle === false) {
+            return [];
+        }
+
+        $headerLine = fgets($handle);
+        if ($headerLine === false) {
+            fclose($handle);
+
+            return [];
+        }
+
+        $headerLine = $this->normalizeCsvLineEncoding($headerLine);
+        $header = str_getcsv($headerLine, ';', '"', '\\');
+        $yearColumns = $this->detectYearColumns($header);
+        if ($yearColumns === []) {
+            fclose($handle);
+
+            return [];
+        }
+
+        $byNomeUf = [];
+
+        while (($line = fgets($handle)) !== false) {
+            $line = trim($this->normalizeCsvLineEncoding($line));
+            if ($line === '' || ! str_contains($line, ';')) {
+                continue;
             }
-            file_put_contents($cachePath, json_encode($index, JSON_UNESCAPED_UNICODE));
-            cache()->put('tesouro_csv_resource_url_'.$resource['resource_id'], $resource['url'], 604800);
+            $fields = str_getcsv($line, ';', '"', '\\');
+            if (count($fields) < 6) {
+                continue;
+            }
+
+            $codMun = trim((string) ($fields[0] ?? ''));
+            $nome = trim((string) ($fields[1] ?? ''));
+            $uf = strtoupper(trim((string) ($fields[2] ?? '')));
+            $mes = (int) preg_replace('/\D/', '', (string) ($fields[4] ?? ''));
+            if ($codMun === '' || $nome === '' || $uf === '' || $mes < 1 || $mes > 12) {
+                continue;
+            }
+
+            $key = $this->nomeUfKey($nome, $uf);
+            if (! isset($byNomeUf[$key])) {
+                $byNomeUf[$key] = [
+                    'cod_mun' => $codMun,
+                    'nome' => $nome,
+                    'uf' => $uf,
+                    'annual' => [],
+                    'months_counted' => [],
+                    'mensal' => [],
+                ];
+            }
+
+            foreach ($yearColumns as $year => $colIdx) {
+                if (! isset($fields[$colIdx])) {
+                    continue;
+                }
+                $valor = $this->parseBrazilianMoney((string) $fields[$colIdx]);
+                if ($valor === null || $valor <= 0) {
+                    continue;
+                }
+                if (! isset($byNomeUf[$key]['annual'][$year])) {
+                    $byNomeUf[$key]['annual'][$year] = 0.0;
+                    $byNomeUf[$key]['months_counted'][$year] = 0;
+                }
+                $byNomeUf[$key]['annual'][$year] += $valor;
+                $byNomeUf[$key]['months_counted'][$year]++;
+                if (! isset($byNomeUf[$key]['mensal'][$year][$mes])) {
+                    $byNomeUf[$key]['mensal'][$year][$mes] = 0.0;
+                }
+                $byNomeUf[$key]['mensal'][$year][$mes] += $valor;
+            }
         }
 
-        return $index;
+        fclose($handle);
+
+        return [
+            'by_nome_uf' => $byNomeUf,
+            'year_columns' => $yearColumns,
+        ];
+    }
+
+    private function normalizeCsvLineEncoding(string $line): string
+    {
+        if ($line === '' || mb_check_encoding($line, 'UTF-8')) {
+            return $line;
+        }
+
+        $converted = @mb_convert_encoding($line, 'UTF-8', 'ISO-8859-1');
+
+        return is_string($converted) ? $converted : $line;
     }
 
     /**
@@ -843,6 +1149,7 @@ final class TesouroTransferenciasCsvService
 
         $index = $this->loadResourceIndex($resources[0], $timeout);
         $byNomeUf = is_array($index['by_nome_uf'] ?? null) ? $index['by_nome_uf'] : [];
+        $loadMeta = $this->lastIndexLoadMeta();
         $yearValues = 0;
         foreach ($byNomeUf as $entry) {
             if (! is_array($entry)) {
@@ -862,7 +1169,31 @@ final class TesouroTransferenciasCsvService
         $codMap = $this->codMunToIbgeMap();
 
         if ($byNomeUf === []) {
-            $message = __('Repasses Tesouro: não foi possível ler o CSV FUNDEB do CKAN (rede bloqueada ou cache vazio). Verifique acesso a tesourotransparente.gov.br.');
+            $url = trim((string) ($resources[0]['url'] ?? ''));
+            $source = (string) ($loadMeta['source'] ?? '');
+            if ($source === 'http' && (int) ($loadMeta['http_code'] ?? 0) === 200) {
+                $message = __('Repasses Tesouro: CSV descarregado (HTTP 200) mas sem colunas de ano ou municípios reconhecidos — verifique o formato fundeb-por-municipio.csv.');
+            } elseif ($source === 'stale_cache') {
+                $message = __('Repasses Tesouro: índice em cache antigo vazio — rede indisponível (:err).', [
+                    'err' => (string) ($loadMeta['fetch_error'] ?? __('desconhecido')),
+                ]);
+            } else {
+                $parts = [
+                    __('Repasses Tesouro: não foi possível ler o CSV FUNDEB do CKAN (rede bloqueada, timeout ou cache vazio).'),
+                ];
+                if (isset($loadMeta['http_code'])) {
+                    $parts[] = __('HTTP :code.', ['code' => (string) $loadMeta['http_code']]);
+                }
+                if (! empty($loadMeta['fetch_error'])) {
+                    $parts[] = (string) $loadMeta['fetch_error'];
+                }
+                if (! empty($loadMeta['local_error'])) {
+                    $parts[] = (string) $loadMeta['local_error'];
+                }
+                $parts[] = __('Teste no servidor: curl -sS -o /dev/null -w "Tesouro %%{http_code}\n" ":url"', ['url' => $url !== '' ? $url : 'https://www.tesourotransparente.gov.br/ckan']);
+                $parts[] = __('Alternativa offline: descarregue fundeb-por-municipio.csv para storage/app/funding/tesouro-csv/ ou defina IEDUCAR_TESOURO_CSV_LOCAL_PATH.');
+                $message = implode(' ', $parts);
+            }
         } elseif ($yearValues === 0) {
             $message = __('Repasses Tesouro: CSV lido (:n municípios), mas sem valores para o ano :ano.', [
                 'n' => (string) count($byNomeUf),

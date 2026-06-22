@@ -1280,12 +1280,17 @@ return [
                 /** CSV municipal (COD_MUN + nome/UF); fallback quando datastore CKAN está inactivo. */
                 'csv_enabled' => filter_var(env('IEDUCAR_TESOURO_CSV_ENABLED', true), FILTER_VALIDATE_BOOL),
                 'csv_cache_ttl_seconds' => max(300, (int) env('IEDUCAR_TESOURO_CSV_CACHE_TTL', 86400)),
+                /** Timeout dedicado ao download do CSV municipal (~20 MB). */
+                'csv_download_timeout' => max(30, (int) env('IEDUCAR_TESOURO_CSV_DOWNLOAD_TIMEOUT', 120)),
+                /** Caminho legível em storage/app (fallback quando tesourotransparente.gov.br está bloqueado). */
+                'csv_local_path' => (string) env('IEDUCAR_TESOURO_CSV_LOCAL_PATH', ''),
                 'csv_resources' => [
                     'fundeb' => [
                         'resource_id' => '18d5b0ae-8037-461e-8685-3f0d7752a287',
                         'programa_id' => 'fundeb',
                         'name' => 'FUNDEB por município',
                         'url' => 'https://www.tesourotransparente.gov.br/ckan/dataset/transferencias-obrigatorias-da-uniao-por-municipio/resource/18d5b0ae-8037-461e-8685-3f0d7752a287/download/fundeb-por-municipio.csv',
+                        'local_path' => (string) env('IEDUCAR_TESOURO_CSV_FUNDEB_LOCAL_PATH', 'funding/tesouro-csv/fundeb-por-municipio.csv'),
                     ],
                 ],
             ],

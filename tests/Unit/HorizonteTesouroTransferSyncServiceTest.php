@@ -61,20 +61,31 @@ final class HorizonteTesouroTransferSyncServiceTest extends TestCase
     #[Test]
     public function repasses_falha_quando_nenhum_ano_tem_linhas(): void
     {
+        Cache::flush();
+
+        @unlink(storage_path('app/funding/tesouro-csv/test-fundeb-no-ibge.json'));
+        @unlink(storage_path('app/funding/tesouro-csv/cod_mun_to_ibge.json'));
+
+        $this->mock(MunicipalTransferSnapshotRepository::class, function ($mock): void {
+            $mock->shouldNotReceive('upsertBatch');
+        });
+
         config([
             'ieducar.other_funding.public_queries.tesouro_ckan.csv_enabled' => true,
             'ieducar.other_funding.public_queries.tesouro_ckan.csv_resources' => [
                 'fundeb' => [
-                    'resource_id' => 'test-fundeb-empty',
+                    'resource_id' => 'test-fundeb-no-cross',
                     'programa_id' => 'fundeb',
-                    'name' => 'FUNDEB vazio',
-                    'url' => 'https://example.test/fundeb-empty.csv',
+                    'name' => 'FUNDEB sem cruzamento',
+                    'url' => 'https://example.test/fundeb-no-cross.csv',
                 ],
             ],
         ]);
 
+        $csv = "COD_MUN;Município;UF;;Mês;2025\n99999;Municipio Inexistente;ZZ;;1;5000\n";
+
         Http::fake([
-            'example.test/fundeb-empty.csv' => Http::response("COD_MUN;Município;UF;Mês\n", 200),
+            'example.test/fundeb-no-cross.csv' => Http::response($csv, 200, ['Content-Type' => 'text/csv']),
         ]);
 
         $result = app(HorizonteTesouroTransferSyncService::class)->syncNationalFundeb(2025);
