@@ -156,4 +156,10 @@ return [
         'hide_approximate_on_map' => filter_var(env('HORIZONTE_MAP_HIDE_APPROXIMATE', true), FILTER_VALIDATE_BOOL),
     ],
 
+    /** Sincronização dedicada de centroides IBGE (`horizonte:sync-ibge-centroids`). */
+    'ibge_centroid_sync' => [
+        'delay_ms' => max(0, (int) env('HORIZONTE_IBGE_CENTROID_DELAY_MS', 120)),
+        'ufs_per_step' => max(1, (int) env('HORIZONTE_IBGE_CENTROID_UFS_PER_STEP', 1)),
+    ],
+
 ];

@@ -487,6 +487,23 @@ final class ArtisanCommandsCatalog
                         'schedule' => __('Bimestral — dia 1 nos meses 1, 3, 5, 7, 9, 11 + passos --continue a cada HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL min.'),
                     ],
                     [
+                        'name' => 'horizonte:sync-ibge-centroids',
+                        'summary' => __('Sincroniza centroides IBGE de todos os municípios (UFs menores primeiro, retomável).'),
+                        'signature' => 'horizonte:sync-ibge-centroids {--reset} {--ufs-per-step=} {--uf=} {--force} {--dry-run} {--delay=}',
+                        'examples' => [
+                            'php artisan horizonte:sync-ibge-centroids --reset',
+                            'php artisan horizonte:sync-ibge-centroids',
+                            'php artisan horizonte:sync-ibge-centroids --uf=RR -v',
+                            'php artisan horizonte:sync-ibge-centroids --dry-run',
+                        ],
+                        'env' => [
+                            'HORIZONTE_IBGE_CENTROID_DELAY_MS',
+                            'HORIZONTE_IBGE_CENTROID_UFS_PER_STEP',
+                        ],
+                        'doc_anchor' => 'horizonte',
+                        'details' => __('Uma UF por invocação por defeito. Grava cache ibge_municipality_centroid:{ibge} e invalida o mapa Horizonte ao concluir cada passo.'),
+                    ],
+                    [
                         'name' => 'horizonte:export-data-bundle',
                         'summary' => __('Exporta pacote ZIP Horizonte (FUNDEB, Censo, SAEB, CadÚnico, SIDRA, repasses, IBGE, SGE).'),
                         'signature' => 'horizonte:export-data-bundle {--output=} {--skip-*}',
