@@ -17,6 +17,7 @@ use App\Support\Brazil\IbgeMunicipalityCatalog;
 use App\Support\Brazil\IbgeUfFromCode;
 use App\Support\Brazil\MunicipalityMapOverlapResolver;
 use App\Support\Dashboard\AdminHomeMapCache;
+use App\Support\Horizonte\HorizonteFundebRepasseOutlook;
 use App\Support\Horizonte\HorizonteManagerInsights;
 use App\Support\Horizonte\HorizonteMapPresenter;
 use App\Support\Horizonte\HorizonteTransferScoring;
@@ -528,6 +529,18 @@ final class HorizonteMapService
         $demographyByIbge = $this->demographyByIbge($refYear, $ibgePrefix);
         $transfersByIbge = HorizonteTesouroTransferSyncService::aggregateByIbge($refYear, $ibgePrefix);
 
+        $currentYear = HorizonteFundebRepasseOutlook::currentYear();
+        $fundebCurrentByIbge = $currentYear > $refYear
+            ? $this->fundebByIbge($currentYear, $ibgePrefix)
+            : [];
+        $fundebRealtimeByIbge = HorizonteFundebRepasseOutlook::byIbge(
+            $refYear,
+            $ibgePrefix,
+            $fundebByIbge,
+            $fundebCurrentByIbge,
+            $censoByIbge,
+        );
+
         $ibgeMetaIndex = [];
         if ($scopedUf !== null && $requireCoordinates) {
             $fetchGeo = (bool) config('horizonte.map_display.fetch_remote_centroids', false);
@@ -553,6 +566,9 @@ final class HorizonteMapService
             $ibgeSet[$ibge] = true;
         }
         foreach (array_keys($transfersByIbge) as $ibge) {
+            $ibgeSet[$ibge] = true;
+        }
+        foreach (array_keys($fundebRealtimeByIbge) as $ibge) {
             $ibgeSet[$ibge] = true;
         }
 
@@ -617,6 +633,7 @@ final class HorizonteMapService
             $cadunico = $cadunicoByIbge[$ibge] ?? null;
             $demography = $demographyByIbge[$ibge] ?? null;
             $transfer = $transfersByIbge[$ibge] ?? null;
+            $fundebRealtime = $fundebRealtimeByIbge[$ibge] ?? null;
 
             $meta = null;
             $fromIbge = $ibgeMetaIndex[$ibge] ?? null;
@@ -722,6 +739,16 @@ final class HorizonteMapService
                 'fundeb_receita_total' => $fundeb['receita_total'] ?? null,
                 'fundeb_ano' => $fundeb['ano'] ?? null,
                 'fundeb_matriculas_base' => $fundeb['matriculas_base'] ?? null,
+                'fundeb_realtime_ano' => $fundebRealtime['ano'] ?? null,
+                'fundeb_realtime_observed' => $fundebRealtime['observed'] ?? null,
+                'fundeb_realtime_expected' => $fundebRealtime['expected'] ?? null,
+                'fundeb_realtime_projected' => $fundebRealtime['projected'] ?? null,
+                'fundeb_realtime_balance' => $fundebRealtime['balance'] ?? null,
+                'fundeb_realtime_pct_done' => $fundebRealtime['pct_done'] ?? null,
+                'fundeb_realtime_months' => $fundebRealtime['months_with_transfers'] ?? null,
+                'fundeb_realtime_outlook' => $fundebRealtime['outlook'] ?? null,
+                'fundeb_realtime_outlook_label' => $fundebRealtime['outlook_label'] ?? null,
+                'fundeb_realtime_expected_source' => $fundebRealtime['expected_source'] ?? null,
                 'saeb_lp' => $saeb['lp'] ?? null,
                 'saeb_mat' => $saeb['mat'] ?? null,
                 'analytics_url' => $city !== null && $consultoriaActive
@@ -756,6 +783,7 @@ final class HorizonteMapService
 
         return [
             'reference_year' => $refYear,
+            'current_year' => $currentYear,
             'generated_at' => now()->toIso8601String(),
             'markers' => $markers,
             'summary' => array_merge($summary, ['coverage' => $coverage]),

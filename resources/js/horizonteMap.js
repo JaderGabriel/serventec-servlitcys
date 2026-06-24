@@ -36,8 +36,23 @@ function formatCurrencyBrl(n) {
     return Number(n).toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL",
-        maximumFractionDigits: 0,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
     });
+}
+
+function moneyEqual(a, b, epsilon = 0.005) {
+    if (a == null || b == null || Number.isNaN(Number(a)) || Number.isNaN(Number(b))) {
+        return false;
+    }
+    return Math.abs(Number(a) - Number(b)) <= epsilon;
+}
+
+function financeNoteHtml(text, tone = "info") {
+    if (!text) {
+        return "";
+    }
+    return `<p class="serv-horizonte-muni-tooltip__finance-note serv-horizonte-muni-tooltip__finance-note--${tone}">${escapeHtml(text)}</p>`;
 }
 
 function formatPercentValue(n) {
@@ -147,6 +162,31 @@ function muniPropensityThermometerHtml(m, th) {
     );
 }
 
+const HORIZONTE_FINANCE_ICONS = {
+    reference: `<svg class="serv-horizonte-muni-tooltip__finance-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>`,
+    repasses: `<svg class="serv-horizonte-muni-tooltip__finance-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.375M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z"/></svg>`,
+    realtime: `<svg class="serv-horizonte-muni-tooltip__finance-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>`,
+};
+
+function financeSectionShell(tone, title, yearLabel, yearTag, iconHtml, bodyHtml) {
+    const tag = yearTag
+        ? `<span class="serv-horizonte-muni-tooltip__finance-tag serv-horizonte-muni-tooltip__finance-tag--${escapeHtml(yearTag)}">${escapeHtml(yearLabel)}</span>`
+        : `<span class="serv-horizonte-muni-tooltip__finance-year">${escapeHtml(yearLabel)}</span>`;
+
+    return (
+        `<section class="serv-horizonte-muni-tooltip__finance-step serv-horizonte-muni-tooltip__finance-step--${tone}">` +
+        `<div class="serv-horizonte-muni-tooltip__finance-head">` +
+        `<div class="serv-horizonte-muni-tooltip__finance-head-main">` +
+        `<span class="serv-horizonte-muni-tooltip__finance-icon-wrap" aria-hidden="true">${iconHtml}</span>` +
+        `<span class="serv-horizonte-muni-tooltip__finance-title">${escapeHtml(title)}</span>` +
+        `</div>` +
+        tag +
+        `</div>` +
+        bodyHtml +
+        `</section>`
+    );
+}
+
 function fundebReferenceHtml(m) {
     const ano = m.fundeb_ano;
     const vaaf = m.fundeb_vaaf;
@@ -195,15 +235,18 @@ function fundebReferenceHtml(m) {
     }
 
     const yearLabel = ano != null ? String(ano) : "—";
+    const footnote = financeNoteHtml(
+        "Portaria FNDE: receita e complementação do exercício para planejamento. Não substitui extrato bancário nem repasses observados no Tesouro Transparente.",
+        "reference",
+    );
 
-    return (
-        `<div class="serv-horizonte-muni-tooltip__fundeb">` +
-        `<div class="serv-horizonte-muni-tooltip__fundeb-head">` +
-        `<span class="serv-horizonte-muni-tooltip__fundeb-title">${escapeHtml("Referência FUNDEB")}</span>` +
-        `<span class="serv-horizonte-muni-tooltip__fundeb-year">${escapeHtml("Ano")} ${escapeHtml(yearLabel)}</span>` +
-        `</div>` +
-        `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` +
-        `</div>`
+    return financeSectionShell(
+        "reference",
+        "Referência FUNDEB",
+        `${escapeHtml("Ano")} ${escapeHtml(yearLabel)}`,
+        "reference",
+        HORIZONTE_FINANCE_ICONS.reference,
+        `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` + footnote,
     );
 }
 
@@ -211,76 +254,257 @@ function transferTooltipHtml(m, refYear) {
     const total = m.transfer_total;
     const hasValue = total != null && Number(total) > 0;
     if (!hasValue) {
-        if (m.has_transfers) {
-            return `<p class="serv-horizonte-muni-tooltip__empty-msg">${escapeHtml("Repasses importados sem valor agregado para este município.")}</p>`;
-        }
         return "";
     }
 
     const ano = m.transfer_ano ?? refYear;
     const fundeb = m.transfer_fundeb;
     const educacao = m.transfer_educacao;
+    const fundebVal = fundeb != null ? Number(fundeb) : 0;
+    const educVal = educacao != null ? Number(educacao) : 0;
+    const totalVal = Number(total);
+    const hasFundeb = fundebVal > 0;
+    const educSameFundeb = hasFundeb && educVal > 0 && moneyEqual(educVal, fundebVal);
+    const onlyFundebInCkan =
+        hasFundeb &&
+        moneyEqual(fundebVal, totalVal) &&
+        (educVal <= 0 || educSameFundeb);
     const pctFundeb = formatPercentValue(m.transfer_pct_fundeb);
     const pctEduc = formatPercentValue(m.transfer_pct_educacao);
     const rows = [];
+    let footnote = "";
 
-    rows.push(
-        `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
-            `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
-            `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Total repasses")}</span>` +
-            `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Soma programas CKAN")}</span>` +
-            `</div>` +
-            `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(total)}</span>` +
-            `</div>`,
-    );
-
-    if (fundeb != null && Number(fundeb) > 0) {
+    if (onlyFundebInCkan) {
         rows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row serv-horizonte-muni-tooltip__fundeb-row--highlight">` +
                 `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Repasse FUNDEB")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Valor total pago (Tesouro CKAN)")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Único programa no CKAN importado (Tesouro)")}</span>` +
                 `</div>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value">` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(fundeb)}</span>` +
-                (pctFundeb
-                    ? `<span class="serv-horizonte-muni-tooltip__fundeb-pct serv-horizonte-muni-tooltip__fundeb-pct--rose">${escapeHtml(pctFundeb)} ${escapeHtml("do total")}</span>`
-                    : "") +
-                `</span></div>`,
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(fundebVal)}</span>` +
+                `</div>`,
         );
-    }
-
-    if (educacao != null && Number(educacao) > 0) {
-        const educSameFundeb =
-            fundeb != null &&
-            Number(fundeb) > 0 &&
-            Math.abs(Number(educacao) - Number(fundeb)) < 0.01;
-        const educLabel = educSameFundeb ? "Verbas educação" : "Verbas educação";
-        const educDesc = educSameFundeb
-            ? "Inclui FUNDEB e demais programas"
-            : "PNAE, PNATE, PDDE e afins";
+        footnote = financeNoteHtml(
+            "Só há FUNDEB neste extrato CKAN — total, repasse e verbas de educação coincidem por definição, não por erro de soma. Para PNAE, PNATE e PDDE, aguarde linhas adicionais no pacote ou use Finanças → Tempo Real na consultoria.",
+            "repasses",
+        );
+    } else {
         rows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
                 `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml(educLabel)}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(educDesc)}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Total repasses")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Soma dos programas CKAN")}</span>` +
                 `</div>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value">` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(educacao)}</span>` +
-                (pctEduc
-                    ? `<span class="serv-horizonte-muni-tooltip__fundeb-pct serv-horizonte-muni-tooltip__fundeb-pct--teal">${escapeHtml(pctEduc)} ${escapeHtml("do total")}</span>`
-                    : "") +
-                `</span></div>`,
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(totalVal)}</span>` +
+                `</div>`,
+        );
+
+        if (hasFundeb) {
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__fundeb-row serv-horizonte-muni-tooltip__fundeb-row--highlight">` +
+                    `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                    `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Repasse FUNDEB")}</span>` +
+                    `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Valor pago — Tesouro CKAN")}</span>` +
+                    `</div>` +
+                    `<span class="serv-horizonte-muni-tooltip__fundeb-value">` +
+                    `<span class="serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(fundebVal)}</span>` +
+                    (pctFundeb
+                        ? `<span class="serv-horizonte-muni-tooltip__fundeb-pct serv-horizonte-muni-tooltip__fundeb-pct--rose">${escapeHtml(pctFundeb)} ${escapeHtml("do total")}</span>`
+                        : "") +
+                    `</span></div>`,
+            );
+        }
+
+        if (educVal > 0 && !educSameFundeb) {
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                    `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                    `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Verbas educação")}</span>` +
+                    `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("PNAE, PNATE, PDDE e afins")}</span>` +
+                    `</div>` +
+                    `<span class="serv-horizonte-muni-tooltip__fundeb-value">` +
+                    `<span class="serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(educVal)}</span>` +
+                    (pctEduc
+                        ? `<span class="serv-horizonte-muni-tooltip__fundeb-pct serv-horizonte-muni-tooltip__fundeb-pct--teal">${escapeHtml(pctEduc)} ${escapeHtml("do total")}</span>`
+                        : "") +
+                    `</span></div>`,
+            );
+        } else if (educSameFundeb) {
+            footnote = financeNoteHtml(
+                "Verbas de educação omitidas: mesmo valor do repasse FUNDEB no CKAN (sem outros programas discriminados neste município).",
+                "repasses",
+            );
+        }
+    }
+
+    return financeSectionShell(
+        "repasses",
+        "Repasses federais",
+        `${escapeHtml("Ano")} ${escapeHtml(String(ano))}`,
+        "previous",
+        HORIZONTE_FINANCE_ICONS.repasses,
+        `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` + footnote,
+    );
+}
+
+function fundebRealtimeHtml(m, currentYear) {
+    const ano = m.fundeb_realtime_ano ?? currentYear;
+    const observed = m.fundeb_realtime_observed;
+    const expected = m.fundeb_realtime_expected;
+    const projected = m.fundeb_realtime_projected;
+    const balance = m.fundeb_realtime_balance;
+    const pctDone = m.fundeb_realtime_pct_done;
+    const months = m.fundeb_realtime_months;
+    const outlook = String(m.fundeb_realtime_outlook ?? "unknown");
+    const outlookLabel = String(m.fundeb_realtime_outlook_label ?? "");
+    const hasObserved = observed != null && Number(observed) > 0;
+    const hasExpected = expected != null && Number(expected) > 0;
+
+    if (!hasObserved && !hasExpected) {
+        return "";
+    }
+
+    const outlookTone =
+        outlook === "risk"
+            ? "risk"
+            : outlook === "surplus"
+              ? "surplus"
+              : outlook === "close"
+                ? "close"
+                : "unknown";
+    const pctWidth = pctDone != null ? Math.max(0, Math.min(100, Number(pctDone))) : 0;
+    const pctLabel = pctDone != null ? formatPercentValue(pctDone) : "—";
+
+    const rows = [];
+    if (hasObserved) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row serv-horizonte-muni-tooltip__fundeb-row--highlight">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Já repassado")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(months != null && Number(months) > 0 ? `${months} mês(es) com repasse` : "Consolidado Tesouro/CKAN")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(observed)}</span>` +
+                `</div>`,
+        );
+    }
+    if (hasExpected) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Previsão anual")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(m.fundeb_realtime_expected_source === "portaria_receita" ? "Receita portaria FNDE" : "Matrículas × VAAF")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(expected)}</span>` +
+                `</div>`,
+        );
+    }
+    if (projected != null && Number(projected) > 0 && hasExpected) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Projeção até dez.")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Ritmo observado ou mensal")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(projected)}</span>` +
+                `</div>`,
+        );
+    }
+    if (balance != null && Number(balance) > 0) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Saldo a repassar")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Indicativo até dezembro")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--balance">${formatCurrencyBrl(balance)}</span>` +
+                `</div>`,
         );
     }
 
+    const progress =
+        hasExpected && pctDone != null
+            ? `<div class="serv-horizonte-muni-tooltip__finance-progress" role="img" aria-label="${escapeHtml("Realizado")} ${escapeHtml(pctLabel ?? "")}">` +
+              `<div class="serv-horizonte-muni-tooltip__finance-progress-track">` +
+              `<div class="serv-horizonte-muni-tooltip__finance-progress-fill serv-horizonte-muni-tooltip__finance-progress-fill--${outlookTone}" style="width:${pctWidth}%"></div>` +
+              `</div>` +
+              `<div class="serv-horizonte-muni-tooltip__finance-progress-meta">` +
+              `<span>${escapeHtml("Realizado")} <strong>${escapeHtml(pctLabel ?? "—")}</strong></span>` +
+              (outlookLabel ? `<span class="serv-horizonte-muni-tooltip__finance-outlook serv-horizonte-muni-tooltip__finance-outlook--${outlookTone}">${escapeHtml(outlookLabel)}</span>` : "") +
+              `</div></div>`
+            : "";
+
+    return financeSectionShell(
+        "realtime",
+        "Repasse FUNDEB",
+        `${escapeHtml("Ano")} ${escapeHtml(String(ano))}`,
+        "current",
+        HORIZONTE_FINANCE_ICONS.realtime,
+        progress +
+            `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` +
+            financeNoteHtml(
+                "Exercício em curso: compare repasse já observado com a previsão indicativa (portaria ou matrículas × VAAF). Use a aba Finanças → Tempo Real na consultoria para extrato e alertas.",
+                "realtime",
+            ),
+    );
+}
+
+function financeTimelineConsultoriaNote(m, refYear) {
+    const receita = m.fundeb_receita_total;
+    const transferFundeb = m.transfer_fundeb;
+    const hasReceita = receita != null && Number(receita) > 0;
+    const hasTransfer = transferFundeb != null && Number(transferFundeb) > 0;
+
+    if (hasReceita && hasTransfer && moneyEqual(receita, transferFundeb)) {
+        return financeNoteHtml(
+            `Receita FNDE (${refYear}) e repasse CKAN têm o mesmo valor aqui, mas medem coisas diferentes: portaria do exercício × pagamento consolidado no Tesouro. Não some nem trate como duplicidade.`,
+            "consultoria",
+        );
+    }
+
+    if (hasReceita && hasTransfer && !moneyEqual(receita, transferFundeb)) {
+        return financeNoteHtml(
+            "Receita FNDE (portaria) e repasse CKAN (pagamento) costumam divergir por calendário, complementações e critério de consolidação — compare na consultoria, não some as faixas.",
+            "consultoria",
+        );
+    }
+
+    return financeNoteHtml(
+        "Para consultoria: use a referência FNDE no planejamento, os repasses CKAN no que já foi pago e o bloco do ano corrente para acompanhar ritmo versus previsão.",
+        "consultoria",
+    );
+}
+
+function financeTimelineHtml(m, refYear, currentYear) {
+    const reference = fundebReferenceHtml(m);
+    const repasses = transferTooltipHtml(m, refYear);
+    const realtime = currentYear > refYear ? fundebRealtimeHtml(m, currentYear) : "";
+
+    if (!reference && !repasses && !realtime) {
+        if (m.has_transfers) {
+            return `<p class="serv-horizonte-muni-tooltip__empty-msg">${escapeHtml("Repasses importados sem valor agregado para este município.")}</p>`;
+        }
+        return "";
+    }
+
+    const steps = [reference, repasses, realtime].filter(Boolean);
+    let body = "";
+    for (let i = 0; i < steps.length; i++) {
+        body += steps[i];
+        if (i < steps.length - 1) {
+            body += `<div class="serv-horizonte-muni-tooltip__finance-connector" aria-hidden="true"></div>`;
+        }
+    }
+
     return (
-        `<div class="serv-horizonte-muni-tooltip__fundeb serv-horizonte-muni-tooltip__fundeb--repasses">` +
-        `<div class="serv-horizonte-muni-tooltip__fundeb-head serv-horizonte-muni-tooltip__fundeb-head--repasses">` +
-        `<span class="serv-horizonte-muni-tooltip__fundeb-title serv-horizonte-muni-tooltip__fundeb-title--repasses">${escapeHtml("Repasses federais")}</span>` +
-        `<span class="serv-horizonte-muni-tooltip__fundeb-year serv-horizonte-muni-tooltip__fundeb-year--repasses">${escapeHtml("Ano")} ${escapeHtml(String(ano))}</span>` +
-        `</div>` +
-        `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` +
+        `<div class="serv-horizonte-muni-tooltip__finance">` +
+        `<p class="serv-horizonte-muni-tooltip__finance-intro">${escapeHtml("Leitura para consultoria — três fontes complementares (não somar):")}</p>` +
+        `<ul class="serv-horizonte-muni-tooltip__finance-legend">` +
+        `<li><span class="serv-horizonte-muni-tooltip__finance-legend-dot serv-horizonte-muni-tooltip__finance-legend-dot--reference"></span>${escapeHtml("FNDE — portaria e índices do exercício")}</li>` +
+        `<li><span class="serv-horizonte-muni-tooltip__finance-legend-dot serv-horizonte-muni-tooltip__finance-legend-dot--repasses"></span>${escapeHtml("Tesouro — repasses federais já pagos (CKAN)")}</li>` +
+        `<li><span class="serv-horizonte-muni-tooltip__finance-legend-dot serv-horizonte-muni-tooltip__finance-legend-dot--realtime"></span>${escapeHtml("Ano corrente — realizado × previsão")}</li>` +
+        `</ul>` +
+        body +
+        financeTimelineConsultoriaNote(m, refYear) +
         `</div>`
     );
 }
@@ -534,6 +758,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         focusSegments: Array.isArray(options.focusSegments) ? options.focusSegments : [],
         sgeSummary: options.sgeSummary && typeof options.sgeSummary === "object" ? options.sgeSummary : {},
         refYear: Number(options.refYear) || new Date().getFullYear() - 1,
+        currentYear: Number(options.currentYear) || new Date().getFullYear(),
         loadUrl: typeof options.loadUrl === "string" ? options.loadUrl : "",
         pageLoading: Boolean(options.loadUrl),
         regionalLoading: false,
@@ -1776,6 +2001,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     ? data.sge_summary
                     : this.sgeSummary;
             this.refYear = Number(data.reference_year) || this.refYear;
+            this.currentYear = Number(data.current_year) || this.currentYear;
             this.meta = data.meta && typeof data.meta === "object" ? data.meta : {};
             if (this.meta.default_filter && typeof this.meta.default_filter === "object") {
                 this.defaultViewFilter = this.meta.default_filter;
@@ -2487,14 +2713,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             lines.push(muniPopulationPipelineHtml(m));
 
-            const fundebBlock = fundebReferenceHtml(m);
-            if (fundebBlock) {
-                lines.push(fundebBlock);
-            }
-
-            const transferBlock = transferTooltipHtml(m, this.refYear);
-            if (transferBlock) {
-                lines.push(transferBlock);
+            const financeBlock = financeTimelineHtml(m, this.refYear, this.currentYear);
+            if (financeBlock) {
+                lines.push(financeBlock);
             }
 
             if (m.benefit_score != null) {

@@ -1,5 +1,6 @@
 @php
     $refYear = (int) ($refYear ?? config('horizonte.reference_year', (int) date('Y') - 1));
+    $currentYear = (int) date('Y');
     $legend = is_array($legend ?? null) ? $legend : [];
     $colors = is_array($colors ?? null) ? $colors : [];
     $methodology = is_array($methodology ?? null) ? $methodology : \App\Support\Horizonte\HorizonteMapPresenter::methodologyUi();
@@ -52,6 +53,7 @@
         x-data="horizonteMap([], @js($colors), @js([
             'loadUrl' => $mapDataUrl,
             'refYear' => $refYear,
+            'currentYear' => $currentYear,
             'legend' => $legend,
             'heatLegend' => $heatLegend,
             'methodology' => $methodology,
