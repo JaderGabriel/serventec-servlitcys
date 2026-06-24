@@ -20,7 +20,7 @@ final class PdfBrandAssets
 
         return array_merge($brand, [
             'system_name' => trim((string) ($brand['system_name'] ?? config('app.name', 'SERVLITCYS'))),
-            'system_tagline' => trim((string) ($brand['system_tagline'] ?? __('Plataforma educacional municipal'))),
+            'system_tagline' => trim((string) ($brand['system_tagline'] ?? __('Consultoria, gráficos e Horizonte municipal'))),
             'serventec_url' => $serventecUrl,
             'serventec_display_url' => self::displayHost($serventecUrl),
             'icon_data_uri' => self::fileToDataUri(is_readable($iconPath) ? $iconPath : null),

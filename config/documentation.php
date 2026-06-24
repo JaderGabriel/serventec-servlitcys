@@ -24,9 +24,9 @@ return [
     */
 
     'product' => [
-        'version' => '5.8.0',
-        'release_tag' => '20260603g-Thor',
-        'commit_short' => '0bf9b2f',
+        'version' => '6.0.0',
+        'release_tag' => '20260603h-Odin',
+        'commit_short' => null,
         'commit_number' => null,
         'revision_date' => '2026-06-03',
         'in_production' => true,

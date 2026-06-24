@@ -1,19 +1,28 @@
 <div
-    x-show="active"
+    x-show="active && tooltipPinned"
     x-cloak
     x-transition.opacity.duration.150ms
-    class="serv-brazil-map-tooltip serv-brazil-map-tooltip--wide serv-brazil-map-tooltip--muni"
-    :style="tooltipStyle"
+    class="serv-horizonte-muni-overlay"
+    role="presentation"
+    @click.self="closeTooltip()"
+    @keydown.escape.window="if (active && tooltipPinned) closeTooltip()"
 >
-    <template x-if="active">
+    <div
+        class="serv-brazil-map-tooltip serv-brazil-map-tooltip--wide serv-brazil-map-tooltip--muni serv-brazil-map-tooltip--centered"
+        :style="tooltipStyle"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="active?.name ? active.name + ' — ' + (active.uf || '') : '{{ __('Município') }}'"
+        @click.stop
+    >
         <div class="space-y-3">
             <div class="serv-horizonte-muni-tooltip__header">
                 <div class="min-w-0 flex-1">
                     <div class="serv-horizonte-muni-tooltip__heading">
-                        <h3 class="serv-horizonte-muni-tooltip__name" x-text="active.name"></h3>
-                        <span class="serv-horizonte-muni-tooltip__uf-badge" x-text="active.uf"></span>
+                        <h3 class="serv-horizonte-muni-tooltip__name" x-text="active?.name"></h3>
+                        <span class="serv-horizonte-muni-tooltip__uf-badge" x-text="active?.uf"></span>
                     </div>
-                    <p class="serv-horizonte-muni-tooltip__meta" x-text="'IBGE ' + active.ibge + ' · ' + tierLabel(active)"></p>
+                    <p class="serv-horizonte-muni-tooltip__meta" x-text="active ? ('IBGE ' + active.ibge + ' · ' + tierLabel(active)) : ''"></p>
                 </div>
                 <button
                     type="button"
@@ -22,7 +31,7 @@
                     aria-label="{{ __('Fechar') }}"
                 >&times;</button>
             </div>
-            <div x-html="tooltipBodyHtml(active)"></div>
+            <div x-show="active" x-html="active ? tooltipBodyHtml(active) : ''"></div>
             <div x-show="canManageSge && active && canEditSgeFor(active)" x-cloak class="pt-2 border-t border-slate-200/80 dark:border-slate-700/80 space-y-2">
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                     {{ __('Inteligência de concorrência — não cadastra o município no catálogo Consultoria.') }}
@@ -37,42 +46,12 @@
             <div x-show="canManageSge && active && active.in_catalog" x-cloak class="pt-2 border-t border-slate-200/80 dark:border-slate-700/80 space-y-2">
                 <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ __('Município no catálogo Consultoria — o SGE é gerido na ficha da cidade.') }}</p>
                 <div class="flex flex-wrap gap-2">
-                    <a x-show="active.cities_url" :href="active.cities_url" target="_blank" rel="noopener noreferrer" class="serv-btn-secondary text-xs">{{ __('Consultar ficha') }}</a>
-                    <a x-show="active.analytics_url" :href="active.analytics_url" target="_blank" rel="noopener noreferrer" class="serv-btn-primary text-xs">{{ __('Abrir consultoria') }}</a>
+                    <a x-show="active?.cities_url" :href="active.cities_url" target="_blank" rel="noopener noreferrer" class="serv-btn-secondary text-xs">{{ __('Consultar ficha') }}</a>
+                    <a x-show="active?.analytics_url" :href="active.analytics_url" target="_blank" rel="noopener noreferrer" class="serv-btn-primary text-xs">{{ __('Abrir consultoria') }}</a>
                 </div>
             </div>
         </div>
-    </template>
-</div>
-
-<div
-    x-show="ufSummaryOpen && isRegionalMode"
-    x-cloak
-    x-transition.opacity.duration.150ms
-    class="serv-brazil-map-tooltip serv-brazil-map-tooltip--wide serv-brazil-map-tooltip--muni serv-brazil-map-tooltip--uf"
-    :style="ufSummaryStyle"
-    role="dialog"
-    aria-modal="true"
-    :aria-label="ufLabel(scopeUf)"
-    @click.stop
-    @keydown.escape.window="closeUfSummary()"
->
-    <div class="serv-horizonte-muni-tooltip__header">
-        <div class="min-w-0 flex-1">
-            <div class="serv-horizonte-muni-tooltip__heading">
-                <h3 class="serv-horizonte-muni-tooltip__name" x-text="ufFundebInsights?.uf_name || ufLabel(scopeUf)"></h3>
-                <span class="serv-horizonte-muni-tooltip__uf-badge" x-text="scopeUf"></span>
-            </div>
-            <p class="serv-horizonte-muni-tooltip__meta" x-text="ufSummaryMetaLabel()"></p>
-        </div>
-        <button
-            type="button"
-            class="serv-horizonte-muni-tooltip__close shrink-0"
-            x-on:click.stop="closeUfSummary()"
-            aria-label="{{ __('Fechar') }}"
-        >&times;</button>
     </div>
-    <div x-html="ufSummaryBodyHtml()"></div>
 </div>
 
 <div

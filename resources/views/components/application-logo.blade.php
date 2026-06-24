@@ -1,12 +1,18 @@
-{{-- Ícone: análise de dados educacionais (gráfico de barras + livro) --}}
+{{-- Ícone: consultoria (gráfico), formação (livro) e Horizonte (linha do horizonte + pin territorial) --}}
 <svg viewBox="0 0 52 36" xmlns="http://www.w3.org/2000/svg" fill="none" {{ $attributes }}>
     <g fill="currentColor">
-        {{-- Barras (métricas) --}}
-        <rect x="2" y="18" width="7" height="14" rx="1.5" opacity="0.75" />
-        <rect x="12" y="10" width="7" height="22" rx="1.5" opacity="0.9" />
-        <rect x="22" y="4" width="7" height="28" rx="1.5" />
+        {{-- Horizonte (base territorial) --}}
+        <path opacity="0.32" d="M0 30.5Q14 25.5 26 24Q38 25.5 52 30.5V36H0Z" />
+        {{-- Barras (métricas / consultoria) --}}
+        <rect x="2" y="18" width="7" height="10" rx="1.5" opacity="0.75" />
+        <rect x="12" y="12" width="7" height="16" rx="1.5" opacity="0.9" />
+        <rect x="22" y="6" width="7" height="22" rx="1.5" />
+        {{-- Pin no mapa (Horizonte GIS) --}}
+        <circle cx="26.5" cy="19.5" r="2.1" opacity="0.92" />
+        <path opacity="0.88" d="M26.5 21.6L24.7 26.2h3.6Z" />
         {{-- Livro aberto (formação) --}}
-        <path opacity="0.92" d="M36 4c2.5 0 4.5 1.2 6 3.1V32c-1.5-1.1-3.3-1.8-5.2-1.8-2.1 0-4 .8-5.5 2.1l-.3.3V6.5C32.5 5 34.1 4 36 4Z" />
-        <path opacity="0.55" d="M42 4c1.9 0 3.5 1 4.5 2.5V32c-1.5-1.3-3.4-2.1-5.5-2.1-1.9 0-3.7.7-5.2 1.8V7.1C36.5 5.2 38.5 4 41 4h1Z" />
+        <path opacity="0.92" d="M36 4c2.5 0 4.5 1.2 6 3.1V26c-1.5-1.1-3.3-1.8-5.2-1.8-2.1 0-4 .8-5.5 2.1l-.3.3V6.5C32.5 5 34.1 4 36 4Z" />
+        <path opacity="0.55" d="M42 4c1.9 0 3.5 1 4.5 2.5V26c-1.5-1.3-3.4-2.1-5.5-2.1-1.9 0-3.7.7-5.2 1.8V7.1C36.5 5.2 38.5 4 41 4h1Z" />
     </g>
+    <path d="M6 29.5Q26 23.5 46 29.5" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" opacity="0.5" />
 </svg>

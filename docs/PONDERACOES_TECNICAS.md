@@ -1,6 +1,6 @@
 # Ponderações técnicas — servlitcys
 
-**Versão do produto:** 5.8.0 · **Última revisão:** 2026-06-03
+**Versão do produto:** 6.0.0 · **Última revisão:** 2026-06-03
 
 > **Índice:** [README.md](README.md) · **Padrão doc:** [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md)
 

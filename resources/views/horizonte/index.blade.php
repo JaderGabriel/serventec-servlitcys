@@ -75,152 +75,7 @@
                 <p class="mt-1" x-text="pageError"></p>
             </div>
 
-            {{-- Barra de comando — decisão imediata --}}
-            <section class="serv-horizonte-cmd" aria-label="{{ __('Painel de decisão') }}" data-horizonte-tour="kpi">
-                <div class="serv-horizonte-cmd__hero">
-                    <div class="serv-horizonte-cmd__primary">
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">{{ __('Prioridade comercial') }}</p>
-                        <p class="serv-horizonte-cmd__primary-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(summary.high_pressure)">…</p>
-                        <p class="mt-1 text-sm text-rose-900/80 dark:text-rose-100/80 line-clamp-3">
-                            {{ __('Municípios em alta pressão FUNDEB (≥ :min) ou alta propensão — camada inicial do mapa.', ['min' => $pressureMin]) }}
-                        </p>
-                    </div>
-                    <div class="serv-horizonte-cmd__metrics">
-                        <div class="serv-horizonte-cmd__metric" title="{{ $kpiHints['prospect_count']['hint'] ?? '' }}">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 truncate">{{ __('Prospectos') }}</p>
-                            <p class="serv-horizonte-cmd__metric-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(summary.prospect_count)">…</p>
-                        </div>
-                        <div class="serv-horizonte-cmd__metric" title="{{ $kpiHints['high_prospect']['hint'] ?? '' }}">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 truncate">{{ __('Alta propensão') }}</p>
-                            <p class="serv-horizonte-cmd__metric-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(summary.high_prospect)">…</p>
-                        </div>
-                        <div class="serv-horizonte-cmd__metric" title="{{ $kpiHints['consultoria_active']['hint'] ?? '' }}">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 truncate">{{ __('Consultoria') }}</p>
-                            <p class="serv-horizonte-cmd__metric-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(summary.consultoria_active)">…</p>
-                        </div>
-                        <div class="serv-horizonte-cmd__metric" title="{{ $kpiHints['prospect_matriculas']['hint'] ?? '' }}">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 truncate">{{ __('Matr. prospecto') }}</p>
-                            <p class="serv-horizonte-cmd__metric-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(coverage.prospect_matriculas_censo)">…</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div
-                    class="serv-horizonte-cmd__fundeb"
-                    x-show="isRegionalMode && ufFundebInsights"
-                    x-cloak
-                    data-horizonte-tour="fundeb-uf"
-                >
-                    <div class="serv-horizonte-cmd__fundeb-head">
-                        <div class="min-w-0">
-                            <p class="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-200">
-                                {{ __('FUNDEB estadual') }}
-                            </p>
-                            <p class="mt-0.5 text-sm font-semibold text-serv-navy dark:text-slate-100" x-text="ufFundebInsights?.uf_name || ufLabel(scopeUf)"></p>
-                        </div>
-                        <div class="serv-horizonte-cmd__fundeb-portaria min-w-0 text-right">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-700/90 dark:text-amber-300/90">
-                                {{ __('Portaria vigente') }}
-                            </p>
-                            <p class="mt-0.5 text-xs font-medium text-slate-700 dark:text-slate-200 line-clamp-2" x-text="ufFundebPortariaLabel()"></p>
-                            <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400" x-show="ufFundebInsights?.portaria?.fundeb_imported_label" x-cloak>
-                                <span>{{ __('Receita FNDE') }}:</span>
-                                <span x-text="ufFundebInsights?.portaria?.fundeb_imported_label"></span>
-                            </p>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400" x-show="ufFundebInsights?.portaria?.transfer_imported_label" x-cloak>
-                                <span>{{ __('Repasses Tesouro') }}:</span>
-                                <span x-text="ufFundebInsights?.portaria?.transfer_imported_label"></span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="serv-horizonte-cmd__fundeb-metrics">
-                        <div class="serv-horizonte-cmd__fundeb-metric">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-800/80 dark:text-amber-200/80">{{ __('Receita portaria') }}</p>
-                            <p class="serv-horizonte-cmd__fundeb-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatFundebCurrency(ufFundebInsights?.receita_portaria_total)"></p>
-                            <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400" x-text="ufFundebExerciseLabel()"></p>
-                        </div>
-                        <div class="serv-horizonte-cmd__fundeb-metric">
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-800/80 dark:text-amber-200/80">{{ __('Complementação') }}</p>
-                            <p class="serv-horizonte-cmd__fundeb-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatFundebCurrency(ufFundebInsights?.complementacao_total)"></p>
-                            <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400" x-text="ufFundebMunicipalitiesLabel()"></p>
-                        </div>
-                        <div class="serv-horizonte-cmd__fundeb-metric" x-show="ufFundebInsights?.realtime?.available" x-cloak>
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-800/80 dark:text-amber-200/80">
-                                {{ __('Avanço :year', ['year' => date('Y')]) }}
-                            </p>
-                            <p class="serv-horizonte-cmd__fundeb-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatFundebPct(ufFundebInsights?.realtime?.pct_done)"></p>
-                            <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400" x-text="ufFundebRealtimeSubLabel()"></p>
-                        </div>
-                        <div class="serv-horizonte-cmd__fundeb-metric" x-show="ufFundebInsights?.national?.rank_receita" x-cloak>
-                            <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-800/80 dark:text-amber-200/80">{{ __('Comparativo nacional') }}</p>
-                            <p class="serv-horizonte-cmd__fundeb-value" :class="kpiLoading ? 'is-loading' : ''" x-text="ufFundebNationalRankLabel()"></p>
-                            <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400" x-text="ufFundebNationalSubLabel()"></p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="serv-horizonte-cmd__segments" data-horizonte-tour="segments" x-show="!kpiLoading && focusSegments.length > 0" x-cloak>
-                    <template x-for="seg in focusSegments" :key="seg.key">
-                        <button
-                            type="button"
-                            class="serv-horizonte-cmd__segment"
-                            :disabled="pageLoading"
-                            @click="applyFocusSegment(seg); workspaceTab = 'list'"
-                        >
-                            <span class="text-[10px] font-bold uppercase tracking-wide text-teal-800 dark:text-teal-300" x-text="seg.label"></span>
-                            <span class="serv-horizonte-cmd__segment-count" x-text="Number(seg.count ?? 0).toLocaleString('pt-BR')"></span>
-                            <span class="mt-0.5 line-clamp-2 text-[11px] text-slate-500 dark:text-slate-400" x-text="seg.description"></span>
-                        </button>
-                    </template>
-                </div>
-
-                <div class="serv-horizonte-cmd__controls" data-horizonte-tour="recorte">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <label class="inline-flex items-center gap-2 text-xs">
-                            <span class="text-slate-500 shrink-0">{{ __('Recorte') }}</span>
-                            <select
-                                x-model="scopeUf"
-                                @change="onScopeUfPick($event)"
-                                :disabled="pageLoading || regionalLoading"
-                                class="rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 text-sm min-w-[11rem]"
-                            >
-                                <option value="">{{ __('Brasil (por UF)') }}</option>
-                                @foreach ($ufNames as $code => $name)
-                                    <option value="{{ $code }}">{{ $code }} — {{ $name }}</option>
-                                @endforeach
-                            </select>
-                        </label>
-                        <span class="serv-horizonte-gis__mode-pill" :class="isOverviewMode ? 'is-national' : 'is-regional'">
-                            <span x-show="isOverviewMode">{{ __('Visão nacional') }}</span>
-                            <span x-show="isRegionalMode" x-cloak x-text="ufLabel(scopeUf)"></span>
-                        </span>
-                        <button
-                            type="button"
-                            x-show="isRegionalMode"
-                            x-cloak
-                            class="serv-btn-secondary text-xs"
-                            @click="backToOverview()"
-                            :disabled="pageLoading || regionalLoading"
-                        >{{ __('← Brasil') }}</button>
-                    </div>
-                    <div class="flex flex-wrap gap-2 sm:justify-end">
-                        <button
-                            type="button"
-                            class="serv-btn-secondary text-xs xl:hidden"
-                            data-horizonte-tour="filters-hint"
-                            @click="openFiltersDock()"
-                            :disabled="pageLoading || isOverviewMode"
-                        >
-                            {{ __('Filtros') }}
-                            <span x-show="activeFilterCount > 0" x-cloak class="ms-1 rounded-full bg-teal-600 px-1.5 py-0.5 text-[10px] font-bold text-white tabular-nums" x-text="activeFilterCount"></span>
-                        </button>
-                        <button type="button" class="serv-btn-secondary text-xs" @click="resetFilters()" :disabled="pageLoading">
-                            {{ __('Vista padrão') }}
-                        </button>
-                    </div>
-                </div>
-            </section>
+            @include('horizonte.partials.cmd-dock')
 
             {{-- Mapa + rail de acção --}}
             <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_16rem] 2xl:grid-cols-[minmax(0,1fr)_17rem]">
@@ -267,13 +122,15 @@
                             <button
                                 type="button"
                                 class="serv-horizonte-map-toolbar-btn"
+                                :class="ufSummaryOpen ? 'is-active' : ''"
                                 x-show="isRegionalMode && scopeUf"
                                 x-cloak
-                                @click="centerSelectedUfAndSummary()"
-                                :title="'{{ __('Centrar UF e abrir resumo estadual') }}'"
+                                @click="toggleUfSummaryPanel()"
+                                :title="mapControlLabelUfSummary()"
+                                :aria-expanded="ufSummaryOpen"
                             >
-                                <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
-                                <span class="hidden sm:inline">{{ __('Resumo UF') }}</span>
+                                <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" /></svg>
+                                <span class="hidden sm:inline" x-text="ufSummaryButtonLabel()"></span>
                             </button>
                             <button
                                 type="button"
@@ -290,19 +147,44 @@
                         </div>
                     </div>
 
+                    @include('horizonte.partials.uf-summary-header')
+
                     <div class="serv-horizonte-result-bar" x-show="isRegionalMode && !pageLoading" x-cloak>
-                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs min-w-0">
                             <span class="font-semibold text-serv-navy dark:text-slate-100 tabular-nums">
                                 <span x-text="filteredCount.toLocaleString('pt-BR')"></span> {{ __('no recorte') }}
                             </span>
                             <span class="text-slate-400">·</span>
-                            <span class="text-slate-600 dark:text-slate-300 tabular-nums">
+                            <span
+                                class="tabular-nums"
+                                :class="mapRenderTruncated ? 'font-medium text-amber-800 dark:text-amber-200' : 'text-slate-600 dark:text-slate-300'"
+                            >
                                 <span x-text="mapInteractionStats.onMap.toLocaleString('pt-BR')"></span> {{ __('desenhados no mapa') }}
                             </span>
                             <span class="text-slate-400">·</span>
                             <span class="text-slate-500" x-text="decisionLensLabel"></span>
                         </div>
-                        <button type="button" class="serv-link text-[11px] shrink-0" @click="toggleFiltersPanel()" x-show="!filtersVisible && !filterDockOpen">{{ __('Mostrar filtros') }}</button>
+                        <div class="flex flex-wrap items-center gap-2 shrink-0">
+                            <button
+                                type="button"
+                                class="serv-horizonte-map-draw-all-btn"
+                                x-show="mapRenderTruncated && canShowAllOnMap"
+                                x-cloak
+                                @click="enableFullMapRender()"
+                                :title="mapDrawAllLabel()"
+                            >
+                                <svg class="h-3.5 w-3.5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" /></svg>
+                                <span x-text="mapDrawAllLabel()"></span>
+                            </button>
+                            <button
+                                type="button"
+                                class="serv-link text-[11px]"
+                                x-show="showAllOnMap && !mapRenderTruncated"
+                                x-cloak
+                                @click="restoreMapRenderCap()"
+                            >{{ __('Limitar mapa') }}</button>
+                            <button type="button" class="serv-link text-[11px]" @click="toggleFiltersPanel()" x-show="!filtersVisible && !filterDockOpen">{{ __('Mostrar filtros') }}</button>
+                        </div>
                     </div>
 
                     <div class="px-4 py-2 border-b border-slate-200/90 dark:border-slate-700/90 space-y-2">
@@ -414,12 +296,25 @@
                             <button
                                 type="button"
                                 class="serv-horizonte-map-float-btn"
+                                :class="ufSummaryOpen ? 'is-active' : ''"
                                 x-show="isRegionalMode && scopeUf"
-                                @click="centerSelectedUfAndSummary()"
-                                :title="'{{ __('Centrar UF e abrir resumo estadual') }}'"
+                                @click="toggleUfSummaryPanel()"
+                                :title="mapControlLabelUfSummary()"
+                                :aria-expanded="ufSummaryOpen"
                             >
-                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
-                                <span>{{ __('Resumo UF') }}</span>
+                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" /></svg>
+                                <span x-text="ufSummaryButtonLabel()"></span>
+                            </button>
+                            <button
+                                type="button"
+                                class="serv-horizonte-map-float-btn"
+                                x-show="mapRenderTruncated && canShowAllOnMap"
+                                x-cloak
+                                @click="enableFullMapRender()"
+                                :title="mapDrawAllLabel()"
+                            >
+                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" /></svg>
+                                <span x-text="mapDrawAllLabel()"></span>
                             </button>
                             <button
                                 type="button"
@@ -488,13 +383,12 @@
                         >
                             <span class="font-medium">{{ __('Mapa limitado') }}:</span>
                             <span class="tabular-nums" x-text="' ' + mapRenderShownCount.toLocaleString('pt-BR') + ' / ' + filteredCount.toLocaleString('pt-BR')"></span>
-                            <button type="button" class="ms-2 underline" x-show="canShowAllOnMap" @click="enableFullMapRender()">{{ __('Mostrar todos') }}</button>
+                            <button type="button" class="ms-2 font-semibold underline" x-show="canShowAllOnMap" @click="enableFullMapRender()" x-text="mapDrawAllLabel()"></button>
                             <span x-show="!canShowAllOnMap" class="ms-2 text-amber-800/80">{{ __('Use a lista ou zoom nos clusters.') }}</span>
                         </div>
 
                         <div x-ref="map" data-horizonte-tour="map" class="serv-brazil-map serv-horizonte-gis__map serv-horizonte-gis__map--tall w-full mt-3 min-h-0 flex-1" role="application" aria-label="{{ __('Mapa Horizonte GIS') }}"></div>
 
-                        @include('horizonte.partials.map-tooltip-sge')
                         </div>
                     </div>
                 </section>
@@ -822,5 +716,7 @@
                 </div>
             </div>
         </div>
+
+        @include('horizonte.partials.map-tooltip-sge')
     </div>
 </x-app-layout>

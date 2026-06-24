@@ -14,8 +14,18 @@
     }
 
     .serv-horizonte-sge-overlay {
-        @apply absolute inset-0 z-[220] flex items-end sm:items-center justify-center p-4
+        @apply fixed inset-0 z-[520] flex items-end sm:items-center justify-center p-4
             bg-slate-900/55 backdrop-blur-[2px];
+    }
+
+    .serv-horizonte-muni-overlay {
+        @apply fixed inset-0 z-[500] flex items-center justify-center p-4
+            bg-slate-900/45 backdrop-blur-[1px];
+    }
+
+    .serv-horizonte-muni-overlay .serv-brazil-map-tooltip--centered {
+        @apply relative left-auto top-auto w-full max-w-[min(26rem,calc(100vw-2rem))] max-h-[min(70dvh,34rem)]
+            translate-x-0 translate-y-0 shadow-2xl ring-1 ring-slate-900/10 dark:ring-white/10;
     }
 
     .serv-horizonte-sge-panel {
@@ -246,8 +256,101 @@
 
     /* Horizonte — centro de decisão (layout v2) */
     .serv-horizonte-cmd {
-        @apply sticky top-0 z-20 rounded-2xl border border-slate-200/90 bg-white/95 px-4 py-4 shadow-sm backdrop-blur-md
+        @apply sticky z-40 rounded-2xl border border-slate-200/90 bg-white/95 shadow-md backdrop-blur-md
             dark:border-slate-700/90 dark:bg-slate-900/95;
+    }
+
+    .serv-horizonte-cmd.is-collapsed {
+        @apply shadow-sm;
+    }
+
+    .serv-horizonte-cmd__bar {
+        @apply relative overflow-hidden rounded-2xl;
+    }
+
+    .serv-horizonte-cmd__accent {
+        @apply pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-teal-500 via-indigo-500 to-rose-500;
+    }
+
+    .serv-horizonte-cmd__bar::after {
+        content: "";
+        @apply pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-teal-500/80 via-indigo-500/80 to-rose-500/80;
+    }
+
+    .serv-horizonte-cmd__bar-grid {
+        @apply grid gap-3 px-4 py-3 pl-5
+            lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)_auto] lg:items-center;
+    }
+
+    .serv-horizonte-cmd__recorte {
+        @apply flex min-w-0 flex-wrap items-center gap-2;
+    }
+
+    .serv-horizonte-cmd__recorte-label {
+        @apply inline-flex min-w-0 items-center gap-2 text-xs;
+    }
+
+    .serv-horizonte-cmd__recorte-select {
+        @apply min-w-[11rem] rounded-lg border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200;
+    }
+
+    .serv-horizonte-cmd__highlight {
+        @apply flex min-w-0 flex-wrap items-center gap-2 rounded-xl border border-slate-200/90 bg-slate-50/90 px-3 py-2
+            dark:border-slate-700/80 dark:bg-slate-900/50;
+    }
+
+    .serv-horizonte-cmd__highlight-item {
+        @apply inline-flex min-w-0 flex-col gap-0.5;
+    }
+
+    .serv-horizonte-cmd__highlight-item--rose .serv-horizonte-cmd__highlight-value {
+        @apply text-rose-800 dark:text-rose-200;
+    }
+
+    .serv-horizonte-cmd__highlight-item--teal .serv-horizonte-cmd__highlight-value {
+        @apply text-teal-800 dark:text-teal-200;
+    }
+
+    .serv-horizonte-cmd__highlight-item--muted .serv-horizonte-cmd__highlight-value {
+        @apply text-sm font-semibold text-slate-700 dark:text-slate-200;
+    }
+
+    .serv-horizonte-cmd__highlight-label {
+        @apply text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-horizonte-cmd__highlight-value {
+        @apply font-display text-lg font-bold tabular-nums text-serv-navy dark:text-slate-100 leading-none;
+    }
+
+    .serv-horizonte-cmd__highlight-value.is-loading {
+        @apply animate-pulse text-slate-400 dark:text-slate-500;
+    }
+
+    .serv-horizonte-cmd__highlight-sep {
+        @apply hidden h-8 w-px shrink-0 bg-slate-200 dark:bg-slate-700 sm:block;
+    }
+
+    .serv-horizonte-cmd__bar-actions {
+        @apply flex flex-wrap items-center justify-end gap-2 lg:justify-self-end;
+    }
+
+    .serv-horizonte-cmd__expand-btn {
+        @apply inline-flex items-center gap-1.5 rounded-lg border border-indigo-200/90 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-900
+            transition hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50
+            dark:border-indigo-800/70 dark:bg-indigo-950/40 dark:text-indigo-100 dark:hover:bg-indigo-950/60;
+    }
+
+    .serv-horizonte-cmd.is-expanded .serv-horizonte-cmd__expand-btn {
+        @apply border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200;
+    }
+
+    .serv-horizonte-cmd__drawer {
+        @apply border-t border-slate-200/80 px-4 pb-4 pt-4 dark:border-slate-700/80;
+    }
+
+    .serv-horizonte-cmd__drawer-foot {
+        @apply mt-4 border-t border-slate-200/80 pt-3 dark:border-slate-700/80;
     }
 
     .serv-horizonte-cmd__hero {
@@ -371,7 +474,7 @@
     }
 
     .serv-horizonte-rail {
-        @apply space-y-3 lg:sticky lg:top-[calc(0.5rem+var(--horizonte-cmd-height,0px))] lg:max-h-[calc(100dvh-1rem)] lg:overflow-y-auto lg:self-start;
+        @apply space-y-3 lg:sticky lg:top-[calc(var(--horizonte-cmd-sticky-top,0px)+var(--horizonte-cmd-height,0px)+0.5rem)] lg:max-h-[calc(100dvh-var(--horizonte-cmd-sticky-top,0px)-var(--horizonte-cmd-height,0px)-1rem)] lg:overflow-y-auto lg:self-start;
     }
 
     .serv-horizonte-rail__card {
@@ -400,9 +503,103 @@
         @apply flex flex-wrap items-center gap-2 border-b border-slate-200/90 px-4 py-2.5 dark:border-slate-700/90;
     }
 
+    .serv-horizonte-uf-summary {
+        @apply border-b border-indigo-200/80 bg-gradient-to-br from-indigo-50/90 via-white to-slate-50 px-4 py-3 shadow-sm
+            dark:border-indigo-900/50 dark:from-indigo-950/30 dark:via-slate-900/90 dark:to-slate-900/80;
+    }
+
+    .serv-horizonte-uf-summary__head {
+        @apply flex items-start justify-between gap-3;
+    }
+
+    .serv-horizonte-uf-summary__badge {
+        @apply inline-flex shrink-0 items-center rounded-md bg-indigo-600 px-2 py-0.5 text-[11px] font-bold tracking-wide text-white;
+    }
+
+    .serv-horizonte-uf-summary__title {
+        @apply text-sm font-semibold text-serv-navy dark:text-slate-100 truncate;
+    }
+
+    .serv-horizonte-uf-summary__meta {
+        @apply mt-1 text-[11px] text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-horizonte-uf-summary__close {
+        @apply shrink-0 rounded-md px-2 py-0.5 text-lg leading-none text-slate-400 transition hover:bg-slate-100 hover:text-slate-700
+            dark:hover:bg-slate-800 dark:hover:text-slate-200;
+    }
+
+    .serv-horizonte-uf-summary__pipeline {
+        @apply mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5;
+    }
+
+    .serv-horizonte-uf-summary__pipe-metric {
+        @apply min-w-0 rounded-lg border border-slate-200/90 bg-white/80 px-3 py-2 dark:border-slate-700/80 dark:bg-slate-900/50;
+    }
+
+    .serv-horizonte-uf-summary__pipe-label {
+        @apply text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 truncate;
+    }
+
+    .serv-horizonte-uf-summary__pipe-value {
+        @apply mt-0.5 font-display text-lg font-semibold tabular-nums text-serv-navy dark:text-slate-100 truncate;
+    }
+
+    .serv-horizonte-uf-summary__pipe-value.is-loading {
+        @apply animate-pulse text-slate-400 dark:text-slate-500;
+    }
+
+    .serv-horizonte-uf-summary__fundeb {
+        @apply mt-3 overflow-hidden rounded-xl border border-amber-200/90 bg-gradient-to-br from-amber-50/80 via-white to-amber-50/30 px-3 py-3
+            dark:border-amber-800/60 dark:from-amber-950/25 dark:via-slate-900/70 dark:to-amber-950/15;
+    }
+
+    .serv-horizonte-uf-summary__fundeb-head {
+        @apply flex flex-col gap-2 border-b border-amber-200/70 pb-2 sm:flex-row sm:items-start sm:justify-between dark:border-amber-900/50;
+    }
+
+    .serv-horizonte-uf-summary__fundeb-kicker {
+        @apply text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-200;
+    }
+
+    .serv-horizonte-uf-summary__fundeb-grid {
+        @apply mt-2 grid grid-cols-2 gap-2 lg:grid-cols-4;
+    }
+
+    .serv-horizonte-uf-summary__fundeb-metric {
+        @apply min-w-0 rounded-lg border border-amber-200/80 bg-white/80 px-2.5 py-2 dark:border-amber-900/50 dark:bg-slate-900/50;
+    }
+
+    .serv-horizonte-uf-summary__fundeb-label {
+        @apply text-[10px] font-semibold uppercase tracking-wide text-amber-800/80 dark:text-amber-200/80 truncate;
+    }
+
+    .serv-horizonte-uf-summary__fundeb-value {
+        @apply mt-0.5 font-display text-base font-semibold tabular-nums text-amber-950 dark:text-amber-100 truncate;
+    }
+
+    .serv-horizonte-uf-summary__fundeb-value.is-loading {
+        @apply animate-pulse text-slate-400 dark:text-slate-500;
+    }
+
+    .serv-horizonte-uf-summary__coverage {
+        @apply mt-3 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400;
+    }
+
+    .serv-horizonte-gis.is-map-fullscreen .serv-horizonte-uf-summary,
+    .serv-horizonte-gis:fullscreen .serv-horizonte-uf-summary {
+        @apply shrink-0;
+    }
+
     .serv-horizonte-result-bar {
         @apply flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 bg-slate-50/80 px-4 py-2
             dark:border-slate-700/80 dark:bg-slate-900/40;
+    }
+
+    .serv-horizonte-map-draw-all-btn {
+        @apply inline-flex items-center gap-1.5 rounded-lg border border-amber-300/90 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-950
+            shadow-sm transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50
+            dark:border-amber-800/70 dark:bg-amber-950/40 dark:text-amber-100 dark:hover:bg-amber-950/60;
     }
 
     .serv-horizonte-map-stage {

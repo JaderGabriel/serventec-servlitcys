@@ -18,6 +18,7 @@ use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Support\Admin\AdminImportHubCatalog;
 use App\Support\Admin\ImportHubThemeCatalog;
 use App\Support\Admin\PublicDataImportCatalog;
+use App\Support\Admin\PublicDataAvailabilityPresenter;
 use App\Support\SyncQueue\SyncQueueUserScope;
 use App\Services\Horizonte\HorizonteFortnightlyFeedService;
 use App\Services\Horizonte\HorizonteDataBundleService;
@@ -232,13 +233,7 @@ class PublicDataImportController extends Controller
                 ]));
         }
 
-        $message = ($result['has_news'] ?? false)
-            ? trans_choice(
-                'Verificação concluída — :n novidade detectada nas fontes oficiais.|Verificação concluída — :n novidades detectadas nas fontes oficiais.',
-                max(1, (int) ($result['news_count'] ?? 0)),
-                ['n' => (int) ($result['news_count'] ?? 0)],
-            )
-            : __('Verificação concluída — sem novidades nas fontes oficiais.');
+        $message = PublicDataAvailabilityPresenter::flashMessage(is_array($result['report'] ?? null) ? $result['report'] : $result);
 
         if ($notify) {
             $message .= ' '.(($result['notified'] ?? false)

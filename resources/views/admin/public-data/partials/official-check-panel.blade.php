@@ -3,7 +3,10 @@
 
     $report = is_array($officialCheck ?? null) ? $officialCheck : null;
     $summary = is_array($report['summary'] ?? null) ? $report['summary'] : null;
-    $findings = is_array($report['findings'] ?? null) ? $report['findings'] : [];
+    $groups = is_array($report['groups'] ?? null) ? $report['groups'] : [];
+    $actionFindings = is_array($groups['action'] ?? null) ? $groups['action'] : [];
+    $alignedFindings = is_array($groups['aligned'] ?? null) ? $groups['aligned'] : [];
+    $counts = is_array($report['counts'] ?? null) ? $report['counts'] : [];
     $checkedAt = filled($report['checked_at'] ?? null)
         ? \Illuminate\Support\Carbon::parse($report['checked_at'])->timezone(config('app.timezone'))->format('d/m/Y H:i')
         : null;
@@ -69,68 +72,51 @@
         </x-admin.import-hub.callout>
     @else
         <x-admin.import-hub.callout :variant="$summary['variant'] ?? 'info'" :title="$summary['headline'] ?? __('Resumo da verificação')">
-            <div class="flex flex-wrap gap-3 text-[11px] font-medium">
-                <span class="text-emerald-700 dark:text-emerald-300">{{ __('Sem novidade: :n', ['n' => (int) ($summary['ok'] ?? 0)]) }}</span>
-                <span class="text-amber-700 dark:text-amber-300">{{ __('Atenção: :n', ['n' => (int) ($summary['attention'] ?? 0)]) }}</span>
-                <span class="text-violet-700 dark:text-violet-300">{{ __('Novidades: :n', ['n' => (int) ($summary['news'] ?? 0)]) }}</span>
+            @if (filled($summary['subline'] ?? null))
+                <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">{{ $summary['subline'] }}</p>
+            @endif
+            <div class="mt-2 flex flex-wrap gap-2 text-[11px] font-medium">
+                @if ((int) ($counts['new_count'] ?? $summary['news'] ?? 0) > 0)
+                    <span class="inline-flex rounded-full bg-violet-100 px-2.5 py-0.5 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200">
+                        {{ trans_choice(':n novidade|:n novidades', (int) ($counts['new_count'] ?? $summary['news'] ?? 0), ['n' => (int) ($counts['new_count'] ?? $summary['news'] ?? 0)]) }}
+                    </span>
+                @endif
+                @if ((int) ($counts['attention_count'] ?? $summary['attention'] ?? 0) > 0)
+                    <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
+                        {{ trans_choice(':n requer atenção|:n requerem atenção', (int) ($counts['attention_count'] ?? $summary['attention'] ?? 0), ['n' => (int) ($counts['attention_count'] ?? $summary['attention'] ?? 0)]) }}
+                    </span>
+                @endif
+                @if ((int) ($counts['aligned_count'] ?? $summary['aligned'] ?? 0) > 0)
+                    <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
+                        {{ trans_choice(':n alinhada|:n alinhadas', (int) ($counts['aligned_count'] ?? $summary['aligned'] ?? 0), ['n' => (int) ($counts['aligned_count'] ?? $summary['aligned'] ?? 0)]) }}
+                    </span>
+                @endif
             </div>
         </x-admin.import-hub.callout>
 
-        <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-left text-xs">
-                    <thead class="bg-gray-50/90 text-[11px] uppercase tracking-wide text-gray-500 dark:bg-gray-900/60 dark:text-gray-400">
-                        <tr>
-                            <th class="px-4 py-2.5 font-semibold">{{ __('Fonte') }}</th>
-                            <th class="px-4 py-2.5 font-semibold">{{ __('Estado') }}</th>
-                            <th class="px-4 py-2.5 font-semibold">{{ __('Resumo') }}</th>
-                            <th class="px-4 py-2.5 font-semibold">{{ __('Rotina sugerida') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                        @foreach ($findings as $finding)
-                            @php
-                                $ui = is_array($finding['ui'] ?? null) ? $finding['ui'] : [];
-                                $level = $ui['level'] ?? 'neutral';
-                                $badgeClass = AdminImportHubCatalog::statusBadgeClasses()[$level]
-                                    ?? AdminImportHubCatalog::statusBadgeClasses()['neutral'];
-                                $status = (string) ($finding['status'] ?? '');
-                                $showRoutine = in_array($status, ['new_available', 'attention', 'unreachable', 'not_configured'], true);
-                                $anchor = (string) ($finding['source_anchor'] ?? '#');
-                            @endphp
-                            <tr class="bg-white dark:bg-gray-900/40">
-                                <td class="px-4 py-3 align-top">
-                                    <a href="{{ $anchor }}" class="font-medium text-indigo-700 dark:text-indigo-300 hover:underline">
-                                        {{ $finding['source_title'] ?? $finding['source_id'] ?? '—' }}
-                                    </a>
-                                </td>
-                                <td class="px-4 py-3 align-top">
-                                    <span class="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold {{ $badgeClass }}">
-                                        {{ $ui['label'] ?? '—' }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 align-top text-gray-700 dark:text-gray-300">
-                                    <p class="font-medium text-gray-900 dark:text-gray-100">{{ $finding['headline'] ?? '' }}</p>
-                                    @if (filled($finding['detail'] ?? null))
-                                        <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ $finding['detail'] }}</p>
-                                    @endif
-                                </td>
-                                <td class="px-4 py-3 align-top">
-                                    @if ($showRoutine && filled($finding['routine_cli'] ?? null))
-                                        <code class="block rounded bg-gray-100 px-2 py-1 text-[10px] text-gray-800 dark:bg-gray-800 dark:text-gray-200">{{ $finding['routine_cli'] }}</code>
-                                    @elseif ($showRoutine && filled($finding['routine_label'] ?? null))
-                                        <a href="{{ $anchor }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
-                                            {{ $finding['routine_label'] }}
-                                        </a>
-                                    @else
-                                        <span class="text-gray-400">—</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+        @if ($actionFindings !== [])
+            <div class="space-y-2">
+                <h4 class="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                    {{ __('Requer ação') }}
+                </h4>
+                @include('admin.public-data.partials.official-check-findings-table', [
+                    'findings' => $actionFindings,
+                    'tone' => 'action',
+                ])
             </div>
-        </div>
+        @endif
+
+        @if ($alignedFindings !== [])
+            <div class="space-y-2">
+                <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {{ __('Sem alteração') }}
+                    <span class="font-normal normal-case text-gray-400 dark:text-gray-500">— {{ __('cobertura local alinhada') }}</span>
+                </h4>
+                @include('admin.public-data.partials.official-check-findings-table', [
+                    'findings' => $alignedFindings,
+                    'tone' => 'aligned',
+                ])
+            </div>
+        @endif
     @endif
 </section>

@@ -237,7 +237,7 @@ return [
         'max_exports_per_user' => max(1, (int) env('ANALYTICS_PDF_MAX_PER_USER', 10)),
         'brand' => [
             'system_name' => (string) env('ANALYTICS_PDF_SYSTEM_NAME', env('APP_NAME', 'SERVLITCYS')),
-            'system_tagline' => (string) env('ANALYTICS_PDF_SYSTEM_TAGLINE', 'Plataforma educacional municipal'),
+            'system_tagline' => (string) env('ANALYTICS_PDF_SYSTEM_TAGLINE', 'Consultoria, gráficos e Horizonte municipal'),
             'icon_path' => (string) env('ANALYTICS_PDF_ICON_PATH', 'favicon.svg'),
             'serventec_name' => (string) env('ANALYTICS_PDF_SERVENTEC_NAME', 'Serventec Assessoria'),
             'serventec_url' => (string) env('ANALYTICS_PDF_SERVENTEC_URL', 'https://analise.serventecassessoria.com.br/'),

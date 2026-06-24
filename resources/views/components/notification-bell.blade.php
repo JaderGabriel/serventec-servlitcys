@@ -134,7 +134,7 @@
                                         class="rounded bg-rose-100 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-rose-800 dark:bg-rose-900/50 dark:text-rose-200"
                                     >{{ __('Crítico') }}</span>
                                 </div>
-                                <p class="mt-0.5 text-xs text-gray-600 dark:text-gray-400 leading-snug" x-text="item.body"></p>
+                                <p class="mt-0.5 text-xs text-gray-600 dark:text-gray-400 leading-snug whitespace-pre-line" x-text="item.body"></p>
                                 <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-gray-400 dark:text-gray-500">
                                     <span x-text="item.created_label"></span>
                                     <template x-if="item.kind_label">

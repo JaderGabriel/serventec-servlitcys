@@ -91,7 +91,7 @@ final class HorizonteMapPresenterTest extends TestCase
         $this->assertSame('markers', $heavy['prefer_map_view']);
         $this->assertTrue($heavy['heavy_regional']);
         $this->assertFalse($heavy['allow_show_all']);
-        $this->assertNotNull($heavy['reason']);
+        $this->assertStringContainsString('Desenhar todos', (string) $heavy['reason']);
     }
 
     #[Test]

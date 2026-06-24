@@ -36,6 +36,9 @@ final class PublicDataOfficialAvailabilityService
      *     checked_at: string,
      *     has_news: bool,
      *     news_count: int,
+     *     attention_count: int,
+     *     aligned_count: int,
+     *     action_count: int,
      *     findings: list<array<string, mixed>>
      * }
      */
@@ -51,13 +54,28 @@ final class PublicDataOfficialAvailabilityService
 
         $news = array_values(array_filter(
             $findings,
-            static fn (array $f): bool => in_array($f['status'] ?? '', ['new_available', 'attention'], true),
+            static fn (array $f): bool => ($f['status'] ?? '') === 'new_available',
         ));
+
+        $attention = array_values(array_filter(
+            $findings,
+            static fn (array $f): bool => in_array($f['status'] ?? '', ['attention', 'unreachable', 'not_configured'], true),
+        ));
+
+        $aligned = array_values(array_filter(
+            $findings,
+            static fn (array $f): bool => ($f['status'] ?? '') === 'unchanged',
+        ));
+
+        $actionCount = count($news) + count($attention);
 
         return [
             'checked_at' => now()->toIso8601String(),
-            'has_news' => $news !== [],
+            'has_news' => $actionCount > 0,
             'news_count' => count($news),
+            'attention_count' => count($attention),
+            'aligned_count' => count($aligned),
+            'action_count' => $actionCount,
             'findings' => $findings,
         ];
     }

@@ -31,18 +31,37 @@ class PublicDataDailyCheckCommand extends Command
         }
 
         $report = is_array($result['report'] ?? null) ? $result['report'] : [];
-        $this->renderTable($report);
+        $counts = PublicDataAvailabilityPresenter::counts($report);
+        $this->renderGroupedTables($report);
 
-        if ($result['has_news'] ?? false) {
-            $this->newLine();
-            $this->info(__('Novidades detectadas: :n área(s).', [
-                'n' => (int) ($result['news_count'] ?? 0),
+        $this->newLine();
+        if ($counts['action'] === 0) {
+            $this->info(__('Tudo alinhado — :n fonte(s) verificada(s).', ['n' => $counts['total']]));
+        } elseif ($counts['new'] > 0 && $counts['attention'] > 0) {
+            $this->info(__('Resultado: :news novidade(s), :att atenção(ões), :aligned alinhada(s).', [
+                'news' => $counts['new'],
+                'att' => $counts['attention'],
+                'aligned' => $counts['aligned'],
             ]));
+        } elseif ($counts['new'] > 0) {
+            $this->info(trans_choice(
+                ':n publicação nova detectada.|:n publicações novas detectadas.',
+                max(1, $counts['new']),
+                ['n' => $counts['new']],
+            ));
         } else {
-            $this->newLine();
-            $this->info(__('Sem novidades. :n fontes verificadas.', [
-                'n' => (int) ($result['findings'] ?? 0),
-            ]));
+            $this->info(trans_choice(
+                ':n fonte requer atenção.|:n fontes requerem atenção.',
+                max(1, $counts['attention']),
+                ['n' => $counts['attention']],
+            ));
+            if ($counts['aligned'] > 0) {
+                $this->line(trans_choice(
+                    ':aligned fonte permanece sem alteração.|:aligned fontes permanecem sem alteração.',
+                    $counts['aligned'],
+                    ['aligned' => $counts['aligned']],
+                ));
+            }
         }
 
         if ($notify) {
@@ -59,12 +78,37 @@ class PublicDataDailyCheckCommand extends Command
     }
 
     /**
-     * @param  array{findings?: list<array<string, mixed>>}  $report
+     * @param  array{findings?: list<array<string, mixed>>, groups?: array{action?: list<array<string, mixed>>, aligned?: list<array<string, mixed>>}}  $report
      */
-    private function renderTable(array $report): void
+    private function renderGroupedTables(array $report): void
+    {
+        $groups = is_array($report['groups'] ?? null) ? $report['groups'] : PublicDataAvailabilityPresenter::groupFindings(
+            is_array($report['findings'] ?? null) ? $report['findings'] : [],
+        );
+
+        if (($groups['action'] ?? []) !== []) {
+            $this->comment(__('▶ REQUER ACÇÃO'));
+            $this->renderTable($groups['action']);
+        }
+
+        if (($groups['aligned'] ?? []) !== []) {
+            $this->newLine();
+            $this->comment(__('✓ SEM ALTERAÇÃO'));
+            $this->renderTable($groups['aligned']);
+        }
+
+        if (($groups['action'] ?? []) === [] && ($groups['aligned'] ?? []) === []) {
+            $this->warn(__('Nenhuma fonte verificada.'));
+        }
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $findings
+     */
+    private function renderTable(array $findings): void
     {
         $rows = [];
-        foreach ($report['findings'] ?? [] as $finding) {
+        foreach ($findings as $finding) {
             $status = (string) ($finding['status'] ?? '');
             $meta = PublicDataAvailabilityPresenter::statusMeta($status);
             $rows[] = [
@@ -75,8 +119,6 @@ class PublicDataDailyCheckCommand extends Command
         }
 
         if ($rows === []) {
-            $this->warn(__('Nenhuma fonte verificada.'));
-
             return;
         }
 

@@ -53,7 +53,7 @@
                             <x-application-logo class="h-11 w-11 text-white shrink-0" />
                         </span>
                         <p class="serv-auth-hero-name">{{ config('app.name') }}</p>
-                        <p class="serv-auth-hero-tagline">{{ __('Consultoria municipal, cadastro i-Educar e inteligência territorial.') }}</p>
+                        <p class="serv-auth-hero-tagline">{{ __('Consultoria e gráficos educacionais com o mapa Horizonte — inteligência territorial municipal.') }}</p>
                     </div>
                 @endunless
 

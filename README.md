@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão em produção (`main`):** **5.7.2** · tag **`20260620c-Forseti`** · [release](docs/RELEASE_20260620c_FORSETI.md) · [histórico](docs/HISTORICO_VERSOES.md)
+**Versão em produção (`main`):** **6.0.0** · tag **`20260603h-Odin`** · [release](docs/RELEASE_20260603h_ODIN.md) · [histórico](docs/HISTORICO_VERSOES.md)
 
 ---
 

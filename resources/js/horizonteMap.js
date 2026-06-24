@@ -91,124 +91,6 @@ function nfCompact(n) {
     return nf(v);
 }
 
-function ufFundebSummaryHtml(insights, refYear, currentYear) {
-    if (!insights || typeof insights !== "object") {
-        return "";
-    }
-    const portaria = insights.portaria || {};
-    const rt = insights.realtime || {};
-    const nat = insights.national || {};
-    const rows = [];
-
-    if (insights.receita_portaria_total != null) {
-        rows.push(
-            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Receita portaria")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(`Exercício ${insights.exercise_year || refYear}`)}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(insights.receita_portaria_total)}</span>` +
-                `</div>`,
-        );
-    }
-    if (insights.complementacao_total != null) {
-        rows.push(
-            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Complementação")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("VAAF + VAAT + VAAR")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(insights.complementacao_total)}</span>` +
-                `</div>`,
-        );
-    }
-    if (rt.available && rt.pct_done != null) {
-        rows.push(
-            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml(`Avanço ${rt.ano || currentYear}`)}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(rt.last_transfer_label ? `Último: ${rt.last_transfer_label}` : "Realizado × previsão")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatPercentValue(rt.pct_done) ?? "—"}</span>` +
-                `</div>`,
-        );
-        if (rt.observed_total != null && rt.expected_total != null) {
-            rows.push(
-                `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
-                    `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Repassado YTD")}</span>` +
-                    `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Soma municipal")}</span>` +
-                    `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(rt.observed_total)} / ${formatCurrencyBrl(rt.expected_total)}</span>` +
-                    `</div>`,
-            );
-        }
-    }
-    if (nat.rank_receita) {
-        const natParts = [
-            `${nat.rank_receita}º em receita`,
-            nat.share_receita_pct != null ? `${formatPercentValue(nat.share_receita_pct)} do Brasil` : null,
-            nat.rank_pct_done ? `${nat.rank_pct_done}º em avanço YTD` : null,
-        ].filter(Boolean);
-        rows.push(
-            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Comparativo nacional")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(natParts.join(" · "))}</span>` +
-                `</div>`,
-        );
-    }
-
-    if (rows.length === 0) {
-        return "";
-    }
-
-    const portariaLabel = portaria.publication_label || `Portaria FNDE ${insights.exercise_year || refYear}`;
-    const updates = [
-        portaria.fundeb_imported_label ? `Receita FNDE: ${portaria.fundeb_imported_label}` : null,
-        portaria.transfer_imported_label ? `Repasses: ${portaria.transfer_imported_label}` : null,
-    ].filter(Boolean);
-    const body =
-        (updates.length > 0
-            ? `<p class="serv-horizonte-muni-tooltip__finance-note serv-horizonte-muni-tooltip__finance-note--info">${escapeHtml(updates.join(" · "))}</p>`
-            : "") +
-        `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>`;
-
-    return (
-        `<div class="serv-horizonte-muni-tooltip__finance serv-horizonte-muni-tooltip__finance--uf">` +
-        financeSectionShell(
-            "reference",
-            "FUNDEB estadual",
-            portariaLabel,
-            "reference",
-            HORIZONTE_FINANCE_ICONS.reference,
-            body,
-        ) +
-        `</div>`
-    );
-}
-
-function ufCommercialPipelineHtml(summary, coverage) {
-    const s = summary && typeof summary === "object" ? summary : {};
-    const c = coverage && typeof coverage === "object" ? coverage : {};
-    const cell = (val, label) =>
-        `<div class="serv-horizonte-muni-tooltip__pipe-cell">` +
-        `<span class="serv-horizonte-muni-tooltip__pipe-val">${nf(val ?? 0)}</span>` +
-        `<span class="serv-horizonte-muni-tooltip__pipe-label">${escapeHtml(label)}</span>` +
-        `</div>`;
-
-    return (
-        `<div class="serv-horizonte-muni-tooltip__pipeline serv-horizonte-muni-tooltip__pipeline--uf">` +
-        `<div class="serv-horizonte-muni-tooltip__pipe-step">` +
-        cell(s.high_pressure, "Alta pressão") +
-        `</div>` +
-        `<div class="serv-horizonte-muni-tooltip__pipe-arrow" aria-hidden="true">›</div>` +
-        `<div class="serv-horizonte-muni-tooltip__pipe-step">` +
-        cell(s.prospect_count, "Prospectos") +
-        `</div>` +
-        `<div class="serv-horizonte-muni-tooltip__pipe-arrow" aria-hidden="true">›</div>` +
-        `<div class="serv-horizonte-muni-tooltip__pipe-step">` +
-        cell(s.high_prospect, "Alta propensão") +
-        `</div>` +
-        `<div class="serv-horizonte-muni-tooltip__pipe-arrow" aria-hidden="true">›</div>` +
-        `<div class="serv-horizonte-muni-tooltip__pipe-step serv-horizonte-muni-tooltip__pipe-step--final">` +
-        cell(c.prospect_matriculas_censo, "Matr. prospecto") +
-        `</div>` +
-        `</div>` +
-        `<p class="serv-horizonte-muni-tooltip__pipe-hint">${escapeHtml("Indicadores comerciais agregados na UF")}</p>`
-    );
-}
 
 function muniPopulationPipelineHtml(m) {
     const fmt = (val) => (val != null && Number(val) > 0 ? nfCompact(val) : "—");
@@ -936,7 +818,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         tooltipPinned: false,
         tooltipStyle: "",
         ufSummaryOpen: false,
-        ufSummaryStyle: "",
+        cmdBarExpanded: false,
+        _cmdDockObserver: null,
         _mapUserAdjustedView: false,
         searchQuery: "",
         viewPreset: options.defaultViewFilter?.preset ?? "high_pressure",
@@ -1102,10 +985,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 list = list.filter((m) => !isApproxCoord(m));
             }
             const limit = Number(this.mapRenderLimit) || 400;
-            const heavyCap = Boolean(this.regionalDisplayPolicy?.heavy_regional);
-            const hardMax = heavyCap ? limit : list.length;
+            const safetyMax = Math.max(
+                limit,
+                Number(this.displayPolicy?.max_render_markers) || 800,
+            );
             let rendered = [];
-            if ((!this.showAllOnMap || heavyCap) && list.length > limit) {
+            if (!this.showAllOnMap && list.length > limit) {
                 rendered = [...list]
                     .sort(
                         (a, b) =>
@@ -1114,7 +999,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     )
                     .slice(0, limit);
             } else {
-                rendered = list.slice(0, hardMax);
+                rendered =
+                    list.length > safetyMax ? list.slice(0, safetyMax) : list;
             }
 
             const allValid = this.filteredMarkersList.filter((m) =>
@@ -1143,10 +1029,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         get canShowAllOnMap() {
-            return (
-                this.regionalDisplayPolicy?.allow_show_all !== false &&
-                !this.regionalDisplayPolicy?.heavy_regional
+            if (this.isOverviewMode) {
+                return false;
+            }
+            const valid = this.filteredMarkersList.filter((m) =>
+                isValidCoord(Number(m.lat), Number(m.lng)),
             );
+            const limit = Number(this.mapRenderLimit) || 400;
+            return valid.length > limit;
         },
 
         get mapRenderShownCount() {
@@ -1550,6 +1440,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this._fullscreenChangeHandler = () => this.onFullscreenChange();
             document.addEventListener("fullscreenchange", this._fullscreenChangeHandler);
             this.bindMapLayoutObservers();
+            this.bindCmdDockObservers();
             if (this.loadUrl) {
                 await this.fetchOverview();
                 await this.applyInitialNavigation();
@@ -1689,6 +1580,92 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             ];
             if (filtered !== total) {
                 parts.push(`${filtered.toLocaleString("pt-BR")} no recorte actual`);
+            }
+            return parts.join(" · ");
+        },
+
+        ufSummaryButtonLabel() {
+            const uf = String(this.scopeUf ?? "")
+                .trim()
+                .toUpperCase();
+            if (!uf) {
+                return "Resumo UF";
+            }
+            return `${uf} — Resumo`;
+        },
+
+        toggleCmdBarExpanded() {
+            this.cmdBarExpanded = !this.cmdBarExpanded;
+            this.$nextTick(() => this.syncCmdDockLayout());
+        },
+
+        cmdBarExpandLabel() {
+            return this.cmdBarExpanded
+                ? "Ocultar indicadores"
+                : "Ver indicadores";
+        },
+
+        syncCmdDockLayout() {
+            const dock = this.$refs.cmdDock;
+            const header = document.querySelector(".serv-app-header");
+            if (!(dock instanceof HTMLElement)) {
+                return;
+            }
+            const headerHeight =
+                header instanceof HTMLElement ? header.getBoundingClientRect().height : 0;
+            dock.style.top = `${Math.round(headerHeight)}px`;
+            document.documentElement.style.setProperty(
+                "--horizonte-cmd-sticky-top",
+                `${Math.round(headerHeight)}px`,
+            );
+            document.documentElement.style.setProperty(
+                "--horizonte-cmd-height",
+                `${Math.round(dock.getBoundingClientRect().height)}px`,
+            );
+        },
+
+        bindCmdDockObservers() {
+            const sync = () => this.syncCmdDockLayout();
+            sync();
+            window.addEventListener("resize", sync, { passive: true });
+            if (typeof ResizeObserver === "undefined") {
+                return;
+            }
+            this._cmdDockObserver = new ResizeObserver(sync);
+            const dock = this.$refs.cmdDock;
+            if (dock instanceof HTMLElement) {
+                this._cmdDockObserver.observe(dock);
+            }
+            const header = document.querySelector(".serv-app-header");
+            if (header instanceof HTMLElement) {
+                this._cmdDockObserver.observe(header);
+            }
+        },
+
+        mapControlLabelUfSummary() {
+            if (this.ufSummaryOpen) {
+                return "Ocultar resumo estadual";
+            }
+            return "Centrar UF e mostrar resumo estadual";
+        },
+
+        ufSummaryCoverageLabel() {
+            const cov = this.coverage || {};
+            const insights = this.ufFundebInsights || {};
+            const sources = [
+                cov.with_fundeb > 0 ? `FUNDEB ${nf(cov.with_fundeb)}` : null,
+                cov.with_censo > 0 ? `Censo ${nf(cov.with_censo)}` : null,
+                cov.with_saeb > 0 ? `SAEB ${nf(cov.with_saeb)}` : null,
+                cov.with_cadunico > 0 ? `CadÚnico ${nf(cov.with_cadunico)}` : null,
+            ].filter(Boolean);
+            const parts = [];
+            if (insights.municipalities_total) {
+                parts.push(
+                    `${nf(insights.municipalities_with_fundeb ?? 0)} municípios com FUNDEB · ${nf(insights.municipalities_total)} no recorte`,
+                );
+            }
+            if (sources.length > 0) {
+                parts.push(`Cobertura: ${sources.join(" · ")}`);
             }
             return parts.join(" · ");
         },
@@ -2560,8 +2537,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             this.map.on("click", () => {
                 if (!this.sgeFormOpen) {
-                    this.closeTooltip();
-                    this.closeUfSummary();
+                    this.closeMapOverlays();
                 }
             });
 
@@ -2576,7 +2552,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             });
 
             this.map.on("move", () => {
-                if (this.ufSummaryOpen || (this.tooltipPinned && this.active)) {
+                if (this.tooltipPinned && this.active) {
                     this.repositionFloatingPanels();
                 }
             });
@@ -2713,13 +2689,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                         pinnedMarker;
                     this.active = latest;
                     this.tooltipPinned = true;
-                    const lat = Number(latest.lat);
-                    const lng = Number(latest.lng);
-                    if (isValidCoord(lat, lng)) {
-                        this.positionTooltip({
-                            containerPoint: this.map.latLngToContainerPoint([lat, lng]),
-                        });
-                    }
+                    this.positionTooltip();
                 }
             }
         },
@@ -3024,68 +2994,40 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         selectMarker(m, ev = null) {
-            this.closeUfSummary();
-            this.active = m;
-            this.tooltipPinned = true;
-            window.requestAnimationFrame(() => {
-                let containerPoint = ev?.containerPoint ?? null;
-                if (!containerPoint && this.map && m) {
-                    const lat = Number(m.lat);
-                    const lng = Number(m.lng);
-                    if (isValidCoord(lat, lng)) {
-                        containerPoint = this.map.latLngToContainerPoint([lat, lng]);
-                    }
-                }
-                if (containerPoint) {
-                    this.positionTooltip({ containerPoint });
-                }
-            });
-        },
-
-        positionTooltip(event) {
-            const mapEl = this.$refs.map;
-            if (!mapEl || !event?.containerPoint) {
+            if (!m) {
                 return;
             }
-            const margin = 16;
-            const gap = 12;
-            const rect = mapEl.getBoundingClientRect();
-            const pinX = rect.left + event.containerPoint.x;
-            const pinY = rect.top + event.containerPoint.y;
-            this.tooltipStyle = `left:${pinX + gap}px;top:${pinY + gap}px;visibility:hidden;`;
-            this.$nextTick(() => {
-                const tooltip = this.$el?.querySelector?.(".serv-brazil-map-tooltip");
-                if (!tooltip || !this.active) {
-                    return;
-                }
-                const vw = window.innerWidth;
-                const vh = window.innerHeight;
-                const maxH = vh - margin * 2;
-                tooltip.style.maxHeight = `${maxH}px`;
-                const tw = tooltip.offsetWidth;
-                const th = Math.min(tooltip.scrollHeight, maxH);
-                let left = pinX + gap;
-                let top = pinY + gap;
-                if (left + tw + margin > vw) {
-                    left = pinX - tw - gap;
-                }
-                if (top + th + margin > vh) {
-                    top = pinY - th - gap;
-                }
-                left = Math.max(margin, Math.min(left, vw - tw - margin));
-                top = Math.max(margin, Math.min(top, vh - th - margin));
-                this.tooltipStyle = `left:${Math.round(left)}px;top:${Math.round(top)}px;max-height:${Math.round(maxH)}px;overflow-y:auto;visibility:visible;`;
-            });
+            if (ev && typeof L !== "undefined" && L.DomEvent?.stopPropagation) {
+                L.DomEvent.stopPropagation(ev);
+            }
+            this.closeUfSummary();
+            this.closeSgeForm();
+            this.highlightIbge = String(m.ibge ?? "");
+            this.active = m;
+            this.tooltipPinned = true;
+            this.positionTooltip();
+        },
+
+        positionTooltip() {
+            const margin = 32;
+            const maxH = Math.max(240, window.innerHeight - margin);
+            this.tooltipStyle = `max-height:${Math.round(maxH)}px;overflow-y:auto;`;
+        },
+
+        closeMapOverlays() {
+            this.closeTooltip();
+            this.closeUfSummary();
+            this.closeSgeForm();
         },
 
         closeTooltip() {
             this.active = null;
             this.tooltipPinned = false;
+            this.tooltipStyle = "";
         },
 
         closeUfSummary() {
             this.ufSummaryOpen = false;
-            this.ufSummaryStyle = "";
         },
 
         resolveUfCenter(uf) {
@@ -3134,8 +3076,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return 7;
         },
 
-        async centerSelectedUfAndSummary() {
+        async toggleUfSummaryPanel() {
             if (!this.isRegionalMode || !this.scopeUf || !this.map) {
+                return;
+            }
+            if (this.ufSummaryOpen) {
+                this.closeUfSummary();
                 return;
             }
             this.closeTooltip();
@@ -3151,103 +3097,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.map.flyTo([lat, lng], zoom, { duration: 0.65 });
             });
             this.ufSummaryOpen = true;
-            this.$nextTick(() => this.positionUfSummaryModal());
+            this.$nextTick(() => this.refreshMapLayout({ immediate: true }));
         },
 
         repositionFloatingPanels() {
             if (this.tooltipPinned && this.active) {
-                const lat = Number(this.active.lat);
-                const lng = Number(this.active.lng);
-                if (this.map && isValidCoord(lat, lng)) {
-                    this.positionTooltip({
-                        containerPoint: this.map.latLngToContainerPoint([lat, lng]),
-                    });
-                }
+                this.positionTooltip();
             }
-            if (this.ufSummaryOpen) {
-                this.positionUfSummaryModal();
-            }
-        },
-
-        positionUfSummaryModal() {
-            const mapEl = this.$refs.map;
-            if (!mapEl) {
-                return;
-            }
-            const margin = 16;
-            const rect = mapEl.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            this.ufSummaryStyle = `left:${Math.round(centerX)}px;top:${Math.round(centerY)}px;transform:translate(-50%,-50%);visibility:hidden;`;
-            this.$nextTick(() => {
-                const tooltip = this.$el?.querySelector?.(".serv-brazil-map-tooltip--uf");
-                if (!tooltip) {
-                    return;
-                }
-                const vw = window.innerWidth;
-                const vh = window.innerHeight;
-                const maxH = Math.min(vh - margin * 2, rect.height - margin * 2);
-                tooltip.style.maxHeight = `${Math.max(200, maxH)}px`;
-                const tw = tooltip.offsetWidth;
-                const th = Math.min(tooltip.scrollHeight, maxH);
-                let left = centerX;
-                let top = centerY;
-                if (left - tw / 2 < margin) {
-                    left = margin + tw / 2;
-                }
-                if (left + tw / 2 > vw - margin) {
-                    left = vw - margin - tw / 2;
-                }
-                if (top - th / 2 < margin) {
-                    top = margin + th / 2;
-                }
-                if (top + th / 2 > vh - margin) {
-                    top = vh - margin - th / 2;
-                }
-                this.ufSummaryStyle = `left:${Math.round(left)}px;top:${Math.round(top)}px;transform:translate(-50%,-50%);max-height:${Math.round(maxH)}px;overflow-y:auto;visibility:visible;`;
-            });
-        },
-
-        ufSummaryBodyHtml() {
-            const lines = ['<div class="serv-horizonte-muni-tooltip__body">'];
-            lines.push(ufCommercialPipelineHtml(this.summary, this.coverage));
-            const fundeb = ufFundebSummaryHtml(
-                this.ufFundebInsights,
-                this.refYear,
-                this.currentYear,
-            );
-            if (fundeb) {
-                lines.push(fundeb);
-            }
-            const cov = this.coverage || {};
-            const insights = this.ufFundebInsights || {};
-            const sources = [
-                cov.with_fundeb > 0 ? `FUNDEB ${nf(cov.with_fundeb)}` : null,
-                cov.with_censo > 0 ? `Censo ${nf(cov.with_censo)}` : null,
-                cov.with_saeb > 0 ? `SAEB ${nf(cov.with_saeb)}` : null,
-                cov.with_cadunico > 0 ? `CadÚnico ${nf(cov.with_cadunico)}` : null,
-            ].filter(Boolean);
-            if (sources.length > 0 || insights.municipalities_total) {
-                lines.push(`<dl class="serv-horizonte-muni-tooltip__sources">`);
-                if (insights.municipalities_total) {
-                    lines.push(
-                        `<dt class="serv-horizonte-muni-tooltip__sources-dt">${escapeHtml("Municípios")}</dt><dd>${nf(insights.municipalities_with_fundeb ?? 0)} ${escapeHtml("com FUNDEB")} · ${nf(insights.municipalities_total)} ${escapeHtml("no recorte")}</dd>`,
-                    );
-                }
-                if (sources.length > 0) {
-                    lines.push(
-                        `<dt class="serv-horizonte-muni-tooltip__sources-dt">${escapeHtml("Cobertura")}</dt><dd>${escapeHtml(sources.join(" · "))}</dd>`,
-                    );
-                }
-                if (this.summary?.consultoria_active != null) {
-                    lines.push(
-                        `<dt class="serv-horizonte-muni-tooltip__sources-dt">${escapeHtml("Consultoria")}</dt><dd>${nf(this.summary.consultoria_active)} ${escapeHtml("municípios activos")}</dd>`,
-                    );
-                }
-                lines.push(`</dl>`);
-            }
-            lines.push(`</div>`);
-            return lines.join("");
         },
 
         pickSearch(m) {
@@ -3282,8 +3138,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 if (!this.map) {
                     return;
                 }
-                const point = this.map.latLngToContainerPoint([lat, lng]);
-                this.selectMarker(m, { containerPoint: point });
+                this.selectMarker(m);
             }, 400);
         },
 
@@ -3306,6 +3161,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.showAllOnMap = true;
             this.renderCapDismissed = true;
             void this.scheduleMapRefresh();
+        },
+
+        restoreMapRenderCap() {
+            this.showAllOnMap = false;
+            this.renderCapDismissed = false;
+            void this.scheduleMapRefresh();
+        },
+
+        mapDrawAllLabel() {
+            const total = Number(this.mapInteractionStats.total ?? this.filteredCount ?? 0);
+            return `Desenhar todos (${total.toLocaleString("pt-BR")})`;
         },
 
         dismissInitialNotice() {

@@ -450,7 +450,7 @@ final class HorizonteMapPresenter
         if ($markerCount >= $heavyAt) {
             $maxRender = max(60, min(400, (int) ($cfg['regional_max_render_heavy'] ?? 120)));
             $preferView = 'markers';
-            $reason = __('UF com :total municípios — mapa limitado aos :limit de maior propensão; clusters activos (sem «mostrar todos»).', [
+            $reason = __('UF com :total municípios — mapa limitado aos :limit de maior propensão; use «Desenhar todos» no mapa para o recorte completo.', [
                 'total' => number_format($markerCount, 0, ',', '.'),
                 'limit' => number_format($maxRender, 0, ',', '.'),
             ]);
