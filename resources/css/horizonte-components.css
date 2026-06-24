@@ -257,6 +257,22 @@
         cursor: pointer;
     }
 
+    .serv-horizonte-gis__map .serv-horizonte-geo-tooltip {
+        @apply text-xs leading-snug font-normal;
+    }
+
+    .serv-horizonte-gis__map .serv-horizonte-capital-marker {
+        pointer-events: none;
+    }
+
+    .serv-horizonte-gis__map .serv-horizonte-capital-marker--core {
+        filter: drop-shadow(0 1px 2px rgb(15 23 42 / 0.28));
+    }
+
+    .serv-horizonte-gis__map path.leaflet-interactive {
+        transition: fill-opacity 140ms ease, stroke-width 140ms ease, stroke 140ms ease;
+    }
+
     .serv-horizonte-gis__map .serv-horizonte-marker--approx {
         cursor: help;
     }

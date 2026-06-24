@@ -515,6 +515,135 @@ function financeTimelineConsultoriaNote(m, refYear) {
     );
 }
 
+function muniDimensionsHtml(m, transferAno) {
+    const dims = [
+        { key: "financial_pressure", label: "Pressão FUNDEB" },
+        { key: "pedagogical_gap", label: "Pedagógica" },
+        { key: "scale_score", label: "Escala" },
+        { key: "social_demand", label: "Social" },
+        { key: "transfer_dependency", label: "Transf. fed." },
+        { key: "data_readiness", label: "Prontidão" },
+    ];
+    const rows = [
+        `<p class="serv-horizonte-muni-tooltip__dims-title">${escapeHtml("Dimensões (0–100)")}</p>`,
+        `<div class="serv-horizonte-muni-tooltip__dims">`,
+    ];
+    for (const d of dims) {
+        const val = Math.max(0, Math.min(100, Number(m[d.key] ?? 0)));
+        const isTransfer = d.key === "transfer_dependency";
+        const dimLabel =
+            isTransfer && transferAno ? `${d.label} (${transferAno})` : d.label;
+        const fillClass =
+            isTransfer && val > 0
+                ? "serv-horizonte-muni-tooltip__dim-fill--rose"
+                : "serv-horizonte-muni-tooltip__dim-fill--blue";
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__dim-row">` +
+                `<span class="serv-horizonte-muni-tooltip__dim-label">${escapeHtml(dimLabel)}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__dim-bar">` +
+                `<span class="serv-horizonte-muni-tooltip__dim-fill ${fillClass}" style="width:${val}%"></span>` +
+                `</span>` +
+                `<span class="serv-horizonte-muni-tooltip__dim-val">${formatScoreValue(val)}</span>` +
+                `</div>`,
+        );
+    }
+    rows.push(`</div>`);
+
+    return rows.join("");
+}
+
+function muniMetaHtml(m) {
+    const parts = [];
+    if (m.benefit_score != null) {
+        parts.push(
+            `<p class="serv-horizonte-muni-tooltip__benefit">${escapeHtml("Benefício estimado")}: <span class="serv-horizonte-muni-tooltip__benefit-val">${formatScoreValue(m.benefit_score)}/100</span></p>`,
+        );
+    }
+
+    const sources = [
+        m.has_fundeb ? "FUNDEB" : null,
+        m.has_censo ? "Censo" : null,
+        m.has_saeb ? "SAEB" : null,
+        m.has_cadunico ? "CadÚnico" : null,
+    ].filter(Boolean);
+    const sge = m.sge && typeof m.sge === "object" ? m.sge : null;
+    if (sources.length > 0 || sge) {
+        parts.push(`<dl class="serv-horizonte-muni-tooltip__sources">`);
+        if (sources.length > 0) {
+            parts.push(
+                `<dt class="serv-horizonte-muni-tooltip__sources-dt">${escapeHtml("Fontes")}</dt><dd>${escapeHtml(sources.join(" · "))}</dd>`,
+            );
+        }
+        if (sge) {
+            parts.push(
+                `<dt class="serv-horizonte-muni-tooltip__sources-dt">${escapeHtml("SGE")}</dt><dd>${escapeHtml(sge.system_label || sge.system || "—")}</dd>`,
+            );
+        }
+        parts.push(`</dl>`);
+    }
+
+    if (m.analytics_url) {
+        parts.push(
+            `<a href="${escapeHtml(m.analytics_url)}" class="serv-horizonte-muni-tooltip__link">${escapeHtml("Abrir consultoria")}</a>`,
+        );
+    }
+
+    return parts.length > 0
+        ? `<div class="serv-horizonte-muni-tooltip__meta-row">${parts.join("")}</div>`
+        : "";
+}
+
+function financeYearColumnShell(side, yearLabel, bodyHtml, emptyMsg) {
+    const sideClass =
+        side === "current"
+            ? "serv-horizonte-muni-tooltip__year-col--current"
+            : "serv-horizonte-muni-tooltip__year-col--previous";
+    const title =
+        side === "current" ? escapeHtml("Ano atual") : escapeHtml("Ano anterior");
+    const content =
+        bodyHtml !== ""
+            ? `<div class="serv-horizonte-muni-tooltip__year-col-body">${bodyHtml}</div>`
+            : `<p class="serv-horizonte-muni-tooltip__empty-msg">${escapeHtml(emptyMsg)}</p>`;
+
+    return (
+        `<section class="serv-horizonte-muni-tooltip__year-col ${sideClass}">` +
+        `<div class="serv-horizonte-muni-tooltip__year-col-head">` +
+        `<span class="serv-horizonte-muni-tooltip__year-col-title">${title}</span>` +
+        `<span class="serv-horizonte-muni-tooltip__year-col-badge">${escapeHtml(String(yearLabel))}</span>` +
+        `</div>` +
+        content +
+        `</section>`
+    );
+}
+
+function financePreviousYearColumnHtml(m, refYear) {
+    const reference = fundebReferenceHtml(m);
+    const repasses = transferTooltipHtml(m, refYear);
+    const body = [reference, repasses].filter(Boolean).join("");
+    const yearLabel = m.transfer_ano ?? m.fundeb_ano ?? refYear;
+
+    return financeYearColumnShell(
+        "previous",
+        yearLabel,
+        body,
+        "Sem referência FNDE nem repasses CKAN para o exercício anterior.",
+    );
+}
+
+function financeCurrentYearColumnHtml(m, refYear, currentYear) {
+    const realtime = currentYear > refYear ? fundebRealtimeHtml(m, currentYear) : "";
+    const yearLabel = m.fundeb_realtime_ano ?? currentYear;
+
+    return financeYearColumnShell(
+        "current",
+        yearLabel,
+        realtime,
+        currentYear > refYear
+            ? "Sem repasses parciais importados para o exercício corrente."
+            : "Ano corrente coincide com o exercício de referência — use a coluna anterior.",
+    );
+}
+
 function financeTimelineHtml(m, refYear, currentYear) {
     const reference = fundebReferenceHtml(m);
     const repasses = transferTooltipHtml(m, refYear);
@@ -563,6 +692,182 @@ function heatColor(intensity) {
     }
 
     return lerpColor("#d97706", "#be123c", (t - 0.5) / 0.5);
+}
+
+const IBGE_PREFIX_TO_UF = {
+    "11": "RO",
+    "12": "AC",
+    "13": "AM",
+    "14": "RR",
+    "15": "PA",
+    "16": "AP",
+    "17": "TO",
+    "21": "MA",
+    "22": "PI",
+    "23": "CE",
+    "24": "RN",
+    "25": "PB",
+    "26": "PE",
+    "27": "AL",
+    "28": "SE",
+    "29": "BA",
+    "31": "MG",
+    "32": "ES",
+    "33": "RJ",
+    "35": "SP",
+    "41": "PR",
+    "42": "SC",
+    "43": "RS",
+    "50": "MS",
+    "51": "MT",
+    "52": "GO",
+    "53": "DF",
+};
+
+const MESO_PALETTE = [
+    "#2563eb",
+    "#0d9488",
+    "#d97706",
+    "#7c3aed",
+    "#db2777",
+    "#0891b2",
+    "#65a30d",
+    "#c026d3",
+    "#ea580c",
+    "#4f46e5",
+    "#059669",
+    "#dc2626",
+    "#0284c7",
+    "#9333ea",
+    "#ca8a04",
+];
+
+function ibgeCodareaToUf(codarea) {
+    const digits = String(codarea ?? "").replace(/\D/g, "");
+    if (digits.length < 2) {
+        return "";
+    }
+
+    return IBGE_PREFIX_TO_UF[digits.slice(0, 2)] ?? "";
+}
+
+function mesoPaletteColor(mesoId, index = 0) {
+    const raw = String(mesoId ?? "");
+    const hash = raw.split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+
+    return MESO_PALETTE[(hash + index) % MESO_PALETTE.length];
+}
+
+function ufChoroplethStyle(intensity) {
+    const t = Math.max(0.08, Number(intensity) || 0.08);
+
+    return {
+        fillColor: heatColor(t),
+        fillOpacity: 0.5,
+        color: "#334155",
+        weight: 1.75,
+        opacity: 1,
+    };
+}
+
+function mesoChoroplethStyle(mesoId, index, intensity) {
+    const base = mesoPaletteColor(mesoId, index);
+    const t = Math.max(0.12, Number(intensity) || 0.12);
+
+    return {
+        fillColor: base,
+        fillOpacity: 0.4 + t * 0.24,
+        color: base,
+        weight: 2.75,
+        opacity: 1,
+    };
+}
+
+function bindChoroplethInteractions(layer, baseStyle, tooltipHtml) {
+    if (tooltipHtml) {
+        layer.bindTooltip(tooltipHtml, {
+            direction: "top",
+            sticky: true,
+            opacity: 0.96,
+            className: "serv-horizonte-geo-tooltip",
+        });
+    }
+
+    layer.on("mouseover", () => {
+        layer.setStyle({
+            ...baseStyle,
+            weight: (baseStyle.weight ?? 1.75) + 1,
+            fillOpacity: Math.min(0.72, (baseStyle.fillOpacity ?? 0.5) + 0.18),
+            color: "#0f172a",
+            opacity: 1,
+        });
+        layer.bringToFront();
+        if (tooltipHtml) {
+            layer.openTooltip();
+        }
+    });
+    layer.on("mouseout", () => {
+        layer.setStyle(baseStyle);
+        if (tooltipHtml) {
+            layer.closeTooltip();
+        }
+    });
+}
+
+function ufOverviewTooltipHtml(p, ufLabelFn) {
+    const ufLabel = escapeHtml(
+        p.uf_name ? `${p.uf} — ${p.uf_name}` : ufLabelFn(p.uf),
+    );
+
+    return (
+        `<strong>${ufLabel}</strong><br>` +
+        `${nf(p.high_pressure ?? 0)} alta pressão · ${nf(p.high_prospect ?? 0)} alta propensão<br>` +
+        `${nf(p.total)} com dados · ${nf(p.prospect_count)} prospectos<br>` +
+        `<span class="text-slate-500">Clique para abrir camada municipal filtrada</span>`
+    );
+}
+
+function mesoOverviewTooltipHtml(p) {
+    const mesoLabel = escapeHtml(String(p.meso_name ?? p.meso_id ?? ""));
+
+    return (
+        `<strong>${mesoLabel}</strong><br>` +
+        `${nf(p.high_pressure ?? 0)} alta pressão · ${nf(p.high_prospect ?? 0)} alta propensão<br>` +
+        `${nf(p.total)} municípios · ${nf(p.prospect_count)} prospectos<br>` +
+        `<span class="text-slate-500">Clique para abrir municípios desta região</span>`
+    );
+}
+
+function addCapitalMarkers(layerGroup, points) {
+    for (const p of points) {
+        const lat = Number(p.capital_lat ?? p.lat);
+        const lng = Number(p.capital_lng ?? p.lng);
+        if (!isValidCoord(lat, lng)) {
+            continue;
+        }
+
+        L.circleMarker([lat, lng], {
+            radius: 7,
+            fillColor: "#ffffff",
+            color: "#f59e0b",
+            weight: 1.5,
+            fillOpacity: 0.92,
+            opacity: 1,
+            interactive: false,
+            className: "serv-horizonte-capital-marker serv-horizonte-capital-marker--halo",
+        }).addTo(layerGroup);
+
+        L.circleMarker([lat, lng], {
+            radius: 4,
+            fillColor: "#f59e0b",
+            color: "#ffffff",
+            weight: 2,
+            fillOpacity: 1,
+            opacity: 1,
+            interactive: false,
+            className: "serv-horizonte-capital-marker serv-horizonte-capital-marker--core",
+        }).addTo(layerGroup);
+    }
 }
 
 function lerpColor(hexA, hexB, t) {
@@ -801,6 +1106,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         refYear: Number(options.refYear) || new Date().getFullYear() - 1,
         currentYear: Number(options.currentYear) || new Date().getFullYear(),
         loadUrl: typeof options.loadUrl === "string" ? options.loadUrl : "",
+        mapGeoUrl: typeof options.mapGeoUrl === "string" ? options.mapGeoUrl : "",
+        _geoCache: {},
         pageLoading: Boolean(options.loadUrl),
         regionalLoading: false,
         pendingRegionalUf: "",
@@ -930,7 +1237,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 {
                     target: '[data-horizonte-tour="recorte"]',
                     title: "Recorte geográfico",
-                    text: "Brasil mostra bolhas por UF. Escolha um estado para carregar municípios no mapa e na lista.",
+                    text: "Brasil mostra contornos por UF e capitais. Escolha um estado para carregar municípios no mapa e na lista.",
                 },
                 {
                     target: '[data-horizonte-tour="segments"]',
@@ -940,7 +1247,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 {
                     target: '[data-horizonte-tour="map"]',
                     title: "Mapa GIS",
-                    text: "Clique numa bolha (Brasil) ou num ponto municipal (UF). Pontos cinza também são clicáveis.",
+                    text: "Passe o mouse sobre um estado ou região para ver os dados. Clique para abrir o recorte. Pontos municipais também são clicáveis.",
                 },
                 {
                     target: '[data-horizonte-tour="filters"]',
@@ -1104,7 +1411,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     kind: "overview",
                     title: "Visão executiva — alta pressão por UF",
                     message:
-                        "Bolhas = estados · intensidade = municípios de alta pressão FUNDEB. Clique num estado para abrir a camada municipal filtrada.",
+                        "Contornos = estados · cor = intensidade de alta pressão FUNDEB · passe o mouse para ver números. Clique num estado para abrir a camada municipal filtrada.",
                     count: totalPressure,
                     unit: "municípios de alta pressão (BR)",
                 };
@@ -2451,7 +2758,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     kind: "meso",
                     message:
                         mesoMeta?.reason ||
-                        `${this.mesoMapPoints.length.toLocaleString("pt-BR")} mesorregiões em ${this.ufLabel(uf)} · clique numa bolha para ver municípios.`,
+                        `${this.mesoMapPoints.length.toLocaleString("pt-BR")} mesorregiões em ${this.ufLabel(uf)} · passe o mouse para ver dados e clique numa região para ver municípios.`,
                     uf,
                 };
             } else {
@@ -2766,6 +3073,73 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
         },
 
+        async fetchGeoMalha(scope, uf = "") {
+            const key = scope === "meso" ? `meso:${uf}` : "brazil";
+            if (this._geoCache[key]) {
+                return this._geoCache[key];
+            }
+            if (!this.mapGeoUrl) {
+                throw new Error("mapGeoUrl indisponível");
+            }
+
+            const url = new URL(this.mapGeoUrl, window.location.origin);
+            url.searchParams.set("scope", scope === "meso" ? "meso" : "brazil");
+            if (scope === "meso" && uf) {
+                url.searchParams.set("uf", uf);
+            }
+
+            const res = await fetch(url.toString(), {
+                headers: { Accept: "application/json" },
+                credentials: "same-origin",
+            });
+            if (!res.ok) {
+                throw new Error(`malha HTTP ${res.status}`);
+            }
+
+            const geo = await res.json();
+            if (!geo || geo.type !== "FeatureCollection") {
+                throw new Error("malha inválida");
+            }
+
+            this._geoCache[key] = geo;
+
+            return geo;
+        },
+
+        renderUfOverviewFallback(points) {
+            const bounds = [];
+
+            for (const p of points) {
+                const lat = Number(p.capital_lat ?? p.lat);
+                const lng = Number(p.capital_lng ?? p.lng);
+                if (!isValidCoord(lat, lng)) {
+                    continue;
+                }
+                bounds.push([lat, lng]);
+                const intensity = Math.max(0.15, Number(p.heat_intensity ?? 0));
+                const circle = L.circleMarker([lat, lng], {
+                    radius: 10,
+                    fillColor: heatColor(intensity),
+                    color: "#ffffff",
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.72,
+                });
+                circle.bindTooltip(ufOverviewTooltipHtml(p, this.ufLabel.bind(this)), {
+                    direction: "top",
+                    sticky: true,
+                    className: "serv-horizonte-geo-tooltip",
+                });
+                circle.on("click", (e) => {
+                    L.DomEvent.stopPropagation(e);
+                    void this.selectUfFromOverview(p.uf);
+                });
+                circle.addTo(this.ufLayer);
+            }
+
+            this.fitMapBounds(bounds, 4);
+        },
+
         async renderUfOverview() {
             this.layer.clearLayers();
             this.heatLayer.clearLayers();
@@ -2775,6 +3149,66 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             const points =
                 this.ufMapPoints.length > 0 ? this.ufMapPoints : this.nationalUfMapPoints;
+            const byUf = new Map(points.map((p) => [String(p.uf), p]));
+
+            let geo;
+            try {
+                geo = await this.fetchGeoMalha("brazil");
+            } catch {
+                this.renderUfOverviewFallback(points);
+                if (!this.map.hasLayer(this.ufLayer)) {
+                    this.ufLayer.addTo(this.map);
+                }
+                this.ufLayer.bringToFront();
+
+                return;
+            }
+
+            const geoLayer = L.geoJSON(geo, {
+                style: (feature) => {
+                    const uf = ibgeCodareaToUf(feature?.properties?.codarea);
+                    const p = byUf.get(uf);
+                    const intensity = p?.heat_intensity ?? 0.08;
+
+                    return ufChoroplethStyle(intensity);
+                },
+                onEachFeature: (feature, layer) => {
+                    const uf = ibgeCodareaToUf(feature?.properties?.codarea);
+                    if (!uf) {
+                        return;
+                    }
+                    const p = byUf.get(uf);
+                    const baseStyle = ufChoroplethStyle(p?.heat_intensity ?? 0.08);
+                    const tooltipHtml = p
+                        ? ufOverviewTooltipHtml(p, this.ufLabel.bind(this))
+                        : `<strong>${escapeHtml(this.ufLabel(uf))}</strong>`;
+
+                    bindChoroplethInteractions(layer, baseStyle, tooltipHtml);
+                    layer.on("click", (e) => {
+                        L.DomEvent.stopPropagation(e);
+                        void this.selectUfFromOverview(uf);
+                    });
+                },
+            });
+
+            geoLayer.addTo(this.ufLayer);
+            addCapitalMarkers(this.ufLayer, points);
+
+            if (!this.map.hasLayer(this.ufLayer)) {
+                this.ufLayer.addTo(this.map);
+            }
+            this.ufLayer.bringToFront();
+
+            if (!this._mapUserAdjustedView && geoLayer.getBounds().isValid()) {
+                this.map.fitBounds(geoLayer.getBounds(), {
+                    padding: [32, 32],
+                    maxZoom: 5,
+                    animate: true,
+                });
+            }
+        },
+
+        renderMesoOverviewFallback(points) {
             const bounds = [];
 
             for (const p of points) {
@@ -2785,36 +3219,34 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 }
                 bounds.push([lat, lng]);
                 const intensity = Math.max(0.15, Number(p.heat_intensity ?? 0));
-                const radius = 12 + Math.sqrt(Number(p.total ?? 1)) * 1.8;
+                const idx = bounds.length - 1;
+                const base = mesoPaletteColor(p.meso_id, idx);
                 const circle = L.circleMarker([lat, lng], {
-                    radius: Math.min(36, radius),
-                    fillColor: heatColor(intensity),
+                    radius: 10,
+                    fillColor: base,
                     color: "#ffffff",
                     weight: 2,
                     opacity: 1,
-                    fillOpacity: 0.72,
+                    fillOpacity: 0.78,
                 });
-                const ufLabel = escapeHtml(p.uf_name ? `${p.uf} — ${p.uf_name}` : this.ufLabel(p.uf));
-                circle.bindTooltip(
-                    `<strong>${ufLabel}</strong><br>` +
-                        `${nf(p.high_pressure ?? 0)} alta pressão · ${nf(p.high_prospect ?? 0)} alta propensão<br>` +
-                        `${nf(p.total)} com dados · ${nf(p.prospect_count)} prospectos<br>` +
-                        `<span class="text-slate-500">Clique para abrir camada municipal filtrada</span>`,
-                    { direction: "top", sticky: true },
-                );
+                circle.bindTooltip(mesoOverviewTooltipHtml(p), {
+                    direction: "top",
+                    sticky: true,
+                    className: "serv-horizonte-geo-tooltip",
+                });
                 circle.on("click", (e) => {
                     L.DomEvent.stopPropagation(e);
-                    void this.selectUfFromOverview(p.uf);
+                    void this.selectMesoFromOverview(p.meso_id);
                 });
                 circle.addTo(this.ufLayer);
             }
 
-            if (!this.map.hasLayer(this.ufLayer)) {
-                this.ufLayer.addTo(this.map);
+            if (bounds.length > 0) {
+                this.fitMapBounds(bounds, 6);
+            } else {
+                const center = this.resolveUfCenter(this.scopeUf);
+                this.map.setView(center, this.regionalUfZoom());
             }
-            this.ufLayer.bringToFront();
-
-            this.fitMapBounds(bounds, 4);
         },
 
         async renderMesoOverview() {
@@ -2825,48 +3257,72 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.markerLayers = [];
 
             const points = this.mesoMapPoints;
-            const bounds = [];
+            const byMeso = new Map(points.map((p) => [String(p.meso_id), p]));
+            const mesoIndex = new Map(
+                points.map((p, index) => [String(p.meso_id), index]),
+            );
 
-            for (const p of points) {
-                const lat = Number(p.lat);
-                const lng = Number(p.lng);
-                if (!isValidCoord(lat, lng)) {
-                    continue;
+            let geo;
+            try {
+                geo = await this.fetchGeoMalha("meso", this.scopeUf);
+            } catch {
+                this.renderMesoOverviewFallback(points);
+                if (!this.map.hasLayer(this.ufLayer)) {
+                    this.ufLayer.addTo(this.map);
                 }
-                bounds.push([lat, lng]);
-                const intensity = Math.max(0.15, Number(p.heat_intensity ?? 0));
-                const radius = 10 + Math.sqrt(Number(p.total ?? 1)) * 1.4;
-                const circle = L.circleMarker([lat, lng], {
-                    radius: Math.min(32, radius),
-                    fillColor: heatColor(intensity),
-                    color: "#ffffff",
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.78,
-                });
-                const mesoLabel = escapeHtml(String(p.meso_name ?? p.meso_id ?? ""));
-                circle.bindTooltip(
-                    `<strong>${mesoLabel}</strong><br>` +
-                        `${nf(p.high_pressure ?? 0)} alta pressão · ${nf(p.high_prospect ?? 0)} alta propensão<br>` +
-                        `${nf(p.total)} municípios · ${nf(p.prospect_count)} prospectos<br>` +
-                        `<span class="text-slate-500">Clique para abrir municípios desta região</span>`,
-                    { direction: "top", sticky: true },
-                );
-                circle.on("click", (e) => {
-                    L.DomEvent.stopPropagation(e);
-                    void this.selectMesoFromOverview(p.meso_id);
-                });
-                circle.addTo(this.ufLayer);
+                this.ufLayer.bringToFront();
+
+                return;
             }
+
+            const geoLayer = L.geoJSON(geo, {
+                style: (feature) => {
+                    const mesoId = String(feature?.properties?.codarea ?? "");
+                    const p = byMeso.get(mesoId);
+                    const idx = mesoIndex.get(mesoId) ?? 0;
+
+                    return mesoChoroplethStyle(mesoId, idx, p?.heat_intensity ?? 0.12);
+                },
+                onEachFeature: (feature, layer) => {
+                    const mesoId = String(feature?.properties?.codarea ?? "");
+                    if (mesoId === "") {
+                        return;
+                    }
+                    const p = byMeso.get(mesoId);
+                    const idx = mesoIndex.get(mesoId) ?? 0;
+                    const baseStyle = mesoChoroplethStyle(
+                        mesoId,
+                        idx,
+                        p?.heat_intensity ?? 0.12,
+                    );
+                    const tooltipHtml = p
+                        ? mesoOverviewTooltipHtml(p)
+                        : `<strong>${escapeHtml(mesoId)}</strong>`;
+
+                    bindChoroplethInteractions(layer, baseStyle, tooltipHtml);
+                    layer.on("click", (e) => {
+                        L.DomEvent.stopPropagation(e);
+                        if (p) {
+                            void this.selectMesoFromOverview(p.meso_id);
+                        }
+                    });
+                },
+            });
+
+            geoLayer.addTo(this.ufLayer);
 
             if (!this.map.hasLayer(this.ufLayer)) {
                 this.ufLayer.addTo(this.map);
             }
             this.ufLayer.bringToFront();
 
-            if (bounds.length > 0) {
-                this.fitMapBounds(bounds, 6);
-            } else {
+            if (!this._mapUserAdjustedView && geoLayer.getBounds().isValid()) {
+                this.map.fitBounds(geoLayer.getBounds(), {
+                    padding: [40, 40],
+                    maxZoom: 8,
+                    animate: true,
+                });
+            } else if (!geoLayer.getBounds().isValid()) {
                 const center = this.resolveUfCenter(this.scopeUf);
                 this.map.setView(center, this.regionalUfZoom());
             }
@@ -3098,7 +3554,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 kind: "meso",
                 message:
                     mesoMeta?.reason ||
-                    `${this.mesoMapPoints.length.toLocaleString("pt-BR")} mesorregiões · clique numa bolha.`,
+                    `${this.mesoMapPoints.length.toLocaleString("pt-BR")} mesorregiões · passe o mouse para ver dados.`,
                 uf: this.scopeUf,
             };
             await this.scheduleMapRefresh();
@@ -3465,96 +3921,43 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 );
             }
 
-            const financeBlock = financeTimelineHtml(m, this.refYear, this.currentYear);
-            lines.push('<div class="serv-horizonte-muni-tooltip__layout">');
-            lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--pipeline">');
-            lines.push(muniPopulationPipelineHtml(m));
-            lines.push("</div>");
-            lines.push('<div class="serv-horizonte-muni-tooltip__layout-col serv-horizonte-muni-tooltip__layout-col--primary">');
-
-            if (m.benefit_score != null) {
-                lines.push(
-                    `<p class="serv-horizonte-muni-tooltip__benefit">${escapeHtml("Benefício estimado")}: <span class="serv-horizonte-muni-tooltip__benefit-val">${formatScoreValue(m.benefit_score)}/100</span></p>`,
-                );
-            }
-
-            const sources = [
-                m.has_fundeb ? "FUNDEB" : null,
-                m.has_censo ? "Censo" : null,
-                m.has_saeb ? "SAEB" : null,
-                m.has_cadunico ? "CadÚnico" : null,
-            ].filter(Boolean);
-            const sge = m.sge && typeof m.sge === "object" ? m.sge : null;
-            if (sources.length > 0 || sge) {
-                lines.push(`<dl class="serv-horizonte-muni-tooltip__sources">`);
-            }
-            if (sources.length > 0) {
-                lines.push(
-                    `<dt class="serv-horizonte-muni-tooltip__sources-dt">${escapeHtml("Fontes")}</dt><dd>${escapeHtml(sources.join(" · "))}</dd>`,
-                );
-            }
-            if (sge) {
-                lines.push(
-                    `<dt class="serv-horizonte-muni-tooltip__sources-dt">${escapeHtml("SGE")}</dt><dd>${escapeHtml(sge.system_label || sge.system || "—")}</dd>`,
-                );
-            }
-            if (sources.length > 0 || sge) {
-                lines.push(`</dl>`);
-            }
-
             const transferAno =
                 m.transfer_ano != null && m.transfer_total != null
                     ? String(m.transfer_ano)
                     : !m.has_transfers && m.has_fundeb
                       ? "FNDE"
                       : null;
-            const dims = [
-                { key: "financial_pressure", label: "Pressão FUNDEB" },
-                { key: "pedagogical_gap", label: "Pedagógica" },
-                { key: "scale_score", label: "Escala" },
-                { key: "social_demand", label: "Social" },
-                { key: "transfer_dependency", label: "Transf. fed." },
-                { key: "data_readiness", label: "Prontidão" },
-            ];
-            lines.push(
-                `<p class="serv-horizonte-muni-tooltip__dims-title">${escapeHtml("Dimensões (0–100)")}</p>`,
-            );
-            lines.push(`<div class="serv-horizonte-muni-tooltip__dims">`);
-            for (const d of dims) {
-                const val = Math.max(0, Math.min(100, Number(m[d.key] ?? 0)));
-                const isTransfer = d.key === "transfer_dependency";
-                const dimLabel =
-                    isTransfer && transferAno
-                        ? `${d.label} (${transferAno})`
-                        : d.label;
-                const fillClass =
-                    isTransfer && val > 0
-                        ? "serv-horizonte-muni-tooltip__dim-fill--rose"
-                        : "serv-horizonte-muni-tooltip__dim-fill--blue";
-                lines.push(
-                    `<div class="serv-horizonte-muni-tooltip__dim-row">` +
-                        `<span class="serv-horizonte-muni-tooltip__dim-label">${escapeHtml(dimLabel)}</span>` +
-                        `<span class="serv-horizonte-muni-tooltip__dim-bar">` +
-                        `<span class="serv-horizonte-muni-tooltip__dim-fill ${fillClass}" style="width:${val}%"></span>` +
-                        `</span>` +
-                        `<span class="serv-horizonte-muni-tooltip__dim-val">${formatScoreValue(val)}</span>` +
-                        `</div>`,
-                );
-            }
-            lines.push(`</div>`);
 
-            if (m.analytics_url) {
-                lines.push(
-                    `<a href="${escapeHtml(m.analytics_url)}" class="serv-horizonte-muni-tooltip__link">${escapeHtml("Abrir consultoria")}</a>`,
-                );
-            }
-            lines.push(`</div>`);
+            lines.push('<div class="serv-horizonte-muni-tooltip__layout">');
+            lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--pipeline">');
+            lines.push(muniPopulationPipelineHtml(m));
+            lines.push("</div>");
 
-            lines.push('<div class="serv-horizonte-muni-tooltip__layout-col serv-horizonte-muni-tooltip__layout-col--finance">');
-            if (financeBlock) {
-                lines.push(financeBlock);
+            const metaBlock = muniMetaHtml(m);
+            if (metaBlock) {
+                lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--meta">');
+                lines.push(metaBlock);
+                lines.push("</div>");
             }
-            lines.push(`</div>`);
+
+            lines.push('<div class="serv-horizonte-muni-tooltip__layout-col serv-horizonte-muni-tooltip__layout-col--previous">');
+            lines.push(financePreviousYearColumnHtml(m, this.refYear));
+            lines.push("</div>");
+
+            lines.push('<div class="serv-horizonte-muni-tooltip__layout-col serv-horizonte-muni-tooltip__layout-col--current">');
+            lines.push(financeCurrentYearColumnHtml(m, this.refYear, this.currentYear));
+            lines.push("</div>");
+
+            const consultoriaNote = financeTimelineConsultoriaNote(m, this.refYear);
+            if (consultoriaNote) {
+                lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--finance-note">');
+                lines.push(consultoriaNote);
+                lines.push("</div>");
+            }
+
+            lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--dims">');
+            lines.push(muniDimensionsHtml(m, transferAno));
+            lines.push("</div>");
 
             lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--propensity">');
             lines.push(muniPropensityThermometerHtml(m, th));

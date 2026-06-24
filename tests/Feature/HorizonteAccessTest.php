@@ -30,6 +30,10 @@ final class HorizonteAccessTest extends TestCase
         $this->actingAs($admin)
             ->get(route('dashboard.horizonte.map-data'))
             ->assertOk();
+
+        $this->actingAs($admin)
+            ->get(route('dashboard.horizonte.map-geo'))
+            ->assertOk();
     }
 
     #[Test]

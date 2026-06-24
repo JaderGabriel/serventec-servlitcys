@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Horizonte\HorizonteIbgeMalhaService;
 use App\Services\Horizonte\HorizonteMapService;
 use App\Support\Brazil\BrazilUfNames;
 use App\Support\Horizonte\HorizonteMapPresenter;
@@ -14,6 +15,7 @@ class HorizonteController extends Controller
 {
     public function __construct(
         private readonly HorizonteMapService $map,
+        private readonly HorizonteIbgeMalhaService $malha,
     ) {}
 
     public function index(Request $request): View
@@ -24,6 +26,7 @@ class HorizonteController extends Controller
 
         return view('horizonte.index', [
             'mapDataUrl' => route('dashboard.horizonte.map-data'),
+            'mapGeoUrl' => route('dashboard.horizonte.map-geo'),
             'refYear' => (int) config('horizonte.reference_year', (int) date('Y') - 1),
             'legend' => HorizonteMapPresenter::legendItems(),
             'colors' => HorizonteMapPresenter::tierColors(),
@@ -59,5 +62,22 @@ class HorizonteController extends Controller
         }
 
         return response()->json($this->map->buildForRequest($scope, $uf));
+    }
+
+    public function mapGeo(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user !== null && $user->canViewHorizonte(), 403);
+        abort_unless((bool) config('horizonte.enabled', true), 404);
+
+        $scope = (string) $request->query('scope', 'brazil');
+        if ($scope === 'meso') {
+            $uf = HorizonteUfScope::normalize($request->query('uf'));
+            abort_unless($uf !== null, 422);
+
+            return response()->json($this->malha->stateMesoGeoJson($uf));
+        }
+
+        return response()->json($this->malha->brazilUfGeoJson());
     }
 }

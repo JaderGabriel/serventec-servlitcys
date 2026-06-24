@@ -22,6 +22,42 @@
                         <h3 class="serv-horizonte-muni-tooltip__name" x-text="active?.name"></h3>
                         <span class="serv-horizonte-muni-tooltip__uf-badge" x-text="active?.uf"></span>
                     </div>
+                    <div
+                        x-show="active?.muni_alerts"
+                        x-cloak
+                        class="serv-horizonte-muni-tooltip__alert-status"
+                        :class="{
+                            'is-found': active?.muni_alerts?.status === 'found',
+                            'is-clear': active?.muni_alerts?.status === 'clear',
+                            'is-unavailable': active?.muni_alerts?.status === 'unavailable',
+                        }"
+                    >
+                        <template x-if="active?.muni_alerts?.status === 'found'">
+                            <a
+                                class="serv-horizonte-muni-tooltip__alert-chip serv-horizonte-muni-tooltip__alert-chip--found"
+                                :href="active.muni_alerts.detail_url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                @click.stop
+                            >
+                                <span class="serv-horizonte-muni-tooltip__alert-chip-label" x-text="active.muni_alerts.status_label"></span>
+                                <span class="serv-horizonte-muni-tooltip__alert-chip-text" x-text="active.muni_alerts.headline"></span>
+                                <span class="serv-horizonte-muni-tooltip__alert-chip-link">{{ __('Ver detalhes') }} ↗</span>
+                            </a>
+                        </template>
+                        <template x-if="active?.muni_alerts?.status === 'clear'">
+                            <div class="serv-horizonte-muni-tooltip__alert-chip serv-horizonte-muni-tooltip__alert-chip--clear">
+                                <span class="serv-horizonte-muni-tooltip__alert-chip-label" x-text="active.muni_alerts.status_label"></span>
+                                <span class="serv-horizonte-muni-tooltip__alert-chip-text" x-text="active.muni_alerts.headline"></span>
+                            </div>
+                        </template>
+                        <template x-if="active?.muni_alerts?.status === 'unavailable'">
+                            <div class="serv-horizonte-muni-tooltip__alert-chip serv-horizonte-muni-tooltip__alert-chip--unavailable">
+                                <span class="serv-horizonte-muni-tooltip__alert-chip-label" x-text="active.muni_alerts.status_label"></span>
+                                <span class="serv-horizonte-muni-tooltip__alert-chip-text" x-text="active.muni_alerts.headline"></span>
+                            </div>
+                        </template>
+                    </div>
                     <p class="serv-horizonte-muni-tooltip__meta" x-text="active ? ('IBGE ' + active.ibge + ' · ' + tierLabel(active)) : ''"></p>
                 </div>
                 <button

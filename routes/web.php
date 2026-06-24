@@ -74,6 +74,7 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
         Route::get('/dashboard/rx', [RxDashboardController::class, 'index'])->name('dashboard.rx');
         Route::get('/dashboard/horizonte', [HorizonteController::class, 'index'])->name('dashboard.horizonte');
         Route::get('/dashboard/horizonte/map-data', [HorizonteController::class, 'mapData'])->name('dashboard.horizonte.map-data');
+        Route::get('/dashboard/horizonte/map-geo', [HorizonteController::class, 'mapGeo'])->name('dashboard.horizonte.map-geo');
         Route::get('/dashboard/analytics/tab', [AnalyticsDashboardController::class, 'tabPartial'])->name('dashboard.analytics.tab');
         Route::get('/dashboard/analytics/filter-options', [AnalyticsDashboardController::class, 'filterOptions'])->name('dashboard.analytics.filter-options');
         Route::get('/dashboard/analytics/filter-options-bootstrap', [AnalyticsDashboardController::class, 'filterOptionsBootstrap'])->name('dashboard.analytics.filter-options-bootstrap');

@@ -34,6 +34,7 @@ final class HorizonteFortnightlyFeedService
         private readonly SaebPlanilhaInepImportService $saebPlanilhas,
         private readonly IbgeMunicipalityCatalog $ibgeCatalog,
         private readonly HorizonteMunicipalSgeRegistryService $sgeRegistry,
+        private readonly HorizonteMunicipalAlertsSyncService $municipalAlerts,
         private readonly HorizonteFortnightlyFeedNotifier $notifier,
         private readonly CadunicoAutoSyncService $cadunicoAutoSync,
         private readonly IbgeSidraMunicipalDemographyService $sidraDemography,
@@ -191,6 +192,7 @@ final class HorizonteFortnightlyFeedService
             'saeb_planilhas' => $this->importSaebPlanilhasNacional($options),
             'ibge_catalog' => $this->warmIbgeCatalog($options),
             'sge_registry' => $this->syncSgeRegistry($options),
+            'municipal_alerts' => $this->syncMunicipalAlerts($options),
             'official_check' => $this->runOfficialCheck($options),
             default => [
                 'success' => false,
@@ -450,6 +452,7 @@ final class HorizonteFortnightlyFeedService
             'skip_saeb' => (bool) ($options['skip_saeb'] ?? false),
             'skip_ibge' => (bool) ($options['skip_ibge'] ?? false),
             'skip_sge' => (bool) ($options['skip_sge'] ?? false),
+            'skip_alerts' => (bool) ($options['skip_alerts'] ?? false),
             'skip_verify' => (bool) ($options['skip_verify'] ?? false),
         ];
     }
@@ -953,6 +956,33 @@ final class HorizonteFortnightlyFeedService
     }
 
     /**
+     * @param  array<string, mixed>  $options
+     * @return array{success: bool, message: string, matched?: int, skipped?: bool}
+     */
+    private function syncMunicipalAlerts(array $options = []): array
+    {
+        $this->debugLog($options, __('Alertas MEC/FNDE — a importar listas oficiais…'));
+        try {
+            $result = $this->municipalAlerts->sync([
+                'uf' => HorizonteUfScope::normalize($options['uf'] ?? null),
+                'dry_run' => (bool) ($options['dry_run'] ?? false),
+            ]);
+            $this->debugLog($options, (string) ($result['message'] ?? ''));
+
+            return $result;
+        } catch (\Throwable $e) {
+            Log::warning('horizonte.municipal_alerts_failed', ['message' => $e->getMessage()]);
+
+            return [
+                'success' => true,
+                'skipped' => true,
+                'message' => __('Alertas MEC/FNDE: importação indisponível — modal mostra «Não verificado».'),
+                'matched' => 0,
+            ];
+        }
+    }
+
+    /**
      * @param  list<array<string, mixed>>  $phases
      */
     private function feedHasUsableOutput(array $phases): bool
@@ -967,7 +997,7 @@ final class HorizonteFortnightlyFeedService
                 || ($phase['ufs'] ?? 0) > 0) {
                 return true;
             }
-            if (($phase['skipped'] ?? false) && ($phase['key'] ?? '') !== 'sge_registry') {
+            if (($phase['skipped'] ?? false) && ! in_array($phase['key'] ?? '', ['sge_registry', 'municipal_alerts'], true)) {
                 return true;
             }
         }

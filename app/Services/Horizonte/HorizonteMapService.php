@@ -11,6 +11,7 @@ use App\Models\SaebIndicatorPoint;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\Cadunico\CadunicoVulnerabilidadeIndicators;
 use App\Services\Horizonte\HorizonteTesouroTransferSyncService;
+use App\Support\Brazil\BrazilStateCapitals;
 use App\Support\Brazil\BrazilUfCentroids;
 use App\Support\Brazil\BrazilUfNames;
 use App\Support\Brazil\IbgeMunicipalityCatalog;
@@ -24,6 +25,7 @@ use App\Support\Horizonte\HorizonteMapPresenter;
 use App\Support\Horizonte\HorizonteTransferScoring;
 use App\Support\Horizonte\HorizonteMapCacheBuster;
 use App\Support\Horizonte\HorizonteSaebLookupYears;
+use App\Support\Horizonte\HorizonteMunicipalAlertsResolver;
 use App\Support\Horizonte\HorizonteMunicipalSgeResolver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -41,6 +43,8 @@ final class HorizonteMapService
         private readonly HorizonteOpportunityScorer $scorer,
         private readonly HorizonteMunicipalSgeResolver $sgeResolver,
         private readonly HorizonteMunicipalSgeRegistryService $sgeRegistry,
+        private readonly HorizonteMunicipalAlertsSyncService $municipalAlerts,
+        private readonly HorizonteMunicipalAlertsResolver $municipalAlertsResolver,
     ) {}
 
     /**
@@ -558,13 +562,15 @@ final class HorizonteMapService
 
         $points = [];
         foreach ($byUf as $row) {
-            [$lat, $lng] = BrazilUfCentroids::latLng($row['uf'], 0);
+            [$capitalLat, $capitalLng] = BrazilStateCapitals::latLng($row['uf']);
             $total = max(1, (int) $row['total']);
             $points[] = [
                 'uf' => $row['uf'],
                 'uf_name' => BrazilUfNames::name($row['uf']),
-                'lat' => $lat,
-                'lng' => $lng,
+                'lat' => $capitalLat,
+                'lng' => $capitalLng,
+                'capital_lat' => $capitalLat,
+                'capital_lng' => $capitalLng,
                 'total' => (int) $row['total'],
                 'prospect_count' => (int) $row['prospect_count'],
                 'high_prospect' => (int) $row['high_prospect'],
@@ -784,6 +790,8 @@ final class HorizonteMapService
         $benchmarks = $this->scorer->benchmarks($saebForBench, $complRatios, $transferRatios);
 
         $sgeRegistry = $this->sgeRegistry->indexedFromCache();
+        $alertsRegistry = $this->municipalAlerts->indexedFromCache();
+        $alertsMeta = $this->municipalAlerts->metaFromCache();
 
         $high = (int) config('horizonte.high_opportunity_threshold', 70);
         $medium = (int) config('horizonte.medium_opportunity_threshold', 40);
@@ -857,6 +865,10 @@ final class HorizonteMapService
                 $city !== null ? array_merge($city, ['in_catalog' => true]) : null,
                 $sgeRegistry[$ibge] ?? null,
             );
+            $muniAlerts = $this->municipalAlertsResolver->resolve(
+                $alertsRegistry[$ibge] ?? null,
+                $alertsMeta,
+            );
 
             $markers[] = [
                 'ibge' => $ibge,
@@ -929,6 +941,8 @@ final class HorizonteMapService
                 'sge_found' => (bool) ($sge['found'] ?? false),
                 'sge_system' => $sge['system'] ?? null,
                 'sge_status' => $sge['status'] ?? 'not_found',
+                'muni_alerts' => $muniAlerts,
+                'muni_alerts_status' => $muniAlerts['status'] ?? 'unavailable',
                 'coord_source' => $meta['coord_source'] ?? null,
                 'coord_approximate' => in_array((string) ($meta['coord_source'] ?? ''), ['uf_spread', 'overview'], true),
             ];
@@ -1402,6 +1416,13 @@ final class HorizonteMapService
         $sgePath = trim((string) config('horizonte.sge.registry_path', 'horizonte/sge_registry.json'));
         if ($sgePath !== '' && Storage::disk('local')->exists($sgePath)) {
             $parts[] = 'sge_mtime:'.(string) Storage::disk('local')->lastModified($sgePath);
+        }
+
+        $alertsMeta = $this->municipalAlerts->metaFromCache();
+        $parts[] = 'alerts_sync:'.(string) ($alertsMeta['synced_at'] ?? '');
+        $alertsSnapshot = trim((string) config('horizonte.municipal_alerts.snapshot_path', 'horizonte/municipal_alerts_snapshot.json'));
+        if ($alertsSnapshot !== '' && Storage::disk('local')->exists($alertsSnapshot)) {
+            $parts[] = 'alerts_mtime:'.(string) Storage::disk('local')->lastModified($alertsSnapshot);
         }
 
         return md5(implode('|', $parts));

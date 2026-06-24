@@ -56,7 +56,7 @@
                     />
                 </svg>
             </div>
-            <p class="serv-horizonte-demo__caption">{{ __('Visão nacional — bolhas por UF (dados fictícios)') }}</p>
+            <p class="serv-horizonte-demo__caption">{{ __('Visão nacional — contornos por UF e capitais (dados fictícios)') }}</p>
         </div>
 
         {{-- Cena 2: UF Bahia — municípios --}}

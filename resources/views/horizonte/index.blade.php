@@ -7,6 +7,7 @@
     $kpiHints = collect($methodology['kpis'] ?? [])->keyBy('key');
     $heatLegend = \App\Support\Horizonte\HorizonteMapPresenter::heatLegendItems();
     $mapDataUrl = $mapDataUrl ?? route('dashboard.horizonte.map-data');
+    $mapGeoUrl = $mapGeoUrl ?? route('dashboard.horizonte.map-geo');
     $docUrl = route(auth()->user()?->isAdmin() ? 'admin.documentation.show' : 'documentation.show', ['doc' => 'docs/HORIZONTE.md']);
     $canRefreshData = (bool) ($canRefreshData ?? auth()->user()?->canImportOrConfigure());
     $canManageSge = (bool) ($canManageSge ?? false);
@@ -52,6 +53,7 @@
         class="py-6 sm:py-8"
         x-data="horizonteMap([], @js($colors), @js([
             'loadUrl' => $mapDataUrl,
+            'mapGeoUrl' => $mapGeoUrl,
             'refYear' => $refYear,
             'currentYear' => $currentYear,
             'legend' => $legend,

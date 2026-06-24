@@ -133,6 +133,59 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Alertas oficiais MEC/FNDE — bloqueios, inabilitações VAAT, avisos
+    |--------------------------------------------------------------------------
+    |
+    | Fontes públicas consultáveis: lista FNDE VAAT inabilitados (PDF portaria),
+    | registo JSON local/remoto (Simec, Tesouro, alertas manuais).
+    | Não existe API REST única — importação periódica via horizonte:sync-municipal-alerts.
+    |
+    */
+
+    'municipal_alerts' => [
+        'enabled' => filter_var(env('HORIZONTE_MUNICIPAL_ALERTS_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'registry_path' => env('HORIZONTE_MUNICIPAL_ALERTS_PATH', 'horizonte/municipal_alerts_registry.json'),
+        'registry_url' => env('HORIZONTE_MUNICIPAL_ALERTS_URL'),
+        'snapshot_path' => env('HORIZONTE_MUNICIPAL_ALERTS_SNAPSHOT_PATH', 'horizonte/municipal_alerts_snapshot.json'),
+        'http_timeout' => max(5, min(120, (int) env('HORIZONTE_MUNICIPAL_ALERTS_HTTP_TIMEOUT', 45))),
+        'cache_ttl' => max(3600, (int) env('HORIZONTE_MUNICIPAL_ALERTS_CACHE_TTL', 604800)),
+        'detail_urls' => [
+            'fnde_consultas' => env(
+                'HORIZONTE_MUNICIPAL_ALERTS_FNDE_URL',
+                'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/consultas',
+            ),
+            'simec' => env('HORIZONTE_MUNICIPAL_ALERTS_SIMEC_URL', 'https://simec.mec.gov.br/'),
+            'siconfi_vaat' => env(
+                'HORIZONTE_MUNICIPAL_ALERTS_SICONFI_VAAT_URL',
+                'https://siconfi.tesouro.gov.br/siconfi/pages/public/conteudo/conteudo.jsf?id=44703',
+            ),
+            'tesouro_bloqueados' => env(
+                'HORIZONTE_MUNICIPAL_ALERTS_TESOURO_BLOQUEADOS_URL',
+                'https://www.tesourotransparente.gov.br/consultas/consulta-aos-entes-bloqueados',
+            ),
+        ],
+        'sources' => [
+            'fnde_vaat_inabilitados' => [
+                'enabled' => filter_var(env('HORIZONTE_FNDE_VAAT_INABILITADOS_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+                'exercise_year' => max(2007, (int) env('HORIZONTE_FNDE_VAAT_INABILITADOS_YEAR', (int) date('Y'))),
+                'pdf_url' => env(
+                    'HORIZONTE_FNDE_VAAT_INABILITADOS_PDF_URL',
+                    'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2025-1/ListapreliminarinabilitadosVAAT202623Jun2025.pdf',
+                ),
+                'detail_page_url' => env(
+                    'HORIZONTE_FNDE_VAAT_INABILITADOS_DETAIL_URL',
+                    'https://siconfi.tesouro.gov.br/siconfi/pages/public/conteudo/conteudo.jsf?id=44703',
+                ),
+                'storage_path' => env(
+                    'HORIZONTE_FNDE_VAAT_INABILITADOS_STORAGE_PATH',
+                    'horizonte/alerts/fnde_vaat_inabilitados.pdf',
+                ),
+            ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Mapa — volume de pontos e vista inicial
     |--------------------------------------------------------------------------
     |
@@ -174,6 +227,21 @@ return [
     'tesouro_repasses_sync' => [
         'ufs_per_step' => max(1, (int) env('HORIZONTE_TESOURO_REPASSES_UFS_PER_STEP', 1)),
         'progress_ttl' => max(3600, (int) env('HORIZONTE_TESOURO_REPASSES_PROGRESS_TTL', 604800)),
+    ],
+
+    /** Malhas IBGE (UF / mesorregião) para mapa coroplético Horizonte. */
+    'geo_malha' => [
+        'cache_dir' => env('HORIZONTE_GEO_CACHE_DIR', 'horizonte/geo'),
+        'cache_seconds' => max(86400, (int) env('HORIZONTE_GEO_CACHE_SECONDS', 604800)),
+        'http_timeout' => max(15, (int) env('HORIZONTE_GEO_HTTP_TIMEOUT', 60)),
+        'brazil_uf_url' => env(
+            'HORIZONTE_GEO_BRAZIL_UF_URL',
+            'https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR?formato=application/vnd.geo+json&qualidade=intermediaria&intrarregiao=UF',
+        ),
+        'state_meso_url_template' => env(
+            'HORIZONTE_GEO_STATE_MESO_URL',
+            'https://servicodados.ibge.gov.br/api/v3/malhas/estados/{id}?formato=application/vnd.geo+json&qualidade=intermediaria&intrarregiao=mesorregiao',
+        ),
     ],
 
 ];

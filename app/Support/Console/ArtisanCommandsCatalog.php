@@ -523,6 +523,23 @@ final class ArtisanCommandsCatalog
                         'details' => __('Uma UF por invocação por defeito. Grava cache ibge_municipality_centroid:{ibge} e invalida o mapa Horizonte ao concluir cada passo.'),
                     ],
                     [
+                        'name' => 'horizonte:sync-municipal-alerts',
+                        'summary' => __('Importa alertas oficiais MEC/FNDE (VAAT inabilitados, registo manual) para o modal municipal.'),
+                        'signature' => 'horizonte:sync-municipal-alerts {--uf=} {--skip-fnde} {--dry-run} {--reset}',
+                        'examples' => [
+                            'php artisan horizonte:sync-municipal-alerts',
+                            'php artisan horizonte:sync-municipal-alerts --dry-run',
+                            'php artisan horizonte:sync-municipal-alerts --uf=BA',
+                        ],
+                        'env' => [
+                            'HORIZONTE_MUNICIPAL_ALERTS_ENABLED',
+                            'HORIZONTE_FNDE_VAAT_INABILITADOS_PDF_URL',
+                            'HORIZONTE_MUNICIPAL_ALERTS_PATH',
+                        ],
+                        'doc_anchor' => 'horizonte',
+                        'details' => __('Consulta a lista FNDE de inabilitados VAAT (PDF portaria Lei 14.113) e registo JSON opcional. Três estados no modal: pendência encontrada, sem pendências, não verificado.'),
+                    ],
+                    [
                         'name' => 'horizonte:export-data-bundle',
                         'summary' => __('Exporta pacote ZIP Horizonte (FUNDEB, Censo, SAEB, CadÚnico, SIDRA, repasses, IBGE, SGE).'),
                         'signature' => 'horizonte:export-data-bundle {--output=} {--skip-*}',
