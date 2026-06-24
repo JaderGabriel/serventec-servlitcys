@@ -396,6 +396,7 @@ final class DocumentationCatalog
     {
         $sections = [
             [
+                'key' => 'entry',
                 'title' => __('1 · Entrada'),
                 'description' => __('Por onde começar — índice, estado do produto e perfis.'),
                 'audience' => self::AUDIENCE_ALL,
@@ -411,17 +412,20 @@ final class DocumentationCatalog
                 ],
             ],
             [
+                'key' => 'architecture',
                 'title' => __('2 · Arquitectura'),
                 'description' => __('Diagramas, decisões técnicas e normas editoriais.'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Arquitectura e fluxos'), 'path' => 'docs/ARQUITETURA_E_FLUXOS.md', 'hint' => __('Camadas · FUNDEB · deploy')],
                     ['label' => __('Ponderações técnicas'), 'path' => 'docs/PONDERACOES_TECNICAS.md', 'hint' => __('Decisões e limites')],
+                    ['label' => __('Análise padrões Laravel'), 'path' => 'docs/ANALISE_PADROES_LARAVEL.md', 'hint' => __('MVC · Eloquent · plano P0–P3')],
                     ['label' => __('Padrão editorial'), 'path' => 'docs/PADRAO_DOCUMENTACAO.md'],
                     ['label' => __('Segurança'), 'path' => 'docs/SEGURANCA.md', 'hint' => __('RBAC · LGPD · checklist')],
                 ],
             ],
             [
+                'key' => 'consultoria',
                 'title' => __('3 · Consultoria municipal'),
                 'description' => __('Painel `/dashboard/analytics` — navegação, métricas e relatórios.'),
                 'audience' => self::AUDIENCE_ALL,
@@ -444,6 +448,7 @@ final class DocumentationCatalog
                 ],
             ],
             [
+                'key' => 'funding',
                 'title' => __('4 · Financiamento (FUNDEB)'),
                 'description' => __('VAAF, repasses, exportações e fontes públicas.'),
                 'audience' => self::AUDIENCE_ALL,
@@ -457,6 +462,7 @@ final class DocumentationCatalog
                 ],
             ],
             [
+                'key' => 'integrations',
                 'title' => __('5 · Integrações (admin)'),
                 'description' => __('Importações, APIs propostas e estudos.'),
                 'audience' => self::AUDIENCE_ADMIN,
@@ -469,6 +475,7 @@ final class DocumentationCatalog
                 ],
             ],
             [
+                'key' => 'operations',
                 'title' => __('6 · Operação (admin)'),
                 'description' => __('Deploy, ambiente, performance e CLI.'),
                 'audience' => self::AUDIENCE_ADMIN,
@@ -483,6 +490,7 @@ final class DocumentationCatalog
             ],
             DocumentationEscalonadasCatalog::menuSection(),
             [
+                'key' => 'archive',
                 'title' => __('Arquivo'),
                 'description' => __('Notas pontuais e documentos executivos antigos.'),
                 'audience' => self::AUDIENCE_ALL,
@@ -494,7 +502,7 @@ final class DocumentationCatalog
             ],
         ];
 
-        return self::appendDiscoveredSections($sections);
+        return DocumentationSectionVisuals::apply(self::appendDiscoveredSections($sections));
     }
 
     /**
@@ -615,6 +623,7 @@ final class DocumentationCatalog
         }
 
         $outros = [
+            'key' => 'outros',
             'title' => __('Outros documentos'),
             'description' => __('Releases recentes e ficheiros adicionais — histórico mensal em «Entregas escalonadas».'),
             'audience' => self::AUDIENCE_ALL,

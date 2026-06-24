@@ -150,6 +150,7 @@ final class DocumentationEscalonadasCatalog
         }
 
         return [
+            'key' => 'escalonadas',
             'title' => __('Entregas escalonadas'),
             'description' => __('Cronologia mensal de entregas com referências às releases.'),
             'audience' => DocumentationCatalog::AUDIENCE_ALL,

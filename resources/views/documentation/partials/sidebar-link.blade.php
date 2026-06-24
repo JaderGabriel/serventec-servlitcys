@@ -1,12 +1,14 @@
 @php
     $active = $currentPath === ($item['path'] ?? null);
+    $tone = (string) ($tone ?? 'teal');
 @endphp
 <li>
     <a
         href="{{ route($documentationRoutePrefix.'.show', ['doc' => $item['path']]) }}"
+        data-tone="{{ $tone }}"
         @class([
-            'block rounded-lg px-3 py-2 text-sm transition',
-            'bg-teal-50 text-teal-900 font-medium ring-1 ring-teal-200/80 dark:bg-teal-950/50 dark:text-teal-100 dark:ring-teal-800/60' => $active,
+            'serv-docs-link block rounded-lg px-3 py-2 text-sm transition',
+            'is-active' => $active,
             'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/60' => ! $active,
         ])
         @if ($active) aria-current="page" @endif

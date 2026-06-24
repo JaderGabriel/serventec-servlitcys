@@ -35,6 +35,25 @@ class DocumentationCatalogTest extends TestCase
         $this->assertStringContainsString('doc=docs%2FENTREGAS_ESCALONADAS_MAIO_2026.md', $url);
     }
 
+    public function test_catalog_sections_have_visual_identity(): void
+    {
+        $sections = DocumentationCatalog::sections();
+
+        foreach ($sections as $section) {
+            $this->assertArrayHasKey('key', $section);
+            $this->assertArrayHasKey('icon', $section);
+            $this->assertArrayHasKey('tone', $section);
+            $this->assertArrayHasKey('analogy', $section);
+            $this->assertNotSame('', $section['icon']);
+            $this->assertNotSame('', $section['tone']);
+        }
+
+        $architecture = collect($sections)->firstWhere('key', 'architecture');
+        $this->assertNotNull($architecture);
+        $paths = array_column($architecture['items'] ?? [], 'path');
+        $this->assertContains('docs/ANALISE_PADROES_LARAVEL.md', $paths);
+    }
+
     public function test_catalog_sections_follow_logical_order(): void
     {
         $sections = DocumentationCatalog::sections();

@@ -1,24 +1,18 @@
 @props(['sections', 'currentPath' => null, 'documentationRoutePrefix' => 'documentation'])
 
-<nav class="serv-docs-sidebar space-y-5" aria-label="{{ __('Índice da documentação') }}">
+<nav class="serv-docs-sidebar space-y-4" aria-label="{{ __('Índice da documentação') }}">
     @foreach ($sections as $section)
-        <div>
-            <p class="text-[11px] font-semibold uppercase tracking-wider text-teal-800 dark:text-teal-300">
-                {{ $section['title'] }}
-            </p>
-            @if (! empty($section['description']))
-                <p class="mt-0.5 text-[10px] leading-snug text-slate-500 dark:text-slate-400">
-                    {{ $section['description'] }}
-                </p>
-            @endif
+        <div class="space-y-2">
+            @include('documentation.partials.sidebar-section', ['section' => $section])
 
             @if (! empty($section['items']))
-                <ul class="mt-2 space-y-0.5">
+                <ul class="mt-1 space-y-0.5 border-s-2 serv-docs-section__list serv-docs-section__list--{{ $section['tone'] ?? 'slate' }} ps-2">
                     @foreach ($section['items'] as $item)
                         @include('documentation.partials.sidebar-link', [
                             'item' => $item,
                             'currentPath' => $currentPath,
                             'documentationRoutePrefix' => $documentationRoutePrefix,
+                            'tone' => $section['tone'] ?? 'slate',
                         ])
                     @endforeach
                 </ul>
@@ -44,12 +38,13 @@
                                 </svg>
                             </span>
                         </summary>
-                        <ul class="mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-700 ml-3 pl-1">
+                        <ul class="mt-0.5 space-y-0.5 border-l serv-docs-section__list serv-docs-section__list--{{ $section['tone'] ?? 'slate' }} ml-3 pl-1">
                             @foreach ($submenuItems as $item)
                                 @include('documentation.partials.sidebar-link', [
                                     'item' => $item,
                                     'currentPath' => $currentPath,
                                     'documentationRoutePrefix' => $documentationRoutePrefix,
+                                    'tone' => $section['tone'] ?? 'slate',
                                 ])
                             @endforeach
                         </ul>
@@ -58,12 +53,13 @@
             @endforeach
 
             @if (! empty($section['trailing_items']))
-                <ul class="mt-3 space-y-0.5 border-t border-slate-200 dark:border-slate-700 pt-2">
+                <ul class="mt-2 space-y-0.5 border-t border-slate-200/80 dark:border-slate-700/80 pt-2 border-s-2 serv-docs-section__list serv-docs-section__list--{{ $section['tone'] ?? 'slate' }} ps-2">
                     @foreach ($section['trailing_items'] as $item)
                         @include('documentation.partials.sidebar-link', [
                             'item' => $item,
                             'currentPath' => $currentPath,
                             'documentationRoutePrefix' => $documentationRoutePrefix,
+                            'tone' => $section['tone'] ?? 'slate',
                         ])
                     @endforeach
                 </ul>
