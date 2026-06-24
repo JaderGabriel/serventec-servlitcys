@@ -264,23 +264,23 @@ function drawBrandLogoFallback(ctx, x, y, w, h) {
     ctx.scale(sx, sy);
 
     ctx.fillStyle = "#93c5fd";
-    roundRect(ctx, 2, 15, 3.25, 6, 0.7);
+    roundRect(ctx, 2, 14, 3.25, 6, 0.7);
     ctx.fill();
 
     ctx.fillStyle = "#3b82f6";
-    roundRect(ctx, 6.5, 11.5, 3.25, 9.5, 0.7);
+    roundRect(ctx, 6.5, 10.5, 3.25, 9.5, 0.7);
     ctx.fill();
 
     ctx.fillStyle = "#1d4ed8";
-    roundRect(ctx, 11, 8, 3.25, 13, 0.7);
+    roundRect(ctx, 11, 7, 3.25, 13, 0.7);
     ctx.fill();
 
     ctx.fillStyle = "#0d9488";
     ctx.beginPath();
-    ctx.moveTo(11, 8);
-    ctx.lineTo(14.25, 8);
-    ctx.lineTo(14.625, 5.65);
-    ctx.lineTo(17.25, 8);
+    ctx.moveTo(11, 7);
+    ctx.lineTo(14.25, 7);
+    ctx.lineTo(14.625, 4.65);
+    ctx.lineTo(17.25, 7);
     ctx.closePath();
     ctx.fill();
 
@@ -288,26 +288,26 @@ function drawBrandLogoFallback(ctx, x, y, w, h) {
     ctx.lineWidth = 1.15;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(14.625, 5.65);
-    ctx.lineTo(14.625, 7.2);
+    ctx.moveTo(14.625, 4.65);
+    ctx.lineTo(14.625, 6.2);
     ctx.stroke();
 
     ctx.strokeStyle = "#f59e0b";
     ctx.lineWidth = 2.05;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(3.25, 17.25);
-    ctx.quadraticCurveTo(12.75, 5.5, 20.5, 9);
+    ctx.moveTo(3.25, 16.25);
+    ctx.quadraticCurveTo(12.75, 4.5, 20.5, 8);
     ctx.stroke();
 
     ctx.fillStyle = "#fbbf24";
     ctx.beginPath();
-    ctx.arc(20.5, 9, 2.85, 0, Math.PI * 2);
+    ctx.arc(20.5, 8, 2.85, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = "rgba(255, 247, 237, 0.6)";
     ctx.beginPath();
-    ctx.arc(20.5, 9, 1.15, 0, Math.PI * 2);
+    ctx.arc(20.5, 8, 1.15, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
