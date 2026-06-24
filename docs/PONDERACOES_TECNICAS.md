@@ -1,6 +1,6 @@
 # Ponderações técnicas — servlitcys
 
-**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
+**Versão do produto:** 5.7.7 · **Última revisão:** 2026-06-24
 
 > **Índice:** [README.md](README.md) · **Padrão doc:** [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md)
 
@@ -167,11 +167,13 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 | Tema | Situação | Direcção |
 |------|----------|----------|
 | PHPStan | Larastan nível 5 em Services/Repositories + baseline | Reduzir baseline gradualmente |
-| Controlador analytics | Orquestra muitos repositórios | Extrair builder de página (backlog) |
+| Controlador analytics | **~955 linhas** (era ~2086); loaders extraídos para `AnalyticsFilterResolver`, `AnalyticsFinanceTabPreloader`, `AnalyticsTabPartialRenderer`, `AnalyticsSafeLoader`, `AnalyticsMunicipalAccess` | Concluir `AnalyticsIndexAssembler`; ver [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md) P0 |
+| Services vs Support | `Services/` = integrações e orquestração de domínio; `Support/` = builders de UI, filtros, presenters, catálogos | Manter convenção ao extrair código do controller |
+| Form Requests / Policies | `AnalyticsFilterRequest`, admin CadÚnico/dados públicos com `PublicDataAdminPolicy` | Estender a outros controllers admin |
 | DTOs tipados | Payloads `array` nos repositórios | Longo prazo — ver backlog |
 | Testes | SQLite in-memory; Feature + Unit | Exigir `pdo_sqlite` em CI |
 
-**Doc:** [DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md](DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md).
+**Docs:** [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md), [DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md](DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md).
 
 ---
 

@@ -1,14 +1,14 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`5.7.6`** · tag de deploy **`20260622b-Saga`** · ver [RELEASE_20260622b_SAGA.md](RELEASE_20260622b_SAGA.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`5.7.7`** · tag de deploy **`20260624a-Skuld`** · ver [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **5.7.6** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **5.7.7** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260622b-Saga` |
-| **Data de referência** | **22/06/2026** |
-| **Último marco documentado** | **Saga** — modal municipal, demo animada, transferências FNDE — [RELEASE_20260622b_SAGA.md](RELEASE_20260622b_SAGA.md) |
+| **Tag de deploy (servidor)** | `20260624a-Skuld` |
+| **Data de referência** | **24/06/2026** |
+| **Último marco documentado** | **Skuld** — timeline financeira modal, SIDRA pop. total, analytics refactor — [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -38,6 +38,7 @@ timeline
     2026-06-20 : 5.7.3d Bragi — mapa recorte/tour, sync screen, UI pt-BR
     2026-06-20 : 5.7.4e Vidar — sync wanted/ensure, reinício pós-TERM
     2026-06-22 : 5.7.5a Mimir — tour/demo Horizonte, repasses modal, import Tesouro
+    2026-06-24 : 5.7.7a Skuld — timeline financeira modal, SIDRA pop. total, analytics refactor
     2026-06-22 : 5.7.6b Saga — modal municipal, demo animada, transferências FNDE
 ```
 
@@ -49,8 +50,9 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 5.7.6** | — / `20260622b-Saga` → `main` | — | 22/06/2026 | **Produção:** modal municipal (pipeline, propensão, CSS), demo com números/cores, transferências FNDE no score — [RELEASE_20260622b_SAGA.md](RELEASE_20260622b_SAGA.md). |
-| 5.7.5 | — / `20260622a-Mimir` → `main` | — | 22/06/2026 | **Produção:** tour/demo Horizonte, repasses no modal (FUNDEB/educação), import Tesouro com índice IBGE — [RELEASE_20260622a_MIMIR.md](RELEASE_20260622a_MIMIR.md). |
+| **▶ 5.7.7** | — / `20260624a-Skuld` → `main` | — | 24/06/2026 | **Produção:** timeline financeira no modal (FNDE/CKAN/ano corrente), SIDRA `populacao_total`, repasses chunk, analytics refactor — [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md). |
+| 5.7.6 | — / `20260622b-Saga` → `main` | — | 22/06/2026 | Modal municipal (pipeline, propensão, CSS), demo com números/cores, transferências FNDE no score — [RELEASE_20260622b_SAGA.md](RELEASE_20260622b_SAGA.md). |
+| 5.7.5 | — / `20260622a-Mimir` → `main` | — | 22/06/2026 | Tour/demo Horizonte, repasses no modal (FUNDEB/educação), import Tesouro com índice IBGE — [RELEASE_20260622a_MIMIR.md](RELEASE_20260622a_MIMIR.md). |
 | 5.7.4 | — / `20260620e-Vidar` → `main` | — | 20/06/2026 | **Produção:** sync BR wanted/ensure, runner resistente a TERM, `loginctl enable-linger` — [RELEASE_20260620e_VIDAR.md](RELEASE_20260620e_VIDAR.md). |
 | 5.7.3 | — / `20260620d-Bragi` → `main` | — | 20/06/2026 | Horizonte mapa UF/recorte/tour; sync BR screen; UI pt-BR — [RELEASE_20260620d_BRAGI.md](RELEASE_20260620d_BRAGI.md). |
 | 5.7.2 | — / `20260620c-Forseti` → `main` | — | 20/06/2026 | Horizonte performance UF 150+; filtros GIS + dock lateral — [RELEASE_20260620c_FORSETI.md](RELEASE_20260620c_FORSETI.md). |

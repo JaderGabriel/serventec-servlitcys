@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **5.7.6** · release `20260622b-Saga` · **Ramo:** `main` · **Última revisão:** 22/06/2026
+**Versão em produção:** **5.7.7** · release `20260624a-Skuld` · **Ramo:** `main` · **Última revisão:** 24/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -217,12 +217,12 @@ Ver [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md) e [CONSULTAS_EXTERNAS.md](C
 
 | Camada | Convenção |
 |--------|-----------|
-| Controllers | Finos; autorização + orquestração |
+| Controllers | Finos; autorização + orquestração (`AnalyticsDashboardController` em refactor P0 — ~955 linhas) |
 | Repositories `app/Repositories/Ieducar/` | Consultas pesadas ao i-Educar |
-| Support `app/Support/` | Regras de negócio, builders de UI (ex. tab impact) |
-| Services `app/Services/` | Integrações (FUNDEB, INEP, geo) |
+| Support `app/Support/` | Regras de negócio, builders de UI, presenters (ex. `FundebTabPresenter`, tab impact) |
+| Services `app/Services/` | Integrações (FUNDEB, INEP, geo) e loaders de aba analytics |
 
-Ponderações: [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
+Auditoria detalhada: [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md). Ponderações: [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
 
 ---
 

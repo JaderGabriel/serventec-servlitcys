@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 5.7.5 · **Última revisão:** 2026-06-22
+**Versão do produto:** 5.7.7 · **Última revisão:** 2026-06-24
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
-Mapa visual da documentação em produção: versão actual **5.7.5**, linha **5.x** (Horizonte GIS + operação admin), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
+Mapa visual da documentação em produção: versão actual **5.7.7**, linha **5.x** (Horizonte GIS + operação admin), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
 
 Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e secções expansíveis).
 
@@ -14,11 +14,11 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **5.7.5** |
-| **Tag de deploy** | `20260620e-Vidar` |
-| **Data de referência** | 2026-06-20 |
-| **Release** | [RELEASE_20260620e_VIDAR.md](RELEASE_20260620e_VIDAR.md) |
-| **Marco** | **Vidar** — sync BR wanted/ensure + linger |
+| **Versão semântica** | **5.7.7** |
+| **Tag de deploy** | `20260622b-Saga` |
+| **Data de referência** | 2026-06-22 |
+| **Release** | [RELEASE_20260622b_SAGA.md](RELEASE_20260622b_SAGA.md) |
+| **Marco** | **Saga** — modal municipal, demo animada, transferências FNDE no score |
 
 ---
 
@@ -156,14 +156,15 @@ Guia: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 
 ---
 
-## Releases recentes (4.2+)
+## Releases recentes (5.7+)
 
 | Versão | Codename | Data | Nota |
 |--------|----------|------|------|
-| **4.4.1** | Peitho | 07/06 b | [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md) |
-| 4.4.0 | Ananke | 07/06 a | [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md) |
-| 4.3.0 | Harmonia | 11/06 | [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md) |
-| 4.2.0 | Clio | 10/06 | [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md) |
+| **5.7.7** | Skuld | 24/06 a | [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md) — timeline financeira modal, SIDRA pop. total |
+| **5.7.6** | Saga | 22/06 b | [RELEASE_20260622b_SAGA.md](RELEASE_20260622b_SAGA.md) — modal municipal, demo animada |
+| 5.7.5 | Mimir | 22/06 a | [RELEASE_20260622a_MIMIR.md](RELEASE_20260622a_MIMIR.md) — tour Horizonte, repasses no modal |
+| 5.7.4 | Vidar | 20/06 e | [RELEASE_20260620e_VIDAR.md](RELEASE_20260620e_VIDAR.md) — sync BR wanted/ensure |
+| 4.4.3 | Lachesis | 09/06 b | [RELEASE_20260609b_LACHESIS.md](RELEASE_20260609b_LACHESIS.md) — CadÚnico faixas + Censo |
 
 ---
 

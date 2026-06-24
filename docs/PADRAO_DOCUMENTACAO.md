@@ -1,6 +1,6 @@
 # Padrão editorial — documentação servlitcys
 
-**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
+**Versão do produto:** 5.7.7 · **Última revisão:** 2026-06-24
 
 > **Índice:** [README.md](README.md) · **Estado:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
@@ -15,7 +15,7 @@ Todo documento **mantido activamente** (âncora, guia operacional, release recen
 ```markdown
 # Título — contexto curto (servlitcys)
 
-**Versão do produto:** 4.4.0 · **Última revisão:** AAAA-MM-DD
+**Versão do produto:** 5.7.6 · **Última revisão:** AAAA-MM-DD
 
 > **Índice:** [README.md](README.md) · **Relacionado:** [outro-doc.md](outro-doc.md)
 ```
@@ -32,6 +32,7 @@ Todo documento **mantido activamente** (âncora, guia operacional, release recen
 | Qual a versão e tag? | [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) |
 | Diagramas de arquitectura e fluxos? | [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) |
 | Porquê esta decisão técnica? | [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) |
+| Qualidade de código / padrões Laravel? | [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md) |
 | Ordem das abas / UI | [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) §5 + [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) |
 | Comandos CLI | [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) + `ArtisanCommandsCatalog` |
 | Variáveis `.env` | [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) |
@@ -121,7 +122,7 @@ Decisão de produto: [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md).
 
 | Recurso | Comportamento |
 |---------|----------------|
-| **Menu lateral** | Secções numeradas 1–6 + Arquivo + releases descobertos |
+| **Menu lateral** | Secções com cor, ícone e analogia (`DocumentationSectionVisuals`) — ver legenda em [README.md](README.md) § Leitor |
 | **Pesquisa** | `GET …/documentacao/buscar?q=` — título, secção, cabeçalhos |
 | **Neste documento** | Sumário à direita (desktop) com âncoras em `h1`–`h4` |
 | **Idioma** | Português europeu na UI e nos docs vivos |
@@ -129,6 +130,8 @@ Decisão de produto: [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md).
 Ficheiros só-admin (deploy, `.env`, importações): lista em `DocumentationCatalog::adminOnlyPaths()`.
 
 Use cabeçalhos `##` e `###` descritivos — alimentam o sumário e a pesquisa.
+
+Ao acrescentar secção nova ao menu, definir `key`, `icon`, `tone` e `analogy` em `DocumentationCatalog` ou reutilizar chave existente em `DocumentationSectionVisuals::catalog()`.
 
 ---
 

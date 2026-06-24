@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 5.2.0 · tag `20260603c-Argus` · **Última revisão:** 2026-06-03
+**Versão do produto:** 5.7.7 · tag `20260624a-Skuld` · **Última revisão:** 2026-06-24
 
 Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitectura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
@@ -10,10 +10,26 @@ Ponto de entrada da documentação técnica e funcional. Para **padrão editoria
 
 | Recurso | Descrição |
 |---------|-----------|
-| **Menu lateral** | Seis secções numeradas (Entrada → Operação) + releases descobertos |
+| **Menu lateral** | Nove secções com **cor, ícone e analogia** (ver legenda abaixo) + releases descobertos |
 | **Pesquisa** | Campo no menu — mínimo 2 caracteres; indexa título, secção e cabeçalhos |
 | **Neste documento** | Sumário à direita (desktop) com âncoras nos títulos `h1`–`h4` |
 | **Idioma** | Português europeu — cadastro, utilizador, secção, arquitectura |
+
+#### Legenda visual do menu lateral
+
+Cada secção do índice usa identidade própria (implementação: `DocumentationSectionVisuals` + `DocumentationCatalog`).
+
+| Secção | Cor | Ícone | Analogia |
+|--------|-----|-------|----------|
+| **1 · Entrada** | Teal | `home` | Porta de entrada — versão, perfis e hub |
+| **2 · Arquitectura** | Indigo | `squares-2x2` | Planta do sistema — camadas e decisões |
+| **3 · Consultoria municipal** | Sky | `chart-bar` | Painel municipal — analytics e Horizonte |
+| **4 · Financiamento (FUNDEB)** | Rose | `banknotes` | Fluxo FUNDEB — VAAF, repasses e extratos |
+| **5 · Integrações (admin)** | Violet | `globe-alt` | Pontes externas — importações e APIs |
+| **6 · Operação (admin)** | Amber | `command-line` | Sala de máquinas — deploy, CLI e testes |
+| **Entregas escalonadas** | Fuchsia | `arrow-path` | Linha do tempo — entregas mensais |
+| **Arquivo** | Slate | `clipboard-document-list` | Arquivo — notas executivas antigas |
+| **Outros documentos** | Emerald | `document-text` | Acervo extra — releases e descobertas |
 
 ---
 
@@ -35,7 +51,7 @@ flowchart TD
 |--------|----------------|
 | Gestão / secretaria | [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) → [STATUS_PROJETO.md](STATUS_PROJETO.md) → [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) |
 | Analista (utilizador) | [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) → [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) |
-| Desenvolvimento | [STATUS_PROJETO.md](STATUS_PROJETO.md) → [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) → [README do repositório](../README.md) |
+| Desenvolvimento | [STATUS_PROJETO.md](STATUS_PROJETO.md) → [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) → [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md) → [README do repositório](../README.md) |
 | Operações / deploy | [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) → [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) → [SEGURANCA.md](SEGURANCA.md) → [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) |
 | Priorização de produto | [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) |
 
@@ -51,6 +67,7 @@ flowchart TD
 | [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) | Tags, commits e trajetória de releases |
 | [STATUS_PROJETO.md](STATUS_PROJETO.md) | Funcionalidades **implementadas** em produção |
 | [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) | Decisões técnicas e limites do sistema |
+| [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md) | Auditoria MVC, Eloquent, testes e plano de melhoria |
 | [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) | Identidade visual e ordem das abas |
 | [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) | Evoluções planeadas (único backlog) |
 
@@ -123,20 +140,14 @@ mindmap
 
 | Documento | Versão |
 |-----------|--------|
+| [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md) | **5.7.7** — Skuld (timeline financeira modal, SIDRA pop. total, analytics refactor) |
+| [RELEASE_20260622b_SAGA.md](RELEASE_20260622b_SAGA.md) | **5.7.6** — Saga (modal municipal, demo animada, transferências FNDE) |
+| [RELEASE_20260622a_MIMIR.md](RELEASE_20260622a_MIMIR.md) | **5.7.5** — Mimir (tour Horizonte, repasses no modal) |
+| [RELEASE_20260620e_VIDAR.md](RELEASE_20260620e_VIDAR.md) | **5.7.4** — Vidar (sync BR wanted/ensure) |
 | [RELEASE_20260609b_LACHESIS.md](RELEASE_20260609b_LACHESIS.md) | **4.4.3** — Lachesis (CadÚnico faixas + Censo + mapa) |
 | [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md) | **4.4.2** — Pythia |
 | [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md) | **4.4.1** — Peitho |
 | [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md) | 4.4.0 — Ananke |
-| [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md) | 4.3.0 — Harmonia |
-| [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md) | 4.2.0 — Clio |
-| [RELEASE_20260609_THEIA.md](RELEASE_20260609_THEIA.md) | 4.1.9 — Theia |
-| [RELEASE_20260608_SOPHIA.md](RELEASE_20260608_SOPHIA.md) | 4.1.8 — Sophia |
-| [RELEASE_20260607_PHRONESIS.md](RELEASE_20260607_PHRONESIS.md) | 4.1.7 — Phronesis |
-| [RELEASE_20260606_ALETHEIA.md](RELEASE_20260606_ALETHEIA.md) | 4.1.6 — Aletheia |
-| [RELEASE_20260605_EUNOMIA.md](RELEASE_20260605_EUNOMIA.md) | 4.1.2 — Eunomia |
-| [RELEASE_20260605_KAIROS.md](RELEASE_20260605_KAIROS.md) | 4.1.1 — Kairos |
-| [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md) | 4.1.0 — Athena |
-| [RELEASE_20260604_HESTIA.md](RELEASE_20260604_HESTIA.md) | 4.0.0 — Hestia |
 
 Histórico completo: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 

@@ -40,7 +40,7 @@ O **Horizonte** é o módulo de **inteligência territorial** do SERVLITCYS. Res
 | **Censo INEP** | `inep_censo_municipio_matriculas` | Escala (matrículas municipais) |
 | **SAEB / IDEB** | `saeb_indicator_points` | Déficit pedagógico (LP, MAT) |
 | **CadÚnico** | `cadunico_municipio_snapshots` | Demanda social (crianças 0–17, PBF), filtro no mapa, dimensão `social_demand` no score |
-| **Demografia IBGE SIDRA** | `municipal_demography_snapshots` | População 4–17 (Censo 2022, agregado 9514) — denominador independente do Censo escolar; fallback de escala |
+| **Demografia IBGE SIDRA** | `municipal_demography_snapshots` | População **total** e 4–17 (Censo 2022, agregado 9514); reimportar com `--phase=sidra_demography --reset` se `populacao_total` estiver vazia |
 | **Repasses Tesouro** | `fundeb_municipio_references` (colunas de transferência) | Dependência de transferências federais — dimensão `transfer_dependency`, complementa FUNDEB |
 | **IBGE** | API localidades (cache) | Nome, UF, centroide para municípios só com dados públicos |
 
@@ -107,7 +107,25 @@ Calculados **na mesma geração do mapa** (amostra actual):
 - Filtros comerciais: **camada «Alta pressão FUNDEB»** (default), propensão/benefício mínimos, matrículas, pressão FUNDEB, FUNDEB/Censo/SAEB/CadÚnico, **demanda social mínima**, UF, segmentos «Onde buscar clientes».
 - **Bases nacionais grandes** (>800 municípios): overview por UF (bolhas = volume de alta pressão); ao abrir UF, camada **Alta pressão** + mapa de **Calor**; limite de **400 pontos** IBGE no mapa (configurável) — coord. aproximadas ficam na lista.
 - Overlay de carregamento durante fetch JSON e desenho do mapa.
-- Tooltip: scores, matrículas Censo, pop. 4–17 SIDRA, CadÚnico/PBF, SAEB, complementação FUNDEB, repasses, **SGE** (sistema, estado, detalhe), fontes, atalho Consultoria ou portal do sistema.
+- Tooltip: scores, pipeline população → CadÚnico → matrículas, **timeline financeira** (ver §6.5), propensão, SAEB, **SGE**, fontes, atalho Consultoria.
+
+### 6.5 Modal municipal — leitura financeira (consultoria)
+
+Três blocos **complementares** (não somar entre si):
+
+| Bloco | Cor | Fonte | Conteúdo |
+|-------|-----|-------|------------|
+| **Referência FUNDEB** | Rosa | Portaria FNDE | VAAF, receita total, complementação do exercício de referência |
+| **Repasses federais** | Azul | Tesouro CKAN | Pagamentos observados no ano anterior (total, FUNDEB, verbas educação quando distintas) |
+| **Repasse FUNDEB (ano corrente)** | Verde | CKAN + previsão | Já repassado, previsão anual, projeção até dezembro, barra % realizado |
+
+**Notas de interpretação (UI):**
+
+- Receita FNDE ≠ repasse CKAN — portaria × pagamento; valores iguais não são duplicidade.
+- Quando o CKAN só tem programa **FUNDEB**, total e verbas coincidem — uma linha no tooltip.
+- Valores monetários com **centavos**; previsão do ano corrente reutiliza lógica de **Finanças → Tempo Real**.
+
+Serviço: `HorizonteFundebRepasseOutlook` · payload `fundeb_realtime_*` em cada marcador.
 
 ### 6.2 Painéis laterais
 
@@ -233,7 +251,7 @@ Por defeito corre **em etapas** (`HORIZONTE_FORTNIGHTLY_FEED_STAGED=true`): cada
 | **FUNDEB** | CSV nacional «Receita total do Fundeb por ente federado» (FNDE) → `fundeb_municipio_references` por IBGE |
 | **Censo** | Indexa matrículas municipais a partir do microdados INEP (`inep_censo_municipio_matriculas`) |
 | **CadÚnico** | Sincroniza snapshots municipais (`cadunico_municipio_snapshots`) — criancas escolares e PBF |
-| **SIDRA** | População 4–17 por município (API agregado 9514) → `municipal_demography_snapshots` — **1 UF por passo** |
+| **SIDRA** | População **total** e 4–17 por município (API agregado 9514) → `municipal_demography_snapshots` — **1 UF por passo** |
 | **Repasses Tesouro** | Transferências federais (CKAN Tesouro / FUNDEB) → enriquece `fundeb_municipio_references` |
 | **SAEB** | Planilhas oficiais INEP — **1 ano por passo** por defeito (`HORIZONTE_FORTNIGHTLY_SAEB_YEARS_PER_STEP=1`) |
 | **IBGE** | Aquece catálogo de centroides (**1 UF por invocação** por defeito — `HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP=1`) |
@@ -247,7 +265,13 @@ php artisan horizonte:fortnightly-feed --staged --continue
 php artisan horizonte:fortnightly-feed --phase=fundeb_receita
 php artisan horizonte:fortnightly-feed --phase=cadunico_sync
 php artisan horizonte:fortnightly-feed --phase=sidra_demography
+php artisan horizonte:fortnightly-feed --phase=sidra_demography --reset
 php artisan horizonte:fortnightly-feed --phase=repasses_tesouro
+php artisan horizonte:fortnightly-feed --phase=saeb_planilhas
+php artisan horizonte:fortnightly-feed --phase=saeb_planilhas --reset
+php artisan horizonte:fortnightly-feed --phase=ibge_catalog
+php artisan horizonte:fortnightly-feed --phase=ibge_catalog --reset
+php artisan horizonte:fortnightly-feed --phase=ibge_catalog --uf=SP
 
 # Manual — tudo numa invocação (verbose activo; retomar se interrompido)
 php artisan horizonte:fortnightly-feed --all
@@ -257,12 +281,15 @@ php artisan horizonte:fortnightly-feed --all --reset
 php artisan horizonte:fortnightly-feed --dry-run
 php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo --skip-cadunico --skip-sidra --skip-repasses --skip-sge
 
-# VPS com pouca RAM — só IBGE + SGE (1 UF por passo; repetir --continue)
+# Fases incrementais (SAEB / IBGE) — repetir --phase até concluir; --reset recomeça o lote
+php artisan horizonte:fortnightly-feed --phase=saeb_planilhas
+php artisan horizonte:fortnightly-feed --phase=ibge_catalog
+
+# Pipeline staged completo (alternativa ao --phase isolado)
 php artisan horizonte:fortnightly-feed --staged --reset --skip-fundeb --skip-censo --skip-saeb --skip-verify
 php artisan horizonte:fortnightly-feed --staged --continue   # até concluir IBGE, depois SGE
 
 # Uma UF manualmente
-php artisan horizonte:fortnightly-feed --phase=ibge_catalog --uf=SP
 
 # Confirmar agendamento
 php artisan schedule:list | grep horizonte

@@ -139,13 +139,14 @@ php artisan public-data:check-official --no-notify   # só verifica e regista ca
 
 | Comando | Descrição |
 |---------|-----------|
-| `horizonte:fortnightly-feed` | Sincroniza dados públicos **nacionais** para o mapa Horizonte: FUNDEB, Censo, CadÚnico, SIDRA, repasses, SAEB, catálogo IBGE, SGE, verificação oficial |
+| `horizonte:fortnightly-feed` | Sincroniza dados públicos **nacionais** para o mapa Horizonte: FUNDEB, Censo, CadÚnico, SIDRA, repasses, SAEB, catálogo IBGE, SGE, verificação oficial. Fases incrementais: `--phase=saeb_planilhas`, `--phase=ibge_catalog`, `--phase=sidra_demography` (repetir até concluir; `--reset` recomeça o lote da fase). |
 
 **Agendamento:** dia **1** às **03:00** nos meses **1, 3, 5, 7, 9, 11** + passos `--continue` a cada `HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL` min.
 
 ```bash
-php artisan horizonte:fortnightly-feed
-php artisan horizonte:fortnightly-feed --dry-run
+php artisan horizonte:fortnightly-feed --phase=saeb_planilhas
+php artisan horizonte:fortnightly-feed --phase=ibge_catalog
+php artisan horizonte:fortnightly-feed --phase=sidra_demography --reset
 php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo
 php artisan schedule:list | grep horizonte
 ```

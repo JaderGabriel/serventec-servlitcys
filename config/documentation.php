@@ -24,11 +24,11 @@ return [
     */
 
     'product' => [
-        'version' => '5.7.6',
-        'release_tag' => '20260622b-Saga',
+        'version' => '5.7.7',
+        'release_tag' => '20260624a-Skuld',
         'commit_short' => '',
         'commit_number' => null,
-        'revision_date' => '2026-06-22',
+        'revision_date' => '2026-06-24',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],
