@@ -628,13 +628,25 @@ final class IbgeMunicipalityCatalog
             if (! is_array($item)) {
                 continue;
             }
-            $meta = $this->metaFromApiItem($item, null, 0, 1, false);
-            if ($meta === null) {
+            $ibge = $this->normalizeIbge((string) ($item['id'] ?? ''));
+            $name = trim((string) ($item['nome'] ?? ''));
+            if ($ibge === null || $name === '') {
                 continue;
             }
-            $key = MunicipalityNomeUfKey::key((string) $meta['name'], (string) $meta['uf']);
+
+            $uf = strtoupper(trim((string) (
+                $item['microrregiao']['mesorregiao']['UF']['sigla']
+                ?? $item['regiao-imediata']['regiao-intermediaria']['UF']['sigla']
+                ?? IbgeUfFromCode::ufFromIbge($ibge)
+                ?? ''
+            )));
+            if ($uf === '') {
+                continue;
+            }
+
+            $key = MunicipalityNomeUfKey::key($name, $uf);
             if ($key !== '') {
-                $index[$key] = (string) $meta['ibge'];
+                $index[$key] = $ibge;
             }
         }
 
