@@ -88,7 +88,8 @@
                     <div class="serv-horizonte-map-toolbar">
                         <h3 id="horizonte-map-heading" class="text-sm font-semibold text-serv-navy dark:text-slate-100 me-auto min-w-0">
                             <span x-show="isOverviewMode">{{ __('Mapa — alta pressão por UF') }}</span>
-                            <span x-show="isRegionalMode" x-cloak>{{ __('Detalhe municipal') }}</span>
+                            <span x-show="isMesoOverviewMode" x-cloak>{{ __('Mesorregiões') }} — <span x-text="ufLabel(scopeUf)"></span></span>
+                            <span x-show="isRegionalMode" x-cloak>{{ __('Detalhe municipal') }}<span x-show="scopeMeso" x-cloak> · <span x-text="mesoScopeLabel()"></span></span></span>
                         </h3>
                         <div class="serv-horizonte-lens-bar" x-show="isRegionalMode" x-cloak role="group" aria-label="{{ __('Lente rápida') }}">
                             <template x-for="opt in decisionLensOptions.filter(o => ['high_pressure','prospects','prospect_high','all'].includes(o.key))" :key="opt.key">
@@ -149,7 +150,7 @@
 
                     @include('horizonte.partials.uf-summary-header')
 
-                    <div class="serv-horizonte-result-bar" x-show="isRegionalMode && !pageLoading" x-cloak>
+                    <div class="serv-horizonte-result-bar" x-show="(isRegionalMode || isMesoOverviewMode) && !pageLoading" x-cloak>
                         <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs min-w-0">
                             <span class="font-semibold text-serv-navy dark:text-slate-100 tabular-nums">
                                 <span x-text="filteredCount.toLocaleString('pt-BR')"></span> {{ __('no recorte') }}
@@ -184,6 +185,7 @@
                                 @click="restoreMapRenderCap()"
                             >{{ __('Limitar mapa') }}</button>
                             <button type="button" class="serv-link text-[11px]" @click="toggleFiltersPanel()" x-show="!filtersVisible && !filterDockOpen">{{ __('Mostrar filtros') }}</button>
+                            <button type="button" class="serv-link text-[11px]" @click="toggleUfSummaryVisibility()" x-show="isRegionalMode && scopeUf && !ufSummaryOpen">{{ __('Mostrar resumo estadual') }}</button>
                         </div>
                     </div>
 
@@ -391,6 +393,8 @@
 
                         </div>
                     </div>
+
+                    @include('horizonte.partials.map-tooltip-sge')
                 </section>
 
                 <aside class="serv-horizonte-rail" aria-label="{{ __('Próximas acções') }}" data-horizonte-tour="rail">
@@ -716,7 +720,5 @@
                 </div>
             </div>
         </div>
-
-        @include('horizonte.partials.map-tooltip-sge')
     </div>
 </x-app-layout>

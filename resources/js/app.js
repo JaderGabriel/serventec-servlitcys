@@ -153,6 +153,79 @@ function wrapChartLabel(text, maxLineLen = 16, maxLines = 3) {
     return lines;
 }
 
+/** Caminho same-origin para lazy-load das abas (ignora APP_URL absoluto). */
+function analyticsTabFetchPath(tabFetchUrl) {
+    const fallback = "/dashboard/analytics/tab";
+    const raw = String(tabFetchUrl ?? "").trim();
+    if (!raw) {
+        return fallback;
+    }
+    try {
+        const parsed = new URL(raw, window.location.origin);
+        if (parsed.origin !== window.location.origin) {
+            return fallback;
+        }
+
+        return parsed.pathname || fallback;
+    } catch {
+        return fallback;
+    }
+}
+
+function looksLikeInvalidAnalyticsTabBody(body) {
+    const s = String(body ?? "").trim();
+    if (!s) {
+        return true;
+    }
+
+    return (
+        /^@layer\b/m.test(s) ||
+        /^@import\b/m.test(s) ||
+        /^\.[\w-]+\s*\{/m.test(s) ||
+        /<!DOCTYPE/i.test(s) ||
+        /<html[\s>]/i.test(s)
+    );
+}
+
+function humanizeAnalyticsTabFetchError(body, status) {
+    const text = String(body ?? "").trim();
+    if (status === 401 || status === 419) {
+        return "Sessão expirada. Recarregue a página e entre novamente.";
+    }
+    if (!text) {
+        return `Não foi possível carregar a aba (HTTP ${status}).`;
+    }
+    if (looksLikeInvalidAnalyticsTabBody(text)) {
+        if (/route\s*=\s*['"]login['"]/i.test(text) || /name=["']email["']/i.test(text)) {
+            return "Sessão expirada. Recarregue a página e entre novamente.";
+        }
+
+        return status >= 500
+            ? "Erro interno ao carregar a aba. Tente novamente em instantes."
+            : "Resposta inválida do servidor. Recarregue a página ou aplique os filtros novamente.";
+    }
+    const stripped = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    if (stripped.length > 240) {
+        return `${stripped.slice(0, 240)}…`;
+    }
+
+    return stripped || `Não foi possível carregar a aba (HTTP ${status}).`;
+}
+
+function assertAnalyticsTabPartialResponse(response, html, tab) {
+    const headerTab = response.headers.get("X-Analytics-Tab");
+    if (!headerTab || headerTab !== tab) {
+        throw new Error(
+            humanizeAnalyticsTabFetchError(html, response.status),
+        );
+    }
+    if (looksLikeInvalidAnalyticsTabBody(html)) {
+        throw new Error(
+            humanizeAnalyticsTabFetchError(html, response.status),
+        );
+    }
+}
+
 /** Junta opções de eixos do payload com os padrões (evita perder eixo X ao só definir Y). */
 function mergeCartesianScales(base, extra) {
     if (!extra || typeof extra !== "object") {
@@ -442,7 +515,10 @@ document.addEventListener("alpine:init", () => {
                 );
                 this.loadingTab = t;
                 try {
-                    const u = new URL(this.tabFetchUrl, window.location.origin);
+                    const u = new URL(
+                        analyticsTabFetchPath(this.tabFetchUrl),
+                        window.location.origin,
+                    );
                     const params = this.buildTabFetchSearchParams();
                     params.set("tab", t);
                     u.search = params.toString();
@@ -453,11 +529,13 @@ document.addEventListener("alpine:init", () => {
                         },
                         credentials: "same-origin",
                     });
-                    if (!r.ok) {
-                        const text = await r.text();
-                        throw new Error(text || `HTTP ${r.status}`);
-                    }
                     const html = await r.text();
+                    if (!r.ok) {
+                        throw new Error(
+                            humanizeAnalyticsTabFetchError(html, r.status),
+                        );
+                    }
+                    assertAnalyticsTabPartialResponse(r, html, t);
                     const el = panel;
                     el.innerHTML = html;
                     Alpine.initTree(el);
@@ -474,13 +552,10 @@ document.addEventListener("alpine:init", () => {
                         const p = document.createElement("p");
                         p.className =
                             "text-sm text-red-600 dark:text-red-400 px-2 py-4";
-                        let msg =
+                        const msg =
                             e instanceof Error
                                 ? e.message
                                 : "Erro ao carregar a aba.";
-                        if (msg.length > 400) {
-                            msg = msg.replace(/<[^>]+>/g, " ").slice(0, 400);
-                        }
                         p.textContent = msg;
                         panel.replaceChildren(p);
                     }
@@ -512,7 +587,7 @@ document.addEventListener("alpine:init", () => {
                     );
                     try {
                         const u = new URL(
-                            this.tabFetchUrl,
+                            analyticsTabFetchPath(this.tabFetchUrl),
                             window.location.origin,
                         );
                         const params = this.buildTabFetchSearchParams();
@@ -527,13 +602,17 @@ document.addEventListener("alpine:init", () => {
                             credentials: "same-origin",
                             signal: controller.signal,
                         });
+                        const html = await r.text();
                         if (!r.ok) {
-                            const errText = await r.text();
                             throw new Error(
-                                errText?.slice(0, 200) || `HTTP ${r.status}`,
+                                humanizeAnalyticsTabFetchError(html, r.status),
                             );
                         }
-                        const html = await r.text();
+                        assertAnalyticsTabPartialResponse(
+                            r,
+                            html,
+                            "municipality_health",
+                        );
                         slot.innerHTML = html;
                         Alpine.initTree(slot);
                         this.applyMunicipalityHealthPatches(panel, slot);

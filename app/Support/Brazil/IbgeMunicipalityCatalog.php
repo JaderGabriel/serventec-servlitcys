@@ -329,7 +329,7 @@ final class IbgeMunicipalityCatalog
             return [];
         }
 
-        $cacheKey = 'ibge_municipality_catalog_uf:v3:'.($fetchRemoteCentroids ? 'geo' : 'spread').':'.$uf;
+        $cacheKey = 'ibge_municipality_catalog_uf:v4:'.($fetchRemoteCentroids ? 'geo' : 'spread').':'.$uf;
         $cache = AdminHomeMapCache::repository();
         $cached = $cache->get($cacheKey);
         if (is_array($cached) && $cached !== []) {
@@ -417,6 +417,12 @@ final class IbgeMunicipalityCatalog
 
         [$lat, $lng, $source] = $this->coordinatesFromApiItem($item, $uf, $index, $total, $ibge, $fetchRemoteCentroids);
 
+        $meso = is_array($item['microrregiao']['mesorregiao'] ?? null)
+            ? $item['microrregiao']['mesorregiao']
+            : null;
+        $mesoId = is_array($meso) ? (string) ($meso['id'] ?? '') : '';
+        $mesoName = is_array($meso) ? trim((string) ($meso['nome'] ?? '')) : '';
+
         return [
             'ibge' => $ibge,
             'name' => $name,
@@ -424,6 +430,8 @@ final class IbgeMunicipalityCatalog
             'lat' => $lat,
             'lng' => $lng,
             'coord_source' => $source,
+            'meso_id' => $mesoId,
+            'meso_name' => $mesoName,
         ];
     }
 

@@ -24,7 +24,7 @@
     }
 
     .serv-horizonte-muni-overlay .serv-brazil-map-tooltip--centered {
-        @apply relative left-auto top-auto w-full max-w-[min(26rem,calc(100vw-2rem))] max-h-[min(70dvh,34rem)]
+        @apply relative left-auto top-auto w-full max-w-[min(42rem,calc(100vw-2rem))] max-h-[min(58dvh,28rem)]
             translate-x-0 translate-y-0 shadow-2xl ring-1 ring-slate-900/10 dark:ring-white/10;
     }
 
@@ -94,7 +94,7 @@
 
     .serv-horizonte-gis.is-map-fullscreen,
     .serv-horizonte-gis:fullscreen {
-        @apply flex flex-col bg-white dark:bg-slate-900;
+        @apply relative flex flex-col bg-white dark:bg-slate-900;
         height: 100dvh;
         max-height: 100dvh;
     }
@@ -589,6 +589,18 @@
     .serv-horizonte-gis.is-map-fullscreen .serv-horizonte-uf-summary,
     .serv-horizonte-gis:fullscreen .serv-horizonte-uf-summary {
         @apply shrink-0;
+    }
+
+    .serv-horizonte-gis.is-map-fullscreen .serv-horizonte-muni-overlay,
+    .serv-horizonte-gis:fullscreen .serv-horizonte-muni-overlay,
+    .serv-horizonte-gis.is-map-fullscreen .serv-horizonte-sge-overlay,
+    .serv-horizonte-gis:fullscreen .serv-horizonte-sge-overlay {
+        @apply absolute inset-0 z-[500];
+    }
+
+    .serv-horizonte-gis.is-map-fullscreen .serv-horizonte-sge-overlay,
+    .serv-horizonte-gis:fullscreen .serv-horizonte-sge-overlay {
+        @apply z-[520];
     }
 
     .serv-horizonte-result-bar {

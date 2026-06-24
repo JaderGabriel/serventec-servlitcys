@@ -107,11 +107,15 @@ Calculados **na mesma geração do mapa** (amostra actual):
 - Base **Leaflet** + OSM; modos **Calor** (propensão) e **Marcadores** (tiers).
 - **Buscador** por nome, UF ou código IBGE (sugestões + `flyTo`).
 - Filtros comerciais: **camada «Alta pressão FUNDEB»** (default), propensão/benefício mínimos, matrículas, pressão FUNDEB, FUNDEB/Censo/SAEB/CadÚnico, **demanda social mínima**, UF, segmentos «Onde buscar clientes».
-- **Bases nacionais grandes** (>800 municípios): overview por UF (bolhas = volume de alta pressão); ao abrir UF, camada **Alta pressão** + mapa de **Calor**; limite de **400 pontos** IBGE no mapa (configurável) — coord. aproximadas ficam na lista.
+- **Bases nacionais grandes** (>800 municípios): overview por UF (bolhas = volume de alta pressão).
+- **UF extensa** (≥60 municípios, `HORIZONTE_MAP_MESO_THRESHOLD`): vista intermédia por **mesorregião IBGE** — bolhas agregadas; clique abre só municípios da região (filtros + cap adaptativo por meso, «Desenhar todos» viável).
+- **UF pequena** ou mesorregião seleccionada: detalhe municipal com limite adaptativo (120–400 pontos) — coord. aproximadas ficam na lista.
 - Overlay de carregamento durante fetch JSON e desenho do mapa.
 - Tooltip: scores, pipeline população → CadÚnico → matrículas, **timeline financeira** (ver §6.5), propensão, SAEB, **SGE**, fontes, atalho Consultoria.
 
 ### 6.5 Modal municipal — leitura financeira (consultoria)
+
+Layout **horizontal** (~42rem): coluna esquerda (pipeline, propensão, dimensões) + coluna direita (timeline financeira em grelha 3 colunas). Altura máxima ~58dvh.
 
 Três blocos **complementares** (não somar entre si):
 

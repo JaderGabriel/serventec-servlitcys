@@ -96,13 +96,13 @@ final class HorizonteMapService
         $uf = \App\Support\Horizonte\HorizonteUfScope::normalize($uf);
 
             if ($scope === 'regional' && $uf !== null) {
-            $responseKey = 'horizonte:map:regional-response:v2:'.$refYear.':'.$uf.':'.$fingerprint;
+            $responseKey = 'horizonte:map:regional-response:v3:'.$refYear.':'.$uf.':'.$fingerprint;
             $cachedResponse = AdminHomeMapCache::get($responseKey);
             if (is_array($cachedResponse)) {
                 return $this->attachNationalUfRankings($cachedResponse, $refYear, $fingerprint);
             }
 
-            $regKey = 'horizonte:map:regional:v2:'.$refYear.':'.$uf.':'.$fingerprint;
+            $regKey = 'horizonte:map:regional:v3:'.$refYear.':'.$uf.':'.$fingerprint;
             $regional = AdminHomeMapCache::get($regKey);
             if (! is_array($regional)) {
                 $regional = $this->assemble($refYear, requireCoordinates: true, scopeUf: $uf);
@@ -176,10 +176,24 @@ final class HorizonteMapService
         $full['sge_summary'] = HorizonteManagerInsights::sgeSummary($regional);
         $full['top_prospects'] = array_slice($topProspects, 0, 25);
         $full['uf_map_points'] = [];
+        $mesoThreshold = max(40, (int) config('horizonte.map_display.meso_overview_threshold', 60));
+        $mesoPoints = $this->buildMesoMapPoints($regional);
+        $useMesoOverview = count($regional) >= $mesoThreshold && count($mesoPoints) >= 2;
+        $full['meso_map_points'] = $mesoPoints;
         $full['meta'] = array_merge(
             is_array($full['meta'] ?? null) ? $full['meta'] : [],
             [
                 'regional_display_policy' => HorizonteMapPresenter::regionalDisplayPolicy(count($regional)),
+                'meso_overview' => [
+                    'enabled' => $useMesoOverview,
+                    'threshold' => $mesoThreshold,
+                    'meso_count' => count($mesoPoints),
+                    'reason' => $useMesoOverview
+                        ? __('UF com :total municípios — escolha uma mesorregião para ver todos os pontos com filtros e qualidade.', [
+                            'total' => number_format(count($regional), 0, ',', '.'),
+                        ])
+                        : null,
+                ],
             ],
         );
 
@@ -571,6 +585,98 @@ final class HorizonteMapService
     }
 
     /**
+     * Agrega municípios por mesorregião IBGE (drill-down dentro da UF).
+     *
+     * @param  list<array<string, mixed>>  $markers
+     * @return list<array<string, mixed>>
+     */
+    private function buildMesoMapPoints(array $markers): array
+    {
+        $byMeso = [];
+        foreach ($markers as $m) {
+            $mesoId = trim((string) ($m['meso_id'] ?? ''));
+            $mesoName = trim((string) ($m['meso_name'] ?? ''));
+            if ($mesoId === '') {
+                continue;
+            }
+            if (! isset($byMeso[$mesoId])) {
+                $byMeso[$mesoId] = [
+                    'meso_id' => $mesoId,
+                    'meso_name' => $mesoName !== '' ? $mesoName : __('Mesorregião :id', ['id' => $mesoId]),
+                    'uf' => strtoupper(trim((string) ($m['uf'] ?? ''))),
+                    'total' => 0,
+                    'prospect_count' => 0,
+                    'high_prospect' => 0,
+                    'high_pressure' => 0,
+                    'without_consultoria' => 0,
+                    'success_sum' => 0,
+                    'benefit_sum' => 0,
+                    'lat_sum' => 0.0,
+                    'lng_sum' => 0.0,
+                    'coord_count' => 0,
+                ];
+            }
+            $byMeso[$mesoId]['total']++;
+            $byMeso[$mesoId]['success_sum'] += (int) ($m['success_score'] ?? 0);
+            $byMeso[$mesoId]['benefit_sum'] += (int) ($m['benefit_score'] ?? 0);
+            if (($m['tier'] ?? '') === 'prospect_high') {
+                $byMeso[$mesoId]['high_prospect']++;
+            }
+            if ($this->isHighPressureMarker($m)) {
+                $byMeso[$mesoId]['high_pressure']++;
+            }
+            if (str_starts_with((string) ($m['tier'] ?? ''), 'prospect_')) {
+                $byMeso[$mesoId]['prospect_count']++;
+            }
+            if (! ($m['consultoria_active'] ?? false)) {
+                $byMeso[$mesoId]['without_consultoria']++;
+            }
+            $lat = (float) ($m['lat'] ?? 0);
+            $lng = (float) ($m['lng'] ?? 0);
+            if (BrazilUfCentroids::isValidBrazilCoord($lat, $lng)) {
+                $byMeso[$mesoId]['lat_sum'] += $lat;
+                $byMeso[$mesoId]['lng_sum'] += $lng;
+                $byMeso[$mesoId]['coord_count']++;
+            }
+        }
+
+        $points = [];
+        foreach ($byMeso as $row) {
+            $total = max(1, (int) $row['total']);
+            $coordCount = (int) $row['coord_count'];
+            if ($coordCount > 0) {
+                $lat = $row['lat_sum'] / $coordCount;
+                $lng = $row['lng_sum'] / $coordCount;
+            } else {
+                [$lat, $lng] = BrazilUfCentroids::latLng($row['uf'], count($points));
+            }
+            $displayPolicy = HorizonteMapPresenter::regionalDisplayPolicy($total);
+            $points[] = [
+                'meso_id' => $row['meso_id'],
+                'meso_name' => $row['meso_name'],
+                'uf' => $row['uf'],
+                'lat' => $lat,
+                'lng' => $lng,
+                'total' => (int) $row['total'],
+                'prospect_count' => (int) $row['prospect_count'],
+                'high_prospect' => (int) $row['high_prospect'],
+                'high_pressure' => (int) $row['high_pressure'],
+                'without_consultoria' => (int) $row['without_consultoria'],
+                'avg_success' => (int) round($row['success_sum'] / $total),
+                'avg_benefit' => (int) round($row['benefit_sum'] / $total),
+                'heat_intensity' => min(1.0, ((int) $row['high_pressure']) / max(1, (int) $row['prospect_count'])),
+                'display_policy' => $displayPolicy,
+            ];
+        }
+
+        usort($points, static fn (array $a, array $b): int => ($b['high_pressure'] <=> $a['high_pressure'])
+            ?: ($b['high_prospect'] <=> $a['high_prospect'])
+            ?: strcmp((string) $a['meso_name'], (string) $b['meso_name']));
+
+        return $points;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function assemble(int $refYear, bool $requireCoordinates = true, ?string $scopeUf = null): array
@@ -757,6 +863,8 @@ final class HorizonteMapService
                 'city_id' => $city['id'] ?? null,
                 'name' => (string) $meta['name'],
                 'uf' => strtoupper((string) ($meta['uf'] ?? $city['uf'] ?? '')),
+                'meso_id' => (string) ($fromIbge['meso_id'] ?? ''),
+                'meso_name' => (string) ($fromIbge['meso_name'] ?? ''),
                 'lat' => (float) $meta['lat'],
                 'lng' => (float) $meta['lng'],
                 'tier' => $scores['tier'],

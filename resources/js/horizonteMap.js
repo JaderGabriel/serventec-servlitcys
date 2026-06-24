@@ -813,6 +813,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         mapView: options.defaultViewFilter?.map_view ?? "heat",
         mapMode: "overview",
         scopeUf: "",
+        loadedRegionalUf: "",
+        scopeMeso: "",
+        mesoMapPoints: [],
         meta: {},
         active: null,
         tooltipPinned: false,
@@ -970,12 +973,20 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return this.mapMode === "overview";
         },
 
+        get isMesoOverviewMode() {
+            return this.mapMode === "meso_overview";
+        },
+
         get isRegionalMode() {
             return this.mapMode === "regional";
         },
 
+        get isUfScopedMode() {
+            return this.isMesoOverviewMode || this.isRegionalMode;
+        },
+
         get mapMarkersForRender() {
-            if (this.isOverviewMode) {
+            if (this.isOverviewMode || this.isMesoOverviewMode) {
                 return [];
             }
             let list = this.filteredMarkersList.filter((m) =>
@@ -1029,7 +1040,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         get canShowAllOnMap() {
-            if (this.isOverviewMode) {
+            if (this.isOverviewMode || this.isMesoOverviewMode) {
+                return false;
+            }
+            if (this.regionalDisplayPolicy?.allow_show_all === false) {
                 return false;
             }
             const valid = this.filteredMarkersList.filter((m) =>
@@ -1151,7 +1165,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         recomputeFilteredMarkers() {
             const q = this.searchQuery.trim().toLowerCase();
+            const mesoScope =
+                this.isRegionalMode && this.scopeMeso
+                    ? String(this.scopeMeso)
+                    : "";
             this.filteredMarkersList = this.markers.filter((m) => {
+                if (mesoScope !== "" && String(m.meso_id ?? "") !== mesoScope) {
+                    return false;
+                }
                 if (this.hideConsultoria && m.consultoria_active) {
                     return false;
                 }
@@ -1218,10 +1239,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 typeof this.meta.regional_display_policy === "object"
                     ? this.meta.regional_display_policy
                     : null;
-            this.regionalDisplayPolicy = policy;
+            this.applyRegionalRenderPolicyFromData(policy);
+        },
+
+        applyRegionalRenderPolicyFromData(policy) {
             if (!policy) {
                 return;
             }
+            this.regionalDisplayPolicy = policy;
             this.mapRenderLimit = Number(policy.max_render_markers) || this.mapRenderLimit;
             const prefer = String(policy.prefer_map_view || "");
             if (
@@ -2251,6 +2276,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return name !== code ? `${code} — ${name}` : code;
         },
 
+        mesoScopeLabel() {
+            const scoped = String(this.scopeMeso ?? "").trim();
+            if (scoped === "") {
+                return "";
+            }
+            const point = this.mesoMapPoints.find(
+                (p) => String(p.meso_id) === scoped,
+            );
+            return point?.meso_name || scoped;
+        },
+
         dataUrl(scope, uf = "") {
             const url = new URL(this.loadUrl, window.location.origin);
             url.searchParams.set("scope", scope);
@@ -2333,6 +2369,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             } catch (error) {
                 console.error("horizonte regional", error);
                 this.scopeUf = "";
+                this.loadedRegionalUf = "";
                 this.pageError =
                     error instanceof Error
                         ? error.message
@@ -2355,6 +2392,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             this.mapMode = "overview";
             this.scopeUf = "";
+            this.loadedRegionalUf = "";
             this.markers = [];
             this.filteredMarkersList = [];
             this.ufMapPoints = Array.isArray(data.uf_map_points) ? data.uf_map_points : [];
@@ -2381,8 +2419,21 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             this._mapUserAdjustedView = false;
             this.closeUfSummary();
-            this.mapMode = "regional";
-            this.scopeUf = uf;
+            this.scopeMeso = "";
+            this.mesoMapPoints = Array.isArray(data.meso_map_points) ? data.meso_map_points : [];
+            const mesoMeta =
+                data.meta?.meso_overview && typeof data.meta.meso_overview === "object"
+                    ? data.meta.meso_overview
+                    : null;
+            if (mesoMeta?.enabled && this.mesoMapPoints.length >= 2) {
+                this.mapMode = "meso_overview";
+            } else {
+                this.mesoMapPoints = [];
+                this.mapMode = "regional";
+            }
+            const scopedUf = String(uf ?? "").trim().toUpperCase();
+            this.scopeUf = scopedUf;
+            this.loadedRegionalUf = scopedUf;
             this.markers = Array.isArray(data.markers) ? data.markers : [];
             this.ufMapPoints = [];
             this.ufFundebInsights =
@@ -2395,13 +2446,23 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.applyRegionalRenderPolicy();
             this._tooltipHtmlCache = {};
             this.ensurePointsVisibleOnMap();
-            this.initialViewNotice = {
-                kind: "regional",
-                message:
-                    this.meta?.regional_display_policy?.reason ||
-                    `${this.markers.length.toLocaleString("pt-BR")} municípios com dados em ${this.ufLabel(uf)} · ${Number(this.summary?.prospect_count ?? 0).toLocaleString("pt-BR")} prospectos.`,
-                uf,
-            };
+            if (this.isMesoOverviewMode) {
+                this.initialViewNotice = {
+                    kind: "meso",
+                    message:
+                        mesoMeta?.reason ||
+                        `${this.mesoMapPoints.length.toLocaleString("pt-BR")} mesorregiões em ${this.ufLabel(uf)} · clique numa bolha para ver municípios.`,
+                    uf,
+                };
+            } else {
+                this.initialViewNotice = {
+                    kind: "regional",
+                    message:
+                        this.meta?.regional_display_policy?.reason ||
+                        `${this.markers.length.toLocaleString("pt-BR")} municípios com dados em ${this.ufLabel(uf)} · ${Number(this.summary?.prospect_count ?? 0).toLocaleString("pt-BR")} prospectos.`,
+                    uf,
+                };
+            }
         },
 
         applyCommonPayload(data) {
@@ -2664,6 +2725,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     }
                     this.detachCanvasRendererForOverview();
                     await this.renderUfOverview();
+                } else if (this.isMesoOverviewMode) {
+                    if (this.map.hasLayer(this.clusterGroup)) {
+                        this.map.removeLayer(this.clusterGroup);
+                    }
+                    this.detachCanvasRendererForOverview();
+                    await this.renderMesoOverview();
                 } else {
                     if (this.mapView === "heat") {
                         if (this.map.hasLayer(this.clusterGroup)) {
@@ -2743,6 +2810,61 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.ufLayer.bringToFront();
 
             this.fitMapBounds(bounds, 4);
+        },
+
+        async renderMesoOverview() {
+            this.layer.clearLayers();
+            this.heatLayer.clearLayers();
+            this.clusterGroup.clearLayers();
+            this.ufLayer.clearLayers();
+            this.markerLayers = [];
+
+            const points = this.mesoMapPoints;
+            const bounds = [];
+
+            for (const p of points) {
+                const lat = Number(p.lat);
+                const lng = Number(p.lng);
+                if (!isValidCoord(lat, lng)) {
+                    continue;
+                }
+                bounds.push([lat, lng]);
+                const intensity = Math.max(0.15, Number(p.heat_intensity ?? 0));
+                const radius = 10 + Math.sqrt(Number(p.total ?? 1)) * 1.4;
+                const circle = L.circleMarker([lat, lng], {
+                    radius: Math.min(32, radius),
+                    fillColor: heatColor(intensity),
+                    color: "#ffffff",
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.78,
+                });
+                const mesoLabel = escapeHtml(String(p.meso_name ?? p.meso_id ?? ""));
+                circle.bindTooltip(
+                    `<strong>${mesoLabel}</strong><br>` +
+                        `${nf(p.high_pressure ?? 0)} alta pressão · ${nf(p.high_prospect ?? 0)} alta propensão<br>` +
+                        `${nf(p.total)} municípios · ${nf(p.prospect_count)} prospectos<br>` +
+                        `<span class="text-slate-500">Clique para abrir municípios desta região</span>`,
+                    { direction: "top", sticky: true },
+                );
+                circle.on("click", (e) => {
+                    L.DomEvent.stopPropagation(e);
+                    void this.selectMesoFromOverview(p.meso_id);
+                });
+                circle.addTo(this.ufLayer);
+            }
+
+            if (!this.map.hasLayer(this.ufLayer)) {
+                this.ufLayer.addTo(this.map);
+            }
+            this.ufLayer.bringToFront();
+
+            if (bounds.length > 0) {
+                this.fitMapBounds(bounds, 6);
+            } else {
+                const center = this.resolveUfCenter(this.scopeUf);
+                this.map.setView(center, this.regionalUfZoom());
+            }
         },
 
         async renderMarkers() {
@@ -2919,6 +3041,64 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
         },
 
+        async selectMesoFromOverview(mesoId) {
+            const scoped = String(mesoId ?? "").trim();
+            if (!scoped) {
+                return;
+            }
+            this.closeTooltip();
+            this.scopeMeso = scoped;
+            this.mapMode = "regional";
+            this.showAllOnMap = false;
+            this.renderCapDismissed = false;
+            this._mapUserAdjustedView = false;
+            const mesoPoint = this.mesoMapPoints.find(
+                (p) => String(p.meso_id) === scoped,
+            );
+            if (mesoPoint?.display_policy) {
+                this.applyRegionalRenderPolicyFromData(mesoPoint.display_policy);
+            }
+            this.recomputeFilteredMarkers();
+            this._filterSignature = this.filterSignature();
+            this.ensurePointsVisibleOnMap();
+            if (this.filteredCount === 0 && this.markers.length > 0) {
+                this.applyDecisionLens("all", { enteringRegional: true });
+                this.recomputeFilteredMarkers();
+            }
+            const mesoName = mesoPoint?.meso_name || scoped;
+            this.initialViewNotice = {
+                kind: "meso_detail",
+                message: `${mesoName} · ${this.filteredCount.toLocaleString("pt-BR")} municípios no recorte`,
+                uf: this.scopeUf,
+            };
+            await this.scheduleMapRefresh();
+        },
+
+        async backToMesoOverview() {
+            if (!this.scopeUf || this.mesoMapPoints.length < 2) {
+                await this.backToOverview();
+                return;
+            }
+            this.closeTooltip();
+            this.scopeMeso = "";
+            this.mapMode = "meso_overview";
+            this.showAllOnMap = false;
+            this.renderCapDismissed = false;
+            this._mapUserAdjustedView = false;
+            this.applyRegionalRenderPolicy();
+            this.recomputeFilteredMarkers();
+            this._filterSignature = this.filterSignature();
+            const mesoMeta = this.meta?.meso_overview;
+            this.initialViewNotice = {
+                kind: "meso",
+                message:
+                    mesoMeta?.reason ||
+                    `${this.mesoMapPoints.length.toLocaleString("pt-BR")} mesorregiões · clique numa bolha.`,
+                uf: this.scopeUf,
+            };
+            await this.scheduleMapRefresh();
+        },
+
         async selectUfFromOverview(uf) {
             await this.enterRegionalWithPressureLens(uf);
         },
@@ -2934,8 +3114,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             if (
                 !force &&
-                this.isRegionalMode &&
-                this.scopeUf === scoped &&
+                this.isUfScopedMode &&
+                this.loadedRegionalUf === scoped &&
                 this.markers.length > 0 &&
                 !this.regionalLoading
             ) {
@@ -2945,6 +3125,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return;
             }
             this.highlightIbge = "";
+            this.scopeMeso = "";
+            if (this.loadedRegionalUf !== scoped) {
+                this.closeMapOverlays();
+            }
             if (userInitiated && !this.isOverviewMode) {
                 this.applyDefaultDecisionView();
             }
@@ -2955,6 +3139,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.cancelPendingMapRefresh();
             this.closeTooltip();
             this.scopeUf = "";
+            this.loadedRegionalUf = "";
+            this.scopeMeso = "";
+            this.mesoMapPoints = [];
             this.markers = [];
             this.mapMode = "overview";
             this.ufFundebInsights = null;
@@ -3028,6 +3215,16 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         closeUfSummary() {
             this.ufSummaryOpen = false;
+        },
+
+        toggleUfSummaryVisibility() {
+            if (!this.isRegionalMode || !this.scopeUf) {
+                return;
+            }
+            this.ufSummaryOpen = !this.ufSummaryOpen;
+            if (this.ufSummaryOpen) {
+                this.$nextTick(() => this.refreshMapLayout({ immediate: true }));
+            }
         },
 
         resolveUfCenter(uf) {
@@ -3262,12 +3459,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     `<p class="serv-horizonte-muni-tooltip__notice serv-horizonte-muni-tooltip__notice--info">${escapeHtml("Sem dados públicos importados — score e tier indicativos. Importe FUNDEB, Censo ou SAEB para enriquecer.")}</p>`,
                 );
             }
-            lines.push(muniPopulationPipelineHtml(m));
 
             const financeBlock = financeTimelineHtml(m, this.refYear, this.currentYear);
-            if (financeBlock) {
-                lines.push(financeBlock);
-            }
+            lines.push('<div class="serv-horizonte-muni-tooltip__layout">');
+            lines.push('<div class="serv-horizonte-muni-tooltip__layout-col serv-horizonte-muni-tooltip__layout-col--primary">');
+            lines.push(muniPopulationPipelineHtml(m));
+            lines.push(muniPropensityThermometerHtml(m, th));
 
             if (m.benefit_score != null) {
                 lines.push(
@@ -3340,13 +3537,18 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             lines.push(`</div>`);
 
-            lines.push(muniPropensityThermometerHtml(m, th));
-
             if (m.analytics_url) {
                 lines.push(
                     `<a href="${escapeHtml(m.analytics_url)}" class="serv-horizonte-muni-tooltip__link">${escapeHtml("Abrir consultoria")}</a>`,
                 );
             }
+            lines.push(`</div>`);
+
+            lines.push('<div class="serv-horizonte-muni-tooltip__layout-col serv-horizonte-muni-tooltip__layout-col--finance">');
+            if (financeBlock) {
+                lines.push(financeBlock);
+            }
+            lines.push(`</div></div>`);
             lines.push(`</div>`);
             const html = lines.join("");
             if (cacheKey !== "") {

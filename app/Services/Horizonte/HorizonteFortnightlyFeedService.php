@@ -179,7 +179,7 @@ final class HorizonteFortnightlyFeedService
      */
     public function runPhase(string $phaseKey, array $options = []): array
     {
-        $this->applyResourceLimits();
+        $this->applyResourceLimits($phaseKey);
         $refYear = (int) config('horizonte.reference_year', (int) date('Y') - 1);
 
         $result = match ($phaseKey) {
@@ -509,9 +509,12 @@ final class HorizonteFortnightlyFeedService
             : __('Âmbito: nacional (27 UFs).');
     }
 
-    private function applyResourceLimits(): void
+    private function applyResourceLimits(?string $phaseKey = null): void
     {
-        $memory = trim((string) config('horizonte.fortnightly_feed.memory_limit', '512M'));
+        $memoryKey = $phaseKey === 'saeb_planilhas'
+            ? 'horizonte.fortnightly_feed.saeb_memory_limit'
+            : 'horizonte.fortnightly_feed.memory_limit';
+        $memory = trim((string) config($memoryKey, '512M'));
         if ($memory !== '') {
             @ini_set('memory_limit', $memory);
         }
@@ -711,7 +714,7 @@ final class HorizonteFortnightlyFeedService
             ];
         }
 
-        $allYears = $this->resolveSaebYears();
+        $allYears = $this->sortSaebYears($this->resolveSaebYears());
 
         if ($allYears === []) {
             return [
@@ -722,7 +725,7 @@ final class HorizonteFortnightlyFeedService
         }
 
         $total = count($allYears);
-        $remaining = HorizonteSaebImportProgress::remainingYears($allYears);
+        $remaining = HorizonteSaebImportProgress::orderedRemainingYears($allYears);
 
         if ($remaining === []) {
             $hasPoints = SaebIndicatorPoint::query()
@@ -742,7 +745,7 @@ final class HorizonteFortnightlyFeedService
             }
 
             HorizonteSaebImportProgress::reset();
-            $remaining = $allYears;
+            $remaining = HorizonteSaebImportProgress::orderedRemainingYears($allYears);
         }
 
         $yearsPerStep = max(1, (int) config('horizonte.fortnightly_feed.saeb_years_per_step', 1));
@@ -750,10 +753,7 @@ final class HorizonteFortnightlyFeedService
         $debugLines = [];
         $totalRows = 0;
         $batchOk = true;
-        $allowSoftFail = filter_var(
-            config('horizonte.fortnightly_feed.censo_skip_if_missing', true),
-            FILTER_VALIDATE_BOOLEAN,
-        );
+        $lastFailure = null;
 
         $allowedIbge = HorizonteUfScope::allowedIbgeMap($options['uf'] ?? null, $this->ibgeCatalog);
         if ($allowedIbge !== null) {
@@ -769,6 +769,15 @@ final class HorizonteFortnightlyFeedService
         foreach ($batch as $year) {
             $this->debugLog($options, __('SAEB — ano :ano: download, conversão e gravação…', ['ano' => (string) $year]));
             $memBefore = round(memory_get_usage(true) / 1024 / 1024, 1);
+
+            if (! $this->saebYearHasUrl($year)) {
+                $skipMsg = __('SAEB — ano :ano: sem URL em planilha_resultados_urls (ignorado).', ['ano' => (string) $year]);
+                $debugLines[] = $skipMsg;
+                $this->debugLog($options, $skipMsg, 'warn');
+                HorizonteSaebImportProgress::markDone($year);
+
+                continue;
+            }
 
             $result = $this->saebPlanilhas->importSingleYearNational(
                 $year,
@@ -799,12 +808,18 @@ final class HorizonteFortnightlyFeedService
 
             if (($result['ok'] ?? false) && $this->saebYearImportedWithRows($result)) {
                 HorizonteSaebImportProgress::markDone($year);
-            } else {
-                $batchOk = false;
-                break;
+                gc_collect_cycles();
+
+                continue;
             }
 
-            gc_collect_cycles();
+            $batchOk = false;
+            $lastFailure = [
+                'year' => $year,
+                'message' => trim((string) ($result['message'] ?? __('Falha desconhecida.'))),
+            ];
+            HorizonteSaebImportProgress::markFailed($year);
+            break;
         }
 
         $doneCount = count(array_intersect($allYears, HorizonteSaebImportProgress::doneYears()));
@@ -815,25 +830,40 @@ final class HorizonteFortnightlyFeedService
             HorizonteSaebImportProgress::reset();
         }
 
+        $message = $partial
+            ? __('SAEB: :done/:total anos — repita: php artisan horizonte:fortnightly-feed --phase=saeb_planilhas', [
+                'done' => (string) $doneCount,
+                'total' => (string) $total,
+            ])
+            : __('SAEB: :n ano(s) importado(s), :rows linha(s) canónicas.', [
+                'n' => (string) $total,
+                'rows' => (string) $totalRows,
+            ]);
+
+        if ($lastFailure !== null) {
+            $message .= ' '.__(
+                'Última falha (:ano): :msg',
+                [
+                    'ano' => (string) $lastFailure['year'],
+                    'msg' => $lastFailure['message'],
+                ],
+            );
+        }
+
         return [
-            'success' => $batchOk || $allowSoftFail,
+            'success' => ! $partial || $doneCount > 0,
             'partial' => $partial,
-            'message' => $partial
-                ? __('SAEB: :done/:total anos — repita: php artisan horizonte:fortnightly-feed --phase=saeb_planilhas', [
-                    'done' => (string) $doneCount,
-                    'total' => (string) $total,
-                ])
-                : __('SAEB: :n ano(s) importado(s), :rows linha(s) canónicas.', [
-                    'n' => (string) $total,
-                    'rows' => (string) $totalRows,
-                ]),
+            'message' => $message,
             'saeb_done' => $doneCount,
             'saeb_total' => $total,
             'saeb_years_batch' => $batch,
             'imported' => $totalRows,
             'debug_lines' => $debugLines,
-            'skipped' => ! $batchOk && $allowSoftFail && ! $partial,
-            'details' => ['years' => $allYears, 'remaining' => HorizonteSaebImportProgress::remainingYears($allYears)],
+            'details' => [
+                'years' => $allYears,
+                'remaining' => HorizonteSaebImportProgress::remainingYears($allYears),
+                'last_failed' => HorizonteSaebImportProgress::lastFailedYear(),
+            ],
         ];
     }
 
@@ -1154,12 +1184,37 @@ final class HorizonteFortnightlyFeedService
     {
         $raw = config('horizonte.fortnightly_feed.saeb_years');
         if (is_array($raw)) {
-            return array_values(array_unique(array_filter(array_map('intval', $raw))));
+            return $this->sortSaebYears(array_values(array_unique(array_filter(array_map('intval', $raw)))));
         }
         if (is_string($raw) && trim($raw) !== '') {
-            return SaebPlanilhaInepImportService::parseYearsOption($raw);
+            return $this->sortSaebYears(SaebPlanilhaInepImportService::parseYearsOption($raw));
         }
 
-        return SaebPlanilhaInepImportService::parseYearsOption(null);
+        return $this->sortSaebYears(SaebPlanilhaInepImportService::parseYearsOption(null));
+    }
+
+    /**
+     * @param  list<int>  $years
+     * @return list<int>
+     */
+    private function sortSaebYears(array $years): array
+    {
+        $years = array_values(array_unique(array_filter(array_map('intval', $years))));
+        sort($years, SORT_NUMERIC);
+
+        return $years;
+    }
+
+    private function saebYearHasUrl(int $year): bool
+    {
+        $urls = config('ieducar.saeb.planilha_resultados_urls', []);
+
+        if (! is_array($urls)) {
+            return false;
+        }
+
+        $url = $urls[$year] ?? null;
+
+        return is_string($url) && trim($url) !== '';
     }
 }

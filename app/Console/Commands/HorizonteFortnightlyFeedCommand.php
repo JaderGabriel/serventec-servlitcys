@@ -107,6 +107,12 @@ class HorizonteFortnightlyFeedCommand extends Command
             $this->renderPhaseLine($phaseRow, $verbose);
         }
 
+        $singlePhase = trim((string) $this->option('phase'));
+        $phaseRow = is_array($result['phase'] ?? null) ? $result['phase'] : ($result['phases'][0] ?? null);
+        if ($singlePhase !== '' && is_array($phaseRow)) {
+            $this->renderPhaseDebugLines($phaseRow);
+        }
+
         if (is_array($result['pipeline'] ?? null)) {
             $this->renderPipelineSummary($result['pipeline']);
         }
@@ -207,6 +213,23 @@ class HorizonteFortnightlyFeedCommand extends Command
         }
 
         return filter_var(config('horizonte.fortnightly_feed.staged', true), FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
+     * @param  array<string, mixed>  $phase
+     */
+    private function renderPhaseDebugLines(array $phase): void
+    {
+        $lines = is_array($phase['debug_lines'] ?? null) ? $phase['debug_lines'] : [];
+        if ($lines === []) {
+            return;
+        }
+
+        foreach ($lines as $line) {
+            if (is_string($line) && trim($line) !== '') {
+                $this->line('    · '.trim($line));
+            }
+        }
     }
 
     /**

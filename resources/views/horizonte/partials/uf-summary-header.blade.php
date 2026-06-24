@@ -1,7 +1,7 @@
 <div
     x-show="ufSummaryOpen && isRegionalMode && scopeUf"
     x-cloak
-    @keydown.escape.window="if (ufSummaryOpen) closeUfSummary()"
+    @keydown.escape.window="if (ufSummaryOpen) toggleUfSummaryVisibility()"
     x-transition:enter="transition ease-out duration-200"
     x-transition:enter-start="opacity-0 -translate-y-1"
     x-transition:enter-end="opacity-100 translate-y-0"
@@ -20,8 +20,8 @@
         <button
             type="button"
             class="serv-horizonte-uf-summary__close"
-            @click="closeUfSummary()"
-            :aria-label="'{{ __('Ocultar resumo') }}'"
+            @click="toggleUfSummaryVisibility()"
+            :aria-label="mapControlLabelUfSummary()"
         >&times;</button>
     </div>
 

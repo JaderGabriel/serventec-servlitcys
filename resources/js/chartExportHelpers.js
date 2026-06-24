@@ -160,8 +160,8 @@ const EXPORT_COLORS = {
 
 const FONT_STACK = 'system-ui, -apple-system, "Segoe UI", sans-serif';
 
-const LOGO_ASPECT = 52 / 36;
-const LOGO_BRAND = "#0d9488";
+const LOGO_ASPECT = 1;
+const LOGO_BRAND = "#2563eb";
 
 /** Tokens de layout — manter alturas de cálculo e desenho alinhadas. */
 const EXPORT_LAYOUT = {
@@ -257,22 +257,44 @@ function headerLogoColumn(pad, textMax) {
  * @param {CanvasRenderingContext2D} ctx
  */
 function drawBrandLogoFallback(ctx, x, y, w, h) {
-    const sx = w / 52;
-    const sy = h / 36;
+    const sx = w / 24;
+    const sy = h / 24;
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(sx, sy);
     ctx.fillStyle = LOGO_BRAND;
-    ctx.globalAlpha = 0.75;
-    ctx.fillRect(2, 18, 7, 14);
+    ctx.globalAlpha = 0.78;
+    ctx.fillRect(2, 15.5, 3.25, 5.5);
     ctx.globalAlpha = 0.9;
-    ctx.fillRect(12, 10, 7, 22);
+    ctx.fillRect(6.75, 12, 3.25, 9);
     ctx.globalAlpha = 1;
-    ctx.fillRect(22, 4, 7, 28);
+    ctx.fillRect(11.5, 8.5, 3.25, 12.5);
+    ctx.beginPath();
+    ctx.moveTo(7.25, 12.8);
+    ctx.lineTo(9, 11.4);
+    ctx.lineTo(10.75, 12.8);
+    ctx.lineTo(9, 14.3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(18.25, 8.75, 2.75, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = LOGO_BRAND;
+    ctx.lineWidth = 1.75;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.moveTo(3.6, 17.2);
+    ctx.lineTo(9.4, 12.8);
+    ctx.lineTo(12.75, 10);
+    ctx.stroke();
+    ctx.lineWidth = 1.9;
     ctx.globalAlpha = 0.92;
-    ctx.fillRect(36, 4, 7, 28);
-    ctx.globalAlpha = 0.55;
-    ctx.fillRect(41, 4, 6, 28);
+    ctx.beginPath();
+    ctx.moveTo(12.75, 10.5);
+    ctx.quadraticCurveTo(15.5, 5.25, 18.25, 8.75);
+    ctx.stroke();
     ctx.restore();
 }
 

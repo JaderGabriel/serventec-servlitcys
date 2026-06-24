@@ -5,6 +5,35 @@
     gap: 0.625rem;
 }
 
+.serv-horizonte-muni-tooltip__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+    gap: 0.75rem;
+    align-items: start;
+}
+
+@media (max-width: 720px) {
+    .serv-horizonte-muni-tooltip__layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.serv-horizonte-muni-tooltip__layout-col--finance {
+    min-width: 0;
+}
+
+.serv-horizonte-muni-tooltip__layout-col--primary .serv-horizonte-muni-tooltip__dims {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem 0.5rem;
+}
+
+@media (max-width: 720px) {
+    .serv-horizonte-muni-tooltip__layout-col--primary .serv-horizonte-muni-tooltip__dims {
+        grid-template-columns: 1fr;
+    }
+}
+
 .serv-horizonte-muni-tooltip__scores {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -265,6 +294,32 @@
 }
 
 .serv-horizonte-muni-tooltip__finance {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    align-items: start;
+}
+
+.serv-horizonte-muni-tooltip__finance-intro,
+.serv-horizonte-muni-tooltip__finance-legend {
+    grid-column: 1 / -1;
+}
+
+.serv-horizonte-muni-tooltip__finance-connector {
+    display: none;
+}
+
+.serv-horizonte-muni-tooltip__finance-note--consultoria {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+    .serv-horizonte-muni-tooltip__finance {
+        grid-template-columns: 1fr;
+    }
+}
+
+.serv-horizonte-muni-tooltip__finance-step {
     display: flex;
     flex-direction: column;
     gap: 0.375rem;

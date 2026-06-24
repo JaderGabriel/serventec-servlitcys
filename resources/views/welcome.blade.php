@@ -28,7 +28,7 @@
                 <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
                     <a href="{{ url('/') }}" class="group flex min-w-0 items-center gap-2.5 sm:gap-3">
                         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-sky-700 shadow-md shadow-blue-900/15 ring-1 ring-slate-900/10 transition group-hover:scale-105 dark:from-blue-500 dark:to-sky-600 dark:ring-white/15">
-                            <x-application-logo class="h-6 w-6 shrink-0 text-white" />
+                            <x-application-logo class="h-5 w-5 shrink-0 text-white" />
                         </span>
                         <span class="min-w-0 truncate font-display text-base font-semibold tracking-tight text-slate-900 sm:text-lg dark:text-white">
                             {{ config('app.name', 'servlitcys') }}

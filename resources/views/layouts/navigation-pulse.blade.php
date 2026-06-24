@@ -19,7 +19,7 @@
                     title="{{ Auth::user()->canViewAdminDashboard() ? __('Início — :app', ['app' => config('app.name')]) : config('app.name') }}"
                     aria-label="{{ Auth::user()->canViewAdminDashboard() ? __('Início') : config('app.name') }}"
                 >
-                    <x-application-logo class="block h-9 w-[3.25rem] shrink-0 text-blue-700 dark:text-blue-400 group-hover:text-blue-900 dark:group-hover:text-blue-300 transition" />
+                    <x-application-logo class="block h-9 w-9 shrink-0 text-blue-700 dark:text-blue-400 group-hover:text-blue-900 dark:group-hover:text-blue-300 transition" />
                 </a>
                 <div class="pulse-nav-links">
                     <x-pulse-nav-link :href="route('dashboard.analytics')" :active="request()->routeIs('dashboard.analytics*')" icon="chart-bar">

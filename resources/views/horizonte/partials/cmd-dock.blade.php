@@ -14,7 +14,7 @@
                 <label class="serv-horizonte-cmd__recorte-label">
                     <span class="text-slate-500 shrink-0">{{ __('Recorte') }}</span>
                     <select
-                        x-model="scopeUf"
+                        :value="scopeUf"
                         @change="onScopeUfPick($event)"
                         :disabled="pageLoading || regionalLoading"
                         class="serv-horizonte-cmd__recorte-select"
@@ -27,11 +27,23 @@
                 </label>
                 <span class="serv-horizonte-gis__mode-pill" :class="isOverviewMode ? 'is-national' : 'is-regional'">
                     <span x-show="isOverviewMode">{{ __('Visão nacional') }}</span>
-                    <span x-show="isRegionalMode" x-cloak x-text="ufLabel(scopeUf)"></span>
+                    <span x-show="isMesoOverviewMode" x-cloak>{{ __('Mesorregiões') }} · <span x-text="ufLabel(scopeUf)"></span></span>
+                    <span x-show="isRegionalMode" x-cloak>
+                        <span x-show="scopeMeso" x-text="mesoScopeLabel()"></span>
+                        <span x-show="!scopeMeso" x-text="ufLabel(scopeUf)"></span>
+                    </span>
                 </span>
                 <button
                     type="button"
-                    x-show="isRegionalMode"
+                    x-show="isRegionalMode && scopeMeso"
+                    x-cloak
+                    class="serv-btn-secondary text-xs shrink-0"
+                    @click="backToMesoOverview()"
+                    :disabled="pageLoading || regionalLoading"
+                >{{ __('← Regiões') }}</button>
+                <button
+                    type="button"
+                    x-show="isUfScopedMode && !scopeMeso"
                     x-cloak
                     class="serv-btn-secondary text-xs shrink-0"
                     @click="backToOverview()"

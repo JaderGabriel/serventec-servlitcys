@@ -1,21 +1,18 @@
-{{-- Consultoria financeira (barras + tendência), educação (capelo) e Horizonte (arco elevado) — sem base inferior para não confundir com a barra do menu --}}
-<svg viewBox="0 0 48 28" xmlns="http://www.w3.org/2000/svg" fill="none" {{ $attributes }}>
+{{--
+    Marca ServLitcys v4 — monólito quadrado (24×24).
+    Dados: barras + tendência · Educação: capelo · Horizonte: sol + arco nascente.
+    Fill sólido; traços ≥1.75px para legibilidade em favicon e nav.
+--}}
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" preserveAspectRatio="xMidYMid meet" {{ $attributes }}>
     <g fill="currentColor">
-        {{-- Gráfico de barras (analytics) --}}
-        <rect x="1" y="16" width="4.5" height="8" rx="1" opacity="0.72" />
-        <rect x="7.5" y="12" width="4.5" height="12" rx="1" opacity="0.88" />
-        <rect x="14" y="7" width="4.5" height="17" rx="1" />
-        {{-- Seta de tendência (consultoria financeira) --}}
-        <path d="M16.8 6.2l-2 .8 1.2 1.9z" opacity="0.92" />
-        {{-- Educação: capelo académico --}}
-        <path d="M22 13.5 28 10.5 34 13.5 28 16.5Z" opacity="0.95" />
-        <path d="M26 14.2v5c0 .45.4.8.9.8h2.2c.5 0 .9-.35.9-.8v-5" opacity="0.78" />
-        <circle cx="33.2" cy="11.8" r="0.85" opacity="0.55" />
-        {{-- Horizonte: nascer do sol / ponto territorial no arco --}}
-        <circle cx="42" cy="10.2" r="1.85" opacity="0.92" />
+        <rect x="2" y="15.5" width="3.25" height="5.5" rx="0.65" opacity="0.78" />
+        <rect x="6.75" y="12" width="3.25" height="9" rx="0.65" opacity="0.9" />
+        <rect x="11.5" y="8.5" width="3.25" height="12.5" rx="0.65" />
+        <path d="M7.25 12.8 9 11.4 10.75 12.8 9 14.3Z" />
+        <circle cx="18.25" cy="8.75" r="2.75" />
     </g>
     <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3.2 14.8 10.2 10.5 16.8 6.2" stroke-width="1.35" opacity="0.9" />
-        <path d="M36 15.5q6-7.5 12 0" stroke-width="1.45" opacity="0.85" />
+        <path d="M3.6 17.2 9.4 12.8 12.75 10" stroke-width="1.75" />
+        <path d="M12.75 10.5 Q15.5 5.25 18.25 8.75" stroke-width="1.9" opacity="0.92" />
     </g>
 </svg>
