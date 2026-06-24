@@ -9,6 +9,12 @@ use Illuminate\Support\Carbon;
 class MunicipalTransferSnapshotRepository
 {
     /**
+     * MySQL limita placeholders por prepared statement (~65 535).
+     * 12 colunas × 400 linhas = 4 800 — margem para upsert nacional (~5 500 municípios).
+     */
+    private const UPSERT_CHUNK_SIZE = 400;
+
+    /**
      * @param  list<array{
      *   ibge_municipio: string,
      *   ano: int,
@@ -56,11 +62,12 @@ class MunicipalTransferSnapshotRepository
             return 0;
         }
 
-        MunicipalTransferSnapshot::query()->upsert(
-            $payload,
-            ['ibge_municipio', 'ano', 'fonte', 'programa_id'],
-            ['city_id', 'programa_label', 'valor', 'meta', 'imported_at', 'updated_at']
-        );
+        $uniqueKeys = ['ibge_municipio', 'ano', 'fonte', 'programa_id'];
+        $updateColumns = ['city_id', 'programa_label', 'valor', 'meta', 'imported_at', 'updated_at'];
+
+        foreach (array_chunk($payload, self::UPSERT_CHUNK_SIZE) as $chunk) {
+            MunicipalTransferSnapshot::query()->upsert($chunk, $uniqueKeys, $updateColumns);
+        }
 
         return count($payload);
     }
@@ -76,12 +83,12 @@ class MunicipalTransferSnapshotRepository
         }
 
         $q = MunicipalTransferSnapshot::query()
-            ->where('ibge_municipio', $ibge)
-            ->where('ano', $year)
+            ->forIbge($ibge)
+            ->forYear($year)
             ->orderBy('programa_id');
 
         if ($fonte !== null && $fonte !== '') {
-            $q->where('fonte', $fonte);
+            $q->forFonte($fonte);
         }
 
         return $q->get()->all();
@@ -98,8 +105,8 @@ class MunicipalTransferSnapshotRepository
         }
 
         $q = MunicipalTransferSnapshot::query()
-            ->where('ibge_municipio', $ibge)
-            ->where('programa_id', $programaId)
+            ->forIbge($ibge)
+            ->forPrograma($programaId)
             ->orderBy('ano');
 
         if ($fromYear !== null && $fromYear >= 2000) {
