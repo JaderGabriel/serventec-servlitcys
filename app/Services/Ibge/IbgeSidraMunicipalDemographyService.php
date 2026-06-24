@@ -98,6 +98,47 @@ final class IbgeSidraMunicipalDemographyService
      */
     private function fetchPop417ForUf(string $uf, int $ano, int $timeout): array
     {
+        $byIbge417 = $this->fetchSidraPopulationByIbge(
+            $uf,
+            $ano,
+            $timeout,
+            implode(',', self::AGE_CATEGORY_IDS),
+        );
+        $byIbgeTotal = $this->fetchSidraPopulationByIbge($uf, $ano, $timeout, '0');
+
+        if ($byIbge417 === [] && $byIbgeTotal === []) {
+            return [];
+        }
+
+        $cfg = config('horizonte.sidra', []);
+        $agregado = (string) ($cfg['agregado'] ?? '9514');
+        $rows = [];
+
+        foreach (array_unique(array_merge(array_keys($byIbge417), array_keys($byIbgeTotal))) as $ibge) {
+            $pop417 = $byIbge417[$ibge] ?? null;
+            $popTotal = $byIbgeTotal[$ibge] ?? null;
+            if (($pop417 ?? 0) <= 0 && ($popTotal ?? 0) <= 0) {
+                continue;
+            }
+
+            $rows[] = [
+                'ibge_municipio' => $ibge,
+                'ano_referencia' => $ano,
+                'populacao_4_17' => $pop417,
+                'populacao_total' => $popTotal,
+                'fonte' => 'ibge_sidra',
+                'metadados' => ['uf' => strtoupper($uf), 'agregado' => $agregado],
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function fetchSidraPopulationByIbge(string $uf, int $ano, int $timeout, string $categoryIds): array
+    {
         $n3 = $this->ufToN3($uf);
         if ($n3 === null) {
             return [];
@@ -107,7 +148,6 @@ final class IbgeSidraMunicipalDemographyService
         $agregado = (string) ($cfg['agregado'] ?? '9514');
         $variavel = (string) ($cfg['variavel'] ?? '93');
         $baseUrl = rtrim((string) ($cfg['base_url'] ?? 'https://servicodados.ibge.gov.br/api/v3/agregados'), '/');
-        $ageIds = implode(',', self::AGE_CATEGORY_IDS);
 
         $url = sprintf(
             '%s/%s/periodos/%d/variaveis/%s?localidades=N6[N3[%s]]&classificacao=287[%s]',
@@ -116,7 +156,7 @@ final class IbgeSidraMunicipalDemographyService
             $ano,
             $variavel,
             $n3,
-            $ageIds,
+            $categoryIds,
         );
 
         try {
@@ -165,18 +205,7 @@ final class IbgeSidraMunicipalDemographyService
             }
         }
 
-        $rows = [];
-        foreach ($byIbge as $ibge => $pop) {
-            $rows[] = [
-                'ibge_municipio' => $ibge,
-                'ano_referencia' => $ano,
-                'populacao_4_17' => $pop,
-                'fonte' => 'ibge_sidra',
-                'metadados' => ['uf' => strtoupper($uf), 'agregado' => $agregado],
-            ];
-        }
-
-        return $rows;
+        return $byIbge;
     }
 
     private function ufToN3(string $uf): ?string
