@@ -21,7 +21,7 @@
             @if (Auth::user())
                 <a
                     href="{{ Auth::user()->homeUrl() }}"
-                    class="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-teal-700 transition hover:bg-teal-50 hover:text-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-500/40 dark:border-slate-600 dark:bg-slate-800 dark:text-teal-400 dark:hover:bg-teal-950/40 dark:hover:text-teal-300"
+                    class="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-blue-700 transition hover:bg-blue-50 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:border-slate-600 dark:bg-slate-800 dark:text-blue-400 dark:hover:bg-blue-950/40 dark:hover:text-blue-300"
                     title="{{ __('Início') }}"
                     aria-label="{{ __('Início') }}"
                 >
@@ -46,7 +46,7 @@
                 </div>
             @endif
             <div class="serv-panel serv-panel--info px-4 py-3 text-sm">
-                <p class="font-medium text-serv-navy dark:text-teal-100">{{ __('Foco no município selecionado') }}</p>
+                <p class="font-medium text-serv-navy dark:text-blue-100">{{ __('Foco no município selecionado') }}</p>
                 <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">
                     {{ __('Comece pelo Resumo (Diagnóstico executivo); depois Cadastro, Pedagógico, Censo ou Finanças conforme a prioridade. Finanças detalha discrepâncias, FUNDEB e repasses. Use o rodapé fixo para mudar município, contato e filtros.') }}
                 </p>

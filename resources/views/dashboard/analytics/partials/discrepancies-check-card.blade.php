@@ -89,11 +89,11 @@
                 <x-dashboard.chart-panel :chart="$check['chart_financeiro']" :exportFilename="'discrepancia-fin-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-fin-'.$idx" panelTone="amber" />
             @endif
             @if (! empty($check['chart_rede']))
-                <x-dashboard.chart-panel :chart="$check['chart_rede']" :exportFilename="'discrepancia-rede-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-rede-'.$idx" panelTone="teal" />
+                <x-dashboard.chart-panel :chart="$check['chart_rede']" :exportFilename="'discrepancia-rede-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-rede-'.$idx" panelTone="blue" />
             @endif
             @if (! empty($check['chart_escolas']))
                 <div class="sm:col-span-3 lg:col-span-1">
-                    <x-dashboard.chart-panel :chart="$check['chart_escolas']" :exportFilename="'discrepancia-escolas-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-esc-'.$idx" panelTone="teal" />
+                    <x-dashboard.chart-panel :chart="$check['chart_escolas']" :exportFilename="'discrepancia-escolas-'.($check['id'] ?? $idx)" :exportMeta="$chartExportContext" :compact="true" :chartPanelId="'chart-discrep-esc-'.$idx" panelTone="blue" />
                 </div>
             @endif
         </div>
@@ -105,7 +105,7 @@
             </summary>
             <div class="px-3 pb-3 pt-0 space-y-3 text-xs leading-relaxed border-t border-slate-200/80 dark:border-slate-700/60">
                 @if (count($vaarRefs) > 0)
-                    <p class="text-teal-800 dark:text-teal-200 pt-2">
+                    <p class="text-blue-800 dark:text-blue-200 pt-2">
                         <span class="font-semibold">{{ __('Eixos:') }}</span>
                         {{ implode(' · ', $vaarRefs) }}
                     </p>

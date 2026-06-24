@@ -3,7 +3,7 @@
     <div class="px-3 sm:px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
         <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
             <div class="min-w-0">
-                <p class="serv-eyebrow text-teal-800 dark:text-teal-300">{{ __('Navegação do painel') }}</p>
+                <p class="serv-eyebrow text-blue-800 dark:text-blue-300">{{ __('Navegação do painel') }}</p>
                 <p class="mt-1 text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl">
                     {{ __('Escolha a área temática e depois a análise. Os valores seguem o município e os filtros aplicados.') }}
                 </p>
@@ -14,7 +14,7 @@
                 x-cloak
             >
                 <span class="text-slate-500 dark:text-slate-400">{{ __('Você está em') }}</span>
-                <span class="font-semibold text-teal-800 dark:text-teal-200" x-text="activeGroupLabel()"></span>
+                <span class="font-semibold text-blue-800 dark:text-blue-200" x-text="activeGroupLabel()"></span>
                 <span class="text-slate-400 dark:text-slate-500 mx-0.5">→</span>
                 <span class="font-semibold text-serv-navy dark:text-white" x-text="activeTabLabel()"></span>
             </p>
@@ -40,7 +40,7 @@
                     class="serv-analytics-nav__segment text-left w-full"
                     :class="{
                         'serv-analytics-nav__segment--active': activeGroupId() === group.id,
-                        'serv-analytics-nav__segment--teal': group.tone === 'teal',
+                        'serv-analytics-nav__segment--blue': group.tone === 'blue',
                         'serv-analytics-nav__segment--indigo': group.tone === 'indigo',
                         'serv-analytics-nav__segment--violet': group.tone === 'violet',
                         'serv-analytics-nav__segment--sky': group.tone === 'sky',

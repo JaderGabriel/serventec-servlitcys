@@ -16,7 +16,7 @@
 <div
     wire:poll.5s
     @class([
-        'rounded-2xl border border-indigo-200/70 bg-white/95 px-4 py-3 shadow-md ring-1 ring-indigo-950/[0.05] backdrop-blur-sm dark:border-indigo-800/50 dark:bg-gray-800/90 dark:ring-indigo-400/10 sm:px-5' => ! $embedded,
+        'rounded-2xl border border-sky-200/70 bg-white/95 px-4 py-3 shadow-md ring-1 ring-sky-950/[0.05] backdrop-blur-sm dark:border-sky-800/50 dark:bg-gray-800/90 dark:ring-sky-400/10 sm:px-5' => ! $embedded,
         'border-0 bg-transparent px-0 py-0 shadow-none ring-0 backdrop-blur-none dark:bg-transparent' => $embedded,
     ])
 >

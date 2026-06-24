@@ -91,12 +91,12 @@
                         <div class="flex flex-wrap items-center gap-2 shrink-0">
                             @if ($context === 'admin')
                                 @if (filled($module['admin_route'] ?? null))
-                                    <a href="{{ route($module['admin_route']) }}" class="text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:underline">
+                                    <a href="{{ route($module['admin_route']) }}" class="text-xs font-semibold text-sky-700 dark:text-sky-300 hover:underline">
                                         {{ $module['admin_route_label'] ?? __('Admin') }}
                                     </a>
                                 @endif
                                 @if (filled($consultoriaUrl))
-                                    <a href="{{ $consultoriaUrl }}#disc-mod-{{ $module['id'] ?? '' }}" class="text-xs font-semibold text-teal-700 dark:text-teal-300 hover:underline">
+                                    <a href="{{ $consultoriaUrl }}#disc-mod-{{ $module['id'] ?? '' }}" class="text-xs font-semibold text-blue-700 dark:text-blue-300 hover:underline">
                                         {{ __('Consultoria → Discrepâncias') }}
                                     </a>
                                 @endif

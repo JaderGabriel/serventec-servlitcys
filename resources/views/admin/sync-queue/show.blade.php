@@ -27,15 +27,15 @@
         </x-slot>
 
         <div class="mb-2">
-            <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', ['domain' => $task->domain]) }}#{{ $taskTheme['anchor'] ?? 'fila-sync' }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+            <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', ['domain' => $task->domain]) }}#{{ $taskTheme['anchor'] ?? 'fila-sync' }}" class="text-sm text-sky-600 dark:text-sky-400 hover:underline">
                 ← {{ __('Voltar à fila') }} · {{ $taskTheme['label'] ?? $task->domainEnum()->label() }}
             </a>
         </div>
 
         @if ($outcomeHint !== null)
-            <div class="rounded-lg border border-indigo-200/90 bg-indigo-50/80 dark:border-indigo-800/60 dark:bg-indigo-950/25 px-4 py-3 text-sm">
-                <p class="font-semibold text-indigo-950 dark:text-indigo-100">{{ $outcomeHint['title'] }}</p>
-                <p class="mt-1 text-xs text-indigo-900/90 dark:text-indigo-200/90 leading-relaxed">{{ $outcomeHint['detail'] }}</p>
+            <div class="rounded-lg border border-sky-200/90 bg-sky-50/80 dark:border-sky-800/60 dark:bg-sky-950/25 px-4 py-3 text-sm">
+                <p class="font-semibold text-sky-950 dark:text-sky-100">{{ $outcomeHint['title'] }}</p>
+                <p class="mt-1 text-xs text-sky-900/90 dark:text-sky-200/90 leading-relaxed">{{ $outcomeHint['detail'] }}</p>
             </div>
         @endif
 
@@ -73,7 +73,7 @@
                         <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">
                             {{ trans_choice('Município|Municípios', count($task->cityNames())) }}
                             @if ($task->targetsAllCities())
-                                <span class="text-indigo-600 dark:text-indigo-400">({{ __('todas') }})</span>
+                                <span class="text-sky-600 dark:text-sky-400">({{ __('todas') }})</span>
                             @endif
                         </dt>
                         <dd class="font-medium">
@@ -124,7 +124,7 @@
                 @if ($canResume ?? false)
                     <form method="post" action="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.resume', $task) }}" class="inline">
                         @csrf
-                        <button type="submit" class="inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">
+                        <button type="submit" class="inline-flex rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500">
                             {{ $task->hasCheckpoint() ? __('Retomar da fila (checkpoint)') : __('Reenfileirar tarefa') }}
                         </button>
                     </form>

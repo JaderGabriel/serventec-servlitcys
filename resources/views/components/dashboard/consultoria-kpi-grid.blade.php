@@ -12,7 +12,7 @@
                     'emerald' => 'border-emerald-200/90 dark:border-emerald-800/60',
                     'sky' => 'border-sky-200/90 dark:border-sky-800/60',
                     'violet' => 'border-violet-200/90 dark:border-violet-800/60',
-                    'indigo', 'teal' => 'border-teal-200/90 dark:border-teal-800/60',
+                    'indigo', 'blue' => 'border-blue-200/90 dark:border-blue-800/60',
                     default => 'border-slate-200/90 dark:border-slate-700/60',
                 };
                 $labelTone = match ($tone) {
@@ -22,7 +22,7 @@
                     'emerald' => 'text-emerald-800/90 dark:text-emerald-200/90',
                     'sky' => 'text-sky-800/90 dark:text-sky-200/90',
                     'violet' => 'text-violet-800/90 dark:text-violet-200/90',
-                    'indigo', 'teal' => 'text-teal-800/90 dark:text-teal-200/90',
+                    'indigo', 'blue' => 'text-blue-800/90 dark:text-blue-200/90',
                     default => 'text-slate-700 dark:text-slate-300',
                 };
                 $valueTone = match ($tone) {
@@ -32,7 +32,7 @@
                     'emerald' => 'text-emerald-700 dark:text-emerald-300',
                     'sky' => 'text-sky-700 dark:text-sky-300',
                     'violet' => 'text-violet-700 dark:text-violet-300',
-                    'indigo', 'teal' => 'text-teal-700 dark:text-teal-300',
+                    'indigo', 'blue' => 'text-blue-700 dark:text-blue-300',
                     default => 'text-slate-800 dark:text-slate-100',
                 };
                 $size = (string) ($item['size'] ?? 'lg');

@@ -23,7 +23,7 @@
             'show' => $user->is_active,
             'title' => __('Consultoria'),
             'icon' => 'chart-bar',
-            'tone' => 'teal',
+            'tone' => 'blue',
             'routes' => ['dashboard.analytics*', 'dashboard.rx*', 'dashboard.horizonte', 'admin.analytics-diagnostics'],
             'items' => array_values(array_filter([
                 [
@@ -64,7 +64,7 @@
             'show' => ! $user->isAdmin() && ($user->canViewDocumentation() || $user->canViewSyncQueue()),
             'title' => __('Recursos'),
             'icon' => 'document-text',
-            'tone' => 'teal',
+            'tone' => 'blue',
             'routes' => ['documentation.*', 'sync-queue.*'],
             'items' => array_values(array_filter([
                 [

@@ -59,17 +59,17 @@
             <input type="hidden" name="city_ids[]" :value="id">
         </template>
 
-        <fieldset class="rounded-lg border border-teal-200/70 dark:border-teal-800/70 p-3 bg-white/50 dark:bg-gray-900/30 space-y-2">
-            <legend class="text-xs font-semibold text-teal-900 dark:text-teal-100 px-1">{{ __('Referências existentes') }}</legend>
+        <fieldset class="rounded-lg border border-blue-200/70 dark:border-blue-800/70 p-3 bg-white/50 dark:bg-gray-900/30 space-y-2">
+            <legend class="text-xs font-semibold text-blue-900 dark:text-blue-100 px-1">{{ __('Referências existentes') }}</legend>
             <label class="flex items-start gap-2 text-sm text-gray-800 dark:text-gray-200 cursor-pointer">
-                <input type="radio" name="import_mode" value="{{ FundebImportMode::UPDATE }}" class="mt-1 border-gray-300 text-teal-600" x-model="importMode">
+                <input type="radio" name="import_mode" value="{{ FundebImportMode::UPDATE }}" class="mt-1 border-gray-300 text-blue-600" x-model="importMode">
                 <span>
                     <span class="font-medium">{{ __('Atualizar se diferente') }}</span>
                     <span class="block text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{ __('Mantém o registro quando VAAF, VAAT e complementação VAAR já coincidem com a fonte; grava só se o município/ano trouxer valores distintos.') }}</span>
                 </span>
             </label>
             <label class="flex items-start gap-2 text-sm text-gray-800 dark:text-gray-200 cursor-pointer">
-                <input type="radio" name="import_mode" value="{{ FundebImportMode::REPLACE }}" class="mt-1 border-gray-300 text-teal-600" x-model="importMode">
+                <input type="radio" name="import_mode" value="{{ FundebImportMode::REPLACE }}" class="mt-1 border-gray-300 text-blue-600" x-model="importMode">
                 <span>
                     <span class="font-medium">{{ __('Apagar e buscar novamente') }}</span>
                     <span class="block text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{ __('Remove referências do município e dos anos selecionados antes de importar (útil para limpar pisos nacionais ou dados antigos).') }}</span>
@@ -78,8 +78,8 @@
         </fieldset>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <fieldset class="space-y-3 rounded-lg border border-teal-200/70 dark:border-teal-800/70 p-3 bg-white/50 dark:bg-gray-900/30">
-                <legend class="text-xs font-semibold text-teal-900 dark:text-teal-100 px-1">{{ __('Intervalo de anos') }}</legend>
+            <fieldset class="space-y-3 rounded-lg border border-blue-200/70 dark:border-blue-800/70 p-3 bg-white/50 dark:bg-gray-900/30">
+                <legend class="text-xs font-semibold text-blue-900 dark:text-blue-100 px-1">{{ __('Intervalo de anos') }}</legend>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label for="fundeb_sync_from" class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Ano inicial') }}</label>
@@ -92,34 +92,34 @@
                 </div>
                 <div class="flex flex-col gap-2 text-xs text-gray-800 dark:text-gray-200">
                     <label class="flex items-start gap-2" title="{{ __('Anos já descarregados em cache local da API FNDE — evita repetir pedidos.') }}">
-                        <input type="checkbox" name="include_cached_years" value="1" class="rounded border-gray-300 text-teal-600 mt-0.5" checked>
+                        <input type="checkbox" name="include_cached_years" value="1" class="rounded border-gray-300 text-blue-600 mt-0.5" checked>
                         <span>{{ __('Incluir anos em cache da API') }}</span>
                     </label>
                     <label class="flex items-start gap-2" title="{{ __('Reimporta anos que já têm linha em fundeb_municipio_references (respeita o modo atualizar/apagar).') }}">
-                        <input type="checkbox" name="include_database_years" value="1" class="rounded border-gray-300 text-teal-600 mt-0.5" checked>
+                        <input type="checkbox" name="include_database_years" value="1" class="rounded border-gray-300 text-blue-600 mt-0.5" checked>
                         <span>{{ __('Incluir anos já gravados na base') }}</span>
                     </label>
                     <label class="flex items-start gap-2" title="{{ __('Se o ano pedido não existir na fonte, usa o mais recente disponível.') }}">
-                        <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-teal-600 mt-0.5">
+                        <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-blue-600 mt-0.5">
                         <span>{{ __('Usar ano mais recente na API se falhar') }}</span>
                     </label>
                 </div>
             </fieldset>
 
-            <fieldset class="space-y-2 rounded-lg border border-teal-200/70 dark:border-teal-800/70 p-3 bg-white/50 dark:bg-gray-900/30">
-                <legend class="text-xs font-semibold text-teal-900 dark:text-teal-100 px-1">{{ __('Municípios') }}</legend>
-                <label class="flex items-center gap-2 text-sm font-medium text-teal-950 dark:text-teal-50 cursor-pointer">
-                    <input type="checkbox" class="rounded border-gray-300 text-teal-600" :checked="allCities" @change="toggleAll($event.target.checked)">
+            <fieldset class="space-y-2 rounded-lg border border-blue-200/70 dark:border-blue-800/70 p-3 bg-white/50 dark:bg-gray-900/30">
+                <legend class="text-xs font-semibold text-blue-900 dark:text-blue-100 px-1">{{ __('Municípios') }}</legend>
+                <label class="flex items-center gap-2 text-sm font-medium text-blue-950 dark:text-blue-50 cursor-pointer">
+                    <input type="checkbox" class="rounded border-gray-300 text-blue-600" :checked="allCities" @change="toggleAll($event.target.checked)">
                     {{ __('Todas com IBGE (:n)', ['n' => $citiesWithIbgeCount]) }}
                 </label>
                 <div class="flex flex-wrap gap-2">
-                    <button type="button" class="text-[11px] px-2 py-1 rounded border border-teal-300 dark:border-teal-700 text-teal-900 dark:text-teal-100" @click="toggleIbgeOnly()">{{ __('Marcar só com IBGE') }}</button>
+                    <button type="button" class="text-[11px] px-2 py-1 rounded border border-blue-300 dark:border-blue-700 text-blue-900 dark:text-blue-100" @click="toggleIbgeOnly()">{{ __('Marcar só com IBGE') }}</button>
                     <button type="button" class="text-[11px] px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300" @click="selected = []; allCities = false">{{ __('Desmarcar') }}</button>
                 </div>
                 <div class="max-h-40 overflow-y-auto rounded border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-800" :class="allCities ? 'opacity-50 pointer-events-none' : ''">
                     @foreach ($cityChoices as $choice)
-                        <label class="flex items-center gap-2 px-2 py-1.5 text-xs cursor-pointer hover:bg-teal-50/50 dark:hover:bg-teal-950/20 {{ ! ($choice['has_ibge'] ?? false) ? 'text-amber-700 dark:text-amber-300' : 'text-gray-800 dark:text-gray-200' }}">
-                            <input type="checkbox" class="rounded border-gray-300 text-teal-600 shrink-0" :checked="isSelected({{ $choice['id'] }})" @change="toggleCity({{ $choice['id'] }})" @disabled(! ($choice['has_ibge'] ?? false))>
+                        <label class="flex items-center gap-2 px-2 py-1.5 text-xs cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-950/20 {{ ! ($choice['has_ibge'] ?? false) ? 'text-amber-700 dark:text-amber-300' : 'text-gray-800 dark:text-gray-200' }}">
+                            <input type="checkbox" class="rounded border-gray-300 text-blue-600 shrink-0" :checked="isSelected({{ $choice['id'] }})" @change="toggleCity({{ $choice['id'] }})" @disabled(! ($choice['has_ibge'] ?? false))>
                             <span class="flex-1 truncate">{{ $choice['name'] }}{{ ($choice['uf'] ?? '') ? ' / '.$choice['uf'] : '' }}</span>
                             <span class="font-mono text-[10px] text-gray-500">{{ $choice['ibge'] ?? __('sem IBGE') }}</span>
                         </label>
@@ -128,13 +128,13 @@
             </fieldset>
         </div>
 
-        <div class="rounded-md bg-teal-800/10 dark:bg-teal-900/30 border border-teal-300/50 px-3 py-2 text-xs text-teal-950 dark:text-teal-100">
+        <div class="rounded-md bg-blue-800/10 dark:bg-blue-900/30 border border-blue-300/50 px-3 py-2 text-xs text-blue-950 dark:text-blue-100">
             <span class="font-semibold">{{ __('Pré-visualização:') }}</span>
             <span x-text="cityCount + ' município(s) × ' + yearCount + ' ano(s) = ' + ops + ' importação(ões)'"></span>
         </div>
 
         <x-slot name="actions">
-            <button type="submit" class="inline-flex items-center rounded-lg bg-teal-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-800 shadow-sm">
+            <button type="submit" class="inline-flex items-center rounded-lg bg-blue-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 shadow-sm">
                 {{ __('Enfileirar importação') }}
             </button>
             <x-admin.queue-submit-hint />
@@ -161,11 +161,11 @@
                     <input type="number" id="fundeb_ano" name="ano" min="2000" max="{{ (int) date('Y') + 1 }}" value="{{ $fundebImportYear }}" class="{{ $selectClass }} w-full" required>
                 </div>
                 <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
-                    <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-teal-600 shrink-0">
+                    <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-blue-600 shrink-0">
                     {{ __('Ano mais recente na API') }}
                 </label>
                 <x-slot name="actions">
-                    <button type="submit" class="inline-flex items-center rounded-lg bg-teal-700 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-600 disabled:opacity-50" @disabled(! ($city ?? null) || ! $cityIbge)>
+                    <button type="submit" class="inline-flex items-center rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50" @disabled(! ($city ?? null) || ! $cityIbge)>
                         {{ __('Enfileirar este município') }}
                     </button>
                     <x-admin.queue-submit-hint />
@@ -184,11 +184,11 @@
                 <input type="hidden" name="import_mode" :value="importMode">
                 <input type="hidden" name="ano" value="{{ $fundebImportYear }}">
                 <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
-                    <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-teal-600 shrink-0">
+                    <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-blue-600 shrink-0">
                     {{ __('Ano mais recente na API') }}
                 </label>
                 <x-slot name="actions">
-                    <button type="submit" class="inline-flex items-center rounded-lg border border-teal-700 px-3 py-2 text-sm font-semibold text-teal-900 dark:text-teal-100 hover:bg-teal-50 dark:hover:bg-teal-950/50">
+                    <button type="submit" class="inline-flex items-center rounded-lg border border-blue-700 px-3 py-2 text-sm font-semibold text-blue-900 dark:text-blue-100 hover:bg-blue-50 dark:hover:bg-blue-950/50">
                         {{ __('Enfileirar todos — ano :ano', ['ano' => $fundebImportYear]) }}
                     </button>
                     <x-admin.queue-submit-hint />

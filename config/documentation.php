@@ -27,7 +27,7 @@ return [
         'version' => '6.0.0',
         'release_tag' => '20260603h-Odin',
         'commit_short' => 'df7d9b3',
-        'commit_number' => null,
+        'commit_number' => 433,
         'revision_date' => '2026-06-03',
         'in_production' => true,
         'production_label' => 'Em produção',

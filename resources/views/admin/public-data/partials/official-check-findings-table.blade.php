@@ -42,7 +42,7 @@
                         <td class="px-4 py-3 align-top">
                             <a href="{{ $anchor }}" @class([
                                 'font-medium hover:underline',
-                                'text-indigo-700 dark:text-indigo-300' => ! $rowMuted,
+                                'text-sky-700 dark:text-sky-300' => ! $rowMuted,
                                 'text-gray-700 dark:text-gray-300' => $rowMuted,
                             ])>
                                 {{ $finding['source_title'] ?? $finding['source_id'] ?? '—' }}
@@ -67,7 +67,7 @@
                             @if ($showRoutine && filled($finding['routine_cli'] ?? null))
                                 <code class="block rounded bg-gray-100 px-2 py-1 text-[10px] text-gray-800 dark:bg-gray-800 dark:text-gray-200">{{ $finding['routine_cli'] }}</code>
                             @elseif ($showRoutine && filled($finding['routine_label'] ?? null))
-                                <a href="{{ $anchor }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                <a href="{{ $anchor }}" class="text-sky-600 dark:text-sky-400 hover:underline">
                                     {{ $finding['routine_label'] }}
                                 </a>
                             @else

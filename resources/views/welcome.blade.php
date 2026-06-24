@@ -14,11 +14,11 @@
         @include('partials.theme-init')
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="min-h-screen antialiased font-sans text-slate-800 selection:bg-teal-500/25 selection:text-slate-900 dark:text-slate-100 dark:selection:bg-teal-400/30 dark:selection:text-white">
+    <body class="min-h-screen antialiased font-sans text-slate-800 selection:bg-blue-500/25 selection:text-slate-900 dark:text-slate-100 dark:selection:bg-blue-400/30 dark:selection:text-white">
         <div class="fixed inset-0 -z-10 bg-slate-50 dark:bg-slate-950">
-            <div class="absolute inset-0 bg-gradient-to-br from-slate-100 via-white to-teal-50/50 dark:from-slate-950 dark:via-slate-950 dark:to-teal-950/40"></div>
-            <div class="absolute top-[-20%] left-[-10%] h-[50vh] w-[50vh] rounded-full bg-teal-400/15 blur-[100px] animate-float dark:bg-teal-600/20"></div>
-            <div class="absolute bottom-[-15%] right-[-5%] h-[45vh] w-[45vh] rounded-full bg-indigo-400/10 blur-[90px] animate-float-delayed dark:bg-indigo-600/15"></div>
+            <div class="absolute inset-0 bg-gradient-to-br from-slate-100 via-white to-blue-50/50 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/40"></div>
+            <div class="absolute top-[-20%] left-[-10%] h-[50vh] w-[50vh] rounded-full bg-blue-400/15 blur-[100px] animate-float dark:bg-blue-600/20"></div>
+            <div class="absolute bottom-[-15%] right-[-5%] h-[45vh] w-[45vh] rounded-full bg-sky-400/10 blur-[90px] animate-float-delayed dark:bg-sky-600/15"></div>
             <div class="absolute inset-0 bg-grid-edu opacity-40 dark:opacity-50"></div>
             <div class="absolute inset-0 bg-gradient-to-t from-slate-50 via-transparent to-transparent dark:from-slate-950"></div>
         </div>
@@ -27,7 +27,7 @@
             <header class="serv-nav-brand sticky top-0 z-50 shrink-0 shadow-sm">
                 <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
                     <a href="{{ url('/') }}" class="group flex min-w-0 items-center gap-2.5 sm:gap-3">
-                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-indigo-700 shadow-md shadow-teal-900/15 ring-1 ring-slate-900/10 transition group-hover:scale-105 dark:from-teal-500 dark:to-indigo-600 dark:ring-white/15">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-sky-700 shadow-md shadow-blue-900/15 ring-1 ring-slate-900/10 transition group-hover:scale-105 dark:from-blue-500 dark:to-sky-600 dark:ring-white/15">
                             <x-application-logo class="h-6 w-6 shrink-0 text-white" />
                         </span>
                         <span class="min-w-0 truncate font-display text-base font-semibold tracking-tight text-slate-900 sm:text-lg dark:text-white">
@@ -89,13 +89,13 @@
 
             <main class="flex flex-1 flex-col">
                 <section class="mx-auto flex w-full max-w-6xl flex-col items-center px-4 pb-20 pt-12 text-center sm:px-6 lg:px-8 lg:pt-20">
-                    <span class="serv-eyebrow inline-flex items-center gap-2 rounded-full border border-teal-600/20 bg-teal-50/90 px-4 py-1.5 dark:border-teal-500/30 dark:bg-teal-950/40">
-                        <span class="h-1.5 w-1.5 rounded-full bg-teal-600 dark:bg-teal-400"></span>
+                    <span class="serv-eyebrow inline-flex items-center gap-2 rounded-full border border-blue-600/20 bg-blue-50/90 px-4 py-1.5 dark:border-blue-500/30 dark:bg-blue-950/40">
+                        <span class="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400"></span>
                         {{ $systemTagline }}
                     </span>
                     <h1 class="font-display mt-6 max-w-4xl text-4xl font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-5xl lg:text-6xl dark:text-white">
                         {{ __('Consultoria educacional') }}
-                        <span class="bg-gradient-to-r from-teal-700 via-teal-600 to-indigo-600 bg-clip-text text-transparent dark:from-teal-300 dark:via-teal-400 dark:to-indigo-300">
+                        <span class="bg-gradient-to-r from-blue-700 via-blue-600 to-sky-600 bg-clip-text text-transparent dark:from-blue-300 dark:via-blue-400 dark:to-sky-300">
                             {{ __('com dados municipais') }}
                         </span>
                     </h1>
@@ -106,7 +106,7 @@
                     @if (Route::has('login'))
                         <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
                             @auth
-                                <a href="{{ route('dashboard.analytics') }}" class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-teal-700 to-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 dark:from-teal-600 dark:to-indigo-600">
+                                <a href="{{ route('dashboard.analytics') }}" class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-700 to-sky-700 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:from-blue-600 dark:to-sky-600">
                                     <x-ui.icon name="chart-bar" class="h-5 w-5" />
                                     {{ __('Abrir consultoria municipal') }}
                                 </a>
@@ -115,7 +115,7 @@
                                     {{ __('Painel RX') }}
                                 </a>
                             @else
-                                <a href="{{ route('login') }}" class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-teal-700 to-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 dark:from-teal-600 dark:to-indigo-600">
+                                <a href="{{ route('login') }}" class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-700 to-sky-700 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:from-blue-600 dark:to-sky-600">
                                     <x-ui.icon name="arrow-right-end-on-rectangle" class="h-5 w-5" />
                                     {{ __('Entrar na plataforma') }}
                                 </a>
@@ -124,8 +124,8 @@
                     @endif
 
                     <div class="relative mt-14 w-full max-w-3xl">
-                        <div class="absolute -inset-4 rounded-3xl bg-gradient-to-r from-teal-500/10 via-indigo-500/10 to-teal-500/10 blur-2xl dark:from-teal-500/15 dark:to-indigo-500/15"></div>
-                        <div class="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 p-6 shadow-lg ring-1 ring-slate-900/5 backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-900/60 dark:ring-teal-500/10 sm:p-8">
+                        <div class="absolute -inset-4 rounded-3xl bg-gradient-to-r from-blue-500/10 via-sky-500/10 to-blue-500/10 blur-2xl dark:from-blue-500/15 dark:to-sky-500/15"></div>
+                        <div class="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 p-6 shadow-lg ring-1 ring-slate-900/5 backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-900/60 dark:ring-blue-500/10 sm:p-8">
                             <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                                 <div class="text-left">
                                     <p class="serv-eyebrow">{{ __('Pré-visualização') }}</p>
@@ -137,7 +137,7 @@
                             </div>
                             <div class="mt-6 flex h-32 items-end justify-between gap-1 sm:h-40 sm:gap-2">
                                 @foreach ([40, 65, 45, 80, 55, 90, 70, 95, 60, 85, 75] as $h)
-                                    <div class="flex-1 rounded-t-md bg-gradient-to-t from-teal-600/90 to-indigo-600/70 transition hover:from-teal-600 hover:to-indigo-600 dark:from-teal-500/80 dark:to-indigo-500/60" style="height: {{ $h }}%"></div>
+                                    <div class="flex-1 rounded-t-md bg-gradient-to-t from-blue-600/90 to-sky-600/70 transition hover:from-blue-600 hover:to-sky-600 dark:from-blue-500/80 dark:to-sky-500/60" style="height: {{ $h }}%"></div>
                                 @endforeach
                             </div>
                             <p class="mt-4 flex items-center justify-center gap-1.5 text-center text-xs text-slate-500 dark:text-slate-400">
@@ -155,15 +155,15 @@
                             <p class="mx-auto mt-3 max-w-2xl text-slate-600 dark:text-slate-400">{{ __('Consultoria analítica, cadastro operacional (RX) e inteligência territorial (Horizonte) para decisão e expansão.') }}</p>
                         </div>
                         <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                            <article class="serv-landing-module border-teal-200/80 bg-gradient-to-br from-teal-50/90 via-white to-slate-50/80 dark:border-teal-900/50 dark:from-teal-950/30 dark:via-slate-900/40 dark:to-slate-950/80">
-                                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-100 text-teal-800 ring-1 ring-teal-200/80 dark:bg-teal-500/15 dark:text-teal-200 dark:ring-teal-700/50">
+                            <article class="serv-landing-module border-blue-200/80 bg-gradient-to-br from-blue-50/90 via-white to-slate-50/80 dark:border-blue-900/50 dark:from-blue-950/30 dark:via-slate-900/40 dark:to-slate-950/80">
+                                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-800 ring-1 ring-blue-200/80 dark:bg-blue-500/15 dark:text-blue-200 dark:ring-blue-700/50">
                                     <x-ui.icon name="chart-bar" class="h-6 w-6" />
                                 </div>
                                 <h3 class="font-display mt-4 text-lg font-semibold text-slate-900 dark:text-white">{{ __('Consultoria municipal') }}</h3>
                                 <p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{{ __('Painel analítico com FUNDEB, matrículas, rede escolar, inclusão, desempenho (SAEB/IDEB), finanças em tempo real e mapa de unidades — filtros por ano letivo e território.') }}</p>
                             </article>
-                            <article class="serv-landing-module border-indigo-200/80 bg-gradient-to-br from-indigo-50/80 via-white to-slate-50/80 dark:border-indigo-900/50 dark:from-indigo-950/25 dark:via-slate-900/40 dark:to-slate-950/80">
-                                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-indigo-800 ring-1 ring-indigo-200/80 dark:bg-indigo-500/15 dark:text-indigo-200 dark:ring-indigo-700/50">
+                            <article class="serv-landing-module border-sky-200/80 bg-gradient-to-br from-sky-50/80 via-white to-slate-50/80 dark:border-sky-900/50 dark:from-sky-950/25 dark:via-slate-900/40 dark:to-slate-950/80">
+                                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-100 text-sky-800 ring-1 ring-sky-200/80 dark:bg-sky-500/15 dark:text-sky-200 dark:ring-sky-700/50">
                                     <x-ui.icon name="clipboard-document-list" class="h-6 w-6" />
                                 </div>
                                 <h3 class="font-display mt-4 text-lg font-semibold text-slate-900 dark:text-white">{{ __('RX — cadastro e Censo') }}</h3>
@@ -188,8 +188,8 @@
                         </div>
                         <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             @foreach ([
-                                ['icon' => 'chart-bar', 't' => __('Visão geral'), 'd' => __('Resumo executivo: matrículas, rede e alertas do município filtrado.'), 'accent' => 'border-teal-200/80 bg-teal-50/70', 'iconBg' => 'bg-teal-100 text-teal-800 dark:bg-teal-500/15 dark:text-teal-200'],
-                                ['icon' => 'users', 't' => __('Matrículas'), 'd' => __('Oferta, distorção idade/série e evolução da matrícula ativa.'), 'accent' => 'border-indigo-200/80 bg-indigo-50/70', 'iconBg' => 'bg-indigo-100 text-indigo-800 dark:bg-indigo-500/15 dark:text-indigo-200'],
+                                ['icon' => 'chart-bar', 't' => __('Visão geral'), 'd' => __('Resumo executivo: matrículas, rede e alertas do município filtrado.'), 'accent' => 'border-blue-200/80 bg-blue-50/70', 'iconBg' => 'bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-200'],
+                                ['icon' => 'users', 't' => __('Matrículas'), 'd' => __('Oferta, distorção idade/série e evolução da matrícula ativa.'), 'accent' => 'border-sky-200/80 bg-sky-50/70', 'iconBg' => 'bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-200'],
                                 ['icon' => 'building-office-2', 't' => __('Unidades escolares'), 'd' => __('Mapa territorial, transporte e gestão da rede no município.'), 'accent' => 'border-violet-200/80 bg-violet-50/70', 'iconBg' => 'bg-violet-100 text-violet-800 dark:bg-violet-500/15 dark:text-violet-200'],
                                 ['icon' => 'academic-cap', 't' => __('Desempenho'), 'd' => __('Referências SAEB/IDEB e leituras cruzadas com a realidade local.'), 'accent' => 'border-amber-200/80 bg-amber-50/70', 'iconBg' => 'bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-100'],
                                 ['icon' => 'globe-alt', 't' => __('Inclusão'), 'd' => __('Educação especial, equidade e indicadores de inclusão.'), 'accent' => 'border-emerald-200/80 bg-emerald-50/70', 'iconBg' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200'],
@@ -221,7 +221,7 @@
                                 ['icon' => 'shield-check', 'title' => __('Acesso controlado'), 'text' => __('Perfis municipal e administrativo, com trilha de uso restrito à gestão autorizada (LGPD).')],
                             ] as $card)
                                 <article class="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/40">
-                                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-800 ring-1 ring-teal-200/80 dark:bg-teal-950/40 dark:text-teal-200 dark:ring-teal-800/60">
+                                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-800 ring-1 ring-blue-200/80 dark:bg-blue-950/40 dark:text-blue-200 dark:ring-blue-800/60">
                                         <x-ui.icon :name="$card['icon']" class="h-6 w-6" />
                                     </div>
                                     <h3 class="font-display mt-4 text-lg font-semibold text-slate-900 dark:text-white">{{ $card['title'] }}</h3>
@@ -235,7 +235,7 @@
                 <section class="border-t border-slate-200/80 bg-slate-100/50 py-14 dark:border-slate-800 dark:bg-slate-950/70">
                     <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
                         <div class="flex items-center justify-center gap-2">
-                            <x-ui.icon name="document-text" class="h-6 w-6 text-teal-700 dark:text-teal-400" />
+                            <x-ui.icon name="document-text" class="h-6 w-6 text-blue-700 dark:text-blue-400" />
                             <h2 class="font-display text-center text-xl font-bold text-slate-900 sm:text-2xl dark:text-white">{{ __('Interpretação responsável dos dados') }}</h2>
                         </div>
                         <p class="mx-auto mt-3 text-center text-sm text-slate-600 dark:text-slate-400">{{ __('Esta página é institucional — não exibe dados da sua rede.') }}</p>
@@ -247,7 +247,7 @@
                                 __('Dados pessoais: tratamento conforme LGPD; acesso apenas a usuários autorizados.'),
                             ] as $i => $text)
                                 <li class="flex gap-3">
-                                    <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-800 ring-1 ring-teal-300/60 dark:bg-teal-950/50 dark:text-teal-200 dark:ring-teal-700/50" aria-hidden="true">{{ $i + 1 }}</span>
+                                    <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-800 ring-1 ring-blue-300/60 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-700/50" aria-hidden="true">{{ $i + 1 }}</span>
                                     <span>{{ $text }}</span>
                                 </li>
                             @endforeach
@@ -262,17 +262,17 @@
                         © {{ date('Y') }}
                         <span class="font-semibold text-slate-700 dark:text-slate-200">{{ config('app.name') }}</span>
                         ·
-                        <a href="https://serventecassessoria.com.br" target="_blank" rel="noopener noreferrer" class="font-semibold text-teal-700 underline decoration-teal-600/40 underline-offset-2 hover:text-teal-900 dark:text-teal-300 dark:hover:text-teal-200">
+                        <a href="https://serventecassessoria.com.br" target="_blank" rel="noopener noreferrer" class="font-semibold text-blue-700 underline decoration-blue-600/40 underline-offset-2 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200">
                             {{ $brand['serventec_name'] ?? 'Serventec Assessoria' }}
                         </a>
                     </p>
                     <p class="text-xs text-slate-500 dark:text-slate-500 flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
                         <x-product-version-badge class="mx-auto sm:mx-0" />
-                        <a href="{{ route('legal.privacy') }}" class="text-teal-700 hover:underline dark:text-teal-400">{{ __('Política de privacidade') }}</a>
+                        <a href="{{ route('legal.privacy') }}" class="text-blue-700 hover:underline dark:text-blue-400">{{ __('Política de privacidade') }}</a>
                         @if (filled($brand['developer_name'] ?? null))
                             <span aria-hidden="true"> · </span>
                             {{ __('Desenvolvimento:') }}
-                            <a href="{{ $brand['developer_github'] ?? 'https://github.com/jadergabriel' }}" target="_blank" rel="noopener noreferrer" class="text-teal-700 hover:underline dark:text-teal-400">
+                            <a href="{{ $brand['developer_github'] ?? 'https://github.com/jadergabriel' }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 hover:underline dark:text-blue-400">
                                 {{ $brand['developer_name'] }}
                             </a>
                         @endif

@@ -50,7 +50,7 @@
                         <article
                             @class([
                                 'serv-panel p-4 sm:p-5 transition',
-                                'ring-2 ring-indigo-200/80 dark:ring-indigo-800/50' => ! $item['read'],
+                                'ring-2 ring-sky-200/80 dark:ring-sky-800/50' => ! $item['read'],
                                 'opacity-80' => $item['read'],
                             ])
                         >
@@ -66,7 +66,7 @@
                                             'mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full',
                                             'bg-rose-500 animate-pulse' => $item['is_critical'] && ! $item['read'],
                                             'bg-rose-400' => $item['is_critical'] && $item['read'],
-                                            'bg-indigo-500' => ! $item['is_critical'] && ! $item['read'],
+                                            'bg-sky-500' => ! $item['is_critical'] && ! $item['read'],
                                             'bg-slate-300 dark:bg-slate-600' => ! $item['is_critical'] && $item['read'],
                                         ])
                                         aria-hidden="true"
@@ -107,7 +107,7 @@
                                         @if (! $item['read'])
                                             <button
                                                 type="button"
-                                                class="text-sm text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
+                                                class="text-sm text-slate-500 hover:text-sky-600 dark:hover:text-sky-400"
                                                 x-data
                                                 @click="fetch(@js(str_replace('__ID__', $item['id'], $readUrlTemplate)), { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, Accept: 'application/json' } }).then(() => location.reload())"
                                             >

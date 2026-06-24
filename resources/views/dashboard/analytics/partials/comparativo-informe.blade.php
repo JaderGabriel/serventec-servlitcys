@@ -9,7 +9,7 @@
     $informe = is_array($informe) ? $informe : [];
     $blocos = is_array($informe['blocos'] ?? null) ? $informe['blocos'] : [];
     $informeRing = static fn (string $s): string => match ($s) {
-        'success' => 'border-l-teal-500',
+        'success' => 'border-l-blue-500',
         'warning' => 'border-l-amber-500',
         'danger' => 'border-l-rose-500',
         default => 'border-l-slate-400',

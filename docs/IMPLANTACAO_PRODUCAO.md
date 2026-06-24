@@ -1,12 +1,12 @@
 # Implantação em produção — servlitcys
 
-**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
+**Versão do produto:** 6.0.0 · **Última revisão:** 2026-06-03
 
 > **Índice:** [README.md](README.md) · **Variáveis:** [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) · **Comandos:** [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md)
 
 Guia passo a passo para publicar no servidor (código, assets, migrações, filas e `.env`).
 
-**Versão de referência:** **4.4.0** · tag **`20260607a-Ananke`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md)
+**Versão de referência:** **6.0.0** · tag **`20260603h-Odin`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md)
 
 ```mermaid
 sequenceDiagram

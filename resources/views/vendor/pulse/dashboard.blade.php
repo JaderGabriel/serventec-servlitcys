@@ -37,7 +37,7 @@
         "
     >
         <x-pulse-dashboard.tab-nav :items="[
-            'operacao' => ['label' => __('Operação municipal'), 'icon' => 'chart-bar', 'accent' => 'teal'],
+            'operacao' => ['label' => __('Operação municipal'), 'icon' => 'chart-bar', 'accent' => 'blue'],
             'sistema' => ['label' => __('Infraestrutura'), 'icon' => 'server', 'accent' => 'slate'],
             'desempenho' => ['label' => __('Desempenho'), 'icon' => 'globe-alt', 'accent' => 'sky'],
             'estabilidade' => ['label' => __('Estabilidade'), 'icon' => 'exclamation', 'accent' => 'rose'],
@@ -53,7 +53,7 @@
             <x-pulse-dashboard.section
                 :title="__('Municípios e decisão operacional')"
                 :subtitle="__('Inventário das bases i-Educar, volume de uso por cidade e fila de sincronização — priorize municípios incompletos ou com falhas.')"
-                accent="teal"
+                accent="blue"
                 icon="chart-bar"
             />
             <livewire:pulse.municipal-infrastructure-card cols="full" rows="2" />

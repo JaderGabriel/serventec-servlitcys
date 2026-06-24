@@ -28,7 +28,7 @@
             />
 
             <div class="serv-panel serv-panel--info px-4 py-3 text-sm">
-                <p class="font-medium text-serv-navy dark:text-teal-100">{{ __('RX — cadastro em andamento e meta') }}</p>
+                <p class="font-medium text-serv-navy dark:text-blue-100">{{ __('RX — cadastro em andamento e meta') }}</p>
                 <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">
                     {{ __('Por município: quantos alunos, matrículas e turmas já estão no i-Educar no ano vigente; comparação com o ano anterior; meta de volume (turmas + matrículas); Censo e prazos. Aluno ≠ matrícula ≠ turma — veja o quadro abaixo antes da tabela.') }}
                 </p>
@@ -53,9 +53,9 @@
             <section aria-labelledby="rx-kpis">
                 <h3 id="rx-kpis" class="sr-only">{{ __('Indicadores RX') }}</h3>
                 <div class="serv-rx-kpi-grid">
-                    <div class="serv-home-kpi serv-home-kpi--teal">
+                    <div class="serv-home-kpi serv-home-kpi--blue">
                         <div class="serv-home-kpi__head">
-                            <span class="serv-home-kpi__icon serv-home-kpi__icon--teal" aria-hidden="true">
+                            <span class="serv-home-kpi__icon serv-home-kpi__icon--blue" aria-hidden="true">
                                 <x-ui.icon name="map-pin" class="h-5 w-5" />
                             </span>
                             <p class="serv-home-kpi__label">{{ __('Municípios') }}</p>
@@ -65,7 +65,7 @@
                         </p>
                         @if ($citiesTotal > 0)
                             <div class="serv-home-kpi__bar" role="presentation" aria-hidden="true">
-                                <span class="serv-home-kpi__bar-fill serv-home-kpi__bar-fill--teal" style="width: {{ $citiesPct }}%"></span>
+                                <span class="serv-home-kpi__bar-fill serv-home-kpi__bar-fill--blue" style="width: {{ $citiesPct }}%"></span>
                             </div>
                         @endif
                         <p class="serv-home-kpi__hint">{{ __('Com leitura i-Educar no período') }}</p>
@@ -112,7 +112,7 @@
                         </p>
                         @if ($pctCenso !== null)
                             <div class="serv-home-kpi__bar" role="presentation" aria-hidden="true">
-                                <span class="serv-home-kpi__bar-fill serv-home-kpi__bar-fill--teal" style="width: {{ $censoBarPct }}%"></span>
+                                <span class="serv-home-kpi__bar-fill serv-home-kpi__bar-fill--blue" style="width: {{ $censoBarPct }}%"></span>
                             </div>
                         @endif
                         <p class="serv-home-kpi__hint">

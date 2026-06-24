@@ -20,7 +20,7 @@
                 </h2>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Gestão de contas: editar dados, senha, ativar ou desativar, encerrar sessões em outros dispositivos e consultar atividade.') }}</p>
             </div>
-            <a href="{{ route('users.create') }}" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition">
+            <a href="{{ route('users.create') }}" class="inline-flex items-center justify-center px-4 py-2 bg-sky-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition">
                 {{ __('Novo usuário') }}
             </a>
         </div>
@@ -118,14 +118,14 @@
                                     </td>
                                     <td class="px-4 py-3 text-sm text-right">
                                         <div class="inline-flex flex-wrap items-center justify-end gap-2 max-w-[18rem] ml-auto">
-                                            <a href="{{ route('users.edit', $u) }}" class="inline-flex items-center justify-end text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Editar usuário') }}" aria-label="{{ __('Editar usuário') }}">
+                                            <a href="{{ route('users.edit', $u) }}" class="inline-flex items-center justify-end text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Editar usuário') }}" aria-label="{{ __('Editar usuário') }}">
                                             <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                             </svg>
                                             </a>
 
                                             @if (auth()->user()->isAdmin())
-                                                <a href="{{ route('users.logins', $u) }}" class="inline-flex items-center justify-end text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Histórico de logins') }}" aria-label="{{ __('Histórico de logins') }}">
+                                                <a href="{{ route('users.logins', $u) }}" class="inline-flex items-center justify-end text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded p-0.5" title="{{ __('Histórico de logins') }}" aria-label="{{ __('Histórico de logins') }}">
                                                     <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 19.5a7.5 7.5 0 0 1 15 0v.75a.75.75 0 0 1-.75.75H5.25a.75.75 0 0 1-.75-.75v-.75Z" />
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v3l2.25 1.5" />

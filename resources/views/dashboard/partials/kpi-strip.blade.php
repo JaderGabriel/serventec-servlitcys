@@ -22,16 +22,16 @@
 <section aria-labelledby="home-kpis">
     <h3 id="home-kpis" class="sr-only">{{ __('Indicadores') }}</h3>
     <div class="serv-home-kpi-grid">
-        <a href="{{ route('admin.connections.index') }}" class="serv-home-kpi serv-home-kpi--teal serv-home-kpi--link group">
+        <a href="{{ route('admin.connections.index') }}" class="serv-home-kpi serv-home-kpi--blue serv-home-kpi--link group">
             <div class="serv-home-kpi__head">
-                <span class="serv-home-kpi__icon serv-home-kpi__icon--teal" aria-hidden="true">
+                <span class="serv-home-kpi__icon serv-home-kpi__icon--blue" aria-hidden="true">
                     <x-ui.icon name="circle-stack" class="h-5 w-5" />
                 </span>
                 <p class="serv-home-kpi__label">{{ __('Bases i-Educar prontas') }}</p>
             </div>
             <p class="serv-home-kpi__value">{{ number_format($ready) }}<span class="serv-home-kpi__suffix">/ {{ number_format($active) }}</span></p>
             <div class="serv-home-kpi__bar" role="presentation" aria-hidden="true">
-                <span class="serv-home-kpi__bar-fill serv-home-kpi__bar-fill--teal" style="width: {{ $readyPct }}%"></span>
+                <span class="serv-home-kpi__bar-fill serv-home-kpi__bar-fill--blue" style="width: {{ $readyPct }}%"></span>
             </div>
             <p class="serv-home-kpi__hint">
                 {{ __(':pct% dos municípios ativos com conexão testada', ['pct' => $readyPct]) }}
@@ -41,9 +41,9 @@
             </p>
         </a>
 
-        <a href="{{ route('dashboard.rx') }}" class="serv-home-kpi serv-home-kpi--link group @if ($fundebAvailable && $fundebComComplementacao > 0) serv-home-kpi--teal @endif">
+        <a href="{{ route('dashboard.rx') }}" class="serv-home-kpi serv-home-kpi--link group @if ($fundebAvailable && $fundebComComplementacao > 0) serv-home-kpi--blue @endif">
             <div class="serv-home-kpi__head">
-                <span class="serv-home-kpi__icon serv-home-kpi__icon--teal" aria-hidden="true">
+                <span class="serv-home-kpi__icon serv-home-kpi__icon--blue" aria-hidden="true">
                     <x-ui.icon name="clipboard-document-list" class="h-5 w-5" />
                 </span>
                 <p class="serv-home-kpi__label">{{ __('RX · :ano', ['ano' => $vigenteAno]) }}</p>
@@ -53,7 +53,7 @@
                     {{ number_format($fundebComComplementacao) }}<span class="serv-home-kpi__suffix">/ {{ number_format($fundebMunicipios) }}</span>
                 </p>
                 <div class="serv-home-kpi__bar" role="presentation" aria-hidden="true">
-                    <span class="serv-home-kpi__bar-fill serv-home-kpi__bar-fill--teal" style="width: {{ $fundebComplPct }}%"></span>
+                    <span class="serv-home-kpi__bar-fill serv-home-kpi__bar-fill--blue" style="width: {{ $fundebComplPct }}%"></span>
                 </div>
                 <p class="serv-home-kpi__hint">{{ __('Municípios com complementação FNDE (:exercício)', ['exercício' => $fundebExercicio]) }}</p>
             @else

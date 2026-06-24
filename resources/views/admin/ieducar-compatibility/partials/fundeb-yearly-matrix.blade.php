@@ -8,7 +8,7 @@
     $anchorYear = (int) ($matrix['anchor_year'] ?? $yearTo);
     $yearSemantics = is_array($matrix['year_semantics'] ?? null) ? $matrix['year_semantics'] : [];
     $fmtBrl = $fmtBrl ?? [\App\Support\Ieducar\DiscrepanciesFundingImpact::class, 'formatBrl'];
-    $selectClass = $selectClass ?? 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 text-sm';
+    $selectClass = $selectClass ?? 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm';
     $indexQuery = array_filter([
         'city_id' => request('city_id'),
         'ano_letivo' => request('ano_letivo'),
@@ -65,7 +65,7 @@
                 'fundeb_matrix_from' => max(2000, $anchorYear - 2),
                 'fundeb_matrix_to' => $anchorYear,
             ])) }}#fundeb-vaaf-matrix"
-            class="text-xs text-teal-700 dark:text-teal-300 hover:underline py-2"
+            class="text-xs text-blue-700 dark:text-blue-300 hover:underline py-2"
         >
             {{ __('Repor :anchor e 2 anteriores', ['anchor' => $anchorYear]) }}
         </a>

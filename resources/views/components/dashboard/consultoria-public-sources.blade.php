@@ -18,7 +18,7 @@
     $tipoPill = static fn (string $t): string => match ($t) {
         'dados_abertos', 'api' => 'serv-status-pill serv-status-pill--info',
         'sistema' => 'serv-status-pill serv-status-pill--warning',
-        'painel' => 'serv-status-pill bg-teal-100 text-teal-900 dark:bg-teal-950/50 dark:text-teal-200',
+        'painel' => 'serv-status-pill bg-blue-100 text-blue-900 dark:bg-blue-950/50 dark:text-blue-200',
         default => 'serv-status-pill serv-status-pill--neutral',
     };
 @endphp

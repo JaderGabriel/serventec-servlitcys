@@ -6,13 +6,13 @@
 
 @php
     $iconTone = match ($tone) {
-        'teal' => 'text-teal-600 dark:text-teal-400',
+        'blue' => 'text-blue-600 dark:text-blue-400',
         'violet' => 'text-violet-600 dark:text-violet-400',
         'sky' => 'text-sky-600 dark:text-sky-400',
         default => 'text-slate-500 dark:text-slate-400',
     };
     $labelTone = match ($tone) {
-        'teal' => 'text-teal-900 dark:text-teal-200',
+        'blue' => 'text-blue-900 dark:text-blue-200',
         'violet' => 'text-violet-900 dark:text-violet-200',
         'sky' => 'text-sky-900 dark:text-sky-200',
         default => 'text-slate-700 dark:text-slate-300',
@@ -26,7 +26,7 @@
     <button
         type="button"
         @click.stop="subOpen = ! subOpen"
-        class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-gray-800/80 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+        class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-gray-800/80 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
         :aria-expanded="subOpen"
     >
         @if ($icon)

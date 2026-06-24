@@ -173,7 +173,7 @@ final class HomeQuickActionsCatalog
                 'id' => 'visao',
                 'title' => __('Visão multi-município'),
                 'subtitle' => __('Painéis que cobrem toda a rede — sem escolher cidade'),
-                'accent' => 'teal',
+                'accent' => 'blue',
                 'actions' => $visao,
             ],
         ];

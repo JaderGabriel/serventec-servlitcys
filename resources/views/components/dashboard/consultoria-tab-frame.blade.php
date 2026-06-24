@@ -1,6 +1,6 @@
 @props([
     'tab' => '',
-    'tone' => 'teal',
+    'tone' => 'blue',
     'title' => '',
     'intro' => '',
     'meta' => null,

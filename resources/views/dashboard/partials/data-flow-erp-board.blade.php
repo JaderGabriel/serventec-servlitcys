@@ -136,18 +136,18 @@
                 <header class="serv-erp-lane__head serv-erp-lane__head--hub">
                     <span class="serv-erp-lane__step serv-erp-lane__step--hub" aria-hidden="true">{{ $zonePlatform['step'] ?? 2 }}</span>
                     <div class="min-w-0">
-                        <p class="serv-erp-lane__title text-teal-900 dark:text-teal-100">{{ __('Motor') }}</p>
-                        <p class="serv-erp-lane__desc text-teal-800/80 dark:text-teal-300/80">{{ __('Núcleo da plataforma') }}</p>
+                        <p class="serv-erp-lane__title text-blue-900 dark:text-blue-100">{{ __('Motor') }}</p>
+                        <p class="serv-erp-lane__desc text-blue-800/80 dark:text-blue-300/80">{{ __('Núcleo da plataforma') }}</p>
                     </div>
                 </header>
                 @if ($hub)
                     @php $st = (string) ($hub['status'] ?? 'ok'); @endphp
-                    <article class="serv-erp-hub relative overflow-hidden rounded-xl border-2 border-teal-500/70 bg-gradient-to-br from-teal-700 via-teal-800 to-serv-navy px-5 py-5 shadow-lg shadow-teal-900/25 ring-2 ring-teal-400/30 dark:border-teal-400/50 dark:from-teal-900 dark:via-teal-950 dark:to-slate-950 dark:shadow-teal-950/40 dark:ring-teal-500/25" title="{{ $hub['hint'] }}">
-                        <span class="pointer-events-none absolute -end-8 -top-8 h-28 w-28 rounded-full bg-teal-300/20 blur-2xl dark:bg-teal-400/12" aria-hidden="true"></span>
+                    <article class="serv-erp-hub relative overflow-hidden rounded-xl border-2 border-blue-500/70 bg-gradient-to-br from-blue-700 via-blue-800 to-serv-navy px-5 py-5 shadow-lg shadow-blue-900/25 ring-2 ring-blue-400/30 dark:border-blue-400/50 dark:from-blue-900 dark:via-blue-950 dark:to-slate-950 dark:shadow-blue-950/40 dark:ring-blue-500/25" title="{{ $hub['hint'] }}">
+                        <span class="pointer-events-none absolute -end-8 -top-8 h-28 w-28 rounded-full bg-blue-300/20 blur-2xl dark:bg-blue-400/12" aria-hidden="true"></span>
                         <span class="serv-erp-node__status serv-erp-node__status--{{ $st === 'ok' ? 'ok' : ($st === 'partial' ? 'partial' : 'off') }} top-3 end-3 h-3 w-3" aria-hidden="true"></span>
-                        <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-teal-100/90">{{ __('Plataforma') }}</p>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-blue-100/90">{{ __('Plataforma') }}</p>
                         <p class="mt-1.5 font-display text-xl font-bold tracking-tight text-white pe-6">{{ $hub['label'] }}</p>
-                        <p class="mt-0.5 text-[11px] font-medium uppercase tracking-wide text-teal-100/85">{{ $hub['sublabel'] }}</p>
+                        <p class="mt-0.5 text-[11px] font-medium uppercase tracking-wide text-blue-100/85">{{ $hub['sublabel'] }}</p>
                     </article>
                 @endif
             </div>

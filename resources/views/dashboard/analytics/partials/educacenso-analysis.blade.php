@@ -28,10 +28,10 @@
     $filterQuery = $filtersObj && $cityId ? $filtersObj->toQueryParamsWithCity((int) $cityId) : [];
 @endphp
 
-<section id="censo-educacenso-analise" class="serv-panel border-l-4 border-l-indigo-500 px-4 py-4 space-y-5 scroll-mt-24">
+<section id="censo-educacenso-analise" class="serv-panel border-l-4 border-l-sky-500 px-4 py-4 space-y-5 scroll-mt-24">
     <div>
-        <p class="serv-eyebrow text-indigo-800/90 dark:text-indigo-200/90">{{ __('Conferência Educacenso') }}</p>
-        <h3 class="text-sm font-semibold uppercase tracking-wide text-indigo-950 dark:text-indigo-100">
+        <p class="serv-eyebrow text-sky-800/90 dark:text-sky-200/90">{{ __('Conferência Educacenso') }}</p>
+        <h3 class="text-sm font-semibold uppercase tracking-wide text-sky-950 dark:text-sky-100">
             {{ __('Análise do arquivo Educacenso × i-Educar') }}
         </h3>
         <p class="mt-1 text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-3xl">
@@ -55,7 +55,7 @@
             method="post"
             action="{{ route('dashboard.analytics.educacenso.analyze') }}"
             enctype="multipart/form-data"
-            class="rounded-lg border border-indigo-200/80 dark:border-indigo-800/60 bg-white/50 dark:bg-slate-900/40 px-4 py-4 space-y-3"
+            class="rounded-lg border border-sky-200/80 dark:border-sky-800/60 bg-white/50 dark:bg-slate-900/40 px-4 py-4 space-y-3"
         >
             @csrf
             <input type="hidden" name="city_id" value="{{ $cityId }}" />
@@ -76,7 +76,7 @@
                         id="educacenso_file"
                         accept=".txt,.csv,text/plain"
                         required
-                        class="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-indigo-700"
+                        class="block w-full text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-sky-600 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-sky-700"
                     />
                     <p class="mt-1 text-[10px] text-slate-500">{{ __('Máx. :mb MB · origem: portal Educacenso', ['mb' => $maxMb]) }}</p>
                 </div>

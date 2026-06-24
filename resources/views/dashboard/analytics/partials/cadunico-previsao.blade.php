@@ -42,7 +42,7 @@
     $ring = static fn (string $s): string => match ($s) {
         'danger', 'rose' => 'border-l-rose-500',
         'warning', 'amber' => 'border-l-amber-500',
-        'emerald', 'success' => 'border-l-teal-500',
+        'emerald', 'success' => 'border-l-blue-500',
         default => 'border-l-slate-400',
     };
 
@@ -207,7 +207,7 @@
                         @endforeach
                     </tbody>
                     <tfoot>
-                        <tr class="bg-indigo-50/80 dark:bg-indigo-950/40 font-semibold">
+                        <tr class="bg-sky-50/80 dark:bg-sky-950/40 font-semibold">
                             <td class="px-3 py-2" colspan="2">{{ __('Soma indicativa dos cenários') }}</td>
                             <td class="px-3 py-2 text-right tabular-nums">{{ $cenarios['total_cenarios_label'] ?? '—' }}</td>
                         </tr>

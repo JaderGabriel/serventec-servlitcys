@@ -47,13 +47,13 @@
                         type="checkbox"
                         name="notify"
                         value="1"
-                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-900"
+                        class="rounded border-gray-300 text-sky-600 shadow-sm focus:ring-sky-500 dark:border-gray-600 dark:bg-gray-900"
                     />
                     {{ __('Notificar administradores') }}
                 </label>
                 <button
                     type="submit"
-                    class="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                    class="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                 >
                     <x-ui.icon name="arrow-path" class="h-3.5 w-3.5" />
                     {{ __('Verificar agora') }}

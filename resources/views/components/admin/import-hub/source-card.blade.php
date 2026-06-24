@@ -72,7 +72,7 @@
         </div>
         <div class="flex shrink-0 flex-col items-end gap-1">
             @if (filled($adminRoute))
-                <a href="{{ route($adminRoute) }}" class="text-sm font-medium text-indigo-700 dark:text-indigo-300 hover:underline">
+                <a href="{{ route($adminRoute) }}" class="text-sm font-medium text-sky-700 dark:text-sky-300 hover:underline">
                     {{ __('Tela dedicada') }} →
                 </a>
             @endif
@@ -89,7 +89,7 @@
                         default => 'fila-sync',
                     };
                 @endphp
-                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', ['domain' => $queueDomain]) }}#{{ $queueAnchor }}" class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', ['domain' => $queueDomain]) }}#{{ $queueAnchor }}" class="text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline">
                     {{ __('Fila') }} →
                 </a>
             @endif

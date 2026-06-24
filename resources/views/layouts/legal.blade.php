@@ -14,7 +14,7 @@
             <header class="serv-nav-brand sticky top-0 z-50 border-b border-slate-200/90 dark:border-slate-700/90 shadow-sm">
                 <div class="serv-page-shell flex items-center justify-between gap-3 py-3">
                     <a href="{{ url('/') }}" class="group flex min-w-0 items-center gap-2.5">
-                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-teal-600 to-indigo-700 shadow-sm">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-sky-700 shadow-sm">
                             <x-application-logo class="h-5 w-5 text-white shrink-0" />
                         </span>
                         <span class="truncate font-display text-sm font-semibold text-slate-900 dark:text-white">{{ config('app.name') }}</span>

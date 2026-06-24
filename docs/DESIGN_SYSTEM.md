@@ -1,6 +1,6 @@
 # Design system — consultoria municipal (servlitcys)
 
-**Versão do produto:** 5.0.1 · **Última revisão:** 2026-06-19
+**Versão do produto:** 6.0.0 · **Última revisão:** 2026-06-03
 
 **Implementação:** `resources/css/app.css` (classes `serv-*`), componentes Blade `x-dashboard.*`, `x-status-pill`, `x-consultoria-tab-link`.
 
@@ -17,7 +17,7 @@ O produto comunica **consultoria profissional** com foco em **finanças educacio
 | Município primeiro | Nome do município + UF em destaque (`serv-municipality-strip`) |
 | Resumo antes de cadastro | Entrada em **Diagnóstico** (área Resumo); depois cadastro → pedagógico → censo → finanças |
 | Indicativo ≠ oficial | Avisos em saldo/perda; links para Discrepâncias e Diagnóstico |
-| Calma e credibilidade | Paleta slate + teal; evitar roxo/indigo como cor primária em consultoria |
+| Calma e credibilidade | Paleta slate + **azul** (`blue` primário, `sky` secundário); evitar misturar hover da mesma cor em colunas de dados |
 
 ---
 
@@ -26,7 +26,7 @@ O produto comunica **consultoria profissional** com foco em **finanças educacio
 | Token | Uso | Tailwind / classe |
 |-------|-----|-------------------|
 | Navy / slate-900 | Títulos, navegação | `text-serv-navy`, `serv-nav-brand` |
-| Teal 600–700 | Acção, aba activa, links | `serv-link`, `serv-tab--active` |
+| Blue 600–700 | Acção, aba activa, links, nav | `serv-link`, `serv-tab--active`, `serv-btn-primary` |
 | Emerald / amber / rose | Semáforos KPI | `serv-status-pill--*` |
 | DM Sans | Corpo | `font-sans` (default app) |
 | Outfit | Títulos | `font-display` |
@@ -43,7 +43,7 @@ O produto comunica **consultoria profissional** com foco em **finanças educacio
 | `x-consultoria-tab-link` | Links internos «ir para aba X» (Alpine `set-analytics-tab`) |
 | `x-status-pill` | Estados success / warning / danger uniformes |
 | `serv-panel` | Cartões de conteúdo e formulários |
-| `serv-eyebrow` | Rótulo de secção (uppercase, teal) |
+| `serv-eyebrow` | Rótulo de secção (uppercase, azul) |
 
 ---
 

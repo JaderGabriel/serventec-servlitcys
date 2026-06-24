@@ -35,12 +35,12 @@
             </div>
             <div class="flex flex-wrap gap-2 text-xs shrink-0">
                 @if ($canViewMap)
-                    <a href="{{ $hub['map_url'] ?? route('dashboard.horizonte') }}" class="rounded-lg border border-indigo-200 dark:border-indigo-800 px-3 py-2 font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40">
+                    <a href="{{ $hub['map_url'] ?? route('dashboard.horizonte') }}" class="rounded-lg border border-sky-200 dark:border-sky-800 px-3 py-2 font-medium text-sky-700 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/40">
                         {{ __('Mapa Horizonte') }} →
                     </a>
                 @endif
                 @if ($canRunFeed)
-                    <a href="{{ route('admin.public-data.index', ['hub' => 'horizonte']) }}#horizonte-hub" class="rounded-lg bg-indigo-600 px-3 py-2 font-medium text-white hover:bg-indigo-500">
+                    <a href="{{ route('admin.public-data.index', ['hub' => 'horizonte']) }}#horizonte-hub" class="rounded-lg bg-sky-600 px-3 py-2 font-medium text-white hover:bg-sky-500">
                         {{ __('Abastecer no hub') }} →
                     </a>
                 @endif

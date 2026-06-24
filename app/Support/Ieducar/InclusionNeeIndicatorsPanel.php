@@ -58,7 +58,7 @@ final class InclusionNeeIndicatorsPanel
                 $nee > 0
                     ? __(':pct% do universo NEE.', ['pct' => self::pct($comCadastro, $nee)])
                     : null,
-                'teal',
+                'blue',
             ),
             self::kpiGrupo(__('Deficiências (grupo)'), $nDef, $nee, $denRede),
             self::kpiGrupo(__('Síndromes e TEA'), $nSin, $nee, $denRede),

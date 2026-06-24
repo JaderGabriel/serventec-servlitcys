@@ -13,12 +13,12 @@
     $catalogChart = is_array($panel['catalog_chart'] ?? null) ? $panel['catalog_chart'] : null;
     $catalogWarning = filled($panel['catalog_warning'] ?? null) ? (string) $panel['catalog_warning'] : null;
     $toneRing = static fn (string $tone): string => match ($tone) {
-        'teal' => 'border-teal-200/90 dark:border-teal-800/60',
+        'blue' => 'border-blue-200/90 dark:border-blue-800/60',
         'amber' => 'border-amber-200/90 dark:border-amber-800/60',
         default => 'border-violet-200/90 dark:border-violet-800/60',
     };
     $legendDot = static fn (string $color): string => match ($color) {
-        'indigo' => 'bg-indigo-600',
+        'indigo' => 'bg-sky-600',
         'violet' => 'bg-violet-600',
         'amber' => 'bg-amber-500',
         default => 'bg-slate-500',

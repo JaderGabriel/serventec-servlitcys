@@ -10,7 +10,7 @@
                 role="tab"
                 @click="pulseTab = @js($key)"
                 :aria-selected="pulseTab === @js($key)"
-                :class="pulseTab === @js($key) ? 'pulse-tab-btn pulse-tab-btn--active pulse-tab-btn--{{ $tab['accent'] ?? 'teal' }}' : 'pulse-tab-btn'"
+                :class="pulseTab === @js($key) ? 'pulse-tab-btn pulse-tab-btn--active pulse-tab-btn--{{ $tab['accent'] ?? 'blue' }}' : 'pulse-tab-btn'"
             >
                 @if (! empty($tab['icon']))
                     <x-ui.icon :name="$tab['icon']" class="h-4 w-4 shrink-0 opacity-90" />

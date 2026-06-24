@@ -103,7 +103,7 @@
                             </template>
                         </div>
                         <div class="flex gap-1 rounded-lg ring-1 ring-slate-200/80 dark:ring-slate-600 p-0.5" x-show="isRegionalMode" x-cloak>
-                            <button type="button" class="rounded-md px-2 py-1 text-xs font-medium transition" :class="mapView === 'markers' ? 'bg-indigo-100 text-indigo-900 dark:bg-indigo-950/50' : 'text-slate-600'" @click="setMapView('markers')">{{ __('Pontos') }}</button>
+                            <button type="button" class="rounded-md px-2 py-1 text-xs font-medium transition" :class="mapView === 'markers' ? 'bg-sky-100 text-sky-900 dark:bg-sky-950/50' : 'text-slate-600'" @click="setMapView('markers')">{{ __('Pontos') }}</button>
                             <button type="button" class="rounded-md px-2 py-1 text-xs font-medium transition" :class="mapView === 'heat' ? 'bg-rose-100 text-rose-900 dark:bg-rose-950/50' : 'text-slate-600'" @click="setMapView('heat')" :disabled="regionalDisplayPolicy?.heavy_regional">{{ __('Calor') }}</button>
                         </div>
                         <div class="flex flex-wrap items-center gap-1" x-show="isRegionalMode" x-cloak>
@@ -117,7 +117,7 @@
                             >
                                 <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" /></svg>
                                 <span class="hidden sm:inline">{{ __('Filtros') }}</span>
-                                <span x-show="activeFilterCount > 0" x-cloak class="rounded-full bg-teal-600 px-1.5 py-0.5 text-[10px] font-bold text-white tabular-nums" x-text="activeFilterCount"></span>
+                                <span x-show="activeFilterCount > 0" x-cloak class="rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white tabular-nums" x-text="activeFilterCount"></span>
                             </button>
                             <button
                                 type="button"
@@ -345,7 +345,7 @@
                             role="status"
                             aria-live="polite"
                         >
-                            <div class="h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" aria-hidden="true"></div>
+                            <div class="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" aria-hidden="true"></div>
                             <p class="text-sm font-medium text-slate-700 dark:text-slate-200" x-text="loadingMessage || (regionalLoading ? '{{ __('A carregar UF…') }}' : '{{ __('A carregar…') }}')"></p>
                         </div>
                         <div
@@ -354,7 +354,7 @@
                             class="absolute top-3 right-7 z-10 flex items-center gap-2 rounded-lg bg-white/90 dark:bg-slate-900/90 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-700"
                             role="status"
                         >
-                            <span class="h-3 w-3 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" aria-hidden="true"></span>
+                            <span class="h-3 w-3 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" aria-hidden="true"></span>
                             <span>{{ __('A actualizar mapa…') }}</span>
                         </div>
                         <div
@@ -401,7 +401,7 @@
                         <ol x-show="topProspects.length > 0" class="mt-2 space-y-1.5">
                             <template x-for="(p, idx) in topProspects.slice(0, 8)" :key="p.ibge">
                                 <li>
-                                    <button type="button" class="flex w-full items-start gap-2 rounded-lg px-2 py-2 text-left hover:bg-teal-50/80 dark:hover:bg-teal-950/30" @click="flyToMarker(p); workspaceTab = 'list'">
+                                    <button type="button" class="flex w-full items-start gap-2 rounded-lg px-2 py-2 text-left hover:bg-slate-100/90 dark:hover:bg-slate-800/50 ring-0 hover:ring-1 hover:ring-slate-200/80 dark:hover:ring-slate-600/60" @click="flyToMarker(p); workspaceTab = 'list'">
                                         <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-100 text-[10px] font-bold text-rose-800 dark:bg-rose-950/50 dark:text-rose-200 tabular-nums" x-text="idx + 1"></span>
                                         <span class="min-w-0">
                                             <span class="block text-sm font-medium text-slate-900 dark:text-slate-100 truncate" x-text="p.name + ' (' + p.uf + ')'"></span>
@@ -454,7 +454,7 @@
                         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             @foreach ($methodology['map_guide'] ?? [] as $step)
                                 <div class="rounded-xl border border-slate-200/90 bg-slate-50/60 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/40">
-                                    <p class="text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300">{{ __('Passo :n', ['n' => $step['step']]) }}</p>
+                                    <p class="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">{{ __('Passo :n', ['n' => $step['step']]) }}</p>
                                     <p class="mt-1 text-sm font-semibold text-serv-navy dark:text-slate-100">{{ $step['title'] }}</p>
                                     <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">{{ $step['text'] }}</p>
                                 </div>
@@ -544,7 +544,7 @@
                                 <p class="text-xs text-slate-400 mb-2">{{ __('Actualizar dados') }}</p>
                                 <code class="block text-xs text-emerald-300 font-mono break-all" x-text="meta.refresh_command || 'php artisan horizonte:fortnightly-feed'"></code>
                                 @if ($canRefreshData)
-                                    <a :href="meta.hub_url || @js(route('admin.public-data.index', ['hub' => 'horizonte']))" class="mt-2 inline-block text-xs font-medium text-indigo-300 hover:underline">{{ __('Hub Horizonte') }} →</a>
+                                    <a :href="meta.hub_url || @js(route('admin.public-data.index', ['hub' => 'horizonte']))" class="mt-2 inline-block text-xs font-medium text-sky-300 hover:underline">{{ __('Hub Horizonte') }} →</a>
                                 @endif
                             </div>
                         </div>
@@ -583,16 +583,16 @@
                                     </ul>
                                 </div>
 
-                                <div class="rounded-lg border border-teal-200/80 bg-teal-50/50 dark:border-teal-900/50 dark:bg-teal-950/20 px-3 py-2 space-y-2">
+                                <div class="rounded-lg border border-blue-200/80 bg-blue-50/50 dark:border-blue-900/50 dark:bg-blue-950/20 px-3 py-2 space-y-2">
                                     <div>
-                                        <p class="font-semibold text-teal-900 dark:text-teal-100">{{ $methodology['success_title'] ?? __('Propensão') }}</p>
+                                        <p class="font-semibold text-blue-900 dark:text-blue-100">{{ $methodology['success_title'] ?? __('Propensão') }}</p>
                                         <p class="mt-0.5 text-sm">{{ $methodology['success_formula'] ?? '' }}</p>
                                     </div>
                                     <div>
-                                        <p class="font-semibold text-teal-900 dark:text-teal-100">{{ $methodology['benefit_title'] ?? __('Benefício') }}</p>
+                                        <p class="font-semibold text-blue-900 dark:text-blue-100">{{ $methodology['benefit_title'] ?? __('Benefício') }}</p>
                                         <p class="mt-0.5 text-sm">{{ $methodology['benefit_formula'] ?? '' }}</p>
                                     </div>
-                                    <p class="text-[11px] text-teal-800/80 dark:text-teal-200/80">{{ $methodology['tier_rules'] ?? '' }}</p>
+                                    <p class="text-[11px] text-blue-800/80 dark:text-blue-200/80">{{ $methodology['tier_rules'] ?? '' }}</p>
                                 </div>
                             </div>
 
@@ -618,7 +618,7 @@
                                         <div class="serv-horizonte-methodology__dim mt-2">
                                             <p class="font-medium text-serv-navy dark:text-slate-200">
                                                 {{ $dim['label'] }}
-                                                <span class="text-teal-700 dark:text-teal-300 tabular-nums">{{ $dim['weight'] }}%</span>
+                                                <span class="text-blue-700 dark:text-blue-300 tabular-nums">{{ $dim['weight'] }}%</span>
                                             </p>
                                             <p class="mt-0.5 text-sm">{{ $dim['formula'] }}</p>
                                             @if (! empty($dim['detects']))
@@ -697,7 +697,7 @@
                 <div class="serv-horizonte-tour__backdrop" @click="skipTour()"></div>
                 <div class="serv-horizonte-tour__spotlight" :style="tourSpotlightStyle"></div>
                 <div class="serv-horizonte-tour__card" x-ref="tourCard" :style="tourCardStyle">
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
                         {{ __('Guia') }}
                         <span class="tabular-nums" x-text="(tourStepIndex + 1) + ' / ' + tourStepsList.length"></span>
                     </p>

@@ -33,7 +33,7 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                 <label class="flex gap-3 items-start rounded-xl border border-slate-200 dark:border-slate-700 p-4 cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-900/40 transition-colors">
-                    <input type="checkbox" name="accept_privacy" value="1" class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-600 focus:ring-teal-500" required @checked(old('accept_privacy')) />
+                    <input type="checkbox" name="accept_privacy" value="1" class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-blue-500" required @checked(old('accept_privacy')) />
                     <span class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                         {{ __('Li e aceito a') }}
                         <a href="{{ $privacyUrl }}" target="_blank" rel="noopener" class="serv-auth-link">{{ __('política de privacidade') }}</a>
@@ -42,7 +42,7 @@
                 </label>
 
                 <label class="flex gap-3 items-start rounded-xl border border-slate-200 dark:border-slate-700 p-4 cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-900/40 transition-colors">
-                    <input type="checkbox" name="accept_cookies" value="1" class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-600 focus:ring-teal-500" required @checked(old('accept_cookies')) />
+                    <input type="checkbox" name="accept_cookies" value="1" class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-blue-500" required @checked(old('accept_cookies')) />
                     <span class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                         {{ __('Aceito cookies essenciais (sessão, segurança e preferências) conforme a política.') }}
                     </span>

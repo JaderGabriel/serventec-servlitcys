@@ -30,7 +30,7 @@
 
             <div class="flex items-center gap-3 pt-2">
                 <input type="hidden" name="is_active" value="0" />
-                <input id="is_active" type="checkbox" name="is_active" value="1" class="rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" @checked(old('is_active', $city?->is_active ?? true)) />
+                <input id="is_active" type="checkbox" name="is_active" value="1" class="rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-sky-600 shadow-sm focus:ring-sky-500 dark:focus:ring-sky-600 dark:focus:ring-offset-gray-800" @checked(old('is_active', $city?->is_active ?? true)) />
                 <x-input-label for="is_active" :value="__('Cidade ativa (incluir em painéis e listagens)')" class="!mb-0" />
             </div>
             <x-input-error :messages="$errors->get('is_active')" class="mt-2" />
@@ -75,7 +75,7 @@
         <div class="space-y-6">
             <div>
                 <x-input-label for="db_driver" :value="__('Motor da base de dados')" />
-                <select id="db_driver" name="db_driver" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                <select id="db_driver" name="db_driver" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500" required>
                     <option value="mysql" @selected(old('db_driver', $city?->dataDriver() ?? \App\Models\City::DRIVER_MYSQL) === 'mysql')>{{ __('MySQL / MariaDB') }}</option>
                     <option value="pgsql" @selected(old('db_driver', $city?->dataDriver() ?? \App\Models\City::DRIVER_MYSQL) === 'pgsql')>{{ __('PostgreSQL') }}</option>
                 </select>

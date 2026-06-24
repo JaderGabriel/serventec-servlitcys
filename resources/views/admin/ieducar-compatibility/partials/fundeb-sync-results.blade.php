@@ -94,7 +94,7 @@
                 <p class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{{ __('Por fonte (registros gravados)') }}</p>
                 <div class="flex flex-wrap gap-2">
                     @foreach ($byFonte as $fonte => $count)
-                        <span class="inline-flex items-center rounded-full bg-teal-100 dark:bg-teal-900/40 px-2 py-0.5 text-[11px] text-teal-900 dark:text-teal-100">
+                        <span class="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 text-[11px] text-blue-900 dark:text-blue-100">
                             <span class="font-mono">{{ Str::limit($fonte, 28) }}</span>
                             <span class="ms-1 font-semibold tabular-nums">{{ $count }}</span>
                         </span>
@@ -154,7 +154,7 @@
                                             <span class="block text-gray-500 mt-0.5">{{ __('Pub. :ano', ['ano' => $row['portaria_publication_year']]) }}</span>
                                         @endif
                                         @if (! empty($row['url_portaria']))
-                                            <a href="{{ $row['url_portaria'] }}" target="_blank" rel="noopener" class="text-teal-700 dark:text-teal-300 underline">{{ __('Portaria') }}</a>
+                                            <a href="{{ $row['url_portaria'] }}" target="_blank" rel="noopener" class="text-blue-700 dark:text-blue-300 underline">{{ __('Portaria') }}</a>
                                         @endif
                                     </td>
                                     <td class="px-3 py-1.5 font-mono text-[10px] text-gray-600 dark:text-gray-400">{{ Str::limit($row['fonte'] ?? '—', 32) }}</td>
@@ -226,7 +226,7 @@
         @endif
     </div>
 @else
-    <p class="rounded-lg border border-dashed border-teal-300/60 dark:border-teal-700 px-3 py-2 text-xs text-teal-900/90 dark:text-teal-200/90">
+    <p class="rounded-lg border border-dashed border-blue-300/60 dark:border-blue-700 px-3 py-2 text-xs text-blue-900/90 dark:text-blue-200/90">
         {{ __('Resultados das importações aparecem na') }}
         <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="font-medium underline">{{ __('fila de sincronização') }}</a>
         {{ __('quando a tarefa concluir (ou atualize esta página após enfileirar).') }}

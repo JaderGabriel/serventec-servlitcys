@@ -1,6 +1,6 @@
 @php
     $active = $currentPath === ($item['path'] ?? null);
-    $tone = (string) ($tone ?? 'teal');
+    $tone = (string) ($tone ?? 'blue');
 @endphp
 <li>
     <a

@@ -14,13 +14,13 @@
                         href="{{ Auth::user()->homeUrl() }}"
                         @class([
                             'flex items-center gap-2 group px-1 pt-1 border-b-2 transition duration-150 ease-in-out',
-                            'border-teal-600' => $homeActive,
+                            'border-blue-600' => $homeActive,
                             'border-transparent hover:border-slate-300 dark:hover:border-slate-600' => ! $homeActive,
                         ])
                         title="{{ Auth::user()->canViewAdminDashboard() ? __('Início — :app', ['app' => config('app.name')]) : config('app.name') }}"
                         aria-label="{{ Auth::user()->canViewAdminDashboard() ? __('Início') : config('app.name') }}"
                     >
-                        <x-application-logo class="block h-9 w-[3.25rem] shrink-0 text-teal-700 dark:text-teal-400 group-hover:text-teal-900 dark:group-hover:text-teal-300 transition" />
+                        <x-application-logo class="block h-9 w-[3.25rem] shrink-0 text-blue-700 dark:text-blue-400 group-hover:text-blue-900 dark:group-hover:text-blue-300 transition" />
                     </a>
                 </div>
 
@@ -48,7 +48,7 @@
                 <x-notification-bell />
                 <x-dropdown align="right" width="w-64" contentClasses="py-1 bg-white dark:bg-gray-800" class="shrink-0">
                     <x-slot name="trigger">
-                        <button type="button" class="inline-flex max-w-full items-center gap-2 rounded-lg border border-transparent px-2 py-1.5 text-sm leading-4 font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/80 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500/40 transition ease-in-out duration-150">
+                        <button type="button" class="inline-flex max-w-full items-center gap-2 rounded-lg border border-transparent px-2 py-1.5 text-sm leading-4 font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/80 hover:text-gray-800 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition ease-in-out duration-150">
                             <x-user-avatar :user="Auth::user()" size="md" />
                             <span class="truncate max-w-[8rem] lg:max-w-[12rem]">{{ Auth::user()->name }}</span>
                             <svg class="fill-current h-4 w-4 shrink-0 opacity-60" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" aria-hidden="true">

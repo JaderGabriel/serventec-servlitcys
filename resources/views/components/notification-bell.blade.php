@@ -16,7 +16,7 @@
     >
         <button
             type="button"
-            class="relative inline-flex size-10 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800 transition"
+            class="relative inline-flex size-10 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800 transition"
             :aria-expanded="open"
             aria-haspopup="true"
             x-bind:title="bellTitle()"
@@ -30,7 +30,7 @@
                 x-show="unread > 0"
                 x-cloak
                 class="pointer-events-none absolute top-0.5 end-0.5 z-[1] flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white dark:ring-gray-800"
-                :class="criticalUnread > 0 ? 'bg-rose-600 animate-pulse' : 'bg-indigo-600'"
+                :class="criticalUnread > 0 ? 'bg-rose-600 animate-pulse' : 'bg-sky-600'"
                 x-text="unread > 9 ? '9+' : unread"
             ></span>
         </button>
@@ -58,7 +58,7 @@
                     <div class="flex items-center gap-2 shrink-0">
                         <button
                             type="button"
-                            class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-40"
+                            class="text-xs text-sky-600 dark:text-sky-400 hover:underline disabled:opacity-40"
                             :disabled="unread === 0"
                             @click="markAllRead()"
                         >
@@ -80,7 +80,7 @@
                     <button
                         type="button"
                         class="rounded-md px-2 py-0.5 text-[11px] font-medium transition"
-                        :class="!filterCritical ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                        :class="!filterCritical ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-200' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
                         @click="setFilter(false)"
                     >{{ __('Todas') }}</button>
                     <button
@@ -145,7 +145,7 @@
                                     <template x-if="item.action_url">
                                         <a
                                             :href="item.action_url"
-                                            class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                                            class="text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline"
                                             @click="markRead(item.id)"
                                         >{{ __('Abrir') }}</a>
                                     </template>
@@ -163,7 +163,7 @@
                 </template>
             </div>
             <div class="border-t border-gray-200 dark:border-gray-700 px-3 py-2">
-                <a href="{{ route('notifications.index') }}" class="block text-center text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                <a href="{{ route('notifications.index') }}" class="block text-center text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline">
                     {{ __('Ver todas as notificações') }}
                 </a>
             </div>

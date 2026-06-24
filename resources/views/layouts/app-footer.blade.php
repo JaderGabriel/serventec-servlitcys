@@ -143,7 +143,7 @@
                         @endif
                     </p>
                     @if (filled($municipalityLabel))
-                        <p class="text-[11px] text-teal-800/90 dark:text-teal-300/90 leading-relaxed">
+                        <p class="text-[11px] text-blue-800/90 dark:text-blue-300/90 leading-relaxed">
                             <x-ui.icon name="map-pin" class="inline h-3.5 w-3.5 -mt-px me-0.5 opacity-80" />
                             <span class="font-medium">{{ __('Município:') }}</span>
                             {{ $municipalityLabel }}

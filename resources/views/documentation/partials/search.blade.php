@@ -27,12 +27,12 @@
             autocomplete="off"
             spellcheck="false"
             placeholder="{{ __('Pesquisar documentos…') }}"
-            class="serv-docs-search-input w-full rounded-lg border border-slate-200/90 bg-white py-2 pl-9 pr-9 text-sm text-slate-800 shadow-sm placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-600 dark:bg-slate-900/80 dark:text-slate-100 dark:placeholder:text-slate-500"
+            class="serv-docs-search-input w-full rounded-lg border border-slate-200/90 bg-white py-2 pl-9 pr-9 text-sm text-slate-800 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-slate-600 dark:bg-slate-900/80 dark:text-slate-100 dark:placeholder:text-slate-500"
         />
         <span
             x-show="loading"
             x-cloak
-            class="absolute inset-y-0 right-0 flex items-center pr-3 text-teal-600 dark:text-teal-400"
+            class="absolute inset-y-0 right-0 flex items-center pr-3 text-blue-600 dark:text-blue-400"
             aria-hidden="true"
         >
             <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -61,13 +61,13 @@
             <a
                 :href="item.url"
                 class="serv-docs-search-hit block border-b border-slate-100 px-3 py-2.5 text-sm last:border-b-0 dark:border-slate-800"
-                :class="index === activeIndex ? 'bg-teal-50 dark:bg-teal-950/40' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'"
+                :class="index === activeIndex ? 'bg-blue-50 dark:bg-blue-950/40' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'"
                 role="option"
                 :aria-selected="index === activeIndex"
                 @mouseenter="activeIndex = index"
             >
                 <span class="font-medium text-slate-900 dark:text-slate-100" x-text="item.label"></span>
-                <span class="mt-0.5 block text-[10px] uppercase tracking-wide text-teal-700/90 dark:text-teal-300/90" x-text="item.section_title"></span>
+                <span class="mt-0.5 block text-[10px] uppercase tracking-wide text-blue-700/90 dark:text-blue-300/90" x-text="item.section_title"></span>
                 <span
                     x-show="item.hint"
                     class="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400"

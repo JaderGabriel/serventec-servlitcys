@@ -64,7 +64,7 @@
         </div>
     @endif
 
-    <x-dashboard.serv-tab-intro :title="__('Inclusão e educação especial (NEE)')" tone="teal">
+    <x-dashboard.serv-tab-intro :title="__('Inclusão e educação especial (NEE)')" tone="blue">
         {{ $inclusionData['intro'] ?? __('Matrículas NEE, cadastro de deficiências, turmas AEE e recursos de prova INEP no recorte dos filtros.') }}
         @if (count($tabMeta) > 0)
             <x-slot name="meta">
@@ -75,10 +75,10 @@
 
     <p class="serv-callout text-sm">
         {{ __('Aprofundar:') }}
-        <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Discrepâncias') }}</button>
+        <button type="button" class="text-sky-600 dark:text-sky-400 hover:underline font-medium" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Discrepâncias') }}</button>
         {{ __('(rotinas Censo/VAAR)') }}
         ·
-        <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Serventec') }}</button>
+        <button type="button" class="text-sky-600 dark:text-sky-400 hover:underline font-medium" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Serventec') }}</button>
         {{ __('(diagnóstico municipal)') }}
     </p>
 
@@ -97,7 +97,7 @@
     @endif
 
     @if ($recursoProva !== null)
-        <div class="rounded-lg border border-teal-200/80 dark:border-teal-800/50 bg-white dark:bg-gray-900/40 px-4 py-4 space-y-4">
+        <div class="rounded-lg border border-blue-200/80 dark:border-blue-800/50 bg-white dark:bg-gray-900/40 px-4 py-4 space-y-4">
             <div>
                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Recursos de prova INEP (Censo)') }}</h3>
                 <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">{{ __('Conferência cadastral: apoios de prova e turmas AEE sem deficiência registada.') }}</p>
@@ -109,7 +109,7 @@
             </div>
             @if ($recursoDisponivel)
                 <dl class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                    <div class="rounded-md bg-teal-50/80 dark:bg-teal-950/30 border border-teal-200/60 dark:border-teal-800/40 px-3 py-2">
+                    <div class="rounded-md bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/40 px-3 py-2">
                         <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Com recurso de prova') }}</dt>
                         <dd class="tabular-nums font-semibold text-gray-900 dark:text-gray-100">{{ number_format((int) ($recursoProva['com_recurso'] ?? 0)) }}</dd>
                     </div>

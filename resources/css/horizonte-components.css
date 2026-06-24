@@ -31,7 +31,7 @@
     .serv-horizonte-sge-panel {
         @apply w-full max-w-lg max-h-[calc(100%-2rem)] overflow-y-auto rounded-xl border border-slate-200
             bg-white p-5 shadow-xl ring-1 ring-slate-900/5 space-y-4
-            dark:border-slate-700 dark:bg-slate-900 dark:ring-teal-500/10;
+            dark:border-slate-700 dark:bg-slate-900 dark:ring-blue-500/10;
     }
 
     .serv-horizonte-gis__toolbar {
@@ -47,7 +47,7 @@
     }
 
     .serv-horizonte-gis__mode-pill.is-regional {
-        @apply bg-teal-100 text-teal-900 ring-teal-200 dark:bg-teal-950/50 dark:text-teal-100 dark:ring-teal-800;
+        @apply bg-blue-100 text-blue-900 ring-blue-200 dark:bg-blue-950/50 dark:text-blue-100 dark:ring-blue-800;
     }
 
     .serv-horizonte-gis__map {
@@ -124,7 +124,7 @@
     }
 
     .serv-horizonte-map-toolbar-btn.is-active {
-        @apply bg-teal-50 text-teal-900 ring-teal-300/80 dark:bg-teal-950/40 dark:text-teal-100 dark:ring-teal-700;
+        @apply bg-blue-50 text-blue-900 ring-blue-300/80 dark:bg-blue-950/40 dark:text-blue-100 dark:ring-blue-700;
     }
 
     .serv-horizonte-map-float-controls {
@@ -146,7 +146,7 @@
     }
 
     .serv-horizonte-map-float-btn.is-active {
-        @apply bg-teal-50 text-teal-900 ring-teal-400/80 dark:bg-teal-950/60 dark:text-teal-100 dark:ring-teal-600;
+        @apply bg-blue-50 text-blue-900 ring-blue-400/80 dark:bg-blue-950/60 dark:text-blue-100 dark:ring-blue-600;
     }
 
     .serv-horizonte-kpi {
@@ -155,7 +155,7 @@
     }
 
     .serv-horizonte-kpi__info {
-        @apply absolute top-2.5 end-2.5 text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 cursor-help;
+        @apply absolute top-2.5 end-2.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-help;
     }
 
     .serv-horizonte-filters {
@@ -172,12 +172,12 @@
     }
 
     .serv-horizonte-filter-chip {
-        @apply inline-flex items-center gap-1 rounded-full bg-teal-100 px-2 py-0.5 text-[11px] font-medium
-            text-teal-900 ring-1 ring-teal-200/80 dark:bg-teal-950/50 dark:text-teal-100 dark:ring-teal-800/60;
+        @apply inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium
+            text-blue-900 ring-1 ring-blue-200/80 dark:bg-blue-950/50 dark:text-blue-100 dark:ring-blue-800/60;
     }
 
     .serv-horizonte-filter-chip--count {
-        @apply bg-indigo-100 text-indigo-900 ring-indigo-200/80 dark:bg-indigo-950/50 dark:text-indigo-100 dark:ring-indigo-800/60;
+        @apply bg-sky-100 text-sky-900 ring-sky-200/80 dark:bg-sky-950/50 dark:text-sky-100 dark:ring-sky-800/60;
     }
 
     .serv-horizonte-tier-pill {
@@ -185,7 +185,7 @@
     }
 
     .serv-horizonte-tier-pill.is-active {
-        @apply ring-2 ring-offset-1 ring-teal-500/60 dark:ring-offset-slate-900;
+        @apply ring-2 ring-offset-1 ring-blue-500/60 dark:ring-offset-slate-900;
     }
 
     .serv-horizonte-methodology {
@@ -269,12 +269,12 @@
     }
 
     .serv-horizonte-cmd__accent {
-        @apply pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-teal-500 via-indigo-500 to-rose-500;
+        @apply pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-blue-500 via-sky-500 to-rose-500;
     }
 
     .serv-horizonte-cmd__bar::after {
         content: "";
-        @apply pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-teal-500/80 via-indigo-500/80 to-rose-500/80;
+        @apply pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-blue-500/80 via-sky-500/80 to-rose-500/80;
     }
 
     .serv-horizonte-cmd__bar-grid {
@@ -307,8 +307,8 @@
         @apply text-rose-800 dark:text-rose-200;
     }
 
-    .serv-horizonte-cmd__highlight-item--teal .serv-horizonte-cmd__highlight-value {
-        @apply text-teal-800 dark:text-teal-200;
+    .serv-horizonte-cmd__highlight-item--blue .serv-horizonte-cmd__highlight-value {
+        @apply text-blue-800 dark:text-blue-200;
     }
 
     .serv-horizonte-cmd__highlight-item--muted .serv-horizonte-cmd__highlight-value {
@@ -336,9 +336,9 @@
     }
 
     .serv-horizonte-cmd__expand-btn {
-        @apply inline-flex items-center gap-1.5 rounded-lg border border-indigo-200/90 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-900
-            transition hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50
-            dark:border-indigo-800/70 dark:bg-indigo-950/40 dark:text-indigo-100 dark:hover:bg-indigo-950/60;
+        @apply inline-flex items-center gap-1.5 rounded-lg border border-sky-200/90 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-900
+            transition hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50
+            dark:border-sky-800/70 dark:bg-sky-950/40 dark:text-sky-100 dark:hover:bg-sky-950/60;
     }
 
     .serv-horizonte-cmd.is-expanded .serv-horizonte-cmd__expand-btn {
@@ -418,8 +418,8 @@
 
     .serv-horizonte-cmd__segment {
         @apply inline-flex min-w-0 max-w-full flex-1 flex-col rounded-xl border border-slate-200/90 bg-white px-3 py-2.5 text-left transition
-            hover:border-teal-300 hover:bg-teal-50/60 disabled:opacity-60
-            dark:border-slate-700 dark:bg-slate-900/60 dark:hover:border-teal-700 dark:hover:bg-teal-950/30
+            hover:border-blue-300 hover:bg-blue-50/60 disabled:opacity-60
+            dark:border-slate-700 dark:bg-slate-900/60 dark:hover:border-blue-700 dark:hover:bg-blue-950/30
             sm:min-w-[9rem] sm:max-w-[14rem] sm:flex-none;
     }
 
@@ -438,7 +438,7 @@
 
     .serv-horizonte-help-nav__item {
         @apply inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/40;
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40;
     }
 
     .serv-horizonte-help-nav__icon {
@@ -450,11 +450,11 @@
     }
 
     .serv-horizonte-help-nav__item--tour {
-        @apply text-teal-900 hover:bg-teal-100/80 dark:text-teal-100 dark:hover:bg-teal-950/50;
+        @apply text-blue-900 hover:bg-blue-100/80 dark:text-blue-100 dark:hover:bg-blue-950/50;
     }
 
     .serv-horizonte-help-nav__item--tour .serv-horizonte-help-nav__icon {
-        @apply bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300;
+        @apply bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300;
     }
 
     .serv-horizonte-help-nav__item--demo {
@@ -492,7 +492,7 @@
     }
 
     .serv-horizonte-workspace__tab.is-active {
-        @apply border-b-2 border-teal-600 bg-teal-50/80 text-teal-900 dark:border-teal-400 dark:bg-teal-950/30 dark:text-teal-100;
+        @apply border-b-2 border-blue-600 bg-blue-50/80 text-blue-900 dark:border-blue-400 dark:bg-blue-950/30 dark:text-blue-100;
     }
 
     .serv-horizonte-workspace__body {
@@ -504,8 +504,8 @@
     }
 
     .serv-horizonte-uf-summary {
-        @apply border-b border-indigo-200/80 bg-gradient-to-br from-indigo-50/90 via-white to-slate-50 px-4 py-3 shadow-sm
-            dark:border-indigo-900/50 dark:from-indigo-950/30 dark:via-slate-900/90 dark:to-slate-900/80;
+        @apply border-b border-sky-200/80 bg-gradient-to-br from-sky-50/90 via-white to-slate-50 px-4 py-3 shadow-sm
+            dark:border-sky-900/50 dark:from-sky-950/30 dark:via-slate-900/90 dark:to-slate-900/80;
     }
 
     .serv-horizonte-uf-summary__head {
@@ -513,7 +513,7 @@
     }
 
     .serv-horizonte-uf-summary__badge {
-        @apply inline-flex shrink-0 items-center rounded-md bg-indigo-600 px-2 py-0.5 text-[11px] font-bold tracking-wide text-white;
+        @apply inline-flex shrink-0 items-center rounded-md bg-sky-600 px-2 py-0.5 text-[11px] font-bold tracking-wide text-white;
     }
 
     .serv-horizonte-uf-summary__title {
@@ -658,7 +658,7 @@
     }
 
     .serv-horizonte-lens-bar__btn.is-active {
-        @apply bg-teal-100 text-teal-900 dark:bg-teal-950/50 dark:text-teal-100;
+        @apply bg-blue-100 text-blue-900 dark:bg-blue-950/50 dark:text-blue-100;
     }
 
     .serv-horizonte-filters--dock {
@@ -674,8 +674,8 @@
     }
 
     .serv-horizonte-filters__step {
-        @apply flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-100 text-[11px] font-bold text-teal-800
-            dark:bg-teal-950/50 dark:text-teal-200;
+        @apply flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[11px] font-bold text-blue-800
+            dark:bg-blue-950/50 dark:text-blue-200;
     }
 
     .serv-horizonte-filters__title {
@@ -704,12 +704,12 @@
 
     .serv-horizonte-lens-card {
         @apply flex items-center gap-2 rounded-lg border border-slate-200/90 bg-white px-2.5 py-2 text-left text-xs font-medium
-            transition hover:border-teal-300 hover:bg-teal-50/50 disabled:opacity-50
-            dark:border-slate-700 dark:bg-slate-900/60 dark:hover:border-teal-700 dark:hover:bg-teal-950/20;
+            transition hover:border-blue-300 hover:bg-blue-50/50 disabled:opacity-50
+            dark:border-slate-700 dark:bg-slate-900/60 dark:hover:border-blue-700 dark:hover:bg-blue-950/20;
     }
 
     .serv-horizonte-lens-card.is-active {
-        @apply border-teal-500 bg-teal-50 ring-1 ring-teal-500/30 dark:border-teal-600 dark:bg-teal-950/40 dark:ring-teal-500/20;
+        @apply border-blue-500 bg-blue-50 ring-1 ring-blue-500/30 dark:border-blue-600 dark:bg-blue-950/40 dark:ring-blue-500/20;
     }
 
     .serv-horizonte-lens-card__dot {
@@ -730,8 +730,8 @@
 
     .serv-horizonte-toggle-pill {
         @apply inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 ring-1 ring-slate-200/80 bg-white/80
-            dark:bg-slate-900/60 dark:ring-slate-600 has-[:checked]:ring-teal-400 has-[:checked]:bg-teal-50/80
-            dark:has-[:checked]:bg-teal-950/30;
+            dark:bg-slate-900/60 dark:ring-slate-600 has-[:checked]:ring-blue-400 has-[:checked]:bg-blue-50/80
+            dark:has-[:checked]:bg-blue-950/30;
     }
 
     .serv-horizonte-toggle-pill--amber {
@@ -740,8 +740,8 @@
 
     .serv-horizonte-source-pill {
         @apply inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] ring-1 ring-slate-200/80 bg-white/80
-            dark:bg-slate-900/60 dark:ring-slate-600 has-[:checked]:ring-teal-400 has-[:checked]:bg-teal-50/80
-            dark:has-[:checked]:bg-teal-950/30;
+            dark:bg-slate-900/60 dark:ring-slate-600 has-[:checked]:ring-blue-400 has-[:checked]:bg-blue-50/80
+            dark:has-[:checked]:bg-blue-950/30;
     }
 
     .serv-horizonte-filter-chip--lens {
@@ -750,7 +750,7 @@
 
     .serv-horizonte-filter-chip__remove {
         @apply ms-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-sm leading-none
-            text-teal-700 hover:bg-teal-200/80 dark:text-teal-200 dark:hover:bg-teal-800/50;
+            text-blue-700 hover:bg-blue-200/80 dark:text-blue-200 dark:hover:bg-blue-800/50;
     }
 
     /* Horizonte — tour guiado in-app */
@@ -763,7 +763,7 @@
     }
 
     .serv-horizonte-tour__spotlight {
-        @apply absolute rounded-xl border-2 border-teal-400 shadow-[0_0_0_9999px_rgba(15,23,42,0.52)] pointer-events-none transition-all duration-300 ease-out;
+        @apply absolute rounded-xl border-2 border-blue-400 shadow-[0_0_0_9999px_rgba(15,23,42,0.52)] pointer-events-none transition-all duration-300 ease-out;
         animation: serv-horizonte-tour-pulse 2.4s ease-in-out infinite;
     }
 
@@ -911,7 +911,7 @@
     }
 
     .serv-horizonte-demo__filter-pill.is-active {
-        @apply bg-teal-50 text-teal-900 ring-teal-300 dark:bg-teal-950/40 dark:text-teal-100 dark:ring-teal-700;
+        @apply bg-blue-50 text-blue-900 ring-blue-300 dark:bg-blue-950/40 dark:text-blue-100 dark:ring-blue-700;
     }
 
     .serv-horizonte-demo__filter-line {
@@ -1025,7 +1025,7 @@
     }
 
     .serv-horizonte-demo__step-num--1 {
-        @apply bg-teal-100 text-teal-900 dark:bg-teal-950/60 dark:text-teal-100;
+        @apply bg-blue-100 text-blue-900 dark:bg-blue-950/60 dark:text-blue-100;
     }
 
     .serv-horizonte-demo__step-num--2 {

@@ -10,9 +10,9 @@
     </x-pulse::card-header>
     <x-pulse::scroll :expand="$expand" wire:poll.15s="">
         <div class="grid gap-4 sm:grid-cols-2">
-            <div class="rounded-xl border border-teal-100/90 bg-teal-50/40 p-4 dark:border-teal-900/50 dark:bg-teal-950/25">
-                <p class="text-xs font-semibold uppercase tracking-wide text-teal-800 dark:text-teal-200">{{ __('Geo (unidades)') }}</p>
-                <p class="mt-1 text-[11px] italic text-teal-700/90 dark:text-teal-300/90">/admin/geo-sync</p>
+            <div class="rounded-xl border border-blue-100/90 bg-blue-50/40 p-4 dark:border-blue-900/50 dark:bg-blue-950/25">
+                <p class="text-xs font-semibold uppercase tracking-wide text-blue-800 dark:text-blue-200">{{ __('Geo (unidades)') }}</p>
+                <p class="mt-1 text-[11px] italic text-blue-700/90 dark:text-blue-300/90">/admin/geo-sync</p>
                 <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
                     <div>
                         <dt class="text-xs text-gray-500 dark:text-gray-400">{{ __('Pedidos (Pulse)') }}</dt>

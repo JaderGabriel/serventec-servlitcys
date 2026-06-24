@@ -51,7 +51,7 @@ export function registerNotificationBellData(Alpine) {
             if (item.priority === "high") {
                 return "bg-amber-50/50 dark:bg-amber-950/25";
             }
-            return "bg-indigo-50/50 dark:bg-indigo-950/30";
+            return "bg-sky-50/50 dark:bg-sky-950/30";
         },
         dotClass(item) {
             if (item.is_critical || item.icon === "error") {
@@ -75,7 +75,7 @@ export function registerNotificationBellData(Alpine) {
                 violet:
                     "bg-violet-100 text-violet-900 dark:bg-violet-950/50 dark:text-violet-200",
                 indigo:
-                    "bg-indigo-100 text-indigo-900 dark:bg-indigo-950/50 dark:text-indigo-200",
+                    "bg-sky-100 text-sky-900 dark:bg-sky-950/50 dark:text-sky-200",
                 rose: "bg-rose-100 text-rose-900 dark:bg-rose-950/50 dark:text-rose-200",
                 slate: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200",
             };

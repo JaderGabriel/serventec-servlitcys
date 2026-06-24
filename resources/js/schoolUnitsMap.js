@@ -115,9 +115,9 @@ function markerStrokeFill(mk) {
         return { color: "#64748b", fill: "#94a3b8" };
     }
     if (key === "unknown") {
-        return { color: "#4f46e5", fill: "#a5b4fc" };
+        return { color: "#0284c7", fill: "#7dd3fc" };
     }
-    return { color: "#4f46e5", fill: "#818cf8" };
+    return { color: "#2563eb", fill: "#93c5fd" };
 }
 
 function buildConciliationHtml(c) {
@@ -183,7 +183,7 @@ function buildLinksSection(links) {
     for (const ln of links) {
         const href = safeExternalHref(ln?.url);
         const label = escapeHtml(ln?.label ?? "Link");
-        block += `<a href="${href}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-2.5 py-1.5 text-center text-[11px] font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">${label}</a>`;
+        block += `<a href="${href}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-md bg-sky-600 px-2.5 py-1.5 text-center text-[11px] font-medium text-white shadow-sm hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500">${label}</a>`;
     }
     block += `</div>`;
     return block;

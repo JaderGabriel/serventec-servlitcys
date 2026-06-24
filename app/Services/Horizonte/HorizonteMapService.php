@@ -23,6 +23,7 @@ use App\Support\Horizonte\HorizonteUfFundebInsights;
 use App\Support\Horizonte\HorizonteMapPresenter;
 use App\Support\Horizonte\HorizonteTransferScoring;
 use App\Support\Horizonte\HorizonteMapCacheBuster;
+use App\Support\Horizonte\HorizonteSaebLookupYears;
 use App\Support\Horizonte\HorizonteMunicipalSgeResolver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -1028,7 +1029,7 @@ final class HorizonteMapService
             return [];
         }
 
-        $years = [$refYear, $refYear - 1, $refYear - 2, $refYear - 3];
+        $years = HorizonteSaebLookupYears::forReferenceYear($refYear);
 
         $query = SaebIndicatorPoint::query()
             ->whereIn('ano', $years)

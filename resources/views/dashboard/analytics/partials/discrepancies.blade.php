@@ -56,7 +56,7 @@
             ] : null,
         ],
         ['label' => __('Corrigíveis no i-Educar'), 'value' => number_format((int) ($summary['corrigiveis'] ?? 0)), 'tone' => 'emerald'],
-        ['label' => __('Escolas afetadas'), 'value' => number_format((int) ($summary['escolas_afetadas'] ?? 0)), 'tone' => 'teal'],
+        ['label' => __('Escolas afetadas'), 'value' => number_format((int) ($summary['escolas_afetadas'] ?? 0)), 'tone' => 'blue'],
     ];
     $publicSources = is_array($d['public_data_sources'] ?? null) ? $d['public_data_sources'] : [];
     $hasPublicSources = count($publicSources['categories'] ?? []) > 0;
@@ -248,7 +248,7 @@
                                 :exportMeta="$chartExportContext"
                                 :compact="true"
                                 chartPanelId="chart-discrepancias-resumo"
-                                panelTone="teal"
+                                panelTone="blue"
                             />
                         @endif
                         @if ($chartFinanceiro !== null)

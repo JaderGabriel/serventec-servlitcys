@@ -211,7 +211,7 @@ final class FinanceComparativoInformeBuilder
             ];
         }
 
-        $tone = (string) ($proj['tone'] ?? 'teal');
+        $tone = (string) ($proj['tone'] ?? 'blue');
 
         return [
             'id' => 'projecao_exercicio',

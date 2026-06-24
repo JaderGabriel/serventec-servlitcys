@@ -5,10 +5,10 @@
     $updates = is_array($panel['updates'] ?? null) ? $panel['updates'] : [];
 @endphp
 
-<section class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/40 dark:bg-indigo-950/25 p-4 space-y-4">
+<section class="rounded-lg border border-sky-200 dark:border-sky-800 bg-sky-50/40 dark:bg-sky-950/25 p-4 space-y-4">
     <div>
-        <h4 class="text-sm font-semibold text-indigo-950 dark:text-indigo-100">{{ __('admin_ieducar_compatibility.official_sources.title') }}</h4>
-        <p class="text-xs text-indigo-900/90 dark:text-indigo-200/90 mt-1 leading-relaxed">
+        <h4 class="text-sm font-semibold text-sky-950 dark:text-sky-100">{{ __('admin_ieducar_compatibility.official_sources.title') }}</h4>
+        <p class="text-xs text-sky-900/90 dark:text-sky-200/90 mt-1 leading-relaxed">
             {{ __('admin_ieducar_compatibility.official_sources.intro') }}
         </p>
         @if (filled($panel['last_import_max'] ?? null))
@@ -25,7 +25,7 @@
             <ul class="text-xs space-y-1">
                 @foreach ($portarias as $p)
                     <li>
-                        <a href="{{ $p['url'] }}" target="_blank" rel="noopener" class="text-indigo-800 dark:text-indigo-300 underline">{{ $p['label'] ?? '' }}</a>
+                        <a href="{{ $p['url'] }}" target="_blank" rel="noopener" class="text-sky-800 dark:text-sky-300 underline">{{ $p['label'] ?? '' }}</a>
                     </li>
                 @endforeach
             </ul>
@@ -38,7 +38,7 @@
             <ul class="text-xs flex flex-wrap gap-x-3 gap-y-1">
                 @foreach ($fontes as $f)
                     <li>
-                        <a href="{{ $f['url'] }}" target="_blank" rel="noopener" class="underline text-indigo-700 dark:text-indigo-300">{{ $f['label'] ?? '' }}</a>
+                        <a href="{{ $f['url'] }}" target="_blank" rel="noopener" class="underline text-sky-700 dark:text-sky-300">{{ $f['label'] ?? '' }}</a>
                     </li>
                 @endforeach
             </ul>

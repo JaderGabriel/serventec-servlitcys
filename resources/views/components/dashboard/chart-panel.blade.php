@@ -31,25 +31,25 @@
     $kpiTotalHint = is_array($chart) && ! empty($chart['kpi_total_hint']) ? (string) $chart['kpi_total_hint'] : null;
     $toneIndigo = $panelTone === 'indigo';
     $panelRootClass = $toneIndigo
-        ? 'border-indigo-200/90 dark:border-indigo-800/65 bg-white dark:bg-gray-800 ring-1 ring-indigo-100/70 dark:ring-indigo-900/45'
+        ? 'border-sky-200/90 dark:border-sky-800/65 bg-white dark:bg-gray-800 ring-1 ring-sky-100/70 dark:ring-sky-900/45'
         : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800';
     $panelHeaderClass = $toneIndigo
-        ? 'border-indigo-100 dark:border-indigo-900/55 bg-indigo-50/85 dark:bg-indigo-950/35'
+        ? 'border-sky-100 dark:border-sky-900/55 bg-sky-50/85 dark:bg-sky-950/35'
         : 'border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40';
     $panelTitleClass = $toneIndigo
-        ? 'text-indigo-950 dark:text-indigo-100'
+        ? 'text-sky-950 dark:text-sky-100'
         : 'text-gray-800 dark:text-gray-200';
     $panelSubtitleClass = $toneIndigo
-        ? 'text-indigo-900/85 dark:text-indigo-200/85'
+        ? 'text-sky-900/85 dark:text-sky-200/85'
         : 'text-gray-600 dark:text-gray-400';
     $zoomBarClass = $toneIndigo
-        ? 'border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/70 dark:bg-indigo-950/30'
+        ? 'border-sky-100 dark:border-sky-900/50 bg-sky-50/70 dark:bg-sky-950/30'
         : 'border-gray-100 dark:border-gray-700 bg-slate-50/90 dark:bg-slate-950/40';
     $zoomHelpTextClass = $toneIndigo
-        ? 'text-indigo-900/85 dark:text-indigo-200/85'
+        ? 'text-sky-900/85 dark:text-sky-200/85'
         : 'text-slate-600 dark:text-slate-400';
     $footnoteBarClass = $toneIndigo
-        ? 'border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/60 dark:bg-indigo-950/25 text-indigo-900/90 dark:text-indigo-200/90'
+        ? 'border-sky-100 dark:border-sky-900/50 bg-sky-50/60 dark:bg-sky-950/25 text-sky-900/90 dark:text-sky-200/90'
         : 'border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400';
 @endphp
 
@@ -88,7 +88,7 @@
                 <button
                     type="button"
                     @click="exportPng()"
-                    class="inline-flex w-full sm:w-auto min-h-[44px] sm:min-h-0 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md bg-indigo-600 px-3 py-2.5 sm:py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
+                    class="inline-flex w-full sm:w-auto min-h-[44px] sm:min-h-0 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md bg-sky-600 px-3 py-2.5 sm:py-1.5 text-xs font-medium text-white shadow-sm hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
                     title="{{ __('Exportar PNG com cabeçalho, recorte e legenda (1 ou 2 colunas)') }}"
                 >
                     {{ __('PNG') }}
@@ -96,7 +96,7 @@
                 <button
                     type="button"
                     @click="legendModalOpen = true"
-                    class="inline-flex w-full sm:w-auto min-h-[44px] sm:min-h-0 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2.5 sm:py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
+                    class="inline-flex w-full sm:w-auto min-h-[44px] sm:min-h-0 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2.5 sm:py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
                     title="{{ __('Ver todos os rótulos e valores numa lista') }}"
                 >
                     <svg class="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -109,7 +109,7 @@
                     x-show="filterUi"
                     x-cloak
                     @click="filterModalOpen = true"
-                    class="inline-flex w-full sm:w-auto min-h-[44px] sm:min-h-0 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2.5 sm:py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
+                    class="inline-flex w-full sm:w-auto min-h-[44px] sm:min-h-0 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-gray-300 bg-white px-3 py-2.5 sm:py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
                     title="{{ __('Mostrar ou ocultar categorias ou séries no gráfico') }}"
                 >
                     <svg class="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -134,7 +134,7 @@
                 <button
                     type="button"
                     @click="zoomOut()"
-                    class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
                     title="{{ __('Reduzir zoom') }}"
                     aria-label="{{ __('Reduzir zoom') }}"
                 >
@@ -143,7 +143,7 @@
                 <button
                     type="button"
                     @click="zoomIn()"
-                    class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
                     title="{{ __('Aumentar zoom') }}"
                     aria-label="{{ __('Aumentar zoom') }}"
                 >
@@ -152,7 +152,7 @@
                 <button
                     type="button"
                     @click="resetZoomView()"
-                    class="inline-flex h-11 min-w-[2.75rem] shrink-0 items-center justify-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-indigo-900 shadow-sm hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-100 dark:hover:bg-indigo-900/80 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    class="inline-flex h-11 min-w-[2.75rem] shrink-0 items-center justify-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-3 text-sky-900 shadow-sm hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/80 dark:text-sky-100 dark:hover:bg-sky-900/80 focus:outline-none focus:ring-2 focus:ring-sky-500"
                     title="{{ __('Repor vista inicial (zoom e posição)') }}"
                     aria-label="{{ __('Repor vista inicial') }}"
                 >
@@ -216,7 +216,7 @@
                         <template x-for="(row, idx) in legendRows()" :key="idx">
                             <li
                                 class="py-2.5 border-b border-gray-100 last:border-0 dark:border-gray-700"
-                                :class="row.isTotal ? 'bg-indigo-50/80 dark:bg-indigo-950/35 font-semibold' : ''"
+                                :class="row.isTotal ? 'bg-sky-50/80 dark:bg-sky-950/35 font-semibold' : ''"
                             >
                                 <span class="block break-words font-medium" x-text="row.label"></span>
                                 <span class="tabular-nums text-xs text-gray-600 dark:text-gray-400" x-show="row.value !== null && row.value !== undefined" x-text="row.valueText"></span>
@@ -264,7 +264,7 @@
                             <li class="flex items-start gap-3 border-b border-gray-100 py-2.5 last:border-0 dark:border-gray-700">
                                 <input
                                     type="checkbox"
-                                    class="mt-0.5 h-5 w-5 shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800"
+                                    class="mt-0.5 h-5 w-5 shrink-0 rounded border-gray-300 text-sky-600 focus:ring-sky-500 dark:border-gray-600 dark:bg-gray-800"
                                     :checked="row.visible"
                                     @change="toggleFilterRow(row)"
                                 />
@@ -275,7 +275,7 @@
                     <div class="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-700">
                         <button
                             type="button"
-                            class="min-h-[44px] w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            class="min-h-[44px] w-full rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
                             @click="filterModalOpen = false"
                         >
                             {{ __('Concluir') }}

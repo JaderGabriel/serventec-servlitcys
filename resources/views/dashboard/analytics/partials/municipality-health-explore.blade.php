@@ -12,7 +12,7 @@
         'amber' => 'diag-explore-card--amber',
         'violet' => 'diag-explore-card--violet',
         'indigo' => 'diag-explore-card--indigo',
-        default => 'diag-explore-card--teal',
+        default => 'diag-explore-card--blue',
     };
 
     $statusBadge = static fn (string $st): string => match ($st) {
@@ -26,7 +26,7 @@
 <section id="diag-explorar" class="diag-explore-section scroll-mt-24">
     <header class="diag-explore-section__head">
         <div>
-            <p class="serv-eyebrow text-teal-800 dark:text-teal-300">{{ __('Navegação rápida') }}</p>
+            <p class="serv-eyebrow text-blue-800 dark:text-blue-300">{{ __('Navegação rápida') }}</p>
             <h3 class="text-base font-semibold font-display text-serv-navy dark:text-slate-100 mt-0.5">
                 {{ __('Roteiro gerencial') }}
             </h3>

@@ -1,20 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
     <defs>
         <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#4f46e5"/>
-            <stop offset="1" stop-color="#059669"/>
+            <stop offset="0" stop-color="#1d4ed8"/>
+            <stop offset="1" stop-color="#2563eb"/>
         </linearGradient>
     </defs>
     <rect width="32" height="32" rx="7" fill="url(#bg)"/>
     <g fill="#fff">
-        <path opacity="0.35" d="M2 24.5Q10 21.5 16 20.5Q22 21.5 30 24.5V30H2Z" />
-        <rect x="4" y="16" width="3.5" height="7" rx="0.8" opacity="0.85"/>
-        <rect x="8.5" y="12" width="3.5" height="11" rx="0.8" opacity="0.95"/>
-        <rect x="13" y="8" width="3.5" height="15" rx="0.8"/>
-        <circle cx="16.5" cy="15.5" r="1.6" opacity="0.95"/>
-        <path opacity="0.9" d="M16.5 17.1L15.2 20.2h2.6Z" />
-        <path opacity="0.95" d="M21 7c1.1 0 2 .5 2.7 1.3V21c-.8-.6-1.7-1-2.7-1-1 0-1.9.4-2.6.9V8.3c.6-.7 1.5-1.1 2.5-1.1h.1Z"/>
-        <path opacity="0.55" d="M24 7c.9.7 1.5 1.7 1.5 2.9V21c-.8-.7-1.8-1.1-2.9-1.1-1 0-1.9.3-2.7.8V8.5c.6-.8 1.5-1.2 2.5-1.2Z"/>
+        {{-- Barras --}}
+        <rect x="4" y="18" width="3" height="6" rx="0.7" opacity="0.75"/>
+        <rect x="8.5" y="15" width="3" height="9" rx="0.7" opacity="0.9"/>
+        <rect x="13" y="11" width="3" height="13" rx="0.7"/>
+        {{-- Tendência --}}
+        <path d="M5.5 16.5 10 13.5 14.5 10" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M14.5 10l-1.5.6 1 1.5z"/>
+        {{-- Capelo --}}
+        <path d="M16.5 14.5 20 12.5 23.5 14.5 20 16.5Z" opacity="0.95"/>
+        <path d="M18.8 15v3.8c0 .35.3.6.7.6h1.5c.4 0 .7-.25.7-.6V15" opacity="0.8"/>
+        <circle cx="22.8" cy="13.2" r="0.65" opacity="0.55"/>
+        {{-- Horizonte --}}
+        <circle cx="26.5" cy="12.5" r="1.5" opacity="0.95"/>
     </g>
-    <path d="M4 23.5Q16 19.5 28 23.5" fill="none" stroke="#fff" stroke-width="0.9" stroke-linecap="round" opacity="0.45"/>
+    <path d="M23.5 16.5q3-4.5 6 0" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity="0.85"/>
 </svg>

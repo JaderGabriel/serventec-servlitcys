@@ -45,7 +45,7 @@
                                 <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ $incident['title'] }}</p>
                                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                                     @if ($moduleAnchor)
-                                        <a href="{{ $moduleAnchor }}" class="hover:text-teal-700 dark:hover:text-teal-300 hover:underline">{{ $mod['label'] ?? $incident['module_id'] }}</a>
+                                        <a href="{{ $moduleAnchor }}" class="hover:text-blue-700 dark:hover:text-blue-300 hover:underline">{{ $mod['label'] ?? $incident['module_id'] }}</a>
                                     @else
                                         {{ $mod['label'] ?? $incident['module_id'] }}
                                     @endif

@@ -37,11 +37,11 @@
 
         @if ($prev !== null)
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-200/80 dark:border-slate-700/80">
-                <div class="serv-panel border-teal-200/90 dark:border-teal-800/60 bg-teal-50/40 dark:bg-teal-950/20 px-3 py-2">
-                    <p class="text-[10px] font-semibold uppercase text-teal-800 dark:text-teal-300">{{ $prev['real']['label'] ?? '' }}</p>
-                    <p class="font-semibold tabular-nums text-teal-950 dark:text-teal-100">{{ $prev['real']['value'] ?? '—' }}</p>
+                <div class="serv-panel border-blue-200/90 dark:border-blue-800/60 bg-blue-50/40 dark:bg-blue-950/20 px-3 py-2">
+                    <p class="text-[10px] font-semibold uppercase text-blue-800 dark:text-blue-300">{{ $prev['real']['label'] ?? '' }}</p>
+                    <p class="font-semibold tabular-nums text-blue-950 dark:text-blue-100">{{ $prev['real']['value'] ?? '—' }}</p>
                     @if (filled($prev['real']['hint'] ?? null))
-                        <p class="text-[11px] text-teal-900/80 dark:text-teal-200/80">{{ $prev['real']['hint'] }}</p>
+                        <p class="text-[11px] text-blue-900/80 dark:text-blue-200/80">{{ $prev['real']['hint'] }}</p>
                     @endif
                 </div>
                 <div class="serv-panel border-slate-200/90 dark:border-slate-600/80 bg-slate-50/50 dark:bg-slate-900/40 px-3 py-2">

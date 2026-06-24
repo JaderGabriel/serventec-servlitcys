@@ -256,11 +256,11 @@
     color: rgb(253 164 175 / 0.9);
 }
 
-.serv-horizonte-muni-tooltip__fundeb-pct--teal {
+.serv-horizonte-muni-tooltip__fundeb-pct--blue {
     color: rgb(15 118 110 / 0.9);
 }
 
-.dark .serv-horizonte-muni-tooltip__fundeb-pct--teal {
+.dark .serv-horizonte-muni-tooltip__fundeb-pct--blue {
     color: rgb(94 234 212 / 0.9);
 }
 
@@ -722,7 +722,7 @@
     border-radius: 9999px;
 }
 
-.serv-horizonte-muni-tooltip__dim-fill--teal {
+.serv-horizonte-muni-tooltip__dim-fill--blue {
     background: rgb(13 148 136);
 }
 

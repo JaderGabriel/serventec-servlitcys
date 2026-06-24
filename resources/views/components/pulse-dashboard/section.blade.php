@@ -13,22 +13,22 @@
         'sky' => 'border border-sky-200/90 bg-gradient-to-r from-sky-50/95 to-sky-50/35 text-sky-950 shadow-md ring-2 ring-sky-200/50 dark:border-sky-800/55 dark:from-sky-950/45 dark:to-sky-950/20 dark:text-sky-100 dark:ring-sky-800/35',
         'rose' => 'border border-rose-200/90 bg-gradient-to-r from-rose-50/95 to-rose-50/35 text-rose-950 shadow-md ring-2 ring-rose-200/50 dark:border-rose-800/55 dark:from-rose-950/45 dark:to-rose-950/20 dark:text-rose-100 dark:ring-rose-800/35',
         'red' => 'border border-red-200/90 bg-gradient-to-r from-red-50/95 to-red-50/35 text-red-950 shadow-md ring-2 ring-red-200/50 dark:border-red-900/50 dark:from-red-950/45 dark:to-red-950/20 dark:text-red-100 dark:ring-red-900/35',
-        'indigo' => 'border border-indigo-200/90 bg-gradient-to-r from-indigo-50/95 to-indigo-50/35 text-indigo-950 shadow-md ring-2 ring-indigo-200/55 dark:border-indigo-800/55 dark:from-indigo-950/50 dark:to-indigo-950/20 dark:text-indigo-100 dark:ring-indigo-700/40',
-        'teal' => 'border border-teal-200/90 bg-gradient-to-r from-teal-50/95 to-teal-50/35 text-teal-950 shadow-md ring-2 ring-teal-200/50 dark:border-teal-800/55 dark:from-teal-950/50 dark:to-teal-950/20 dark:text-teal-100 dark:ring-teal-800/40',
+        'indigo' => 'border border-sky-200/90 bg-gradient-to-r from-sky-50/95 to-sky-50/35 text-sky-950 shadow-md ring-2 ring-sky-200/55 dark:border-sky-800/55 dark:from-sky-950/50 dark:to-sky-950/20 dark:text-sky-100 dark:ring-sky-700/40',
+        'blue' => 'border border-blue-200/90 bg-gradient-to-r from-blue-50/95 to-blue-50/35 text-blue-950 shadow-md ring-2 ring-blue-200/50 dark:border-blue-800/55 dark:from-blue-950/50 dark:to-blue-950/20 dark:text-blue-100 dark:ring-blue-800/40',
         'cyan' => 'border border-cyan-200/80 bg-slate-50/90 text-slate-900 shadow-sm ring-1 ring-cyan-300/40 dark:border-cyan-800/50 dark:bg-slate-900/70 dark:text-slate-100 dark:ring-cyan-700/30',
     ];
     $cardClass = $styles[$accent] ?? $styles['indigo'];
 
     $bar = [
-        'emerald' => 'bg-gradient-to-b from-emerald-500 to-teal-600',
+        'emerald' => 'bg-gradient-to-b from-emerald-500 to-blue-600',
         'slate' => 'bg-gradient-to-b from-slate-500 to-slate-700',
         'amber' => 'bg-gradient-to-b from-amber-500 to-orange-600',
         'violet' => 'bg-gradient-to-b from-violet-500 to-purple-600',
         'sky' => 'bg-gradient-to-b from-sky-500 to-blue-600',
         'rose' => 'bg-gradient-to-b from-rose-500 to-pink-600',
         'red' => 'bg-gradient-to-b from-red-500 to-rose-700',
-        'indigo' => 'bg-gradient-to-b from-indigo-500 to-violet-600',
-        'teal' => 'bg-gradient-to-b from-teal-500 to-cyan-600',
+        'indigo' => 'bg-gradient-to-b from-sky-500 to-violet-600',
+        'blue' => 'bg-gradient-to-b from-blue-500 to-cyan-600',
         'cyan' => 'bg-gradient-to-b from-cyan-500 to-sky-600',
     ];
     $barClass = $bar[$accent] ?? $bar['indigo'];

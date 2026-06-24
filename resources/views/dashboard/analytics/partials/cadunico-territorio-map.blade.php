@@ -132,8 +132,8 @@
                         {{ __('Territórios no mapa') }}
                     </p>
                     <span class="flex gap-2 text-[10px]">
-                        <button type="button" class="underline text-indigo-600 dark:text-indigo-400" @click="toggleAllTerritories(true)">{{ __('Todos') }}</button>
-                        <button type="button" class="underline text-indigo-600 dark:text-indigo-400" @click="toggleAllTerritories(false)">{{ __('Nenhum') }}</button>
+                        <button type="button" class="underline text-sky-600 dark:text-sky-400" @click="toggleAllTerritories(true)">{{ __('Todos') }}</button>
+                        <button type="button" class="underline text-sky-600 dark:text-sky-400" @click="toggleAllTerritories(false)">{{ __('Nenhum') }}</button>
                     </span>
                 </div>
                 <div class="space-y-1 max-h-36 overflow-y-auto pr-1">

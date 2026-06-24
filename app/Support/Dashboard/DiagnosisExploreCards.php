@@ -219,17 +219,17 @@ final class DiagnosisExploreCards
         return match ($tab) {
             'enrollment' => ['tone' => 'indigo', 'icon' => 'users'],
             'cadunico_previsao' => ['tone' => 'sky', 'icon' => 'user-group'],
-            'network' => ['tone' => 'teal', 'icon' => 'share'],
+            'network' => ['tone' => 'blue', 'icon' => 'share'],
             'school_units' => ['tone' => 'indigo', 'icon' => 'map-pin'],
             'inclusion' => ['tone' => 'violet', 'icon' => 'users'],
             'performance' => ['tone' => 'indigo', 'icon' => 'chart-bar'],
             'attendance' => ['tone' => 'amber', 'icon' => 'calendar-days'],
             'work_done' => ['tone' => 'sky', 'icon' => 'document-chart'],
-            'fundeb' => ['tone' => 'teal', 'icon' => 'banknotes'],
+            'fundeb' => ['tone' => 'blue', 'icon' => 'banknotes'],
             'finance_realtime' => ['tone' => 'amber', 'icon' => 'signal'],
-            'comparativo' => ['tone' => 'teal', 'icon' => 'arrows-right-left'],
+            'comparativo' => ['tone' => 'blue', 'icon' => 'arrows-right-left'],
             'other_funding' => ['tone' => 'amber', 'icon' => 'building-library'],
-            default => ['tone' => 'teal', 'icon' => 'clipboard-check'],
+            default => ['tone' => 'blue', 'icon' => 'clipboard-check'],
         };
     }
 

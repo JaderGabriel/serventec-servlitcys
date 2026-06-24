@@ -2,7 +2,7 @@
 
 @php
     $classes = ($active ?? false)
-        ? 'bg-teal-50/90 text-teal-900 dark:bg-teal-950/50 dark:text-teal-100'
+        ? 'bg-blue-50/90 text-blue-900 dark:bg-blue-950/50 dark:text-blue-100'
         : 'text-gray-600 hover:bg-slate-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800/80 dark:hover:text-gray-100';
 @endphp
 

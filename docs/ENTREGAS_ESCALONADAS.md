@@ -1,6 +1,6 @@
 # Entregas escalonadas
 
-> **Versão em produção:** **4.4.2** · tag **`20260608a-Pythia`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md)
+> **Versão em produção:** **6.0.0** · tag **`20260603h-Odin`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md)
 
 Documentação das alterações desenvolvidas no ramo `main`, organizadas **por mês civil** e ligadas às **releases** (`RELEASE_*.md`). Cada documento mensal lista as tags e versões semânticas do período; o detalhe técnico de cada marco está na nota de release correspondente.
 
@@ -16,7 +16,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas **por 
 
 | Mês | Intervalo de versões | Documento | Releases |
 |-----|----------------------|-----------|----------|
-| **Junho/2026** | 3.5.0 → 4.4.2 | [ENTREGAS_ESCALONADAS_JUNHO_2026.md](ENTREGAS_ESCALONADAS_JUNHO_2026.md) | 20 tags |
+| **Junho/2026** | 3.5.0 → **6.0.0** | [ENTREGAS_ESCALONADAS_JUNHO_2026.md](ENTREGAS_ESCALONADAS_JUNHO_2026.md) | 35+ tags |
 | **Maio/2026** *(arquivo)* | 2.3.6 → 3.4.0 | [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) | 11 tags |
 
 ```mermaid
@@ -25,14 +25,16 @@ flowchart LR
         A[3.5 Atlas] --> B[4.0 Hestia]
         B --> C[4.1 Athena]
         C --> D[4.4 Pythia]
-        D --> E[4.2 Clio / 4.3 Harmonia]
+        D --> E[5.0 Horizonte]
+        E --> F[5.7 Skuld]
+        F --> G[6.0 Odin]
     end
     subgraph mai [Maio/2026]
-        F[2.3.6 Janus] --> G[2.4 Ceres]
-        G --> H[3.0 Apollo]
-        H --> I[3.4 Nemesis]
+        H[2.3.6 Janus] --> I[2.4 Ceres]
+        I --> J[3.0 Apollo]
+        J --> K[3.4 Nemesis]
     end
-    I --> A
+    K --> A
 ```
 
 ---

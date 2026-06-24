@@ -53,7 +53,7 @@
         $healthKpis[] = [
             'label' => __('Programas (PNAE/PNATE/…) em alerta'),
             'value' => number_format($programasAlerta),
-            'tone' => 'teal',
+            'tone' => 'blue',
             'explicacao_resumo' => __('Cobertura baixa de campos no i-Educar — ver Financiamentos e modal de condições.'),
         ];
     }
@@ -136,7 +136,7 @@
         ])
 
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <x-dashboard.serv-tab-intro :title="__('Diagnóstico municipal')" tone="teal">
+            <x-dashboard.serv-tab-intro :title="__('Diagnóstico municipal')" tone="blue">
                 {{ $h['intro'] ?? '' }}
                 <x-slot name="meta">
                     <span class="font-medium">{{ __('Contexto') }}:</span>
@@ -164,7 +164,7 @@
             <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 px-1 mb-1.5">
                 {{ __('Ir para a secção') }}
             </p>
-            <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="teal" />
+            <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="blue" />
         </div>
 
         @if (filled($h['footnote'] ?? null))
@@ -196,7 +196,7 @@
                     <summary class="cursor-pointer list-none px-4 py-3 bg-slate-50/80 dark:bg-slate-900/50 border-b border-slate-200/80 dark:border-slate-700 flex items-center justify-between gap-2 select-none">
                         <div class="min-w-0 flex items-start gap-2">
                             @if (filled($consolidadoStep))
-                                <span class="inline-flex h-6 min-w-[1.5rem] shrink-0 items-center justify-center rounded-md bg-teal-100/90 px-1.5 text-[11px] font-bold tabular-nums text-teal-900 dark:bg-teal-950/50 dark:text-teal-100">{{ $consolidadoStep }}</span>
+                                <span class="inline-flex h-6 min-w-[1.5rem] shrink-0 items-center justify-center rounded-md bg-blue-100/90 px-1.5 text-[11px] font-bold tabular-nums text-blue-900 dark:bg-blue-950/50 dark:text-blue-100">{{ $consolidadoStep }}</span>
                             @endif
                             <div>
                                 <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">

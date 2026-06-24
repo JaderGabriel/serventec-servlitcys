@@ -38,7 +38,7 @@
                 </p>
             @endif
             <div class="mt-2 flex flex-wrap gap-2 text-xs">
-                <a href="{{ $hub['map_url'] ?? route('dashboard.horizonte') }}" class="font-medium text-indigo-700 dark:text-indigo-300 hover:underline">{{ __('Abrir mapa Horizonte') }} →</a>
+                <a href="{{ $hub['map_url'] ?? route('dashboard.horizonte') }}" class="font-medium text-sky-700 dark:text-sky-300 hover:underline">{{ __('Abrir mapa Horizonte') }} →</a>
                 <a href="{{ $hub['doc_url'] ?? '#' }}" class="text-gray-500 hover:underline">{{ __('Documentação') }}</a>
             </div>
         </div>
@@ -47,14 +47,14 @@
             <form
                 method="POST"
                 action="{{ route('admin.public-data.horizonte-feed') }}"
-                class="shrink-0 rounded-xl border border-indigo-200/90 bg-indigo-50/50 px-4 py-3 dark:border-indigo-900/60 dark:bg-indigo-950/30 space-y-2 max-w-xs w-full"
+                class="shrink-0 rounded-xl border border-sky-200/90 bg-sky-50/50 px-4 py-3 dark:border-sky-900/60 dark:bg-sky-950/30 space-y-2 max-w-xs w-full"
             >
                 @csrf
-                <p class="text-[11px] font-semibold uppercase tracking-wide text-indigo-800 dark:text-indigo-200">{{ __('Executar agora') }}</p>
-                <p class="text-[11px] text-indigo-900/80 dark:text-indigo-200/80">{{ __('Inicia o pipeline em etapas. IBGE e fases pesadas continuam com --continue ou pelo agendador.') }}</p>
+                <p class="text-[11px] font-semibold uppercase tracking-wide text-sky-800 dark:text-sky-200">{{ __('Executar agora') }}</p>
+                <p class="text-[11px] text-sky-900/80 dark:text-sky-200/80">{{ __('Inicia o pipeline em etapas. IBGE e fases pesadas continuam com --continue ou pelo agendador.') }}</p>
                 <label class="block text-[11px] text-gray-700 dark:text-gray-300">
                     <span class="font-medium">{{ __('UF (opcional)') }}</span>
-                    <select name="uf" class="mt-1 block w-full rounded-md border-gray-300 text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                    <select name="uf" class="mt-1 block w-full rounded-md border-gray-300 text-xs shadow-sm focus:border-sky-500 focus:ring-sky-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
                         <option value="">{{ __('Nacional (27 UFs)') }}</option>
                         @foreach ($brazilianUfs as $ufOption)
                             <option value="{{ $ufOption }}">{{ $ufOption }}</option>
@@ -63,19 +63,19 @@
                     <span class="mt-0.5 block text-[10px] text-gray-500 dark:text-gray-400">{{ __('Restringe FUNDEB, Censo, SAEB, IBGE e SGE à UF escolhida.') }}</span>
                 </label>
                 <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-gray-700 dark:text-gray-300">
-                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_fundeb" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar FUNDEB') }}</label>
-                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_censo" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar Censo') }}</label>
-                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_cadunico" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar CadÚnico') }}</label>
-                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_sidra" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar SIDRA') }}</label>
-                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_repasses" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar repasses') }}</label>
-                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_saeb" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar SAEB') }}</label>
-                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_ibge" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar IBGE') }}</label>
-                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_sge" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar SGE') }}</label>
-                    <label class="col-span-2 flex items-center gap-1.5"><input type="checkbox" name="skip_verify" value="1" class="rounded border-gray-300 text-indigo-600" /> {{ __('Ignorar verificação oficial') }}</label>
+                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_fundeb" value="1" class="rounded border-gray-300 text-sky-600" /> {{ __('Ignorar FUNDEB') }}</label>
+                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_censo" value="1" class="rounded border-gray-300 text-sky-600" /> {{ __('Ignorar Censo') }}</label>
+                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_cadunico" value="1" class="rounded border-gray-300 text-sky-600" /> {{ __('Ignorar CadÚnico') }}</label>
+                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_sidra" value="1" class="rounded border-gray-300 text-sky-600" /> {{ __('Ignorar SIDRA') }}</label>
+                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_repasses" value="1" class="rounded border-gray-300 text-sky-600" /> {{ __('Ignorar repasses') }}</label>
+                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_saeb" value="1" class="rounded border-gray-300 text-sky-600" /> {{ __('Ignorar SAEB') }}</label>
+                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_ibge" value="1" class="rounded border-gray-300 text-sky-600" /> {{ __('Ignorar IBGE') }}</label>
+                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_sge" value="1" class="rounded border-gray-300 text-sky-600" /> {{ __('Ignorar SGE') }}</label>
+                    <label class="col-span-2 flex items-center gap-1.5"><input type="checkbox" name="skip_verify" value="1" class="rounded border-gray-300 text-sky-600" /> {{ __('Ignorar verificação oficial') }}</label>
                 </div>
                 <button
                     type="submit"
-                    class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                    class="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-sky-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                 >
                     <x-ui.icon name="arrow-path" class="h-3.5 w-3.5" />
                     {{ __('Abastecer Horizonte') }}
@@ -128,7 +128,7 @@
                 <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Exportar pacote (servidor actual)') }}</p>
                 <div class="grid grid-cols-2 gap-1 text-[10px] text-slate-600 dark:text-slate-300">
                     @foreach (['fundeb' => 'FUNDEB', 'censo' => 'Censo', 'saeb' => 'SAEB', 'cadunico' => 'CadÚnico', 'demography' => 'SIDRA', 'transfers' => 'Repasses', 'ibge_cache' => 'IBGE cache', 'sge_registry' => 'SGE'] as $key => $label)
-                        <label class="inline-flex items-center gap-1"><input type="checkbox" name="section_{{ $key }}" value="1" checked class="rounded border-gray-300 text-indigo-600" /> {{ $label }}</label>
+                        <label class="inline-flex items-center gap-1"><input type="checkbox" name="section_{{ $key }}" value="1" checked class="rounded border-gray-300 text-sky-600" /> {{ $label }}</label>
                     @endforeach
                 </div>
                 <button type="submit" class="mt-2 inline-flex items-center rounded-md bg-slate-800 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-700">{{ __('Gerar ZIP') }}</button>
@@ -137,9 +137,9 @@
             <form method="POST" action="{{ route('admin.public-data.horizonte-bundle-import') }}" enctype="multipart/form-data" class="rounded-lg border border-slate-200/80 dark:border-slate-700 bg-white/80 dark:bg-slate-900/50 p-3 space-y-2">
                 @csrf
                 <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Importar pacote (upload)') }}</p>
-                <input type="file" name="bundle" accept=".zip,application/zip" required class="block w-full text-[11px] text-slate-700 file:mr-2 file:rounded file:border-0 file:bg-indigo-50 file:px-2 file:py-1 file:text-indigo-700 dark:text-slate-200" />
+                <input type="file" name="bundle" accept=".zip,application/zip" required class="block w-full text-[11px] text-slate-700 file:mr-2 file:rounded file:border-0 file:bg-sky-50 file:px-2 file:py-1 file:text-sky-700 dark:text-slate-200" />
                 <label class="inline-flex items-center gap-1 text-[10px] text-slate-600"><input type="checkbox" name="dry_run" value="1" class="rounded border-gray-300" /> {{ __('Dry-run (contar apenas)') }}</label>
-                <button type="submit" class="mt-2 inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-indigo-500">{{ __('Importar ZIP') }}</button>
+                <button type="submit" class="mt-2 inline-flex items-center rounded-md bg-sky-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-sky-500">{{ __('Importar ZIP') }}</button>
                 <code class="block rounded bg-slate-100 px-2 py-1 text-[10px] text-slate-700 dark:bg-slate-800 dark:text-slate-300">php artisan horizonte:import-data-bundle …</code>
             </form>
         </div>
@@ -211,7 +211,7 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 align-top">
-                                <a href="{{ $hubLink }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                <a href="{{ $hubLink }}" class="text-sky-600 dark:text-sky-400 hover:underline">
                                     {{ $phase['routine_label'] ?? __('Ver fonte no hub') }}
                                 </a>
                                 @if (filled($phase['admin_url'] ?? null) && ($phase['admin_url'] ?? '') !== $hubLink)

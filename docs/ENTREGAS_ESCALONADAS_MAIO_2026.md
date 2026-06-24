@@ -1,6 +1,6 @@
 # Entregas escalonadas — maio/2026 *(arquivo)*
 
-> **Documento histórico** — cobre entregas até **3.4.0** (mai/2026). **Versão actual em produção:** **4.4.2** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md).  
+> **Documento histórico** — cobre entregas até **3.4.0** (mai/2026). **Versão actual em produção:** **6.0.0** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md).  
 > **Índice geral:** [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) · **Mês seguinte:** [ENTREGAS_ESCALONADAS_JUNHO_2026.md](ENTREGAS_ESCALONADAS_JUNHO_2026.md).
 
 Documentação das alterações desenvolvidas no ramo `main`, organizadas para **commits e PRs pequenos**. Cada bloco pode ser revisto e implantado de forma independente (com `php artisan migrate` e `npm run build` quando indicado).

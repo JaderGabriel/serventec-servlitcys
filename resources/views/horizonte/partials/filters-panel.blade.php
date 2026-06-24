@@ -63,7 +63,7 @@
                 :disabled="pageLoading"
                 placeholder="{{ __('Nome ou IBGE…') }}"
                 autocomplete="off"
-                class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 text-sm shadow-sm focus:border-teal-500 focus:ring-teal-500 disabled:opacity-60"
+                class="block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-60"
             />
             <ul
                 x-show="searchSuggestions.length > 0 && searchQuery.trim().length >= 2"
@@ -92,7 +92,7 @@
             </label>
             <label class="serv-horizonte-refine-field">
                 <span class="serv-horizonte-filters__field-label">{{ __('Benefício mín.') }}</span>
-                <input type="range" min="0" max="100" step="5" x-model.number="minBenefitScore" @input="markFiltersCustom()" class="w-full accent-teal-600" :disabled="pageLoading" />
+                <input type="range" min="0" max="100" step="5" x-model.number="minBenefitScore" @input="markFiltersCustom()" class="w-full accent-blue-600" :disabled="pageLoading" />
                 <span class="tabular-nums font-semibold text-serv-navy dark:text-slate-100" x-text="minBenefitScore + '/100'"></span>
             </label>
             <label class="serv-horizonte-refine-field">
@@ -132,7 +132,7 @@
                 <span>{{ __('Só coord. IBGE no mapa') }}</span>
             </label>
             <label class="serv-horizonte-toggle-pill" x-show="viewPreset === 'all'" x-cloak>
-                <input type="checkbox" x-model="hideConsultoria" @change="markFiltersCustom()" class="rounded border-gray-300 text-teal-600" :disabled="pageLoading" />
+                <input type="checkbox" x-model="hideConsultoria" @change="markFiltersCustom()" class="rounded border-gray-300 text-blue-600" :disabled="pageLoading" />
                 <span>{{ __('Ocultar consultoria') }}</span>
             </label>
             @if ($canManageSge)
@@ -145,16 +145,16 @@
         <p class="serv-horizonte-filters__field-label mt-3 mb-1.5">{{ __('Exigir fontes') }}</p>
         <div class="flex flex-wrap gap-1.5">
             <label class="serv-horizonte-source-pill">
-                <input type="checkbox" x-model="requireFundeb" @change="markFiltersCustom()" class="rounded border-gray-300 text-teal-600" :disabled="pageLoading" /><span>FUNDEB</span>
+                <input type="checkbox" x-model="requireFundeb" @change="markFiltersCustom()" class="rounded border-gray-300 text-blue-600" :disabled="pageLoading" /><span>FUNDEB</span>
             </label>
             <label class="serv-horizonte-source-pill">
-                <input type="checkbox" x-model="requireCenso" @change="markFiltersCustom()" class="rounded border-gray-300 text-teal-600" :disabled="pageLoading" /><span>Censo</span>
+                <input type="checkbox" x-model="requireCenso" @change="markFiltersCustom()" class="rounded border-gray-300 text-blue-600" :disabled="pageLoading" /><span>Censo</span>
             </label>
             <label class="serv-horizonte-source-pill">
-                <input type="checkbox" x-model="requireSaeb" @change="markFiltersCustom()" class="rounded border-gray-300 text-teal-600" :disabled="pageLoading" /><span>SAEB</span>
+                <input type="checkbox" x-model="requireSaeb" @change="markFiltersCustom()" class="rounded border-gray-300 text-blue-600" :disabled="pageLoading" /><span>SAEB</span>
             </label>
             <label class="serv-horizonte-source-pill">
-                <input type="checkbox" x-model="requireCadunico" @change="markFiltersCustom()" class="rounded border-gray-300 text-teal-600" :disabled="pageLoading" /><span>CadÚnico</span>
+                <input type="checkbox" x-model="requireCadunico" @change="markFiltersCustom()" class="rounded border-gray-300 text-blue-600" :disabled="pageLoading" /><span>CadÚnico</span>
             </label>
         </div>
     </div>

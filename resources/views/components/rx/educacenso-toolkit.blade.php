@@ -57,7 +57,7 @@
                         {{ __('Calendário oficial') }}
                     </h4>
                     @if ($activeKey)
-                        <p class="inline-flex items-center gap-1.5 text-[10px] font-medium text-teal-800 dark:text-teal-300">
+                        <p class="inline-flex items-center gap-1.5 text-[10px] font-medium text-blue-800 dark:text-blue-300">
                             <span class="serv-rx-cal-dot serv-rx-cal-dot--active" aria-hidden="true"></span>
                             {{ __('Fase atual destacada') }}
                         </p>

@@ -3,6 +3,7 @@
 namespace App\Services\Horizonte;
 
 use App\Models\City;
+use App\Models\SaebIndicatorPoint;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\Cadunico\CadunicoAutoSyncService;
 use App\Services\Fundeb\FundebFndeReceitaCsvService;
@@ -724,15 +725,24 @@ final class HorizonteFortnightlyFeedService
         $remaining = HorizonteSaebImportProgress::remainingYears($allYears);
 
         if ($remaining === []) {
-            HorizonteSaebImportProgress::reset();
+            $hasPoints = SaebIndicatorPoint::query()
+                ->whereIn('ano', $allYears)
+                ->exists();
 
-            return [
-                'success' => true,
-                'message' => __('SAEB: todos os :n ano(s) já importados.', ['n' => (string) $total]),
-                'partial' => false,
-                'saeb_done' => $total,
-                'saeb_total' => $total,
-            ];
+            if ($hasPoints) {
+                HorizonteSaebImportProgress::reset();
+
+                return [
+                    'success' => true,
+                    'message' => __('SAEB: todos os :n ano(s) já importados.', ['n' => (string) $total]),
+                    'partial' => false,
+                    'saeb_done' => $total,
+                    'saeb_total' => $total,
+                ];
+            }
+
+            HorizonteSaebImportProgress::reset();
+            $remaining = $allYears;
         }
 
         $yearsPerStep = max(1, (int) config('horizonte.fortnightly_feed.saeb_years_per_step', 1));
@@ -787,7 +797,7 @@ final class HorizonteFortnightlyFeedService
                 'after' => (string) $memAfter,
             ]));
 
-            if (($result['ok'] ?? false) || ($result['skipped'] ?? false)) {
+            if (($result['ok'] ?? false) && $this->saebYearImportedWithRows($result)) {
                 HorizonteSaebImportProgress::markDone($year);
             } else {
                 $batchOk = false;
@@ -1121,6 +1131,20 @@ final class HorizonteFortnightlyFeedService
                 'total' => (string) $phaseResult['saeb_total'],
             ]));
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $result
+     */
+    private function saebYearImportedWithRows(array $result): bool
+    {
+        if (! ($result['ok'] ?? false) || ($result['skipped'] ?? false)) {
+            return false;
+        }
+
+        $details = is_array($result['detalhes'] ?? null) ? $result['detalhes'] : [];
+
+        return (int) ($details['rows'] ?? 0) > 0;
     }
 
     /**

@@ -81,7 +81,7 @@ final class AnalyticsTabCatalog
                 'step' => '1',
                 'short' => __('Resumo'),
                 'hint' => __('Diagnóstico executivo, prioridades e explorar em detalhe'),
-                'tone' => 'teal',
+                'tone' => 'blue',
             ],
             'cadastro' => [
                 'step' => '2',
@@ -105,7 +105,7 @@ final class AnalyticsTabCatalog
                 'step' => '5',
                 'short' => __('Finanças'),
                 'hint' => __('Discrepâncias, FUNDEB, repasses, comparativo e programas'),
-                'tone' => 'teal',
+                'tone' => 'blue',
             ],
         ];
     }
@@ -183,7 +183,7 @@ final class AnalyticsTabCatalog
                 'short' => (string) ($pres['short'] ?? $group['label'] ?? ''),
                 'step' => (string) ($pres['step'] ?? ''),
                 'hint' => (string) ($pres['hint'] ?? ''),
-                'tone' => (string) ($pres['tone'] ?? 'teal'),
+                'tone' => (string) ($pres['tone'] ?? 'blue'),
                 'tabs' => array_values(array_filter(
                     $group['tabs'] ?? [],
                     static fn (string $k): bool => isset($labels[$k]),

@@ -103,9 +103,9 @@
 
     {{-- Comparativo de matrículas (rede) --}}
     @if ($comparison !== null)
-        <div class="rounded-lg border border-indigo-200/80 dark:border-indigo-800/60 bg-white/70 dark:bg-slate-900/40 px-4 py-4 space-y-3">
+        <div class="rounded-lg border border-sky-200/80 dark:border-sky-800/60 bg-white/70 dark:bg-slate-900/40 px-4 py-4 space-y-3">
             <div>
-                <h4 class="text-xs font-semibold uppercase tracking-wide text-indigo-900 dark:text-indigo-200">
+                <h4 class="text-xs font-semibold uppercase tracking-wide text-sky-900 dark:text-sky-200">
                     {{ __('Comparativo de matrículas (rede municipal)') }}
                 </h4>
                 <p class="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400">
@@ -262,7 +262,7 @@
                     {{ __('Escolas — comparativo detalhado') }}
                 </h4>
                 <label class="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
-                    <input type="checkbox" x-model="onlyIssues" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                    <input type="checkbox" x-model="onlyIssues" class="rounded border-slate-300 text-sky-600 focus:ring-sky-500" />
                     {{ __('Mostrar só escolas com achados ou diferença') }}
                 </label>
             </div>

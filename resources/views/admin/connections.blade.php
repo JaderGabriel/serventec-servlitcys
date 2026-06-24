@@ -11,7 +11,7 @@
     </x-slot>
 
     @php
-        $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm';
+        $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm';
     @endphp
 
     <x-admin.screen-shell
@@ -55,11 +55,11 @@
                             @endforeach
                         </select>
                     </div>
-                    <button type="submit" class="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">{{ __('Atualizar') }}</button>
+                    <button type="submit" class="inline-flex items-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500">{{ __('Atualizar') }}</button>
                 </form>
 
                 @if ($selectedCity)
-                    <div class="mt-6 rounded-xl border border-indigo-200/80 dark:border-indigo-900/50 p-4 bg-indigo-50/50 dark:bg-indigo-950/20">
+                    <div class="mt-6 rounded-xl border border-sky-200/80 dark:border-sky-900/50 p-4 bg-sky-50/50 dark:bg-sky-950/20">
                         <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $selectedCity->name }} — {{ $selectedCity->dataDriver() === 'pgsql' ? 'PostgreSQL' : 'MySQL' }} — {{ $selectedCity->db_host }} / {{ $selectedCity->db_database }}</p>
                         @if ($cityDataProbe)
                             @if ($cityDataProbe['ok'])
@@ -73,7 +73,7 @@
                                     @endif
                                 </ul>
                                 <p class="mt-3">
-                                    <a href="{{ route('dashboard.analytics', ['city_id' => $selectedCity->id]) }}" class="text-sm font-medium text-indigo-700 hover:text-indigo-600 dark:text-indigo-300 dark:hover:text-indigo-200">{{ __('Abrir consultoria municipal →') }}</a>
+                                    <a href="{{ route('dashboard.analytics', ['city_id' => $selectedCity->id]) }}" class="text-sm font-medium text-sky-700 hover:text-sky-600 dark:text-sky-300 dark:hover:text-sky-200">{{ __('Abrir consultoria municipal →') }}</a>
                                 </p>
                             @else
                                 <p class="mt-3 text-sm text-rose-600 dark:text-rose-400">{{ $cityDataProbe['message'] }}</p>
@@ -134,7 +134,7 @@
                                     <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ $city->uf }}</td>
                                     <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $city->created_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</td>
                                     <td class="px-4 py-3 text-right">
-                                        <a href="{{ route('dashboard.analytics', ['city_id' => $city->id]) }}" class="text-xs font-medium text-indigo-700 hover:text-indigo-600 dark:text-indigo-300">{{ __('Consultoria') }}</a>
+                                        <a href="{{ route('dashboard.analytics', ['city_id' => $city->id]) }}" class="text-xs font-medium text-sky-700 hover:text-sky-600 dark:text-sky-300">{{ __('Consultoria') }}</a>
                                     </td>
                                 </tr>
                             @empty

@@ -458,7 +458,7 @@ final class FinanceComparativoService
             $out[] = [
                 'label' => __('Projeção próximo exercício'),
                 'value' => $fmt($previsaoNext),
-                'tone' => 'teal',
+                'tone' => 'blue',
                 'explicacao_resumo' => __('Matrículas do ano base × VAAF do exercício seguinte (quando houver referência).'),
             ];
         }

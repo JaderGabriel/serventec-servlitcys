@@ -46,7 +46,7 @@
         </p>
     @elseif ($available && ($total > 0 || $schoolCount > 0))
         <details class="group/censo">
-            <summary class="cursor-pointer list-none inline-flex items-center gap-1.5 text-[10px] font-medium text-teal-700 dark:text-teal-300 hover:underline">
+            <summary class="cursor-pointer list-none inline-flex items-center gap-1.5 text-[10px] font-medium text-blue-700 dark:text-blue-300 hover:underline">
                 <x-ui.icon name="building-office-2" class="h-3.5 w-3.5 shrink-0 opacity-80" />
                 <span class="group-open/censo:hidden">{{ __('Ver escolas') }} ({{ number_format(max($total, $schoolCount), 0, ',', '.') }})</span>
                 <span class="hidden group-open/censo:inline">{{ __('Ocultar escolas') }}</span>

@@ -27,7 +27,7 @@
 
             <label for="photo" class="serv-profile-upload">
                 <span class="serv-profile-upload__inner">
-                    <x-ui.icon name="user-circle" class="h-7 w-7 text-teal-600/80 dark:text-teal-400/90" />
+                    <x-ui.icon name="user-circle" class="h-7 w-7 text-blue-600/80 dark:text-blue-400/90" />
                     <span class="text-sm font-medium text-slate-700 dark:text-slate-200">
                         {{ __('Escolher imagem') }}
                     </span>
@@ -51,7 +51,7 @@
                     type="checkbox"
                     name="remove_photo"
                     value="1"
-                    class="rounded border-slate-300 text-teal-600 focus:ring-teal-500 dark:border-slate-600 dark:bg-slate-900"
+                    class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900"
                     x-on:change="if ($event.target.checked) { photoPreview = null; }"
                 />
                 {{ __('Remover foto atual') }}

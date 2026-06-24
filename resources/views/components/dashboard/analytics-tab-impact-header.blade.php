@@ -24,13 +24,13 @@
         <div class="serv-impact-card__header-row">
             <div class="serv-impact-card__title-col min-w-0">
                 @if ($title !== '')
-                    <h2 class="text-base font-semibold font-display text-serv-navy dark:text-teal-50">{{ $title }}</h2>
+                    <h2 class="text-base font-semibold font-display text-serv-navy dark:text-blue-50">{{ $title }}</h2>
                 @endif
                 @if ($purpose !== '')
                     <p class="mt-1 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ $purpose }}</p>
                 @endif
                 @if ($impactNote !== '')
-                    <p class="mt-2 text-xs text-teal-800/90 dark:text-teal-300/90 leading-relaxed">{{ $impactNote }}</p>
+                    <p class="mt-2 text-xs text-blue-800/90 dark:text-blue-300/90 leading-relaxed">{{ $impactNote }}</p>
                 @endif
             </div>
 
@@ -155,7 +155,7 @@
                 <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('Resumo financeiro indisponível.') }}</p>
             @endif
             @if ($fundebMethodology !== null)
-                <p class="text-[11px] text-teal-900/90 dark:text-teal-200/90 border-t border-slate-200/80 dark:border-slate-700/80 pt-2 leading-relaxed">
+                <p class="text-[11px] text-blue-900/90 dark:text-blue-200/90 border-t border-slate-200/80 dark:border-slate-700/80 pt-2 leading-relaxed">
                     <span class="font-semibold">{{ $fundebMethodology['rotulo_vaaf'] ?? __('VAAF') }}:</span>
                     {{ $fundebMethodology['vaa_label'] ?? '' }}
                     @if (filled($fundebMethodology['vaa_fonte_label'] ?? null))

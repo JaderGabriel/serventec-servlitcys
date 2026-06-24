@@ -38,11 +38,11 @@
     </div>
 
     <div class="serv-rx-kpi-grid serv-rx-kpi-grid--fundeb">
-        <div class="serv-home-kpi serv-home-kpi--teal">
+        <div class="serv-home-kpi serv-home-kpi--blue">
             <p class="serv-home-kpi__label">{{ __('VAAF-MIN nacional') }}</p>
             <p class="serv-home-kpi__value text-2xl">{{ $fmtPer($national['vaaf_min'] ?? null) }}</p>
         </div>
-        <div class="serv-home-kpi serv-home-kpi--teal">
+        <div class="serv-home-kpi serv-home-kpi--blue">
             <p class="serv-home-kpi__label">{{ __('VAAT-MIN nacional') }}</p>
             <p class="serv-home-kpi__value text-2xl">{{ $fmtPer($national['vaat_min'] ?? null) }}</p>
         </div>

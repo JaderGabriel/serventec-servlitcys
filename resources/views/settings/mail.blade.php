@@ -36,7 +36,7 @@
                             </div>
                             <div>
                                 <x-input-label for="smtp_encryption" :value="__('Criptografia')" />
-                                <select id="smtp_encryption" name="smtp_encryption" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600">
+                                <select id="smtp_encryption" name="smtp_encryption" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-sky-500 dark:focus:border-sky-600 focus:ring-sky-500 dark:focus:ring-sky-600">
                                     <option value="">—</option>
                                     <option value="tls" @selected(old('smtp_encryption', $settings?->smtp_encryption ?? '') === 'tls')>TLS</option>
                                     <option value="ssl" @selected(old('smtp_encryption', $settings?->smtp_encryption ?? '') === 'ssl')>SSL</option>

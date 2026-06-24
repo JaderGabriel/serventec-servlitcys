@@ -1,6 +1,6 @@
 # Documentação executiva — servlitcys
 
-**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
+**Versão do produto:** 6.0.0 · **Última revisão:** 2026-06-03
 
 > **Índice:** [README.md](README.md) · **Estado:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md)
 

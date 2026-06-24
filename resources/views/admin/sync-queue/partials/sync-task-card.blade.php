@@ -20,7 +20,7 @@
                 @endif
             </div>
             <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-snug">
-                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.show', $task) }}" class="hover:text-indigo-600 dark:hover:text-indigo-400">
+                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.show', $task) }}" class="hover:text-sky-600 dark:hover:text-sky-400">
                     {{ $task->label }}
                 </a>
             </h4>

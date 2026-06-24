@@ -48,12 +48,12 @@
 
             @if (count($pillars) > 0)
                 <section>
-                    <h3 class="text-xs font-semibold uppercase tracking-wide text-indigo-800 dark:text-indigo-200 mb-2">{{ __('FUNDEB, VAAR e matrícula no Censo') }}</h3>
+                    <h3 class="text-xs font-semibold uppercase tracking-wide text-sky-800 dark:text-sky-200 mb-2">{{ __('FUNDEB, VAAR e matrícula no Censo') }}</h3>
                     <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         @foreach ($pillars as $pillar)
-                            <li class="rounded-md border border-indigo-200/70 dark:border-indigo-800/50 bg-indigo-50/50 dark:bg-indigo-950/20 px-3 py-2">
-                                <p class="font-medium text-indigo-950 dark:text-indigo-100">{{ $pillar['titulo'] ?? '' }}</p>
-                                <p class="mt-0.5 text-xs leading-relaxed text-indigo-900/90 dark:text-indigo-200/85">{{ $pillar['descricao'] ?? '' }}</p>
+                            <li class="rounded-md border border-sky-200/70 dark:border-sky-800/50 bg-sky-50/50 dark:bg-sky-950/20 px-3 py-2">
+                                <p class="font-medium text-sky-950 dark:text-sky-100">{{ $pillar['titulo'] ?? '' }}</p>
+                                <p class="mt-0.5 text-xs leading-relaxed text-sky-900/90 dark:text-sky-200/85">{{ $pillar['descricao'] ?? '' }}</p>
                             </li>
                         @endforeach
                     </ul>
@@ -62,7 +62,7 @@
 
             @if (count($programs) > 0)
                 <section>
-                    <h3 class="text-xs font-semibold uppercase tracking-wide text-teal-800 dark:text-teal-200 mb-2">
+                    <h3 class="text-xs font-semibold uppercase tracking-wide text-blue-800 dark:text-blue-200 mb-2">
                         {{ __('Programas complementares (:n)', ['n' => count($programs)]) }}
                     </h3>
                     <p class="text-xs text-gray-600 dark:text-gray-400 mb-3 leading-relaxed">
@@ -74,7 +74,7 @@
                             <article
                                 class="rounded-lg border p-3 transition-all duration-200"
                                 x-bind:class="activeProgramIds.includes(@js($progId))
-                                    ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-400/60 dark:border-teal-600 dark:bg-teal-950/40 dark:ring-teal-500/40'
+                                    ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-400/60 dark:border-blue-600 dark:bg-blue-950/40 dark:ring-blue-500/40'
                                     : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/20'"
                             >
                                 <div class="flex flex-wrap items-start justify-between gap-2">
@@ -82,13 +82,13 @@
                                         <span
                                             x-show="activeProgramIds.includes(@js($progId))"
                                             x-cloak
-                                            class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-teal-600 text-white mr-1"
+                                            class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-blue-600 text-white mr-1"
                                         >{{ __('Alerta cadastro') }}</span>
                                         <h4 class="font-semibold text-gray-900 dark:text-gray-100">{{ $prog['titulo'] ?? '' }}</h4>
                                         <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{{ $prog['repasse_fonte'] ?? '' }}</p>
                                     </div>
                                     @if (filled($prog['fnde_url'] ?? null))
-                                        <a href="{{ $prog['fnde_url'] }}" target="_blank" rel="noopener noreferrer" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline shrink-0">{{ __('FNDE') }}</a>
+                                        <a href="{{ $prog['fnde_url'] }}" target="_blank" rel="noopener noreferrer" class="text-xs text-sky-600 dark:text-sky-400 hover:underline shrink-0">{{ __('FNDE') }}</a>
                                     @endif
                                 </div>
                                 <p class="mt-2 text-gray-700 dark:text-gray-300 leading-relaxed">{{ $prog['explanation'] ?? '' }}</p>
@@ -102,7 +102,7 @@
                                     <span class="font-medium">{{ __('Correção:') }}</span> {{ $prog['correction'] ?? '' }}
                                 </p>
                                 @if (! empty($prog['related_checks']) && is_array($prog['related_checks']))
-                                    <p class="mt-1 text-[11px] text-indigo-700 dark:text-indigo-300">
+                                    <p class="mt-1 text-[11px] text-sky-700 dark:text-sky-300">
                                         {{ __('Rotinas relacionadas em Discrepâncias:') }}
                                         {{ implode(', ', array_map('strval', $prog['related_checks'])) }}
                                     </p>
@@ -168,7 +168,7 @@
                                 </span>
                             </div>
                             @if (! empty($cond['vaar_refs']) && is_array($cond['vaar_refs']))
-                                <p class="mt-1 text-xs text-indigo-700 dark:text-indigo-300">{{ implode(' · ', $cond['vaar_refs']) }}</p>
+                                <p class="mt-1 text-xs text-sky-700 dark:text-sky-300">{{ implode(' · ', $cond['vaar_refs']) }}</p>
                             @endif
                             <p class="mt-2 text-gray-700 dark:text-gray-300 leading-relaxed">{{ $cond['explanation'] ?? '' }}</p>
                             <p class="mt-2 text-rose-800/95 dark:text-rose-200/95 leading-relaxed">
@@ -187,21 +187,21 @@
 
             <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed border-t border-gray-200 dark:border-gray-700 pt-3">
                 {{ __('Serventec consolida FUNDEB, programas e Censo. Financiamentos detalha cobertura de cadastro e consultas CKAN/API. Discrepâncias lista ocorrências por escola.') }}
-                <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline ml-1" x-on:click="$dispatch('close-modal', 'funding-loss-conditions'); $dispatch('set-analytics-tab', 'other_funding')">{{ __('Abrir Financiamentos') }}</button>
+                <button type="button" class="text-sky-600 dark:text-sky-400 hover:underline ml-1" x-on:click="$dispatch('close-modal', 'funding-loss-conditions'); $dispatch('set-analytics-tab', 'other_funding')">{{ __('Abrir Financiamentos') }}</button>
             </p>
         </div>
 
         <div class="px-6 py-3 border-t border-gray-200 dark:border-gray-700 flex flex-wrap justify-end gap-2 shrink-0">
             <button
                 type="button"
-                class="px-3 py-2 rounded-md text-xs font-medium text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
+                class="px-3 py-2 rounded-md text-xs font-medium text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-50 dark:hover:bg-sky-950/30"
                 x-on:click="$dispatch('close-modal', 'funding-loss-conditions'); $dispatch('set-analytics-tab', 'fundeb')"
             >
                 {{ __('Aba FUNDEB') }}
             </button>
             <button
                 type="button"
-                class="px-3 py-2 rounded-md text-xs font-medium text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-950/30"
+                class="px-3 py-2 rounded-md text-xs font-medium text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/30"
                 x-on:click="$dispatch('close-modal', 'funding-loss-conditions'); $dispatch('set-analytics-tab', 'other_funding')"
             >
                 {{ __('Aba Financiamentos') }}

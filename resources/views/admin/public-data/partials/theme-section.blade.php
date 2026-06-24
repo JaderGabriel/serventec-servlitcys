@@ -118,11 +118,11 @@
                             @if (in_array($enriched['key'], ['import_city_year', 'import_bulk_year', 'sync_all_years'], true))
                                 <div class="flex flex-wrap gap-4 text-xs">
                                     <label class="inline-flex items-center gap-2">
-                                        <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-indigo-600" @checked(old('use_nearest_year'))>
+                                        <input type="checkbox" name="use_nearest_year" value="1" class="rounded border-gray-300 text-sky-600" @checked(old('use_nearest_year'))>
                                         {{ __('Usar ano mais próximo se CKAN não tiver o exercício') }}
                                     </label>
                                     <label class="inline-flex items-center gap-2">
-                                        <input type="checkbox" name="include_cached_years" value="1" class="rounded border-gray-300 text-indigo-600" checked>
+                                        <input type="checkbox" name="include_cached_years" value="1" class="rounded border-gray-300 text-sky-600" checked>
                                         {{ __('Incluir anos em cache/BD') }}
                                     </label>
                                 </div>

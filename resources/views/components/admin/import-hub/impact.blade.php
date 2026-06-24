@@ -55,7 +55,7 @@
                             ? $analyticsBase.(str_contains($analyticsBase, '?') ? '&' : '?').'tab='.$tab
                             : route('dashboard');
                     @endphp
-                    <a href="{{ $href }}" class="inline-flex items-center rounded-lg border border-indigo-300/80 dark:border-indigo-600/80 px-2.5 py-1 text-xs font-medium text-indigo-900 dark:text-indigo-100 hover:bg-indigo-50 dark:hover:bg-indigo-950/40">
+                    <a href="{{ $href }}" class="inline-flex items-center rounded-lg border border-sky-300/80 dark:border-sky-600/80 px-2.5 py-1 text-xs font-medium text-sky-900 dark:text-sky-100 hover:bg-sky-50 dark:hover:bg-sky-950/40">
                         {{ $link['label'] }} →
                     </a>
                 @endforeach

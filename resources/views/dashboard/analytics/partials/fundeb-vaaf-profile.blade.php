@@ -99,7 +99,7 @@
                                     {{ __('Portaria :p', ['p' => $rec['ano_publicacao']]) }}
                                 @endif
                                 @if (filled($rec['csv_url'] ?? null))
-                                    <a href="{{ $rec['csv_url'] }}" target="_blank" rel="noopener" class="block text-teal-700 dark:text-teal-300 hover:underline truncate max-w-[12rem]">{{ __('CSV FNDE') }}</a>
+                                    <a href="{{ $rec['csv_url'] }}" target="_blank" rel="noopener" class="block text-blue-700 dark:text-blue-300 hover:underline truncate max-w-[12rem]">{{ __('CSV FNDE') }}</a>
                                 @endif
                             </td>
                         </tr>

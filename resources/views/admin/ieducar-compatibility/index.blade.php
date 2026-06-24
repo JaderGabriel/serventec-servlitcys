@@ -11,7 +11,7 @@
     </x-slot>
 
     @php
-        $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm';
+        $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm';
         $schema = is_array($report['recurso_prova_schema'] ?? null) ? $report['recurso_prova_schema'] : null;
         $fmtBrl = [\App\Support\Ieducar\DiscrepanciesFundingImpact::class, 'formatBrl'];
         $anoLetivo = $filters?->ano_letivo ?? (string) \App\Support\Ieducar\IeducarCompatibilityProbe::vigenteSchoolYear();
@@ -80,7 +80,7 @@
                 </div>
                 <x-slot name="actions">
                     @if ($city)
-                        <a href="{{ route('admin.ieducar-compatibility.export', ['city_id' => $city->id]) }}" class="inline-flex items-center rounded-lg border border-indigo-300 dark:border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-800 dark:text-indigo-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40" title="{{ __('Cria tarefa na fila; baixe o JSON quando concluir.') }}">
+                        <a href="{{ route('admin.ieducar-compatibility.export', ['city_id' => $city->id]) }}" class="inline-flex items-center rounded-lg border border-sky-300 dark:border-sky-600 px-4 py-2 text-sm font-medium text-sky-800 dark:text-sky-200 hover:bg-sky-50 dark:hover:bg-sky-950/40" title="{{ __('Cria tarefa na fila; baixe o JSON quando concluir.') }}">
                             {{ __('Enfileirar export JSON') }}
                         </a>
                     @endif

@@ -16,7 +16,7 @@
     $photoUrl = $user?->profilePhotoUrl();
 @endphp
 
-<span {{ $attributes->merge(['class' => "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-teal-200/80 dark:ring-teal-800/80 bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-200 {$sizeClass} {$class}"]) }}>
+<span {{ $attributes->merge(['class' => "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-blue-200/80 dark:ring-blue-800/80 bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-200 {$sizeClass} {$class}"]) }}>
     @if ($photoUrl)
         <img src="{{ $photoUrl }}" alt="" class="h-full w-full object-cover" loading="lazy" />
     @elseif ($user)

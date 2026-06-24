@@ -162,7 +162,7 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-center gap-0.5">
-                                        <a href="{{ route('dashboard.analytics', ['city_id' => $city->id]) }}" class="inline-flex items-center justify-center rounded-md p-1.5 text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-950/40" title="{{ __('Análise') }}">
+                                        <a href="{{ route('dashboard.analytics', ['city_id' => $city->id]) }}" class="inline-flex items-center justify-center rounded-md p-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/40" title="{{ __('Análise') }}">
                                             <x-ui.icon name="chart-bar" class="h-5 w-5" />
                                             <span class="sr-only">{{ __('Análise') }}</span>
                                         </a>

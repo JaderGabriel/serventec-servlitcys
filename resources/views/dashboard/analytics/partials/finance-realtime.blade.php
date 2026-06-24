@@ -328,7 +328,7 @@
                                         @php $lineType = (string) ($line['line_type'] ?? 'credit'); @endphp
                                         <tr @class([
                                             'bg-amber-50/90 dark:bg-amber-950/30 font-semibold' => $lineType === 'month_total',
-                                            'bg-teal-50/90 dark:bg-teal-950/35 font-bold' => $lineType === 'year_total',
+                                            'bg-blue-50/90 dark:bg-blue-950/35 font-bold' => $lineType === 'year_total',
                                             'bg-slate-100/60 dark:bg-slate-800/40' => $lineType === 'opening',
                                         ])>
                                             <td class="px-3 py-2 whitespace-nowrap">{{ $line['date'] ?? '—' }}</td>
@@ -415,8 +415,8 @@
     </div>
 
     @if ($methodologyCompact !== null && $realtimeDataReady)
-        <details class="serv-panel text-xs border border-teal-200/80 dark:border-teal-800/60">
-            <summary class="cursor-pointer px-3 py-2 font-semibold text-teal-950 dark:text-teal-100">{{ __('Regras FUNDEB e ponderações') }}</summary>
+        <details class="serv-panel text-xs border border-blue-200/80 dark:border-blue-800/60">
+            <summary class="cursor-pointer px-3 py-2 font-semibold text-blue-950 dark:text-blue-100">{{ __('Regras FUNDEB e ponderações') }}</summary>
             <div class="px-3 pb-3 text-slate-700 dark:text-slate-300 space-y-1">
                 <p><span class="font-semibold">{{ $methodologyCompact['rotulo_vaaf'] ?? __('VAAF') }}:</span> {{ $methodologyCompact['vaa_label'] ?? '' }} @if (filled($methodologyCompact['vaa_fonte_label'] ?? null))— {{ $methodologyCompact['vaa_fonte_label'] }}@endif</p>
                 <p class="text-[11px]">{{ $methodologyCompact['formula_curta'] ?? '' }}</p>

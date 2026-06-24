@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="max-w-3xl mx-auto py-10 px-4 sm:px-6">
         <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="px-6 py-8 bg-gradient-to-br from-teal-700 to-indigo-800 text-white">
+            <div class="px-6 py-8 bg-gradient-to-br from-blue-700 to-sky-800 text-white">
                 <p class="text-xs uppercase tracking-widest opacity-90">{{ __('Relatório educacional municipal') }}</p>
                 <h1 class="text-2xl font-bold mt-1">{{ $city?->name ?? __('Município') }}</h1>
                 <p class="text-sm mt-2 opacity-95">{{ $bibliography['year_label'] ?? '' }} · {{ $city?->uf ?? '' }}</p>
@@ -17,7 +17,7 @@
                 <div class="text-sm space-y-3">
                     <div>
                         <span class="text-gray-500 dark:text-gray-400 block text-xs uppercase">{{ __('Identificador bibliográfico') }}</span>
-                        <span class="font-mono text-base font-semibold text-teal-800 dark:text-teal-300">{{ $bibliography['public_id'] ?? '—' }}</span>
+                        <span class="font-mono text-base font-semibold text-blue-800 dark:text-blue-300">{{ $bibliography['public_id'] ?? '—' }}</span>
                     </div>
                     <div>
                         <span class="text-gray-500 dark:text-gray-400 block text-xs uppercase">{{ __('Citação') }}</span>
@@ -39,14 +39,14 @@
             <div class="px-6 pb-6 flex flex-wrap gap-3">
                 @if ($download_url)
                     <a href="{{ $download_url }}"
-                       class="inline-flex items-center px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white text-sm font-medium rounded-lg">
+                       class="inline-flex items-center px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium rounded-lg">
                         {{ __('Descarregar PDF') }}
                     </a>
                 @endif
                 @auth
                     @if (filled($auth_download_url ?? null))
                         <a href="{{ $auth_download_url }}"
-                           class="inline-flex items-center px-4 py-2 border border-teal-700 text-teal-800 dark:text-teal-300 text-sm font-medium rounded-lg">
+                           class="inline-flex items-center px-4 py-2 border border-blue-700 text-blue-800 dark:text-blue-300 text-sm font-medium rounded-lg">
                             {{ __('Download autenticado') }}
                         </a>
                     @endif

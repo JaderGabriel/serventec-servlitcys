@@ -13,7 +13,7 @@
     </x-slot>
 
     @php
-        $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm';
+        $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm';
         $fundeb = $snapshot['fundeb'] ?? [];
         $censo = $snapshot['censo'] ?? [];
         $transfers = $snapshot['transfers'] ?? [];
@@ -138,7 +138,7 @@
                                     <td class="py-2 pe-4 font-mono">{{ $row['gap_code'] }}</td>
                                     <td class="py-2 pe-4">{{ $row['section'] }}</td>
                                     <td class="py-2">
-                                        <a href="#source-{{ $row['source_id'] }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ $row['source_id'] }}</a>
+                                        <a href="#source-{{ $row['source_id'] }}" class="text-sky-600 dark:text-sky-400 hover:underline">{{ $row['source_id'] }}</a>
                                     </td>
                                 </tr>
                             @endforeach

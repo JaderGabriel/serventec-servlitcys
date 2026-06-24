@@ -13,11 +13,11 @@
 
 @if ($temMeta && $prog !== null)
     <div class="space-y-1.5">
-        <p class="font-semibold tabular-nums text-teal-950 dark:text-teal-50 text-sm">
+        <p class="font-semibold tabular-nums text-blue-950 dark:text-blue-50 text-sm">
             {{ number_format((float) $prog, 1, ',', '.') }}%
         </p>
         <div class="serv-rx-progress-bar" role="presentation" aria-hidden="true">
-            <span class="serv-rx-progress-bar__fill serv-rx-progress-bar__fill--teal" style="width: {{ $barPct }}%"></span>
+            <span class="serv-rx-progress-bar__fill serv-rx-progress-bar__fill--blue" style="width: {{ $barPct }}%"></span>
         </div>
         @if ($progMat !== null)
             <p class="text-[10px] text-slate-600 dark:text-slate-400">

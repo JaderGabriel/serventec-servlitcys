@@ -9,7 +9,7 @@
     $publicMunicipal = is_array($d['public_municipal'] ?? null) ? $d['public_municipal'] : [];
     $transferSeries = is_array($d['transfer_series'] ?? null) ? $d['transfer_series'] : [];
     $programRing = static fn (string $s): string => match ($s) {
-        'success' => 'border-l-teal-500',
+        'success' => 'border-l-blue-500',
         'warning' => 'border-l-amber-500',
         'danger' => 'border-l-rose-500',
         default => 'border-l-slate-400',

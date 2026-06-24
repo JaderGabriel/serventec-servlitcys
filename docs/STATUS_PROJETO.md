@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **5.7.7** · release `20260624a-Skuld` · **Ramo:** `main` · **Última revisão:** 24/06/2026
+**Versão em produção:** **6.0.0** · release `20260603h-Odin` · **Ramo:** `main` · **Última revisão:** 03/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -8,7 +8,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 
 ---
 
-## Mapa de capacidades (4.4.0)
+## Mapa de capacidades (6.0.0)
 
 ```mermaid
 flowchart TB
@@ -18,25 +18,30 @@ flowchart TB
         PED[Pedagógico · NEE/SAEB]
         CEN[Censo · ritmo]
         FIN[Finanças · FUNDEB · Tempo Real]
+        HOR[Horizonte · mapa GIS]
     end
 
     subgraph Admin
         IMP[Importações hub]
         COMP[i-Educar compatibilidade<br/>VAAR · CadÚnico · Discrepâncias]
         RX[Painel RX]
+        Mon[Monitor módulos]
     end
 
     subgraph Dados
         IED[(i-Educar)]
-        PUB[APIs FNDE · IBGE · MDS]
+        PUB[APIs FNDE · IBGE · MDS · Tesouro]
         LOC[(MySQL app)]
     end
 
     Consultoria --> IED
     Consultoria --> LOC
+    HOR --> PUB
+    HOR --> LOC
     Admin --> PUB
     Admin --> LOC
     COMP -.->|paridade| FIN
+    Mon -.->|sondas| IMP
 ```
 
 ---
@@ -135,6 +140,11 @@ flowchart TB
 | Horizonte — sync BR screen robusto (`setsid`, runner, linger) | Implementado (5.7.3) — [HORIZONTE.md](HORIZONTE.md) §9.1b |
 | Horizonte — sync BR wanted/ensure (reinício pós-TERM, cron) | Implementado (5.7.4) — [HORIZONTE.md](HORIZONTE.md) §9.1b |
 | UI menus pt-BR («Usuários», login, LGPD) | Implementado (5.7.3) |
+| Horizonte — timeline financeira no modal municipal (FNDE/CKAN/ano corrente) | Implementado (5.7.7) — [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md) |
+| Horizonte — painel FUNDEB estadual, pan mapa, sync repasses Tesouro | Implementado (5.8.0) — [RELEASE_20260603g_THOR.md](RELEASE_20260603g_THOR.md) |
+| Horizonte — barra cmd fixa, resumo UF inline, «desenhar todos», modal municipal centrado | Implementado (6.0.0) — [HORIZONTE.md](HORIZONTE.md) |
+| Dados públicos — notificação agrupada (novo / atenção / alinhado) | Implementado (6.0.0) |
+| Identidade visual — paleta base azul (`blue` + `sky` secundário) | Implementado (6.0.0) — [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) |
 | Monitor de módulos — recolha diária (`module-monitor:collect`) + sondas estruturais | Implementado (5.2.0) — substituído por intervalo 10 min (5.5.0) |
 | Horizonte — hub abastecimento em Dados públicos (`#horizonte-hub`) | Implementado (5.2.0) — [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11 |
 | Horizonte — acesso admin e utilizador (`canViewHorizonte`; municipal 403) | Implementado (5.2.0) |

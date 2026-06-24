@@ -17,10 +17,10 @@
 @endphp
 
 <details
-    {{ $attributes->merge(['class' => 'serv-panel text-xs border border-teal-200/80 dark:border-teal-800/60']) }}
+    {{ $attributes->merge(['class' => 'serv-panel text-xs border border-blue-200/80 dark:border-blue-800/60']) }}
     @if ($defaultOpen) open @endif
 >
-    <summary class="cursor-pointer select-none px-3 py-2.5 font-semibold text-teal-950 dark:text-teal-100 bg-teal-50/60 dark:bg-teal-950/30 rounded-md">
+    <summary class="cursor-pointer select-none px-3 py-2.5 font-semibold text-blue-950 dark:text-blue-100 bg-blue-50/60 dark:bg-blue-950/30 rounded-md">
         {{ $met['titulo'] ?? __('Regras FUNDEB e ponderações vigentes') }}
     </summary>
     <div class="px-3 pb-3 pt-2 space-y-3 text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -85,7 +85,7 @@
                     @foreach ($portarias as $p)
                         @if (filled($p['url'] ?? null))
                             <li>
-                                <a href="{{ $p['url'] }}" target="_blank" rel="noopener noreferrer" class="text-teal-800 dark:text-teal-300 underline">
+                                <a href="{{ $p['url'] }}" target="_blank" rel="noopener noreferrer" class="text-blue-800 dark:text-blue-300 underline">
                                     {{ $p['label'] ?? __('Fonte') }}
                                 </a>
                             </li>

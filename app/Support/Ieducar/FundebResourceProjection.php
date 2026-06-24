@@ -205,7 +205,7 @@ final class FundebResourceProjection
                 [
                     'label' => __('Cenário após correções'),
                     'value' => $fmt($previsaoCorrigida),
-                    'tone' => 'teal',
+                    'tone' => 'blue',
                     'explicacao_resumo' => __('Base + ganho potencial (quando há correções de cadastro).'),
                     'funding_explicacao' => [
                         'formula_curta' => __(':base + :ganho = :total', [

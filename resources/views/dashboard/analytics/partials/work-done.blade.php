@@ -260,10 +260,10 @@
             @endif
         </section>
 
-        <section id="censo-export" class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/30 dark:bg-indigo-950/20 px-4 py-4 space-y-4 scroll-mt-24">
-            <h3 class="text-sm font-semibold uppercase tracking-wide text-indigo-950 dark:text-indigo-100">{{ __('Escolas — Censo / Educacenso') }}</h3>
+        <section id="censo-export" class="rounded-lg border border-sky-200 dark:border-sky-800 bg-sky-50/30 dark:bg-sky-950/20 px-4 py-4 space-y-4 scroll-mt-24">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-sky-950 dark:text-sky-100">{{ __('Escolas — Censo / Educacenso') }}</h3>
             @if (filled($censo['source_label'] ?? null))
-                <p class="text-xs text-indigo-800/90 dark:text-indigo-300/90">{{ __('Fonte na base:') }} <span class="font-mono">{{ $censo['source_label'] }}</span></p>
+                <p class="text-xs text-sky-800/90 dark:text-sky-300/90">{{ __('Fonte na base:') }} <span class="font-mono">{{ $censo['source_label'] }}</span></p>
             @endif
             @if (! ($censo['available'] ?? false) && filled($censo['note'] ?? null))
                 <p class="text-sm text-amber-900 dark:text-amber-100">{{ $censo['note'] }}</p>

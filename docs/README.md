@@ -1,10 +1,10 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 5.7.7 · tag `20260624a-Skuld` · **Última revisão:** 2026-06-24
+**Versão do produto:** 6.0.0 · tag `20260603h-Odin` · **Última revisão:** 2026-06-03
 
 Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitectura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
-**Hub visual** (timeline 4.x, mapa de docs): [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) — leitor Documentação na app · [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) no Cursor IDE.
+**Hub visual** (timeline 4.x→6.x, mapa de docs): [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) — leitor Documentação na app · [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) no Cursor IDE.
 
 ### Leitor na aplicação (`/documentacao`)
 
@@ -21,8 +21,8 @@ Cada secção do índice usa identidade própria (implementação: `Documentatio
 
 | Secção | Cor | Ícone | Analogia |
 |--------|-----|-------|----------|
-| **1 · Entrada** | Teal | `home` | Porta de entrada — versão, perfis e hub |
-| **2 · Arquitectura** | Indigo | `squares-2x2` | Planta do sistema — camadas e decisões |
+| **1 · Entrada** | Blue | `home` | Porta de entrada — versão, perfis e hub |
+| **2 · Arquitectura** | Sky | `squares-2x2` | Planta do sistema — camadas e decisões |
 | **3 · Consultoria municipal** | Sky | `chart-bar` | Painel municipal — analytics e Horizonte |
 | **4 · Financiamento (FUNDEB)** | Rose | `banknotes` | Fluxo FUNDEB — VAAF, repasses e extratos |
 | **5 · Integrações (admin)** | Violet | `globe-alt` | Pontes externas — importações e APIs |
@@ -61,7 +61,7 @@ flowchart TD
 
 | Documento | Função |
 |-----------|--------|
-| [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) | Mapa visual — versão, 4.x, consultoria, releases |
+| [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) | Mapa visual — versão, 4.x→6.x, consultoria, releases |
 | [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) | Diagramas: camadas, RBAC, consultoria, FUNDEB, deploy, releases |
 | [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) | Padrão editorial e checklist de manutenção |
 | [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) | Tags, commits e trajetória de releases |
@@ -103,7 +103,7 @@ mindmap
 |-----------|----------|
 | [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) | Propósito, público, governação |
 | [INICIO_DASHBOARD.md](INICIO_DASHBOARD.md) | Início admin — KPIs, atalhos, mapa mental |
-| [HORIZONTE.md](HORIZONTE.md) | Mapa de oportunidade municipal (5.x) — propensão, calor, feed bimestral, alta pressão |
+| [HORIZONTE.md](HORIZONTE.md) | Mapa de oportunidade municipal (6.x) — propensão, calor, feed bimestral, alta pressão |
 | [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) | RBAC: admin, user, municipal |
 | [SEGURANCA.md](SEGURANCA.md) | Senhas, sessões, checklist produção |
 
@@ -140,6 +140,8 @@ mindmap
 
 | Documento | Versão |
 |-----------|--------|
+| [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md) | **6.0.0** — Odin (marca azul, barra cmd fixa, resumo UF inline, dados públicos agrupados) |
+| [RELEASE_20260603g_THOR.md](RELEASE_20260603g_THOR.md) | **5.8.0** — Thor (FUNDEB estadual, pan mapa, sync repasses Tesouro) |
 | [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md) | **5.7.7** — Skuld (timeline financeira modal, SIDRA pop. total, analytics refactor) |
 | [RELEASE_20260622b_SAGA.md](RELEASE_20260622b_SAGA.md) | **5.7.6** — Saga (modal municipal, demo animada, transferências FNDE) |
 | [RELEASE_20260622a_MIMIR.md](RELEASE_20260622a_MIMIR.md) | **5.7.5** — Mimir (tour Horizonte, repasses no modal) |

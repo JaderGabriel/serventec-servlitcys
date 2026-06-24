@@ -21,7 +21,7 @@
         'emerald' => 'from-emerald-50 to-white dark:from-emerald-950/30 dark:to-gray-900',
         'violet' => 'from-violet-50 to-white dark:from-violet-950/40 dark:to-gray-900/80',
         'fuchsia' => 'from-fuchsia-50 to-white dark:from-fuchsia-950/30 dark:to-gray-900',
-        'indigo' => 'from-indigo-50 to-white dark:from-indigo-950/30 dark:to-gray-900',
+        'indigo' => 'from-sky-50 to-white dark:from-sky-950/30 dark:to-gray-900',
         'sky' => 'from-sky-50 to-white dark:from-sky-950/30 dark:to-gray-900',
         'amber' => 'from-amber-50 to-white dark:from-amber-950/30 dark:to-gray-900',
         'rose' => 'from-rose-50 to-white dark:from-rose-950/30 dark:to-gray-900',
@@ -31,11 +31,11 @@
         'emerald' => 'text-emerald-800 dark:text-emerald-300',
         'violet' => 'text-violet-800 dark:text-violet-300',
         'fuchsia' => 'text-fuchsia-800 dark:text-fuchsia-300',
-        'indigo' => 'text-indigo-800 dark:text-indigo-300',
+        'indigo' => 'text-sky-800 dark:text-sky-300',
         'sky' => 'text-sky-800 dark:text-sky-300',
         'amber' => 'text-amber-800 dark:text-amber-300',
         'rose' => 'text-rose-800 dark:text-rose-300',
-        'slate' => 'text-indigo-700 dark:text-indigo-300',
+        'slate' => 'text-sky-700 dark:text-sky-300',
     ];
     $gradient = $gradients[$accent] ?? $gradients['indigo'];
     $eyebrowColor = $eyebrowColors[$accent] ?? $eyebrowColors['indigo'];

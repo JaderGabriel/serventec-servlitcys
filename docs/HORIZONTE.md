@@ -1,5 +1,7 @@
 # Horizonte — mapa de oportunidade municipal
 
+**Versão do produto:** 6.0.0 · **Última revisão:** 2026-06-03
+
 **Rota:** `/dashboard/horizonte` (`dashboard.horizonte`)  
 **Menu:** Consultoria → **Horizonte** (perfil com `canViewHorizonte()`)  
 **Relacionado:** [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) · [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) · [INICIO_DASHBOARD.md](INICIO_DASHBOARD.md)

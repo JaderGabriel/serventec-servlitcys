@@ -20,7 +20,7 @@
                     :matriculas="$k['matriculas'] ?? 0"
                     :alunos="$k['alunos_distintos'] ?? null"
                     :hint="$k['volume_hint'] ?? null"
-                    class="mt-0.5 text-indigo-600 dark:text-indigo-400"
+                    class="mt-0.5 text-sky-600 dark:text-sky-400"
                 />
             </div>
             <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/40 px-3 py-2 sm:px-3 sm:py-2.5 min-h-0 flex flex-col justify-center">
@@ -240,7 +240,7 @@
                     @foreach ($enrollmentData['unidades_escolares'] as $row)
                         <li class="flex items-center justify-between gap-3 py-2.5 first:pt-0 text-sm">
                             <span class="text-gray-800 dark:text-gray-200 min-w-0 break-words">{{ $row['nome'] }}</span>
-                            <span class="tabular-nums font-semibold text-indigo-600 dark:text-indigo-400 shrink-0">{{ number_format($row['total'] ?? 0) }}</span>
+                            <span class="tabular-nums font-semibold text-sky-600 dark:text-sky-400 shrink-0">{{ number_format($row['total'] ?? 0) }}</span>
                         </li>
                     @endforeach
                 </ul>

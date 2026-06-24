@@ -5,7 +5,7 @@
 
 @php
     $toneRing = match ($tone) {
-        'teal' => 'border-teal-200/90 dark:border-teal-800 text-teal-800 dark:text-teal-200 hover:bg-teal-50/80 dark:hover:bg-teal-950/30',
+        'blue' => 'border-blue-200/90 dark:border-blue-800 text-blue-800 dark:text-blue-200 hover:bg-blue-50/80 dark:hover:bg-blue-950/30',
         'rose' => 'border-rose-200/90 dark:border-rose-800 text-rose-800 dark:text-rose-200 hover:bg-rose-50/80 dark:hover:bg-rose-950/30',
         default => 'border-slate-200/90 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50',
     };

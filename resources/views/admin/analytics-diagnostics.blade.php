@@ -77,7 +77,7 @@
                         @endphp
                         <details class="serv-panel group" @if (! $stepOk) open @endif>
                             <summary class="cursor-pointer px-5 py-3 flex flex-wrap items-center justify-between gap-2 list-none">
-                                <span class="font-mono text-sm font-semibold {{ $stepOk ? 'text-teal-800 dark:text-teal-200' : 'text-red-800 dark:text-red-200' }}">
+                                <span class="font-mono text-sm font-semibold {{ $stepOk ? 'text-blue-800 dark:text-blue-200' : 'text-red-800 dark:text-red-200' }}">
                                     {{ $stepOk ? '✓' : '✗' }} {{ $step['id'] }}
                                 </span>
                                 <span class="text-xs text-slate-500">{{ $step['ms'] ?? 0 }} ms</span>

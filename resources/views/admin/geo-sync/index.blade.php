@@ -12,7 +12,7 @@
 
     @php
         $cityCount = $cities->count();
-        $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition';
+        $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm transition';
     @endphp
 
     <x-admin.import-hub.shell
@@ -67,8 +67,8 @@
                             <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('Fonte: i-Educar (escola, INEP, coords locais)') }}</span>
                         </div>
                         <span class="hidden sm:inline self-center text-slate-400 dark:text-slate-500" aria-hidden="true">→</span>
-                        <div class="shrink-0 rounded-lg border border-indigo-200/90 bg-indigo-50/90 dark:border-indigo-900/60 dark:bg-indigo-950/30 px-3 py-2.5 max-w-[11rem] text-left">
-                            <span class="font-bold text-indigo-800 dark:text-indigo-200">{{ __('Passo 1') }}</span>
+                        <div class="shrink-0 rounded-lg border border-sky-200/90 bg-sky-50/90 dark:border-sky-900/60 dark:bg-sky-950/30 px-3 py-2.5 max-w-[11rem] text-left">
+                            <span class="font-bold text-sky-800 dark:text-sky-200">{{ __('Passo 1') }}</span>
                             <span class="block mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ __('Sync → tabela `school_unit_geos`') }}</span>
                         </div>
                         <span class="hidden sm:inline self-center text-slate-400 dark:text-slate-500" aria-hidden="true">→</span>

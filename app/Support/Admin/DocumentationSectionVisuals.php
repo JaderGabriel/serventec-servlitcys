@@ -46,12 +46,12 @@ final class DocumentationSectionVisuals
         return [
             'entry' => [
                 'icon' => 'home',
-                'tone' => 'teal',
+                'tone' => 'blue',
                 'analogy' => __('Porta de entrada — versão, perfis e hub'),
             ],
             'architecture' => [
                 'icon' => 'squares-2x2',
-                'tone' => 'indigo',
+                'tone' => 'sky',
                 'analogy' => __('Planta do sistema — camadas e decisões'),
             ],
             'consultoria' => [

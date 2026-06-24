@@ -10,7 +10,7 @@
                 </p>
             </div>
             @if ($filterDomain !== '' || $filterStatus !== '' || $filterPdfStatus !== '')
-                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline shrink-0">
+                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="text-sm text-sky-600 dark:text-sky-400 hover:underline shrink-0">
                     {{ __('Limpar todos os filtros') }}
                 </a>
             @endif

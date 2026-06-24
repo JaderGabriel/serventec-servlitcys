@@ -45,9 +45,9 @@
     <div class="rounded-lg border border-violet-200 dark:border-violet-900/50 bg-violet-50/60 dark:bg-violet-950/20 px-4 py-3 text-sm space-y-2">
         <p class="text-xs text-violet-800/90 dark:text-violet-200/90 leading-relaxed">
             {{ __('Consultoria municipal:') }}
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Serventec') }}</button>
+            <button type="button" class="text-sky-600 dark:text-sky-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'municipality_health')">{{ __('Serventec') }}</button>
             ·
-            <button type="button" class="text-indigo-600 dark:text-indigo-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Discrepâncias') }}</button>
+            <button type="button" class="text-sky-600 dark:text-sky-400 hover:underline" x-on:click="$dispatch('set-analytics-tab', 'discrepancies')">{{ __('Discrepâncias') }}</button>
             {{ __('(cadastro) · Fontes externas assinaladas abaixo.') }}
         </p>
     </div>
@@ -95,10 +95,10 @@
         </div>
             @endif
             @if (($performanceData['distorcao_pct'] ?? null) !== null)
-            <div class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/30 px-3 py-2 text-sm text-indigo-900 dark:text-indigo-100">
+            <div class="rounded-lg border border-sky-200 dark:border-sky-800 bg-sky-50/80 dark:bg-sky-950/30 px-3 py-2 text-sm text-sky-900 dark:text-sky-100">
                 {{ __('Distorção idade/série (rede)') }}:
                 <span class="font-semibold">{{ number_format((float) $performanceData['distorcao_pct'], 1, ',', '.') }}%</span>
-                <span class="text-xs text-indigo-700 dark:text-indigo-300">({{ __('critério de rede ou definição personalizada') }})</span>
+                <span class="text-xs text-sky-700 dark:text-sky-300">({{ __('critério de rede ou definição personalizada') }})</span>
             </div>
         @endif
         </x-dashboard.consultoria-section>
@@ -118,19 +118,19 @@
             </div>
         @endif
 
-        <div class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-950/25 p-4 space-y-4">
+        <div class="rounded-lg border border-sky-200 dark:border-sky-800 bg-sky-50/60 dark:bg-sky-950/25 p-4 space-y-4">
             <div>
-                <h3 class="text-sm font-semibold text-indigo-950 dark:text-indigo-100">{{ __('Indicadores externos: IDEB, SAEB e PNE') }}</h3>
-                <p class="text-xs text-indigo-900/90 dark:text-indigo-200/90 mt-1 leading-relaxed">
+                <h3 class="text-sm font-semibold text-sky-950 dark:text-sky-100">{{ __('Indicadores externos: IDEB, SAEB e PNE') }}</h3>
+                <p class="text-xs text-sky-900/90 dark:text-sky-200/90 mt-1 leading-relaxed">
                     {{ __('O IDEB e o SAEB são produzidos pelo INEP; as metas do PNE são acompanhadas com indicadores nacionais. Abaixo consolidamos referências e, se configurado, valores lidos da sua base (tabela ou view própria). Consulte também o portal do INEP para séries históricas oficiais.') }}
-                    <a href="https://www.gov.br/inep/pt-br" class="text-indigo-700 dark:text-indigo-300 underline" target="_blank" rel="noopener noreferrer">https://www.gov.br/inep/pt-br</a>
+                    <a href="https://www.gov.br/inep/pt-br" class="text-sky-700 dark:text-sky-300 underline" target="_blank" rel="noopener noreferrer">https://www.gov.br/inep/pt-br</a>
                 </p>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 @foreach (['ideb', 'saeb', 'pne'] as $secKey)
                     @php $sec = $inepPanel['sections'][$secKey] ?? null; @endphp
                     @if ($sec !== null)
-                        <div class="rounded-lg border border-white/80 dark:border-indigo-900/50 bg-white/90 dark:bg-gray-900/40 p-4 shadow-sm flex flex-col gap-2 min-h-[12rem]">
+                        <div class="rounded-lg border border-white/80 dark:border-sky-900/50 bg-white/90 dark:bg-gray-900/40 p-4 shadow-sm flex flex-col gap-2 min-h-[12rem]">
                             <p class="text-sm font-bold text-gray-900 dark:text-gray-100">{{ $sec['title'] }}</p>
                             <p class="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed flex-1">{{ $sec['intro'] }}</p>
                             @if (! empty($sec['items']))
@@ -139,7 +139,7 @@
                                         <li class="leading-snug">
                                             <span class="font-medium">{{ $item['label'] ?? '—' }}</span>
                                             @if (($item['valor'] ?? null) !== null && is_numeric($item['valor']))
-                                                <span class="tabular-nums text-indigo-700 dark:text-indigo-300"> — {{ number_format((float) $item['valor'], 2, ',', '.') }}</span>
+                                                <span class="tabular-nums text-sky-700 dark:text-sky-300"> — {{ number_format((float) $item['valor'], 2, ',', '.') }}</span>
                                                 @if (! empty($item['unidade']))
                                                     <span class="text-gray-500"> ({{ $item['unidade'] }})</span>
                                                 @endif

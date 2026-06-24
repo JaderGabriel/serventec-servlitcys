@@ -17,11 +17,11 @@
         @include('partials.theme-init')
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="min-h-screen antialiased font-sans text-slate-800 selection:bg-teal-500/25 selection:text-slate-900 dark:text-slate-100 dark:selection:bg-teal-400/30 dark:selection:text-white">
+    <body class="min-h-screen antialiased font-sans text-slate-800 selection:bg-blue-500/25 selection:text-slate-900 dark:text-slate-100 dark:selection:bg-blue-400/30 dark:selection:text-white">
         <div class="fixed inset-0 -z-10 serv-auth-bg">
             <div class="serv-auth-bg__gradient"></div>
-            <div class="absolute top-[-20%] left-[-10%] h-[50vh] w-[50vh] rounded-full bg-teal-400/15 blur-[100px] animate-float dark:bg-teal-600/20"></div>
-            <div class="absolute bottom-[-15%] right-[-5%] h-[45vh] w-[45vh] rounded-full bg-indigo-400/10 blur-[90px] animate-float-delayed dark:bg-indigo-600/15"></div>
+            <div class="absolute top-[-20%] left-[-10%] h-[50vh] w-[50vh] rounded-full bg-blue-400/15 blur-[100px] animate-float dark:bg-blue-600/20"></div>
+            <div class="absolute bottom-[-15%] right-[-5%] h-[45vh] w-[45vh] rounded-full bg-sky-400/10 blur-[90px] animate-float-delayed dark:bg-sky-600/15"></div>
             <div class="serv-auth-bg__grid"></div>
             <div class="serv-auth-bg__fade"></div>
         </div>
@@ -30,7 +30,7 @@
             <header class="serv-nav-brand sticky top-0 z-50 shrink-0 shadow-sm">
                 <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
                     <a href="{{ url('/') }}" class="group flex min-w-0 items-center gap-2.5 sm:gap-3">
-                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-indigo-700 shadow-md shadow-teal-900/15 ring-1 ring-slate-900/10 transition group-hover:scale-105 dark:from-teal-500 dark:to-indigo-600 dark:ring-white/15">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-sky-700 shadow-md shadow-blue-900/15 ring-1 ring-slate-900/10 transition group-hover:scale-105 dark:from-blue-500 dark:to-sky-600 dark:ring-white/15">
                             <x-application-logo class="h-6 w-6 text-white shrink-0" />
                         </span>
                         <span class="min-w-0 truncate font-display text-base font-semibold tracking-tight text-slate-900 sm:text-lg dark:text-white">
@@ -39,7 +39,7 @@
                     </a>
                     <div class="flex shrink-0 items-center gap-2 sm:gap-3">
                         <x-theme-toggle appearance="landing" />
-                        <a href="{{ url('/') }}" class="text-sm font-medium text-slate-600 transition hover:text-teal-800 dark:text-slate-300 dark:hover:text-white">
+                        <a href="{{ url('/') }}" class="text-sm font-medium text-slate-600 transition hover:text-blue-800 dark:text-slate-300 dark:hover:text-white">
                             ← {{ __('Voltar ao início') }}
                         </a>
                     </div>

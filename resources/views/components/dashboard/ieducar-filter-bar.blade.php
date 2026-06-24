@@ -97,7 +97,7 @@
                 @if ($needsYearFetch && empty($loadErrors))
                     <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ __('Carregando anos letivos da base do município…') }}</p>
                 @endif
-                <select id="ano_letivo" name="ano_letivo" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <select id="ano_letivo" name="ano_letivo" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
                     @foreach ($yearOptions as $value => $label)
                         <option
                             value="{{ $value }}"
@@ -108,7 +108,7 @@
             </div>
             <div>
                 <x-input-label for="escola_id" :value="__('Escolas')" />
-                <select id="escola_id" name="escola_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <select id="escola_id" name="escola_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
                     <option value="">{{ __('Todos os dados') }}</option>
                     @foreach ($escolas as $opt)
                         @php
@@ -148,7 +148,7 @@
             </div>
             <div>
                 <x-input-label for="curso_id" :value="__('Tipo/Segmento')" />
-                <select id="curso_id" name="curso_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <select id="curso_id" name="curso_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
                     <option value="">{{ __('Todos os dados') }}</option>
                     @foreach ($cursos as $opt)
                         <option value="{{ $opt['id'] }}" @selected((string) old('curso_id', $filters->curso_id) === (string) $opt['id'])>{{ $opt['name'] }}</option>
@@ -157,7 +157,7 @@
             </div>
             <div>
                 <x-input-label for="turno_id" :value="__('Turno')" />
-                <select id="turno_id" name="turno_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <select id="turno_id" name="turno_id" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
                     <option value="">{{ __('Todos os dados') }}</option>
                     @foreach ($turnos as $opt)
                         <option value="{{ $opt['id'] }}" @selected((string) old('turno_id', $filters->turno_id) === (string) $opt['id'])>{{ $opt['name'] }}</option>

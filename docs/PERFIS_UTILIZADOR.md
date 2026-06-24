@@ -1,6 +1,6 @@
 # Perfis de utilizador — servlitcys
 
-**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
+**Versão do produto:** 6.0.0 · **Última revisão:** 2026-06-03
 
 > **Índice:** [README.md](README.md) · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §10.
 

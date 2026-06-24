@@ -326,7 +326,7 @@ function transferTooltipHtml(m, refYear) {
                     `<span class="serv-horizonte-muni-tooltip__fundeb-value">` +
                     `<span class="serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(educVal)}</span>` +
                     (pctEduc
-                        ? `<span class="serv-horizonte-muni-tooltip__fundeb-pct serv-horizonte-muni-tooltip__fundeb-pct--teal">${escapeHtml(pctEduc)} ${escapeHtml("do total")}</span>`
+                        ? `<span class="serv-horizonte-muni-tooltip__fundeb-pct serv-horizonte-muni-tooltip__fundeb-pct--blue">${escapeHtml(pctEduc)} ${escapeHtml("do total")}</span>`
                         : "") +
                     `</span></div>`,
             );
@@ -729,7 +729,7 @@ const DECISION_LENSES = {
     consultoria_active: {
         label: "Consultoria activa",
         short: "Consultoria",
-        color: "#0d9488",
+        color: "#2563eb",
         overviewOk: false,
     },
     catalog_pending: {
@@ -3327,7 +3327,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 const fillClass =
                     isTransfer && val > 0
                         ? "serv-horizonte-muni-tooltip__dim-fill--rose"
-                        : "serv-horizonte-muni-tooltip__dim-fill--teal";
+                        : "serv-horizonte-muni-tooltip__dim-fill--blue";
                 lines.push(
                     `<div class="serv-horizonte-muni-tooltip__dim-row">` +
                         `<span class="serv-horizonte-muni-tooltip__dim-label">${escapeHtml(dimLabel)}</span>` +

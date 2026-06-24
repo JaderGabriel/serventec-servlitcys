@@ -13,7 +13,7 @@
             </div>
             <p class="text-xs text-gray-500 dark:text-gray-400 shrink-0 mt-2 sm:mt-0 max-w-xs sm:text-right">
                 {{ __('Documentação completa:') }}
-                <a href="{{ $documentationUrl }}" class="text-indigo-700 dark:text-indigo-300 hover:underline font-medium">
+                <a href="{{ $documentationUrl }}" class="text-sky-700 dark:text-sky-300 hover:underline font-medium">
                     {{ __('Comandos Artisan') }}
                 </a>
             </p>
@@ -138,7 +138,7 @@
                             @endphp
                             <article class="px-4 sm:px-6 py-4 space-y-2">
                                 <div class="flex flex-wrap items-center gap-2">
-                                    <code class="text-sm font-semibold text-indigo-800 dark:text-indigo-200">{{ $cmd['name'] }}</code>
+                                    <code class="text-sm font-semibold text-sky-800 dark:text-sky-200">{{ $cmd['name'] }}</code>
                                     @if (filled($cmd['schedule'] ?? null))
                                         <span class="inline-flex items-center rounded-full bg-sky-100 dark:bg-sky-950/50 px-2 py-0.5 text-[10px] font-medium text-sky-800 dark:text-sky-200 ring-1 ring-sky-200/80 dark:ring-sky-800/60">
                                             {{ __('Agendado') }}

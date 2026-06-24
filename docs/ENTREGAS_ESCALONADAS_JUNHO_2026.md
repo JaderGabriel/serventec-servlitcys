@@ -1,9 +1,9 @@
 # Entregas escalonadas — junho/2026
 
-> **Versão actual em produção:** **5.5.0** · tag **`20260619c-Helios`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260619c_HELIOS.md](RELEASE_20260619c_HELIOS.md)  
+> **Versão actual em produção:** **6.0.0** · tag **`20260603h-Odin`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md)  
 > **Índice geral:** [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) · **Mês anterior:** [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) (3.4.0)
 
-Cronologia de **junho/2026**: de **3.5.0** (CadÚnico e comparativo) a **5.0.0** (Horizonte — mapa de oportunidade). Cada linha da tabela abaixo aponta para a nota de release; patches sem bump estão no [histórico](HISTORICO_VERSOES.md).
+Cronologia de **junho/2026**: de **3.5.0** (CadÚnico e comparativo) a **6.0.0** (Odin — marca Horizonte e identidade 6.x). Cada linha da tabela abaixo aponta para a nota de release; patches sem bump estão no [histórico](HISTORICO_VERSOES.md).
 
 ---
 
@@ -36,11 +36,18 @@ Cronologia de **junho/2026**: de **3.5.0** (CadÚnico e comparativo) a **5.0.0**
 | 21 | **4.4.5** | `20260609a-Themis` | [RELEASE_20260609a_THEMIS.md](RELEASE_20260609a_THEMIS.md) | **Produção:** índice qualidade no dock, FUNDEB gerencial, fix município/ano, pt-BR |
 | 22 | **5.0.0** | `20260603b-Horizonte`* | [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md) | Horizonte — mapa oportunidade (*tag data incorrecta) |
 | 25 | **5.2.0** | `20260603c-Argus` | [RELEASE_20260603c_ARGUS.md](RELEASE_20260603c_ARGUS.md) | Hub Horizonte, monitor sondas, acesso admin/utilizador |
-| 28 | **5.5.0** | `20260619c-Helios` | [RELEASE_20260619c_HELIOS.md](RELEASE_20260619c_HELIOS.md) | **Produção:** Horizonte GIS gerencial, monitor 10 min, catálogo Artisan admin |
+| 28 | **5.5.0** | `20260619c-Helios` | [RELEASE_20260619c_HELIOS.md](RELEASE_20260619c_HELIOS.md) | Horizonte GIS gerencial, monitor 10 min, catálogo Artisan admin |
 | 27 | **5.4.0** | `20260603e-Hyperion` | [RELEASE_20260603e_HYPERION.md](RELEASE_20260603e_HYPERION.md) | Horizonte v2 — CadÚnico/SIDRA/repasses, mapa performante, SGE concorrência |
 | 26 | **5.3.0** | `20260603d-Prometheus` | [RELEASE_20260603d_PROMETHEUS.md](RELEASE_20260603d_PROMETHEUS.md) | Feed bimestral/UF, SGE no mapa, fix IBGE |
 | 24 | **5.1.0** | `20260619b-Prospeccao` | [RELEASE_20260619b_PROSPECCAO.md](RELEASE_20260619b_PROSPECCAO.md) | Horizonte calor/gestores + feed quinzenal nacional |
 | 23 | **5.0.1** | `20260619a-Heimdall` | [RELEASE_20260619a_HEIMDALL.md](RELEASE_20260619a_HEIMDALL.md) | Data release; monitor módulos; check dados públicos no hub |
+| 29 | **5.6.0** | `20260620-Urania` | [RELEASE_20260620_URANIA.md](RELEASE_20260620_URANIA.md) | Alta pressão GIS, feed robusto, sync BR |
+| 30 | **5.7.0** | `20260620a-Metis` | [RELEASE_20260620a_METIS.md](RELEASE_20260620a_METIS.md) | Centro de decisão Horizonte, performance UF extensas |
+| 31 | **5.7.5** | `20260622a-Mimir` | [RELEASE_20260622a_MIMIR.md](RELEASE_20260622a_MIMIR.md) | Tour/demo Horizonte, repasses modal, import Tesouro |
+| 32 | **5.7.6** | `20260622b-Saga` | [RELEASE_20260622b_SAGA.md](RELEASE_20260622b_SAGA.md) | Modal municipal, demo animada, transferências FNDE |
+| 33 | **5.7.7** | `20260624a-Skuld` | [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md) | Timeline financeira modal, SIDRA pop. total, analytics refactor |
+| 34 | **5.8.0** | `20260603g-Thor` | [RELEASE_20260603g_THOR.md](RELEASE_20260603g_THOR.md) | FUNDEB estadual, pan mapa, sync repasses Tesouro |
+| 35 | **6.0.0** | `20260603h-Odin` | [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md) | **Produção:** marca Horizonte, barra cmd fixa, resumo UF inline, dados públicos agrupados |
 
 > **Nota:** versões **4.1.3–4.1.5** (Chronos, Horae, Themis) e patches do mesmo dia estão no [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) sem `RELEASE_*.md` dedicado. A numeração **4.4.x** reflecte marcos de documentação e convenção de tag com sufixo no mesmo dia civil.
 

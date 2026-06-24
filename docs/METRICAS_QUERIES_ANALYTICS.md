@@ -1,6 +1,6 @@
 # Métricas: queries lentas no painel de analytics
 
-**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
+**Versão do produto:** 6.0.0 · **Última revisão:** 2026-06-03
 
 > **Índice:** [README.md](README.md) · **Navegação:** [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §9.
 

@@ -245,7 +245,7 @@ final class CadunicoPrevisaoRepository
                     .($alunos > 0 && $alunos < $matriculas
                         ? ' ('.__(':alu alunos', ['alu' => number_format($alunos, 0, ',', '.')]).')'
                         : ''),
-                'tone' => 'teal',
+                'tone' => 'blue',
             ],
             [
                 'label' => __('Estimativa fora da rede'),

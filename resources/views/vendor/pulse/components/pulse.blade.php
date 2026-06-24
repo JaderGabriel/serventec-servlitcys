@@ -42,17 +42,17 @@
             <header class="serv-app-header">
                 @include('layouts.navigation-pulse')
 
-                <div class="pulse-noc-header shrink-0 border-b border-teal-500/25 border-t-0">
+                <div class="pulse-noc-header shrink-0 border-b border-blue-500/25 border-t-0">
                 <div class="mx-auto max-w-[min(100%,100rem)] px-4 py-5 sm:px-6 sm:py-6 lg:px-10 xl:px-12">
                     <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                         <div class="flex items-start gap-4 min-w-0">
-                            <div class="shrink-0 rounded-lg border border-teal-500/35 bg-teal-500/15 p-2.5">
-                                <svg class="h-7 w-7 text-teal-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                            <div class="shrink-0 rounded-lg border border-blue-500/35 bg-blue-500/15 p-2.5">
+                                <svg class="h-7 w-7 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                                 </svg>
                             </div>
                             <div class="min-w-0">
-                                <p class="serv-eyebrow text-teal-300/95">{{ __('Centro de monitorização') }}</p>
+                                <p class="serv-eyebrow text-blue-300/95">{{ __('Centro de monitorização') }}</p>
                                 <h1 class="mt-1 text-xl font-semibold leading-tight text-white sm:text-2xl">
                                     {{ __('Monitorização — municípios e infraestrutura') }}
                                 </h1>

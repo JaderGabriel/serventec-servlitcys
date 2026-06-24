@@ -79,8 +79,8 @@
 
 @endphp
 
-<section class="serv-panel overflow-hidden border border-teal-200/60 dark:border-teal-900/50" id="diag-decisao">
-    <div class="bg-gradient-to-br from-teal-50/90 via-white to-slate-50/80 dark:from-teal-950/30 dark:via-slate-900 dark:to-slate-900/80 px-4 py-5 sm:px-6 sm:py-6 border-b border-teal-100/80 dark:border-teal-900/40">
+<section class="serv-panel overflow-hidden border border-blue-200/60 dark:border-blue-900/50" id="diag-decisao">
+    <div class="bg-gradient-to-br from-blue-50/90 via-white to-slate-50/80 dark:from-blue-950/30 dark:via-slate-900 dark:to-slate-900/80 px-4 py-5 sm:px-6 sm:py-6 border-b border-blue-100/80 dark:border-blue-900/40">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
             <div class="lg:col-span-12 space-y-3">
                 <h2 class="text-lg sm:text-xl font-semibold font-display text-serv-navy dark:text-slate-100 leading-snug">

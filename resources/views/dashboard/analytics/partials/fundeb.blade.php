@@ -7,7 +7,7 @@
 
 <x-dashboard.consultoria-tab-frame
     tab="fundeb"
-    tone="teal"
+    tone="blue"
     :title="__('FUNDEB e repasses')"
     :intro="$fundebData['intro'] ?? __('Previsão de recursos, complementação VAAR e roteiro de condicionalidades.')"
     :meta="$fundebMeta"
@@ -143,7 +143,7 @@
                                                     <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{{ $item['descricao'] }}</p>
                                                 @endif
                                                 @if (filled($item['nota'] ?? null))
-                                                    <p class="text-[11px] text-teal-800/90 dark:text-teal-300/90 mt-0.5">{{ $item['nota'] }}</p>
+                                                    <p class="text-[11px] text-blue-800/90 dark:text-blue-300/90 mt-0.5">{{ $item['nota'] }}</p>
                                                 @endif
                                             </td>
                                             <td class="px-3 py-2.5 text-right tabular-nums text-slate-700 dark:text-slate-300 whitespace-nowrap">{{ $item['percentual_label'] ?? '' }}</td>
@@ -237,7 +237,7 @@
                                         <dd class="font-semibold tabular-nums text-serv-navy dark:text-slate-100">{{ $ind['value'] ?? '' }}</dd>
                                         @if (is_array($ind['comparacao'] ?? null))
                                             <dd class="mt-2 pt-2 border-t border-slate-200 dark:border-slate-600 space-y-1 text-[10px] text-slate-600 dark:text-slate-400">
-                                                <p><span class="font-medium text-teal-800 dark:text-teal-300">{{ __('Real') }}:</span> {{ $ind['comparacao']['real']['value'] ?? '—' }}</p>
+                                                <p><span class="font-medium text-blue-800 dark:text-blue-300">{{ __('Real') }}:</span> {{ $ind['comparacao']['real']['value'] ?? '—' }}</p>
                                                 <p><span class="font-medium text-slate-700 dark:text-slate-300">{{ __('Prévia') }}:</span> {{ $ind['comparacao']['previa']['value'] ?? '—' }}</p>
                                             </dd>
                                         @endif

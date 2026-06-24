@@ -14,7 +14,7 @@
         'past' => 'bg-slate-500',
         'danger' => 'bg-rose-500',
         'warning' => 'bg-amber-500',
-        default => 'bg-teal-600',
+        default => 'bg-blue-600',
     };
     $days = (int) ($d['days_remaining'] ?? 0);
     $phaseLabel = (string) ($d['phase_label'] ?? __('Censo Escolar'));

@@ -133,7 +133,7 @@
                                     <div class="min-w-0">
                                         <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 break-words" x-text="modal?.title || '—'"></h3>
                                         <div class="mt-1 flex flex-wrap items-center gap-2 text-xs">
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 font-medium text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-200">
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 font-medium text-sky-800 dark:bg-sky-950/60 dark:text-sky-200">
                                                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 21s6-5.686 6-10a6 6 0 1 0-12 0c0 4.314 6 10 6 10Z" />
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
@@ -152,7 +152,7 @@
                                     </div>
                                     <button
                                         type="button"
-                                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
                                         @click="closeSchoolModal()"
                                         title="{{ __('Fechar') }}"
                                         aria-label="{{ __('Fechar') }}"
@@ -324,7 +324,7 @@
                                         <template x-for="(ln, li) in (modal?.inep_links || [])" :key="li + '-' + (ln?.url || '')">
                                             <a
                                                 x-show="ln && ln.id !== 'inep_portal'"
-                                                class="inline-flex items-center justify-center rounded-md border border-indigo-200 bg-white px-3 py-2 text-xs font-medium text-indigo-800 shadow-sm hover:bg-indigo-50 dark:border-indigo-800 dark:bg-gray-900 dark:text-indigo-200 dark:hover:bg-indigo-950/50"
+                                                class="inline-flex items-center justify-center rounded-md border border-sky-200 bg-white px-3 py-2 text-xs font-medium text-sky-800 shadow-sm hover:bg-sky-50 dark:border-sky-800 dark:bg-gray-900 dark:text-sky-200 dark:hover:bg-sky-950/50"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 :href="ln.url"
@@ -346,7 +346,7 @@
                                     </a>
                                     <button
                                         type="button"
-                                        class="w-full sm:w-auto rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:ml-auto"
+                                        class="w-full sm:w-auto rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-500 sm:ml-auto"
                                         @click="closeSchoolModal()"
                                     >
                                         {{ __('Fechar') }}
@@ -598,22 +598,22 @@
 
     {{-- 6) TRANSPORTE ESCOLAR --}}
     @if ($transport && is_array($transport))
-        <div class="rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/60 dark:bg-indigo-950/30 p-4">
+        <div class="rounded-xl border border-sky-100 dark:border-sky-900/50 bg-sky-50/60 dark:bg-sky-950/30 p-4">
             <div class="flex items-start gap-3">
-                <svg class="h-5 w-5 mt-0.5 text-indigo-800 dark:text-indigo-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                <svg class="h-5 w-5 mt-0.5 text-sky-800 dark:text-sky-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0ZM12.75 18.75a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0ZM3 6.75h13.5l2.25 6.75H6.75L5.25 9H3V6.75Z" />
                 </svg>
                 <div class="min-w-0">
-                    <h3 class="text-sm font-semibold uppercase tracking-wide text-indigo-950 dark:text-indigo-100">{{ __('TRANSPORTE ESCOLAR') }}</h3>
-                    <p class="mt-1 text-xs text-indigo-900/90 dark:text-indigo-200/90 leading-relaxed">
+                    <h3 class="text-sm font-semibold uppercase tracking-wide text-sky-950 dark:text-sky-100">{{ __('TRANSPORTE ESCOLAR') }}</h3>
+                    <p class="mt-1 text-xs text-sky-900/90 dark:text-sky-200/90 leading-relaxed">
                         {{ __('Indicadores e notas de transporte escolar calculados a partir dos dados de matrícula (quando disponíveis).') }}
                     </p>
                 </div>
             </div>
 
-            <p class="mt-2 text-xs text-indigo-900/90 dark:text-indigo-200/90 leading-relaxed">{{ $transport['texto'] ?? '' }}</p>
+            <p class="mt-2 text-xs text-sky-900/90 dark:text-sky-200/90 leading-relaxed">{{ $transport['texto'] ?? '' }}</p>
             @if (! empty($transport['linhas']))
-                <ul class="mt-3 space-y-1 text-xs font-mono text-indigo-900 dark:text-indigo-100">
+                <ul class="mt-3 space-y-1 text-xs font-mono text-sky-900 dark:text-sky-100">
                     @foreach ($transport['linhas'] as $ln)
                         <li>{{ $ln }}</li>
                     @endforeach

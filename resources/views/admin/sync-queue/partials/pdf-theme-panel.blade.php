@@ -23,7 +23,7 @@
                         @endforeach
                     </select>
                 </div>
-                <button type="submit" class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500">{{ __('Filtrar') }}</button>
+                <button type="submit" class="rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white hover:bg-sky-500">{{ __('Filtrar') }}</button>
             </form>
         </div>
         <div class="flex flex-wrap gap-2 text-xs mt-3">

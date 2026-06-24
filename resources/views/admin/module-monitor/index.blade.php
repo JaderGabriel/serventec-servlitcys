@@ -126,7 +126,7 @@
                         <select
                             id="period"
                             name="period"
-                            class="rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 text-sm shadow-sm focus:border-teal-500 focus:ring-teal-500 min-w-[10rem]"
+                            class="rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 min-w-[10rem]"
                             onchange="this.form.submit()"
                         >
                             @foreach ($periods as $p)
@@ -155,7 +155,7 @@
                             href="{{ $filterUrl($chip['key']) }}"
                             @class([
                                 'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition ring-1',
-                                'bg-serv-navy text-white ring-serv-navy dark:bg-teal-700 dark:ring-teal-600' => $active,
+                                'bg-serv-navy text-white ring-serv-navy dark:bg-blue-700 dark:ring-blue-600' => $active,
                                 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 ring-slate-200 dark:ring-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800' => ! $active,
                             ])
                         >

@@ -37,7 +37,7 @@
                     <tr @class([
                         'hover:bg-slate-50/80 dark:hover:bg-slate-900/50' => ! $isSubtotal,
                         'bg-amber-50/90 dark:bg-amber-950/30 font-semibold' => $lineType === 'month_total',
-                        'bg-teal-50/90 dark:bg-teal-950/35 font-bold' => $lineType === 'year_total',
+                        'bg-blue-50/90 dark:bg-blue-950/35 font-bold' => $lineType === 'year_total',
                         'bg-slate-100/60 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400' => $lineType === 'opening',
                     ])>
                         <td class="{{ $cellPad }} whitespace-nowrap align-top">
@@ -68,7 +68,7 @@
             {{ __('Por mês vs. expectativa') }}
         </div>
         <table class="w-full text-left text-[10px]">
-            <thead class="bg-teal-50/80 dark:bg-teal-950/40 text-teal-900 dark:text-teal-200">
+            <thead class="bg-blue-50/80 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200">
                 <tr>
                     <th class="{{ $cellPad }}">{{ __('Período') }}</th>
                     <th class="{{ $cellPad }} text-right">{{ __('Repasse') }}</th>

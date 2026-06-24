@@ -1,7 +1,7 @@
 @php
     $isCurrent = (bool) ($isCurrent ?? false);
 @endphp
-<tr class="{{ $isCurrent ? 'bg-teal-50/80 dark:bg-teal-950/25' : '' }}">
+<tr class="{{ $isCurrent ? 'bg-blue-50/80 dark:bg-blue-950/25' : '' }}">
     <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
         @if ($s->user)
             <span class="font-medium">{{ $s->user->name }}</span>
@@ -10,7 +10,7 @@
             —
         @endif
         @if ($isCurrent)
-            <span class="mt-1 inline-flex items-center rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-teal-800 dark:bg-teal-900/60 dark:text-teal-100">
+            <span class="mt-1 inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-800 dark:bg-blue-900/60 dark:text-blue-100">
                 {{ __('Esta sessão') }}
             </span>
         @endif

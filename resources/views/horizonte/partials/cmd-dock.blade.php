@@ -50,7 +50,7 @@
                     <span class="serv-horizonte-cmd__highlight-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(summary.prospect_count)"></span>
                 </span>
                 <span class="serv-horizonte-cmd__highlight-sep" aria-hidden="true" x-show="isRegionalMode" x-cloak></span>
-                <span class="serv-horizonte-cmd__highlight-item serv-horizonte-cmd__highlight-item--teal" x-show="isRegionalMode" x-cloak>
+                <span class="serv-horizonte-cmd__highlight-item serv-horizonte-cmd__highlight-item--blue" x-show="isRegionalMode" x-cloak>
                     <span class="serv-horizonte-cmd__highlight-label">{{ __('No recorte') }}</span>
                     <span class="serv-horizonte-cmd__highlight-value tabular-nums" x-text="filteredCount.toLocaleString('pt-BR')"></span>
                 </span>
@@ -70,7 +70,7 @@
                     :disabled="pageLoading || isOverviewMode"
                 >
                     {{ __('Filtros') }}
-                    <span x-show="activeFilterCount > 0" x-cloak class="ms-1 rounded-full bg-teal-600 px-1.5 py-0.5 text-[10px] font-bold text-white tabular-nums" x-text="activeFilterCount"></span>
+                    <span x-show="activeFilterCount > 0" x-cloak class="ms-1 rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white tabular-nums" x-text="activeFilterCount"></span>
                 </button>
                 <button type="button" class="serv-btn-secondary text-xs hidden sm:inline-flex" @click="resetFilters()" :disabled="pageLoading">
                     {{ __('Vista padrão') }}
@@ -200,7 +200,7 @@
                     :disabled="pageLoading"
                     @click="applyFocusSegment(seg); workspaceTab = 'list'"
                 >
-                    <span class="text-[10px] font-bold uppercase tracking-wide text-teal-800 dark:text-teal-300" x-text="seg.label"></span>
+                    <span class="text-[10px] font-bold uppercase tracking-wide text-blue-800 dark:text-blue-300" x-text="seg.label"></span>
                     <span class="serv-horizonte-cmd__segment-count" x-text="Number(seg.count ?? 0).toLocaleString('pt-BR')"></span>
                     <span class="mt-0.5 line-clamp-2 text-[11px] text-slate-500 dark:text-slate-400" x-text="seg.description"></span>
                 </button>

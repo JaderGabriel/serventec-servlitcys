@@ -18,11 +18,11 @@
     $scopedUf = strtoupper(trim((string) ($pipelineOptions['uf'] ?? '')));
 @endphp
 
-<div class="rounded-xl border border-indigo-200/80 bg-indigo-50/40 dark:border-indigo-900/50 dark:bg-indigo-950/20 p-4 space-y-3">
+<div class="rounded-xl border border-sky-200/80 bg-sky-50/40 dark:border-sky-900/50 dark:bg-sky-950/20 p-4 space-y-3">
     <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-            <h4 class="text-sm font-semibold text-indigo-950 dark:text-indigo-100">{{ __('Abastecimento em etapas') }}</h4>
-            <p class="mt-1 text-xs text-indigo-900/80 dark:text-indigo-200/80">
+            <h4 class="text-sm font-semibold text-sky-950 dark:text-sky-100">{{ __('Abastecimento em etapas') }}</h4>
+            <p class="mt-1 text-xs text-sky-900/80 dark:text-sky-200/80">
                 {{ __('Pipeline :id — :done/:total fases (:status).', [
                     'id' => $pipeline['run_id'] ?? '—',
                     'done' => (string) $done,
@@ -34,7 +34,7 @@
                 @endif
             </p>
             @if ($status === 'running')
-                <p class="mt-1 text-[11px] text-indigo-800/70 dark:text-indigo-300/70">
+                <p class="mt-1 text-[11px] text-sky-800/70 dark:text-sky-300/70">
                     {{ __('Próximo passo a cada :n min (--staged --continue). IBGE: :u UF(s)/passo · SAEB: :y ano(s)/passo.', [
                         'n' => (string) $stepInterval,
                         'u' => (string) $ibgeUfsPerStep,
@@ -78,7 +78,7 @@
                             : $phaseStatus,
                     };
                 @endphp
-                <li class="rounded-lg border border-indigo-100/80 dark:border-indigo-900/40 bg-white/70 dark:bg-slate-900/40 px-3 py-2 text-xs">
+                <li class="rounded-lg border border-sky-100/80 dark:border-sky-900/40 bg-white/70 dark:bg-slate-900/40 px-3 py-2 text-xs">
                     <div class="flex flex-wrap items-start gap-2 justify-between">
                         <div class="min-w-0 flex-1">
                             <span class="font-medium text-slate-900 dark:text-slate-100">{{ HorizonteFortnightlyFeedPhaseCatalog::label($phaseKey) }}</span>

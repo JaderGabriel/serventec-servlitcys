@@ -109,7 +109,7 @@ final class CadunicoFinanceScenarioBuilder
                 'valor_anual' => $vaarIndicativo,
                 'valor_label' => $fmt($vaarIndicativo),
                 'formula' => __('~15% da complementação VAAR indicativa sobre a base da lacuna.'),
-                'tone' => 'teal',
+                'tone' => 'blue',
                 'aviso' => __('Não substitui VAAR-inclusão oficial.'),
             ];
         }

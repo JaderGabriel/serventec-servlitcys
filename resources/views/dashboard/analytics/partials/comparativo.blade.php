@@ -37,7 +37,7 @@
     $alertRing = static fn (string $s): string => match ($s) {
         'danger', 'rose' => 'border-l-rose-500',
         'warning', 'amber' => 'border-l-amber-500',
-        'emerald', 'success' => 'border-l-teal-500',
+        'emerald', 'success' => 'border-l-blue-500',
         'sky' => 'border-l-sky-500',
         default => 'border-l-slate-400',
     };
@@ -83,7 +83,7 @@
 
 <x-dashboard.consultoria-tab-frame
     tab="comparativo"
-    tone="teal"
+    tone="blue"
     :title="__('Comparativo anual')"
     :intro="$data['intro'] ?? __('Evolução de matrículas e recursos FUNDEB entre exercícios — distinguindo portaria publicada, exercício em formação e projeção indicativa.')"
     :meta="$meta"
@@ -93,7 +93,7 @@
     :municipality-context="$municipalityContext"
     :tab-data="['comparativoData' => $data]"
     :flow-steps="$flowSteps"
-    flow-tone="teal"
+    flow-tone="blue"
     :no-year-message="__('Selecione o ano letivo nos filtros superiores (ou o ano base abaixo) e aplique para carregar o comparativo.')"
 >
     <x-slot name="links">
@@ -242,8 +242,8 @@
             :subtitle="__('Exercício em formação ou consolidado: participação na rede e projeção indicativa (matrículas × índice do exercício).')"
         >
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                <div class="serv-panel p-4 border border-teal-200/80 dark:border-teal-800/50">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-teal-800/90 dark:text-teal-200/90">{{ __('Matrículas ativas') }}</p>
+                <div class="serv-panel p-4 border border-blue-200/80 dark:border-blue-800/50">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-blue-800/90 dark:text-blue-200/90">{{ __('Matrículas ativas') }}</p>
                     <p class="text-2xl font-semibold tabular-nums text-serv-navy dark:text-slate-100 mt-1">{{ $detail['matriculas_fmt'] ?? '—' }}</p>
                 </div>
                 <div class="serv-panel p-4">
@@ -296,7 +296,7 @@
             :subtitle="__('Cenário de planejamento: matrículas do ano base × índice do exercício seguinte — não é portaria publicada nem repasse FNDE.')"
         >
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="serv-panel p-4 border-l-4 {{ $alertRing((string) ($projNext['tone'] ?? 'teal')) }}">
+                <div class="serv-panel p-4 border-l-4 {{ $alertRing((string) ($projNext['tone'] ?? 'blue')) }}">
                     <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">{{ __('fundeb.semantics.previsao_indicativa_label') }}</p>
                     <p class="text-2xl font-semibold tabular-nums text-serv-navy dark:text-slate-100 mt-1">{{ $projNext['previsao_label'] ?? '—' }}</p>
                     <p class="text-sm text-slate-700 dark:text-slate-300 mt-2">
@@ -339,11 +339,11 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                         @foreach ($fundebSeries as $row)
-                            <tr @class(['bg-teal-50/60 dark:bg-teal-950/30' => ! empty($row['is_anchor'])])>
+                            <tr @class(['bg-blue-50/60 dark:bg-blue-950/30' => ! empty($row['is_anchor'])])>
                                 <td class="px-3 py-2 font-medium text-serv-navy dark:text-slate-100">
                                     {{ $row['ano'] ?? '' }}
                                     @if (! empty($row['is_anchor']))
-                                        <span class="ml-1 text-[10px] uppercase font-semibold text-teal-700 dark:text-teal-300">{{ __('base') }}</span>
+                                        <span class="ml-1 text-[10px] uppercase font-semibold text-blue-700 dark:text-blue-300">{{ __('base') }}</span>
                                     @endif
                                 </td>
                                 <td class="px-3 py-2 text-right tabular-nums">{{ $row['vaaf'] ?? '—' }}</td>

@@ -54,7 +54,7 @@
                         <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{{ $q['fonte'] }}</p>
                     @endif
                     @if (filled($q['source_url'] ?? null) && ($q['source_url'] ?? '') !== '#')
-                        <a href="{{ $q['source_url'] }}" target="_blank" rel="noopener noreferrer" class="mt-1 inline-block text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline">
+                        <a href="{{ $q['source_url'] }}" target="_blank" rel="noopener noreferrer" class="mt-1 inline-block text-[11px] text-sky-600 dark:text-sky-400 hover:underline">
                             {{ __('Abrir fonte') }} ↗
                         </a>
                     @endif

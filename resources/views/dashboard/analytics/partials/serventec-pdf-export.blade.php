@@ -18,7 +18,7 @@
 
 @if ($canExportPdf)
 <section
-    class="rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/40 dark:bg-indigo-950/25 px-4 py-4 space-y-3"
+    class="rounded-lg border border-sky-200 dark:border-sky-800 bg-sky-50/40 dark:bg-sky-950/25 px-4 py-4 space-y-3"
     x-data="{
         polling: null,
         pollExport(id) {
@@ -45,10 +45,10 @@
 >
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-            <h3 class="text-sm font-semibold text-indigo-950 dark:text-indigo-100">{{ __('Relatório PDF completo') }}</h3>
-            <p class="text-xs text-indigo-900/90 dark:text-indigo-200/90 mt-1 leading-relaxed">
+            <h3 class="text-sm font-semibold text-sky-950 dark:text-sky-100">{{ __('Relatório PDF completo') }}</h3>
+            <p class="text-xs text-sky-900/90 dark:text-sky-200/90 mt-1 leading-relaxed">
                 {{ __('Enfileira a geração do PDF (Serventec, discrepâncias, FUNDEB, Censo e gráficos). Com QUEUE_CONNECTION=database/redis, o cron `schedule:run` dispara o worker da fila :queue; em alternativa: `php artisan analytics-pdf:work`.', ['queue' => $pdfQueue]) }}
-                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', ['pdf_status' => 'pending']) }}#fila-pdf" class="font-medium text-indigo-700 dark:text-indigo-300 hover:underline">{{ __('Ver fila de processamento') }}</a>
+                <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', ['pdf_status' => 'pending']) }}#fila-pdf" class="font-medium text-sky-700 dark:text-sky-300 hover:underline">{{ __('Ver fila de processamento') }}</a>
             </p>
             @if ($queueIsSync)
                 <p class="mt-2 text-xs text-amber-800 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800 rounded-md px-2.5 py-1.5">
@@ -81,7 +81,7 @@
                 @endif
                 <button
                     type="submit"
-                    class="inline-flex items-center gap-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 shadow-sm"
+                    class="inline-flex items-center gap-2 rounded-md bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium px-4 py-2 shadow-sm"
                 >
                     {{ __('Gerar PDF') }}
                 </button>
@@ -106,21 +106,21 @@
 
     @if (count($exports) > 0)
         <div class="overflow-x-auto">
-            <table class="min-w-full text-xs divide-y divide-indigo-200/60 dark:divide-indigo-800">
+            <table class="min-w-full text-xs divide-y divide-sky-200/60 dark:divide-sky-800">
                 <thead>
-                    <tr class="text-left text-indigo-800/80 dark:text-indigo-200/80">
+                    <tr class="text-left text-sky-800/80 dark:text-sky-200/80">
                         <th class="py-2 pr-3">#</th>
                         <th class="py-2 pr-3">{{ __('Estado') }}</th>
                         <th class="py-2 pr-3">{{ __('Criado') }}</th>
                         <th class="py-2 text-center">
                             <span class="block">{{ __('ação') }}</span>
-                            <span class="mt-0.5 inline-flex justify-center text-indigo-500/80" title="{{ __('Descarregar PDF') }}">
+                            <span class="mt-0.5 inline-flex justify-center text-sky-500/80" title="{{ __('Descarregar PDF') }}">
                                 <x-icons.pdf-download class="h-4 w-4" />
                             </span>
                         </th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-indigo-100 dark:divide-indigo-900/50">
+                <tbody class="divide-y divide-sky-100 dark:divide-sky-900/50">
                     @foreach ($exports as $export)
                         @php $st = $export->statusEnum(); @endphp
                         <tr>
@@ -135,7 +135,7 @@
                                 @if ($export->isDownloadable())
                                     <a
                                         href="{{ route('dashboard.analytics.pdf.download', $export) }}"
-                                        class="inline-flex items-center justify-center rounded-md p-1 text-indigo-600 hover:bg-indigo-100/80 dark:text-indigo-400 dark:hover:bg-indigo-900/40"
+                                        class="inline-flex items-center justify-center rounded-md p-1 text-sky-600 hover:bg-sky-100/80 dark:text-sky-400 dark:hover:bg-sky-900/40"
                                         title="{{ __('Descarregar PDF') }}@if ($export->page_count) ({{ $export->page_count }} {{ __('pág.') }})@endif"
                                     >
                                         <x-icons.pdf-download />

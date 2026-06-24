@@ -49,7 +49,7 @@
                     </p>
                 </div>
                 @if ($consultoriaUrl)
-                    <a href="{{ $consultoriaUrl }}" class="shrink-0 inline-flex items-center rounded-lg border border-teal-300 dark:border-teal-700 px-3 py-2 text-xs font-semibold text-teal-800 dark:text-teal-200 hover:bg-teal-50 dark:hover:bg-teal-950/40">
+                    <a href="{{ $consultoriaUrl }}" class="shrink-0 inline-flex items-center rounded-lg border border-blue-300 dark:border-blue-700 px-3 py-2 text-xs font-semibold text-blue-800 dark:text-blue-200 hover:bg-blue-50 dark:hover:bg-blue-950/40">
                         {{ __('Abrir Discrepâncias (consultoria)') }}
                     </a>
                 @endif
@@ -73,7 +73,7 @@
                 </div>
                 <div title="{{ __('admin_ieducar_compatibility.discrepancies.escolas') }}">
                     <p class="text-[10px] uppercase tracking-wide text-gray-500">{{ __('Escolas afetadas') }}</p>
-                    <p class="text-lg font-semibold tabular-nums text-indigo-800 dark:text-indigo-200">{{ number_format((int) ($discSummary['escolas_afetadas'] ?? 0), 0, ',', '.') }}</p>
+                    <p class="text-lg font-semibold tabular-nums text-sky-800 dark:text-sky-200">{{ number_format((int) ($discSummary['escolas_afetadas'] ?? 0), 0, ',', '.') }}</p>
                 </div>
                 <div>
                     <p class="text-[10px] uppercase tracking-wide text-gray-500">{{ __('Módulos c/ pendência') }}</p>

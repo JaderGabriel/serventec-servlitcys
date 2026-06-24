@@ -17,7 +17,7 @@
     ])
 
     @if ($yearFilterReady && ! empty($overviewData['filter_note']))
-        <p class="text-xs text-indigo-800 dark:text-indigo-200 bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900 rounded-md px-3 py-2">
+        <p class="text-xs text-sky-800 dark:text-sky-200 bg-sky-50/80 dark:bg-sky-950/40 border border-sky-100 dark:border-sky-900 rounded-md px-3 py-2">
             {{ $overviewData['filter_note'] }}
         </p>
     @endif
@@ -139,13 +139,13 @@
             $turmasPorCurso = is_array($kpiDetails) ? ($kpiDetails['turmas_por_curso'] ?? null) : null;
         @endphp
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
-            <div class="rounded-lg border border-indigo-200/90 dark:border-indigo-800/60 bg-indigo-50/85 dark:bg-indigo-950/35 p-4 min-h-[6.75rem] flex flex-col justify-center shadow-sm ring-1 ring-indigo-100/60 dark:ring-indigo-900/40">
-                <p class="text-xs font-semibold text-indigo-800/90 dark:text-indigo-200/90 uppercase tracking-wide">{{ __('Escolas') }}</p>
-                <p class="mt-1 text-2xl font-semibold tabular-nums text-indigo-950 dark:text-indigo-50">
+            <div class="rounded-lg border border-sky-200/90 dark:border-sky-800/60 bg-sky-50/85 dark:bg-sky-950/35 p-4 min-h-[6.75rem] flex flex-col justify-center shadow-sm ring-1 ring-sky-100/60 dark:ring-sky-900/40">
+                <p class="text-xs font-semibold text-sky-800/90 dark:text-sky-200/90 uppercase tracking-wide">{{ __('Escolas') }}</p>
+                <p class="mt-1 text-2xl font-semibold tabular-nums text-sky-950 dark:text-sky-50">
                     {{ $overviewData['kpis']['escolas'] !== null ? number_format($overviewData['kpis']['escolas']) : '—' }}
                 </p>
                 @if (is_array($escolasDetails) && (isset($escolasDetails['ativas']) || isset($escolasDetails['inativas'])))
-                    <p class="mt-1 text-[11px] italic text-indigo-900/80 dark:text-indigo-200/85">
+                    <p class="mt-1 text-[11px] italic text-sky-900/80 dark:text-sky-200/85">
                         {{ __('Ativas: :a · Inativas: :i', [
                             'a' => number_format((int) ($escolasDetails['ativas'] ?? 0)),
                             'i' => number_format((int) ($escolasDetails['inativas'] ?? 0)),
@@ -155,7 +155,7 @@
                         $porSub = is_array($escolasDetails['por_substatus'] ?? null) ? $escolasDetails['por_substatus'] : [];
                     @endphp
                     @if (count($porSub) > 0)
-                        <div class="mt-1.5 space-y-0.5 text-[11px] text-indigo-900/85 dark:text-indigo-200/90">
+                        <div class="mt-1.5 space-y-0.5 text-[11px] text-sky-900/85 dark:text-sky-200/90">
                             @foreach (array_slice($porSub, 0, 6) as $row)
                                 <p class="leading-snug">
                                     <span class="font-medium not-italic">{{ $row['label'] ?? '—' }}</span>
@@ -167,15 +167,15 @@
                     @endif
                 @endif
             </div>
-            <div class="rounded-lg border border-indigo-200/90 dark:border-indigo-800/60 bg-indigo-50/85 dark:bg-indigo-950/35 p-4 min-h-[6.75rem] flex flex-col justify-center shadow-sm ring-1 ring-indigo-100/60 dark:ring-indigo-900/40">
-                <p class="text-xs font-semibold text-indigo-800/90 dark:text-indigo-200/90 uppercase tracking-wide">{{ __('Turmas') }}</p>
-                <p class="mt-1 text-2xl font-semibold tabular-nums text-indigo-950 dark:text-indigo-50">
+            <div class="rounded-lg border border-sky-200/90 dark:border-sky-800/60 bg-sky-50/85 dark:bg-sky-950/35 p-4 min-h-[6.75rem] flex flex-col justify-center shadow-sm ring-1 ring-sky-100/60 dark:ring-sky-900/40">
+                <p class="text-xs font-semibold text-sky-800/90 dark:text-sky-200/90 uppercase tracking-wide">{{ __('Turmas') }}</p>
+                <p class="mt-1 text-2xl font-semibold tabular-nums text-sky-950 dark:text-sky-50">
                     {{ $overviewData['kpis']['turmas'] !== null ? number_format($overviewData['kpis']['turmas']) : '—' }}
                 </p>
                 @if (is_array($turmasPorCurso) && count($turmasPorCurso) > 0)
                     <div class="mt-2 space-y-0.5">
                         @foreach (array_slice($turmasPorCurso, 0, 5) as $row)
-                            <p class="text-[11px] italic text-indigo-900/80 dark:text-indigo-200/85">
+                            <p class="text-[11px] italic text-sky-900/80 dark:text-sky-200/85">
                                 <span class="font-medium not-italic">{{ $row['curso'] ?? '—' }}</span>
                                 <span class="opacity-80">·</span>
                                 <span class="tabular-nums">{{ number_format((int) ($row['turmas'] ?? 0)) }}</span>
@@ -184,14 +184,14 @@
                     </div>
                 @endif
             </div>
-            <div class="rounded-lg border border-indigo-300/90 dark:border-indigo-700/70 bg-white dark:bg-indigo-950/50 p-4 min-h-[6.75rem] flex flex-col justify-center shadow-sm ring-1 ring-indigo-200/70 dark:ring-indigo-800/50">
-                <p class="text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wide">{{ __('Volume no filtro') }}</p>
+            <div class="rounded-lg border border-sky-300/90 dark:border-sky-700/70 bg-white dark:bg-sky-950/50 p-4 min-h-[6.75rem] flex flex-col justify-center shadow-sm ring-1 ring-sky-200/70 dark:ring-sky-800/50">
+                <p class="text-xs font-semibold text-sky-700 dark:text-sky-300 uppercase tracking-wide">{{ __('Volume no filtro') }}</p>
                 <x-dashboard.enrollment-volume-display
                     :matriculas="$overviewData['kpis']['matriculas'] ?? null"
                     :alunos="$overviewData['kpis']['alunos_distintos'] ?? null"
                     :hint="$overviewData['kpis']['volume_hint'] ?? null"
                     size="xl"
-                    class="mt-1 text-indigo-600 dark:text-indigo-400"
+                    class="mt-1 text-sky-600 dark:text-sky-400"
                 />
             </div>
         </div>

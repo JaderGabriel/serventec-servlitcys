@@ -10,16 +10,17 @@
 | **Data de referência** | **03/06/2026** |
 | **Último marco documentado** | **Odin** — marca Horizonte, barra cmd fixa, resumo UF inline, dados públicos agrupados — [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
+| **Commit de release (#433)** | `df7d9b3` — selo doc-only `#434` (`5521b6d`) não altera versão semântica |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
 > **Entregas em série:** índice [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) — [junho/2026](ENTREGAS_ESCALONADAS_JUNHO_2026.md) · [maio/2026 (arquivo)](ENTREGAS_ESCALONADAS_MAIO_2026.md).
 
-### Linha 4.x (visual)
+### Linha 4.x → 6.x (visual)
 
 ```mermaid
 timeline
-    title Marcos semânticos 4.x → 5.0
+    title Marcos semânticos 4.x → 6.0
     2026-06-04 : 4.0.0 Hestia — Início reorganizado
     2026-06-05 : 4.1.0 Athena — 5 áreas consultoria
     2026-06-09 : 4.4.5a Themis — qualidade no dock, FUNDEB gerencial
@@ -38,10 +39,10 @@ timeline
     2026-06-20 : 5.7.3d Bragi — mapa recorte/tour, sync screen, UI pt-BR
     2026-06-20 : 5.7.4e Vidar — sync wanted/ensure, reinício pós-TERM
     2026-06-22 : 5.7.5a Mimir — tour/demo Horizonte, repasses modal, import Tesouro
+    2026-06-22 : 5.7.6b Saga — modal municipal, demo animada, transferências FNDE
     2026-06-24 : 5.7.7a Skuld — timeline financeira modal, SIDRA pop. total, analytics refactor
     2026-06-03 : 5.8.0g Thor — FUNDEB estadual, pan mapa, resumo UF, sync repasses Tesouro
     2026-06-03 : 6.0.0h Odin — marca Horizonte, barra cmd fixa, resumo UF inline, dados públicos
-    2026-06-22 : 5.7.6b Saga — modal municipal, demo animada, transferências FNDE
 ```
 
 Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) §5–6.
@@ -52,24 +53,24 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 6.0.0** | — / `20260603h-Odin` → `main` | — | 03/06/2026 | **Produção:** marca consultoria+Horizonte, barra cmd fixa, resumo UF inline, desenhar todos, modal municipal centrado, notificação dados públicos agrupada — [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md). |
-| 5.8.0 | — / `20260603g-Thor` → `main` | — | 03/06/2026 | Painel FUNDEB estadual, pan mapa + resumo UF, tela inteira, `horizonte:sync-repasses-tesouro`, YTD último repasse — [RELEASE_20260603g_THOR.md](RELEASE_20260603g_THOR.md). |
-| 5.7.7 | — / `20260624a-Skuld` → `main` | — | 24/06/2026 | Timeline financeira no modal (FNDE/CKAN/ano corrente), SIDRA `populacao_total`, repasses chunk, analytics refactor — [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md). |
-| 5.7.6 | — / `20260622b-Saga` → `main` | — | 22/06/2026 | Modal municipal (pipeline, propensão, CSS), demo com números/cores, transferências FNDE no score — [RELEASE_20260622b_SAGA.md](RELEASE_20260622b_SAGA.md). |
-| 5.7.5 | — / `20260622a-Mimir` → `main` | — | 22/06/2026 | Tour/demo Horizonte, repasses no modal (FUNDEB/educação), import Tesouro com índice IBGE — [RELEASE_20260622a_MIMIR.md](RELEASE_20260622a_MIMIR.md). |
-| 5.7.4 | — / `20260620e-Vidar` → `main` | — | 20/06/2026 | **Produção:** sync BR wanted/ensure, runner resistente a TERM, `loginctl enable-linger` — [RELEASE_20260620e_VIDAR.md](RELEASE_20260620e_VIDAR.md). |
-| 5.7.3 | — / `20260620d-Bragi` → `main` | — | 20/06/2026 | Horizonte mapa UF/recorte/tour; sync BR screen; UI pt-BR — [RELEASE_20260620d_BRAGI.md](RELEASE_20260620d_BRAGI.md). |
-| 5.7.2 | — / `20260620c-Forseti` → `main` | — | 20/06/2026 | Horizonte performance UF 150+; filtros GIS + dock lateral — [RELEASE_20260620c_FORSETI.md](RELEASE_20260620c_FORSETI.md). |
-| 5.7.1 | — / `20260620b-Sleipnir` → `main` | — | 20/06/2026 | Convenção `MAJOR.VERSÃO.MINOR` + codenames nórdicos/astecas; sync BR em GNU screen — [RELEASE_20260620b_SLEIPNIR.md](RELEASE_20260620b_SLEIPNIR.md). |
-| 5.7.0 | — / `20260620a-Metis` → `main` | — | 20/06/2026 | Horizonte centro de decisão (UI funil comercial), consultas scoped por UF, render adaptativo e mapa canvas — [RELEASE_20260620a_METIS.md](RELEASE_20260620a_METIS.md). |
-| 5.6.0 | — / `20260620-Urania` → `main` | — | 20/06/2026 | Horizonte alta pressão GIS (preset decisão comercial), centroides IBGE, feed SAEB/repasses/CadÚnico robusto, script sync BR — [RELEASE_20260620_URANIA.md](RELEASE_20260620_URANIA.md). |
-| 5.5.0 | — / `20260619c-Helios` → `main` | — | 19/06/2026 | Horizonte GIS gerencial (filtros, metodologia, tooltip dimensões), monitor 10 min, catálogo Artisan admin, login/home — [RELEASE_20260619c_HELIOS.md](RELEASE_20260619c_HELIOS.md). *Tag `20260603f-Helios` obsoleta.* |
-| 5.4.0 | — / `20260603e-Hyperion` → `main` | — | 03/06/2026 | Horizonte v2 — CadÚnico/SIDRA/repasses no score e feed, mapa performante, SGE concorrência, fix Closure no cache — [RELEASE_20260603e_HYPERION.md](RELEASE_20260603e_HYPERION.md). |
-| 5.3.0 | — / `20260603d-Prometheus` → `main` | — | 03/06/2026 | Feed Horizonte bimestral, escopo UF, cadastro SGE no mapa, fix catálogo IBGE — [RELEASE_20260603d_PROMETHEUS.md](RELEASE_20260603d_PROMETHEUS.md). |
-| 5.2.0 | — / `20260603c-Argus` → `main` | — | 03/06/2026 | Hub Horizonte em Dados públicos, `module-monitor:collect`, acesso admin/utilizador — [RELEASE_20260603c_ARGUS.md](RELEASE_20260603c_ARGUS.md). |
-| 5.1.0 | — / `20260619b-Prospeccao` → `main` | — | 19/06/2026 | Horizonte comercial (calor, gestores, prospecção) + rotina quinzenal `horizonte:fortnightly-feed` — [RELEASE_20260619b_PROSPECCAO.md](RELEASE_20260619b_PROSPECCAO.md). |
-| 5.0.1 | — / `20260619a-Heimdall` → `main` | — | 19/06/2026 | Data de release corrigida; monitor de módulos; painel verificação dados públicos no hub — [RELEASE_20260619a_HEIMDALL.md](RELEASE_20260619a_HEIMDALL.md). |
-| 5.0.0 | `f3d19b8` / `20260603b-Horizonte`* → `main` | — | 19/06/2026 | **Horizonte** — mapa oportunidade; KPIs Início; check dados públicos — [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md). *Tag com prefixo de data incorrecto; usar `20260619a-Heimdall`. |
+| **▶ 6.0.0** | `df7d9b3` / `20260603h-Odin` → `main` | **433** | 03/06/2026 | **Produção:** marca consultoria+Horizonte, barra cmd fixa, resumo UF inline, desenhar todos, modal municipal centrado, notificação dados públicos agrupada — [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md). |
+| 5.8.0 | `0bf9b2f` / `20260603g-Thor` → `main` | **431** | 03/06/2026 | Painel FUNDEB estadual, pan mapa + resumo UF, tela inteira, `horizonte:sync-repasses-tesouro`, YTD último repasse — [RELEASE_20260603g_THOR.md](RELEASE_20260603g_THOR.md). |
+| 5.7.7 | `16e49e0` / `20260624a-Skuld` → `main` | **427** | 24/06/2026 | Timeline financeira no modal (FNDE/CKAN/ano corrente), SIDRA `populacao_total`, repasses chunk, analytics refactor — [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md). |
+| 5.7.6 | `ed7fccf` / `20260622b-Saga` → `main` | **419** | 22/06/2026 | Modal municipal (pipeline, propensão, CSS), demo com números/cores, transferências FNDE no score — [RELEASE_20260622b_SAGA.md](RELEASE_20260622b_SAGA.md). |
+| 5.7.5 | `6be4f7c` / `20260622a-Mimir` → `main` | **412** | 22/06/2026 | Tour/demo Horizonte, repasses no modal (FUNDEB/educação), import Tesouro com índice IBGE — [RELEASE_20260622a_MIMIR.md](RELEASE_20260622a_MIMIR.md). |
+| 5.7.4 | `605f829` / `20260620e-Vidar` → `main` | **406** | 20/06/2026 | Sync BR wanted/ensure, runner resistente a TERM, `loginctl enable-linger` — [RELEASE_20260620e_VIDAR.md](RELEASE_20260620e_VIDAR.md). |
+| 5.7.3 | `85aa358` / `20260620d-Bragi` → `main` | **405** | 20/06/2026 | Horizonte mapa UF/recorte/tour; sync BR screen; UI pt-BR — [RELEASE_20260620d_BRAGI.md](RELEASE_20260620d_BRAGI.md). |
+| 5.7.2 | `862b552` / `20260620c-Forseti` → `main` | **404** | 20/06/2026 | Horizonte performance UF 150+; filtros GIS + dock lateral — [RELEASE_20260620c_FORSETI.md](RELEASE_20260620c_FORSETI.md). |
+| 5.7.1 | `84cda6e` / `20260620b-Sleipnir` → `main` | **402** | 20/06/2026 | Convenção `MAJOR.VERSÃO.MINOR` + codenames nórdicos/astecas; sync BR em GNU screen — [RELEASE_20260620b_SLEIPNIR.md](RELEASE_20260620b_SLEIPNIR.md). |
+| 5.7.0 | `cc9a025` / `20260620a-Metis` → `main` | **401** | 20/06/2026 | Horizonte centro de decisão (UI funil comercial), consultas scoped por UF, render adaptativo e mapa canvas — [RELEASE_20260620a_METIS.md](RELEASE_20260620a_METIS.md). |
+| 5.6.0 | `2fe55d3` / `20260620-Urania` → `main` | **400** | 20/06/2026 | Horizonte alta pressão GIS (preset decisão comercial), centroides IBGE, feed SAEB/repasses/CadÚnico robusto, script sync BR — [RELEASE_20260620_URANIA.md](RELEASE_20260620_URANIA.md). |
+| 5.5.0 | `317705d` / `20260619c-Helios` → `main` | **395** | 19/06/2026 | Horizonte GIS gerencial (filtros, metodologia, tooltip dimensões), monitor 10 min, catálogo Artisan admin, login/home — [RELEASE_20260619c_HELIOS.md](RELEASE_20260619c_HELIOS.md). *Tag `20260603f-Helios` obsoleta.* |
+| 5.4.0 | `ccbce57` / `20260603e-Hyperion` → `main` | **392** | 03/06/2026 | Horizonte v2 — CadÚnico/SIDRA/repasses no score e feed, mapa performante, SGE concorrência, fix Closure no cache — [RELEASE_20260603e_HYPERION.md](RELEASE_20260603e_HYPERION.md). |
+| 5.3.0 | `a33ec4e` / `20260603d-Prometheus` → `main` | **391** | 03/06/2026 | Feed Horizonte bimestral, escopo UF, cadastro SGE no mapa, fix catálogo IBGE — [RELEASE_20260603d_PROMETHEUS.md](RELEASE_20260603d_PROMETHEUS.md). |
+| 5.2.0 | `97e5960` / `20260603c-Argus` → `main` | **384** | 03/06/2026 | Hub Horizonte em Dados públicos, `module-monitor:collect`, acesso admin/utilizador — [RELEASE_20260603c_ARGUS.md](RELEASE_20260603c_ARGUS.md). |
+| 5.1.0 | `c6a98df` / `20260619b-Prospeccao` → `main` | **383** | 19/06/2026 | Horizonte comercial (calor, gestores, prospecção) + rotina quinzenal `horizonte:fortnightly-feed` — [RELEASE_20260619b_PROSPECCAO.md](RELEASE_20260619b_PROSPECCAO.md). |
+| 5.0.1 | `c4f34d9` / `20260619a-Heimdall` → `main` | **381** | 19/06/2026 | Data de release corrigida; monitor de módulos; painel verificação dados públicos no hub — [RELEASE_20260619a_HEIMDALL.md](RELEASE_20260619a_HEIMDALL.md). |
+| 5.0.0 | `f3d19b8` / `20260603b-Horizonte`* → `main` | **380** | 19/06/2026 | **Horizonte** — mapa oportunidade; KPIs Início; check dados públicos — [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md). *Tag com prefixo de data incorrecto; usar `20260619a-Heimdall`. |
 | 4.4.8 | — / `20260603a-Cleodora` → `main` | — | 03/06/2026 | Conferência Educacenso 1ª etapa — upload, parser, cruzamento i-Educar read-only, painel na aba Censo — [RELEASE_20260603a_CLEODORA.md](RELEASE_20260603a_CLEODORA.md). |
 | 4.4.7 | `66bc396` / `20260615a-Mnemosyne` → `main` | **369** | 15/06/2026 | Toolkit Educacenso 2026, calendário INEP e banner de prazo por fase no RX — [RELEASE_20260615a_MNEMOSYNE.md](RELEASE_20260615a_MNEMOSYNE.md). |
 | 4.4.6 | `5225496` / `20260609d-Themis` → `main` | **367** | 09/06/2026 | Ano letivo automático ao trocar município, abas lazy com `ano_letivo`, índice qualidade no dock — [RELEASE_20260609d_THEMIS.md](RELEASE_20260609d_THEMIS.md). |

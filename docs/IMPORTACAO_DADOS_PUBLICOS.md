@@ -1,5 +1,7 @@
 # Importação de dados públicos (hub admin)
 
+**Versão do produto:** 6.0.0 · **Última revisão:** 2026-06-03
+
 **Rota:** `/admin/dados-publicos` (`admin.public-data.index`)  
 **Menu:** Operação / **Dados públicos** (perfil com `canImportOrConfigure`)  
 **Relacionado:** [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) · [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) · [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md) · [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md)

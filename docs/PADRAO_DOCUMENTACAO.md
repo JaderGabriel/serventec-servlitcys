@@ -15,7 +15,7 @@ Todo documento **mantido activamente** (âncora, guia operacional, release recen
 ```markdown
 # Título — contexto curto (servlitcys)
 
-**Versão do produto:** 5.7.6 · **Última revisão:** AAAA-MM-DD
+**Versão do produto:** 6.0.0 · **Última revisão:** AAAA-MM-DD
 
 > **Índice:** [README.md](README.md) · **Relacionado:** [outro-doc.md](outro-doc.md)
 ```

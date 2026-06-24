@@ -1,6 +1,6 @@
 # Arquitectura e fluxos — servlitcys
 
-**Versão do produto:** 4.4.0 · **Última revisão:** 2026-06-07
+**Versão do produto:** 6.0.0 · **Última revisão:** 2026-06-03
 
 > **Índice:** [README.md](README.md) · **Hub visual:** [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) · **Estado:** [STATUS_PROJETO.md](STATUS_PROJETO.md)
 
@@ -70,6 +70,7 @@ flowchart LR
 
     subgraph Rotas_analise["Análise municipal"]
         Analytics[/dashboard/analytics/]
+        Horizonte[/dashboard/horizonte/]
         RX[/dashboard/rx/]
         Doc[/documentacao/]
     end
@@ -78,14 +79,16 @@ flowchart LR
     Admin --> AdminHub
     Admin --> Pulse
     Admin --> Analytics
+    Admin --> Horizonte
     Admin --> RX
     User --> Analytics
+    User --> Horizonte
     User --> Doc
     Municipal --> Analytics
     Municipal --> Doc
 ```
 
-Detalhe RBAC: [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md).
+Detalhe RBAC: [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) · Horizonte: [HORIZONTE.md](HORIZONTE.md).
 
 ---
 
@@ -239,21 +242,65 @@ flowchart TB
     Hub --> SAEB[saeb:import-planilhas-inep]
     Hub --> CAD[cadunico:import-misocial<br/>cadunico:sync-territorio]
     Hub --> GEO[geo / Censo INEP]
+    Hub --> HFeed[horizonte:fortnightly-feed<br/>horizonte:sync-repasses-tesouro]
 
     FUNDEB --> Q1[(fila default)]
     SAEB --> Q1
     CAD --> Q2[(fila cadastro)]
     GEO --> Q2
+    HFeed --> Q1
 
     Q1 --> Notif[Notificações + Pulse]
     Q2 --> Notif
 ```
 
-Comandos: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) · impacto nas abas: [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md).
+Comandos: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) · impacto nas abas: [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) · Horizonte: [HORIZONTE.md](HORIZONTE.md) §8.
 
 ---
 
-## 8. Hierarquia da documentação
+## 8. Fluxo Horizonte — dados públicos → mapa
+
+```mermaid
+flowchart LR
+    subgraph Fontes
+        FNDE[FNDE / CKAN / Tesouro]
+        INEP[SAEB planilhas INEP]
+        MDS[CadÚnico Misocial]
+        IBGE[SIDRA / IBGE]
+    end
+
+    subgraph CLI["Comandos Artisan"]
+        Feed[horizonte:fortnightly-feed]
+        SyncRep[horizonte:sync-repasses-tesouro]
+        SAEB[saeb:import-planilhas-inep]
+    end
+
+    subgraph Base
+        Scores[(horizonte_municipality_scores)]
+        Ref[(fundeb_municipio_references<br/>saeb · censo)]
+    end
+
+    subgraph UI
+        Mapa["/dashboard/horizonte<br/>mapa GIS + modal municipal"]
+        Hub["/admin/dados-publicos<br/>#horizonte-hub"]
+    end
+
+    FNDE --> Feed
+    INEP --> SAEB
+    MDS --> Feed
+    IBGE --> Feed
+    Feed --> SyncRep
+    SAEB --> Ref
+    Feed --> Scores
+    SyncRep --> Scores
+    Ref --> Mapa
+    Scores --> Mapa
+    Feed --> Hub
+```
+
+---
+
+## 9. Hierarquia da documentação
 
 ```mermaid
 mindmap
