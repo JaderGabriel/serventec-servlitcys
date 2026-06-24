@@ -2682,6 +2682,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                         return;
                     }
                     await this.refreshMapLayers();
+                    if (this.mapFullscreen) {
+                        this.$nextTick(() =>
+                            this.refreshMapLayout({ immediate: true, force: true }),
+                        );
+                    }
                     resolve();
                 }, this.mapRefreshDebounceMs);
             });
@@ -3462,9 +3467,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             const financeBlock = financeTimelineHtml(m, this.refYear, this.currentYear);
             lines.push('<div class="serv-horizonte-muni-tooltip__layout">');
-            lines.push('<div class="serv-horizonte-muni-tooltip__layout-col serv-horizonte-muni-tooltip__layout-col--primary">');
+            lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--pipeline">');
             lines.push(muniPopulationPipelineHtml(m));
-            lines.push(muniPropensityThermometerHtml(m, th));
+            lines.push("</div>");
+            lines.push('<div class="serv-horizonte-muni-tooltip__layout-col serv-horizonte-muni-tooltip__layout-col--primary">');
 
             if (m.benefit_score != null) {
                 lines.push(
@@ -3548,7 +3554,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (financeBlock) {
                 lines.push(financeBlock);
             }
-            lines.push(`</div></div>`);
+            lines.push(`</div>`);
+
+            lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--propensity">');
+            lines.push(muniPropensityThermometerHtml(m, th));
+            lines.push("</div></div>");
             lines.push(`</div>`);
             const html = lines.join("");
             if (cacheKey !== "") {

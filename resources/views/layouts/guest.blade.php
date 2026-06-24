@@ -22,7 +22,7 @@
             <div>
                 <a href="/" class="group flex flex-col items-center gap-2">
                     <span class="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 shadow-md ring-1 ring-blue-900/10 transition group-hover:scale-105 dark:from-blue-500 dark:to-blue-800 dark:ring-blue-500/20">
-                        <x-application-logo class="h-8 w-8 text-white shrink-0" />
+                        <x-application-logo class="h-8 w-8 shrink-0" />
                     </span>
                     <span class="font-display text-sm font-semibold text-slate-700 dark:text-slate-200">{{ config('app.name') }}</span>
                 </a>

@@ -31,7 +31,7 @@
                 <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
                     <a href="{{ url('/') }}" class="group flex min-w-0 items-center gap-2.5 sm:gap-3">
                         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-sky-700 shadow-md shadow-blue-900/15 ring-1 ring-slate-900/10 transition group-hover:scale-105 dark:from-blue-500 dark:to-sky-600 dark:ring-white/15">
-                            <x-application-logo class="h-7 w-7 text-white shrink-0" />
+                            <x-application-logo class="h-7 w-7 shrink-0" />
                         </span>
                         <span class="min-w-0 truncate font-display text-base font-semibold tracking-tight text-slate-900 sm:text-lg dark:text-white">
                             {{ config('app.name') }}
@@ -50,7 +50,7 @@
                 @unless ($hideHero)
                     <div class="mb-7 flex flex-col items-center text-center">
                         <span class="serv-auth-brand-mark" aria-hidden="true">
-                            <x-application-logo class="h-10 w-10 text-white shrink-0" />
+                            <x-application-logo class="h-10 w-10 shrink-0" />
                         </span>
                         <p class="serv-auth-hero-name">{{ config('app.name') }}</p>
                         <p class="serv-auth-hero-tagline">{{ __('Consultoria e gráficos educacionais com o mapa Horizonte — inteligência territorial municipal.') }}</p>

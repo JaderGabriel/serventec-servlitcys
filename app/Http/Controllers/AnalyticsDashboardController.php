@@ -48,6 +48,7 @@ use App\Services\Analytics\AnalyticsMunicipalAccess;
 use App\Services\Analytics\AnalyticsFinanceTabPreloader;
 use App\Services\Analytics\AnalyticsFilterResolver;
 use App\Services\Analytics\AnalyticsIndexAssembler;
+use App\Services\Analytics\AnalyticsTabPartialDispatcher;
 use App\Http\Requests\AnalyticsFilterRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;

@@ -1,18 +1,14 @@
 {{--
-    Marca ServLitcys v4 — monólito quadrado (24×24).
-    Dados: barras + tendência · Educação: capelo · Horizonte: sol + arco nascente.
-    Fill sólido; traços ≥1.75px para legibilidade em favicon e nav.
+    Marca ServLitcys v5 — tríade colorida em 24×24.
+    Azul: dados / consultoria · Teal: educação · Âmbar: Horizonte (sol + arco).
 --}}
-<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" preserveAspectRatio="xMidYMid meet" {{ $attributes }}>
-    <g fill="currentColor">
-        <rect x="2" y="15.5" width="3.25" height="5.5" rx="0.65" opacity="0.78" />
-        <rect x="6.75" y="12" width="3.25" height="9" rx="0.65" opacity="0.9" />
-        <rect x="11.5" y="8.5" width="3.25" height="12.5" rx="0.65" />
-        <path d="M7.25 12.8 9 11.4 10.75 12.8 9 14.3Z" />
-        <circle cx="18.25" cy="8.75" r="2.75" />
-    </g>
-    <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3.6 17.2 9.4 12.8 12.75 10" stroke-width="1.75" />
-        <path d="M12.75 10.5 Q15.5 5.25 18.25 8.75" stroke-width="1.9" opacity="0.92" />
-    </g>
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" preserveAspectRatio="xMidYMid meet" role="img" aria-hidden="true" {{ $attributes }}>
+    <rect x="2" y="15" width="3.25" height="6" rx="0.7" fill="#93c5fd" />
+    <rect x="6.5" y="11.5" width="3.25" height="9.5" rx="0.7" fill="#3b82f6" />
+    <rect x="11" y="8" width="3.25" height="13" rx="0.7" fill="#1d4ed8" />
+    <path fill="#0d9488" d="M11 8h3.25L14.625 5.65 17.25 8Z" />
+    <path d="M14.625 5.65v1.55" stroke="#5eead4" stroke-width="1.15" stroke-linecap="round" />
+    <path d="M3.25 17.25Q12.75 5.5 20.5 9" stroke="#f59e0b" stroke-width="2.05" stroke-linecap="round" />
+    <circle cx="20.5" cy="9" r="2.85" fill="#fbbf24" />
+    <circle cx="20.5" cy="9" r="1.15" fill="#fff7ed" opacity="0.6" />
 </svg>

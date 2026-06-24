@@ -133,20 +133,24 @@
                                 <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" /></svg>
                                 <span class="hidden sm:inline" x-text="ufSummaryButtonLabel()"></span>
                             </button>
-                            <button
-                                type="button"
-                                class="serv-horizonte-map-toolbar-btn"
-                                :class="mapFullscreen ? 'is-active' : ''"
-                                @click="toggleMapFullscreen()"
-                                :title="mapControlLabelFullscreen()"
-                                :aria-pressed="mapFullscreen"
-                            >
-                                <svg x-show="!mapFullscreen" class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg>
-                                <svg x-show="mapFullscreen" x-cloak class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M15 9h4.5M15 9V4.5M15 9l5.25-5.25M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" /></svg>
-                                <span class="hidden sm:inline" x-text="mapFullscreen ? '{{ __('Sair') }}' : '{{ __('Tela inteira') }}'"></span>
-                            </button>
                         </div>
+                        <button
+                            type="button"
+                            class="serv-horizonte-map-toolbar-btn shrink-0"
+                            x-show="isOverviewMode || isUfScopedMode"
+                            x-cloak
+                            :class="mapFullscreen ? 'is-active' : ''"
+                            @click="toggleMapFullscreen()"
+                            :title="mapControlLabelFullscreen()"
+                            :aria-pressed="mapFullscreen"
+                        >
+                            <svg x-show="!mapFullscreen" class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg>
+                            <svg x-show="mapFullscreen" x-cloak class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M15 9h4.5M15 9V4.5M15 9l5.25-5.25M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" /></svg>
+                            <span class="hidden sm:inline" x-text="mapFullscreen ? '{{ __('Sair') }}' : '{{ __('Tela inteira') }}'"></span>
+                        </button>
                     </div>
+
+                    @include('horizonte.partials.map-fullscreen-nav', ['ufNames' => $ufNames])
 
                     @include('horizonte.partials.uf-summary-header')
 
@@ -289,12 +293,34 @@
                             x-ref="mapCanvas"
                         >
                         <div
-                            x-show="isRegionalMode"
+                            x-show="isRegionalMode || (mapFullscreen && isUfScopedMode)"
                             x-cloak
                             class="serv-horizonte-map-float-controls"
                             role="toolbar"
                             aria-label="{{ __('Controlos do mapa') }}"
                         >
+                            <button
+                                type="button"
+                                class="serv-horizonte-map-float-btn"
+                                x-show="mapFullscreen && isRegionalMode && mesoMapPoints.length >= 2"
+                                x-cloak
+                                @click="backToMesoOverview()"
+                                :disabled="pageLoading || regionalLoading"
+                            >
+                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+                                <span>{{ __('Regiões') }}</span>
+                            </button>
+                            <button
+                                type="button"
+                                class="serv-horizonte-map-float-btn"
+                                x-show="mapFullscreen && isUfScopedMode"
+                                x-cloak
+                                @click="backToOverview()"
+                                :disabled="pageLoading || regionalLoading"
+                            >
+                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+                                <span>{{ __('Brasil') }}</span>
+                            </button>
                             <button
                                 type="button"
                                 class="serv-horizonte-map-float-btn"
@@ -321,6 +347,8 @@
                             <button
                                 type="button"
                                 class="serv-horizonte-map-float-btn"
+                                x-show="isRegionalMode"
+                                x-cloak
                                 :class="(filtersVisible || filterDockOpen) ? 'is-active' : ''"
                                 @click="toggleFiltersPanel()"
                                 :aria-expanded="filtersVisible || filterDockOpen"

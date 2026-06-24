@@ -15,7 +15,7 @@
                 <div class="serv-page-shell flex items-center justify-between gap-3 py-3">
                     <a href="{{ url('/') }}" class="group flex min-w-0 items-center gap-2.5">
                         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-sky-700 shadow-sm">
-                            <x-application-logo class="h-4 w-4 text-white shrink-0" />
+                            <x-application-logo class="h-4 w-4 shrink-0" />
                         </span>
                         <span class="truncate font-display text-sm font-semibold text-slate-900 dark:text-white">{{ config('app.name') }}</span>
                     </a>
