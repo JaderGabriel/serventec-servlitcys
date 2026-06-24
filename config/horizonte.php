@@ -2,6 +2,8 @@
 
 use App\Support\Horizonte\HorizonteReferenceYear;
 
+$horizonteReferenceYearRaw = (int) env('HORIZONTE_REFERENCE_YEAR', 0);
+
 return [
 
     /*
@@ -18,7 +20,9 @@ return [
 
     'cache_seconds' => max(60, (int) env('HORIZONTE_CACHE_SECONDS', 3600)),
 
-    'reference_year' => HorizonteReferenceYear::resolve(),
+    'reference_year_raw' => $horizonteReferenceYearRaw,
+
+    'reference_year' => HorizonteReferenceYear::resolve($horizonteReferenceYearRaw),
 
     'high_opportunity_threshold' => max(1, min(99, (int) env('HORIZONTE_HIGH_THRESHOLD', 70))),
 

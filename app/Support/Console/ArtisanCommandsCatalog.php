@@ -472,8 +472,10 @@ final class ArtisanCommandsCatalog
                         'examples' => [
                             'php artisan horizonte:fortnightly-feed --staged --reset',
                             'php artisan horizonte:fortnightly-feed --staged --continue',
+                            'php artisan horizonte:fortnightly-feed --phase=saeb_planilhas',
+                            'php artisan horizonte:fortnightly-feed --phase=ibge_catalog',
                             'php artisan horizonte:fortnightly-feed --dry-run',
-                            'php artisan horizonte:fortnightly-feed --uf=SP --staged --reset',
+                            'php artisan horizonte:fortnightly-feed --uf=SP --phase=ibge_catalog',
                         ],
                         'env' => [
                             'HORIZONTE_FORTNIGHTLY_FEED_ENABLED',
@@ -483,7 +485,7 @@ final class ArtisanCommandsCatalog
                             'HORIZONTE_REFERENCE_YEAR',
                         ],
                         'doc_anchor' => 'horizonte',
-                        'details' => __('Modo --staged recomendado em produção (1 fase por invocação). Fases: fundeb_receita, censo_matriculas, cadunico, sidra_pop417, repasses_tesouro, saeb_planilhas, ibge_catalog, sge_registry, public_data_verify.'),
+                        'details' => __('Modo --staged recomendado em produção (1 fase por invocação). Fases: fundeb_receita, censo_matriculas, cadunico_sync, sidra_demography, repasses_tesouro, saeb_planilhas, ibge_catalog, sge_registry, official_check. SAEB e IBGE também aceitam --phase isolado (repetir até concluir; --reset recomeça).'),
                         'schedule' => __('Bimestral — dia 1 nos meses 1, 3, 5, 7, 9, 11 + passos --continue a cada HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL min.'),
                     ],
                     [

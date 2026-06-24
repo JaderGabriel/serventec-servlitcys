@@ -10,14 +10,11 @@ use App\Support\Ieducar\FundebReferenceYearOrder;
  */
 final class HorizonteReferenceYear
 {
-    public static function resolve(): int
+    public static function resolve(?int $rawOverride = null): int
     {
-        $raw = env('HORIZONTE_REFERENCE_YEAR');
-        if ($raw !== null && $raw !== '' && is_numeric(trim((string) $raw))) {
-            $year = (int) trim((string) $raw);
-            if (self::isPlausible($year)) {
-                return $year;
-            }
+        $configured = $rawOverride ?? (int) config('horizonte.reference_year_raw', 0);
+        if ($configured > 0 && self::isPlausible($configured)) {
+            return $configured;
         }
 
         return FundebOpenDataImportService::suggestedImportYear();

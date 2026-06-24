@@ -16,5 +16,10 @@ final class HorizonteImportHubStatusServiceTest extends TestCase
         $this->assertArrayHasKey('map_url', $status);
         $this->assertCount(9, $status['phases']);
         $this->assertSame(route('dashboard.horizonte'), $status['map_url']);
+
+        $saeb = collect($status['phases'])->firstWhere('key', 'saeb_planilhas');
+        $ibge = collect($status['phases'])->firstWhere('key', 'ibge_catalog');
+        $this->assertSame('php artisan horizonte:fortnightly-feed --phase=saeb_planilhas', $saeb['cli'] ?? null);
+        $this->assertSame('php artisan horizonte:fortnightly-feed --phase=ibge_catalog', $ibge['cli'] ?? null);
     }
 }

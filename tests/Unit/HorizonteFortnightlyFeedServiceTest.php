@@ -84,4 +84,40 @@ final class HorizonteFortnightlyFeedServiceTest extends TestCase
         $this->assertFalse($result['success']);
         $this->assertSame([], $result['phases']);
     }
+
+    #[Test]
+    public function single_phase_reset_clears_saeb_incremental_progress(): void
+    {
+        config(['horizonte.enabled' => true]);
+        Cache::flush();
+        \App\Support\Horizonte\HorizonteSaebImportProgress::markDone(2023);
+
+        $this->assertSame([2023], \App\Support\Horizonte\HorizonteSaebImportProgress::doneYears());
+
+        $result = app(HorizonteFortnightlyFeedService::class)->runSinglePhase('saeb_planilhas', [
+            'reset' => true,
+            'dry_run' => true,
+        ]);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame([], \App\Support\Horizonte\HorizonteSaebImportProgress::doneYears());
+    }
+
+    #[Test]
+    public function single_phase_reset_clears_ibge_incremental_progress(): void
+    {
+        config(['horizonte.enabled' => true]);
+        Cache::flush();
+        \App\Support\Horizonte\HorizonteIbgeWarmProgress::markDone(['SP', 'RJ']);
+
+        $this->assertCount(2, \App\Support\Horizonte\HorizonteIbgeWarmProgress::doneUfs());
+
+        $result = app(HorizonteFortnightlyFeedService::class)->runSinglePhase('ibge_catalog', [
+            'reset' => true,
+            'dry_run' => true,
+        ]);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame([], \App\Support\Horizonte\HorizonteIbgeWarmProgress::doneUfs());
+    }
 }

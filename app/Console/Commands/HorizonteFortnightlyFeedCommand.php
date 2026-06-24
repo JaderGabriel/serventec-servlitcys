@@ -82,7 +82,9 @@ class HorizonteFortnightlyFeedCommand extends Command
 
                 return self::FAILURE;
             }
-            $result = $feed->runSinglePhase($phase, $options);
+            $result = $feed->runSinglePhase($phase, array_merge($options, [
+                'reset' => (bool) $this->option('reset'),
+            ]));
         } elseif ($this->shouldRunStaged()) {
             $result = $feed->runStaged(array_merge($options, [
                 'reset' => (bool) $this->option('reset'),
@@ -118,6 +120,14 @@ class HorizonteFortnightlyFeedCommand extends Command
 
         if (! empty($result['remaining_phases'] ?? [])) {
             $this->line(__('Retomar: php artisan horizonte:fortnightly-feed --all --continue'));
+        }
+
+        $singlePhase = trim((string) $this->option('phase'));
+        $phaseRow = is_array($result['phase'] ?? null) ? $result['phase'] : ($result['phases'][0] ?? null);
+        if ($singlePhase !== '' && is_array($phaseRow) && ($phaseRow['partial'] ?? false)) {
+            $this->line(__('Retomar: php artisan horizonte:fortnightly-feed --phase=:phase', [
+                'phase' => $singlePhase,
+            ]));
         }
 
         $this->line(__('Mapa: :url', ['url' => route('dashboard.horizonte')]));
@@ -216,6 +226,19 @@ class HorizonteFortnightlyFeedCommand extends Command
         $ok = (bool) ($phase['success'] ?? false);
         $line = sprintf('  [%s] %s: %s', $ok ? 'OK' : '!!', $label, (string) ($phase['message'] ?? ''));
         $ok ? $this->line($line) : $this->warn($line);
+
+        if (isset($phase['saeb_done'], $phase['saeb_total']) && ($phase['partial'] ?? false)) {
+            $this->line(__('    · SAEB: :done/:total anos', [
+                'done' => (string) $phase['saeb_done'],
+                'total' => (string) $phase['saeb_total'],
+            ]));
+        }
+        if (isset($phase['ibge_done'], $phase['ibge_total']) && ($phase['partial'] ?? false)) {
+            $this->line(__('    · IBGE: :done/:total UFs', [
+                'done' => (string) $phase['ibge_done'],
+                'total' => (string) $phase['ibge_total'],
+            ]));
+        }
 
         if ($verbose) {
             if (isset($phase['imported'])) {

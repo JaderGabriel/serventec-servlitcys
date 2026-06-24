@@ -143,6 +143,10 @@ final class HorizonteFortnightlyFeedService
             return $disabled;
         }
 
+        if ((bool) ($options['reset'] ?? false)) {
+            $this->resetIncrementalProgressForPhase($phaseKey);
+        }
+
         $dryRun = (bool) ($options['dry_run'] ?? false);
         $phaseResult = $dryRun ? $this->dryRunPhase($phaseKey) : $this->runPhase($phaseKey, $options);
 
@@ -156,6 +160,16 @@ final class HorizonteFortnightlyFeedService
             'message' => (string) ($phaseResult['message'] ?? ''),
             'phase' => $phaseResult,
         ];
+    }
+
+    private function resetIncrementalProgressForPhase(string $phaseKey): void
+    {
+        match ($phaseKey) {
+            'saeb_planilhas' => HorizonteSaebImportProgress::reset(),
+            'ibge_catalog' => HorizonteIbgeWarmProgress::reset(),
+            'sidra_demography' => HorizonteSidraImportProgress::reset(),
+            default => null,
+        };
     }
 
     /**
@@ -795,10 +809,9 @@ final class HorizonteFortnightlyFeedService
             'success' => $batchOk || $allowSoftFail,
             'partial' => $partial,
             'message' => $partial
-                ? __('SAEB: :done/:total anos — continue com --continue ou agendador (:pending pendente(s)).', [
+                ? __('SAEB: :done/:total anos — repita: php artisan horizonte:fortnightly-feed --phase=saeb_planilhas', [
                     'done' => (string) $doneCount,
                     'total' => (string) $total,
-                    'pending' => (string) $stillRemaining,
                 ])
                 : __('SAEB: :n ano(s) importado(s), :rows linha(s) canónicas.', [
                     'n' => (string) $total,
@@ -1009,7 +1022,7 @@ final class HorizonteFortnightlyFeedService
             'success' => true,
             'partial' => $partial,
             'message' => $partial
-                ? __('IBGE: :done/:total UFs aquecidas — continue com --continue ou aguarde o agendador.', [
+                ? __('IBGE: :done/:total UFs aquecidas — repita: php artisan horizonte:fortnightly-feed --phase=ibge_catalog', [
                     'done' => (string) $doneCount,
                     'total' => (string) $total,
                 ])

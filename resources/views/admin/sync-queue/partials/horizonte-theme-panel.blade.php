@@ -178,6 +178,9 @@
                                 <td class="px-4 py-3 align-top">
                                     @if (filled($phase['cli'] ?? null))
                                         <code class="block rounded bg-slate-100 px-2 py-1 text-[10px] text-slate-800 dark:bg-slate-800 dark:text-slate-200">{{ $phase['cli'] }}</code>
+                                        @if (filled($phase['cli_reset'] ?? null))
+                                            <code class="mt-1 block rounded bg-slate-100 px-2 py-1 text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">{{ $phase['cli_reset'] }}</code>
+                                        @endif
                                     @else
                                         <span class="text-slate-400">—</span>
                                     @endif

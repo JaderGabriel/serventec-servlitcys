@@ -200,13 +200,14 @@ final class HorizonteImportHubStatusService
             [
                 'key' => 'saeb_planilhas',
                 'label' => __('SAEB — planilhas INEP (nacional)'),
-                'description' => __('Indicadores LP/MAT por município — :n ano(s) por passo (HORIZONTE_FORTNIGHTLY_SAEB_YEARS_PER_STEP).', [
+                'description' => __('Indicadores LP/MAT por município — :n ano(s) por passo (HORIZONTE_FORTNIGHTLY_SAEB_YEARS_PER_STEP). Repita o comando até concluir todos os anos.', [
                     'n' => (string) max(1, (int) config('horizonte.fortnightly_feed.saeb_years_per_step', 1)),
                 ]),
                 'source_id' => 'saeb_inep',
                 'hub_anchor' => '#source-saeb_inep',
                 'admin_url' => route('admin.pedagogical-sync.index'),
-                'cli' => 'php artisan horizonte:fortnightly-feed --staged --reset --skip-fundeb --skip-censo --skip-ibge --skip-sge --skip-verify',
+                'cli' => 'php artisan horizonte:fortnightly-feed --phase=saeb_planilhas',
+                'cli_reset' => 'php artisan horizonte:fortnightly-feed --phase=saeb_planilhas --reset',
                 'ok' => count($saebSet) >= 100,
                 'metric' => count($saebSet),
                 'metric_label' => __('municípios'),
@@ -214,13 +215,14 @@ final class HorizonteImportHubStatusService
             [
                 'key' => 'ibge_catalog',
                 'label' => __('Catálogo IBGE — centroides'),
-                'description' => __('Nome, UF e coordenadas — :n UF(s) por passo (HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP).', [
+                'description' => __('Nome, UF e coordenadas — :n UF(s) por passo (HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP). Repita o comando até aquecer as 27 UFs.', [
                     'n' => (string) max(1, (int) config('horizonte.fortnightly_feed.ibge_ufs_per_step', 1)),
                 ]),
                 'source_id' => 'geo_inep',
                 'hub_anchor' => '#source-geo_inep',
                 'admin_url' => route('admin.geo-sync.index'),
-                'cli' => 'php artisan horizonte:fortnightly-feed --staged --reset --skip-fundeb --skip-censo --skip-saeb --skip-sge --skip-verify && php artisan horizonte:fortnightly-feed --staged --continue --skip-fundeb --skip-censo --skip-saeb --skip-sge --skip-verify',
+                'cli' => 'php artisan horizonte:fortnightly-feed --phase=ibge_catalog',
+                'cli_reset' => 'php artisan horizonte:fortnightly-feed --phase=ibge_catalog --reset',
                 'ok' => $ibgeUfsWarmed >= $ibgeUfsTotal,
                 'metric' => $ibgeUfsWarmed,
                 'metric_label' => __('UFs aquecidas'),
